@@ -1,0 +1,125 @@
+#!/usr/bin/env python
+from github import Github
+from os.path import expanduser
+from optparse import OptionParser
+from categories import CMSSW_CATEGORIES, CMSSW_L2
+import re
+
+if __name__ == "__main__":
+  parser = OptionParser(usage="%prog <pull-request-id>")
+  parser.add_option("-n", "--dry-run", dest="dryRun", action="store_true", help="Do not modify Github", default=False)
+  opts, args = parser.parse_args()
+
+  if len(args) != 1:
+    parser.error("Too many arguments")
+  prId = int(args[0])
+  gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  pr = gh.get_organization("cms-sw").get_repo("cmssw").get_pull(prId)
+  packages = set(["/".join(x.filename.split("/", 2)[0:2]) for x in pr.get_files()])
+  print "Following packages affected:"
+  print "\n".join(packages)
+  signing_categories = set([category for package in packages 
+                            for category, category_packages in CMSSW_CATEGORIES.items()
+                            if package in category_packages])
+  print
+  print "Following categories affected:"
+  print "\n".join(signing_categories)
+    
+  # Process the issue comments
+  repo = gh.get_organization("cms-sw").get_repo("cmssw")
+  issue = repo.get_issue(prId)
+  signatures = {x: "pending" for x in signing_categories}
+  last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
+  already_seen = False
+  for comment in issue.get_comments():
+    comment_date = comment.created_at
+    if comment_date < last_commit_date:
+      print "Ignoring comment done before the last commit."
+      continue
+    commenter = comment.user.login
+    if commenter == "cmsbuild":
+      actor = re.match("The following categories have been signed by [^@]*[@]([^ :]*).*", str(comment.body))
+      if actor:
+        print "cmsbuild commented about signature"
+        if not actor.group(1) in CMSSW_L2:
+          continue
+        for sign in CMSSW_L2[actor.group(1)]:
+          signatures[sign] = "approved" 
+
+      actor = re.match("The following categories have been rejected by [^@]*[@]([^ :]*).*", str(comment.body))
+      if actor:
+        print "cmsbuild commented about rejection"
+        if not actor.group(1) in CMSSW_L2:
+          print actor.group(1) + " is not a L2."
+          continue
+        for sign in CMSSW_L2[actor.group(1)]:
+          signatures[sign] = "rejected"
+
+      if re.match("A new Pull Request was created by", str(comment.body)):
+        already_seen = True
+
+    if commenter in CMSSW_L2:
+      if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
+        continue
+      if re.match("^[\t ]*[+]1[\t ]*$", str(comment.body.split("\n")[0])):
+        for sign in CMSSW_L2[commenter]:
+          signatures[sign] = "approved"
+      if re.match("^[\t ]*[-]1[\t ]*$", str(comment.body.split("\n")[0])):
+        for sign in CMSSW_L2[commenter]:
+          signatures[sign] = "rejected"
+      if re.match("^[\t ]*hold[\t ]*$", str(comment.body.split("\n")[0])):
+        for sign in CMSSW_L2[commenter]:
+          signatures[sign] = "pending"
+        
+
+  print "The labels of the pull request should be:"
+  labels = [x + "-pending" for x in signing_categories]
+  for category, value in signatures.items():
+    if not category in signing_categories:
+      continue
+    labels = [l for l in labels if not l.startswith(category)]
+    if value == "approved":
+      labels.append(category + "-approved")
+    elif value == "rejected":
+      labels.append(category + "-rejected")
+    else:
+      labels.append(category + "-pending")
+    
+  print "\n".join(labels)
+
+  # Now updated the labels.
+  if not opts.dryRun:
+    issue.delete_labels()
+    issue.add_to_labels(*[repo.get_label(x) for x in labels])
+  
+  # Now check if the pull request was already seen:
+  def format(s, **kwds):
+    return s % kwds
+
+  # We do not want to spam people for the old pull requests.
+  if not already_seen and pr.number > 582:
+    unsigned = [k for (k, v) in signatures.items() if v == "pending"]
+    missing_notifications = ["@" + name for name, l2_categories in CMSSW_L2.items()
+                                        for signature in signing_categories
+                                        if signature in l2_categories and signature in unsigned]
+    missing_notifications = set(missing_notifications)
+    name = ""
+    if pr.user.name:
+      name = "(%s)" % pr.user.name
+    msg = format("A new Pull Request was created by @%(user)s %(name)s for %(branch)s.\n\n"
+                 "%(title)s\n\n"
+                 "It involves the following packages:\n\n"
+                 "%(packages)s\n\n"
+                 "%(l2s)s can you please review it and eventually sign? Thanks.",
+                 user=pr.user.login,
+                 name=pr.user.name,
+                 branch=pr.base.ref,
+                 title=pr.title.encode("ascii", "replace"),
+                 l2s=", ".join(missing_notifications),
+                packages="\n".join(packages))
+    print "The following comment will be made"
+    print msg
+    if not opts.dryRun:
+      pr.create_issue_comment(msg)
+  else:
+    print "Already seen " + str(pr.number)

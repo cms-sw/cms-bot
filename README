@@ -1,0 +1,4 @@
+# A simple set of scripts to update labels on issues according to the +1 -1 comments 
+
+To have it working you'll need a `~/.github-token` which can access
+cms-sw/cmssw repository.

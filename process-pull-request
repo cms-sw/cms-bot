@@ -88,16 +88,25 @@ if __name__ == "__main__":
   print "\n".join(labels)
 
   # Now updated the labels.
+  missingApprovals = [x for x in labels if not x.endswith("-approved")]
+  if not missingApprovals:
+    print "The pull request is complete."
   if not opts.dryRun:
     issue.delete_labels()
     issue.add_to_labels(*[repo.get_label(x) for x in labels])
+    if missingApprovals:
+      issue.add_to_labels(repo.get_label("pending-signatures"))
+    else:
+      issue.add_to_labels(repo.get_label("fully-signed"))
   
   # Now check if the pull request was already seen:
   def format(s, **kwds):
     return s % kwds
 
   # We do not want to spam people for the old pull requests.
-  if not already_seen and pr.number > 582:
+  if not missingApprovals:
+    print "Pull request is already fully signed. Not sending message."
+  elif not already_seen and pr.number > 582:
     unsigned = [k for (k, v) in signatures.items() if v == "pending"]
     missing_notifications = ["@" + name for name, l2_categories in CMSSW_L2.items()
                                         for signature in signing_categories
@@ -112,7 +121,7 @@ if __name__ == "__main__":
                  "%(packages)s\n\n"
                  "%(l2s)s can you please review it and eventually sign? Thanks.",
                  user=pr.user.login,
-                 name=pr.user.name,
+                 name=name,
                  branch=pr.base.ref,
                  title=pr.title.encode("ascii", "replace"),
                  l2s=", ".join(missing_notifications),

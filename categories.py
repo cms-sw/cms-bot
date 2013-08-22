@@ -20,6 +20,7 @@ CMSSW_L2 = {
   "ggovi": ["db"],
   "apfeiffer1": ["db"],
   "demattia": ["alca"],
+  "rcastello": ["alca"],
 }
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",

@@ -33,7 +33,7 @@ if __name__ == "__main__":
   # Process the issue comments
   repo = gh.get_organization("cms-sw").get_repo("cmssw")
   issue = repo.get_issue(prId)
-  signatures = {x: "pending" for x in signing_categories}
+  signatures = dict([(x, "pending") for x in signing_categories])
   last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
   already_seen = False
   pull_request_updated = False

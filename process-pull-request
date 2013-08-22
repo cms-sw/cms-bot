@@ -36,12 +36,26 @@ if __name__ == "__main__":
   signatures = {x: "pending" for x in signing_categories}
   last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
   already_seen = False
+  pull_request_updated = False
   for comment in issue.get_comments():
     comment_date = comment.created_at
+    commenter = comment.user.login
+    # Check special cmsbuild messages:
+    # - Check we did not announce the pull request already
+    # - Check we did not announce changes already
+    if commenter == "cmsbuild":
+      if re.match("A new Pull Request was created by", str(comment.body)):
+        already_seen = True
+      if re.match("Pull request [#][0-9]+ was updated[.] Signatures reset, please check and sign again[.]", str(comment.body)):
+        pull_request_updated = False
+
+    # Ignore all other messages which are before last commit.
     if comment_date < last_commit_date:
       print "Ignoring comment done before the last commit."
+      pull_request_updated = True
       continue
-    commenter = comment.user.login
+
+    # Check signatures using the old Topic Collector.
     if commenter == "cmsbuild":
       actor = re.match("The following categories have been signed by [^@]*[@]([^ :]*).*", str(comment.body))
       if actor:
@@ -60,19 +74,18 @@ if __name__ == "__main__":
         for sign in CMSSW_L2[actor.group(1)]:
           signatures[sign] = "rejected"
 
-      if re.match("A new Pull Request was created by", str(comment.body)):
-        already_seen = True
 
     if commenter in CMSSW_L2:
       if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
         continue
-      if re.match("^[\t ]*[+]1[\t ]*$", str(comment.body.split("\n")[0])):
+      first_line = comment.body.split("\n")[0].strip("\n\t\r ")
+      if re.match("^[+]1$", str(first_line)):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"
-      if re.match("^[\t ]*[-]1[\t ]*$", str(comment.body.split("\n")[0])):
+      if re.match("^[-]1$", str(first_line)):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
-      if re.match("^[\t ]*hold[\t ]*$", str(comment.body.split("\n")[0])):
+      if re.match("^hold$", str(first_line)):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "pending"
         
@@ -96,13 +109,22 @@ if __name__ == "__main__":
   missingApprovals = [x for x in labels if not x.endswith("-approved")]
   if not missingApprovals:
     print "The pull request is complete."
-  if not opts.dryRun:
+  if missingApprovals:
+    labels.append("pending-signatures")
+  else:
+    labels.append("fully-signed")
+
+  # We update labels only if they are different.
+  old_labels = [x.name for x in issue.labels]
+  if set(old_labels) == set(labels):
+    print "Labels unchanged."
+  elif not opts.dryRun:
     issue.delete_labels()
     issue.add_to_labels(*[repo.get_label(x) for x in labels])
-    if missingApprovals:
-      issue.add_to_labels(repo.get_label("pending-signatures"))
-    else:
-      issue.add_to_labels(repo.get_label("fully-signed"))
+    if "fully-signed" in labels:
+      msg = "This pull request is fully signed and it will be integrated in one of the next IBs unless changes."
+      if not opts.dryRun:
+        pr.create_issue_comment(msg)
   
   # Now check if the pull request was already seen:
   def format(s, **kwds):
@@ -135,5 +157,12 @@ if __name__ == "__main__":
     print msg
     if not opts.dryRun:
       pr.create_issue_comment(msg)
+  elif pull_request_updated and pr.number > 589:
+    print "The pull request was updated. We notify people about it."
+    msg = format("Pull request #%(pr)s was updated. Signatures reset, please check and sign again.", 
+                 pr=pr.number)
+    print msg
+    if not opts.dryRun:
+      pr.create_issue_comment(msg)
   else:
-    print "Already seen " + str(pr.number)
+    print "Already notified L2 about " + str(pr.number)

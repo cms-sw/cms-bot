@@ -4,6 +4,7 @@ from os.path import expanduser
 from optparse import OptionParser
 from categories import CMSSW_CATEGORIES, CMSSW_L2
 import re
+from sys import exit
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")
@@ -14,7 +15,11 @@ if __name__ == "__main__":
     parser.error("Too many arguments")
   prId = int(args[0])
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-  pr = gh.get_organization("cms-sw").get_repo("cmssw").get_pull(prId)
+  try:
+    pr = gh.get_organization("cms-sw").get_repo("cmssw").get_pull(prId)
+  except:
+    print "Could not find pull request. Maybe this is an issue"
+    exit(0)
   packages = set(["/".join(x.filename.split("/", 2)[0:2]) for x in pr.get_files()])
   print "Following packages affected:"
   print "\n".join(packages)

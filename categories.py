@@ -21,6 +21,8 @@ CMSSW_L2 = {
   "apfeiffer1": ["db"],
   "demattia": ["alca"],
   "rcastello": ["alca"],
+  "franzoni": ["operations"],
+  "fabiocos": ["operations"],
 }
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",

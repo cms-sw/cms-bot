@@ -78,14 +78,14 @@ if __name__ == "__main__":
     if commenter in CMSSW_L2:
       if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
         continue
-      first_line = comment.body.split("\n")[0].strip("\n\t\r ")
-      if re.match("^[+]1$", str(first_line)):
+      first_line = str(comment.body.split("\n")[0].strip("\n\t\r "))
+      if re.match("^([+]1|approve[d]?|sign|signed)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"
-      if re.match("^[-]1$", str(first_line)):
+      if re.match("^([-]1|reject|rejected)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
-      if re.match("^hold$", str(first_line)):
+      if re.match("^hold$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "pending"
         
@@ -122,7 +122,9 @@ if __name__ == "__main__":
     issue.delete_labels()
     issue.add_to_labels(*[repo.get_label(x) for x in labels])
     if "fully-signed" in labels:
-      msg = "This pull request is fully signed and it will be integrated in one of the next IBs unless changes."
+      msg = format("This pull request is fully signed and it will be"
+                   " integrated in one of the next IBs unless changes" 
+                   " or unless it breaks tests.")
       if not opts.dryRun:
         pr.create_issue_comment(msg)
   
@@ -146,7 +148,9 @@ if __name__ == "__main__":
                  "%(title)s\n\n"
                  "It involves the following packages:\n\n"
                  "%(packages)s\n\n"
-                 "%(l2s)s can you please review it and eventually sign? Thanks.",
+                 "%(l2s)s can you please review it and eventually sign? Thanks.\n"
+                 "You can sign-off by replying to this message having '+1' in the first line of your reply.\n"
+                 "You can reject by replying  to this message having '-1' in the first line of your reply.\n",
                  user=pr.user.login,
                  name=name,
                  branch=pr.base.ref,

@@ -10,7 +10,7 @@ CMSSW_L2 = {
   "vadler": ["analysis"],
   "vciulli": ["generators"],
   "civanch": ["simulation"],
-  "giamman": ["fastsim"],
+  "giamman": ["fastsim", "simulation"],
   "mdhildred": ["simulation"],
   "Dr15Jones": ["core", "visualization", "geometry"],
   "ktf": ["core", "visualization", "geometry"],
@@ -23,6 +23,7 @@ CMSSW_L2 = {
   "rcastello": ["alca"],
   "franzoni": ["operations"],
   "fabiocos": ["operations"],
+  "vlimant": ["operations"],
 }
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",

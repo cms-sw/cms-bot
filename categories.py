@@ -24,6 +24,8 @@ CMSSW_L2 = {
   "franzoni": ["operations"],
   "fabiocos": ["operations"],
   "vlimant": ["operations"],
+  "cmsdoxy": ["docs"],
+  "mommsen": ["daq"],
 }
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",

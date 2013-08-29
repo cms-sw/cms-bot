@@ -27,6 +27,7 @@ CMSSW_L2 = {
   "cmsdoxy": ["docs"],
   "mommsen": ["daq"],
   "emeschi": ["daq"],
+  "mulhearn": ["l1"],
 }
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",

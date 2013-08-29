@@ -26,6 +26,7 @@ CMSSW_L2 = {
   "vlimant": ["operations"],
   "cmsdoxy": ["docs"],
   "mommsen": ["daq"],
+  "emeschi": ["daq"],
 }
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",

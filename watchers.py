@@ -1,4 +1,4 @@
 WATCHERS = {
   "alja": ["Fireworks"],
-  "ghellwig": ["Alignment/OfflineValidation"],
+  "ghellwig": ["Alignment", "CalibTracker/Configuration", "CondCore", "Configuration", "Geometry", "RecoTracker"],
 }

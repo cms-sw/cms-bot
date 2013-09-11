@@ -170,7 +170,7 @@ if __name__ == "__main__":
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
-                        title=pr.title.encode("utf-8", "replace"),
+                        title=pr.title.decode("utf-8", "replace"),
                         l2s=", ".join(missing_notifications),
                         packages="\n".join(packages))
   messageUpdatedPR = format("Pull request #%(pr)s was updated. %(signers)s can you please check and sign again.",
@@ -188,6 +188,6 @@ if __name__ == "__main__":
     print "Already notified L2 about " + str(pr.number)
   if commentMsg:
     print "The following comment will be made:"
-    print commentMsg
+    print commentMsg.decode("ascii", "replace")
   if commentMsg and not opts.dryRun:
     pr.create_issue_comment(commentMsg)

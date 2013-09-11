@@ -3,8 +3,25 @@ from github import Github
 from os.path import expanduser
 from optparse import OptionParser
 from categories import CMSSW_CATEGORIES, CMSSW_L2
+from releases import RELEASE_BRANCH_MILESTONE
+
 import re
 from sys import exit
+
+# Update the milestone for a given issue.
+def updateMilestone(issue, pr):
+  if issue.milestone:
+    return
+  branch = pr.base.label.split(":")[1]
+  milestoneId = RELEASE_BRANCH_MILESTONE.get(branch, None)
+  if not milestoneId:
+    print "Unable to find a milestone for the given branch"
+    return
+  milestone = repo.get_milestone(milestoneId)
+  print "Setting milestone to %s" % milestone.title
+  if opts.dryRun:
+    return
+  issue.edit(milestone=milestone)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")
@@ -20,6 +37,9 @@ if __name__ == "__main__":
   except:
     print "Could not find pull request. Maybe this is an issue"
     exit(0)
+
+  # Process the changes for the given pull request so that we can determine the
+  # signatures it requires.
   packages = set(["/".join(x.filename.split("/", 2)[0:2]) for x in pr.get_files()])
   print "Following packages affected:"
   print "\n".join(packages)
@@ -29,10 +49,12 @@ if __name__ == "__main__":
   print
   print "Following categories affected:"
   print "\n".join(signing_categories)
-    
-  # Process the issue comments
+
   repo = gh.get_organization("cms-sw").get_repo("cmssw")
   issue = repo.get_issue(prId)
+
+  updateMilestone(issue, pr)
+  # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
   last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
   already_seen = False

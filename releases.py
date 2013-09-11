@@ -1,0 +1,7 @@
+RELEASE_BRANCH_MILESTONE = {
+  "CMSSW_7_0_X": 11,
+  "CMSSW_6_2_X": 4,
+  "CMSSW_5_3_X": 12,
+  "CMSSW_4_4_X": 8,
+  "CMSSW_4_1_X": 7,
+}

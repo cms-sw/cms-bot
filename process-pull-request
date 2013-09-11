@@ -46,7 +46,7 @@ if __name__ == "__main__":
     if commenter == "cmsbuild":
       if re.match("A new Pull Request was created by", str(comment.body)):
         already_seen = True
-      if re.match("Pull request [#][0-9]+ was updated[.] Signatures reset, please check and sign again[.]", str(comment.body)):
+      if re.match("Pull request [#][0-9]+ was updated[.].*", str(comment.body)):
         pull_request_updated = False
 
     # Ignore all other messages which are before last commit.
@@ -128,45 +128,44 @@ if __name__ == "__main__":
       if not opts.dryRun:
         pr.create_issue_comment(msg)
   
-  # Now check if the pull request was already seen:
+  # Prepare various comments regardless of whether they will be made or not.
   def format(s, **kwds):
     return s % kwds
 
+  unsigned = [k for (k, v) in signatures.items() if v == "pending"]
+  missing_notifications = ["@" + name for name, l2_categories in CMSSW_L2.items()
+                                      for signature in signing_categories
+                                      if signature in l2_categories and signature in unsigned]
+  missing_notifications = set(missing_notifications)
   # We do not want to spam people for the old pull requests.
+  messageNewPR = format("A new Pull Request was created by @%(user)s %(name)s for %(branch)s.\n\n"
+                        "%(title)s\n\n"
+                        "It involves the following packages:\n\n"
+                        "%(packages)s\n\n"
+                        "%(l2s)s can you please review it and eventually sign? Thanks.\n"
+                        "You can sign-off by replying to this message having '+1' in the first line of your reply.\n"
+                        "You can reject by replying  to this message having '-1' in the first line of your reply.\n",
+                        user=pr.user.login,
+                        name=pr.user.name and "(%s)" % pr.user.name or "",
+                        branch=pr.base.ref,
+                        title=pr.title.encode("ascii", "replace"),
+                        l2s=", ".join(missing_notifications),
+                        packages="\n".join(packages))
+  messageUpdatedPR = format("Pull request #%(pr)s was updated. %(signers)s can you please check and sign again.",
+                             pr=pr.number,
+                             signers=", ".join(missing_notifications))
+  # Now select the appropriate comment to make and add it unless dry running.
+  commentMsg = ""
   if not missingApprovals:
     print "Pull request is already fully signed. Not sending message."
   elif not already_seen and pr.number > 582:
-    unsigned = [k for (k, v) in signatures.items() if v == "pending"]
-    missing_notifications = ["@" + name for name, l2_categories in CMSSW_L2.items()
-                                        for signature in signing_categories
-                                        if signature in l2_categories and signature in unsigned]
-    missing_notifications = set(missing_notifications)
-    name = ""
-    if pr.user.name:
-      name = "(%s)" % pr.user.name
-    msg = format("A new Pull Request was created by @%(user)s %(name)s for %(branch)s.\n\n"
-                 "%(title)s\n\n"
-                 "It involves the following packages:\n\n"
-                 "%(packages)s\n\n"
-                 "%(l2s)s can you please review it and eventually sign? Thanks.\n"
-                 "You can sign-off by replying to this message having '+1' in the first line of your reply.\n"
-                 "You can reject by replying  to this message having '-1' in the first line of your reply.\n",
-                 user=pr.user.login,
-                 name=name,
-                 branch=pr.base.ref,
-                 title=pr.title.encode("ascii", "replace"),
-                 l2s=", ".join(missing_notifications),
-                packages="\n".join(packages))
-    print "The following comment will be made"
-    print msg
-    if not opts.dryRun:
-      pr.create_issue_comment(msg)
+    commentMsg = messageNewPR
   elif pull_request_updated and pr.number > 589:
-    print "The pull request was updated. We notify people about it."
-    msg = format("Pull request #%(pr)s was updated. Signatures reset, please check and sign again.", 
-                 pr=pr.number)
-    print msg
-    if not opts.dryRun:
-      pr.create_issue_comment(msg)
+    commentMsg = messageUpdatedPR
   else:
     print "Already notified L2 about " + str(pr.number)
+  if commentMsg:
+    print "The following comment will be made:"
+    print commentMsg
+  if not opts.dryRun:
+    pr.create_issue_comment(commentMsg)

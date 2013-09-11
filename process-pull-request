@@ -66,9 +66,9 @@ if __name__ == "__main__":
     # - Check we did not announce the pull request already
     # - Check we did not announce changes already
     if commenter == "cmsbuild":
-      if re.match("A new Pull Request was created by", str(comment.body)):
+      if re.match("A new Pull Request was created by", str(comment.body).decode("ascii", "replace")):
         already_seen = True
-      if re.match("Pull request [#][0-9]+ was updated[.].*", str(comment.body)):
+      if re.match("Pull request [#][0-9]+ was updated[.].*", str(comment.body).decode("ascii", "replace")):
         pull_request_updated = False
 
     # Ignore all other messages which are before last commit.

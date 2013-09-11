@@ -1,0 +1,3 @@
+WATCHERS = {
+  "alja": ["Fireworks"],
+}

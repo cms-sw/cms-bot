@@ -4,6 +4,7 @@ from os.path import expanduser
 from optparse import OptionParser
 from categories import CMSSW_CATEGORIES, CMSSW_L2
 from releases import RELEASE_BRANCH_MILESTONE
+from watchers import WATCHERS
 
 import re
 from sys import exit
@@ -46,9 +47,16 @@ if __name__ == "__main__":
   signing_categories = set([category for package in packages 
                             for category, category_packages in CMSSW_CATEGORIES.items()
                             if package in category_packages])
-  print
   print "Following categories affected:"
   print "\n".join(signing_categories)
+
+  # Given the packages check if there are additional developers watching one or more.
+  author = pr.user.login
+  watchers = set(["@" + user for package in packages
+                       for user, watched_regexp in WATCHERS.items()
+                       for regexp in watched_regexp
+                       if re.match("^" + regexp + ".*", package) and user != author])
+  print "Watchers " + ", ".join(watchers)
 
   repo = gh.get_organization("cms-sw").get_repo("cmssw")
   issue = repo.get_issue(prId)
@@ -165,6 +173,7 @@ if __name__ == "__main__":
                         "It involves the following packages:\n\n"
                         "%(packages)s\n\n"
                         "%(l2s)s can you please review it and eventually sign? Thanks.\n"
+                        "%(watchers)s"
                         "You can sign-off by replying to this message having '+1' in the first line of your reply.\n"
                         "You can reject by replying  to this message having '-1' in the first line of your reply.\n",
                         user=pr.user.login,
@@ -172,7 +181,8 @@ if __name__ == "__main__":
                         branch=pr.base.ref,
                         title=pr.title.decode("utf-8", "replace"),
                         l2s=", ".join(missing_notifications),
-                        packages="\n".join(packages))
+                        packages="\n".join(packages),
+                        watchers=watchers and ", ".join(watchers) + " this is something you requested to watch as well.\n" or "")
   messageUpdatedPR = format("Pull request #%(pr)s was updated. %(signers)s can you please check and sign again.",
                              pr=pr.number,
                              signers=", ".join(missing_notifications))

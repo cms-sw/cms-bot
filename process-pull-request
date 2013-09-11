@@ -66,9 +66,9 @@ if __name__ == "__main__":
     # - Check we did not announce the pull request already
     # - Check we did not announce changes already
     if commenter == "cmsbuild":
-      if re.match("A new Pull Request was created by", str(comment.body).decode("ascii", "replace")):
+      if re.match("A new Pull Request was created by", comment.body.encode("ascii", "ignore")):
         already_seen = True
-      if re.match("Pull request [#][0-9]+ was updated[.].*", str(comment.body).decode("ascii", "replace")):
+      if re.match("Pull request [#][0-9]+ was updated[.].*", comment.body.encode("ascii", "ignore")):
         pull_request_updated = False
 
     # Ignore all other messages which are before last commit.
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     # Check signatures using the old Topic Collector.
     if commenter == "cmsbuild":
-      actor = re.match("The following categories have been signed by [^@]*[@]([^ :]*).*", str(comment.body))
+      actor = re.match("The following categories have been signed by [^@]*[@]([^ :]*).*", comment.body.encode("ascii", "ignore"))
       if actor:
         print "cmsbuild commented about signature"
         if not actor.group(1) in CMSSW_L2:
@@ -87,7 +87,7 @@ if __name__ == "__main__":
         for sign in CMSSW_L2[actor.group(1)]:
           signatures[sign] = "approved" 
 
-      actor = re.match("The following categories have been rejected by [^@]*[@]([^ :]*).*", str(comment.body))
+      actor = re.match("The following categories have been rejected by [^@]*[@]([^ :]*).*", comment.body.encode("ascii", "ignore"))
       if actor:
         print "cmsbuild commented about rejection"
         if not actor.group(1) in CMSSW_L2:

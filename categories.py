@@ -28,6 +28,7 @@ CMSSW_L2 = {
   "mommsen": ["daq"],
   "emeschi": ["daq"],
   "mulhearn": ["l1"],
+  "danduggan": ["dqm"],
 }
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",

@@ -11,7 +11,7 @@ CMSSW_L2 = {
   "vciulli": ["generators"],
   "civanch": ["simulation"],
   "giamman": ["fastsim", "simulation"],
-  "mdhildred": ["simulation"],
+  "mdhildreth": ["simulation"],
   "Dr15Jones": ["core", "visualization", "geometry"],
   "ktf": ["core", "visualization", "geometry"],
   "ianna": ["geometry"],

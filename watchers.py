@@ -8,4 +8,17 @@ WATCHERS = {
     "DataFormats/WrappedStdDictionaries", "FWCore", "IOMC/RandomEngine", "IOPool",
     "IORawData/DaqSource", "Mixing", "SimDataFormats/RandomEngine",
     "SimGeneral/DataMixingModule", "SimGeneral/MixingModule"],
+  "TaiSakuma": [
+    "CondFormats/JetMETObjects",
+    "DQMOffline/JetMET",
+    "DataFormats/JetReco",
+    "DataFormats/METReco",
+    "JetMETCorrections",
+    "PhysicsTools/PatAlgos",
+    "PhysicsTools/PatUtils",
+    "PhysicsTools/RecoAlgos",
+    "RecoJets",
+    "RecoMET",
+    "Validation/RecoJets",
+    "Validation/RecoMET"],
 }

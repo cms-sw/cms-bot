@@ -52,6 +52,10 @@ if __name__ == "__main__":
   signing_categories = set([category for package in packages 
                             for category, category_packages in CMSSW_CATEGORIES.items()
                             if package in category_packages])
+
+  # We always require tests.
+  signing_categories.add("tests")
+
   print "Following categories affected:"
   print "\n".join(signing_categories)
 

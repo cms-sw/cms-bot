@@ -7,6 +7,19 @@ RELEASE_BRANCH_MILESTONE = {
   "CMSSW_4_1_X": 7,
 }
 
+RELEASE_BRANCH_CLOSED = [
+  "CMSSW_4_4_X",
+  "CMSSW_4_1_X",
+  "CMSSW_6_1_X",
+  "CMSSW_6_1_X_SLHC",
+]
+
+RELEASE_BRANCH_PRODUCTION = [
+  "CMSSW_6_2_X",
+  "CMSSW_6_2_X_SLHC",
+  "CMSSW_5_3_X",
+]
+
 RELEASE_MANAGERS = {
   "CMSSW_7_0_X": ["ktf"],
   "CMSSW_6_2_X": ["davidlt"],

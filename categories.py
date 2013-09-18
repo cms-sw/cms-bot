@@ -32,6 +32,8 @@ CMSSW_L2 = {
   "nclopezo": ["tests"],
 }
 
+CMSSW_L1 = ["fabiocos"]
+
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
   "Configuration/DataProcessing", "Configuration/GlobalRuns",
   "Configuration/PyReleaseValidation", "Configuration/Skimming",

@@ -2,8 +2,8 @@
 from github import Github
 from os.path import expanduser
 from optparse import OptionParser
-from categories import CMSSW_CATEGORIES, CMSSW_L2
-from releases import RELEASE_BRANCH_MILESTONE
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1
+from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS
 from watchers import WATCHERS
 
@@ -55,9 +55,14 @@ if __name__ == "__main__":
 
   # We always require tests.
   signing_categories.add("tests")
+  # We require ORP approval for releases which are in production.
+  if pr.base.ref in RELEASE_BRANCH_PRODUCTION:
+    print "This pull request requires ORP approval"
+    signing_categories.add("orp")
 
   print "Following categories affected:"
   print "\n".join(signing_categories)
+
 
   # Given the packages check if there are additional developers watching one or more.
   author = pr.user.login
@@ -76,6 +81,11 @@ if __name__ == "__main__":
   last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
   already_seen = False
   pull_request_updated = False
+  # A pull request is by default closed if the branch is a closed one.
+  mustClose = False
+  if pr.base.ref in RELEASE_BRANCH_CLOSED:
+    mustClose = True
+  requiresL1 = False
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -113,11 +123,12 @@ if __name__ == "__main__":
         for sign in CMSSW_L2[actor.group(1)]:
           signatures[sign] = "rejected"
 
+    # The first line is an invariant.
+    first_line = str(comment.body.split("\n")[0].strip("\n\t\r "))
 
     if commenter in CMSSW_L2:
       if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
         continue
-      first_line = str(comment.body.split("\n")[0].strip("\n\t\r "))
       if re.match("^([+]1|approve[d]?|sign|signed)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"
@@ -127,7 +138,26 @@ if __name__ == "__main__":
       if re.match("^hold$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "pending"
-        
+
+    # Check actions made by L1.
+    # L1 signatures are only relevant for closed releases where 
+    # we have a orp signature requested.
+    # Approving a pull request, sign it.
+    # Rejecting a pull request, will also close it.
+    # Use "reopen" to open a closed pull request.
+    if commenter in CMSSW_L1:
+      if not "orp" in signing_categories:
+        continue
+      requiresL1 = True
+      if re.match("^([+]1|approve[d]?)$", first_line):
+        signatures["orp"] = "approved"
+        mustClose = False
+      if re.match("^([-]1|reject|rejected)$", first_line):
+        signatures["orp"] = "rejected" 
+        mustClose = True
+      if re.match("reopen", first_line):
+        signatures["orp"] = "pending"
+        mustClose = False
 
   print "The labels of the pull request should be:"
   labels = [x + "-pending" for x in signing_categories]
@@ -162,6 +192,7 @@ if __name__ == "__main__":
                               " integrated in one of the next IBs unless changes" 
                               " or unless it breaks tests. %(releaseManagersMsg)s",
                               releaseManagersMsg=releaseManagersMsg)
+
   if set(old_labels) == set(labels):
     print "Labels unchanged."
   elif not opts.dryRun:
@@ -185,7 +216,8 @@ if __name__ == "__main__":
                         "%(watchers)s"
                         "You can sign-off by replying to this message having '+1' in the first line of your reply.\n"
                         "You can reject by replying  to this message having '-1' in the first line of your reply.\n"
-                        "%(releaseManagers)s",
+                        "%(releaseManagers)s"
+                        "%(orpRequired)s",
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
@@ -193,13 +225,18 @@ if __name__ == "__main__":
                         l2s=", ".join(missing_notifications),
                         packages="\n".join(packages),
                         watchers=watchers and ", ".join(watchers) + " this is something you requested to watch as well.\n" or "",
-                        releaseManagers=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " you are the release manager for this." or "")
+                        releaseManagers=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " you are the release manager for this." or "",
+                        orpRequired=requiresL1 and "\nThis pull requests was done for a production branch and will require explicit ORP approval on friday or L1 override." or "")
   messageUpdatedPR = format("Pull request #%(pr)s was updated. %(signers)s can you please check and sign again.",
-                             pr=pr.number,
-                             signers=", ".join(missing_notifications))
-  # Now select the appropriate comment to make and add it unless dry running.
+                            pr=pr.number,
+                            signers=", ".join(missing_notifications))
+
+  # Finally decide whether or not we should close the pull request:
+  messageBranchClosed = "This branch is closed for updates. Closing this pull request.\nPlease bring this up in the ORP meeting if really needed.\n"
   commentMsg = ""
-  if not missingApprovals:
+  if pr.base.ref in RELEASE_BRANCH_CLOSED:
+    commentMsg = messageBranchClosed
+  elif not missingApprovals:
     print "Pull request is already fully signed. Not sending message."
   elif not already_seen and pr.number > 582:
     commentMsg = messageNewPR
@@ -212,3 +249,9 @@ if __name__ == "__main__":
     print commentMsg.decode("ascii", "replace")
   if commentMsg and not opts.dryRun:
     pr.create_issue_comment(commentMsg)
+  
+  # Check if it needs to be automatically closed.
+  if mustClose == True and issue.state == "open":
+    print "This pull request must be closed."
+    if not opts.dryRun:
+      print issue.edit(state="closed")

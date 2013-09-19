@@ -44,5 +44,17 @@ WATCHERS = {
     "Configuration/StandardSequences",
     "Validation/RecoTrack",
     "Validation/RecoVertex",
+  ],
+  "rovere" : [
+    "RecoTracker",
+    "RecoLocalTracker",
+    "TrackingTools",
+    "SimTracker",
+    "SimGeneral/TrackingAnalysis",
+    "RecoVertex",
+    "RecoPixelVertexing",
+    "Configuration/StandardSequences",
+    "Validation/RecoTrack",
+    "Validation/RecoVertex",
   ]
 }

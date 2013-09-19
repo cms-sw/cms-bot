@@ -124,7 +124,7 @@ if __name__ == "__main__":
           signatures[sign] = "rejected"
 
     # The first line is an invariant.
-    first_line = str(comment.body.split("\n")[0].strip("\n\t\r "))
+    first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
 
     if commenter in CMSSW_L2:
       if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
@@ -171,11 +171,13 @@ if __name__ == "__main__":
       labels.append(category + "-rejected")
     else:
       labels.append(category + "-pending")
-    
+
   print "\n".join(labels)
 
   # Now updated the labels.
-  missingApprovals = [x for x in labels if not x.endswith("-approved")]
+  
+  missingApprovals = [x for x in labels
+                      if not x.endswith("-approved") and not x.startswith("orp") and not x.startswith("tests")]
   if not missingApprovals:
     print "The pull request is complete."
   if missingApprovals:

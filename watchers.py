@@ -21,4 +21,17 @@ WATCHERS = {
     "RecoMET",
     "Validation/RecoJets",
     "Validation/RecoMET"],
+  "cerati" : [
+    "RecoTracker",
+    "RecoLocalTracker",
+    "TrackingTools",
+    "SimTracker",
+    "SimGeneral/TrackingAnalysis",
+    "RecoVertex",
+    "RecoPixelVertexing",
+    "Configuration/StandardSequences",
+    "Validation/RecoTrack",
+    "Validation/RecoVertex",
+  ]
+
 }

@@ -30,6 +30,7 @@ CMSSW_L2 = {
   "mulhearn": ["l1"],
   "danduggan": ["dqm"],
   "nclopezo": ["tests"],
+  "eliasron": ["dqm"],
 }
 
 CMSSW_L1 = ["fabiocos"]

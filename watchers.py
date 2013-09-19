@@ -56,5 +56,8 @@ WATCHERS = {
     "Configuration/StandardSequences",
     "Validation/RecoTrack",
     "Validation/RecoVertex",
+  ],
+  "valuev": [
+    "L1Trigger/CSCTriggerPrimitives",
   ]
 }

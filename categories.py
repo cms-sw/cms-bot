@@ -34,7 +34,7 @@ CMSSW_L2 = {
   "eliasron": ["dqm"],
 }
 
-CMSSW_L1 = ["fabiocos"]
+CMSSW_L1 = ["fabiocos", "davidlange6"]
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
   "Configuration/DataProcessing", "Configuration/GlobalRuns",

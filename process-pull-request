@@ -133,16 +133,16 @@ if __name__ == "__main__":
     # Rejecting a pull request, will also close it.
     # Use "reopen" to open a closed pull request.
     if commenter in CMSSW_L1:
-      if not "orp" in signing_categories:
-        continue
       requiresL1 = True
-      if re.match("^([+]1|approve[d]?)$", first_line):
+      if not "orp" in signing_categories:
+        requiresL1 = False 
+      elif re.match("^([+]1|approve[d]?)$", first_line):
         signatures["orp"] = "approved"
         mustClose = False
-      if re.match("^([-]1|reject|rejected)$", first_line):
+      elif re.match("^([-]1|reject|rejected)$", first_line):
         signatures["orp"] = "rejected" 
         mustClose = True
-      if re.match("reopen", first_line):
+      elif re.match("reopen", first_line):
         signatures["orp"] = "pending"
         mustClose = False
 

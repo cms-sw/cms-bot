@@ -126,19 +126,6 @@ if __name__ == "__main__":
     # The first line is an invariant.
     first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
 
-    if commenter in CMSSW_L2:
-      if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
-        continue
-      if re.match("^([+]1|approve[d]?|sign|signed)$", first_line):
-        for sign in CMSSW_L2[commenter]:
-          signatures[sign] = "approved"
-      if re.match("^([-]1|reject|rejected)$", first_line):
-        for sign in CMSSW_L2[commenter]:
-          signatures[sign] = "rejected"
-      if re.match("^hold$", first_line):
-        for sign in CMSSW_L2[commenter]:
-          signatures[sign] = "pending"
-
     # Check actions made by L1.
     # L1 signatures are only relevant for closed releases where 
     # we have a orp signature requested.
@@ -158,6 +145,19 @@ if __name__ == "__main__":
       if re.match("reopen", first_line):
         signatures["orp"] = "pending"
         mustClose = False
+
+    if commenter in CMSSW_L2:
+      if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
+        continue
+      if re.match("^([+]1|approve[d]?|sign|signed)$", first_line):
+        for sign in CMSSW_L2[commenter]:
+          signatures[sign] = "approved"
+      if re.match("^([-]1|reject|rejected)$", first_line):
+        for sign in CMSSW_L2[commenter]:
+          signatures[sign] = "rejected"
+      if re.match("^hold$", first_line):
+        for sign in CMSSW_L2[commenter]:
+          signatures[sign] = "pending"
 
   print "The labels of the pull request should be:"
   labels = [x + "-pending" for x in signing_categories]

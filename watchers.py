@@ -64,5 +64,9 @@ WATCHERS = {
     "RecoJets",
     "RecoBTag",
     "RecoBTau",
-  ]
+  ],
+  "jpavel": [
+    "RecoTautag",
+    "DataFormats/TauReco",
+  ],
 }

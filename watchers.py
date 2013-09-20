@@ -59,5 +59,10 @@ WATCHERS = {
   ],
   "valuev": [
     "L1Trigger/CSCTriggerPrimitives",
+  ],
+  "ferencek": [
+    "RecoJets",
+    "RecoBTag",
+    "RecoBTau",
   ]
 }

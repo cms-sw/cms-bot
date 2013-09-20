@@ -200,7 +200,11 @@ if __name__ == "__main__":
   elif not opts.dryRun:
     issue.delete_labels()
     issue.add_to_labels(*[repo.get_label(x) for x in labels])
-    if "fully-signed" in labels:
+    if "fully-signed" in labels and not "orp-approved" in labels and not "orp-pending" in labels:
+      pr.create_issue_comment(messageFullySigned)
+    elif "fully-signed" in labels and "orp-approved" in labels:
+      pass
+    elif "fully-signed" in labels and "orp-pending" in labels:
       pr.create_issue_comment(messageFullySigned)
   
 

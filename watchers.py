@@ -69,4 +69,11 @@ WATCHERS = {
     "RecoTautag",
     "DataFormats/TauReco",
   ],
+  "gpetruc": [
+     "DataFormats/Track"
+     "DataFormats/Trajectory",
+     "RecoLocalTracker",
+     "RecoTracker",
+     "TrackingTools",
+  ]
 }

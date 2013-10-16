@@ -32,6 +32,7 @@ CMSSW_L2 = {
   "nclopezo": ["tests"],
   "smuzaffar": ["tests"],
   "eliasron": ["dqm"],
+  "lveldere": ["fastsim"],
 }
 
 CMSSW_L1 = ["fabiocos", "davidlange6"]

@@ -227,7 +227,7 @@ if __name__ == "__main__":
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
-                        title=pr.title.decode("utf-8", "replace"),
+                        title=pr.title.encode("ascii", "ignore"),
                         l2s=", ".join(missing_notifications),
                         packages="\n".join(packages),
                         watchers=watchers and ", ".join(watchers) + " this is something you requested to watch as well.\n" or "",

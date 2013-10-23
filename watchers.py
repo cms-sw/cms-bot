@@ -75,5 +75,14 @@ WATCHERS = {
      "RecoLocalTracker",
      "RecoTracker",
      "TrackingTools",
+  ],
+  "pakhotin": [
+      "Alignment/MuonAlignment",
+      "Alignment/MuonAlignmentAlgorithms",
+      "Alignment/CommonAlignment",
+      "Alignment/CommonAlignmentAlgorithm",
+      "Alignment/CommonAlignmentMonitor",
+      "Alignment/CommonAlignmentProducer",
+      "Alignment/CommonAlignmentParametrization"
   ]
 }

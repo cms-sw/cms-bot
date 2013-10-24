@@ -14,6 +14,7 @@ CMSSW_L2 = {
   "mdhildreth": ["simulation", "geometry"],
   "Dr15Jones": ["core", "visualization", "geometry"],
   "ktf": ["core", "visualization", "geometry"],
+  "alja": ["visualization"],
   "ianna": ["geometry"],
   "rovere": ["dqm"],
   "deguio": ["dqm"],

@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from os.path import expanduser
 from optparse import OptionParser
 from github import Github
 import re
@@ -13,6 +14,7 @@ parser.add_option("-p", action="store", type="string", dest="password", help="Yo
 parser.add_option("--pr", action="store", type="int", dest="pr_number", help="The number of the pull request to use", default=-1)
 parser.add_option("--pr-job-id", action="store", type="int", dest="pr_job_id", help="The jenkins job id for the  pull request to use", default=-1)
 parser.add_option("--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="Unit tests file to analyze", default='None')
+parser.add_option("-t", action="store", type="string", dest="token", help="tells me to use the github api token, it supersedes the username and password, example: -t cmsbuild", default='None')
 
 (options, args) = parser.parse_args()
 
@@ -65,7 +67,7 @@ def read_matrix_log_file(repo,matrix_log,tests_url):
 		message += wf['number'] +' '+ wf['step']+'\n' + '<pre>' + wf['message'] + '</pre>' + '\n'
 	message += '\n you can see the results of the tests here: \n %s ' % tests_url
         print message
-	pull_request.create_issue_comment(message) 
+	#pull_request.create_issue_comment(message) 
 
 
 def read_build_log_file(repo,build_log,tests_url):
@@ -158,17 +160,22 @@ if (action == 'prBot.py'):
 
 print 'you chose the action %s' % action
 
-if (options.username == 'None' ):
-	complain_missing_param('github username')
-	exit()
+if (options.token == 'None' ):
+	if (options.username == 'None' ):
+		complain_missing_param('github username')
+		exit()
+	else:
+		username = options.username
+	if (options.password == 'None' ):
+        	complain_missing_param('github password')
+        	exit()
+	else:
+		password = options.password
+	github = Github(username, password)
+elif (options.token == 'nclopezo' ):
+	github = Github(login_or_token=open(expanduser("/afs/cern.ch/user/d/dmendezl/private/github-token")).read().strip())
 else:
-	username = options.username
-
-if (options.password == 'None' ):
-        complain_missing_param('github password')
-        exit()
-else:
-	password = options.password
+	github = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
 
 if (options.pr_number == -1 ):
         complain_missing_param('pull request number')
@@ -182,7 +189,8 @@ if (options.pr_job_id == -1 ):
 else:
 	pr_job_id=options.pr_job_id
 
-github = Github(username, password)
+#github = Github(username, password)
+github = Github(login_or_token=open(expanduser("/afs/cern.ch/user/d/dmendezl/private/github-token")).read().strip())
 official_cmssw=get_cmssw_official_repo(github)
 
 if (action == 'TESTS_OK_PR'):

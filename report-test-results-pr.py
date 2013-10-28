@@ -22,16 +22,16 @@ def get_wf_error_msg(out_directory,out_file):
 	route = 'runTheMatrix-results/'+out_directory+'/'+out_file
 	reading = False
 	error_lines = ''
+	error_lines += route +'\n' + '\n'
 	for line in open(route):
 		if reading:
 			error_lines += line + '\n'
-			#print line
 			if '----- End Fatal Exception' in line:
 				reading = False
 		elif '----- Begin Fatal Exception' in line:
 			error_lines += line + '\n'
 			reading = True
-	print route
+	return error_lines
 
 def parse_workflow_info(parts):
 	workflow_info = {}
@@ -48,7 +48,7 @@ def parse_workflow_info(parts):
 			step = re.sub('_.*log', '', out_file)
 			workflow_info['out_file']=out_file
 			workflow_info['step']=step
-	get_wf_error_msg(out_directory,out_file)
+	workflow_info['message'] = get_wf_error_msg(out_directory,out_file)
 	return workflow_info
 		
  
@@ -62,10 +62,10 @@ def read_matrix_log_file(repo,matrix_log,tests_url):
 			workflows_with_error.append(workflow_info)
 	message = '-1 \n When I ran the RelVals I found an error in the following worklfows: \n '
 	for wf in workflows_with_error:
-		message += wf['number'] +' '+ wf['step']+'\n'
+		message += wf['number'] +' '+ wf['step']+'\n' + '<pre>' + wf['message'] + '</pre>' + '\n'
 	message += '\n you can see the results of the tests here: \n %s ' % tests_url
         print message
-	#pull_request.create_issue_comment(message) 
+	pull_request.create_issue_comment(message) 
 
 
 def read_build_log_file(repo,build_log,tests_url):

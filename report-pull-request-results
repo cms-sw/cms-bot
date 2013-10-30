@@ -195,7 +195,7 @@ else:
 	pr_job_id=options.pr_job_id
 
 #github = Github(username, password)
-github = Github(login_or_token=open(expanduser("/afs/cern.ch/user/d/dmendezl/private/github-token")).read().strip())
+#github = Github(login_or_token=open(expanduser("/afs/cern.ch/user/d/dmendezl/private/github-token")).read().strip())
 official_cmssw=get_cmssw_official_repo(github)
 
 if (action == 'TESTS_OK_PR'):

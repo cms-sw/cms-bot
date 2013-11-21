@@ -56,7 +56,7 @@ if __name__ == "__main__":
   print "Modifying release notes for %s at %s" % (release, url)
   if opts.dryRun:
     print notes
-    print "--dry-run specified, not quitting without modifying."
+    print "--dry-run specified, quitting without modifying release."
     exit(1)
   header = "#### Changes since %s:\n" % previous
   print urllib2.urlopen(request, json.dumps({"body": header + notes })).read()

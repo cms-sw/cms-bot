@@ -60,10 +60,19 @@ WATCHERS = {
   "valuev": [
     "L1Trigger/CSCTriggerPrimitives",
   ],
-  "ferencek": [
-    "RecoJets",
-    "RecoBTag",
-    "RecoBTau",
+  "cms-btv-pog": [
+    "DataFormats/BTauReco",
+    "DQMOffline/RecoB",
+    "SimDataFormats/JetMatching",
+    "HLTriggerOffline/Btag",
+    "HLTrigger/btau",
+    "PhysicsTools/JetMCAlgos",
+    "PhysicsTools/JetMCUtils",
+    "RecoJets/JetAssociationAlgorithms",
+    "RecoJets/JetAssociationProducers",
+    "RecoVertex/AdaptiveVertexFinder",
+    "RecoVertex/AdaptiveVertexFit",
+    "Validation/RecoB",
   ],
   "jpavel": [
     "RecoTautag",

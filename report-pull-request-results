@@ -198,19 +198,17 @@ else:
 #github = Github(login_or_token=open(expanduser("/afs/cern.ch/user/d/dmendezl/private/github-token")).read().strip())
 official_cmssw=get_cmssw_official_repo(github)
 
+tests_results_url='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (pr_number,pr_job_id)
+
 if (action == 'TESTS_OK_PR'):
-	tests_results_url='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/%d/summary.html' % pr_job_id
 	send_tests_approved_pr_message(official_cmssw,pr_number,tests_results_url)
 elif (action == 'PARSE_UNIT_TESTS_FAIL'):
-	tests_results_url='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/%d/summary.html' % pr_job_id
 	unit_tests_file = options.unit_tests_file
 	read_unit_tests_file(official_cmssw,unit_tests_file,tests_results_url)
 elif (action == 'PARSE_BUILD_FAIL'):
-	tests_results_url='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/%d/summary.html' % pr_job_id
 	build_log_file = options.unit_tests_file
 	read_build_log_file(official_cmssw,build_log_file, tests_results_url)
 elif (action == 'PARSE_MATRIX_FAIL'):
-	tests_results_url='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/%d/summary.html' % pr_job_id
 	matrix_log_file = options.unit_tests_file
 	read_matrix_log_file(official_cmssw,matrix_log_file,tests_results_url)
 else:

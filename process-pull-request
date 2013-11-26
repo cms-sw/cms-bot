@@ -86,6 +86,7 @@ if __name__ == "__main__":
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     mustClose = True
   requiresL1 = False
+  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, None) 
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -152,12 +153,21 @@ if __name__ == "__main__":
       if re.match("^([+]1|approve[d]?|sign|signed)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"
-      if re.match("^([-]1|reject|rejected)$", first_line):
+      elif re.match("^([-]1|reject|rejected)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
-      if re.match("^hold$", first_line):
+      elif re.match("^hold$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "pending"
+
+    # Check for release managers and and sign the tests category based on their comment
+    #+tested for approved
+    #-tested for rejected
+    if commenter in releaseManagers:
+      if re.match("^[+](test|tested)$", first_line):
+        signatures["tests"] = "approved"
+      elif re.match("^[-](test|tested)$", first_line):
+        signatures["tests"] = "rejected"
 
   print "The labels of the pull request should be:"
   labels = [x + "-pending" for x in signing_categories]
@@ -187,7 +197,6 @@ if __name__ == "__main__":
 
   # We update labels only if they are different.
   old_labels = [x.name for x in issue.labels]
-  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, None) 
   releaseManagersMsg=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " can you please take care of it?" or ""
   
   messageFullySigned = format("This pull request is fully signed and it will be"

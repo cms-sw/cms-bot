@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+
+# A script to generate the list of releases to deprecate, via a set of regexp.
+
+from urllib2 import urlopen
+from xml.sax import make_parser, handler
+import re
+
+class ReleasesDeprecator(handler.ContentHandler):
+  def __init__(self):
+    self.survival = []
+    self.devel_deprecated = []
+    self.prod_deprecated = []
+    self.rules = ["3_[0-9]_[0-9].*", "[45]_[0-9]_[0-9]+.*pre[0-9].*", "6_1_[0-9]+.*pre[0-9].*", "6_2_0_.*pre[0-68-9]", "4_3_.*", ".*_TS.*", 
+                  ".*cand.*", "5_2_[0-8].*", "5_[0-1]_.*",
+                  "5_3_11_patch[1-5]", "4_4_5_patch[1-4]", "5_3_2_patch[1-4]", "5_3_7_patch[1-6]", "6_0_.*", "CMSSW_6_2_0_p1_gcc481",
+                  "4_2_.*SLHC.*", "4_2_8_p7rootfix", "5_3_1[2-3]_patch[1-2]", "4_2_4_g94p03c",
+                  "5_3_[8-9]_patch[1-2]", "6_1_0", "4_4_2_p10JEmalloc"]
+
+  def startElement(self, name, attrs):
+    if not name == "project":
+      return
+    release = attrs["label"]
+    prod = attrs["type"]
+    for r in self.rules:
+      rule = "CMSSW_" + r
+      if re.match(rule, release) and prod == "Development":
+        self.devel_deprecated.append(release)
+        return
+      if re.match(rule, release) and prod == "Production":
+        self.prod_deprecated.append(release)
+        return
+    self.survival.append(release)
+
+
+if __name__ == "__main__":
+  releases = urlopen("https://cmstags.cern.ch/tc/ReleasesXML?anytype=1")
+  parser = make_parser()
+  handler = ReleasesDeprecator()
+  parser.setContentHandler(handler)
+  parser.parse(releases)
+  print "\n\n# The following releases will be untouched:\n\n%s" % "\n".join(sorted(handler.survival))
+  print "\n\n# The following **production** releases will be removed:\n\n%s" % "\n".join(sorted(handler.prod_deprecated))
+  print "\n\n# The following **development** releases will be removed:\n\n%s" % "\n".join(sorted(handler.devel_deprecated))

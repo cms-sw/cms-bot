@@ -94,5 +94,9 @@ WATCHERS = {
       "Alignment/CommonAlignmentMonitor",
       "Alignment/CommonAlignmentProducer",
       "Alignment/CommonAlignmentParametrization"
+  ],
+  "inugent": [
+    "GeneratorInterface/ExternalDecays",
+    "Validation/EventGenerator"
   ]
 }

@@ -86,7 +86,7 @@ if __name__ == "__main__":
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     mustClose = True
   requiresL1 = False
-  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, None) 
+  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, []) 
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login

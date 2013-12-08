@@ -63,6 +63,12 @@ if __name__ == "__main__":
   print "Following categories affected:"
   print "\n".join(signing_categories)
 
+  # If there is a new package, add also a dummy "new" category.
+  has_category = all([package in category_packages for package in packages
+                           for category, category_packages in CMSSW_CATEGORIES.items()])
+  if not has_category:
+    print "A package does not have a category."
+    signing_categories.add("new-package")
 
   # Given the packages check if there are additional developers watching one or more.
   author = pr.user.login

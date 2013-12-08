@@ -13,7 +13,7 @@ CMSSW_L2 = {
   "giamman": ["fastsim", "simulation"],
   "mdhildreth": ["simulation", "geometry"],
   "Dr15Jones": ["core", "visualization", "geometry"],
-  "ktf": ["core", "visualization", "geometry"],
+  "ktf": ["core", "visualization", "geometry", "new-package"],
   "alja": ["visualization"],
   "ianna": ["geometry"],
   "rovere": ["dqm"],

@@ -67,10 +67,11 @@ if __name__ == "__main__":
   all_packages = [package for category_packages in CMSSW_CATEGORIES.values()
                           for package in category_packages]
   has_category = all([package in all_packages for package in packages])
-  print [(package, package in all_packages) for package in packages]
                            
+  new_package_message = ""
   if not has_category:
-    print "A package does not have a category."
+    new_package_message = "\nThe following packages do not have a category, yet:\n\n"
+    new_package_message += "\n".join([package for package in packages if not package in all_packages]) + "\n"
     signing_categories.add("new-package")
 
   # Given the packages check if there are additional developers watching one or more.
@@ -236,6 +237,7 @@ if __name__ == "__main__":
                         "%(title)s\n\n"
                         "It involves the following packages:\n\n"
                         "%(packages)s\n\n"
+                        "%(new_package_message)s\n"
                         "%(l2s)s can you please review it and eventually sign? Thanks.\n"
                         "%(watchers)s"
                         "You can sign-off by replying to this message having '+1' in the first line of your reply.\n"
@@ -248,6 +250,7 @@ if __name__ == "__main__":
                         title=pr.title.encode("ascii", "ignore"),
                         l2s=", ".join(missing_notifications),
                         packages="\n".join(packages),
+                        new_package_message=new_package_message,
                         watchers=watchers and ", ".join(watchers) + " this is something you requested to watch as well.\n" or "",
                         releaseManagers=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " you are the release manager for this." or "",
                         orpRequired=requiresL1 and "\nThis pull requests was done for a production branch and will require explicit ORP approval on friday or L1 override." or "")

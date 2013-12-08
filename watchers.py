@@ -69,6 +69,8 @@ WATCHERS = {
     "PhysicsTools/JetExamples",
     "PhysicsTools/JetMCAlgos",
     "PhysicsTools/JetMCUtils",
+    "RecoBTag",
+    "RecoBTau",
     "RecoJets/JetAssociationAlgorithms",
     "RecoJets/JetAssociationProducers",
     "RecoVertex/AdaptiveVertexFinder",

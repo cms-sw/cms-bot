@@ -64,8 +64,11 @@ if __name__ == "__main__":
   print "\n".join(signing_categories)
 
   # If there is a new package, add also a dummy "new" category.
-  has_category = all([package in category_packages for package in packages
-                           for category, category_packages in CMSSW_CATEGORIES.items()])
+  all_packages = [package for category_packages in CMSSW_CATEGORIES.values()
+                          for package in category_packages]
+  has_category = all([package in all_packages for package in packages])
+  print [(package, package in all_packages) for package in packages]
+                           
   if not has_category:
     print "A package does not have a category."
     signing_categories.add("new-package")

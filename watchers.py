@@ -100,5 +100,13 @@ WATCHERS = {
   "inugent": [
     "GeneratorInterface/ExternalDecays",
     "Validation/EventGenerator"
-  ]
+  ],
+  "richard-cms": ["RecoHI"],
+  "yenjie": ["RecoHI"],
+  "mandrenguyen": ["RecoHI"],
+  "yslai": ["RecoHI"],
+  "cbaus": ["RecoHI"],
+  "kurtejung": ["RecoHI"],
+  "jazzitup": ["RecoHI"],
+  "azsigmon": ["RecoHI"]
 }

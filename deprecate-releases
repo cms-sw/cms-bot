@@ -40,7 +40,7 @@ class ReleasesDeprecator(handler.ContentHandler):
                   "CMSSW_[45]_.*cand.*", "5_2_[0-8].*", "5_[0-1]_.*",
                   "5_3_11_patch[1-5]", "4_4_5_patch[1-4]", "5_3_2_patch[1-4]", "5_3_7_patch[1-6]", "6_0_.*", "6_2_0_p1_gcc481",
                   "4_2_.*SLHC.*", "4_2_8_p7rootfix", "5_3_1[2-3]_patch[1-2]", "4_2_4_g94p03c",
-                  "5_3_[8-9]_patch[1-2]", "6_1_0", "4_4_2_p10JEmalloc", "6_1_2_SLHC[12357].*", "6_2_0_SLHC[12].*", "5_3_3_patch[12]"]
+                  "5_3_[8-9]_patch[1-2]", "6_1_0", "4_4_2_p10JEmalloc", "6_1_2_SLHC[1357].*", "6_2_0_SLHC[12].*", "5_3_3_patch[12]"]
 
   def startElement(self, name, attrs):
     if not name == "project":

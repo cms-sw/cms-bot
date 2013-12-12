@@ -86,6 +86,14 @@ if __name__ == "__main__":
   issue = repo.get_issue(prId)
 
   updateMilestone(issue, pr)
+
+  # check if the pull request is mergeable
+  print 'Checking if this pull request is mergeable:'
+  print pr.mergeable
+  # if this is unmergeable, from reading the comments we decide 
+  # if we must complain or if we have complained about it already
+  mustComplainMergeability = not pr.mergeable
+
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
   last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
@@ -103,11 +111,15 @@ if __name__ == "__main__":
     # Check special cmsbuild messages:
     # - Check we did not announce the pull request already
     # - Check we did not announce changes already
+    # - Check we did not complain already because the pull request 
+    #   is not mergeable (If that is the case)
     if commenter == "cmsbuild":
       if re.match("A new Pull Request was created by", comment.body.encode("ascii", "ignore")):
         already_seen = True
       if re.match("Pull request [#][0-9]+ was updated[.].*", comment.body.encode("ascii", "ignore")):
         pull_request_updated = False
+      if re.match("This pull request is not mergeable[.].*", comment.body.encode("ascii", "ignore")):
+        mustComplainMergeability = False
 
     # Ignore all other messages which are before last commit.
     if comment_date < last_commit_date:
@@ -257,11 +269,20 @@ if __name__ == "__main__":
   messageUpdatedPR = format("Pull request #%(pr)s was updated. %(signers)s can you please check and sign again.",
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
+  messageUnmergeablePR = format("This pull request is not mergeable. "
+                                "@%(user)s %(name)s could you please rebase it?\n\n"
+                                "Please have a look at:\n\n"
+                                "http://cms-sw.github.io/cmssw/tutorial-forward-port.html\n\n"
+                                "if you do not know how."
+                                , user=pr.user.login, name=pr.user.name and "(%s)" % pr.user.name or "") 
 
   # Finally decide whether or not we should close the pull request:
   messageBranchClosed = "This branch is closed for updates. Closing this pull request.\nPlease bring this up in the ORP meeting if really needed.\n"
   commentMsg = ""
-  if pr.base.ref in RELEASE_BRANCH_CLOSED:
+  
+  if mustComplainMergeability and pr.number > 589:
+    commentMsg=messageUnmergeablePR
+  elif pr.base.ref in RELEASE_BRANCH_CLOSED:
     commentMsg = messageBranchClosed
   elif not missingApprovals:
     print "Pull request is already fully signed. Not sending message."

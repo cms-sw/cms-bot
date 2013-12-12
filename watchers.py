@@ -108,5 +108,6 @@ WATCHERS = {
   "cbaus": ["RecoHI"],
   "kurtejung": ["RecoHI"],
   "jazzitup": ["RecoHI"],
-  "azsigmon": ["RecoHI"]
+  "azsigmon": ["RecoHI"],
+  "bachtis": ["RecoMuon", "DataFormats/MuonReco"]
 }

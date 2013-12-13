@@ -34,6 +34,7 @@ CMSSW_L2 = {
   "cmsbuild": ["tests"],
   "eliasron": ["dqm"],
   "lveldere": ["fastsim"],
+  "anton-a": ["reconstruction"]
 }
 
 CMSSW_L1 = ["fabiocos", "davidlange6"]

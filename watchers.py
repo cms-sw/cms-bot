@@ -109,5 +109,6 @@ WATCHERS = {
   "kurtejung": ["RecoHI"],
   "jazzitup": ["RecoHI"],
   "azsigmon": ["RecoHI"],
-  "bachtis": ["RecoMuon", "DataFormats/MuonReco"]
+  "bachtis": ["RecoMuon", "DataFormats/MuonReco"],
+  "venturia": ["DPGAnalysis/SiStripTools", "Validation/RecoVertex", "DQM/SiStripMonitorSummary", "DQM/SiStripMonitorClient", "CommonTools/TrackerMap"]
 }

@@ -104,6 +104,7 @@ WATCHERS = {
   "mandrenguyen": ["RecoHI", "HeavyIonsAnalysis", "DataFormats/HeavyIonEvent"],
   "yetkinyilmaz": ["RecoHI", "HeavyIonsAnalysis", "DataFormats/HeavyIonEvent"],
   "richard-cms": ["RecoHI", "Validation/RecoHI", "Validation/RecoEgamma"],
+  "kkrajczar": ["Validation/RecoHI"],
   "yenjie": ["RecoHI"],
   "yslai": ["RecoHI/HiJetAlgos", "RecoJets/JetProducers", "DataFormats/HeavyIonEvent"],
   "cbaus": [

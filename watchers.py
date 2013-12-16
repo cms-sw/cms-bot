@@ -101,12 +101,20 @@ WATCHERS = {
     "GeneratorInterface/ExternalDecays",
     "Validation/EventGenerator"
   ],
+  "mandrenguyen": ["RecoHI", "HeavyIonsAnalysis", "DataFormats/HeavyIonEvent"],
+  "yetkinyilmaz": ["RecoHI", "HeavyIonsAnalysis", "DataFormats/HeavyIonEvent"],
   "richard-cms": ["RecoHI"],
   "yenjie": ["RecoHI"],
-  "mandrenguyen": ["RecoHI"],
-  "yslai": ["RecoHI"],
-  "cbaus": ["RecoHI"],
+  "yslai": ["RecoHI/HiJetAlgos", "RecoJets/JetProducers", "DataFormats/HeavyIonEvent"],
+  "cbaus": [
+      "GeneratorInterface/ReggeGribovPartonMCInterface",
+      "GeneratorInterface/HiGenCommon", 
+      "GeneratorInterface/HydjetInterface", 
+      "GeneratorInterface/PyquenInterface"
+  ],
   "kurtejung": ["RecoHI"],
   "jazzitup": ["RecoHI"],
-  "azsigmon": ["RecoHI"]
+  "azsigmon": ["RecoHI/HiCentralityAlgos", "DataFormats/HeavyIonEvent"],
+  "dmoon": ["RecoHI/HiMuonAlgos", "RecoHI/Configuration"],
+  "miheejo": ["RecoHI/HiMuonAlgos", "RecoHI/Configuration"]
 }

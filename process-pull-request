@@ -209,10 +209,17 @@ if __name__ == "__main__":
   old_labels = [x.name for x in issue.labels]
   releaseManagersMsg=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " can you please take care of it?" or ""
   
+  # Do not complain about tests
+  requiresTestMessage = "or unless it breaks tests"
+  if "tests-approved" in set(labels):
+    requiresTestMessage = "(tests are also fine)"
+  elif "tests-rejected" in set(labels):
+    requiresTestMessage = "(but tests are reportedly failing)"
   messageFullySigned = format("This pull request is fully signed and it will be"
                               " integrated in one of the next IBs unless changes" 
-                              " or unless it breaks tests. %(releaseManagersMsg)s",
-                              releaseManagersMsg=releaseManagersMsg)
+                              " %(requiresTestMessage)s. %(releaseManagersMsg)s",
+                              releaseManagersMsg=releaseManagersMsg,
+                              requiresTestMessage=requiresTestMessage)
 
   if set(old_labels) == set(labels):
     print "Labels unchanged."

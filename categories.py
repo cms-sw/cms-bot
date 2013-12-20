@@ -36,6 +36,7 @@ CMSSW_L2 = {
   "lveldere": ["fastsim"],
   "anton-a": ["reconstruction"],
   "diguida": ["alca"],
+  "cerminar": ["operations"],
 }
 
 CMSSW_L1 = ["fabiocos", "davidlange6"]

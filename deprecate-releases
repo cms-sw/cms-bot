@@ -33,6 +33,8 @@ Ciao,
 Giulio
 """
 
+WHITELIST = ["CMSSW_5_2_7_hltpatch1"]
+
 class ReleasesDeprecator(handler.ContentHandler):
   def __init__(self, whitelist):
     self.whitelist = whitelist
@@ -70,9 +72,10 @@ if __name__ == "__main__":
                     help="Contents of https://cms-pdmv.cern.ch/mcm/search/?db_name=campaigns&page=-1",
                     dest="exclude_list", default=None)
   opts, args = parser.parse_args()
+  whitelist = set()
   if opts.exclude_list:
     exclude_list = load(open(opts.exclude_list))
-    excludedReleases = set([x["cmssw_release"] for x in exclude_list["results"]])
+    excludedReleases = set([x["cmssw_release"] for x in exclude_list["results"]]).union(WHITELIST)
     excludedBaseReleases = set([re.sub("_[a-zA-Z0-9]*patch[0-9]*", "", x) for x in excludedReleases])
     whitelist = excludedBaseReleases.union(excludedReleases)
     print whitelist

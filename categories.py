@@ -38,6 +38,7 @@ CMSSW_L2 = {
   "diguida": ["alca"],
   "cerminar": ["operations"],
   "bendavid": ["generators"],
+  "degano": ["tests"],
 }
 
 CMSSW_L1 = ["fabiocos", "davidlange6"]

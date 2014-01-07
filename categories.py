@@ -20,7 +20,6 @@ CMSSW_L2 = {
   "deguio": ["dqm"],
   "ggovi": ["db"],
   "apfeiffer1": ["db"],
-  "demattia": ["alca"],
   "rcastello": ["alca"],
   "franzoni": ["operations"],
   "fabiocos": ["operations"],

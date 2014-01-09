@@ -31,7 +31,7 @@ CMSSW_L2 = {
   "danduggan": ["dqm"],
   "nclopezo": ["tests"],
   "cmsbuild": ["tests"],
-  "eliasron": ["dqm"],
+  "ojeda": ["dqm"],
   "lveldere": ["fastsim"],
   "anton-a": ["reconstruction"],
   "diguida": ["alca"],

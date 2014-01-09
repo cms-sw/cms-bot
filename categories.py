@@ -10,7 +10,7 @@ CMSSW_L2 = {
   "vadler": ["analysis"],
   "vciulli": ["generators"],
   "civanch": ["simulation", "geometry"],
-  "giamman": ["fastsim", "simulation"],
+  "giamman": ["fastsim"],
   "mdhildreth": ["simulation", "geometry"],
   "Dr15Jones": ["core", "visualization", "geometry"],
   "ktf": ["core", "visualization", "geometry", "new-package"],

@@ -100,6 +100,7 @@ if __name__ == "__main__":
   pull_request_updated = False
   # A pull request is by default closed if the branch is a closed one.
   mustClose = False
+  mustMerge = False
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     mustClose = True
   requiresL1 = False
@@ -163,6 +164,11 @@ if __name__ == "__main__":
       elif re.match("reopen", first_line):
         signatures["orp"] = "pending"
         mustClose = False
+
+    # Check if the release manager asked for merging this.
+    if commenter in releaseManagers:
+      if re.match("merge", first_line):
+        mustMerge = True
 
     if commenter in CMSSW_L2:
       if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
@@ -266,7 +272,7 @@ if __name__ == "__main__":
                         packages="\n".join(packages),
                         new_package_message=new_package_message,
                         watchers=watchers and ", ".join(watchers) + " this is something you requested to watch as well.\n" or "",
-                        releaseManagers=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " you are the release manager for this." or "",
+                        releaseManagers=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " you are the release manager for this.\nYou can merge this pull request by typing 'merge' in the first line of your comment." or "",
                         orpRequired=requiresL1 and "\nThis pull requests was done for a production branch and will require explicit ORP approval on friday or L1 override." or "")
   messageUpdatedPR = format("Pull request #%(pr)s was updated. %(signers)s can you please check and sign again.",
                             pr=pr.number,
@@ -296,3 +302,9 @@ if __name__ == "__main__":
     print "This pull request must be closed."
     if not opts.dryRun:
       print issue.edit(state="closed")
+
+  # Check if it needs to be automatically merged.
+  if mustMerge == True:
+    print "This pull request must be merged."
+    if not opts.dryRun:
+        pr.merge()

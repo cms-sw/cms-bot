@@ -23,9 +23,10 @@ RELEASE_BRANCH_PRODUCTION = [
 ]
 
 RELEASE_MANAGERS = {
+  "CMSSW_7_1_X": ["ktf"],
   "CMSSW_7_0_X": ["ktf"],
-  "CMSSW_6_2_X": ["davidlt"],
-  "CMSSW_6_2_X_SLHC": ["davidlange6"],
+  "CMSSW_6_2_X": ["degano"],
+  "CMSSW_6_2_X_SLHC": ["andersonjacob", "kknb1056"],
   "CMSSW_5_3_X": ["smuzaffar"],
   "CMSSW_4_4_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],
   "CMSSW_4_1_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],

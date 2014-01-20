@@ -229,10 +229,11 @@ if __name__ == "__main__":
   elif "tests-rejected" in set(labels):
     requiresTestMessage = "(but tests are reportedly failing)"
   messageFullySigned = format("This pull request is fully signed and it will be"
-                              " integrated in one of the next IBs unless changes" 
+                              " integrated in one of the next %(branch)s IBs unless changes" 
                               " %(requiresTestMessage)s. %(releaseManagersMsg)s",
                               releaseManagersMsg=releaseManagersMsg,
-                              requiresTestMessage=requiresTestMessage)
+                              requiresTestMessage=requiresTestMessage,
+                              branch=pr.base.ref)
 
   if set(old_labels) == set(labels):
     print "Labels unchanged."

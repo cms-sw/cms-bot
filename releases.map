@@ -929,3 +929,4 @@ architecture=slc5_amd64_gcc462;label=CMSSW_5_3_8_patch3;type=Production;state=An
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_9;type=Production;state=Announced;
 architecture=slc5_amd64_gcc481;label=CMSSW_7_1_0_pre1;type=Development;state=Announced;
 architecture=slc6_amd64_gcc481;label=CMSSW_7_1_0_pre1;type=Development;state=Announced;
+architecture=slc6_amd64_gcc472;label=CMSSW_6_2_6;type=Development;state=Announced;

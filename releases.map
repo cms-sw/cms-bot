@@ -892,7 +892,7 @@ architecture=slc5_amd64_gcc462;label=CMSSW_5_3_12;type=Production;state=Announce
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_12_patch3;type=Production;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_12_sherpa2beta2;type=Production;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_13;type=Production;state=Announced;
-architecture=slc5_amd64_gcc462;label=CMSSW_5_3_13_cand1;type=Production;state=Announced;
+architecture=slc5_amd64_gcc462;label=CMSSW_5_3_13_cand1;type=Production;state=Deprecated;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_13_patch3;type=Production;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_14;type=Production;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_14_LHAPDF590;type=Development;state=Announced;
@@ -911,7 +911,7 @@ architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_TC125616patch1;type=Development
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_cand1;type=Development;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_cand1_TTpatch1;type=Development;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_cand1_patch1;type=Development;state=Announced;
-architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_cand2;type=Development;state=Announced;
+architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_cand2;type=Development;state=Deprecated;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_patch1;type=Production;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_4_patch2;type=Production;state=Announced;
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_5;type=Production;state=Announced;

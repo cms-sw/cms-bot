@@ -1,5 +1,6 @@
 WATCHERS = {
   "alja": ["Fireworks"],
+  "acaudron": ["DQMOffline/RecoB", "Validation/RecoB"],
   "ghellwig": ["Alignment", "CalibTracker/Configuration", "CondCore", "Configuration", "Geometry", "RecoTracker"],
   "wmtan": [
     "DataFormats/Common", "DataFormats/FWLite", "DataFormats/FEDRawData",

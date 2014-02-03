@@ -22,7 +22,6 @@ CMSSW_L2 = {
   "apfeiffer1": ["db"],
   "rcastello": ["alca"],
   "franzoni": ["operations"],
-  "fabiocos": ["operations"],
   "vlimant": ["operations"],
   "cmsdoxy": ["docs"],
   "mommsen": ["daq"],
@@ -35,8 +34,8 @@ CMSSW_L2 = {
   "lveldere": ["fastsim"],
   "anton-a": ["reconstruction"],
   "diguida": ["alca"],
-  "cerminar": ["operations"],
   "bendavid": ["generators"],
+  "davidlange6": ["operations"],
   "degano": ["tests"],
   "monttj": ["analysis"],
 }

@@ -38,6 +38,7 @@ CMSSW_L2 = {
   "cerminar": ["operations"],
   "bendavid": ["generators"],
   "degano": ["tests"],
+  "monttj": ["analysis"],
 }
 
 CMSSW_L1 = ["fabiocos", "davidlange6"]

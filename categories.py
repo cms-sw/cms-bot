@@ -208,6 +208,7 @@ CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
   "RecoJets/JetAssociationAlgorithms", "RecoJets/JetAssociationProducers",
   "RecoJets/JetPlusTracks", "RecoJets/JetProducers"], "db":
   ["CondFormats/EgammaObjects", "CondFormats/GeometryObjects",
+  "CondFormats/External", "CondFormats/Serialization",
   "CondFormats/HIObjects", "CondFormats/HLTObjects", "CondFormats/HcalMapping",
   "CondFormats/HcalObjects", "CondFormats/JetMETObjects",
   "CondFormats/L1TObjects", "CondFormats/Luminosity",

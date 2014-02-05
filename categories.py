@@ -577,5 +577,7 @@ CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
   "SimTracker/TrackerHitAssociation", "SimTracker/TrackerMaterialAnalysis",
   "SimTracker/VertexAssociation", "SimTracker/VertexAssociatorESProducer",
   "SimTracker/TrackTriggerAssociation",
-  "SimTransport/HectorProducer", "TauAnalysis/MCEmbeddingTools",
+  "SimTransport/HectorProducer", 
+  "SLHCUpgradeSimulations/Configuration",
+  "TauAnalysis/MCEmbeddingTools",
   "TrackPropagation/Geant4e", "Validation/Configuration"]}

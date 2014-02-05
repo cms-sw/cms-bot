@@ -126,6 +126,5 @@ WATCHERS = {
                "DQM/SiStripMonitorClient", 
                "CommonTools/TrackerMap"],
   "azsigmon": ["RecoHI/HiCentralityAlgos", "DataFormats/HeavyIonEvent"],
-  "dmoon": ["RecoHI/HiMuonAlgos", "RecoHI/Configuration"],
   "miheejo": ["RecoHI/HiMuonAlgos", "RecoHI/Configuration"],
 }

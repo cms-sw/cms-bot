@@ -1,6 +1,6 @@
 RELEASE_BRANCH_MILESTONE = {
   "CMSSW_7_0_X": 33,
-  "CMSSW_7_1_X": 34,
+  "CMSSW_7_1_X": 36,
   "CMSSW_6_2_X": 21,
   "CMSSW_6_2_X_SLHC": 9,
   "CMSSW_5_3_X": 20,

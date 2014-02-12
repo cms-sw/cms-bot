@@ -99,6 +99,32 @@ WATCHERS = {
       "Alignment/CommonAlignmentProducer",
       "Alignment/CommonAlignmentParametrization"
   ],
+  "frmeier": [
+      "Alignment/CommonAlignment",
+      "Alignment/CommonAlignmentAlgorithm",
+      "Alignment/CommonAlignmentParametrization",
+      "Alignment/CommonAlignmentProducer",
+      "Alignment/MillePedeAlignmentAlgorithm",
+      "Alignment/OfflineValidation",
+      "Alignment/ReferenceTrajectories",
+      "Alignment/SurveyAnalysis",
+      "Alignment/TrackerAlignment",
+      "Alignment/TwoBodyDecay",
+      "MuonAnalysis/MomentumScaleCalibration",
+  ],
+  "mmusich": [
+      "Alignment/CommonAlignment",
+      "Alignment/CommonAlignmentAlgorithm",
+      "Alignment/CommonAlignmentParametrization",
+      "Alignment/CommonAlignmentProducer",
+      "Alignment/MillePedeAlignmentAlgorithm",
+      "Alignment/OfflineValidation",
+      "Alignment/ReferenceTrajectories",
+      "Alignment/SurveyAnalysis",
+      "Alignment/TrackerAlignment",
+      "Alignment/TwoBodyDecay",
+      "MuonAnalysis/MomentumScaleCalibration",
+  ],
   "inugent": [
     "GeneratorInterface/ExternalDecays",
     "Validation/EventGenerator"

@@ -79,7 +79,6 @@ WATCHERS = {
     "RecoVertex/AdaptiveVertexFit",
     "Validation/RecoB",
   ],
-  ],
   "pvmulder": [
     "DataFormats/BTauReco",
     "DQMOffline/RecoB",

@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+	<head>
+	<meta charset="utf-8" />
+	<title>Merged Pull Requests</title>
+
+	<link href="bootstrap/css/bootstrap.css" rel="stylesheet">
+         <link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+         <link href="bootstrap/css/docs.css" rel="stylesheet">
+         <link href="bootstrap/js/google-code-prettify/prettify.css" rel="stylesheet"> 	
+
+	</head>
+	<body>
+		<script type='text/javascript' src="http://code.jquery.com/jquery-2.1.0.js"></script>
+		<script type='text/javascript' src="bootstrap/js/bootstrap.js"></script>
+	
+
+	<div class="container">
+		<div class="span3"></div>
+		<div class="col-md-10"  id="results"></div>
+		</div>
+		<div class="span3">
+	</div>
+
+	<script>
+        
+	$(document).ready(function () {
+		
+	
+
+		write_pr = function(pr,pr_list_group){
+			console.log(pr)
+			
+			var list_item = $('<li class="list-group-item"></li>')
+			var item_link_text = "#".concat(pr.number)
+			var pr_description = " from ".concat(pr.author_login,": ", pr.title)
+			
+			var pr_link_address = pr.url
+			var pr_link = $("<a></a>").attr("href", pr_link_address)
+			pr_link.append($("<span></span>").text(item_link_text))
+			list_item.append(pr_link)
+			
+			list_item.append($("<span></span>").text(pr_description))
+
+			pr_list_group.append(list_item)
+
+		}
+
+		write_comparison = function(comparison,tab_pane){
+			
+			// if there were not merged prs in this comparison I don't show it
+                        if(comparison.merged_prs.length!=0){
+
+				var comp_tags = comparison.compared_tags+"   "
+				comp_tags = comp_tags.substring(comp_tags.indexOf(">")+2,comp_tags.length)
+
+				var title_compared_tags = $("<h3></h3>").text(comp_tags)
+			
+				var comp_link_address = comparison.compared_tags.replace(" --> ","...")
+				comp_link_address = "https://github.com/cms-sw/cmssw/compare/".concat(comp_link_address)
+				var comp_link = $("<a></a>").attr("href", comp_link_address)
+				comp_link.append($("<span></span>").text("See comparison on GitHub"))
+			
+				var see_on_github = $("<small></small>").append(comp_link)
+			
+				title_compared_tags.append(see_on_github)
+				title_compared_tags.append($("<br>"))
+				title_compared_tags.append($("<br>"))
+
+				tab_pane.append(title_compared_tags)
+				var pull_requests = comparison.merged_prs			
+			
+				var pr_list_group = $('<ul class="list-group"></ul>')
+			
+
+				//write the info for each pull request
+				for(var i =0; i < pull_requests.length; i++){
+					write_pr(pull_requests[i],pr_list_group)
+                       		 }
+			
+				tab_pane.append(pr_list_group)
+			}else{
+				console.log("There were no merged prs between the following tags")
+				console.log(comparison.compared_tags)
+			}
+		}
+		
+		f = function(data){
+                       	// create tab panel
+			var tabs = $('<ul id="myTab" class="nav nav-tabs"></ul>')
+			
+			//create nav tabs
+			for(var i = 0; i < data.length; i++) {
+                                
+                                var release_queue = data[i];
+				 //add tab 
+                                var tab_title = $('<li><a href="#'+release_queue.release_name+'" data-toggle="tab">'+release_queue.release_name+'</a></li>')
+                                tabs.append(tab_title)
+
+
+			}
+			$("#results").append(tabs)
+			
+			// create tab panes
+			var tabs_content = $('<div class="tab-content"></div>')
+			tabs_content.attr("id","tabs_container")
+		
+			for(var i = 0; i < data.length; i++) {
+			
+				var release_queue = data[i];
+				//the first one is active
+				if (i==0){
+					var tab_pane = $('<div class="tab-pane active" id="'+release_queue.release_name+'"></div>')
+				}else{
+					var tab_pane = $('<div class="tab-pane" id="'+release_queue.release_name+'"></div>')
+				}
+				
+    				console.log(release_queue.release_name);
+				console.log("---")
+				// write the titles for the release queue
+				var title_rel_name=$("<h1></h1>").text(release_queue.release_name)
+				tab_pane.append(title_rel_name)
+				tab_pane.append($("<hr>"))
+				tab_pane.append($("<br>"))
+				var comparisons = release_queue.comparisons
+				//console.log(comparisons)
+
+				// write the comparisons for the release queue
+				for(var j =0; j < comparisons.length; j++){
+					write_comparison(comparisons[j],tab_pane)
+				}
+
+				tabs_content.append(tab_pane)
+
+			}
+
+			 $("#results").append(tabs_content)
+		
+			//Enable tabbable tabs	
+			$('#myTab a').click(function (e) {
+                                  e.preventDefault()
+                                  console.log(this)
+                                  $(this).tab('show')
+                         })
+	
+			
+                }
+	
+
+  		$.getJSON( "merged_prs_summary.json", f)
+
+	})	
+	
+	</script>
+	</body>
+</html>

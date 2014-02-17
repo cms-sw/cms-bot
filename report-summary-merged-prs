@@ -1,0 +1,141 @@
+#! /usr/bin/env python
+
+from optparse import OptionParser
+from os.path import expanduser
+from github import Github
+import re
+import datetime
+import json
+
+#-----------------------------------------------------------------------------------
+#---- Parser Options
+#-----------------------------------------------------------------------------------
+parser = OptionParser(usage="usage: %prog RELEASE_QUEUES NUM_TAGS START_DATE" 
+                            "\n RELEASE_QUEUES a list separated by commas with the release queues from which you want to get the IB tags"
+                            "\n NUM_TAGS the maximum number of tags that you want to see per release queue"
+                            "\n START_DATE Start date from which get the tags")
+
+(options, args) = parser.parse_args()
+
+#-----------------------------------------------------------------------------------
+#---- Review of arguments
+#-----------------------------------------------------------------------------------
+
+if (len(args)==0):
+        print 'not enough arguments\n'
+        parser.print_help()
+        exit()
+
+release_queues_param = args[0]
+num_tags = int(args[1])
+start_date = args[2]
+
+release_queues = release_queues_param.split(",")
+
+print "I will analyze the last %d IB Tags for the following Release Queues" % num_tags
+print "Starting from %s" % start_date
+
+for rq in release_queues:
+	print rq
+
+def get_cmssw_official_repo(github):
+        user = github.get_user()
+        orgs = user.get_orgs()
+        for org in orgs:
+                if (org.login == 'cms-sw'):
+                        repo = org.get_repo('cmssw')
+                        return repo
+
+def get_commits_comparison(base,head,repo):
+	comparison = repo.compare(base,head)
+	commits = comparison.commits 
+	git_commits = []
+	for commit in commits:
+        	git_commit = official_cmssw.get_git_commit(commit.sha)
+        	git_commits.append(git_commit)
+	return git_commits
+
+def get_list_prs_details_from_comparison(base,head,repo):
+	print "%s --> %s:" % (base,head)
+	print
+	git_commits = get_commits_comparison(base,head,repo)
+	prs_details = []
+	for git_commit in git_commits:
+        	message = git_commit.message
+        	if 'Merge pull request' in message:
+                	number = re.sub('\n', '', message)
+                	number = re.sub(' from .*', '', number)
+                	number = re.sub('Merge pull request #', '', number)
+			print number
+			pull_request = repo.get_pull(int(number))
+			#print pull_request.title
+			#print pull_request.url
+			#print pull_request.user.login
+			pr = {}
+			pr['number'] = number
+			pr['title'] = pull_request.title
+			pr['author_login'] = pull_request.user.login
+			pr['url'] = 'https://github.com/cms-sw/cmssw/pull/%s' % number
+			print pr
+			prs_details.append(pr)
+	print prs_details
+	return prs_details
+
+def get_previous_release_name(current_release):
+	name_parts = current_release.rsplit('_',1)
+	date_parts = name_parts[1].split("-")
+	current_year = int(date_parts[0])
+	current_month = int(date_parts[1])
+	current_day = int(date_parts[2])
+	current_hour = int(date_parts[3])/100
+	
+	current_datetime = datetime.datetime(current_year,current_month,current_day,current_hour)
+	time_delta = datetime.timedelta(hours=12)
+	previous_datetime = current_datetime - time_delta
+	previous_release = "%s_%d-%02d-%02d-%02d00" % (name_parts[0],previous_datetime.year,previous_datetime.month,previous_datetime.day,previous_datetime.hour)
+	return previous_release
+
+#-----------------------------------------------------------------------------------
+#---- Start of execution
+#-----------------------------------------------------------------------------------
+
+github = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
+
+official_cmssw = get_cmssw_official_repo(github)
+
+#prs_numbers = get_list_prs_details_from_comparison("CMSSW_7_1_X_2014-02-09-1400","CMSSW_7_1_X_2014-02-10-0200",official_cmssw)
+
+
+results = []
+
+for rq in release_queues:
+        print "Analyzing %s from %s:" % (rq,start_date)
+	current_date = start_date
+	current_release = "%s_%s"%(rq,current_date)
+	release_queue_results = {}
+	release_queue_results['release_name'] = rq
+	comparisons = []
+	for i in range(num_tags):
+		comparison_info = {}
+		print "--"
+		previous_release = get_previous_release_name(current_release)
+		comparison_info['compared_tags']='%s --> %s' % (previous_release, current_release)
+		prs_details = get_list_prs_details_from_comparison(previous_release,current_release,official_cmssw)
+		comparison_info['merged_prs'] = prs_details
+		current_release=previous_release
+		comparisons.append(comparison_info)
+	print
+	print
+	release_queue_results['comparisons'] = comparisons
+	results.append(release_queue_results)
+print
+print
+print
+print '----------'
+print results
+
+out_json = open("merged_prs_summary.json", "w")
+json.dump(results,out_json,indent=4)
+out_json.close()
+
+

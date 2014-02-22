@@ -1,6 +1,7 @@
 WATCHERS = {
   "alja": ["Fireworks"],
   "acaudron": ["DQMOffline/RecoB", "Validation/RecoB"],
+  "argiro": [".*[Ee][Cc][Aa][Ll].*"],
   "bachtis": ["DataFormats/ParticleFlowReco", "DataFormats/ParticleFlowCandidate", "RecoParticleFlow"],
   "ghellwig": ["Alignment", "CalibTracker/Configuration", "CondCore", "Configuration", "Geometry", "RecoTracker"],
   "wmtan": [

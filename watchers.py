@@ -111,7 +111,7 @@ WATCHERS = {
     "Validation/RecoB",
   ],
   "jpavel": [
-    "RecoTautag",
+    "RecoTauTag",
     "DataFormats/TauReco",
   ],
   "gpetruc": [

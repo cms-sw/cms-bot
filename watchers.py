@@ -77,6 +77,7 @@ WATCHERS = {
     "L1Trigger/CSCTriggerPrimitives",
   ],
   "ferencek": [
+    "CondFormats/BTauObjects",
     "DataFormats/BTauReco",
     "DQMOffline/RecoB",
     "SimDataFormats/JetMatching",
@@ -94,6 +95,7 @@ WATCHERS = {
     "Validation/RecoB",
   ],
   "pvmulder": [
+    "CondFormats/BTauObjects",
     "DataFormats/BTauReco",
     "DQMOffline/RecoB",
     "SimDataFormats/JetMatching",

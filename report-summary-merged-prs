@@ -1,19 +1,19 @@
 #! /usr/bin/env python
 
 from optparse import OptionParser
-from os.path import expanduser
-from github import Github
+import subprocess
 import re
-import datetime
 import json
+import pickle
 
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog RELEASE_QUEUES NUM_TAGS START_DATE" 
-                            "\n RELEASE_QUEUES a list separated by commas with the release queues from which you want to get the IB tags"
-                            "\n NUM_TAGS the maximum number of tags that you want to see per release queue"
-                            "\n START_DATE Start date from which get the tags")
+parser = OptionParser(usage="usage: %prog COMPARISON_PAIRS" 
+                            "\n COMPARISON_PAIRS: a list separated by commas with the pairs of tags or "
+			    "\n heads or branches that you want to compare, this pairs should be separated by .."
+                            "\n For example:"
+			    "\n CMSSW_7_1_0_pre2..CMSSW_7_0_X,CMSSW_6_2_7..CMSSW_6_2_X")
 
 (options, args) = parser.parse_args()
 
@@ -22,120 +22,234 @@ parser = OptionParser(usage="usage: %prog RELEASE_QUEUES NUM_TAGS START_DATE"
 #-----------------------------------------------------------------------------------
 
 if (len(args)==0):
-        print 'not enough arguments\n'
-        parser.print_help()
-        exit()
+  print 'not enough arguments\n'
+  parser.print_help()
+  exit()
 
-release_queues_param = args[0]
-num_tags = int(args[1])
-start_date = args[2]
+requested_comparisons_param = args[0]
 
-release_queues = release_queues_param.split(",")
+requested_comparisons = requested_comparisons_param.split(",")
 
-print "I will analyze the last %d IB Tags for the following Release Queues" % num_tags
-print "Starting from %s" % start_date
+#-----------------------------------------------------------------------------------
+#---- Fuctions
+#-----------------------------------------------------------------------------------
 
-for rq in release_queues:
-	print rq
 
-def get_cmssw_official_repo(github):
-        user = github.get_user()
-        orgs = user.get_orgs()
-        for org in orgs:
-                if (org.login == 'cms-sw'):
-                        repo = org.get_repo('cmssw')
-                        return repo
+def get_pr_number(line_parts):
+  number_and_name = line_parts[0].replace('"','')
+  number = re.sub(' from .*', '', number_and_name)
+  number = re.sub('Merge pull request #', '', number)
+  return number
 
-def get_commits_comparison(base,head,repo):
-	comparison = repo.compare(base,head)
-	commits = comparison.commits 
-	git_commits = []
-	for commit in commits:
-        	git_commit = official_cmssw.get_git_commit(commit.sha)
-        	git_commits.append(git_commit)
-	return git_commits
+def get_pr_author_login(line_parts):
+  number_and_name = line_parts[0].replace('"','')
+  name = re.sub('^Merge .* from ', '', number_and_name)
+  name = name.split('/')[0]
+  return name
 
-def get_list_prs_details_from_comparison(base,head,repo):
-	print "%s --> %s:" % (base,head)
-	print
-	git_commits = get_commits_comparison(base,head,repo)
-	prs_details = []
-	for git_commit in git_commits:
-        	message = git_commit.message
-        	if 'Merge pull request' in message:
-                	number = re.sub('\n', '', message)
-                	number = re.sub(' from .*', '', number)
-                	number = re.sub('Merge pull request #', '', number)
-			print number
-			pull_request = repo.get_pull(int(number))
-			#print pull_request.title
-			#print pull_request.url
-			#print pull_request.user.login
-			pr = {}
-			pr['number'] = number
-			pr['title'] = pull_request.title
-			pr['author_login'] = pull_request.user.login
-			pr['url'] = 'https://github.com/cms-sw/cmssw/pull/%s' % number
-			print pr
-			prs_details.append(pr)
-	print prs_details
-	return prs_details
+def get_pr_title(line_parts):
+  title = line_parts[1].replace('"','').strip()
+  return title
 
-def get_previous_release_name(current_release):
-	name_parts = current_release.rsplit('_',1)
-	date_parts = name_parts[1].split("-")
-	current_year = int(date_parts[0])
-	current_month = int(date_parts[1])
-	current_day = int(date_parts[2])
-	current_hour = int(date_parts[3])/100
-	
-	current_datetime = datetime.datetime(current_year,current_month,current_day,current_hour)
-	time_delta = datetime.timedelta(hours=12)
-	previous_datetime = current_datetime - time_delta
-	previous_release = "%s_%d-%02d-%02d-%02d00" % (name_parts[0],previous_datetime.year,previous_datetime.month,previous_datetime.day,previous_datetime.hour)
-	return previous_release
+def get_info_pr(line):
+  pull_request = {}
+  line_parts = line.split(',')
+  pull_request['number'] = get_pr_number(line_parts)
+  pull_request['author_login'] = get_pr_author_login(line_parts)
+  pull_request['title'] = get_pr_title(line_parts)
+  pull_request['url'] = 'https://github.com/cms-sw/cmssw/pull/%d' % int(pull_request['number'])
+  return pull_request
+
+def get_tags_from_line(line, release_queue):
+  tags_str = line.split('tags->')[1]
+  filter = release_queue[:-1]
+  ## if the tags part is equal to ," there are no tags
+  if tags_str != ',"':
+    tags = tags_str.split(',',1)[1].strip().replace('(','').replace(')','').split(',')
+    #I also have to remove the branch name
+    tags = [t for t in tags if filter in t and t.strip().replace('"','') != release_queue]
+    return [t.replace('"','').replace('tag:','').strip() for t in tags]
+  else:
+    return []
+
+
+#-----------------------------------------------------------------------------------
+#---- Fuctions -- Analize Git ouputs
+#-----------------------------------------------------------------------------------
+
+
+def get_results_one_relval_file(file):
+  read_last_line_command = 'tail -n1 %s' %file
+
+  p = subprocess.Popen(read_last_line_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  out,err = p.communicate()
+  ret_code = p.returncode
+
+  if ret_code != 0:
+    print ret_code
+    print 'Error:'
+    print err
+    exit(1)
+
+  if '0 0 0 0 0 failed' in out:
+    return True
+  else:
+    return False
+
+def analyze_relvals_results(output,relvals_results,arch):
+  for line in output.splitlines():
+    m = re.search('CMSSW.*[0-9]/', line)
+    rel_name = line[m.start():m.end()-1]
+    result_arch = {}
+    result_arch['arch'] = arch
+    result_arch['file'] = line
+    passed = get_results_one_relval_file(line)
+    result_arch['passed'] = passed
+
+    if rel_name not in relvals_results.keys():
+      relvals_results[rel_name] = []
+
+    relvals_results[rel_name].append(result_arch)
+		
+def get_tags(output,release_queue):
+  tags = []
+  for line in output.splitlines():
+    tags += get_tags_from_line(line, release_queue)
+
+  return tags
+
+#-----------------------------------------------------------------------------------
+#---- Fuctions -- Execute Magic commands
+#-----------------------------------------------------------------------------------
+
+def get_output_command(command_to_execute):
+  print 'Executing:'
+  print command_to_execute
+
+  p = subprocess.Popen(command_to_execute, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  out,err = p.communicate()
+  ret_code = p.returncode
+
+  if ret_code != 0 and out != '':
+    print ret_code
+    print 'Error:'
+    print err
+    exit(1)
+  return out
+
+def execute_magic_command_tags(start_tag,end_tag,release_queue):
+  tags = []
+  command_to_execute = magic_command_tags.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
+  out = get_output_command(command_to_execute)
+  tags = get_tags(out,release_queue)
+  tags.append(start_tag)
+  tags = [t for t in reversed(tags)]
+  return tags
+
+def execute_command_compare_tags(start_tag,end_tag):
+  command_to_execute = magic_command_prs.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
+  output = get_output_command(command_to_execute)
+  print '------'
+  comp = {}
+  comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
+  prs = []
+  for line in output.splitlines():
+    pr = get_info_pr(line)
+    prs.append(pr)
+  comp['merged_prs'] = prs
+  return comp
+
+def compare_tags(tags):
+  comparisons = []
+  for i in range(len(tags)-1):
+    comp = execute_command_compare_tags(tags[i],tags[i+1])
+    comparisons.append(comp)
+  return comparisons
+
+
+def execute_magic_command_find_results_relvals(relvals_results):
+  for arch in architectures:
+    command_to_execute = magic_command_find_resutls_relvals.replace('ARCHITECTURE',arch)
+    out = get_output_command(command_to_execute)
+    analyze_relvals_results(out,relvals_results,arch)
+
+
+
+def print_results(results):
+  print "Results:"
+  print
+  print
+  for rq in results:
+    print
+    print rq['release_name']
+    print '/////////////////////////'
+    for comp in rq['comparisons']:
+      print comp['compared_tags']
+
+      relvals_results = [res['arch']+':'+str(res['passed']) for res in comp['relvals'] ]
+      print '\t' + str(relvals_results)
+
+      merged_prs = [pr['number'] for pr in comp['merged_prs']]
+      print '\t' + str(merged_prs)
+
+def add_relvals_to_results(results, relvals_results):
+  for rq in results:
+    for comp in rq['comparisons']:
+      rel_name = comp['compared_tags'].split('-->')[1]
+      results = relvals_results.get(rel_name)
+      comp['relvals'] = results if results else []
+
 
 #-----------------------------------------------------------------------------------
 #---- Start of execution
 #-----------------------------------------------------------------------------------
 
-github = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
+magic_command_prs = 'GIT_DIR=/afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep "Merge pull"'
 
-official_cmssw = get_cmssw_official_repo(github)
+magic_command_find_resutls_relvals = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
 
-#prs_numbers = get_list_prs_details_from_comparison("CMSSW_7_1_X_2014-02-09-1400","CMSSW_7_1_X_2014-02-10-0200",official_cmssw)
+magic_command_tags = 'GIT_DIR=/afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
 
+architectures = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481']
+
+print magic_command_prs
 
 results = []
 
-for rq in release_queues:
-        print "Analyzing %s from %s:" % (rq,start_date)
-	current_date = start_date
-	current_release = "%s_%s"%(rq,current_date)
-	release_queue_results = {}
-	release_queue_results['release_name'] = rq
-	comparisons = []
-	for i in range(num_tags):
-		comparison_info = {}
-		print "--"
-		previous_release = get_previous_release_name(current_release)
-		comparison_info['compared_tags']='%s --> %s' % (previous_release, current_release)
-		prs_details = get_list_prs_details_from_comparison(previous_release,current_release,official_cmssw)
-		comparison_info['merged_prs'] = prs_details
-		current_release=previous_release
-		comparisons.append(comparison_info)
-	print
-	print
-	release_queue_results['comparisons'] = comparisons
-	results.append(release_queue_results)
-print
-print
-print
-print '----------'
-print results
+for comp in requested_comparisons:
+  start_tag = comp.split("..")[0]
+  end_tag = comp.split("..")[1]
+  release_queue = start_tag
+	
+  # if is a SLHC or any special release, the split will happen with the fifth underscore _
+  if 'SLHC' in release_queue or 'BOOSTIO' in release_queue or 'ROOT6' in release_queue or 'THREADED'in release_queue or 'GEANT10' in release_queue:
+    release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
+  else:
+    release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]
+
+  print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
+
+  release_queue_results = {}
+	
+  release_queue_results['release_name'] = release_queue
+
+  tags = execute_magic_command_tags(start_tag,end_tag,release_queue)
+
+  release_queue_results['comparisons'] = compare_tags(tags)
+
+  results.append(release_queue_results)
+	
+  print 
+  print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+relvals_results = {}
+
+execute_magic_command_find_results_relvals(relvals_results)
+
+add_relvals_to_results(results, relvals_results)
+
+print_results(results)
 
 out_json = open("merged_prs_summary.json", "w")
 json.dump(results,out_json,indent=4)
 out_json.close()
-
-

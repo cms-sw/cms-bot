@@ -957,3 +957,4 @@ architecture=slc5_amd64_gcc472;label=CMSSW_6_2_0_SLHC8;type=Production;state=Ann
 architecture=slc5_amd64_gcc462;label=CMSSW_5_3_16;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc472;label=CMSSW_5_3_16;type=Production;state=Announced;prodarch=0;
 architecture=slc5_amd64_gcc472;label=CMSSW_6_2_7_patch2;type=Production;state=Announced;prodarch=1;
+architecture=slc6_amd64_gcc472;label=CMSSW_6_2_7_patch2;type=Production;state=Announced;prodarch=0;

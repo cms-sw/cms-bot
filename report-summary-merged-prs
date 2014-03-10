@@ -61,6 +61,8 @@ def get_info_pr(line):
   return pull_request
 
 def get_tags_from_line(line, release_queue):
+  if 'tags->' not in line:
+    return []
   tags_str = line.split('tags->')[1]
   filter = release_queue[:-1]
   ## if the tags part is equal to ," there are no tags

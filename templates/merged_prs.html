@@ -17,7 +17,7 @@
 		<div class="col-md-10"  id="results"></div>
 		</div>
 		<div class="span3">
-	</div>
+		</div>
 
 	<script>
         
@@ -46,7 +46,7 @@
 		}
 
 		write_pr = function(pr,pr_list_group){
-			console.log(pr)
+			//console.log(pr)
 			
 			var list_item = $('<li class="list-group-item"></li>')
 			var item_link_text = "#".concat(pr.number)
@@ -62,6 +62,150 @@
 			pr_list_group.append(list_item)
 
 		}
+		add_qa_link_to_row = function(row, arch,release_name){
+			var result_cell = $('<td></td>')
+			var url = 'http://cmssdt.cern.ch/SDT/cgi-bin//newQA.py?arch='+arch+'&release='+release_name
+			var r_link = $("<a></a>").attr("href", url)
+			r_link.append($("<span></span>").text('See Results'))
+			result_cell.append(r_link)
+			row.append(result_cell)
+		}
+	
+		add_tests_to_row = function(tests,row,arch,type){
+			// just add a blank cell if tere are no results for that kind of tests
+			if (tests.length == 0){
+				var result_cell = $('<td></td>')
+				row.append(result_cell)
+				return
+			}
+				
+			var result = null
+                        var file = null
+                        var result_cell = $('<td></td>')
+
+                        for(var i = 0; i<tests.length; i++){
+
+	                	if (tests[i].arch == arch){
+        	        		result = tests[i].passed
+                	        	file = tests[i].file
+                        		break
+                        	}                       
+                        }
+			//just add a blank cell if I didn't find any results for that arch
+			if (result == null || file == null){
+				var result_cell = $('<td></td>')
+                                row.append(result_cell)
+				return
+			}
+
+			console.log(result)
+			console.log(file)
+                        var res_label = $('<span></span>')
+                        var r_class = result? "label label-success" : "label label-danger"
+                        res_label.attr("class", r_class)
+                        res_label.text('See Details')
+                        var link_parts = file.split('/')
+			
+                        var details_link = ""
+
+			if (type == 'utests'){
+				details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[6] + '/'
+                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]
+                                                                +'/'+link_parts[10]
+
+			}else if(type == 'relvals'){
+				details_link="https://cmssdt.cern.ch/SDT/cgi-bin//showMatrixTestLogs.py/" + link_parts[6] + '/'
+                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
+                                                                +'/'+link_parts[11]+'/'+link_parts[12]
+			}else if(type == 'addons'){
+				details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[6] + '/'
+                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
+								+'/'+'addOnTests'+'/'
+
+			}
+
+                        var r_link = $("<a></a>").attr("href", details_link)
+                        r_link.append(res_label)
+                        result_cell.append(r_link)
+
+                        row.append(result_cell)
+			
+
+		}
+
+		add_static_analyzer_link = function (title_cell,url){
+			if (url != ''){
+				var sa_link = $("<a></a>").attr("href", url)
+				sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
+				sa_link.append($('<span></span>').text('Static Analyzer'))
+				title_cell.append(sa_link)
+			}
+		}
+
+		write_comp_title =  function(comparison , tab_pane){
+		
+			var current_tag = comparison.compared_tags.split("-->")[1]
+
+                        var title_compared_tags = $("<h3><b></b></h3>").text(current_tag)
+                        
+                        title_compared_tags.append($("<br>"))
+                        title_compared_tags.append($("<br>"))
+                        
+                        var title_table = $('<table class="table table-condensed"></table>')
+
+                        var title_cell = $('<td></td>').append(title_compared_tags)
+                        //here I check the result of the relvals
+
+			add_static_analyzer_link(title_cell,comparison.static_checks)
+
+			var title_row = $('<tr></tr>')	
+                        var relvals_results = comparison.relvals
+			var uTests_results = comparison.utests
+			var addons_results = comparison.addons
+			var architectures = comparison.tests_archs
+                        
+			title_cell.attr("rowspan",architectures.length+1)
+
+                        console.log('*************')
+                        console.log(comparison.compared_tags)
+                        console.log(relvals_results)
+			console.log(uTests_results)
+			console.log(architectures)
+                        
+                        title_row.append(title_cell)
+                        title_table.append(title_row)
+
+                        if (architectures.length != 0 ){
+
+				var archs_title = $('<th></th>').text('Architectures')
+				title_row.append(archs_title)
+				var utests_title = $('<th></th>').text('Unit Tests')
+				title_row.append(utests_title)
+				var rvs_title = $('<th></th>').text('RelVals')
+                                title_row.append(rvs_title)
+				var addons_title = $('<th></th>').text('Other Tests')
+                                title_row.append(addons_title)
+				var qa_title = $('<th></th>').text('Q/A')
+                                title_row.append(qa_title)
+
+                                for( var i = 0; i < architectures.length; i++){
+                                        var ar_row = $('<tr></tr>')
+                                        var ar_cell = $('<td></td>')
+					ar_cell.text(architectures[i])
+                                        ar_row.append(ar_cell)
+					add_tests_to_row(uTests_results,ar_row,architectures[i],'utests')
+					add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals')
+					add_tests_to_row(addons_results,ar_row,architectures[i],'addons')
+					add_qa_link_to_row(ar_row,architectures[i],current_tag)
+                                        title_table.append(ar_row)
+                                }
+                        }
+
+			tab_pane.append(title_table)
+                        
+
+
+		}
 
 		write_comparison = function(comparison,tab_pane){
 			
@@ -70,54 +214,9 @@
 			current_tag = comp_tags.split("-->")[1]
 			var prev_tag = comp_tags.split("-->")[0]
 
-			var title_compared_tags = $("<h3></h3>").text(current_tag)
-			
-			title_compared_tags.append($("<br>"))
-			title_compared_tags.append($("<br>"))
-			
-			var title_table = $('<table class="table table-condensed"></table>')
-                        var title_row = $('<tr></tr>')
-
-			var title_cell = $('<td rowspan=3></td>').append(title_compared_tags)
-			//here I check the result of the relvals
-			var relvals_results = comparison.relvals
-			var relvals_title = $('<th></th>')
-			
-			console.log('*************')
-			console.log(comparison.compared_tags)
-			console.log(relvals_results)
-			
-			title_row.append(title_cell)
-                        title_table.append(title_row)
-                        title_row.append(relvals_title)
-
-			if (relvals_results.length != 0 ){
-				relvals_title.text('RelVals')
-				for( var i = 0; i < relvals_results.length; i++){
-					var rv_row = $('<tr></tr>')
-					var result_cell = $('<td></td>')
-					var arch = relvals_results[i].arch
-					var res_label = $('<span></span>')
-					var r_class = relvals_results[i].passed? "label label-success" : "label label-danger"
-					res_label.attr("class", r_class)
-
-					var link_parts = relvals_results[i].file.split('/')
-					var details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showMatrixTestLogs.py/" + link_parts[6] + '/'
-								+link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
-								+'/'+link_parts[11]+'/'+link_parts[12]
-
-					var rv_link = $("<a></a>").attr("href", details_link)
-					rv_link.append(res_label)
-
-					res_label.text(arch)
-					result_cell.append(rv_link)
-					rv_row.append(result_cell)
-					title_table.append(rv_row)
-				}
-			}
+			write_comp_title(comparison,tab_pane)
 			
 
-			tab_pane.append(title_table)
 
 			var comp_link_address = comparison.compared_tags.replace("-->","...")
                         comp_link_address = "https://github.com/cms-sw/cmssw/compare/".concat(comp_link_address)

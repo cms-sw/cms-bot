@@ -31,7 +31,7 @@ if __name__ == "__main__":
     parser.error("Error while updating the repository:\n" + out)
 
   error, notes = getstatusoutput(format("cd cmssw ;"
-                                      "git log --merges --pretty='%%s: %%b' %(previous)s..%(release)s | "
+                                      "git log  --first-parent --merges --pretty='%%s: %%b' %(previous)s..%(release)s | "
                                       "grep 'pull request' |"
                                       "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
                                       previous=previous,
@@ -46,7 +46,7 @@ if __name__ == "__main__":
                             headers={"Authorization" : "token " + token})
   releases = json.loads(urllib2.urlopen(request).read())
   matchingRelease = [x["id"] for x in releases if x["name"] == release]
-  if len(matchingRelease) != 1:
+  if len(matchingRelease) < 1:
     print "Release %s not found." % release
     exit(1)
   releaseId = matchingRelease[0]

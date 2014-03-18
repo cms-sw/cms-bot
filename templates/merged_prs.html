@@ -45,31 +45,57 @@
 
 		}
 
-		write_pr = function(pr,pr_list_group){
-			//console.log(pr)
-			
-			var list_item = $('<li class="list-group-item"></li>')
-			var item_link_text = "#".concat(pr.number)
-			var pr_description = " from ".concat(pr.author_login,": ", pr.title)
-			
-			var pr_link_address = pr.url
-			var pr_link = $("<a></a>").attr("href", pr_link_address)
-			pr_link.append($("<span></span>").text(item_link_text))
-			list_item.append(pr_link)
-			
-			list_item.append($("<span></span>").text(pr_description))
+//------------------------------------------------------------------
+//-- Write tests results
+//-----------------------------------------------------------------
 
-			pr_list_group.append(list_item)
-
-		}
 		add_qa_link_to_row = function(row, arch,release_name){
 			var result_cell = $('<td></td>')
 			var url = 'http://cmssdt.cern.ch/SDT/cgi-bin//newQA.py?arch='+arch+'&release='+release_name
 			var r_link = $("<a></a>").attr("href", url)
-			r_link.append($("<span></span>").text('See Results'))
+			var label_link = $("<span></span>")
+			r_link.append(label_link)
+			label_link.attr("class", "glyphicon glyphicon-search")
 			result_cell.append(r_link)
 			row.append(result_cell)
 		}
+		
+		get_tests_url = function(type,file) {
+		
+		        var link_parts = file.split('/')
+                        
+                        var details_link = ""
+
+                        if (type == 'utests' || type =='builds'){
+                                details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[6] + '/'
+                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]
+                                                                +'/'+link_parts[10]
+
+                        }else if(type == 'relvals'){
+                                details_link="https://cmssdt.cern.ch/SDT/cgi-bin//showMatrixTestLogs.py/" + link_parts[6] + '/'
+                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
+                                                                +'/'+link_parts[11]+'/'+link_parts[12]
+                        }else if(type == 'addons'){
+                                details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[6] + '/'
+                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
+                                                                +'/'+'addOnTests'+'/'
+
+                        }
+			return details_link
+
+		}
+
+		get_result_tests =  function (arch,tests){
+
+			for(var i = 0; i<tests.length; i++){
+
+                                if (tests[i].arch == arch){
+                                        return tests[i]
+                                }                       
+                        }
+
+		}
+
 	
 		add_tests_to_row = function(tests,row,arch,type){
 			// just add a blank cell if tere are no results for that kind of tests
@@ -83,48 +109,64 @@
                         var file = null
                         var result_cell = $('<td></td>')
 
-                        for(var i = 0; i<tests.length; i++){
+			var result_tests = get_result_tests(arch,tests)
 
-	                	if (tests[i].arch == arch){
-        	        		result = tests[i].passed
-                	        	file = tests[i].file
-                        		break
-                        	}                       
-                        }
+			if(result_tests != null){
+				result = result_tests.passed
+                                file = result_tests.file
+
+			}
+
+
 			//just add a blank cell if I didn't find any results for that arch
 			if (result == null || file == null){
 				var result_cell = $('<td></td>')
                                 row.append(result_cell)
 				return
+
 			}
 
 			console.log(result)
 			console.log(file)
                         var res_label = $('<span></span>')
-                        var r_class = result? "label label-success" : "label label-danger"
-                        res_label.attr("class", r_class)
-                        res_label.text('See Details')
-                        var link_parts = file.split('/')
-			
-                        var details_link = ""
+			res_label.append($('<small></small>').text('See Details'))
+                        
 
-			if (type == 'utests'){
-				details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]
-                                                                +'/'+link_parts[10]
+			var r_class = ""
+                        if(type == 'utests'){
 
-			}else if(type == 'relvals'){
-				details_link="https://cmssdt.cern.ch/SDT/cgi-bin//showMatrixTestLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
-                                                                +'/'+link_parts[11]+'/'+link_parts[12]
-			}else if(type == 'addons'){
-				details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
-								+'/'+'addOnTests'+'/'
+				if (result == 'passed'){
+                                	r_class = "label label-success"
+                        	}else if (result == 'failed'){
+                                	r_class = "label label-danger"
+                        	}else{
+                                	r_class = "label label-default"
+                        	}
+
+
+                        }else if (type == 'builds'){
+
+				if (result == 'passed'){
+                                        r_class = "label label-success"
+                                }else if (result == 'warning'){
+                                        r_class = "label label-warning"
+                                }else{
+                                        r_class = "label label-danger"
+                                }
 
 			}
+			else{
+                                r_class = result? "label label-success" : "label label-danger"
+                        }
 
-                        var r_link = $("<a></a>").attr("href", details_link)
+
+			res_label.attr("class", r_class)
+                        var link_parts = file.split('/')
+			
+                        var details_url = get_tests_url(type,file)
+
+
+                        var r_link = $("<a></a>").attr("href", details_url)
                         r_link.append(res_label)
                         result_cell.append(r_link)
 
@@ -163,7 +205,8 @@
 			var uTests_results = comparison.utests
 			var addons_results = comparison.addons
 			var architectures = comparison.tests_archs
-                        
+                        var building_results =  comparison.builds
+ 
 			title_cell.attr("rowspan",architectures.length+1)
 
                         console.log('*************')
@@ -179,6 +222,8 @@
 
 				var archs_title = $('<th></th>').text('Architectures')
 				title_row.append(archs_title)
+				var builds_title = $('<th></th>').text('Builds')
+                                title_row.append(builds_title)
 				var utests_title = $('<th></th>').text('Unit Tests')
 				title_row.append(utests_title)
 				var rvs_title = $('<th></th>').text('RelVals')
@@ -193,7 +238,8 @@
                                         var ar_cell = $('<td></td>')
 					ar_cell.text(architectures[i])
                                         ar_row.append(ar_cell)
-					add_tests_to_row(uTests_results,ar_row,architectures[i],'utests')
+					add_tests_to_row(building_results,ar_row, architectures[i],'builds')
+					add_tests_to_row(uTests_results,ar_row, architectures[i],'utests')
 					add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals')
 					add_tests_to_row(addons_results,ar_row,architectures[i],'addons')
 					add_qa_link_to_row(ar_row,architectures[i],current_tag)
@@ -206,6 +252,31 @@
 
 
 		}
+
+
+//------------------------------------------------------------------
+//-- Write merged pull requests
+//-----------------------------------------------------------------
+
+
+    write_pr = function(pr,pr_list_group){
+                        //console.log(pr)
+                        
+                        var list_item = $('<li class="list-group-item"></li>')
+                        var item_link_text = "#".concat(pr.number)
+                        var pr_description = " from ".concat(pr.author_login,": ", pr.title)
+                        
+                        var pr_link_address = pr.url
+                        var pr_link = $("<a></a>").attr("href", pr_link_address)
+                        pr_link.append($("<span></span>").text(item_link_text))
+                        list_item.append(pr_link)
+                        
+                        list_item.append($("<span></span>").text(pr_description))
+
+                        pr_list_group.append(list_item)
+
+                }
+
 
 		write_comparison = function(comparison,tab_pane){
 			
@@ -285,7 +356,15 @@
 				tab_pane.append($("<hr>"))
 				tab_pane.append($("<br>"))
 				var comparisons = release_queue.comparisons
-				//console.log(comparisons)
+				// if the release is 7_1_X I add the link for the performance summary
+				if (release_queue.release_name == "CMSSW_7_1_X"){
+					var ps_link = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/jenkins-artifacts/performance/summary/performanceSummaryOut.html" )
+					var lbl_link = $('<span class="glyphicon glyphicon-stats"></span>')
+                                	ps_link.append(lbl_link)
+					ps_link.append($('<span></span>').text('  Historical Performance Plots'))
+					tab_pane.append(ps_link)
+
+				}
 
 				// write the comparisons for the release queue
 				for(var j =comparisons.length-1; j >= 0; j--){

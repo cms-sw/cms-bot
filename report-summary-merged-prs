@@ -5,11 +5,13 @@ import subprocess
 import re
 import json
 import pickle
-
+from pickle import Unpickler
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog COMPARISON_PAIRS" 
+parser = OptionParser(usage="usage: %prog REPO COMPARISON_PAIRS" 
+                            "\n REPO: location of the repository."
+			    "\n for example: cmssw.git or /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git"
                             "\n COMPARISON_PAIRS: a list separated by commas with the pairs of tags or "
 			    "\n heads or branches that you want to compare, this pairs should be separated by .."
                             "\n For example:"
@@ -21,12 +23,13 @@ parser = OptionParser(usage="usage: %prog COMPARISON_PAIRS"
 #---- Review of arguments
 #-----------------------------------------------------------------------------------
 
-if (len(args)==0):
+if (len(args)<2):
   print 'not enough arguments\n'
   parser.print_help()
   exit()
 
-requested_comparisons_param = args[0]
+repo = args[0]
+requested_comparisons_param = args[1]
 
 requested_comparisons = requested_comparisons_param.split(",")
 
@@ -79,6 +82,18 @@ def get_tags_from_line(line, release_queue):
 #---- Fuctions -- Analize Git ouputs
 #-----------------------------------------------------------------------------------
 
+def determine_build_error(nErrorInfo):
+  a = BuildResultsKeys.COMP_ERROR in nErrorInfo.keys()
+  b = BuildResultsKeys.LINK_ERROR in nErrorInfo.keys()
+  c = BuildResultsKeys.MISC_ERROR in nErrorInfo.keys()
+  d = BuildResultsKeys.DWNL_ERROR in nErrorInfo.keys()
+  e = BuildResultsKeys.DICT_ERROR in nErrorInfo.keys()
+  f = BuildResultsKeys.PYTHON_ERROR in nErrorInfo.keys()
+  return a or b or c or d or e or f
+
+def determine_build_warning(nErrorInfo):
+  return BuildResultsKeys.COMP_WARNING in nErrorInfo.keys()
+
 def get_results_one_addOn_file(file):
   look_for_err_cmd = 'grep "failed" %s' %file
   result = get_output_command(look_for_err_cmd)
@@ -92,9 +107,9 @@ def get_results_one_unitTests_file(file):
   result = get_output_command(look_for_err_cmd)
 
   if result != '':
-    return False
+    return PossibleUnitTestResults.FAILED
   else:
-    return True
+    return PossibleUnitTestResults.PASSED
 
 def get_results_one_relval_file(file):
   read_last_line_command = 'tail -n1 %s' %file
@@ -105,6 +120,23 @@ def get_results_one_relval_file(file):
     return True
   else:
     return False
+
+def get_results_one_build_file(file):
+  summFile = open(file,'r')
+  pklr = Unpickler(summFile)
+  [rel, plat, anaTime]   = pklr.load()
+  errorKeys   = pklr.load()
+  nErrorInfo  = pklr.load()
+  summFile.close()
+
+  if determine_build_error(nErrorInfo):
+    return PossibleBuildResults.ERROR
+  elif determine_build_warning(nErrorInfo):
+    return PossibleBuildResults.WARNING
+  else:
+    return PossibleBuildResults.PASSED
+
+  return True
 
 def analyze_tests_results(output,results,arch,type):
   for line in output.splitlines():
@@ -119,6 +151,8 @@ def analyze_tests_results(output,results,arch,type):
       passed = get_results_one_unitTests_file(line)
     elif type == 'addOn':
       passed = get_results_one_addOn_file(line)
+    elif type == 'builds':
+      passed = get_results_one_build_file(line)
     else:
       print 'not a valid test type %s' %type
       exit(1)
@@ -135,6 +169,15 @@ def get_tags(output,release_queue):
   tags = []
   for line in output.splitlines():
     tags += get_tags_from_line(line, release_queue)
+
+  if (len(tags) ==0):
+    print "ATTENTION:"
+    print "looks like %s has not changed between the tags specified!" % release_queue
+    command_to_execute = MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG.replace('END_TAG',release_queue)
+    out = get_output_command(command_to_execute)
+    print out
+    tags = get_tags_from_line(out, release_queue)
+    print tags
 
   return tags
 
@@ -195,6 +238,8 @@ def execute_magic_command_find_results(results,type):
       base_command = MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS
     elif type == 'addOn':
       base_command = MAGIC_COMMAND_FIND_RESULTS_ADDON
+    elif type == 'builds':
+      base_command = MAGIC_COMMAND_FIND_RESULTS_BUILD
     else:
       print 'not a valid test type %s' %type
       exit(1)
@@ -217,6 +262,9 @@ def print_results(results):
 
       print '\t' + 'Static Checks:' + comp['static_checks']
 
+      builds_results = [res['arch']+':'+str(res['passed']) for res in comp['builds'] ]
+      print '\t' + 'Builds:'+ str(builds_results)
+
       relvals_results = [res['arch']+':'+str(res['passed']) for res in comp['relvals'] ]
       print '\t' + 'RelVals:'+ str(relvals_results)
 
@@ -229,21 +277,33 @@ def print_results(results):
       merged_prs = [pr['number'] for pr in comp['merged_prs']]
       print '\t' + 'PRs:' + str(merged_prs)
 
-def add_tests_to_results(results, unit_tests, relvals_results,addon_results):
+def add_tests_to_results(results, unit_tests, relvals_results,addon_results, build_results):
   for rq in results:
     for comp in rq['comparisons']:
       rel_name = comp['compared_tags'].split('-->')[1]
       rvsres = relvals_results.get(rel_name)
       utres = unit_tests.get(rel_name)
       adonres = addon_results.get(rel_name)
+      buildsres = build_results.get(rel_name)
 
       comp['relvals'] = rvsres if rvsres else []
       comp['utests'] = utres if utres else []
       comp['addons'] = adonres if adonres else []
+      comp['builds'] = buildsres if buildsres else []
 
       a = [t['arch'] for t in utres] if utres else []
       b = [t['arch'] for t in rvsres] if rvsres else []
-      comp['tests_archs'] = list(set(a+b))
+      c = [t['arch'] for t in buildsres] if buildsres else []
+
+      not_complete_archs =  [arch for arch in c if arch not in a]
+      for nca in not_complete_archs:
+        result = {}
+        result['arch'] = nca
+        result['file'] = str([res['file'] for res in buildsres if res['arch'] == nca])
+        result['passed'] = PossibleUnitTestResults.UNKNOWN
+        comp['utests'].append(result)
+
+      comp['tests_archs'] = list(set(a+b+c))
 
 def find_static_results(comparisons):
   for comp in comparisons:
@@ -262,22 +322,46 @@ def find_one_static_check(release_name):
 #---- Start of execution
 #-----------------------------------------------------------------------------------
 
-MAGIC_COMMAND_PRS  = 'GIT_DIR=/afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep "Merge pull"'
+# I used this type of concatenation because the string has %s inside
+MAGIC_COMMAND_PRS  = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep "Merge pull"'
+
+MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
 
 MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
 
-MAGIC_COMMAND_TAGS = 'GIT_DIR=/afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
+MAGIC_COMMAND_TAGS = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
 
 MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
 
 MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name addOnTests.log'
 
+MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name logAnalysis.pkl'
+
 STATIC_CHECKS_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/RELEASE_NAME/slc5_amd64_gcc481/llvm-analysis/index.html'
 
 MAGIC_COMMAND_FIND_STATIC_CHECKS = 'curl -s -k --head %s | head -n 1' % STATIC_CHECKS_URL
 
-ARCHITECTURES = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481','slc6_amd64_gcc490','slc6_mic_gcc481']
+ARCHITECTURES = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481','slc6_amd64_gcc490','slc6_mic_gcc481','osx108_amd64_gcc481']
 
+class BuildResultsKeys:
+  DICT_ERROR = 'dictError'
+  COMP_ERROR = 'compError'
+  LINK_ERROR = 'linkError'
+  COMP_WARNING = 'compWarning'
+  DWNL_ERROR = 'dwnlError'
+  MISC_ERROR = 'miscError'
+  IGNORE_WARNING = 'ignoreWarning'
+  PYTHON_ERROR = 'pythonError'
+
+class PossibleBuildResults:
+  PASSED = 'passed'
+  WARNING = 'warning'
+  ERROR = 'error'
+
+class PossibleUnitTestResults:
+  PASSED = 'passed'
+  FAILED = 'failed'
+  UNKNOWN = 'unknown'
 
 results = []
 
@@ -300,6 +384,10 @@ for comp in requested_comparisons:
 
   tags = execute_magic_command_tags(start_tag,end_tag,release_queue)
 
+  if (len(tags) ==0):
+    print "looks like the release has not changed since one week ago"
+    # GIT_DIR=cmssw.git git log --merges  --pretty='"%s", "%b", "tags->,%d"' CMSSW_5_3_X | grep "tags->" | head -n1
+
   release_queue_results['comparisons'] = compare_tags(tags)
 
   find_static_results(release_queue_results['comparisons'])
@@ -308,6 +396,10 @@ for comp in requested_comparisons:
 	
   print 
   print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+build_results = {}
+
+execute_magic_command_find_results(build_results,'builds')
 
 relvals_results = {}
 
@@ -321,7 +413,7 @@ addOn_tests_results = {}
 
 execute_magic_command_find_results(addOn_tests_results,'addOn')
 
-add_tests_to_results(results, unit_tests_results, relvals_results,addOn_tests_results)
+add_tests_to_results(results, unit_tests_results, relvals_results,addOn_tests_results, build_results)
 print_results(results)
 
 out_json = open("merged_prs_summary.json", "w")

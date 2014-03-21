@@ -1,9 +1,4 @@
-#/bin/sh -x
-
-# Reset kerberos token every time you run.
-kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
-klist
-
+#/bin/sh -ex
 ARCHITECTURE=$1
 RELEASE_FORMAT=$2
 REPOSITORY=$3

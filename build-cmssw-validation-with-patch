@@ -1,0 +1,64 @@
+#/bin/sh -x
+
+# Reset kerberos token every time you run.
+kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
+klist
+
+ARCHITECTURE=$1
+RELEASE_FORMAT=$2
+REPOSITORY=$3
+BASE_PACKAGE_NAME=$4
+PKGTOOLS_HASH=$5
+CMSDIST_HASH=$6
+CMSSW_RELEASE_BASE=$7
+
+
+case $ARCHITECTURE in
+  *_mic_*) export BUILD_ARCH=`echo $ARCHITECTURE | cut -f1,2 -d_` ;;
+esac
+
+RELEASE_NAME=`date +$RELEASE_FORMAT`
+DAY=`date +%Y-%m-%d`
+HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
+RELEASE_QUEUE=`echo $RELEASE_NAME | sed 's/\(CMSSW_[0-9][0-9]*_[0-9][0-9]*.*_X\).*/\1/'`
+CMSDIST_REPO=cms-sw
+cd "$WORKSPACE"
+
+git clone git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
+eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+# Use git clone -b to avoid ambiguities between branch and refs.
+
+# Cleanup before checking out
+rm -rf CMSDIST PKGTOOLS
+
+git clone -b $CMSDIST_TAG git@github.com:cms-sw/cmsdist.git CMSDIST 
+git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git PKGTOOLS
+
+# Use these in case github dies of an horrible death.
+# git clone https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+# git clone https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
+pushd CMSDIST; 
+  git checkout $CMSDIST_TAG;
+  # If the hash is specified, use it.
+  if [ ! "X$CMSDIST_HASH" = X ]; then
+    git reset --hard $CMSDIST_HASH  
+  fi
+popd
+pushd PKGTOOLS; 
+  git checkout $PKGTOOLS_TAG; 
+  if [ ! "X$PKGTOOLS_HASH" = X ]; then
+    git reset --hard $PKGTOOLS_HASH  
+  fi
+popd
+
+echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
+perl -p -i -e "s/### RPM cms cmssw.*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" CMSDIST/cmssw.spec
+perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $RELEASE_NAME/" CMSDIST/cmssw-validation.spec
+perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" CMSDIST/cmssw-patch.spec
+perl -p -i -e "s/BuildRequires: cmssw /BuildRequires: $BASE_PACKAGE_NAME /" CMSDIST/cmssw-validation.spec
+perl -p -i -e 's/cd [$]CMSSW_ROOT/cd ${CMSSW_PATCH_ROOT-$CMSSW_ROOT}/' CMSDIST/cmssw-validation.spec
+perl -p -i -e "s/%define baserelver .*/%define baserelver $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file
+perl -p -i -e "s/%define baserelqueue .*/%define baserelqueue $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file
+
+echo " " >> CMSDIST/cmssw-validation.spec
+PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms `buildtype="build cmssw-validation" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`

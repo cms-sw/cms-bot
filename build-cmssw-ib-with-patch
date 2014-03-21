@@ -1,0 +1,107 @@
+#!/bin/sh -ex
+ARCHITECTURE=$1
+RELEASE_FORMAT=$2
+REPOSITORY=$3
+PACKAGE_NAME=cmssw
+# Workspace is usually defined by jenkins. If not running in
+# jenkins it will assume the current directory is the workspace.
+WORKSPACE=${WORKSPACE-$PWD}
+cd $WORKSPACE
+
+# OSX does not need the keytab.
+case $ARCHITECTURE in 
+  osx*) ;;
+  *) kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab ;;
+esac
+
+BUILD_JOBS=2
+
+case $ARCHITECTURE in
+  *_mic_*) export BUILD_ARCH=`echo $ARCHITECTURE | cut -f1,2 -d_` ;;
+  *_armv7hl_*) BUILD_JOBS=1 ;;
+esac
+
+RELEASE_NAME=`date +$RELEASE_FORMAT`
+DAY=`date +%Y-%m-%d`
+HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
+# RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/\(CMSSW_[0-9][0-9]*_[0-9][0-9]*\).*/\1_X/'`
+RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/_X.*/_X/'`
+
+# Hardcode special queues like SLHC one.
+case $RELEASE_NAME in
+  *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
+esac
+
+# Hardoce XROOTD special queue XROOTD
+case $RELEASE_NAME in
+  *XROOTD*) RELEASE_QUEUE=${RELEASE_QUEUE}ROOTD_X ;;
+esac
+
+CMSDIST_REPO=cms-sw
+
+mkdir -p $WORKSPACE/$BUILD_NUMBER
+cd $WORKSPACE/$BUILD_NUMBER
+rm -rf CMSDIST PKGTOOLS w
+
+
+git clone git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
+eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+
+# eval `curl https://raw.github.com/cms-sw/cmsdist/IB/$RELEASE_QUEUE/stable/config.map | grep $ARCHITECTURE`
+# We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
+# are both branches. See below to handle the case in which they are actually tags.
+rm -rf CMSDIST
+git clone -b $CMSDIST_TAG git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
+git clone -b $PKGTOOLS_TAG git://github.com/cms-sw/pkgtools.git PKGTOOLS
+# In case github is down.
+# git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
+# git clone -b $PKGTOOLS_TAG https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+
+# If we use a tag, rather than a branch, we need to check-it out explicitly.
+# We also store the HASH of both PKGTOOLS and CMSDIST to reuse them later on.
+pushd CMSDIST; git checkout $CMSDIST_TAG; PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,]' '\n ' | grep "^\(IB\|REL\)/${RELEASE_QUEUE}_[^/]*/$ARCHITECTURE"`; CMSDIST_HASH="`git rev-parse HEAD`"; popd
+pushd PKGTOOLS; git checkout $PKGTOOLS_TAG; PKGTOOLS_HASH="`git rev-parse HEAD`"; popd
+
+while [ true ]; do
+  case $ARCHITECTURE in
+   *mic*) CMSSW_TOOL_CONF=cmssw-mic-tool-conf ;;
+   *) CMSSW_TOOL_CONF=cmssw-tool-conf ;;
+  esac
+  rm -rf w
+  # 
+  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $(getconf _NPROCESSORS_ONLN) --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build coral"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $(getconf _NPROCESSORS_ONLN) --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build $CMSSW_TOOL_CONF"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+  if [ "X$(ls w/RPMS/$ARCHITECTURE | wc -l | sed -e 's/[^0-9]*//')" = X0 ]; then
+    break;
+  fi
+  PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload $CMSSW_TOOL_CONF" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype` || true
+done
+
+# Decide if we already have a release which uses the same CMSDIST.
+pushd w
+for previous in $PREVIOUS_RELEASES; do
+  previous=`echo $previous | cut -f2 -d/`
+  echo "Checking if we can install $previous"
+  CMSSW_RELEASE_BASE=`apt-cache search cms\\\+cmssw\\\+$previous | cut -f1 | cut -f3 -d+ | grep -e "^$previous\$"`
+  if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
+    PACKAGE_NAME=cmssw-patch
+    perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" CMSDIST/cmssw-ib.spec
+    perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" CMSDIST/cmssw-validation.spec
+    break
+  fi
+done
+popd
+
+CMSSW_RELEASE_BASE=${CMSSW_RELEASE_BASE-$RELEASE_NAME}
+echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
+perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" CMSDIST/cmssw.spec
+perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" CMSDIST/cmssw-ib.spec
+perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $RELEASE_NAME/" CMSDIST/cmssw-validation.spec
+perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" CMSDIST/cmssw-patch.spec
+
+PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $(getconf _NPROCESSORS_ONLN) --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build $PACKAGE_NAME" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload $PACKAGE_NAME" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+
+echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
+echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops
+echo PACKAGE_NAME=$PACKAGE_NAME >> $WORKSPACE/buildprops

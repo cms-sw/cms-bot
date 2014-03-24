@@ -26,6 +26,9 @@ cd "$WORKSPACE"
 rm -rf CMSDIST w PKGTOOLS
 
 git clone git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
+pushd CMSDIST
+  DEFAULT_CMSDIST_TAG="`git rev-parse HEAD`"
+popd
 eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 # Use git clone -b to avoid ambiguities between branch and refs.
 
@@ -50,6 +53,13 @@ pushd PKGTOOLS;
   if [ ! "X$PKGTOOLS_HASH" = X ]; then
     git reset --hard $PKGTOOLS_HASH  
   fi
+popd
+
+# We checkout a few files from the default branch in any case.
+pushd CMSDIST
+  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-validation.spec 
+  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-ib.spec 
+  git checkout $DEFAULT_CMSDIST_TAG -- das-cache.file
 popd
 
 echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec

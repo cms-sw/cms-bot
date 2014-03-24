@@ -39,7 +39,9 @@ rm -rf CMSDIST PKGTOOLS w
 
 
 git clone git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
-DEFAULT_CMSDIST_TAG="`git rev-parse HEAD`"
+pushd CMSDIST
+  DEFAULT_CMSDIST_TAG="`git rev-parse HEAD`"
+popd
 eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 # eval `curl https://raw.github.com/cms-sw/cmsdist/IB/$RELEASE_QUEUE/stable/config.map | grep $ARCHITECTURE`

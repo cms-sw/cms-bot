@@ -39,6 +39,7 @@ rm -rf CMSDIST PKGTOOLS w
 
 
 git clone git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
+DEFAULT_CMSDIST_TAG="`git rev-parse HEAD`"
 eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 # eval `curl https://raw.github.com/cms-sw/cmsdist/IB/$RELEASE_QUEUE/stable/config.map | grep $ARCHITECTURE`
@@ -55,6 +56,13 @@ git clone -b $PKGTOOLS_TAG git://github.com/cms-sw/pkgtools.git PKGTOOLS
 # We also store the HASH of both PKGTOOLS and CMSDIST to reuse them later on.
 pushd CMSDIST; git checkout $CMSDIST_TAG; PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,]' '[\n ]' | grep "^\(IB\|REL\)/${RELEASE_QUEUE}_[^/]*/$ARCHITECTURE"`; CMSDIST_HASH="`git rev-parse HEAD`"; popd
 pushd PKGTOOLS; git checkout $PKGTOOLS_TAG; PKGTOOLS_HASH="`git rev-parse HEAD`"; popd
+
+# We checkout a few files from the default branch in any case.
+pushd CMSDIST
+  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-validation.spec 
+  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-ib.spec 
+  git checkout $DEFAULT_CMSDIST_TAG -- das-cache.file
+popd
 
 while [ true ]; do
   case $ARCHITECTURE in

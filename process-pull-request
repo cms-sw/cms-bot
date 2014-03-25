@@ -308,4 +308,7 @@ if __name__ == "__main__":
   if mustMerge == True:
     print "This pull request must be merged."
     if not opts.dryRun:
-        pr.merge()
+        try:
+          pr.merge()
+        except:
+          pass

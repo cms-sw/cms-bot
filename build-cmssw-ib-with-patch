@@ -115,7 +115,7 @@ PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $A
 if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
   pushd CMSDIST
     git tag IB/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
-    git remote add originrw git@github.com/$CMSDIST_REPO/cmsdist.git
+    git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
     git push originrw IB/$RELEASE_NAME/$ARCHITECTURE
   podp CMSDIST
 fi

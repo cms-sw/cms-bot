@@ -117,7 +117,7 @@ if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
     git tag IB/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
     git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
     git push originrw IB/$RELEASE_NAME/$ARCHITECTURE
-  podp CMSDIST
+  popd CMSDIST
 fi
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops

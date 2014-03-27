@@ -1,5 +1,6 @@
 WATCHERS = {
   "alja": ["Fireworks"],
+  "namapane": [".*Magnetic.*"],
   "acaudron": ["DQMOffline/RecoB", "Validation/RecoB"],
   "argiro": [".*[Ee][Cc][Aa][Ll].*"],
   "bachtis": ["DataFormats/ParticleFlowReco", "DataFormats/ParticleFlowCandidate", "RecoParticleFlow"],

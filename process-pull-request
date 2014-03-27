@@ -98,6 +98,7 @@ if __name__ == "__main__":
     last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
   already_seen = False
   pull_request_updated = False
+  comparison_done = False
   # A pull request is by default closed if the branch is a closed one.
   mustClose = False
   mustMerge = False
@@ -125,6 +126,11 @@ if __name__ == "__main__":
 
     # The first line is an invariant.
     first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+
+    # Check for cmsbuild comments
+    if commenter == "cmsbuild":
+      if re.match("Comparison is ready", first_line):
+        comparison_done = True
 
     # Check actions made by L1.
     # L1 signatures are only relevant for closed releases where 
@@ -186,12 +192,19 @@ if __name__ == "__main__":
     else:
       labels.append(category + "-pending")
 
+  if comparison_done:
+    labels.append("comparison-available")
+  else:
+    labels.append("comparison-pending")
+
   print "\n".join(labels)
 
   # Now updated the labels.
   
   missingApprovals = [x for x in labels
-                      if not x.endswith("-approved") and not x.startswith("orp") and not x.startswith("tests")]
+                      if not x.endswith("-approved") and not x.startswith("orp")
+                                                     and not x.startswith("tests")
+                                                     and not x.startswith("comparison")]
   if not missingApprovals:
     print "The pull request is complete."
   if missingApprovals:

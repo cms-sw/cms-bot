@@ -1,0 +1,97 @@
+#! /usr/bin/env python
+from optparse import OptionParser
+from os import listdir
+from os import path
+import re
+import json
+
+
+def get_wfs_ordered(base_dir):
+	workflows={}
+	check=re.compile("^[0-9]+.")
+	for wf in listdir(base_dir):
+		if check.match(wf):
+			wf_number = float(re.sub('_.*$', '', wf))
+			workflows[wf_number]=wf
+	return [ workflows[wf_number] for wf_number in sorted(workflows.keys()) ]
+
+
+def add_images_to_step(wf,step):
+  imgs = []
+  for img_name in listdir('%s/%s/%s' % (BASE_DIR,wf['wf_name'],step['step_name'])):
+    if (img_name in RESULT_FILE_NAMES ):
+      img = {}
+      img['name'] = img_name
+      img['url'] = '%s/%s/%s/%s' % (BASE_URL,wf['wf_name'],step['step_name'],img['name'])
+      imgs.append(img) 
+      print img['name']
+  step['imgs'] = imgs
+
+def add_steps_to_wf(wf):
+  steps = []
+  for step_name in sorted(listdir('%s/%s' % (BASE_DIR,wf['wf_name']))):
+    if path.isdir('%s/%s/%s'% (BASE_DIR,wf['wf_name'],step_name) ):
+      step = {}
+      step['step_name'] = step_name
+      add_images_to_step(wf,step)
+      steps.append(step)
+      print step_name
+  wf['steps'] = steps
+
+
+def get_workflows():
+  workflows = []
+  for wf_name in get_wfs_ordered(BASE_DIR):
+    if path.isdir('%s/%s/'% (BASE_DIR,wf_name) ) and not 'bootstrap' in wf_name:
+      print 'Adding %s' % wf_name
+      wf = {}
+      wf['wf_name'] = wf_name
+      add_steps_to_wf(wf)
+      workflows.append(wf)
+      print
+  return workflows
+
+def print_workflows(wfs):
+  for wf in wfs:
+    print wf['wf_name']
+    for step in wf['steps']:
+      print '\t %s' % step['step_name']
+      for img in step['imgs']:
+        print img
+
+#-----------------------------------------------------------------------------------
+#---- Parser Options
+#-----------------------------------------------------------------------------------
+parser = OptionParser(usage="usage: %prog RELEASE_NAME BASE_DIR \n RELEASE_NAME \t release for which the summary will be generated.\n BASE_DIR \t the files where the results are")
+
+(options, args) = parser.parse_args()
+
+#-----------------------------------------------------------------------------------
+#---- Start
+#-----------------------------------------------------------------------------------
+
+if (len(args)<2):
+        print 'you need to specify a release name and a base directory'
+        parser.print_help()
+        exit()
+
+release = args[0]
+BASE_DIR = args[1]
+
+BASE_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/performance/summary/'
+RESULT_FILE_NAMES = ['maximum_rss_histo.png', 'average_cpu_histo.png']
+
+print 'I will generate the results page for %s \n' % release
+
+result = {}
+
+workflows = get_workflows()
+
+print_workflows(workflows)
+
+result['wfs'] = workflows
+result['last_release'] = release
+
+out_json = open("plots_summary.json", "w")
+json.dump(result,out_json,indent=4)
+out_json.close()

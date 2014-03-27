@@ -69,8 +69,8 @@ perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME
 perl -p -i -e "s/BuildRequires: cmssw /BuildRequires: $BASE_PACKAGE_NAME /" CMSDIST/cmssw-validation.spec
 CMSSW_BUILD_ROOT=`echo ${PACKAGE_NAME}_ROOT | tr "[:lower:]-" "[:upper:]_"`
 perl -p -i -e "s/CMSSW_ROOT/$CMSSW_BUILD_ROOT/" CMSDIST/cmssw-validation.spec
-perl -p -i -e "s/%define baserelver .*/%define baserelver $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file
-perl -p -i -e "s/%define baserelqueue .*/%define baserelqueue $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file
+perl -p -i -e "s/%define baserelver[\s].*/%define baserelver $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file
+perl -p -i -e "s/%define baserelqueue[\s].*/%define baserelqueue $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file
 
 echo " " >> CMSDIST/cmssw-validation.spec
 PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms `buildtype="build cmssw-validation" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`

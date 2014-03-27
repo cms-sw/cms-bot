@@ -92,8 +92,8 @@ for previous in $PREVIOUS_RELEASES; do
     PACKAGE_NAME=cmssw-patch
     perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" ../CMSDIST/cmssw-ib.spec
     perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" ../CMSDIST/cmssw-validation.spec
-    perl -p -i -e "s/%define baserelver[\s][\s]*.*/%define baserelver $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
-    perl -p -i -e "s/%define baserelqueue[\s][\s]*.*/%define baserelqueue $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
+    perl -p -i -e "s/%define baserelver[\s].*/%define baserelver $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
+    perl -p -i -e "s/%define baserelqueue[\s].*/%define baserelqueue $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
     perl -p -i -e 's/CMSSW_ROOT/CMSSW_PATCH_ROOT/' ../CMSDIST/cmssw-ib.spec
     perl -p -i -e 's/CMSSW_VERSION/CMSSW_PATCH_VERSION/' ../CMSDIST/cmssw-ib.spec
     break

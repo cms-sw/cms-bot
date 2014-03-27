@@ -123,25 +123,6 @@ if __name__ == "__main__":
       pull_request_updated = True
       continue
 
-    # Check signatures using the old Topic Collector.
-    if commenter == "cmsbuild":
-      actor = re.match("The following categories have been signed by [^@]*[@]([^ :]*).*", comment.body.encode("ascii", "ignore"))
-      if actor:
-        print "cmsbuild commented about signature"
-        if not actor.group(1) in CMSSW_L2:
-          continue
-        for sign in CMSSW_L2[actor.group(1)]:
-          signatures[sign] = "approved" 
-
-      actor = re.match("The following categories have been rejected by [^@]*[@]([^ :]*).*", comment.body.encode("ascii", "ignore"))
-      if actor:
-        print "cmsbuild commented about rejection"
-        if not actor.group(1) in CMSSW_L2:
-          print actor.group(1) + " is not a L2."
-          continue
-        for sign in CMSSW_L2[actor.group(1)]:
-          signatures[sign] = "rejected"
-
     # The first line is an invariant.
     first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
 

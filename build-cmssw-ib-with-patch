@@ -87,7 +87,9 @@ pushd w
 for previous in $PREVIOUS_RELEASES; do
   previous=`echo $previous | cut -f2 -d/`
   echo "Checking if we can install $previous"
+  set +e
   CMSSW_RELEASE_BASE=`apt-cache search cms\\\+cmssw\\\+$previous | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+  set -e
   if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
     PACKAGE_NAME=cmssw-patch
     perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" ../CMSDIST/cmssw-ib.spec

@@ -103,7 +103,7 @@ for previous in $PREVIOUS_RELEASES; do
 done
 popd
 
-CMSSW_RELEASE_BASE=${CMSSW_RELEASE_BASE-$RELEASE_NAME}
+if [ X$CMSSW_RELEASE_BASE = X ]; then CMSSW_RELEASE_BASE=$RELEASE_NAME; fi
 echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
 perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" CMSDIST/cmssw.spec
 perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" CMSDIST/cmssw-ib.spec

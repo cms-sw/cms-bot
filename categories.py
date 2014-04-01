@@ -44,10 +44,12 @@ CMSSW_L2 = {
 CMSSW_L1 = ["fabiocos", "davidlange6"]
 
 CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
-  "Configuration/DataProcessing", "Configuration/GlobalRuns",
+  "Configuration/DataProcessing",
+  "Configuration/EventContent",
+  "Configuration/GlobalRuns",
   "Configuration/PyReleaseValidation", "Configuration/Skimming",
   "Configuration/StandardSequences", "DPGAnalysis/Skims", "Validation/Tools"],
-  "core": ["Configuration/EventContent", "Configuration/SVSuite",
+  "core": [ "Configuration/SVSuite",
   "FWCore/Concurrency", "FWCore/Catalog", "FWCore/Common", "FWCore/FWLite", "FWCore/Framework",
   "FWCore/GuiBrowsers", "FWCore/Integration", "FWCore/MessageLogger",
   "FWCore/MessageService", "FWCore/Modules", "FWCore/ParameterSet",

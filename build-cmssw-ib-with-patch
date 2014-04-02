@@ -13,6 +13,7 @@ BUILD_JOBS=2
 case $ARCHITECTURE in
   *_mic_*) export BUILD_ARCH=`echo $ARCHITECTURE | cut -f1,2 -d_` ;;
   *_armv7hl_*) BUILD_JOBS=1 ;;
+  slc6_amd64_gcc472) export http_proxy=http://localhost:8123 ;;
 esac
 
 RELEASE_NAME=`date +$RELEASE_FORMAT`

@@ -220,4 +220,11 @@ WATCHERS = {
                "DataFormats/SiPixelDigi"],
   "azsigmon": ["RecoHI/HiCentralityAlgos", "DataFormats/HeavyIonEvent"],
   "miheejo": ["RecoHI/HiMuonAlgos", "RecoHI/Configuration"],
+  "lgray": ["RecoEcal" ,
+            "RecoEgamma",
+            "RecoParticleFlow",
+            "DataFormats/ParticleFlowReco",
+            "DataFormats/ParticleFlowCandidate",
+            "DataFormats/EgammaCandidate",
+            "DataFormats/EgammaReco"],
 }

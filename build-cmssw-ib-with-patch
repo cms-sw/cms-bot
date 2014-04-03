@@ -92,7 +92,7 @@ done
 popd
 
 case $ARCHITECTURE in
- *mic*) CMSSW_RELEASE_BASE=""; CMSSW_TOOL_CONF=cmssw-mic-tool-conf ;;
+ *mic*) CMSSW_RELEASE_BASE=""; PACKAGE_NAME=cmssw; CMSSW_TOOL_CONF=cmssw-mic-tool-conf ;;
  *) CMSSW_TOOL_CONF=$PACKAGE_NAME-tool-conf ;;
 esac
 

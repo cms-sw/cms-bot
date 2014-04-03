@@ -71,12 +71,11 @@ PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $(getconf _NPROCESSORS_ON
 
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w
-(source $ARCHITECTURE/apt-init.sh
 for previous in $PREVIOUS_RELEASES; do
   previous=`echo $previous | cut -f2 -d/`
   echo "Checking if we can install $previous"
   set +e
-  CMSSW_RELEASE_BASE=`apt-cache search cms\\\+cmssw\\\+$previous | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+  CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
   set -e
   if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
     PACKAGE_NAME=cmssw-patch
@@ -88,7 +87,7 @@ for previous in $PREVIOUS_RELEASES; do
     perl -p -i -e 's/CMSSW_VERSION/CMSSW_PATCH_VERSION/' ../CMSDIST/cmssw-ib.spec
     break
   fi
-done )
+done
 popd
 
 case $ARCHITECTURE in

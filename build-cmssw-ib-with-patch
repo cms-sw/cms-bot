@@ -70,8 +70,8 @@ popd
 PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $(getconf _NPROCESSORS_ONLN) --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build SCRAMV1"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
 
 # Decide if we already have a release which uses the same CMSDIST.
-source w/$ARCHITECTURE/apt-init.sh
 pushd w
+(source $ARCHITECTURE/apt-init.sh
 for previous in $PREVIOUS_RELEASES; do
   previous=`echo $previous | cut -f2 -d/`
   echo "Checking if we can install $previous"
@@ -88,7 +88,7 @@ for previous in $PREVIOUS_RELEASES; do
     perl -p -i -e 's/CMSSW_VERSION/CMSSW_PATCH_VERSION/' ../CMSDIST/cmssw-ib.spec
     break
   fi
-done
+done )
 popd
 
 case $ARCHITECTURE in

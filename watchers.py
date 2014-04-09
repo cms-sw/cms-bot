@@ -3,7 +3,6 @@ WATCHERS = {
   "namapane": [".*Magnetic.*"],
   "acaudron": ["DQMOffline/RecoB", "Validation/RecoB"],
   "argiro": [".*[Ee][Cc][Aa][Ll].*"],
-  "bachtis": ["DataFormats/ParticleFlowReco", "DataFormats/ParticleFlowCandidate", "RecoParticleFlow"],
   "ghellwig": ["Alignment", "CalibTracker/Configuration", "CondCore", "Configuration", "Geometry", "RecoTracker"],
   "wmtan": [
     "DataFormats/Common", "DataFormats/FWLite", "DataFormats/FEDRawData",
@@ -179,7 +178,7 @@ WATCHERS = {
   "kurtejung": ["RecoHI"],
   "jazzitup": ["RecoHI"],
   "azsigmon": ["RecoHI"],
-  "bachtis": ["RecoMuon", "DataFormats/MuonReco"],
+  "bachtis": ["RecoMuon", "DataFormats/MuonReco", "DataFormats/ParticleFlowReco", "DataFormats/ParticleFlowCandidate", "RecoParticleFlow"],
   "venturia": ["DPGAnalysis/SiStripTools",
                "Validation/RecoVertex",
                "DQM/SiStripMonitorSummary",

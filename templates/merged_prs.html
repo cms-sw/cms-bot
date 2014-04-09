@@ -179,10 +179,20 @@
 			if (url != ''){
 				var sa_link = $("<a></a>").attr("href", url)
 				sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
-				sa_link.append($('<span></span>').text('Static Analyzer'))
+				sa_link.append($('<span></span>').text(' Static Analyzer'))
 				title_cell.append(sa_link)
 			}
 		}
+
+		add_hlt_tests_link = function (title_cell,url){
+                        if (url != ''){
+                                var sa_link = $("<a></a>").attr("href", url)
+                                sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+                                sa_link.append($('<span></span>').text(' HLT Validation'))
+                                title_cell.append(sa_link)
+                        }
+                }
+
 
 		write_comp_title =  function(comparison , tab_pane){
 		
@@ -199,6 +209,8 @@
                         //here I check the result of the relvals
 
 			add_static_analyzer_link(title_cell,comparison.static_checks)
+			title_cell.append($('<br>'))
+			add_hlt_tests_link(title_cell,comparison.hlt_tests)	
 
 			var title_row = $('<tr></tr>')	
                         var relvals_results = comparison.relvals

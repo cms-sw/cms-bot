@@ -55,7 +55,6 @@ if __name__ == "__main__":
   error, files = getstatusoutput("find %s/slc* -name 'pyRelValMatrixLogs.zip'" % IB_BASE_DIR)
   files = [x for x in files.split("\n") if x]
   schema = set()
-  print ",".join(["architecture", "release", "step", "workflow"] + args.what)
   for f in files:
     print >> sys.stderr, f
     architecture = re.sub(".*/((slc|osx|fc)[^/]*)/.*", "\\1", f)

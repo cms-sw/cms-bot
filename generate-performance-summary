@@ -69,8 +69,8 @@ if __name__ == "__main__":
     for r in [x for x in reports.split("\n") if x]:
       cmd = "unzip -p %s %s" % (f, r)
       error, report = getstatusoutput(cmd)
-      workflow = re.sub("^([0-9.]+)+.*", "\\1", r).replace(".","_")
-      step = re.sub(".*JobReport([0-9]).*", "\\1", r)
+      workflow = re.sub("^([^/]*).*", "\\1", r).replace(".","_")
+      step = re.sub(".*JobReport([0-9]).*", "step\\1", r)
       if not args.what:
         handler = SchemaDumper(schema)
       else:

@@ -61,6 +61,7 @@ if __name__ == "__main__":
     release = re.sub(".*/(CMSSW_[^/]*)/.*", "\\1", f)
     # Note for a future maintainer, remember to fix it by year 2100.
     date = re.sub(".*/CMSSW_[^/]*(20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]-[0-2][0-9][0-9][0-9]).*", "\\1", f)
+    release = release.replace(date,"").strip("_")
     timestamp = time.strptime(date, "%Y-%m-%d-%H%M")
     if not re.match(args.filterRelease, release):
       continue

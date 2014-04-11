@@ -23,7 +23,7 @@ class JobReportHandler(ContentHandler):
     
     if not attrs["Name"] in self.counters:
       return
-    if attrs["Value"] == "nan":
+    if "nan" in attrs["Value"]:
       return
 
     print "%s %s %s" % (".".join([self.architecture, self.release, self.workflow, self.step, attrs["Name"]]), attrs["Value"], time.mktime(self.timestamp))

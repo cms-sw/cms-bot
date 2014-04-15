@@ -120,7 +120,7 @@ PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $(getconf _NPROCESSORS_ON
 PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload cmssw-ib" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
 
 # Tag CMSDIST for later reusage if we built a full release.
-if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
+if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME -a ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   pushd CMSDIST
     git tag IB/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
     git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git

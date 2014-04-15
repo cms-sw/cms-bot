@@ -187,9 +187,40 @@ def get_tags(output,release_queue):
 
   return tags
 
+#returns the number of the day of a tag
+#if it is not an IB tag, it returns -1
+def get_day_number_tag(tag):
+  parts = tag.split("-")
+  if len(parts) == 1:
+    return -1
+  else:
+    day = parts[2]
+    try:
+        return int(day)
+    except ValueError:
+        return -1
+
+
+# uses some heuristics to tell if the list of tags seems to be too short
+def is_tag_list_suspicious(tags):
+  if len(tags) < 2:
+    return True
+  day_first_tag = get_day_number_tag(tags[-1])
+  day_second_tag = get_day_number_tag(tags[-2])
+  return day_second_tag-day_first_tag > 1
+  
+
 #-----------------------------------------------------------------------------------
 #---- Fuctions -- Execute Magic commands
 #-----------------------------------------------------------------------------------
+
+# this calls the git log command with the first tag to look for missing
+# tags that were not found previously
+def look_for_missing_tags(start_tag, release_queue):
+  command_to_execute = MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG.replace('END_TAG',start_tag)
+  out = get_output_command(command_to_execute)
+  tags = get_tags_from_line(out, release_queue)
+  return tags
 
 def get_output_command(command_to_execute):
   print 'Executing:'
@@ -212,7 +243,16 @@ def execute_magic_command_tags(start_tag,end_tag,release_queue):
   out = get_output_command(command_to_execute)
   tags = get_tags(out,release_queue)
   tags.append(start_tag)
+
+  if is_tag_list_suspicious(tags):
+    print 'this list could be missing something!'
+    print tags
+    new_tags = look_for_missing_tags(start_tag, release_queue)
+    tags.pop()
+    tags += new_tags    
+
   tags = [t for t in reversed(tags)]
+  print tags
   return tags
 
 def execute_command_compare_tags(start_tag,end_tag):

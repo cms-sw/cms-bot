@@ -271,7 +271,7 @@
 //-----------------------------------------------------------------
 
 
-    write_pr = function(pr,pr_list_group){
+    		write_pr = function(pr,pr_list_group){
                         //console.log(pr)
                         
                         var list_item = $('<li class="list-group-item"></li>')
@@ -289,7 +289,9 @@
 
                 }
 
-
+		/**
+		* This function writes on the page the pull requests involved in the comparison between 2 tags
+		*/
 		write_comparison = function(comparison,tab_pane){
 			
 			
@@ -331,6 +333,15 @@
 		}
 		
 		f = function(data){
+
+			// Before addcint the tab panel I will add a link to the previous version
+			var prevVersionLink = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/html/showIB.html")
+                        prevVersionLink.append($('<span class="glyphicon glyphicon-warning-sign"></span>'))
+                        prevVersionLink.append($('<span></span>').text(' Click here to see the previous version'))
+			
+                        $("#results").append($('<div align="center" class="alert alert-warning">').append(prevVersionLink))
+
+			
                        	// create tab panel
 			var tabs = $('<ul id="myTab" class="nav nav-tabs"></ul>')
 			

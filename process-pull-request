@@ -288,7 +288,10 @@ if __name__ == "__main__":
     print "Already notified L2 about " + str(pr.number)
   if commentMsg:
     print "The following comment will be made:"
-    print commentMsg.decode("ascii", "replace")
+    try:
+      print commentMsg.decode("ascii", "replace")
+    except:
+      pass
   if commentMsg and not opts.dryRun:
     pr.create_issue_comment(commentMsg)
   

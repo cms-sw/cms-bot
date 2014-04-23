@@ -473,7 +473,7 @@ CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
   "DataFormats/L1Trigger", "DataFormats/LTCDigi", "DQMOffline/L1Trigger",
   "SimCalorimetry/EcalTrigPrimAlgos", "SimCalorimetry/EcalTrigPrimProducers",
   "SimCalorimetry/HcalTrigPrimAlgos", "SimCalorimetry/HcalTrigPrimProducers",
-  "Validation/EcalTriggerPrimitives"], "alca":
+  "Validation/EcalTriggerPrimitives", "SLHCUpgradeSimulations/L1CaloTrigger"], "alca":
   ["CondFormats/EgammaObjects", "CondFormats/GeometryObjects",
   "CondFormats/HIObjects", "CondFormats/HLTObjects", "CondFormats/HcalMapping",
   "CondFormats/HcalObjects", "CondFormats/L1TObjects", "CondFormats/Luminosity",
@@ -588,7 +588,8 @@ CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
   "SimTracker/TrackerHitAssociation", "SimTracker/TrackerMaterialAnalysis",
   "SimTracker/VertexAssociation", "SimTracker/VertexAssociatorESProducer",
   "SimTracker/TrackTriggerAssociation",
-  "SimTransport/HectorProducer", 
+  "SimTransport/HectorProducer",
   "SLHCUpgradeSimulations/Configuration",
   "TauAnalysis/MCEmbeddingTools",
-  "TrackPropagation/Geant4e", "Validation/Configuration"]}
+  "TrackPropagation/Geant4e", "Validation/Configuration",
+  "SLHCUpgradeSimulations/L1CaloTrigger"]}

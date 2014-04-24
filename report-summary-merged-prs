@@ -72,17 +72,18 @@ def get_tags_from_line(line, release_queue):
   if 'tags->' not in line:
     return []
   tags_str = line.split('tags->')[1]
-  filter = release_queue[:-1]
-  pattern_to_ignore = IGNORE_TAGS_PATTERN.get(release_queue)
+  if 'SLHC' in release_queue:
+    filter = release_queue[:-6]+'[X|0-9]_SLHC.*'
+  else:
+    filter = release_queue[:-1]+'[X|0-9].*'
 
   ## if the tags part is equal to ," there are no tags
   if tags_str != ',"':
     tags = tags_str.split(',',1)[1].strip().replace('(','').replace(')','').split(',')
-    #I also have to remove the branch name
-    tags = [t for t in tags if filter in t and t.strip().replace('"','') != release_queue]
-    #here I remove the tags that need to be ignored
-    if pattern_to_ignore:
-      tags = [t for t in tags if pattern_to_ignore not in t]
+    #remove te word "tag: "
+    tags = [t.replace('tag: ','') for t in tags ]
+    #I also have to remove the branch name because it otherwise will always appear
+    tags = [t for t in tags if re.match(filter,t.strip()) and t.strip().replace('"','') != release_queue]
     return [t.replace('"','').replace('tag:','').strip() for t in tags]
   else:
     return []
@@ -428,8 +429,6 @@ MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_UR
 
 ARCHITECTURES = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481','slc6_amd64_gcc490','slc6_mic_gcc481','osx108_amd64_gcc481']
 
-#this defines, for each release queue, tags that should be ignored from the list
-IGNORE_TAGS_PATTERN = {'CMSSW_7_1_X':'CMSSW_7_1_DEVEL_X'}
 
 class BuildResultsKeys:
   DICT_ERROR = 'dictError'
@@ -471,10 +470,6 @@ for comp in requested_comparisons:
   release_queue_results['release_name'] = release_queue
 
   tags = execute_magic_command_tags(start_tag,end_tag,release_queue)
-
-  if (len(tags) ==0):
-    print "looks like the release has not changed since one week ago"
-    # GIT_DIR=cmssw.git git log --merges  --pretty='"%s", "%b", "tags->,%d"' CMSSW_5_3_X | grep "tags->" | head -n1
 
   release_queue_results['comparisons'] = compare_tags(tags)
 

@@ -54,6 +54,7 @@ def get_pr_title(line_parts):
   title = line_parts[1].replace('"','').strip()
   return title
 
+#gets the information of the pull request
 def get_info_pr(line):
   pull_request = {}
   line_parts = line.split(',')
@@ -63,16 +64,25 @@ def get_info_pr(line):
   pull_request['url'] = 'https://github.com/cms-sw/cmssw/pull/%d' % int(pull_request['number'])
   return pull_request
 
+#reads a line of the output of git log and returns the tags that it contains
+#if there are no tags it returns an empty list
+#it applies filters according to the release queue to only get the 
+#tags related to the current release queue
 def get_tags_from_line(line, release_queue):
   if 'tags->' not in line:
     return []
   tags_str = line.split('tags->')[1]
   filter = release_queue[:-1]
+  pattern_to_ignore = IGNORE_TAGS_PATTERN.get(release_queue)
+
   ## if the tags part is equal to ," there are no tags
   if tags_str != ',"':
     tags = tags_str.split(',',1)[1].strip().replace('(','').replace(')','').split(',')
     #I also have to remove the branch name
     tags = [t for t in tags if filter in t and t.strip().replace('"','') != release_queue]
+    #here I remove the tags that need to be ignored
+    if pattern_to_ignore:
+      tags = [t for t in tags if pattern_to_ignore not in t]
     return [t.replace('"','').replace('tag:','').strip() for t in tags]
   else:
     return []
@@ -203,7 +213,7 @@ def get_day_number_tag(tag):
 
 # uses some heuristics to tell if the list of tags seems to be too short
 def is_tag_list_suspicious(tags):
-  if len(tags) < 2:
+  if len(tags) < 7:
     return True
   day_first_tag = get_day_number_tag(tags[-1])
   day_second_tag = get_day_number_tag(tags[-2])
@@ -244,6 +254,7 @@ def execute_magic_command_tags(start_tag,end_tag,release_queue):
   tags = get_tags(out,release_queue)
   tags.append(start_tag)
 
+  #check if the tags list could be missing tags
   if is_tag_list_suspicious(tags):
     print 'this list could be missing something!'
     print tags
@@ -416,6 +427,9 @@ MAGIC_COMMAND_FIND_STATIC_CHECKS = 'curl -s -k --head %s | head -n 1' % STATIC_C
 MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_URL
 
 ARCHITECTURES = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481','slc6_amd64_gcc490','slc6_mic_gcc481','osx108_amd64_gcc481']
+
+#this defines, for each release queue, tags that should be ignored from the list
+IGNORE_TAGS_PATTERN = {'CMSSW_7_1_X':'CMSSW_7_1_DEVEL_X'}
 
 class BuildResultsKeys:
   DICT_ERROR = 'dictError'

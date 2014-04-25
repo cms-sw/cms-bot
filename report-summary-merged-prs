@@ -37,7 +37,6 @@ requested_comparisons = requested_comparisons_param.split(",")
 #---- Fuctions
 #-----------------------------------------------------------------------------------
 
-
 def get_pr_number(line_parts):
   number_and_name = line_parts[0].replace('"','')
   number = re.sub(' from .*', '', number_and_name)
@@ -429,6 +428,9 @@ MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_UR
 
 ARCHITECTURES = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481','slc6_amd64_gcc490','slc6_mic_gcc481','osx108_amd64_gcc481']
 
+SPECIAL_RELEASES = ['SLHC','BOOSTIO','ROOT6','THREADED','GEANT10','DEVEL']
+
+SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
 
 class BuildResultsKeys:
   DICT_ERROR = 'dictError'
@@ -456,9 +458,12 @@ for comp in requested_comparisons:
   start_tag = comp.split("..")[0]
   end_tag = comp.split("..")[1]
   release_queue = start_tag
-	
+  print release_queue
+  print SP_REL_REGEX	
+  print re.search(SP_REL_REGEX,release_queue)
   # if is a SLHC or any special release, the split will happen with the fifth underscore _
-  if 'SLHC' in release_queue or 'BOOSTIO' in release_queue or 'ROOT6' in release_queue or 'THREADED'in release_queue or 'GEANT10' in release_queue:
+  if re.search(SP_REL_REGEX,release_queue):
+    print 'This is a special release'
     release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
   else:
     release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]

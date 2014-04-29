@@ -37,7 +37,6 @@ requested_comparisons = requested_comparisons_param.split(",")
 #---- Fuctions
 #-----------------------------------------------------------------------------------
 
-
 def get_pr_number(line_parts):
   number_and_name = line_parts[0].replace('"','')
   number = re.sub(' from .*', '', number_and_name)
@@ -107,7 +106,7 @@ def determine_build_warning(nErrorInfo):
 
 def get_results_one_addOn_file(file):
   look_for_err_cmd = 'grep "failed" %s' %file
-  result = get_output_command(look_for_err_cmd)
+  result,err,ret_code = get_output_command(look_for_err_cmd)
   if '0 failed' in result:
     return True
   else:
@@ -115,7 +114,7 @@ def get_results_one_addOn_file(file):
 
 def get_results_one_unitTests_file(file):
   look_for_err_cmd = 'grep "ERROR" %s' %file
-  result = get_output_command(look_for_err_cmd)
+  result,err,ret_code = get_output_command(look_for_err_cmd)
 
   if result != '':
     return PossibleUnitTestResults.FAILED
@@ -125,7 +124,7 @@ def get_results_one_unitTests_file(file):
 def get_results_one_relval_file(file):
   read_last_line_command = 'tail -n1 %s' %file
   
-  out = get_output_command(read_last_line_command)
+  out,err,ret_code = get_output_command(read_last_line_command)
   
   if 'SLHC' in file:
     if '0 0 0 0 failed' in out:
@@ -191,7 +190,7 @@ def get_tags(output,release_queue):
     print "ATTENTION:"
     print "looks like %s has not changed between the tags specified!" % release_queue
     command_to_execute = MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG.replace('END_TAG',release_queue)
-    out = get_output_command(command_to_execute)
+    out,err,ret_code = get_output_command(command_to_execute)
     print out
     tags = get_tags_from_line(out, release_queue)
     print tags
@@ -220,6 +219,11 @@ def is_tag_list_suspicious(tags):
   day_second_tag = get_day_number_tag(tags[-2])
   return day_second_tag-day_first_tag > 1
   
+# determines if  the error is because one of the tags does not exist
+# this can happen when the branch that is being analyzed has been 
+# created recently
+def is_recent_branch(err):
+  return "unknown revision or path not in the working tree" in err
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions -- Execute Magic commands
@@ -229,10 +233,12 @@ def is_tag_list_suspicious(tags):
 # tags that were not found previously
 def look_for_missing_tags(start_tag, release_queue):
   command_to_execute = MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG.replace('END_TAG',start_tag)
-  out = get_output_command(command_to_execute)
+  out,err,ret_code = get_output_command(command_to_execute)
   tags = get_tags_from_line(out, release_queue)
   return tags
 
+# Executes the command that is given as parameter, returns a tuple out,err,ret_code
+# with the output, error and return code obtained
 def get_output_command(command_to_execute):
   print 'Executing:'
   print command_to_execute
@@ -241,21 +247,33 @@ def get_output_command(command_to_execute):
   out,err = p.communicate()
   ret_code = p.returncode
 
-  if ret_code != 0 and out != '':
+  if ret_code != 0:
     print ret_code
     print 'Error:'
     print err
-    exit(1)
-  return out
 
+  return out,err,ret_code
+
+# Gets the tags between start_tag and end_tag, the release_queue is used as a filter
+# to ignore tags that are from other releases
 def execute_magic_command_tags(start_tag,end_tag,release_queue):
   tags = []
   command_to_execute = MAGIC_COMMAND_TAGS.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
-  out = get_output_command(command_to_execute)
+  out,err,ret_code = get_output_command(command_to_execute)
+
+  # check if the end_tag exists, but the start_tag doesn't
+  # this could mean that the release branch has been created recently
+  if ret_code != 0:
+    if is_recent_branch(err):
+      print 'looks like this branch has been created recently'
+      command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace('END_TAG',end_tag).replace('RELEASE_QUEUE',release_queue)
+      out,err,ret_code = get_output_command(command_to_execute)
+
   tags = get_tags(out,release_queue)
   tags.append(start_tag)
 
   #check if the tags list could be missing tags
+  # this means that the release branch has not changed much from the start_tag
   if is_tag_list_suspicious(tags):
     print 'this list could be missing something!'
     print tags
@@ -269,7 +287,7 @@ def execute_magic_command_tags(start_tag,end_tag,release_queue):
 
 def execute_command_compare_tags(start_tag,end_tag):
   command_to_execute = MAGIC_COMMAND_PRS.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
-  output = get_output_command(command_to_execute)
+  output,err,ret_code = get_output_command(command_to_execute)
   print '------'
   comp = {}
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
@@ -303,7 +321,7 @@ def execute_magic_command_find_results(results,type):
       exit(1)
 
     command_to_execute = base_command.replace('ARCHITECTURE',arch)
-    out = get_output_command(command_to_execute)
+    out,err,ret_code = get_output_command(command_to_execute)
     analyze_tests_results(out,results,arch,type)
 
 
@@ -378,14 +396,14 @@ def find_hlt_tests_results(comparisons):
 def find_one_static_check(release_name):
   command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE','slc5_amd64_gcc481')
-  out = get_output_command(command_to_execute)
+  out,err,ret_code = get_output_command(command_to_execute)
   if '200 OK' in out:
     return STATIC_CHECKS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE','slc5_amd64_gcc481')
   else:
     #If I don't find it in slc5 I look for it in slc6
     print 'looking for resuls in slc6'
     command_to_execute = command_to_execute.replace('slc5_amd64_gcc481','slc6_amd64_gcc481')
-    out = get_output_command(command_to_execute)
+    out,err,ret_code = get_output_command(command_to_execute)
     if '200 OK' in out:
       print 'results found for slc6'
       return STATIC_CHECKS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE','slc6_amd64_gcc481')
@@ -394,7 +412,7 @@ def find_one_static_check(release_name):
 
 def find_one_hlt_test(release_name):
   command = MAGIC_COMMAND_FIND_HLT_TESTS.replace('RELEASE_NAME',release_name)
-  out = get_output_command(command)
+  out,err,ret_code = get_output_command(command)
   if '200 OK' in out:
     return HLT_TESTS_URL.replace('RELEASE_NAME',release_name)
   else:
@@ -429,6 +447,11 @@ MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_UR
 
 ARCHITECTURES = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481','slc6_amd64_gcc490','slc6_mic_gcc481','osx108_amd64_gcc481']
 
+SPECIAL_RELEASES = ['SLHC','BOOSTIO','ROOT6','THREADED','GEANT10','DEVEL']
+
+SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+
+MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
 
 class BuildResultsKeys:
   DICT_ERROR = 'dictError'
@@ -456,9 +479,9 @@ for comp in requested_comparisons:
   start_tag = comp.split("..")[0]
   end_tag = comp.split("..")[1]
   release_queue = start_tag
-	
   # if is a SLHC or any special release, the split will happen with the fifth underscore _
-  if 'SLHC' in release_queue or 'BOOSTIO' in release_queue or 'ROOT6' in release_queue or 'THREADED'in release_queue or 'GEANT10' in release_queue:
+  if re.search(SP_REL_REGEX,release_queue):
+    print 'This is a special release'
     release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
   else:
     release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]

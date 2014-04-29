@@ -7,7 +7,7 @@ import re
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | PARSE_MATRIX_FAIL | COMPARISON_READY")
+parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -141,6 +141,15 @@ def send_comparison_ready_message(official_cmssw,pr_number,tests_results_url):
   if not options.no_post_mesage:
     pull_request.create_issue_comment(message)
 
+def send_std_cout_found_message(official_cmssw,pr_number,tests_results_url):
+  pull_request = official_cmssw.get_pull(pr_number)
+  print 'I will notify that I found a std::cout on PR %d:' % pr_number
+  message = STD_COUT_FOUND_MSG
+  print 'Message:'
+  print message
+  if not options.no_post_mesage:
+    pull_request.create_issue_comment(message)
+
 def get_cmssw_official_repo(github):
   user = github.get_user()
   orgs = user.get_orgs()
@@ -161,6 +170,7 @@ def complain_missing_param(param_name):
 #---------------------------------------------------------------------------------------
 
 COMPARISON_READY_MSG = 'Comparison is ready'
+STD_COUT_FOUND_MSG = '-1 \n There is a std::cout in the diff for this pull request. Could you please clean it up?'
 
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
@@ -226,5 +236,7 @@ elif (action == 'PARSE_MATRIX_FAIL'):
   read_matrix_log_file(official_cmssw,matrix_log_file,tests_results_url)
 elif (action == 'COMPARISON_READY'):
   send_comparison_ready_message(official_cmssw,pr_number,tests_results_url)
+elif (action == 'STD_COUT'):
+  send_std_cout_found_message(official_cmssw,pr_number,tests_results_url)
 else:
   print "I don't recognize that action!"

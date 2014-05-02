@@ -538,7 +538,7 @@ CMSSW_CATEGORIES={"operations": ["Configuration/Applications",
   "DataFormats/Alignment", "RecoVertex/BeamSpotProducer"], "simulation":
   ["Mixing/Base", "IOMC/EventVertexGenerators", "DataFormats/DTDigi",
   "DataFormats/EcalDigi", "DataFormats/EcalRawData", "DataFormats/FP420Digi",
-  "DataFormats/GeometryCommonDetAlgo", "DataFormats/GeometrySurface",
+  "DataFormats/GEMDigi","DataFormats/GeometryCommonDetAlgo", "DataFormats/GeometrySurface",
   "DataFormats/GeometryVector", "DataFormats/HcalDetId", "DataFormats/HcalDigi",
   "DataFormats/MuonDetId", "DataFormats/RPCDigi", "DataFormats/SiPixelDetId",
   "DataFormats/SiPixelDigi", "DataFormats/SiPixelRawData",

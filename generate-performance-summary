@@ -26,7 +26,7 @@ class JobReportHandler(ContentHandler):
     if "nan" in attrs["Value"]:
       return
 
-    print "%s %s %s" % (".".join([self.architecture, self.release, self.workflow, self.step, attrs["Name"]]), attrs["Value"], time.mktime(self.timestamp))
+    print "%s %s %s" % (".".join(["IBRelVals", self.architecture, self.release, self.workflow, self.step, attrs["Name"]]), attrs["Value"], time.mktime(self.timestamp))
                          
     self.counters[attrs["Name"]] = attrs["Value"]
 
@@ -46,6 +46,8 @@ if __name__ == "__main__":
   parser.add_argument('--base-dir', dest='baseDir', default=IB_BASE_DIR,
                       help='Where the logs are located.')
   parser.add_argument('--filter-release', dest='filterRelease', default=".*",
+                      help='regexp to filter releases')
+  parser.add_argument('--filter-workflows', dest='filterWorkflows', default=".*",
                       help='regexp to filter releases')
   parser.add_argument('what', metavar='KEYS', type=str, nargs='*',
                       help='What to dump from the logs')
@@ -70,6 +72,8 @@ if __name__ == "__main__":
       cmd = "unzip -p %s %s" % (f, r)
       error, report = getstatusoutput(cmd)
       workflow = re.sub("^([^/]*).*", "\\1", r).replace(".","_")
+      if not re.match(args.filterWorkflows, workflow):
+        continue
       step = re.sub(".*JobReport([0-9]).*", "step\\1", r)
       if not args.what:
         handler = SchemaDumper(schema)

@@ -447,7 +447,7 @@ MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_UR
 
 ARCHITECTURES = ['slc5_amd64_gcc462','slc6_amd64_gcc472','slc5_amd64_gcc472','slc5_amd64_gcc481','slc6_amd64_gcc481','slc6_amd64_gcc490','slc6_mic_gcc481','osx108_amd64_gcc481']
 
-SPECIAL_RELEASES = ['SLHC','BOOSTIO','ROOT6','THREADED','GEANT10','DEVEL','CLANG']
+SPECIAL_RELEASES = ['SLHC','BOOSTIO','ROOT6','THREADED','GEANT10','DEVEL','CLANG','DEBUG']
 
 SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
 

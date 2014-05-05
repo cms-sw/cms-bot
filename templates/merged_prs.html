@@ -274,7 +274,7 @@
     		write_pr = function(pr,pr_list_group){
                         //console.log(pr)
                         
-                        var list_item = $('<li class="list-group-item"></li>')
+                        var list_item = $('<li></li>')
                         var item_link_text = "#".concat(pr.number)
                         var pr_description = " from ".concat(pr.author_login,": ", pr.title)
                         
@@ -312,9 +312,12 @@
                         
                         tab_pane.append(see_on_github)
 
+			tab_pane.append($("<br>"))
+			tab_pane.append($("<br>"))
+
 			var pull_requests = comparison.merged_prs			
 			
-			var pr_list_group = $('<ul class="list-group"></ul>')
+			var pr_list_group = $('<ul></ul>')
 		
 			// if there were not merged prs in this comparison I alert it
                         if(comparison.merged_prs.length!=0){

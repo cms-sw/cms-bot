@@ -7,6 +7,12 @@ import re
 from sys import exit
 import sys
 import time
+import pickle
+import struct
+import socket
+
+CARBON_SERVER = '0.0.0.0'
+CARBON_PORT = 2004
 
 class JobReportHandler(ContentHandler):
   def __init__(self, what, step, architecture, release, workflow, timestamp):
@@ -16,6 +22,7 @@ class JobReportHandler(ContentHandler):
     self.release = release
     self.workflow = workflow
     self.timestamp = timestamp 
+    self.metrics = []
 
   def startElement(self, name, attrs):
     if name != "Metric":
@@ -26,8 +33,10 @@ class JobReportHandler(ContentHandler):
     if "nan" in attrs["Value"]:
       return
 
-    print "%s %s %s" % (".".join(["IBRelVals", self.architecture, self.release, self.workflow, self.step, attrs["Name"]]), attrs["Value"], time.mktime(self.timestamp))
-                         
+    path = ".".join(["IBRelVals", self.architecture, self.release, self.workflow, self.step, attrs["Name"]])
+    value = attrs["Value"]
+    timestamp = time.mktime(self.timestamp)
+    self.metrics.append((path, (timestamp, value)))
     self.counters[attrs["Name"]] = attrs["Value"]
 
 class SchemaDumper(ContentHandler):
@@ -40,6 +49,10 @@ class SchemaDumper(ContentHandler):
     self.schema.add(attrs["Name"])
 
 IB_BASE_DIR="/afs/cern.ch/cms/sw/ReleaseCandidates"
+
+def chunks(l, n):
+  for i in xrange(0, len(l), n):
+    yield l[i:i+n]
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Extract plot data from IB job reports')
@@ -68,6 +81,7 @@ if __name__ == "__main__":
     if not re.match(args.filterRelease, release):
       continue
     error, reports = getstatusoutput("unzip -l %s | grep JobReport | awk '{print $4}'" % f)
+    metrics = []
     for r in [x for x in reports.split("\n") if x]:
       cmd = "unzip -p %s %s" % (f, r)
       error, report = getstatusoutput(cmd)
@@ -83,6 +97,21 @@ if __name__ == "__main__":
         parseString(report, handler)
       except:
         continue
+      metrics += handler.metrics
       if schema:
         print "\n".join(sorted(schema))
         exit(0)
+    if not len(metrics):
+      continue
+    print "Sending %s metrics." % len(metrics)
+    # 100 metrics at the time
+    for l in chunks(metrics, 100):
+      payload = pickle.dumps(l)
+      print len(payload)
+      header = struct.pack("!L", len(payload))
+      message = header + payload
+      sock = socket.socket()
+      sock.connect((CARBON_SERVER, CARBON_PORT))
+      sock.sendall(message)
+      sock.close()
+      time.sleep(0.5)

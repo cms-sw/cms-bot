@@ -290,20 +290,13 @@
                 }
 
 		/**
-		* This function writes on the page the pull requests involved in the comparison between 2 tags
+		*This function generates the comparison link on github
 		*/
-		write_comparison = function(comparison,tab_pane){
-			
-			
-			var comp_tags = comparison.compared_tags
-			current_tag = comp_tags.split("-->")[1]
-			var prev_tag = comp_tags.split("-->")[0]
-
-			write_comp_title(comparison,tab_pane)
-			
-
-
-			var comp_link_address = comparison.compared_tags.replace("-->","...")
+		writeComparisonLinkGithub = function(comparedTags, tab_pane){
+		
+			var prev_tag = comparedTags.split("-->")[0]
+	
+			var comp_link_address = comparedTags.replace("-->","...")
                         comp_link_address = "https://github.com/cms-sw/cmssw/compare/".concat(comp_link_address)
                         var comp_link = $("<a></a>").attr("href", comp_link_address)
                         comp_link.append($("<span></span>").text("See comparison with "+prev_tag+" on GitHub"))
@@ -311,17 +304,29 @@
                         var see_on_github = $("<small></small>").append(comp_link)
                         
                         tab_pane.append(see_on_github)
+			tab_pane.append($("<br>"))
+                        tab_pane.append($("<br>"))
 
-			tab_pane.append($("<br>"))
-			tab_pane.append($("<br>"))
+		}
+
+		/**
+		* This function writes on the page the pull requests involved in the comparison between 2 tags
+		*/
+		write_comparison = function(comparison,tab_pane){
+			
+			
+			var compTags = comparison.compared_tags
+
+			write_comp_title(comparison,tab_pane)
 
 			var pull_requests = comparison.merged_prs			
-			
-			var pr_list_group = $('<ul></ul>')
 		
 			// if there were not merged prs in this comparison I alert it
                         if(comparison.merged_prs.length!=0){
+			
+				writeComparisonLinkGithub(compTags,tab_pane)
 	
+				var pr_list_group = $('<ul></ul>')	
 				//write the info for each pull request
 				for(var i =0; i < pull_requests.length; i++){
 					write_pr(pull_requests[i],pr_list_group)
@@ -329,10 +334,12 @@
 			
 				tab_pane.append(pr_list_group)
 			}else{
-				var no_prs_found = $('<div class="alert alert-warning"></div>')
-				no_prs_found.text('No new pull requests since previous tag')
+				var prevTag = compTags.split("-->")[0]
+				var no_prs_found = $('<ul>').append($('<li>').text('No new pull requests since '+prevTag))
 				tab_pane.append(no_prs_found)
 			}
+
+			tab_pane.append($("<br>"))
 		}
 		
 		f = function(data){

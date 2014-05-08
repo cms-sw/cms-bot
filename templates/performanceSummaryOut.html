@@ -23,11 +23,11 @@
         
 	$(document).ready(function () {
 
-		create_header_table = function(last_release,table){
+		create_header_table = function(table){
 
 			var header = $('<thead>')
 			var h_row = $('<tr>')
-			var last_rel = $('<h2>').text('Last Release Evaulated: ' + last_release)
+			var last_rel = $('<h2>').text('Performance Plots Summary')
 			
 			h_row.append($('<td>').append(last_rel))
 			
@@ -71,7 +71,7 @@
 
 		}
 
-		addImgsRow = function(imgs,tbody){
+		addImgsRows = function(imgs,tbody){
 			var row = $('<tr>')
 			
 			for( var i = 0 ; i < imgs.length ; i++){
@@ -94,7 +94,22 @@
 				row.append(cell)
 
 			}
+
                         tbody.append(row)
+
+			var rowTittles = $('<tr>')
+
+			for( var i = 0 ; i < imgs.length ; i++){
+                                var cell = $('<td>')
+				var title = imgs[i].name
+
+                                cell.append($('<center>').text(title))
+                                rowTittles.append(cell)
+
+                        }
+
+
+			tbody.append(rowTittles)
 
 		}
 
@@ -111,7 +126,7 @@
 				var steps = wf.steps
 				for (var j =  0; j < steps.length; j++){
 					addStepRow(steps[j],tbody)
-					addImgsRow(steps[j].imgs,tbody)
+					addImgsRows(steps[j].imgs,tbody)
 
 				}
 
@@ -125,7 +140,7 @@
 			
 			var table = $('<table class="table"></table>')
 
-			create_header_table(data.last_release,table)
+			create_header_table(table)
 			addResultsTable(data.wfs,table)
 
 			$("#results").append(table)

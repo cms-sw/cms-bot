@@ -127,7 +127,7 @@ if (len(args)<1):
 
 WF_LIST = args[0]
 
-GRAPH_PARAMS = '&from=-15days&fontBold=true&fontSize=12&lineWidth=5&title=PARAM'
+GRAPH_PARAMS = '&from=-15days&fontBold=true&fontSize=12&lineWidth=5&title=PARAM&yMin=0'
 
 BASE_URL = 'https://cmsgraph.cern.ch/render?target=IBRelVals.slc6_amd64_gcc481.CMSSW_7_1_X.WORKFLOW.STEP.PARAM&height=800&width=800%s'%GRAPH_PARAMS
 

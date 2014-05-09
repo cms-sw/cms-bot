@@ -283,6 +283,10 @@
                         pr_link.append($("<span></span>").text(item_link_text))
                         list_item.append(pr_link)
                         
+			if (pr.from_merge_commit){
+				var fromMergeGlyph = $('<span class="glyphicon glyphicon-transfer">')
+				list_item.append(fromMergeGlyph)
+			}
                         list_item.append($("<span></span>").text(pr_description))
 
                         pr_list_group.append(list_item)

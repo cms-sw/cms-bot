@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from glob import glob
 from commands import getstatusoutput
+from os.path import dirname
 from xml.sax import parseString, ContentHandler
 import argparse
 import re
@@ -54,6 +55,40 @@ def chunks(l, n):
   for i in xrange(0, len(l), n):
     yield l[i:i+n]
 
+def format(s, **kwds):
+  return s % kwds
+
+# 100 metrics at the time
+def sendMetrics(metrics):
+  for l in chunks(metrics, 100):
+    payload = pickle.dumps(l)
+    print len(payload)
+    header = struct.pack("!L", len(payload))
+    message = header + payload
+    sock = socket.socket()
+    sock.connect((CARBON_SERVER, CARBON_PORT))
+    sock.sendall(message)
+    sock.close()
+    time.sleep(0.5)
+
+def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease):
+  timestamp = time.mktime(timestamp)
+  cmd = format("find %(base)s/vol*/%(architecture)s/cms/cmssw*/%(fullRelease)s/lib/%(architecture)s -name '*.so' -exec wc -c {} \; | sed -e 's|/.*/||;s|[.]so||'",
+               base=IB_BASE_DIR,
+               releasePath=releasePath,
+               fullRelease=fullRelease,
+               architecture=architecture)
+  print cmd
+  error, out = getstatusoutput(format(cmd))
+  if error:
+    return
+  metrics = []
+  for line in out.split("\n"):
+    size, library = line.split(" ", 1)
+    metric = ".".join(["IBStats", architecture, release, library, "FileSize"])
+    metrics.append((metric, (timestamp, size)))
+  sendMetrics(metrics)
+
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Extract plot data from IB job reports')
   parser.add_argument('--base-dir', dest='baseDir', default=IB_BASE_DIR,
@@ -67,12 +102,14 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   print >> sys.stderr, "Parsing files"
-  error, files = getstatusoutput("find %s/slc* -name 'pyRelValMatrixLogs.zip'" % IB_BASE_DIR)
+  error, files = getstatusoutput("find %s/slc* -name 'pyRelValMatrixLogs.zip' | sort -r" % IB_BASE_DIR)
   files = [x for x in files.split("\n") if x]
   schema = set()
   for f in files:
     print >> sys.stderr, f
+    releasePath = dirname(f)
     architecture = re.sub(".*/((slc|osx|fc)[^/]*)/.*", "\\1", f)
+    fullRelease = re.sub(".*/(CMSSW_[^/]*)/.*", "\\1", f)
     release = re.sub(".*/(CMSSW_[^/]*)/.*", "\\1", f)
     # Note for a future maintainer, remember to fix it by year 2100.
     date = re.sub(".*/CMSSW_[^/]*(20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]-[0-2][0-9][0-9][0-9]).*", "\\1", f)
@@ -81,6 +118,8 @@ if __name__ == "__main__":
     if not re.match(args.filterRelease, release):
       continue
     error, reports = getstatusoutput("unzip -l %s | grep JobReport | awk '{print $4}'" % f)
+    calculateFileSizeMetrics(release, architecture, timestamp, fullRelease)
+    
     metrics = []
     for r in [x for x in reports.split("\n") if x]:
       cmd = "unzip -p %s %s" % (f, r)
@@ -104,14 +143,4 @@ if __name__ == "__main__":
     if not len(metrics):
       continue
     print "Sending %s metrics." % len(metrics)
-    # 100 metrics at the time
-    for l in chunks(metrics, 100):
-      payload = pickle.dumps(l)
-      print len(payload)
-      header = struct.pack("!L", len(payload))
-      message = header + payload
-      sock = socket.socket()
-      sock.connect((CARBON_SERVER, CARBON_PORT))
-      sock.sendall(message)
-      sock.close()
-      time.sleep(0.5)
+    sendMetrics(metrics)

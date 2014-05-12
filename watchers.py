@@ -226,4 +226,12 @@ WATCHERS = {
             "DataFormats/ParticleFlowCandidate",
             "DataFormats/EgammaCandidate",
             "DataFormats/EgammaReco"],
+  "threus": ["DQM/SiPixel*",
+             "DQM/SiStrip*",
+             "DQM/Tracker*",
+             "DQM/Tracking*",
+             "DQMOffline/CalibTracker",
+             "DQMOffline/Configuration",
+             "SimTracker",
+             "DPGAnalysis/SiStripTools"],
 }

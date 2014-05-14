@@ -233,5 +233,12 @@ WATCHERS = {
              "DQMOffline/CalibTracker",
              "DQMOffline/Configuration",
              "SimTracker",
-             "DPGAnalysis/SiStripTools"],
+             "DPGAnalysis/SiStripTools",
+             "CalibFormats/SiStripObjects",
+             "Calibration/TkAlCaRecoProducers",
+             "CommonTools/TrackerMap",
+             "CondFormats/SiStripObjects",
+             "DataFormats/SiStrip*",
+             "RecoLocalTracker/*",
+             "Validation/Tracker*"],
 }

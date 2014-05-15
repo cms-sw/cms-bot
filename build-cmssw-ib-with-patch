@@ -67,8 +67,8 @@ pushd PKGTOOLS; git checkout $PKGTOOLS_TAG; PKGTOOLS_HASH="`git rev-parse HEAD`"
 
 # We checkout a few files from the default branch in any case.
 pushd CMSDIST
-  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-validation.spec 
-  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-ib.spec 
+  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-validation.spec
+  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-ib.spec
   git checkout $DEFAULT_CMSDIST_TAG -- das-cache.file
 popd
 
@@ -117,7 +117,7 @@ while [ true ]; do
   rm -rf w
 done
 
-PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build cmssw-ib" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j `echo "$BUILD_NPROC * 2" | bc` --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build cmssw-ib" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
 PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload cmssw-ib" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
 
 # Tag CMSDIST for later reusage if we built a full release.

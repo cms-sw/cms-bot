@@ -241,4 +241,10 @@ WATCHERS = {
              "DataFormats/SiStrip*",
              "RecoLocalTracker/*",
              "Validation/Tracker*"],
+  "rociovilar": ["Validation/RecoMuon",
+                 "Validation/MuonIdentification",
+                 "Validation/MuonIdentification",
+                 "Validation/RecoTracks",
+                 "RecoMuon",
+                 "DQMOffline"],
 }

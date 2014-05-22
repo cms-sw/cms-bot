@@ -8,8 +8,9 @@
 
 	</head>
 	<body>
-		<script type='text/javascript' src="https://code.jquery.com/jquery-2.1.0.js"></script>
+		<script type='text/javascript' src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 		<script type='text/javascript' src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+		<script type='text/javascript' src="render.min.js"></script>
 	
 
 	<div class="container">
@@ -28,9 +29,9 @@
 			   //Enable tabbable tabs  
                         $('#myTab a').click(function (e) {
                                   e.preventDefault()
-                                  console.log(this)
-                                  $(this).tab('show')
+				  console.log('tabs')
                          })
+
         
                         // Javascript to enable link to tab
                         var url = document.location.toString();
@@ -45,321 +46,44 @@
 
 		}
 
-//------------------------------------------------------------------
-//-- Write tests results
-//-----------------------------------------------------------------
-
-		add_qa_link_to_row = function(row, arch,release_name){
-			var result_cell = $('<td></td>')
-			var url = 'http://cmssdt.cern.ch/SDT/cgi-bin//newQA.py?arch='+arch+'&release='+release_name
-			var r_link = $("<a></a>").attr("href", url)
-			var label_link = $("<span></span>")
-			r_link.append(label_link)
-			label_link.attr("class", "glyphicon glyphicon-search")
-			result_cell.append(r_link)
-			row.append(result_cell)
-		}
-		
-		get_tests_url = function(type,file) {
-		
-		        var link_parts = file.split('/')
-                        
-                        var details_link = ""
-
-                        if (type == 'utests' || type =='builds'){
-                                details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]
-                                                                +'/'+link_parts[10]
-
-                        }else if(type == 'relvals'){
-                                details_link="https://cmssdt.cern.ch/SDT/cgi-bin//showMatrixTestLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
-                                                                +'/'+link_parts[11]+'/'+link_parts[12]
-                        }else if(type == 'addons'){
-                                details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
-                                                                +'/'+'addOnTests'+'/'
-
-                        }
-			return details_link
-
-		}
-
-		get_result_tests =  function (arch,tests){
-
-			for(var i = 0; i<tests.length; i++){
-
-                                if (tests[i].arch == arch){
-                                        return tests[i]
-                                }                       
-                        }
-
-		}
-
-	
-		add_tests_to_row = function(tests,row,arch,type){
-			// just add a blank cell if tere are no results for that kind of tests
-			if (tests.length == 0){
-				var result_cell = $('<td></td>')
-				row.append(result_cell)
-				return
-			}
-				
-			var result = null
-                        var file = null
-                        var result_cell = $('<td></td>')
-
-			var result_tests = get_result_tests(arch,tests)
-
-			if(result_tests != null){
-				result = result_tests.passed
-                                file = result_tests.file
-
-			}
 
 
-			//just add a blank cell if I didn't find any results for that arch
-			if (result == null || file == null){
-				var result_cell = $('<td></td>')
-                                row.append(result_cell)
-				return
-
-			}
-
-			console.log(result)
-			console.log(file)
-                        var res_label = $('<span></span>')
-			res_label.append($('<small></small>').text('See Details'))
-                        
-
-			var r_class = ""
-                        if(type == 'utests'){
-
-				if (result == 'passed'){
-                                	r_class = "label label-success"
-                        	}else if (result == 'failed'){
-                                	r_class = "label label-danger"
-                        	}else{
-                                	r_class = "label label-default"
-                        	}
 
 
-                        }else if (type == 'builds'){
-
-				if (result == 'passed'){
-                                        r_class = "label label-success"
-                                }else if (result == 'warning'){
-                                        r_class = "label label-warning"
-                                }else{
-                                        r_class = "label label-danger"
-                                }
-
-			}
-			else{
-                                r_class = result? "label label-success" : "label label-danger"
-                        }
 
 
-			res_label.attr("class", r_class)
-                        var link_parts = file.split('/')
-			
-                        var details_url = get_tests_url(type,file)
-
-
-                        var r_link = $("<a></a>").attr("href", details_url)
-                        r_link.append(res_label)
-                        result_cell.append(r_link)
-
-                        row.append(result_cell)
-			
-
-		}
-
-		add_static_analyzer_link = function (title_cell,url){
-			if (url != ''){
-				var sa_link = $("<a></a>").attr("href", url)
-				sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
-				sa_link.append($('<span></span>').text(' Static Analyzer'))
-				title_cell.append(sa_link)
-			}
-		}
-
-		add_hlt_tests_link = function (title_cell,url){
-                        if (url != ''){
-                                var sa_link = $("<a></a>").attr("href", url)
-                                sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
-                                sa_link.append($('<span></span>').text(' HLT Validation'))
-                                title_cell.append(sa_link)
-                        }
-                }
-
-
-		write_comp_title =  function(comparison , tab_pane){
-		
-			var current_tag = comparison.compared_tags.split("-->")[1]
-
-                        var title_compared_tags = $("<h3><b></b></h3>").text(current_tag)
-                        
-                        title_compared_tags.append($("<br>"))
-                        title_compared_tags.append($("<br>"))
-                        
-                        var title_table = $('<table class="table table-condensed"></table>')
-
-                        var title_cell = $('<td></td>').append(title_compared_tags)
-                        //here I check the result of the relvals
-
-			add_static_analyzer_link(title_cell,comparison.static_checks)
-			title_cell.append($('<br>'))
-			add_hlt_tests_link(title_cell,comparison.hlt_tests)	
-
-			var title_row = $('<tr></tr>')	
-                        var relvals_results = comparison.relvals
-			var uTests_results = comparison.utests
-			var addons_results = comparison.addons
-			var architectures = comparison.tests_archs
-                        var building_results =  comparison.builds
  
-			title_cell.attr("rowspan",architectures.length+1)
 
-                        console.log('*************')
-                        console.log(comparison.compared_tags)
-                        console.log(relvals_results)
-			console.log(uTests_results)
-			console.log(architectures)
-                        
-                        title_row.append(title_cell)
-                        title_table.append(title_row)
+                    
 
-                        if (architectures.length != 0 ){
 
-				var archs_title = $('<th></th>').text('Architectures')
-				title_row.append(archs_title)
-				var builds_title = $('<th></th>').text('Builds')
-                                title_row.append(builds_title)
-				var utests_title = $('<th></th>').text('Unit Tests')
-				title_row.append(utests_title)
-				var rvs_title = $('<th></th>').text('RelVals')
-                                title_row.append(rvs_title)
-				var addons_title = $('<th></th>').text('Other Tests')
-                                title_row.append(addons_title)
-				var qa_title = $('<th></th>').text('Q/A')
-                                title_row.append(qa_title)
 
-                                for( var i = 0; i < architectures.length; i++){
-                                        var ar_row = $('<tr></tr>')
-                                        var ar_cell = $('<td></td>')
-					ar_cell.text(architectures[i])
-                                        ar_row.append(ar_cell)
-					add_tests_to_row(building_results,ar_row, architectures[i],'builds')
-					add_tests_to_row(uTests_results,ar_row, architectures[i],'utests')
-					add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals')
-					add_tests_to_row(addons_results,ar_row,architectures[i],'addons')
-					add_qa_link_to_row(ar_row,architectures[i],current_tag)
-                                        title_table.append(ar_row)
-                                }
-                        }
-
-			tab_pane.append(title_table)
-                        
-
+		
+		paintMenu = function (structure){
+			console.log("painting menu bar")
+			menuBar = getMenuBar(structure)
+			$("#PrevVersionWarning").after(menuBar)
 
 		}
 
-
-//------------------------------------------------------------------
-//-- Write merged pull requests
-//-----------------------------------------------------------------
-
-
-    		write_pr = function(pr,pr_list_group){
-                        //console.log(pr)
-                        
-                        var list_item = $('<li></li>')
-                        var item_link_text = "#".concat(pr.number)
-                        var pr_description = " from ".concat(pr.author_login,": ", pr.title)
-                        
-                        var pr_link_address = pr.url
-                        var pr_link = $("<a></a>").attr("href", pr_link_address)
-                        pr_link.append($("<span></span>").text(item_link_text))
-                        list_item.append(pr_link)
-                        
-			if (pr.from_merge_commit){
-				var fromMergeGlyph = $('<span class="glyphicon glyphicon-transfer">')
-				list_item.append(fromMergeGlyph)
-			}
-                        list_item.append($("<span></span>").text(pr_description))
-
-                        pr_list_group.append(list_item)
-
-                }
-
-		/**
-		*This function generates the comparison link on github
-		*/
-		writeComparisonLinkGithub = function(comparedTags, tab_pane){
-		
-			var prev_tag = comparedTags.split("-->")[0]
-	
-			var comp_link_address = comparedTags.replace("-->","...")
-                        comp_link_address = "https://github.com/cms-sw/cmssw/compare/".concat(comp_link_address)
-                        var comp_link = $("<a></a>").attr("href", comp_link_address)
-                        comp_link.append($("<span></span>").text("See comparison with "+prev_tag+" on GitHub"))
-                        
-                        var see_on_github = $("<small></small>").append(comp_link)
-                        
-                        tab_pane.append(see_on_github)
-			tab_pane.append($("<br>"))
-                        tab_pane.append($("<br>"))
-
-		}
-
-		/**
-		* This function writes on the page the pull requests involved in the comparison between 2 tags
-		*/
-		write_comparison = function(comparison,tab_pane){
-			
-			
-			var compTags = comparison.compared_tags
-
-			write_comp_title(comparison,tab_pane)
-
-			var pull_requests = comparison.merged_prs			
-		
-			// if there were not merged prs in this comparison I alert it
-                        if(comparison.merged_prs.length!=0){
-			
-				writeComparisonLinkGithub(compTags,tab_pane)
-	
-				var pr_list_group = $('<ul></ul>')	
-				//write the info for each pull request
-				for(var i =0; i < pull_requests.length; i++){
-					write_pr(pull_requests[i],pr_list_group)
-                       		 }
-			
-				tab_pane.append(pr_list_group)
-			}else{
-				var prevTag = compTags.split("-->")[0]
-				var no_prs_found = $('<ul>').append($('<li>').text('No new pull requests since '+prevTag))
-				tab_pane.append(no_prs_found)
-			}
-
-			tab_pane.append($("<br>"))
-		}
-		
 		f = function(data){
 
-			// Before addcint the tab panel I will add a link to the previous version
+			// Before adding the tab panel I add a link to the previous version
 			var prevVersionLink = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/html/showIB.html")
                         prevVersionLink.append($('<span class="glyphicon glyphicon-warning-sign"></span>'))
                         prevVersionLink.append($('<span></span>').text(' Click here to see the previous version'))
 			
-                        $("#results").append($('<div align="center" class="alert alert-warning">').append(prevVersionLink))
+                        $("#results").append($('<div id="PrevVersionWarning" align="center" class="alert alert-warning">').append(prevVersionLink))
 
 			
                        	// create tab panel
-			var tabs = $('<ul id="myTab" class="nav nav-tabs"></ul>')
+			var tabs = $('<ul id="myTab" class="nav nav-tabs hidden"></ul>')
 			
+			// add menu
+			$.getJSON( "structure.json" , paintMenu )
+
 			//create nav tabs
+		
 			for(var i = 0; i < data.length; i++) {
                                 
                                 var release_queue = data[i];
@@ -385,8 +109,6 @@
 					var tab_pane = $('<div class="tab-pane" id="'+release_queue.release_name+'"></div>')
 				}
 				
-    				console.log(release_queue.release_name);
-				console.log("---")
 				// write the titles for the release queue
 				var title_rel_name=$("<h1></h1>").text(release_queue.release_name)
 				tab_pane.append(title_rel_name)

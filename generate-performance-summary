@@ -11,6 +11,7 @@ import time
 import pickle
 import struct
 import socket
+from datetime import date, timedelta
 
 CARBON_SERVER = '0.0.0.0'
 CARBON_PORT = 2004
@@ -78,9 +79,10 @@ def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease):
                releasePath=releasePath,
                fullRelease=fullRelease,
                architecture=architecture)
-  print cmd
   error, out = getstatusoutput(format(cmd))
   if error:
+    return
+  if not out.strip():
     return
   metrics = []
   for line in out.split("\n"):
@@ -97,14 +99,18 @@ if __name__ == "__main__":
                       help='regexp to filter releases')
   parser.add_argument('--filter-workflows', dest='filterWorkflows', default=".*",
                       help='regexp to filter releases')
+  parser.add_argument('--days', dest="days", default=7, type=int, help="days to go into the past.")
   parser.add_argument('what', metavar='KEYS', type=str, nargs='*',
                       help='What to dump from the logs')
   args = parser.parse_args()
 
   print >> sys.stderr, "Parsing files"
-  error, files = getstatusoutput("find %s/slc* -name 'pyRelValMatrixLogs.zip' | sort -r" % IB_BASE_DIR)
+  cmd = "find %s/slc* -name 'pyRelValMatrixLogs.zip' | sort -r" % IB_BASE_DIR
+  print cmd
+  error, files = getstatusoutput(cmd)
   files = [x for x in files.split("\n") if x]
   schema = set()
+  beginning = (date.today() - timedelta(args.days)).timetuple()
   for f in files:
     print >> sys.stderr, f
     releasePath = dirname(f)
@@ -115,6 +121,8 @@ if __name__ == "__main__":
     date = re.sub(".*/CMSSW_[^/]*(20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]-[0-2][0-9][0-9][0-9]).*", "\\1", f)
     release = release.replace(date,"").strip("_")
     timestamp = time.strptime(date, "%Y-%m-%d-%H%M")
+    if timestamp < beginning:
+      continue
     if not re.match(args.filterRelease, release):
       continue
     error, reports = getstatusoutput("unzip -l %s | grep JobReport | awk '{print $4}'" % f)

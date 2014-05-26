@@ -328,13 +328,13 @@ def identify_prs_from_merge_commit(comparisons,release_queue):
 
   print prs.keys()
   # a counter to not ceck all the results of the log file
-  #counter = 1
-  #max = len(prs)
+  counter = 1
+  max = len(prs)
 
   for line in output.splitlines():
-    #counter += 1
-    #if counter == max:
-      #break
+    counter += 1
+    if counter == max:
+      break
 
     pr_info = re.split("[\*|\|]+ ",line)
     num_pr = get_pr_number(pr_info[-1].split(',')).strip()
@@ -461,6 +461,39 @@ def find_one_hlt_test(release_name):
   else:
     return ''
 
+# Identifies and groups the releases accodring to their prefix 
+# For example if the release queues are: 
+# CMSSW_7_1_X, CMSSW_7_0_X, CMSSW_6_2_X, CMSSW_5_3_X, CMSSW_7_1_THREADED_X
+# CMSSW_7_1_BOOSTIO_X, CMSSW_7_1_ROOT6_X, CMSSW_7_1_GEANT10_X, CMSSW_6_2_X_SLHC
+# CMSSW_7_1_DEVEL_X, CMSSW_7_1_CLANG_X, CMSSW_7_2_X, CMSSW_7_2_DEVEL_X, CMSSW_7_2_CLANG_X 
+# CMSSW_7_2_GEANT10_X
+# It will organize them like this:
+# CMSSW_5_3_X: CMSSW_5_3_X 
+# CMSSW_7_2_X: CMSSW_7_2_X, CMSSW_7_2_DEVEL_X, CMSSW_7_2_CLANG_X, CMSSW_7_2_GEANT10_X
+# CMSSW_6_2_X: CMSSW_6_2_X CMSSW_6_2_X_SLHC
+# CMSSW_7_0_X: CMSSW_7_0_X 
+# CMSSW_7_1_X: CMSSW_7_1_X, CMSSW_7_1_THREADED_X, CMSSW_7_1_BOOSTIO_X, CMSSW_7_1_ROOT6_X',
+#              CMSSW_7_1_GEANT10_X, CMSSW_7_1_DEVEL_X, CMSSW_7_1_CLANG_X
+#
+# It returns a dictionary in which the keys are the release prefixes, and the values are
+# the release queues
+def identify_release_groups(results):
+  releases = [rq['release_name'] for rq in results]
+  
+  groups = {}
+
+  for rel in releases:
+    prefix  = rel[:10] + 'X'
+    group = groups.get(prefix)
+    if not group:
+      groups[prefix] = []
+    groups[prefix].append(rel)
+
+  keys = groups.keys()
+  keys.sort()
+  groups['all_releases'] = keys
+  return groups
+
 #-----------------------------------------------------------------------------------
 #---- Start of execution
 #-----------------------------------------------------------------------------------
@@ -570,6 +603,15 @@ execute_magic_command_find_results(addOn_tests_results,'addOn')
 add_tests_to_results(results, unit_tests_results, relvals_results,addOn_tests_results, build_results)
 print_results(results)
 
+structure = identify_release_groups(results)
+
 out_json = open("merged_prs_summary.json", "w")
 json.dump(results,out_json,indent=4)
 out_json.close()
+
+
+out_groups = open("structure.json", "w")
+json.dump(structure,out_groups,indent=4)
+out_groups.close()
+
+

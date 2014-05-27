@@ -6,6 +6,26 @@ from github import Github
 import json
 import urllib2
 from sys import exit
+import re
+
+def add_categories_notes(notes,token):
+  
+  new_notes = ""   
+  for note in notes.splitlines():
+
+    pr_number = note.split(' ')[1].replace('#','')
+    request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/issues/%s/labels" % pr_number,
+                                  headers={"Authorization" : "token " + token})
+
+    labels = json.loads(urllib2.urlopen(request).read())
+    categories = [ l['name'].split('-')[0] for l in labels if not re.match( 'tests|orp|pending-signatures|comparison|fully|new-package' , l['name'] ) ]
+
+    for cat in categories:
+      note += " `%s` " % cat
+
+    new_notes += note + "\n"
+
+  return new_notes
 
 def format(s, **kwds):
   print kwds
@@ -21,17 +41,17 @@ if __name__ == "__main__":
     parser.error("Wrong number or arguments")
   previous = args[0]
   release = args[1]
-  if not exists("cmssw"):
-    error, out = getstatusoutput("git clone https://github.com/cms-sw/cmssw")
+  if not exists("cmssw.git"):
+    error, out = getstatusoutput("git clone --bare --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git")
     if error:
       parser.error("Error while checking out the repository:\n" + out)
 
-  error, out = getstatusoutput("cd cmssw ; git fetch --all --tags")
+  error, out = getstatusoutput("GIT_DIR=cmssw.git git fetch --all --tags")
   if error:
     parser.error("Error while updating the repository:\n" + out)
 
-  error, notes = getstatusoutput(format("cd cmssw ;"
-                                      "git log  --first-parent --merges --pretty='%%s: %%b' %(previous)s..%(release)s | "
+  error, notes = getstatusoutput(format("GIT_DIR=cmssw.git"
+                                      " git log  --first-parent --merges --pretty='%%s: %%b' %(previous)s..%(release)s | "
                                       "grep 'pull request' |"
                                       "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
                                       previous=previous,
@@ -42,6 +62,9 @@ if __name__ == "__main__":
     exit(1)
 
   token = open(expanduser("~/.github-token")).read().strip()
+
+  notes = add_categories_notes(notes,token)
+
   request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases",
                             headers={"Authorization" : "token " + token})
   releases = json.loads(urllib2.urlopen(request).read())

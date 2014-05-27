@@ -8,17 +8,23 @@ import urllib2
 from sys import exit
 import re
 
+
 def add_categories_notes(notes,token):
   
   new_notes = ""   
   for note in notes.splitlines():
-
+    
+    note = note.decode('ascii','ignore')
     pr_number = note.split(' ')[1].replace('#','')
     request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/issues/%s/labels" % pr_number,
                                   headers={"Authorization" : "token " + token})
 
     labels = json.loads(urllib2.urlopen(request).read())
     categories = [ l['name'].split('-')[0] for l in labels if not re.match( 'tests|orp|pending-signatures|comparison|fully|new-package' , l['name'] ) ]
+
+    if len(categories) == 0:
+      print "no categories for:"
+      print pr_number
 
     for cat in categories:
       note += " `%s` " % cat
@@ -65,7 +71,7 @@ if __name__ == "__main__":
 
   notes = add_categories_notes(notes,token)
 
-  request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases",
+  request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
                             headers={"Authorization" : "token " + token})
   releases = json.loads(urllib2.urlopen(request).read())
   matchingRelease = [x["id"] for x in releases if x["name"] == release]

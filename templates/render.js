@@ -1,7 +1,7 @@
 getMenuBar = function(structure){
 
 
-  var allQueues = structure.all_releases
+  var allQueues = structure.all_prefixes
 
   var menuBar = $('<nav id="topNavBar" class="navbar navbar-primary" role="navigation">')
   
@@ -346,4 +346,28 @@ write_comparison = function(comparison,tab_pane){
 
 
 }
+
+
+/**
+ * loads the comparisons and adds it to the tab pane for the corresponding release queue
+ */
+paintComparisons = function(rqInfo){
+
+  console.log('Loaded!')
+
+  var tab_pane = $("#"+rqInfo.release_name)
+  var comparisons = rqInfo.comparisons
+
+  for(var j =comparisons.length-1; j >= 0; j--){
+    
+    write_comparison(comparisons[j],tab_pane)
+  
+  }
+
+  hideProgressBar(rqInfo.release_name)
+}
+
+
+
+
 

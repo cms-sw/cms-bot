@@ -47,17 +47,6 @@
 		}
 
 
-
-
-
-
-
- 
-
-                    
-
-
-
 		
 		paintMenu = function (structure){
 			console.log("painting menu bar")
@@ -66,83 +55,86 @@
 
 		}
 
-		f = function(data){
+		// Reads the file structre.json to know how to paint the manu and how to paint the tabs.
+                start_load = function(structure){
 
 			// Before adding the tab panel I add a link to the previous version
-			var prevVersionLink = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/html/showIB.html")
+                        var prevVersionLink = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/html/showIB.html")
                         prevVersionLink.append($('<span class="glyphicon glyphicon-warning-sign"></span>'))
                         prevVersionLink.append($('<span></span>').text(' Click here to see the previous version'))
-			
+                        
                         $("#results").append($('<div id="PrevVersionWarning" align="center" class="alert alert-warning">').append(prevVersionLink))
 
-			
-                       	// create tab panel
-			var tabs = $('<ul id="myTab" class="nav nav-tabs hidden"></ul>')
-			
-			// add menu
-			$.getJSON( "structure.json" , paintMenu )
+			paintMenu(structure)
+
+			// create tab panel
+                        var tabs = $('<ul id="myTab" class="nav nav-tabs hidden"></ul>')
 
 			//create nav tabs
-		
-			for(var i = 0; i < data.length; i++) {
-                                
-                                var release_queue = data[i];
-				 //add tab 
-                                var tab_title = $('<li><a href="#'+release_queue.release_name+'" data-toggle="tab">'+release_queue.release_name+'</a></li>')
+			var all_releases = structure.all_release_queues
+
+
+			for(var i = 0; i < all_releases.length; i++){
+
+				var release_name = all_releases[i];
+                                 //add tab 
+                                var tab_title = $('<li><a href="#'+release_name+'" data-toggle="tab">'+release_name+'</a></li>')
                                 tabs.append(tab_title)
 
-
 			}
+
 			$("#results").append(tabs)
-			
-			// create tab panes
+
+			//create tab panes
 			var tabs_content = $('<div class="tab-content"></div>')
-			tabs_content.attr("id","tabs_container")
-		
-			for(var i = 0; i < data.length; i++) {
-			
-				var release_queue = data[i];
-				//the first one is active
-				if (i==0){
-					var tab_pane = $('<div class="tab-pane active" id="'+release_queue.release_name+'"></div>')
-				}else{
-					var tab_pane = $('<div class="tab-pane" id="'+release_queue.release_name+'"></div>')
-				}
-				
+                        tabs_content.attr("id","tabs_container")
+			for(var i = 0; i < all_releases.length; i++){
+
+				var release_name = all_releases[i];
+
+			 	//by default, the first one is the one which starts as active
+                        	if (i == 0 ){
+					var tab_pane = $('<div class="tab-pane active" id="'+release_name+'"></div>')
+                        	}else{
+                                	var tab_pane = $('<div class="tab-pane" id="'+release_name+'"></div>')
+                        	}
+
 				// write the titles for the release queue
-				var title_rel_name=$("<h1></h1>").text(release_queue.release_name)
-				tab_pane.append(title_rel_name)
-				tab_pane.append($("<hr>"))
-				tab_pane.append($("<br>"))
-				var comparisons = release_queue.comparisons
+                        	var title_rel_name=$("<h1></h1>").text(release_name)
+                        	tab_pane.append(title_rel_name)
+                        	tab_pane.append($("<hr>"))
+                        	tab_pane.append($("<br>"))
+                        
 				// if the release is 7_1_X I add the link for the performance summary
-				if (release_queue.release_name == "CMSSW_7_1_X"){
-					var ps_link = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/jenkins-artifacts/performance/summary/performanceSummaryOut.html" )
-					var lbl_link = $('<span class="glyphicon glyphicon-stats"></span>')
+                        	if (release_name == "CMSSW_7_1_X"){
+                        		var ps_link = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/jenkins-artifacts/performance/summary/performanceSummaryOut.html" )
+                                	var lbl_link = $('<span class="glyphicon glyphicon-stats"></span>')
                                 	ps_link.append(lbl_link)
-					ps_link.append($('<span></span>').text('  Historical Performance Plots'))
-					tab_pane.append(ps_link)
+                                	ps_link.append($('<span></span>').text('  Historical Performance Plots'))
+                                	tab_pane.append(ps_link)
 
-				}
+                         	}
 
-				// write the comparisons for the release queue
-				for(var j =comparisons.length-1; j >= 0; j--){
-					write_comparison(comparisons[j],tab_pane)
-				}
+
+				
+				// write the comparisons for the release queue, here I read a json file per release queue
+				var compFileName = release_name + ".json"
+				
+
+				$.getJSON( compFileName, paintComparisons)
+
 
 				tabs_content.append(tab_pane)
-
 			}
 
-			 $("#results").append(tabs_content)
-		
-			enable_tabs() 
-		
-	
-                }
-	
+			$("#results").append(tabs_content)
+                
+                        enable_tabs() 
 
-  		$.getJSON( "merged_prs_summary.json", f)
+                }
+
+
+  		$.getJSON( "structure.json", start_load)
 
 
 

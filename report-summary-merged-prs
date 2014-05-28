@@ -461,6 +461,16 @@ def find_one_hlt_test(release_name):
   else:
     return ''
 
+# reads the results and generates a separated json for each release_queue
+def generate_separated_json_results(results):
+
+  for rq in results:
+
+    file_name = rq['release_name'] + ".json"
+    out_json = open(file_name, "w")
+    json.dump(rq,out_json,indent=4)
+    out_json.close()
+
 # Identifies and groups the releases accodring to their prefix 
 # For example if the release queues are: 
 # CMSSW_7_1_X, CMSSW_7_0_X, CMSSW_6_2_X, CMSSW_5_3_X, CMSSW_7_1_THREADED_X
@@ -478,8 +488,10 @@ def find_one_hlt_test(release_name):
 # It returns a dictionary in which the keys are the release prefixes, and the values are
 # the release queues
 def identify_release_groups(results):
-  releases = [rq['release_name'] for rq in results]
   
+  releases = [rq['release_name'] for rq in results]
+  releases.sort(reverse=True)
+ 
   groups = {}
 
   for rel in releases:
@@ -491,7 +503,8 @@ def identify_release_groups(results):
 
   keys = groups.keys()
   keys.sort()
-  groups['all_releases'] = keys
+  groups['all_prefixes'] = keys
+  groups['all_release_queues'] = releases
   return groups
 
 #-----------------------------------------------------------------------------------
@@ -604,6 +617,8 @@ add_tests_to_results(results, unit_tests_results, relvals_results,addOn_tests_re
 print_results(results)
 
 structure = identify_release_groups(results)
+
+generate_separated_json_results(results)
 
 out_json = open("merged_prs_summary.json", "w")
 json.dump(results,out_json,indent=4)

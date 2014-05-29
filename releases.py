@@ -30,7 +30,7 @@ RELEASE_MANAGERS = {
   "CMSSW_7_1_X": ["nclopezo", "ktf"],
   "CMSSW_7_0_X": ["nclopezo", "ktf"],
   "CMSSW_6_2_X": ["degano"],
-  "CMSSW_6_2_X_SLHC": ["andersonjacob", "mark-grimes"],
+  "CMSSW_6_2_X_SLHC": ["fratnikov", "mark-grimes"],
   "CMSSW_5_3_X": ["smuzaffar"],
   "CMSSW_4_4_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],
   "CMSSW_4_2_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],

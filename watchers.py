@@ -247,4 +247,8 @@ WATCHERS = {
                  "Validation/RecoTracks",
                  "RecoMuon",
                  "DQMOffline"],
+  "barvic": ["EventFilter/CSCRawToDigi",
+             "DQM/CSCMonitorModule",
+             "DQMOffline/Muon",
+             "DQMServices"],
 }

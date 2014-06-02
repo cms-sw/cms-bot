@@ -6,7 +6,6 @@ CMSSW_L2 = {
   "perrotta": ["hlt"],
   "fwyzard": ["hlt"],
   "slava77": ["reconstruction"],
-  "thspeer": ["reconstruction"],
   "vadler": ["analysis"],
   "vciulli": ["generators"],
   "civanch": ["simulation", "geometry"],

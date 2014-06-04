@@ -1,0 +1,76 @@
+#!/bin/sh -e
+# Updates a branch by doing the following:
+# - switch to the target branch
+# - Merge the source branch but keep anything on the development branch
+#   in case of conflicts.
+# - Update the target branch. 
+function updateBranch()
+{
+  SOURCE_BRANCH=$1
+  TARGET_BRANCH=$2
+  git clean -fdx
+  git reset --hard origin/$TARGET_BRANCH
+  git clean -fdx
+  git merge -X ours origin/$SOURCE_BRANCH
+  git push origin HEAD:$TARGET_BRANCH
+}
+
+# Update CMSSW
+# Clone once…
+cd $WORKSPACE
+rm -rf cmssw
+if [ ! -d cmssw ]; then
+  git clone -b CMSSW_7_0_X git@github.com:cms-sw/cmssw
+fi
+
+cd cmssw
+git fetch origin
+
+# CMSSW_7_1_X for the moment is based on CMSSW_7_0_X
+updateBranch CMSSW_7_0_X CMSSW_7_1_X
+updateBranch CMSSW_7_1_X CMSSW_7_1_DEVEL_X
+updateBranch CMSSW_7_1_X CMSSW_7_1_CLANG_X
+
+# SLHC branch is based on top of the associated release branch.
+updateBranch CMSSW_6_2_X CMSSW_6_2_X_SLHC
+
+# CMSSW_7_2_X for the moment is based on CMSSW_7_1_X
+updateBranch CMSSW_7_1_X CMSSW_7_2_X
+updateBranch CMSSW_7_2_X CMSSW_7_2_ROOT6_X
+updateBranch CMSSW_7_2_X CMSSW_7_2_GEANT10_X
+updateBranch CMSSW_7_2_X CMSSW_7_2_DEVEL_X
+updateBranch CMSSW_7_2_X CMSSW_7_2_CLANG_X
+updateBranch CMSSW_7_2_X CMSSW_7_2_THREADED_X
+
+# Update CMSDIST
+cd $WORKSPACE
+if [ ! -d cmsdist ]; then
+  git clone -b IB/CMSSW_7_0_X/stable git@github.com:cms-sw/cmsdist
+fi
+
+cd cmsdist
+git fetch
+
+# CMSSW_6_2_X
+updateBranch IB/CMSSW_6_2_X/stable IB/CMSSW_6_2_X/devel-gcc472
+
+# CMSSW_7_0_X
+# devel
+updateBranch IB/CMSSW_7_0_X/stable IB/CMSSW_7_0_X/devel
+
+# CMSSW_7_1_X
+updateBranch IB/CMSSW_7_0_X/stable IB/CMSSW_7_1_X/stable
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/jemalloc341
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/jemalloc350
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/gcc490
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/devel
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/next
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/root5
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug
+
+# CMSSW_7_2_X
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_2_X/stable
+updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/root6
+updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/geant10
+updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/gcc490
+updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/next

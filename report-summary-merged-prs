@@ -440,14 +440,14 @@ def find_one_static_check(release_name):
   command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE','slc5_amd64_gcc481')
   out,err,ret_code = get_output_command(command_to_execute)
-  if '200 OK' in out:
+  if '200 OK' in out or '302 ' in out:
     return STATIC_CHECKS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE','slc5_amd64_gcc481')
   else:
     #If I don't find it in slc5 I look for it in slc6
     print 'looking for resuls in slc6'
     command_to_execute = command_to_execute.replace('slc5_amd64_gcc481','slc6_amd64_gcc481')
     out,err,ret_code = get_output_command(command_to_execute)
-    if '200 OK' in out:
+    if '200 OK' in out or '302 ' in out:
       print 'results found for slc6'
       return STATIC_CHECKS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE','slc6_amd64_gcc481')
     else:
@@ -456,7 +456,7 @@ def find_one_static_check(release_name):
 def find_one_hlt_test(release_name):
   command = MAGIC_COMMAND_FIND_HLT_TESTS.replace('RELEASE_NAME',release_name)
   out,err,ret_code = get_output_command(command)
-  if '200 OK' in out:
+  if '200 OK' in out or '302 ' in out:
     return HLT_TESTS_URL.replace('RELEASE_NAME',release_name)
   else:
     return ''

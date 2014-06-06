@@ -60,19 +60,19 @@ def format(s, **kwds):
   return s % kwds
 
 # 100 metrics at the time
-def sendMetrics(metrics):
+def sendMetrics(metrics, server, port):
   for l in chunks(metrics, 100):
     payload = pickle.dumps(l)
     print len(payload)
     header = struct.pack("!L", len(payload))
     message = header + payload
     sock = socket.socket()
-    sock.connect((CARBON_SERVER, CARBON_PORT))
+    sock.connect((server, port))
     sock.sendall(message)
     sock.close()
     time.sleep(0.5)
 
-def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease):
+def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease, args):
   timestamp = time.mktime(timestamp)
   cmd = format("find %(base)s/vol*/%(architecture)s/cms/cmssw*/%(fullRelease)s/lib/%(architecture)s -name '*.so' -exec wc -c {} \; | sed -e 's|/.*/||;s|[.]so||'",
                base=IB_BASE_DIR,
@@ -89,11 +89,15 @@ def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease):
     size, library = line.split(" ", 1)
     metric = ".".join(["IBStats", architecture, release, library, "FileSize"])
     metrics.append((metric, (timestamp, size)))
-  sendMetrics(metrics)
+  sendMetrics(metrics, args.server, args.port)
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Extract plot data from IB job reports')
   parser.add_argument('--base-dir', dest='baseDir', default=IB_BASE_DIR,
+                      help='Where the logs are located.')
+  parser.add_argument('--server', dest='server', default=CARBON_SERVER,
+                      help='Where the logs are located.')
+  parser.add_argument('--port', dest='port', default=CARBON_PORT,
                       help='Where the logs are located.')
   parser.add_argument('--filter-release', dest='filterRelease', default=".*",
                       help='regexp to filter releases')
@@ -126,7 +130,7 @@ if __name__ == "__main__":
     if not re.match(args.filterRelease, release):
       continue
     error, reports = getstatusoutput("unzip -l %s | grep JobReport | awk '{print $4}'" % f)
-    calculateFileSizeMetrics(release, architecture, timestamp, fullRelease)
+    calculateFileSizeMetrics(release, architecture, timestamp, fullRelease, args)
     
     metrics = []
     for r in [x for x in reports.split("\n") if x]:
@@ -151,4 +155,4 @@ if __name__ == "__main__":
     if not len(metrics):
       continue
     print "Sending %s metrics." % len(metrics)
-    sendMetrics(metrics)
+    sendMetrics(metrics, args.server, args.port)

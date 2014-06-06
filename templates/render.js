@@ -267,6 +267,31 @@ write_comp_title =  function(comparison , tab_pane){
 //----------------------------------------------------------
 //-- Write merged prs
 //----------------------------------------------------------
+write_merge_commit = function(merge_commit,pr_list_group){
+
+  var list_item = $('<li>')
+  var item_link_text = merge_commit.number
+  var merge_description = " Automatic merge of "
+
+  for( var i = 0; i < merge_commit.brought_prs.length ; i++){
+    merge_description += '#'.concat( merge_commit.brought_prs[i] , ' ' )
+  }
+
+
+  var merge_link_address = "https://github.com/olivito/cmssw/commit/".concat(merge_commit.hash)
+  var merge_link = $("<a>").attr("href", merge_link_address)
+  merge_link.append($("<span>").text(item_link_text))
+  list_item.append(merge_link)
+
+  var fromMergeGlyph = $('<span class="glyphicon glyphicon-transfer">')
+  list_item.append(fromMergeGlyph)
+
+  list_item.append($("<span>").text(merge_description))
+  pr_list_group.append(list_item)
+
+
+
+}
 
 write_pr = function(pr,pr_list_group){
 
@@ -327,8 +352,12 @@ write_comparison = function(comparison,tab_pane){
 
     //write the info for each pull request
     for(var i =0; i < pull_requests.length; i++){
-    
-      write_pr(pull_requests[i],pr_list_group)
+
+      if(pull_requests[i].is_merge_commit){
+        write_merge_commit(pull_requests[i],pr_list_group)
+      }else{ 
+        write_pr(pull_requests[i],pr_list_group)
+      }
     
     }
 

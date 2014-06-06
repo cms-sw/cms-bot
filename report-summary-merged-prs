@@ -6,6 +6,7 @@ import re
 import json
 import pickle
 from pickle import Unpickler
+from gitmergesgraph import *
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
@@ -43,31 +44,49 @@ def is_pr_from_merge_commit(graph_part):
   return graph_part.startswith('|')
 
 def get_pr_number(line_parts):
-  number_and_name = line_parts[0].replace('"','')
+  number_and_name = line_parts[1].replace('"','')
   number = re.sub(' from .*', '', number_and_name)
   number = re.sub('Merge pull request #', '', number)
   return number
 
 def get_pr_author_login(line_parts):
-  number_and_name = line_parts[0].replace('"','')
+  number_and_name = line_parts[1].replace('"','')
   name = re.sub('^Merge .* from ', '', number_and_name)
   name = name.split('/')[0]
   return name
 
+def get_pr_commit_hash(line_parts):
+  hash = line_parts[0].replace('"','')
+  return hash
+
 def get_pr_title(line_parts):
-  title = line_parts[1].replace('"','').strip()
+  title = line_parts[2].replace('"','').strip()
   return title
 
-#gets the information of the pull request
-def get_info_pr(line):
+# gets the information of the pull request
+def get_info_pr( line , graph ):
   pull_request = {}
   line_parts = line.split(',')
+  pull_request['hash'] = get_pr_commit_hash(line_parts)
   pull_request['number'] = get_pr_number(line_parts)
   pull_request['author_login'] = get_pr_author_login(line_parts)
   pull_request['title'] = get_pr_title(line_parts)
   pull_request['url'] = 'https://github.com/cms-sw/cmssw/pull/%d' % int(pull_request['number'])
-  pull_request['from_merge_commit'] = False
+  pull_request['from_merge_commit'] = graph[pull_request['hash']].is_from_merge
+  pull_request['is_merge_commit'] = False
   return pull_request
+
+def get_info_merge_commit( line , graph ):
+  merge_commit = {}
+  line_parts = line.split(',')
+  merge_commit['hash'] = get_pr_commit_hash(line_parts)
+  merge_commit['number'] = merge_commit['hash'][0:7]
+  merge_commit['is_merge_commit'] = True
+  merge_commit['from_merge_commit'] = False
+  brought_commits = get_prs_brought_by_commit( graph , merge_commit['hash'] )
+  merge_commit['brought_prs'] = [ pr.pr_number for pr in brought_commits ]
+  
+  return merge_commit
 
 #reads a line of the output of git log and returns the tags that it contains
 #if there are no tags it returns an empty list
@@ -299,7 +318,7 @@ def execute_magic_command_tags(start_tag,end_tag,release_queue):
   print tags
   return tags
 
-def execute_command_compare_tags(start_tag,end_tag):
+def execute_command_compare_tags(start_tag,end_tag , graph ):
   command_to_execute = MAGIC_COMMAND_PRS.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
   output,err,ret_code = get_output_command(command_to_execute)
   print '------'
@@ -307,44 +326,27 @@ def execute_command_compare_tags(start_tag,end_tag):
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
   prs = []
   for line in output.splitlines():
-    pr = get_info_pr(line)
+    
+    if 'Merge remote branch ' in line:
+      pr = get_info_merge_commit( line , graph )
+      if pr['brought_prs'] == []:
+        continue
+    elif 'Merge pull ' in line:
+      pr = get_info_pr( line , graph )
+    else:
+      continue
+    
     prs.append(pr)
   comp['merged_prs'] = prs
   return comp
 
-def compare_tags(tags):
+def compare_tags( tags , graph ):
   comparisons = []
   for i in range(len(tags)-1):
-    comp = execute_command_compare_tags(tags[i],tags[i+1])
+    comp = execute_command_compare_tags(tags[i],tags[i+1] , graph )
     comparisons.append(comp)
   return comparisons
 
-# Identifies which prs come from a merge commit 
-def identify_prs_from_merge_commit(comparisons,release_queue):
-  command_to_execute = MAGIC_COMMAND_GRAPH.replace('RELEASE_QUEUE',release_queue)
-  output,err,ret_code = get_output_command(command_to_execute)
-
-  prs = get_all_prs(comparisons)
-
-  print prs.keys()
-  # a counter to not ceck all the results of the log file
-  counter = 1
-  max = len(prs)
-
-  for line in output.splitlines():
-    counter += 1
-    if counter == max:
-      break
-
-    pr_info = re.split("[\*|\|]+ ",line)
-    num_pr = get_pr_number(pr_info[-1].split(',')).strip()
-    
-    pr = prs.get(num_pr)
-    if not pr:
-      continue
-    else:
-      pr['from_merge_commit'] = is_pr_from_merge_commit(line) 
-    
 
 def execute_magic_command_find_results(results,type):
   for arch in ARCHITECTURES:
@@ -512,9 +514,7 @@ def identify_release_groups(results):
 #-----------------------------------------------------------------------------------
 
 # I used this type of concatenation because the string has %s inside
-MAGIC_COMMAND_PRS  = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep "Merge pull"'
-
-MAGIC_COMMAND_GRAPH = 'GIT_DIR='+repo+' git log --merges --graph --pretty=\'"%s", "%b"\' RELEASE_QUEUE | grep "Merge pull"'
+MAGIC_COMMAND_PRS  = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
 
 MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
 
@@ -579,15 +579,17 @@ for comp in requested_comparisons:
 
   print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
 
+  # load the graph fo the history
+
+  graph = load_graph(release_queue,-1)
+ 
   release_queue_results = {}
 	
   release_queue_results['release_name'] = release_queue
 
   tags = execute_magic_command_tags(start_tag,end_tag,release_queue)
 
-  release_queue_results['comparisons'] = compare_tags(tags)
-
-  identify_prs_from_merge_commit(release_queue_results['comparisons'],release_queue)
+  release_queue_results['comparisons'] = compare_tags( tags , graph )
 
   find_static_results(release_queue_results['comparisons'])
   find_hlt_tests_results(release_queue_results['comparisons'])

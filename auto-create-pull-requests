@@ -1,0 +1,70 @@
+#!/usr/bin/env python
+# Creates pull requests to automatically forward port from one release to another.
+from github import Github, GithubException
+from sys import exit
+from os.path import expanduser
+
+# Mappings between releases for CMSSW
+MAPPINGS = {
+"cmssw": [
+  # CMSSW_6_2_X
+  ("CMSSW_6_2_X", "CMSSW_6_2_X_SLHC"),
+  # CMSSW_7_0_X
+  ("CMSSW_7_0_X", "CMSSW_7_1_X"),
+  # CMSSW_7_1_X
+  ("CMSSW_7_1_X", "CMSSW_7_1_DEVEL_X"),
+  ("CMSSW_7_1_X", "CMSSW_7_1_CLANG_X"),
+  ("CMSSW_7_1_X", "CMSSW_7_2_X"),
+  # CMSSW_7_2_X
+  ("CMSSW_7_2_X", "CMSSW_7_2_ROOT6_X"),
+  ("CMSSW_7_2_X", "CMSSW_7_2_GEANT10_X"),
+  ("CMSSW_7_2_X", "CMSSW_7_2_DEVEL_X"),
+  ("CMSSW_7_2_X", "CMSSW_7_2_CLANG_X"),
+  ("CMSSW_7_2_X", "CMSSW_7_2_THREADED_X"),
+],
+"cmsdist": [
+  ("IB/CMSSW_6_2_X/stable", "IB/CMSSW_6_2_X/devel-gcc472"),
+  # CMSSW_7_0_X
+  ("IB/CMSSW_7_0_X/stable", "IB/CMSSW_7_0_X/devel"),
+  ("IB/CMSSW_7_0_X/stable", "IB/CMSSW_7_1_X/stable"),
+  # CMSSW_7_1_X
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_1_X/jemalloc341"),
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_1_X/jemalloc350"),
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_1_X/gcc490"),
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_1_X/devel"),
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_1_X/next"),
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_1_X/root5"),
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_1_X/debug"),
+  ("IB/CMSSW_7_1_X/stable", "IB/CMSSW_7_2_X/stable"),
+  # CMSSW_7_2_X
+  ("IB/CMSSW_7_2_X/stable", "IB/CMSSW_7_2_X/root6"),
+  ("IB/CMSSW_7_2_X/stable", "IB/CMSSW_7_2_X/geant10"),
+  ("IB/CMSSW_7_2_X/stable", "IB/CMSSW_7_2_X/gcc490"),
+  ("IB/CMSSW_7_2_X/stable", "IB/CMSSW_7_2_X/next"),
+]
+}
+
+if __name__ == "__main__":
+  gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  for repo in MAPPINGS:
+    try:
+      gh_repo = gh.get_organization("cms-sw").get_repo(repo)
+    except:
+      print "Could not find repository."
+      exit(0)
+    for (head, base) in MAPPINGS[repo]:
+      title = "Forward port %s into %s" % (head, base)
+      pr = None
+      try:
+        pr = gh_repo.create_pull(title=title,
+                                 body="",
+                                 base=base,
+                                 head=head)
+      except GithubException, e:
+        if e.data[u"errors"][0][u"message"].startswith("No commits between"):
+          print "%s already in %s" % (head, base)
+        else:
+          print e.data
+          exit(1)
+      if pr:
+        print pr

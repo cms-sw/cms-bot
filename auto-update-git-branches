@@ -27,7 +27,6 @@ cd cmssw
 git fetch origin
 
 # CMSSW_7_1_X for the moment is based on CMSSW_7_0_X
-updateBranch CMSSW_7_0_X CMSSW_7_1_X
 updateBranch CMSSW_7_1_X CMSSW_7_1_DEVEL_X
 updateBranch CMSSW_7_1_X CMSSW_7_1_CLANG_X
 
@@ -35,7 +34,6 @@ updateBranch CMSSW_7_1_X CMSSW_7_1_CLANG_X
 updateBranch CMSSW_6_2_X CMSSW_6_2_X_SLHC
 
 # CMSSW_7_2_X for the moment is based on CMSSW_7_1_X
-updateBranch CMSSW_7_1_X CMSSW_7_2_X
 updateBranch CMSSW_7_2_X CMSSW_7_2_ROOT6_X
 updateBranch CMSSW_7_2_X CMSSW_7_2_GEANT10_X
 updateBranch CMSSW_7_2_X CMSSW_7_2_DEVEL_X

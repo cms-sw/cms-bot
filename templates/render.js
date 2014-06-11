@@ -278,7 +278,7 @@ write_merge_commit = function(merge_commit,pr_list_group){
   }
 
 
-  var merge_link_address = "https://github.com/olivito/cmssw/commit/".concat(merge_commit.hash)
+  var merge_link_address = "https://github.com/cms-sw/cmssw/commit/".concat(merge_commit.hash)
   var merge_link = $("<a>").attr("href", merge_link_address)
   merge_link.append($("<span>").text(item_link_text))
   list_item.append(merge_link)

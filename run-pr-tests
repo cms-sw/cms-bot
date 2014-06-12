@@ -1,0 +1,84 @@
+#!/bin/sh -ex
+BASE_URL=cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/matrix-results/
+PULL_REQUEST_BASE_URL=cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/
+
+WF_NAME_4_22='4.22_RunCosmics2011A+RunCosmics2011A+RECOCOSD+ALCACOSD+SKIMCOSD+HARVESTDC/DQM_V0001_R000160960__Global__CMSSW_X_Y_Z__RECO.root'
+WF_NAME_4_53='4.53_RunPhoton2012B+RunPhoton2012B+HLTD+RECODreHLT+HARVESTDreHLT/DQM_V0001_R000194533__Global__CMSSW_X_Y_Z__RECO.root'
+WF_NAME_5_1='5.1_TTbar+TTbarFS+HARVESTFS/DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root'
+WF_NAME_8_0='8.0_BeamHalo+BeamHalo+DIGICOS+RECOCOS+ALCABH+HARVESTCOS/DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root'
+WF_NAME_25_0='25.0_TTbar+TTbar+DIGI+RECO+HARVEST+ALCATT/DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root'
+WF_NAME_401_0='401.0_TTbarNewMix+TTbarFSPU2+HARVESTFS/DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root'
+WF_NAME_1000_0='1000.0_RunMinBias2011A+RunMinBias2011A+TIER0+SKIMD+HARVESTDfst2+ALCASPLIT/DQM_V0001_R000165121__Global__CMSSW_X_Y_Z__RECO.root'
+#WF_NAME_101_0='101.0_SingleElectronE120EHCAL+SingleElectronE120EHCAL/DQM_V0001_R000165121__Express__PCLTest__ALCAPROMPT.root'
+WF_NAME_1306_0='1306.0_SingleMuPt1_UP15+SingleMuPt1_UP15+DIGIUP15+RECOUP15+HARVESTUP15/DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root'
+#WF_NAME_1003_0='1003.0_RunMinBias2012A+RunMinBias2012A+RECODDQM+HARVESTDDQM/DQM_V0001_R000191226__Global__CMSSW_X_Y_Z__RECO.root'
+#WF_NAME_1001_0='1001.0_RunMinBias2011A+RunMinBias2011A+TIER0EXP+ALCAEXP+ALCAHARVD/DQM_V0001_R000165121__Express__PCLTest__ALCAPROMPT.root'
+
+WORKFLOWS_TO_COMPARE=$WF_NAME_1001_0,$WF_NAME_4_22,$WF_NAME_4_53,$WF_NAME_5_1,$WF_NAME_8_0,$WF_NAME_25_0,$WF_NAME_401_0,$WF_NAME_1000_0,$WF_NAME_1306_0
+
+#temp fix!!
+sleep 120
+
+COUNT=1
+
+rsync cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/summary.html summary.html
+
+RSYNC_RESULT=`echo $?`
+
+while $RSYNC_RESULT -gt 0; do
+   if [ $COUNT -eq 60 ]; then
+  echo "To many times trying to download the file"
+        exit 1
+   fi
+   echo "summary file not uploaded yet"
+   echo $COUNT
+   COUNT=$((COUNT+1))
+   sleep 10
+   rsync cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/summary.html summary.html
+   RSYNC_RESULT=`echo $?`
+
+done
+
+
+
+export SCRAM_ARCH=$ARCHITECTURE
+scram project $RELEASE_FORMAT
+cd $RELEASE_FORMAT
+eval `scram run -sh`
+git cms-addpkg Utilities/RelMon
+cd ..
+
+#pushd $CMSSW_X_Y_Z/src
+#  eval `scram run -sh`
+#  git cms-addpkg Utilities/RelMon
+#  git checkout CMSSW_7_0_X -- Utilities/RelMon
+#popd
+mkdir results
+cd results
+
+for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
+  WF_BASE_URL=$BASE_URL$WF
+  WF_PR_URL=$PULL_REQUEST_BASE_URL$WF
+  FILE=$(basename $WF)
+  DIR=`echo $WF | cut -d "/" -f1`
+  mkdir $DIR
+  cd $DIR
+  rsync $WF_BASE_URL $RELEASE_FORMAT-$FILE 
+  rsync $WF_PR_URL $PULL_REQUEST_NUMBER-$FILE
+  #requires checking out a package in the release. 
+  compare_using_files.py $RELEASE_FORMAT-$FILE $PULL_REQUEST_NUMBER-$FILE -o comparisonResults --metas " $RELEASE_FORMAT @@@ $RELEASE_FORMAT + $PULL_REQUEST_NUMBER " --use_black_file -C -R -p --no_successes -s b2b --standalone || true
+  pwd
+  ls -la
+  pushd comparisonResults
+  cp RelMonSummary.html index.html
+  ls -la
+  find . -name "*" | xargs sh -c "sed -i -s 's/..\/RelMonSummary.html/RelMonSummary.html/g' || true"
+  popd
+  cd ..
+done
+
+cd ..
+
+sed -i "s/PARAM_BASELINE_COMPARISON/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/baseLineComparisons\/$RELEASE_FORMAT+$PULL_REQUEST_NUMBER\/$BUILD_NUMBER\//g" summary.html
+sed -i "s/Still running.../See comparison results/g" summary.html
+

@@ -34,14 +34,18 @@ git clone git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
 pushd CMSDIST
   DEFAULT_CMSDIST_TAG="`git rev-parse HEAD`"
 popd
+
+CMSDIST_REPO=cms-sw
+PKGTOOLS_REPO=cms-sw
+
 eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 # Use git clone -b to avoid ambiguities between branch and refs.
 
 # Cleanup before checking out
 rm -rf CMSDIST PKGTOOLS
 
-git clone -b $CMSDIST_TAG git@github.com:cms-sw/cmsdist.git CMSDIST 
-git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git PKGTOOLS
+git clone -b $CMSDIST_TAG git@github.com:$CMSDIST_REPO/cmsdist.git CMSDIST
+git clone -b $PKGTOOLS_TAG git@github.com:$PKGTOOLS_REPO/pkgtools.git PKGTOOLS
 
 # Use these in case github dies of an horrible death.
 # git clone https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS

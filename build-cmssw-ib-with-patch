@@ -38,6 +38,7 @@ case $RELEASE_NAME in
 esac
 
 CMSDIST_REPO=cms-sw
+PKGTOOLS_REPO=cms-sw
 
 mkdir -p $WORKSPACE/$BUILD_NUMBER
 cd $WORKSPACE/$BUILD_NUMBER
@@ -55,7 +56,7 @@ eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_
 # are both branches. See below to handle the case in which they are actually tags.
 rm -rf CMSDIST
 git clone -b $CMSDIST_TAG git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
-git clone -b $PKGTOOLS_TAG git://github.com/cms-sw/pkgtools.git PKGTOOLS
+git clone -b $PKGTOOLS_TAG git://github.com/$PKGTOOLS_REPO/pkgtools.git PKGTOOLS
 # In case github is down.
 # git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
 # git clone -b $PKGTOOLS_TAG https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS

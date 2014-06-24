@@ -184,7 +184,14 @@ add_static_analyzer_link = function (title_cell,url){
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
     sa_link.append($('<span></span>').text(' Static Analyzer'))
-    title_cell.append(sa_link)
+
+    var sa2_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/modules2statics.txt"))
+    sa2_link.append($('<span></span>').text(' Modules to thread unsafe statics'))
+    title_cell.append(sa2_link)
+
+    var sa3_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/tlf2esd.txt"))
+    sa3_link.append($('<span></span>').text(' Modules to thread unsafe EventSetup products'))
+    title_cell.append(sa3_link)
   }
 }
 

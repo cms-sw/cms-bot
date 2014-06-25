@@ -273,4 +273,7 @@ WATCHERS = {
                "CondFormats/SiPixelObjects",
                "CondTools/SiPixel"],
   "thuer": ["GeneratorInterface/SherpaInterface"],
+  "wmtford": ["SimTracker/TrackerHitAssociation",
+              "Validation/TrackerRecHits",
+              "Validation/RecoTrack"],
 }

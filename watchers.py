@@ -263,5 +263,13 @@ WATCHERS = {
              "DataFormats/Streamer",
              "DataFormats/TestObjects",
              "DataFormats/WrappedStdDictionaries"],
-  "cnuttens": ["SimTracker/SiStripDigitizer"]
+  "cnuttens": ["SimTracker/SiStripDigitizer"],
+  "dkotlins": ["RecoLocalTracker/SiPixelClusterizer",
+               "RecoLocalTracker/SiPixelRecHits",
+               "SimTracker/SiPixelDigitizer",
+               "EventFilter/SiPixelRawToDigi",
+               "CalibTracker/SiPixel*",
+               "CondCore/SiPixelPlugins",
+               "CondFormats/SiPixelObjects",
+               "CondTools/SiPixel"]
 }

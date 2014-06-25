@@ -271,5 +271,6 @@ WATCHERS = {
                "CalibTracker/SiPixel*",
                "CondCore/SiPixelPlugins",
                "CondFormats/SiPixelObjects",
-               "CondTools/SiPixel"]
+               "CondTools/SiPixel"],
+  "thuer": ["GeneratorInterface/SherpaInterface"],
 }

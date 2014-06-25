@@ -263,4 +263,5 @@ WATCHERS = {
              "DataFormats/Streamer",
              "DataFormats/TestObjects",
              "DataFormats/WrappedStdDictionaries"],
+  "cnuttens": ["SimTracker/SiStripDigitizer"]
 }

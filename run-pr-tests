@@ -1,0 +1,322 @@
+#!/bin/sh -ex
+
+# Reset kerberos token every time you run.
+aklog
+kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
+
+cd "$WORKSPACE"
+git clone git@github.com:$CMS_GIT_TOOLS_REPO/cms-git-tools
+# creation of results summary file
+mv $WORKSPACE/templates/PullRequestSummary.html $WORKSPACE/summary.html
+
+
+sed -i "s/PARAM_PR_GITHUB/https:\/\/github.com\/cms-sw\/cmssw\/pull\/$PULL_REQUEST/g" $WORKSPACE/summary.html
+sed -i "s/PARAM_PR/$PULL_REQUEST $ADDITIONAL_PULL_REQUESTS/g" $WORKSPACE/summary.html
+sed -i "s/PARAM_BASE_RELEASE/$RELEASE_FORMAT/g" $WORKSPACE/summary.html
+
+### this is for triggering the comparison with the baseline
+  PULL_REQUEST_NUMBER=$PULL_REQUEST
+  PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
+### to know at the end of the tests if everything went ok
+ALL_OK=true
+BUILD_OK=true
+UNIT_TESTS_OK=true
+RELVALS_OK=true
+
+
+# Checkout the correct ref
+pushd cms-git-tools
+ git checkout $CMS_GIT_TOOLS_REF
+popd
+
+export PATH=$PWD/cms-git-tools:$PATH
+which git-cms-merge-topic
+git config --global user.github cmsbuild
+RELEASE_NAME=`date +$RELEASE_FORMAT`
+export SCRAM_ARCH=$ARCHITECTURE
+scram project $RELEASE_NAME
+cd $RELEASE_NAME
+eval `scram run -sh`
+cd src
+git config --replace-all merge.renamelimit 2500
+
+# use the branch name if necesary
+
+if [ "X$BRANCH_NAME" = X ]; then
+
+  git cms-merge-topic -u $PULL_REQUEST
+
+else
+
+  git cms-merge-topic -u $BRANCH_NAME
+
+fi
+
+#if git diff $RELEASE_NAME | grep -E "^[+| ] .* std::cout" ; then
+#  echo "I found a std::cout"
+#  $WORKSPACE/report-pull-request-results STD_COUT -t cmsbuild --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID
+#  exit 0
+#fi
+
+# this is to test several pull requests at the same time
+for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do 
+  echo 'I will add the following pull request to the test'
+  echo $PR; 
+  git cms-merge-topic -u $PR
+done
+
+#get the latest commit
+
+pushd $WORKSPACE/$RELEASE_NAME/src
+
+  if [ "X$BRANCH_NAME" = X ]; then
+
+    LAST_COMMIT=`git log cms-sw/refs/pull/$PULL_REQUEST/head --pretty="%H" | head -n1` 
+
+  else
+
+    LAST_COMMIT=`git log ${BRANCH_NAME//:/\/} --pretty="%H" | head -n1`
+
+  fi
+
+popd
+
+############################################
+# Force the run of DQM tests if necessary
+############################################
+
+if ls $WORKSPACE/$RELEASE_NAME/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
+  echo "I will make sure that DQM tests will be run"
+  if ls $WORKSPACE/$RELEASE_NAME/src/| grep "DQMServices"; then
+    echo “DQMServices is already there”
+      if ls $WORKSPACE/$RELEASE_NAME/src/DQMServices/| grep "Components"; then
+        echo "and DQMServices/Components is there"
+      else
+        git cms-addpkg DQMServices/Components
+      fi
+  else
+    echo "checking out DQMServices"
+    git cms-addpkg DQMServices
+  fi
+fi
+
+
+git log --oneline --merges ${CMSSW_VERSION}..
+git cms-checkdeps -A -a
+
+BUILD_LOG_URL=https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/${BUILD_NUMBER}\/build.log
+sed -i "s/PARAM_BUILD_LOG_URL/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/build.log/g" $WORKSPACE/summary.html
+
+scram b -j 10 2>&1 | tee -a $WORKSPACE/build.log
+echo 'END OF BUILD LOG'
+echo '--------------------------------------'
+
+if grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log; then
+    echo "Errors when building"
+    sed -i "s/<!--BUILD_STATUS//g" $WORKSPACE/summary.html
+    sed -i "s/BUILD_STATUS-->//g" $WORKSPACE/summary.html
+    ALL_OK=false
+    BUILD_OK=false
+else  
+    echo "the build had no errors!!"
+fi
+
+#
+# Unit tests
+#
+if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
+  sed -i "s/PARAM_UNIT_TESTS_URL/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/unitTests.log/g" $WORKSPACE/summary.html
+  echo '--------------------------------------'
+  scram b -j 12 runtests 2>&1 | tee -a $WORKSPACE/unitTests.log
+  echo 'END OF UNIT TESTS'
+  echo '--------------------------------------'
+  #######################################
+  # check if DQM Tests where run
+  #######################################
+  if ls $WORKSPACE/$RELEASE_NAME/src/DQMServices/Components/test/ | grep -v -E "[a-z]+"; then 
+    echo "DQM Tests were run!"
+    pushd $WORKSPACE/$RELEASE_NAME/src/DQMServices/Components/test/
+    ls | grep -v -E "[a-z]+" | xargs -I ARG mv ARG DQMTestsResults
+    mkdir $WORKSPACE/DQMTestsResults
+    cp -r DQMTestsResults $WORKSPACE/DQMTestsResults
+    ls $WORKSPACE
+    popd
+    sed -i "s/<!--DQM_TEST_REPORTS//g" $WORKSPACE/summary.html
+    sed -i "s/DQM_TEST_REPORTS-->//g" $WORKSPACE/summary.html
+    sed -i "s/PARAM_DQM_TESTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/DQMTestsResults\//g" $WORKSPACE/summary.html
+  fi
+else
+  sed -i "s/PARAM_UNIT_TESTS_URL/#/g" $WORKSPACE/summary.html
+  sed -i "s/See Unit Tests Log/Not Run/g" $WORKSPACE/summary.html
+fi
+
+if grep -i "had errors" $WORKSPACE/unitTests.log; then
+    echo "Errors in the unit tests"
+    sed -i "s/<!--UNIT_TESTS_STATUS//g" $WORKSPACE/summary.html
+    sed -i "s/UNIT_TESTS_STATUS-->//g" $WORKSPACE/summary.html
+    ALL_OK=false
+    UNIT_TESTS_OK=false
+else  
+    echo "no errors in the unit tests!!"
+fi
+
+#
+# Static checks
+#
+if [ "X$DO_STATIC_CHECKS" = Xtrue ]; then
+  sed -i "s/PARAM_STATIC_CHECKS_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/llvm-analysis/g" $WORKSPACE/summary.html
+  echo '--------------------------------------'
+  pushd $CMSSW_BASE
+  git cms-addpkg Utilities/StaticAnalyzers
+  cp -p src/Utilities/StaticAnalyzers/scripts/classes.txt tmp/classes.txt
+  USER_CXXFLAGS="-DEDM_ML_DEBUG" USER_LLVM_CHECKERS="-enable-checker cms.FunctionChecker -enable-checker optional.ClassChecker" scram b -j 12 checker | tee -a $WORKSPACE/staticChecks.log
+  pwd
+  ls
+  mkdir $WORKSPACE/llvm-analysis
+  cp -R llvm-analysis/*/* $WORKSPACE/llvm-analysis
+  echo 'END OF STATIC CHECKS'
+  echo '--------------------------------------'
+  popd  
+else
+  sed -i "s/PARAM_STATIC_CHECKS_OUTPUTS/#/g" $WORKSPACE/summary.html
+  sed -i "s/See Static Checks Log/Not Run/g" $WORKSPACE/summary.html
+fi
+
+#
+# Matrix tests
+#
+
+
+
+JOB_REPORTS=""
+if [ "X$USE_JOB_REPORTS" = Xtrue ]; then
+  JOB_REPORTS='--job-reports'
+fi
+
+if [ ! "X$MATRIX_EXTRAS" = X ]; then
+  MATRIX_EXTRAS="-l `echo $MATRIX_EXTRAS | sed -e 's/[^0-9., ]*//g'`"
+fi
+
+
+if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
+  sed -i "s/PARAM_MATRIX_TESTS_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/runTheMatrix-results\//g" $WORKSPACE/summary.html
+ 
+  echo '--------------------------------------'
+  mkdir "$WORKSPACE/runTheMatrix-results"
+  pushd "$WORKSPACE/runTheMatrix-results"
+    
+    if [ "X$USE_DAS_CACHE" = Xtrue ]; then
+      wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_1_X/stable/das-cache.file
+    
+      case $RELEASE_FORMAT in 
+        *THREADED*)
+        echo "Threaded!"
+        runTheMatrix.py --command '--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe' --das-options="--cache das-cache.file" --job-reports -j $(getconf _NPROCESSORS_ONLN) -s $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
+       *)runTheMatrix.py ${OVERRIDE_MATRIX_PARAMETERS} --das-options='--cache das-cache.file' $JOB_REPORTS -s -j $(getconf _NPROCESSORS_ONLN) $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
+       esac
+
+    else
+
+      case $RELEASE_FORMAT in 
+        *THREADED*)
+        echo "Threaded!"
+        runTheMatrix.py --command '--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe' --das-options="--cache das-cache.file" --job-reports -j $(getconf _NPROCESSORS_ONLN) -s $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
+       *)runTheMatrix.py ${OVERRIDE_MATRIX_PARAMETERS} $JOB_REPORTS -s -j $(getconf _NPROCESSORS_ONLN) $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
+       esac
+
+    fi
+  popd
+ 
+     
+  if grep -i "ERROR executing" $WORKSPACE/matrixTests.log; then
+    echo "Errors in the RelVals"
+    sed -i "s/<!--MATRIX_TESTS_STATUS//g" $WORKSPACE/summary.html
+    sed -i "s/MATRIX_TESTS_STATUS-->//g" $WORKSPACE/summary.html
+    sed -i "s/See comparison with baseline/Not Run/g" $WORKSPACE/summary.html
+    ALL_OK=false
+    RELVALS_OK=false
+  else  
+    echo "no errors in the RelVals!!"
+    sed -i "s/See comparison with baseline/Still running.../g" $WORKSPACE/summary.html
+
+    ######################################################################
+    #### Run cfg-viewer
+    ######################################################################
+
+    if [ "X$RUN_CONFIG_VIEWER" = Xtrue ]; then
+
+      mkdir -p "$WORKSPACE/cfg-viewerResults"
+      pushd "$WORKSPACE/cfg-viewerResults"
+      cfg-viewer.py -r -s "$WORKSPACE/runTheMatrix-results"
+      popd
+       sed -i "s/<!--CONFIG_FILES_BROWSER//g" $WORKSPACE/summary.html
+       sed -i "s/CONFIG_FILES_BROWSER-->//g" $WORKSPACE/summary.html
+       sed -i "s/PARAM_CONFIG_BROWSER/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/cfg-viewerResults\//g" $WORKSPACE/summary.html
+    fi
+  fi
+  
+else
+  sed -i "s/PARAM_MATRIX_TESTS_OUTPUTS/#/g" $WORKSPACE/summary.html
+  sed -i "s/See Matrix Log/Not Run/g" $WORKSPACE/summary.html
+  sed -i "s/PARAM_BASELINE_COMPARISON/#/g" $WORKSPACE/summary.html
+  sed -i "s/See comparison with baseline/Not Run/g" $WORKSPACE/summary.html
+fi
+
+#
+# Duplicate checks
+#
+if [ "X$DO_DUPLICATE_CHECKS" = Xtrue ]; then
+  pushd $CMSSW_BASE/src
+  eval `scram run -sh`
+  echo '--------------------------------------'
+  echo "check dup dicts"
+  duplicateReflexLibrarySearch.py --dir ./ --dup 2>&1 | tee -a $WORKSPACE/duplicateChecks.log
+  echo "check wrong dict locations"
+  duplicateReflexLibrarySearch.py --dir ./ --lostDefs 2>&1 | tee -a $WORKSPACE/duplicateChecks.log
+  echo "check dup plugins"
+  duplicateReflexLibrarySearch.py   --edmPD 2>&1 | tee -a $WORKSPACE/duplicateChecks.log
+  echo '--------------------------------------'
+  popd
+fi
+
+#
+# Valgrind tests
+#
+for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do 
+  echo 'I will run valgrind for the following workflow'
+  echo $WF; 
+  mkdir -p "$WORKSPACE/valgrindResults-"$WF
+  pushd "$WORKSPACE/valgrindResults-"$WF
+  runTheMatrix.py --command '-n 10 --prefix "time valgrind --tool=memcheck --suppressions=$CMSSW_RELEASE_BASE/src/Utilities/ReleaseScripts/data/cms-valgrind-memcheck.supp --num-callers=20 --xml=yes --xml-file=valgrind.xml " ' -l $WF  
+  popd
+done
+ls
+
+pushd $WORKSPACE
+
+wget https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
+tar -xvf requests-2.3.0.tar.gz
+mv requests-2.3.0/requests/ requests
+
+popd
+
+#
+# If auto post is selected...
+#
+if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
+  if $ALL_OK ; then
+     echo $ALL_OK
+     $WORKSPACE/report-pull-request-results TESTS_OK_PR -t cmsbuild --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID
+  elif [ "X$BUILD_OK" = Xfalse ]; then
+     echo $BUILD_OK
+     $WORKSPACE/report-pull-request-results PARSE_BUILD_FAIL -t cmsbuild --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/build.log
+  elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
+     echo $UNIT_TESTS_OK
+     echo 'failure in unit tests'
+     $WORKSPACE/report-pull-request-results PARSE_UNIT_TESTS_FAIL -t cmsbuild --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/unitTests.log
+  elif [ "X$RELVALS_OK" = Xfalse ]; then
+     pushd $WORKSPACE/
+     ./report-pull-request-results PARSE_MATRIX_FAIL -t cmsbuild --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log
+     popd
+  fi
+fi

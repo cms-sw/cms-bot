@@ -1,3 +1,7 @@
+# Map between github username and the list of packages to watch.
+# Package is a regular expression which will be automatically delimited by
+# ".*".
+
 WATCHERS = {
   "alja": ["Fireworks"],
   "namapane": [".*Magnetic.*"],
@@ -84,6 +88,18 @@ WATCHERS = {
     "Configuration/StandardSequences",
     "Validation/RecoTrack",
     "Validation/RecoVertex",
+    "DataFormats/Tra",
+    "DataFormats/GsfTrackReco",
+    "DataFormats/VertexReco",
+    "DataFormats/Si",
+    "CondFormats/Si",
+    "CondTools/Si",
+    "CondCore/Si",
+    "SimTracker",
+    "EventFilter/Si",
+    "Validation/TrackerRecHits",
+    "Geometry/Track",
+    "Geometry/CommonTopologies",
   ],
   "valuev": [
     "L1Trigger/CSCTriggerPrimitives",

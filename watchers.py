@@ -73,6 +73,18 @@ WATCHERS = {
     "Validation/RecoTrack",
     "Validation/RecoVertex",
   ],
+  "VinInn" : [
+    "RecoTracker",
+    "RecoLocalTracker",
+    "TrackingTools",
+    "SimTracker",
+    "SimGeneral/TrackingAnalysis",
+    "RecoVertex",
+    "RecoPixelVertexing",
+    "Configuration/StandardSequences",
+    "Validation/RecoTrack",
+    "Validation/RecoVertex",
+  ],
   "valuev": [
     "L1Trigger/CSCTriggerPrimitives",
   ],

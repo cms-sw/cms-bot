@@ -528,8 +528,9 @@ CMSSW_CATEGORIES={
    "Validation/Geometry",
    "Validation/MuonRPCGeometry",
    "SLHCUpgradeSimulations/Geometry",
-   "Validation/CheckOverlap"
-  ], 
+   "Validation/CheckOverlap",
+   "Validation/Shashlik",
+  ],
   "hlt": [
    "CondFormats/HLTObjects",
    "CondTools/HLT", "Configuration/HLT",

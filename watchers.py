@@ -304,4 +304,5 @@ WATCHERS = {
   "wmtford": ["SimTracker/TrackerHitAssociation",
               "Validation/TrackerRecHits",
               "Validation/RecoTrack"],
+  "batinkov": ["DQM/Integration"],
 }

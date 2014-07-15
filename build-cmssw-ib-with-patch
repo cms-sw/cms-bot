@@ -81,7 +81,7 @@ for previous in $PREVIOUS_RELEASES; do
   previous=`echo $previous | cut -f2 -d/`
   echo "Checking if we can install $previous"
   set +e
-  CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+  CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
   set -e
   if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
     PACKAGE_NAME=cmssw-patch

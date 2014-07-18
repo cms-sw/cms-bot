@@ -7,5 +7,8 @@ dirPattern=${6}
 echo -e "gROOT->SetStyle(\"Plain\");\n .L compareValHists.C+ \n\
  f1=new TFile(\"${f1}\");\n f2 = new TFile(\"${f2}\");\n compareAll(f1,f2,${lMod},${dOpt}, \"${dirPattern}\");\n\
 .qqqqqq" | root -l -b
-mv diff.ps ${fO}
-gzip -f ${fO}
+mv diff.ps ${fO}.ps
+mv diff.pdf ${fO}.pdf
+gzip -f ${fO}.ps
+gzip -f ${fO}.pdf
+

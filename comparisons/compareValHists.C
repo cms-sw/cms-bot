@@ -188,6 +188,9 @@ void compareInDir(TFile* f1, TFile* f2, std::string dirName,unsigned int logmod=
     ksPt.AddText(Form("P(KS)=%g, diffBins=%g, eblk %g ered %g",ksProb, bDiff, h1->GetEntries(), h2->GetEntries()));
     ksPt.Draw();
     cv->Print("diff.ps");
+    cv->Print("diff.pdf");
+
+
   }
 
   //  std::cout<<"Done in "<<dirName.c_str()<<std::endl;
@@ -195,6 +198,7 @@ void compareInDir(TFile* f1, TFile* f2, std::string dirName,unsigned int logmod=
   if (cv) delete cv;
   //  cv->Print("diff.ps]");
 }
+
 
 void cmpLRD(TFile* f1, TFile* f2, const char* dName, const char* patt = 0, unsigned int logmod=0, unsigned int dOpt=1){
   //  std::cout<<"cmpLRD In "<< dName<<std::endl;
@@ -228,6 +232,7 @@ void cmpLRD(TFile* f1, TFile* f2, const char* dName, const char* patt = 0, unsig
 void compareAll(TFile* f1, TFile* f2, unsigned int logmod=0, unsigned int dOpt=1, const char* dirPattern = 0){
   TCanvas dummyC;
   dummyC.Print("diff.ps[");
+  dummyC.Print("diff.pdf[");
   //  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_tpToStaAssociation"); dummyC.Print("diff.ps]"); return;
 //   compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Top"); dummyC.Print("diff.ps]"); return;
 //compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_Mu5"); dummyC.Print("diff.ps]"); return;
@@ -247,6 +252,8 @@ void compareAll(TFile* f1, TFile* f2, unsigned int logmod=0, unsigned int dOpt=1
   if ((dOpt/10)%10 == 7) cmpLRD(f1, f2, f1->GetPath(), dirPattern, logmod, dOpt);
 
   dummyC.Print("diff.ps]");
+  dummyC.Print("diff.pdf]");
+
   return;
 
   compareInDir(f1, f2,"DQMData/Run 1/Muons");
@@ -315,5 +322,6 @@ void compareAll(TFile* f1, TFile* f2, unsigned int logmod=0, unsigned int dOpt=1
   compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3TkFromL2_tpToL3TkTrackAssociation");
   compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3TkFromL2_tpToL3TkTrackAssociation/simulation");
   dummyC.Print("diff.ps]");
+  dummyC.Print("diff.pdf]");
 
 }

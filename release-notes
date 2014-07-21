@@ -8,7 +8,7 @@ import urllib2
 from sys import exit
 import re
 
-
+#defines the categories for eac pr in the release notes
 def add_categories_notes(notes,token):
   
   new_notes = ""   
@@ -37,16 +37,8 @@ def format(s, **kwds):
   print kwds
   return s % kwds
 
-if __name__ == "__main__":
-  parser = OptionParser(usage="%(progname) <previous-release> <this-release>")
-  parser.add_option("-n", "--dry-run", help="Only print out release notes. Do not execute.", 
-                    dest="dryRun", default=False, action="store_true")
-  opts, args = parser.parse_args()
-
-  if len(args) != 2:
-    parser.error("Wrong number or arguments")
-  previous = args[0]
-  release = args[1]
+# gets release notes for cmssw
+def get_cmssw_notes( previous_release , this_release ):
   if not exists("cmssw.git"):
     error, out = getstatusoutput("git clone --bare --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git")
     if error:
@@ -60,32 +52,86 @@ if __name__ == "__main__":
                                       " git log  --first-parent --merges --pretty='%%s: %%b' %(previous)s..%(release)s | "
                                       "grep 'pull request' |"
                                       "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
-                                      previous=previous,
-                                      release=release))
+                                      previous=previous_release,
+                                      release=this_release))
   if error:
     print "Error while getting release notes."
     print notes
     exit(1)
 
+  return notes
+
+# gets the changes in cmsdist, production architecture is the production architecture of the release
+def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
+
+  if not exists("cmsdist.git"):
+    error, out = getstatusoutput("git clone --bare git@github.com:cms-sw/cmsdist.git")
+    if error:
+      parser.error("Error while checking out the cmsdist repository:\n" + out)
+
+  error, out = getstatusoutput("GIT_DIR=cmssw.git git fetch --all --tags")
+  if error:
+    parser.error("Error while updating the repository:\n" + out)
+
+
+  error, notes = getstatusoutput(format("GIT_DIR=cmsdist.git"
+                                      " git log  --first-parent --merges --pretty='%%s: %%b' %(prev_tag)s..%(curr_tag)s | "
+                                      "grep 'pull request' |"
+                                      "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
+                                      prev_tag=prev_cmsdist_tag,
+                                      curr_tag=curr_cmsdist_tag))
+  if error:
+    print "Error while getting release notes."
+    print notes
+    exit(1)
+
+ 
+  notes = notes.replace( '#' , 'cms-sw/cmsdist#' ) 
+
+  return notes
+
+
+if __name__ == "__main__":
+  parser = OptionParser(usage="%(progname) <previous-release> <this-release> <previous-cmsdist-tag> <this-cmsdist-tag>")
+  parser.add_option("-n", "--dry-run", help="Only print out release notes. Do not execute.", 
+                    dest="dryRun", default=False, action="store_true")
+  opts, args = parser.parse_args()
+
+  if len(args) != 4:
+    parser.error("Wrong number or arguments")
+  prev_release = args[0]
+  curr_release = args[1]
+  prev_cmsdist_tag = args[2]
+  curr_cmsdist_tag = args[3]
+  
+  cmssw_notes = get_cmssw_notes( prev_release , curr_release)
+
+  cmsdist_notes = get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag )
+
   token = open(expanduser("~/.github-token")).read().strip()
 
-  notes = add_categories_notes(notes,token)
+  cmssw_notes = add_categories_notes(cmssw_notes,token)
+
 
   request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
                             headers={"Authorization" : "token " + token})
   releases = json.loads(urllib2.urlopen(request).read())
-  matchingRelease = [x["id"] for x in releases if x["name"] == release]
+  matchingRelease = [x["id"] for x in releases if x["name"] == curr_release]
   if len(matchingRelease) < 1:
-    print "Release %s not found." % release
+    print "Release %s not found." % curr_release
     exit(1)
   releaseId = matchingRelease[0]
   url = "https://api.github.com/repos/cms-sw/cmssw/releases/%s" % releaseId
   request = urllib2.Request(url, headers={"Authorization" : "token " + token})
   request.get_method = lambda: 'PATCH'
-  print "Modifying release notes for %s at %s" % (release, url)
+  print "Modifying release notes for %s at %s" % (curr_release, url)
   if opts.dryRun:
-    print notes
+    print cmssw_notes
+    print "\n cmsdist: \n"
+    print cmsdist_notes
     print "--dry-run specified, quitting without modifying release."
     exit(1)
-  header = "#### Changes since %s:\n" % previous
-  print urllib2.urlopen(request, json.dumps({"body": header + notes })).read()
+  header = "#### Changes since %s:\n" % prev_release
+  cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n" % ( prev_cmsdist_tag , curr_cmsdist_tag )
+
+  print urllib2.urlopen(request, json.dumps({"body": header + cmssw_notes + cmsdist_header + cmsdist_notes })).read()

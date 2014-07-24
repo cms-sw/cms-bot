@@ -54,6 +54,7 @@ CMSSW_CATEGORIES={
   ],
   "core": [
    ".gitignore",
+   "BigProducts/Simulation",
    "Configuration/SVSuite",
    "FWCore/Concurrency",
    "FWCore/Catalog", "FWCore/Common", "FWCore/FWLite", "FWCore/Framework",

@@ -8,8 +8,58 @@ import urllib2
 from sys import exit
 import re
 
-#defines the categories for eac pr in the release notes
-def add_categories_notes(notes,token):
+#---------------------------------------------------------
+# pyGithub
+#--------------------------------------------------------
+
+#
+# get an official repository from the cms-sw organization
+#
+def get_official_repo( github , repository_name ):
+  user = github.get_user()
+  orgs = user.get_orgs()
+  for org in orgs:
+    if (org.login == 'cms-sw'):
+      repo = org.get_repo( repository_name )
+      return repo
+
+
+#
+# given a line from git log, it gets the pr number
+#
+def get_pr_number( git_log_line ):
+
+  if 'cms-sw/cmsdist' in git_log_line:
+    pr_number = git_log_line.split( '- cms-sw/cmsdist#' )[1].split( ' ' )[0]
+  else:
+    pr_number = git_log_line.split( '- #' )[1].split( ' ' )[0]
+  return pr_number
+
+#
+# it looks for the description of the pull requests listed in the release notes
+# returns the release notes with the description of each pull request
+#
+def fill_notes_description( notes ):
+
+  new_notes = ''
+  for log_line in notes.splitlines():
+
+    pr_number = get_pr_number( log_line )
+    
+    if 'cms-sw/cmsdist' in log_line:
+      title = CMSDIST_REPO.get_pull( int(pr_number) ).title
+    else:
+      title = CMSSW_REPO.get_pull( int(pr_number) ).title
+
+    log_line = log_line.replace( 'DESC' , title )
+    new_notes += log_line + '\n'
+
+  return new_notes
+
+#
+#defines the categories for each pr in the release notes
+#
+def add_categories_notes( notes , token ):
   
   new_notes = ""   
   for note in notes.splitlines():
@@ -36,8 +86,9 @@ def add_categories_notes(notes,token):
 def format(s, **kwds):
   print kwds
   return s % kwds
-
+#
 # gets release notes for cmssw
+#
 def get_cmssw_notes( previous_release , this_release ):
   if not exists("cmssw.git"):
     error, out = getstatusoutput("git clone --bare --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git")
@@ -49,7 +100,7 @@ def get_cmssw_notes( previous_release , this_release ):
     parser.error("Error while updating the repository:\n" + out)
 
   error, notes = getstatusoutput(format("GIT_DIR=cmssw.git"
-                                      " git log  --first-parent --merges --pretty='%%s: %%b' %(previous)s..%(release)s | "
+                                      " git log  --first-parent --merges --pretty='%%s: DESC' %(previous)s..%(release)s | "
                                       "grep 'pull request' |"
                                       "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
                                       previous=previous_release,
@@ -59,9 +110,15 @@ def get_cmssw_notes( previous_release , this_release ):
     print notes
     exit(1)
 
-  return notes
 
+
+  return fill_notes_description( notes )
+
+
+
+#
 # gets the changes in cmsdist, production architecture is the production architecture of the release
+#
 def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
 
   if not exists("cmsdist.git"):
@@ -75,7 +132,7 @@ def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
 
 
   error, notes = getstatusoutput(format("GIT_DIR=cmsdist.git"
-                                      " git log  --first-parent --merges --pretty='%%s: %%b' %(prev_tag)s..%(curr_tag)s | "
+                                      " git log  --first-parent --merges --pretty='%%s: DESC' %(prev_tag)s..%(curr_tag)s | "
                                       "grep 'pull request' |"
                                       "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
                                       prev_tag=prev_cmsdist_tag,
@@ -88,7 +145,7 @@ def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
  
   notes = notes.replace( '#' , 'cms-sw/cmsdist#' ) 
 
-  return notes
+  return fill_notes_description( notes )
 
 
 if __name__ == "__main__":
@@ -103,7 +160,17 @@ if __name__ == "__main__":
   curr_release = args[1]
   prev_cmsdist_tag = args[2]
   curr_cmsdist_tag = args[3]
-  
+
+
+  #---------------------------------
+  # pyGithub intialization
+  #---------------------------------
+
+  TOKEN = open(expanduser("~/.github-token")).read().strip() 
+  github = Github( login_or_token = TOKEN )
+  CMSSW_REPO = get_official_repo( github , 'cmssw' )
+  CMSDIST_REPO = get_official_repo( github , 'cmsdist' )
+ 
   cmssw_notes = get_cmssw_notes( prev_release , curr_release)
 
   cmsdist_notes = get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag )

@@ -86,7 +86,10 @@ def read_matrix_log_file(repo,matrix_log,tests_url):
     if options.commit_hash:
       mark_commit( ACTION , options.commit_hash , tests_url )
 
-
+#
+# reads the build log file looking for the first error
+# it includes 5 lines before and 5 lines after the error
+#
 def read_build_log_file(repo,build_log,tests_url):
   pull_request = repo.get_pull(pr_number)
   error_found = False
@@ -104,6 +107,7 @@ def read_build_log_file(repo,build_log,tests_url):
       lines_before.append(line)
       if (line_number > lines_to_keep_before):
         lines_before.pop(0)
+    #this is how it determines that a line has an error
     if 'error: ' in line:
       error_found = True
       error_line = line_number

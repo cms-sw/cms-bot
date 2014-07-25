@@ -107,7 +107,7 @@ git cms-checkdeps -A -a
 BUILD_LOG_URL=https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/${BUILD_NUMBER}\/build.log
 sed -i "s/PARAM_BUILD_LOG_URL/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/build.log/g" $WORKSPACE/summary.html
 
-scram b -j 10 2>&1 | tee -a $WORKSPACE/build.log
+scram b -k -j 10 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
 
@@ -127,7 +127,7 @@ fi
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   sed -i "s/PARAM_UNIT_TESTS_URL/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/unitTests.log/g" $WORKSPACE/summary.html
   echo '--------------------------------------'
-  scram b -j 12 runtests 2>&1 | tee -a $WORKSPACE/unitTests.log
+  scram b -k -j 12 runtests 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
   #######################################

@@ -284,7 +284,6 @@ CMSSW_CATEGORIES={
    "RecoTracker/TkTrackingRegions",
    "RecoTracker/TrackProducer",
    "RecoTracker/TransientTrackingRecHit",
-   "Validation/RecoHI",
    "RecoVZero/VZeroFinding",
    "RecoVertex/AdaptiveVertexFinder",
    "RecoVertex/AdaptiveVertexFit",

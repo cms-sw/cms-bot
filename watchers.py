@@ -4,6 +4,7 @@
 
 WATCHERS = {
   "alja": ["Fireworks"],
+  "bellan": [ "RecoMuon" , "RecoLocalMuon" , "MuonAnalysis" , "TrackingTools" , "DQMOffline/Muon" ],
   "namapane": [".*Magnetic.*"],
   "acaudron": ["DQMOffline/RecoB", "Validation/RecoB"],
   "argiro": [".*[Ee][Cc][Aa][Ll].*"],

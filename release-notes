@@ -147,6 +147,17 @@ def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
 
   return fill_notes_description( notes )
 
+#
+# returns the comparison url to include in the notes
+#
+def get_comparison_url( previous_tag , current_tag , repo ):
+  return COMPARISON_URL % ( repo , previous_tag , current_tag )
+
+#--------------------------------------------------------------------------------
+# Start of Execution
+#--------------------------------------------------------------------------------
+
+COMPARISON_URL = 'https://github.com/cms-sw/%s/compare/%s...%s'
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%(progname) <previous-release> <this-release> <previous-cmsdist-tag> <this-cmsdist-tag>")
@@ -198,7 +209,11 @@ if __name__ == "__main__":
     print cmsdist_notes
     print "--dry-run specified, quitting without modifying release."
     exit(1)
-  header = "#### Changes since %s:\n" % prev_release
-  cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n" % ( prev_cmsdist_tag , curr_cmsdist_tag )
+
+  header = "#### Changes since %s:\n%s\n" %  \
+           ( prev_release , get_comparison_url( prev_release, curr_release , 'cmssw' ) )
+
+  cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \
+                   ( prev_cmsdist_tag , curr_cmsdist_tag , get_comparison_url( prev_cmsdist_tag, curr_cmsdist_tag , 'cmsdist' ) )
 
   print urllib2.urlopen(request, json.dumps({"body": header + cmssw_notes + cmsdist_header + cmsdist_notes })).read()

@@ -310,4 +310,9 @@ WATCHERS = {
                "DataFormats/METReco" , "JetMETCorrections" , "PhysicsTools/PatAlgos" ,
                "PhysicsTools/PatUtils" , "PhysicsTools/RecoAlgos" , "RecoJets" ,
                "RecoMET" , "Validation/RecoJets" , "Validation/RecoMET"],
+  "mmarionncern" : [ "CondFormats/JetMETObjects" , "DQMOffline/JetMET" , "DataFormats/METReco" ,
+               "JetMETCorrections" , "PhysicsTools/PatAlgos" , "PhysicsTools/PatUtils" ,
+               "PhysicsTools/RecoAlgos" , "RecoMET" , "RecoParticleFlow" , 
+               "Validation/RecoMET" ],
+
 }

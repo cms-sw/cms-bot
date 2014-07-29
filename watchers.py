@@ -306,4 +306,8 @@ WATCHERS = {
               "Validation/TrackerRecHits",
               "Validation/RecoTrack"],
   "batinkov": ["DQM/Integration"],
+  "schoef" : [ "CondFormats/JetMETObjects" , "DQMOffline/JetMET" , "DataFormats/JetReco" , 
+               "DataFormats/METReco" , "JetMETCorrections" , "PhysicsTools/PatAlgos" ,
+               "PhysicsTools/PatUtils" , "PhysicsTools/RecoAlgos" , "RecoJets" ,
+               "RecoMET" , "Validation/RecoJets" , "Validation/RecoMET"],
 }

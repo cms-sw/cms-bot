@@ -65,6 +65,7 @@ updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/devel
 updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/next
 updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/root5
 updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug
+updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug-gcc491
 
 # CMSSW_7_2_X
 updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_2_X/stable

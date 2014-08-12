@@ -19,6 +19,7 @@ CMSSW_L2 = {
   "ggovi": ["db"],
   "apfeiffer1": ["db"],
   "rcastello": ["alca"],
+  "cerminar": ["alca"],
   "franzoni": ["operations"],
   "vlimant": ["operations"],
   "cmsdoxy": ["docs"],

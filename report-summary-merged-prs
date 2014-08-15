@@ -157,32 +157,62 @@ def get_results_one_addOn_file(file):
   else:
     return False
 
+#
+# given a unitTests-summary.log it determines if the test passed or not
+# it returns a tuple, the first element is one of the possible values of PossibleUnitTestResults
+# The second element is a dictionary which indicates how many tests failed
+#
 def get_results_one_unitTests_file(file):
-  look_for_err_cmd = 'grep "ERROR" %s' %file
+  look_for_err_cmd = 'grep -c "ERROR" %s' %file
   result,err,ret_code = get_output_command(look_for_err_cmd)
 
-  if result != '':
-    return PossibleUnitTestResults.FAILED
-  else:
-    return PossibleUnitTestResults.PASSED
+  result = result.rstrip()
 
+  details = { 'num_fails':result }
+
+  if result != '0':
+    return PossibleUnitTestResults.FAILED,details
+  else:
+    return PossibleUnitTestResults.PASSED,details
+#
+# given a runall-report-step123-.log file it returns the result of the relvals
+# it returns a tuple, the first element indicates if the tests passed or not
+# the second element is a dictionary which shows the details of how many relvals pased
+# and how meny failed
+#
 def get_results_one_relval_file(file):
   read_last_line_command = 'tail -n1 %s' %file
   
   out,err,ret_code = get_output_command(read_last_line_command)
-  
+
+  num_passed_sep = out.split(',')[0].replace( ' tests passed' , '' ).strip()
+  num_failed_sep = out.split(',')[1].replace( ' failed' , '' ).strip()
+
+  num_passed = sum( [ int(num) for num in num_passed_sep.split(' ') ] )
+  num_failed = sum( [ int(num) for num in num_failed_sep.split(' ') ] )
+
+  details = { 'num_passed' : num_passed,
+              'num_failed' : num_failed }
+
+
   if 'SLHC' in file:
     if '0 0 0 0 failed' in out:
-      return True
+      return True,details
     else:
-      return False
+      return False,details
 
   if '0 0 0 0 0 failed' in out:
-    return True
+    return True,details
   else:
-    return False
+    return False,details
 
-def get_results_one_build_file(file):
+#
+# Given a logAnalysis.pkl file, it determines if the tests passed or not
+# it returns a tuple, the first element is one of the values of PossibleBuildResults
+# The second element is a dictionary contaning the details of the results. 
+# If the tests are all ok this dictionary is empty
+#
+def get_results_details_one_build_file(file):
   summFile = open(file,'r')
   pklr = Unpickler(summFile)
   [rel, plat, anaTime]   = pklr.load()
@@ -191,14 +221,18 @@ def get_results_one_build_file(file):
   summFile.close()
 
   if determine_build_error(nErrorInfo):
-    return PossibleBuildResults.ERROR
+    return PossibleBuildResults.ERROR,nErrorInfo
   elif determine_build_warning(nErrorInfo):
-    return PossibleBuildResults.WARNING
+    return PossibleBuildResults.WARNING,nErrorInfo
   else:
-    return PossibleBuildResults.PASSED
+    return PossibleBuildResults.PASSED,nErrorInfo
 
-  return True
+  return True,nErrorInfo
 
+#
+# parses the tests results for each file in output. It distinguishes if it is 
+# build, unit tests, relvals, or addon tests logs. 
+#
 def analyze_tests_results(output,results,arch,type):
   for line in output.splitlines():
     m = re.search('CMSSW.*[0-9]/', line)
@@ -206,19 +240,22 @@ def analyze_tests_results(output,results,arch,type):
     result_arch = {}
     result_arch['arch'] = arch
     result_arch['file'] = line
+
+    details = {}
     if type == 'relvals':
-      passed = get_results_one_relval_file(line)
+      passed,details = get_results_one_relval_file(line)
     elif type == 'utests':
-      passed = get_results_one_unitTests_file(line)
+      passed,details = get_results_one_unitTests_file(line)
     elif type == 'addOn':
       passed = get_results_one_addOn_file(line)
     elif type == 'builds':
-      passed = get_results_one_build_file(line)
+      passed,details = get_results_details_one_build_file(line)
     else:
       print 'not a valid test type %s' %type
       exit(1)
 
     result_arch['passed'] = passed
+    result_arch['details'] = details
 
     if rel_name not in results.keys():
       results[rel_name] = []
@@ -394,13 +431,13 @@ def print_results(results):
 
       print '\t' + 'Static Checks: ' + comp['static_checks']
 
-      builds_results = [res['arch']+':'+str(res['passed']) for res in comp['builds'] ]
+      builds_results = [res['arch']+':'+str(res['passed'])+':'+str(res['details']) for res in comp['builds'] ]
       print '\t' + 'Builds:'+ str(builds_results)
 
-      relvals_results = [res['arch']+':'+str(res['passed']) for res in comp['relvals'] ]
+      relvals_results = [res['arch']+':'+str(res['passed'])+":"+str(res['details']) for res in comp['relvals'] ]
       print '\t' + 'RelVals:'+ str(relvals_results)
 
-      utests_results = [res['arch']+':'+str(res['passed']) for res in comp['utests'] ]
+      utests_results = [res['arch']+':'+str(res['passed']) +':'+str(res['details']) for res in comp['utests'] ]
       print '\t' + 'UnitTests:' + str(utests_results)
 
       addons_results = [res['arch']+':'+str(res['passed']) for res in comp['addons'] ]
@@ -411,7 +448,9 @@ def print_results(results):
 
       from_merge_commit = [pr['number'] for pr in comp['merged_prs'] if pr['from_merge_commit']]
       print '\t' + 'From merge commit' + str(from_merge_commit)
-
+#
+# merges the results of the tests with the prs structure
+#
 def add_tests_to_results(results, unit_tests, relvals_results,addon_results, build_results):
   for rq in results:
     for comp in rq['comparisons']:
@@ -436,6 +475,7 @@ def add_tests_to_results(results, unit_tests, relvals_results,addon_results, bui
         result['arch'] = nca
         result['file'] = str([res['file'] for res in buildsres if res['arch'] == nca])
         result['passed'] = PossibleUnitTestResults.UNKNOWN
+        result['details'] = {}
         comp['utests'].append(result)
 
       comp['tests_archs'] = list(set(a+b+c))

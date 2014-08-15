@@ -75,7 +75,9 @@ add_qa_link_to_row = function(row, arch,release_name){
 
 
 }
-
+/**
+ * returns the url for the tests, type can be unit tests, relvals or addons
+ */
 get_tests_url = function(type,file) {
   var link_parts = file.split('/')
          
@@ -110,10 +112,12 @@ get_result_tests =  function (arch,tests){
   }
 }
 
-
+/**
+ * Adds the results of the tests to a row of the table
+ */
 add_tests_to_row = function(tests,row,arch,type){
 
-console.log("adding tests")
+  console.log("adding tests")
 
   // just add a blank cell if tere are no results for that kind of tests
 
@@ -125,12 +129,15 @@ console.log("adding tests")
 
   var result = null
   var file = null
+  var testDetails = null
   var result_cell = $('<td></td>')
   var result_tests = get_result_tests(arch,tests)
   
   if(result_tests != null){
     result = result_tests.passed
+    testDetails = result_tests.details
     file = result_tests.file
+
   }
   //just add a blank cell if I didn't find any results for that arch
   if (result == null || file == null){
@@ -139,33 +146,57 @@ console.log("adding tests")
     return
   }
  
-  var res_label = $('<span></span>')
-  res_label.append($('<small></small>').text('See Details'))
                                                                                                      
   var r_class = ""
+  var test_label = "See Details"
 
   if(type == 'utests'){
     
     if (result == 'passed'){
       r_class = "label label-success"
+      test_label = 'See Details'
     }else if (result == 'failed'){
       r_class = "label label-danger"
+      test_label = testDetails.num_fails + " Tests Failing"
     }else{
       r_class = "label label-default"
+      test_label = "Unknown"
     }
    
   }else if (type == 'builds'){
 
     if (result == 'passed'){
       r_class = "label label-success"
+      test_label = 'See Details'
     }else if (result == 'warning'){
       r_class = "label label-warning"
+      test_label = testDetails.compWarning + " Warnings"
     }else{
       r_class = "label label-danger"
+      test_label = ( testDetails.compError + testDetails.linkError ) + " Errors"
     }
+  }else if (type == 'relvals'){
+
+      r_class = result? "label label-success" : "label label-danger"
+
+      if ( result ){
+
+        r_class = "label label-success"
+        test_label = "See Details"
+
+      }else{
+
+        r_class = "label label-danger"
+        test_label = "Pass: " + testDetails.num_passed + " Fail: " + testDetails.num_failed
+      }
+
+
   }else{
       r_class = result? "label label-success" : "label label-danger"
   }
+
+  var res_label = $('<span></span>')
+  res_label.append($('<small></small>').text(test_label))
 
 
   res_label.attr("class", r_class)
@@ -174,20 +205,26 @@ console.log("adding tests")
   var r_link = $("<a></a>").attr("href", details_url)
 
   r_link.append(res_label)
-  result_cell.append(r_link)
+  result_cell.append(r_link) 
+
   row.append(result_cell)
 
 }
+
 
 add_static_analyzer_link = function (title_cell,url){
   if (url != ''){
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
     sa_link.append($('<span></span>').text(' Static Analyzer'))
+    title_cell.append(sa_link)
+    title_cell.append($("<br>"))
 
     var sa2_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/modules2statics.txt"))
     sa2_link.append($('<span></span>').text(' Modules to thread unsafe statics'))
     title_cell.append(sa2_link)
+
+    title_cell.append($("<br>"))
 
     var sa3_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/tlf2esd.txt"))
     sa3_link.append($('<span></span>').text(' Modules to thread unsafe EventSetup products'))

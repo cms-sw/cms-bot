@@ -16,6 +16,7 @@ from commands import getstatusoutput
 import sys
 import re
 import hashlib
+from operator import itemgetter, attrgetter
 
 PING_COMMENT="This issue is also present in release %s"
 RESULTS_RE = "^([0-9.]+)_([^ ]*) (.*) - time date.*exit: (.*)"
@@ -76,8 +77,7 @@ def readWorkflows(f):
 
 def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=None, workflows=[], current_release=None, error_hash=None, error_text=None, **kwds):
   steps = ""
-  print workflows[0]
-  workflows.sort()
+  workflows.sort(key=attrgetter(""))
   for info in workflows[:20]:
     steps += format(RELVAL_ISSUE_LINK_TEMPLATE,
                     step=step,
@@ -106,7 +106,12 @@ def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=No
   repo.create_issue(title=title, body=body, labels=labels)
 
 def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwds):
-  steps = "\n".join([RELVAL_ISSUE_LINK_TEMPLATE % s for s in workflows]) + "\n"
+  print workflows
+  workflows.sort(key=itemgetter("workflowId"))
+  links = [RELVAL_ISSUE_LINK_TEMPLATE % s for s in workflows]
+  if len(links) > 20:
+    links = links[:20] + ["- .. and %s more" % (len(links) - 20)]
+  steps = "\n".join(links) + "\n"
   body = format(RELVAL_ISSUE_SUMMARY,
                 error_text=error_text,
                 steps=steps,
@@ -114,6 +119,8 @@ def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwd
                )
   print "Issue %s will be updated as follows" % issue.number
   print body
+  oldBody = issue.body.split("\n")
+
   if dryRun:
     print "--dry-run specified. Not adding new messages"
     return
@@ -178,6 +185,28 @@ def understandFatalRootError(name, t, p, info):
   print h
   return (h, errorTitle, errorMessage)
 
+# Understand if there was a missing input file error.
+# - Fails in step2.
+def understandStep1Error(name, t, p, info):
+  if int(info["steps"][0]) != 2:
+    return
+  zippedLogs = "%s/pyRelValMatrixLogs.zip" % p
+  logFile = "%(workflowId)s_%(name)s/step1_dasquery.log" % info
+  if not exists(join(p, "pyRelValMatrixLogs.zip")):
+    return None
+  cmd = "unzip -qq -cx %s %s 2>/dev/null" % (zippedLogs, logFile)
+  print cmd
+  err, out = getstatusoutput(cmd)
+  if err:
+    return None
+  if out.strip():
+    return None
+  errorTitle = "cannot find input"
+  errorMessage = str("step2 fails when looking for input.\n"
+                     "Input file might have been deleted or we have a DAS issue.")
+  h = hashlib.sha1(name + errorTitle).hexdigest()[:10]
+  return (h, errorTitle, errorMessage)
+
 # Generic "catch all" solution for errors. This must be last in the list of
 # understanding plugins.
 def understandGenericError(name, t, p, info):
@@ -186,7 +215,8 @@ def understandGenericError(name, t, p, info):
   h = hashlib.sha1(name + "generic error").hexdigest()[:10]
   return (h, errorTitle, errorMessage)
 
-understandingPlugins = [understandAssertion,
+understandingPlugins = [understandStep1Error,
+                        understandAssertion,
                         understandFatalRootError,
                         understandGenericError]
 
@@ -334,9 +364,9 @@ if __name__ == "__main__":
       print "No changes in issue %s." % pastIssues[h]["issue"].number
       continue
 
-    print "Error is already found in github, but changed. Adapting description."
-    updateBugReport(dryRun=args.dryRun,
-                    issue=pastIssues[h]["issue"], **payload)
+    issue = pastIssues[h]["issue"]
+    print "Error %s is already found in github, but changed. Adapting description." % issue.number
+    updateBugReport(dryRun=args.dryRun, issue=issue, **payload)
 
   for h, payload in pastIssues.items():
     if h in validErrorReport:

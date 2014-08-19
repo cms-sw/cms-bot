@@ -86,7 +86,6 @@ def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=No
                     ) + "\n"
   if len(workflows) > 20:
     steps += "- .. and %s more not listed here." % (len(workflows) - 20)
-  print "Unparsed keys: ", kwds.keys()
   title = format(RELVAL_ISSUE_TITLE,
                  id_ib=queue,
                  id_release=current_release,
@@ -107,7 +106,6 @@ def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=No
   repo.create_issue(title=title, body=body, labels=labels)
 
 def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwds):
-  print "Unparsed keys: ", kwds.keys()
   steps = "\n".join([RELVAL_ISSUE_LINK_TEMPLATE % s for s in workflows]) + "\n"
   body = format(RELVAL_ISSUE_SUMMARY,
                 error_text=error_text,
@@ -121,9 +119,7 @@ def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwd
     return
   issue.edit(body=body)
 
-# Return (hash, title, errorMessage) if I can
-# understand the error message. False otherwise.
-def understandAssertion(name, t, p, info):
+def getZippedLog(name, t, p, info):
   zippedLogs = "%s/pyRelValMatrixLogs.zip" % p
   print info
   info["step"] = info["steps"][0]
@@ -136,8 +132,16 @@ def understandAssertion(name, t, p, info):
   print cmd
   err, out = getstatusoutput("unzip -cx %s %s" % (zippedLogs, logFile))
   if err:
-    print name
-  checkAssertion = re.findall(".*/src/(.*/src/.*): Assertion `(.*)' failed.", out)
+    return None
+  return out
+
+# Return (hash, title, errorMessage) if I can
+# understand the error message. False otherwise.
+def understandAssertion(name, t, p, info):
+  log = getZippedLog(name, t, p, info)
+  if not log:
+    return None
+  checkAssertion = re.findall(".*/src/(.*/src/.*): Assertion `(.*)' failed.", log)
   if len(checkAssertion) == 0:
     return None
 
@@ -148,6 +152,31 @@ def understandAssertion(name, t, p, info):
   h = hashlib.sha1(name + errorTitle + uniqueMessage).hexdigest()[:10]
   return (h, errorTitle, errorMessage)
 
+# Understand fatal root errors
+def understandFatalRootError(name, t, p, info):
+  print "Attempt with root error"
+  log = getZippedLog(name, t, p, info)
+  if not log:
+    print "Log not found"
+    return None
+  print len(log)
+  print not "----- Begin Fatal Exception" in log
+  if not "----- Begin Fatal Exception" in log:
+    return None
+  matcher = str(".*An exception of category 'FatalRootError' occurred.*"
+                ".*Fatal Root Error: [@]SUB=([^\n]*)(.*)\n")
+  s = log.split("----- Begin Fatal Exception")[1].split("----- End Fatal Exception")[0]
+  s = s.split("\n", 1)[1]
+  checkRootError = re.findall(matcher, s, re.DOTALL)
+  print "root error %s" % str(checkRootError)
+  if not checkRootError:
+    return None
+  errorTitle = checkRootError[0][1]
+  # Remove any paths.
+  errorMessage = re.sub("/.*/", "", s).strip("\n")
+  h = hashlib.sha1(name + errorTitle + errorMessage).hexdigest()[:10]
+  return (h, errorTitle, errorMessage)
+
 # Generic "catch all" solution for errors. This must be last in the list of
 # understanding plugins.
 def understandGenericError(name, t, p, info):
@@ -156,7 +185,9 @@ def understandGenericError(name, t, p, info):
   h = hashlib.sha1(name + "generic error").hexdigest()[:10]
   return (h, errorTitle, errorMessage)
 
-understandingPlugins = [understandAssertion, understandGenericError]
+understandingPlugins = [understandAssertion,
+                        understandFatalRootError,
+                        understandGenericError]
 
 def understandError(name, t, p, info):
   """returns a tuple with a unique hash identifyingh this error
@@ -241,7 +272,7 @@ if __name__ == "__main__":
       stepInfo = {"workflowId": info["workflowId"], "name": info["name"], "step": step}
       validErrorReport[h]["workflows"].append(stepInfo)
 
-  print "Parsing old issues"
+  print "Parsing old issues."
   # Get from github all the issues which are associated to failing relvals.
   # Parse them to have an understanding of current status.
   issues = []
@@ -249,15 +280,13 @@ if __name__ == "__main__":
   repo = gh.get_organization("cms-sw").get_repo("cmssw")
   labels = repo.get_labels()
   relvalIssueLabel = [x for x in labels if x.name == "relval"]
-  print relvalIssueLabel
   issues = repo.get_issues(labels=relvalIssueLabel)
-  print issues
+  print "Old issues found: " + ", ".join(["#%s" % x.number for x in issues])
   pastIssues = {}
   for issue in issues:
     tm = re.match(ISSUE_TITLE_MATCHER, issue.title)
     if not tm:
       print "Unable to parse title %s for issue %s" % (issue.title, issue.number)
-      print ISSUE_TITLE_MATCHER
       continue
     parts = tm.groups()
     queue, error_title, first_release, error_hash = parts
@@ -276,12 +305,9 @@ if __name__ == "__main__":
     bm = re.match(ISSUE_BODY_MATCHER, issue.body, re.DOTALL)
     if not bm:
       print "Unable to parse body for issue %s. Issue will be updated" % (issue.number)
-      print ISSUE_BODY_MATCHER
-      print issue.body
       continue
     parts = bm.groups()
     error_message, workflows = parts
-    print "Parsed body: %s." % str(parts)
     pastIssues[error_hash]["workflows"] = parseSteps(workflows)
 
   print "Updating current status"
@@ -294,7 +320,7 @@ if __name__ == "__main__":
   #
   for h, payload in validErrorReport.items():
     if not h in pastIssues:
-      print "%s now has error but not in the past. Will post a message" % payload["queue"]
+      print "New error detected for %s. Will post a message" % payload["queue"]
       postNewMessage(dryRun=args.dryRun, repo=repo, labels=relvalIssueLabel, **payload)
       continue
 
@@ -303,10 +329,9 @@ if __name__ == "__main__":
     currentSteps = sorted([(float(x["workflowId"]), x["step"]) for x in currentSteps])
     pastSteps = sorted([(float(x["workflow"]), x["step"]) for x in pastSteps])
 
-    print currentSteps == pastSteps
-
     if currentSteps == pastSteps:
-      print "No changes in the error."
+      print currentSteps, pastSteps
+      print "No changes in issue %s." % pastIssues[h]["issue"].number
       continue
 
     print "Error is already found in github, but changed. Adapting description."
@@ -316,4 +341,8 @@ if __name__ == "__main__":
   for h, payload in pastIssues.items():
     if h in validErrorReport:
       continue
-    print "Issue %s should really be closed." % issue.number
+    if args.dryRun:
+      print "Issue %s should really be closed." % payload["issue"].number
+    else:
+      print "Closing issue %s." % payload["issue"].number
+      issue.edit(state="closed")

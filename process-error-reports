@@ -171,10 +171,11 @@ def understandFatalRootError(name, t, p, info):
   print "root error %s" % str(checkRootError)
   if not checkRootError:
     return None
-  errorTitle = checkRootError[0][1]
+  errorTitle = re.sub("/.*/", "", checkRootError[0][1].strip("\n"))
   # Remove any paths.
   errorMessage = re.sub("/.*/", "", s).strip("\n")
   h = hashlib.sha1(name + errorTitle + errorMessage).hexdigest()[:10]
+  print h
   return (h, errorTitle, errorMessage)
 
 # Generic "catch all" solution for errors. This must be last in the list of
@@ -284,7 +285,7 @@ if __name__ == "__main__":
   print "Old issues found: " + ", ".join(["#%s" % x.number for x in issues])
   pastIssues = {}
   for issue in issues:
-    tm = re.match(ISSUE_TITLE_MATCHER, issue.title)
+    tm = re.match(ISSUE_TITLE_MATCHER, issue.title, re.DOTALL)
     if not tm:
       print "Unable to parse title %s for issue %s" % (issue.title, issue.number)
       continue
@@ -330,7 +331,6 @@ if __name__ == "__main__":
     pastSteps = sorted([(float(x["workflow"]), x["step"]) for x in pastSteps])
 
     if currentSteps == pastSteps:
-      print currentSteps, pastSteps
       print "No changes in issue %s." % pastIssues[h]["issue"].number
       continue
 
@@ -340,6 +340,9 @@ if __name__ == "__main__":
 
   for h, payload in pastIssues.items():
     if h in validErrorReport:
+      continue
+    # Skip the queues which we have filtered.
+    if not re.match(".*" + args.filter + ".*", payload["queue"]):
       continue
     if args.dryRun:
       print "Issue %s should really be closed." % payload["issue"].number

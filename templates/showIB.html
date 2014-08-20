@@ -10,7 +10,7 @@
 	<body>
 		<script type='text/javascript' src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
 		<script type='text/javascript' src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-		<script type='text/javascript' src="render.min.js"></script>
+		<script type='text/javascript' src="js/render.min.js"></script>
 	
 
 	<div class="container">
@@ -118,7 +118,7 @@
 
 				
 				// write the comparisons for the release queue, here I read a json file per release queue
-				var compFileName = release_name + ".json"
+				var compFileName = "data/" + release_name + ".json"
 				
 
 				$.getJSON( compFileName, paintComparisons)
@@ -134,7 +134,7 @@
                 }
 
 
-  		$.getJSON( "structure.json", start_load)
+  		$.getJSON( "data/structure.json", start_load)
 
 
 

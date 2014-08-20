@@ -77,7 +77,8 @@ def readWorkflows(f):
 
 def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=None, workflows=[], current_release=None, error_hash=None, error_text=None, **kwds):
   steps = ""
-  workflows.sort(key=attrgetter(""))
+  print "foo" + str(workflows[0])
+  workflows.sort(key=itemgetter("workflowId"))
   for info in workflows[:20]:
     steps += format(RELVAL_ISSUE_LINK_TEMPLATE,
                     step=step,
@@ -249,7 +250,6 @@ if __name__ == "__main__":
   releases = [r for r in glob(globExpr) if re.match(".*" + args.filter + ".*", r)]
   RESULTS_PATH = "pyRelValMatrixLogs/run/runall-report-step123-.log"
   releases = [r for r in releases if exists(join(r, RESULTS_PATH))]
-  print releases
   names = sorted([basename(r) for r in releases])
   names.reverse()
   types = []
@@ -261,8 +261,6 @@ if __name__ == "__main__":
     last_names.append(x)
 
   types = [x + "_X" for x in types]
-  print last_names
-  print types
   last_releases = []
   for r in releases:
     for l in last_names:
@@ -270,6 +268,10 @@ if __name__ == "__main__":
         last_releases.append(r)
   last_releases.sort()
   release_info = zip(last_names, types, last_releases)
+
+  for x in release_info:
+    print "The following releases will be considered: "
+    print "\n".join(["- %s for %s" % (x[0], x[1]) for x in release_info])
 
   # Iterate on the latest releases and find out if they have issues, producing
   # a map of workflows steps which are broken.

@@ -873,6 +873,7 @@ CMSSW_CATEGORIES={
    "Validation/L1T",
    "Validation/RecoB",
    "Validation/RecoEgamma",
+   "Validation/RecoHI",
    "Validation/RecoJets",
    "Validation/RecoMET",
    "Validation/RecoMuon",

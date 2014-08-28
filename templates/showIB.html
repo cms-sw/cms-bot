@@ -36,7 +36,18 @@
                         // Javascript to enable link to tab
                         var url = document.location.toString();
                         if (url.match('#')) {
-                                $('#myTab a[href=#'+url.split('#')[1]+']').tab('show') ;
+                                var hash = url.split('#')[1] 
+                                var release_name = hash.substring( 0 , hash.lastIndexOf( '_' ) )
+				var lastChar = release_name.charAt( release_name.length - 1 )
+
+				// the url is asking for an IB
+				if ( lastChar == 'X' || lastChar == 'C' ){
+					$('#myTab a[href=#' + release_name + ']').tab('show')
+				
+				}else {
+					$('#myTab a[href=#' + hash + ']').tab('show') ;
+				}
+
                         }
 
                         // Change hash for page-reload
@@ -135,8 +146,6 @@
 
 
   		$.getJSON( "data/structure.json", start_load)
-
-
 
 	})	
 	

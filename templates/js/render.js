@@ -117,7 +117,6 @@ get_result_tests =  function (arch,tests){
  */
 add_tests_to_row = function(tests,row,arch,type){
 
-  console.log("adding tests")
 
   // just add a blank cell if tere are no results for that kind of tests
 
@@ -245,8 +244,10 @@ add_hlt_tests_link = function (title_cell,url){
 }
 
 
-
-write_comp_title =  function(comparison , tab_pane){
+/**
+ * writes a table with the comparison lates tag, and the information about the IB if it is an IB
+ */
+write_comp_IB_table =  function(comparison , tab_pane){
 
   var current_tag = comparison.compared_tags.split("-->")[1]
   var title_compared_tags = $("<h3><b></b></h3>").text(current_tag)
@@ -255,6 +256,7 @@ write_comp_title =  function(comparison , tab_pane){
   title_compared_tags.append($("<br>"))
    
   var title_table = $('<table class="table table-condensed"></table>')
+  title_table.attr( 'id' , current_tag )
   var title_cell = $('<td></td>').append(title_compared_tags)
   //here I check the result of the relvals
   
@@ -270,7 +272,6 @@ write_comp_title =  function(comparison , tab_pane){
   var building_results =  comparison.builds
 
   title_cell.attr("rowspan",architectures.length+1)
-  console.log(architectures)
   title_row.append(title_cell)
   title_table.append(title_row)
   
@@ -387,7 +388,7 @@ writeComparisonLinkGithub = function(comparedTags, tab_pane){
 write_comparison = function(comparison,tab_pane){
 
   var compTags = comparison.compared_tags
-  write_comp_title(comparison,tab_pane)
+  write_comp_IB_table(comparison,tab_pane)
   var pull_requests = comparison.merged_prs
 
   //if there were not merged prs in this comparison I alert it
@@ -429,21 +430,44 @@ write_comparison = function(comparison,tab_pane){
  */
 paintComparisons = function(rqInfo){
 
-  console.log('Loaded!')
-
   var tab_pane = $("#"+rqInfo.release_name)
   var comparisons = rqInfo.comparisons
 
   for(var j =comparisons.length-1; j >= 0; j--){
-    
     write_comparison(comparisons[j],tab_pane)
   
   }
 
-  hideProgressBar(rqInfo.release_name)
+  checkHasToScroll( rqInfo.release_name )
+
 }
 
 
+//------------------------------------------------------------------------------------
+// Hash
+//----------------------------------------------------------------------------------
 
+checkHasToScroll = function ( releaseName ){
+   
+  var url = document.location.toString();
+  console.log( 'option2' )
+  var hash = url.split('#')[1]
+  var requiredReleaseName = hash.substring( 0 , hash.lastIndexOf( '_' ) )
+  var lastChar = requiredReleaseName.charAt( requiredReleaseName.length - 1 )
+
+  // they are asking for an IB
+  if ( lastChar == 'X' || lastChar == 'C' ){
+
+    if( releaseName == requiredReleaseName ){
+
+      $('html, body').animate({
+          scrollTop: $( '#' + hash ).offset().top
+      }, 1000);
+
+    }
+                                
+  }
+
+}
 
 

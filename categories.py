@@ -34,7 +34,6 @@ CMSSW_L2 = {
   "diguida": ["alca"],
   "bendavid": ["generators"],
   "davidlange6": ["operations"],
-  "degano": ["tests"],
   "monttj": ["analysis"],
   "thuer": ["generators"],
   "StoyanStoynev": ["reconstruction"],

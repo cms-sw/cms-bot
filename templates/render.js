@@ -173,7 +173,10 @@ add_tests_to_row = function(tests,row,arch,type){
       test_label = testDetails.compWarning + " Warnings"
     }else{
       r_class = "label label-danger"
-      test_label = ( testDetails.compError + testDetails.linkError ) + " Errors"
+      var compError = testDetails.compError != null ? testDetails.compError : 0
+      var linkError = testDetails.linkError != null ? testDetails.linkError : 0
+      var miscError = testDetails.miscError != null ? testDetails.miscError : 0
+      test_label = ( compError + linkError + miscError ) + " Errors"
     }
   }else if (type == 'relvals'){
 

@@ -88,9 +88,7 @@ get_tests_url = function(type,file) {
                                                                 +'/'+link_parts[10]
 
   }else if(type == 'relvals'){
-    details_link="https://cmssdt.cern.ch/SDT/cgi-bin//showMatrixTestLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
-                                                                +'/'+link_parts[11]+'/'+link_parts[12]
+    details_link="https://cms-sw.github.io/relvalLogDetail.html#" + link_parts[6] + ';' + link_parts[10] 
   }else if(type == 'addons'){
     details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[6] + '/'
                                                                 +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]

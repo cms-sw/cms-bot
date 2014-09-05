@@ -768,6 +768,7 @@ CMSSW_CATEGORIES={
    "CommonTools/TrackerMap",
    "CondCore/DQMPlugins",
    "CondFormats/DQMObjects",
+   "HLTriggerOffline/B2G",
    "HLTriggerOffline/Common",
    "HLTriggerOffline/Egamma",
    "HLTriggerOffline/Exotica",

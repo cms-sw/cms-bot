@@ -13,8 +13,14 @@ grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do
     cd ${cWD}/${extN}
     cp ~/tools/validate.C ./
     echo "Will run on ${fN} in ${cWD}/${extN}"
-    echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n\
-.x validate.C++(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log &
+    echo "Now in `pwd`"
+    g++ -shared -o validate.so validate.C `root-config --cflags ` -fPIC
+    echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n 
+    .x validate.C+(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log &
+# manually set the make flags, not needed in most cases
+#    gSystem->SetMakeSharedLib(\"cd \$BuildDir ;g++  -c \$Opt -pipe -m64 -Wshadow -Wall -W -Woverloaded-virtual -fPIC -std=c++11 -Wno-deprecated-declarations -DG__MAXSTRUCT=36000 -DG__MAXTYPEDEF=36000 -DG__LONGLINE=4096 -pthread \$IncludePath \$SourceFiles ; g++ \$ObjectFiles -shared -Wl,-soname,\$LibName.so -m64 -Wl,--hash-style=gnu -O2  \$LinkedLibs -o \$SharedLib\");\n 
+#    cout<< gSystem->GetMakeSharedLib()<<endl ;\n
+
     pidList=${pidList}" "${!}
     export pidList
     echo $pidList

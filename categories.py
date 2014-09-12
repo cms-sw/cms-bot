@@ -769,6 +769,7 @@ CMSSW_CATEGORIES={
    "CondCore/DQMPlugins",
    "CondFormats/DQMObjects",
    "HLTriggerOffline/B2G",
+   "HLTriggerOffline/Btag",
    "HLTriggerOffline/Common",
    "HLTriggerOffline/Egamma",
    "HLTriggerOffline/Exotica",

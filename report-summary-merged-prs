@@ -104,7 +104,7 @@ def get_info_merge_commit( line , graph ):
 #if there are no tags it returns an empty list
 #it applies filters according to the release queue to only get the 
 #tags related to the current release queue
-def get_tags_from_line(line, release_queue):
+def get_tags_from_line( line , release_queue):
   if 'tags->' not in line:
     return []
   tags_str = line.split('tags->')[1]
@@ -119,8 +119,9 @@ def get_tags_from_line(line, release_queue):
     #remove te word "tag: "
     tags = [t.replace('tag: ','') for t in tags ]
     #I also have to remove the branch name because it otherwise will always appear
-    tags = [t for t in tags if re.match(filter,t.strip()) and t.strip().replace('"','') != release_queue]
-    return [t.replace('"','').replace('tag:','').strip() for t in tags]
+    #I also remove tags that have the  string _DEBUG_TEST, they are used to create test IBs
+    tags = [ t for t in tags if re.match(filter,t.strip()) and ( t.strip().replace('"','') != release_queue ) and ( 'DEBUG_TEST' not in t ) ]
+    return [ t.replace('"','').replace('tag:','').strip() for t in tags ]
   else:
     return []
 
@@ -262,10 +263,13 @@ def analyze_tests_results(output,results,arch,type):
       
     results[rel_name].append(result_arch)
  
-
-def get_tags(output,release_queue):
+# returns a list of tags based on git log output
+# It uses the release queue name to filter the tags, this avoids having
+# in the result tags from other queues that may come from automatic merges.
+# For example, if release_queue is 7_2_X, it will drop tags like CMSSW_7_2_THREADED_X_2014-09-15-0200
+def get_tags( git_log_output , release_queue ):
   tags = []
-  for line in output.splitlines():
+  for line in git_log_output.splitlines():
     tags += get_tags_from_line(line, release_queue)
 
   if (len(tags) ==0):

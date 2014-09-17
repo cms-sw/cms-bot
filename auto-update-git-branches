@@ -74,3 +74,7 @@ updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/geant10
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/gcc490
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/gcc491
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/next
+
+# CMSSW_7_3_X
+updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_3_X/stable
+updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/gcc491

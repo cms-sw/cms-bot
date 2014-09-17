@@ -14,6 +14,7 @@ MAPPINGS = {
   # CMSSW_7_1_X
   ("CMSSW_7_1_X", "CMSSW_7_2_X"),
   # CMSSW_7_2_X
+  ("CMSSW_7_2_X", "CMSSW_7_3_X"),
 ],
 "cmsdist": [
   # CMSSW_7_0_X

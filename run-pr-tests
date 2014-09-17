@@ -52,18 +52,32 @@ else
 
 fi
 
-#if git diff $RELEASE_NAME | grep -E "^[+| ] .* std::cout" ; then
-#  echo "I found a std::cout"
-#  $WORKSPACE/report-pull-request-results STD_COUT -t cmsbuild --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID
-#  exit 0
-#fi
 
 # this is to test several pull requests at the same time
-for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do 
+for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do
   echo 'I will add the following pull request to the test'
-  echo $PR; 
+  echo $PR;
   git cms-merge-topic -u $PR
 done
+
+#If Fireworks is the only package involved I only compile and run unit tests
+ONLY_FIREWORKS=false
+if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
+
+  ls $WORKSPACE/$RELEASE_NAME/src
+  NUM_DIRS=$((`(find $WORKSPACE/$RELEASE_NAME/src -maxdepth 1 -type d -print | grep -v '.git' | grep -v 'FWCore' | wc -l)`-1))
+
+  if [ "$NUM_DIRS" == 1 ]; then
+
+    if ls | grep 'Fireworks'; then
+      ONLY_FIREWORKS=true
+      echo 'This pr only involves Fireworks!' 
+      echo 'Only compiling and running unit tests'
+    fi 
+
+  fi
+
+fi
 
 #get the latest commit
 
@@ -163,7 +177,7 @@ fi
 #
 # Static checks
 #
-if [ "X$DO_STATIC_CHECKS" = Xtrue ]; then
+if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   sed -i "s/PARAM_STATIC_CHECKS_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/llvm-analysis/g" $WORKSPACE/summary.html
   echo '--------------------------------------'
   pushd $CMSSW_BASE
@@ -198,7 +212,7 @@ if [ ! "X$MATRIX_EXTRAS" = X ]; then
 fi
 
 
-if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
+if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   sed -i "s/PARAM_MATRIX_TESTS_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/runTheMatrix-results\//g" $WORKSPACE/summary.html
  
   echo '--------------------------------------'
@@ -265,7 +279,7 @@ fi
 #
 # Duplicate checks
 #
-if [ "X$DO_DUPLICATE_CHECKS" = Xtrue ]; then
+if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   pushd $CMSSW_BASE/src
   eval `scram run -sh`
   echo '--------------------------------------'

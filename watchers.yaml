@@ -1,0 +1,20 @@
+# Map between github username and the list of packages to watch.
+# Package is a regular expression which will be automatically delimited by
+# ".*".
+btv-pog:
+  - CondFormats/BTauObjects
+  - DataFormats/BTauReco
+  - DQMOffline/RecoB
+  - SimDataFormats/JetMatching
+  - HLTriggerOffline/Btag
+  - HLTrigger/btau
+  - PhysicsTools/JetExamples
+  - PhysicsTools/JetMCAlgos
+  - PhysicsTools/JetMCUtils
+  - RecoBTag
+  - RecoBTau
+  - RecoJets/JetAssociationAlgorithms
+  - RecoJets/JetAssociationProducers
+  - RecoVertex/AdaptiveVertexFinder
+  - RecoVertex/AdaptiveVertexFit
+  - Validation/RecoB

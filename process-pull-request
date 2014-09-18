@@ -6,6 +6,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS
 from watchers import WATCHERS
+import yaml
 
 import re
 from sys import exit
@@ -49,7 +50,7 @@ if __name__ == "__main__":
   packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2]) for x in pr.get_files()])])
   print "Following packages affected:"
   print "\n".join(packages)
-  signing_categories = set([category for package in packages 
+  signing_categories = set([category for package in packages
                             for category, category_packages in CMSSW_CATEGORIES.items()
                             if package in category_packages])
 
@@ -67,19 +68,30 @@ if __name__ == "__main__":
   all_packages = [package for category_packages in CMSSW_CATEGORIES.values()
                           for package in category_packages]
   has_category = all([package in all_packages for package in packages])
-                           
+
   new_package_message = ""
   if not has_category:
     new_package_message = "\nThe following packages do not have a category, yet:\n\n"
     new_package_message += "\n".join([package for package in packages if not package in all_packages]) + "\n"
     signing_categories.add("new-package")
 
+  # Add watchers.yaml information to the WATCHERS dict.
+  WATCHERS.update(yaml.load(file("watchers.yaml")))
   # Given the packages check if there are additional developers watching one or more.
   author = pr.user.login
-  watchers = set(["@" + user for package in packages
+  watchers = set([user for package in packages
                        for user, watched_regexp in WATCHERS.items()
                        for regexp in watched_regexp
                        if re.match("^" + regexp + ".*", package) and user != author])
+  # Handle watchers
+  watchingGroups = yaml.load(file("groups.yaml"))
+  for watcher in [x for x in watchers]:
+    if not watcher in watchingGroups:
+      print watcher + " not in %s " % watchingGroups
+      continue
+    watchers.remove(watcher)
+    watchers.update(set(watchingGroups[watcher]))
+  watchers = set(["@" + u for u in watchers])
   print "Watchers " + ", ".join(watchers)
 
   repo = gh.get_organization("cms-sw").get_repo("cmssw")
@@ -91,7 +103,7 @@ if __name__ == "__main__":
   last_commit_date = None
   try:
     # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-    last_commit_date = pr.get_commits().reversed[0].commit.committer.date 
+    last_commit_date = pr.get_commits().reversed[0].commit.committer.date
   except:
     # This seems to fail for more than 250 commits. Not sure if the
     # problem is github itself or the bindings.
@@ -105,7 +117,7 @@ if __name__ == "__main__":
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     mustClose = True
   requiresL1 = False
-  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, []) 
+  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -133,7 +145,7 @@ if __name__ == "__main__":
         comparison_done = True
 
     # Check actions made by L1.
-    # L1 signatures are only relevant for closed releases where 
+    # L1 signatures are only relevant for closed releases where
     # we have a orp signature requested.
     # Approving a pull request, sign it.
     # Rejecting a pull request, will also close it.
@@ -141,12 +153,12 @@ if __name__ == "__main__":
     if commenter in CMSSW_L1:
       requiresL1 = True
       if not "orp" in signing_categories:
-        requiresL1 = False 
+        requiresL1 = False
       elif re.match("^([+]1|approve[d]?)$", first_line):
         signatures["orp"] = "approved"
         mustClose = False
       elif re.match("^([-]1|reject|rejected)$", first_line):
-        signatures["orp"] = "rejected" 
+        signatures["orp"] = "rejected"
         mustClose = True
       elif re.match("reopen", first_line):
         signatures["orp"] = "pending"
@@ -200,7 +212,7 @@ if __name__ == "__main__":
   print "\n".join(labels)
 
   # Now updated the labels.
-  
+
   missingApprovals = [x for x in labels
                       if not x.endswith("-approved") and not x.startswith("orp")
                                                      and not x.startswith("tests")
@@ -215,7 +227,7 @@ if __name__ == "__main__":
   # We update labels only if they are different.
   old_labels = [x.name for x in issue.labels]
   releaseManagersMsg=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " can you please take care of it?" or ""
-  
+
   # Do not complain about tests
   requiresTestMessage = "or unless it breaks tests"
   if "tests-approved" in set(labels):
@@ -223,7 +235,7 @@ if __name__ == "__main__":
   elif "tests-rejected" in set(labels):
     requiresTestMessage = "(but tests are reportedly failing)"
   messageFullySigned = format("This pull request is fully signed and it will be"
-                              " integrated in one of the next %(branch)s IBs unless changes" 
+                              " integrated in one of the next %(branch)s IBs unless changes"
                               " %(requiresTestMessage)s. %(releaseManagersMsg)s",
                               releaseManagersMsg=releaseManagersMsg,
                               requiresTestMessage=requiresTestMessage,
@@ -240,7 +252,7 @@ if __name__ == "__main__":
       pass
     elif "fully-signed" in labels and "orp-pending" in labels:
       pr.create_issue_comment(messageFullySigned)
-  
+
 
   unsigned = [k for (k, v) in signatures.items() if v == "pending"]
   missing_notifications = ["@" + name for name, l2_categories in CMSSW_L2.items()
@@ -294,7 +306,7 @@ if __name__ == "__main__":
       pass
   if commentMsg and not opts.dryRun:
     pr.create_issue_comment(commentMsg)
-  
+
   # Check if it needs to be automatically closed.
   if mustClose == True and issue.state == "open":
     print "This pull request must be closed."

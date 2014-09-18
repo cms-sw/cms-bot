@@ -182,12 +182,23 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   echo '--------------------------------------'
   pushd $CMSSW_BASE
   git cms-addpkg Utilities/StaticAnalyzers
-  cp -p src/Utilities/StaticAnalyzers/scripts/classes.txt tmp/classes.txt
-  USER_CXXFLAGS="-DEDM_ML_DEBUG" USER_LLVM_CHECKERS="-enable-checker cms.FunctionChecker -enable-checker optional.ClassChecker" scram b -j 12 checker | tee -a $WORKSPACE/staticChecks.log
+  cp -pv src/Utilities/StaticAnalyzers/scripts/* $WORKSPACE/$RELEASE_FORMAT/tmp
+  
+  cd $WORKSPACE/$RELEASE_FORMAT/tmp
+  chmod +x *.py *.sh
+
+  #USER_CXXFLAGS="-DEDM_ML_DEBUG" USER_LLVM_CHECKERS="-enable-checker cms.FunctionChecker -enable-checker optional.ClassChecker" scram b -j 12 checker | tee -a $WORKSPACE/staticChecks.log
+  chmod +x run_class_dumper.sh
+  ./run_class_dumper.sh
+
+
+  chmod +x run_class_checker.sh
+  ./run_class_checker.sh
+
   pwd
   ls
   mkdir $WORKSPACE/llvm-analysis
-  cp -R llvm-analysis/*/* $WORKSPACE/llvm-analysis
+  cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
   popd  

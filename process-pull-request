@@ -87,7 +87,6 @@ if __name__ == "__main__":
   watchingGroups = yaml.load(file("groups.yaml"))
   for watcher in [x for x in watchers]:
     if not watcher in watchingGroups:
-      print watcher + " not in %s " % watchingGroups
       continue
     watchers.remove(watcher)
     watchers.update(set(watchingGroups[watcher]))

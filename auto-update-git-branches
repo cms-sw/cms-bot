@@ -16,7 +16,7 @@ function updateBranch()
 }
 
 # Update CMSSW
-# Clone once…
+# Clone once
 cd $WORKSPACE
 rm -rf cmssw
 if [ ! -d cmssw ]; then

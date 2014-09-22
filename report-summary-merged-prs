@@ -38,17 +38,56 @@ requested_comparisons = requested_comparisons_param.split(",")
 #---- Fuctions
 #-----------------------------------------------------------------------------------
 
-# gets the list of architectures by reading config.map
-def get_architectures_from_config_map():
-  f = open('config.map', "r")
+# reads a line of config.map and returns a dictionary with is parameters
+def parse_config_map_line ( line ):
+  params = {}
+  parts = line.split( ';' )
+ 
+  for part in parts:
+    if part == '':
+      continue
+    key = part.split( '=' )[ 0 ]
+    value = part.split( '=' )[ 1 ]
+    params[ key ] = value
+    
+  return params
+
+# gets the list of architectures by reading config.map, they are saved in ARCHITECTURES
+# gets the releases branches from config.map, they are saved in RELEASES_BRANCHES
+# it maps the branches for all the releases this is to take into account the case in which the base branch 
+# is different from the release queue
+def get_config_map_params():
+
+  f = open( 'config.map' , 'r' )
   for line in f.readlines():
-    arch = line.split(';')[0].split('=')[1]
+    params = parse_config_map_line ( line.rstrip() ) 
+
+    arch = params[ 'SCRAM_ARCH' ]
     if arch not in ARCHITECTURES:
       ARCHITECTURES.append( arch )
 
-  print 'ARCHITECTURES'
+    release_queue = params[ 'RELEASE_QUEUE' ]
+    base_branch = params.get( 'RELEASE_BRANCH' ) 
+    if base_branch:
+      RELEASES_BRANCHES[ release_queue ] = base_branch
+    else:
+      RELEASES_BRANCHES[ release_queue ] = release_queue
+
+    sp_rel_name = release_queue.split( '_' )[ 3 ]
+
+    if sp_rel_name != 'X' and sp_rel_name not in SPECIAL_RELEASES:
+      SPECIAL_RELEASES.append( sp_rel_name )
+
+  SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+
+  print 'ARCHS:'
   print ARCHITECTURES
-  f.close()
+  print 'RELEASES_BRANCHES:'
+  print RELEASES_BRANCHES
+  print 'special releases'
+  print SPECIAL_RELEASES
+
+
 
 # Tells if the pr comes from a merge commit it reads the first part of the line that
 # was obtained from git log --graph
@@ -342,9 +381,17 @@ def get_output_command(command_to_execute):
 
 # Gets the tags between start_tag and end_tag, the release_queue is used as a filter
 # to ignore tags that are from other releases
-def execute_magic_command_tags(start_tag,end_tag,release_queue):
+def execute_magic_command_tags( start_tag , end_tag , release_queue , release_branch ):
+
+  # if it is a special release queue based on a branch with a different name, I use the release_branch as end tag
+  if release_queue == release_branch:
+    real_end_tag = end_tag
+  else:
+    sp_rel_name = release_queue.split( '_' )[ 3 ]
+    real_end_tag = end_tag.replace( '_'+sp_rel_name , '' )
+
   tags = []
-  command_to_execute = MAGIC_COMMAND_TAGS.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
+  command_to_execute = MAGIC_COMMAND_TAGS.replace( 'START_TAG' , start_tag ).replace( 'END_TAG' , real_end_tag )
   out,err,ret_code = get_output_command(command_to_execute)
 
   # check if the end_tag exists, but the start_tag doesn't
@@ -352,7 +399,7 @@ def execute_magic_command_tags(start_tag,end_tag,release_queue):
   if ret_code != 0:
     if is_recent_branch(err):
       print 'looks like this branch has been created recently'
-      command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace('END_TAG',end_tag).replace('RELEASE_QUEUE',release_queue)
+      command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace( 'END_TAG' , real_end_tag ).replace( 'RELEASE_QUEUE' , release_branch )
       out,err,ret_code = get_output_command(command_to_execute)
 
   tags = get_tags(out,release_queue)
@@ -363,12 +410,12 @@ def execute_magic_command_tags(start_tag,end_tag,release_queue):
   if is_tag_list_suspicious(tags):
     print 'this list could be missing something!'
     print tags
-    new_tags = look_for_missing_tags(start_tag, release_queue)
+    new_tags = look_for_missing_tags(start_tag, release_branch)
     tags.pop()
     tags += new_tags    
 
   tags = [t for t in reversed(tags)]
-  print tags
+
   return tags
 
 def execute_command_compare_tags(start_tag,end_tag , graph ):
@@ -595,12 +642,17 @@ MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_UR
 
 MAGIC_COMMAND_GET_CONGIG_MAP = 'wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_0_X/stable/config.map' 
 
-# this will be filled using config.map by get_architectures_from_config_map()
+# this will be filled using config.map by get_config_map_params()
 ARCHITECTURES = []
 
-SPECIAL_RELEASES = ['SLHC','BOOSTIO','ROOT6','THREADED','GEANT10','DEVEL','CLANG','DEBUG']
+# this will be filled using config.map by get_config_map_params()
+RELEASES_BRANCHES = {}
 
-SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+# this will be filled using config.map by get_config_map_params() SLHC releases have a different format, so it is hardcoded
+SPECIAL_RELEASES = [ 'SLHC' ]
+
+# this will be filled using config.map by get_config_map_params()
+SP_REL_REGEX = ""
 
 MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
 
@@ -628,7 +680,9 @@ results = []
 
 get_output_command( MAGIC_COMMAND_GET_CONGIG_MAP )
 
-get_architectures_from_config_map()
+get_config_map_params()
+
+SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
 
 for comp in requested_comparisons:
   start_tag = comp.split("..")[0]
@@ -645,13 +699,18 @@ for comp in requested_comparisons:
 
   # load the graph fo the history
 
-  graph = load_graph(release_queue,-1)
+  release_branch = RELEASES_BRANCHES[ release_queue ]
+  graph = load_graph( release_branch , -1 )
  
   release_queue_results = {}
 	
-  release_queue_results['release_name'] = release_queue
+  release_queue_results[ 'release_name' ] = release_queue
+  release_queue_results[ 'base_branch' ] = release_branch
 
-  tags = execute_magic_command_tags(start_tag,end_tag,release_queue)
+  tags = execute_magic_command_tags( start_tag , end_tag , release_queue , release_branch )
+
+  print 'I got these tags: '
+  print tags
 
   release_queue_results['comparisons'] = compare_tags( tags , graph )
 

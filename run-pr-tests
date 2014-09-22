@@ -256,10 +256,44 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   else  
     echo "no errors in the RelVals!!"
     sed -i "s/See comparison with baseline/Still running.../g" $WORKSPACE/summary.html
+    
+  #####################################################################
+  #### Run igprof
+  #####################################################################
+   # for now this is only run for 25202
 
-    ######################################################################
-    #### Run cfg-viewer
-    ######################################################################
+  mkdir "$WORKSPACE/igprof-results-data"
+  pushd "$WORKSPACE/igprof-results-data"
+
+    runTheMatrix.py -l 25202 --command '--profile mp'
+    ls
+
+    for dir in $WORKSPACE/igprof-results-data/
+    do 
+      
+      for f in $dir/*.gz
+      do
+  
+        echo "processing file $f"
+
+        OUTFILE=${f//.gz/.sql}
+        echo $OUTFILE
+        igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE
+
+
+
+      done
+
+      ls $dir
+
+    done
+
+  popd
+
+
+  #####################################################################
+  #### Run cfg-viewer
+  #####################################################################
 
     if [ "X$RUN_CONFIG_VIEWER" = Xtrue ]; then
 

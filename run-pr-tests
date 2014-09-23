@@ -265,7 +265,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   mkdir "$WORKSPACE/igprof-results-data"
   pushd "$WORKSPACE/igprof-results-data"
 
-    runTheMatrix.py -l 25202 --command '--profile mp'
+    runTheMatrix.py -l 25202 --command '--profile mp' 2>&1 | tee -a $WORKSPACE/igprof-results-data/runTheMatrix.log
     ls
 
     find $WORKSPACE/igprof-results-data/ -type d | while read d; do

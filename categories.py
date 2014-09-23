@@ -39,7 +39,7 @@ CMSSW_L2 = {
   "StoyanStoynev": ["reconstruction"],
 }
 
-CMSSW_L1 = ["fabiocos", "davidlange6"]
+CMSSW_L1 = ["davidlange6"]
 
 CMSSW_CATEGORIES={
   "operations": [

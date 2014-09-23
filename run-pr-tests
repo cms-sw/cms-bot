@@ -184,7 +184,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   pushd $WORKSPACE/$RELEASE_FORMAT
   git cms-addpkg Utilities/StaticAnalyzers
   
-  USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(getconf _NPROCESSORS_ONLN) checker SCRAM_IGNORE_PACKAGES=Fireworks/% SCRAM_IGNORE_SUBDIRS=test
+  USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(getconf _NPROCESSORS_ONLN) checker SCRAM_IGNORE_PACKAGES=Fireworks/% SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/runStaticChecks.log
  
   pwd
   

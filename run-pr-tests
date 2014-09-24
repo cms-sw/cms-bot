@@ -261,38 +261,40 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   #### Run igprof
   #####################################################################
    # for now this is only run for 25202
-
-  mkdir "$WORKSPACE/igprof-results-data"
-  pushd "$WORKSPACE/igprof-results-data"
-
-    runTheMatrix.py -l 25202 --command '--profile mp' 2>&1 | tee -a $WORKSPACE/igprof-results-data/runTheMatrix.log
-    ls
-
-    find $WORKSPACE/igprof-results-data/ -type d | while read d; do
-    
-      echo "processing dir $d"
-      
-      for f in $d/*.gz
-      do
+   
   
-        echo "processing file $f"
+  if [ "X$RUN_IGPROF" = Xtrue ]; then
+  
 
-        OUTFILE=${f//.gz/.sql}
-        echo $OUTFILE
-        igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE
+    mkdir "$WORKSPACE/igprof-results-data"
+    pushd "$WORKSPACE/igprof-results-data"
 
+      runTheMatrix.py -l 25202 --command '--profile mp' 2>&1 | tee -a $WORKSPACE/igprof-results-data/runTheMatrix.log
+      ls
 
+      find $WORKSPACE/igprof-results-data/ -type d | while read d; do
+    
+        echo "processing dir $d"
+      
+        for f in $d/*.gz
+        do
+  
+          echo "processing file $f"
+
+          OUTFILE=${f//.gz/.sql}
+          echo $OUTFILE
+          igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE
+
+        done
+
+        ls $dir
 
       done
 
-      ls $dir
+    popd
 
-    done
-
-  popd
-
-  sed -i "s/PARAM_IGPROF_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/igprof-results-data\//g" $WORKSPACE/summary.html
-
+    sed -i "s/PARAM_IGPROF_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/igprof-results-data\//g" $WORKSPACE/summary.html
+  fi
 
   #####################################################################
   #### Run cfg-viewer

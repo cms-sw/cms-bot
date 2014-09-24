@@ -291,6 +291,8 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
   popd
 
+  sed -i "s/PARAM_IGPROF_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/igprof-results-data\//g" $WORKSPACE/summary.html
+
 
   #####################################################################
   #### Run cfg-viewer

@@ -207,6 +207,7 @@ CMSSW_CATEGORIES={
    "RecoLuminosity/TCPReceiver",
    "RecoMET/Configuration", "RecoMET/METAlgorithms",
    "RecoMET/METProducers",
+   "RecoMET/METPUSubtraction",
    "RecoMuon/Configuration",
    "RecoMuon/CosmicMuonProducer",
    "RecoMuon/DetLayers",

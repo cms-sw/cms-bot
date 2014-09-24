@@ -189,7 +189,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   pwd
   
   mkdir $WORKSPACE/llvm-analysis
-  cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis
+  cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
   

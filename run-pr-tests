@@ -184,11 +184,11 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   pushd $WORKSPACE/$RELEASE_FORMAT
   git cms-addpkg Utilities/StaticAnalyzers
   
-  USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(getconf _NPROCESSORS_ONLN) checker SCRAM_IGNORE_PACKAGES=Fireworks/% SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/runStaticChecks.log
+  mkdir $WORKSPACE/llvm-analysis
+  USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(getconf _NPROCESSORS_ONLN) checker SCRAM_IGNORE_PACKAGES=Fireworks/% SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
  
   pwd
   
-  mkdir $WORKSPACE/llvm-analysis
   cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'

@@ -18,3 +18,23 @@ btv-pog:
   - RecoVertex/AdaptiveVertexFinder
   - RecoVertex/AdaptiveVertexFit
   - Validation/RecoB
+makortel:
+  - Configuration/StandardSequences
+  - DataFormats/Tra
+  - DataFormats/GsfTrackReco
+  - DataFormats/VertexReco
+  - DataFormats/Si
+  - EventFilter/Si
+  - Geometry/Track
+  - Geometry/CommonTopologies
+  - RecoLocalTracker
+  - RecoPixelVertexing
+  - RecoTracker
+  - RecoVertex
+  - SimG4Core
+  - SimG4CMS
+  - SimGeneral/TrackingAnalysis
+  - SimTracker
+  - TrackingTools
+  - Validation/RecoTrack
+  - Validation/RecoVertex

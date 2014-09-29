@@ -896,7 +896,8 @@ CMSSW_CATEGORIES={
    "Validation/EcalClusters",
    "Validation/EcalDigis",
    "Validation/EcalHits",
-   "Validation/EcalRecHits"],
+   "Validation/EcalRecHits",
+   "Validation/Geometry"],
   "l1": [
    "CondFormats/L1TObjects",
    "CondTools/L1Trigger",

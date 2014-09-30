@@ -42,6 +42,8 @@ for QUEUE in $RELEASE_QUEUES; do
   done
 done
 
+ls $WORKSPACE
+
 if [ "X$SCHEDULE_BUILDS" = Xfalse ]; then
   exit 1
 fi

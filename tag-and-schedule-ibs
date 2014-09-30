@@ -1,0 +1,47 @@
+#!/bin/sh -e
+aklog
+cd $WORKSPACE
+rm -rf cmssw
+git clone --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git cmssw
+cd cmssw
+
+CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/config.map"
+for QUEUE in $RELEASE_QUEUES; do
+  unset RELEASE_BRANCH
+  eval `curl -s -k $CONFIG_MAP_URL | grep "RELEASE_QUEUE=$QUEUE;"`
+  RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE} 
+  git checkout $RELEASE_BRANCH
+  RELEASE_NAME=`date +${QUEUE}_${DATE}`
+  DAY=`date +%Y-%m-%d`
+  HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
+  # find old tag, if any
+  OLD_HASH=`git show-ref $RELEASE_NAME | cut -f1 -d\ `  
+  NEW_HASH=`git rev-list -n 1 --before="$DAY $HOUR:00" $RELEASE_BRANCH`
+  # If there is no new hash, we have a problem.
+  # If there is no old hash, we simply tag.
+  # If there is one and it's different, we exit with error.
+  # If there is one and it's the same, we continue.
+  if [ "X$NEW_HASH" = X ]; then
+    exit 1
+  fi
+  if [ "X$OLD_HASH" = X ]; then
+    git tag $RELEASE_NAME $NEW_HASH
+    git push origin --tags
+    continue
+  fi
+  if [ ! "X$OLD_HASH" = "X$NEW_HASH" ]; then
+    exit 1
+  fi
+  
+  for SCRAM_ARCH in `curl -s -k $CONFIG_MAP_URL | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | sed -e's/.*SCRAM_ARCH=//;s/;.*//'`; do
+    echo "RELEASE_NAME=$RELEASE_NAME" > $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    echo "DATE_FORMAT=$DATE" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+  done
+done
+
+if [ "X$SCHEDULE_BUILDS" = Xfalse ]; then
+  exit 1
+fi

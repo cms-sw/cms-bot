@@ -6,13 +6,16 @@ kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
 
 cd "$WORKSPACE"
 git clone git@github.com:$CMS_GIT_TOOLS_REPO/cms-git-tools
+
 # creation of results summary file
-mv $WORKSPACE/templates/PullRequestSummary.html $WORKSPACE/summary.html
-
-
-sed -i "s/PARAM_PR_GITHUB/https:\/\/github.com\/cms-sw\/cmssw\/pull\/$PULL_REQUEST/g" $WORKSPACE/summary.html
-sed -i "s/PARAM_PR/$PULL_REQUEST $ADDITIONAL_PULL_REQUESTS/g" $WORKSPACE/summary.html
-sed -i "s/PARAM_BASE_RELEASE/$RELEASE_FORMAT/g" $WORKSPACE/summary.html
+cp $WORKSPACE/templates/PullRequestSummary.html $WORKSPACE/summary.html
+cp $WORKSPACE/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
+RESULTS_FILE=$WORKSPACE/testsResults.txt
+touch $RESULTS_FILE
+echo 'PR_NUMBER;'$PULL_REQUEST >> $RESULTS_FILE
+echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
+echo 'BASE_IB;'$RELEASE_FORMAT >> $RESULTS_FILE
+echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
 
 ### this is for triggering the comparison with the baseline
   PULL_REQUEST_NUMBER=$PULL_REQUEST
@@ -118,8 +121,6 @@ fi
 git log --oneline --merges ${CMSSW_VERSION}..
 git cms-checkdeps -A -a
 
-BUILD_LOG_URL=https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/${BUILD_NUMBER}\/build.log
-sed -i "s/PARAM_BUILD_LOG_URL/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/build.log/g" $WORKSPACE/summary.html
 
 scram b -k -j $(getconf _NPROCESSORS_ONLN) 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'
@@ -127,12 +128,12 @@ echo '--------------------------------------'
 
 if grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log; then
     echo "Errors when building"
-    sed -i "s/<!--BUILD_STATUS//g" $WORKSPACE/summary.html
-    sed -i "s/BUILD_STATUS-->//g" $WORKSPACE/summary.html
+    echo 'COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
     ALL_OK=false
     BUILD_OK=false
 else  
     echo "the build had no errors!!"
+    echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
 fi
 
 #
@@ -155,30 +156,38 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
     cp -r DQMTestsResults $WORKSPACE/DQMTestsResults
     ls $WORKSPACE
     popd
-    sed -i "s/<!--DQM_TEST_REPORTS//g" $WORKSPACE/summary.html
-    sed -i "s/DQM_TEST_REPORTS-->//g" $WORKSPACE/summary.html
-    sed -i "s/PARAM_DQM_TESTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/DQMTestsResults\//g" $WORKSPACE/summary.html
-  fi
-else
-  sed -i "s/PARAM_UNIT_TESTS_URL/#/g" $WORKSPACE/summary.html
-  sed -i "s/See Unit Tests Log/Not Run/g" $WORKSPACE/summary.html
-fi
 
-if grep -i "had errors" $WORKSPACE/unitTests.log; then
+    echo 'DQM_TESTS;OK' >> $RESULTS_FILE
+  else
+
+    echo 'DQM_TESTS;NOTRUN' >> $RESULTS_FILE
+
+  fi
+
+  if grep -i "had errors" $WORKSPACE/unitTests.log; then
     echo "Errors in the unit tests"
-    sed -i "s/<!--UNIT_TESTS_STATUS//g" $WORKSPACE/summary.html
-    sed -i "s/UNIT_TESTS_STATUS-->//g" $WORKSPACE/summary.html
+    echo 'UNIT_TEST_RESULTS;ERROR' >> $RESULTS_FILE
     ALL_OK=false
     UNIT_TESTS_OK=false
-else  
-    echo "no errors in the unit tests!!"
+  else
+    echo 'UNIT_TEST_RESULTS;OK' >> $RESULTS_FILE
+  fi
+
+
+else
+
+  echo 'UNIT_TEST_RESULTS;NOTRUN' >> $RESULTS_FILE
+  echo 'DQM_TESTS;NOTRUN' >> $RESULTS_FILE
+
 fi
+
 
 #
 # Static checks
 #
 if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-  sed -i "s/PARAM_STATIC_CHECKS_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/llvm-analysis/g" $WORKSPACE/summary.html
+
+  echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   
   pushd $WORKSPACE/$RELEASE_FORMAT
@@ -196,15 +205,14 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   popd
     
 else
-  sed -i "s/PARAM_STATIC_CHECKS_OUTPUTS/#/g" $WORKSPACE/summary.html
-  sed -i "s/See Static Checks Log/Not Run/g" $WORKSPACE/summary.html
+
+  echo 'STATIC_CHECKS;NOTRUN' >> $RESULTS_FILE
+
 fi
 
 #
 # Matrix tests
 #
-
-
 
 JOB_REPORTS=""
 if [ "X$USE_JOB_REPORTS" = Xtrue ]; then
@@ -217,7 +225,7 @@ fi
 
 
 if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-  sed -i "s/PARAM_MATRIX_TESTS_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/runTheMatrix-results\//g" $WORKSPACE/summary.html
+
  
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
@@ -248,14 +256,16 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
      
   if grep -i "ERROR executing" $WORKSPACE/matrixTests.log; then
     echo "Errors in the RelVals"
-    sed -i "s/<!--MATRIX_TESTS_STATUS//g" $WORKSPACE/summary.html
-    sed -i "s/MATRIX_TESTS_STATUS-->//g" $WORKSPACE/summary.html
-    sed -i "s/See comparison with baseline/Not Run/g" $WORKSPACE/summary.html
+
+    echo 'MATRIX_TESTS;ERROR' >> $RESULTS_FILE
+
     ALL_OK=false
     RELVALS_OK=false
   else  
     echo "no errors in the RelVals!!"
-    sed -i "s/See comparison with baseline/Still running.../g" $WORKSPACE/summary.html
+    echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE
+
+    #sed -i "s/See comparison with baseline/Still running.../g" $WORKSPACE/summary.html
     
    #####################################################################
    #### Run igprof
@@ -293,11 +303,12 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
      popd
 
-    sed -i "s/PARAM_IGPROF_OUTPUTS/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/igprof-results-data\//g" $WORKSPACE/summary.html
+    echo 'IGPROF;OK' >> $RESULTS_FILE
     
   else  
-    sed -i "s/PARAM_IGPROF_OUTPUTS/#/g" $WORKSPACE/summary.html
-    sed -i "s/See igprof results/Not Run/g" $WORKSPACE/summary.html
+
+    echo 'IGPROF;NOTRUN' >> $RESULTS_FILE
+
   fi
 
   #####################################################################
@@ -317,10 +328,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   fi
   
 else
-  sed -i "s/PARAM_MATRIX_TESTS_OUTPUTS/#/g" $WORKSPACE/summary.html
-  sed -i "s/See Matrix Log/Not Run/g" $WORKSPACE/summary.html
-  sed -i "s/PARAM_BASELINE_COMPARISON/#/g" $WORKSPACE/summary.html
-  sed -i "s/See comparison with baseline/Not Run/g" $WORKSPACE/summary.html
+
+  echo 'MATRIX_TESTS;NOTRUN' >> $RESULTS_FILE
+  echo 'COMPARISON;NOTRUN' >> $RESULTS_FILE
+  echo 'IGPROF;NOTRUN' >> $RESULTS_FILE
+
 fi
 
 #

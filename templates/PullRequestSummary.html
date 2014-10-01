@@ -1,89 +1,61 @@
 <!DOCTYPE html>
+
 <html>
-	<head><title>Test Results: PARAM_BASE_RELEASE + PARAM_PR</title>
-         <!-- styles -->
+  <head>
+  <meta charset="utf-8" />
+  <title>Tests Results</title>
 
-	<link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
 
-        </head>
+  </head>
+  <body>
+    <script type='text/javascript' src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script type='text/javascript' src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script type='text/javascript' src="js/renderPRTests.js"></script>
 
-<body>
-
-<br>
-<br>
-
-<div class="container">
-	<div class="row">
-		<div class="col-md-6">
-	
-		<table class="table table-stripped text-center"  >
-			<thead>
-			<tr>
-                		<td ><p class="text-center"><a href="PARAM_PR_GITHUB">See Pull Request on github</a></p></td>
-               			 <td ><p class="text-center"><img src="http://cms.web.cern.ch/sites/cms.web.cern.ch/files/cms-logo-with-text_0_0.png" class="img-rounded"></p></td>
-        		</tr>
-			</thead>
-		</table>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-2"  ></div>
+        <div class="col-md-5"  id="header"></div>
+      </div>
+      <div class="row">
+        <div class="col-md-2"  ></div>
+        <div class="col-md-6"  id="results"></div>
+      </div>
+    </div>
 
 
-		<table class="table table-striped" >
-			<thead>
-                	<tr>
-				<td colspan="2"><p class="text-center"><h2>PARAM_BASE_RELEASE + PARAM_PR</h2></p></td>
-				</tr>
-			</thead>
-			<tbody>
-                	<tr>
-                	<td>Building 
-			</td>
-                	<td><a href="PARAM_BUILD_LOG_URL">See log</a>
-			<!--BUILD_STATUS <br><p class="text-error"><i class="icon-warning-sign"></i> Had Errors</p> BUILD_STATUS-->
-			</td>
-                	</tr>
-			<tr>
-                	<td>Unit Tests
-			</td>
-                	<td><a href="PARAM_UNIT_TESTS_URL">See Unit Tests Log</a>
-			<!--UNIT_TESTS_STATUS <br><p class="text-error"><i class="icon-warning-sign"></i> Had Errors</p> UNIT_TESTS_STATUS-->
-			</td>
-                	</tr>
-			<tr>
-                	<td>Matrix Tests outputs</td>
-                	<td><a href="PARAM_MATRIX_TESTS_OUTPUTS">See Matrix Log</a>
-			<!--MATRIX_TESTS_STATUS <br><p class="text-error"><i class="icon-warning-sign"></i> Had Errors</p> MATRIX_TESTS_STATUS-->
-                        </td>
-                	</tr>
-                        <tr>
-                        <td> igprof for 25202 </td>
-                        <td><a href="PARAM_IGPROF_OUTPUTS">See igprof results</a>
-                        </td>
-                        </tr>
-			<!--CONFIG_FILES_BROWSER
-			<tr>
-                        <td> Config Files Browser </td>
-                        <td><a href="PARAM_CONFIG_BROWSER">See Browser</a></td>
-                        </tr>
-			CONFIG_FILES_BROWSER-->
-			<tr>
-                	<td>Static checks outputs</td>
-                	<td><a href="PARAM_STATIC_CHECKS_OUTPUTS">See Static Checks Log</a></td>
-                	</tr>
-			<tr>
-                	<td>Comparison with the baseline </td>
-                	<td><a href="PARAM_BASELINE_COMPARISON">See comparison with baseline</a></td>
-                	</tr>
-			<!--DQM_TEST_REPORTS
-                        <tr>
-                        <td>DQM Tests </td>
-                        <td><a href="PARAM_DQM_TESTS">See results</a></td>
-                        </tr>
-			DQM_TEST_REPORTS-->
+    <script>
 
-        		</tbody>
-		</table>
-		</div>
-	</div>
-</div>
-</body>
+       $(document).ready(function () {
 
+         load_results = function( results ){
+
+           console.log( 'Results:' )
+           console.log( results ) 
+           console.log( '---' )
+           resultsDict = parseResultsIntoDict( results )
+           console.log( resultsDict )
+
+           var header = getHeader( resultsDict )
+           $( "#header" ).append( header )
+
+           
+           var table = $( '<table>' ).attr( 'class' , 'table table-striped' )
+           $( "#results" ).append( table )
+           fillResultsTable( resultsDict , table )
+
+         }
+         $.get( "testsResults.txt", load_results , 'text' )
+
+
+       } )
+
+    </script>
+  </body>
 </html>
+
+
+      
+
+

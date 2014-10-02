@@ -27,11 +27,11 @@ cd ..
 mkdir $WORKSPACE/results
 cd $WORKSPACE/results
 
+
 rsync cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt $WORKSPACE/results/testsResults.txt
-
 sed -i "s/COMPARISON;QUEUED/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
-
 rsync $WORKSPACE/results/testsResults.txt cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
+
 
 # --------------------------------------------------------------------------
 # Download the Files
@@ -87,53 +87,28 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   OUTPUT_DIR=$WORKSPACE/results/default-comparison/$WF_DIR
   mkdir -p $OUTPUT_DIR
 
-  #requires checking out Utilities/RelMon from the release. 
-  compare_using_files.py $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE -o $OUTPUT_DIR --metas " $RELEASE_FORMAT @@@ $RELEASE_FORMAT + $PULL_REQUEST_NUMBER " --use_black_file -C -R -p --no_successes -s b2b --standalone || true
+  #requires checking out Utilities/RelMon from the release.
 
-  cd $OUTPUT_DIR
-    cp RelMonSummary.html index.html
-    find . -name "*" | xargs sh -c "sed -i -s 's/..\/RelMonSummary.html/RelMonSummary.html/g' || true"
-  cd ..
+  # create a mini script for running this comparisons in parallel
+  echo '#!/bin/sh -ex' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+  echo 'compare_using_files.py '$WORKSPACE'/results/files/'$WF_DIR'/'$RELEASE_FORMAT'-'$WF_FILE' '$WORKSPACE'/results/files/'$WF_DIR'/'$PULL_REQUEST_NUMBER'-'$WF_FILE' -o '$OUTPUT_DIR' --metas " '$RELEASE_FORMAT' @@@ '$RELEASE_FORMAT' + '$PULL_REQUEST_NUMBER' " --use_black_file -C -R -p --no_successes -s b2b --standalone 2>&1 | tee -a '$OUTPUT_DIR'RelMonComp-'$WF_NUMBER'.log' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
 
-  echo 'compare_using_files.py '$WORKSPACE'/results/files/'$WF_DIR'/'$RELEASE_FORMAT'-'$WF_FILE' '$WORKSPACE'/results/files/'$WF_DIR'/'$PULL_REQUEST_NUMBER'-'$WF_FILE' -o '$OUTPUT_DIR' --metas " '$RELEASE_FORMAT' @@@ '$RELEASE_FORMAT' + '$PULL_REQUEST_NUMBER' " --use_black_file -C -R -p --no_successes -s b2b --standalone || true ' > $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+  echo "pushd $OUTPUT_DIR" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+  echo "cp RelMonSummary.html index.html" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+  echo 'find . -name "*" | xargs sh -c "sed -i -s 's/..\/RelMonSummary.html/RelMonSummary.html/g' || true"' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+  echo "popd" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+
+  chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+
+  # execute the script
+  $WORKSPACE/results/default-comparison/command-$WF_NUMBER &
 
 done
+
+jobs
+wait
 
 echo 'Finished with default comparison'
-
-
-# ----------------------------------------------------------------------------
-# Alternative Comparison
-# ----------------------------------------------------------------------------
-
-ALT_COMP_DIR=$WORKSPACE/results/alternative-comparison
-mkdir -p $ALT_COMP_DIR
-cp $WORKSPACE/cms-bot/comparisons/compareValHists.C $ALT_COMP_DIR
-cp $WORKSPACE/cms-bot/comparisons/makeDiff.sh $ALT_COMP_DIR
-
-
-for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
-
-  WF_BASE_URL=$BASE_URL$WF
-  WF_PR_URL=$PULL_REQUEST_BASE_URL$WF
-  WF_FILE=$(basename $WF)
-  WF_DIR=`echo $WF | cut -d "/" -f1`
-
-  WF_NUMBER=`echo $WF | cut -d'_' -f1`
-
-  BASE_FILE=$WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
-  COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
-
-  cd $ALT_COMP_DIR
-    source $ALT_COMP_DIR/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 1 || true
-  cd ..
-  
-  echo 'source '$ALT_COMP_DIR'/makeDiff.sh '$BASE_FILE' '$COMP_FILE' '$WF_NUMBER'-result 0 1 || true' > $ALT_COMP_DIR/command-$WF_NUMBER
-
-done
-
-echo 'Finished with alternative comparison:'
-
 
 
 # --------------------------------------------------------------------------
@@ -166,5 +141,65 @@ echo  'source '$JR_COMP_DIR'/validateJR.sh '$JR_COMP_DIR'/PR-'$PULL_REQUEST_NUMB
 
 echo 'Finished with JR comparison:'
 
+#sed -i "s/COMPARISON;RUNNING/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
+
+
+# ----------------------------------------------------------------------------
+# Alternative Comparison
+# ----------------------------------------------------------------------------
+
+ALT_COMP_DIR=$WORKSPACE/results/alternative-comparison
+mkdir -p $ALT_COMP_DIR
+DQM_COMP_PARAMS_FILE=$ALT_COMP_DIR/comparisonParams.txt
+
+$WORKSPACE/cms-bot/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE 2>&1 | tee -a $ALT_COMP_DIR/assignedParameters.log
+
+for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
+
+  WF_BASE_URL=$BASE_URL$WF
+  WF_PR_URL=$PULL_REQUEST_BASE_URL$WF
+  WF_FILE=$(basename $WF)
+  WF_DIR=`echo $WF | cut -d "/" -f1`
+
+  WF_NUMBER=`echo $WF | cut -d'_' -f1`
+
+  BASE_FILE=$WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
+  COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
+  
+  mkdir -p $ALT_COMP_DIR/$WF_NUMBER
+
+  cp $WORKSPACE/cms-bot/comparisons/compareValHists.C $ALT_COMP_DIR/$WF_NUMBER
+  cp $WORKSPACE/cms-bot/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
+
+  eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
+
+  echo $MOD
+
+  # create a mini script for running this comparisons in parallel
+  echo '#!/bin/sh -ex' >> $ALT_COMP_DIR/command-$WF_NUMBER
+  echo "pushd $ALT_COMP_DIR/$WF_NUMBER" >> $ALT_COMP_DIR/command-$WF_NUMBER
+  echo "source $ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD 2>&1 | tee -a $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log" >> $ALT_COMP_DIR/command-$WF_NUMBER
+  echo "mv diff.ps $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+  echo "mv diff.pdf $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+  echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+  echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+  echo "popd" >> $ALT_COMP_DIR/command-$WF_NUMBER
+
+
+
+  chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
+  $ALT_COMP_DIR/command-$WF_NUMBER &
+
+done
+
+jobs
+wait
+
+echo 'Finished with alternative comparison:'
+
 sed -i "s/COMPARISON;RUNNING/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
+rsync $WORKSPACE/results/testsResults.txt cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
+
+
+
 

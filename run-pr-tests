@@ -258,12 +258,14 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo "Errors in the RelVals"
 
     echo 'MATRIX_TESTS;ERROR' >> $RESULTS_FILE
+    echo 'COMPARISON;NOTRUN' >> $RESULTS_FILE
 
     ALL_OK=false
     RELVALS_OK=false
   else  
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE
+    echo 'COMPARISON;QUEUED' >> $RESULTS_FILE
 
     #sed -i "s/See comparison with baseline/Still running.../g" $WORKSPACE/summary.html
     

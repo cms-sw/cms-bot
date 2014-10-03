@@ -194,7 +194,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   git cms-addpkg Utilities/StaticAnalyzers
   
   mkdir $WORKSPACE/llvm-analysis
-  USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(getconf _NPROCESSORS_ONLN) checker SCRAM_IGNORE_PACKAGES=Fireworks/% SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
+  SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(getconf _NPROCESSORS_ONLN) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
  
   pwd
   
@@ -258,12 +258,14 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo "Errors in the RelVals"
 
     echo 'MATRIX_TESTS;ERROR' >> $RESULTS_FILE
+    echo 'COMPARISON;NOTRUN' >> $RESULTS_FILE
 
     ALL_OK=false
     RELVALS_OK=false
   else  
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE
+    echo 'COMPARISON;QUEUED' >> $RESULTS_FILE
 
     #sed -i "s/See comparison with baseline/Still running.../g" $WORKSPACE/summary.html
     

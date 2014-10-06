@@ -107,7 +107,7 @@ done
 # the same CMSDIST / PKGTOOLS / CMSSW tags were used to build an IB which 
 # is already available in the apt repository.
 if [ "X$PACKAGE_NAME" = Xcmssw-patch ]; then
-  AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep 'cms[+]cmssw\(-patch|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
+  AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
   for same_tag in $RELEASE_LIST; do
     if echo $ALL_PREVIOUS_RELEASES | grep $same_tag; then
       if echo $AVAILABLE_RELEASES | grep $same_tag; then

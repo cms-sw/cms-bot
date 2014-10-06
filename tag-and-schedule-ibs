@@ -28,7 +28,7 @@ for QUEUE in $RELEASE_QUEUES; do
     git push origin --tags
   fi
 
-  RELEASE_LIST="`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | { grep \"^$QUEUE\" || true; }`"
+  RELEASE_LIST="`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]'| { grep \"^$QUEUE\" || true; }`"
 
   for SCRAM_ARCH in `curl -s -k $CONFIG_MAP_URL | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | sed -e's/.*SCRAM_ARCH=//;s/;.*//'`; do
     echo "RELEASE_NAME=$RELEASE_NAME" > $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
@@ -36,7 +36,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
-    echo "RELEASE_LIST=${RELEASE_LIST}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
   done
 done
 

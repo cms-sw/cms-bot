@@ -160,6 +160,8 @@ echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops
 echo PACKAGE_NAME=$PACKAGE_NAME >> $WORKSPACE/buildprops
 echo CMSSW_RELEASE_BASE=$CMSSW_RELEASE_BASE >> $WORKSPACE/buildprops
+echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} >> $WORKSPACE/buildprops
+echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/buildprops
 
 # This is used to guide the creation of additional files which drive the
 # spawning of extra tests.

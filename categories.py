@@ -548,7 +548,8 @@ CMSSW_CATEGORIES={
    "HLTrigger/Tools", "HLTrigger/btau", "HLTrigger/special",
    "DataFormats/HLTReco",
    "RecoTauTag/HLTProducers", "RecoEgamma/EgammaHLTAlgos",
-   "RecoEgamma/EgammaHLTProducers"
+   "RecoEgamma/EgammaHLTProducers",
+   "HLTrigger/JSONMonitoring",
  ],
  "analysis": [
    "EgammaAnalysis/ElectronTools",

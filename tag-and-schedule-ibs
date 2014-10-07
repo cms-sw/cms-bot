@@ -5,7 +5,7 @@ rm -rf cmssw
 git clone --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git cmssw
 cd cmssw
 
-CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/config.map"
+CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
 for QUEUE in $RELEASE_QUEUES; do
   unset RELEASE_BRANCH
   eval `curl -s -k $CONFIG_MAP_URL | grep "RELEASE_QUEUE=$QUEUE;"`

@@ -8,7 +8,7 @@ cd cmssw
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
 RELEASE_FILTER=${RELEASE_FILTER-.*}
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
-RELEASE_QUEUES="`curl -k -s $CONFIG_MAP_URL | grep -v DISABLED= | grep -e \"SCRAM_ARCH=$ARCHITURE_FILTER;\" | grep -e \"RELEASE_QUEUE=$RELEASE_FILTER;\" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//' | sort -u`"
+RELEASE_QUEUES="`curl -k -s $CONFIG_MAP_URL | grep -v DISABLED= | grep -e \"SCRAM_ARCH=$ARCHITECTURE_FILTER;\" | grep -e \"RELEASE_QUEUE=$RELEASE_FILTER;\" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//' | sort -u`"
 for QUEUE in $RELEASE_QUEUES; do
   unset RELEASE_BRANCH
   eval `curl -s -k $CONFIG_MAP_URL | grep "RELEASE_QUEUE=$QUEUE;"`

@@ -292,7 +292,7 @@ write_comp_IB_table =  function(comparison , tab_pane){
       
       var ar_row = $('<tr></tr>')
       var ar_cell = $('<td></td>')
-      ar_cell.text(architectures[i])
+      fill_arch_cell( ar_cell , architectures[ i ] , comparison.cmsdistTags , current_tag )
       ar_row.append(ar_cell)
       add_tests_to_row(building_results,ar_row, architectures[i],'builds')
       add_tests_to_row(uTests_results,ar_row, architectures[i],'utests')
@@ -308,6 +308,43 @@ write_comp_IB_table =  function(comparison , tab_pane){
 
 }
 
+/**
+ * fills the arch cell with a link to the cmsdist tag used to build that IB if 
+ * the tag exsists, current_tag is the current IB being processed
+ */
+fill_arch_cell = function( cell , architecture , cmsdistTags , current_tag ){
+
+  // if there is no information about the tag I only add text
+  if( cmsdistTags[ architecture ] == null ){
+    cell.text( architecture )
+  }else{
+    
+    var tagName = cmsdistTags[ architecture ]
+    var intendedTagName = 'IB/'.concat( current_tag ,'/', architecture )
+    var link = $( '<a>' )
+    link.attr( 'href' , 'https://github.com/cms-sw/cmsdist/commits/' + tagName )
+    var tooltipText = ''
+    
+    if( tagName == 'Not Found' ){
+      cell.text( architecture )
+      return      
+    }else if ( tagName != intendedTagName ){
+      tooltipText = 'Used same cmsdist tag as ' + tagName.replace( 'IB/' , '').replace( '/' + architecture , '')
+    }else { 
+
+      tooltipText = 'See cmsdist tag used for this build'
+
+    }
+
+ 
+    link.text( architecture )
+    cell.append( link ).attr( 'data-toggle' , 'tooltip' )
+    cell.append( link ).attr( 'data-placement' , 'right' )
+    cell.append( link ).attr( 'title' , tooltipText )
+
+  }
+
+}
 
 
 //----------------------------------------------------------

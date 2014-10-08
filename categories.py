@@ -911,6 +911,8 @@ CMSSW_CATEGORIES={
    "CalibCalorimetry/HcalTPGIO",
    "EventFilter/CSCTFRawToDigi",
    "DataFormats/L1TrackTrigger",
+   "L1Trigger/L1TCalorimeter",
+   "L1Trigger/L1TCommon",
    "L1Trigger/TrackFindingTracklet",
    "L1Trigger/TrackTrigger",
    "L1Trigger/TrackFindingAM",

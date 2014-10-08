@@ -377,8 +377,9 @@ CMSSW_CATEGORIES={
    "RecoJets/JetAssociationAlgorithms",
    "RecoJets/JetAssociationProducers",
    "RecoJets/JetPlusTracks",
-   "RecoJets/JetProducers"
- ], 
+   "RecoJets/JetProducers",
+   "DataFormats/Candidate"
+ ],
  "db": [
    "CondFormats/EgammaObjects",
    "CondFormats/GeometryObjects",
@@ -547,7 +548,8 @@ CMSSW_CATEGORIES={
    "HLTrigger/Tools", "HLTrigger/btau", "HLTrigger/special",
    "DataFormats/HLTReco",
    "RecoTauTag/HLTProducers", "RecoEgamma/EgammaHLTAlgos",
-   "RecoEgamma/EgammaHLTProducers"
+   "RecoEgamma/EgammaHLTProducers",
+   "HLTrigger/JSONMonitoring",
  ],
  "analysis": [
    "EgammaAnalysis/ElectronTools",
@@ -909,6 +911,8 @@ CMSSW_CATEGORIES={
    "CalibCalorimetry/HcalTPGIO",
    "EventFilter/CSCTFRawToDigi",
    "DataFormats/L1TrackTrigger",
+   "L1Trigger/L1TCalorimeter",
+   "L1Trigger/L1TCommon",
    "L1Trigger/TrackFindingTracklet",
    "L1Trigger/TrackTrigger",
    "L1Trigger/TrackFindingAM",

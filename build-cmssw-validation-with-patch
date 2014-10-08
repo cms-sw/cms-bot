@@ -38,7 +38,8 @@ popd
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 
-eval `cat CMSDIST/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
+eval `curl -s -k $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 # Use git clone -b to avoid ambiguities between branch and refs.
 
 # Cleanup before checking out

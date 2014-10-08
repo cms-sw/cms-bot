@@ -5,10 +5,13 @@ rm -rf cmssw
 git clone --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git cmssw
 cd cmssw
 
-CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/config.map"
+CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
+RELEASE_FILTER=${RELEASE_FILTER-.*}
+ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
+RELEASE_QUEUES="`curl -k -s $CONFIG_MAP_URL | grep -v "DISABLED=" | grep -e \"SCRAM_ARCH=$ARCHITECTURE_FILTER;\" | grep -e \"RELEASE_QUEUE=$RELEASE_FILTER;\" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//' | sort -u`"
 for QUEUE in $RELEASE_QUEUES; do
   unset RELEASE_BRANCH
-  eval `curl -s -k $CONFIG_MAP_URL | grep "RELEASE_QUEUE=$QUEUE;"`
+  eval `curl -s -k $CONFIG_MAP_URL | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;"`
   RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE} 
   git checkout $RELEASE_BRANCH
   RELEASE_NAME=`date +${QUEUE}_${DATE}`
@@ -28,17 +31,29 @@ for QUEUE in $RELEASE_QUEUES; do
     git push origin --tags
   fi
 
-  for SCRAM_ARCH in `curl -s -k $CONFIG_MAP_URL | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | sed -e's/.*SCRAM_ARCH=//;s/;.*//'`; do
+  RELEASE_LIST="`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]'| { grep \"^$QUEUE\" || true; }`"
+
+  for ARCH_CONFIG in `curl -s -k $CONFIG_MAP_URL | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;"`; do
+    eval $ARCH_CONFIG
     echo "RELEASE_NAME=$RELEASE_NAME" > $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "DATE_FORMAT=$DATE" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    if [ "X$ALWAYS_BUILD" = X ]; then
+      echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    else
+      echo "RELEASE_LIST=" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    fi
   done
 done
 
 ls $WORKSPACE
 
+# Delete all files after having created them so that we do not build unless
+# requested.
 if [ "X$SCHEDULE_BUILDS" = Xfalse ]; then
-  exit 1
+  mkdir -p $WORKSPACE/not-scheduled
+  touch $WORKSPACE/properties-x.txt
+  mv $WORKSPACE/properties-*.txt $WORKSPACE/not-scheduled
 fi

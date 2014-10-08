@@ -739,7 +739,7 @@ MAGIC_COMMAND_FIND_STATIC_CHECKS = 'curl -s -k --head %s | head -n 1' % STATIC_C
 
 MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_URL
 
-MAGIC_COMMAND_GET_CONGIG_MAP = 'wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_0_X/stable/config.map' 
+MAGIC_COMMAND_GET_CONGIG_MAP = 'wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map' 
 
 # this will be filled using config.map by get_config_map_params()
 ARCHITECTURES = []

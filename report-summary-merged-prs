@@ -14,10 +14,10 @@ parser = OptionParser(usage="usage: %prog CMSSW_REPO CMSDIST_REPO COMPARISON_PAI
                             "\n CMSSW_REPO: location of the cmssw repository. This must be a bare clone ( git clone --bare )"
                             "\n CMSDIST_REPO: location of the cmsdist repository. This must be a normal clone"
 			    "\n for example: cmssw.git or /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git"
-                            "\n COMPARISON_PAIRS: a list separated by commas with the pairs of tags or "
-			    "\n heads or branches that you want to compare, this pairs should be separated by .."
+                            "\n START_DATE: the date of the earliest IB to show. It must be in the format"
+			    "\n <year>-<day>-<month>-<hour>"
                             "\n For example:"
-			    "\n CMSSW_7_1_0_pre2..CMSSW_7_0_X,CMSSW_6_2_7..CMSSW_6_2_X")
+			    "\n 2014-10-08-1400")
 
 (options, args) = parser.parse_args()
 
@@ -33,9 +33,7 @@ if (len(args)<3):
 # Remember that the cmssw repo is a bare clone while cmsdist is a complete clone
 CMSSW_REPO = args[ 0 ]
 CMSDIST_REPO = args[ 1 ]
-requested_comparisons_param = args[ 2 ]
-
-requested_comparisons = requested_comparisons_param.split(",")
+START_DATE = args[ 2 ]
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions
@@ -64,7 +62,8 @@ def get_config_map_params():
   f = open( 'config.map' , 'r' )
   for line in f.readlines():
     params = parse_config_map_line ( line.rstrip() ) 
-
+    print params
+    
     arch = params[ 'SCRAM_ARCH' ]
     if arch not in ARCHITECTURES:
       ARCHITECTURES.append( arch )
@@ -81,14 +80,20 @@ def get_config_map_params():
     if sp_rel_name != 'X' and sp_rel_name not in SPECIAL_RELEASES:
       SPECIAL_RELEASES.append( sp_rel_name )
 
-  SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+    if not params.get( 'DISABLED' ) and release_queue not in RELEASE_QUEUES:
+      RELEASE_QUEUES.append( release_queue ) 
 
+  SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+  RELEASE_QUEUES.sort()
+ 
   print 'ARCHS:'
   print ARCHITECTURES
   print 'RELEASES_BRANCHES:'
   print RELEASES_BRANCHES
   print 'special releases'
   print SPECIAL_RELEASES
+  print 'I am going to show:'
+  print RELEASE_QUEUES
 
 
 
@@ -753,6 +758,10 @@ SPECIAL_RELEASES = [ 'SLHC' ]
 # this will be filled using config.map by get_config_map_params()
 SP_REL_REGEX = ""
 
+# These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
+RELEASE_QUEUES = []
+
+
 MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
 
 class BuildResultsKeys:
@@ -783,7 +792,9 @@ get_config_map_params()
 
 SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
 
-for comp in requested_comparisons:
+REQUESTED_COMPARISONS = [ ( '%s_%s..%s' % ( rq , START_DATE , rq ) ) for rq in RELEASE_QUEUES ]
+
+for comp in REQUESTED_COMPARISONS:
   start_tag = comp.split("..")[0]
   end_tag = comp.split("..")[1]
   release_queue = start_tag

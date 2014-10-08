@@ -10,8 +10,9 @@ from gitmergesgraph import *
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog REPO COMPARISON_PAIRS" 
-                            "\n REPO: location of the repository."
+parser = OptionParser(usage="usage: %prog CMSSW_REPO CMSDIST_REPO COMPARISON_PAIRS" 
+                            "\n CMSSW_REPO: location of the cmssw repository. This must be a bare clone ( git clone --bare )"
+                            "\n CMSDIST_REPO: location of the cmsdist repository. This must be a normal clone"
 			    "\n for example: cmssw.git or /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git"
                             "\n COMPARISON_PAIRS: a list separated by commas with the pairs of tags or "
 			    "\n heads or branches that you want to compare, this pairs should be separated by .."
@@ -24,13 +25,15 @@ parser = OptionParser(usage="usage: %prog REPO COMPARISON_PAIRS"
 #---- Review of arguments
 #-----------------------------------------------------------------------------------
 
-if (len(args)<2):
+if (len(args)<3):
   print 'not enough arguments\n'
   parser.print_help()
   exit()
 
-repo = args[0]
-requested_comparisons_param = args[1]
+# Remember that the cmssw repo is a bare clone while cmsdist is a complete clone
+CMSSW_REPO = args[ 0 ]
+CMSDIST_REPO = args[ 1 ]
+requested_comparisons_param = args[ 2 ]
 
 requested_comparisons = requested_comparisons_param.split(",")
 
@@ -269,13 +272,32 @@ def get_results_details_one_build_file(file):
 
   return True,nErrorInfo
 
+
 #
 # parses the tests results for each file in output. It distinguishes if it is 
-# build, unit tests, relvals, or addon tests logs. 
+# build, unit tests, relvals, or addon tests logs. The the result of the parsing
+# is saved in the parameter results.
+# type can be 'relvals', 'utests', 'addON', 'builds'
 #
-def analyze_tests_results(output,results,arch,type):
+# schema of results:
+# {
+#   "<IBName>": [ result_arch1, result_arch2, ... result_archN ]
+# }
+# schema of result_arch
+# {
+#   "arch"    : "<architecture>"
+#   "file"    : "<location of the result>"
+#   "passed"  : <true or false> ( if not applicable the value is true )
+#   "details" : <details for the tests> ( can be empty if not applicable, but not undefined ) 
+# }
+#
+def analyze_tests_results( output , results , arch , type ):
   for line in output.splitlines():
     m = re.search('CMSSW.*[0-9]/', line)
+    if not m:
+      print 'Ignoring line:\n%s' % line
+      continue
+ 
     rel_name = line[m.start():m.end()-1]
     result_arch = {}
     result_arch['arch'] = arch
@@ -301,6 +323,7 @@ def analyze_tests_results(output,results,arch,type):
       results[rel_name] = []
       
     results[rel_name].append(result_arch)
+
  
 # returns a list of tags based on git log output
 # It uses the release queue name to filter the tags, this avoids having
@@ -447,8 +470,45 @@ def compare_tags( tags , graph ):
     comparisons.append(comp)
   return comparisons
 
+#
+# Executes the command to get the tags 
+# schema of all_tags_found:
+# {
+#   "<IBName>": { 
+#                 "<arch_name>" : "<tag_name>" 
+#               }
+# }
+def execute_magic_command_get_cmsdist_tags(): 
+  all_tags_found = {}
+  for arch in ARCHITECTURES:
+    command_to_execute = MAGIC_COMMAND_CMSDIST_TAGS.replace( 'ARCHITECTURE' , arch )
+    out,err,ret_code = get_output_command( command_to_execute )
 
-def execute_magic_command_find_results(results,type):
+    for line in out.splitlines():
+      m = re.search('CMSSW.*[0-9]/', line)
+      if not m:
+        print 'Ignoring line:\n%s' % line
+        continue
+  
+      rel_name = line[m.start():m.end()-1]
+
+      if not all_tags_found.get( rel_name ):
+        all_tags_found[ rel_name ] = {}
+
+      all_tags_found[ rel_name ][ arch ] = line
+
+  print 'ALL TAGS'
+  print all_tags_found
+  return all_tags_found 
+
+
+#
+# Executes the a command to get the results for the relvals, unit tests, 
+# addon tests, and compitlation tests
+# It saves the results in the parameter 'results' 
+# type can be 'relvals', 'utests', 'addON', 'builds'
+#
+def execute_magic_command_find_results( results , type ):
   for arch in ARCHITECTURES:
     if type == 'relvals':
       base_command = MAGIC_COMMAD_FIND_RESULTS_RELVALS
@@ -462,9 +522,9 @@ def execute_magic_command_find_results(results,type):
       print 'not a valid test type %s' %type
       exit(1)
 
-    command_to_execute = base_command.replace('ARCHITECTURE',arch)
-    out,err,ret_code = get_output_command(command_to_execute)
-    analyze_tests_results(out,results,arch,type)
+    command_to_execute = base_command.replace( 'ARCHITECTURE' , arch )
+    out,err,ret_code = get_output_command( command_to_execute )
+    analyze_tests_results( out , results , arch , type )
 
 
 def print_results(results):
@@ -481,6 +541,9 @@ def print_results(results):
       print '\t' + 'HLT Tests: ' + comp['hlt_tests']
 
       print '\t' + 'Static Checks: ' + comp['static_checks']
+
+      cmsdist_tags = comp['cmsdistTags']
+      print '\t' + 'cmsdist Tags:'+ str( cmsdist_tags )
 
       builds_results = [res['arch']+':'+str(res['passed'])+':'+str(res['details']) for res in comp['builds'] ]
       print '\t' + 'Builds:'+ str(builds_results)
@@ -499,10 +562,39 @@ def print_results(results):
 
       from_merge_commit = [pr['number'] for pr in comp['merged_prs'] if pr['from_merge_commit']]
       print '\t' + 'From merge commit' + str(from_merge_commit)
+
+
 #
-# merges the results of the tests with the prs structure
+# Iterates over the IBs comparisons, if an IB doesn't had a tag for an architecture, the previous tag is 
+# assigned. For example, for arch slc6_amd64_gcc481
+# 1. CMSSW_7_1_X_2014-10-02-1500 was built using the tag IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481 
+# 2. There is no tag for CMSSW_7_1_X_2014-10-03-0200 in cmsdist
 #
-def add_tests_to_results(results, unit_tests, relvals_results,addon_results, build_results):
+# Then, it assumes that the tag used for CMSSW_7_1_X_2014-10-03-0200 was IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481
+#
+def fill_missing_cmsdist_tags( results ):
+
+  for rq in results:
+    previous_cmsdist_tags = {}
+    for comp in rq['comparisons']:
+      rel_name = comp['compared_tags'].split('-->')[1]
+
+      for arch in comp['tests_archs']:
+        current_ib_tag_arch = comp[ 'cmsdistTags' ].get( arch )
+        if current_ib_tag_arch:
+          previous_cmsdist_tags[ arch ] = current_ib_tag_arch
+        else:
+          if previous_cmsdist_tags.get( arch ):
+            comp[ 'cmsdistTags' ][ arch ] = previous_cmsdist_tags[ arch ]
+          else:
+            comp[ 'cmsdistTags' ][ arch ] = 'Not Found'
+           
+
+
+#
+# merges the results of the tests with the structure of the IBs tags and the pull requests
+# 
+def add_tests_to_results( results, unit_tests, relvals_results , addon_results , build_results, cmsdist_tags_results ):
   for rq in results:
     for comp in rq['comparisons']:
       rel_name = comp['compared_tags'].split('-->')[1]
@@ -510,12 +602,14 @@ def add_tests_to_results(results, unit_tests, relvals_results,addon_results, bui
       utres = unit_tests.get(rel_name)
       adonres = addon_results.get(rel_name)
       buildsres = build_results.get(rel_name)
+      cmsdist_tags = cmsdist_tags_results.get(rel_name)
 
-      comp['relvals'] = rvsres if rvsres else []
-      comp['utests'] = utres if utres else []
-      comp['addons'] = adonres if adonres else []
-      comp['builds'] = buildsres if buildsres else []
-
+      comp[ 'relvals' ] = rvsres if rvsres else []
+      comp[ 'utests' ] = utres if utres else []
+      comp[ 'addons' ] = adonres if adonres else []
+      comp[ 'builds' ] = buildsres if buildsres else []
+      comp[ 'cmsdistTags' ] = cmsdist_tags if cmsdist_tags else {}
+ 
       a = [t['arch'] for t in utres] if utres else []
       b = [t['arch'] for t in rvsres] if rvsres else []
       c = [t['arch'] for t in buildsres] if buildsres else []
@@ -530,6 +624,9 @@ def add_tests_to_results(results, unit_tests, relvals_results,addon_results, bui
         comp['utests'].append(result)
 
       comp['tests_archs'] = list(set(a+b+c))
+
+  fill_missing_cmsdist_tags( results )
+
 
 def find_static_results(comparisons):
   for comp in comparisons:
@@ -617,14 +714,16 @@ def identify_release_groups(results):
 #---- Start of execution
 #-----------------------------------------------------------------------------------
 
-# I used this type of concatenation because the string has %s inside
-MAGIC_COMMAND_PRS  = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
+MAGIC_COMMAND_CMSDIST_TAGS = 'pushd %s; git tag -l IB/*/ARCHITECTURE; popd' % CMSDIST_REPO
 
-MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
+# I used this type of concatenation because the string has %s inside
+MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
+
+MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
 
 MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
 
-MAGIC_COMMAND_TAGS = 'GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
+MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
 
 MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
 
@@ -654,7 +753,7 @@ SPECIAL_RELEASES = [ 'SLHC' ]
 # this will be filled using config.map by get_config_map_params()
 SP_REL_REGEX = ""
 
-MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+repo+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
+MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
 
 class BuildResultsKeys:
   DICT_ERROR = 'dictError'
@@ -697,8 +796,7 @@ for comp in requested_comparisons:
 
   print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
 
-  # load the graph fo the history
-
+  # load the graph to check the history and identify merge prs and commits
   release_branch = RELEASES_BRANCHES[ release_queue ]
   graph = load_graph( release_branch , -1 )
  
@@ -722,24 +820,24 @@ for comp in requested_comparisons:
   print 
   print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
 
-build_results = {}
+cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
 
-execute_magic_command_find_results(build_results,'builds')
+build_results = {}
+execute_magic_command_find_results( build_results , 'builds' )
 
 relvals_results = {}
-
-execute_magic_command_find_results(relvals_results,'relvals')
+execute_magic_command_find_results( relvals_results , 'relvals' )
 
 unit_tests_results = {}
-
-execute_magic_command_find_results(unit_tests_results,'utests')
+execute_magic_command_find_results( unit_tests_results , 'utests' )
 
 addOn_tests_results = {}
+execute_magic_command_find_results( addOn_tests_results ,'addOn' )
 
-execute_magic_command_find_results(addOn_tests_results,'addOn')
 
-add_tests_to_results(results, unit_tests_results, relvals_results,addOn_tests_results, build_results)
+add_tests_to_results( results , unit_tests_results, relvals_results , addOn_tests_results, build_results , cmsdist_tags_results )
 print_results(results)
+
 
 structure = identify_release_groups(results)
 

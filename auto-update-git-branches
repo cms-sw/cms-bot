@@ -89,3 +89,4 @@ updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/root6
 updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/asan
 updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/geant10
 updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/next
+updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/debug

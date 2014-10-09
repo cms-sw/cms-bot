@@ -31,7 +31,7 @@ for QUEUE in $RELEASE_QUEUES; do
     git push origin --tags
   fi
 
-  RELEASE_LIST="`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]'| { grep \"^$QUEUE\" || true; }`"
+  RELEASE_LIST="`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]'| { grep \"^${QUEUE}_20\" || true; }`"
 
   for ARCH_CONFIG in `curl -s -k $CONFIG_MAP_URL | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;"`; do
     eval $ARCH_CONFIG

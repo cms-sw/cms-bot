@@ -418,16 +418,26 @@ writeComparisonLinkGithub = function(comparedTags, tab_pane){
 
 /*
 *
-* This function writes on the page the pull requests involved in the comparison between 2 tags
+* Writes on the tab the pull requests involved in the comparison between 2 tags. 
+* It also writes the results of the IB if it is an IB
 */
 write_comparison = function(comparison,tab_pane){
 
   var compTags = comparison.compared_tags
-  write_comp_IB_table(comparison,tab_pane)
   var pull_requests = comparison.merged_prs
 
-  //if there were not merged prs in this comparison I alert it
+  //if the tag is an IB, there are no differences in cmssw, and the ib was not built, I don't show it.
+  var current_tag = comparison.compared_tags.split("-->")[1]
+  var isIB = current_tag.indexOf( '-' ) >= 0
+  var noCMSSWdiffs = comparison.merged_prs.length == 0
+  var noIBBuilt = comparison.tests_archs.length == 0
 
+  if( isIB && noCMSSWdiffs && noIBBuilt ){
+    return
+  }
+
+  write_comp_IB_table(comparison,tab_pane)
+  //if there were not merged prs in this comparison I informed it
   if(comparison.merged_prs.length!=0){
     
     writeComparisonLinkGithub(compTags,tab_pane)

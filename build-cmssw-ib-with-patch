@@ -163,6 +163,7 @@ echo PACKAGE_NAME=$PACKAGE_NAME >> $WORKSPACE/buildprops
 echo CMSSW_RELEASE_BASE=$CMSSW_RELEASE_BASE >> $WORKSPACE/buildprops
 echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} >> $WORKSPACE/buildprops
 echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/buildprops
+echo RELEASE_QUEUE=${RELEASE_QUEUE} >> $WORKSPACE/buildprops
 
 # This is used to guide the creation of additional files which drive the
 # spawning of extra tests.
@@ -170,4 +171,5 @@ CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map
 for x in `curl -k -s $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
   echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $x-properties
   echo "ARCHITECTURE=${ARCHITECTURE}" >> $x-properties
+  echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $x-properties
 done

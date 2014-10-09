@@ -5,8 +5,9 @@ cd $WORKSPACE
 # Use helper to get PR.
 
 RELEASE_QUEUE=`cms-bot/get-pr-branch $PULL_REQUEST`
+CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map"
 
-for line in `curl https://github.com/cms-sw/cms-bot/blob/master/config.map | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= | grep SCRAM_ARCH=$ARCHITECTURE_FILTER;`; do
+for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= | grep SCRAM_ARCH=$ARCHITECTURE_FILTER;`; do
   (
     eval $line
     echo PULL_REQUEST=${PULL_REQUEST} > properties-pr-${SCRAM_ARCH}.txt

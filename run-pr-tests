@@ -27,9 +27,7 @@ git config --global user.github cmsbuild
 export SCRAM_ARCH=$ARCHITECTURE
 
 if [[ $RELEASE_FORMAT != *-* ]]; then
-  RELEASE_NAME=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
-else
-  RELEASE_NAME=$RELEASE_FORMAT
+  RELEASE_FORMAT=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
 fi
 
 # creation of results summary file
@@ -39,11 +37,11 @@ RESULTS_FILE=$WORKSPACE/testsResults.txt
 touch $RESULTS_FILE
 echo 'PR_NUMBER;'$PULL_REQUEST >> $RESULTS_FILE
 echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
-echo 'BASE_IB;'$RELEASE_NAME >> $RESULTS_FILE
+echo 'BASE_IB;'$RELEASE_FORMAT >> $RESULTS_FILE
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
 
-scram project $RELEASE_NAME
-cd $RELEASE_NAME
+scram project $RELEASE_FORMAT
+cd $RELEASE_FORMAT
 eval `scram run -sh`
 cd src
 git config --replace-all merge.renamelimit 2500
@@ -72,8 +70,8 @@ done
 ONLY_FIREWORKS=false
 if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
 
-  ls $WORKSPACE/$RELEASE_NAME/src
-  NUM_DIRS=$((`(find $WORKSPACE/$RELEASE_NAME/src -maxdepth 1 -type d -print | grep -v '.git' | grep -v 'FWCore' | wc -l)`-1))
+  ls $WORKSPACE/$RELEASE_FORMAT/src
+  NUM_DIRS=$((`(find $WORKSPACE/$RELEASE_FORMAT/src -maxdepth 1 -type d -print | grep -v '.git' | grep -v 'FWCore' | wc -l)`-1))
 
   if [ "$NUM_DIRS" == 1 ]; then
 
@@ -89,7 +87,7 @@ fi
 
 #get the latest commit
 
-pushd $WORKSPACE/$RELEASE_NAME/src
+pushd $WORKSPACE/$RELEASE_FORMAT/src
 
   if [ "X$BRANCH_NAME" = X ]; then
 
@@ -107,11 +105,11 @@ popd
 # Force the run of DQM tests if necessary
 ############################################
 
-if ls $WORKSPACE/$RELEASE_NAME/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
+if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
   echo "I will make sure that DQM tests will be run"
-  if ls $WORKSPACE/$RELEASE_NAME/src/| grep "DQMServices"; then
+  if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep "DQMServices"; then
     echo “DQMServices is already there”
-      if ls $WORKSPACE/$RELEASE_NAME/src/DQMServices/| grep "Components"; then
+      if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
         echo "and DQMServices/Components is there"
       else
         git cms-addpkg DQMServices/Components
@@ -153,9 +151,9 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   #######################################
   # check if DQM Tests where run
   #######################################
-  if ls $WORKSPACE/$RELEASE_NAME/src/DQMServices/Components/test/ | grep -v -E "[a-z]+"; then 
+  if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/Components/test/ | grep -v -E "[a-z]+"; then 
     echo "DQM Tests were run!"
-    pushd $WORKSPACE/$RELEASE_NAME/src/DQMServices/Components/test/
+    pushd $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/Components/test/
     ls | grep -v -E "[a-z]+" | xargs -I ARG mv ARG DQMTestsResults
     mkdir $WORKSPACE/DQMTestsResults
     cp -r DQMTestsResults $WORKSPACE/DQMTestsResults
@@ -195,7 +193,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   
-  pushd $WORKSPACE/$RELEASE_NAME
+  pushd $WORKSPACE/$RELEASE_FORMAT
   git cms-addpkg Utilities/StaticAnalyzers
   
   mkdir $WORKSPACE/llvm-analysis
@@ -203,7 +201,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
  
   pwd
   
-  cp -R $WORKSPACE/$RELEASE_NAME/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
+  cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
   
@@ -239,7 +237,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     if [ "X$USE_DAS_CACHE" = Xtrue ]; then
       wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_1_X/stable/das-cache.file
     
-      case $RELEASE_NAME in 
+      case $RELEASE_FORMAT in 
         *THREADED*)
         echo "Threaded!"
         runTheMatrix.py --command '--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe' --das-options="--cache das-cache.file" --job-reports -j $(getconf _NPROCESSORS_ONLN) -s $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
@@ -248,7 +246,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
     else
 
-      case $RELEASE_NAME in 
+      case $RELEASE_FORMAT in 
         *THREADED*)
         echo "Threaded!"
         runTheMatrix.py --command '--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe' --das-options="--cache das-cache.file" --job-reports -j $(getconf _NPROCESSORS_ONLN) -s $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;

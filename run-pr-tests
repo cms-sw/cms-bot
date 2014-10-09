@@ -36,7 +36,13 @@ export PATH=$PWD/cms-git-tools:$PATH
 which git-cms-merge-topic
 git config --global user.github cmsbuild
 export SCRAM_ARCH=$ARCHITECTURE
-RELEASE_NAME=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
+
+if [[ $RELEASE_FORMAT != *-* ]]; then
+  RELEASE_NAME=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
+else
+  RELEASE_NAME=$RELEASE_FORMAT
+fi
+
 scram project $RELEASE_NAME
 cd $RELEASE_NAME
 eval `scram run -sh`

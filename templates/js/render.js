@@ -211,9 +211,13 @@ add_tests_to_row = function(tests,row,arch,type){
 
 }
 
-
-add_static_analyzer_link = function (title_cell,url){
-  if (url != ''){
+/**
+ * Generates the static analyzer link and adds it to the cell for the IB
+ */
+add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
+  if ( isFound == 'found'){
+    // for now the arch is hardcoded, this needs to be changed eventually
+    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/slc6_amd64_gcc481/llvm-analysis/index.html'
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
     sa_link.append($('<span></span>').text(' Static Analyzer'))
@@ -232,8 +236,12 @@ add_static_analyzer_link = function (title_cell,url){
   }
 }
 
-add_hlt_tests_link = function (title_cell,url){
-  if (url != ''){
+/**
+ * Generates the hlt tests link link and adds it to the cell for the IB
+ */
+add_hlt_tests_link = function ( title_cell , isFound , currentTag ){
+  if ( isFound == 'found' ){
+    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/HLT-Validation/' + currentTag 
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' HLT Validation'))
@@ -258,11 +266,11 @@ write_comp_IB_table =  function(comparison , tab_pane){
   var title_cell = $('<td></td>').append(title_compared_tags)
   //here I check the result of the relvals
   
-  add_static_analyzer_link(title_cell,comparison.static_checks)
+  add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
   title_cell.append($('<br>'))
-  add_hlt_tests_link(title_cell,comparison.hlt_tests)
+   add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
 
-  var title_row = $('<tr></tr>')
+  var title_row = $('<tr>')
   var relvals_results = comparison.relvals
   var uTests_results = comparison.utests
   var addons_results = comparison.addons
@@ -425,16 +433,6 @@ write_comparison = function(comparison,tab_pane){
 
   var compTags = comparison.compared_tags
   var pull_requests = comparison.merged_prs
-
-  //if the tag is an IB, there are no differences in cmssw, and the ib was not built, I don't show it.
-  var current_tag = comparison.compared_tags.split("-->")[1]
-  var isIB = current_tag.indexOf( '-' ) >= 0
-  var noCMSSWdiffs = comparison.merged_prs.length == 0
-  var noIBBuilt = comparison.tests_archs.length == 0
-
-  if( isIB && noCMSSWdiffs && noIBBuilt ){
-    return
-  }
 
   write_comp_IB_table(comparison,tab_pane)
   //if there were not merged prs in this comparison I informed it

@@ -169,7 +169,7 @@ echo RELEASE_QUEUE=${RELEASE_QUEUE} >> $WORKSPACE/buildprops
 # spawning of extra tests.
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
 for x in `curl -k -s $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
-  echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $x-properties
-  echo "ARCHITECTURE=${ARCHITECTURE}" >> $x-properties
-  echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $x-properties
+  echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $WORKSPACE/$x-properties
+  echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/$x-properties
+  echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/$x-properties
 done

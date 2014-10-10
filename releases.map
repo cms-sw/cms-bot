@@ -1095,3 +1095,4 @@ architecture=slc5_amd64_gcc462;label=CMSSW_5_3_21;type=Production;state=Announce
 architecture=slc6_amd64_gcc472;label=CMSSW_5_3_21;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc481;label=CMSSW_7_1_10_patch2;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc481;label=CMSSW_7_2_0_pre8;type=Development;state=Announced;prodarch=1;
+architecture=slc6_amd64_gcc481;label=CMSSW_7_1_9_patch2;type=Production;state=Announced;prodarch=1;

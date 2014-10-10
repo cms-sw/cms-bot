@@ -154,7 +154,7 @@ if [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
         git tag IB/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
         git push originrw IB/$RELEASE_NAME/$ARCHITECTURE || true
     fi
-  popd CMSDIST
+  popd
 fi
 
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops

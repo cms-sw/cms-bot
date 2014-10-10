@@ -81,7 +81,15 @@ def get_config_map_params():
       SPECIAL_RELEASES.append( sp_rel_name )
 
     if not params.get( 'DISABLED' ) and release_queue not in RELEASE_QUEUES:
-      RELEASE_QUEUES.append( release_queue ) 
+      RELEASE_QUEUES.append( release_queue )
+
+    additional_tests = params.get( 'ADDITIONAL_TESTS' )
+
+    if additional_tests:
+      if not RELEASE_ADITIONAL_TESTS.get( release_queue ):
+        RELEASE_ADITIONAL_TESTS[ release_queue ] = {}
+      RELEASE_ADITIONAL_TESTS[ release_queue ][ arch ] = [ test for test in additional_tests.split( ',' ) if test != 'baseline' and test != 'dqm' ]
+        
 
   SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
   RELEASE_QUEUES.sort()
@@ -92,6 +100,8 @@ def get_config_map_params():
   print RELEASES_BRANCHES
   print 'special releases'
   print SPECIAL_RELEASES
+  print 'aditional tests'
+  print RELEASE_ADITIONAL_TESTS
   print 'I am going to show:'
   print RELEASE_QUEUES
 
@@ -595,9 +605,42 @@ def fill_missing_cmsdist_tags( results ):
             comp[ 'cmsdistTags' ][ arch ] = 'Not Found'
            
 
+#
+# it cleans the comparisons which have the following characteristics:
+# 1. Is an IB
+# 2. Has no new pull requests
+# 3. Has no IB results
+#
+def cleanup_not_built_tags( results ):
+
+  for rq in results:
+    #for comp in rq['comparisons']:
+    #  isIB = comp[ 'isIB' ]
+    #  no_prs = len( comp[ 'merged_prs' ] ) == 0
+    #  noIBBuilt = len( comp[ 'tests_archs' ] ) == 0 
+
+    #  if ( isIB and no_prs and noIBBuilt ):
+    #    rq[ 'comparisons' ].remove( comp )
+    #    print 'Removed:'
+    #    print comp['compared_tags'].split('-->')[1]
+    #  else:
+    #    print 'Not Removed:'
+    #    print comp['compared_tags'].split('-->')[1]
+
+    #  print comp[ 'isIB' ]
+    #  print comp[ 'isIB' ]
+    #  print comp[ 'merged_prs' ]
+    #  print len( comp[ 'merged_prs' ] )
+    #  print comp[ 'tests_archs' ]
+    #  print len( comp[ 'tests_archs' ] )
+    #  print '------'
+
+    clean_comparisons = [ comp for comp in rq['comparisons'] if not ( comp[ 'isIB' ] and len( comp[ 'merged_prs' ] ) == 0 and len( comp[ 'tests_archs' ] ) == 0 ) ] 
+    rq['comparisons'] = clean_comparisons
 
 #
 # merges the results of the tests with the structure of the IBs tags and the pull requests
+# it also marks the comparisons that correspond to an IB
 # 
 def add_tests_to_results( results, unit_tests, relvals_results , addon_results , build_results, cmsdist_tags_results ):
   for rq in results:
@@ -614,6 +657,12 @@ def add_tests_to_results( results, unit_tests, relvals_results , addon_results ,
       comp[ 'addons' ] = adonres if adonres else []
       comp[ 'builds' ] = buildsres if buildsres else []
       comp[ 'cmsdistTags' ] = cmsdist_tags if cmsdist_tags else {}
+      comp[ 'isIB' ] = '-' in rel_name
+
+      if not comp.get( 'static_checks' ):
+        comp[ 'static_checks' ] = 'not-found'
+      if not comp.get( 'hlt_tests' ):
+        comp['hlt_tests' ] = 'not-found' 
  
       a = [t['arch'] for t in utres] if utres else []
       b = [t['arch'] for t in rvsres] if rvsres else []
@@ -630,44 +679,45 @@ def add_tests_to_results( results, unit_tests, relvals_results , addon_results ,
 
       comp['tests_archs'] = list(set(a+b+c))
 
-  fill_missing_cmsdist_tags( results )
 
-
-def find_static_results(comparisons):
+#
+# Finds for an IB the results of the static tests
+#
+def find_static_results( comparisons , architecture ):
   for comp in comparisons:
     rel_name = comp['compared_tags'].split('-->')[1]
-    comp['static_checks'] = find_one_static_check(rel_name) 
-
-def find_hlt_tests_results(comparisons):
+    comp['static_checks'] = find_one_static_check( rel_name , architecture ) 
+#
+# Finds for an IB the results of the HLT tests
+#
+def find_hlt_tests_results( comparisons ):
   for comp in comparisons:
-    rel_name = comp['compared_tags'].split('-->')[1]
-    comp['hlt_tests'] = find_one_hlt_test(rel_name)
+    rel_name = comp[ 'compared_tags' ].split('-->')[1]
+    comp[ 'hlt_tests' ] = find_one_hlt_test(rel_name)
 
-def find_one_static_check(release_name):
+#
+# Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is ''
+#
+def find_one_static_check( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME',release_name)
-  command_to_execute = command_to_execute.replace('ARCHITECTURE','slc5_amd64_gcc481')
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
   out,err,ret_code = get_output_command(command_to_execute)
   if '200 OK' in out:
-    return STATIC_CHECKS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE','slc5_amd64_gcc481').replace('vocms12','cmssdt')
+    return 'found'
   else:
-    #If I don't find it in slc5 I look for it in slc6
-    print 'looking for resuls in slc6'
-    command_to_execute = command_to_execute.replace('slc5_amd64_gcc481','slc6_amd64_gcc481')
-    out,err,ret_code = get_output_command(command_to_execute)
-    if '200 OK' in out:
-      print 'results found for slc6'
-      return STATIC_CHECKS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE','slc6_amd64_gcc481').replace('vocms12','cmssdt')
-    else:
-      return ''
+    return 'not-found'
 
-def find_one_hlt_test(release_name):
+#
+# Looks for one hlt test result for the IB, if it finds it, the value is 'found' if not, the value is ''
+#
+def find_one_hlt_test( release_name ):
   command = MAGIC_COMMAND_FIND_HLT_TESTS.replace('RELEASE_NAME',release_name)
   out,err,ret_code = get_output_command(command)
   if '200 OK' in out:
     print 'found'
-    return HLT_TESTS_URL.replace('RELEASE_NAME',release_name).replace('vocms12','cmssdt').replace('vocms12','cmssdt')
+    return 'found'
   else:
-    return ''
+    return 'not-found'
 
 # reads the results and generates a separated json for each release_queue
 def generate_separated_json_results(results):
@@ -744,7 +794,7 @@ MAGIC_COMMAND_FIND_STATIC_CHECKS = 'curl -s -k --head %s | head -n 1' % STATIC_C
 
 MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_URL
 
-MAGIC_COMMAND_GET_CONGIG_MAP = 'wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map' 
+MAGIC_COMMAND_GET_CONFIG_MAP = 'wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map' 
 
 # this will be filled using config.map by get_config_map_params()
 ARCHITECTURES = []
@@ -761,6 +811,15 @@ SP_REL_REGEX = ""
 # These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
 RELEASE_QUEUES = []
 
+# These are the ibs and archs for which the aditional tests need to be shown
+# The schema is:
+# {
+#   "<IBName>": { 
+#                 "<architecture>" : [ test1, test2, ... , testN ]
+#               }
+# }
+# This this will be filled using config.map by get_config_map_params()
+RELEASE_ADITIONAL_TESTS = {}
 
 MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
 
@@ -786,7 +845,7 @@ class PossibleUnitTestResults:
 
 results = []
 
-get_output_command( MAGIC_COMMAND_GET_CONGIG_MAP )
+get_output_command( MAGIC_COMMAND_GET_CONFIG_MAP )
 
 get_config_map_params()
 
@@ -823,8 +882,15 @@ for comp in REQUESTED_COMPARISONS:
 
   release_queue_results['comparisons'] = compare_tags( tags , graph )
 
-  find_static_results(release_queue_results['comparisons'])
-  find_hlt_tests_results(release_queue_results['comparisons'])
+  #it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
+  additional_tests = RELEASE_ADITIONAL_TESTS.get( release_queue )
+  if additional_tests:
+    for arch in additional_tests.keys():
+      tests_to_find = additional_tests[ arch ]
+      if 'HLT' in tests_to_find:
+        find_hlt_tests_results( release_queue_results['comparisons'] )
+      if 'static-checks' in tests_to_find:
+        find_static_results( release_queue_results['comparisons'] , arch )
 
   results.append(release_queue_results)
 	
@@ -847,6 +913,8 @@ execute_magic_command_find_results( addOn_tests_results ,'addOn' )
 
 
 add_tests_to_results( results , unit_tests_results, relvals_results , addOn_tests_results, build_results , cmsdist_tags_results )
+fill_missing_cmsdist_tags( results )
+cleanup_not_built_tags( results )
 print_results(results)
 
 

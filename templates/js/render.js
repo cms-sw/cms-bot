@@ -63,7 +63,8 @@ addDropDownList = function(navBarUl,releaseName,releaseQueues){
 
 add_qa_link_to_row = function(row, arch,release_name){
   
-  var result_cell = $('<td></td>')
+  var result_cell = $('<td>')
+  row.append(result_cell)
   var url = 'http://cmssdt.cern.ch/SDT/cgi-bin//newQA.py?arch='+arch+'&release='+release_name
   var r_link = $("<a></a>").attr("href", url)
   var label_link = $("<span></span>")
@@ -71,7 +72,6 @@ add_qa_link_to_row = function(row, arch,release_name){
   r_link.append(label_link)
   label_link.attr("class", "glyphicon glyphicon-search")
   result_cell.append(r_link)
-  row.append(result_cell)
 
 
 }
@@ -113,21 +113,19 @@ get_result_tests =  function (arch,tests){
 /**
  * Adds the results of the tests to a row of the table
  */
-add_tests_to_row = function(tests,row,arch,type){
+add_tests_to_row = function( tests , row , arch , type ){
 
 
   // just add a blank cell if tere are no results for that kind of tests
-
-  if (tests.length == 0){
-    var result_cell = $('<td></td>')
-    row.append(result_cell)
+  var result_cell = $('<td>')
+  row.append(result_cell)
+  if (tests.length == 0) {
     return
   }
 
   var result = null
   var file = null
   var testDetails = null
-  var result_cell = $('<td></td>')
   var result_tests = get_result_tests(arch,tests)
   
   if(result_tests != null){
@@ -138,8 +136,6 @@ add_tests_to_row = function(tests,row,arch,type){
   }
   //just add a blank cell if I didn't find any results for that arch
   if (result == null || file == null){
-    var result_cell = $('<td></td>')
-    row.append(result_cell)
     return
   }
  
@@ -195,8 +191,8 @@ add_tests_to_row = function(tests,row,arch,type){
       r_class = result? "label label-success" : "label label-danger"
   }
 
-  var res_label = $('<span></span>')
-  res_label.append($('<small></small>').text(test_label))
+  var res_label = $( '<span>' )
+  res_label.append( $( '<small>' ).text(test_label) )
 
 
   res_label.attr("class", r_class)
@@ -276,15 +272,17 @@ addTagLink = function( titleCell , currentTag ){
 /**
  * writes a table with the comparison lates tag, and the information about the IB if it is an IB
  */
-write_comp_IB_table =  function(comparison , tab_pane){
+write_comp_IB_table =  function( comparison , tab_pane ){
 
   var current_tag = comparison.compared_tags.split("-->")[1]
   var title_compared_tags = $("<h3><b></b></h3>").text(current_tag)
  
    
-  var title_table = $('<table class="table table-condensed"></table>')
-  title_table.attr( 'id' , current_tag )
-  var title_cell = $('<td></td>').append(title_compared_tags)
+  var titleTable = $('<table class="table table-condensed"></table>')
+  titleTable.attr( 'id' , current_tag )
+  tab_pane.append( titleTable )
+
+  var title_cell = $('<td>').append(title_compared_tags)
   addTagLink( title_cell , current_tag )
   title_cell.append($('<br>'))
  
@@ -301,40 +299,39 @@ write_comp_IB_table =  function(comparison , tab_pane){
 
   title_cell.attr("rowspan",architectures.length+1)
   title_row.append(title_cell)
-  title_table.append(title_row)
+  titleTable.append( title_row )
   
-  if (architectures.length != 0 ){
+  if ( architectures.length != 0 ){
     
-    var archs_title = $('<th></th>').text('Architectures')
+    var archs_title = $( '<th>' ).text( 'Architectures' )
     title_row.append(archs_title)
-    var builds_title = $('<th></th>').text('Builds')
+    var builds_title = $( '<th>' ).text( 'Builds' )
     title_row.append(builds_title)
-    var utests_title = $('<th></th>').text('Unit Tests')
+    var utests_title = $( '<th>' ).text( 'Unit Tests' )
     title_row.append(utests_title)
-    var rvs_title = $('<th></th>').text('RelVals')
+    var rvs_title = $( '<th>' ).text( 'RelVals' )
     title_row.append(rvs_title)
-    var addons_title = $('<th></th>').text('Other Tests')
+    var addons_title = $( '<th>' ).text( 'Other Tests' )
     title_row.append(addons_title)
-    var qa_title = $('<th></th>').text('Q/A')
+    var qa_title = $( '<th>' ).text( 'Q/A' )
     title_row.append(qa_title)
     
     for( var i = 0; i < architectures.length; i++){
       
-      var ar_row = $('<tr></tr>')
-      var ar_cell = $('<td></td>')
+      var ar_row = $( '<tr>' )
+      titleTable.append(ar_row)
+      var ar_cell = $( '<td>' )
       fill_arch_cell( ar_cell , architectures[ i ] , comparison.cmsdistTags , current_tag )
       ar_row.append(ar_cell)
-      add_tests_to_row(building_results,ar_row, architectures[i],'builds')
-      add_tests_to_row(uTests_results,ar_row, architectures[i],'utests')
+      add_tests_to_row( building_results , ar_row , architectures[i] , 'builds' )
+      add_tests_to_row( uTests_results, ar_row, architectures[i] , 'utests' )
       add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals')
       add_tests_to_row(addons_results,ar_row,architectures[i],'addons')
       add_qa_link_to_row(ar_row,architectures[i],current_tag)
-      title_table.append(ar_row)
      }
 
   }
 
-  tab_pane.append(title_table)
 
 }
 
@@ -451,12 +448,12 @@ writeComparisonLinkGithub = function(comparedTags, tab_pane){
 * Writes on the tab the pull requests involved in the comparison between 2 tags. 
 * It also writes the results of the IB if it is an IB
 */
-write_comparison = function(comparison,tab_pane){
+write_comparison = function( comparison , tab_pane ){
 
   var compTags = comparison.compared_tags
   var pull_requests = comparison.merged_prs
 
-  write_comp_IB_table(comparison,tab_pane)
+  write_comp_IB_table( comparison , tab_pane )
   //if there were not merged prs in this comparison I informed it
   if(comparison.merged_prs.length!=0){
     
@@ -499,7 +496,8 @@ paintComparisons = function(rqInfo){
   var comparisons = rqInfo.comparisons
 
   for(var j =comparisons.length-1; j >= 0; j--){
-    write_comparison(comparisons[j],tab_pane)
+
+    write_comparison( comparisons[j] , tab_pane )
   
   }
 

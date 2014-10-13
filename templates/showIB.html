@@ -104,35 +104,34 @@
 				var release_name = all_releases[i];
 
 			 	//by default, the first one is the one which starts as active
-                        	if (i == 0 ){
+                        	if ( i == 0 ){
 					var tab_pane = $('<div class="tab-pane active" id="'+release_name+'"></div>')
+                                        
+                                        // add the link for the performance summary
+                                        var ps_link = $("<a>").attr("href", "https://cmssdt.cern.ch/SDT/jenkins-artifacts/performance/summary/performanceSummaryOut.html" )
+                                        var lbl_link = $('<span class="glyphicon glyphicon-stats">')
+                                        ps_link.append(lbl_link)
+                                        ps_link.append($('<span>').text('  Historical Performance Plots'))
+                                        tab_pane.append(ps_link)
+
                         	}else{
-                                	var tab_pane = $('<div class="tab-pane" id="'+release_name+'"></div>')
+                                	var tab_pane = $('<div class="tab-pane" id="'+release_name+'">')
                         	}
 
 				// write the titles for the release queue
-                        	var title_rel_name=$("<h1></h1>").text(release_name)
+                        	var title_rel_name=$("<h1>").text(release_name)
                         	tab_pane.append(title_rel_name)
                         	tab_pane.append($("<hr>"))
                         	tab_pane.append($("<br>"))
                         
-				// if the release is 7_1_X I add the link for the performance summary
-                        	if (release_name == "CMSSW_7_1_X"){
-                        		var ps_link = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/jenkins-artifacts/performance/summary/performanceSummaryOut.html" )
-                                	var lbl_link = $('<span class="glyphicon glyphicon-stats"></span>')
-                                	ps_link.append(lbl_link)
-                                	ps_link.append($('<span></span>').text('  Historical Performance Plots'))
-                                	tab_pane.append(ps_link)
-
-                         	}
 
 
 				
 				// write the comparisons for the release queue, here I read a json file per release queue
 				var compFileName = "data/" + release_name + ".json"
 				
-
-				$.getJSON( compFileName, paintComparisons)
+                                console.log( compFileName )
+				$.getJSON( compFileName, paintComparisons )
 
 
 				tabs_content.append(tab_pane)

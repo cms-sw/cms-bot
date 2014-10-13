@@ -249,6 +249,29 @@ add_hlt_tests_link = function ( title_cell , isFound , currentTag ){
   }
 }
 
+/**
+ * Adds a link to the tag of the IB in github
+ */
+addTagLink = function( titleCell , currentTag ){
+
+  var isIB = currentTag.indexOf( '-' ) >= 0
+  
+  if( isIB ) {
+    var url = 'https://github.com/cms-sw/cmssw/tree/' + currentTag
+    var tagLink = $( "<a>" ).attr( "href" , url )
+    tagLink.append( $('<span class="glyphicon glyphicon-tag">') )
+    tagLink.append( $('<span>').text(' IB Tag') )
+    titleCell.append( tagLink )
+  }else{
+    var url = 'https://github.com/cms-sw/cmssw/releases/tag/' + currentTag
+    var tagLink = $( "<a>" ).attr( "href" , url )
+    tagLink.append( $('<span class="glyphicon glyphicon-tag">') )
+    tagLink.append( $('<span>').text(' Release') )
+    titleCell.append( tagLink )
+  }
+
+
+}
 
 /**
  * writes a table with the comparison lates tag, and the information about the IB if it is an IB
@@ -258,14 +281,13 @@ write_comp_IB_table =  function(comparison , tab_pane){
   var current_tag = comparison.compared_tags.split("-->")[1]
   var title_compared_tags = $("<h3><b></b></h3>").text(current_tag)
  
-  title_compared_tags.append($("<br>"))
-  title_compared_tags.append($("<br>"))
    
   var title_table = $('<table class="table table-condensed"></table>')
   title_table.attr( 'id' , current_tag )
   var title_cell = $('<td></td>').append(title_compared_tags)
-  //here I check the result of the relvals
-  
+  addTagLink( title_cell , current_tag )
+  title_cell.append($('<br>'))
+ 
   add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
   title_cell.append($('<br>'))
    add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )

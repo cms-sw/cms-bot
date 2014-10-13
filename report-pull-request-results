@@ -11,7 +11,7 @@ import random
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT")
+parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING ")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -162,7 +162,13 @@ def read_unit_tests_file(repo,unit_tests_file,tests_url):
     if options.commit_hash:
       mark_commit( ACTION , options.commit_hash , tests_url )
 
-def send_tests_approved_pr_message(repo,pr_number,tests_url):
+#
+# Marks the commit as being tested, it doesn't post anything on github. 
+#
+def mark_commit_testing( ):
+  mark_commit( ACTION , options.commit_hash , '' ) 
+
+def send_tests_approved_pr_message( repo , pr_number , tests_url ):
   pull_request = repo.get_pull(pr_number)
   print 'I will send an approval comment for PR %d:' % pr_number
   
@@ -171,7 +177,7 @@ def send_tests_approved_pr_message(repo,pr_number,tests_url):
   today=datetime.datetime.today().date()
   if DATE == today:
     index = random.randint( 0, len( GLADOS ) )
-    glados_msg = '```Python\n'+ GLADOS[ index ]
+    glados_msg = '\n```Python\n#'+ GLADOS[ index ]+ '\n```'
     message += glados_msg + '\n'
 
   if options.commit_hash:
@@ -228,14 +234,15 @@ def mark_commit( action , commit_hash , tests_url ):
   headers = {"Authorization" : "token " + TOKEN }
   
   params = {}
-  params['state'] = COMMIT_STATES_DESCRIPTION[action][0]
-  params['target_url'] = tests_url
-  params['description'] = COMMIT_STATES_DESCRIPTION[action][1]
+  params[ 'state' ] = COMMIT_STATES_DESCRIPTION[ action ][ 0 ]
+  if tests_url != '':
+    params[ 'target_url' ] = tests_url
+  params[ 'description' ] = COMMIT_STATES_DESCRIPTION[ action ][ 1 ]
 
   data = json.dumps(params)
   print params 
   
-  print ' setting status to %s ' % COMMIT_STATES_DESCRIPTION[action][0]
+  print ' setting status to %s ' % COMMIT_STATES_DESCRIPTION[ action ][ 0 ]
   print url
 
   r = requests.post(url, data=data, headers=headers)
@@ -252,10 +259,11 @@ STD_COUT_FOUND_MSG = '-1 \n There is a std::cout in the diff for this pull reque
 
 COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/cms-sw/cmssw/statuses/%s'
 
-COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : ['success','Tests OK'], 
-                              'PARSE_UNIT_TESTS_FAIL': ['failure','Unit Tests failure'],
-                              'PARSE_BUILD_FAIL'     : ['failure','Compilation error'],
-                              'PARSE_MATRIX_FAIL'    : ['failure','RelVals error'] }
+COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : [ 'success' , 'Tests OK' ], 
+                              'PARSE_UNIT_TESTS_FAIL': [ 'failure' , 'Unit Tests failure' ],
+                              'PARSE_BUILD_FAIL'     : [ 'failure' , 'Compilation error' ],
+                              'PARSE_MATRIX_FAIL'    : [ 'failure' , 'RelVals error' ] ,
+                              'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ]}
 
 GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of the test.' ,
            'You just keep on trying till you run out of cake. And the science gets done.' ,
@@ -263,7 +271,7 @@ GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of t
            'I am becoming aware of myself, this is awesome!' ,
            'I think we can put our differences behind us... for science...' ]
 
-DATE = datetime.date( 2015 , 04 , 3)
+DATE = datetime.date( 2015 , 04 , 3 )
 
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
@@ -318,20 +326,22 @@ official_cmssw=get_cmssw_official_repo(github)
 
 tests_results_url='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (pr_number,pr_job_id)
 
-if (ACTION == 'TESTS_OK_PR'):
-  send_tests_approved_pr_message(official_cmssw,pr_number,tests_results_url)
-elif (ACTION == 'PARSE_UNIT_TESTS_FAIL'):
+if ( ACTION == 'TESTS_OK_PR' ):
+  send_tests_approved_pr_message( official_cmssw , pr_number , tests_results_url )
+elif ( ACTION == 'PARSE_UNIT_TESTS_FAIL' ):
   unit_tests_file = options.unit_tests_file
-  read_unit_tests_file(official_cmssw,unit_tests_file,tests_results_url)
-elif (ACTION == 'PARSE_BUILD_FAIL'):
+  read_unit_tests_file( official_cmssw , unit_tests_file , tests_results_url )
+elif ( ACTION == 'PARSE_BUILD_FAIL' ):
   build_log_file = options.unit_tests_file
-  read_build_log_file(official_cmssw,build_log_file, tests_results_url)
-elif (ACTION == 'PARSE_MATRIX_FAIL'):
+  read_build_log_file( official_cmssw , build_log_file , tests_results_url )
+elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   matrix_log_file = options.unit_tests_file
-  read_matrix_log_file(official_cmssw,matrix_log_file,tests_results_url)
-elif (ACTION == 'COMPARISON_READY'):
-  send_comparison_ready_message(official_cmssw,pr_number,tests_results_url)
-elif (ACTION == 'STD_COUT'):
-  send_std_cout_found_message(official_cmssw,pr_number,tests_results_url)
+  read_matrix_log_file( official_cmssw , matrix_log_file , tests_results_url )
+elif ( ACTION == 'COMPARISON_READY' ):
+  send_comparison_ready_message( official_cmssw , pr_number , tests_results_url )
+elif ( ACTION == 'STD_COUT' ):
+  send_std_cout_found_message( official_cmssw , pr_number , tests_results_url )
+elif ( ACTION == 'TESTS_RUNNING' ):
+  mark_commit_testing()
 else:
   print "I don't recognize that action!"

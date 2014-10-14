@@ -5,7 +5,6 @@ from optparse import OptionParser
 from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS
-from watchers import WATCHERS
 import yaml
 
 import re
@@ -76,7 +75,7 @@ if __name__ == "__main__":
     signing_categories.add("new-package")
 
   # Add watchers.yaml information to the WATCHERS dict.
-  WATCHERS.update(yaml.load(file("watchers.yaml")))
+  WATCHERS = (yaml.load(file("watchers.yaml")))
   # Given the packages check if there are additional developers watching one or more.
   author = pr.user.login
   watchers = set([user for package in packages

@@ -49,13 +49,9 @@ git config --replace-all merge.renamelimit 2500
 # use the branch name if necesary
 
 if [ "X$BRANCH_NAME" = X ]; then
-
   git cms-merge-topic -u $PULL_REQUEST
-
 else
-
   git cms-merge-topic -u $BRANCH_NAME
-
 fi
 
 
@@ -85,21 +81,27 @@ if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
 
 fi
 
-#get the latest commit
+#get the latest commit and mark it as pending
+pushd $WORKSPACE
+
+  wget https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
+  tar -xvf requests-2.3.0.tar.gz
+  mv requests-2.3.0/requests/ requests
+
+popd
+
 
 pushd $WORKSPACE/$RELEASE_FORMAT/src
 
   if [ "X$BRANCH_NAME" = X ]; then
-
     LAST_COMMIT=`git log cms-sw/refs/pull/$PULL_REQUEST/head --pretty="%H" | head -n1` 
-
   else
-
     LAST_COMMIT=`git log ${BRANCH_NAME//:/\/} --pretty="%H" | head -n1`
-
   fi
 
 popd
+
+$WORKSPACE/report-pull-request-results TESTS_RUNNING -t cmsbuild --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID
 
 ############################################
 # Force the run of DQM tests if necessary
@@ -370,13 +372,6 @@ for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
 done
 ls
 
-pushd $WORKSPACE
-
-wget https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
-tar -xvf requests-2.3.0.tar.gz
-mv requests-2.3.0/requests/ requests
-
-popd
 
 #
 # If auto post is selected...

@@ -13,24 +13,25 @@ CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.m
 for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= | grep SCRAM_ARCH=$ARCHITECTURE_FILTER;`; do
   (
     eval $line
-    echo PULL_REQUEST=${PULL_REQUEST} > properties-pr-${SCRAM_ARCH}.txt
-    echo ARCHITECTURE=${SCRAM_ARCH} >> properties-pr-${SCRAM_ARCH}.txt 
-    echo CMS_GIT_TOOLS_REPO=${CMS_GIT_TOOLS_REPO} >>  properties-pr-${SCRAM_ARCH}.txt
-    echo CMS_GIT_TOOLS_REF=${CMS_GIT_TOOLS_REF} >> properties-pr-${SCRAM_ARCH}.txt 
-    echo RELEASE_FORMAT=${RELEASE_FORMAT} >> properties-pr-${SCRAM_ARCH}.txt
-    echo DO_TESTS=${DO_TESTS} >> properties-pr-${SCRAM_ARCH}.txt
-    echo DO_SHORT_MATRIX=${DO_SHORT_MATRIX} >> properties-pr-${SCRAM_ARCH}.txt
-    echo DO_STATIC_CHECKS=${DO_STATIC_CHECKS} >> properties-pr-${SCRAM_ARCH}.txt
-    echo DO_DUPLICATE_CHECKS=${DO_DUPLICATE_CHECKS} >> properties-pr-${SCRAM_ARCH}.txt
-    echo MATRIX_EXTRAS=${MATRIX_EXTRAS} >> properties-pr-${SCRAM_ARCH}.txt
-    echo ADDITIONAL_PULL_REQUESTS=${ADDITIONAL_PULL_REQUESTS} >> properties-pr-${SCRAM_ARCH}.txt
-    echo WORKFLOWS_FOR_VALGRIND_TEST=${WORKFLOWS_FOR_VALGRIND_TEST} >> properties-pr-${SCRAM_ARCH}.txt
-    echo AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE} >> properties-pr-${SCRAM_ARCH}.txt
-    echo RUN_CONFIG_VIEWER=${RUN_CONFIG_VIEWER} >> properties-pr-${SCRAM_ARCH}.txt
-    echo USE_DAS_CACHE=${USE_DAS_CACHE} >> properties-pr-${SCRAM_ARCH}.txt
-    echo USE_JOB_REPORTS=${USE_JOB_REPORTS} >> properties-pr-${SCRAM_ARCH}.txt
-    echo BRANCH_NAME=${BRANCH_NAME} >> properties-pr-${SCRAM_ARCH}.txt
-    echo APPLY_FIREWORKS_RULE=${APPLY_FIREWORKS_RULE} >> properties-pr-${SCRAM_ARCH}.txt
-    echo RUN_IGPROF=${RUN_IGPROF} >> properties-pr-${SCRAM_ARCH}.txt
+    OUTPUT_FILE=properties-pr-${PULL_REQUEST}-${SCRAM_ARCH}.txt
+    echo PULL_REQUEST=${PULL_REQUEST} > $OUTPUT_FILE
+    echo ARCHITECTURE=${SCRAM_ARCH} >> $OUTPUT_FILE
+    echo CMS_GIT_TOOLS_REPO=${CMS_GIT_TOOLS_REPO} >>  $OUTPUT_FILE
+    echo CMS_GIT_TOOLS_REF=${CMS_GIT_TOOLS_REF} >> $OUTPUT_FILE
+    echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $OUTPUT_FILE
+    echo DO_TESTS=${DO_TESTS} >> $OUTPUT_FILE
+    echo DO_SHORT_MATRIX=${DO_SHORT_MATRIX} >> $OUTPUT_FILE
+    echo DO_STATIC_CHECKS=${DO_STATIC_CHECKS} >> $OUTPUT_FILE
+    echo DO_DUPLICATE_CHECKS=${DO_DUPLICATE_CHECKS} >> $OUTPUT_FILE
+    echo MATRIX_EXTRAS=${MATRIX_EXTRAS} >> $OUTPUT_FILE
+    echo ADDITIONAL_PULL_REQUESTS=${ADDITIONAL_PULL_REQUESTS} >> $OUTPUT_FILE
+    echo WORKFLOWS_FOR_VALGRIND_TEST=${WORKFLOWS_FOR_VALGRIND_TEST} >> $OUTPUT_FILE
+    echo AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE} >> $OUTPUT_FILE
+    echo RUN_CONFIG_VIEWER=${RUN_CONFIG_VIEWER} >> $OUTPUT_FILE
+    echo USE_DAS_CACHE=${USE_DAS_CACHE} >> $OUTPUT_FILE
+    echo USE_JOB_REPORTS=${USE_JOB_REPORTS} >> $OUTPUT_FILE
+    echo BRANCH_NAME=${BRANCH_NAME} >> $OUTPUT_FILE
+    echo APPLY_FIREWORKS_RULE=${APPLY_FIREWORKS_RULE} >> $OUTPUT_FILE
+    echo RUN_IGPROF=${RUN_IGPROF} >> $OUTPUT_FILE
   )
 done

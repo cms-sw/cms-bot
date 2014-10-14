@@ -11,6 +11,11 @@ btv-pog:
   - PhysicsTools/JetExamples
   - PhysicsTools/JetMCAlgos
   - PhysicsTools/JetMCUtils
+  - PhysicsTools/MVAComputer
+  - PhysicsTools/MVATrainer
+  - PhysicsTools/PatAlgos
+  - PhysicsTools/PatExamples
+  - PhysicsTools/PatUtils
   - RecoBTag
   - RecoBTau
   - RecoJets/JetAssociationAlgorithms

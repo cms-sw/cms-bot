@@ -2,8 +2,11 @@
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
 
 cd $WORKSPACE
-# Use helper to get PR.
 
+# The pull request number is $1
+PULL_REQUEST=$1
+
+# Use helper to get PR branch
 RELEASE_QUEUE=`cms-bot/get-pr-branch $PULL_REQUEST`
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map"
 

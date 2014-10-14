@@ -28,7 +28,7 @@ getResultRow = function( resultsDict , resultsKey ){
   }else if( resultsKey == COMPARISON_KEY ){
 
     column2Label = 'See Comparison Results'
-    linkURL = BASE_COMPARISONS_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/' 
+    linkURL = BASE_COMPARISONS_URL + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/' 
 
   }
 

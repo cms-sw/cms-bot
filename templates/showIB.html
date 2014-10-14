@@ -69,13 +69,6 @@
 		// Reads the file structre.json to know how to paint the menu and how to paint the tabs.
                 start_load = function(structure){
 
-			// Before adding the tab panel I add a link to the previous version
-                        var prevVersionLink = $("<a></a>").attr("href", "https://cmssdt.cern.ch/SDT/html/showIBOld.html")
-                        prevVersionLink.append($('<span class="glyphicon glyphicon-warning-sign"></span>'))
-                        prevVersionLink.append($('<span></span>').text(' Click here to see the previous version'))
-                        
-                        $("#results").append($('<div id="PrevVersionWarning" align="center" class="alert alert-warning">').append(prevVersionLink))
-
 			paintMenu(structure)
 
 			// create tab panel

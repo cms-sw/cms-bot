@@ -1,6 +1,6 @@
 #!/bin/sh -e
-WORKDIR=$1
-if [ X$WORKDIR = X ]; then
+WORKDIR="$1"
+if [ "X$WORKDIR" = X ]; then
   echo "Please specify a a work directory."
   exit 1
 fi
@@ -14,7 +14,7 @@ fi
 
 cd "$WORKDIR/root"
 git remote set-url origin https://github.com/root-mirror/root
-git remote set-url cms-sw https://github.com/cms-sw/root
+git remote add cms-sw https://github.com/cms-sw/root || git remote set-url cms-sw https://github.com/cms-sw/root
 git fetch origin --tags
 git fetch cms-sw
 git checkout master

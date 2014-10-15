@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from releases import *
+from categories import *
 import yaml
 import re
 # Validate the schema of watchers.

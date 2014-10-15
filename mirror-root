@@ -5,14 +5,14 @@ if [ X$WORKDIR = X ]; then
   exit 1
 fi
 
-mkdir -p $WORKDIR
+mkdir -p "$WORKDIR"
 
-if [ ! -d $WORKDIR/root ]; then
-  cd $WORKDIR
+if [ ! -d "$WORKDIR/root" ]; then
+  cd "$WORKDIR"
   git clone https://github.com/root-mirror/root
 fi
 
-cd $WORKDIR/root
+cd "$WORKDIR/root"
 git remote set-url origin https://github.com/root-mirror/root
 git remote set-url cms-sw https://github.com/cms-sw/root
 git fetch origin --tags

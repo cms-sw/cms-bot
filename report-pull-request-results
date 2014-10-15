@@ -20,13 +20,19 @@ parser.add_option("--pr-job-id", action="store", type="int", dest="pr_job_id", h
 parser.add_option("--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="Unit tests file to analyze", default='None')
 parser.add_option("-t", action="store", type="string", dest="token", help="tells me to use the github api token, it supersedes the username and password, example: -t cmsbuild", default='None')
 parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help="I will only show the message I would post, but I will not post it in github")
-parser.add_option("-c", action="store", dest="commit_hash", help="Thells me to use the commit hash to mark it as success or failure depending on the results of the tests" , )
+parser.add_option("-c", action="store", dest="commit_hash", help="Tells me to use the commit hash to mark it as success or failure depending on the results of the tests" , )
 
 (options, args) = parser.parse_args()
 
 
-#-------------------------------------------------------------------------------------
-def get_wf_error_msg(out_directory,out_file):
+#
+# Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
+#
+def get_wf_error_msg( out_directory , out_file ):
+
+  if out_file == MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND:
+    return ''
+
   route = 'runTheMatrix-results/'+out_directory+'/'+out_file
   reading = False
   error_lines = ''
@@ -41,35 +47,49 @@ def get_wf_error_msg(out_directory,out_file):
       reading = True
   return error_lines
 
-def parse_workflow_info(parts):
+#
+# Reads a line that starts with 'ERROR executing',  the line has ben splitted by ' '
+# it gets the directory where the results for the workflow are, the step that failed
+# and the log file
+#
+def parse_workflow_info( parts ):
   workflow_info = {}
-
-  for i in range(0,len(parts)):
-    current_part = parts[i]
-    if (current_part == 'cd'):
+  # this is the output file to which the output of command for the step was directed
+  # it starts asumed as not found
+  out_file = MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND
+  workflow_info[ 'step' ] = MATRIX_WORKFLOW_STEP_NA
+  for i in range( 0 , len( parts ) ):
+    current_part = parts[ i ]
+    if ( current_part == 'cd' ):
       out_directory = parts[ i+1 ] 
-      out_directory = re.sub(';', '', out_directory)
-      number = re.sub('_.*$', '', out_directory)
-      workflow_info['out_directory']=out_directory
-      workflow_info['number']=number
-    if (current_part == '>'):
-      out_file = parts[i+1]
-      step = re.sub('_.*log', '', out_file)
-      workflow_info['out_file']=out_file
-      workflow_info['step']=step
-  workflow_info['message'] = get_wf_error_msg(out_directory,out_file)
+      out_directory = re.sub( ';' , '', out_directory)
+      number = re.sub( '_.*$' , '' , out_directory )
+      workflow_info[ 'out_directory' ] = out_directory
+      workflow_info[ 'number' ] = number
+    if ( current_part == '>' ):
+      out_file = parts[ i+1 ]
+      step = re.sub( '_.*log' , '' , out_file)
+      workflow_info[ 'out_file'] = out_file
+      workflow_info[ 'step' ] = step
+
+  workflow_info['message'] = get_wf_error_msg( out_directory , out_file )
   return workflow_info
     
- 
-def read_matrix_log_file(repo,matrix_log,tests_url):
-  pull_request = repo.get_pull(pr_number)
-  workflows_with_error = []
+#
+# Reads the log file for the matrix tests. It identifyes which workflows failed
+# and then proceeds to read the corresponding log file to identify the message
+#
+def read_matrix_log_file( repo , matrix_log , tests_url ):
 
-  for line in open(matrix_log):
+  pull_request = repo.get_pull( pr_number )
+  workflows_with_error = [ ]
+
+  for line in open( matrix_log ):
     if 'ERROR executing' in line:
+      print 'processing: %s' % line 
       parts = line.split(" ")
-      workflow_info = parse_workflow_info(parts)
-      workflows_with_error.append(workflow_info)
+      workflow_info = parse_workflow_info( parts )
+      workflows_with_error.append( workflow_info )
 
   message = '-1 '
 
@@ -79,7 +99,7 @@ def read_matrix_log_file(repo,matrix_log,tests_url):
   message += '\n When I ran the RelVals I found an error in the following worklfows: \n '
 
   for wf in workflows_with_error:
-    message += wf['number'] +' '+ wf['step']+'\n' + '<pre>' + wf['message'] + '</pre>' + '\n'
+    message += wf[ 'number' ] +' '+ wf[ 'step' ]+'\n' + '<pre>' + wf[ 'message' ] + '</pre>' + '\n'
   message += '\n you can see the results of the tests here: \n %s ' % tests_url
   print message
 
@@ -273,6 +293,8 @@ GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of t
 
 DATE = datetime.date( 2015 , 04 , 3 )
 
+MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
+MATRIX_WORKFLOW_STEP_NA = 'N/A'
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
 #---------------------------------------------------------------------------------------
@@ -324,7 +346,7 @@ else:
 
 official_cmssw=get_cmssw_official_repo(github)
 
-tests_results_url='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (pr_number,pr_job_id)
+tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (pr_number,pr_job_id)
 
 if ( ACTION == 'TESTS_OK_PR' ):
   send_tests_approved_pr_message( official_cmssw , pr_number , tests_results_url )

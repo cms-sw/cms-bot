@@ -1,0 +1,30 @@
+#!/bin/sh -e
+WORKDIR=$1
+if [ X$WORKDIR = X ]; then
+  echo "Please specify a a work directory."
+  exit 1
+fi
+
+mkdir -p $WORKDIR
+
+if [ ! -d $WORKDIR/root ]; then
+  cd $WORKDIR
+  git clone https://github.com/root-mirror/root
+fi
+
+cd $WORKDIR/root
+git remote set-url origin https://github.com/root-mirror/root
+git remote set-url cms-sw https://github.com/cms-sw/root
+git fetch origin --tags
+git fetch cms-sw
+git checkout master
+
+# Process tags
+TAGS=`git tag | grep -e 'v\(5-34-[2-9][0-9]\|6-02-0[1-9]\|6-02-[1-9][0-9]\)' | grep -v -e "-rc"`
+for t in $TAGS; do
+  git show-ref -- $t | grep cms-sw/cms >/dev/null && continue
+  echo cms/$t is missing
+  git branch -D cms/$t
+  git branch cms/$t $t
+  git push cms-sw cms/$t:cms/$t
+done

@@ -32,6 +32,7 @@ CMSSW_L2 = {
   "ojeda": ["dqm"],
   "lveldere": ["fastsim"],
   "diguida": ["alca"],
+  "mmusich": ["alca"],
   "bendavid": ["generators"],
   "covarell": ["generators"],
   "davidlange6": ["operations"],

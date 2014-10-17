@@ -33,6 +33,7 @@ print '----------------'
 print categories_to_people
 
 output = {}
+output[ 'people_to_categories' ] = CMSSW_L2
 output[ 'categories_to_people' ] = categories_to_people
 output[ 'categories_to_packages' ] = CMSSW_CATEGORIES
 output[ 'L1' ] = CMSSW_L1

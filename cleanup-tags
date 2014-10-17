@@ -28,7 +28,7 @@ for QUEUE in $QUEUES; do
   git ls-remote --tags origin "${QUEUE}_2*" \
       | sed -e "s/.*$QUEUE/:$QUEUE/" \
       | head -n -60 \
-      | xargs -n 50 $ECHO git push origin 
+      | xargs -r -n 50 $ECHO git push origin 
 done
 
 cd $WORKSPACE
@@ -53,5 +53,5 @@ for QUEUE in $CMSDIST_QUEUES; do
   git ls-remote --tags origin "$QUEUE" \
       | sed -e "s|.*refs/tags/|:|" \
       | head -n -40 \
-      | xargs -n 50 $ECHO git push origin 
+      | xargs -r -n 50 $ECHO git push origin 
 done

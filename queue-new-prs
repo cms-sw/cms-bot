@@ -1,0 +1,17 @@
+#!/bin/sh -ex
+
+# Uses query-new-pull-requests to get the latest PRS.
+# It checks if the PR is for a branch for which automatic tests are activated.
+# Finally, it creates a properties file with the PR number for jenkins to trigger the next job.
+
+for PR in `./query-new-pull-requests ${TIME_INTERVAL}`; do
+
+  # Use helper to get PR branch
+  RELEASE_QUEUE=`./get-pr-branch $PR`
+  if cat config.map | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= ; then
+    echo 'Creating properties file for '$PR
+    echo "PULL_REQUEST=$PR" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
+  fi
+
+
+done

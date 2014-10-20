@@ -9,6 +9,9 @@ import re
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <since-n-seconds>")
   parser.add_option("--repository", "-r", dest="repository", type=str, default="cmssw")
+  parser.add_option("--tests-pending", "-t", action="store_true", dest="only_tests_pending" , \
+                   help="Only show the pull requests that are pending for tests")
+
   opts, args = parser.parse_args()
   if not len(args):
     parser.error("Please specify the number of seconds since you want updates")
@@ -16,5 +19,12 @@ if __name__ == "__main__":
   since = datetime.utcnow() - timedelta(seconds=int(args[0]))
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   repo = gh.get_organization("cms-sw").get_repo(opts.repository)
-  issues = repo.get_issues(state="open", sort="updated", since=since)
+
+  if opts.only_tests_pending:
+    queried_labels = []
+    queried_labels.append( repo.get_label( "tests-pending" ) )
+    issues = repo.get_issues( state="open" , labels=queried_labels , sort="updated" , since=since )
+  else:
+    issues = repo.get_issues(state="open", sort="updated", since=since)
+
   print " ".join([str(x.number) for x in issues])

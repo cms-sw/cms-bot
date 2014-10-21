@@ -822,10 +822,10 @@ REQUESTED_COMPARISONS = [ ( '%s_%s..%s' % ( rq , START_DATE , rq ) ) for rq in R
 
 AFS_IB_INSTALLATION = "/afs/cern.ch/cms/sw/ReleaseCandidates/vol*/*/cms"
 AFS_INSTALLATION = "/afs/cern.ch/cms/*/cms"
-installedPaths = [x for x in glob(AFS_IB_INSTALLATION + "/cmssw/*")] +
-                 [x for x in glob(AFS_IB_INSTALLATION + "/cmssw-patch/*")] +
-                 [x for x in glob(AFS_INSTALLATION + "/cmssw/*")] +
-                 [x for x in glob(AFS_INSTALLATION + "/cmssw-patch/*")]
+installedPaths = [x for x in glob(AFS_IB_INSTALLATION + "/cmssw/*")]
+installedPaths += [x for x in glob(AFS_IB_INSTALLATION + "/cmssw-patch/*")]
+installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw/*")]
+installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw-patch/*")]
 
 installedReleases = [basename(x) for x in installedPaths]
 

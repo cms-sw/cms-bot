@@ -829,6 +829,7 @@ installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw-patch/*")]
 
 installedReleases = [basename(x) for x in installedPaths]
 
+print installedReleases
 
 for comp in REQUESTED_COMPARISONS:
   start_tag = comp.split("..")[0]

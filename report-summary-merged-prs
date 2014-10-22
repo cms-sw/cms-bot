@@ -82,8 +82,13 @@ def get_config_map_params():
     if sp_rel_name != 'X' and sp_rel_name not in SPECIAL_RELEASES:
       SPECIAL_RELEASES.append( sp_rel_name )
 
-    if not params.get( 'DISABLED' ) and release_queue not in RELEASE_QUEUES:
-      RELEASE_QUEUES.append( release_queue )
+    if not params.get( 'DISABLED' ):
+      if not RELEASES_ARCHS.get( release_queue ):
+        RELEASES_ARCHS[ release_queue ] = []
+      RELEASES_ARCHS[ release_queue ].append( arch )
+      if release_queue not in RELEASE_QUEUES:
+        RELEASE_QUEUES.append( release_queue )
+      
 
     additional_tests = params.get( 'ADDITIONAL_TESTS' )
 
@@ -92,12 +97,13 @@ def get_config_map_params():
         RELEASE_ADITIONAL_TESTS[ release_queue ] = {}
       RELEASE_ADITIONAL_TESTS[ release_queue ][ arch ] = [ test for test in additional_tests.split( ',' ) if test != 'baseline' and test != 'dqm' ]
 
-
   SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
   RELEASE_QUEUES.sort()
 
   print 'ARCHS:'
   print ARCHITECTURES
+  print '--'
+  print RELEASES_ARCHS
   print 'RELEASES_BRANCHES:'
   print RELEASES_BRANCHES
   print 'special releases'
@@ -464,6 +470,7 @@ def execute_command_compare_tags(start_tag,end_tag , graph ):
   print '------'
   comp = {}
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
+  comp[ 'release_name' ] = end_tag
   prs = []
   for line in output.splitlines():
 
@@ -689,14 +696,81 @@ def find_one_hlt_test( release_name ):
     return 'not-found'
 
 # reads the results and generates a separated json for each release_queue
-def generate_separated_json_results(results):
+def generate_separated_json_results( results ):
 
   for rq in results:
-
     file_name = rq['release_name'] + ".json"
     out_json = open(file_name, "w")
     json.dump(rq,out_json,indent=4)
     out_json.close()
+#
+# Generates a json file with the global status of the last IB for each architecture, 
+# per each  Release Queue
+# Schema of short_summary
+# [ releaseQueue1, releaseQueue2, ... , releaseQueueN ]
+# Schema of releaseQueueN
+# {
+#    "<ReleaseQueue>": {
+#                        "<arch>": {
+#                                    "status": "ok|warning|error|unknown"
+#                                    "latest_IB" : "<latest IB>"
+#                                  }
+#                      }
+# }
+def generate_ib_json_short_summary( results ):
+  short_summary = {}
+  for rq in results:
+    # this should not be called 'release name', this should be fixed
+    rq_name = rq[ 'release_name' ]
+    enabled_archs = RELEASES_ARCHS[ rq_name ]
+    for arch in enabled_archs:
+      ibs_for_current_arch  = [rel for rel in rq[ 'comparisons' ] if arch in rel[ "tests_archs" ] ]
+      # it starts as ok and checks the conditions
+      ib_status = 'ok'
+
+      if len( ibs_for_current_arch ) == 0:
+         latest_IB = 'N/A'
+         ib_status = 'unknown'
+      else:
+        latest_IB_info = ibs_for_current_arch[ -1 ]
+        latest_IB_name = latest_IB_info[ 'release_name' ]
+
+        build_info = [ b for b in latest_IB_info[ "builds" ] if b[ 'arch' ] == arch ]
+        if len( build_info ) == 0:
+          build_passed = 'unknown'
+        else: 
+          build_passed = build_info[ 0 ][ "passed" ]
+       
+        unit_tests_info = [ u for u in latest_IB_info[ "utests" ] if u[ 'arch' ] == arch ]
+        if len( unit_tests_info ) == 0:
+          utests_passed = 'unknown'
+        else:
+          utests_passed = unit_tests_info[ 0 ][ "passed" ]
+
+        relvals_info = [ r for r in latest_IB_info[ "relvals" ] if r[ 'arch' ] == arch ]
+        if len( relvals_info ) == 0:
+          relvals_passed = 'unknown'
+        else:
+          relvals_passed = relvals_info[ 0 ][ "passed" ]
+
+        short_summary[ rq_name ] = {}
+        short_summary[ rq_name ][ arch ] = {}
+        short_summary[ rq_name ][ arch ][ "latest_IB" ] = latest_IB_name
+
+        merged_statuses = "%s-%s-%s" % (build_passed,utests_passed,relvals_passed)
+       
+        if 'unknown' in merged_statuses:
+          ib_status = 'unknown'
+        elif 'failed' in merged_statuses or 'False' in merged_statuses:
+          ib_status = 'error'
+        elif 'warning' in merged_statuses:
+          ib_status = 'warning'
+        short_summary[ rq_name ][ arch ][ "status" ] = ib_status
+
+
+  out_json = open( 'LatestIBsSummary.json' , "w" )
+  json.dump( short_summary , out_json , indent=4 )
+  out_json.close()
 
 # Identifies and groups the releases accodring to their prefix
 # For example if the release queues are:
@@ -738,173 +812,161 @@ def identify_release_groups(results):
 #---- Start of execution
 #-----------------------------------------------------------------------------------
 
-MAGIC_COMMAND_CMSDIST_TAGS = 'pushd %s; git tag -l IB/*/ARCHITECTURE; popd' % CMSDIST_REPO
+if __name__ == "__main__":
 
-# I used this type of concatenation because the string has %s inside
-MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
+  MAGIC_COMMAND_CMSDIST_TAGS = 'pushd %s; git tag -l IB/*/ARCHITECTURE; popd' % CMSDIST_REPO
 
-MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
+  # I used this type of concatenation because the string has %s inside
+  MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
+  MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
+  MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
+  MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
+  MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
+  MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name addOnTests.log'
+  MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name logAnalysis.pkl'
+  STATIC_CHECKS_URL = 'https://vocms12.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
+  HLT_TESTS_URL = 'https://vocms12.cern.ch/SDT/jenkins-artifacts/HLT-Validation/RELEASE_NAME/'
+  MAGIC_COMMAND_FIND_STATIC_CHECKS = 'curl -s -k --head %s | head -n 1' % STATIC_CHECKS_URL
+  MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_URL
+  CONFIG_MAP_FILE = 'config.map'
+  # this will be filled using config.map by get_config_map_params()
+  ARCHITECTURES = []
+  # this will be filled using config.map by get_config_map_params()
+  RELEASES_BRANCHES = {}
+  # this will be filled using config.map by get_config_map_params() SLHC releases have a different format, so it is hardcoded
+  SPECIAL_RELEASES = [ 'SLHC' ]
+  # this will be filled using config.map by get_config_map_params()
+  SP_REL_REGEX = ""
+  # These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
+  RELEASE_QUEUES = []
+  # These are the ibs and archs for which the aditional tests need to be shown
+  # The schema is:
+  # {
+  #   "<IBName>": {
+  #                 "<architecture>" : [ test1, test2, ... , testN ]
+  #               }
+  # }
+  # This this will be filled using config.map by get_config_map_params()
+  RELEASE_ADITIONAL_TESTS = {}
+  # the acrhitectures for which the enabled releases are currently avaiable
+  # The schema is:
+  # {
+  #   "<IBName>": [ "arch1" , "arch2" , ... ,"archN" ]
+  # }
+  # will be filled using config.map by get_config_map_params()
+  RELEASES_ARCHS = {}
 
-MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
+  MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
 
-MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
+  class BuildResultsKeys:
+    DICT_ERROR = 'dictError'
+    COMP_ERROR = 'compError'
+    LINK_ERROR = 'linkError'
+    COMP_WARNING = 'compWarning'
+    DWNL_ERROR = 'dwnlError'
+    MISC_ERROR = 'miscError'
+    IGNORE_WARNING = 'ignoreWarning'
+    PYTHON_ERROR = 'pythonError'
 
-MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
+  class PossibleBuildResults:
+    PASSED = 'passed'
+    WARNING = 'warning'
+    ERROR = 'error'
 
-MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name addOnTests.log'
+  class PossibleUnitTestResults:
+    PASSED = 'passed'
+    FAILED = 'failed'
+    UNKNOWN = 'unknown'
+ 
+  results = []
 
-MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name logAnalysis.pkl'
+  get_config_map_params()
+  SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+  REQUESTED_COMPARISONS = [ ( '%s_%s..%s' % ( rq , START_DATE , rq ) ) for rq in RELEASE_QUEUES ]
 
-STATIC_CHECKS_URL = 'https://vocms12.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
+  AFS_IB_INSTALLATION = "/afs/cern.ch/cms/sw/ReleaseCandidates/vol*/*/cms"
+  AFS_INSTALLATION = "/afs/cern.ch/cms/*/cms"
+  installedPaths = [x for x in glob(AFS_IB_INSTALLATION + "/cmssw/*")]
+  installedPaths += [x for x in glob(AFS_IB_INSTALLATION + "/cmssw-patch/*")]
+  installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw/*")]
+  installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw-patch/*")]
 
-HLT_TESTS_URL = 'https://vocms12.cern.ch/SDT/jenkins-artifacts/HLT-Validation/RELEASE_NAME/'
+  installedReleases = [basename(x) for x in installedPaths]
 
-MAGIC_COMMAND_FIND_STATIC_CHECKS = 'curl -s -k --head %s | head -n 1' % STATIC_CHECKS_URL
+  print 'Installed Releases:'
+  print installedReleases
 
-MAGIC_COMMAND_FIND_HLT_TESTS = 'curl -s -k --head %s | head -n 1' % HLT_TESTS_URL
+  for comp in REQUESTED_COMPARISONS:
+    start_tag = comp.split("..")[0]
+    end_tag = comp.split("..")[1]
+    release_queue = start_tag
+    # if is a SLHC or any special release, the split will happen with the fifth underscore _
+    if re.search(SP_REL_REGEX,release_queue):
+      print 'This is a special release'
+      release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
+    else:
+      release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]
+  
+    print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
 
-CONFIG_MAP_FILE = 'config.map'
+    # load the graph to check the history and identify merge prs and commits
+    release_branch = RELEASES_BRANCHES[ release_queue ]
+    graph = load_graph( release_branch , -1 )
 
-# this will be filled using config.map by get_config_map_params()
-ARCHITECTURES = []
+    release_queue_results = {}
 
-# this will be filled using config.map by get_config_map_params()
-RELEASES_BRANCHES = {}
+    release_queue_results[ 'release_name' ] = release_queue
+    release_queue_results[ 'base_branch' ] = release_branch
 
-# this will be filled using config.map by get_config_map_params() SLHC releases have a different format, so it is hardcoded
-SPECIAL_RELEASES = [ 'SLHC' ]
+    tags = execute_magic_command_tags( start_tag , end_tag , release_queue , release_branch )
+    tags = [x for x in tags if x in installedReleases]
 
-# this will be filled using config.map by get_config_map_params()
-SP_REL_REGEX = ""
+    print 'I got these tags: '
+    print tags
 
-# These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
-RELEASE_QUEUES = []
+    release_queue_results['comparisons'] = compare_tags( tags , graph )
 
-# These are the ibs and archs for which the aditional tests need to be shown
-# The schema is:
-# {
-#   "<IBName>": {
-#                 "<architecture>" : [ test1, test2, ... , testN ]
-#               }
-# }
-# This this will be filled using config.map by get_config_map_params()
-RELEASE_ADITIONAL_TESTS = {}
+    #it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
+    additional_tests = RELEASE_ADITIONAL_TESTS.get( release_queue )
+    if additional_tests:
+      for arch in additional_tests.keys():
+        tests_to_find = additional_tests[ arch ]
+        if 'HLT' in tests_to_find:
+          find_hlt_tests_results( release_queue_results['comparisons'] )
+        if 'static-checks' in tests_to_find:
+          find_static_results( release_queue_results['comparisons'] , arch )
+  
+    results.append(release_queue_results)
+  
+    print
+    print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+  
+  cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
+  
+  build_results = {}
+  execute_magic_command_find_results( build_results , 'builds' )
+  
+  relvals_results = {}
+  execute_magic_command_find_results( relvals_results , 'relvals' )
+  
+  unit_tests_results = {}
+  execute_magic_command_find_results( unit_tests_results , 'utests' )
+  
+  addOn_tests_results = {}
+  execute_magic_command_find_results( addOn_tests_results ,'addOn' )
+ 
+  add_tests_to_results( results , unit_tests_results, relvals_results , addOn_tests_results, build_results , cmsdist_tags_results )
+  fill_missing_cmsdist_tags( results )
+  print_results(results)
+  
+  structure = identify_release_groups( results )
+  generate_separated_json_results( results )
+  generate_ib_json_short_summary( results )
+  
+  out_json = open("merged_prs_summary.json", "w")
+  json.dump(results,out_json,indent=4)
+  out_json.close()
 
-MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
-
-class BuildResultsKeys:
-  DICT_ERROR = 'dictError'
-  COMP_ERROR = 'compError'
-  LINK_ERROR = 'linkError'
-  COMP_WARNING = 'compWarning'
-  DWNL_ERROR = 'dwnlError'
-  MISC_ERROR = 'miscError'
-  IGNORE_WARNING = 'ignoreWarning'
-  PYTHON_ERROR = 'pythonError'
-
-class PossibleBuildResults:
-  PASSED = 'passed'
-  WARNING = 'warning'
-  ERROR = 'error'
-
-class PossibleUnitTestResults:
-  PASSED = 'passed'
-  FAILED = 'failed'
-  UNKNOWN = 'unknown'
-
-results = []
-
-get_config_map_params()
-
-SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
-
-REQUESTED_COMPARISONS = [ ( '%s_%s..%s' % ( rq , START_DATE , rq ) ) for rq in RELEASE_QUEUES ]
-
-AFS_IB_INSTALLATION = "/afs/cern.ch/cms/sw/ReleaseCandidates/vol*/*/cms"
-AFS_INSTALLATION = "/afs/cern.ch/cms/*/cms"
-installedPaths = [x for x in glob(AFS_IB_INSTALLATION + "/cmssw/*")]
-installedPaths += [x for x in glob(AFS_IB_INSTALLATION + "/cmssw-patch/*")]
-installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw/*")]
-installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw-patch/*")]
-
-installedReleases = [basename(x) for x in installedPaths]
-
-print installedReleases
-
-for comp in REQUESTED_COMPARISONS:
-  start_tag = comp.split("..")[0]
-  end_tag = comp.split("..")[1]
-  release_queue = start_tag
-  # if is a SLHC or any special release, the split will happen with the fifth underscore _
-  if re.search(SP_REL_REGEX,release_queue):
-    print 'This is a special release'
-    release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
-  else:
-    release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]
-
-  print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
-
-  # load the graph to check the history and identify merge prs and commits
-  release_branch = RELEASES_BRANCHES[ release_queue ]
-  graph = load_graph( release_branch , -1 )
-
-  release_queue_results = {}
-
-  release_queue_results[ 'release_name' ] = release_queue
-  release_queue_results[ 'base_branch' ] = release_branch
-
-  tags = execute_magic_command_tags( start_tag , end_tag , release_queue , release_branch )
-  tags = [x for x in tags if x in installedReleases]
-
-  print 'I got these tags: '
-  print tags
-
-  release_queue_results['comparisons'] = compare_tags( tags , graph )
-
-  #it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
-  additional_tests = RELEASE_ADITIONAL_TESTS.get( release_queue )
-  if additional_tests:
-    for arch in additional_tests.keys():
-      tests_to_find = additional_tests[ arch ]
-      if 'HLT' in tests_to_find:
-        find_hlt_tests_results( release_queue_results['comparisons'] )
-      if 'static-checks' in tests_to_find:
-        find_static_results( release_queue_results['comparisons'] , arch )
-
-  results.append(release_queue_results)
-
-  print
-  print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
-
-cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
-
-build_results = {}
-execute_magic_command_find_results( build_results , 'builds' )
-
-relvals_results = {}
-execute_magic_command_find_results( relvals_results , 'relvals' )
-
-unit_tests_results = {}
-execute_magic_command_find_results( unit_tests_results , 'utests' )
-
-addOn_tests_results = {}
-execute_magic_command_find_results( addOn_tests_results ,'addOn' )
-
-
-add_tests_to_results( results , unit_tests_results, relvals_results , addOn_tests_results, build_results , cmsdist_tags_results )
-fill_missing_cmsdist_tags( results )
-print_results(results)
-
-
-structure = identify_release_groups(results)
-
-generate_separated_json_results(results)
-
-out_json = open("merged_prs_summary.json", "w")
-json.dump(results,out_json,indent=4)
-out_json.close()
-
-
-out_groups = open("structure.json", "w")
-json.dump(structure,out_groups,indent=4)
-out_groups.close()
+  out_groups = open("structure.json", "w")
+  json.dump(structure,out_groups,indent=4)
+  out_groups.close()

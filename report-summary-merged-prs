@@ -753,7 +753,8 @@ def generate_ib_json_short_summary( results ):
         else:
           relvals_passed = relvals_info[ 0 ][ "passed" ]
 
-        short_summary[ rq_name ] = {}
+        if not short_summary.get( rq_name ):
+          short_summary[ rq_name ] = {}
         short_summary[ rq_name ][ arch ] = {}
         short_summary[ rq_name ][ arch ][ "latest_IB" ] = latest_IB_name
 

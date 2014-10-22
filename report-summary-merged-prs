@@ -767,7 +767,7 @@ def generate_ib_json_short_summary( results ):
           ib_status = 'warning'
         short_summary[ rq_name ][ arch ][ "status" ] = ib_status
 
-
+  short_summary[ 'all_archs' ] = ARCHITECTURES
   out_json = open( 'LatestIBsSummary.json' , "w" )
   json.dump( short_summary , out_json , indent=4 )
   out_json.close()

@@ -795,6 +795,8 @@ CMSSW_CATEGORIES={
    "DQM/EcalEndcapMonitorDbModule",
    "DQM/EcalEndcapMonitorModule",
    "DQM/EcalEndcapMonitorTasks",
+   "DQM/EcalMonitorClient",
+   "DQM/EcalMonitorTasks",
    "DQM/EcalPreshowerMonitorClient",
    "DQM/EcalPreshowerMonitorModule",
    "DQM/HLTEvF",

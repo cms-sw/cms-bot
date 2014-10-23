@@ -18,3 +18,16 @@ for (key, value) in w.items():
   for x in value:
     assert(type(x) == str)
     assert(re.match(VALUE_RE, x))
+
+
+assert(CMSSW_CATEGORIES)
+assert(type(CMSSW_CATEGORIES) == dict)
+
+PACKAGE_RE = "^([A-Z][0-9A-Za-z]*/[a-zA-Z][0-9A-Za-z]*|.gitignore)$"
+
+for (key, value) in CMSSW_CATEGORIES.items():
+  assert(type(key) == str)
+  assert(type(value) == list)
+  for p in value:
+    assert(type(p) == str) 
+    assert(re.match(PACKAGE_RE, p))

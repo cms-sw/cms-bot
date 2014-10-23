@@ -15,7 +15,9 @@ parser = OptionParser( usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK
                      "| PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
                      "| PARSE_MATRIX_FAIL | COMPARISON_READY "
                      "| STD_COUT | TESTS_RUNNING " 
-                     "| EXTERNALS_PR_READY ")
+                     "| EXTERNALS_PR_READY "
+                     "| IGPROF_READY " )
+parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -247,6 +249,16 @@ def send_comparison_ready_message(official_cmssw,pr_number,tests_results_url):
   if not options.no_post_mesage:
     pull_request.create_issue_comment(message)
 
+def send_igprof_ready_message( official_cmssw , pr_number , tests_results_url ):
+  pull_request = official_cmssw.get_pull( pr_number )
+  print 'I will notify that igprof is ready for PR %d:' % pr_number
+  message = IGPROF_READY_MSG +'\n' + tests_results_url
+  print 'Message:'
+  print message
+  if not options.no_post_mesage:
+    pull_request.create_issue_comment(message)
+
+
 def send_std_cout_found_message(official_cmssw,pr_number,tests_results_url):
   pull_request = official_cmssw.get_pull(pr_number)
   print 'I will notify that I found a std::cout on PR %d:' % pr_number
@@ -313,6 +325,7 @@ def mark_commit( action , commit_hash , tests_url ):
 #---------------------------------------------------------------------------------------
 
 COMPARISON_READY_MSG = 'Comparison is ready'
+IGPROF_READY_MSG = 'IgProf is ready'
 STD_COUT_FOUND_MSG = '-1 \n There is a std::cout in the diff for this pull request. Could you please clean it up?'
 
 COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/cms-sw/cmssw/statuses/%s'
@@ -394,5 +407,7 @@ elif ( ACTION == 'TESTS_RUNNING' ):
 elif ( ACTION == 'EXTERNALS_PR_READY' ):
   tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/PR-%d/%d' % (pr_number,pr_job_id)
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )
+elif ( ACTION == 'IGPROF_READY' ):
+  send_igprof_ready_message( official_cmssw , pr_number , tests_results_url )
 else:
   print "I don't recognize that action!"

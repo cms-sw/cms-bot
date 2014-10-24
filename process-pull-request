@@ -371,6 +371,10 @@ if __name__ == "__main__":
     commentMsg = messageBranchClosed
   elif not missingApprovals:
     print "Pull request is already fully signed. Not sending message."
+  elif not already_seen:
+    commentMsg = messageNewPR
+  elif pull_request_updated:
+    commentMsg = messageUpdatedPR
   else:
     print "Already notified L2 about " + str(pr.number)
   if commentMsg:

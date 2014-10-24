@@ -178,9 +178,6 @@ if __name__ == "__main__":
       elif re.match("^([-]1|reject|rejected)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
-      elif re.match("^hold$", first_line):
-        for sign in CMSSW_L2[commenter]:
-          signatures[sign] = "pending"
 
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.

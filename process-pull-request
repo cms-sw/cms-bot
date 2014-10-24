@@ -106,6 +106,7 @@ if __name__ == "__main__":
     # This seems to fail for more than 250 commits. Not sure if the
     # problem is github itself or the bindings.
     last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
+  is_hold = False
   already_seen = False
   pull_request_updated = False
   comparison_done = False
@@ -167,6 +168,7 @@ if __name__ == "__main__":
       if re.match("merge", first_line):
         mustMerge = True
 
+    # Check L2 signoff
     if commenter in CMSSW_L2:
       if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
         continue
@@ -180,7 +182,15 @@ if __name__ == "__main__":
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "pending"
 
-    # Check for release managers and and sign the tests category based on their comment
+    # Some of the special users can say "hold" prevent automatic merging of
+    # fully signed PRs.
+    if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
+      if re.match("^hold$", first_line):
+        is_hold = True
+        blocker = commenter
+
+    # Check for release managers and and sign the tests category based on
+    # their comment
     #+tested for approved
     #-tested for rejected
     if commenter in releaseManagers:
@@ -190,7 +200,9 @@ if __name__ == "__main__":
         signatures["tests"] = "rejected"
 
   print "The labels of the pull request should be:"
+  # Labels coming from signature.
   labels = [x + "-pending" for x in signing_categories]
+
   for category, value in signatures.items():
     if not category in signing_categories:
       continue
@@ -202,6 +214,10 @@ if __name__ == "__main__":
     else:
       labels.append(category + "-pending")
 
+  # Additional labels.
+  if is_hold:
+    labels.append("hold")
+
   if comparison_done:
     labels.append("comparison-available")
   else:
@@ -210,11 +226,14 @@ if __name__ == "__main__":
   print "\n".join(labels)
 
   # Now updated the labels.
+  missingApprovals = [x
+                      for x in labels
+                      if not x.endswith("-approved")
+                         and not x.startswith("orp")
+                         and not x.startswith("tests")
+                         and not x.startswith("comparison")
+                         and not x == "hold"]
 
-  missingApprovals = [x for x in labels
-                      if not x.endswith("-approved") and not x.startswith("orp")
-                                                     and not x.startswith("tests")
-                                                     and not x.startswith("comparison")]
   if not missingApprovals:
     print "The pull request is complete."
   if missingApprovals:
@@ -224,19 +243,46 @@ if __name__ == "__main__":
 
   # We update labels only if they are different.
   old_labels = [x.name for x in issue.labels]
-  releaseManagersMsg=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " can you please take care of it?" or ""
+  releaseManagersList = ", ".join(["@" + x for x in releaseManagers])
+  releaseManagersMsg = ""
+  if releaseManagers:
+    releaseManagersMsg = format("%(rm)s can you please take care of it?",
+                                 rm=releaseManagersList)
 
   # Do not complain about tests
-  requiresTestMessage = "or unless it breaks tests"
+  requiresTestMessage = "or unless it breaks tests."
   if "tests-approved" in set(labels):
-    requiresTestMessage = "(tests are also fine)"
+    requiresTestMessage = "(tests are also fine)."
   elif "tests-rejected" in set(labels):
-    requiresTestMessage = "(but tests are reportedly failing)"
+    requiresTestMessage = "(but tests are reportedly failing)."
+
+  autoMergeMsg = ""
+  if all(["fully-signed" in set(labels),
+          not "hold" in set(labels),
+          not "orp-rejected" in set(labels),
+          not "orp-pending" in set(labels),
+          "tests-approved" in set(labels)]):
+    autoMergeMsg = "This pull request will be automatically merged."
+  else:
+    if "orp-pending" in set(labels) or "orp-rejected" in set(labels):
+      autoMergeMsg = format("This pull request requires discussion in the"
+                            " ORP meeting before it's merged.",
+                            managers = releaseManagersList)
+    elif "hold" in set(labels):
+      autoMergeMsg = format("This PR is put on hold by @%(blocker)s. He / she"
+                            " will have to remove the `hold` comment or"
+                            " %(releaseManagers)s will have to merge it by"
+                            " hand.",
+                            blocker=blocker,
+                            releaseManagers=releaseManagersList)
+
   messageFullySigned = format("This pull request is fully signed and it will be"
-                              " integrated in one of the next %(branch)s IBs unless changes"
-                              " %(requiresTestMessage)s. %(releaseManagersMsg)s",
-                              releaseManagersMsg=releaseManagersMsg,
-                              requiresTestMessage=requiresTestMessage,
+                              " integrated in one of the next %(branch)s IBs"
+                              " unless changes"
+                              " %(requiresTest)s"
+                              " %(autoMerge)s",
+                              requiresTest=requiresTestMessage,
+                              autoMerge = autoMergeMsg,
                               branch=pr.base.ref)
 
   if set(old_labels) == set(labels):
@@ -244,7 +290,9 @@ if __name__ == "__main__":
   elif not opts.dryRun:
     issue.delete_labels()
     issue.add_to_labels(*[repo.get_label(x) for x in labels])
-    if "fully-signed" in labels and not "orp-approved" in labels and not "orp-pending" in labels:
+    if all(["fully-signed" in labels,
+            not "orp-approved" in labels,
+            not "orp-pending" in labels]):
       pr.create_issue_comment(messageFullySigned)
     elif "fully-signed" in labels and "orp-approved" in labels:
       pass
@@ -253,20 +301,51 @@ if __name__ == "__main__":
 
 
   unsigned = [k for (k, v) in signatures.items() if v == "pending"]
-  missing_notifications = ["@" + name for name, l2_categories in CMSSW_L2.items()
-                                      for signature in signing_categories
-                                      if signature in l2_categories and signature in unsigned]
+  missing_notifications = ["@" + name
+                            for name, l2_categories in CMSSW_L2.items()
+                            for signature in signing_categories
+                            if signature in l2_categories
+                               and signature in unsigned]
+
   missing_notifications = set(missing_notifications)
+  # Construct message for the watchers
+  watchersMsg = ""
+  if watchers:
+    watchersMsg = format("%(watchers)s this is something you requested to"
+                         " watch as well.\n",
+                         watchers=", ".join(watchers))
+  # Construct message for the release managers.
+  releaseManagersMsg = ""
+  managers = ", ".join(["@" + x for x in releaseManagers])
+
+  if releaseManagers:
+    releaseManagers = format("%(managers)s you are the release manager for"
+                             " this.\nYou can merge this pull request by"
+                             " typing 'merge' in the first line of your"
+                             " comment.",
+                             managers = managers)
+
+  # Construct message for ORP approval
+  orpRequiredMsg = ""
+  if requiresL1:
+    orpRequiredMsg = format("\nThis pull requests was done for a production"
+                            " branch and will require explicit ORP approval"
+                            " on friday or L1 override.")
+
   # We do not want to spam people for the old pull requests.
-  messageNewPR = format("A new Pull Request was created by @%(user)s %(name)s for %(branch)s.\n\n"
+  messageNewPR = format("A new Pull Request was created by @%(user)s"
+                        " %(name)s for %(branch)s.\n\n"
                         "%(title)s\n\n"
                         "It involves the following packages:\n\n"
                         "%(packages)s\n\n"
                         "%(new_package_message)s\n"
-                        "%(l2s)s can you please review it and eventually sign? Thanks.\n"
+                        "%(l2s)s can you please review it and eventually sign?"
+                        " Thanks.\n"
                         "%(watchers)s"
-                        "You can sign-off by replying to this message having '+1' in the first line of your reply.\n"
-                        "You can reject by replying  to this message having '-1' in the first line of your reply.\n"
+                        "You can sign-off by replying to this message having"
+                        " '+1' in the first line of your reply.\n"
+                        "You can reject by replying  to this message having"
+                        " '-1' in the first line of your reply.\n"
                         "%(releaseManagers)s"
                         "%(orpRequired)s",
                         user=pr.user.login,
@@ -276,24 +355,21 @@ if __name__ == "__main__":
                         l2s=", ".join(missing_notifications),
                         packages="\n".join(packages),
                         new_package_message=new_package_message,
-                        watchers=watchers and ", ".join(watchers) + " this is something you requested to watch as well.\n" or "",
-                        releaseManagers=releaseManagers and ", ".join(["@" + x for x in releaseManagers]) + " you are the release manager for this.\nYou can merge this pull request by typing 'merge' in the first line of your comment." or "",
-                        orpRequired=requiresL1 and "\nThis pull requests was done for a production branch and will require explicit ORP approval on friday or L1 override." or "")
-  messageUpdatedPR = format("Pull request #%(pr)s was updated. %(signers)s can you please check and sign again.",
-                            pr=pr.number,
-                            signers=", ".join(missing_notifications))
+                        watchers=watchersMsg,
+                        releaseManagers=releaseManagersMsg,
+                        orpRequired=orpRequiredMsg)
 
   # Finally decide whether or not we should close the pull request:
-  messageBranchClosed = "This branch is closed for updates. Closing this pull request.\nPlease bring this up in the ORP meeting if really needed.\n"
+  messageBranchClosed = format("This branch is closed for updates."
+                               " Closing this pull request.\n"
+                               " Please bring this up in the ORP"
+                               " meeting if really needed.\n")
+
   commentMsg = ""
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     commentMsg = messageBranchClosed
   elif not missingApprovals:
     print "Pull request is already fully signed. Not sending message."
-  elif not already_seen and pr.number > 582:
-    commentMsg = messageNewPR
-  elif pull_request_updated and pr.number > 589:
-    commentMsg = messageUpdatedPR
   else:
     print "Already notified L2 about " + str(pr.number)
   if commentMsg:
@@ -302,6 +378,7 @@ if __name__ == "__main__":
       print commentMsg.decode("ascii", "replace")
     except:
       pass
+
   if commentMsg and not opts.dryRun:
     pr.create_issue_comment(commentMsg)
 
@@ -312,6 +389,17 @@ if __name__ == "__main__":
       print issue.edit(state="closed")
 
   # Check if it needs to be automatically merged.
+  if all(["fully-signed" in labels,
+          "tests-approved" in labels,
+          not "hold" in labels,
+          not "orp-rejected" in labels,
+          not "orp-pending" in labels]):
+    print "This pull request can be automatically merged"
+    mustMerge = True
+  else:
+    print "This pull request will not be automatically merged."
+    print not "orp-rejected" in labels, not "orp-pending" in labels
+
   if mustMerge == True:
     print "This pull request must be merged."
     if not opts.dryRun:

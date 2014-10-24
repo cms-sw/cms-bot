@@ -46,7 +46,8 @@ if __name__ == "__main__":
 
   # Process the changes for the given pull request so that we can determine the
   # signatures it requires.
-  packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2]) for x in pr.get_files()])])
+  packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2])
+                       for x in pr.get_files()])])
   print "Following packages affected:"
   print "\n".join(packages)
   signing_categories = set([category for package in packages

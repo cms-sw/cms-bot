@@ -265,6 +265,9 @@ if __name__ == "__main__":
       autoMergeMsg = format("This pull request requires discussion in the"
                             " ORP meeting before it's merged.",
                             managers = releaseManagersList)
+    elif "new-package-pending" in set(labels):
+      autoMergeMsg = format("This pull request requires a new package and "
+                            " will not be merged.")
     elif "hold" in set(labels):
       autoMergeMsg = format("This PR is put on hold by @%(blocker)s. He / she"
                             " will have to remove the `hold` comment or"
@@ -390,7 +393,8 @@ if __name__ == "__main__":
           "tests-approved" in labels,
           not "hold" in labels,
           not "orp-rejected" in labels,
-          not "orp-pending" in labels]):
+          not "orp-pending" in labels,
+          not "new-package-pending" in labels]):
     print "This pull request can be automatically merged"
     mustMerge = True
   else:

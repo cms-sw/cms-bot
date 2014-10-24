@@ -78,7 +78,6 @@ updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug-gcc491
 
 # CMSSW_7_2_X
 updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_2_X/stable
-updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/root6
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/geant10
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/gcc490
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/gcc491

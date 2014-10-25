@@ -15,7 +15,7 @@ for PR in `./query-new-pull-requests -t ${TIME_INTERVAL}`; do
     # not apporved. This is under the assumption some human being checked
     # everything is ok.
     if [ "X$FORCE_ALL_TESTS" = Xtrue ]; then
-      echo "FORCE=1" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
+      echo "FORCE=true" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
     fi
   fi
 

@@ -1006,6 +1006,7 @@ CMSSW_CATEGORIES={
    "CondFormats/DataRecord", "CondFormats/ESObjects",
    "CondFormats/EcalCorrections",
    "CondFormats/EcalObjects",
+   "CondFormats/MFObjects",
    "Alignment/CocoaAnalysis",
    "Alignment/CocoaApplication",
    "Alignment/CocoaDDLObjects",

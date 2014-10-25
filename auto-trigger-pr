@@ -20,6 +20,8 @@ from optparse import OptionParser
 if __name__ == "__main__":
 
   parser = OptionParser( usage="%prog <pr-number>" )
+  parser.add_option("-f", "--force", dest="force", action="store_true", 
+                    help="Promote tests, regardless of status.", default=False)
   opts, args = parser.parse_args()
   pr_number = int( args[ 0 ] )
   if not len(args):
@@ -38,9 +40,11 @@ if __name__ == "__main__":
   someone_approved = len( approved_labels ) > 0
 
   # if noone has approved I don't trigger the tests
-  if not someone_approved:
+  if not someone_approved and not opts.force:
     print 'nobody has approved, tests not triggered'
     exit( 1 )
+  elif opts.force:
+    print "Force passed, triggering in any case"
 
   commits = [ c for c in repo.get_pull( pr_number ).get_commits( ) ]
   last_commit_statuses = [ s for s in commits[ -1 ].get_statuses() ]

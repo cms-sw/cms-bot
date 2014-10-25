@@ -14,7 +14,7 @@ for PR in `./query-new-pull-requests -t ${TIME_INTERVAL}`; do
     # If this is the case, we force the creation of tests for the PR, even if
     # not apporved. This is under the assumption some human being checked
     # everything is ok.
-    if [ "X$FORCE_ALL_TESTS" = X1 ]; then
+    if [ "X$FORCE_ALL_TESTS" = Xtrue ]; then
       echo "FORCE=1" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
     fi
   fi

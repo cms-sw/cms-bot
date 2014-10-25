@@ -11,6 +11,12 @@ for PR in `./query-new-pull-requests -t ${TIME_INTERVAL}`; do
   if cat config.map | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= ; then
     echo 'Creating properties file for '$PR
     echo "PULL_REQUEST=$PR" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
+    # If this is the case, we force the creation of tests for the PR, even if
+    # not apporved. This is under the assumption some human being checked
+    # everything is ok.
+    if [ "X$FORCE_ALL_TESTS" = X1 ]; then
+      echo "FORCE=1" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
+    fi
   fi
 
 

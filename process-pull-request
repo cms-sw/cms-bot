@@ -359,13 +359,11 @@ if __name__ == "__main__":
                         watchers=watchersMsg,
                         releaseManagers=releaseManagersMsg,
                         orpRequired=orpRequiredMsg)
+
   messageUpdatedPR = format("Pull request #%(pr)s was updated."
                             " %(signers)s can you please check and sign again.",
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
-                            watchers=watchersMsg,
-                            releaseManagers=releaseManagersMsg,
-                            orpRequired=orpRequiredMsg)
 
   # Finally decide whether or not we should close the pull request:
   messageBranchClosed = format("This branch is closed for updates."

@@ -240,8 +240,9 @@ if __name__ == "__main__":
     labels.append("fully-signed")
 
   # We update labels only if they are different.
+  SUPER_USERS = (yaml.load(file("super-users.yaml")))
   old_labels = [x.name for x in issue.labels]
-  releaseManagersList = ", ".join(["@" + x for x in releaseManagers])
+  releaseManagersList = ", ".join(["@" + x for x in releaseManagers + SUPER_USERS])
   releaseManagersMsg = ""
   if releaseManagers:
     releaseManagersMsg = format("%(rm)s can you please take care of it?",
@@ -264,18 +265,19 @@ if __name__ == "__main__":
   else:
     if "orp-pending" in set(labels) or "orp-rejected" in set(labels):
       autoMergeMsg = format("This pull request requires discussion in the"
-                            " ORP meeting before it's merged.",
-                            managers = releaseManagersList)
+                            " ORP meeting before it's merged. %(managers)s",
+                            managers=releaseManagersList)
     elif "new-package-pending" in set(labels):
       autoMergeMsg = format("This pull request requires a new package and "
-                            " will not be merged.")
+                            " will not be merged. %(managers)s",
+                            managers=releaseManagersList)
     elif "hold" in set(labels):
       autoMergeMsg = format("This PR is put on hold by @%(blocker)s. He / she"
                             " will have to remove the `hold` comment or"
-                            " %(releaseManagers)s will have to merge it by"
+                            " %(managers)s will have to merge it by"
                             " hand.",
                             blocker=blocker,
-                            releaseManagers=releaseManagersList)
+                            managers=releaseManagersList)
 
   messageFullySigned = format("This pull request is fully signed and it will be"
                               " integrated in one of the next %(branch)s IBs"

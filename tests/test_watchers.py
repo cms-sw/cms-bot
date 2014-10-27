@@ -6,7 +6,7 @@ import yaml
 import re
 # Validate the schema of watchers.
 
-KEY_RE = "[^@]+"
+KEY_RE = "^[^@]+"
 VALUE_RE = "[A-Za-z0-0.*+]"
 
 w = yaml.load(open("watchers.yaml", "r"))
@@ -31,3 +31,10 @@ for (key, value) in CMSSW_CATEGORIES.items():
   for p in value:
     assert(type(p) == str) 
     assert(re.match(PACKAGE_RE, p))
+
+w = yaml.load(open("super-users.yaml", "r"))
+
+assert(type(w) == list)
+for p in w:
+  assert(type(p) == str)
+  assert(re.match(KEY_RE, p))

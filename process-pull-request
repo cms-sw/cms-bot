@@ -316,15 +316,15 @@ if __name__ == "__main__":
                          " watch as well.\n",
                          watchers=", ".join(watchers))
   # Construct message for the release managers.
-  releaseManagersMsg = ""
   managers = ", ".join(["@" + x for x in releaseManagers])
 
+  releaseManagersMsg = ""
   if releaseManagers:
-    releaseManagers = format("%(managers)s you are the release manager for"
-                             " this.\nYou can merge this pull request by"
-                             " typing 'merge' in the first line of your"
-                             " comment.",
-                             managers = managers)
+    releaseManagersMsg = format("%(managers)s you are the release manager for"
+                                " this.\nYou can merge this pull request by"
+                                " typing 'merge' in the first line of your"
+                                " comment.",
+                                managers = managers)
 
   # Construct message for ORP approval
   orpRequiredMsg = ""

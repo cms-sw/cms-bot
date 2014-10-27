@@ -43,7 +43,7 @@ updateBranch CMSSW_7_2_X CMSSW_7_2_CLANG_X
 updateBranch CMSSW_7_2_X CMSSW_7_2_THREADED_X
 
 # CMSSW_7_3_X special branches
-# updateBranch CMSSW_7_3_X CMSSW_7_3_ROOT6_X
+updateBranch CMSSW_7_3_X CMSSW_7_3_ROOT6_X
 updateBranch CMSSW_7_3_X CMSSW_7_3_GEANT10_X
 updateBranch CMSSW_7_3_X CMSSW_7_3_THREADED_X
 updateBranch CMSSW_7_3_X CMSSW_7_3_CLANG_X

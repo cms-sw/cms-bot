@@ -1,9 +1,12 @@
 #!/bin/sh -ex
 
 env
+# If it is not run by jenkins it sets up a default workspace
+WORKSPACE=${WORKSPACE-/build}
 CMSDIST_PATH=$WORKSPACE/cmsdist
 PKGTOOLS_PATH=$WORKSPACE/pkgtools
-# SCRAM_ARCH and RELEASE_QUEUE are set by Jenkins
+# SCRAM_ARCH and RELEASE_QUEUE are set by Jenkins, If it is not
+# run by jenkins they should be provided in the parameters
 INTERACTIVE=${INTERACTIVE-}
 JOBS=${JOBS-1}
 export SCRAM_ARCH=$ARCHITECTURE
@@ -25,8 +28,12 @@ done
 
 eval `curl https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map | grep SCRAM_ARCH=$SCRAM_ARCH | grep RELEASE_QUEUE=$RELEASE_QUEUE`
 
-git clone git@github.com:cms-sw/cmsdist.git $CMSDIST_PATH
-git clone git@github.com:cms-sw/pkgtools.git $PKGTOOLS_PATH
+if [ ! -d "$CMSDIST_PATH" ]; then
+  git clone git@github.com:cms-sw/cmsdist.git $CMSDIST_PATH
+fi
+if [ ! -d "$PKGTOOLS_PATH" ]; then
+  git clone git@github.com:cms-sw/pkgtools.git $PKGTOOLS_PATH
+fi
 
 pushd $PKGTOOLS_PATH ; git fetch origin ; git checkout $PKGTOOLS_TAG; popd
 pushd $CMSDIST_PATH ; git remote -v ; strace git fetch origin $CMSDIST_TAG ; git checkout FETCH_HEAD; popd

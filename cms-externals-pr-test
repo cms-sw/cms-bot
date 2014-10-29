@@ -26,7 +26,12 @@ while [ X$# != X0 ] ; do
   esac
 done
 
-eval `curl https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map | grep SCRAM_ARCH=$SCRAM_ARCH | grep RELEASE_QUEUE=$RELEASE_QUEUE`
+if [ "X$SCRAM_ARCH" = X ] || [ "X$RELEASE_QUEUE" = X ]; then
+  echo "You need to specify SCRAM_ARCH (-a) and RELEASE_QUEUE (-q)"
+  exit 1
+fi
+
+eval `curl https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map | grep "SCRAM_ARCH=$SCRAM_ARCH;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 if [ ! -d "$CMSDIST_PATH" ]; then
   git clone git@github.com:cms-sw/cmsdist.git $CMSDIST_PATH

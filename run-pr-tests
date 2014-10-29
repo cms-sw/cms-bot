@@ -284,7 +284,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo 'COMPARISON;QUEUED' >> $RESULTS_FILE
 
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
-    echo "Creating property file comparison-properties."   
+    echo "Creating properties file $TRIGGER_COMPARISON_FILE"
     echo "RELEASE_FORMAT=$RELEASE_FORMAT" > $TRIGGER_COMPARISON_FILE
     echo "ARCHITECTURE=${ARCHITECTURE}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_COMPARISON_FILE
@@ -296,43 +296,20 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
    # for now this is only run for 25202
    
   
-   if [ "X$RUN_IGPROF" = Xtrue ]; then
-     if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-       $WORKSPACE/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running IGProf"
-     fi   
-     mkdir "$WORKSPACE/igprof-results-data"
-     pushd "$WORKSPACE/igprof-results-data"
+  if [ "X$RUN_IGPROF" = Xtrue ]; then
+    echo 'IGPROF;QUEQUED' >> $RESULTS_FILE
 
-       runTheMatrix.py -l 25202 --command '--profile mp' 2>&1 | tee -a $WORKSPACE/igprof-results-data/runTheMatrix.log
-       ls
+    TRIGGER_IGPROF_FILE=$WORKSPACE/'igprof.properties'
+    echo "Creating properties file $TRIGGER_IGPROF_FILE"   
+    echo "RELEASE_FORMAT=$RELEASE_FORMAT" > $TRIGGER_IGPROF_FILE
+    echo "ARCHITECTURE=${ARCHITECTURE}" >> $TRIGGER_IGPROF_FILE
+    echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_IGPROF_FILE
+    echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_IGPROF_FILE
+    echo "LAST_COMMIT=${LAST_COMMIT}" >> $TRIGGER_IGPROF_FILE
+    echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $TRIGGER_IGPROF_FILE
 
-       find $WORKSPACE/igprof-results-data/ -type d | while read d; do
-    
-         echo "processing dir $d"
-      
-         for f in $d/*.gz
-         do
-  
-           echo "processing file $f"
-
-            OUTFILE=${f//.gz/.sql}
-            echo $OUTFILE
-            igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE 2>&1 | tee -a $WORKSPACE/igprof-results-data/igprof-analyse-$f.log
-
-          done
-
-          ls $dir
-
-        done
-
-     popd
-
-    echo 'IGPROF;OK' >> $RESULTS_FILE
-    
   else  
-
     echo 'IGPROF;NOTRUN' >> $RESULTS_FILE
-
   fi
 
   #####################################################################

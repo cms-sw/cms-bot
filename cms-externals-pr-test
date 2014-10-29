@@ -1,12 +1,14 @@
 #!/bin/sh -ex
 
 env
-CMSDIST_PATH=/build/cmsdist
-PKGTOOLS_PATH=/build/pkgtools
-SCRAM_ARCH=unknown
-RELEASE_QUEUE=unknown
+CMSDIST_PATH=$WORKSPACE/cmsdist
+PKGTOOLS_PATH=$WORKSPACE/pkgtools
+# SCRAM_ARCH and RELEASE_QUEUE are set by Jenkins
 INTERACTIVE=${INTERACTIVE-}
 JOBS=${JOBS-1}
+export SCRAM_ARCH=$ARCHITECTURE
+RESULTS_DIR=$WORKSPACE/results
+mkdir -p $RESULTS_DIR
 
 while [ X$# != X0 ] ; do
   case $1 in
@@ -22,6 +24,9 @@ while [ X$# != X0 ] ; do
 done
 
 eval `curl https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map | grep SCRAM_ARCH=$SCRAM_ARCH | grep RELEASE_QUEUE=$RELEASE_QUEUE`
+
+git clone git@github.com:cms-sw/cmsdist.git $CMSDIST_PATH
+git clone git@github.com:cms-sw/pkgtools.git $PKGTOOLS_PATH
 
 pushd $PKGTOOLS_PATH ; git fetch origin ; git checkout $PKGTOOLS_TAG; popd
 pushd $CMSDIST_PATH ; git remote -v ; strace git fetch origin $CMSDIST_TAG ; git checkout FETCH_HEAD; popd
@@ -60,4 +65,6 @@ if [ X$INTERACTIVE = X1 ]; then
   bash
 fi
 
-pkgtools/cmsBuild -c cmsdist -a $SCRAM_ARCH -j $JOBS --work-dir w build $BUILD_PACKAGE
+pushd $RESULTS_DIR
+  $PKGTOOLS_PATH/cmsBuild -c $CMSDIST_PATH -a $SCRAM_ARCH -j $JOBS --work-dir $RESULTS_DIR/w build $BUILD_PACKAGE 2>&1 | tee -a $RESULTS_DIR/build.log
+popd

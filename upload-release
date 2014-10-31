@@ -1,0 +1,33 @@
+#!/bin/sh -ex
+
+# This script assumes that the release is built without errors in the directory 
+# /build/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCH/build
+# CMSSW_X_Y_Z: the release to upload
+# ARCH: architecture for the upload
+# ISSUE_NUMBER: the number of the issue that triggered the upload
+# DRY_RUN_PARAM: parameter that to use dry-run
+
+CMSSW_X_Y_Z=not-assigned
+ARCH=not-assigned
+ISSUE_NUMBER=not-assigned
+DRY_RUN_PARAM=not-assigned
+BUILD_NUMBER=not-assigned
+WORKSPACE=${WORKSPACE-"/build/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCH/"}
+
+HERE=$WORKSPACE/build
+BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
+case $CMSSW_X_Y_Z in
+    *patch*) 
+      PATCH='-patch';;
+    *) 
+     /afs/cern.ch/cms/sdt/internal/scripts/requestNewAfsSpace.py --platform $ARCH --version $CMSSW_X_Y_Z; 
+    ;; 
+esac
+
+# the jenkins build number is the one of the job in jenkins doing the upload
+$WORKSPACE/report-build-release-status $BUILD_NUMBER N/A $ISSUE_NUMBER $ARCH $CMSSW_X_Y_Z UPLOADING $DRY_RUN_PARAM
+pushd $BUILD_DIR
+  PKGTOOLS/cmsBuild --architecture=$ARCH --sync-back upload cmssw$PATCH
+popd
+
+echo 'ALL_OK'

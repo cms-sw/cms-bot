@@ -20,27 +20,115 @@ GH_CMSSW_REPO = 'cmssw'
 BUILD_REL = 'Build'
 NOT_AUTHORIZED_MSG = 'You are not authorized to trigger the build of a release.'
 CONFIG_MAP_FILE = 'config.map'
-NO_ARCHS_FOUND_MSG = 'No architecures to build found for %s. Please check that you entered a ' \
-                     'valid release name or that the IBs are currently enabled for that release queue'
+NO_ARCHS_FOUND_MSG = 'No architecures to build found for {rel_name}. Please check that you entered a ' \
+                     'valid release name or that the IBs are currently enabled for that release queue.'
 RELEASE_BASE_URL = 'https://github.com/cms-sw/cmssw/releases/tag/%s'
 RELEASE_CREATED_MSG = 'Release created: %s'
-QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s ' 
+QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s '
+QUEING_UPLOADS_MSG = 'Queing Jenkins upload for {architecture}'
 BUILD_QUEUED_LABEL = 'build-release-queued'
+BUILD_STARTED_LABEL = 'build-release-started'
 JENKINS_CMSSW_X_Y_Z = 'CMSSW_X_Y_Z'
 JENKINS_ARCH = 'ARCH'
 JENKINS_ISSUE_NUMBER = 'ISSUE_NUMBER'
+JENKINS_MACHINE_NAME = 'MACHINE_NAME'
+UPLOAD_COMMENT = 'upload %s'
+DEFAULT_CHECK_COMMENT = ( AUTO_BUILD_RELEASE + [ 'cmsbuild' ] )
 
+#
+# Creates a properties file in Jenkins to trigger the upload
+# it needs to know the machine that was used for the build
+#
+def create_properties_files_upload( release_name , arch , issue_number , machine_name ):
+
+  out_file_name = 'upload-%s-%s.properties' % ( release_name , arch )
+  if opts.dryRun:
+    print 'Not creating properties file (dry-run):\n %s' % out_file_name
+  else:
+    print 'Creating properties file for %s' % arch
+    out_file = open( out_file_name , 'w' )
+    out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_MACHINE_NAME , machine_name ) )
+
+
+#
+# for each architecture, reads the message to see if they are asking to upload a release
+# retruns True if it is going to trigger the upload, False otherwise.
+#
+def check_and_trigger_upload( release_name , issue , comments, architectures ):
+  triggered_upload = False
+  for arch in architectures:
+    pattern = 'The build has finished sucessfully for the architecture %s .*' % arch
+    if not search_in_comments( comments , DEFAULT_CHECK_COMMENT , pattern ):
+      print 'Not ready to upload %s ' % arch
+      continue
+    else:
+      pattern = ( UPLOAD_COMMENT % arch )
+      upload_requested = search_in_comments( comments , DEFAULT_CHECK_COMMENT , pattern )
+      pattern = ( QUEING_UPLOADS_MSG.format( architecture=arch ) )
+      already_triggered = search_in_comments( comments , DEFAULT_CHECK_COMMENT  , pattern )
+      if upload_requested and not already_triggered:
+        print 'Upload requested for %s' % arch
+        pattern = 'The build has started for %s .*' % arch
+        building_msg = search_in_comments( comments , DEFAULT_CHECK_COMMENT  , pattern )
+        if not building_msg:
+          print 'Build machine not found in the comments, something is wrong'
+          exit( 1 )
+        else:
+          print 'Triggering upload for %s' % arch
+          machine = building_msg[ 0 ].split( ' ' )[ -1 ]
+          create_properties_files_upload( release_name , arch , issue.number , machine )
+          post_message( issue , QUEING_UPLOADS_MSG.format( architecture=arch ) )
+          triggered_upload = True
+      else:
+        print 'Upload for %s no requested yet, or already triggered' % arch
+
+  return triggered_upload
+#
+# Searches in the comments if there is a comment made from  the given users  that
+# matches the given pattern. It returns a list with the matched comments.
+#
+def search_in_comments( comments , user_logins , pattern ):
+  found_comments = []
+  requested_comment_bodies = [ c.body for c in comments if c.user.login in user_logins ]
+  for body in requested_comment_bodies:
+    if re.match( pattern , body ):
+      found_comments.append( body )
+  return found_comments
+
+
+#
+# Checks if the issue has already been seen so the issue will not be processed again
+# Returns True if the issue needs to be processed, False if not
+# 
+def check_if_already_processed( issue ):
+  comments = [ c for c in issue.get_comments( ) ]
+  comment_bodies = [ c.body for c in comments if c.user.login == 'cmsbuild' ]
+  for body in comment_bodies:
+    if 'Release created' in body:
+      return True
+    if 'Queuing Jenkins build' in body:
+      return True
+    if 'You are not authorized' in body:
+      return True
+
+  return False
 #
 #  Creates the properties files to trigger the build in Jenkins
 #
 def create_properties_files( release_name , architectures , issue_number ):
   for arch in architectures:
-    print 'Creating properties file for %s' % arch
-    out_file_name = '%s-%s.properties' % ( release_name , arch )
-    out_file = open( out_file_name , 'w' )
-    out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
-    out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
-    out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
+    out_file_name = 'build-%s-%s.properties' % ( release_name , arch )
+    if opts.dryRun:
+      print 'Not creating properties file (dry-run):\n %s' % out_file_name
+    else:
+      print 'Creating properties file for %s' % arch
+      out_file = open( out_file_name , 'w' )
+      out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
+      out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
+      out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
 
     
 #
@@ -111,46 +199,75 @@ def post_message( issue , msg ):
 if __name__ == "__main__":
   parser = OptionParser( usage="%prog <issue-id>" )
   parser.add_option( "-n" , "--dry-run" , dest="dryRun" , action="store_true", help="Do not post on Github", default=False )
-  parser.add_option( "-f" , "--force" , dest="force" , action="store_true", help="Ignore previous issue labels", default=False )
+  parser.add_option( "-f" , "--force" , dest="force" , action="store_true", help="Ignore previous comments in the issue and proccess it again", default=False )
+  parser.add_option( "-c", "--check-upload", dest="check_upload" , action="store" , help="Check if one of the authorized users has written the upload message"
+                                                                                        "for the architecture given as a parameter. It exits with 0 if it finds"
+                                                                                        "a message with the structure 'upload <architecture>', if not it exits"
+                                                                                        " with 1"  )
   opts, args = parser.parse_args( )
 
   if len( args ) != 1:
+    parser.print_help()
     parser.error( "Too many arguments" )
   
   issue_id  = int( args[ 0 ] )
   gh = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
   issue = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO ).get_issue( issue_id )
-
-  if not opts.force:
-    labels = [ l.name for l in issue.get_labels() ]
-    if BUILD_QUEUED_LABEL in labels:
-      print 'Build already queued, ignoring' 
-      exit( 0 )
-
+  comments = [ c for c in issue.get_comments( ) ]
+ 
+  # 1. Is this a pull request?
   if issue.pull_request:
     print 'This is a pull request, ignoring.'
     exit( 0 )
+  # 2. Is this issue meant to build a release?
   if not issue.title.startswith( BUILD_REL ):
     print 'This issue is not for building a release, ignoring.'
     exit( 0 )
+  # 3. Is the author authorized to trigger a build?
   if not issue.user.login in AUTO_BUILD_RELEASE:
     print 'User not authorized'
-    post_message( issue , NOT_AUTHORIZED_MSG )
+    if not search_in_comments( comments, DEFAULT_CHECK_COMMENT , NOT_AUTHORIZED_MSG ): 
+      post_message( issue , NOT_AUTHORIZED_MSG )
+    else:
+      print 'Already posted about this'
     exit( 0 )
 
   release_name = issue.title.split( BUILD_REL )[ 1 ].strip()
   isPatch = 'patch' in release_name
+  isPre = 'pre' in release_name
   release_queue = ''
+  exp = '[0-9]+_SLHC[0-9]+$' if 'SLHC' in release_name else '[0-9]+$'
+  replacement = 'X_SLHC' if 'SLHC' in release_name else 'X'
+  
   if isPatch:
-    release_queue = re.sub( '[0-9]+$' , 'X' , release_name.split( '_patch' )[ 0 ] )
+    release_queue = re.sub( exp , replacement , release_name.split( '_patch' )[ 0 ] )
+  elif isPre:
+    release_queue = re.sub( exp , replacement , release_name.split( '_pre' )[ 0 ] )
   else:
-    release_queue = re.sub( '[0-9]+$' , 'X' , release_name )
+    release_queue = re.sub( exp , replacement , release_name )
 
+  print release_queue
   architectures =  get_archs_config_map( release_queue )
+
+  # 4. Are they asking to upload an architecture? 
+  if check_and_trigger_upload( release_name , issue , comments , architectures ):
+    print 'Uploads triggered'
+    exit( 0 )
+
+  # 5. Is the build on progress?
+  if not opts.force:
+    if search_in_comments( comments, DEFAULT_CHECK_COMMENT , QUEUING_BUILDS_MSG[:20] ):
+      print 'Build in progress or already uploaded. Nothing to do, ignoring.' 
+      exit( 0 )
+
+  # 6. The build needs to be triggered
   if not architectures:
-    print 'no archs found'
-    post_message( issue , NO_ARCHS_FOUND_MSG % release_queue )
-    # here the issue should be labeled or something to mark that the release name is wrong and not check it again
+    print 'no archs found for the requested release'
+    msg = NO_ARCHS_FOUND_MSG.format( rel_name=release_name )
+    if search_in_comments( comments, DEFAULT_CHECK_COMMENT , msg ):
+      print 'Already notified about it'
+    else:
+      post_message( issue , msg )
     exit( 0 )
   else:
     cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
@@ -162,6 +279,6 @@ if __name__ == "__main__":
 
     msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
     post_message( issue , msg )
-    add_label( issue, BUILD_QUEUED_LABEL )
+    #add_label( issue, BUILD_QUEUED_LABEL )
 
 

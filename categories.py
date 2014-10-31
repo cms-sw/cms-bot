@@ -1,6 +1,8 @@
 # A ridicously long mapping for categories. Good enough for now.
 import re
 
+AUTO_BUILD_RELEASE = [ "nclopezo" , "ktf" ]
+
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],
   "perrotta": ["hlt"],

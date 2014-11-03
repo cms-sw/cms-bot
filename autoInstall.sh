@@ -13,7 +13,12 @@ export SCRAM_ARCH=$1
 export BASEDIR=$2
 export BASEDESTDIR=/afs/cern.ch/cms/sw/ReleaseCandidates
 export LANG=C
-# The repositories we need to install are those for which we find the 
+
+# Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at
+# any point.
+find $BASEDIR -maxdepth 1 -mindepth 1 | sort -n | head -n -2 | xargs rm -rf
+
+# The repositories we need to install are those for which we find the
 # timestamp files:
 REPOSITORIES=`find /afs/cern.ch/cms/sw/ReleaseCandidates/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
 echo $REPOSITORIES
@@ -21,11 +26,11 @@ echo $REPOSITORIES
 # We install packages for both weeks. We reset every two week, alternating.
 # Notice that the biweekly period for week 1 is shifted by 1 week for this
 # reason we move it away from the 0 into 52 and take the modulo 52 afterward.
-# Potentially we could separate the installation of the two volumes so that 
+# Potentially we could separate the installation of the two volumes so that
 # we don't need a huge local disk, but we can scatter this on different machienes.
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
-  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc) 
+  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH
   DESTDIR=$BASEDESTDIR/vol$WEEK
   mkdir -p $WORKDIR
@@ -36,7 +41,7 @@ for REPOSITORY in $REPOSITORIES; do
   # rebootstrap the area.
   if [ ! -f $LOGFILE ]; then
     # We move it so that if we are slow removing it, we do not endup removing
-    # what got installed by someone else.  
+    # what got installed by someone else.
     mkdir -p $WORKDIR/common
     touch $LOGFILE
     wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/cms/bootstrap.sh
@@ -63,9 +68,9 @@ for REPOSITORY in $REPOSITORIES; do
     done ;
     rm installed$$.txt ;
     rm onserver$$.txt ;
-    apt-get clean 
-  ) || true 
-  # We create the directory in any case, to avoid the rsync to fail in case 
+    apt-get clean
+  ) || true
+  # We create the directory in any case, to avoid the rsync to fail in case
   # the repository is not there and we cannot install.
   mkdir -p $WORKDIR/etc/
   rsync -a --no-group --no-owner $WORKDIR/etc/ $DESTDIR/etc/
@@ -81,7 +86,7 @@ echo $REPOSITORIES
 # - Create the timestamp
 # - Remove packages which are not in the source anymore.
 for REPOSITORY in $REPOSITORIES; do
-  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc) 
+  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH/$SCRAM_ARCH
   DESTDIR=$BASEDESTDIR/vol$WEEK/$SCRAM_ARCH
   DIRFILE=$WORKDIR/dirs$$.txt

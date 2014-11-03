@@ -116,8 +116,10 @@ getHeader = function( resultsDict ){
   var adittionalPRS = resultsDict[ ADDITIONAL_PRS_KEY ]
   if ( adittionalPRS != '' ){
   
-    $.each( adittionalPRS.split( ',' ) , function( pr ){
+    addPRParts = adittionalPRS.split( ',' )
+    $.each( addPRParts , function( index ){
       
+      var pr = addPRParts[ index ]
       var addPrLink = $( "<a>" ).text( pr )
       addPrLink.attr( 'href' , getLinkToPR( pr ) )
       subtitle.append( $( '<span>' ).text( ', ' ) ).append( addPrLink )

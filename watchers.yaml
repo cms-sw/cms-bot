@@ -458,6 +458,17 @@ schoef:
 - RecoMET
 - Validation/RecoJets
 - Validation/RecoMET
+tlampen:
+- Alignment/CommonAlignment
+- Alignment/CommonAlignmentAlgorithm
+- Alignment/CommonAlignmentParametrization
+- Alignment/CommonAlignmentProducer
+- Alignment/MillePedeAlignmentAlgorithm
+- Alignment/OfflineValidation
+- Alignment/ReferenceTrajectories
+- Alignment/SurveyAnalysis
+- Alignment/TrackerAlignment
+- Alignment/TwoBodyDecay
 threus:
 - DQM/SiPixel*
 - DQM/SiStrip*

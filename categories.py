@@ -597,6 +597,8 @@ CMSSW_CATEGORIES={
    "PhysicsTools/Configuration",
    "PhysicsTools/FWLite",
    "PhysicsTools/HepMCCandAlgos",
+   "PhysicsTools/Heppy",
+   "PhysicsTools/HeppyCore",
    "PhysicsTools/IsolationAlgos",
    "PhysicsTools/IsolationUtils",
    "PhysicsTools/JetCharge",

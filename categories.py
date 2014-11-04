@@ -738,6 +738,7 @@ CMSSW_CATEGORIES={
    "GeneratorInterface/SherpaInterface",
    "GeneratorInterface/TauolaInterface",
    "GeneratorInterface/ThePEGInterface",
+   "GeneratorInterface/Hydjet2Interface",
    "DataFormats/HepMCCandidate", "SimDataFormats/GeneratorProducts",
    "Validation/EventGenerator",
    "IOMC/ParticleGuns"

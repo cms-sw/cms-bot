@@ -77,7 +77,7 @@ perl -p -i -e "s/### RPM cms cmssw.*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" CMS
 perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $RELEASE_NAME/" CMSDIST/cmssw-validation.spec
 perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" CMSDIST/cmssw-patch.spec
 perl -p -i -e "s/BuildRequires: cmssw /BuildRequires: $BASE_PACKAGE_NAME /" CMSDIST/cmssw-validation.spec
-CMSSW_BUILD_ROOT=`echo ${PACKAGE_NAME}_ROOT | tr "[:lower:]-" "[:upper:]_"`
+CMSSW_BUILD_ROOT=`echo ${BASE_PACKAGE_NAME}_ROOT | tr "[:lower:]-" "[:upper:]_"`
 perl -p -i -e "s/CMSSW_ROOT/$CMSSW_BUILD_ROOT/" CMSDIST/cmssw-validation.spec
 perl -p -i -e "s/%define baserelver[\s].*/%define baserelver $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file
 perl -p -i -e "s/%define baserelqueue[\s].*/%define baserelqueue $CMSSW_RELEASE_BASE/" CMSDIST/cmssw-patch-build.file

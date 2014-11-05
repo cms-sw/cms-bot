@@ -41,7 +41,7 @@ if [ ! -d "$PKGTOOLS_PATH" ]; then
 fi
 
 pushd $PKGTOOLS_PATH ; git fetch origin ; git checkout $PKGTOOLS_TAG; popd
-pushd $CMSDIST_PATH ; git remote -v ; strace git fetch origin $CMSDIST_TAG ; git checkout FETCH_HEAD; popd
+pushd $CMSDIST_PATH ; git remote -v ; git fetch origin $CMSDIST_TAG ; git checkout FETCH_HEAD; popd
 
 BUILD_REPO=`echo $PR | sed -e 's|/.*||'`
 BUILD_PACKAGE=`echo $PR | sed -e 's|.*/||;s|#.*||'`

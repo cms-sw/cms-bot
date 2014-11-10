@@ -270,7 +270,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   popd
  
      
-  if grep -i "ERROR executing" $WORKSPACE/matrixTests.log; then
+  if grep -i -E "ERROR executing.*|ERROR .*" $WORKSPACE/matrixTests.log; then
     echo "Errors in the RelVals"
 
     echo 'MATRIX_TESTS;ERROR' >> $RESULTS_FILE

@@ -1120,6 +1120,7 @@ CMSSW_CATEGORIES={
    "DataFormats/SiStripDigi", "DataFormats/CSCDigi",
    "SimCalorimetry/CaloSimAlgos",
    "SimCalorimetry/CastorSim",
+   "SimCalorimetry/CastorTechTrigProducer",
    "SimCalorimetry/Configuration",
    "SimCalorimetry/EcalElectronicsEmulation",
    "SimCalorimetry/EcalSelectiveReadoutAlgos",

@@ -260,6 +260,10 @@ dkotlins:
 - CondCore/SiPixelPlugins
 - CondFormats/SiPixelObjects
 - CondTools/SiPixel
+echapon:
+- RecoHI/Configuration
+- RecoHI/HiMuonAlgos
+- RecoHI/HiTracking
 forthommel:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration

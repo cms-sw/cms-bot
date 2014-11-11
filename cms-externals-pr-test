@@ -37,7 +37,7 @@ if [ ! -d "$CMSDIST_PATH" ]; then
   git clone git@github.com:cms-sw/cmsdist.git $CMSDIST_PATH
 fi
 if [ ! -d "$PKGTOOLS_PATH" ]; then
-  git clone git@github.com:cms-sw/pkgtools.git $PKGTOOLS_PATH
+  git clone https://github.com/cms-sw/pkgtools.git $PKGTOOLS_PATH
 fi
 
 pushd $PKGTOOLS_PATH ; git fetch origin ; git checkout $PKGTOOLS_TAG; popd

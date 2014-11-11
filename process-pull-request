@@ -242,7 +242,7 @@ if __name__ == "__main__":
   # We update labels only if they are different.
   SUPER_USERS = (yaml.load(file("super-users.yaml")))
   old_labels = [x.name for x in issue.labels]
-  releaseManagersList = ", ".join(["@" + x for x in releaseManagers + SUPER_USERS])
+  releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
   releaseManagersMsg = ""
   if releaseManagers:
     releaseManagersMsg = format("%(rm)s can you please take care of it?",

@@ -57,7 +57,7 @@ HEAD_BRANCH=`curl -s $BUILD_PR_URL | jq '.["head"]["ref"]' | sed -e 's/"//g'`
 
 # Clone the repository and merge the pull request.
 git clone -b $BASE_BRANCH $BASE_REPO $BUILD_PACKAGE
-pushd $BUILD_PACKAGE
+pushd $WORKSPACE/$BUILD_PACKAGE
   git config user.email "cmsbuild@cern.ch"
   git config user.name "CMS BOT"
   git pull $HEAD_REPO $HEAD_BRANCH
@@ -66,7 +66,7 @@ popd
 
 perl -p -i -e "s|%define branch.*|%define branch ${BASE_BRANCH}|" cmsdist/${BUILD_PACKAGE}.spec
 perl -p -i -e "s|%define tag.*|%define tag ${HEAD_REF}|" cmsdist/${BUILD_PACKAGE}.spec
-perl -p -i -e "s|^Source.*|Source: git:/build/$BUILD_PACKAGE/.git?obj=${BASE_BRANCH}/%{tag}&export=%{n}-%{realversion}&output=/%{n}-%{realversion}-%{tag}.tgz|" cmsdist/${BUILD_PACKAGE}.spec
+perl -p -i -e "s|^Source.*|Source: git:$WORKSPACE/$BUILD_PACKAGE/.git?obj=${BASE_BRANCH}/%{tag}&export=%{n}-%{realversion}&output=/%{n}-%{realversion}-%{tag}.tgz|" cmsdist/${BUILD_PACKAGE}.spec
 
 if [ X$INTERACTIVE = X1 ]; then
   echo "Run "

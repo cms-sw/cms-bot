@@ -407,7 +407,7 @@ elif ( ACTION == 'STD_COUT' ):
 elif ( ACTION == 'TESTS_RUNNING' ):
   mark_commit_testing()
 elif ( ACTION == 'EXTERNALS_PR_READY' ):
-  tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/PR-%d/%d' % (pr_number,pr_job_id)
+  tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/%d' % (pr_job_id)
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'IGPROF_READY' ):
   send_igprof_ready_message( official_cmssw , pr_number , tests_results_url )

@@ -34,7 +34,7 @@ fi
 eval `curl https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map | grep "SCRAM_ARCH=$SCRAM_ARCH;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 if [ ! -d "$CMSDIST_PATH" ]; then
-  git clone git@github.com:cms-sw/cmsdist.git $CMSDIST_PATH
+  git clone https://github.com/cms-sw/cmsdist.git $CMSDIST_PATH
 fi
 if [ ! -d "$PKGTOOLS_PATH" ]; then
   git clone https://github.com/cms-sw/pkgtools.git $PKGTOOLS_PATH

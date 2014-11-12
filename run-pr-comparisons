@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-BASE_URL=cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/matrix-results/
+BASE_URL=cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/
 PULL_REQUEST_BASE_URL=cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/
 
 WF_NAME_4_22='4.22_RunCosmics2011A+RunCosmics2011A+RECOCOSD+ALCACOSD+SKIMCOSD+HARVESTDC/DQM_V0001_R000160960__Global__CMSSW_X_Y_Z__RECO.root'

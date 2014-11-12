@@ -1,6 +1,6 @@
 #!/bin/sh -ex
-BASE_URL=cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/
-PULL_REQUEST_BASE_URL=cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/
+BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/
+PULL_REQUEST_BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/
 
 WF_NAME_4_22='4.22_RunCosmics2011A+RunCosmics2011A+RECOCOSD+ALCACOSD+SKIMCOSD+HARVESTDC/DQM_V0001_R000160960__Global__CMSSW_X_Y_Z__RECO.root'
 WF_NAME_4_53='4.53_RunPhoton2012B+RunPhoton2012B+HLTD+RECODreHLT+HARVESTDreHLT/DQM_V0001_R000194533__Global__CMSSW_X_Y_Z__RECO.root'
@@ -35,9 +35,9 @@ mkdir $WORKSPACE/results
 cd $WORKSPACE/results
 
 
-rsync cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt $WORKSPACE/results/testsResults.txt
+rsync $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt $WORKSPACE/results/testsResults.txt
 sed -i "s/COMPARISON;QUEUED/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
-rsync $WORKSPACE/results/testsResults.txt cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
+rsync $WORKSPACE/results/testsResults.txt $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
 
 
 # --------------------------------------------------------------------------
@@ -135,10 +135,10 @@ cp $WORKSPACE/cms-bot/comparisons/validate.C $HOME/tools
 
 
 #Download the baseline files
-rsync -r cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/matrix-results/ $JR_COMP_DIR/$RELEASE_FORMAT
+rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/matrix-results/ $JR_COMP_DIR/$RELEASE_FORMAT
 
 #Download the files for the pr
-rsync -r cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/ $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER
+rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/ $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER
 
 cd $JR_COMP_DIR
   source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_70X.txt 2>&1 | tee -a $JR_COMP_DIR/validateJR.log
@@ -205,7 +205,7 @@ wait
 echo 'Finished with alternative comparison:'
 
 sed -i "s/COMPARISON;RUNNING/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
-rsync $WORKSPACE/results/testsResults.txt cmsbuild@vocms12.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
+rsync $WORKSPACE/results/testsResults.txt $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
 
 
 

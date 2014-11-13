@@ -44,58 +44,6 @@ pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
   git push origin --tags
 popd
 
-RELEASES_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/releases.map"
-PRODUCTION_ARCH=`curl -k -s $RELEASES_MAP_URL | grep "label=$QUEUE;" | grep prodarch=1 | sed -e's/.*architecture=//;s/;.*//'`
-if [ "X$ARCH" == "X$PRODUCTION_ARCH" ]; then
-  echo 'I built the production architecture, I need to trigger the release notes job in jenkins'
-
-  case $CMSSW_X_Y_Z in
-  *patch*)
-
-      PATCH_NUMBER=`echo $CMSSW_X_Y_Z | sed 's/.*_patch//g'`
-      BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9][0-9]*//g'`
-      if [ "$PATCH_NUMBER" == "1" ]; then
-        PREVIOUS_CMSSW_X_Y_Z=$BASE_RELEASE
-      else
-        PREVIOUS_CMSSW_X_Y_Z=$BASE_RELEASE"_patch"$(( PATCH_NUMBER - 1 ))
-      fi
-
-    ;;
-    *pre*)
-
-      PATCH_NUMBER=`echo $CMSSW_X_Y_Z | sed 's/.*_pre//g'`
-      BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_pre[0-9][0-9]*//g'`
-      if [ "$PATCH_NUMBER" == "1" ]; then
-        PREVIOUS_CMSSW_X_Y_Z=$BASE_RELEASE
-      else
-        PREVIOUS_CMSSW_X_Y_Z=$BASE_RELEASE"_pre"$(( PATCH_NUMBER - 1 ))
-      fi
-
-    ;;
-    *)
-
-      case $CMSSW_X_Y_Z in
-      *SLHC*)
-        REL_NUM_EXP='CMSSW_[0-9][0-9]*_[0-9][0-9]*_[0-9][0-9]*_SLHC'
-      ;;
-      *)
-        REL_NUM_EXP='CMSSW_[0-9][0-9]*_[0-9][0-9]*_'
-      ;;
-      esac
-
-      RELEASE_NUMBER=`echo $CMSSW_X_Y_Z | sed "s/$REL_NUM_EXP//g"`
-      BASE_NO_NUMBER=`echo $CMSSW_X_Y_Z | sed 's/[0-9]*$//g'`
-      PREVIOUS_CMSSW_X_Y_Z=$BASE_NO_NUMBER$(( $RELEASE_NUMBER -1 ))
-      ;;
-  esac
-
- 
-  TRIGGER_RELEASE_NOTES_FILE=$WORKSPACE/release-notes.properties
-  echo "PREVIOUS_RELEASE=$PREVIOUS_CMSSW_X_Y_Z" >> $TRIGGER_RELEASE_NOTES_FILE
-  echo "RELEASE=$CMSSW_X_Y_Z" >> $TRIGGER_RELEASE_NOTES_FILE
-  echo "PREVIOUS_CMSDIST_TAG=REL/"$PREVIOUS_CMSSW_X_Y_Z"/"$ARCH >> $TRIGGER_RELEASE_NOTES_FILE
-  echo "CMSDIST_TAG=REL/"$CMSSW_X_Y_Z"/"$ARCH >> $TRIGGER_RELEASE_NOTES_FILE
-fi
 
 # If it reaches here it is because there were no errors
 echo 'ALL_OK'

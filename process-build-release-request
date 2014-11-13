@@ -32,6 +32,8 @@ JENKINS_CMSSW_X_Y_Z = 'CMSSW_X_Y_Z'
 JENKINS_ARCH = 'ARCH'
 JENKINS_ISSUE_NUMBER = 'ISSUE_NUMBER'
 JENKINS_MACHINE_NAME = 'MACHINE_NAME'
+JENKINS_CMSSW_QUEUE = 'CMSSW_QUEUE'
+
 UPLOAD_COMMENT = 'upload %s'
 DEFAULT_CHECK_COMMENT = ( AUTO_BUILD_RELEASE + [ 'cmsbuild' ] )
 
@@ -118,17 +120,19 @@ def check_if_already_processed( issue ):
 #
 #  Creates the properties files to trigger the build in Jenkins
 #
-def create_properties_files( release_name , architectures , issue_number ):
+def create_properties_files(release_name, architectures, issue_number, queue):
+  if opts.dryRun:
+    print 'Not creating properties file (dry-run):\n %s' % out_file_name
+    return
+
   for arch in architectures:
     out_file_name = 'build-%s-%s.properties' % ( release_name , arch )
-    if opts.dryRun:
-      print 'Not creating properties file (dry-run):\n %s' % out_file_name
-    else:
-      print 'Creating properties file for %s' % arch
-      out_file = open( out_file_name , 'w' )
-      out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
-      out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
-      out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
+    print 'Creating properties file for %s' % arch
+    out_file = open( out_file_name , 'w' )
+    out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_QUEUE , queue) )
 
     
 #
@@ -283,7 +287,7 @@ if __name__ == "__main__":
   msg = RELEASE_CREATED_MSG % ( RELEASE_BASE_URL % release_name )
   post_message( issue , msg )
 
-  create_properties_files( release_name , architectures , issue_id )
+  create_properties_files( release_name , architectures , issue_id, release_queue)
 
   msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
   post_message( issue , msg )

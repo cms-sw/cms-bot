@@ -17,7 +17,7 @@ import urllib2
 # --------------------------------------------------------------------------------
 GH_CMSSW_ORGANIZATION = 'cms-sw'
 GH_CMSSW_REPO = 'cmssw'
-BUILD_REL = 'Build'
+BUILD_REL = '^[Bb]uild[ ]+(CMSSW_[^ ]+)'
 NOT_AUTHORIZED_MSG = 'You are not authorized to trigger the build of a release.'
 CONFIG_MAP_FILE = 'config.map'
 NO_ARCHS_FOUND_MSG = 'No architecures to build found for {rel_name}. Please check that you entered a ' \
@@ -135,26 +135,27 @@ def create_properties_files( release_name , architectures , issue_number ):
 # Creates a release in github
 # If dry-run is selected it doesn't create the release and just prints that
 #
-def create_release_github( repository , release_name , release_queue ):
+def create_release_github( repository , release_name , branch):
   if opts.dryRun:
     print 'Not creating release (dry-run):\n %s' % release_name
-  else:
-    print 'Creating release:\n %s' % release_name
-    # creating releases will be available in the next version of pyGithub
-    params = { "tag_name" : release_name, 
-             "target_commitish" : release_queue,
-             "name" : release_name,
-             "body" : 'cms-bot is going to build this release',
-             "draft" : False, 
-             "prerelease" : False }
+    return 
 
-    token = open(expanduser("~/.github-token")).read().strip()
-    request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases",
-    headers={"Authorization" : "token " + token})
-    request.get_method = lambda: 'POST'
-    print '--'
-    print urllib2.urlopen( request, json.dumps( params  ) ).read()
-    print
+  print 'Creating release:\n %s' % release_name
+  # creating releases will be available in the next version of pyGithub
+  params = { "tag_name" : release_name, 
+           "target_commitish" : branch,
+           "name" : release_name,
+           "body" : 'cms-bot is going to build this release',
+           "draft" : False, 
+           "prerelease" : False }
+
+  token = open(expanduser("~/.github-token")).read().strip()
+  request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases",
+  headers={"Authorization" : "token " + token})
+  request.get_method = lambda: 'POST'
+  print '--'
+  print urllib2.urlopen( request, json.dumps( params  ) ).read()
+  print
 
 
 #
@@ -162,15 +163,15 @@ def create_release_github( repository , release_name , release_queue ):
 # If the list is empty it means that it didn't find any architecture for that release queue, or 
 # that the IBs are disabled.
 #
-def get_archs_config_map( release_queue ):
-  architectures = []
+def get_config_map_properties():
+  specs = []
   f = open( CONFIG_MAP_FILE , 'r' )
   for line in f.readlines():
-    if ('%s;'%release_queue in line ) and ( 'DISABLED' not in line ):
-      arch = line.split( 'SCRAM_ARCH=' )[ 1 ].split( ';' )[ 0 ]
-      architectures.append( arch )
-  f.close()
-  return architectures
+    pairs = line.split(";")
+    entry = dict(x.split("=",1) for x in line.split(";"))
+    specs.append(entry)
+  return specs
+
 #
 # Adds a label to the issue in github
 # if dry-run is selected it doesn't add the label and just prints it
@@ -219,10 +220,13 @@ if __name__ == "__main__":
   if issue.pull_request:
     print 'This is a pull request, ignoring.'
     exit( 0 )
+  
+  m = re.match(BUILD_REL, issue.title)
   # 2. Is this issue meant to build a release?
-  if not issue.title.startswith( BUILD_REL ):
+  if not m:
     print 'This issue is not for building a release, ignoring.'
     exit( 0 )
+  
   # 3. Is the author authorized to trigger a build?
   if not issue.user.login in AUTO_BUILD_RELEASE:
     print 'User not authorized'
@@ -232,35 +236,18 @@ if __name__ == "__main__":
       print 'Already posted about this'
     exit( 0 )
 
-  release_name = issue.title.split( BUILD_REL )[ 1 ].strip()
-  isPatch = 'patch' in release_name
-  isPre = 'pre' in release_name
-  release_queue = ''
-  exp = '[0-9]+_SLHC[0-9]+$' if 'SLHC' in release_name else '[0-9]+$'
-  replacement = 'X_SLHC' if 'SLHC' in release_name else 'X'
-  
-  if isPatch:
-    release_queue = re.sub( exp , replacement , release_name.split( '_patch' )[ 0 ] )
-  elif isPre:
-    release_queue = re.sub( exp , replacement , release_name.split( '_pre' )[ 0 ] )
-  else:
-    release_queue = re.sub( exp , replacement , release_name )
+  release_name = m.group(1)
+
+  # Get the release queue from the release name.
+  m = re.match("(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)", release_name)
+  release_queue = "".join([x for x in m.group(1,4)] + ["_X"] + [x.strip("0123456789") for x in m.group(2)])
 
   print release_queue
-  architectures =  get_archs_config_map( release_queue )
+  specs = get_config_map_properties()
+  architectures = [x["SCRAM_ARCH"] for x in specs
+                   if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x]
 
-  # 4. Are they asking to upload an architecture? 
-  if check_and_trigger_upload( release_name , issue , comments , architectures ):
-    print 'Uploads triggered'
-    exit( 0 )
-
-  # 5. Is the build on progress?
-  if not opts.force:
-    if search_in_comments( comments, DEFAULT_CHECK_COMMENT , QUEUING_BUILDS_MSG[:20] ):
-      print 'Build in progress or already uploaded. Nothing to do, ignoring.' 
-      exit( 0 )
-
-  # 6. The build needs to be triggered
+  # Check if we have at least one architecture to build and complain if not.
   if not architectures:
     print 'no archs found for the requested release'
     msg = NO_ARCHS_FOUND_MSG.format( rel_name=release_name )
@@ -269,16 +256,33 @@ if __name__ == "__main__":
     else:
       post_message( issue , msg )
     exit( 0 )
-  else:
-    cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
-    create_release_github( cmssw_repo , release_name , release_queue )
-    msg = RELEASE_CREATED_MSG % ( RELEASE_BASE_URL % release_name )
-    post_message( issue , msg )
 
-    create_properties_files( release_name , architectures , issue_id )
+  # Are they asking to upload an architecture? 
+  if check_and_trigger_upload( release_name , issue , comments , architectures ):
+    print 'Uploads triggered'
+    exit( 0 )
 
-    msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
-    post_message( issue , msg )
-    #add_label( issue, BUILD_QUEUED_LABEL )
+  # Determine the release branch (which is the same as the release queue if not
+  # specified) and start the build if needed.
+  release_branches = [x["RELEASE_BRANCH"] for x in specs
+                      if x["RELEASE_QUEUE"] == release_queue and "RELEASE_BRANCH" in x and not "DISABLED" in x]
+  
+  release_branch = release_queue
+  if len(release_branches):
+    release_branch = release_branches[0]
 
+  if not opts.force:
+    if search_in_comments( comments, DEFAULT_CHECK_COMMENT , QUEUING_BUILDS_MSG[:20] ):
+      print 'Build in progress or already uploaded. Nothing to do, ignoring.' 
+      exit( 0 )
 
+  cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
+  create_release_github( cmssw_repo , release_name , release_branch )
+  msg = RELEASE_CREATED_MSG % ( RELEASE_BASE_URL % release_name )
+  post_message( issue , msg )
+
+  create_properties_files( release_name , architectures , issue_id )
+
+  msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
+  post_message( issue , msg )
+  #add_label( issue, BUILD_QUEUED_LABEL )

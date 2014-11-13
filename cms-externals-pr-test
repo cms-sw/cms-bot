@@ -22,6 +22,8 @@ while [ X$# != X0 ] ; do
     -i) shift ; INTERACTIVE=$1 ; shift ;;
     -j) shift ; JOBS=$1 ; shift ;;
     -pr) shift ; PR=$1 ; shift ;;
+    -fp) shift ; FINAL_PACKAGE=$1 ; shift ;;
+    -cpr) shift ; CMSDIST_PR=$1 ; shift ;;
     *) shift ; echo unknown option ;;
   esac
 done
@@ -34,7 +36,7 @@ fi
 eval `curl https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map | grep "SCRAM_ARCH=$SCRAM_ARCH;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 if [ ! -d "$CMSDIST_PATH" ]; then
-  git clone git@github.com:cms-sw/cmsdist.git $CMSDIST_PATH
+  git clone https://github.com/cms-sw/cmsdist.git $CMSDIST_PATH
 fi
 if [ ! -d "$PKGTOOLS_PATH" ]; then
   git clone https://github.com/cms-sw/pkgtools.git $PKGTOOLS_PATH
@@ -43,17 +45,34 @@ fi
 pushd $PKGTOOLS_PATH ; git fetch origin ; git checkout $PKGTOOLS_TAG; popd
 pushd $CMSDIST_PATH ; git remote -v ; git fetch origin $CMSDIST_TAG ; git checkout FETCH_HEAD; popd
 
-BUILD_REPO=`echo $PR | sed -e 's|/.*||'`
-BUILD_PACKAGE=`echo $PR | sed -e 's|.*/||;s|#.*||'`
-BUILD_PR=`echo $PR | sed -e 's|.*#||'`
-BUILD_PR_URL=`echo https://api.github.com/repos/$PR | sed -e "s|#|/pulls/|"`
+BUILD_REPO=`echo $PR | sed -e 's|[#@].*||;s|/.*||'`
+BUILD_PACKAGE=`echo $PR | sed -e 's|[#@].*||;s|.*/||'`
 
-# Find out basic details about the PR
-BASE_REPO=`curl -s $BUILD_PR_URL  | jq '.["base"]["repo"]["clone_url"]' | sed -e 's/"//g'`
-BASE_BRANCH=`curl -s $BUILD_PR_URL  | jq '.["base"]["ref"]' | sed -e 's/"//g'`
+case $PR in 
+  *[#]*)
+    BUILD_PR=`echo $PR | sed -e 's|.*#||'`
+    BUILD_PR_URL=`echo https://api.github.com/repos/$PR | sed -e "s|#|/pulls/|"`
 
-HEAD_REPO=`curl -s $BUILD_PR_URL | jq '.["head"]["repo"]["clone_url"]' | sed -e 's/"//g'`
-HEAD_BRANCH=`curl -s $BUILD_PR_URL | jq '.["head"]["ref"]' | sed -e 's/"//g'`
+    # Find out basic details about the PR
+    BASE_REPO=`curl -s $BUILD_PR_URL  | jq '.["base"]["repo"]["clone_url"]' | sed -e 's/"//g'`
+    BASE_BRANCH=`curl -s $BUILD_PR_URL  | jq '.["base"]["ref"]' | sed -e 's/"//g'`
+
+    HEAD_REPO=`curl -s $BUILD_PR_URL | jq '.["head"]["repo"]["clone_url"]' | sed -e 's/"//g'`
+    HEAD_BRANCH=`curl -s $BUILD_PR_URL | jq '.["head"]["ref"]' | sed -e 's/"//g'`
+  ;;
+  *[@]*)
+    # This is in case we want to specify a given version of the external.
+    BASE_REPO=https://github.com/$BUILD_REPO/$BUILD_PACKAGE
+    BASE_BRANCH=`echo $PR | sed -e 's|.*[@]||'`
+
+    HEAD_REPO=$BASE_REPO
+    HEAD_BRANCH=$BASE_BRANCH
+  ;;
+  *)
+    echo "You need to specify a PR or a branch".
+    exit 1
+  ;;
+esac
 
 # Clone the repository and merge the pull request.
 git clone -b $BASE_BRANCH $BASE_REPO $BUILD_PACKAGE
@@ -64,19 +83,42 @@ pushd $WORKSPACE/$BUILD_PACKAGE
   HEAD_REF=`git rev-parse HEAD`
 popd
 
+# Merge CMSDIST_PR if found.
+if [ ! X$CMSDIST_PR = X ]; then
+  CMSDIST_BUILD_PR_URL="https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR"
+
+  CMSDIST_BASE_BRANCH=`curl -s $CMSDIST_BUILD_PR_URL  | jq '.["base"]["ref"]' | sed -e 's/"//g'`
+  CMSDIST_HEAD_REPO=`curl -s $CMSDIST_BUILD_PR_URL | jq '.["head"]["repo"]["clone_url"]' | sed -e 's/"//g'`
+  CMSDIST_HEAD_BRANCH=`curl -s $CMSDIST_BUILD_PR_URL | jq '.["head"]["ref"]' | sed -e 's/"//g'`
+  
+  # Workaround needed since git pull for cmsdist does not work, for some reason
+  # inside a docker container.
+  git clone -b $CMSDIST_HEAD_BRANCH $CMSDIST_HEAD_REPO cmsdist-pr
+  pushd $WORKSPACE/cmsdist
+    git checkout $CMSDIST_BASE_BRANCH
+    git config user.email "cmsbuild@cern.ch"
+    git config user.name "CMS BOT"
+    git pull ../cmsdist-pr/.git $CMSDIST_HEAD_BRANCH
+  popd
+fi
+
 perl -p -i -e "s|%define branch.*|%define branch ${BASE_BRANCH}|" cmsdist/${BUILD_PACKAGE}.spec
 perl -p -i -e "s|%define tag.*|%define tag ${HEAD_REF}|" cmsdist/${BUILD_PACKAGE}.spec
 perl -p -i -e "s|^Source.*|Source: git:$WORKSPACE/$BUILD_PACKAGE/.git?obj=${BASE_BRANCH}/%{tag}&export=%{n}-%{realversion}&output=/%{n}-%{realversion}-%{tag}.tgz|" cmsdist/${BUILD_PACKAGE}.spec
 
+# In case we do not pass -fp we build the package to which the PR refers to.
+# You can use this for example to force building cmssw-tool-conf.
+FINAL_PACKAGE=${FINAL_PACKAGE-$BUILD_PACKAGE}
+
 if [ X$INTERACTIVE = X1 ]; then
   echo "Run "
   echo
-  echo pkgtools/cmsBuild -c cmsdist -a $SCRAM_ARCH -j $JOBS --work-dir w build $BUILD_PACKAGE
+  echo pkgtools/cmsBuild -c cmsdist -a $SCRAM_ARCH -j $JOBS --work-dir w build $FINAL_PACKAGE
   echo
   echo to build
   bash
 fi
 
 pushd $RESULTS_DIR
-  $PKGTOOLS_PATH/cmsBuild -c $CMSDIST_PATH -a $SCRAM_ARCH -j $JOBS --work-dir $RESULTS_DIR/w build $BUILD_PACKAGE 2>&1 | tee -a $RESULTS_DIR/build.log
+  $PKGTOOLS_PATH/cmsBuild -c $CMSDIST_PATH -a $SCRAM_ARCH -j $JOBS --work-dir $RESULTS_DIR/w build $FINAL_PACKAGE 2>&1 | tee -a $RESULTS_DIR/build.log
 popd

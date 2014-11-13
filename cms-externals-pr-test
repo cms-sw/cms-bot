@@ -69,19 +69,20 @@ case $PR in
     HEAD_BRANCH=$BASE_BRANCH
   ;;
   *)
-    echo "You need to specify a PR or a branch".
-    exit 1
+    echo "No PR specified, will not checkout any external."
   ;;
 esac
 
-# Clone the repository and merge the pull request.
-git clone -b $BASE_BRANCH $BASE_REPO $BUILD_PACKAGE
-pushd $WORKSPACE/$BUILD_PACKAGE
-  git config user.email "cmsbuild@cern.ch"
-  git config user.name "CMS BOT"
-  git pull $HEAD_REPO $HEAD_BRANCH
-  HEAD_REF=`git rev-parse HEAD`
-popd
+if [ ! "X$PR" = X ]; then
+  # Clone the repository and merge the pull request.
+  git clone -b $BASE_BRANCH $BASE_REPO $BUILD_PACKAGE
+  pushd $WORKSPACE/$BUILD_PACKAGE
+    git config user.email "cmsbuild@cern.ch"
+    git config user.name "CMS BOT"
+    git pull $HEAD_REPO $HEAD_BRANCH
+    HEAD_REF=`git rev-parse HEAD`
+  popd
+fi
 
 # Merge CMSDIST_PR if found.
 if [ ! X$CMSDIST_PR = X ]; then
@@ -102,9 +103,13 @@ if [ ! X$CMSDIST_PR = X ]; then
   popd
 fi
 
-perl -p -i -e "s|%define branch.*|%define branch ${BASE_BRANCH}|" cmsdist/${BUILD_PACKAGE}.spec
-perl -p -i -e "s|%define tag.*|%define tag ${HEAD_REF}|" cmsdist/${BUILD_PACKAGE}.spec
-perl -p -i -e "s|^Source.*|Source: git:$WORKSPACE/$BUILD_PACKAGE/.git?obj=${BASE_BRANCH}/%{tag}&export=%{n}-%{realversion}&output=/%{n}-%{realversion}-%{tag}.tgz|" cmsdist/${BUILD_PACKAGE}.spec
+# If a PR is specified for an external, we rewrite the spec file
+# to point out to it.
+if [ ! X$PR = X ]; then
+  perl -p -i -e "s|%define branch.*|%define branch ${BASE_BRANCH}|" cmsdist/${BUILD_PACKAGE}.spec
+  perl -p -i -e "s|%define tag.*|%define tag ${HEAD_REF}|" cmsdist/${BUILD_PACKAGE}.spec
+  perl -p -i -e "s|^Source.*|Source: git:$WORKSPACE/$BUILD_PACKAGE/.git?obj=${BASE_BRANCH}/%{tag}&export=%{n}-%{realversion}&output=/%{n}-%{realversion}-%{tag}.tgz|" cmsdist/${BUILD_PACKAGE}.spec
+fi
 
 # In case we do not pass -fp we build the package to which the PR refers to.
 # You can use this for example to force building cmssw-tool-conf.

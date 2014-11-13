@@ -135,7 +135,7 @@ cp $WORKSPACE/cms-bot/comparisons/validate.C $HOME/tools
 
 
 #Download the baseline files
-rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/matrix-results/ $JR_COMP_DIR/$RELEASE_FORMAT
+rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/ $JR_COMP_DIR/$RELEASE_FORMAT
 
 #Download the files for the pr
 rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/ $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER

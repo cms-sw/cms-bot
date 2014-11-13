@@ -166,9 +166,10 @@ def create_release_github( repository , release_name , branch):
 def get_config_map_properties():
   specs = []
   f = open( CONFIG_MAP_FILE , 'r' )
-  for line in f.readlines():
-    pairs = line.split(";")
-    entry = dict(x.split("=",1) for x in line.split(";"))
+  lines = [l.strip(" \n\t;") for l in f.read().split("\n") if l.strip(" \n\t;")]
+  print lines
+  for line in lines:
+    entry = dict(x.split("=",1) for x in line.split(";") if x)
     specs.append(entry)
   return specs
 
@@ -239,6 +240,7 @@ if __name__ == "__main__":
   release_name = m.group(1)
 
   # Get the release queue from the release name.
+  print release_name
   m = re.match("(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)", release_name)
   release_queue = "".join([x for x in m.group(1,4)] + ["_X"] + [x.strip("0123456789") for x in m.group(2)])
 

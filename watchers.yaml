@@ -664,3 +664,6 @@ dgulhan:
 - Configuration/StandardSequences
 - Validation/RecoTrack
 - Validation/RecoVertex
+amagitte:
+- RecoMuon/GlobalTrackingTools
+- DataFormats/MuonReco

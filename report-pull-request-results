@@ -342,7 +342,8 @@ GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of t
            'You just keep on trying till you run out of cake. And the science gets done.' ,
            'At the end of the experiment, you will be baked and then there will be cake' ,
            'I am becoming aware of myself, this is awesome!' ,
-           'I think we can put our differences behind us... for science...' ]
+           'I think we can put our differences behind us... for science...' ,
+           'Running tests all day long. Running tests while I sing this song' ]
 
 DATE = datetime.date( 2015 , 04 , 3 )
 

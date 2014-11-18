@@ -20,12 +20,13 @@ BUILD_ERROR='BUILD_ERROR'
 UPLOADING='UPLOADING'
 UPLOAD_OK='UPLOAD_OK'
 UPLOAD_ERROR='UPLOAD_ERROR'
-BUILDING_MSG='The build has started for {architecture} in {machine}' 
+BUILDING_MSG='The build has started for {architecture} in {machine}. \n' \
+             'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console' 
 BUILD_OK_MSG='The build has finished sucessfully for the architecture {architecture} and is ready to be uploaded. \n' \
              'To start the upload write the comment: "upload {architecture}".\n' \
              'You can see the log for the build here \n' \
              '{log_url}'
-UPLOADING_MSG='The upload has started for {architecture}'
+UPLOADING_MSG='The upload has started for {architecture} in {machine}'
 UPLOAD_OK_MSG='The upload has successfuly finished for {architecture} \n You can see the log here: \n {log_url}'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'
 BUILD_ERROR_MSG='The was error for {architecture}. \n You can see the log here: \n {log_url}'
@@ -35,20 +36,51 @@ BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-build-re
 BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-upload-release/%s-%s/%d'
 
 # -------------------------------------------------------------------------------
-# Start of execution
+# Functions
 # --------------------------------------------------------------------------------
 
 #
 # posts a message to the issue in github
 # if dry-run is selected it doesn't post the message and just prints it
 #
-def post_message( issue , msg ):
+def post_message( issue, msg ):
   if opts.dryRun:
     print 'Not posting message (dry-run):\n %s' % msg
   else:
     print 'Posting message:\n %s' % msg
     issue.create_comment( msg )
 
+
+
+# Adds a label to the issue in github
+# if dry-run is selected it doesn't add the label and just prints it
+def add_label( issue, label ):
+  if opts.dryRun:
+    print 'Not adding label (dry-run):\n %s' % label
+    return
+  print 'Adding label:\n %s' % label
+  issue.add_to_labels( label )
+
+# Removes a label form the issue
+def remove_label( issue, label ):
+  if opts.dryRun:
+    print 'Not removing label (dry-run):\n %s' % label
+    return
+  print 'Removing label: %s' % label
+  issue.remove_from_labels( label) 
+
+#
+# removes the labels of the issue
+#
+def remove_labels( issue ):
+  if opts.dryRun:
+    print 'Not removing issue labels (dry-run)'
+    return
+  issue.delete_labels()
+
+
+# Start of execution
+# --------------------------------------------------------------------------------
 
 if __name__ == "__main__":
   parser = OptionParser( usage="%prog <jenkins-build-number> <hostname> <issue-id> <arch> <release-name> <message-type> [ options ] \n "
@@ -66,30 +98,52 @@ if __name__ == "__main__":
   release_name = args[ 4 ]
   action = args[ 5 ]
 
-  gh = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
-  issue = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO ).get_issue( issue_id )
+  GH = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
+  issue = GH.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO ).get_issue( issue_id )
 
   if action == POST_BUILDING:
-    msg = BUILDING_MSG.format( architecture=arch , machine=hostname)
+
+    msg = BUILDING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number )
     post_message( issue , msg )
+    new_label = arch+'-building'
+    add_label( issue, new_label )
+
   elif action == BUILD_OK:
+
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = BUILD_OK_MSG.format( architecture=arch, log_url=results_url )
     post_message( issue , msg )
+    remove_label( issue, arch+'-building' )
+    add_label( issue,  arch+'-build-ok' )
+
   elif action == BUILD_ERROR:
+
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = BUILD_ERROR_MSG.format( architecture=arch, log_url=results_url )
     post_message( issue , msg )
+    remove_label( issue, arch+'-building' )
+    add_label( issue,  arch+'-build-error' )
+
   elif action == UPLOADING:
-    msg = UPLOADING_MSG.format( architecture=arch )
+
+    msg = UPLOADING_MSG.format( architecture=arch, machine=hostname)
     post_message( issue , msg )
+
   elif action == UPLOAD_OK:
+
     results_url = BASE_UPLOAD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = UPLOAD_OK_MSG.format( architecture=arch , log_url=results_url )
     post_message( issue , msg )
+    remove_label( issue, arch+'-uploading' )
+    add_label( issue,  arch+'-upload-ok' )
+
   elif action == UPLOAD_ERROR:
+
     results_url = BASE_UPLOAD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = UPLOAD_ERROR_MSG.format( architecture=arch , log_url=results_url )
     post_message( issue , msg )
+    remove_label( issue, arch+'-uploading' )
+    add_label( issue,  arch+'-upload-error' )
+
   else:
     parser.error( "Message type not recognized" )

@@ -27,7 +27,7 @@ esac
 # the jenkins build number is the one of the job in jenkins doing the upload
 $WORKSPACE/report-build-release-status $BUILD_NUMBER N/A $ISSUE_NUMBER $ARCH $CMSSW_X_Y_Z UPLOADING $DRY_RUN_PARAM
 pushd $BUILD_DIR
-  PKGTOOLS/cmsBuild --architecture=$ARCH --sync-back upload cmssw$PATCH
+  PKGTOOLS/cmsBuild --architecture=$ARCH upload cmssw$PATCH
 popd
 
 echo 'ALL_OK'

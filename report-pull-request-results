@@ -217,9 +217,27 @@ def send_externals_pr_finished_message( repo , pr_number , tests_url ):
   print message
 
 #
+# sends a message informing that the pull reqeuest is cannot be merged automatically
+#
+def send_not_mergeable_pr_message( repo, pr_number ):
+  pull_request = repo.get_pull(pr_number)
+  user = pull_request.user
+  
+  message = "@" + user.login + ' This pull request is cannot be automatically '\
+            ' merged, could you please rebase it?'
+  print 'Postng message:'
+  print message
+
+  if not options.no_post_mesage:
+    pull_request.create_issue_comment(message)
+    if options.commit_hash:
+      mark_commit( ACTION , options.commit_hash , tests_url )
+
+
+#
 # sends an approval message for a pr in cmssw
 #
-def send_tests_approved_pr_message( repo , pr_number , tests_url ):
+def send_tests_approved_pr_message( repo, pr_number, tests_url ):
   pull_request = repo.get_pull(pr_number)
   print 'I will send an approval comment for PR %d:' % pr_number
   
@@ -412,5 +430,7 @@ elif ( ACTION == 'EXTERNALS_PR_READY' ):
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'IGPROF_READY' ):
   send_igprof_ready_message( official_cmssw , pr_number , tests_results_url )
+elif (ACTION == 'NOT_MERGEABLE' ):
+  send_not_mergeable_pr_message( official_cmssw, pr_number )
 else:
   print "I don't recognize that action!"

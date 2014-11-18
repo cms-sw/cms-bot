@@ -46,21 +46,34 @@ eval `scram run -sh`
 cd src
 git config --replace-all merge.renamelimit 2500
 
+# Requests is used to mark the commits
+pushd $WORKSPACE
+  wget https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
+  tar -xvf requests-2.3.0.tar.gz
+  mv requests-2.3.0/requests/ requests
+popd
+
+GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 # use the branch name if necesary
-
 if [ "X$BRANCH_NAME" = X ]; then
-  git cms-merge-topic -u $PULL_REQUEST
+  git cms-merge-topic -u $PULL_REQUEST 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
 else
-  git cms-merge-topic -u $BRANCH_NAME
+  git cms-merge-topic -u $BRANCH_NAME 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
 fi
-
 
 # this is to test several pull requests at the same time
 for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do
   echo 'I will add the following pull request to the test'
   echo $PR;
-  git cms-merge-topic -u $PR
+  git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
 done
+
+if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
+  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
+    $WORKSPACE/report-pull-request-results NOT_MERGEABLE  --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID
+  fi
+  exit 0   
+fi
 
 #If Fireworks is the only package involved I only compile and run unit tests
 ONLY_FIREWORKS=false
@@ -82,14 +95,6 @@ if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
 fi
 
 #get the latest commit and mark it as pending
-pushd $WORKSPACE
-
-  wget https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
-  tar -xvf requests-2.3.0.tar.gz
-  mv requests-2.3.0/requests/ requests
-
-popd
-
 
 pushd $WORKSPACE/$RELEASE_FORMAT/src
 

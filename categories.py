@@ -17,14 +17,12 @@ CMSSW_L2 = {
   "ktf": ["core", "visualization", "geometry"],
   "alja": ["visualization"],
   "ianna": ["geometry"],
-  "rovere": ["dqm"],
   "deguio": ["dqm"],
   "ggovi": ["db"],
   "apfeiffer1": ["db"],
   "rcastello": ["alca"],
   "cerminar": ["alca"],
-  "franzoni": ["operations"],
-  "vlimant": ["operations"],
+  "franzoni": ["operations","pdmv"],
   "cmsdoxy": ["docs"],
   "mommsen": ["daq"],
   "emeschi": ["daq"],
@@ -32,7 +30,6 @@ CMSSW_L2 = {
   "danduggan": ["dqm"],
   "nclopezo": ["tests"],
   "cmsbuild": ["tests"],
-  "ojeda": ["dqm"],
   "lveldere": ["fastsim"],
   "diguida": ["alca"],
   "mmusich": ["alca"],
@@ -42,6 +39,8 @@ CMSSW_L2 = {
   "monttj": ["analysis"],
   "thuer": ["generators"],
   "StoyanStoynev": ["reconstruction"],
+  "boudoul": ["pdmv"],
+  "srimanob": ["pdmv"]
 }
 
 CMSSW_L1 = ["davidlange6"]
@@ -52,11 +51,12 @@ CMSSW_CATEGORIES={
    "Configuration/DataProcessing",
    "Configuration/EventContent",
    "Configuration/GlobalRuns",
-   "Configuration/PyReleaseValidation",
-   "Configuration/Skimming",
    "Configuration/StandardSequences",
-   "DPGAnalysis/Skims", "Validation/Tools"
   ],
+  "pdmv": [
+   "Configuration/Skimming",
+   "Configuration/PyReleaseValidation",
+   "DPGAnalysis/Skims"],
   "core": [
    ".gitignore",
    "BigProducts/Simulation",
@@ -99,7 +99,8 @@ CMSSW_CATEGORIES={
    "Utilities/StaticAnalyzers",
    "Utilities/StorageFactory",
    "Utilities/Testing", "Utilities/Timing",
-   "Utilities/XrdAdaptor"
+   "Utilities/XrdAdaptor",
+   "Validation/Tools"
  ],
  "docs": [
    "Documentation/CodingRules",
@@ -532,8 +533,6 @@ CMSSW_CATEGORIES={
    "Geometry/TrackingGeometryAligner",
    "Geometry/TwentyFivePercentTrackerCommonData",
    "GeometryReaders/XMLIdealGeometryESSource",
-   "DataFormats/DetId",
-   "DataFormats/EcalDetId",
    "Validation/Geometry",
    "Validation/MuonRPCGeometry",
    "SLHCUpgradeSimulations/Geometry",
@@ -1107,6 +1106,8 @@ CMSSW_CATEGORIES={
    "RecoVertex/BeamSpotProducer"], "simulation":
    ["Mixing/Base",
    "IOMC/EventVertexGenerators", "DataFormats/DTDigi",
+   "DataFormats/DetId",
+   "DataFormats/EcalDetId",
    "DataFormats/EcalDigi",
    "DataFormats/EcalRawData", "DataFormats/FP420Digi",
    "DataFormats/GEMDigi","DataFormats/GeometryCommonDetAlgo",

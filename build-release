@@ -2,7 +2,7 @@
 
 # The release should have been already created in Github
 # CMSSW_X_Y_Z: the release to build
-# ARCH: architecture for the build
+# ARCHITECTURE: architecture for the build
 # ISSUE_NUMBER: the number of the issue that triggered the build
 # DRY_RUN_PARAM: parameter that to use dry-run
 
@@ -13,13 +13,13 @@ QUEUE=$CMSSW_QUEUE
 
 git clone git@github.com:cms-sw/cmsdist.git $BUILD_DIR/CMSDIST
 pushd $BUILD_DIR/CMSDIST
-  eval $(cat $WORKSPACE/config.map | grep "SCRAM_ARCH=$ARCH;" | grep "RELEASE_QUEUE=$QUEUE;")
+  eval $(cat $WORKSPACE/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$QUEUE;")
 
   # a patch release uses the same cmsdist tag as its base release
   case $CMSSW_X_Y_Z in
     *patch*)
     BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
-    CMSDIST_TAG=REL/$BASE_RELEASE/$ARCH
+    CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
     PATCH='-patch'
   ;;
   esac
@@ -30,17 +30,17 @@ popd
 git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS
 
 WORKER=`hostname -s`
-./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCH $CMSSW_X_Y_Z BUILDING $DRY_RUN_PARAM
+./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z BUILDING $DRY_RUN_PARAM
 
 pushd $BUILD_DIR
   # prepare cmssw.spec
-  sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCH 2>&1 | tee -a $WORKSPACE/prepare-cmsdist.log
-  PKGTOOLS/cmsBuild --architecture=$ARCH --builders 4 -j $(getconf _NPROCESSORS_ONLN) build cmssw$PATCH
+  sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE 2>&1 | tee -a $WORKSPACE/prepare-cmsdist.log
+  PKGTOOLS/cmsBuild --architecture=$ARCHITECTURE --builders 4 -j $(getconf _NPROCESSORS_ONLN) build cmssw$PATCH
 popd
 
   
 pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
-  git tag  REL/$CMSSW_X_Y_Z/$ARCH
+  git tag  REL/$CMSSW_X_Y_Z/$ARCHITECTURE
   git push origin --tags
 popd
 

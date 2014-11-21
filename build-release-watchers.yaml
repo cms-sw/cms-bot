@@ -2,6 +2,9 @@
 # that want to be aware of the build process
 CMSSW_7_3_X:
   - smuzaffar
+  - nclopezo
+  - davidlange6
+  - degano
 CMSSW_7_3_DEVEL_X:
 CMSSW_7_2_X:
 CMSSW_7_1_X:

@@ -75,6 +75,12 @@ if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
   exit 0   
 fi
 
+if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
+  echo "Please add the branch name to the parameters"
+  exit 1
+fi
+
+
 #If Fireworks is the only package involved I only compile and run unit tests
 ONLY_FIREWORKS=false
 if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then

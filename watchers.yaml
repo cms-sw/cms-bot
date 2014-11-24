@@ -667,3 +667,9 @@ dgulhan:
 amagitte:
 - RecoMuon/GlobalTrackingTools
 - DataFormats/MuonReco
+Sam-Harper:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco

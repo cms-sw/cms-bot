@@ -26,8 +26,14 @@ BUILD_OK_MSG='The build has finished sucessfully for the architecture {architect
              'To start the upload write the comment: "upload {architecture}".\n' \
              'You can see the log for the build here \n' \
              '{log_url}'
-UPLOADING_MSG='The upload has started for {architecture} in {machine}'
-UPLOAD_OK_MSG='The upload has successfuly finished for {architecture} \n You can see the log here: \n {log_url}'
+UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
+              'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console'
+UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
+              'The release is now being installed, you can see the progress here: \n ' \
+              'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' \
+              'To generate the release notes for the release write "release-notes since \\<previous-release\\> \\<architecture\\>". \n ' \
+              'I will generate the release notes based on the release that you provide. The architecture will be used '
+              'to infer the cmsdist tag'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'
 BUILD_ERROR_MSG='The was error for {architecture}. \n You can see the log here: \n {log_url}'
 BUILD_QUEUED_LABEL = 'build-release-queued'
@@ -126,7 +132,7 @@ if __name__ == "__main__":
 
   elif action == UPLOADING:
 
-    msg = UPLOADING_MSG.format( architecture=arch, machine=hostname)
+    msg = UPLOADING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number)
     post_message( issue , msg )
 
   elif action == UPLOAD_OK:

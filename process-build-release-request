@@ -41,9 +41,19 @@ JENKINS_ARCH = 'ARCHITECTURE'
 JENKINS_ISSUE_NUMBER = 'ISSUE_NUMBER'
 JENKINS_MACHINE_NAME = 'MACHINE_NAME'
 JENKINS_CMSSW_QUEUE = 'CMSSW_QUEUE'
+WRONG_NOTES_RELEASE_MSG = '{previous_release} does not appear to be a valid release name'
+GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release}. \n' \
+                               'You can see the progress here: \n' \
+                               'https://cmssdt.cern.ch/jenkins/job/release-produce-changelog/'
+REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 
 UPLOAD_COMMENT = 'upload %s'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
+RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
+JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
+JENKINS_RELEASE='RELEASE'
+JENKINS_PREV_CMSDIST_TAG='PREVIOUS_CMSDIST_TAG'
+JENKINS_CMSDIST_TAG='CMSDIST_TAG'
 
 # -------------------------------------------------------------------------------
 # Statuses
@@ -126,7 +136,25 @@ def create_properties_files(release_name, architectures, issue_number, queue):
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
     out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_QUEUE , queue) )
 
-    
+#
+# generates the properties file for triggering the release notes
+# it infers the tag names based on te format REL/<release-name>/architecture
+#
+def create_properties_file_rel_notes( release_name, previous_release, architecture):
+  cmsdist_tag = 'REL/'+release_name+'/'+architecture
+  previos_cmsdist_tag = 'REL/'+previous_release+'/'+architecture
+  out_file_name = 'release-notes.properties'
+
+  if opts.dryRun:
+    print 'Not creating properties file (dry-run): %s' % out_file_name
+    return
+
+  out_file = open( out_file_name , 'w' )
+  out_file.write( '%s=%s\n' % ( JENKINS_PREV_RELEASE, previous_release ) )
+  out_file.write( '%s=%s\n' % ( JENKINS_RELEASE, release_name ) )
+  out_file.write( '%s=%s\n' % ( JENKINS_PREV_CMSDIST_TAG, previos_cmsdist_tag ) )
+  out_file.write( '%s=%s\n' % ( JENKINS_CMSDIST_TAG, cmsdist_tag) )
+
 #
 # Creates a release in github
 # If dry-run is selected it doesn't create the release and just prints that
@@ -192,7 +220,7 @@ def post_message( issue , msg ):
   if opts.dryRun:
     print 'Not posting message (dry-run):\n %s' % msg
     return
-  if search_in_comments( comments, [ 'cmsbuild' ] , msg ):
+  if search_in_comments( comments, [ 'cmsbuild', 'nclopezo' ] , msg ):
     print 'Message already in the thread: \n %s' % msg
     return
   print 'Posting message:\n %s' % msg 
@@ -226,8 +254,7 @@ def remove_label( issue, label ):
     print 'Not removing label (dry-run):\n %s' % label
     return
   print 'Removing label: %s' % label
-  issue.remove_from_labels( label)
-
+  issue.remove_from_labels( label )
 
 # -------------------------------------------------------------------------------
 # Start of execution 
@@ -273,7 +300,8 @@ if __name__ == "__main__":
   release_name = title_match.group(1)
   # Get the release queue from the release name.
   print release_name
-  rel_name_match = re.match("(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)", release_name)
+
+  rel_name_match = re.match( REL_NAME_REGEXP, release_name )
 
   if not rel_name_match:
     print 'Release name not correctly formed'
@@ -349,6 +377,27 @@ if __name__ == "__main__":
   if status == BUILD_IN_PROGRESS:
     labels = [ l.name for l in issue.get_labels() ]
     to_upload = [ x.split('-')[0] for x in labels if '-build-ok' in x ]
+    upload_ok = [ x.split('-')[0] for x in labels if '-upload-ok' in x ]
+
+    if upload_ok and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
+      pattern = 'release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
+      release_notes_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )
+      for comment in release_notes_comments:
+        comment_parts = comment.strip().split(' ')
+        prev_rel_name = comment_parts[ 2 ]
+        requested_arch = comment_parts[ 3 ]
+        rel_name_match = re.match( REL_NAME_REGEXP, prev_rel_name )
+        if not rel_name_match:
+          msg = WRONG_NOTES_RELEASE_MSG.format( previous_release=prev_rel_name )
+          post_message( issue, msg )
+          continue
+
+        create_properties_file_rel_notes( release_name, prev_rel_name, requested_arch )
+        msg = GENERATING_RELEASE_NOTES_MSG.format( previous_release=prev_rel_name )
+        post_message( issue, msg )
+        add_label( issue, RELEASE_NOTES_GENERATED_LBL )
+
+
     if not to_upload:
       print 'Build in progress. Nothing to upload for any architecture.' 
       exit( 0 )

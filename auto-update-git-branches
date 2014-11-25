@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 # Updates a branch by doing the following:
 # - switch to the target branch
 # - Merge the source branch but keep anything on the development branch

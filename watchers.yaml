@@ -686,7 +686,7 @@ ahinzmann:
 - RecoMET
 - Validation/RecoJets
 - Validation/RecoMET
-TaiSakuma:
+rappoccio:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET
 - DataFormats/JetReco

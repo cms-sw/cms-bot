@@ -686,3 +686,19 @@ ahinzmann:
 - RecoMET
 - Validation/RecoJets
 - Validation/RecoMET
+TaiSakuma:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- Validation/RecoJets
+- DQM/Physics
+- HLTriggerOffline/B2G
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos

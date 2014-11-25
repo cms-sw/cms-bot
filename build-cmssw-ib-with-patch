@@ -132,13 +132,14 @@ perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" CM
 perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $RELEASE_NAME/" CMSDIST/cmssw-validation.spec
 perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" CMSDIST/cmssw-patch.spec
 
+TOOL_CONF_PACKAGES="$CMSSW_TOOL_CONF local-cern-siteconf cms-git-tools"
 while [ true ]; do
   PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build coral"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
-  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build $CMSSW_TOOL_CONF"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build $TOOL_CONF_PACKAGES"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
   if [ "X$(ls w/RPMS/$ARCHITECTURE | wc -l | sed -e 's/[^0-9]*//')" = X0 ]; then
     break;
   fi
-  PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload $CMSSW_TOOL_CONF" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype` || true
+  PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload $TOOL_CONF_PACKAGES" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype` || true
   rm -rf w
 done
 

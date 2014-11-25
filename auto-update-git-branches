@@ -99,4 +99,4 @@ updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/debug
 # merges into IB/CMSSW_7_4_X/stable Then it merges into the
 # other cmsdist branches for 74X as usual
 updateBranch IB/CMSSW_7_3_X/gcc491 IB/CMSSW_7_4_X/stable
-updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/gcc481
+#updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/gcc481

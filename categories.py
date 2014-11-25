@@ -147,6 +147,7 @@ CMSSW_CATEGORIES={
    "DataFormats/EgammaTrackReco",
    "DataFormats/FP420Cluster",
    "DataFormats/GsfTrackReco",
+   "DataFormats/GEMRecHit",
    "DataFormats/HcalIsolatedTrack",
    "DataFormats/HcalRecHit",
    "DataFormats/HeavyIonEvent", "DataFormats/JetReco",

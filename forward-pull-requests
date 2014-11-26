@@ -47,14 +47,20 @@ if __name__ == "__main__":
     newBody = issue.body + "\nAutomatically ported from " + args.source + " #%s" % issue.number
     try:
       newHead = "%s:%s" % (pr.head.user.login, pr.head.ref)
-      if not args.dryRun:
-        gh_repo.create_pull(title = issue.title, body =newBody, base = args.dest, head = newHead)
-      else:
-        print "Forward porting %s" % issue.number
-        print issue.title
-        print newBody
-        print args.dest
-        print "%s:%s" % (pr.head.user.login, pr.head.ref)
-        print
+      
+      print 
+      print '-----'
+      print "Forward porting %s" % issue.number
+      print issue.title
+      print newBody.encode('utf-8')
+      print args.dest
+      print "%s:%s" % (pr.head.user.login, pr.head.ref)
+      print '---'
+      if args.dryRun:
+        print 'ATTENTION: Not creating new PR on Github (dry-run)'
+        continue
+      gh_repo.create_pull(title = issue.title, body =newBody, base = args.dest, head = newHead )
+
     except GithubException:
+      print "Error while processing: ", issue.number
       continue

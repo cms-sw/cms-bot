@@ -1,4 +1,24 @@
 #!/bin/sh -ex
+
+function GetCmsBuildConfig ()
+{
+  pkg_tag=$1
+  type=$2
+  shift 2
+  case $pkg_tag in
+    V00-16-*)
+      echo -e "[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg
+      for p in  $@ ; do
+        echo -e "[$type $p]\npriority: 20" >> cmsBuild.cfg
+      done
+      echo "--cfg cmsBuild.cfg"
+      ;;
+    *)
+    echo "$type $@"
+    ;;
+  esac
+}
+
 ARCHITECTURE=$1
 RELEASE_FORMAT=$2
 REPOSITORY=$3
@@ -82,7 +102,11 @@ pushd CMSDIST
   git checkout $DEFAULT_CMSDIST_TAG -- das-cache.file
 popd
 
-PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build SCRAMV1"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+CMS_TAG=""
+if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
+ CMS_TAG="--tag `echo $RELEASE_QUEUE | md5sum | tr '0123456789' 'ghijklmnop' | cut -b1-6`"
+fi
+PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
 
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w
@@ -134,17 +158,17 @@ perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME
 
 TOOL_CONF_PACKAGES="$CMSSW_TOOL_CONF local-cern-siteconf cms-git-tools"
 while [ true ]; do
-  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build coral"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
-  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build $TOOL_CONF_PACKAGES"; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
+  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
   if [ "X$(ls w/RPMS/$ARCHITECTURE | wc -l | sed -e 's/[^0-9]*//')" = X0 ]; then
     break;
   fi
-  PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload $TOOL_CONF_PACKAGES" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype` || true
+  PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
   rm -rf w
 done
 
-PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j `echo "$BUILD_NPROC * 2" | bc` --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w `buildtype="build cmssw-ib" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
-PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w `buildtype="upload cmssw-ib" ; echo $PKGTOOLS_TAG | grep 'V00-16' > /dev/null && ( echo -e "[$buildtype]\npriority: 20 \n[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg && echo --cfg cmsBuild.cfg ) || echo $buildtype`
+PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j `echo "$BUILD_NPROC * 2" | bc` --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
+PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 
 if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   pushd CMSDIST

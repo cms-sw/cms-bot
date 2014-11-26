@@ -32,7 +32,7 @@ UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You ca
               'The release is now being installed, you can see the progress here: \n ' \
               'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\> \\<architecture\\>". \n ' \
-              'I will generate the release notes based on the release that you provide. The architecture will be used '
+              'I will generate the release notes based on the release that you provide. The architecture will be used ' \
               'to infer the cmsdist tag'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'
 BUILD_ERROR_MSG='The was error for {architecture}. \n You can see the log here: \n {log_url}'

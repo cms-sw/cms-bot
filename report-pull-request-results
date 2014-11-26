@@ -223,7 +223,7 @@ def send_not_mergeable_pr_message( repo, pr_number ):
   pull_request = repo.get_pull(pr_number)
   user = pull_request.user
   
-  message = "-1\n"+"@" + user.login + ' This pull request is cannot be automatically '\
+  message = "-1\n"+"@" + user.login + ' This pull request cannot be automatically '\
             ' merged, could you please rebase it?'
   print 'Postng message:'
   print message

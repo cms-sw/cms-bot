@@ -29,8 +29,6 @@ if [ "X$RELEASE_TYPE" = "XDefault" ]; then
   fi
 fi
 
-exit 0
-
 RPM_NAME=cmssw
 case $CMSSW_X_Y_Z in
    *patch*) RPM_NAME=cmssw-patch ;;

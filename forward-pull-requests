@@ -10,8 +10,10 @@ from argparse import ArgumentParser
 
 if __name__ == "__main__":
   parser = ArgumentParser()
-  parser.add_argument("source")
-  parser.add_argument("dest")
+  parser.add_argument("-s", "--source")
+  parser.add_argument("-d", "--dest")
+  parser.add_argument("-n", "-dry-run", dest="dryRun", default=False, action="store_true")
+  parser.add_argument("issues", nargs="*", type=int)
   args = parser.parse_args()
 
   print args
@@ -35,11 +37,24 @@ if __name__ == "__main__":
     print "Could not find destination milestone."
     exit(1)
 
-  for issue in gh_repo.get_issues(milestone=milestone.pop(), state="open"):
+  issues = args.issues or gh_repo.get_issues(milestone=milestone.pop(), state="open")
+  for issue in issues:
+    # If we just have the numeric Id, let's get the associated issue.
+    if type(issue) == int:
+      issue = gh_repo.get_issue(issue)
     pr = gh_repo.get_pull(issue.number)
     print issue.number, pr.head.user.login, pr.head.ref, destMilestone
     newBody = issue.body + "\nAutomatically ported from " + args.source + " #%s" % issue.number
     try:
-      gh_repo.create_pull(title = issue.title, body =newBody, base = args.dest, head = "%s:%s" % (pr.head.user.login, pr.head.ref))
+      newHead = "%s:%s" % (pr.head.user.login, pr.head.ref)
+      if not args.dryRun:
+        gh_repo.create_pull(title = issue.title, body =newBody, base = args.dest, head = newHead)
+      else:
+        print "Forward porting %s" % issue.number
+        print issue.title
+        print newBody
+        print args.dest
+        print "%s:%s" % (pr.head.user.login, pr.head.ref)
+        print
     except GithubException:
       continue

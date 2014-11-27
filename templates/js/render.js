@@ -209,11 +209,12 @@ add_tests_to_row = function( tests , row , arch , type ){
 
 /**
  * Generates the static analyzer link and adds it to the cell for the IB
+ * isFound is equal to te architecture where the test is found, if not found
+ * the value is 'not-found'
  */
 add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
-  if ( isFound == 'found'){
-    // for now the arch is hardcoded, this needs to be changed eventually
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/slc6_amd64_gcc481/llvm-analysis/index.html'
+  if ( isFound != 'not-found'){
+    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/'+isFound+'/llvm-analysis/index.html'
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
     sa_link.append($('<span></span>').text(' Static Analyzer'))
@@ -251,19 +252,32 @@ add_hlt_tests_link = function ( title_cell , isFound , currentTag ){
 addTagLink = function( titleCell , currentTag ){
 
   var isIB = currentTag.indexOf( '-' ) >= 0
-  
+  isTopOfBranch = !isIB && currentTag.indexOf( 'X' ) >= 0
+ 
   if( isIB ) {
+
     var url = 'https://github.com/cms-sw/cmssw/tree/' + currentTag
     var tagLink = $( "<a>" ).attr( "href" , url )
     tagLink.append( $('<span class="glyphicon glyphicon-tag">') )
     tagLink.append( $('<span>').text(' IB Tag') )
     titleCell.append( tagLink )
+
+  }else if( isTopOfBranch ){
+
+    var url = 'https://github.com/cms-sw/cmssw/commits/' + currentTag
+    var tagLink = $( "<a>" ).attr( "href" , url )
+    tagLink.append( $('<span class="glyphicon glyphicon-list">') )
+    tagLink.append( $('<span>').text(' See Branch') )
+    titleCell.append( tagLink )
+
   }else{
+
     var url = 'https://github.com/cms-sw/cmssw/releases/tag/' + currentTag
     var tagLink = $( "<a>" ).attr( "href" , url )
     tagLink.append( $('<span class="glyphicon glyphicon-tag">') )
     tagLink.append( $('<span>').text(' Release') )
     titleCell.append( tagLink )
+
   }
 
 
@@ -275,8 +289,12 @@ addTagLink = function( titleCell , currentTag ){
 write_comp_IB_table =  function( comparison , tab_pane ){
 
   var current_tag = comparison.compared_tags.split("-->")[1]
+  isTopOfBranch = ( current_tag.indexOf( '-' ) == -1 ) && ( current_tag.indexOf( 'X' ) >= 0 )
+
   var title_compared_tags = $("<h3><b></b></h3>").text(current_tag)
- 
+  if ( isTopOfBranch ){
+    title_compared_tags.text( 'Next IB:')
+  }
    
   var titleTable = $('<table class="table table-condensed"></table>')
   titleTable.attr( 'id' , current_tag )

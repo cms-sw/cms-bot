@@ -27,7 +27,7 @@ BUILD_OK_MSG='The build has finished sucessfully for the architecture {architect
              'You can see the log for the build here \n' \
              '{log_url}'
 UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
-              'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console'
+              'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/upload-release/{jk_build_number}/console'
 UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'The release is now being installed, you can see the progress here: \n ' \
               'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' \

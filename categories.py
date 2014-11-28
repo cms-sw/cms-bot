@@ -631,6 +631,7 @@ CMSSW_CATEGORIES={
    "JetMETCorrections/FFTJetObjects",
    "JetMETCorrections/InterpolationTables",
    "JetMETCorrections/IsolatedParticles",
+   "JetMETCorrections/JetCorrector",
    "JetMETCorrections/JetParton",
    "JetMETCorrections/JetVertexAssociation",
    "JetMETCorrections/MCJet",

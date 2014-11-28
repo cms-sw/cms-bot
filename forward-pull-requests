@@ -59,8 +59,10 @@ if __name__ == "__main__":
       if args.dryRun:
         print 'ATTENTION: Not creating new PR on Github (dry-run)'
         continue
-      gh_repo.create_pull(title = issue.title, body =newBody, base = args.dest, head = newHead )
+      newIssue = gh_repo.create_pull(title = issue.title, body =newBody, base = args.dest, head = newHead )
+      print "New issue number", newIssue.number
 
-    except GithubException:
+    except GithubException, e:
       print "Error while processing: ", issue.number
+      print e
       continue

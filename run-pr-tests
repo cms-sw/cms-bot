@@ -1,8 +1,12 @@
 #!/bin/sh -ex
 
-# Reset kerberos token every time you run.
-aklog
-kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
+# In case we have kerberos and aklog reset token every time you run.
+if [ ! X`which aklog` = X ]; then
+  aklog
+fi
+if [ ! X`which kinit` = X ]; then
+  kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
+fi
 
 cd "$WORKSPACE"
 git clone git@github.com:$CMS_GIT_TOOLS_REPO/cms-git-tools

@@ -47,6 +47,7 @@ echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
 scram project $RELEASE_FORMAT
 cd $RELEASE_FORMAT
 eval `scram run -sh`
+git cms-init
 cd src
 git config --replace-all merge.renamelimit 2500
 

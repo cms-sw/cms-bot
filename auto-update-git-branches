@@ -52,6 +52,7 @@ updateBranch CMSSW_7_3_X CMSSW_7_3_DEVEL_X
 # CMSSW_7_4_X
 updateBranch CMSSW_7_3_X CMSSW_7_4_X
 updateBranch CMSSW_7_4_X CMSSW_7_4_DEVEL_X
+updateBranch CMSSW_7_4_X CMSSW_7_4_THREADED_X
 
 # Update CMSDIST
 cd $WORKSPACE

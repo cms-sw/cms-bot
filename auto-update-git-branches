@@ -11,7 +11,7 @@ function updateBranch()
   git clean -fdx
   git reset --hard origin/$TARGET_BRANCH
   git clean -fdx
-  git merge -X ours origin/$SOURCE_BRANCH
+  git merge --no-ff -X ours origin/$SOURCE_BRANCH
   if [ "X`git diff --name-only HEAD origin/$TARGET_BRANCH | tail -1`" != "X" ]; then
     git push origin HEAD:$TARGET_BRANCH
   fi
@@ -51,6 +51,7 @@ updateBranch CMSSW_7_3_X CMSSW_7_3_DEVEL_X
 
 # CMSSW_7_4_X
 updateBranch CMSSW_7_3_X CMSSW_7_4_X
+updateBranch CMSSW_7_4_X CMSSW_7_4_DEVEL_X
 
 # Update CMSDIST
 cd $WORKSPACE
@@ -100,3 +101,4 @@ updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/debug
 # other cmsdist branches for 74X as usual
 updateBranch IB/CMSSW_7_3_X/gcc491 IB/CMSSW_7_4_X/stable
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/gcc481
+updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/next

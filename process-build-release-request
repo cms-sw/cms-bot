@@ -3,10 +3,12 @@ from optparse import OptionParser
 from github import Github
 from os.path import expanduser
 from categories import REQUEST_BUILD_RELEASE,CMSSW_L1,APPROVE_BUILD_RELEASE
+from commands import getstatusoutput
 import re
 import json
 import urllib2
 import yaml
+
 
 # 
 # Processes a github issue to check if it is requesting the build of a new release
@@ -18,6 +20,7 @@ import yaml
 # --------------------------------------------------------------------------------
 GH_CMSSW_ORGANIZATION = 'cms-sw'
 GH_CMSSW_REPO = 'cmssw'
+GH_CMSDIST_REPO = 'cmsdist'
 BUILD_REL = '^[Bb]uild[ ]+(CMSSW_[^ ]+)'
 NOT_AUTHORIZED_MSG = 'You are not authorized to trigger the build of a release.'
 CONFIG_MAP_FILE = 'config.map'
@@ -31,8 +34,11 @@ WRONG_RELEASE_NAME_MSG = 'The release name is malformed. Please check for typos.
 ACK_MSG = 'Request received. I will start to build the release after one of the following approve ' \
           'the issue: {approvers_list}. You can do this by writing "+1" in a ' \
           'comment.\n'
-WATCHERS_MSG = '{watchers_list} you requested to watch the automated builds for {queue}'
-QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s '
+WATCHERS_MSG = '{watchers_list} you requested to watch the automated builds for {queue}' 
+QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s \n' \
+                     'You can abort the build by writing "Abort" in a comment. I will delete the release, ' \
+                     'the cmssw and cmsdist tag, and close the issue. You can\'t abort the upload once at' \
+                     'least one achitecture is being uploaded'
 QUEING_UPLOADS_MSG = 'Queing Jenkins upload for {architecture}'
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED_LABEL = 'build-release-started'
@@ -68,6 +74,8 @@ PENDING_APPROVAL = 'build-pending-approval'
 BUILD_IN_PROGRESS = 'build-in-progress'
 # The build has started
 BUILD_STARTED = 'build-started'
+# The build has been aborted. 
+BUILD_ABORTED = 'build-aborted'
 
 # -------------------------------------------------------------------------------
 # Functions
@@ -174,9 +182,8 @@ def create_release_github( repository, release_name, branch):
            "draft" : False, 
            "prerelease" : False }
 
-  token = open(expanduser("~/.github-token")).read().strip()
-  request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases",
-  headers={"Authorization" : "token " + token})
+  request = urllib2.Request("https://api.github.com/repos/" + GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO +"/releases",
+  headers={"Authorization" : "token " + GH_TOKEN })
   request.get_method = lambda: 'POST'
   print '--'
   try:
@@ -187,7 +194,86 @@ def create_release_github( repository, release_name, branch):
     return False
   print
 
+#
+# Deletes in github the release given as a parameter. 
+# If the release does no exists, it informs it in the message.
+# 
+def delete_release_github( release_name ):
+  if opts.dryRun:
+    print 'Not deleting release (dry-run):\n %s' % release_name
+    return 'Not deleting release (dry-run)'
+  
+  releases_url = "https://api.github.com/repos/" + GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO +"/releases?per_page=100"
 
+  request = urllib2.Request( releases_url, headers={"Authorization" : "token " + GH_TOKEN })
+  releases = json.loads(urllib2.urlopen(request).read())
+  matchingRelease = [x["id"] for x in releases if x["name"] == release_name]
+
+  if len(matchingRelease) < 1:
+    return "Release %s not found." % release_name
+
+  releaseId = matchingRelease[0]
+  url = "https://api.github.com/repos/cms-sw/cmssw/releases/%s" % releaseId
+  request = urllib2.Request( url, headers={"Authorization" : "token " + GH_TOKEN })
+  request.get_method = lambda: 'DELETE'
+
+  try:
+    print urllib2.urlopen( request ).read()
+    return 'Release successfully deleted'
+  except Exception as e:
+    return 'There was an error while deleting the release:\n %s' % e
+
+#
+# Deletes in github the tag given as a parameter
+#
+def delete_cmssw_tag_github( release_name ):
+  if opts.dryRun:
+    print 'Not deleting cmssw tag (dry-run):\n %s' % release_name
+    return 'Not deleting cmssw tag (dry-run): %s ' % release_name
+
+  cmd = "git push git@github.com:{org}/{repo}.git :{tag}"\
+        .format( org=GH_CMSSW_ORGANIZATION,
+                 repo=GH_CMSSW_REPO,
+                 tag= release_name )
+  print 'Executing: \n %s' % cmd
+  status, out = getstatusoutput( cmd )
+  print out
+  if status != 0:
+    msg = 'I was not able to delete the tag %s. Probaly it had not been created.' % release_name
+    print msg
+    return msg 
+ 
+  msg = 'cmssw tag %s successfully deleted.' % release_name 
+  return msg
+#
+# for each architecture, gets the tag in cmsdist that should have ben created and deletes it
+#
+def delete_cmsdist_tags_github( release_name, architectures ):
+  result = ''
+  for arch in architectures:
+    tag_to_delete = "REL/{rel_name}/{architecture}".format( rel_name=release_name, architecture=arch )
+
+    if opts.dryRun:
+      msg = 'Not deleting cmsdist tag (dry-run): %s' % tag_to_delete
+      result += '\n\n  -' + msg
+      continue
+
+    cmd = "git push git@github.com:{org}/{repo}.git :{tag}"\
+        .format( org=GH_CMSSW_ORGANIZATION,
+                 repo=GH_CMSDIST_REPO,
+                 tag=tag_to_delete )
+
+    print 'Executing: \n %s' % cmd
+    status, out = getstatusoutput( cmd )
+    print out
+    if status != 0:
+      msg = 'I was not able to delete the cmsdist tag %s. Probaly it had not been created.' % tag_to_delete
+    else:
+      msg = 'cmsdist tag %s successfully deleted.' % tag_to_delete
+
+    result += '\n\n  -' + msg
+
+  return result
 #
 # Reads config.map and returns a list of the architectures for which a release needs to be built.
 # If the list is empty it means that it didn't find any architecture for that release queue, or 
@@ -234,6 +320,8 @@ def get_issue_status( issue ):
 
   if not labels:
     return NEW_ISSUE
+  if BUILD_ABORTED in labels:
+    return BUILD_ABORTED 
   if PENDING_APPROVAL in labels:
     return PENDING_APPROVAL
   if BUILD_IN_PROGRESS in labels:
@@ -256,6 +344,24 @@ def remove_label( issue, label ):
   print 'Removing label: %s' % label
   issue.remove_from_labels( label )
 
+#
+# Aborts the build:
+# -Deletes the release in github
+# -Deletes the cmssw tags
+# -Deletes the cmsdist tags
+#
+def abort_build( issue, release_name, architectures):
+  msg = 'Deleting %s:' % release_name
+
+  del_rel_result = delete_release_github( release_name )
+  msg += '\n\n  -' + del_rel_result
+  msg += '\n\n  -' + delete_cmssw_tag_github( release_name )
+  msg += delete_cmsdist_tags_github( release_name, architectures )
+  msg += '\n\n' + 'You must create a new issue to start over the build.'
+  post_message( issue, msg )
+  add_label( issue, BUILD_ABORTED )
+  remove_label( issue, BUILD_IN_PROGRESS )
+
 # -------------------------------------------------------------------------------
 # Start of execution 
 # --------------------------------------------------------------------------------
@@ -273,9 +379,11 @@ if __name__ == "__main__":
   if len( args ) != 1:
     parser.print_help()
     parser.error( "Too many arguments" )
+
+  GH_TOKEN = open( expanduser("~/.github-token")).read().strip()
   
   issue_id  = int( args[ 0 ] )
-  gh = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
+  gh = Github( login_or_token=GH_TOKEN )
   issue = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO ).get_issue( issue_id )
   comments = [ c for c in issue.get_comments( ) ]
  
@@ -378,7 +486,21 @@ if __name__ == "__main__":
     labels = [ l.name for l in issue.get_labels() ]
     to_upload = [ x.split('-')[0] for x in labels if '-build-ok' in x ]
     upload_ok = [ x.split('-')[0] for x in labels if '-upload-ok' in x ]
-
+    uploading = [ x.split('-')[0] for x in labels if '-uploading' in x ] 
+    # the build can be aborted only until one of the architectures is uploading
+    if not ( uploading or upload_ok ):
+      pattern = '^Abort$'
+      abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )
+      print abort_comments
+      if abort_comments:
+        print 'Aborting'
+        abort_build( issue, release_name, architectures )
+        exit( 0 )
+    else:
+      msg = "You can't abort the build at this point"
+      post_message( issue, msg )
+      print msg
+ 
     if upload_ok and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
       pattern = 'release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
       release_notes_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )

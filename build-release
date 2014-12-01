@@ -41,7 +41,7 @@ popd
   
 pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
   git tag  REL/$CMSSW_X_Y_Z/$ARCHITECTURE
-  git push origin --tags
+  git push origin REL/$CMSSW_X_Y_Z/$ARCHITECTURE
 popd
 
 

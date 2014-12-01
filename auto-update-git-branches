@@ -108,3 +108,4 @@ updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/gcc481
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/next
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/root6
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/geant10
+updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/debug

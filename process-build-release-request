@@ -40,6 +40,7 @@ QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s 
                      'the cmssw and cmsdist tag, and close the issue. You can\'t abort the upload once at' \
                      'least one achitecture is being uploaded'
 QUEING_UPLOADS_MSG = 'Queing Jenkins upload for {architecture}'
+CLEANUP_STARTED_MSG = 'The cleanup has started for {architecture}'
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED_LABEL = 'build-release-started'
 JENKINS_CMSSW_X_Y_Z = 'CMSSW_X_Y_Z'
@@ -81,10 +82,26 @@ BUILD_ABORTED = 'build-aborted'
 # Functions
 # --------------------------------------------------------------------------------
 
+#
+# creates a properties file to cleanup the build files. 
+#
+def create_properties_file_cleanup( release_name, arch, issue_number, machine_name):
+  out_file_name = 'cleanup-%s-%s.properties' % ( release_name , arch )
+  if opts.dryRun:
+    print 'Not creating cleanup properties file (dry-run):\n %s' % out_file_name
+  else:
+    print 'Creating properties file for %s' % arch
+    out_file = open( out_file_name , 'w' )
+    out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_MACHINE_NAME , machine_name ) )
+
+
 # Creates a properties file in Jenkins to trigger the upload
 # it needs to know the machine that was used for the build
 #
-def create_properties_files_upload( release_name , arch , issue_number , machine_name ):
+def create_properties_files_upload( release_name, arch, issue_number, machine_name ):
 
   out_file_name = 'upload-%s-%s.properties' % ( release_name , arch )
   if opts.dryRun:
@@ -487,6 +504,7 @@ if __name__ == "__main__":
     to_upload = [ x.split('-')[0] for x in labels if '-build-ok' in x ]
     upload_ok = [ x.split('-')[0] for x in labels if '-upload-ok' in x ]
     uploading = [ x.split('-')[0] for x in labels if '-uploading' in x ] 
+    build_error = [ x.split('-')[0] for x in labels if '-build-error' in x ]
     # the build can be aborted only until one of the architectures is uploading
     if not ( uploading or upload_ok ):
       pattern = '^Abort$'
@@ -497,9 +515,7 @@ if __name__ == "__main__":
         abort_build( issue, release_name, architectures )
         exit( 0 )
     else:
-      msg = "You can't abort the build at this point"
-      post_message( issue, msg )
-      print msg
+      print "You can't abort the build at this point"
  
     if upload_ok and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
       pattern = 'release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
@@ -519,9 +535,33 @@ if __name__ == "__main__":
         post_message( issue, msg )
         add_label( issue, RELEASE_NOTES_GENERATED_LBL )
 
+    # check if the cleanup has been requested.
+    to_cleanup = upload_ok + build_error
+    if to_cleanup:
+      pattern = '^cleanup$'
+      cleanup_requested_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )
+      if cleanup_requested_comments:
+        # trigger the cleanup for each architecture that was build correctly
+        for arch in to_cleanup:
+          print arch
+          pattern = 'The build has started for %s .*' % arch
+          build_info_comments = search_in_comments( comments, ['cmsbuild'] , pattern )
+          if not build_info_comments:
+            print 'No information found about the build machine, something is wrong for %s' % arch
+            exit(1)
+          
+          build_machine = build_info_comments[0].split( ' ' )[7].strip( '.' )
+          print 'Triggering cleanup for %s' % arch
+          create_properties_file_cleanup( release_name , arch , issue.number , build_machine )
+          msg = CLEANUP_STARTED_MSG.format( architecture=arch )
+          post_message( issue, msg ) 
+          remove_label( issue, arch + '-upload-ok' )
+          remove_label( issue, arch + '-build-error' )
+          add_label( issue, arch + '-finished' )
+
 
     if not to_upload:
-      print 'Build in progress. Nothing to upload for any architecture.' 
+      print 'Nothing to upload for any architecture.' 
       exit( 0 )
 
     for arch in to_upload:

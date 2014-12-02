@@ -20,6 +20,8 @@ BUILD_ERROR='BUILD_ERROR'
 UPLOADING='UPLOADING'
 UPLOAD_OK='UPLOAD_OK'
 UPLOAD_ERROR='UPLOAD_ERROR'
+CLEANUP_OK='CLEANUP_OK'
+CLEANUP_ERROR='CLEANUP_ERROR'
 BUILDING_MSG='The build has started for {architecture} in {machine}. \n' \
              'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console' 
 BUILD_OK_MSG='The build has finished sucessfully for the architecture {architecture} and is ready to be uploaded. \n' \
@@ -35,11 +37,14 @@ UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You ca
               'I will generate the release notes based on the release that you provide. The architecture will be used ' \
               'to infer the cmsdist tag'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'
+CLEANUP_OK_MSG='The workspace for {architecture} has been deleted \n You can see the log here: \n {log_url} \n'
+CLEANUP_ERROR_MSG='There was an error deletng the workspace for {architecture} \n You can see the log here: \n {log_url} \n'
 BUILD_ERROR_MSG='The was error for {architecture}. \n You can see the log here: \n {log_url}'
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED = 'build-release-started'
 BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-build-release/%s-%s/%d' 
 BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-upload-release/%s-%s/%d'
+BASE_CLEANUP_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cleanup-auto-build/%s-%s/%d'
 
 # -------------------------------------------------------------------------------
 # Functions
@@ -90,7 +95,7 @@ def remove_labels( issue ):
 
 if __name__ == "__main__":
   parser = OptionParser( usage="%prog <jenkins-build-number> <hostname> <issue-id> <arch> <release-name> <message-type> [ options ] \n "
-                               "message-type = BUILDING | BUILD_OK | BUILD_ERROR | UPLOADING | UPLOAD_OK | UPLOAD_ERROR" )
+                               "message-type = BUILDING | BUILD_OK | BUILD_ERROR | UPLOADING | UPLOAD_OK | UPLOAD_ERROR | CLEANUP_OK | CLEANUP_ERROR" )
   parser.add_option( "-n" , "--dry-run" , dest="dryRun" , action="store_true", help="Do not post on Github", default=False )
   opts, args = parser.parse_args( )
 
@@ -150,6 +155,18 @@ if __name__ == "__main__":
     post_message( issue , msg )
     remove_label( issue, arch+'-uploading' )
     add_label( issue,  arch+'-upload-error' )
+
+  elif action == CLEANUP_OK:
+
+    results_url = BASE_CLEANUP_LOG_URL % (release_name,arch,jenkins_build_number)
+    msg = CLEANUP_OK_MSG.format( architecture=arch , log_url=results_url )
+    post_message( issue , msg )
+
+  elif action == CLEANUP_ERROR:
+
+   results_url = BASE_CLEANUP_LOG_URL % (release_name,arch,jenkins_build_number)
+   msg = CLEANUP_ERROR_MSG.format( architecture=arch , log_url=results_url )
+   post_message( issue , msg ) 
 
   else:
     parser.error( "Message type not recognized" )

@@ -406,7 +406,7 @@ if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
      $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/unitTests.log
   elif [ "X$RELVALS_OK" = Xfalse ]; then
      pushd $WORKSPACE/
-     ./report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log
+     $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log
      popd
   fi
 fi

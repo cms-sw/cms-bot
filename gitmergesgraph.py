@@ -118,12 +118,12 @@ def identify_automated_merges(nodes):
         responsible_commit.brought_commits.append( commit )
   
 
-  print '-'.join( [ '%s by %s' % (c.hash,c.brought_by.hash) for c in commits_from_merge if c.brought_by] )
+  #print '-'.join( [ '%s by %s' % (c.hash,c.brought_by.hash) for c in commits_from_merge if c.brought_by] )
 
   automated_merges = [n for n in nodes.values() if n.is_automated_merge]
 
-  for auto_merge in automated_merges:
-    auto_merge.printme()
+  #for auto_merge in automated_merges:
+  #  auto_merge.printme()
 
 
 #

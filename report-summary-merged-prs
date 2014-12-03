@@ -21,6 +21,8 @@ parser = OptionParser(usage="usage: %prog CMSSW_REPO CMSDIST_REPO COMPARISON_PAI
                             "\n For example:"
 			    "\n 2014-10-08-1400")
 
+parser.add_option( "-v" , "--verbose" , dest="verbose" , action="store_true", help="Do not post on Github", default=False )
+
 (options, args) = parser.parse_args()
 
 #-----------------------------------------------------------------------------------
@@ -40,6 +42,13 @@ START_DATE = args[ 2 ]
 #-----------------------------------------------------------------------------------
 #---- Fuctions
 #-----------------------------------------------------------------------------------
+
+#
+# Takes into account the verbose option. If the option is activated it douesn't print anything. 
+#
+def print_verbose( msg ):
+  if options.verbose:
+    print ( msg )
 
 # reads a line of config.map and returns a dictionary with is parameters
 def parse_config_map_line ( line ):
@@ -99,7 +108,10 @@ def get_config_map_params():
 
   SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
   RELEASE_QUEUES.sort()
-
+ 
+  print
+  print '---------------------------'
+  print 'Read config.map:'
   print 'ARCHS:'
   print ARCHITECTURES
   print '--'
@@ -112,7 +124,8 @@ def get_config_map_params():
   print RELEASE_ADITIONAL_TESTS
   print 'I am going to show:'
   print RELEASE_QUEUES
-
+  print '---------------------------'
+  print
 
 
 # Tells if the pr comes from a merge commit it reads the first part of the line that
@@ -318,7 +331,7 @@ def analyze_tests_results( output , results , arch , type ):
   for line in output.splitlines():
     m = re.search('CMSSW.*[0-9]/', line)
     if not m:
-      print 'Ignoring line:\n%s' % line
+      print_verbose( 'Ignoring file:\n%s' % line )
       continue
 
     rel_name = line[m.start():m.end()-1]
@@ -411,23 +424,23 @@ def look_for_missing_tags(start_tag, release_queue):
 # Executes the command that is given as parameter, returns a tuple out,err,ret_code
 # with the output, error and return code obtained
 def get_output_command(command_to_execute):
-  print 'Executing:'
-  print command_to_execute
+  print_verbose( 'Executing:' )
+  print_verbose( command_to_execute )
 
   p = subprocess.Popen(command_to_execute, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   out,err = p.communicate()
   ret_code = p.returncode
 
   if ret_code != 0:
-    print ret_code
-    print 'Error:'
-    print err
+    print_verbose( ret_code )
+    print_verbose( 'Error:' )
+    print_verbose( err )
 
   return out,err,ret_code
 
 # Gets the tags between start_tag and end_tag, the release_queue is used as a filter
 # to ignore tags that are from other releases
-def execute_magic_command_tags( start_tag , end_tag , release_queue , release_branch ):
+def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch ):
 
   # if it is a special release queue based on a branch with a different name, I use the release_branch as end tag
   if release_queue == release_branch:
@@ -444,7 +457,7 @@ def execute_magic_command_tags( start_tag , end_tag , release_queue , release_br
   # this could mean that the release branch has been created recently
   if ret_code != 0:
     if is_recent_branch(err):
-      print 'looks like this branch has been created recently'
+      print_verbose( 'looks like this branch has been created recently' )
       command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace( 'END_TAG' , real_end_tag ).replace( 'RELEASE_QUEUE' , release_branch )
       out,err,ret_code = get_output_command(command_to_execute)
 
@@ -454,8 +467,8 @@ def execute_magic_command_tags( start_tag , end_tag , release_queue , release_br
   #check if the tags list could be missing tags
   # this means that the release branch has not changed much from the start_tag
   if is_tag_list_suspicious(tags):
-    print 'this list could be missing something!'
-    print tags
+    print_verbose( 'this list could be missing something!' )
+    print_verbose( tags )
     new_tags = look_for_missing_tags(start_tag, release_branch)
     tags.pop()
     tags += new_tags
@@ -467,7 +480,6 @@ def execute_magic_command_tags( start_tag , end_tag , release_queue , release_br
 def execute_command_compare_tags(start_tag,end_tag , graph ):
   command_to_execute = MAGIC_COMMAND_PRS.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
   output,err,ret_code = get_output_command(command_to_execute)
-  print '------'
   comp = {}
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
   comp[ 'release_name' ] = end_tag
@@ -662,6 +674,7 @@ def add_tests_to_results( results, unit_tests, relvals_results , addon_results ,
 def find_static_results( comparisons , architecture ):
   for comp in comparisons:
     rel_name = comp['compared_tags'].split('-->')[1]
+    print 'Looking for static tests results for ', rel_name
     comp['static_checks'] = find_one_static_check( rel_name , architecture )
 #
 # Finds for an IB the results of the HLT tests
@@ -669,7 +682,8 @@ def find_static_results( comparisons , architecture ):
 def find_hlt_tests_results( comparisons ):
   for comp in comparisons:
     rel_name = comp[ 'compared_tags' ].split('-->')[1]
-    comp[ 'hlt_tests' ] = find_one_hlt_test(rel_name)
+    print 'Looking for HLT tests results for ', rel_name
+    comp[ 'hlt_tests' ] = find_one_hlt_test( rel_name )
 
 #
 # Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is ''
@@ -681,17 +695,19 @@ def find_one_static_check( release_name , architecture ):
   if ret_code == 0:
     print 'found'
     return architecture
+  print 'not-found'
   return 'not-found'
 
 #
 # Looks for one hlt test result for the IB, if it finds it, the value is 'found' if not, the value is ''
 #
 def find_one_hlt_test( release_name ):
-  command = MAGIC_COMMAND_FIND_HLT_TESTS.replace('RELEASE_NAME',release_name)
+  command = MAGIC_COMMAND_FIND_HLT_TESTS.replace('RELEASE_NAME', release_name)
   out,err,ret_code = get_output_command(command)
   if ret_code == 0:
     print 'found'
     return 'found'
+  print 'not-found'
   return 'not-found'
 
 # reads the results and generates a separated json for each release_queue
@@ -881,7 +897,7 @@ if __name__ == "__main__":
   results = []
 
   get_config_map_params()
-  SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+  SP_REL_REGEX = "|".join( SPECIAL_RELEASES )
   REQUESTED_COMPARISONS = [ ( '%s_%s..%s' % ( rq , START_DATE , rq ) ) for rq in RELEASE_QUEUES ]
 
   AFS_IB_INSTALLATION = "/afs/cern.ch/cms/sw/ReleaseCandidates/vol*/*/cms"
@@ -893,8 +909,8 @@ if __name__ == "__main__":
 
   installedReleases = [basename(x) for x in installedPaths]
 
-  print 'Installed Releases:'
-  print installedReleases
+  print_verbose( 'Installed Releases:' )
+  print_verbose( installedReleases )
 
   for comp in REQUESTED_COMPARISONS:
     start_tag = comp.split("..")[0]
@@ -902,30 +918,36 @@ if __name__ == "__main__":
     release_queue = start_tag
     # if is a SLHC or any special release, the split will happen with the fifth underscore _
     if re.search(SP_REL_REGEX,release_queue):
-      print 'This is a special release'
+      print_verbose( 'This is a special release' )
       release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
     else:
       release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]
   
+    print '####################################################################'
     print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
 
     # load the graph to check the history and identify merge prs and commits
     release_branch = RELEASES_BRANCHES[ release_queue ]
+    print 'Identifying merge commits...'
     graph = load_graph( release_branch , -1 )
+    print 'Done'
 
     release_queue_results = {}
 
     release_queue_results[ 'release_name' ] = release_queue
     release_queue_results[ 'base_branch' ] = release_branch
 
+    print 'Identifying tags...'
     tags = execute_magic_command_tags( start_tag , end_tag , release_queue , release_branch )
     tags = [x for x in tags if x in installedReleases]
     tags.append( release_branch )
-
+    
     print 'I got these tags: '
-    print tags
+    print tags 
 
+    print 'Getting merged pull requests between tags...'
     release_queue_results['comparisons'] = compare_tags( tags , graph )
+    print 'Done'
 
     #it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
     additional_tests = RELEASE_ADITIONAL_TESTS.get( release_queue )
@@ -939,8 +961,6 @@ if __name__ == "__main__":
   
     results.append(release_queue_results)
   
-    print
-    print "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
   
   cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
   

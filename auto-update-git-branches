@@ -26,6 +26,15 @@ if [ ! -d cmssw ]; then
 fi
 
 cd cmssw
+
+# Make sure we push with our correct name and address 
+# in the case our user does not have an home directory,
+# e.g. under mesos.
+if [ X$HOME = X ]; then
+  git config user.email 'cmsbuild@cern.ch'
+  git config user.name "CMS Build"
+fi
+
 git fetch origin
 
 # CMSSW_7_1_X for the moment is based on CMSSW_7_0_X

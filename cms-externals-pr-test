@@ -1,12 +1,23 @@
 #!/bin/sh -ex
 
 env
+#  The following should be set by jenkins or in the parameters if run in docker:
+# - SCRAM_ARCH 
+# - RELEASE_QUEUE
+# - CMSDIST_PR is the pull request in cmsdist that you want to test. It must have the format
+#   #<pr-number>
+# - EXTERNAL_PR is a pull request made to a repository in cms-externals it need. It must
+#   have the format: cms-externals/<package-repo>#<pr-number>
+# - FINAL_PACKAGE is the package that you want to force to test. For example cmssw-tool-conf
+#   if you don't set it, the package of te external pr will be used. If you are only testing
+#   a cmsdist pr, you must use -fp to set it 
+
 # If it is not run by jenkins it sets up a default workspace
 WORKSPACE=${WORKSPACE-/build}
 CMSDIST_PATH=$WORKSPACE/cmsdist
 PKGTOOLS_PATH=$WORKSPACE/pkgtools
-# SCRAM_ARCH and RELEASE_QUEUE are set by Jenkins, If it is not
-# run by jenkins they should be provided in the parameters
+
+
 INTERACTIVE=${INTERACTIVE-}
 JOBS=${JOBS-1}
 export SCRAM_ARCH=$ARCHITECTURE
@@ -21,7 +32,7 @@ while [ X$# != X0 ] ; do
     -q) shift ; RELEASE_QUEUE=$1 ; shift ;;
     -i) shift ; INTERACTIVE=$1 ; shift ;;
     -j) shift ; JOBS=$1 ; shift ;;
-    -pr) shift ; PR=$1 ; shift ;;
+    -pr) shift ; EXTERNAL_PR=$1 ; shift ;;
     -fp) shift ; FINAL_PACKAGE=$1 ; shift ;;
     -cpr) shift ; CMSDIST_PR=$1 ; shift ;;
     *) shift ; echo unknown option ;;
@@ -45,13 +56,13 @@ fi
 pushd $PKGTOOLS_PATH ; git fetch origin ; git checkout $PKGTOOLS_TAG; popd
 pushd $CMSDIST_PATH ; git remote -v ; git fetch origin $CMSDIST_TAG ; git checkout FETCH_HEAD; popd
 
-BUILD_REPO=`echo $PR | sed -e 's|[#@].*||;s|/.*||'`
-BUILD_PACKAGE=`echo $PR | sed -e 's|[#@].*||;s|.*/||'`
+BUILD_REPO=`echo $EXTERNAL_PR | sed -e 's|[#@].*||;s|/.*||'`
+BUILD_PACKAGE=`echo $EXTERNAL_PR | sed -e 's|[#@].*||;s|.*/||'`
 
-case $PR in 
+case $EXTERNAL_PR in 
   *[#]*)
-    BUILD_PR=`echo $PR | sed -e 's|.*#||'`
-    BUILD_PR_URL=`echo https://api.github.com/repos/$PR | sed -e "s|#|/pulls/|"`
+    BUILD_PR=`echo $EXTERNAL_PR | sed -e 's|.*#||'`
+    BUILD_PR_URL=`echo https://api.github.com/repos/$EXTERNAL_PR | sed -e "s|#|/pulls/|"`
 
     # Find out basic details about the PR
     BASE_REPO=`curl -s $BUILD_PR_URL  | jq '.["base"]["repo"]["clone_url"]' | sed -e 's/"//g'`
@@ -63,7 +74,7 @@ case $PR in
   *[@]*)
     # This is in case we want to specify a given version of the external.
     BASE_REPO=https://github.com/$BUILD_REPO/$BUILD_PACKAGE
-    BASE_BRANCH=`echo $PR | sed -e 's|.*[@]||'`
+    BASE_BRANCH=`echo $EXTERAL_PR | sed -e 's|.*[@]||'`
 
     HEAD_REPO=$BASE_REPO
     HEAD_BRANCH=$BASE_BRANCH
@@ -73,7 +84,7 @@ case $PR in
   ;;
 esac
 
-if [ ! "X$PR" = X ]; then
+if [ ! "X$EXTERNAL_PR" = X ]; then
   # Clone the repository and merge the pull request.
   git clone -b $BASE_BRANCH $BASE_REPO $BUILD_PACKAGE
   pushd $WORKSPACE/$BUILD_PACKAGE
@@ -94,18 +105,18 @@ if [ ! X$CMSDIST_PR = X ]; then
   
   # Workaround needed since git pull for cmsdist does not work, for some reason
   # inside a docker container.
-  git clone -b $CMSDIST_HEAD_BRANCH $CMSDIST_HEAD_REPO cmsdist-pr
-  pushd $WORKSPACE/cmsdist
+  git clone -b $CMSDIST_HEAD_BRANCH $CMSDIST_HEAD_REPO $WORKSPACE/cmsdist-pr
+  pushd $CMSDIST_PATH
     git checkout $CMSDIST_BASE_BRANCH
     git config user.email "cmsbuild@cern.ch"
     git config user.name "CMS BOT"
-    git pull ../cmsdist-pr/.git $CMSDIST_HEAD_BRANCH
+    git pull $WORKSPACE/cmsdist-pr/.git $CMSDIST_HEAD_BRANCH
   popd
 fi
 
 # If a PR is specified for an external, we rewrite the spec file
 # to point out to it.
-if [ ! X$PR = X ]; then
+if [ ! X$EXTERNAL_PR = X ]; then
   perl -p -i -e "s|%define branch.*|%define branch ${BASE_BRANCH}|" cmsdist/${BUILD_PACKAGE}.spec
   perl -p -i -e "s|%define tag.*|%define tag ${HEAD_REF}|" cmsdist/${BUILD_PACKAGE}.spec
   perl -p -i -e "s|^Source.*|Source: git:$WORKSPACE/$BUILD_PACKAGE/.git?obj=${BASE_BRANCH}/%{tag}&export=%{n}-%{realversion}&output=/%{n}-%{realversion}-%{tag}.tgz|" cmsdist/${BUILD_PACKAGE}.spec

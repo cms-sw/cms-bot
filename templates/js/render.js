@@ -353,6 +353,7 @@ write_comp_IB_table =  function( comparison , tab_pane ){
 
 }
 
+
 /**
  * fills the arch cell with a link to the cmsdist tag used to build that IB if 
  * the tag exsists, current_tag is the current IB being processed
@@ -369,23 +370,28 @@ fill_arch_cell = function( cell , architecture , cmsdistTags , current_tag ){
     var link = $( '<a>' )
     link.attr( 'href' , 'https://github.com/cms-sw/cmsdist/commits/' + tagName )
     var tooltipText = ''
-    
+   
+    var isPatchSmall = $( '<small>' )
+     
     if( tagName == 'Not Found' ){
       cell.text( architecture )
       return      
     }else if ( tagName != intendedTagName ){
       tooltipText = 'Used same cmsdist tag as ' + tagName.replace( 'IB/' , '').replace( '/' + architecture , '')
+      var baseIB = tagName.split( '/' )[ 1 ]
+      var previousDate = baseIB.substring( baseIB.lastIndexOf( '_' ) + 1, baseIB.length )
+      var baseIBLink = $( '<a>' ).attr( 'href' , '#' + baseIB ).text( 'Patch from ' + previousDate )
+      isPatchSmall.append( baseIBLink )
     }else { 
-
       tooltipText = 'See cmsdist tag used for this build'
-
+      isPatchSmall.text( 'Full Build' )
     }
 
- 
     link.text( architecture )
-    cell.append( link ).attr( 'data-toggle' , 'tooltip' )
-    cell.append( link ).attr( 'data-placement' , 'right' )
-    cell.append( link ).attr( 'title' , tooltipText )
+    cell.append( link )
+    cell.attr( 'data-toggle' , 'tooltip' ).attr( 'data-placement' , 'right' ).attr( 'title' , tooltipText )
+    cell.append( $( '<br>' ) )
+    cell.append( isPatchSmall )
 
   }
 

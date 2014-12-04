@@ -601,7 +601,7 @@ def print_results(results):
 
 
 #
-# Iterates over the IBs comparisons, if an IB doesn't had a tag for an architecture, the previous tag is
+# Iterates over the IBs comparisons, if an IB doesn't have a tag for an architecture, the previous tag is
 # assigned. For example, for arch slc6_amd64_gcc481
 # 1. CMSSW_7_1_X_2014-10-02-1500 was built using the tag IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481
 # 2. There is no tag for CMSSW_7_1_X_2014-10-03-0200 in cmsdist

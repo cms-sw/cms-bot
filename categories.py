@@ -1,8 +1,8 @@
 # A ridicously long mapping for categories. Good enough for now.
 import re
 
-REQUEST_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano"  ]
-APPROVE_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano" ]
+REQUEST_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6"  ]
+APPROVE_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6" ]
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],

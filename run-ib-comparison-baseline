@@ -14,11 +14,11 @@ pushd "$WORKSPACE/matrix-results"
   esac
 
   MAPPING_FILE=wf_mapping.txt
-  ROOT_FILES=`find $WORKSPACE/matrix-results -name DQM*.root`
+  ROOT_FILES=`find . -name DQM*.root`
   PKGTOOLS_PATH=$WORKSPACE/pkgtools
   for f in $ROOT_FILES
   do
-    WF_PATH=`echo $f | sed "s/$ROOT_FILES//"`
+    WF_PATH=`echo $f | sed 's/^\.\///'`
     WF_NUMBER=`echo $WF_PATH | sed 's/_.*$//'`
     echo $WF_PATH >> $MAPPING_FILE
   done

@@ -18,7 +18,7 @@ pushd "$WORKSPACE/matrix-results"
   PKGTOOLS_PATH=$WORKSPACE/pkgtools
   for f in $ROOT_FILES
   do
-    WF_PATH=`echo $f | sed 's/^\.\///'`
+    WF_PATH=`echo $f | sed "s/$ROOT_FILES//"`
     WF_NUMBER=`echo $WF_PATH | sed 's/_.*$//'`
     echo $WF_PATH >> $MAPPING_FILE
   done

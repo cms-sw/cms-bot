@@ -106,7 +106,8 @@ CMS_TAG=""
 if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
  CMS_TAG="--tag `echo $RELEASE_QUEUE | md5sum | tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
+CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
 
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w
@@ -157,7 +158,6 @@ perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $R
 perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" CMSDIST/cmssw-patch.spec
 
 TOOL_CONF_PACKAGES="$CMSSW_TOOL_CONF local-cern-siteconf cms-git-tools"
-CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 while [ true ]; do
   $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
   $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`

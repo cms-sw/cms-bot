@@ -157,18 +157,19 @@ perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $R
 perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" CMSDIST/cmssw-patch.spec
 
 TOOL_CONF_PACKAGES="$CMSSW_TOOL_CONF local-cern-siteconf cms-git-tools"
+CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 while [ true ]; do
-  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
-  PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
+  $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
+  $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
   if [ "X$(ls w/RPMS/$ARCHITECTURE | wc -l | sed -e 's/[^0-9]*//')" = X0 ]; then
     break;
   fi
-  PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
+  $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
   rm -rf w
 done
 
-PKGTOOLS/cmsBuild --debug -k --builders $BUILD_JOBS -j `echo "$BUILD_NPROC * 2" | bc` --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
-PKGTOOLS/cmsBuild --debug --repository $REPOSITORY --sync-back --architecture $ARCHITECTURE --work-dir w $CMS_TAG `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
+$CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
+$CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 
 if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   pushd CMSDIST

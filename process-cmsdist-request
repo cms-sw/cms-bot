@@ -3,15 +3,57 @@ from github import Github
 from os.path import expanduser
 from optparse import OptionParser
 import yaml
-
 import re
 from sys import exit
+from releases import RELEASE_MANAGERS
+import itertools
 
 RELEASE_BRANCH_MILESTONE=yaml.load("cmsdist-milestones.yaml")
 
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
   return s % kwds
+
+#
+# Update the labels settint the ones that the issue should have
+# If the issue has no labels, it assings the label 'tests-pending'
+#
+def updateLabels( issue, pr ):
+  labels = [ l.name for l in issue.get_labels() ]
+  if not labels:
+    add_label( issue, 'tests-pending' )
+
+  # Copied from process-pull-request
+  last_commit_date = None
+  try:
+    # This requires at least PyGithub 1.23.0. Making it optional for the moment.
+    last_commit_date = pr.get_commits().reversed[0].commit.committer.date
+  except:
+    # This seems to fail for more than 250 commits. Not sure if the
+    # problem is github itself or the bindings.
+    last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
+  
+  tests_label = None
+
+  for comment in issue.get_comments():
+    comment_date = comment.created_at
+    commenter = comment.user.login    
+    if comment_date < last_commit_date:
+      print "Ignoring comment done before the last commit."
+      pull_request_updated = True
+      continue
+    first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+    all_release_managers = set( list(itertools.chain.from_iterable(RELEASE_MANAGERS.values())) )
+    if commenter in all_release_managers:
+      if re.match("^[+](1|test|tested)$", first_line):
+        new_tests_label = "tests-approved"
+      elif re.match("^[-](1|test|tested)$", first_line):
+        new_tests_label = "tests-rejected"
+      
+  if new_tests_label:
+    remove_labels( issue )
+    add_label( issue, new_tests_label )
+
 
 # Update the milestone for a given issue.
 # - If the issue already has a milestone, do not bother.
@@ -41,6 +83,28 @@ def updateMilestone(repo, issue, pr):
   milestone = repo.create_milestone(title=milestoneName)
   issue.edit(milestone=milestone)
 
+# Adds a label to the issue in github
+# if dry-run is selected it doesn't add the label and just prints it
+def add_label( issue, label ):
+  if opts.dryRun:
+    print 'Not adding label (dry-run):\n %s' % label
+    return
+  print 'Adding label:\n %s' % label
+  issue.add_to_labels( label )
+
+
+
+#
+# removes all the labels of the issue
+#
+def remove_labels( issue ):
+  if opts.dryRun:
+    print 'Not removing issue labels (dry-run)'
+    return
+  print 'Removing Labels'
+  issue.delete_labels()
+
+
 IS_CMSDIST_RE="IB/(CMSSW[^/]*)/[^/]+$"
 
 if __name__ == "__main__":
@@ -62,3 +126,4 @@ if __name__ == "__main__":
   issue = repo.get_issue(prId)
 
   updateMilestone(repo, issue, pr)
+  updateLabels( issue, pr )

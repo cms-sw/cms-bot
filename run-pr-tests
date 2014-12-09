@@ -267,24 +267,28 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     
     if [ "X$USE_DAS_CACHE" = Xtrue ]; then
       wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_1_X/stable/das-cache.file
-    
-      case $RELEASE_FORMAT in 
-        *THREADED*)
-        echo "Threaded!"
-        runTheMatrix.py --command '--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe' --das-options="--cache das-cache.file" --job-reports -j $(getconf _NPROCESSORS_ONLN) -s $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
-       *)runTheMatrix.py ${OVERRIDE_MATRIX_PARAMETERS} --das-options='--cache das-cache.file' $JOB_REPORTS -s -j $(getconf _NPROCESSORS_ONLN) $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
-       esac
-
-    else
-
-      case $RELEASE_FORMAT in 
-        *THREADED*)
-        echo "Threaded!"
-        runTheMatrix.py --command '--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe' --das-options="--cache das-cache.file" --job-reports -j $(getconf _NPROCESSORS_ONLN) -s $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
-       *)runTheMatrix.py ${OVERRIDE_MATRIX_PARAMETERS} $JOB_REPORTS -s -j $(getconf _NPROCESSORS_ONLN) $MATRIX_EXTRAS 2>&1 | tee -a $WORKSPACE/matrixTests.log ;;
-       esac
-
+      DAS_CACHE_PARAM='--das-options=\"--cache das-cache.file\"'
     fi
+   
+    case $RELEASE_FORMAT in
+        *THREADED*)
+        THREADED_PARAM='--command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
+        ;;
+       *)
+    esac
+
+    case $RELEASE_FORMAT in
+        *SLHC*)
+         SLHC_PARAM='-w upgrade'
+         WF_LIST="-l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13600,13661"
+         ;;
+        *)
+         WF_LIST="-s $MATRIX_EXTRAS"
+        ;;
+    esac
+
+    runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM --job-reports -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  
   popd
  
      

@@ -33,7 +33,7 @@ def updateLabels( issue, pr ):
     # problem is github itself or the bindings.
     last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
   
-  tests_label = None
+  new_tests_label = None
 
   for comment in issue.get_comments():
     comment_date = comment.created_at

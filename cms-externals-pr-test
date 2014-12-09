@@ -58,6 +58,7 @@ pushd $CMSDIST_PATH ; git remote -v ; git fetch origin $CMSDIST_TAG ; git checko
 
 BUILD_REPO=`echo $EXTERNAL_PR | sed -e 's|[#@].*||;s|/.*||'`
 BUILD_PACKAGE=`echo $EXTERNAL_PR | sed -e 's|[#@].*||;s|.*/||'`
+LAST_COMMIT='undefined'
 
 case $EXTERNAL_PR in 
   *[#]*)
@@ -95,6 +96,7 @@ if [ ! "X$EXTERNAL_PR" = X ]; then
   popd
 fi
 
+
 # Merge CMSDIST_PR if found.
 if [ ! X$CMSDIST_PR = X ]; then
   CMSDIST_BUILD_PR_URL="https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR"
@@ -111,7 +113,9 @@ if [ ! X$CMSDIST_PR = X ]; then
     git config user.email "cmsbuild@cern.ch"
     git config user.name "CMS BOT"
     git pull $WORKSPACE/cmsdist-pr/.git $CMSDIST_HEAD_BRANCH
+    LAST_COMMIT=`git log --pretty="%H" | head -n1`
   popd
+
 fi
 
 # If a PR is specified for an external, we rewrite the spec file
@@ -126,6 +130,7 @@ fi
 # You can use this for example to force building cmssw-tool-conf.
 FINAL_PACKAGE=${FINAL_PACKAGE-$BUILD_PACKAGE}
 
+
 if [ X$INTERACTIVE = X1 ]; then
   echo "Run "
   echo
@@ -135,6 +140,13 @@ if [ X$INTERACTIVE = X1 ]; then
   bash
 fi
 
+if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
+  # For now it will only work if a cmsdist pr is specified. 
+  $WORKSPACE/report-cmsdist-pull-request-results ${BUILD_NUMBER} $CMSDIST_PR $SCRAM_ARCH $LAST_COMMIT TESTING $FINAL_PACKAGE || true
+fi
+
 pushd $RESULTS_DIR
   $PKGTOOLS_PATH/cmsBuild -c $CMSDIST_PATH -a $SCRAM_ARCH -j $JOBS --work-dir $RESULTS_DIR/w build $FINAL_PACKAGE 2>&1 | tee -a $RESULTS_DIR/build.log
 popd
+
+echo 'ALL_OK'

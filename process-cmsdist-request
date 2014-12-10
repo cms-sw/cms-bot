@@ -43,7 +43,7 @@ def updateLabels( issue, pr ):
       pull_request_updated = True
       continue
     first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
-    all_release_managers = set( list(itertools.chain.from_iterable(RELEASE_MANAGERS.values())) )
+    all_release_managers = set( list(itertools.chain.from_iterable(RELEASE_MANAGERS.values())) + [ 'cmsbuild' ]  )
     if commenter in all_release_managers:
       if re.match("^[+](1|test|tested)$", first_line):
         new_tests_label = "tests-approved"

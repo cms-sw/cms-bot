@@ -140,7 +140,7 @@ if [ X$INTERACTIVE = X1 ]; then
   bash
 fi
 
-if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
+if [ "X$AUTO_POST_MESSAGE_CMSDIST" = Xtrue ]; then
   # For now it will only work if a cmsdist pr is specified. 
   $WORKSPACE/report-cmsdist-pull-request-results ${BUILD_NUMBER} $CMSDIST_PR $SCRAM_ARCH $LAST_COMMIT TESTING $FINAL_PACKAGE || true
 fi

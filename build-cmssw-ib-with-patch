@@ -104,7 +104,11 @@ popd
 
 CMS_TAG=""
 if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
- CMS_TAG="--tag `echo $RELEASE_QUEUE | md5sum | tr '0123456789' 'ghijklmnop' | cut -b1-6`"
+  case `uname -s` in
+    Darwin ) MD5_CMD=md5;;
+    * )      MD5_CMD=md5sum;;
+  esac
+  CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`

@@ -119,12 +119,21 @@ def create_properties_files_upload( release_name, arch, issue_number, machine_na
 # Searches in the comments if there is a comment made from  the given users  that
 # matches the given pattern. It returns a list with the matched comments.
 #
-def search_in_comments( comments , user_logins , pattern ):
+def search_in_comments( comments, user_logins, pattern, first_line ):
   found_comments = []
   requested_comment_bodies = [ c.body for c in comments if c.user.login in user_logins ]
   for body in requested_comment_bodies:
-    if re.match( pattern , body ):
+    examined_str = body
+    if first_line:
+      examined_str = str(body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+   
+    if examined_str == pattern:
       found_comments.append( body )
+      continue
+
+    if re.match( pattern , examined_str ):
+      found_comments.append( body )
+
   return found_comments
 
 
@@ -323,7 +332,7 @@ def post_message( issue , msg ):
   if opts.dryRun:
     print 'Not posting message (dry-run):\n %s' % msg
     return
-  if search_in_comments( comments, [ 'cmsbuild', 'nclopezo' ] , msg ):
+  if search_in_comments( comments, [ 'cmsbuild', 'nclopezo' ], msg, False):
     print 'Message already in the thread: \n %s' % msg
     return
   print 'Posting message:\n %s' % msg 
@@ -477,7 +486,7 @@ if __name__ == "__main__":
     exit( 0 )
 
   if status == PENDING_APPROVAL:
-    approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , '^[+]1' )
+    approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , '^[+]1$', True )
     if not approval_comments:
       print 'Build not approved yet'
       exit( 0 )
@@ -505,10 +514,10 @@ if __name__ == "__main__":
     upload_ok = [ x.split('-')[0] for x in labels if '-upload-ok' in x ]
     uploading = [ x.split('-')[0] for x in labels if '-uploading' in x ] 
     build_error = [ x.split('-')[0] for x in labels if '-build-error' in x ]
-    # the build can be aborted only until one of the architectures is uploading
-    if not ( uploading or upload_ok ):
+    # the build can be aborted only if none of the architectures has been uploaded or is uploading
+    if not ( uploading + upload_ok ):
       pattern = '^Abort$'
-      abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )
+      abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
       print abort_comments
       if abort_comments:
         print 'Aborting'
@@ -518,8 +527,8 @@ if __name__ == "__main__":
       print "You can't abort the build at this point"
  
     if upload_ok and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
-      pattern = 'release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
-      release_notes_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )
+      pattern = '^release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
+      release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
       for comment in release_notes_comments:
         comment_parts = comment.strip().split(' ')
         prev_rel_name = comment_parts[ 2 ]
@@ -539,20 +548,20 @@ if __name__ == "__main__":
     to_cleanup = upload_ok + build_error
     if to_cleanup:
       pattern = '^cleanup$'
-      cleanup_requested_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )
+      cleanup_requested_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
       if cleanup_requested_comments:
         # trigger the cleanup for each architecture that was build correctly
         for arch in to_cleanup:
           print arch
           pattern = 'The build has started for %s .*' % arch
-          build_info_comments = search_in_comments( comments, ['cmsbuild'] , pattern )
+          build_info_comments = search_in_comments( comments, ['cmsbuild'], pattern, False)
           if not build_info_comments:
             print 'No information found about the build machine, something is wrong for %s' % arch
             exit(1)
           
           build_machine = build_info_comments[0].split( ' ' )[7].strip( '.' )
           print 'Triggering cleanup for %s' % arch
-          create_properties_file_cleanup( release_name , arch , issue.number , build_machine )
+          create_properties_file_cleanup( release_name, arch, issue.number, build_machine )
           msg = CLEANUP_STARTED_MSG.format( architecture=arch )
           post_message( issue, msg ) 
           remove_label( issue, arch + '-upload-ok' )
@@ -566,19 +575,20 @@ if __name__ == "__main__":
 
     for arch in to_upload:
       print 'Ready to upload %s' % arch
-      pattern = ( UPLOAD_COMMENT % arch )
-      upload_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern )
+      pattern = ( '^' + ( UPLOAD_COMMENT % arch ) )
+      upload_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
       if not upload_requested:
         print 'Upload not requested yet.'
         exit( 0 )
 
-      pattern = 'The build has started for %s .*' % arch
-      build_info_comments = search_in_comments( comments, ['cmsbuild','nclopezo'] , pattern )
+      pattern = '^The build has started for %s .*' % arch
+      build_info_comments = search_in_comments( comments, ['cmsbuild','nclopezo'] , pattern, True )
       if not build_info_comments:
         print 'No information found about the build machine, something is wrong'
         exit( 1 )
 
-      build_machine = build_info_comments[0].split( ' ' )[7].strip( '.' )
+      first_line_info_comment = str(build_info_comments[0].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r ")) 
+      build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
       print 'Triggering upload for %s' % arch
       create_properties_files_upload( release_name , arch , issue.number , build_machine )
       post_message( issue , QUEING_UPLOADS_MSG.format( architecture=arch ) )

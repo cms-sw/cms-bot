@@ -687,6 +687,10 @@ ahinzmann:
 - RecoMET
 - Validation/RecoJets
 - Validation/RecoMET
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+- FWCore/GuiBrowsers
 rappoccio:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET

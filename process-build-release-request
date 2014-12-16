@@ -38,7 +38,7 @@ WATCHERS_MSG = '{watchers_list} you requested to watch the automated builds for 
 QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s \n' \
                      'You can abort the build by writing "Abort" in a comment. I will delete the release, ' \
                      'the cmssw and cmsdist tag, and close the issue. You can\'t abort the upload once at' \
-                     'least one achitecture is being uploaded'
+                     ' least one achitecture is being uploaded'
 QUEING_UPLOADS_MSG = 'Queing Jenkins upload for {architecture}'
 CLEANUP_STARTED_MSG = 'The cleanup has started for {architecture}'
 BUILD_QUEUED_LABEL = 'build-release-queued'
@@ -293,7 +293,7 @@ def delete_cmsdist_tags_github( release_name, architectures ):
     status, out = getstatusoutput( cmd )
     print out
     if status != 0:
-      msg = 'I was not able to delete the cmsdist tag %s. Probaly it had not been created.' % tag_to_delete
+      msg = 'I was not able to delete the cmsdist tag %s. Probably it had not been created.' % tag_to_delete
     else:
       msg = 'cmsdist tag %s successfully deleted.' % tag_to_delete
 

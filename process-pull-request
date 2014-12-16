@@ -2,7 +2,7 @@
 from github import Github
 from os.path import expanduser
 from optparse import OptionParser
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS
 import yaml
@@ -10,9 +10,24 @@ import yaml
 import re
 from sys import exit
 
+TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
+
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
   return s % kwds
+
+#
+# creates a properties file to trigger the test of the pull request
+#
+def create_properties_file_tests( pr_number ):
+  out_file_name = 'trigger-tests-%s.properties' % pr_number
+  if opts.dryRun:
+    print 'Not creating cleanup properties file (dry-run): %s' % out_file_name
+  else:
+    print 'Creating properties file %s' % out_file_name
+    out_file = open( out_file_name , 'w' )
+    out_file.write( '%s=%s\n' % ( 'PULL_REQUEST_LIST', pr_number ) )
+    out_file.close()
 
 # Update the milestone for a given issue.
 def updateMilestone(issue, pr):
@@ -111,6 +126,8 @@ if __name__ == "__main__":
   already_seen = False
   pull_request_updated = False
   comparison_done = False
+  tests_already_queued = False
+  tests_requested = False
   # A pull request is by default closed if the branch is a closed one.
   mustClose = False
   mustMerge = False
@@ -143,6 +160,9 @@ if __name__ == "__main__":
     if commenter == "cmsbuild":
       if re.match("Comparison is ready", first_line):
         comparison_done = True
+      if re.match( TRIGERING_TESTS_MSG, first_line):
+        tests_already_queued = True
+        print 'Tests already queued'
 
     # Check actions made by L1.
     # L1 signatures are only relevant for closed releases where
@@ -197,6 +217,13 @@ if __name__ == "__main__":
       elif re.match("^[-](test|tested)$", first_line):
         signatures["tests"] = "rejected"
 
+    # Check if the someone asked to trigger the tests
+    if commenter in TRIGGER_PR_TESTS:
+      if re.match("^please test$", first_line):
+        print 'Tests requested:', commenter, 'asked to test this PR'
+        tests_requested = True
+      
+
   print "The labels of the pull request should be:"
   # Labels coming from signature.
   labels = [x + "-pending" for x in signing_categories]
@@ -247,6 +274,12 @@ if __name__ == "__main__":
   if releaseManagers:
     releaseManagersMsg = format("%(rm)s can you please take care of it?",
                                  rm=releaseManagersList)
+
+  # trigger the tests and inform it in the thread.
+  if tests_requested and ( not tests_already_queued ):
+    create_properties_file_tests( prId )
+    if not opts.dryRun:
+      pr.create_issue_comment( TRIGERING_TESTS_MSG )
 
   # Do not complain about tests
   requiresTestMessage = "or unless it breaks tests."

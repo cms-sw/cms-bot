@@ -6,6 +6,7 @@ BASE_PACKAGE_NAME=$4
 PKGTOOLS_HASH=$5
 CMSDIST_HASH=$6
 CMSSW_RELEASE_BASE=$7
+SUBPACKAGE_DEBUG=$8
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE=${WORKSPACE-$PWD}
@@ -70,6 +71,12 @@ pushd CMSDIST
   git checkout $DEFAULT_CMSDIST_TAG -- cmssw-validation.spec 
   git checkout $DEFAULT_CMSDIST_TAG -- cmssw-ib.spec 
   git checkout $DEFAULT_CMSDIST_TAG -- das-cache.file
+  DEBUG_SUBPACKS="cmssw.spec coral.spec cmssw-patch.spec"
+  if [ "X$BASE_PACKAGE_NAME" = Xcmssw-patch ]; then
+    git checkout IB/$CMSSW_RELEASE_BASE/$ARCHITECTURE -- $DEBUG_SUBPACKS
+  elif [ "X$SUBPACKAGE_DEBUG" = X ]; then
+    perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
+  fi
 popd
 
 echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec

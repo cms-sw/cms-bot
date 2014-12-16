@@ -23,7 +23,8 @@ UPLOAD_ERROR='UPLOAD_ERROR'
 CLEANUP_OK='CLEANUP_OK'
 CLEANUP_ERROR='CLEANUP_ERROR'
 BUILDING_MSG='The build has started for {architecture} in {machine}. \n' \
-             'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console' 
+             'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console \n' \
+             '{details}' 
 BUILD_OK_MSG='The build has finished sucessfully for the architecture {architecture} and is ready to be uploaded. \n' \
              'To start the upload write the comment: "upload {architecture}".\n' \
              'You can see the log for the build here \n' \
@@ -97,8 +98,9 @@ if __name__ == "__main__":
   parser = OptionParser( usage="%prog <jenkins-build-number> <hostname> <issue-id> <arch> <release-name> <message-type> [ options ] \n "
                                "message-type = BUILDING | BUILD_OK | BUILD_ERROR | UPLOADING | UPLOAD_OK | UPLOAD_ERROR | CLEANUP_OK | CLEANUP_ERROR" )
   parser.add_option( "-n" , "--dry-run" , dest="dryRun" , action="store_true", help="Do not post on Github", default=False )
-  opts, args = parser.parse_args( )
+  parser.add_option( "-d" , "--details" , dest="details" , action="store", help="Add aditional details to the message", default=False )
 
+  opts, args = parser.parse_args( )
   if len( args ) != 6:
     parser.error( "Not enough arguments" )
 
@@ -113,8 +115,10 @@ if __name__ == "__main__":
   issue = GH.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO ).get_issue( issue_id )
 
   if action == POST_BUILDING:
-
-    msg = BUILDING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number )
+    msg_details = ''
+    if opts.details:
+      msg_details = opts.details
+    msg = BUILDING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number, details=msg_details )
     post_message( issue , msg )
     new_label = arch+'-building'
     add_label( issue, new_label )

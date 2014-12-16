@@ -155,17 +155,13 @@ case $ARCHITECTURE in
 esac
 
 pushd CMSDIST
-  DEBUG_SUBPACKS="cmssw.spec coral.spec"
-  if [ X$CMSSW_RELEASE_BASE = X ]; then
-    CMSSW_RELEASE_BASE=$RELEASE_NAME
-  else
+  DEBUG_SUBPACKS="cmssw.spec coral.spec cmssw-patch.spec"
+  if [ "X$PACKAGE_NAME" = Xcmssw-patch ]; then
     git checkout IB/$CMSSW_RELEASE_BASE/$ARCHITECTURE -- $DEBUG_SUBPACKS
-    DEBUG_SUBPACKS=cmssw-patch.spec
-  fi
-
-  if [ "X$ENABLE_DEBUG" = X ]; then
-    perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
-    if [ ! "X$DEBUG_SUBPACKS" = Xcmssw-patch ]; then
+  else
+    CMSSW_RELEASE_BASE=$RELEASE_NAME
+    if [ "X$ENABLE_DEBUG" = X ]; then
+      perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
       git commit -m 'subpackage debug disabled' $DEBUG_SUBPACKS
     fi
   fi
@@ -210,6 +206,7 @@ echo CMSSW_RELEASE_BASE=$CMSSW_RELEASE_BASE >> $WORKSPACE/buildprops
 echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} >> $WORKSPACE/buildprops
 echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/buildprops
 echo RELEASE_QUEUE=${RELEASE_QUEUE} >> $WORKSPACE/buildprops
+echo ENABLE_DEBUG=${ENABLE_DEBUG} >> $WORKSPACE/buildprops
 
 # This is used to guide the creation of additional files which drive the
 # spawning of extra tests.

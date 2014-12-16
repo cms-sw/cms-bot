@@ -154,12 +154,28 @@ case $ARCHITECTURE in
  *) CMSSW_TOOL_CONF=$PACKAGE_NAME-tool-conf ;;
 esac
 
-if [ X$CMSSW_RELEASE_BASE = X ]; then CMSSW_RELEASE_BASE=$RELEASE_NAME; fi
-echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
-perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" CMSDIST/cmssw.spec
-perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" CMSDIST/cmssw-ib.spec
-perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $RELEASE_NAME/" CMSDIST/cmssw-validation.spec
-perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" CMSDIST/cmssw-patch.spec
+pushd CMSDIST
+  DEBUG_SUBPACKS="cmssw.spec coral.spec"
+  if [ X$CMSSW_RELEASE_BASE = X ]; then
+    CMSSW_RELEASE_BASE=$RELEASE_NAME
+  else
+    git checkout IB/$CMSSW_RELEASE_BASE/$ARCHITECTURE -- $DEBUG_SUBPACKS
+    DEBUG_SUBPACKS=cmssw-patch.spec
+  fi
+
+  if [ "X$ENABLE_DEBUG" = X ]; then
+    perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
+    if [ ! "X$DEBUG_SUBPACKS" = Xcmssw-patch ]; then
+      git commit -m 'subpackage debug disabled' $DEBUG_SUBPACKS
+    fi
+  fi
+
+  echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > dummy.spec
+  perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" cmssw.spec
+  perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" cmssw-ib.spec
+  perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $RELEASE_NAME/" cmssw-validation.spec
+  perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
+popd
 
 TOOL_CONF_PACKAGES="$CMSSW_TOOL_CONF local-cern-siteconf cms-git-tools"
 while [ true ]; do

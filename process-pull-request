@@ -219,7 +219,7 @@ if __name__ == "__main__":
 
     # Check if the someone asked to trigger the tests
     if commenter in TRIGGER_PR_TESTS:
-      if re.match("^please test$", first_line):
+      if re.match("^(please |)test$", first_line):
         print 'Tests requested:', commenter, 'asked to test this PR'
         tests_requested = True
       

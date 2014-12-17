@@ -1,0 +1,35 @@
+#!/bin/sh -ex
+
+# This script assumes that the release has already been built without errors
+# It runs some tests on the release that has been built
+# CMSSW_X_Y_Z: the release to build
+# ARCHITECTURE: architecture for the build
+# ISSUE_NUMBER: the number of the issue that triggered the build
+# DRY_RUN_PARAM: parameter that to use dry-run
+
+HERE=$WORKSPACE/build
+BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
+TEST_DIR=$HERE/$CMSSW_X_Y_Z-tests
+
+source $BUILD_DIR/cmsset_default.sh
+
+mkdir -p $TEST_DIR
+pushd $TEST_DIR
+  scram p $CMSSW_X_Y_Z
+  pushd $TEST_DIR/$CMSSW_X_Y_Z
+    cmsenv
+  popd
+popd
+
+mkdir $TEST_DIR/matrixTests
+pushd $TEST_DIR/matrixTests
+  runTheMatrix.py -s 2>&1 | tee -a $WORKSPACE/matrixTests.log
+popd
+
+
+# If it reaches here it is because there were no errors
+echo 'ALL_OK'
+
+
+
+

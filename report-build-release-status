@@ -33,7 +33,7 @@ BUILD_OK_MSG='The build has finished sucessfully for the architecture {architect
              'To start the upload write the comment: "upload {architecture}".\n' \
              'You can see the log for the build here \n' \
              '{log_url} \n' \
-             'Some tests ( runTheMatrix.py -s ) are being run, the results will be posted wen done.'
+             'Some tests ( runTheMatrix.py -s ) are being run, the results will be posted when done.'
 UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
               'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/upload-release/{jk_build_number}/console'
 UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \

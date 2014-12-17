@@ -29,7 +29,7 @@ popd
 
 git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS
 
-BRANCH_DETAILS="CMSDIST Branch: $CMSDIST_TAG, PKTGOOLS Branch: $PKGTOOLS_TAG"
+BRANCH_DETAILS="CMSDIST Branch: [$CMSDIST_TAG](https://github.com/cms-sw/cmsdist/commits/$CMSDIST_TAG), PKGTOOLS Branch: [$PKGTOOLS_TAG](https://github.com/cms-sw/pkgtools/commits/$PKGTOOLS_TAG)"
 WORKER=`hostname -s`
 ./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z BUILDING $DRY_RUN_PARAM -d "$BRANCH_DETAILS"
 

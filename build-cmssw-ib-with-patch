@@ -91,7 +91,7 @@ git clone -b $PKGTOOLS_TAG git://github.com/$PKGTOOLS_REPO/pkgtools.git PKGTOOLS
 pushd CMSDIST
   git checkout $CMSDIST_TAG
   CMSDIST_HASH="`git rev-parse HEAD`"
-  if [ X$FORCE_FULL_IB = X ]; then
+  if [ ! "X$FORCE_FULL_IB" = Xtrue ]; then
     PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^\(IB\|REL\)/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
     ALL_PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^ALL/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
   fi

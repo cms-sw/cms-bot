@@ -55,6 +55,7 @@ GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release
 REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 
 UPLOAD_COMMENT = 'upload %s'
+UPLOAD_ALL_COMMENT = 'upload all'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
 RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
 JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
@@ -573,13 +574,20 @@ if __name__ == "__main__":
       print 'Nothing to upload for any architecture.' 
       exit( 0 )
 
+    pattern = '^' + UPLOAD_ALL_COMMENT + '$'
+    upload_all_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
+    
     for arch in to_upload:
       print 'Ready to upload %s' % arch
-      pattern = ( '^' + ( UPLOAD_COMMENT % arch ) )
-      upload_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
-      if not upload_requested:
-        print 'Upload not requested yet.'
-        exit( 0 )
+
+      if upload_all_requested:
+        print 'Requested to upload all, uploading this arch'
+      else:
+        pattern = ( '^' + ( UPLOAD_COMMENT % arch ) )
+        upload_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
+        if not upload_requested:
+          print 'Upload not requested yet.'
+          continue
 
       pattern = '^The build has started for %s .*' % arch
       build_info_comments = search_in_comments( comments, ['cmsbuild','nclopezo'] , pattern, True )

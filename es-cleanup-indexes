@@ -22,7 +22,7 @@ import re
 
 CONFIG = [
   ["mesos-offers-%Y.%m.%d.%H.%M", "1m", "delete"],
-  ["mesos-offers-%Y.%m.%d.%H", "1m", "delete"],
+  ["mesos-offers-%Y.%m.%d.%H", "1H", "delete"],
   ["mesos-offers-%Y.%m.%d", "24H", "delete"],
   ["mesos-info-%Y.%m.%d", "1H", "delete"]
 ]

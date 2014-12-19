@@ -1,0 +1,17 @@
+{
+  "template" : "ib-files-*",
+  "settings" : {
+      "number_of_shards" : 1
+  },
+  "mappings": {
+    "ib-file-data": {
+      "properties": {
+        "architecture":{"type":"string", "analyzer": "not_analyzed"},
+        "file":{"type":"string", "analyzer": "not_analyzed"},
+        "release":{"type":"string", "analyzer": "not_analyzed"},
+        "step":{"type":"string", "analyzer": "not_analyzed"},
+        "workflow":{"type":"string", "analyzer": "not_analyzed"}
+      }
+    }
+  }
+}

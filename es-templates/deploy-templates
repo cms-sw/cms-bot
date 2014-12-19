@@ -1,0 +1,2 @@
+# You need to have a proxy to the actual machine in order to be able to run this.
+curl --socks5 localhost:8080 -XPUT $ES_HOSTNAME:9200/_template/template_ib-file-data -d@ib-files.json

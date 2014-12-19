@@ -194,10 +194,10 @@ $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   pushd CMSDIST
     git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
-    git tag ALL/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
+    git tag ALL/$RELEASE_NAME/$ARCHITECTURE
     git push originrw ALL/$RELEASE_NAME/$ARCHITECTURE || true
     if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
-        git tag IB/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
+        git tag IB/$RELEASE_NAME/$ARCHITECTURE
         git push originrw IB/$RELEASE_NAME/$ARCHITECTURE || true
     fi
   popd

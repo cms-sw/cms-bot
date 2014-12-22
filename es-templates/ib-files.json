@@ -6,11 +6,11 @@
   "mappings": {
     "ib-file-data": {
       "properties": {
-        "architecture":{"type":"string", "analyzer": "not_analyzed"},
-        "file":{"type":"string", "analyzer": "not_analyzed"},
-        "release":{"type":"string", "analyzer": "not_analyzed"},
-        "step":{"type":"string", "analyzer": "not_analyzed"},
-        "workflow":{"type":"string", "analyzer": "not_analyzed"}
+        "architecture":{"type":"string", "index": "not_analyzed"},
+        "file":{"type":"string", "index": "not_analyzed"},
+        "release":{"type":"string", "index": "not_analyzed"},
+        "step":{"type":"string", "index": "not_analyzed"},
+        "workflow":{"type":"string", "index": "not_analyzed"}
       }
     }
   }

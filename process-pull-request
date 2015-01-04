@@ -218,11 +218,13 @@ if __name__ == "__main__":
         signatures["tests"] = "rejected"
 
     # Check if the someone asked to trigger the tests
-    if commenter in TRIGGER_PR_TESTS:
-      if re.match("^(please |)test$", first_line):
+    if (commenter in TRIGGER_PR_TESTS
+        or commenter in releaseManagers
+        or commenter in CMSSW_L2.keys()):
+      if re.match("^(@cmsbuild |)([Pp]lease[,]* |)test$", first_line):
         print 'Tests requested:', commenter, 'asked to test this PR'
         tests_requested = True
-      
+
 
   print "The labels of the pull request should be:"
   # Labels coming from signature.

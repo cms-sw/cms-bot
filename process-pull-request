@@ -384,6 +384,9 @@ if __name__ == "__main__":
                         " '+1' in the first line of your reply.\n"
                         "You can reject by replying  to this message having"
                         " '-1' in the first line of your reply.\n"
+                        "If you are a L2 or a release manager you can ask for"
+                        " tests by saying 'please test' in the first line of a"
+                        " comment.\n"
                         "%(releaseManagers)s"
                         "%(orpRequired)s",
                         user=pr.user.login,

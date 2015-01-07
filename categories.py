@@ -39,7 +39,7 @@ CMSSW_L2 = {
   "davidlange6": ["operations"],
   "monttj": ["analysis"],
   "thuer": ["generators"],
-  "StoyanStoynev": ["reconstruction"],
+  "cvuosalo": ["reconstruction"],
   "boudoul": ["pdmv"],
   "srimanob": ["pdmv"]
 }

@@ -259,20 +259,25 @@ def get_results_one_unitTests_file(file):
 # the second element is a dictionary which shows the details of how many relvals pased
 # and how meny failed
 #
-def get_results_one_relval_file(file):
-  read_last_line_command = 'tail -n1 %s' %file
-
-  out,err,ret_code = get_output_command(read_last_line_command)
+def get_results_one_relval_file(filename):
+  lines = file(filename).readall()
+  results = [x for x in lines if ' tests passed' in x]
+  if len(results) != 1:
+    results = ["0 0 0 0 0 0 tests passed, 1 1 1 1 1 1 failed"]
+  out = results.pop()
 
   num_passed_sep = out.split(',')[0].replace( ' tests passed' , '' ).strip()
   num_failed_sep = out.split(',')[1].replace( ' failed' , '' ).strip()
 
-  num_passed = sum( [ int(num) for num in num_passed_sep.split(' ') ] )
-  num_failed = sum( [ int(num) for num in num_failed_sep.split(' ') ] )
-
-  details = { 'num_passed' : num_passed,
-              'num_failed' : num_failed }
-
+  details = { 'num_passed' : 0,
+              'num_failed' : 1}
+  try:
+    details["num_passed"] = sum( [ int(num) for num in num_passed_sep.split(' ') ] )
+    details["num_failed"] = sum( [ int(num) for num in num_failed_sep.split(' ') ] )
+  except ValueError, e:
+    print "Error while reading file %s" % filename
+    print e
+    return False, details
 
   if 'SLHC' in file:
     if '0 0 0 0 failed' in out:

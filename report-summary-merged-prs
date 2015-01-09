@@ -279,7 +279,7 @@ def get_results_one_relval_file(filename):
     print e
     return False, details
 
-  if 'SLHC' in file:
+  if 'SLHC' in filename:
     if '0 0 0 0 failed' in out:
       return True,details
     else:

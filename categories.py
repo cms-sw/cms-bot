@@ -3,7 +3,7 @@ import re
 
 REQUEST_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6", "mark-grimes"  ]
 APPROVE_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6" ]
-TRIGGER_PR_TESTS = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6" ]
+TRIGGER_PR_TESTS = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6", "mark-grimes" ]
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],

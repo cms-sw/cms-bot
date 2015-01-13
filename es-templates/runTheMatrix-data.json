@@ -11,7 +11,11 @@
         "architecture":{"type":"string", "index": "not_analyzed"},
         "step":{"type":"string", "index": "not_analyzed"},
         "command":{"type":"string", "index": "not_analyzed"},
-        "status":{"type":"string", "index": "not_analyzed"}
+        "status":{"type":"string", "index": "not_analyzed"},
+        "workflow_id":{"type":"string", "index": "not_analyzed"},
+        "start_time":{"type":"timestamp", "index": "not_analyzed"},
+        "end_time":{"type":"timestamp", "index": "not_analyzed"},
+        "delta_time":{"type":"long"}
       }
     }
   }

@@ -1,5 +1,5 @@
 {
-  "template" : "ib-runTheMatrix-*",
+  "template" : "ib-matrix.*",
   "settings" : {
       "number_of_shards" : 1
   },
@@ -13,8 +13,8 @@
         "command":{"type":"string", "index": "not_analyzed"},
         "status":{"type":"string", "index": "not_analyzed"},
         "workflow_id":{"type":"string", "index": "not_analyzed"},
-        "start_time":{"type":"timestamp", "index": "not_analyzed"},
-        "end_time":{"type":"timestamp", "index": "not_analyzed"},
+        "start_time":{"type":"date", "index": "not_analyzed"},
+        "end_time":{"type":"date", "index": "not_analyzed"},
         "delta_time":{"type":"long"}
       }
     }

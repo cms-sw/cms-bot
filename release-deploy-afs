@@ -35,7 +35,7 @@ case $CMSSW_X_Y_Z in
 esac   
 BASERELEASE=$(echo $CMSSW_X_Y_Z | sed -e 's/_[a-zA-Z0-9]*patch[0-9].*//')
 
-while ! fs lq /afs/.cern.ch/cms/$ARCHITECTURE/cms/cmssw/$BASERELEASE | grep -E '2000000|3000000'; do
+while ! fs lq /afs/.cern.ch/cms/$ARCHITECTURE/cms/cmssw/$BASERELEASE | grep -E '[2-9]000000'; do
   echo Waiting for volume ; sleep 10
 done
 

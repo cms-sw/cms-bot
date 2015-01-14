@@ -11,6 +11,7 @@ import re
 from sys import exit
 
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
+TESTS_RESULTS_MSG = '[-|+]1'
 
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
@@ -163,6 +164,10 @@ if __name__ == "__main__":
       if re.match( TRIGERING_TESTS_MSG, first_line):
         tests_already_queued = True
         print 'Tests already queued'
+      if re.match( TESTS_RESULTS_MSG, first_line):
+        tests_already_queued = False
+        tests_requested = False
+        print 'Previous tests already finished, resetting test request state'
 
     # Check actions made by L1.
     # L1 signatures are only relevant for closed releases where

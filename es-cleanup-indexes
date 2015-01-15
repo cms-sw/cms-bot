@@ -25,7 +25,8 @@ CONFIG = [
   ["mesos-warning-%Y.%m.%d", "1d", "delete"],
   ["mesos-error-%Y.%m.%d", "1d", "delete"],
   ["ib-files-%Y.%m", "1m", "delete"],
-  ["stats-condweb-%Y.%m.%d", "7d", "delete"],
+  ["stats-condweb-%Y.%m.%d", "4d", "delete"],
+  ["ib-matrix.%Y.%m", "1m", "delete"],
 ]
 
 def format(s, **kwds):

@@ -18,6 +18,7 @@ from argparse import ArgumentParser
 from commands import getstatusoutput
 from datetime import datetime
 import re
+from os import getenv
 
 CONFIG = [
   ["mesos-offers-%Y.%m.%d", "1M", "delete"],
@@ -58,6 +59,8 @@ if __name__ == "__main__":
 
   if args.user and args.authFile:
     user_string = "--user %s:%s" % (args.user, open(args.authFile).read().strip())
+  elif getenv("ES_AUTH"):
+    user_string = "--user %s" % getenv("ES_AUTH")
 
   cmd = format("curl -s %(proxy_string)s %(server)s/_cat/indices "
                "%(user_string)s",
@@ -85,7 +88,7 @@ if __name__ == "__main__":
         continue
       print index, "matches", pattern
       now = datetime.now()
-      if (now-d).seconds < timedelta:
+      if (now-d).total_seconds() < timedelta:
         print index, "is recent enough. Keeping."
         continue
       print index, "is older than", timeout, ". Deleting"

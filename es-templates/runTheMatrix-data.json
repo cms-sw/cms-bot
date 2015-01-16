@@ -18,8 +18,8 @@
         "delta_time":{"type":"long"},
         "errors": {
           "properties": {
-            "kind": {"type": string, "index": "not_analyzed"},
-            "error": {"type": string}
+            "kind": {"type": "string", "index": "not_analyzed"},
+            "error": {"type": "string"}
           }
         }
       }

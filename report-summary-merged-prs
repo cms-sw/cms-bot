@@ -15,6 +15,7 @@ from glob import glob
 parser = OptionParser(usage="usage: %prog CMSSW_REPO CMSDIST_REPO COMPARISON_PAIRS"
                             "\n CMSSW_REPO: location of the cmssw repository. This must be a bare clone ( git clone --bare )"
                             "\n CMSDIST_REPO: location of the cmsdist repository. This must be a normal clone"
+                            "\n GITHUB_IO_REPO: location of the github.io repository. This must be a normal clone"
 			    "\n for example: cmssw.git or /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git"
                             "\n START_DATE: the date of the earliest IB to show. It must be in the format"
 			    "\n <year>-<day>-<month>-<hour>"
@@ -36,8 +37,9 @@ if (len(args)<3):
 
 # Remember that the cmssw repo is a bare clone while cmsdist is a complete clone
 CMSSW_REPO = args[ 0 ]
-CMSDIST_REPO = args[ 1 ]
-START_DATE = args[ 2 ]
+GITHUB_IO_REPO = args[ 1 ]
+CMSDIST_REPO = args[ 2 ]
+START_DATE = args[ 3 ]
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions
@@ -332,7 +334,7 @@ def get_results_details_one_build_file(file):
 #   "details" : <details for the tests> ( can be empty if not applicable, but not undefined )
 # }
 #
-def analyze_tests_results( output , results , arch , type ):
+def analyze_tests_results( output, results, arch, type ):
   for line in output.splitlines():
     m = re.search('CMSSW.*[0-9]/', line)
     if not m:
@@ -364,6 +366,29 @@ def analyze_tests_results( output , results , arch , type ):
       results[rel_name] = []
 
     results[rel_name].append(result_arch)
+
+#
+# Searchs in github.io for incomplete results. for now it only works for relvals
+#
+def execute_magic_command_find_incomplete_results( results ):
+  command_to_execute = MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS
+  out,err,ret_code = get_output_command(command_to_execute)
+  
+  for line in out.splitlines():
+    line_parts = line.split( '/' )
+    ib_name = line_parts[ -1 ].replace( 'INCOMPLETE.json', '' ) + line_parts[ -2 ]
+    arch = line_parts[ -3 ]
+    line.split( '/' )
+    result_arch = { "arch" : arch,
+                    "passed" : True, 
+                    "file" : "not-ready",
+                    "details" : {}
+                  }
+    if not results.get( ib_name ): 
+      results[ ib_name ] = []
+      results[ ib_name ].append( result_arch )
+    else:
+      results[ ib_name ].append( result_arch )
 
 
 # returns a list of tags based on git log output
@@ -842,6 +867,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
   MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
   MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
+  MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS = "find cms-sw.github.io/data/relvals/ -name '*INCOMPLETE.json'"
   MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
   MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name addOnTests.log'
@@ -975,6 +1001,7 @@ if __name__ == "__main__":
   
   relvals_results = {}
   execute_magic_command_find_results( relvals_results , 'relvals' )
+  execute_magic_command_find_incomplete_results( relvals_results )
   
   unit_tests_results = {}
   execute_magic_command_find_results( unit_tests_results , 'utests' )

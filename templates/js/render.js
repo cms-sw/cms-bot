@@ -78,7 +78,7 @@ add_qa_link_to_row = function(row, arch,release_name){
 /**
  * returns the url for the tests, type can be unit tests, relvals or addons
  */
-get_tests_url = function(type,file) {
+get_tests_url = function( type, file, arch, ib ) {
   var link_parts = file.split('/')
          
   var details_link = ""
@@ -88,7 +88,11 @@ get_tests_url = function(type,file) {
                                                                 +'/'+link_parts[10]
 
   }else if(type == 'relvals'){
-    details_link="https://cms-sw.github.io/relvalLogDetail.html#" + link_parts[6] + ';' + link_parts[10] 
+    if ( file == 'not-ready' ){
+      details_link="https://cms-sw.github.io/relvalLogDetail.html#" + arch + ';' + ib
+    }else {
+      details_link="https://cms-sw.github.io/relvalLogDetail.html#" + link_parts[6] + ';' + link_parts[10] 
+    }
   }else if(type == 'addons'){
     details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[6] + '/'
                                                                 +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
@@ -113,7 +117,7 @@ get_result_tests =  function (arch,tests){
 /**
  * Adds the results of the tests to a row of the table
  */
-add_tests_to_row = function( tests , row , arch , type ){
+add_tests_to_row = function( tests, row, arch, type, ib ){
 
 
   // just add a blank cell if tere are no results for that kind of tests
@@ -174,8 +178,14 @@ add_tests_to_row = function( tests , row , arch , type ){
   }else if (type == 'relvals'){
 
       r_class = result? "label label-success" : "label label-danger"
+      incomplete = file == 'not-ready'
 
-      if ( result ){
+      if ( incomplete ){
+
+        r_class = "label label-info"
+        test_label = "Not complete"
+
+      }else if ( result ){
 
         r_class = "label label-success"
         test_label = "See Details"
@@ -197,7 +207,7 @@ add_tests_to_row = function( tests , row , arch , type ){
 
   res_label.attr("class", r_class)
   var link_parts = file.split('/')
-  var details_url = get_tests_url(type,file)
+  var details_url = get_tests_url( type, file, arch, ib )
   var r_link = $("<a></a>").attr("href", details_url)
 
   r_link.append(res_label)
@@ -339,12 +349,12 @@ write_comp_IB_table =  function( comparison , tab_pane ){
       var ar_row = $( '<tr>' )
       titleTable.append(ar_row)
       var ar_cell = $( '<td>' )
-      fill_arch_cell( ar_cell , architectures[ i ] , comparison.cmsdistTags , current_tag )
+      fill_arch_cell( ar_cell , architectures[ i ], comparison.cmsdistTags, current_tag )
       ar_row.append(ar_cell)
-      add_tests_to_row( building_results , ar_row , architectures[i] , 'builds' )
-      add_tests_to_row( uTests_results, ar_row, architectures[i] , 'utests' )
-      add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals')
-      add_tests_to_row(addons_results,ar_row,architectures[i],'addons')
+      add_tests_to_row( building_results , ar_row , architectures[i] , 'builds', current_tag )
+      add_tests_to_row( uTests_results, ar_row, architectures[i] , 'utests', current_tag )
+      add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals', current_tag)
+      add_tests_to_row(addons_results,ar_row,architectures[i],'addons', current_tag)
       add_qa_link_to_row(ar_row,architectures[i],current_tag)
      }
 

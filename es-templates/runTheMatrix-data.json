@@ -1,5 +1,5 @@
 {
-  "template" : "v2-ib-matrix-*",
+  "template" : "*ib-matrix-*",
   "settings" : {
       "number_of_shards" : 1
   },
@@ -21,7 +21,8 @@
             "kind": {"type": "string", "index": "not_analyzed"},
             "error": {"type": "string"}
           }
-        }
+        },
+        "exception": {"type": "string", "index": "not_analyzed"}
       }
     }
   }

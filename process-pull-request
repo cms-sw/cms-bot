@@ -287,6 +287,7 @@ if __name__ == "__main__":
     create_properties_file_tests( prId )
     if not opts.dryRun:
       pr.create_issue_comment( TRIGERING_TESTS_MSG )
+      labels.append("tests-started")
 
   # Do not complain about tests
   requiresTestMessage = "or unless it breaks tests."

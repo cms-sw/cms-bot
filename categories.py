@@ -792,6 +792,7 @@ CMSSW_CATEGORIES={
    "HLTriggerOffline/SUSYBSM",
    "HLTriggerOffline/Tau",
    "HLTriggerOffline/Top",
+   "HLTriggerOffline/SMP",
    "DataFormats/Histograms",
    "DQM/EcalBarrelMonitorClient",
    "DQM/EcalBarrelMonitorDbModule",

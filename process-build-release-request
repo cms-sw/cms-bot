@@ -517,7 +517,7 @@ if __name__ == "__main__":
     build_error = [ x.split('-')[0] for x in labels if '-build-error' in x ]
     # the build can be aborted only if none of the architectures has been uploaded or is uploading
     if not ( uploading + upload_ok ):
-      pattern = '^Abort$'
+      pattern = '^[Aa]bort$'
       abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
       print abort_comments
       if abort_comments:

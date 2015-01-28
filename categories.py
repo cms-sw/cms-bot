@@ -20,7 +20,6 @@ CMSSW_L2 = {
   "ianna": ["geometry"],
   "deguio": ["dqm"],
   "ggovi": ["db"],
-  "rcastello": ["alca"],
   "cerminar": ["alca"],
   "franzoni": ["operations","pdmv"],
   "cmsdoxy": ["docs"],

@@ -204,6 +204,8 @@ if __name__ == "__main__":
       elif re.match("^([-]1|reject|rejected)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
+      elif (commenter == "cmsbuild" and re.match( TRIGERING_TESTS_MSG, first_line) ):
+        signatures["tests"] = "started"
 
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
@@ -243,6 +245,8 @@ if __name__ == "__main__":
       labels.append(category + "-approved")
     elif value == "rejected":
       labels.append(category + "-rejected")
+    elif value == "started":
+       labels.append(category + "-started")
     else:
       labels.append(category + "-pending")
 

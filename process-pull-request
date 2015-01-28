@@ -194,10 +194,8 @@ if __name__ == "__main__":
       if re.match("merge", first_line):
         mustMerge = True
 
-    # Check L2 signoff
-    if commenter in CMSSW_L2:
-      if not [x for x in CMSSW_L2[commenter] if x in signing_categories]:
-        continue
+    # Check L2 signoff for users in this PR signing categories
+    if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
       if re.match("^([+]1|approve[d]?|sign|signed)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"

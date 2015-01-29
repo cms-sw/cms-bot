@@ -101,13 +101,11 @@ updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug
 updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug-gcc491
 
 # CMSSW_7_2_X
-updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_2_X/stable
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/geant10
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/gcc491
 updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/next
 
 # CMSSW_7_3_X
-updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_3_X/stable
 updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/gcc491
 updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/root6
 updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/asan
@@ -119,7 +117,6 @@ updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/debug
 # Since the production arch for 74X is gcc491, IB/CMSSW_7_3_X/491
 # merges into IB/CMSSW_7_4_X/stable Then it merges into the
 # other cmsdist branches for 74X as usual
-updateBranch IB/CMSSW_7_3_X/gcc491 IB/CMSSW_7_4_X/stable
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/gcc481
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/next
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/root6

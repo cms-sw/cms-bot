@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+from optparse import OptionParser
+from atk import Action
+from _warnings import default_action
+import os, time, sys
+
+start_dir = "pkg_mon_start"
+stop_dir = "pkg_mon_stop"
+max_stop_files = 5
+max_time_stop = 30 #seconds
+
+if __name__ == "__main__":
+    parser = OptionParser(usage="%prog <start|stop> <package>")
+    parser.add_option("-b","--start", dest="start", action="store_true", help="Building started for package", default=True)
+    parser.add_option("-e","--stop", dest="start", action="store_false", help="Building done for package", default=True)
+    parser.add_option("-p","--package", dest="pkg_name", help="Package name to track", default="")
+    opts, args = parser.parse_args()
+    start_file = opts.pkg_name + ".json"
+    if opts.start:
+        if not os.path.exists(start_dir):
+            os.makedirs(start_dir)
+        out_file = open(start_dir+"/"+start_file, "w")
+        out_file.write('dummy useless string \n')
+        out_file.close()
+    else:
+        if not os.path.exists(stop_dir):
+            os.makedirs(stop_dir)
+        if not os.path.exists(start_dir+"/"+start_file):
+            print "This package was never started. Quitting."
+            sys.exit(1)
+        os.rename(start_dir+"/"+start_file, stop_dir+"/"+start_file)
+    
+    # pid dir if stop files > x or creation date > y
+    if os.path.exists(stop_dir):
+        if len([file for file in os.listdir(stop_dir) if os.path.isfile(file)]) > max_stop_files or \
+            os.path.getctime(stop_dir) - os.path.getctime(stop_dir+"/"+(min([(f,os.path.getmtime(stop_dir+"/"+f)) for f in os.listdir(stop_dir)], key=lambda f:f[1])[0])) > max_time_stop:
+            os.rename(stop_dir, stop_dir+"_"+str(os.getpid() ))
+            #push content of this dir to elastic server
+        
+        

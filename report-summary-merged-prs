@@ -262,10 +262,9 @@ def get_results_one_unitTests_file(file):
 # and how meny failed
 #
 def get_results_one_relval_file(filename):
+  print_verbose( 'Analyzing: ' + filename )
   lines = file(filename).read().split("\n")
   results = [x for x in lines if ' tests passed' in x]
-  if len(results) != 1:
-    results = ["0 0 0 0 0 0 tests passed, 1 1 1 1 1 1 failed"]
   out = results.pop()
 
   num_passed_sep = out.split(',')[0].replace( ' tests passed' , '' ).strip()
@@ -281,13 +280,7 @@ def get_results_one_relval_file(filename):
     print e
     return False, details
 
-  if 'SLHC' in filename:
-    if '0 0 0 0 failed' in out:
-      return True,details
-    else:
-      return False,details
-
-  if '0 0 0 0 0 failed' in out:
+  if details["num_failed"] == 0:
     return True,details
   else:
     return False,details

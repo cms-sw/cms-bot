@@ -1,0 +1,172 @@
+#!/usr/bin/env python
+import os, sys, json, socket, errno
+from glob import glob
+from datetime import datetime
+from optparse import OptionParser
+from os.path import basename, getctime, join
+from os import getenv
+from time import strftime, localtime, strptime, mktime
+from hashlib import sha1
+from commands import getstatusoutput
+import re
+import urllib2, base64
+
+WORK_DIR = "pkg_mon"
+MAX_FILES_PUSH = 20
+MAX_TIME_STOP = 120 #seconds
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+def esReportPackages(results):
+  # Silently exit if we cannot contact elasticsearch
+  es_hostname = getenv("ES_HOSTNAME")
+  es_auth = getenv("ES_AUTH")
+  if not es_hostname and not es_auth:
+    return
+
+  url = "https://%s/_bulk" % (es_hostname)
+
+  request = urllib2.Request(url)
+  if es_auth:
+    base64string = base64.encodestring(es_auth).replace('\n', '')
+    request.add_header("Authorization", "Basic %s" % base64string)
+  request.get_method = lambda: 'POST'
+  data = "\n".join(results) + "\n"
+  try:
+    result = urllib2.urlopen(request, data=data)
+  except urllib2.HTTPError, e:
+    print e
+    try:
+      print result.read()
+    except:
+      pass
+
+def create_dir(dir_to_create):
+  try:
+    os.makedirs(dir_to_create)
+  except OSError as exception:
+    if exception.errno != errno.EEXIST:
+      raise exception
+
+def check_pid(pid):
+    """ Check For the existence of a unix pid. """
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    else:
+        return True
+
+if __name__ == "__main__":
+  try:
+    thread_id = os.fork()
+  except OSError, e:
+    print "Error while forking"
+    sys.exit(1)
+  if not thread_id == 0:
+    sys.exit(0)
+
+  parser = OptionParser(usage="%prog <-s|-e> -p <package>")
+  parser.add_option("-s","--start", dest="start", action="store_true",
+                    help="Building started for package", default=True)
+  parser.add_option("-e","--stop", dest="start", action="store_false",
+                    help="Building done for package", default=True)
+  parser.add_option("-f","--force", dest="force", action="store_true",
+                    help="Force pushing", default=False)
+  parser.add_option("-p","--package", dest="pkg_name",
+                    help="Package name to track", default="")
+  parser.add_option("--dry-run", dest="dryrun", action="store_true",
+                    help="Do not push files to server", default=False)
+  opts, args = parser.parse_args()
+  pkg_name = opts.pkg_name
+  create_dir(WORK_DIR)
+
+  # We look for stale "push" dirs, move all the files back in the workdir and
+  # remove them.
+  pushDirs = glob("push_dir_*")
+  pids = [p.replace("push_dir_", "") for p in pushDirs]
+  stalePids = [p for p in pids if not check_pid(int(p))]
+  staleDirs = ["push_dir_" + p for p in stalePids]
+  for d in staleDirs:
+    for f in glob(join(d, "*")):
+      try:
+        os.renames(f, join(WORK_DIR, basename(f)))
+      except:
+        pass
+
+  # Create the file for the current invocation.
+  prefix = opts.start and strftime("start_%s-") or strftime("stop_%s-")
+  filename = prefix + pkg_name.replace("/",":")
+  open(join(WORK_DIR, filename), "a").close()
+
+
+  # When enough files are ready to push or enough time has passed, start
+  # pushing to elasticsearch.
+  fileLimitReached = len([f for f in os.listdir(WORK_DIR)]) > MAX_FILES_PUSH
+  timestamps = sorted([int(basename(x).split("_")[1].split("-")[0])
+                       for x in glob(join(WORK_DIR, "*"))])
+  timeLimitReached = getctime(WORK_DIR) - int(timestamps.pop())
+
+  if not fileLimitReached and not timeLimitReached and not opts.force:
+    sys.exit(0)
+
+  push_dir = "push_dir_"+str(os.getpid())
+  try:
+    os.rename(WORK_DIR, push_dir)
+  except:
+    sys.exit(0)
+
+  results = []
+  removables = []
+  RE_FILE = "(start|stop)_([0-9]+)-(.*)"
+  pushables = [f.replace(":", "/") for f in os.listdir(push_dir)]
+  info = [re.match(RE_FILE, f).groups() for f in pushables]
+  cmssw_version = os.getenv("CMSSW_VERSION", "unknown")
+  defaults = { "hostname": socket.gethostname(),
+               "scram_arch": os.getenv("SCRAM_ARCH", "unknown"),
+               "cmssw_version": cmssw_version
+             }
+  m = re.match("(.*)_(20[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{4})", cmssw_version)
+  if m:
+    defaults["cmssw_queue"] = m.group(1)
+    defaults["@timestamp"] = strftime("%Y-%m-%dT%H:%M:00.0", strptime(m.group(2), "%Y-%m-%d-%H%M"))
+  starts = dict([(x[2],int(x[1])) for x in info if x[0] == "start"])
+  stops = dict([(x[2],int(x[1])) for x in info if x[0] == "stop"])
+  packages = set(x[2] for x in info)
+  results = []
+  for x in packages:
+    h = sha1(x + defaults["scram_arch"] + defaults["cmssw_version"]).hexdigest()
+    header = { "index" : { "_index" : strftime("ib-scram-stats-%Y.%m.%d"),
+                           "_type" : "cmssw_pkg_times",
+                           "_id" : h } }
+    results.append(json.dumps(header))
+    data = { "package": x}
+    data.update(defaults)
+    startTime = starts.get(x, None)
+    stopTime = stops.get(x, None)
+    if startTime:
+      data["start"] = strftime(TIME_FORMAT,localtime(startTime))
+    if stopTime:
+      data["stop"] = strftime(TIME_FORMAT,localtime(stopTime))
+
+    if startTime and stopTime:
+      data["diff"] = stopTime - startTime
+      removables.append(x.replace("/",":"))
+    results.append(json.dumps(data))
+
+  # Actually do the push to ES.
+  if opts.dryrun:
+    print "Dry run specified, exiting"
+    sys.exit(0)
+
+  esReportPackages(results)
+
+  for x in removables:
+    cmd = "find %s -name \"*%s\" -delete" % (push_dir, x)
+    err, out = getstatusoutput(cmd)
+  for f in os.listdir(push_dir):
+    while(True):
+      try:
+        os.renames(join(push_dir,f), join(WORK_DIR,f))
+        break
+      except:
+        pass

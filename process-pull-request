@@ -226,7 +226,7 @@ if __name__ == "__main__":
     if (commenter in TRIGGER_PR_TESTS
         or commenter in releaseManagers
         or commenter in CMSSW_L2.keys()):
-      if re.match("^(@cmsbuild |)([Pp]lease[,]* |)test$", first_line):
+      if re.match("^(@cmsbuild[,]* |)([Pp]lease[,]* |)test$", first_line):
         print 'Tests requested:', commenter, 'asked to test this PR'
         tests_requested = True
 

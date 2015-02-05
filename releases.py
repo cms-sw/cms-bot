@@ -19,9 +19,11 @@ RELEASE_BRANCH_CLOSED = [
   "CMSSW_6_1_X",
   "CMSSW_6_1_X_SLHC",
   "CMSSW_6_2_X",
+  "CMSSW_7_0_X",
 ]
 
 RELEASE_BRANCH_PRODUCTION = [
+  "CMSSW_7_4_X",
   "CMSSW_7_3_X",
   "CMSSW_7_2_X",
   "CMSSW_7_1_X",
@@ -31,6 +33,7 @@ RELEASE_BRANCH_PRODUCTION = [
 ]
 
 RELEASE_MANAGERS = {
+  "CMSSW_7_4_X": ["degano"],
   "CMSSW_7_3_X": ["nclopezo"],
   "CMSSW_7_2_X": ["nclopezo"],
   "CMSSW_7_1_X": ["degano"],

@@ -1,40 +1,76 @@
 #!/usr/bin/env python
+import os, time, sys, json, socket, time, errno, re
 from optparse import OptionParser
-from atk import Action
-from _warnings import default_action
-import os, time, sys
+from report import report
 
-start_dir = "pkg_mon_start"
-stop_dir = "pkg_mon_stop"
-max_stop_files = 5
+work_dir = "pkg_mon"
+max_files_push = 5
 max_time_stop = 30 #seconds
+time_format = "%Y-%m-%d %H:%M:%S"
+
+def fill_dictionary(begin_time=0, end_time=0):
+        # more report info like CMSSW version, arch etc...
+        dict_to_fill = {"Hostname": socket.gethostname(), "StartTime": "", "StopTime": "", "DiffTime": "", "Package": pkg_name}
+        if(not begin_time == 0 and end_time == 0):
+            dict_to_fill["StartTime"] = time.strftime(time_format,time.localtime(begin_time))
+        elif( not end_time == 0):
+            dict_to_fill["StopTime"] = time.strftime(time_format,time.localtime(end_time))
+        return json.dumps(dict_to_fill)
+
+def merge_jsons(wk_dir, package):
+    start_file=open(os.path.join(wk_dir,"start_"+package), "r")
+    start_data = json.load(start_file)
+    stop_file = open(os.path.join(wk_dir,"stop_"+package), "r")
+    stop_data = json.load(stop_file)
+    out_file = open(os.path.join(wk_dir,"complete_"+package), "w")
+    start_data["StopTime"]=stop_data["StopTime"]
+    start_data["DiffTime"]= time.mktime(time.strptime(stop_data["StopTime"], time_format)) - time.mktime(time.strptime(start_data["StartTime"], time_format))
+    out_file.write(json.dumps(start_data))
+    out_file.close()
+    start_file.close()
+    stop_file.close()
+    os.remove(os.path.join(wk_dir,"start_"+package))
+    os.remove(os.path.join(wk_dir,"stop_"+package))
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="%prog <start|stop> <package>")
-    parser.add_option("-b","--start", dest="start", action="store_true", help="Building started for package", default=True)
-    parser.add_option("-e","--stop", dest="start", action="store_false", help="Building done for package", default=True)
-    parser.add_option("-p","--package", dest="pkg_name", help="Package name to track", default="")
-    opts, args = parser.parse_args()
-    start_file = opts.pkg_name + ".json"
-    if opts.start:
-        if not os.path.exists(start_dir):
-            os.makedirs(start_dir)
-        out_file = open(start_dir+"/"+start_file, "w")
-        out_file.write('dummy useless string \n')
-        out_file.close()
+    try:
+        thread_id = os.fork()
+    except OSError, e:
+    ## some debug output
+        sys.exit(1)
+    if not thread_id == 0:
+        sys.exit(0)
     else:
-        if not os.path.exists(stop_dir):
-            os.makedirs(stop_dir)
-        if not os.path.exists(start_dir+"/"+start_file):
-            print "This package was never started. Quitting."
-            sys.exit(1)
-        os.rename(start_dir+"/"+start_file, stop_dir+"/"+start_file)
-    
-    # pid dir if stop files > x or creation date > y
-    if os.path.exists(stop_dir):
-        if len([file for file in os.listdir(stop_dir) if os.path.isfile(file)]) > max_stop_files or \
-            os.path.getctime(stop_dir) - os.path.getctime(stop_dir+"/"+(min([(f,os.path.getmtime(stop_dir+"/"+f)) for f in os.listdir(stop_dir)], key=lambda f:f[1])[0])) > max_time_stop:
-            os.rename(stop_dir, stop_dir+"_"+str(os.getpid() ))
-            #push content of this dir to elastic server
-        
-        
+        parser = OptionParser(usage="%prog <-s|-e> -p <package>")
+        parser.add_option("-s","--start", dest="start", action="store_true", help="Building started for package", default=True)
+        parser.add_option("-e","--stop", dest="start", action="store_false", help="Building done for package", default=True)
+        parser.add_option("-p","--package", dest="pkg_name", help="Package name to track", default="")
+        opts, args = parser.parse_args()
+        pkg_name = opts.pkg_name
+        start_file_name = "start_"+pkg_name+".json.tmp"
+        stop_file_name = "stop_"+pkg_name+".json.tmp"
+        try:
+            os.makedirs(work_dir)
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+        if opts.start:
+            out_file = open(os.path.join(work_dir, start_file_name), "w")
+            out_file.write(fill_dictionary(time.time(),0))
+            out_file.close()
+            os.rename(os.path.join(work_dir, start_file_name), os.path.join(work_dir, start_file_name[:-4]))
+        else:
+            out_file = open(os.path.join(work_dir, stop_file_name), "w")
+            out_file.write(fill_dictionary(0,time.time()))
+            out_file.close()
+            os.rename(os.path.join(work_dir, stop_file_name), os.path.join(work_dir, stop_file_name[:-4]))
+        if len([file for file in os.listdir(work_dir)]) > max_files_push or os.path.getctime(work_dir) - os.path.getctime(os.path.join(work_dir, (min([(f,os.path.getmtime(os.path.join(work_dir,f))) for f in os.listdir(work_dir)], key=lambda f:f[1])[0]) ) ) > max_time_stop:
+            push_dir = "push_dir_"+str(os.getpid())
+            os.makedirs(push_dir)
+            for file in os.listdir(work_dir):
+                if not re.match(".*\.tmp", file):
+                    os.rename(os.path.join(work_dir, file), os.path.join(push_dir, file))
+            for p in list(set([pkg.split("_")[1] for pkg in os.listdir(push_dir)])):
+                if (os.path.exists(os.path.join(push_dir, "start_"+p)) and os.path.exists(os.path.join(push_dir, "stop_"+p))):
+                    merge_jsons(push_dir, p)
+            #Push complete files, remove them, put back incomplete files to work_dir

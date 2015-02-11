@@ -30,6 +30,7 @@ CMSSW_L2 = {
   "nclopezo": ["tests"],
   "cmsbuild": ["tests"],
   "lveldere": ["fastsim"],
+  "ssekmen": ["fastsim"],
   "diguida": ["alca"],
   "mmusich": ["alca"],
   "bendavid": ["generators"],

@@ -27,6 +27,33 @@ parser.add_option( "-v" , "--verbose" , dest="verbose" , action="store_true", he
 (options, args) = parser.parse_args()
 
 #-----------------------------------------------------------------------------------
+#---- Output Schema
+#-----------------------------------------------------------------------------------
+#
+# comparisons": [ <DictA>, <DictB>, <DictC> ]
+#
+# Each dict contains the result of the comparison between 2 tags in cmssw. For example 
+# CMSSW_5_3_X_2015-02-03-0200 with CMSSW_5_3_X_2015-02-04-0200 which correspond 
+# to the IB CMSSW_5_3_X_2015-02-04-0200
+#
+# The schema of the dictionary is as folows:
+# {
+#    "addons": [],
+#    "builds": [],
+#    "compared_tags": "",
+#    "utests": [],
+#    "cmsdistTags": {},
+#    "relvals": [],
+#    "static_checks": "",
+#    "isIB": Boolean,
+#    "tests_archs": [],
+#    "release_name": "",
+#    "merged_prs": [],
+#    "RVExceptions" : Boolean
+#
+# }
+
+#-----------------------------------------------------------------------------------
 #---- Review of arguments
 #-----------------------------------------------------------------------------------
 
@@ -360,10 +387,30 @@ def analyze_tests_results( output, results, arch, type ):
 
     results[rel_name].append(result_arch)
 
+
 #
-# Searchs in github.io for incomplete results. for now it only works for relvals
+# Searchs in github.io for the results for relvals exceptions
+#
+def execute_magic_command_find_rv_exceptions_results( ):
+  print ( 'Finding relval exceptions results...')
+  command_to_execute = MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS
+  out,err,ret_code = get_output_command(command_to_execute)
+
+  rv_exception_results = {}
+
+  for line in out.splitlines():
+    line_parts = line.split( '/' )
+    ib_name = line_parts[ -1 ].replace( 'EXCEPTIONS.json', '' ) + line_parts[ -2 ]
+    rv_exception_results[ ib_name ] = True 
+
+  return rv_exception_results
+
+#
+# Searchs in github.io for incomplete results. For now it only works for relvals.
+# It looks into the existing results and adds them to the structure.
 #
 def execute_magic_command_find_incomplete_results( results ):
+  print( 'Finding incomplete relval results...' )
   command_to_execute = MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS
   out,err,ret_code = get_output_command(command_to_execute)
   
@@ -622,6 +669,8 @@ def print_results(results):
       from_merge_commit = [pr['number'] for pr in comp['merged_prs'] if pr['from_merge_commit']]
       print '\t' + 'From merge commit' + str(from_merge_commit)
 
+      print '\t' + 'RVExceptions: ' + str( comp.get( 'RVExceptions' ) )
+
 
 #
 # Iterates over the IBs comparisons, if an IB doesn't have a tag for an architecture, the previous tag is
@@ -653,7 +702,9 @@ def fill_missing_cmsdist_tags( results ):
 # merges the results of the tests with the structure of the IBs tags and the pull requests
 # it also marks the comparisons that correspond to an IB
 #
-def add_tests_to_results( results, unit_tests, relvals_results , addon_results , build_results, cmsdist_tags_results ):
+def add_tests_to_results( results, unit_tests, relvals_results, 
+                          addon_results , build_results, cmsdist_tags_results, 
+                          rv_Exceptions_Results ):
   for rq in results:
     for comp in rq['comparisons']:
       rel_name = comp['compared_tags'].split('-->')[1]
@@ -669,6 +720,7 @@ def add_tests_to_results( results, unit_tests, relvals_results , addon_results ,
       comp[ 'builds' ] = buildsres if buildsres else []
       comp[ 'cmsdistTags' ] = cmsdist_tags if cmsdist_tags else {}
       comp[ 'isIB' ] = '-' in rel_name
+      comp[ 'RVExceptions' ] = rv_Exceptions_Results.get( rel_name )
 
       if not comp.get( 'static_checks' ):
         comp[ 'static_checks' ] = 'not-found'
@@ -861,6 +913,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
   MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
   MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS = "find cms-sw.github.io/data/relvals/ -name '*INCOMPLETE.json'"
+  MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS ="find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
   MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
   MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name addOnTests.log'
@@ -1001,8 +1054,13 @@ if __name__ == "__main__":
   
   addOn_tests_results = {}
   execute_magic_command_find_results( addOn_tests_results ,'addOn' )
+
+  rv_Exceptions_Results = execute_magic_command_find_rv_exceptions_results() 
  
-  add_tests_to_results( results , unit_tests_results, relvals_results , addOn_tests_results, build_results , cmsdist_tags_results )
+  add_tests_to_results( results, unit_tests_results, relvals_results, 
+                       addOn_tests_results, build_results, cmsdist_tags_results,
+                       rv_Exceptions_Results )
+
   fill_missing_cmsdist_tags( results )
   print_results(results)
   

@@ -246,14 +246,43 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
 /**
  * Generates the hlt tests link link and adds it to the cell for the IB
  */
-add_hlt_tests_link = function ( title_cell , isFound , currentTag ){
+add_hlt_tests_link = function ( title_cell, isFound, currentTag ){
   if ( isFound == 'found' ){
     var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/HLT-Validation/' + currentTag 
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' HLT Validation'))
     title_cell.append(sa_link)
+    title_cell.append($("<br>"))
   }
+}
+
+/**
+ * Generates the link to the Relvals Exception Page if the results were found
+ * and addsit to the cell for the IB
+ */
+add_rv_exceptions_link = function ( title_cell, isFound, currentTag ){
+
+  if ( isFound ){
+    var url = 'http://cms-sw.github.io/relvalsExceptions.html#' + currentTag
+    var sa_link = $("<a></a>").attr("href", url)
+    sa_link.append($('<span class="glyphicon glyphicon-warning-sign"></span>'))
+    sa_link.append($('<span></span>').text(' Relvals Exceptions Summary'))
+    title_cell.append(sa_link)
+  }
+
+}
+
+/**
+ * Generates the link to the Relvals Exception Page for the given release queue
+ */
+get_rv_exceptions_link_rq = function ( releaseQueue ){
+
+  var url = 'http://cms-sw.github.io/relvalsExceptions.html#' + releaseQueue
+  var sa_link = $("<a></a>").attr("href", url)
+  sa_link.text('Relvals Exceptions Summary for ' + releaseQueue )
+  return sa_link
+
 }
 
 /**
@@ -316,7 +345,8 @@ write_comp_IB_table =  function( comparison , tab_pane ){
  
   add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
   title_cell.append($('<br>'))
-   add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
+  add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
+  add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )
 
   var title_row = $('<tr>')
   var relvals_results = comparison.relvals
@@ -549,6 +579,10 @@ checkHasToScroll = function ( releaseName ){
   var url = document.location.toString();
   console.log( 'option2' )
   var hash = url.split('#')[1]
+  if( hash == undefined ){
+    return
+  }
+ 
   var requiredReleaseName = hash.substring( 0 , hash.lastIndexOf( '_' ) )
   var lastChar = requiredReleaseName.charAt( requiredReleaseName.length - 1 )
 

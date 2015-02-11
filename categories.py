@@ -872,6 +872,7 @@ CMSSW_CATEGORIES={
    
    "DQMServices/StreamerIO",
    "DQMServices/XdaqCollector",
+   "Validation/EventGenerator",
    "Validation/GlobalDigis",
    "Validation/GlobalHits",
    "Validation/GlobalRecHits",

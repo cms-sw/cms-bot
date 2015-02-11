@@ -39,7 +39,6 @@
                                 var hash = url.split('#')[1] 
                                 var release_name = hash.substring( 0 , hash.lastIndexOf( '_' ) )
 				var lastChar = release_name.charAt( release_name.length - 1 )
-
 				// the url is asking for an IB
 				if ( lastChar == 'X' || lastChar == 'C' ){
 					$('#myTab a[href=#' + release_name + ']').tab('show')
@@ -109,16 +108,18 @@
 
                         	}else{
                                 	var tab_pane = $('<div class="tab-pane" id="'+release_name+'">')
+
                         	}
+
+                                var rv_exceptions_link = get_rv_exceptions_link_rq( release_name )
+                                tab_pane.append($("<br>"))
+                                tab_pane.append( rv_exceptions_link )
 
 				// write the titles for the release queue
                         	var title_rel_name=$("<h1>").text(release_name)
                         	tab_pane.append(title_rel_name)
                         	tab_pane.append($("<hr>"))
                         	tab_pane.append($("<br>"))
-                        
-
-
 				
 				// write the comparisons for the release queue, here I read a json file per release queue
 				var compFileName = "data/" + release_name + ".json"

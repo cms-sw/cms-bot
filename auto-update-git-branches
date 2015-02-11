@@ -12,7 +12,7 @@ function updateBranch()
   git reset --hard origin/$TARGET_BRANCH
   git clean -fdx
   git merge --no-ff -X ours origin/$SOURCE_BRANCH
-  git commit --amend -m 'Merge $SOURCE_BRANCH into $TARGET_BRANCH.'
+  git commit --amend -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH."
   if [ "X`git diff --name-only HEAD origin/$TARGET_BRANCH | tail -1`" != "X" ]; then
     git push origin HEAD:$TARGET_BRANCH
   fi

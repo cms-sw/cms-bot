@@ -181,17 +181,27 @@ $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAG
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 
+
+pushd CMSDIST
+git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
+
+# In case we do not have errors in the full release, or in case we are forcing the 
+# tagging we create an ALL tag and use IB if we discover it's a full release later on.
+# In case we have errors, we use an ERR tag in case we discover it's a full release later on.
 if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
-  pushd CMSDIST
-    git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
-    git tag ALL/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
-    git push originrw ALL/$RELEASE_NAME/$ARCHITECTURE || true
-    if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
-        git tag IB/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
-        git push originrw IB/$RELEASE_NAME/$ARCHITECTURE || true
-    fi
-  popd
+  git tag ALL/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
+  git push originrw ALL/$RELEASE_NAME/$ARCHITECTURE || true
+  TAG_TYPE="IB"
+else
+  TAG_TYPE="ERR"
 fi
+
+# Check if it is a full release and tag depending on wether it had ERRors or not.
+if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
+  git tag $TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
+  git push originrw $TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE || true
+fi
+popd
 
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops

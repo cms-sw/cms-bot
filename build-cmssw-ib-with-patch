@@ -181,17 +181,21 @@ $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAG
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 
-if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
-  pushd CMSDIST
-    git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
+pushd CMSDIST
+  git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
+  git tag DEF/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
+  git push originrw DEF/$RELEASE_NAME/$ARCHITECTURE || true
+  
+  if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
     git tag ALL/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
     git push originrw ALL/$RELEASE_NAME/$ARCHITECTURE || true
     if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
         git tag IB/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
         git push originrw IB/$RELEASE_NAME/$ARCHITECTURE || true
     fi
-  popd
-fi
+  fi
+
+popd
 
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops

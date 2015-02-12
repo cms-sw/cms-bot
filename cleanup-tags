@@ -41,7 +41,7 @@ else
   cd cmsdist
 fi
 
-CMSDIST_QUEUES=`git ls-remote --tags origin "*/CMSSW_*X*" | grep refs/tags | grep "\(IB\|ALL\)" | sed -e 's|.*refs/tags/||;s|20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]|2*|' | sort -u`
+CMSDIST_QUEUES=`git ls-remote --tags origin "*/CMSSW_*X*" | grep refs/tags | grep "\(IB\|ALL|DEF\)" | sed -e 's|.*refs/tags/||;s|20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]|2*|' | sort -u`
 
 for QUEUE in $CMSDIST_QUEUES; do
   # List the tags we are going to delete. This will stay in the

@@ -914,7 +914,7 @@ if __name__ == "__main__":
   MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'
   MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS = "find cms-sw.github.io/data/relvals/ -name '*INCOMPLETE.json'"
   MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS ="find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
-  MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge [pull|remote]"'
+  MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge "'
   MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name addOnTests.log'
   MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name logAnalysis.pkl'

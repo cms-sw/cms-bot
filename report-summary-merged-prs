@@ -905,7 +905,7 @@ def identify_release_groups(results):
 
 if __name__ == "__main__":
 
-  MAGIC_COMMAND_CMSDIST_TAGS = 'pushd %s; git tag -l IB/*/ARCHITECTURE; popd' % CMSDIST_REPO
+  MAGIC_COMMAND_CMSDIST_TAGS = "pushd %s; git tag -l */*/ARCHITECTURE | grep -E 'IB|ERR'; popd" % CMSDIST_REPO
 
   # I used this type of concatenation because the string has %s inside
   ARTIFACTS_MACHINE = 'vocms12.cern.ch'

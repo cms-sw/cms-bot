@@ -950,7 +950,7 @@ if __name__ == "__main__":
   # will be filled using config.map by get_config_map_params()
   RELEASES_ARCHS = {}
 
-  MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge [pull|remote]" | grep -E "RELEASE_QUEUE"'
+  MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
 
   class BuildResultsKeys:
     DICT_ERROR = 'dictError'

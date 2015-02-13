@@ -18,7 +18,9 @@ parser = OptionParser( usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK
                      "| STD_COUT | TESTS_RUNNING " 
                      "| EXTERNALS_PR_READY "
                      "| IGPROF_READY " )
-parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY")
+parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
+                            "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
+                            "| REMOTE_REF_ISSUE")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -217,7 +219,7 @@ def send_externals_pr_finished_message( repo , pr_number , tests_url ):
   print message
 
 #
-# sends a message informing that the pull reqeuest is cannot be merged automatically
+# sends a message informing that the pull request cannot be merged automatically
 #
 def send_not_mergeable_pr_message( repo, pr_number ):
   pull_request = repo.get_pull(pr_number)
@@ -225,13 +227,31 @@ def send_not_mergeable_pr_message( repo, pr_number ):
   
   message = "-1\n"+"@" + user.login + ' This pull request cannot be automatically '\
             ' merged, could you please rebase it?'
-  print 'Postng message:'
+  print 'Posting message:'
   print message
 
   if not options.no_post_mesage:
     pull_request.create_issue_comment(message)
     if options.commit_hash:
       mark_commit( ACTION , options.commit_hash , tests_url )
+
+#
+# sends a message informing that it has the 
+# fatal: Couldn't find remote ref refs/pull/<pr_number>/head issue
+#
+def send_remote_ref_issue_message( repo, pr_number):
+  pull_request = repo.get_pull(pr_number)
+  user = pull_request.user
+
+  message = 'I had the issue '\
+            '<pre> Couldn\'t find remote ref refs/pull/' \
+            + str( pr_number ) +'/head</pre> Please restart the tests in jenkins' \
+            ' providing the complete branch name' 
+  print 'Posting message:'
+  print message
+
+  if not options.no_post_mesage:
+    pull_request.create_issue_comment(message)
 
 
 #
@@ -439,5 +459,7 @@ elif ( ACTION == 'IGPROF_READY' ):
   send_igprof_ready_message( official_cmssw , pr_number , tests_results_url )
 elif (ACTION == 'NOT_MERGEABLE' ):
   send_not_mergeable_pr_message( official_cmssw, pr_number )
+elif( ACTION == 'REMOTE_REF_ISSUE'):
+  send_remote_ref_issue_message( official_cmssw, pr_number )
 else:
   print "I don't recognize that action!"

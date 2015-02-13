@@ -84,6 +84,11 @@ fi
 
 if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
   echo "Please add the branch name to the parameters"
+
+  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
+    $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID
+  fi
+
   exit 1
 fi
 

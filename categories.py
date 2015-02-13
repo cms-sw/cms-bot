@@ -767,7 +767,9 @@ CMSSW_CATEGORIES={
    "EventFilter/SiStripChannelChargeFilter",
    "EventFilter/StorageManager",
    "EventFilter/Utilities",
-   "IORawData/DaqSource", "DataFormats/FEDRawData"],
+   "IORawData/DaqSource",
+   "DataFormats/FEDRawData",
+   "DataFormats/Scalers"],
   "dqm": [
    "CondTools/DQM",
    "DQM/BeamMonitor",
@@ -925,6 +927,7 @@ CMSSW_CATEGORIES={
    "CalibCalorimetry/HcalTPGIO",
    "EventFilter/CSCTFRawToDigi",
    "DataFormats/L1TrackTrigger",
+   "DataFormats/Scalers",
    "L1Trigger/L1TCalorimeter",
    "L1Trigger/L1TCommon",
    "L1Trigger/TrackFindingTracklet",

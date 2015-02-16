@@ -560,7 +560,7 @@ if __name__ == "__main__":
             print 'No information found about the build machine, something is wrong for %s' % arch
             exit(1)
           
-          build_machine = build_info_comments[0].split( ' ' )[7].strip( '.' )
+          build_machine = build_info_comments[-1].split( ' ' )[7].strip( '.' )
           print 'Triggering cleanup for %s' % arch
           create_properties_file_cleanup( release_name, arch, issue.number, build_machine )
           msg = CLEANUP_STARTED_MSG.format( architecture=arch )
@@ -595,7 +595,7 @@ if __name__ == "__main__":
         print 'No information found about the build machine, something is wrong'
         exit( 1 )
 
-      first_line_info_comment = str(build_info_comments[0].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r ")) 
+      first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r ")) 
       build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
       print 'Triggering upload for %s' % arch
       create_properties_files_upload( release_name , arch , issue.number , build_machine )

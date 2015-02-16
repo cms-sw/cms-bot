@@ -63,18 +63,14 @@ getResultRow = function( resultsDict , resultsKey ){
 /**
  * Fills the results table
  */
-fillResultsTable = function( resultsDict , table ){
+fillResultsTable = function( resultsDict, table ){
 
-  $.each( LABELS , function( key , value ){
-
+  $.each( LABELS , function( key, value ){
     var resultsRow = getResultRow( resultsDict , key )
     table.append( resultsRow )
 
   })
   
-//  var compilationLink = BASE_RESULTS_URL + 'PR-' + resultsDict[ PR_NUMBER_KEY ] + '/' + resultsDict[ BUILD_NUMBER_KEY ] + '/build.log'
-
-//  var unitTestsLink = BASE_RESULTS_URL + 'PR-' + resultsDict[ PR_NUMBER_KEY ] + '/' + resultsDict[ BUILD_NUMBER_KEY ] + '/unitTests.log'
 
 
 }
@@ -183,6 +179,7 @@ IGPROF_KEY = 'IGPROF'
 STATIC_CHECKS_KEY = 'STATIC_CHECKS'
 COMPARISON_KEY = 'COMPARISON'
 DQM_TESTS_KEY = 'DQM_TESTS'
+CLANG_COMPILATION_KEY = 'CLANG_COMPILATION_RESULTS'
 BASE_IB_URL = 'https://cmssdt.cern.ch/SDT/html/showIB.html'
 BASE_PR_URL = 'https://github.com/cms-sw/cmssw/pull/'
 BASE_RESULTS_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/'
@@ -195,6 +192,7 @@ LABELS[ IGPROF_KEY ] = 'Igprof for 25202'
 LABELS[ STATIC_CHECKS_KEY ] = 'Static checks outputs'
 LABELS[ COMPARISON_KEY ] = 'Comparison with the baseline' 
 LABELS[ DQM_TESTS_KEY ] = 'DQM Tests' 
+LABELS[ CLANG_COMPILATION_KEY ] = 'Clang Compilation'
 
 LABELS2 = {}
 LABELS2[ COMPILATION_RESULTS_KEY ] = 'See Log'
@@ -204,6 +202,7 @@ LABELS2[ IGPROF_KEY ] = 'See results'
 LABELS2[ STATIC_CHECKS_KEY ] = 'See Static Checks'
 LABELS2[ COMPARISON_KEY ] = 'See results'
 LABELS2[ DQM_TESTS_KEY ] = 'See results'
+LABELS2[ CLANG_COMPILATION_KEY ] = 'See Log'
 
 LOCATIONS = {}
 LOCATIONS[ COMPILATION_RESULTS_KEY ] = 'build.log'
@@ -213,5 +212,6 @@ LOCATIONS[ IGPROF_KEY ] = 'igprof-results-data'
 LOCATIONS[ STATIC_CHECKS_KEY ] = 'llvm-analysis'
 LOCATIONS[ COMPARISON_KEY ] = 'See results'
 LOCATIONS[ DQM_TESTS_KEY ] = 'DQMTestsResults'
+LOCATIONS[ CLANG_COMPILATION_KEY ] = 'buildClang.log'
 
 BASE_COMPARISONS_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/baseLineComparisons/'

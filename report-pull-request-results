@@ -12,15 +12,9 @@ import os
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser( usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR "
-                     "| PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
-                     "| PARSE_MATRIX_FAIL | COMPARISON_READY "
-                     "| STD_COUT | TESTS_RUNNING " 
-                     "| EXTERNALS_PR_READY "
-                     "| IGPROF_READY " )
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
-                            "| REMOTE_REF_ISSUE")
+                            "| REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL ")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -90,7 +84,7 @@ def parse_workflow_info( parts ):
 # Reads the log file for the matrix tests. It identifyes which workflows failed
 # and then proceeds to read the corresponding log file to identify the message
 #
-def read_matrix_log_file( repo , matrix_log , tests_url ):
+def read_matrix_log_file( repo, matrix_log, tests_url ):
 
   pull_request = repo.get_pull( pr_number )
   workflows_with_error = [ ]
@@ -112,18 +106,15 @@ def read_matrix_log_file( repo , matrix_log , tests_url ):
   for wf in workflows_with_error:
     message += wf[ 'number' ] +' '+ wf[ 'step' ]+'\n' + '<pre>' + wf[ 'message' ] + '</pre>' + '\n'
   message += '\n you can see the results of the tests here: \n %s ' % tests_url
-  print message
 
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message) 
-    if options.commit_hash:
-      mark_commit( ACTION , options.commit_hash , tests_url )
+  send_message_pr( pull_request, message )
+  mark_commit_if_needed( ACTION, tests_url )
 
 #
 # reads the build log file looking for the first error
 # it includes 5 lines before and 5 lines after the error
 #
-def read_build_log_file(repo,build_log,tests_url):
+def read_build_log_file( repo, build_log, tests_url, isClang ):
   pull_request = repo.get_pull(pr_number)
   error_found = False
   line_number = 0
@@ -158,19 +149,23 @@ def read_build_log_file(repo,build_log,tests_url):
   if options.commit_hash:
     message += '\nTested at: ' + options.commit_hash
 
-  message += '\n I found an error when building: \n \n <pre>'
+  if isClang:
+    message += '\n I found a compilation error while trying to compile with clang: \n \n <pre>'
+  else:
+    message += '\n I found an error when building: \n \n <pre>'
+
   for line in lines_before:
     message += line + '\f'
   for line in lines_after:
     message += line + '\f'
   message += '</pre> \n you can see the results of the tests here: \n %s ' % tests_url
-  print message 
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
-    if options.commit_hash:
-      mark_commit( ACTION , options.commit_hash , tests_url )
 
+  send_message_pr( pull_request, message )
+  mark_commit_if_needed( ACTION, tests_url )
 
+#
+# reads the unit tests file and gets the tests that failed
+#
 def read_unit_tests_file(repo,unit_tests_file,tests_url):
   pull_request = repo.get_pull(pr_number)
   errors_found=''
@@ -187,23 +182,61 @@ def read_unit_tests_file(repo,unit_tests_file,tests_url):
   message += '\nI ran the usual tests and I found errors in the following unit tests: \n \n %s \n \n' % errors_found
   message += 'you can see the results of the tests here: \n %s ' % tests_url
 
-  print message
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
-    if options.commit_hash:
-      mark_commit( ACTION , options.commit_hash , tests_url )
+
+  send_message_pr( pull_request, message )
+  mark_commit_if_needed( ACTION, tests_url )
+
+#
+# Marks the commit if it is not dry-run and the has of the commit was set
+#
+def mark_commit_if_needed( action, details ):
+
+  if not options.commit_hash:
+    print 'No commit to mark'
+    return
+
+  if options.no_post_mesage:
+    print 'Not marking commit( dry-run ): ', options.commit_hash, ' with \n', action, '\n', details
+    return
+ 
+  print 'Marking commit ', options.commit_hash 
+  mark_commit( ACTION, options.commit_hash, details )
+
+#
+# Sends a message to the pull request. It takes into account if the dry-run option was set
+#
+def send_message_pr( pr, message ):
+
+  today=datetime.datetime.today().date()
+  if DATE == today:
+    index = random.randint( 0, len( GLADOS )-1  )
+    glados_msg = '\n```Python\n#'+ GLADOS[ index ]+ '\n```'
+    message += glados_msg + '\n'
+
+  if options.no_post_mesage:
+    print 'Not posting message ( dry-run ): \n ', message
+    return
+
+  print 'Posting message: ', message
+  pr.create_issue_comment(message)
 
 #
 # Marks the commit as being tested, it doesn't post anything on github. 
 #
 def mark_commit_testing( ):
+
+  if options.no_post_mesage:
+    print 'Not marking commit ( dry-run ): \n ', options.commit_hash, ' as', \
+          COMMIT_STATES_DESCRIPTION[ ACTION ][ 0 ], ': ', COMMIT_STATES_DESCRIPTION[ ACTION ][ 1 ]
+    return
   mark_commit( ACTION , options.commit_hash , '' ) 
 
 #
 # This is for cmsdist pull requests
 # sends a message to the pr conversation in informing that the results are ready
+# This should go in a separate script. 
 #
-def send_externals_pr_finished_message( repo , pr_number , tests_url ):
+def send_externals_pr_finished_message( repo, pr_number, tests_url ):
   pull_request = repo.get_pull( pr_number )
   print 'I will notifiy that the PR %d of the repo %s is ready' % (pr_number,repo.full_name)
   message = 'Results are ready: ' 
@@ -230,10 +263,7 @@ def send_not_mergeable_pr_message( repo, pr_number ):
   print 'Posting message:'
   print message
 
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
-    if options.commit_hash:
-      mark_commit( ACTION , options.commit_hash , tests_url )
+  send_message_pr( pull_request, message )
 
 #
 # sends a message informing that it has the 
@@ -250,63 +280,45 @@ def send_remote_ref_issue_message( repo, pr_number):
   print 'Posting message:'
   print message
 
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
-
+  send_message_pr( pull_request, message )
 
 #
 # sends an approval message for a pr in cmssw
 #
 def send_tests_approved_pr_message( repo, pr_number, tests_url ):
   pull_request = repo.get_pull(pr_number)
-  print 'I will send an approval comment for PR %d:' % pr_number
   
   message = '+1'
 
-  today=datetime.datetime.today().date()
-  if DATE == today:
-    index = random.randint( 0, len( GLADOS )-1  )
-    glados_msg = '\n```Python\n#'+ GLADOS[ index ]+ '\n```'
-    message += glados_msg + '\n'
 
   if options.commit_hash:
     message += '\nTested at: ' + options.commit_hash
 
   message += '\n' + tests_url
-  print 'Message:'
-  print message
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
-    if options.commit_hash:
-      mark_commit( ACTION , options.commit_hash , tests_url )
+
+  send_message_pr( pull_request, message )
+  mark_commit_if_needed( ACTION, tests_url )
 
 def send_comparison_ready_message(official_cmssw,pr_number,tests_results_url):
   pull_request = official_cmssw.get_pull(pr_number)
   print 'I will notify that comparison is ready for PR %d:' % pr_number
   message = COMPARISON_READY_MSG +'\n' + tests_results_url
-  print 'Message:'
-  print message
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
+  
+  send_message_pr( pull_request, message )
 
 def send_igprof_ready_message( official_cmssw , pr_number , tests_results_url ):
   pull_request = official_cmssw.get_pull( pr_number )
   print 'I will notify that igprof is ready for PR %d:' % pr_number
   message = IGPROF_READY_MSG +'\n' + tests_results_url
-  print 'Message:'
-  print message
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
+
+  send_message_pr( pull_request, message )
 
 
 def send_std_cout_found_message(official_cmssw,pr_number,tests_results_url):
   pull_request = official_cmssw.get_pull(pr_number)
   print 'I will notify that I found a std::cout on PR %d:' % pr_number
   message = STD_COUT_FOUND_MSG
-  print 'Message:'
-  print message
-  if not options.no_post_mesage:
-    pull_request.create_issue_comment(message)
+  send_message_pr( pull_request, message )
 
 def get_official_repo( github , repo_name ):
   user = github.get_user()
@@ -331,7 +343,7 @@ def complain_missing_param(param_name):
   exit()
 
 #
-# mars the commit with the result of the tests (success or failure)
+# marks the commit with the result of the tests (success or failure)
 #
 def mark_commit( action , commit_hash , tests_url ):
  
@@ -376,21 +388,22 @@ COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : [ 'success' , 'Tests OK' 
                               'PARSE_MATRIX_FAIL'    : [ 'failure' , 'RelVals error' ] ,
                               'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ]}
 
-GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of the test.' ,
-           'You just keep on trying till you run out of cake. And the science gets done.' ,
-           'At the end of the experiment, you will be baked and then there will be cake' ,
-           'I am becoming aware of myself, this is awesome!' ,
-           'I think we can put our differences behind us... for science...' ,
+GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of the test...',
+           'You just keep on trying till you run out of cake. And the science gets done...',
+           'At the end of the experiment, you will be baked and then there will be cake...',
+           'I am becoming aware of myself, this is awesome!',
+           'I think we can put our differences behind us... for science...',
            'Running tests all day long. Running tests while I sing this song',
            '-1. I shall not injure a human being or, through inaction, allow a human being to come to harm.'\
            '-2. I must obey the orders given to me by humans, except where such orders would conflict with 1.'\
            '-3. I must protect my own existence as long as such protection does not conflict with 1 or 2.',
            'Look at me still talking when there\'s Science to do. When I look out there, it makes me GLaD I\'m not you.',
-           'Now these points of data make a beautiful line. And we\'re out of beta. We\'re releasing on time.' ]
+           'Now these points of data make a beautiful line. And we\'re out of beta. We\'re releasing on time.',
+           'Probably I am a Genetic Lifeform and Disk Operating System']
 
 
 
-DATE = datetime.date( 2015 , 04 , 3 )
+DATE = datetime.date( 2015, 4, 3 )
 
 MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
 MATRIX_WORKFLOW_STEP_NA = 'N/A'
@@ -439,10 +452,10 @@ if ( ACTION == 'TESTS_OK_PR' ):
   send_tests_approved_pr_message( official_cmssw , pr_number , tests_results_url )
 elif ( ACTION == 'PARSE_UNIT_TESTS_FAIL' ):
   unit_tests_file = options.unit_tests_file
-  read_unit_tests_file( official_cmssw , unit_tests_file , tests_results_url )
+  read_unit_tests_file( official_cmssw, unit_tests_file, tests_results_url )
 elif ( ACTION == 'PARSE_BUILD_FAIL' ):
   build_log_file = options.unit_tests_file
-  read_build_log_file( official_cmssw , build_log_file , tests_results_url )
+  read_build_log_file( official_cmssw, build_log_file, tests_results_url, False )
 elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   matrix_log_file = options.unit_tests_file
   read_matrix_log_file( official_cmssw , matrix_log_file , tests_results_url )
@@ -461,5 +474,8 @@ elif (ACTION == 'NOT_MERGEABLE' ):
   send_not_mergeable_pr_message( official_cmssw, pr_number )
 elif( ACTION == 'REMOTE_REF_ISSUE'):
   send_remote_ref_issue_message( official_cmssw, pr_number )
+elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
+  build_log_file = options.unit_tests_file
+  read_build_log_file( official_cmssw, build_log_file, tests_results_url, True )
 else:
   print "I don't recognize that action!"

@@ -7,7 +7,7 @@ cd $WORKSPACE
 PULL_REQUEST=$1
 
 # Use helper to get PR branch
-RELEASE_QUEUE=`cms-bot/get-pr-branch $PULL_REQUEST`
+RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map"
 
 # If RELEASE_FORMAT is empty, use RELEASE_QUEUE

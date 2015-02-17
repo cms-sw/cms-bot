@@ -16,6 +16,6 @@ if __name__ == "__main__":
     pr = gh.get_organization("cms-sw").get_repo("cmssw").get_pull(prId)
   except:
     print "Could not find pull request. Maybe this is an issue"
-    exit(0)
+    exit(1)
 
   print pr.base.ref

@@ -66,6 +66,9 @@ updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT6_X
 updateBranch CMSSW_7_4_X CMSSW_7_4_GEANT10_X
 updateBranch CMSSW_7_4_X CMSSW_7_4_CLANG_X
 
+# CMSSW_7_5_X
+updateBranch CMSSW_7_4_X CMSSW_7_5_X
+
 # Update CMSDIST
 cd $WORKSPACE
 if [ ! -d cmsdist ]; then
@@ -122,3 +125,6 @@ updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/next
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/root6
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/geant10
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/debug
+
+# CMSSW_7_5_X
+updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_5_X/stable

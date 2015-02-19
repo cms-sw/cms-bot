@@ -39,8 +39,8 @@ git config --global user.email cmsbuild@cern.ch
 export SCRAM_ARCH=$ARCHITECTURE
 
 if [[ $RELEASE_FORMAT != *-* ]]; then
-  RELEASE_FORMAT=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
   RELEASE_QUEUE=$RELEASE_FORMAT
+  RELEASE_FORMAT=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
 else
   RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
 fi

@@ -44,7 +44,7 @@ if __name__ == "__main__":
       issue = gh_repo.get_issue(issue)
     pr = gh_repo.get_pull(issue.number)
     print issue.number, pr.head.user.login, pr.head.ref, destMilestone
-    newBody = issue.body + "\nAutomatically ported from " + args.source + " #%s" % issue.number
+    newBody = issue.body + "\nAutomatically ported from " + args.source + " #%s (original by @%s)." % (issue.number, str(pr.head.user.login))
     try:
       newHead = "%s:%s" % (pr.head.user.login, pr.head.ref)
       

@@ -1,0 +1,110 @@
+#!/usr/bin/env python
+import os, time, sys, json, socket, time, errno, glob
+from optparse import OptionParser
+
+#debug remove me
+import shutil
+from _warnings import default_action
+
+work_dir = "pkg_mon"
+max_files_push = 1
+max_time_stop = 30 #seconds
+time_format = "%Y-%m-%d %H:%M:%S"
+
+def make_json(wk_dir, package, mode):
+    header = { "index" : { "_index" : package.replace(":","/"), "_type" : "cmssw_pkg_times", "_id" : "1" } }
+    payload = {"Hostname": socket.gethostname(), "StartTime": "", "StopTime": "", "DiffTime": "", "Package": package.replace(":","/"), "ScramArch": str(os.environ['SCRAM_ARCH']), "CMSSW_Release": str(os.environ["CMSSW_VERSION"])}
+    if mode == 0:
+        begin_time=os.path.getctime(os.path.join(wk_dir,"start_"+package))
+        end_time=os.path.getctime(os.path.join(wk_dir,"stop_"+package))
+        payload["StartTime"]=time.strftime(time_format,time.localtime(begin_time))
+        payload["StopTime"] = time.strftime(time_format,time.localtime(end_time))
+        payload["DiffTime"] = end_time - begin_time
+        out_file = open(os.path.join(wk_dir,"complete_"+package+".json"), "a")
+        out_file.write(json.dumps(header))
+        out_file.write("\n")
+        out_file.write(json.dumps(payload))
+        out_file.write("\n")
+        out_file.close()
+        os.remove(os.path.join(wk_dir,"start_"+package))
+        os.remove(os.path.join(wk_dir,"stop_"+package))
+    elif mode == 1:
+        begin_time=os.path.getctime(os.path.join(wk_dir,"start_"+package))
+        payload["StartTime"]=time.strftime(time_format,time.localtime(begin_time))
+        out_file = open(os.path.join(wk_dir,package+".json"), "a")
+        out_file.write(json.dumps(header))
+        out_file.write("\n")
+        out_file.write(json.dumps(payload))
+        out_file.write("\n")
+        out_file.close()
+    else:
+        end_time=os.path.getctime(os.path.join(wk_dir,"stop_"+package))
+        payload["StopTime"]=time.strftime(time_format,time.localtime(end_time))
+        out_file = open(os.path.join(wk_dir,package+".json"), "a")
+        out_file.write(json.dumps(header))
+        out_file.write("\n")
+        out_file.write(json.dumps(payload))
+        out_file.write("\n")
+        out_file.close()
+        
+def create_dir(dir_to_create):
+        try:
+            os.makedirs(dir_to_create)
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+
+if __name__ == "__main__":
+    try:
+        thread_id = os.fork()
+    except OSError, e:
+    ## some debug output
+        sys.exit(1)
+    if not thread_id == 0:
+        sys.exit(0)
+    else:
+        parser = OptionParser(usage="%prog <-s|-e> -p <package>")
+        parser.add_option("-s","--start", dest="start", action="store_true", help="Building started for package", default=True)
+        parser.add_option("-e","--stop", dest="start", action="store_false", help="Building done for package", default=True)
+        parser.add_option("-p","--package", dest="pkg_name", help="Package name to track", default="")
+        parser.add_option("--dry-run", dest="dryrun", action="store_true", help="Do not push files to server", default=False)
+        opts, args = parser.parse_args()
+        pkg_name = opts.pkg_name
+        start_file_name = "start_"+pkg_name.replace("/",":")
+        stop_file_name = "stop_"+pkg_name.replace("/",":")
+        create_dir(work_dir)
+        
+        if opts.start:
+            open(os.path.join(work_dir, start_file_name), "a").close()
+        else:
+            open(os.path.join(work_dir, stop_file_name), "a").close()
+        
+        if len([file for file in os.listdir(work_dir)]) > max_files_push or os.path.getctime(work_dir) - os.path.getctime(os.path.join(work_dir, (min([(f,os.path.getmtime(os.path.join(work_dir,f))) for f in os.listdir(work_dir)], key=lambda f:f[1])[0]) ) ) > max_time_stop:
+            push_dir = "push_dir_"+str(os.getpid())
+            os.rename(work_dir,push_dir)
+            for p in list(set([pkg.split("_")[1] for pkg in os.listdir(push_dir)])):
+                if (os.path.exists(os.path.join(push_dir, "start_"+p)) and os.path.exists(os.path.join(push_dir, "stop_"+p))):
+                    make_json(push_dir, p, 0)
+                elif(os.path.exists(os.path.join(push_dir, "start_"+p))):
+                    make_json(push_dir, p, 1)
+                else:
+                    make_json(push_dir, p, 2)
+            for j in glob.glob(os.path.join(push_dir,"*.json")):
+                if opts.dryrun:
+                    debug_dir = "debug_pushed"+str(os.getpid())
+                    create_dir(debug_dir)
+                    shutil.copy2(j,debug_dir) #Debug only, replace with push to elastic search
+                else:
+                    print "Pretend I'm pushing the files to the server"
+                os.remove(j)
+            #Move back remaining timestamps files
+            for f in os.listdir(push_dir):
+                while(True):
+                    create_dir(work_dir)
+                    try:
+                        os.rename(os.path.join(push_dir,f), os.path.join(work_dir,f))
+                        break
+                    except:
+                        pass
+            #Push complete files, remove them, put back incomplete files to work_dir
+            os.rmdir(push_dir)

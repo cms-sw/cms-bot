@@ -8,6 +8,12 @@ if [ ! X`which kinit` = X ]; then
   kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
 fi
 
+# to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
+if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
+  DRY_RUN='--no-post'
+fi
+
+
 cd "$WORKSPACE"
 git clone https://github.com/$CMS_GIT_TOOLS_REPO/cms-git-tools
 
@@ -34,7 +40,11 @@ export SCRAM_ARCH=$ARCHITECTURE
 
 if [[ $RELEASE_FORMAT != *-* ]]; then
   RELEASE_FORMAT=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
+  RELEASE_QUEUE=$RELEASE_FORMAT
+else
+  RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
 fi
+
 
 # creation of results summary file
 cp $WORKSPACE/cms-bot/templates/PullRequestSummary.html $WORKSPACE/summary.html
@@ -76,19 +86,13 @@ for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do
 done
 
 if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
-  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results NOT_MERGEABLE  --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID
-  fi
+  $WORKSPACE/cms-bot/report-pull-request-results NOT_MERGEABLE  --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID $DRY_RUN
   exit 0   
 fi
 
 if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
   echo "Please add the branch name to the parameters"
-
-  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID
-  fi
-
+  $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id $PULL_REQUEST_JOB_ID $DRY_RUN
   exit 1
 fi
 
@@ -124,9 +128,7 @@ pushd $WORKSPACE/$RELEASE_FORMAT/src
 
 popd
 
-if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID
-fi
+$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID $DRY_RUN
 
 ############################################
 # Force the run of DQM tests if necessary
@@ -151,11 +153,47 @@ fi
 git log --oneline --merges ${CMSSW_VERSION}..
 git cms-checkdeps -A -a
 
-if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Compiling"
+$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Compiling" $DRY_RUN
+
+# #############################################
+# test compilation with Clang
+# ############################################
+echo 'test clang compilation'
+
+CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map"
+
+NEED_CLANG_TEST=false
+if curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=$ARCHITECTURE; then
+  NEED_CLANG_TEST=true
 fi
 
-scram b -k -j $(getconf _NPROCESSORS_ONLN) 2>&1 | tee -a $WORKSPACE/build.log
+if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Testing Clang compilation" $DRY_RUN
+
+  #first, add the command to the log
+  echo "scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'" > $WORKSPACE/buildClang.log
+
+  scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile' 2>&1 | tee -a $WORKSPACE/buildClang.log
+
+  if grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log; then
+    echo "Errors when testing compilation with clang"
+    echo 'CLANG_COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
+    ALL_OK=false
+    CLANG_BUILD_OK=false
+  else
+    echo "the clan compilation had no errors!!"
+    echo 'CLANG_COMPILATION_RESULTS;OK' >> $RESULTS_FILE
+  fi
+
+else
+  echo 'CLANG_COMPILATION_RESULTS;NOTRUN' >> $RESULTS_FILE
+fi
+
+
+# #############################################
+# test compilation with GCC
+# ############################################
+scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN) 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
 
@@ -173,9 +211,7 @@ fi
 # Unit tests
 #
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
-  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running Unit Tests"
-  fi  
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
   scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
@@ -222,9 +258,7 @@ fi
 #
 if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
 
-  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running Static Checks"
-  fi   
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running Static Checks" $DRY_RUN
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   
@@ -263,9 +297,7 @@ fi
 
 
 if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running RelVals"
-  fi
+    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running RelVals" $DRY_RUN
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
@@ -365,6 +397,7 @@ else
 
 fi
 
+
 #
 # Duplicate checks
 #
@@ -386,9 +419,8 @@ fi
 # Valgrind tests
 #
 for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do 
-  if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running Valgrind"
-  fi  
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running Valgrind" $DRY_RUN
+
   echo 'I will run valgrind for the following workflow'
   echo $WF; 
   mkdir -p "$WORKSPACE/valgrindResults-"$WF
@@ -396,26 +428,26 @@ for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
   runTheMatrix.py --command '-n 10 --prefix "time valgrind --tool=memcheck --suppressions=$CMSSW_RELEASE_BASE/src/Utilities/ReleaseScripts/data/cms-valgrind-memcheck.supp --num-callers=20 --xml=yes --xml-file=valgrind.xml " ' -l $WF  
   popd
 done
-ls
 
 
-#
-# If auto post is selected...
-#
-if [ "X$AUTO_POST_MESSAGE" = Xtrue ]; then
-  if $ALL_OK ; then
-     echo $ALL_OK
-     $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID
-  elif [ "X$BUILD_OK" = Xfalse ]; then
-     echo $BUILD_OK
-     $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/build.log
-  elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-     echo $UNIT_TESTS_OK
-     echo 'failure in unit tests'
-     $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/unitTests.log
-  elif [ "X$RELVALS_OK" = Xfalse ]; then
-     pushd $WORKSPACE/
-     $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log
-     popd
-  fi
+#evaluate results
+
+if $ALL_OK ; then
+  echo $ALL_OK
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID $DRY_RUN
+elif [ "X$BUILD_OK" = Xfalse ]; then
+  echo $BUILD_OK
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/build.log $DRY_RUN
+elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
+  echo $UNIT_TESTS_OK
+  echo 'failure in unit tests'
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/unitTests.log $DRY_RUN
+elif [ "X$RELVALS_OK" = Xfalse ]; then
+  pushd $WORKSPACE/
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log $DRY_RUN
+  popd
+elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/buildClang.log $DRY_RUN 
 fi
+
+ls 

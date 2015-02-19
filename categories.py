@@ -1208,6 +1208,7 @@ CMSSW_CATEGORIES={
    "SimTracker/SiStripDigitizer",
    "SimTracker/TrackAssociation",
    "SimTracker/TrackAssociatorESProducer",
+   "SimTracker/TrackAssociatorProducers",
    "SimTracker/TrackHistory",
    "SimTracker/TrackerFilters",
    "SimTracker/TrackerHitAssociation",

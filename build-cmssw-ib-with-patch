@@ -28,6 +28,9 @@ PACKAGE_NAME=cmssw
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
 
+export USER_HOOK_PACKAGE=$WORKSPACE/cms-bot/scram-package-monitor
+export USER_HOOK_PROJECT=$WORKSPACE/cms-bot/scram-package-monitor
+
 # WORKDIR is where the build actually happens. In order to recycle things
 # already downloaded, we go one level up (i.e. in build-any-ib) and create
 # a directory using $REPOSITORY to distinguish between weeks.

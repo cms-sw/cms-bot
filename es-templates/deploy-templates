@@ -2,3 +2,4 @@
 curl --user $ES_AUTH -XPUT https://$ES_HOSTNAME/_template/template_ib-file-data -d@ib-files.json
 curl --user $ES_AUTH -XPUT https://$ES_HOSTNAME/_template/template_ib-matrix-data -d@runTheMatrix-data.json
 curl --user $ES_AUTH -XPUT https://$ES_HOSTNAME/_template/template_condweb -d@condweb.json
+curl --user $ES_AUTH -XPUT https://$ES_HOSTNAME/_template/template_ib-scram-stats -d@ib-scram-stats.json

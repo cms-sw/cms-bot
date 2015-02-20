@@ -1,0 +1,21 @@
+{
+  "template" : "ib-scram-stats*",
+  "settings" : {
+    "number_of_shards" : 1
+  },
+  "mappings": {
+    "cmssw_pkg_times": {
+      "properties":{
+        "@timestamp":{"type": "date","format": "dateOptionalTime"},
+        "cmssw_queue":{"type": "string", "index": "not_analyzed"},
+        "cmssw_version":{"type": "string", "index": "not_analyzed"},
+        "diff":{"type": "long"},
+        "hostname":{"type": "string", "index": "not_analyzed"},
+        "package":{"type": "string", "index": "not_analyzed"},
+        "scram_arch":{"type": "string", "index": "not_analyzed"},
+        "start":{"type": "date", "format": "dateOptionalTime"},
+        "stop": {"type": "date", "format": "dateOptionalTime"}
+      }
+    }
+  }
+}

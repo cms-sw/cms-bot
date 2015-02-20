@@ -14,7 +14,7 @@ import urllib2, base64
 WORK_DIR = "pkg_mon"
 MAX_FILES_PUSH = 20
 MAX_TIME_STOP = 120 #seconds
-TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.0"
 
 def esReportPackages(results):
   # Silently exit if we cannot contact elasticsearch

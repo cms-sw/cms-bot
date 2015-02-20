@@ -203,7 +203,6 @@ $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAG
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 
-
 pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
@@ -222,6 +221,8 @@ if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
   git push originrw $TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE || true
 fi
 popd
+
+$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local cmssw-ib`
 
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops
@@ -247,3 +248,4 @@ OS=`echo $ARCHITECTURE | cut -d"_" -f 1`
 echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} > $WORKSPACE/install_$OS
 echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/install_$OS
 echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/install_$OS
+

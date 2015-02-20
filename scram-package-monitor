@@ -101,7 +101,7 @@ if __name__ == "__main__":
     thread_id = os.fork()
   except OSError, e:
     print "Error while forking"
-    sys.exit(1)
+    sys.exit(0)
   if not thread_id == 0:
     sys.exit(0)
 

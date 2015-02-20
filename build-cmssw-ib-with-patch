@@ -195,7 +195,7 @@ popd
 
 #FIXME: Fix --specs-only option which is not available for PKGTOOLS V00-16.
 $CMSBUILD_CMD --specs-only `GetCmsBuildConfig $PKGTOOLS_TAG build $PACKAGE_NAME`
-TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
+TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`

@@ -26,8 +26,26 @@ FORCE_FULL_IB=$4
 PACKAGE_NAME=cmssw
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
-WORKSPACE=${WORKSPACE-$PWD}
-cd $WORKSPACE
+WORKSPACE="${WORKSPACE-$PWD}"
+
+# WORKDIR is where the build actually happens. In order to recycle things
+# already downloaded, we go one level up (i.e. in build-any-ib) and create
+# a directory using $REPOSITORY to distinguish between weeks.
+# Notice we need to remove completely workdirs older than a week because they
+# actually refer to an obsolete repository. We also do a cleanup if we are using
+# too much disk space.
+WORKDIR=$WORKSPACE/../build-cache/$REPOSITORY
+THIS_WEEK=`date +%W`
+mkdir -p $WORKDIR
+if [ -e "$WORKDIR/current_week" ] && [ ! X`cat "$WORKDIR/current_week"` = X$THIS_WEEK ]; then
+  mv $WORKDIR $WORKSPACE/../build-cache/deleteme-$REPOSITORY
+  rm -rf $WORKSPACE/../build-cache/deleteme-* &
+elif [ `df --block-size=1000000000 $WORKSPACE | tail -1 | awk '{print $4}'` -lt 100 ]; then
+  rm -rf $WORKSPACE/../build-cache
+else
+  echo $THIS_WEEK > $WORKDIR/current_week
+fi
+cd $WORKDIR
 
 BUILD_JOBS=2
 BUILD_NPROC=$(getconf _NPROCESSORS_ONLN)
@@ -61,27 +79,35 @@ esac
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 
-mkdir -p $WORKSPACE/$BUILD_NUMBER
-cd $WORKSPACE/$BUILD_NUMBER
-rm -rf CMSDIST PKGTOOLS w
-
-
-git clone git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
-pushd CMSDIST
-  DEFAULT_CMSDIST_TAG="`git rev-parse HEAD`"
-popd
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
 eval `curl -s -k $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 # eval `curl https://raw.github.com/cms-sw/cms-bot/HEAD/config.map | grep $ARCHITECTURE`
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
 # are both branches. See below to handle the case in which they are actually tags.
-rm -rf CMSDIST
-git clone -b $CMSDIST_TAG git://github.com/$CMSDIST_REPO/cmsdist.git CMSDIST
-git clone -b $PKGTOOLS_TAG git://github.com/$PKGTOOLS_REPO/pkgtools.git PKGTOOLS
+
 # In case github is down.
 # git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
 # git clone -b $PKGTOOLS_TAG https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+
+for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TAG; do
+  REPO=`echo $x | cut -f1 -d@`
+  T=`echo $x | cut -f2 -d@`
+  P=`echo $REPO | cut -f2 -d/ | tr "[:lower:]" "[:upper:]"`
+  if [ ! -d $P ]; then
+    git clone -b $T git://github.com/$REPO.git $P
+    pushd $P
+      git remote add originrw git@github.com:$REPO.git
+    popd
+  fi
+  pushd $P
+    git fetch
+    git clean -fxd ; git reset --hard HEAD
+    git checkout $T
+    eval "${P}_HASH=`git rev-parse HEAD`"
+  popd
+done
+
 
 # If we use a tag, rather than a branch, we need to check-it out explicitly.
 # We also store the HASH of both PKGTOOLS and CMSDIST to reuse them later on.
@@ -89,21 +115,15 @@ git clone -b $PKGTOOLS_TAG git://github.com/$PKGTOOLS_REPO/pkgtools.git PKGTOOLS
 # to eventually skip the build if the same exact IB is already available.
 # We disable the whole logic and build a full IB if FORCE_FULL_IB is not empty.
 pushd CMSDIST
-  git checkout $CMSDIST_TAG
-  CMSDIST_HASH="`git rev-parse HEAD`"
   if [ ! "X$FORCE_FULL_IB" = Xtrue ]; then
     PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^\(IB\|REL\)/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
     ALL_PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^ALL/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
   fi
-popd
-
-pushd PKGTOOLS; git checkout $PKGTOOLS_TAG; PKGTOOLS_HASH="`git rev-parse HEAD`"; popd
-
-# We checkout a few files from the default branch in any case.
-pushd CMSDIST
-  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-validation.spec
-  git checkout $DEFAULT_CMSDIST_TAG -- cmssw-ib.spec
-  git checkout $DEFAULT_CMSDIST_TAG -- das-cache.file
+  # We checkout a few files from the default branch in any case.
+  DEFAULT_CMSDIST_URL="https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD"
+  curl -L -s -k $DEFAULT_CMSDIST_URL/cmssw-validation.spec > cmssw-validation.spec
+  curl -L -s -k $DEFAULT_CMSDIST_URL/cmssw-ib.spec > cmssw-ib.spec
+  curl -L -s -k $DEFAULT_CMSDIST_URL/das-cache.file > das-cache.file
 popd
 
 CMS_TAG=""
@@ -137,8 +157,8 @@ for previous in $PREVIOUS_RELEASES; do
   fi
 done
 
-# This is done to decide wether or not we actually need to build a release or  
-# the same CMSDIST / PKGTOOLS / CMSSW tags were used to build an IB which 
+# This is done to decide wether or not we actually need to build a release or
+# the same CMSDIST / PKGTOOLS / CMSSW tags were used to build an IB which
 # is already available in the apt repository.
 if [ "X$PACKAGE_NAME" = Xcmssw-patch ]; then
   AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
@@ -185,9 +205,7 @@ $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 
 
 pushd CMSDIST
-git remote add originrw git@github.com:$CMSDIST_REPO/cmsdist.git
-
-# In case we do not have errors in the full release, or in case we are forcing the 
+# In case we do not have errors in the full release, or in case we are forcing the
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
 # In case we have errors, we use an ERR tag in case we discover it's a full release later on.
 if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then

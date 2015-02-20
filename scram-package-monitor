@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, json, socket, errno
+import os, sys, json, socket, errno, re, urllib2, base64
 from glob import glob
 from datetime import datetime
 from optparse import OptionParser
@@ -8,10 +8,7 @@ from os import getenv
 from time import strftime, localtime, strptime, mktime
 from hashlib import sha1
 from commands import getstatusoutput
-import re
-import urllib2, base64
 
-WORK_DIR = "pkg_mon"
 MAX_FILES_PUSH = 20
 MAX_TIME_STOP = 120 #seconds
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -57,14 +54,11 @@ def check_pid(pid):
         return True
 
 if __name__ == "__main__":
-  try:
-    thread_id = os.fork()
-  except OSError, e:
-    print "Error while forking"
-    sys.exit(1)
-  if not thread_id == 0:
-    sys.exit(0)
-
+  parent_dir = os.getenv("WORKSPACE", "")
+  WORK_DIR = join(parent_dir, "pkg_mon")
+  cmssw_base = os.getenv("CMSSW_BASE", "")
+  SOURCE_DIR = join(cmssw_base, "src")
+  
   parser = OptionParser(usage="%prog <-s|-e> -p <package>")
   parser.add_option("-s","--start", dest="start", action="store_true",
                     help="Building started for package", default=True)
@@ -73,10 +67,42 @@ if __name__ == "__main__":
   parser.add_option("-f","--force", dest="force", action="store_true",
                     help="Force pushing", default=False)
   parser.add_option("-p","--package", dest="pkg_name",
-                    help="Package name to track", default="")
+                    help="Package name to track", default=None)
   parser.add_option("--dry-run", dest="dryrun", action="store_true",
                     help="Do not push files to server", default=False)
   opts, args = parser.parse_args()
+
+  if (not opts.pkg_name and opts.start):
+    results = []
+    cmssw_version = os.getenv("CMSSW_VERSION", "unknown")
+    data = { "hostname": socket.gethostname(),
+               "scram_arch": os.getenv("SCRAM_ARCH", "unknown"),
+               "cmssw_version": cmssw_version,
+            }
+    header = { "index" : { "_index" : strftime("ib-scram-stats-%Y.%m.%d"),
+                           "_type" : "cmssw_pkg_times",
+              } }
+    for p in glob(join(SOURCE_DIR, "*", "*")):
+      pkg = re.match(SOURCE_DIR+"/(.+)", p).groups()[0]
+      h = sha1(pkg + data["scram_arch"] + data["cmssw_version"]).hexdigest()
+      header["index"]["_id"] = h
+      data["package"] = pkg
+      results.append(json.dumps(header))
+      results.append(json.dumps(data))
+    if opts.dryrun:
+      print "Dry run specified, what I would have sent: \n" + str(results) 
+    else:
+      esReportPackages(results)
+    exit(0)
+
+  try:
+    thread_id = os.fork()
+  except OSError, e:
+    print "Error while forking"
+    sys.exit(1)
+  if not thread_id == 0:
+    sys.exit(0)
+
   pkg_name = opts.pkg_name
   create_dir(WORK_DIR)
 
@@ -106,7 +132,7 @@ if __name__ == "__main__":
                        for x in glob(join(WORK_DIR, "*"))])
   timeLimitReached = getctime(WORK_DIR) - int(timestamps.pop())
 
-  if not fileLimitReached and not timeLimitReached and not opts.force:
+  if not fileLimitReached and not timeLimitReached and not opts.force and ( opts.start or opts.pkg_name): #Can force the push with force option or by calling end package without a package
     sys.exit(0)
 
   push_dir = "push_dir_"+str(os.getpid())
@@ -155,9 +181,8 @@ if __name__ == "__main__":
 
   # Actually do the push to ES.
   if opts.dryrun:
-    print "Dry run specified, exiting"
+    print "Dry run specified, what I would have sent: \n" + str(results)
     sys.exit(0)
-
   esReportPackages(results)
 
   for x in removables:

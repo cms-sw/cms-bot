@@ -55,7 +55,7 @@ GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release
 REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 
 UPLOAD_COMMENT = 'upload %s'
-UPLOAD_ALL_COMMENT = 'upload all'
+UPLOAD_ALL_COMMENT = '[uU]pload all'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
 RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
 JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'

@@ -48,6 +48,7 @@ elif [ `df --block-size=1000000000 $WORKSPACE | tail -1 | awk '{print $4}'` -lt 
 else
   echo $THIS_WEEK > $WORKDIR/current_week
 fi
+mkdir -p $WORKDIR
 cd $WORKDIR
 
 BUILD_JOBS=2

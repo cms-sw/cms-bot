@@ -43,7 +43,7 @@ mkdir -p $WORKDIR
 if [ -e "$WORKDIR/current_week" ] && [ ! X`cat "$WORKDIR/current_week"` = X$THIS_WEEK ]; then
   mv $WORKDIR $WORKSPACE/../build-cache/deleteme-$REPOSITORY
   rm -rf $WORKSPACE/../build-cache/deleteme-* &
-elif [ `df --block-size=1000000000 $WORKSPACE | tail -1 | awk '{print $4}'` -lt 100 ]; then
+elif [ `df -k $WORKSPACE | tail -1 | awk '{print $4}'` -lt 100000000 ]; then
   rm -rf $WORKSPACE/../build-cache
 else
   echo $THIS_WEEK > $WORKDIR/current_week

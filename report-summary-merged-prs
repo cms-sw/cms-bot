@@ -406,29 +406,74 @@ def execute_magic_command_find_rv_exceptions_results( ):
   return rv_exception_results
 
 #
-# Searchs in github.io for incomplete results. For now it only works for relvals.
-# It looks into the existing results and adds them to the structure.
+# Searchs in github.io for incomplete results. It fills a structure with the results found
+# this is done to discard tags at the begining
 #
-def execute_magic_command_find_incomplete_results( results ):
-  print( 'Finding incomplete relval results...' )
-  command_to_execute = MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS
+def fill_list_incomplete_results( type ):
+  print( 'Getting incomplete ', type, ' results...')
+  dict = {}
+  if type == 'relvals':
+    command_to_execute = MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS
+    dict = INCOMPLETE_RELVALS_RESULTS
+  elif type == 'builds':
+    command_to_execute = MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_BUILD
+    dict = INCOMPLETE_BUILD_RESULTS
+  else:
+    print( "I don't know this type of result", type )
+    exit( 0 )
+
   out,err,ret_code = get_output_command(command_to_execute)
-  
+
   for line in out.splitlines():
     line_parts = line.split( '/' )
     ib_name = line_parts[ -1 ].replace( 'INCOMPLETE.json', '' ) + line_parts[ -2 ]
     arch = line_parts[ -3 ]
-    line.split( '/' )
-    result_arch = { "arch" : arch,
-                    "passed" : True, 
+
+    if not dict.get( ib_name ):
+      dict[ ib_name ] = []
+      dict[ ib_name ].append( arch )
+    else:
+      dict[ ib_name ].append( arch )
+
+  print_verbose( type )
+  print_verbose( dict )
+
+
+#
+# Searchs in github.io for incomplete results. 
+# It looks into the existing results and adds them to the structure.
+#
+def execute_magic_command_find_incomplete_results( results, type ):
+
+  print( 'Adding incomplete results...' )
+  dict = {}
+  if type == 'relvals':
+    dict = INCOMPLETE_RELVALS_RESULTS
+  elif type == 'builds':
+    dict = INCOMPLETE_BUILD_RESULTS
+  else: 
+    print( "I don't know this type of result", type )
+    exit( 0 )
+
+  for ib_name in dict.keys():
+    for arch in dict[ ib_name ]:
+      result_arch = { "arch" : arch,
+                    "passed" : True,
                     "file" : "not-ready",
                     "details" : {}
                   }
-    if not results.get( ib_name ): 
-      results[ ib_name ] = []
-      results[ ib_name ].append( result_arch )
-    else:
-      results[ ib_name ].append( result_arch )
+      if not results.get( ib_name ):
+        results[ ib_name ] = []
+   
+
+
+
+      # if there is a result for that arch, I don't add the incomplete one
+      if not [ r['arch'] for r in results[ ib_name ] if r['arch'] == arch ]:
+        results[ ib_name ].append( result_arch )
+        print_verbose( 'Added incomplete: ' + type + ', ' + arch +', ' + ib_name )
+      else:
+        print_verbose( 'NOT Added incomplete: ' + type + ', ' + arch +', ' + ib_name )
 
 
 # returns a list of tags based on git log output
@@ -614,7 +659,7 @@ def execute_magic_command_get_cmsdist_tags():
 # It saves the results in the parameter 'results'
 # type can be 'relvals', 'utests', 'addON', 'builds'
 #
-def execute_magic_command_find_results( results , type ):
+def execute_magic_command_find_results( results, type ):
   for arch in ARCHITECTURES:
     if type == 'relvals':
       base_command = MAGIC_COMMAD_FIND_RESULTS_RELVALS
@@ -670,6 +715,7 @@ def print_results(results):
       print '\t' + 'From merge commit' + str(from_merge_commit)
 
       print '\t' + 'RVExceptions: ' + str( comp.get( 'RVExceptions' ) )
+      print '\t' + 'inProgress: ' + str( comp.get( 'inProgress' ) )
 
 
 #
@@ -697,7 +743,6 @@ def fill_missing_cmsdist_tags( results ):
           else:
             comp[ 'cmsdistTags' ][ arch ] = 'Not Found'
 
-
 #
 # merges the results of the tests with the structure of the IBs tags and the pull requests
 # it also marks the comparisons that correspond to an IB
@@ -721,6 +766,8 @@ def add_tests_to_results( results, unit_tests, relvals_results,
       comp[ 'cmsdistTags' ] = cmsdist_tags if cmsdist_tags else {}
       comp[ 'isIB' ] = '-' in rel_name
       comp[ 'RVExceptions' ] = rv_Exceptions_Results.get( rel_name )
+      
+      comp[ 'inProgress' ] = rel_name in ALL_BUILDING_IBS
 
       if not comp.get( 'static_checks' ):
         comp[ 'static_checks' ] = 'not-found'
@@ -899,6 +946,23 @@ def identify_release_groups(results):
   groups['all_release_queues'] = releases
   return groups
 
+#
+# Using the original list of tags and the latest installed IB, it infers which IBs are currently building
+# and IB is currently building if is after lastInstalledIB and incomplete compilation results are found.
+# returns a list of the IBs that are currenyl being built. 
+#
+def getBuildingIBs( originalTags, lastInstalled ):
+
+  print_verbose( 'last Installed: ' + lastInstalled )
+  print_verbose( 'Original tags: ' + str( originalTags ) )
+  print_verbose( 'index: ' + str( originalTags.index( lastInstalled ) ) )
+  #these are te tags that are between the latest installed release and the head of the branch
+  latestTags = originalTags[ (originalTags.index( lastInstalled )+1): ]
+  print_verbose( 'latestTags: ' + str( latestTags ) )
+
+  return [ t for t in latestTags if t in INCOMPLETE_BUILD_RESULTS.keys() ]
+  
+
 #-----------------------------------------------------------------------------------
 #---- Start of execution
 #-----------------------------------------------------------------------------------
@@ -918,6 +982,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name unitTests-summary.log'
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name addOnTests.log'
   MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name logAnalysis.pkl'
+  MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_BUILD = "find cms-sw.github.io/data/scram/ -name '*INCOMPLETE.json'"
   STATIC_CHECKS_URL = 'http://' + ARTIFACTS_MACHINE + '/SDT/jenkins-artifacts/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
   HLT_TESTS_URL = 'http://' + ARTIFACTS_MACHINE + '/SDT/jenkins-artifacts/HLT-Validation/RELEASE_NAME/'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'curl -s -k --head %s | head -n 1' % STATIC_CHECKS_URL
@@ -949,7 +1014,24 @@ if __name__ == "__main__":
   # }
   # will be filled using config.map by get_config_map_params()
   RELEASES_ARCHS = {}
-
+  # The IBs and arch for which incomplete results are availavle
+  # this is loaded earlier to allow to discard tags since the beginning
+  # The schema is:
+  # {
+  #   "<IBName>": [ "arch1" , "arch2" , ... ,"archN" ]
+  # }
+  # will be filled with fill_list_incomplete_results( type )
+  INCOMPLETE_BUILD_RESULTS = {}
+  # The IBs and arch for which relval results are availavle
+  # The schema is:
+  # {
+  #   "<IBName>": [ "arch1" , "arch2" , ... ,"archN" ]
+  # }
+  # will be filled with fill_list_incomplete_results( type )
+  INCOMPLETE_RELVALS_RESULTS = {}  
+  # A list of IBs which are being built
+  # will be filled with getBuildingIBs( originalTags, lastInstalled )
+  ALL_BUILDING_IBS = []
   MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
 
   class BuildResultsKeys:
@@ -990,6 +1072,9 @@ if __name__ == "__main__":
   print_verbose( 'Installed Releases:' )
   print_verbose( installedReleases )
 
+  fill_list_incomplete_results( 'builds' )
+  fill_list_incomplete_results( 'relvals' )
+
   for comp in REQUESTED_COMPARISONS:
     start_tag = comp.split("..")[0]
     end_tag = comp.split("..")[1]
@@ -1016,10 +1101,16 @@ if __name__ == "__main__":
     release_queue_results[ 'base_branch' ] = release_branch
 
     print 'Identifying tags...'
-    tags = execute_magic_command_tags( start_tag , end_tag , release_queue , release_branch )
+    tags = execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch )
+    originalTags = tags
     tags = [x for x in tags if x in installedReleases]
+    # this is to get the IBs that are not installed and most probably are being built
+    lastInstalled = tags[ -1 ]
+    buildingIBs = getBuildingIBs( originalTags, lastInstalled )
+    ALL_BUILDING_IBS.extend( buildingIBs )
+    tags.extend( buildingIBs ) 
+ 
     tags.append( release_branch )
-    
     print 'I got these tags: '
     print tags 
 
@@ -1044,10 +1135,11 @@ if __name__ == "__main__":
   
   build_results = {}
   execute_magic_command_find_results( build_results , 'builds' )
+  execute_magic_command_find_incomplete_results( build_results, 'builds' )
   
   relvals_results = {}
   execute_magic_command_find_results( relvals_results , 'relvals' )
-  execute_magic_command_find_incomplete_results( relvals_results )
+  execute_magic_command_find_incomplete_results( relvals_results, 'relvals' )
   
   unit_tests_results = {}
   execute_magic_command_find_results( unit_tests_results , 'utests' )
@@ -1075,3 +1167,4 @@ if __name__ == "__main__":
   out_groups = open("structure.json", "w")
   json.dump(structure,out_groups,indent=4)
   out_groups.close()
+

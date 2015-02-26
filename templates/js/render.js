@@ -83,9 +83,15 @@ get_tests_url = function( type, file, arch, ib ) {
          
   var details_link = ""
   if (type == 'utests' || type =='builds'){
-    details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[6] + '/'
+
+    if( file == 'not-ready' ){
+      details_link = "http://cms-sw.github.io/scramDetail.html#" + arch + ";" + ib 
+    }else{
+
+      details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[6] + '/'
                                                                 +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]
                                                                 +'/'+link_parts[10]
+   }
 
   }else if(type == 'relvals'){
     if ( file == 'not-ready' ){
@@ -162,7 +168,12 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
    
   }else if (type == 'builds'){
 
-    if (result == 'passed'){
+    incomplete = file == 'not-ready'
+
+    if ( incomplete ){
+        r_class = "label label-info"
+        test_label = "Not complete"
+    }else if (result == 'passed'){
       r_class = "label label-success"
       test_label = 'See Details'
     }else if (result == 'warning'){
@@ -323,9 +334,22 @@ addTagLink = function( titleCell , currentTag ){
 }
 
 /**
+ * Adds an indicator that informs that the IB is currently being built
+ */
+addInProgressWarning = function( titleCell, currentTag ){
+
+  var progressSpan = $( '<b>' ).text( 'This IB is currently being built' )
+  var progressGlyph = $( '<span>' ).attr( 'class', 'glyphicon glyphicon-hourglass' )
+
+  titleCell.append( progressGlyph )
+  titleCell.append( progressSpan )
+  titleCell.append( $('<br>') )
+}
+
+/**
  * writes a table with the comparison lates tag, and the information about the IB if it is an IB
  */
-write_comp_IB_table =  function( comparison , tab_pane ){
+write_comp_IB_table =  function( comparison, tab_pane ){
 
   var current_tag = comparison.compared_tags.split("-->")[1]
   isTopOfBranch = ( current_tag.indexOf( '-' ) == -1 ) && ( current_tag.indexOf( 'X' ) >= 0 )
@@ -334,12 +358,15 @@ write_comp_IB_table =  function( comparison , tab_pane ){
   if ( isTopOfBranch ){
     title_compared_tags.text( 'Next IB:')
   }
-   
+
   var titleTable = $('<table class="table table-condensed"></table>')
   titleTable.attr( 'id' , current_tag )
   tab_pane.append( titleTable )
 
   var title_cell = $('<td>').append(title_compared_tags)
+  if( comparison[ 'inProgress' ] ){
+    addInProgressWarning( title_cell, current_tag )
+  }
   addTagLink( title_cell , current_tag )
   title_cell.append($('<br>'))
  
@@ -379,7 +406,7 @@ write_comp_IB_table =  function( comparison , tab_pane ){
       var ar_row = $( '<tr>' )
       titleTable.append(ar_row)
       var ar_cell = $( '<td>' )
-      fill_arch_cell( ar_cell , architectures[ i ], comparison.cmsdistTags, current_tag )
+      fill_arch_cell( ar_cell, architectures[ i ], comparison.cmsdistTags, current_tag )
       ar_row.append(ar_cell)
       add_tests_to_row( building_results , ar_row , architectures[i] , 'builds', current_tag )
       add_tests_to_row( uTests_results, ar_row, architectures[i] , 'utests', current_tag )

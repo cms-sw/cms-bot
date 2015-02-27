@@ -713,7 +713,7 @@ Martin-Grunewald:
 - Utilities
 - SLHCUpgradeSimulations
 - L1Trig
-- HLTrigger
+- HLTrigger/
 - FWCore
 - FastSimulation
 - EventFilter

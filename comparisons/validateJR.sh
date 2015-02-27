@@ -5,6 +5,7 @@ inList=$4
 
 cWD=`pwd`
 export pidList=""
+nProc=$(getconf _NPROCESSORS_ONLN)
 echo Start processing at `date`
 grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do 
     [ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN} && continue
@@ -25,9 +26,9 @@ grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do
     export pidList
     echo $pidList
     nRunning=`ps -p $pidList | grep -c root`
-    while ((nRunning > 5 )); do  
+    while  [ "$nRunning" -ge "$nProc"  ]; do  
 	nRunning=`ps -p $pidList | grep -c root`
-#	echo $nRunning "still above 5 -> sleep 10 "
+        echo "limiting number of parallel processes"
 	sleep 10
     done
     cd ${cWD}
@@ -35,9 +36,11 @@ grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do
 done
 allPids=`cat lastlist.txt`
 nRunning=1
-while (( nRunning > 0 )); do
+timeWaiting=0
+while [ "$nRunning" -gt "0" -a "$timeWaiting" -lt "3600" ]; do
     nRunning=`ps -p $allPids | grep -c root`
-#    echo $nRunning
-    sleep 10
+    echo "waiting maximum 1 more Hour for the processes to finish"
+    sleep 30
+    timeWaiting=$((timeWaiting + 30))
 done
 echo done at `date`

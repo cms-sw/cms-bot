@@ -16,7 +16,7 @@ export LANG=C
 
 # Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at
 # any point.
-find $BASEDIR -maxdepth 1 -mindepth 1 | sort -n | head -n -2 | xargs rm -rf
+find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs rm -rf
 
 # The repositories we need to install are those for which we find the
 # timestamp files:

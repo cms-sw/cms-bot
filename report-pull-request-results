@@ -30,6 +30,29 @@ parser.add_option("--repo", action="store", dest="custom_repo", help="Tells me t
 
 
 #
+# Searches in the comments if there is a comment made from the given users that
+# matches the given pattern. It returns a list with the matched comments.
+#
+def search_in_comments( comments, user_logins, pattern, first_line ):
+  found_comments = []
+  requested_comment_bodies = [ c.body for c in comments if c.user.login in user_logins ]
+
+  for body in requested_comment_bodies:
+    examined_str = body
+    if first_line:
+      examined_str = str(body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+
+    if examined_str == pattern:
+      found_comments.append( body )
+      continue
+
+    if re.match( pattern , examined_str ):
+      found_comments.append( body )
+
+  return found_comments
+
+
+#
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #
 def get_wf_error_msg( out_directory , out_file ):
@@ -204,14 +227,23 @@ def mark_commit_if_needed( action, details ):
 
 #
 # Sends a message to the pull request. It takes into account if the dry-run option was set
+# If checkDuplicateMessage is set to true, it checks if the message was already posted in the thread
+# and if it is it doesn't post it again
 #
-def send_message_pr( pr, message ):
+def send_message_pr( pr, message, checkDuplicateMessage=False ):
 
   today=datetime.datetime.today().date()
   if DATE == today:
     index = random.randint( 0, len( GLADOS )-1  )
     glados_msg = '\n```Python\n#'+ GLADOS[ index ]+ '\n```'
     message += glados_msg + '\n'
+
+  if checkDuplicateMessage:
+    comments = [ c for c in pr.get_issue_comments( ) ]
+    print 'Checking if the message is already in the thread...'
+    if search_in_comments( comments, [ 'cmsbuild' ], message, False):
+      print 'Message already in the thread. \nNot posting'
+      return
 
   if options.no_post_mesage:
     print 'Not posting message ( dry-run ): \n ', message
@@ -260,8 +292,6 @@ def send_not_mergeable_pr_message( repo, pr_number ):
   
   message = "-1\n"+"@" + user.login + ' This pull request cannot be automatically '\
             ' merged, could you please rebase it?'
-  print 'Posting message:'
-  print message
 
   send_message_pr( pull_request, message )
 
@@ -280,7 +310,7 @@ def send_remote_ref_issue_message( repo, pr_number):
   print 'Posting message:'
   print message
 
-  send_message_pr( pull_request, message )
+  send_message_pr( pull_request, message, checkDuplicateMessage=True )
 
 #
 # sends an approval message for a pr in cmssw

@@ -39,16 +39,14 @@ export USER_HOOK_PROJECT=$WORKSPACE/cms-bot/scram-package-monitor
 # too much disk space.
 WORKDIR=$WORKSPACE/../build-cache/$REPOSITORY
 THIS_WEEK=`date +%W`
-mkdir -p $WORKDIR
 if [ -e "$WORKDIR/current_week" ] && [ ! X`cat "$WORKDIR/current_week"` = X$THIS_WEEK ]; then
   mv $WORKDIR $WORKSPACE/../build-cache/deleteme-$REPOSITORY
   rm -rf $WORKSPACE/../build-cache/deleteme-* &
 elif [ `df -k $WORKSPACE | tail -1 | awk '{print $4}'` -lt 100000000 ]; then
   rm -rf $WORKSPACE/../build-cache
-else
-  echo $THIS_WEEK > $WORKDIR/current_week
 fi
 mkdir -p $WORKDIR
+echo $THIS_WEEK > $WORKDIR/current_week
 cd $WORKDIR
 rm -rf w/SPECS
 

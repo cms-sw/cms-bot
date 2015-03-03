@@ -720,3 +720,21 @@ Martin-Grunewald:
 - Configuration
 apfeiffer1:
 - Cond
+jdolen:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+- TopQuarkAnalysis/TopPairBSM
+- HLTriggerOffline/B2G
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos

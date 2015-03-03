@@ -15,7 +15,10 @@ from os.path import expanduser
 GH_CMSSW_ORGANIZATION = 'cms-sw'
 GH_CMSSW_REPO = 'cmssw'
 POST_BUILDING='BUILDING'
+POST_TOOL_CONF_BUILDING='TOOL_CONF_BUILDING'
 BUILD_OK='BUILD_OK'
+TOOL_CONF_OK='TOOL_CONF_OK'
+TOOL_CONF_ERROR = 'TOOL_CONF_ERROR'
 BUILD_ERROR='BUILD_ERROR'
 UPLOADING='UPLOADING'
 UPLOAD_OK='UPLOAD_OK'
@@ -28,13 +31,23 @@ TESTS_OK='TESTS_OK'
 TESTS_ERROR='TESTS_ERROR'
 BUILDING_MSG='The build has started for {architecture} in {machine}. \n' \
              'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console \n' \
-             '{details}' 
+             '{details}'
+BUILDING_TOOL_CONF_MSG='The cmssw-tool-conf build has started for {architecture} in {machine}. \n' \
+             'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console \n' \
+             '{details}'
 BUILD_OK_MSG='The build has finished sucessfully for the architecture {architecture} and is ready to be uploaded. \n' \
              '* You can start the uploads by writing the comment: "upload all". I will upload all the architectures as soon as the build finishes successfully.\n' \
              '* Or you can start the upload only for {architecture} by writing: "upload {architecture}".\n \n' \
              'You can see the log for the build here: \n' \
              '{log_url} \n' \
              'Some tests ( runTheMatrix.py -s ) are being run, the results will be posted when done.'
+TOOL_CONF_OK_MSG='The cmssw-tool-conf build has finished sucessfully for the architecture {architecture} and it was automatically uploaded. \n' \
+             'Remember that if you write "+1" I will start to build this and all the architectures as soon as their cmssw-tool-conf finish.\n' \
+             'You can see the log for the build here: \n' \
+             '{log_url} \n' 
+TOOL_CONF_ERROR_MSG='There was an error building cmssw-tool-conf for {architecture} \n' \
+             'You can see the log for the build here: \n' \
+             '{log_url} \n'
 UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
               'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/upload-release/{jk_build_number}/console'
 UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
@@ -51,7 +64,7 @@ TESTS_ERROR_MSG='There was an error when running the tests for {architecture} \n
 BUILD_ERROR_MSG='The was an error for {architecture}. \n You can see the log here: \n {log_url}'
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED = 'build-release-started'
-BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-build-release/%s-%s/%d' 
+BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-build-release/%s-%s/%d'
 BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-upload-release/%s-%s/%d'
 BASE_CLEANUP_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cleanup-auto-build/%s-%s/%d'
 
@@ -131,6 +144,17 @@ if __name__ == "__main__":
     new_label = arch+'-building'
     add_label( issue, new_label )
 
+  elif action == POST_TOOL_CONF_BUILDING:
+
+    msg_details = ''
+    if opts.details:
+      msg_details = opts.details
+    msg = BUILDING_TOOL_CONF_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number, details=msg_details )
+    post_message( issue , msg )
+    remove_label( issue, arch+'-tool-conf-waiting' )
+    new_label = arch+'-tool-conf-building'
+    add_label( issue, new_label )
+
   elif action == BUILD_OK:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
@@ -139,6 +163,14 @@ if __name__ == "__main__":
     remove_label( issue, arch+'-building' )
     add_label( issue,  arch+'-build-ok' )
 
+  elif action == TOOL_CONF_OK:
+
+    results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
+    msg = TOOL_CONF_OK_MSG.format( architecture=arch, log_url=results_url )
+    post_message( issue , msg )
+    remove_label( issue, arch+'-tool-conf-building' )
+    add_label( issue,  arch+'-tool-conf-ok' )
+
   elif action == BUILD_ERROR:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
@@ -146,6 +178,14 @@ if __name__ == "__main__":
     post_message( issue , msg )
     remove_label( issue, arch+'-building' )
     add_label( issue,  arch+'-build-error' )
+
+  elif action == TOOL_CONF_ERROR:
+
+    results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
+    msg = TOOL_CONF_ERROR_MSG.format( architecture=arch, log_url=results_url )
+    post_message( issue , msg )
+    remove_label( issue, arch+'-tool-conf-building' )
+    add_label( issue,  arch+'-tool-conf-error' )
 
   elif action == UPLOADING:
 

@@ -8,7 +8,7 @@ import re
 import json
 import urllib2
 import yaml
-
+from  datetime import datetime, timedelta
 
 # 
 # Processes a github issue to check if it is requesting the build of a new release
@@ -18,6 +18,7 @@ import yaml
 # -------------------------------------------------------------------------------
 # Global Variables
 # --------------------------------------------------------------------------------
+
 GH_CMSSW_ORGANIZATION = 'cms-sw'
 GH_CMSSW_REPO = 'cmssw'
 GH_CMSDIST_REPO = 'cmsdist'
@@ -56,12 +57,15 @@ REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]
 
 UPLOAD_COMMENT = 'upload %s'
 UPLOAD_ALL_COMMENT = '[uU]pload all'
+ABORT_COMMENT = '^[Aa]bort$'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
 RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
 JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
 JENKINS_RELEASE='RELEASE'
 JENKINS_PREV_CMSDIST_TAG='PREVIOUS_CMSDIST_TAG'
 JENKINS_CMSDIST_TAG='CMSDIST_TAG'
+
+
 
 # -------------------------------------------------------------------------------
 # Statuses
@@ -114,6 +118,32 @@ def create_properties_files_upload( release_name, arch, issue_number, machine_na
     out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
     out_file.write( '%s=%s\n' % ( JENKINS_MACHINE_NAME , machine_name ) )
+
+
+#
+# Searches in the comments if there is a comment made from  the given users  that
+# matches the given pattern. It returns the date of the first comment that matches
+# if no comment matches it not returns None
+# 
+def search_date_comment( comments, user_logins, pattern, first_line ):
+
+  for comment in comments:
+
+    if comment.user.login not in user_logins:
+      continue
+ 
+    examined_str = comment.body
+
+    if first_line:
+      examined_str = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+
+    if examined_str == pattern:
+      return comment.created_at
+
+    if re.match( pattern , examined_str ):
+      return comment.created_at
+
+  return None
 
 
 #
@@ -389,6 +419,44 @@ def abort_build( issue, release_name, architectures):
   add_label( issue, BUILD_ABORTED )
   remove_label( issue, BUILD_IN_PROGRESS )
 
+#
+# Classifies the labels and fills the lists with the details of the current
+# status of each architecture
+#
+def fillDeatilsArchsLists( issue ):
+  labels = [ l.name for l in issue.get_labels() ]
+  TO_UPLOAD.extend( [ x.split('-')[0] for x in labels if '-build-ok' in x ] )
+  UPLOAD_OK.extend( [ x.split('-')[0] for x in labels if '-upload-ok' in x ] )
+  UPLOADING.extend( [ x.split('-')[0] for x in labels if '-uploading' in x ] )
+  BUILD_ERROR.extend( [ x.split('-')[0] for x in labels if '-build-error' in x ] )
+  TO_CLEANUP.extend( UPLOAD_OK + BUILD_ERROR + TO_UPLOAD )
+
+#
+# Triggers the cleanup for the architectures in the list TO_CLEANUP 
+#
+def triggerCleanup( issue, comments, release_name ):
+
+  if TO_CLEANUP:
+
+    for arch in TO_CLEANUP:
+
+      pattern = 'The build has started for %s .*' % arch
+      build_info_comments = search_in_comments( comments, ['cmsbuild', 'nclopezo'], pattern, False)
+
+      if not build_info_comments:
+        print 'No information found about the build machine, something is wrong for %s' % arch
+        continue
+
+      build_machine = build_info_comments[-1].split( ' ' )[7].strip( '.' )
+      print 'Triggering cleanup for %s' % arch
+      create_properties_file_cleanup( release_name, arch, issue.number, build_machine )
+      msg = CLEANUP_STARTED_MSG.format( architecture=arch )
+      post_message( issue, msg )
+      remove_label( issue, arch + '-upload-ok' )
+      remove_label( issue, arch + '-build-error' )
+      add_label( issue, arch + '-finished' )
+
+
 # -------------------------------------------------------------------------------
 # Start of execution 
 # --------------------------------------------------------------------------------
@@ -469,7 +537,30 @@ if __name__ == "__main__":
 
   # Get the status of this issue.
   status = get_issue_status( issue ) 
-  print 'Status: %s \n' % status 
+  print 'Status: %s \n' % status
+
+  labels = [ l.name for l in issue.get_labels() ]
+
+  TO_UPLOAD = []
+  UPLOAD_OK = []
+  UPLOADING = []
+  BUILD_ERROR = []
+  TO_CLEANUP = []
+  # These lists are filled by fillDeatilsArchsLists( issue )
+
+  fillDeatilsArchsLists( issue )
+
+  if status == BUILD_ABORTED:
+    print 'Build Aborted. A new issue must be created if you want to build the release'
+
+    date_aborted = search_date_comment( comments, APPROVE_BUILD_RELEASE, ABORT_COMMENT, True )
+    cleanup_deadline = datetime.now() - timedelta(days=2)
+    if date_aborted < cleanup_deadline:
+      print 'Cleaning up since it was aborted more than 2 days ago'
+      triggerCleanup( issue, comments, release_name )
+    else:
+      print 'Not too old yet to clean up'
+    
 
   if status == NEW_ISSUE:
     approvers = ", ".join( [ "@"+x for x in APPROVE_BUILD_RELEASE ] )
@@ -510,15 +601,9 @@ if __name__ == "__main__":
     add_label( issue, BUILD_IN_PROGRESS )
 
   if status == BUILD_IN_PROGRESS:
-    labels = [ l.name for l in issue.get_labels() ]
-    to_upload = [ x.split('-')[0] for x in labels if '-build-ok' in x ]
-    upload_ok = [ x.split('-')[0] for x in labels if '-upload-ok' in x ]
-    uploading = [ x.split('-')[0] for x in labels if '-uploading' in x ] 
-    build_error = [ x.split('-')[0] for x in labels if '-build-error' in x ]
     # the build can be aborted only if none of the architectures has been uploaded or is uploading
-    if not ( uploading + upload_ok ):
-      pattern = '^[Aa]bort$'
-      abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
+    if not ( UPLOADING + UPLOAD_OK ):
+      abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , ABORT_COMMENT, True )
       print abort_comments
       if abort_comments:
         print 'Aborting'
@@ -527,7 +612,7 @@ if __name__ == "__main__":
     else:
       print "You can't abort the build at this point"
  
-    if upload_ok and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
+    if UPLOAD_OK and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
       pattern = '^release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
       release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
       for comment in release_notes_comments:
@@ -546,38 +631,20 @@ if __name__ == "__main__":
         add_label( issue, RELEASE_NOTES_GENERATED_LBL )
 
     # check if the cleanup has been requested.
-    to_cleanup = upload_ok + build_error
-    if to_cleanup:
+    if TO_CLEANUP:
       pattern = '^cleanup$'
       cleanup_requested_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
       if cleanup_requested_comments:
-        # trigger the cleanup for each architecture that was build correctly
-        for arch in to_cleanup:
-          print arch
-          pattern = 'The build has started for %s .*' % arch
-          build_info_comments = search_in_comments( comments, ['cmsbuild'], pattern, False)
-          if not build_info_comments:
-            print 'No information found about the build machine, something is wrong for %s' % arch
-            exit(1)
-          
-          build_machine = build_info_comments[-1].split( ' ' )[7].strip( '.' )
-          print 'Triggering cleanup for %s' % arch
-          create_properties_file_cleanup( release_name, arch, issue.number, build_machine )
-          msg = CLEANUP_STARTED_MSG.format( architecture=arch )
-          post_message( issue, msg ) 
-          remove_label( issue, arch + '-upload-ok' )
-          remove_label( issue, arch + '-build-error' )
-          add_label( issue, arch + '-finished' )
+        triggerCleanup( issue, comments, release_name )
 
-
-    if not to_upload:
+    if not TO_UPLOAD:
       print 'Nothing to upload for any architecture.' 
       exit( 0 )
 
     pattern = '^' + UPLOAD_ALL_COMMENT + '$'
     upload_all_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
     
-    for arch in to_upload:
+    for arch in TO_UPLOAD:
       print 'Ready to upload %s' % arch
 
       if upload_all_requested:

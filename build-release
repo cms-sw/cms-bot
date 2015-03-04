@@ -5,11 +5,19 @@
 # ARCHITECTURE: architecture for the build
 # ISSUE_NUMBER: the number of the issue that triggered the build
 # DRY_RUN_PARAM: parameter that to use dry-run
+# ONLY_BUILD_TOOLCONF: if True, tells me to only build cmssw-tool-conf 
 
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
 mkdir -p $BUILD_DIR
 QUEUE=$CMSSW_QUEUE
+
+if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
+  POST_ACTION='TOOL_CONF_BUILDING'
+else
+  POST_ACTION='BUILDING'
+fi
+
 
 git clone git@github.com:cms-sw/cmsdist.git $BUILD_DIR/CMSDIST
 pushd $BUILD_DIR/CMSDIST
@@ -31,7 +39,7 @@ git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOL
 
 BRANCH_DETAILS="CMSDIST Branch: [$CMSDIST_TAG](https://github.com/cms-sw/cmsdist/commits/$CMSDIST_TAG), PKGTOOLS Branch: [$PKGTOOLS_TAG](https://github.com/cms-sw/pkgtools/commits/$PKGTOOLS_TAG)"
 WORKER=`hostname -s`
-./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z BUILDING $DRY_RUN_PARAM -d "$BRANCH_DETAILS"
+./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z $POST_ACTION $DRY_RUN_PARAM -d "$BRANCH_DETAILS"
 
 pushd $BUILD_DIR
   # prepare cmssw.spec
@@ -53,6 +61,19 @@ pushd $BUILD_DIR
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   $CMSBUILD_CMD build $TOOL_CONF_PACKAGES
   $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+
+  if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
+    echo 'I was asked to build only cmssw-tool-conf, exiting without building cmssw'
+
+    pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
+      git tag  REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
+      git push origin REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
+    popd
+    # If it reaches here it is because there were no errors
+    echo 'ALL_OK'
+    exit 0
+  fi
+
   $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
   $CMSBUILD_CMD build cmssw$PATCH
 popd

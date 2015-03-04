@@ -34,14 +34,21 @@ RELEASE_CREATION_FAIL_MSG = 'There was an error while attempting to create {rel_
 WRONG_RELEASE_NAME_MSG = 'The release name is malformed. Please check for typos.'
 ACK_MSG = 'Request received. I will start to build the release after one of the following approve ' \
           'the issue: {approvers_list}. You can do this by writing "+1" in a ' \
-          'comment.\n'
+          'comment.\n You can also ask me to begin to build cmssw-tool-conf first ( Cannot be done for patch releases ). To do this write ' \
+          '"build cmssw-tool-conf" in a comment. I will start to build cmssw-tool-conf and then wait for the "+1" ' \
+          'to start the build of the release. \n' 
 WATCHERS_MSG = '{watchers_list} you requested to watch the automated builds for {queue}' 
 QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s \n' \
                      'You can abort the build by writing "Abort" in a comment. I will delete the release, ' \
                      'the cmssw and cmsdist tag, and close the issue. You can\'t abort the upload once at' \
                      ' least one achitecture is being uploaded'
+QUEUING_TOOLCONF_MSG = 'Queuing Jenkins build for cmssw-tool-conf for the following architectures: %s \n' \
+                     'Be aware that I am building only cmssw-tool-conf. You still need to "+1" this issue to ' \
+                     'make me start the build of the release. For each architecture, I will only start to build ' \
+                     'the release after cmssw-tool-conf finishes building.'
 QUEING_UPLOADS_MSG = 'Queing Jenkins upload for {architecture}'
 CLEANUP_STARTED_MSG = 'The cleanup has started for {architecture}'
+NOT_TOOLCONF_FOR_PATCH_MSG = 'You cannot ask me to build cmssw-tool-conf for patch releases. Please delete that message.'
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED_LABEL = 'build-release-started'
 JENKINS_CMSSW_X_Y_Z = 'CMSSW_X_Y_Z'
@@ -49,6 +56,7 @@ JENKINS_ARCH = 'ARCHITECTURE'
 JENKINS_ISSUE_NUMBER = 'ISSUE_NUMBER'
 JENKINS_MACHINE_NAME = 'MACHINE_NAME'
 JENKINS_CMSSW_QUEUE = 'CMSSW_QUEUE'
+JENKINS_ONLY_TOOL_CONF = 'ONLY_BUILD_TOOLCONF'
 WRONG_NOTES_RELEASE_MSG = '{previous_release} does not appear to be a valid release name'
 GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release}. \n' \
                                'You can see the progress here: \n' \
@@ -58,6 +66,8 @@ REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]
 UPLOAD_COMMENT = 'upload %s'
 UPLOAD_ALL_COMMENT = '[uU]pload all'
 ABORT_COMMENT = '^[Aa]bort$'
+BUILD_TOOLCONF = '^[Bb]uild cmssw-tool-conf'
+APPROVAL_COMMENT =  '^[+]1$'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
 RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
 JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
@@ -82,6 +92,8 @@ BUILD_IN_PROGRESS = 'build-in-progress'
 BUILD_STARTED = 'build-started'
 # The build has been aborted. 
 BUILD_ABORTED = 'build-aborted'
+# they requested to build cmssw-tool-conf and it is being built
+TOOLCONF_BUILDING = 'toolconf-building'
 
 # -------------------------------------------------------------------------------
 # Functions
@@ -186,8 +198,9 @@ def check_if_already_processed( issue ):
   return False
 #
 #  Creates the properties files to trigger the build in Jenkins
+# if only_toolconf is selected, it adds a parameter to tell the script to only build cmssw-tool-conf
 #
-def create_properties_files(release_name, architectures, issue_number, queue):
+def create_properties_files(release_name, architectures, issue_number, queue, only_toolconf=False):
   if opts.dryRun:
     print 'Not creating properties files for (dry-run): %s' % ", ".join( architectures )
     return
@@ -200,6 +213,8 @@ def create_properties_files(release_name, architectures, issue_number, queue):
     out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
     out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_QUEUE , queue) )
+    out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, only_toolconf ) )
+
 
 #
 # generates the properties file for triggering the release notes
@@ -383,6 +398,8 @@ def get_issue_status( issue ):
     return PENDING_APPROVAL
   if BUILD_IN_PROGRESS in labels:
     return BUILD_IN_PROGRESS
+  if TOOLCONF_BUILDING in labels:
+    return TOOLCONF_BUILDING
 
 #
 # removes the labels of the issue
@@ -429,6 +446,10 @@ def fillDeatilsArchsLists( issue ):
   UPLOAD_OK.extend( [ x.split('-')[0] for x in labels if '-upload-ok' in x ] )
   UPLOADING.extend( [ x.split('-')[0] for x in labels if '-uploading' in x ] )
   BUILD_ERROR.extend( [ x.split('-')[0] for x in labels if '-build-error' in x ] )
+  TOOL_CONF_BUILDING.extend( [ x.split('-')[0] for x in labels if '-tool-conf-building' in x ] )
+  TOOL_CONF_OK.extend( [ x.split('-')[0] for x in labels if '-tool-conf-ok' in x ] )
+  TOOL_CONF_ERROR.extend( [ x.split('-')[0] for x in labels if '-tool-conf-error' in x ] )
+  TOOL_CONF_WAITING.extend( [ x.split('-')[0] for x in labels if '-tool-conf-waiting' in x ] )
   TO_CLEANUP.extend( UPLOAD_OK + BUILD_ERROR + TO_UPLOAD )
 
 #
@@ -456,6 +477,40 @@ def triggerCleanup( issue, comments, release_name ):
       remove_label( issue, arch + '-build-error' )
       add_label( issue, arch + '-finished' )
 
+#
+# Creates the release in github, including the cmssw tag. It then creates the files to trigger the builds in jenkins
+#TODO check cmssw toolconf
+#
+def start_release_build( issue, release_name, release_branch, architectures ): 
+
+  # if someone approved, go ahead and create the release
+  cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
+  release_created = create_release_github( cmssw_repo, release_name, release_branch )
+  if not release_created:
+    msg = RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name )
+    post_message( issue , RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name ) )
+    exit( 0 )
+
+  msg = RELEASE_CREATED_MSG % ( RELEASE_BASE_URL % release_name )
+  post_message( issue , msg )
+
+  ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
+  create_properties_files( release_name, ready_to_build, issue.number, release_queue )
+  msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
+  post_message( issue , msg )
+
+#
+# Creates the files to trigger the build of cmssw-tool-conf in jenkins.
+#
+def start_tool_conf_build( issue, release_name, release_branch, architectures ):
+
+  create_properties_files( release_name, architectures, issue.number, release_queue, only_toolconf=True )
+  QUEUING_TOOLCONF_MSG
+  msg = QUEUING_TOOLCONF_MSG % ', '.join( architectures )
+  post_message( issue , msg )
+  remove_labels( issue )
+  add_label( issue, TOOLCONF_BUILDING ) 
+  
 
 # -------------------------------------------------------------------------------
 # Start of execution 
@@ -546,6 +601,10 @@ if __name__ == "__main__":
   UPLOADING = []
   BUILD_ERROR = []
   TO_CLEANUP = []
+  TOOL_CONF_BUILDING = []
+  TOOL_CONF_OK = []
+  TOOL_CONF_ERROR = []
+  TOOL_CONF_WAITING = []
   # These lists are filled by fillDeatilsArchsLists( issue )
 
   fillDeatilsArchsLists( issue )
@@ -579,28 +638,49 @@ if __name__ == "__main__":
 
   if status == PENDING_APPROVAL:
     approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , '^[+]1$', True )
-    if not approval_comments:
-      print 'Build not approved yet'
+    build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
+    is_patch = 'patch' in release_name
+    
+    if build_toolconf_commments:
+      if is_patch:
+        post_message( issue, NOT_TOOLCONF_FOR_PATCH_MSG )
+      else:
+        start_tool_conf_build( issue, release_name, release_branch, architectures )
+    elif approval_comments:
+      start_release_build( issue, release_name, release_branch, architectures )
+      remove_labels( issue )
+      add_label( issue, BUILD_IN_PROGRESS )
+    else:
+      print 'Build not approved yet, or cmssw-tool-conf requested'
       exit( 0 )
 
-    # if someone approved, go ahead and create the release
-    cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
-    release_created = create_release_github( cmssw_repo, release_name, release_branch )
-    if not release_created:
-      msg = RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name )
-      post_message( issue , RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name ) )
-      exit( 0 )
+  if status == TOOLCONF_BUILDING:
+    print 'Waiting for approval to start the build'
+    approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , APPROVAL_COMMENT, True )
+    if approval_comments:
+      print 'Build approved, switching to "Build in Progress" state'
 
-    msg = RELEASE_CREATED_MSG % ( RELEASE_BASE_URL % release_name )
-    post_message( issue , msg )
+      # add a label for each arch for which tool conf has not started in jenkins
+      tool_conf_reported = ( TOOL_CONF_BUILDING + TOOL_CONF_OK + TOOL_CONF_ERROR )
+      not_started = list( set( architectures ) - set( tool_conf_reported ) )
 
-    create_properties_files( release_name, architectures, issue_id, release_queue )
-    msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
-    post_message( issue , msg )
-    remove_labels( issue )
-    add_label( issue, BUILD_IN_PROGRESS )
+      for arch in not_started:
+        add_label( issue, arch + '-tool-conf-waiting' )
+        TOOL_CONF_WAITING.append( arch )
+
+      remove_label( issue, TOOLCONF_BUILDING )
+      add_label( issue, BUILD_IN_PROGRESS ) 
+      start_release_build( issue, release_name, release_branch, architectures )
 
   if status == BUILD_IN_PROGRESS:
+    
+    ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
+    print 'conf tool waiting'
+    print TOOL_CONF_WAITING
+    print 'ready to build'
+    print ready_to_build
+    create_properties_files( release_name, ready_to_build, issue.number, release_queue )
+    
     # the build can be aborted only if none of the architectures has been uploaded or is uploading
     if not ( UPLOADING + UPLOAD_OK ):
       abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , ABORT_COMMENT, True )
@@ -671,6 +751,3 @@ if __name__ == "__main__":
       add_label( issue, arch + '-uploading' )
 
   exit( 0 )
-
-
-

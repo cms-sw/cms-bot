@@ -28,7 +28,7 @@ def get_official_repo( github , repository_name ):
 # given a line from git log, it gets the pr number
 #
 def get_pr_number( git_log_line ):
-
+  print git_log_line
   if 'cms-sw/cmsdist' in git_log_line:
     pr_number = git_log_line.split( '- cms-sw/cmsdist#' )[1].split( ' ' )[0]
   else:

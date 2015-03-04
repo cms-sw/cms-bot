@@ -213,7 +213,8 @@ def create_properties_files(release_name, architectures, issue_number, queue, on
     out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
     out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_QUEUE , queue) )
-    out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, only_toolconf ) )
+    tool_conf_param = 'true' if only_toolconf else 'false'
+    out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, tool_conf_param ) )
 
 
 #

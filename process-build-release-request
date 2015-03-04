@@ -675,12 +675,12 @@ if __name__ == "__main__":
 
   if status == BUILD_IN_PROGRESS:
     
-    ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
-    print 'conf tool waiting'
-    print TOOL_CONF_WAITING
-    print 'ready to build'
-    print ready_to_build
-    create_properties_files( release_name, ready_to_build, issue.number, release_queue )
+    #ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
+    #print 'conf tool waiting'
+    #print TOOL_CONF_WAITING
+    #print 'ready to build'
+    #print ready_to_build
+    #create_properties_files( release_name, ready_to_build, issue.number, release_queue )
     
     # the build can be aborted only if none of the architectures has been uploaded or is uploading
     if not ( UPLOADING + UPLOAD_OK ):

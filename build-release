@@ -61,6 +61,7 @@ pushd $BUILD_DIR
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   $CMSBUILD_CMD build $TOOL_CONF_PACKAGES
   $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+  $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
 
   if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
     echo 'I was asked to build only cmssw-tool-conf, exiting without building cmssw'
@@ -74,7 +75,6 @@ pushd $BUILD_DIR
     exit 0
   fi
 
-  $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
   $CMSBUILD_CMD build cmssw$PATCH
 popd
 

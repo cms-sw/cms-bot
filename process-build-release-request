@@ -200,7 +200,13 @@ def check_if_already_processed( issue ):
 #  Creates the properties files to trigger the build in Jenkins
 # if only_toolconf is selected, it adds a parameter to tell the script to only build cmssw-tool-conf
 #
-def create_properties_files(release_name, architectures, issue_number, queue, only_toolconf=False):
+def create_properties_files( issue, release_name, architectures, issue_number, queue, only_toolconf=False):
+ 
+  if not only_toolconf: 
+    for arch in architectures:
+      remove_label( issue, arch + '-tool-conf-ok' )
+      add_label( issue, arch + '-build-queued' )
+
   if opts.dryRun:
     print 'Not creating properties files for (dry-run): %s' % ", ".join( architectures )
     return
@@ -496,7 +502,7 @@ def start_release_build( issue, release_name, release_branch, architectures ):
   post_message( issue , msg )
 
   ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
-  create_properties_files( release_name, ready_to_build, issue.number, release_queue )
+  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue )
   msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
   post_message( issue , msg )
 
@@ -505,7 +511,7 @@ def start_release_build( issue, release_name, release_branch, architectures ):
 #
 def start_tool_conf_build( issue, release_name, release_branch, architectures ):
 
-  create_properties_files( release_name, architectures, issue.number, release_queue, only_toolconf=True )
+  create_properties_files( issue, release_name, architectures, issue.number, release_queue, only_toolconf=True )
   QUEUING_TOOLCONF_MSG
   msg = QUEUING_TOOLCONF_MSG % ', '.join( architectures )
   post_message( issue , msg )
@@ -674,13 +680,14 @@ if __name__ == "__main__":
       start_release_build( issue, release_name, release_branch, architectures )
 
   if status == BUILD_IN_PROGRESS:
-    
-    #ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
-    #print 'conf tool waiting'
-    #print TOOL_CONF_WAITING
-    #print 'ready to build'
-    #print ready_to_build
-    #create_properties_files( release_name, ready_to_build, issue.number, release_queue )
+   
+    # if the previous state was to build tool-conf there are architectures for which it is needed to wait
+    build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
+    if build_toolconf_commments: 
+      print 'Checking if there are architectures waiting to be started after building tool-conf'
+      ready_to_build = TOOL_CONF_OK
+      print ready_to_build
+      create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue )
     
     # the build can be aborted only if none of the architectures has been uploaded or is uploading
     if not ( UPLOADING + UPLOAD_OK ):

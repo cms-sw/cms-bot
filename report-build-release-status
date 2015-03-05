@@ -141,6 +141,7 @@ if __name__ == "__main__":
       msg_details = opts.details
     msg = BUILDING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number, details=msg_details )
     post_message( issue , msg )
+    remove_label( issue, arch+'-build-queued' )
     new_label = arch+'-building'
     add_label( issue, new_label )
 

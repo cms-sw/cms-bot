@@ -129,3 +129,4 @@ updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/debug
 # CMSSW_7_5_X
 updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_5_X/stable
 updateBranch IB/CMSSW_7_5_X/stable IB/CMSSW_7_5_X/gcc481
+updateBranch IB/CMSSW_7_5_X/stable IB/CMSSW_7_5_X/next

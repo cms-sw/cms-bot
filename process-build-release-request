@@ -227,7 +227,7 @@ def create_properties_files( issue, release_name, architectures, issue_number, q
 # generates the properties file for triggering the release notes
 # it infers the tag names based on te format REL/<release-name>/architecture
 #
-def create_properties_file_rel_notes( release_name, previous_release, architecture):
+def create_properties_file_rel_notes( release_name, previous_release, architecture, issue_number ):
   cmsdist_tag = 'REL/'+release_name+'/'+architecture
   previos_cmsdist_tag = 'REL/'+previous_release+'/'+architecture
   out_file_name = 'release-notes.properties'
@@ -241,6 +241,7 @@ def create_properties_file_rel_notes( release_name, previous_release, architectu
   out_file.write( '%s=%s\n' % ( JENKINS_RELEASE, release_name ) )
   out_file.write( '%s=%s\n' % ( JENKINS_PREV_CMSDIST_TAG, previos_cmsdist_tag ) )
   out_file.write( '%s=%s\n' % ( JENKINS_CMSDIST_TAG, cmsdist_tag) )
+  out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
 
 #
 # Creates a release in github
@@ -713,7 +714,7 @@ if __name__ == "__main__":
           post_message( issue, msg )
           continue
 
-        create_properties_file_rel_notes( release_name, prev_rel_name, requested_arch )
+        create_properties_file_rel_notes( release_name, prev_rel_name, requested_arch, issue.number )
         msg = GENERATING_RELEASE_NOTES_MSG.format( previous_release=prev_rel_name )
         post_message( issue, msg )
         add_label( issue, RELEASE_NOTES_GENERATED_LBL )

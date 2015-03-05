@@ -26,6 +26,8 @@ UPLOAD_ERROR='UPLOAD_ERROR'
 CLEANUP_OK='CLEANUP_OK'
 CLEANUP_ERROR='CLEANUP_ERROR'
 TESTS_OK='TESTS_OK'
+RELEASE_NOTES_OK='RELEASE_NOTES_OK'
+RELEASE_NOTES_ERROR='RELEASE_NOTES_ERROR'
 # this means that there was an error in the script that excecutes the tests,
 # it is independent from the tests results
 TESTS_ERROR='TESTS_ERROR'
@@ -62,6 +64,8 @@ CLEANUP_ERROR_MSG='There was an error deletng the workspace for {architecture} \
 TESTS_OK_MSG='The tests have finished for {architecture} \n You can see the log here: \n {log_url} \n'
 TESTS_ERROR_MSG='There was an error when running the tests for {architecture} \n You can see the log here: \n {log_url} \n'
 BUILD_ERROR_MSG='The was an error for {architecture}. \n You can see the log here: \n {log_url}'
+RELEASE_NOTES_OK_MSG='The release notes are ready: https://github.com/cms-sw/cmssw/releases/tag/{rel_name}'
+RELEASE_NOTES_ERROR_MSG='There was an error generating the release notes, please look into the logs'
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED = 'build-release-started'
 BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-build-release/%s-%s/%d'
@@ -117,7 +121,8 @@ def remove_labels( issue ):
 
 if __name__ == "__main__":
   parser = OptionParser( usage="%prog <jenkins-build-number> <hostname> <issue-id> <arch> <release-name> <message-type> [ options ] \n "
-                               "message-type = BUILDING | BUILD_OK | BUILD_ERROR | UPLOADING | UPLOAD_OK | UPLOAD_ERROR | CLEANUP_OK | CLEANUP_ERROR | TESTS_OK | TESTS_ERROR" )
+                               "message-type = BUILDING | BUILD_OK | BUILD_ERROR | UPLOADING | UPLOAD_OK | UPLOAD_ERROR | CLEANUP_OK | CLEANUP_ERROR | TESTS_OK | TESTS_ERROR " 
+                               "| RELEASE_NOTES_OK | RELEASE_NOTES_ERROR ")
   parser.add_option( "-n" , "--dry-run" , dest="dryRun" , action="store_true", help="Do not post on Github", default=False )
   parser.add_option( "-d" , "--details" , dest="details" , action="store", help="Add aditional details to the message", default=False )
 
@@ -232,6 +237,16 @@ if __name__ == "__main__":
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TESTS_ERROR_MSG.format( architecture=arch, log_url=results_url )
     post_message( issue , msg )
-    
+   
+  elif action == RELEASE_NOTES_OK:
+
+    msg = RELEASE_NOTES_OK_MSG.format( rel_name=release_name )
+    post_message( issue, msg)
+
+  elif action == RELEASE_NOTES_ERROR:
+
+    msg = RELEASE_NOTES_ERROR_MSG.format( rel_name=release_name )
+    post_message( issue, msg)
+
   else:
     parser.error( "Message type not recognized" )

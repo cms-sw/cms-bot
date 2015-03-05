@@ -208,7 +208,8 @@ if __name__ == "__main__":
     print "\n cmsdist: \n"
     print cmsdist_notes
     print "--dry-run specified, quitting without modifying release."
-    exit(1)
+    print 'ALL_OK'
+    exit(0)
 
   header = "#### Changes since %s:\n%s\n" %  \
            ( prev_release , get_comparison_url( prev_release, curr_release , 'cmssw' ) )
@@ -217,3 +218,4 @@ if __name__ == "__main__":
                    ( prev_cmsdist_tag , curr_cmsdist_tag , get_comparison_url( prev_cmsdist_tag, curr_cmsdist_tag , 'cmsdist' ) )
 
   print urllib2.urlopen(request, json.dumps({"body": header + cmssw_notes + cmsdist_header + cmsdist_notes })).read()
+  print 'ALL_OK'

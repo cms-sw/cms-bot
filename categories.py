@@ -928,6 +928,8 @@ CMSSW_CATEGORIES={
    "EventFilter/CSCTFRawToDigi",
    "DataFormats/L1TrackTrigger",
    "DataFormats/Scalers",
+   "DataFormats/L1TCalorimeter",
+   "DataFormats/L1TGlobal",
    "L1Trigger/L1TCalorimeter",
    "L1Trigger/L1TCommon",
    "L1Trigger/TrackFindingTracklet",

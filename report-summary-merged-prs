@@ -1105,10 +1105,11 @@ if __name__ == "__main__":
     originalTags = tags
     tags = [x for x in tags if x in installedReleases]
     # this is to get the IBs that are not installed and most probably are being built
-    lastInstalled = tags[ -1 ]
-    buildingIBs = getBuildingIBs( originalTags, lastInstalled )
-    ALL_BUILDING_IBS.extend( buildingIBs )
-    tags.extend( buildingIBs ) 
+    if len( tags ) > 0:
+      lastInstalled = tags[ -1 ]
+      buildingIBs = getBuildingIBs( originalTags, lastInstalled )
+      ALL_BUILDING_IBS.extend( buildingIBs )
+      tags.extend( buildingIBs ) 
  
     tags.append( release_branch )
     print 'I got these tags: '

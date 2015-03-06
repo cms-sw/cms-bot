@@ -103,6 +103,11 @@ def remove_label( issue, label ):
   if opts.dryRun:
     print 'Not removing label (dry-run):\n %s' % label
     return
+
+  if label not in ALL_LABELS:
+    print 'label ', label, ' does not exist. Not attempting to remove'
+    return
+
   print 'Removing label: %s' % label
   issue.remove_from_labels( label) 
 
@@ -138,8 +143,10 @@ if __name__ == "__main__":
   action = args[ 5 ]
 
   GH = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
-  issue = GH.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO ).get_issue( issue_id )
-
+  cmssw_repo = GH.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
+  issue = cmssw_repo.get_issue( issue_id )
+  ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
+  
   if action == POST_BUILDING:
     msg_details = ''
     if opts.details:

@@ -8,6 +8,7 @@ import re
 import json
 import urllib2
 import yaml
+import os.path
 from  datetime import datetime, timedelta
 
 # 
@@ -41,7 +42,8 @@ WATCHERS_MSG = '{watchers_list} you requested to watch the automated builds for 
 QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s \n' \
                      'You can abort the build by writing "Abort" in a comment. I will delete the release, ' \
                      'the cmssw and cmsdist tag, and close the issue. You can\'t abort the upload once at' \
-                     ' least one achitecture is being uploaded'
+                     ' least one achitecture is being uploaded. \n' \
+                     'If you are building cmssw-tool-conf first, I will wait for each acrhitecture to finish to start the build of cmssw.'
 QUEUING_TOOLCONF_MSG = 'Queuing Jenkins build for cmssw-tool-conf for the following architectures: %s \n' \
                      'Be aware that I am building only cmssw-tool-conf. You still need to "+1" this issue to ' \
                      'make me start the build of the release. For each architecture, I will only start to build ' \
@@ -49,8 +51,6 @@ QUEUING_TOOLCONF_MSG = 'Queuing Jenkins build for cmssw-tool-conf for the follow
 QUEING_UPLOADS_MSG = 'Queing Jenkins upload for {architecture}'
 CLEANUP_STARTED_MSG = 'The cleanup has started for {architecture}'
 NOT_TOOLCONF_FOR_PATCH_MSG = 'You cannot ask me to build cmssw-tool-conf for patch releases. Please delete that message.'
-BUILD_QUEUED_LABEL = 'build-release-queued'
-BUILD_STARTED_LABEL = 'build-release-started'
 JENKINS_CMSSW_X_Y_Z = 'CMSSW_X_Y_Z'
 JENKINS_ARCH = 'ARCHITECTURE'
 JENKINS_ISSUE_NUMBER = 'ISSUE_NUMBER'
@@ -60,27 +60,39 @@ JENKINS_ONLY_TOOL_CONF = 'ONLY_BUILD_TOOLCONF'
 WRONG_NOTES_RELEASE_MSG = '{previous_release} does not appear to be a valid release name'
 GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release}. \n' \
                                'You can see the progress here: \n' \
-                               'https://cmssdt.cern.ch/jenkins/job/release-produce-changelog/'
+                               'https://cmssdt.cern.ch/jenkins/job/release-produce-changelog/\n' \
+                               'I will generate an announcement template.\n'
 REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
-
 UPLOAD_COMMENT = 'upload %s'
-UPLOAD_ALL_COMMENT = '[uU]pload all'
+UPLOAD_ALL_COMMENT = '^[uU]pload all$'
 ABORT_COMMENT = '^[Aa]bort$'
+RELEASE_NOTES_COMMENT = '^release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
 BUILD_TOOLCONF = '^[Bb]uild cmssw-tool-conf'
 APPROVAL_COMMENT =  '^[+]1$'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
 RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
+ANNOUNCEMENT_GENERATED_LBL = 'release-notes-requested'
 JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
 JENKINS_RELEASE='RELEASE'
 JENKINS_PREV_CMSDIST_TAG='PREVIOUS_CMSDIST_TAG'
 JENKINS_CMSDIST_TAG='CMSDIST_TAG'
-
+INSTALLATION_FILE='/afs/.cern.ch/cms/{architecture}/tmp/{rel_name}'
+ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
+                        'The {rel_type} {is_patch} release {rel_name} is now available '\
+                        'for the following architectures:\n\n'\
+                        '{production_arch} (production)\n'\
+                        '{rest_of_archs}\n\n'\
+                        'The release notes of what changed with respect to {prev_release} can be found at:\n'\
+                        'https://github.com/cms-sw/cmssw/releases/{rel_name}\n\n'\
+                        '{description}\n\n'\
+                        'Cheers,\n'\
+                        'cms-bot'
 
 
 # -------------------------------------------------------------------------------
 # Statuses
 # --------------------------------------------------------------------------------
-# This is to determine the status of the issue after reading the comments
+# This is to determine the status of the issue after reading the labels
 
 #The issue has just been created
 NEW_ISSUE = 'NEW_ISSUSE'
@@ -94,6 +106,14 @@ BUILD_STARTED = 'build-started'
 BUILD_ABORTED = 'build-aborted'
 # they requested to build cmssw-tool-conf and it is being built
 TOOLCONF_BUILDING = 'toolconf-building'
+# at leas one of the architectures was built successully
+BUILD_SUCCESSFUL = 'build-successful'
+# the builds are being uploaded
+UPLOADING_BUILDS = 'uploading-builds'
+# the release has been announced
+RELEASE_ANNOUNCED = 'release-announced'
+# the release was build without issues. 
+PROCESS_COMPLETE = 'process-complete' 
 
 # -------------------------------------------------------------------------------
 # Functions
@@ -408,6 +428,23 @@ def get_issue_status( issue ):
     return BUILD_IN_PROGRESS
   if TOOLCONF_BUILDING in labels:
     return TOOLCONF_BUILDING
+  if BUILD_SUCCESSFUL in labels:
+    return BUILD_SUCCESSFUL
+  if UPLOADING_BUILDS in labels:
+    return UPLOADING_BUILDS
+  if RELEASE_ANNOUNCED in labels:
+    return RELEASE_ANNOUNCED
+  if PROCESS_COMPLETE in labels:
+    return PROCESS_COMPLETE
+#
+# closes the issue
+#
+def close_issue( issue ):
+  if opts.dryRun:
+    print 'Not closing issue (dry-run)'
+    return
+  print 'Closing issue...'
+  issue.edit( state="closed" )
 
 #
 # removes the labels of the issue
@@ -446,8 +483,6 @@ def abort_build( issue, release_name, architectures):
   msg += delete_cmsdist_tags_github( release_name, architectures )
   msg += '\n\n' + 'You must create a new issue to start over the build.'
   post_message( issue, msg )
-  add_label( issue, BUILD_ABORTED )
-  remove_label( issue, BUILD_IN_PROGRESS )
 
 #
 # Classifies the labels and fills the lists with the details of the current
@@ -455,7 +490,7 @@ def abort_build( issue, release_name, architectures):
 #
 def fillDeatilsArchsLists( issue ):
   labels = [ l.name for l in issue.get_labels() ]
-  TO_UPLOAD.extend( [ x.split('-')[0] for x in labels if '-build-ok' in x ] )
+  BUILD_OK.extend( [ x.split('-')[0] for x in labels if '-build-ok' in x ] )
   UPLOAD_OK.extend( [ x.split('-')[0] for x in labels if '-upload-ok' in x ] )
   UPLOADING.extend( [ x.split('-')[0] for x in labels if '-uploading' in x ] )
   BUILD_ERROR.extend( [ x.split('-')[0] for x in labels if '-build-error' in x ] )
@@ -463,7 +498,7 @@ def fillDeatilsArchsLists( issue ):
   TOOL_CONF_OK.extend( [ x.split('-')[0] for x in labels if '-tool-conf-ok' in x ] )
   TOOL_CONF_ERROR.extend( [ x.split('-')[0] for x in labels if '-tool-conf-error' in x ] )
   TOOL_CONF_WAITING.extend( [ x.split('-')[0] for x in labels if '-tool-conf-waiting' in x ] )
-  TO_CLEANUP.extend( UPLOAD_OK + BUILD_ERROR + TO_UPLOAD )
+  TO_CLEANUP.extend( UPLOAD_OK + BUILD_ERROR + BUILD_OK )
 
 #
 # Triggers the cleanup for the architectures in the list TO_CLEANUP 
@@ -509,8 +544,9 @@ def start_release_build( issue, release_name, release_branch, architectures ):
 
   ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
   create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue )
-  msg = QUEUING_BUILDS_MSG % ', '.join( architectures )
-  post_message( issue , msg )
+  if ready_to_build:
+    msg = QUEUING_BUILDS_MSG % ', '.join( ready_to_build )
+    post_message( issue , msg )
 
 #
 # Creates the files to trigger the build of cmssw-tool-conf in jenkins.
@@ -518,12 +554,94 @@ def start_release_build( issue, release_name, release_branch, architectures ):
 def start_tool_conf_build( issue, release_name, release_branch, architectures ):
 
   create_properties_files( issue, release_name, architectures, issue.number, release_queue, only_toolconf=True )
-  QUEUING_TOOLCONF_MSG
   msg = QUEUING_TOOLCONF_MSG % ', '.join( architectures )
   post_message( issue , msg )
-  remove_labels( issue )
-  add_label( issue, TOOLCONF_BUILDING ) 
   
+#
+# removes the label for the current state and adds the label for the next state
+#
+def go_to_state( issue, current_state, new_state ):
+  print '\nSwitching to state: ', new_state, '\n'
+  remove_label( issue, current_state )
+  add_label( issue, new_state )
+
+#
+# Generates an announcement prototype
+#
+def generate_announcement( release_name, previous_release_name, production_architecture, architectures ):
+
+  print '\nGenerating announcement template...\n'
+  is_development = 'pre' in release_name
+  type_str = 'development' if is_development else 'production'
+  print 'Is development: ', is_development
+  is_patch = 'patch' in release_name
+  patch_str = 'patch' if is_patch else ''
+  print 'Is patch: ', is_patch
+  # The description of the issue should explain the reason for building the release
+  desc = issue.body
+  print 'Description: \n', desc
+
+  architectures.remove( production_architecture )
+  announcement = ANNOUNCEMENT_TEMPLATE.format( rel_type=type_str,
+                                is_patch=patch_str,
+                                rel_name=release_name,
+                                production_arch=production_architecture,
+                                rest_of_archs='\n'.join(architectures),
+                                prev_release=previous_release_name,
+                                description=desc )
+
+  return announcement
+
+#
+# checks if the production architecture is ready, if so, it generates a template for the announcement
+#
+def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
+  if ( production_architecture in UPLOAD_OK ):
+    print 'Production architecture successfully uploaded..'
+    #For now, it assumes that the release is being installed and it will be installed successfully
+    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, architectures )
+    msg = 'You can use this template for announcing the release:\n\n%s' % announcement
+    post_message( issue, msg )
+    add_label( issue, ANNOUNCEMENT_GENERATED_LBL )
+
+#
+# checks the issue for archs to be uploaded
+#
+def check_archs_to_upload( release_name, issue ):
+  print 'Looking for archs ready to be uploaded...\n'
+  for arch in BUILD_OK:
+    print 'Ready to upload %s' % arch
+    pattern = '^The build has started for %s .*' % arch
+    build_info_comments = search_in_comments( comments, ['cmsbuild','nclopezo'] , pattern, True )
+    if not build_info_comments:
+      print 'No information found about the build machine, something is wrong'
+      exit( 1 )
+ 
+    first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+    build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
+    print 'Triggering upload for %s' % arch
+    create_properties_files_upload( release_name , arch , issue.number , build_machine )
+    post_message( issue , QUEING_UPLOADS_MSG.format( architecture=arch ) )
+    remove_label( issue, arch + '-build-ok' )
+    add_label( issue, arch + '-uploading' )
+
+  if BUILD_OK:
+    return True
+  else:
+    return False
+
+#
+# checks if there are architectures that are ready to be built afer building tool-conf, and triggers the build if neccessary
+#
+def check_to_build_after_tool_conf( issue, release_name, release_queue):
+  print 'Checking if there are architectures waiting to be started after building tool-conf'
+  ready_to_build = TOOL_CONF_OK
+  print ready_to_build
+  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue )
+  if ready_to_build:
+    msg = QUEUING_BUILDS_MSG % ', '.join( ready_to_build )
+    post_message( issue , msg )
+
 
 # -------------------------------------------------------------------------------
 # Start of execution 
@@ -600,6 +718,9 @@ if __name__ == "__main__":
   release_branches = [x["RELEASE_BRANCH"] for x in specs
                       if x["RELEASE_QUEUE"] == release_queue and "RELEASE_BRANCH" in x and not "DISABLED" in x]
 
+  production_architecture = [x["SCRAM_ARCH"] for x in specs
+                                               if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x and "PROD_ARCH" in x][0]
+
   release_branch = release_queue
   if len(release_branches):
     release_branch = release_branches[0]
@@ -611,7 +732,7 @@ if __name__ == "__main__":
 
   labels = [ l.name for l in issue.get_labels() ]
 
-  TO_UPLOAD = []
+  BUILD_OK = []
   UPLOAD_OK = []
   UPLOADING = []
   BUILD_ERROR = []
@@ -628,13 +749,16 @@ if __name__ == "__main__":
     print 'Build Aborted. A new issue must be created if you want to build the release'
 
     date_aborted = search_date_comment( comments, APPROVE_BUILD_RELEASE, ABORT_COMMENT, True )
+    # the time is 2 days because a new issue must be created to start again the build
+    # if for the new build the build starts in the same machine as before, this will
+    # start to delete the work directory of the new build.
     cleanup_deadline = datetime.now() - timedelta(days=2)
     if date_aborted < cleanup_deadline:
-      print 'Cleaning up since it was aborted more than 2 days ago'
+      print 'Cleaning up since it is too old since it was aborted'
       triggerCleanup( issue, comments, release_name )
+      close_issue( issue )
     else:
       print 'Not too old yet to clean up'
-    
 
   if status == NEW_ISSUE:
     approvers = ", ".join( [ "@"+x for x in APPROVE_BUILD_RELEASE ] )
@@ -652,7 +776,7 @@ if __name__ == "__main__":
     exit( 0 )
 
   if status == PENDING_APPROVAL:
-    approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , '^[+]1$', True )
+    approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , APPROVAL_COMMENT, True )
     build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
     is_patch = 'patch' in release_name
     
@@ -661,15 +785,16 @@ if __name__ == "__main__":
         post_message( issue, NOT_TOOLCONF_FOR_PATCH_MSG )
       else:
         start_tool_conf_build( issue, release_name, release_branch, architectures )
+        go_to_state( issue, status, TOOLCONF_BUILDING )
     elif approval_comments:
       start_release_build( issue, release_name, release_branch, architectures )
-      remove_labels( issue )
-      add_label( issue, BUILD_IN_PROGRESS )
+      go_to_state( issue, status, BUILD_IN_PROGRESS )
     else:
-      print 'Build not approved yet, or cmssw-tool-conf requested'
+      print 'Build not approved or cmssw-tool-conf not requested yet'
       exit( 0 )
 
   if status == TOOLCONF_BUILDING:
+   
     print 'Waiting for approval to start the build'
     approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , APPROVAL_COMMENT, True )
     if approval_comments:
@@ -683,34 +808,61 @@ if __name__ == "__main__":
         add_label( issue, arch + '-tool-conf-waiting' )
         TOOL_CONF_WAITING.append( arch )
 
-      remove_label( issue, TOOLCONF_BUILDING )
-      add_label( issue, BUILD_IN_PROGRESS ) 
+      go_to_state( issue, status, BUILD_IN_PROGRESS )
       start_release_build( issue, release_name, release_branch, architectures )
 
   if status == BUILD_IN_PROGRESS:
-   
+
+    abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , ABORT_COMMENT, True )
+    print abort_comments
+    if abort_comments:
+      print 'Aborting'
+      abort_build( issue, release_name, architectures )
+      go_to_state( issue, status, BUILD_ABORTED )
+      exit( 0 )
+ 
     # if the previous state was to build tool-conf there are architectures for which it is needed to wait
     build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
-    if build_toolconf_commments: 
-      print 'Checking if there are architectures waiting to be started after building tool-conf'
-      ready_to_build = TOOL_CONF_OK
-      print ready_to_build
-      create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue )
-    
-    # the build can be aborted only if none of the architectures has been uploaded or is uploading
-    if not ( UPLOADING + UPLOAD_OK ):
-      abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , ABORT_COMMENT, True )
-      print abort_comments
-      if abort_comments:
-        print 'Aborting'
-        abort_build( issue, release_name, architectures )
-        exit( 0 )
-    else:
-      print "You can't abort the build at this point"
- 
+    if build_toolconf_commments:
+      check_to_build_after_tool_conf( issue, release_name, release_queue)
+
+    if BUILD_OK:
+      go_to_state( issue, status, BUILD_SUCCESSFUL )
+
+  if status == BUILD_SUCCESSFUL:
+
+    abort_comments = search_in_comments( comments , APPROVE_BUILD_RELEASE , ABORT_COMMENT, True )
+    print abort_comments
+    if abort_comments:
+      print 'Aborting'
+      abort_build( issue, release_name, architectures )
+      go_to_state( issue, status, BUILD_ABORTED )
+      exit( 0 )
+
+    # if the previous state was to build tool-conf there are architectures for which it is needed to wait
+    build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
+    if build_toolconf_commments:
+      check_to_build_after_tool_conf( issue, release_name, release_queue)
+
+
+    upload_all_requested = search_in_comments( comments, APPROVE_BUILD_RELEASE, UPLOAD_ALL_COMMENT, True )
+
+    if upload_all_requested:
+      check_archs_to_upload( release_name, issue )
+      go_to_state( issue, status, UPLOADING_BUILDS )
+    else:    
+      print 'Upload not requested yet'
+
+  if status == UPLOADING_BUILDS:
+
+    #upload archs as soon as they get ready
+    check_archs_to_upload( release_name, issue )
+
+    #Check if someone asked for release notes, go to next state after generating notes.
+    #At least one architecture must have been successfully uploaded
     if UPLOAD_OK and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
-      pattern = '^release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
-      release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
+      release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
+
       for comment in release_notes_comments:
         comment_parts = comment.strip().split(' ')
         prev_rel_name = comment_parts[ 2 ]
@@ -726,44 +878,25 @@ if __name__ == "__main__":
         post_message( issue, msg )
         add_label( issue, RELEASE_NOTES_GENERATED_LBL )
 
-    # check if the cleanup has been requested.
-    if TO_CLEANUP:
-      pattern = '^cleanup$'
-      cleanup_requested_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
-      if cleanup_requested_comments:
-        triggerCleanup( issue, comments, release_name )
+      if release_notes_comments:
+       #Check if the production architecture was uploaded and was correctly installed, generate announcement if so. 
+        check_if_prod_arch_ready( issue, prev_rel_name, production_architecture )
+        go_to_state( issue, status, RELEASE_ANNOUNCED )
 
-    if not TO_UPLOAD:
-      print 'Nothing to upload for any architecture.' 
-      exit( 0 )
+  if status == RELEASE_ANNOUNCED:
 
-    pattern = '^' + UPLOAD_ALL_COMMENT + '$'
-    upload_all_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
-    
-    for arch in TO_UPLOAD:
-      print 'Ready to upload %s' % arch
+    #upload archs as soon as they get ready
+    check_archs_to_upload( release_name, issue )
 
-      if upload_all_requested:
-        print 'Requested to upload all, uploading this arch'
-      else:
-        pattern = ( '^' + ( UPLOAD_COMMENT % arch ) )
-        upload_requested = search_in_comments( comments , APPROVE_BUILD_RELEASE , pattern, True )
-        if not upload_requested:
-          print 'Upload not requested yet.'
-          continue
+    # check if the cleanup has been requested or if 2 days have passed since the release-notes were generated.
+    print 'Checking if someone requested cleanup, or the issue is too old...' 
+    date_rel_notes = search_date_comment( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
+    cleanup_deadline = datetime.now() - timedelta(minutes=2)
+    too_old = date_rel_notes < cleanup_deadline
 
-      pattern = '^The build has started for %s .*' % arch
-      build_info_comments = search_in_comments( comments, ['cmsbuild','nclopezo'] , pattern, True )
-      if not build_info_comments:
-        print 'No information found about the build machine, something is wrong'
-        exit( 1 )
-
-      first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r ")) 
-      build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
-      print 'Triggering upload for %s' % arch
-      create_properties_files_upload( release_name , arch , issue.number , build_machine )
-      post_message( issue , QUEING_UPLOADS_MSG.format( architecture=arch ) )
-      remove_label( issue, arch + '-build-ok' )
-      add_label( issue, arch + '-uploading' )
-
-  exit( 0 )
+    pattern = '^cleanup$'
+    cleanup_requested_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
+    if cleanup_requested_comments or too_old:
+      triggerCleanup( issue, comments, release_name )
+      close_issue( issue )
+      go_to_state( issue, status, PROCESS_COMPLETE )

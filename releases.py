@@ -35,7 +35,7 @@ RELEASE_BRANCH_PRODUCTION = [
 ]
 
 RELEASE_MANAGERS = {
-  "CMSSW_7_5_X": ["nclopezo","ktf"],
+  "CMSSW_7_5_X": ["nclopezo"],
   "CMSSW_7_4_X": ["degano"],
   "CMSSW_7_3_X": ["nclopezo"],
   "CMSSW_7_2_X": ["nclopezo"],

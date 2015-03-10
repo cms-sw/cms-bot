@@ -38,8 +38,7 @@ BUILDING_TOOL_CONF_MSG='The cmssw-tool-conf build has started for {architecture}
              'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console \n' \
              '{details}'
 BUILD_OK_MSG='The build has finished sucessfully for the architecture {architecture} and is ready to be uploaded. \n' \
-             '* You can start the uploads by writing the comment: "upload all". I will upload all the architectures as soon as the build finishes successfully.\n' \
-             '* Or you can start the upload only for {architecture} by writing: "upload {architecture}".\n \n' \
+             'You can start the uploads by writing the comment: "upload all". I will upload all the architectures as soon as the build finishes successfully.\n' \
              'You can see the log for the build here: \n' \
              '{log_url} \n' \
              'Some tests ( runTheMatrix.py -s ) are being run, the results will be posted when done.'
@@ -57,7 +56,7 @@ UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You ca
               'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\> \\<architecture\\>". \n ' \
               'I will generate the release notes based on the release that you provide. The architecture will be used ' \
-              'to infer the cmsdist tag'
+              'to infer the cmsdist tag.'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'
 CLEANUP_OK_MSG='The workspace for {architecture} has been deleted \n You can see the log here: \n {log_url} \n'
 CLEANUP_ERROR_MSG='There was an error deletng the workspace for {architecture} \n You can see the log here: \n {log_url} \n'

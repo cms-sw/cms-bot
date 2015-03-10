@@ -59,7 +59,7 @@ pushd cms-bot
       fi
     fi
     echo "architecture=$ARCHITECTURE;label=$CMSSW_X_Y_Z;type=$RELEASE_TYPE;state=Announced;prodarch=$prodarch;" >> releases.map
-    git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE as $RELELEASE_TYPE." releases.map
+    git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE as $RELEASE_TYPE." releases.map
     git pull --rebase
     git push
     if [ "X$ANNOUNCE_RELEASE" = Xtrue ]; then

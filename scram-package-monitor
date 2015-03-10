@@ -129,16 +129,22 @@ if __name__ == "__main__":
   if pkg_name:
     prefix = opts.start and strftime("start_%s-") or strftime("stop_%s-")
     filename = prefix + pkg_name.replace("/",":")
-    open(join(WORK_DIR, filename), "a").close()
+    while(True):
+      try:
+        open(join(WORK_DIR, filename), "a").close()
+        break
+      except:
+        create_dir(WORK_DIR)
 
   # When enough files are ready to push or enough time has passed, start
   # pushing to elasticsearch.
   fileLimitReached = len([f for f in os.listdir(WORK_DIR)]) > MAX_FILES_PUSH
   timestamps = sorted([int(basename(x).split("_")[1].split("-")[0])
                        for x in glob(join(WORK_DIR, "*"))])
-  if not timestamps:
+  if len(timestamps) < 2:
     sys.exit(0)
-  timeLimitReached = getctime(WORK_DIR) - int(timestamps.pop())
+  # Time passed between oldest file in the directory and the newest
+  timeLimitReached = int(timestamps.pop()) - int(timestamps[0]) 
   limitsReached = fileLimitReached or timeLimitReached
   #Can force the push with force option or by calling end package without a
   # package

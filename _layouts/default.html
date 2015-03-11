@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" >
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <title>{{ page.title }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="copyright" content="1954-2014 CERN"> 
+  </head>
+
+  <body>
+
+    <script type='text/javascript' src="https://netdna.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+    <div class="row">
+      <div class="col-md-12">
+ 
+        <header class="navbar navbar-default navbar-static-top">
+          <div class="container">
+
+            <div class="navbar-header">
+              <a class="brand" href="index.html">
+                <img src="https://avatars2.githubusercontent.com/u/4170616?v=3&s=400" alt="cms-bot" style="width:45px;height:45px" class="img-thumbnail" class="img-responsive" >
+              </a>
+            </div>
+
+            <nav class="collapse navbar-collapse" >
+              <ul class="nav navbar-nav">
+                <li><a href="https://github.com/cms-sw/cms-bot">See Code</a></li>
+                <li><a href="https://github.com/cms-sw/cms-bot/issues/new">Feedback</a></li>
+              </ul>
+            </nav>
+
+          </div> 
+        </header>      
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-2">
+      </div>
+
+      <div class="col-md-6">
+        {{content}}
+      </div>
+
+      <div class="col-md-3">
+        <h3 id='quick_start'>Quick start</h3>
+        <ul>
+          <li><a href='index.html'>Main page</a></li>
+          <li><a href='automatedBuilds.html'>Automated Builds</a></li>
+        </ul>
+      </div>
+
+      <div class="col-md-1">
+      </div>
+    </div> 
+
+  </body>
+</html>

@@ -30,6 +30,7 @@ CONFIG = [
   ["stats-condweb-access-%Y.%m.%d", "2d", "delete"],
   ["stats-condweb-error-%Y.%m", "1m", "delete"],
   ["ib-matrix.%Y.%m", "1m", "delete"],
+  ["ib-matrix.%Y-%W-%w", "14d", "delete"],
   ["ib-scram-stats-%Y.%m.%d", "7d", "delete"],
 ]
 

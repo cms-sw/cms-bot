@@ -138,7 +138,13 @@ if __name__ == "__main__":
 
   # When enough files are ready to push or enough time has passed, start
   # pushing to elasticsearch.
-  fileLimitReached = len([f for f in os.listdir(WORK_DIR)]) > MAX_FILES_PUSH
+  try:
+    fileLimitReached = len([f for f in os.listdir(WORK_DIR)]) > MAX_FILES_PUSH
+  except OSError as exception:
+    if exception.errno != errno.EEXIST:
+      raise exception
+    else:
+      sys.exit(0)
   timestamps = sorted([int(basename(x).split("_")[1].split("-")[0])
                        for x in glob(join(WORK_DIR, "*"))])
   if len(timestamps) < 2:

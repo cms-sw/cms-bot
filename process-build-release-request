@@ -122,8 +122,12 @@ PROCESS_COMPLETE = 'process-complete'
 #
 # creates a properties file to cleanup the build files. 
 #
-def create_properties_file_cleanup( release_name, arch, issue_number, machine_name):
-  out_file_name = 'cleanup-%s-%s.properties' % ( release_name , arch )
+def create_properties_file_cleanup( release_name, arch, issue_number, machine_name, tool_conf=False):
+  if tool_conf:
+    out_file_name = 'cleanup-tool-conf-%s-%s.properties' % ( release_name , arch )
+  else:
+    out_file_name = 'cleanup-%s-%s.properties' % ( release_name , arch )
+
   if opts.dryRun:
     print 'Not creating cleanup properties file (dry-run):\n %s' % out_file_name
   else:
@@ -512,13 +516,23 @@ def triggerCleanup( issue, comments, release_name ):
       pattern = 'The build has started for %s .*' % arch
       build_info_comments = search_in_comments( comments, ['cmsbuild', 'nclopezo'], pattern, False)
 
+      pattern_tool_conf = 'The cmssw-tool-conf build has started for %s .*' % arch
+      tool_conf_info_comments = search_in_comments( comments, ['cmsbuild', 'nclopezo'], pattern_tool_conf, False)
+
       if not build_info_comments:
         print 'No information found about the build machine, something is wrong for %s' % arch
         continue
 
       build_machine = build_info_comments[-1].split( ' ' )[7].strip( '.' )
-      print 'Triggering cleanup for %s' % arch
+      print '\nTriggering cleanup for %s' % arch
       create_properties_file_cleanup( release_name, arch, issue.number, build_machine )
+
+      if tool_conf_info_comments:
+        build_machine_toolconf = tool_conf_info_comments[-1].split( ' ' )[8].strip( '.' )
+        print '\nTriggering tool-conf cleanup for %s' % arch
+        create_properties_file_cleanup( release_name, arch, issue.number, build_machine_toolconf, tool_conf=True)
+
+      print
       msg = CLEANUP_STARTED_MSG.format( architecture=arch )
       post_message( issue, msg )
       remove_label( issue, arch + '-upload-ok' )

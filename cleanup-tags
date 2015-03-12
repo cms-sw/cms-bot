@@ -47,11 +47,11 @@ for QUEUE in $CMSDIST_QUEUES; do
   # List the tags we are going to delete. This will stay in the
   # logs and therefore we can always get them back.
   git ls-remote --tags origin "$QUEUE" \
-      | head -n -40 | head -n 50
+      | head -n -80
 
   # Keep 60 tags per QUEUE.
   git ls-remote --tags origin "$QUEUE" \
       | sed -e "s|.*refs/tags/|:|" \
-      | head -n -40 \
-      | xargs -r -n 50 $ECHO git push origin 
+      | head -n -80 \
+      | xargs -r $ECHO git push origin 
 done

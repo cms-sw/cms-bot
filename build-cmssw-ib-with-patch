@@ -211,7 +211,7 @@ pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
 # In case we have errors, we use an ERR tag in case we discover it's a full release later on.
-if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
+if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKDIR/w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   git tag ALL/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
   git push originrw ALL/$RELEASE_NAME/$ARCHITECTURE || true
   TAG_TYPE="IB"

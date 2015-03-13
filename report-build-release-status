@@ -54,9 +54,9 @@ UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
 UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'The release is now being installed, you can see the progress here: \n ' \
               'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' \
-              'To generate the release notes for the release write "release-notes since \\<previous-release\\> \\<architecture\\>". \n ' \
-              'I will generate the release notes based on the release that you provide. The architecture will be used ' \
-              'to infer the cmsdist tag.'
+              'To generate the release notes for the release write "release-notes since \\<previous-release\\>". \n ' \
+              'I will generate the release notes based on the release that you provide. You don\'t need to provide the architectue ' \
+              'I will use the production architecture to infer the cmsdist tag.'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'
 CLEANUP_OK_MSG='The workspace for {architecture} has been deleted \n You can see the log here: \n {log_url} \n'
 CLEANUP_ERROR_MSG='There was an error deletng the workspace for {architecture} \n You can see the log here: \n {log_url} \n'

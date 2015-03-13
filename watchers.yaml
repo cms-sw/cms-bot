@@ -93,6 +93,7 @@ VinInn:
 abbiendi:
 - Alignment/MuonAlignment
 - Alignment/MuonAlignmentAlgorithms
+- CommonTools/RecoAlgos
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit
 - DataFormats/DTRecHit
@@ -105,6 +106,10 @@ abbiendi:
 - HLTrigger/Muon
 - HLTriggerOffline/Muon
 - MuonAnalysis/MuonAssociators
+- RecoLocalMuon/CSCRecHitD
+- RecoLocalMuon/CSCSegment
+- RecoLocalMuon/Configuration
+- RecoLocalMuon/DTSegment
 - RecoMuon/Configuration
 - RecoMuon/CosmicMuonProducer
 - RecoMuon/DetLayers
@@ -136,6 +141,7 @@ abbiendi:
 - SimGeneral/TrackingAnalysis
 - SimMuon/Configuration
 - SimMuon/MCTruth
+- SimTracker/TrackAssociation
 - TrackingTools/KalmanUpdators
 - TrackingTools/PatternTools
 - TrackingTools/TrackAssociator

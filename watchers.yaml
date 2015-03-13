@@ -102,7 +102,6 @@ abbiendi:
 - DataFormats/MuonSeed
 - DataFormats/RPCRecHit
 - DQMOffline/Muon
-- DQMOffline/Trigger
 - HLTrigger/Muon
 - HLTriggerOffline/Muon
 - MuonAnalysis/MuonAssociators

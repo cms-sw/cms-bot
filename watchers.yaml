@@ -321,6 +321,44 @@ jalimena:
 - HLTrigger/Configuration
 jazzitup:
 - RecoHI
+jhgoh:
+- Alignment/MuonAlignment
+- Alignment/MuonAlignmentAlgorithms
+- CommonTools/RecoAlgos
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoLocalMuon
+- RecoMuon
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon
+- SimTracker/TrackAssociation
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+- Validation/RPCRecHits
+- Validation/MuonRPCDigis
 jlagram:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration

@@ -460,7 +460,7 @@ print 'you chose the action %s' % ACTION
 
 TOKEN = open(expanduser("~/.github-token")).read().strip()
 github = Github( login_or_token = TOKEN )
-
+rate_limit = github.get_rate_limit().rate
 print 'API Rate Limit'
 print 'Limit: ', rate_limit.limit
 print 'Remaining: ', rate_limit.remaining

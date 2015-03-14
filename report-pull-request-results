@@ -416,7 +416,8 @@ COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : [ 'success' , 'Tests OK' 
                               'PARSE_UNIT_TESTS_FAIL': [ 'failure' , 'Unit Tests failure' ],
                               'PARSE_BUILD_FAIL'     : [ 'failure' , 'Compilation error' ],
                               'PARSE_MATRIX_FAIL'    : [ 'failure' , 'RelVals error' ] ,
-                              'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ]}
+                              'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ],
+                              'PARSE_CLANG_BUILD_FAIL' : [ 'failure' , 'Clang error' ] }
 
 GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of the test...',
            'You just keep on trying till you run out of cake. And the science gets done...',

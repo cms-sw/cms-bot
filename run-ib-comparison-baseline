@@ -13,7 +13,7 @@ pushd "$WORKSPACE/matrix-results"
     ;;
   esac
 
-  runTheMatrix.py $THREADED_PARAM -j $(getconf _NPROCESSORS_ONLN) -l 401,1306 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  runTheMatrix.py $THREADED_PARAM -s -j $(getconf _NPROCESSORS_ONLN) -l 401,1306,101.0,1003.0 2>&1 | tee -a $WORKSPACE/matrixTests.log
 
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root`

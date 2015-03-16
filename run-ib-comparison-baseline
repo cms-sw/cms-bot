@@ -29,5 +29,5 @@ popd
 
 if grep -i -E "ERROR .*" $WORKSPACE/matrixTests.log; then
   echo "Errors in the RelVals"
-  $WORKSPACE/touch wf_errors.txt
+  touch $WORKSPACE/wf_errors.txt
 fi

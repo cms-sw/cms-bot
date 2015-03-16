@@ -9,9 +9,11 @@ pushd "$WORKSPACE/matrix-results"
   case $RELEASE_FORMAT in 
     *THREADED*)
     echo "Threaded!"
-    runTheMatrix.py --command '--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe' -s -j $(getconf _NPROCESSORS_ONLN) -l 401,1306,101.0,1003.0;;
-    *) runTheMatrix.py -s -j $(getconf _NPROCESSORS_ONLN) -l 401,1306,101.0,1003.0
+    THREADED_PARAM='--command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
+    ;;
   esac
+
+  runTheMatrix.py $THREADED_PARAM -j $(getconf _NPROCESSORS_ONLN) -l 401,1306 2>&1 | tee -a $WORKSPACE/matrixTests.log
 
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root`
@@ -25,4 +27,7 @@ pushd "$WORKSPACE/matrix-results"
 
 popd
 
-
+if grep -i -E "ERROR .*" $WORKSPACE/matrixTests.log; then
+  echo "Errors in the RelVals"
+  $WORKSPACE/touch wf_errors.txt
+fi

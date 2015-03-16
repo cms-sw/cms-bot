@@ -27,7 +27,7 @@ pushd "$WORKSPACE/matrix-results"
 
 popd
 
-if grep -i -E "ERROR .*" $WORKSPACE/matrixTests.log; then
+if grep -i -E "ERROR executing.*" $WORKSPACE/matrixTests.log; then
   echo "Errors in the RelVals"
   touch $WORKSPACE/wf_errors.txt
 fi

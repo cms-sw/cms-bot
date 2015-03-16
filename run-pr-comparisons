@@ -2,13 +2,25 @@
 BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/
 PULL_REQUEST_BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/
 
+WFS_WITH_ERRORS=''
+
 MAPPING_FILE=wf_mapping.txt
 rsync $BASE_URL$MAPPING_FILE $WORKSPACE
+
+ERRORS_FILE=wf_errors.txt
+rsync $BASE_URL$ERRORS_FILE $WORKSPACE
 
 for wf in ${WORKFLOWS_LIST//,/ }
 do
   WF_PATH=`grep $wf $WORKSPACE/$MAPPING_FILE`
-  WORKFLOWS_TO_COMPARE=$WORKFLOWS_TO_COMPARE,$WF_PATH
+
+  if [ "X$WF_PATH" = X ]; then
+    ERR_DETAILS=`grep $wf $WORKSPACE/$ERRORS_FILE`
+    WFS_WITH_ERRORS=$ERR_DETAILS,$WFS_WITH_ERRORS
+  else
+    WORKFLOWS_TO_COMPARE=$WORKFLOWS_TO_COMPARE,$WF_PATH
+  fi
+
 done
 
 #remove first ,

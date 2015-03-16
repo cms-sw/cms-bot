@@ -27,7 +27,20 @@ pushd "$WORKSPACE/matrix-results"
 
 popd
 
+ERRORS_FILE=$WORKSPACE/wf_errors.txt
+touch $ERRORS_FILE
+
+grep "ERROR executing.*" $WORKSPACE/matrixTests.log | while read line
+do
+  WF_STEP=`echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g'`
+  # don't add duplicate lines
+  if ! grep $WF_STEP $ERRORS_FILE; then
+    echo $WF_STEP >> $ERRORS_FILE
+  fi
+done
+
+# Make it fail so it can be identified when there were errors
 if grep -i -E "ERROR executing.*" $WORKSPACE/matrixTests.log; then
   echo "Errors in the RelVals"
-  touch $WORKSPACE/wf_errors.txt
+  exit 1
 fi

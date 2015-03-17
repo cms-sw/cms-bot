@@ -55,7 +55,7 @@ if __name__ == "__main__":
   prId = int(args[0])
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   try:
-    pr = gh.get_organization("cms-sw").get_repo("cmssw").get_pull(prId)
+    pr = gh.get_repo( 'cms-sw/cmssw' ).get_pull(prId)
   except:
     print "Could not find pull request. Maybe this is an issue"
     exit(0)
@@ -109,7 +109,7 @@ if __name__ == "__main__":
   watchers = set(["@" + u for u in watchers])
   print "Watchers " + ", ".join(watchers)
 
-  repo = gh.get_organization("cms-sw").get_repo("cmssw")
+  repo = gh.get_repo( 'cms-sw/cmssw' )
   issue = repo.get_issue(prId)
 
   updateMilestone(issue, pr)

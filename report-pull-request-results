@@ -493,7 +493,7 @@ if (options.pr_job_id == -1 ):
 else:
   pr_job_id=options.pr_job_id
 
-official_cmssw = get_official_repo( github , 'cmssw' )
+official_cmssw = github.get_repo( 'cms-sw/cmssw' )
 
 if options.custom_repo:
   destination_repo = get_official_repo( github , options.custom_repo )

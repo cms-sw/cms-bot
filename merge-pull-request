@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   try:
-    pr = gh.get_organization("cms-sw").get_repo("cmssw").get_pull(args.pr)
+    pr = gh.get_repo( 'cms-sw/cmssw' ).get_pull(args.pr)
   except:
     print "Could not find pull request. Maybe this is an issue?"
     exit(0)

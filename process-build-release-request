@@ -66,7 +66,7 @@ REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]
 UPLOAD_COMMENT = 'upload %s'
 UPLOAD_ALL_COMMENT = '^[uU]pload all$'
 ABORT_COMMENT = '^[Aa]bort$'
-RELEASE_NOTES_COMMENT = '^release-notes[ ]+since[ ]+[^ ]+[ ]+[^ ]+'
+RELEASE_NOTES_COMMENT = '^release-notes[ ]+since[ ]+[^ ]+'
 BUILD_TOOLCONF = '^[Bb]uild cmssw-tool-conf'
 APPROVAL_COMMENT =  '^[+]1$'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
@@ -885,14 +885,13 @@ if __name__ == "__main__":
       for comment in release_notes_comments:
         comment_parts = comment.strip().split(' ')
         prev_rel_name = comment_parts[ 2 ]
-        requested_arch = comment_parts[ 3 ]
         rel_name_match = re.match( REL_NAME_REGEXP, prev_rel_name )
         if not rel_name_match:
           msg = WRONG_NOTES_RELEASE_MSG.format( previous_release=prev_rel_name )
           post_message( issue, msg )
           continue
 
-        create_properties_file_rel_notes( release_name, prev_rel_name, requested_arch, issue.number )
+        create_properties_file_rel_notes( release_name, prev_rel_name, production_architecture, issue.number )
         msg = GENERATING_RELEASE_NOTES_MSG.format( previous_release=prev_rel_name )
         post_message( issue, msg )
         add_label( issue, RELEASE_NOTES_GENERATED_LBL )

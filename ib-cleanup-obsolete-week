@@ -1,0 +1,29 @@
+#!/bin/sh -ex
+
+# We use %U rather than %W because the groovy macros expect
+# weeks to start on sunday, not monday.
+WEEK=`date +%U`
+CURRENT_WEEK=$(echo "$WEEK + 1" | bc)
+PREVIOUS_WEEK=$WEEK
+OBSOLETE_WEEK=$(echo "$WEEK - 1" | bc)
+
+CURRENT_WEEK_LETTER=$(echo "$CURRENT_WEEK % 3" | bc | tr 012 ABC )
+PREVIOUS_WEEK_LETTER=$(echo "$PREVIOUS_WEEK % 3" | bc | tr 012 ABC )
+OBSOLETE_WEEK_LETTER=$(echo "($OBSOLETE_WEEK + 3) % 3" | bc | tr 012 ABC )
+
+CURRENT_WEEK_NUMBER=$(echo "$CURRENT_WEEK % 2" | bc)
+PREVIOUS_WEEK_NUMBER=$(echo "$PREVIOUS_WEEK % 2" | bc)
+
+# We cleanup the third volume if and only if the week setup is consistent.
+cd /afs/cern.ch/cms/sw/ReleaseCandidates
+if [ ! X`readlink vol$CURRENT_WEEK_NUMBER` = Xvol$CURRENT_WEEK_LETTER ]; then
+  echo "Inconsistent week setup. Not deleting."
+  exit 0
+fi
+
+if [ ! X`readlink vol$PREVIOUS_WEEK_NUMBER` = Xvol$PREVIOUS_WEEK_LETTER ]; then
+  echo "Inconsistent week setup. Not deleting."
+  exit 0
+fi
+
+find vol$OBSOLETE_WEEK_LETTER -maxdepth 2 -mindepth 2 -exec rm -rf {} \;

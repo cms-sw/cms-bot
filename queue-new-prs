@@ -4,20 +4,30 @@
 # It checks if the PR is for a branch for which automatic tests are activated.
 # Finally, it creates a properties file with the PR number for jenkins to trigger the next job.
 
+TRIGGERING_FILE=$WORKSPACE/'trigger-tests.properties'
+PR_LIST=''
+
 for PR in `./query-new-pull-requests -t ${TIME_INTERVAL}`; do
 
   # Use helper to get PR branch
   RELEASE_QUEUE=`./get-pr-branch $PR`
   if cat config.map | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= ; then
-    echo 'Creating properties file for '$PR
-    echo "PULL_REQUEST=$PR" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
     # If this is the case, we force the creation of tests for the PR, even if
-    # not apporved. This is under the assumption some human being checked
+    # not apporved. This is under the assumption some human checked that
     # everything is ok.
     if [ "X$FORCE_ALL_TESTS" = Xtrue ]; then
-      echo "FORCE=true" >> $WORKSPACE/approve-pr-tests-$PR-properties.txt
+      echo 'Triggering tests (Forced) for: '$PR
+      PR_LIST=$PR,$PR_LIST
+    else
+      if ./auto-trigger-pr $PR; then
+        echo 'Triggeing tests for: '$PR
+        PR_LIST=$PR,$PR_LIST
+      fi
     fi
   fi
 
-
 done
+
+if [ "X$PR_LIST" != X ]; then
+  echo 'PULL_REQUEST_LIST='$PR_LIST >> $TRIGGERING_FILE
+fi

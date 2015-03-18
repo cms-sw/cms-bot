@@ -173,7 +173,9 @@ def read_build_log_file( repo, build_log, tests_url, isClang ):
     message += '\nTested at: ' + options.commit_hash
 
   if isClang:
-    message += '\n I found a compilation error while trying to compile with clang: \n \n <pre>'
+    cmd = open( build_log ).readline()
+    message += '\n I found a compilation error while trying to compile with clang: \n <pre>'
+    message += cmd + '\n...\n\n'
   else:
     message += '\n I found an error when building: \n \n <pre>'
 

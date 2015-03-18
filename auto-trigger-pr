@@ -28,7 +28,7 @@ if __name__ == "__main__":
     parser.error( "Please specify the number of the pull request" )
 
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-  repo = gh.get_organization( "cms-sw" ).get_repo( "cmssw" )
+  repo = gh.get_repo( "cms-sw/cmssw" )
 
   issue = repo.get_issue( pr_number )
   labels = [ l for l in issue.get_labels() ]

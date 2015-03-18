@@ -41,5 +41,6 @@ For more information see [automatedBuilds](http://cms-sw.github.io/cms-bot/autom
 Logging happens at many different level but we are trying to unify things using
 Elasticsearch for "live" data from which we dump precomputed views on a
 basis.
+
 - [es-templates](https://github.com/cms-sw/cms-bot/tree/master/es-templates): contains the templates for the logged dataes-templates.
 - [es-cleanup-indexes](https://github.com/cms-sw/cms-bot/blob/master/es-cleanup-indexes): cleanups old indexes in elasticsearch.

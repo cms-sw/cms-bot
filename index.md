@@ -16,8 +16,8 @@ To have it working you'll need a `~/.github-token` which can access the
 [cms-sw](http://github.io/cms-sw) organization.
 
 # Release integration
--
-[process-pull-request](https://github.com/cms-sw/cms-bot/blob/master/process-pull-request):
+
+- [process-pull-request](https://github.com/cms-sw/cms-bot/blob/master/process-pull-request):
 this is the script which updates the status of a CMSSW PR. It parses all the
 messages associated to the specified PR and if it spots a transition (e.g. a L2
 signature) it posts a message acknowledging what happended, updates the tags

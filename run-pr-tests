@@ -171,7 +171,8 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
-  echo "scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'" > $WORKSPACE/buildClang.log
+  CLANG_CMD="scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
+  echo $CLANG_CMD > $WORKSPACE/buildClang.log
 
   scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile' 2>&1 | tee -a $WORKSPACE/buildClang.log
 
@@ -447,7 +448,7 @@ elif [ "X$RELVALS_OK" = Xfalse ]; then
   $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log $DRY_RUN
   popd
 elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/buildClang.log $DRY_RUN 
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID -f $WORKSPACE/buildClang.log $DRY_RUN 
 fi
 
 ls 

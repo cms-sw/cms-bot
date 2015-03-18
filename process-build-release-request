@@ -613,7 +613,7 @@ def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
   if ( production_architecture in UPLOAD_OK ):
     print 'Production architecture successfully uploaded..'
     #For now, it assumes that the release is being installed and it will be installed successfully
-    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, architectures )
+    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, UPLOAD_OK )
     msg = 'You can use this template for announcing the release:\n\n%s' % announcement
     post_message( issue, msg )
     add_label( issue, ANNOUNCEMENT_GENERATED_LBL )

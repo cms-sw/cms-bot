@@ -11,6 +11,8 @@ if __name__ == "__main__":
   parser.add_option("--repository", "-r", dest="repository", type=str, default="cmssw")
   parser.add_option("--tests-pending", "-t", action="store_true", dest="only_tests_pending" , \
                    help="Only show the pull requests that are pending for tests")
+  parser.add_option("--only-issues", "-i", action="store_true", dest="only_issues" , \
+                   help="Only show actual issues")
 
   opts, args = parser.parse_args()
   if not len(args):
@@ -18,7 +20,7 @@ if __name__ == "__main__":
 
   since = datetime.utcnow() - timedelta(seconds=int(args[0]))
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-  repo = gh.get_organization("cms-sw").get_repo(opts.repository)
+  repo = gh.get_repo( "cms-sw/" + opts.repository )
 
   if opts.only_tests_pending:
     queried_labels = []
@@ -26,5 +28,8 @@ if __name__ == "__main__":
     issues = repo.get_issues( state="open" , labels=queried_labels , sort="updated" , since=since )
   else:
     issues = repo.get_issues(state="open", sort="updated", since=since)
+
+  if opts.only_issues:
+    issues = [ i for i in issues if not i.pull_request ]
 
   print " ".join([str(x.number) for x in issues])

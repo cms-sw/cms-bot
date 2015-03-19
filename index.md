@@ -28,10 +28,10 @@ contains all the information required by `process-pull-requests` to notify
 developers when a PR touches the packages they watch.
 
 # Release building
-- [process-build-release-request](https://github.com/cms-sw/cms-bot/blob/master/process-build-release-request)
-- [release-build](): script used to build a release which has been requested
+- [process-build-release-request](https://github.com/cms-sw/cms-bot/blob/master/process-build-release-request): script that handles the github issue used to request the build.
+- [build-release](https://github.com/cms-sw/cms-bot/blob/master/build-release): script used to build a release which has been requested
 through a Github issue.
-- [upload-release](): script used to upload a release to the repository. When
+- [upload-release](https://github.com/cms-sw/cms-bot/blob/master/upload-release): script used to upload a release to the repository. When
 the job processing build requests spots a request to upload, it SSH to the
 build machine which has the release and executes this script.
 

@@ -35,7 +35,7 @@ through a Github issue.
 the job processing build requests spots a request to upload, it SSH to the
 build machine which has the release and executes this script.
 
-For more information see [automatedBuilds](http://cms-sw.github.io/cms-bot/automatedBuilds.html)
+For more information see [Automated Builds](automatedBuilds.html)
 
 # Logging
 Logging happens at many different level but we are trying to unify things using

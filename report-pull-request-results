@@ -204,7 +204,7 @@ def read_unit_tests_file(repo,unit_tests_file,tests_url):
     message += '\nTested at: ' + options.commit_hash
 
 
-  message += '\nI ran the usual tests and I found errors in the following unit tests: \n \n %s \n \n' % errors_found
+  message += '\nI found errors in the following unit tests: \n \n %s \n \n' % errors_found
   message += 'you can see the results of the tests here: \n %s ' % tests_url
 
 

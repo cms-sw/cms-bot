@@ -434,6 +434,9 @@ mmusich:
 - Alignment/TrackerAlignment
 - Alignment/TwoBodyDecay
 - MuonAnalysis/MomentumScaleCalibration
+mschrode:
+- Alignment
+- RecoTracker
 namapane:
 - .*Magnetic.*
 nhanvtran:

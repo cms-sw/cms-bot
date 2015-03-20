@@ -422,7 +422,8 @@ def mark_commit( action , commit_hash , tests_url ):
 COMPARISON_READY_MSG = 'Comparison is ready'
 COMPARISON_INCOMPLETE_MSG = 'There are some workflows for which there are errors in the baseline:\n {workflows} ' \
                             'The results for the comparisons for these workflows could be incomplete \n' \
-                            'This means most likely that the IB is having errors in the relvals'
+                            'This means most likely that the IB is having errors in the relvals.'\
+                            'The error does NOT come from this pull request'
 IGPROF_READY_MSG = 'IgProf is ready'
 STD_COUT_FOUND_MSG = '-1 \n There is a std::cout in the diff for this pull request. Could you please clean it up?'
 

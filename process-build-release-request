@@ -737,8 +737,10 @@ if __name__ == "__main__":
   release_branches = [x["RELEASE_BRANCH"] for x in specs
                       if x["RELEASE_QUEUE"] == release_queue and "RELEASE_BRANCH" in x and not "DISABLED" in x]
 
-  production_architecture = [x["SCRAM_ARCH"] for x in specs
-                                               if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x and "PROD_ARCH" in x][0]
+  possible_prod_arch = [x["SCRAM_ARCH"] for x in specs
+                        if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x and "PROD_ARCH" in x]
+
+  production_architecture = possible_prod_arch[0] if possible_prod_arch else architectures[0]
 
   release_branch = release_queue
   if len(release_branches):

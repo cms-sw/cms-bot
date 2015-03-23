@@ -2,7 +2,6 @@
 title: CMS-bot
 layout: default
 redirect_from:
-  - /cmssw/
   - /cmssw/automatedBuilds.html
 ---
 

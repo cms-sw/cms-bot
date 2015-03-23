@@ -21,6 +21,8 @@ of the process.
 
 ## General Workflow
 
+[Here](https://github.com/cms-sw/cmssw/issues/8372) you can see an example of the process.
+
 - Step 1: Create a new issue with the name "Build \<release_name\>". Only if you are in [REQUEST_BUILD_RELEASE](https://github.com/cms-sw/cms-bot/blob/master/categories.py#L4)
   your isse will be processed. 
 - Step 2: someone from [APPROVE_BUILD_RELEASE](https://github.com/cms-sw/cms-bot/blob/master/categories.py#L5) needs to write "+1" in a comment to start the build. When that 

@@ -72,6 +72,7 @@ CMSSW_CATEGORIES={
    "FWCore/PythonParameterSet",
    "FWCore/PythonUtilities",
    "FWCore/RootAutoLibraryLoader",
+   "FWCore/ROOTTests",
    "FWCore/ServiceRegistry", "FWCore/Services",
    "FWCore/Skeletons",
    "FWCore/Sources", "FWCore/TFWLiteSelector",

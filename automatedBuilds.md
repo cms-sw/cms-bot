@@ -22,6 +22,8 @@ of the process.
 ## General Workflow
 
 [Here](https://github.com/cms-sw/cmssw/issues/8372) you can see an example of the process.
+This process is inteded to be very similar to the [manual workflow](http://cms-sw.github.io/build-release.html) and 
+at any time the release manager should be able to manually continue it or solve a failure. 
 
 - Step 1: Create a new issue with the name "Build \<release_name\>". Only if you are in [REQUEST_BUILD_RELEASE](https://github.com/cms-sw/cms-bot/blob/master/categories.py#L4)
   your isse will be processed. 
@@ -44,3 +46,4 @@ through a Github issue.
 the job processing build requests spots a request to upload, it SSH to the
 build machine which has the release and executes this script.
   Run by [upload-release (jenkins) ](https://cmssdt.cern.ch/jenkins/job/upload-release/)
+- [report-build-release-status](https://github.com/cms-sw/cms-bot/blob/master/report-build-release-status) script used   to report the status of the build.

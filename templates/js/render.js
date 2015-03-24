@@ -432,8 +432,10 @@ fill_arch_cell = function( cell , architecture , cmsdistTags , current_tag ){
     cell.text( architecture )
   }else{
     
-    var tagName = cmsdistTags[ architecture ]
-    var intendedTagName = 'IB/'.concat( current_tag ,'/', architecture )
+    var tagName = cmsdistTags[ architecture ] 
+    var intendedTagName1 = 'IB/'.concat( current_tag ,'/', architecture )
+    var intendedTagName2 = 'ERR/'.concat( current_tag ,'/', architecture )
+
     var link = $( '<a>' )
     link.attr( 'href' , 'https://github.com/cms-sw/cmsdist/commits/' + tagName )
     var tooltipText = ''
@@ -443,7 +445,7 @@ fill_arch_cell = function( cell , architecture , cmsdistTags , current_tag ){
     if( tagName == 'Not Found' ){
       cell.text( architecture )
       return      
-    }else if ( tagName != intendedTagName ){
+    }else if ( tagName != intendedTagName1 && tagName != intendedTagName2 ){
       tooltipText = 'Used same cmsdist tag as ' + tagName.replace( 'IB/' , '').replace( '/' + architecture , '')
       var baseIB = tagName.split( '/' )[ 1 ]
       var previousDate = baseIB.substring( baseIB.lastIndexOf( '_' ) + 1, baseIB.length )

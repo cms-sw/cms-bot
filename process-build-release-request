@@ -886,7 +886,7 @@ if __name__ == "__main__":
 
       for comment in release_notes_comments:
         comment_parts = comment.strip().split(' ')
-        prev_rel_name = comment_parts[ 2 ]
+        prev_rel_name = comment_parts[ 2 ].rstrip()
         rel_name_match = re.match( REL_NAME_REGEXP, prev_rel_name )
         if not rel_name_match:
           msg = WRONG_NOTES_RELEASE_MSG.format( previous_release=prev_rel_name )

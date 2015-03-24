@@ -912,8 +912,10 @@ if __name__ == "__main__":
     print 'Checking if someone requested cleanup, or the issue is too old...' 
     date_rel_notes = search_date_comment( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
     cleanup_deadline = datetime.now() - timedelta(days=2)
-    too_old = date_rel_notes < cleanup_deadline
-
+    if date_rel_notes:
+      too_old = date_rel_notes < cleanup_deadline
+    else:
+      too_old = False
     pattern = '^cleanup$'
     cleanup_requested_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, pattern, True )
     if cleanup_requested_comments or too_old:

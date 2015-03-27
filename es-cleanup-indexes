@@ -78,7 +78,7 @@ if __name__ == "__main__":
     print "Error while getting indices"
     print out
     exit(0)
-  indices = [re.split("[ ]+", l)[1] for l in out.split("\n")]
+  indices = [re.split("[ ]+", l)[2] for l in out.split("\n")]
   for c in CONFIG:
     pattern, timeout, action = c
     m = re.match("([0-9]*)([YmdHM])", timeout)

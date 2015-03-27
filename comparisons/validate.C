@@ -53,123 +53,132 @@ double plotvar(TString v,TString cut=""){
       limit+=1000;
     }
   
-    TString vn=v;
-    vn.ReplaceAll(".","_");
-    vn.ReplaceAll("(","");
-    vn.ReplaceAll(")","");
-    vn.ReplaceAll("@","AT");
-    vn.ReplaceAll("[","_");
-    vn.ReplaceAll("]","_");
+  TString vn=v;
+  vn.ReplaceAll(".","_");
+  vn.ReplaceAll("(","");
+  vn.ReplaceAll(")","");
+  vn.ReplaceAll("@","AT");
+  vn.ReplaceAll("[","_");
+  vn.ReplaceAll("]","_");
+  
+  if (limit!="")
+    selection *= limit;
+  
+  TString cn="c_"+vn;
+  if (cut!="") cn+=count;
+  TCanvas * c = new TCanvas(cn,"plot of "+v);
+  c->SetGrid();
+  TH1F * refplot=0;
+  TString refvn=vn;
+  vn.ReplaceAll(recoS,refrecoS);
+  TString refv=v;
+  refv.ReplaceAll(recoS,refrecoS);
+  if (refv!=v)
+    std::cout<<" changing reference variable to:"<<refv<<std::endl;
+  
+  double refplotEntries = -1;
+  double plotEntries = -1;
 
-    if (limit!="")
-      selection *= limit;
-	
-    TString cn="c_"+vn;
-    if (cut!="") cn+=count;
-    TCanvas * c = new TCanvas(cn,"plot of "+v);
-    c->SetGrid();
-    TH1F * refplot=0;
-    TString refvn=vn;
-    vn.ReplaceAll(recoS,refrecoS);
-    TString refv=v;
-    refv.ReplaceAll(recoS,refrecoS);
-    if (refv!=v)
-      std::cout<<" changing reference variable to:"<<refv<<std::endl;
-
-    if (Events!=0){
-      
-      TString reffn=refvn+"_refplot";
-      if (cut!="") reffn+=count;
-      refEvents->Draw(refv+">>"+reffn,
-		      selection,
-		      "",
-		      Nmax);
-      refplot = (TH1F*)gROOT->Get(reffn);
-      
-      if (refplot)	refplot->SetLineColor(1);
-      else {std::cout<<"Comparison died "<<std::endl; if (cleanEmpties) delete c; return -1;}
+  double refplotMean = -1e12;
+  double plotMean = -1e12;
+  
+  if (refEvents!=0){
+    
+    TString reffn=refvn+"_refplot";
+    if (cut!="") reffn+=count;
+    refEvents->Draw(refv+">>"+reffn,
+		    selection,
+		    "",
+		    Nmax);
+    refplot = (TH1F*)gROOT->Get(reffn);
+    
+    if (refplot){
+      refplot->SetLineColor(1);
+      refplotEntries = refplot->GetEntries();
+      refplotMean = refplot->GetMean();//something inside the histo makes it to make more sense
     }
-    else 
-      {
-	std::cout<<"cannot do things for "<<refv<<std::endl;
-	return -1;
-      }
-
-    TString fn=vn+"_plot";
-    if (cut!="") fn+=count;
-    TH1F *  plot = new TH1F(fn,refplot->GetTitle(),
+    else {std::cout<<"Comparison died "<<std::endl; if (cleanEmpties) delete c; return -1;}
+  } else {
+    std::cout<<"cannot do things for "<<refv<<std::endl;
+    return -1;
+  }
+  
+  TString fn=vn+"_plot";
+  if (cut!="") fn+=count;
+  TH1F *  plot = new TH1F(fn,refplot->GetTitle(),
+			  refplot->GetNbinsX(),
+			  refplot->GetXaxis()->GetXmin(),
+			  refplot->GetXaxis()->GetXmax());
+  plot->SetLineColor(2);
+  
+  if (Events!=0){
+    Events->Draw(v+">>"+fn,
+		 selection,
+		 "",
+		 Nmax);
+    plotEntries = plot->GetEntries();
+    plotMean = plot->GetMean();
+    if ( plot->GetXaxis()->GetXmax() != refplot->GetXaxis()->GetXmax()){
+      std::cout<<"ERROR: DRAW RANGE IS INCONSISTENT !!!"<<std::endl;
+    }
+    
+  }
+  
+  
+  double countDiff=0;
+  if (refplot && plot) {
+    refplot->Draw("he");
+    refplot->SetMinimum(-0.05*refplot->GetMaximum() );
+    plot->Draw("same he");
+    
+    TString dn=vn+"_diff";
+    if (cut!="") dn+=count;
+    TH1F *  diff = new TH1F(dn,refplot->GetTitle(),
 			    refplot->GetNbinsX(),
 			    refplot->GetXaxis()->GetXmin(),
 			    refplot->GetXaxis()->GetXmax());
-    plot->SetLineColor(2);
     
-    if (Events!=0){
-      Events->Draw(v+">>"+fn,
-		   selection,
-		   "",
-		   Nmax);
-      if ( plot->GetXaxis()->GetXmax() != refplot->GetXaxis()->GetXmax()){
-	std::cout<<"what the fuck does Draw does !!!"<<std::endl;
-      }
-      
+    diff->Add(plot);
+    diff->Add(refplot,-1.);
+    
+    double max = std::max(refplot->GetMaximum() , plot->GetMaximum());
+    double min = std::min(refplot->GetMinimum() , plot->GetMinimum());
+    min = std::min(diff->GetMinimum(), min);
+    refplot->SetMaximum(max + 0.05*std::abs(max));
+    refplot->SetMinimum(min - 0.05*std::abs(min));
+    
+    diff->SetMarkerColor(4);
+    diff->SetLineColor(4);
+    diff->SetMarkerStyle(7);
+    diff->Draw("same p e");
+    
+    
+    for (int ib=1;ib<=diff->GetNbinsX();++ib){
+      countDiff+=std::abs(diff->GetBinContent(ib));
     }
-
-
-    double countDiff=0;
-    if (refplot && plot) {
-      refplot->Draw("he");
-      refplot->SetMinimum(-0.05*refplot->GetMaximum() );
-      plot->Draw("same he");
-
-      //      TH1F * diff = new TH1F(*refplot);
-      //      diff->SetName(vn+"_diff");
-      TString dn=vn+"_diff";
-      if (cut!="") dn+=count;
-      TH1F *  diff = new TH1F(dn,refplot->GetTitle(),
-			      refplot->GetNbinsX(),
-			      refplot->GetXaxis()->GetXmin(),
-			      refplot->GetXaxis()->GetXmax());
-      diff->Add(plot);
-      diff->Add(refplot,-1.);
-
-      double max = std::max(refplot->GetMaximum() , plot->GetMaximum());
-      double min = std::min(refplot->GetMinimum() , plot->GetMinimum());
-      min = std::min(diff->GetMinimum(), min);
-      refplot->SetMaximum(max + 0.05*std::abs(max));
-      refplot->SetMinimum(min - 0.05*std::abs(min));
-
-      diff->SetMarkerColor(4);
-      diff->SetLineColor(4);
-      diff->SetMarkerStyle(7);
-      diff->Draw("same p e");
-
-      
-      for (int ib=1;ib<=diff->GetNbinsX();++ib){
-	countDiff+=std::abs(diff->GetBinContent(ib));
-      }
-
-      TLegend * leg = new TLegend(0.5,0.8,0.99,0.99);
-      leg->AddEntry(refplot,"reference","l");
-      leg->AddEntry(plot,"new version","l");
-      leg->AddEntry(diff,"new - reference","p");
-      leg->Draw();
-
-    }else{ 
-      std::cout<<"cannot do things for "<<v<<std::endl;
-      return -1;
+    
+    TLegend * leg = new TLegend(0.5,0.8,0.99,0.99);
+    leg->AddEntry(refplot,"reference","l");
+    leg->AddEntry(plot,"new version","l");
+    leg->AddEntry(diff,"new - reference","p");
+    leg->Draw();
+    
+  }else{ 
+    std::cout<<"cannot do things for "<<v<<std::endl;
+    return -1;
+  }
+  if (countDiff!=0)
+    {
+      std::cout<<v<<" has "<< countDiff <<" differences"<<std::endl;
     }
-    if (countDiff!=0)
-      {
-	std::cout<<v<<" has differences"<<std::endl;
+  else
+    {
+      if (RemoveIdentical){
+	//	  std::cout<<"remove identical"<<std::endl;
+	delete c;
       }
-    else
-      {
-	if (RemoveIdentical){
-	  //	  std::cout<<"remove identical"<<std::endl;
-	    delete c;
-	}
-      }
-    return countDiff;
+    }
+  return countDiff;
 }
 
 
@@ -656,6 +665,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
   Nmax = TMath::Min(Nref,Nnew);
   
   gROOT->cd();
+
+  std::cout<<"Start making plots for Events with "<<Nnew<<" events and refEvents with "<<Nref<<" events ==> check  "<<Nmax<<std::endl;
 
   if (!step.Contains("hlt")){
 

@@ -885,7 +885,8 @@ if __name__ == "__main__":
       release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
 
       for comment in release_notes_comments:
-        comment_parts = comment.strip().split(' ')
+        first_line = str(comment.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+        comment_parts = first_line.strip().split(' ')
         prev_rel_name = comment_parts[ 2 ].rstrip()
         rel_name_match = re.match( REL_NAME_REGEXP, prev_rel_name )
         if not rel_name_match:

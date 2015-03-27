@@ -62,6 +62,10 @@ GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release
                                'You can see the progress here: \n' \
                                'https://cmssdt.cern.ch/jenkins/job/release-produce-changelog/\n' \
                                'I will generate an announcement template.\n'
+PROD_ARCH_NOT_READY_MSG = 'ATTENTION!!! The production architecture ({prod_arch}) is not ready yet. '\
+                          'This needs to be checked before asking me to generate the release notes.\n'\
+                          'When the production architecture is uploaded successfully, I will generate the release notes.'\
+                          ' You don\'t need to write the command again.'
 REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 UPLOAD_COMMENT = 'upload %s'
 UPLOAD_ALL_COMMENT = '^[uU]pload all$'
@@ -882,9 +886,11 @@ if __name__ == "__main__":
     #Check if someone asked for release notes, go to next state after generating notes.
     #At least one architecture must have been successfully uploaded
     if UPLOAD_OK and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
+      print 'checking if someone asked for the release notes'
       release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
 
-      for comment in release_notes_comments:
+      if release_notes_comments:
+        comment = release_notes_comments[-1]
         first_line = str(comment.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
         comment_parts = first_line.strip().split(' ')
         prev_rel_name = comment_parts[ 2 ].rstrip()
@@ -892,14 +898,17 @@ if __name__ == "__main__":
         if not rel_name_match:
           msg = WRONG_NOTES_RELEASE_MSG.format( previous_release=prev_rel_name )
           post_message( issue, msg )
-          continue
+          exit( 0 )
 
+        if ( production_architecture not in UPLOAD_OK ):
+          msg = PROD_ARCH_NOT_READY_MSG.format( prod_arch=production_architecture )
+          post_message( issue, msg )
+          exit( 0 )
         create_properties_file_rel_notes( release_name, prev_rel_name, production_architecture, issue.number )
         msg = GENERATING_RELEASE_NOTES_MSG.format( previous_release=prev_rel_name )
         post_message( issue, msg )
         add_label( issue, RELEASE_NOTES_GENERATED_LBL )
 
-      if release_notes_comments:
        #Check if the production architecture was uploaded and was correctly installed, generate announcement if so. 
         check_if_prod_arch_ready( issue, prev_rel_name, production_architecture )
         go_to_state( issue, status, RELEASE_ANNOUNCED )

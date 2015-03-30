@@ -11,6 +11,7 @@ RELEASE_BRANCH_MILESTONE = {
   "CMSSW_4_4_X": 8,
   "CMSSW_4_2_X": 35,
   "CMSSW_4_1_X": 7,
+  "CMSSW_6_2_SLHCDEV_X": 52,
 }
 
 RELEASE_BRANCH_CLOSED = [
@@ -43,6 +44,7 @@ RELEASE_MANAGERS = {
   "CMSSW_7_0_X": ["degano"],
   "CMSSW_6_2_X": ["degano"],
   "CMSSW_6_2_X_SLHC": ["fratnikov", "mark-grimes"],
+  "CMSSW_6_2_SLHCDEV_X": ["fratnikov", "mark-grimes"],
   "CMSSW_5_3_X": ["smuzaffar"],
   "CMSSW_4_4_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],
   "CMSSW_4_2_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],

@@ -44,6 +44,7 @@ git fetch origin
 
 # SLHC branch is based on top of the associated release branch.
 (updateBranch CMSSW_6_2_X CMSSW_6_2_X_SLHC) || true
+(updateBranch CMSSW_6_2_X_SLHC CMSSW_6_2_SLHCDEV_X) || true
 
 # CMSSW_7_2_X for the moment is based on CMSSW_7_1_X
 (updateBranch CMSSW_7_2_X CMSSW_7_2_ROOT6_X) || true

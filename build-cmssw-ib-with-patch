@@ -71,6 +71,7 @@ RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/_X.*/_X/'`
 
 # Hardcode special queues like SLHC one.
 case $RELEASE_NAME in
+  *SLHCDEV*) ;;
   *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
 esac
 

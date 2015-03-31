@@ -84,7 +84,7 @@ CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
-eval `curl -s -k $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+eval `curl -s -k -f $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 # eval `curl https://raw.github.com/cms-sw/cms-bot/HEAD/config.map | grep $ARCHITECTURE`
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
@@ -98,7 +98,7 @@ for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TA
   REPO=`echo $x | cut -f1 -d@`
   T=`echo $x | cut -f2 -d@`
   P=`echo $REPO | cut -f2 -d/ | tr "[:lower:]" "[:upper:]"`
-  if [ ! -d $P -o ! "$(ls -A $P)" ]; then
+  if [ ! -d $P ]; then
     git clone -b $T git://github.com/$REPO.git $P
     pushd $P
       git remote add originrw git@github.com:$REPO.git

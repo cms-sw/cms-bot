@@ -66,7 +66,7 @@ git fetch origin
 (updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT6_X) || true
 (updateBranch CMSSW_7_4_X CMSSW_7_4_GEANT10_X) || true
 (updateBranch CMSSW_7_4_X CMSSW_7_4_CLANG_X) || true
-#(updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT5_X) || true
+(updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT5_X) || true
 
 # CMSSW_7_5_X
 (updateBranch CMSSW_7_4_X CMSSW_7_5_X) || true

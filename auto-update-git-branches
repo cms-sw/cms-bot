@@ -39,26 +39,14 @@ fi
 git fetch origin
 
 # CMSSW_7_1_X for the moment is based on CMSSW_7_0_X
-(updateBranch CMSSW_7_1_X CMSSW_7_1_DEVEL_X) || true 
-(updateBranch CMSSW_7_1_X CMSSW_7_1_CLANG_X) || true
 
 # SLHC branch is based on top of the associated release branch.
 (updateBranch CMSSW_6_2_X CMSSW_6_2_X_SLHC) || true
 (updateBranch CMSSW_6_2_X_SLHC CMSSW_6_2_SLHCDEV_X) || true
 
 # CMSSW_7_2_X for the moment is based on CMSSW_7_1_X
-(updateBranch CMSSW_7_2_X CMSSW_7_2_ROOT6_X) || true
-(updateBranch CMSSW_7_2_X CMSSW_7_2_GEANT10_X) || true
-(updateBranch CMSSW_7_2_X CMSSW_7_2_DEVEL_X) || true
-(updateBranch CMSSW_7_2_X CMSSW_7_2_CLANG_X) || true
-(updateBranch CMSSW_7_2_X CMSSW_7_2_THREADED_X) || true
 
 # CMSSW_7_3_X special branches
-(updateBranch CMSSW_7_3_X CMSSW_7_3_ROOT6_X) || true
-(updateBranch CMSSW_7_3_X CMSSW_7_3_GEANT10_X) || true
-(updateBranch CMSSW_7_3_X CMSSW_7_3_THREADED_X) || true
-(updateBranch CMSSW_7_3_X CMSSW_7_3_CLANG_X) || true
-(updateBranch CMSSW_7_3_X CMSSW_7_3_DEVEL_X) || true
 
 # CMSSW_7_4_X
 (updateBranch CMSSW_7_4_X CMSSW_7_4_DEVEL_X) || true
@@ -93,29 +81,15 @@ git fetch
 
 # CMSSW_7_0_X
 # devel
-(updateBranch IB/CMSSW_7_0_X/stable IB/CMSSW_7_0_X/devel) || true
 
 # CMSSW_7_1_X
 (updateBranch IB/CMSSW_7_0_X/stable IB/CMSSW_7_1_X/stable) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/jemalloc341) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/jemalloc350) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/gcc490) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/devel) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/next) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/root5) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug) || true
-(updateBranch IB/CMSSW_7_1_X/stable IB/CMSSW_7_1_X/debug-gcc491) || true
 
 # CMSSW_7_2_X
-(updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/geant10) || true
-(updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/gcc491) || true
-(updateBranch IB/CMSSW_7_2_X/stable IB/CMSSW_7_2_X/next) || true
 
 # CMSSW_7_3_X
 (updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/gcc491) || true
 (updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/root6) || true
-(updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/asan) || true
-(updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/geant10) || true
 (updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/next) || true
 (updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/debug) || true
 

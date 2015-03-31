@@ -66,6 +66,7 @@ git fetch origin
 (updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT6_X) || true
 (updateBranch CMSSW_7_4_X CMSSW_7_4_GEANT10_X) || true
 (updateBranch CMSSW_7_4_X CMSSW_7_4_CLANG_X) || true
+(updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT5_X) || true
 
 # CMSSW_7_5_X
 (updateBranch CMSSW_7_4_X CMSSW_7_5_X) || true
@@ -127,6 +128,7 @@ git fetch
 (updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/root6) || true
 (updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/geant10) || true
 (updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/debug) || true
+(updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/root5) || true
 
 # CMSSW_7_5_X
 (updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_5_X/stable) || true

@@ -215,7 +215,7 @@ def get_tags_from_line( line , release_queue):
   if 'tags->' not in line:
     return []
   tags_str = line.split('tags->')[1]
-  if 'SLHC' in release_queue:
+  if re.match( '.*SLHC$', release_queue):
     filter = release_queue[:-6]+'[X|0-9]_SLHC.*'
   else:
     filter = release_queue[:-1]+'[X|0-9].*'

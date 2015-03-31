@@ -23,7 +23,7 @@ function updateBranch()
 cd $WORKSPACE
 rm -rf cmssw
 if [ ! -d cmssw ]; then
-  git clone --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw
+  git clone git@github.com:cms-sw/cmssw
 fi
 
 cd cmssw

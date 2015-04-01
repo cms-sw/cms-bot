@@ -847,7 +847,9 @@ def generate_separated_json_results( results ):
     out_json.close()
 
     f_summary = open(summary_file_name, "w")
-    ibs = [ comp['release_name'] for comp in rq['comparisons'] if (comp['release_name'] != rq['base_branch']) ]
+    ibs = [ comp['release_name'] for comp in rq['comparisons']
+                                   if (comp['release_name'] != rq['base_branch']) and comp['isIB'] ]
+
     all_ibs_list.extend( ibs )
     
     # Ignore forward ported prs, and merge commits

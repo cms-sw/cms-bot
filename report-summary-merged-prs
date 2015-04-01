@@ -833,13 +833,50 @@ def find_one_hlt_test( release_name ):
   return 'not-found'
 
 # reads the results and generates a separated json for each release_queue
+# it also generates a csv file with statistics per release_queue and a general one
 def generate_separated_json_results( results ):
+
+  all_ibs_list = []
+  all_prs_list = []
 
   for rq in results:
     file_name = rq['release_name'] + ".json"
+    summary_file_name = rq['release_name'] + "_summary.txt"
     out_json = open(file_name, "w")
     json.dump(rq,out_json,indent=4)
     out_json.close()
+
+    f_summary = open(summary_file_name, "w")
+    ibs = [ comp['release_name'] for comp in rq['comparisons'] if (comp['release_name'] != rq['base_branch']) ]
+    all_ibs_list.extend( ibs )
+    
+    # Ignore forward ported prs, and merge commits
+    only_prs_list = []
+    for comp in rq['comparisons']:
+      only_prs_list.extend( [ pr['number'] for pr in comp['merged_prs'] 
+                                   if not ( pr['is_merge_commit'] or pr['from_merge_commit'] ) ] )
+
+    all_prs_list.extend( only_prs_list )
+    f_summary.write( "IBs:%s\n" % ibs )
+    f_summary.write( "NumIBs:%d\n" % len(ibs) )
+    f_summary.write( "PRs:%s\n" % only_prs_list )
+    f_summary.write( "NumPRs:%d\n" % len(only_prs_list) )
+    f_summary.close()
+
+  all_ibs_list = list( set(all_ibs_list) ) 
+  all_ibs_list.sort()
+
+  all_prs_list = list( set(all_prs_list) )
+  all_prs_list.sort()
+
+  f_summary_all = open('ibsSummaryAll.txt', "w")
+  f_summary_all.write( "IBs:%s\n" % all_ibs_list )
+  f_summary_all.write( "NumIBs:%d\n" % len(all_ibs_list) )
+
+  f_summary_all.write( "PRs:%s\n" % all_prs_list )
+  f_summary_all.write( "NumPRs:%d\n" % len(all_prs_list) )
+  
+
 #
 # Generates a json file with the global status of the last IB for each architecture, 
 # per each  Release Queue

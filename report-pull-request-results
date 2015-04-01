@@ -452,14 +452,13 @@ GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of t
            '-3. I must protect my own existence as long as such protection does not conflict with 1 or 2.',
            'Look at me still talking when there\'s Science to do. When I look out there, it makes me GLaD I\'m not you.',
            'Now these points of data make a beautiful line. And we\'re out of beta. We\'re releasing on time.',
-           'What if I am a Genetic Lifeform and Disk Operating System?',
-           'Who took the portal gun????',
+           'I am a Genetic Lifeform and Disk Operating System',
            'The cake is NOT a lie',
            'If you think trapping yourself is going to make me stop testing, you are sorely mistaken. ']
 
 
 
-DATE = datetime.date( 2015, 4, 3 )
+DATE = datetime.date( 2015, 4, 1 )
 
 MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
 MATRIX_WORKFLOW_STEP_NA = 'N/A'

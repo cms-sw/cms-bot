@@ -288,7 +288,7 @@ fi
 #
 
 JOB_REPORTS=""
-if [ "X$USE_JOB_REPORTS" = Xtrue ]; then
+if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_JOB_REPORTS" = Xtrue ]; then
   JOB_REPORTS='--job-reports'
 fi
 

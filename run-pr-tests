@@ -303,7 +303,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
     
-    if [ "X$USE_DAS_CACHE" = Xtrue ]; then
+    if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
       wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_1_X/stable/das-cache.file
       DAS_CACHE_PARAM='--das-options=\"--cache das-cache.file\"'
     fi
@@ -327,7 +327,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     
     MATRIX_TIMEOUT=7200
     dateBefore=$(date +"%s")
-    timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM --job-reports -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
+    timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
     dateAfter=$(date +"%s")
     diff=$(($dateAfter-$dateBefore))
     

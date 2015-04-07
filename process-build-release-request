@@ -70,7 +70,7 @@ REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]
 UPLOAD_COMMENT = 'upload %s'
 UPLOAD_ALL_COMMENT = '^[uU]pload all$'
 ABORT_COMMENT = '^[Aa]bort$'
-RELEASE_NOTES_COMMENT = '^release-notes[ ]+since[ ]+[^ ]+'
+RELEASE_NOTES_COMMENT = '^release-notes([ ]+since[ ]+[^ ]+)?$'
 BUILD_TOOLCONF = '^[Bb]uild cmssw-tool-conf'
 APPROVAL_COMMENT =  '^[+]1$'
 DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
@@ -82,7 +82,7 @@ JENKINS_PREV_CMSDIST_TAG='PREVIOUS_CMSDIST_TAG'
 JENKINS_CMSDIST_TAG='CMSDIST_TAG'
 INSTALLATION_FILE='/afs/.cern.ch/cms/{architecture}/tmp/{rel_name}'
 ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
-                        'The {rel_type} {is_patch} release {rel_name} is now available '\
+                        'The {rel_type} {is_patch}release {rel_name} is now available '\
                         'for the following architectures:\n\n'\
                         '{production_arch} (production)\n'\
                         '{rest_of_archs}\n\n'\
@@ -92,6 +92,9 @@ ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
                         'Cheers,\n'\
                         'cms-bot'
 
+HN_REL_ANNOUNCE_EMAIL = 'hn-cms-relAnnounce@cern.ch'
+ANNOUNCEMENT_EMAIL_SUBJECT = '{rel_type} {is_patch}Release {rel_name} Now Available '
+MAILTO_TEMPLATE = '<a href="mailto:{destinatary}?subject={sub}&amp;body={body}">here</a>'
 
 # -------------------------------------------------------------------------------
 # Statuses
@@ -593,7 +596,7 @@ def generate_announcement( release_name, previous_release_name, production_archi
   type_str = 'development' if is_development else 'production'
   print 'Is development: ', is_development
   is_patch = 'patch' in release_name
-  patch_str = 'patch' if is_patch else ''
+  patch_str = 'patch ' if is_patch else ''
   print 'Is patch: ', is_patch
   # The description of the issue should explain the reason for building the release
   desc = issue.body
@@ -611,6 +614,26 @@ def generate_announcement( release_name, previous_release_name, production_archi
   return announcement
 
 #
+# Generates a link that the uset can click to write the announcement email with just one click
+#
+def generate_announcement_link( announcement, release_name ):
+  is_development = 'pre' in release_name
+  type_str = 'Development' if is_development else 'Production'
+  is_patch = 'patch' in release_name
+  patch_str = 'patch ' if is_patch else ''
+
+  subject = ANNOUNCEMENT_EMAIL_SUBJECT.format( rel_type=type_str,
+                                is_patch=patch_str,
+                                rel_name=release_name).replace( ' ', '%20' )
+
+  msg = announcement.replace( '\n', '%0D%0A' ).replace( ' ', '%20')
+  link = MAILTO_TEMPLATE.format( destinatary=HN_REL_ANNOUNCE_EMAIL, 
+                                        sub=subject,
+                                        body=msg )
+  return link
+
+
+#
 # checks if the production architecture is ready, if so, it generates a template for the announcement
 #
 def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
@@ -618,7 +641,9 @@ def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
     print 'Production architecture successfully uploaded..'
     #For now, it assumes that the release is being installed and it will be installed successfully
     announcement = generate_announcement( release_name, prev_rel_name, production_architecture, UPLOAD_OK )
-    msg = 'You can use this template for announcing the release:\n\n%s' % announcement
+    mailto = generate_announcement_link( announcement, release_name )
+    msg = 'You can use this template for announcing the release:\n\n%s\n\n' \
+          'You can also click %s to send the email.' % (announcement, mailto)
     post_message( issue, msg )
     add_label( issue, ANNOUNCEMENT_GENERATED_LBL )
 
@@ -660,6 +685,25 @@ def check_to_build_after_tool_conf( issue, release_name, release_queue):
     msg = QUEUING_BUILDS_MSG % ', '.join( ready_to_build )
     post_message( issue , msg )
 
+#
+# Guesses the previous release name based on the name given as a parameter
+#
+def guess_prev_rel_name( release_name ):
+
+  num_str = release_name.split( '_' )[ -1 ]
+  number = int( re.search( '[0-9]+$', release_name).group(0) )
+  prev_number = number - 1
+  prev_num_str = num_str.replace( str(number), str(prev_number) )
+
+  if ('patch' in release_name) or ('pre' in release_name):
+    if prev_number < 1:
+      return release_name.replace( '_' + num_str, '')
+
+  else:
+    if prev_number < 0:
+      return release_name + '_pre9'
+
+  return release_name.replace( num_str, prev_num_str)
 
 # -------------------------------------------------------------------------------
 # Start of execution 
@@ -893,7 +937,13 @@ if __name__ == "__main__":
         comment = release_notes_comments[-1]
         first_line = str(comment.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
         comment_parts = first_line.strip().split(' ')
-        prev_rel_name = comment_parts[ 2 ].rstrip()
+
+        if len( comment_parts ) > 1:
+          prev_rel_name = comment_parts[ 2 ].rstrip()
+        else:
+          prev_rel_name = guess_prev_rel_name( release_name )
+          print prev_rel_name 
+
         rel_name_match = re.match( REL_NAME_REGEXP, prev_rel_name )
         if not rel_name_match:
           msg = WRONG_NOTES_RELEASE_MSG.format( previous_release=prev_rel_name )

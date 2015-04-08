@@ -194,6 +194,8 @@ fi
 # #############################################
 # test compilation with GCC
 # ############################################
+COMPILATION_CMD="scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN)"
+echo $COMPILATION_CMD > $WORKSPACE/build.log
 scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN) 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
@@ -214,6 +216,8 @@ fi
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
+  UTESTS_CMD="scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests"
+  echo $UTESTS_CMD > $WORKSPACE/unitTests.log
   scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
@@ -324,7 +328,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
          WF_LIST="-s $MATRIX_EXTRAS"
         ;;
     esac
-    
+
+    RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
+    echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
+
     MATRIX_TIMEOUT=7200
     dateBefore=$(date +"%s")
     timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log

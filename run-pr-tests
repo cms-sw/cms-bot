@@ -329,10 +329,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
         ;;
     esac
 
+    # MATRIX_TIMEOUT is set by jenkins
     RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
     echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
 
-    MATRIX_TIMEOUT=7200
     dateBefore=$(date +"%s")
     timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
     dateAfter=$(date +"%s")

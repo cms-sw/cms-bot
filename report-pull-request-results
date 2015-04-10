@@ -20,7 +20,8 @@ parser.add_option("-u", action="store", type="string", dest="username", help="Yo
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
 parser.add_option("--pr", action="store", type="int", dest="pr_number", help="The number of the pull request to use", default=-1)
 parser.add_option("--pr-job-id", action="store", type="int", dest="pr_job_id", help="The jenkins job id for the  pull request to use", default=-1)
-parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="Unit tests file to analyze", default='None')
+parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
+parser.add_option("--f2", action="store", type="string", dest="results_file2", help="second results file to analyse", default='None')
 parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help="I will only show the message I would post, but I will not post it in github")
 parser.add_option("-c", action="store", dest="commit_hash", help="Tells me to use the commit hash to mark it as success or failure depending on the results of the tests" , )
 parser.add_option("--add-message", action="store", dest="aditional_message", help="I will add the text to the message that I will send" , )
@@ -336,7 +337,7 @@ def send_tests_approved_pr_message( repo, pr_number, tests_url ):
   send_message_pr( pull_request, message )
   mark_commit_if_needed( ACTION, tests_url )
 
-def send_comparison_ready_message(official_cmssw, pr_number, tests_results_url, comparison_errors_file ):
+def send_comparison_ready_message(official_cmssw, pr_number, tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file ):
   pull_request = official_cmssw.get_pull(pr_number)
   message = COMPARISON_READY_MSG +'\n' + tests_results_url
 
@@ -350,8 +351,17 @@ def send_comparison_ready_message(official_cmssw, pr_number, tests_results_url, 
 
   if wfs_with_errors != '':
     error_info = COMPARISON_INCOMPLETE_MSG.format( workflows=wfs_with_errors )
-    message += '\n' + error_info
-  
+    message += '\n\n' + error_info
+
+  wfs_das_inconsistency = open( wfs_with_das_inconsistency_file ).readline().rstrip().rstrip(',').split( ',' )
+
+  if '' in wfs_das_inconsistency:
+    wfs_das_inconsistency.remove( '' )
+
+  if wfs_das_inconsistency:
+    das_inconsistency_info = DAS_INCONSISTENCY_MSG.format( workflows=', '.join( wfs_das_inconsistency ) )
+    message += '\n\n' + das_inconsistency_info
+ 
   send_message_pr( pull_request, message )
 
 def send_igprof_ready_message( official_cmssw , pr_number , tests_results_url ):
@@ -429,6 +439,9 @@ COMPARISON_INCOMPLETE_MSG = 'There are some workflows for which there are errors
                             'The results for the comparisons for these workflows could be incomplete \n' \
                             'This means most likely that the IB is having errors in the relvals.'\
                             'The error does NOT come from this pull request'
+DAS_INCONSISTENCY_MSG = 'The workflows {workflows} have different files in step1_dasquery.log than the ones ' \
+                        'found in the baseline. You may want to check and retrigger the tests if necessary. ' \
+                        'You can check it in the "files" directory in the results of the comparisons'
 IGPROF_READY_MSG = 'IgProf is ready'
 STD_COUT_FOUND_MSG = '-1 \n There is a std::cout in the diff for this pull request. Could you please clean it up?'
 
@@ -521,7 +534,8 @@ elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   read_matrix_log_file( official_cmssw , matrix_log_file , tests_results_url )
 elif ( ACTION == 'COMPARISON_READY' ):
   comparison_errors_file = options.unit_tests_file
-  send_comparison_ready_message( official_cmssw, pr_number, tests_results_url, comparison_errors_file )
+  wfs_with_das_inconsistency_file = options.results_file2
+  send_comparison_ready_message( official_cmssw, pr_number, tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file )
 elif ( ACTION == 'STD_COUT' ):
   send_std_cout_found_message( official_cmssw , pr_number , tests_results_url )
 elif ( ACTION == 'TESTS_RUNNING' ):

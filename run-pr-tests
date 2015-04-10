@@ -309,7 +309,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     
     if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
       wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_1_X/stable/das-cache.file
-      DAS_CACHE_PARAM='--das-options=\"--cache das-cache.file\"'
+      DAS_CACHE_PARAM='--das-options=\"--limit 0 --cache das-cache.file\"'
     fi
    
     case $RELEASE_FORMAT in

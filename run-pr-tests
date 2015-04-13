@@ -307,11 +307,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
     
-    if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
-      wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/IB/CMSSW_7_1_X/stable/das-cache.file
-      DAS_CACHE_PARAM='--das-options=\"--limit 0 --cache das-cache.file\"'
-    fi
-   
     case $RELEASE_FORMAT in
         *THREADED*)
         THREADED_PARAM='--command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
@@ -330,11 +325,20 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     esac
 
     # MATRIX_TIMEOUT is set by jenkins
-    RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $DAS_CACHE_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
-    echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
-
     dateBefore=$(date +"%s")
-    timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM "$DAS_CACHE_PARAM" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
+
+    # The --das-options are not correctly interpreted when set as a variable
+    if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
+      wget --no-check-certificat https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
+      RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options=\"--cache das-cache.file --limit 0\" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
+      echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
+      timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options="--cache das-cache.file --limit 0" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
+    else
+      RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
+      echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
+      timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
+    fi
+
     dateAfter=$(date +"%s")
     diff=$(($dateAfter-$dateBefore))
     

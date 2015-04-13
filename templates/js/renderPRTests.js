@@ -127,6 +127,13 @@ getHeader = function( resultsDict ){
 
   header.append( title )
   header.append( subtitle )
+
+  var baselineSubtitle = $( '<h5>' )
+  header.append( baselineSubtitle )
+  var baselineLink = $( "<a>" ).text( "See baseline used for the comparisons" )
+  baselineSubtitle.append( baselineLink )
+  baselineLink.attr( 'href' , 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-baseline-tests/' + resultsDict[ BASE_IB_KEY ] )
+
   header.append( $( '<br>' ) )
 
   return header

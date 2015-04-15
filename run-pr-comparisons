@@ -22,6 +22,8 @@ do
     WFS_WITH_ERRORS=$ERR_DETAILS,$WFS_WITH_ERRORS
   else
     echo "Going to compare: $wf"
+    echo $WF_PATH
+    echo ""
     WORKFLOWS_TO_COMPARE=$WORKFLOWS_TO_COMPARE,$WF_PATH
   fi
 

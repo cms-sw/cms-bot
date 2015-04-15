@@ -15,7 +15,7 @@ DAS_NON_CONSISTENT_WFS_FILE=wf_non_consistent_das.txt
 
 for wf in ${WORKFLOWS_LIST//,/ }
 do
-  WF_PATH=`grep $wf $WORKSPACE/$MAPPING_FILE`
+  WF_PATH=`grep -F $wf $WORKSPACE/$MAPPING_FILE`
 
   if [ "X$WF_PATH" = X ]; then
     ERR_DETAILS=`grep $wf $WORKSPACE/$ERRORS_FILE`
@@ -26,7 +26,6 @@ do
     echo ""
     WORKFLOWS_TO_COMPARE=$WORKFLOWS_TO_COMPARE,$WF_PATH
   fi
-  WF_PATH=''
 
 done
 

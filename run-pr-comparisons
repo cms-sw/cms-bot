@@ -26,6 +26,7 @@ do
     echo ""
     WORKFLOWS_TO_COMPARE=$WORKFLOWS_TO_COMPARE,$WF_PATH
   fi
+  WF_PATH=''
 
 done
 

@@ -16,7 +16,7 @@ pushd "$WORKSPACE/matrix-results"
   runTheMatrix.py $THREADED_PARAM -s -j $(getconf _NPROCESSORS_ONLN) -l 1306.0,101.0,1003.0,50202.0,9.0,25202.0 2>&1 | tee -a $WORKSPACE/matrixTests.log
 
   MAPPING_FILE=wf_mapping.txt
-  ROOT_FILES=`find . -name DQM*.root`
+  ROOT_FILES=`find . -name DQM*.root | sort`
   PKGTOOLS_PATH=$WORKSPACE/pkgtools
   for f in $ROOT_FILES
   do

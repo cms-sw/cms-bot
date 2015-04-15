@@ -21,6 +21,7 @@ do
     ERR_DETAILS=`grep $wf $WORKSPACE/$ERRORS_FILE`
     WFS_WITH_ERRORS=$ERR_DETAILS,$WFS_WITH_ERRORS
   else
+    echo "Going to compare: $wf"
     WORKFLOWS_TO_COMPARE=$WORKFLOWS_TO_COMPARE,$WF_PATH
   fi
 

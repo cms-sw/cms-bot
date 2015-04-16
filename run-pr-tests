@@ -329,7 +329,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
     # The --das-options are not correctly interpreted when set as a variable
     if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
-      wget --no-check-certificat https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
+      wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
       RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options=\"--cache das-cache.file --limit 0\" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
       echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
       timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options="--cache das-cache.file --limit 0" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log

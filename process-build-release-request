@@ -85,10 +85,10 @@ ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
                         'The {rel_type} {is_patch}release {rel_name} is now available '\
                         'for the following architectures:\n\n'\
                         '{production_arch} (production)\n'\
-                        '{rest_of_archs}\n\n'\
-                        'The release notes of what changed with respect to {prev_release} can be found at:\n'\
-                        'https://github.com/cms-sw/cmssw/releases/{rel_name}\n\n'\
-                        '{description}\n\n'\
+                        '{rest_of_archs}'\
+                        'The release notes of what changed with respect to {prev_release} can be found at:\n\n'\
+                        'https://github.com/cms-sw/cmssw/releases/{rel_name}\n'\
+                        '{description}'\
                         'Cheers,\n'\
                         'cms-bot'
 
@@ -599,15 +599,16 @@ def generate_announcement( release_name, previous_release_name, production_archi
   patch_str = 'patch ' if is_patch else ''
   print 'Is patch: ', is_patch
   # The description of the issue should explain the reason for building the release
-  desc = issue.body
+  desc = '\n' + issue.body + '\n\n' if issue.body else '\n'
   print 'Description: \n', desc
 
   architectures.remove( production_architecture )
+  rest_of_archs = '\n'.join(architectures) + '\n\n' if architectures else '\n'
   announcement = ANNOUNCEMENT_TEMPLATE.format( rel_type=type_str,
                                 is_patch=patch_str,
                                 rel_name=release_name,
                                 production_arch=production_architecture,
-                                rest_of_archs='\n'.join(architectures),
+                                rest_of_archs=rest_of_archs,
                                 prev_release=previous_release_name,
                                 description=desc )
 

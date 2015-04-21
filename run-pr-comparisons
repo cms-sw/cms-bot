@@ -89,12 +89,10 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
 
       PR_DAS_QUERY_LOG=$WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-'step1_dasquery.log'
       BASELINE_DAS_QUERY_LOG=$WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-'step1_dasquery.log'
-      for PR_ROOT_FILE in `grep '.root' $PR_DAS_QUERY_LOG`; do
-        if ! grep $PR_ROOT_FILE $BASELINE_DAS_QUERY_LOG; then
-          WFS_WITH_DAS_INCONSISTENCY=$WF_NUMBER,$WFS_WITH_DAS_INCONSISTENCY
-          break
-        fi
-      done
+      THEY_DIFFER=`diff -q $PR_DAS_QUERY_LOG $BASELINE_DAS_QUERY_LOG || true`
+      if [ "X$THEY_DIFFER" != X ]; then
+        WFS_WITH_DAS_INCONSISTENCY=$WF_NUMBER,$WFS_WITH_DAS_INCONSISTENCY
+      fi
 
     fi 
 

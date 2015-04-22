@@ -18,8 +18,12 @@ do
   WF_PATH=`grep -F $wf $WORKSPACE/$MAPPING_FILE` || true
 
   if [ "X$WF_PATH" = X ]; then
-    ERR_DETAILS=`grep $wf $WORKSPACE/$ERRORS_FILE`
-    WFS_WITH_ERRORS=$ERR_DETAILS,$WFS_WITH_ERRORS
+    ERR_DETAILS=`grep $wf $WORKSPACE/$ERRORS_FILE` || true
+    if [ "X$ERR_DETAILS" = X ]; then
+      WFS_WITH_ERRORS=$ERR_DETAILS,$wf';1'
+    else
+      WFS_WITH_ERRORS=$ERR_DETAILS,$WFS_WITH_ERRORS
+    fi
   else
     echo "Going to compare: $wf"
     echo $WF_PATH

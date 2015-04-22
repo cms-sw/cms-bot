@@ -24,23 +24,40 @@ btv-pog:
   - RecoVertex/AdaptiveVertexFit
   - Validation/RecoB
 makortel:
+  - CommonTools/CandAlgos
+  - CommonTools/CandUtils
+  - CommonTools/RecoAlgos
+  - CommonTools/RecoUtils
+  - CommonTools/UtilAlgos
+  - CommonTools/Utils
   - Configuration/StandardSequences
-  - DataFormats/Tra
+  - DataFormats/Common
   - DataFormats/GsfTrackReco
-  - DataFormats/VertexReco
+  - DataFormats/Math
+  - DataFormats/RecoCandidate
   - DataFormats/Si
+  - DataFormats/Tra
+  - DataFormats/VertexReco
+  - DQM/Track
   - EventFilter/Si
+  - FWCore/Utilities
   - Geometry/Track
   - Geometry/CommonTopologies
+  - IgTools
+  - PerfTools
   - RecoLocalTracker
   - RecoPixelVertexing
   - RecoTracker
   - RecoVertex
+  - SimDataFormats/Track
+  - SimDataFormats/Vertex
   - SimG4Core
   - SimG4CMS
   - SimGeneral/TrackingAnalysis
   - SimTracker
+  - SLHCUpgradeSimulations/Configuration
   - TrackingTools
+  - TrackPropagation
   - Validation/RecoTrack
   - Validation/RecoVertex
 GiacomoSguazzoni:

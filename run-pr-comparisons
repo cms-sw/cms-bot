@@ -61,6 +61,8 @@ cd $WORKSPACE/results
 mkdir $WORKSPACE/results/files
 cd $WORKSPACE/results/files
 
+echo $WORKFLOWS_TO_COMPARE
+
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
 
   WF_DIR=`echo $WF | cut -d "/" -f1`
@@ -119,14 +121,63 @@ rsync $WORKSPACE/results/testsResults.txt $ARTIFACTS_MACHINE:/data/sdt/SDT/jenki
 pwd
 ls -R
 
+# --------------------------------------------------------------------------
+# JR-Comparison
+# --------------------------------------------------------------------------
+
+#This is used manily for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
+#which comparison is run.
+if [ "X$RUN_JR_COMP" = Xtrue ]; then
+
+  JR_COMP_DIR=$WORKSPACE/results/JR-comparison
+
+  mkdir -p $JR_COMP_DIR
+
+  cp $WORKSPACE/cms-bot/comparisons/validateJR.sh $JR_COMP_DIR
+  cp $WORKSPACE/cms-bot/comparisons/validate.C $JR_COMP_DIR
+  cp $WORKSPACE/cms-bot/comparisons/matrix_70X.txt $JR_COMP_DIR
+
+  mkdir -p $HOME/tools
+  cp $WORKSPACE/cms-bot/comparisons/validate.C $HOME/tools
+
+  #Download the baseline and pr files, they need to be downloaded again because the validateJR script needs more files to work, and they
+  #can't be in the same structure as the files for the other comparisons. 
+  mkdir -p $JR_COMP_DIR/$RELEASE_FORMAT
+  mkdir -p $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER
+
+  for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
+
+    WF_DIR=`echo $WF | cut -d "/" -f1`
+    WF_NUMBER=`echo $WF | cut -d'_' -f1`
+
+    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/$WF_DIR $JR_COMP_DIR/$RELEASE_FORMAT
+    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/$WF_DIR $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER
+
+  done  
+
+  cd $JR_COMP_DIR
+    source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_70X.txt 2>&1 | tee -a $JR_COMP_DIR/validateJR.log
+  cd ..
+
+  echo  'source '$JR_COMP_DIR'/validateJR.sh '$JR_COMP_DIR'/PR-'$PULL_REQUEST_NUMBER' '$JR_COMP_DIR'/'$RELEASE_FORMAT' OldVSNew matrix_70X.txt 2>&1 | tee -a '$JR_COMP_DIR'/validateJR.log' > $JR_COMP_DIR/command
+
+  echo 'Finished with JR comparison:'
+
+fi
+
 
 # --------------------------------------------------------------------------
 # Default Comparison
 # --------------------------------------------------------------------------
-
 if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 
-  mkdir $WORKSPACE/results/default-comparison
+  RELMON_COMP_DIR=$WORKSPACE/results/default-comparison
+  mkdir $RELMON_COMP_DIR
+
+  if [ "X$RUN_JR_COMP" = Xtrue ]; then
+    RELMON_COMP_PARAMS_FILE=$RELMON_COMP_DIR/RelMonComparisonParams.txt
+    $WORKSPACE/cms-bot/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R 2>&1 | tee -a $RELMON_COMP_DIR/RelMonAssignedParameters.log
+  fi
 
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
 
@@ -141,11 +192,18 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     OUTPUT_DIR=$WORKSPACE/results/default-comparison/$WF_DIR
     mkdir -p $OUTPUT_DIR
 
-    #requires checking out Utilities/RelMon from the release.
+    # If there is a file assigning custom thresholds from the results of the FWlite (JR) comparison, use it
+    if [ "X$RUN_JR_COMP" = Xtrue ]; then
+      eval $( cat $RELMON_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
+      echo $TH
+      TH_PARAM="-t $TH "
+    fi
+
+    #requires checking out Utilities/RelMon from the release. It has already been done at the begining of this script. 
 
     # create a mini script for running this comparisons in parallel
     echo '#!/bin/sh -ex' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    echo 'compare_using_files.py '$WORKSPACE'/results/files/'$WF_DIR'/'$RELEASE_FORMAT'-'$WF_FILE' '$WORKSPACE'/results/files/'$WF_DIR'/'$PULL_REQUEST_NUMBER'-'$WF_FILE' -o '$OUTPUT_DIR' --metas " '$RELEASE_FORMAT' @@@ '$RELEASE_FORMAT' + '$PULL_REQUEST_NUMBER' " --use_black_file -C -R -p --no_successes -s b2b --standalone 2>&1 | tee -a '$OUTPUT_DIR'RelMonComp-'$WF_NUMBER'.log' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo 'compare_using_files.py '$WORKSPACE'/results/files/'$WF_DIR'/'$RELEASE_FORMAT'-'$WF_FILE' '$WORKSPACE'/results/files/'$WF_DIR'/'$PULL_REQUEST_NUMBER'-'$WF_FILE' -o '$OUTPUT_DIR' --metas " '$RELEASE_FORMAT' @@@ '$RELEASE_FORMAT' + '$PULL_REQUEST_NUMBER' " --use_black_file -C -R -p --no_successes -s b2b '$TH_PARAM'--standalone 2>&1 | tee -a '$OUTPUT_DIR'RelMonComp-'$WF_NUMBER'.log' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
 
     echo "pushd $OUTPUT_DIR" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "cp RelMonSummary.html index.html" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
@@ -163,39 +221,6 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
   wait
 
   echo 'Finished with default comparison'
-
-fi
-
-# --------------------------------------------------------------------------
-# JR-Comparison
-# --------------------------------------------------------------------------
-
-if [ "X$RUN_JR_COMP" = Xtrue ]; then
-
-  JR_COMP_DIR=$WORKSPACE/results/JR-comparison
-
-  mkdir -p $JR_COMP_DIR
-
-  cp $WORKSPACE/cms-bot/comparisons/validateJR.sh $JR_COMP_DIR
-  cp $WORKSPACE/cms-bot/comparisons/validate.C $JR_COMP_DIR
-  cp $WORKSPACE/cms-bot/comparisons/matrix_70X.txt $JR_COMP_DIR
-
-  mkdir -p $HOME/tools
-  cp $WORKSPACE/cms-bot/comparisons/validate.C $HOME/tools
-
-  #Download the baseline files
-  rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/ $JR_COMP_DIR/$RELEASE_FORMAT
-
-  #Download the files for the pr
-  rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/ $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER
-
-  cd $JR_COMP_DIR
-    source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_70X.txt 2>&1 | tee -a $JR_COMP_DIR/validateJR.log
-  cd ..
-
-  echo  'source '$JR_COMP_DIR'/validateJR.sh '$JR_COMP_DIR'/PR-'$PULL_REQUEST_NUMBER' '$JR_COMP_DIR'/'$RELEASE_FORMAT' OldVSNew matrix_70X.txt 2>&1 | tee -a '$JR_COMP_DIR'/validateJR.log' > $JR_COMP_DIR/command
-
-  echo 'Finished with JR comparison:'
 
 fi
 

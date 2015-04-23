@@ -64,7 +64,7 @@ GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release
                                'I will generate an announcement template.\n'
 PROD_ARCH_NOT_READY_MSG = 'ATTENTION!!! The production architecture ({prod_arch}) is not ready yet. '\
                           'This needs to be checked before asking me to generate the release notes.\n'\
-                          'When the production architecture is uploaded successfully, I will generate the release notes.'\
+                          'When the production architecture is installed successfully, I will generate the release notes.'\
                           ' You don\'t need to write the command again.'
 REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 UPLOAD_COMMENT = 'upload %s'
@@ -503,6 +503,7 @@ def fillDeatilsArchsLists( issue ):
   labels = [ l.name for l in issue.get_labels() ]
   BUILD_OK.extend( [ x.split('-')[0] for x in labels if '-build-ok' in x ] )
   UPLOAD_OK.extend( [ x.split('-')[0] for x in labels if '-upload-ok' in x ] )
+  INSTALL_OK.extend( [ x.split('-')[0] for x in labels if '-installation-ok' in x ] )
   UPLOADING.extend( [ x.split('-')[0] for x in labels if '-uploading' in x ] )
   BUILD_ERROR.extend( [ x.split('-')[0] for x in labels if '-build-error' in x ] )
   TOOL_CONF_BUILDING.extend( [ x.split('-')[0] for x in labels if '-tool-conf-building' in x ] )
@@ -638,10 +639,10 @@ def generate_announcement_link( announcement, release_name ):
 # checks if the production architecture is ready, if so, it generates a template for the announcement
 #
 def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
-  if ( production_architecture in UPLOAD_OK ):
-    print 'Production architecture successfully uploaded..'
+  if ( production_architecture in INSTALL_OK ):
+    print 'Production architecture successfully installed..'
     #For now, it assumes that the release is being installed and it will be installed successfully
-    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, UPLOAD_OK )
+    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, INSTALL_OK )
     mailto = generate_announcement_link( announcement, release_name )
     msg = 'You can use this template for announcing the release:\n\n%s\n\n' \
           'You can also click %s to send the email.' % (announcement, mailto)
@@ -804,6 +805,7 @@ if __name__ == "__main__":
 
   BUILD_OK = []
   UPLOAD_OK = []
+  INSTALL_OK = []
   UPLOADING = []
   BUILD_ERROR = []
   TO_CLEANUP = []
@@ -929,8 +931,8 @@ if __name__ == "__main__":
     check_archs_to_upload( release_name, issue )
 
     #Check if someone asked for release notes, go to next state after generating notes.
-    #At least one architecture must have been successfully uploaded
-    if UPLOAD_OK and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
+    #At least one architecture must have been successfully installed
+    if INSTALL_OK and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
       print 'checking if someone asked for the release notes'
       release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
 
@@ -951,7 +953,7 @@ if __name__ == "__main__":
           post_message( issue, msg )
           exit( 0 )
 
-        if ( production_architecture not in UPLOAD_OK ):
+        if ( production_architecture not in INSTALL_OK  ):
           msg = PROD_ARCH_NOT_READY_MSG.format( prod_arch=production_architecture )
           post_message( issue, msg )
           exit( 0 )

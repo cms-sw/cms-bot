@@ -29,6 +29,9 @@ through a Github issue.
 - [upload-release](): script used to upload a release to the repository. When
 the job processing build requests spots a request to upload, it SSH to the
 build machine which has the release and executes this script.
+- [config.map](https://github.com/cms-sw/cms-bot/blob/master/config.map): semicolon separated `key=value`
+pairs formatted file with release queue related information. Each line represent a release queue. In
+particular `CMSDIST_TAG` is used to point to the CMSDIST tag to be used by the release building process.
 
 # Logging
 

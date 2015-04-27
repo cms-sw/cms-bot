@@ -28,6 +28,8 @@ CLEANUP_ERROR='CLEANUP_ERROR'
 TESTS_OK='TESTS_OK'
 RELEASE_NOTES_OK='RELEASE_NOTES_OK'
 RELEASE_NOTES_ERROR='RELEASE_NOTES_ERROR'
+INSTALLATION_OK='INSTALLATION_OK'
+INSTALLATION_ERROR='INSTALLATION_ERROR'
 # this means that there was an error in the script that excecutes the tests,
 # it is independent from the tests results
 TESTS_ERROR='TESTS_ERROR'
@@ -53,12 +55,14 @@ UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
               'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/upload-release/{jk_build_number}/console'
 UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'The release is now being installed, you can see the progress here: \n ' \
-              'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' \
+              'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' 
+INSTALLATION_OK_MSG='The installation has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\>", in the first line of your comment.\n ' \
               'I will generate the release notes based on the release that you provide. You don\'t need to provide the architectue ' \
               'I will use the production architecture to infer the cmsdist tag.\n' \
-              'Alternatively, you can just write "release-notes", I will try to guess the previous release.' 
+              'Alternatively, you can just write "release-notes", I will try to guess the previous release.'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'
+INSTALLATION_ERROR_MSG='The was error installing {architecture}. \n You can see the log here: \n {log_url}'
 CLEANUP_OK_MSG='The workspace for {architecture} has been deleted \n You can see the log here: \n {log_url} \n'
 CLEANUP_ERROR_MSG='There was an error deletng the workspace for {architecture} \n You can see the log here: \n {log_url} \n'
 TESTS_OK_MSG='The tests have finished for {architecture} \n You can see the log here: \n {log_url} \n'
@@ -71,6 +75,7 @@ BUILD_STARTED = 'build-release-started'
 BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-build-release/%s-%s/%d'
 BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-upload-release/%s-%s/%d'
 BASE_CLEANUP_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cleanup-auto-build/%s-%s/%d'
+BASE_INSTALLATION_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/deploy-release-afs/{rel_name}/{architecture}/{job_id}/'
 
 # -------------------------------------------------------------------------------
 # Functions
@@ -127,7 +132,7 @@ def remove_labels( issue ):
 if __name__ == "__main__":
   parser = OptionParser( usage="%prog <jenkins-build-number> <hostname> <issue-id> <arch> <release-name> <message-type> [ options ] \n "
                                "message-type = BUILDING | BUILD_OK | BUILD_ERROR | UPLOADING | UPLOAD_OK | UPLOAD_ERROR | CLEANUP_OK | CLEANUP_ERROR | TESTS_OK | TESTS_ERROR " 
-                               "| RELEASE_NOTES_OK | RELEASE_NOTES_ERROR ")
+                               "| RELEASE_NOTES_OK | RELEASE_NOTES_ERROR | INSTALLATION_OK | INSTALLATION_ERROR")
   parser.add_option( "-n" , "--dry-run" , dest="dryRun" , action="store_true", help="Do not post on Github", default=False )
   parser.add_option( "-d" , "--details" , dest="details" , action="store", help="Add aditional details to the message", default=False )
 
@@ -216,6 +221,7 @@ if __name__ == "__main__":
     msg = UPLOAD_OK_MSG.format( architecture=arch , log_url=results_url )
     post_message( issue , msg )
     remove_label( issue, arch+'-uploading' )
+    remove_label( issue, arch+'-upload-error' )
     add_label( issue,  arch+'-upload-ok' )
 
   elif action == UPLOAD_ERROR:
@@ -259,6 +265,27 @@ if __name__ == "__main__":
 
     msg = RELEASE_NOTES_ERROR_MSG.format( rel_name=release_name )
     post_message( issue, msg)
+
+  elif action == INSTALLATION_OK:
+
+    results_url = BASE_INSTALLATION_URL.format( rel_name=release_name,
+                                                     architecture=arch,
+                                                     job_id=jenkins_build_number )
+    msg = INSTALLATION_OK_MSG.format( architecture=arch , log_url=results_url )
+    post_message( issue, msg )
+    remove_label( issue, arch+'-upload-ok' )
+    remove_label( issue, arch+'-installation-error' )
+    add_label( issue,  arch+'-installation-ok' )
+
+  elif action == INSTALLATION_ERROR:
+
+    results_url = BASE_INSTALLATION_URL.format( rel_name=release_name,
+                                                     architecture=arch,
+                                                     job_id=jenkins_build_number )
+    msg = INSTALLATION_ERROR_MSG.format( architecture=arch , log_url=results_url )
+    post_message( issue, msg )
+    remove_label( issue, arch+'-upload-ok' )
+    add_label( issue,  arch+'-installation-error' )
 
   else:
     parser.error( "Message type not recognized" )

@@ -69,3 +69,7 @@ pushd cms-bot
     echo "Release already announced."
   fi
 popd
+
+# If it reaches here it is because there were no errors
+echo 'ALL_OK'
+

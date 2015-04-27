@@ -64,7 +64,7 @@ GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release
                                'I will generate an announcement template.\n'
 PROD_ARCH_NOT_READY_MSG = 'ATTENTION!!! The production architecture ({prod_arch}) is not ready yet. '\
                           'This needs to be checked before asking me to generate the release notes.\n'\
-                          'When the production architecture is uploaded successfully, I will generate the release notes.'\
+                          'When the production architecture is installed successfully, I will generate the release notes.'\
                           ' You don\'t need to write the command again.'
 REL_NAME_REGEXP="(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 UPLOAD_COMMENT = 'upload %s'
@@ -170,7 +170,7 @@ def create_properties_files_upload( release_name, arch, issue_number, machine_na
 # 
 def search_date_comment( comments, user_logins, pattern, first_line ):
 
-  for comment in comments:
+  for comment in reversed( comments ):
 
     if comment.user.login not in user_logins:
       continue
@@ -412,12 +412,13 @@ def add_label( issue , label ):
 #
 # posts a message to the issue in github
 # if dry-run is selected it doesn't post the message and just prints it
+# if you set checkIfRepeated to False, if will not check if the message has already been written. 
 #
-def post_message( issue , msg ):
+def post_message( issue , msg, checkIfRepeated=True ):
   if opts.dryRun:
     print 'Not posting message (dry-run):\n %s' % msg
     return
-  if search_in_comments( comments, [ 'cmsbuild', 'nclopezo' ], msg, False):
+  if checkIfRepeated and search_in_comments( comments, [ 'cmsbuild', 'nclopezo' ], msg, False):
     print 'Message already in the thread: \n %s' % msg
     return
   print 'Posting message:\n %s' % msg 
@@ -503,13 +504,14 @@ def fillDeatilsArchsLists( issue ):
   labels = [ l.name for l in issue.get_labels() ]
   BUILD_OK.extend( [ x.split('-')[0] for x in labels if '-build-ok' in x ] )
   UPLOAD_OK.extend( [ x.split('-')[0] for x in labels if '-upload-ok' in x ] )
+  INSTALL_OK.extend( [ x.split('-')[0] for x in labels if '-installation-ok' in x ] )
   UPLOADING.extend( [ x.split('-')[0] for x in labels if '-uploading' in x ] )
   BUILD_ERROR.extend( [ x.split('-')[0] for x in labels if '-build-error' in x ] )
   TOOL_CONF_BUILDING.extend( [ x.split('-')[0] for x in labels if '-tool-conf-building' in x ] )
   TOOL_CONF_OK.extend( [ x.split('-')[0] for x in labels if '-tool-conf-ok' in x ] )
   TOOL_CONF_ERROR.extend( [ x.split('-')[0] for x in labels if '-tool-conf-error' in x ] )
   TOOL_CONF_WAITING.extend( [ x.split('-')[0] for x in labels if '-tool-conf-waiting' in x ] )
-  TO_CLEANUP.extend( UPLOAD_OK + BUILD_ERROR + BUILD_OK )
+  TO_CLEANUP.extend( UPLOAD_OK + BUILD_ERROR + BUILD_OK + INSTALL_OK )
 
 #
 # Triggers the cleanup for the architectures in the list TO_CLEANUP 
@@ -544,6 +546,8 @@ def triggerCleanup( issue, comments, release_name ):
       post_message( issue, msg )
       remove_label( issue, arch + '-upload-ok' )
       remove_label( issue, arch + '-build-error' )
+      remove_label( issue, arch + '-build-ok' )
+      remove_label( issue, arch + '-installation-ok' )
       add_label( issue, arch + '-finished' )
 
 #
@@ -638,14 +642,14 @@ def generate_announcement_link( announcement, release_name ):
 # checks if the production architecture is ready, if so, it generates a template for the announcement
 #
 def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
-  if ( production_architecture in UPLOAD_OK ):
-    print 'Production architecture successfully uploaded..'
+  if ( production_architecture in INSTALL_OK ):
+    print 'Production architecture successfully installed..'
     #For now, it assumes that the release is being installed and it will be installed successfully
-    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, UPLOAD_OK )
+    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, INSTALL_OK )
     mailto = generate_announcement_link( announcement, release_name )
     msg = 'You can use this template for announcing the release:\n\n%s\n\n' \
           'You can also click %s to send the email.' % (announcement, mailto)
-    post_message( issue, msg )
+    post_message( issue, msg, checkIfRepeated=False )
     add_label( issue, ANNOUNCEMENT_GENERATED_LBL )
 
 #
@@ -804,6 +808,7 @@ if __name__ == "__main__":
 
   BUILD_OK = []
   UPLOAD_OK = []
+  INSTALL_OK = []
   UPLOADING = []
   BUILD_ERROR = []
   TO_CLEANUP = []
@@ -929,8 +934,8 @@ if __name__ == "__main__":
     check_archs_to_upload( release_name, issue )
 
     #Check if someone asked for release notes, go to next state after generating notes.
-    #At least one architecture must have been successfully uploaded
-    if UPLOAD_OK and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
+    #At least one architecture must have been successfully installed
+    if INSTALL_OK and ( RELEASE_NOTES_GENERATED_LBL not in labels ):
       print 'checking if someone asked for the release notes'
       release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
 
@@ -951,7 +956,7 @@ if __name__ == "__main__":
           post_message( issue, msg )
           exit( 0 )
 
-        if ( production_architecture not in UPLOAD_OK ):
+        if ( production_architecture not in INSTALL_OK  ):
           msg = PROD_ARCH_NOT_READY_MSG.format( prod_arch=production_architecture )
           post_message( issue, msg )
           exit( 0 )
@@ -969,6 +974,34 @@ if __name__ == "__main__":
     #upload archs as soon as they get ready
     check_archs_to_upload( release_name, issue )
 
+    print 'checking if someone asked again for the release notes'
+    release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
+    generating_release_notes_comments = search_in_comments( comments, ['cmsbuild'], 'Generating release notes', True )
+
+    if len( release_notes_comments ) > len( generating_release_notes_comments ):
+      print 'I need to generate the release notes again'
+      # check if this is beter if a function is added
+      comment = release_notes_comments[-1]
+      first_line = str(comment.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+      comment_parts = first_line.strip().split(' ')
+
+      if len( comment_parts ) > 1:
+        prev_rel_name = comment_parts[ 2 ].rstrip()
+      else:
+        prev_rel_name = guess_prev_rel_name( release_name )
+        print prev_rel_name
+
+      rel_name_match = re.match( REL_NAME_REGEXP, prev_rel_name )
+      if not rel_name_match:
+        msg = WRONG_NOTES_RELEASE_MSG.format( previous_release=prev_rel_name )
+        post_message( issue, msg, checkIfRepeated=False )
+        exit( 0 )
+
+      create_properties_file_rel_notes( release_name, prev_rel_name, production_architecture, issue.number )
+      msg = GENERATING_RELEASE_NOTES_MSG.format( previous_release=prev_rel_name )
+      post_message( issue, msg, checkIfRepeated=False )
+      check_if_prod_arch_ready( issue, prev_rel_name, production_architecture )
+
     # check if the cleanup has been requested or if 2 days have passed since the release-notes were generated.
     print 'Checking if someone requested cleanup, or the issue is too old...' 
     date_rel_notes = search_date_comment( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )
@@ -983,3 +1016,4 @@ if __name__ == "__main__":
       triggerCleanup( issue, comments, release_name )
       close_issue( issue )
       go_to_state( issue, status, PROCESS_COMPLETE )
+

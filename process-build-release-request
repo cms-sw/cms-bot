@@ -10,6 +10,8 @@ import urllib2
 import yaml
 import os.path
 from  datetime import datetime, timedelta
+from glob import glob
+from os.path import basename
 
 # 
 # Processes a github issue to check if it is requesting the build of a new release
@@ -95,6 +97,7 @@ ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
 HN_REL_ANNOUNCE_EMAIL = 'hn-cms-relAnnounce@cern.ch'
 ANNOUNCEMENT_EMAIL_SUBJECT = '{rel_type} {is_patch}Release {rel_name} Now Available '
 MAILTO_TEMPLATE = '<a href="mailto:{destinatary}?subject={sub}&amp;body={body}">here</a>'
+AFS_INSTALLATION = "/afs/cern.ch/cms/*/cms"
 
 # -------------------------------------------------------------------------------
 # Statuses
@@ -703,12 +706,25 @@ def guess_prev_rel_name( release_name ):
   if ('patch' in release_name) or ('pre' in release_name):
     if prev_number < 1:
       return release_name.replace( '_' + num_str, '')
+    return release_name.replace( num_str, prev_num_str)
 
   else:
     if prev_number < 0:
       return release_name + '_pre9'
 
-  return release_name.replace( num_str, prev_num_str)
+    previous_full_release = release_name.replace( num_str, prev_num_str)
+
+    #Check if there are previous patch releases
+    installedPaths = [x for x in glob(AFS_INSTALLATION + "/cmssw/*" )]
+    installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw-patch/*" )]
+    installedReleases = [ basename(x) for x in installedPaths
+                                      if ( previous_full_release+'_patch' in x )]
+
+    installedReleases.sort()
+    if installedReleases:
+      return installedReleases[ -1 ]
+
+  return previous_full_release
 
 # -------------------------------------------------------------------------------
 # Start of execution 

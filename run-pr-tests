@@ -96,6 +96,16 @@ if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
   exit 1
 fi
 
+#############################################
+# Check if there are unwanted commits that came with the merge. 
+############################################
+RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits
+RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
+IB_DATE=`echo $RELEASE_FORMAT | sed -e 's/^.*_//g'`
+YEAR_MONTH_DAY=`echo $IB_DATE | sed -e 's/-[0-9]*$//g'`
+HOUR=`echo $IB_DATE | sed -e "s/$YEAR_MONTH_DAY-//g" | sed -e 's/0*//g'`
+git rev-list --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
+git log --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 
 #If Fireworks is the only package involved I only compile and run unit tests
 ONLY_FIREWORKS=false
@@ -455,20 +465,20 @@ done
 
 if $ALL_OK ; then
   echo $ALL_OK
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
 elif [ "X$BUILD_OK" = Xfalse ]; then
   echo $BUILD_OK
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/build.log $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/build.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
 elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
   echo $UNIT_TESTS_OK
   echo 'failure in unit tests'
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/unitTests.log $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/unitTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
 elif [ "X$RELVALS_OK" = Xfalse ]; then
   pushd $WORKSPACE/
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID --unit-tests-file $WORKSPACE/matrixTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
   popd
 elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID -f $WORKSPACE/buildClang.log $DRY_RUN 
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id $PULL_REQUEST_JOB_ID -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN 
 fi
 
 ls 

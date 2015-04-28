@@ -46,7 +46,7 @@ RELEASE_MANAGERS = {
   "CMSSW_6_2_X_SLHC": ["fratnikov", "mark-grimes"],
   "CMSSW_6_2_SLHCDEV_X": ["fratnikov", "mark-grimes"],
   "CMSSW_5_3_X": ["smuzaffar"],
-  "CMSSW_4_4_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],
-  "CMSSW_4_2_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],
-  "CMSSW_4_1_X": ["smuzaffar", "nclopezo", "davidlt", "ktf"],
+  "CMSSW_4_4_X": ["smuzaffar", "nclopezo", "davidlt"],
+  "CMSSW_4_2_X": ["smuzaffar", "nclopezo", "davidlt"],
+  "CMSSW_4_1_X": ["smuzaffar", "nclopezo", "davidlt"],
 }

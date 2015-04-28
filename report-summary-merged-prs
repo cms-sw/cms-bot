@@ -12,7 +12,7 @@ from glob import glob
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog CMSSW_REPO CMSDIST_REPO COMPARISON_PAIRS"
+parser = OptionParser(usage="usage: %prog CMSSW_REPO GITHUB_IO_REPO START_DATE ARTIFACTS_MACHINE"
                             "\n CMSSW_REPO: location of the cmssw repository. This must be a bare clone ( git clone --bare )"
                             "\n CMSDIST_REPO: location of the cmsdist repository. This must be a normal clone"
                             "\n GITHUB_IO_REPO: location of the github.io repository. This must be a normal clone"
@@ -20,7 +20,8 @@ parser = OptionParser(usage="usage: %prog CMSSW_REPO CMSDIST_REPO COMPARISON_PAI
                             "\n START_DATE: the date of the earliest IB to show. It must be in the format"
 			    "\n <year>-<day>-<month>-<hour>"
                             "\n For example:"
-			    "\n 2014-10-08-1400")
+			    "\n 2014-10-08-1400"
+                            "\n ARTIFACTS_MACHINE: the artifacts machine to use to look for static checks and hlt tests")
 
 parser.add_option( "-v" , "--verbose" , dest="verbose" , action="store_true", help="Do not post on Github", default=False )
 
@@ -57,7 +58,7 @@ parser.add_option( "-v" , "--verbose" , dest="verbose" , action="store_true", he
 #---- Review of arguments
 #-----------------------------------------------------------------------------------
 
-if (len(args)<3):
+if (len(args)<5):
   print 'not enough arguments\n'
   parser.print_help()
   exit()
@@ -67,6 +68,7 @@ CMSSW_REPO = args[ 0 ]
 GITHUB_IO_REPO = args[ 1 ]
 CMSDIST_REPO = args[ 2 ]
 START_DATE = args[ 3 ]
+ARTIFACTS_MACHINE = args[ 4 ]
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions
@@ -1011,7 +1013,6 @@ if __name__ == "__main__":
   MAGIC_COMMAND_CMSDIST_TAGS = "pushd %s; git tag -l */*/ARCHITECTURE | grep -E 'IB|ERR'; popd" % CMSDIST_REPO
 
   # I used this type of concatenation because the string has %s inside
-  ARTIFACTS_MACHINE = 'vocms12.cern.ch'
   MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
   MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
   MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find /afs/cern.ch/cms/sw/ReleaseCandidates/ARCHITECTURE/www -name runall-report-step123-.log'

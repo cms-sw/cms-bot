@@ -1,9 +1,9 @@
 # A ridicously long mapping for categories. Good enough for now.
 import re
 
-REQUEST_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6", "mark-grimes"  ]
-APPROVE_BUILD_RELEASE = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6" ]
-TRIGGER_PR_TESTS = [ "nclopezo" , "ktf", "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov" ]
+REQUEST_BUILD_RELEASE = [ "nclopezo" , "smuzaffar", "degano", "davidlange6", "mark-grimes"  ]
+APPROVE_BUILD_RELEASE = [ "nclopezo" , "smuzaffar", "degano", "davidlange6" ]
+TRIGGER_PR_TESTS = [ "nclopezo" , "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov" ]
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],
@@ -15,7 +15,6 @@ CMSSW_L2 = {
   "civanch": ["simulation", "geometry", "fastsim"],
   "mdhildreth": ["simulation", "geometry", "fastsim"],
   "Dr15Jones": ["core", "visualization", "geometry"],
-  "ktf": ["core", "visualization", "geometry"],
   "alja": ["visualization"],
   "ianna": ["geometry"],
   "deguio": ["dqm"],

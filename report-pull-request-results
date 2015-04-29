@@ -21,7 +21,8 @@ parser.add_option("-p", action="store", type="string", dest="password", help="Yo
 parser.add_option("--pr", action="store", type="int", dest="pr_number", help="The number of the pull request to use", default=-1)
 parser.add_option("--pr-job-id", action="store", type="int", dest="pr_job_id", help="The jenkins job id for the  pull request to use", default=-1)
 parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
-parser.add_option("--f2", action="store", type="string", dest="results_file2", help="second results file to analyse", default='None')
+parser.add_option("--f2", action="store", type="string", dest="results_file2", help="second results file to analyse" )
+parser.add_option("--recent-merges", action="store", type="string", dest="recent_merges_file", help="file with the recent merges after doing the git cms-merge-topic")
 parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help="I will only show the message I would post, but I will not post it in github")
 parser.add_option("-c", action="store", dest="commit_hash", help="Tells me to use the commit hash to mark it as success or failure depending on the results of the tests" , )
 parser.add_option("--add-message", action="store", dest="aditional_message", help="I will add the text to the message that I will send" , )
@@ -253,6 +254,22 @@ def send_message_pr( pr, message, checkDuplicateMessage=False ):
       print 'Message already in the thread. \nNot posting'
       return
 
+  if options.recent_merges_file:
+    lines = open( options.recent_merges_file ).readlines()
+    if len( lines ) > 1:
+      message += '\n\nThe following merge commits were also included on top of IB + this PR '\
+                 'after doing git cms-merge-topic: \n'
+      git_log_url = GITLOG_FILE_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
+      git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
+      #Ignore the first line, the first line is the merge commit that comes from git-cms-merge-topic
+      for l in lines[ 1: ]:
+        commit_url = COMMITS_BASE_URL.format( hash=l.strip() )
+        message += commit_url + '\n'
+
+      message += 'You can see more details here:\n'
+      message += git_log_url +'\n'
+      message += git_cms_merge_topic_url + '\n'       
+ 
   if options.no_post_mesage:
     print 'Not posting message ( dry-run ): \n ', message
     return
@@ -475,6 +492,9 @@ DATE = datetime.date( 2015, 4, 1 )
 
 MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
 MATRIX_WORKFLOW_STEP_NA = 'N/A'
+COMMITS_BASE_URL='https://github.com/cms-sw/cmssw/commit/{hash}'
+GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits'
+GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result'
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
 #---------------------------------------------------------------------------------------

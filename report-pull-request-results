@@ -286,7 +286,8 @@ def mark_commit_testing( ):
     print 'Not marking commit ( dry-run ): \n ', options.commit_hash, ' as', \
           COMMIT_STATES_DESCRIPTION[ ACTION ][ 0 ], ': ', COMMIT_STATES_DESCRIPTION[ ACTION ][ 1 ]
     return
-  mark_commit( ACTION , options.commit_hash , '' ) 
+  jk_log_url = JENKINS_LOG_URL.format( job_id=options.pr_job_id ) 
+  mark_commit( ACTION , options.commit_hash , jk_log_url ) 
 
 #
 # This is for cmsdist pull requests
@@ -495,6 +496,7 @@ MATRIX_WORKFLOW_STEP_NA = 'N/A'
 COMMITS_BASE_URL='https://github.com/cms-sw/cmssw/commit/{hash}'
 GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits'
 GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result'
+JENKINS_LOG_URL='https://cmssdt.cern.ch/jenkins/job/ib-any-integration/{job_id}/console'
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
 #---------------------------------------------------------------------------------------

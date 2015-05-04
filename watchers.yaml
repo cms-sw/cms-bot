@@ -444,6 +444,8 @@ mmarionncern:
 - RecoMET
 - RecoParticleFlow
 - Validation/RecoMET
+mkirsano:
+- GeneratorInterface
 mmusich:
 - Alignment/CommonAlignment
 - Alignment/CommonAlignmentAlgorithm

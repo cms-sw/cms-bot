@@ -326,10 +326,15 @@ ghellwig:
 - Geometry
 - RecoTracker
 gpetruc:
-- DataFormats/TrackDataFormats/Trajectory
+- DataFormats/Candidate
+- DataFormats/PatCandidates
+- DataFormats/Track
+- DataFormats/Trajectory
 - RecoLocalTracker
 - RecoTracker
 - TrackingTools
+- PhysicsTools/PatUtils
+- PhysicsTools/PatAlgos
 inugent:
 - GeneratorInterface/ExternalDecays
 - Validation/EventGenerator

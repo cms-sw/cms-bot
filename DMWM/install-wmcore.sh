@@ -1,0 +1,33 @@
+#! /bin/sh
+
+# Install from git code, set paths appropriately for testing
+
+set +x
+. deploy/current/apps/wmagent/etc/profile.d/init.sh
+set -x
+rm -rf install
+
+(cd code && python setup.py install --prefix=../install)
+
+set +x
+. deploy/current/apps/wmagent/etc/profile.d/init.sh
+set -x
+. deploy/current/config/admin/init.sh
+
+export WMCORE_ROOT=$PWD/install
+export PATH=$WMCORE_ROOT/install/bin:$PATH
+export PYTHONPATH=$WMCORE_ROOT/lib/python2.6/site-packages:$PYTHONPATH
+export PYTHONPATH=$WMCORE_ROOT/test/python:$PYTHONPATH
+
+#export PYTHONPATH=$PYTHONPATH:/data/software/lib/python2.6/site-packages
+
+echo "Sourcing secrets and setting DB connectors"
+set +x # don't echo secrets
+. $WMAGENT_SECRETS_LOCATION
+
+export DATABASE=mysql://${MYSQL_USER}:${MYSQL_PASS}@localhost/WMCore_unit_test
+#export DBSOCK=$WORKSPACE/mysql.sock
+export COUCHURL="http://${COUCH_USER}:${COUCH_PASS}@${COUCH_HOST}:${COUCH_PORT}"
+
+set -x
+

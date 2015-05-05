@@ -19,9 +19,10 @@ def format(s, **kwds):
 # If the issue has no labels, it assings the label 'tests-pending'
 #
 def updateLabels( issue, pr ):
-  labels = [ l.name for l in issue.get_labels() ]
-  if not labels:
-    add_label( issue, 'tests-pending' )
+  old_labels = set([ l.name for l in issue.get_labels() ])
+  new_labels = set( old_labels )
+  if not old_labels:
+    new_labels.add( "tests-pending" )
 
   # Copied from process-pull-request
   last_commit_date = None
@@ -46,13 +47,20 @@ def updateLabels( issue, pr ):
     all_release_managers = set( list(itertools.chain.from_iterable(RELEASE_MANAGERS.values())) + [ 'cmsbuild' ]  )
     if commenter in all_release_managers:
       if re.match("^[+](1|test|tested)$", first_line):
-        new_tests_label = "tests-approved"
+        new_labels.discard( "tests-pending" )
+        new_labels.discard( "tests-rejected" )
+        new_labels.add( "tests-approved" )
+
       elif re.match("^[-](1|test|tested)$", first_line):
-        new_tests_label = "tests-rejected"
-      
-  if new_tests_label:
+        new_labels.discard( "tests-pending" )
+        new_labels.discard( "tests-approved" )
+        new_labels.add( "tests-rejected" )
+ 
+  if old_labels == new_labels:
+    print 'labels unchanged'
+  else:
     remove_labels( issue )
-    add_label( issue, new_tests_label )
+    add_labels_list( issue, list( new_labels ) )
 
 
 # Update the milestone for a given issue.
@@ -75,11 +83,14 @@ def updateMilestone(repo, issue, pr):
 
   for milestone in milestones:
     if milestone.title == milestoneName:
+      if opts.dryRun:
+        print "Not assigning to milestone (dry-run): " + str(milestone.number)
+        return
       print "Assign to milestone " + str(milestone.number)
       issue.edit(milestone=milestone)
       return
 
-  print "Create milestone " + milestoneName
+  print "Creating milestone " + milestoneName
   milestone = repo.create_milestone(title=milestoneName)
   issue.edit(milestone=milestone)
 
@@ -92,7 +103,13 @@ def add_label( issue, label ):
   print 'Adding label:\n %s' % label
   issue.add_to_labels( label )
 
-
+# Adds the labels to the issue on gthub from the list passed as parameter
+def add_labels_list( issue, new_labels_list ):
+  if opts.dryRun:
+    print 'Not adding labels (dry-run):\n %s' % ",".join( new_labels_list )
+    return
+  print 'Adding labels:\n %s' % ",".join( new_labels_list )
+  issue.add_to_labels( *new_labels_list )
 
 #
 # removes all the labels of the issue

@@ -602,8 +602,8 @@ def execute_command_compare_tags(start_tag,end_tag , graph ):
   comp[ 'release_name' ] = end_tag
   prs = []
   for line in output.splitlines():
-
-    if 'Merge remote branch ' in line:
+    # show in the list merge commits from forward port and pull requests.
+    if re.match(AUTO_FORWARD_PORT_REGEX, line ):
       pr = get_info_merge_commit( line , graph )
       if pr['brought_prs'] == []:
         continue
@@ -1073,6 +1073,9 @@ if __name__ == "__main__":
   # will be filled with getBuildingIBs( originalTags, lastInstalled )
   ALL_BUILDING_IBS = []
   MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
+  # This regular expression allows to identify if a merge commit is an automatic forward port
+  AUTO_FORWARD_PORT_REGEX='^.*Merge CMSSW.+ into CMSSW.+$'
+
 
   class BuildResultsKeys:
     DICT_ERROR = 'dictError'

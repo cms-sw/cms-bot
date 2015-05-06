@@ -22,7 +22,8 @@ this is the script which updates the status of a CMSSW PR. It parses all the
 messages associated to the specified PR and if it spots a transition (e.g. a L2
 signature) it posts a message acknowledging what happended, updates the tags
 etc. The state of the PR is fully obtained by parsing all the comments, so that
-we do not have to maintain our own state tracking DB.
+we do not have to maintain our own state tracking DB. It is run by [CMS Github Bot](https://cmssdt.cern.ch/jenkins/job/cms-bot/) in jenkins. 
+- [run-pr-tests](https://github.com/cms-sw/cms-bot/blob/master/run-pr-tests): Runs several tests for the pull requests, this includes compilation, unit tests, relvals, and static analysis, among other tests. It is run by [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration/) in Jenkins
 - [watchers.yaml](https://github.com/cms-sw/cms-bot/blob/master/watchers.yaml):
 contains all the information required by `process-pull-requests` to notify
 developers when a PR touches the packages they watch.

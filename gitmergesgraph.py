@@ -15,6 +15,8 @@ import re
 INFO_SEPARATOR = '--INFO--'
 REPO = 'cmssw.git'
 MAGIC_COMMAND_GRAPH = 'GIT_DIR='+REPO+' git log --merges --graph --pretty=\'"'+INFO_SEPARATOR+'%H,%s"\' RELEASE_QUEUE '
+# This regular expression allows to identify if a merge commit is an automatic forward port
+AUTO_FORWARD_PORT_REGEX='Merge CMSSW.+ into CMSSW.+'
 
 #
 # load the graph for a given release queue
@@ -163,7 +165,7 @@ class Node:
     self.desc = desc
     self.lane = lane
     self.is_from_merge = lane > 1
-    self.is_automated_merge = 'Merge remote branch' in desc
+    self.is_automated_merge = re.match(AUTO_FORWARD_PORT_REGEX, desc) != None
     # which commit brought this one to the release queue
     self.brought_by = None 
     # which commits did this commit bring

@@ -1,4 +1,5 @@
-#! /bin/sh
+#! /bin/bash -e
+start=`date +%s`
 
 current="none"
 [ `ls -d deploy/current/sw*/$DMWM_ARCH/cms/wmagent/*` ] && current=$(basename $(ls -d deploy/current/sw*/$DMWM_ARCH/cms/wmagent/*))
@@ -25,8 +26,6 @@ if [ X$current != X$WMAGENT_VERSION ]; then
     #crontab -l
     crontab -r || true
     # hard kill any orphan processes
-    pkill -9 -f $PWD/deploy || true
-    pkill -9 -f $PWD/../.. || true
     rm -rf $PWD/deploy
     rm -rf $DBSOCK || true
   fi
@@ -40,3 +39,7 @@ perl -p -i -e 's/key_buffer=4000M/key_buffer=100M/' deploy/current/config/mysql/
 perl -p -i -e 's/max_heap_table_size=2048M/max_heap_table_size=100M/' deploy/current/config/mysql/my.cnf
 perl -p -i -e 's/tmp_table_size=2048M/tmp_table_size=100M/' deploy/current/config/mysql/my.cnf
 
+end=`date +%s`
+runtime=$((end-start))
+
+echo "Total time to deploy WMAgent: $runtime"

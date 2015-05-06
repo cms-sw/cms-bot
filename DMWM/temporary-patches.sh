@@ -1,3 +1,5 @@
+#! /bin/bash -e
+
 pushd deployment
 git remote add ewv https://github.com/ericvaandering/deployment.git || true
 git fetch ewv

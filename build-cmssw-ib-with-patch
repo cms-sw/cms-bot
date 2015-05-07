@@ -50,7 +50,7 @@ echo $THIS_WEEK > $WORKDIR/current_week
 cd $WORKDIR
 rm -rf w/SPECS
 
-BUILD_JOBS=2
+BUILD_JOBS=4
 BUILD_NPROC=$(getconf _NPROCESSORS_ONLN)
 
 case $ARCHITECTURE in

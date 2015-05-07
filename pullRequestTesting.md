@@ -52,3 +52,6 @@ cms-bot can run the following tests on a pull request:
     You can write a list of pull request numbers separated by commas. 
   - If you want to set manually all the parameters you can run the tests directly with [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration)
 
+## Pull Request Comparisons
+
+For information about the comparisons see [Pull Request Comparisons](pullRequestComparisons.html)

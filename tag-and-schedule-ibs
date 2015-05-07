@@ -26,7 +26,7 @@ for QUEUE in $RELEASE_QUEUES; do
   HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
   # find old tag, if any
   OLD_HASH=`git show-ref $RELEASE_NAME | cut -f1 -d\ `  
-  NEW_HASH=`git rev-list -n 1 --before="$DAY $HOUR:00" $RELEASE_BRANCH`
+  NEW_HASH=`git rev-list -n 1 --before="$DAY $HOUR:00" --first-parent $RELEASE_BRANCH`
   # If there is no new hash, we have a problem.
   # If there is no old hash, we simply tag.
   # If there is an old hash, we use the old one.

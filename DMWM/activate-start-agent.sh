@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash -e
 
 rm -rf $DBSOCK || true
 echo "Attempting to activate agent"

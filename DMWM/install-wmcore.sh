@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash -e
 
 # Install from git code, set paths appropriately for testing
 

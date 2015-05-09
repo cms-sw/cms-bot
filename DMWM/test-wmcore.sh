@@ -1,3 +1,7 @@
+#! /bin/bash -e
+
+start=`date +%s`
+
 # ensure db exists
 echo "CREATE DATABASE IF NOT EXISTS WMCore_unit_test" | mysql -u ${MYSQL_USER} --password=${MYSQL_PASS} --socket=${DBSOCK}
 set -x
@@ -26,8 +30,8 @@ coverage erase
 
 # run test - force success though - failure stops coverage report
 rm nosetests*.xml || true
-python code/setup.py test --buildBotMode=true --reallyDeleteMyDatabaseAfterEveryTest=true --testCertainPath=code/test/python --testTotalSlices=10 --testCurrentSlice=$SLICE || true #--testCertainPath=test/python/WMCore_t/WMBS_t || true
-cp nosetests.xml nosetests-$SLICE.xml
+python code/setup.py test --buildBotMode=true --reallyDeleteMyDatabaseAfterEveryTest=true --testCertainPath=code/test/python --testTotalSlices=$SLICES --testCurrentSlice=$SLICE || true #--testCertainPath=test/python/WMCore_t/WMBS_t || true
+mv nosetests.xml nosetests-$SLICE.xml
 
 # Add these here as they need the same environment as the main run
 #FIXME: change so initial coverage command skips external code
@@ -35,4 +39,10 @@ coverage xml -i --include=$PWD/install* || true
 
 export PYLINTHOME=$PWD/.pylint.d # force pylint cache to this workspace
 ulimit -n 4086 # opens all source files at once (> 1024)
-pylint --rcfile=code/standards/.pylintrc -f parseable install/lib/python2.6/site-packages/* 2>&1 > pylint.txt || true
+# pylint broken in latest build
+#pylint --rcfile=code/standards/.pylintrc -f parseable install/lib/python2.6/site-packages/* 2>&1 > pylint.txt || true
+
+end=`date +%s`
+runtime=$((end-start))
+
+echo "Total time to test slice $SLICE: $runtime"

@@ -64,7 +64,6 @@ def add_categories_notes( notes , token ):
   new_notes = ""   
   for note in notes.splitlines():
     
-    note = note.decode('ascii','ignore')
     pr_number = note.split(' ')[1].replace('#','')
     request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/issues/%s/labels" % pr_number,
                                   headers={"Authorization" : "token " + token})

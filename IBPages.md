@@ -34,7 +34,7 @@ If the validation job for the IB fails, the paratial results still can be shown 
 
 [showIB.html](https://github.com/cms-sw/cms-bot/blob/master/templates/showIB.html) is the main file of the pages. It uses javascript code found [here](https://github.com/cms-sw/cms-bot/tree/master/templates/js)
 
-## Details pages
+## Test Details Pages
 
 The details for the relvals results can be seen by using [relvalLogDetail.html](https://github.com/cms-sw/cms-sw.github.io/blob/master/relvalLogDetail.html),
 you can use the following syntax:

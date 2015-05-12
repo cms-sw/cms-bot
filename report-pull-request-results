@@ -496,7 +496,7 @@ MATRIX_WORKFLOW_STEP_NA = 'N/A'
 COMMITS_BASE_URL='https://github.com/cms-sw/cmssw/commit/{hash}'
 GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits'
 GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result'
-JENKINS_LOG_URL='https://cmssdt.cern.ch/jenkins/job/ib-any-integration/{job_id}/console'
+JENKINS_LOG_URL='https://cmssdt.cern.ch/jenkins/job/ib-any-integration-mesos/{job_id}/console'
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
 #---------------------------------------------------------------------------------------

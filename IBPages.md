@@ -28,15 +28,6 @@ The script uses information from the following sources:
   - The pages in cmssdt can be found in [https://cmssdt.cern.ch/SDT/html/showIB.html](https://cmssdt.cern.ch/SDT/html/showIB.html)
   - You can also see the a github mirror in [http://cms-sw.github.io/showIB.html](http://cms-sw.github.io/showIB.html)
 
-## The IB Pages can report incomplete results from Elasticsearch
-
-[update-github-pages](https://cmssdt.cern.ch/jenkins/job/update-github-pages/) runs periodicaly to parse the results 
-from AFS logs and ES about the IBs (Compilation, Unit tests, Relvals). 
-It saves the results in json files [here](https://github.com/cms-sw/cms-sw.github.io/tree/master/data). When a result is found in ES but not in AFS,
-the name of the json file will end with the suffix "_INCOMPLETE.json". [summary-of-merged-prs](https://cmssdt.cern.ch/jenkins/job/summary-of-merged-prs/) 
-uses these json files to identify results that are currently not complete and show them in the pages. An incomplete result can indicate for compilation results, 
-that the IB being is built, and for the Unit tests and Relvals indicates that the validation for that IB is being run. 
-
 If the validation job for the IB fails, the paratial results still can be shown in the IB pages if ES is available.
 
 ## Html and javascript files for the IB pages.
@@ -69,3 +60,12 @@ For the compilation, unit tests, and addon tests results, it is still used the o
 When the results are incomplete, [relvalLogDetail.html](https://github.com/cms-sw/cms-sw.github.io/blob/master/relvalLogDetail.html) will look for the "_INCOMPLETE.json" file
 in [https://github.com/cms-sw/cms-sw.github.io/tree/master/data/relvals](https://github.com/cms-sw/cms-sw.github.io/tree/master/data/relvals)
 and it inform accordingly.
+
+## The IB Pages can report incomplete results from Elasticsearch
+
+[update-github-pages](https://cmssdt.cern.ch/jenkins/job/update-github-pages/) runs periodicaly to parse the results 
+from AFS logs and ES about the IBs (Compilation, Unit tests, Relvals). 
+It saves the results in json files [here](https://github.com/cms-sw/cms-sw.github.io/tree/master/data). When a result is found in ES but not in AFS,
+the name of the json file will end with the suffix "_INCOMPLETE.json". [summary-of-merged-prs](https://cmssdt.cern.ch/jenkins/job/summary-of-merged-prs/) 
+uses these json files to identify results that are currently not complete and show them in the pages. An incomplete result can indicate for compilation results, 
+that the IB being is built, and for the Unit tests and Relvals indicates that the validation for that IB is being run.

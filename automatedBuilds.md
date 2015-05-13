@@ -18,6 +18,9 @@ Likewise, the build must be approved from one of the users in the list APPROVE_B
 if you are not authorized to request a build, cms-bot will simply ignore the issue. In this [diagram](data/AutomatedBuildOfReleases.pdf) you can see a detailed description
 of the process.
 
+Notice that there is a label for each state of the process, this is the way in which cms-bot can tell the status of a build issue.
+
+
 ## General Workflow
 
 [Here](https://github.com/cms-sw/cmssw/issues/8372) you can see an example of the process.
@@ -44,5 +47,7 @@ through a Github issue.
 - [upload-release](https://github.com/cms-sw/cms-bot/blob/master/upload-release): script used to upload a release to the repository. When
 the job processing build requests spots a request to upload, it SSH to the
 build machine which has the release and executes this script.
-  Run by [upload-release (jenkins) ](https://cmssdt.cern.ch/jenkins/job/upload-release/)
+  Run by [upload-release (jenkins)](https://cmssdt.cern.ch/jenkins/job/upload-release/).
 - [report-build-release-status](https://github.com/cms-sw/cms-bot/blob/master/report-build-release-status) script used   to report the status of the build.
+- [release-deploy-afs](https://github.com/ktf/cms-bot/blob/master/release-deploy-afs) takes care of installing the release in afs, it is run by
+[release-deploy-afs (jenkins)](https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/).

@@ -52,7 +52,7 @@ The IB pages can bee seen [here](https://cmssdt.cern.ch/SDT/html/showIB.html).
 
 - [summary-of-merged-prs](https://cmssdt.cern.ch/jenkins/job/summary-of-merged-prs/) is the jenkins job that generates and deploys the pages. 
 - [report-summary-merged-prs](https://github.com/cms-sw/cms-bot/blob/master/report-summary-merged-prs) is the script that generates the json
-  files with that the pages show. 
+  files with the information that the pages show. 
 
 For more information see [IB Pages](IBPages.html)
 

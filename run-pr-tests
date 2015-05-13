@@ -73,9 +73,9 @@ popd
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 # use the branch name if necesary
 if [ "X$BRANCH_NAME" = X ]; then
-  git cms-merge-topic -u $PULL_REQUEST 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+  (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
 else
-  git cms-merge-topic -u $BRANCH_NAME 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+  (git cms-merge-topic -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
 fi
 
 # this is to test several pull requests at the same time
@@ -95,6 +95,14 @@ if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
   $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
   exit 1
 fi
+
+# look for any other error in general
+if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
+  echo "There was an error while running git cms-merge-topic"
+  $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+  exit 1
+fi
+
 
 #############################################
 # Check if there are unwanted commits that came with the merge. 
@@ -184,9 +192,12 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
   CLANG_CMD="scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
   echo $CLANG_CMD > $WORKSPACE/buildClang.log
 
-  scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile' 2>&1 | tee -a $WORKSPACE/buildClang.log
+  (scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile' && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
 
-  if grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log; then
+  TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
+  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
+
+  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when testing compilation with clang"
     echo 'CLANG_COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
     ALL_OK=false
@@ -206,11 +217,14 @@ fi
 # ############################################
 COMPILATION_CMD="scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN)"
 echo $COMPILATION_CMD > $WORKSPACE/build.log
-scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN) 2>&1 | tee -a $WORKSPACE/build.log
+(scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN) && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
 
-if grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log; then
+TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
+GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
+
+if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
     echo 'COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
     ALL_OK=false
@@ -228,7 +242,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   echo '--------------------------------------'
   UTESTS_CMD="scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests"
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
-  scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests 2>&1 | tee -a $WORKSPACE/unitTests.log
+  (scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
   #######################################
@@ -250,7 +264,10 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
 
   fi
 
-  if grep -i "had errors" $WORKSPACE/unitTests.log; then
+  TEST_ERRORS=`grep -i "had errors" $WORKSPACE/unitTests.log` || true
+  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/unitTests.log` || true
+
+  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the unit tests"
     echo 'UNIT_TEST_RESULTS;ERROR' >> $RESULTS_FILE
     ALL_OK=false
@@ -342,11 +359,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
       wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
       RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options=\"--cache das-cache.file --limit 0\" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
       echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
-      timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options="--cache das-cache.file --limit 0" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
+      (timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options="--cache das-cache.file --limit 0" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
     else
       RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
       echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
-      timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST 2>&1 | tee -a $WORKSPACE/matrixTests.log
+      (timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
     fi
 
     dateAfter=$(date +"%s")
@@ -359,8 +376,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
   popd
  
+  TEST_ERRORS=`grep -i -E "ERROR .*" $WORKSPACE/matrixTests.log` || true
+  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/matrixTests.log` || true
      
-  if grep -i -E "ERROR .*" $WORKSPACE/matrixTests.log; then
+  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the RelVals"
 
     echo 'MATRIX_TESTS;ERROR' >> $RESULTS_FILE

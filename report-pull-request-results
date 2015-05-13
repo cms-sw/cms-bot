@@ -14,7 +14,7 @@ import os
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
-                            "| REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL ")
+                            "| REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -228,7 +228,7 @@ def mark_commit_if_needed( action, details ):
     return
 
   if options.no_post_mesage:
-    print 'Not marking commit( dry-run ): ', options.commit_hash, ' with \n', action, '\n', details
+    print 'Not marking commit(dry-run): ', options.commit_hash, ' with \n', action, '\n', details
     return
  
   print 'Marking commit ', options.commit_hash 
@@ -271,7 +271,7 @@ def send_message_pr( pr, message, checkDuplicateMessage=False ):
       message += git_cms_merge_topic_url + '\n'       
  
   if options.no_post_mesage:
-    print 'Not posting message ( dry-run ): \n ', message
+    print 'Not posting message (dry-run): \n ', message
     return
 
   print 'Posting message: ', message
@@ -319,7 +319,21 @@ def send_not_mergeable_pr_message( repo, pr_number ):
   message = "-1\n"+"@" + user.login + ' This pull request cannot be automatically '\
             ' merged, could you please rebase it?'
 
+  git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
+  message += "\n you can see the log for git cms-merge-topic here: \n%s" % git_cms_merge_topic_url 
+
   send_message_pr( pull_request, message )
+
+#
+# sends a message informing that there was an issue with git cms-merge-topic
+#
+def send_git_cms_merge_topic_issue_message( repo, pr_number ):
+
+  pull_request = repo.get_pull(pr_number)
+  git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
+  message = "There was an issue with git-cms-merge-topic you can see the log here: \n%s" % git_cms_merge_topic_url
+  send_message_pr( pull_request, message )
+
 
 #
 # sends a message informing that it has the 
@@ -574,5 +588,7 @@ elif( ACTION == 'REMOTE_REF_ISSUE'):
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
   build_log_file = options.unit_tests_file
   read_build_log_file( official_cmssw, build_log_file, tests_results_url, True )
+elif( ACTION == 'GIT_CMS_MERGE_TOPIC_ISSUE' ):
+  send_git_cms_merge_topic_issue_message( official_cmssw, pr_number )
 else:
   print "I don't recognize that action!"

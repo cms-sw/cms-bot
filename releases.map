@@ -1038,6 +1038,7 @@ architecture=slc5_amd64_gcc481;label=CMSSW_7_1_0;type=Production;state=Announced
 architecture=slc6_amd64_gcc490;label=CMSSW_7_1_0;type=Production;state=Announced;prodarch=0;
 architecture=slc6_amd64_gcc481;label=CMSSW_7_2_0_pre1;type=Development;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc490;label=CMSSW_7_2_0_pre1;type=Development;state=Announced;prodarch=0;
+architecture=fc19_aarch64_gcc490;label=CMSSW_7_2_0_pre1;type=Development;state=Announced;prodarch=0;
 architecture=slc6_amd64_gcc481;label=CMSSW_7_1_1;type=Production;state=Announced;prodarch=1;
 architecture=slc5_amd64_gcc481;label=CMSSW_7_1_1;type=Production;state=Announced;prodarch=0;
 architecture=slc6_amd64_gcc490;label=CMSSW_7_1_1;type=Production;state=Announced;prodarch=0;

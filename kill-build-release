@@ -1,0 +1,18 @@
+#!/bin/sh -ex
+
+# This is used when the build is aborted from the issue comments.
+# build-release creates a filed called BUILD_PID, this file 
+# contains the process id for the build.
+# When this script is excecuted, it reads the file and kills
+# the process with that process ID.
+# The file BUILD_PID must be in the workspace of the build
+
+CMSSW_X_Y_Z=not-assigned
+ARCHITECTURE=not-assigned
+WORKSPACE=${WORKSPACE-"/build/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCHITECTURE/"}
+
+pushd $WORKSPACE
+ PID_TO_KILL=`head -n 1 BUILD_PID`
+ echo "Killing $PID_TO_KILL, the build was aborted in the github issue." >> buildSteps.log
+ kill -9 $PID_TO_KILL
+popd

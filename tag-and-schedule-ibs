@@ -47,6 +47,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    echo "MESOS_QUEUE=${MESOS_QUEUE}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     if [ "X$ALWAYS_BUILD" = X ]; then
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
     else

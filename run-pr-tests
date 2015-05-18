@@ -100,7 +100,7 @@ fi
 if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
   echo "There was an error while running git cms-merge-topic"
   $WORKSPACE/cms-bot/report-pull-request-results GIT_CMS_MERGE_TOPIC_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
-  exit 1
+  exit 0
 fi
 
 

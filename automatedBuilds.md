@@ -55,3 +55,14 @@ build machine which has the release and executes this script.
 - [release-notes](https://github.com/cms-sw/cms-bot/blob/master/release-notes): generates the release notes for the release, is run by [release-produce-changelog](https://cmssdt.cern.ch/jenkins/job/release-produce-changelog/). 
 - [cleanup-auto-build](https://github.com/cms-sw/cms-bot/blob/master/cleanup-auto-build) cleans the workspace of a build in the node where it was built. It is triggered 2 days after the release has been announced (2 days after the command to generate the release notes was written). Run by [cleanup-auto-build (jenkins)](https://cmssdt.cern.ch/jenkins/job/cleanup-auto-build/).
 - [kill-build-release](https://github.com/cms-sw/cms-bot/blob/master/kill-build-release) when the build is aborted, it kills the process that was building the release. It is run by [kill-build-release (jenkins)](https://cmssdt.cern.ch/jenkins/job/kill-build-release/). It logs into the machine that is building the release, and kills the process. [build-release](https://github.com/cms-sw/cms-bot/blob/master/build-release) writes the pid in the file `$WORKSPACE/BUILD_PID`, this is used by kill-build-release to get the pid to kill.
+
+## Commands
+
+During the process, cms-bot will indicate to the user which commands they can write in the comments depending on the status of the build. You need to be in the list APPROVE_BUILD_RELEASE in the file [categories.py](https://github.com/cms-sw/cms-bot/blob/master/categories.py), otherwise your commands will be ignored. Currently the commands are:
+
+ - **"build cmssw-tool-conf":** Before the actual build starts you can request to build cmssw-tool-conf, this package will be built and uploaded for each architecture of the release queue. 
+ - **"+1":** Start the build of the release per each architecture.
+ - **"Abort":** Aborts the build, deletes the release in github, the cmssw and cmsdist tags, and kills the builds in jenkins. The issue goes to the state `build-aborted` and a new issue must be created to start over the build. 
+ - **"upload all":** starts the upload of the builds per each architecture as soon as the build is finished successfully. 
+ - **"release-notes since \<previous-release\>":** triggers the generation of the release notes since the release indicated. A template for the announcement is generated. The issue goes to the state `release-announced`, it is responsibility of the user to send the announcement email. 
+ - **"release-notes":** triggers the generation of the release-notes, but guesses the previous release. In any case, you can trigger the generation of the release notes again if necessary by writing again the command. 

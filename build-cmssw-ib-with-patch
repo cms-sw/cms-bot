@@ -140,6 +140,9 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+if [ -d w/RPMS/$ARCHITECTURE ] ; then
+  (source w/$ARCHITECTURE/apt-init.sh ; find w/RPMS/$ARCHITECTURE -name '*.rpm' -type l | sed "s|.*/||;s|-1-1\.$ARCHITECTURE.rpm||" | xargs apt-get remove -y ; rm -rf w/RPMS/$ARCHITECTURE)
+fi
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
 
 # Decide if we already have a release which uses the same CMSDIST.

@@ -41,7 +41,9 @@ Both the original and the mirror pages are deployed by [summary-of-merged-prs](h
 
 [showIB.html](https://github.com/cms-sw/cms-bot/blob/master/templates/showIB.html) is the main file of the pages. It uses javascript code found [here](https://github.com/cms-sw/cms-bot/tree/master/templates/js). The files are copied to the place were they are being deployed. 
 
-## Test Details Pages
+## Test Detailed Results Pages
+
+For the compilation and unit tests, the old version is still used. You can find the links from the IB pages. 
 
 The details for the relvals results can be seen by using [relvalLogDetail.html](https://github.com/cms-sw/cms-sw.github.io/blob/master/relvalLogDetail.html),
 you can use the following syntax:
@@ -62,11 +64,15 @@ These links are automatically generated from the main IB pages.
 
 For the compilation, unit tests, and addon tests results, it is still used the old version. 
 
-### Incomplete detail pages for incomplete results. 
+### Detailed results pages for incomplete results. 
 
 When the results are incomplete, [relvalLogDetail.html](https://github.com/cms-sw/cms-sw.github.io/blob/master/relvalLogDetail.html) will look for the "_INCOMPLETE.json" file
 in [https://github.com/cms-sw/cms-sw.github.io/tree/master/data/relvals](https://github.com/cms-sw/cms-sw.github.io/tree/master/data/relvals)
 and it inform accordingly.
+
+In the following diagram you can see a summary of how the detailed results pages work:
+
+[ ![diagram](https://docs.google.com/drawings/d/142HGSUY3xi2k4H8QZt5ikd0nycncMwrk6VSlHErnIdo/pub?w=459&h=242)](https://docs.google.com/drawings/d/142HGSUY3xi2k4H8QZt5ikd0nycncMwrk6VSlHErnIdo/pub?w=919&h=484)
 
 ## The IB Pages can report incomplete results from Elasticsearch
 
@@ -77,4 +83,4 @@ the name of the json file will end with the suffix "_INCOMPLETE.json". [summary-
 uses these json files to identify results that are currently not complete and show them in the pages. An incomplete result can indicate for compilation results, 
 that the IB being is built, and for the Unit tests and Relvals indicates that the validation for that IB is being run.
 
-If the validation job for the IB fails, the paratial results still can be shown in the IB pages if ES is available.
+If the validation job for the IB fails, the partial results still can be shown in the IB pages if ES is available.

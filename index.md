@@ -56,6 +56,13 @@ The IB pages can bee seen [here](https://cmssdt.cern.ch/SDT/html/showIB.html).
 
 For more information see [IB Pages](IBPages.html)
 
+# Cleanup of cmssdt
+- [cleanup-cmssdt](https://cmssdt.cern.ch/jenkins/job/cleanup-cmssdt): takes care of cleaning up disk space in vocms12. This machine is currently used for the jenkins artifacts.
+- [cleanup-cmssdt01](https://cmssdt.cern.ch/jenkins/job/cleanup-cmssdt01): takes care fo cleaning up disk space in cmssdt01. 
+
+# Automatic Forward Ports.
+- [update-cmssw-7-0-X-branches](https://cmssdt.cern.ch/jenkins/job/update-cmssw-7-0-X-branches/): takes care of forward porting changes between cmsssw and cmssdt branches. It runs [auto-update-git-branches](https://github.com/cms-sw/cms-bot/blob/master/auto-update-git-branches).
+
 
 
 

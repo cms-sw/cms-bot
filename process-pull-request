@@ -377,6 +377,19 @@ if __name__ == "__main__":
                             " branch and will require explicit ORP approval"
                             " on friday or L1 override.")
 
+  # Add a Warning if the pull request was done against a patch branch
+  warning_msg = ''
+  if 'patchX' in pr.base.ref:
+    print 'Must warn that this is a patch branch'
+    base_release = pr.base.ref.replace( '_patchX', '' )
+    base_release_branch = re.sub( '[0-9]+$', 'X', base_release )
+    warning_msg = format("Note that this branch is designed for requested bug "
+                         "fixes specific to the %(base_rel)s release.\nIf you "
+                         "wish to make a pull request for the %(base_branch)s "
+                         "release cycle, please use the %(base_branch)s branch instead",
+                         base_rel=base_release,
+                         base_branch=base_release_branch)
+
   # We do not want to spam people for the old pull requests.
   messageNewPR = format("A new Pull Request was created by @%(user)s"
                         " %(name)s for %(branch)s.\n\n"
@@ -395,7 +408,8 @@ if __name__ == "__main__":
                         " tests by saying 'please test' in the first line of a"
                         " comment.\n"
                         "%(releaseManagers)s"
-                        "%(orpRequired)s",
+                        "%(orpRequired)s"
+                        "\n%(patch_branch_warning)s",
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
@@ -405,7 +419,8 @@ if __name__ == "__main__":
                         new_package_message=new_package_message,
                         watchers=watchersMsg,
                         releaseManagers=releaseManagersMsg,
-                        orpRequired=orpRequiredMsg)
+                        orpRequired=orpRequiredMsg,
+                        patch_branch_warning=warning_msg)
 
   messageUpdatedPR = format("Pull request #%(pr)s was updated."
                             " %(signers)s can you please check and sign again.",

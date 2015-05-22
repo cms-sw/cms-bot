@@ -31,7 +31,8 @@ CONFIG_MAP_FILE = 'config.map'
 NO_ARCHS_FOUND_MSG = 'No architecures to build found for {rel_name}. Please check that you entered a ' \
                      'valid release name or that the IBs are currently enabled for {queue}'
 RELEASE_BASE_URL = 'https://github.com/cms-sw/cmssw/releases/tag/%s'
-RELEASE_CREATED_MSG = 'Release created: %s'
+BASE_BRANCH_URL = ' https://github.com/cms-sw/cmssw/tree/%s'
+RELEASE_CREATED_MSG = 'Release created: {rel_name}. The tag was created on top of branch: {base_branch}'
 RELEASE_CREATION_FAIL_MSG = 'There was an error while attempting to create {rel_name}. ' \
                             'Please check if it already exists https://github.com/cms-sw/cmssw/releases' 
 WRONG_RELEASE_NAME_MSG = 'The release name is malformed. Please check for typos.'
@@ -584,11 +585,9 @@ def triggerCleanup( issue, comments, release_name ):
 
 #
 # Creates the release in github, including the cmssw tag. It then creates the files to trigger the builds in jenkins
-#TODO check cmssw toolconf
 #
 def start_release_build( issue, release_name, release_branch, architectures ): 
 
-  # if someone approved, go ahead and create the release
   cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
   release_created = create_release_github( cmssw_repo, release_name, release_branch )
   if not release_created:
@@ -596,7 +595,8 @@ def start_release_build( issue, release_name, release_branch, architectures ):
     post_message( issue , RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name ) )
     exit( 0 )
 
-  msg = RELEASE_CREATED_MSG % ( RELEASE_BASE_URL % release_name )
+  msg = RELEASE_CREATED_MSG.format( rel_name=(RELEASE_BASE_URL % release_name),
+                                    base_branch=(BASE_BRANCH_URL % release_branch) )
   post_message( issue , msg )
 
   ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
@@ -841,9 +841,21 @@ if __name__ == "__main__":
   production_architecture = possible_prod_arch[0] if possible_prod_arch else architectures[0]
 
   release_branch = release_queue
+
   if len(release_branches):
     release_branch = release_branches[0]
 
+  # If a patch release is requested and there is a patchX branch, it will be used to tag the release. For example:
+  # if you want to create CMSSW_7_1_4_patch2 and there exists a branch called CMSSW_7_1_4_patchX the tag will be 
+  # on top of the branch CMSSW_7_1_4_patchX instead of CMSSW_7_1_X.
+ 
+  patch_reg_exp = '.*_[a-zA-Z]*patch[0-9]+$'
+  if re.match( patch_reg_exp, release_name ):
+    possible_branch = re.sub( '[0-9]+$', 'X', release_name )
+    if possible_branch in [b.name for b in cmssw_repo.get_branches()]:
+      print 'This is a patch release and the branch %s was found. It will be used as base branch.' % possible_branch
+      release_branch = possible_branch
+    
 
   # Get the status of this issue.
   status = get_issue_status( issue ) 

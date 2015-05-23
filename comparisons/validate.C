@@ -491,6 +491,9 @@ void allTracks(TString alias){
   plotTrack(alias,"dxy");
   if (detailled)    plotTrack(alias,"ndof");
   plotTrack(alias,"algo");
+  plotTrack(alias,"originalAlgo");
+  plotTrack(alias,"algoMaskUL");
+  plotTrack(alias,"algoMask_.count");
   plotTrack(alias,"quality(0)");
   plotTrack(alias,"quality(1)");
   plotTrack(alias,"quality(2)");
@@ -937,6 +940,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       //plotvar("SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data.barycenter()");
       plotvar("SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data.charge()");
 
+      tbr="recoClusterCompatibility_hiClusterCompatibility__";
+      plotvar(tbr+recoS+".obj.nValidPixelHits()");
+      plotvar(tbr+recoS+".obj.size()");
+      plotvar(tbr+recoS+".obj.z0_");
+      plotvar(tbr+recoS+".obj.z0(0)");
+      plotvar(tbr+recoS+".obj.nHit_");
+      plotvar(tbr+recoS+".obj.nHit(0)");
+      plotvar(tbr+recoS+".obj.chi_");
+      plotvar(tbr+recoS+".obj.chi(0)");
     }
     if ((step.Contains("all") || step.Contains("sistrip")) && !step.Contains("cosmic") ){
       plotvar("SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj.m_data@.size()");
@@ -1371,6 +1383,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       
       //new ged stuff
       photonVars("gedPhotons_");
+
+      //HI stuff
+      plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.ecalClusterIsoR2()");
+      plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.hcalRechitIsoR2()");
+      plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.trackIsoR2PtCut20()");
+      plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.swissCrx()");
+      plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.seedTime()");
 
       if (detailled){
 

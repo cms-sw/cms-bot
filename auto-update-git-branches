@@ -59,6 +59,7 @@ git fetch origin
 # CMSSW_7_5_X
 (updateBranch CMSSW_7_4_X CMSSW_7_5_X) || true
 (updateBranch CMSSW_7_5_X CMSSW_7_5_ROOT5_X) || true
+(updateBranch CMSSW_7_5_X CMSSW_7_5_ROOT64_X) || true
 
 # Update CMSDIST
 cd $WORKSPACE

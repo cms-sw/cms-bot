@@ -46,6 +46,7 @@ elif [ `df -k $WORKSPACE | tail -1 | awk '{print $4}'` -lt 100000000 ]; then
   rm -rf $WORKSPACE/../build-cache
 fi
 mkdir -p $WORKDIR
+touch $WORKSPACE/../build-cache
 echo $THIS_WEEK > $WORKDIR/current_week
 cd $WORKDIR
 rm -rf w/SPECS

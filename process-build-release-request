@@ -26,7 +26,7 @@ GH_CMSSW_ORGANIZATION = 'cms-sw'
 GH_CMSSW_REPO = 'cmssw'
 GH_CMSDIST_REPO = 'cmsdist'
 BUILD_REL = '^[Bb]uild[ ]+(CMSSW_[^ ]+)'
-NOT_AUTHORIZED_MSG = 'You are not authorized to trigger the build of a release.'
+NOT_AUTHORIZED_MSG = 'You are not authorized to request the build of a release.'
 CONFIG_MAP_FILE = 'config.map'
 NO_ARCHS_FOUND_MSG = 'No architecures to build found for {rel_name}. Please check that you entered a ' \
                      'valid release name or that the IBs are currently enabled for {queue}'

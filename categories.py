@@ -1,7 +1,7 @@
 # A ridicously long mapping for categories. Good enough for now.
 import re
 
-REQUEST_BUILD_RELEASE = [ "nclopezo" , "smuzaffar", "degano", "davidlange6", "mark-grimes"  ]
+REQUEST_BUILD_RELEASE = [ "nclopezo" , "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov"  ]
 APPROVE_BUILD_RELEASE = [ "nclopezo" , "smuzaffar", "degano", "davidlange6" ]
 TRIGGER_PR_TESTS = [ "nclopezo" , "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov" ]
 

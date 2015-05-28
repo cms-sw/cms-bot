@@ -559,15 +559,24 @@ def get_output_command(command_to_execute):
 # to ignore tags that are from other releases
 def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch ):
 
+  print_verbose( 'Release Queue:' )
+  print_verbose( release_queue )
+  print_verbose( 'Release Branch:' )
+  print_verbose( release_branch )
+
   # if it is a special release queue based on a branch with a different name, I use the release_branch as end tag
   if release_queue == release_branch:
+    print_verbose( 'These IBs have a custom release branch' )
     real_end_tag = end_tag
   else:
-    sp_rel_name = release_queue.split( '_' )[ 3 ]
-    real_end_tag = end_tag.replace( '_'+sp_rel_name , '' )
+    real_end_tag = release_branch
 
+  print_verbose( 'Start tag:' )
+  print_verbose( start_tag )
+  print_verbose( 'End tag:' )
+  print_verbose( real_end_tag )
   tags = []
-  command_to_execute = MAGIC_COMMAND_TAGS.replace( 'START_TAG' , start_tag ).replace( 'END_TAG' , real_end_tag )
+  command_to_execute = MAGIC_COMMAND_TAGS.replace( 'START_TAG', start_tag ).replace( 'END_TAG', real_end_tag )
   out,err,ret_code = get_output_command(command_to_execute)
 
   # check if the end_tag exists, but the start_tag doesn't
@@ -575,7 +584,7 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
   if ret_code != 0:
     if is_recent_branch(err):
       print_verbose( 'looks like this branch has been created recently' )
-      command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace( 'END_TAG' , real_end_tag ).replace( 'RELEASE_QUEUE' , release_branch )
+      command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace( 'END_TAG', real_end_tag ).replace( 'RELEASE_QUEUE', release_branch )
       out,err,ret_code = get_output_command(command_to_execute)
 
   tags = get_tags(out,release_queue)

@@ -23,7 +23,7 @@ messages associated to the specified PR and if it spots a transition (e.g. a L2
 signature) it posts a message acknowledging what happended, updates the tags
 etc. The state of the PR is fully obtained by parsing all the comments, so that
 we do not have to maintain our own state tracking DB. It is run by [CMS Github Bot](https://cmssdt.cern.ch/jenkins/job/cms-bot/) in jenkins. 
-- [run-pr-tests](https://github.com/cms-sw/cms-bot/blob/master/run-pr-tests): Runs several tests for the pull requests, this includes compilation, unit tests, relvals, and static analysis, among other tests. It is run by [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration/) in Jenkins
+- [run-pr-tests](https://github.com/cms-sw/cms-bot/blob/master/run-pr-tests): Runs several tests for the pull requests, this includes compilation, unit tests, relvals, and static analysis, among other tests. It is run by [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration/) in Jenkins.
 - [watchers.yaml](https://github.com/cms-sw/cms-bot/blob/master/watchers.yaml):
 contains all the information required by `process-pull-requests` to notify
 developers when a PR touches the packages they watch.
@@ -57,8 +57,8 @@ The IB pages can bee seen [here](https://cmssdt.cern.ch/SDT/html/showIB.html).
 For more information see [IB Pages](IBPages.html)
 
 # Cleanup of cmssdt
-- [cleanup-cmssdt](https://cmssdt.cern.ch/jenkins/job/cleanup-cmssdt): takes care of cleaning up disk space in vocms12. This machine is currently used for the jenkins artifacts.
-- [cleanup-cmssdt01](https://cmssdt.cern.ch/jenkins/job/cleanup-cmssdt01): takes care fo cleaning up disk space in cmssdt01. 
+- [cleanup-cmssdt](https://cmssdt.cern.ch/jenkins/job/cleanup-cmssdt): takes care of cleaning up disk space in vocms12. 
+- [cleanup-cmssdt01](https://cmssdt.cern.ch/jenkins/job/cleanup-cmssdt01): takes care fo cleaning up disk space in cmssdt01. This machine is currently used for the jenkins artifacts.
 
 # Automatic Forward Ports.
 - [update-cmssw-7-0-X-branches](https://cmssdt.cern.ch/jenkins/job/update-cmssw-7-0-X-branches/): takes care of forward porting changes between cmsssw and cmssdt branches. It runs [auto-update-git-branches](https://github.com/cms-sw/cms-bot/blob/master/auto-update-git-branches).

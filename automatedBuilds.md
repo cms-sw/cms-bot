@@ -11,12 +11,14 @@ redirect_from:
 The github issues can be used to build CMSSW Releases. The main idea is that an authorized user creates an issue with the name "Build \<release_name\>".
 Then, cms-bot guides you through the process. 
 
-Only authorized people can request of a release trhough a github issue. To request the build of a release ( that means that your issue is processed by cms-bot )
+Only authorized people can request of a release through a github issue. To request the build of a release
 your username must be in the list REQUEST_BUILD_RELEASE in the [categories.py](https://github.com/cms-sw/cms-bot/blob/master/categories.py) file. 
 Likewise, the build must be approved from one of the users in the list APPROVE_BUILD_RELEASE. 
 
-if you are not authorized to request a build, cms-bot will simply ignore the issue. In this [diagram](data/AutomatedBuildOfReleases.pdf) you can see a detailed description
+if you are not authorized to request a build, cms-bot will inform it and ignore the issue. In this [diagram](data/AutomatedBuildOfReleases.pdf) you can see a detailed description
 of the process.
+
+Click [here](https://docs.google.com/drawings/d/1H7Xsa-KXnsX6ZSQrskKrJjLbGPteAMHYuyMeAF2vjC8/edit?usp=sharing) to access the diagram in Google Drive. 
 
 Notice that there is a label for each state of the process, this is the way in which cms-bot can tell the status of a build issue.
 
@@ -42,19 +44,19 @@ at any time the release manager should be able to manually continue it or solve 
 ## Scripts and Jenkins Jobs
 
 - [process-build-release-request](https://github.com/cms-sw/cms-bot/blob/master/process-build-release-request): script that handles the github issue used to request the build. It orchestates the triggering of the next scripts according to the status of the build. 
-  Run by [query-build-release-issues](https://cmssdt.cern.ch/jenkins/job/query-build-release-issues/)
+  Run by [query-build-release-issues](https://cmssdt.cern.ch/jenkins/job/query-build-release-issues/).
 - [build-release](https://github.com/cms-sw/cms-bot/blob/master/build-release): script used to build a release which has been requested
 through a Github issue. It can also build only cmssw-tool-conf if requested. 
   Run by [build-release (jenkins)](https://cmssdt.cern.ch/jenkins/job/build-release/).
-- [upload-release](https://github.com/cms-sw/cms-bot/blob/master/upload-release): script used to upload a release to the repository. Tt SSH to the
+- [upload-release](https://github.com/cms-sw/cms-bot/blob/master/upload-release): script used to upload a release to the repository. It connvects via SSH to the
 build machine which has the release and executes this script.
   Run by [upload-release (jenkins)](https://cmssdt.cern.ch/jenkins/job/upload-release/). It is triggered after the comment "upload all" is found in the issue. 
 - [report-build-release-status](https://github.com/cms-sw/cms-bot/blob/master/report-build-release-status) script used   to report the status of the build.
 - [release-deploy-afs](https://github.com/ktf/cms-bot/blob/master/release-deploy-afs): takes care of installing the release in afs, it is run by
 [release-deploy-afs (jenkins)](https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/). It is triggered automatically after the upload finished correctly. 
 - [release-notes](https://github.com/cms-sw/cms-bot/blob/master/release-notes): generates the release notes for the release, is run by [release-produce-changelog](https://cmssdt.cern.ch/jenkins/job/release-produce-changelog/). 
-- [cleanup-auto-build](https://github.com/cms-sw/cms-bot/blob/master/cleanup-auto-build) cleans the workspace of a build in the node where it was built. It is triggered 2 days after the release has been announced (2 days after the command to generate the release notes was written). Run by [cleanup-auto-build (jenkins)](https://cmssdt.cern.ch/jenkins/job/cleanup-auto-build/).
-- [kill-build-release](https://github.com/cms-sw/cms-bot/blob/master/kill-build-release) when the build is aborted, it kills the process that was building the release. It is run by [kill-build-release (jenkins)](https://cmssdt.cern.ch/jenkins/job/kill-build-release/). It logs into the machine that is building the release, and kills the process. [build-release](https://github.com/cms-sw/cms-bot/blob/master/build-release) writes the pid in the file `$WORKSPACE/BUILD_PID`, this is used by kill-build-release to get the pid to kill.
+- [cleanup-auto-build](https://github.com/cms-sw/cms-bot/blob/master/cleanup-auto-build): cleans the workspace of a build in the node where it was built. It is triggered 2 days after the release has been announced (2 days after the command to generate the release notes was written). Run by [cleanup-auto-build (jenkins)](https://cmssdt.cern.ch/jenkins/job/cleanup-auto-build/).
+- [kill-build-release](https://github.com/cms-sw/cms-bot/blob/master/kill-build-release): kills the process that was building the release, when the build is aborted. [kill-build-release (jenkins)](https://cmssdt.cern.ch/jenkins/job/kill-build-release/). It logs into the machine that is building the release, and kills the process. [build-release](https://github.com/cms-sw/cms-bot/blob/master/build-release) writes the pid in the file `$WORKSPACE/BUILD_PID`, this is used by kill-build-release to get the pid to kill.
 
 ## Commands
 

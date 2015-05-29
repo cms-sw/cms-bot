@@ -20,7 +20,7 @@ cms-bot can run the following tests on a pull request:
 ## Main Scripts
 
   - [run-pr-tests](https://github.com/cms-sw/cms-bot/blob/master/run-pr-tests) is the script that runs the tests on the pull requests.
-    It is run by [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration).
+    It is run by [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration) in jenkins.
   - [report-pull-request-results](https://github.com/cms-sw/cms-bot/blob/master/report-pull-request-results) is the script that is used
     by [run-pr-tests](https://github.com/cms-sw/cms-bot/blob/master/run-pr-tests) to report the results of the tests.
 
@@ -39,19 +39,19 @@ cms-bot can run the following tests on a pull request:
     The tests for a pull request are automatically triggered if the following conditions are met:
       - There is at least 1 signature.
       - The tests are pending.
-      - It is not already being tested (it checks if the latest commit is marked as "testing")
+      - It is not already being tested (it checks if the latest commit is marked as "testing").
 
 ### The tests can be triggered by L2 or release managers by writing "please test"
 
-  - If a L2 or a release manager write "please test" in the pull request conversation, the tests are triggered. This is handled by [process-pull-request](https://github.com/cms-sw/cms-bot/blob/master/process-pull-request),
+  - If a L2 or a release manager writes "please test" in the pull request conversation, the tests are triggered. This is handled by [process-pull-request](https://github.com/cms-sw/cms-bot/blob/master/process-pull-request),
     which generates a file that triggers [ib-schedule-pr-tests](https://cmssdt.cern.ch/jenkins/job/ib-schedule-pr-tests/) to get the parameters needed by the tests and start them. 
 
 ## Manual Triggering
 
   - If you want to select only the pull request number and get all the other parameters automatically you can just use [ib-schedule-pr-tests](https://cmssdt.cern.ch/jenkins/job/ib-schedule-pr-tests).
     You can write a list of pull request numbers separated by commas. 
-  - If you want to set manually all the parameters you can run the tests directly with [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration)
+  - If you want to set manually all the parameters you can run the tests directly with [ib-any-integration](https://cmssdt.cern.ch/jenkins/job/ib-any-integration).
 
 ## Pull Request Comparisons
 
-For information about the comparisons see [Pull Request Comparisons](pullRequestComparisons.html)
+For information about the comparisons see [Pull Request Comparisons](pullRequestComparisons.html).

@@ -37,17 +37,17 @@ RELEASE_BRANCH_PRODUCTION = [
 ]
 
 RELEASE_MANAGERS = {
-  "CMSSW_7_5_X": ["nclopezo"],
+  "CMSSW_7_5_X": ["degano"],
   "CMSSW_7_4_X": ["degano"],
-  "CMSSW_7_3_X": ["nclopezo"],
-  "CMSSW_7_2_X": ["nclopezo"],
+  "CMSSW_7_3_X": ["degano"],
+  "CMSSW_7_2_X": ["degano"],
   "CMSSW_7_1_X": ["degano"],
   "CMSSW_7_0_X": ["degano"],
   "CMSSW_6_2_X": ["degano"],
   "CMSSW_6_2_X_SLHC": ["fratnikov", "mark-grimes"],
   "CMSSW_6_2_SLHCDEV_X": ["fratnikov", "mark-grimes"],
   "CMSSW_5_3_X": ["smuzaffar"],
-  "CMSSW_4_4_X": ["smuzaffar", "nclopezo", "davidlt"],
-  "CMSSW_4_2_X": ["smuzaffar", "nclopezo", "davidlt"],
-  "CMSSW_4_1_X": ["smuzaffar", "nclopezo", "davidlt"],
+  "CMSSW_4_4_X": ["smuzaffar", "davidlt"],
+  "CMSSW_4_2_X": ["smuzaffar", "davidlt"],
+  "CMSSW_4_1_X": ["smuzaffar", "davidlt"],
 }

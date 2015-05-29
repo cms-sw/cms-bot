@@ -422,7 +422,7 @@ def post_message( issue , msg, checkIfRepeated=True ):
   if opts.dryRun:
     print 'Not posting message (dry-run):\n %s' % msg
     return
-  if checkIfRepeated and search_in_comments( comments, [ 'cmsbuild', 'nclopezo' ], msg, False):
+  if checkIfRepeated and search_in_comments( comments, [ 'cmsbuild' ], msg, False):
     print 'Message already in the thread: \n %s' % msg
     return
   print 'Posting message:\n %s' % msg 
@@ -515,7 +515,7 @@ def abort_build( issue, release_name, architectures, comments):
   for arch in BUILDING:
     msg += '\n\n  -Aborting Jenkins build for %s' % arch
     pattern = '^The build has started for %s .*' % arch
-    build_info_comments = search_in_comments( comments, ['cmsbuild','nclopezo'] , pattern, True )
+    build_info_comments = search_in_comments( comments, ['cmsbuild'] , pattern, True )
     if not build_info_comments:
       print 'No information found about the build machine, something is wrong'
       exit( 1 )
@@ -556,10 +556,10 @@ def triggerCleanup( issue, comments, release_name ):
     for arch in TO_CLEANUP:
 
       pattern = 'The build has started for %s .*' % arch
-      build_info_comments = search_in_comments( comments, ['cmsbuild', 'nclopezo'], pattern, False)
+      build_info_comments = search_in_comments( comments, ['cmsbuild'], pattern, False)
 
       pattern_tool_conf = 'The cmssw-tool-conf build has started for %s .*' % arch
-      tool_conf_info_comments = search_in_comments( comments, ['cmsbuild', 'nclopezo'], pattern_tool_conf, False)
+      tool_conf_info_comments = search_in_comments( comments, ['cmsbuild'], pattern_tool_conf, False)
 
       if not build_info_comments:
         print 'No information found about the build machine, something is wrong for %s' % arch
@@ -692,7 +692,7 @@ def check_archs_to_upload( release_name, issue ):
   for arch in BUILD_OK:
     print 'Ready to upload %s' % arch
     pattern = '^The build has started for %s .*' % arch
-    build_info_comments = search_in_comments( comments, ['cmsbuild','nclopezo'] , pattern, True )
+    build_info_comments = search_in_comments( comments, ['cmsbuild'] , pattern, True )
     if not build_info_comments:
       print 'No information found about the build machine, something is wrong'
       exit( 1 )

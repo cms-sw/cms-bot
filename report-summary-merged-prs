@@ -825,7 +825,7 @@ def find_one_static_check( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
   out,err,ret_code = get_output_command(command_to_execute)
-  if re.match('.*(200 OK|Found)', out):
+  if re.match('.*(200 OK|302 Found)', out):
     print 'found'
     return architecture
   print 'not-found'
@@ -837,7 +837,7 @@ def find_one_static_check( release_name , architecture ):
 def find_one_hlt_test( release_name ):
   command = MAGIC_COMMAND_FIND_HLT_TESTS.replace('RELEASE_NAME', release_name)
   out,err,ret_code = get_output_command(command)
-  if re.match('.*(200 OK|Found)', out):
+  if re.match('.*(200 OK|302 Found)', out):
     print 'found'
     return 'found'
   print 'not-found'

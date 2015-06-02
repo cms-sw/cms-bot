@@ -28,8 +28,9 @@ PACKAGE_NAME=cmssw
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
 
-export USER_HOOK_PACKAGE=$WORKSPACE/cms-bot/scram-package-monitor
-export USER_HOOK_PROJECT=$WORKSPACE/cms-bot/scram-package-monitor
+export USER_HOOK_PACKAGE=$WORKSPACE/cms-bot/scram-package-monitor-timestamps
+export USER_HOOK_PROJECT=$WORKSPACE/cms-bot/scram-package-monitor-timestamps
+export PKG_MON_SENDER=$WORKSPACE/cms-bot/scram-package-monitor-sender
 
 # WORKDIR is where the build actually happens. In order to recycle things
 # already downloaded, we go one level up (i.e. in build-any-ib) and create
@@ -209,6 +210,7 @@ $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
+$PKG_MON_SENDER & # Call the sender script just before the actual building of the release  
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 

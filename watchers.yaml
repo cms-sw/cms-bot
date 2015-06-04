@@ -393,9 +393,6 @@ jlagram:
 - SimTracker/Common
 - SimTracker/Configuration
 - SimTracker/Records
-jpavel:
-- RecoTauTag
-- DataFormats/TauReco
 kkrajczar:
 - Validation/RecoHI
 kurtejung:

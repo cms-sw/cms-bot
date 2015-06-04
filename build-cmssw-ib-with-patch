@@ -210,7 +210,7 @@ $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
-$PKG_MON_SENDER & # Call the sender script just before the actual building of the release  
+$PKG_MON_SENDER 2>&1 >monitor.log & # Call the sender script just before the actual building of the release  
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 

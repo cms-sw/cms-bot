@@ -130,6 +130,7 @@ CMSSW_CATEGORIES={
    "EventFilter/SiPixelRawToDigi",
    "EventFilter/SiStripRawToDigi",
    "EventFilter/Phase2TrackerRawToDigi",
+   "EventFilter/Utilities",
    "MagneticField/Engine",
    "MagneticField/GeomBuilder",
    "MagneticField/Interpolation",

@@ -12,7 +12,8 @@ RELEASE_BRANCH_MILESTONE = {
   "CMSSW_4_2_X": 35,
   "CMSSW_4_1_X": 7,
   "CMSSW_6_2_SLHCDEV_X": 52,
-  "CMSSW_7_1_4_patchX": 53
+  "CMSSW_7_1_4_patchX": 53,
+  "CMSSW_7_4_1_patchX": 54
 }
 
 RELEASE_BRANCH_CLOSED = [

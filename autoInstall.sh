@@ -59,7 +59,7 @@ for REPOSITORY in $REPOSITORIES; do
   (
     source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ;
     apt-get update ;
-    if [ "X$TRIGGERING_RELEASE" != "X" ] then
+    if [ "X$TRIGGERING_RELEASE" != "X" ] ; then
       apt-get install -q -y `apt-cache search $TRIGGERING_RELEASE | grep 'cms+cmssw+\|cms+cmssw-patch+' | awk '{print $1}'` || true;
     fi;
     apt-cache search cmssw-ib\\+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;

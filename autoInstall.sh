@@ -59,6 +59,7 @@ for REPOSITORY in $REPOSITORIES; do
   (
     source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ;
     apt-get update ;
+    apt-get install -q -y `apt-cache search $TRIGGERING_RELEASE | grep 'cms+cmssw+\|cms+cmssw-patch+' | awk '{print $1}'` || true;
     apt-cache search cmssw-ib\\+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
     rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed$$.txt ;
     for x in `diff -u onserver$$.txt installed$$.txt | grep -e '^-[^-]' | sed -e 's/^-//'`; do

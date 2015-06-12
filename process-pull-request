@@ -5,6 +5,7 @@ from optparse import OptionParser
 from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS
+from releases import DEVEL_RELEASE_CYCLE
 import yaml
 
 import re
@@ -321,13 +322,17 @@ if __name__ == "__main__":
                             blocker=blocker,
                             managers=releaseManagersList)
 
+  devReleaseRelVal = ""
+  if not pr.base.ref in DEVEL_RELEASE_CYCLE:
+    devReleaseRelVal = "once checked with relvals in the development release cycle of CMSSW"
   messageFullySigned = format("This pull request is fully signed and it will be"
                               " integrated in one of the next %(branch)s IBs"
-                              " unless changes"
+                              " %(devReleaseRelVal)s"
                               " %(requiresTest)s"
                               " %(autoMerge)s",
                               requiresTest=requiresTestMessage,
                               autoMerge = autoMergeMsg,
+                              devReleaseRelVal=devReleaseRelVal,
                               branch=pr.base.ref)
 
   if set(old_labels) == set(labels):

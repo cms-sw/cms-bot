@@ -52,3 +52,5 @@ RELEASE_MANAGERS = {
   "CMSSW_4_2_X": ["smuzaffar", "davidlt"],
   "CMSSW_4_1_X": ["smuzaffar", "davidlt"],
 }
+
+DEVEL_RELEASE_CYCLE = [ "CMSSW_7_5_X" ]

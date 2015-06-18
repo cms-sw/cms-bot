@@ -126,6 +126,24 @@ def remove_labels( issue ):
   issue.delete_labels()
 
 
+#
+# Get tests log output
+#
+def get_test_log(logfile, lastlines=10):
+  from os import getenv
+  from os.path import join,exists
+  logmsg=''
+  try:
+    logfile = join(getenv('WORKSPACE'),logfile)
+    try:
+      from commands import getoutput
+      logmsg = '\n\nLast '+str(lastlines)+' lines of tests log are:\n'+getoutput('tail -n '+str(lastlines)+' '+logfile)
+    except:
+      logmsg = '\n\nUnable to read tests log: No such file '+logfile
+  except:
+    logmsg = '\n\nUnable to read tests log: WORKSPACE variable not set.'
+  return logmsg
+  
 # Start of execution
 # --------------------------------------------------------------------------------
 
@@ -156,6 +174,7 @@ if __name__ == "__main__":
   cmssw_repo = GH.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
   issue = cmssw_repo.get_issue( issue_id )
   ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
+  test_logfile = "build/"+release_name+"-tests/matrixTests/runall-report-step123-.log"
   
   if action == POST_BUILDING:
     msg_details = ''
@@ -248,13 +267,13 @@ if __name__ == "__main__":
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TESTS_OK_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg )
+    post_message( issue , msg + get_test_log(test_logfile))
 
   elif action == TESTS_ERROR:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TESTS_ERROR_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg )
+    post_message( issue , msg + get_test_log(test_logfile))
    
   elif action == RELEASE_NOTES_OK:
 

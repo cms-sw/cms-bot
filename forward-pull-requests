@@ -51,7 +51,7 @@ if __name__ == "__main__":
       print 
       print '-----'
       print "Forward porting %s" % issue.number
-      print issue.title
+      print issue.title.encode('utf-8')
       print newBody.encode('utf-8')
       print args.dest
       print "%s:%s" % (pr.head.user.login, pr.head.ref)

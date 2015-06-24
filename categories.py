@@ -15,6 +15,7 @@ CMSSW_L2 = {
   "civanch": ["simulation", "geometry", "fastsim"],
   "mdhildreth": ["simulation", "geometry", "fastsim"],
   "Dr15Jones": ["core", "visualization", "geometry"],
+  "smuzaffar": ["core"],
   "alja": ["visualization"],
   "ianna": ["geometry"],
   "deguio": ["dqm"],

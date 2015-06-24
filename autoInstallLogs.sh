@@ -40,11 +40,9 @@ for WEEK in 0 1; do
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
     rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$REPO_PATH/cms.week$WEEK/WEB/build-logs/$SCRAM_ARCH/$CMSSW_NAME/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
     pushd $REL_LOGS
-      if [ -f html-logs.tgz ] ; then
-        tar xzf html-logs.tgz ./logAnalysis.pkl ./index.html || echo "Unable to unpack logs in $REL_LOGS."
-      elif [ -f html-logs.zip ] ; then
-        unzip -p html-logs.zip logAnalysis.pkl > logAnalysis.pkl || echo "Unable to unpack logs in $REL_LOGS."
-        unzip -p html-logs.zip index.html >  index.html || echo "Unable to unpack logs in $REL_LOGS."
+      if [ -f html-logs.zip ] ; then
+        [ -f logAnalysis.pkl ] || (unzip -p html-logs.zip logAnalysis.pkl > logAnalysis.pkl || echo "Unable to unpack logs in $REL_LOGS.")
+        [ -f index.html ] || (unzip -p html-logs.zip index.html >  index.html || echo "Unable to unpack logs in $REL_LOGS.")
       fi
     popd
   done

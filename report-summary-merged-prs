@@ -291,16 +291,18 @@ def get_results_one_unitTests_file(file):
 # and how meny failed
 #
 def get_results_one_relval_file(filename):
+  details = { 'num_passed' : 0,
+              'num_failed' : 1}
+
   print_verbose( 'Analyzing: ' + filename )
   lines = file(filename).read().split("\n")
   results = [x for x in lines if ' tests passed' in x]
+  if len(results)==0:
+    return False,details
   out = results.pop()
 
   num_passed_sep = out.split(',')[0].replace( ' tests passed' , '' ).strip()
   num_failed_sep = out.split(',')[1].replace( ' failed' , '' ).strip()
-
-  details = { 'num_passed' : 0,
-              'num_failed' : 1}
   try:
     details["num_passed"] = sum( [ int(num) for num in num_passed_sep.split(' ') ] )
     details["num_failed"] = sum( [ int(num) for num in num_failed_sep.split(' ') ] )

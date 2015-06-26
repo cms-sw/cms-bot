@@ -56,7 +56,10 @@ class TestCase(unittest.TestCase):
         if self.result == 'success':
             tr.addSuccess(self)
         elif self.result == 'skipped':
-            tr.addSkip(self, '%s: %s' % (self.typename, self._textMessage()))
+            try:
+                tr.addSkip(self, '%s: %s' % (self.typename, self._textMessage()))
+            except AttributeError:
+                print ("Skip not supported")
         elif self.result == 'error':
             tr.addError(self, (self.typename, self._textMessage()))
         elif self.result == 'failure':
@@ -110,7 +113,10 @@ class TestCase(unittest.TestCase):
 
     @property
     def good(self):
-        return self.skipped or self.success
+        try:
+            return self.skipped or self.success
+        except AttributeError:
+            return self.success
 
     @property
     def bad(self):
@@ -157,8 +163,11 @@ class Parser(object):
             assert len(tr.errors) == int(root.attrib['errors'])
         if 'failures' in root.attrib:
             assert len(tr.failures) == int(root.attrib['failures'])
-        if 'skip' in root.attrib:
-            assert len(tr.skipped) == int(root.attrib['skip'])
+        try:
+            if 'skip' in root.attrib:
+                assert len(tr.skipped) == int(root.attrib['skip'])
+        except AttributeError:
+            pass
         if 'tests' in root.attrib:
             assert len(list(ts)) == int(root.attrib['tests'])
 

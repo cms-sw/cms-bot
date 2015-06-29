@@ -497,6 +497,7 @@ void allTracks(TString alias){
   plotTrack(alias,"quality(0)");
   plotTrack(alias,"quality(1)");
   plotTrack(alias,"quality(2)");
+  plotTrack(alias,"qualityMask");
   plotTrack(alias,"qoverp");
   if (detailled)    plotTrack(alias,"px");
   if (detailled)    plotvar("log10(abs(recoTracks_"+alias+".px()))");
@@ -1575,6 +1576,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       allpf();
       //for each sub category ...
       for (int t=1;t!=8;t++)	allpf(t);
+
+      allpf(-1, "particleFlowTmp_");
+      //for each sub category ...
+      for (int t=1;t!=8;t++)	allpf(t, "particleFlowTmp_");
 
       allpf(-1, "particleFlowEGamma_");
       allpf(-1, "particleFlowTmp_AddedMuonsAndHadrons");

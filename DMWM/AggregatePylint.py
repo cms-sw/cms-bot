@@ -29,11 +29,14 @@ with open('pylint.out', 'r') as pylintFile:
         if line.startswith('Your code has been rated at '):
             scorePart = line.strip('Your code has been rated at ')
             score = scorePart.split('/')[0]
-            if not filename in report:
-                report[filename] = {}
-            if not label in report[filename]:
-                report[filename][label] = {}
-            report[filename][label]['score'] = score
+            try:
+                if not filename in report:
+                    report[filename] = {}
+                if not label in report[filename]:
+                    report[filename][label] = {}
+                report[filename][label]['score'] = score
+            except NameError:
+                print "Score of %s found, but no filename" % score
 
         parts = line.split(':')
         if len(parts) != 3:

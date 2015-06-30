@@ -6,7 +6,6 @@ import glob
 import os
 import sys
 import xunitparser
-import pdb # REMOVE
 
 from github import Github
 
@@ -66,4 +65,4 @@ if not changed:
 issue.create_comment('%s' % message)
 
 if failed:
-    sys.exit(1)
+    print('Testing of unit tests failed. DMWM-UNIT-FAIL')

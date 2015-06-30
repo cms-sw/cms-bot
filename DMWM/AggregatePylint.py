@@ -27,10 +27,14 @@ score = 0
 with open('pylint.out', 'r') as pylintFile:
     for line in pylintFile:
         if line.startswith('Your code has been rated at '):
-            print "Found score line"
             scorePart = line.strip('Your code has been rated at ')
             score = scorePart.split('/')[0]
-            print "Score set to", score
+            if not filename in report:
+                report[filename] = {}
+            if not label in report[filename]:
+                report[filename][label] = {}
+            report[filename][label]['score'] = score
+
         parts = line.split(':')
         if len(parts) != 3:
             continue
@@ -69,7 +73,6 @@ with open('pylint.out', 'r') as pylintFile:
             report[filename][label]['warnings'] = warnings
             report[filename][label]['errors'] = errors
             report[filename][label]['comments'] = comments
-            report[filename][label]['score'] = score
 
         except ValueError:
             continue

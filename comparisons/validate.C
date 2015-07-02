@@ -68,6 +68,10 @@ double plotvar(TString v,TString cut=""){
   if (cut!="") cn+=count;
   TCanvas * c = new TCanvas(cn,"plot of "+v);
   c->SetGrid();
+  c->SetTopMargin(0.06);
+  c->SetLeftMargin(0.06);
+  c->SetRightMargin(0.01);
+  c->SetBottomMargin(0.06);
   TH1F * refplot=0;
   TString refvn=vn;
   vn.ReplaceAll(recoS,refrecoS);
@@ -75,6 +79,11 @@ double plotvar(TString v,TString cut=""){
   refv.ReplaceAll(recoS,refrecoS);
   if (refv!=v)
     std::cout<<" changing reference variable to:"<<refv<<std::endl;
+
+  gStyle->SetTitleX(0.3);
+  gStyle->SetTitleY(1);
+  gStyle->SetTitleW(0.6);
+  gStyle->SetTitleH(0.06);
   
   double refplotEntries = -1;
   double plotEntries = -1;
@@ -157,11 +166,14 @@ double plotvar(TString v,TString cut=""){
       countDiff+=std::abs(diff->GetBinContent(ib));
     }
     
-    TLegend * leg = new TLegend(0.5,0.8,0.99,0.99);
-    leg->AddEntry(refplot,"reference","l");
-    leg->AddEntry(plot,"new version","l");
-    leg->AddEntry(diff,"new - reference","p");
+    TLegend * leg = new TLegend(0.61,0.95,0.99,0.99);
+    leg->SetNColumns(3);
+    leg->SetMargin(0.15);
+    leg->AddEntry(refplot,"Reference","l");
+    leg->AddEntry(plot,"New Version","l");
+    leg->AddEntry(diff,"New - Reference","p");
     leg->Draw();
+
     
   }else{ 
     std::cout<<"cannot do things for "<<v<<std::endl;

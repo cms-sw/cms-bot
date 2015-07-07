@@ -240,9 +240,9 @@ fi
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
-  UTESTS_CMD="scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests"
+  UTESTS_CMD="scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests skiptest_testCommonToolsUtil"
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
-  (scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
+  (scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests skiptest_testCommonToolsUtil && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
   #######################################

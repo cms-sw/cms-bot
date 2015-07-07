@@ -5,7 +5,7 @@ if [ ! X`which aklog` = X ]; then
   aklog
 fi
 if [ ! X`which kinit` = X ]; then
-  kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
+  kinit cmsbuild@CERN.CH -k -t /build/cmsbuild/cmsbuild.keytab
 fi
 
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter

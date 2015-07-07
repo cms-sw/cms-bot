@@ -10,7 +10,7 @@
 
 # Reset kerberos token every time you run.
 aklog
-kinit cmsbuild@CERN.CH -k -t ~/private/cmsbuild.keytab
+kinit cmsbuild@CERN.CH -k -t /build/cmsbuild/cmsbuild.keytab
 
 export SCRAM_ARCH=$ARCHITECTURE
 scram project $RELEASE_FORMAT

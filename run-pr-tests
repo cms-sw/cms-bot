@@ -155,7 +155,7 @@ $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_
 if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
   echo "I will make sure that DQM tests will be run"
   if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep "DQMServices"; then
-    echo “DQMServices is already there”
+    echo DQMServices is already there
       if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
         echo "and DQMServices/Components is there"
       else

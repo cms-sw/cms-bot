@@ -1274,3 +1274,4 @@ architecture=slc6_amd64_gcc491;label=CMSSW_7_4_6_patch4;type=Production;state=An
 architecture=slc6_amd64_gcc491;label=CMSSW_7_4_6_patch5;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc491;label=CMSSW_7_4_6_patch6;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc472;label=CMSSW_5_3_29;type=Production;state=Announced;prodarch=1;
+architecture=slc6_amd64_gcc491;label=CMSSW_7_4_7;type=Production;state=Announced;prodarch=1;

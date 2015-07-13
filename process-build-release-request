@@ -734,14 +734,17 @@ def guess_prev_rel_name( release_name ):
 
   if ('patch' in release_name) or ('pre' in release_name):
     if prev_number < 1:
-      return release_name.replace( '_' + num_str, '')
-    return release_name.replace( num_str, prev_num_str)
+      previous_full_release=re.sub("_"+num_str+"$","",release_name)
+      if ('pre' in release_name):
+        previous_full_release=guess_prev_rel_name( previous_full_release )
+      return previous_full_release
+    return re.sub("_"+num_str+"$","_"+prev_num_str,release_name)
 
   else:
     if prev_number < 0:
       return release_name + '_pre9'
 
-    previous_full_release = release_name.replace( num_str, prev_num_str)
+    previous_full_release = re.sub("_"+num_str+"$","_"+prev_num_str,release_name)
 
     #Check if there are previous patch releases
     installedPaths = [x for x in glob(AFS_INSTALLATION + "/cmssw/*" )]

@@ -83,7 +83,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
     rsync $WF_BASE_URL $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
     #The file step1_dasquery.log could not exist for the current workflow, this is normal
     rsync $DAS_QUERY_LOG_BASE_URL $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-'step1_dasquery.log' || true
-    rsync $WF_PR_URL $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
+    rsync $WF_PR_URL $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE || true
     rsync $DAS_QUERY_LOG_PR_URL $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-'step1_dasquery.log' || true
 
     # check that the step1_dasquery.log files are correct.
@@ -150,13 +150,13 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     WF_DIR=`echo $WF | cut -d "/" -f1`
     WF_NUMBER=`echo $WF | cut -d'_' -f1`
 
-    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/$WF_DIR $JR_COMP_DIR/$RELEASE_FORMAT
-    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/$WF_DIR $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER
+    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/$WF_DIR $JR_COMP_DIR/$RELEASE_FORMAT || true
+    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/$WF_DIR $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER || true
 
   done  
 
   cd $JR_COMP_DIR
-    source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_70X.txt 2>&1 | tee -a $JR_COMP_DIR/validateJR.log
+    (source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_70X.txt 2>&1 | tee -a $JR_COMP_DIR/validateJR.log) || true
   cd ..
 
   echo  'source '$JR_COMP_DIR'/validateJR.sh '$JR_COMP_DIR'/PR-'$PULL_REQUEST_NUMBER' '$JR_COMP_DIR'/'$RELEASE_FORMAT' OldVSNew matrix_70X.txt 2>&1 | tee -a '$JR_COMP_DIR'/validateJR.log' > $JR_COMP_DIR/command

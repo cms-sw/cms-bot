@@ -1,0 +1,45 @@
+#!/bin/sh -ex
+ARCHITECTURE=$1
+RELEASE_FORMAT=$2
+REPOSITORY=$3
+PKGTOOLS_HASH=$4
+CMSDIST_HASH=$5
+# Workspace is usually defined by jenkins. If not running in
+# jenkins it will assume the current directory is the workspace.
+WORKSPACE=${WORKSPACE-$PWD}
+echo $WORKSPACE
+set -x
+
+RELEASE_NAME=`date +$RELEASE_FORMAT`
+RELEASE_QUEUE=`echo $RELEASE_NAME | sed 's/\(CMSSW_[0-9][0-9]*_[0-9][0-9]*.*_X\).*/\1/'`
+cd "$WORKSPACE"
+
+rm -rf CMSDIST cms PKGTOOLS
+
+CMSDIST_REPO=cms-sw
+PKGTOOLS_REPO=cms-sw
+
+CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
+eval `curl -s -k $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+
+git clone -b $CMSDIST_TAG  git@github.com:$CMSDIST_REPO/cmsdist.git   CMSDIST
+git clone -b $PKGTOOLS_TAG git@github.com:$PKGTOOLS_REPO/pkgtools.git PKGTOOLS
+
+pushd CMSDIST; 
+  git checkout $CMSDIST_TAG;
+  # If the hash is specified, use it.
+  if [ ! "X$CMSDIST_HASH" = X ]; then
+    git reset --hard $CMSDIST_HASH  
+  fi
+popd
+pushd PKGTOOLS; 
+  git checkout $PKGTOOLS_TAG; 
+  if [ ! "X$PKGTOOLS_HASH" = X ]; then
+    git reset --hard $PKGTOOLS_HASH  
+  fi
+popd
+
+perl -p -i -e "s/### RPM cms fwlite.*/### RPM cms fwlite ${RELEASE_FORMAT}_FWLITE/" CMSDIST/fwlite.spec
+
+PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
+PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms upload fwlite

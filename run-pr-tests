@@ -1,5 +1,10 @@
 #!/bin/sh -ex
 
+CMSBUILD_KEY="/build/cmsbuild/cmsbuild.keytab"
+case $NODE_NAME in
+  lxplus* ) CMSBUILD_KEY="/tmp/cmsbuild/cmsbuild.keytab" ;;
+esac
+
 function Jenkins_GetCPU ()
 {
   ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
@@ -17,7 +22,7 @@ if [ ! X`which aklog` = X ]; then
   aklog
 fi
 if [ ! X`which kinit` = X ]; then
-  kinit cmsbuild@CERN.CH -k -t /build/cmsbuild/cmsbuild.keytab
+  kinit cmsbuild@CERN.CH -k -t $CMSBUILD_KEY
 fi
 
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter

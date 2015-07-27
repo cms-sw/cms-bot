@@ -1,5 +1,17 @@
 #!/bin/sh -ex
 
+function Jenkins_GetCPU ()
+{
+  ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
+  case $NODE_NAME in
+    lxplus* )
+      if [ "X$1" != "X" ] ; then
+        ACTUAL_CPU=$(echo $ACTUAL_CPU / $1 | bc)
+      fi ;;
+  esac
+  echo $ACTUAL_CPU
+}
+
 # In case we have kerberos and aklog reset token every time you run.
 if [ ! X`which aklog` = X ]; then
   aklog
@@ -189,10 +201,10 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
-  CLANG_CMD="scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
+  CLANG_CMD="scram b vclean && scram build -k -j $(Jenkins_GetCPU) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
   echo $CLANG_CMD > $WORKSPACE/buildClang.log
 
-  (scram b vclean && scram build -k -j $(getconf _NPROCESSORS_ONLN) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile' && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
+  (eval $CLANG_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
@@ -215,9 +227,9 @@ fi
 # #############################################
 # test compilation with GCC
 # ############################################
-COMPILATION_CMD="scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN)"
+COMPILATION_CMD="scram b vclean && scram b -k -j $(Jenkins_GetCPU)"
 echo $COMPILATION_CMD > $WORKSPACE/build.log
-(scram b vclean && scram b -k -j $(getconf _NPROCESSORS_ONLN) && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
+(eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
 
@@ -240,9 +252,9 @@ fi
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
-  UTESTS_CMD="scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests "
+  UTESTS_CMD="scram b -k -j $(Jenkins_GetCPU 2)  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
-  (scram b -k -j $(getconf _NPROCESSORS_ONLN)  runtests && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
+  (eval $UTESTS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
   #######################################
@@ -298,7 +310,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   git cms-addpkg Utilities/StaticAnalyzers
   
   mkdir $WORKSPACE/llvm-analysis
-  SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(getconf _NPROCESSORS_ONLN) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
+  SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
  
   pwd
   
@@ -355,16 +367,14 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     dateBefore=$(date +"%s")
 
     # The --das-options are not correctly interpreted when set as a variable
+    EXTRA_RELVALS_OPTION=""
     if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
       wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
-      RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options=\"--cache das-cache.file --limit 0\" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
-      echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
-      (timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM --das-options="--cache das-cache.file --limit 0" $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
-    else
-      RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST"
-      echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
-      (timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(getconf _NPROCESSORS_ONLN) $WF_LIST && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
+      EXTRA_RELVALS_OPTION='--das-options="--cache das-cache.file --limit 0"'
     fi
+    RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $THREADED_PARAM $EXTRA_RELVALS_OPTION $SLHC_PARAM $JOB_REPORTS -j $(Jenkins_GetCPU 2) $WF_LIST"
+    echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
+    (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
 
     dateAfter=$(date +"%s")
     diff=$(($dateAfter-$dateBefore))

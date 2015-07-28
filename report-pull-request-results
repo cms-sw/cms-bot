@@ -120,6 +120,14 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
       parts = line.split(" ")
       workflow_info = parse_workflow_info( parts )
       workflows_with_error.append( workflow_info )
+    elif ' Step0-DAS_ERROR ' in line:
+      print 'processing: %s' % line
+      parts = line.split("_",2)
+      workflow_info = {}
+      workflow_info[ 'step' ] = "step1"
+      workflow_info[ 'number' ] = parts [0]
+      workflow_info[ 'message' ] = "DAS Error"
+      workflows_with_error.append( workflow_info )
 
   message = '-1 '
 

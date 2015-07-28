@@ -253,6 +253,8 @@ for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH
   echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $WORKSPACE/$x-properties
   echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/$x-properties
   echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/$x-properties
+  echo "CMSDIST_HASH=${CMSDIST_HASH}" >> $WORKSPACE/$x-properties
+  echo "PKGTOOLS_HASH=${PKGTOOLS_HASH}" >> $WORKSPACE/$x-properties
 done
 
 # This part is needed to drive the installation on afs for different OS.

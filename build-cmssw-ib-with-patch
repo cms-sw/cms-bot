@@ -189,7 +189,7 @@ case $ARCHITECTURE in
 esac
 
 pushd CMSDIST
-  DEBUG_SUBPACKS="cmssw.spec coral.spec cmssw-patch.spec"
+  DEBUG_SUBPACKS="cmssw.spec coral.spec cmssw-patch.spec root.spec"
   if [ "X$ENABLE_DEBUG" = X ]; then
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
   fi

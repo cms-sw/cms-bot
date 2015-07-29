@@ -28,7 +28,7 @@ with open('pylintReport.json', 'r') as reportFile:
             baseReport = fileReport['base']
             if not 'score' in testReport or not 'score' in baseReport:
                 continue
-            if testReport['score'] < baseReport['score']:
+            if float(testReport['score']) < float(baseReport['score']):
                 reportOn[filename] = True
                 summaryMessage += '* Score for %s decreased from %s to %s\n' % (filename, baseReport['score'], testReport['score'])
             if testReport['errors'] > baseReport['errors']:
@@ -45,8 +45,8 @@ with open('pylintReport.json', 'r') as reportFile:
             testReport = fileReport['test']
             if not 'score' in testReport:
                 continue
-            if testReport['score'] < 8.0 or filename in reportOn:
-                if testReport['score'] < 8.0:
+            if float(testReport['score']) < 8.0 or filename in reportOn:
+                if float(testReport['score']) < 8.0:
                     failed = True
                     longMessage += '\n%s fails the pylint check. Report follows:\n' % filename
                 elif filename in reportOn:

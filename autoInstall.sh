@@ -60,14 +60,23 @@ for REPOSITORY in $REPOSITORIES; do
     source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ;
     apt-get update ;
     if [ "X$TRIGGERING_RELEASE" != "X" ] ; then
-      apt-get install -q -y `apt-cache search $TRIGGERING_RELEASE | grep 'cms+cmssw+\|cms+cmssw-patch+' | awk '{print $1}'` || true;
+      TRIGGERING_RELEASE="cms+cmssw-ib+$TRIGGERING_RELEASE" ;
     fi;
     apt-cache search cmssw-ib\\+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
     rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed$$.txt ;
-    for x in `diff -u onserver$$.txt installed$$.txt | grep -e '^-[^-]' | sed -e 's/^-//'`; do
+    for x in $TRIGGERING_RELEASE  `diff -u onserver$$.txt installed$$.txt | grep -e '^-[^-]' | sed -e 's/^-//'`; do
       apt-get install -q -y $x || true;
       apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
       apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
+      relname=`echo $x | awk -F + '{print $NF}'` ;
+      timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
+      if [ "X$timestamp" != "X" ] ; then
+        for y in cmssw cmssw-patch ; do
+          if [ -d $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ] ; then
+            touch -t $timestamp $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ;
+          fi
+        done ;
+      fi
     done ;
     rm installed$$.txt ;
     rm onserver$$.txt ;

@@ -701,6 +701,7 @@ istaslis:
 - Validation/RecoVertex
 - HeavyIonsAnalysis
 - DataFormats/HeavyIonEvent
+- CondFormats/EgammaObjects
 amagitte:
 - RecoMuon/GlobalTrackingTools
 - DataFormats/MuonReco

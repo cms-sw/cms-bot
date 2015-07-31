@@ -203,6 +203,7 @@ CMSSW_CATEGORIES={
    "RecoLocalMuon/DTSegment",
    "RecoLocalMuon/RPCRecHit",
    "RecoLocalMuon/GEMRecHit",
+   "RecoLocalMuon/GEMSegment",
    "RecoLocalMuon/GEMCSCSegment",
    "RecoLocalTracker/ClusterParameterEstimator",
    "RecoLocalTracker/Configuration",

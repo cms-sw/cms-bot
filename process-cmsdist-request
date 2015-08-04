@@ -8,8 +8,6 @@ from sys import exit
 from releases import RELEASE_MANAGERS
 import itertools
 
-RELEASE_BRANCH_MILESTONE=yaml.load("cmsdist-milestones.yaml")
-
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
   return s % kwds

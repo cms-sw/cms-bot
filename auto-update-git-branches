@@ -66,6 +66,7 @@ git fetch origin
 
 # Update CMSDIST
 cd $WORKSPACE
+rm -rf cmsdist
 if [ ! -d cmsdist ]; then
   git clone -b IB/CMSSW_7_0_X/stable git@github.com:cms-sw/cmsdist
 fi

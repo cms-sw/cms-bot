@@ -32,7 +32,7 @@ def create_properties_file_tests( pr_number ):
     out_file.close()
 
 # Update the milestone for a given issue.
-def updateMilestone(issue, pr):
+def updateMilestone(repo, issue, pr):
   if issue.milestone:
     return
   branch = pr.base.label.split(":")[1]
@@ -48,23 +48,32 @@ def updateMilestone(issue, pr):
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")
-  parser.add_option("-n", "--dry-run", dest="dryRun", action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
   opts, args = parser.parse_args()
 
   if len(args) != 1:
     parser.error("Too many arguments")
   prId = int(args[0])
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  repo = None
+  pr   = None
   try:
-    pr = gh.get_repo( 'cms-sw/cmssw' ).get_pull(prId)
+    repo = gh.get_repo( opts.repository )
+    pr   = repo.get_pull(prId)
   except:
     print "Could not find pull request. Maybe this is an issue"
     exit(0)
 
   # Process the changes for the given pull request so that we can determine the
   # signatures it requires.
-  packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2])
-                       for x in pr.get_files()])])
+  if opts.repository == "cms-sw/cmssw":
+    packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2])
+                         for x in pr.get_files()])])
+
+  else:
+    packages = set (["external/"+opts.repository])
+
   print "Following packages affected:"
   print "\n".join(packages)
   signing_categories = set([category for package in packages
@@ -74,23 +83,24 @@ if __name__ == "__main__":
   # We always require tests.
   signing_categories.add("tests")
   # We require ORP approval for releases which are in production.
-  if pr.base.ref in RELEASE_BRANCH_PRODUCTION:
+  # or all externals package
+  if (opts.repository != "cms-sw/cmssw") or (pr.base.ref in RELEASE_BRANCH_PRODUCTION):
     print "This pull request requires ORP approval"
     signing_categories.add("orp")
 
   print "Following categories affected:"
   print "\n".join(signing_categories)
 
-  # If there is a new package, add also a dummy "new" category.
-  all_packages = [package for category_packages in CMSSW_CATEGORIES.values()
-                          for package in category_packages]
-  has_category = all([package in all_packages for package in packages])
-
-  new_package_message = ""
-  if not has_category:
-    new_package_message = "\nThe following packages do not have a category, yet:\n\n"
-    new_package_message += "\n".join([package for package in packages if not package in all_packages]) + "\n"
-    signing_categories.add("new-package")
+  if opts.repository == "cms-sw/cmssw":
+    # If there is a new package, add also a dummy "new" category.
+    all_packages = [package for category_packages in CMSSW_CATEGORIES.values()
+                            for package in category_packages]
+    has_category = all([package in all_packages for package in packages])
+    new_package_message = ""
+    if not has_category:
+      new_package_message = "\nThe following packages do not have a category, yet:\n\n"
+      new_package_message += "\n".join([package for package in packages if not package in all_packages]) + "\n"
+      signing_categories.add("new-package")
 
   # Add watchers.yaml information to the WATCHERS dict.
   WATCHERS = (yaml.load(file("watchers.yaml")))
@@ -110,10 +120,9 @@ if __name__ == "__main__":
   watchers = set(["@" + u for u in watchers])
   print "Watchers " + ", ".join(watchers)
 
-  repo = gh.get_repo( 'cms-sw/cmssw' )
   issue = repo.get_issue(prId)
+  updateMilestone(repo, issue, pr)
 
-  updateMilestone(issue, pr)
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
   last_commit_date = None
@@ -143,10 +152,11 @@ if __name__ == "__main__":
     # Check special cmsbuild messages:
     # - Check we did not announce the pull request already
     # - Check we did not announce changes already
+    comment_msg = comment.body.encode("ascii", "ignore")
     if commenter == "cmsbuild":
-      if re.match("A new Pull Request was created by", comment.body.encode("ascii", "ignore")):
+      if re.match("A new Pull Request was created by", comment_msg):
         already_seen = True
-      if re.match("Pull request [#][0-9]+ was updated[.].*", comment.body.encode("ascii", "ignore")):
+      if re.match("Pull request [#][0-9]+ was updated[.].*", comment_msg):
         pull_request_updated = False
 
     # Ignore all other messages which are before last commit.
@@ -156,7 +166,11 @@ if __name__ == "__main__":
       continue
 
     # The first line is an invariant.
-    first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+    first_line = ""
+    for l in comment_msg.split("\n"):
+      if re.match("^[\n\t\r ]*$",l): continue
+      first_line = l.strip("\n\t\r ")
+      break
 
     # Check for cmsbuild comments
     if commenter == "cmsbuild":
@@ -239,7 +253,7 @@ if __name__ == "__main__":
   for category, value in signatures.items():
     if not category in signing_categories:
       continue
-    labels = [l for l in labels if not l.startswith(category)]
+    labels = [l for l in labels if not l.startswith(category+"-")]
     if value == "approved":
       labels.append(category + "-approved")
     elif value == "rejected":
@@ -253,10 +267,11 @@ if __name__ == "__main__":
   if is_hold:
     labels.append("hold")
 
-  if comparison_done:
-    labels.append("comparison-available")
-  else:
-    labels.append("comparison-pending")
+  if opts.repository == "cms-sw/cmssw":
+    if comparison_done:
+      labels.append("comparison-available")
+    else:
+      labels.append("comparison-pending")
 
   print "\n".join(labels)
 
@@ -275,46 +290,49 @@ if __name__ == "__main__":
     labels.append("pending-signatures")
   else:
     labels.append("fully-signed")
+  labels = set(labels)
 
   # We update labels only if they are different.
   SUPER_USERS = (yaml.load(file("super-users.yaml")))
-  old_labels = [x.name for x in issue.labels]
+  old_labels = set([x.name for x in issue.labels])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
   releaseManagersMsg = ""
   if releaseManagers:
     releaseManagersMsg = format("%(rm)s can you please take care of it?",
                                  rm=releaseManagersList)
 
-  # trigger the tests and inform it in the thread.
-  if tests_requested and ( not tests_already_queued ):
-    create_properties_file_tests( prId )
-    if not opts.dryRun:
-      pr.create_issue_comment( TRIGERING_TESTS_MSG )
+  #For now, only trigger tests for cms-sw/cmssw
+  if opts.repository == "cms-sw/cmssw":
+    # trigger the tests and inform it in the thread.
+    if tests_requested and ( not tests_already_queued ):
+      create_properties_file_tests( prId )
+      if not opts.dryRun:
+        pr.create_issue_comment( TRIGERING_TESTS_MSG )
 
   # Do not complain about tests
   requiresTestMessage = "or unless it breaks tests."
-  if "tests-approved" in set(labels):
+  if "tests-approved" in labels:
     requiresTestMessage = "(tests are also fine)."
-  elif "tests-rejected" in set(labels):
+  elif "tests-rejected" in labels:
     requiresTestMessage = "(but tests are reportedly failing)."
 
   autoMergeMsg = ""
-  if all(["fully-signed" in set(labels),
-          not "hold" in set(labels),
-          not "orp-rejected" in set(labels),
-          not "orp-pending" in set(labels),
-          "tests-approved" in set(labels)]):
+  if all(["fully-signed"     in labels,
+          not "hold"         in labels,
+          not "orp-rejected" in labels,
+          not "orp-pending"  in labels,
+          "tests-approved"   in labels]):
     autoMergeMsg = "This pull request will be automatically merged."
   else:
-    if "orp-pending" in set(labels) or "orp-rejected" in set(labels):
+    if "orp-pending" in labels or "orp-rejected" in labels:
       autoMergeMsg = format("This pull request requires discussion in the"
                             " ORP meeting before it's merged. %(managers)s",
                             managers=releaseManagersList)
-    elif "new-package-pending" in set(labels):
+    elif "new-package-pending" in labels:
       autoMergeMsg = format("This pull request requires a new package and "
                             " will not be merged. %(managers)s",
                             managers=releaseManagersList)
-    elif "hold" in set(labels):
+    elif "hold" in labels:
       autoMergeMsg = format("This PR is put on hold by @%(blocker)s. He / she"
                             " will have to remove the `hold` comment or"
                             " %(managers)s will have to merge it by"
@@ -335,11 +353,10 @@ if __name__ == "__main__":
                               devReleaseRelVal=devReleaseRelVal,
                               branch=pr.base.ref)
 
-  if set(old_labels) == set(labels):
+  if old_labels == labels:
     print "Labels unchanged."
   elif not opts.dryRun:
-    issue.delete_labels()
-    issue.add_to_labels(*[repo.get_label(x) for x in labels])
+    issue.edit(labels=list(labels))
     if all(["fully-signed" in labels,
             not "orp-approved" in labels,
             not "orp-pending" in labels]):
@@ -383,20 +400,21 @@ if __name__ == "__main__":
                             " on friday or L1 override.")
 
   # Add a Warning if the pull request was done against a patch branch
-  warning_msg = ''
-  if 'patchX' in pr.base.ref:
-    print 'Must warn that this is a patch branch'
-    base_release = pr.base.ref.replace( '_patchX', '' )
-    base_release_branch = re.sub( '[0-9]+$', 'X', base_release )
-    warning_msg = format("Note that this branch is designed for requested bug "
+  if opts.repository == "cms-sw/cmssw":
+    warning_msg = ''
+    if 'patchX' in pr.base.ref:
+      print 'Must warn that this is a patch branch'
+      base_release = pr.base.ref.replace( '_patchX', '' )
+      base_release_branch = re.sub( '[0-9]+$', 'X', base_release )
+      warning_msg = format("Note that this branch is designed for requested bug "
                          "fixes specific to the %(base_rel)s release.\nIf you "
                          "wish to make a pull request for the %(base_branch)s "
                          "release cycle, please use the %(base_branch)s branch instead",
                          base_rel=base_release,
                          base_branch=base_release_branch)
 
-  # We do not want to spam people for the old pull requests.
-  messageNewPR = format("A new Pull Request was created by @%(user)s"
+    # We do not want to spam people for the old pull requests.
+    messageNewPR = format("A new Pull Request was created by @%(user)s"
                         " %(name)s for %(branch)s.\n\n"
                         "%(title)s\n\n"
                         "It involves the following packages:\n\n"
@@ -427,10 +445,27 @@ if __name__ == "__main__":
                         orpRequired=orpRequiredMsg,
                         patch_branch_warning=warning_msg)
 
-  messageUpdatedPR = format("Pull request #%(pr)s was updated."
+    messageUpdatedPR = format("Pull request #%(pr)s was updated."
                             " %(signers)s can you please check and sign again.",
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
+  else:
+    messageNewPR = format("A new Pull Request was created by @%(user)s"
+                          " %(name)s for %(branch)s.\n\n"
+                          "%(title)s\n\n"
+                          "%(watchers)s"
+                          "You can sign-off by replying to this message having"
+                          " '+1' in the first line of your reply.\n"
+                          "You can reject by replying  to this message having"
+                          " '-1' in the first line of your reply.",
+                          user=pr.user.login,
+                          name=pr.user.name and "(%s)" % pr.user.name or "",
+                          branch=pr.base.ref,
+                          title=pr.title.encode("ascii", "ignore"),
+                          watchers=watchersMsg)
+
+    messageUpdatedPR = format("Pull request #%(pr)s was updated.",
+                              pr=pr.number)
 
   # Finally decide whether or not we should close the pull request:
   messageBranchClosed = format("This branch is closed for updates."

@@ -16,6 +16,6 @@ ls
 ./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log
 ./examLogs.csh | tee -a $WORKSPACE/results/examLogs.out
 ls
-mkdir $WORKSPACE/results
+mkdir -p $WORKSPACE/results
 cp *.log $WORKSPACE/results
 cp *.out $WORKSPACE/results

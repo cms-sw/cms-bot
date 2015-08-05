@@ -13,7 +13,7 @@ git cms-addpkg HLTrigger/Configuration
 scram build -j $(getconf _NPROCESSORS_ONLN)
 cd HLTrigger/Configuration/test/
 ls
-./runAll.csh ALL | tee -a $WORKSPACE/results/runAll.log
+./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log
 ./examLogs.csh | tee -a $WORKSPACE/results/examLogs.out
 ls
 mkdir $WORKSPACE/results

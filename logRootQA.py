@@ -92,17 +92,23 @@ if len(sys.argv)==3:
     baseDir=sys.argv[1]
     testDir=sys.argv[2]
 
+if baseDir[-1]=='/':
+    baseDir=baseDir[:-1]
+if testDir[-1]=='/':
+    testDir=testDir[:-1]
+
 commonLogs=getCommonFiles(baseDir,testDir,'log')
 
 #### check the printouts
 lines=0
 lChanges=False
+nLog=0
 for l in commonLogs:
     lCount=checkLines(baseDir+l,testDir+l)
     lines=lines+lCount
     if lChanges!=0:
         lChanges=True
-
+    nLog=nLog+1    
 if lines >0 :
     print "You added "+str(lines)+" lines to the logs" 
 if lChanges:
@@ -111,12 +117,15 @@ if lChanges:
 #### compare edmEventSize on each to look for new missing candidates
 commonRoots=getCommonFiles(baseDir,testDir,'root')
 sameEvts=True
+nRoot=0
 for r in commonRoots:
-    sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
-
+    if '50' in r or '25' in r:
+        sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
+        nRoot=nRoot+1
 if not sameEvts:
     qaIssues=True
 
 #### conclude
+print "Checked",nLog,"log files and",nRoot,"root files"
 if not qaIssues:
     print "No potential problems in log/root QA checks!"

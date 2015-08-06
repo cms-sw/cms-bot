@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import sys
+sys.exit(0)
+
 from commands import getstatusoutput
 from socket import gethostname
 from argparse import ArgumentParser

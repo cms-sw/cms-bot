@@ -163,6 +163,12 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
 
   echo 'Finished with JR comparison:'
 
+  echo 'Doing log and root comparison:'
+
+  cd $JR_COMP_DIR
+  (python $WORKSPACE/cms-bot/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} 2>&1 | tee -a $JR_COMP_DIR/logRootQA.log) || true
+
+
 fi
 
 

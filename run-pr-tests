@@ -353,7 +353,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     
     case $RELEASE_FORMAT in
         *THREADED*)
-        THREADED_PARAM='--command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
+        THREADED_PARAM='-t 4 --command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
         ;;
        *)
     esac

@@ -65,4 +65,7 @@ if not changed:
 issue.create_comment('%s' % message)
 
 if failed:
-    print('Testing of unit tests failed. DMWM-UNIT-FAIL')
+    pass
+#    print('Testing of python code. DMWM-FAIL-UNIT')
+else:
+    print('Testing of python code. DMWM-SUCCEED-UNIT')

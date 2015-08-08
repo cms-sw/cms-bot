@@ -57,7 +57,7 @@ export SCRAM_ARCH=$ARCHITECTURE
 
 if [[ $RELEASE_FORMAT != *-* ]]; then
   RELEASE_QUEUE=$RELEASE_FORMAT
-  RELEASE_FORMAT=`scram l -c $RELEASE_FORMAT | tail -1 | awk '{print $2}'`
+  RELEASE_FORMAT=`scram l -c $RELEASE_FORMAT | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | tail -1 | awk '{print $2}'`
 else
   RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
 fi

@@ -4,7 +4,7 @@ if [ "X$DOCKER_IMG" != X ]; then
   echo "Passing to docker the args: "$DOCK_ARGS
   docker run -v /etc/localtime:/etc/localtime:ro -v /build/cmsbuild:/build/cmsbuild -v /home/cmsbuild:/home/cmsbuild\
   -e WORKSPACE=$WORKSPACE\
-  -t $DOCKER_IMG sh -c "$DOCK_ARGS"
+  $DOCKER_IMG sh -c "$DOCK_ARGS"
 else
   eval $@
 fi

@@ -12,7 +12,7 @@ import re
 from sys import exit
 
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
-TESTS_RESULTS_MSG = '[-|+]1'
+TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
@@ -176,13 +176,34 @@ if __name__ == "__main__":
     if commenter == "cmsbuild":
       if re.match("Comparison is ready", first_line):
         comparison_done = True
-      if re.match( TRIGERING_TESTS_MSG, first_line):
+      elif re.match( TRIGERING_TESTS_MSG, first_line):
         tests_already_queued = True
-        print 'Tests already queued'
-      if re.match( TESTS_RESULTS_MSG, first_line):
+        tests_requested = False
+        signatures["tests"] = "started"
+      elif re.match( TESTS_RESULTS_MSG, first_line):
         tests_already_queued = False
         tests_requested = False
-        print 'Previous tests already finished, resetting test request state'
+        if re.match('^\s*[+]1\s*$', first_line):
+          signatures["tests"] = "approved"
+        else:
+          signatures["tests"] = "rejected"
+        print 'Previous tests already finished, resetting test request state to ',signatures["tests"]
+      continue
+
+    # Check if the someone asked to trigger the tests
+    if (commenter in TRIGGER_PR_TESTS
+        or commenter in releaseManagers
+        or commenter in CMSSW_L2.keys()):
+      if re.match("^\s*(@cmsbuild\s*[,]*\s+|)([Pp]lease\s*[,]*\s+|)test\s*$", first_line):
+        print 'Tests requested:', commenter, 'asked to test this PR'
+        if not tests_already_queued:
+          print 'cms-bot will request test for this PR'
+          tests_requested = True
+          comparison_done = False
+          signatures["tests"] = "pending"
+        else:
+          print 'Tests already request for this PR'
+        continue
 
     # Check actions made by L1.
     # L1 signatures are only relevant for closed releases where
@@ -217,8 +238,6 @@ if __name__ == "__main__":
       elif re.match("^([-]1|reject|rejected)$", first_line):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
-      elif (commenter == "cmsbuild" and re.match( TRIGERING_TESTS_MSG, first_line) ):
-        signatures["tests"] = "started"
 
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
@@ -236,15 +255,6 @@ if __name__ == "__main__":
         signatures["tests"] = "approved"
       elif re.match("^[-](test|tested)$", first_line):
         signatures["tests"] = "rejected"
-
-    # Check if the someone asked to trigger the tests
-    if (commenter in TRIGGER_PR_TESTS
-        or commenter in releaseManagers
-        or commenter in CMSSW_L2.keys()):
-      if re.match("^\s*(@cmsbuild\s*[,]*\s+|)([Pp]lease\s*[,]*\s+|)test\s*$", first_line):
-        print 'Tests requested:', commenter, 'asked to test this PR'
-        tests_requested = True
-
 
   print "The labels of the pull request should be:"
   # Labels coming from signature.
@@ -304,7 +314,7 @@ if __name__ == "__main__":
   #For now, only trigger tests for cms-sw/cmssw
   if opts.repository == "cms-sw/cmssw":
     # trigger the tests and inform it in the thread.
-    if tests_requested and ( not tests_already_queued ):
+    if tests_requested:
       create_properties_file_tests( prId )
       if not opts.dryRun:
         pr.create_issue_comment( TRIGERING_TESTS_MSG )

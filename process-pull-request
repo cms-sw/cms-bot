@@ -52,6 +52,7 @@ if __name__ == "__main__":
   parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
   opts, args = parser.parse_args()
 
+  cmsdist_repo_name = "cms-sw/cmsdist"
   if len(args) != 1:
     parser.error("Too many arguments")
   prId = int(args[0])
@@ -67,12 +68,16 @@ if __name__ == "__main__":
 
   # Process the changes for the given pull request so that we can determine the
   # signatures it requires.
+  create_cmsdist_issue = False
+  add_external_category = False
   if opts.repository == "cms-sw/cmssw":
     packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2])
                          for x in pr.get_files()])])
 
   else:
-    packages = set (["external/"+opts.repository])
+    add_external_category = True
+    packages = set (["externals/"+opts.repository])
+    if opts.repository != cmsdist_repo_name: create_cmsdist_issue = True
 
   print "Following packages affected:"
   print "\n".join(packages)
@@ -82,6 +87,8 @@ if __name__ == "__main__":
 
   # We always require tests.
   signing_categories.add("tests")
+  if add_external_category:
+    signing_categories.add("externals")
   # We require ORP approval for releases which are in production.
   # or all externals package
   if (opts.repository != "cms-sw/cmssw") or (pr.base.ref in RELEASE_BRANCH_PRODUCTION):
@@ -125,14 +132,17 @@ if __name__ == "__main__":
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
-  last_commit_date = None
+  last_commit = None
   try:
     # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-    last_commit_date = pr.get_commits().reversed[0].commit.committer.date
+    last_commit = pr.get_commits().reversed[0].commit
   except:
     # This seems to fail for more than 250 commits. Not sure if the
     # problem is github itself or the bindings.
-    last_commit_date = pr.get_commits()[pr.commits - 1].commit.committer.date
+    last_commit = pr.get_commits()[pr.commits - 1].commit
+  last_commit_date = last_commit.committer.date
+  print "Latest commit by ",last_commit.committer.name," at ",last_commit_date
+  print "Latest commit message: ",last_commit.message
   is_hold = False
   already_seen = False
   pull_request_updated = False
@@ -146,6 +156,7 @@ if __name__ == "__main__":
     mustClose = True
   requiresL1 = False
   releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])
+  cmsdist_issue_number=""
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -156,7 +167,12 @@ if __name__ == "__main__":
     if commenter == "cmsbuild":
       if re.match("A new Pull Request was created by", comment_msg):
         already_seen = True
-      if re.match("Pull request [#][0-9]+ was updated[.].*", comment_msg):
+        if create_cmsdist_issue:
+          cmsdist_issue_number=comment_msg.split("cmsdist issue "+cmsdist_repo_name+"#",2)[-1].split("\n")[0]
+          if not re.match("^[1-9][0-9]*$",cmsdist_issue_number):
+            print "ERROR: Unknow cmsdist PR format:",cmsdist_issue_number
+            cmsdist_issue_number=""
+      if re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", comment_msg):
         pull_request_updated = False
 
     # Ignore all other messages which are before last commit.
@@ -376,7 +392,6 @@ if __name__ == "__main__":
     elif "fully-signed" in labels and "orp-pending" in labels:
       pr.create_issue_comment(messageFullySigned)
 
-
   unsigned = [k for (k, v) in signatures.items() if v == "pending"]
   missing_notifications = ["@" + name
                             for name, l2_categories in CMSSW_L2.items()
@@ -460,22 +475,64 @@ if __name__ == "__main__":
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
   else:
+    if create_cmsdist_issue:
+      if not already_seen:
+        if opts.dryRun:
+          print "Should create a new issue in ",cmsdist_repo_name," for this PR"
+        else:
+          cmsdist_repo  = gh.get_repo(cmsdist_repo_name)
+          cmsdist_title = format("%(repo)s#%(pr)s: %(title)s",
+                                 title=pr.title.encode("ascii", "ignore"),
+                                 repo=opts.repository,
+                                 pr=pr.number)
+          cmsdist_body = format("A new Pull Request was created by @%(user)s"
+                                " %(name)s for branch %(branch)s."
+                                "Pull Request Reference: %(repo)s#%(pr)s",
+                                repo=opts.repository,
+                                user=pr.user.login,
+                                name=pr.user.name and "(%s)" % pr.user.name or "",
+                                branch=pr.base.ref,
+                                pr=pr.number)
+          cissue = cmsdist_repo.create_issue(cmsdist_title, cmsdist_body)
+          cmsdist_issue_number = str(cissue.number)
+          print "Created a new issue ",cmsdist_repo_name,"#",cmsdist_issue_number
+      if pull_request_updated and cmsdist_issue_number:
+        if opts.dryRun:
+          print "Should add an update message for issue ",cmsdist_repo_name,"#",cmsdist_issue_number
+        else:
+          cmsdist_repo  = gh.get_repo(cmsdist_repo_name)
+          cissue = cmsdist_repo.get_issue(int(cmsdist_issue_number))
+          cmsdist_body = format("Pull request %(repo)s#%(pr)s was updated.\n"
+                                "Latest update by %(name)s with commit message\n%(message)s",
+                                repo=opts.repository,
+                                pr=pr.number,
+                                name=last_commit.committer.name.encode("ascii", "ignore"),
+                                message=last_commit.message.encode("ascii", "ignore"))
+          cissue.create_comment(cmsdist_body)
+    cmsdist_issue = ""
+    if cmsdist_issue_number:
+      cmsdist_issue="\n\ncmsdist issue "+cmsdist_repo_name+"#"+cmsdist_issue_number
+
     messageNewPR = format("A new Pull Request was created by @%(user)s"
-                          " %(name)s for %(branch)s.\n\n"
+                          " %(name)s for branch %(branch)s.\n\n"
                           "%(title)s\n\n"
                           "%(watchers)s"
                           "You can sign-off by replying to this message having"
                           " '+1' in the first line of your reply.\n"
                           "You can reject by replying  to this message having"
-                          " '-1' in the first line of your reply.",
+                          " '-1' in the first line of your reply."
+                          "%(cmsdist_issue)s",
                           user=pr.user.login,
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,
                           title=pr.title.encode("ascii", "ignore"),
-                          watchers=watchersMsg)
+                          watchers=watchersMsg,
+                          cmsdist_issue=cmsdist_issue)
 
-    messageUpdatedPR = format("Pull request #%(pr)s was updated.",
-                              pr=pr.number)
+    messageUpdatedPR = format("Pull request #%(pr)s was updated."
+                              "%(cmsdist_issue)s",
+                              pr=pr.number,
+                              cmsdist_issue=cmsdist_issue)
 
   # Finally decide whether or not we should close the pull request:
   messageBranchClosed = format("This branch is closed for updates."
@@ -486,12 +543,12 @@ if __name__ == "__main__":
   commentMsg = ""
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     commentMsg = messageBranchClosed
-  elif not missingApprovals:
-    print "Pull request is already fully signed. Not sending message."
   elif not already_seen:
     commentMsg = messageNewPR
   elif pull_request_updated:
     commentMsg = messageUpdatedPR
+  elif not missingApprovals:
+    print "Pull request is already fully signed. Not sending message."
   else:
     print "Already notified L2 about " + str(pr.number)
   if commentMsg:

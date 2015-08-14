@@ -39,12 +39,14 @@ CMSSW_L2 = {
   "thuer": ["generators"],
   "cvuosalo": ["reconstruction"],
   "boudoul": ["pdmv"],
-  "srimanob": ["pdmv"]
+  "srimanob": ["pdmv"],
+  "externals" : ["degano"]
 }
 
 CMSSW_L1 = ["davidlange6"]
 
 CMSSW_CATEGORIES={
+  "externals": [""],
   "operations": [
    "Configuration/Applications",
    "Configuration/DataProcessing",

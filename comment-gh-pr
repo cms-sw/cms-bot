@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+from github import Github
+from os.path import expanduser
+from optparse import OptionParser
+from sys import exit
+import re
+
+if __name__ == "__main__":
+  parser = OptionParser(usage="%prog -p|--pullrequest <number> -m|--message <message> [-r|--repository <repo>] [-n|--dry-run]")
+  parser.add_option("-n", "--dry-run",     dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-r", "--repository",  dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.",  type=str, default="cms-sw/cmssw")
+  parser.add_option("-p", "--pullrequest", dest="pr",         help="Github Pull Request Number e.g. 10500",     type="int", metavar="N")
+  parser.add_option("-m", "--message",     dest="msg",        help="Message to be added for Github Pull Request", type="str")
+  opts, args = parser.parse_args()
+
+  if not opts.pr:
+    parser.error("Missing pull request number : -p|--pullrequest <number>")
+  if not opts.msg:
+    parser.error("Missing pull request message: -m|--message <message>")
+
+  try:
+    gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+    repo = gh.get_repo( opts.repository )
+    pr   = repo.get_pull(opts.pr)
+    pr.create_issue_comment(re.sub("@N@","\n",opts.msg))
+  except Exception as e:
+    print "Failed to add comment: ",e.message
+    exit(1)
+

@@ -13,6 +13,7 @@ from sys import exit
 
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
+FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
@@ -192,6 +193,10 @@ if __name__ == "__main__":
     if commenter == "cmsbuild":
       if re.match("Comparison is ready", first_line):
         comparison_done = True
+      elif re.match( FAILED_TESTS_MSG, first_line):
+        tests_already_queued = False
+        tests_requested = False
+        signatures["tests"] = "pending"
       elif re.match( TRIGERING_TESTS_MSG, first_line):
         tests_already_queued = True
         tests_requested = False

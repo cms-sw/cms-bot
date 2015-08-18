@@ -474,7 +474,9 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
   echo 'END OF ADDON TESTS'
   echo '--------------------------------------'
-
+  if [ -d addOnTests ] ; then
+    mv addOnTests $WORKSPACE/addOnTests
+  fi
   TEST_ERRORS=`grep -i -E ": FAILED .*" $WORKSPACE/addOnTests.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/addOnTests.logg` || true
 

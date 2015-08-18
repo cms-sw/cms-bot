@@ -14,7 +14,7 @@ import os
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
-                            "| REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE")
+                            "| PARSE_ADDON_FAIL | REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -144,6 +144,29 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
   for wf in workflows_with_error:
     message += wf[ 'number' ] +' '+ wf[ 'step' ]+'\n' + '<pre>' + wf[ 'message' ] + '</pre>' + '\n'
   message += '\n you can see the results of the tests here: \n %s ' % tests_url
+
+  send_message_pr( pull_request, message )
+  mark_commit_if_needed( ACTION, tests_url )
+
+#
+# reads the addon  tests log file and gets the tests that failed
+#
+def read_addon_log_file(repo,unit_tests_file,tests_url):
+  pull_request = repo.get_pull(pr_number)
+  errors_found=''
+  for line in open(unit_tests_file):
+    if( ': FAILED -' in line):
+      errors_found = errors_found + line
+
+  message = '-1 \n '
+
+  if options.commit_hash:
+    message += '\nTested at: ' + options.commit_hash
+
+
+  message += '\nI found errors in the following addon tests: \n \n %s \n \n' % errors_found
+  message += 'you can see the results of the tests here: \n %s ' % tests_url
+
 
   send_message_pr( pull_request, message )
   mark_commit_if_needed( ACTION, tests_url )
@@ -491,6 +514,7 @@ COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : [ 'success' , 'Tests OK' 
                               'PARSE_UNIT_TESTS_FAIL': [ 'failure' , 'Unit Tests failure' ],
                               'PARSE_BUILD_FAIL'     : [ 'failure' , 'Compilation error' ],
                               'PARSE_MATRIX_FAIL'    : [ 'failure' , 'RelVals error' ] ,
+                              'PARSE_ADDON_FAIL'     : [ 'failure' , 'AddOn error' ] ,
                               'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ],
                               'PARSE_CLANG_BUILD_FAIL' : [ 'failure' , 'Clang error' ] }
 
@@ -576,6 +600,9 @@ elif ( ACTION == 'PARSE_BUILD_FAIL' ):
 elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   matrix_log_file = options.unit_tests_file
   read_matrix_log_file( official_cmssw , matrix_log_file , tests_results_url )
+elif ( ACTION == 'PARSE_ADDON_FAIL' ):
+  matrix_log_file = options.unit_tests_file
+  read_addon_log_file( official_cmssw , matrix_log_file , tests_results_url )
 elif ( ACTION == 'COMPARISON_READY' ):
   comparison_errors_file = options.unit_tests_file
   wfs_with_das_inconsistency_file = options.results_file2

@@ -42,6 +42,7 @@ ALL_OK=true
 BUILD_OK=true
 UNIT_TESTS_OK=true
 RELVALS_OK=true
+ADDON_OK=true
 
 # Checkout the correct ref
 pushd cms-git-tools
@@ -462,6 +463,33 @@ else
 
 fi
 
+#
+# AddOn Tetss
+#
+if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
+  echo '--------------------------------------'
+  ADDON_CMD="addOnTests.py -j $(Jenkins_GetCPU 2) "
+  echo $ADDON_CMD > $WORKSPACE/addOnTests.log
+  (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
+  echo 'END OF ADDON TESTS'
+  echo '--------------------------------------'
+
+  TEST_ERRORS=`grep -i -E ": FAILED .*" $WORKSPACE/addOnTests.log` || true
+  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/addOnTests.logg` || true
+
+  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
+    echo "Errors in the addOnTests"
+    echo 'ADDON_TESTS;ERROR' >> $RESULTS_FILE
+    ALL_OK=false
+    ADDON_OK=false
+  else
+    echo "no errors in the addOnTests!!"
+    echo 'ADDON_TESTS;OK' >> $RESULTS_FILE
+  fi
+else
+  echo 'ADDON_TESTS_RESULTS;NOTRUN' >> $RESULTS_FILE
+fi
 
 #
 # Duplicate checks
@@ -510,6 +538,10 @@ elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
 elif [ "X$RELVALS_OK" = Xfalse ]; then
   pushd $WORKSPACE/
   $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+  popd
+elif [ "X$ADDON_OK" = Xfalse ]; then
+  pushd $WORKSPACE/
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/addOnTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
   popd
 elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
   $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN 

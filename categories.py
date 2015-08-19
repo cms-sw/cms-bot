@@ -528,6 +528,7 @@ CMSSW_CATEGORIES={
    "Geometry/HcalEventSetup",
    "Geometry/HcalSimData",
    "Geometry/HGCalCommonData",
+   "Geometry/HGCalGeometry",
    "Geometry/HcalTestBeamData",
    "Geometry/HcalTowerAlgo",
    "Geometry/MTCCTrackerCommonData",

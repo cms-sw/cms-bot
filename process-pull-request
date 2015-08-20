@@ -485,18 +485,21 @@ if __name__ == "__main__":
         if opts.dryRun:
           print "Should create a new issue in ",external_issue_repo_name," for this PR"
         else:
+          external_managers = ["@" + name for name, l2_categories in CMSSW_L2.items() if "externals" in l2_categories]
           cmsdist_repo  = gh.get_repo(external_issue_repo_name)
           cmsdist_title = format("%(repo)s#%(pr)s: %(title)s",
                                  title=pr.title.encode("ascii", "ignore"),
                                  repo=opts.repository,
                                  pr=pr.number)
           cmsdist_body = format("A new Pull Request was created by @%(user)s"
-                                " %(name)s for branch %(branch)s."
-                                "Pull Request Reference: %(repo)s#%(pr)s",
+                                " %(name)s for branch %(branch)s.\n\n"
+                                "Pull Request Reference: %(repo)s#%(pr)s\n\n"
+                                "%(externals_l2s)s can you please review it and eventually sign? Thanks.\n",
                                 repo=opts.repository,
                                 user=pr.user.login,
                                 name=pr.user.name and "(%s)" % pr.user.name or "",
                                 branch=pr.base.ref,
+                                externals_l2s=", ".join(external_managers),
                                 pr=pr.number)
           cissue = cmsdist_repo.create_issue(cmsdist_title, cmsdist_body)
           external_issue_number = str(cissue.number)

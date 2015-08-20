@@ -53,7 +53,7 @@ if __name__ == "__main__":
   parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
   opts, args = parser.parse_args()
 
-  cmsdist_repo_name = "cms-sw/cmsdist"
+  external_issue_repo_name = "cms-sw/cmsdist"
   if len(args) != 1:
     parser.error("Too many arguments")
   prId = int(args[0])
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
   # Process the changes for the given pull request so that we can determine the
   # signatures it requires.
-  create_cmsdist_issue = False
+  create_external_issue = False
   add_external_category = False
   if opts.repository == "cms-sw/cmssw":
     packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2])
@@ -78,7 +78,7 @@ if __name__ == "__main__":
   else:
     add_external_category = True
     packages = set (["externals/"+opts.repository])
-    if opts.repository != cmsdist_repo_name: create_cmsdist_issue = True
+    if opts.repository != external_issue_repo_name: create_external_issue = True
 
   print "Following packages affected:"
   print "\n".join(packages)
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     mustClose = True
   requiresL1 = False
   releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])
-  cmsdist_issue_number=""
+  external_issue_number=""
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -168,11 +168,11 @@ if __name__ == "__main__":
     if commenter == "cmsbuild":
       if re.match("A new Pull Request was created by", comment_msg):
         already_seen = True
-        if create_cmsdist_issue:
-          cmsdist_issue_number=comment_msg.split("cmsdist issue "+cmsdist_repo_name+"#",2)[-1].split("\n")[0]
-          if not re.match("^[1-9][0-9]*$",cmsdist_issue_number):
-            print "ERROR: Unknow cmsdist PR format:",cmsdist_issue_number
-            cmsdist_issue_number=""
+        if create_external_issue:
+          external_issue_number=comment_msg.split("external issue "+external_issue_repo_name+"#",2)[-1].split("\n")[0]
+          if not re.match("^[1-9][0-9]*$",external_issue_number):
+            print "ERROR: Unknow external issue PR format:",external_issue_number
+            external_issue_number=""
       if re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", comment_msg):
         pull_request_updated = False
 
@@ -480,12 +480,12 @@ if __name__ == "__main__":
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
   else:
-    if create_cmsdist_issue:
+    if create_external_issue:
       if not already_seen:
         if opts.dryRun:
-          print "Should create a new issue in ",cmsdist_repo_name," for this PR"
+          print "Should create a new issue in ",external_issue_repo_name," for this PR"
         else:
-          cmsdist_repo  = gh.get_repo(cmsdist_repo_name)
+          cmsdist_repo  = gh.get_repo(external_issue_repo_name)
           cmsdist_title = format("%(repo)s#%(pr)s: %(title)s",
                                  title=pr.title.encode("ascii", "ignore"),
                                  repo=opts.repository,
@@ -499,14 +499,14 @@ if __name__ == "__main__":
                                 branch=pr.base.ref,
                                 pr=pr.number)
           cissue = cmsdist_repo.create_issue(cmsdist_title, cmsdist_body)
-          cmsdist_issue_number = str(cissue.number)
-          print "Created a new issue ",cmsdist_repo_name,"#",cmsdist_issue_number
-      if pull_request_updated and cmsdist_issue_number:
+          external_issue_number = str(cissue.number)
+          print "Created a new issue ",external_issue_repo_name,"#",external_issue_number
+      if pull_request_updated and external_issue_number:
         if opts.dryRun:
-          print "Should add an update message for issue ",cmsdist_repo_name,"#",cmsdist_issue_number
+          print "Should add an update message for issue ",external_issue_repo_name,"#",external_issue_number
         else:
-          cmsdist_repo  = gh.get_repo(cmsdist_repo_name)
-          cissue = cmsdist_repo.get_issue(int(cmsdist_issue_number))
+          cmsdist_repo  = gh.get_repo(external_issue_repo_name)
+          cissue = cmsdist_repo.get_issue(int(external_issue_number))
           cmsdist_body = format("Pull request %(repo)s#%(pr)s was updated.\n"
                                 "Latest update by %(name)s with commit message\n%(message)s",
                                 repo=opts.repository,
@@ -515,8 +515,8 @@ if __name__ == "__main__":
                                 message=last_commit.message.encode("ascii", "ignore"))
           cissue.create_comment(cmsdist_body)
     cmsdist_issue = ""
-    if cmsdist_issue_number:
-      cmsdist_issue="\n\ncmsdist issue "+cmsdist_repo_name+"#"+cmsdist_issue_number
+    if external_issue_number:
+      cmsdist_issue="\n\nexternal issue "+external_issue_repo_name+"#"+external_issue_number
 
     messageNewPR = format("A new Pull Request was created by @%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"

@@ -5,6 +5,10 @@ REQUEST_BUILD_RELEASE = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "
 APPROVE_BUILD_RELEASE = [ "smuzaffar", "degano", "davidlange6" ]
 TRIGGER_PR_TESTS = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov", "lgray" ]
 
+COMMON_CATEGORIES = [ "orp", "tests" ]
+EXTERNAL_CATEGORIES = [ "externals" ]
+EXTERNAL_REPOS = [ "cms-externals", "cms-sw/root", "cms-sw/cmssw-config","cms-sw/SCRAM","cms-sw/cms-git-tools","cms-sw/apt-rpm" ]
+
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],
   "perrotta": ["hlt"],

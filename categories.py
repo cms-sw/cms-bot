@@ -7,7 +7,7 @@ TRIGGER_PR_TESTS = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratn
 
 COMMON_CATEGORIES = [ "orp", "tests" ]
 EXTERNAL_CATEGORIES = [ "externals" ]
-EXTERNAL_REPOS = [ "cms-externals", "cms-sw/root", "cms-sw/cmssw-config","cms-sw/SCRAM","cms-sw/cms-git-tools","cms-sw/apt-rpm" ]
+EXTERNAL_REPOS = [ "cms-data", "cms-externals", "cms-sw/root", "cms-sw/cmssw-config","cms-sw/SCRAM","cms-sw/cms-git-tools","cms-sw/apt-rpm" ]
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],
@@ -44,7 +44,7 @@ CMSSW_L2 = {
   "cvuosalo": ["reconstruction"],
   "boudoul": ["pdmv"],
   "srimanob": ["pdmv"],
-  "externals" : ["degano"]
+  "degano" : ["externals"],
 }
 
 CMSSW_L1 = ["davidlange6"]

@@ -215,7 +215,7 @@ if __name__ == "__main__":
     if (commenter in TRIGGER_PR_TESTS
         or commenter in releaseManagers
         or commenter in CMSSW_L2.keys()):
-      if re.match("^\s*(@cmsbuild\s*[,]*\s+|)([Pp]lease\s*[,]*\s+|)test\s*$", first_line):
+      if re.match("^\s*(@cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test\s*$", first_line, re.I):
         print 'Tests requested:', commenter, 'asked to test this PR'
         if not tests_already_queued:
           print 'cms-bot will request test for this PR'
@@ -236,34 +236,34 @@ if __name__ == "__main__":
       requiresL1 = True
       if not "orp" in signing_categories:
         requiresL1 = False
-      elif re.match("^([+]1|approve[d]?)$", first_line):
+      elif re.match("^([+]1|approve[d]?)$", first_line, re.I):
         signatures["orp"] = "approved"
         mustClose = False
-      elif re.match("^([-]1|reject|rejected)$", first_line):
+      elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
         signatures["orp"] = "rejected"
         mustClose = True
-      elif re.match("reopen", first_line):
+      elif re.match("reopen", first_line, re.I):
         signatures["orp"] = "pending"
         mustClose = False
 
     # Check if the release manager asked for merging this.
     if commenter in releaseManagers:
-      if re.match("merge", first_line):
+      if re.match("merge", first_line, re.I):
         mustMerge = True
 
     # Check L2 signoff for users in this PR signing categories
     if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
-      if re.match("^([+]1|approve[d]?|sign|signed)$", first_line):
+      if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"
-      elif re.match("^([-]1|reject|rejected)$", first_line):
+      elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
 
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
     if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
-      if re.match("^hold$", first_line):
+      if re.match("^hold$", first_line, re.I):
         is_hold = True
         blocker = commenter
 
@@ -272,9 +272,9 @@ if __name__ == "__main__":
     #+tested for approved
     #-tested for rejected
     if commenter in releaseManagers:
-      if re.match("^[+](test|tested)$", first_line):
+      if re.match("^[+](test|tested)$", first_line, re.I):
         signatures["tests"] = "approved"
-      elif re.match("^[-](test|tested)$", first_line):
+      elif re.match("^[-](test|tested)$", first_line, re.I):
         signatures["tests"] = "rejected"
 
   print "The labels of the pull request should be:"

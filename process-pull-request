@@ -521,6 +521,8 @@ if __name__ == "__main__":
     messageNewPR = format("A new Pull Request was created by @%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"
                           "%(title)s\n\n"
+                          "%(l2s)s can you please review it and eventually sign?"
+                          " Thanks.\n"
                           "%(watchers)s"
                           "You can sign-off by replying to this message having"
                           " '+1' in the first line of your reply.\n"
@@ -531,6 +533,7 @@ if __name__ == "__main__":
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,
                           title=pr.title.encode("ascii", "ignore"),
+                          l2s=", ".join(missing_notifications),
                           watchers=watchersMsg,
                           cmsdist_issue=cmsdist_issue)
 

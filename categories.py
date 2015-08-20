@@ -830,6 +830,7 @@ CMSSW_CATEGORIES={
    "DQM/Integration",
    "DQM/L1TMonitor",
    "DQM/L1TMonitorClient",
+   "DQM/PixelLumi",
    "DQM/Physics",
    "DQM/PhysicsObjectsMonitoring",
    "DQM/PhysicsHWW",

@@ -118,7 +118,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
   print "Watchers " + ", ".join(watchers)
 
   issue = repo.get_issue(prId)
-  updateMilestone(repo, issue, pr)
+  updateMilestone(repo, issue, pr, dryRun)
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
@@ -325,7 +325,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
   if cmssw_repo:
     # trigger the tests and inform it in the thread.
     if tests_requested:
-      create_properties_file_tests( prId )
+      create_properties_file_tests( prId, dryRun )
       if not dryRun:
         pr.create_issue_comment( TRIGERING_TESTS_MSG )
 

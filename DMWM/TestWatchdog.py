@@ -32,8 +32,6 @@ while True:
         process = psutil.Process(testPid)
         userCPU = process.get_cpu_times()[0]
         for xunitFile in glob.iglob('nosetests*.xml'):
-            if not foundXML:
-                print('TESTWATCH: Found a new XML file.')
             foundXML = True
 
         if not foundXML:

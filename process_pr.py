@@ -43,6 +43,7 @@ def updateMilestone(repo, issue, pr, dryRun):
   issue.edit(milestone=milestone)
 
 def process_pr(gh, repo, prId, repository, dryRun):
+  print "Working on ",repo.full_name," for PR ",prId
   external_issue_repo_name = "cms-sw/cmsdist"
   cmssw_repo = False
   if repository == "cms-sw/cmssw": cmssw_repo = True
@@ -152,13 +153,12 @@ def process_pr(gh, repo, prId, repository, dryRun):
     if commenter == "cmsbuild":
       if re.match("A new Pull Request was created by", comment_msg):
         already_seen = True
+        pull_request_updated = False
         if create_external_issue:
           external_issue_number=comment_msg.split("external issue "+external_issue_repo_name+"#",2)[-1].split("\n")[0]
           if not re.match("^[1-9][0-9]*$",external_issue_number):
             print "ERROR: Unknow external issue PR format:",external_issue_number
             external_issue_number=""
-      if re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", comment_msg):
-        pull_request_updated = False
 
     # Ignore all other messages which are before last commit.
     if comment_date < last_commit_date:
@@ -181,6 +181,8 @@ def process_pr(gh, repo, prId, repository, dryRun):
         tests_already_queued = False
         tests_requested = False
         signatures["tests"] = "pending"
+      elif re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", first_line):
+        pull_request_updated = False
       elif re.match( TRIGERING_TESTS_MSG, first_line):
         tests_already_queued = True
         tests_requested = False

@@ -6,7 +6,7 @@ from categories import EXTERNAL_REPOS
 from datetime import datetime, timedelta
 from process_pr import process_pr
 
-def check_prs(gh, repo, prId, since, dryRun):
+def check_prs(gh, repo, prId, since, dryRun): 
   if prId > 0:
     process_pr(gh, repo, prId, repo.full_name, dryRun)
   else:
@@ -15,6 +15,7 @@ def check_prs(gh, repo, prId, since, dryRun):
     else:
       issues = repo.get_issues(state="open", sort="updated")
     for pr in issues:
+      if not pr.pull_request: continue
       process_pr(gh, repo, pr.number, repo.full_name, dryRun)
 
 if __name__ == "__main__":
@@ -41,7 +42,7 @@ if __name__ == "__main__":
 
   if prId==0 and opts.prId>0:
     print "Warning: Ignoring --pull-request ",opts.prId," due to multuiple repositories selection."
-  for repo_name in repos:
+  for repo_name in repos:    
     if not "/" in repo_name:
       user = gh.get_user(repo_name)
       for repo in user.get_repos():

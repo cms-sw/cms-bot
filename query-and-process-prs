@@ -32,7 +32,7 @@ if __name__ == "__main__":
   prId = 0
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   repos = []
-  if opts.repository != "external":
+  if opts.repository != "externals":
     repos.append(opts.repository)
     if "/" in opts.repository:
       prId = opts.prId

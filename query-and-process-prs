@@ -7,18 +7,15 @@ from datetime import datetime, timedelta
 from process_pr import process_pr
 
 def check_prs(gh, repo, prId, since, dryRun):
-  print "HERE:",repo.full_name,":",prId,":",since
   if prId > 0:
-    print "HERE: prId=",prId
-    #process_pr(gh, repo, prId, repo.full_name, dryRun)
+    process_pr(gh, repo, prId, repo.full_name, dryRun)
   else:
     if since:
       issues = repo.get_issues(state="open", sort="updated", since=since)
     else:
       issues = repo.get_issues(state="open", sort="updated")
     for pr in issues:
-      print "HERE:",repo.full_name," => ", pr.number
-      #process_pr(gh, repo, pr.number, repo.full_name, dryRun)
+      process_pr(gh, repo, pr.number, repo.full_name, dryRun)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-r|--repository <repo>] [-p|--pull-request <pull-request-id>] [-s|--since <sec>] [-n|--dry-run]")

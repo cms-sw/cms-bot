@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+from github import Github
+from os.path import expanduser
+from optparse import OptionParser
+from categories import EXTERNAL_REPOS
+from datetime import datetime, timedelta
+from process_pr import process_pr
+
+def check_prs(gh, repo, prId, since, dryRun):
+  if prId > 0:
+    process_pr(gh, repo, prId, repo.full_name, dryRun)
+  else:
+    if since:
+      issues = repo.get_issues(state="open", sort="updated", since=since)
+    else:
+      issues = repo.get_issues(state="open", sort="updated")
+    for pr in issues:
+      process_pr(gh, repo, pr.number, repo.full_name, dryRun)
+
+if __name__ == "__main__":
+  parser = OptionParser(usage="%prog [-r|--repository <repo>] [-p|--pull-request <pull-request-id>] [-s|--since <sec>] [-n|--dry-run]")
+  parser.add_option("-n", "--dry-run", dest="dryRun", action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name, default is cms-sw/cmssw. Use 'externals' to process all external repos.", type=str, default="cms-sw/cmssw")
+  parser.add_option("-p", "--pull-request", dest="prId", help="Github pull request ID", type="int", default=0)
+  parser.add_option("-s", "--since", dest="since", help="Pull request updated since time in sec", type="int", default=3600)
+  opts, args = parser.parse_args()
+
+  since=None
+  if opts.since>0:
+    since = datetime.utcnow() - timedelta(seconds=opts.since)
+
+  prId = 0
+  gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  repos = []
+  if opts.repository != "external":
+    repos.append(opts.repository)
+    if "/" in opts.repository:
+      prId = opts.prId
+  else:
+    repos = EXTERNAL_REPOS
+
+  if prId==0 and opts.prId>0:
+    print "Warning: Ignoring --pull-request ",opts.prId," due to multuiple repositories selection."
+  for repo_name in repos:
+    if not "/" in repo_name:
+      user = gh.get_user(repo_name)
+      for repo in user.get_repos():
+        check_prs(gh, repo, prId, since, opts.dryRun)
+    else:
+      check_prs(gh, gh.get_repo(repo_name), prId, since, opts.dryRun)
+

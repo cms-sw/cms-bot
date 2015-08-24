@@ -30,15 +30,16 @@ coverage erase
 
 # run test - force success though - failure stops coverage report
 rm nosetests*.xml || true
+./cms-bot/DMWM/TestWatchdog.py &
 python code/setup.py test --buildBotMode=true --reallyDeleteMyDatabaseAfterEveryTest=true --testCertainPath=code/test/python --testTotalSlices=$SLICES --testCurrentSlice=$SLICE || true #--testCertainPath=test/python/WMCore_t/WMBS_t || true
-mv nosetests.xml nosetests-$SLICE.xml
+mv nosetests.xml nosetests-$SLICE-$BUILD_ID.xml
 
 # Add these here as they need the same environment as the main run
 #FIXME: change so initial coverage command skips external code
-coverage xml -i --include=$PWD/install* || true
+# coverage xml -i --include=$PWD/install* || true
 
-export PYLINTHOME=$PWD/.pylint.d # force pylint cache to this workspace
-ulimit -n 4086 # opens all source files at once (> 1024)
+#export PYLINTHOME=$PWD/.pylint.d # force pylint cache to this workspace
+#ulimit -n 4086 # opens all source files at once (> 1024)
 # pylint broken in latest build
 #pylint --rcfile=code/standards/.pylintrc -f parseable install/lib/python2.6/site-packages/* 2>&1 > pylint.txt || true
 

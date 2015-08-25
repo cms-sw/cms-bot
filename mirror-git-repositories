@@ -3,7 +3,7 @@
 kinit -R
 MIRROR=/afs/.cern.ch/cms/git-cmssw-mirror
 CERN_GIT=https://:@git.cern.ch/kerberos
-REPOS="cmssw:CMSSW cmsdist:CMSDIST pkgtools:PKGTOOLS cmssw-config:config SCRAM:SCRAM ib-scheduler:ib-scheduler"
+REPOS="cmssw:CMSSW cmsdist:CMSDIST pkgtools:PKGTOOLS cmssw-config:CMSSW/config SCRAM:SCRAM ib-scheduler:ib-scheduler"
 
 for item in $REPOS; do
   GH_REPO=`echo $item | sed 's|:.*||'`

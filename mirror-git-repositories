@@ -1,19 +1,26 @@
 #!/bin/sh -ex
-function repackRepo()
-{
-  git repack -a -d -f --max-pack-size=10g --depth=100 --window=250
-  git pack-refs --all
-}
 
 kinit -R
 MIRROR=/afs/.cern.ch/cms/git-cmssw-mirror
-CERN_REPO=https://:@git.cern.ch/kerberos
-cd $MIRROR/cmssw.git ; git config http.postBuffer 209715200 ; git remote update origin ; repackRepo ; git push --mirror $CERN_REPO/CMSSW.git
-cd $MIRROR/cmsdist.git ; git config http.postBuffer 209715200 ; git remote update origin ; repackRepo ; git push --mirror $CERN_REPO/CMSDIST.git
-cd $MIRROR/pkgtools.git ; git config http.postBuffer 209715200 ; git remote update origin ; repackRepo ; git push --mirror $CERN_REPO/PKGTOOLS.git
-cd $MIRROR/cmssw-config.git ; git config http.postBuffer 209715200 ; git remote update origin ; repackRepo ; git push --mirror $CERN_REPO/CMSSW/config.git
-cd $MIRROR/SCRAM.git ; git config http.postBuffer 209715200 ; git remote update origin ; repackRepo ; git push --mirror $CERN_REPO/SCRAM.git
-cd $MIRROR/ib-scheduler.git ; git config http.postBuffer 209715200 ; git remote update origin ; repackRepo ; git push --mirror $CERN_REPO/ib-scheduler.git
-/afs/cern.ch/cms/sdt/internal/requestHandler/requestGitMirrorSync.py
+CERN_GIT=https://:@git.cern.ch/kerberos
+REPOS="cmssw:CMSSW cmsdist:CMSDIST pkgtools:PKGTOOLS cmssw-config:config SCRAM:SCRAM ib-scheduler:ib-scheduler"
 
+for item in $REPOS; do
+  GH_REPO=`echo $item | sed 's|:.*||'`
+  cd $MIRROR/$GH_REPO.git
+  git config --global http.postBuffer 209715200
+  git remote update origin
+  git repack -a -d -f --max-pack-size=10g --depth=100 --window=250
+  git pack-refs --all
+done
+
+/afs/cern.ch/cms/sdt/internal/requestHandler/requestGitMirrorSync.py
 du -sh /afs/.cern.ch/cms/git-cmssw-mirror
+
+for item in $REPOS; do
+  GH_REPO=`echo $item | sed 's|:.*||'`
+  CERN_REPO=`echo $item | sed 's|.*:||'`
+  cd $MIRROR/$GH_REPO.git
+  git push --mirror ${CERN_GIT}/${CERN_REPO}.git
+done
+

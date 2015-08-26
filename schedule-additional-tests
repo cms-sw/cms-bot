@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
-for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
+for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n' || true`; do
   if [ "$x" == "baseline" ]; then
     BASELINE_FILE_INTEL=$WORKSPACE/$x-GenuineIntel-properties
     echo "Creating property file $BASELINE_FILE_INTEL"

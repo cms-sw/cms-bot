@@ -14,7 +14,7 @@ fi
 
 cd "$WORKDIR/root"
 git remote set-url origin https://github.com/root-mirror/root
-git remote add cms-sw https://github.com/cms-sw/root || git remote set-url cms-sw https://github.com/cms-sw/root
+git remote add cms-sw git@github.com:cms-sw/root.git || git remote set-url cms-sw git@github.com:cms-sw/root.git
 git fetch origin --tags
 git fetch cms-sw
 git checkout master

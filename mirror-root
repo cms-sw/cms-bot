@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 WORKDIR="$1"
 if [ "X$WORKDIR" = X ]; then
   echo "Please specify a a work directory."
@@ -20,11 +20,11 @@ git fetch cms-sw
 git checkout master
 
 # Process tags
-TAGS=`git tag | grep -e 'v\(5-34-[2-9][0-9]\|6-02-0[1-9]\|6-02-[1-9][0-9]\)' | grep -v -e "-rc"`
+TAGS=`git tag | grep -e 'v\(5-34-[2-9][0-9]\|6-[0-9][0-9]-[0-9][0-9]\)' | grep -v -e "-rc"`
 for t in $TAGS; do
   git show-ref -- $t | grep cms-sw/cms >/dev/null && continue
   echo cms/$t is missing
-  git branch -D cms/$t
+  git branch -D cms/$t || true
   git branch cms/$t $t
   git push cms-sw cms/$t:cms/$t
 done

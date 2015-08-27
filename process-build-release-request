@@ -64,6 +64,7 @@ JENKINS_ARCH = 'ARCHITECTURE'
 JENKINS_ISSUE_NUMBER = 'ISSUE_NUMBER'
 JENKINS_MACHINE_NAME = 'MACHINE_NAME'
 JENKINS_CMSSW_QUEUE = 'CMSSW_QUEUE'
+JENKINS_DOCKER_IMG = 'DOCKER_IMG'
 JENKINS_ONLY_TOOL_CONF = 'ONLY_BUILD_TOOLCONF'
 WRONG_NOTES_RELEASE_MSG = '{previous_release} does not appear to be a valid release name'
 PREVIOUS_RELEASE_NAME_MSG = 'Unable to find previous release for {release_name}. Please use "release-notes since <release>" in first line of the comment.'
@@ -157,8 +158,10 @@ def create_properties_file_cleanup( release_name, arch, issue_number, machine_na
 # Creates a properties file in Jenkins to trigger the upload
 # it needs to know the machine that was used for the build
 #
-def create_properties_files_upload( release_name, arch, issue_number, machine_name ):
+def create_properties_files_upload( release_name, arch, issue_number, machine_name, docker_imgs ):
 
+  docker_img = ''
+  if arch in docker_imgs: docker_img = docker_imgs[arch]
   out_file_name = 'upload-%s-%s.properties' % ( release_name , arch )
   if opts.dryRun:
     print 'Not creating properties file (dry-run):\n %s' % out_file_name
@@ -168,6 +171,7 @@ def create_properties_files_upload( release_name, arch, issue_number, machine_na
     out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
     out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img ) )
     out_file.write( '%s=%s\n' % ( JENKINS_MACHINE_NAME , machine_name ) )
 
 
@@ -239,7 +243,7 @@ def check_if_already_processed( issue ):
 #  Creates the properties files to trigger the build in Jenkins
 # if only_toolconf is selected, it adds a parameter to tell the script to only build cmssw-tool-conf
 #
-def create_properties_files( issue, release_name, architectures, issue_number, queue, only_toolconf=False):
+def create_properties_files( issue, release_name, architectures, issue_number, queue, docker_imgs, only_toolconf=False):
  
   if not only_toolconf: 
     for arch in architectures:
@@ -251,6 +255,8 @@ def create_properties_files( issue, release_name, architectures, issue_number, q
     return
 
   for arch in architectures:
+    docker_img = ''
+    if arch in docker_imgs: docker_img = docker_imgs[arch]
     out_file_name = 'build-%s-%s.properties' % ( release_name , arch )
     print 'Creating properties file for %s' % arch
     out_file = open( out_file_name , 'w' )
@@ -258,6 +264,7 @@ def create_properties_files( issue, release_name, architectures, issue_number, q
     out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
     out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_QUEUE , queue) )
+    out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img) )
     tool_conf_param = 'true' if only_toolconf else 'false'
     out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, tool_conf_param ) )
 
@@ -590,7 +597,7 @@ def triggerCleanup( issue, comments, release_name ):
 #
 # Creates the release in github, including the cmssw tag. It then creates the files to trigger the builds in jenkins
 #
-def start_release_build( issue, release_name, release_branch, architectures ): 
+def start_release_build( issue, release_name, release_branch, architectures, docker_imgs ): 
 
   cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
   release_created = create_release_github( cmssw_repo, release_name, release_branch )
@@ -604,7 +611,7 @@ def start_release_build( issue, release_name, release_branch, architectures ):
   post_message( issue , msg )
 
   ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
-  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue )
+  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue, docker_imgs, only_toolconf=False )
   if ready_to_build:
     msg = QUEUING_BUILDS_MSG % ', '.join( ready_to_build )
     post_message( issue , msg )
@@ -612,9 +619,9 @@ def start_release_build( issue, release_name, release_branch, architectures ):
 #
 # Creates the files to trigger the build of cmssw-tool-conf in jenkins.
 #
-def start_tool_conf_build( issue, release_name, release_branch, architectures ):
+def start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs ):
 
-  create_properties_files( issue, release_name, architectures, issue.number, release_queue, only_toolconf=True )
+  create_properties_files( issue, release_name, architectures, issue.number, release_queue, docker_imgs, only_toolconf=True )
   msg = QUEUING_TOOLCONF_MSG % ', '.join( architectures )
   post_message( issue , msg )
   
@@ -691,7 +698,7 @@ def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
 #
 # checks the issue for archs to be uploaded
 #
-def check_archs_to_upload( release_name, issue ):
+def check_archs_to_upload( release_name, issue, docker_imgs ):
   print 'Looking for archs ready to be uploaded...\n'
   for arch in BUILD_OK:
     print 'Ready to upload %s' % arch
@@ -704,7 +711,7 @@ def check_archs_to_upload( release_name, issue ):
     first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
     build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
     print 'Triggering upload for %s' % arch
-    create_properties_files_upload( release_name , arch , issue.number , build_machine )
+    create_properties_files_upload( release_name , arch , issue.number , build_machine, docker_imgs )
     post_message( issue , QUEING_UPLOADS_MSG.format( architecture=arch ) )
     remove_label( issue, arch + '-build-ok' )
     add_label( issue, arch + '-uploading' )
@@ -717,11 +724,11 @@ def check_archs_to_upload( release_name, issue ):
 #
 # checks if there are architectures that are ready to be built afer building tool-conf, and triggers the build if neccessary
 #
-def check_to_build_after_tool_conf( issue, release_name, release_queue):
+def check_to_build_after_tool_conf( issue, release_name, release_queue, docker_imgs):
   print 'Checking if there are architectures waiting to be started after building tool-conf'
   ready_to_build = TOOL_CONF_OK
   print ready_to_build
-  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue )
+  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue, docker_imgs )
   if ready_to_build:
     msg = QUEUING_BUILDS_MSG % ', '.join( ready_to_build )
     post_message( issue , msg )
@@ -816,12 +823,18 @@ if __name__ == "__main__":
   architectures = [x["SCRAM_ARCH"] for x in specs
                    if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x]
 
-    # Check if we have at least one architecture to build and complain if not.
+  # Check if we have at least one architecture to build and complain if not.
   if not architectures:
     print 'no archs found for the requested release'
     msg = NO_ARCHS_FOUND_MSG.format( rel_name=release_name, queue=release_queue )
     post_message( issue, msg )
     exit( 0 )
+
+  #Find out the docker images to be used for each arch
+  docker_imgs = {}
+  for x in specs:
+    if (x["RELEASE_QUEUE"] == release_queue) and (not "DISABLED" in x) and ("DOCKER_IMG" in x) and (x["SCRAM_ARCH"] in architectures):
+      docker_imgs[x["SCRAM_ARCH"]] = x["DOCKER_IMG"]
 
   # Determine the release branch (which is the same as the release queue if not
   # specified) and start the build if needed.
@@ -910,10 +923,10 @@ if __name__ == "__main__":
       if is_patch:
         post_message( issue, NOT_TOOLCONF_FOR_PATCH_MSG )
       else:
-        start_tool_conf_build( issue, release_name, release_branch, architectures )
+        start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs )
         go_to_state( issue, status, TOOLCONF_BUILDING )
     elif approval_comments:
-      start_release_build( issue, release_name, release_branch, architectures )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs )
       go_to_state( issue, status, BUILD_IN_PROGRESS )
     else:
       print 'Build not approved or cmssw-tool-conf not requested yet'
@@ -935,7 +948,7 @@ if __name__ == "__main__":
         TOOL_CONF_WAITING.append( arch )
 
       go_to_state( issue, status, BUILD_IN_PROGRESS )
-      start_release_build( issue, release_name, release_branch, architectures )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs )
 
   if status == BUILD_IN_PROGRESS:
 
@@ -950,7 +963,7 @@ if __name__ == "__main__":
     # if the previous state was to build tool-conf there are architectures for which it is needed to wait
     build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
     if build_toolconf_commments:
-      check_to_build_after_tool_conf( issue, release_name, release_queue)
+      check_to_build_after_tool_conf( issue, release_name, release_queue, docker_imgs)
 
     if BUILD_OK:
       go_to_state( issue, status, BUILD_SUCCESSFUL )
@@ -968,13 +981,13 @@ if __name__ == "__main__":
     # if the previous state was to build tool-conf there are architectures for which it is needed to wait
     build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
     if build_toolconf_commments:
-      check_to_build_after_tool_conf( issue, release_name, release_queue)
+      check_to_build_after_tool_conf( issue, release_name, release_queue, docker_imgs)
 
 
     upload_all_requested = search_in_comments( comments, APPROVE_BUILD_RELEASE, UPLOAD_ALL_COMMENT, True )
 
     if upload_all_requested:
-      check_archs_to_upload( release_name, issue )
+      check_archs_to_upload( release_name, issue, docker_imgs )
       go_to_state( issue, status, UPLOADING_BUILDS )
     else:    
       print 'Upload not requested yet'
@@ -982,7 +995,7 @@ if __name__ == "__main__":
   if status == UPLOADING_BUILDS:
 
     #upload archs as soon as they get ready
-    check_archs_to_upload( release_name, issue )
+    check_archs_to_upload( release_name, issue, docker_imgs )
 
     #Check if someone asked for release notes, go to next state after generating notes.
     #At least one architecture must have been successfully installed
@@ -1024,7 +1037,7 @@ if __name__ == "__main__":
   if status == RELEASE_ANNOUNCED:
 
     #upload archs as soon as they get ready
-    check_archs_to_upload( release_name, issue )
+    check_archs_to_upload( release_name, issue, docker_imgs )
 
     print 'checking if someone asked again for the release notes'
     release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )

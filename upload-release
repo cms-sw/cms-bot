@@ -7,12 +7,12 @@
 # ISSUE_NUMBER: the number of the issue that triggered the upload
 # DRY_RUN_PARAM: parameter that to use dry-run
 
-CMSSW_X_Y_Z=not-assigned
-ARCHITECTURE=not-assigned
-ISSUE_NUMBER=not-assigned
-DRY_RUN_PARAM=not-assigned
-BUILD_NUMBER=not-assigned
-WORKSPACE=${WORKSPACE-"/build/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCHITECTURE/"}
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+ISSUE_NUMBER=$3
+BUILD_NUMBER=$4
+WORKSPACE=$5
+DRY_RUN_PARAM=$6
 
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build

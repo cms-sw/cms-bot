@@ -6,6 +6,12 @@
 # ISSUE_NUMBER: the number of the issue that triggered the build
 # DRY_RUN_PARAM: parameter that to use dry-run
 # ONLY_BUILD_TOOLCONF: if True, tells me to only build cmssw-tool-conf 
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+CMSSW_QUEUE=$3
+ONLY_BUILD_TOOLCONF=$4
+ISSUE_NUMBER=$5
+DRY_RUN_PARAM=$6
 
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
@@ -19,7 +25,6 @@ if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
 else
   POST_ACTION='BUILDING'
 fi
-
 
 git clone git@github.com:cms-sw/cmsdist.git $BUILD_DIR/CMSDIST
 pushd $BUILD_DIR/CMSDIST

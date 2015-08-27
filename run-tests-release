@@ -6,6 +6,12 @@
 # ARCHITECTURE: architecture for the build
 # ISSUE_NUMBER: the number of the issue that triggered the build
 # DRY_RUN_PARAM: parameter that to use dry-run
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+CMSSW_QUEUE=$3
+ONLY_BUILD_TOOLCONF=$4
+ISSUE_NUMBER=$5
+DRY_RUN_PARAM=$6
 
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
@@ -25,7 +31,6 @@ mkdir $TEST_DIR/matrixTests
 pushd $TEST_DIR/matrixTests
   runTheMatrix.py -s 2>&1 | tee -a $WORKSPACE/matrixTests.log
 popd
-
 
 # If it reaches here it is because there were no errors
 echo 'ALL_OK'

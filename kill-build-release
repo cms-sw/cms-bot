@@ -9,7 +9,7 @@
 
 CMSSW_X_Y_Z=$1
 ARCHITECTURE=$2
-WORKSPACE=${WORKSPACE-"/build/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCHITECTURE/"}
+WORKSPACE=$3
 PID_TO_KILL=`ps -awx 2>&1  | grep docker_launcher.sh | grep $CMSSW_X_Y_Z | grep $ARCHITECTURE | awk '{print $1}'`
 
 pushd $WORKSPACE

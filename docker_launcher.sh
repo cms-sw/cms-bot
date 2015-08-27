@@ -8,6 +8,7 @@ if [ "X$DOCKER_IMG" != X ]; then
     -v /home/cmsbuild:/home/cmsbuild \
     -v /afs:/afs \
     -e WORKSPACE=$WORKSPACE \
+    -e BUILD_NUMBER=$BUILD_NUMBER \
     $DOCKER_IMG sh -c "$DOCK_ARGS"
 else
   eval $@

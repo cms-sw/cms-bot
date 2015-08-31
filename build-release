@@ -63,7 +63,7 @@ pushd $BUILD_DIR
     esac
     CMS_TAG="--tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --architecture=$ARCHITECTURE --builders 4 -j $(getconf _NPROCESSORS_ONLN) $CMS_TAG"
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 4 -j $(getconf _NPROCESSORS_ONLN) $CMS_TAG"
   $CMSBUILD_CMD --specs-only build cmssw$PATCH
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   $CMSBUILD_CMD build $TOOL_CONF_PACKAGES

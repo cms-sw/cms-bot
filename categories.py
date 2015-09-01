@@ -38,6 +38,7 @@ CMSSW_L2 = {
   "mmusich": ["alca"],
   "bendavid": ["generators"],
   "covarell": ["generators"],
+  "govoni": ["generators"],
   "davidlange6": ["operations"],
   "monttj": ["analysis"],
   "thuer": ["generators"],

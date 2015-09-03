@@ -285,7 +285,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
 
 fi
 
-sed -i "s/COMPARISON;RUNNING/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
+sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
 rsync $WORKSPACE/results/testsResults.txt $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
 
 

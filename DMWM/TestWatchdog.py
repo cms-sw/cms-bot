@@ -35,7 +35,7 @@ while True:
         time.sleep(10)
         process = psutil.Process(testPid)
         try:
-            userCPU = p.cpu_times().user
+            userCPU = process.cpu_times().user
         except AttributeError:
             userCPU = process.get_cpu_times()[0]
         for xunitFile in glob.iglob('nosetests*.xml'):

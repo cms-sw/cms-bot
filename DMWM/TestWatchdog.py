@@ -17,6 +17,10 @@ while not testPid:
     for process in psutil.process_iter():
 
         try:
+            if 'python' in process.cmdline()[0] and 'setup.py' in process.cmdline()[1] and process.cmdline()[2] == 'test':
+                testPid = process.pid
+                print ('TESTWATCH: Found pid %s' % testPid)
+        except TypeError:
             if 'python' in process.cmdline[0] and 'setup.py' in process.cmdline[1] and process.cmdline[2] == 'test':
                 testPid = process.pid
                 print ('TESTWATCH: Found pid %s' % testPid)
@@ -30,7 +34,10 @@ while True:
     try:
         time.sleep(10)
         process = psutil.Process(testPid)
-        userCPU = process.get_cpu_times()[0]
+        try:
+            userCPU = p.cpu_times().user
+        except AttributeError:
+            userCPU = process.get_cpu_times()[0]
         for xunitFile in glob.iglob('nosetests*.xml'):
             foundXML = True
 

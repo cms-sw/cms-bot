@@ -43,3 +43,5 @@ perl -p -i -e "s/### RPM cms fwlite.*/### RPM cms fwlite ${RELEASE_FORMAT}_FWLIT
 
 PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
 PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms upload fwlite
+mkdir -p /afs/cern.ch/cms/sw/ReleaseCandidates/$ARCHITECTURE/fwlite/${RELEASE_FORMAT}_FWLITE
+cp cms/BUILD/$ARCHITECTURE/cms/fwlite/${RELEASE_FORMAT}_FWLITE/log /afs/cern.ch/cms/sw/ReleaseCandidates/$ARCHITECTURE/fwlite/${RELEASE_FORMAT}_FWLITE/log

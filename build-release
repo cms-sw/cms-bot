@@ -16,6 +16,7 @@ echo DATE=`date`
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
 mkdir -p $BUILD_DIR
+BUILD_NPROC=$(getconf _NPROCESSORS_ONLN)
 QUEUE=$CMSSW_QUEUE
 
 echo $$ > $WORKSPACE/BUILD_PID
@@ -64,7 +65,7 @@ pushd $BUILD_DIR
     CMS_TAG="--tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
   echo DATE=`date`
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 4 -j $(getconf _NPROCESSORS_ONLN) $CMS_TAG"
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 4 -j $BUILD_NPROC $CMS_TAG"
   $CMSBUILD_CMD --specs-only build cmssw$PATCH
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
@@ -89,7 +90,7 @@ pushd $BUILD_DIR
     exit 0
   fi
 
-  $CMSBUILD_CMD build cmssw$PATCH
+  $CMSBUILD_CMD -j `echo "$BUILD_NPROC * 2" | bc` build cmssw$PATCH
   echo DATE=`date`
 popd
 echo DATE=`date`

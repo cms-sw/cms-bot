@@ -19,7 +19,7 @@ function GetCmsBuildConfig ()
   esac
 }
 
-echo DATE1=`date`
+echo DATE=`date`
 ARCHITECTURE=$1
 RELEASE_FORMAT=$2
 REPOSITORY=$3
@@ -115,7 +115,7 @@ for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TA
     eval "${P}_HASH=`git rev-parse HEAD`"
   popd
 done
-echo DATE2=`date`
+echo DATE=`date`
 
 # If we use a tag, rather than a branch, we need to check-it out explicitly.
 # We also store the HASH of both PKGTOOLS and CMSDIST to reuse them later on.
@@ -183,7 +183,7 @@ if [ "X$PACKAGE_NAME" = Xcmssw-patch ]; then
   done
 fi
 popd
-echo DATE3=`date`
+echo DATE=`date`
 
 case $ARCHITECTURE in
  *mic*) CMSSW_RELEASE_BASE=""; PACKAGE_NAME=cmssw; CMSSW_TOOL_CONF=cmssw-mic-tool-conf ;;
@@ -208,17 +208,21 @@ popd
 #FIXME: Fix --specs-only option which is not available for PKGTOOLS V00-16.
 $CMSBUILD_CMD --specs-only `GetCmsBuildConfig $PKGTOOLS_TAG build $PACKAGE_NAME`
 TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
-$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
-echo DATE4=`date`
+#$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
+echo DATE=`date`
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
-$CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
-echo DATE5=`date`
-$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
+echo DATE=`date`
+if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
+  $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
+  echo DATE=`date`
+  $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
+  echo DATE=`date`
+fi
 #$PKG_MON_SENDER 2>&1 >monitor.log & # Call the sender script just before the actual building of the release  
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
-echo DATE6=`date`
+echo DATE=`date`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
-echo DATE7=`date`
+echo DATE=`date`
 pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
@@ -238,7 +242,7 @@ if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
 fi
 popd
 
-$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local cmssw-ib`
+#$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local cmssw-ib`
 
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops
@@ -268,4 +272,4 @@ echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} > $WORKSPACE/install_$OS
 echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/install_$OS
 echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/install_$OS
 
-echo DATE7=`date`
+echo DATE=`date`

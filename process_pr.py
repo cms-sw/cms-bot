@@ -127,8 +127,8 @@ def process_pr(gh, repo, prId, repository, dryRun):
     # problem is github itself or the bindings.
     last_commit = pr.get_commits()[pr.commits - 1].commit
   last_commit_date = last_commit.committer.date
-  print "Latest commit by ",last_commit.committer.name," at ",last_commit_date
-  print "Latest commit message: ",last_commit.message
+  print "Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date
+  print "Latest commit message: ",last_commit.message.encode("ascii", "ignore")
   is_hold = False
   already_seen = False
   pull_request_updated = False

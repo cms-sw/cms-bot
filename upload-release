@@ -19,9 +19,9 @@ BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
 case $CMSSW_X_Y_Z in
     *patch*) 
       PATCH='-patch';;
-    *) 
-     /afs/cern.ch/cms/sdt/internal/scripts/requestNewAfsSpace.py --platform $ARCHITECTURE --version $CMSSW_X_Y_Z; 
-    ;; 
+    *)
+      PATCH=''
+    ;;
 esac
 
 WORKER=`hostname -s`

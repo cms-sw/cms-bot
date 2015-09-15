@@ -24,6 +24,7 @@ ARCHITECTURE=$1
 RELEASE_FORMAT=$2
 REPOSITORY=$3
 FORCE_FULL_IB=$4
+RELEASE_LIST=$5
 PACKAGE_NAME=cmssw
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.

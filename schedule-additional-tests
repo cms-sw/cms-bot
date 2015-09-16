@@ -8,11 +8,12 @@ for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH
     echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_INTEL
     echo "REAL_ARCH=-GenuineIntel" >> $BASELINE_FILE_INTEL
 
-    BASELINE_FILE_AMD=$WORKSPACE/$x-AuthenticAMD-properties
-    echo "Creating property file $BASELINE_FILE_AMD"
-    echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $BASELINE_FILE_AMD
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_AMD
-    echo "REAL_ARCH=-AuthenticAMD" >> $BASELINE_FILE_AMD
+    #For now only run it for GenuineIntel
+    #BASELINE_FILE_AMD=$WORKSPACE/$x-AuthenticAMD-properties
+    #echo "Creating property file $BASELINE_FILE_AMD"
+    #echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $BASELINE_FILE_AMD
+    #echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_AMD
+    #echo "REAL_ARCH=-AuthenticAMD" >> $BASELINE_FILE_AMD
 
   else
     echo "Creating property file $WORKSPACE/$x-properties."

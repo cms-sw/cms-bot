@@ -355,6 +355,7 @@ CMSSW_CATEGORIES={
    "RecoBTag/BTagTools",
    "RecoBTag/Configuration",
    "RecoBTag/Combined",
+   "RecoBTag/CTagging",
    "RecoBTag/ImpactParameter",
    "RecoBTag/ImpactParameterLearning",
    "RecoBTag/PerformanceDB",

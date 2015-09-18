@@ -56,4 +56,7 @@ RELEASE_MANAGERS = {
   "CMSSW_4_1_X": ["smuzaffar", "davidlt"],
 }
 
-DEVEL_RELEASE_CYCLE = [ "CMSSW_7_6_X" ]
+DEVEL_RELEASE_CYCLE = {
+  "CMSSW_7_4_X" :"CMSSW_7_6_X",
+  "CMSSW_7_5_X" :"CMSSW_7_6_X",
+}

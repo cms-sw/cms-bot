@@ -327,11 +327,11 @@ def process_pr(gh, repo, prId, repository, dryRun):
         pr.create_issue_comment( TRIGERING_TESTS_MSG )
 
   # Do not complain about tests
-  requiresTestMessage = "or unless it breaks tests."
+  requiresTestMessage = " after it passes the integration tests"
   if "tests-approved" in labels:
-    requiresTestMessage = "(tests are also fine)."
+    requiresTestMessage = " (tests are also fine)"
   elif "tests-rejected" in labels:
-    requiresTestMessage = "(but tests are reportedly failing)."
+    requiresTestMessage = " (but tests are reportedly failing)"
 
   autoMergeMsg = ""
   if all(["fully-signed"     in labels,
@@ -358,12 +358,12 @@ def process_pr(gh, repo, prId, repository, dryRun):
                             managers=releaseManagersList)
 
   devReleaseRelVal = ""
-  if not pr.base.ref in DEVEL_RELEASE_CYCLE:
-    devReleaseRelVal = "once checked with relvals in the development release cycle of CMSSW"
+  if pr.base.ref in DEVEL_RELEASE_CYCLE:
+    devReleaseRelVal = " and once validation in the development release cycle "+DEVEL_RELEASE_CYCLE[pr.base.ref]+" is complete"
   messageFullySigned = format("This pull request is fully signed and it will be"
                               " integrated in one of the next %(branch)s IBs"
-                              " %(devReleaseRelVal)s"
-                              " %(requiresTest)s"
+                              "%(requiresTest)s"
+                              "%(devReleaseRelVal)s."
                               " %(autoMerge)s",
                               requiresTest=requiresTestMessage,
                               autoMerge = autoMergeMsg,

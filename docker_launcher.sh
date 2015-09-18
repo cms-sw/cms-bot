@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 voms-proxy-init
-setenv X509_USER_PROXY /tmp/x509up_u`id -u`
+export X509_USER_PROXY=/tmp/x509up_u`id -u`
 
 if [ "X$DOCKER_IMG" != X ]; then
   DOCK_ARGS="kinit cmsbuild@CERN.CH -k -t /home/cmsbuild/cmsbuild.keytab || true; cd $WORKSPACE; $@"

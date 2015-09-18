@@ -46,6 +46,7 @@ CMSSW_L2 = {
   "boudoul": ["pdmv"],
   "srimanob": ["pdmv"],
   "degano" : ["externals"],
+  "broen" : ["dqm"],
 }
 
 CMSSW_L1 = ["davidlange6"]

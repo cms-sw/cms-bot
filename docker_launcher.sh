@@ -1,4 +1,7 @@
 #!/bin/bash -ex
+voms-proxy-init
+setenv X509_USER_PROXY /tmp/x509up_u`id -u`
+
 if [ "X$DOCKER_IMG" != X ]; then
   DOCK_ARGS="kinit cmsbuild@CERN.CH -k -t /home/cmsbuild/cmsbuild.keytab || true; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
@@ -9,6 +12,7 @@ if [ "X$DOCKER_IMG" != X ]; then
     -v /afs:/afs \
     -e WORKSPACE=$WORKSPACE \
     -e BUILD_NUMBER=$BUILD_NUMBER \
+    -e X509_USER_PROXY=$X509_USER_PROXY \
     -e PYTHONPATH=/afs/cern.ch/user/c/cmsbuild/public/pygithub/lib/python2.6/site-packages \
     $DOCKER_IMG sh -c "$DOCK_ARGS"
 else

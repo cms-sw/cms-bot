@@ -25,7 +25,7 @@ CMSSW_L2 = {
   "deguio": ["dqm"],
   "ggovi": ["db"],
   "cerminar": ["alca"],
-  "franzoni": ["operations","pdmv"],
+  "franzoni": ["operations","pdmv", "alca"],
   "cmsdoxy": ["docs"],
   "mommsen": ["daq"],
   "emeschi": ["daq"],
@@ -47,6 +47,7 @@ CMSSW_L2 = {
   "srimanob": ["pdmv"],
   "degano" : ["externals"],
   "vanbesien" : ["dqm"],
+  "fabozzi" : ["pdmv"],
 }
 
 CMSSW_L1 = ["davidlange6"]

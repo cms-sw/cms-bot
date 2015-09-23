@@ -42,20 +42,22 @@ popd
 
 perl -p -i -e "s/### RPM cms fwlite.*/### RPM cms fwlite ${RELEASE_FORMAT}_FWLITE/" CMSDIST/fwlite.spec
 
-PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
-PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms upload fwlite
-
-mkdir -p /afs/cern.ch/cms/sw/ReleaseCandidates/$ARCHITECTURE/fwlite/${RELEASE_FORMAT}_FWLITE
-export RELEASE_NAME
 DOW=`python -c "import os;from datetime import datetime;print datetime.strptime(os.environ['RELEASE_NAME'].replace('_X_SLHC_', '_X_').rsplit('_X_')[1], '%Y-%m-%d-%H00').strftime('%a').lower()"`
 HOUR=`python -c "import os;from datetime import datetime;print datetime.strptime(os.environ['RELEASE_NAME'].replace('_X_SLHC_', '_X_').rsplit('_X_')[1], '%Y-%m-%d-%H00').strftime('%H').lower()"`
 CMSSW_MAJOR_MINOR=`echo $RELEASE_NAME | sed -e 's/CMSSW_\([0-9]*\)_\([0-9]*\).*/\1.\2/g'`
-FWLITE_LOG_DIR=/afs/cern.ch/cms/sw/ReleaseCandidates/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/fwlite
+
+PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
+
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src
   tar xzf src-logs.tgz
+  python ${WORKSPACE}/IntBuild/IB/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/fwlite/"
+  cd ../html
+  zip -r ../html-logs.zip ./
+  cd ..
+  rm -rf src html
+  mkdir -p html
+  mv html-logs.zip html
 popd
-python ${WORKSPACE}/IntBuild/IB/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/fwlite/"
-mkdir -p ${FWLITE_LOG_DIR}
-rm -rf ${FWLITE_LOG_DIR}
-cp -r ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/html ${FWLITE_LOG_DIR}
-cp ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src/src-logs.tgz ${FWLITE_LOG_DIR}/
+
+PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms upload fwlite
+

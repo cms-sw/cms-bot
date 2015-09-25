@@ -63,7 +63,6 @@ else
   RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
 fi
 
-
 # creation of results summary file
 cp $WORKSPACE/cms-bot/templates/PullRequestSummary.html $WORKSPACE/summary.html
 cp $WORKSPACE/cms-bot/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
@@ -126,7 +125,6 @@ if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
   exit 0
 fi
 
-
 #############################################
 # Check if there are unwanted commits that came with the merge. 
 ############################################
@@ -141,59 +139,30 @@ git log --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_C
 #If Fireworks is the only package involved I only compile and run unit tests
 ONLY_FIREWORKS=false
 if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
-
   ls $WORKSPACE/$RELEASE_FORMAT/src
   NUM_DIRS=$((`(find $WORKSPACE/$RELEASE_FORMAT/src -maxdepth 1 -type d -print | grep -v '.git' | grep -v 'FWCore' | wc -l)`-1))
-
   if [ "$NUM_DIRS" == 1 ]; then
-
     if ls | grep 'Fireworks'; then
       ONLY_FIREWORKS=true
       echo 'This pr only involves Fireworks!' 
       echo 'Only compiling and running unit tests'
     fi 
-
   fi
-
 fi
 
 #get the latest commit and mark it as pending
-
 pushd $WORKSPACE/$RELEASE_FORMAT/src
-
   if [ "X$BRANCH_NAME" = X ]; then
     LAST_COMMIT=`git log cms-sw/refs/pull/$PULL_REQUEST/head --pretty="%H" | head -n1` 
   else
     LAST_COMMIT=`git log ${BRANCH_NAME//:/\/} --pretty="%H" | head -n1`
   fi
-
 popd
 
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
-############################################
-# Force the run of DQM tests if necessary
-############################################
-
-if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
-  echo "I will make sure that DQM tests will be run"
-  if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep "DQMServices"; then
-    echo DQMServices is already there
-      if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
-        echo "and DQMServices/Components is there"
-      else
-        git cms-addpkg DQMServices/Components
-      fi
-  else
-    echo "checking out DQMServices"
-    git cms-addpkg DQMServices
-  fi
-fi
-
-
+cp -r $WORKSPACE/$RELEASE_FORMAT/src $WORKSPACE/$RELEASE_FORMAT/src.orig
 git log --oneline --merges ${CMSSW_VERSION}..
-#git cms-checkdeps -A -a
-
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
 
 # #############################################
@@ -229,12 +198,52 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
     echo "the clan compilation had no errors!!"
     echo 'CLANG_COMPILATION_RESULTS;OK' >> $RESULTS_FILE
   fi
-
 else
   echo 'CLANG_COMPILATION_RESULTS;NOTRUN' >> $RESULTS_FILE
 fi
+
+#
+# Static checks
+#
+if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
+  echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
+  echo '--------------------------------------'
+  pushd $WORKSPACE/$RELEASE_FORMAT
+  git cms-addpkg Utilities/StaticAnalyzers
+  mkdir $WORKSPACE/llvm-analysis
+  SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
+  cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
+  echo 'END OF STATIC CHECKS'
+  echo '--------------------------------------'
+  popd
+else
+  echo 'STATIC_CHECKS;NOTRUN' >> $RESULTS_FILE
+fi
+
+rm -rf $WORKSPACE/$RELEASE_FORMAT/src
+cp -r $WORKSPACE/$RELEASE_FORMAT/src.orig $WORKSPACE/$RELEASE_FORMAT/src
 scram build clean
 git cms-checkdeps -A -a
+
+############################################
+# Force the run of DQM tests if necessary
+############################################
+if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
+  echo "I will make sure that DQM tests will be run"
+  if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep "DQMServices"; then
+    echo DQMServices is already there
+      if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
+        echo "and DQMServices/Components is there"
+      else
+        git cms-addpkg DQMServices/Components
+      fi
+  else
+    echo "checking out DQMServices"
+    git cms-addpkg DQMServices
+  fi
+fi
+
 # #############################################
 # test compilation with GCC
 # ############################################
@@ -304,36 +313,6 @@ else
 
   echo 'UNIT_TEST_RESULTS;NOTRUN' >> $RESULTS_FILE
   echo 'DQM_TESTS;NOTRUN' >> $RESULTS_FILE
-
-fi
-
-
-#
-# Static checks
-#
-if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
-  echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
-  echo '--------------------------------------'
-  
-  pushd $WORKSPACE/$RELEASE_FORMAT
-  git cms-addpkg Utilities/StaticAnalyzers
-  
-  mkdir $WORKSPACE/llvm-analysis
-  SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
- 
-  pwd
-  
-  cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
-  echo 'END OF STATIC CHECKS'
-  echo '--------------------------------------'
-  
-  popd
-    
-else
-
-  echo 'STATIC_CHECKS;NOTRUN' >> $RESULTS_FILE
 
 fi
 

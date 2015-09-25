@@ -192,7 +192,7 @@ fi
 
 
 git log --oneline --merges ${CMSSW_VERSION}..
-git cms-checkdeps -A -a
+#git cms-checkdeps -A -a
 
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
 
@@ -233,8 +233,8 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
 else
   echo 'CLANG_COMPILATION_RESULTS;NOTRUN' >> $RESULTS_FILE
 fi
-
-
+scram build clean
+git cms-checkdeps -A -a
 # #############################################
 # test compilation with GCC
 # ############################################

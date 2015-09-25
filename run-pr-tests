@@ -223,7 +223,7 @@ fi
 
 pushd $WORKSPACE/$RELEASE_FORMAT
   rm -rf src
-  cp -r src.orig src
+  mv src.orig src
 popd
 scram build clean
 git cms-checkdeps -A -a

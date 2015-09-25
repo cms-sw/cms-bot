@@ -221,8 +221,10 @@ else
   echo 'STATIC_CHECKS;NOTRUN' >> $RESULTS_FILE
 fi
 
-rm -rf $WORKSPACE/$RELEASE_FORMAT/src
-cp -r $WORKSPACE/$RELEASE_FORMAT/src.orig $WORKSPACE/$RELEASE_FORMAT/src
+pushd $WORKSPACE/$RELEASE_FORMAT
+  rm -rf src
+  cp -r src.orig src
+popd
 scram build clean
 git cms-checkdeps -A -a
 

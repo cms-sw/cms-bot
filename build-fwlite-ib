@@ -50,7 +50,7 @@ PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --archi
 
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src
   tar xzf src-logs.tgz
-  python ${WORKSPACE}/IntBuild/IB/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/fwlite/"
+  python ${WORKSPACE}/IntBuild/IB/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/${RELEASE_FORMAT}/new_FWLITE/"
   cd ../html
   zip -r ../html-logs.zip ./
   cd ..

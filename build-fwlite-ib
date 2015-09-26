@@ -54,12 +54,10 @@ pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/l
   cd ../html
   zip -r ../html-logs.zip ./
   cd ..
-  rm -rf src html
-  mkdir -p html
-  mv html-logs.zip html
+  mv html-logs.zip $WORKSPACE/
 popd
-ls -l ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/html/
+rm -rf ${WORKSPACE}/cms/WEB/build-logs
 PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms upload fwlite
-ls -l ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/html/
-ssh cmsbuild@cmsrep.cern.ch ls /data/cmssw/${REPOSITORY}/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs || true
+ssh cmsbuild@cmsrep.cern.ch mkdir -p /data/cmssw/${REPOSITORY}/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/html || true
+scp $WORKSPACE/html-logs.zip cmsbuild@cmsrep.cern.ch:/data/cmssw/${REPOSITORY}/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/html/ || true
 

@@ -78,8 +78,8 @@ if summaryMessage or longMessage:
     message += longMessage
 
 gh = Github(os.environ['DMWMBOT_TOKEN'])
-
-repoName = '%s/%s' % (os.environ['WMCORE_REPO'], 'WMCore') # Could be parameterized
+codeRepo = os.environ.get('CODE_REPO', 'WMCore')
+repoName = '%s/%s' % (os.environ['WMCORE_REPO'], codeRepo)
 
 issue = gh.get_repo(repoName).get_issue(int(issueID))
 if len(message) > 250000:

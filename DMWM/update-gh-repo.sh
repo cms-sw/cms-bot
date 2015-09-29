@@ -1,7 +1,7 @@
 #! /bin/bash -e
 
 if [ ! -d code ]; then
-  git clone https://github.com/$WMCORE_REPO/WMCore.git code
+  git clone https://github.com/$WMCORE_REPO/$CODE_REPO.git code
 fi
 
 pushd code

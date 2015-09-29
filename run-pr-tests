@@ -9,11 +9,11 @@ function Jenkins_GetCPU ()
 {
   ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
   case $NODE_NAME in
-    lxplus* )
-      if [ "X$1" != "X" ] ; then
-        ACTUAL_CPU=$(echo $ACTUAL_CPU / $1 | bc)
-      fi ;;
+    lxplus* ) ACTUAL_CPU=$(echo $ACTUAL_CPU / 2 | bc) ;;
   esac
+  if [ "X$1" != "X" ] ; then
+    ACTUAL_CPU=$(echo "$ACTUAL_CPU*$1" | bc)
+  fi
   echo $ACTUAL_CPU
 }
 
@@ -181,7 +181,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
-  CLANG_CMD="scram b vclean && scram build -k -j $(Jenkins_GetCPU) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
+  CLANG_CMD="scram b vclean && scram build -k -j $(Jenkins_GetCPU 2) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
   echo $CLANG_CMD > $WORKSPACE/buildClang.log
 
   (eval $CLANG_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
@@ -212,7 +212,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   pushd $WORKSPACE/$RELEASE_FORMAT
   git cms-addpkg Utilities/StaticAnalyzers
   mkdir $WORKSPACE/llvm-analysis
-  SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
+  SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU 2) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
   cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
@@ -249,7 +249,7 @@ fi
 # #############################################
 # test compilation with GCC
 # ############################################
-COMPILATION_CMD="scram b vclean && scram b -k -j $(Jenkins_GetCPU)"
+COMPILATION_CMD="scram b vclean && scram b -k -j $(Jenkins_GetCPU 2)"
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'
@@ -274,7 +274,7 @@ fi
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
-  UTESTS_CMD="scram b -k -j $(Jenkins_GetCPU 2)  runtests "
+  UTESTS_CMD="scram b -k -j $(Jenkins_GetCPU)  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
   (eval $UTESTS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
@@ -364,7 +364,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
       wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
       EXTRA_RELVALS_OPTION='--das-options="--cache das-cache.file --limit 0"'
     fi
-    RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $THREADED_PARAM $EXTRA_RELVALS_OPTION $SLHC_PARAM $JOB_REPORTS -j $(Jenkins_GetCPU 2) $WF_LIST"
+    RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $THREADED_PARAM $EXTRA_RELVALS_OPTION $SLHC_PARAM $JOB_REPORTS -j $(Jenkins_GetCPU) $WF_LIST"
     echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
     (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
 
@@ -455,7 +455,7 @@ fi
 if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
   echo '--------------------------------------'
-  ADDON_CMD="addOnTests.py -j $(Jenkins_GetCPU 2) "
+  ADDON_CMD="addOnTests.py -j $(Jenkins_GetCPU) "
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
   echo 'END OF ADDON TESTS'

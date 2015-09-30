@@ -17,7 +17,7 @@ failed = False
 with open('pylintReport.json', 'r') as reportFile:
     report = json.load(reportFile)
 
-    for filename in report.keys():
+    for filename in sorted(report.keys()):
         fileReport = report[filename]
         if 'test' in fileReport and 'base' not in fileReport:
             testReport = fileReport['test']
@@ -36,7 +36,7 @@ with open('pylintReport.json', 'r') as reportFile:
                 reportOn[filename] = True
                 summaryMessage += '* Score for %s changed from %s to %s with %s and %s total errors and warnings\n' % (filename, baseReport['score'], testReport['score'], testReport['errors'], testReport['warnings'])
 
-    for filename in report.keys():
+    for filename in sorted(report.keys()):
         comments = 0
         warnings = 0
         fileReport = report[filename]

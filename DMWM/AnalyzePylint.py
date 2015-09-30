@@ -84,7 +84,7 @@ with open('pylintReport.json', 'r') as reportFile:
                             conditionalMessage += 'in %s ' % event[3]
                         conditionalMessage += '%s%s %s\n' % (event[1], event[2], event[4])
                 if conditionalMessage:
-                    longMessage = ('\nAbbreviated pylint report for %s follows:\n' % filename) + conditionalMessage
+                    longMessage += ('\nAbbreviated pylint report for %s follows:\n' % filename) + conditionalMessage
                     longMessage += "* plus %s total warnings\n" % warnings
                     longMessage += "* plus %s comments on code style\n" % comments
 

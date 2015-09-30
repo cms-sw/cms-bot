@@ -78,7 +78,6 @@ if not changed:
 issue.create_comment('%s' % message)
 
 if failed:
-    pass
-# print('Testing of python code. DMWM-FAIL-UNIT')
+    print('Testing of python code. DMWM-FAIL-UNIT')
 else:
     print('Testing of python code. DMWM-SUCCEED-UNIT')

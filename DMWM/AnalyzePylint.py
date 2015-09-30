@@ -34,7 +34,7 @@ with open('pylintReport.json', 'r') as reportFile:
                float(testReport['errors']) > float(baseReport['errors']) or \
                float(testReport['warnings']) > float(baseReport['warnings']):
                 reportOn[filename] = True
-                summaryMessage += '* Score for %s changed from %s to %s with %s and %s total errors and warnings\n' % (filename, baseReport['score'], testReport['score'], testReport['errors'], testReport['warnings'])
+                summaryMessage += '* Score for %s changed from %s to %s with %s (%s) total errors (warnings)\n' % (filename, baseReport['score'], testReport['score'], testReport['errors'], testReport['warnings'])
 
     for filename in sorted(report.keys()):
         comments = 0
@@ -76,6 +76,8 @@ with open('pylintReport.json', 'r') as reportFile:
                         if  event[3]: # Module
                             conditionalMessage += 'in %s ' % event[3]
                         conditionalMessage += '%s%s %s\n' % (event[1], event[2], event[4])
+                    if event[1] == 'W':
+                        warnings += 1
                     if event[1] == 'W' and event[2] in reportWarnings:
                         conditionalMessage += '* Line %s ' % (event[0])
                         if  event[3]: # Module

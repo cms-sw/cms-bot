@@ -28,18 +28,15 @@ with open('pylintReport.json', 'r') as reportFile:
             baseReport = fileReport['base']
             if not 'score' in testReport or not 'score' in baseReport:
                 continue
-            if float(testReport['score']) < float(baseReport['score']):
+            if float(testReport['score']) < float(baseReport['score']) or \
+               float(testReport['errors']) > float(baseReport['errors']) or \
+               float(testReport['warnings']) > float(baseReport['warnings']):
                 reportOn[filename] = True
-                summaryMessage += '* Score for %s decreased from %s to %s\n' % (filename, baseReport['score'], testReport['score'])
-            if testReport['errors'] > baseReport['errors']:
-                reportOn[filename] = True
-                summaryMessage += '* Errors for %s increased from %s to %s\n' % (filename, baseReport['errors'], testReport['errors'])
-            if testReport['warnings'] > baseReport['warnings']:
-                reportOn[filename] = True
-                summaryMessage += '* Warnings for %s increased from %s to %s\n' % (filename, baseReport['warnings'], testReport['warnings'])
+                summaryMessage += '* Score for %s changed from %s to %s with %s and %s total errors and warnings\n' % (filename, baseReport['score'], testReport['score'], testReport['errors'], testReport['warnings'])
 
     for filename in report.keys():
         comments = 0
+        warnings = 0
         fileReport = report[filename]
         if 'test' in fileReport:
             testReport = fileReport['test']
@@ -64,6 +61,28 @@ with open('pylintReport.json', 'r') as reportFile:
                         longMessage += 'in %s ' % event[3]
                     longMessage += '%s%s %s\n' % (event[1], event[2], event[4])
                 longMessage += "* plus %s comments on code style\n" % comments
+            else:
+                conditionalMessage = ''
+                for event in testReport['events']:
+                    if event[1] == 'C': # Severity
+                        comments += 1
+                        continue
+                    if event[1] == 'I': # Severity
+                        continue
+                    if event[1] == 'E':
+                        conditionalMessage += '* Line %s ' % (event[0])
+                        if  event[3]: # Module
+                            conditionalMessage += 'in %s ' % event[3]
+                        conditionalMessage += '%s%s %s\n' % (event[1], event[2], event[4])
+                    if event[1] == 'W' and event[2] in reportWarnings:
+                        conditionalMessage += '* Line %s ' % (event[0])
+                        if  event[3]: # Module
+                            conditionalMessage += 'in %s ' % event[3]
+                        conditionalMessage += '%s%s %s\n' % (event[1], event[2], event[4])
+                if conditionalMessage:
+                    longMessage = ('\nAbbreviated pylint report for %s follows:\n' % filename) + conditionalMessage
+                    longMessage += "* plus %s total warnings\n" % warnings
+                    longMessage += "* plus %s comments on code style\n" % comments
 
 issueID = None
 

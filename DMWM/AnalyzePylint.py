@@ -7,6 +7,8 @@ import os
 
 from github import Github
 
+reportWarnings = ['0611', '0612', '0613']
+
 summaryMessage = ''
 longMessage = ''
 reportOn = {}

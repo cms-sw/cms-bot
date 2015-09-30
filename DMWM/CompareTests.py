@@ -65,6 +65,8 @@ for testName, testResult in sorted(testResults.items()):
     elif 'base' in testResult:
         changed = True
         message += "* %s was deleted. Prior status was %s\n" % (testName, testResult['base'])
+if failed:
+    message += '\n\nPreviously working unit tests have failed!\n'
 
 gh = Github(os.environ['DMWMBOT_TOKEN'])
 

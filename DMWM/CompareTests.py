@@ -12,6 +12,15 @@ from github import Github
 
 testResults = {}
 
+unstableTests = []
+
+try:
+    with open ('code/test/etc/UnstableTests.txt') as unstableFile:
+        for line in unstableFile:
+            unstableTests.append(line.strip())
+except:
+    print("Was not able to open list of unstable tests")
+
 # Parse all the various nose xunit test reports looking for changes
 
 for kind, directory in [('base', './MasterUnitTests/'), ('test', './LatestUnitTests/')]:
@@ -35,9 +44,13 @@ if 'ghprbPullId' in os.environ:
 message = 'Unit test changes for pull request %s:\n' % issueID
 changed = False
 failed = False
-errorConditions = ['error']
+errorConditions = ['error', 'failure']
 
 for testName, testResult in sorted(testResults.items()):
+    if 'base' in testResult and 'test' in testResult and testName in unstableTests:
+        if testResult['base'] != testResult['test']:
+            changed = True
+            message += "* %s (unstable) changed from %s to %s\n" % (testName, testResult['base'], testResult['test'])
     if 'base' in testResult and 'test' in testResult:
         if testResult['base'] != testResult['test']:
             changed = True
@@ -52,6 +65,8 @@ for testName, testResult in sorted(testResults.items()):
     elif 'base' in testResult:
         changed = True
         message += "* %s was deleted. Prior status was %s\n" % (testName, testResult['base'])
+if failed:
+    message += '\n\nPreviously working unit tests have failed!\n'
 
 gh = Github(os.environ['DMWMBOT_TOKEN'])
 
@@ -65,7 +80,6 @@ if not changed:
 issue.create_comment('%s' % message)
 
 if failed:
-    pass
-# print('Testing of python code. DMWM-FAIL-UNIT')
+    print('Testing of python code. DMWM-FAIL-UNIT')
 else:
     print('Testing of python code. DMWM-SUCCEED-UNIT')

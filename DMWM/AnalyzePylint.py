@@ -70,7 +70,7 @@ issueID = None
 if 'ghprbPullId' in os.environ:
     issueID = os.environ['ghprbPullId']
 
-message = 'No pylint warnings for pull request %s:\n' % issueID
+message = 'No pylint warnings for pull request %s.\n' % issueID
 
 
 if summaryMessage or longMessage:

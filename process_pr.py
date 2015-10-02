@@ -143,6 +143,8 @@ def process_pr(gh, repo, prId, repository, dryRun):
   requiresL1 = False
   releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])
   external_issue_number=""
+  trigger_test_on_signature = True
+  has_categories_approval = False
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -177,17 +179,21 @@ def process_pr(gh, repo, prId, repository, dryRun):
     if commenter == "cmsbuild":
       if re.match("Comparison is ready", first_line):
         comparison_done = True
+        trigger_test_on_signature = False
       elif re.match( FAILED_TESTS_MSG, first_line):
         tests_already_queued = False
         tests_requested = False
         signatures["tests"] = "pending"
+        trigger_test_on_signature = False
       elif re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", first_line):
         pull_request_updated = False
       elif re.match( TRIGERING_TESTS_MSG, first_line):
         tests_already_queued = True
         tests_requested = False
         signatures["tests"] = "started"
+        trigger_test_on_signature = False
       elif re.match( TESTS_RESULTS_MSG, first_line):
+        trigger_test_on_signature = False
         tests_already_queued = False
         tests_requested = False
         if re.match('^\s*[+]1\s*$', first_line):
@@ -203,6 +209,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
         or commenter in CMSSW_L2.keys()):
       if re.match("^\s*(@cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test\s*$", first_line, re.I):
         print 'Tests requested:', commenter, 'asked to test this PR'
+        trigger_test_on_signature = False
         if not tests_already_queued:
           print 'cms-bot will request test for this PR'
           tests_requested = True
@@ -242,9 +249,11 @@ def process_pr(gh, repo, prId, repository, dryRun):
       if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"
+          has_categories_approval = True
       elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
+          has_categories_approval = False
 
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
@@ -252,16 +261,6 @@ def process_pr(gh, repo, prId, repository, dryRun):
       if re.match("^hold$", first_line, re.I):
         is_hold = True
         blocker = commenter
-
-    # Check for release managers and and sign the tests category based on
-    # their comment
-    #+tested for approved
-    #-tested for rejected
-    if commenter in releaseManagers:
-      if re.match("^[+](test|tested)$", first_line, re.I):
-        signatures["tests"] = "approved"
-      elif re.match("^[-](test|tested)$", first_line, re.I):
-        signatures["tests"] = "rejected"
 
   print "The labels of the pull request should be:"
   # Labels coming from signature.
@@ -321,10 +320,12 @@ def process_pr(gh, repo, prId, repository, dryRun):
   #For now, only trigger tests for cms-sw/cmssw
   if cmssw_repo:
     # trigger the tests and inform it in the thread.
+    if trigger_test_on_signature and has_categories_approval:
+      tests_requested = True
     if tests_requested:
-      create_properties_file_tests( prId, dryRun )
       if not dryRun:
         pr.create_issue_comment( TRIGERING_TESTS_MSG )
+        create_properties_file_tests( prId, dryRun )
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"

@@ -377,7 +377,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
     issue.edit(labels=list(labels))
     diff_labels1 = old_labels-labels
     diff_labels2 = labels-old_labels
-    if (diff_labels1==set(["tests-pending"])) and (diff_labels2==set(["tests-started"]):
+    if (diff_labels1==set(["tests-pending"])) and (diff_labels2==set(["tests-started"])):
       pass
     elif all(["fully-signed" in labels,
             not "orp-approved" in labels,

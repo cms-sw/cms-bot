@@ -411,6 +411,8 @@ lgray:
 - DataFormats/EgammaCandidate
 - DataFormats/EgammaReco
 - SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
 mandrenguyen:
 - RecoHI
 - HeavyIonsAnalysis
@@ -781,5 +783,9 @@ kreczko:
 - TopQuarkAnalysis
 pfs:
 - SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
 vandreev11:
 - SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit

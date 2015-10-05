@@ -410,6 +410,7 @@ lgray:
 - DataFormats/ParticleFlowCandidate
 - DataFormats/EgammaCandidate
 - DataFormats/EgammaReco
+- SimCalorimetry/HGCalSimProducers
 mandrenguyen:
 - RecoHI
 - HeavyIonsAnalysis
@@ -778,3 +779,7 @@ jdolen:
 kreczko:
 - AnalysisDataFormats/TopObjects
 - TopQuarkAnalysis
+pfs:
+- SimCalorimetry/HGCalSimProducers
+vandreev11:
+- SimCalorimetry/HGCalSimProducers

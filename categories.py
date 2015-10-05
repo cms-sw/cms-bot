@@ -1172,6 +1172,7 @@ CMSSW_CATEGORIES={
    "SimCalorimetry/HcalSimProducers",
    "SimCalorimetry/HcalTestBeam",
    "SimCalorimetry/HcalZeroSuppressionProducers",
+   "SimCalorimetry/HGCalSimProducers",
    "SimDataFormats/Associations",
    "SimDataFormats/CaloHit",
    "SimDataFormats/CaloTest",

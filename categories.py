@@ -204,6 +204,8 @@ CMSSW_CATEGORIES={
    "RecoLocalCalo/HcalLaserReco",
    "RecoLocalCalo/HcalRecAlgos",
    "RecoLocalCalo/HcalRecProducers",
+   "RecoLocalCalo/HGCalRecAlgos",
+   "RecoLocalCalo/HGCalRecProducers",
    "RecoLocalMuon/CSCEfficiency",
    "RecoLocalMuon/CSCRecHitD",
    "RecoLocalMuon/CSCSegment",

@@ -413,6 +413,7 @@ lgray:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
+- Validation/HGCalValidation
 mandrenguyen:
 - RecoHI
 - HeavyIonsAnalysis
@@ -785,7 +786,21 @@ pfs:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
+- Validation/HGCalValidation
 vandreev11:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
+- Validation/HGCalValidation
+bsunanda:
+- Validation/HGCalValidation
+sethzenz:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+kpedro88:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation

@@ -414,6 +414,8 @@ lgray:
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
 - Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
 mandrenguyen:
 - RecoHI
 - HeavyIonsAnalysis
@@ -787,11 +789,15 @@ pfs:
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
 - Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
 vandreev11:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
 - Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
 bsunanda:
 - Validation/HGCalValidation
 sethzenz:
@@ -799,8 +805,12 @@ sethzenz:
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
 - Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
 kpedro88:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
 - Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers

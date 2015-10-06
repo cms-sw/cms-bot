@@ -789,3 +789,11 @@ vandreev11:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
+sethzenz:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+kpedro88:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit

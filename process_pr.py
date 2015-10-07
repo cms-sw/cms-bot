@@ -42,6 +42,28 @@ def updateMilestone(repo, issue, pr, dryRun):
     return
   issue.edit(milestone=milestone)
 
+def find_last_comment(issue, user, match):
+  last_comment = None
+  for comment in issue.get_comments():
+    if user != comment.user.login:
+      continue
+    if not re.match(match,comment.body.encode("ascii", "ignore").strip("\n\t\r "),re.MULTILINE):
+      continue
+    last_comment = comment
+    print "Matched comment from ",comment.user.login+" with comment id ",comment.id
+  return last_comment
+
+def modify_comment(comment, match, replace, dryRun):
+  comment_msg = comment.body.encode("ascii", "ignore")
+  new_comment_msg = re.sub(match,replace,comment_msg)
+  if new_comment_msg != comment_msg:
+    if not dryRun:
+      comment.edit(new_comment_msg)
+      print "Message updated"
+  return 0
+
+
+
 def process_pr(gh, repo, prId, repository, dryRun):
   print "Working on ",repo.full_name," for PR ",prId
   external_issue_repo_name = "cms-sw/cmsdist"

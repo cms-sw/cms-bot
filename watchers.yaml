@@ -814,3 +814,10 @@ kpedro88:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+cseez:
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers

@@ -4,10 +4,10 @@ from os.path import expanduser
 from optparse import OptionParser
 import sys
 from process_pr import modify_comment, find_last_comment
-from process_pr import TRIGERING_TESTS_MSG
+from process_pr import TRIGERING_TESTS_MSG,JENKINS_TEST_URL
 
 valid_types = {}
-valid_types["JENKINS_TEST_URL"]="^\s*"+TRIGERING_TESTS_MSG+".*$"
+valid_types[JENKINS_TEST_URL]="^\s*"+TRIGERING_TESTS_MSG+".*$"
 all_types = "|".join(valid_types)
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-n|--dry-run] [-r|--repository <repo>] -t|--type "+all_types+" -m|--message <message> <pull-request-id>")

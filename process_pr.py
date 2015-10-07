@@ -9,6 +9,7 @@ from sys import exit
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
+JENKINS_TEST_URL='JENKINS_TEST_URL'
 
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
@@ -346,7 +347,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
       tests_requested = True
     if tests_requested:
       if not dryRun:
-        pr.create_issue_comment( TRIGERING_TESTS_MSG )
+        pr.create_issue_comment( TRIGERING_TESTS_MSG+"\n"+JENKINS_TEST_URL )
         create_properties_file_tests( prId, dryRun )
 
   # Do not complain about tests

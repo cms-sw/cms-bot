@@ -347,7 +347,8 @@ def process_pr(gh, repo, prId, repository, dryRun):
       tests_requested = True
     if tests_requested:
       if not dryRun:
-        pr.create_issue_comment( TRIGERING_TESTS_MSG+"\n"+JENKINS_TEST_URL )
+        msg = TRIGERING_TESTS_MSG+'\n'+JENKINS_TEST_URL
+        pr.create_issue_comment( msg )
         create_properties_file_tests( prId, dryRun )
 
   # Do not complain about tests

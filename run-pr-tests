@@ -25,7 +25,7 @@ if [ ! X`which kinit` = X ]; then
   kinit cmsbuild@CERN.CH -k -t $CMSBUILD_KEY
 fi
 
-$WORKSPACE/cms-bot/modify_comment.py -r cms-sw/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/ib-any-integration/${BUILD_NUMBER}/console" || true
+$WORKSPACE/cms-bot/modify_comment.py -r cms-sw/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/ib-any-integration/${BUILD_NUMBER}/console" $PULL_REQUEST || true
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'

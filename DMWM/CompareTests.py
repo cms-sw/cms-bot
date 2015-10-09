@@ -40,8 +40,15 @@ issueID = None
 
 if 'ghprbPullId' in os.environ:
     issueID = os.environ['ghprbPullId']
+    mode = 'PR'
+elif 'TargetIssueID' in os.environ:
+    issueID = os.environ['TargetIssueID']
+    mode = 'Daily'
 
 message = 'Unit test changes for pull request %s:\n' % issueID
+if mode == 'Daily':
+    message = 'Unit test changes for most recent test of master branch:\n'
+
 changed = False
 failed = False
 errorConditions = ['error', 'failure']
@@ -51,7 +58,7 @@ for testName, testResult in sorted(testResults.items()):
         if testResult['base'] != testResult['test']:
             changed = True
             message += "* %s (unstable) changed from %s to %s\n" % (testName, testResult['base'], testResult['test'])
-    if 'base' in testResult and 'test' in testResult:
+    elif 'base' in testResult and 'test' in testResult:
         if testResult['base'] != testResult['test']:
             changed = True
             message += "* %s changed from %s to %s\n" % (testName, testResult['base'], testResult['test'])
@@ -76,6 +83,8 @@ issue = gh.get_repo(repoName).get_issue(int(issueID))
 
 if not changed:
     message = "No changes to unit tests for pull request %s\n" % issueID
+if not changed and mode == 'Daily':
+    message = "No changes to unit tests for latest build\n"
 
 issue.create_comment('%s' % message)
 

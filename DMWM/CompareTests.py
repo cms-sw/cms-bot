@@ -81,10 +81,10 @@ repoName = '%s/%s' % (os.environ['WMCORE_REPO'], codeRepo)
 
 issue = gh.get_repo(repoName).get_issue(int(issueID))
 
-if not changed:
-    message = "No changes to unit tests for pull request %s\n" % issueID
 if not changed and mode == 'Daily':
     message = "No changes to unit tests for latest build\n"
+elif not changed:
+    message = "No changes to unit tests for pull request %s\n" % issueID
 
 issue.create_comment('%s' % message)
 

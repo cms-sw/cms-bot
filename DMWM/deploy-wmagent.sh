@@ -3,8 +3,8 @@ start=`date +%s`
 
 export DBSOCK=/tmp/`uuidgen`-mysql.sock
 
-echo "Deploying wmagent@$WMAGENT_VERSION"
-$PWD/deployment/Deploy -R wmagent-dev@${WMAGENT_VERSION} -r comp=comp.pre -t $WMAGENT_VERSION -A $DMWM_ARCH -s 'prep sw post' $PWD/deploy admin/devtools wmagent
+echo "Deploying wmagent@$WMAGENT_VERSION from $COMP_REPO"
+$PWD/deployment/Deploy -R wmagent-dev@${WMAGENT_VERSION} -r comp=$COMP_REPO -t $WMAGENT_VERSION -A $DMWM_ARCH -s 'prep sw post' $PWD/deploy admin/devtools wmagent
 
 perl -p -i -e 's/set-variable = innodb_buffer_pool_size=2G/set-variable = innodb_buffer_pool_size=50M/' deploy/current/config/mysql/my.cnf
 perl -p -i -e 's/set-variable = innodb_log_file_size=512M/set-variable = innodb_log_file_size=20M/' deploy/current/config/mysql/my.cnf

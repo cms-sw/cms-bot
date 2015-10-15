@@ -4,7 +4,7 @@ from runPyRelValThread import PyRelValsThread
 
 path=sys.argv[1]
 ProcessLogs = PyRelValsThread(1,path)
-print "Generatig runall log file"
+print "Generating runall log file"
 ProcessLogs.update_runall()
 print "Parsing logs for workflows/steps"
 ProcessLogs.parseLog()

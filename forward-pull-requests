@@ -41,11 +41,12 @@ if __name__ == "__main__":
   since = datetime (2000,1,1)
   if args.since:
     since = datetime.strptime(args.since, '%Y-%m-%dT%H:%M')
-  issues = args.issues or gh_repo.get_issues(milestone=milestone.pop(), since=since, state="open")
+  issues = args.issues or gh_repo.get_issues(milestone=milestone.pop(), state="open")
   for issue in issues:
     # If we just have the numeric Id, let's get the associated issue.
     if type(issue) == int:
       issue = gh_repo.get_issue(issue)
+    if issue.created_at < since: continue
     pr = gh_repo.get_pull(issue.number)
     print issue.number, pr.head.user.login, pr.head.ref, destMilestone, issue.created_at
     newBody = issue.body + "\nAutomatically ported from " + args.source + " #%s (original by @%s)." % (issue.number, str(pr.head.user.login))

@@ -64,6 +64,11 @@ git fetch origin
 (updateBranch CMSSW_7_5_X CMSSW_7_6_X) || true
 (updateBranch CMSSW_7_6_X CMSSW_7_6_ROOT64_X) || true
 
+# CMSSW_7_6_X
+(updateBranch CMSSW_7_6_X CMSSW_8_0_X) || true
+(updateBranch CMSSW_8_0_X CMSSW_8_0_ROOT64_X) || true
+
+
 # Update CMSDIST
 cd $WORKSPACE
 rm -rf cmsdist
@@ -116,6 +121,7 @@ git fetch
 (updateBranch IB/CMSSW_7_5_X/stable IB/CMSSW_7_5_X/root5) || true
 
 # CMSSW_7_6_X
+(updateBranch IB/CMSSW_7_5_X/stable IB/CMSSW_7_6_X/stable) || true
 (updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_7_6_X/next) || true
 (updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_7_6_X/gcc493) || true
 

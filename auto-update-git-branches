@@ -118,3 +118,7 @@ git fetch
 # CMSSW_7_6_X
 (updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_7_6_X/next) || true
 (updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_7_6_X/gcc493) || true
+
+# CMSSW_8_0_X
+(updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_8_0_X/stable) || true
+(updateBranch IB/CMSSW_8_0_X/stable IB/CMSSW_8_0_X/next) || true

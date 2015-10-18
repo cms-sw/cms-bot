@@ -7,11 +7,13 @@ from github import Github, GithubException
 from sys import exit
 from os.path import expanduser
 from argparse import ArgumentParser
+import datetime
 
 if __name__ == "__main__":
   parser = ArgumentParser()
   parser.add_argument("-s", "--source")
   parser.add_argument("-d", "--dest")
+  parser.add_argument("--since", dest="since", default=None)
   parser.add_argument("-n", "-dry-run", dest="dryRun", default=False, action="store_true")
   parser.add_argument("issues", nargs="*", type=int)
   args = parser.parse_args()
@@ -36,14 +38,16 @@ if __name__ == "__main__":
   if not destMilestone:
     print "Could not find destination milestone."
     exit(1)
-
-  issues = args.issues or gh_repo.get_issues(milestone=milestone.pop(), state="open")
+  since = datetime.datetime (2000,1,1)
+  if args.since:
+    since = datetime.strptime(args.since, '%Y-%m-%dT%H:%M')
+  issues = args.issues or gh_repo.get_issues(milestone=milestone.pop(), since=since, state="open")
   for issue in issues:
     # If we just have the numeric Id, let's get the associated issue.
     if type(issue) == int:
       issue = gh_repo.get_issue(issue)
     pr = gh_repo.get_pull(issue.number)
-    print issue.number, pr.head.user.login, pr.head.ref, destMilestone
+    print issue.number, pr.head.user.login, pr.head.ref, destMilestone, issue.created_at
     newBody = issue.body + "\nAutomatically ported from " + args.source + " #%s (original by @%s)." % (issue.number, str(pr.head.user.login))
     try:
       newHead = "%s:%s" % (pr.head.user.login, pr.head.ref)

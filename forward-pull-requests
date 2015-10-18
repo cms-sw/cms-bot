@@ -38,7 +38,7 @@ if __name__ == "__main__":
   if not destMilestone:
     print "Could not find destination milestone."
     exit(1)
-  since = datetime.datetime (2000,1,1)
+  since = datetime (2000,1,1)
   if args.since:
     since = datetime.strptime(args.since, '%Y-%m-%dT%H:%M')
   issues = args.issues or gh_repo.get_issues(milestone=milestone.pop(), since=since, state="open")

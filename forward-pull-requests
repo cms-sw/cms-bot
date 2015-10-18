@@ -7,7 +7,7 @@ from github import Github, GithubException
 from sys import exit
 from os.path import expanduser
 from argparse import ArgumentParser
-import datetime
+from datetime import datetime
 
 if __name__ == "__main__":
   parser = ArgumentParser()

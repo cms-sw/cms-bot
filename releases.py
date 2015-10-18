@@ -1,4 +1,5 @@
 RELEASE_BRANCH_MILESTONE = {
+  "CMSSW_8_0_X": 57,
   "CMSSW_7_6_X": 55,
   "CMSSW_7_5_X": 51,
   "CMSSW_7_4_X": 50,
@@ -29,6 +30,7 @@ RELEASE_BRANCH_CLOSED = [
 ]
 
 RELEASE_BRANCH_PRODUCTION = [
+  "CMSSW_8_0_X",
   "CMSSW_7_6_X",
   "CMSSW_7_5_X",
   "CMSSW_7_4_X",
@@ -41,6 +43,7 @@ RELEASE_BRANCH_PRODUCTION = [
 ]
 
 RELEASE_MANAGERS = {
+  "CMSSW_8_0_X": ["degano"],
   "CMSSW_7_6_X": ["degano"],
   "CMSSW_7_5_X": ["degano"],
   "CMSSW_7_4_X": ["degano"],

@@ -60,7 +60,9 @@ if __name__ == "__main__":
     if issue.number in done_issues_id:
       print "Already ported as #",done_issues_id[issue.number]
       continue
-    if issue.created_at < since: continue
+    if issue.created_at < since:
+      print "Older than ",args.since
+      continue
     pr = gh_repo.get_pull(issue.number)
     print issue.number, pr.head.user.login, pr.head.ref, destMilestone, issue.created_at
     newBody = issue.body + "\nAutomatically ported from " + args.source + " #%s (original by @%s)." % (issue.number, str(pr.head.user.login))

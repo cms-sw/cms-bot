@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-from github import Github
+from github import Github, GithubException
 from os.path import expanduser
 from optparse import OptionParser
 from datetime import datetime
+from sys import exit
+import re
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog -b|--branch <branch> -d|--date <YYYY-MM-DD-HH00> -t|--tag <tag> [-n|--dry-run]")
@@ -29,8 +31,17 @@ if __name__ == "__main__":
   sha = commits[0].sha
   print 'Found Commit :',sha,commits[0].author.login,'(',commits[0].author.name,')'
   if not opts.dryRun:
-    repo.create_git_tag(opts.tag, "Release", sha, "commit")
-    repo.create_git_ref("refs/tags/"+opts.tag,sha)
-    print "Created Tag ",opts.tag," based on ",sha
+    try:
+      repo.create_git_tag(opts.tag, "Release", sha, "commit")
+      repo.create_git_ref("refs/tags/"+opts.tag,sha)
+      print "Created Tag ",opts.tag," based on ",sha
+    except GithubException, e:
+      msg = e.data['message'].encode("ascii", "ignore")
+      print "Message: ",msg
+      if re.match('^.*Reference already exists.*$',msg,re.M):
+        exit(0)
+      print "ERROR: unable to create tag ",opts.tag
+      exit (1)
   else:
     print "Dry run, would have created tag ",opts.tag," based on ",sha
+  exit(0)

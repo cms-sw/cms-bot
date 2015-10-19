@@ -99,9 +99,9 @@ def get_cmssw_notes( previous_release , this_release ):
     parser.error("Error while updating the repository:\n" + out)
 
   error, notes = getstatusoutput(format("GIT_DIR=cmssw.git"
-                                      " git log  --first-parent --merges --pretty='%%s: DESC' %(previous)s..%(release)s | "
-                                      "grep 'pull request' |"
-                                      "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
+                                      " git log --graph --merges --pretty='%%s: DESC' %(previous)s..%(release)s | "
+                                      " grep 'Merge pull request' | grep -v ' \* Merge pull request' | "
+                                      " sed -e's/.*Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
                                       previous=previous_release,
                                       release=this_release))
   if error:
@@ -131,8 +131,8 @@ def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
 
 
   error, notes = getstatusoutput(format("GIT_DIR=cmsdist.git"
-                                      " git log  --first-parent --merges --pretty='%%s: DESC' %(prev_tag)s..%(curr_tag)s | "
-                                      "grep 'pull request' |"
+                                      " git log --graph --merges --pretty='%%s: DESC' %(prev_tag)s..%(curr_tag)s | "
+                                      " grep 'Merge pull request' | grep -v ' \* Merge pull request' | "
                                       "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
                                       prev_tag=prev_cmsdist_tag,
                                       curr_tag=curr_cmsdist_tag))

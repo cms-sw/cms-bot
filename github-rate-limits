@@ -1,0 +1,11 @@
+#!/usr/bin/env python
+from github import Github
+from os.path import expanduser
+
+if __name__ == "__main__":
+  gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  rate_limit = gh.get_rate_limit().rate
+  print 'API Rate Limit'
+  print 'Limit: ', rate_limit.limit
+  print 'Remaining: ', rate_limit.remaining
+  print 'Reset time (GMT): ', rate_limit.reset

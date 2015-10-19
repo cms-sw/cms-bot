@@ -8,6 +8,7 @@ from sys import exit
 from os.path import expanduser
 from argparse import ArgumentParser
 from datetime import datetime
+import re
 
 if __name__ == "__main__":
   parser = ArgumentParser()
@@ -41,11 +42,24 @@ if __name__ == "__main__":
   since = datetime (2000,1,1)
   if args.since:
     since = datetime.strptime(args.since, '%Y-%m-%dT%H:%M')
+  done_issues = gh_repo.get_issues(milestone=destMilestone[0])
   issues = args.issues or gh_repo.get_issues(milestone=milestone.pop(), state="open")
+  done_issues_id = {}
+  issueRe = re.compile('Automatically ported from '+args.source+' #(\d+)\s+.*',re.MULTILINE)
+  for issue in done_issues:
+    body = issue.body.encode("ascii", "ignore")
+    m  = issueRe.search(body)
+    if m:
+      done_issues_id[int(m.group(1))]=issue.number
+      print m.group(1),"=>",issue.number
   for issue in issues:
     # If we just have the numeric Id, let's get the associated issue.
     if type(issue) == int:
       issue = gh_repo.get_issue(issue)
+    print "Checking ",issue.number
+    if issue.number in done_issues_id:
+      print "Already ported as #",done_issues_id[issue.number]
+      continue
     if issue.created_at < since: continue
     pr = gh_repo.get_pull(issue.number)
     print issue.number, pr.head.user.login, pr.head.ref, destMilestone, issue.created_at

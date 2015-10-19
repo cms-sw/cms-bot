@@ -9,6 +9,7 @@ from os.path import expanduser
 from argparse import ArgumentParser
 from datetime import datetime
 import re
+from time import sleep
 
 if __name__ == "__main__":
   parser = ArgumentParser()
@@ -82,7 +83,7 @@ if __name__ == "__main__":
         continue
       newIssue = gh_repo.create_pull(title = issue.title, body =newBody, base = args.dest, head = newHead )
       print "New issue number", newIssue.number
-
+      sleep(15)
     except GithubException, e:
       print "Error while processing: ", issue.number
       print e

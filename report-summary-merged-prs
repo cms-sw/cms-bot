@@ -1026,6 +1026,7 @@ if __name__ == "__main__":
 
   MAGIC_COMMAND_CMSDIST_TAGS = "pushd %s; git tag -l */*/ARCHITECTURE | grep -E 'IB|ERR'; popd" % CMSDIST_REPO
   BUILD_LOG_DIR = "/data/sdt/buildlogs"
+  BUILD_LOG_DIR = "/afs/cern.ch/cms/sw/ReleaseCandidates"
   # I used this type of concatenation because the string has %s inside
   MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
   MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'

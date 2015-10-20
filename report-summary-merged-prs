@@ -374,9 +374,9 @@ def analyze_tests_results( output, results, arch, type ):
     if type == 'relvals':
       passed,details = get_results_one_relval_file(line)
       result_arch['done']=False
-      print "Checking done for ",output,join(dirname(output),"done")
-      if exists(join(dirname(output),"done")):
+      if exists(join(dirname(line),"done")):
         result_arch['done']=True
+        print "RelVal Done ",line
     elif type == 'utests':
       passed,details = get_results_one_unitTests_file(line)
     elif type == 'addOn':

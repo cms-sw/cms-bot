@@ -16,7 +16,7 @@ os.system('mkdir -p ' + newloc)
 os.system('mv ' + path + '/runall-report-step123-.log '+ newloc)
 os.system('mv ' + path + '/runTheMatrixMsgs.pkl '+ newloc)
 os.system('mv ' + path + '/relval-times.json '+ newloc)
-cmd = 'cd '+path+'; rm -f ../pyRelValMatrixLogs.zip ; zip -r ../pyRelValMatrixLogs.zip .'
+cmd = 'cd '+path+'; rm -f ../pyRelValMatrixLogs.zip ; zip -q -r ../pyRelValMatrixLogs.zip .'
 print "Running ",cmd
 os.system(cmd)
 print "Done"

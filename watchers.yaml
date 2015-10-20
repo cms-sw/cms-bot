@@ -171,6 +171,9 @@ abbiendi:
 - Validation/RecoMuon
 alja:
 - Fireworks
+acimmino:
+- DQM/RPCMonitorDigi
+- DQM/RPCMonitorClient
 argiro:
 - .*[Ee][Cc][Aa][Ll].*
 azsigmon:

@@ -95,6 +95,7 @@ CMSSW_CATEGORIES={
    "IgTools/IgProf",
    "DataFormats/FWLite", "DataFormats/Histograms",
    "DataFormats/Provenance",
+   "DataFormats/Scouting",
    "DataFormats/StdDictionaries",
    "DataFormats/Streamer",
    "DataFormats/TestObjects",

@@ -4,10 +4,10 @@ from os.path import expanduser
 from optparse import OptionParser
 import sys
 from process_pr import modify_comment, find_last_comment
-from process_pr import TRIGERING_TESTS_MSG,JENKINS_TEST_URL
+from process_pr import TRIGERING_TESTS_MSG
 
 valid_types = {}
-valid_types[JENKINS_TEST_URL]="^\s*"+TRIGERING_TESTS_MSG+".*$"
+valid_types['JENKINS_TEST_URL']=[ "^\s*"+TRIGERING_TESTS_MSG+".*$", None ]
 all_types = "|".join(valid_types)
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-n|--dry-run] [-r|--repository <repo>] -t|--type "+all_types+" -m|--message <message> <pull-request-id>")
@@ -24,9 +24,9 @@ if __name__ == "__main__":
   
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   issue = gh.get_repo(opts.repository).get_issue(int(args[0]))
-  last_comment = find_last_comment(issue, "cmsbuild" ,valid_types[opts.msgtype])
+  last_comment = find_last_comment(issue, "cmsbuild" ,valid_types[opts.msgtype][0])
   if not last_comment:
     print "Warning: Not comment matched"
     sys.exit(1)
   print last_comment.body.encode("ascii", "ignore")
-  sys.exit(modify_comment(last_comment,".*"+opts.msgtype+".*",opts.message,opts.dryRun))
+  sys.exit(modify_comment(last_comment,valid_types[opts.msgtype][1],opts.message,opts.dryRun))

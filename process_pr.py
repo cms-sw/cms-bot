@@ -9,7 +9,6 @@ from sys import exit
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
-JENKINS_TEST_URL='JENKINS_TEST_URL'
 
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
@@ -56,14 +55,15 @@ def find_last_comment(issue, user, match):
 
 def modify_comment(comment, match, replace, dryRun):
   comment_msg = comment.body.encode("ascii", "ignore")
-  new_comment_msg = re.sub(match,replace,comment_msg)
+  if match:
+    new_comment_msg = re.sub(match,replace,comment_msg)
+  else:
+    new_comment_msg = comment_msg+"\n"+replace
   if new_comment_msg != comment_msg:
     if not dryRun:
       comment.edit(new_comment_msg)
       print "Message updated"
   return 0
-
-
 
 def process_pr(gh, repo, prId, repository, dryRun):
   print "Working on ",repo.full_name," for PR ",prId
@@ -347,7 +347,6 @@ def process_pr(gh, repo, prId, repository, dryRun):
       tests_requested = True
     if tests_requested:
       if not dryRun:
-        msg = TRIGERING_TESTS_MSG+'\n'+JENKINS_TEST_URL
         pr.create_issue_comment( msg )
         create_properties_file_tests( prId, dryRun )
 

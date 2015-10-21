@@ -439,9 +439,7 @@ def fill_list_incomplete_results( type ):
 
     if not dict.get( ib_name ):
       dict[ ib_name ] = []
-      dict[ ib_name ].append( arch )
-    else:
-      dict[ ib_name ].append( arch )
+    dict[ ib_name ].append( arch )
 
   print_verbose( type )
   print_verbose( dict )

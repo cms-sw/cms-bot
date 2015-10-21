@@ -365,6 +365,7 @@ def analyze_tests_results( output, results, arch, type ):
       print_verbose( 'Ignoring file:\n%s' % line )
       continue
 
+    print "Processing ",type,":",line
     rel_name = line[m.start():m.end()-1]
     result_arch = {}
     result_arch['arch'] = arch
@@ -376,7 +377,6 @@ def analyze_tests_results( output, results, arch, type ):
       result_arch['done']=False
       if exists(join(dirname(line),"done")):
         result_arch['done']=True
-        print "RelVal Done ",line
     elif type == 'utests':
       passed,details = get_results_one_unitTests_file(line)
     elif type == 'addOn':

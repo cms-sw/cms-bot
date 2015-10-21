@@ -689,6 +689,7 @@ def execute_magic_command_find_results( results, type ):
       exit(1)
 
     command_to_execute = base_command.replace( 'ARCHITECTURE' , arch )
+    print "Run>>",command_to_execute
     out,err,ret_code = get_output_command( command_to_execute )
     analyze_tests_results( out , results , arch , type )
 

@@ -3,17 +3,11 @@ import os, sys
 from runPyRelValThread import PyRelValsThread
 
 path=sys.argv[1]
-ProcessLogs = PyRelValsThread(1,path)
+newloc = os.path.dirname(path) + '/pyRelValMatrixLogs/run'
+os.system('mkdir -p ' + newloc)
+ProcessLogs = PyRelValsThread(1,path,"1of1",newloc)
 print "Generating runall log file"
 ProcessLogs.update_runall()
 print "Generating relval time info"
 ProcessLogs.update_wftime()
 print "Parsing logs for workflows/steps"
-ProcessLogs.parseLog()
-newloc = os.path.dirname(path) + '/pyRelValMatrixLogs/run'
-
-os.system('mkdir -p ' + newloc)
-os.system('mv ' + path + '/runall-report-step123-.log '+ newloc)
-os.system('mv ' + path + '/runTheMatrixMsgs.pkl '+ newloc)
-os.system('mv ' + path + '/relval-times.json '+ newloc)
-print "Done"

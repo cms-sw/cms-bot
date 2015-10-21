@@ -16,5 +16,4 @@ os.system('mkdir -p ' + newloc)
 os.system('mv ' + path + '/runall-report-step123-.log '+ newloc)
 os.system('mv ' + path + '/runTheMatrixMsgs.pkl '+ newloc)
 os.system('mv ' + path + '/relval-times.json '+ newloc)
-os.system('touch ' + path)
 print "Done"

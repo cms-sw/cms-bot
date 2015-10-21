@@ -104,4 +104,3 @@ fi
 RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_RELVALS_OPTION -j $(Jenkins_GetCPU) -s -l $MATRIX_EXTRAS"
 echo $RELVALS_CMD > matrixTests.log
 (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a matrixTests.log
-

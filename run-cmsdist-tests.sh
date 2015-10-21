@@ -1,7 +1,29 @@
 #!/bin/sh -ex
 
-if [ "X$TEST_USER" == X ] || [ "X$TEST_BRANCH" == X ]; then
-  echo "Error: TEST_USER and TEST_BRANCH variables must be set"
+if [ "X$TEST_PR" == X ]; then
+  echo "Error: TEST_PR variable must be set"
+  exit 1
+fi
+
+function Jenkins_GetCPU ()
+{
+  ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
+  case $NODE_NAME in
+    lxplus* ) ACTUAL_CPU=$(echo $ACTUAL_CPU / 2 | bc) ;;
+  esac
+  if [ "X$1" != "X" ] ; then
+    ACTUAL_CPU=$(echo "$ACTUAL_CPU*$1" | bc)
+  fi
+  echo $ACTUAL_CPU
+}
+
+
+GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$TEST_PR)
+TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
+TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
+
+if [ "X$TEST_USER" == X ] || [ "X$TEST_BRANCH" == X]; then
+  echo "Error: failed to retrieve user or branch to test."
   exit 1
 fi
 
@@ -15,6 +37,14 @@ fi
 
 if [ "X$PKGTOOLS_BRANCH" == X ]; then
   PKGTOOLS_BRANCH="V00-22-XX"
+fi
+
+if [ "X$MATRIX_EXTRAS" == X ]; then
+  $MATRIX_EXTRAS="1306.0,101.0,1003.0,50202.0,9.0,25202.0"
+fi
+
+if [ "X$MATRIX_TIMEOUT" == X ]; then
+  $MATRIX_TIMEOUT="9000"
 fi
 
 BUILD_DIR="testBuildDir"
@@ -35,8 +65,8 @@ for P in $PKGS; do
 done
 popd
 
-# Build the packages
-PKGTOOLS/cmsBuild -i $BUILD_DIR --arch $ARCH -j 12 build $PKGS $TOOLFILES
+# Build the whole cmssw-tool-conf toolchain
+PKGTOOLS/cmsBuild -i $BUILD_DIR --arch $ARCH -j 12 build cmssw-tool-conf
 
 # Create an appropriate CMSSW area
 CMSSW_IB=$(scram l $(echo $CMSDIST_BRANCH | cut -d"/" -f 2) | grep -v /ReleaseCandidates | tail -n 1 | awk '{print $2}')
@@ -61,4 +91,17 @@ if [ "X$CMSSW_PR" != X ]; then
 fi
 
 # Build all the packages added
-scram build -j 12
+scram build -j $(Jenkins_GetCPU)
+popd
+
+# Run usual relvals
+EXTRA_RELVALS_OPTION=""
+if [[ $CMSSW_IB != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
+  wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
+  EXTRA_RELVALS_OPTION='--das-options="--cache das-cache.file --limit 0"'
+fi
+
+RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_RELVALS_OPTION -j $(Jenkins_GetCPU) -s -l $MATRIX_EXTRAS"
+echo $RELVALS_CMD > matrixTests.log
+(eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a matrixTests.log
+

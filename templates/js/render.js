@@ -80,7 +80,7 @@ add_qa_link_to_row = function(row, arch,release_name){
  */
 get_tests_url = function( type, file, arch, ib ) {
   var link_parts = file.split('/')
-         
+  var si=4
   var details_link = ""
   if (type == 'utests' || type =='builds'){
 
@@ -88,20 +88,20 @@ get_tests_url = function( type, file, arch, ib ) {
       details_link = "http://cms-sw.github.io/scramDetail.html#" + arch + ";" + ib 
     }else{
 
-      details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]
-                                                                +'/'+link_parts[10]
+      details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[si] + '/'
+                                                                +link_parts[si+1]+'/'+link_parts[si+2]+'/'+link_parts[si+3]
+                                                                +'/'+link_parts[si+4]
    }
 
   }else if(type == 'relvals'){
     if ( file == 'not-ready' ){
       details_link="https://cms-sw.github.io/relvalLogDetail.html#" + arch + ';' + ib
     }else {
-      details_link="https://cms-sw.github.io/relvalLogDetail.html#" + link_parts[6] + ';' + link_parts[10] 
+      details_link="https://cms-sw.github.io/relvalLogDetail.html#" + link_parts[si] + ';' + link_parts[si+4] 
     }
   }else if(type == 'addons'){
-    details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[6] + '/'
-                                                                +link_parts[7]+'/'+link_parts[8]+'/'+link_parts[9]+'/'+link_parts[10]
+    details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[si] + '/'
+                                                                +link_parts[si+1]+'/'+link_parts[si+2]+'/'+link_parts[si+3]+'/'+link_parts[si+4]
                                                                 +'/'+'addOnTests'+'/'
 
   }
@@ -191,12 +191,7 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
       r_class = result? "label label-success" : "label label-danger"
       incomplete = file == 'not-ready'
 
-      if ( incomplete ){
-
-        r_class = "label label-info"
-        test_label = "Not complete"
-
-      }else if ( result ){
+      if ( result ){
 
         r_class = "label label-success"
         test_label = "See Details"
@@ -206,6 +201,11 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
         r_class = "label label-danger"
         test_label = "Pass: " + testDetails.num_passed + " Fail: " + testDetails.num_failed
       }
+      if ( result_tests.done == false )
+      {
+        r_class = "label label-primary"
+      }
+
 
 
   }else{

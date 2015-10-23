@@ -11,3 +11,5 @@ ProcessLogs.update_runall()
 print "Generating relval time info"
 ProcessLogs.update_wftime()
 print "Parsing logs for workflows/steps"
+ProcessLogs.parseLog()
+print "Done"

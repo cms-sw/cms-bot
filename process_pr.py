@@ -29,14 +29,19 @@ def create_properties_file_tests( pr_number, dryRun ):
 
 # Update the milestone for a given issue.
 def updateMilestone(repo, issue, pr, dryRun):
-  if issue.milestone:
-    return
+  #if issue.milestone:
+  #  return
   branch = pr.base.label.split(":")[1]
   milestoneId = RELEASE_BRANCH_MILESTONE.get(branch, None)
   if not milestoneId:
     print "Unable to find a milestone for the given branch"
     return
   milestone = repo.get_milestone(milestoneId)
+  if issue.milestone:
+    if issue.milestone == milestone:
+      return
+    else:
+      print "Changing milestone from ",issue.milestone," to ",milestone
   print "Setting milestone to %s" % milestone.title
   if dryRun:
     return

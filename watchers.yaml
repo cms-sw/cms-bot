@@ -1,4 +1,4 @@
-# Map between github username and the list of packages to watch.
+#  Map between github username and the list of packages to watch.
 # Package is a regular expression which will be automatically delimited by
 # ".*".
 btv-pog:

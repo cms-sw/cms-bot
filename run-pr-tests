@@ -43,7 +43,7 @@ BUILD_OK=true
 UNIT_TESTS_OK=true
 RELVALS_OK=true
 ADDON_OK=true
-
+REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 # Checkout the correct ref
 pushd cms-git-tools
  git checkout $CMS_GIT_TOOLS_REF
@@ -58,7 +58,13 @@ export SCRAM_ARCH=$ARCHITECTURE
 
 if [[ $RELEASE_FORMAT != *-* ]]; then
   RELEASE_QUEUE=$RELEASE_FORMAT
-  RELEASE_FORMAT=`scram l -c $RELEASE_FORMAT | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | tail -1 | awk '{print $2}'`
+  for SCRAM_REL in $(scram l -c $RELEASE_FORMAT | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | awk '{print $2}' | sort -r) ;  do
+    FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$SCRAM_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
+    if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
+      RELEASE_FORMAT=$SCRAM_REL
+      break
+    fi
+  done
 else
   RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
 fi
@@ -394,7 +400,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE
     echo 'COMPARISON;QUEUED' >> $RESULTS_FILE
 
-    REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
     echo "Creating properties file $TRIGGER_COMPARISON_FILE"
     echo "RELEASE_FORMAT=$RELEASE_FORMAT" > $TRIGGER_COMPARISON_FILE

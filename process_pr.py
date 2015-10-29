@@ -235,7 +235,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
     if (commenter in TRIGGER_PR_TESTS
         or commenter in releaseManagers
         or commenter in CMSSW_L2.keys()):
-      if re.match("^\s*(@cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test\s*$", first_line, re.I):
+      if re.match("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test\s*$", first_line, re.I):
         print 'Tests requested:', commenter, 'asked to test this PR'
         trigger_test_on_signature = False
         if not tests_already_queued:
@@ -477,8 +477,8 @@ def process_pr(gh, repo, prId, repository, dryRun):
                         "You can reject by replying  to this message having"
                         " '-1' in the first line of your reply.\n"
                         "If you are a L2 or a release manager you can ask for"
-                        " tests by saying 'please test' in the first line of a"
-                        " comment.\n"
+                        " tests by saying 'please test' or '@cmsbuild, please test'"
+                        " in the first line of a comment.\n"
                         "%(releaseManagers)s"
                         "%(orpRequired)s"
                         "\n%(patch_branch_warning)s",

@@ -6,7 +6,7 @@ from cmsutils import doCmd, getIBReleaseInfo
 class LogUpdater():
 
     def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt01.cern.ch", webDir="/data/sdt/buildlogs/"):
-        self.dryRun = True
+        self.dryRun = dryRun
         self.remote = remote
         self.cmsswBuildDir = dirIn
         rel = os.path.basename(dirIn)
@@ -94,8 +94,6 @@ class LogUpdater():
         try:
             if self.dryRun:
               print "CMD>>",cmd
-              doCmd("mkdir -p "+tgtDirIn)
-              doCmd("cp -r "+fromFile+" "+tgtDirIn+"/")
             else:
               doCmd(cmd)
         except Exception, e:

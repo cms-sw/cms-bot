@@ -90,7 +90,7 @@ class LogUpdater():
     def copyLogs(self, what, logSubDir, tgtDirIn):
         fromFile = os.path.join(self.cmsswBuildDir, logSubDir, what)
         ssh_opt="-o CheckHostIP=no -o ConnectTimeout=60 -o ConnectionAttempts=5 -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no"
-        cmd ="echo ssh -Y "+ssh_opt+" "+self.remote+" mkdir -p "+tgtDirIn+"; echo scp "+ssh_opt+" -r "+fromFile+" "+self.remote+":"+tgtDirIn+"/"
+        cmd ="ssh -Y "+ssh_opt+" "+self.remote+" mkdir -p "+tgtDirIn+"; echo scp "+ssh_opt+" -r "+fromFile+" "+self.remote+":"+tgtDirIn+"/"
         try:
             if self.dryRun:
               print "CMD>>",cmd

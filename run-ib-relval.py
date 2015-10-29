@@ -26,6 +26,6 @@ if __name__ == "__main__":
     if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
 
   matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)
-  matrix.setArgs(GetMatrixOptions(environ["CMSSW_VERSION"],environ["SCRAM_ARCH"], opts.dascache))
+  matrix.setArgs(GetMatrixOptions(environ["CMSSW_VERSION"],environ["SCRAM_ARCH"], opts.das_cache))
   matrix.run_workflows(opts.workflow.split(","),LogUpdater(environ["CMSSW_BASE"]))
 

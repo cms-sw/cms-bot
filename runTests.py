@@ -369,7 +369,7 @@ class ReleaseTester():
   def __init__(self, releaseDir, dryRun=False):
     self.dryRun = dryRun
     self.plat   = os.environ["SCRAM_ARCH"]
-    self.appset = releaseDir
+    self.appset = releaseDir+"/CMSDIST"
     self.cmsswBuildDir = releaseDir
     self.release = os.path.basename(releaseDir)
     self.relTag = self.release

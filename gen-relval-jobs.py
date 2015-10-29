@@ -16,7 +16,7 @@ if workflows:
   for i in range(1, total+1):
     wf=",".join(workflows[i-1])
     jobid   = str(i)+"of"+str(total)
-    jobfile = workdir+"/ib-test-relval-"+jobid
-    doCmd("cp "+workdir+"/ib-test-qa "+jobfile)
+    jobfile = workdir+"/ib-run-relval-"+jobid
+    doCmd("cp "+workdir+"/ib-run-qa "+jobfile)
     doCmd("echo WORKFLOWS="+wf+" >>"+jobfile)
     doCmd("echo JOBID="+jobid+" >>"+jobfile)

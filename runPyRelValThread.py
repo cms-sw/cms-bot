@@ -90,7 +90,6 @@ class PyRelValsThread(object):
     threads = []
     while(len(workflows) > 0):
       threads = [t for t in threads if t.is_alive()]
-      print "Active Threads:",len(threads)
       if(len(threads) < self.jobs):
         try:
           t = threading.Thread(target=runThreadMatrix, args=(self.basedir, workflows.pop(), self.args['rest']+" "+self.args['w'], logger))

@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
   thrds = cmsRunProcessCount
   if "_THREADED_" in  environ["CMSSW_VERSION"]:
-    thrds=int(MachineMemoryGB/3)
+    thrds=int(MachineMemoryGB/3)+1
     if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
 
   matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)

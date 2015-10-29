@@ -5,7 +5,7 @@ from cmsutils import doCmd, getIBReleaseInfo
 
 class LogUpdater():
 
-    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt01.cern.ch", webDir="/var/build/muz/WEB/"):
+    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt01.cern.ch", webDir="/data/sdt/buildlogs/"):
         self.dryRun = True
         self.remote = remote
         self.cmsswBuildDir = dirIn

@@ -2,7 +2,7 @@
 
 CMSBUILD_KEY="/build/cmsbuild/cmsbuild.keytab"
 case $NODE_NAME in
-  lxplus* ) CMSBUILD_KEY="/tmp/cmsbuild/cmsbuild.keytab" ;;
+  lxplus* ) CMSBUILD_KEY="$WORKSPACE/../../cmsbuild.keytab" ;;
 esac
 
 function Jenkins_GetCPU ()

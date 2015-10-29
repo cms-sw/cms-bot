@@ -14,13 +14,15 @@ export BASEDIR=$2
 export BASEDESTDIR=/afs/cern.ch/cms/sw/ReleaseCandidates
 export LANG=C
 
+mkdir -p $BASEDESTDIR/../deleted
 # Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at
 # any point.
-find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs rm -rf
+find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs --no-run-if-empty -i mv '{}' $BASEDESTDIR/../deleted
+(rm -rf $BASEDESTDIR/../deleted/* || true) &
 
 # The repositories we need to install are those for which we find the
 # timestamp files:
-REPOSITORIES=`find /afs/cern.ch/cms/sw/ReleaseCandidates/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
+REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
 echo $REPOSITORIES
 
 # We install packages for both weeks. We reset every two week, alternating.

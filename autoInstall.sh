@@ -17,7 +17,7 @@ export LANG=C
 mkdir -p $BASEDESTDIR/../deleted
 # Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at
 # any point.
-find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs --no-run-if-empty -i mv '{}' $BASEDESTDIR/../deleted
+find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs --no-run-if-empty -i mv '{}' $BASEDESTDIR/../deleted/
 (rm -rf $BASEDESTDIR/../deleted/* || true) &
 
 # The repositories we need to install are those for which we find the

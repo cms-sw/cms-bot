@@ -195,6 +195,9 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
 
         r_class = "label label-success"
         test_label = "See Details"
+        if ( result_tests.done == false ){
+          test_label = "Pass: " + testDetails.num_passed
+        }
 
       }else{
 

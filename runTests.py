@@ -579,7 +579,7 @@ def main():
   only = None
   for o, a in opts:
     if o in ('--dryRun',): dryRun = True
-    if o in ('--only',):   only = a
+    if o in ('--only',):   only = a.split(",")
   os.chdir(rel)
   rb = ReleaseTester(rel, dryRun)
   try:

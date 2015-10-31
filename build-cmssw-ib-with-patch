@@ -268,9 +268,8 @@ for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH
 done
 
 # This part is needed to drive the installation on afs for different OS.
-OS=`echo $ARCHITECTURE | cut -d"_" -f 1`
-echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} > $WORKSPACE/install_$OS
-echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/install_$OS
-echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/install_$OS
+echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} > $WORKSPACE/ib-install
+echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/ib-install
+echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/ib-install
 
 echo DATE=`date`

@@ -20,7 +20,7 @@ mkdir -p $DELDIR
 # The repositories we need to install are those for which we find the
 # timestamp files:
 REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
-echo $REPOSITORIES | xargs --no-run-if-empty -i mkdir -p "$BASEDIR/{}"
+echo $REPOSITORIES | tr ' ' '\n' | xargs --no-run-if-empty -i mkdir -p "$BASEDIR/{}"
 
 # Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at
 # any point.

@@ -13,12 +13,13 @@ export SCRAM_ARCH=$1
 export BASEDIR=$2
 export BASEDESTDIR=/afs/cern.ch/cms/sw/ReleaseCandidates
 export LANG=C
+DELDIR=$BASEDIR/../del-$SCRAM_ARCH
 
-mkdir -p $BASEDESTDIR/../deleted
+mkdir -p $DELDIR
 # Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at
 # any point.
-find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs --no-run-if-empty -i mv '{}' $BASEDESTDIR/../deleted/
-(rm -rf $BASEDESTDIR/../deleted/* || true) &
+find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs --no-run-if-empty -i mv '{}' ${DELDIR}/
+(rm -rf ${DELDIR} || true) &
 
 # The repositories we need to install are those for which we find the
 # timestamp files:

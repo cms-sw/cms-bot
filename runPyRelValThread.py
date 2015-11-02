@@ -136,7 +136,7 @@ class PyRelValsThread(object):
 
   def update_wftime(self):
     time_info = {}
-    logRE = re.compile('^.*/([1-9][0-9]*\.[0-9]+)_[^/]+/time\.log$')
+    logRE = re.compile('^.*/([1-9][0-9]*(\.[0-9]+|))_[^/]+/time\.log$')
     for logFile in glob.glob(self.basedir+'/*/time.log'):
       m = logRE.match(logFile)
       if not m: continue
@@ -155,13 +155,13 @@ class PyRelValsThread(object):
 
   def parseLog(self):
     logData = {}
-    logRE = re.compile('^.*/([1-9][0-9]*\.[0-9]+)_[^/]+/step([1-9])_.*\.log$')
+    logRE = re.compile('^.*/([1-9][0-9]*(\.[0-9]+|))_[^/]+/step([1-9])_.*\.log$')
     max_steps = 0
     for logFile in glob.glob(self.basedir+'/[1-9]*/step[0-9]*.log'):
       m = logRE.match(logFile)
       if not m: continue
       wf = m.group(1)
-      step = int(m.group(2))
+      step = int(m.group(3))
       if step>max_steps: max_steps=step
       if not logData.has_key(wf):
         logData[wf] = {'steps': {}, 'events' : [], 'failed' : [], 'warning' : []}

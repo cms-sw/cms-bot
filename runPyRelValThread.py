@@ -87,6 +87,7 @@ class PyRelValsThread(object):
 
   def run_workflows(self, workflows=[], logger=None):
     if not workflows: return
+    workflows = workflows[::-1]
     threads = []
     while(len(workflows) > 0):
       threads = [t for t in threads if t.is_alive()]

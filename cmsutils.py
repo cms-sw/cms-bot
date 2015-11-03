@@ -57,7 +57,7 @@ def _compilationProcesses():
     return count
 
 def _cmsRunProcesses():
-    count = int(MachineMemoryGB/2)
+    count = int((MachineMemoryGB+1)/2)
     if count==0: count =1
     if MachineCPUCount<count: count = MachineCPUCount
     return count

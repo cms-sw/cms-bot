@@ -13,6 +13,7 @@ class LogUpdater():
         self.release = rel
         rc, day, hour = getIBReleaseInfo (rel)
         self.webTargetDir = webDir+"/"+os.environ["SCRAM_ARCH"]+"/www/"+day+"/"+rc+"-"+day+"-"+hour+"/"+self.release
+        self.ssh_opt = "-o CheckHostIP=no -o ConnectTimeout=60 -o ConnectionAttempts=5 -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no"
         return
 
     def updateUnitTestLogs(self):
@@ -57,9 +58,15 @@ class LogUpdater():
         destination = os.path.join(self.webTargetDir,'pyRelValPartialLogs') 
         print "\n--> going to copy pyrelval partial matrix logs to", destination, '... \n'
         self.copyLogs(dirToSend, partialSubDir, destination)
-        self.copyLogs("wf.done", '', destination+"/"+dirToSend, True)
+        self.runRemoteCmd("touch "+os.path.join(destination,dirToSend,"wf.done"))
         return
 
+    def relvalAlreadyDone(self, wf):
+        wfDoneFile = "wf.done"
+        destination = os.path.join(self.webTargetDir,'pyRelValPartialLogs',str(wf)+"_*",wfDoneFile)
+        code, out = self.runRemoteCmd ("ls -d "+destination)
+        return ((code == 0) and out.endswith(wfDoneFile))
+   
     def updateAddOnTestsLogs(self):
         print "\n--> going to copy addOn logs to", self.webTargetDir, '... \n'
         self.copyLogs('addOnTests.log' ,'.',self.webTargetDir)
@@ -88,19 +95,29 @@ class LogUpdater():
         self.copyLogs(appType ,'BuildSet',wwwBSDir)
         return
 
-    def copyLogs(self, what, logSubDir, tgtDirIn, stampFile=False):
-        fromFile = os.path.join(self.cmsswBuildDir, logSubDir, what)
-        ssh_opt="-o CheckHostIP=no -o ConnectTimeout=60 -o ConnectionAttempts=5 -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no"
-        cmd ="ssh -Y "+ssh_opt+" "+self.remote+" mkdir -p "+tgtDirIn+"; scp "+ssh_opt+" -r "+fromFile+" "+self.remote+":"+tgtDirIn+"/"
-        if stampFile:
-          cmd = "ssh -Y "+ssh_opt+" "+self.remote+" mkdir -p "+tgtDirIn+"; ssh "+ssh_opt+" touch "+tgtDirIn+"/"+what
+    def copyLogs(self, what, logSubDir, tgtDirIn):
+        runRemoteCmd("mkdir -p "+tgtDirIn)
+        copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what),tgtDirIn+"/")
+
+    def runRemoteCmd(self, cmd):
+        cmd ="ssh -Y "+self.ssh_opt+" "+self.remote+" "+cmd
         try:
             if self.dryRun:
               print "CMD>>",cmd
             else:
-              doCmd(cmd)
+              return doCmd(cmd)
         except Exception, e:
-            print "Ignoring exception during copyLogs:", str(e)
-            pass
-        return
+            print "Ignoring exception during runRemoteCmd:", str(e)
+            return (1,str(e))
+
+    def copy2Remote(self, src, des):
+        cmd ="scp "+self.ssh_opt+" -r "+src+" "+self.remote+":"+des
+        try:
+            if self.dryRun:
+              print "CMD>>",cmd
+            else:
+              return doCmd(cmd)
+        except Exception, e:
+            print "Ignoring exception during copy2Remote:", str(e)
+            return (1,str(e))
 

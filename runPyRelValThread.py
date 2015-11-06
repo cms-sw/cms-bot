@@ -2,7 +2,10 @@
 import os, sys, glob, re, shutil, time, threading, json
 from cmsutils import doCmd
 
-def runThreadMatrix(basedir, workflow, args='', logger=None):
+def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
+  if (not force) and logger and logger.relvalAlreadyDone(workflow):
+    print "Message>> Not ruuning workflow ",workflow," as it is already ran"
+    return
   workdir = os.path.join(basedir, workflow)
   matrixCmd = 'runTheMatrix.py -l ' + workflow +' '+args
   try:
@@ -85,7 +88,7 @@ class PyRelValsThread(object):
     print "runPyRelVal> ERROR during test PyReleaseValidation : could not get output of " + workflowsCmd
     return []
 
-  def run_workflows(self, workflows=[], logger=None):
+  def run_workflows(self, workflows=[], logger=None, force=False):
     if not workflows: return
     workflows = workflows[::-1]
     threads = []
@@ -93,7 +96,7 @@ class PyRelValsThread(object):
       threads = [t for t in threads if t.is_alive()]
       if(len(threads) < self.jobs):
         try:
-          t = threading.Thread(target=runThreadMatrix, args=(self.basedir, workflows.pop(), self.args['rest']+" "+self.args['w'], logger))
+          t = threading.Thread(target=runThreadMatrix, args=(self.basedir, workflows.pop(), self.args['rest']+" "+self.args['w'], logger, force))
           t.start()
           threads.append(t)
         except Exception, e:

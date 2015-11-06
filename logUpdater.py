@@ -96,8 +96,8 @@ class LogUpdater():
         return
 
     def copyLogs(self, what, logSubDir, tgtDirIn):
-        runRemoteCmd("mkdir -p "+tgtDirIn)
-        copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what),tgtDirIn+"/")
+        self.runRemoteCmd("mkdir -p "+tgtDirIn)
+        self.copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what),tgtDirIn+"/")
 
     def runRemoteCmd(self, cmd):
         cmd ="ssh -Y "+self.ssh_opt+" "+self.remote+" "+cmd

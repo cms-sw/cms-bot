@@ -57,6 +57,7 @@ class LogUpdater():
         destination = os.path.join(self.webTargetDir,'pyRelValPartialLogs') 
         print "\n--> going to copy pyrelval partial matrix logs to", destination, '... \n'
         self.copyLogs(dirToSend, partialSubDir, destination)
+        self.copyLogs("wf.done", '', destination+"/"+dirToSend, True)
         return
 
     def updateAddOnTestsLogs(self):
@@ -87,10 +88,12 @@ class LogUpdater():
         self.copyLogs(appType ,'BuildSet',wwwBSDir)
         return
 
-    def copyLogs(self, what, logSubDir, tgtDirIn):
+    def copyLogs(self, what, logSubDir, tgtDirIn, stampFile=False):
         fromFile = os.path.join(self.cmsswBuildDir, logSubDir, what)
         ssh_opt="-o CheckHostIP=no -o ConnectTimeout=60 -o ConnectionAttempts=5 -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no"
         cmd ="ssh -Y "+ssh_opt+" "+self.remote+" mkdir -p "+tgtDirIn+"; scp "+ssh_opt+" -r "+fromFile+" "+self.remote+":"+tgtDirIn+"/"
+        if stampFile:
+          cmd = "ssh -Y "+ssh_opt+" "+self.remote+" mkdir -p "+tgtDirIn+"; ssh "+ssh_opt+" touch "+tgtDirIn+"/"+what
         try:
             if self.dryRun:
               print "CMD>>",cmd

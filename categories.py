@@ -3,7 +3,7 @@ import re
 
 REQUEST_BUILD_RELEASE = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov"  ]
 APPROVE_BUILD_RELEASE = [ "smuzaffar", "degano", "davidlange6" ]
-TRIGGER_PR_TESTS = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov", "lgray", "wmtan", "bsunanda" ]
+TRIGGER_PR_TESTS = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov", "lgray", "wmtan", "bsunanda", "VinInn" ]
 
 COMMON_CATEGORIES = [ "orp", "tests" ]
 EXTERNAL_CATEGORIES = [ "externals" ]

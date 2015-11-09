@@ -30,7 +30,7 @@ def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
     m = logRE.match(logFile)
     if not m : continue
     step = m.group(2)
-    if (step != "1") or (m.group(3) == "dasquery"):
+    if (m.group(3) != "lumiRanges"):
       ret = doCmd ("cp "+logFile+" "+m.group(1)+"/wfstep"+step+".log")
   ret = doCmd("mv "+os.path.join(workdir,"runall-report-step*.log")+" "+os.path.join(outfolder,"workflow.log"))
   ret = doCmd("echo " + str(wftime) +" > " + os.path.join(outfolder,"time.log"))

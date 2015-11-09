@@ -25,6 +25,13 @@ def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
   wfdir     = os.path.join(workdir,outfolders[0])
   ret = doCmd("rm -rf " + outfolder + "; mkdir -p " + outfolder)
   ret = doCmd("find . -mindepth 1 -maxdepth 1 -name '*.xml' -o -name '*.log' -o -name '*.py' -o -name 'cmdLog' -type f | xargs -i mv '{}' "+outfolder+"/", False, wfdir)
+  logRE = re.compile('^(.*)/step([1-9]+)_(.*)\.log$')
+  for logFile in glob.glob(outfolder+"/step*.log"):
+    m = logRE.match(logFile)
+    if not m : continue
+    step = m.group(2)
+    if (step != "1") or (m.group(3) == "dasquery"):
+      ret = doCmd ("cp "+logFile+" "+m.group(1)+"/wfstep"+step+".log")
   ret = doCmd("mv "+os.path.join(workdir,"runall-report-step*.log")+" "+os.path.join(outfolder,"workflow.log"))
   ret = doCmd("echo " + str(wftime) +" > " + os.path.join(outfolder,"time.log"))
   if logger: logger.updateRelValMatrixPartialLogs(basedir, outfolders[0])

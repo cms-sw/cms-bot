@@ -32,7 +32,6 @@ if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
 fi
 
 cd "$WORKSPACE"
-git clone https://github.com/$CMS_GIT_TOOLS_REPO/cms-git-tools
 
 ### this is for triggering the comparison with the baseline
   PULL_REQUEST_NUMBER=$PULL_REQUEST
@@ -44,13 +43,6 @@ UNIT_TESTS_OK=true
 RELVALS_OK=true
 ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
-# Checkout the correct ref
-pushd cms-git-tools
- git checkout $CMS_GIT_TOOLS_REF
-popd
-
-export PATH=$PWD/cms-git-tools:$PATH
-which git-cms-merge-topic
 git config --global user.name "Cms Build"
 git config --global user.github cmsbuild
 git config --global user.email cmsbuild@cern.ch

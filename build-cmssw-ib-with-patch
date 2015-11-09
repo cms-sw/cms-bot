@@ -175,8 +175,8 @@ done
 if [ "X$PACKAGE_NAME" = Xcmssw-patch ]; then
   AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
   for same_tag in $RELEASE_LIST; do
-    if echo $ALL_PREVIOUS_RELEASES | grep $same_tag; then
-      if echo $AVAILABLE_RELEASES | grep $same_tag; then
+    if [ "X`echo $ALL_PREVIOUS_RELEASES | grep $same_tag`" != X ] ; then
+      if [ "X`echo $AVAILABLE_RELEASES | grep $same_tag`" != "X" ] ; then
         echo $same_tag uses the same CMSDIST, PKGTOOLS and CMSSW tag. Not building.
         exit 0
       fi

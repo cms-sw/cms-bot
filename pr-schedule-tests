@@ -17,7 +17,7 @@ fi
 
 PROP_FILE=properties-pr
 if [ "X$CMSDIST_PR" != "X" ] ; then 
-  PROP_FILE=properties-pr-cmsdist
+  PROP_FILE=cmsdist-properties-pr
 fi
 
 for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= | grep SCRAM_ARCH=$ARCHITECTURE_FILTER;`; do

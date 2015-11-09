@@ -10,6 +10,11 @@ TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 
+#Regexp to match the test requests
+REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+cms[-]sw/cmsdist#([0-9]+)|)\s*$", re.I):
+#Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
+CMSDIST_PR_INDEX = 5
+
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
   return s % kwds
@@ -17,7 +22,7 @@ def format(s, **kwds):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests( pr_number, dryRun ):
+def create_properties_file_tests( pr_number, cmsdist_pr, dryRun ):
   out_file_name = 'trigger-tests-%s.properties' % pr_number
   if dryRun:
     print 'Not creating cleanup properties file (dry-run): %s' % out_file_name
@@ -25,6 +30,7 @@ def create_properties_file_tests( pr_number, dryRun ):
     print 'Creating properties file %s' % out_file_name
     out_file = open( out_file_name , 'w' )
     out_file.write( '%s=%s\n' % ( 'PULL_REQUEST_LIST', pr_number ) )
+    out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', cmsdist_pr ) )
     out_file.close()
 
 # Update the milestone for a given issue.
@@ -173,6 +179,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
   external_issue_number=""
   trigger_test_on_signature = True
   has_categories_approval = False
+  cmsdist_pr = ''
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -235,13 +242,16 @@ def process_pr(gh, repo, prId, repository, dryRun):
     if (commenter in TRIGGER_PR_TESTS
         or commenter in releaseManagers
         or commenter in CMSSW_L2.keys()):
-      if re.match("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test\s*$", first_line, re.I):
+      m = REGEX_TEST_REQ.match(first_line)
+      if m:
         print 'Tests requested:', commenter, 'asked to test this PR'
         trigger_test_on_signature = False
+        cmsdist_pr = ''
         if not tests_already_queued:
           print 'cms-bot will request test for this PR'
           tests_requested = True
           comparison_done = False
+          cmsdist_pr = m.group(CMSDIST_PR_INDEX)
           signatures["tests"] = "pending"
         else:
           print 'Tests already request for this PR'
@@ -353,7 +363,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
     if tests_requested:
       if not dryRun:
         pr.create_issue_comment( TRIGERING_TESTS_MSG )
-        create_properties_file_tests( prId, dryRun )
+        create_properties_file_tests( prId, cmsdist_pr, dryRun)
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"
@@ -478,6 +488,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
                         " '-1' in the first line of your reply.\n"
                         "If you are a L2 or a release manager you can ask for"
                         " tests by saying 'please test' or '@cmsbuild, please test'"
+                        " 'please test with cms-sw/cmsdist#PR'"
                         " in the first line of a comment.\n"
                         "%(releaseManagers)s"
                         "%(orpRequired)s"

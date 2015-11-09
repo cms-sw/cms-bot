@@ -303,7 +303,7 @@ def process_pr(gh, repo, prId, repository, dryRun):
   print "The labels of the pull request should be:"
   # Labels coming from signature.
   labels = [x + "-pending" for x in signing_categories]
-
+  if not cmsdist_pr: cmsdist_pr = ''
   for category, value in signatures.items():
     if not category in signing_categories:
       continue

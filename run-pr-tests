@@ -2,7 +2,7 @@
 
 CMSBUILD_KEY="/build/cmsbuild/cmsbuild.keytab"
 case $NODE_NAME in
-  lxplus* ) CMSBUILD_KEY="$WORKSPACE/../../cmsbuild.keytab" ;;
+  lxplus* ) CMSBUILD_KEY="$CMSBUILD_KEYTAB/cmsbuild.keytab" ;;
 esac
 
 function Jenkins_GetCPU ()
@@ -22,7 +22,7 @@ if [ ! X`which aklog` = X ]; then
   aklog
 fi
 if [ ! X`which kinit` = X ]; then
-  kinit cmsbuild@CERN.CH -k -t $CMSBUILD_KEY
+  kinit cmsbuild@CERN.CH -k -t $CMSBUILD_KEY || true
 fi
 
 $WORKSPACE/cms-bot/modify_comment.py -r cms-sw/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/ib-any-integration/${BUILD_NUMBER}/console" $PULL_REQUEST || true

@@ -78,7 +78,7 @@ def modify_comment(comment, match, replace, dryRun):
   return 0
 
 def process_pr(gh, repo, issue, dryRun):
-  if not issue.pull_request: continue
+  if not issue.pull_request: return
   if re.match(BUILD_REL, issue.title): return
   prId = issue.number
   repository = repo.full_name

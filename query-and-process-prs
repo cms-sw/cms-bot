@@ -9,15 +9,14 @@ from process_pr import process_pr
 def check_prs(gh, repo, prId, since, dryRun):
   print "Working on Repository: ",repo.full_name 
   if prId > 0:
-    process_pr(gh, repo, prId, repo.full_name, dryRun)
+    process_pr(gh, repo, repo.get_issue(prId), dryRun)
   else:
     if since:
       issues = repo.get_issues(state="open", sort="updated", since=since)
     else:
       issues = repo.get_issues(state="open", sort="updated")
-    for pr in issues:
-      if not pr.pull_request: continue
-      process_pr(gh, repo, pr.number, repo.full_name, dryRun)
+    for issue in issues:
+      process_pr(gh, repo, issue, dryRun)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-r|--repository <repo>] [-p|--pull-request <pull-request-id>] [-s|--since <sec>] [-n|--dry-run]")

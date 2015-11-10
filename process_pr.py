@@ -2,6 +2,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
+from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 import yaml
 import re
 from sys import exit
@@ -76,7 +77,11 @@ def modify_comment(comment, match, replace, dryRun):
       print "Message updated"
   return 0
 
-def process_pr(gh, repo, prId, repository, dryRun):
+def process_pr(gh, repo, issue, dryRun):
+  if not issue.pull_request: continue
+  if re.match(BUILD_REL, issue.title): return
+  prId = issue.number
+  repository = repo.full_name
   print "Working on ",repo.full_name," for PR ",prId
   external_issue_repo_name = "cms-sw/cmsdist"
   cmssw_repo = False
@@ -147,7 +152,6 @@ def process_pr(gh, repo, prId, repository, dryRun):
   watchers = set(["@" + u for u in watchers])
   print "Watchers " + ", ".join(watchers)
 
-  issue = repo.get_issue(prId)
   updateMilestone(repo, issue, pr, dryRun)
 
   # Process the issue comments

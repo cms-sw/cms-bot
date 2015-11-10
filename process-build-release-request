@@ -3,6 +3,7 @@ from optparse import OptionParser
 from github import Github
 from os.path import expanduser
 from categories import REQUEST_BUILD_RELEASE,CMSSW_L1,APPROVE_BUILD_RELEASE
+from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 from commands import getstatusoutput
 import re
 import json
@@ -27,10 +28,6 @@ except Exception, e :
 # Global Variables
 # --------------------------------------------------------------------------------
 
-GH_CMSSW_ORGANIZATION = 'cms-sw'
-GH_CMSSW_REPO = 'cmssw'
-GH_CMSDIST_REPO = 'cmsdist'
-BUILD_REL = '^[Bb]uild[ ]+(CMSSW_[^ ]+)'
 NOT_AUTHORIZED_MSG = 'You are not authorized to request the build of a release.'
 CONFIG_MAP_FILE = 'config.map'
 NO_ARCHS_FOUND_MSG = 'No architecures to build found for {rel_name}. Please check that you entered a ' \

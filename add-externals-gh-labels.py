@@ -2,7 +2,7 @@
 from github import Github
 from os.path import expanduser
 from githublabels import LABEL_TYPES, COMMON_LABELS
-from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSSW_CATEGORIES
+from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
 
 def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
   repos = []
@@ -28,11 +28,12 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
 
 if __name__ == "__main__":
   from optparse import OptionParser
-  parser = OptionParser(usage="%prog [-n|--dry-run] [-e|--externals] [-c|--cmssw] [-a|--all]")
-  parser.add_option("-n", "--dry-run", dest="dryRun", action="store_true", help="Do not modify Github", default=False)
+  parser = OptionParser(usage="%prog [-n|--dry-run] [-e|--externals] [-c|--cmssw]  [-d|--cmsdist] [-a|--all]")
+  parser.add_option("-n", "--dry-run",   dest="dryRun",    action="store_true", help="Do not modify Github", default=False)
   parser.add_option("-e", "--externals", dest="externals", action="store_true", help="Only process CMS externals repositories", default=False)
-  parser.add_option("-c", "--cmssw", dest="cmssw", action="store_true", help="Only process "+",".join(CMSSW_REPOS)+" repository", default=False)
-  parser.add_option("-a", "--all", dest="all", action="store_true", help="Process all CMS repository i.e. externals, cmsdist and cmssw", default=False)
+  parser.add_option("-c", "--cmssw",     dest="cmssw",     action="store_true", help="Only process "+",".join(CMSSW_REPOS)+" repository", default=False)
+  parser.add_option("-d", "--cmsdist",   dest="cmsdist",   action="store_true", help="Only process "+",".join(CMSDIST_REPOS)+" repository", default=False)
+  parser.add_option("-a", "--all",       dest="all",       action="store_true", help="Process all CMS repository i.e. externals, cmsdist and cmssw", default=False)
   opts, args = parser.parse_args()
 
   if opts.all:
@@ -52,10 +53,18 @@ if __name__ == "__main__":
       setRepoLabels (gh, repo_name, all_labels, opts.dryRun)
 
   if opts.cmssw:
-    all_labels = COMMON_LABELS
+    all_labels = COMMON_LABELS + COMPARISON_LABELS
     for cat in COMMON_CATEGORIES+CMSSW_CATEGORIES.keys():
       for lab in LABEL_TYPES:
         all_labels[cat+"-"+lab]=LABEL_TYPES[lab]
     for repo_name in CMSSW_REPOS:
+      setRepoLabels (gh, repo_name, all_labels, opts.dryRun)
+
+  if opts.cmsdist:
+    all_labels = COMMON_LABELS
+    for cat in COMMON_CATEGORIES+CMSSW_CATEGORIES.keys():
+      for lab in LABEL_TYPES:
+        all_labels[cat+"-"+lab]=LABEL_TYPES[lab]
+    for repo_name in CMSDIST_REPOS:
       setRepoLabels (gh, repo_name, all_labels, opts.dryRun)
 

@@ -6,8 +6,13 @@ LABEL_TYPES = {
 }
 
 COMMON_LABELS = {
-  "test-started": "eb6420",
-  "fully-signed": "009800",
-  "pending-signatures": "eb6420",
+  "test-started": LABEL_TYPES["hold"],
+  "fully-signed": LABEL_TYPES["approved"],
+  "pending-signatures": LABEL_TYPES["hold"],
+}
+
+COMPARISON_LABELS = {
+  "comparison-available" : LABEL_TYPES["approved"],
+  "comparison-pending" : LABEL_TYPES["pending"],
 }
 

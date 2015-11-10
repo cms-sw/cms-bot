@@ -8,6 +8,9 @@ TRIGGER_PR_TESTS = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratn
 COMMON_CATEGORIES = [ "orp", "tests" ]
 EXTERNAL_CATEGORIES = [ "externals" ]
 EXTERNAL_REPOS = [ "cms-data", "cms-externals", "cms-sw/root", "cms-sw/cmssw-config","cms-sw/SCRAM","cms-sw/cms-git-tools","cms-sw/apt-rpm" ]
+CMSSW_REPOS = [ "cms-sw/cmssw" ]
+CMSDIST_REPOS = [ "cms-sw/cmsdist" ]
+
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],

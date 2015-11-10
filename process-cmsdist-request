@@ -123,7 +123,7 @@ def remove_labels( issue ):
 IS_CMSDIST_RE="IB/(CMSSW[^/]*)/[^/]+$"
 
 if __name__ == "__main__":
-  parser = OptionParser(usage="%prog <pull-request-id>")
+  parser = OptionParser(usage="%prog [-n|--dry-run] <pull-request-id>")
   parser.add_option("-n", "--dry-run", dest="dryRun", action="store_true", help="Do not modify Github", default=False)
   opts, args = parser.parse_args()
 

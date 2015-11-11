@@ -5,14 +5,19 @@ from releases import DEVEL_RELEASE_CYCLE
 from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 import yaml
 import re
-from sys import exit
+from sys import exit, argv
+from os.path import abspath, dirname, join
+try:
+  SCRIPT_DIR = dirname(abspath(__file__))
+except Exception, e :
+  SCRIPT_DIR = dirname(abspath(argv[0]))
 
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
-
+CMSDIST_REPO_NAME = GH_CMSSW_ORGANIZATION+"/"+GH_CMSDIST_REPO
 #Regexp to match the test requests
-REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+cms[-]sw/cmsdist#([0-9]+)|)\s*$", re.I)
+REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+"+CMSDIST_REPO_NAME+"#([0-9]+)|)\s*$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
 CMSDIST_PR_INDEX = 5
 
@@ -77,15 +82,25 @@ def modify_comment(comment, match, replace, dryRun):
       print "Message updated"
   return 0
 
-def process_pr(gh, repo, issue, dryRun):
+def get_assign_categories(line):
+  m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s]+)\s*$", line, re.I)
+  if m:
+    assgin_type = m.group(1)
+    new_cats = []
+    for ex_cat in m.group(2).replace(" ","").split(","):
+      if (not ex_cat in CMSSW_CATEGORIES): return ('', [])
+      new_cats.append(ex_cat)
+    return (assgin_type.strip(), new_cats)
+  return ('', [])
+
+def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if not issue.pull_request: return
   if re.match(BUILD_REL, issue.title): return
   prId = issue.number
   repository = repo.full_name
   print "Working on ",repo.full_name," for PR ",prId
-  external_issue_repo_name = "cms-sw/cmsdist"
   cmssw_repo = False
-  if repository == "cms-sw/cmssw": cmssw_repo = True
+  if repository.endswith("/"+GH_CMSSW_REPO): cmssw_repo = True
   try:
     pr   = repo.get_pull(prId)
   except:
@@ -102,7 +117,7 @@ def process_pr(gh, repo, issue, dryRun):
   else:
     add_external_category = True
     packages = set (["externals/"+repository])
-    if repository != external_issue_repo_name: create_external_issue = True
+    if repository != CMSDIST_REPO_NAME: create_external_issue = True
 
   print "Following packages affected:"
   print "\n".join(packages)
@@ -119,6 +134,11 @@ def process_pr(gh, repo, issue, dryRun):
   if (not cmssw_repo) or (pr.base.ref in RELEASE_BRANCH_PRODUCTION):
     print "This pull request requires ORP approval"
     signing_categories.add("orp")
+    for l1 in CMSSW_L1:
+      if not l1 in CMSSW_L2:
+        CMSSW_L2[l1]=[]
+      if not "orp" in CMSSW_L2[l1]:
+        CMSSW_L2[l1].append("orp")
 
   print "Following categories affected:"
   print "\n".join(signing_categories)
@@ -135,7 +155,7 @@ def process_pr(gh, repo, issue, dryRun):
       signing_categories.add("new-package")
 
   # Add watchers.yaml information to the WATCHERS dict.
-  WATCHERS = (yaml.load(file("watchers.yaml")))
+  WATCHERS = (yaml.load(file(join(SCRIPT_DIR, "watchers.yaml"))))
   # Given the packages check if there are additional developers watching one or more.
   author = pr.user.login
   watchers = set([user for package in packages
@@ -143,7 +163,7 @@ def process_pr(gh, repo, issue, dryRun):
                        for regexp in watched_regexp
                        if re.match("^" + regexp + ".*", package) and user != author])
   # Handle watchers
-  watchingGroups = yaml.load(file("groups.yaml"))
+  watchingGroups = yaml.load(file(join(SCRIPT_DIR, "groups.yaml")))
   for watcher in [x for x in watchers]:
     if not watcher in watchingGroups:
       continue
@@ -167,7 +187,6 @@ def process_pr(gh, repo, issue, dryRun):
   last_commit_date = last_commit.committer.date
   print "Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date
   print "Latest commit message: ",last_commit.message.encode("ascii", "ignore")
-  is_hold = False
   already_seen = False
   pull_request_updated = False
   comparison_done = False
@@ -178,28 +197,51 @@ def process_pr(gh, repo, issue, dryRun):
   mustMerge = False
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     mustClose = True
-  requiresL1 = False
   releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])
   external_issue_number=""
   trigger_test_on_signature = True
   has_categories_approval = False
   cmsdist_pr = ''
+  assign_cats = {}
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
-    # Check special cmsbuild messages:
+    # Check special cmsbuild_user messages:
     # - Check we did not announce the pull request already
     # - Check we did not announce changes already
     comment_msg = comment.body.encode("ascii", "ignore")
-    if commenter == "cmsbuild":
-      if re.match("A new Pull Request was created by", comment_msg):
-        already_seen = True
-        pull_request_updated = False
-        if create_external_issue:
-          external_issue_number=comment_msg.split("external issue "+external_issue_repo_name+"#",2)[-1].split("\n")[0]
-          if not re.match("^[1-9][0-9]*$",external_issue_number):
-            print "ERROR: Unknow external issue PR format:",external_issue_number
-            external_issue_number=""
+
+    # The first line is an invariant.
+    first_line = comment_msg.split("\n",1)[0].strip()
+
+    if (commenter == cmsbuild_user) and re.match("A new Pull Request was created by", first_line):
+      already_seen = True
+      pull_request_updated = False
+      if create_external_issue:
+        external_issue_number=comment_msg.split("external issue "+CMSDIST_REPO_NAME+"#",2)[-1].split("\n")[0]
+        if not re.match("^[1-9][0-9]*$",external_issue_number):
+          print "ERROR: Unknow external issue PR format:",external_issue_number
+          external_issue_number=""
+      continue
+
+    if (commenter in CMSSW_L2) and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
+      assign_type, new_cats = get_assign_categories(first_line)
+      if new_cats:
+        if assign_type == "assign":
+          for ex_cat in new_cats:
+            if not ex_cat in signing_categories:
+              assign_cats[ex_cat] = 0
+              signing_categories.add(ex_cat)
+        elif assign_type == "unassign":
+          for ex_cat in new_cats:
+            if ex_cat in assign_cats:
+              assign_cats.pop(ex_cat)
+              signing_categories.remove(ex_cat)
+        elif (assign_type == "New categories assigned:") and (commenter == cmsbuild_user):
+          for ex_cat in new_cats:
+            if ex_cat in assign_cats:
+              assign_cats[ex_cat] = 1
+        continue
 
     # Ignore all other messages which are before last commit.
     if comment_date < last_commit_date:
@@ -207,15 +249,8 @@ def process_pr(gh, repo, issue, dryRun):
       pull_request_updated = True
       continue
 
-    # The first line is an invariant.
-    first_line = ""
-    for l in comment_msg.split("\n"):
-      if re.match("^[\n\t\r ]*$",l): continue
-      first_line = l.strip("\n\t\r ")
-      break
-
-    # Check for cmsbuild comments
-    if commenter == "cmsbuild":
+    # Check for cmsbuild_user comments
+    if commenter == cmsbuild_user:
       if re.match("Comparison is ready", first_line):
         comparison_done = True
         trigger_test_on_signature = False
@@ -242,9 +277,15 @@ def process_pr(gh, repo, issue, dryRun):
         print 'Previous tests already finished, resetting test request state to ',signatures["tests"]
       continue
 
+    # Check if the release manager asked for merging this.
+    if commenter in releaseManagers:
+      if re.match("^\s*(merge)\s*$", first_line, re.I):
+        mustMerge = True
+        mustClose = False
+        continue
+
     # Check if the someone asked to trigger the tests
     if (commenter in TRIGGER_PR_TESTS
-        or commenter in releaseManagers
         or commenter in CMSSW_L2.keys()):
       m = REGEX_TEST_REQ.match(first_line)
       if m:
@@ -256,35 +297,11 @@ def process_pr(gh, repo, issue, dryRun):
           tests_requested = True
           comparison_done = False
           cmsdist_pr = m.group(CMSDIST_PR_INDEX)
+          if not cmsdist_pr: cmsdist_pr = ''
           signatures["tests"] = "pending"
         else:
           print 'Tests already request for this PR'
         continue
-
-    # Check actions made by L1.
-    # L1 signatures are only relevant for closed releases where
-    # we have a orp signature requested.
-    # Approving a pull request, sign it.
-    # Rejecting a pull request, will also close it.
-    # Use "reopen" to open a closed pull request.
-    if commenter in CMSSW_L1:
-      requiresL1 = True
-      if not "orp" in signing_categories:
-        requiresL1 = False
-      elif re.match("^([+]1|approve[d]?)$", first_line, re.I):
-        signatures["orp"] = "approved"
-        mustClose = False
-      elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
-        signatures["orp"] = "rejected"
-        mustClose = True
-      elif re.match("reopen", first_line, re.I):
-        signatures["orp"] = "pending"
-        mustClose = False
-
-    # Check if the release manager asked for merging this.
-    if commenter in releaseManagers:
-      if re.match("merge", first_line, re.I):
-        mustMerge = True
 
     # Check L2 signoff for users in this PR signing categories
     if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
@@ -292,38 +309,49 @@ def process_pr(gh, repo, issue, dryRun):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "approved"
           has_categories_approval = True
+          if sign == "orp": mustClose = False
       elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
         for sign in CMSSW_L2[commenter]:
           signatures[sign] = "rejected"
           has_categories_approval = False
-
-    # Some of the special users can say "hold" prevent automatic merging of
-    # fully signed PRs.
-    if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
-      if re.match("^hold$", first_line, re.I):
-        is_hold = True
-        blocker = commenter
-
-  print "The labels of the pull request should be:"
-  # Labels coming from signature.
-  labels = [x + "-pending" for x in signing_categories]
-  if not cmsdist_pr: cmsdist_pr = ''
-  for category, value in signatures.items():
-    if not category in signing_categories:
+          if sign == "orp": mustClose = True
+      elif re.match("^(hold)$", first_line, re.I):
+        for sign in CMSSW_L2[commenter]:
+          signatures[sign] = "hold"
+          has_categories_approval = False
+          if sign == "orp": mustClose = False
+      elif re.match("^(reopen)$", first_line, re.I):
+        if "orp" in CMSSW_L2[commenter]:
+          signatures["orp"] = "pending"
+          mustClose = False
+      elif re.match("^\s*(merge)\s*$", first_line, re.I):
+        if "orp" in CMSSW_L2[commenter]:
+          signatures["orp"] = "approved"
+          mustClose = False
+          mustMerge = True
       continue
-    labels = [l for l in labels if not l.startswith(category+"-")]
-    if value == "approved":
-      labels.append(category + "-approved")
-    elif value == "rejected":
-      labels.append(category + "-rejected")
-    elif value == "started":
-       labels.append(category + "-started")
-    else:
-      labels.append(category + "-pending")
 
-  # Additional labels.
-  if is_hold:
-    labels.append("hold")
+  is_hold = False
+  blocker = []
+  for cat in signatures:
+    if signatures[cat] == "hold":
+      is_hold = True
+      blocker.append(cat)
+
+  new_assign_cats = []
+  for ex_cat in assign_cats:
+    if assign_cats[ex_cat]==1: continue
+    new_assign_cats.append(ex_cat)
+
+  print "All assigned cats:",",".join(assign_cats.keys())
+  print "Newly assigned cats:",",".join(new_assign_cats)
+
+  # Labels coming from signature.
+  labels = []
+  for cat in signing_categories:
+    l = cat+"-pending"
+    if cat in signatures: l = cat+"-"+signatures[cat]
+    labels.append(l)
 
   if cmssw_repo:
     if comparison_done:
@@ -331,16 +359,15 @@ def process_pr(gh, repo, issue, dryRun):
     else:
       labels.append("comparison-pending")
 
-  print "\n".join(labels)
+  print "The labels of the pull request should be:\n"+"\n  ".join(labels)
 
   # Now updated the labels.
   missingApprovals = [x
                       for x in labels
-                      if not x.endswith("-approved")
+                      if     not x.endswith("-approved")
                          and not x.startswith("orp")
                          and not x.startswith("tests")
-                         and not x.startswith("comparison")
-                         and not x == "hold"]
+                         and not x.startswith("comparison")]
 
   if not missingApprovals:
     print "The pull request is complete."
@@ -351,13 +378,11 @@ def process_pr(gh, repo, issue, dryRun):
   labels = set(labels)
 
   # We update labels only if they are different.
-  SUPER_USERS = (yaml.load(file("super-users.yaml")))
   old_labels = set([x.name for x in issue.labels])
+
+  # get release managers
+  SUPER_USERS = (yaml.load(file(join(SCRIPT_DIR, "super-users.yaml"))))
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
-  releaseManagersMsg = ""
-  if releaseManagers:
-    releaseManagersMsg = format("%(rm)s can you please take care of it?",
-                                 rm=releaseManagersList)
 
   #For now, only trigger tests for cms-sw/cmssw
   if cmssw_repo:
@@ -366,8 +391,17 @@ def process_pr(gh, repo, issue, dryRun):
       tests_requested = True
     if tests_requested:
       if not dryRun:
-        pr.create_issue_comment( TRIGERING_TESTS_MSG )
+        test_msg = TRIGERING_TESTS_MSG
+        if cmsdist_pr: test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
+        pr.create_issue_comment( test_msg )
         create_properties_file_tests( prId, cmsdist_pr, dryRun)
+    if new_assign_cats and not dryRun:
+      new_l2s = ["@" + name
+                 for name, l2_categories in CMSSW_L2.items()
+                 for signature in new_assign_cats
+                 if signature in l2_categories]
+      new_l2s = []
+      pr.create_issue_comment("New categories assigned: "+",".join(new_assign_cats)+"\n\n"+",".join(new_l2s)+" you have been requested to review this Pull request and eventually sign? Thanks")
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"
@@ -377,27 +411,24 @@ def process_pr(gh, repo, issue, dryRun):
     requiresTestMessage = " (but tests are reportedly failing)"
 
   autoMergeMsg = ""
-  if all(["fully-signed"     in labels,
-          not "hold"         in labels,
-          not "orp-rejected" in labels,
-          not "orp-pending"  in labels,
-          "tests-approved"   in labels]):
+  if (("fully-signed" in labels) and ("tests-approved" in labels) and
+      ((not "orp" in signatures) or (signatures["orp"] == "approved"))):
     autoMergeMsg = "This pull request will be automatically merged."
   else:
-    if "orp-pending" in labels or "orp-rejected" in labels:
-      autoMergeMsg = format("This pull request requires discussion in the"
-                            " ORP meeting before it's merged. %(managers)s",
-                            managers=releaseManagersList)
+    if is_hold:
+      autoMergeMsg = format("This PR is put on hold by %(blocker)s. They have"
+                          " to approve to remove the hold state or"
+                          " %(managers)s will have to merge it by"
+                          " hand.",
+                          blocker=",".join(blocker),
+                          managers=releaseManagersList)
     elif "new-package-pending" in labels:
       autoMergeMsg = format("This pull request requires a new package and "
                             " will not be merged. %(managers)s",
                             managers=releaseManagersList)
-    elif "hold" in labels:
-      autoMergeMsg = format("This PR is put on hold by @%(blocker)s. He / she"
-                            " will have to remove the `hold` comment or"
-                            " %(managers)s will have to merge it by"
-                            " hand.",
-                            blocker=blocker,
+    elif ("orp" in signatures) and (signatures["orp"] != "approved"):
+      autoMergeMsg = format("This pull request requires discussion in the"
+                            " ORP meeting before it's merged. %(managers)s",
                             managers=releaseManagersList)
 
   devReleaseRelVal = ""
@@ -423,6 +454,7 @@ def process_pr(gh, repo, issue, dryRun):
       pass
     elif all(["fully-signed" in labels,
             not "orp-approved" in labels,
+            not "orp-hold" in labels,
             not "orp-pending" in labels]):
       pr.create_issue_comment(messageFullySigned)
     elif "fully-signed" in labels and "orp-approved" in labels:
@@ -455,13 +487,6 @@ def process_pr(gh, repo, issue, dryRun):
                                 " comment.",
                                 managers = managers)
 
-  # Construct message for ORP approval
-  orpRequiredMsg = ""
-  if requiresL1:
-    orpRequiredMsg = format("\nThis pull requests was done for a production"
-                            " branch and will require explicit ORP approval"
-                            " on friday or L1 override.")
-
   # Add a Warning if the pull request was done against a patch branch
   if cmssw_repo:
     warning_msg = ''
@@ -485,17 +510,17 @@ def process_pr(gh, repo, issue, dryRun):
                         "%(new_package_message)s\n"
                         "%(l2s)s can you please review it and eventually sign?"
                         " Thanks.\n"
-                        "%(watchers)s"
-                        "You can sign-off by replying to this message having"
-                        " '+1' in the first line of your reply.\n"
-                        "You can reject by replying  to this message having"
-                        " '-1' in the first line of your reply.\n"
-                        "If you are a L2 or a release manager you can ask for"
-                        " tests by saying 'please test' or '@cmsbuild, please test'"
-                        " 'please test with cms-sw/cmsdist#PR'"
-                        " in the first line of a comment.\n"
+                        "%(watchers)s\n"
+                        "Following commands in first line of a comment are recognized\n\n"
+                        "* **+1|approve[d]|sign[ed]**: L1/L2's to approve it\n"
+                        "* **-1|reject[ed]**: L1/L2's to reject it\n"
+                        "* **assign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to request signatures from other categories\n"
+                        "* **unassign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to remove signatures from other categories\n"
+                        "* **hold**: L1/L2's to mark it as on hold\n"
+                        "* **merge**: L1 to merge this request\n"
+                        "* **[@cmsbuild,] please test**: L1/L2 and selected users to start jenkins tests\n"
+                        "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist\n\n",
                         "%(releaseManagers)s"
-                        "%(orpRequired)s"
                         "\n%(patch_branch_warning)s",
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
@@ -506,7 +531,6 @@ def process_pr(gh, repo, issue, dryRun):
                         new_package_message=new_package_message,
                         watchers=watchersMsg,
                         releaseManagers=releaseManagersMsg,
-                        orpRequired=orpRequiredMsg,
                         patch_branch_warning=warning_msg)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
@@ -517,10 +541,10 @@ def process_pr(gh, repo, issue, dryRun):
     if create_external_issue:
       if not already_seen:
         if dryRun:
-          print "Should create a new issue in ",external_issue_repo_name," for this PR"
+          print "Should create a new issue in ",CMSDIST_REPO_NAME," for this PR"
         else:
           external_managers = ["@" + name for name, l2_categories in CMSSW_L2.items() if "externals" in l2_categories]
-          cmsdist_repo  = gh.get_repo(external_issue_repo_name)
+          cmsdist_repo  = gh.get_repo(CMSDIST_REPO_NAME)
           cmsdist_title = format("%(repo)s#%(pr)s: %(title)s",
                                  title=pr.title.encode("ascii", "ignore"),
                                  repo=repository,
@@ -537,12 +561,12 @@ def process_pr(gh, repo, issue, dryRun):
                                 pr=pr.number)
           cissue = cmsdist_repo.create_issue(cmsdist_title, cmsdist_body)
           external_issue_number = str(cissue.number)
-          print "Created a new issue ",external_issue_repo_name,"#",external_issue_number
+          print "Created a new issue ",CMSDIST_REPO_NAME,"#",external_issue_number
       if pull_request_updated and external_issue_number:
         if dryRun:
-          print "Should add an update message for issue ",external_issue_repo_name,"#",external_issue_number
+          print "Should add an update message for issue ",CMSDIST_REPO_NAME,"#",external_issue_number
         else:
-          cmsdist_repo  = gh.get_repo(external_issue_repo_name)
+          cmsdist_repo  = gh.get_repo(CMSDIST_REPO_NAME)
           cissue = cmsdist_repo.get_issue(int(external_issue_number))
           cmsdist_body = format("Pull request %(repo)s#%(pr)s was updated.\n"
                                 "Latest update by %(name)s with commit message\n%(message)s",
@@ -553,7 +577,7 @@ def process_pr(gh, repo, issue, dryRun):
           cissue.create_comment(cmsdist_body)
     cmsdist_issue = ""
     if external_issue_number:
-      cmsdist_issue="\n\nexternal issue "+external_issue_repo_name+"#"+external_issue_number
+      cmsdist_issue="\n\nexternal issue "+CMSDIST_REPO_NAME+"#"+external_issue_number
 
     messageNewPR = format("A new Pull Request was created by @%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"

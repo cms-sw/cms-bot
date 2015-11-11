@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from github import Github
 from os.path import expanduser
-from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS
+from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
 
 def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
@@ -57,6 +57,8 @@ if __name__ == "__main__":
   if opts.cmssw:
     all_labels = COMMON_LABELS
     for lab in COMPARISON_LABELS:
+      all_labels[lab] = COMPARISON_LABELS[lab]
+    for lab in CMSSW_BUILD_LABELS:
       all_labels[lab] = COMPARISON_LABELS[lab]
     for cat in COMMON_CATEGORIES+CMSSW_CATEGORIES.keys():
       for lab in LABEL_TYPES:

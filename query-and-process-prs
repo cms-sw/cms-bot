@@ -6,6 +6,7 @@ from categories import EXTERNAL_REPOS
 from datetime import datetime, timedelta
 from process_pr import process_pr
 
+IGNORE_PRS = [12368]
 def check_prs(gh, repo, prId, since, dryRun):
   print "Working on Repository: ",repo.full_name 
   if prId > 0:
@@ -16,6 +17,9 @@ def check_prs(gh, repo, prId, since, dryRun):
     else:
       issues = repo.get_issues(state="open", sort="updated")
     for issue in issues:
+      if issue.number in IGNORE_PRS:
+        print "Explicitly ignored PR/Issue:",issue.number
+        continue
       process_pr(gh, repo, issue, dryRun)
 
 if __name__ == "__main__":

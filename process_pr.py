@@ -359,7 +359,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     else:
       labels.append("comparison-pending")
 
-  print "The labels of the pull request should be:\n"+"\n  ".join(labels)
+  print "The labels of the pull request should be:\n  "+"\n  ".join(labels)
 
   # Now updated the labels.
   missingApprovals = [x
@@ -519,7 +519,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "* **hold**: L1/L2's to mark it as on hold\n"
                         "* **merge**: L1 to merge this request\n"
                         "* **[@cmsbuild,] please test**: L1/L2 and selected users to start jenkins tests\n"
-                        "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist\n\n",
+                        "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist\n\n"
                         "%(releaseManagers)s"
                         "\n%(patch_branch_warning)s",
                         user=pr.user.login,

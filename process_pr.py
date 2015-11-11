@@ -504,7 +504,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     # We do not want to spam people for the old pull requests.
     messageNewPR = format("A new Pull Request was created by @%(user)s"
                         " %(name)s for %(branch)s.\n\n"
-                        "%(title)s\n\n"
                         "It involves the following packages:\n\n"
                         "%(packages)s\n\n"
                         "%(new_package_message)s\n"

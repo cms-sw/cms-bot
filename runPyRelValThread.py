@@ -50,6 +50,7 @@ def find_argv(args, arg):
   return (args, fullval, val)
 
 def splitWorkflows(workflows, max_wf_pre_set):
+  avg_t = sum ([ x[1] for x in workflows ] ) / len(workflows)
   wf_max = len(workflows)
   wf_pre_set = wf_max
   wf_sets = 1
@@ -61,9 +62,16 @@ def splitWorkflows(workflows, max_wf_pre_set):
   merged = []
   for i in range (1, wf_sets):
     wf_count = len(workflows)
-    merged.append(workflows[0:long_wf]+workflows[-short_wf:])
-    workflows = workflows[long_wf:wf_count-short_wf]
-  merged.append(workflows)
+    sub_set=workflows[0:long_wf]+workflows[-short_wf:]
+    new_avg = sum([ x[1] for x in sub_set])/len(sub_set)
+    new_index=0
+    while new_avg > avg_t:
+       new_index+=1
+       sub_set=workflows[0:long_wf-new_index]+workflows[-short_wf-new_index:]
+       new_avg= sum([ x[1] for x in sub_set ])/len(sub_set)
+    merged.append(','.join([x[0] for x in sub_set]))
+    workflows = workflows[long_wf-new_index:wf_count-short_wf-new_index]
+  merged.append(','.join([x[0] for x in workflows]))
   return merged
 
 class PyRelValsThread(object):

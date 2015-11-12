@@ -481,10 +481,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
   releaseManagersMsg = ""
   if releaseManagers:
-    releaseManagersMsg = format("%(managers)s you are the release manager for"
-                                " this.\nYou can merge this pull request by"
-                                " typing 'merge' in the first line of your"
-                                " comment.",
+    releaseManagersMsg = format("%(managers)s you are the release manager for this.\n",
                                 managers = managers)
 
   # Add a Warning if the pull request was done against a patch branch
@@ -497,7 +494,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       warning_msg = format("Note that this branch is designed for requested bug "
                          "fixes specific to the %(base_rel)s release.\nIf you "
                          "wish to make a pull request for the %(base_branch)s "
-                         "release cycle, please use the %(base_branch)s branch instead",
+                         "release cycle, please use the %(base_branch)s branch instead\n",
                          base_rel=base_release,
                          base_branch=base_release_branch)
 
@@ -509,18 +506,18 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "%(new_package_message)s\n"
                         "%(l2s)s can you please review it and eventually sign?"
                         " Thanks.\n"
-                        "%(watchers)s\n"
+                        "%(watchers)s"
+                        "%(releaseManagers)s"
+                        "%(patch_branch_warning)s\n"
                         "Following commands in first line of a comment are recognized\n\n"
                         "* **+1|approve[d]|sign[ed]**: L1/L2's to approve it\n"
                         "* **-1|reject[ed]**: L1/L2's to reject it\n"
                         "* **assign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to request signatures from other categories\n"
                         "* **unassign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to remove signatures from other categories\n"
                         "* **hold**: L1/L2's to mark it as on hold\n"
-                        "* **merge**: L1 to merge this request\n"
+                        "* **merge**: L1/release managers to merge this request\n"
                         "* **[@cmsbuild,] please test**: L1/L2 and selected users to start jenkins tests\n"
-                        "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist\n\n"
-                        "%(releaseManagers)s"
-                        "\n%(patch_branch_warning)s",
+                        "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist",
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,

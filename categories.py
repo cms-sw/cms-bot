@@ -196,6 +196,8 @@ CMSSW_CATEGORIES={
    "DataFormats/BeamSpot", "DataFormats/CSCRecHit",
    "DataFormats/CaloRecHit",
    "DataFormats/CaloTowers", "DataFormats/CastorReco",
+   "DataFormats/PatCandidates",
+   "PhysicsTools/PatAlgos",
    "RecoLocalCalo/CaloRecCandCreator",
    "RecoLocalCalo/CaloTowersCreator",
    "RecoLocalCalo/Castor",

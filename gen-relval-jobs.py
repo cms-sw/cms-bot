@@ -22,8 +22,9 @@ if exists(RelValtimes):
       for wf in json_data["avg"][str(tm)]:
         if wf in workflows: owf.append([wf,tm])
   uwf = []
+  owfs = [ x[0] for x in owf ]
   for wf in workflows:
-    if not wf in owf: uwf.append([wf,max_tm])
+    if not wf in owfs: uwf.append([wf,max_tm])
   workflows = uwf + owf
 if workflows:
   workflows = splitWorkflows(workflows, 100)

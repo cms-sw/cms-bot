@@ -829,7 +829,9 @@ def find_hlt_tests_results( comparisons ):
 def find_one_static_check( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
   out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
   if ret_code == 0:
     print 'found'
     return architecture

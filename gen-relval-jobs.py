@@ -14,14 +14,18 @@ matrix =  PyRelValsThread(1,environ["CMSSW_BASE"])
 workflows = matrix.getWorkFlows(relval_args)
 if exists(RelValtimes):
   owf = []
+  max_tm=0
   with open(RelValtimes) as json_file:
     json_data = json.load(json_file)
-    for tm in sorted(json_data["avg"],key=int, reverse=True):
-      for wf in json_data["avg"][str(tm)]:
-        if wf in workflows: owf.append(wf)
+    for tm_str in sorted(json_data["avg"],key=int, reverse=True):
+      tm=int(tm_str)
+      if tm > max_tm : max_tm=tm
+      for wf in json_data["avg"][tm_str]:
+        if wf in workflows: owf.append([wf,tm])
   uwf = []
+  owfs = [ x[0] for x in owf ]
   for wf in workflows:
-    if not wf in owf: uwf.append(wf)
+    if not wf in owfs: uwf.append([wf,max_tm])
   workflows = uwf + owf
 if workflows:
   workflows = splitWorkflows(workflows, 100)

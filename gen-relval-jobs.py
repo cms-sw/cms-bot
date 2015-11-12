@@ -17,9 +17,10 @@ if exists(RelValtimes):
   max_tm=0
   with open(RelValtimes) as json_file:
     json_data = json.load(json_file)
-    for tm in sorted(json_data["avg"],key=int, reverse=True):
+    for tm_str in sorted(json_data["avg"],key=int, reverse=True):
+      tm=int(tm_str)
       if tm > max_tm : max_tm=tm
-      for wf in json_data["avg"][str(tm)]:
+      for wf in json_data["avg"][tm_str]:
         if wf in workflows: owf.append([wf,tm])
   uwf = []
   owfs = [ x[0] for x in owf ]

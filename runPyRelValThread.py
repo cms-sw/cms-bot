@@ -69,9 +69,9 @@ def splitWorkflows(workflows, max_wf_pre_set):
        new_index+=1
        sub_set=workflows[0:long_wf-new_index]+workflows[-short_wf-new_index:]
        new_avg= sum([ x[1] for x in sub_set ])/len(sub_set)
-    merged.append(','.join([x[0] for x in sub_set]))
+    merged.append([x[0] for x in sub_set])
     workflows = workflows[long_wf-new_index:wf_count-short_wf-new_index]
-  merged.append(','.join([x[0] for x in workflows]))
+  merged.append([x[0] for x in workflows])
   return merged
 
 class PyRelValsThread(object):

@@ -1062,6 +1062,7 @@ CMSSW_CATEGORIES={
    "CondFormats/EcalCorrections",
    "CondFormats/EcalObjects",
    "CondFormats/MFObjects",
+   "Alignment/APEEstimation",
    "Alignment/CocoaAnalysis",
    "Alignment/CocoaApplication",
    "Alignment/CocoaDDLObjects",

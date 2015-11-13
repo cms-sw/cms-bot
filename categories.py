@@ -809,6 +809,8 @@ CMSSW_CATEGORIES={
    "DQM/DTMonitorClient",
    "DQM/DTMonitorModule",
    "DQM/DataScouting",
+   "DQM/HcalCommon",
+   "DQM/HcalTasks",
    "CommonTools/TrackerMap",
    "CondCore/DQMPlugins",
    "CondFormats/DQMObjects",
@@ -844,7 +846,6 @@ CMSSW_CATEGORIES={
    "DQM/HcalMonitorClient",
    "DQM/HcalMonitorModule",
    "DQM/HcalMonitorTasks",
-   
    "DQM/Integration",
    "DQM/L1TMonitor",
    "DQM/L1TMonitorClient",
@@ -902,9 +903,9 @@ CMSSW_CATEGORIES={
    "DQMServices/Diagnostic",
    "DQMServices/Examples",
    "DQMServices/FwkIO",
-   
    "DQMServices/StreamerIO",
    "DQMServices/XdaqCollector",
+   "DQMServices/FileIO",
    "Validation/EventGenerator",
    "Validation/GlobalDigis",
    "Validation/GlobalHits",

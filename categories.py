@@ -1011,6 +1011,7 @@ CMSSW_CATEGORIES={
    "L1Trigger/L1ExtraFromDigis",
    "L1Trigger/L1GctAnalyzer",
    "L1Trigger/L1TGlobal",
+   "L1Trigger/L1TNtuples",
    "L1Trigger/RPCTechnicalTrigger",
    "L1Trigger/RPCTrigger",
    "L1Trigger/RegionalCaloTrigger",

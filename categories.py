@@ -976,6 +976,7 @@ CMSSW_CATEGORIES={
    "EventFilter/DTTFRawToDigi",
    "EventFilter/GctRawToDigi",
    "EventFilter/L1GlobalTriggerRawToDigi",
+   "EventFilter/L1TRawToDigi",
    "EventFilter/RctRawToDigi",
    "L1Trigger/TextToDigi",
    "L1TriggerConfig/CSCTFConfigProducers",

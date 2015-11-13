@@ -150,9 +150,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     has_category = all([package in all_packages for package in packages])
     new_package_message = ""
     if not has_category:
-      print "New Packages:",has_category
       new_package_message = "\nThe following packages do not have a category, yet:\n\n"
       new_package_message += "\n".join([package for package in packages if not package in all_packages]) + "\n"
+      print new_package_message
       signing_categories.add("new-package")
 
   # Add watchers.yaml information to the WATCHERS dict.

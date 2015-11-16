@@ -23,128 +23,76 @@ def get_official_repo( github , repository_name ):
       repo = org.get_repo( repository_name )
       return repo
 
-
-#
-# given a line from git log, it gets the pr number
-#
-def get_pr_number( git_log_line ):
-  print git_log_line
-  if 'cms-sw/cmsdist' in git_log_line:
-    pr_number = git_log_line.split( '- cms-sw/cmsdist#' )[1].split( ' ' )[0]
-  else:
-    pr_number = git_log_line.split( '- #' )[1].split( ' ' )[0]
-  return pr_number
-
 #
 # it looks for the description of the pull requests listed in the release notes
 # returns the release notes with the description of each pull request
 #
-def fill_notes_description( notes ):
-
-  new_notes = ''
+def fill_notes_description(notes, repo, gitdir, ref_repo=""):
+  new_notes = {}
   for log_line in notes.splitlines():
-
-    pr_number = get_pr_number( log_line )
-    
-    if 'cms-sw/cmsdist' in log_line:
-      title = CMSDIST_REPO.get_pull( int(pr_number) ).title
-    else:
-      title = CMSSW_REPO.get_pull( int(pr_number) ).title
-
-    log_line = log_line.replace( 'DESC' , title )
-    new_notes += log_line + '\n'
-
+    pr_number = int(log_line.split(' REPO='+gitdir+'#',2)[1].split(' ')[0])
+    new_notes[pr_number]=re.sub('DESC$',repo.get_pull(int(pr_number)).title.encode("ascii", "ignore"),log_line.replace(" REPO="+gitdir+"#"," "+ref_repo+"#"))
   return new_notes
 
 #
 #defines the categories for each pr in the release notes
 #
-def add_categories_notes( notes , token ):
-  
-  new_notes = ""   
-  for note in notes.splitlines():
-    
-    pr_number = note.split(' ')[1].replace('#','')
-    request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/issues/%s/labels" % pr_number,
+def add_categories_notes(notes, token):
+  for pr_number in notes:
+    request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/issues/%s/labels" % str(pr_number),
                                   headers={"Authorization" : "token " + token})
-
     labels = json.loads(urllib2.urlopen(request).read())
-    categories = [ l['name'].split('-')[0] for l in labels if not re.match( 'tests|orp|pending-signatures|comparison|fully|new-package' , l['name'] ) ]
-
+    categories = [ l['name'].split('-')[0] for l in labels if re.match("^[a-zA-Z0-9]+[-](approved|pending|hold|rejected)$", l['name'])
+                                                              and not re.match('^(tests|orp)-' , l['name'] ) ]
     if len(categories) == 0:
       print "no categories for:"
       print pr_number
-
+    note = notes[pr_number]
     for cat in categories:
       note += " `%s` " % cat
-
-    new_notes += note + "\n"
-
-  return new_notes
+    notes[pr_number] = note
+  return notes
 
 def format(s, **kwds):
   print kwds
   return s % kwds
+
+def get_merge_prs(prev_tag, this_tag, git_dir):
+  error, out = getstatusoutput("GIT_DIR="+git_dir+" git fetch --all --tags")
+  if error: parser.error("Error while updating the repository:\n" + out)
+  error, notes = getstatusoutput(format("GIT_DIR=%(git_dir)s"
+                                      " git log --graph --merges --pretty='%%s: DESC' %(previous)s..%(release)s | "
+                                      " grep ' Merge pull request #[1-9]' | grep -v '^| \* | | | ' | sed 's|^\| .* Merge pull request #|- **-->** REPO=%(git_dir)s#|' | "
+                                      " sed 's|^\*.* Merge pull request #|- REPO=%(git_dir)s#|;s|||' | "
+                                      " sed 's|/[^:]*||;s|from |from @|'",
+                                      git_dir=git_dir,
+                                      previous=prev_tag,
+                                      release=this_tag))
+  if error:
+    print "Error while getting release notes."
+    print notes
+    exit(1)
+  return notes
+
 #
 # gets release notes for cmssw
 #
 def get_cmssw_notes( previous_release , this_release ):
   if not exists("cmssw.git"):
     error, out = getstatusoutput("git clone --bare --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git")
-    if error:
-      parser.error("Error while checking out the repository:\n" + out)
-
-  error, out = getstatusoutput("GIT_DIR=cmssw.git git fetch --all --tags")
-  if error:
-    parser.error("Error while updating the repository:\n" + out)
-
-  error, notes = getstatusoutput(format("GIT_DIR=cmssw.git"
-                                      " git log --graph --merges --pretty='%%s: DESC' %(previous)s..%(release)s | "
-                                      " grep 'Merge pull request' | grep -v ' \* Merge pull request' | "
-                                      " sed -e's/.*Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
-                                      previous=previous_release,
-                                      release=this_release))
-  if error:
-    print "Error while getting release notes."
-    print notes
-    exit(1)
-
-
-
-  return fill_notes_description( notes )
-
-
+    if error: parser.error("Error while checking out the repository:\n" + out)
+  notes = get_merge_prs (previous_release, this_release, "cmssw.git")
+  return fill_notes_description (notes, CMSSW_REPO, "cmssw.git")
 
 #
 # gets the changes in cmsdist, production architecture is the production architecture of the release
 #
 def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
-
   if not exists("cmsdist.git"):
     error, out = getstatusoutput("git clone --bare git@github.com:cms-sw/cmsdist.git")
-    if error:
-      parser.error("Error while checking out the cmsdist repository:\n" + out)
-
-  error, out = getstatusoutput("GIT_DIR=cmssw.git git fetch --all --tags")
-  if error:
-    parser.error("Error while updating the repository:\n" + out)
-
-
-  error, notes = getstatusoutput(format("GIT_DIR=cmsdist.git"
-                                      " git log --graph --merges --pretty='%%s: DESC' %(prev_tag)s..%(curr_tag)s | "
-                                      " grep 'Merge pull request' | grep -v ' \* Merge pull request' | "
-                                      "sed -e's/Merge pull request /- /;s|/[^:]*||;s/from /from @/'",
-                                      prev_tag=prev_cmsdist_tag,
-                                      curr_tag=curr_cmsdist_tag))
-  if error:
-    print "Error while getting release notes."
-    print notes
-    exit(1)
-
- 
-  notes = notes.replace( '#' , 'cms-sw/cmsdist#' ) 
-
-  return fill_notes_description( notes )
+    if error: parser.error("Error while checking out the cmsdist repository:\n" + out)
+  notes = get_merge_prs (prev_cmsdist_tag, curr_cmsdist_tag, "cmsdist.git")
+  return fill_notes_description (notes, CMSDIST_REPO, "cmsdist.git", "cms-sw/cmsdist")
 
 #
 # returns the comparison url to include in the notes
@@ -176,19 +124,21 @@ if __name__ == "__main__":
   # pyGithub intialization
   #---------------------------------
 
-  TOKEN = open(expanduser("~/.github-token")).read().strip() 
-  github = Github( login_or_token = TOKEN )
+  token = open(expanduser("~/.github-token")).read().strip() 
+  github = Github( login_or_token = token )
   CMSSW_REPO = get_official_repo( github , 'cmssw' )
   CMSDIST_REPO = get_official_repo( github , 'cmsdist' )
  
   cmssw_notes = get_cmssw_notes( prev_release , curr_release)
-
   cmsdist_notes = get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag )
 
-  token = open(expanduser("~/.github-token")).read().strip()
-
   cmssw_notes = add_categories_notes(cmssw_notes,token)
-
+  cmssw_notes_str = ""
+  cmsdist_notes_str = ""
+  for pr in sorted(cmssw_notes.keys(), reverse=True):
+    cmssw_notes_str += cmssw_notes[pr]+'\n'
+  for pr in sorted(cmsdist_notes.keys(), reverse=True):
+    cmsdist_notes_str += cmsdist_notes[pr]+'\n'
 
   request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
                             headers={"Authorization" : "token " + token})
@@ -203,9 +153,9 @@ if __name__ == "__main__":
   request.get_method = lambda: 'PATCH'
   print "Modifying release notes for %s at %s" % (curr_release, url)
   if opts.dryRun:
-    print cmssw_notes
+    print cmssw_notes_str
     print "\n cmsdist: \n"
-    print cmsdist_notes
+    print cmsdist_notes_str
     print "--dry-run specified, quitting without modifying release."
     print 'ALL_OK'
     exit(0)
@@ -216,5 +166,5 @@ if __name__ == "__main__":
   cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \
                    ( prev_cmsdist_tag , curr_cmsdist_tag , get_comparison_url( prev_cmsdist_tag, curr_cmsdist_tag , 'cmsdist' ) )
 
-  print urllib2.urlopen(request, json.dumps({"body": header + cmssw_notes + cmsdist_header + cmsdist_notes })).read()
+  print urllib2.urlopen(request, json.dumps({"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str })).read()
   print 'ALL_OK'

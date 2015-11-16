@@ -246,6 +246,24 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
               assign_cats[ex_cat] = 1
         continue
 
+    # Some of the special users can say "hold" prevent automatic merging of
+    # fully signed PRs.
+    if re.match("^hold$", first_line, re.I):
+      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers: hold[commenter]=1
+      continue
+    if re.match("^unhold$", first_line, re.I):
+      if commenter in CMSSW_L1:
+        hold = {}
+      elif commenter in CMSSW_L2.keys() + releaseManagers:
+        if hold.has_key(commenter): del hold[commenter]
+        for u in hold: hold[u]=1
+      continue
+    if (commenter == cmsbuild_user) and (re.match("^"+HOLD_MSG+".+", first_line)):
+      for u in first_line.split(HOLD_MSG,2)[1].split(","):
+        u = u.strip().lstrip("@")
+        if hold.has_key(u): hold[u]=0
+      continue
+
     # Ignore all other messages which are before last commit.
     if comment_date < last_commit_date:
       print "Ignoring comment done before the last commit."
@@ -262,10 +280,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         tests_requested = False
         signatures["tests"] = "pending"
         trigger_test_on_signature = False
-      elif re.match("^"+HOLD_MSG+".+", first_line):
-        for u in first_line.split(HOLD_MSG,2)[1].split(","):
-          u = u.strip().lstrip("@")
-          if hold.has_key(u): hold[u]=0
       elif re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", first_line):
         pull_request_updated = False
       elif re.match( TRIGERING_TESTS_MSG, first_line):
@@ -285,19 +299,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       continue
 
     # Check if the release manager asked for merging this.
-    # Some of the special users can say "hold" prevent automatic merging of
-    # fully signed PRs.
-    if re.match("^hold$", first_line, re.I):
-      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers: hold[commenter]=1
-      continue
-    if re.match("^unhold$", first_line, re.I):
-      if commenter in CMSSW_L1:
-        hold = {}
-      elif commenter in CMSSW_L2.keys() + releaseManagers:
-        if hold.has_key(commenter): del hold[commenter]
-        for u in hold: hold[u]=1
-      continue
-
     if commenter in releaseManagers:
       if re.match("^\s*(merge)\s*$", first_line, re.I):
         mustMerge = True

@@ -1,16 +1,16 @@
 # A ridicously long mapping for categories. Good enough for now.
 import re
 
-REQUEST_BUILD_RELEASE = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov"  ]
-APPROVE_BUILD_RELEASE = [ "smuzaffar", "degano", "davidlange6" ]
-TRIGGER_PR_TESTS = [ "smuzaffar", "degano", "davidlange6", "mark-grimes", "fratnikov", "lgray", "wmtan", "bsunanda", "VinInn" ]
+CMSSW_L1 = ["davidlange6"]
+APPROVE_BUILD_RELEASE = [ "smuzaffar", "degano", "slava77" ] + CMSSW_L1
+REQUEST_BUILD_RELEASE = [ "mark-grimes", "fratnikov" ] + APPROVE_BUILD_RELEASE
+TRIGGER_PR_TESTS = [ "lgray", "wmtan", "bsunanda", "VinInn" ] + REQUEST_BUILD_RELEASE
 
 COMMON_CATEGORIES = [ "orp", "tests" ]
 EXTERNAL_CATEGORIES = [ "externals" ]
 EXTERNAL_REPOS = [ "cms-data", "cms-externals", "cms-sw/root", "cms-sw/cmssw-config","cms-sw/SCRAM","cms-sw/cms-git-tools","cms-sw/apt-rpm" ]
 CMSSW_REPOS = [ "cms-sw/cmssw" ]
 CMSDIST_REPOS = [ "cms-sw/cmsdist" ]
-
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],
@@ -52,8 +52,6 @@ CMSSW_L2 = {
   "vanbesien" : ["dqm"],
   "fabozzi" : ["pdmv"],
 }
-
-CMSSW_L1 = ["davidlange6"]
 
 CMSSW_CATEGORIES={
   "externals": [""],

@@ -305,8 +305,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         continue
 
     # Check if the someone asked to trigger the tests
-    if (commenter in TRIGGER_PR_TESTS
-        or commenter in CMSSW_L2.keys()):
+    if commenter in TRIGGER_PR_TESTS + CMSSW_L2.keys() + CMSSW_L1 + releaseManagers:
       m = REGEX_TEST_REQ.match(first_line)
       if m:
         print 'Tests requested:', commenter, 'asked to test this PR'

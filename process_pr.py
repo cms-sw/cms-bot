@@ -15,6 +15,7 @@ except Exception, e :
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
+HOLD_MSG = "Pull request has been put on hold by "
 CMSDIST_REPO_NAME = GH_CMSSW_ORGANIZATION+"/"+GH_CMSDIST_REPO
 #Regexp to match the test requests
 REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+"+CMSDIST_REPO_NAME+"#([0-9]+)|)\s*$", re.I)
@@ -204,6 +205,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   has_categories_approval = False
   cmsdist_pr = ''
   assign_cats = {}
+  hold = {}
   for comment in issue.get_comments():
     comment_date = comment.created_at
     commenter = comment.user.login
@@ -260,6 +262,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         tests_requested = False
         signatures["tests"] = "pending"
         trigger_test_on_signature = False
+      elif re.match("^"+HOLD_MSG+".+", first_line):
+        for u in first_line.split(HOLD_MSG,2)[1].split(","):
+          u = u.strip().lstrip("@")
+          if hold.has_key(u): hold[u]=0
       elif re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", first_line):
         pull_request_updated = False
       elif re.match( TRIGERING_TESTS_MSG, first_line):
@@ -279,6 +285,19 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       continue
 
     # Check if the release manager asked for merging this.
+    # Some of the special users can say "hold" prevent automatic merging of
+    # fully signed PRs.
+    if re.match("^hold$", first_line, re.I):
+      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers: hold[commenter]=1
+      continue
+    if re.match("^unhold$", first_line, re.I):
+      if commenter in CMSSW_L1:
+        hold = {}
+      elif commenter in CMSSW_L2.keys() + releaseManagers:
+        if hold.has_key(commenter): del hold[commenter]
+        for u in hold: hold[u]=1
+      continue
+
     if commenter in releaseManagers:
       if re.match("^\s*(merge)\s*$", first_line, re.I):
         mustMerge = True
@@ -316,11 +335,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           signatures[sign] = "rejected"
           has_categories_approval = False
           if sign == "orp": mustClose = True
-      elif re.match("^(hold)$", first_line, re.I):
-        for sign in CMSSW_L2[commenter]:
-          signatures[sign] = "hold"
-          has_categories_approval = False
-          if sign == "orp": mustClose = False
       elif re.match("^(reopen)$", first_line, re.I):
         if "orp" in CMSSW_L2[commenter]:
           signatures["orp"] = "pending"
@@ -332,12 +346,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           mustMerge = True
       continue
 
-  is_hold = False
-  blocker = []
-  for cat in signatures:
-    if signatures[cat] == "hold":
-      is_hold = True
-      blocker.append(cat)
+  is_hold = len(hold)>0
+  new_blocker = False
+  blockers = ""
+  for u in hold:
+    blockers += " @"+u+","
+    if hold[u]: new_blocker = True
+  blockers = blockers.rstrip(",")
 
   new_assign_cats = []
   for ex_cat in assign_cats:
@@ -353,6 +368,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     l = cat+"-pending"
     if cat in signatures: l = cat+"-"+signatures[cat]
     labels.append(l)
+
+  # Additional labels.
+  if is_hold: labels.append("hold")
 
   if cmssw_repo:
     if comparison_done:
@@ -384,6 +402,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   # get release managers
   SUPER_USERS = (yaml.load(file(join(SCRIPT_DIR, "super-users.yaml"))))
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
+
+  #update blocker massge
+  if new_blocker:
+    if not dryRun: pr.create_issue_comment(HOLD_MSG+blockers+'\nThey need to issue an `unhold` command to remove the `hold` state or L1 can `unhold` it for all')
+    print "Blockers:",blockers
 
   #For now, only trigger tests for cms-sw/cmssw
   if cmssw_repo:
@@ -417,11 +440,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     autoMergeMsg = "This pull request will be automatically merged."
   else:
     if is_hold:
-      autoMergeMsg = format("This PR is put on hold by %(blocker)s. They have"
-                          " to approve to remove the hold state or"
-                          " %(managers)s will have to merge it by"
+      autoMergeMsg = format("This PR is put on hold by %(blockers)s. They have"
+                          " to `unhold` to remove the `hold` state or"
+                          " %(managers)s will have to `merge` it by"
                           " hand.",
-                          blocker=",".join(blocker),
+                          blockers=blockers,
                           managers=releaseManagersList)
     elif "new-package-pending" in labels:
       autoMergeMsg = format("This pull request requires a new package and "
@@ -455,7 +478,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       pass
     elif all(["fully-signed" in labels,
             not "orp-approved" in labels,
-            not "orp-hold" in labels,
             not "orp-pending" in labels]):
       pr.create_issue_comment(messageFullySigned)
     elif "fully-signed" in labels and "orp-approved" in labels:
@@ -515,7 +537,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "* **-1|reject[ed]**: L1/L2's to reject it\n"
                         "* **assign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to request signatures from other categories\n"
                         "* **unassign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to remove signatures from other categories\n"
-                        "* **hold**: L1/L2's to mark it as on hold\n"
+                        "* **hold**: L1/all L2's/release manager to mark it as on hold\n"
+                        "* **unhold**: L1/user who put this PR on hold\n"
                         "* **merge**: L1/release managers to merge this request\n"
                         "* **[@cmsbuild,] please test**: L1/L2 and selected users to start jenkins tests\n"
                         "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist",

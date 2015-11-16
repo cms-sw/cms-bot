@@ -2,7 +2,6 @@ LABEL_TYPES = {
   "pending":  "fbca04",
   "approved": "009800",
   "rejected": "e11d21",
-  "hold": "eb6420",
 }
 
 COMMON_LABELS = {
@@ -11,6 +10,7 @@ COMMON_LABELS = {
   "pending-signatures": LABEL_TYPES["hold"],
   "new-package-pending" : LABEL_TYPES["rejected"],
   "process-complete" : "006b75",
+  "hold": "eb6420",
 }
 
 COMPARISON_LABELS = {

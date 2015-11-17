@@ -160,7 +160,7 @@ if __name__ == "__main__":
     print 'ALL_OK'
     exit(0)
 
-  header = "#### Changes since %s:\n:arrow_right: Merge due to auto-matic forward port\n%s\n" %  \
+  header = "#### Changes since %s:\n:arrow_right: Merge due to automatic forward port\n%s\n" %  \
            ( prev_release , get_comparison_url( prev_release, curr_release , 'cmssw' ) )
 
   cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \

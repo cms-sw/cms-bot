@@ -62,7 +62,7 @@ def get_merge_prs(prev_tag, this_tag, git_dir):
   if error: parser.error("Error while updating the repository:\n" + out)
   error, notes = getstatusoutput(format("GIT_DIR=%(git_dir)s"
                                       " git log --graph --merges --pretty='%%s: DESC' %(previous)s..%(release)s | "
-                                      " grep ' Merge pull request #[1-9]' | grep -v '^| \* | | | ' | sed 's|^\| .* Merge pull request #|- **-->** REPO=%(git_dir)s#|' | "
+                                      " grep ' Merge pull request #[1-9]' | grep -v '^| \* | | | ' | sed 's|^\| .* Merge pull request #|- :arrow_right: REPO=%(git_dir)s#|' | "
                                       " sed 's|^\*.* Merge pull request #|- REPO=%(git_dir)s#|;s|||' | "
                                       " sed 's|/[^:]*||;s|from |from @|'",
                                       git_dir=git_dir,
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     print 'ALL_OK'
     exit(0)
 
-  header = "#### Changes since %s:\n%s\n" %  \
+  header = "#### Changes since %s:\n:arrow_right: Merge due to auto-matic forward port\n%s\n" %  \
            ( prev_release , get_comparison_url( prev_release, curr_release , 'cmssw' ) )
 
   cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \

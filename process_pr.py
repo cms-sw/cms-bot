@@ -1,6 +1,6 @@
 from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
-from releases import RELEASE_MANAGERS
+from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
 from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 import yaml
@@ -199,7 +199,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   mustMerge = False
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     mustClose = True
-  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])
+  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])+SPECIAL_RELEASE_MANAGERS
   external_issue_number=""
   trigger_test_on_signature = True
   has_categories_approval = False

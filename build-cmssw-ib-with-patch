@@ -248,30 +248,21 @@ popd
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops
 echo PACKAGE_NAME=$PACKAGE_NAME >> $WORKSPACE/buildprops
+echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $WORKSPACE/buildprops
 echo CMSSW_RELEASE_BASE=$CMSSW_RELEASE_BASE >> $WORKSPACE/buildprops
-echo TRIGGERING_RELEASE=${RELEASE_QUEUE}_${DATE_FORMAT} >> $WORKSPACE/buildprops
+echo TRIGGERING_RELEASE=${RELEASE_FORMAT} >> $WORKSPACE/buildprops
 echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/buildprops
 echo RELEASE_QUEUE=${RELEASE_QUEUE} >> $WORKSPACE/buildprops
 echo ENABLE_DEBUG=${ENABLE_DEBUG} >> $WORKSPACE/buildprops
 echo DOCKER_IMG=${DOCKER_IMG} >> $WORKSPACE/buildprops
+echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/buildprops
 
 # This is used to guide the creation of additional files which drive the
 # spawning of extra tests.
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
 for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
   echo "Creating property file $WORKSPACE/$x-properties."
-  echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/$x-properties
-  echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/$x-properties
-  echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/$x-properties
-  echo "CMSDIST_HASH=${CMSDIST_HASH}" >> $WORKSPACE/$x-properties
-  echo "PKGTOOLS_HASH=${PKGTOOLS_HASH}" >> $WORKSPACE/$x-properties
+  cp $WORKSPACE/buildprops $WORKSPACE/$x-properties
 done
-
-# This part is needed to drive the installation on afs for different OS.
-echo CMSDIST_HASH=${CMSDIST_HASH} >> $WORKSPACE/ib-install
-echo PKGTOOLS_HASH=${PKGTOOLS_HASH} >> $WORKSPACE/ib-install
-echo TRIGGERING_RELEASE=${RELEASE_FORMAT} > $WORKSPACE/ib-install
-echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/ib-install
-echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/ib-install
 
 echo DATE=`date`

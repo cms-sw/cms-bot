@@ -388,10 +388,8 @@ def send_remote_ref_issue_message( repo, pr_number):
 #
 def send_tests_approved_pr_message( repo, pr_number, tests_url ):
   pull_request = repo.get_pull(pr_number)
-  
+
   message = '+1'
-
-
   if options.commit_hash:
     message += '\nTested at: ' + options.commit_hash
 
@@ -400,8 +398,8 @@ def send_tests_approved_pr_message( repo, pr_number, tests_url ):
   send_message_pr( pull_request, message )
   mark_commit_if_needed( ACTION, tests_url )
 
-def send_comparison_ready_message(official_cmssw, pr_number, tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file ):
-  pull_request = official_cmssw.get_pull(pr_number)
+def send_comparison_ready_message(repo, pr_number, tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file ):
+  pull_request = repo.get_pull(pr_number)
   message = COMPARISON_READY_MSG +'\n' + tests_results_url
 
   wfs_with_errors = ''
@@ -427,16 +425,16 @@ def send_comparison_ready_message(official_cmssw, pr_number, tests_results_url, 
  
   send_message_pr( pull_request, message )
 
-def send_igprof_ready_message( official_cmssw , pr_number , tests_results_url ):
-  pull_request = official_cmssw.get_pull( pr_number )
+def send_igprof_ready_message( repo , pr_number , tests_results_url ):
+  pull_request = repo.get_pull( pr_number )
   print 'I will notify that igprof is ready for PR %d:' % pr_number
   message = IGPROF_READY_MSG +'\n' + tests_results_url
 
   send_message_pr( pull_request, message )
 
 
-def send_std_cout_found_message(official_cmssw,pr_number,tests_results_url):
-  pull_request = official_cmssw.get_pull(pr_number)
+def send_std_cout_found_message(repo,pr_number,tests_results_url):
+  pull_request = repo.get_pull(pr_number)
   print 'I will notify that I found a std::cout on PR %d:' % pr_number
   message = STD_COUT_FOUND_MSG
   send_message_pr( pull_request, message )
@@ -581,49 +579,52 @@ if (options.pr_job_id == -1 ):
 else:
   pr_job_id=options.pr_job_id
 
-official_cmssw = github.get_repo( 'cms-sw/cmssw' )
-
-if options.custom_repo:
-  destination_repo = get_official_repo( github , options.custom_repo )
-
+destination_repo = github.get_repo( 'cms-sw/cmssw' )
 
 tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (pr_number,pr_job_id)
 
+if options.custom_repo == 'cms-sw/cmsdist':
+  destination_repo = get_official_repo( github , options.custom_repo )
+  COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/'+destination_repo.full_name+'/statuses/%s'
+  #TODO: There should be a variable for the folder name where the tests are stored
+  tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cmsdist-test-pr/PR-%d/%d/summary.html' % (pr_number,pr_job_id)
+
+
 if ( ACTION == 'TESTS_OK_PR' ):
-  send_tests_approved_pr_message( official_cmssw , pr_number , tests_results_url )
+  send_tests_approved_pr_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'PARSE_UNIT_TESTS_FAIL' ):
   unit_tests_file = options.unit_tests_file
-  read_unit_tests_file( official_cmssw, unit_tests_file, tests_results_url )
+  read_unit_tests_file( destination_repo, unit_tests_file, tests_results_url )
 elif ( ACTION == 'PARSE_BUILD_FAIL' ):
   build_log_file = options.unit_tests_file
-  read_build_log_file( official_cmssw, build_log_file, tests_results_url, False )
+  read_build_log_file( destination_repo, build_log_file, tests_results_url, False )
 elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   matrix_log_file = options.unit_tests_file
-  read_matrix_log_file( official_cmssw , matrix_log_file , tests_results_url )
+  read_matrix_log_file( destination_repo , matrix_log_file , tests_results_url )
 elif ( ACTION == 'PARSE_ADDON_FAIL' ):
   matrix_log_file = options.unit_tests_file
-  read_addon_log_file( official_cmssw , matrix_log_file , tests_results_url )
+  read_addon_log_file( destination_repo , matrix_log_file , tests_results_url )
 elif ( ACTION == 'COMPARISON_READY' ):
   comparison_errors_file = options.unit_tests_file
   wfs_with_das_inconsistency_file = options.results_file2
-  send_comparison_ready_message( official_cmssw, pr_number, tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file )
+  send_comparison_ready_message( destination_repo, pr_number, tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file )
 elif ( ACTION == 'STD_COUT' ):
-  send_std_cout_found_message( official_cmssw , pr_number , tests_results_url )
+  send_std_cout_found_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'TESTS_RUNNING' ):
   mark_commit_testing()
 elif ( ACTION == 'EXTERNALS_PR_READY' ):
   tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/%d' % (pr_job_id)
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'IGPROF_READY' ):
-  send_igprof_ready_message( official_cmssw , pr_number , tests_results_url )
+  send_igprof_ready_message( destination_repo , pr_number , tests_results_url )
 elif (ACTION == 'NOT_MERGEABLE' ):
-  send_not_mergeable_pr_message( official_cmssw, pr_number )
+  send_not_mergeable_pr_message( destination_repo, pr_number )
 elif( ACTION == 'REMOTE_REF_ISSUE'):
-  send_remote_ref_issue_message( official_cmssw, pr_number )
+  send_remote_ref_issue_message( destination_repo, pr_number )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
   build_log_file = options.unit_tests_file
-  read_build_log_file( official_cmssw, build_log_file, tests_results_url, True )
+  read_build_log_file( destination_repo, build_log_file, tests_results_url, True )
 elif( ACTION == 'GIT_CMS_MERGE_TOPIC_ISSUE' ):
-  send_git_cms_merge_topic_issue_message( official_cmssw, pr_number )
+  send_git_cms_merge_topic_issue_message( destination_repo, pr_number )
 else:
   print "I don't recognize that action!"

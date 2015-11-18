@@ -25,17 +25,38 @@ if [ ! X`which kinit` = X ]; then
   kinit cmsbuild@CERN.CH -k -t $CMSBUILD_KEY || true
 fi
 
-$WORKSPACE/cms-bot/modify_comment.py -r cms-sw/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/ib-any-integration/${BUILD_NUMBER}/console" $PULL_REQUEST || true
+# If a repo to comment on isn't specified use cmssw
+if [ "X$PUB_REPO" == X ] || [ "X$PULL_REQUEST" != X ]; then
+  PUB_REPO="cms-sw/cmssw"
+fi
+### this is for triggering the comparison with the baseline
+if [ "X$PULL_REQUEST" != X ]; then
+  PULL_REQUEST_NUMBER=$PULL_REQUEST
+  PUB_REPO="cms-sw/cmssw"
+  CMSDIST_ONLY=false
+  if [ "X$CMSDIST_PR" != X ]; then
+    CMSDIST_ALSO=true
+  else
+    CMSDIST_ALSO=false
+  fi
+else
+# If PULL_REQUEST is empty then we are only testing a CMSDIST PR, take that
+  PULL_REQUEST_NUMBER=$CMSDIST_PR
+  CMSDIST_ONLY=true
+fi
+PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
+
+$WORKSPACE/cms-bot/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST_NUMBER || true
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'
 fi
 
-cd "$WORKSPACE"
+if [ "X$CMS_GIT_TOOLS_REPO" == X ]; then
+  CMS_GIT_TOOLS_REPO="cms-sw"
+fi
 
-### this is for triggering the comparison with the baseline
-  PULL_REQUEST_NUMBER=$PULL_REQUEST
-  PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
+cd $WORKSPACE
 ### to know at the end of the tests if everything went ok
 ALL_OK=true
 BUILD_OK=true
@@ -43,96 +64,108 @@ UNIT_TESTS_OK=true
 RELVALS_OK=true
 ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
-git config --global user.name "Cms Build"
-git config --global user.github cmsbuild
-git config --global user.email cmsbuild@cern.ch
 export SCRAM_ARCH=$ARCHITECTURE
 
-if [[ $RELEASE_FORMAT != *-* ]]; then
-  RELEASE_QUEUE=$RELEASE_FORMAT
-  for SCRAM_REL in $(scram l -c $RELEASE_FORMAT | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | awk '{print $2}' | sort -r) ;  do
-    FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$SCRAM_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
-    if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
-      RELEASE_FORMAT=$SCRAM_REL
-      break
-    fi
-  done
+#If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
+if [ ! -d CMSSW_* ]; then
+  if [[ $RELEASE_FORMAT != *-* ]]; then
+    RELEASE_QUEUE=$RELEASE_FORMAT
+    for SCRAM_REL in $(scram l -c $RELEASE_FORMAT | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | awk '{print $2}' | sort -r) ;  do
+      FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$SCRAM_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
+      if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
+        RELEASE_FORMAT=$SCRAM_REL
+        break
+      fi
+    done
+  else
+    RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
+  fi
 else
-  RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
+  RELEASE_FORMAT=$( find $WORKSPACE -maxdepth 1 -name "CMSSW_*" -printf '%f\n' )
+  RELEASE_QUEUE=$( echo $RELEASE_FORMAT | cut -d "_" -f 1,2,3,4 )
 fi
 
 # creation of results summary file
 cp $WORKSPACE/cms-bot/templates/PullRequestSummary.html $WORKSPACE/summary.html
 cp $WORKSPACE/cms-bot/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
+if [ "X$CMSDIST_ONLY" == Xtrue ]; then
+  sed -i 's/pull-request-integration/cmsdist-test-pr/g' $WORKSPACE/renderPRTests.js
+  sed -i 's|https:\/\/github.com\/cms-sw\/cmssw/\pull\/|https:\/\/github.com\/cms-sw\/cmsdist\/pull\/|g' $WORKSPACE/renderPRTests.js
+fi
 RESULTS_FILE=$WORKSPACE/testsResults.txt
 touch $RESULTS_FILE
-echo 'PR_NUMBER;'$PULL_REQUEST >> $RESULTS_FILE
+echo 'PR_NUMBER;'$PULL_REQUEST_NUMBER >> $RESULTS_FILE
 echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
 echo 'BASE_IB;'$RELEASE_FORMAT >> $RESULTS_FILE
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
 
-case $RELEASE_FORMAT in
-  *SLHC*)
-     DO_ADDON_TESTS=false
-  ;;
-esac
-scram project $RELEASE_FORMAT
-cd $RELEASE_FORMAT
-eval `scram run -sh`
-cd src
-git config --global --replace-all merge.renamelimit 2500
-
-# Requests is used to mark the commits
-# We should really make this part of the system requirements.
 pushd $WORKSPACE/cms-bot
   wget --no-check-certificate https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
   tar -xvf requests-2.3.0.tar.gz
   mv requests-2.3.0/requests/ requests
 popd
 
+case $RELEASE_FORMAT in
+  *SLHC*)
+     DO_ADDON_TESTS=false
+  ;;
+esac
+
+if [ ! -d CMSSW_* ]; then
+  scram project $RELEASE_FORMAT
+  cd $RELEASE_FORMAT
+else
+  cd $WORKSPACE/CMSSW_*
+fi
+eval $(scram run -sh)
+cd src
+git config --global --replace-all merge.renamelimit 2500
+
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 # use the branch name if necesary
-if [ "X$BRANCH_NAME" = X ]; then
-  (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
-else
-  (git cms-merge-topic -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
+  if [ "X$BRANCH_NAME" = X ]; then
+    (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+  else
+    (git cms-merge-topic -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+  fi
+
+  # this is to test several pull requests at the same time
+  for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do
+    echo 'I will add the following pull request to the test'
+    echo $PR;
+    git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+  done
+
+  if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
+    $WORKSPACE/cms-bot/report-pull-request-results NOT_MERGEABLE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+    exit 0
+  fi
+
+  if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
+    echo "Please add the branch name to the parameters"
+    $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+    exit 1
+  fi
+
+  # look for any other error in general
+  if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
+    echo "There was an error while running git cms-merge-topic"
+    $WORKSPACE/cms-bot/report-pull-request-results GIT_CMS_MERGE_TOPIC_ISSUE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+    exit 0
+  fi
+
+  #############################################
+  # Check if there are unwanted commits that came with the merge.
+  ############################################
+  RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits
+  RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
+  IB_DATE=`echo $RELEASE_FORMAT | sed -e 's/^.*_//g'`
+  YEAR_MONTH_DAY=`echo $IB_DATE | sed -e 's/-[0-9]*$//g'`
+  HOUR=`echo $IB_DATE | sed -e "s/$YEAR_MONTH_DAY-//g" | sed -e 's/0*//g'`
+  git rev-list --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
+  git log --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 fi
-
-# this is to test several pull requests at the same time
-for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do
-  echo 'I will add the following pull request to the test'
-  echo $PR;
-  git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
-done
-
-if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
-  $WORKSPACE/cms-bot/report-pull-request-results NOT_MERGEABLE  --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
-  exit 0   
-fi
-
-if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
-  echo "Please add the branch name to the parameters"
-  $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
-  exit 1
-fi
-
-# look for any other error in general
-if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
-  echo "There was an error while running git cms-merge-topic"
-  $WORKSPACE/cms-bot/report-pull-request-results GIT_CMS_MERGE_TOPIC_ISSUE --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
-  exit 0
-fi
-
-#############################################
-# Check if there are unwanted commits that came with the merge. 
-############################################
-RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits
-RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
-IB_DATE=`echo $RELEASE_FORMAT | sed -e 's/^.*_//g'`
-YEAR_MONTH_DAY=`echo $IB_DATE | sed -e 's/-[0-9]*$//g'`
-HOUR=`echo $IB_DATE | sed -e "s/$YEAR_MONTH_DAY-//g" | sed -e 's/0*//g'`
-git rev-list --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
-git log --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 
 #If Fireworks is the only package involved I only compile and run unit tests
 ONLY_FIREWORKS=false
@@ -142,26 +175,31 @@ if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
   if [ "$NUM_DIRS" == 1 ]; then
     if ls | grep 'Fireworks'; then
       ONLY_FIREWORKS=true
-      echo 'This pr only involves Fireworks!' 
+      echo 'This pr only involves Fireworks!'
       echo 'Only compiling and running unit tests'
-    fi 
+    fi
   fi
 fi
 
-#get the latest commit and mark it as pending
-pushd $WORKSPACE/$RELEASE_FORMAT/src
-  if [ "X$BRANCH_NAME" = X ]; then
-    LAST_COMMIT=`git log cms-sw/refs/pull/$PULL_REQUEST/head --pretty="%H" | head -n1` 
-  else
-    LAST_COMMIT=`git log ${BRANCH_NAME//:/\/} --pretty="%H" | head -n1`
-  fi
-popd
+# Don't do the following if we are only testing CMSDIST PR
+if [ "X$CMSDIST_ONLY" == Xfalse ]; then
+  #get the latest commit and mark it as pending
+  pushd $WORKSPACE/$RELEASE_FORMAT/src
+    if [ "X$BRANCH_NAME" = X ]; then
+      LAST_COMMIT=`git log cms-sw/refs/pull/$PULL_REQUEST/head --pretty="%H" | head -n1`
+    else
+      LAST_COMMIT=`git log ${BRANCH_NAME//:/\/} --pretty="%H" | head -n1`
+    fi
+  popd
 
-$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
+  git log --oneline --merges ${CMSSW_VERSION}..
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
+fi
+
+# Save the original src dir for later
 cp -r $WORKSPACE/$RELEASE_FORMAT/src $WORKSPACE/$RELEASE_FORMAT/src.orig
-git log --oneline --merges ${CMSSW_VERSION}..
-$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
 
 # #############################################
 # test compilation with Clang
@@ -176,7 +214,7 @@ if curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep PRS_TEST_CLANG= | grep SCRA
 fi
 
 if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
   CLANG_CMD="scram b vclean && scram build -k -j $(Jenkins_GetCPU 2) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
@@ -204,7 +242,7 @@ fi
 # Static checks
 #
 if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   pushd $WORKSPACE/$RELEASE_FORMAT
@@ -261,7 +299,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo 'COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
     ALL_OK=false
     BUILD_OK=false
-else  
+else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
 fi
@@ -270,7 +308,7 @@ fi
 # Unit tests
 #
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
   UTESTS_CMD="timeout 7200 scram b -k -j $(Jenkins_GetCPU)  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
@@ -291,9 +329,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
 
     echo 'DQM_TESTS;OK' >> $RESULTS_FILE
   else
-
     echo 'DQM_TESTS;NOTRUN' >> $RESULTS_FILE
-
   fi
 
   TEST_ERRORS=`grep -i "had errors" $WORKSPACE/unitTests.log` || true
@@ -331,11 +367,11 @@ fi
 
 
 if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
-    
+
     case $RELEASE_FORMAT in
         *THREADED*)
         THREADED_PARAM='-t 4 --command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
@@ -372,17 +408,17 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
     dateAfter=$(date +"%s")
     diff=$(($dateAfter-$dateBefore))
-    
+
     if [ "$diff" -ge $MATRIX_TIMEOUT ]; then
       echo "------------"  >> $WORKSPACE/matrixTests.log
       echo 'ERROR TIMEOUT' >> $WORKSPACE/matrixTests.log
     fi
 
   popd
- 
+
   TEST_ERRORS=`grep -i -E "ERROR .*" $WORKSPACE/matrixTests.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/matrixTests.log` || true
-     
+
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the RelVals"
 
@@ -391,7 +427,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
     ALL_OK=false
     RELVALS_OK=false
-  else  
+  else
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE
     echo 'COMPARISON;QUEUED' >> $RESULTS_FILE
@@ -403,18 +439,17 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
     echo "REAL_ARCH=$REAL_ARCH" >> $TRIGGER_COMPARISON_FILE
- 
+
    #####################################################################
    #### Run igprof
    #####################################################################
    # for now this is only run for 25202
-   
-  
+
   if [ "X$RUN_IGPROF" = Xtrue ]; then
     echo 'IGPROF;QUEQUED' >> $RESULTS_FILE
 
     TRIGGER_IGPROF_FILE=$WORKSPACE/'igprof.properties'
-    echo "Creating properties file $TRIGGER_IGPROF_FILE"   
+    echo "Creating properties file $TRIGGER_IGPROF_FILE"
     echo "RELEASE_FORMAT=$RELEASE_FORMAT" > $TRIGGER_IGPROF_FILE
     echo "ARCHITECTURE=${ARCHITECTURE}" >> $TRIGGER_IGPROF_FILE
     echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_IGPROF_FILE
@@ -422,7 +457,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo "LAST_COMMIT=${LAST_COMMIT}" >> $TRIGGER_IGPROF_FILE
     echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $TRIGGER_IGPROF_FILE
 
-  else  
+  else
     echo 'IGPROF;NOTRUN' >> $RESULTS_FILE
   fi
 
@@ -438,10 +473,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
       popd
        sed -i "s/<!--CONFIG_FILES_BROWSER//g" $WORKSPACE/summary.html
        sed -i "s/CONFIG_FILES_BROWSER-->//g" $WORKSPACE/summary.html
-       sed -i "s/PARAM_CONFIG_BROWSER/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/pull-request-integration\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/cfg-viewerResults\//g" $WORKSPACE/summary.html
+       sed -i "s/PARAM_CONFIG_BROWSER/https:\/\/cmssdt.cern.ch\/SDT\/jenkins-artifacts\/${JOB_NAME}\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/cfg-viewerResults\//g" $WORKSPACE/summary.html
     fi
   fi
-  
+
 else
 
   echo 'MATRIX_TESTS;NOTRUN' >> $RESULTS_FILE
@@ -454,7 +489,7 @@ fi
 # AddOn Tetss
 #
 if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
   echo '--------------------------------------'
   ADDON_CMD="addOnTests.py -j $(Jenkins_GetCPU) "
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
@@ -500,40 +535,53 @@ fi
 #
 # Valgrind tests
 #
-for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do 
+for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Valgrind" $DRY_RUN
 
   echo 'I will run valgrind for the following workflow'
-  echo $WF; 
+  echo $WF;
   mkdir -p "$WORKSPACE/valgrindResults-"$WF
   pushd "$WORKSPACE/valgrindResults-"$WF
-  runTheMatrix.py --command '-n 10 --prefix "time valgrind --tool=memcheck --suppressions=$CMSSW_RELEASE_BASE/src/Utilities/ReleaseScripts/data/cms-valgrind-memcheck.supp --num-callers=20 --xml=yes --xml-file=valgrind.xml " ' -l $WF  
+  runTheMatrix.py --command '-n 10 --prefix "time valgrind --tool=memcheck --suppressions=$CMSSW_RELEASE_BASE/src/Utilities/ReleaseScripts/data/cms-valgrind-memcheck.supp --num-callers=20 --xml=yes --xml-file=valgrind.xml " ' -l $WF
   popd
 done
 
-
 #evaluate results
 
-if $ALL_OK ; then
-  echo $ALL_OK
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-elif [ "X$BUILD_OK" = Xfalse ]; then
-  echo $BUILD_OK
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/build.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-  echo $UNIT_TESTS_OK
-  echo 'failure in unit tests'
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/unitTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-elif [ "X$RELVALS_OK" = Xfalse ]; then
-  pushd $WORKSPACE/
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-  popd
-elif [ "X$ADDON_OK" = Xfalse ]; then
-  pushd $WORKSPACE/
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/addOnTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-  popd
-elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN 
+if [ "X$CMSDIST_ONLY" == Xfalse ]; then
+  if $ALL_OK ; then
+    echo $ALL_OK
+    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+  elif [ "X$BUILD_OK" = Xfalse ]; then
+    echo $BUILD_OK
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/build.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+  elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
+    echo $UNIT_TESTS_OK
+    echo 'failure in unit tests'
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/unitTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+  elif [ "X$RELVALS_OK" = Xfalse ]; then
+    pushd $WORKSPACE/
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    popd
+  elif [ "X$ADDON_OK" = Xfalse ]; then
+    pushd $WORKSPACE/
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/addOnTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    popd
+  elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+  fi
+fi
+if [ "X$CMSDIST_ONLY" == Xtrue ] || [ "X$CMSDIST_ALSO" == Xtrue ]; then
+  if $ALL_OK ; then
+    echo $ALL_OK
+    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo cms-sw/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+  elif [ "X$BUILD_OK" = Xfalse ]; then
+    echo $BUILD_OK
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo cms-sw/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/build.log $DRY_RUN
+  elif [ "X$RELVALS_OK" = Xfalse ]; then
+    pushd $WORKSPACE/
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --repo cms-sw/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log $DRY_RUN
+  fi
 fi
 
-ls 
+ls

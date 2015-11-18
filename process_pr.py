@@ -199,7 +199,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   mustMerge = False
   if pr.base.ref in RELEASE_BRANCH_CLOSED:
     mustClose = True
-  releaseManagers=RELEASE_MANAGERS.get(pr.base.ref, [])+SPECIAL_RELEASE_MANAGERS
+  releaseManagers=list(set(RELEASE_MANAGERS.get(pr.base.ref, [])+SPECIAL_RELEASE_MANAGERS))
   external_issue_number=""
   trigger_test_on_signature = True
   has_categories_approval = False

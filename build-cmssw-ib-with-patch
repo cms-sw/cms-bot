@@ -268,6 +268,8 @@ for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH
 done
 
 # This part is needed to drive the installation on afs for different OS.
+echo CMSDIST_HASH=${CMSDIST_HASH} >> $WORKSPACE/ib-install
+echo PKGTOOLS_HASH=${PKGTOOLS_HASH} >> $WORKSPACE/ib-install
 echo TRIGGERING_RELEASE=${RELEASE_FORMAT} > $WORKSPACE/ib-install
 echo TRIGGERING_ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/ib-install
 echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/ib-install

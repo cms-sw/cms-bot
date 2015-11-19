@@ -106,7 +106,7 @@ for TOOL in $TOOLFILES; do
     XML=$(find $WORKSPACE/$BUILD_DIR/$ARCH/external/$TOOL/*/etc/scram.d/ -name *.xml)
     for FILE in $XML; do
       scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-      DEP_NAMES=$DEP_NAMES" "$(echo $FILE | cut -d "." -f 1)
+      DEP_NAMES=$DEP_NAMES" "$(echo $FILE | sed 's|.*/||;s|.xml$||')
     done
   fi
 done

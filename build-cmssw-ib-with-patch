@@ -34,24 +34,8 @@ WORKSPACE="${WORKSPACE-$PWD}"
 #export USER_HOOK_PROJECT=$WORKSPACE/cms-bot/scram-package-monitor-timestamps
 #export PKG_MON_SENDER=$WORKSPACE/cms-bot/scram-package-monitor-sender
 
-# WORKDIR is where the build actually happens. In order to recycle things
-# already downloaded, we go one level up (i.e. in build-any-ib) and create
-# a directory using $REPOSITORY to distinguish between weeks.
-# Notice we need to remove completely workdirs older than a week because they
-# actually refer to an obsolete repository. We also do a cleanup if we are using
-# too much disk space.
-WORKDIR=$WORKSPACE/../build-cache/$REPOSITORY
-THIS_WEEK=`date +%W`
-if [ -e "$WORKDIR/current_week" ] && [ ! X`cat "$WORKDIR/current_week"` = X$THIS_WEEK ]; then
-  mv $WORKDIR $WORKSPACE/../build-cache/deleteme-$REPOSITORY
-  rm -rf $WORKSPACE/../build-cache/deleteme-* &
-elif [ `df -k $WORKSPACE | tail -1 | awk '{print $4}'` -lt 100000000 ]; then
-  rm -rf $WORKSPACE/../build-cache
-fi
-mkdir -p $WORKDIR
-touch $WORKSPACE/../build-cache
-echo $THIS_WEEK > $WORKDIR/current_week
-cd $WORKDIR
+rm -rf $WORKSPACE/../build-cache &
+cd $WORKSPACE
 rm -rf w/SPECS
 
 BUILD_JOBS=4
@@ -144,9 +128,6 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
-#if [ -d w/RPMS/$ARCHITECTURE ] ; then
-#  (source w/$ARCHITECTURE/apt-init.sh ; find w/RPMS/$ARCHITECTURE -name '*.rpm' -type l | sed "s|.*/||;s|-1-1\.$ARCHITECTURE.rpm||" | xargs apt-get remove -y ; rm -rf w/RPMS/$ARCHITECTURE)
-#fi
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
 
 # Decide if we already have a release which uses the same CMSDIST.
@@ -209,7 +190,6 @@ popd
 #FIXME: Fix --specs-only option which is not available for PKGTOOLS V00-16.
 $CMSBUILD_CMD --specs-only `GetCmsBuildConfig $PKGTOOLS_TAG build $PACKAGE_NAME`
 TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
-#$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build coral`
 echo DATE=`date`
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
 echo DATE=`date`
@@ -219,7 +199,6 @@ if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
   $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
   echo DATE=`date`
 fi
-#$PKG_MON_SENDER 2>&1 >monitor.log & # Call the sender script just before the actual building of the release  
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 echo DATE=`date`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
@@ -228,7 +207,7 @@ pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
 # In case we have errors, we use an ERR tag in case we discover it's a full release later on.
-if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKDIR/w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
+if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKSPACE/w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   git tag ALL/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
   git push originrw ALL/$RELEASE_NAME/$ARCHITECTURE || true
   TAG_TYPE="IB"
@@ -242,8 +221,6 @@ if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
   git push originrw $TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE || true
 fi
 popd
-
-#$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local cmssw-ib`
 
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops

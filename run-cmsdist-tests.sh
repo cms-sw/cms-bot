@@ -16,7 +16,7 @@ function Jenkins_GetCPU ()
   fi
   echo $ACTUAL_CPU
 }
-
+CMS_WEEKLY_REPO=cms.week`date +%g | xargs -i echo "{} % 2" | bc`
 GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
 TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
@@ -68,9 +68,9 @@ $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --
 
 # Build the whole cmssw-tool-conf toolchain
 if [ "$FULL_TOOLCONF" = true ]; then
-  COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --arch $ARCH -j $(Jenkins_GetCPU) build cmssw-tool-conf"
+  COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCH -j $(Jenkins_GetCPU) build cmssw-tool-conf"
 else
-  COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --arch $ARCH -j $(Jenkins_GetCPU) build $PKGS $TOOLFILES"
+  COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO --arch $ARCH -j $(Jenkins_GetCPU) build $PKGS $TOOLFILES"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/cmsswtoolconf.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log

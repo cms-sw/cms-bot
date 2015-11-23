@@ -59,7 +59,7 @@ if __name__ == "__main__":
     for lab in COMPARISON_LABELS:
       all_labels[lab] = COMPARISON_LABELS[lab]
     for lab in CMSSW_BUILD_LABELS:
-      all_labels[lab] = COMPARISON_LABELS[lab]
+      all_labels[lab] = CMSSW_BUILD_LABELS[lab]
     for cat in COMMON_CATEGORIES+CMSSW_CATEGORIES.keys():
       for lab in LABEL_TYPES:
         all_labels[cat+"-"+lab]=LABEL_TYPES[lab]

@@ -1,19 +1,26 @@
-LABEL_TYPES = {
+LABEL_COLORS = {
+  "hold" : "eb6420",
   "pending":  "fbca04",
   "approved": "009800",
   "rejected": "e11d21",
 }
 
+LABEL_TYPES = {
+  "pending":  LABEL_COLORS["pending"],
+  "approved": LABEL_COLORS["approved"],
+  "rejected": LABEL_COLORS["rejected"],
+}
+
 COMMON_LABELS = {
-  "test-started": LABEL_TYPES["hold"],
-  "fully-signed": LABEL_TYPES["approved"],
-  "pending-signatures": LABEL_TYPES["hold"],
-  "pending-assignment": LABEL_TYPES["hold"],
-  "new-package-pending" : LABEL_TYPES["rejected"],
+  "tests-started": LABEL_COLORS["hold"],
+  "fully-signed": LABEL_COLORS["approved"],
+  "pending-signatures": LABEL_COLORS["hold"],
+  "pending-assignment": LABEL_COLORS["hold"],
+  "new-package-pending" : LABEL_COLORS["rejected"],
   "bug-fix" : "b8860b",
   "new-feature" : "0000ff",
   "process-complete" : "006b75",
-  "hold": "eb6420",
+  "hold": LABEL_COLORS["hold"],
 }
 
 COMPARISON_LABELS = {

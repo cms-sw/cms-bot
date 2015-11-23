@@ -29,8 +29,8 @@ def format(s, **kwds):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests( pr_number, cmsdist_pr, dryRun ):
-  out_file_name = 'trigger-tests-%s.properties' % pr_number
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, dryRun ):
+  out_file_name = 'trigger-tests-%s-%s.properties' % (repository, pr_number)
   if dryRun:
     print 'Not creating cleanup properties file (dry-run): %s' % out_file_name
   else:
@@ -100,6 +100,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   repository = repo.full_name
   print "Working on ",repo.full_name," for PR/Issue ",prId
   cmssw_repo = False
+  create_test_property = False
   if repository.endswith("/"+GH_CMSSW_REPO): cmssw_repo = True
   packages = set([])
   create_external_issue = False
@@ -125,10 +126,14 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2])
                            for x in pr.get_files()])])
       updateMilestone(repo, issue, pr, dryRun)
+      create_test_property = True
     else:
       add_external_category = True
       packages = set (["externals/"+repository])
-      if repository != CMSDIST_REPO_NAME: create_external_issue = True
+      if repository != CMSDIST_REPO_NAME:
+        create_external_issue = True
+      else:
+        create_test_property = True
 
     print "Following packages affected:"
     print "\n".join(packages)
@@ -324,8 +329,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
             print 'cms-bot will request test for this PR'
             tests_requested = True
             comparison_done = False
-            cmsdist_pr = m.group(CMSDIST_PR_INDEX)
-            if not cmsdist_pr: cmsdist_pr = ''
+            if cmssw_repo:
+              cmsdist_pr = m.group(CMSDIST_PR_INDEX)
+              if not cmsdist_pr: cmsdist_pr = ''
             signatures["tests"] = "pending"
           else:
             print 'Tests already request for this PR'
@@ -461,8 +467,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   SUPER_USERS = (yaml.load(file(join(SCRIPT_DIR, "super-users.yaml"))))
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
-  #For now, only trigger tests for cms-sw/cmssw
-  if cmssw_repo:
+  #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
+  if create_test_property:
     # trigger the tests and inform it in the thread.
     if trigger_test_on_signature and has_categories_approval:
       tests_requested = True
@@ -471,7 +477,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       if cmsdist_pr: test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
       if not dryRun:
         issue.create_comment( test_msg )
-        create_properties_file_tests( prId, cmsdist_pr, dryRun)
+        create_properties_file_tests( repository.split("/")[1], prId, cmsdist_pr, dryRun)
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"

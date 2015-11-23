@@ -86,10 +86,10 @@ def modify_comment(comment, match, replace, dryRun):
 def get_assign_categories(line):
   m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s]+)\s*$", line, re.I)
   if m:
-    assgin_type = m.group(1)
+    assgin_type = m.group(1).lower()
     new_cats = []
     for ex_cat in m.group(2).replace(" ","").split(","):
-      if (not ex_cat in CMSSW_CATEGORIES): return ('', [])
+      if (not ex_cat in CMSSW_CATEGORIES): continue
       new_cats.append(ex_cat)
     return (assgin_type.strip(), new_cats)
   return ('', [])
@@ -224,9 +224,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           external_issue_number=""
       continue
 
-    if (commenter in CMSSW_L2) and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
-      assign_type, new_cats = get_assign_categories(first_line)
-      if new_cats:
+    assign_type, new_cats = get_assign_categories(first_line)
+    if new_cats:
+      if (assign_type == "new categories assigned:") and (commenter == cmsbuild_user):
+        for ex_cat in new_cats:
+          if ex_cat in assign_cats: assign_cats[ex_cat] = 1
+      if ((commenter in CMSSW_L2) and [x for x in CMSSW_L2[commenter] if x in signing_categories]) or \
+          (not issue.pull_request and (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1)):
         if assign_type == "assign":
           for ex_cat in new_cats:
             if not ex_cat in signing_categories:
@@ -237,11 +241,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
             if ex_cat in assign_cats:
               assign_cats.pop(ex_cat)
               signing_categories.remove(ex_cat)
-        elif (assign_type == "New categories assigned:") and (commenter == cmsbuild_user):
-          for ex_cat in new_cats:
-            if ex_cat in assign_cats:
-              assign_cats[ex_cat] = 1
-        continue
+      continue
 
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
@@ -266,6 +266,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       for u in first_line.split(HOLD_MSG,2)[1].split(","):
         u = u.strip().lstrip("@")
         if hold.has_key(u): hold[u]=0
+    if re.match("^close$", first_line, re.I):
+      if (not issue.pull_request and (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1)):
+        mustClose = True
       continue
 
     # Ignore all other messages which are before last commit.
@@ -355,6 +358,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   blockers = blockers.rstrip(",")
 
   new_assign_cats = []
+  print "XX:",assign_cats
   for ex_cat in assign_cats:
     if assign_cats[ex_cat]==1: continue
     new_assign_cats.append(ex_cat)
@@ -391,6 +395,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                       if     not x.endswith("-approved")
                          and not x.startswith("orp")
                          and not x.startswith("tests")
+                         and not x.startswith("pending-assignment")
                          and not x.startswith("comparison")]
 
   if not missingApprovals:
@@ -422,6 +427,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     print "Labels unchanged."
   elif not dryRun:
     issue.edit(labels=list(labels))
+
+  # Check if it needs to be automatically closed.
+  if mustClose == True and issue.state == "open":
+    print "This pull request must be closed."
+    if not dryRun: issue.edit(state="closed")
  
   if not issue.pull_request:
     issueMessage = None
@@ -672,12 +682,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
   if commentMsg and not dryRun:
     issue.create_comment(commentMsg)
-
-  # Check if it needs to be automatically closed.
-  if mustClose == True and issue.state == "open":
-    print "This pull request must be closed."
-    if not dryRun:
-      print issue.edit(state="closed")
 
   # Check if it needs to be automatically merged.
   if all(["fully-signed" in labels,

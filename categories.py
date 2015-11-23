@@ -23,7 +23,7 @@ CMSSW_L2 = {
   "civanch": ["simulation", "geometry", "fastsim"],
   "mdhildreth": ["simulation", "geometry", "fastsim"],
   "Dr15Jones": ["core", "visualization", "geometry"],
-  "smuzaffar": ["core"],
+  "smuzaffar": ["core", "externals"],
   "alja": ["visualization"],
   "ianna": ["geometry"],
   "deguio": ["dqm"],
@@ -52,6 +52,7 @@ CMSSW_L2 = {
   "degano" : ["externals"],
   "vanbesien" : ["dqm"],
   "fabozzi" : ["pdmv"],
+  "iahmad-khan" : ["externals"],
 }
 
 CMSSW_CATEGORIES={

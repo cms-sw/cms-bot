@@ -7,50 +7,48 @@ from datetime import datetime, timedelta
 from process_pr import process_pr
 
 IGNORE_PRS = [12368]
-def check_prs(gh, repo, prId, since, dryRun):
+def check_prs(gh, repo, since, process_issue, dryRun):
   print "Working on Repository: ",repo.full_name 
-  if prId > 0:
-    process_pr(gh, repo, repo.get_issue(prId), dryRun)
+  if since:
+    issues = repo.get_issues(state="open", sort="updated", since=since)
   else:
-    if since:
-      issues = repo.get_issues(state="open", sort="updated", since=since)
-    else:
-      issues = repo.get_issues(state="open", sort="updated")
-    for issue in issues:
-      if issue.number in IGNORE_PRS:
-        print "Explicitly ignored PR/Issue:",issue.number
-        continue
-      process_pr(gh, repo, issue, dryRun)
+    issues = repo.get_issues(state="open", sort="updated")
+  for issue in issues:
+    if issue.number in IGNORE_PRS:
+      print "Explicitly ignored PR/Issue:",issue.number
+      continue
+    isIssue = True
+    if issue.pull_request: isIssue = False
+    if process_issue != isIssue:
+      print "Not processing ",process_issue,isIssue, issue.number
+      continue
+    process_pr(gh, repo, issue, dryRun)
+    
 
 if __name__ == "__main__":
-  parser = OptionParser(usage="%prog [-r|--repository <repo>] [-p|--pull-request <pull-request-id>] [-s|--since <sec>] [-n|--dry-run]")
+  parser = OptionParser(usage="%prog [-r|--repository <repo: default is cms-sw/cmssw>] [-i|--issue] [-s|--since <sec default is 3600>] [-n|--dry-run]")
   parser.add_option("-n", "--dry-run", dest="dryRun", action="store_true", help="Do not modify Github", default=False)
   parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name, default is cms-sw/cmssw. Use 'externals' to process all external repos.", type=str, default="cms-sw/cmssw")
-  parser.add_option("-p", "--pull-request", dest="prId", help="Github pull request ID", type="int", default=0)
   parser.add_option("-s", "--since", dest="since", help="Pull request updated since time in sec", type="int", default=3600)
+  parser.add_option("-i", "--issue", dest="issue", action="store_true", help="Process github issues", default=False)
   opts, args = parser.parse_args()
 
   since=None
   if opts.since>0:
     since = datetime.utcnow() - timedelta(seconds=opts.since)
 
-  prId = 0
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   repos = []
   if opts.repository != "externals":
     repos.append(opts.repository)
-    if "/" in opts.repository:
-      prId = opts.prId
   else:
     repos = EXTERNAL_REPOS
 
-  if prId==0 and opts.prId>0:
-    print "Warning: Ignoring --pull-request ",opts.prId," due to multuiple repositories selection."
-  for repo_name in repos:    
+  for repo_name in repos:
     if not "/" in repo_name:
       user = gh.get_user(repo_name)
       for repo in user.get_repos():
-        check_prs(gh, repo, prId, since, opts.dryRun)
+        check_prs(gh, repo, since, opts.issue, opts.dryRun)
     else:
-      check_prs(gh, gh.get_repo(repo_name), prId, since, opts.dryRun)
+      check_prs(gh, gh.get_repo(repo_name), since, opts.issue, opts.dryRun)
 

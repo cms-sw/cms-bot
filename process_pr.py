@@ -2,7 +2,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, C
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
-from cms_static import NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
+from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 import yaml
 import re
 from sys import exit, argv
@@ -137,6 +137,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         create_external_issue = True
       else:
         create_test_property = True
+        if not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref):
+          print "Skipping PR as it does not belong to valid CMSDIST branch"
+          return
 
     print "Following packages affected:"
     print "\n".join(packages)

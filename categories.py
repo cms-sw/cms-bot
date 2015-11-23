@@ -11,6 +11,7 @@ EXTERNAL_CATEGORIES = [ "externals" ]
 EXTERNAL_REPOS = [ "cms-data", "cms-externals", "cms-sw/root", "cms-sw/cmssw-config","cms-sw/SCRAM","cms-sw/cms-git-tools","cms-sw/apt-rpm" ]
 CMSSW_REPOS = [ "cms-sw/cmssw" ]
 CMSDIST_REPOS = [ "cms-sw/cmsdist" ]
+CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "degano", "davidlt" ]
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],

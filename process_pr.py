@@ -642,7 +642,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
     messageNewPR = format("A new Pull Request was created by @%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"
-                          "%(title)s\n\n"
                           "%(l2s)s can you please review it and eventually sign?"
                           " Thanks.\n"
                           "%(watchers)s"

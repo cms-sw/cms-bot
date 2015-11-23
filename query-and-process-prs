@@ -17,10 +17,8 @@ def check_prs(gh, repo, since, process_issue, dryRun):
     if issue.number in IGNORE_PRS:
       print "Explicitly ignored PR/Issue:",issue.number
       continue
-    isIssue = True
-    if issue.pull_request: isIssue = False
-    if process_issue != isIssue:
-      print "Not processing ",process_issue,isIssue, issue.number
+    if not process_issue and not issue.pull_request:
+      print "Only processing PRs, skipped issue: ",issue.number
       continue
     process_pr(gh, repo, issue, dryRun)
     

@@ -98,7 +98,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if re.match(BUILD_REL, issue.title): return
   prId = issue.number
   repository = repo.full_name
-  print "Working on ",repo.full_name," for PR ",prId
+  print "Working on ",repo.full_name," for PR/Issue ",prId
   cmssw_repo = False
   if repository.endswith("/"+GH_CMSSW_REPO): cmssw_repo = True
   packages = set([])
@@ -206,6 +206,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   cmsdist_pr = ''
   assign_cats = {}
   hold = {}
+  extra_labels = {}
   for comment in issue.get_comments():
     commenter = comment.user.login
     comment_msg = comment.body.encode("ascii", "ignore")
@@ -246,6 +247,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     # fully signed PRs.
     if re.match("^hold$", first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers: hold[commenter]=1
+      continue
+    if re.match("^type\s+(bug(-fix|)|(new-|)feature)$", first_line, re.I):
+      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + [issue.user.login]:
+        if "bug" in first_line.lower():
+          extra_labels["type"]="bug-fix"
+        elif "feature" in first_line.lower():
+          extra_labels["type"]="new-feature"
       continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:
@@ -359,12 +367,15 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   for cat in signing_categories:
     l = cat+"-pending"
     if cat in signatures: l = cat+"-"+signatures[cat]
-    labels.append(l)
+    labels.pend(l)
 
   if not issue.pull_request and len(signing_categories)==0:
     labels.append("pending-assignment")
   # Additional labels.
   if is_hold: labels.append("hold")
+
+  # Add additional labels
+  for lab in extra_labels: labels.append(extra_labels[lab])
 
   if cmssw_repo and issue.pull_request:
     if comparison_done:

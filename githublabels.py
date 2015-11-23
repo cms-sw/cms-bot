@@ -10,6 +10,8 @@ COMMON_LABELS = {
   "pending-signatures": LABEL_TYPES["hold"],
   "pending-assignment": LABEL_TYPES["hold"],
   "new-package-pending" : LABEL_TYPES["rejected"],
+  "bug-fix" : "b8860b",
+  "new-feature" : "0000ff",
   "process-complete" : "006b75",
   "hold": "eb6420",
 }

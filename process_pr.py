@@ -358,7 +358,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   blockers = blockers.rstrip(",")
 
   new_assign_cats = []
-  print "XX:",assign_cats
   for ex_cat in assign_cats:
     if assign_cats[ex_cat]==1: continue
     new_assign_cats.append(ex_cat)

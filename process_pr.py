@@ -2,7 +2,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, C
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
-from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
+from cms_static import NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 import yaml
 import re
 from sys import exit, argv
@@ -215,14 +215,16 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   assign_cats = {}
   hold = {}
   extra_labels = {}
+  if (issue.user.login == cmsbuild_user) and \
+     re.match(ISSUE_SEEN_MSG,issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()):
+    already_seen = True
   for comment in issue.get_comments():
     commenter = comment.user.login
     comment_msg = comment.body.encode("ascii", "ignore")
 
     # The first line is an invariant.
     first_line = comment_msg.split("\n",1)[0].strip()
-
-    if (commenter == cmsbuild_user) and re.match("A new (Pull Request|Issue) was created by", first_line):
+    if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
       already_seen = True
       pull_request_updated = False
       if create_external_issue:
@@ -445,7 +447,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     issueMessage = None
     if not already_seen:
       l2s = ", ".join([ "@" + name for name in CMSSW_ISSUES_TRACKERS ])
-      issueMessage = format("A new Issue was created by @%(user)s"
+      issueMessage = format("%(msgPrefix)s @%(user)s"
                         " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
@@ -457,6 +459,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "* **hold**: L1/all L2's/release manager to mark it as on hold\n"
                         "* **unhold**: L1/user who put this PR on hold\n"
                         "* **merge**: L1/release managers to merge this request\n",
+                        msgPrefix=NEW_ISSUE_PREFIX,
                         user=issue.user.login,
                         name=issue.user.name and "(%s)" % issue.user.name or "",
                         l2s=l2s)
@@ -564,7 +567,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                          base_branch=base_release_branch)
 
     # We do not want to spam people for the old pull requests.
-    messageNewPR = format("A new Pull Request was created by @%(user)s"
+    messageNewPR = format("%(msgPrefix)s @%(user)s"
                         " %(name)s for %(branch)s.\n\n"
                         "It involves the following packages:\n\n"
                         "%(packages)s\n\n"
@@ -584,6 +587,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "* **merge**: L1/release managers to merge this request\n"
                         "* **[@cmsbuild,] please test**: L1/L2 and selected users to start jenkins tests\n"
                         "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist",
+                        msgPrefix=NEW_PR_PREFIX,
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
@@ -610,10 +614,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                                  title=pr.title.encode("ascii", "ignore"),
                                  repo=repository,
                                  pr=pr.number)
-          cmsdist_body = format("A new Pull Request was created by @%(user)s"
+          cmsdist_body = format("%(msgPrefix)s @%(user)s"
                                 " %(name)s for branch %(branch)s.\n\n"
                                 "Pull Request Reference: %(repo)s#%(pr)s\n\n"
                                 "%(externals_l2s)s can you please review it and eventually sign? Thanks.\n",
+                                msgPrefix=NEW_PR_PREFIX,
                                 repo=repository,
                                 user=pr.user.login,
                                 name=pr.user.name and "(%s)" % pr.user.name or "",
@@ -640,7 +645,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     if external_issue_number:
       cmsdist_issue="\n\nexternal issue "+CMSDIST_REPO_NAME+"#"+external_issue_number
 
-    messageNewPR = format("A new Pull Request was created by @%(user)s"
+    messageNewPR = format("%(msgPrefix)s @%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"
                           "%(l2s)s can you please review it and eventually sign?"
                           " Thanks.\n"
@@ -650,6 +655,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                           "You can reject by replying  to this message having"
                           " '-1' in the first line of your reply."
                           "%(cmsdist_issue)s",
+                          msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,

@@ -367,7 +367,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   for cat in signing_categories:
     l = cat+"-pending"
     if cat in signatures: l = cat+"-"+signatures[cat]
-    labels.pend(l)
+    labels.append(l)
 
   if not issue.pull_request and len(signing_categories)==0:
     labels.append("pending-assignment")

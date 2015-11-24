@@ -35,7 +35,11 @@ if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
 fi
 
 if [ "X$ARCH" == X ]; then
-  ARCH=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | grep PR_TESTS | cut -d ";" -f 1 | cut -d "=" -f 2)
+  if(( $(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
+    ARCH=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | grep PR_TESTS | cut -d ";" -f 1 | cut -d "=" -f 2)
+  else
+    ARCH=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
+  fi
 fi
 
 if [ "X$PKGTOOLS_BRANCH" == X ]; then

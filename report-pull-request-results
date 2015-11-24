@@ -586,8 +586,6 @@ tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-i
 if options.custom_repo == 'cms-sw/cmsdist':
   destination_repo = get_official_repo( github , options.custom_repo )
   COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/'+destination_repo.full_name+'/statuses/%s'
-  #TODO: There should be a variable for the folder name where the tests are stored
-  tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cmsdist-test-pr/PR-%d/%d/summary.html' % (pr_number,pr_job_id)
 
 
 if ( ACTION == 'TESTS_OK_PR' ):

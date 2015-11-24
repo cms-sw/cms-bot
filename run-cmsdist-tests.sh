@@ -21,7 +21,13 @@ GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
 TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
 CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
-CMSSW_IB=$(scram l $(echo $CMSDIST_BRANCH | cut -d"/" -f 2) | grep -v /ReleaseCandidates | tail -n 1 | awk '{print $2}')
+if(( $(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
+  CMSSW_CYCLE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | grep "PROD_ARCH" | cut -d ";" -f 4 | cut -d "=" -f 2)
+else
+  CMSSW_CYCLE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | cut -d ";" -f 4 | cut -d "=" -f 2)
+fi
+
+CMSSW_IB=$(scram l $CMSSW_CYCLE | grep -v /ReleaseCandidates | tail -n 1 | awk '{print $2}')
 
 if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
   echo "Error: failed to retrieve user or branch to test."

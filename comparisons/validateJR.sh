@@ -7,6 +7,10 @@ cWD=`pwd`
 export pidList=""
 nProc=$(getconf _NPROCESSORS_ONLN)
 echo Start processing at `date`
+touch missing_map.txt
+ls -d ${baseA}/[1-9]* | sed 's|.*/||' | while read -r d; do
+  grep  " $d/" ${inList} >& /dev/null || echo $d >> missing_map.txt
+done
 grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do 
     [ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN} && continue
     extN=all_${diffN}_${dsN}
@@ -43,10 +47,4 @@ while [ "$nRunning" -gt "0" -a "$timeWaiting" -lt "3600" ]; do
     sleep 30
     timeWaiting=$((timeWaiting + 30))
 done
-cd ${cWD}
-touch missing_map.txt
-ls -d ${baseA}/[1-9]* | sed 's|.*/||' | while read -r d; do
-  grep  " $d/" ${inList} >& /dev/null || echo $d >> missing_map.txt
-done
-cat missing_map.txt
 echo done at `date`

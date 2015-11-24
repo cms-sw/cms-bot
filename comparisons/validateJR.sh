@@ -43,4 +43,10 @@ while [ "$nRunning" -gt "0" -a "$timeWaiting" -lt "3600" ]; do
     sleep 30
     timeWaiting=$((timeWaiting + 30))
 done
+cd ${cWD}
+touch missing_map.txt
+ls -d ${baseA}/[1-9]* | sed 's|.*/||' | while read -r d; do
+  grep  " $d/" ${inList} >& /dev/null || echo $d >> missing_map.txt
+done
+cat missing_map.txt
 echo done at `date`

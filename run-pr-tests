@@ -45,8 +45,10 @@ else
   CMSDIST_ONLY=true
 fi
 PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
-
-$WORKSPACE/cms-bot/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST_NUMBER || true
+# Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
+if [ "X$CMSDIST_ONLY" == Xfalse ] || [ "X$CMSDIST_ALSO" == Xfalse ]; then
+  $WORKSPACE/cms-bot/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST_NUMBER || true
+fi
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'

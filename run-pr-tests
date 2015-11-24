@@ -89,7 +89,6 @@ fi
 cp $WORKSPACE/cms-bot/templates/PullRequestSummary.html $WORKSPACE/summary.html
 cp $WORKSPACE/cms-bot/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
 if [ "X$CMSDIST_ONLY" == Xtrue ]; then
-  sed -i 's/pull-request-integration/cmsdist-test-pr/g' $WORKSPACE/renderPRTests.js
   sed -i 's|https:\/\/github.com\/cms-sw\/cmssw/\pull\/|https:\/\/github.com\/cms-sw\/cmsdist\/pull\/|g' $WORKSPACE/renderPRTests.js
 fi
 RESULTS_FILE=$WORKSPACE/testsResults.txt

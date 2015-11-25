@@ -12,6 +12,7 @@ EXTERNAL_REPOS = [ "cms-data", "cms-externals", "cms-sw/root", "cms-sw/cmssw-con
 CMSSW_REPOS = [ "cms-sw/cmssw" ]
 CMSDIST_REPOS = [ "cms-sw/cmsdist" ]
 CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "degano", "davidlt" ]
+COMPARISON_MISSING_MAP = [ "slava77" ]
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],

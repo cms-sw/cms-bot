@@ -428,9 +428,11 @@ def send_comparison_ready_message(repo, pr_number, tests_results_url, comparison
     missing = []
     for line in open(missing_map):
       line = line.strip()
-      if line: missing.append(line)
+      if line: missing.append("   * "+line)
     if missing:
-      message += '\n\nMissing matrix maps:\n```'+"\n".join(missing)+"\n```\n\n"
+      from categories import COMPARISON_MISSING_MAP
+      map_notify = ", ".join([ "@"+u for u in COMPARISON_MISSING_MAP] )
+      message += "\n\n"+map_notify+" there are some missing matrix maps:\n"+"\n".join(missing)
  
   send_message_pr( pull_request, message )
 

@@ -100,9 +100,7 @@ TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
 GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
 if [ "X$TEST_ERRORS" != X ]; then
-  ERROR_MSG="Compilation of cmssw-tool-conf failed.\n https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console \n \\
-             https://cmssdt.cern.ch/SDT/jenkins-artifacts/${JOB_NAME}/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/cmsswtoolconf.log"
-  $WORKSPACE/cms-bot/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m $ERROR_MSG $CMSDIST_PR || true
+  $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
   echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
   exit 0
 else

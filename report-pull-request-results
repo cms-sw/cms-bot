@@ -432,8 +432,8 @@ def send_comparison_ready_message(repo, pr_number, tests_results_url, comparison
     if missing:
       from categories import COMPARISON_MISSING_MAP
       map_notify = ", ".join([ "@"+u for u in COMPARISON_MISSING_MAP] )
-      message += "\n\n"+map_notify+" there are some missing matrix maps:\n"+"\n".join(missing)
- 
+      message += "\n\n"+map_notify+" comparisons for the following workflows were not done due to missing matrix map:\n"+"\n".join(missing)
+
   send_message_pr( pull_request, message )
 
 def send_igprof_ready_message( repo , pr_number , tests_results_url ):

@@ -20,108 +20,25 @@ function updateBranch()
 
 # Update CMSSW
 # Clone once
-cd $WORKSPACE
-rm -rf cmssw
-if [ ! -d cmssw ]; then
-  git clone git@github.com:cms-sw/cmssw
-fi
+SCRIPT_PATH="`dirname \"$0\"`"
+SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
+WORKSPACE="${WORKSPACE-$PWD}"
 
-cd cmssw
-
-# Make sure we push with our correct name and address 
-# in the case our user does not have an home directory,
-# e.g. under mesos.
-if [ X$HOME = X ]; then
-  git config user.email 'cmsbuild@cern.ch'
-  git config user.name "CMS Build"
-fi
-
-git fetch origin
-
-# CMSSW_7_1_X for the moment is based on CMSSW_7_0_X
-
-# SLHC branch is based on top of the associated release branch.
-(updateBranch CMSSW_6_2_X CMSSW_6_2_X_SLHC) || true
-(updateBranch CMSSW_6_2_X_SLHC CMSSW_6_2_SLHCDEV_X) || true
-
-# CMSSW_7_2_X for the moment is based on CMSSW_7_1_X
-
-# CMSSW_7_3_X special branches
-
-# CMSSW_7_4_X
-(updateBranch CMSSW_7_4_X CMSSW_7_4_DEVEL_X) || true
-(updateBranch CMSSW_7_4_X CMSSW_7_4_THREADED_X) || true
-(updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT6_X) || true
-(updateBranch CMSSW_7_4_X CMSSW_7_4_GEANT10_X) || true
-(updateBranch CMSSW_7_4_X CMSSW_7_4_CLANG_X) || true
-(updateBranch CMSSW_7_4_X CMSSW_7_4_ROOT5_X) || true
-
-# CMSSW_7_5_X
-(updateBranch CMSSW_7_5_X CMSSW_7_5_ROOT5_X) || true
-(updateBranch CMSSW_7_5_X CMSSW_7_5_ROOT64_X) || true
-
-# CMSSW_7_6_X
-(updateBranch CMSSW_7_6_X CMSSW_7_6_ROOT64_X) || true
-
-# CMSSW_7_6_X
-(updateBranch CMSSW_7_6_X CMSSW_8_0_X) || true
-(updateBranch CMSSW_8_0_X CMSSW_8_0_ROOT64_X) || true
-
-
-# Update CMSDIST
-cd $WORKSPACE
-rm -rf cmsdist
-if [ ! -d cmsdist ]; then
-  git clone -b IB/CMSSW_7_0_X/stable git@github.com:cms-sw/cmsdist
-fi
-
-cd cmsdist
-# Make sure we push with our correct name and address 
-# in the case our user does not have an home directory,
-# e.g. under mesos.
-if [ X$HOME = X ]; then
-  git config user.email 'cmsbuild@cern.ch'
-  git config user.name "CMS Build"
-fi
-git fetch
-
-# CMSSW_6_2_X
-(updateBranch IB/CMSSW_6_2_X/stable IB/CMSSW_6_2_X/devel-gcc472) || true
-
-# CMSSW_7_0_X
-# devel
-
-# CMSSW_7_1_X
-(updateBranch IB/CMSSW_7_0_X/stable IB/CMSSW_7_1_X/stable) || true
-
-# CMSSW_7_2_X
-
-# CMSSW_7_3_X
-(updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/gcc491) || true
-(updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/root6) || true
-(updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/next) || true
-(updateBranch IB/CMSSW_7_3_X/stable IB/CMSSW_7_3_X/debug) || true
-
-# CMSSW_7_4_X
-# Since the production arch for 74X is gcc491, IB/CMSSW_7_3_X/491
-# merges into IB/CMSSW_7_4_X/stable Then it merges into the
-# other cmsdist branches for 74X as usual
-(updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/gcc481) || true
-(updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/next) || true
-(updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/root6) || true
-(updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/geant10) || true
-(updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/debug) || true
-(updateBranch IB/CMSSW_7_4_X/stable IB/CMSSW_7_4_X/root5) || true
-
-# CMSSW_7_5_X
-(updateBranch IB/CMSSW_7_5_X/stable IB/CMSSW_7_5_X/gcc481) || true
-(updateBranch IB/CMSSW_7_5_X/stable IB/CMSSW_7_5_X/next) || true
-(updateBranch IB/CMSSW_7_5_X/stable IB/CMSSW_7_5_X/root5) || true
-
-# CMSSW_7_6_X
-(updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_7_6_X/next) || true
-(updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_7_6_X/gcc493) || true
-
-# CMSSW_8_0_X
-(updateBranch IB/CMSSW_7_6_X/stable IB/CMSSW_8_0_X/stable) || true
-(updateBranch IB/CMSSW_8_0_X/stable IB/CMSSW_8_0_X/next) || true
+for repo in `ls $SCRIPT_PATH/forward-ports` ; do
+  echo "Working on cms-sw/$repo ..."
+  cd "$WORKSPACE"
+  rm -rf $repo
+  git clone git@github.com:cms-sw/$repo
+  cd $repo
+  if [ X$HOME = X ]; then
+    git config user.email 'cmsbuild@cern.ch'
+    git config user.name  'CMS Build'
+  fi
+  git fetch origin
+  for release in `ls $SCRIPT_PATH/forward-ports/$repo`; do
+    echo "Forward porting release $release"
+    grep 'CMSSW_' $SCRIPT_PATH/forward-ports/$repo/$release | while read line ; do
+      (updateBranch $line) || true
+    done
+  done
+done

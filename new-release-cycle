@@ -1,0 +1,183 @@
+#!/usr/bin/env python
+from github import Github, GithubException
+from os.path import expanduser, dirname, abspath, join
+from optparse import OptionParser
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
+from sys import exit, argv
+from commands import getstatusoutput 
+try:
+  scriptPath = dirname(abspath(__file__))
+except Exception, e :
+  scriptPath = dirname(abspath(argv[0]))
+
+###############################################################
+def create_branch(repo, base_branch, new_branch, dryRun=False):
+  print "Creating new branch '%s' based on '%s'" % (new_branch, base_branch)
+  base_ref = repo.get_branch(base_branch)
+  print "Base branch %s has sha %s" % (base_branch, base_ref.commit.sha)
+  try:
+    repo.get_branch(new_branch)
+    print "Branch already exists: ",new_branch
+    return
+  except GithubException as e:
+    print e
+    if not "Branch not found" in e.data['message']: raise e
+  if not dryRun:
+    repo.create_git_ref (new_branch, base_ref.commit.sha)
+    print "Created new branch ",new_branch," based on ",base_ref.commit.sha
+  else:
+    print "DryRun: Creating new branch ",new_branch," based on ",base_ref.commit.sha
+  return
+
+def create_milestone(repo, milestone_name, dryRun=False):
+  print "Creating new milestone '%s'" % milestone_name
+  milestones = repo.get_milestones()
+  for item in repo.get_milestones():
+    if milestone_name in item.title:
+      print "Milestone %s already exists" % milestone_name
+      return item
+  milestone = None
+  if not dryRun:
+    milestone = repo.create_milestone (milestone_name)
+    print "Created milestone %s with number %s" % (milestone_name, str(milestone.number))
+  else:
+    print "DryRun: Creating new milestone %s" % milestone_name
+  return milestone
+
+def add_milestone_in_cmsbot(cycle, milestone, dryRun=False):
+  from releases import RELEASE_BRANCH_MILESTONE, RELEASE_MANAGERS_FOR_NEW_RELEASE_CYCLES
+  release_manager = ", ".join([ '"' + m + '"' for m in RELEASE_MANAGERS_FOR_NEW_RELEASE_CYCLES ])
+  if cycle in RELEASE_BRANCH_MILESTONE:
+    print "Milestone already available in the releases.py"
+    return
+  print "Creating %s release information" % cycle
+  if not dryRun:
+    with open(join(scriptPath,"releases.py"), "a") as relFile:
+      relFile.write('\n######################################################################\n')
+      relFile.write('# Automatically added by cms-bot for %s release cycle\n' % (cycle))
+      relFile.write('######################################################################\n')
+      relFile.write('RELEASE_BRANCH_MILESTONE["%s"]=%s\n' % (cycle, milestone.number))
+      relFile.write('RELEASE_BRANCH_PRODUCTION.append("%s")\n' % (cycle))
+      relFile.write('RELEASE_MANAGERS["%s"]=[%s]\n' % (cycle, release_manager))
+    print "Wrote relase milestone/manager information for %s" % cycle
+  else:
+    print "DryRun: Writing relase milestone/manager information for %s" % cycle
+  return
+
+def add_releases_in_config(config_lines, dryRun=False):
+  config_file = "%s/config.map" % scriptPath
+  tmp_config_file = config_file + ".tmp"
+  print "Writing release IB info in config.map"
+  if not dryRun:
+    with open(tmp_config_file, "w") as configFile:
+      for line in config_lines: configFile.write(line)
+    err, out = getstatusoutput("cat %s >> %s" % (config_file, tmp_config_file))
+    if err: return False
+    err, out = getstatusoutput("mv %s %s" % (tmp_config_file, config_file))
+    if err: return False 
+    print "Wrote release IB information in config.map"
+  else:
+    print "DryRun: Writing release IB information in config.map"
+  return True
+
+def add_auto_forward_ports(cmssw, cmsdist, cmssw_branches, cmsdist_branches, dryRun=False):
+  data = {}
+  data["cmssw"]   = [cmssw, cmssw_branches]
+  data["cmsdist"] = [cmsdist, cmsdist_branches]
+  for repo, info in data.items():
+    print "Writing auto forward port file for %s/%s" % (repo, cmssw)
+    lines = []
+    lines.append(info[1][info[0]]+" "+info[0])
+    for c in info[1]:
+      if c == info[0]: continue
+      lines.append(info[0]+" "+c)
+    for line in lines: print "  "+line
+    if not dryRun:
+      fwdport_file = "%s/forward-ports/%s/%s" % (scriptPath, repo, cmssw)
+      with open(fwdport_file, "w") as fwdFile:
+        for line in lines: fwdFile.write(line+"\n")
+      print "Wrote auto forward port file %s/%s" % (repo, cmssw)
+    else:
+      print "DryRun: Wrote auto forward port file %s/%s" % (repo, cmssw)
+  return True
+
+def process(base, cycle, gh_push, dryRun):
+  base_rc = base.replace("_X","")
+  new_rc  = cycle.replace("_X","")
+  cmssw_branches = { cycle : base }
+  cmsdist_branches = {}
+  config = open(join(scriptPath,"config.map"))
+  config_lines = []
+  cmsdist_prod = ""
+  for line in config.readlines():
+    if "DISABLED=1;" in line: continue
+    if not "CMSDIST_TAG=IB/"+base+"/" in line: continue
+    config_lines.append(line.replace(base_rc, new_rc))
+    items = {}
+    for item in line.strip("\n").split(";"):
+      if item=='': continue
+      k,v=item.split("=",2)
+      items[k]=v
+    new_cmsdist = items["CMSDIST_TAG"].replace(base,cycle)
+    if ("PROD_ARCH" in items) and items["PROD_ARCH"] == "1": cmsdist_prod = new_cmsdist
+    cmsdist_branches [new_cmsdist] = items["CMSDIST_TAG"]
+    if items["RELEASE_QUEUE"] == base: continue
+    if "RELEASE_BRANCH" in items:
+      if items["RELEASE_BRANCH"] == base: continue
+      cmssw_branches[items["RELEASE_BRANCH"].replace(base_rc,new_rc)]=items["RELEASE_BRANCH"]
+
+  print "CMSSW Branches:",cmssw_branches
+  print "CMSDIST Branches:",cmsdist_branches
+  print "Production CMSDIST Branch:",cmsdist_prod
+
+  if not cmssw_branches or not cmsdist_branches or not cmsdist_prod:
+   print "Error: Not cmsdist/cmssw branches found in config.map or missing production branch for cmsdist"
+   return
+
+  GH_CMSSW_ORGANIZATION = "smuzaffar"
+  gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  cmssw_repo   = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO)
+
+  #Create cmssw branches
+  for new_br, base_br in cmssw_branches.items():
+    create_branch (cmssw_repo, base_br, new_br, dryRun)
+  
+  #Create cmsdist branches
+  cmsdist_repo   = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSDIST_REPO)
+  for new_br, base_br in cmsdist_branches.items():
+    create_branch (cmsdist_repo, base_br, new_br, dryRun)
+  
+  #Create milestone
+  milestone = create_milestone(cmssw_repo, "Next "+cycle, dryRun)
+
+  #Add milestone on
+  add_milestone_in_cmsbot (cycle, milestone, dryRun)
+
+  #Add IBs in config.map
+  if not add_releases_in_config(config_lines, dryRun): return False
+  if not add_auto_forward_ports(cycle, cmsdist_prod, cmssw_branches, cmsdist_branches, dryRun): return False
+
+  err, out = getstatusoutput("cd %s; git add forward-ports && git diff origin" % scriptPath)
+  print "GIT DIFF:\n",out
+  print "\nIf the changes above looks good then please commit and push these to github"
+  
+  #Commit and push changes to cms-bot github repo
+  if gh_push and out:
+    err, out = getstatusoutput("cd %s && git commit -a -m 'New release cycle %s based on %s added' && git pull --rebase && git push origin" % (scriptPath, cycle, base))
+    return err
+  return True
+
+###############################################################
+if __name__ == "__main__":
+  parser = OptionParser(usage="%prog <pull-request-id>")
+  parser.add_option("-n", "--dry-run",   dest="dryRun", action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-c", "--cycle",     dest="cycle",  help="Release cycle name e.g CMSSW_8_1_X", type=str, default='None')
+  parser.add_option("-b", "--base-cycle",dest="base",   help="Base release cycle name e.g CMSSW_8_0_X", type=str, default='None')
+  parser.add_option("-p", "--push",      dest="push",   action="store_true", help="Commit and push cms-bot changes back to github", default=False)
+  opts, args = parser.parse_args()
+
+  if len(args) > 0: parser.error("Too many arguments")
+  if not opts.cycle or not opts.cycle.endswith("_X"): parser.error("Invalid cycle '"+str(opts.cycle)+"' it must end with _X")
+  if not opts.base or not opts.base.endswith("_X"): parser.error("Invalid base cycle '"+str(opts.base)+"' it must end with _X")
+  process (opts.base, opts.cycle, opts.push, opts.dryRun)
+

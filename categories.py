@@ -35,7 +35,6 @@ CMSSW_L2 = {
   "mommsen": ["daq"],
   "emeschi": ["daq"],
   "mulhearn": ["l1"],
-  "danduggan": ["dqm","pdmv"],
   "cmsbuild": ["tests"],
   "lveldere": ["fastsim"],
   "ssekmen": ["fastsim"],
@@ -54,6 +53,7 @@ CMSSW_L2 = {
   "vanbesien" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "iahmad-khan" : ["externals"],
+  "hengne" : ["pdmv"],
 }
 
 CMSSW_CATEGORIES={

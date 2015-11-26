@@ -28,6 +28,7 @@ parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help=
 parser.add_option("-c", action="store", dest="commit_hash", help="Tells me to use the commit hash to mark it as success or failure depending on the results of the tests" , )
 parser.add_option("--add-message", action="store", dest="aditional_message", help="I will add the text to the message that I will send" , )
 parser.add_option("--repo", action="store", dest="custom_repo", help="Tells me to use a custom repository from the user cms-sw" )
+parser.add_option("--cmsdist-pr", action="store", type="int", dest="cmsdist_pr", help="Tells me an optional CMSDIST PR to print a message too", default=-1)
 
 (options, args) = parser.parse_args()
 
@@ -598,6 +599,8 @@ if options.custom_repo == 'cms-sw/cmsdist':
   destination_repo = get_official_repo( github , options.custom_repo )
   COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/'+destination_repo.full_name+'/statuses/%s'
 
+if (options.cmsdist_pr > -1):
+  pr_number = options.cmsdist_pr
 
 if ( ACTION == 'TESTS_OK_PR' ):
   send_tests_approved_pr_message( destination_repo , pr_number , tests_results_url )

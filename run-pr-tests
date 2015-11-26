@@ -577,13 +577,13 @@ fi
 if [ "X$CMSDIST_ONLY" == Xtrue ] || [ "X$CMSDIST_ALSO" == Xtrue ]; then
   if $ALL_OK ; then
     echo $ALL_OK
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo cms-sw/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo cms-sw/cmsdist --pr $PULL_REQUEST_NUMBER -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --cmsdist-pr $CMSDIST_PR $DRY_RUN
   elif [ "X$BUILD_OK" = Xfalse ]; then
     echo $BUILD_OK
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo cms-sw/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/build.log $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo cms-sw/cmsdist --pr $PULL_REQUEST_NUMBER -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --cmsdist-pr $CMSDIST_PR --unit-tests-file $WORKSPACE/build.log $DRY_RUN
   elif [ "X$RELVALS_OK" = Xfalse ]; then
     pushd $WORKSPACE/
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --repo cms-sw/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --repo cms-sw/cmsdist --pr $PULL_REQUEST_NUMBER -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --cmsdist-pr $CMSDIST_PR --unit-tests-file $WORKSPACE/matrixTests.log $DRY_RUN
   fi
 fi
 

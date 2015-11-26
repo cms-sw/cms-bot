@@ -38,6 +38,7 @@ for repo in `ls $SCRIPT_PATH/forward-ports` ; do
   for release in `ls $SCRIPT_PATH/forward-ports/$repo`; do
     echo "Forward porting release $release"
     grep 'CMSSW_' $SCRIPT_PATH/forward-ports/$repo/$release | while read line ; do
+      [ "X$line" = "X" ] && continue
       (updateBranch $line) || true
     done
   done

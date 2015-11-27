@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+from github import Github
+from os.path import expanduser , exists
+from optparse import OptionParser
+#from process_pr import process_pr
+from github_hooks_config import GITHUB_HOOKS as hk_conf
+import hashlib
+#Get secret from file
+def get_secret(hook_name):
+  secret_file = '/data/secrets/' + hook_name
+  if not exists(secret_file):
+    secret_file = '/data/secrets/github_hook_secret_cmsbot' 
+  return open(secret_file,'r').read().split('\n')[0].strip()
+#match hook config
+def match_config(new,old):
+  if new["active"] != old.active:
+    return False
+  elif new["events"] != old.events:
+    return False
+  for key in new["config"]:
+    if key in old.config and key!='secret' and new["config"][key] != old.config[key]:
+      return False
+  return True
+  
+#main section
+if __name__ == "__main__":
+  parser = OptionParser(usage="%prog [-k|--hook <name>] [-r|--repository <repo>] [-f|--force] [-n|--dry-run]")
+  parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-f", "--force",    dest="force",     action="store_true", help="Force update github hook", default=False)
+  parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
+  parser.add_option("-k", "--hook", dest="hook", help="Github Hook name", type=str, default="")
+  opts, args = parser.parse_args()
+#get hooks to be processed
+  hooks = []
+  if not opts.hook:
+    hooks = [ hook_name for hook_name in hk_conf.keys() ]
+  elif opts.hook in hk_conf:
+    hooks.append(opts.hook)
+  else:
+    parser.error("Invalid hook name %s.\nValid hooks are\n  %s" % (opts.hook, "\n  ".join(hk_conf.keys())))
+  gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
+#get repos to be processed
+  repos = []
+  if not "/" in opts.repository:
+    for repo in gh.get_user().get_repos():
+      repos.append(repo.full_name)
+  else:
+    repos.append(opts.repository)
+#process repos
+  for repo_name in repos:
+    print "checking for repo ",repo_name
+    repo = gh.get_repo(repo_name)
+    repo_hooks_all = {}
+    for hook in repo.get_hooks():
+      repo_hooks_all[ hook.name ] = hook
+    for hook in hooks:
+      print "checking for web hook" , hook
+      hook_conf = hk_conf[hook]
+      hook_conf["name"] = hook
+      hook_conf["config"]["secret"] = get_secret(hook)
+      hook_conf["config"]["data"] = hashlib.sha256(hook_conf["config"]["secret"].encode()).hexdigest()
+      if hook in repo_hooks_all:
+        old_hook = repo_hooks_all[hook]
+        if opts.force or not match_config(hook_conf,old_hook):
+          if not opts.dryRun: old_hook.edit(**hook_conf)
+          print "hook updated"
+        else:
+          print "Hook configuration is same"
+      else:
+        if not opts.dryRun: repo.create_hook(**hook_conf)
+        print "Hook created in github.....success"

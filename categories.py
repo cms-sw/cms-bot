@@ -1,5 +1,8 @@
 # A ridicously long mapping for categories. Good enough for now.
 import re
+from cms_static import GH_CMSSW_ORGANIZATION as gh_user
+from cms_static import GH_CMSSW_REPO as gh_cmssw
+from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 
 CMSSW_L1 = ["davidlange6"]
 APPROVE_BUILD_RELEASE = [ "smuzaffar", "degano", "slava77" ] + CMSSW_L1
@@ -8,9 +11,18 @@ TRIGGER_PR_TESTS = [ "lgray", "wmtan", "bsunanda", "VinInn" ] + REQUEST_BUILD_RE
 
 COMMON_CATEGORIES = [ "orp", "tests" ]
 EXTERNAL_CATEGORIES = [ "externals" ]
-EXTERNAL_REPOS = [ "cms-data", "cms-externals", "cms-sw/root", "cms-sw/cmssw-config","cms-sw/SCRAM","cms-sw/cms-git-tools","cms-sw/apt-rpm" ]
-CMSSW_REPOS = [ "cms-sw/cmssw" ]
-CMSDIST_REPOS = [ "cms-sw/cmsdist" ]
+EXTERNAL_REPOS = [
+  "cms-data",
+  "cms-externals",
+  gh_user+"/root",
+  gh_user+"/cmssw-config",
+  gh_user+"/SCRAM",
+  gh_user+"/cms-git-tools",
+  gh_user+"/apt-rpm"
+]
+
+CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
+CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
 CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "degano", "davidlt" ]
 COMPARISON_MISSING_MAP = [ "slava77" ]
 

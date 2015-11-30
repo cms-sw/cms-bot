@@ -102,6 +102,9 @@ GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
   $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
   echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
+  # creation of results summary file, normally done in run-pr-tests, here just to let close the process
+  cp $WORKSPACE/cms-bot/templates/PullRequestSummary.html $WORKSPACE/summary.html
+  cp $WORKSPACE/cms-bot/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
   exit 0
 else
   echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE

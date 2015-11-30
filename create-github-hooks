@@ -52,12 +52,14 @@ if __name__ == "__main__":
     repo = gh.get_repo(repo_name)
     repo_hooks_all = {}
     for hook in repo.get_hooks():
-      repo_hooks_all[ hook.name ] = hook
+      if "name" in hook.config:
+        repo_hooks_all[ hook.config['name'] ] = hook 
     for hook in hooks:
       print "checking for web hook" , hook
       hook_conf = hk_conf[hook]
-      hook_conf["name"] = hook
+      hook_conf["name"] = "web"
       hook_conf["config"]["secret"] = get_secret(hook)
+      hook_conf["config"]["name"] = hook
       hook_conf["config"]["data"] = hashlib.sha256(hook_conf["config"]["secret"].encode()).hexdigest()
       if hook in repo_hooks_all:
         old_hook = repo_hooks_all[hook]

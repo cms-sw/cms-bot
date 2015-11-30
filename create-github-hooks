@@ -18,7 +18,7 @@ def match_config(new,old):
   elif new["events"] != old.events:
     return False
   for key in new["config"]:
-    if key in old.config and key!='secret' and new["config"][key] != old.config[key]:
+    if (not key in old.config) or (key!='secret' and new["config"][key] != old.config[key]):
       return False
   return True
   
@@ -58,6 +58,7 @@ if __name__ == "__main__":
       print "checking for web hook" , hook
       hook_conf = hk_conf[hook]
       hook_conf["name"] = "web"
+      hook_conf["config"]["insecure_ssl"] = "1"
       hook_conf["config"]["secret"] = get_secret(hook)
       hook_conf["config"]["name"] = hook
       hook_conf["config"]["data"] = hashlib.sha256(hook_conf["config"]["secret"].encode()).hexdigest()

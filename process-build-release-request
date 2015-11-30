@@ -596,7 +596,7 @@ def triggerCleanup( issue, comments, release_name ):
 #
 def start_release_build( issue, release_name, release_branch, architectures, docker_imgs ): 
 
-  cmssw_repo = gh.get_organization( GH_CMSSW_ORGANIZATION ).get_repo( GH_CMSSW_REPO )
+  cmssw_repo = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO)
   release_created = create_release_github( cmssw_repo, release_name, release_branch )
   if not release_created:
     msg = RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name )
@@ -774,15 +774,8 @@ if __name__ == "__main__":
   
   issue_id  = int( args[ 0 ] )
   gh = Github( login_or_token=GH_TOKEN )
-  rate_limit = gh.get_rate_limit().rate
-  print 'API Rate Limit'
-  print 'Limit: ', rate_limit.limit
-  print 'Remaining: ', rate_limit.remaining
-  print 'Reset time (GMT): ', rate_limit.reset
   cmssw_repo = gh.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
   issue = cmssw_repo.get_issue( issue_id )
-  ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
-  comments = [ c for c in issue.get_comments( ) ]
 
   # 1. Is this a pull request?
   if issue.pull_request:
@@ -801,6 +794,15 @@ if __name__ == "__main__":
     print 'User not authorized'
     post_message( issue , NOT_AUTHORIZED_MSG )
     exit( 0 )
+
+  rate_limit = gh.get_rate_limit().rate
+  print 'API Rate Limit'
+  print 'Limit: ', rate_limit.limit
+  print 'Remaining: ', rate_limit.remaining
+  print 'Reset time (GMT): ', rate_limit.reset
+
+  ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
+  comments = [ c for c in issue.get_comments( ) ]
 
   release_name = title_match.group(1)
   # Get the release queue from the release name.

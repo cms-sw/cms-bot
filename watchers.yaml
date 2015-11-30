@@ -812,3 +812,9 @@ cseez:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+OlivierBondu:
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip*
+- RecoLocalTracker/SubCollectionProducers

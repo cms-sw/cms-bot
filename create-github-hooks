@@ -5,6 +5,8 @@ from optparse import OptionParser
 #from process_pr import process_pr
 from github_hooks_config import GITHUB_HOOKS as hk_conf
 import hashlib
+from categories import EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS
+
 #Get secret from file
 def get_secret(hook_name):
   secret_file = '/data/secrets/' + hook_name
@@ -25,12 +27,32 @@ def match_config(new,old):
 #main section
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-k|--hook <name>] [-r|--repository <repo>] [-f|--force] [-n|--dry-run]")
-  parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
-  parser.add_option("-f", "--force",    dest="force",     action="store_true", help="Force update github hook", default=False)
-  parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
+  parser.add_option("-n", "--dry-run",   dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-f", "--force",     dest="force",     action="store_true", help="Force update github hook", default=False)
+  parser.add_option("-r", "--repository",dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default=None)
+  parser.add_option("-e", "--externals", dest="externals", action="store_true", help="Only process CMS externals repositories", default=False)
+  parser.add_option("-c", "--cmssw",     dest="cmssw",     action="store_true", help="Only process "+",".join(CMSSW_REPOS)+" repository", default=False)
+  parser.add_option("-d", "--cmsdist",   dest="cmsdist",   action="store_true", help="Only process "+",".join(CMSDIST_REPOS)+" repository", default=False)
+  parser.add_option("-a", "--all",       dest="all",       action="store_true", help="Process all CMS repository i.e. externals, cmsdist and cmssw", default=False)
   parser.add_option("-k", "--hook", dest="hook", help="Github Hook name", type=str, default="")
   opts, args = parser.parse_args()
-#get hooks to be processed
+
+  repos_names = []
+  if opts.repository:
+    repos_names.append(opts.repository)
+  elif opts.all:
+    opts.externals = True
+    opts.cmssw = True
+    opts.cmsdist = True
+  elif (not opts.externals) and (not opts.cmssw) and (not opts.cmsdist):
+    parser.error("Too few arguments, please use either -e, -c or -d")
+
+  if not repos_names:
+    if opts.externals: repos_names = repos_names + EXTERNAL_REPOS
+    if opts.cmssw: repos_names = repos_names + CMSSW_REPOS
+    if opts.cmsdist: repos_names = repos_names + CMSDIST_REPOS
+
+  #get hooks to be processed
   hooks = []
   if not opts.hook:
     hooks = [ hook_name for hook_name in hk_conf.keys() ]
@@ -38,15 +60,18 @@ if __name__ == "__main__":
     hooks.append(opts.hook)
   else:
     parser.error("Invalid hook name %s.\nValid hooks are\n  %s" % (opts.hook, "\n  ".join(hk_conf.keys())))
+
   gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
-#get repos to be processed
+  #get repos to be processed
   repos = []
-  if not "/" in opts.repository:
-    for repo in gh.get_user().get_repos():
-      repos.append(repo.full_name)
-  else:
-    repos.append(opts.repository)
-#process repos
+  for r in set(repos_names):
+    if not "/" in r:
+      for repo in gh.get_user(r).get_repos():
+        repos.append(repo.full_name)
+    else:
+      repos.append(r)
+
+  #process repos
   for repo_name in repos:
     print "checking for repo ",repo_name
     repo = gh.get_repo(repo_name)

@@ -226,7 +226,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     comment_msg = comment.body.encode("ascii", "ignore")
 
     # The first line is an invariant.
-    first_line = comment_msg.split("\n",1)[0].strip()
+    comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ]
+    first_line = comment_lines[0:1]
+    if not first_line: continue
+    first_line = first_line[0]
     if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
       already_seen = True
       pull_request_updated = False
@@ -309,7 +312,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         signatures["tests"] = "started"
         trigger_test_on_signature = False
       elif re.match( TESTS_RESULTS_MSG, first_line):
-        test_sha = [ l.strip() for l in comment_msg.split("\n") if l.strip() ][1:2]
+        test_sha = comment_lines[1:2]
         if test_sha: test_sha = test_sha[0].replace("Tested at: ","").strip()
         if test_sha != last_commit.sha:
           print "Ignoring test results for sha:",test_sha

@@ -27,8 +27,6 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
       elif cur_labels[lab].color != all_labels[lab]:
         if not dryRun: cur_labels[lab].edit(lab, all_labels[lab])
         print "  Label ",lab," color updatd: ",cur_labels[lab].color ," => ",all_labels[lab]
-      else:
-        print "  Already available:",lab
 
   rate_limit = gh.get_rate_limit().rate
   print 'Limit: ', rate_limit.remaining, "/", rate_limit.limit, "(",rate_limit.reset,")"

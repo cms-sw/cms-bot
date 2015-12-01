@@ -67,19 +67,16 @@ if __name__ == "__main__":
   #process repos
   error = 0
   for repo_name in repos:
-    print "checking for repo ",repo_name
+    print "Checking for repo ",repo_name
     hooks = []
     for r in REPO_HOOK_MAP:
-    if not opts.hook:
-      for r in REPO_HOOK_MAP:
-        if re.match(r[0],repo_name):
-          for h in r[1]: hooks.append(h)
+      if re.match(r[0],repo_name):
+        if opts.hook and opts.hook in r[1]:
+          hooks.append(opts.hook)
           break
-    else:
-      for r in REPO_HOOK_MAP:
-        if re.match(r[0],repo_name):
+        elif not opts.hook:
           for h in r[1]: hooks.append(h)
-          break
+        break
     if not hooks:
       print "==>Warning: No hook found for repository",repo_name
       error = 1

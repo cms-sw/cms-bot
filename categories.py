@@ -18,7 +18,8 @@ EXTERNAL_REPOS = [
   gh_user+"/cmssw-config",
   gh_user+"/SCRAM",
   gh_user+"/cms-git-tools",
-  gh_user+"/apt-rpm"
+  gh_user+"/apt-rpm",
+  gh_user+"/cms-bot"
 ]
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]

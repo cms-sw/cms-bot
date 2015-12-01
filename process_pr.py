@@ -201,6 +201,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     last_commit_date = last_commit.committer.date
     print "Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date
     print "Latest commit message: ",last_commit.message.encode("ascii", "ignore")
+    print "Latest commit sha: ",last_commit.sha
     releaseManagers=list(set(RELEASE_MANAGERS.get(pr.base.ref, [])+SPECIAL_RELEASE_MANAGERS))
 
   # Process the issue comments

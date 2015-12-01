@@ -1285,3 +1285,5 @@ CMSSW_CATEGORIES={
    "TrackPropagation/Geant4e",
    "Validation/Configuration",
    "SLHCUpgradeSimulations/L1CaloTrigger"]}
+
+USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + CMSSW_L2.keys())

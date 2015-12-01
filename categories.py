@@ -23,7 +23,7 @@ EXTERNAL_REPOS = [
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
 CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
-CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "degano", "davidlt" ]
+CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "degano", "davidlt", "Dr15Jones" ]
 COMPARISON_MISSING_MAP = [ "slava77" ]
 
 CMSSW_L2 = {

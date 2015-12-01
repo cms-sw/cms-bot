@@ -101,9 +101,9 @@ GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
 if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
   $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
-  echo 'PR_NUMBER;'$PULL_REQUEST_NUMBER >> $RESULTS_FILE
+  echo 'PR_NUMBER;'$CMSDIST_PR >> $RESULTS_FILE
   echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
-  echo 'BASE_IB;'$RELEASE_FORMAT >> $RESULTS_FILE
+  echo 'BASE_IB;'$CMSSW_IB >> $RESULTS_FILE
   echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
   echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
   # creation of results summary file, normally done in run-pr-tests, here just to let close the process

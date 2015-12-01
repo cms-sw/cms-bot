@@ -76,7 +76,7 @@ for EXT in $EXT_DEP; do
     TOOLFILES=$TOOLFILES" "$EXT-toolfile
   fi
 done
-export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" | head -n 1)
+export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" --no-merges | head -n 1)
 cd $WORKSPACE
 
 # Notify github that the script will start testing now

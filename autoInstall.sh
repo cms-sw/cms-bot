@@ -14,7 +14,7 @@ export BASEDIR=$2
 export BASEDESTDIR=/afs/cern.ch/cms/sw/ReleaseCandidates
 export LANG=C
 
-DELDIR=$BASEDIR/../delete
+DELDIR=$BASEDIR/../delete-${SCRAM_ARCH}
 mkdir -p $DELDIR
 
 # The repositories we need to install are those for which we find the
@@ -90,7 +90,7 @@ for REPOSITORY in $REPOSITORIES; do
   mkdir -p $WORKDIR/etc/
   rsync -a --no-group --no-owner $WORKDIR/etc/ $DESTDIR/etc/ || true
 done
-REPOSITORIES=`find /afs/cern.ch/cms/sw/ReleaseCandidates/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
+REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
 echo $REPOSITORIES
 
 # In order to avoid synchronizing the whole directories every time we do the

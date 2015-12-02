@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-ARCHITECTURE=slc6_amd64_gcc491
+ARCHITECTURE=slc6_amd64_gcc493
 REPO_FILE_DIR=/afs/cern.ch/cms/sw/ReleaseCandidates/reset-repo-info
 
 # We use %U rather than %W because the groovy macros expect

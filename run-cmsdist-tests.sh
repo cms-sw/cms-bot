@@ -123,13 +123,15 @@ eval $(scramv1 runtime -sh)
 # Setup all the toolfiles previously built
 DEP_NAMES=""
 for TOOL in $TOOLFILES; do
-  if [ -d $WORKSPACE/$BUILD_DIR/$ARCH/external/$TOOL/*/etc/scram.d/ ]; then
-    XML=$(find $WORKSPACE/$BUILD_DIR/$ARCH/external/$TOOL/*/etc/scram.d/ -name *.xml)
-    for FILE in $XML; do
-      scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-      DEP_NAMES=$DEP_NAMES" "$(echo $FILE | sed 's|.*/||;s|.xml$||')
-    done
-  fi
+  for DIR in "external" "lcg"; do
+    if [ -d $WORKSPACE/$BUILD_DIR/$ARCH/$DIR/$TOOL/*/etc/scram.d/ ]; then
+      XML=$(find $WORKSPACE/$BUILD_DIR/$ARCH/$DIR/$TOOL/*/etc/scram.d/ -name *.xml)
+      for FILE in $XML; do
+        scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+        DEP_NAMES=$DEP_NAMES" "$(echo $FILE | sed 's|.*/||;s|.xml$||')
+      done
+    fi
+  done
 done
 eval $(scramv1 runtime -sh)
 

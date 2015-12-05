@@ -101,14 +101,16 @@ fi
 SCRAM_ARCH=$ARCH
 scram project $CMSSW_IB
 pushd $CMSSW_IB/src
-eval $(scramv1 runtime -sh)
 
 # Setup all the toolfiles previously built
+mv ../config/toolbox/${ARCH}/tools/selected ../config/toolbox/${ARCH}/tools/selected.old
+cp -r $WORKSPACE/$BUILD_DIR/$ARCH/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCH}/tools/selected
+scram seup
 DEP_NAMES=""
 for DIR in `find $WORKSPACE/$BUILD_DIR/BUILD/$ARCH -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCH/|/$ARCH/|"` ; do
   if [ -d $DIR/etc/scram.d ]; then
     for FILE in `find $DIR/etc/scram.d -name '*.xml'`; do
-      scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+      #scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       DEP_NAMES=$DEP_NAMES" "$(echo $FILE | sed 's|.*/||;s|.xml$||')
     done
   fi

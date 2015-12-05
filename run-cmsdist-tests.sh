@@ -70,7 +70,7 @@ for P in $PKGS; do
   else
     TOOLFILES=$TOOLFILES" "$P
   fi
-  EXT_DEP=$EXT_DEP" "$(grep -nr $P . | grep "Requires:" | cut -d "/" -f 2 | cut -d ":" -f 1 | grep -v "cmssw-tool-conf" | grep -v $P | cut -d "." -f 1)
+  EXT_DEP=$EXT_DEP" "$(grep -nr $P . | grep "Requires:" | cut -d "/" -f 2 | cut -d ":" -f 1 | grep -v "cmssw-tool-conf\|fwlite" | grep -v $P | cut -d "." -f 1)
 done
 # Add the toolfiles of the external packages depending on the one(s) being modified
 for EXT in $EXT_DEP; do

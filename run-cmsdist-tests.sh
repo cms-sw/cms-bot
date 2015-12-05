@@ -63,23 +63,6 @@ git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
 # Check which packages the PR changes
 PKGS=$(git diff origin/$CMSDIST_BRANCH.. --name-only --diff-filter=ACMR | grep -v .patch | cut -d"." -f"1")
 
-# Check if the packages have a toolfile and add them to the build if they exists
-for P in $PKGS; do
-  if [ -f $P-toolfile.spec ]; then
-    TOOLFILES=$TOOLFILES" "$P-toolfile
-  else
-    TOOLFILES=$TOOLFILES" "$P
-  fi
-  EXT_DEP=$EXT_DEP" "$(grep -nr $P . | grep "Requires:" | cut -d "/" -f 2 | cut -d ":" -f 1 | grep -v "cmssw-tool-conf\|fwlite" | grep -v $P | cut -d "." -f 1)
-done
-# Add the toolfiles of the external packages depending on the one(s) being modified
-for EXT in $EXT_DEP; do
-  if [ -f $EXT-toolfile.spec ]; then
-    TOOLFILES=$TOOLFILES" "$EXT-toolfile
-  else
-    TOOLFILES=$TOOLFILES" "$EXT
-  fi
-done
 export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" --no-merges | head -n 1)
 cd $WORKSPACE
 
@@ -87,11 +70,7 @@ cd $WORKSPACE
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
 # Build the whole cmssw-tool-conf toolchain
-if [ "$FULL_TOOLCONF" = true ]; then
-  COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCH -j $(Jenkins_GetCPU) build cmssw-tool-conf"
-else
-  COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO --arch $ARCH -j $(Jenkins_GetCPU) build $PKGS $TOOLFILES"
-fi
+COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCH -j $(Jenkins_GetCPU) build cmssw-tool-conf"
 echo $COMPILATION_CMD > $WORKSPACE/cmsswtoolconf.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 echo 'END OF BUILD LOG'
@@ -126,16 +105,13 @@ eval $(scramv1 runtime -sh)
 
 # Setup all the toolfiles previously built
 DEP_NAMES=""
-for TOOL in $TOOLFILES; do
-  for DIR in "external" "lcg" "cms"; do
-    if [ -d $WORKSPACE/$BUILD_DIR/$ARCH/$DIR/$TOOL/*/etc/scram.d/ ]; then
-      XML=$(find $WORKSPACE/$BUILD_DIR/$ARCH/$DIR/$TOOL/*/etc/scram.d/ -name *.xml)
-      for FILE in $XML; do
-        scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-        DEP_NAMES=$DEP_NAMES" "$(echo $FILE | sed 's|.*/||;s|.xml$||')
-      done
-    fi
-  done
+for DIR in `find $WORKSPACE/$BUILD_DIR/BUILD/$ARCH -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCH/|/$ARCH/|"` ; do
+  if [ -d $DIR/etc/scram.d ]; then
+    for FILE in `find $DIR/etc/scram.d -name '*.xml'`; do
+      scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+      DEP_NAMES=$DEP_NAMES" "$(echo $FILE | sed 's|.*/||;s|.xml$||')
+    done
+  fi
 done
 eval $(scramv1 runtime -sh)
 

@@ -67,6 +67,8 @@ PKGS=$(git diff origin/$CMSDIST_BRANCH.. --name-only --diff-filter=ACMR | grep -
 for P in $PKGS; do
   if [ -f $P-toolfile.spec ]; then
     TOOLFILES=$TOOLFILES" "$P-toolfile
+  else
+    TOOLFILES=$TOOLFILES" "$P
   fi
   EXT_DEP=$EXT_DEP" "$(grep -nr $P . | grep "Requires:" | cut -d "/" -f 2 | cut -d ":" -f 1 | grep -v "cmssw-tool-conf" | grep -v $P | cut -d "." -f 1)
 done
@@ -74,6 +76,8 @@ done
 for EXT in $EXT_DEP; do
   if [ -f $EXT-toolfile.spec ]; then
     TOOLFILES=$TOOLFILES" "$EXT-toolfile
+  else
+    TOOLFILES=$TOOLFILES" "$EXT
   fi
 done
 export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" --no-merges | head -n 1)
@@ -123,7 +127,7 @@ eval $(scramv1 runtime -sh)
 # Setup all the toolfiles previously built
 DEP_NAMES=""
 for TOOL in $TOOLFILES; do
-  for DIR in "external" "lcg"; do
+  for DIR in "external" "lcg" "cms"; do
     if [ -d $WORKSPACE/$BUILD_DIR/$ARCH/$DIR/$TOOL/*/etc/scram.d/ ]; then
       XML=$(find $WORKSPACE/$BUILD_DIR/$ARCH/$DIR/$TOOL/*/etc/scram.d/ -name *.xml)
       for FILE in $XML; do

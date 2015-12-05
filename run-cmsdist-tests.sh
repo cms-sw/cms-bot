@@ -136,7 +136,7 @@ done
 eval $(scramv1 runtime -sh)
 
 # Search for CMSSW package that might depend on the compiled externals
-CMSSW_DEP=$(for D in $DEP_NAMES; do (for L in $(scram build echo_${D}_USED_BY); do echo $L | grep '\(self\|cmssw\)' | cut -d"/" -f 2,3; done); done)
+CMSSW_DEP=$(echo $(for D in $DEP_NAMES; do (for L in $(scram build echo_${D}_USED_BY); do echo $L | grep '\(self\|cmssw\)' | cut -d"/" -f 2,3; done); done) | tr ' ' '\n' | sort | uniq)
 git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables

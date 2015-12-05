@@ -105,7 +105,7 @@ pushd $CMSSW_IB/src
 # Setup all the toolfiles previously built
 mv ../config/toolbox/${ARCH}/tools/selected ../config/toolbox/${ARCH}/tools/selected.old
 cp -r $WORKSPACE/$BUILD_DIR/$ARCH/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCH}/tools/selected
-scram seup
+scram setup
 DEP_NAMES=""
 for DIR in `find $WORKSPACE/$BUILD_DIR/BUILD/$ARCH -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCH/|/$ARCH/|"` ; do
   if [ -d $DIR/etc/scram.d ]; then

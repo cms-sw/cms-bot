@@ -47,12 +47,11 @@ for REPOSITORY in $REPOSITORIES; do
     (pushd $DESTDIR ; rm -rf $REMOVED; popd)
   done
   for PKG in `find $WORKDIR/ -mindepth 3 -maxdepth 3 -type d | sort -r | sed -e "s|.*$SCRAM_ARCH/||"`; do
-    if [ ! -f  $WORKDIR/$PKG/done ]; then
-      NEWPKG=`dirname $PKG`/tmp$$-`basename $PKG`
-      mv $DESTDIR/$PKG $DESTDIR/$NEWPKG || mkdir -p $DESTDIR/$NEWPKG
-      # We need to delete the temp directory in case of failure.
-      (rsync -a -W --inplace --delete --no-group --no-owner $WORKDIR/$PKG/ $DESTDIR/$NEWPKG/ && mv -T $DESTDIR/$NEWPKG $DESTDIR/$PKG && touch $WORKDIR/$PKG/done) || rm -rf $DESTDIR/$NEWPKG || true
-    fi
+    [ -f  $WORKDIR/$PKG/done ] && continue
+    NEWPKG=`dirname $PKG`/tmp$$-`basename $PKG`
+    mv $DESTDIR/$PKG $DESTDIR/$NEWPKG || mkdir -p $DESTDIR/$NEWPKG
+    # We need to delete the temp directory in case of failure.
+    (rsync -a -W --inplace --delete --no-group --no-owner $WORKDIR/$PKG/ $DESTDIR/$NEWPKG/ && mv -T $DESTDIR/$NEWPKG $DESTDIR/$PKG && touch $WORKDIR/$PKG/done) || rm -rf $DESTDIR/$NEWPKG || true
   done
   rsync -a --no-group --no-owner $WORKDIR/../etc/ $DESTDIR/../etc/ || true
   rm $DIRFILE

@@ -14,7 +14,7 @@ export BASEDIR=$2
 export BASEDESTDIR=/afs/cern.ch/cms/sw/ReleaseCandidates
 export LANG=C
 
-DELDIR=$BASEDIR/../delete-${SCRAM_ARCH}
+DELDIR=$BASEDIR/../delete/${SCRAM_ARCH}
 mkdir -p $DELDIR
 
 # The repositories we need to install are those for which we find the

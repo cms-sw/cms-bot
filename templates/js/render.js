@@ -399,6 +399,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
   var addons_results = comparison.addons
   var architectures = comparison.tests_archs
   var building_results =  comparison.builds
+  var fwlite_results =  comparison.fwlite
 
   title_cell.attr("rowspan",architectures.length+1)
   title_row.append(title_cell)
@@ -416,6 +417,8 @@ write_comp_IB_table =  function( comparison, tab_pane ){
     title_row.append(rvs_title)
     var addons_title = $( '<th>' ).text( 'Other Tests' )
     title_row.append(addons_title)
+    var fwlite_title = $( '<th>' ).text( 'FWLite' )
+    title_row.append(fwlite_title )
     var qa_title = $( '<th>' ).text( 'Q/A' )
     title_row.append(qa_title)
     
@@ -430,6 +433,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
       add_tests_to_row( uTests_results, ar_row, architectures[i] , 'utests', current_tag )
       add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals', current_tag)
       add_tests_to_row(addons_results,ar_row,architectures[i],'addons', current_tag)
+      add_tests_to_row( building_results , ar_row , architectures[i] , 'fwlite', current_tag )
       add_qa_link_to_row(ar_row,architectures[i],current_tag)
      }
 

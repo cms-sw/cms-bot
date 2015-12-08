@@ -99,6 +99,14 @@ get_tests_url = function( type, file, arch, ib ) {
     }else {
       details_link="https://cms-sw.github.io/relvalLogDetail.html#" + link_parts[si] + ';' + link_parts[si+4] 
     }
+  }else if(type == 'fwlite'){
+    if ( file == 'not-ready' ){
+      details_link=""
+    }else {
+      details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/fwlite/" + link_parts[si] + '/'
+                                                                +link_parts[si+1]+'/'+link_parts[si+2]+'/'+link_parts[si+3]
+                                                                +'/'+link_parts[si+4]
+    }
   }else if(type == 'addons'){
     details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[si] + '/'
                                                                 +link_parts[si+1]+'/'+link_parts[si+2]+'/'+link_parts[si+3]+'/'+link_parts[si+4]
@@ -433,7 +441,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
       add_tests_to_row( uTests_results, ar_row, architectures[i] , 'utests', current_tag )
       add_tests_to_row(relvals_results,ar_row,architectures[i],'relvals', current_tag)
       add_tests_to_row(addons_results,ar_row,architectures[i],'addons', current_tag)
-      add_tests_to_row( building_results , ar_row , architectures[i] , 'fwlite', current_tag )
+      add_tests_to_row(fwlite_results, ar_row , architectures[i] , 'fwlite', current_tag )
       add_qa_link_to_row(ar_row,architectures[i],current_tag)
      }
 

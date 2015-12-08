@@ -550,41 +550,47 @@ for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
 done
 
 #evaluate results
+REPEAT=1
+if [ "X$CMSDIST_ONLY" == Xtrue ]; then
+  COMMITS[1]=$CMSDIST_COMMIT
+  REPOS[1]="cms-sw/cmsdist"
+  PR[1]=$CMSDIST_PR
+elif [ "X$CMSDIST_ALSO" == Xtrue ]; then
+  COMMITS[1]=$LAST_COMMIT
+  REPOS[1]=$PUB_REPO
+  PR[1]=$PULL_REQUEST_NUMBER
+  COMMITS[2]=$CMSDIST_COMMIT
+  REPOS[2]="cms-sw/cmsdist"
+  PR[2]=$CMSDIST_PR
+  REPEAT=2
+else
+  COMMITS[1]=$LAST_COMMIT
+  REPOS[1]=$PUB_REPO
+  PR[1]=$PULL_REQUEST_NUMBER
+fi
 
-if [ "X$CMSDIST_ONLY" == Xfalse ]; then
+for i in $( seq 1 $REPEAT); do
   if $ALL_OK ; then
     echo $ALL_OK
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
   elif [ "X$BUILD_OK" = Xfalse ]; then
     echo $BUILD_OK
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/build.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/build.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
   elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
     echo $UNIT_TESTS_OK
     echo 'failure in unit tests'
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/unitTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/unitTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
   elif [ "X$RELVALS_OK" = Xfalse ]; then
     pushd $WORKSPACE/
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
     popd
   elif [ "X$ADDON_OK" = Xfalse ]; then
     pushd $WORKSPACE/
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/addOnTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/addOnTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
     popd
   elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
   fi
-fi
-if [ "X$CMSDIST_ONLY" == Xtrue ] || [ "X$CMSDIST_ALSO" == Xtrue ]; then
-  if $ALL_OK ; then
-    echo $ALL_OK
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo cms-sw/cmsdist --pr $PULL_REQUEST_NUMBER -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --cmsdist-pr $CMSDIST_PR $DRY_RUN
-  elif [ "X$BUILD_OK" = Xfalse ]; then
-    echo $BUILD_OK
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo cms-sw/cmsdist --pr $PULL_REQUEST_NUMBER -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --cmsdist-pr $CMSDIST_PR --unit-tests-file $WORKSPACE/build.log $DRY_RUN
-  elif [ "X$RELVALS_OK" = Xfalse ]; then
-    pushd $WORKSPACE/
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL --repo cms-sw/cmsdist --pr $PULL_REQUEST_NUMBER -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --cmsdist-pr $CMSDIST_PR --unit-tests-file $WORKSPACE/matrixTests.log $DRY_RUN
-  fi
-fi
+done
 
 ls

@@ -174,7 +174,7 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
       test_label = "Unknown"
     }
    
-  }else if (type == 'builds'){
+  }else if (type == 'builds' || type == 'fwlite'){
 
     incomplete = file == 'not-ready'
 

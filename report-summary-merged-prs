@@ -736,6 +736,7 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp['valgrind' ] = 'not-found'
 
       a = [t['arch'] for t in utres] if utres else []
+      b = [t['arch'] for t in rvsres] if rvsres else []
       c = [t['arch'] for t in buildsres] if buildsres else []
 
       not_complete_archs =  [arch for arch in c if arch not in a]

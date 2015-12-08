@@ -390,7 +390,6 @@ write_comp_IB_table =  function( comparison, tab_pane ){
   add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
   title_cell.append($('<br>'))
   add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
-  title_cell.append($('<br>'))
   add_valgrind_tests_link( title_cell , comparison.hlt_tests , current_tag )
   add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )
 

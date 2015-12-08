@@ -41,6 +41,7 @@ parser.add_option( "-v" , "--verbose" , dest="verbose" , action="store_true", he
 # {
 #    "addons": [],
 #    "builds": [],
+#    "fwlite": [],
 #    "compared_tags": "",
 #    "utests": [],
 #    "cmsdistTags": {},
@@ -345,7 +346,7 @@ def get_results_details_one_build_file(file):
 # parses the tests results for each file in output. It distinguishes if it is
 # build, unit tests, relvals, or addon tests logs. The the result of the parsing
 # is saved in the parameter results.
-# type can be 'relvals', 'utests', 'addON', 'builds'
+# type can be 'relvals', 'utests', 'addON', 'builds', 'fwlite'
 #
 # schema of results:
 # {
@@ -384,6 +385,8 @@ def analyze_tests_results( output, results, arch, type ):
       passed = get_results_one_addOn_file(line)
     elif type == 'builds':
       passed,details = get_results_details_one_build_file(line)
+    elif type == 'fwlite':
+      passed,details = get_results_details_one_build_file(line)
     else:
       print 'not a valid test type %s' %type
       exit(1)
@@ -413,75 +416,6 @@ def execute_magic_command_find_rv_exceptions_results( ):
     rv_exception_results[ ib_name ] = True 
 
   return rv_exception_results
-
-#
-# Searchs in github.io for incomplete results. It fills a structure with the results found
-# this is done to discard tags at the begining
-#
-def fill_list_incomplete_results( type ):
-  print( 'Getting incomplete ', type, ' results...')
-  dict = {}
-  if type == 'relvals':
-    command_to_execute = MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS
-    dict = INCOMPLETE_RELVALS_RESULTS
-  elif type == 'builds':
-    command_to_execute = MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_BUILD
-    dict = INCOMPLETE_BUILD_RESULTS
-  else:
-    print( "I don't know this type of result", type )
-    exit( 0 )
-
-  out,err,ret_code = get_output_command(command_to_execute)
-
-  for line in out.splitlines():
-    line_parts = line.split( '/' )
-    ib_name = line_parts[ -1 ].replace( 'INCOMPLETE.json', '' ) + line_parts[ -2 ]
-    arch = line_parts[ -3 ]
-
-    if not dict.get( ib_name ):
-      dict[ ib_name ] = []
-    dict[ ib_name ].append( arch )
-
-  print_verbose( type )
-  print_verbose( dict )
-
-
-#
-# Searchs in github.io for incomplete results. 
-# It looks into the existing results and adds them to the structure.
-#
-def execute_magic_command_find_incomplete_results( results, type ):
-
-  print( 'Adding incomplete results...' )
-  dict = {}
-  if type == 'relvals':
-    dict = INCOMPLETE_RELVALS_RESULTS
-  elif type == 'builds':
-    dict = INCOMPLETE_BUILD_RESULTS
-  else: 
-    print( "I don't know this type of result", type )
-    exit( 0 )
-
-  for ib_name in dict.keys():
-    for arch in dict[ ib_name ]:
-      result_arch = { "arch" : arch,
-                    "passed" : True,
-                    "file" : "not-ready",
-                    "details" : {}
-                  }
-      if not results.get( ib_name ):
-        results[ ib_name ] = []
-   
-
-
-
-      # if there is a result for that arch, I don't add the incomplete one
-      if not [ r['arch'] for r in results[ ib_name ] if r['arch'] == arch ]:
-        results[ ib_name ].append( result_arch )
-        print_verbose( 'Added incomplete: ' + type + ', ' + arch +', ' + ib_name )
-      else:
-        print_verbose( 'NOT Added incomplete: ' + type + ', ' + arch +', ' + ib_name )
-
 
 # returns a list of tags based on git log output
 # It uses the release queue name to filter the tags, this avoids having
@@ -685,6 +619,8 @@ def execute_magic_command_find_results( results, type ):
       base_command = MAGIC_COMMAND_FIND_RESULTS_ADDON
     elif type == 'builds':
       base_command = MAGIC_COMMAND_FIND_RESULTS_BUILD
+    elif type == 'fwlite':
+      base_command = MAGIC_COMMAND_FIND_RESULTS_FWLITE
     else:
       print 'not a valid test type %s' %type
       exit(1)
@@ -716,6 +652,9 @@ def print_results(results):
 
       builds_results = [res['arch']+':'+str(res['passed'])+':'+str(res['details']) for res in comp['builds'] ]
       print '\t' + 'Builds:'+ str(builds_results)
+
+      fwlite_results = [res['arch']+':'+str(res['passed'])+':'+str(res['details']) for res in comp['fwlite'] ]
+      print '\t' + 'FWLite:'+ str(fwlite_results)
 
       relvals_results = [res['arch']+':'+str(res['passed'])+":"+str(res['details']) for res in comp['relvals'] ]
       print '\t' + 'RelVals:'+ str(relvals_results)
@@ -767,7 +706,7 @@ def fill_missing_cmsdist_tags( results ):
 #
 def add_tests_to_results( results, unit_tests, relvals_results, 
                           addon_results , build_results, cmsdist_tags_results, 
-                          rv_Exceptions_Results ):
+                          rv_Exceptions_Results, fwlite_results ):
   for rq in results:
     for comp in rq['comparisons']:
       rel_name = comp['compared_tags'].split('-->')[1]
@@ -775,17 +714,19 @@ def add_tests_to_results( results, unit_tests, relvals_results,
       utres = unit_tests.get(rel_name)
       adonres = addon_results.get(rel_name)
       buildsres = build_results.get(rel_name)
+      fwliteres = fwlite_results.get(rel_name)
       cmsdist_tags = cmsdist_tags_results.get(rel_name)
 
       comp[ 'relvals' ] = rvsres if rvsres else []
       comp[ 'utests' ] = utres if utres else []
       comp[ 'addons' ] = adonres if adonres else []
       comp[ 'builds' ] = buildsres if buildsres else []
+      comp[ 'fwlite' ] = fwliteres if fwliteres else []
       comp[ 'cmsdistTags' ] = cmsdist_tags if cmsdist_tags else {}
       comp[ 'isIB' ] = '-' in rel_name
       comp[ 'RVExceptions' ] = rv_Exceptions_Results.get( rel_name )
       
-      comp[ 'inProgress' ] = rel_name in ALL_BUILDING_IBS
+      comp[ 'inProgress' ] = False
 
       if not comp.get( 'static_checks' ):
         comp[ 'static_checks' ] = 'not-found'
@@ -795,7 +736,6 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp['valgrind' ] = 'not-found'
 
       a = [t['arch'] for t in utres] if utres else []
-      b = [t['arch'] for t in rvsres] if rvsres else []
       c = [t['arch'] for t in buildsres] if buildsres else []
 
       not_complete_archs =  [arch for arch in c if arch not in a]
@@ -962,6 +902,12 @@ def generate_ib_json_short_summary( results ):
         else: 
           build_passed = build_info[ 0 ][ "passed" ]
        
+        fwlite_info = [ b for b in latest_IB_info[ "fwlite" ] if b[ 'arch' ] == arch ]
+        if len( fwlite_info ) == 0:
+          fwlite_passed = 'unknown'
+        else: 
+          fwlite_passed = build_info[ 0 ][ "passed" ]
+       
         unit_tests_info = [ u for u in latest_IB_info[ "utests" ] if u[ 'arch' ] == arch ]
         if len( unit_tests_info ) == 0:
           utests_passed = 'unknown'
@@ -1030,23 +976,6 @@ def identify_release_groups(results):
   groups['all_release_queues'] = releases
   return groups
 
-#
-# Using the original list of tags and the latest installed IB, it infers which IBs are currently building
-# and IB is currently building if is after lastInstalledIB and incomplete compilation results are found.
-# returns a list of the IBs that are currenyl being built. 
-#
-def getBuildingIBs( originalTags, lastInstalled ):
-
-  print_verbose( 'last Installed: ' + lastInstalled )
-  print_verbose( 'Original tags: ' + str( originalTags ) )
-  print_verbose( 'index: ' + str( originalTags.index( lastInstalled ) ) )
-  #these are te tags that are between the latest installed release and the head of the branch
-  latestTags = originalTags[ (originalTags.index( lastInstalled )+1): ]
-  print_verbose( 'latestTags: ' + str( latestTags ) )
-
-  return [ t for t in latestTags if t in INCOMPLETE_BUILD_RESULTS.keys() ]
-  
-
 #-----------------------------------------------------------------------------------
 #---- Start of execution
 #-----------------------------------------------------------------------------------
@@ -1063,13 +992,12 @@ if __name__ == "__main__":
   MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
   MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
   MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 6 -maxdepth 6 -path "*/pyRelValMatrixLogs/run/runall-report-step123-.log"'
-  MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_RELVALS = "find cms-sw.github.io/data/relvals/ -name '*INCOMPLETE.json'"
   MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS ="find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
   MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge "'
   MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name unitTests-summary.log'
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name addOnTests.log'
-  MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -name logAnalysis.pkl | grep -v /new_FWLITE/'
-  MAGIC_COMMAD_FIND_INCOMPLETE_RESULTS_BUILD = "find cms-sw.github.io/data/scram/ -name '*INCOMPLETE.json'"
+  MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
+  MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
   STATIC_CHECKS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
   HLT_TESTS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/HLT-Validation/RELEASE_NAME/'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
@@ -1102,24 +1030,11 @@ if __name__ == "__main__":
   # }
   # will be filled using config.map by get_config_map_params()
   RELEASES_ARCHS = {}
-  # The IBs and arch for which incomplete results are availavle
-  # this is loaded earlier to allow to discard tags since the beginning
-  # The schema is:
-  # {
-  #   "<IBName>": [ "arch1" , "arch2" , ... ,"archN" ]
-  # }
-  # will be filled with fill_list_incomplete_results( type )
-  INCOMPLETE_BUILD_RESULTS = {}
   # The IBs and arch for which relval results are availavle
   # The schema is:
   # {
   #   "<IBName>": [ "arch1" , "arch2" , ... ,"archN" ]
   # }
-  # will be filled with fill_list_incomplete_results( type )
-  INCOMPLETE_RELVALS_RESULTS = {}  
-  # A list of IBs which are being built
-  # will be filled with getBuildingIBs( originalTags, lastInstalled )
-  ALL_BUILDING_IBS = []
   MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
   # This regular expression allows to identify if a merge commit is an automatic forward port
   AUTO_FORWARD_PORT_REGEX='^.*Merge CMSSW.+ into CMSSW.+$'
@@ -1163,9 +1078,6 @@ if __name__ == "__main__":
   print_verbose( 'Installed Releases:' )
   print_verbose( installedReleases )
 
-  fill_list_incomplete_results( 'builds' )
-  fill_list_incomplete_results( 'relvals' )
-
   for comp in REQUESTED_COMPARISONS:
     start_tag = comp.split("..")[0]
     end_tag = comp.split("..")[1]
@@ -1195,13 +1107,6 @@ if __name__ == "__main__":
     tags = execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch )
     originalTags = tags
     tags = [x for x in tags if x in installedReleases]
-    # this is to get the IBs that are not installed and most probably are being built
-    if len( tags ) > 0:
-      lastInstalled = tags[ -1 ]
-      buildingIBs = getBuildingIBs( originalTags, lastInstalled )
-      ALL_BUILDING_IBS.extend( buildingIBs )
-      tags.extend( buildingIBs ) 
- 
     tags.append( release_branch )
     print 'I got these tags: '
     print tags 
@@ -1229,11 +1134,12 @@ if __name__ == "__main__":
   
   build_results = {}
   execute_magic_command_find_results( build_results , 'builds' )
-  execute_magic_command_find_incomplete_results( build_results, 'builds' )
+  
+  fwlite_results = {}
+  execute_magic_command_find_results( fwlite_results , 'fwlite' )
   
   relvals_results = {}
   execute_magic_command_find_results( relvals_results , 'relvals' )
-  execute_magic_command_find_incomplete_results( relvals_results, 'relvals' )
   
   unit_tests_results = {}
   execute_magic_command_find_results( unit_tests_results , 'utests' )
@@ -1245,7 +1151,7 @@ if __name__ == "__main__":
  
   add_tests_to_results( results, unit_tests_results, relvals_results, 
                        addOn_tests_results, build_results, cmsdist_tags_results,
-                       rv_Exceptions_Results )
+                       rv_Exceptions_Results, fwlite_results )
 
   fill_missing_cmsdist_tags( results )
   print_results(results)

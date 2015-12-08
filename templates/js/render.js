@@ -272,6 +272,20 @@ add_hlt_tests_link = function ( title_cell, isFound, currentTag ){
 }
 
 /**
+ * Generates the hlt tests link link and adds it to the cell for the IB
+ */
+add_valgrind_tests_link = function ( title_cell, isFound, currentTag ){
+  if ( isFound == 'found' ){
+    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/valgrind/' + currentTag 
+    var sa_link = $("<a></a>").attr("href", url)
+    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+    sa_link.append($('<span></span>').text(' Valgrind'))
+    title_cell.append(sa_link)
+    title_cell.append($("<br>"))
+  }
+}
+
+/**
  * Generates the link to the Relvals Exception Page if the results were found
  * and addsit to the cell for the IB
  */
@@ -376,6 +390,8 @@ write_comp_IB_table =  function( comparison, tab_pane ){
   add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
   title_cell.append($('<br>'))
   add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
+  title_cell.append($('<br>'))
+  add_valgrind_tests_link( title_cell , comparison.hlt_tests , current_tag )
   add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )
 
   var title_row = $('<tr>')

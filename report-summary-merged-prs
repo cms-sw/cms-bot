@@ -46,6 +46,7 @@ parser.add_option( "-v" , "--verbose" , dest="verbose" , action="store_true", he
 #    "cmsdistTags": {},
 #    "relvals": [],
 #    "static_checks": "",
+#    "valgrind": "",
 #    "isIB": Boolean,
 #    "tests_archs": [],
 #    "release_name": "",
@@ -708,6 +709,7 @@ def print_results(results):
       print '\t' + 'HLT Tests: ' + comp['hlt_tests']
 
       print '\t' + 'Static Checks: ' + comp['static_checks']
+      print '\t' + 'Valgrind: ' + comp['valgrind']
 
       cmsdist_tags = comp['cmsdistTags']
       print '\t' + 'cmsdist Tags:'+ str( cmsdist_tags )
@@ -789,6 +791,8 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp[ 'static_checks' ] = 'not-found'
       if not comp.get( 'hlt_tests' ):
         comp['hlt_tests' ] = 'not-found'
+      if not comp.get( 'valgrind' ):
+        comp['valgrind' ] = 'not-found'
 
       a = [t['arch'] for t in utres] if utres else []
       b = [t['arch'] for t in rvsres] if rvsres else []
@@ -806,6 +810,14 @@ def add_tests_to_results( results, unit_tests, relvals_results,
       comp['tests_archs'] = list(set(a+b+c))
 
 
+#
+# Finds for an IB the results of the valgrind
+#
+def find_valgrind_results( comparisons , architecture ):
+  for comp in comparisons:
+    rel_name = comp['compared_tags'].split('-->')[1]
+    print 'Looking for valgrind results for ', rel_name
+    comp['valgrind'] = find_one_valgrind( rel_name , architecture )
 #
 # Finds for an IB the results of the static tests
 #
@@ -828,6 +840,21 @@ def find_hlt_tests_results( comparisons ):
 #
 def find_one_static_check( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME',release_name)
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
+  out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
+  if ret_code == 0:
+    print 'found'
+    return architecture
+  print 'not-found'
+  return 'not-found'
+
+#
+# Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is ''
+#
+def find_one_valgrind( release_name , architecture ):
+  command_to_execute = MAGIC_COMMAND_FIND_VALGRIND.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
   print "Running ",command_to_execute
   out,err,ret_code = get_output_command(command_to_execute)
@@ -1046,6 +1073,7 @@ if __name__ == "__main__":
   STATIC_CHECKS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
   HLT_TESTS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/HLT-Validation/RELEASE_NAME/'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
+  MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME/ARCHITECTURE'
   MAGIC_COMMAND_FIND_HLT_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/HLT-Validation/RELEASE_NAME'
   CONFIG_MAP_FILE = 'config.map'
   # this will be filled using config.map by get_config_map_params()
@@ -1191,6 +1219,8 @@ if __name__ == "__main__":
           find_hlt_tests_results( release_queue_results['comparisons'] )
         if 'static-checks' in tests_to_find:
           find_static_results( release_queue_results['comparisons'] , arch )
+        if 'valgrind' in tests_to_find:
+          find_valgrind_results( release_queue_results['comparisons'] , arch )
   
     results.append(release_queue_results)
   

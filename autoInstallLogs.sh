@@ -54,10 +54,10 @@ for WEEK in 0 1; do
       ExtractLogs $REL_LOGS
     fi
     if [ "X$REL_TYPE" = "Xnew" ] ; then
-      if [ -d $IB_BASEDIR/${SCRAM_ARCH}/fwlite/${RELEASE_FORMAT}/${REL_TYPE} ] ; then
+      if [ -d $IB_BASEDIR/${SCRAM_ARCH}/fwlite/${CMSSW_NAME}/${REL_TYPE} ] ; then
         REL_LOGS="${REL_LOGS_DIR}/new_FWLITE"
         if [ ! -f ${REL_LOGS}/index.html ] ; then
-          rsync -a --no-group --no-owner $IB_BASEDIR/${SCRAM_ARCH}/fwlite/${RELEASE_FORMAT}/${REL_TYPE}/ ${REL_LOGS}/
+          rsync -a --no-group --no-owner $IB_BASEDIR/${SCRAM_ARCH}/fwlite/${CMSSW_NAME}/${REL_TYPE}/ ${REL_LOGS}/
           ExtractLogs $REL_LOGS
         fi
       fi

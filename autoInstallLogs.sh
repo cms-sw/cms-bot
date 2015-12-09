@@ -37,9 +37,7 @@ for WEEK in 0 1; do
     CMSSW_QUEUE=`echo $CMSSW_NAME | sed -e's/_X_.*//;s/^CMSSW_//' | tr _ .`
     REL_LOGS_DIR="$IB_BASEDIR/$SCRAM_ARCH/www/$CMSSW_WEEKDAY/$CMSSW_QUEUE-$CMSSW_WEEKDAY-$CMSSW_HOUR/$CMSSW_NAME"
     REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"
-    if [ -L $REL_LOGS ]; then
-      rm -rf $REL_LOGS
-    fi
+    [ -f ${REL_LOGS}/index.html ] && continue
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
     rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$REPO_PATH/cms.week$WEEK/WEB/build-logs/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
     if [ -d $IB_BASEDIR/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT} ] ; then

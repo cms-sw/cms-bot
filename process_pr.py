@@ -7,16 +7,19 @@ import yaml
 import re
 from sys import exit, argv
 from os.path import abspath, dirname, join
+from github import UnknownObjectException
 try:
   SCRIPT_DIR = dirname(abspath(__file__))
 except Exception, e :
   SCRIPT_DIR = dirname(abspath(argv[0]))
 
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
+IGNORING_TESTS_MSG = 'Ignoring test request.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
 CMSDIST_REPO_NAME = GH_CMSSW_ORGANIZATION+"/"+GH_CMSDIST_REPO
+CMSSW_REPO_NAME = GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO
 #Regexp to match the test requests
 REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+"+CMSDIST_REPO_NAME+"#([0-9]+)|)\s*$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
@@ -300,7 +303,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       if re.match("Comparison is ready", first_line):
         comparison_done = True
         trigger_test_on_signature = False
-      elif re.match( FAILED_TESTS_MSG, first_line):
+      elif re.match( FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
         tests_already_queued = False
         tests_requested = False
         signatures["tests"] = "pending"
@@ -492,10 +495,21 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       tests_requested = True
     if tests_requested:
       test_msg = TRIGERING_TESTS_MSG
-      if cmsdist_pr: test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
+      cmsdist_issue = None
+      if cmsdist_pr:
+        try:
+          cmsdist_repo = gh.get_repo(CMSDIST_REPO_NAME)
+          cmsdist_pull = cmsdist_repo.get_pull(int(cmsdist_pr))
+          cmsdist_issue = cmsdist_repo.get_issue(int(cmsdist_pr))
+          test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
+        except UnknownObjectException as e:
+          print "Error getting cmsdist PR:",e.data.message
+          test_msg = IGNORING_TESTS_MSG+"\n**ERROR**: Unable to find cmsdist Pull request "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
       if not dryRun:
         issue.create_comment( test_msg )
-        create_properties_file_tests( repository.split("/")[1], prId, cmsdist_pr, dryRun)
+        if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
+        if (not cmsdist_pr) or cmsdist_issue:
+          create_properties_file_tests( repository.split("/")[1], prId, cmsdist_pr, dryRun)
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"

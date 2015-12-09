@@ -57,6 +57,6 @@ pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/l
   mv html-logs.zip $WORKSPACE/
 popd
 SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT} || true
-scp $SSH_OPTS $WORKSPACE/html-logs.zip cmsbuild@cmssdt01.cern.ch:/data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/ || true
+ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/new_FWLITE || true
+scp $SSH_OPTS $WORKSPACE/html-logs.zip cmsbuild@cmssdt01.cern.ch:/data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/new_FWLITE/ || true
 

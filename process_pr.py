@@ -503,7 +503,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           cmsdist_issue = cmsdist_repo.get_issue(int(cmsdist_pr))
           test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
         except UnknownObjectException as e:
-          print "Error getting cmsdist PR:",e.data.message
+          print "Error getting cmsdist PR:",e.data['message']
           test_msg = IGNORING_TESTS_MSG+"\n**ERROR**: Unable to find cmsdist Pull request "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
       if not dryRun:
         issue.create_comment( test_msg )

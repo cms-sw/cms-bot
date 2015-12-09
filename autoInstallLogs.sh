@@ -1,4 +1,15 @@
 #!/bin/sh -e
+
+function ExtractLogs ()
+{
+  pushd $1
+    if [ -f html-logs.zip ] ; then
+        [ -f logAnalysis.pkl ] || (unzip -p html-logs.zip logAnalysis.pkl > logAnalysis.pkl || echo "Unable to unpack logs in $1.")
+        [ -f index.html ] || (unzip -p html-logs.zip index.html >  index.html || echo "Unable to unpack logs in $1.")
+    fi
+  popd
+}
+
 while [ ! X$# = X0 ]; do
   case $1 in
     --basedir) shift ; IB_BASEDIR=$1 ;; 
@@ -37,17 +48,19 @@ for WEEK in 0 1; do
     CMSSW_QUEUE=`echo $CMSSW_NAME | sed -e's/_X_.*//;s/^CMSSW_//' | tr _ .`
     REL_LOGS_DIR="$IB_BASEDIR/$SCRAM_ARCH/www/$CMSSW_WEEKDAY/$CMSSW_QUEUE-$CMSSW_WEEKDAY-$CMSSW_HOUR/$CMSSW_NAME"
     REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"
-    [ -f ${REL_LOGS}/index.html ] && continue
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
-    rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$REPO_PATH/cms.week$WEEK/WEB/build-logs/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
-    if [ -d $IB_BASEDIR/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT} ] ; then
-      rsync -a --no-group --no-owner $IB_BASEDIR/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/ ${REL_LOGS_DIR}/
+    if [ ! -f ${REL_LOGS}/index.html ] ; then
+      rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$REPO_PATH/cms.week$WEEK/WEB/build-logs/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
+      ExtractLogs $REL_LOGS
     fi
-    pushd $REL_LOGS
-      if [ -f html-logs.zip ] ; then
-        [ -f logAnalysis.pkl ] || (unzip -p html-logs.zip logAnalysis.pkl > logAnalysis.pkl || echo "Unable to unpack logs in $REL_LOGS.")
-        [ -f index.html ] || (unzip -p html-logs.zip index.html >  index.html || echo "Unable to unpack logs in $REL_LOGS.")
+    if [ "X$REL_TYPE" = "Xnew" ] ; then
+      if [ -d $IB_BASEDIR/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/${REL_TYPE} ] ; then
+        REL_LOGS="${REL_LOGS_DIR}/new_FWLITE"
+        if [ ! -f ${REL_LOGS}/index.html ] ; then
+          rsync -a --no-group --no-owner $IB_BASEDIR/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/${REL_TYPE}/ ${REL_LOGS}/
+          ExtractLogs $REL_LOGS
+        fi
       fi
-    popd
+    fi
   done
 done

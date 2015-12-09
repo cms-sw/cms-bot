@@ -35,12 +35,16 @@ for WEEK in 0 1; do
     CMSSW_WEEKDAY=`python -c "import time;print time.strftime('%a', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower()"`
     CMSSW_HOUR=`python -c "import time;print time.strftime('%H', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower()"`
     CMSSW_QUEUE=`echo $CMSSW_NAME | sed -e's/_X_.*//;s/^CMSSW_//' | tr _ .`
-    REL_LOGS="$IB_BASEDIR/$SCRAM_ARCH/www/$CMSSW_WEEKDAY/$CMSSW_QUEUE-$CMSSW_WEEKDAY-$CMSSW_HOUR/$CMSSW_NAME/${REL_TYPE}"
+    REL_LOGS_DIR="$IB_BASEDIR/$SCRAM_ARCH/www/$CMSSW_WEEKDAY/$CMSSW_QUEUE-$CMSSW_WEEKDAY-$CMSSW_HOUR/$CMSSW_NAME"
+    REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"
     if [ -L $REL_LOGS ]; then
       rm -rf $REL_LOGS
     fi
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
     rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$REPO_PATH/cms.week$WEEK/WEB/build-logs/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
+    if [ -d $IB_BASEDIR/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT} ] ; then
+      rsync -a --no-group --no-owner $IB_BASEDIR/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/ ${REL_LOGS_DIR}/
+    fi
     pushd $REL_LOGS
       if [ -f html-logs.zip ] ; then
         [ -f logAnalysis.pkl ] || (unzip -p html-logs.zip logAnalysis.pkl > logAnalysis.pkl || echo "Unable to unpack logs in $REL_LOGS.")

@@ -17,10 +17,12 @@ function Jenkins_GetCPU ()
   echo $ACTUAL_CPU
 }
 CMS_WEEKLY_REPO=cms.week`date +%V | xargs -i echo "{} % 2" | bc`
+GH_COMMITS=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR/commits)
 GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
 TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
 CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
+CMSDIST_COMMITS=$(echo $GH_COMMITS | python -c 'import json,sys;obj=json.load(sys.stdin);print " ".join([s["sha"] for s in obj])')
 if(( $(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
   CMSSW_CYCLE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | grep "PROD_ARCH" | cut -d ";" -f 4 | cut -d "=" -f 2)
 else
@@ -61,7 +63,13 @@ git clone git@github.com:cms-sw/pkgtools $WORKSPACE/PKGTOOLS -b $PKGTOOLS_BRANCH
 cd $WORKSPACE/CMSDIST
 git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
 # Check which packages the PR changes
-PKGS=$(git diff origin/$CMSDIST_BRANCH.. --name-only --diff-filter=ACMR | grep -v .patch | cut -d"." -f"1")
+PKGS=
+for c in $CMSDIST_COMMITS ; do
+  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|') ; do
+    PKGS="$PKGS $p"
+  done
+fi
+PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
 
 export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" --no-merges | head -n 1)
 if [ "X$CMSDIST_COMMIT" = "X" ] ; then
@@ -110,7 +118,9 @@ mv ../config/toolbox/${ARCH}/tools/selected ../config/toolbox/${ARCH}/tools/sele
 cp -r $WORKSPACE/$BUILD_DIR/$ARCH/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCH}/tools/selected
 scram setup
 DEP_NAMES=""
-for DIR in `find $WORKSPACE/$BUILD_DIR/BUILD/$ARCH -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCH/|/$ARCH/|"` ; do
+BUILD_TOOLS=$(find $WORKSPACE/$BUILD_DIR/BUILD/$ARCH -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCH/|/$ARCH/|")
+PR_TOOLS=$(for p in $PKGS ; do find $WORKSPACE/$BUILD_DIR/$ARCH -maxdepth 3 -mindepth 3 -path "*/$p/*" -type d; done)
+for DIR in $(echo $BUILD_TOOLS $PR_TOOLS |  sort | uniq) ; do
   if [ -d $DIR/etc/scram.d ]; then
     for FILE in `find $DIR/etc/scram.d -name '*.xml'`; do
       DEP_NAMES=$DEP_NAMES" echo_"$(echo $FILE | sed 's|.*/||;s|.xml$||')"_USED_BY"

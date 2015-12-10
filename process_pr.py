@@ -32,7 +32,7 @@ def format(s, **kwds):
 # creates a properties file to trigger the test of the pull request
 #
 def create_properties_file_tests(repository, pr_number, cmsdist_pr, dryRun ):
-  out_file_name = 'trigger-tests-%s-%s.properties' % (repository, pr_number)
+  out_file_name = 'trigger-tests-%s-%s.properties' % (repository.split("/")[1], pr_number)
   if dryRun:
     print 'Not creating cleanup properties file (dry-run): %s' % out_file_name
   else:

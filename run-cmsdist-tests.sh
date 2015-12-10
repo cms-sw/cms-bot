@@ -66,6 +66,7 @@ git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
 PKGS=
 for c in $CMSDIST_COMMITS ; do
   for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|') ; do
+    [ -f $WORKSPACE/CMSDIST/$p.spec ] || continue
     PKGS="$PKGS $p"
   done
 done
@@ -81,7 +82,7 @@ cd $WORKSPACE
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
 # Build the whole cmssw-tool-conf toolchain
-COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCH -j $(Jenkins_GetCPU) build cmssw-tool-conf"
+COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCH -j $(Jenkins_GetCPU) build $PKGS cmssw-tool-conf"
 echo $COMPILATION_CMD > $WORKSPACE/cmsswtoolconf.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 echo 'END OF BUILD LOG'

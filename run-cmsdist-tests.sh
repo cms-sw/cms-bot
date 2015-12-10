@@ -16,7 +16,7 @@ function Jenkins_GetCPU ()
   fi
   echo $ACTUAL_CPU
 }
-CMS_WEEKLY_REPO=cms.week`date +%g | xargs -i echo "{} % 2" | bc`
+CMS_WEEKLY_REPO=cms.week`date +%V | xargs -i echo "{} % 2" | bc`
 GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
 TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')

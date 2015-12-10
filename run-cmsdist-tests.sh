@@ -73,7 +73,7 @@ PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
 
 export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" --no-merges | head -n 1)
 if [ "X$CMSDIST_COMMIT" = "X" ] ; then
-  CMSDIST_COMMIT=$(git log --pretty="%H" -1)
+  CMSDIST_COMMIT=$(echo $CMSDIST_COMMITS | sed 's|.* ||')
 fi
 cd $WORKSPACE
 

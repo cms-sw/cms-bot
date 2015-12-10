@@ -2,9 +2,9 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, C
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
-from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
+from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
 import yaml
-import re
+import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
 from github import UnknownObjectException
@@ -18,12 +18,11 @@ IGNORING_TESTS_MSG = 'Ignoring test request.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
-CMSDIST_REPO_NAME = GH_CMSSW_ORGANIZATION+"/"+GH_CMSDIST_REPO
-CMSSW_REPO_NAME = GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO
 #Regexp to match the test requests
 REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+"+CMSDIST_REPO_NAME+"#([0-9]+)|)\s*$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
 CMSDIST_PR_INDEX = 5
+TEST_WAIT_GAP=720
 
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
@@ -39,7 +38,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, dryRun ):
   else:
     print 'Creating properties file %s' % out_file_name
     out_file = open( out_file_name , 'w' )
-    if repository == GH_CMSDIST_REPO:
+    if repository.endswith("/"+GH_CMSDIST_REPO):
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', pr_number ) )
     else:
       out_file.write( '%s=%s\n' % ( 'PULL_REQUEST_LIST', pr_number ) )
@@ -100,8 +99,17 @@ def get_assign_categories(line):
     return (assgin_type.strip(), new_cats)
   return ('', [])
 
+def ignore_issue(repo, issue):
+  if (repo.full_name in GITHUB_IGNORE_ISSUES) and (issue.number in GITHUB_IGNORE_ISSUES[repo.full_name]):
+    return True
+  if re.match(BUILD_REL, issue.title):
+    return True
+  if re.match(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+    return True
+  return False
+
 def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
-  if re.match(BUILD_REL, issue.title): return
+  if ignore_issue(repo, issue): return
   prId = issue.number
   repository = repo.full_name
   print "Working on ",repo.full_name," for PR/Issue ",prId
@@ -222,6 +230,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   assign_cats = {}
   hold = {}
   extra_labels = {}
+  last_test_start_time = None
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()):
     already_seen = True
@@ -315,6 +324,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         tests_requested = False
         signatures["tests"] = "started"
         trigger_test_on_signature = False
+        last_test_start_time = comment.created_at
       elif re.match( TESTS_RESULTS_MSG, first_line):
         test_sha = comment_lines[1:2]
         if test_sha: test_sha = test_sha[0].replace("Tested at: ","").strip()
@@ -345,6 +355,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           print 'Tests requested:', commenter, 'asked to test this PR'
           trigger_test_on_signature = False
           cmsdist_pr = ''
+          if tests_already_queued:
+            print "Test results not obtained in ",comment.created_at-last_test_start_time
+            diff = time.mktime(comment.created_at.timetuple()) - time.mktime(last_test_start_time.timetuple())
+            if diff>=TEST_WAIT_GAP:
+              print "Looks like tests are stuck, will try to re-queue"
+              tests_already_queued = False
           if not tests_already_queued:
             print 'cms-bot will request test for this PR'
             tests_requested = True
@@ -509,7 +525,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository.split("/")[1], prId, cmsdist_pr, dryRun)
+          create_properties_file_tests( repository, prId, cmsdist_pr, dryRun)
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"

@@ -68,7 +68,7 @@ for c in $CMSDIST_COMMITS ; do
   for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|') ; do
     PKGS="$PKGS $p"
   done
-fi
+done
 PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
 
 export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" --no-merges | head -n 1)

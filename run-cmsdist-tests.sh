@@ -64,6 +64,9 @@ git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
 PKGS=$(git diff origin/$CMSDIST_BRANCH.. --name-only --diff-filter=ACMR | grep -v .patch | cut -d"." -f"1")
 
 export CMSDIST_COMMIT=$(git log origin/$CMSDIST_BRANCH.. --pretty="%H" --no-merges | head -n 1)
+if [ "X$CMSDIST_COMMIT" = "X" ] ; then
+  CMSDIST_COMMIT=$(git log --pretty="%H" -1)
+fi
 cd $WORKSPACE
 
 # Notify github that the script will start testing now

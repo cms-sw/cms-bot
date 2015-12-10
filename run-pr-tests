@@ -179,6 +179,7 @@ if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
 fi
 
 # Don't do the following if we are only testing CMSDIST PR
+CMSSW_COMMIT=
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   #get the latest commit and mark it as pending
   pushd $WORKSPACE/$RELEASE_FORMAT/src
@@ -188,7 +189,7 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then
       LAST_COMMIT=`git log ${BRANCH_NAME//:/\/} --pretty="%H" | head -n1`
     fi
   popd
-
+  CMSSW_COMMIT=$LAST_COMMIT
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
   git log --oneline --merges ${CMSSW_VERSION}..
@@ -359,7 +360,7 @@ fi
 
 
 if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN
+  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
@@ -545,7 +546,7 @@ if [ "X$PULL_REQUEST" == X ]; then
   REPOS[1]="cms-sw/cmsdist"
   PR[1]=$CMSDIST_PR
 elif [ "X$CMSDIST_PR" != X ]; then
-  COMMITS[1]=$LAST_COMMIT
+  COMMITS[1]=$CMSSW_COMMIT
   REPOS[1]=$PUB_REPO
   PR[1]=$PULL_REQUEST_NUMBER
   COMMITS[2]=$CMSDIST_COMMIT

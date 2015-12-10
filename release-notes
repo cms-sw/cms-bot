@@ -2,12 +2,13 @@
 from optparse import OptionParser
 from os.path import exists,expanduser
 from commands import getstatusoutput
-from github import Github
+from github import Github, UnknownObjectException
 import json
 import urllib2
 from sys import exit
 import re
 
+def format(s, **kwds): return s % kwds
 #---------------------------------------------------------
 # pyGithub
 #--------------------------------------------------------
@@ -30,8 +31,30 @@ def get_official_repo( github , repository_name ):
 def fill_notes_description(notes, repo, gitdir, ref_repo=""):
   new_notes = {}
   for log_line in notes.splitlines():
-    pr_number = int(log_line.split(' REPO='+gitdir+'#',2)[1].split(' ')[0])
-    new_notes[pr_number]=re.sub('DESC$',repo.get_pull(int(pr_number)).title.encode("ascii", "ignore"),log_line.replace(" REPO="+gitdir+"#"," "+ref_repo+"#"))
+    items = log_line.split(" ")
+    author = items[1]
+    pr_number= int(items[0])
+    parent_hash = items.pop()
+    print "Checking ",pr_number,author,parent_hash
+    try:
+      pr = repo.get_pull(pr_number)
+      ok = True
+      if pr.head.user.login!=author:
+        print "  Author mismatch:",pr.head.user.login
+        ok=False
+      if pr.head.sha!=parent_hash:
+        print "  sha mismatch:",pr.head.sha
+        ok=False
+      if not ok:
+        print "  Invalid/Indirect PR"
+        continue
+      new_notes[pr_number]=format("- %(ref_repo)s#%(pull_request)s from @%(author)s: %(title)s",
+                                  ref_repo=ref_repo,
+                                  pull_request=pr_number,
+                                  author=author,
+                                  title=pr.title.encode("ascii", "ignore"))
+    except UnknownObjectException as e:
+      continue
   return new_notes
 
 #
@@ -53,18 +76,15 @@ def add_categories_notes(notes, token):
     notes[pr_number] = note
   return notes
 
-def format(s, **kwds):
-  print kwds
-  return s % kwds
-
 def get_merge_prs(prev_tag, this_tag, git_dir):
+  print "Getting merged Pull Requests b/w",prev_tag, this_tag
   error, out = getstatusoutput("GIT_DIR="+git_dir+" git fetch --all --tags")
   if error: parser.error("Error while updating the repository:\n" + out)
   error, notes = getstatusoutput(format("GIT_DIR=%(git_dir)s"
-                                      " git log --graph --merges --pretty='%%s: DESC' %(previous)s..%(release)s | "
-                                      " grep ' Merge pull request #[1-9]' | grep -v '^| \* | | | ' | sed 's|^\| .* Merge pull request #|- :arrow_right: REPO=%(git_dir)s#|' | "
-                                      " sed 's|^\*.* Merge pull request #|- REPO=%(git_dir)s#|;s|||' | "
-                                      " sed 's|/[^:]*||;s|from |from @|'",
+                                      " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
+                                      " grep ' Merge pull request #[1-9][0-9]* from ' | "
+                                      " sed 's|^.* Merge pull request #||' | "
+                                      " sed 's|/[^:]*:||;s|from ||'",
                                       git_dir=git_dir,
                                       previous=prev_tag,
                                       release=this_tag))
@@ -139,7 +159,6 @@ if __name__ == "__main__":
     cmssw_notes_str += cmssw_notes[pr]+'\n'
   for pr in sorted(cmsdist_notes.keys(), reverse=True):
     cmsdist_notes_str += cmsdist_notes[pr]+'\n'
-
   request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
                             headers={"Authorization" : "token " + token})
   releases = json.loads(urllib2.urlopen(request).read())
@@ -160,11 +179,10 @@ if __name__ == "__main__":
     print 'ALL_OK'
     exit(0)
 
-  header = "#### Changes since %s:\n:arrow_right: Merge due to automatic forward port\n%s\n" %  \
+  header = "#### Changes since %s:\n%s\n" %  \
            ( prev_release , get_comparison_url( prev_release, curr_release , 'cmssw' ) )
 
   cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \
                    ( prev_cmsdist_tag , curr_cmsdist_tag , get_comparison_url( prev_cmsdist_tag, curr_cmsdist_tag , 'cmsdist' ) )
-
   print urllib2.urlopen(request, json.dumps({"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str })).read()
   print 'ALL_OK'

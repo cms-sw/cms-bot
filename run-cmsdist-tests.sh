@@ -110,15 +110,14 @@ DEP_NAMES=""
 for DIR in `find $WORKSPACE/$BUILD_DIR/BUILD/$ARCH -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCH/|/$ARCH/|"` ; do
   if [ -d $DIR/etc/scram.d ]; then
     for FILE in `find $DIR/etc/scram.d -name '*.xml'`; do
-      #scram setup $FILE 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-      DEP_NAMES=$DEP_NAMES" "$(echo $FILE | sed 's|.*/||;s|.xml$||')
+      DEP_NAMES=$DEP_NAMES" echo_"$(echo $FILE | sed 's|.*/||;s|.xml$||')"_USED_BY"
     done
   fi
 done
-eval $(scramv1 runtime -sh)
+eval $(scram runtime -sh)
 
 # Search for CMSSW package that might depend on the compiled externals
-CMSSW_DEP=$(echo $(for D in $DEP_NAMES; do (for L in $(scram build echo_${D}_USED_BY); do echo $L | grep '\(self\|cmssw\)' | cut -d"/" -f 2,3; done); done) | tr ' ' '\n' | sort | uniq)
+CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/' | cut -d"/" -f 2,3 | sort | uniq)
 git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables

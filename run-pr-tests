@@ -202,9 +202,6 @@ else
   LAST_COMMIT=$CMSDIST_COMMIT
 fi
 
-# Save the original src dir for later
-cp -r $WORKSPACE/$RELEASE_FORMAT/src $WORKSPACE/$RELEASE_FORMAT/src.orig
-
 # #############################################
 # test compilation with Clang
 # ############################################
@@ -217,7 +214,7 @@ if curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep PRS_TEST_CLANG= | grep SCRA
   NEED_CLANG_TEST=true
 fi
 
-if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true ]; then
+if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST_PR" = X ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
@@ -245,7 +242,7 @@ fi
 #
 # Static checks
 #
-if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
+if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_PR" = X ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
@@ -261,10 +258,6 @@ else
   echo 'STATIC_CHECKS;NOTRUN' >> $RESULTS_FILE
 fi
 
-pushd $WORKSPACE/$RELEASE_FORMAT
-  rm -rf src
-  mv src.orig src
-popd
 scram build clean
 git cms-checkdeps -A -a
 

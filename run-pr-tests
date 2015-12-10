@@ -30,23 +30,18 @@ if [ "X$PUB_REPO" == X ] || [ "X$PULL_REQUEST" != X ]; then
   PUB_REPO="cms-sw/cmssw"
 fi
 ### this is for triggering the comparison with the baseline
+CMSDIST_ONLY=false
 if [ "X$PULL_REQUEST" != X ]; then
   PULL_REQUEST_NUMBER=$PULL_REQUEST
   PUB_REPO="cms-sw/cmssw"
-  CMSDIST_ONLY=false
-  if [ "X$CMSDIST_PR" != X ]; then
-    CMSDIST_ALSO=true
-  else
-    CMSDIST_ALSO=false
-  fi
 else
-# If PULL_REQUEST is empty then we are only testing a CMSDIST PR, take that
+  # If PULL_REQUEST is empty then we are only testing a CMSDIST PR, take that
   PULL_REQUEST_NUMBER=$CMSDIST_PR
   CMSDIST_ONLY=true
 fi
 PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
 # Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
-if [ "X$CMSDIST_ONLY" == Xfalse ] || [ "X$CMSDIST_ALSO" == Xfalse ]; then
+if [ "X$CMSDIST_PR" = X ] ; then
   $WORKSPACE/cms-bot/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST_NUMBER || true
 fi
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
@@ -545,11 +540,11 @@ done
 
 #evaluate results
 REPEAT=1
-if [ "X$CMSDIST_ONLY" == Xtrue ]; then
+if [ "X$PULL_REQUEST" == X ]; then
   COMMITS[1]=$CMSDIST_COMMIT
   REPOS[1]="cms-sw/cmsdist"
   PR[1]=$CMSDIST_PR
-elif [ "X$CMSDIST_ALSO" == Xtrue ]; then
+elif [ "X$CMSDIST_PR" != X ]; then
   COMMITS[1]=$LAST_COMMIT
   REPOS[1]=$PUB_REPO
   PR[1]=$PULL_REQUEST_NUMBER

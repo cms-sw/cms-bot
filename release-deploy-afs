@@ -1,40 +1,13 @@
 #!/bin/sh -ex
-
-# the following are set up by jenkins
-# CMSSW_X_Y_Z
-# ARCHITECTURE
-# RELEASE_TYPE
-# PRODUCTION_ARCHITECTURE
-
-RELEASE_SERIES=`echo $CMSSW_X_Y_Z | sed 's/^\(CMSSW_[0-9][0-9]*_[0-9][0-9]*_\).*/\1X/'`
-
-prodarch=0
-
-if [ "X$PRODUCTION_ARCHITECTURE" = "XDefault" ]; then
-  #here it gets the SCRAM_ARCH value for the production arch
-  eval `cat config.map | grep "RELEASE_QUEUE=$RELEASE_SERIES" | grep 'PROD_ARCH=1'`
-
-  if [ "$SCRAM_ARCH" = "$ARCHITECTURE" ]; then
-    prodarch=1
-  fi
-
-elif [ "X$PRODUCTION_ARCHITECTURE" = "XYes" ]; then
-  prodarch=1
-fi
-
-if [ "X$RELEASE_TYPE" = "XDefault" ]; then
-  RELEASE_TYPE=Development
-  if [ X`echo $CMSSW_X_Y_Z | grep -e '_pre[0-9][0-9]*'` = X ] ; then
-    RELEASE_TYPE=Production
-  fi
-fi
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
 
 RPM_NAME=cmssw
 case $CMSSW_X_Y_Z in
    *patch*) RPM_NAME=cmssw-patch ;;
-esac   
-BASERELEASE=$(echo $CMSSW_X_Y_Z | sed -e 's/_[a-zA-Z0-9]*patch[0-9].*//')
+esac
 
+BASERELEASE=$(echo $CMSSW_X_Y_Z | sed -e 's/_[a-zA-Z0-9]*patch[0-9].*//')
 while ! fs lq /afs/.cern.ch/cms/$ARCHITECTURE/cms/cmssw/$BASERELEASE | grep -E '[2-9]000000'; do
   echo Waiting for volume ; sleep 10
 done
@@ -45,32 +18,5 @@ source $(find /afs/cern.ch/cms/$ARCHITECTURE/external/apt/ -name init.sh | tail 
 apt-get update
 apt-get install -y $(apt-cache search $CMSSW_X_Y_Z | sed -e 's|[ ].*||' | grep -e "^cms[+]$RPM_NAME[+]$CMSSW_X_Y_Z\$")
 touch /afs/.cern.ch/cms/$ARCHITECTURE/tmp/$CMSSW_X_Y_Z
-
-cd $WORKSPACE
-
-git clone git@github.com:cms-sw/cms-bot
-pushd cms-bot
-  if [ X`grep -e "architecture=$ARCHITECTURE;" releases.map | grep -e "label=$CMSSW_X_Y_Z;"` = X ]; then
-    if [ `grep -e "label=$CMSSW_X_Y_Z;" releases.map | sed -e's/.*type=//;s/;.*//' | grep -v -e "$RELEASE_TYPE" | sort -u | wc -l` -ge 1 ]; then
-      echo "Too many release types." && exit 1
-    fi
-    if [ "X$prodarch" = "X1" ] ; then
-      if [ `grep -e "label=$CMSSW_X_Y_Z;" releases.map | grep -e ";prodarch=1;" | wc -l` -ge 1 ]; then
-        echo "Too many production architectures for release." && exit 1
-      fi
-    fi
-    echo "architecture=$ARCHITECTURE;label=$CMSSW_X_Y_Z;type=$RELEASE_TYPE;state=Announced;prodarch=$prodarch;" >> releases.map
-    git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE as $RELEASE_TYPE." releases.map
-    git pull --rebase
-    git push
-    if [ "X$ANNOUNCE_RELEASE" = Xtrue ]; then
-      echo "Here we should announce the release"  
-    fi
-  else
-    echo "Release already announced."
-  fi
-popd
-
-# If it reaches here it is because there were no errors
 echo 'ALL_OK'
 

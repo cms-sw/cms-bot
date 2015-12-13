@@ -68,12 +68,15 @@ for REPOSITORY in $REPOSITORIES; do
   (
     source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ;
     apt-get update ;
+    RELS_TO_INSTALL="" ;
     if [ "X$INSTALL_RELEASE" != "X" ] ; then
-      INSTALL_RELEASE="cms+cmssw-ib+$INSTALL_RELEASE" ;
+      RELS_TO_INSTALL="cms+cmssw-ib+$INSTALL_RELEASE" ;
+    else
+      apt-cache search cmssw-ib\\+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
+      rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed$$.txt ;
+      RELS_TO_INSTALL=`diff -u onserver$$.txt installed$$.txt | grep -e '^-[^-]' | sed -e 's/^-//'`;
     fi;
-    apt-cache search cmssw-ib\\+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
-    rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed$$.txt ;
-    for x in $INSTALL_RELEASE  `diff -u onserver$$.txt installed$$.txt | grep -e '^-[^-]' | sed -e 's/^-//'`; do
+    for x in $RELS_TO_INSTALL; do
       apt-get install -q -y $x || true;
       apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
       apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
@@ -87,8 +90,8 @@ for REPOSITORY in $REPOSITORIES; do
         done ;
       fi
     done ;
-    rm installed$$.txt ;
-    rm onserver$$.txt ;
+    rm -f installed$$.txt ;
+    rm -f onserver$$.txt ;
     apt-get clean
   ) || true
   # We create the directory in any case, to avoid the rsync to fail in case

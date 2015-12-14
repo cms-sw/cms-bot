@@ -36,11 +36,11 @@ if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
   exit 0
 fi
 
-if [ "X$ARCH" == X ]; then
+if [ "X$ARCHITECTURE" == X ]; then
   if(( $(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
-    ARCH=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | grep PR_TESTS | cut -d ";" -f 1 | cut -d "=" -f 2)
+    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | grep PR_TESTS | cut -d ";" -f 1 | cut -d "=" -f 2)
   else
-    ARCH=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
+    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
   fi
 fi
 
@@ -79,7 +79,7 @@ cd $WORKSPACE
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
 # Build the whole cmssw-tool-conf toolchain
-COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCH -j $(Jenkins_GetCPU) build $PKGS cmssw-tool-conf"
+COMPILATION_CMD="PKGTOOLS/cmsBuild -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCHITECTURE -j $(Jenkins_GetCPU) build $PKGS cmssw-tool-conf"
 echo $COMPILATION_CMD > $WORKSPACE/cmsswtoolconf.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 echo 'END OF BUILD LOG'
@@ -107,17 +107,17 @@ else
 fi
 
 # Create an appropriate CMSSW area
-SCRAM_ARCH=$ARCH
+SCRAM_ARCH=$ARCHITECTURE
 scram project $CMSSW_IB
 pushd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built
-mv ../config/toolbox/${ARCH}/tools/selected ../config/toolbox/${ARCH}/tools/selected.old
-cp -r $WORKSPACE/$BUILD_DIR/$ARCH/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCH}/tools/selected
+mv ../config/toolbox/${ARCHITECTURE}/tools/selected ../config/toolbox/${ARCHITECTURE}/tools/selected.old
+cp -r $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCHITECTURE}/tools/selected
 scram setup
 DEP_NAMES=""
-BUILD_TOOLS=$(find $WORKSPACE/$BUILD_DIR/BUILD/$ARCH -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCH/|/$ARCH/|")
-PR_TOOLS=$(for p in $PKGS ; do find $WORKSPACE/$BUILD_DIR/$ARCH -maxdepth 3 -mindepth 3 -path "*/$p/*" -type d; done)
+BUILD_TOOLS=$(find $WORKSPACE/$BUILD_DIR/BUILD/$ARCHITECTURE -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCHITECTURE/|/$ARCHITECTURE/|")
+PR_TOOLS=$(for p in $PKGS ; do find $WORKSPACE/$BUILD_DIR/$ARCHITECTURE -maxdepth 3 -mindepth 3 -path "*/$p/*" -type d; done)
 for DIR in $(echo $BUILD_TOOLS $PR_TOOLS |  sort | uniq) ; do
   if [ -d $DIR/etc/scram.d ]; then
     for FILE in `find $DIR/etc/scram.d -name '*.xml'`; do

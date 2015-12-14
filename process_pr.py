@@ -145,7 +145,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       add_external_category = True
       packages = set (["externals/"+repository])
       if repository != CMSDIST_REPO_NAME:
-        create_external_issue = True
+        if not repository.endswith("/cms-bot"): create_external_issue = True
       else:
         create_test_property = True
         if not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref):

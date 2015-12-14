@@ -50,6 +50,7 @@ if mode == 'Daily':
     message = 'Unit test changes for most recent test of master branch:\n'
 
 changed = False
+stableChanged = False
 failed = False
 errorConditions = ['error', 'failure']
 
@@ -61,16 +62,19 @@ for testName, testResult in sorted(testResults.items()):
     elif 'base' in testResult and 'test' in testResult:
         if testResult['base'] != testResult['test']:
             changed = True
+            stableChanged = True
             message += "* %s changed from %s to %s\n" % (testName, testResult['base'], testResult['test'])
             if testResult['test'] in errorConditions:
                 failed = True
     elif 'test' in testResult:
         changed = True
+        stableChanged = True
         message += "* %s was added. Status is %s\n" % (testName, testResult['test'])
         if testResult['test'] in errorConditions:
             failed = True
     elif 'base' in testResult:
         changed = True
+        stableChanged = True
         message += "* %s was deleted. Prior status was %s\n" % (testName, testResult['base'])
 if failed:
     message += '\n\nPreviously working unit tests have failed!\n'
@@ -86,7 +90,10 @@ if not changed and mode == 'Daily':
 elif not changed:
     message = "No changes to unit tests for pull request %s\n" % issueID
 
-issue.create_comment('%s' % message)
+if mode == 'Daily' and stableChanged:
+    issue.create_comment('%s' % message)
+elif mode != 'Daily':
+    issue.create_comment('%s' % message)
 
 if failed:
     print('Testing of python code. DMWM-FAIL-UNIT')

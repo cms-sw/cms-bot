@@ -34,7 +34,8 @@ with open('pylint.out', 'r') as pylintFile:
                     report[filename] = {}
                 if not label in report[filename]:
                     report[filename][label] = {}
-                report[filename][label]['score'] = score
+                if filename and label:
+                    report[filename][label]['score'] = score
             except NameError:
                 print "Score of %s found, but no filename" % score
 
@@ -42,9 +43,12 @@ with open('pylint.out', 'r') as pylintFile:
         if len(parts) != 3:
             continue
         try:
-            filename, lineNumber, rawMessage = parts
+            newFilename, lineNumber, rawMessage = parts
+            newFilename = newFilename.strip()
+            if not newFilename:  # Don't update filename if we didn't find one
+                continue
             lineNumber = int(lineNumber)
-
+            filename = newFilename
             rmParts = rawMessage.split(']', 1)
             rawCode = rmParts[0].strip()
             message = rmParts[1].strip()

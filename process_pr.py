@@ -192,12 +192,19 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                          for user, watched_regexp in WATCHERS.items()
                          for regexp in watched_regexp
                          if re.match("^" + regexp + ".*", package) and user != author])
+    #Handle category watchers
+    for user, cats in (yaml.load(file(join(SCRIPT_DIR, "category-watchers.yaml")))).items():
+      for cat in cats:
+        if cat in signing_categories:
+          print "Added ",user, " to watch due to cat",cat
+          watchers.add(user)
+
     # Handle watchers
     watchingGroups = yaml.load(file(join(SCRIPT_DIR, "groups.yaml")))
     for watcher in [x for x in watchers]:
       if not watcher in watchingGroups: continue
       watchers.remove(watcher)
-      watchers.update(set(watchingGroups[watcher]))
+      watchers.update(set(watchingGroups[watcher]))      
     watchers = set(["@" + u for u in watchers])
     print "Watchers " + ", ".join(watchers)
 

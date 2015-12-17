@@ -8,38 +8,63 @@ function updateBranch()
 {
   SOURCE_BRANCH=$1
   TARGET_BRANCH=$2
-  git clean -fdx
-  git reset --hard origin/$TARGET_BRANCH
-  git clean -fdx
-  git merge --no-ff -X ours origin/$SOURCE_BRANCH
-  git commit --amend -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH."
-  if [ "X`git diff --name-only HEAD origin/$TARGET_BRANCH | tail -1`" != "X" ]; then
-    git push origin HEAD:$TARGET_BRANCH
+  git clean -fdx &&\
+  git checkout --force dummy-local-branch &&\
+  git fetch --force origin $SOURCE_BRANCH:$SOURCE_BRANCH &&\
+  git fetch --force origin $TARGET_BRANCH:$TARGET_BRANCH &&\
+  git checkout --force $TARGET_BRANCH &&\
+  git reset --hard origin/$TARGET_BRANCH &&\
+  git clean -fdx &&\
+  git merge --no-ff -X ours origin/$SOURCE_BRANCH &&\
+  if [ "X`git diff --name-only origin/$TARGET_BRANCH | tail -1`" != "X" ]; then \
+    git commit --amend -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH." &&\
+    echo git push origin $TARGET_BRANCH ;\
   fi
 }
 
-# Update CMSSW
-# Clone once
+function getRepos()
+{
+  (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nprint ' '.join(p.keys())" | python)
+}
+
+function getBranches()
+{
+  if [ "X$2" = "X" ] ; then
+    (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nif '$1' in p:\n  x=p['$1'].keys()\n  x.sort()\n  print ' '.join(x)" | python)
+  else
+    (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nif '$1' in p and '$2' in p['$1']:\n  print ' '.join(p['$1']['$2'])" | python)
+  fi
+}
+
+REPO_NAME=$1
+BRRANCH=$2
 SCRIPT_PATH="`dirname \"$0\"`"
 SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
 WORKSPACE="${WORKSPACE-$PWD}"
-
-for repo in `ls $SCRIPT_PATH/forward-ports` ; do
+if [ "X$REPO_NAME" = "X" ] ; then REPO_NAME=`getRepos`; fi
+for repo in $REPO_NAME ; do
   echo "Working on cms-sw/$repo ..."
   cd "$WORKSPACE"
-  rm -rf $repo
-  git clone git@github.com:cms-sw/$repo
-  cd $repo
-  if [ X$HOME = X ]; then
-    git config user.email 'cmsbuild@cern.ch'
-    git config user.name  'CMS Build'
+  if [ ! -d $repo ] ; then
+    git clone git@github.com:cms-sw/$repo
+    cd $repo
+    git checkout -b dummy-local-branch 
+    if [ X$HOME = X ]; then
+      git config user.email 'cmsbuild@cern.ch'
+      git config user.name  'CMS Build'
+    fi
+  else
+    cd $repo
   fi
-  git fetch origin
-  for release in `ls $SCRIPT_PATH/forward-ports/$repo`; do
-    echo "Forward porting release $release"
-    grep 'CMSSW_' $SCRIPT_PATH/forward-ports/$repo/$release | while read line ; do
-      [ "X$line" = "X" ] && continue
-      (updateBranch $line) || true
+  if [ "X$BRRANCH" = "X" ] ; then
+    BRRANCHES=`getBranches $repo`
+  else
+    BRRANCHES=$BRRANCH
+  fi
+  for src in $BRRANCHES; do
+    echo "Forward porting branch $src"
+    for des in `getBranches $repo $src`; do
+      (updateBranch $src $des) || true
     done
   done
 done

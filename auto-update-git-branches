@@ -6,20 +6,20 @@
 # - Update the target branch. 
 function updateBranch()
 {
-  SOURCE_BRANCH=$1
-  TARGET_BRANCH=$2
+  REPO=`echo $1 | tr '[a-z]' '[A-Z]'`
+  SOURCE_BRANCH=$2
+  TARGET_BRANCH=$3
+  STRATEGY=$4
+  if [ "X$STRATEGY" != "X" ]; then STRATEGY="-X $STRATEGY" ; fi
   git clean -fdx &&\
-  git checkout --force dummy-local-branch &&\
-  git fetch --force origin $SOURCE_BRANCH:$SOURCE_BRANCH &&\
-  git fetch --force origin $TARGET_BRANCH:$TARGET_BRANCH &&\
   git checkout --force $TARGET_BRANCH &&\
-  git reset --hard origin/$TARGET_BRANCH &&\
-  git clean -fdx &&\
-  git merge --no-ff -X ours origin/$SOURCE_BRANCH &&\
-  if [ "X`git diff --name-only origin/$TARGET_BRANCH | tail -1`" != "X" ]; then \
+  git reset --hard origin/$TARGET_BRANCH  &&\
+  git merge --no-ff $STRATEGY origin/$SOURCE_BRANCH || (git diff | mail -s "[$REPO] Merge Conflict: $SOURCE_BRANCH -> $TARGET_BRANCH" cms-sdt-logs@cern.ch && exit 1)  &&\
+  if [ "X`git rev-parse origin/$TARGET_BRANCH`" != "X`git rev-parse $TARGET_BRANCH`" ]; then \
     git commit --amend -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH." &&\
-    echo git push origin $TARGET_BRANCH ;\
+    git push origin $TARGET_BRANCH ;\
   fi
+  echo "====> OK $SOURCE_BRANCH => $TARGET_BRANCH"
 }
 
 function getRepos()
@@ -36,6 +36,7 @@ function getBranches()
   fi
 }
 
+GIT_USER='cms-sw'
 REPO_NAME=$1
 BRRANCH=$2
 SCRIPT_PATH="`dirname \"$0\"`"
@@ -43,12 +44,11 @@ SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
 WORKSPACE="${WORKSPACE-$PWD}"
 if [ "X$REPO_NAME" = "X" ] ; then REPO_NAME=`getRepos`; fi
 for repo in $REPO_NAME ; do
-  echo "Working on cms-sw/$repo ..."
+  echo "Working on ${GIT_USER}/$repo ..."
   cd "$WORKSPACE"
   if [ ! -d $repo ] ; then
-    git clone git@github.com:cms-sw/$repo
+    git clone git@github.com:${GIT_USER}/$repo
     cd $repo
-    git checkout -b dummy-local-branch 
     if [ X$HOME = X ]; then
       git config user.email 'cmsbuild@cern.ch'
       git config user.name  'CMS Build'
@@ -56,6 +56,7 @@ for repo in $REPO_NAME ; do
   else
     cd $repo
   fi
+  git fetch --force origin
   if [ "X$BRRANCH" = "X" ] ; then
     BRRANCHES=`getBranches $repo`
   else
@@ -64,7 +65,7 @@ for repo in $REPO_NAME ; do
   for src in $BRRANCHES; do
     echo "Forward porting branch $src"
     for des in `getBranches $repo $src`; do
-      (updateBranch $src $des) || true
+      (updateBranch $repo $src $(echo $des | tr ':' ' ')) || true
     done
   done
 done

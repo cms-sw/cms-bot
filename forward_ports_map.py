@@ -1,4 +1,9 @@
 #CMS GIT Repositories auto matic forward port map
+#FORMAT:
+#GIT_REPO_FWPORTS[repo][source-branch]=[destination-branch[:strategy]]
+#e.g
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"]=["CMSSW_7_6_ROOT64_X", "CMSSW_8_0_X:ours"]
+
 GIT_REPO_FWPORTS = {"cmsdist" : {},"cmssw" : {}}
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_6_2_X/stable"]=["IB/CMSSW_6_2_X/devel-gcc472"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_0_X/stable"]=["IB/CMSSW_7_1_X/stable"]
@@ -23,3 +28,5 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"].append("IB/CMSSW_8_0_X/next
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"].append("CMSSW_8_0_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"].append("CMSSW_8_0_ROOT64_X")
+
+

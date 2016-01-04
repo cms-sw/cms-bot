@@ -19,15 +19,14 @@ fi
 QUEUES=`git ls-remote --tags origin "CMSSW_*X*" | grep refs/tags | sed -e 's|.*refs/tags/||;s|_2[0-1][0-9][0-9]-[0-1][0-9].*||' | sort -u`
 
 for QUEUE in $QUEUES; do
-  # List the tags we are going to delete. This will stay in the
-  # logs and therefore we can always get them back.
+  # List the tags we are going to delete.
   git ls-remote --tags origin "${QUEUE}_2*" \
-      | head -n -50
+      | head -n -30
 
-  # Keep 50 tags per QUEUE.
+  # Keep 30 tags per QUEUE.
   git ls-remote --tags origin "${QUEUE}_2*" \
       | sed -e "s/.*$QUEUE/:$QUEUE/" \
-      | head -n -50 \
+      | head -n -30 \
       | xargs -r $ECHO git push origin 
 done
 
@@ -44,14 +43,13 @@ fi
 CMSDIST_QUEUES=`git ls-remote --tags origin "*/CMSSW_*X*" | grep refs/tags | grep "\(ERR\|IB\|ALL\)" | sed -e 's|.*refs/tags/||;s|20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]|2*|' | sort -u`
 
 for QUEUE in $CMSDIST_QUEUES; do
-  # List the tags we are going to delete. This will stay in the
-  # logs and therefore we can always get them back.
+  # List the tags we are going to delete.
   git ls-remote --tags origin "$QUEUE" \
-      | head -n -50
+      | head -n -30
 
-  # Keep 50 tags per QUEUE.
+  # Keep 30 tags per QUEUE.
   git ls-remote --tags origin "$QUEUE" \
       | sed -e "s|.*refs/tags/|:|" \
-      | head -n -50 \
+      | head -n -30 \
       | xargs -r $ECHO git push origin 
 done

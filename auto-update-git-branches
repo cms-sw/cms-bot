@@ -36,18 +36,22 @@ function getBranches()
   fi
 }
 
-GIT_USER='cms-sw'
 REPO_NAME=$1
 BRRANCH=$2
 SCRIPT_PATH="`dirname \"$0\"`"
 SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
 WORKSPACE="${WORKSPACE-$PWD}"
 if [ "X$REPO_NAME" = "X" ] ; then REPO_NAME=`getRepos`; fi
-for repo in $REPO_NAME ; do
-  echo "Working on ${GIT_USER}/$repo ..."
+for full_repo in $REPO_NAME ; do
+  case $full_repo in 
+    */*) ;;
+    *)   full_repo="cms-sw/${full_repo}" ;;
+  esac
+  repo=`echo $full_repo |sed 's|.*/||'`
+  echo "Working on ${full_repo} ..."
   cd "$WORKSPACE"
   if [ ! -d $repo ] ; then
-    git clone git@github.com:${GIT_USER}/$repo
+    git clone git@github.com:${full_repo}
     cd $repo
     if [ X$HOME = X ]; then
       git config user.email 'cmsbuild@cern.ch'

@@ -38,10 +38,11 @@ function getBranches()
 
 REPO_NAME=$1
 BRRANCH=$2
+COMMITS=$3
 SCRIPT_PATH="`dirname \"$0\"`"
 SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
 WORKSPACE="${WORKSPACE-$PWD}"
-if [ "X$REPO_NAME" = "X" ] ; then REPO_NAME=`getRepos`; fi
+if [ "X$REPO_NAME" = "X" ] ; then REPO_NAME=`getRepos`; COMMITS=""; fi
 for full_repo in $REPO_NAME ; do
   case $full_repo in 
     */*) ;;
@@ -63,6 +64,7 @@ for full_repo in $REPO_NAME ; do
   git fetch -q --force origin
   if [ "X$BRRANCH" = "X" ] ; then
     BRRANCHES=`getBranches $repo`
+    COMMITS=""
   else
     BRRANCHES=$BRRANCH
   fi

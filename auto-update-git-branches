@@ -12,7 +12,7 @@ function updateBranch()
   STRATEGY=$4
   if [ "X$STRATEGY" != "X" ]; then STRATEGY="-X $STRATEGY" ; fi
   git clean -fdx &&\
-  git checkout --force $TARGET_BRANCH &&\
+  git checkout -q --force $TARGET_BRANCH &&\
   git reset --hard origin/$TARGET_BRANCH  &&\
   git merge --no-ff $STRATEGY origin/$SOURCE_BRANCH || (git diff | mail -s "[$REPO] Merge Conflict: $SOURCE_BRANCH -> $TARGET_BRANCH" cms-sdt-logs@cern.ch && exit 1)  &&\
   if [ "X`git rev-parse origin/$TARGET_BRANCH`" != "X`git rev-parse $TARGET_BRANCH`" ]; then \
@@ -60,7 +60,7 @@ for full_repo in $REPO_NAME ; do
   else
     cd $repo
   fi
-  git fetch --force origin
+  git fetch -q --force origin
   if [ "X$BRRANCH" = "X" ] ; then
     BRRANCHES=`getBranches $repo`
   else

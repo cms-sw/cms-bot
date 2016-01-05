@@ -12,7 +12,8 @@ RELVAL_KEYS = {"dropNonMTSafe":{},
 
 RELVAL_KEYS["dropNonMTSafe"]["_(THREADED|ROOT6)_"]  = "--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe"
 RELVAL_KEYS["customiseWithTimeMemorySummary"][".+"] = "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"
-RELVAL_KEYS["PREFIX"][".+"]                 = "--prefix 'timeout --signal SIGSEGV 7200 '"
+RELVAL_KEYS["PREFIX"]["CMSSW_8_.+"]         = "--prefix 'timeout --signal SIGTERM 7200 '"
+RELVAL_KEYS["PREFIX"]["^(?!CMSSW_8_).+"]    = "--prefix 'timeout --signal SIGSEGV 7200 '"
 RELVAL_KEYS["JOB_REPORT"][".+"]             = "--job-reports"
 RELVAL_KEYS["USE_INPUT"][".+"]              = "--useInput all"
 RELVAL_KEYS["THREADED"]["_THREADED_"]       = "-t 4"

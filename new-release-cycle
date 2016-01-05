@@ -81,24 +81,32 @@ def add_releases_in_config(config_lines, dryRun=False):
   return True
 
 def add_auto_forward_ports(cmssw, cmsdist, cmssw_branches, cmsdist_branches, dryRun=False):
+  from forward_ports_map import GIT_REPO_FWPORTS
   data = {}
   data["cmssw"]   = [cmssw, cmssw_branches]
   data["cmsdist"] = [cmsdist, cmsdist_branches]
+  lines = []
   for repo, info in data.items():
-    print "Writing auto forward port file for %s/%s" % (repo, cmssw)
-    lines = []
-    lines.append(info[1][info[0]]+" "+info[0])
+    base = info[1][info[0]]
+    rc = info[0]
+    lines.append("\n#Automatically added for %s new branch %s" % (repo.upper(), rc))
+    if (base in GIT_REPO_FWPORTS[repo]) and (not rc in GIT_REPO_FWPORTS[repo][base]):
+      lines.append('GIT_REPO_FWPORTS["'+repo+'"]["'+base+'"].append("'+rc+'")')
+    if not rc in GIT_REPO_FWPORTS[repo]:
+      lines.append('GIT_REPO_FWPORTS["'+repo+'"]["'+rc+'"]=[]')
+      GIT_REPO_FWPORTS[repo][rc]=[]
     for c in info[1]:
-      if c == info[0]: continue
-      lines.append(info[0]+" "+c)
-    for line in lines: print "  "+line
-    if not dryRun:
-      fwdport_file = "%s/forward-ports/%s/%s" % (scriptPath, repo, cmssw)
-      with open(fwdport_file, "w") as fwdFile:
-        for line in lines: fwdFile.write(line+"\n")
-      print "Wrote auto forward port file %s/%s" % (repo, cmssw)
-    else:
-      print "DryRun: Wrote auto forward port file %s/%s" % (repo, cmssw)
+      if (c == rc) or (c in GIT_REPO_FWPORTS[repo][rc]): continue
+      lines.append('GIT_REPO_FWPORTS["'+repo+'"]["'+rc+'"].append("'+c+'")')
+  if not lines: return True
+  for line in lines: print line
+  if not dryRun:
+    fwdport_file = "%s/forward_ports_map.py" % (scriptPath)
+    with open(fwdport_file, "w") as fwdFile:
+      for line in lines: fwdFile.write(line+"\n")
+    print "Wrote auto forward port file"
+  else:
+    print "DryRun: Wrote auto forward port file"
   return True
 
 def process(base, cycle, gh_push, dryRun):
@@ -134,7 +142,6 @@ def process(base, cycle, gh_push, dryRun):
    print "Error: Not cmsdist/cmssw branches found in config.map or missing production branch for cmsdist"
    return
 
-  GH_CMSSW_ORGANIZATION = "smuzaffar"
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   cmssw_repo   = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO)
 
@@ -157,12 +164,12 @@ def process(base, cycle, gh_push, dryRun):
   if not add_releases_in_config(config_lines, dryRun): return False
   if not add_auto_forward_ports(cycle, cmsdist_prod, cmssw_branches, cmsdist_branches, dryRun): return False
 
-  err, out = getstatusoutput("cd %s; git add forward-ports && git diff origin" % scriptPath)
+  err, out = getstatusoutput("cd %s; git diff origin" % scriptPath)
   print "GIT DIFF:\n",out
   print "\nIf the changes above looks good then please commit and push these to github"
   
   #Commit and push changes to cms-bot github repo
-  if gh_push and out:
+  if not dryRun and gh_push and out:
     err, out = getstatusoutput("cd %s && git commit -a -m 'New release cycle %s based on %s added' && git pull --rebase && git push origin" % (scriptPath, cycle, base))
     return err
   return True

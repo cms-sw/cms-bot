@@ -6,18 +6,55 @@
 # - Update the target branch. 
 function updateBranch()
 {
-  REPO=`echo $1 | tr '[a-z]' '[A-Z]'`
-  SOURCE_BRANCH=$2
-  TARGET_BRANCH=$3
-  STRATEGY=$4
+  COMMITS_LIST=$1
+  REPO=`echo $2 | tr '[a-z]' '[A-Z]'`
+  SOURCE_BRANCH=$3
+  TARGET_BRANCH=$4
+  STRATEGY=$5
   if [ "X$STRATEGY" != "X" ]; then STRATEGY="-X $STRATEGY" ; fi
+  rm -f $WORKSPACE/errors &&\
+  echo ">git fetch -q --force origin" > $WORKSPACE/cmds &&\
+  echo ">git clean -fdx" >> $WORKSPACE/cmds &&\
+  echo ">git checkout -q --force $TARGET_BRANCH" >> $WORKSPACE/cmds &&\
+  echo ">git reset --hard origin/$TARGET_BRANCH" >> $WORKSPACE/cmds &&\
   git clean -fdx &&\
   git checkout -q --force $TARGET_BRANCH &&\
   git reset --hard origin/$TARGET_BRANCH  &&\
-  git merge --no-ff $STRATEGY origin/$SOURCE_BRANCH || (git diff | mail -s "[$REPO] Merge Conflict: $SOURCE_BRANCH -> $TARGET_BRANCH" cms-sdt-logs@cern.ch && exit 1)  &&\
+  PRMSG="" &&\
+  if [ "X$COMMITS_LIST" = "X" ] ; then \
+    echo ">git merge --no-ff $STRATEGY origin/$SOURCE_BRANCH" >> $WORKSPACE/cmds &&\
+    (git merge --no-ff $STRATEGY origin/$SOURCE_BRANCH >> $WORKSPACE/cmds 2>&1) || touch $WORKSPACE/errors &&\
+    PRMSG="Merge $SOURCE_BRANCH into $TARGET_BRANCH." ;\
+  else \
+    git branch -D auto-fwport || true &&\
+    git checkout -b auto-fwport &&\
+    for c in $(echo $COMMITS_LIST | tr ',' '\n') ; do \
+      PRMSG=$(git show --pretty=format:%s $c | head -1 | grep '^Merge pull request #[1-9][0-9]* from ') || true &&\
+      if [ "X$PRMSG" = "X" ] ; then \
+        echo ">git cherry-pick -x $STRATEGY $c" >> $WORKSPACE/cmds &&\
+        (git cherry-pick -x $STRATEGY $c >> $WORKSPACE/cmds 2>&1) || touch $WORKSPACE/errors ;\
+      else \
+        git checkout -q --force $TARGET_BRANCH &&\
+        git merge --no-ff auto-fwport &&\
+        git commit --amend -m "$PRMSG" &&\
+        git checkout -q auto-fwport ;\
+      fi ;\
+    done &&\
+    if [ "X$PRMSG" = "X" ] ; then \
+      git checkout -q --force $TARGET_BRANCH &&\
+      git merge --no-ff auto-fwport &&\
+      PRMSG="Merge $SOURCE_BRANCH into $TARGET_BRANCH." ;\
+    else \
+      git checkout -q --force $TARGET_BRANCH && PRMSG="" ;\
+    fi &&\
+    git branch -D auto-fwport ;\
+  fi &&\
+  if [ -f $WORKSPACE/errors ] ; then (cat $WORKSPACE/cmds $WORKSPACE/cmds && exit 1) ; fi &&\
   if [ "X`git rev-parse origin/$TARGET_BRANCH`" != "X`git rev-parse $TARGET_BRANCH`" ]; then \
-    git commit --amend -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH." &&\
-    git push origin $TARGET_BRANCH ;\
+    if [ ! "X$PRMSG" = "X" ] ; then \
+      git commit --amend -m "$PRMSG" ;\
+    fi &&\
+    echo git push origin $TARGET_BRANCH ;\
   fi
   echo "====> OK $SOURCE_BRANCH => $TARGET_BRANCH"
 }
@@ -39,6 +76,7 @@ function getBranches()
 REPO_NAME=$1
 BRRANCH=$2
 COMMITS=$3
+GIT_USER="cms-sw"
 SCRIPT_PATH="`dirname \"$0\"`"
 SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
 WORKSPACE="${WORKSPACE-$PWD}"
@@ -46,7 +84,7 @@ if [ "X$REPO_NAME" = "X" ] ; then REPO_NAME=`getRepos`; COMMITS=""; fi
 for full_repo in $REPO_NAME ; do
   case $full_repo in 
     */*) ;;
-    *)   full_repo="cms-sw/${full_repo}" ;;
+    *)   full_repo="${GIT_USER}/${full_repo}" ;;
   esac
   repo=`echo $full_repo |sed 's|.*/||'`
   echo "Working on ${full_repo} ..."
@@ -71,7 +109,7 @@ for full_repo in $REPO_NAME ; do
   for src in $BRRANCHES; do
     echo "Forward porting branch $src"
     for des in `getBranches $repo $src`; do
-      (updateBranch $repo $src $(echo $des | tr ':' ' ')) || true
+      (updateBranch "$COMMITS" "$repo" "$src" $(echo $des | tr ':' ' ')) || true
     done
   done
 done

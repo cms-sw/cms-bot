@@ -1,0 +1,88 @@
+#!/bin/sh -ex
+GIT_DIFF_LOGFILE=$1
+COMMITS_LIST=$2
+SOURCE_BRANCH=$3
+TARGET_BRANCH=$4
+STRATEGY=$5
+PUSH_UPDATES=$6
+#clean up any previous un-commited changes
+git clean -fdx
+#checkout target branch and remove any local changes
+git checkout -q --force $TARGET_BRANCH
+git reset --hard origin/$TARGET_BRANCH
+MERGE_COMMIT_MSG=""
+STRATEGY_OPTS=""
+DEFAULT_MERGE_COMMIT_MSG="Merge $SOURCE_BRANCH into $TARGET_BRANCH."
+#Depending on the commits, use either cherry-pick or merge
+if [ "X$COMMITS_LIST" = "X" ] ; then
+  #We do not have the commits to just try to merge source branch in to target
+  [ "X$STRATEGY" = "X" ] || STRATEGY_OPTS="-X $STRATEGY"
+  git merge --no-ff $STRATEGY_OPTS origin/$SOURCE_BRANCH || (git diff >> $GIT_DIFF_LOGFILE && exit 1)
+  MERGE_COMMIT_MSG="$DEFAULT_MERGE_COMMIT_MSG"
+else
+  #We have the commits list, so do cherry picking by doing the following
+  #  1. Create and checkout new dummy branch based on target branch
+  #  2. Find the commit type
+  #    2.1. non-merged commits with only one parent
+  #      - cherry-pick them in new dummy branch
+  #    2.2. merged commits with more than 1 parents
+  #      - checkout targent branch
+  #      - merge dummy new branch in to target branch
+  #      - merge the new dummy branch in to the target branch
+  #      - amend the commit message
+  #      - checkout the dummy branch again and repeat step 2
+  DUMMY_BRANCH=$(whoami)-auto-forward-port-dummy-branch  
+  if [ "X$STRATEGY" != "X" ] ; then
+    #check if git cherry-pick support --strategy-option
+    if git help cherry-pick | grep 'strategy-option' ; then
+      STRATEGY_OPTS=" -X $STRATEGY"
+    fi
+  fi
+  #Delete dummy branch if exists
+  git branch -D $DUMMY_BRANCH || true
+  #Create and checkout dummy branch
+  git checkout -b $DUMMY_BRANCH
+  #Loop through the commits
+  for c in $(echo $COMMITS_LIST | tr ',' '\n') ; do
+    #Find out the commit type; If more than 1 parents then it is a merge commit
+    IsMergeCommit=$([ $(git rev-list --parents -n 1 $c | wc -w) -lt 3 ] || echo YES)
+    if [ "X$IsMergeCommit" = X ] ; then
+      #Non-merge commit found; cherry pick it
+      if ! git cherry-pick -x $STRATEGY_OPTS $c ; then
+        git diff >> $GIT_DIFF_LOGFILE
+        [ $(git diff --name-only | wc -l) -eq 0 ] || exit 1
+      fi
+    else
+      #Merge commit found
+      #checkout target brach; merge dummy branch in it; go back to dummy branch
+      git checkout -q --force $TARGET_BRANCH
+      git merge --no-ff $DUMMY_BRANCH
+      git checkout -q $DUMMY_BRANCH
+    fi
+  done
+  git checkout -q --force $TARGET_BRANCH
+  #If last commit was not a merge commit then we have new commits in dummy branch
+  if [ "X$IsMergeCommit" = X ] ; then
+    #We have new commits in dummy branch which are not yet merged in to target branch
+    git merge --no-ff $DUMMY_BRANCH
+    #As we do not know the merge commit message so we go back to default message
+    MERGE_COMMIT_MSG="$DEFAULT_MERGE_COMMIT_MSG"
+  fi
+  #We are done with cherry-picking, now delete the dummy branch
+  git branch -D $DUMMY_BRANCH
+fi
+#We should be on target branch by now
+#Check if local target branch has any changes w.r.t remote target branch
+if [ "X$(git rev-parse origin/$TARGET_BRANCH)" != "X$(git rev-parse $TARGET_BRANCH)" ]; then
+  #Local target branch is different than remote target branch
+  #Amend the commit message it needed
+  [ "X$MERGE_COMMIT_MSG" = "X" ] || git commit --amend -m "$MERGE_COMMIT_MSG"
+  #Finaly, push the local target branch to remote target branch
+  if [ ! "X$PUSH_UPDATES" = "X" ] ; then
+    git push origin $TARGET_BRANCH
+  else
+    echo "Skipped pushing updates to remote due to env variable PUSH_UPDATES not set"
+  fi
+fi
+echo "ALL_OK $SOURCE_BRANCH $TARGET_BRANCH"
+

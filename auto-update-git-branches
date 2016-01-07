@@ -1,34 +1,27 @@
 #!/bin/sh -ex
-# Updates a branch by doing the following:
-# - switch to the target branch
-# - Merge the source branch but keep anything on the development branch
-#   in case of conflicts.
-# - Update the target branch. 
-function updateBranch()
-{
-  REPO=`echo $1 | tr '[a-z]' '[A-Z]'`
-  SOURCE_BRANCH=$2
-  TARGET_BRANCH=$3
-  STRATEGY=$4
-  if [ "X$STRATEGY" != "X" ]; then STRATEGY="-X $STRATEGY" ; fi
-  git clean -fdx &&\
-  git checkout -q --force $TARGET_BRANCH &&\
-  git reset --hard origin/$TARGET_BRANCH  &&\
-  git merge --no-ff $STRATEGY origin/$SOURCE_BRANCH || (git diff | mail -s "[$REPO] Merge Conflict: $SOURCE_BRANCH -> $TARGET_BRANCH" cms-sdt-logs@cern.ch && exit 1)  &&\
-  if [ "X`git rev-parse origin/$TARGET_BRANCH`" != "X`git rev-parse $TARGET_BRANCH`" ]; then \
-    git commit --amend -m "Merge $SOURCE_BRANCH into $TARGET_BRANCH." &&\
-    git push origin $TARGET_BRANCH ;\
-  fi
-  echo "====> OK $SOURCE_BRANCH => $TARGET_BRANCH"
-}
 
-function getRepos()
-{
-  (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nprint ' '.join(p.keys())" | python)
-}
+REPO_NAME=$1
+if [ "X$REPO_NAME" = "X" ] ; then
+  echo "Usage: $0 <cmssw|cmsdist> [<src-branch>] [<comma-seperated-commit-hashes>] [<OVERRIDE_STRATEGY>] [push]"
+  exit 1
+fi
+SRC_BRANCH=$2
+COMMITS=$3
+OVERRIDE_STRATEGY=$4
+PUSH_UPDATES=$5
 
+GIT_USER="cms-sw"
+SCRIPT_PATH="`dirname \"$0\"`"
+SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
+WORKSPACE="${WORKSPACE-$PWD}"
+HAS_ERRORS=0
+
+#Some helper functions
+#Return auto forward port branches.
 function getBranches()
 {
+  #If only repo is known then return space seperated list of all source branches which should be forward ported
+  #If repo and source branch are known then return space seperated list of all target branches
   if [ "X$2" = "X" ] ; then
     (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nif '$1' in p:\n  x=p['$1'].keys()\n  x.sort()\n  print ' '.join(x)" | python)
   else
@@ -36,42 +29,54 @@ function getBranches()
   fi
 }
 
-REPO_NAME=$1
-BRRANCH=$2
-COMMITS=$3
-SCRIPT_PATH="`dirname \"$0\"`"
-SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
-WORKSPACE="${WORKSPACE-$PWD}"
-if [ "X$REPO_NAME" = "X" ] ; then REPO_NAME=`getRepos`; COMMITS=""; fi
-for full_repo in $REPO_NAME ; do
-  case $full_repo in 
-    */*) ;;
-    *)   full_repo="cms-sw/${full_repo}" ;;
-  esac
-  repo=`echo $full_repo |sed 's|.*/||'`
-  echo "Working on ${full_repo} ..."
-  cd "$WORKSPACE"
-  if [ ! -d $repo ] ; then
-    git clone git@github.com:${full_repo}
-    cd $repo
-    if [ X$HOME = X ]; then
-      git config user.email 'cmsbuild@cern.ch'
-      git config user.name  'CMS Build'
+#make sure we have a full repo name i.e. git-user/git-repo
+case $REPO_NAME in 
+  */*) ;;
+  *)   REPO_NAME="${GIT_USER}/${REPO_NAME}" ;;
+esac
+repo=`echo $REPO_NAME |sed 's|.*/||'`
+echo "Working on ${REPO_NAME} ..."
+cd "$WORKSPACE"
+#Clone repo if not already done
+if [ ! -d $repo ] ; then
+  git clone git@github.com:${REPO_NAME} ${repo}
+  cd $repo
+  if [ X$HOME = X ]; then
+    git config user.email 'cmsbuild@cern.ch'
+    git config user.name  'CMS Build'
+  fi
+else
+  cd $repo
+fi
+#Fetch updates from remote
+git fetch -q --force origin
+#If source branch was not provided via command-line then get it from GIT_REPO_FWPORTS and reset commits
+if [ "X$SRC_BRANCH" = "X" ] ; then
+  SRC_BRANCH=`getBranches $repo`
+  COMMITS=""
+fi
+LOG_COMMANDS="$WORKSPACE/$repo.log"
+for src in $SRC_BRANCH; do
+  echo "Forward porting branch $src"
+  for des in `getBranches $repo $src`; do
+    rm -f $LOG_COMMANDS
+    echo ">git clone https://github.com/cms-sw/cms-bot.git cms-bot" > $LOG_COMMANDS
+    echo ">./cms-bot/`basename $0` $REPO_NAME $src $COMMITS" >> $LOG_COMMANDS
+    if [ "X$OVERRIDE_STRATEGY" != "X" ] ; then
+      merge_strategy=$OVERRIDE_STRATEGY
+    else
+      merge_strategy=$(echo $des | grep : | sed 's|^[^:]*:||')
     fi
-  else
-    cd $repo
-  fi
-  git fetch -q --force origin
-  if [ "X$BRRANCH" = "X" ] ; then
-    BRRANCHES=`getBranches $repo`
-    COMMITS=""
-  else
-    BRRANCHES=$BRRANCH
-  fi
-  for src in $BRRANCHES; do
-    echo "Forward porting branch $src"
-    for des in `getBranches $repo $src`; do
-      (updateBranch $repo $src $(echo $des | tr ':' ' ')) || true
-    done
+    des=$(echo $des | sed 's|:.*||')
+    err=0
+    $SCRIPT_PATH/merge-git-branch "$LOG_COMMANDS" "$COMMITS" "$src" "$des" "$merge_strategy" "$PUSH_UPDATES" || err=1
+    if [ "X$err" = "X1" ] ; then 
+      HAS_ERRORS=1
+      if [ ! "X$PUSH_UPDATES" = "X" ] ; then
+        cat $LOG_COMMANDS | mail -s "[$(echo $repo | tr '[a-z]' '[A-Z]')] Merge Conflict: $src -> $(echo $des | sed 's|:.*||')" cms-sdt-logs@cern.ch
+      fi
+      break
+    fi
   done
 done
+exit $HAS_ERRORS

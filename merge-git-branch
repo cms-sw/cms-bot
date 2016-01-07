@@ -32,12 +32,7 @@ else
   #      - amend the commit message
   #      - checkout the dummy branch again and repeat step 2
   DUMMY_BRANCH=$(whoami)-auto-forward-port-dummy-branch  
-  if [ "X$STRATEGY" != "X" ] ; then
-    #check if git cherry-pick support --strategy-option
-    if git help cherry-pick | grep 'strategy-option' ; then
-      STRATEGY_OPTS=" -X $STRATEGY"
-    fi
-  fi
+  [ "X$STRATEGY" = "X" ] || STRATEGY_OPTS="-X $STRATEGY"
   #Delete dummy branch if exists
   git branch -D $DUMMY_BRANCH || true
   #Create and checkout dummy branch
@@ -48,7 +43,7 @@ else
     IsMergeCommit=$([ $(git rev-list --parents -n 1 $c | wc -w) -lt 3 ] || echo YES)
     if [ "X$IsMergeCommit" = X ] ; then
       #Non-merge commit found; cherry pick it
-      if ! git cherry-pick -x $STRATEGY_OPTS $c ; then
+      if ! git cherry-pick -x $c ; then
         git diff >> $GIT_DIFF_LOGFILE
         [ $(git diff --name-only | wc -l) -eq 0 ] || exit 1
       fi
@@ -56,7 +51,7 @@ else
       #Merge commit found
       #checkout target brach; merge dummy branch in it; go back to dummy branch
       git checkout -q --force $TARGET_BRANCH
-      git merge --no-ff $DUMMY_BRANCH
+      git merge -m "$(git show --pretty=format:%s $c)" --no-ff $DUMMY_BRANCH
       git checkout -q $DUMMY_BRANCH
     fi
   done
@@ -73,9 +68,7 @@ else
 fi
 #We should be on target branch by now
 #Check if local target branch has any changes w.r.t remote target branch
-if [ "X$(git rev-parse origin/$TARGET_BRANCH)" != "X$(git rev-parse $TARGET_BRANCH)" ]; then
-  #Local target branch is different than remote target branch
-  #Amend the commit message it needed
+if [ "X`git diff --name-only HEAD origin/$TARGET_BRANCH | tail -1`" != "X" ]; then
   [ "X$MERGE_COMMIT_MSG" = "X" ] || git commit --amend -m "$MERGE_COMMIT_MSG"
   #Finaly, push the local target branch to remote target branch
   if [ ! "X$PUSH_UPDATES" = "X" ] ; then

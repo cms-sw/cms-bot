@@ -9,6 +9,7 @@ SRC_BRANCH=$2
 COMMITS=$3
 OVERRIDE_STRATEGY=$4
 PUSH_UPDATES=$5
+DES_BRANCH=$6
 
 GIT_USER="cms-sw"
 SCRIPT_PATH="`dirname \"$0\"`"
@@ -58,7 +59,8 @@ fi
 LOG_COMMANDS="$WORKSPACE/$repo.log"
 for src in $SRC_BRANCH; do
   echo "Forward porting branch $src"
-  for des in `getBranches $repo $src`; do
+  if [ "X$DES_BRANCH" = "X" ] ; then DES_BRANCH=$(getBranches $repo $src) ; fi
+  for des in $DES_BRANCH; do
     rm -f $LOG_COMMANDS
     echo ">git clone https://github.com/cms-sw/cms-bot.git cms-bot" > $LOG_COMMANDS
     echo ">./cms-bot/`basename $0` $REPO_NAME $src $COMMITS" >> $LOG_COMMANDS

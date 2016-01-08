@@ -18,8 +18,8 @@ parseargs() {
       -c | --commits ) COMMITS_LIST=$1 && has_arg $1 $arg && shift  ;;
       -X | --strategy ) STRATEGY=$1 && has_arg $1 $arg && shift  ;;
       -p | --push ) PUSH_UPDATES=yes ;;
-      -h | --help )
-        echo -e "Usage: $0\n\t-r|--repository <repository>\n\t[-s|--src-branch <branch>]\n\t[-d|--des-branch <branch>]"
+      -* )
+        echo -e "Usage: $0\n\t-l|--log-file <file>\n\t-s|--src-branch <branch>\n\t-d|--des-branch <branch>"
         echo -e"\n\t[-c|--commits <comma-seperated-hashes>]\n\t[-X|--strategy <merge-strategy>]\n\t[-p|--push]\n\t[-h|--help]"
         exit 0 ;;
       esac ;;

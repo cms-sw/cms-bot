@@ -17,7 +17,7 @@ parseargs() {
       -d | --des-branch ) DES_BRANCH=$1 && has_arg $1 $arg && shift  ;;
       -c | --commits ) COMMITS="-c $1" && has_arg $1 $arg && shift  ;;
       -X | --strategy ) OVERRIDE_STRATEGY=$1 && has_arg $1 $arg && shift  ;;
-      -p | --push ) PUSH_UPDATES="-p" ;;
+      -p | --push ) PUSH_UPDATES="--push" ;;
       -* )
         echo -e "Usage: $0\n\t-r|--repository <repository>\n\t[-s|--src-branch <branch>]\n\t[-d|--des-branch <branch>]"
         echo -e"\n\t[-c|--commits <comma-seperated-hashes>]\n\t[-X|--strategy <merge-strategy>]\n\t[-p|--push]\n\t[-h|--help]"

@@ -1,21 +1,44 @@
 #!/bin/sh -ex
 
-REPO_NAME=$1
-if [ "X$REPO_NAME" = "X" ] ; then
-  echo "Usage: $0 <cmssw|cmsdist> [<src-branch>] [<comma-seperated-commit-hashes>] [<OVERRIDE_STRATEGY>] [push]"
-  exit 1
-fi
-SRC_BRANCH=$2
-COMMITS=$3
-OVERRIDE_STRATEGY=$4
-PUSH_UPDATES=$5
-DES_BRANCH=$6
+has_arg() {
+  [ "X$1" = "X" ] && echo "Error: Missing command-line arg value for $2" && exit 1
+  return 0
+}
 
-GIT_USER="cms-sw"
-SCRIPT_PATH="`dirname \"$0\"`"
-SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
-WORKSPACE="${WORKSPACE-$PWD}"
-HAS_ERRORS=0
+parseargs() {
+  set +x
+  while [ $# -gt 0 ]; do
+    arg=$1; shift
+    case $arg in
+    -* )
+      case $arg in
+      -r | --repository ) REPO_NAME=$1 && has_arg $1 $arg && shift ;;
+      -s | --src-branch  ) SRC_BRANCH=$1 && has_arg $1 $arg && shift  ;;
+      -d | --des-branch ) DES_BRANCH=$1 && has_arg $1 $arg && shift  ;;
+      -c | --commits ) COMMITS="-c $1" && has_arg $1 $arg && shift  ;;
+      -X | --strategy ) OVERRIDE_STRATEGY=$1 && has_arg $1 $arg && shift  ;;
+      -p | --push ) PUSH_UPDATES="-p" ;;
+      -h | --help )
+        echo -e "Usage: $0\n\t-r|--repository <repository>\n\t[-s|--src-branch <branch>]\n\t[-d|--des-branch <branch>]"
+        echo -e"\n\t[-c|--commits <comma-seperated-hashes>]\n\t[-X|--strategy <merge-strategy>]\n\t[-p|--push]\n\t[-h|--help]"
+        exit 0 ;;
+      esac ;;
+    * ) echo "Error: Invalid argument $arg."; exit 1;;
+    esac
+  done
+  for s in REPO_NAME#repository ; do
+    v=$(echo $s | sed 's|#.*||')
+    o=$(echo $s | sed 's|.*#||')
+    eval "vc=$(echo \$$v)"
+    err=0
+    if [ "X$vc" = "X" ] ; then 
+      echo "Error: Missing required command-line option --$o <value>"
+      err=1
+    fi
+    [ $err -eq 0 ] || exit 1
+  done
+  set -x
+}
 
 #Some helper functions
 #Return auto forward port branches.
@@ -29,6 +52,14 @@ function getBranches()
     (export PYTHONPATH=$SCRIPT_PATH; echo -e "from forward_ports_map import GIT_REPO_FWPORTS as p\nif '$1' in p and '$2' in p['$1']:\n  print ' '.join(p['$1']['$2'])" | python)
   fi
 }
+
+GIT_USER="cms-sw"
+SCRIPT_PATH="`dirname \"$0\"`"
+SCRIPT_PATH="`(cd \"$SCRIPT_PATH\" && pwd)`"
+WORKSPACE="${WORKSPACE-$PWD}"
+HAS_ERRORS=0
+
+parseargs $@
 
 #make sure we have a full repo name i.e. git-user/git-repo
 case $REPO_NAME in 
@@ -62,16 +93,17 @@ for src in $SRC_BRANCH; do
   if [ "X$DES_BRANCH" = "X" ] ; then DES_BRANCH=$(getBranches $repo $src) ; fi
   for des in $DES_BRANCH; do
     rm -f $LOG_COMMANDS
-    echo ">git clone https://github.com/cms-sw/cms-bot.git cms-bot" > $LOG_COMMANDS
-    echo ">./cms-bot/`basename $0` $REPO_NAME $src $COMMITS" >> $LOG_COMMANDS
     if [ "X$OVERRIDE_STRATEGY" != "X" ] ; then
       merge_strategy=$OVERRIDE_STRATEGY
     else
       merge_strategy=$(echo $des | grep : | sed 's|^[^:]*:||')
     fi
+    [ "X$merge_strategy" = "X" ] || merge_strategy="-X $merge_strategy"
     des=$(echo $des | sed 's|:.*||')
+    echo ">git clone https://github.com/cms-sw/cms-bot.git cms-bot" > $LOG_COMMANDS
+    echo ">./cms-bot/$(basename $0) -r $REPO_NAME -s $src -d $des $COMMITS $merge_strategy" >> $LOG_COMMANDS
     err=0
-    $SCRIPT_PATH/merge-git-branch "$LOG_COMMANDS" "$COMMITS" "$src" "$des" "$merge_strategy" "$PUSH_UPDATES" || err=1
+    $SCRIPT_PATH/merge-git-branch -l $LOG_COMMANDS -s $src -d $des $COMMITS $merge_strategy $PUSH_UPDATES || err=1
     if [ "X$err" = "X1" ] ; then 
       HAS_ERRORS=1
       if [ ! "X$PUSH_UPDATES" = "X" ] ; then

@@ -20,7 +20,7 @@ parseargs() {
       -p | --push ) PUSH_UPDATES="--push" ;;
       -* )
         echo -e "Usage: $0\n\t-r|--repository <repository>\n\t[-s|--src-branch <branch>]\n\t[-d|--des-branch <branch>]"
-        echo -e"\n\t[-c|--commits <comma-seperated-hashes>]\n\t[-X|--strategy <merge-strategy>]\n\t[-p|--push]\n\t[-h|--help]"
+        echo -e "\t[-c|--commits <comma-seperated-hashes>]\n\t[-X|--strategy <merge-strategy>]\n\t[-p|--push]\n\t[-h|--help]"
         exit 0 ;;
       esac ;;
     * ) echo "Error: Invalid argument $arg."; exit 1;;

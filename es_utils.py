@@ -4,7 +4,7 @@ from datetime import datetime
 #Function to store data in elasticsearch
 def send_payload(index,document,id,payload):
   try:
-    passw=open('/data/secrets/github_hook_secret','r').read().strip()
+    passw=open('/data/secrets/github_hook_secret_cmsbot','r').read().strip()
   except:
     print "Couldn't read the secrets file"
   

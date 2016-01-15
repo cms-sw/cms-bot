@@ -663,6 +663,7 @@ CMSSW_CATEGORIES={
    "PhysicsTools/RecoUtils",
    "PhysicsTools/RooStatsCms",
    "HeavyFlavorAnalysis/Configuration",
+   "HeavyFlavorAnalysis/Onia2MuMu",
    "HeavyFlavorAnalysis/Skimming",
    "HeavyIonsAnalysis/Configuration",
    "HiggsAnalysis/Configuration",

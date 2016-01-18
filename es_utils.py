@@ -7,7 +7,6 @@ def send_payload(index,document,id,payload):
     passw=open('/data/secrets/github_hook_secret','r').read().strip()
   except Exception as e:
     print "Couldn't read the secrets file" , str(e)
-  
   url="https://%s/%s/%s/%s" % ('128.142.136.155',index,document,id)
   print url
   #send the data to elasticsearch

@@ -5,8 +5,8 @@ from datetime import datetime
 def send_payload(index,document,id,payload):
   try:
     passw=open('/data/secrets/github_hook_secret_cmsbot','r').read().strip()
-  except:
-    print "Couldn't read the secrets file"
+  except Exception as e:
+    print "Couldn't read the secrets file" , str(e)
   
   url="https://%s/%s/%s/%s" % ('128.142.136.155',index,document,id)
   print url
@@ -18,7 +18,6 @@ def send_payload(index,document,id,payload):
   try:
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)
-  except:
-    print "Couldn't send data to elastic search"
+  except Exception as e:
+    print "Couldn't send data to elastic search" , str(e)
 
-  print "Data sent to elasticsearch", content.info()

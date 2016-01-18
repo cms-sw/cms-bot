@@ -54,8 +54,14 @@ def es_parse_log(logFile):
         exception += l + "\n"
       if inError:
         error += l + "\n"
+  Send_Flag = False
   if exception:
     payload["exception"] = exception
+    Send_Flag = True
   if errors:
     payload["errors"] = errors
-  send_payload(index,document,id,json.dumps(payload))
+    Send_Flag = True
+  if Send_Flag:
+    send_payload(index,document,id,json.dumps(payload))
+  else:
+   print "Nothing to Send"

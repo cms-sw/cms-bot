@@ -104,9 +104,7 @@ class LogSplitter(object):
                     actLogDir = os.path.join(logDirs, pkg)
                     os.makedirs(actLogDir)
                     actLogFile = open(os.path.join(actLogDir, 'unitTest.log'), 'w')
-                    actLogFile.write("<xmp>\n")
                     actLogFile.write("".join(actLogLines))
-                    actLogFile.write("</xmp>\n")
                     actLogFile.close()
                     actLogLines = []
                 startFound = False

@@ -3,6 +3,7 @@ from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEAS
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
+from cms_static import CMSSW_PULL_REQUEST_COMMANDS, CMSSW_ISSUE_COMMANDS
 import yaml
 import re, time
 from sys import exit, argv
@@ -489,18 +490,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
-                        "Following commands in first line of a comment are recognized\n\n"
-                        "* **+1|approve[d]|sign[ed]**: L1/L2's to approve it\n"
-                        "* **-1|reject[ed]**: L1/L2's to reject it\n"
-                        "* **assign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to request signatures from other categories\n"
-                        "* **unassign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to remove signatures from other categories\n"
-                        "* **hold**: L1/all L2's/release manager to mark it as on hold\n"
-                        "* **unhold**: L1/user who put this PR on hold\n"
-                        "* **merge**: L1/release managers to merge this request\n",
+                        "cms-bot commands are list here %(issue_url)s\n",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=issue.user.login,
                         name=issue.user.name and "(%s)" % issue.user.name or "",
-                        l2s=l2s)
+                        l2s=l2s,
+                        issue_url=CMSSW_ISSUE_COMMANDS)
     elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):
       issueMessage = "This issue is fully signed and ready to be closed."
     print "Issue Maeeage:",issueMessage
@@ -626,16 +621,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "%(watchers)s"
                         "%(releaseManagers)s"
                         "%(patch_branch_warning)s\n"
-                        "Following commands in first line of a comment are recognized\n\n"
-                        "* **+1|approve[d]|sign[ed]**: L1/L2's to approve it\n"
-                        "* **-1|reject[ed]**: L1/L2's to reject it\n"
-                        "* **assign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to request signatures from other categories\n"
-                        "* **unassign &lt;category&gt;[,&lt;category&gt;[,...]]**: L1/L2's to remove signatures from other categories\n"
-                        "* **hold**: L1/all L2's/release manager to mark it as on hold\n"
-                        "* **unhold**: L1/user who put this PR on hold\n"
-                        "* **merge**: L1/release managers to merge this request\n"
-                        "* **[@cmsbuild,] please test**: L1/L2 and selected users to start jenkins tests\n"
-                        "* **[@cmsbuild,] please test with "+CMSDIST_REPO_NAME+"#&lt;PR&gt;**: L1/L2 and selected users to start jenkins tests using externals from cmsdist",
+                        "cms-bot commands are list here %(issue_url)s\n",
                         msgPrefix=NEW_PR_PREFIX,
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
@@ -645,7 +631,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         new_package_message=new_package_message,
                         watchers=watchersMsg,
                         releaseManagers=releaseManagersMsg,
-                        patch_branch_warning=warning_msg)
+                        patch_branch_warning=warning_msg,
+                        issue_url=CMSSW_PULL_REQUEST_COMMANDS)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
                             " %(signers)s can you please check and sign again.",

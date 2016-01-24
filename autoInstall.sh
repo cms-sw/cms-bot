@@ -37,6 +37,7 @@ find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs --no-run-if
 # reason we move it away from the 0 into 52 and take the modulo 52 afterward.
 # Potentially we could separate the installation of the two volumes so that
 # we don't need a huge local disk, but we can scatter this on different machienes.
+REPOSITORIES="2016-4"
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)

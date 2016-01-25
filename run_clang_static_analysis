@@ -16,6 +16,7 @@ eval `scram run -sh`
 git cms-addpkg "*"
 
 cp -pv src/Utilities/StaticAnalyzers/scripts/*  $LOCALRT/tmp
+cp $WORKSPACE/cms-bot/run_class_dumper.sh $LOCALRT/tmp
 cd $LOCALRT/tmp
 chmod +x *.py *.sh
 ./run_class_dumper.sh $J

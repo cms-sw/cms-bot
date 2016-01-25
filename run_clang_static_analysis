@@ -1,0 +1,32 @@
+#!/bin/bash -x
+ARCHITECTURE=$1
+RELEASE_FORMAT=$2
+WORKSPACE="${WORKSPACE-$PWD}"
+
+cd $WORKSPACE
+rm -rf llvm-analysis reports
+mkdir -p llvm-analysis reports
+
+export LC_ALL=C
+export SCRAM_ARCH=$ARCHITECTURE
+export J=$(getconf _NPROCESSORS_ONLN)
+scram -a $SCRAM_ARCH project $RELEASE_FORMAT
+cd $RELEASE_FORMAT
+eval `scram run -sh`
+git cms-addpkg "*"
+
+cp -pv src/Utilities/StaticAnalyzers/scripts/*  $LOCALRT/tmp
+cd $LOCALRT/tmp
+chmod +x *.py *.sh
+./run_class_dumper.sh $J
+./run_class_checker.sh $J
+
+chmod +r $LOCALRT/llvm-analysis/*/*
+cp -R $LOCALRT/llvm-analysis/*/* $WORKSPACE/llvm-analysis
+
+./create_statics_esd_reports.sh
+ls -ltrh
+tar cvfz dumper-checker.tgz *.txt* 
+cp dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt get-param-dumper.txt $WORKSPACE/reports
+
+

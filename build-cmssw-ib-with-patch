@@ -74,7 +74,6 @@ PKGTOOLS_REPO=cms-sw
 CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
 eval `curl -s -k -f $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
-# eval `curl https://raw.github.com/cms-sw/cms-bot/HEAD/config.map | grep $ARCHITECTURE`
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
 # are both branches. See below to handle the case in which they are actually tags.
 
@@ -222,6 +221,7 @@ if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
 fi
 popd
 
+if [ "X$DO_NOT_INSTALL" != "X" ] ; then exit 0 ; fi
 echo CMSDIST_HASH=$CMSDIST_HASH > $WORKSPACE/buildprops
 echo PKGTOOLS_HASH=$PKGTOOLS_HASH >> $WORKSPACE/buildprops
 echo PACKAGE_NAME=$PACKAGE_NAME >> $WORKSPACE/buildprops
@@ -232,10 +232,7 @@ echo ENABLE_DEBUG=${ENABLE_DEBUG} >> $WORKSPACE/buildprops
 echo DOCKER_IMG=${DOCKER_IMG} >> $WORKSPACE/buildprops
 echo ARCHITECTURE=${ARCHITECTURE} >> $WORKSPACE/buildprops
 
-# This is used to guide the creation of additional files which drive the
-# spawning of extra tests.
-CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
-for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
+for x in `echo $ADDITIONAL_TESTS | tr , '\n'`; do
   echo "Creating property file $WORKSPACE/$x-properties."
   cp $WORKSPACE/buildprops $WORKSPACE/$x-properties
 done

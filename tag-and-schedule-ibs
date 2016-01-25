@@ -1,5 +1,4 @@
 #!/bin/sh -ex
-aklog
 cd $WORKSPACE
 
 CONFIG_MAP_PATH="$WORKSPACE/cms-bot/config.map"
@@ -16,14 +15,16 @@ rm -rf cmssw
 git clone --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git cmssw
 cd cmssw
 
+DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
+HOUR=`echo $DATE | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
 for QUEUE in $RELEASE_QUEUES; do
   unset RELEASE_BRANCH
-  eval `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;"`
-  RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE} 
+  unset BUILD_HOUR
+  eval `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;"`  
+  if [ "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
+  RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
   git checkout $RELEASE_BRANCH
-  RELEASE_NAME=`date +${QUEUE}_${DATE}`
-  DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
-  HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
+  RELEASE_NAME="${QUEUE}_${DATE}"
   # find old tag, if any
   OLD_HASH=`git show-ref $RELEASE_NAME | cut -f1 -d\ `  
   NEW_HASH=`git rev-list -n 1 --before="$DAY $HOUR:00" --first-parent $RELEASE_BRANCH`

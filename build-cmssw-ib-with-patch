@@ -198,7 +198,7 @@ if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
   $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
   echo DATE=`date`
 fi
-$CMSBUILD_CMD -k -j `echo "$BUILD_NPROC * 2" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
+$CMSBUILD_CMD -k -j `echo "$BUILD_NPROC + 1" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 echo DATE=`date`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
 echo DATE=`date`

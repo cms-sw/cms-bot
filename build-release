@@ -90,7 +90,7 @@ pushd $BUILD_DIR
     exit 0
   fi
 
-  $CMSBUILD_CMD -j `echo "$BUILD_NPROC * 2" | bc` build local-cern-siteconf cmssw$PATCH
+  $CMSBUILD_CMD -j `echo "$BUILD_NPROC + 1" | bc` build local-cern-siteconf cmssw$PATCH
   echo DATE=`date`
 popd
 echo DATE=`date`

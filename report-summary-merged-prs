@@ -194,6 +194,13 @@ def get_info_pr( line , graph ):
   pull_request['number'] = get_pr_number(line_parts)
   pull_request['author_login'] = get_pr_author_login(line_parts)
   pull_request['title'] = get_pr_title(line_parts)
+  if not pull_request['title']:
+    result,err,ret_code = get_output_command("curl -s -k https://api.github.com/repos/cms-sw/cmssw/pulls/%s" % pull_request['number'])
+    if not err:
+      try:
+        pull_request['title'] = json.loads(result)['title']
+      except:
+        pass
   pull_request['url'] = 'https://github.com/cms-sw/cmssw/pull/%d' % int(pull_request['number'])
   pull_request['from_merge_commit'] = graph[pull_request['hash']].is_from_merge
   pull_request['is_merge_commit'] = False

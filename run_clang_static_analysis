@@ -28,6 +28,6 @@ cp -R $LOCALRT/llvm-analysis/*/* $WORKSPACE/llvm-analysis
 ./create_statics_esd_reports.sh
 ls -ltrh
 tar cvfz dumper-checker.tgz *.txt* 
-cp dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt get-param-dumper.txt $WORKSPACE/reports
+cp dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt getparam-dumper.txt $WORKSPACE/reports
 
 

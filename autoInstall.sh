@@ -25,7 +25,11 @@ mkdir -p $DELDIR
 
 # The repositories we need to install are those for which we find the
 # timestamp files:
-REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
+if [ -d $BASEDESTDIR/reset-repo-info ] ; then
+  REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
+else
+  REPOSITORIES=`find $BASEDESTDIR  -maxdepth 1 -mindepth 1 -type d | tail -2 | xargs -n1 basename | sort -r -n`
+fi
 echo $REPOSITORIES | tr ' ' '\n' | xargs --no-run-if-empty -i mkdir -p "$BASEDIR/{}"
 
 # Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at
@@ -43,6 +47,7 @@ for REPOSITORY in $REPOSITORIES; do
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH
   DESTDIR=$BASEDESTDIR/vol$WEEK
+  if [ ! -e $DESTDIR ] ; then DESTDIR=$BASEDESTDIR/$REPOSITORY ; fi
   mkdir -p $WORKDIR
   # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
   # This is because bootstraptmp is otherwise shared between different arches. Sigh.

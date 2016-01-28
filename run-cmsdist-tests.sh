@@ -29,8 +29,6 @@ else
   CMSSW_CYCLE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | cut -d ";" -f 4 | cut -d "=" -f 2)
 fi
 
-CMSSW_IB=$(scram l $CMSSW_CYCLE | grep -v /ReleaseCandidates | tail -n 1 | awk '{print $2}')
-
 if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
   echo "Error: failed to retrieve user or branch to test."
   exit 0
@@ -43,6 +41,8 @@ if [ "X$ARCHITECTURE" == X ]; then
     ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
   fi
 fi
+
+CMSSW_IB=$(scram -a $ARCHITECTURE l $CMSSW_CYCLE | grep -v /ReleaseCandidates | tail -n 1 | awk '{print $2}')
 
 if [ "X$PKGTOOLS_BRANCH" == X ]; then
   PKGTOOLS_BRANCH="V00-22-XX"
@@ -108,7 +108,7 @@ fi
 
 # Create an appropriate CMSSW area
 SCRAM_ARCH=$ARCHITECTURE
-scram project $CMSSW_IB
+scram -a $SCRAM_ARCH project $CMSSW_IB
 pushd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built

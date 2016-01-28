@@ -2,60 +2,18 @@
 from optparse import OptionParser
 from os.path import exists,expanduser
 from commands import getstatusoutput
-from github import Github, UnknownObjectException
+from github import Github
 import json
 import urllib2
 from sys import exit
 import re
+from cms_static import CMSDIST_REPO_NAME,CMSSW_REPO_NAME
+from github_utils import prs2relnotes, get_merge_prs
 
 def format(s, **kwds): return s % kwds
 #---------------------------------------------------------
 # pyGithub
 #--------------------------------------------------------
-
-#
-# get an official repository from the cms-sw organization
-#
-def get_official_repo( github , repository_name ):
-  user = github.get_user()
-  orgs = user.get_orgs()
-  for org in orgs:
-    if (org.login == 'cms-sw'):
-      repo = org.get_repo( repository_name )
-      return repo
-
-#
-# it looks for the description of the pull requests listed in the release notes
-# returns the release notes with the description of each pull request
-#
-def fill_notes_description(notes, repo, gitdir, ref_repo=""):
-  new_notes = {}
-  for log_line in notes.splitlines():
-    items = log_line.split(" ")
-    author = items[1]
-    pr_number= int(items[0])
-    parent_hash = items.pop()
-    print "Checking ",pr_number,author,parent_hash
-    try:
-      pr = repo.get_pull(pr_number)
-      ok = True
-      if pr.head.user.login!=author:
-        print "  Author mismatch:",pr.head.user.login
-        ok=False
-      if pr.head.sha!=parent_hash:
-        print "  sha mismatch:",pr.head.sha
-        ok=False
-      if not ok:
-        print "  Invalid/Indirect PR"
-        continue
-      new_notes[pr_number]=format("- %(ref_repo)s#%(pull_request)s from @%(author)s: %(title)s",
-                                  ref_repo=ref_repo,
-                                  pull_request=pr_number,
-                                  author=author,
-                                  title=pr.title.encode("ascii", "ignore"))
-    except UnknownObjectException as e:
-      continue
-  return new_notes
 
 #
 #defines the categories for each pr in the release notes
@@ -76,33 +34,12 @@ def add_categories_notes(notes, token):
     notes[pr_number] = note
   return notes
 
-def get_merge_prs(prev_tag, this_tag, git_dir):
-  print "Getting merged Pull Requests b/w",prev_tag, this_tag
-  error, out = getstatusoutput("GIT_DIR="+git_dir+" git fetch --all --tags")
-  if error: parser.error("Error while updating the repository:\n" + out)
-  error, notes = getstatusoutput(format("GIT_DIR=%(git_dir)s"
-                                      " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
-                                      " grep ' Merge pull request #[1-9][0-9]* from ' | "
-                                      " sed 's|^.* Merge pull request #||' | "
-                                      " sed 's|/[^:]*:||;s|from ||'",
-                                      git_dir=git_dir,
-                                      previous=prev_tag,
-                                      release=this_tag))
-  if error:
-    print "Error while getting release notes."
-    print notes
-    exit(1)
-  return notes
-
-#
-# gets release notes for cmssw
-#
 def get_cmssw_notes( previous_release , this_release ):
   if not exists("cmssw.git"):
     error, out = getstatusoutput("git clone --bare --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git")
     if error: parser.error("Error while checking out the repository:\n" + out)
-  notes = get_merge_prs (previous_release, this_release, "cmssw.git")
-  return fill_notes_description (notes, CMSSW_REPO, "cmssw.git")
+  getstatusoutput("GIT_DIR=cmssw.git git fetch --all --tags")
+  return prs2relnotes(get_merge_prs(previous_release, this_release, "cmssw.git", CMSSW_REPO))
 
 #
 # gets the changes in cmsdist, production architecture is the production architecture of the release
@@ -111,8 +48,8 @@ def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag ):
   if not exists("cmsdist.git"):
     error, out = getstatusoutput("git clone --bare git@github.com:cms-sw/cmsdist.git")
     if error: parser.error("Error while checking out the cmsdist repository:\n" + out)
-  notes = get_merge_prs (prev_cmsdist_tag, curr_cmsdist_tag, "cmsdist.git")
-  return fill_notes_description (notes, CMSDIST_REPO, "cmsdist.git", "cms-sw/cmsdist")
+  getstatusoutput("GIT_DIR=cmsdist.git git fetch --all --tags")
+  return prs2relnotes(get_merge_prs(prev_cmsdist_tag, curr_cmsdist_tag, "cmsdist.git", CMSDIST_REPO), "cms-sw/cmsdist")
 
 #
 # returns the comparison url to include in the notes
@@ -146,8 +83,8 @@ if __name__ == "__main__":
 
   token = open(expanduser("~/.github-token")).read().strip() 
   github = Github( login_or_token = token )
-  CMSSW_REPO = get_official_repo( github , 'cmssw' )
-  CMSDIST_REPO = get_official_repo( github , 'cmsdist' )
+  CMSSW_REPO = github.get_repo(CMSSW_REPO_NAME)
+  CMSDIST_REPO =  github.get_repo(CMSDIST_REPO_NAME)
  
   cmssw_notes = get_cmssw_notes( prev_release , curr_release)
   cmsdist_notes = get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag )

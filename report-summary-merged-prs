@@ -6,9 +6,12 @@ import re
 import json
 import pickle
 from pickle import Unpickler
-from gitmergesgraph import *
-from os.path import basename, dirname, exists, join
+from os.path import basename, dirname, exists, join, expanduser
 from glob import glob
+from github import Github
+from github_utils import prs2relnotes, get_merge_prs, save_prs_cache, read_prs_cache
+from cms_static import CMSDIST_REPO_NAME,CMSSW_REPO_NAME
+
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
@@ -23,7 +26,9 @@ parser = OptionParser(usage="usage: %prog CMSSW_REPO GITHUB_IO_REPO START_DATE A
 			    "\n 2014-10-08-1400"
                             "\n ARTIFACTS_MACHINE: the artifacts machine to use to look for static checks and hlt tests")
 
-parser.add_option( "-v" , "--verbose" , dest="verbose" , action="store_true", help="Do not post on Github", default=False )
+parser.add_option( "-v" , "--verbose" , dest="verbose"  , action="store_true", help="Do not post on Github", default=False )
+parser.add_option( "-c" , "--cmssw-prs"   , dest="cmssw_pr_cache" , help="File with PRs cache information for cmssw", type=str, default='cmssw-prs-cache.json')
+parser.add_option( "-d" , "--cmsdist-prs"   , dest="cmsdist_pr_cache" , help="File with PRs cache information for cmssw", type=str, default='cmsdist-prs-cache.json')
 
 (options, args) = parser.parse_args()
 
@@ -71,6 +76,7 @@ GITHUB_IO_REPO = args[ 1 ]
 CMSDIST_REPO = args[ 2 ]
 START_DATE = args[ 3 ]
 ARTIFACTS_MACHINE = args[ 4 ]
+PRS_CACHE_FILE = options.cmssw_pr_cache
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions
@@ -161,63 +167,6 @@ def get_config_map_params():
   print
 
 
-# Tells if the pr comes from a merge commit it reads the first part of the line that
-# was obtained from git log --graph
-def is_pr_from_merge_commit(graph_part):
-  return graph_part.startswith('|')
-
-def get_pr_number(line_parts):
-  number_and_name = line_parts[1].replace('"','')
-  number = re.sub(' from .*', '', number_and_name)
-  number = re.sub('Merge pull request #', '', number)
-  return number
-
-def get_pr_author_login(line_parts):
-  number_and_name = line_parts[1].replace('"','')
-  name = re.sub('^Merge .* from ', '', number_and_name)
-  name = name.split('/')[0]
-  return name
-
-def get_pr_commit_hash(line_parts):
-  hash = line_parts[0].replace('"','')
-  return hash
-
-def get_pr_title(line_parts):
-  title = line_parts[2].replace('"','').strip()
-  return title
-
-# gets the information of the pull request
-def get_info_pr( line , graph ):
-  pull_request = {}
-  line_parts = line.split(',')
-  pull_request['hash'] = get_pr_commit_hash(line_parts)
-  pull_request['number'] = get_pr_number(line_parts)
-  pull_request['author_login'] = get_pr_author_login(line_parts)
-  pr_title = get_pr_title(line_parts)
-  if pr_title == '':
-    try:
-      result,err,ret_code = get_output_command("curl -s -k https://api.github.com/repos/cms-sw/cmssw/pulls/%s" % pull_request['number'])
-      if not err: pr_title = json.loads(result)['title']
-    except:
-      pass
-  pull_request['title'] = pr_title
-  pull_request['url'] = 'https://github.com/cms-sw/cmssw/pull/%d' % int(pull_request['number'])
-  pull_request['from_merge_commit'] = graph[pull_request['hash']].is_from_merge
-  pull_request['is_merge_commit'] = False
-  return pull_request
-
-def get_info_merge_commit( line , graph ):
-  merge_commit = {}
-  line_parts = line.split(',')
-  merge_commit['hash'] = get_pr_commit_hash(line_parts)
-  merge_commit['number'] = merge_commit['hash'][0:7]
-  merge_commit['is_merge_commit'] = True
-  merge_commit['from_merge_commit'] = False
-  brought_commits = get_prs_brought_by_commit( graph , merge_commit['hash'] )
-  merge_commit['brought_prs'] = [ pr.pr_number for pr in brought_commits ]
-
-  return merge_commit
-
 #reads a line of the output of git log and returns the tags that it contains
 #if there are no tags it returns an empty list
 #it applies filters according to the release queue to only get the
@@ -242,15 +191,6 @@ def get_tags_from_line( line , release_queue):
     return [ t.replace('"','').replace('tag:','').strip() for t in tags ]
   else:
     return []
-
-# Returns all pull request found in a list of comparisons, it returns then in a
-# dictionary in which the key is the pr number
-def get_all_prs(comparisons):
-  prs = {}
-  for comp in comparisons:
-    for pr in comp['merged_prs']:
-      prs[pr['number']] = pr
-  return prs
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions -- Analize Git ouputs
@@ -406,7 +346,6 @@ def analyze_tests_results( output, results, arch, type ):
 
     results[rel_name].append(result_arch)
 
-
 #
 # Searchs in github.io for the results for relvals exceptions
 #
@@ -549,32 +488,29 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
 
   return tags
 
-def execute_command_compare_tags(start_tag,end_tag , graph ):
-  command_to_execute = MAGIC_COMMAND_PRS.replace('START_TAG',start_tag).replace('END_TAG',end_tag)
-  output,err,ret_code = get_output_command(command_to_execute)
+def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache):
   comp = {}
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
   comp[ 'release_name' ] = end_tag
+  notes = get_merge_prs(start_tag, end_tag, git_dir, repo, cache)
   prs = []
-  for line in output.splitlines():
-    # show in the list merge commits from forward port and pull requests.
-    if re.match(AUTO_FORWARD_PORT_REGEX, line ):
-      pr = get_info_merge_commit( line , graph )
-      if pr['brought_prs'] == []:
-        continue
-    elif 'Merge pull ' in line:
-      pr = get_info_pr( line , graph )
-    else:
-      continue
-
+  for pr_num in notes:
+    pr={'is_merge_commit':False , 'from_merge_commit' : False}
+    if notes[pr_num]['branch'] != branch: pr['from_merge_commit']=True
+    pr['number'] = pr_num
+    pr['hash'] = notes[pr_num]['hash']
+    pr['author_login'] = notes[pr_num]['author']
+    pr['title'] = notes[pr_num]['title']
+    pr['url'] = 'https://github.com/cms-sw/cmssw/pull/%s' % pr_num
     prs.append(pr)
   comp['merged_prs'] = prs
+  save_prs_cache(cache, PRS_CACHE_FILE)
   return comp
 
-def compare_tags( tags , graph ):
+def compare_tags(branch, tags , git_dir, repo, cache):
   comparisons = []
   for i in range(len(tags)-1):
-    comp = execute_command_compare_tags(tags[i],tags[i+1] , graph )
+    comp = execute_command_compare_tags(branch, tags[i], tags[i+1] , git_dir, repo, cache  )
     comparisons.append(comp)
   return comparisons
 
@@ -997,7 +933,6 @@ if __name__ == "__main__":
   JENKINS_ARTIFACTS_SUBDIR = "SDT/jenkins-artifacts"
   JENKINS_ARTIFACTS_DIR = CMSSDT_DIR+"/"+JENKINS_ARTIFACTS_SUBDIR
   # I used this type of concatenation because the string has %s inside
-  MAGIC_COMMAND_PRS  = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%H,%s", "%b", "tags->,%d"\' START_TAG..END_TAG'
   MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
   MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 6 -maxdepth 6 -path "*/pyRelValMatrixLogs/run/runall-report-step123-.log"'
   MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS ="find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
@@ -1085,11 +1020,17 @@ if __name__ == "__main__":
 
   print_verbose( 'Installed Releases:' )
   print_verbose( installedReleases )
+  prs_file = GITHUB_IO_REPO + "/_data/prs_cmssw_cache.json"
+  PRS_CACHE = read_prs_cache(PRS_CACHE_FILE)
+  token = open(expanduser("~/.github-token")).read().strip()
+  github = Github( login_or_token = token )
+  CMSSW_REPO = github.get_repo(CMSSW_REPO_NAME)
 
   for comp in REQUESTED_COMPARISONS:
     start_tag = comp.split("..")[0]
     end_tag = comp.split("..")[1]
     release_queue = start_tag
+
     # if is a SLHC or any special release, the split will happen with the fifth underscore _
     if re.search(SP_REL_REGEX,release_queue):
       print_verbose( 'This is a special release' )
@@ -1100,14 +1041,8 @@ if __name__ == "__main__":
     print '####################################################################'
     print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
 
-    # load the graph to check the history and identify merge prs and commits
     release_branch = RELEASES_BRANCHES[ release_queue ]
-    print 'Identifying merge commits...'
-    graph = load_graph( release_branch , -1 )
-    print 'Done'
-
     release_queue_results = {}
-
     release_queue_results[ 'release_name' ] = release_queue
     release_queue_results[ 'base_branch' ] = release_branch
 
@@ -1120,7 +1055,7 @@ if __name__ == "__main__":
     print tags 
 
     print 'Getting merged pull requests between tags...'
-    release_queue_results['comparisons'] = compare_tags( tags , graph )
+    release_queue_results['comparisons'] = compare_tags(release_branch, tags , 'cmssw.git', CMSSW_REPO , PRS_CACHE  )
     print 'Done'
 
     #it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
@@ -1137,7 +1072,8 @@ if __name__ == "__main__":
   
     results.append(release_queue_results)
   
-  
+  save_prs_cache(PRS_CACHE, PRS_CACHE_FILE)
+
   cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
   
   build_results = {}

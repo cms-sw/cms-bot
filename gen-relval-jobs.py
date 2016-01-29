@@ -9,6 +9,10 @@ from cmsutils import doCmd
 
 workdir = sys.argv[1]
 RelValtimes = sys.argv[2]
+try:
+  max_wf=int(sys.argv[3])
+except:
+  max_wf=100
 relval_args = GetMatrixOptions(environ["CMSSW_VERSION"], environ["SCRAM_ARCH"])
 matrix =  PyRelValsThread(1,environ["CMSSW_BASE"])
 workflows = matrix.getWorkFlows(relval_args)
@@ -28,7 +32,7 @@ if exists(RelValtimes):
     if not wf in owfs: uwf.append([wf,max_tm])
   workflows = uwf + owf
 if workflows:
-  workflows = splitWorkflows(workflows, 100)
+  workflows = splitWorkflows(workflows, max_wf)
   print workflows
   total = len(workflows)
   for i in range(1, total+1):

@@ -191,7 +191,7 @@ def save_prs_cache(cache, cache_file):
   if cache['dirty']:
     del cache['dirty']
     with open(cache_file, "w") as out_json:
-      json.dump(cache,out_json,indent=2)
+      json.dump(cache,out_json,indent=2, sort_keys=True)
       out_json.close()
     cache['dirty']=False
 

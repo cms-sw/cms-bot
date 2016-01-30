@@ -31,7 +31,6 @@ echo $REPOSITORIES | tr ' ' '\n' | xargs --no-run-if-empty -i mkdir -p "$BASEDIR
 # - Do the rsync to destination.
 # - Create the timestamp
 # - Remove packages which are not in the source anymore.
-REPOSITORIES="2016-5"
 for REPOSITORY in $REPOSITORIES; do
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH/$SCRAM_ARCH

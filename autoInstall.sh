@@ -27,7 +27,6 @@ mkdir -p $DELDIR
 # timestamp files:
 if [ -d $BASEDESTDIR/reset-repo-info ] ; then
   REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
-  REPOSITORIES="2016-5"
 else
   REPOSITORIES=`find $BASEDESTDIR  -maxdepth 1 -mindepth 1 -type d | tail -2 | xargs -n1 basename | sort -r -n`
 fi

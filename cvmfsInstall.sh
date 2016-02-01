@@ -111,7 +111,7 @@ for REPOSITORY in $REPOSITORIES; do
         APT_SEARCH="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; \
         apt-get update ; \
         apt-cache search cmssw-ib\\\+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \
-        rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt ; " ;
+        rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt  " ;
         dockerrun $APT_SEARCH ;
         REL_TO_INSTALL=`diff -u onserver.txt installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'` ;
       else
@@ -121,7 +121,7 @@ for REPOSITORY in $REPOSITORIES; do
         APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; \
         apt-get install -q -y $x || true; \
         apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
-        apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;" ;
+        apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true" ;
         dockerrun $APT_INSTALL ;
         relname=`echo $x | awk -F + '{print $NF}'` ;
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;

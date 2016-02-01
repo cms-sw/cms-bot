@@ -25,7 +25,7 @@ if __name__ == "__main__":
   if "_THREADED_" in  environ["CMSSW_VERSION"]:
     thrds=int(MachineMemoryGB/4)
   elif "fc22_" in environ["SCRAM_ARCH"]:
-    thrds=int(MachineMemoryGB/3)
+    thrds=int(MachineMemoryGB/4)
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
 
   matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)

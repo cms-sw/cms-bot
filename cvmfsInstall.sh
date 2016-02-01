@@ -94,6 +94,9 @@ for REPOSITORY in $REPOSITORIES; do
       touch $LOGFILE
       wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/cms/bootstrap.sh
       dockerrun "sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE"
+      echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
+      APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get install -q -y cms+local-cern-siteconf+sm111124 || true; "
+      dockerrun $APT_INSTALL
     fi
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.

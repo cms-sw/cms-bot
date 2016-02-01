@@ -95,7 +95,7 @@ for REPOSITORY in $REPOSITORIES; do
       wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/cms/bootstrap.sh
       dockerrun "sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE"
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
-      APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get install -q -y cms+local-cern-siteconf+sm111124 || true; "
+      APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get install -q -y cms+local-cern-siteconf+sm111124 || true"
       dockerrun $APT_INSTALL
     fi
     # Since we are installing on a local disk, no need to worry about
@@ -106,23 +106,32 @@ for REPOSITORY in $REPOSITORIES; do
     # to interfere with the installation of a different one. For that reason we
     # ignore the exit code.
     (
-      REL_TO_INSTALL=""
+      REL_TO_INSTALL="" ;
       if [ "X$RELEASE_NAME" = "X" ] ; then 
         APT_SEARCH="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; \
         apt-get update ; \
         apt-cache search cmssw-ib\\\+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \
-        rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt ; "
-        dockerrun $APT_SEARCH
-        REL_TO_INSTALL=`diff -u onserver.txt installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'`
+        rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt ; " ;
+        dockerrun $APT_SEARCH ;
+        REL_TO_INSTALL=`diff -u onserver.txt installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'` ;
       else
-        REL_TO_INSTALL="cms+cmssw-ib+$RELEASE_NAME"
-      fi
+        REL_TO_INSTALL="cms+cmssw-ib+$RELEASE_NAME" ;
+      fi ;
       for x in $REL_TO_INSTALL; do
         APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; \
         apt-get install -q -y $x || true; \
         apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
-        apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;"
-        dockerrun $APT_INSTALL
+        apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;" ;
+        dockerrun $APT_INSTALL ;
+        relname=`echo $x | awk -F + '{print $NF}'` ;
+        timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
+        if [ "X$timestamp" != "X" ] ; then
+          for y in cmssw cmssw-patch ; do
+            if [ -d $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ] ; then
+              touch -t $timestamp $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ;
+            fi
+          done ;
+        fi ;
         CURRENT_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
         if (( $CURRENT_SIZE - $INITIAL_SIZE > $PUBLISH_THRESHOLD )); then
           # If we already installed more than the threshold publish, put again the repository in transaction and reset INITIAL_SIZE

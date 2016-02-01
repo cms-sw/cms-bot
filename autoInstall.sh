@@ -26,9 +26,9 @@ mkdir -p $DELDIR
 # The repositories we need to install are those for which we find the
 # timestamp files:
 if [ -d $BASEDESTDIR/reset-repo-info ] ; then
-  REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f | tail -2 | xargs -n1 basename | sort -r -n`
+  REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f          | sed 's|.*/||' | grep '^20' | tail -2 | sort -r -n`
 else
-  REPOSITORIES=`find $BASEDESTDIR  -maxdepth 1 -mindepth 1 -type d | tail -2 | xargs -n1 basename | sort -r -n`
+  REPOSITORIES=`find $BASEDESTDIR  -maxdepth 1 -mindepth 1 -type d | sed 's|.*/||' | grep '^20' | tail -2 | sort -r -n`
 fi
 echo $REPOSITORIES | tr ' ' '\n' | xargs --no-run-if-empty -i mkdir -p "$BASEDIR/{}"
 

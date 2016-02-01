@@ -129,8 +129,8 @@ for REPOSITORY in $REPOSITORIES; do
           INITIAL_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
         fi
       done ;
-      rm installed.txt ;
-      rm onserver.txt ;
+      rm -f installed.txt ;
+      rm -f onserver.txt ;
       dockerrun "source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get clean"
     ) || true
 

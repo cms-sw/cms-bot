@@ -75,7 +75,7 @@ for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
   #If CMS_WEEK was set then only check releases for that week
-  if [ "X$CMS_WEEK" != "Xcms.week$WEEK" ] ; then
+  if [ "X$CMS_WEEK" != "X" -a "$CMS_WEEK" != "cms.week$WEEK" ] ; then
     echo "Skipping week for $REPOSITORY"
     continue
   fi

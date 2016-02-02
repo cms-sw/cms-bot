@@ -72,16 +72,16 @@ dockerrun()
   # we don't need a huge local disk, but we can scatter this on different machienes.
 for REPOSITORY in $REPOSITORIES; do
   # Install all architectures of the most recent week first.
+  echo $REPOSITORY
+  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
+  if [ "X$CMS_WEEK" != "Xcms.week$WEEK" ] ; then
+    echo "Skipping week for $REPOSITORY"
+    continue
+  fi
+  echo "Checking week $REPOSITORY ($WEEK) for RPMS"
+  WORKDIR=$BASEDIR/$REPOSITORY
+  mkdir -p $WORKDIR
   for SCRAM_ARCH in $ARCHITECTURES; do
-    echo $REPOSITORY
-    WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
-    if [ "X$CMS_WEEK" != "Xcms.week$WEEK" ] ; then
-      echo "Skipping week for $REPOSITORY"
-      continue
-    fi
-    echo "Checking week $REPOSITORY ($WEEK) for RPMS"
-    WORKDIR=$BASEDIR/$REPOSITORY
-    mkdir -p $WORKDIR
     # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
     # This is because bootstraptmp is otherwise shared between different arches. Sigh.
     LOGFILE=$WORKDIR/bootstrap-$REPOSITORY-$SCRAM_ARCH.log

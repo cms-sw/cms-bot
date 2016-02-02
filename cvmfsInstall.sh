@@ -17,12 +17,12 @@ REPOSITORIES=`find /srv/cvmfs/shared/releases/ -type f | xargs -n1 basename | se
 
 echo $REPOSITORIES
 ARCHITECTURES=$ARCHITECTURE
+#If Architecture is not pass via command line then check for all ARCHS from the config.map file
 if [ "X$ARCHITECTURE" = "X" ] ; then
   ARCHITECTURES=`curl -s https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map | grep -o "slc[5-7]_amd64_gcc[0-9][0-9][0-9]" | sort -ur` #Reverse order to install most important IBs first
 fi
 
 echo $ARCHITECTURES
-CMS_WEEK=$REPOSITORY
 # Prepare the cvmfs repository in read/write mode
 cvmfs_server transaction
 # Check if the transaction really happened
@@ -65,15 +65,16 @@ dockerrun()
   fi
 }
 
-  # We install packages for both weeks. We reset every two week, alternating.
-  # Notice that the biweekly period for week 1 is shifted by 1 week for this
-  # reason we move it away from the 0 into 52 and take the modulo 52 afterward.
-  # Potentially we could separate the installation of the two volumes so that
-  # we don't need a huge local disk, but we can scatter this on different machienes.
+
+# We install packages for both weeks. We reset every two week, alternating.
+# Notice that the biweekly period for week 1 is shifted by 1 week for this
+# reason we move it away from the 0 into 52 and take the modulo 52 afterward.
+# Potentially we could separate the installation of the two volumes so that
+# we don't need a huge local disk, but we can scatter this on different machienes.
 for REPOSITORY in $REPOSITORIES; do
-  # Install all architectures of the most recent week first.
   echo $REPOSITORY
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
+  #If CMS_WEEK was set then only check releases for that week
   if [ "X$CMS_WEEK" != "Xcms.week$WEEK" ] ; then
     echo "Skipping week for $REPOSITORY"
     continue
@@ -81,6 +82,7 @@ for REPOSITORY in $REPOSITORIES; do
   echo "Checking week $REPOSITORY ($WEEK) for RPMS"
   WORKDIR=$BASEDIR/$REPOSITORY
   mkdir -p $WORKDIR
+  # Install all architectures of the most recent week first.
   for SCRAM_ARCH in $ARCHITECTURES; do
     # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
     # This is because bootstraptmp is otherwise shared between different arches. Sigh.

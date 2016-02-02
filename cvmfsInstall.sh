@@ -106,11 +106,10 @@ for REPOSITORY in $REPOSITORIES; do
     # to interfere with the installation of a different one. For that reason we
     # ignore the exit code.
     (
+      dockerrun "source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get update " ;
       REL_TO_INSTALL="" ;
       if [ "X$RELEASE_NAME" = "X" ] ; then 
-        APT_SEARCH="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; \
-        apt-get update ; \
-        apt-cache search cmssw-ib\\\+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \
+        APT_SEARCH="apt-cache search cmssw-ib\\\+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \
         rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt  " ;
         dockerrun $APT_SEARCH ;
         REL_TO_INSTALL=`diff -u onserver.txt installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'` ;

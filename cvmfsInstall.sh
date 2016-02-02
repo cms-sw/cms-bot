@@ -59,7 +59,7 @@ dockerrun()
 {
   if [ X$(echo $SCRAM_ARCH | cut -d"_" -f 1) == "Xslc7" ]; then
     ARGS="cd $THISDIR; $@"
-    docker run -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-builder:v16 sh -c "$ARGS"
+    docker run -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-installer sh -c "$ARGS"
   else
     eval $@
   fi

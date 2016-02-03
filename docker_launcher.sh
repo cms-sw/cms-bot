@@ -6,7 +6,6 @@ if [ "X$DOCKER_IMG" != X ]; then
   DOCK_ARGS="kinit cmsbuild@CERN.CH -k -t /home/cmsbuild/cmsbuild.keytab || true; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
   docker run -h `hostname` \
-    -v /etc/pki:/etc/pki \
     -v /etc/localtime:/etc/localtime \
     -v /build/cmsbuild:/build/cmsbuild \
     -v /home/cmsbuild:/home/cmsbuild \

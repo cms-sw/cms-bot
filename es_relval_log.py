@@ -61,7 +61,7 @@ def es_parse_log(logFile):
   if errors:
     payload["errors"] = errors
     Send_Flag = True
-  if Send_Flag:
-    send_payload(index,document,id,json.dumps(payload))
-  else:
-   print "Nothing to Send"
+#  if Send_Flag:
+  send_payload(index,document,id,json.dumps(payload))
+#  else:
+#   print "Nothing to Send"

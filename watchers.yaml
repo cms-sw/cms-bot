@@ -169,6 +169,9 @@ abbiendi:
 - Validation/MuonIdentification
 - Validation/MuonIsolation
 - Validation/RecoMuon
+amarini:
+- DataFormats/L1THGCal
+- L1Trigger/L1THGCal
 alja:
 - Fireworks
 acimmino:
@@ -333,6 +336,9 @@ jalimena:
 - HLTrigger/Configuration
 jazzitup:
 - RecoHI
+jbsauvan:
+- DataFormats/L1THGCal
+- L1Trigger/L1THGCal
 jhgoh:
 - Alignment/MuonAlignment
 - Alignment/MuonAlignmentAlgorithms
@@ -407,6 +413,8 @@ lgray:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- DataFormats/L1THGCal
+- L1Trigger/L1THGCal
 mandrenguyen:
 - RecoHI
 - HeavyIonsAnalysis

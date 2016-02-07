@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import os, sys, glob, re, shutil, time, threading, json
 from cmsutils import doCmd
-from es_relval_log import es_parse_log
+#from es_relval_log import es_parse_log
 
 def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
   if (not force) and logger and logger.relvalAlreadyDone(workflow):
@@ -198,10 +198,10 @@ class PyRelValsThread(object):
         logFile = logData[wf]['steps'][step]
         json_cache = os.path.dirname(logFile)+"/logcache_"+str(step)+".json"
         if (not os.path.exists(json_cache)) or (os.path.getmtime(logFile)>os.path.getmtime(json_cache)):
-          try:
-            es_parse_log(logFile)
-          except Exception as e:
-            print "Sending log information to elasticsearch failed" , str(e)
+          #try:
+          #  es_parse_log(logFile)
+          #except Exception as e:
+          #  print "Sending log information to elasticsearch failed" , str(e)
           inFile = open(logFile)
           for line in inFile:
             if '%MSG-w' in line: data[1]=data[1]+1

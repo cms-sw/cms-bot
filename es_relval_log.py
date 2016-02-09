@@ -3,7 +3,7 @@ from hashlib import sha1
 import sys,json , re
 from os import getenv
 from os.path import exists
-import dateutil.parser
+from time import strftime , strptime
 from socket import gethostname
 from es_utils import send_payload
 
@@ -15,7 +15,7 @@ def es_parse_log(logFile):
   workflow = pathInfo[10].split('_')[0]
   step = pathInfo[11].split('_')[0]
   dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
-  week = dateutil.parser.parse(dat).strftime("%U")
+  week = strftime("%U",strptime(dat,"%Y-%m-%d"))
   index = "ib-matrix-" + week
   document = "runTheMatrix-data"
   id = sha1(release + architecture + workflow + str(step)).hexdigest()

@@ -5,9 +5,9 @@
 # CMSSW_X_Y_Z: the release that was build
 # ARCHITECTURE: architecture for the upload
 
-CMSSW_X_Y_Z=not-assigned
-ARCHITECTURE=not-assigned
-BUILD_DIR=not-assigned
+CMSSW_X_Y_Z=$1
+ARCHITECTURE=$2
+BUILD_DIR=$3
 WORKSPACE="${BUILD_DIR}/cmsbuild/auto-builds/$CMSSW_X_Y_Z-$ARCHITECTURE"
 
 rm -r $WORKSPACE

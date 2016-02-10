@@ -43,7 +43,7 @@ if [ "X$ARCHITECTURE" == X ]; then
 fi
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
-for SCRAM_REL in $(scram -a $ARCHITECTURE l $CMSSW_CYCLE | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | awk '{print $2}' | sort -r) ;  do
+for SCRAM_REL in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | awk '{print $2}' | sort -r) ;  do
   FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$ARCHITECTURE/$REAL_ARCH/matrix-results/wf_errors.txt"
   if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
     CMSSW_IB=$SCRAM_REL

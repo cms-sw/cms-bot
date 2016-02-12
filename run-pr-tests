@@ -113,6 +113,7 @@ if [ ! -d CMSSW_* ]; then
 else
   cd $WORKSPACE/CMSSW_*
 fi
+sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
 eval $(scram run -sh)
 cd src
 git config --global --replace-all merge.renamelimit 2500

@@ -8,7 +8,8 @@ def send_payload(index,document,id,payload):
   #except Exception as e:
   #  print "Couldn't read the secrets file" , str(e)
   
-  url="http://%s/%s/%s/%s" % ('cmses-client01.cern.ch',index,document,id)
+  #url="http://%s/%s/%s/%s" % ('cmses-client01.cern.ch',index,document,id)
+  url="http://%s/%s/%s/%s" % ('es-test-master01.cern.ch:9200',index,document,id)
   #print url
   #send the data to elasticsearch
   #passman = urllib2.HTTPPasswordMgrWithDefaultRealm()

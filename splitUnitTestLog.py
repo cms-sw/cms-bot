@@ -32,7 +32,7 @@ class LogSplitter(object):
 
         pkgTestStartRe  = re.compile('^===== Test \"(.*)\" ====')
         pkgTestEndRe    = re.compile('^\^\^\^\^ End Test (.*) \^\^\^\^')
-        pkgTestResultRe = re.compile('.*---> test [^ ] had ERRORS')
+        pkgTestResultRe = re.compile('.*---> test [^ ]+ had ERRORS')
 
         pkgStartRe = re.compile("^>> Entering Package (.*)")
         # pkgEndRe   = re.compile("^>> Leaving Package (.*)")

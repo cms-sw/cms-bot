@@ -100,7 +100,7 @@ class TestLogChecker(object):
 
         pkgTestStartRe  = re.compile('^===== Test \"(.*)\" ====')
         pkgTestEndRe    = re.compile('^\^\^\^\^ End Test (.*) \^\^\^\^')
-        pkgTestResultRe = re.compile('.*---> test [^ ]+ had ERRORS')
+        pkgTestResultRe = re.compile('.*---> test ([^ ]+) (had ERRORS|succeeded)')
 
         pkgStartRe = re.compile("^>> Entering Package (.*)")
         pkgEndRe   = re.compile("^>> Leaving Package (.*)")
@@ -154,7 +154,7 @@ class TestLogChecker(object):
 
             pkgTestResultMatch= pkgTestResultRe.match(line)
             if pkgTestResultMatch :  # this seems to only appear if there is an ERROR
-                tstName = pkgTestResultMatch.group(1).split(' ')[0]
+                tstName = pkgTestResultMatch.group(1)
                 results[tstName] = pkgTestResultMatch.group(2)
             
             pkgTestStartMatch = pkgTestStartRe.match(line)
@@ -168,7 +168,7 @@ class TestLogChecker(object):
                 else:
                     testNames[actPkg] = [actTest]
                 if actTest not in results:
-                    results[actTest] = " OK " # set the default, no error seen yet
+                    results[actTest] = "succeeded" # set the default, no error seen yet
             
             pkgTestEndMatch   = pkgTestEndRe.match(line)
             if pkgTestEndMatch:
@@ -205,7 +205,7 @@ class TestLogChecker(object):
                 nOK = 0
                 if self.verbose: self.outFile.write( "\n" )
                 for tNam in testNames[pkg]:
-                    if results[tNam].find("OK") != -1:
+                    if results[tNam] == "succeeded":
                         nOK += 1
                         totalOK += 1
                     else:

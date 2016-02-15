@@ -611,7 +611,3 @@ for i in $( seq 1 $REPEAT); do
   fi
 done
 
-rm -f $WORKSPACE/run-comparision
-if [ "X$RELVALS_OK" = Xtrue ]; then
-  touch $WORKSPACE/run-comparision
-fi

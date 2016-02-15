@@ -610,3 +610,8 @@ for i in $( seq 1 $REPEAT); do
     $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL ${TESTS_FAILED} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
   fi
 done
+
+rm -f $WORKSPACE/run-comparision
+if [ "X$RELVALS_OK" = Xtrue ]; then
+  touch $WORKSPACE/run-comparision
+fi

@@ -12,7 +12,7 @@ import os
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
+parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | RELEASE_NOT_FOUND "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
                             "| PARSE_ADDON_FAIL | REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE")
 
@@ -229,6 +229,18 @@ def read_build_log_file( repo, build_log, tests_url, isClang ):
   mark_commit_if_needed( ACTION, tests_url )
 
 #
+# release to test the PR not found
+#
+def release_not_found_for_tests( tests_url ):
+  pull_request = repo.get_pull(pr_number)
+  message = '-1 '
+  if options.commit_hash:
+    message += '\nTested at: ' + options.commit_hash
+  message += '\n I was not able to find a release to test this PR. See the Jenkins logs for more details.'
+  send_message_pr( pull_request, message )
+  mark_commit_if_needed( ACTION, tests_url )
+
+#
 # reads the unit tests file and gets the tests that failed
 #
 def read_unit_tests_file(repo,unit_tests_file,tests_url):
@@ -306,7 +318,8 @@ def send_message_pr( pr, message, checkDuplicateMessage=False ):
   if options.no_post_mesage:
     print 'Not posting message (dry-run): \n ', message
     return
-
+  if options.aditional_message:
+    message += '\n  '+options.aditional_message
   print 'Posting message: ', message
   pr.create_issue_comment(message)
 
@@ -525,6 +538,7 @@ COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : [ 'success' , 'Tests OK' 
                               'PARSE_BUILD_FAIL'     : [ 'failure' , 'Compilation error' ],
                               'PARSE_MATRIX_FAIL'    : [ 'failure' , 'RelVals error' ] ,
                               'PARSE_ADDON_FAIL'     : [ 'failure' , 'AddOn error' ] ,
+                              'RELEASE_NOT_FOUND'    : [ 'failure' , 'Release area error' ] ,
                               'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ],
                               'PARSE_CLANG_BUILD_FAIL' : [ 'failure' , 'Clang error' ] }
 
@@ -624,6 +638,8 @@ elif ( ACTION == 'STD_COUT' ):
   send_std_cout_found_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'TESTS_RUNNING' ):
   mark_commit_testing()
+elif ( ACTION == 'RELEASE_NOT_FOUND' ):
+  release_not_found_for_tests(tests_results_url)
 elif ( ACTION == 'EXTERNALS_PR_READY' ):
   tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/%d' % (pr_job_id)
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )

@@ -48,6 +48,4 @@ for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | gr
   )
 done
 
-if [ "X$RELEASE_QUEUE_OK" = "X" ] ; then
-  $WORKSPACE/cms-bot/report-pull-request-results RELEASE_NOT_FOUND --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
-fi
+

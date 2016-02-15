@@ -19,12 +19,11 @@ PROP_FILE=properties-pr
 if [ "X$CMSDIST_PR" != "X" ] ; then 
   PROP_FILE=cmsdist-properties-pr
 fi
-
-RELEASE_QUEUE_OK=
+rm -f $WORKSPACE/pr_test_ok
 for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= | grep SCRAM_ARCH=$ARCHITECTURE_FILTER;`; do
   (
     eval $line
-    RELEASE_QUEUE_OK=yes
+    touch $WORKSPACE/pr_test_ok
     OUTPUT_FILE=${PROP_FILE}-${PULL_REQUEST}-${SCRAM_ARCH}.txt
     echo PULL_REQUEST=${PULL_REQUEST} > $OUTPUT_FILE
     echo ARCHITECTURE=${SCRAM_ARCH} >> $OUTPUT_FILE
@@ -48,4 +47,7 @@ for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | gr
   )
 done
 
+if [ ! -f $WORKSPACE/pr_test_ok ] ; then
+  $WORKSPACE/cms-bot/report-pull-request-results RELEASE_NOT_FOUND --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
+fi
 

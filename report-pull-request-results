@@ -231,7 +231,7 @@ def read_build_log_file( repo, build_log, tests_url, isClang ):
 #
 # release to test the PR not found
 #
-def release_not_found_for_tests( tests_url ):
+def release_not_found_for_tests(repo, tests_url ):
   pull_request = repo.get_pull(pr_number)
   message = '-1 '
   if options.commit_hash:
@@ -639,7 +639,7 @@ elif ( ACTION == 'STD_COUT' ):
 elif ( ACTION == 'TESTS_RUNNING' ):
   mark_commit_testing()
 elif ( ACTION == 'RELEASE_NOT_FOUND' ):
-  release_not_found_for_tests(tests_results_url)
+  release_not_found_for_tests(destination_repo, tests_results_url)
 elif ( ACTION == 'EXTERNALS_PR_READY' ):
   tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/%d' % (pr_job_id)
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )

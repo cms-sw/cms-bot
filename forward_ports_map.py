@@ -1,4 +1,4 @@
-#CMS GIT Repositories auto matic forward port map
+#CMS GIT Repositories automatic forward port map
 #FORMAT:
 #GIT_REPO_FWPORTS[repo][source-branch]=[destination-branch[:strategy]]
 #e.g
@@ -21,10 +21,10 @@ GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"]=["CMSSW_7_6_ROOT64_X"]
 #Something like following should be automatically added for each new release cycle
 #i.e first forward port the previous production branch in to new release cycle production branch
 #and then forward port new production branch to its devel branches
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_6_X/stable"].append("IB/CMSSW_8_0_X/stable")
+#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_6_X/stable"].append("IB/CMSSW_8_0_X/stable")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"].append("IB/CMSSW_8_0_X/next")
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"].append("CMSSW_8_0_X")
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"].append("CMSSW_8_0_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"].append("CMSSW_8_0_ROOT64_X")
 

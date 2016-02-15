@@ -336,7 +336,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       elif re.match( TESTS_RESULTS_MSG, first_line):
         test_sha = comment_lines[1:2]
         if test_sha: test_sha = test_sha[0].replace("Tested at: ","").strip()
-        if test_sha != last_commit.sha:
+        if (test_sha != last_commit.sha) and (test_sha != 'UNKNOWN'):
           print "Ignoring test results for sha:",test_sha
           continue
         trigger_test_on_signature = False

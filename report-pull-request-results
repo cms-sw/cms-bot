@@ -233,10 +233,7 @@ def read_build_log_file( repo, build_log, tests_url, isClang ):
 #
 def release_not_found_for_tests(repo, tests_url ):
   pull_request = repo.get_pull(pr_number)
-  message = '-1 '
-  if options.commit_hash:
-    message += '\nTested at: ' + options.commit_hash
-  message += '\n I was not able to find a release to test this PR. See the Jenkins logs for more details.'
+  message = '-1 \nTested at: UNKNOWN\n I was not able to find a release to test this PR. See the Jenkins logs for more details.'
   send_message_pr( pull_request, message )
   mark_commit_if_needed( ACTION, tests_url )
 

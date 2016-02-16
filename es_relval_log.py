@@ -1,6 +1,6 @@
 #!/bin/env python
 from hashlib import sha1
-import sys,json , re
+import os, sys,json , re , datetime
 from os import getenv
 from os.path import exists
 from time import strftime , strptime
@@ -8,6 +8,8 @@ from socket import gethostname
 from es_utils import send_payload
 
 def es_parse_log(logFile):
+  t = os.path.getmtime(logFile)
+  timestp = datetime.datetime.fromtimestamp(int(t)).strftime('%Y-%m-%d %H:%M:%S.%s')
   payload = {}
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
@@ -24,6 +26,7 @@ def es_parse_log(logFile):
   payload["architecture"] = architecture
   payload["step"] = step
   payload["hostname"] = gethostname()
+  payload["_timestamp"] = timestp
   exception = ""
   error = ""
   errors = []
@@ -54,14 +57,8 @@ def es_parse_log(logFile):
         exception += l + "\n"
       if inError:
         error += l + "\n"
-  Send_Flag = False
   if exception:
     payload["exception"] = exception
-    Send_Flag = True
   if errors:
     payload["errors"] = errors
-    Send_Flag = True
-  if Send_Flag:
-    send_payload(index,document,id,json.dumps(payload))
-  else:
-    print "Nothing to Send"
+  send_payload(index,document,id,json.dumps(payload))

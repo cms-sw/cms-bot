@@ -27,7 +27,6 @@ def es_parse_log(logFile):
   payload["step"] = step
   payload["hostname"] = gethostname()
   payload["_timestamp"] = timestp
-  payload
   exception = ""
   error = ""
   errors = []

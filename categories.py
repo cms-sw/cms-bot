@@ -1275,6 +1275,7 @@ CMSSW_CATEGORIES={
    "SimRomanPot/SimFP420", "SimTracker/Common",
    "SimTracker/Configuration",
    "SimTracker/Records",
+   "SimTracker/SiPhase2Digitizer",
    "SimTracker/SiPixelDigitizer",
    "SimTracker/SiStripDigitizer",
    "SimTracker/TrackAssociation",

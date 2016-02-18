@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
   pulls = args.pulls or gh_repo.get_pulls(base=args.source, state="open")
 
-  done_prs_id = get_ported_PRs(gh_repo, sargs.source, args.dest)
+  done_prs_id = get_ported_PRs(gh_repo, args.source, args.dest)
   for pr in pulls:
     # If we just have the numeric Id, let's get the associated issue.
     if type(pr) == int:

@@ -20,10 +20,9 @@ def create_branch(repo, base_branch, new_branch, dryRun=False):
     print "Branch already exists: ",new_branch
     return
   except GithubException as e:
-    print e
     if not "Branch not found" in e.data['message']: raise e
   if not dryRun:
-    repo.create_git_ref (new_branch, base_ref.commit.sha)
+    repo.create_git_ref ("refs/heads/"+new_branch, base_ref.commit.sha)
     print "Created new branch ",new_branch," based on ",base_ref.commit.sha
   else:
     print "DryRun: Creating new branch ",new_branch," based on ",base_ref.commit.sha
@@ -102,7 +101,7 @@ def add_auto_forward_ports(cmssw, cmsdist, cmssw_branches, cmsdist_branches, dry
   for line in lines: print line
   if not dryRun:
     fwdport_file = "%s/forward_ports_map.py" % (scriptPath)
-    with open(fwdport_file, "w") as fwdFile:
+    with open(fwdport_file, "a") as fwdFile:
       for line in lines: fwdFile.write(line+"\n")
     print "Wrote auto forward port file"
   else:

@@ -468,7 +468,7 @@ class ReleaseTester():
     print "runProjectInit> Going regenerate scram caches ... "
     try:
       cmd= "cd "+self.cmsswBuildDir+"; rm -rf src;"
-      cmd=+"curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/"+self.cmsswBuildDir+".tar.gz;"
+      cmd+="curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/"+self.cmsswBuildDir+".tar.gz;"
       cmd+="tar -xzf src.tar.gz; mv cmssw-"+self.cmsswBuildDir+" src; rm -rf src.tar.gz"
       cmd+="scram build -r echo_CXX"
       doCmd(cmd)

@@ -1,5 +1,6 @@
 #!/bin/sh -ex
-BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/
+if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
+BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/
 PULL_REQUEST_BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/
 
 WFS_WITH_ERRORS=''
@@ -42,6 +43,7 @@ echo 'PR_NUMBER;'$PULL_REQUEST_NUMBER >> $DETAILS_FILE
 echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $DETAILS_FILE
 echo 'ARCHITECTURE;'$ARCHITECTURE >> $DETAILS_FILE
 echo 'REAL_ARCH;'$REAL_ARCH >> $DETAILS_FILE
+echo 'COMPARISON_ARCH;'$COMPARISON_ARCH >> $DETAILS_FILE
 echo 'MACHINE ARCHITECTURE:' >> $DETAILS_FILE
 cat /proc/cpuinfo |  grep "model name" >> $DETAILS_FILE
 
@@ -149,9 +151,8 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
 
     WF_DIR=`echo $WF | cut -d "/" -f1`
     WF_NUMBER=`echo $WF | cut -d'_' -f1`
-
-    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$ARCHITECTURE/$REAL_ARCH/matrix-results/$WF_DIR $JR_COMP_DIR/$RELEASE_FORMAT || true
-    rsync -r $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/$WF_DIR $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER || true
+    rsync -r ${BASE_URL}$WF_DIR $JR_COMP_DIR/$RELEASE_FORMAT || true
+    rsync -r ${PULL_REQUEST_BASE_URL}$WF_DIR $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER || true
 
   done  
 

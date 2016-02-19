@@ -467,8 +467,11 @@ class ReleaseTester():
   def runProjectInit(self, deps = []):
     print "runProjectInit> Going regenerate scram caches ... "
     try:
-      doCmd("cd "+self.cmsswBuildDir+"; rm -rf src; ln -s "+os.environ['CMSSW_RELEASE_BASE']+"/src src")
-      doCmd("scram build -r echo_CXX",self.dryRun,self.cmsswBuildDir)
+      cmd= "cd "+self.cmsswBuildDir+"; rm -rf src;"
+      cmd=+"curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/"+self.cmsswBuildDir+".tar.gz;"
+      cmd+="tar -xzf src.tar.gz; mv cmssw-"+self.cmsswBuildDir+" src; rm -rf src.tar.gz"
+      cmd+="scram build -r echo_CXX"
+      doCmd(cmd)
     except Exception, e :
       print "ERROR during runProjectInit: caught exception: " + str(e)
     return None

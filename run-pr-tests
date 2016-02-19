@@ -62,13 +62,14 @@ RELVALS_OK=true
 ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
+if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
   if [[ $RELEASE_FORMAT != *-* ]]; then
     RELEASE_QUEUE=$RELEASE_FORMAT
     for SCRAM_REL in $(scram l -c $RELEASE_FORMAT | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
-      FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$SCRAM_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
+      FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
       if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
         RELEASE_FORMAT=$SCRAM_REL
         break
@@ -440,6 +441,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
     echo "REAL_ARCH=$REAL_ARCH" >> $TRIGGER_COMPARISON_FILE
+    echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
 
    #####################################################################
    #### Run igprof

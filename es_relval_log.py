@@ -9,7 +9,7 @@ from es_utils import send_payload
 
 def es_parse_log(logFile):
   t = os.path.getmtime(logFile)
-  timestp = datetime.datetime.fromtimestamp(int(t)).strftime('%Y-%m-%d %H:%M:%S')
+  timestp = datetime.datetime.fromtimestamp(int(t))
   payload = {}
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]

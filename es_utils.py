@@ -15,7 +15,7 @@ def send_payload(index,document,id,payload):
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'elasticsearch', passw)
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
-  opener = urllib2.build_opener()
+  opener = urllib2.build_opener(auth_handler)
   try:
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)

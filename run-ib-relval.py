@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
   thrds = cmsRunProcessCount
   if "_THREADED_" in  environ["CMSSW_VERSION"]:
-    thrds=int(MachineMemoryGB/4)
+    thrds=int(MachineMemoryGB/5)
   elif "fc22_" in environ["SCRAM_ARCH"]:
     thrds=int(MachineMemoryGB/4)
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount

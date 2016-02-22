@@ -91,7 +91,7 @@ for REPOSITORY in $REPOSITORIES; do
         for y in cmssw cmssw-patch ; do
           if [ -d $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ] ; then
             touch -t $timestamp $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ;
-            find $WORKDIR/$SCRAM_ARCH/cms/$y/$relname -type f -print | xargs chmod a-w ;
+            find $WORKDIR/$SCRAM_ARCH/cms/$y/$relname -type f -print | xargs -i  chmod a-w '{}' ;
           fi
         done ;
       fi

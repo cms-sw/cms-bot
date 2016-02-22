@@ -24,6 +24,7 @@ GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"]=["CMSSW_7_6_ROOT64_X"]
 #GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_6_X/stable"].append("IB/CMSSW_8_0_X/stable")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"].append("IB/CMSSW_8_0_X/next")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"].append("IB/CMSSW_8_0_X/gcc530")
 #GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"].append("CMSSW_8_0_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"].append("CMSSW_8_0_ROOT64_X")
@@ -37,4 +38,4 @@ GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_1_X"].append("CMSSW_8_1_ROOT64_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"].append("IB/CMSSW_8_1_X/stable")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_1_X/stable"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_1_X/stable"].append("IB/CMSSW_8_1_X/next")
-#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_1_X/stable"].append("IB/CMSSW_8_1_X/gcc530")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_1_X/stable"].append("IB/CMSSW_8_1_X/gcc530")

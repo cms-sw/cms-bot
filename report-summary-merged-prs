@@ -586,7 +586,7 @@ def print_results(results):
       print comp['compared_tags']
 
       print '\t' + 'HLT Tests: ' + comp['hlt_tests']
-
+      print '\t' + 'DQM Tests: ' + comp['dqm_tests']
       print '\t' + 'Static Checks: ' + comp['static_checks']
       print '\t' + 'Valgrind: ' + comp['valgrind']
 
@@ -677,6 +677,8 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp['hlt_tests' ] = 'not-found'
       if not comp.get( 'valgrind' ):
         comp['valgrind' ] = 'not-found'
+      if not comp.get( 'dqm_tests' ):
+        comp['dqm_tests' ] = 'not-found'
 
       a = [t['arch'] for t in utres] if utres else []
       b = [t['arch'] for t in rvsres] if rvsres else []
@@ -720,6 +722,16 @@ def find_hlt_tests_results( comparisons ):
     comp[ 'hlt_tests' ] = find_one_hlt_test( rel_name )
 
 #
+# Finds for an IB the results of the HLT tests
+#
+def find_dqm_tests_results( comparisons ):
+  for comp in comparisons:
+    rel_name = comp[ 'compared_tags' ].split('-->')[1]
+    print 'Looking for DQM tests results for ', rel_name
+    comp[ 'dqm_tests' ] = find_one_dqm_test( rel_name )
+
+
+#
 # Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is ''
 #
 def find_one_static_check( release_name , architecture ):
@@ -760,6 +772,19 @@ def find_one_hlt_test( release_name ):
     return 'found'
   print 'not-found'
   return 'not-found'
+
+#
+# Looks for one dqm test result for the IB, if it finds it, the value is 'found' if not, the value is ''
+#
+def find_one_dqm_test( release_name ):
+  command = MAGIC_COMMAND_FIND_DQM_TESTS.replace('RELEASE_NAME', release_name)
+  out,err,ret_code = get_output_command(command)
+  if ret_code == 0:
+    print 'found'
+    return 'found'
+  print 'not-found'
+  return 'not-found'
+
 
 # reads the results and generates a separated json for each release_queue
 # it also generates a csv file with statistics per release_queue and a general one
@@ -946,6 +971,8 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
   MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME/ARCHITECTURE'
   MAGIC_COMMAND_FIND_HLT_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/HLT-Validation/RELEASE_NAME'
+  DQM_TESTS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-dqm-tests/RELEASE_NAME/'
+  MAGIC_COMMAND_FIND_DQM_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/ib-dqm-tests/RELEASE_NAME'
   CONFIG_MAP_FILE = 'config.map'
   # this will be filled using config.map by get_config_map_params()
   ARCHITECTURES = []
@@ -1069,7 +1096,7 @@ if __name__ == "__main__":
           find_static_results( release_queue_results['comparisons'] , arch )
         if 'valgrind' in tests_to_find:
           find_valgrind_results( release_queue_results['comparisons'] , arch )
-  
+    find_dqm_tests_results( release_queue_results['comparisons'] ) 
     results.append(release_queue_results)
   
   save_prs_cache(PRS_CACHE, PRS_CACHE_FILE)

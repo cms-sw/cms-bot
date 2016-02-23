@@ -757,7 +757,7 @@ def find_one_valgrind( release_name , architecture ):
   print "Ran:",out,err,ret_code,command_to_execute
   if ret_code == 0:
     print 'found'
-    return architecture
+    return 'found'
   print 'not-found'
   return 'not-found'
 

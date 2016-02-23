@@ -6,7 +6,7 @@ from es_utils import send_payload
 path = '/build/jobs'
 index = "jenkins"
 document = "builds-data"
-rematch = re.compile(".*/build/\d+$")
+rematch = re.compile(".*/builds/\d+$")
 for root, dirs, files in os.walk(path):
   if rematch.match(root):
     logFile = root + '/build.xml'
@@ -25,11 +25,11 @@ for root, dirs, files in os.walk(path):
         build_result = root.find('result')
         if build_result is not None:
           payload['build_result'] = build_result.text
-          payload['build_duration'] = root.find('duration').text
+          payload['build_duration'] = int(int(root.find('duration').text)/1000)
           payload['job_status'] = 'Finished'
           os.system('touch ' + flagFile)
         else:
           payload['job_status'] = 'Running'
         send_payload(index,document,id,json.dumps(payload))
-       except Exception as e:
-         print "Xml parsing error" , e
+      except Exception as e:
+        print "Xml parsing error" , e

@@ -6,7 +6,7 @@ from es_utils import send_payload
 path = '/build/jobs'
 index = "jenkins"
 document = "builds-data"
-rematch = re.compile(".*/build\d+$")
+rematch = re.compile(".*/build/\d+$")
 for root, dirs, files in os.walk(path):
   if rematch.match(root):
     logFile = root + '/build.xml'

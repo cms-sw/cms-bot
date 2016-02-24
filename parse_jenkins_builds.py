@@ -20,14 +20,14 @@ for root, dirs, files in os.walk(path):
       try:
         tree = ET.parse(logFile)
         root = tree.getroot()
-        payload['start_time'] = root.find('startTime').text
+        payload['@timestamp'] = root.find('startTime').text
         payload['slave_node'] = root.find('builtOn').text
         build_result = root.find('result')
         if build_result is not None:
           payload['build_result'] = build_result.text
           payload['build_duration'] = int(int(root.find('duration').text)/1000)
           payload['job_status'] = 'Finished'
-          os.system('touch ' + flagFile)
+          os.system('touch "' + flagFile + '"')
         else:
           payload['job_status'] = 'Running'
         send_payload(index,document,id,json.dumps(payload))

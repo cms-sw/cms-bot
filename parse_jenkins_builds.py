@@ -11,7 +11,7 @@ for root, dirs, files in os.walk(path):
   if rematch.match(root):
     logFile = root + '/build.xml'
     flagFile = root + '/check.done'
-    if os.path.exists(logFile):
+    if os.path.exists(logFile) and not os.path.exists(flagFile):
       payload = {}
       job_info = root.split('/')
       payload['job_name'] = job_info[3]
@@ -27,7 +27,7 @@ for root, dirs, files in os.walk(path):
           payload['build_result'] = build_result.text
           payload['build_duration'] = int(int(root.find('duration').text)/1000)
           payload['job_status'] = 'Finished'
-          os.system('touch ' + flagFile)
+          os.system('touch "' + flagFile + '"')
         else:
           payload['job_status'] = 'Running'
         send_payload(index,document,id,json.dumps(payload))

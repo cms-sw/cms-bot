@@ -44,6 +44,7 @@ for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | gr
     echo RUN_IGPROF=${RUN_IGPROF} >> $OUTPUT_FILE
     echo CMSDIST_PR=${CMSDIST_PR} >> $OUTPUT_FILE
     echo FULL_TOOLCONF=true >> $OUTPUT_FILE
+    echo PYTHONDONTWRITEBYTECODE=1 >> $OUTPUT_FILE
   )
 done
 

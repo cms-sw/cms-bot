@@ -16,6 +16,7 @@ for root, dirs, files in os.walk(path):
       job_info = root.split('/')
       payload['job_name'] = job_info[3]
       payload['build_number'] = job_info[-1]
+      payload['url'] = "https://cmssdt.cern.ch/jenkins/job/" + job_info[3] + "/" + job_info[-1] + "/"
       id = sha1(root).hexdigest()
       try:
         tree = ET.parse(logFile)

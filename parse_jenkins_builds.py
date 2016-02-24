@@ -11,7 +11,7 @@ for root, dirs, files in os.walk(path):
   if rematch.match(root):
     logFile = root + '/build.xml'
     flagFile = root + '/check.done'
-    if os.path.exists(logFile) and not os.path.exists(flagFile):
+    if os.path.exists(logFile):
       payload = {}
       job_info = root.split('/')
       payload['job_name'] = job_info[3]
@@ -20,7 +20,7 @@ for root, dirs, files in os.walk(path):
       try:
         tree = ET.parse(logFile)
         root = tree.getroot()
-        payload['start_time'] = root.find('startTime').text
+        payload['@timestamp'] = root.find('startTime').text
         payload['slave_node'] = root.find('builtOn').text
         build_result = root.find('result')
         if build_result is not None:

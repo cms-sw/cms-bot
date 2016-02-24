@@ -265,15 +265,6 @@ fi
 
 scram build clean
 git cms-checkdeps -A -a
-#############################################
-# Remove poison if asked to do so
-#############################################
-if [ "X$DISABLE_POISON" = Xtrue ]; then
-  if [ -d $WORKSPACE/CMSSW_*/poison ]; then
-    rm -rf $WORKSPACE/CMSSW_*/poison
-  fi
-fi
-
 ############################################
 # Force the run of DQM tests if necessary
 ############################################

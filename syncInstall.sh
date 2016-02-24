@@ -48,10 +48,11 @@ for REPOSITORY in $REPOSITORIES; do
   done
   for PKG in `find $WORKDIR/ -mindepth 3 -maxdepth 3 -type d | sort -r | sed -e "s|.*$SCRAM_ARCH/||"`; do
     [ -f  $WORKDIR/$PKG/done ] && continue
+    find $WORKDIR/$PKG -print | xargs -i  chmod a-w '{}'
     NEWPKG=`dirname $PKG`/tmp$$-`basename $PKG`
     mv $DESTDIR/$PKG $DESTDIR/$NEWPKG || mkdir -p $DESTDIR/$NEWPKG
     # We need to delete the temp directory in case of failure.
-    (rsync -a -W --inplace --delete --no-group --no-owner $WORKDIR/$PKG/ $DESTDIR/$NEWPKG/ && mv -T $DESTDIR/$NEWPKG $DESTDIR/$PKG && touch $WORKDIR/$PKG/done) || rm -rf $DESTDIR/$NEWPKG || true
+    (rsync -a -W --inplace --delete --no-group --no-owner $WORKDIR/$PKG/ $DESTDIR/$NEWPKG/ && mv -T $DESTDIR/$NEWPKG $DESTDIR/$PKG && chmod 0755 $WORKDIR/$PKG && touch $WORKDIR/$PKG/done) || rm -rf $DESTDIR/$NEWPKG || true
   done
   rsync -a --no-group --no-owner $WORKDIR/../etc/ $DESTDIR/../etc/ || true
   rm $DIRFILE

@@ -171,6 +171,14 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
   HOUR=`echo $IB_DATE | sed -e "s/$YEAR_MONTH_DAY-//g" | sed -e 's/0*//g'`
   git rev-list --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
   git log --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
+  #############################################
+  # Remove poison if asked to do so
+  #############################################
+  if [ "X$DISABLE_POISON" = Xtrue ]; then
+    if [ -d $WORKSPACE/CMSSW_*/poison ]; then
+      rm -rf $WORKSPACE/CMSSW_*/poison
+    fi
+  fi
 fi
 
 #If Fireworks is the only package involved I only compile and run unit tests

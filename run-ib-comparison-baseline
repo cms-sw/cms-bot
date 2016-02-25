@@ -26,7 +26,7 @@ pushd "$WORKSPACE/matrix-results"
     ;;
   esac
 
-  runTheMatrix.py $THREADED_PARAM -s -j $(Jenkins_GetCPU) -l 1306.0,101.0,1003.0,50202.0,9.0,25202.0 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  runTheMatrix.py $THREADED_PARAM -s -j $(Jenkins_GetCPU) -l 1306.0,101.0,1003.0,50202.0,9.0,25202.0,10039.0,10060.0 2>&1 | tee -a $WORKSPACE/matrixTests.log
 
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root | sort`

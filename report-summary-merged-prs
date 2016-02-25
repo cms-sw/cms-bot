@@ -954,7 +954,6 @@ if __name__ == "__main__":
   MAGIC_COMMAND_CMSDIST_TAGS = "pushd %s; git tag -l */*/ARCHITECTURE | grep -E 'IB|ERR'; popd" % CMSDIST_REPO
   CMSSDT_DIR = "/data/sdt"
   BUILD_LOG_DIR = CMSSDT_DIR+"/buildlogs"
-  AFS_LOG_DIR = "/afs/cern.ch/cms/sw/ReleaseCandidates"
   JENKINS_ARTIFACTS_SUBDIR = "SDT/jenkins-artifacts"
   JENKINS_ARTIFACTS_DIR = CMSSDT_DIR+"/"+JENKINS_ARTIFACTS_SUBDIR
   # I used this type of concatenation because the string has %s inside
@@ -1036,8 +1035,8 @@ if __name__ == "__main__":
   SP_REL_REGEX = "|".join( SPECIAL_RELEASES )
   REQUESTED_COMPARISONS = [ ( '%s_%s..%s' % ( rq , START_DATE , rq ) ) for rq in RELEASE_QUEUES ]
 
-  AFS_IB_INSTALLATION = "/afs/cern.ch/cms/sw/ReleaseCandidates/vol*/*/cms"
-  AFS_INSTALLATION = "/afs/cern.ch/cms/*/cms"
+  AFS_IB_INSTALLATION = "/cvmfs/cms-ib.cern.ch/week*/*/cms"
+  AFS_INSTALLATION = "/cvmfs/cms.cern.ch/*/cms"
   installedPaths = [x for x in glob(AFS_IB_INSTALLATION + "/cmssw/*")]
   installedPaths += [x for x in glob(AFS_IB_INSTALLATION + "/cmssw-patch/*")]
   installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw/*")]

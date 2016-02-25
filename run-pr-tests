@@ -68,7 +68,7 @@ if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
 if [ ! -d CMSSW_* ]; then
   if [[ $RELEASE_FORMAT != *-* ]]; then
     RELEASE_QUEUE=$RELEASE_FORMAT
-    for SCRAM_REL in $(scram l -c $RELEASE_FORMAT | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
+    for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
       FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
       if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
         RELEASE_FORMAT=$SCRAM_REL
@@ -76,7 +76,7 @@ if [ ! -d CMSSW_* ]; then
       fi
     done
     if [ "$RELEASE_FORMAT" = "$RELEASE_QUEUE" ] ; then
-      RELEASE_FORMAT=$(scram l -c $RELEASE_QUEUE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
+      RELEASE_FORMAT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$RELEASE_FORMAT" = "X" ] ; then
         $WORKSPACE/cms-bot/report-pull-request-results RELEASE_NOT_FOUND --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
         exit 0
@@ -116,7 +116,7 @@ case $RELEASE_FORMAT in
 esac
 
 if [ ! -d CMSSW_* ]; then
-  scram project $RELEASE_FORMAT
+  scram -a $SCRAM_ARCH  project $RELEASE_FORMAT
   cd $RELEASE_FORMAT
 else
   cd $WORKSPACE/CMSSW_*

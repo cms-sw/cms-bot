@@ -126,7 +126,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   esac
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+CMSBUILD_CMD="PKGTOOLS/cmsBuild --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
 
 # Decide if we already have a release which uses the same CMSDIST.

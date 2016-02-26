@@ -3,65 +3,6 @@ from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
 from es_utils import send_payload
-from es_utils import get_payload
-query_url='http://cmses-master01.cern.ch:9200/jenkins/_search'
-query_running_builds = """ {
-  "query": {
-    "filtered": {
-      "query": {
-        "bool": {
-          "should": [
-            {
-              "query_string": {
-                "query": "job_status:Running",
-                "lowercase_expanded_terms": false
-              }
-            }
-          ]
-        }
-      },
-      "filter": {
-        "bool": {
-          "must": [
-            {
-              "match_all": {}
-            }
-          ]
-        }
-      }
-    }
-  },
-  "highlight": {
-    "fields": {},
-    "fragment_size": 2147483647,
-    "pre_tags": [
-      "@start-highlight@"
-    ],
-    "post_tags": [
-      "@end-highlight@"
-    ]
-  },
-  "size": 500,
-  "sort": [
-    {
-      "_score": {
-        "order": "desc",
-        "ignore_unmapped": true
-      }
-    }
-  ]
-} """
-running_builds_elastic=list()
-content = get_payload(query_url,query_running_builds)
-if content == "":
-  running_builds_elastic = []
-else:
-  content_hash = json.loads(content)
-  last=int(len(content_hash["hits"]["hits"]))
-  for i in range(0,last):
-    running_builds_elastic.append(str(content_hash["hits"]["hits"][i]["_id"]))
-
-running_current=list() 
 path = '/build/jobs'
 index = "jenkins"
 document = "builds-data"
@@ -90,11 +31,6 @@ for root, dirs, files in os.walk(path):
           os.system('touch "' + flagFile + '"')
         else:
           payload['job_status'] = 'Running'
-          running_current.append(id)
         send_payload(index,document,id,json.dumps(payload))
       except Exception as e:
         print "Xml parsing error" , e
-for build in running_builds_elastic:
-  if build not in running_current:
-    send_payload(index,document,build,'{"job_status":"unkown-stale"}')
-    print "job status marked as unkown-stale"

@@ -2,7 +2,7 @@
 ARCHITECTURE=$1
 RELEASE_FORMAT=$2
 WORKSPACE="${WORKSPACE-$PWD}"
-
+ls /cvmfs/cms-ib.cern.ch || true
 cd $WORKSPACE
 rm -rf llvm-analysis reports
 mkdir -p llvm-analysis reports

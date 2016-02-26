@@ -11,7 +11,7 @@ function Jenkins_GetCPU ()
   fi
   echo $ACTUAL_CPU
 }
-
+ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
 scram project $RELEASE_FORMAT
 cd $RELEASE_FORMAT

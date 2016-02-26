@@ -47,6 +47,7 @@ echo 'COMPARISON_ARCH;'$COMPARISON_ARCH >> $DETAILS_FILE
 echo 'MACHINE ARCHITECTURE:' >> $DETAILS_FILE
 cat /proc/cpuinfo |  grep "model name" >> $DETAILS_FILE
 
+ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
 scram project $RELEASE_FORMAT
 cd $RELEASE_FORMAT

@@ -77,3 +77,9 @@ USERS_TO_TRIGGER_HOOKS = set(SPECIAL_RELEASE_MANAGERS + [ m for rel in RELEASE_M
 RELEASE_BRANCH_MILESTONE["CMSSW_8_1_X"]=59
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_8_1_X")
 RELEASE_MANAGERS["CMSSW_8_1_X"]=["degano"]
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_8_0_0_patchX release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_8_0_0_patchX"]=60
+

@@ -67,7 +67,6 @@ for root, dirs, files in os.walk(path):
       payload['build_number'] = job_info[-1]
       payload['url'] = "https://cmssdt.cern.ch/jenkins/job/" + job_info[3] + "/" + job_info[-1] + "/"
       id = sha1(root).hexdigest()
-      all_local.append(id)
       try:
         tree = ET.parse(logFile)
         root = tree.getroot()
@@ -81,6 +80,7 @@ for root, dirs, files in os.walk(path):
           os.system('touch "' + flagFile + '"')
         else:
           payload['job_status'] = 'Running'
+          all_local.append(id)
         send_payload(index,document,id,json.dumps(payload))
       except Exception as e:
         print "Xml parsing error" , e

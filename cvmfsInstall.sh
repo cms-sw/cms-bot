@@ -4,6 +4,7 @@ CMS_WEEK=$2
 RELEASE_NAME=$3
 export BASEDIR=/cvmfs/cms-ib.cern.ch
 export BASEDESTDIR=/cvmfs/cms-ib.cern.ch
+export PROOTDIR=/build/cmsbuild/proot
 export THISDIR=`pwd`
 export LANG=C
 # The disk where cvmfs is mounted
@@ -30,7 +31,7 @@ if [ `touch $BASEDIR/is_writable 2> /dev/null; echo "$?"` -eq 0 ]; then
 rm $BASEDIR/is_writable
 else
 echo CVMFS filesystem is not writable. Aborting.
-echo " " | mail -s "cms-ib.cern.ch cannot be set to transaction" alessandro.degano@cern.ch
+echo " " | mail -s "cms-ib.cern.ch cannot be set to transaction" cms-sdt-logs@cern.ch
 exit 1
 fi
 
@@ -57,12 +58,23 @@ for dir in $(find $BASEDESTDIR/* -maxdepth 0 -type d | grep -G "20[0-9][0-9]-[0-
 
 dockerrun()
 {
-  if [ X$(echo $SCRAM_ARCH | cut -d"_" -f 1) == "Xslc7" ]; then
-    ARGS="cd $THISDIR; $@"
-    docker run -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-installer:latest sh -c "$ARGS"
-  else
-    eval $@
-  fi
+  case "$SCRAM_ARCH" in
+    slc7_amd64_* )
+      ARGS="cd $THISDIR; $@"
+      docker run -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-installer:latest sh -c "$ARGS"
+      ;;
+    slc7_aarch64_* )
+      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
+      $PROOTDIR/proot -R $PROOTDIR/centos-7.2.1511-aarch64-rootfs -b ${THISDIR}:${THISDIR} -b ${WORKDIR}:${WORKDIR} -w ${THISDIR} -q "$PROOTDIR/qemu-aarch64 -cpu cortex-a57" sh -c "$ARGS"
+      ;;
+    fc22_ppc64le_* )
+      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
+      $PROOTDIR/proot -R $PROOTDIR/fedora-22-ppc64le-rootfs -b ${THISDIR}:${THISDIR} -b ${WORKDIR}:${WORKDIR} -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
+      ;;
+    * )
+      eval $@
+      ;;
+  esac
 }
 
 

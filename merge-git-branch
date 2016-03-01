@@ -107,7 +107,7 @@ fi
 if [ "X`git diff --name-only HEAD origin/$TARGET_BRANCH | tail -1`" != "X" ]; then
   #Finaly, push the local target branch to remote target branch
   if [ ! "X$PUSH_UPDATES" = "X" ] ; then
-    git push origin $TARGET_BRANCH
+    git push origin $TARGET_BRANCH >> $GIT_DIFF_LOGFILE 2>&1
   else
     echo "Skipped pushing updates to remote due to env variable PUSH_UPDATES not set"
   fi

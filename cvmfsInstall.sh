@@ -69,7 +69,7 @@ dockerrun()
       ;;
     fc22_ppc64le_* )
       ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R $PROOTDIR/fedora-22-ppc64le-rootfs -b ${THISDIR}:${THISDIR} -b ${WORKDIR}:${WORKDIR} -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
+      $PROOTDIR/proot -R $PROOTDIR/fedora-22-ppc64le-rootfs -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
       ;;
     * )
       eval $@

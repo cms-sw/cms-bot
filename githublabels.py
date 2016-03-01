@@ -24,6 +24,7 @@ COMMON_LABELS = {
 }
 
 COMPARISON_LABELS = {
+  "comparison-notrun" : "bfe5bf",
   "comparison-available" : LABEL_TYPES["approved"],
   "comparison-pending" : LABEL_TYPES["pending"],
 }

@@ -177,7 +177,7 @@ fi
 ONLY_FIREWORKS=false
 if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
   ls $WORKSPACE/$RELEASE_FORMAT/src
-  NUM_DIRS=$((`(find $WORKSPACE/$RELEASE_FORMAT/src -maxdepth 1 -type d -print | grep -v '.git' | grep -v 'FWCore' | wc -l)`-1))
+  NUM_DIRS=$((`(find $WORKSPACE/$RELEASE_FORMAT/src -maxdepth 1 -type d -print | grep -v '.git' | wc -l)`-1))
   if [ "$NUM_DIRS" == 1 ]; then
     if ls | grep 'Fireworks'; then
       ONLY_FIREWORKS=true
@@ -492,7 +492,9 @@ else
   echo 'MATRIX_TESTS;NOTRUN' >> $RESULTS_FILE
   echo 'COMPARISON;NOTRUN' >> $RESULTS_FILE
   echo 'IGPROF;NOTRUN' >> $RESULTS_FILE
-
+  if [ "X$CMSDIST_ONLY" == Xfalse ]; then
+    $WORKSPACE/cms-bot/comment-gh-pr -r $PUB_REPO -p $PULL_REQUEST -m 'Comparison not run due to Fireworks only changes (RelVals and Igprof tests were also skipped)'
+  fi
 fi
 
 #

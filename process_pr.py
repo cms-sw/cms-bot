@@ -228,6 +228,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   already_seen = False
   pull_request_updated = False
   comparison_done = False
+  comparison_notrun = False
   tests_already_queued = False
   tests_requested = False
   mustMerge = False
@@ -319,6 +320,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       if not issue.pull_request: continue
       if re.match("Comparison is ready", first_line):
         comparison_done = True
+        comparison_notrun = False
+        trigger_test_on_signature = False
+      elif re.match("^Comparison not run.+",first_line):
+        comparison_notrun = True
+        comparison_done = False
         trigger_test_on_signature = False
       elif re.match( FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
         tests_already_queued = False
@@ -373,6 +379,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
             print 'cms-bot will request test for this PR'
             tests_requested = True
             comparison_done = False
+            comparison_notrun = False
             if cmssw_repo:
               cmsdist_pr = m.group(CMSDIST_PR_INDEX)
               if not cmsdist_pr: cmsdist_pr = ''
@@ -433,6 +440,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if cmssw_repo and issue.pull_request:
     if comparison_done:
       labels.append("comparison-available")
+    elif comparison_notrun:
+      labels.append("comparison-notrun")
     else:
       labels.append("comparison-pending")
 

@@ -19,12 +19,11 @@ rm -rf CMSDIST cms PKGTOOLS
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 
-CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
-eval `curl -s -k $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+CONFIG_MAP_URL="${WORKSPACE}/cms-bot/config.map"
+eval `cat $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 git clone -b $CMSDIST_TAG  git@github.com:$CMSDIST_REPO/cmsdist.git   CMSDIST
 git clone -b $PKGTOOLS_TAG git@github.com:$PKGTOOLS_REPO/pkgtools.git PKGTOOLS
-git clone -b $PKGTOOLS_TAG git@github.com:$PKGTOOLS_REPO/int-build.git IntBuild
 
 pushd CMSDIST; 
   git checkout $CMSDIST_TAG;
@@ -46,11 +45,11 @@ DOW=`python -c "import os;from datetime import datetime;print datetime.strptime(
 HOUR=`python -c "import os;from datetime import datetime;print datetime.strptime(os.environ['RELEASE_NAME'].replace('_X_SLHC_', '_X_').rsplit('_X_')[1], '%Y-%m-%d-%H00').strftime('%H').lower()"`
 CMSSW_MAJOR_MINOR=`echo $RELEASE_NAME | sed -e 's/CMSSW_\([0-9]*\)_\([0-9]*\).*/\1.\2/g'`
 
-PKGTOOLS/cmsBuild --debug -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
+PKGTOOLS/cmsBuild -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
 
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src
   tar xzf src-logs.tgz
-  python ${WORKSPACE}/IntBuild/IB/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/${RELEASE_FORMAT}/new_FWLITE/"
+  python ${WORKSPACE}/cms-bot/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/${RELEASE_FORMAT}/new_FWLITE/"
   cd ../html
   zip -r ../html-logs.zip ./
   cd ..

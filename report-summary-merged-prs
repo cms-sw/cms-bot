@@ -957,10 +957,10 @@ if __name__ == "__main__":
   JENKINS_ARTIFACTS_SUBDIR = "SDT/jenkins-artifacts"
   JENKINS_ARTIFACTS_DIR = CMSSDT_DIR+"/"+JENKINS_ARTIFACTS_SUBDIR
   # I used this type of concatenation because the string has %s inside
-  MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
+  MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
   MAGIC_COMMAD_FIND_RESULTS_RELVALS  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 6 -maxdepth 6 -path "*/pyRelValMatrixLogs/run/runall-report-step123-.log"'
   MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS ="find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
-  MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge "'
+  MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge "'
   MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name unitTests-summary.log'
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name addOnTests.log'
   MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
@@ -1004,7 +1004,7 @@ if __name__ == "__main__":
   # {
   #   "<IBName>": [ "arch1" , "arch2" , ... ,"archN" ]
   # }
-  MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "%b", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
+  MAGIC_COMMAND_FIND_ALL_TAGS ='GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
   # This regular expression allows to identify if a merge commit is an automatic forward port
   AUTO_FORWARD_PORT_REGEX='^.*Merge CMSSW.+ into CMSSW.+$'
 

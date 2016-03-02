@@ -5,8 +5,8 @@ RELEASE=$1
 ARCH=$2
 WAIT_STEP=$3
 MAX_WAIT=$4
-if [ "X$RELEASE" = "X" ] ; then echo "Error: Missing release name"     ; echo "Usage: $0 RELEASE ARCH [WAIT_STEP] [MAX_WAIT]"; exit 1;  fi
-if [ "X$ARCH" = "X" ]    ; then echo "Error: Missing architecture name"; echo "Usage: $0 RELEASE ARCH [WAIT_STEP] [MAX_WAIT]"; exit 1;  fi
+if [ "X$RELEASE" = "X" ] ; then echo "Error: Missing release name"     ; echo "Usage: $0 RELEASE ARCH [WAIT_STEP: default 120s] [MAX_WAIT: default 7200s]"; exit 1;  fi
+if [ "X$ARCH" = "X" ]    ; then echo "Error: Missing architecture name"; echo "Usage: $0 RELEASE ARCH [WAIT_STEP: default 120s] [MAX_WAIT: default 7200s]"; exit 1;  fi
 
 if [ "X$WAIT_STEP" = "X" ] ; then WAIT_STEP=120; fi
 if [ "X$MAX_WAIT" = "X" ]  ; then MAX_WAIT=7200; fi

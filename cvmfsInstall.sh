@@ -133,8 +133,8 @@ for REPOSITORY in $REPOSITORIES; do
       for x in $REL_TO_INSTALL; do
         APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; \
         apt-get install -q -y $x || true; \
-        apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
-        apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true" ;
+        time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
+        time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true" ;
         dockerrun $APT_INSTALL ;
         relname=`echo $x | awk -F + '{print $NF}'` ;
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;

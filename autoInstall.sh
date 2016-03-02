@@ -83,8 +83,8 @@ for REPOSITORY in $REPOSITORIES; do
     fi;
     for x in $RELS_TO_INSTALL; do
       apt-get install -q -y $x || true;
-      apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
-      apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
+      time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
+      time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
       relname=`echo $x | awk -F + '{print $NF}'` ;
       timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
       if [ "X$timestamp" != "X" ] ; then

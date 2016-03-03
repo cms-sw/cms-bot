@@ -471,6 +471,7 @@ class ReleaseTester():
       cmd= "cd "+self.cmsswBuildDir+"; rm -rf src;"
       cmd+="curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/"+ver+".tar.gz;"
       cmd+="tar -xzf src.tar.gz; mv cmssw-"+ver+" src; rm -rf src.tar.gz;"
+      cmd+="mv src/Geometry/TrackerSimData/data src/Geometry/TrackerSimData/data.backup;"
       cmd+="scram build -r echo_CXX"
       doCmd(cmd)
     except Exception, e :

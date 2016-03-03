@@ -319,13 +319,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     if commenter == cmsbuild_user:
       if not issue.pull_request: continue
       if re.match("Comparison is ready", first_line):
-        comparison_done = True
-        comparison_notrun = False
-        trigger_test_on_signature = False
+        if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
       elif re.match("^Comparison not run.+",first_line):
-        comparison_notrun = True
-        comparison_done = False
-        trigger_test_on_signature = False
+        if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
       elif re.match( FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
         tests_already_queued = False
         tests_requested = False
@@ -348,6 +344,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         trigger_test_on_signature = False
         tests_already_queued = False
         tests_requested = False
+        comparison_done = False
+        comparison_notrun = False
         if re.match('^\s*[+]1\s*$', first_line):
           signatures["tests"] = "approved"
         else:

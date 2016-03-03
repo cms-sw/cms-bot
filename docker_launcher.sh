@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-voms-proxy-init -valid 24:00
+voms-proxy-init -valid 24:00 || true
 export X509_USER_PROXY=/tmp/x509up_u`id -u`
 
 if [ "X$DOCKER_IMG" != X ]; then

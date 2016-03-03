@@ -826,3 +826,5 @@ OlivierBondu:
 - RecoLocalTracker/Records
 - RecoLocalTracker/SiStrip*
 - RecoLocalTracker/SubCollectionProducers
+agrohsje:
+- GeneratorInterface

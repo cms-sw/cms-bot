@@ -44,6 +44,11 @@ find $BASEDIR -maxdepth 1 -mindepth 1 | sort -V | head -n -2 | xargs --no-run-if
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
+  if [ "X$CMS_WEEK" != "X" -a "$CMS_WEEK" != "cms.week$WEEK" ] ; then
+    echo "Skipping week for $REPOSITORY"
+    continue
+  fi
+  echo "Checking week $REPOSITORY ($WEEK) for RPMS"
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH
   DESTDIR=$BASEDESTDIR/vol$WEEK
   if [ ! -e $DESTDIR ] ; then DESTDIR=$BASEDESTDIR/$REPOSITORY ; fi

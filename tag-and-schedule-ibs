@@ -17,6 +17,7 @@ cd cmssw
 
 DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
 HOUR=`echo $DATE | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
+ORDER_INDEX=0
 for QUEUE in $RELEASE_QUEUES; do
   unset RELEASE_BRANCH
   unset BUILD_HOUR
@@ -44,17 +45,20 @@ for QUEUE in $RELEASE_QUEUES; do
   for ARCH_CONFIG in `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;"`; do
     DOCKER_IMG=
     eval $ARCH_CONFIG
-    echo "RELEASE_NAME=$RELEASE_NAME" > $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
-    echo "DATE_FORMAT=$DATE" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
-    echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
-    echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
-    echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
-    echo "DOCKER_IMG=${DOCKER_IMG}"  >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+    echo "RELEASE_NAME=$RELEASE_NAME" > $WORKSPACE/properties
+    echo "DATE_FORMAT=$DATE" >> $WORKSPACE/properties
+    echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties
+    echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties
+    echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties
+    echo "DOCKER_IMG=${DOCKER_IMG}"  >> $WORKSPACE/properties
     if [ "X$ALWAYS_BUILD" = X ]; then
-      echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+      echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties
     else
-      echo "RELEASE_LIST=" >> $WORKSPACE/properties-$RELEASE_NAME-$SCRAM_ARCH.txt
+      echo "RELEASE_LIST=" >> $WORKSPACE/properties
     fi
+    ORDER_INDEX=`expr $ORDER_INDEX + 1`
+    BUILD_ORDER=`echo 000${ORDER_INDEX} | tail -c 4`
+    mv $WORKSPACE/properties $WORKSPACE/properties-${BUILD_ORDER}-${RELEASE_NAME}-${SCRAM_ARCH}.txt
   done
 done
 

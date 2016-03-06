@@ -1,8 +1,11 @@
 #!/bin/bash -ex
 voms-proxy-init -valid 24:00 || true
 export X509_USER_PROXY=/tmp/x509up_u`id -u`
-
-if [ "X$DOCKER_IMG" != X ]; then
+RUN_NATIVE=
+if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
+  RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
+fi
+if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   DOCK_ARGS="kinit cmsbuild@CERN.CH -k -t /home/cmsbuild/cmsbuild.keytab || true; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
   docker run -h `hostname` \

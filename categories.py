@@ -1035,6 +1035,8 @@ CMSSW_CATEGORIES={
    "L1Trigger/L1GctAnalyzer",
    "L1Trigger/L1TGlobal",
    "L1Trigger/L1TNtuples",
+   "L1Trigger/L1TMuonBarrel",
+   "L1Trigger/L1TMuonOverlap",
    "L1Trigger/RPCTechnicalTrigger",
    "L1Trigger/RPCTrigger",
    "L1Trigger/RegionalCaloTrigger",

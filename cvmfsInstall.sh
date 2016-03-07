@@ -149,7 +149,7 @@ for REPOSITORY in $REPOSITORIES; do
         if (( $CURRENT_SIZE - $INITIAL_SIZE > $PUBLISH_THRESHOLD )); then
           # If we already installed more than the threshold publish, put again the repository in transaction and reset INITIAL_SIZE
           echo "Threshold passed, forcing publishing."
-          cvmfs_server publish
+          time cvmfs_server publish
           cvmfs_server transaction
           INITIAL_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
         fi

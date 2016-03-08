@@ -19,7 +19,7 @@ while [ true ] ; do
   for proj in cmssw cmssw-patch ; do
     for dir in $IB_WEEK_DIR; do
       if [ -d ${dir}/$ARCH/cms/$proj/$RELEASE ] ; then exit 0 ; fi
-    fi
+    done
   done
   if [ $TOTAL_WAIT -gt $MAX_WAIT ] ; then exit 1; fi
   echo "Waiting for IB since ${TOTAL_WAIT} secs"

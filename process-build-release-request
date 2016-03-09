@@ -87,6 +87,7 @@ JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
 JENKINS_RELEASE='RELEASE'
 JENKINS_PREV_CMSDIST_TAG='PREVIOUS_CMSDIST_TAG'
 JENKINS_CMSDIST_TAG='CMSDIST_TAG'
+JENKINS_BUILD_DIR='BUILD_DIR'
 ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
                         'The {rel_type} {is_patch}release {rel_name} is now available '\
                         'for the following architectures:\n\n'\
@@ -264,6 +265,8 @@ def create_properties_files( issue, release_name, architectures, issue_number, q
     out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img) )
     tool_conf_param = 'true' if only_toolconf else 'false'
     out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, tool_conf_param ) )
+    if arch.startswith('fc22_ppc64le_'):
+      out_file.write( '%s=%s\n' % ( JENKINS_BUILD_DIR , 'data1') )
 
 
 #

@@ -1,16 +1,22 @@
 #!/bin/sh -ex
+WORKSPACE=`/bin/pwd`/..
 cd $WORKSPACE
 
 CONFIG_MAP_PATH="$WORKSPACE/cms-bot/config.map"
 RELEASE_FILTER=${RELEASE_FILTER-.*}
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
-RELEASE_QUEUES="`cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep -e \"SCRAM_ARCH=$ARCHITECTURE_FILTER;\" | grep -e \"RELEASE_QUEUE=$RELEASE_FILTER;\" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//' | sort -u`"
+
+RELEASE_QUEUES=""
+for q in `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep -e "SCRAM_ARCH=$ARCHITECTURE_FILTER;" | grep -e "RELEASE_QUEUE=$RELEASE_FILTER;" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//'` ; do
+  if [ "X`echo " $RELEASE_QUEUES " | grep " $q " | wc -l`" = "X1" ] ; then continue; fi
+  RELEASE_QUEUES="$RELEASE_QUEUES $q"
+  echo $RELEASE_QUEUES
+done
 
 if [ "X$RELEASE_QUEUES" = X ]; then
   echo No releases found to build.
   exit 1
 fi
-
 rm -rf cmssw
 git clone --reference /afs/cern.ch/cms/git-cmssw-mirror/cmssw.git git@github.com:cms-sw/cmssw.git cmssw
 cd cmssw

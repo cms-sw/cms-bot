@@ -256,26 +256,24 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
     add_inprogress_item(title_cell,' Static Analyzer')
     return
   }
-  if (isFound == 'found'){
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/'+isFound+'/llvm-analysis/index.html'
-    var sa_link = $("<a></a>").attr("href", url)
-    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
-    sa_link.append($('<span></span>').text(' Static Analyzer'))
-    title_cell.append(sa_link)
-    title_cell.append($("<br>"))
+  var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/'+isFound+'/llvm-analysis/index.html'
+  var sa_link = $("<a></a>").attr("href", url)
+  sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+  sa_link.append($('<span></span>').text(' Static Analyzer'))
+  title_cell.append(sa_link)
+  title_cell.append($("<br>"))
 
-    var sa2_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/modules2statics.txt"))
-    sa2_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
-    sa2_link.append($('<span></span>').text(' Modules to thread unsafe statics'))
-    title_cell.append(sa2_link)
-    title_cell.append($("<br>"))
+  var sa2_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/modules2statics.txt"))
+  sa2_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+  sa2_link.append($('<span></span>').text(' Modules to thread unsafe statics'))
+  title_cell.append(sa2_link)
+  title_cell.append($("<br>"))
 
-    var sa3_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/tlf2esd.txt"))
-    sa3_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
-    sa3_link.append($('<span></span>').text(' Modules to thread unsafe EventSetup products'))
-    title_cell.append(sa3_link)
-    title_cell.append($("<br>"))
-  }
+  var sa3_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/tlf2esd.txt"))
+  sa3_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+  sa3_link.append($('<span></span>').text(' Modules to thread unsafe EventSetup products'))
+  title_cell.append(sa3_link)
+  title_cell.append($("<br>"))
 }
 
 /**

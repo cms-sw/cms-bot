@@ -239,7 +239,7 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
 
 }
 
-add_inprogress_item(title_cell, test_name){
+add_inprogress_item = function (title_cell, test_name){
   title_cell.append($('<span class="glyphicon glyphicon-refresh"></span>'))
   title_cell.append($('<span></span>').text(test_name))
   title_cell.append($("<br>"))

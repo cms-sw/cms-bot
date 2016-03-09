@@ -1014,7 +1014,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME/ARCHITECTURE'
   MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
   MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
-  COMPARISON_BASELINE_TESTS_URL = 'https://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'
+  COMPARISON_BASELINE_TESTS_URL = 'https://cmssdt.cern.ch/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'
   MAGIC_COMMAND_FIND_HLT_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/HLT-Validation/RELEASE_NAME'
   MAGIC_COMMAND_FIND_DQM_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/ib-dqm-tests/RELEASE_NAME'
   CONFIG_MAP_FILE = 'config.map'

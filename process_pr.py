@@ -388,17 +388,32 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
     # Check L2 signoff for users in this PR signing categories
     if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
+      ctype = ""
+      selected_cats = []
       if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
-        for sign in CMSSW_L2[commenter]:
+        ctype = "+1"
+        selected_cats = CMSSW_L2[commenter]
+      elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
+        ctype = "-1"
+        selected_cats = CMSSW_L2[commenter]
+      elif re.match("^[+-][a-z][a-z0-9]+$", first_line, re.I):
+        category_name = first_line[1:].lower()
+        if category_name in CMSSW_L2[commenter]:
+          ctype = first_line[0]+"1"
+          selected_cats = [ category_name ]
+      elif re.match("^(reopen)$", first_line, re.I):
+        ctype = "reopen"
+      if ctype == "+1":
+        for sign in selected_cats:
           signatures[sign] = "approved"
           has_categories_approval = True
           if sign == "orp": mustClose = False
-      elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
-        for sign in CMSSW_L2[commenter]:
+      elif ctype == "-1":
+        for sign in selected_cats:
           signatures[sign] = "rejected"
           has_categories_approval = False
           if sign == "orp": mustClose = True
-      elif re.match("^(reopen)$", first_line, re.I):
+      elif ctype == "reopen":
         if "orp" in CMSSW_L2[commenter]:
           signatures["orp"] = "pending"
           mustClose = False
@@ -505,7 +520,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         issue_url=CMSSW_ISSUE_COMMANDS)
     elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):
       issueMessage = "This issue is fully signed and ready to be closed."
-    print "Issue Maeeage:",issueMessage
+    print "Issue Message:",issueMessage
     if issueMessage and not dryRun: issue.create_comment(issueMessage)
     return
 

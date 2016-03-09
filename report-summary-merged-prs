@@ -589,6 +589,8 @@ def print_results(results):
       print '\t' + 'DQM Tests: ' + comp['dqm_tests']
       print '\t' + 'Static Checks: ' + comp['static_checks']
       print '\t' + 'Valgrind: ' + comp['valgrind']
+      print '\t' + 'Comparison Baseline: ' + comp['comp_baseline']
+      print '\t' + 'Comparison Baseline State: ' + comp['comp_baseline_state']
 
       cmsdist_tags = comp['cmsdistTags']
       print '\t' + 'cmsdist Tags:'+ str( cmsdist_tags )
@@ -677,6 +679,9 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp['hlt_tests' ] = 'not-found'
       if not comp.get( 'valgrind' ):
         comp['valgrind' ] = 'not-found'
+      if not comp.get( 'comp_baseline' ):
+        comp['comp_baseline' ] = 'not-found'
+        comp['comp_baseline_state' ] = 'errors'
       if not comp.get( 'dqm_tests' ):
         comp['dqm_tests' ] = 'not-found'
 
@@ -696,6 +701,17 @@ def add_tests_to_results( results, unit_tests, relvals_results,
       comp['tests_archs'] = list(set(a+b+c))
 
 
+#
+# Finds for an IB the results of the Comparison BaseLine
+#
+def find_comparison_baseline_results( comparisons , architecture ):
+  for comp in comparisons:
+    rel_name = comp['compared_tags'].split('-->')[1]
+    print 'Looking for comparison baseline results for ', rel_name
+    comp['comp_baseline'] = find_one_comparison_baseline( rel_name , architecture )
+    comp['comp_baseline_state']="errors"
+    if comp ['comp_baseline'] != 'not-found':
+      comp['comp_baseline_state'] = find_one_comparison_baseline_errors( rel_name , architecture )
 #
 # Finds for an IB the results of the valgrind
 #
@@ -758,6 +774,35 @@ def find_one_valgrind( release_name , architecture ):
   if ret_code == 0:
     print 'found'
     return 'found'
+  print 'not-found'
+  return 'not-found'
+
+#
+# Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not, the value is 'errors'
+#
+def find_one_comparison_baseline_errors( release_name , architecture ):
+  command_to_execute = MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS.replace('RELEASE_NAME',release_name)
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
+  out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
+  if out == "":
+    return "ok"
+  else:
+    return "errors"
+
+#
+# Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is ''
+#
+def find_one_comparison_baseline( release_name , architecture ):
+  command_to_execute = MAGIC_COMMAND_FIND_COMPARISON_BASELINE.replace('RELEASE_NAME',release_name)
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
+  out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
+  if ret_code == 0:
+    print 'found'
+    return COMPARISON_BASELINE_TESTS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE', architecture )
   print 'not-found'
   return 'not-found'
 
@@ -965,12 +1010,12 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name addOnTests.log'
   MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
-  STATIC_CHECKS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
-  HLT_TESTS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/HLT-Validation/RELEASE_NAME/'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
   MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME/ARCHITECTURE'
+  MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
+  MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
+  COMPARISON_BASELINE_TESTS_URL = 'https://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'
   MAGIC_COMMAND_FIND_HLT_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/HLT-Validation/RELEASE_NAME'
-  DQM_TESTS_URL = 'http://' + ARTIFACTS_MACHINE + '/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-dqm-tests/RELEASE_NAME/'
   MAGIC_COMMAND_FIND_DQM_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/ib-dqm-tests/RELEASE_NAME'
   CONFIG_MAP_FILE = 'config.map'
   # this will be filled using config.map by get_config_map_params()
@@ -1095,6 +1140,8 @@ if __name__ == "__main__":
           find_static_results( release_queue_results['comparisons'] , arch )
         if 'valgrind' in tests_to_find:
           find_valgrind_results( release_queue_results['comparisons'] , arch )
+        if 'baseline' in tests_to_find:
+          find_comparison_baseline_results( release_queue_results['comparisons'] , arch )
     find_dqm_tests_results( release_queue_results['comparisons'] ) 
     results.append(release_queue_results)
   

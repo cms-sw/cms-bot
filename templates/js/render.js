@@ -266,6 +266,20 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
 }
 
 /**
+ * Generates the comparison baseline tests link link and adds it to the cell for the IB
+ */
+add_comp_baseline_tests_link = function ( title_cell, isFound, currentTag, test_state ){
+  if ( isFound == 'not-found' ){return}
+  var url = isFound
+  var sa_link = $("<a></a>").attr("href", url)
+  if (test_state = 'ok'){sa_link.append($('<span class="glyphicons glyphicons-ok-sign"></span>'))}
+  else{sa_link.append($('<span class="glyphicons glyphicons-warning-sign"></span>'))}
+  sa_link.append($('<span></span>').text(' Comparison Baseline'))
+  title_cell.append(sa_link)
+  title_cell.append($("<br>"))
+}
+
+/**
  * Generates the hlt tests link link and adds it to the cell for the IB
  */
 add_hlt_tests_link = function ( title_cell, isFound, currentTag ){
@@ -411,6 +425,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
  
   add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
   title_cell.append($('<br>'))
+  add_comp_baseline_tests_link( title_cell , comparison.comp_baseline , current_tag, comparison.comp_baseline_state )
   add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
   add_valgrind_tests_link( title_cell , comparison.valgrind , current_tag )
   add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )

@@ -274,7 +274,7 @@ add_comp_baseline_tests_link = function ( title_cell, isFound, currentTag, test_
   if ( isFound == 'not-found' ){return}
   var url = isFound
   var sa_link = $("<a></a>").attr("href", url)
-  if (test_state = 'ok'){sa_link.append($('<span class="glyphicon glyphicon-ok-sign"></span>'))}
+  if (test_state == 'ok'){sa_link.append($('<span class="glyphicon glyphicon-ok-sign"></span>'))}
   else{sa_link.append($('<span class="glyphicon glyphicon-warning-sign"></span>'))}
   sa_link.append($('<span></span>').text(' Comparison Baseline'))
   title_cell.append(sa_link)

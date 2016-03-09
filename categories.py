@@ -988,6 +988,7 @@ CMSSW_CATEGORIES={
    "DataFormats/Scalers",
    "DataFormats/L1TCalorimeter",
    "DataFormats/L1TGlobal",
+   "DataFormats/L1TMuon",
    "L1Trigger/L1TCalorimeter",
    "L1Trigger/L1THGCal",
    "L1Trigger/L1TCommon",

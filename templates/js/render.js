@@ -239,28 +239,39 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
 
 }
 
+add_inprogress_item(title_cell, test_name){
+  title_cell.append($('<span class="glyphicon glyphicon-refresh"></span>'))
+  title_cell.append($('<span></span>').text(test_name))
+  title_cell.append($("<br>"))
+}
+
 /**
  * Generates the static analyzer link and adds it to the cell for the IB
  * isFound is equal to te architecture where the test is found, if not found
  * the value is 'not-found'
  */
 add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
-  if ( isFound != 'not-found'){
+  if (isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' Static Analyzer')
+    return
+  }
+  if (isFound == 'found'){
     var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/'+isFound+'/llvm-analysis/index.html'
     var sa_link = $("<a></a>").attr("href", url)
-    sa_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
+    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' Static Analyzer'))
     title_cell.append(sa_link)
     title_cell.append($("<br>"))
 
     var sa2_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/modules2statics.txt"))
-    sa2_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
+    sa2_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa2_link.append($('<span></span>').text(' Modules to thread unsafe statics'))
     title_cell.append(sa2_link)
     title_cell.append($("<br>"))
 
     var sa3_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/tlf2esd.txt"))
-    sa3_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
+    sa3_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa3_link.append($('<span></span>').text(' Modules to thread unsafe EventSetup products'))
     title_cell.append(sa3_link)
     title_cell.append($("<br>"))
@@ -271,7 +282,11 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
  * Generates the comparison baseline tests link link and adds it to the cell for the IB
  */
 add_comp_baseline_tests_link = function ( title_cell, isFound, currentTag, test_state ){
-  if ( isFound == 'not-found' ){return}
+  if (isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' Comparison Baseline')
+    return
+  }
   var url = isFound
   var sa_link = $("<a></a>").attr("href", url)
   if (test_state == 'ok'){sa_link.append($('<span class="glyphicon glyphicon-ok-sign"></span>'))}
@@ -285,7 +300,12 @@ add_comp_baseline_tests_link = function ( title_cell, isFound, currentTag, test_
  * Generates the hlt tests link link and adds it to the cell for the IB
  */
 add_hlt_tests_link = function ( title_cell, isFound, currentTag ){
-  if ( isFound == 'found' ){
+  if (isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' HLT Validation')
+    return
+  }
+  if (isFound == 'found' ){
     var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/HLT-Validation/' + currentTag 
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
@@ -299,7 +319,12 @@ add_hlt_tests_link = function ( title_cell, isFound, currentTag ){
  *  * Generates the dqm tests link link and adds it to the cell for the IB
  *   */
 add_dqm_tests_link = function ( title_cell, isFound, currentTag ){
-  if ( isFound == 'found' ){
+  if (isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' DQM Tests')
+    return
+  }
+  if (isFound == 'found' ){
     var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-dqm-tests/' + currentTag
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
@@ -313,6 +338,11 @@ add_dqm_tests_link = function ( title_cell, isFound, currentTag ){
  * Generates the valgrind tests link link and adds it to the cell for the IB
  */
 add_valgrind_tests_link = function ( title_cell, isFound, currentTag ){
+  if ( isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' Valgrind')
+    return
+  }
   if ( isFound == 'found' ){
     var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/valgrind/' + currentTag 
     var sa_link = $("<a></a>").attr("href", url)
@@ -328,7 +358,11 @@ add_valgrind_tests_link = function ( title_cell, isFound, currentTag ){
  * and addsit to the cell for the IB
  */
 add_rv_exceptions_link = function ( title_cell, isFound, currentTag ){
-
+  if ( isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' Relvals Exceptions Summary')
+    return
+  }
   if ( isFound ){
     var url = 'http://cms-sw.github.io/relvalsExceptions.html#' + currentTag
     var sa_link = $("<a></a>").attr("href", url)

@@ -759,8 +759,8 @@ def find_one_static_check( release_name , architecture ):
   if ret_code == 0:
     print 'found'
     return architecture
-  print 'not-found'
-  return 'not-found'
+  print 'inprogress'
+  return 'inprogress'
 
 #
 # Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is ''
@@ -774,8 +774,8 @@ def find_one_valgrind( release_name , architecture ):
   if ret_code == 0:
     print 'found'
     return 'found'
-  print 'not-found'
-  return 'not-found'
+  print 'inprogress'
+  return 'inprogress'
 
 #
 # Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not, the value is 'errors'
@@ -803,8 +803,8 @@ def find_one_comparison_baseline( release_name , architecture ):
   if ret_code == 0:
     print 'found'
     return COMPARISON_BASELINE_TESTS_URL.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE', architecture )
-  print 'not-found'
-  return 'not-found'
+  print 'inprogress'
+  return 'inprogress'
 
 #
 # Looks for one hlt test result for the IB, if it finds it, the value is 'found' if not, the value is ''
@@ -815,8 +815,8 @@ def find_one_hlt_test( release_name ):
   if ret_code == 0:
     print 'found'
     return 'found'
-  print 'not-found'
-  return 'not-found'
+  print 'inprogress'
+  return 'inprogress'
 
 #
 # Looks for one dqm test result for the IB, if it finds it, the value is 'found' if not, the value is ''
@@ -827,9 +827,8 @@ def find_one_dqm_test( release_name ):
   if ret_code == 0:
     print 'found'
     return 'found'
-  print 'not-found'
-  return 'not-found'
-
+  print 'inprogress'
+  return 'inprogress'
 
 # reads the results and generates a separated json for each release_queue
 # it also generates a csv file with statistics per release_queue and a general one

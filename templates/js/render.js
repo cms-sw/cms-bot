@@ -257,13 +257,13 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
     sa2_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
     sa2_link.append($('<span></span>').text(' Modules to thread unsafe statics'))
     title_cell.append(sa2_link)
-
     title_cell.append($("<br>"))
 
     var sa3_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/tlf2esd.txt"))
     sa3_link.append($('<span class="glyphicon glyphicon-eye-open"></span>'))
     sa3_link.append($('<span></span>').text(' Modules to thread unsafe EventSetup products'))
     title_cell.append(sa3_link)
+    title_cell.append($("<br>"))
   }
 }
 
@@ -426,7 +426,6 @@ write_comp_IB_table =  function( comparison, tab_pane ){
   title_cell.append($('<br>'))
  
   add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
-  title_cell.append($('<br>'))
   add_comp_baseline_tests_link( title_cell , comparison.comp_baseline , current_tag, comparison.comp_baseline_state )
   add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
   add_valgrind_tests_link( title_cell , comparison.valgrind , current_tag )

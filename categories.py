@@ -213,6 +213,7 @@ CMSSW_CATEGORIES={
    "DataFormats/CaloTowers", "DataFormats/CastorReco",
    "DataFormats/PatCandidates",
    "PhysicsTools/PatAlgos",
+   "PhysicsTools/PatUtils",
    "RecoLocalCalo/CaloRecCandCreator",
    "RecoLocalCalo/CaloTowersCreator",
    "RecoLocalCalo/Castor",

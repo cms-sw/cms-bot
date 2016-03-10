@@ -1,0 +1,60 @@
+#!/bin/sh -ex
+
+DRY_RUN=$1
+if [ "X$DRY_RUN" = "Xtrue" ] ; then
+  DRY_RUN=echo
+else
+  DRY_RUN=
+fi
+
+JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
+DIRS_PROCESSED=
+PR_TESTS_TO_KEEP=200
+RUNS_TO_KEEP=2
+#Keep $PR_TESTS_TO_KEEP of these
+for dir in pull-request-integration cmsdist-test-pr ; do
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$PR_TESTS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  for run in `ls -d *`; do
+    ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+  done
+done
+
+RUNS_TO_KEEP=1
+#Keep $PR_TESTS_TO_KEEP of these with RUNS_TO_KEEP
+for dir in  baseLineComparisons ; do
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  ls -rt | head -n -$PR_TESTS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  for run in `ls -d *`; do
+    ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
+  done
+done
+
+#Keep the following for 15 days
+for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-release-afs; do
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +15 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+done
+
+#Keep the following for 8 days
+for dir in valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof; do
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+done
+
+NEW_DIRS=""
+for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 1 -type d | sed 's|.*/||'`; do
+  if [ "X`echo ${DIRS_PROCESSED} | grep ${dir}`" = "X" ] ; then
+    NEW_DIRS="${NEW_DIRS} ${dir}"
+  fi
+done
+
+if [ "X${NEW_DIRS}" != "X" ] ; then
+  echo "New directories: ${NEW_DIRS}" | mail -s '[CMSSDT] Found new Directories to cleanup' cms-sdt-logs@cern.ch
+fi
+
+WEB_LOG_DIR=/data/sdt/buildlogs
+find /data/sdt/buildlogs -mtime +8 -maxdepth 3 -maxdepth 3 -path '*/fwlite/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+

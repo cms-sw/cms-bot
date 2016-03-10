@@ -1,0 +1,28 @@
+#!/bin/sh -ex
+
+# Runs igprof for an IB
+WORKSPACE="${WORKSPACE-$PWD}"
+RELEASE_FORMAT=$1
+ARCHITECTURE=$2
+WORKFLOWS=$3
+scram -a $ARCHITECTURE project $RELEASE_FORMAT
+pushd $RELEASE_FORMAT
+  eval `scram run -sh`
+popd
+
+mkdir "$WORKSPACE/igprof"
+pushd "$WORKSPACE/igprof"
+  runTheMatrix.py $WORKFLOWS --command '--profile mp' 2>&1 | tee -a $WORKSPACE/igprof/runTheMatrix.log
+  find $WORKSPACE/igprof/* -type d | while read d; do
+    echo "processing dir $d"
+    for f in $d/*.gz
+    do
+      echo "processing file $f"
+      OUTFILE=${f//.gz/.sql}
+      echo $OUTFILE
+      igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE 2>&1 | tee -a $WORKSPACE/igprof/igprof-analyse.log
+    done
+  ls $d
+  done
+popd
+

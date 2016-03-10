@@ -589,6 +589,7 @@ def print_results(results):
       print '\t' + 'DQM Tests: ' + comp['dqm_tests']
       print '\t' + 'Static Checks: ' + comp['static_checks']
       print '\t' + 'Valgrind: ' + comp['valgrind']
+      print '\t' + 'Igprof: ' + comp['igprof']
       print '\t' + 'Comparison Baseline: ' + comp['comp_baseline']
       print '\t' + 'Comparison Baseline State: ' + comp['comp_baseline_state']
 
@@ -679,6 +680,8 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp['hlt_tests' ] = 'not-found'
       if not comp.get( 'valgrind' ):
         comp['valgrind' ] = 'not-found'
+      if not comp.get( 'igprof' ):
+        comp['igprof' ] = 'not-found'
       if not comp.get( 'comp_baseline' ):
         comp['comp_baseline' ] = 'not-found'
         comp['comp_baseline_state' ] = 'errors'
@@ -721,6 +724,14 @@ def find_valgrind_results( comparisons , architecture ):
     print 'Looking for valgrind results for ', rel_name
     comp['valgrind'] = find_one_valgrind( rel_name , architecture )
 #
+# Finds for an IB the results of the igprof
+#
+def find_igprof_results( comparisons , architecture ):
+  for comp in comparisons:
+    rel_name = comp['compared_tags'].split('-->')[1]
+    print 'Looking for igprof results for ', rel_name
+    comp['igprof'] = find_one_igprof( rel_name , architecture )
+#
 # Finds for an IB the results of the static tests
 #
 def find_static_results( comparisons , architecture ):
@@ -748,7 +759,7 @@ def find_dqm_tests_results( comparisons ):
 
 
 #
-# Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is ''
+# Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
 #
 def find_one_static_check( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME',release_name)
@@ -763,10 +774,25 @@ def find_one_static_check( release_name , architecture ):
   return 'inprogress'
 
 #
-# Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is ''
+# Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
 #
 def find_one_valgrind( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_VALGRIND.replace('RELEASE_NAME',release_name)
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
+  out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
+  if ret_code == 0:
+    print 'found'
+    return 'found'
+  print 'inprogress'
+  return 'inprogress'
+
+#
+# Looks for one igprof result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#
+def find_one_igprof( release_name , architecture ):
+  command_to_execute = MAGIC_COMMAND_FIND_IGPROF.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
   print "Running ",command_to_execute
   out,err,ret_code = get_output_command(command_to_execute)
@@ -1011,6 +1037,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
   MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME/ARCHITECTURE'
+  MAGIC_COMMAND_FIND_IGPROF = 'test -d '+JENKINS_ARTIFACTS_DIR+'/igprof/RELEASE_NAME/ARCHITECTURE'
   MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
   MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
   COMPARISON_BASELINE_TESTS_URL = 'https://cmssdt.cern.ch/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'
@@ -1141,6 +1168,8 @@ if __name__ == "__main__":
           find_valgrind_results( release_queue_results['comparisons'] , arch )
         if 'baseline' in tests_to_find:
           find_comparison_baseline_results( release_queue_results['comparisons'] , arch )
+        if 'igprof' in tests_to_find:
+          find_igprof_results( release_queue_results['comparisons'] , arch )
     find_dqm_tests_results( release_queue_results['comparisons'] ) 
     results.append(release_queue_results)
   

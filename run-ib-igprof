@@ -18,7 +18,7 @@ pushd "$WORKSPACE/igprof"
     for f in $d/*.gz
     do
       echo "processing file $f"
-      OUTFILE=${f//.gz/.sql}
+      OUTFILE=${f//.gz/.sql3}
       echo $OUTFILE
       igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE 2>&1 | tee -a $WORKSPACE/igprof/igprof-analyse.log
     done

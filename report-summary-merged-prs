@@ -769,7 +769,7 @@ def find_one_static_check( release_name , architecture ):
   print "Ran:",out,err,ret_code,command_to_execute
   if ret_code == 0:
     print 'found'
-    return architecture
+    return out.split()[0]
   print 'inprogress'
   return 'inprogress'
 
@@ -1035,9 +1035,9 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name addOnTests.log'
   MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
-  MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/llvm-analysis/index.html'
-  MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME/ARCHITECTURE'
-  MAGIC_COMMAND_FIND_IGPROF = 'test -d '+JENKINS_ARTIFACTS_DIR+'/igprof/RELEASE_NAME/ARCHITECTURE'
+  MAGIC_COMMAND_FIND_STATIC_CHECKS = 'tests -d '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME && ls '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/'
+  MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME'
+  MAGIC_COMMAND_FIND_IGPROF = 'test -d '+JENKINS_ARTIFACTS_DIR+'/igprof/RELEASE_NAME'
   MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
   MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
   COMPARISON_BASELINE_TESTS_URL = 'https://cmssdt.cern.ch/'+JENKINS_ARTIFACTS_SUBDIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'

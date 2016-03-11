@@ -5,24 +5,22 @@ WORKSPACE="${WORKSPACE-$PWD}"
 RELEASE_FORMAT=$1
 ARCHITECTURE=$2
 WORKFLOWS=$3
+PROFILES=$4
 scram -a $ARCHITECTURE project $RELEASE_FORMAT
-pushd $RELEASE_FORMAT
-  eval `scram run -sh`
-popd
+cd $RELEASE_FORMAT
+eval `scram run -sh`
 
-mkdir "$WORKSPACE/igprof"
-pushd "$WORKSPACE/igprof"
-  runTheMatrix.py $WORKFLOWS --command '--profile mp' 2>&1 | tee -a $WORKSPACE/igprof/runTheMatrix.log
-  find $WORKSPACE/igprof/* -type d | while read d; do
+for prof in ${PROFILES} ; do
+  mkdir $WORKSPACE/igprof/${prof}
+  cd $WORKSPACE/igprof/${prof}
+  runTheMatrix.py $WORKFLOWS --command "--profile $prof" > runTheMatrix.log
+  find . -type d | while read d; do
     echo "processing dir $d"
-    for f in $d/*.gz
-    do
+    for f in $d/*.gz ; do
       echo "processing file $f"
       OUTFILE=${f//.gz/.sql3}
       echo $OUTFILE
-      igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE 2>&1 | tee -a $WORKSPACE/igprof/igprof-analyse.log
+      igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE > igprof-analyse.log
     done
-  ls $d
   done
-popd
-
+done

@@ -11,7 +11,7 @@ cd $RELEASE_FORMAT
 eval `scram run -sh`
 
 for prof in ${PROFILES} ; do
-  mkdir $WORKSPACE/igprof/${prof}
+  mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
   runTheMatrix.py $WORKFLOWS --command "--profile $prof" > runTheMatrix.log
   find . -type d | while read d; do

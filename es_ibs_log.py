@@ -12,8 +12,8 @@ def process_ib_utests(logFile):
   timestp = datetime.datetime.fromtimestamp(int(t)).strftime('%Y-%m-%d %H:%M:%S')
   payload = {}
   pathInfo = logFile.split('/')
-  architecture = pathInfo[0]
-  release = pathInfo[4]
+  architecture = pathInfo[4]
+  release = pathInfo[8]
   #dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
   index = "ibs"
   document = "unittests"
@@ -23,30 +23,31 @@ def process_ib_utests(logFile):
 
   if exists(logFile):
     with open(logFile) as f:
-    it=iter(f)
-    line=it.next()
-    while '--------' not in line:
-      line=it.next()
-    while True:
       try:
-        line=it.next()
-        if ":" in line:
-          pkg = line.split(':')[0].strip()
-          payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+ architecture +'/'+ release +'/unitTestLogs/' + pkg
+        it = iter(f)
+        line = it.next()
+        while '--------' not in line:
           line = it.next()
-          while ':' not in line:
-            if "had ERRORS" in line:
-              payload["status"] = 0
-            else:
-              payload["status"] = 1
-            utest= line.split(' ')[-2]
-            payload["pakage"] = pkg
-            payload["unit_test"] = utest
-            id = sha1(release + architecture + pkg + utest).hexdigest()
-            send_payload(index,document,id,json.dumps(payload))
+        while True:
+          line=it.next()
+          if ":" in line:
+            pkg = line.split(':')[0].strip()
+            payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+ architecture +'/'+ release +'/unitTestLogs/' + pkg
             line = it.next()
+            while ':' not in line:
+              if "had ERRORS" in line:
+                payload["status"] = 1
+              else:
+                payload["status"] = 0
+              utest= line.split(' ')[-2]
+              payload["pakage"] = pkg
+              payloaf["unit_test"] = utest
+              id = sha1(release + architecture + pkg + utest).hexdigest()
+              send_payload(index,document,id,json.dumps(payload))
+              print "sent"
+              line = it.next()
       except:
-        break
+        print "File processed"
   else:
     print "Invalid File Path"
 

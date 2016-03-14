@@ -9,7 +9,7 @@ except Exception, e :
 if scriptPath not in sys.path:
   sys.path.append(scriptPath)
 
-from cmsutils import doCmd, MachineCPUCount
+from cmsutils import doCmd, MachineCPUCount, getHostName
 import checkLogFile
 # ================================================================================
 def runCmd (cmd):
@@ -78,6 +78,7 @@ class UnitTester(IBThreadBase):
         if platform.system() == 'Darwin':
             print 'unitTest> Skipping unit tests for MacOS'
             return
+        if 'lxplus' in getHostName(): os.environ['SKIP_UNITTESTS']="ExpressionEvaluatorUnitTest"
         TEST_PATH=os.environ['CMSSW_RELEASE_BASE']+"/test/"+os.environ['SCRAM_ARCH']
         err, cmd = getstatusoutput("cd "+self.startDir+";scram tool info cmssw 2>&1 | grep CMSSW_BASE= | sed 's|^CMSSW_BASE=||'")
         if cmd: TEST_PATH=TEST_PATH+":"+cmd+"/test/"+os.environ['SCRAM_ARCH']

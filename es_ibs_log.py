@@ -41,13 +41,12 @@ def process_ib_utests(logFile):
                 payload["status"] = 0
               utest= line.split(' ')[-2]
               payload["pakage"] = pkg
-              payloaf["unit_test"] = utest
+              payload["unit_test"] = utest
               id = sha1(release + architecture + pkg + utest).hexdigest()
               send_payload(index,document,id,json.dumps(payload))
-              print "sent"
               line = it.next()
-      except:
-        print "File processed"
+      except Exception as e:
+        print "File processed:", e
   else:
     print "Invalid File Path"
 

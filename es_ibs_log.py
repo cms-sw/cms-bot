@@ -40,9 +40,9 @@ def process_ib_utests(logFile):
               else:
                 payload["status"] = 0
               utest= line.split(' ')[0]
-              payload["pakage"] = pkg
-              payload["unit_test"] = utest
-              id = sha1(release + architecture + pkg + utest).hexdigest()
+              payload["package"] = pkg
+              payload["name"] = utest
+              id = sha1(release + architecture + utest).hexdigest()
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:

@@ -29,22 +29,22 @@ def process_ib_utests(logFile):
         while '--------' not in line:
           line = it.next()
         while True:
-          line=it.next()
+          line=it.next().strip()
           if ":" in line:
             pkg = line.split(':')[0].strip()
             payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+ architecture +'/'+ release +'/unitTestLogs/' + pkg
-            line = it.next()
+            line = it.next().strip()
             while ':' not in line:
               if "had ERRORS" in line:
                 payload["status"] = 1
               else:
                 payload["status"] = 0
-              utest= line.split(' ')[-2]
+              utest= line.split(' ')[0]
               payload["pakage"] = pkg
               payload["unit_test"] = utest
               id = sha1(release + architecture + pkg + utest).hexdigest()
               send_payload(index,document,id,json.dumps(payload))
-              line = it.next()
+              line = it.next().strip()
       except Exception as e:
         print "File processed:", e
   else:

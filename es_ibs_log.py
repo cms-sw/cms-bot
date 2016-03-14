@@ -20,7 +20,6 @@ def process_ib_utests(logFile):
   payload["release"] = release
   payload["architecture"] = architecture
   payload["@timestamp"] = timestp
-  payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+ architecture +'/'+ release +'/unitTestLogs/CommonTools/Utils'
 
   if exists(logFile):
     with open(logFile) as f:
@@ -33,6 +32,7 @@ def process_ib_utests(logFile):
         line=it.next()
         if ":" in line:
           pkg = line.split(':')[0].strip()
+          payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+ architecture +'/'+ release +'/unitTestLogs/' + pkg
           line = it.next()
           while ':' not in line:
             if "had ERRORS" in line:
@@ -41,7 +41,7 @@ def process_ib_utests(logFile):
               payload["status"] = 1
             utest= line.split(' ')[-2]
             payload["pakage"] = pkg
-            payloaf["unit_test"] = utest
+            payload["unit_test"] = utest
             id = sha1(release + architecture + pkg + utest).hexdigest()
             send_payload(index,document,id,json.dumps(payload))
             line = it.next()
@@ -59,5 +59,3 @@ for logFile in logs:
   if not os.path.exists(flagFile):
     process_ib_utests(logFile)
     os.system('touch "' + flagFile + '"')
-    
-

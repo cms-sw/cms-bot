@@ -6,7 +6,6 @@ RELEASE_FORMAT=$1
 ARCHITECTURE=$2
 scram -a $ARCHITECTURE project $RELEASE_FORMAT
 pushd $RELEASE_FORMAT
-  cd $RELEASE_FORMAT
   eval `scram run -sh`
 popd
 

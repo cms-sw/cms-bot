@@ -1244,7 +1244,7 @@ CMSSW_CATEGORIES={
    "SimG4CMS/Forward",
    "SimG4CMS/HcalTestBeam", "SimG4CMS/Muon",
    "SimG4CMS/ShowerLibraryProducer",
-   "SimG4CMS/Tracker", "SimG4Core/Application",
+   "SimG4CMS/Tracker", "SimG4Core/Application", "SimG4CMS/TestBeam",
    "SimG4Core/CheckSecondary",
    "SimG4Core/Configuration",
    "SimG4Core/CountProcesses",

@@ -70,16 +70,16 @@ def process_build_any_ib(logFile):
   payload["total_time"] = ttime.seconds
   payload["upload_time"] = uploadTime
   payload["patch"] = patch
-  payload["@timestamp"] = timestp
+  payload["@timestamp"] = int(timestp*1000)
   payload["url"]=url
   id = sha1(rel + arch).hexdigest()
-  send_payload("jenkins","build-any-ib",id,json.dumps(payload))
+  send_payload("ib-build","ib-build-time",id,json.dumps(payload))
   return True
     
 err, logs = getstatusoutput("find /build/jobs/build-any-ib/builds -maxdepth 2 -mindepth 2 -name log -type f")
 logs = logs.split('\n')
 for logFile in logs:
-  flagFile = logFile + '.ib-stats'
+  flagFile = logFile + '.ib-build'
   if not exists(flagFile):
     print "Processing ",logFile
     done = True

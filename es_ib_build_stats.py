@@ -5,6 +5,7 @@ from datetime import datetime
 from os.path import getmtime, exists
 from commands import getstatusoutput
 from es_utils import send_payload
+from hashlib import sha1
 
 ReDate = re.compile("DATE=[A-Z][a-z]{2}\s+([A-Z][a-z]{2}\s+\d\d\s+\d\d:\d\d:\d\d\s+)[A-Z]{3}\s+(\d\d\d\d)")
 ReUpload = re.compile("^[+]{2}\s+type=upload")

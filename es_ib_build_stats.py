@@ -74,6 +74,7 @@ def process_build_any_ib(logFile):
   payload["url"]=url
   id = sha1(rel + arch).hexdigest()
   send_payload("jenkins","build-any-ib",id,json.dumps(payload))
+  return True
     
 err, logs = getstatusoutput("find /build/jobs/build-any-ib/builds -maxdepth 2 -mindepth 2 -name log -type f")
 logs = logs.split('\n')

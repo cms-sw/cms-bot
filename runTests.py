@@ -78,7 +78,8 @@ class UnitTester(IBThreadBase):
         if platform.system() == 'Darwin':
             print 'unitTest> Skipping unit tests for MacOS'
             return
-        if 'lxplus' in getHostName(): os.environ['SKIP_UNITTESTS']="ExpressionEvaluatorUnitTest"
+        skiptests=""
+        if 'lxplus' in getHostName(): skiptests='SKIP_UNITTESTS=ExpressionEvaluatorUnitTest'
         TEST_PATH=os.environ['CMSSW_RELEASE_BASE']+"/test/"+os.environ['SCRAM_ARCH']
         err, cmd = getstatusoutput("cd "+self.startDir+";scram tool info cmssw 2>&1 | grep CMSSW_BASE= | sed 's|^CMSSW_BASE=||'")
         if cmd: TEST_PATH=TEST_PATH+":"+cmd+"/test/"+os.environ['SCRAM_ARCH']
@@ -86,7 +87,7 @@ class UnitTester(IBThreadBase):
         try:
             cmd = "cd "+self.startDir+"; sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
             cmd += " if which timeout 2>/dev/null; then TIMEOUT=timeout; fi ; "
-            cmd += 'PATH='+TEST_PATH+':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j '+str(MachineCPUCount)+' unittests >unitTests1.log 2>&1 '
+            cmd += 'PATH='+TEST_PATH+':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j '+str(MachineCPUCount)+' unittests ' + skiptests + ' >unitTests1.log 2>&1 '
             print 'unitTest> Going to run '+cmd
             ret = runCmd(cmd)
             if ret != 0:

@@ -414,6 +414,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $THREADED_PARAM $EXTRA_RELVALS_OPTION $SLHC_PARAM $JOB_REPORTS -j $(Jenkins_GetCPU) $WF_LIST"
     echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
     (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
+    WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' $WORKSPACE/matrixTests.log | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
 
     dateAfter=$(date +"%s")
     diff=$(($dateAfter-$dateBefore))
@@ -448,6 +449,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
     echo "REAL_ARCH=$REAL_ARCH" >> $TRIGGER_COMPARISON_FILE
+    echo "WORKFLOWS_LIST=${WORKFLOW_TO_COMPARE}" >> $TRIGGER_COMPARISON_FILE
     echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
 
    #####################################################################

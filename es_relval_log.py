@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 def es_parse_jobreport(payload,logFile):
   xmlFile = "/".join(logFile.split('/')[:-1]) + "/JobReport"+logFile.split('/')[-1].split("_")[0][-1]+".xml"
   if not os.path.exists(xmlFile): return payload
-  payload['jobreport'] = xmlFile.replace('/data/sdt/' , 'https://cmssdt.cern.ch/SDT/cgi-bin/')
+  payload['jobreport'] = '/'.join(payload["url"].split('/')[:-1]+'/'+xmlFile.split('/')[-1]
   tree = ET.parse(xmlFile)
   root = tree.getroot()
   events_read = []
@@ -65,7 +65,7 @@ def es_parse_log(logFile):
   inError = False
   if exists(logFile):
     lines = file(logFile).read()
-    payload["url"] = logFile.replace('/data/sdt/' , 'https://cmssdt.cern.ch/SDT/cgi-bin/')
+    payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+pathInfo[4]+'/'+pathInfo[8]+'/pyRelValMatrixLogs/run/'+pathInfo[-2]+'/'+pathInfo[-1]
     for l in lines.split("\n"):
       if l.startswith("----- Begin Fatal Exception"):
         inException = True

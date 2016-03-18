@@ -18,8 +18,8 @@ def es_parse_jobreport(payload,logFile):
   total_events = []
   for i in root.getiterator("EventsRead") : events_read.append(i.text)
   for i in root.getiterator("TotalEvents") : total_events.append(i.text)
-  payload["events_read"] = max(events_read)
-  payload["total_events"] = max(total_events)
+  if events_read: payload["events_read"] = max(events_read)
+  if total_events: payload["total_events"] = max(total_events)
   reports_p = root.getiterator('PerformanceReport')
   for i in reports_p:
     summaries = i.getiterator("PerformanceSummary")

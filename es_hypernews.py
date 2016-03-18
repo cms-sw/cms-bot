@@ -5,6 +5,7 @@ from commands import getstatusoutput
 from es_utils import send_payload
 from hashlib import sha1
 from json import dumps
+from time import time
 
 apache_log_dir="/var/log/httpd"
 ssl_error_log = "ssl_error_log"
@@ -37,6 +38,7 @@ for log in out.split("\n"):
       payload['ip'] = m.group(2)
       payload['message'] = line
       id = sha1(str(timestamp)  + m.group(2)).hexdigest()
-      print id, payload
       send_payload("hypernews","hn-timeouts",id, dumps(payload), passwd_file="/data/es/es_secret")
-
+payload = {}
+payload['@timestamp'] = int(time()*1000)
+send_payload("hypernews","hn-heartbeat",str(payload['@timestamp']), dumps(payload), passwd_file="/data/es/es_secret")

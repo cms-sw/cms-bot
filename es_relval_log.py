@@ -56,8 +56,11 @@ def es_parse_log(logFile):
   payload["release"] = release
   payload["architecture"] = architecture
   payload["step"] = step
-  payload["hostname"] = gethostname()
   payload["@timestamp"] = timestp
+  hostFile = "/".join(logFile.split('/')[:-1]) + "/hostname"
+  if os.path.exists (hostFile):
+    with open(hostFile,'r') as hname:
+      payload["hostname"] = hname.readlines()[0].strip()
   exception = ""
   error = ""
   errors = []

@@ -33,6 +33,7 @@ def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
     ret = doCmd ("cp "+logFile+" "+m.group(1)+"/step1_"+m.group(3)+".log")
   ret = doCmd("mv "+os.path.join(workdir,"runall-report-step*.log")+" "+os.path.join(outfolder,"workflow.log"))
   ret = doCmd("echo " + str(wftime) +" > " + os.path.join(outfolder,"time.log"))
+  ret = doCmd("hostname -s > " + os.path.join(outfolder,"hostname"))
   if logger: logger.updateRelValMatrixPartialLogs(basedir, outfolders[0])
   shutil.rmtree(workdir)
   return

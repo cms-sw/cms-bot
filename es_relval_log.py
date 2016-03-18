@@ -94,6 +94,6 @@ def es_parse_log(logFile):
     payload["errors"] = errors
   try:
     payload = es_parse_jobreport(payload,logFile)
-  except Execpetion as e:
+  except Exception, e
     print e
   send_payload(index,document,id,json.dumps(payload))

@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 def es_parse_jobreport(payload,logFile):
   xmlFile = "/".join(logFile.split('/')[:-1]) + "/JobReport"+logFile.split('/')[-1].split("_")[0][-1]+".xml"
   if not os.path.exists(xmlFile):
-    print "No JR File:",xmlFile
+    if not '/JobReport1.xml' in xmlFile: print "No JR File:",xmlFile
     return payload
   payload['jobreport'] = '/'.join(payload["url"].split('/')[:-1])+'/'+xmlFile.split('/')[-1]
   tree = ET.parse(xmlFile)

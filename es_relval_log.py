@@ -31,11 +31,18 @@ def es_parse_jobreport(payload,logFile):
         for i in metrics_list:
           name=i.get("Name")
           if name in ["AverageGrowthRateRss", "AverageGrowthRateVsize", "PeakValueVsize"]:
-            payload[name] = i.get("Value")
+            val = i.get("Value")
+            if 'nan' in val: val=''
+            payload[name] = val
       elif j.get("Metric") == "Timing":
         metrics_list = j.getchildren()
         for i in metrics_list:
-          payload[i.get("Name")] = i.get("Value")
+          val = i.get("Value")
+          if 'nan' in val:
+            val=''
+          elif 'e' in val:
+            val=float(val)
+          payload[i.get("Name")] = val
   return payload
 
 def es_parse_log(logFile):
@@ -99,4 +106,7 @@ def es_parse_log(logFile):
     payload = es_parse_jobreport(payload,logFile)
   except Exception, e:
     print e
+  print "sending data for ",logFile
   send_payload(index,document,id,json.dumps(payload))
+print "Processing ",sys.argv[1]
+es_parse_log(sys.argv[1])

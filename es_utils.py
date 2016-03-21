@@ -18,6 +18,7 @@ def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hoo
     content = urllib2.urlopen(url,payload)
   except Exception as e:
     print "Couldn't send data to elastic search" , str(e)
+    print "Data:",payload
 
 def get_payload(url,query):
   try:

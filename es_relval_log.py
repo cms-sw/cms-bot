@@ -108,5 +108,7 @@ def es_parse_log(logFile):
     print e
   print "sending data for ",logFile
   send_payload(index,document,id,json.dumps(payload))
-print "Processing ",sys.argv[1]
-es_parse_log(sys.argv[1])
+
+if __name__ == "__main__":
+  print "Processing ",sys.argv[1]
+  es_parse_log(sys.argv[1])

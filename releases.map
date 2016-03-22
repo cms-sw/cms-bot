@@ -8,7 +8,7 @@ architecture=slc6_amd64_gcc491;label=CMSSW_7_3_X;type=Development;state=IB;proda
 architecture=slc6_amd64_gcc491;label=CMSSW_7_4_X;type=Development;state=IB;prodarch=1;
 architecture=slc6_amd64_gcc491;label=CMSSW_7_5_X;type=Development;state=IB;prodarch=1;
 architecture=slc6_amd64_gcc493;label=CMSSW_7_6_X;type=Development;state=IB;prodarch=1;
-architecture=slc6_amd64_gcc493;label=CMSSW_8_0_X;type=Development;state=IB;prodarch=1;
+architecture=slc6_amd64_gcc530;label=CMSSW_8_0_X;type=Development;state=IB;prodarch=1;
 architecture=slc6_amd64_gcc530;label=CMSSW_8_1_X;type=Development;state=IB;prodarch=1;
 architecture=slc5_amd64_gcc451;label=CMSSW_4_2_0_pre6;type=Development;state=Deprecated;prodarch=1;
 architecture=slc5_amd64_gcc451;label=CMSSW_4_2_0_pre7;type=Development;state=Deprecated;prodarch=1;

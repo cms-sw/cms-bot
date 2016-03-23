@@ -35,8 +35,8 @@ for REPOSITORY in $REPOSITORIES; do
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH/$SCRAM_ARCH
   DESTDIR=$BASEDESTDIR/vol$WEEK/$SCRAM_ARCH
+  mkdir -p $BASEDESTDIR/vol$WEEK/slc7_amd64_gcc493/share
   if [ ! -e $BASEDESTDIR/vol$WEEK/share ] ; then
-    mkdir -p $BASEDESTDIR/vol$WEEK/slc7_amd64_gcc493/share
     ln -s $BASEDESTDIR/vol$WEEK/slc7_amd64_gcc493/share $BASEDESTDIR/vol$WEEK/share
   fi
   DIRFILE=$WORKDIR/dirs$$.txt

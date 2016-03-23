@@ -36,6 +36,8 @@ for REPOSITORY in $REPOSITORIES; do
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH/$SCRAM_ARCH
   DESTDIR=$BASEDESTDIR/vol$WEEK/$SCRAM_ARCH
   DIRFILE=$WORKDIR/dirs$$.txt
+  rsync -a --no-group --no-owner $WORKDIR/../etc/ $DESTDIR/../etc/ || true
+  rsync -a --no-group --no-owner $WORKDIR/../share/ $DESTDIR/../share/ || true
   # Again, we create the WORKDIR to handle the case we cannot bootstrap one of
   # the reposiries.
   mkdir -p $WORKDIR
@@ -53,8 +55,6 @@ for REPOSITORY in $REPOSITORIES; do
     # We need to delete the temp directory in case of failure.
     (rsync -a -W --inplace --delete --no-group --no-owner $WORKDIR/$PKG/ $DESTDIR/$NEWPKG/ && mv -T $DESTDIR/$NEWPKG $DESTDIR/$PKG && chmod 0755 $WORKDIR/$PKG && touch $WORKDIR/$PKG/done) || rm -rf $DESTDIR/$NEWPKG || true
   done
-  rsync -a --no-group --no-owner $WORKDIR/../etc/ $DESTDIR/../etc/ || true
-  rsync -a --no-group --no-owner $WORKDIR/../share/ $DESTDIR/../share/ || true
   rm $DIRFILE
   for LEFTOVER in `find $DESTDIR -mindepth 3 -maxdepth 3 -type d -name "tmp*-*" | grep -e '.*/tmp[0-9][0-9]*-[^/][^/]*$'`; do
     OLD_PID=`basename $LEFTOVER | sed -e 's|.*/tmp\([0-9]*\)-.*|\1|'`

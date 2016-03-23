@@ -54,6 +54,7 @@ for REPOSITORY in $REPOSITORIES; do
     (rsync -a -W --inplace --delete --no-group --no-owner $WORKDIR/$PKG/ $DESTDIR/$NEWPKG/ && mv -T $DESTDIR/$NEWPKG $DESTDIR/$PKG && chmod 0755 $WORKDIR/$PKG && touch $WORKDIR/$PKG/done) || rm -rf $DESTDIR/$NEWPKG || true
   done
   rsync -a --no-group --no-owner $WORKDIR/../etc/ $DESTDIR/../etc/ || true
+  rsync -a --no-group --no-owner $WORKDIR/../share/ $DESTDIR/../share/ || true
   rm $DIRFILE
   for LEFTOVER in `find $DESTDIR -mindepth 3 -maxdepth 3 -type d -name "tmp*-*" | grep -e '.*/tmp[0-9][0-9]*-[^/][^/]*$'`; do
     OLD_PID=`basename $LEFTOVER | sed -e 's|.*/tmp\([0-9]*\)-.*|\1|'`

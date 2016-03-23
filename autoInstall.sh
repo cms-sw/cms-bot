@@ -107,5 +107,6 @@ for REPOSITORY in $REPOSITORIES; do
   # We create the directory in any case, to avoid the rsync to fail in case
   # the repository is not there and we cannot install.
   mkdir -p $WORKDIR/etc/
+  mkdir -p $WORKDIR/share
 done
 

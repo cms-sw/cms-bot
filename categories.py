@@ -48,6 +48,7 @@ CMSSW_L2 = {
   "mommsen": ["daq"],
   "emeschi": ["daq"],
   "mulhearn": ["l1"],
+  "rekovic": ["l1"],
   "cmsbuild": ["tests"],
   "lveldere": ["fastsim"],
   "ssekmen": ["fastsim"],

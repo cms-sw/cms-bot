@@ -4,7 +4,8 @@ ARCHITECTURE=$2
 
 SCRAM_ARCH=`./get-production-arch $CMSSW_X_Y_Z | tail -1`
 prodarch=0
-if [ "$SCRAM_ARCH" = "$ARCHITECTURE" ]; then prodarch=1 ; fi
+archtype='non-production'
+if [ "$SCRAM_ARCH" = "$ARCHITECTURE" ]; then prodarch=1 ;  archtype='production' ; fi
 
 RELEASE_TYPE=Development
 if [ X`echo $CMSSW_X_Y_Z | grep -e '_pre[0-9][0-9]*'` = X ] ; then RELEASE_TYPE=Production ; fi
@@ -19,7 +20,7 @@ if [ X`grep -e "architecture=$ARCHITECTURE;" releases.map | grep -e "label=$CMSS
     fi
   fi
   echo "architecture=$ARCHITECTURE;label=$CMSSW_X_Y_Z;type=$RELEASE_TYPE;state=Announced;prodarch=$prodarch;" >> releases.map
-  git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE as $RELEASE_TYPE." releases.map
+  git commit -m "Add $CMSSW_X_Y_Z for $ARCHITECTURE ($archtype arch) as $RELEASE_TYPE release." releases.map
   git pull --rebase
   git push
 else

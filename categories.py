@@ -938,6 +938,7 @@ CMSSW_CATEGORIES={
    "Validation/MuonME0Digis",
    "Validation/MuonME0Hits",
    "Validation/MuonME0RecHits",
+   "Validation/MuonME0Validation",
    "Validation/MuonHits",
    "Validation/MuonIdentification",
    "Validation/MuonIsolation",

@@ -127,6 +127,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   signatures = {}
   watchers = []
   #Process Pull Request
+  pkg_categories = set([])
   if issue.pull_request:
     try:
       pr   = repo.get_pull(prId)
@@ -155,9 +156,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
     print "Following packages affected:"
     print "\n".join(packages)
-    signing_categories = set([category for package in packages
+    pkg_categories = set([category for package in packages
                               for category, category_packages in CMSSW_CATEGORIES.items()
                               if package in category_packages])
+    signing_categories.update(pkg_categories)
 
     # For PR, we always require tests.
     signing_categories.add("tests")
@@ -479,6 +481,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
   # We update labels only if they are different.
   old_labels = set([x.name for x in issue.labels])
+  new_categories  = set ([])
+  for nc_lab in pkg_categories:
+    ncat = [ nc_lab for oc_lab in old_labels if oc_lab.startswith(nc_lab+'-') ]
+    if ncat: continue
+    new_categories.add(nc_lab)
 
   if new_assign_cats:
     new_l2s = ["@" + name
@@ -738,7 +745,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     commentMsg = messageBranchClosed
   elif not already_seen:
     commentMsg = messageNewPR
-  elif pull_request_updated:
+  elif pull_request_updated or new_categories:
     commentMsg = messageUpdatedPR
   elif not missingApprovals:
     print "Pull request is already fully signed. Not sending message."

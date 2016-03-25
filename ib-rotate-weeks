@@ -1,6 +1,6 @@
 #!/bin/sh -ex
 ARCHITECTURE=slc6_amd64_gcc493
-REPO_FILE_DIR=/afs/cern.ch/cms/sw/ReleaseCandidates/reset-repo-info
+REPO_FILE_DIR=/afs/cern.ch/user/c/cmsbuild/public/reset-repo-info
 
 # We use %U rather than %W because the groovy macros expect
 # weeks to start on sunday, not monday.
@@ -21,8 +21,8 @@ if [ ! -f $REPO_FILE ]; then
   PKGTOOLS/cmsBuild --debug --repository cms --architecture $ARCHITECTURE --work-dir w build dummy
   PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $ARCHITECTURE --work-dir w upload dummy
 
-  cd /afs/cern.ch/cms/sw/ReleaseCandidates
-  ln -sfT vol$CURRENT_WEEK_LETTER vol$CURRENT_WEEK_NUMBER
+  #cd /afs/cern.ch/cms/sw/ReleaseCandidates
+  #ln -sfT vol$CURRENT_WEEK_LETTER vol$CURRENT_WEEK_NUMBER
   
   touch $REPO_FILE
 fi

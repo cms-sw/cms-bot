@@ -137,7 +137,6 @@ for REPOSITORY in $REPOSITORIES; do
         time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true" ;
         dockerrun $APT_INSTALL ;
         relname=`echo $x | awk -F + '{print $NF}'` ;
-        /build/cmsbuild/fix_symlink.sh $WORKDIR $relname ;
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
         if [ "X$timestamp" != "X" ] ; then
           for y in cmssw cmssw-patch ; do

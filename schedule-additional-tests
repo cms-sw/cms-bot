@@ -4,7 +4,7 @@ for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH
   if [ "$x" == "baseline" ]; then
     BASELINE_FILE_INTEL=$WORKSPACE/$x-GenuineIntel-properties
     echo "Creating property file $BASELINE_FILE_INTEL"
-    echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $BASELINE_FILE_INTEL
+    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $BASELINE_FILE_INTEL
     echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_INTEL
     echo "REAL_ARCH=-GenuineIntel" >> $BASELINE_FILE_INTEL
 
@@ -17,7 +17,7 @@ for x in `curl -k -s $CONFIG_MAP_URL | grep ADDITIONAL_TESTS= | grep "SCRAM_ARCH
 
   else
     echo "Creating property file $WORKSPACE/$x-properties."
-    echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $WORKSPACE/$x-properties
+    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/$x-properties
     echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/$x-properties
     echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/$x-properties
   fi  

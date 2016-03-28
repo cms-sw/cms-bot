@@ -192,6 +192,7 @@ CMSSW_CATEGORIES={
    "DataFormats/SiStripCluster",
    "DataFormats/SiStripCommon",
    "DataFormats/TauReco",
+   "DataFormats/TotemRPDigi",
    "DataFormats/TrackCandidate",
    "DataFormats/TrackReco",
    "DataFormats/TrackerCommon",
@@ -1178,7 +1179,8 @@ CMSSW_CATEGORIES={
    "IORawData/SiPixelInputSources",
    "DataFormats/HcalCalibObjects",
    "DataFormats/Alignment",
-   "RecoVertex/BeamSpotProducer"], "simulation":
+   "RecoVertex/BeamSpotProducer"], 
+   "simulation":
    ["Mixing/Base",
    "IOMC/EventVertexGenerators", "DataFormats/DTDigi",
    "DataFormats/DetId",
@@ -1196,7 +1198,9 @@ CMSSW_CATEGORIES={
    "DataFormats/SiPixelDigi",
    "DataFormats/SiPixelRawData",
    "DataFormats/SiStripDetId",
-   "DataFormats/SiStripDigi", "DataFormats/CSCDigi",
+   "DataFormats/SiStripDigi",
+   "DataFormats/TotemRPDetId",
+   "DataFormats/CSCDigi",
    "SimCalorimetry/CaloSimAlgos",
    "SimCalorimetry/CastorSim",
    "SimCalorimetry/CastorTechTrigProducer",

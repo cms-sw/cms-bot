@@ -1,28 +1,33 @@
 #!/bin/sh -ex
+
+[ -f ib-weeks ] || exit 1
 ARCHITECTURE=slc6_amd64_gcc493
-REPO_FILE_DIR=/afs/cern.ch/user/c/cmsbuild/public/reset-repo-info
 
 # We use %U rather than %W because the groovy macros expect
 # weeks to start on sunday, not monday.
-mkdir -p $REPO_FILE_DIR
 CURRENT_WEEK=$(echo "`date +%U` + 1" | bc)
 CURRENT_WEEK_LETTER=$(echo "$CURRENT_WEEK % 3" | bc | tr 012 ABC )
 CURRENT_WEEK_NUMBER=$(echo "$CURRENT_WEEK % 2" | bc)
-REPO_FILE=$REPO_FILE_DIR/`date +%Y`-$CURRENT_WEEK
+WEEK_NO=`date +%Y`-$CURRENT_WEEK
+WEEK_FOUND=`grep "^$WEEK_NO\$" ib-weeks | wc -l`
 
-if [ ! -f $REPO_FILE ]; then
-  mkdir -p $WORKSPACE/reset-repo
-  cd $WORKSPACE/reset-repo
-  rm -rf CMSDIST PKGTOOLS w
-  git clone git://github.com/cms-sw/cmsdist.git CMSDIST || git clone https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
-  git clone git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+if [ "X$WEEK_FOUND" = "X0" ] ; then
+  rm -rf dummybuild
+  mkdir dummybuild
+  pushd dummybuild
+    git clone git://github.com/cms-sw/cmsdist.git CMSDIST || git clone https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
+    git clone git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
 
-  echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
-  PKGTOOLS/cmsBuild --debug --repository cms --architecture $ARCHITECTURE --work-dir w build dummy
-  PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $ARCHITECTURE --work-dir w upload dummy
-
-  #cd /afs/cern.ch/cms/sw/ReleaseCandidates
-  #ln -sfT vol$CURRENT_WEEK_LETTER vol$CURRENT_WEEK_NUMBER
+    echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
+    PKGTOOLS/cmsBuild --debug --repository cms --architecture $ARCHITECTURE --work-dir w build dummy
+    PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $ARCHITECTURE --work-dir w upload dummy
+  popd
+  rm -rf dummybuild
+  echo "$WEEK_NO" > ib-weeks
+  git commit -m "Added new ib-week $WEEK_NO" ib-weeks
+  git pull --rebase
+  git push origin
   
-  touch $REPO_FILE
+  cd /afs/cern.ch/cms/sw/ReleaseCandidates
+  ln -sfT vol$CURRENT_WEEK_LETTER vol$CURRENT_WEEK_NUMBER
 fi

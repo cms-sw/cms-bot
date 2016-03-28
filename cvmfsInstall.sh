@@ -2,7 +2,7 @@
 ARCHITECTURE=$1
 CMS_WEEK=$2
 RELEASE_NAME=$3
-WORKSPACE=$1
+WORKSPACE=$4
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1
 

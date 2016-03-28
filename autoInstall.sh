@@ -23,13 +23,8 @@ export LANG=C
 DELDIR=$BASEDIR/../delete/${SCRAM_ARCH}
 mkdir -p $DELDIR
 
-# The repositories we need to install are those for which we find the
-# timestamp files:
-if [ -d $BASEDESTDIR/reset-repo-info ] ; then
-  REPOSITORIES=`find $BASEDESTDIR/reset-repo-info -type f          | sed 's|.*/||' | grep '^20' | tail -2 | sort -r -n`
-else
-  REPOSITORIES=`find $BASEDESTDIR  -maxdepth 1 -mindepth 1 -type d | sed 's|.*/||' | grep '^20' | tail -2 | sort -r -n`
-fi
+# The repositories we need to install are those for which we find the ib-week
+REPOSITORIES=`tail -2 $WORKSPACE/cms-bot/ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
 echo $REPOSITORIES | tr ' ' '\n' | xargs --no-run-if-empty -i mkdir -p "$BASEDIR/{}"
 
 # Remove obsolete installations. We keep two not to break AFS vol0 and vol1 at

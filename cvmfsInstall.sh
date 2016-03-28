@@ -2,6 +2,7 @@
 ARCHITECTURE=$1
 CMS_WEEK=$2
 RELEASE_NAME=$3
+WORKSPACE=$4
 export BASEDIR=/cvmfs/cms-ib.cern.ch
 export BASEDESTDIR=/cvmfs/cms-ib.cern.ch
 export PROOTDIR=/build/cmsbuild/proot
@@ -14,7 +15,7 @@ export INITIAL_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
 export PUBLISH_THRESHOLD=13000
 # The repositories we need to install are those for which we find the
 # timestamp files:
-REPOSITORIES=`find /srv/cvmfs/shared/releases/ -type f | xargs -n1 basename | sed -e's/-\([0-9]\)$/-0\1/' | sort | tail -2 | sort -r`
+REPOSITORIES=`tail -2 $WORKSPACE/ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
 
 echo $REPOSITORIES
 ARCHITECTURES=$ARCHITECTURE

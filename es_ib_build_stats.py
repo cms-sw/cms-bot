@@ -42,6 +42,7 @@ def process_build_any_ib(logFile):
         continue
       if ReFinish.match(line):
         finished = True
+        if "ABORTED" in line: return True
         break
       if ReUpload.match(line):
         upload=True

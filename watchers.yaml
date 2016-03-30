@@ -329,9 +329,6 @@ gpetruc:
 - TrackingTools
 - PhysicsTools/PatUtils
 - PhysicsTools/PatAlgos
-inugent:
-- GeneratorInterface/ExternalDecays
-- Validation/EventGenerator
 jalimena:
 - HLTrigger/Configuration
 jazzitup:

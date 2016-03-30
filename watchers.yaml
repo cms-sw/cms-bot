@@ -1,6 +1,65 @@
 #  Map between github username and the list of packages to watch.
 # Package is a regular expression which will be automatically delimited by
 # ".*".
+bsunanda:
+  - Geometry/
+  - SimDataFormats/
+  - SimG4Core/
+  - SimG4CMS/
+  - CondCore/GeometryPlugins
+  - CondCore/HcalPlugins
+  - CondFormats/GeometryObjects
+  - CondFormats/HcalMapping
+  - CondFormats/HcalObjects
+  - CondTools/Geometry
+  - CalibCalorimetry/HcalAlgos
+  - CalibCalorimetry/HcalPlugins
+  - CalibCalorimetry/HcalTPGAlgos
+  - CalibCalorimetry/HcalTPGEventSetup
+  - CalibCalorimetry/HcalTPGIO
+  - CalibFormats/HcalObjects
+  - Calibration/HcalAlCaRecoProducers
+  - Calibration/HcalCalibAlgos
+  - Calibration/HcalConnectivity
+  - Calibration/HcalIsolatedTrackReco
+  - Calibration/IsolatedParticles
+  - DQM/HcalCommon
+  - DQM/HcalMonitorClient
+  - DQM/HcalMonitorModule
+  - DQM/HcalMonitorTasks
+  - DQM/HcalTasks
+  - DQMOffline/Hcal
+  - DataFormats/ForwardDetId
+  - DataFormats/HcalCalibObjects
+  - DataFormats/HcalDetId
+  - DataFormats/HcalDigi
+  - DataFormats/HcalIsolatedTrack
+  - DataFormats/HcalRecHit
+  - DataFormats/HGCDigi
+  - DataFormats/HGCRecHit
+  - EventFilter/HcalRawToDigi
+  - IORawData/HcalTBInputService
+  - OnlineDB/HcalCondDB
+  - RecoLocalCalo/HcalLaserReco
+  - RecoLocalCalo/HcalRecAlgos
+  - RecoLocalCalo/HcalRecProducers
+  - RecoLocalCalo/HGCalRecAlgos
+  - RecoLocalCalo/HGCalRecProducers
+  - RecoTBCalo/HcalPlotter
+  - RecoTBCalo/HcalTBObjectUnpacker
+  - RecoTBCalo/HcalTBTools
+  - SimCalorimetry/HcalSimAlgos
+  - SimCalorimetry/HcalSimProducers
+  - SimCalorimetry/HcalTestBeam
+  - SimCalorimetry/HcalTrigPrimAlgos
+  - SimCalorimetry/HcalTrigPrimProducers
+  - SimCalorimetry/HcalZeroSuppressionProducers
+  - SimCalorimetry/HGCalSimProducers
+  - TBDataFormats/HcalTBObjects
+  - Validation/HcalDigis
+  - Validation/HcalHits
+  - Validation/HcalRecHits
+  - Validation/HGCalValidation
 btv-pog:
   - CondFormats/BTauObjects
   - DataFormats/BTauReco

@@ -62,7 +62,9 @@ RELVALS_OK=true
 ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
-if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
+if [ "X$COMPARISON_ARCH" = "X" ] ; then
+  COMPARISON_ARCH=$(cat $WORKSPACE/config.map | grep $RELEASE_FORMAT | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2) #Always take the prod architecture for comparison tests.
+fi
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then

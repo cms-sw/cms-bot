@@ -46,5 +46,4 @@ payload['byts_transfd'] = byttr[1]
 payload['top_relys'] = top_relays
 payload['egroups'] = egrp_emails
 payload['temp_failures'] = temp_fails
-print payload
 send_payload("hypernews","mailinfo", dumps(payload), passwd_file="/data/es/es_secret")

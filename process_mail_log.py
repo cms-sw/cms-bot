@@ -1,9 +1,9 @@
 #!/usr/bin/python
 from commands import getstatusoutput
-import time , datetime
+import sys,time , datetime
 from es_utils import send_payload
 from json import dumps
-logFile = '/tmp/logwatch'
+logFile = sys.argv[1]
 payload = {}
 def cust_strip(str_in):
   return str_in.lstrip('/').rstrip(':"')
@@ -41,8 +41,11 @@ payload['addressed_rcpts'] = adrpts[1]
 payload['byts_transfd'] = byttr[1]
 for k in top_relays:
   payload['top_relays-'+k] = top_relays[k]
+total=0
 for k in egrp_emails:
-  payload['hn-cms-'+k] = egrp_emails[k]
+  payload['hn-'+k] = egrp_emails[k]
+  total += egrp_emails[k]
+payload['hn_emails_total'] = total
 for k in temp_fails:
   payload['temp_failures-'+k] = temp_fails[k]
 send_payload("hypernews","mailinfo", id="", dumps(payload), passwd_file="/data/es/es_secret")

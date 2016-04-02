@@ -23,7 +23,7 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
     PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $ARCHITECTURE --work-dir w upload dummy
   popd
   rm -rf dummybuild
-  echo "$WEEK_NO" > ib-weeks
+  echo "$WEEK_NO" >> ib-weeks
   git commit -m "Added new ib-week $WEEK_NO" ib-weeks
   git pull --rebase
   git push origin

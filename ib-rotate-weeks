@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 
 [ -f ib-weeks ] || exit 1
-ARCHITECTURE=slc6_amd64_gcc493
+ARCHITECTURE=slc6_amd64_gcc530
 
 # We use %U rather than %W because the groovy macros expect
 # weeks to start on sunday, not monday.
@@ -27,7 +27,10 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   git commit -m "Added new ib-week $WEEK_NO" ib-weeks
   git pull --rebase
   git push origin
-  
+  echo "ARCHITECTURE=${ARCHITECTURE}" > cvmfs-reset-week 
+  echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> cvmfs-reset-week
+  echo "RELEASE_FORMAT=" >> cvmfs-reset-week
+  echo "CMSDIST_HASH=" >> cvmfs-reset-week
   cd /afs/cern.ch/cms/sw/ReleaseCandidates
   ln -sfT vol$CURRENT_WEEK_LETTER vol$CURRENT_WEEK_NUMBER
 fi

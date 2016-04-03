@@ -18,6 +18,7 @@ export SCRAM_ARCH=$1
 export BASEDIR=$2
 export BASEDESTDIR=$3
 export INSTALL_RELEASE=$4
+CMS_WEEK=$5
 export LANG=C
 
 DELDIR=$BASEDIR/../delete/${SCRAM_ARCH}

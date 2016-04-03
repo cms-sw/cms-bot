@@ -40,8 +40,8 @@ for REPOSITORY in $REPOSITORIES; do
     ln -s $BASEDESTDIR/vol$WEEK/slc7_amd64_gcc493/share $BASEDESTDIR/vol$WEEK/share
   fi
   DIRFILE=$WORKDIR/dirs$$.txt
-  rsync -a --no-group --no-owner --no-t --size-only $WORKDIR/../etc/ $DESTDIR/../etc/ || true
-  rsync -a --no-group --no-owner --no-t --size-only $WORKDIR/../share/ $DESTDIR/../share/ || true
+  rsync -av --no-group --no-owner --no-t --size-only $WORKDIR/../etc/ $DESTDIR/../etc/ || true
+  rsync -av --no-group --no-owner --no-t --size-only $WORKDIR/../share/ $DESTDIR/../share/ || true
   # Again, we create the WORKDIR to handle the case we cannot bootstrap one of
   # the reposiries.
   mkdir -p $WORKDIR

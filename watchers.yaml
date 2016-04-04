@@ -886,3 +886,12 @@ agrohsje:
 - GeneratorInterface
 mverzett:
 - CalibTracker/SiStripCommon
+rafaellopesdesa:
+- EgammaAnalysis
+- RecoEcal
+- RecoEgamma
+- RecoParticleFlow
+- DataFormats/ParticleFlowReco
+- DataFormats/ParticleFlowCandidate
+- DataFormats/EgammaCandidate
+- DataFormats/EgammaReco

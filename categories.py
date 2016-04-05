@@ -516,6 +516,7 @@ CMSSW_CATEGORIES={
    "CaloOnlineTools/HcalOnlineDb",
    "OnlineDB/CSCCondDB",
    "OnlineDB/EcalCondDB",
+   "OnlineDB/HcalCondDB",
    "OnlineDB/Oracle",
    "OnlineDB/SiStripConfigDb",
    "OnlineDB/SiStripESSources",

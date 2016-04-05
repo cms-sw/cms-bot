@@ -1233,6 +1233,7 @@ CMSSW_CATEGORIES={
    "SimDataFormats/EcalTestBeam",
    "SimDataFormats/EncodedEventId",
    "SimDataFormats/Forward",
+   "SimDataFormats/GEMDigiSimLink",
    "SimDataFormats/HcalTestBeam",
    "SimDataFormats/HiGenData",
    "SimDataFormats/JetMatching",

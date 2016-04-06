@@ -58,8 +58,10 @@ def process_build_any_ib(logFile):
         upload=False
         dtime = xtime - stime 
         uploadTime += dtime.seconds
-  print "FINISHED: ",finished
-  if not rel or not arch or not finished: return False
+  print "FINISHED: ",finished,rel, arch,uploadTime
+  if not rel or not arch:
+    if not finished: return False
+    return True
   urlx = logFile.split("/")
   url = "https://cmssdt.cern.ch/jenkins/job/build-any-ib/"+logFile.split("/")[-2]+"/console"
   timestp  = getmtime(logFile)
@@ -73,6 +75,7 @@ def process_build_any_ib(logFile):
   payload["patch"] = patch
   payload["@timestamp"] = int(timestp*1000)
   payload["url"]=url
+  print payload
   id = sha1(rel + arch).hexdigest()
   send_payload("jenkins-ibs","timings",id,json.dumps(payload))
   return True

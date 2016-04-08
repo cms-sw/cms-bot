@@ -7,7 +7,7 @@ from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 CMSSW_L1 = ["davidlange6"]
 APPROVE_BUILD_RELEASE = [ "smuzaffar", "degano", "slava77" ] + CMSSW_L1
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
-TRIGGER_PR_TESTS = [ "lgray", "wmtan", "bsunanda", "VinInn" ] + REQUEST_BUILD_RELEASE
+TRIGGER_PR_TESTS = [ "lgray", "wmtan", "bsunanda", "VinInn", "kpedro88" ] + REQUEST_BUILD_RELEASE
 
 COMMON_CATEGORIES = [ "orp", "tests" ]
 EXTERNAL_CATEGORIES = [ "externals" ]

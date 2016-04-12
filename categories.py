@@ -192,7 +192,7 @@ CMSSW_CATEGORIES={
    "DataFormats/SiStripCluster",
    "DataFormats/SiStripCommon",
    "DataFormats/TauReco",
-   "DataFormats/TotemRPDigi",
+   "DataFormats/TotemDigi",
    "DataFormats/TrackCandidate",
    "DataFormats/TrackReco",
    "DataFormats/TrackerCommon",

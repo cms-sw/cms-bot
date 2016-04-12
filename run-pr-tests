@@ -606,7 +606,7 @@ fi
 if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED ClangBuild"
 fi
-if [ "X$TESTS_FAILE" != "X" ] ;then
+if [ "X$TESTS_FAILED" != "X" ] ;then
   TESTS_FAILED="--add-message 'List of all tests failed: $(echo $TESTS_FAILED | tr ' ' ',')'"
 fi
 

@@ -403,6 +403,7 @@ CMSSW_CATEGORIES={
    "RecoEcal/EgammaClusterAlgos",
    "RecoEcal/EgammaClusterProducers",
    "RecoEcal/EgammaCoreTools",
+   "RecoHGCal/HGCalCoreTools",
    "RecoEgamma/Configuration",
    "RecoEgamma/EgammaElectronAlgos",
    "RecoEgamma/EgammaElectronProducers",

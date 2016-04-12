@@ -469,6 +469,7 @@ lgray:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- RecoHGCal/HGCalCoreTools
 - DataFormats/L1THGCal
 - L1Trigger/L1THGCal
 mandrenguyen:
@@ -846,6 +847,7 @@ pfs:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- RecoHGCal/HGCalCoreTools
 vandreev11:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
@@ -853,6 +855,7 @@ vandreev11:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- RecoHGCal/HGCalCoreTools
 bsunanda:
 - Validation/HGCalValidation
 sethzenz:
@@ -862,6 +865,7 @@ sethzenz:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- RecoHGCal/HGCalCoreTools
 kpedro88:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
@@ -869,6 +873,7 @@ kpedro88:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- RecoHGCal/HGCalCoreTools
 cseez:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi
@@ -876,6 +881,7 @@ cseez:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+- RecoHGCal/HGCalCoreTools
 OlivierBondu:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration
@@ -895,3 +901,4 @@ rafaellopesdesa:
 - DataFormats/ParticleFlowCandidate
 - DataFormats/EgammaCandidate
 - DataFormats/EgammaReco
+

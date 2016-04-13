@@ -590,6 +590,8 @@ schoef:
 - RecoMET
 - Validation/RecoJets
 - Validation/RecoMET
+sdevissc:
+- SimTracker/
 tlampen:
 - Alignment/CommonAlignment
 - Alignment/CommonAlignmentAlgorithm

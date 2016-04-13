@@ -54,6 +54,7 @@ if [ "X$CMS_GIT_TOOLS_REPO" == X ]; then
 fi
 
 cd $WORKSPACE
+CONFIG_MAP=$WORKSPACE/cms-bot/config.map
 ### to know at the end of the tests if everything went ok
 ALL_OK=true
 BUILD_OK=true
@@ -63,7 +64,7 @@ ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
 if [ "X$COMPARISON_ARCH" = "X" ] ; then
-  COMPARISON_ARCH=$(cat $WORKSPACE/config.map | grep $RELEASE_FORMAT | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2) #Always take the prod architecture for comparison tests.
+  COMPARISON_ARCH=$(cat $CONFIG_MAP | grep $RELEASE_FORMAT | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2) #Always take the prod architecture for comparison tests.
 fi
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
@@ -214,10 +215,8 @@ fi
 # ############################################
 echo 'test clang compilation'
 
-CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map"
-
 NEED_CLANG_TEST=false
-if curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=$ARCHITECTURE; then
+if cat $CONFIG_MAP | grep $RELEASE_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=$ARCHITECTURE; then
   NEED_CLANG_TEST=true
 fi
 

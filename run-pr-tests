@@ -291,6 +291,7 @@ if [ "X$DISABLE_POISON" = Xtrue ]; then
     rm -rf $WORKSPACE/CMSSW_*/poison
   fi
 fi
+rm -rf $WORKSPACE/CMSSW_*/poison/L1Trigger/CSCTrackFinder/src || true
 
 # #############################################
 # test compilation with GCC

@@ -884,6 +884,7 @@ OlivierBondu:
 - RecoLocalTracker/Records
 - RecoLocalTracker/SiStrip*
 - RecoLocalTracker/SubCollectionProducers
+- DataFormats/SiStrip*
 agrohsje:
 - GeneratorInterface
 mverzett:

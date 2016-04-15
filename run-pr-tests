@@ -591,7 +591,7 @@ else
   PR[1]=$PULL_REQUEST_NUMBER
 fi
 
-TESTS_FAILED=""
+TESTS_FAILED="Failed tests:"
 if [ "X$BUILD_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  Build"
 fi
@@ -607,7 +607,6 @@ fi
 if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  ClangBuild"
 fi
-TESTS_FAILED=$(echo ${TESTS_FAILED})
 
 rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
@@ -615,7 +614,7 @@ for i in $( seq 1 $REPEAT); do
   if $ALL_OK ; then
     $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR ${REPORT_OPTS}
   else 
-    echo "Failed tests: **${TESTS_FAILED}**" >  $WORKSPACE/report.txt
+    echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
     if [ "X$BUILD_OK" = Xfalse ]; then
       $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/build.log ${REPORT_OPTS}

@@ -124,6 +124,7 @@ if [ ! -d CMSSW_* ]; then
 else
   cd $WORKSPACE/CMSSW_*
 fi
+$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
 sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
 eval $(scram run -sh)
 cd src
@@ -291,11 +292,11 @@ if [ "X$DISABLE_POISON" = Xtrue ]; then
     rm -rf $WORKSPACE/CMSSW_*/poison
   fi
 fi
-rm -rf $WORKSPACE/CMSSW_*/poison/L1Trigger/CSCTrackFinder/src || true
 
 # #############################################
 # test compilation with GCC
 # ############################################
+$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
 COMPILATION_CMD="scram b vclean && scram b -k -j $(Jenkins_GetCPU 2)"
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
@@ -592,45 +593,46 @@ fi
 
 TESTS_FAILED=""
 if [ "X$BUILD_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED Build"
+  TESTS_FAILED="$TESTS_FAILED  Build"
 fi
 if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED UnitTests"
+  TESTS_FAILED="$TESTS_FAILED  UnitTests"
 fi
 if [ "X$RELVALS_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED RelVals"
+  TESTS_FAILED="$TESTS_FAILED  RelVals"
 fi
 if [ "X$ADDON_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED AddOn"
+  TESTS_FAILED="$TESTS_FAILED  AddOn"
 fi
 if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED ClangBuild"
+  TESTS_FAILED="$TESTS_FAILED  ClangBuild"
 fi
-if [ "X$TESTS_FAILED" != "X" ] ;then
-  TESTS_FAILED="--add-message 'List of all tests failed: $(echo $TESTS_FAILED | tr ' ' ',')'"
-fi
+TESTS_FAILED=$(echo ${TESTS_FAILED})
 
+rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
+  REPORT_OPTS="--repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
-    echo $ALL_OK
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-  elif [ "X$BUILD_OK" = Xfalse ]; then
-    echo $BUILD_OK
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL ${TESTS_FAILED} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/build.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-  elif [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-    echo $UNIT_TESTS_OK
-    echo 'failure in unit tests'
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL ${TESTS_FAILED} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/unitTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-  elif [ "X$RELVALS_OK" = Xfalse ]; then
-    pushd $WORKSPACE/
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL ${TESTS_FAILED} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/matrixTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-    popd
-  elif [ "X$ADDON_OK" = Xfalse ]; then
-    pushd $WORKSPACE/
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL ${TESTS_FAILED} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/addOnTests.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
-    popd
-  elif [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL ${TESTS_FAILED} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} -f $WORKSPACE/buildClang.log --recent-merges $RECENT_COMMITS_FILE $DRY_RUN
+    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR ${REPORT_OPTS}
+  else 
+    echo "Failed tests: **${TESTS_FAILED}**" >  $WORKSPACE/report.txt
+    REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
+    if [ "X$BUILD_OK" = Xfalse ]; then
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/build.log ${REPORT_OPTS}
+    fi
+    if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/unitTests.log ${REPORT_OPTS}
+    fi
+    if [ "X$RELVALS_OK" = Xfalse ]; then
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/matrixTests.log ${REPORT_OPTS}
+    fi
+    if [ "X$ADDON_OK" = Xfalse ]; then
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/addOnTests.log ${REPORT_OPTS}
+    fi
+    if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/buildClang.log ${REPORT_OPTS}
+    fi
+    $WORKSPACE/cms-bot/report-pull-request-results REPORT_ERRORS ${REPORT_OPTS}
   fi
 done
 

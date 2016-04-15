@@ -23,7 +23,7 @@ TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
 CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
 CMSDIST_COMMITS=$(echo $GH_COMMITS | python -c 'import json,sys;obj=json.load(sys.stdin);print " ".join([s["sha"] for s in obj])')
-if [ "X$CMSSW_CYCLE=" == X ]; then
+if [ "X$CMSSW_CYCLE" == X ]; then
   if(( $(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
     CMSSW_CYCLE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | grep "PROD_ARCH" | cut -d ";" -f 4 | cut -d "=" -f 2 | head -n 1)
   else
@@ -37,10 +37,10 @@ if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
 fi
 
 if [ "X$ARCHITECTURE" == X ]; then
-  if(( $(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
-    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | grep PR_TESTS | cut -d ";" -f 1 | cut -d "=" -f 2 | head -n 1)
+  if(( $(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
+    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | grep PR_TESTS | cut -d ";" -f 1 | cut -d "=" -f 2 | head -n 1)
   else
-    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
+    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
   fi
 fi
 

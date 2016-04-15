@@ -124,7 +124,7 @@ if [ ! -d CMSSW_* ]; then
 else
   cd $WORKSPACE/CMSSW_*
 fi
-$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
+$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
 sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
 eval $(scram run -sh)
 cd src

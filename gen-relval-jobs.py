@@ -36,10 +36,12 @@ if workflows:
   workflows = splitWorkflows(workflows, max_wf)
   print workflows
   total = len(workflows)
-  for i in range(1, total+1):
-    wf=",".join(workflows[i-1])
-    jobid   = str(i)+"of"+str(total)
-    jobfile = workdir+"/ib-run-relval-"+jobid
-    doCmd("echo WORKFLOWS="+wf+" >"+jobfile)
-    doCmd("echo JOBID="+jobid+" >>"+jobfile)
-  print "Done"
+  try:
+    for i in range(1, total+1):
+      wf=",".join(workflows[i-1])
+      jobid   = str(i)+"of"+str(total)
+      jobfile = workdir+"/ib-run-relval-"+jobid
+      doCmd("echo WORKFLOWS="+wf+" >"+jobfile)
+      doCmd("echo JOBID="+jobid+" >>"+jobfile)
+  except Exception as e:
+    print "Error " , e

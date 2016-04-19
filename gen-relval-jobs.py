@@ -42,3 +42,4 @@ if workflows:
     jobfile = workdir+"/ib-run-relval-"+jobid
     doCmd("echo WORKFLOWS="+wf+" >"+jobfile)
     doCmd("echo JOBID="+jobid+" >>"+jobfile)
+  print "Done"

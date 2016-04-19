@@ -756,15 +756,6 @@ dgulhan:
 - Configuration/StandardSequences
 - Validation/RecoTrack
 - Validation/RecoVertex
-istaslis:
-- RecoTracker
-- RecoHI
-- TrackingTools
-- Validation/RecoTrack
-- Validation/RecoVertex
-- HeavyIonsAnalysis
-- DataFormats/HeavyIonEvent
-- CondFormats/EgammaObjects
 amagitte:
 - RecoMuon/GlobalTrackingTools
 - DataFormats/MuonReco

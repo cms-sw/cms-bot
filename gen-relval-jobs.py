@@ -6,7 +6,7 @@ from os.path import exists
 from RelValArgs import GetMatrixOptions
 from runPyRelValThread import PyRelValsThread, splitWorkflows
 from cmsutils import doCmd
-
+print "Diving workflows"
 workdir = sys.argv[1]
 RelValtimes = sys.argv[2]
 print RelValtimes

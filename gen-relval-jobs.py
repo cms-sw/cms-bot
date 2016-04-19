@@ -9,6 +9,7 @@ from cmsutils import doCmd
 
 workdir = sys.argv[1]
 RelValtimes = sys.argv[2]
+print RelValtimes
 try:
   max_wf=int(sys.argv[3])
 except:

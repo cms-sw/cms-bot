@@ -67,7 +67,7 @@ def splitWorkflows(workflows, max_wf_pre_set):
     sub_set=workflows[0:long_wf]+workflows[-short_wf:]
     new_avg = sum([ x[1] for x in sub_set])/len(sub_set)
     new_index=0
-    while new_avg > avg_t:
+    while (new_avg > avg_t) and (new_index<long_wf):
        new_index+=1
        sub_set=workflows[0:long_wf-new_index]+workflows[-short_wf-new_index:]
        new_avg= sum([ x[1] for x in sub_set ])/len(sub_set)

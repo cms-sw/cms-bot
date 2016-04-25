@@ -26,7 +26,6 @@ def process_build_any_ib(logFile):
   with open(logFile) as f:
     for line in f:
       line = line.strip()
-      
       if not jstart:
         m=ReDate.match(line)
         if m:
@@ -59,9 +58,7 @@ def process_build_any_ib(logFile):
         dtime = xtime - stime 
         uploadTime += dtime.seconds
   print "FINISHED: ",finished,rel, arch,uploadTime
-  if not rel or not arch:
-    if not finished: return False
-    return True
+  if not rel or not arch or not finished: return finished
   urlx = logFile.split("/")
   url = "https://cmssdt.cern.ch/jenkins/job/build-any-ib/"+logFile.split("/")[-2]+"/console"
   timestp  = getmtime(logFile)
@@ -78,7 +75,7 @@ def process_build_any_ib(logFile):
   print payload
   id = sha1(rel + arch).hexdigest()
   send_payload("jenkins-ibs","timings",id,json.dumps(payload))
-  return True
+  return finished
     
 err, logs = getstatusoutput("find /build/jobs/build-any-ib/builds -maxdepth 2 -mindepth 2 -name log -type f")
 logs = logs.split('\n')

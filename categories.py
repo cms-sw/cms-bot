@@ -39,6 +39,7 @@ CMSSW_L2 = {
   "alja": ["visualization"],
   "ianna": ["geometry"],
   "deguio": ["dqm"],
+  "dmitrijus": ["dqm"],
   "ggovi": ["db"],
   "cerminar": ["alca"],
   "franzoni": ["operations","alca"],

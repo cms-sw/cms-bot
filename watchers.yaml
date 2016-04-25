@@ -889,3 +889,11 @@ rafaellopesdesa:
 - DataFormats/ParticleFlowCandidate
 - DataFormats/EgammaCandidate
 - DataFormats/EgammaReco
+cbernet:
+- CommonTools/ParticleFlow
+- DataFormats/ParticleFlowCandidate
+- DataFormats/ParticleFlowReco
+- DataFormats/PatCandidates
+- PhysicsTools/Heppy
+- PhysicsTools/HeppyCore
+- RecoParticleFlow

@@ -7,16 +7,14 @@ if [ "X$CMSSW_TAG" = "X" ] ; then
   echo "Usage: 0 CMSSW_version"
   exit 1
 fi
-if [ "X$GIT_RELEASE" = "X" ] ; then
-  GIT_RELEASE=CMSSW_8_0_0
+if [ "X$GIT_RELEASE" != "X" ] ; then
+  scram p $GIT_RELEASE
+  pushd $GIT_RELEASE
+    eval `scram runtime -sh`
+  popd
 fi
 
 STITCHED_TAG=$(echo $CMSSW_TAG | sed 's|CMSSW_|STITCHED_|')
-
-scram p $GIT_RELEASE
-pushd $GIT_RELEASE
-  eval `scram runtime -sh`
-popd
 
 git clone git@github.com:cms-sw/Stitched.git
 pushd Stitched

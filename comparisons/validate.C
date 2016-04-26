@@ -86,7 +86,6 @@ double plotvar(TString v,TString cut=""){
   gStyle->SetTitleW(1);
   gStyle->SetTitleH(0.06);
 
-  
   double refplotEntries = -1;
   double plotEntries = -1;
 
@@ -141,7 +140,7 @@ double plotvar(TString v,TString cut=""){
     refplot->Draw("he");
     refplot->SetMinimum(-0.05*refplot->GetMaximum() );
     plot->Draw("same he");
-    
+
     TString dn=vn+"_diff";
     if (cut!="") dn+=count;
     TH1F *  diff = new TH1F(dn,refplot->GetTitle(),
@@ -151,7 +150,7 @@ double plotvar(TString v,TString cut=""){
     
     diff->Add(plot);
     diff->Add(refplot,-1.);
-    
+
     double max = std::max(refplot->GetMaximum() , plot->GetMaximum());
     double min = std::min(refplot->GetMinimum() , plot->GetMinimum());
     min = std::min(diff->GetMinimum(), min);
@@ -163,7 +162,6 @@ double plotvar(TString v,TString cut=""){
     diff->SetMarkerStyle(7);
     diff->Draw("same p e");
     
-    
     for (int ib=1;ib<=diff->GetNbinsX();++ib){
       countDiff+=std::abs(diff->GetBinContent(ib));
     }
@@ -171,7 +169,7 @@ double plotvar(TString v,TString cut=""){
     double ksscore = refplot->KolmogorovTest(plot);
     int refentries = refplot->GetEntries();
     int newentries = plot->GetEntries();
-
+    
     TString outtext;
     outtext.Form("Ref: %i, New: %i, Diff: %g, 1-KS: %6.4g",refentries,newentries,countDiff,1-ksscore);
 
@@ -219,7 +217,7 @@ void jets(TString type,TString algo){
   jet(type,algo,"et", true);
   jet(type,algo,"eta");
   jet(type,algo,"phi");
-  if (type!="recoPFJets"){
+  if (type!="recoPFJets" && type!="patJets"){
     jet(type,algo,"emEnergyFraction");
   }
   else{
@@ -243,6 +241,8 @@ void secondaryVertexTagInfoVars(TString br){
   plotvar(br+recoS+".obj.nVertexTracks()");
   plotvar(br+recoS+".obj.nVertices()");
   plotvar(br+recoS+".obj.nVertexCandidates()");
+  plotvar(br+recoS+".obj.m_svData.dist1d.value()");
+  plotvar(br+recoS+".obj.m_svData.dist1d.error()");
   plotvar(br+recoS+".obj.m_svData.dist2d.value()");
   plotvar(br+recoS+".obj.m_svData.dist2d.error()");
   plotvar(br+recoS+".obj.m_trackData.first");
@@ -291,197 +291,223 @@ void calomet(TString algo, TString var, bool doLog10 = false){
   plotvar(v);
 }
 
-void met(TString algo, TString var, bool doLog10 = false){
-  TString v;
-  if (doLog10) v ="log10(recoMETs_"+algo+"__"+recoS+".obj."+var+"())";
-  else v = "recoMETs_"+algo+"__"+recoS+".obj."+var+"()";
+void met(TString var, TString cName = "tcMet_", TString tName = "recoMETs_",  bool notafunction=false){
+  TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
+    tName+cName+"_"+recoS+".obj."+var+"()";
   plotvar(v);
 }
 
-void tau(TString algo, TString var){
-  TString v="recoPFTaus_"+algo+"__"+recoS+".obj."+var+"()";
+void metVars(TString cName = "tcMet_", TString tName = "recoMETs_") {
+  met("pt",cName,tName);
+  met("px",cName,tName);
+  met("py",cName,tName);
+  met("eta",cName,tName);
+  met("phi",cName,tName);
+  met("significance",cName,tName);
+}
+
+void tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_",  bool notafunction=false){
+  TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
+    tName+cName+"_"+recoS+".obj."+var+"()";
   plotvar(v);
 }
 
-void photon(TString var, TString cName = "photons_", bool notafunction=false){
-  TString v= notafunction ? "recoPhotons_"+cName+"_"+recoS+".obj."+var :
-    "recoPhotons_"+cName+"_"+recoS+".obj."+var+"()" ;
+void tauVars(TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_"){
+  plotvar(tName+cName+"_"+recoS+".obj@.size()");
+  tau("energy",cName,tName);
+  tau("et",cName,tName);
+  tau("eta",cName,tName);
+  tau("phi",cName,tName);
+  if (tName!="patTaus_") tau("emFraction",cName,tName);//crashes now for patTaus
+}
+
+void photon(TString var, TString cName = "photons_", TString tName = "recoPhotons_", bool notafunction=false){
+  TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
+    tName+cName+"_"+recoS+".obj."+var+"()" ;
   plotvar(v);
 }
 
-void photonVars(TString cName = "photons_"){
-  plotvar("recoPhotons_"+cName+"_"+recoS+".obj@.size()");
-  photon("energy", cName);
-  photon("et", cName);
-  if (detailled)    photon("px", cName);
-  if (detailled)    photon("py", cName);
-  if (detailled)    photon("pz", cName);
-  photon("eta", cName);
-  photon("phi", cName);
+void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
+  plotvar(tName+cName+"_"+recoS+".obj@.size()");
+  photon("energy", cName,tName);
+  photon("et", cName,tName);
+  if (detailled)    photon("px", cName,tName);
+  if (detailled)    photon("py", cName,tName);
+  if (detailled)    photon("pz", cName,tName);
+  photon("eta", cName,tName);
+  photon("phi", cName,tName);
   
-  photon("e1x5", cName);
-  photon("e2x5", cName);
-  photon("e3x3", cName);
-  photon("e5x5", cName);
-  photon("full5x5_e1x5", cName);
-  photon("full5x5_e2x5Max", cName);
-  photon("full5x5_e5x5", cName);
+  photon("e1x5", cName,tName);
+  photon("e2x5", cName,tName);
+  photon("e3x3", cName,tName);
+  photon("e5x5", cName,tName);
+  photon("full5x5_e1x5", cName,tName);
+  photon("full5x5_e2x5Max", cName,tName);
+  photon("full5x5_e5x5", cName,tName);
 
-  photon("maxEnergyXtal", cName);
-  photon("sigmaEtaEta", cName);
-  photon("sigmaIetaIeta", cName);
-  photon("r1x5", cName);
-  photon("r2x5", cName);
+  photon("maxEnergyXtal", cName,tName);
+  photon("sigmaEtaEta", cName,tName);
+  photon("sigmaIetaIeta", cName,tName);
+  photon("r1x5", cName,tName);
+  photon("r2x5", cName,tName);
+  //  photon("r9", cName,tName);
+  photon("mipChi2", cName,tName);
+  photon("mipNhitCone", cName,tName);
+  photon("ecalRecHitSumEtConeDR03", cName,tName);
+  photon("hcalTowerSumEtConeDR03", cName,tName);
+  photon("hcalDepth1TowerSumEtConeDR03", cName,tName);
+  photon("trkSumPtSolidConeDR03", cName,tName);
+  photon("trkSumPtHollowConeDR03", cName,tName);
+  photon("chargedHadronIso", cName,tName);
+  photon("neutralHadronIso", cName,tName);
+  photon("photonIso", cName,tName);
+  photon("sumChargedParticlePt", cName,tName);
+  photon("sumNeutralHadronEtHighThreshold", cName,tName);
+  photon("sumPhotonEtHighThreshold", cName,tName);
+  photon("sumPUPt", cName,tName);
+  photon("nClusterOutsideMustache", cName,tName);
+  photon("etOutsideMustache", cName,tName);
+  photon("pfMVA", cName,tName);
+  photon("showerShapeVariables().effSigmaRR",cName,tName, true);
+  photon("showerShapeVariables().sigmaIetaIphi",cName,tName, true);
+  photon("showerShapeVariables().sigmaIphiIphi",cName,tName, true);
+  photon("showerShapeVariables().e2nd",cName,tName, true);
+  photon("showerShapeVariables().eTop",cName,tName, true);
+  photon("showerShapeVariables().eLeft",cName,tName, true);
+  photon("showerShapeVariables().eRight",cName,tName, true);
+  photon("showerShapeVariables().eBottom",cName,tName, true);
+  photon("showerShapeVariables().e1x3",cName,tName, true);
+  photon("showerShapeVariables().e2x2",cName,tName, true);
+  photon("showerShapeVariables().e2x5Max",cName,tName, true);
+  photon("showerShapeVariables().e2x5Left",cName,tName, true);
+  photon("showerShapeVariables().e2x5Right",cName,tName, true);
+  photon("showerShapeVariables().e2x5Top",cName,tName, true);
+  photon("showerShapeVariables().e2x5Bottom",cName,tName, true);
 
-  photon("showerShapeVariables().effSigmaRR",cName, true);
-  photon("showerShapeVariables().sigmaIetaIphi",cName, true);
-  photon("showerShapeVariables().sigmaIphiIphi",cName, true);
-  photon("showerShapeVariables().e2nd",cName, true);
-  photon("showerShapeVariables().eTop",cName, true);
-  photon("showerShapeVariables().eLeft",cName, true);
-  photon("showerShapeVariables().eRight",cName, true);
-  photon("showerShapeVariables().eBottom",cName, true);
-  photon("showerShapeVariables().e1x3",cName, true);
-  photon("showerShapeVariables().e2x2",cName, true);
-  photon("showerShapeVariables().e2x5Max",cName, true);
-  photon("showerShapeVariables().e2x5Left",cName, true);
-  photon("showerShapeVariables().e2x5Right",cName, true);
-  photon("showerShapeVariables().e2x5Top",cName, true);
-  photon("showerShapeVariables().e2x5Bottom",cName, true);
-
-  //  photon("r9", cName);
-  photon("mipChi2", cName);
-  photon("mipNhitCone", cName);
-  photon("ecalRecHitSumEtConeDR03", cName);
-  photon("hcalTowerSumEtConeDR03", cName);
-  photon("hcalDepth1TowerSumEtConeDR03", cName);
-  photon("trkSumPtSolidConeDR03", cName);
-  photon("trkSumPtHollowConeDR03", cName);
-  photon("chargedHadronIso", cName);
-  photon("neutralHadronIso", cName);
-  photon("photonIso", cName);
-  photon("sumChargedParticlePt", cName);
-  photon("sumNeutralHadronEtHighThreshold", cName);
-  photon("sumPhotonEtHighThreshold", cName);
-  photon("sumPUPt", cName);
-  photon("nClusterOutsideMustache", cName);
-  photon("etOutsideMustache", cName);
-  photon("pfMVA", cName);
-  
-  photon("energyCorrections().scEcalEnergy", cName, true);
-  photon("energyCorrections().scEcalEnergyError", cName, true);
-  photon("energyCorrections().phoEcalEnergy", cName, true);
-  photon("energyCorrections().phoEcalEnergyError", cName, true);
-  photon("energyCorrections().regression1Energy", cName, true);
-  photon("energyCorrections().regression1EnergyError", cName, true);
-  photon("energyCorrections().regression2Energy", cName, true);
-  photon("energyCorrections().regression2EnergyError", cName, true);
-  photon("energyCorrections().candidateP4type", cName, true);
+  photon("energyCorrections().scEcalEnergy", cName,tName, true);
+  photon("energyCorrections().scEcalEnergyError", cName,tName, true);
+  photon("energyCorrections().phoEcalEnergy", cName,tName, true);
+  photon("energyCorrections().phoEcalEnergyError", cName,tName, true);
+  photon("energyCorrections().regression1Energy", cName,tName, true);
+  photon("energyCorrections().regression1EnergyError", cName,tName, true);
+  photon("energyCorrections().regression2Energy", cName,tName, true);
+  photon("energyCorrections().regression2EnergyError", cName,tName, true);
+  photon("energyCorrections().candidateP4type", cName,tName, true);
 }
 
-void conversion(TString label, TString var){
-  TString v="recoConversions_"+label+"__"+recoS+".obj."+var+"()";
+void conversion(TString var, TString cName = "conversions_", TString tName = "recoConversions_",  bool notafunction=false){
+  TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
+    tName+cName+"_"+recoS+".obj."+var+"()";
+  plotvar(v);
+
+}
+
+void conversionVars(TString cName = "conversions_", TString tName = "recoConversions_"){
+      plotvar(tName+cName+recoS+".obj@.size()");
+      //conversion("EoverP", cName,tName); //seg fault !!! 
+      conversion("algo", cName,tName);
+      conversion("nTracks", cName,tName);
+      conversion("pairMomentum().x", cName,tName);
+      conversion("pairMomentum().y", cName,tName);
+      conversion("pairMomentum().z", cName,tName);
+      conversion("MVAout", cName,tName);
+}
+
+void electron(TString var, TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_",  bool notafunction=false){
+  TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
+    tName+cName+"_"+recoS+".obj."+var+"()";
   plotvar(v);
 }
 
-
-
-void gsfElectron(TString var, TString cName = "gsfElectrons_", bool notafunction=false){
-  TString v=notafunction ? "recoGsfElectrons_"+cName+"_"+recoS+".obj."+var:
-    "recoGsfElectrons_"+cName+"_"+recoS+".obj."+var+"()";
-  plotvar(v);
-}
-
-void gsfElectronVars(TString cName = "gsfElectrons_"){
-  plotvar("recoGsfElectrons_"+cName+"_"+recoS+".obj@.size()");
-  gsfElectron("pt", cName);
-  if (detailled)    gsfElectron("px", cName);
-  if (detailled)    gsfElectron("py", cName);
-  if (detailled)    gsfElectron("pz", cName);
-  gsfElectron("eta", cName);
-  gsfElectron("phi", cName);
+void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_"){
+  plotvar(tName+cName+"_"+recoS+".obj@.size()");
+  electron("pt", cName, tName);
+  if (detailled)    electron("px", cName, tName);
+  if (detailled)    electron("py", cName, tName);
+  if (detailled)    electron("pz", cName, tName);
+  electron("eta", cName, tName);
+  electron("phi", cName, tName);
   
-  gsfElectron("e1x5", cName);
-  gsfElectron("e5x5", cName);
-  gsfElectron("e2x5Max", cName);
-  gsfElectron("full5x5_e1x5", cName);
-  gsfElectron("full5x5_e5x5", cName);
-  gsfElectron("full5x5_e2x5Max", cName);
-  gsfElectron("ecalEnergy", cName);
-  if (detailled)    gsfElectron("hcalOverEcal", cName);
-  gsfElectron("energy", cName);
-  if (detailled)    gsfElectron("fbrem", cName);
-  gsfElectron("classification", cName);
+  electron("e1x5", cName, tName);
+  electron("e5x5", cName, tName);
+  electron("e2x5Max", cName, tName);
+  electron("full5x5_e1x5", cName, tName);
+  electron("full5x5_e5x5", cName, tName);
+  electron("full5x5_e2x5Max", cName, tName);
+  electron("ecalEnergy", cName, tName);
+  if (detailled)    electron("hcalOverEcal", cName, tName);
+  electron("energy", cName, tName);
+  if (detailled)    electron("fbrem", cName, tName);
+  electron("classification", cName, tName);
   
-  gsfElectron("scPixCharge", cName);
-  gsfElectron("isGsfCtfScPixChargeConsistent", cName);
-  gsfElectron("isGsfScPixChargeConsistent", cName);
-  gsfElectron("isGsfCtfChargeConsistent", cName);
-  //      gsfElectron("superCluster().index", cName);
-  //      gsfElectron("gsfTrack().index", cName);
-  //      gsfElectron("closestTrack().index", cName);
-  gsfElectron("eSuperClusterOverP", cName);
-  gsfElectron("eSeedClusterOverPout", cName);
-  gsfElectron("deltaEtaEleClusterTrackAtCalo", cName);
-  gsfElectron("deltaPhiEleClusterTrackAtCalo", cName);
-  gsfElectron("sigmaEtaEta", cName);
-  gsfElectron("sigmaIetaIeta", cName);
-  gsfElectron("sigmaIphiIphi", cName);
-  gsfElectron("r9", cName);
-  gsfElectron("hcalDepth1OverEcal", cName);
-  gsfElectron("hcalDepth2OverEcal", cName);
-  gsfElectron("hcalOverEcalBc", cName);
-  gsfElectron("full5x5_sigmaEtaEta", cName);
-  gsfElectron("full5x5_sigmaIetaIeta", cName);
-  gsfElectron("full5x5_sigmaIphiIphi", cName);
-  gsfElectron("full5x5_r9", cName);
-  gsfElectron("full5x5_hcalDepth1OverEcal", cName);
-  gsfElectron("full5x5_hcalDepth2OverEcal", cName);
-  gsfElectron("full5x5_hcalOverEcalBc", cName);
-  //new variables in 7X post-regression-in-RECO
-  gsfElectron("showerShape().sigmaIetaIphi", cName, true);
-  gsfElectron("showerShape().eMax", cName, true);
-  gsfElectron("showerShape().e2nd", cName, true);
-  gsfElectron("showerShape().eTop", cName, true);
-  gsfElectron("showerShape().eLeft", cName, true);
-  gsfElectron("showerShape().eRight", cName, true);
-  gsfElectron("showerShape().eBottom", cName, true);
+  electron("scPixCharge", cName, tName);
+  electron("isGsfCtfScPixChargeConsistent", cName, tName);
+  electron("isGsfScPixChargeConsistent", cName, tName);
+  electron("isGsfCtfChargeConsistent", cName, tName);
+  //      electron("superCluster().index", cName, tName);
+  //      electron("gsfTrack().index", cName, tName);
+  //      electron("closestTrack().index", cName, tName);
+  electron("eSuperClusterOverP", cName, tName);
+  electron("eSeedClusterOverPout", cName, tName);
+  electron("deltaEtaEleClusterTrackAtCalo", cName, tName);
+  electron("deltaPhiEleClusterTrackAtCalo", cName, tName);
+  electron("sigmaEtaEta", cName, tName);
+  electron("sigmaIetaIeta", cName, tName);
+  electron("sigmaIphiIphi", cName, tName);
+  electron("r9", cName, tName);
+  electron("hcalDepth1OverEcal", cName, tName);
+  electron("hcalDepth2OverEcal", cName, tName);
+  electron("hcalOverEcalBc", cName, tName);
+  electron("full5x5_sigmaEtaEta", cName, tName);
+  electron("full5x5_sigmaIetaIeta", cName, tName);
+  electron("full5x5_sigmaIphiIphi", cName, tName);
+  electron("full5x5_r9", cName, tName);
+  electron("full5x5_hcalDepth1OverEcal", cName, tName);
+  electron("full5x5_hcalDepth2OverEcal", cName, tName);
+  electron("full5x5_hcalOverEcalBc", cName, tName);
+  electron("dr03TkSumPt", cName, tName);
+  electron("dr03EcalRecHitSumEt", cName, tName);
+  electron("dr03HcalDepth1TowerSumEt", cName, tName);
+  electron("dr03HcalTowerSumEt", cName, tName);
+  electron("dr03HcalDepth1TowerSumEtBc", cName, tName);
+  electron("dr03HcalTowerSumEtBc", cName, tName);
+  electron("convDist", cName, tName);
+  electron("convRadius", cName, tName);
+  electron("pfIsolationVariables().chargedHadronIso", cName, tName, true);
+  electron("pfIsolationVariables().neutralHadronIso", cName, tName, true);
+  electron("pfIsolationVariables().photonIso", cName, tName, true);
+  electron("pfIsolationVariables().sumChargedHadronPt", cName, tName, true);
+  electron("pfIsolationVariables().sumNeutralHadronEt", cName, tName, true);
+  electron("pfIsolationVariables().sumPhotonEt", cName, tName, true);
+  electron("pfIsolationVariables().sumChargedParticlePt", cName, tName, true);
+  electron("pfIsolationVariables().sumNeutralHadronEtHighThreshold", cName, tName, true);
+  electron("pfIsolationVariables().sumPhotonEtHighThreshold", cName, tName, true);
+  electron("pfIsolationVariables().sumPUPt", cName, tName, true);
 
-  gsfElectron("dr03TkSumPt", cName);
-  gsfElectron("dr03EcalRecHitSumEt", cName);
-  gsfElectron("dr03HcalDepth1TowerSumEt", cName);
-  gsfElectron("dr03HcalTowerSumEt", cName);
-  gsfElectron("dr03HcalDepth1TowerSumEtBc", cName);
-  gsfElectron("dr03HcalTowerSumEtBc", cName);
-  gsfElectron("convDist", cName);
-  gsfElectron("convRadius", cName);
-  gsfElectron("pfIsolationVariables().chargedHadronIso", cName, true);
-  gsfElectron("pfIsolationVariables().neutralHadronIso", cName, true);
-  gsfElectron("pfIsolationVariables().photonIso", cName, true);
-  gsfElectron("pfIsolationVariables().sumChargedHadronPt", cName, true);
-  gsfElectron("pfIsolationVariables().sumNeutralHadronEt", cName, true);
-  gsfElectron("pfIsolationVariables().sumPhotonEt", cName, true);
-  gsfElectron("pfIsolationVariables().sumChargedParticlePt", cName, true);
-  gsfElectron("pfIsolationVariables().sumNeutralHadronEtHighThreshold", cName, true);
-  gsfElectron("pfIsolationVariables().sumPhotonEtHighThreshold", cName, true);
-  gsfElectron("pfIsolationVariables().sumPUPt", cName, true);
+  electron("mvaInput().earlyBrem", cName, tName, true);
+  electron("mvaOutput().mva", cName, tName, true);
+  electron("mvaOutput().mva_Isolated", cName, tName, true);
+  electron("mvaOutput().mva_e_pi", cName, tName, true);
+  electron("correctedEcalEnergy", cName, tName);
+  electron("correctedEcalEnergyError", cName, tName);
+  electron("trackMomentumError", cName, tName);
+  electron("ecalEnergyError", cName, tName);
+  electron("caloEnergy", cName, tName);
 
-  gsfElectron("mvaInput().earlyBrem", cName, true);
-  gsfElectron("mvaOutput().mva", cName, true);
-  gsfElectron("mvaOutput().mva_Isolated", cName, true);
-  gsfElectron("mvaOutput().mva_e_pi", cName, true);
-  gsfElectron("correctedEcalEnergy", cName);
-  gsfElectron("correctedEcalEnergyError", cName);
-  gsfElectron("trackMomentumError", cName);
-  gsfElectron("ecalEnergyError", cName);
-  gsfElectron("caloEnergy", cName);
+  electron("pixelMatchSubdetector1", cName, tName);
+  electron("pixelMatchSubdetecto", cName, tName);
+  electron("pixelMatchDPhi1", cName, tName);
+  electron("pixelMatchDPhi2", cName, tName);
+  electron("pixelMatchDRz1", cName, tName);
+  electron("pixelMatchDRz2", cName, tName);
+  electron("showerShape().sigmaIetaIphi", cName,tName, true);
+  electron("showerShape().eMax", cName,tName, true);
+  electron("showerShape().e2nd", cName,tName, true);
+  electron("showerShape().eTop", cName,tName, true);
+  electron("showerShape().eLeft", cName,tName, true);
+  electron("showerShape().eRight", cName,tName, true);
+  electron("showerShape().eBottom", cName,tName, true);
 
-  gsfElectron("pixelMatchSubdetector1", cName);
-  gsfElectron("pixelMatchSubdetecto", cName);
-  gsfElectron("pixelMatchDPhi1", cName);
-  gsfElectron("pixelMatchDPhi2", cName);
-  gsfElectron("pixelMatchDRz1", cName);
-  gsfElectron("pixelMatchDRz2", cName);
 }
 
 void gsfTracks(TString var){
@@ -498,11 +524,144 @@ void staMuons(TString var){
   plotvar(v);
 }
 
-void recoMuons(TString var, bool notafunction = false){
-  TString v= notafunction ? "recoMuons_muons__"+recoS+".obj."+var :
-    "recoMuons_muons__"+recoS+".obj."+var+"()" ;
+void muonVar(TString var, TString cName = "muons_", TString tName = "recoMuons_", bool notafunction = false){
+  TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
+    tName+cName+"_"+recoS+".obj."+var+"()" ;
   plotvar(v);
 }
+
+void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
+  plotvar(tName+cName+"_"+recoS+".obj@.size()");
+  muonVar("innerTrack().index",cName,tName);
+  muonVar("track().index",cName,tName);
+  muonVar("outerTrack().index",cName,tName);
+  muonVar("globalTrack().index",cName,tName);
+  muonVar("pt",cName,tName);
+  muonVar("eta",cName,tName);
+  muonVar("phi",cName,tName);
+  muonVar("calEnergy().towerS9",cName,tName, true);
+  muonVar("calEnergy().emS9",cName,tName, true);
+  muonVar("calEnergy().hadS9",cName,tName, true);
+  muonVar("calEnergy().hoS9",cName,tName, true);
+  muonVar("calEnergy().ecal_time",cName,tName, true);
+  muonVar("calEnergy().hcal_time",cName,tName, true);
+  muonVar("combinedQuality().trkKink",cName,tName, true);
+  muonVar("combinedQuality().glbKink",cName,tName, true);
+  muonVar("combinedQuality().localDistance",cName,tName, true);
+  muonVar("combinedQuality().updatedSta",cName,tName, true);
+  muonVar("time().nDof",cName,tName, true);
+  muonVar("time().timeAtIpInOut",cName,tName, true);
+  muonVar("time().timeAtIpInOutErr",cName,tName, true);
+  muonVar("rpcTime().nDof",cName,tName, true);
+  muonVar("rpcTime().timeAtIpInOut",cName,tName, true);
+  muonVar("rpcTime().timeAtIpInOutErr",cName,tName, true);
+  muonVar("caloCompatibility",cName,tName);
+  muonVar("isolationR03().sumPt",cName,tName, true);
+  muonVar("isolationR03().emEt",cName,tName, true);
+  muonVar("isolationR03().hadEt",cName,tName, true);
+  muonVar("isolationR03().hoEt",cName,tName, true);
+  muonVar("isolationR03().trackerVetoPt",cName,tName, true);
+  muonVar("isolationR03().emVetoEt",cName,tName, true);
+  muonVar("isolationR03().hadVetoEt",cName,tName, true);
+  muonVar("isolationR05().sumPt",cName,tName, true);
+  muonVar("isolationR05().emEt",cName,tName, true);
+  muonVar("isolationR05().hadEt",cName,tName, true);
+  muonVar("isolationR05().hoEt",cName,tName, true);
+  muonVar("isolationR05().trackerVetoPt",cName,tName, true);
+  muonVar("isolationR05().emVetoEt",cName,tName, true);
+  muonVar("isolationR05().hadVetoEt",cName,tName, true);
+  muonVar("pfIsolationR03().sumChargedHadronPt",cName,tName, true);
+  muonVar("pfIsolationR03().sumChargedParticlePt",cName,tName, true);
+  muonVar("pfIsolationR03().sumNeutralHadronEt",cName,tName, true);
+  muonVar("pfIsolationR03().sumPhotonEt",cName,tName, true);
+  muonVar("pfIsolationR03().sumPUPt",cName,tName, true);
+  muonVar("pfIsolationR04().sumChargedHadronPt",cName,tName, true);
+  muonVar("pfIsolationR04().sumChargedParticlePt",cName,tName, true);
+  muonVar("pfIsolationR04().sumNeutralHadronEt",cName,tName, true);
+  muonVar("pfIsolationR04().sumPhotonEt",cName,tName, true);
+  muonVar("pfIsolationR04().sumPUPt",cName,tName, true);
+  muonVar("pfMeanDRIsoProfileR03().sumChargedHadronPt",cName,tName, true);
+  muonVar("pfMeanDRIsoProfileR03().sumChargedParticlePt",cName,tName, true);
+  muonVar("pfMeanDRIsoProfileR03().sumNeutralHadronEt",cName,tName, true);
+  muonVar("pfMeanDRIsoProfileR03().sumPhotonEt",cName,tName, true);
+  muonVar("pfMeanDRIsoProfileR03().sumPUPt",cName,tName, true);
+  muonVar("pfSumDRIsoProfileR03().sumChargedHadronPt",cName,tName, true);
+  muonVar("pfSumDRIsoProfileR03().sumChargedParticlePt",cName,tName, true);
+  muonVar("pfSumDRIsoProfileR03().sumNeutralHadronEt",cName,tName, true);
+  muonVar("pfSumDRIsoProfileR03().sumPhotonEt",cName,tName, true);
+  muonVar("pfSumDRIsoProfileR03().sumPUPt",cName,tName, true);
+  muonVar("numberOfChambers",cName,tName);
+  muonVar("numberOfMatches",cName,tName);
+  muonVar("stationMask",cName,tName);
+  muonVar("type",cName,tName);
+
+}
+
+void packedCandVar(TString var, TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_", bool notafunction = false){
+  TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
+    tName+cName+"_"+recoS+".obj."+var+"()" ;
+  plotvar(v);
+}
+
+void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_"){
+  //plotvar(tName+cName+"_"+recoS+".obj@.size()");
+  //  packedCandVar("charge",cName,tName);
+  //track parameters require vertex and it wouldnt unpack in our environment
+  //  packedCandVar("dxy",cName,tName);
+  //  packedCandVar("dxyError",cName,tName);
+  //  packedCandVar("dz",cName,tName);
+  //  packedCandVar("dzError",cName,tName);
+  /*
+  packedCandVar("energy",cName,tName);
+  packedCandVar("et",cName,tName);
+  packedCandVar("eta",cName,tName);
+  packedCandVar("isCaloMuon",cName,tName);
+  packedCandVar("isConvertedPhoton",cName,tName);
+  packedCandVar("isElectron",cName,tName);
+  packedCandVar("isGlobalMuon",cName,tName);
+  packedCandVar("isJet",cName,tName);
+  packedCandVar("isMuon",cName,tName);
+  packedCandVar("isPhoton",cName,tName);
+  packedCandVar("isElectron",cName,tName);
+  packedCandVar("isStandAloneMuon",cName,tName);
+  packedCandVar("isTrackerMuon",cName,tName);
+  packedCandVar("mass",cName,tName);
+  packedCandVar("mt",cName,tName);
+  packedCandVar("numberOfDaughters",cName,tName);
+  packedCandVar("numberOfMothers",cName,tName);
+  packedCandVar("numberOfHits",cName,tName);
+  packedCandVar("numberOfPixelHits",cName,tName);
+  packedCandVar("p",cName,tName);
+  packedCandVar("phi",cName,tName);
+  packedCandVar("pt",cName,tName);
+  packedCandVar("status",cName,tName);
+  packedCandVar("theta",cName,tName);
+  packedCandVar("vertexChi2",cName,tName);
+  packedCandVar("vertexNdof",cName,tName);
+  packedCandVar("vx",cName,tName);
+  packedCandVar("vy",cName,tName);
+  packedCandVar("vz",cName,tName);
+  */
+  //try to get something from the branches without constructor calls
+  packedCandVar("packedPt_",cName,tName, true); 
+  packedCandVar("packedEta_",cName,tName, true); 
+  packedCandVar("packedPhi_",cName,tName, true); 
+  packedCandVar("packedM_",cName,tName, true); 
+  packedCandVar("packedDxy_",cName,tName, true); 
+  packedCandVar("packedDz_",cName,tName, true); 
+  packedCandVar("packedDPhi_",cName,tName, true); 
+  packedCandVar("packedPuppiweight_",cName,tName, true); 
+  packedCandVar("packedPuppiweightNoLepDiff_",cName,tName, true); 
+  packedCandVar("hcalFraction_",cName,tName, true); 
+  packedCandVar("pdgId_",cName,tName, true); 
+  packedCandVar("qualityFlags_",cName,tName, true); 
+  packedCandVar("pvRefKey_",cName,tName, true); 
+  packedCandVar("packedHits_",cName,tName, true); 
+  packedCandVar("normalizedChi2_",cName,tName, true); 
+
+
+}
+
 void recoMuonsCos(TString var, bool notafunction = false){
   TString v= notafunction ? "recoMuons_muonsFromCosmics__"+recoS+".obj."+var :
     "recoMuons_muonsFromCosmics__"+recoS+".obj."+var+"()" ;
@@ -608,8 +767,8 @@ void readFileList(TString file,TChain * ch){
   {
     in>>f;
     if (f!=""){
-      if (!f.Contains("castor"))
-	f="/castor/cern.ch/cms"+f;
+      //      if (!f.Contains("castor"))
+      //	f="/castor/cern.ch/cms"+f;
       std::cout<<"adding : "<<f<<std::endl;
       ch->AddFile(f);
       f="";
@@ -756,8 +915,16 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj.EcalTightHaloId()");
       plotvar(tbr+recoS+".obj.CSCLooseHaloId()");
       plotvar(tbr+recoS+".obj.CSCTightHaloId()");
+      plotvar(tbr+recoS+".obj.CSCTightHaloIdTrkMuUnveto()");
+      plotvar(tbr+recoS+".obj.CSCTightHaloId2015()");
       plotvar(tbr+recoS+".obj.GlobalLooseHaloId()");
       plotvar(tbr+recoS+".obj.GlobalTightHaloId()");
+      plotvar(tbr+recoS+".obj.getProblematicStrips()@.size()");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().cellTowerIds@.size()");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().hadEt");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().energyRatio");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().emEt");
+
 
       tbr="recoCSCHaloData_CSCHaloData__";
       plotvar(tbr+recoS+".obj.NumberOfHaloTriggers()");
@@ -781,6 +948,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj.PhiWedgeCollection.MinTime()");
       plotvar(tbr+recoS+".obj.PhiWedgeCollection.MaxTime()");
       plotvar(tbr+recoS+".obj.PhiWedgeCollection.ZDirectionConfidence()");
+      plotvar(tbr+recoS+".obj.getProblematicStrips()@.size()");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().cellTowerIds@.size()");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().hadEt");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().energyRatio");
+      plotvar(tbr+recoS+".obj.getProblematicStrips().emEt");
     }
     if ((step.Contains("all") || step.Contains("hcal")) && !step.Contains("cosmic") ){
       //hcal rechit plots
@@ -935,9 +1107,35 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("EcalRecHitsSorted_reducedEcalRecHitsEE__"+recoS+".obj.obj.flags()");      
 
 
+      // miniaod
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj@.size()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj.energy()");
+      plotvar("log10(EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj.energy())");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj.time()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj.chi2()");
+      if (detailled)      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj.outOfTimeChi2()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj.recoFlag()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEBRecHits_"+recoS+".obj.obj.flags()");
+
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj@.size()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj.energy()");
+      plotvar("log10(EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj.energy())");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj.time()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj.chi2()");
+      if (detailled)      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj.outOfTimeChi2()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj.recoFlag()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedEERecHits_"+recoS+".obj.obj.flags()");
+
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj@.size()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.energy()");
+      plotvar("log10(EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.energy())");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.time()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.chi2()");
+      if (detailled)      plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.outOfTimeChi2()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.recoFlag()");
+      plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.flags()");
       
     }
-
 
 
     if ((step.Contains("all") || step.Contains("dt")) && !step.Contains("cosmic") ){
@@ -1107,7 +1305,21 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoPFDisplacedVertexs_particleFlowDisplacedVertex__"+recoS+".obj.secondaryPt()");
       plotvar("recoPFDisplacedVertexs_particleFlowDisplacedVertex__"+recoS+".obj.primaryPt()");
 
+      // miniaod
+      plotvar("floatedmValueMap_offlineSlimmedPrimaryVertices__"+recoS+".obj.values_");
+      vertexVars("recoVertexs_offlineSlimmedPrimaryVerticies__");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj@.size()");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.x()");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.y()");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.z()");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexNormalizedChi2()");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexNdof()");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.numberOfDaughters()");
+      plotvar("log10(recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexCovariance(0,0))/2");
+      plotvar("log10(recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexCovariance(1,1))/2");
+      plotvar("log10(recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexCovariance(2,2))/2");
     }
+
     if ((step.Contains("all") || step.Contains("track")) && step.Contains("cosmic") ){
       ///cosmic tracks plots
       allTracks("ctfWithMaterialTracksP5__"+recoS+"");
@@ -1193,69 +1405,14 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoMuons_muons__"+recoS+".obj.phi()",c);
       plotvar("recoMuons_muons__"+recoS+".obj.pt()",c);
       plotvar("recoMuons_muons__"+recoS+".obj.p()",c);
+      c="patMuons_slimmedMuons__"+recoS+".obj.isTrackerMuon()";
+      plotvar("patMuons_slimmedMuons__"+recoS+".obj@.size()",c);
+      plotvar("patMuons_slimmedMuons__"+recoS+".obj.eta()",c);
+      plotvar("patMuons_slimmedMuons__"+recoS+".obj.phi()",c);
+      plotvar("patMuons_slimmedMuons__"+recoS+".obj.pt()",c);
+      plotvar("patMuons_slimmedMuons__"+recoS+".obj.p()",c);
 
-      plotvar("recoMuons_muons__"+recoS+".obj@.size()");
-
-      recoMuons("innerTrack().index");
-      recoMuons("track().index");
-      recoMuons("outerTrack().index");
-      recoMuons("globalTrack().index");
-      recoMuons("pt");
-      recoMuons("eta");
-      recoMuons("phi");
-      recoMuons("calEnergy().towerS9", true);
-      recoMuons("calEnergy().emS9", true);
-      recoMuons("calEnergy().hadS9", true);
-      recoMuons("calEnergy().hoS9", true);
-      recoMuons("calEnergy().ecal_time", true);
-      recoMuons("calEnergy().hcal_time", true);
-      recoMuons("combinedQuality().trkKink", true);
-      recoMuons("combinedQuality().glbKink", true);
-      recoMuons("combinedQuality().localDistance", true);
-      recoMuons("combinedQuality().updatedSta", true);
-      recoMuons("time().nDof", true);
-      recoMuons("time().timeAtIpInOut", true);
-      recoMuons("time().timeAtIpInOutErr", true);
-      recoMuons("caloCompatibility");
-      recoMuons("isolationR03().sumPt", true);
-      recoMuons("isolationR03().emEt", true);
-      recoMuons("isolationR03().hadEt", true);
-      recoMuons("isolationR03().hoEt", true);
-      recoMuons("isolationR03().trackerVetoPt", true);
-      recoMuons("isolationR03().emVetoEt", true);
-      recoMuons("isolationR03().hadVetoEt", true);
-      recoMuons("isolationR05().sumPt", true);
-      recoMuons("isolationR05().emEt", true);
-      recoMuons("isolationR05().hadEt", true);
-      recoMuons("isolationR05().hoEt", true);
-      recoMuons("isolationR05().trackerVetoPt", true);
-      recoMuons("isolationR05().emVetoEt", true);
-      recoMuons("isolationR05().hadVetoEt", true);
-      recoMuons("pfIsolationR03().sumChargedHadronPt", true);
-      recoMuons("pfIsolationR03().sumChargedParticlePt", true);
-      recoMuons("pfIsolationR03().sumNeutralHadronEt", true);
-      recoMuons("pfIsolationR03().sumPhotonEt", true);
-      recoMuons("pfIsolationR03().sumPUPt", true);
-      recoMuons("pfIsolationR04().sumChargedHadronPt", true);
-      recoMuons("pfIsolationR04().sumChargedParticlePt", true);
-      recoMuons("pfIsolationR04().sumNeutralHadronEt", true);
-      recoMuons("pfIsolationR04().sumPhotonEt", true);
-      recoMuons("pfIsolationR04().sumPUPt", true);
-      recoMuons("pfMeanDRIsoProfileR03().sumChargedHadronPt", true);
-      recoMuons("pfMeanDRIsoProfileR03().sumChargedParticlePt", true);
-      recoMuons("pfMeanDRIsoProfileR03().sumNeutralHadronEt", true);
-      recoMuons("pfMeanDRIsoProfileR03().sumPhotonEt", true);
-      recoMuons("pfMeanDRIsoProfileR03().sumPUPt", true);
-      recoMuons("pfSumDRIsoProfileR03().sumChargedHadronPt", true);
-      recoMuons("pfSumDRIsoProfileR03().sumChargedParticlePt", true);
-      recoMuons("pfSumDRIsoProfileR03().sumNeutralHadronEt", true);
-      recoMuons("pfSumDRIsoProfileR03().sumPhotonEt", true);
-      recoMuons("pfSumDRIsoProfileR03().sumPUPt", true);
-      recoMuons("numberOfChambers");
-      recoMuons("numberOfMatches");
-      recoMuons("stationMask");
-      recoMuons("type");
-
+      muonVars("muons_");
       plotvar("recoCaloMuons_calomuons__"+recoS+".obj@.size()");
       //      plotvar("recoCaloMuons_calomuons__"+recoS+".obj.eta()");
       //      plotvar("recoCaloMuons_calomuons__"+recoS+".obj.phi()");
@@ -1281,119 +1438,17 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("booledmValueMap_muons_muidGlobalMuonPromptTight_"+recoS+".obj.values_");
       plotvar("booledmValueMap_muons_muidTMLastStationAngTight_"+recoS+".obj.values_");
 
-      plotvar("recoMuons_muonsFromCosmics__"+recoS+".obj@.size()");
-
-      recoMuonsCos("innerTrack().index");
-      recoMuonsCos("track().index");
-      recoMuonsCos("outerTrack().index");
-      recoMuonsCos("globalTrack().index");
-      recoMuonsCos("pt");
-      recoMuonsCos("eta");
-      recoMuonsCos("phi");
-      recoMuonsCos("calEnergy().towerS9", true);
-      recoMuonsCos("calEnergy().emS9", true);
-      recoMuonsCos("calEnergy().hadS9", true);
-      recoMuonsCos("calEnergy().hoS9", true);
-      recoMuonsCos("calEnergy().ecal_time", true);
-      recoMuonsCos("calEnergy().hcal_time", true);
-      recoMuonsCos("combinedQuality().trkKink", true);
-      recoMuonsCos("combinedQuality().glbKink", true);
-      recoMuonsCos("combinedQuality().localDistance", true);
-      recoMuonsCos("combinedQuality().updatedSta", true);
-      recoMuonsCos("time().nDof", true);
-      recoMuonsCos("time().timeAtIpInOut", true);
-      recoMuonsCos("time().timeAtIpInOutErr", true);
-      recoMuonsCos("caloCompatibility");
-      recoMuonsCos("isolationR03().sumPt", true);
-      recoMuonsCos("isolationR03().emEt", true);
-      recoMuonsCos("isolationR03().hadEt", true);
-      recoMuonsCos("isolationR03().hoEt", true);
-      recoMuonsCos("isolationR03().trackerVetoPt", true);
-      recoMuonsCos("isolationR03().emVetoEt", true);
-      recoMuonsCos("isolationR03().hadVetoEt", true);
-      recoMuonsCos("isolationR05().sumPt", true);
-      recoMuonsCos("isolationR05().emEt", true);
-      recoMuonsCos("isolationR05().hadEt", true);
-      recoMuonsCos("isolationR05().hoEt", true);
-      recoMuonsCos("isolationR05().trackerVetoPt", true);
-      recoMuonsCos("isolationR05().emVetoEt", true);
-      recoMuonsCos("isolationR05().hadVetoEt", true);
-      recoMuonsCos("pfIsolationR03().sumChargedHadronPt", true);
-      recoMuonsCos("pfIsolationR03().sumChargedParticlePt", true);
-      recoMuonsCos("pfIsolationR03().sumNeutralHadronEt", true);
-      recoMuonsCos("pfIsolationR03().sumPhotonEt", true);
-      recoMuonsCos("pfIsolationR03().sumPUPt", true);
-      recoMuonsCos("pfIsolationR04().sumChargedHadronPt", true);
-      recoMuonsCos("pfIsolationR04().sumChargedParticlePt", true);
-      recoMuonsCos("pfIsolationR04().sumNeutralHadronEt", true);
-      recoMuonsCos("pfIsolationR04().sumPhotonEt", true);
-      recoMuonsCos("pfIsolationR04().sumPUPt", true);
-      recoMuonsCos("numberOfChambers");
-      recoMuonsCos("numberOfMatches");
-      recoMuonsCos("stationMask");
-      recoMuonsCos("type");
-
-      plotvar("recoMuons_muonsFromCosmics1Leg__"+recoS+".obj@.size()");
-
-      recoMuonsCos1Leg("innerTrack().index");
-      recoMuonsCos1Leg("track().index");
-      recoMuonsCos1Leg("outerTrack().index");
-      recoMuonsCos1Leg("globalTrack().index");
-      recoMuonsCos1Leg("pt");
-      recoMuonsCos1Leg("eta");
-      recoMuonsCos1Leg("phi");
-      recoMuonsCos1Leg("calEnergy().towerS9", true);
-      recoMuonsCos1Leg("calEnergy().emS9", true);
-      recoMuonsCos1Leg("calEnergy().hadS9", true);
-      recoMuonsCos1Leg("calEnergy().hoS9", true);
-      recoMuonsCos1Leg("calEnergy().ecal_time", true);
-      recoMuonsCos1Leg("calEnergy().hcal_time", true);
-      recoMuonsCos1Leg("combinedQuality().trkKink", true);
-      recoMuonsCos1Leg("combinedQuality().glbKink", true);
-      recoMuonsCos1Leg("combinedQuality().localDistance", true);
-      recoMuonsCos1Leg("combinedQuality().updatedSta", true);
-      recoMuonsCos1Leg("time().nDof", true);
-      recoMuonsCos1Leg("time().timeAtIpInOut", true);
-      recoMuonsCos1Leg("time().timeAtIpInOutErr", true);
-      recoMuonsCos1Leg("caloCompatibility");
-      recoMuonsCos1Leg("isolationR03().sumPt", true);
-      recoMuonsCos1Leg("isolationR03().emEt", true);
-      recoMuonsCos1Leg("isolationR03().hadEt", true);
-      recoMuonsCos1Leg("isolationR03().hoEt", true);
-      recoMuonsCos1Leg("isolationR03().trackerVetoPt", true);
-      recoMuonsCos1Leg("isolationR03().emVetoEt", true);
-      recoMuonsCos1Leg("isolationR03().hadVetoEt", true);
-      recoMuonsCos1Leg("isolationR05().sumPt", true);
-      recoMuonsCos1Leg("isolationR05().emEt", true);
-      recoMuonsCos1Leg("isolationR05().hadEt", true);
-      recoMuonsCos1Leg("isolationR05().hoEt", true);
-      recoMuonsCos1Leg("isolationR05().trackerVetoPt", true);
-      recoMuonsCos1Leg("isolationR05().emVetoEt", true);
-      recoMuonsCos1Leg("isolationR05().hadVetoEt", true);
-      recoMuonsCos1Leg("pfIsolationR03().sumChargedHadronPt", true);
-      recoMuonsCos1Leg("pfIsolationR03().sumChargedParticlePt", true);
-      recoMuonsCos1Leg("pfIsolationR03().sumNeutralHadronEt", true);
-      recoMuonsCos1Leg("pfIsolationR03().sumPhotonEt", true);
-      recoMuonsCos1Leg("pfIsolationR03().sumPUPt", true);
-      recoMuonsCos1Leg("pfIsolationR04().sumChargedHadronPt", true);
-      recoMuonsCos1Leg("pfIsolationR04().sumChargedParticlePt", true);
-      recoMuonsCos1Leg("pfIsolationR04().sumNeutralHadronEt", true);
-      recoMuonsCos1Leg("pfIsolationR04().sumPhotonEt", true);
-      recoMuonsCos1Leg("pfIsolationR04().sumPUPt", true);
-      recoMuonsCos1Leg("numberOfChambers");
-      recoMuonsCos1Leg("numberOfMatches");
-      recoMuonsCos1Leg("stationMask");
-      recoMuonsCos1Leg("type");
+      muonVars("muonsFromCosmics_");
+      muonVars("muonsFromCosmics1Leg_");
+      // miniaod
+      muonVars("slimmedMuons_","patMuons_");
     }
-    
+
     if ((step.Contains("all") || step.Contains("tau")) && !step.Contains("cosmic") && !step.Contains("NoTaus")){
       // tau plots
-      plotvar("recoPFTaus_hpsPFTauProducer__"+recoS+".obj@.size()");
-      tau("hpsPFTauProducer","energy");
-      tau("hpsPFTauProducer","et");
-      tau("hpsPFTauProducer","eta");
-      tau("hpsPFTauProducer","phi");
-      tau("hpsPFTauProducer","emFraction");
+      tauVars("hpsPFTauProducer_");
+      // miniaod
+      tauVars("slimmedTaus_","patTaus_");
 
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolation__"+recoS+".obj.data_");
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolationMVA__"+recoS+".obj.data_");
@@ -1408,26 +1463,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       //      plotvar("recoRecoTauPiZeros_hpsPFTauProducer_pizeros_"+recoS+".obj.numberOfElectrons()");
   }
 
-  if ((step.Contains("all") || step.Contains("conversion") || step.Contains("photon"))){
+  if (step.Contains("all") || step.Contains("conversion") || step.Contains("photon")){
       //converstion plots
-      plotvar("recoConversions_conversions__"+recoS+".obj@.size()");
-      //conversion("conversions","EoverP"); //seg fault !!! 
-      conversion("conversions","algo");
-      conversion("conversions","nTracks");
-      conversion("conversions","pairMomentum().x");
-      conversion("conversions","pairMomentum().y");
-      conversion("conversions","pairMomentum().z");
-      conversion("conversions","MVAout");
+      conversionVars("conversions_");
+      conversionVars("allConversions_");
 
-      plotvar("recoConversions_allConversions__"+recoS+".obj@.size()");
-      //conversion("allConversions","EoverP"); //seg fault !!! 
-      conversion("allConversions","algo");
-      conversion("allConversions","nTracks");
-      conversion("allConversions","pairMomentum().x");
-      conversion("allConversions","pairMomentum().y");
-      conversion("allConversions","pairMomentum().z");
-      conversion("allConversions","MVAout");
-      
+      // miniaod
+      conversionVars("reducedEgamma_reducedConversions");
+      conversionVars("reducedEgamma_reducedSingleLegConversions");
+
       allTracks("conversionStepTracks__"+recoS+"");
 
       /*      plotvar("recoConversions_trackerOnlyConversions__"+recoS+".obj@.size()");
@@ -1457,11 +1501,27 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.swissCrx()");
       plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.seedTime()");
 
+      // miniaod
+      photonVars("slimmedPhotons_","patPhotons_");
+
+      plotvar("recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj@.size()");
+      plotvar("recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj.eta()");
+      plotvar("recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj.phi()");
+      plotvar("log10(recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj.energy())");
+
+      plotvar("recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj@.size()");
+      plotvar("recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj.eta()");
+      plotvar("recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj.phi()");
+      plotvar("log10(recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj.energy())");
+
       if (detailled){
 
 	
 	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj@.size()");
 	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.eta()");
+	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.energy()");
+	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.correctedEnergy()");
+	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.correctedEnergyUncertainty()");
 	/* plotvar("recoSuperClusters_hybridSuperClusters__"+recoS+".obj@.size()");
 	   plotvar("recoSuperClusters_hybridSuperClusters__"+recoS+".obj.eta()");
 	   plotvar("TrackCandidates_conversionTrackCandidates_outInTracksFromConversions_"+recoS+".obj@.size()");
@@ -1476,99 +1536,129 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_particleFlowEGamma__"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_particleFlowEGamma__"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_particleFlowEGamma__"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_particleFlowEGamma__"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowEGamma__"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowEGamma__"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj@.size()");
       plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.eta()");
       plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.phi()");
       plotvar("log10(recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj@.size()");
       plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.eta()");
       plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.phi()");
       plotvar("log10(recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoCaloClusters_hfEMClusters__"+recoS+".obj@.size()");
       plotvar("recoCaloClusters_hfEMClusters__"+recoS+".obj.eta()");
       plotvar("recoCaloClusters_hfEMClusters__"+recoS+".obj.phi()");
       plotvar("log10(recoCaloClusters_hfEMClusters__"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoCaloClusters_hfEMClusters__"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoCaloClusters_hfEMClusters__"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoSuperClusters_hfEMClusters__"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_hfEMClusters__"+recoS+".obj.eta()");
       plotvar("recoSuperClusters_hfEMClusters__"+recoS+".obj.phi()");
       plotvar("log10(recoSuperClusters_hfEMClusters__"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoSuperClusters_hfEMClusters__"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoSuperClusters_hfEMClusters__"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj@.size()");
       plotvar("recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.eta()");
       plotvar("recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.phi()");
       plotvar("log10(recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       plotvar("recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj@.size()");
       plotvar("recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.eta()");
       plotvar("recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.phi()");
       plotvar("log10(recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.energy())");
+      plotvar("log10(max(1e-5,recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.correctedEnergy()))");
+      plotvar("log10(max(1e-5,recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.correctedEnergyUncertainty()))");
 
       
       plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj@.size()");
-      plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.position().eta()");
-      plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.position().phi()");
+      plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.position_.eta()");
+      plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.position_.phi()");
       plotvar("log10(recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.energy())");
       plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.time()");
 
       plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj@.size()");
-      plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.position().eta()");
-      plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.position().phi()");
+      plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.position_.eta()");
+      plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.position_.phi()");
       plotvar("log10(recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.energy())");
       plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.time()");
 
       plotvar("recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj@.size()");
-      plotvar("recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj.position().eta()");
-      plotvar("recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj.position().phi()");
+      plotvar("recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj.position_.eta()");
+      plotvar("recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj.position_.phi()");
       plotvar("log10(recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj.energy())");
       plotvar("recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj.time()");
 
       plotvar("recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj@.size()");
-      plotvar("recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.position().eta()");
-      plotvar("recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.position().phi()");
+      plotvar("recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.position_.eta()");
+      plotvar("recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.position_.phi()");
       plotvar("log10(recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.energy())");
       plotvar("recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.time()");
 
@@ -1592,20 +1682,26 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.eta()");
       plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.phi()");
       plotvar("log10(recoPFClusters_particleFlowClusterPS__"+recoS+".obj.energy())");
-    }
 
-    if ((step.Contains("all"))){
-      
+      // miniaod
+      plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj@.size()");
+      plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj.eta()");
+      plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj.phi()");
+      plotvar("log10(recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj.energy())");
     }
 
     if ((step.Contains("all") || step.Contains("electron")) && !step.Contains("cosmic")){
       ///electron plots
-      gsfElectronVars("gsfElectrons_");
-      gsfElectronVars("gedGsfElectrons_");
+      electronVars("gsfElectrons_");
+      electronVars("gedGsfElectrons_");
+
       //HI collections
-      gsfElectronVars("gedGsfElectronsTmp_");
-      gsfElectronVars("ecalDrivenGsfElectrons_");
-      gsfElectronVars("mvaElectrons_");
+      electronVars("gedGsfElectronsTmp_");
+      electronVars("ecalDrivenGsfElectrons_");
+      electronVars("mvaElectrons_");
+
+      // miniaod
+      electronVars("slimmedElectrons_","patElectrons_");
 
       plotvar("floatedmValueMap_eidLoose__"+recoS+".obj.values_");
 
@@ -1639,6 +1735,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (detailled)    plotvar("log10(abs(recoGsfTracks_electronGsfTracks__"+recoS+".obj.pz()))");
       
     }
+
     if (step.Contains("all") || step.Contains("pflow")){
       ///particle flow objects
 
@@ -1765,28 +1862,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     }
     if (step.Contains("all") || step.Contains("met")){
       ///MET plots
-      met("tcMet","pt", true);
-      met("tcMet","px");
-      met("tcMet","py");
-      met("tcMet","eta");
-      met("tcMet","phi");
-      met("tcMet","significance");
+      metVars("tcMet_");
+      metVars("tcMetWithPFclusters_");
+      metVars("htMetAK7_");
 
-      met("tcMetWithPFclusters","pt", true);
-      met("tcMetWithPFclusters","px");
-      met("tcMetWithPFclusters","py");
-      met("tcMetWithPFclusters","eta");
-      met("tcMetWithPFclusters","phi");
-      met("tcMetWithPFclusters","significance");
-      
-      
-      met("htMetAK7","pt", true);
-      met("htMetAK7","px");
-      met("htMetAK7","py");
-      met("htMetAK7","eta");
-      met("htMetAK7","phi");
-      met("htMetAK7","significance");
-
+      // miniaod
+      metVars("slimmedMETs_","patMETs_");
+      metVars("slimmedMETsPuppi_","patMETs_");
 
       calomet("metOpt","et", true);
       calomet("metOpt","eta");
@@ -1924,6 +2006,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       jets("recoCaloJets", "akVs4CaloJets");
       jets("recoPFJets", "akVs4PFJets");
+
+      // miniaod
+      jets("patJets","slimmedJets");
+      jets("patJets","slimmedJetsAK8");
+      jets("patJets","slimmedJetsPuppi");
+      //jets("patJets","slimmedJetsAK8PFCHSSoftDropPacked_SubJets");
+      //jets("patJets","slimmedJetsCMSTopTagCHSPacked_SubJets");
     }
 
     if (step.Contains("all") || step.Contains("jet")){
@@ -2007,6 +2096,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoRecoEcalCandidates_hfRecoEcalCandidate__"+recoS+".obj.pt()");
       plotvar("recoRecoEcalCandidates_hfRecoEcalCandidate__"+recoS+".obj.eta()");
       plotvar("recoRecoEcalCandidates_hfRecoEcalCandidate__"+recoS+".obj.phi()");
+    }
+
+    if (step.Contains("all")) {
+      packedCand("packedPFCandidates_");
+      //packedCand("lostTracks_");
     }
     
   }else{

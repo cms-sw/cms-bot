@@ -64,6 +64,7 @@ CMSSW_L2 = {
   "fabozzi" : ["pdmv"],
   "iahmad-khan" : ["externals"],
   "hengne" : ["pdmv"],
+  "ghellwig" : ["alca"],
 }
 
 CMSSW_CATEGORIES={

@@ -321,17 +321,6 @@ cbaus:
 - GeneratorInterface/HiGenCommon
 - GeneratorInterface/HydjetInterface
 - GeneratorInterface/PyquenInterface
-cerati:
-- RecoTracker
-- RecoLocalTracker
-- TrackingTools
-- SimTracker
-- SimGeneral/TrackingAnalysis
-- RecoVertex
-- RecoPixelVertexing
-- Configuration/StandardSequences
-- Validation/RecoTrack
-- Validation/RecoVertex
 cnuttens:
 - SimTracker/SiStripDigitizer
 - SimTracker/Common

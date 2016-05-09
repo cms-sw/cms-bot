@@ -1,7 +1,7 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
-DIR="$1"
-BRANCH="$2"
+BRANCH="$1"
+DIR=$(/bin/pwd)
 COMMIT_STORE="$DIR/commits"
 [ -f $DIR/commits/commits.txt ] || exit 1
 

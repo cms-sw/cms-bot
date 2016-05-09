@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 BRANCH="$1"
 DIR=$(/bin/pwd)
@@ -7,8 +7,6 @@ COMMIT_STORE="$DIR/commits"
 
 cd $DIR/stitched
 git checkout master
-PKGS=$(ls -d */*)
-rm -f $DIR/new-diff
 I=0
 for COMMIT in `cat $DIR/commits/commits.txt | grep '^[0-9a-f][0-9a-f]*$'` ; do 
   I=$(expr $I + 1)

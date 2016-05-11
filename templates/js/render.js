@@ -271,6 +271,17 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
   title_cell.append(sa2_link)
   title_cell.append($("<br>"))
 
+  var sa_links = ""
+  for (i = 1; i < found_items.length; i++) {
+    if (found_items[i]=='') continue
+    sa_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", found_items[i] ))
+    sa_link.append($('<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>'))
+    sa_link.append($('<span class="glyphicon glyphicon-alert"></span>'))
+    sa_link.append($('<span></span>').text(' produce/analyze/filter()'))
+    title_cell.append(sa_link)
+    title_cell.append($("<br>"))
+  }
+
   var sa3_link = $("<a></a>").attr("href", url.replace("llvm-analysis/index.html", "reports/tlf2esd.txt"))
   sa3_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
   sa3_link.append($('<span></span>').text(' Modules to thread unsafe EventSetup products'))

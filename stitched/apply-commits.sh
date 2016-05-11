@@ -8,6 +8,7 @@ COMMIT_STORE="$DIR/commits"
 cd $DIR/stitched
 git checkout master
 I=0
+CHGS=
 for COMMIT in `cat $DIR/commits/commits.txt | grep '^[0-9a-f][0-9a-f]*$'` ; do 
   I=$(expr $I + 1)
   echo "WORKING ON $I: $COMMIT"
@@ -20,6 +21,7 @@ for COMMIT in `cat $DIR/commits/commits.txt | grep '^[0-9a-f][0-9a-f]*$'` ; do
   fi
   echo "Applying patch $COMMIT"
   REV=$(patch -p1 -N --dry-run < $COMMIT_STORE/stitched.patch | grep 'Reversed .* patch detected' | wc -l)
+  CHGS=YES
   if [ "X$REV" = "X0" ] ; then
     echo "Apply $COMMIT"
     patch -p1 < $COMMIT_STORE/stitched.patch
@@ -31,4 +33,8 @@ for COMMIT in `cat $DIR/commits/commits.txt | grep '^[0-9a-f][0-9a-f]*$'` ; do
   fi
   touch $COMMIT_STORE/apply
 done
+if [ "X$CHGS" = "XYES" ] ; then
+  echo $COMMIT > .cmssw-commit
+  git commit -a -m 'sync changes from cms-sw/cmssw using $COMMIT'
+fi
 

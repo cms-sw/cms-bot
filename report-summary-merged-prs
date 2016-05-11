@@ -779,8 +779,8 @@ def find_one_static_check( release_name , architecture ):
   out,err,ret_code = get_output_command(command_to_execute)
   print "Ran:",out,err,ret_code,command_to_execute
   if ret_code == 0:
-    print 'found',arch
     arch = out.split()[0]
+    print 'found',arch
     filter1 = find_one_static_filter_check( release_name , arch, MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1)
     return arch+":"+filter1
   print 'inprogress'

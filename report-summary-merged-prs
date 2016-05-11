@@ -759,6 +759,17 @@ def find_dqm_tests_results( comparisons ):
 
 
 #
+# Looks for one static-tests-filter result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#
+def find_one_static_filter_check( release_name , architecture, magic_cmd ):
+  command_to_execute = magic_cmd.replace('RELEASE_NAME',release_name)
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
+  out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
+  return out
+
+#
 # Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
 #
 def find_one_static_check( release_name , architecture ):
@@ -768,8 +779,10 @@ def find_one_static_check( release_name , architecture ):
   out,err,ret_code = get_output_command(command_to_execute)
   print "Ran:",out,err,ret_code,command_to_execute
   if ret_code == 0:
-    print 'found'
-    return out.split()[0]
+    print 'found',arch
+    arch = out.split()[0]
+    filter1 = find_one_static_filter_check( release_name , arch, MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1)
+    return arch+":"+filter1
   print 'inprogress'
   return 'inprogress'
 
@@ -1036,6 +1049,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME && ls '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/'
+  MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1 = 'test -s '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/reports/modules2statics-filter1.txt && echo reports/modules2statics-filter1.txt'
   MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME'
   MAGIC_COMMAND_FIND_IGPROF = 'test -d '+JENKINS_ARTIFACTS_DIR+'/igprof/RELEASE_NAME'
   MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'

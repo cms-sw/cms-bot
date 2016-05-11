@@ -256,6 +256,8 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
     add_inprogress_item(title_cell,' Static Analyzer')
     return
   }
+  found_items = isFound.trim().split(":")
+  isFound = found_items[0]
   var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/'+isFound+'/llvm-analysis/index.html'
   var sa_link = $("<a></a>").attr("href", url)
   sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))

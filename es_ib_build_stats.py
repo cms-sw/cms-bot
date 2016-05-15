@@ -62,7 +62,9 @@ def process_build_any_ib(logFile):
   urlx = logFile.split("/")
   url = "https://cmssdt.cern.ch/jenkins/job/build-any-ib/"+logFile.split("/")[-2]+"/console"
   timestp  = getmtime(logFile)
-  ttime = jend - jstart
+  ttime=0
+  if jend and jstart:
+    ttime = jend - jstart
   print ttime.seconds, uploadTime, rel, arch, patch, url
   payload = {}
   payload["release"] = rel

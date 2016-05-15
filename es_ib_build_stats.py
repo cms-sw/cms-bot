@@ -64,12 +64,13 @@ def process_build_any_ib(logFile):
   timestp  = getmtime(logFile)
   ttime=0
   if jend and jstart:
-    ttime = jend - jstart
-  print ttime.seconds, uploadTime, rel, arch, patch, url
+    dtime = jend - jstart
+    ttime = dtime.seconds 
+  print ttime, uploadTime, rel, arch, patch, url
   payload = {}
   payload["release"] = rel
   payload["architecture"] = arch
-  payload["total_time"] = ttime.seconds
+  payload["total_time"] = ttime
   payload["upload_time"] = uploadTime
   payload["patch"] = patch
   payload["@timestamp"] = int(timestp*1000)

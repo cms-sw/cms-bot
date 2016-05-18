@@ -46,7 +46,8 @@ pushd $BUILD_DIR/CMSDIST
 
   #Create a temp branch so that we can commit the local changes and
   #push the REL tag once release is build successfully
-  git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE $CMSDIST_TAG
+  git checkout $CMSDIST_TAG
+  git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE
 popd
 
 git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS

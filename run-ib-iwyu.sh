@@ -5,7 +5,7 @@ echo 'Running Scram'
 scram -a $ARCHITECTURE project $RELEASE_NAME
 cd $RELEASE_NAME
 eval `scram run -sh`
-cp -R $CMSSW_RELEASE_BASE/src/* /src 
+cp -R $CMSSW_RELEASE_BASE/src/* src 
 find src/ -maxdepth 2 -type l -exec rm -f {} \;
 BUILD_LOG=yes scram b -k -j $(nproc) compile COMPILER=iwyu
 scram build -f buildlog

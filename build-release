@@ -12,6 +12,7 @@ CMSSW_QUEUE=$3
 ONLY_BUILD_TOOLCONF=$4
 ISSUE_NUMBER=$5
 DRY_RUN_PARAM=$6
+CMSDIST_HASH=$7
 echo DATE=`date`
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
@@ -37,10 +38,15 @@ pushd $BUILD_DIR/CMSDIST
     BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
     CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
     PATCH='-patch'
-  ;;
+    ;;
+    * )
+    [ ! -z "$CMSDIST_HASH" ] && CMSDIST_TAG=$CMSDIST_HASH
+    ;;
   esac
 
-  git checkout $CMSDIST_TAG
+  #Create a temp branch so that we can commit the local changes and
+  #push the REL tag once release is build successfully
+  git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE $CMSDIST_TAG
 popd
 
 git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS

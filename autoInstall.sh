@@ -65,6 +65,7 @@ for REPOSITORY in $REPOSITORIES; do
     echo "CMS_INSTALL_PREFIX='$DESTDIR'; export CMS_INSTALL_PREFIX" > $WORKDIR/common/apt-site-env.sh
   fi
   [ -f $WORKDIR/common/cmspkg ] || wget -O $WORKDIR/common/cmspkg http://cmsrep.cern.ch/cmssw/repos/cmspkg
+  chmod +x $WORKDIR/common/cmspkg
   # Since we are installing on a local disk, no need to worry about
   # the rpm database.
   #

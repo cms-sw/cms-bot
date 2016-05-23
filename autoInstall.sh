@@ -59,11 +59,12 @@ for REPOSITORY in $REPOSITORIES; do
     # what got installed by someone else.
     mkdir -p $WORKDIR/common
     touch $LOGFILE
-    wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/cms/bootstrap.sh
+    wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
     sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH >& $LOGFILE
     # We install locally, but we want to run from DESTDIR.
     echo "CMS_INSTALL_PREFIX='$DESTDIR'; export CMS_INSTALL_PREFIX" > $WORKDIR/common/apt-site-env.sh
   fi
+  [ -f $WORKDIR/common/cmspkg ] || wget -O $WORKDIR/common/cmspkg http://cmsrep.cern.ch/cmssw/repos/cmspkg
   # Since we are installing on a local disk, no need to worry about
   # the rpm database.
   #
@@ -71,21 +72,23 @@ for REPOSITORY in $REPOSITORIES; do
   # Also we do not want the installation of one release (which can be broken)
   # to interfere with the installation of a different one. For that reason we
   # ignore the exit code.
+  APT_GET="$WORKDIR/common/cmspkg -a $SCRAM_ARCH"
+  APT_CACHE="${APT_GET}"
   (
-    source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ;
-    apt-get update ;
+    source $WORKDIR/$SCRAM_ARCH/external/rpm/*/etc/profile.d/init.sh ;
+    $APT_GET update ;
     RELS_TO_INSTALL="" ;
     if [ "X$INSTALL_RELEASE" != "X" ] ; then
       RELS_TO_INSTALL="cms+cmssw-ib+$INSTALL_RELEASE" ;
     else
-      apt-cache search cmssw-ib\\+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
+      $APT_CACHE search cmssw-ib+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
       rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed$$.txt ;
       RELS_TO_INSTALL=`diff -u onserver$$.txt installed$$.txt | grep -e '^-[^-]' | sed -e 's/^-//'`;
     fi;
     for x in $RELS_TO_INSTALL; do
-      apt-get install -q -y $x || true;
-      time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
-      time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
+      $APT_GET install -y $x || true;
+      time $APT_GET install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
+      time $APT_GET install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
       relname=`echo $x | awk -F + '{print $NF}'` ;
       timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
       if [ "X$timestamp" != "X" ] ; then
@@ -98,7 +101,7 @@ for REPOSITORY in $REPOSITORIES; do
     done ;
     rm -f installed$$.txt ;
     rm -f onserver$$.txt ;
-    apt-get clean
+    $APT_GET clean
   ) || true
   # We create the directory in any case, to avoid the rsync to fail in case
   # the repository is not there and we cannot install.

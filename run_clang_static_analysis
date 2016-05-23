@@ -27,8 +27,12 @@ cp -R $LOCALRT/llvm-analysis/*/* $WORKSPACE/llvm-analysis
 
 ./create_statics_esd_reports.sh
 ls -ltrh
-tar cvfz dumper-checker.tgz *.txt* 
-egrep '::(stream|global)::[^ ]+::(produce|analyze|filter)\(\)' modules2statics.txt | egrep -v 'edm::RootInputFileSequence::initTheFile\(\)'  > modules2statics-filter1.txt
-cp dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt getparam-dumper.txt modules2statics-filter1.txt $WORKSPACE/reports
+tar cvfz dumper-checker.tgz *.txt*
+EX_FILES=""
+if [ -f  modules2statics.txt ] ; then 
+  egrep '::(stream|global)::[^ ]+::(produce|analyze|filter)\(\)' modules2statics.txt | egrep -v 'edm::RootInputFileSequence::initTheFile\(\)'  > modules2statics-filter1.txt
+  EX_FILES=modules2statics-filter1.txt
+fi
+cp dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt getparam-dumper.txt $EX_FILES $WORKSPACE/reports
 
 

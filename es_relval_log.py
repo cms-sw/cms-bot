@@ -8,6 +8,36 @@ from socket import gethostname
 from es_utils import send_payload
 import xml.etree.ElementTree as ET
 
+def find_step_cmd(cmdfile,step):
+  try:
+    cmd = ''
+    data=open(cmdfile,'r')
+    get = iter(data)
+    line = get.next()
+    while line:
+      if step=='step1' and 'das_client' in line:
+        while 'step1_dasquery.log' not in line:
+          cmd = cmd + line
+          line = get.next()
+        return (cmd + line).strip()
+      elif 'file:'+step in line:
+        return line.strip()
+      line=get.next()
+  except:
+    return None
+
+def get_exit_code(workflow_log,step):
+  try:
+    d=open(workflow_log,'r')
+    for line in d:
+      if 'exit:' in line:
+        codes = map(int,line.split('exit:')[-1].strip().split())
+        return int(codes[step-1])
+  except:
+    pass
+  return -1
+
+
 def es_parse_jobreport(payload,logFile):
   xmlFile = "/".join(logFile.split('/')[:-1]) + "/JobReport"+logFile.split('/')[-1].split("_")[0][-1]+".xml"
   if not os.path.exists(xmlFile):
@@ -61,6 +91,13 @@ def es_parse_log(logFile):
   index = "ib-matrix-" + week
   document = "runTheMatrix-data"
   id = sha1(release + architecture + workflow + str(step)).hexdigest()
+  logdir = '/'.join(logFile.split('/')[:-1])
+  cmdfile = logdir + '/cmdLog'
+  cmd_step = find_step_cmd(cmdfile,step)
+  if cmd_step: payload["command"] = cmd_step
+  wf_log = logdir + '/workflow.log'
+  exitcode = get_exit_code(wf_log,int(step[-1]))
+  if exitcode != -1 : payload["exitcode"] = exitcode
   payload["workflow"] = workflow
   payload["release"] = release
   payload["architecture"] = architecture

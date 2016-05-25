@@ -29,14 +29,12 @@ for l in fd:
     line=line.rstrip()
     if len(line):
       files += 1
-      print '<tr><td bgcolor="#00FFFF"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/'+l.split(splitline)[-1].split()[0] + '"' + '>' + l.split(splitline)[-1] + '</a></b>'
-      #print '<tr><td bgcolor="#00FFFF"><h2>'+ l.split(splitline)[-1] +'</h2>'
+      items = l.split(splitline)[-1].split("",1)
+      print '<tr><td bgcolor="#00FFFF"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/'+items[0] + '"' + '>' + items[0] + '</a> '+items[1]+'</b>'
       while len(line):
         excludes +=1
         line=line.replace('<','&#60;')
         line=line.replace('>','&#62;')
-        #line=line.replace('"','')
-        #line=line.replace('- #include ','')
         print '<br/>'+line
         line=sec.next()
         line=line.rstrip()
@@ -48,14 +46,12 @@ for l in fd:
     line=line.rstrip()
     if len(line):
       files += 1
-      print '<tr><td bgcolor="#00FF90"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/' + l.split(splitline)[-1].split()[0] + '"' + '>' + l.split(splitline)[-1] + '</a></b>'
-
-      #print '<tr><td bgcolor="#00FF90"><h2>'+ l.split(splitline)[-1]+'</h2>'
+      items = l.split(splitline)[-1].split("",1)
+      print '<tr><td bgcolor="#00FF90"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/'+items[0]+ '"' + '>' + items[0] + '</a> '+items[1]+'</b>'
       while len(line):
         includes += 1
         line=line.replace('<','&#60;')
         line=line.replace('>','&#62;')
-        #line=line.replace('#include ','').replace('"','')
         print '<br />'+line
         line=sec.next()
         line=line.rstrip()

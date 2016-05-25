@@ -1,6 +1,11 @@
 #!/bin/env python
 import sys , json
 fd=open(sys.argv[1],'r')
+info = {}
+includes=0
+excludes=0
+pkg_name = sys.argv[1].split('/')[-2]
+files=0
 splitline = sys.argv[2] + '/src/'
 print """<!DOCTYPE html>
 <html>
@@ -23,8 +28,11 @@ for l in fd:
     line=sec.next()
     line=line.rstrip()
     if len(line):
-      print '<tr><td bgcolor="#00FFFF"><h2>'+ l.split(splitline)[-1] +'</h2>'
+      files += 1
+      print '<tr><td bgcolor="#00FFFF"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/'+l.split(splitline)[-1].split()[0] + '"' + '>' + l.split(splitline)[-1] + '</a></b>'
+      #print '<tr><td bgcolor="#00FFFF"><h2>'+ l.split(splitline)[-1] +'</h2>'
       while len(line):
+        excludes +=1
         line=line.replace('<','&#60;')
         line=line.replace('>','&#62;')
         #line=line.replace('"','')
@@ -39,8 +47,12 @@ for l in fd:
     line=sec.next()
     line=line.rstrip()
     if len(line):
-      print '<tr><td bgcolor="#00FF90"><h2>'+ l.split(splitline)[-1]+'</h2>'
+      files += 1
+      print '<tr><td bgcolor="#00FF90"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/' + l.split(splitline)[-1].split()[0] + '"' + '>' + l.split(splitline)[-1] + '</a></b>'
+
+      #print '<tr><td bgcolor="#00FF90"><h2>'+ l.split(splitline)[-1]+'</h2>'
       while len(line):
+        includes += 1
         line=line.replace('<','&#60;')
         line=line.replace('>','&#62;')
         #line=line.replace('#include ','').replace('"','')
@@ -49,3 +61,8 @@ for l in fd:
         line=line.rstrip()
       print '</td></tr>'
 print '</table>'
+stat = [ files , includes , excludes ]
+info[pkg_name] = stat
+output_file = open('stats.json', 'a')
+output_file.write(json.dumps(info))
+output_file.close()

@@ -215,6 +215,8 @@ CMSSW_CATEGORIES={
    "DataFormats/PatCandidates",
    "PhysicsTools/PatAlgos",
    "PhysicsTools/PatUtils",
+   "RecoCTPPS/Configuration",
+   "RecoCTPPS/TotemRPLocal",
    "RecoLocalCalo/CaloRecCandCreator",
    "RecoLocalCalo/CaloTowersCreator",
    "RecoLocalCalo/Castor",

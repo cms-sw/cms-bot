@@ -16,7 +16,6 @@ mkdir iwyu
 for logfile in `find tmp/$ARCHITECTURE/cache/log/src -name 'build.log' -type f` ; do
   DIR=`echo $logfile | cut -d/ -f6,7`
   mkdir -p iwyu/$DIR
-  echo "Generating html page"
   $DIR_NAME/parse_iwyu_logs.py $logfile $RELEASE_NAME >iwyu/$DIR/index.html 
   cp $logfile iwyu/$DIR
 done

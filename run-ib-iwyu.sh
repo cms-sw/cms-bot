@@ -10,7 +10,7 @@ eval `scram run -sh`
 cp -R $CMSSW_RELEASE_BASE/src/* src 
 find src/ -maxdepth 2 -type l -exec rm -f {} \;
 CPUS=`nproc`
-if [ `hostname | grep '^lxplus' | wc -l` = '1' ]
+if [ `hostname | grep '^lxplus' | wc -l` = '1' ]; then
   let CPUS=$CPUS/2
 fi
 BUILD_LOG=yes scram b -k -j $CPUS compile COMPILER=iwyu

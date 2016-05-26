@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 P=$(readlink -f $0)
 DIR_NAME=$(dirname $P)
 RELEASE_NAME=$1
@@ -9,7 +9,11 @@ cd $RELEASE_NAME
 eval `scram run -sh`
 cp -R $CMSSW_RELEASE_BASE/src/* src 
 find src/ -maxdepth 2 -type l -exec rm -f {} \;
-BUILD_LOG=yes scram b -k -j $(nproc) compile COMPILER=iwyu
+CPUS=`nproc`
+if [ `hostname | grep '^lxplus' | wc -l` = '1' ]
+  let CPUS=$CPUS/2
+fi
+BUILD_LOG=yes scram b -k -j $CPUS compile COMPILER=iwyu
 scram build -f buildlog
 rm -rf iwyu/
 mkdir iwyu

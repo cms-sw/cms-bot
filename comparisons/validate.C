@@ -905,6 +905,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("HcalUpgradeDataFramesSorted_simHcalUnsuppressedDigis_HFUpgradeDigiCollection_"+recoS+".obj.obj@.size()");
       plotvar("HcalUpgradeDataFramesSorted_simHcalDigis_HBHEUpgradeDigiCollection_"+recoS+".obj.obj@.size()");
       plotvar("HcalUpgradeDataFramesSorted_simHcalDigis_HFUpgradeDigiCollection_"+recoS+".obj.obj@.size()");
+
+      plotvar("QIE10DataFrameHcalDataFrameContainer_hcalDigis__"+recoS+".obj.m_ids@.size()");
+      plotvar("QIE11DataFrameHcalDataFrameContainer_hcalDigis__"+recoS+".obj.m_ids@.size()");
+      plotvar("HFDataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
+      plotvar("ZDCDataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
+      plotvar("HODataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
+      plotvar("HBHEDataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
     }
 
     if ((step.Contains("all") || step.Contains("halo"))){
@@ -1269,6 +1276,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     }
     if (step.Contains("all")){
       allTracks("regionalCosmicTracks__"+recoS+"");
+      allTracks("cosmicDCTracks__"+recoS+"");
+      allTracks("displacedGlobalMuons__"+recoS+"");
     }
     if ((step.Contains("all") || step.Contains("pixeltrack")) && !step.Contains("cosmic") ){
       /// general track plots

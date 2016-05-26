@@ -47,6 +47,7 @@ for REPOSITORY in $REPOSITORIES; do
   echo "Checking week $REPOSITORY ($WEEK) for RPMS"
   WORKDIR=$BASEDIR/$REPOSITORY/$SCRAM_ARCH
   DESTDIR=$BASEDESTDIR/vol$WEEK
+  CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH"
   if [ ! -e $DESTDIR ] ; then DESTDIR=$BASEDESTDIR/$REPOSITORY ; fi
   mkdir -p $WORKDIR
   # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
@@ -73,23 +74,20 @@ for REPOSITORY in $REPOSITORIES; do
   # Also we do not want the installation of one release (which can be broken)
   # to interfere with the installation of a different one. For that reason we
   # ignore the exit code.
-  APT_GET="$WORKDIR/common/cmspkg -a $SCRAM_ARCH"
-  APT_CACHE="${APT_GET}"
   (
-    source $WORKDIR/$SCRAM_ARCH/external/rpm/*/etc/profile.d/init.sh ;
-    $APT_GET update ;
+    $CMSPKG update ;
     RELS_TO_INSTALL="" ;
     if [ "X$INSTALL_RELEASE" != "X" ] ; then
       RELS_TO_INSTALL="cms+cmssw-ib+$INSTALL_RELEASE" ;
     else
-      $APT_CACHE search cmssw-ib+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
-      rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed$$.txt ;
+      $CMSPKG search cmssw-ib+CMSSW | cut -d\  -f1 | sort > onserver$$.txt ;
+      $CMSPKG rpm -- -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed$$.txt ;
       RELS_TO_INSTALL=`diff -u onserver$$.txt installed$$.txt | grep -e '^-[^-]' | sed -e 's/^-//'`;
     fi;
     for x in $RELS_TO_INSTALL; do
-      $APT_GET install -y $x || true;
-      time $APT_GET install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
-      time $APT_GET install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
+      $CMSPKG install -y $x || true;
+      time $CMSPKG install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true;
+      time $CMSPKG install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true;
       relname=`echo $x | awk -F + '{print $NF}'` ;
       timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
       if [ "X$timestamp" != "X" ] ; then
@@ -102,7 +100,7 @@ for REPOSITORY in $REPOSITORIES; do
     done ;
     rm -f installed$$.txt ;
     rm -f onserver$$.txt ;
-    $APT_GET clean
+    $CMSPKG clean
   ) || true
   # We create the directory in any case, to avoid the rsync to fail in case
   # the repository is not there and we cannot install.

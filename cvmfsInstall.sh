@@ -100,6 +100,7 @@ for REPOSITORY in $REPOSITORIES; do
   mkdir -p $WORKDIR
   # Install all architectures of the most recent week first.
   for SCRAM_ARCH in $ARCHITECTURES; do
+    CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH"
     # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
     # This is because bootstraptmp is otherwise shared between different arches. Sigh.
     LOGFILE=$WORKDIR/bootstrap-$REPOSITORY-$SCRAM_ARCH.log
@@ -110,12 +111,13 @@ for REPOSITORY in $REPOSITORIES; do
       # what got installed by someone else.
       mkdir -p $WORKDIR/common
       touch $LOGFILE
-      wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/cms/bootstrap.sh
+      wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
       dockerrun "sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE"
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
-      APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get install -q -y cms+local-cern-siteconf+sm111124 || true"
-      dockerrun $APT_INSTALL
+      dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
+    [ -f $WORKDIR/common/cmspkg ] || wget -O $WORKDIR/common/cmspkg http://cmsrep.cern.ch/cmssw/repos/cmspkg
+    chmod +x $WORKDIR/common/cmspkg
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.
     #
@@ -124,22 +126,22 @@ for REPOSITORY in $REPOSITORIES; do
     # to interfere with the installation of a different one. For that reason we
     # ignore the exit code.
     (
-      dockerrun "source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get update " ;
+      dockerrun "${CMSPKG} update " ;
       REL_TO_INSTALL="" ;
       if [ "X$RELEASE_NAME" = "X" ] ; then 
-        APT_SEARCH="apt-cache search cmssw-ib\\\+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \
-        rpm -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt  " ;
-        dockerrun $APT_SEARCH ;
+        SEARCH="${CMSPKG} search cmssw-ib+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \
+        ${CMSPKG} rpm -- -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt  " ;
+        dockerrun $SEARCH ;
         REL_TO_INSTALL=`diff -u onserver.txt installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'` ;
       else
         REL_TO_INSTALL="cms+cmssw-ib+$RELEASE_NAME" ;
       fi ;
       for x in $REL_TO_INSTALL; do
-        APT_INSTALL="source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; \
-        apt-get install -q -y $x || true; \
-        time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
-        time apt-get install -q -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true" ;
-        dockerrun $APT_INSTALL ;
+        INSTALL="${CMSPKG} install -y $x || true; \
+        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
+        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true; \
+        ${CMSPKG} clean" ;
+        dockerrun $INSTALL ;
         relname=`echo $x | awk -F + '{print $NF}'` ;
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
         if [ "X$timestamp" != "X" ] ; then
@@ -159,8 +161,7 @@ for REPOSITORY in $REPOSITORIES; do
         fi
       done ;
       rm -f installed.txt ;
-      rm -f onserver.txt ;
-      dockerrun "source $WORKDIR/$SCRAM_ARCH/external/apt/*/etc/profile.d/init.sh ; apt-get clean"
+      rm -f onserver.txt
     ) || true
 
   done  #End architecture

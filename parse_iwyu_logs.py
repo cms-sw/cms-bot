@@ -4,7 +4,7 @@ fd=open(sys.argv[1],'r')
 info = {}
 includes=0
 excludes=0
-pkg_name = sys.argv[1].split('/')[-2]
+pkg_name = '/'.join(sys.argv[1].split('/')[-3:-1])
 files=0
 splitline = sys.argv[2] + '/src/'
 print """<!DOCTYPE html>

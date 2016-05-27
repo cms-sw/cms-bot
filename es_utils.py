@@ -7,8 +7,9 @@ def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hoo
     passw=open(passwd_file,'r').read().strip()
   except Exception as e:
     print "Couldn't read the secrets file" , str(e)
-  
-  url="http://%s/%s/%s/%s" % ('cmses-master01.cern.ch:9200',index,document,id)
+
+  url = "http://%s/%s/%s/" % ('cmses-master01.cern.ch:9200',index,document)
+  if id: url = url+id
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'elasticsearch', passw)
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)

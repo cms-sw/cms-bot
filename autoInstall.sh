@@ -61,7 +61,7 @@ for REPOSITORY in $REPOSITORIES; do
     mkdir -p $WORKDIR/common
     touch $LOGFILE
     wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
-    sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH >& $LOGFILE
+    sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH >& $LOGFILE || (cat $LOGFILE && exit 1)
     # We install locally, but we want to run from DESTDIR.
     echo "CMS_INSTALL_PREFIX='$DESTDIR'; export CMS_INSTALL_PREFIX" > $WORKDIR/common/apt-site-env.sh
   fi

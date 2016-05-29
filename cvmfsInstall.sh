@@ -126,7 +126,7 @@ for REPOSITORY in $REPOSITORIES; do
     # to interfere with the installation of a different one. For that reason we
     # ignore the exit code.
     (
-      dockerrun "${CMSPKG} update " ;
+      dockerrun "${CMSPKG} update ; ${CMSPKG} -f install cms+cms-common+1.0 " ;
       REL_TO_INSTALL="" ;
       if [ "X$RELEASE_NAME" = "X" ] ; then 
         SEARCH="${CMSPKG} search cmssw-ib+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \

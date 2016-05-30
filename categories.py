@@ -916,6 +916,7 @@ CMSSW_CATEGORIES={
    "DQM/TrackingMonitor",
    "DQM/TrigXMonitor",
    "DQM/TrigXMonitorClient",
+   "DQM/TotemRP",
    "DQMOffline/Alignment",
    "DQMOffline/CalibCalo",
    "DQMOffline/CalibMuon",

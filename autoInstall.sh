@@ -60,12 +60,12 @@ for REPOSITORY in $REPOSITORIES; do
     # what got installed by someone else.
     mkdir -p $WORKDIR/common
     touch $LOGFILE
-    wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
+    wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
     sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH >& $LOGFILE || (cat $LOGFILE && exit 1)
     # We install locally, but we want to run from DESTDIR.
     echo "CMS_INSTALL_PREFIX='$DESTDIR'; export CMS_INSTALL_PREFIX" > $WORKDIR/common/apt-site-env.sh
   fi
-  [ -f $WORKDIR/common/cmspkg ] || wget -O $WORKDIR/common/cmspkg http://cmsrep.cern.ch/cmssw/repos/cmspkg
+  wget --tries=5 --waitretry=60 -O $WORKDIR/common/cmspkg.tmp http://cmsrep.cern.ch/cmssw/repos/cmspkg && mv $WORKDIR/common/cmspkg.tmp $WORKDIR/common/cmspkg
   chmod +x $WORKDIR/common/cmspkg
   # Since we are installing on a local disk, no need to worry about
   # the rpm database.

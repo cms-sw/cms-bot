@@ -111,13 +111,12 @@ for REPOSITORY in $REPOSITORIES; do
       # what got installed by someone else.
       mkdir -p $WORKDIR/common
       touch $LOGFILE
-      wget -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
-      dockerrun "sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE"
+      wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
+      dockerrun "sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
-    [ -f $WORKDIR/common/cmspkg ] || wget -O $WORKDIR/common/cmspkg http://cmsrep.cern.ch/cmssw/repos/cmspkg
-    chmod +x $WORKDIR/common/cmspkg
+    wget --tries=5 --waitretry=60 -O $WORKDIR/common/cmspkg.tmp http://cmsrep.cern.ch/cmssw/repos/cmspkg && mv $WORKDIR/common/cmspkg.tmp $WORKDIR/common/cmspkg
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.
     #

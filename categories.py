@@ -832,6 +832,7 @@ CMSSW_CATEGORIES={
    "DQM/TrackingMonitorClient",
    "DQM/TrackingMonitorSource",
    "DQM/CastorMonitor",
+   "DQM/CTPPS",
    "DQM/DTMonitorClient",
    "DQM/DTMonitorModule",
    "DQM/DataScouting",

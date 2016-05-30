@@ -29,7 +29,7 @@ for l in fd:
     line=line.rstrip()
     if len(line):
       files += 1
-      items = l.split(splitline)[-1].split("",1)
+      items = l.split(splitline)[-1].split(" ",1)
       print '<tr><td bgcolor="#00FFFF"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/'+items[0] + '"' + '>' + items[0] + '</a> '+items[1]+'</b>'
       while len(line):
         excludes +=1
@@ -46,7 +46,7 @@ for l in fd:
     line=line.rstrip()
     if len(line):
       files += 1
-      items = l.split(splitline)[-1].split("",1)
+      items = l.split(splitline)[-1].split(" ",1)
       print '<tr><td bgcolor="#00FF90"><b><a href='+'"'+ 'https://github.com/cms-sw/cmssw/tree/'+ sys.argv[2] +'/'+items[0]+ '"' + '>' + items[0] + '</a> '+items[1]+'</b>'
       while len(line):
         includes += 1

@@ -140,7 +140,8 @@ for previous in $PREVIOUS_RELEASES; do
   previous=`echo $previous | cut -f2 -d/`
   echo "Checking if we can install $previous"
   set +e
-  CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+  #CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+  CMSSW_RELEASE_BASE=`./common/cmspkg -a $ARCHITECTURE -f search cms+cmssw+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
   set -e
   if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
     PACKAGE_NAME=cmssw-patch
@@ -158,7 +159,8 @@ done
 # the same CMSDIST / PKGTOOLS / CMSSW tags were used to build an IB which
 # is already available in the apt repository.
 if [ "X$PACKAGE_NAME" = Xcmssw-patch -a "X$BUILD_PATCH_RELEASE" = "X" ]; then
-  AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
+  #AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
+  AVAILABLE_RELEASES=`./common/cmspkg -a $ARCHITECTURE search cms+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
   for same_tag in $RELEASE_LIST; do
     if [ "X`echo $ALL_PREVIOUS_RELEASES | grep $same_tag`" != X ] ; then
       if [ "X`echo $AVAILABLE_RELEASES | grep $same_tag`" != "X" ] ; then

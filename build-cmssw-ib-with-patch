@@ -81,6 +81,11 @@ eval `curl -s -k -f $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "R
 # git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
 # git clone -b $PKGTOOLS_TAG https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
 
+#For now force V00-24 tags for all IBs
+case $PKGTOOLS_TAG in 
+  V00-22-*) PKGTOOLS_TAG=V00-24-XX ;;
+esac
+
 for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TAG; do
   REPO=`echo $x | cut -f1 -d@`
   T=`echo $x | cut -f2 -d@`

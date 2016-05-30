@@ -1,6 +1,7 @@
 #!/bin/env python
-import sys , json
+import sys , json , os
 from es_utils import send_payload
+timestp = os.path.getmtime(sys.argv[1])
 items = sys.argv[1].split('/')[:-1]
 arch = items[-1]
 rel = items[-2]
@@ -11,6 +12,7 @@ except:
 payload = {}
 payload['architecture'] = arch
 payload['relase-tag'] = rel
+payload['@timestamp'] = int(timestp*1000)
 index = 'iwyu'
 document = 'iwyu-stats'
 id = False

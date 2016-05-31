@@ -215,7 +215,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 
     echo "pushd $OUTPUT_DIR" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "cp RelMonSummary.html index.html" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    echo 'find . -name "*" | xargs -i sh -c "sed -i -s 's#../RelMonSummary.html#RelMonSummary.html#g' {} || true"' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo 'find . -name "*" -type f | xargs -i sh -c "sed -i -s 's#../RelMonSummary.html#RelMonSummary.html#g' {} || true"' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "popd" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
 
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER

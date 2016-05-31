@@ -14,7 +14,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   DOCK_ARGS="kinit cmsbuild@CERN.CH -k -t /home/${XUSER}/cmsbuild.keytab || true; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
   docker run -h `hostname` $DOCKER_OPT \
-    -v $X509_USER_PROXY:$X509_USER_PROXY
+    -v $X509_USER_PROXY:$X509_USER_PROXY \
     -v /etc/localtime:/etc/localtime \
     -v /build/$XUSER:/build/$XUSER \
     -v /home/$XUSER:/home/$XUSER \

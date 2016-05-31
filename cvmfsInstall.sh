@@ -114,8 +114,8 @@ for REPOSITORY in $REPOSITORIES; do
     if [ ! -f $LOGFILE ]; then
       # We move it so that if we are slow removing it, we do not endup removing
       # what got installed by someone else.
-      mkdir -p $WORKDIR/common
-      touch $LOGFILE
+      rm -rf $WORKDIR/$SCRAM_ARCH
+      rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
       dockerrun "sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db

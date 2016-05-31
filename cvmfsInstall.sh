@@ -105,6 +105,10 @@ for REPOSITORY in $REPOSITORIES; do
     # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
     # This is because bootstraptmp is otherwise shared between different arches. Sigh.
     LOGFILE=$WORKDIR/bootstrap-$REPOSITORY-$SCRAM_ARCH.log
+    #Recover from bad bootstrap arch
+    if [ -f $LOGFILE -a ! -f $WORKDIR/$SCRAM_ARCH/cms/cms-common/1.0/etc/profile.d/init.sh ] ; then
+      rm -f $LOGFILE
+    fi
     # If the bootstrap log for the current two week period is not there
     # rebootstrap the area.
     if [ ! -f $LOGFILE ]; then

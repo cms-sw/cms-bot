@@ -87,6 +87,7 @@ dockerrun()
 # reason we move it away from the 0 into 52 and take the modulo 52 afterward.
 # Potentially we could separate the installation of the two volumes so that
 # we don't need a huge local disk, but we can scatter this on different machienes.
+TMP_PREFIX=/tmp/cvsmfs-$$
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
   WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
@@ -129,10 +130,10 @@ for REPOSITORY in $REPOSITORIES; do
       dockerrun "${CMSPKG} update ; ${CMSPKG} -f install cms+cms-common+1.0 " ;
       REL_TO_INSTALL="" ;
       if [ "X$RELEASE_NAME" = "X" ] ; then 
-        SEARCH="${CMSPKG} search cmssw-ib+CMSSW | cut -d'\' -f1 | sort > onserver.txt ; \
-        ${CMSPKG} rpm -- -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > installed.txt  " ;
+        SEARCH="${CMSPKG} search cmssw-ib+CMSSW | cut -d'\' -f1 | sort > ${TMP_PREFIX}-onserver.txt ; \
+        ${CMSPKG} rpm -- -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > ${TMP_PREFIX}-installed.txt  " ;
         dockerrun $SEARCH ;
-        REL_TO_INSTALL=`diff -u onserver.txt installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'` ;
+        REL_TO_INSTALL=`diff -u ${TMP_PREFIX}-onserver.txt ${TMP_PREFIX}-installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'` ;
       else
         REL_TO_INSTALL="cms+cmssw-ib+$RELEASE_NAME" ;
       fi ;
@@ -160,8 +161,8 @@ for REPOSITORY in $REPOSITORIES; do
           INITIAL_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
         fi
       done ;
-      rm -f installed.txt ;
-      rm -f onserver.txt
+      rm -f ${TMP_PREFIX}-installed.txt ;
+      rm -f ${TMP_PREFIX}-onserver.txt
     ) || true
 
   done  #End architecture

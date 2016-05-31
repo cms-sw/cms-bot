@@ -24,7 +24,7 @@ echo $REPOSITORIES
 ARCHITECTURES=$ARCHITECTURE
 #If Architecture is not pass via command line then check for all ARCHS from the config.map file
 if [ "X$ARCHITECTURE" = "X" ] ; then
-  ARCHITECTURES=`curl -s https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map | grep -o "slc[5-7]_amd64_gcc[0-9][0-9][0-9]" | sort -ur` #Reverse order to install most important IBs first
+  ARCHITECTURES=`curl -s https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map | grep -v DISABLED= | grep -o "slc[5-7]_amd64_gcc[0-9][0-9][0-9]" | sort -ur` #Reverse order to install most important IBs first
 fi
 
 echo $ARCHITECTURES

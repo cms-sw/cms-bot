@@ -460,6 +460,7 @@ CMSSW_CATEGORIES={
    "CondFormats/SiPixelObjects",
    "CondFormats/SiStripObjects",
    "CondFormats/TotemReadoutObjects",
+   "CondTools/BTau",
    "CondTools/DQM",
    "CondTools/DT",
    "CondTools/Ecal",

@@ -663,19 +663,19 @@ for i in $( seq 1 $REPEAT); do
     echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
     if [ "X$BUILD_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/build.log ${REPORT_OPTS}
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}
     fi
     if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/unitTests.log ${REPORT_OPTS}
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_OPTS}
     fi
     if [ "X$RELVALS_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/matrixTests.log ${REPORT_OPTS}
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_OPTS}
     fi
     if [ "X$ADDON_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/addOnTests.log ${REPORT_OPTS}
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_OPTS}
     fi
     if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/buildClang.log ${REPORT_OPTS}
+      $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
     fi
     $WORKSPACE/cms-bot/report-pull-request-results REPORT_ERRORS ${REPORT_OPTS}
   fi

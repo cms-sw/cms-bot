@@ -117,7 +117,7 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
-      dockerrun "sh -x $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
+      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi

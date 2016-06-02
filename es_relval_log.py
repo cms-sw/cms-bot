@@ -62,7 +62,7 @@ def es_parse_jobreport(payload,logFile):
         metrics_list = j.getchildren()
         for i in metrics_list:
           name=i.get("Name")
-          if name in ["AverageGrowthRateRss", "AverageGrowthRateVsize", "PeakValueVsize"]:
+          if name in ["AverageGrowthRateRss", "AverageGrowthRateVsize", "PeakValueVsize", "PeakValueRss"]:
             val = i.get("Value")
             if 'nan' in val: val=''
             payload[name] = val

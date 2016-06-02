@@ -941,3 +941,24 @@ cbernet:
 - PhysicsTools/Heppy
 - PhysicsTools/HeppyCore
 - RecoParticleFlow
+ptcox:
+- CalibMuon/CSCCalibration
+- CondFormats/CSCObjects
+- DataFormats/CSCDigi
+- DataFormats/CSCRecHit
+- DataFormats/MuonDetId
+- DQM/CSCMonitorModule
+- DQMOffline/Muon
+- EventFilter/CSCRawToDigi
+- RecoLocalMuon/CSCRecHitD
+- RecoLocalMuon/CSCSegment
+- RecoLocalMuon/CSCValidation
+- RecoLocalMuon/CSCEfficiency
+- Geometry/CSCGeometry
+- Geometry/CSCGeometryBuilder
+- Geometry/MuonCommonData
+- Geometry/MuonSimData
+- Geometry/MuonNumbering
+- L1Trigger/CSCTriggerPrimitives
+- SimMuon/CSCDigitizer
+- SimMuon/Neutron

@@ -1,0 +1,20 @@
+{
+  "template" : "iwyu",
+  "settings" : {
+      "number_of_shards" : 2
+  },
+  "mappings": {
+    "iwyu-stats": {
+      "properties": {
+        "package":{"type":"string", "index": "not_analyzed"},
+        "architecture":{"type":"string", "index": "not_analyzed"},
+        "@timestamp":{"type":"date"},
+        "release-tag":{"type":"string", "index": "not_analyzed"},
+        "files":{"type":"long"},
+        "excludes":{"type":"long"},
+        "pkg_url": {"type": "string", "index": "not_analyzed"},
+        "includes": {"type": "long"}
+      }
+    }
+  }
+}

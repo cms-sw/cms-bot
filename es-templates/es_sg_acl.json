@@ -1,0 +1,21 @@
+{"acl": [
+    {
+      "__Comment__": "Default is to execute all filters",
+      "filters_bypass": [],
+      "filters_execute": ["*"]
+    },
+    {
+      "__Comment__": "This means that every requestor (regardless of the requestors hostname and username) which has the root role can do anything",
+      "roles": [
+        "root"
+      ],
+      "filters_bypass": ["*"],
+      "filters_execute": []
+    },
+    {
+      "__Comment__": "This means that for the user public only the actionrequestfilter.readonly will be executed, no other",
+      "roles": ["user"],
+      "filters_bypass": [],
+      "filters_execute": ["actionrequestfilter.readonly"]
+    }
+  ]}

@@ -1,0 +1,20 @@
+{
+  "template" : "jenkins",
+  "settings" : {
+      "number_of_shards" : 1
+  },
+  "mappings": {
+    "builds-data": {
+      "properties": {
+        "build_result":{"type":"string", "index": "not_analyzed"},
+        "@timestamp":{"type":"date"},
+        "slave_node":{"type":"string", "index": "not_analyzed"},
+        "job_status":{"type":"string", "index": "not_analyzed"},
+        "build_duration":{"type":"long"},
+        "job_name": {"type": "string", "index": "not_analyzed"},
+        "url": {"type": "string", "index": "not_analyzed"},
+        "build_number": {"type": "long"}
+      }
+    }
+  }
+}

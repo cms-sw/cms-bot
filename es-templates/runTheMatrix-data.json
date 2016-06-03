@@ -1,5 +1,5 @@
 {
-  "template" : "*ib-matrix*",
+  "template" : "*ib-matrix-*",
   "settings" : {
       "number_of_shards" : 1
   },
@@ -9,14 +9,23 @@
         "workflow":{"type":"string", "index": "not_analyzed"},
         "release":{"type":"string", "index": "not_analyzed"},
         "architecture":{"type":"string", "index": "not_analyzed"},
-        "step":{"type":"string", "index": "not_analyzed"},
-        "command":{"type":"string", "index": "not_analyzed"},
-        "status":{"type":"string", "index": "not_analyzed"},
-        "workflow_id":{"type":"string", "index": "not_analyzed"},
-        "start_time":{"type":"date", "index": "not_analyzed"},
-        "end_time":{"type":"date", "index": "not_analyzed"},
         "hostname":{"type":"string", "index": "not_analyzed"},
-        "delta_time":{"type":"long"},
+        "events_read":{"type":"long"},
+        "total_events":{"type":"long"},
+        "AverageGrowthRateRss":{"type":"float"},
+        "AverageGrowthRateVsize":{"type":"float"},
+        "PeakValueVsize":{"type":"float"},
+        "PeakValueRss":{"type":"float"},
+        "AvgEventTime":{"type":"float"},
+        "EventThroughput":{"type":"float"},
+        "MaxEventTime":{"type":"float"},
+        "MinEventTime":{"type":"float"},
+        "TotalJobCPU":{"type":"float"},
+        "TotalJobTime":{"type":"float"},
+        "TotalLoopCPU":{"type":"float"},
+        "command":{"type":"string", "index": "not_analyzed"},
+        "exitcode":{"type":"long"},
+        "@timestamp":{"type":"date"},
         "errors": {
           "properties": {
             "kind": {"type": "string", "index": "not_analyzed"},

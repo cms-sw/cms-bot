@@ -881,7 +881,7 @@ if __name__ == "__main__":
   print 'Status: %s \n' % status
 
   labels = [ l.name for l in issue.get_labels() ]
-  print "Issue labels:",ALL_LABELS
+  print "Issue labels:",labels
 
   BUILD_OK = []
   BUILDING = []

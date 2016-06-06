@@ -114,7 +114,10 @@ def remove_label( issue, label ):
     return
 
   print 'Removing label: %s' % label
-  issue.remove_from_labels( label) 
+  try:
+    issue.remove_from_labels( label) 
+  except Exception as e:
+    pass
 
 #
 # removes the labels of the issue
@@ -173,7 +176,7 @@ if __name__ == "__main__":
   print 'Reset time (GMT): ', rate_limit.reset
   cmssw_repo = GH.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
   issue = cmssw_repo.get_issue( issue_id )
-  ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
+  ALL_LABELS = [ l.name for l in issue.get_labels() ]
   test_logfile = "build/"+release_name+"-tests/matrixTests/runall-report-step123-.log"
   
   if action == POST_BUILDING:

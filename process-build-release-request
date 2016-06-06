@@ -487,7 +487,7 @@ def remove_label( issue, label ):
   if opts.dryRun:
     print 'Not removing label (dry-run):\n %s' % label
     return
-  print "All labels: ", ALL_LABELS
+
   if label not in ALL_LABELS:
     print 'label ', label, ' does not exist. Not attempting to remove'
     return
@@ -810,6 +810,7 @@ if __name__ == "__main__":
   print 'Reset time (GMT): ', rate_limit.reset
 
   ALL_LABELS = [ l.name for l in issue.get_labels() ]
+  print "Issue labels:",ALL_LABELS
   comments = [ c for c in issue.get_comments( ) ]
 
   release_name = title_match.group(1)

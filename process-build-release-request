@@ -809,7 +809,7 @@ if __name__ == "__main__":
   print 'Remaining: ', rate_limit.remaining
   print 'Reset time (GMT): ', rate_limit.reset
 
-  ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
+  ALL_LABELS = [ l.name for l in issue.get_labels() ]
   comments = [ c for c in issue.get_comments( ) ]
 
   release_name = title_match.group(1)

@@ -487,13 +487,18 @@ def remove_label( issue, label ):
   if opts.dryRun:
     print 'Not removing label (dry-run):\n %s' % label
     return
-
+  print "All labels: ", ALL_LABELS
   if label not in ALL_LABELS:
     print 'label ', label, ' does not exist. Not attempting to remove'
     return
 
   print 'Removing label: %s' % label
-  issue.remove_from_labels( label )
+  try:
+    issue.remove_from_labels( label )
+  except Exception as e:
+    print e
+    from sys import exit
+    exit(1)
 
 #
 # Creates a properties file in Jenkins to kill the build

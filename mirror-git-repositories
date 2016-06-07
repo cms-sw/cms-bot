@@ -1,25 +1,25 @@
 #!/bin/sh -ex
 
 kinit -R
+WORKSPACE=${WORKSPACE-$PWD}
 MIRROR=/afs/.cern.ch/cms/git-cmssw-mirror
 CERN_GIT=ssh://git@gitlab.cern.ch:7999/cms-sw
 GITHUB=https://github.com/cms-sw
 REPOS="cmssw:cmssw cmsdist:cmsdist pkgtools:pkgtools cmssw-config:cmssw-config SCRAM:SCRAM"
 
 git config --global http.postBuffer 209715200
+ERR=0
+mkdir -p ${MIRROR}
+mkdir -p ${WORKSPACE}/repos
 for item in $REPOS; do
-  cd ${MIRROR}
+  cd ${WORKSPACE}/repos
   GH_REPO=`echo $item | sed 's|:.*||'`
-  if [ ! -d ${MIRROR}/${GH_REPO}.git ] ; then
-    git clone --bare ${GITHUB}/${GH_REPO}.git
-    cd ${MIRROR}/${GH_REPO}.git
-    git remote add origin ${GITHUB}/${GH_REPO}.git || true
-  fi
-  cd ${MIRROR}/${GH_REPO}.git
-  git remote update origin
-  git repack -a -d -f --max-pack-size=10g --depth=100 --window=250
-  git pack-refs --all
+  rm -rf ${GH_REPO}.git
+  git clone --bare ${GITHUB}/${GH_REPO}.git || (ERR=1 && continue)
+  rsync -a --delete ${GH_REPO}.git/ ${MIRROR}/${GH_REPO}.git/
 done
+cd ${WORKSPACE}
+rm -rf ${WORKSPACE}/repos
 
 /afs/cern.ch/cms/sdt/internal/requestHandler/requestGitMirrorSync.py
 du -sh /afs/.cern.ch/cms/git-cmssw-mirror
@@ -27,7 +27,10 @@ du -sh /afs/.cern.ch/cms/git-cmssw-mirror
 for item in $REPOS; do
   GH_REPO=`echo $item | sed 's|:.*||'`
   CERN_REPO=`echo $item | sed 's|.*:||'`
+  [ -d ${MIRROR}/${GH_REPO}.git ] || continue
   cd ${MIRROR}/${GH_REPO}.git
-  git push -f --mirror ${CERN_GIT}/${CERN_REPO}.git
+  git push -f --mirror ${CERN_GIT}/${CERN_REPO}.git || (ERR=1 && continue)
 done
+
+exit $ERR
 

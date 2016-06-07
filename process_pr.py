@@ -514,13 +514,17 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if not issue.pull_request:
     issueMessage = None
     if not already_seen:
+      uname = ""
+      if issue.user.name: uname = issue.user.name.encode("ascii", "ignore")
       l2s = ", ".join([ "@" + name for name in CMSSW_ISSUES_TRACKERS ])
-      issueMessage = format("%(msgPrefix)s @%(user)s.\n\n"
+      issueMessage = format("%(msgPrefix)s @%(user)s"
+                        " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
                         "cms-bot commands are list here %(issue_url)s\n",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=issue.user.login.encode("ascii", "ignore"),
+                        name=uname,
                         l2s=l2s,
                         issue_url=CMSSW_ISSUE_COMMANDS)
     elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):

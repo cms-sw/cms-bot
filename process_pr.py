@@ -522,7 +522,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "cms-bot commands are list here %(issue_url)s\n",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=issue.user.login.encode("ascii", "ignore"),
-                        name=issue.user.name.encode("ascii", "ignore") and "(%s)" % issue.user.name.encode("ascii", "ignore") or "",
                         l2s=l2s,
                         issue_url=CMSSW_ISSUE_COMMANDS)
     elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):

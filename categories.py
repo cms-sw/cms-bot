@@ -593,6 +593,7 @@ CMSSW_CATEGORIES={
    "Geometry/TrackerSimData",
    "Geometry/TrackingGeometryAligner",
    "Geometry/TwentyFivePercentTrackerCommonData",
+   "Geometry/VeryForwardRPTopology",
    "GeometryReaders/XMLIdealGeometryESSource",
    "Validation/Geometry",
    "Validation/MuonRPCGeometry",

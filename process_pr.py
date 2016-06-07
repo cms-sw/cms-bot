@@ -515,8 +515,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     issueMessage = None
     if not already_seen:
       l2s = ", ".join([ "@" + name for name in CMSSW_ISSUES_TRACKERS ])
-      issueMessage = format("%(msgPrefix)s @%(user)s"
-                        " %(name)s.\n\n"
+      issueMessage = format("%(msgPrefix)s @%(user)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
                         "cms-bot commands are list here %(issue_url)s\n",

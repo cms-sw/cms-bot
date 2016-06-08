@@ -35,8 +35,11 @@ def process (log, backup):
       payload["bytes"]=int(items[9])
     except:
       payload["bytes"]=0
-    payload["referrer"]=items[10][1:-1]
-    payload["agent"]=" ".join(items[11:]).replace('"','').replace(" ","-")
+    payload["referrer"]=items[10][1:-1] 
+    agent = " ".join(items[11:]).replace('"','')
+    if "CMSPKG-v" in agent: agent = agent.replace("-v","/")
+    payload["agent"]=agent
+    payload["agent_type"]=agent.replace(" ","-").split("/",1)[0]
     payload["@timestamp"]=int(mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())*1000)
     id = sha1(line).hexdigest()
     send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret")

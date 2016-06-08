@@ -24,7 +24,7 @@ def process (log, backup):
     items = line.split(" ")
     if len(items)<12: continue
     if not (items[3][0]=='[' and items[4][-1]==']'): continue
-    payload["clientip"]=items[0]
+    payload["ip"]=items[0]
     payload["ident"]=items[1]
     payload["auth"]=items[2]
     payload["verb"]=items[5][1:]
@@ -36,7 +36,7 @@ def process (log, backup):
     except:
       payload["bytes"]=0
     payload["referrer"]=items[10][1:-1]
-    payload["agent"]=" ".join(items[11:]).replace('"','')
+    payload["agent"]=" ".join(items[11:]).replace('"','').replace(" ","-")
     payload["@timestamp"]=int(mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())*1000)
     id = sha1(line).hexdigest()
     send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret")

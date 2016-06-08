@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from os.path import exists, join
-from sys import exit
+from sys import exit,argv
 from commands import getstatusoutput
 from datetime import datetime
 from time import mktime
@@ -45,6 +45,8 @@ def process (log, backup):
       print "Processed ",count,"entries"
   print "Processed ",count,"entries"
 
+count=run_cmd("pgrep -l -x -f '^.* %s$' | wc -l" % argv[0],False)
+if count>1: exit(0)
 access_log = "access_log"
 apache_dir = "/var/log/httpd"
 backup_dir = "/data/es/http-log"

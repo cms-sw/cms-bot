@@ -27,7 +27,6 @@ def process (log, backup):
     payload["clientip"]=items[0]
     payload["ident"]=items[1]
     payload["auth"]=items[2]
-    payload["time"]=items[3][1:]
     payload["verb"]=items[5][1:]
     payload["request"]=items[6]
     payload["httpversion"]=items[7][:-1]

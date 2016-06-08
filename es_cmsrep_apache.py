@@ -41,6 +41,8 @@ def process (log, backup):
     id = sha1(line).hexdigest()
     send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret")
     count = count + 1
+    if count%1000==0:
+      print "Processed ",count,"entries"
   print "Processed ",count,"entries"
 
 access_log = "access_log"

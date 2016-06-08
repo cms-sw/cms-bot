@@ -45,7 +45,7 @@ def process (log, backup):
       print "Processed ",count,"entries"
   print "Processed ",count,"entries"
 
-count=run_cmd("pgrep -l -x -f '^.*/es_cmsrep_apache.py.*$' | wc -l ",False)
+count=run_cmd("pgrep -f /es_cmsrep_apache.py | wc -l ",False)
 if int(count)>2: exit(0)
 access_log = "access_log"
 apache_dir = "/var/log/httpd"

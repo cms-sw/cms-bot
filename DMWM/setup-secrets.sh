@@ -5,7 +5,7 @@ set +x
 
 start=`date +%s`
 
-cp /build/cmsbuild/secrets/dmwm-config.tmpl $WORKSPACE/wmas
+cp /build/`whoami`/secrets/dmwm-config.tmpl $WORKSPACE/wmas
 perl -p -i -e "s/THISHOSTNAME/`hostname`/" $WORKSPACE/wmas
 perl -p -i -e "s/srtest/dmwmtest/" $WORKSPACE/wmas
 . $WORKSPACE/wmas

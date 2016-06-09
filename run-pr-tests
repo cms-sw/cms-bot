@@ -63,9 +63,6 @@ RELVALS_OK=true
 ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
-if [ "X$COMPARISON_ARCH" = "X" ] ; then
-  COMPARISON_ARCH=$(cat $CONFIG_MAP | grep $RELEASE_FORMAT | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2) #Always take the prod architecture for comparison tests.
-fi
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
@@ -90,7 +87,11 @@ if [ ! -d CMSSW_* ]; then
   fi
 else
   RELEASE_FORMAT=$( find $WORKSPACE -maxdepth 1 -name "CMSSW_*" -printf '%f\n' )
-  RELEASE_QUEUE=$( echo $RELEASE_FORMAT | cut -d "_" -f 1,2,3,4 )
+  RELEASE_QUEUE=$( echo $RELEASE_FORMAT | sed 's|_X.*|_X|' )
+fi
+
+if [ "X$COMPARISON_ARCH" = "X" ] ; then
+  COMPARISON_ARCH=$(cat $CONFIG_MAP | grep $RELEASE_QUEUE | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2) #Always take the prod architecture for comparison tests.
 fi
 
 # creation of results summary file
@@ -122,7 +123,7 @@ if [ ! -d CMSSW_* ]; then
   scram -a $SCRAM_ARCH  project $RELEASE_FORMAT
   cd $RELEASE_FORMAT
 else
-  cd $WORKSPACE/CMSSW_*
+  cd $WORKSPACE/$RELEASE_FORMAT
 fi
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
 sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
@@ -408,10 +409,13 @@ if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_JOB_REPORTS" = Xtrue ]; the
   JOB_REPORTS='--job-reports'
 fi
 
+if [ "X$MATRIX_EXTRAS" = "X" ] ; then
+  export MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $WORKSPACE/cms-bot/cmssw-pr-test-config | sed 's|.*=||')
+fi
+
 if [ ! "X$MATRIX_EXTRAS" = X ]; then
   MATRIX_EXTRAS="-l `echo $MATRIX_EXTRAS | sed -e 's/[^0-9., ]*//g'`"
 fi
-
 
 if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN

@@ -1,23 +1,13 @@
 #!/usr/bin/env python
-from os.path import exists, join
 from sys import exit
-from commands import getstatusoutput
 from datetime import datetime
 from time import mktime
 from es_utils import send_payload
 from hashlib import sha1
 from json import dumps
+from logwatch import logwatch, run_cmd
 
-def run_cmd (cmd, exit_on_error=True):
-  err, out = getstatusoutput (cmd)
-  if err and exit_on_error: exit (1)
-  return out
-
-def process (log, backup):
-  cmd = "cat %s" % log
-  if backup and exists(backup):
-    out = run_cmd ("cat %s | wc -l" % backup)
-    cmd = "tail -n +%s %s" % (out , log)
+def process (cmd):
   count = 0
   for line in run_cmd (cmd).split ("\n"):
     payload = {}
@@ -50,25 +40,11 @@ def process (log, backup):
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsrep_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)
-access_log = "access_log"
-apache_dir = "/var/log/httpd"
-backup_dir = "/data/es/http-log"
-log_copy   = join (backup_dir, access_log)
-tmp_log    = log_copy+".tmp"
-
-cmd_to_get_logs = "ls -rt %s/%s* | tail -2" % (apache_dir, access_log)
-
-logs = run_cmd (cmd_to_get_logs).split ("\n")
-if len(logs)==0: exit(0)
-if exists(log_copy):
-  if len(logs)>1:
-    out1 = run_cmd ("head -1 %s" % logs[-1])
-    out2 = run_cmd ("head -1 %s" % log_copy)
-    if out1 != out2: process (logs[-2], log_copy)
-elif len(logs)>1:
-  process(logs[-2], None)
-
-out  = run_cmd ("touch %s && rsync %s %s" % (log_copy, logs[-1], tmp_log))
-process(tmp_log, log_copy)
-run_cmd ("mv -f %s %s" % (tmp_log , log_copy))
+logs = run_cmd("ls -rt /var/log/httpd/access_log* | grep -v '[.]gz$'").split("\n")
+log = logwatch("httpd",log_dir="/data/es")
+for cmd in log.get_command(logs):
+  print cmd[0]
+  process(cmd[0])
+  print cmd[1]
+  run_cmd(cmd[1])
 

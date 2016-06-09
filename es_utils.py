@@ -20,6 +20,8 @@ def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hoo
   except Exception as e:
     print "Couldn't send data to elastic search" , str(e)
     print "Data:",payload
+    return False
+  return True
 
 def get_payload(url,query):
   try:

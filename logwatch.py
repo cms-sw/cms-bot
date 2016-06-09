@@ -37,15 +37,12 @@ class logwatch (object):
       service_log = join (log_dir, "logs", basename(log))
       run_cmd ("rsync -a %s %s" % (log, service_log))
       log_line = "XXX"
-      if line_num>0:
-        log_line = run_cmd("head -1 %s" % service_log)
-      matched = False
+      if line_num>0: log_line = run_cmd("head -1 %s" % service_log)
       if log_line != first_line:
         all_cmds.insert(0,self._add_cmd(service_log, info_file, line_num=1, keep_file=first_file))
       else:
         all_cmds.insert(0,self._add_cmd(service_log, info_file, line_num, keep_file=first_file))
-        matched = True
+        break
       if first_file: first_file = False
-      if matched: break
     return all_cmds
 

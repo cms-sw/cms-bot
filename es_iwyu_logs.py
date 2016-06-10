@@ -11,7 +11,7 @@ except:
   print 'json file not found/processed'
 payload = {}
 payload['architecture'] = arch
-payload['relase-tag'] = rel
+payload['release'] = rel
 payload['@timestamp'] = int(timestp*1000)
 index = 'iwyu'
 document = 'iwyu-stats'

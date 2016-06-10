@@ -2,6 +2,7 @@
 from os.path import exists, join, basename
 from sys import exit
 from commands import getstatusoutput
+from hashlib import sha256
 
 def run_cmd (cmd, exit_on_error=True):
   err, out = getstatusoutput (cmd)
@@ -14,35 +15,42 @@ class logwatch (object):
   def __init__ (self, service, log_dir="/var/log"):
     self.log_dir = join(log_dir,"logwatch_" + service)
 
-  def _add_cmd (self, service_log, info_file, line_num=1, keep_file=True):
-    precmd = "cat %s" % service_log
-    if line_num>1: precmd = "tail -n +%s %s" % (str(line_num), service_log)
-    postcmd = "head -1 %s > %s && wc -l %s  | sed 's| .*||' >> %s" % (service_log, info_file,service_log, info_file)
-    if not keep_file: postcmd = postcmd + " && rm -f %s" % service_log
-    return (precmd,postcmd)
-
-  def get_command(self, logs):
-    log_dir   = self.log_dir
-    info_file = join(log_dir, "info")
-    run_cmd ("mkdir -p %s/logs" % log_dir)
-    first_file = True
-    line_num = 0
-    first_line = ""
-    all_cmds = []
+  def process(self, logs, callback, **kwrds):
+    if not logs: return True, 0
+    info_file = join(self.log_dir, "info")
+    run_cmd ("mkdir -p %s/logs" % self.log_dir)
+    prev_lnum, prev_hash, count, data = -1, "", 0, []
     if exists(info_file):
-      items = run_cmd("head -2 %s" % info_file).split("\n",1)
-      first_line = items[0]
-      line_num = int(items[1])
+      prev_hash,ln = run_cmd("head -1 %s" % info_file).strip().split(" ",1)
+      prev_lnum = int(ln)
+      if prev_lnum<1: prev_lnum=1
     for log in reversed(logs):
-      service_log = join (log_dir, "logs", basename(log))
+      service_log = join (self.log_dir, "logs", basename(log))
       run_cmd ("rsync -a %s %s" % (log, service_log))
-      log_line = "XXX"
-      if line_num>0: log_line = run_cmd("head -1 %s" % service_log)
-      if log_line != first_line:
-        all_cmds.insert(0,self._add_cmd(service_log, info_file, line_num=1, keep_file=first_file))
-      else:
-        all_cmds.insert(0,self._add_cmd(service_log, info_file, line_num, keep_file=first_file))
+      cur_hash = sha256(run_cmd("head -1 %s" % service_log)).hexdigest()
+      data.insert(0,[log , service_log, 1, cur_hash, False])
+      if (prev_lnum>0) and (cur_hash == prev_hash):
+        data[0][2] = prev_lnum
         break
-      if first_file: first_file = False
-    return all_cmds
+    data[-1][4] = True
+    for item in data:
+      lnum, service_log = item[2], item[1]
+      get_lines_cmd = "tail -n +%s %s" % (str(lnum),  service_log)
+      if lnum<=1: get_lines_cmd = "cat %s" % service_log
+      print "Processing %s:%s" % (item[0], str(lnum))
+      lnum -= 1
+      for line in run_cmd (get_lines_cmd).split ("\n"):
+        count += 1
+        lnum += 1
+        status = callback(line, count, **kwrds)
+        if not status:
+          if (prev_lnum!=lnum) or (prev_hash!=item[3]):
+            run_cmd("echo '%s %s' >  %s" % (item[3], str(lnum),info_file))
+          return status, count
+      if (prev_lnum!=lnum) or (prev_hash!=item[3]):
+        prev_lnum=-1
+        cmd = "echo '%s %s' >  %s" % (item[3], str(lnum),info_file)
+        if not item[4]: cmd = cmd + " && rm -f %s" % service_log
+        run_cmd(cmd)
+    return True, count
 

@@ -42,8 +42,9 @@ class logwatch (object):
       for line in run_cmd (get_lines_cmd).split ("\n"):
         count += 1
         lnum += 1
-        status = callback(line, count, **kwrds)
-        if not status:
+        try: ok = callback(line, count, **kwrds)
+        except: ok = False
+        if not ok:
           if (prev_lnum!=lnum) or (prev_hash!=item[3]):
             run_cmd("echo '%s %s' >  %s" % (item[3], str(lnum),info_file))
           return status, count

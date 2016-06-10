@@ -538,6 +538,7 @@ CMSSW_CATEGORIES={
   ],
   "geometry": [
    "Configuration/Geometry",
+   "DataFormats/CTPPSAlignment",
    "DetectorDescription/Algorithm",
    "DetectorDescription/Base",
    "DetectorDescription/Core",

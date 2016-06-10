@@ -71,8 +71,7 @@ esac
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 
-CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map"
-eval `curl -s -k -f $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+eval `cat $WORKSPACE/cms-bot/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
 # are both branches. See below to handle the case in which they are actually tags.

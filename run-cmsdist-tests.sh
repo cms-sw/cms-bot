@@ -43,9 +43,10 @@ if [ "X$ARCHITECTURE" == X ]; then
     ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
   fi
 fi
+export ARCHITECTURE
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
-CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f $WORKSPACE/cms-bot/ignore-releases-for-tests | awk '{print $2}' | tail -n 1)
+CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
 
 if [ "X$PKGTOOLS_BRANCH" == X ]; then
   PKGTOOLS_BRANCH="V00-22-XX"
@@ -110,7 +111,7 @@ else
 fi
 
 # Create an appropriate CMSSW area
-SCRAM_ARCH=$ARCHITECTURE
+export SCRAM_ARCH=$ARCHITECTURE
 scram -a $SCRAM_ARCH project $CMSSW_IB
 pushd $CMSSW_IB/src
 

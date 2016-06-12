@@ -743,7 +743,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                                " meeting if really needed.\n")
 
   commentMsg = ""
-  if pr.base.ref in RELEASE_BRANCH_CLOSED:
+  if (pr.base.ref in RELEASE_BRANCH_CLOSED) and (pr.state != "closed"):
     commentMsg = messageBranchClosed
   elif not already_seen:
     commentMsg = messageNewPR

@@ -18,7 +18,7 @@ class logwatch (object):
   def process(self, logs, callback, **kwrds):
     if not logs: return True, 0
     info_file = join(self.log_dir, "info")
-    run_cmd ("mkdir -p %s/logs" % self.log_dir)
+    if not exists ("%s/logs" % self.log_dir): run_cmd ("mkdir -p %s/logs" % self.log_dir)
     prev_lnum, prev_hash, count, data = -1, "", 0, []
     if exists(info_file):
       prev_hash,ln = run_cmd("head -1 %s" % info_file).strip().split(" ",1)

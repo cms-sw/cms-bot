@@ -27,6 +27,8 @@ if [ "X$IB_BASEDIR" = X -o "X$REPO_USER" = X -o "X$REPO_SERVER" = X -o "X$REPO_P
   exit 1
 fi
 
+ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK/WEB/build-logs && REPO_PATH="$REPO_PATH/repos" || true
+
 export LANG=C
 # Remove from AFS logs for releases older than 7 days.
 find $IB_BASEDIR -maxdepth 5 -mindepth 5 -mtime +6 -path '*/www/*/CMSSW_*' -type d -exec rm -rf {} \; || true

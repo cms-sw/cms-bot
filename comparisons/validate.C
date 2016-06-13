@@ -914,6 +914,56 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("HBHEDataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
     }
 
+    if (step.Contains("all") || step.Contains("ctpps")){
+      //CTPPS
+      tbr="TotemFEDInfos_totemRPRawToDigi_RP_";
+      plotvar(tbr+recoS+".obj@.size()");
+      plotvar(tbr+recoS+".obj.getFEDId()");
+      plotvar(tbr+recoS+".obj.getOptoRxId()");
+      plotvar(tbr+recoS+".obj.getFSize()");
+      tbr="TotemVFATStatusedmDetSetVector_totemRPRawToDigi_RP_";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.isOK()");
+      plotvar(tbr+recoS+".obj._sets.data.getChipPosition()");
+      plotvar(tbr+recoS+".obj._sets.data.getNumberOfClusters()");
+      tbr="TotemRPDigiedmDetSetVector_totemRPRawToDigi_RP_";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getStripNumber()");
+      tbr="TotemTriggerCounters_totemTriggerRawToDigi__";
+      plotvar(tbr+recoS+".obj.orbit_num");
+
+      tbr="TotemRPRecHitedmDetSetVector_totemRPRecHitProducer__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getPosition()");
+      plotvar(tbr+recoS+".obj._sets.data.getSigma()");
+      tbr="TotemRPClusteredmDetSetVector_totemRPClusterProducer__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getStripBegin()");
+      plotvar(tbr+recoS+".obj._sets.data.getNumberOfStrips()");
+      tbr="TotemRPUVPatternedmDetSetVector_totemRPUVPatternFinder__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getProjection()");
+      plotvar(tbr+recoS+".obj._sets.data.getA()");
+      plotvar(tbr+recoS+".obj._sets.data.getB()");
+      plotvar(tbr+recoS+".obj._sets.data.getW()");
+      plotvar(tbr+recoS+".obj._sets.data.getFittable()");
+      tbr="TotemRPLocalTrackedmDetSetVector_totemRPLocalTrackFitter__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getHits()@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getX0()");
+      plotvar(tbr+recoS+".obj._sets.data.getY0()");
+      plotvar(tbr+recoS+".obj._sets.data.getZ0()");
+      plotvar(tbr+recoS+".obj._sets.data.getTx()");
+      plotvar(tbr+recoS+".obj._sets.data.getTy()");
+      plotvar(tbr+recoS+".obj._sets.data.getChiSquared()");
+    }
+
     if ((step.Contains("all") || step.Contains("halo"))){
       tbr="recoBeamHaloSummary_BeamHaloSummary__";
       plotvar(tbr+recoS+".obj.HcalLooseHaloId()");

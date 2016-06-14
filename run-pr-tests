@@ -267,7 +267,7 @@ echo "CODE_RULES;${QA_RES}" >> $RESULTS_FILE
 
 #Duplicate dict
 QA_RES="NOTRUN"
-if [ "X$CMSDIST_ONLY" == "Xfalse" ]; then # If a CMSSW specific PR was specified
+if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" ]; then
   $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Duplicate Dict Checks" $DRY_RUN
   mkdir $WORKSPACE/dupDict
   QA_RES="OK"
@@ -577,23 +577,6 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   fi
 else
   echo 'ADDON_TESTS_RESULTS;NOTRUN' >> $RESULTS_FILE
-fi
-
-#
-# Duplicate checks
-#
-if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-  pushd $CMSSW_BASE/src
-  eval `scram run -sh`
-  echo '--------------------------------------'
-  echo "check dup dicts"
-  duplicateReflexLibrarySearch.py --dir ./ --dup 2>&1 | tee -a $WORKSPACE/duplicateChecks.log
-  echo "check wrong dict locations"
-  duplicateReflexLibrarySearch.py --dir ./ --lostDefs 2>&1 | tee -a $WORKSPACE/duplicateChecks.log
-  echo "check dup plugins"
-  duplicateReflexLibrarySearch.py   --edmPD 2>&1 | tee -a $WORKSPACE/duplicateChecks.log
-  echo '--------------------------------------'
-  popd
 fi
 
 #

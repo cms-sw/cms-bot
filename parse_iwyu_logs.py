@@ -23,8 +23,11 @@ th, td {
 </head>"""
 print '<a href='+'"'+ sys.argv[1].split('/')[-1] + '"' + '>' + 'Access BuildLog' + '</a><br/>'
 print '<table  align="center">'
+lines_seen = set()
 for l in fd:
-  if 'remove these lines' in l:
+  if 'remove these lines' in l and l not in lines_seen:
+    lines_seen.add(l)
+    sec=iter(fd)
     line=sec.next()
     line=line.rstrip()
     if len(line):
@@ -40,7 +43,8 @@ for l in fd:
         line=line.rstrip()
       print '</td></tr>'
       
-  elif 'add these lines' in l:
+  elif 'add these lines' in l and l not in lines_seen:
+    lines_seen.add(l)
     sec=iter(fd)
     line=sec.next()
     line=line.rstrip()

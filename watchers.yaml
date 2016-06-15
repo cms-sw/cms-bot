@@ -972,7 +972,7 @@ fioriNTU:
 - DQM/SiPixelMonitorTrack
 - DQM/SiPixelPhase1Clusters
 - DQM/SiPixelPhase1Common
-- DQM/SiPixelPhase1Config/python
+- DQM/SiPixelPhase1Config
 - DQM/SiPixelPhase1Digis
 - DQM/SiPixelPhase1RecHits
 - DQM/SiPixelPhase1TrackClusters

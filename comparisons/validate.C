@@ -1081,6 +1081,26 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("HcalUnpackerReport_castorDigis__"+recoS+".obj.unmappedTPDigis()");
       plotvar("HcalUnpackerReport_castorDigis__"+recoS+".obj.spigotFormatErrors()");
       plotvar("HcalUnpackerReport_castorDigis__"+recoS+".obj.badQualityDigis()");
+
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj@.size()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.energy()");
+      plotvar("log10(HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.energy())");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.flags()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.time()"); 
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.timeError()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.outOfTimeEnergy()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.chi2()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCEERecHits_"+recoS+".obj.obj.outOfTimeChi2()");
+
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj@.size()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.energy()");
+      plotvar("log10(HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.energy())");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.flags()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.time()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.timeError()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.outOfTimeEnergy()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.chi2()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.outOfTimeChi2()");
     }
 
     if ((step.Contains("all") || step.Contains("preshower")) && !step.Contains("cosmic") ){
@@ -1246,6 +1266,60 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().yy()");
       plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xy()");
       
+    }
+    if ((step.Contains("all") || step.Contains("gem")) && !step.Contains("cosmic") ){
+      tbr="GEMDetIdGEMRecHitsOwnedRangeMap_gemRecHits__";
+      plotvar(tbr+recoS+".obj@.size()");
+      plotvar(tbr+recoS+".obj.collection_.data_.clusterSize()");
+      plotvar(tbr+recoS+".obj.collection_.data_.firstClusterStrip()");
+      plotvar(tbr+recoS+".obj.collection_.data_.BunchX()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().x()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().y()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().z()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xx()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().yy()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xy()");
+      
+      tbr="GEMDetIdGEMSegmentsOwnedRangeMap_gemSegments__";
+      plotvar(tbr+recoS+".obj.collection_.data_@.size()");
+      if (detailled)      plotvar(tbr+recoS+".obj.collection_.data_.weight()");
+      plotvar("log10("+tbr+recoS+".obj.collection_.data_.chi2())");
+      plotvar(tbr+recoS+".obj.collection_.data_.chi2()");
+      plotvar(tbr+recoS+".obj.collection_.data_.time()");
+      plotvar(tbr+recoS+".obj.collection_.data_.timeErr()");
+      plotvar(tbr+recoS+".obj.collection_.data_.degreesOfFreedom()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().x()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().y()");
+      if (detailled)      plotvar(tbr+recoS+".obj.collection_.data_.type()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xx()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().yy()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xy()");
+    }
+    if ((step.Contains("all") || step.Contains("me0")) && !step.Contains("cosmic") ){
+      tbr="ME0DetIdME0RecHitsOwnedRangeMap_me0RecHits__";
+      plotvar(tbr+recoS+".obj@.size()");
+      plotvar(tbr+recoS+".obj.collection_.data_.tof()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().x()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().y()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().z()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xx()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().yy()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xy()");
+
+      tbr="ME0DetIdME0SegmentsOwnedRangeMap_me0Segments__";
+      plotvar(tbr+recoS+".obj.collection_.data_@.size()");
+      if (detailled)      plotvar(tbr+recoS+".obj.collection_.data_.weight()");
+      plotvar("log10("+tbr+recoS+".obj.collection_.data_.chi2())");
+      plotvar(tbr+recoS+".obj.collection_.data_.chi2()");
+      plotvar(tbr+recoS+".obj.collection_.data_.time()");
+      plotvar(tbr+recoS+".obj.collection_.data_.timeErr()");
+      plotvar(tbr+recoS+".obj.collection_.data_.degreesOfFreedom()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().x()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().y()");
+      if (detailled)      plotvar(tbr+recoS+".obj.collection_.data_.type()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xx()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().yy()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xy()");
     }
     if ((step.Contains("all") || step.Contains("sipixel")) && !step.Contains("cosmic") ){
       plotvar("SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data@.size()");

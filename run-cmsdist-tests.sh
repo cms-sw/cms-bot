@@ -23,34 +23,44 @@ TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
 CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
 CMSDIST_COMMITS=$(echo $GH_COMMITS | python -c 'import json,sys;obj=json.load(sys.stdin);print " ".join([s["sha"] for s in obj])')
-if [ "X$CMSSW_CYCLE" == X ]; then
-  if(( $(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
-    CMSSW_CYCLE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | grep "PROD_ARCH" | cut -d ";" -f 4 | cut -d "=" -f 2 | head -n 1)
-  else
-    CMSSW_CYCLE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | cut -d ";" -f 4 | cut -d "=" -f 2)
-  fi
-fi
 
 if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
   echo "Error: failed to retrieve user or branch to test."
   exit 0
 fi
 
-if [ "X$ARCHITECTURE" == X ]; then
-  if(( $(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | wc -l) > 1 )); then
-    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | grep PR_TESTS | cut -d ";" -f 1 | cut -d "=" -f 2 | head -n 1)
-  else
-    ARCHITECTURE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1' | grep $CMSDIST_BRANCH | cut -d ";" -f 1 | cut -d "=" -f 2)
-  fi
+ARCH_MATCH="SCRAM_ARCH="
+if [ "X$ARCHITECTURE" != X ]; then
+  ARCH_MATCH="SCRAM_ARCH=${ARCHITECTURE};"
 fi
+
+if [ $(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | wc -l) -gt 1 ] ; then
+  CONFIG_LINE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | grep "PROD_ARCH=")
+else
+  CONFIG_LINE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}")
+fi
+
+if [ "X$CMSSW_CYCLE" = X ]; then
+  CMSSW_CYCLE=$(echo "$CONFIG_LINE" | tr ';' '\n' | grep RELEASE_QUEUE= | sed 's|RELEASE_QUEUE=||')
+fi
+
+if [ "X$PKGTOOLS_BRANCH" = X ]; then
+  PKGTOOLS_BRANCH=$(echo "$CONFIG_LINE" | tr ';' '\n' | grep PKGTOOLS_TAG= | sed 's|PKGTOOLS_TAG=||')
+fi
+
+if [ "X$ARCHITECTURE" = X ]; then
+  ARCHITECTURE=$(echo "$CONFIG_LINE" | tr ';' '\n' | grep SCRAM_ARCH= | sed 's|SCRAM_ARCH=||')
+fi
+
+if [ "X$ARCHITECTURE" = X ]; then
+  echo "Unable to find the ARCHITECTURE for $CMSDIST_BRANCH"
+  exit 1
+fi
+exit 0
 export ARCHITECTURE
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
-
-if [ "X$PKGTOOLS_BRANCH" == X ]; then
-  PKGTOOLS_BRANCH="V00-22-XX"
-fi
 
 BUILD_DIR="testBuildDir"
 export PUB_REPO="cms-sw/cmsdist"

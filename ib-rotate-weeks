@@ -16,7 +16,7 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   mkdir dummybuild
   pushd dummybuild
     git clone git://github.com/cms-sw/cmsdist.git CMSDIST || git clone https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
-    git clone git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+    git clone -b V00-30-XX git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
 
     echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
     PKGTOOLS/cmsBuild --debug --repository cms --architecture $ARCHITECTURE --work-dir w build dummy

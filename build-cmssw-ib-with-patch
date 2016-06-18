@@ -84,6 +84,7 @@ eval `cat $WORKSPACE/cms-bot/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | gre
 case $PKGTOOLS_TAG in 
   V00-22-*) PKGTOOLS_TAG=V00-24-XX ;;
 esac
+PKGTOOLS_TAG=V00-30-XX
 
 for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TAG; do
   REPO=`echo $x | cut -f1 -d@`

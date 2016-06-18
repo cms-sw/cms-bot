@@ -21,6 +21,7 @@ PKGTOOLS_REPO=cms-sw
 
 CONFIG_MAP_URL="${WORKSPACE}/cms-bot/config.map"
 eval `cat $CONFIG_MAP_URL | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+PKGTOOLS_TAG=V00-30-XX
 
 git clone -b $CMSDIST_TAG  git@github.com:$CMSDIST_REPO/cmsdist.git   CMSDIST
 git clone -b $PKGTOOLS_TAG git@github.com:$PKGTOOLS_REPO/pkgtools.git PKGTOOLS

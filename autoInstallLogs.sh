@@ -27,8 +27,6 @@ if [ "X$IB_BASEDIR" = X -o "X$REPO_USER" = X -o "X$REPO_SERVER" = X -o "X$REPO_P
   exit 1
 fi
 
-ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK/WEB/build-logs && REPO_PATH="$REPO_PATH/repos" || true
-
 export LANG=C
 # Remove from AFS logs for releases older than 7 days.
 find $IB_BASEDIR -maxdepth 5 -mindepth 5 -mtime +6 -path '*/www/*/CMSSW_*' -type d -exec rm -rf {} \; || true
@@ -38,7 +36,9 @@ for WEEK in 0 1; do
   BIWEEK=`echo "((52 + $(date +%W) - $WEEK)/2)%26" | bc`
   # notice it must finish with something which matches %Y-%m-%d-%H00
   # We only sync the last 7 days.
-  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $REPO_PATH/cms.week$WEEK/WEB/build-logs/ -mtime -7 -mindepth 2 -maxdepth 2 | cut -d/ -f7,8 | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
+  XREPO_PATH=$REPO_PATH
+  ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK/WEB/build-logs && XREPO_PATH="$REPO_PATH/repos" || true
+  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/WEB/build-logs/ -mtime -7 -mindepth 2 -maxdepth 2 | cut -d/ -f7,8 | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
   for x in $BUILDS; do
     SCRAM_ARCH=`echo $x | cut -f1 -d/`
     REL_NAME=`echo $x | cut -f2 -d/`
@@ -52,7 +52,7 @@ for WEEK in 0 1; do
     REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
     if [ ! -f ${REL_LOGS}/index.html ] ; then
-      rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$REPO_PATH/cms.week$WEEK/WEB/build-logs/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
+      rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$XREPO_PATH/cms.week$WEEK/WEB/build-logs/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
       ExtractLogs $REL_LOGS
     fi
     if [ "X$REL_TYPE" = "Xnew" ] ; then

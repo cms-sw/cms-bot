@@ -38,7 +38,8 @@ for WEEK in 0 1; do
   # We only sync the last 7 days.
   XREPO_PATH=$REPO_PATH
   ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK/WEB/build-logs && XREPO_PATH="$REPO_PATH/repos" || true
-  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/WEB/build-logs/ -mtime -7 -mindepth 2 -maxdepth 2 | sed 's|.*/WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
+  for logdir in $(ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK -path '*/WEB/build-logs' -mindepth 2 -maxdepth 4) ; do
+  BUILDS`=ssh $REPO_USER@$REPO_SERVER find $logdir -mtime -7 -mindepth 2 -maxdepth 2 | sed 's|^.*/WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
   for x in $BUILDS; do
     SCRAM_ARCH=`echo $x | cut -f1 -d/`
     REL_NAME=`echo $x | cut -f2 -d/`
@@ -52,7 +53,7 @@ for WEEK in 0 1; do
     REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
     if [ ! -f ${REL_LOGS}/index.html ] ; then
-      rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$XREPO_PATH/cms.week$WEEK/WEB/build-logs/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
+      rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$logdir/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."
       ExtractLogs $REL_LOGS
     fi
     if [ "X$REL_TYPE" = "Xnew" ] ; then
@@ -65,5 +66,6 @@ for WEEK in 0 1; do
         fi
       fi
     fi
+  done
   done
 done

@@ -38,7 +38,7 @@ for WEEK in 0 1; do
   # We only sync the last 7 days.
   XREPO_PATH=$REPO_PATH
   ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK/WEB/build-logs && XREPO_PATH="$REPO_PATH/repos" || true
-  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/WEB/build-logs/ -mtime -7 -mindepth 2 -maxdepth 2 | cut -d/ -f7,8 | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
+  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/WEB/build-logs/ -mtime -7 -mindepth 2 -maxdepth 2 | sed '|.*WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
   for x in $BUILDS; do
     SCRAM_ARCH=`echo $x | cut -f1 -d/`
     REL_NAME=`echo $x | cut -f2 -d/`

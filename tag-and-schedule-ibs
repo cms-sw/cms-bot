@@ -28,7 +28,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset BUILD_HOUR
     unset DOCKER_IMG
     eval "$IB_INFO"
-    if [ "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
+    if [ "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     git checkout $RELEASE_BRANCH
     RELEASE_NAME="${QUEUE}_${DATE}"

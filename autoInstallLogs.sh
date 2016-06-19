@@ -37,9 +37,10 @@ for WEEK in 0 1; do
   # notice it must finish with something which matches %Y-%m-%d-%H00
   # We only sync the last 7 days.
   XREPO_PATH=$REPO_PATH
-  ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK/WEB/build-logs && XREPO_PATH="$REPO_PATH/repos" || true
-  for logdir in $(ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK -path '*/WEB/build-logs' -mindepth 2 -maxdepth 4) ; do
-  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $logdir -mtime -7 -mindepth 2 -maxdepth 2 | sed 's|^.*/WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
+  XDEPTH=2
+  ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK && XREPO_PATH="$REPO_PATH/repos" && XDEPTH=4 || true
+  for logdir in $(ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/ -mindepth 2 -maxdepth $XDEPTH -path '*/WEB/build-logs' -type d) ; do
+  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $logdir -mtime -7 -mindepth 2 -maxdepth 2 -type d | sed 's|^.*/WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
   for x in $BUILDS; do
     SCRAM_ARCH=`echo $x | cut -f1 -d/`
     REL_NAME=`echo $x | cut -f2 -d/`

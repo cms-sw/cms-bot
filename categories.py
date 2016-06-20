@@ -187,6 +187,7 @@ CMSSW_CATEGORIES={
    "DataFormats/ParticleFlowCandidate",
    "DataFormats/ParticleFlowReco",
    "DataFormats/PixelMatchTrackReco",
+   "DataFormats/Phase2ITPixelCluster",
    "DataFormats/Phase2TrackerCluster",
    "DataFormats/Phase2TrackerDigi",
    "DataFormats/Phase2TrackerRecHit",

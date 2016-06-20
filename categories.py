@@ -249,6 +249,7 @@ CMSSW_CATEGORIES={
    "RecoLocalMuon/GEMCSCSegment",
    "RecoLocalTracker/ClusterParameterEstimator",
    "RecoLocalTracker/Configuration",
+   "RecoLocalTracker/Phase2ITPixelClusterizer",
    "RecoLocalTracker/Phase2TrackerRecHits",
    "RecoLocalTracker/Records",
    "RecoLocalTracker/SiPhase2Clusterizer",

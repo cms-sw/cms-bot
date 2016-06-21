@@ -121,6 +121,8 @@ for REPOSITORY in $REPOSITORIES; do
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
+    rm -rf $WORKDIR/share/cms/cmspkg
+    rm -f $WORKDIR/common/cmspkg
     if [ ! -d $WORKDIR/share/cms/cmspkg ] ; then
       wget --tries=5 --waitretry=60 -O $WORKDIR/cmspkg.py http://cmsrep.cern.ch/cmssw/repos/cmspkg.py
       chmod +x $WORKDIR/cmspkg.py

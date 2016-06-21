@@ -65,8 +65,12 @@ for REPOSITORY in $REPOSITORIES; do
     # We install locally, but we want to run from DESTDIR.
     echo "CMS_INSTALL_PREFIX='$DESTDIR'; export CMS_INSTALL_PREFIX" > $WORKDIR/common/apt-site-env.sh
   fi
-  wget --tries=5 --waitretry=60 -O $WORKDIR/common/cmspkg.tmp http://cmsrep.cern.ch/cmssw/repos/cmspkg && mv $WORKDIR/common/cmspkg.tmp $WORKDIR/common/cmspkg
-  chmod +x $WORKDIR/common/cmspkg
+  if [ ! -d $WORKDIR/share/cms/cmspkg ] ; then
+    wget --tries=5 --waitretry=60 -O $WORKDIR/cmspkg.py http://cmsrep.cern.ch/cmssw/repos/cmspkg.py
+    chmod +x $WORKDIR/cmspkg.py
+    $WORKDIR/cmspkg.tmp.py --repository cms.week$WEEK --architecture $SCRAM_ARCH --server cmsrep.cern.ch --path $WORKDIR setup
+    rm -f $WORKDIR/cmspkg.py
+  fi
   # Since we are installing on a local disk, no need to worry about
   # the rpm database.
   #

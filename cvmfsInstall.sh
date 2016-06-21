@@ -124,7 +124,7 @@ for REPOSITORY in $REPOSITORIES; do
     if [ ! -d $WORKDIR/share/cms/cmspkg ] ; then
       wget --tries=5 --waitretry=60 -O $WORKDIR/cmspkg.py http://cmsrep.cern.ch/cmssw/repos/cmspkg.py
       chmod +x $WORKDIR/cmspkg.py
-      $WORKDIR/cmspkg.tmp.py --repository cms.week$WEEK --architecture $SCRAM_ARCH --server cmsrep.cern.ch --path $WORKDIR setup
+      $WORKDIR/cmspkg.py --repository cms.week$WEEK --architecture $SCRAM_ARCH --server cmsrep.cern.ch --path $WORKDIR setup
       rm -f $WORKDIR/cmspkg.py
     fi
     # Since we are installing on a local disk, no need to worry about

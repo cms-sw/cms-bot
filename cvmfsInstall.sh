@@ -122,10 +122,10 @@ for REPOSITORY in $REPOSITORIES; do
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
     if [ ! -d $WORKDIR/share/cms/cmspkg ] ; then
-      wget --tries=5 --waitretry=60 -O $WORKDIR/cmspkg.tmp.py http://cmsrep.cern.ch/cmssw/repos/cmspkg.py
-      chmod +x $WORKDIR/common/cmspkg.tmp.py
+      wget --tries=5 --waitretry=60 -O $WORKDIR/cmspkg.py http://cmsrep.cern.ch/cmssw/repos/cmspkg.py
+      chmod +x $WORKDIR/cmspkg.py
       $WORKDIR/cmspkg.tmp.py --repository cms.week$WEEK --architecture $SCRAM_ARCH --server cmsrep.cern.ch --path $WORKDIR setup
-      rm -f $WORKDIR/cmspkg.tmp.py
+      rm -f $WORKDIR/cmspkg.py
     fi
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.

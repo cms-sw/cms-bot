@@ -56,7 +56,6 @@ if [ "X$ARCHITECTURE" = X ]; then
   echo "Unable to find the ARCHITECTURE for $CMSDIST_BRANCH"
   exit 1
 fi
-exit 0
 export ARCHITECTURE
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`

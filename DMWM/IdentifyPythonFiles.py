@@ -21,8 +21,11 @@ with open(list_of_files, 'r') as changedFiles:
         if fileName.endswith('.py'):
             print(fileName)
             continue
-        with open(fileName, 'r') as pyFile:
-            pyLines = pyFile.readlines()
-            if 'python' in pyLines[0]:
-                print(fileName)
-                continue
+        try:
+            with open(fileName, 'r') as pyFile:
+                pyLines = pyFile.readlines()
+                if 'python' in pyLines[0]:
+                    print(fileName)
+                    continue
+        except IOError:
+            pass

@@ -87,7 +87,7 @@ esac
 PKGTOOLS_TAG=V00-30-XX
 [ "$FORCE_PKGTOOLS_TAG" != "" ] && PKGTOOLS_TAG=$FORCE_PKGTOOLS_TAG
 USE_DEV=""
-[ "$USE_DEV" != "" ] && USE_DEV="--use-dev"
+[ "$USE_DEV_CMSPKG" = "true" ] && USE_DEV="--use-dev"
 
 for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TAG; do
   REPO=`echo $x | cut -f1 -d@`

@@ -82,10 +82,7 @@ eval `cat $WORKSPACE/cms-bot/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | gre
 # git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
 # git clone -b $PKGTOOLS_TAG https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
 
-#For now force V00-24 tags for all IBs
-case $PKGTOOLS_TAG in 
-  V00-22-*) PKGTOOLS_TAG=V00-24-XX ;;
-esac
+#For now force V00-30 tags for all IBs unless it is overridden by FORCE_PKGTOOLS_TAG
 PKGTOOLS_TAG=V00-30-XX
 [ "$FORCE_PKGTOOLS_TAG" != "" ] && PKGTOOLS_TAG=$FORCE_PKGTOOLS_TAG
 USE_DEV=""

@@ -85,9 +85,9 @@ case $PKGTOOLS_TAG in
   V00-22-*) PKGTOOLS_TAG=V00-24-XX ;;
 esac
 PKGTOOLS_TAG=V00-30-XX
-case $ARCHITECTURE in 
-  *_ppc64le_* ) PKGTOOLS_TAG=V00-30-XX-devel ;;
-esac
+[ "$FORCE_PKGTOOLS_TAG" != "" ] && PKGTOOLS_TAG=$FORCE_PKGTOOLS_TAG
+USE_DEV=""
+[ "$USE_DEV" != "" ] && USE_DEV="--use-dev"
 
 for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TAG; do
   REPO=`echo $x | cut -f1 -d@`
@@ -134,7 +134,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   esac
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-CMSBUILD_CMD="PKGTOOLS/cmsBuild  --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+CMSBUILD_CMD="PKGTOOLS/cmsBuild $USE_DEV --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
 
 # Decide if we already have a release which uses the same CMSDIST.

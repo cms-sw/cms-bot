@@ -85,6 +85,9 @@ case $PKGTOOLS_TAG in
   V00-22-*) PKGTOOLS_TAG=V00-24-XX ;;
 esac
 PKGTOOLS_TAG=V00-30-XX
+case $ARCHITECTURE in 
+  *_ppc64le_* ) PKGTOOLS_TAG=V00-30-XX-devel ;;
+esac
 
 for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TAG; do
   REPO=`echo $x | cut -f1 -d@`

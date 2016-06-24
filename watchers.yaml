@@ -921,6 +921,7 @@ OlivierBondu:
 - RecoLocalTracker/SiStrip*
 - RecoLocalTracker/SubCollectionProducers
 - DataFormats/SiStrip*
+- CalibTracker/SiStripChannelGain
 agrohsje:
 - GeneratorInterface
 mverzett:

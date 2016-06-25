@@ -121,14 +121,7 @@ for REPOSITORY in $REPOSITORIES; do
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
-    rm -rf $WORKDIR/share/cms/cmspkg
-    rm -f $WORKDIR/common/cmspkg
-    if [ ! -d $WORKDIR/share/cms/cmspkg ] ; then
-      wget --tries=5 --waitretry=60 -O $WORKDIR/cmspkg.py http://cmsrep.cern.ch/cmssw/repos/cmspkg.py
-      chmod +x $WORKDIR/cmspkg.py
-      $WORKDIR/cmspkg.py --repository cms.week$WEEK --architecture $SCRAM_ARCH --server cmsrep.cern.ch --path $WORKDIR setup
-      rm -f $WORKDIR/cmspkg.py
-    fi
+    $CMSPKG -y upgrade
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.
     #

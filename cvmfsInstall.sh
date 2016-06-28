@@ -42,14 +42,15 @@ fi
 # Create Nested Catalogs file if it doesn't exist
 if [ ! -f $BASEDIR/.cvmfsdirtab ]; then
 cat <<EOF > $BASEDIR/.cvmfsdirtab
+/*/share
 /*/*_*_*/external
 /*/*_*_*/cms
+/*/*_*_*/lcg
 /*/*_*_*/cms/cmssw
 /*/*_*_*/cms/cmssw/*
 /*/*_*_*/cms/cmssw-patch
 /*/*_*_*/cms/cmssw-patch/*
 /*/*_*_*/cms/cmssw-ib
-/*/*_*_*/cms/cmssw-ib/*
 EOF
 fi
 

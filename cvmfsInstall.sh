@@ -46,11 +46,8 @@ cat <<EOF > $BASEDIR/.cvmfsdirtab
 /*/*_*_*/external
 /*/*_*_*/cms
 /*/*_*_*/lcg
-/*/*_*_*/cms/cmssw
 /*/*_*_*/cms/cmssw/*
-/*/*_*_*/cms/cmssw-patch
 /*/*_*_*/cms/cmssw-patch/*
-/*/*_*_*/cms/cmssw-ib
 EOF
 fi
 

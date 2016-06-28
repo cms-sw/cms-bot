@@ -44,6 +44,9 @@ if [ ! -f $BASEDIR/.cvmfsdirtab ]; then
 cat <<EOF > $BASEDIR/.cvmfsdirtab
 /*/share
 /*/*_*_*/external
+/*/*_*_*/external/blackhat/*
+/*/*_*_*/external/geant4/*
+/*/*_*_*/external/boost/*
 /*/*_*_*/cms
 /*/*_*_*/lcg
 /*/*_*_*/cms/cmssw/*

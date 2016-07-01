@@ -54,6 +54,7 @@ cat <<EOF > $BASEDIR/.cvmfsdirtab
 EOF
 fi
 
+OLD_WEEKS=$(ls -d /cvmfs/cms-ib.cern.ch/20*)
 # Cleanup old weeks
 find /cvmfs/cms-ib.cern.ch/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | xargs rm -rf
 # Remove all existing links for week[0-1]
@@ -173,7 +174,6 @@ for REPOSITORY in $REPOSITORIES; do
 
 done #End week repository
 
-CUR_WEEKS=$(ls -d /cvmfs/cms-ib.cern.ch/20*)
 # Cleanup old weeks
 find /cvmfs/cms-ib.cern.ch/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | xargs rm -rf
 # Remove all existing links for week[0-1]
@@ -186,7 +186,7 @@ echo "Publishing started" `date`
 time cvmfs_server publish
 
 NEW_WEEKS=$(ls -d /cvmfs/cms-ib.cern.ch/20*)
-if [ "X${CUR_WEEKS}" != "X${NEW_WEEKS}" ] ; then
+if [ "X${OLD_WEEKS}" != "X${NEW_WEEKS}" ] ; then
   echo "Running garbage collector"
   time cvmfs_server gc -f
 fi

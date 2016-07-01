@@ -173,6 +173,7 @@ for REPOSITORY in $REPOSITORIES; do
 
 done #End week repository
 
+CUR_WEEKS=$(ls -d /cvmfs/cms-ib.cern.ch/20*)
 # Cleanup old weeks
 find /cvmfs/cms-ib.cern.ch/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | xargs rm -rf
 # Remove all existing links for week[0-1]
@@ -183,4 +184,10 @@ for dir in $(find $BASEDESTDIR/* -maxdepth 0 -type d | grep -G "20[0-9][0-9]-[0-
 # Write everything in the repository
 echo "Publishing started" `date`
 time cvmfs_server publish
+
+NEW_WEEKS=$(ls -d /cvmfs/cms-ib.cern.ch/20*)
+if [ "X${CUR_WEEKS}" != "X${NEW_WEEKS}" ] ; then
+  echo "Running garbage collector"
+  time cvmfs_server gc -f
+fi
 

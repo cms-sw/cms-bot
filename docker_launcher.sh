@@ -20,6 +20,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     -v /home/$XUSER:/home/$XUSER \
     -v /cvmfs:/cvmfs \
     -v /afs:/afs \
+    -v /tmp:/tmp \
     -e WORKSPACE=$WORKSPACE \
     -e BUILD_NUMBER=$BUILD_NUMBER \
     -e X509_USER_PROXY=$X509_USER_PROXY \

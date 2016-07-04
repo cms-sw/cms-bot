@@ -13,10 +13,8 @@ while ! fs lq /afs/.cern.ch/cms/$ARCHITECTURE/cms/cmssw/$BASERELEASE | grep -E '
 done
 
 source /afs/cern.ch/cms/cmsset_default.sh
-find /afs/cern.ch/cms/$ARCHITECTURE/external/apt/ -name init.sh | tail -n 1
-source $(find /afs/cern.ch/cms/$ARCHITECTURE/external/apt/ -name init.sh | tail -n 1)
-apt-get update
-apt-get install -y $(apt-cache search $CMSSW_X_Y_Z | sed -e 's|[ ].*||' | grep -e "^cms[+]$RPM_NAME[+]$CMSSW_X_Y_Z\$")
+/afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE update
+/afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE install -y $(/afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE search $CMSSW_X_Y_Z | sed -e 's|[ ].*||' | grep -e "^cms[+]$RPM_NAME[+]$CMSSW_X_Y_Z\$")
 touch /afs/.cern.ch/cms/$ARCHITECTURE/tmp/$CMSSW_X_Y_Z
 echo 'ALL_OK'
 

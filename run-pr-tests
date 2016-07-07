@@ -64,14 +64,25 @@ ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
 
+COMPARISON_REL=
+COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
+
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
   if [[ $RELEASE_FORMAT != *-* ]]; then
     RELEASE_QUEUE=$RELEASE_FORMAT
+    COMP_ARCH=$COMPARISON_ARCH
+    if [ "X$COMP_ARCH" = "X" ] ; then
+      COMP_ARCH=$(cat $CONFIG_MAP | grep $COMP_QUEUE | grep -v "DISABLED=1" | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2)
+      if [ "X$COMP_ARCH" = "X" ] ; then COMP_ARCH=$ARCHITECTURE ; fi
+    fi
     for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
-      FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$SCRAM_REL/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
+      COMP_REL=$(echo $SCRAM_REL | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_[^0-9]*\(_X_.*\)|\1\2|')
+      FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
       if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
         RELEASE_FORMAT=$SCRAM_REL
+        COMPARISON_ARCH=$COMP_ARCH
+        COMPARISON_REL=$COMP_REL
         break
       fi
     done
@@ -90,8 +101,13 @@ else
   RELEASE_QUEUE=$( echo $RELEASE_FORMAT | sed 's|_X.*|_X|' )
 fi
 
+if [ "X$COMPARISON_REL" = "X" ] ; then
+  COMPARISON_REL=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_[^0-9]*\(_X_.*\)|\1\2|')
+fi
+
 if [ "X$COMPARISON_ARCH" = "X" ] ; then
-  COMPARISON_ARCH=$(cat $CONFIG_MAP | grep $RELEASE_QUEUE | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2) #Always take the prod architecture for comparison tests.
+  COMPARISON_ARCH=$(cat $CONFIG_MAP | grep $COMP_QUEUE | grep -v "DISABLED=1" | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2) #Always take the prod architecture for comparison tests.
+  if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE ; fi
 fi
 
 # creation of results summary file
@@ -486,7 +502,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
     echo "Creating properties file $TRIGGER_COMPARISON_FILE"
-    echo "RELEASE_FORMAT=$RELEASE_FORMAT" > $TRIGGER_COMPARISON_FILE
+    echo "RELEASE_FORMAT=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE
     echo "ARCHITECTURE=${ARCHITECTURE}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE

@@ -462,6 +462,7 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
   print_verbose( real_end_tag )
   tags = []
   command_to_execute = MAGIC_COMMAND_TAGS.replace( 'START_TAG', start_tag ).replace( 'END_TAG', real_end_tag )
+  print "Running:",command_to_execute
   out,err,ret_code = get_output_command(command_to_execute)
 
   # check if the end_tag exists, but the start_tag doesn't
@@ -470,6 +471,7 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
     if is_recent_branch(err):
       print_verbose( 'looks like this branch has been created recently' )
       command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace( 'END_TAG', real_end_tag ).replace( 'RELEASE_QUEUE', release_queue )
+      print "Running:",command_to_execute
       out,err,ret_code = get_output_command(command_to_execute)
 
   tags = get_tags(out,release_queue)

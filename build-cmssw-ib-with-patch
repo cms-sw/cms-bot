@@ -28,6 +28,7 @@ RELEASE_LIST=$5
 PACKAGE_NAME=cmssw
 FORCE_PKGTOOLS_TAG=$6
 USE_DEV_CMSPKG=$7
+BUILD_PATCH_RELEASE=$8
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"

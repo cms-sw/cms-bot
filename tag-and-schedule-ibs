@@ -4,6 +4,7 @@ cd $WORKSPACE
 CONFIG_MAP_PATH="$WORKSPACE/cms-bot/config.map"
 RELEASE_FILTER=${RELEASE_FILTER-.*}
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
+BUILD_PATCH=${BUILD_PATCH_FOR_NO_CHANGES}
 
 RELEASE_QUEUES=""
 for q in `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep -e "SCRAM_ARCH=$ARCHITECTURE_FILTER;" | grep -e "RELEASE_QUEUE=$RELEASE_FILTER;" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//'` ; do
@@ -54,6 +55,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties
     echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties
     echo "DOCKER_IMG=${DOCKER_IMG}"  >> $WORKSPACE/properties
+    echo "BUILD_PATCH_RELEASE=$BUILD_PATCH" >> $WORKSPACE/properties
     if [ "X$ALWAYS_BUILD" = X ]; then
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties
     else

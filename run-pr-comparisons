@@ -287,9 +287,45 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
 
 fi
 
+if [ "X$JOB_NAME" = "Xcompare-root-files-short-matrix" ] ; then
 sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
 rsync $WORKSPACE/results/testsResults.txt $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/testsResults.txt
+exit 0
+fi
 
+cd $WORKSPACE
+mkdir -p upload/alternative-comparisons
 
+#default-comparison
+for f in results/default-comparison/* ; do
+  [ -e $f ] && mv $f upload/
+done
 
+#alternative-comparison
+for f in results/alternative-comparison/command* results/alternative-comparison/*.ps results/alternative-comparison/*.gz results/alternative-comparison/*.log results/alternative-comparison/comparisonParams.txt ; do
+  [ -e $f ] && mv $f upload/alternative-comparisons/
+done
+
+#JR-comparison
+for f in $(ls -d results/JR-comparison/command* results/JR-comparison/logRootQA.log results/JR-comparison/*/*.log results/JR-comparison/*/*.png | sed 's|results/JR-comparison/||') ; do
+  d=$(dirname upload/validateJR/$f)
+  if [ -e results/JR-comparison/$f ] ; then
+    [ -d $d ] || mkdir -p $d
+    mv results/JR-comparison/$f $d/
+  fi
+done
+
+#files
+[ -e results/files ] && mv results/files upload/files
+[ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
+
+SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}
+rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt01.cern.ch:/data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
+
+if [ -e results/testsResults.txt ] ; then
+  sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" results/testsResults.txt
+  ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${PULL_REQUEST_JOB_ID}
+  rsync -a -e "ssh $SSH_OPTS" results/testsResults.txt cmsbuild@cmssdt01.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/${PULL_REQUEST_JOB_ID}/
+fi
 

@@ -656,7 +656,7 @@ done
 [ -d upload/addOnTests       ] && find upload/addOnTests -name '*.root' -type f | xargs rm -f
 SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
-rsync -a -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt01.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
+rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt01.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
 
 rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do

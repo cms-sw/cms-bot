@@ -3,6 +3,15 @@ ARCHITECTURE=$1
 CMS_WEEK=$2
 RELEASE_NAME=$3
 WORKSPACE=$4
+DEV=$5
+USE_DEV=""
+if [ "X$DEV" = "Xtrue" ] ; then
+  DEV="-dev"
+  USE_DEV="--use-dev"
+else
+  DEV=""
+fi
+
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1
 
@@ -103,7 +112,7 @@ for REPOSITORY in $REPOSITORIES; do
   mkdir -p $WORKDIR
   # Install all architectures of the most recent week first.
   for SCRAM_ARCH in $ARCHITECTURES; do
-    CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH"
+    CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH ${USE_DEV}"
     # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
     # This is because bootstraptmp is otherwise shared between different arches. Sigh.
     LOGFILE=$WORKDIR/bootstrap-$REPOSITORY-$SCRAM_ARCH.log
@@ -118,8 +127,8 @@ for REPOSITORY in $REPOSITORIES; do
       # what got installed by someone else.
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
-      wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap.sh
-      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
+      wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
+      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi

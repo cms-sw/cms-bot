@@ -4,7 +4,7 @@ cd $WORKSPACE
 CONFIG_MAP_PATH="$WORKSPACE/cms-bot/config.map"
 RELEASE_FILTER=${RELEASE_FILTER-.*}
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
-BUILD_PATCH=${BUILD_PATCH_FOR_NO_CHANGES}
+BUILD_PATCH=${BUILD_PATCH_FOR_NO_CHANGES-false}
 
 RELEASE_QUEUES=""
 for q in `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep -e "SCRAM_ARCH=$ARCHITECTURE_FILTER;" | grep -e "RELEASE_QUEUE=$RELEASE_FILTER;" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//'` ; do
@@ -28,8 +28,14 @@ for QUEUE in $RELEASE_QUEUES; do
     unset RELEASE_BRANCH
     unset BUILD_HOUR
     unset DOCKER_IMG
+    unset BUILD_PATCH_RELEASE
     eval "$IB_INFO"
     if [ "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
+    if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
+      BUILD_PATCH_RELEASE=true
+    else
+      BUILD_PATCH_RELEASE=false
+    fi
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     git checkout $RELEASE_BRANCH
     RELEASE_NAME="${QUEUE}_${DATE}"
@@ -55,7 +61,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "RELEASE_QUEUE=${QUEUE}" >> $WORKSPACE/properties
     echo "ARCHITECTURE=${SCRAM_ARCH}" >> $WORKSPACE/properties
     echo "DOCKER_IMG=${DOCKER_IMG}"  >> $WORKSPACE/properties
-    echo "BUILD_PATCH_RELEASE=$BUILD_PATCH" >> $WORKSPACE/properties
+    echo "BUILD_PATCH_RELEASE=$BUILD_PATCH_RELEASE" >> $WORKSPACE/properties
     if [ "X$ALWAYS_BUILD" = X ]; then
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties
     else

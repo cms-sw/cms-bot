@@ -161,7 +161,7 @@ done
 # This is done to decide wether or not we actually need to build a release or
 # the same CMSDIST / PKGTOOLS / CMSSW tags were used to build an IB which
 # is already available in the apt repository.
-if [ "X$PACKAGE_NAME" = Xcmssw-patch -a "X$BUILD_PATCH_RELEASE" = "X" ]; then
+if [ "X$PACKAGE_NAME" = Xcmssw-patch -a "X$BUILD_PATCH_RELEASE" != "Xtrue" ]; then
   #AVAILABLE_RELEASES=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
   AVAILABLE_RELEASES=`./common/cmspkg -a $ARCHITECTURE search cms+cmssw | grep ${RELEASE_QUEUE} | grep 'cms[+]cmssw\(-patch\|\)[+]' | cut -f1 -d\  | cut -f3 -d+`
   for same_tag in $RELEASE_LIST; do

@@ -117,6 +117,7 @@ CMSSW_CATEGORIES={
    "DataFormats/CLHEP",
    "DataFormats/Common",
    "Validation/Performance",
+   "Utilities/DavixAdaptor",
    "Utilities/DCacheAdaptor",
    "Utilities/Xerces",
    "Utilities/General",

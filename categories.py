@@ -5,7 +5,7 @@ from cms_static import GH_CMSSW_REPO as gh_cmssw
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 
 CMSSW_L1 = ["davidlange6"]
-APPROVE_BUILD_RELEASE = [ "smuzaffar", "degano", "slava77" ] + CMSSW_L1
+APPROVE_BUILD_RELEASE = [ "smuzaffar", "slava77" ] + CMSSW_L1
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = [ "lgray", "wmtan", "bsunanda", "VinInn", "kpedro88" ] + REQUEST_BUILD_RELEASE
 
@@ -24,7 +24,7 @@ EXTERNAL_REPOS = [
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
 CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
-CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "degano", "davidlt", "Dr15Jones" ]
+CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "davidlt", "Dr15Jones" ]
 COMPARISON_MISSING_MAP = [ "slava77" ]
 
 CMSSW_L2 = {
@@ -58,7 +58,6 @@ CMSSW_L2 = {
   "thuer": ["generators"],
   "cvuosalo": ["reconstruction"],
   "srimanob": ["pdmv"],
-  "degano" : ["externals"],
   "vanbesien" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "iahmad-khan" : ["externals"],

@@ -48,15 +48,15 @@ RELEASE_BRANCH_PRODUCTION = [
 SPECIAL_RELEASE_MANAGERS = ["slava77", "smuzaffar"]
 
 RELEASE_MANAGERS = {
-  "CMSSW_8_0_X": ["degano"],
-  "CMSSW_7_6_X": ["degano"],
-  "CMSSW_7_5_X": ["degano"],
-  "CMSSW_7_4_X": ["degano"],
-  "CMSSW_7_3_X": ["degano"],
-  "CMSSW_7_2_X": ["degano"],
-  "CMSSW_7_1_X": ["degano"],
-  "CMSSW_7_0_X": ["degano"],
-  "CMSSW_6_2_X": ["degano"],
+  "CMSSW_8_0_X": ["smuzaffar"],
+  "CMSSW_7_6_X": ["smuzaffar"],
+  "CMSSW_7_5_X": ["smuzaffar"],
+  "CMSSW_7_4_X": ["smuzaffar"],
+  "CMSSW_7_3_X": ["smuzaffar"],
+  "CMSSW_7_2_X": ["smuzaffar"],
+  "CMSSW_7_1_X": ["smuzaffar"],
+  "CMSSW_7_0_X": ["smuzaffar"],
+  "CMSSW_6_2_X": ["smuzaffar"],
   "CMSSW_6_2_X_SLHC": ["fratnikov"],
   "CMSSW_6_2_SLHCDEV_X": ["fratnikov"],
   "CMSSW_5_3_X": ["smuzaffar"],
@@ -70,7 +70,7 @@ DEVEL_RELEASE_CYCLE = {
   "CMSSW_7_5_X" :"CMSSW_7_6_X",
 }
 
-RELEASE_MANAGERS_FOR_NEW_RELEASE_CYCLES = ["degano"]
+RELEASE_MANAGERS_FOR_NEW_RELEASE_CYCLES = ["smuzaffar"]
 USERS_TO_TRIGGER_HOOKS = set(SPECIAL_RELEASE_MANAGERS + [ m for rel in RELEASE_MANAGERS for m in rel ])
 
 ######################################################################
@@ -78,7 +78,7 @@ USERS_TO_TRIGGER_HOOKS = set(SPECIAL_RELEASE_MANAGERS + [ m for rel in RELEASE_M
 ######################################################################
 RELEASE_BRANCH_MILESTONE["CMSSW_8_1_X"]=59
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_8_1_X")
-RELEASE_MANAGERS["CMSSW_8_1_X"]=["degano"]
+RELEASE_MANAGERS["CMSSW_8_1_X"]=["smuzaffar"]
 
 ######################################################################
 # Automatically added by cms-bot for CMSSW_8_0_0_patchX release cycle

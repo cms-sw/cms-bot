@@ -3,6 +3,8 @@ from github import Github
 from os.path import expanduser
 from optparse import OptionParser
 from process_pr import process_pr
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")

@@ -3,6 +3,8 @@
 from optparse import OptionParser
 from github import Github
 from os.path import expanduser
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 #
 # Posts a message in the github issue that triggered the build

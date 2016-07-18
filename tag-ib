@@ -5,6 +5,8 @@ from optparse import OptionParser
 from datetime import datetime
 from sys import exit
 import re
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog -b|--branch <branch> -d|--date <YYYY-MM-DD-HH00> -t|--tag <tag> [-n|--dry-run]")

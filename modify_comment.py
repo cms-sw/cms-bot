@@ -5,6 +5,8 @@ from optparse import OptionParser
 import sys
 from process_pr import modify_comment, find_last_comment
 from process_pr import TRIGERING_TESTS_MSG
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 valid_types = {}
 valid_types['JENKINS_TEST_URL']=[ "^\s*"+TRIGERING_TESTS_MSG+".*$", None ]

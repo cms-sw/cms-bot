@@ -11,6 +11,8 @@ from glob import glob
 from github import Github
 from github_utils import prs2relnotes, get_merge_prs, save_prs_cache, read_prs_cache
 from cms_static import CMSDIST_REPO_NAME,CMSSW_REPO_NAME
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 #-----------------------------------------------------------------------------------
 #---- Parser Options

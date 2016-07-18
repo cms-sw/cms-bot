@@ -9,6 +9,8 @@ import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
 from github import UnknownObjectException
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 try:
   SCRIPT_DIR = dirname(abspath(__file__))
 except Exception, e :

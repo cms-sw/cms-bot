@@ -8,7 +8,7 @@ import json
 import random
 import os
 from socket import setdefaulttimeout
-setdefaulttimeout(60)
+setdefaulttimeout(120)
 
 #-----------------------------------------------------------------------------------
 #---- Parser Options

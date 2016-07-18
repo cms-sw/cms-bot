@@ -5,6 +5,8 @@ from optparse import OptionParser
 from categories import EXTERNAL_REPOS
 from datetime import datetime, timedelta
 from process_pr import process_pr
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 def check_prs(gh, repo, since, process_issue, dryRun):
   print "Working on Repository: ",repo.full_name 

@@ -5,6 +5,8 @@ from github import Github
 from os.path import expanduser
 import requests
 import json
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 #
 # Posts a message in the github issue that triggered the build

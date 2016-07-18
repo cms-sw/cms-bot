@@ -13,6 +13,8 @@ import os.path
 from  datetime import datetime, timedelta
 from glob import glob
 from os.path import basename, dirname, abspath, join
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 try:
   CMS_BOT_DIR = dirname(abspath(__file__))

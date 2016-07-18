@@ -5,6 +5,9 @@ from optparse import OptionParser
 from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 from sys import exit, argv
 from commands import getstatusoutput 
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
+
 try:
   scriptPath = dirname(abspath(__file__))
 except Exception, e :

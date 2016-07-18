@@ -3,6 +3,8 @@
 from github import Github, GithubException
 from sys import exit
 from os.path import expanduser
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 # Mappings between releases for CMSSW
 MAPPINGS = {

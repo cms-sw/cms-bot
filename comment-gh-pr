@@ -4,6 +4,8 @@ from os.path import expanduser
 from optparse import OptionParser
 from sys import exit
 import re
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog -p|--pullrequest <number> -m|--message <message> [-r|--repository <repo>] [-n|--dry-run]")

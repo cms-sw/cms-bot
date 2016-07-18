@@ -5,6 +5,8 @@ from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from github import Github
 from github_utils import port_pr
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 if __name__ == "__main__":
   parser = OptionParser( usage="%prog <issue-id>" )

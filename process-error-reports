@@ -17,6 +17,8 @@ import sys
 import re
 import hashlib
 from operator import itemgetter, attrgetter
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 PING_COMMENT="This issue is also present in release %s"
 RESULTS_RE = "^([0-9.]+)_([^ ]*) (.*) - time date.*exit: (.*)"

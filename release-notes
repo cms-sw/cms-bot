@@ -9,6 +9,8 @@ from sys import exit
 import re
 from cms_static import CMSDIST_REPO_NAME,CMSSW_REPO_NAME
 from github_utils import prs2relnotes, get_merge_prs
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 def format(s, **kwds): return s % kwds
 #---------------------------------------------------------

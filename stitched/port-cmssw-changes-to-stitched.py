@@ -26,7 +26,7 @@ if max_thd<1: max_thd=1
 repo = "stitched"
 if not exists(repo):
   print "Cloning ",repo
-  err, out = getstatusoutput("git clone github.com:cms-sw/%s" % repo)
+  err, out = getstatusoutput("git clone git@github.com:cms-sw/%s" % repo)
   if err:
     print out
     exit(1)
@@ -62,7 +62,7 @@ if err:
   exit(1)
 
 if out == "0":
-  err, out = getstatusoutput("cd %s && git remote add cmssw github.com:cms-sw/cmssw" % repo)
+  err, out = getstatusoutput("cd %s && git remote add cmssw git@github.com:cms-sw/cmssw" % repo)
   if err:
     print out
     exit(1)

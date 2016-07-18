@@ -3,6 +3,8 @@ from github import Github
 from os.path import expanduser
 from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
   repos = []

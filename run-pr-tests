@@ -127,6 +127,7 @@ pushd $WORKSPACE/cms-bot
   wget --no-check-certificate https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
   tar -xvf requests-2.3.0.tar.gz
   mv requests-2.3.0/requests/ requests
+  sed -i -e 's|^DEFAULT_RETRIES *=.*|DEFAULT_RETRIES=10|' requests/adapters.py
 popd
 
 case $RELEASE_FORMAT in

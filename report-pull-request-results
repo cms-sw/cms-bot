@@ -6,7 +6,8 @@ import re
 import requests
 import json
 import random
-import os
+from socket import setdefaulttimeout
+setdefaulttimeout(60)
 
 #-----------------------------------------------------------------------------------
 #---- Parser Options

@@ -8,6 +8,8 @@ from github_hooks_config import REPO_HOOK_MAP
 import hashlib, re
 from categories import EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS
 from sys import exit
+from socket import setdefaulttimeout
+setdefaulttimeout(120)
 
 #Get secret from file
 def get_secret(hook_name):

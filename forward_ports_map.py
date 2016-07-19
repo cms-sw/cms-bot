@@ -30,12 +30,10 @@ GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"].append("CMSSW_8_0_ROOT64_X")
 
 #Automatically added for CMSSW new branch CMSSW_8_1_X
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"].append("CMSSW_8_1_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_1_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_1_X"].append("CMSSW_8_1_ROOT64_X")
 
 #Automatically added for CMSDIST new branch IB/CMSSW_8_1_X/stable
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/stable"].append("IB/CMSSW_8_1_X/stable")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_1_X/stable"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_1_X/stable"].append("IB/CMSSW_8_1_X/gcc530")
 

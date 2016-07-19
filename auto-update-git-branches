@@ -69,9 +69,13 @@ esac
 repo=`echo $REPO_NAME |sed 's|.*/||'`
 echo "Working on ${REPO_NAME} ..."
 cd "$WORKSPACE"
+REF_REPO=""
+if [ -d /afs/cern.ch/cms/git-cmssw-mirror/${repo}.git ] ; then
+  REF_REPO="--reference /afs/cern.ch/cms/git-cmssw-mirror/${repo}.git"
+fi
 #Clone repo if not already done
 if [ ! -d $repo ] ; then
-  git clone git@github.com:${REPO_NAME} ${repo}
+  git clone $REF_REPO git@github.com:${REPO_NAME} ${repo}
   cd $repo
   if [ X$HOME = X ]; then
     git config user.email 'cmsbuild@cern.ch'

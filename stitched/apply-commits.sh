@@ -35,6 +35,6 @@ for COMMIT in `cat $DIR/commits/commits.txt | grep '^[0-9a-f][0-9a-f]*$'` ; do
 done
 if [ "X$CHGS" = "XYES" ] ; then
   echo $COMMIT > .cmssw-commit
-  git commit -a -m 'sync changes from cms-sw/cmssw using $COMMIT'
+  git commit -a -m "sync changes from cms-sw/cmssw using $COMMIT"
 fi
 

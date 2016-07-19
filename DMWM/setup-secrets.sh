@@ -16,11 +16,8 @@ export X509_USER_CERT=$COUCH_CERT_FILE
 export X509_USER_KEY=$COUCH_KEY_FILE
 
 set -x
-voms-proxy-init -voms cms
-export X509_USER_PROXY=/tmp/x509up_u`id -u`
-
-
-
+voms-proxy-init -voms cms -out $WORKSPACE/x509up_u`id -u`
+export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 
 end=`date +%s`
 runtime=$((end-start))

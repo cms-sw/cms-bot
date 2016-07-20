@@ -10,7 +10,6 @@ import commands
 def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
     payload["file"]=ds
-    print payload, index, doc
     send_payload(index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
 
 def process_unittest_log(logFile):

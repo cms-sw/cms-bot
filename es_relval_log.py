@@ -120,7 +120,7 @@ def es_parse_log(logFile):
       if " Initiating request to open file " in l:
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-          if (not "file:step" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
+          if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
         except: pass
       if l.startswith("----- Begin Fatal Exception"):
         inException = True

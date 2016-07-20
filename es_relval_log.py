@@ -112,10 +112,16 @@ def es_parse_log(logFile):
   errors = []
   inException = False
   inError = False
+  datasets = []
   if exists(logFile):
     lines = file(logFile).read()
     payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+pathInfo[4]+'/'+pathInfo[8]+'/pyRelValMatrixLogs/run/'+pathInfo[-2]+'/'+pathInfo[-1]
     for l in lines.split("\n"):
+      if " Initiating request to open file " in l:
+        try:
+          rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
+          if not rootfile in datasets: datasets.append(rootfile)
+        except: pass
       if l.startswith("----- Begin Fatal Exception"):
         inException = True
         continue
@@ -146,7 +152,15 @@ def es_parse_log(logFile):
   except Exception, e:
     print e
   print "sending data for ",logFile
-  send_payload(index,document,id,json.dumps(payload))
+  try:send_payload(index,document,id,json.dumps(payload))
+  except:pass
+  if datasets:
+    dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"]}
+    for fld in ["release","architecture","@timestamp"]: dataset[fld] = payload[fld]
+    for ds in datasets:
+      dataset["file"]=ds
+      idx = sha1(id + ds).hexdigest()
+      send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))
 
 if __name__ == "__main__":
   print "Processing ",sys.argv[1]

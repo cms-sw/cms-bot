@@ -155,7 +155,7 @@ def es_parse_log(logFile):
   try:send_payload(index,document,id,json.dumps(payload))
   except:pass
   if datasets:
-    dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"]}
+    dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"])}
     for fld in ["release","architecture","@timestamp"]: dataset[fld] = payload[fld]
     for ds in datasets:
       dataset["file"]=ds

@@ -836,6 +836,8 @@ if __name__ == "__main__":
     print "Trying default queue"
     release_queue = "".join([x for x in rel_name_match.group(1,2)] + ["_X"])
     print release_queue
+    architectures = [x["SCRAM_ARCH"] for x in specs
+                   if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x]
 
   # Check if we have at least one architecture to build and complain if not.
   if not architectures:

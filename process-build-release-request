@@ -44,7 +44,9 @@ ACK_MSG = 'Request received. I will start to build the release after one of the 
           'the issue: {approvers_list}. You can do this by writing "+1" in a ' \
           'comment.\n You can also ask me to begin to build cmssw-tool-conf first ( Cannot be done for patch releases ). To do this write ' \
           '"build cmssw-tool-conf" in a comment. I will start to build cmssw-tool-conf and then wait for the "+1" ' \
-          'to start the build of the release. \n' 
+          'to start the build of the release. ' \
+          'CMSSW Branch: {cmssw_queue} '\
+          'Architecture: {architecture} \n'
 WATCHERS_MSG = '{watchers_list} you requested to watch the automated builds for {queue}' 
 QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s \n' \
                      'You can abort the build by writing "Abort" in a comment. I will delete the release, ' \
@@ -925,7 +927,7 @@ if __name__ == "__main__":
     approvers = ", ".join( [ "@"+x for x in APPROVE_BUILD_RELEASE ] )
     ALL_WATCHERS = (yaml.load(file("build-release-watchers.yaml")))
     watchers = ALL_WATCHERS.get( release_queue )
-    msg = ACK_MSG.format( approvers_list=approvers )
+    msg = ACK_MSG.format( approvers_list=approvers, cmssw_queue=release_queue, architecture=", ".join(architectures) )
 
     if watchers:
       watchers_l = ", ".join( [ "@"+x for x in watchers ] )

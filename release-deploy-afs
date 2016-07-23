@@ -16,6 +16,7 @@ source /afs/cern.ch/cms/cmsset_default.sh
 /afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE update
 /afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE -f upgrade
 /afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE install -y $(/afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE search $CMSSW_X_Y_Z | sed -e 's|[ ].*||' | grep -e "^cms[+]$RPM_NAME[+]$CMSSW_X_Y_Z\$")
+/afs/.cern.ch/cms/common/cmspkg -a $ARCHITECTURE -f clean || true
 touch /afs/.cern.ch/cms/$ARCHITECTURE/tmp/$CMSSW_X_Y_Z
 echo 'ALL_OK'
 

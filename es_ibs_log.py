@@ -23,7 +23,7 @@ def process_unittest_log(logFile):
   package = pathInfo[-3]+"/"+ pathInfo[-2]
   utname = None
   datasets = []
-  payload = {"type" : "unittest"}
+  payload = {"type" : "unittest", "ds_block" : "", "ds_status" : "", "ds_owner" : "", "ds_files" : "", "T2_CH_CERN" : ""}
   payload["release"]=release
   payload["architecture"]=architecture
   payload["@timestamp"]=timestp
@@ -52,7 +52,7 @@ def process_addon_log(logFile):
   dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
   week = strftime("%U",strptime(dat,"%Y-%m-%d"))
   datasets = []
-  payload = {"type" : "addon"}
+  payload = {"type" : "addon", "ds_block" : "", "ds_status" : "", "ds_owner" : "", "ds_files" : "", "T2_CH_CERN" : ""}
   payload["release"]=release
   payload["architecture"]=architecture
   payload["@timestamp"]=timestp

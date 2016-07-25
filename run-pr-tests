@@ -100,6 +100,7 @@ else
   RELEASE_FORMAT=$( find $WORKSPACE -maxdepth 1 -name "CMSSW_*" -printf '%f\n' )
   RELEASE_QUEUE=$( echo $RELEASE_FORMAT | sed 's|_X.*|_X|' )
 fi
+[ "X$COMP_QUEUE" = "X" ] && COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
 
 if [ "X$COMPARISON_REL" = "X" ] ; then
   COMPARISON_REL=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_[^0-9]*\(_X_.*\)|\1\2|')

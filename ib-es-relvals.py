@@ -18,7 +18,7 @@ def process_matrix_log(logFile):
   dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
   week = strftime("%U",strptime(dat,"%Y-%m-%d"))
   id = sha1(release + architecture + workflow + str(step)).hexdigest()
-  dataset = {"type" : "relvals", "name" : "%s/%s" % (workflow, step), "ds_block" : "", "ds_status" : "", "ds_owner" : "", "ds-files" : "", "at_cern" : ""}
+  dataset = {"type" : "relvals", "name" : "%s/%s" % (workflow, step), "ds_block" : "", "ds_status" : "", "ds_owner" : "", "ds_files" : "", "at_cern" : ""}
   dataset["release"]=release
   dataset["architecture"]=architecture
   dataset["@timestamp"]=timestp

@@ -10,7 +10,8 @@ import commands
 def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
     payload["protocol"]=ds.split("/store/",1)[0]
-    payload["lfn"]="/store/"+ds.split("/store/",1)[1]
+    payload["protocol_opts"]=ds.split("?",1)[1]
+    payload["lfn"]="/store/"+ds.split("/store/",1)[1].split("?")[0]
     send_payload(index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
 
 def process_unittest_log(logFile):

@@ -159,7 +159,8 @@ def es_parse_log(logFile):
     for fld in ["release","architecture","@timestamp"]: dataset[fld] = payload[fld]
     for ds in datasets:
       dataset["protocol"]=ds.split("/store/",1)[0]
-      dataset["lfn"]="/store/"+ds.split("/store/",1)[1]
+      dataset["protocol_opts"]=ds.split("?",1)[1]
+      dataset["lfn"]="/store/"+ds.split("/store/",1)[1].split("?")[0]
       idx = sha1(id + ds).hexdigest()
       send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))
 

@@ -4,6 +4,7 @@ import os, sys,json , re , datetime
 from os.path import exists, dirname
 from time import strftime , strptime
 from es_utils import send_payload
+from sys import argv
 import commands
 
 def process_matrix_log(logFile):
@@ -41,21 +42,25 @@ def process_matrix_log(logFile):
     send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))
 
 
-logs = commands.getstatusoutput("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'pyRelValMatrixLogs.zip'")
-logs = logs[1].split('\n')
+logs = argv[1:]
+if len(logs)==0:
+  logs = commands.getstatusoutput("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'pyRelValMatrixLogs.zip'")
+  logs = logs[1].split('\n')
+
 for logFile in logs:
   flagFile = logFile + '.checked'
   if not exists(flagFile):
     utdir = dirname(logFile)
     print "Working on ",logFile
-    try:
-      err, utlogs = commands.getstatusoutput("cd %s; rm -rf MT; mkdir MT; cd MT; unzip ../pyRelValMatrixLogs.zip" % utdir)
-      err, utlogs = commands.getstatusoutput("find %s/MT -name 'step*.log' -type f" % utdir)
-      if not err:
-        for utlog in utlogs.split("\n"):
+    err, utlogs = commands.getstatusoutput("cd %s; rm -rf MT; mkdir MT; cd MT; unzip ../pyRelValMatrixLogs.zip" % utdir)
+    err, utlogs = commands.getstatusoutput("find %s/MT -mindepth 2 -name 'step*_*.log' -type f" % utdir)
+    if not err:
+      for utlog in utlogs.split("\n"):
+        try:
           process_matrix_log(utlog)
-        commands.getstatusoutput("touch %s" % flagFile)
-    except Exception as e:
-      print "ERROR:",e
+        except Exception as e:
+          print "ERROR:",e
+          err = True
+      if not err: commands.getstatusoutput("touch %s" % flagFile)
     commands.getstatusoutput("rm -rf %s/MT" % utdir)
 

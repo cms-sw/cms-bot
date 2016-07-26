@@ -127,7 +127,7 @@ logs = logs[1].split('\n')
 #process zip log files
 for logFile in logs:
   flagFile = logFile + '.checked'
-  if not exists(flagFile+"xx"):
+  if not exists(flagFile):
     utdir = dirname(logFile)
     print "Working on ",logFile
     try:

@@ -45,7 +45,7 @@ logs = commands.getstatusoutput("find /data/sdt/buildlogs -mindepth 6 -maxdepth 
 logs = logs[1].split('\n')
 for logFile in logs:
   flagFile = logFile + '.checked'
-  if not exists(flagFile+"x1"):
+  if not exists(flagFile):
     utdir = dirname(logFile)
     print "Working on ",logFile
     try:

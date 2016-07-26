@@ -2,18 +2,19 @@
 from hashlib import sha1
 import os, sys,json , re , datetime
 from os import getenv
-from os.path import exists, dirname
+from os.path import exists, dirname, getmtime
 from time import strftime , strptime
 from es_utils import send_payload
 import commands
 
 def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
-    payload["file"]=ds
+    payload["PFN"]=ds
+    payload["LFN"]="/store/"+ds.split("/store/",1)[1]
     send_payload(index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
 
 def process_unittest_log(logFile):
-  t = os.path.getmtime(logFile)
+  t = getmtime(logFile)
   timestp = int(t*1000)
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
@@ -44,7 +45,7 @@ def process_unittest_log(logFile):
   return
 
 def process_addon_log(logFile):
-  t = os.path.getmtime(logFile)
+  t = getmtime(logFile)
   timestp = int(t*1000)
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
@@ -68,7 +69,7 @@ def process_addon_log(logFile):
   return
 
 def process_ib_utests(logFile):
-  t = os.path.getmtime(logFile)
+  t = getmtime(logFile)
   timestp = datetime.datetime.fromtimestamp(int(t)).strftime('%Y-%m-%d %H:%M:%S')
   payload = {}
   pathInfo = logFile.split('/')
@@ -116,7 +117,7 @@ logs = logs[1].split('\n')
 #process log files
 for logFile in logs:
   flagFile = logFile + '.checked'
-  if not os.path.exists(flagFile):
+  if not exists(flagFile):
     print "Working on ",logFile
     process_ib_utests(logFile)
     os.system('touch "' + flagFile + '"')
@@ -126,7 +127,7 @@ logs = logs[1].split('\n')
 #process zip log files
 for logFile in logs:
   flagFile = logFile + '.checked'
-  if not os.path.exists(flagFile):
+  if not exists(flagFile+"xx"):
     utdir = dirname(logFile)
     print "Working on ",logFile
     try:
@@ -145,7 +146,7 @@ logs = logs[1].split('\n')
 #process zip log files
 for logFile in logs:
   flagFile = logFile + '.checked'
-  if not os.path.exists(flagFile):
+  if not exists(flagFile):
     utdir = dirname(logFile)
     print "Working on ",logFile
     try:

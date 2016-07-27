@@ -671,7 +671,7 @@ threus:
 - CommonTools/TrackerMap
 - CondFormats/SiStripObjects
 - DataFormats/SiStrip
-- RecoLocalTracker
+- RecoLocalTracker/
 - Validation/Tracker
 thuer:
 - GeneratorInterface/SherpaInterface

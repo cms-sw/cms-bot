@@ -62,6 +62,7 @@ bsunanda:
   - Validation/HGCalValidation
 btv-pog:
   - CondFormats/BTauObjects
+  - CondTools/BTau
   - DataFormats/BTauReco
   - DQMOffline/RecoB
   - SimDataFormats/JetMatching

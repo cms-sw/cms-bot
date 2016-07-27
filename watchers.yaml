@@ -238,7 +238,7 @@ acimmino:
 - DQM/RPCMonitorDigi
 - DQM/RPCMonitorClient
 argiro:
-- .*[Ee][Cc][Aa][Ll].*
+- .*[Ee][Cc][Aa][Ll]
 azsigmon:
 - RecoHI/HiCentralityAlgos
 - DataFormats/HeavyIonEvent
@@ -332,7 +332,7 @@ dkotlins:
 - RecoLocalTracker/SiPixelRecHits
 - SimTracker/SiPixelDigitizer
 - EventFilter/SiPixelRawToDigi
-- CalibTracker/SiPixel*
+- CalibTracker/SiPixel
 - CondCore/SiPixelPlugins
 - CondFormats/SiPixelObjects
 - CondTools/SiPixel
@@ -344,15 +344,15 @@ forthommel:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration
 - RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip*
+- RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
 gbenelli:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration
 - RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip*
+- RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
-- CalibTracker/SiStrip*
+- CalibTracker/SiStrip
 - CalibTracker/Configuration
 - CalibTracker/RecordsSimTracker/SiStripDigitizer
 - SimTracker/Common
@@ -482,9 +482,9 @@ jlagram:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration
 - RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip*
+- RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
-- CalibTracker/SiStrip*
+- CalibTracker/SiStrip
 - CalibTracker/Configuration
 - CalibTracker/Records
 - SimTracker/SiStripDigitizer
@@ -524,7 +524,11 @@ miheejo:
 - RecoHI/HiMuonAlgos
 - RecoHI/Configuration
 mariadalfonso:
+- CalibCalorimetry/HcalAlgos
 - CondFormats/JetMETObjects
+- DataFormats/HcalRecHit
+- DataFormats/HcalDigi
+- DataFormats/HcalDetId
 - DQMOffline/JetMET
 - DataFormats/JetReco
 - DataFormats/METReco
@@ -534,6 +538,10 @@ mariadalfonso:
 - PhysicsTools/RecoAlgos
 - RecoJets
 - RecoMET
+- RecoLocalCalo/HcalRecProducers
+- RecoLocalCalo/HcalRecAlgos
+- SimCalorimetry/HcalSimAlgos
+- SimCalorimetry/HcalSimProducers
 - Validation/RecoJets
 - Validation/RecoMET
 mmarionncern:
@@ -565,7 +573,7 @@ mschrode:
 - Alignment
 - RecoTracker
 namapane:
-- .*Magnetic.*
+- .*Magnetic
 nhanvtran:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET
@@ -583,7 +591,7 @@ nickmccoll:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration
 - RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip*
+- RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
 pakhotin:
 - Alignment/MuonAlignment
@@ -649,11 +657,11 @@ tlampen:
 - Alignment/TrackerAlignment
 - Alignment/TwoBodyDecay
 threus:
-- DQM/SiPixel*
-- DQM/SiStrip*
-- DQM/Tracker*
-- DQM/Tracking*
-- DQM/Integration*
+- DQM/SiPixel
+- DQM/SiStrip
+- DQM/Tracker
+- DQM/Tracking
+- DQM/Integration
 - DQMOffline/CalibTracker
 - DQMOffline/Configuration
 - SimTracker
@@ -662,9 +670,9 @@ threus:
 - Calibration/TkAlCaRecoProducers
 - CommonTools/TrackerMap
 - CondFormats/SiStripObjects
-- DataFormats/SiStrip*
-- RecoLocalTracker/*
-- Validation/Tracker*
+- DataFormats/SiStrip
+- RecoLocalTracker/
+- Validation/Tracker
 thuer:
 - GeneratorInterface/SherpaInterface
 tracking-pog:
@@ -778,7 +786,7 @@ yduhm:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration
 - RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip*
+- RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
 yenjie:
 - RecoHI
@@ -918,9 +926,9 @@ OlivierBondu:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration
 - RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip*
+- RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
-- DataFormats/SiStrip*
+- DataFormats/SiStrip
 - CalibTracker/SiStripChannelGain
 agrohsje:
 - GeneratorInterface
@@ -965,23 +973,23 @@ ptcox:
 - SimMuon/CSCDigitizer
 - SimMuon/Neutron
 fioriNTU:
-- DQM/SiPixel*
+- DQM/SiPixel
 - DQM/SiStripCommon
 - DQM/SiStripHistoricInfoClient
-- DQM/SiStripMonitor*
-- DQM/Tracker*
-- DQM/TrackingMonitor*
+- DQM/SiStripMonitor
+- DQM/Tracker
+- DQM/TrackingMonitor
 hdelanno:
-- DQM/SiPixel*
+- DQM/SiPixel
 - DQM/SiStripCommon
 - DQM/SiStripHistoricInfoClient
-- DQM/SiStripMonitor*
-- DQM/Tracker*
-- DQM/TrackingMonitor*
+- DQM/SiStripMonitor
+- DQM/Tracker
+- DQM/TrackingMonitor
 idebruyn:
-- DQM/SiPixel*
+- DQM/SiPixel
 - DQM/SiStripCommon
 - DQM/SiStripHistoricInfoClient
-- DQM/SiStripMonitor*
-- DQM/Tracker*
-- DQM/TrackingMonitor*
+- DQM/SiStripMonitor
+- DQM/Tracker
+- DQM/TrackingMonitor

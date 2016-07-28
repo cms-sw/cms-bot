@@ -27,7 +27,7 @@ def process_unittest_log(logFile):
   package = pathInfo[-3]+"/"+ pathInfo[-2]
   utname = None
   datasets = []
-  payload = {"type" : "unittest", "ds_block" : "", "ds_status" : "", "ds_owner" : "", "ds_files" : "", "at_cern" : ""}
+  payload = {"type" : "unittest", "ds_block" : "UNKNOWN", "ds_status" : "UNKNOWN", "ds_owner" : "UNKNOWN", "ds_files" : "", "at_cern" : "UNKNOWN"}
   payload["release"]=release
   payload["architecture"]=architecture
   payload["@timestamp"]=timestp

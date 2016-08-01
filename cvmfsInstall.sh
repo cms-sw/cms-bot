@@ -12,12 +12,18 @@ else
   DEV=""
 fi
 
+PROOTDIR=$6
+if [ "X$PROOTDIR" = "X" ] ; then
+  PROOTDIR=/build/cmsbuild/proot
+fi
+
+export $PROOTDIR
+
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1
 
 export BASEDIR=/cvmfs/cms-ib.cern.ch
 export BASEDESTDIR=/cvmfs/cms-ib.cern.ch
-export PROOTDIR=/build/cmsbuild/proot
 export THISDIR=`pwd`
 export LANG=C
 # The disk where cvmfs is mounted

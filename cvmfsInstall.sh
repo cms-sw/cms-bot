@@ -17,7 +17,7 @@ if [ "X$PROOTDIR" = "X" ] ; then
   PROOTDIR=/build/cmsbuild/proot
 fi
 
-export $PROOTDIR
+export PROOTDIR
 
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1

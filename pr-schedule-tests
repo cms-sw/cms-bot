@@ -8,27 +8,34 @@ PULL_REQUEST=$1
 
 # Use helper to get PR branch
 RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
-CONFIG_MAP_URL="https://raw.githubusercontent.com/cms-sw/cms-bot/master/config.map"
-
-# If RELEASE_FORMAT is empty, use RELEASE_QUEUE
-if [[ "X$RELEASE_FORMAT" = X ]]; then
-  RELEASE_FORMAT=$RELEASE_QUEUE
-fi
+CONFIG_MAP_FILE="$WORKSPACE/cms-bot/config.map"
 
 PROP_FILE=properties-pr
 if [ "X$CMSDIST_PR" != "X" ] ; then 
   PROP_FILE=cmsdist-properties-pr
 fi
 rm -f $WORKSPACE/pr_test_ok
-for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | grep PR_TESTS= | grep SCRAM_ARCH=$ARCHITECTURE_FILTER;`; do
-  (
-    eval $line
+COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
+COMP_ARCH=$(grep "RELEASE_QUEUE=$COMP_QUEUE;" $CONFIG_MAP_FILE | grep -v "DISABLED=" | grep "PROD_ARCH=1;" | tr ';' '\n' | grep "SCRAM_ARCH=" | sed 's|SCRAM_ARCH=||')
+
+MLINES=`grep "=$RELEASE_QUEUE;" $CONFIG_MAP_FILE | grep -v DISABLED= | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;"`
+MLC=$(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l)
+if [ $MLC -gt 1 ] ; then
+  MLINES=$(grep "=$RELEASE_QUEUE;" $CONFIG_MAP_FILE | grep -v DISABLED= |  grep "SCRAM_ARCH=$COMP_ARCH;" | grep "PROD_ARCH=1")
+  MLC=$(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l)
+fi
+if [ $MLC -eq 1 ] ; then
+    eval $MLINES
     if [ "X$CMSDIST_PR" != "X" ] ; then SCRAM_ARCH="" ; fi
     touch $WORKSPACE/pr_test_ok
     OUTPUT_FILE=${PROP_FILE}-${PULL_REQUEST}-${SCRAM_ARCH}.txt
     echo PULL_REQUEST=${PULL_REQUEST} > $OUTPUT_FILE
     echo ARCHITECTURE=${SCRAM_ARCH} >> $OUTPUT_FILE
-    echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $OUTPUT_FILE
+    if [ "X$RELEASE_FORMAT" = X ] ; then
+      echo RELEASE_FORMAT=${RELEASE_QUEUE} >> $OUTPUT_FILE
+    else
+      echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $OUTPUT_FILE
+    fi
     echo DO_TESTS=${DO_TESTS} >> $OUTPUT_FILE
     echo DO_SHORT_MATRIX=${DO_SHORT_MATRIX} >> $OUTPUT_FILE
     echo DO_STATIC_CHECKS=${DO_STATIC_CHECKS} >> $OUTPUT_FILE
@@ -46,8 +53,8 @@ for line in `curl $CONFIG_MAP_URL | grep $RELEASE_QUEUE | grep -v DISABLED= | gr
     echo CMSDIST_PR=${CMSDIST_PR} >> $OUTPUT_FILE
     echo FULL_TOOLCONF=true >> $OUTPUT_FILE
     echo PYTHONDONTWRITEBYTECODE=1 >> $OUTPUT_FILE
-  )
-done
+    echo COMPARISON_ARCH=${COMP_ARCH} >> $OUTPUT_FILE
+fi
 
 if [ ! -f $WORKSPACE/pr_test_ok ] ; then
   $WORKSPACE/cms-bot/report-pull-request-results RELEASE_NOT_FOUND --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}

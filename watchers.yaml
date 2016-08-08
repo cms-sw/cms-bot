@@ -994,3 +994,6 @@ idebruyn:
 - DQM/SiStripMonitor
 - DQM/Tracker
 - DQM/TrackingMonitor
+deguio:
+- DQM/HcalCommon
+- DQM/HcalTasks

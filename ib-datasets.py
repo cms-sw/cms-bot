@@ -170,6 +170,7 @@ if __name__ == "__main__":
   from optparse import OptionParser  
   parser = OptionParser(usage="%prog <pull-request-id>")
   parser.add_option("--json",               dest="json",    action="store_true", help="Do not download files but just dump the json results", default=False)
+  parser.add_option("--datasets",           dest="datasets",action="store_true", help="Do not download files but dump datasets names", default=False)
   parser.add_option("--update",             dest="update",  action="store_true", help="Do not download file but update block/site info in ES", default=False)
   parser.add_option("-n", "--dry-run",      dest="dryRun",  action="store_true", help="Do not actually download the files", default=False)
   parser.add_option("-s", "--store",        dest="store",   help="Data store directory",   type=str, default="/build")
@@ -181,6 +182,7 @@ if __name__ == "__main__":
   opts, args = parser.parse_args()
   
   transfer = True
+  if opts.datasets: opts.json=True
   if opts.update or opts.json: transfer = False
   if transfer and not opts.dryRun:
     err, out = getstatusoutput("which xrdcp")
@@ -245,7 +247,16 @@ if __name__ == "__main__":
 
   if not transfer:
     if opts.json:
-      print json.dumps(json_out, indent=2, sort_keys=True, separators=(',',': '))
+      if opts.datasets:
+        ds = {}
+        for item in json_out:
+          for h in item["hits"]["hits"]:
+           if h["_source"]["dataset"] == "UNKNOWN": continue
+           ds[h["_source"]["dataset"]]=1
+        ods = sorted(ds.keys())
+        print "\n".join(ods)
+      else:
+        print json.dumps(json_out, indent=2, sort_keys=True, separators=(',',': '))
     else:
       cmsweb=CMSWeb()
       lfns = {}

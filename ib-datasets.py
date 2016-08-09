@@ -172,6 +172,7 @@ if __name__ == "__main__":
   parser.add_option("--json",               dest="json",    action="store_true", help="Do not download files but just dump the json results", default=False)
   parser.add_option("--datasets",           dest="datasets",action="store_true", help="Do not download files but dump datasets names", default=False)
   parser.add_option("--update",             dest="update",  action="store_true", help="Do not download file but update block/site info in ES", default=False)
+  parser.add_option("--update-opts",        dest="update_opts",type=str,         help="Extra update guery options", default="ds_owner:UNKNOWN AND NOT ds_status:DEPRECATED")
   parser.add_option("-n", "--dry-run",      dest="dryRun",  action="store_true", help="Do not actually download the files", default=False)
   parser.add_option("-s", "--store",        dest="store",   help="Data store directory",   type=str, default="/build")
   parser.add_option("-r", "--release",      dest="release", help="Release filter",   type=str, default="CMSSW_8_1_X")
@@ -220,8 +221,8 @@ if __name__ == "__main__":
   else:
     queryInfo["page_size"]=opts.page_size
   
-  if opts.update:
-    queryInfo["update_opts"]=" AND ds_owner:UNKNOWN AND NOT ds_status:DEPRECATED"
+  if opts.update and opts.update_opts:
+    queryInfo["update_opts"]=" AND ( "+opts.update_opts+" )"
   total_hits = 0
   if not opts.json: print queryInfo
   while True:

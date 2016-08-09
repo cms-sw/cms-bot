@@ -371,6 +371,11 @@ else
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
 fi
 
+##FIXME: Remove the following das_client.py link once all IBs use das_client wrapper
+ln -s `which das_client` $WORKSPACE/$RELEASE_FORMAT/bin/$SCRAM_ARCH/das_client.py
+which das_client.py
+eval $(scram run -sh)
+which das_client.py
 #
 # Unit tests
 #

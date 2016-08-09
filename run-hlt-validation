@@ -4,6 +4,7 @@
 # ARCHITECTURE
 # RELEASE_FORMAT
 # WORKSPACE
+voms-proxy-init
 ls /cvmfs/cms-ib.cern.ch || true
 SCRAM_ARCH=$ARCHITECTURE
 scram p $RELEASE_FORMAT

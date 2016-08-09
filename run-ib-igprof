@@ -9,7 +9,7 @@ PROFILES=$4
 scram -a $ARCHITECTURE project $RELEASE_FORMAT
 cd $RELEASE_FORMAT
 eval `scram run -sh`
-
+voms-proxy-init -valid 24:00 || true
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}

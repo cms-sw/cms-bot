@@ -4,6 +4,7 @@ CMSBUILD_KEY="/build/`whoami`/`whoami`.keytab"
 case $NODE_NAME in
   lxplus* ) CMSBUILD_KEY="$CMSBUILD_KEYTAB/cmsbuild.keytab" ;;
 esac
+voms-proxy-init -valid 24:00 || true
 
 function Jenkins_GetCPU ()
 {

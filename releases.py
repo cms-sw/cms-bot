@@ -60,9 +60,9 @@ RELEASE_MANAGERS = {
   "CMSSW_6_2_X_SLHC": ["fratnikov"],
   "CMSSW_6_2_SLHCDEV_X": ["fratnikov"],
   "CMSSW_5_3_X": ["smuzaffar"],
-  "CMSSW_4_4_X": ["smuzaffar", "davidlt"],
-  "CMSSW_4_2_X": ["smuzaffar", "davidlt"],
-  "CMSSW_4_1_X": ["smuzaffar", "davidlt"],
+  "CMSSW_4_4_X": ["smuzaffar"],
+  "CMSSW_4_2_X": ["smuzaffar"],
+  "CMSSW_4_1_X": ["smuzaffar"],
 }
 
 DEVEL_RELEASE_CYCLE = {

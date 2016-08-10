@@ -50,6 +50,10 @@ RELVAL_ARGS[len(RELVAL_ARGS)-1][".+"]="""
   @USE_INPUT@
 """
 
+def isThreaded(release, arch):
+  if re.search(THREADED_IBS,release+":"+arch): return True
+  return False
+
 def GetMatrixOptions(release, arch, dasfile=None):
   rel_arch = release+":"+arch
   for exp in RELVAL_KEYS["DAS_OPTION"]:

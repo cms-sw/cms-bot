@@ -3,7 +3,7 @@ from sys import exit
 from optparse import OptionParser
 from os import environ
 from runPyRelValThread import PyRelValsThread
-from RelValArgs import GetMatrixOptions
+from RelValArgs import GetMatrixOptions, isThreaded
 from logUpdater import LogUpdater
 from cmsutils import cmsRunProcessCount, MachineMemoryGB, doCmd
 
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     exit(1)
 
   thrds = cmsRunProcessCount
-  if "_THREADED_" in  environ["CMSSW_VERSION"]:
+  if isThreaded(environ["CMSSW_VERSION"],environ["SCRAM_ARCH"]):
     thrds=int(MachineMemoryGB/5)
   elif "fc22_" in environ["SCRAM_ARCH"]:
     thrds=int(MachineMemoryGB/4)

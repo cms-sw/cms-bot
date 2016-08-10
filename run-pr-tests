@@ -448,7 +448,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   pushd "$WORKSPACE/runTheMatrix-results"
 
     case $RELEASE_FORMAT in
-        *THREADED*)
+        *_THREADED_*)
         THREADED_PARAM='-t 4 --command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
         ;;
        *)

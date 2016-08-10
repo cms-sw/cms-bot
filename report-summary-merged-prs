@@ -132,7 +132,7 @@ def get_config_map_params():
     if sp_rel_name != 'X' and sp_rel_name not in SPECIAL_RELEASES:
       SPECIAL_RELEASES.append( sp_rel_name )
 
-    if not params.get( 'DISABLED' ):
+    if not params.get( 'DISABLED' ) or params.get('IB_WEB_PAGE'):
       if not RELEASES_ARCHS.get( release_queue ):
         RELEASES_ARCHS[ release_queue ] = []
       RELEASES_ARCHS[ release_queue ].append( arch )

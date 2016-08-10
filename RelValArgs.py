@@ -9,14 +9,14 @@ RELVAL_KEYS = {"dropNonMTSafe":{},
                "DAS_OPTION":{},
                "SLHC_WORKFLOWS":{},
               }
-
-RELVAL_KEYS["dropNonMTSafe"]["_(THREADED|ROOT6)_"]  = "--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe"
+THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc6_amd64_gcc530|_THREADED_"
+RELVAL_KEYS["dropNonMTSafe"][THREADED_IBS]  = "--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe"
 RELVAL_KEYS["customiseWithTimeMemorySummary"][".+"] = "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"
 RELVAL_KEYS["PREFIX"]["CMSSW_8_.+"]         = "--prefix 'timeout --signal SIGTERM 7200 '"
 RELVAL_KEYS["PREFIX"]["^(?!CMSSW_8_).+"]    = "--prefix 'timeout --signal SIGSEGV 7200 '"
 RELVAL_KEYS["JOB_REPORT"][".+"]             = "--job-reports"
 RELVAL_KEYS["USE_INPUT"][".+"]              = "--useInput all"
-RELVAL_KEYS["THREADED"]["_THREADED_"]       = "-t 4"
+RELVAL_KEYS["THREADED"][THREADED_IBS]       = "-t 4"
 RELVAL_KEYS["DAS_OPTION"][".+"]             = "--das-options '--cache @DAS_FILE@'"
 RELVAL_KEYS["SLHC_WORKFLOWS"]["_SLHCDEV_"]  = "-w upgrade -l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
 RELVAL_KEYS["SLHC_WORKFLOWS"]["_SLHC_"]     = "-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"

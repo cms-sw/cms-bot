@@ -9,7 +9,7 @@ RELVAL_KEYS = {"dropNonMTSafe":{},
                "DAS_OPTION":{},
                "SLHC_WORKFLOWS":{},
               }
-THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc6_amd64_gcc530|_THREADED_"
+THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc6_amd64_gcc530|_THREADED_X|_DEVEL_X"
 RELVAL_KEYS["dropNonMTSafe"][THREADED_IBS]  = "--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe"
 RELVAL_KEYS["customiseWithTimeMemorySummary"][".+"] = "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"
 RELVAL_KEYS["PREFIX"]["CMSSW_8_.+"]         = "--prefix 'timeout --signal SIGTERM 7200 '"

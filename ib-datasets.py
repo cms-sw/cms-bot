@@ -59,7 +59,7 @@ class CMSWeb (object):
     self.URL_DBS_FILES='/dbs/prod/global/DBSReader/files'
     self.URL_DBS_BLOCKS='/dbs/prod/global/DBSReader/blocks'
     self.conn = HTTPSConnection(self.URL_CMSWEB_BASE, cert_file='/tmp/x509up_u{0}'.format(getuid()),  timeout=30)
-    self.cache = {'lfns':{}, 'datasets': {}, 'blocks': {}, 'new_lfns' : {}}
+    self.cache = {'lfns':{}, 'datasets': {}, 'blocks': {}, 'new_lfns' : {}, "replicas" : {}}
     self.errors = 0
 
   def __del__(self): self.conn.close ()
@@ -84,6 +84,24 @@ class CMSWeb (object):
     self.cache['lfns'][lfn] = self.search_(lfn, lfn_info)
     #print "NEW:",self.cache['lfns'][lfn]
     return self.cache['lfns'][lfn]
+
+  def search_block(self, block):
+    if not block in self.cache["replicas"]: self.cache["replicas"][block]={}
+    if not block in self.cache['blocks']:
+      status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_PHEDEX_BLOCKREPLICAS, urlencode({'block': block})))
+      if not status: return False
+      if len(jmsg['phedex']['block']) == 0: return False
+      block_data = {'at_cern' : 'no'}
+      for replica in jmsg['phedex']['block'][0]['replica']:
+        self.cache["replicas"][block][replica['node']]=1
+        if replica['node'] != 'T2_CH_CERN': continue
+        block_data['at_cern'] = 'yes'
+        block_data['ds_files'] = str(replica['files'])
+        block_data['ds_owner'] = replica['group'].strip().replace(" ","_")
+        break
+      self.cache['blocks'][block]={}
+      for x in block_data: self.cache['blocks'][block][x]=block_data[x]
+    return True
 
   def search_(self, lfn, lfn_info):
     #print "CUR:",lfn_info
@@ -112,19 +130,7 @@ class CMSWeb (object):
     lfn_data['ds_status'] = self.cache['datasets'][dataset]
 
     # Check if dataset/block exists at T2_CH_CERN and belongs to IB RelVals group
-    if not block in self.cache['blocks']:
-      status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_PHEDEX_BLOCKREPLICAS, urlencode({'block': block})))
-      if not status: return lfn_data
-      if len(jmsg['phedex']['block']) == 0: return lfn_data
-      block_data = {'at_cern' : 'no'}
-      for replica in jmsg['phedex']['block'][0]['replica']:
-        if replica['node'] != 'T2_CH_CERN': continue
-        block_data['at_cern'] = 'yes'
-        block_data['ds_files'] = str(replica['files'])
-        block_data['ds_owner'] = replica['group'].strip().replace(" ","_")
-        break
-      self.cache['blocks'][block]={}
-      for x in block_data: self.cache['blocks'][block][x]=block_data[x]
+    if not self.search_block(block): return lfn_data
     for x in self.cache['blocks'][block]: lfn_data[x] = self.cache['blocks'][block][x]
     return lfn_data
 
@@ -171,11 +177,17 @@ if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")
   parser.add_option("--json",               dest="json",    action="store_true", help="Do not download files but just dump the json results", default=False)
   parser.add_option("--datasets",           dest="datasets",action="store_true", help="Do not download files but dump datasets names", default=False)
+  parser.add_option("--blocks",             dest="blocks",  action="store_true", help="Do not download files but dump blocks names", default=False)
+  parser.add_option("--lfns",               dest="lfns",    action="store_true", help="Do not download files but dump uniq LFNS names", default=False)
+  parser.add_option("--show-release",       dest="show_release",  action="store_true", help="show release name which uses the block", default=False)
+  parser.add_option("--deprecated",         dest="deprecated",    action="store_true", help="show results/blocks which are deprecated", default=False)
+  parser.add_option("--not-at-cern",        dest="not_at_cern",   action="store_true", help="show results which are not at cern", default=False)
+  parser.add_option("--block-sites",        dest="block_sites",   action="store_true", help="Show sites where a dataset block replica exists", default=False)
   parser.add_option("--update",             dest="update",  action="store_true", help="Do not download file but update block/site info in ES", default=False)
   parser.add_option("--update-opts",        dest="update_opts",type=str,         help="Extra update guery options", default="ds_owner:UNKNOWN AND NOT ds_status:DEPRECATED")
   parser.add_option("-n", "--dry-run",      dest="dryRun",  action="store_true", help="Do not actually download the files", default=False)
   parser.add_option("-s", "--store",        dest="store",   help="Data store directory",   type=str, default="/build")
-  parser.add_option("-r", "--release",      dest="release", help="Release filter",   type=str, default="CMSSW_8_1_X")
+  parser.add_option("-r", "--release",      dest="release", help="Release filter",   type=str, default="*")
   parser.add_option("-a", "--architecture", dest="arch",    help="SCRAM_ARCH filter. Production arch for a release cycle is used if found otherwise slc6_amd64_gcc530",   type=str, default=None)
   parser.add_option("-d", "--days",         dest="days",    help="Files access in last n days",   type=int, default=7)
   parser.add_option("-j", "--job",          dest="job",     help="Parallel jobs to run",   type=int, default=4)
@@ -183,7 +195,7 @@ if __name__ == "__main__":
   opts, args = parser.parse_args()
   
   transfer = True
-  if opts.datasets: opts.json=True
+  if opts.datasets or opts.lfns or opts.blocks: opts.json=True
   if opts.update or opts.json: transfer = False
   if transfer and not opts.dryRun:
     err, out = getstatusoutput("which xrdcp")
@@ -248,14 +260,58 @@ if __name__ == "__main__":
 
   if not transfer:
     if opts.json:
-      if opts.datasets:
-        ds = {}
+      if opts.datasets or opts.lfns or opts.blocks:
+        ds = {"datasets" : {}, "lfns" : {}, "blocks" : {}}
+        rels = {"datasets" : {}, "lfns" : {}, "blocks" : {}}
         for item in json_out:
           for h in item["hits"]["hits"]:
-           if h["_source"]["dataset"] == "UNKNOWN": continue
-           ds[h["_source"]["dataset"]]=1
-        ods = sorted(ds.keys())
-        print "\n".join(ods)
+           if opts.not_at_cern and h["_source"]["at_cern"]=="yes": continue
+           if opts.deprecated and h["_source"]["ds_status"]!="DEPRECATED": continue
+           rel = "_".join(h["_source"]["release"].split("_")[0:3])+"_X"
+           if opts.datasets and h["_source"]["dataset"] != "UNKNOWN":
+             x ="datasets"
+             k = h["_source"]["dataset"]
+             ds[x][k]=1
+             if not k in rels[x]: rels[x][k]={}
+             rels[x][k][rel]=1
+           if opts.blocks and h["_source"]["ds_block"] != "UNKNOWN":
+             x ="blocks"
+             k = h["_source"]["ds_block"]
+             ds[x][k]=1
+             if not k in rels[x]: rels[x][k]={}
+             rels[x][k][rel]=1
+           if opts.lfns:
+             x ="lfns"
+             k = h["_source"]["lfn"]
+             ds[x][k]=1
+             if not k in rels[x]: rels[x][k]={}
+             rels[x][k][rel]=1
+        if opts.datasets:
+          ods = sorted(ds["datasets"].keys())
+          print "Datasets: %s" % len(ods)
+          for b in ods:
+            print "  Dataset: %s" % b
+            if opts.show_release:
+              print "    Releases: %s" % ",".join(sorted(rels["datasets"][b].keys()))
+        if opts.blocks:
+          ods = sorted(ds["blocks"].keys())
+          cmsweb=None
+          if opts.block_sites: cmsweb=CMSWeb()
+          print "Blocks: %s" % (len(ods))
+          for b in ods:
+            print "  Block: %s" % b
+            if opts.block_sites:
+              cmsweb.search_block(b)
+              print "    Replica: %s" % ",".join(cmsweb.cache["replicas"][b])
+            if opts.show_release:
+              print "    Releases: %s" % ",".join(sorted(rels["blocks"][b].keys()))
+        if opts.lfns:
+          ods = sorted(ds["lfns"].keys())
+          print "LFNS: %s" % len(ods)
+          for b in ods:
+            print "  LFN: %s" % b
+            if opts.show_release:
+              print "    Releases: %s" % ",".join(sorted(rels["lfns"][b].keys()))
       else:
         print json.dumps(json_out, indent=2, sort_keys=True, separators=(',',': '))
     else:

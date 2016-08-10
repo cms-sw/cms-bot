@@ -104,13 +104,15 @@ if __name__ == "__main__":
   parser = OptionParser(usage="%prog <input>")
   opts, args = parser.parse_args()
   
-  data = args[0]  
-  cmsweb=CMSWeb()
-  if data.endswith(".root"):
-    cmsweb.search(data,{})
-  else:
-    cmsweb.search_dataset(data.split("#")[0])
-    cmsweb.search_block(data)
-  print json.dumps(cmsweb.reply_cache, indent=2, sort_keys=True, separators=(',',': '))
-  
+  cmsweb = None
+  for data in args:
+    if not cmsweb: cmsweb=CMSWeb()
+    if data.endswith(".root"):
+      cmsweb.search(data,{})
+    else:
+      cmsweb.search_dataset(data.split("#")[0])
+      cmsweb.search_block(data)
+    info = {data : cmsweb.reply_cache}
+    print json.dumps(info, indent=2, sort_keys=True, separators=(',',': '))
+    cmsweb.reply_cache = {}
 

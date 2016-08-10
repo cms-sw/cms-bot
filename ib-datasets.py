@@ -180,6 +180,7 @@ if __name__ == "__main__":
   parser.add_option("--blocks",             dest="blocks",  action="store_true", help="Do not download files but dump blocks names", default=False)
   parser.add_option("--lfns",               dest="lfns",    action="store_true", help="Do not download files but dump uniq LFNS names", default=False)
   parser.add_option("--show-release",       dest="show_release",  action="store_true", help="show release name which uses the block", default=False)
+  parser.add_option("--show-tests",         dest="show_tests",    action="store_true", help="show test name which uses the block", default=False)
   parser.add_option("--deprecated",         dest="deprecated",    action="store_true", help="show results/blocks which are deprecated", default=False)
   parser.add_option("--not-at-cern",        dest="not_at_cern",   action="store_true", help="show results which are not at cern", default=False)
   parser.add_option("--block-sites",        dest="block_sites",   action="store_true", help="Show sites where a dataset block replica exists", default=False)
@@ -268,33 +269,44 @@ if __name__ == "__main__":
            if opts.not_at_cern and h["_source"]["at_cern"]=="yes": continue
            if opts.deprecated and h["_source"]["ds_status"]!="DEPRECATED": continue
            rel = "_".join(h["_source"]["release"].split("_")[0:3])+"_X"
+           test = h["_source"]["name"]
            if opts.datasets and h["_source"]["dataset"] != "UNKNOWN":
              x ="datasets"
              k = h["_source"]["dataset"]
              ds[x][k]=1
              if not k in rels[x]: rels[x][k]={}
-             rels[x][k][rel]=1
+             if not rel in rels[x][k]: rels[x][k][rel]={}
+             rels[x][k][rel][test]=1
            if opts.blocks and h["_source"]["ds_block"] != "UNKNOWN":
              x ="blocks"
              k = h["_source"]["ds_block"]
              ds[x][k]=1
              if not k in rels[x]: rels[x][k]={}
-             rels[x][k][rel]=1
+             if not rel in rels[x][k]: rels[x][k][rel]={}
+             rels[x][k][rel][test]=1
            if opts.lfns:
              x ="lfns"
              k = h["_source"]["lfn"]
              ds[x][k]=1
              if not k in rels[x]: rels[x][k]={}
-             rels[x][k][rel]=1
+             if not rel in rels[x][k]: rels[x][k][rel]={}
+             rels[x][k][rel][test]=1
         if opts.datasets:
-          ods = sorted(ds["datasets"].keys())
+          k = "datasets"
+          ods = sorted(ds[k].keys())
           print "Datasets: %s" % len(ods)
           for b in ods:
             print "  Dataset: %s" % b
-            if opts.show_release:
-              print "    Releases: %s" % ",".join(sorted(rels["datasets"][b].keys()))
+            if opt.show_release:
+              x = []
+              for r in sorted(rels[k][b].keys()):
+                t = ""
+                if opts.show_tests: t = " ("+",".join(sorted(rels[k][b][r].keys()))+")"
+                x.append("%s%s" % (r,t))
+              print "    Releases: %s " % ", ".join(x)
         if opts.blocks:
-          ods = sorted(ds["blocks"].keys())
+          k = "blocks"
+          ods = sorted(ds[k].keys())
           cmsweb=None
           if opts.block_sites: cmsweb=CMSWeb()
           print "Blocks: %s" % (len(ods))
@@ -304,14 +316,25 @@ if __name__ == "__main__":
               cmsweb.search_block(b)
               print "    Replica: %s" % ",".join(cmsweb.cache["replicas"][b])
             if opts.show_release:
-              print "    Releases: %s" % ",".join(sorted(rels["blocks"][b].keys()))
+              x = []
+              for r in sorted(rels[k][b].keys()):
+                t = ""
+                if opts.show_tests: t = " ("+",".join(sorted(rels[k][b][r].keys()))+")"
+                x.append("%s%s" % (r,t))
+              print "    Releases: %s " % ", ".join(x)
         if opts.lfns:
-          ods = sorted(ds["lfns"].keys())
+          k = "lfns"
+          ods = sorted(ds[k].keys())
           print "LFNS: %s" % len(ods)
           for b in ods:
             print "  LFN: %s" % b
-            if opts.show_release:
-              print "    Releases: %s" % ",".join(sorted(rels["lfns"][b].keys()))
+            if opt.show_release:
+              x = []
+              for r in sorted(rels[k][b].keys()):
+                t = ""
+                if opts.show_tests: t = " ("+",".join(sorted(rels[k][b][r].keys()))+")"
+                x.append("%s%s" % (r,t))
+              print "    Releases: %s " % ", ".join(x)
       else:
         print json.dumps(json_out, indent=2, sort_keys=True, separators=(',',': '))
     else:

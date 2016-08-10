@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
   thrds = cmsRunProcessCount
   if isThreaded(environ["CMSSW_VERSION"],environ["SCRAM_ARCH"]):
+    print "Treaded IB Found"
     thrds=int(MachineMemoryGB/5)
   elif "fc22_" in environ["SCRAM_ARCH"]:
     thrds=int(MachineMemoryGB/4)

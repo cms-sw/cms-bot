@@ -24,14 +24,8 @@ def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hoo
   return True
 
 def get_payload(url,query):
-  try:
-    passw=open('/data/secrets/github_hook_secret_cmsbot','r').read().strip()
-  except Exception as e:
-    print "Couldn't read the secrets file" , str(e)
-    return ""
-  #send the data to elasticsearch
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-  passman.add_password(None,url, 'elasticsearch', passw)
+  passman.add_password(None,url, 'kibana', 'kibana')
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
   opener = urllib2.build_opener(auth_handler)
   try:

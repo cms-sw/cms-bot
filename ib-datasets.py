@@ -1,14 +1,12 @@
 #!/usr/bin/python
 from os.path import dirname, basename, join, exists, abspath
-from os import getuid
 from sys import exit, argv
 from time import time, sleep
-from urllib import urlencode
-from httplib import HTTPSConnection
 import json
 from commands import getstatusoutput
 from es_utils import get_payload, send_payload
-def format(s, **kwds): return s % kwds
+from CMSWeb import CMSWeb, format
+
 def download_file(store, lfn, protocol, dryRun):
   pfn_dir = dirname(store+lfn)
   pfn_file = basename(lfn)
@@ -51,89 +49,6 @@ def download(lfns, store, jobs=4, dryRun=False):
   for t in threads: t.join()
   return
 
-class CMSWeb (object):
-  def __init__ (self):
-    self.URL_CMSWEB_BASE='cmsweb.cern.ch'
-    self.URL_PHEDEX_BLOCKREPLICAS='/phedex/datasvc/json/prod/blockreplicas'
-    self.URL_DBS_DATASETS='/dbs/prod/global/DBSReader/datasets'
-    self.URL_DBS_FILES='/dbs/prod/global/DBSReader/files'
-    self.URL_DBS_BLOCKS='/dbs/prod/global/DBSReader/blocks'
-    self.conn = HTTPSConnection(self.URL_CMSWEB_BASE, cert_file='/tmp/x509up_u{0}'.format(getuid()),  timeout=30)
-    self.cache = {'lfns':{}, 'datasets': {}, 'blocks': {}, 'new_lfns' : {}, "replicas" : {}}
-    self.errors = 0
-
-  def __del__(self): self.conn.close ()
-
-  def get_cmsweb_data(self, url):
-    msg =""
-    try:
-      self.conn.request('GET', url)
-      msg = self.conn.getresponse()
-      if msg.status!=200:
-        self.errors = self.errors + 1
-        print 'Result: {0} {1}: {2}'.format(msg.status, msg.reason, url)
-        return False, {}
-      return True, json.loads(msg.read())
-    except Exception, e:
-      print "Error:", e, url
-      self.errors = self.errors + 1
-      return False, {}
-
-  def search(self, lfn, lfn_info):
-    if lfn in self.cache['lfns']: return self.cache['lfns'][lfn]
-    self.cache['lfns'][lfn] = self.search_(lfn, lfn_info)
-    #print "NEW:",self.cache['lfns'][lfn]
-    return self.cache['lfns'][lfn]
-
-  def search_block(self, block):
-    if not block in self.cache["replicas"]: self.cache["replicas"][block]={}
-    if not block in self.cache['blocks']:
-      status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_PHEDEX_BLOCKREPLICAS, urlencode({'block': block})))
-      if not status: return False
-      if len(jmsg['phedex']['block']) == 0: return False
-      block_data = {'at_cern' : 'no'}
-      for replica in jmsg['phedex']['block'][0]['replica']:
-        self.cache["replicas"][block][replica['node']]=1
-        if replica['node'] != 'T2_CH_CERN': continue
-        block_data['at_cern'] = 'yes'
-        block_data['ds_files'] = str(replica['files'])
-        block_data['ds_owner'] = replica['group'].strip().replace(" ","_")
-        break
-      self.cache['blocks'][block]={}
-      for x in block_data: self.cache['blocks'][block][x]=block_data[x]
-    return True
-
-  def search_(self, lfn, lfn_info):
-    #print "CUR:",lfn_info
-    lfn_data = {}
-    for x in ["ds_status", "ds_block", "ds_owner", "at_cern", "dataset"]:
-      if (not x in lfn_info) or (lfn_info[x]==""): lfn_data[x]="UNKNOWN"
-    if (not "ds_files" in lfn_info) or (lfn_info["ds_files"]==""): lfn_data["ds_files"]="0"
-    # Find the block
-    if lfn_info['ds_block']=='UNKNOWN':
-      self.cache['new_lfns'][lfn]=1
-      status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_BLOCKS, urlencode({'detail': 1,'logical_file_name': lfn})))
-      if not status: return lfn_data
-      lfn_data['ds_block'] = jmsg[0]['block_name']
-      lfn_data['dataset']  = jmsg[0]['dataset']
-    else:
-      lfn_data['ds_block'] = lfn_info['ds_block']
-      lfn_data['dataset']  = lfn_info['dataset']
-
-    block = lfn_data['ds_block']
-    dataset = lfn_data['dataset']
-    # Check if dataset is still VALID
-    if not dataset in self.cache['datasets']:
-      status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_DATASETS, urlencode({'detail': 1, 'dataset_access_type': '*', 'dataset': dataset})))
-      if not status: return lfn_data
-      self.cache['datasets'][dataset] = jmsg[0]['dataset_access_type'].strip().replace(" ","_")
-    lfn_data['ds_status'] = self.cache['datasets'][dataset]
-
-    # Check if dataset/block exists at T2_CH_CERN and belongs to IB RelVals group
-    if not self.search_block(block): return lfn_data
-    for x in self.cache['blocks'][block]: lfn_data[x] = self.cache['blocks'][block][x]
-    return lfn_data
-
 query_url='http://cmses-master01.cern.ch:9200/ib-dataset-*/_search'
 query_datsets = """
 {
@@ -174,7 +89,7 @@ query_datsets = """
 
 if __name__ == "__main__":
   from optparse import OptionParser  
-  parser = OptionParser(usage="%prog <pull-request-id>")
+  parser = OptionParser(usage="%prog ")
   parser.add_option("--json",               dest="json",    action="store_true", help="Do not download files but just dump the json results", default=False)
   parser.add_option("--datasets",           dest="datasets",action="store_true", help="Do not download files but dump datasets names", default=False)
   parser.add_option("--blocks",             dest="blocks",  action="store_true", help="Do not download files but dump blocks names", default=False)

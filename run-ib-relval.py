@@ -26,7 +26,10 @@ if __name__ == "__main__":
     print "Treaded IB Found"
     thrds=int(MachineMemoryGB/5)
   elif "fc22_" in environ["SCRAM_ARCH"]:
+    print "FC22 IB Found"
     thrds=int(MachineMemoryGB/4)
+  else:
+    print "Normal IB Found"
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
 
   matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)

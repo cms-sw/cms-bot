@@ -1816,6 +1816,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.phi()");
       plotvar("log10(recoPFClusters_particleFlowClusterPS__"+recoS+".obj.energy())");
 
+      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj@.size()");
+      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.eta()");
+      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.phi()");
+      plotvar("log10(recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.energy())");
+
       // miniaod
       plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj@.size()");
       plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj.eta()");

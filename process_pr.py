@@ -290,12 +290,17 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     if re.match("^hold$", first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers: hold[commenter]=1
       continue
-    if re.match("^type\s+(bug(-fix|)|(new-|)feature)$", first_line, re.I):
+    if re.match("^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)#\d+$", first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + [issue.user.login]:
         if "bug" in first_line.lower():
           extra_labels["type"]="bug-fix"
         elif "feature" in first_line.lower():
           extra_labels["type"]="new-feature"
+        elif "urgent" in first_line.lower():
+          extra_labels["urgent"]="urgent"
+        elif "backport" in first_line.lower():
+          bp_pr = first_line.split("#")[1].strip()
+          extra_labels["backport"]="backport"
       continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:

@@ -299,7 +299,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         elif "urgent" in first_line.lower():
           extra_labels["urgent"]="urgent"
         elif "backport" in first_line.lower():
-          bp_pr = first_line.split("#")[1].strip()
           extra_labels["backport"]="backport"
       continue
     if re.match("^unhold$", first_line, re.I):

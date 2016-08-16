@@ -96,9 +96,9 @@ if __name__ == "__main__":
   parser.add_option("--lfns",               dest="lfns",    action="store_true", help="Do not download files but dump uniq LFNS names", default=False)
   parser.add_option("--show-release",       dest="show_release",  action="store_true", help="show release name which uses the block", default=False)
   parser.add_option("--show-tests",         dest="show_tests",    action="store_true", help="show test name which uses the block", default=False)
+  parser.add_option("--show-sites",         dest="show_sites",   action="store_true", help="Show sites where a dataset block replica exists", default=False)
   parser.add_option("--deprecated",         dest="deprecated",    action="store_true", help="show results/blocks which are deprecated", default=False)
   parser.add_option("--not-at-cern",        dest="not_at_cern",   action="store_true", help="show results which are not at cern", default=False)
-  parser.add_option("--block-sites",        dest="block_sites",   action="store_true", help="Show sites where a dataset block replica exists", default=False)
   parser.add_option("--update",             dest="update",  action="store_true", help="Do not download file but update block/site info in ES", default=False)
   parser.add_option("--update-opts",        dest="update_opts",type=str,         help="Extra update guery options", default="ds_owner:UNKNOWN AND NOT ds_status:DEPRECATED")
   parser.add_option("-n", "--dry-run",      dest="dryRun",  action="store_true", help="Do not actually download the files", default=False)
@@ -212,7 +212,7 @@ if __name__ == "__main__":
           print "Datasets: %s" % len(ods)
           for b in ods:
             print "  Dataset: %s" % b
-            if opt.show_release:
+            if opts.show_release:
               x = []
               for r in sorted(rels[k][b].keys()):
                 t = ""
@@ -223,11 +223,11 @@ if __name__ == "__main__":
           k = "blocks"
           ods = sorted(ds[k].keys())
           cmsweb=None
-          if opts.block_sites: cmsweb=CMSWeb()
+          if opts.show_sites: cmsweb=CMSWeb()
           print "Blocks: %s" % (len(ods))
           for b in ods:
             print "  Block: %s" % b
-            if opts.block_sites:
+            if opts.show_sites:
               cmsweb.search_block(b)
               print "    Replica: %s" % ",".join(cmsweb.cache["replicas"][b])
             if opts.show_release:

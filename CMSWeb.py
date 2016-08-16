@@ -11,6 +11,7 @@ class CMSWeb (object):
     self.URL_PHEDEX_BLOCKREPLICAS='/phedex/datasvc/json/prod/blockreplicas'
     self.URL_DBS_DATASETS='/dbs/prod/global/DBSReader/datasets'
     self.URL_DBS_FILES='/dbs/prod/global/DBSReader/files'
+    self.URL_DBS_RUNS='/dbs/prod/global/DBSReader/runs'
     self.URL_DBS_BLOCKS='/dbs/prod/global/DBSReader/blocks'
     self.conn = HTTPSConnection(self.URL_CMSWEB_BASE, cert_file='/tmp/x509up_u{0}'.format(getuid()),  timeout=30)
     self.cache = {'lfns':{}, 'datasets': {}, 'blocks': {}, 'new_lfns' : {}, "replicas" : {}}
@@ -71,6 +72,21 @@ class CMSWeb (object):
     if not status: return {}
     return jmsg
 
+  def search_files(self, dataset):
+    status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_FILES, urlencode({'detail': 1,'dataset': dataset})))
+    if not status: return {}
+    return jmsg
+
+  def search_runs(self, dataset):
+    status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_RUNS, urlencode({'dataset': dataset})))
+    if not status: return {}
+    return jmsg
+
+  def search_blocks(self, dataset):
+    status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_BLOCKS, urlencode({'dataset': dataset})))
+    if not status: return {}
+    return jmsg
+
   def search_(self, lfn, lfn_info):
     #print "CUR:",lfn_info
     lfn_data = {}
@@ -111,8 +127,9 @@ if __name__ == "__main__":
       cmsweb.search(data,{})
     else:
       cmsweb.search_dataset(data.split("#")[0])
-      cmsweb.search_block(data)
+      if "#" in data: cmsweb.search_block(data)
     info = {data : cmsweb.reply_cache}
     print json.dumps(info, indent=2, sort_keys=True, separators=(',',': '))
     cmsweb.reply_cache = {}
+
 

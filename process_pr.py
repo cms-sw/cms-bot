@@ -111,6 +111,16 @@ def ignore_issue(repo, issue):
     return True
   return False
 
+def check_extra_labels(first_line, extra_labels):
+  if "bug" in first_line:
+    extra_labels["type"]="bug-fix"
+  elif "feature" in first_line:
+    extra_labels["type"]="new-feature"
+  elif "urgent" in first_line:
+    extra_labels["urgent"]="urgent"
+  elif "backport" in first_line:
+    extra_labels["backport"]="backport"
+
 def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if ignore_issue(repo, issue): return
   prId = issue.number
@@ -244,9 +254,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   hold = {}
   extra_labels = {}
   last_test_start_time = None
+  body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
   if (issue.user.login == cmsbuild_user) and \
-     re.match(ISSUE_SEEN_MSG,issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()):
+     re.match(ISSUE_SEEN_MSG,body_firstline):
     already_seen = True
+  elif re.match("^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)#\d+$", body_firstline, re.I):
+    check_extra_labels(body_firstline.lower(), extra_labels)
   for comment in issue.get_comments():
     commenter = comment.user.login
     comment_msg = comment.body.encode("ascii", "ignore")
@@ -292,14 +305,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       continue
     if re.match("^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)#\d+$", first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + [issue.user.login]:
-        if "bug" in first_line.lower():
-          extra_labels["type"]="bug-fix"
-        elif "feature" in first_line.lower():
-          extra_labels["type"]="new-feature"
-        elif "urgent" in first_line.lower():
-          extra_labels["urgent"]="urgent"
-        elif "backport" in first_line.lower():
-          extra_labels["backport"]="backport"
+        check_extra_labels(first_line.lower(), extra_labels)
       continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:

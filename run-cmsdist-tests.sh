@@ -123,7 +123,7 @@ fi
 export SCRAM_ARCH=$ARCHITECTURE
 scram -a $SCRAM_ARCH project $CMSSW_IB
 
-if [ $(grep 'V05-05-' ../config/config_tag | wc -l) -gt 0 ] ; then
+if [ $(grep 'V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   git clone git@github.com:cms-sw/cmssw-config
   pushd cmssw-config
     git checkout V05-05-09

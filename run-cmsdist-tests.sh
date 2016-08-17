@@ -122,6 +122,15 @@ fi
 # Create an appropriate CMSSW area
 export SCRAM_ARCH=$ARCHITECTURE
 scram -a $SCRAM_ARCH project $CMSSW_IB
+
+if [ $(grep 'V05-05-' ../config/config_tag | wc -l) -gt 0 ] ; then
+  git clone git@github.com:cms-sw/cmssw-config
+  pushd cmssw-config
+    git checkout V05-05-09
+  popd
+  mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
+  cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
+fi
 pushd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built

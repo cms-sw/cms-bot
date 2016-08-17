@@ -353,6 +353,9 @@ fi
 # ############################################
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
 COMPILATION_CMD="scram b vclean && scram b -k -j $(Jenkins_GetCPU 2)"
+if [ "X$CMSDIST_PR" != X && $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
+  COMPILATION_CMD="scram b vclean && SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU 2) && scram b -k -j $(Jenkins_GetCPU 2) edm_checks"
+fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
 echo 'END OF BUILD LOG'

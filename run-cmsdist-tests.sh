@@ -124,7 +124,6 @@ export SCRAM_ARCH=$ARCHITECTURE
 scram -a $SCRAM_ARCH project $CMSSW_IB
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
 which das_client
-which das_client.py
 
 if [ $(grep 'V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   git clone git@github.com:cms-sw/cmssw-config

@@ -22,19 +22,20 @@ export PROOTDIR
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1
 
-export BASEDIR=/cvmfs/cms-ib.cern.ch
-export BASEDESTDIR=/cvmfs/cms-ib.cern.ch
+export CMSIB_CVMFS_REPO=cms-ib.cern.ch
+export BASEDIR=/cvmfs/$CMSIB_CVMFS_REPO
+export BASEDESTDIR=/cvmfs/$CMSIB_CVMFS_REPO
 export THISDIR=`pwd`
 export LANG=C
 # The disk where cvmfs is mounted
-if [ -d /srv/cvmfs/cms-ib.cern.ch/data/ ]; then
-  export DISK="/srv/cvmfs/cms-ib.cern.ch/data/"
-elif [ -d /var/spool/cvmfs/cms-ib.cern.ch/cms-ib.cern.ch/data/ ]; then
-  export DISK="/var/spool/cvmfs/cms-ib.cern.ch/cms-ib.cern.ch/data/"
+if [ -d /srv/cvmfs/$CMSIB_CVMFS_REPO/data/ ]; then
+  export DISK="/srv/cvmfs/$CMSIB_CVMFS_REPO/data/"
+elif [ -d /var/spool/cvmfs/$CMSIB_CVMFS_REPO/$CMSIB_CVMFS_REPO/data/ ]; then
+  export DISK="/var/spool/cvmfs/$CMSIB_CVMFS_REPO/$CMSIB_CVMFS_REPO/data/"
 else
   export DISK="/dev/vdc"
 fi
-export INITIAL_SIZE=`df -B 1M $DISK | tail -n 2 | awk {'print $3'}`
+export INITIAL_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
 # Size in Mb to trigger publishing, this avoid huge publishing time (note at 3.6 Mb/s 13000 Mb is roughly 1 hr)
 export PUBLISH_THRESHOLD=13000
 # The repositories we need to install are those for which we find the
@@ -56,7 +57,7 @@ if [ `touch $BASEDIR/is_writable 2> /dev/null; echo "$?"` -eq 0 ]; then
 rm $BASEDIR/is_writable
 else
 echo CVMFS filesystem is not writable. Aborting.
-echo " " | mail -s "cms-ib.cern.ch cannot be set to transaction" cms-sdt-logs@cern.ch
+echo " " | mail -s "$CMSIB_CVMFS_REPO cannot be set to transaction" cms-sdt-logs@cern.ch
 exit 1
 fi
 
@@ -147,8 +148,8 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
       dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
-      if [ -f /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db]; then
-        echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
+      if [ -f $BASEDIR/week$WEEK/etc/scramrc/links.db]; then
+        echo $BASEDIR/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/$CMSIB_CVMFS_REPO/week$WEEK/etc/scramrc/links.db
       fi
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
@@ -204,7 +205,7 @@ for REPOSITORY in $REPOSITORIES; do
 done #End week repository
 
 # Cleanup old weeks
-find /cvmfs/cms-ib.cern.ch/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | xargs rm -rf
+find $BASEDIR/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | xargs rm -rf
 # Remove all existing links for week[0-1]
 for link in $(find $BASEDESTDIR/* -maxdepth 0 -type l); do unlink $link; done;
 # Recreate links week[0-1]
@@ -214,7 +215,7 @@ for dir in $(find $BASEDESTDIR/* -maxdepth 0 -type d | grep -G "20[0-9][0-9]-[0-
 echo "Publishing started" `date`
 time cvmfs_server publish
 
-NEW_WEEKS=$(ls -d /cvmfs/cms-ib.cern.ch/20*)
+NEW_WEEKS=$(ls -d $BASEDIR/20*)
 if [ "X${OLD_WEEKS}" != "X${NEW_WEEKS}" ] ; then
   echo "Running garbage collector"
   time cvmfs_server gc -f

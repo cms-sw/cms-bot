@@ -27,8 +27,14 @@ export BASEDESTDIR=/cvmfs/cms-ib.cern.ch
 export THISDIR=`pwd`
 export LANG=C
 # The disk where cvmfs is mounted
-export DISK="/dev/vdc"
-export INITIAL_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
+if [ -d /srv/cvmfs/cms-ib.cern.ch/data/ ]; then
+  export DISK="/srv/cvmfs/cms-ib.cern.ch/data/"
+elif [ -d /var/spool/cvmfs/cms-ib.cern.ch/cms-ib.cern.ch/data/ ]; then
+  export DISK="/var/spool/cvmfs/cms-ib.cern.ch/cms-ib.cern.ch/data/"
+else
+  export DISK="/dev/vdc"
+fi
+export INITIAL_SIZE=`df -B 1M $DISK | tail -n 2 | awk {'print $3'}`
 # Size in Mb to trigger publishing, this avoid huge publishing time (note at 3.6 Mb/s 13000 Mb is roughly 1 hr)
 export PUBLISH_THRESHOLD=13000
 # The repositories we need to install are those for which we find the
@@ -80,6 +86,10 @@ for dir in $(find $BASEDESTDIR/* -maxdepth 0 -type d | grep -G "20[0-9][0-9]-[0-
 dockerrun()
 {
   case "$SCRAM_ARCH" in
+    slc6_amd64_* )
+      ARGS="cd $THISDIR; $@"
+      docker run --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc6-installer:latest sh -c "$ARGS"
+      ;;
     slc7_amd64_* )
       ARGS="cd $THISDIR; $@"
       docker run --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-installer:latest sh -c "$ARGS"
@@ -135,7 +145,9 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
       dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
-      echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
+      if [ -f /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db]; then
+        echo /cvmfs/cms-ib.cern.ch/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/cms-ib.cern.ch/week$WEEK/etc/scramrc/links.db
+      fi
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
     $CMSPKG -y upgrade

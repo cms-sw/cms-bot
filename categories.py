@@ -54,7 +54,7 @@ CMSSW_L2 = {
   "covarell": ["generators"],
   "govoni": ["generators"],
   "perrozzi": ["generators"],
-  "davidlange6": ["operations","analysis"],
+  "davidlange6": ["operations"],
   "thuer": ["generators"],
   "cvuosalo": ["reconstruction"],
   "srimanob": ["pdmv"],
@@ -63,6 +63,7 @@ CMSSW_L2 = {
   "iahmad-khan" : ["externals"],
   "hengne" : ["pdmv"],
   "ghellwig" : ["alca"],
+  "montjj" : ["analysis"],
 }
 
 CMSSW_CATEGORIES={

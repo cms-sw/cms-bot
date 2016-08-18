@@ -91,7 +91,7 @@ cd $WORKSPACE
 # Notify github that the script will start testing now
 $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
-if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $WORKSPACE/cms-bot/config.map | grep "RELEASE_QUEUE=$CMSSW_CYCLE;" | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep ";ENABLE_DEBUG=" | wc -l) -gt 0 ] ; then
+if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $WORKSPACE/cms-bot/config.map | grep "RELEASE_QUEUE=$CMSSW_CYCLE;" | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
   DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $WORKSPACE/cms-bot/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
   pushd $WORKSPACE/CMSDIST
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS

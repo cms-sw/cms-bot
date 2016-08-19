@@ -154,7 +154,7 @@ for REPOSITORY in $REPOSITORIES; do
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
     $CMSPKG -y upgrade
-    RPM_CONFIG=$BASEDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
+    RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     [ $(grep mutex_set_max $RPM_CONFIG | wc -l) -gt 0 ] || echo "mutex_set_max 10000000" >> $RPM_CONFIG
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.

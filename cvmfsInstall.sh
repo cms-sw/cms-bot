@@ -157,7 +157,7 @@ for REPOSITORY in $REPOSITORIES; do
     RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     if [ ! -e $RPM_CONFIG ] ; then
       echo "mutex_set_max 10000000" > $RPM_CONFIG
-      dockerrun "source $WORKDIR/${SCRAM_ARCH}/external/rpm/*/etc/profile.d/init.sh && rpmdb --rebuilddb"
+      dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
     fi
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.

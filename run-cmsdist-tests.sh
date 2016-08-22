@@ -63,6 +63,7 @@ CMSSW_IB=
 for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests"  | awk '{print $3}' | tac) ; do
   [ -e $relpath/build-errors ] && continue
   CMSSW_IB=$(basename $relpath)
+  break
 done
 [ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
 

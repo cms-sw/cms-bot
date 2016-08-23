@@ -91,6 +91,7 @@ makortel:
   - CommonTools/UtilAlgos
   - CommonTools/Utils
   - Configuration/AlCa
+  - Configuration/Eras
   - Configuration/StandardSequences
   - DataFormats/Common
   - DataFormats/GsfTrackReco

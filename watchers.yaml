@@ -369,6 +369,8 @@ ghellwig:
 - Configuration
 - Geometry
 - RecoTracker
+ghugo83:
+- Geometry/TrackerCommonData
 gpetruc:
 - DataFormats/Candidate
 - DataFormats/PatCandidates

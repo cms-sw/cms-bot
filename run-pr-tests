@@ -666,15 +666,12 @@ done
 [ -e upload/renderPRTests.js ] && mkdir -p upload/js && mv upload/renderPRTests.js upload/js/
 [ -e upload/matrixTests.log  ] && mkdir -p upload/runTheMatrix-results && mv upload/matrixTests.log upload/runTheMatrix-results/
 [ -d upload/addOnTests       ] && find upload/addOnTests -name '*.root' -type f | xargs rm -f
-SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
-rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt01.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
 
 rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
   REPORT_OPTS="--repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
-    $WORKSPACE/cms-bot/report-pull-request-results TESTS_OK_PR ${REPORT_OPTS}
+    REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS}"
   else 
     echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
@@ -693,7 +690,11 @@ for i in $( seq 1 $REPEAT); do
     if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
       $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
     fi
-    $WORKSPACE/cms-bot/report-pull-request-results REPORT_ERRORS ${REPORT_OPTS}
+    REPORT_OPTS="REPORT_ERRORS ${REPORT_OPTS}"
   fi
 done
+SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
+rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt01.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
+$WORKSPACE/cms-bot/report-pull-request-results ${REPORT_OPTS}
 

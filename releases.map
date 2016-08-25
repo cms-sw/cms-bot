@@ -1561,3 +1561,4 @@ architecture=slc6_amd64_gcc530;label=CMSSW_8_0_18;type=Production;state=Announce
 architecture=slc6_amd64_gcc493;label=CMSSW_8_0_18;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc530;label=CMSSW_8_0_18;type=Production;state=Announced;prodarch=0;
 architecture=slc6_amd64_gcc530;label=CMSSW_8_0_18_Geant4102;type=Production;state=Announced;prodarch=1;
+architecture=slc6_amd64_gcc493;label=CMSSW_8_0_17_patch1;type=Production;state=Announced;prodarch=0;

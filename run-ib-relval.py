@@ -25,7 +25,7 @@ if __name__ == "__main__":
   if isThreaded(environ["CMSSW_VERSION"],environ["SCRAM_ARCH"]):
     print "Treaded IB Found"
     thrds=int(MachineMemoryGB/5)
-  elif "fc22_" in environ["SCRAM_ARCH"]:
+  elif "fc24_ppc64le_" in environ["SCRAM_ARCH"]:
     print "FC22 IB Found"
     thrds=int(MachineMemoryGB/4)
   else:

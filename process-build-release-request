@@ -269,8 +269,6 @@ def create_properties_files( issue, release_name, architectures, issue_number, q
     out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img) )
     tool_conf_param = 'true' if only_toolconf else 'false'
     out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, tool_conf_param ) )
-    if arch.startswith('fc22_ppc64le_'):
-      out_file.write( '%s=%s\n' % ( JENKINS_BUILD_DIR , 'data1') )
 
 
 #

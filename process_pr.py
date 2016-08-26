@@ -472,8 +472,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     else:
       labels.append("comparison-pending")
 
-  print "The labels of the pull request should be:\n  "+"\n  ".join(labels)
-
   # Now updated the labels.
   missingApprovals = [x
                       for x in labels
@@ -481,7 +479,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                          and not x.startswith("orp")
                          and not x.startswith("tests")
                          and not x.startswith("pending-assignment")
-                         and not x.startswith("comparison")]
+                         and not x.startswith("comparison")
+                         and not x in ["backport", "urgent", "bug-fix", "new-feature"]]
 
   if not missingApprovals:
     print "The pull request is complete."
@@ -490,6 +489,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   elif not "pending-assignment" in labels:
     labels.append("fully-signed")
   labels = set(labels)
+
+  print "The labels of the pull request should be:\n  "+"\n  ".join(labels)
 
   # We update labels only if they are different.
   old_labels = set([x.name for x in issue.labels])

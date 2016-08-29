@@ -148,10 +148,10 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
       dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
-      if [ -f $BASEDIR/week$WEEK/etc/scramrc/links.db]; then
-        echo $BASEDIR/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/$CMSIB_CVMFS_REPO/week$WEEK/etc/scramrc/links.db
-      fi
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
+    fi
+    if [ -f $BASEDIR/week$WEEK/etc/scramrc/links.db ] ; then
+      [ -s $BASEDIR/week$WEEK/etc/scramrc/links.db ] || echo $BASEDIR/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/$CMSIB_CVMFS_REPO/week$WEEK/etc/scramrc/links.db
     fi
     $CMSPKG -y upgrade
     RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG

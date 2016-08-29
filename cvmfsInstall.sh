@@ -150,9 +150,6 @@ for REPOSITORY in $REPOSITORIES; do
       dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
-    if [ -f $BASEDIR/week$WEEK/etc/scramrc/links.db ] ; then
-      [ -s $BASEDIR/week$WEEK/etc/scramrc/links.db ] || echo $BASEDIR/week`echo -e "0\n1" | grep -v $WEEK` > /cvmfs/$CMSIB_CVMFS_REPO/week$WEEK/etc/scramrc/links.db
-    fi
     $CMSPKG -y upgrade
     RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     if [ ! -e $RPM_CONFIG ] ; then
@@ -215,6 +212,13 @@ find $BASEDIR/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{p
 for link in $(find $BASEDESTDIR/* -maxdepth 0 -type l); do unlink $link; done;
 # Recreate links week[0-1]
 for dir in $(find $BASEDESTDIR/* -maxdepth 0 -type d | grep -G "20[0-9][0-9]-[0-5][0-9]"); do ln -s $dir $( dirname $dir )/week$(( 10#$( echo $( basename $dir ) | cut -d"-" -f 2 )%2 )); done;
+if [ -f $BASEDIR/week0/etc/scramrc/links.db ] ; then
+ [ -s $BASEDIR/week0/etc/scramrc/links.db ] || echo $BASEDIR/week1 > $BASEDIR/week0/etc/scramrc/links.db
+fi
+if [ -f $BASEDIR/week1/etc/scramrc/links.db ] ; then
+ [ -s $BASEDIR/week1/etc/scramrc/links.db ] || echo $BASEDIR/week0 > $BASEDIR/week1/etc/scramrc/links.db
+fi
+
 
 # Write everything in the repository
 echo "Publishing started" `date`

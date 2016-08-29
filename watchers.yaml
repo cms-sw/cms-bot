@@ -839,6 +839,23 @@ ahinzmann:
 - CommonTools/PileupAlgos
 - CommonTools/RecoAlgos
 - FWCore/GuiBrowsers
+gkasieczka:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+- FWCore/GuiBrowsers
 rappoccio:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET

@@ -71,6 +71,7 @@ CMSSW_CATEGORIES={
   "operations": [
    "Configuration/Applications",
    "Configuration/DataProcessing",
+   "Configuration/Eras",
    "Configuration/EventContent",
    "Configuration/GlobalRuns",
    "Configuration/StandardSequences",

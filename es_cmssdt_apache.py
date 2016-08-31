@@ -39,7 +39,7 @@ def process (line, count):
   if payload["request"].startswith("/SDT/releases.map?release="):
     xpayload = dict(item.split("=") for item in payload["request"].split("?",1)[1].split("&"))
     for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
-    return send_payload("scram-access","cmssw-releases", id, dumps(payload), passwd_file="/data/es/es_secret")
+    return send_payload("scram-access","cmssw-releases", id, dumps(xpayload), passwd_file="/data/es/es_secret")
   return True
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmssdt_apache.py$' | wc -l",False)

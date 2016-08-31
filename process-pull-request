@@ -8,6 +8,7 @@ setdefaulttimeout(120)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")
+  parser.add_option("-c", "--commit",     dest="commit",     action="store_true", help="Get last commit of the PR", default=False)
   parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
   parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
   opts, args = parser.parse_args()
@@ -18,4 +19,8 @@ if __name__ == "__main__":
   
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   repo = gh.get_repo(opts.repository)
-  process_pr(gh, repo, repo.get_issue(prId), opts.dryRun)
+  if opts.commit:
+    pr   = repo.get_pull(prId)
+    print pr.get_commits().reversed[0].commit.sha
+  else:
+    process_pr(gh, repo, repo.get_issue(prId), opts.dryRun)

@@ -217,7 +217,7 @@ fi
 CMSSW_COMMIT=
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   #get the latest commit and mark it as pending
-  LAST_COMMIT=$(curl -s https://api.github.com/repos/cms-sw/cmssw/pulls/$PULL_REQUEST/commits | python -c 'import json,sys;print json.load(sys.stdin)[-1]["sha"];') || true
+  LAST_COMMIT=$($WORKSPACE/cms-bot/process-pull-request -c -r cms-sw/cmssw $PULL_REQUEST)
   if [ "X${LAST_COMMIT}" = "X" ]  ; then
     pushd $WORKSPACE/$RELEASE_FORMAT/src
       if [ "X$BRANCH_NAME" = X ]; then

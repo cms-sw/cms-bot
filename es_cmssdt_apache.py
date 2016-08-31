@@ -29,7 +29,12 @@ def process (line, count):
   payload["@timestamp"]=int(mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())*1000)
   id = sha1(line).hexdigest()
   if (count%1000)==0: print "Processed entries",count
-  return send_payload("apache-cmssdt","access_log", id, dumps(payload), passwd_file="/data/es/es_secret")
+  if not send_payload("apache-cmssdt","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+    return False
+  if payload["request"].startswith("/SDT/releases.map?release="):
+    payload = dict(item.split("=") for item in payload["request"].split("?",1)[1].split("&"))
+    return send_payload("scram-access","cmssw-releases", id, dumps(payload), passwd_file="/data/es/es_secret")
+  return True
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmssdt_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)

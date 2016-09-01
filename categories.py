@@ -63,7 +63,7 @@ CMSSW_L2 = {
   "iahmad-khan" : ["externals"],
   "hengne" : ["pdmv"],
   "ghellwig" : ["alca"],
-  "montjj" : ["analysis"],
+  "monttj" : ["analysis"],
 }
 
 CMSSW_CATEGORIES={

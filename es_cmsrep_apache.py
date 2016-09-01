@@ -31,7 +31,22 @@ def process (line, count):
   payload["@timestamp"]=int(mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())*1000)
   id = sha1(line).hexdigest()
   if (count%1000)==0: print "Processed entries",count
-  return send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret")
+  if not send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+    return False
+  if payload["request"].startswith("/cgi-bin/cmspkg/RPMS/"):
+    items = payload["request"].split("/")
+    if len(items)<8: return True
+    xpayload = {}
+    try:
+      from urllib import unquote
+      pkg, rest = items[7].split("?",1)
+      cmdpkg = rest.split("version=",1)[1].split("&",1)[0]
+      xpayload = {'repository' : items[4], 'architecture' : items[5], 'package' : unquote(pkg), 'cmspkg' : cmspkg}
+      for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
+    except:
+      return True
+    return send_payload("cmspkg-access","rpm-packages", id, dumps(xpayload), passwd_file="/data/es/es_secret")
+  return True
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsrep_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)

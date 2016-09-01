@@ -47,7 +47,7 @@ class logwatch (object):
         if not ok:
           if (prev_lnum!=lnum) or (prev_hash!=item[3]):
             run_cmd("echo '%s %s' >  %s" % (item[3], str(lnum),info_file))
-          return status, count
+          return ok, count
       if (prev_lnum!=lnum) or (prev_hash!=item[3]):
         prev_lnum=-1
         cmd = "echo '%s %s' >  %s" % (item[3], str(lnum),info_file)

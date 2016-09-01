@@ -44,7 +44,7 @@ def process (line, count):
     from urllib import unquote
     pkg, rest = items[7].split("?",1)
     cmspkg = rest.split("version=",1)[1].split("&",1)[0]
-    xpayload = {'dev' : dev, 'repository' : items[4], 'architecture' : items[5], 'package' : unquote(pkg), 'cmspkg' : cmspkg}
+    xpayload = {'dev' : dev, 'repository' : items[4], 'architecture' : items[5], 'package' : unquote(pkg).split("-1-",1)[0], 'cmspkg' : cmspkg}
   except:
     return True
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]

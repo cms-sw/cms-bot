@@ -33,15 +33,18 @@ def process (line, count):
   if (count%1000)==0: print "Processed entries",count
   if not send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
     return False
-  if not payload["request"].startswith("/cgi-bin/cmspkg/RPMS/"): return True
+  if not payload["request"].startswith("/cgi-bin/cmspkg"): return True
   items = payload["request"].split("/")
   if len(items)<8: return True
+  if items[3] != "RPMS": return True
+  dev = 0
+  if items[2].endswith('-dev'): dev=1
   xpayload = {}
   try:
     from urllib import unquote
     pkg, rest = items[7].split("?",1)
     cmspkg = rest.split("version=",1)[1].split("&",1)[0]
-    xpayload = {'repository' : items[4], 'architecture' : items[5], 'package' : unquote(pkg), 'cmspkg' : cmspkg}
+    xpayload = {'dev' : dev, 'repository' : items[4], 'architecture' : items[5], 'package' : unquote(pkg), 'cmspkg' : cmspkg}
   except:
     return True
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]

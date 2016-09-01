@@ -10,6 +10,8 @@ perl -p -i -e "s/THISHOSTNAME/`hostname`/" $WORKSPACE/wmas
 perl -p -i -e "s/srtest/dmwmtest/" $WORKSPACE/wmas
 . $WORKSPACE/wmas
 export WMAGENT_SECRETS_LOCATION=$WORKSPACE/wmas
+export COUCH_CERT_FILE=~/.globus/usercert.pem
+export COUCH_KEY_FILE=~/.globus/userkey.pem
 export X509_HOST_CERT=$COUCH_CERT_FILE
 export X509_HOST_KEY=$COUCH_KEY_FILE
 export X509_USER_CERT=$COUCH_CERT_FILE

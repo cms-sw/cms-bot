@@ -1,7 +1,6 @@
 #!/bin/sh -ex
 
 [ -f ib-weeks ] || exit 1
-ARCHITECTURE=slc6_amd64_gcc530
 
 # We use %U rather than %W because the groovy macros expect
 # weeks to start on sunday, not monday.
@@ -15,9 +14,10 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   rm -rf dummybuild
   mkdir dummybuild
   pushd dummybuild
-    git clone git://github.com/cms-sw/cmsdist.git CMSDIST || git clone https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
-    git clone -b V00-30-XX git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
-
+    ARCHITECTURE=slc6_amd64_gcc530
+    git clone -b IB/CMSSW_8_1_X/gcc530 git://github.com/cms-sw/cmsdist.git CMSDIST   || git clone -b IB/CMSSW_8_1_X/gcc530 https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
+    git clone -b V00-30-XX             git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone -b V00-30-XX             https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+    if [ $(sh ./CMSDIST/cmsos.file | grep slc7_ | wc -l) -gt 0 ] ; then ARCHITECTURE=slc7_amd64_gcc530 ; fi
     echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
     PKGTOOLS/cmsBuild --debug --repository cms --architecture $ARCHITECTURE --work-dir w build dummy
     PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $ARCHITECTURE --work-dir w upload dummy

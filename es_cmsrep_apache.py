@@ -45,7 +45,7 @@ def process (line, count):
     if items[2].endswith('-dev'): dev=1
     repo, arch = items[4], items[5]
   elif items[1] == "cmssw":
-    repo, arch = items[2], items[3]
+    repo, arch = items[2], items[4]
   else:
     return True
   from urllib import unquote

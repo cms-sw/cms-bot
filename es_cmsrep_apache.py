@@ -51,7 +51,6 @@ def process (line, count):
   from urllib import unquote
   xpayload = {'dev' : dev, 'repository' : unquote(repo), 'architecture' : unquote(arch), 'package' : unquote(pkg).split("-1-",1)[0], 'cmspkg' : unquote(cmspkg)}
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
-  print xpayload
   return send_payload("cmspkg-access","rpm-packages", id, dumps(xpayload), passwd_file="/data/es/es_secret")
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsrep_apache.py$' | wc -l",False)

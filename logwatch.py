@@ -39,15 +39,18 @@ class logwatch (object):
       if lnum<=1: get_lines_cmd = "cat %s" % service_log
       print "Processing %s:%s" % (item[0], str(lnum))
       lnum -= 1
+      xlines = 0
       for line in run_cmd (get_lines_cmd).split ("\n"):
         count += 1
         lnum += 1
+        xlines += 1
         try: ok = callback(line, count, **kwrds)
         except: ok = False
         if not ok:
           if (prev_lnum!=lnum) or (prev_hash!=item[3]):
             run_cmd("echo '%s %s' >  %s" % (item[3], str(lnum),info_file))
           return ok, count
+        if (xlines%1000)==0: run_cmd("echo '%s %s' >  %s" % (item[3], str(lnum),info_file))
       if (prev_lnum!=lnum) or (prev_hash!=item[3]):
         prev_lnum=-1
         cmd = "echo '%s %s' >  %s" % (item[3], str(lnum),info_file)

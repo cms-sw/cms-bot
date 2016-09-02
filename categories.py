@@ -29,6 +29,7 @@ COMPARISON_MISSING_MAP = [ "slava77" ]
 
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],
+  "silviodonato": ["hlt"],
   "perrotta": ["hlt"],
   "fwyzard": ["hlt"],
   "slava77": ["reconstruction"],

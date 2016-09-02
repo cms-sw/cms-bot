@@ -33,20 +33,23 @@ def process (line, count):
   if (count%1000)==0: print "Processed entries",count
   if not send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
     return False
-  if not payload["request"].startswith("/cgi-bin/cmspkg"): return True
   items = payload["request"].split("/")
-  if len(items)<8: return True
-  if items[3] != "RPMS": return True
-  dev = 0
-  if items[2].endswith('-dev'): dev=1
-  xpayload = {}
-  try:
-    from urllib import unquote
-    pkg, rest = items[7].split("?",1)
-    cmspkg = rest.split("version=",1)[1].split("&",1)[0]
-    xpayload = {'dev' : dev, 'repository' : items[4], 'architecture' : items[5], 'package' : unquote(pkg).split("-1-",1)[0], 'cmspkg' : cmspkg}
-  except:
+  if (len(items)<6) or (items[3] != "RPMS"): return True
+  pkg, cmspkg, arch, repo, dev = items[-1], "apt", "" , "", 0
+  if "?" in pkg:
+    pkg, pkgopts = pkg.split("?",1)
+    if "version=" in pkgopts: cmspkg = pkgopts.split("version=",1)[1].split("&",1)[0]
+  if not pkg.endswith(".rpm"): return True
+  if (items[1] == "cgi-bin") and items[2].startswith("cmspkg"):
+    if len(items)<8: return True
+    if items[2].endswith('-dev'): dev=1
+    repo, arch = items[4], items[5]
+  elif items[1] == "cmssw":
+    repo, arch = items[2], items[3]
+  else:
     return True
+  from urllib import unquote
+  xpayload = {'dev' : dev, 'repository' : unquote(repo), 'architecture' : unquote(arch), 'package' : unquote(pkg).split("-1-",1)[0], 'cmspkg' : unquote(cmspkg)}
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
   return send_payload("cmspkg-access","rpm-packages", id, dumps(xpayload), passwd_file="/data/es/es_secret")
 

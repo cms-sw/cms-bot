@@ -34,8 +34,9 @@ def process (line, count):
   if not send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
     return False
   items = payload["request"].replace("/cms/cpt/Software/download/","/cmssw/",1).split("/")
+  if len(items)<6: return True
   if items[3]=="apt": items[3]="PRMS"
-  if (len(items)<6) or (items[3] != "RPMS"): return True
+  if items[3] != "RPMS": return True
   pkg, cmspkg, arch, repo, dev = items[-1], "apt", "" , "", 0
   if "?" in pkg:
     pkg, pkgopts = pkg.split("?",1)

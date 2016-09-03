@@ -33,9 +33,10 @@ def process (line, count):
   if (count%1000)==0: print "Processed entries",count
   if not send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
     return False
+  if payload["verb"] == "HEAD": return True
   items = payload["request"].replace("/cms/cpt/Software/download/","/cmssw/",1).split("/")
   if len(items)<6: return True
-  if items[3]=="apt": items[3]="PRMS"
+  if items[3] == "apt": items[3]="PRMS"
   if items[3] != "RPMS": return True
   pkg, cmspkg, arch, repo, dev = items[-1], "apt", "" , "", 0
   if "?" in pkg:

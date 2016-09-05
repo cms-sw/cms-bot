@@ -22,7 +22,7 @@ request.get_method = lambda: 'POST'
 print '--'
 try:
   print urllib2.urlopen( request, json.dumps( params  ) ).read()
-  print OK
+  print "OK release",release_name,"created"
 except Exception as e:
   print 'There was an error while creating the release:\n', e
 

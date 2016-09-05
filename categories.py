@@ -52,7 +52,6 @@ CMSSW_L2 = {
   "lveldere": ["fastsim"],
   "ssekmen": ["fastsim"],
   "mmusich": ["alca"],
-  "covarell": ["generators"],
   "govoni": ["generators"],
   "perrozzi": ["generators"],
   "davidlange6": ["operations"],

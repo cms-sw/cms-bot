@@ -28,6 +28,9 @@ if __name__ == "__main__":
   elif "fc24_ppc64le_" in environ["SCRAM_ARCH"]:
     print "FC22 IB Found"
     thrds=int(MachineMemoryGB/4)
+  elif "fc24_ppc64le_" in environ["SCRAM_ARCH"]:
+    print "CentOS 7.2 + PPC64LE Found"
+    thrds=int(MachineMemoryGB/3)
   else:
     print "Normal IB Found"
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount

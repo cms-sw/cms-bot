@@ -29,7 +29,9 @@ for QUEUE in $RELEASE_QUEUES; do
     unset BUILD_HOUR
     unset DOCKER_IMG
     unset BUILD_PATCH_RELEASE
+    unset NO_IB
     eval "$IB_INFO"
+    if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     if [ "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
     if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
       BUILD_PATCH_RELEASE=true

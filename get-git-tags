@@ -15,13 +15,11 @@ if __name__ == "__main__":
   opts, args = parser.parse_args()
 
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-  rate_limit = gh.get_rate_limit().rate
-  print 'API Rate Limit'
-  print 'Limit: ', rate_limit.limit
-  print 'Remaining: ', rate_limit.remaining
-  print 'Reset time (GMT): ', rate_limit.reset
-
   repo =  gh.get_repo(opts.repo)
+  print 'API Rate Limit'
+  print 'Limit, Remaining: ', gh.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
+
   tags  = repo.get_releases()
   tagRe = re.compile ('^'+opts.match+'.*$')
   for t in tags:

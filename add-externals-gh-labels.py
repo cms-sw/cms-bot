@@ -3,6 +3,7 @@ from github import Github
 from os.path import expanduser
 from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
+from datetime import datetime
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 
@@ -15,8 +16,9 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
   else:
     repos.append(gh.get_repo(repo_name))
 
-  rate_limit = gh.get_rate_limit().rate
-  print 'Limit: ', rate_limit.remaining, "/", rate_limit.limit, "(",rate_limit.reset,")"
+  print 'API Rate Limit'
+  print 'Limit, Remaining: ', gh.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
   for repo in repos:
     print "Checking repository ", repo.full_name
     cur_labels = {}
@@ -30,8 +32,9 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
         if not dryRun: cur_labels[lab].edit(lab, all_labels[lab])
         print "  Label ",lab," color updatd: ",cur_labels[lab].color ," => ",all_labels[lab]
 
-  rate_limit = gh.get_rate_limit().rate
-  print 'Limit: ', rate_limit.remaining, "/", rate_limit.limit, "(",rate_limit.reset,")"
+  print 'API Rate Limit'
+  print 'Limit, Remaining: ', gh.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
 
 if __name__ == "__main__":
   from optparse import OptionParser

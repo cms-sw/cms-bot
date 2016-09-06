@@ -3,6 +3,7 @@
 from optparse import OptionParser
 from github import Github
 from os.path import expanduser
+from datetime import datetime
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 
@@ -171,12 +172,10 @@ if __name__ == "__main__":
   action = args[ 5 ]
 
   GH = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
-  rate_limit = GH.get_rate_limit().rate
-  print 'API Rate Limit'
-  print 'Limit: ', rate_limit.limit
-  print 'Remaining: ', rate_limit.remaining
-  print 'Reset time (GMT): ', rate_limit.reset
   cmssw_repo = GH.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
+  print 'API Rate Limit'
+  print 'Limit, Remaining: ', GH.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(GH.rate_limiting_resettime)
   issue = cmssw_repo.get_issue( issue_id )
   ALL_LABELS = [ l.name for l in issue.get_labels() ]
   test_logfile = "build/"+release_name+"-tests/matrixTests/runall-report-step123-.log"

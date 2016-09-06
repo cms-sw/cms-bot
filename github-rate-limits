@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 from github import Github
 from os.path import expanduser
+from datetime import datetime
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 
 if __name__ == "__main__":
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-  rate_limit = gh.get_rate_limit().rate
   print 'API Rate Limit'
-  print 'Limit: ', rate_limit.limit
-  print 'Remaining: ', rate_limit.remaining
-  print 'Reset time (GMT): ', rate_limit.reset
+  print 'Limit, Remaining: ', gh.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
+

@@ -10,6 +10,7 @@ from sys import exit, argv
 from os.path import abspath, dirname, join
 from github import UnknownObjectException
 from socket import setdefaulttimeout
+from datetime import datetime
 setdefaulttimeout(120)
 try:
   SCRIPT_DIR = dirname(abspath(__file__))
@@ -122,6 +123,9 @@ def check_extra_labels(first_line, extra_labels):
     extra_labels["backport"]="backport"
 
 def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
+  print 'API Rate Limit'
+  print 'Limit, Remaining: ', gh.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
   if ignore_issue(repo, issue): return
   prId = issue.number
   repository = repo.full_name

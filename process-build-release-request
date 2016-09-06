@@ -797,6 +797,9 @@ if __name__ == "__main__":
   gh = Github( login_or_token=GH_TOKEN )
   cmssw_repo = gh.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
   issue = cmssw_repo.get_issue( issue_id )
+  print 'API Rate Limit'
+  print 'Limit, Remaining: ', gh.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
 
   # 1. Is this a pull request?
   if issue.pull_request:
@@ -815,12 +818,6 @@ if __name__ == "__main__":
     print 'User not authorized'
     post_message( issue , NOT_AUTHORIZED_MSG )
     exit( 0 )
-
-  rate_limit = gh.get_rate_limit().rate
-  print 'API Rate Limit'
-  print 'Limit: ', rate_limit.limit
-  print 'Remaining: ', rate_limit.remaining
-  print 'Reset time (GMT): ', rate_limit.reset
 
   ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
   print "All labels:",ALL_LABELS

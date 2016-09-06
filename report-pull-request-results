@@ -2,6 +2,7 @@
 from os.path import expanduser
 from optparse import OptionParser
 from github import Github
+from datetime import datetime
 import re
 import requests
 import json
@@ -576,11 +577,9 @@ print 'you chose the action %s' % ACTION
 
 TOKEN = open(expanduser("~/.github-token")).read().strip()
 github = Github( login_or_token = TOKEN )
-rate_limit = github.get_rate_limit().rate
 print 'API Rate Limit'
-print 'Limit: ', rate_limit.limit
-print 'Remaining: ', rate_limit.remaining
-print 'Reset time (GMT): ', rate_limit.reset
+print 'Limit, Remaining: ', github.rate_limiting
+print 'Reset time (GMT): ', datetime.fromtimestamp(github.rate_limiting_resettime)
 
 if (options.pr_number == -1 ):
   complain_missing_param('pull request number')

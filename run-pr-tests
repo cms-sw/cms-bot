@@ -623,10 +623,12 @@ done
 
 #evaluate results
 REPEAT=1
+REPORT_PR=$PULL_REQUEST_NUMBER
 if [ "X$PULL_REQUEST" == X ]; then
   COMMITS[1]=$CMSDIST_COMMIT
   REPOS[1]="cms-sw/cmsdist"
   PR[1]=$CMSDIST_PR
+  REPORT_PR=$CMSDIST_PR
 elif [ "X$CMSDIST_PR" != X ]; then
   COMMITS[1]=$CMSSW_COMMIT
   REPOS[1]=$PUB_REPO
@@ -669,7 +671,7 @@ done
 
 rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
-  REPORT_OPTS="--repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
+  REPORT_OPTS="--report-pr ${REPORT_PR} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
     REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS}"
   else 

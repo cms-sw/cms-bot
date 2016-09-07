@@ -739,7 +739,9 @@ CMSSW_CATEGORIES={
    "QCDAnalysis/ChargedHadronSpectra",
    "QCDAnalysis/Configuration",
    "QCDAnalysis/Skimming",
-   "QCDAnalysis/UEAnalysis"
+   "QCDAnalysis/UEAnalysis",
+   "HeavyFlavorAnalysis/RecoDecay",
+   "HeavyFlavorAnalysis/SpecificDecay"
   ],
   "fastsim": [
    "FastSimDataFormats/External",

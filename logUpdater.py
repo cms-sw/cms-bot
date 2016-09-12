@@ -100,7 +100,15 @@ class LogUpdater():
         self.copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what),tgtDirIn+"/")
 
     def runRemoteCmd(self, cmd):
-        cmd ="ssh -Y "+self.ssh_opt+" "+self.remote+" "+cmd
+        self.runRemoteHostCmd(cmd,"cmsbuild@cmssdt02.cern.ch")
+        return self.runRemoteHostCmd(cmd,self.remote)
+
+    def copy2Remote(self, src, des):
+        self.copy2RemoteHost(src,des,"cmsbuild@cmssdt02.cern.ch")
+        return self.copy2RemoteHost(src,des,self.remote)
+
+    def runRemoteHostCmd(self, cmd, host):
+        cmd ="ssh -Y "+self.ssh_opt+" "+host+" "+cmd
         try:
             if self.dryRun:
               print "CMD>>",cmd
@@ -110,8 +118,8 @@ class LogUpdater():
             print "Ignoring exception during runRemoteCmd:", str(e)
             return (1,str(e))
 
-    def copy2Remote(self, src, des):
-        cmd ="scp "+self.ssh_opt+" -r "+src+" "+self.remote+":"+des
+    def copy2RemoteHost(self, src, des, host):
+        cmd ="scp "+self.ssh_opt+" -r "+src+" "+host+":"+des
         try:
             if self.dryRun:
               print "CMD>>",cmd

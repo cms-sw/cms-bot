@@ -704,6 +704,13 @@ for i in 1 2 3 4 5 ;  do
     touch all_done) && break
   sleep 120
 done
+for i in 1 2 3 4 5 ;  do
+  echo Trying to upload results $i
+  ( ssh $SSH_OPTS cmsbuild@cmssdt02.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
+    rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt02.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
+    touch all_done) && break
+  sleep 120
+done
 if [ -f all_done ] ; then
   rm -f all_done
   for i in $( seq 1 $REPEAT); do

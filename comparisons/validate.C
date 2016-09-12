@@ -1582,6 +1582,21 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tauVars("hpsPFTauProducer_");
       // miniaod
       tauVars("slimmedTaus_","patTaus_");
+      //pat::Tau specifics
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.dxy()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.dxy_error()");
+
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ip3d()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ip3d_error()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ecalEnergy()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.hcalEnergy()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.leadingTrackNormChi2()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ecalEnergyLeadChargedHadrCand()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.hcalEnergyLeadChargedHadrCand()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.etaAtEcalEntrance()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.etaAtEcalEntranceLeadChargedCand()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ptLeadChargedCand()");
+      plotvar("patTaus_slimmedTaus__"+recoS+".obj.emFraction_MVA()");
 
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolation__"+recoS+".obj.data_");
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolationMVA__"+recoS+".obj.data_");
@@ -2007,6 +2022,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       // miniaod
       metVars("slimmedMETs_","patMETs_");
       metVars("slimmedMETsPuppi_","patMETs_");
+      // miniaod debug
+      metVars("patMETsPuppi_","patMETs_");
+      metVars("pfMetT1Puppi_","recoPFMETs_");
+      metVars("pfMetPuppi_","recoPFMETs_");
 
       calomet("metOpt","et", true);
       calomet("metOpt","eta");

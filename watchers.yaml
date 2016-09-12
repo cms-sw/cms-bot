@@ -1017,3 +1017,11 @@ idebruyn:
 deguio:
 - DQM/HcalCommon
 - DQM/HcalTasks
+gouskos:
+- DataFormats/RecoCandidate
+- DataFormats/PatCandidates
+- DataFormats/METReco
+- RecoMET/
+- JetMETCorrections/
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils

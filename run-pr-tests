@@ -80,7 +80,7 @@ if [ ! -d CMSSW_* ]; then
     for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
       COMP_REL=$(echo $SCRAM_REL | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_[^0-9]*\(_X_.*\)|\1\2|')
       FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
-      if ssh cmsbuild@cmssdt01.cern.ch test -f $FILE_CHECK ; then
+      if ssh cmsbuild@cmssdtprod.cern.ch test -f $FILE_CHECK ; then
         RELEASE_FORMAT=$SCRAM_REL
         COMPARISON_ARCH=$COMP_ARCH
         COMPARISON_REL=$COMP_REL
@@ -699,15 +699,15 @@ SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile
 rm -f all_done
 for i in 1 2 3 4 5 ;  do
   echo Trying to upload results $i
-  ( ssh $SSH_OPTS cmsbuild@cmssdt01.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
-    rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt01.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
+  ( ssh $SSH_OPTS cmsbuild@cmssdtprod.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
+    rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdtprod.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
     touch all_done) && break
   sleep 120
 done
 for i in 1 2 3 4 5 ;  do
   echo Trying to upload results $i
-  ( ssh $SSH_OPTS cmsbuild@cmssdt02.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
-    rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdt02.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
+  ( ssh $SSH_OPTS cmsbuild@cmssdtdev.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
+    rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdtdev.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
     touch all_done) && break
   sleep 120
 done

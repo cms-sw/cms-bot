@@ -5,7 +5,7 @@ from cmsutils import doCmd, getIBReleaseInfo
 
 class LogUpdater():
 
-    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt01.cern.ch", webDir="/data/sdt/buildlogs/"):
+    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdtprod.cern.ch", webDir="/data/sdt/buildlogs/"):
         self.dryRun = dryRun
         self.remote = remote
         self.cmsswBuildDir = dirIn
@@ -100,11 +100,11 @@ class LogUpdater():
         self.copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what),tgtDirIn+"/")
 
     def runRemoteCmd(self, cmd):
-        self.runRemoteHostCmd(cmd,"cmsbuild@cmssdt02.cern.ch")
+        self.runRemoteHostCmd(cmd,"cmsbuild@cmssdtdev.cern.ch")
         return self.runRemoteHostCmd(cmd,self.remote)
 
     def copy2Remote(self, src, des):
-        self.copy2RemoteHost(src,des,"cmsbuild@cmssdt02.cern.ch")
+        self.copy2RemoteHost(src,des,"cmsbuild@cmssdtdev.cern.ch")
         return self.copy2RemoteHost(src,des,self.remote)
 
     def runRemoteHostCmd(self, cmd, host):

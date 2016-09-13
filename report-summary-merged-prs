@@ -17,7 +17,7 @@ setdefaulttimeout(120)
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
-parser = OptionParser(usage="usage: %prog CMSSW_REPO GITHUB_IO_REPO START_DATE ARTIFACTS_MACHINE"
+parser = OptionParser(usage="usage: %prog CMSSW_REPO GITHUB_IO_REPO START_DATE"
                             "\n CMSSW_REPO: location of the cmssw repository. This must be a bare clone ( git clone --bare )"
                             "\n CMSDIST_REPO: location of the cmsdist repository. This must be a normal clone"
                             "\n GITHUB_IO_REPO: location of the github.io repository. This must be a normal clone"
@@ -67,7 +67,7 @@ parser.add_option( "-d" , "--cmsdist-prs"   , dest="cmsdist_pr_cache" , help="Fi
 #---- Review of arguments
 #-----------------------------------------------------------------------------------
 
-if (len(args)<5):
+if (len(args)<4):
   print 'not enough arguments\n'
   parser.print_help()
   exit()

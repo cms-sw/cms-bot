@@ -77,7 +77,7 @@ CMSSW_REPO = args[ 0 ]
 GITHUB_IO_REPO = args[ 1 ]
 CMSDIST_REPO = args[ 2 ]
 START_DATE = args[ 3 ]
-ARTIFACTS_MACHINE = args[ 4 ]
+ARTIFACTS_MACHINE = "cmssdtprod.cern.ch"
 PRS_CACHE_FILE = options.cmssw_pr_cache
 
 #-----------------------------------------------------------------------------------

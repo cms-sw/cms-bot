@@ -9,7 +9,7 @@ kinit $WORKER_USER@CERN.CH -k -t /build/cmsbuild/jenkins/$WORKER_USER.keytab
 aklog
 klist
 
-SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 max_loop=30
 SCRIPT_DIR=`dirname $0`
 while [ true  ] ; do

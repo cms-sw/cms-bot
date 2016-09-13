@@ -4,14 +4,13 @@ WORKER_USER=${2-cmsbuild}
 WORKER_DIR=${3-/build1/cmsbuild}
 DELETE_SLAVE=${4-yes}
 WORKER_JENKINS_NAME=$5
-
-kinit $WORKER_USER@CERN.CH -k -t /build/cmsbuild/jenkins/$WORKER_USER.keytab
+JENKINS_MASTER_ROOT=/var/lib/jenkins
+SCRIPT_DIR=`dirname $0`
+kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
 aklog
 klist
-
 SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 max_loop=30
-SCRIPT_DIR=`dirname $0`
 while [ true  ] ; do
   max_loop=`expr ${max_loop} - 1`
   [ "X${max_loop}" = "X0" ] && exit 0

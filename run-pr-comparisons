@@ -1,5 +1,6 @@
 #!/bin/sh -ex
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
+ARTIFACTS_MACHINE=cmsbuild@cmssdtprod.cern.ch
 BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/
 PULL_REQUEST_BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID/runTheMatrix-results/
 
@@ -314,11 +315,11 @@ done
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
 
 SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-ssh $SSH_OPTS cmsbuild@cmssdtprod.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}
-rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdtprod.cern.ch:/data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
+ssh $SSH_OPTS $ARTIFACTS_MACHINE mkdir -p /data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}
+rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
 if [ -e results/testsResults.txt ] ; then
   sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" results/testsResults.txt
-  rsync -a -e "ssh $SSH_OPTS" results/testsResults.txt cmsbuild@cmssdtprod.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/${PULL_REQUEST_JOB_ID}/
+  rsync -a -e "ssh $SSH_OPTS" results/testsResults.txt $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/${PULL_REQUEST_JOB_ID}/
 fi
 
 ssh $SSH_OPTS cmsbuild@cmssdtdev.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} || true

@@ -15,23 +15,23 @@ pushd cmsjenkins
   git config --global user.name "CMS Build"
   git config --global user.email "cmsbuild@cern.ch"
 
-  IFS=$'\n' 
+  IFS=$'\n'
   for xml in $(find ${JENKINS_DIR} -name '*.xml' -type f | sed "s|^${JENKINS_DIR}/||" | grep -v ^config-history/ | grep -v ^war/ | grep -v ^plugins/ | grep -v ^fingerprints/ | grep -v ^global-build-stats/ | grep -v /builds/); do
     dir=$(dirname "$xml")
     mkdir -p "./${dir}"
     cp -pf "${JENKINS_DIR}/${xml}" "./${xml}"
   done
  
-  for xml in $(find . -name '*' -type f | grep -v /.git/ | sed "s|^./||" | sort ) ; do
+  for xml in $(find . -name '*' -type f | sed "s|^./||" | grep -v ^.git/ | grep -v ^plugins/ | sort ) ; do
     [ -e "${JENKINS_DIR}/${xml}" ] || rm -f "${xml}"
   done
-  for dir in $(find . -type d | grep -v /.git/ | sed "s|^./||" | sort -r) ; do
+  for dir in $(find . -type d | sed "s|^./||" | grep -v ^.git/ | grep -v ^plugins/ | sort -r) ; do
     [ $(find ${dir} -type f | wc -l) -gt 0 ] && continue
     rm -rf ${dir}
   done
+  rsync -rtu --delete ${JENKINS_DIR}/plugins/ ./plugins/
   git add . || true
   git commit -a -m 'Updates new configurations' || true
-  git diff origin/cms-${JENKINS_VERSION} --name-only
   if [ "X$PUSH_CHANGES" = "Xpush" ] ; then
     [ $(git diff origin/cms-${JENKINS_VERSION} --name-only | wc -l) -gt 0 ] && git push origin cms-${JENKINS_VERSION}
   fi

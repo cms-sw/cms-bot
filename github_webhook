@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+print "Content-Type: text/html\n"
+
+import os , sys , cgi , json , pycurl , hmac, re
+from hashlib import sha1
+import urllib2, urllib
+
+BASE_DIRECTORY = "/data"
+
+def check_event(data):
+  if not 'HTTP_X_GITHUB_EVENT' in os.environ: return False,''
+  event = os.environ['HTTP_X_GITHUB_EVENT']
+  if not event in ['issues', 'issue_comment', 'pull_request' , 'push']: return False,event
+  if (event == 'push'):
+    branch = data["ref"]
+    if not branch.startswith("refs/heads/"):
+      return False, event
+    if (not data['repository']['full_name'] in ['cms-sw/cms-bot', 'cms-sw/cmsdist', 'cms-sw/cmssw']):
+      return False,event
+    repo = data['repository']['name']
+    if repo in ['cms-bot']:
+      return True, event
+    branch = branch.replace("refs/heads/","")
+    sys.path.append(BASE_DIRECTORY+"/sdt/cms-bot")
+    from forward_ports_map import GIT_REPO_FWPORTS
+    if (not repo in GIT_REPO_FWPORTS) or (not branch in GIT_REPO_FWPORTS[repo]):
+      return False, event
+  elif (event == 'pull_request'):
+    if (not data['action'] in ['opened','synchronize']): return False,event
+    if (data['repository']['full_name'] in ['cms-sw/cmsdist']) and (not data["pull_request"]["base"]["ref"].startswith("IB/CMSSW_")):
+      return False,event
+  elif (event == 'issues') and (not data['action'] in ['opened']): return False,event
+  elif (event == 'issue_comment'):
+    if (not data['action'] in ['created']): return False,event
+    sys.path.append(BASE_DIRECTORY+"/sdt/cms-bot")
+    from categories import USERS_TO_TRIGGER_HOOKS as l2
+    from releases import USERS_TO_TRIGGER_HOOKS as managers
+    valid_admins = l2 | managers
+    if not data['comment']['user']['login'] in valid_admins: return False,event
+  return True, event
+
+#check signature function
+def check_signature(data):
+  if not 'HTTP_X_HUB_SIGNATURE' in os.environ: return False
+  sha_name, signature = os.environ['HTTP_X_HUB_SIGNATURE'].split('=')
+  if sha_name != 'sha1': return False
+  try:
+    secret = open(BASE_DIRECTORY+'/secrets/github_hook_secret','r').read().split('\n')[0].strip()
+  except Exception as e:
+    print "Unable to read secret file"
+    return False
+  mac = hmac.new(str(secret), msg=data, digestmod=sha1)
+  print str(mac.hexdigest()) , str(signature)
+  return str(mac.hexdigest()) == str(signature)
+
+#check source ip in white list fucntion
+def check_ip():
+  try:
+    ip_net = open(BASE_DIRECTORY+'/sdt/github-hook-meta.txt','r').read().split('\n')[0].strip()
+  except Exception as e:
+    print "Unable to read github hoot meta information, using hard coded value"
+    ip_net ="192.30.252.0/22"
+
+  ip, mask = ip_net.split('/')
+  mask = int(mask)
+  ip = ''.join(["{0:08b}".format(int(i)) for i in ip.split('.') ])[0:mask]
+  if 'HTTP_X_FORWARDED_FOR' in os.environ and os.environ['HTTP_X_FORWARDED_FOR']!='':
+    src_ip = ''.join([ "{0:08b}".format(int(i)) for i in os.environ['HTTP_X_FORWARDED_FOR'].split('.')])[0:mask]
+  else:
+    src_ip = ''.join([ "{0:08b}".format(int(i)) for i in os.environ['REMOTE_ADDR'].split('.')])[0:mask]
+  return ip == src_ip
+
+#test jenkins parameters
+def get_parameters(info, event):
+  params = []
+  job = ""
+  repo = info["repository"]["full_name"]
+  if event in ['push']:
+    job = "github-push-hook"
+    params.append({"name":"REPOSITORY","value":repo})
+    params.append({"name":"BRANCH","value" : info["ref"].replace("refs/heads/","")})
+    params.append({"name":"COMMITS","value" : ",".join([c['id'] for c in info['commits']])})
+    return json.dumps({"parameter":params}) , job
+
+  etype = ""
+  if event in ['issues', 'issue_comment']:
+    etype = "issue"
+  elif event in ['pull_request']:
+    etype = "pull_request"
+  else:
+    return '',''
+  title = info[etype]["title"]
+  pr_num = info[etype]["number"]
+  if (repo == "cms-sw/cmssw") and (re.match('^[Bb]uild[ ]+(CMSSW_[^ ]+)', title)):
+    job = "query-build-release-issues"
+    params.append({"name":"TIME_INTERVAL","value":"60"})
+    params.append({"name":"FORCE_ISSUE","value":pr_num})
+    params.append({"name":"IGNORE_ISSUE","value":"6375"})
+    params.append({"name":"DRY_RUN","value":"false"})
+  else:
+    job = "cms-bot"
+    params.append({"name":"TIME_INTERVAL","value":"60"})
+    params.append({"name":"FORCE_PULL_REQUEST","value":pr_num})
+    params.append({"name":"REPOSITORY","value":repo})
+    if (repo=="cms-sw/cmssw") or (repo=="cms-sw/cmsdist"):
+      params.append({"name":"ISSUES","value":"true"})
+    else:
+      job = "cms-bot-externals"
+  return json.dumps({"parameter":params}), job
+
+#get data
+data = sys.stdin.read()
+try:
+  payload = json.loads(data)
+except Exception as e:
+  print "Invalid data, can not read json input"
+  sys.exit()
+
+#check valid data, ip and signature of source
+valid, event = check_event(payload)
+if (not valid) or (not check_ip()) or (not check_signature(data)):
+  sys.exit()
+
+#trigger jenkins job
+jenkins_parameters, job = get_parameters(payload, event)
+if job:
+  url = 'http://cmsjenkins02.cern.ch:8080/jenkins/job/'+ job + '/build'
+  print jenkins_parameters,job
+  data = {
+              "json": jenkins_parameters,
+              "Submit": "Build"
+         }
+  try:
+    data=urllib.urlencode(data)
+    req = urllib2.Request(url=url,data=data,headers={"ADFS_LOGIN" : "cmssdt"})
+    content = urllib2.urlopen(req).read()
+  except Exception as e:
+    print "Unable to start jenkins job"

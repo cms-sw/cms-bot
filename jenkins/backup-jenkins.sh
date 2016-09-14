@@ -25,7 +25,7 @@ pushd cmsjenkins
   for xml in $(find . -name '*' -type f | grep -v /.git/ | sed "s|^./||" | sort ) ; do
     [ -e "${JENKINS_DIR}/${xml}" ] || rm -f "${xml}"
   done
-  for dir in $(find . -type d | sed "s|^./||" | sort -r) ; do
+  for dir in $(find . -type d | grep -v /.git/ | sed "s|^./||" | sort -r) ; do
     [ $(find ${dir} -type f | wc -l) -gt 0 ] && continue
     rm -rf ${dir}
   done

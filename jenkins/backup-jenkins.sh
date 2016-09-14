@@ -16,10 +16,15 @@ pushd cmsjenkins
   git config --global user.email "cmsbuild@cern.ch"
 
   IFS=$'\n'
-  for xml in $(find ${JENKINS_DIR} -name '*.xml' -type f | sed "s|^${JENKINS_DIR}/||" | grep -v ^config-history/ | grep -v ^war/ | grep -v ^plugins/ | grep -v ^fingerprints/ | grep -v ^global-build-stats/ | grep -v /builds/); do
-    dir=$(dirname "$xml")
+  for jfile in $(find ${JENKINS_DIR} -name '*.xml' -type f | sed "s|^${JENKINS_DIR}/||" | grep -v ^config-history/ | grep -v ^war/ | grep -v ^plugins/ | grep -v ^fingerprints/ | grep -v ^global-build-stats/ | grep -v /builds/); do
+    dir=$(dirname "$jfile")
     mkdir -p "./${dir}"
-    cp -pf "${JENKINS_DIR}/${xml}" "./${xml}"
+    cp -pf "${JENKINS_DIR}/${jfile}" "./${jfile}"
+  done
+  for jfile in $(find ${JENKINS_DIR}/jobs -name nextBuildNumber -type f | sed "s|^${JENKINS_DIR}/||"); do
+    dir=$(dirname "$jfile")
+    mkdir -p "./${dir}"
+    cp -pf "${JENKINS_DIR}/${jfile}" "./${jfile}"
   done
  
   for xml in $(find . -name '*' -type f | sed "s|^./||" | grep -v ^.git/ | grep -v ^plugins/ | sort ) ; do

@@ -9,7 +9,7 @@ if (found == 0)
 { 
   remote_dir = args[3] + "/" + node_name
   workspace = remote_dir + "/jenkins-workarea"
-  new_launcher = new hudson.slaves.CommandLauncher("/build/cmsbuild/jenkins/connectToSlaveKstart.sh "+args[1]+"@"+args[2]+" "+args[1]+" "+remote_dir)
+  new_launcher = new hudson.slaves.CommandLauncher("/build/workspace/cache/cms-bot/jenkins/connectToSlaveKstart.sh "+args[1]+"@"+args[2]+" "+args[1]+" "+remote_dir)
   hudson.model.Hudson.instance.addNode(new hudson.slaves.DumbSlave(node_name, "Slave to install IBs", workspace, "1", hudson.model.Node.Mode.EXCLUSIVE , "no_label", new_launcher, new hudson.slaves.RetentionStrategy.Demand(0, 3),new LinkedList()))
   println "Created new node: "+ node_name
 }

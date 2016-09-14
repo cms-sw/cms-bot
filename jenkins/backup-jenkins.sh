@@ -31,6 +31,7 @@ pushd cmsjenkins
   done
   git add . || true
   git commit -a -m 'Updates new configurations' || true
+  git diff origin/cms-${JENKINS_VERSION} --name-only
   if [ "X$PUSH_CHANGES" = "Xpush" ] ; then
     [ $(git diff origin/cms-${JENKINS_VERSION} --name-only | wc -l) -gt 0 ] && git push origin cms-${JENKINS_VERSION}
   fi

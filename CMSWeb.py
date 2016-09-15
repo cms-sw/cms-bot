@@ -14,14 +14,14 @@ class CMSWeb (object):
     self.URL_DBS_RUNS='/dbs/prod/global/DBSReader/runs'
     self.URL_DBS_BLOCKS='/dbs/prod/global/DBSReader/blocks'
     self.conn = HTTPSConnection(self.URL_CMSWEB_BASE, cert_file='/tmp/x509up_u{0}'.format(getuid()),  timeout=30)
-    self.cache = {'lfns':{}, 'datasets': {}, 'blocks': {}, 'new_lfns' : {}, "replicas" : {}}
+    self.cache = {'lfns':{}, 'datasets': {}, 'blocks': {}, 'new_lfns' : {}, "replicas" : {}, "blocks_raw": {}}
     self.reply_cache = {}
     self.errors = 0
 
   def __del__(self): self.conn.close ()
 
   def get_cmsweb_data(self, url):
-    if url in self.reply_cache: return self.reply_cache[url]
+    if url in self.reply_cache: return True, self.reply_cache[url]
     msg =""
     try:
       self.conn.request('GET', url)
@@ -47,6 +47,7 @@ class CMSWeb (object):
     if not block in self.cache['blocks']:
       status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_PHEDEX_BLOCKREPLICAS, urlencode({'block': block})))
       if not status: return False
+      self.cache['blocks_raw'][block] = jmsg
       if len(jmsg['phedex']['block']) == 0: return False
       block_data = {'at_cern' : 'no'}
       for replica in jmsg['phedex']['block'][0]['replica']:

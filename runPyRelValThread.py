@@ -198,7 +198,17 @@ class PyRelValsThread(object):
         data = [0, 0, 0]
         logFile = logData[wf]['steps'][step]
         json_cache = os.path.dirname(logFile)+"/logcache_"+str(step)+".json"
-        if (not os.path.exists(json_cache)) or (os.path.getmtime(logFile)>os.path.getmtime(json_cache)):
+        cache_ok = False
+        if (os.path.exists(json_cache)) and (os.path.getmtime(logFile)<=os.path.getmtime(json_cache)):
+          try:
+            jfile = open(json_cache,"r")
+            data = json.load(jfile)
+            jfile.close()
+            cache_read+=1
+            cache_ok = True
+          except:
+            os.remove(json_cache)
+        if not cache_ok:
           try:
             es_parse_log(logFile)
           except Exception as e:
@@ -213,11 +223,6 @@ class PyRelValsThread(object):
           json.dump(data,jfile)
           jfile.close()
           log_processed+=1
-        else:
-          jfile = open(json_cache,"r")
-          data = json.load(jfile)
-          jfile.close()
-          cache_read+=1
         logData[wf]['events'][index] = data[0]
         logData[wf]['failed'][index] = data[2]
         logData[wf]['warning'][index] = data[1]

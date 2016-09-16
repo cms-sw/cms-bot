@@ -18,10 +18,6 @@ function Jenkins_GetCPU ()
   echo $ACTUAL_CPU
 }
 ls /cvmfs/cms-ib.cern.ch || true
-# In case we have kerberos and aklog reset token every time you run.
-if [ ! X`which aklog` = X ]; then
-  aklog
-fi
 if [ ! X`which kinit` = X ]; then
   kinit cmsbuild@CERN.CH -k -t $CMSBUILD_KEY || true
 fi

@@ -9,7 +9,6 @@
 # for now this is only run for 25202
 
 # Reset kerberos token every time you run.
-aklog
 kinit cmsbuild@CERN.CH -k -t /build/cmsbuild/cmsbuild.keytab
 ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE

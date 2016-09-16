@@ -1,5 +1,4 @@
 #!/bin/sh -ex
-aklog
 cd $WORKSPACE
 
 CONFIG_MAP_PATH="$WORKSPACE/cms-bot/config.map"

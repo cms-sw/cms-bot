@@ -128,6 +128,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
   if ignore_issue(repo, issue): return
   prId = issue.number
+  if prId in [ 15876 ] : return
   repository = repo.full_name
   print "Working on ",repo.full_name," for PR/Issue ",prId
   cmssw_repo = False

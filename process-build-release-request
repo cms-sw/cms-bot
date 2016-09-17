@@ -938,7 +938,9 @@ if __name__ == "__main__":
     approvers = ", ".join( [ "@"+x for x in APPROVE_BUILD_RELEASE ] )
     ALL_WATCHERS = (yaml.load(file("build-release-watchers.yaml")))
     watchers = ALL_WATCHERS.get( release_queue )
-    msg = ACK_MSG.format( approvers_list=approvers, cmssw_queue=release_queue, architecture=", ".join(architectures) )
+    xqueue = release_queue
+    if release_queue != release_branch: xqueue =release_queue+"("+release_branch+")"
+    msg = ACK_MSG.format( approvers_list=approvers, cmssw_queue=xqueue, architecture=", ".join(architectures) )
 
     if watchers:
       watchers_l = ", ".join( [ "@"+x for x in watchers ] )

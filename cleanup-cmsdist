@@ -12,7 +12,7 @@ DIRS_PROCESSED=
 PR_TESTS_TO_KEEP=200
 RUNS_TO_KEEP=2
 #Keep $PR_TESTS_TO_KEEP of these
-for dir in pull-request-integration cmsdist-test-pr ; do
+for dir in pull-request-integration ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
   ls -rt | head -n -$PR_TESTS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'

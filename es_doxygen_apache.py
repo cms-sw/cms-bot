@@ -6,9 +6,11 @@ from time import mktime
 from es_utils import send_payload
 from hashlib import sha1
 from json import dumps
-from logwatch import logwatch, run_cmd
+from logwatch import logwatch, run_cmd, LOGWATCH_APACHE_IGNORE_AGENTS
 
 def process (line, count):
+  for agent in LOGWATCH_APACHE_IGNORE_AGENTS:
+    if argent in line: return True
   payload = {}
   items = line.split(" ")
   if len(items)<10: return True

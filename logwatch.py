@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from os.path import exists, join, basename
+from os.path import exists, join, basename, getmtime
 from sys import exit
 from commands import getstatusoutput
 from hashlib import sha256
+from time import time
 
 LOGWATCH_APACHE_IGNORE_AGENTS = ["www.google.com/bot.html", "ahrefs.com", "yandex.com","www.exabot.com")]
 
@@ -29,6 +30,7 @@ class logwatch (object):
     found = False
     for log in reversed(logs):
       service_log = join (self.log_dir, "logs", basename(log))
+      if (len(data)>0) and ((time()-getmtime(log))<600):return True, 0
       if found:
         if exists (service_log):
           run_cmd("rm -f %s" % service_log)

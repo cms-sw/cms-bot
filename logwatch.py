@@ -5,7 +5,7 @@ from commands import getstatusoutput
 from hashlib import sha256
 from time import time
 
-LOGWATCH_APACHE_IGNORE_AGENTS = ["www.google.com/bot.html", "ahrefs.com", "yandex.com","www.exabot.com", "www.bing.com")]
+LOGWATCH_APACHE_IGNORE_AGENTS = ["www.google.com/bot.html", "ahrefs.com", "yandex.com","www.exabot.com", "www.bing.com"]
 
 def run_cmd (cmd, exit_on_error=True):
   err, out = getstatusoutput (cmd)

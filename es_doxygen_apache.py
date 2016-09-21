@@ -10,7 +10,7 @@ from logwatch import logwatch, run_cmd, LOGWATCH_APACHE_IGNORE_AGENTS
 
 def process (line, count):
   for agent in LOGWATCH_APACHE_IGNORE_AGENTS:
-    if argent in line: return True
+    if agent in line: return True
   payload = {}
   items = line.split(" ")
   if len(items)<10: return True

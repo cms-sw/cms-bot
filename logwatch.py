@@ -4,7 +4,7 @@ from sys import exit
 from commands import getstatusoutput
 from hashlib import sha256
 
-LOGWATCH_APACHE_IGNORE_AGENTS = ["www.google.com/bot.html", "ahrefs.com/robot", "yandex.com/bots"]
+LOGWATCH_APACHE_IGNORE_AGENTS = ["www.google.com/bot.html", "ahrefs.com", "yandex.com","www.exabot.com")]
 
 def run_cmd (cmd, exit_on_error=True):
   err, out = getstatusoutput (cmd)

@@ -59,6 +59,4 @@ popd
 SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 ssh $SSH_OPTS cmsbuild@cmssdtprod.cern.ch mkdir -p /data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/new_FWLITE || true
 scp $SSH_OPTS $WORKSPACE/html-logs.zip cmsbuild@cmssdtprod.cern.ch:/data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/new_FWLITE/ || true
-ssh $SSH_OPTS cmsbuild@cmssdtdev.cern.ch mkdir -p /data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/new_FWLITE || true
-scp $SSH_OPTS $WORKSPACE/html-logs.zip cmsbuild@cmssdtdev.cern.ch:/data/sdt/buildlogs/${ARCHITECTURE}/fwlite/${RELEASE_FORMAT}/new_FWLITE/ || true
 

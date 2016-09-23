@@ -100,11 +100,9 @@ class LogUpdater():
         self.copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what),tgtDirIn+"/")
 
     def runRemoteCmd(self, cmd):
-        self.runRemoteHostCmd(cmd,"cmsbuild@cmssdtdev.cern.ch")
         return self.runRemoteHostCmd(cmd,self.remote)
 
     def copy2Remote(self, src, des):
-        self.copy2RemoteHost(src,des,"cmsbuild@cmssdtdev.cern.ch")
         return self.copy2RemoteHost(src,des,self.remote)
 
     def runRemoteHostCmd(self, cmd, host):

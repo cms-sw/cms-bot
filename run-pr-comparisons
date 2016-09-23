@@ -322,10 +322,3 @@ if [ -e results/testsResults.txt ] ; then
   rsync -a -e "ssh $SSH_OPTS" results/testsResults.txt $ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/${PULL_REQUEST_JOB_ID}/
 fi
 
-ssh $SSH_OPTS cmsbuild@cmssdtdev.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} || true
-rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdtdev.cern.ch:/data/sdt/SDT/jenkins-artifacts/baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ || true
-if [ -e results/testsResults.txt ] ; then
-  sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" results/testsResults.txt
-  rsync -a -e "ssh $SSH_OPTS" results/testsResults.txt cmsbuild@cmssdtdev.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-$PULL_REQUEST_NUMBER/${PULL_REQUEST_JOB_ID}/ || true
-fi
-

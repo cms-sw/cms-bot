@@ -209,10 +209,10 @@ class PyRelValsThread(object):
           except:
             os.remove(json_cache)
         if not cache_ok:
-          #try:
-          #  es_parse_log(logFile)
-          #except Exception as e:
-          #  print "Sending log information to elasticsearch failed" , str(e)
+          try:
+            es_parse_log(logFile)
+          except Exception as e:
+            print "Sending log information to elasticsearch failed" , str(e)
           inFile = open(logFile)
           for line in inFile:
             if '%MSG-w' in line: data[1]=data[1]+1

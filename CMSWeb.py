@@ -84,7 +84,7 @@ class CMSWeb (object):
     return jmsg
 
   def search_blocks(self, dataset):
-    status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_BLOCKS, urlencode({'dataset': dataset})))
+    status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_BLOCKS, urlencode({'dataset': dataset, "detail":1})))
     if not status: return {}
     return jmsg
 

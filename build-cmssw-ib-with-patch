@@ -18,6 +18,8 @@ function GetCmsBuildConfig ()
     ;;
   esac
 }
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
 echo DATE=`date`
 ARCHITECTURE=$1
@@ -32,10 +34,6 @@ FORCE_BUILD_PATCH_RELEASE=$8
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
-
-#export USER_HOOK_PACKAGE=$WORKSPACE/cms-bot/scram-package-monitor-timestamps
-#export USER_HOOK_PROJECT=$WORKSPACE/cms-bot/scram-package-monitor-timestamps
-#export PKG_MON_SENDER=$WORKSPACE/cms-bot/scram-package-monitor-sender
 
 rm -rf $WORKSPACE/../build-cache &
 cd $WORKSPACE
@@ -74,7 +72,7 @@ esac
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 unset BUILD_PATCH_RELEASE
-eval `cat $WORKSPACE/cms-bot/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+eval `cat $CMS_BOT_DIR/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 [ "X$BUILD_PATCH_RELEASE" = "X1" ] && FORCE_BUILD_PATCH_RELEASE=true
 
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,

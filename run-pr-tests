@@ -1,5 +1,6 @@
 #!/bin/sh -ex
-
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 CMSBUILD_KEY="/build/`whoami`/`whoami`.keytab"
 case $NODE_NAME in
   lxplus* ) CMSBUILD_KEY="$CMSBUILD_KEYTAB/cmsbuild.keytab" ;;
@@ -39,7 +40,7 @@ fi
 PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
 # Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
 if [ "X$CMSDIST_PR" = X ] ; then
-  $WORKSPACE/cms-bot/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST_NUMBER || true
+  $CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST_NUMBER || true
 fi
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
@@ -51,7 +52,7 @@ if [ "X$CMS_GIT_TOOLS_REPO" == X ]; then
 fi
 
 cd $WORKSPACE
-CONFIG_MAP=$WORKSPACE/cms-bot/config.map
+CONFIG_MAP=$CMS_BOT_DIR/config.map
 ### to know at the end of the tests if everything went ok
 ALL_OK=true
 BUILD_OK=true
@@ -73,7 +74,7 @@ if [ ! -d CMSSW_* ]; then
       COMP_ARCH=$(cat $CONFIG_MAP | grep $COMP_QUEUE | grep -v "DISABLED=1" | grep "PROD_ARCH=1" | cut -d ";" -f 1 | cut -d "=" -f 2)
       if [ "X$COMP_ARCH" = "X" ] ; then COMP_ARCH=$ARCHITECTURE ; fi
     fi
-    for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
+    for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
       COMP_REL=$(echo $SCRAM_REL | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_[^0-9]*\(_X_.*\)|\1\2|')
       FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
       if ssh cmsbuild@cmssdtprod.cern.ch test -f $FILE_CHECK ; then
@@ -84,14 +85,14 @@ if [ ! -d CMSSW_* ]; then
       fi
     done
     if [ "$RELEASE_FORMAT" = "$RELEASE_QUEUE" ] ; then
-      RELEASE_FORMAT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
+      RELEASE_FORMAT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$RELEASE_FORMAT" = "X" ] ; then
-        $WORKSPACE/cms-bot/report-pull-request-results RELEASE_NOT_FOUND --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+        $CMS_BOT_DIR/report-pull-request-results RELEASE_NOT_FOUND --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
         exit 0
       fi
     fi
   else
-    RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
+    RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST`
   fi
 else
   RELEASE_FORMAT=$( find $WORKSPACE -maxdepth 1 -name "CMSSW_*" -printf '%f\n' )
@@ -109,8 +110,8 @@ if [ "X$COMPARISON_ARCH" = "X" ] ; then
 fi
 
 # creation of results summary file
-cp $WORKSPACE/cms-bot/templates/PullRequestSummary.html $WORKSPACE/summary.html
-cp $WORKSPACE/cms-bot/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
+cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
+cp $CMS_BOT_DIR/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
 if [ "X$CMSDIST_ONLY" == Xtrue ]; then
   sed -i 's|https:\/\/github.com\/cms-sw\/cmssw/\pull\/|https:\/\/github.com\/cms-sw\/cmsdist\/pull\/|g' $WORKSPACE/renderPRTests.js
 fi
@@ -121,12 +122,19 @@ echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
 echo 'BASE_IB;'$RELEASE_FORMAT >> $RESULTS_FILE
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
 
-pushd $WORKSPACE/cms-bot
-  wget --no-check-certificate https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
-  tar -xvf requests-2.3.0.tar.gz
-  mv requests-2.3.0/requests/ requests
-  sed -i -e 's|^DEFAULT_RETRIES *=.*|DEFAULT_RETRIES=10|' requests/adapters.py
-popd
+REQ_OK=$(python -c 'from requests import __version__ as v;x=v.split(".");print int(x[0])*10000+int(x[1])*100+int(x[2])>=20300' 2>/dev/null || echo False)
+if [ "X$REQ_OK" = "XFalse" ] ; then
+  pushd $WORKSPACE
+    wget --no-check-certificate https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
+    tar -xvf requests-2.3.0.tar.gz
+    sed -i -e 's|^DEFAULT_RETRIES *=.*|DEFAULT_RETRIES=10|' requests-2.3.0/requests/adapters.py
+    if [ -z $PYTHONPATH ] ; then 
+      export PYTHONPATH=$WORKSPACE/requests-2.3.0/requests
+    else
+      export PYTHONPATH=$WORKSPACE/requests-2.3.0/requests:$PYTHONPATH
+    fi
+  popd
+fi
 
 case $RELEASE_FORMAT in
   *SLHC*)
@@ -140,7 +148,7 @@ if [ ! -d CMSSW_* ]; then
 else
   cd $WORKSPACE/$RELEASE_FORMAT
 fi
-$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
+$CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
 sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
 eval $(scram run -sh)
 cd src
@@ -165,13 +173,13 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
   done
 
   if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
-    $WORKSPACE/cms-bot/report-pull-request-results NOT_MERGEABLE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+    $CMS_BOT_DIR/report-pull-request-results NOT_MERGEABLE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
     exit 0
   fi
 
   if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
     echo "Please add the branch name to the parameters"
-    $WORKSPACE/cms-bot/report-pull-request-results REMOTE_REF_ISSUE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+    $CMS_BOT_DIR/report-pull-request-results REMOTE_REF_ISSUE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
     exit 1
   fi
 
@@ -180,7 +188,7 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
     echo "There was an error while running git cms-merge-topic"
-    $WORKSPACE/cms-bot/report-pull-request-results GIT_CMS_MERGE_TOPIC_ISSUE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+    $CMS_BOT_DIR/report-pull-request-results GIT_CMS_MERGE_TOPIC_ISSUE --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} $DRY_RUN
     exit 0
   fi
 
@@ -213,7 +221,7 @@ fi
 CMSSW_COMMIT=
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   #get the latest commit and mark it as pending
-  LAST_COMMIT=$($WORKSPACE/cms-bot/process-pull-request -c -r cms-sw/cmssw $PULL_REQUEST)
+  LAST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r cms-sw/cmssw $PULL_REQUEST)
   if [ "X${LAST_COMMIT}" = "X" ]  ; then
     pushd $WORKSPACE/$RELEASE_FORMAT/src
       if [ "X$BRANCH_NAME" = X ]; then
@@ -224,10 +232,10 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then
     popd
   fi
   CMSSW_COMMIT=$LAST_COMMIT
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
   git log --oneline --merges ${CMSSW_VERSION}..
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
 else
   LAST_COMMIT=$CMSDIST_COMMIT
 fi
@@ -243,7 +251,7 @@ if cat $CONFIG_MAP | grep $RELEASE_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARC
 fi
 
 if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST_PR" = X ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
   CLANG_CMD="scram b vclean && scram build -k -j $(Jenkins_GetCPU 2) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
@@ -271,7 +279,7 @@ fi
 #Code Rules
 QA_RES="NOTRUN"
 if [ "X$CMSDIST_ONLY" == "Xfalse" ]; then # If a CMSSW specific PR was specified
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Code Rules Checks" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Code Rules Checks" $DRY_RUN
   mkdir $WORKSPACE/codeRules
   cmsCodeRulesChecker.py -s $WORKSPACE/codeRules -r 1,3 || true
   QA_COUNT=$(cat $WORKSPACE/codeRules/cmsCodeRule*.txt | grep '^/' | sed 's|^/||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
@@ -283,7 +291,7 @@ echo "CODE_RULES;${QA_RES}" >> $RESULTS_FILE
 #Duplicate dict
 QA_RES="NOTRUN"
 if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Duplicate Dict Checks" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Duplicate Dict Checks" $DRY_RUN
   mkdir $WORKSPACE/dupDict
   QA_RES="OK"
   for type in dup lostDefs edmPD ; do
@@ -301,7 +309,7 @@ echo "DUPLICATE_DICT_RULES;${QA_RES}" >> $RESULTS_FILE
 # Static checks
 #
 if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_PR" = X ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   pushd $WORKSPACE/$RELEASE_FORMAT
@@ -347,7 +355,7 @@ fi
 # #############################################
 # test compilation with GCC
 # ############################################
-$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
+$CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
 COMPILATION_CMD="scram b vclean && scram b -k -j $(Jenkins_GetCPU 2)"
 if [ "X$CMSDIST_PR" != X -a $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
   COMPILATION_CMD="scram b vclean && SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU 2) && scram b -k -j $(Jenkins_GetCPU 2) edm_checks"
@@ -379,7 +387,7 @@ which das_client.py
 # Unit tests
 #
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
   UTESTS_CMD="timeout 7200 scram b -k -j $(Jenkins_GetCPU)  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
@@ -433,7 +441,7 @@ if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_JOB_REPORTS" = Xtrue ]; the
 fi
 
 if [ "X$MATRIX_EXTRAS" = "X" ] ; then
-  export MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $WORKSPACE/cms-bot/cmssw-pr-test-config | sed 's|.*=||')
+  export MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
 fi
 
 if [ ! "X$MATRIX_EXTRAS" = X ]; then
@@ -441,7 +449,7 @@ if [ ! "X$MATRIX_EXTRAS" = X ]; then
 fi
 
 if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
@@ -569,7 +577,7 @@ else
     elif [ "X$ONLY_FIREWORKS" = "Xtrue" ] ; then
       ERR_MSG="Fireworks only changes in PR"
     fi
-    $WORKSPACE/cms-bot/comment-gh-pr -r $PUB_REPO -p $PULL_REQUEST -m "Comparison not run due to ${ERR_MSG} (RelVals and Igprof tests were also skipped)"
+    $CMS_BOT_DIR/comment-gh-pr -r $PUB_REPO -p $PULL_REQUEST -m "Comparison not run due to ${ERR_MSG} (RelVals and Igprof tests were also skipped)"
   fi
 fi
 
@@ -577,7 +585,7 @@ fi
 # AddOn Tetss
 #
 if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
   echo '--------------------------------------'
   ADDON_CMD="addOnTests.py -j $(Jenkins_GetCPU) "
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
@@ -607,7 +615,7 @@ fi
 # Valgrind tests
 #
 for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
-  $WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Valgrind" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Valgrind" $DRY_RUN
 
   echo 'I will run valgrind for the following workflow'
   echo $WF;
@@ -674,19 +682,19 @@ for i in $( seq 1 $REPEAT); do
     echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
     if [ "X$BUILD_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}
+      $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}
     fi
     if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_OPTS}
+      $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_OPTS}
     fi
     if [ "X$RELVALS_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_OPTS}
+      $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_OPTS}
     fi
     if [ "X$ADDON_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_OPTS}
+      $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_OPTS}
     fi
     if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-      $WORKSPACE/cms-bot/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
+      $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
     fi
     REPORT_OPTS[$i]="REPORT_ERRORS ${REPORT_OPTS}"
   fi
@@ -703,7 +711,7 @@ done
 if [ -f all_done ] ; then
   rm -f all_done
   for i in $( seq 1 $REPEAT); do
-    $WORKSPACE/cms-bot/report-pull-request-results ${REPORT_OPTS[$i]}
+    $CMS_BOT_DIR/report-pull-request-results ${REPORT_OPTS[$i]}
   done
 else
   exit 1

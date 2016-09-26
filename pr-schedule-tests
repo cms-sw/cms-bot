@@ -1,4 +1,6 @@
 #!/bin/sh -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
 
 cd $WORKSPACE
@@ -7,8 +9,8 @@ cd $WORKSPACE
 PULL_REQUEST=$1
 
 # Use helper to get PR branch
-RELEASE_QUEUE=`$WORKSPACE/cms-bot/get-pr-branch $PULL_REQUEST`
-CONFIG_MAP_FILE="$WORKSPACE/cms-bot/config.map"
+RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST`
+CONFIG_MAP_FILE="$CMS_BOT_DIR/config.map"
 
 PROP_FILE=properties-pr
 if [ "X$CMSDIST_PR" != "X" ] ; then 
@@ -57,6 +59,6 @@ if [ $MLC -eq 1 ] ; then
 fi
 
 if [ ! -f $WORKSPACE/pr_test_ok ] ; then
-  $WORKSPACE/cms-bot/report-pull-request-results RELEASE_NOT_FOUND --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
+  $CMS_BOT_DIR/report-pull-request-results RELEASE_NOT_FOUND --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
 fi
 

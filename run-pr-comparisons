@@ -1,4 +1,6 @@
 #!/bin/sh -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
 ARTIFACTS_MACHINE=cmsbuild@cmssdtprod.cern.ch
 BASE_URL=$ARTIFACTS_MACHINE:/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$RELEASE_FORMAT/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/
@@ -137,12 +139,12 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
 
   mkdir -p $JR_COMP_DIR
 
-  cp $WORKSPACE/cms-bot/comparisons/validateJR.sh $JR_COMP_DIR
-  cp $WORKSPACE/cms-bot/comparisons/validate.C $JR_COMP_DIR
-  cp $WORKSPACE/cms-bot/comparisons/matrix_70X.txt $JR_COMP_DIR
+  cp $CMS_BOT_DIR/comparisons/validateJR.sh $JR_COMP_DIR
+  cp $CMS_BOT_DIR/comparisons/validate.C $JR_COMP_DIR
+  cp $CMS_BOT_DIR/comparisons/matrix_70X.txt $JR_COMP_DIR
 
   mkdir -p $HOME/tools
-  cp $WORKSPACE/cms-bot/comparisons/validate.C $HOME/tools
+  cp $CMS_BOT_DIR/comparisons/validate.C $HOME/tools
 
   #Download the baseline and pr files, they need to be downloaded again because the validateJR script needs more files to work, and they
   #can't be in the same structure as the files for the other comparisons. 
@@ -169,7 +171,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   echo 'Doing log and root comparison:'
 
   cd $JR_COMP_DIR
-  (python $WORKSPACE/cms-bot/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} 2>&1 | tee -a $JR_COMP_DIR/logRootQA.log) || true
+  (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} 2>&1 | tee -a $JR_COMP_DIR/logRootQA.log) || true
 
 
 fi
@@ -185,7 +187,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 
   if [ "X$RUN_JR_COMP" = Xtrue ]; then
     RELMON_COMP_PARAMS_FILE=$RELMON_COMP_DIR/RelMonComparisonParams.txt
-    $WORKSPACE/cms-bot/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R 2>&1 | tee -a $RELMON_COMP_DIR/RelMonAssignedParameters.log
+    $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R 2>&1 | tee -a $RELMON_COMP_DIR/RelMonAssignedParameters.log
   fi
 
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
@@ -243,7 +245,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   mkdir -p $ALT_COMP_DIR
   DQM_COMP_PARAMS_FILE=$ALT_COMP_DIR/comparisonParams.txt
 
-  $WORKSPACE/cms-bot/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE 2>&1 | tee -a $ALT_COMP_DIR/assignedParameters.log
+  $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE 2>&1 | tee -a $ALT_COMP_DIR/assignedParameters.log
 
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
 
@@ -259,8 +261,8 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   
     mkdir -p $ALT_COMP_DIR/$WF_NUMBER
 
-    cp $WORKSPACE/cms-bot/comparisons/compareValHists.C $ALT_COMP_DIR/$WF_NUMBER
-    cp $WORKSPACE/cms-bot/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
+    cp $CMS_BOT_DIR/comparisons/compareValHists.C $ALT_COMP_DIR/$WF_NUMBER
+    cp $CMS_BOT_DIR/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
 
     eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
 

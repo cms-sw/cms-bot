@@ -1,4 +1,6 @@
 #!/bin/sh -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$1" = X ]; then
   echo "Please specify arch"
   exit 1
@@ -21,7 +23,7 @@ export LANG=C
 
 # The repositories we need to install are those for which we find the
 # timestamp files:
-REPOSITORIES=`tail -2 $WORKSPACE/cms-bot/ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
+REPOSITORIES=`tail -2 $CMS_BOT_DIR/ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
 echo $REPOSITORIES | tr ' ' '\n' | xargs --no-run-if-empty -i mkdir -p "$BASEDIR/{}"
 
 # In order to avoid synchronizing the whole directories every time we do the

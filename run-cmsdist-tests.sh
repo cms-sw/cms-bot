@@ -1,5 +1,6 @@
 #!/bin/sh -ex
-
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$CMSDIST_PR" == X ]; then
   echo "Error: CMSDIST_PR variable must be set"
   exit 0
@@ -16,13 +17,13 @@ function Jenkins_GetCPU ()
   fi
   echo $ACTUAL_CPU
 }
-CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $WORKSPACE/cms-bot/ib-weeks | sed 's|.*-||') % 2 | bc)
+CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
 GH_COMMITS=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR/commits)
 GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
 TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
 CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
-CMSDIST_COMMITS=$($WORKSPACE/cms-bot/process-pull-request -c -r cms-sw/cmsdist $CMSDIST_PR)
+CMSDIST_COMMITS=$($CMS_BOT_DIR/process-pull-request -c -r cms-sw/cmsdist $CMSDIST_PR)
 
 if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
   echo "Error: failed to retrieve user or branch to test."
@@ -34,10 +35,10 @@ if [ "X$ARCHITECTURE" != X ]; then
   ARCH_MATCH="SCRAM_ARCH=${ARCHITECTURE};"
 fi
 
-if [ $(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | wc -l) -gt 1 ] ; then
-  CONFIG_LINE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | grep "PROD_ARCH=")
+if [ $(cat $CMS_BOT_DIR/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | wc -l) -gt 1 ] ; then
+  CONFIG_LINE=$(cat $CMS_BOT_DIRt/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | grep "PROD_ARCH=")
 else
-  CONFIG_LINE=$(cat $WORKSPACE/cms-bot/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}")
+  CONFIG_LINE=$(cat $CMS_BOT_DIR/config.map | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}")
 fi
 
 if [ "X$CMSSW_CYCLE" = X ]; then
@@ -60,20 +61,20 @@ export ARCHITECTURE
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 CMSSW_IB=
-for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests"  | awk '{print $3}' | tac) ; do
+for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests"  | awk '{print $3}' | tac) ; do
   [ -e $relpath/build-errors ] && continue
   CMSSW_IB=$(basename $relpath)
   break
 done
-[ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$WORKSPACE/cms-bot/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
+[ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
 
 BUILD_DIR="testBuildDir"
 export PUB_REPO="cms-sw/cmsdist"
 
-$WORKSPACE/cms-bot/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $CMSDIST_PR || true
+$CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $CMSDIST_PR || true
 # If a CMSSW PR is also being tested update the comment on its page too
 if [ "X$PULL_REQUEST" != X ]; then
-  $WORKSPACE/cms-bot/modify_comment.py -r cms-sw/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST || true
+  $CMS_BOT_DIR/modify_comment.py -r cms-sw/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST || true
 fi
 
 git clone git@github.com:cms-sw/cmsdist $WORKSPACE/CMSDIST -b $CMSDIST_BRANCH
@@ -95,10 +96,10 @@ export CMSDIST_COMMIT=$(echo $CMSDIST_COMMITS | sed 's|.* ||')
 cd $WORKSPACE
 
 # Notify github that the script will start testing now
-$WORKSPACE/cms-bot/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+$CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
-if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $WORKSPACE/cms-bot/config.map | grep "RELEASE_QUEUE=$CMSSW_CYCLE;" | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
-  DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $WORKSPACE/cms-bot/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
+if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $CMS_BOT_DIR/config.map | grep "RELEASE_QUEUE=$CMSSW_CYCLE;" | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
+  DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $CMS_BOT_DIR/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
   pushd $WORKSPACE/CMSDIST
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
   popd
@@ -118,15 +119,15 @@ TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
 GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
 if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
-  $WORKSPACE/cms-bot/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
+  $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
   echo 'PR_NUMBER;'$CMSDIST_PR >> $RESULTS_FILE
   echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
   echo 'BASE_IB;'$CMSSW_IB >> $RESULTS_FILE
   echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
   echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
   # creation of results summary file, normally done in run-pr-tests, here just to let close the process
-  cp $WORKSPACE/cms-bot/templates/PullRequestSummary.html $WORKSPACE/summary.html
-  cp $WORKSPACE/cms-bot/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
+  cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
+  cp $CMS_BOT_DIR/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
   exit 0
 else
   echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE
@@ -169,4 +170,4 @@ CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cu
 git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables
-$WORKSPACE/cms-bot/run-pr-tests
+$CMS_BOT_DIR/run-pr-tests

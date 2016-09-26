@@ -1,5 +1,6 @@
 #!/bin/sh -ex
-
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 function Jenkins_GetCPU ()
 {
   ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
@@ -18,7 +19,7 @@ cd $RELEASE_FORMAT
 eval `scram run -sh`
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
-  MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $WORKSPACE/cms-bot/cmssw-pr-test-config | sed 's|.*=||')
+  MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
   if [ ! "X$MATRIX_EXTRAS" = "X" ] ; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
   case $RELEASE_FORMAT in 
     *THREADED*)

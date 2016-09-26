@@ -31,7 +31,7 @@ except Exception, e :
 # --------------------------------------------------------------------------------
 
 NOT_AUTHORIZED_MSG = 'You are not authorized to request the build of a release.'
-CONFIG_MAP_FILE = 'config.map'
+CONFIG_MAP_FILE = CMS_BOT_DIR+'/config.map'
 NO_ARCHS_FOUND_MSG = 'No architecures to build found for {rel_name}. Please check that you entered a ' \
                      'valid release name or that the IBs are currently enabled for {queue}'
 RELEASE_BASE_URL = 'https://github.com/cms-sw/cmssw/releases/tag/%s'

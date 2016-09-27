@@ -33,7 +33,9 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
   for item in jdata["data"]:
     if (not item["file"]) or (not 'name' in item["file"][0]): continue
     results['files'].append(item["file"][0]["name"])
-  if results['files'] or override: write_json (outfile, results)
+  if results['files'] or override:
+    print "  Success %s, found %s files." % (query, len(results['files']))
+    write_json (outfile, results)
   return True
 
 if __name__ == "__main__":

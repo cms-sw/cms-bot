@@ -7,6 +7,7 @@ from time import time, sleep
 import json, threading
 from hashlib import sha256
 from optparse import OptionParser
+from RelValArgs import GetMatrixOptions
 
 def write_json(outfile, cache):
   outdir = dirname(outfile)
@@ -55,7 +56,8 @@ if __name__ == "__main__":
     exit(1)
   cycle = "_".join(release.split("_X_",1)[0].split("_")[0:3])+"_X"
   print "Release cycle:",cycle
-  e, o = getstatusoutput("runTheMatrix.py -i all -n -e | grep 'input from:' | sed 's|  *.*input from:||;s| with run | |'")
+  matrix_opts = GetMatrixOptions(environ["CMSSW_VERSION"], environ["SCRAM_ARCH"])
+  e, o = getstatusoutput("runTheMatrix.py %s -n -e | grep 'input from:' | sed 's|  *.*input from:||;s| with run | |'" % matrix_opts)
   if e:
     print o
     exit(1)

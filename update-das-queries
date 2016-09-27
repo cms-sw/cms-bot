@@ -19,7 +19,6 @@ if [ "X$RELEASE_CYCLE" = "X" ] ; then
   fi
 fi
 
-PUSH_GITHUB=FALSE
 for cyc in $RELEASE_CYCLE ; do
   rel_path=$(scram list -c ${cyc} | grep '_X_' | tail -1 | sed 's|^.* ||')
   if [ "X$rel_path" != "X" ] ; then
@@ -30,18 +29,12 @@ for cyc in $RELEASE_CYCLE ; do
       git add das_queries
       if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then 
         git commit -a -m "Updated das queries for $cyc"
-        PUSH_GITHUB=TRUE
+        git pull --rebase 
+        git push origin
       fi
     popd
   fi
 done
-
-if [ "$PUSH_GITHUB" = "TRUE" ] ; then
-  pushd $WORKSPACE/das_results
-    git pull --rebase 
-    git push origin
-  popd
-fi
 
 [ -e $WORKSPACE/error ] && exit 1
 

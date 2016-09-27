@@ -1,0 +1,47 @@
+#!/bin/bash -ex
+RELEASE_CYCLE=$1
+WORKSPACE="${WORKSPACE-$PWD}"
+
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+cd $WORKSPACE
+rm -rf $WORKSPACE/error
+
+if [ ! -d das_results ] ; then
+  git clone git@github.com:cms-sw/cms-sw.github.io.git das_results
+fi
+if [ "X$RELEASE_CYCLE" = "X" ] ; then
+  RELEASE_CYCLE=$(grep -v DISABLED=1 $CMS_BOT_DIR/config.map | grep -v NO_IB | sed 's|.*RELEASE_QUEUE=||;s|;.*||' | cut -d_ -f1-3 | sort | uniq)
+  if [ "X$RELEASE_CYCLE" = "X" ] ; then
+    echo "Unable to find and release cycle in config.map"
+    exit 1
+  fi
+fi
+
+PUSH_GITHUB=FALSE
+for cyc in $RELEASE_CYCLE ; do
+  rel_path=$(scram list -c ${cyc} | grep '_X_' | tail -1 | sed 's|^.* ||')
+  if [ "X$rel_path" != "X" ] ; then
+    scram project -d $WORKSPACE -n $cyc  $rel_path
+    (cd $WORKSPACE/$cyc && eval `scram runtime -sh` && echo $CMSSW_VERSION && cd $WORKSPACE/das_results && pwd && $CMS_BOT_DIR/das_cache.py) || touch $WORKSPACE/error
+    rm -rf $cyc
+    pushd $WORKSPACE/das_results
+      git add das_queries
+      if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then 
+        git commit -a -m "Updated das queries for $cyc"
+        PUSH_GITHUB=TRUE
+      fi
+    popd
+  fi
+done
+
+if [ "$PUSH_GITHUB" = "TRUE" ] ; then
+  pushd $WORKSPACE/das_results
+    git pull --rebase 
+    git push origin
+  popd
+fi
+
+[ -e $WORKSPACE/error ] && exit 1
+

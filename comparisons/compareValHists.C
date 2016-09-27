@@ -6,6 +6,7 @@
 #include "TPaveText.h"
 #include "TCanvas.h"
 #include "TProfile.h"
+#include "TPRegexp.h"
 #include "TH2.h"
 #include "TKey.h"
 #include "TClass.h"
@@ -14,6 +15,7 @@
 #include <cmath>
 
 void compareInDir(TFile* f1, TFile* f2, std::string dirName,unsigned int logmod=0, unsigned int dOpt=1){
+  bool printPDF = (((dOpt/100)%10) & 2) == 0;//default prints all types. Set this bit to disable.
   TCanvas* cv = 0;
   TPad* pH = 0;
   TPad* pD = 0;
@@ -192,7 +194,7 @@ void compareInDir(TFile* f1, TFile* f2, std::string dirName,unsigned int logmod=
     ksPt.AddText(h1->GetName());
     ksPt.Draw();
     cv->Print("diff.ps");
-    cv->Print("diff.pdf");
+    if (printPDF) cv->Print("diff.pdf");
 
 
   }
@@ -204,7 +206,7 @@ void compareInDir(TFile* f1, TFile* f2, std::string dirName,unsigned int logmod=
 }
 
 
-void cmpLRD(TFile* f1, TFile* f2, const char* dName, const char* patt = 0, unsigned int logmod=0, unsigned int dOpt=1){
+void cmpLRD(TFile* f1, TFile* f2, const char* dName, TPRegexp* patt = 0, unsigned int logmod=0, unsigned int dOpt=1){
   //  std::cout<<"cmpLRD In "<< dName<<std::endl;
   TDirectory* td = gROOT->GetDirectory(dName);
   if (td){
@@ -223,7 +225,8 @@ void cmpLRD(TFile* f1, TFile* f2, const char* dName, const char* patt = 0, unsig
 	//now execute compare 
 	//	if(pRel.Index("/SiStrip/")>=0) continue; //this takes a huge time in alcareco and is irrelevant
 	///DQMData/Run 1/Btag
-	if (patt==0 || (patt!=0 && pRel.Index(patt)>=0)){
+	int mLength = 0;
+	if (patt==0 || (patt!=0 && pRel.Index(*patt, mLength)>=0)){
 	  //	  std::cout<<"Comparing in " <<pRel.Data()<<std::endl;
 	  compareInDir(f1, f2, pRel.Data(),logmod,dOpt);
 	}
@@ -235,97 +238,21 @@ void cmpLRD(TFile* f1, TFile* f2, const char* dName, const char* patt = 0, unsig
 
 void compareAll(TFile* f1, TFile* f2, unsigned int logmod=0, unsigned int dOpt=1, const char* dirPattern = 0){
   TCanvas dummyC;
+  bool printPDF = (((dOpt/100)%10) & 2) == 0;//default prints all types. Set this bit to disable.
   dummyC.Print("diff.ps[");
-  dummyC.Print("diff.pdf[");
-  //  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_tpToStaAssociation"); dummyC.Print("diff.ps]"); return;
-//   compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Top"); dummyC.Print("diff.ps]"); return;
-//compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_Mu5"); dummyC.Print("diff.ps]"); return;
-//compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_UpdatedAtVtx_tpToL2UpdAssociation");dummyC.Print("diff.ps]"); return;
-//  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_tpToStaAssociation");dummyC.Print("diff.ps]"); return;
-//  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_UpdatedAtVtx_tpToStaUpdAssociation");dummyC.Print("diff.ps]"); return;
+  if (printPDF) dummyC.Print("diff.pdf[");
 
-//  cmpLRD(f1, f2, f1->GetPath() );
-//  cmpLRD(f1, f2, f1->GetPath(), "MuonRecoAnalyzer", logmod);
-  if ((dOpt/10)%10 == 0) cmpLRD(f1, f2, f1->GetPath(), 0, logmod, dOpt);
-  if ((dOpt/10)%10 == 1) cmpLRD(f1, f2, f1->GetPath(), "/Muon", logmod, dOpt);
-  if ((dOpt/10)%10 == 2) cmpLRD(f1, f2, f1->GetPath(), "/MuonIdentificationV", logmod, dOpt);
-  if ((dOpt/10)%10 == 3) cmpLRD(f1, f2, f1->GetPath(), "/RecoMuon", logmod, dOpt);
-  if ((dOpt/10)%10 == 4) cmpLRD(f1, f2, f1->GetPath(), "/RecoMuonV/MultiTrack", logmod, dOpt);
-  if ((dOpt/10)%10 == 5) cmpLRD(f1, f2, f1->GetPath(), "/Muons", logmod, dOpt);
-  if ((dOpt/10)%10 == 6) cmpLRD(f1, f2, f1->GetPath(), "/HLT/Run summary/Muon", logmod, dOpt);
-  if ((dOpt/10)%10 == 7) cmpLRD(f1, f2, f1->GetPath(), dirPattern, logmod, dOpt);
+  const char* dPatterns[10] {0, "/Muon", "/MuonIdentificationV", "/RecoMuon", "/RecoMuonV/MultiTrack", "/Muons", "/HLT/Run summary/Muon", dirPattern, 0, 0};
+  int dpIndex = (dOpt/10)%10;
+  TPRegexp* dirPatternRP = dPatterns[dpIndex] == 0 ? 0 : new TPRegexp(dPatterns[dpIndex]);
+  cmpLRD(f1, f2, f1->GetPath(), dirPatternRP, logmod, dOpt);
 
   dummyC.Print("diff.ps]");
-  dummyC.Print("diff.pdf]");
+  if (printPDF) dummyC.Print("diff.pdf]");
 
   return;
 
-  compareInDir(f1, f2,"DQMData/Run 1/Muons");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/MuonIdentificationV");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/MuonIdentificationV/GlobalMuons");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/MuonIdentificationV/TrackerMuons");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/MuonIsolationV_global");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/MuonIsolationV_inc");
-  //  dummyC.Print("diff.ps]"); return;
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/general_tpToTkmuAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/general_tpToTkmuAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/globalMuons_tpToGlbAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/globalMuons_tpToGlbAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/globalMuons_tpToGlbMuonAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/globalMuons_tpToGlbMuonAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_UpdatedAtVtx_tpToStaUpdAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_UpdatedAtVtx_tpToStaUpdAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_UpdatedAtVtx_tpToStaUpdMuonAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_UpdatedAtVtx_tpToStaUpdMuonAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_tpToStaAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_tpToStaAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_tpToStaMuonAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/MultiTrack/standAloneMuons_tpToStaMuonAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_MuonAssoc");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_MuonAssoc/Glb");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_MuonAssoc/Muons");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_MuonAssoc/Sta");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_MuonAssoc/Trk");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_TrackAssoc");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_TrackAssoc/Glb");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_TrackAssoc/Muons");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_TrackAssoc/Sta");
-  compareInDir(f1, f2,"DQMData/Run 1/Muons/Run summary/RecoMuonV/RecoMuon_TrackAssoc/Trk");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_DoubleMu0");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_DoubleMu3");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_IsoMu9");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_L1DoubleMuOpen");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_L1Mu");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_L1Mu20HQ");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_L1Mu30");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_L1MuOpen");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_L2Mu11");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_Mu11");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_Mu15");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_Mu5");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/Distributions/HLT_Mu9");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_UpdatedAtVtx_tpToL2UpdAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_UpdatedAtVtx_tpToL2UpdAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_UpdatedAtVtx_tpToL2UpdMuonAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_UpdatedAtVtx_tpToL2UpdMuonAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_tpToL2Association");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_tpToL2Association/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_tpToL2MuonAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL2Muons_tpToL2MuonAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3Muons_tpToL3Association");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3Muons_tpToL3Association/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3Muons_tpToL3MuonAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3Muons_tpToL3MuonAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3TkFromL2_tpToL3TkMuonAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3TkFromL2_tpToL3TkMuonAssociation/simulation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3TkFromL2_tpToL3TkTrackAssociation");
-  compareInDir(f1, f2,"DQMData/Run 1/HLT/Run summary/Muon/MultiTrack/hltL3TkFromL2_tpToL3TkTrackAssociation/simulation");
   dummyC.Print("diff.ps]");
-  dummyC.Print("diff.pdf]");
+  if (printPDF)  dummyC.Print("diff.pdf]");
 
 }

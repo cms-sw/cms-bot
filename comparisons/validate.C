@@ -15,6 +15,7 @@
 #include <cmath>
 
 bool detailled = true;
+bool detailled1 = false;//higher level of detail
 bool RemoveIdentical = true;
 bool cleanEmpties = true;
 TTree * Events=0;
@@ -268,9 +269,11 @@ void vertexVars(TString br){
   plotvar(br+recoS+".obj.x()");
   plotvar(br+recoS+".obj.y()");
   plotvar(br+recoS+".obj.z()");
+  plotvar(br+recoS+".obj.t()");
   plotvar("log10("+br+recoS+".obj.xError())");
   plotvar("log10("+br+recoS+".obj.yError())");
   plotvar("log10("+br+recoS+".obj.zError())");
+  plotvar("log10("+br+recoS+".obj.tError())");
   plotvar(br+recoS+".obj.chi2()");
   plotvar(br+recoS+".obj.tracksSize()");
 }
@@ -691,7 +694,7 @@ void allTracks(TString alias){
   plotTrack(alias,"p");
   plotvar("log10(recoTracks_"+alias+".p())");
   plotTrack(alias,"eta");
-  if (detailled)    plotTrack(alias,"theta");
+  if (detailled1)    plotTrack(alias,"theta");
   plotTrack(alias,"phi");
   if (detailled)    plotTrack(alias,"found");
   plotTrack(alias,"chi2");
@@ -710,12 +713,12 @@ void allTracks(TString alias){
   plotTrack(alias,"quality(2)");
   plotTrack(alias,"qualityMask");
   plotTrack(alias,"qoverp");
-  if (detailled)    plotTrack(alias,"px");
-  if (detailled)    plotvar("log10(abs(recoTracks_"+alias+".px()))");
-  if (detailled)    plotTrack(alias,"py");
-  if (detailled)    plotvar("log10(abs(recoTracks_"+alias+".py()))");
-  if (detailled)    plotTrack(alias,"pz");
-  if (detailled)    plotvar("log10(abs(recoTracks_"+alias+".pz()))");
+  if (detailled1)    plotTrack(alias,"px");
+  if (detailled1)    plotvar("log10(abs(recoTracks_"+alias+".px()))");
+  if (detailled1)    plotTrack(alias,"py");
+  if (detailled1)    plotvar("log10(abs(recoTracks_"+alias+".py()))");
+  if (detailled1)    plotTrack(alias,"pz");
+  if (detailled1)    plotvar("log10(abs(recoTracks_"+alias+".pz()))");
 
 }
 
@@ -749,9 +752,9 @@ void allpf(int type=-1, TString cName  = "particleFlow_"){
   pf("phi",type, cName);
   pf("pt",type, cName);
   pf("p",type, cName);
-  if (detailled)      pf("px",type, cName);
-  if (detailled)      pf("py",type, cName);
-  if (detailled)      pf("pz",type, cName);
+  if (detailled1)      pf("px",type, cName);
+  if (detailled1)      pf("py",type, cName);
+  if (detailled1)      pf("pz",type, cName);
 }
 
 
@@ -1013,6 +1016,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     }
     if ((step.Contains("all") || step.Contains("hcal")) && !step.Contains("cosmic") ){
       //hcal rechit plots
+      plotvar("HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj@.size()");
+      plotvar("HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj.energy()");
+      plotvar("log10(HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj.energy())");
+      plotvar("HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj.eaux()");
+      plotvar("log10(HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj.eaux())");
+      plotvar("HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj.flags()");
+      plotvar("HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj.time()");
+      plotvar("log10(HBHERecHitsSorted_hbheprereco__"+recoS+".obj.obj.chi2())");
+
       plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj@.size()");
       plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy()");
       plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy())");
@@ -1020,6 +1032,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eaux())");
       plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.flags()");
       plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.time()");
+      plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.chi2())");
 
       plotvar("HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj@.size()");
       plotvar("HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.energy()");
@@ -1028,6 +1041,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("log10(HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.eaux())");
       plotvar("HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.flags()");
       plotvar("HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.time()");
+      plotvar("log10(HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.chi2())");
 
       plotvar("HFRecHitsSorted_hfreco__"+recoS+".obj.obj@.size()");
       plotvar("HFRecHitsSorted_hfreco__"+recoS+".obj.obj.energy()");
@@ -1414,6 +1428,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       vertexVars("recoVertexs_offlinePrimaryVertices__");
       vertexVars("recoVertexs_offlinePrimaryVerticesWithBS__");
       vertexVars("recoVertexs_inclusiveSecondaryVertices__");
+      //phase-2 vertex reco
+      vertexVars("recoVertexs_offlinePrimaryVertices1D__");
+      vertexVars("recoVertexs_offlinePrimaryVertices1DWithBS__");
+      vertexVars("recoVertexs_offlinePrimaryVertices4D__");
+      vertexVars("recoVertexs_offlinePrimaryVertices4DWithBS__");
+
 
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj@.size()");
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.x()");
@@ -1815,26 +1835,31 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.eta()");
       plotvar("recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.phi()");
       plotvar("log10(recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.energy())");
+      plotvar("recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.time()");
 
       plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj@.size()");
       plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.eta()");
       plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.phi()");
       plotvar("log10(recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.energy())");
+      plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.time()");
 
       plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj@.size()");
       plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj.eta()");
       plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj.phi()");
       plotvar("log10(recoPFClusters_particleFlowClusterHO__"+recoS+".obj.energy())");
+      plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj.time()");
 
       plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj@.size()");
       plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.eta()");
       plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.phi()");
       plotvar("log10(recoPFClusters_particleFlowClusterPS__"+recoS+".obj.energy())");
+      plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.time()");
 
       plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj@.size()");
       plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.eta()");
       plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.phi()");
       plotvar("log10(recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.energy())");
+      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.time()");
 
       // miniaod
       plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj@.size()");

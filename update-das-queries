@@ -6,7 +6,7 @@ CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
 cd $WORKSPACE
-rm -rf $WORKSPACE/error
+rm -f $WORKSPACE/error
 
 if [ ! -d das_results ] ; then
   git clone git@github.com:cms-sw/cms-sw.github.io.git das_results
@@ -36,5 +36,7 @@ for cyc in $RELEASE_CYCLE ; do
   fi
 done
 
-[ -e $WORKSPACE/error ] && exit 1
+if [ -e $WORKSPACE/error ] ; then
+  exit 1
+fi
 

@@ -617,6 +617,7 @@ CMSSW_CATEGORIES={
    "CondFormats/HLTObjects",
    "CondTools/HLT", "Configuration/HLT",
    "CondCore/HLTPlugins",
+   "DQM/HLTEvF",
    "HLTrigger/Configuration", "HLTrigger/Egamma",
    "HLTrigger/HLTanalyzers",
    "HLTrigger/HLTcore", "HLTrigger/HLTexample",

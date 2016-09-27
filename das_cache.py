@@ -109,8 +109,8 @@ if __name__ == "__main__":
     while True:
       threads = [t for t in threads if t.is_alive()]
       tcount = len(threads)
-      print "  Searching DAS (threads: %s)" % tcount
       if(tcount < jobs):
+        print "  Searching DAS (threads: %s)" % tcount
         try:
           t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override))
           t.start()

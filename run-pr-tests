@@ -587,7 +587,7 @@ fi
 if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
   echo '--------------------------------------'
-  ADDON_CMD="addOnTests.py -j $(Jenkins_GetCPU) "
+  ADDON_CMD="timeout 5400 addOnTests.py -j $(Jenkins_GetCPU) "
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
   echo 'END OF ADDON TESTS'

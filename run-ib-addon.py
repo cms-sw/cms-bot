@@ -9,7 +9,7 @@ if (not environ.has_key("CMSSW_BASE")) or (not environ.has_key("SCRAM_ARCH")):
   exit(1)
 
 logger = LogUpdater(environ["CMSSW_BASE"])
-ret = doCmd('cd '+environ["CMSSW_BASE"]+'; rm -rf addOnTests; addOnTests.py -j '+str(cmsRunProcessCount)+' 2>&1 >addOnTests.log ')
+ret = doCmd('cd '+environ["CMSSW_BASE"]+'; rm -rf addOnTests; timeout 5400 addOnTests.py -j '+str(cmsRunProcessCount)+' 2>&1 >addOnTests.log ')
 doCmd('cd '+environ["CMSSW_BASE"]+'/addOnTests/logs; zip -r addOnTests.zip *.log')
 logger.updateAddOnTestsLogs()
 

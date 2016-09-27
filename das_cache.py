@@ -63,6 +63,7 @@ if __name__ == "__main__":
     exit(1)
 
   cache = {}
+  wfs = 0
   for line in o.split("\n"):
     block = None
     try:
@@ -70,7 +71,7 @@ if __name__ == "__main__":
     except:
       print "Error parsing: ",line
       exit(1)
-      
+    wfs += 1
     runs = runs.replace("[","").replace("]","").replace(" ","")
     if "#" in runs:
       block, runs = runs.split("#",1)
@@ -84,6 +85,7 @@ if __name__ == "__main__":
     else:
       cache["file %s site=T2_CH_CERN" % query] = []
 
+  print "Found %s workflows with %s uniq queries" % (wfs, len(cache))
   jobs = opts.jobs
   if jobs <= 0:
     e, o = getstatusoutput("nproc")

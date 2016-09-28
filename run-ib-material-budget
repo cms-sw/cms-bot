@@ -1,0 +1,12 @@
+#!/bin/bash -ex
+
+WORKSPACE="${WORKSPACE-$PWD}"
+mkdir $LOCALRT/run
+cd $LOCALRT/run
+cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/python/single_neutrino_cfg.py
+scram b disable-biglib
+eval `scram run -sh`
+cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py
+mkdir Images
+cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C
+root -b -q 'MaterialBudget.C("Tracker”)'

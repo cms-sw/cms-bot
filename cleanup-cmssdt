@@ -39,7 +39,7 @@ for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-rele
 done
 
 #Keep the following for 8 days
-for dir in valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof iwyu; do
+for dir in valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof iwyu material-budget; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done

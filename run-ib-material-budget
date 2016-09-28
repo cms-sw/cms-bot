@@ -1,11 +1,11 @@
 #!/bin/bash -ex
 
 WORKSPACE="${WORKSPACE-$PWD}"
+eval `scram run -sh`
 mkdir $LOCALRT/run
 cd $LOCALRT/run
 cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/python/single_neutrino_cfg.py >single_neutrino_cfg.log 2>&1
 scram b disable-biglib
-eval `scram run -sh`
 cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py >runP_Tracker_cfg.log 2>&1
 mkdir Images
 cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C .

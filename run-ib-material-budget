@@ -8,5 +8,5 @@ scram b disable-biglib
 eval `scram run -sh`
 cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py >runP_Tracker_cfg.log 2>&1
 mkdir Images
-cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C
+cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C .
 root -b -q 'MaterialBudget.C("Tracker”)'

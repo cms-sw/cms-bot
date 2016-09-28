@@ -22,12 +22,19 @@ fi
 for cyc in $RELEASE_CYCLE ; do
   rel_path=$(scram list -c ${cyc} | grep '_X_' | tail -1 | sed 's|^.* ||')
   if [ "X$rel_path" != "X" ] ; then
-    scram project -d $WORKSPACE -n $cyc  $rel_path
-    (cd $WORKSPACE/$cyc && eval `scram runtime -sh` && echo $CMSSW_VERSION && cd $WORKSPACE/das_results && pwd && $CMS_BOT_DIR/das_cache.py) || touch $WORKSPACE/error
-    rm -rf $cyc
+    RELEASE_ARCH=$(ls $rel_path/lib/)
+    RELEASE_VER=$(basename $rel_path)
+    scram -a $RELEASE_ARCH project -n $RELEASE_VER $rel_path
+    pushd $WORKSPACE/$RELEASE_VER
+      MATRIX_OPT=$(PYTHONPATH=$CMS_BOT_DIR python -c "from RelValArgs import GetMatrixOptions; print GetMatrixOptions('${RELEASE_VER}','${RELEASE_ARCH}')" | sed 's| --command .*||;s|--job-reports||')
+      (set +x ; eval `scram runtime -sh` ; set -x; runTheMatrix.py ${MATRIX_OPT} --dryRun -j 8 | grep 'das_client' | sed "s/.*--query *.file /file /;s|'.*||" > $WORKSPACE/$cyc.query)
+    popd
+    rm -rf $WORKSPACE/$RELEASE_VER
+    $CMS_BOT_DIR/das_cache.py --query $WORKSPACE/$cyc.query --cache $WORKSPACE/das_results/das_queries/$cyc.json --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
+    rm -f $WORKSPACE/$cyc.query
     pushd $WORKSPACE/das_results
       git add das_queries
-      if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then 
+      if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then
         git commit -a -m "Updated das queries for $cyc"
         git pull --rebase
         git push origin

@@ -44,48 +44,20 @@ if __name__ == "__main__":
   parser.add_option("-t", "--time",       dest="time",      help="Refresh query results if previous resulst were older than time sec", default=86400)
   parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests in cache empty results are returned from das", action="store_true", default=False)
   parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", default=-1)
-  opts, args = parser.parse_args()
-  das_queries_dir = "das_queries"
+  parser.add_option("-q", "--query",      dest="query",     help="Name of the file to contains the das queries to run.", default=None)
+  parser.add_option("-c", "--cache",      dest="cache",     help="Name of the cache file name e.g. CMSSW_8_1_X.json", default=None)
+  parser.add_option("-s", "--store",      dest="store",     help="Name of object store directory to store the das queries results", default=None)
 
-  if not "CMSSW_VERSION" in environ:
-    print "Error: Missing release env"
-    exit (1)
-  release = environ["CMSSW_VERSION"]
-  if not "_X_" in release:
-    print "Error: Env is not from CMSSW IB."
-    exit(1)
-  cycle = "_".join(release.split("_X_",1)[0].split("_")[0:3])+"_X"
-  print "Release cycle:",cycle
-  matrix_opts = GetMatrixOptions(environ["CMSSW_VERSION"], environ["SCRAM_ARCH"])
-  e, o = getstatusoutput("runTheMatrix.py %s -n -e | grep 'input from:' | sed 's|  *.*input from:||;s| with run | |'" % matrix_opts)
-  if e:
-    print o
-    exit(1)
+  opts, args = parser.parse_args()
+  if (not opts.query) or (not exists(opts.query)): parser.error("Missing das query file.")
+  if (not opts.cache): parser.error("Missing cache file name to store the results.")
+  if (not opts.store): parser.error("Missing store directory path to store das queries objects.")
 
   cache = {}
-  wfs = 0
-  for line in o.split("\n"):
-    block = None
-    try:
-      workflow, dataset, runs = line.split(" ",2)
-    except:
-      print "Error parsing: ",line
-      exit(1)
-    wfs += 1
-    runs = runs.replace("[","").replace("]","").replace(" ","")
-    if "#" in runs:
-      block, runs = runs.split("#",1)
-    query="dataset="+dataset
-    if block:
-      query = "block="+dataset+"#"+block
-    cmds = []
-    if runs:
-      for run in runs.split(","):
-        cache["file %s run=%s" % (query, run)] = []
-    else:
-      cache["file %s site=T2_CH_CERN" % query] = []
+  for query in [line.rstrip('\n').strip() for line in open(opts.query)]:
+    cache[query] = []
 
-  print "Found %s workflows with %s uniq queries" % (wfs, len(cache))
+  print "Found %s uniq queries" % len(cache)
   jobs = opts.jobs
   if jobs <= 0:
     e, o = getstatusoutput("nproc")
@@ -93,13 +65,13 @@ if __name__ == "__main__":
   if jobs>8: jobs=8
   print "Parallel jobs:", jobs
 
-  getstatusoutput("mkdir -p %s" % das_queries_dir)
+  getstatusoutput("mkdir -p %s" % opts.store)
   query_sha = {}
   das_cache = {}
   threads = []
   for query in cache:
     sha = sha256(query).hexdigest()
-    outfile = "%s/%s/%s" % (das_queries_dir, sha[0:2], sha)
+    outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     query_sha [query] = outfile
     print "Quering ",query
     if exists(outfile):
@@ -122,7 +94,7 @@ if __name__ == "__main__":
           t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override))
           t.start()
           threads.append(t)
-          sleep(5)
+          sleep(1)
         except Exception, e:
           print "ERROR threading das query cache: caught exception: " + str(e)
         break
@@ -136,8 +108,8 @@ if __name__ == "__main__":
       jdata = read_json (obj)
       das_cache[query] = jdata['files']
 
-  print "Generating das query cache for %s" % cycle
-  write_json("%s/%s.json" % (das_queries_dir,cycle), das_cache)
+  print "Generating das query cache for %s" % opts.cache
+  write_json(opts.cache, das_cache)
 
 
 

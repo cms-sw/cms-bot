@@ -7,6 +7,11 @@ cd $LOCALRT/run
 cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/python/single_neutrino_cfg.py >single_neutrino_cfg.log 2>&1
 scram b disable-biglib
 eval `scram run -sh`
+
+#Workaround for patch release where scram is not dropping biglib path from base release
+#following is done to avoid a bug in scram
+export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':')
+
 cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py >runP_Tracker_cfg.log 2>&1
 mkdir Images
 cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C .

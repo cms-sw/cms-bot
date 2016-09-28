@@ -104,11 +104,14 @@ if __name__ == "__main__":
     print "Quering ",query
     if exists(outfile):
       jdata = read_json (outfile)
-      if ((time()-jdata['mtime'])<=opts.time) and (len(jdata['files'])>0):
+      dtime = time()-jdata['mtime']
+      fcount = len(jdata['files'])
+      if (dtime<=opts.time) and (fcount>0):
         das_cache[query] = jdata['files']
-        print "  Found in cache"
+        print "  Found in cache with %s files (age: %s src)" % (fcount , dtime)
         continue
-      else: print "  Cache expired of no files found"
+      elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
+      else: print "  Retrying as cache with empty file list found."
 
     while True:
       threads = [t for t in threads if t.is_alive()]

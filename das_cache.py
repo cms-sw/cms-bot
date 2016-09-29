@@ -44,20 +44,28 @@ if __name__ == "__main__":
   parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", default=86400)
   parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests in cache empty results are returned from das", action="store_true", default=False)
   parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", default=-1)
-  parser.add_option("-q", "--query",      dest="query",     help="Name of the file to contains the das queries to run.", default=None)
-  parser.add_option("-c", "--cache",      dest="cache",     help="Name of the cache file name e.g. CMSSW_8_1_X.json", default=None)
+  parser.add_option("-q", "--query",      dest="query",     help="Release cycle and Queryfiles e.g. CMSSW_5_3_X=<path>/CMSSW_5_3_X.txt", default=[], action='append')
   parser.add_option("-s", "--store",      dest="store",     help="Name of object store directory to store the das queries results", default=None)
 
   opts, args = parser.parse_args()
-  if (not opts.query) or (not exists(opts.query)): parser.error("Missing das query file.")
-  if (not opts.cache): parser.error("Missing cache file name to store the results.")
   if (not opts.store): parser.error("Missing store directory path to store das queries objects.")
 
-  cache = {}
-  for query in [line.rstrip('\n').strip() for line in open(opts.query)]:
-    cache[query] = []
+  cycles = {}
+  uqueries = {}
+  query2cycle = {}
+  for item in opts.query:
+    cycle, qfile = item.split("=",1)
+    if (not cycle) or (not qfile) or (not exists(qfile)):
+       parser.error("Invalid --query %s option or query file '%s' does not exist."  % (item, qfile))
+    if not cycle in cycles: cycles[cycle]={}
+    for query in [line.rstrip('\n').strip() for line in open(qfile)]:
+      cycles[cycle][query] = 1
+      uqueries[query] = []
+      if not query in query2cycle: query2cycle[query]={}
+      query2cycle[query][cycle]=1
 
-  print "Found %s uniq queries" % len(cache)
+  tqueries = len(uqueries)
+  print "Found %s unique queries for %s release cycles" % (tqueries, len(cycles))
   jobs = opts.jobs
   if jobs <= 0:
     e, o = getstatusoutput("nproc")
@@ -67,24 +75,30 @@ if __name__ == "__main__":
 
   getstatusoutput("mkdir -p %s" % opts.store)
   query_sha = {}
-  das_cache = {}
   threads = []
-  for query in cache:
+  nquery = 0
+  inCache = 0 
+  DasSearch = 0
+  for query in uqueries:
+    nquery += 1
     sha = sha256(query).hexdigest()
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     query_sha [query] = outfile
-    print "Quering ",query
+    print "[%s/%s] Quering %s (%s)" % (nquery, tqueries, query, ",".join(query2cycle[query].keys()))
     if exists(outfile):
       jdata = read_json (outfile)
       dtime = time()-jdata['mtime']
       fcount = len(jdata['files'])
       if (dtime<=opts.threshold) and (fcount>0):
-        das_cache[query] = jdata['files']
+        uqueries[query] = jdata['files']
         print "  Found in cache with %s files (age: %s src)" % (fcount , dtime)
+        inCache += 1
         continue
       elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
       else: print "  Retrying as cache with empty file list found."
-
+    else: print "  No cache file found %s" % sha
+    
+    DasSearch += 1
     while True:
       threads = [t for t in threads if t.is_alive()]
       tcount = len(threads)
@@ -101,15 +115,21 @@ if __name__ == "__main__":
       else:
         sleep(10)
   for t in threads: t.join()
+  print "Total queries: %s" % tqueries
+  print "Found in object store: %s" % inCache
+  print "DAS Search: %s" % DasSearch
 
-  for query in query_sha:
-    obj = query_sha [query]
-    if ((not query in das_cache) or (len(das_cache[query])==0)) and exists(obj):
-      jdata = read_json (obj)
-      das_cache[query] = jdata['files']
+  for cycle in cycles:
+    das_cache = {}
+    for query in cycles[cycle]:
+      obj = query_sha [query]
+      if ((not query in uqueries) or (len(uqueries[query])==0)) and exists(obj):
+        uqueries[query] = read_json (obj)['files']
+      if len(uqueries[query])>0:
+        das_cache[query] = uqueries[query]
 
-  print "Generating das query cache for %s" % opts.cache
-  write_json(opts.cache, das_cache)
+    print "Generating das query cache for %s/%s.json" % (opts.store, cycle)
+    write_json("%s/%s.json" %(opts.store, cycle), das_cache)
 
 
 

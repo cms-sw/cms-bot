@@ -2,7 +2,7 @@
 RELEASE_CYCLE=$1
 THRESHOLD_TIME=""
 [ "X$2" = "X" ] || THRESHOLD_TIME="--threshold $2"
-
+voms-proxy-init
 WORKSPACE="${WORKSPACE-$PWD}"
 
 CMS_BOT_DIR=$(dirname $0)
@@ -22,6 +22,7 @@ if [ "X$RELEASE_CYCLE" = "X" ] ; then
   fi
 fi
 
+QUERIES=""
 for cyc in $RELEASE_CYCLE ; do
   rel_path=$(scram list -c ${cyc} | grep '_X_' | tail -1 | sed 's|^.* ||')
   if [ "X$rel_path" != "X" ] ; then
@@ -30,21 +31,25 @@ for cyc in $RELEASE_CYCLE ; do
     scram -a $RELEASE_ARCH project -n $RELEASE_VER $rel_path
     pushd $WORKSPACE/$RELEASE_VER
       MATRIX_OPT=$(PYTHONPATH=$CMS_BOT_DIR python -c "from RelValArgs import GetMatrixOptions; print GetMatrixOptions('${RELEASE_VER}','${RELEASE_ARCH}')" | sed 's| --command .*||;s|--job-reports||')
-      (set +x ; eval `scram runtime -sh` ; set -x; runTheMatrix.py ${MATRIX_OPT} --dryRun -j 8 | grep 'das_client' | sed "s/.*--query *.file /file /;s|'.*||" > $WORKSPACE/$cyc.query)
+      (set +x ; eval `scram runtime -sh` ; set -x; runTheMatrix.py ${MATRIX_OPT} --dryRun -j 8 | grep 'das_client' | sed "s/.*--query *.file /file /;s|'.*||" > $WORKSPACE/$cyc.txt)
     popd
     rm -rf $WORKSPACE/$RELEASE_VER
-    $CMS_BOT_DIR/das_cache.py ${THRESHOLD_TIME} --query $WORKSPACE/$cyc.query --cache $WORKSPACE/das_results/das_queries/$cyc.json --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
-    rm -f $WORKSPACE/$cyc.query
-    pushd $WORKSPACE/das_results
-      git add das_queries
-      if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then
-        git commit -a -m "Updated das queries for $cyc"
-        git pull --rebase
-        git push origin
-      fi
-    popd
+    QUERIES="--query $cyc=$cyc.txt $QUERIES"
   fi
 done
+
+cd $WORKSPACE
+if [ "X$QUERIES" != "X" ] ; then
+  $CMS_BOT_DIR/das_cache.py ${THRESHOLD_TIME} ${QUERIES} --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
+  pushd $WORKSPACE/das_results
+    git add das_queries
+    if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then
+      git commit -a -m "Updated das queries"
+      git pull --rebase
+      git push origin
+    fi
+  popd
+fi
 
 if [ -e $WORKSPACE/error ] ; then
   exit 1

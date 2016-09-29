@@ -1,5 +1,8 @@
 #!/bin/bash -ex
 RELEASE_CYCLE=$1
+THRESHOLD_TIME=""
+[ "X$2" = "X" ] || THRESHOLD_TIME="--threshold $2"
+
 WORKSPACE="${WORKSPACE-$PWD}"
 
 CMS_BOT_DIR=$(dirname $0)
@@ -30,7 +33,7 @@ for cyc in $RELEASE_CYCLE ; do
       (set +x ; eval `scram runtime -sh` ; set -x; runTheMatrix.py ${MATRIX_OPT} --dryRun -j 8 | grep 'das_client' | sed "s/.*--query *.file /file /;s|'.*||" > $WORKSPACE/$cyc.query)
     popd
     rm -rf $WORKSPACE/$RELEASE_VER
-    $CMS_BOT_DIR/das_cache.py --query $WORKSPACE/$cyc.query --cache $WORKSPACE/das_results/das_queries/$cyc.json --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
+    $CMS_BOT_DIR/das_cache.py ${THRESHOLD_TIME} --query $WORKSPACE/$cyc.query --cache $WORKSPACE/das_results/das_queries/$cyc.json --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
     rm -f $WORKSPACE/$cyc.query
     pushd $WORKSPACE/das_results
       git add das_queries

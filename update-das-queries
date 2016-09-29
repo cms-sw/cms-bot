@@ -12,7 +12,7 @@ if [ ! -d das_results ] ; then
   git clone git@github.com:cms-sw/cms-sw.github.io.git das_results
 fi
 if [ "X$RELEASE_CYCLE" = "X" ] ; then
-  RELEASE_CYCLE=$(grep -v DISABLED=1 $CMS_BOT_DIR/config.map | grep -v NO_IB | sed 's|.*RELEASE_QUEUE=||;s|;.*||' | cut -d_ -f1-3 | sort | uniq)
+  RELEASE_CYCLE=$(grep -v DISABLED=1 $CMS_BOT_DIR/config.map | grep -v NO_IB | sed 's|.*RELEASE_QUEUE=||;s|;.*||' | cut -d_ -f1-3 | sed 's|$|_X|' | sort | uniq)
   if [ "X$RELEASE_CYCLE" = "X" ] ; then
     echo "Unable to find and release cycle in config.map"
     exit 1

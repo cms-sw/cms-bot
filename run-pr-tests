@@ -123,16 +123,15 @@ echo 'BASE_IB;'$RELEASE_FORMAT >> $RESULTS_FILE
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
 
 REQ_OK=$(python -c 'from requests import __version__ as v;x=v.split(".");print int(x[0])*10000+int(x[1])*100+int(x[2])>=20300' 2>/dev/null || echo False)
-REQ_OK="False"
 if [ "X$REQ_OK" = "XFalse" ] ; then
   pushd $WORKSPACE
     wget --no-check-certificate https://pypi.python.org/packages/source/r/requests/requests-2.3.0.tar.gz#md5=7449ffdc8ec9ac37bbcd286003c80f00
     tar -xvf requests-2.3.0.tar.gz
     sed -i -e 's|^DEFAULT_RETRIES *=.*|DEFAULT_RETRIES=10|' requests-2.3.0/requests/adapters.py
     if [ -z $PYTHONPATH ] ; then 
-      export PYTHONPATH=$WORKSPACE/requests-2.3.0/requests
+      export PYTHONPATH=$WORKSPACE/requests-2.3.0
     else
-      export PYTHONPATH=$WORKSPACE/requests-2.3.0/requests:$PYTHONPATH
+      export PYTHONPATH=$WORKSPACE/requests-2.3.0:$PYTHONPATH
     fi
   popd
 fi

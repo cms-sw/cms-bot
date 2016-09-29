@@ -41,7 +41,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <options>")
-  parser.add_option("-t", "--time",       dest="time",      help="Refresh query results if previous resulst were older than time sec", default=86400)
+  parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", default=86400)
   parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests in cache empty results are returned from das", action="store_true", default=False)
   parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", default=-1)
   parser.add_option("-q", "--query",      dest="query",     help="Name of the file to contains the das queries to run.", default=None)
@@ -78,7 +78,7 @@ if __name__ == "__main__":
       jdata = read_json (outfile)
       dtime = time()-jdata['mtime']
       fcount = len(jdata['files'])
-      if (dtime<=opts.time) and (fcount>0):
+      if (dtime<=opts.threshold) and (fcount>0):
         das_cache[query] = jdata['files']
         print "  Found in cache with %s files (age: %s src)" % (fcount , dtime)
         continue

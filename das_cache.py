@@ -41,7 +41,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <options>")
-  parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", default=86400)
+  parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", type=int, default=86400)
   parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests in cache empty results are returned from das", action="store_true", default=False)
   parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", default=-1)
   parser.add_option("-q", "--query",      dest="query",     help="Release cycle and Queryfiles e.g. CMSSW_5_3_X=<path>/CMSSW_5_3_X.txt", default=[], action='append')

@@ -3,7 +3,7 @@
 eval `scram run -sh`
 mkdir $LOCALRT/run
 cd $LOCALRT/run
-cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/python/single_neutrino_cfg.py >single_neutrino_cfg.log 2>&1
+cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/python/single_neutrino_cfg.py >$LOCALRT/single_neutrino_cfg.log 2>&1
 scram b disable-biglib
 eval `scram run -sh`
 
@@ -11,7 +11,7 @@ eval `scram run -sh`
 #following is done to avoid a bug in scram
 export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':')
 
-cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py >runP_Tracker_cfg.log 2>&1
+cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py >$LOCALRT/runP_Tracker_cfg.log 2>&1
 mkdir Images
 cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C .
 root -b -q 'MaterialBudget.C("Tracker")' || true

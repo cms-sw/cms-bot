@@ -123,10 +123,9 @@ if __name__ == "__main__":
     das_cache = {}
     for query in cycles[cycle]:
       obj = query_sha [query]
-      if ((not query in uqueries) or (len(uqueries[query])==0)) and exists(obj):
+      if (len(uqueries[query])==0) and exists(obj):
         uqueries[query] = read_json (obj)['files']
-      if len(uqueries[query])>0:
-        das_cache[query] = uqueries[query]
+      das_cache[query] = uqueries[query]
 
     print "Generating das query cache for %s/%s.json" % (opts.store, cycle)
     write_json("%s/%s.json" %(opts.store, cycle), das_cache)

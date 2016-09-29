@@ -4,7 +4,6 @@ from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
 from cms_static import CMSSW_PULL_REQUEST_COMMANDS, CMSSW_ISSUE_COMMANDS
-import yaml
 import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
@@ -123,6 +122,7 @@ def check_extra_labels(first_line, extra_labels):
     extra_labels["backport"]="backport"
 
 def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
+  import yaml
   print 'API Rate Limit'
   print 'Limit, Remaining: ', gh.rate_limiting
   print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)

@@ -61,7 +61,6 @@ CMSSW_L2 = {
   "vanbesien" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "iahmad-khan" : ["externals"],
-  "degano" : ["externals"],
   "hengne" : ["pdmv"],
   "ghellwig" : ["alca"],
   "monttj" : ["analysis"],

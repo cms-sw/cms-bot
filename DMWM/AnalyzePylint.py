@@ -13,9 +13,12 @@ summaryMessage = ''
 longMessage = ''
 reportOn = {}
 failed = False
+reportExists = False
 
 with open('pylintReport.json', 'r') as reportFile:
     report = json.load(reportFile)
+    if report:
+        reportExists = True
 
     for filename in sorted(report.keys()):
         fileReport = report[filename]
@@ -93,8 +96,10 @@ issueID = None
 if 'ghprbPullId' in os.environ:
     issueID = os.environ['ghprbPullId']
 
-message = 'No pylint warnings for pull request %s.\n' % issueID
-
+if reportExists:
+    message = 'No pylint warnings for pull request %s.\n' % issueID
+else:
+    message = 'No python changes for pull request %s.\n' % issueID
 
 if summaryMessage or longMessage:
     message = 'Summary of pylint changes for pull request %s:\n' % issueID + summaryMessage

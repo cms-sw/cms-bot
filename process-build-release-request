@@ -936,7 +936,7 @@ if __name__ == "__main__":
 
   if status == NEW_ISSUE:
     approvers = ", ".join( [ "@"+x for x in APPROVE_BUILD_RELEASE ] )
-    ALL_WATCHERS = (yaml.load(file("build-release-watchers.yaml")))
+    ALL_WATCHERS = (yaml.load(file(CMS_BOT_DIR+"/build-release-watchers.yaml")))
     watchers = ALL_WATCHERS.get( release_queue )
     xqueue = release_queue
     if release_queue != release_branch: xqueue =release_queue+"("+release_branch+")"

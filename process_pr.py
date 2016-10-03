@@ -201,6 +201,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       if not has_category:
         new_package_message = "\nThe following packages do not have a category, yet:\n\n"
         new_package_message += "\n".join([package for package in packages if not package in all_packages]) + "\n"
+        new_package_message += "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories.py to assign category\n"
         print new_package_message
         signing_categories.add("new-package")
 

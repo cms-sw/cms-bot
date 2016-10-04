@@ -3,7 +3,7 @@ CMSSW_X_Y_Z=$1
 
 FULL_RELEASE=`echo $CMSSW_X_Y_Z | grep '_[a-zA-Z]*patch[1-9][0-9]*.*' | sed 's|_[a-zA-Z]*patch.*||'`
 if [ "X$FULL_RELEASE" != "X" ] ; then
-  SCRAM_ARCH=`grep "label=$FULL_RELEASE;" releases.map | grep 'prodarch=1;' | sed 's|.*architecture=||;s|;.*||'`
+  SCRAM_ARCH=`grep "label=$FULL_RELEASE;" $CMS_BOT_DIR/releases.map | grep 'prodarch=1;' | sed 's|.*architecture=||;s|;.*||'`
 fi
 if [ "X$FULL_RELEASE" = "X" -o "X$SCRAM_ARCH" = "X" ] ; then
   RELEASE_SERIES=`echo $CMSSW_X_Y_Z | sed 's/^\(CMSSW_[0-9][0-9]*_[0-9][0-9]*_\).*/\1X/'`

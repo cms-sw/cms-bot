@@ -31,7 +31,8 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_0_X/gcc530"].append("IB/CMSSW_8_0_X/gcc5
 
 #GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"].append("CMSSW_8_0_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"]=[]
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"].append("CMSSW_8_0_ROOT64_X")
+#disable CMSSW_8_0_X -> CMSSW_8_0_ROOT64_X as ROOT64 80X IBs are disbaled.
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_0_X"].append("CMSSW_8_0_ROOT64_X")
 
 #Automatically added for CMSSW new branch CMSSW_8_1_X
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_8_1_X"]=[]

@@ -878,6 +878,7 @@ if __name__ == "__main__":
     print "Unable to find production architecture for the release"
     post_message( issue, "Unable to find production architecture for the release" )
     exit(0)
+  print "debug production arch: ",production_architecture.split("\n")
   production_architecture = production_architecture.split("\n")[-1]
 
   release_branch = release_queue

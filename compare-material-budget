@@ -1,0 +1,25 @@
+#!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+REF_CMSSW_VERSION=$1
+eval `scram run -sh`
+mkdir -p $LOCALRT/run/Images
+cd $LOCALRT/run
+scram b disable-biglib
+eval `scram run -sh`
+
+#Workaround for patch release where scram is not dropping biglib path from base release
+#following is done to avoid a bug in scram
+export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':')
+
+source $CMS_BOT_DIR/jenkins-artifacts
+get_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_new.root
+get_jenkins_artifacts material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_old.root
+cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/TrackerMaterialBudgetComparison.C .
+root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > $LOCALRT/run/compare.log 2>&1
+ln -sf ../../../../material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH} ref
+echo ${REF_CMSSW_VERSION} > $LOCALRT/run/cmssw-ref-release
+rm -f $LOCALRT/run/matbdg_Tracker*.root $LOCALRT/run/TrackerMaterialBudgetComparison.C
+send_jenkins_artifacts $LOCALRT/run material-budget/$CMSSW_VERSION/$SCRAM_ARCH/comparison
+

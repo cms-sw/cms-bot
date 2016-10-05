@@ -1,4 +1,6 @@
 #!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
 eval `scram run -sh`
 mkdir $LOCALRT/run
@@ -16,10 +18,6 @@ mkdir Images
 cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C .
 root -b -q 'MaterialBudget.C("Tracker")' || true
 
-SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-for i in 1 2 3 4 5 ;  do
-  echo Trying to upload results $i
-  ( ssh $SSH_OPTS cmsbuild@cmssdtprod.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/material-budget/$CMSSW_VERSION/$SCRAM_ARCH && \
-    rsync -az -e "ssh $SSH_OPTS" $LOCALRT/run/ cmsbuild@cmssdtprod.cern.ch:/data/sdt/SDT/jenkins-artifacts/material-budget/$CMSSW_VERSION/$SCRAM_ARCH/ ) && break
-  sleep 120
-done
+source $CMS_BOT_DIR/jenkins-artifacts
+send_jenkins_artifacts $LOCALRT/run material-budget/$CMSSW_VERSION/$SCRAM_ARCH
+

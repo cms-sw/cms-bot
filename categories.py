@@ -931,6 +931,7 @@ CMSSW_CATEGORIES={
    "DQM/SiPixelPhase1Common",
    "DQM/SiPixelPhase1Config",
    "DQM/SiPixelPhase1Digis",
+   "DQM/SiPixelPhase1RawData",
    "DQM/SiPixelPhase1RecHits",
    "DQM/SiPixelPhase1TrackClusters",
    "DQM/SiPixelPhase1TrackEfficiency",

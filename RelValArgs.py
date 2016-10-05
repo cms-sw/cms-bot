@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import re
+MULTI_THREAD_OPT  = "-t 4"
+SINGLE_THREAD_OPT = "-t 1"
 RELVAL_KEYS = {"dropNonMTSafe":{}, 
                "customiseWithTimeMemorySummary":{}, 
                "PREFIX":{},
@@ -16,7 +18,7 @@ RELVAL_KEYS["PREFIX"]["CMSSW_8_.+"]         = "--prefix 'timeout --signal SIGTER
 RELVAL_KEYS["PREFIX"]["^(?!CMSSW_8_).+"]    = "--prefix 'timeout --signal SIGSEGV 7200 '"
 RELVAL_KEYS["JOB_REPORT"][".+"]             = "--job-reports"
 RELVAL_KEYS["USE_INPUT"][".+"]              = "--useInput all"
-RELVAL_KEYS["THREADED"][THREADED_IBS]       = "-t 4"
+RELVAL_KEYS["THREADED"][THREADED_IBS]       = MULTI_THREAD_OPT
 RELVAL_KEYS["DAS_OPTION"][".+"]             = "--das-options '--cache @DAS_FILE@'"
 RELVAL_KEYS["SLHC_WORKFLOWS"]["_SLHCDEV_"]  = "-w upgrade -l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
 RELVAL_KEYS["SLHC_WORKFLOWS"]["_SLHC_"]     = "-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
@@ -80,4 +82,11 @@ def GetMatrixOptions(release, arch, dasfile=None):
     m=re.search("(@([a-zA-Z_]+)@)",cmd)
   
   return re.sub("\s+"," ",cmd)
+
+def FixWFArgs(release, arch, wf, args):
+  if not isThreaded(release, arch): return args
+  NonThreadedWF = ["101.0","102.0"]
+  if wf in NonThreadedWF:
+    args = args.replace(MULTI_THREAD_OPT,SINGLE_THREAD_OPT)
+  return args
 

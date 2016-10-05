@@ -2,11 +2,13 @@
 import os, sys, glob, re, shutil, time, threading, json
 from cmsutils import doCmd
 from es_relval_log import es_parse_log
+from RelValArgs import FixWFArgs
 
 def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
   if (not force) and logger and logger.relvalAlreadyDone(workflow):
     print "Message>> Not ruuning workflow ",workflow," as it is already ran"
     return
+  args = FixFWArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
   workdir = os.path.join(basedir, workflow)
   matrixCmd = 'runTheMatrix.py -l ' + workflow +' '+args
   try:

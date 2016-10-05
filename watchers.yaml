@@ -82,6 +82,7 @@ btv-pog:
   - RecoJets/JetAssociationProducers
   - RecoVertex/AdaptiveVertexFinder
   - RecoVertex/AdaptiveVertexFit
+  - SimTracker/TrackHistory
   - Validation/RecoB
 makortel:
   - CommonTools/CandAlgos

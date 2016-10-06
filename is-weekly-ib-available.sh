@@ -15,12 +15,19 @@ TOTAL_WAIT=0
 for dir in $IB_WEEK_DIR ; do
   if [ ! -e ${dir} ] ; then echo "Error: No such directory: ${dir}"; exit 1; fi
 done
+END_WAIT=NO
 while [ true ] ; do
   for proj in cmssw cmssw-patch ; do
     for dir in $IB_WEEK_DIR; do
-      if [ -d ${dir}/$ARCH/cms/$proj/$RELEASE ] ; then exit 0 ; fi
+      if [ -d ${dir}/$ARCH/cms/$proj/$RELEASE ] ; then
+        if [ "$END_WAIT" = "YES" ] ; then
+          sleep 120
+        fi
+        exit 0
+      fi
     done
   done
+  END_WAIT=YES
   if [ $TOTAL_WAIT -gt $MAX_WAIT ] ; then exit 1; fi
   echo "Waiting for IB since ${TOTAL_WAIT} secs"
   sleep $WAIT_STEP

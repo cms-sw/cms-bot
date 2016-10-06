@@ -1116,6 +1116,7 @@ CMSSW_CATEGORIES={
    "CondFormats/RecoMuonObjects", "CondFormats/RunInfo",
    "CondFormats/SiPixelObjects",
    "CondFormats/SiStripObjects",
+   "CondFormats/CTPPSReadoutObjects",
    "CondFormats/TotemReadoutObjects",
    "Configuration/AlCa",
    "CondCore/DBCommon", "CondCore/DBOutputService",

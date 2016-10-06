@@ -15,9 +15,7 @@ RUNS_TO_KEEP=2
 for dir in pull-request-integration ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
-  if [ $(ls | wc -l) -gt $JOBS_TO_KEEP ] ; then
-    ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
-  fi
+  ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
   done
@@ -28,22 +26,17 @@ RUNS_TO_KEEP=1
 for dir in  baseLineComparisons ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
-  if [ $(ls | wc -l) -gt $JOBS_TO_KEEP ] ; then
-    ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
-  fi
+  ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
   done
 done
 
 JOBS_TO_KEEP=50
-#Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
-for dir in  material-budget-ref ; do
+for dir in material-budget-ref ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
-  if [ $(ls | wc -l) -gt $JOBS_TO_KEEP ] ; then
-    ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
-  fi
+  ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Keep the following for 15 days

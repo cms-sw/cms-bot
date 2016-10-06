@@ -9,27 +9,41 @@ fi
 
 JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 DIRS_PROCESSED=
-PR_TESTS_TO_KEEP=200
+JOBS_TO_KEEP=200
 RUNS_TO_KEEP=2
-#Keep $PR_TESTS_TO_KEEP of these
+#Keep $JOBS_TO_KEEP of these
 for dir in pull-request-integration ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
-  ls -rt | head -n -$PR_TESTS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  if [ $(ls | wc -l) -gt $JOBS_TO_KEEP ] ; then
+    ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  fi
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
   done
 done
 
 RUNS_TO_KEEP=1
-#Keep $PR_TESTS_TO_KEEP of these with RUNS_TO_KEEP
+#Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
 for dir in  baseLineComparisons ; do
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
-  ls -rt | head -n -$PR_TESTS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  if [ $(ls | wc -l) -gt $JOBS_TO_KEEP ] ; then
+    ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  fi
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
   done
+done
+
+JOBS_TO_KEEP=50
+#Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
+for dir in  material-budget-ref ; do
+  DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  if [ $(ls | wc -l) -gt $JOBS_TO_KEEP ] ; then
+    ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  fi
 done
 
 #Keep the following for 15 days

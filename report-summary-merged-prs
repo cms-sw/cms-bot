@@ -55,6 +55,7 @@ parser.add_option( "-d" , "--cmsdist-prs"   , dest="cmsdist_pr_cache" , help="Fi
 #    "relvals": [],
 #    "static_checks": "",
 #    "valgrind": "",
+#    "material_bugdet" : "",
 #    "isIB": Boolean,
 #    "tests_archs": [],
 #    "release_name": "",
@@ -593,6 +594,7 @@ def print_results(results):
       print '\t' + 'DQM Tests: ' + comp['dqm_tests']
       print '\t' + 'Static Checks: ' + comp['static_checks']
       print '\t' + 'Valgrind: ' + comp['valgrind']
+      print '\t' + 'Material bugdet: ' + comp['material_bugdet']
       print '\t' + 'Igprof: ' + comp['igprof']
       print '\t' + 'Comparison Baseline: ' + comp['comp_baseline']
       print '\t' + 'Comparison Baseline State: ' + comp['comp_baseline_state']
@@ -684,6 +686,8 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp['hlt_tests' ] = 'not-found'
       if not comp.get( 'valgrind' ):
         comp['valgrind' ] = 'not-found'
+      if not comp.get( 'material_bugdet' ):
+        comp['material_bugdet' ] = 'not-found'
       if not comp.get( 'igprof' ):
         comp['igprof' ] = 'not-found'
       if not comp.get( 'comp_baseline' ):
@@ -719,6 +723,14 @@ def find_comparison_baseline_results( comparisons , architecture ):
     comp['comp_baseline_state']="errors"
     if comp ['comp_baseline'] != 'not-found':
       comp['comp_baseline_state'] = find_one_comparison_baseline_errors( rel_name , architecture )
+#
+# Finds for an IB the results of the material_bugdet
+#
+def find_material_bugdet_results( comparisons , architecture ):
+  for comp in comparisons:
+    rel_name = comp['compared_tags'].split('-->')[1]
+    print 'Looking for material_bugdet results for ', rel_name
+    comp['material_bugdet'] = find_one_material_bugdet( rel_name , architecture )
 #
 # Finds for an IB the results of the valgrind
 #
@@ -791,6 +803,21 @@ def find_one_static_check( release_name , architecture ):
   return 'inprogress'
 
 #
+# Looks for one material_bugdet result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#
+def find_one_material_bugdet( release_name , architecture ):
+  command_to_execute = MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS.replace('RELEASE_NAME',release_name)
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
+  out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
+  if ret_code == 0:
+    print 'found'
+    return 'found'
+  print 'inprogress'
+  return 'inprogress'
+
+#
 # Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
 #
 def find_one_valgrind( release_name , architecture ):
@@ -835,7 +862,7 @@ def find_one_comparison_baseline_errors( release_name , architecture ):
     return "errors"
 
 #
-# Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is ''
+# Looks for one comparison baseline result for the IB, if it finds it, the value is 'found' if not, the value is ''
 #
 def find_one_comparison_baseline( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_COMPARISON_BASELINE.replace('RELEASE_NAME',release_name)
@@ -1054,6 +1081,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME && ls '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/'
   MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1 = 'test -s '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/reports/modules2statics-filter1.txt && echo reports/modules2statics-filter1.txt'
+  MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/material-budget/RELEASE_NAME'
   MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME'
   MAGIC_COMMAND_FIND_IGPROF = 'test -d '+JENKINS_ARTIFACTS_DIR+'/igprof/RELEASE_NAME'
   MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
@@ -1184,6 +1212,8 @@ if __name__ == "__main__":
           find_static_results( release_queue_results['comparisons'] , arch )
         if 'valgrind' in tests_to_find:
           find_valgrind_results( release_queue_results['comparisons'] , arch )
+        if 'material_bugdet' in tests_to_find:
+          find_material_bugdet_results( release_queue_results['comparisons'] , arch )
         if 'baseline' in tests_to_find:
           find_comparison_baseline_results( release_queue_results['comparisons'] , arch )
         if 'igprof' in tests_to_find:

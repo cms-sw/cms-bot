@@ -812,8 +812,14 @@ def find_one_material_budget( release_name , architecture ):
   out,err,ret_code = get_output_command(command_to_execute)
   print "Ran:",out,err,ret_code,command_to_execute
   if ret_code == 0:
-    print 'found'
-    return 'found'
+    arch = out.split()[0]
+    print 'found',arch
+    command_to_execute = MAGIC_COMMAND_FIND_MATERIL_BUDGET_COMPARISON_CHECKS.replace('RELEASE_NAME',release_name).replace('ARCHITECTURE', architecture )
+    print "Running ",command_to_execute
+    out,err,ret_code = get_output_command(command_to_execute)
+    if ret_code == 0:
+      return arch+":"+out
+    return arch+":-1"
   print 'inprogress'
   return 'inprogress'
 
@@ -1081,7 +1087,8 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME && ls '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/'
   MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1 = 'test -s '+JENKINS_ARTIFACTS_DIR+'/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/reports/modules2statics-filter1.txt && echo reports/modules2statics-filter1.txt'
-  MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/material-budget/RELEASE_NAME'
+  MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/material-budget/RELEASE_NAME && ls '+JENKINS_ARTIFACTS_DIR+'/material-budget/RELEASE_NAME/'
+  MAGIC_COMMAND_FIND_MATERIL_BUDGET_COMPARISON_CHECKS = "TEST_FILE="+JENKINS_ARTIFACTS_DIR+"/material-budget/RELEASE_NAME/ARCHITECTURE/comparison/Images/MBDiff.txt && test -f $TEST_FILE && grep '0$' $TEST_FILE | wc -l"
   MAGIC_COMMAND_FIND_VALGRIND = 'test -d '+JENKINS_ARTIFACTS_DIR+'/valgrind/RELEASE_NAME'
   MAGIC_COMMAND_FIND_IGPROF = 'test -d '+JENKINS_ARTIFACTS_DIR+'/igprof/RELEASE_NAME'
   MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f '+JENKINS_ARTIFACTS_DIR+'/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'

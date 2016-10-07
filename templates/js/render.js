@@ -381,6 +381,16 @@ add_material_budget_tests_link = function ( title_cell, isFound, currentTag ){
   sa_link.append($('<span></span>').text(' Material Bugdet'))
   title_cell.append(sa_link)
   title_cell.append($("<br>"))
+
+  comp = found_items[1]
+  if (comp == "-1") {return}
+  var sa_link1 = $("<a></a>").attr("href", url + "/comparison/")
+  sa_link1.append($('<span>&nbsp;&nbsp;&nbsp;&nbsp;</span>'))
+  if (comp == "0"){sa_link1.append($('<span class="glyphicon glyphicon-ok-sign"></span>'))}
+  else{sa_link1.append($('<span class="glyphicon glyphicon-warning-sign"></span>'))}
+  sa_link1.append($('<span></span>').text(' comparison'))
+  title_cell.append(sa_link1)
+  title_cell.append($("<br>"))
 }
 
 /**

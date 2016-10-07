@@ -818,7 +818,7 @@ def find_one_material_budget( release_name , architecture ):
     print "Running ",command_to_execute
     out,err,ret_code = get_output_command(command_to_execute)
     if ret_code == 0:
-      return arch+":"+out
+      return arch+":"+out.split()[0]
     return arch+":-1"
   print 'inprogress'
   return 'inprogress'

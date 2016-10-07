@@ -1212,7 +1212,7 @@ if __name__ == "__main__":
           find_static_results( release_queue_results['comparisons'] , arch )
         if 'valgrind' in tests_to_find:
           find_valgrind_results( release_queue_results['comparisons'] , arch )
-        if 'material_bugdet' in tests_to_find:
+        if 'material-bugdet' in tests_to_find:
           find_material_bugdet_results( release_queue_results['comparisons'] , arch )
         if 'baseline' in tests_to_find:
           find_comparison_baseline_results( release_queue_results['comparisons'] , arch )

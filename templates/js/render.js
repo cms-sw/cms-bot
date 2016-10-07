@@ -373,14 +373,14 @@ add_material_budget_tests_link = function ( title_cell, isFound, currentTag ){
     add_inprogress_item(title_cell,' Material Bugdet')
     return
   }
-  if ( isFound == 'found' ){
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/material-budget/' + currentTag 
-    var sa_link = $("<a></a>").attr("href", url)
-    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
-    sa_link.append($('<span></span>').text(' Material Bugdet'))
-    title_cell.append(sa_link)
-    title_cell.append($("<br>"))
-  }
+  found_items = isFound.trim().split(":")
+  arch = found_items[0]
+  var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/material-budget/' + currentTag + '/' + arch
+  var sa_link = $("<a></a>").attr("href", url)
+  sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+  sa_link.append($('<span></span>').text(' Material Bugdet'))
+  title_cell.append(sa_link)
+  title_cell.append($("<br>"))
 }
 
 /**

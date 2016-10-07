@@ -1059,3 +1059,8 @@ calderona:
 - Validation/MuonIdentification
 - Validation/MuonIsolation
 - Validation/RecoMuon
+sviret:
+- DataFormats/L1TrackTrigger
+- L1Trigger/TrackTrigger
+- L1Trigger/TrackFindingAM
+- SLHCUpgradeSimulations/Configuration

@@ -365,9 +365,9 @@ add_valgrind_tests_link = function ( title_cell, isFound, currentTag ){
 }
 
 /**
- * Generates the material_bugdet tests link link and adds it to the cell for the IB
+ * Generates the material_budget tests link link and adds it to the cell for the IB
  */
-add_material_bugdet_tests_link = function ( title_cell, isFound, currentTag ){
+add_material_budget_tests_link = function ( title_cell, isFound, currentTag ){
   if ( isFound == 'not-found'){return}
   if (isFound == 'inprogress'){
     add_inprogress_item(title_cell,' Material Bugdet')
@@ -515,7 +515,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
     add_igprof_tests_link( title_cell , comparison.igprof , current_tag )
     add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
     add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )
-    add_material_bugdet_tests_link( title_cell , comparison.material_bugdet , current_tag )
+    add_material_budget_tests_link( title_cell , comparison.material_budget , current_tag )
   }
 
   var title_row = $('<tr>')

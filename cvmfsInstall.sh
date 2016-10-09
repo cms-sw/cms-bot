@@ -67,7 +67,7 @@ fi
 
 echo $ARCHITECTURES
 # Prepare the cvmfs repository in read/write mode
-cvmfs_server transaction || (cvmfs_server abort -f && cvmfs_server transaction)
+cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/cms-ib.cern.ch/is_publishing.lock) && cvmfs_server transaction)
 # Check if the transaction really happened
 if [ `touch $BASEDIR/is_writable 2> /dev/null; echo "$?"` -eq 0 ]; then
 rm $BASEDIR/is_writable

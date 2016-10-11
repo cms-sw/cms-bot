@@ -142,7 +142,7 @@ which das_client
 if [ $(grep 'V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   git clone git@github.com:cms-sw/cmssw-config
   pushd cmssw-config
-    git checkout V05-05-09
+    git checkout V05-05-13
   popd
   mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
   cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM

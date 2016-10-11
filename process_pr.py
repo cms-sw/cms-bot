@@ -540,7 +540,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
-                        "cms-bot commands are list here %(issue_url)s\n",
+                        "cms-bot commands are listed here %(issue_url)s\n",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=issue.user.login.encode("ascii", "ignore"),
                         name=uname,
@@ -671,7 +671,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "%(watchers)s"
                         "%(releaseManagers)s"
                         "%(patch_branch_warning)s\n"
-                        "cms-bot commands are list here %(issue_url)s\n",
+                        "cms-bot commands are listed here %(issue_url)s\n",
                         msgPrefix=NEW_PR_PREFIX,
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",

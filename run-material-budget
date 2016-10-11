@@ -1,0 +1,11 @@
+#!/bin/bash -ex
+
+cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/python/single_neutrino_cfg.py >$LOCALRT/single_neutrino_cfg.log 2>&1
+#Remove big plugin paths
+export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':')
+
+cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py >$LOCALRT/runP_Tracker_cfg.log 2>&1
+mkdir Images
+cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C .
+root -b -q 'MaterialBudget.C("Tracker")' || true
+

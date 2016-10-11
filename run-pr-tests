@@ -615,14 +615,16 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
 else
   echo 'ADDON_TESTS_RESULTS;NOTRUN' >> $RESULTS_FILE
 fi
-MB_COMPARISON=false
+
 MB_TESTS_OK=NOTRUN
 if [ $MB_COMPARISON = "YES" -a "$ALL_OK" = "true" ] ; then
-  mkdir $WORKSPACE/material-budget
-  MB_TESTS_OK=OK
-  pushd $WORKSPACE/material-budget
-    $CMS_BOT_DIR/run-material-budget || MB_TESTS_OK=ERROR
-  popd
+  if has_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/Images ; then
+    mkdir $WORKSPACE/material-budget
+    MB_TESTS_OK=OK
+    pushd $WORKSPACE/material-budget
+      $CMS_BOT_DIR/run-material-budget || MB_TESTS_OK=ERROR
+    popd
+  fi
 fi
 echo "MATERIAL_BUDGET;${MB_TESTS_OK}" >> $RESULTS_FILE
 

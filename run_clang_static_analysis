@@ -18,6 +18,7 @@ cp -pv src/Utilities/StaticAnalyzers/scripts/*  $LOCALRT/tmp
 cd $LOCALRT/tmp
 chmod +x *.py *.sh
 ./run_class_dumper.sh $J
+cp -pv $LOCALRT/tmp/bloom.bin $LOCALRT/src/Utilities/StaticAnalyzers/scripts/bloom.bin
 ./run_class_checker.sh $J
 
 mv $LOCALRT/llvm-analysis/* $WORKSPACE/llvm-analysis

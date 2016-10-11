@@ -615,7 +615,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
 else
   echo 'ADDON_TESTS_RESULTS;NOTRUN' >> $RESULTS_FILE
 fi
-
+MB_COMPARISON=false
 MB_TESTS_OK=NOTRUN
 if [ $MB_COMPARISON = "YES" -a "$ALL_OK" = "true" ] ; then
   mkdir $WORKSPACE/material-budget

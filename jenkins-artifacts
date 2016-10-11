@@ -5,6 +5,16 @@ ARTIFACTS_MACHINE=${ARTIFACTS_USER}@cmssdtprod.cern.ch
 ARTIFACT_BASE_DIR=/data/sdt/SDT/jenkins-artifacts
 SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
+function has_jenkins_artifacts ()
+{
+  local SRC=$1
+  local TYPE=$2
+  [ "X$TYPE" = "X" ] && TYPE="-e"
+  ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "test ${TYPE} ${ARTIFACT_BASE_DIR}/${SRC}" && echo "JA_STATUS=OK" && return 0
+  echo "JA_STATUS=ERROR"
+  return 1
+}
+
 function send_jenkins_artifacts ()
 {
   local SRC=$1
@@ -14,26 +24,28 @@ function send_jenkins_artifacts ()
   if [ "X$IS_DIR" = "X" ] ; then DES_DIR=$(dirname $DES) ; fi
   for i in 1 2 3 4 5 ;  do
     ( ssh $SSH_OPTS ${ARTIFACTS_MACHINE} mkdir -p ${ARTIFACT_BASE_DIR}/${DES_DIR} && \
-      rsync -az -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} ) && break
-    echo "Retry after 120 sec"
+      rsync -az -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} && echo "JA_STATUS=OK") && return
     sleep 120
   done
+  echo "JA_STATUS=ERROR"
+  return 1
 }
 
 function get_jenkins_artifacts ()
 {
   local SRC=$1
   local DES=$2
-  local IS_DIR=$(ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "test -e ${ARTIFACT_BASE_DIR}/${SRC} && test -d ${ARTIFACT_BASE_DIR}/${SRC}" && echo "/")
+  local IS_DIR=$(ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "test -e ${ARTIFACT_BASE_DIR}/${SRC} && test -d ${ARTIFACT_BASE_DIR}/${SRC}" && echo "/") || return 1
   if [ "X${IS_DIR}" = "X/" ] ; then
     mkdir -p $DES
   else
     mkdir -p $(dirname $DES)
   fi
   for i in 1 2 3 4 5 ;  do
-    rsync -az -e "ssh $SSH_OPTS" ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${SRC}${IS_DIR} ${DES}${IS_DIR} && break
-    echo "Retry after 120 sec"
+    rsync -az -e "ssh $SSH_OPTS" ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${SRC}${IS_DIR} ${DES}${IS_DIR} && echo "JA_STATUS=OK" && return
     sleep 120
   done
+  echo "JA_STATUS=ERROR"
+  return 1
 }
 

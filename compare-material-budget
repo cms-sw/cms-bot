@@ -14,12 +14,12 @@ eval `scram run -sh`
 export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':')
 
 source $CMS_BOT_DIR/jenkins-artifacts
-get_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_new.root
-get_jenkins_artifacts material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_old.root
+get_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_new.root || exit 1
+get_jenkins_artifacts material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_old.root || exit 1
 cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/TrackerMaterialBudgetComparison.C .
 root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > $LOCALRT/run/compare.log 2>&1
 ln -sf ../../../../material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH} ref
 echo ${REF_CMSSW_VERSION} > $LOCALRT/run/cmssw-ref-release
 rm -f $LOCALRT/run/matbdg_Tracker*.root $LOCALRT/run/TrackerMaterialBudgetComparison.C
-send_jenkins_artifacts $LOCALRT/run material-budget/$CMSSW_VERSION/$SCRAM_ARCH/comparison
+send_jenkins_artifacts $LOCALRT/run material-budget/$CMSSW_VERSION/$SCRAM_ARCH/comparison || exit 1
 

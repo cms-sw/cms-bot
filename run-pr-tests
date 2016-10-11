@@ -1,6 +1,8 @@
 #!/bin/sh -ex
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+source $CMS_BOT_DIR/jenkins-artifacts
+
 CMSBUILD_KEY="/build/`whoami`/`whoami`.keytab"
 case $NODE_NAME in
   lxplus* ) CMSBUILD_KEY="$CMSBUILD_KEYTAB/cmsbuild.keytab" ;;
@@ -76,13 +78,11 @@ if [ ! -d CMSSW_* ]; then
     fi
     for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
       COMP_REL=$(echo $SCRAM_REL | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_[^0-9]*\(_X_.*\)|\1\2|')
-      FILE_CHECK="/data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt"
-      if ssh cmsbuild@cmssdtprod.cern.ch test -f $FILE_CHECK ; then
-        RELEASE_FORMAT=$SCRAM_REL
-        COMPARISON_ARCH=$COMP_ARCH
-        COMPARISON_REL=$COMP_REL
-        break
-      fi
+      has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
+      RELEASE_FORMAT=$SCRAM_REL
+      COMPARISON_ARCH=$COMP_ARCH
+      COMPARISON_REL=$COMP_REL
+      break
     done
     if [ "$RELEASE_FORMAT" = "$RELEASE_QUEUE" ] ; then
       RELEASE_FORMAT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
@@ -157,6 +157,7 @@ git config --global --replace-all merge.renamelimit 2500
 
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits
+MB_COMPARISON=NO
 touch $RECENT_COMMITS_FILE
 # use the branch name if necesary
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
@@ -202,6 +203,9 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
   HOUR=`echo $IB_DATE | sed -e "s/$YEAR_MONTH_DAY-//g" | sed -e 's/0*//g'`
   git rev-list --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
   git log --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
+  if [ $(grep '^Geometry/' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
+    has_jenkins_artifacts material-budget/$RELEASE_FORMAT/$SCRAM_ARCH/Images -d && MB_COMPARISON=YES
+  fi
 fi
 
 #If Fireworks is the only package involved I only compile and run unit tests
@@ -612,6 +616,16 @@ else
   echo 'ADDON_TESTS_RESULTS;NOTRUN' >> $RESULTS_FILE
 fi
 
+MB_TESTS_OK=NOTRUN
+if [ $MB_COMPARISON = "YES" -a "$ALL_OK" = "true" ] ; then
+  mkdir $WORKSPACE/material-budget
+  MB_TESTS_OK=OK
+  pushd $WORKSPACE/material-budget
+    $CMS_BOT_DIR/run-material-budget || MB_TESTS_OK=ERROR
+  popd
+fi
+echo "MATERIAL_BUDGET;${MB_TESTS_OK}" >> $RESULTS_FILE
+
 #
 # Valgrind tests
 #
@@ -667,7 +681,7 @@ fi
 
 cd $WORKSPACE
 mkdir -p upload
-for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict ; do
+for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget; do
   [ -e $f ] && mv $f upload/$f
 done
 [ -e upload/renderPRTests.js ] && mkdir -p upload/js && mv upload/renderPRTests.js upload/js/
@@ -700,15 +714,8 @@ for i in $( seq 1 $REPEAT); do
     REPORT_OPTS[$i]="REPORT_ERRORS ${REPORT_OPTS}"
   fi
 done
-SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 rm -f all_done
-for i in 1 2 3 4 5 ;  do
-  echo Trying to upload results $i
-  ( ssh $SSH_OPTS cmsbuild@cmssdtprod.cern.ch mkdir -p /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
-    rsync -az -e "ssh $SSH_OPTS" $WORKSPACE/upload/ cmsbuild@cmssdtprod.cern.ch:/data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/ && \
-    touch all_done) && break
-  sleep 120
-done
+send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} && touch all_done
 if [ -f all_done ] ; then
   rm -f all_done
   for i in $( seq 1 $REPEAT); do

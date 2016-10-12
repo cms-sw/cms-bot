@@ -236,7 +236,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     except:
       # This seems to fail for more than 250 commits. Not sure if the
       # problem is github itself or the bindings.
-      last_commit = pr.get_commits()[pr.commits - 1].commit
+      try:
+        last_commit = pr.get_commits()[pr.commits - 1].commit
+      except IndexError:
+        print "Index error: May be PR with no commits"
+        return
     last_commit_date = last_commit.committer.date
     print "Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date
     print "Latest commit message: ",last_commit.message.encode("ascii", "ignore")

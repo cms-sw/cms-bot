@@ -1128,6 +1128,17 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.outOfTimeEnergy()");
       plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.chi2()");
       plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEFRecHits_"+recoS+".obj.obj.outOfTimeChi2()");
+
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj@.size()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.energy()");
+      plotvar("log10(HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.energy())");
+      plotvar("log10(HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.energy())", "HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.energy()>0.001");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.flags()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.time()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.timeError()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.outOfTimeEnergy()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.chi2()");
+      plotvar("HGCRecHitsSorted_HGCalRecHit_HGCHEBRecHits_"+recoS+".obj.obj.outOfTimeChi2()");
     }
 
     if ((step.Contains("all") || step.Contains("preshower")) && !step.Contains("cosmic") ){

@@ -203,7 +203,7 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
   HOUR=`echo $IB_DATE | sed -e "s/$YEAR_MONTH_DAY-//g" | sed -e 's/0*//g'`
   git rev-list --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
   git log --after="$YEAR_MONTH_DAY $HOUR:00" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
-  if [ $(grep '^Geometry/' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
+  if [ $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     has_jenkins_artifacts material-budget/$RELEASE_FORMAT/$SCRAM_ARCH/Images -d && MB_COMPARISON=YES
   fi
 fi

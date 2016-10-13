@@ -120,6 +120,9 @@ GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
 if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
   $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
+  if [ "X$PULL_REQUEST" != X ]; then
+    $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --repo cms-sw/cmssw --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
+  fi
   echo 'PR_NUMBER;'$CMSDIST_PR >> $RESULTS_FILE
   echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
   echo 'BASE_IB;'$CMSSW_IB >> $RESULTS_FILE

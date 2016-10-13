@@ -93,6 +93,7 @@ makortel:
   - CommonTools/Utils
   - Configuration/AlCa
   - Configuration/Eras
+  - Configuration/PyReleaseValidation
   - Configuration/StandardSequences
   - DataFormats/Common
   - DataFormats/GsfTrackReco

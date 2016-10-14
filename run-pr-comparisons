@@ -57,7 +57,10 @@ export SCRAM_ARCH=$ARCHITECTURE
 scram project $RELEASE_FORMAT
 cd $RELEASE_FORMAT
 eval `scram run -sh`
-git cms-addpkg Utilities/RelMon
+if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
+  mkdir -p src/Utilities/RelMon
+  cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/*  src/Utilities/RelMon/
+fi
 cd ..
 
 mkdir $WORKSPACE/results

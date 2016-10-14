@@ -39,6 +39,7 @@ function get_jenkins_artifacts ()
     */) mkdir -p $DES ; DES="${DES}/";;
     * ) mkdir -p $(dirname $DES) ;;
   esac
+  has_jenkins_artifacts $1 || return 1
   for i in 1 2 3 4 5 ;  do
     rsync -az -e "ssh $SSH_OPTS" ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${SRC} ${DES} && echo "JA_STATUS=OK" && return
     sleep 120

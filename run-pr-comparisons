@@ -219,13 +219,14 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
 
     # execute the script
-    $WORKSPACE/results/default-comparison/command-$WF_NUMBER &
+    $WORKSPACE/results/default-comparison/command-$WF_NUMBER || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER &
 
   done
 
   jobs
   wait
 
+  ls -l $WORKSPACE/results/default-comparison/error-* || true
   echo 'Finished with default comparison'
 
 fi
@@ -272,13 +273,13 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     echo "popd" >> $ALT_COMP_DIR/command-$WF_NUMBER
 
     chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
-    $ALT_COMP_DIR/command-$WF_NUMBER &
+    $ALT_COMP_DIR/command-$WF_NUMBER || touch $ALT_COMP_DIR/error-$WF_NUMBER &
 
   done
 
   jobs
   wait
-
+  ls -l $ALT_COMP_DIR/error-* || true
   echo 'Finished with alternative comparison:'
 
 fi

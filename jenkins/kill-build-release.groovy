@@ -16,7 +16,9 @@ for (it in jenkins.model.Jenkins.instance.getItem("build-release").builds)
     catch (e) {}
   }
   else{println "  DryRun: Not killing release build job #"+it.getNumber();}
-  def out = new File(wspace+"/kill-build-release-"+it.getNumber()+".txt");
+  pfile = wspace+"/properties.kill-build-release-"+it.getNumber();
+  println "Creating property file:"+pfile;
+  def out = new File(pfile);
   out << "CMSSW_X_Y_Z="+version+"\n";
   out << "ARCHITECTURE="+arch+"\n";
   out << "BUILD_DIR="+it.getWorkspace()+"\n";

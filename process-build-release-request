@@ -504,16 +504,15 @@ def remove_label( issue, label ):
 # Creates a properties file in Jenkins to kill the build
 # it needs to know the machine that was used for the build
 #
-def create_properties_kill_build( release_name, arch, machine_name ):
-  out_file_name = 'kill-%s-%s.properties' % ( release_name , arch )
+def create_properties_kill_build( release_name ):
+  out_file_name = 'kill-%s.properties' % ( release_name )
+  print 'Creating properties file for %s' % release_name
+  out_file = open( out_file_name , 'w' )
+  out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
   if opts.dryRun:
-    print 'Not creating properties file (dry-run):\n %s' % out_file_name
+    out_file.write('DRY_RUN=true\n')
   else:
-    print 'Creating properties file for %s' % arch
-    out_file = open( out_file_name , 'w' )
-    out_file.write( '%s=%s\n' % ( JENKINS_CMSSW_X_Y_Z , release_name ) )
-    out_file.write( '%s=%s\n' % ( JENKINS_ARCH , arch ) )
-    out_file.write( '%s=%s\n' % ( JENKINS_MACHINE_NAME , machine_name ) )
+    out_file.write('DRY_RUN=false\n')
 
 #
 # Aborts the build:
@@ -528,18 +527,7 @@ def abort_build( issue, release_name, architectures, comments):
   msg += '\n\n  -' + del_rel_result
   msg += '\n\n  -' + delete_cmssw_tag_github( release_name )
 
-  for arch in BUILDING:
-    msg += '\n\n  -Aborting Jenkins build for %s' % arch
-    pattern = '^The build has started for %s .*' % arch
-    build_info_comments = search_in_comments( comments, ['cmsbuild'] , pattern, True )
-    if not build_info_comments:
-      print 'No information found about the build machine, something is wrong'
-      exit( 1 )
-    first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
-    build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
-    print 'Triggereing kill for %s' % arch
-    create_properties_kill_build( release_name, arch, build_machine )
-    
+  create_properties_kill_build(release_name)
   msg += delete_cmsdist_tags_github( release_name, architectures )
   msg += '\n\n' + 'You must create a new issue to start over the build.'
   post_message( issue, msg )

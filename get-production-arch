@@ -8,7 +8,7 @@ if [ "X$FULL_RELEASE" != "X" ] ; then
 fi
 if [ "X$FULL_RELEASE" = "X" -o "X$SCRAM_ARCH" = "X" ] ; then
   RELEASE_SERIES=`echo $CMSSW_X_Y_Z | sed 's/^\(CMSSW_[0-9][0-9]*_[0-9][0-9]*_\).*/\1X/'`
-  eval `cat config.map | grep "RELEASE_QUEUE=$RELEASE_SERIES" | grep 'PROD_ARCH=1'`
+  eval `cat ${CMS_BOT_DIR}/config.map | grep "RELEASE_QUEUE=$RELEASE_SERIES" | grep 'PROD_ARCH=1'`
 fi
 echo $SCRAM_ARCH
 

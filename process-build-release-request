@@ -12,7 +12,7 @@ import yaml
 import os.path
 from  datetime import datetime, timedelta
 from glob import glob
-from os.path import basename, dirname, abspath, join
+from os.path import basename, dirname, abspath, join, exists
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 
@@ -362,6 +362,22 @@ def delete_release_github( release_name ):
   except Exception as e:
     return 'There was an error while deleting the release:\n %s' % e
 
+def delete_tag(repo_org, repo_name, tag):
+  if not exists (repo_name):
+    cmd = "mkdir deltag-{repo}; cd deltag-{repo}; git remote add {repo} git@github.com:{org}/{repo}.git".format(org=repo_org,repo=repo_name)
+    print 'Executing: \n %s' % cmd
+    status, out = getstatusoutput( cmd )
+  cmd = "cd deltag-{repo}; git push {repo} :{tag}".format(repo=repo,tag=tag)
+  print 'Executing: \n %s' % cmd
+  status, out = getstatusoutput( cmd )
+  print out
+  if status != 0:
+    msg = 'I was not able to delete the tag %s. Probaly it had not been created.' % tag
+    print msg
+    return msg 
+  msg = '%s tag %s successfully deleted.' % (repo, tag)
+  return msg
+
 #
 # Deletes in github the tag given as a parameter
 #
@@ -369,21 +385,8 @@ def delete_cmssw_tag_github( release_name ):
   if opts.dryRun:
     print 'Not deleting cmssw tag (dry-run):\n %s' % release_name
     return 'Not deleting cmssw tag (dry-run): %s ' % release_name
+  return delete_tag(GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, release_name)
 
-  cmd = "git push git@github.com:{org}/{repo}.git :{tag}"\
-        .format( org=GH_CMSSW_ORGANIZATION,
-                 repo=GH_CMSSW_REPO,
-                 tag= release_name )
-  print 'Executing: \n %s' % cmd
-  status, out = getstatusoutput( cmd )
-  print out
-  if status != 0:
-    msg = 'I was not able to delete the tag %s. Probaly it had not been created.' % release_name
-    print msg
-    return msg 
- 
-  msg = 'cmssw tag %s successfully deleted.' % release_name 
-  return msg
 #
 # for each architecture, gets the tag in cmsdist that should have ben created and deletes it
 #
@@ -391,27 +394,11 @@ def delete_cmsdist_tags_github( release_name, architectures ):
   result = ''
   for arch in architectures:
     tag_to_delete = "REL/{rel_name}/{architecture}".format( rel_name=release_name, architecture=arch )
-
     if opts.dryRun:
       msg = 'Not deleting cmsdist tag (dry-run): %s' % tag_to_delete
       result += '\n\n  -' + msg
       continue
-
-    cmd = "git push git@github.com:{org}/{repo}.git :{tag}"\
-        .format( org=GH_CMSSW_ORGANIZATION,
-                 repo=GH_CMSDIST_REPO,
-                 tag=tag_to_delete )
-
-    print 'Executing: \n %s' % cmd
-    status, out = getstatusoutput( cmd )
-    print out
-    if status != 0:
-      msg = 'I was not able to delete the cmsdist tag %s. Probably it had not been created.' % tag_to_delete
-    else:
-      msg = 'cmsdist tag %s successfully deleted.' % tag_to_delete
-
-    result += '\n\n  -' + msg
-
+    result += '\n\n -' + delete_tag(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO, tag_to_delete)
   return result
 #
 # Reads config.map and returns a list of the architectures for which a release needs to be built.

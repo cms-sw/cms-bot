@@ -362,9 +362,9 @@ def delete_release_github( release_name ):
   except Exception as e:
     return 'There was an error while deleting the release:\n %s' % e
 
-def delete_tag(repo_org, repo_name, tag):
-  if not exists (repo_name):
-    cmd = "mkdir deltag-{repo}; cd deltag-{repo}; git remote add {repo} git@github.com:{org}/{repo}.git".format(org=repo_org,repo=repo_name)
+def delete_tag(org, repo, tag):
+  if not exists (repo):
+    cmd = "mkdir deltag-{repo}; cd deltag-{repo}; git remote add {repo} git@github.com:{org}/{repo}.git".format(org=org,repo=repo)
     print 'Executing: \n %s' % cmd
     status, out = getstatusoutput( cmd )
   cmd = "cd deltag-{repo}; git push {repo} :{tag}".format(repo=repo,tag=tag)
@@ -393,7 +393,7 @@ def delete_cmssw_tag_github( release_name ):
 def delete_cmsdist_tags_github( release_name, architectures ):
   result = ''
   for arch in architectures:
-    tag_to_delete = "REL/{rel_name}/{architecture}".format( rel_name=release_name, architecture=arch )
+    tag_to_delete = "REL/{rel_name}/{architecture}".format(rel_name=release_name, architecture=arch )
     if opts.dryRun:
       msg = 'Not deleting cmsdist tag (dry-run): %s' % tag_to_delete
       result += '\n\n  -' + msg

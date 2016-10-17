@@ -102,8 +102,10 @@ pushd $BUILD_DIR
 popd
 echo DATE=`date`
 
-  
 pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
+  #Force delete any existing tags
+  git tag -d REL/$CMSSW_X_Y_Z/$ARCHITECTURE || true
+  git push origin :refs/tags/REL/$CMSSW_X_Y_Z/$ARCHITECTURE || true
   git tag  REL/$CMSSW_X_Y_Z/$ARCHITECTURE
   git push origin REL/$CMSSW_X_Y_Z/$ARCHITECTURE
 popd

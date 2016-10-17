@@ -364,7 +364,7 @@ def delete_release_github( release_name ):
 
 def delete_tag(org, repo, tag):
   if not exists (repo):
-    cmd = "mkdir deltag-{repo}; cd deltag-{repo}; git remote add {repo} git@github.com:{org}/{repo}.git".format(org=org,repo=repo)
+    cmd = "mkdir deltag-{repo}; cd deltag-{repo}; git init; git remote add {repo} git@github.com:{org}/{repo}.git".format(org=org,repo=repo)
     print 'Executing: \n %s' % cmd
     status, out = getstatusoutput( cmd )
   cmd = "cd deltag-{repo}; git push {repo} :{tag}".format(repo=repo,tag=tag)

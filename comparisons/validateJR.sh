@@ -2,6 +2,9 @@ baseA=$1
 baseB=$2
 diffN=$3
 inList=$4
+if [ "X$VALIDATE_C_SCRIPT" = "X" ] ; then
+  VALIDATE_C_SCRIPT="${HOME}/tools/validate.C"
+fi
 
 cWD=`pwd`
 export pidList=""
@@ -34,7 +37,7 @@ grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do
 	extN=all_${diffN}_${dsN}
 	mkdir -p ${extN}
 	cd ${cWD}/${extN}
-	cp ~/tools/validate.C ./
+	cp ${VALIDATE_C_SCRIPT} ./
 	echo "Will run on ${fN} in ${cWD}/${extN}"
 	echo "Now in `pwd`"
 	g++ -shared -o validate.so validate.C `root-config --cflags ` -fPIC
@@ -53,7 +56,7 @@ grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do
 	extmN=all_mini_${diffN}_${dsN}
 	mkdir -p ${extmN}
 	cd ${cWD}/${extmN}
-	cp ~/tools/validate.C ./
+	cp ${VALIDATE_C_SCRIPT} ./
 	echo "Will run on ${mFN} in ${cWD}/${extmN}"
 	echo "Now in `pwd`"
 	echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n

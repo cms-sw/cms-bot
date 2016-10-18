@@ -31,11 +31,6 @@ COMPARISON_LABELS = {
   "comparison-pending" : LABEL_TYPES["pending"],
 }
 
-MATERIAL_BUDGET_LABELS = {
-  "material-budget-comparison" : LABEL_TYPES["approved"],
-  "material-budget-changed"    : LABEL_COLORS["hold"],
-}
-
 CMSSW_BUILD_LABELS = {
   "build-aborted" : "5319e7",
   "build-in-progress" : LABEL_TYPES["pending"],

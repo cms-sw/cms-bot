@@ -28,7 +28,8 @@ parser.add_option("--missing_map", action="store", type="string", dest="missing_
 parser.add_option("--recent-merges", action="store", type="string", dest="recent_merges_file", help="file with the recent merges after doing the git cms-merge-topic")
 parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help="I will only show the message I would post, but I will not post it in github")
 parser.add_option("-c", action="store", dest="commit_hash", help="Tells me to use the commit hash to mark it as success or failure depending on the results of the tests" , )
-parser.add_option("--add-message", action="store", dest="aditional_message", help="I will add the text to the message that I will send" , )
+parser.add_option("--add-message", action="store", dest="additional_message", help="I will add the text to the message that I will send" , )
+parser.add_option("--add-comment", action="store", dest="additional_comment", help="I will add the text to the comment that I will send" , )
 parser.add_option("--repo", action="store", dest="custom_repo", help="Tells me to use a custom repository from the user cms-sw", default="cms-sw/cmssw" )
 parser.add_option("--cmsdist-pr", action="store", type="int", dest="cmsdist_pr", help="Tells me an optional CMSDIST PR to print a message too", default=-1)
 parser.add_option("--report-file", action="store", type="string", dest="report_file", help="Report the github comment in report file instead of github", default=None)
@@ -433,6 +434,8 @@ def send_tests_approved_pr_message( repo, pr_number, tests_url ):
     message += '\nTested at: ' + options.commit_hash
 
   message += '\n' + tests_url
+  if options.additional_comment:
+    message += '\nAdditional comment: ' + options.additional_comment
 
   send_message_pr( pull_request, message )
   mark_commit_if_needed( ACTION, tests_url )
@@ -511,8 +514,8 @@ def mark_commit( action , commit_hash , tests_url ):
 
   params[ 'description' ] = COMMIT_STATES_DESCRIPTION[ action ][ 1 ]
 
-  if options.aditional_message:
-    params[ 'description' ] = params[ 'description' ] + ' (' + options.aditional_message + ')'
+  if options.additional_message:
+    params[ 'description' ] = params[ 'description' ] + ' (' + options.additional_message + ')'
 
   data = json.dumps(params)
   print params 

@@ -701,9 +701,17 @@ rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
   REPORT_OPTS="--report-pr ${REPORT_PR} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
-    REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS}"
+    ADD_COMMANET=""
+    if [ "X$MB_TESTS_OK" = Xtrue ]; then
+       ADD_COMMANET="--add-comment 'materialbudget'"
+    fi
+    REPORT_OPTS[$i]="TESTS_OK_PR ${ADD_COMMANET} ${REPORT_OPTS}"
   else 
-    echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
+    touch $WORKSPACE/report.txt
+    if [ "X$MB_TESTS_OK" = Xtrue ]; then
+      echo "Additional comment: materialbudget" >> $WORKSPACE/report.txt
+    fi
+    echo "**${TESTS_FAILED}**" >>  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
     if [ "X$BUILD_OK" = Xfalse ]; then
       $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}

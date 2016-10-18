@@ -617,16 +617,23 @@ else
 fi
 
 MB_TESTS_OK=NOTRUN
-if [ $MB_COMPARISON = "YES" -a "$ALL_OK" = "true" ] ; then
+if [ "$MB_COMPARISON" = "YES" -a "X$BUILD_OK" = "Xtrue" ] ; then
   if has_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/Images ; then
     mkdir $WORKSPACE/material-budget
     MB_TESTS_OK=OK
     pushd $WORKSPACE/material-budget
-      $CMS_BOT_DIR/run-material-budget || MB_TESTS_OK=ERROR
+      $CMS_BOT_DIR/run-material-budget 2>&1 $WORKSPACE/material-budget.log || MB_TESTS_OK=ERROR
+      cat $WORKSPACE/material-budget.log || true
     popd
   fi
 fi
 echo "MATERIAL_BUDGET;${MB_TESTS_OK}" >> $RESULTS_FILE
+if [ "$MB_TESTS_OK" = "ERROR" ] ; then
+  ALL_OK=false
+  MB_TESTS_OK=false
+else
+  MB_TESTS_OK=true
+fi
 
 #
 # Valgrind tests
@@ -683,7 +690,7 @@ fi
 
 cd $WORKSPACE
 mkdir -p upload
-for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget; do
+for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget material-budget.log; do
   [ -e $f ] && mv $f upload/$f
 done
 [ -e upload/renderPRTests.js ] && mkdir -p upload/js && mv upload/renderPRTests.js upload/js/
@@ -712,6 +719,9 @@ for i in $( seq 1 $REPEAT); do
     fi
     if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
       $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
+    fi
+    if [ "X$MB_TESTS_OK" = Xfalse ]; then
+      $CMS_BOT_DIR/report-pull-request-results MATERIAL_BUDGET        -f $WORKSPACE/upload/material-budget.log ${REPORT_OPTS}
     fi
     REPORT_OPTS[$i]="REPORT_ERRORS ${REPORT_OPTS}"
   fi

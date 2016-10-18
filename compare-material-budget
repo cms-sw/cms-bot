@@ -28,6 +28,9 @@ rm -f $LOCALRT/run/matbdg_Tracker*.root $LOCALRT/run/TrackerMaterialBudgetCompar
 if [ "$PR_TESTS" = "NO" ] ; then
   ln -sf ../../../../material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH} ref
   echo ${REF_CMSSW_VERSION} > $LOCALRT/run/cmssw-ref-release
+else
+  ln -sf ../../../../material-budget/${CMSSW_VERSION}/${SCRAM_ARCH} ref
+  echo ${CMSSW_VERSION} > $LOCALRT/run/cmssw-ref-release
 fi
 send_jenkins_artifacts $LOCALRT/run ${NEW_MB_DIR}/comparison || exit 1
 

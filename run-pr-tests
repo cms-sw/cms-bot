@@ -619,17 +619,18 @@ fi
 MB_TESTS_OK=NOTRUN
 if [ "$MB_COMPARISON" = "YES" -a "X$BUILD_OK" = "Xtrue" ] ; then
   if has_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/Images ; then
-    mkdir $WORKSPACE/material-budget
+    mkdir $LOCALRT/material-budget-run
     MB_TESTS_OK=OK
-    pushd $WORKSPACE/material-budget
+    pushd $LOCALRT/material-budget-run
       $CMS_BOT_DIR/run-material-budget 2>&1 $WORKSPACE/material-budget.log || MB_TESTS_OK=ERROR
-      cat $WORKSPACE/material-budget.log || true
+      if [ "$MB_TESTS_OK" = "OK" ] ; then
+        $CMS_BOT_DIR/compare-material-budget $CMS_BOT_DIR/run-material-budget || MB_TESTS_OK=ERROR
+      fi
     popd
   fi
 fi
 echo "MATERIAL_BUDGET;${MB_TESTS_OK}" >> $RESULTS_FILE
 if [ "$MB_TESTS_OK" = "ERROR" ] ; then
-  ALL_OK=false
   MB_TESTS_OK=false
 else
   MB_TESTS_OK=true
@@ -690,7 +691,7 @@ fi
 
 cd $WORKSPACE
 mkdir -p upload
-for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget material-budget.log; do
+for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict $LOCALRT/material-budget-run; do
   [ -e $f ] && mv $f upload/$f
 done
 [ -e upload/renderPRTests.js ] && mkdir -p upload/js && mv upload/renderPRTests.js upload/js/
@@ -701,17 +702,9 @@ rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
   REPORT_OPTS="--report-pr ${REPORT_PR} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
-    ADD_COMMANET=""
-    if [ "X$MB_TESTS_OK" = Xtrue ]; then
-       ADD_COMMANET="--add-comment 'materialbudget'"
-    fi
-    REPORT_OPTS[$i]="TESTS_OK_PR ${ADD_COMMANET} ${REPORT_OPTS}"
+    REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS}"
   else 
-    touch $WORKSPACE/report.txt
-    if [ "X$MB_TESTS_OK" = Xtrue ]; then
-      echo "Additional comment: materialbudget" >> $WORKSPACE/report.txt
-    fi
-    echo "**${TESTS_FAILED}**" >>  $WORKSPACE/report.txt
+    echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
     if [ "X$BUILD_OK" = Xfalse ]; then
       $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}

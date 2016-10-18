@@ -55,6 +55,7 @@ cat /proc/cpuinfo |  grep "model name" >> $DETAILS_FILE
 ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
 scram project $RELEASE_FORMAT
+set +x
 cd $RELEASE_FORMAT
 eval `scram run -sh`
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
@@ -62,7 +63,7 @@ if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
   cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/* src/Utilities/RelMon/
   scram build clean
 fi
-
+set -x
 JR_COMP_DIR=$WORKSPACE/results/JR-comparison
 mkdir -p $JR_COMP_DIR
 mkdir -p $WORKSPACE/results/files

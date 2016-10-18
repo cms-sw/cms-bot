@@ -32,9 +32,8 @@ COMPARISON_LABELS = {
 }
 
 MATERIAL_BUDGET_LABELS = {
-  "material-budget-available" : LABEL_TYPES["approved"],
   "material-budget-comparison" : LABEL_TYPES["approved"],
-  "material-budget-rejected" : LABEL_COLORS["rejected"],
+  "material-budget-changed"    : LABEL_COLORS["hold"],
 }
 
 CMSSW_BUILD_LABELS = {

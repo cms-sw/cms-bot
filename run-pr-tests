@@ -619,14 +619,15 @@ fi
 MB_TESTS_OK=NOTRUN
 if [ "$MB_COMPARISON" = "YES" -a "X$BUILD_OK" = "Xtrue" ] ; then
   if has_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/Images ; then
-    mkdir $LOCALRT/material-budget-run
+    mkdir $LOCALRT/material-budget
     MB_TESTS_OK=OK
-    pushd $LOCALRT/material-budget-run
+    pushd $LOCALRT/material-budget
       $CMS_BOT_DIR/run-material-budget 2>&1 $WORKSPACE/material-budget.log || MB_TESTS_OK=ERROR
       if [ "$MB_TESTS_OK" = "OK" ] ; then
         $CMS_BOT_DIR/compare-material-budget $CMS_BOT_DIR/run-material-budget || MB_TESTS_OK=ERROR
       fi
     popd
+    mv $LOCALRT/material-budget $WORKSPACE/material-budget
   fi
 fi
 echo "MATERIAL_BUDGET;${MB_TESTS_OK}" >> $RESULTS_FILE
@@ -691,7 +692,7 @@ fi
 
 cd $WORKSPACE
 mkdir -p upload
-for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict $LOCALRT/material-budget-run; do
+for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget; do
   [ -e $f ] && mv $f upload/$f
 done
 [ -e upload/renderPRTests.js ] && mkdir -p upload/js && mv upload/renderPRTests.js upload/js/

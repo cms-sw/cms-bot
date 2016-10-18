@@ -8,8 +8,8 @@ eval `scram run -sh`
 #Remove biglib path from LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':' | sed 's|:$||')
 
-mkdir -p $LOCALRT/material-budget-run/comparison/Images
-cd $LOCALRT/material-budget-run/comparison
+mkdir -p $LOCALRT/material-budget/comparison/Images
+cd $LOCALRT/material-budget/comparison
 
 source $CMS_BOT_DIR/jenkins-artifacts
 

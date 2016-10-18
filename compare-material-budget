@@ -4,33 +4,31 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
 REF_CMSSW_VERSION=$1
 eval `scram run -sh`
-mkdir -p $LOCALRT/run/Images
-cd $LOCALRT/run
-
-OLD_MB_DIR="material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH}"
-NEW_MB_DIR="material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}"
-PR_TESTS=NO
-if [ $(echo $REF_CMSSW_VERSION | grep '^[1-9][0-9]*' | wc -l) -gt 0 ] ; then
-  NEW_MB_DIR="pull-request-integration/PR-${REF_CMSSW_VERSION}/material-budget"
-  OLD_MB_DIR="material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}"
-  PR_TESTS=YES
-fi
 
 #Remove biglib path from LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':' | sed 's|:$||')
 
+mkdir -p $LOCALRT/material-budget-run/comparison/Images
+cd $LOCALRT/material-budget-run/comparison
+
 source $CMS_BOT_DIR/jenkins-artifacts
-get_jenkins_artifacts $NEW_MB_DIR/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_new.root || exit 1
-get_jenkins_artifacts $OLD_MB_DIR/matbdg_Tracker.root $LOCALRT/run/matbdg_Tracker_old.root || exit 1
+
+PR_TESTS=NO
+if [ -f ${REF_CMSSW_VERSION}/matbdg_Tracker.root ] ; then
+  cp ${REF_CMSSW_VERSION}/matbdg_Tracker.root `pwd`/matbdg_Tracker_new.root
+  get_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root `pwd`/matbdg_Tracker_old.root || exit 1
+  PR_TESTS=YES
+else
+  get_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root         `pwd`/matbdg_Tracker_new.root || exit 1
+  get_jenkins_artifacts material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root `pwd`/matbdg_Tracker_old.root || exit 1
+fi
+
 cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/TrackerMaterialBudgetComparison.C .
-root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > $LOCALRT/run/compare.log 2>&1
-rm -f $LOCALRT/run/matbdg_Tracker*.root $LOCALRT/run/TrackerMaterialBudgetComparison.C
+root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > compare.log 2>&1
+rm -f matbdg_Tracker*.root TrackerMaterialBudgetComparison.C
 if [ "$PR_TESTS" = "NO" ] ; then
   ln -sf ../../../../material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH} ref
-  echo ${REF_CMSSW_VERSION} > $LOCALRT/run/cmssw-ref-release
-else
-  ln -sf ../../../../material-budget/${CMSSW_VERSION}/${SCRAM_ARCH} ref
-  echo ${CMSSW_VERSION} > $LOCALRT/run/cmssw-ref-release
+  echo ${REF_CMSSW_VERSION} > cmssw-ref-release
+  send_jenkins_artifacts `pwd`/ material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/comparison || exit 1
 fi
-send_jenkins_artifacts $LOCALRT/run ${NEW_MB_DIR}/comparison || exit 1
 

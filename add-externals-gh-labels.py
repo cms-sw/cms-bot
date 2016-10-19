@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from github import Github
 from os.path import expanduser
-from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS, MATERIAL_BUDGET_LABELS
+from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
 from datetime import datetime
 from socket import setdefaulttimeout
@@ -66,8 +66,6 @@ if __name__ == "__main__":
     all_labels = COMMON_LABELS
     for lab in COMPARISON_LABELS:
       all_labels[lab] = COMPARISON_LABELS[lab]
-    for lab in MATERIAL_BUDGET_LABELS:
-      all_labels[lab] = MATERIAL_BUDGET_LABELS[lab]
     for lab in CMSSW_BUILD_LABELS:
       all_labels[lab] = CMSSW_BUILD_LABELS[lab]
     for cat in COMMON_CATEGORIES+CMSSW_CATEGORIES.keys():

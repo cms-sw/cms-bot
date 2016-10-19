@@ -243,7 +243,8 @@ for f in results/default-comparison/* ; do
 done
 
 #alternative-comparison
-for f in results/alternative-comparison/command* results/alternative-comparison/*.ps results/alternative-comparison/*.gz results/alternative-comparison/*.log results/alternative-comparison/comparisonParams.txt ; do
+alt_dir=results/alternative-comparison
+for f in ${alt_dir}/command* ${alt_dir}/*.ps ${alt_dir}/*.gz ${alt_dir}/*.log ${alt_dir}/comparisonParams.txt ; do
   [ -e $f ] && mv $f upload/alternative-comparisons/
 done
 

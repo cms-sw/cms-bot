@@ -370,7 +370,7 @@ add_valgrind_tests_link = function ( title_cell, isFound, currentTag ){
 add_material_budget_tests_link = function ( title_cell, isFound, currentTag ){
   if ( isFound == 'not-found'){return}
   if (isFound == 'inprogress'){
-    add_inprogress_item(title_cell,' Material Bugdet')
+    add_inprogress_item(title_cell,' Material Budget')
     return
   }
   found_items = isFound.trim().split(":")
@@ -378,7 +378,7 @@ add_material_budget_tests_link = function ( title_cell, isFound, currentTag ){
   var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/material-budget/' + currentTag + '/' + arch
   var sa_link = $("<a></a>").attr("href", url)
   sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
-  sa_link.append($('<span></span>').text(' Material Bugdet'))
+  sa_link.append($('<span></span>').text(' Material Budget'))
   title_cell.append(sa_link)
   title_cell.append($("<br>"))
 

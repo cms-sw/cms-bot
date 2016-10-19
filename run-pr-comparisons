@@ -184,12 +184,12 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
   jobs
   wait
 
-  ls -l $WORKSPACE/results/default-comparison/error-* || true
-  set +x
-  find $WORKSPACE/results/default-comparison -mindepth 2 -maxdepth 2 -name '*.html' -type f | while read html ; do
-    sed -i -e 's#../RelMonSummary.html#RelMonSummary.html#g' "$html" || true
+  for WF_DIR in $(find $WORKSPACE/results/default-comparison -mindepth 1 -maxdepth 1 -type d) ; do
+    [ -f $WF_DIR/RelMonSummary.html ] || continue
+    find $WF_DIR -mindepth 1 -maxdepth 1 -name '*.html' -type f | while read html ; do
+      (sed -i -e 's#../RelMonSummary.html#RelMonSummary.html#g' "$html") || true
+    done
   done
-  set -x
   echo 'Finished with default comparison'
 fi
 
@@ -237,7 +237,6 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
 
   jobs
   wait
-  ls -l $ALT_COMP_DIR/error-* || true
   echo 'Finished with alternative comparison:'
 fi
 

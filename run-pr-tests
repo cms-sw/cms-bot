@@ -507,6 +507,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo 'COMPARISON;NOTRUN' >> $RESULTS_FILE
     ALL_OK=false
     RELVALS_OK=false
+B
   else
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE
@@ -721,6 +722,8 @@ if [ $(grep 'COMPARISON;NOTRUN' $WORKSPACE/upload/testsResults.txt | wc -l) -gt 
   ERR_MSG="Build errors/Fireworks only changes/No short matrix requested"
   if [ "X$BUILD_OK" != "Xtrue" ] ; then
     ERR_MSG="Build errors"
+  elif [ "X$RELVALS_OK" != "Xtrue" ] ; then
+    ERR_MSG="runTheMatrix errors"
   elif [ "X$DO_SHORT_MATRIX" != "Xtrue" ] ; then
     ERR_MSG="short runTheMatrix was not requested"
   elif [ "X$ONLY_FIREWORKS" = "Xtrue" ] ; then

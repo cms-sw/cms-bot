@@ -61,6 +61,7 @@ eval `scram run -sh`
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
   mkdir -p src/Utilities/RelMon
   cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/* src/Utilities/RelMon/
+  sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' src/Utilities/RelMon/python/directories2html.py
   scram build clean
 fi
 set -x
@@ -183,13 +184,6 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 
   jobs
   wait
-
-  for WF_DIR in $(find $WORKSPACE/results/default-comparison -mindepth 1 -maxdepth 1 -type d) ; do
-    [ -f $WF_DIR/RelMonSummary.html ] || continue
-    find $WF_DIR -mindepth 1 -maxdepth 1 -name '*.html' -type f | while read html ; do
-      (sed -i -e 's#../RelMonSummary.html#RelMonSummary.html#g' "$html") || true
-    done
-  done
   echo 'Finished with default comparison'
 fi
 

@@ -218,6 +218,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     echo '#!/bin/sh -ex' >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "pushd $ALT_COMP_DIR/$WF_NUMBER" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "source $ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD >> $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "ls -l" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.ps $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.pdf $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
@@ -231,6 +232,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
 
   jobs
   wait
+  ls -ld $ALT_COMP_DIR/*/* || true
   echo 'Finished with alternative comparison:'
 fi
 

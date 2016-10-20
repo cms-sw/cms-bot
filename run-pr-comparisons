@@ -198,7 +198,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   DQM_COMP_PARAMS_FILE=$ALT_COMP_DIR/comparisonParams.txt
 
   $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE >> $ALT_COMP_DIR/assignedParameters.log 2>&1
-
+  chmod +x $CMS_BOT_DIR/comparisons/makeDiff.sh
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
 
     WF_FILE=$(basename $WF)
@@ -217,7 +217,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     # create a mini script for running this comparisons in parallel
     echo '#!/bin/sh -ex' >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "cd $ALT_COMP_DIR/$WF_NUMBER" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "source $ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "$ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "ls -l" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.ps $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.pdf $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER

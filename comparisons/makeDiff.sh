@@ -9,4 +9,11 @@ echo -e "gROOT->SetStyle(\"Plain\");\n .L compareValHists.C+ \n\
  f1=new TFile(\"${f1}\");\n f2 = new TFile(\"${f2}\");\n compareAll(f1,f2,${lMod},${dOpt}, \"${dirPattern}\");\n\
 .qqqqqq" | root -l -b
 # this is normal for .qqqqqq. Do not pass it downstream.
-[ "$?" == "6" ] && exit 0
+exit_code=$?
+if [ $exit_code -gt 0 ] ; then
+  if [ $exit_code -eq 6 ] ; then
+    exit 0
+  fi
+  exit $exit_code
+fi
+

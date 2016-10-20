@@ -507,7 +507,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo 'COMPARISON;NOTRUN' >> $RESULTS_FILE
     ALL_OK=false
     RELVALS_OK=false
-B
   else
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE

@@ -745,7 +745,7 @@ def guess_prev_rel_name( release_name, issue ):
   rel_match = re.sub("_"+num_str+"$","_"+prev_num_str,release_name)+"\(_patch[0-9][0-9]*\|\);"
   if number == 0:
     rel_match = release_name + "_pre\([0-9][0-9]*\);"
-  ret, out = getstatusoutput("grep 'label="+ rel_match +"' "+ join(".","releases.map") + " | grep -v 'label=" + release_name + ";' | tail -1 | sed 's|.*label=||;s|;.*||'")
+  ret, out = getstatusoutput("grep 'label="+ rel_match +"' "+ CMS_BOT_DIR+"/releases.map" + " | grep -v 'label=" + release_name + ";' | tail -1 | sed 's|.*label=||;s|;.*||'")
   return out
 
 # -------------------------------------------------------------------------------

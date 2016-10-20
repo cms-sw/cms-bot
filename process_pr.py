@@ -295,7 +295,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         for ex_cat in new_cats:
           if ex_cat in assign_cats: assign_cats[ex_cat] = 1
       if ((commenter in CMSSW_L2) and [x for x in CMSSW_L2[commenter] if x in signing_categories]) or \
-          (not issue.pull_request and (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1)):
+          (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1):
         if assign_type == "assign":
           for ex_cat in new_cats:
             if not ex_cat in signing_categories:

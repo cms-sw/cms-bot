@@ -331,6 +331,7 @@ fi
 
 scram build clean
 git cms-checkdeps -A -a
+CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 ############################################
 # Force the run of DQM tests if necessary
 ############################################
@@ -394,7 +395,8 @@ which das_client.py
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
-  UTESTS_CMD="timeout 7200 scram b -k -j $(Jenkins_GetCPU)  runtests "
+  UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*10 | bc)
+  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j $(Jenkins_GetCPU)  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
   (eval $UTESTS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'

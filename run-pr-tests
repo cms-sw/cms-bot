@@ -731,8 +731,8 @@ if [ $(grep 'COMPARISON;NOTRUN' $WORKSPACE/upload/testsResults.txt | wc -l) -gt 
   COMP_MSG="Comparison not run due to ${ERR_MSG} (RelVals and Igprof tests were also skipped)"
 fi
 if [ "X$PULL_REQUEST" != X ] ; then
-  $CMS_BOT_DIR/comment-gh-pr -r cms-sw/cmssw   -p $PULL_REQUEST -m "${COMP_MSG}"
+  $CMS_BOT_DIR/comment-gh-pr -r cms-sw/cmssw   -p $PULL_REQUEST -m "${COMP_MSG}" || true
 fi
 if [ "X$CMSDIST_PR" != X ] ; then
-  $CMS_BOT_DIR/comment-gh-pr -r cms-sw/cmsdist -p $CMSDIST_PR   -m "${COMP_MSG}"
+  $CMS_BOT_DIR/comment-gh-pr -r cms-sw/cmsdist -p $CMSDIST_PR   -m "${COMP_MSG}" || true
 fi

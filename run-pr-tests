@@ -601,9 +601,9 @@ if [ "$MB_COMPARISON" = "YES" -a "X$BUILD_OK" = "Xtrue" ] ; then
     mkdir $LOCALRT/material-budget
     MB_TESTS_OK=OK
     pushd $LOCALRT/material-budget
-      $CMS_BOT_DIR/run-material-budget 2>&1 $WORKSPACE/material-budget.log || MB_TESTS_OK=ERROR
+      $CMS_BOT_DIR/run-material-budget > $WORKSPACE/material-budget.log 2>&1 || MB_TESTS_OK=ERROR
       if [ "$MB_TESTS_OK" = "OK" ] ; then
-        $CMS_BOT_DIR/compare-material-budget $CMS_BOT_DIR/material-budget || MB_TESTS_OK=ERROR
+        $CMS_BOT_DIR/compare-material-budget $LOCALRT/material-budget || MB_TESTS_OK=ERROR
       fi
     popd
     mv $LOCALRT/material-budget $WORKSPACE/material-budget

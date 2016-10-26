@@ -1,0 +1,73 @@
+#!/bin/sh
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+
+TIMEOUT=300
+QUERY=""
+FORMAT="plain"
+for ((i=1; i<=$#; i++)); do
+  next=$((i+1))
+  case  ${!i} in
+    --threshold=* ) TIMEOUT=$(echo ${!i} | sed 's|.*=||') ;;
+    --threshold   ) TIMEOUT=${!next} ;;
+    --query=*     ) QUERY=$(echo ${!i} | sed 's|.*=||') ;;
+    --query       ) QUERY=${!next} ;;
+    --format=*    ) FORMAT=$(echo ${!i} | sed 's|.*=||') ;;
+    --format      ) FORMAT=${!next} ;;
+  esac
+done
+
+next_das_client=""
+SKIP=YES
+for dir in $(echo $PATH | tr ':' '\n') ; do
+  if [ -x ${dir}/das_client ] ; then
+    if [ $SKIP = "YES" ] ; then
+      SKIP=NO
+    else
+      next_das_client=${dir}/das_client
+      break
+    fi
+  fi
+done
+
+if [ "X$next_das_client" = "X" ] ; then
+  echo "das_client: Command not found." 1>&2
+  exit 1
+fi
+
+if [ "X$CMSSDT_DAS_CACHE" = "X" -o "X$FORMAT" = "Xjson" ] ; then
+  $next_das_client "$@"
+  exit $?
+fi
+
+DAS_LOG="$$-das.log"
+if [ "X$CMSSDT_DAS_LOGS_DIRS" != "X" ] ; then DAS_LOG="${CMSSDT_DAS_LOGS_DIR}/${DAS_LOG}" ; fi
+
+$next_das_client "$@" --cache=${CMSSDT_DAS_CACHE} > $DAS_LOG &
+child_pid="$!"
+THRESHOLD=$(($(date +%s)+$TIMEOUT))
+USE_LOCAL_CACHE=NO
+while [ $(jobs | wc -l) -gt 0 ] ; do
+  sleep 1
+  if [ $(date +%s) -gt $THRESHOLD ] ; then
+    pkill -9 -P $child_pid
+    rm -f $DAS_LOG
+    USE_LOCAL_CACHE=YES
+  fi
+  jobs >/dev/null
+done
+
+if [ $USE_LOCAL_CACHE = "NO" ] ; then
+  if [ $(grep '/store/' $DAS_LOG |  wc -l) -eq 0 ] ; then
+    USE_LOCAL_CACHE=YES
+  fi
+fi
+
+if [ $USE_LOCAL_CACHE = "YES" ] ; then
+  $CMS_BOT_DIR/das-cmssdt-cache.py --query "$QUERY" --cache ${CMSSDT_DAS_CACHE} > $DAS_LOG || true
+fi
+
+cat $DAS_LOG | $CMS_BOT_DIR/order-das-files.py
+rm -f $DAS_LOG
+
+

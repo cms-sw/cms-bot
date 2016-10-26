@@ -130,6 +130,3 @@ if __name__ == "__main__":
     print "Generating das query cache for %s/%s.json" % (opts.store, cycle)
     write_json("%s/%s.json" %(opts.store, cycle), das_cache)
 
-
-
-

@@ -45,7 +45,7 @@ def run_cmd(cmd, exit_on_error=True,debug=True):
 def get_lfns_from_kibana():
   print "Getting information from CMS Elasticsearch...."
   kibana_file = "lfn_kibana.json"
-  cmd = "%s/ib-datasets.py --json > %s" % (CMS_BOT_DIR, kibana_file)
+  cmd = "%s/ib-datasets.py --json > %s; cat %s" % (CMS_BOT_DIR, kibana_file, kibana_file)
   if exists(kibana_file): cmd = "cat %s" % kibana_file
   err, from_kibaba = run_cmd(cmd)
   print "Collecting unique LFN from Kibana ...."

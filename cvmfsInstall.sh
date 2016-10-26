@@ -82,7 +82,7 @@ if [ -d $BASEDIR/SITECONF ] ; then
     git pull --rebase || true
   popd
 else
-  git clone git@github.com:cms-sw/siteconf.git $BASEDIR/SITECONF
+  git clone https://github.com/cms-sw/siteconf.git $BASEDIR/SITECONF
 fi
 
 # Create Nested Catalogs file if it doesn't exist

@@ -170,14 +170,12 @@ for REPOSITORY in $REPOSITORIES; do
     # If the bootstrap log for the current two week period is not there
     # rebootstrap the area.
     if [ ! -f $LOGFILE ]; then
-      # We move it so that if we are slow removing it, we do not endup removing
-      # what got installed by someone else.
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
       dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
-      dockerrun "$CMSPKG install -y cms+local-cern-siteconf+sm111124 || true"
     fi
+    ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
     RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     if [ ! -e $RPM_CONFIG ] ; then

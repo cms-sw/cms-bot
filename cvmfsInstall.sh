@@ -77,6 +77,14 @@ echo " " | mail -s "$CMSIB_CVMFS_REPO cannot be set to transaction" cms-sdt-logs
 exit 1
 fi
 
+if [ -d $BASEDIR/SITECONF ] ; then
+  pushd $BASEDIR/SITECONF
+    git pull --rebase || true
+  popd
+else
+  git clone git@github.com:cms-sw/siteconf.git $BASEDIR/SITECONF
+fi
+
 # Create Nested Catalogs file if it doesn't exist
 if [ ! -f $BASEDIR/.cvmfsdirtab ]; then
 cat <<EOF > $BASEDIR/.cvmfsdirtab

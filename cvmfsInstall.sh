@@ -103,7 +103,7 @@ fi
 if [ $(ls -d $BASEDIR/20* | wc -l) -gt 0 ] ; then
   OLD_WEEKS=$(ls -d $BASEDIR/20*)
   # Cleanup old weeks
-  find $BASEDIR/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | xargs rm -rf
+  find $BASEDIR/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | grep -v $BASEDIR/SITECONF | xargs rm -rf
 fi
 # Remove all existing links for week[0-1]
 for link in $(find $BASEDESTDIR/* -maxdepth 0 -type l); do unlink $link; done;

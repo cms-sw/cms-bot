@@ -243,7 +243,7 @@ if __name__ == "__main__":
           print "LFNS: %s" % len(ods)
           for b in ods:
             print "  LFN: %s" % b
-            if opt.show_release:
+            if opts.show_release:
               x = []
               for r in sorted(rels[k][b].keys()):
                 t = ""

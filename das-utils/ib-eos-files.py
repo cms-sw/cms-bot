@@ -60,7 +60,7 @@ def get_lfns_from_kibana():
 
 def get_lfns_from_das(lfn_per_query=1):
   print "Getting information from DAS queries...."
-  err, out = run_cmd("test -d cms-sw.github.io || git clone git@github.com:cms-sw/cms-sw.github.io.git")
+  err, out = run_cmd("test -d cms-sw.github.io || git clone --depth 1 https://github.com/cms-sw/cms-sw.github.io.git")
   err, jfiles = run_cmd("ls cms-sw.github.io/das_queries/*.json")
   used_lfns = {}
   for rel_file in jfiles.split("\n"):
@@ -188,7 +188,7 @@ def copy_lfns_to_eos(eos_lfns):
 if __name__ == "__main__":
   from optparse import OptionParser  
   parser = OptionParser(usage="%prog ")
-  parser.add_option("-r", "--redirectory",  dest="redirector",  help="Xroot reditrector",   type=str, default="root://cms-xrd-global.cern.ch")
+  parser.add_option("-r", "--redirector",   dest="redirector",  help="Xroot reditrector",   type=str, default="root://cms-xrd-global.cern.ch")
   parser.add_option("-n", "--dry-run",      dest="dryRun",  action="store_true", help="Do not actually download the files", default=False)
   parser.add_option("-f", "--file-per-das", dest="files_per_das",   help="Number of files per das query need to be copy to EOS",  type=int, default=1)
   parser.add_option("-j", "--jobs",         dest="jobs",     help="Parallel jobs to run",   type=int, default=4)

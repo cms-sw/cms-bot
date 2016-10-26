@@ -45,10 +45,10 @@ if [ "X$CMSSDT_DAS_LOGS_DIRS" != "X" ] ; then DAS_LOG="${CMSSDT_DAS_LOGS_DIR}/${
 
 $next_das_client "$@" --cache=${CMSSDT_DAS_CACHE} > $DAS_LOG &
 child_pid="$!"
-THRESHOLD=$(($(date +%s)+$TIMEOUT))
+THRESHOLD=$(($(date +%s)+$TIMEOUT-10))
 USE_LOCAL_CACHE=NO
 while [ $(jobs | wc -l) -gt 0 ] ; do
-  sleep 1
+  sleep 5
   if [ $(date +%s) -gt $THRESHOLD ] ; then
     pkill -9 -P $child_pid
     rm -f $DAS_LOG
@@ -69,5 +69,4 @@ fi
 
 cat $DAS_LOG | $CMS_BOT_DIR/order-das-files.py
 rm -f $DAS_LOG
-
 

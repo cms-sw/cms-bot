@@ -54,7 +54,6 @@ def get_lfns_from_kibana():
     if not "_source"  in hit: continue
     if not "lfn" in hit["_source"]: continue
     if not hit["_source"]["lfn"]: continue
-    if "protocol" in hit["_source"] and eos_base in hit["_source"]["protocol"]: continue
     used_lfns[hit["_source"]["lfn"]]=1
   return used_lfns.keys()
 

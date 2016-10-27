@@ -149,14 +149,12 @@ if [ ! -d CMSSW_* ]; then
 else
   cd $WORKSPACE/$RELEASE_FORMAT
 fi
-#Copy the cmssw ib das_cleint wrapper in PATH
-cp -f $CMS_BOT_DIR/das-utils/das_client bin/$SCRAM_ARCH/das_client
-##FIXME: Remove the following das_client.py link once all IBs use das_client wrapper
-ln -sf das_client bin/$SCRAM_ARCH/das_client.py
 
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
 sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
-eval $(scram run -sh)
+set +x
+eval $(scram run -sh) 
+set -x
 cd src
 git config --global --replace-all merge.renamelimit 2500
 
@@ -388,6 +386,12 @@ else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
 fi
+
+#Copy the cmssw ib das_cleint wrapper in PATH
+cp -f $CMS_BOT_DIR/das-utils/das_client bin/$SCRAM_ARCH/das_client
+##FIXME: Remove the following das_client.py link once all IBs use das_client wrapper
+ln -sf das_client bin/$SCRAM_ARCH/das_client.py
+set +x ; eval $(scram run -sh) ;set -x
 
 #
 # Unit tests

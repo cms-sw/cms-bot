@@ -53,6 +53,7 @@ def get_lfns_from_kibana():
   for hit in json.loads(from_kibaba)[0]["hits"]["hits"]:
     if not "_source"  in hit: continue
     if not "lfn" in hit["_source"]: continue
+    if "/store/user/cmsbuild" in lfn: continue
     if not hit["_source"]["lfn"]: continue
     used_lfns[hit["_source"]["lfn"]]=1
   return used_lfns.keys()

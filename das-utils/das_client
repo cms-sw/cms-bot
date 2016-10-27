@@ -16,7 +16,7 @@ for ((i=1; i<=$#; i++)); do
 done
 
 ORIG_DAS_CLIENT=""
-WRAPPER_DAS_CLIENT_SIGN=$(head -2 $(which das_client) | tail -1)
+WRAPPER_DAS_CLIENT_SIGN=$(head -2 $0 | tail -1)
 for DAS_CLIENT in $(echo $PATH | tr ':' '\n' | sed 's|$|/das_client|') ; do
  [ -e ${DAS_CLIENT} ] || continue
  if [ "${WRAPPER_DAS_CLIENT_SIGN}" != "$(head -2 ${DAS_CLIENT} | tail -1)" ] ; then ORIG_DAS_CLIENT=${DAS_CLIENT}; break; fi
@@ -27,17 +27,25 @@ if [ "X${ORIG_DAS_CLIENT}" = "X" ] ; then
   exit 1
 fi
 
-if [ "${FORMAT}" = "json" -o "${QUERY}" = "" -o "${HELP}" != "" ] ; then
+if [ "${QUERY}" = "" -o "${HELP}" != "" ] ; then
   ${ORIG_DAS_CLIENT} "$@"
   exit $?
 fi
 
 QUERY_SHA=$(echo -n "${QUERY}" | sha256sum | sed 's| .*$||;s| *||;s|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"
-QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| *||g;s|"||g;s|,||g')
+if [ "${FORMAT}" = "json" ]  ; then
+  QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
+else
+  QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| *||g;s|"||g;s|,||g')
+fi
 
 if [ "${QUERY_RESULTS}" != "" ] ; then
-  echo "${QUERY_RESULTS}" | tr ' ' '\n'
+  if [ "${FORMAT}" = "json" ]  ; then 
+    echo "${QUERY_RESULTS}"
+  else
+    echo "${QUERY_RESULTS}" | tr ' ' '\n'
+  fi
 else
   ${ORIG_DAS_CLIENT} "$@"
 fi

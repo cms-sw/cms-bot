@@ -83,6 +83,14 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   get_jenkins_artifacts ${BASELINE_DIR}/${WF_DIR}/    ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF_DIR}/ || true
   get_jenkins_artifacts ${PR_BASELINE_DIR}/${WF_DIR}/ ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/${WF_DIR}/ || true
 
+  for dir in "${JR_COMP_DIR}/$RELEASE_FORMAT/${WF_DIR}" "${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/${WF_DIR}" ; do
+    [ -d $dir ] || continue
+    for das_log in $(find ${dir} -name '*-step1_dasquery.log') ; do
+      grep '/store/' $das_log > ${das_log}.new || true
+      mv ${das_log}.new $das_log
+    done
+  done
+
   mkdir -p $WORKSPACE/results/files/$WF_DIR
   ln ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
 
@@ -97,10 +105,6 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   fi
 
   # check that the step1_dasquery.log files are correct.
-  for das_log in $(find $WORKSPACE/results/files/$WF_DIR -name '*-step1_dasquery.log') ; do
-    cat $das_log | grep /store/ > ${das_log}.new
-    mv ${das_log}.new $das_log
-  done
   NUM_FILES=$(( `ls $WORKSPACE/results/files/$WF_DIR/*-step1_dasquery.log | wc -l` ))
   # if there is only one of them something is wrong, but if there is none is ok
   if [ "$NUM_FILES" -eq "1" ]; then

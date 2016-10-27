@@ -11,9 +11,12 @@ def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
     ds_items = ds.split("?",1)
     ds_items.append("")
-    payload["protocol"]=ds_items[0].split("/store/",1)[0]
-    payload["protocol_opts"]=ds_items[1]
-    payload["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
+    ibeos = "/store/user/cmsbuild"
+    if ibeos in ds_items[0]: ds_items[0] = ds_items[0].replace(ibeos,"")
+    else: ibeos=""
+    dataset["protocol"]=ds_items[0].split("/store/",1)[0]+ibeos
+    dataset["protocol_opts"]=ds_items[1]
+    dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
     send_payload(index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
 
 def process_unittest_log(logFile):

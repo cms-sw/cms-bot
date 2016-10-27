@@ -85,7 +85,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
 
   for dir in "${JR_COMP_DIR}/$RELEASE_FORMAT/${WF_DIR}" "${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/${WF_DIR}" ; do
     [ -d $dir ] || continue
-    for das_log in $(find ${dir} -name '*-step1_dasquery.log') ; do
+    for das_log in $(find ${dir} -name 'step1_dasquery.log') ; do
       grep '/store/' $das_log > ${das_log}.new || true
       mv ${das_log}.new $das_log
     done

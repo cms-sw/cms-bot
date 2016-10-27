@@ -2,6 +2,10 @@
 import sys,urllib2 , json
 from datetime import datetime
 #Function to store data in elasticsearch
+
+def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
+  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)
+
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   try:
     passw=open(passwd_file,'r').read().strip()

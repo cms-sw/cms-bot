@@ -97,6 +97,10 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   fi
 
   # check that the step1_dasquery.log files are correct.
+  for das_log in $(find $WORKSPACE/results/files/$WF_DIR -name '*-step1_dasquery.log') ; do
+    cat $das_log | grep /store/ > ${das_log}.new
+    mv ${das_log}.new $das_log
+  done
   NUM_FILES=$(( `ls $WORKSPACE/results/files/$WF_DIR/*-step1_dasquery.log | wc -l` ))
   # if there is only one of them something is wrong, but if there is none is ok
   if [ "$NUM_FILES" -eq "1" ]; then

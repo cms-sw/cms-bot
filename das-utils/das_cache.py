@@ -17,6 +17,14 @@ def write_json(outfile, cache):
     ofile.write(json.dumps(cache, sort_keys=True, indent=2,separators=(',',': ')))
     ofile.close()
 
+def write_data(outfile, data):
+  outdir = dirname(outfile)
+  if not exists(outdir): getstatusoutput("mkdir -p %s" % outdir)
+  ofile = open(outfile, 'w')
+  if ofile:
+    ofile.write(data)
+    ofile.close()
+
 def read_json(infile):
   with open(infile) as json_data:
     return json.load(json_data)
@@ -34,7 +42,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
   for item in jdata["data"]:
     if (not item["file"]) or (not 'name' in item["file"][0]): continue
     results['files'].append(item["file"][0]["name"])
-  write_json (outfile+".query", query)
+  write_data (outfile+".query", query)
   if results['files'] or override:
     print "  Success %s, found %s files." % (query, len(results['files']))
     write_json (outfile, results)

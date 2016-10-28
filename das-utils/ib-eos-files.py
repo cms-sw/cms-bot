@@ -157,8 +157,8 @@ def copy_lfns_to_eos(eos_lfns):
           check_dead_transfers(threads, job_monitor)
           sleep(10)
     else:
-      print "OK (%s/%s): %s" % (already_done, total_lfns, lfn)
       already_done += 1
+      print "OK (%s/%s): %s" % (already_done, total_lfns, lfn)
   while len(threads)>0:
     sleep(10)
     threads = get_alive_threads(threads)

@@ -1,6 +1,7 @@
 #!/bin/sh
-#CMSSW DAS_CLIENT SIGNATURE:12345678901234567890ABCDEFABCDEF#
-#Do not change the contents of above line. It is signature for the cmssw ibs das_cleint wrapper
+#CMSSDT_DAS_CLIENT_SIGN:12345678901234567890ABCDEFABCDEF
+#Do not change the above magic line. It is signature for the cmssw ibs das_cleint wrapper
+
 QUERY=
 FORMAT="plain"
 HELP=
@@ -16,10 +17,9 @@ for ((i=1; i<=$#; i++)); do
 done
 
 ORIG_DAS_CLIENT=""
-WRAPPER_DAS_CLIENT_SIGN=$(head -2 $0 | tail -1)
 for DAS_CLIENT in $(echo $PATH | tr ':' '\n' | sed 's|$|/das_client|') ; do
  [ -e ${DAS_CLIENT} ] || continue
- if [ "${WRAPPER_DAS_CLIENT_SIGN}" != "$(head -2 ${DAS_CLIENT} | tail -1)" ] ; then ORIG_DAS_CLIENT=${DAS_CLIENT}; break; fi
+ if [ $(head -2 ${DAS_CLIENT} | grep 'CMSSDT_DAS_CLIENT_SIGN' | wc -l) -eq 0 ] ; then ORIG_DAS_CLIENT=${DAS_CLIENT}; break; fi
 done
 
 if [ "X${ORIG_DAS_CLIENT}" = "X" ] ; then
@@ -37,16 +37,11 @@ QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_
 if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
 else
-  QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| *||g;s|"||g;s|,||g')
+  QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| ||g;s|"||g;s|,||g')
 fi
 
-if [ "${QUERY_RESULTS}" != "" ] ; then
-  if [ "${FORMAT}" = "json" ]  ; then 
-    echo "${QUERY_RESULTS}"
-  else
-    echo "${QUERY_RESULTS}" | tr ' ' '\n'
-  fi
+if [ $(echo "${QUERY_RESULTS}" | grep '/store/' | wc -l) -gt 0 ] ; then
+  echo "${QUERY_RESULTS}"
 else
   ${ORIG_DAS_CLIENT} "$@"
 fi
-

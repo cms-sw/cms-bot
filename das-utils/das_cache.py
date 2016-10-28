@@ -38,6 +38,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
     print "  Success %s, found %s files." % (query, len(results['files']))
     write_json (outfile, results)
     write_json (outfile+".json", jdata)
+    write_json (outfile+".query", query)
   return True
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-voms-proxy-init -valid 24:00 || true
+voms-proxy-init -voms cms -valid 24:00 || true
 export X509_USER_PROXY=/tmp/x509up_u`id -u`
 RUN_NATIVE=
 if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then

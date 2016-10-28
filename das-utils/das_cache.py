@@ -85,7 +85,7 @@ if __name__ == "__main__":
     sha = sha256(query).hexdigest()
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     query_sha [query] = outfile
-    print "[%s/%s] Quering %s (%s)" % (nquery, tqueries, query, ",".join(query2cycle[query].keys()))
+    print "[%s/%s] Quering %s (%s):%s" % (nquery, tqueries, query, ",".join(query2cycle[query].keys()),sha)
     if exists(outfile):
       jdata = read_json (outfile)
       dtime = time()-jdata['mtime']

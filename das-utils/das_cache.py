@@ -30,7 +30,8 @@ def read_json(infile):
     return json.load(json_data)
 
 def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
-  err, out = getstatusoutput("das_client --format=json --limit=%s --query '%s' --retry=%s --threshold=%s" % (limit, query,retry, threshold))
+  das_cmd = "das_client --format=json --limit=%s --query '%s' --retry=%s --threshold=%s" % (limit, query,retry, threshold)
+  err, out = getstatusoutput(das_cmd)
   if err:
     print out
     return False
@@ -42,7 +43,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
   for item in jdata["data"]:
     if (not item["file"]) or (not 'name' in item["file"][0]): continue
     results['files'].append(item["file"][0]["name"])
-  write_data (outfile+".query", query)
+  write_data (outfile+".query", das_cmd)
   if results['files'] or override:
     print "  Success %s, found %s files." % (query, len(results['files']))
     write_json (outfile, results)

@@ -7,7 +7,7 @@ CMSBUILD_KEY="/build/`whoami`/`whoami`.keytab"
 case $NODE_NAME in
   lxplus* ) CMSBUILD_KEY="$CMSBUILD_KEYTAB/cmsbuild.keytab" ;;
 esac
-voms-proxy-init -valid 24:00 || true
+voms-proxy-init -voms cms -valid 24:00 || true
 
 function Jenkins_GetCPU ()
 {
@@ -401,7 +401,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*10 | bc)
-  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j $(Jenkins_GetCPU)  runtests "
+  UTESTS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout ${UT_TIMEOUT} scram b -k -j $(Jenkins_GetCPU)  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
   (eval $UTESTS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/unitTests.log
   echo 'END OF UNIT TESTS'
@@ -576,7 +576,7 @@ fi
 if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
   echo '--------------------------------------'
-  ADDON_CMD="timeout 5400 addOnTests.py -j $(Jenkins_GetCPU) "
+  ADDON_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout 5400 addOnTests.py -j $(Jenkins_GetCPU) "
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
   echo 'END OF ADDON TESTS'

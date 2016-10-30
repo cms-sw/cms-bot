@@ -5,8 +5,6 @@
 # We use %U rather than %W because the groovy macros expect
 # weeks to start on sunday, not monday.
 CURRENT_WEEK=$(echo "`date +%U` + 1" | bc)
-CURRENT_WEEK_LETTER=$(echo "$CURRENT_WEEK % 3" | bc | tr 012 ABC )
-CURRENT_WEEK_NUMBER=$(echo "$CURRENT_WEEK % 2" | bc)
 WEEK_NO=`date +%Y`-$CURRENT_WEEK
 WEEK_FOUND=`grep "^$WEEK_NO\$" ib-weeks | wc -l`
 
@@ -31,6 +29,4 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> cvmfs-reset-week
   echo "RELEASE_FORMAT=" >> cvmfs-reset-week
   echo "CMSDIST_HASH=" >> cvmfs-reset-week
-  cd /afs/cern.ch/cms/sw/ReleaseCandidates
-  ln -sfT vol$CURRENT_WEEK_LETTER vol$CURRENT_WEEK_NUMBER
 fi

@@ -709,7 +709,7 @@ done
 rm -f all_done
 send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} && touch all_done
 if [ -d $LOCALRT/das_query ] ; then
-  send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} || true
+  send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/PR || true
 fi
 if [ -f all_done ] ; then
   rm -f all_done

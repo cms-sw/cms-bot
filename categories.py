@@ -1298,7 +1298,6 @@ CMSSW_CATEGORIES={
    "SimDataFormats/ValidationFormats",
    "SimDataFormats/Vertex", 
    "SimFastTiming/Configuration",
-   "SimFastTiming/CrystalSiPMFastTimingDigitizer",
    "SimFastTiming/FastTimingCommon",
    "SimG4CMS/Calo",
    "SimG4CMS/CherenkovAnalysis",

@@ -32,7 +32,7 @@ if [ "${QUERY}" = "" -o "${HELP}" != "" ] ; then
   exit $?
 fi
 
-QUERY=$(echo "${QUERY}" | sed 's|  *| |g')
+QUERY=$(echo "${QUERY}" | sed 's|^ *||;s| *$||;s|  *| |g;s| =|=|g;s|= |=|g;')
 QUERY_SHA_HASH=$(echo -n "${QUERY}" | sha256sum | sed 's| .*$||;s| *||')
 QUERY_SHA=$(echo "${QUERY_SHA_HASH}" | sed 's|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"

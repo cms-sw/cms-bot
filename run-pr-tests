@@ -485,13 +485,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     # MATRIX_TIMEOUT is set by jenkins
     dateBefore=$(date +"%s")
 
-    # The --das-options are not correctly interpreted when set as a variable
-    EXTRA_RELVALS_OPTION=""
-    if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_DAS_CACHE" = Xtrue ]; then
-      wget --no-check-certificate https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/das-cache.file
-      EXTRA_RELVALS_OPTION='--das-options="--cache das-cache.file --limit 0"'
-    fi
-    RELVALS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $THREADED_PARAM $EXTRA_RELVALS_OPTION $SLHC_PARAM $JOB_REPORTS -j $(Jenkins_GetCPU) $WF_LIST"
+    RELVALS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $THREADED_PARAM $SLHC_PARAM $JOB_REPORTS -j $(Jenkins_GetCPU) $WF_LIST"
     echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
     (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
     WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' $WORKSPACE/matrixTests.log | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')

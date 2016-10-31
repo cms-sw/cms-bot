@@ -13,6 +13,7 @@ JOBS_TO_KEEP=200
 RUNS_TO_KEEP=2
 #Keep $JOBS_TO_KEEP of these
 for dir in pull-request-integration ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
@@ -24,6 +25,7 @@ done
 RUNS_TO_KEEP=1
 #Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
 for dir in  baseLineComparisons ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
@@ -34,6 +36,7 @@ done
 
 JOBS_TO_KEEP=50
 for dir in material-budget-ref ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
@@ -41,12 +44,14 @@ done
 
 #Keep the following for 15 days
 for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-release-afs; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +15 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Keep the following for 8 days
-for dir in valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof iwyu material-budget; do
+for dir in valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof iwyu material-budget das_query; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done

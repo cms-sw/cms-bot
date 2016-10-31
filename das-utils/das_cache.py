@@ -4,7 +4,7 @@ from commands import getstatusoutput
 from os.path import exists, getmtime, dirname
 from os import environ
 from time import time, sleep
-import json, threading
+import json, threading, re
 from hashlib import sha256
 from optparse import OptionParser
 from RelValArgs import GetMatrixOptions
@@ -70,6 +70,7 @@ if __name__ == "__main__":
        parser.error("Invalid --query %s option or query file '%s' does not exist."  % (item, qfile))
     if not cycle in cycles: cycles[cycle]={}
     for query in [line.rstrip('\n').strip() for line in open(qfile)]:
+      query = re.sub("= ","=",re.sub(" =","=",re.sub("  +"," ",query)))
       cycles[cycle][query] = 1
       uqueries[query] = []
       if not query in query2cycle: query2cycle[query]={}

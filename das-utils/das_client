@@ -32,12 +32,13 @@ if [ "${QUERY}" = "" -o "${HELP}" != "" ] ; then
   exit $?
 fi
 
-QUERY_SHA=$(echo -n "${QUERY}" | sha256sum | sed 's| .*$||;s| *||;s|^\(..\)|\1/\1|')
+QUERY_SHA_HASH=$(echo -n "${QUERY}" | sha256sum | sed 's| .*$||;s| *||')
+QUERY_SHA=$(echo "${QUERY_SHA_HASH}" | sed 's|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"
-DAS_QUERY_DIR=das_query/$$/${QUERY_SHA}
+DAS_QUERY_DIR=das_query/$$
 if [ "X${LOCALRT}" != "X" ] ; then DAS_QUERY_DIR="${LOCALRT}/${DAS_QUERY_DIR}" ; fi
 mkdir -p ${DAS_QUERY_DIR}
-echo "${QUERY}" > ${DAS_QUERY_DIR}.query
+echo "${QUERY}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
 if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
 else

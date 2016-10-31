@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 from sys import exit, argv
 from commands import getstatusoutput
-from os.path import exists, getmtime, dirname
+from os.path import exists, getmtime, dirname, basename
 from os import environ
 from time import time, sleep
 import json, threading, re
-from hashlib import sha256
 from optparse import OptionParser
-from RelValArgs import GetMatrixOptions
 
 def write_json(outfile, cache):
   outdir = dirname(outfile)
@@ -15,14 +13,6 @@ def write_json(outfile, cache):
   ofile = open(outfile, 'w')
   if ofile:
     ofile.write(json.dumps(cache, sort_keys=True, indent=2,separators=(',',': ')))
-    ofile.close()
-
-def write_data(outfile, data):
-  outdir = dirname(outfile)
-  if not exists(outdir): getstatusoutput("mkdir -p %s" % outdir)
-  ofile = open(outfile, 'w')
-  if ofile:
-    ofile.write(data)
     ofile.close()
 
 def read_json(infile):
@@ -43,9 +33,8 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
   for item in jdata["data"]:
     if (not item["file"]) or (not 'name' in item["file"][0]): continue
     results['files'].append(item["file"][0]["name"])
-  write_data (outfile+".query", query)
   if results['files'] or override:
-    print "  Success %s, found %s files." % (query, len(results['files']))
+    print "  Success '%s', found %s files." % (query, len(results['files']))
     write_json (outfile, results)
     write_json (outfile+".json", jdata)
   return True
@@ -55,29 +44,35 @@ if __name__ == "__main__":
   parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", type=int, default=86400)
   parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests in cache empty results are returned from das", action="store_true", default=False)
   parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", default=-1)
-  parser.add_option("-q", "--query",      dest="query",     help="Release cycle and Queryfiles e.g. CMSSW_5_3_X=<path>/CMSSW_5_3_X.txt", default=[], action='append')
   parser.add_option("-s", "--store",      dest="store",     help="Name of object store directory to store the das queries results", default=None)
 
   opts, args = parser.parse_args()
   if (not opts.store): parser.error("Missing store directory path to store das queries objects.")
 
-  cycles = {}
   uqueries = {}
-  query2cycle = {}
-  for item in opts.query:
-    cycle, qfile = item.split("=",1)
-    if (not cycle) or (not qfile) or (not exists(qfile)):
-       parser.error("Invalid --query %s option or query file '%s' does not exist."  % (item, qfile))
-    if not cycle in cycles: cycles[cycle]={}
+  query_sha = {}
+  err, qout = getstatusoutput("find %s -name '*.query' -type f" % opts.store)
+  for qfile in qout.split("\n"):
+    sha = basename(qfile).replace(".query","")
+    qs = {}
+    rewrite = False
     for query in [line.rstrip('\n').strip() for line in open(qfile)]:
+      if not "file " in query: continue
+      if "--query " in query:
+        query = query.split("--query ")[1].split("'")[1]
+        rewrite = True
       query = re.sub("= ","=",re.sub(" =","=",re.sub("  +"," ",query)))
-      cycles[cycle][query] = 1
       uqueries[query] = []
-      if not query in query2cycle: query2cycle[query]={}
-      query2cycle[query][cycle]=1
+      query_sha[query]=sha
+      qs[query]=1
+    if rewrite:
+      ofile = open(qfile, 'w')
+      if ofile:
+        for q in qs: ofile.write("%s\n" % q)
+        ofile.close()
 
   tqueries = len(uqueries)
-  print "Found %s unique queries for %s release cycles" % (tqueries, len(cycles))
+  print "Found %s unique queries" % (tqueries)
   jobs = opts.jobs
   if jobs <= 0:
     e, o = getstatusoutput("nproc")
@@ -86,17 +81,15 @@ if __name__ == "__main__":
   print "Parallel jobs:", jobs
 
   getstatusoutput("mkdir -p %s" % opts.store)
-  query_sha = {}
   threads = []
   nquery = 0
   inCache = 0 
   DasSearch = 0
   for query in uqueries:
     nquery += 1
-    sha = sha256(query).hexdigest()
+    sha = query_sha[query]
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
-    query_sha [query] = outfile
-    print "[%s/%s] Quering %s (%s):%s" % (nquery, tqueries, query, ",".join(query2cycle[query].keys()),sha)
+    print "[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query)
     if exists(outfile):
       jdata = read_json (outfile)
       dtime = time()-jdata['mtime']
@@ -130,15 +123,3 @@ if __name__ == "__main__":
   print "Total queries: %s" % tqueries
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
-
-  for cycle in cycles:
-    das_cache = {}
-    for query in cycles[cycle]:
-      obj = query_sha [query]
-      if (len(uqueries[query])==0) and exists(obj):
-        uqueries[query] = read_json (obj)['files']
-      das_cache[query] = uqueries[query]
-
-    print "Generating das query cache for %s/%s.json" % (opts.store, cycle)
-    write_json("%s/%s.json" %(opts.store, cycle), das_cache)
-

@@ -34,6 +34,8 @@ fi
 
 QUERY_SHA=$(echo -n "${QUERY}" | sha256sum | sed 's| .*$||;s| *||;s|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"
+mkdir -p das_query/$$/${QUERY_SHA}
+echo "${QUERY}" > das_query/$$/${QUERY_SHA}.query
 if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
 else

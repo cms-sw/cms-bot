@@ -45,7 +45,7 @@ def run_cmd(cmd, exit_on_error=True,debug=True):
 def get_lfns_from_kibana():
   print "Getting information from CMS Elasticsearch...."
   kibana_file = "lfn_kibana.json"
-  cmd = "%s/ib-datasets.py --json > %s; cat %s" % (CMS_BOT_DIR, kibana_file, kibana_file)
+  cmd = "PYTHONPATH=%s/.. %s/ib-datasets.py --json > %s; cat %s" % (CMS_BOT_DIR, CMS_BOT_DIR, kibana_file, kibana_file)
   if exists(kibana_file): cmd = "cat %s" % kibana_file
   err, from_kibaba = run_cmd(cmd)
   print "Collecting unique LFN from Kibana ...."
@@ -62,22 +62,32 @@ def get_lfns_from_das(lfn_per_query=1):
   if lfn_per_query<1: return []
   print "Getting information from DAS queries...."
   err, out = run_cmd("test -d cms-sw.github.io || git clone --depth 1 https://github.com/cms-sw/cms-sw.github.io.git")
-  err, jfiles = run_cmd("ls cms-sw.github.io/das_queries/*.json")
+  err, qfiles = run_cmd("ls cms-sw.github.io/das_queries/*/*.query")
   used_lfns = {}
-  for rel_file in jfiles.split("\n"):
-    with open(rel_file) as data_file:
-      data = json.load(data_file)
-      for query in data:
-        if not data[query]: continue
-        for lfn in data[query][0:lfn_per_query]: used_lfns[lfn]=1
-  print " [DONE]"
+  for qfile in qfiles.split("\n"):
+    lfn_file = qfile[:-6]
+    if not exists(lfn_file): continue
+    lfn_count = 0
+    err, out = run_cmd("grep '/store/' %s" % lfn_file,debug=False)
+    for lfn in out.split("\n"):
+      if not "/store/" in lfn: continue
+      lfn = lfn.strip("\n").replace('"',"").replace(',',"").strip(" ")
+      used_lfns[lfn]=1
+      lfn_count += 1
+      if lfn_count>=lfn_per_query: break
   return used_lfns.keys()
 
 def get_lfns_for_cmsbuild_eos(lfn_per_query=1):
-  kibana_lfns = get_lfns_from_kibana()
   das_lfns    = get_lfns_from_das(lfn_per_query)
+  kibana_lfns = get_lfns_from_kibana()
+  print "LFNs from Kibana: %s" % len(kibana_lfns)
+  print "LFNs from DAS Queries: %s" % len(das_lfns)
+  print "DAS\n","\n".join(das_lfns)
+  print "KIB\n","\n".join(kibana_lfns)
+
   eos_lfns = {}
   for lfn in kibana_lfns+das_lfns: eos_lfns[lfn]=1
+  print "Total LFNs: %s" % len(eos_lfns)
   return eos_lfns.keys()
 
 def copy_to_eos(lfn, log_file):

@@ -35,8 +35,11 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
     results['files'].append(item["file"][0]["name"])
   if results['files'] or override:
     print "  Success '%s', found %s files." % (query, len(results['files']))
-    write_json (outfile, results)
-    write_json (outfile+".json", jdata)
+    if results['files']:
+      write_json (outfile, results)
+      write_json (outfile+".json", jdata)
+    else:
+      getstatusoutput("rm -f %s %s.json" % (outfile,outfile))
   return True
 
 if __name__ == "__main__":

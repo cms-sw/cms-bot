@@ -80,13 +80,10 @@ def get_lfns_from_das(lfn_per_query=1):
 def get_lfns_for_cmsbuild_eos(lfn_per_query=1):
   das_lfns    = get_lfns_from_das(lfn_per_query)
   kibana_lfns = get_lfns_from_kibana()
-  print "LFNs from Kibana: %s" % len(kibana_lfns)
-  print "LFNs from DAS Queries: %s" % len(das_lfns)
-  print "DAS\n","\n".join(das_lfns)
-  print "KIB\n","\n".join(kibana_lfns)
-
   eos_lfns = {}
   for lfn in kibana_lfns+das_lfns: eos_lfns[lfn]=1
+  print "LFNs from Kibana: %s" % len(kibana_lfns)
+  print "LFNs from DAS Queries: %s" % len(das_lfns)
   print "Total LFNs: %s" % len(eos_lfns)
   return eos_lfns.keys()
 

@@ -33,6 +33,10 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
   for item in jdata["data"]:
     if (not item["file"]) or (not 'name' in item["file"][0]): continue
     results['files'].append(item["file"][0]["name"])
+  if (len(results['files'])==0) and ('site=T2_CH_CERN' in query):
+    query = query.replace("site=T2_CH_CERN","").strip()
+    print "Removed T2_CH_CERN restrictions and limit set to 10: %s" % query
+    return run_das_client(outfile, query, override, threshold, retry, limit=10)
   if results['files'] or override:
     print "  Success '%s', found %s files." % (query, len(results['files']))
     if results['files']:

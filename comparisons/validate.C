@@ -930,6 +930,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("ZDCDataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
       plotvar("HODataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
       plotvar("HBHEDataFramesSorted_hcalDigis__"+recoS+".obj.obj@.size()");
+      plotvar("QIE10DataFrameHcalDataFrameContainer_hcalDigis_ZDC_"+recoS+".obj.m_ids@.size()");
     }
 
     if (step.Contains("all") || step.Contains("ctpps")){

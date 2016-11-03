@@ -19,12 +19,10 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     -v /build/$XUSER:/build/$XUSER \
     -v /home/$XUSER:/home/$XUSER \
     -v /cvmfs:/cvmfs \
-    -v /afs:/afs \
     -v /tmp:/tmp \
     -e WORKSPACE=$WORKSPACE \
     -e BUILD_NUMBER=$BUILD_NUMBER \
     -e X509_USER_PROXY=$X509_USER_PROXY \
-    -e PYTHONPATH=/afs/cern.ch/user/c/cmsbuild/public/pygithub/lib/python2.6/site-packages \
     $DOCKER_IMG sh -c "$DOCK_ARGS"
 else
   eval $@

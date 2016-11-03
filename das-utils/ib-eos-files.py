@@ -42,10 +42,10 @@ def run_cmd(cmd, exit_on_error=True,debug=True):
       exit(1)
   return err, out
 
-def get_lfns_from_kibana():
+def get_lfns_from_kibana(days=7):
   print "Getting information from CMS Elasticsearch...."
   kibana_file = "lfn_kibana.json"
-  cmd = "PYTHONPATH=%s/.. %s/ib-datasets.py --json > %s; cat %s" % (CMS_BOT_DIR, CMS_BOT_DIR, kibana_file, kibana_file)
+  cmd = "PYTHONPATH=%s/.. %s/ib-datasets.py --days %s --json > %s; cat %s" % (CMS_BOT_DIR, CMS_BOT_DIR, days, kibana_file, kibana_file)
   if exists(kibana_file): cmd = "cat %s" % kibana_file
   err, from_kibaba = run_cmd(cmd)
   print "Collecting unique LFN from Kibana ...."
@@ -78,9 +78,9 @@ def get_lfns_from_das(lfn_per_query=1):
       if lfn_count>=lfn_per_query: break
   return used_lfns.keys()
 
-def get_lfns_for_cmsbuild_eos(lfn_per_query=1):
+def get_lfns_for_cmsbuild_eos(lfn_per_query=1, days=7):
   das_lfns    = get_lfns_from_das(lfn_per_query)
-  kibana_lfns = get_lfns_from_kibana()
+  kibana_lfns = get_lfns_from_kibana(days)
   eos_lfns = {}
   for lfn in kibana_lfns+das_lfns: eos_lfns[lfn]=1
   print "LFNs from Kibana: %s" % len(kibana_lfns)
@@ -201,9 +201,10 @@ if __name__ == "__main__":
   parser.add_option("-n", "--dry-run",      dest="dryRun",  action="store_true", help="Do not actually download the files", default=False)
   parser.add_option("-f", "--file-per-das", dest="files_per_das",   help="Number of files per das query need to be copy to EOS",  type=int, default=1)
   parser.add_option("-j", "--jobs",         dest="jobs",     help="Parallel jobs to run",   type=int, default=4)
+  parser.add_option("-d", "--days",         dest="days",    help="Files access in last n days via kibana",   type=int, default=7)
   opts, args = parser.parse_args()
   
-  all_OK = copy_lfns_to_eos(get_lfns_for_cmsbuild_eos(opts.files_per_das))
+  all_OK = copy_lfns_to_eos(get_lfns_for_cmsbuild_eos(opts.files_per_das, opts.days))
   if not all_OK: exit(1)
   exit(0)
 

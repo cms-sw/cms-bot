@@ -19,7 +19,7 @@ def read_json(infile):
   with open(infile) as json_data:
     return json.load(json_data)
 
-def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
+def run_das_client(outfile, query, override, threshold=900, retry=5, limit=10):
   das_cmd = "das_client --format=json --limit=%s --query '%s | grep file.name | sort | unique' --retry=%s --threshold=%s" % (limit, query,retry, threshold)
   err, out = getstatusoutput(das_cmd)
   if err:

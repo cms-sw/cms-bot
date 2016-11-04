@@ -43,7 +43,7 @@ echo "${QUERY}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
 if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
 else
-  QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | head 5 | sed 's| ||g;s|"||g;s|,||g')
+  QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | head -5 | sed 's| ||g;s|"||g;s|,||g')
 fi
 
 if [ $(echo "${QUERY_RESULTS}" | grep '/store/' | wc -l) -gt 0 ] ; then

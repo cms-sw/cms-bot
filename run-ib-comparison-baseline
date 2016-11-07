@@ -29,9 +29,7 @@ pushd "$WORKSPACE/matrix-results"
     THREADED_PARAM='--command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
     ;;
   esac
-
   CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py $THREADED_PARAM -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
-
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root | sort`
   for f in $ROOT_FILES
@@ -40,7 +38,6 @@ pushd "$WORKSPACE/matrix-results"
     WF_NUMBER=`echo $WF_PATH | sed 's/_.*$//'`
     echo $WF_PATH >> $MAPPING_FILE
   done
-
 popd
 
 ERRORS_FILE=$WORKSPACE/wf_errors.txt
@@ -54,6 +51,11 @@ do
     echo $WF_STEP >> $ERRORS_FILE
   fi
 done
+
+mv $ERRORS_FILE $WORKSPACE/matrix-results/
+
+source $CMS_BOT_DIR/jenkins-artifacts
+send_jenkins_artifacts $WORKSPACE/matrix-results/ ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix-results 
 
 # Make it fail so it can be identified when there were errors
 if grep -i -E "ERROR executing.*" $WORKSPACE/matrixTests.log; then

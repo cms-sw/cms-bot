@@ -4,6 +4,7 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
 source $CMS_BOT_DIR/jenkins-artifacts
 cd $WORKSPACE
+rm -f $WORKSPACE/ALL_DONE
 
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$RELEASE_FORMAT; fi
 
@@ -286,4 +287,5 @@ if [ -e $WORKSPACE/results/testsResults.txt ] ; then
   sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
   send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
 fi
+touch $WORKSPACE/ALL_DONE
 

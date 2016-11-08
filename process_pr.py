@@ -1,4 +1,4 @@
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
@@ -311,7 +311,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
     if re.match("^hold$", first_line, re.I):
-      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers: hold[commenter]=1
+      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + PR_HOLD_MANAGERS: hold[commenter]=1
       continue
     if re.match("^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)#\d+$", first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + [issue.user.login]:
@@ -320,9 +320,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:
         hold = {}
-      elif commenter in CMSSW_L2.keys() + releaseManagers:
+      elif commenter in CMSSW_L2.keys() + releaseManagers + PR_HOLD_MANAGERS:
         if hold.has_key(commenter): del hold[commenter]
-        for u in hold: hold[u]=1
       continue
     if (commenter == cmsbuild_user) and (re.match("^"+HOLD_MSG+".+", first_line)):
       for u in first_line.split(HOLD_MSG,2)[1].split(","):

@@ -8,6 +8,7 @@ CMSSW_L1 = ["davidlange6"]
 APPROVE_BUILD_RELEASE = [ "smuzaffar", "slava77" ] + CMSSW_L1
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = [ "lgray", "wmtan", "bsunanda", "VinInn", "kpedro88" ] + REQUEST_BUILD_RELEASE
+PR_HOLD_MANAGERS = [ "kpedro88" ]
 
 COMMON_CATEGORIES = [ "orp", "tests" ]
 EXTERNAL_CATEGORIES = [ "externals" ]

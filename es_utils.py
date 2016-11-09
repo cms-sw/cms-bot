@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import sys,urllib2 , json
-import ssl
 from datetime import datetime
 #Function to store data in elasticsearch
 
@@ -19,10 +18,7 @@ def send_payload_new(index,document,id,payload,passwd_file="/data/secrets/cmssdt
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'cmssdt', passw)
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
-  ctx = ssl.create_default_context()
-  ctx.check_hostname = False
-  ctx.verify_mode = ssl.CERT_NONE
-  opener = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx),auth_handler)
+  opener = urllib2.build_opener(urllib2.HTTPSHandler(auth_handler)
   try:
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)
@@ -54,9 +50,8 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  return send_payload_old(index,document,id,payload,passwd_file)
-  #try:send_payload_new(index,document,id,payload)
-  #except Exception as e: pass
+  send_payload_new(index,document,id,payload)
+  return send_payload_old(index,document,id,payload,passwd_file) 
 
 def get_payload(url,query):
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()

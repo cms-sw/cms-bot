@@ -6,7 +6,32 @@ from datetime import datetime
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)
 
-def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
+def send_payload_new(index,document,id,payload,passwd_file="/data/secrets/cmssdt-es-secret"):
+  index = 'cmssdt-' + index
+  try:
+    passw=open(passwd_file,'r').read().strip()
+  except Exception as e:
+    print "Couldn't read the secrets file" , str(e)
+
+  url = "https://%s/%s/%s/" % ('es-cmssdt.cern.ch:9203',index,document)
+  if id: url = url+id
+  passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+  passman.add_password(None,url, 'cmssdt', passw)
+  auth_handler = urllib2.HTTPBasicAuthHandler(passman)
+  ctx = ssl.create_default_context()
+  ctx.check_hostname = False
+  ctx.verify_mode = ssl.CERT_NONE
+  opener = urllib2.build_opener(urllib2.HTTPSHandler(context=ctx),auth_handler)
+  try:
+    urllib2.install_opener(opener)
+    content = urllib2.urlopen(url,payload)
+  except Exception as e:
+    print "Couldn't send data to elastic search" , str(e)
+    print "Data:",payload
+    return False
+  return True
+
+def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   try:
     passw=open(passwd_file,'r').read().strip()
   except Exception as e:
@@ -26,6 +51,10 @@ def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hoo
     print "Data:",payload
     return False
   return True
+
+def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
+  send_payload_old(index,document,id,payload,passwd_file) 
+  send_payload_new(index,document,id,payload)
 
 def get_payload(url,query):
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()

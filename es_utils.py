@@ -18,7 +18,7 @@ def send_payload_new(index,document,id,payload,passwd_file="/data/secrets/cmssdt
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'cmssdt', passw)
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
-  opener = urllib2.build_opener(urllib2.HTTPSHandler(auth_handler))
+  opener = urllib2.build_opener(auth_handler)
   try:
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)

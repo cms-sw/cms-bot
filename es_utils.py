@@ -1,5 +1,5 @@
 #!/bin/python
-import sys,urllib2 , json
+import sys,urllib2 , json , ssl
 from datetime import datetime
 #Function to store data in elasticsearch
 

@@ -1,6 +1,6 @@
 #!/bin/python
 import sys,urllib2 , json
-#import ssl
+import ssl
 from datetime import datetime
 #Function to store data in elasticsearch
 
@@ -54,7 +54,7 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  send_payload_old(index,document,id,payload,passwd_file)
+  return send_payload_old(index,document,id,payload,passwd_file)
   #try:send_payload_new(index,document,id,payload)
   #except Exception as e: pass
 

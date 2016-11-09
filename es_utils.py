@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/env python
 import sys,urllib2 , json
 import ssl
 from datetime import datetime

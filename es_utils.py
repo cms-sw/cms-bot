@@ -53,8 +53,9 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  send_payload_old(index,document,id,payload,passwd_file) 
-  send_payload_new(index,document,id,payload)
+  send_payload_old(index,document,id,payload,passwd_file)
+  try:send_payload_new(index,document,id,payload)
+  except Exception as e: pass
 
 def get_payload(url,query):
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()

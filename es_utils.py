@@ -1,5 +1,6 @@
 #!/bin/python
-import sys,urllib2 , json , ssl
+import sys,urllib2 , json
+#import ssl
 from datetime import datetime
 #Function to store data in elasticsearch
 
@@ -54,8 +55,8 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   send_payload_old(index,document,id,payload,passwd_file)
-  try:send_payload_new(index,document,id,payload)
-  except Exception as e: pass
+  #try:send_payload_new(index,document,id,payload)
+  #except Exception as e: pass
 
 def get_payload(url,query):
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()

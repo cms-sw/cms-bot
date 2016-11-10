@@ -192,7 +192,7 @@ def copy_lfns_to_eos(eos_lfns):
   print "Already available: %s" % already_done
   print "Newly fetched:     %s" % total_copied
   print "Error:             %s" % total_failed
-  return total_failed>0
+  return total_failed==0
 
 if __name__ == "__main__":
   from optparse import OptionParser  

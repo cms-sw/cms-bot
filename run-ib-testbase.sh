@@ -1,6 +1,8 @@
 #!/bin/bash
 echo "#!/bin/bash -ex"
 echo "set +x"
+echo "export ARCHITECTURE=${ARCHITECTURE}"
+echo "export RELEASE_FORMAT=${RELEASE_FORMAT}"
 echo "source $CMS_PATH/cmsset_default.sh  || true"
 echo "scram -a $ARCHITECTURE project $RELEASE_FORMAT"
 echo "cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py"

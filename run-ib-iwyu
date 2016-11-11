@@ -19,3 +19,16 @@ if [ -d tmp/$SCRAM_ARCH/cache/log/src ] ; then
     cp $logfile iwyu/$DIR
   done
 fi
+
+if [ ! $(ls -A $LOCALRT/iwyu | wc -l) -eq 0 ]; then
+ pushd $LOCALRT/iwyu
+   tar czf iwyu.tar.gz *
+ popd
+ mkdir $WORKSPACE/results
+ mv $LOCALRT/iwyu/iwyu.tar.gz $WORKSPACE/results
+ mv $LOCALRT/stats.json $WORKSPACE/results
+ sed -i 's/}{/,/g' $WORKSPACE/results/stats.json
+ source $CMS_BOT_DIR/jenkins-artifacts
+ send_jenkins_artifacts $WORKSPACE/results/ iwyu/${RELEASE_FORMAT}/${ARCHITECTURE}
+fi
+

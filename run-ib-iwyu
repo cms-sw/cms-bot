@@ -1,0 +1,21 @@
+#!/bin/bash -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
+cd $LOCALRT
+rm -rf src
+cp -r $CMSSW_RELEASE_BASE/src src
+find src -maxdepth 2 -type l -exec rm -f {} \;
+CPUS=`nproc`
+if [ `hostname | grep '^lxplus' | wc -l` = '1' ]; then
+  let CPUS=$CPUS/2
+fi
+BUILD_LOG=yes scram b -k -j $CPUS compile COMPILER=iwyu || true
+scram build -f buildlog
+if [ -d tmp/$SCRAM_ARCH/cache/log/src ] ; then
+  for logfile in `find tmp/$SCRAM_ARCH/cache/log/src -name 'build.log' -type f` ; do
+    DIR=`echo $logfile | cut -d/ -f6,7`
+    mkdir -p iwyu/$DIR
+    ${CMS_BOT_DIR}/parse_iwyu_logs.py $logfile $CMSSW_VERSION >iwyu/$DIR/index.html
+    cp $logfile iwyu/$DIR
+  done
+fi

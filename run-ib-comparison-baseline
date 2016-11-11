@@ -54,6 +54,7 @@ done
 
 mv $ERRORS_FILE $WORKSPACE/matrix-results/
 
+[ -f ${LOCALRT}/used-ibeos-sort ] && mv ${LOCALRT}/used-ibeos-sort $WORKSPACE/matrix-results/
 source $CMS_BOT_DIR/jenkins-artifacts
 send_jenkins_artifacts $WORKSPACE/matrix-results/ ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix-results 
 

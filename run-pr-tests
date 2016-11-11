@@ -109,6 +109,9 @@ if [ "X$COMPARISON_ARCH" = "X" ] ; then
   if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE ; fi
 fi
 
+USE_DAS_SORT=YES
+has_jenkins_artifacts ib-baseline-tests/$COMPARISON_REL/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/used-ibeos-sort || USE_DAS_SORT=NO
+
 # creation of results summary file
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
 cp $CMS_BOT_DIR/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
@@ -393,6 +396,8 @@ cp -f $CMS_BOT_DIR/das-utils/das_client $LOCALRT/bin/$SCRAM_ARCH/das_client
 ln -sf das_client $LOCALRT/bin/$SCRAM_ARCH/das_client.py
 set +x ; eval $(scram run -sh) ;set -x
 which das_client
+
+[ "X$USE_DAS_SORT" = "XYES" ] && $CMS_BOT_DIR/das-utils/use-ibeos-sort
 
 #
 # Unit tests

@@ -1,6 +1,8 @@
 #!/bin/bash
 echo "#!/bin/bash -ex"
 echo "set +x"
+echo "ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 || true"
+echo "ls /cvmfs/cms.cern.ch >/dev/null 2>&1 || true"
 echo "export ARCHITECTURE=${ARCHITECTURE}"
 echo "export RELEASE_FORMAT=${RELEASE_FORMAT}"
 echo "source $CMS_PATH/cmsset_default.sh  || true"

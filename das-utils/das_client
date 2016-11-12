@@ -2,6 +2,19 @@
 #CMSSDT_DAS_CLIENT_SIGN:12345678901234567890ABCDEFABCDEF
 #Do not change the above magic line. It is signature for the cmssw ibs das_cleint wrapper
 
+function get_parent_cmds ()
+{
+  local DEPTH=$2
+  let DEPTH=$DEPTH+1
+  [ $DEPTH -gt 2 ] && return 0
+  local XPID=$(ps -p $1 -o ppid= | sed 's| ||;')
+  [ "$XPID" = "" -o "$XPID" = "1" ] && return 0
+  cat "/proc/$XPID/cmdline"
+  echo ""
+  get_parent_cmds "$XPID" "$DEPTH"
+}
+
+LIMIT_RESULTS="NO"
 QUERY=
 FORMAT="plain"
 HELP=
@@ -44,10 +57,17 @@ if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
 else
   QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| ||g;s|"||g;s|,||g')
+  [ $((get_parent_cmds $$ 0 2>&1 ||true) | grep '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
 fi
 
 if [ $(echo "${QUERY_RESULTS}" | grep '/store/' | wc -l) -gt 0 ] ; then
-  echo "${QUERY_RESULTS}"
-else
+  if [ "$LIMIT_RESULTS" = "YES" ] ; then
+    echo "${QUERY_RESULTS}" | ibeos-lfn-sort
+  else
+    echo "${QUERY_RESULTS}"
+  fi
+elif [ "${FORMAT}" = "json" -o "$LIMIT_RESULTS" = "NO"]  ; then
   ${ORIG_DAS_CLIENT} "$@"
+else
+  ${ORIG_DAS_CLIENT} "$@" | ibeos-lfn-sort
 fi

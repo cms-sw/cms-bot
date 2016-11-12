@@ -51,6 +51,7 @@ class CMSWeb (object):
       if len(jmsg['phedex']['block']) == 0: return False
       block_data = {'at_cern' : 'no'}
       for replica in jmsg['phedex']['block'][0]['replica']:
+        if (not "group" in replica) or (not replica['group']): continue
         self.cache["replicas"][block][replica['node']]=1
         block_data['ds_files'] = str(replica['files'])
         block_data['ds_owner'] = replica['group'].strip().replace(" ","_")

@@ -391,10 +391,10 @@ else
 fi
 
 #Copy the cmssw ib das_cleint wrapper in PATH
-cp -f $CMS_BOT_DIR/das-utils/das_client $LOCALRT/bin/$SCRAM_ARCH/das_client
+cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 ##FIXME: Remove the following das_client.py link once all IBs use das_client wrapper
-ln -sf das_client $LOCALRT/bin/$SCRAM_ARCH/das_client.py
 set +x ; eval $(scram run -sh) ;set -x
+export PATH=$CMS_BOT_DIR/das-utils:$PATH
 which das_client
 
 [ "X$USE_DAS_SORT" = "XYES" ] && $CMS_BOT_DIR/das-utils/use-ibeos-sort

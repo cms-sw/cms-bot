@@ -52,10 +52,10 @@ class CMSWeb (object):
       block_data = {'at_cern' : 'no'}
       for replica in jmsg['phedex']['block'][0]['replica']:
         self.cache["replicas"][block][replica['node']]=1
-        if replica['node'] != 'T2_CH_CERN': continue
-        block_data['at_cern'] = 'yes'
         block_data['ds_files'] = str(replica['files'])
         block_data['ds_owner'] = replica['group'].strip().replace(" ","_")
+        if replica['node'] != 'T2_CH_CERN': continue
+        block_data['at_cern'] = 'yes'
         break
       self.cache['blocks'][block]={}
       for x in block_data: self.cache['blocks'][block][x]=block_data[x]

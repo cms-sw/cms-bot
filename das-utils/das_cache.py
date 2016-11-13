@@ -30,7 +30,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
     print out
     return False
   results = {'mtime' : time(), 'files' : []}
-  field = query.spilt(" ",1)[0]
+  field = query.split(" ",1)[0]
   for item in jdata["data"]:
     if (not item[field]) or (not 'name' in item[field][0]): continue
     results['files'].append(item[field][0]["name"])

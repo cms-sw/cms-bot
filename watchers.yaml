@@ -612,10 +612,6 @@ prolay:
 - SimTracker/Common
 - SimTracker/Configuration
 - SimTracker/Records
-richard-cms:
-- RecoHI
-- Validation/RecoHI
-- Validation/RecoEgamma
 rociovilar:
 - Validation/RecoMuon
 - Validation/MuonIdentification

@@ -45,7 +45,7 @@ def run_cmd(cmd, exit_on_error=True,debug=True):
 def get_lfns_from_kibana(days=7):
   print "Getting information from CMS Elasticsearch...."
   kibana_file = "lfn_kibana.json"
-  cmd = "PYTHONPATH=%s/.. %s/ib-datasets.py --days %s --json > %s; cat %s" % (CMS_BOT_DIR, CMS_BOT_DIR, days, kibana_file, kibana_file)
+  cmd = "PYTHONPATH=%s/.. %s/ib-datasets.py --days %s > %s; cat %s" % (CMS_BOT_DIR, CMS_BOT_DIR, days, kibana_file, kibana_file)
   if exists(kibana_file): cmd = "cat %s" % kibana_file
   err, from_kibaba = run_cmd(cmd)
   print "Collecting unique LFN from Kibana ...."

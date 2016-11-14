@@ -476,15 +476,17 @@ def send_comparison_ready_message(repo, pr_number, tests_results_url, comparison
       map_notify = ", ".join([ "@"+u for u in COMPARISON_MISSING_MAP] )
       message += "\n\n"+map_notify+" comparisons for the following workflows were not done due to missing matrix map:\n"+"\n".join(missing)
 
-  alt_comp_dir = join(dirname(comparison_errors_file), "results","alternative-comparison")
+  alt_comp_dir = join(dirname(comparison_errors_file), "upload","alternative-comparisons")
   print "Alt comparison directory: ",alt_comp_dir
   if exists(alt_comp_dir):
     err, out = run_cmd("grep ' Compilation failed' %s/runDQMComp-*.log" % alt_comp_dir)
-    err_wfs = {}
-    for line in out.split("\n"):
-      wf = line.split(".log:",1)[0].split("runDQMComp-")[-1]
-      err_wfs [wf]=1
-    if err_wfs: message += "\n\nAlternative comparison was/were failed for workflow(s):\n"+"\n".join(err_wfs.keys())
+    print out
+    if not err:
+      err_wfs = {}
+      for line in out.split("\n"):
+        wf = line.split(".log:",1)[0].split("runDQMComp-")[-1]
+        err_wfs [wf]=1
+      if err_wfs: message += "\n\nAlternative comparison was/were failed for workflow(s):\n"+"\n".join(err_wfs.keys())
 
   send_message_pr( pull_request, message )
 

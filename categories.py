@@ -723,6 +723,7 @@ CMSSW_CATEGORIES={
    "SUSYBSMAnalysis/Configuration",
    "SUSYBSMAnalysis/HSCP",
    "SUSYBSMAnalysis/Skimming",
+   "TauAnalysis/MCEmbeddingTools",
    "TBDataFormats/EcalTBObjects",
    "TBDataFormats/HcalTBObjects",
    "TopQuarkAnalysis/Configuration",

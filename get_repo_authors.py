@@ -15,7 +15,7 @@ try:
     authors_info[item['author']['login']] = item['total']
   if not authors_info:
     print output
-    exit(1)  
+    exit(1)
   print basename(repo).upper().replace('-','_') + "_AUTHORS="+dumps(authors_info,sort_keys=True, indent=2)
 except IndexError:
   print "Repo Name Required ... Arugement missing !!!!"

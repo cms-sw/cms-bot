@@ -3,11 +3,13 @@ import re
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
+from cmssw_authors import CMSSW_AUTHORS as authors
 
+GITHUB_BLACKLIST_AUTHORS = []
 CMSSW_L1 = ["davidlange6"]
-APPROVE_BUILD_RELEASE = [ "smuzaffar", "slava77" ] + CMSSW_L1
+APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar", "slava77" ] + CMSSW_L1))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
-TRIGGER_PR_TESTS = [ "lgray", "wmtan", "bsunanda", "VinInn", "kpedro88", "makortel" ] + REQUEST_BUILD_RELEASE
+TRIGGER_PR_TESTS = list(set([ "lgray", "wmtan", "bsunanda", "VinInn", "kpedro88", "makortel" ] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
 PR_HOLD_MANAGERS = [ "kpedro88" ]
 
 COMMON_CATEGORIES = [ "orp", "tests" ]
@@ -25,7 +27,7 @@ EXTERNAL_REPOS = [
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
 CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
-CMSSW_ISSUES_TRACKERS = CMSSW_L1 + [ "smuzaffar", "Dr15Jones" ]
+CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + [ "smuzaffar", "Dr15Jones" ]))
 COMPARISON_MISSING_MAP = [ "slava77" ]
 
 CMSSW_L2 = {

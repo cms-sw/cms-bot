@@ -1,3 +1,7 @@
+################################################################
+# Do not update this file directory. Auto generrated via       #
+# https://api.github.com/repos/cms-sw/cmssw/stats/contributors #
+################################################################
 CMSSW_AUTHORS={
   "BetterWang": 102, 
   "Dr15Jones": 3672, 

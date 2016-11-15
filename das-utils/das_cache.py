@@ -30,9 +30,10 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
     print out
     return False
   results = {'mtime' : time(), 'files' : []}
+  field = query.split(" ",1)[0]
   for item in jdata["data"]:
-    if (not item["file"]) or (not 'name' in item["file"][0]): continue
-    results['files'].append(item["file"][0]["name"])
+    if (not item[field]) or (not 'name' in item[field][0]): continue
+    results['files'].append(item[field][0]["name"])
   if (len(results['files'])==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()
     print "Removed T2_CH_CERN restrictions and limit set to 10: %s" % query
@@ -64,7 +65,7 @@ if __name__ == "__main__":
     qs = {}
     rewrite = False
     for query in [line.rstrip('\n').strip() for line in open(qfile)]:
-      if not "file " in query: continue
+      if not "=" in query: continue
       if "--query " in query:
         query = query.split("--query ")[1].split("'")[1]
         rewrite = True

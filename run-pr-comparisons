@@ -194,7 +194,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
   done
 
   jobs
-  wait
+  wait || true
   echo 'Finished with default comparison'
 fi
 
@@ -240,7 +240,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   done
 
   jobs
-  wait
+  wait || true
   echo 'Finished with alternative comparison:'
 fi
 

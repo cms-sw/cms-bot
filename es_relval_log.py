@@ -114,14 +114,22 @@ def es_parse_log(logFile):
   inError = False
   datasets = []
   if exists(logFile):
-    lines = file(logFile).read()
+    lines = file(logFile).read().split("\n")
     payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+pathInfo[4]+'/'+pathInfo[8]+'/pyRelValMatrixLogs/run/'+pathInfo[-2]+'/'+pathInfo[-1]
-    for l in lines.split("\n"):
+    total_lines = len(lines)
+    for i in range(total_lines):
+      l = lines[i]
       if " Initiating request to open file " in l:
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-          if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
+          if (not "file:" in rootfile) and (not rootfile in datasets):
+            if (i+2)<total_lines:
+              if (rootfile in lines[i+1]) and (rootfile in lines[i+2]) and ("Successfully opened file " in lines[i+1]) and ("Closed file " in lines[i+2]):
+                print "File read with no valid events: %s" % rootfile
+                continue
+            datasets.append(rootfile)
         except: pass
+        continue
       if l.startswith("----- Begin Fatal Exception"):
         inException = True
         continue
@@ -155,7 +163,7 @@ def es_parse_log(logFile):
   try:send_payload(index,document,id,json.dumps(payload))
   except:pass
   if datasets:
-    dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"]), "ds_block" : "UNKNOWN", "ds_status" : "UNKNOWN", "ds_owner" : "UNKNOWN", "ds_files" : "0", "at_cern" : "UNKNOWN", "dataset" : "UNKNOWN"}
+    dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"])}
     for fld in ["release","architecture","@timestamp"]: dataset[fld] = payload[fld]
     for ds in datasets:
       ds_items = ds.split("?",1)

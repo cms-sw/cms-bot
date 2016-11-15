@@ -14,13 +14,14 @@ class CMSWeb (object):
     self.URL_DBS_RUNS='/dbs/prod/global/DBSReader/runs'
     self.URL_DBS_BLOCKS='/dbs/prod/global/DBSReader/blocks'
     self.conn = HTTPSConnection(self.URL_CMSWEB_BASE, cert_file='/tmp/x509up_u{0}'.format(getuid()),  timeout=30)
-    self.cache = {'lfns':{}, 'datasets': {}, 'blocks': {}, 'new_lfns' : {}, "replicas" : {}, "blocks_raw": {}}
     self.reply_cache = {}
+    self.last_result = ""
     self.errors = 0
 
   def __del__(self): self.conn.close ()
 
   def get_cmsweb_data(self, url):
+    self.last_result = url
     if url in self.reply_cache: return True, self.reply_cache[url]
     msg =""
     try:
@@ -37,36 +38,43 @@ class CMSWeb (object):
       self.errors = self.errors + 1
       return False, {}
 
-  def search(self, lfn, lfn_info):
-    if lfn in self.cache['lfns']: return self.cache['lfns'][lfn]
-    self.cache['lfns'][lfn] = self.search_(lfn, lfn_info)
-    return self.cache['lfns'][lfn]
+  def search(self, lfn):
+    lfn_data = {"ds_status":"UNKNOWN", "ds_block":"UNKNOWN", "ds_owner":"UNKNOWN","at_cern":"UNKNOWN","dataset":"UNKNOWN","ds_files":"0"}
+
+    # Find the block
+    jmsg = self.search_lfn(lfn)
+    if not jmsg: return lfn_data
+    block = jmsg[0]['block_name']
+    dataset  = jmsg[0]['dataset']
+    lfn_data['ds_block'] = block
+    lfn_data['dataset'] = dataset
+
+    # Check if dataset is still VALID
+    status, res = self.search_dataset_status(dataset)
+    if status: lfn_data['ds_status'] = res
+
+    # Check if dataset/block exists at T2_CH_CERN and belongs to IB RelVals group
+    status, res = self.search_block(block)
+    if status: for x in res: lfn_data[x] = res[x]
+    return lfn_data
 
   def search_block(self, block):
-    if not block in self.cache["replicas"]: self.cache["replicas"][block]={}
-    if not block in self.cache['blocks']:
-      status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_PHEDEX_BLOCKREPLICAS, urlencode({'block': block})))
-      if not status: return False
-      self.cache['blocks_raw'][block] = jmsg
-      if len(jmsg['phedex']['block']) == 0: return False
-      block_data = {'at_cern' : 'no'}
-      for replica in jmsg['phedex']['block'][0]['replica']:
-        self.cache["replicas"][block][replica['node']]=1
-        if replica['node'] != 'T2_CH_CERN': continue
-        block_data['at_cern'] = 'yes'
-        block_data['ds_files'] = str(replica['files'])
-        block_data['ds_owner'] = replica['group'].strip().replace(" ","_")
-        break
-      self.cache['blocks'][block]={}
-      for x in block_data: self.cache['blocks'][block][x]=block_data[x]
-    return True
+    status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_PHEDEX_BLOCKREPLICAS, urlencode({'block': block})))
+    if not status: return False, {}
+    if len(jmsg['phedex']['block']) == 0: return False, {}
+    block_data = {"at_cern" : "no", "replicas" : [], "ds_files": "0", "ds_owner":"UNKNOWN"}
+    for replica in jmsg['phedex']['block'][0]['replica']:
+      if (not "group" in replica) or (not replica['group']): continue
+      block_data["replica"].append(replica["node"])
+      block_data["ds_files"] = str(replica["files"])
+      block_data["ds_owner"] = replica["group"].strip().replace(" ","_")
+      if replica["node"] == "T2_CH_CERN": block_data["at_cern"] = "yes"
+    return True, block_data
 
-  def search_dataset(self, dataset):
-    if not dataset in self.cache['datasets']:
-      status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_DATASETS, urlencode({'detail': 1, 'dataset_access_type': '*', 'dataset': dataset})))
-      if not status: return False
-      self.cache['datasets'][dataset] = jmsg[0]['dataset_access_type'].strip().replace(" ","_")
-    return True
+  def search_dataset_status(self, dataset):
+    status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_DATASETS, urlencode({'detail': 1, 'dataset_access_type': '*', 'dataset': dataset})))
+    if not status: return False, ""
+    return True, jmsg[0]['dataset_access_type'].strip().replace(" ","_")
 
   def search_lfn(self, lfn):
     status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_BLOCKS, urlencode({'detail': 1,'logical_file_name': lfn})))
@@ -87,34 +95,6 @@ class CMSWeb (object):
     status, jmsg = self.get_cmsweb_data('{0}?{1}'.format(self.URL_DBS_BLOCKS, urlencode({'dataset': dataset, "detail":1})))
     if not status: return {}
     return jmsg
-
-  def search_(self, lfn, lfn_info):
-    #print "CUR:",lfn_info
-    lfn_data = {}
-    for x in ["ds_status", "ds_block", "ds_owner", "at_cern", "dataset"]:
-      if (not x in lfn_info) or (lfn_info[x]==""): lfn_data[x]="UNKNOWN"
-    if (not "ds_files" in lfn_info) or (lfn_info["ds_files"]==""): lfn_data["ds_files"]="0"
-    # Find the block
-    if not 'ds_block' in lfn_info or lfn_info['ds_block']=='UNKNOWN':
-      self.cache['new_lfns'][lfn]=1
-      jmsg = self.search_lfn(lfn)
-      if not jmsg: return lfn_data
-      lfn_data['ds_block'] = jmsg[0]['block_name']
-      lfn_data['dataset']  = jmsg[0]['dataset']
-    else:
-      lfn_data['ds_block'] = lfn_info['ds_block']
-      lfn_data['dataset']  = lfn_info['dataset']
-
-    block = lfn_data['ds_block']
-    dataset = lfn_data['dataset']
-    # Check if dataset is still VALID
-    if not self.search_dataset(dataset): return lfn_data
-    lfn_data['ds_status'] = self.cache['datasets'][dataset]
-
-    # Check if dataset/block exists at T2_CH_CERN and belongs to IB RelVals group
-    if not self.search_block(block): return lfn_data
-    for x in self.cache['blocks'][block]: lfn_data[x] = self.cache['blocks'][block][x]
-    return lfn_data
 
 if __name__ == "__main__":
   from optparse import OptionParser  

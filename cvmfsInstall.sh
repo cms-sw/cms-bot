@@ -76,7 +76,7 @@ echo CVMFS filesystem is not writable. Aborting.
 echo " " | mail -s "$CMSIB_CVMFS_REPO cannot be set to transaction" cms-sdt-logs@cern.ch
 exit 1
 fi
-
+hostname > $BASEDIR/stratum0
 if [ -d $BASEDIR/SITECONF ] ; then
   pushd $BASEDIR/SITECONF
     git pull --rebase || true

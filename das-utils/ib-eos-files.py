@@ -45,7 +45,7 @@ def run_cmd(cmd, exit_on_error=True,debug=True):
 def get_lfns_from_kibana(days=7):
   print "Getting information from CMS Elasticsearch...."
   kibana_file = "lfn_kibana.json"
-  cmd = "PYTHONPATH=%s/.. %s/ib-datasets.py --days %s --json > %s; cat %s" % (CMS_BOT_DIR, CMS_BOT_DIR, days, kibana_file, kibana_file)
+  cmd = "PYTHONPATH=%s/.. %s/ib-datasets.py --days %s > %s; cat %s" % (CMS_BOT_DIR, CMS_BOT_DIR, days, kibana_file, kibana_file)
   if exists(kibana_file): cmd = "cat %s" % kibana_file
   err, from_kibaba = run_cmd(cmd)
   print "Collecting unique LFN from Kibana ...."
@@ -192,7 +192,7 @@ def copy_lfns_to_eos(eos_lfns):
   print "Already available: %s" % already_done
   print "Newly fetched:     %s" % total_copied
   print "Error:             %s" % total_failed
-  return total_failed>0
+  return total_failed==0
 
 if __name__ == "__main__":
   from optparse import OptionParser  

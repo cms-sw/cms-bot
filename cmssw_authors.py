@@ -1,5 +1,5 @@
 ################################################################
-# Do not update this file directory. Auto generrated via       #
+# Do not modify this file directly. Auto generrated via        #
 # https://api.github.com/repos/cms-sw/cmssw/stats/contributors #
 ################################################################
 CMSSW_AUTHORS={

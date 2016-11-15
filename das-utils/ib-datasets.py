@@ -5,8 +5,8 @@ from time import time, sleep
 import json
 from commands import getstatusoutput
 from es_utils import get_payload
-from CMSWeb import CMSWeb, format
 
+def format(s, **kwds): return s % kwds
 query_url='http://cmses-master01.cern.ch:9200/ib-dataset-*/_search'
 query_datsets = """
 {

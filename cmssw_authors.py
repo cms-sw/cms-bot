@@ -1,4 +1,4 @@
-CMSSW_AUTHORS= {
+CMSSW_AUTHORS={
   "BetterWang": 102, 
   "Dr15Jones": 3672, 
   "HeinerTholen": 97, 

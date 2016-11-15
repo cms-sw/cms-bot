@@ -12,7 +12,7 @@ try:
   if not data: exit(1)
   for item in data:
     commiters_info[item['author']['login']] = item['total']  
-  print basename(repo).upper().replace('-','_') + "_COMMITER=",dumps(commiters_info,sort_keys=True, indent=4)
+  print basename(repo).upper().replace('-','_') + "_COMMITERS=",dumps(commiters_info,sort_keys=True, indent=4)
 except IndexError:
   print "Repo Name Required ... Arugement missing !!!!"
   exit (1)

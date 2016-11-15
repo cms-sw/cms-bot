@@ -9,6 +9,7 @@ try:
   err, output = run("curl -s https://api.github.com/repos/" + repo + "/stats/contributors")
   if err: exit(1)
   data = loads(output)
+  if not data: exit(1)
   for item in data:
     commiters_info[item['author']['login']] = item['total']  
   print dumps(commiters_info,sort_keys=True, indent=4)

@@ -3,8 +3,8 @@ import re
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
-from cmssw_authors import CMSSW_AUTHORS as authors
 
+authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
 CMSSW_L1 = ["davidlange6"]
 APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar", "slava77" ] + CMSSW_L1))

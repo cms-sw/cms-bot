@@ -87,3 +87,8 @@ RELEASE_MANAGERS["CMSSW_8_1_X"]=["smuzaffar"]
 ######################################################################
 RELEASE_BRANCH_MILESTONE["CMSSW_8_0_0_patchX"]=60
 
+RELEASE_BRANCH_MILESTONE["CMSSW_9_0_X"]=64
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_0_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_0_ROOT6_X")
+RELEASE_MANAGERS["CMSSW_9_0_X"]=["smuzaffar"]
+

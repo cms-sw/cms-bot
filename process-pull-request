@@ -19,7 +19,7 @@ if __name__ == "__main__":
   prId = int(args[0])
   
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-  api_rate_limits(gh)
+  if not opts.commit: api_rate_limits(gh)
   repo = gh.get_repo(opts.repository)
   if opts.commit:
     pr   = repo.get_pull(prId)

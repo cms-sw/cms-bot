@@ -10,6 +10,8 @@ from os.path import abspath, dirname, join
 from github import UnknownObjectException
 from socket import setdefaulttimeout
 from datetime import datetime
+from time import gmtime
+from calendar import timegm
 setdefaulttimeout(120)
 try:
   SCRIPT_DIR = dirname(abspath(__file__))
@@ -126,6 +128,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   print 'API Rate Limit'
   print 'Limit, Remaining: ', gh.rate_limiting
   print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
+  print 'Reset time in sec: ', gh.rate_limiting_resettime - timegm(gmtime())
   if ignore_issue(repo, issue): return
   prId = issue.number
   #if prId in [ 15876 ] : return

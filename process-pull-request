@@ -4,8 +4,7 @@ from os.path import expanduser
 from optparse import OptionParser
 from process_pr import process_pr
 from socket import setdefaulttimeout
-from time import sleep, gmtime
-from calendar import timegm
+from github_utils import api_rate_limits
 setdefaulttimeout(120)
 
 if __name__ == "__main__":
@@ -20,20 +19,7 @@ if __name__ == "__main__":
   prId = int(args[0])
   
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-  doSleep = 0
-  rate_limit = gh.rate_limiting[0]
-  rate_reset_sec = gh.rate_limiting_resettime - timegm(gmtime())
-  if   rate_limit<20:   doSleep = rate_reset_sec
-  elif rate_limit<100:  doSleep = 120
-  elif rate_limit<500:  doSleep = 60
-  elif rate_limit<1000: doSleep = 30
-  elif rate_limit<2000: doSleep = 15
-  if (rate_reset_sec<doSleep) : doSleep=rate_reset_sec
-  print 'GH API Limits: ', rate_limit , rate_reset_sec , doSleep
-  if doSleep>0:
-    print "Slowing down for %s sec due to api rate limits %s approching zero" % (doSleep, rate_limit)
-    sleep (doSleep)
-
+  api_rate_limits(gh)
   repo = gh.get_repo(opts.repository)
   if opts.commit:
     pr   = repo.get_pull(prId)

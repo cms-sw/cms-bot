@@ -14,6 +14,7 @@ from  datetime import datetime, timedelta
 from glob import glob
 from os.path import basename, dirname, abspath, join, exists
 from socket import setdefaulttimeout
+from github_utils import api_rate_limits
 setdefaulttimeout(120)
 
 try:
@@ -770,6 +771,7 @@ if __name__ == "__main__":
   
   issue_id  = int( args[ 0 ] )
   gh = Github( login_or_token=GH_TOKEN )
+  api_rate_limits(gh)
   cmssw_repo = gh.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
   issue = cmssw_repo.get_issue( issue_id )
   print 'API Rate Limit'

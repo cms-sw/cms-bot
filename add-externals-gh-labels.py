@@ -5,6 +5,7 @@ from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BU
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
 from datetime import datetime
 from socket import setdefaulttimeout
+from github_utils import api_rate_limits
 setdefaulttimeout(120)
 
 def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
@@ -15,10 +16,7 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
       repos.append(repo)
   else:
     repos.append(gh.get_repo(repo_name))
-
-  print 'API Rate Limit'
-  print 'Limit, Remaining: ', gh.rate_limiting
-  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
+  api_rate_limits(gh)
   for repo in repos:
     print "Checking repository ", repo.full_name
     cur_labels = {}
@@ -31,10 +29,6 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
       elif cur_labels[lab].color != all_labels[lab]:
         if not dryRun: cur_labels[lab].edit(lab, all_labels[lab])
         print "  Label ",lab," color updatd: ",cur_labels[lab].color ," => ",all_labels[lab]
-
-  print 'API Rate Limit'
-  print 'Limit, Remaining: ', gh.rate_limiting
-  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
 
 if __name__ == "__main__":
   from optparse import OptionParser
@@ -54,6 +48,7 @@ if __name__ == "__main__":
     parser.error("Too few arguments, please use either -e, -c or -d")
 
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  api_rate_limits(gh)
   if opts.externals:
     all_labels = COMMON_LABELS
     for cat in COMMON_CATEGORIES+EXTERNAL_CATEGORIES:

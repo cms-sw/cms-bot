@@ -6,10 +6,12 @@ from categories import EXTERNAL_REPOS
 from datetime import datetime, timedelta
 from process_pr import process_pr
 from socket import setdefaulttimeout
+from github_utils import api_rate_limits
 setdefaulttimeout(None)
 
 def check_prs(gh, repo, since, process_issue, dryRun):
   print "Working on Repository: ",repo.full_name 
+  api_rate_limits(gh)
   if since:
     issues = repo.get_issues(state="open", sort="updated", since=since)
   else:
@@ -34,6 +36,7 @@ if __name__ == "__main__":
     since = datetime.utcnow() - timedelta(seconds=opts.since)
 
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  api_rate_limits(gh)
   repos = []
   if opts.repository != "externals":
     repos.append(opts.repository)

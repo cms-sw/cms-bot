@@ -13,6 +13,28 @@ except Exception, e :
 
 def format(s, **kwds): return s % kwds
 
+def api_rate_limits(gh):
+  from time import sleep, gmtime
+  from calendar import timegm
+  from datetime import datetime
+  doSleep = 0
+  rate_limit = gh.rate_limiting[0]
+  rate_reset_sec = gh.rate_limiting_resettime - timegm(gmtime())
+  print 'API Rate Limit'
+  print 'Limit, Remaining: ', gh.rate_limiting
+  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
+  print 'Reset time in sec: ', rate_reset_sec
+  if   rate_limit<50:   doSleep = rate_reset_sec
+  elif rate_limit<100:  doSleep = 120
+  elif rate_limit<500:  doSleep = 60
+  elif rate_limit<1000: doSleep = 30
+  elif rate_limit<2000: doSleep = 15
+  if (rate_reset_sec<doSleep) : doSleep=rate_reset_sec
+  if doSleep>0:
+    print "Slowing down for %s sec due to api rate limits %s approching zero" % (doSleep, rate_limit)
+    sleep (doSleep)
+  return
+
 def get_ported_PRs(repo, src_branch, des_branch):
   done_prs_id = {}
   prRe = re.compile('Automatically ported from '+src_branch+' #(\d+)\s+.*',re.MULTILINE)

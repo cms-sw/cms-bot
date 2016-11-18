@@ -23,7 +23,7 @@ FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
 REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+"+CMSDIST_REPO_NAME+"#([0-9]+)|)\s*$", re.I)
-REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort\s+(test|)$", re.I)
+REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
 CMSDIST_PR_INDEX = 5
 TEST_WAIT_GAP=720

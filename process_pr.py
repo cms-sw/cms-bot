@@ -415,6 +415,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         elif REGEX_TEST_ABORT.match(first_line) and tests_already_queued:
           tests_already_queued = False
           abort_test = True
+          signatures["tests"] = "pending"
 
     # Check L2 signoff for users in this PR signing categories
     if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:

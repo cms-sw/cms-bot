@@ -67,6 +67,7 @@ CMSSW_L2 = {
   "hengne" : ["pdmv"],
   "ghellwig" : ["alca"],
   "monttj" : ["analysis"],
+  "arunhep" : ["alca"]
 }
 
 CMSSW_CATEGORIES={

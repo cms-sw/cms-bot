@@ -19,12 +19,6 @@ for (it in jenkins.model.Jenkins.instance.getItem("build-release").builds)
     }
     catch (e) {println "Error: Unable to find workspace"; continue;}
   }
-  if (dryrun == "false"){
-    println "  Killing release build job #"+it.getNumber();
-    try {it.doStop();}
-    catch (e) {}
-  }
-  else{println "  DryRun: Not killing release build job #"+it.getNumber();}
   pfile = wspace+"/properties.kill-build-release-"+it.getNumber();
   println "Creating property file:"+pfile;
   def out = new File(pfile);

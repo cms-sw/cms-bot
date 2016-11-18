@@ -29,16 +29,6 @@ catch ( e ) {id2ignore=0;}
 
 println "Procject:"+proj;
 println "Params:"+params
-println "Checking running jobs";
-for (it in jenkins.model.Jenkins.instance.getItem(proj).builds)
-{ 
-  if (it.isInProgress() != true){continue;}
-  if (it.getNumber() == id2ignore){continue;}
-  println "  Checking job number: "+it.getNumber();
-  if (! isJobMatched(params, it.getBuildVariables())) {continue;}
-  it.doStop();
-  println "  Stopped Job";
-}
 
 println "Checking jobs in queue";
 def queue = jenkins.model.Jenkins.getInstance().getQueue();
@@ -57,9 +47,19 @@ for (i=0;i<items.length;i++)
     }
     println "  Checking Jobs :"+data;
     if (! isJobMatched(params, data)) {continue;}
-    println "  Killing job"
     queue.cancel(items[i].task);
     println "  Cancelled Job";
   }
+}
+
+println "Checking running jobs";
+for (it in jenkins.model.Jenkins.instance.getItem(proj).builds)
+{
+  if (it.isInProgress() != true){continue;}
+  if (it.getNumber() == id2ignore){continue;}
+  println "  Checking job number: "+it.getNumber();
+  if (! isJobMatched(params, it.getBuildVariables())) {continue;}
+  it.doStop();
+  println "  Stopped Job";
 }
 

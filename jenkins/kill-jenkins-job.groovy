@@ -2,25 +2,31 @@ proj=args[0];
 params = [:];
 for (p in args[1].tokenize(";")){
   def x=p.tokenize("=");
-  params[x[0]]=x[1][1..-2];
+  def v="";
+  if (x[1]!=null){v=x[1];}
+  params[x[0]]=v;
 }
 try {id2ignore=args[2].toInteger();}
 catch ( e ) {id2ignore=0;}
-
+println "Procject:"+proj;
+println "Params:"+params
 for (it in jenkins.model.Jenkins.instance.getItem(proj).builds)
 {
-  if (it.getResult() != null){continue;}
-  if (it.getNumber() ==id2ignore){continue;}
-  def all_ok = true
+  if (it.isInProgress() != true){continue;}
+  if (it.getNumber() == id2ignore){continue;}
+  println "  Checking job number: "+it.getNumber();
+  def all_ok = true;
   for (p in params)
-  {
+  { 
     try {
-      if (it.getBuildVariables()[p]!=params[p]){all_ok=false;}
+      if (it.getBuildVariables()[p.key]!=p.value){all_ok=false;}
     }
-    catch ( e ) {all_ok=false;}
+    catch ( e ) {all_ok=false;println "    "+e;}
+    if (all_ok){println "    Matched   : "+p;}
+    else{println "    Unmatched : "+p; break;}
   }
   if (all_ok==false){continue;}
-  println "JOB FOUND:"+proj+" "+it.getNumber()
+  println "  Killing job "+proj+" "+it.getNumber()
   it.doStop();
 }
 

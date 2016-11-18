@@ -18,12 +18,14 @@ for (it in jenkins.model.Jenkins.instance.getItem(proj).builds)
   def all_ok = true;
   for (p in params)
   { 
+    def cv="";
     try {
-      if (it.getBuildVariables()[p.key]!=p.value){all_ok=false;}
+      cv = it.getBuildVariables()[p.key];
+      if (cv != p.value){all_ok=false;}
     }
-    catch ( e ) {all_ok=false;println "    "+e;}
+    catch ( e ) {all_ok=false; println "    "+e;}
     if (all_ok){println "    Matched   : "+p;}
-    else{println "    Unmatched : "+p; break;}
+    else{println "    Unmatched : "+p+"("+cv+")"; break;}
   }
   if (all_ok==false){continue;}
   println "  Killing job "+proj+" "+it.getNumber()

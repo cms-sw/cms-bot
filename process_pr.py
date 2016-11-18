@@ -15,6 +15,7 @@ try:
 except Exception, e :
   SCRIPT_DIR = dirname(abspath(argv[0]))
 
+TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 IGNORING_TESTS_MSG = 'Ignoring test request.'
 TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
@@ -22,6 +23,7 @@ FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
 REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+"+CMSDIST_REPO_NAME+"#([0-9]+)|)\s*$", re.I)
+REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort\s+(test|)$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
 CMSDIST_PR_INDEX = 5
 TEST_WAIT_GAP=720
@@ -33,8 +35,10 @@ def format(s, **kwds):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, dryRun ):
-  out_file_name = 'trigger-tests-%s-%s.properties' % (repository.split("/")[1], pr_number)
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, dryRun, abort=False):
+  req_type = "tests"
+  if abort: req_type = "abort"
+  out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repository.split("/")[1], pr_number)
   if dryRun:
     print 'Not creating cleanup properties file (dry-run): %s' % out_file_name
   else:
@@ -261,6 +265,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   extra_labels = {}
   last_test_start_time = None
   body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
+  abort_test = False
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,body_firstline):
     already_seen = True
@@ -354,6 +359,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         signatures["tests"] = "started"
         trigger_test_on_signature = False
         last_test_start_time = comment.created_at
+        abort_test = False
       elif re.match( TESTS_RESULTS_MSG, first_line):
         test_sha = comment_lines[1:2]
         if test_sha: test_sha = test_sha[0].replace("Tested at: ","").strip()
@@ -370,6 +376,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         else:
           signatures["tests"] = "rejected"
         print 'Previous tests already finished, resetting test request state to ',signatures["tests"]
+      elif re.match( TRIGERING_TESTS_ABORT_MSG, first_line):
+        abort_test = False
       continue
 
     if issue.pull_request:
@@ -404,6 +412,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           else:
             print 'Tests already request for this PR'
           continue
+        elif REGEX_TEST_ABORT.match(first_line) and tests_already_queued:
+          tests_already_queued = False
+          abort_test = True
 
     # Check L2 signoff for users in this PR signing categories
     if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
@@ -558,25 +569,29 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
   if create_test_property:
     # trigger the tests and inform it in the thread.
-    if trigger_test_on_signature and has_categories_approval:
-      tests_requested = True
-    if tests_requested:
-      test_msg = TRIGERING_TESTS_MSG
-      cmsdist_issue = None
-      if cmsdist_pr:
-        try:
-          cmsdist_repo = gh.get_repo(CMSDIST_REPO_NAME)
-          cmsdist_pull = cmsdist_repo.get_pull(int(cmsdist_pr))
-          cmsdist_issue = cmsdist_repo.get_issue(int(cmsdist_pr))
-          test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
-        except UnknownObjectException as e:
-          print "Error getting cmsdist PR:",e.data['message']
-          test_msg = IGNORING_TESTS_MSG+"\n**ERROR**: Unable to find cmsdist Pull request "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
-      if not dryRun:
+    if trigger_test_on_signature and has_categories_approval: tests_requested = True
+    cmsdist_issue = None
+    test_msg = TRIGERING_TESTS_MSG
+    if (tests_requested or abort_test) and cmsdist_pr:
+      try:
+        cmsdist_repo = gh.get_repo(CMSDIST_REPO_NAME)
+        cmsdist_pull = cmsdist_repo.get_pull(int(cmsdist_pr))
+        cmsdist_issue = cmsdist_repo.get_issue(int(cmsdist_pr))
+        test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
+      except UnknownObjectException as e:
+        print "Error getting cmsdist PR:",e.data['message']
+        test_msg = IGNORING_TESTS_MSG+"\n**ERROR**: Unable to find cmsdist Pull request "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
+    if not dryRun:
+      if tests_requested:
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, dryRun)
+          create_properties_file_tests( repository, prId, cmsdist_pr, dryRun, abort=False)
+      elif abort_test:
+        issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
+        if cmsdist_issue: cmsdist_issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
+        if (not cmsdist_pr) or cmsdist_issue:
+          create_properties_file_tests( repository, prId, cmsdist_pr, dryRun, abort=True)
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"

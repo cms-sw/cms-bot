@@ -742,22 +742,25 @@ void generalTrack(TString var){
 }
 
 
-void pf(TString var,int type=-1, TString cName = "particleFlow_"){
+void pf(TString var,int type=-1, TString cName = "particleFlow_"){ 
+  TString v="recoPFCandidates_"+cName+"_"+recoS+".obj."+var+"()";
+  if (var == "p" || var == "pt"){
+    v = "log10("+v+")";
+  } else if (var == "time"){//direct data member is faster; no op if impl changes
+    v = "recoPFCandidates_"+cName+"_"+recoS+".obj.time_";
+    v = "max(-30,min(30,"+v+"))";//avoid nans and other nonsense
+  } else if (var == "time wide"){//direct data member is faster; no op if impl changes
+    v = "recoPFCandidates_"+cName+"_"+recoS+".obj.time_";
+    v = "max(-250,min(150,"+v+"))";//avoid nans and other nonsense
+  }
+
   if (type==-1){
-    TString v="recoPFCandidates_"+cName+"_"+recoS+".obj."+var+"()";
     plotvar(v);
-    if (var == "p" || var == "pt"){
-      plotvar("log10("+v+")");
-    }
   }else{
-    TString v="recoPFCandidates_"+cName+"_"+recoS+".obj."+var+"()";
     TString sel="recoPFCandidates_"+cName+"_"+recoS+".obj.particleId()==";
     sel+=type;
     //std::cout<<"selecting "<<sel<<std::endl;
     plotvar(v,sel);
-    if (var == "p" || var == "pt"){
-      plotvar("log10("+v+")", sel);
-    }
   }
 }
 
@@ -767,6 +770,8 @@ void allpf(int type=-1, TString cName  = "particleFlow_"){
   pf("phi",type, cName);
   pf("pt",type, cName);
   pf("p",type, cName);
+  pf("time",type, cName);
+  pf("time wide",type, cName);
   if (detailled1)      pf("px",type, cName);
   if (detailled1)      pf("py",type, cName);
   if (detailled1)      pf("pz",type, cName);

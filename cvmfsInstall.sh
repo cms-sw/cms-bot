@@ -155,6 +155,7 @@ for REPOSITORY in $REPOSITORIES; do
     continue
   fi
   echo "Checking week $REPOSITORY ($WEEK) for RPMS"
+  if [ "X$TEST_INSTALL" = "XYes" ] ; then REPOSITORY="test" ; fi
   WORKDIR=$BASEDIR/$REPOSITORY
   mkdir -p $WORKDIR
   # Install all architectures of the most recent week first.

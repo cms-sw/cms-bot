@@ -412,7 +412,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           else:
             print 'Tests already request for this PR'
           continue
-        elif REGEX_TEST_ABORT.match(first_line) and tests_already_queued:
+        elif (REGEX_TEST_ABORT.match(first_line) and 
+              ((signatures["tests"] == "started") or 
+               ((signatures["tests"] != "pending") and (not comparison_done)))):
           tests_already_queued = False
           abort_test = True
           signatures["tests"] = "pending"

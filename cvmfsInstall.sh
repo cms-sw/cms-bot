@@ -5,6 +5,7 @@ RELEASE_NAME=$3
 WORKSPACE=$4
 DEV=$5
 USE_DEV=""
+TEST_INSTALL=$6
 if [ "X$DEV" = "Xtrue" ] ; then
   DEV="-dev"
   USE_DEV="--use-dev"

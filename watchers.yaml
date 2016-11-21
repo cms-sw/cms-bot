@@ -903,7 +903,19 @@ jdolen:
 - CommonTools/RecoAlgos
 kreczko:
 - AnalysisDataFormats/TopObjects
+- CondCore/L1TPlugins
+- CondFormats/L1TObjects
+- CondTools/L1Trigger
+- DataFormats/L1Trigger
+- DQM/L1TMonitorClient
+- DQM/L1TMonitor
+- DQMOffline/L1Trigger
+- EventFilter/L1TRawToDigi
+- L1Trigger
+- L1TriggerConfig
+- L1TriggerOffline
 - TopQuarkAnalysis
+- Validation/L1T
 pfs:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi

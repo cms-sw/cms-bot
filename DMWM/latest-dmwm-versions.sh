@@ -1,5 +1,4 @@
 #! /bin/bash -e
 
-export WMAGENT_LATEST=$(curl -s http://cmsrep.cern.ch/cmssw/$COMP_REPO/RPMS/$DMWM_ARCH/ | cut -d\> -f6 | cut -d\" -f2 | grep wmagent-dev | cut -d+ -f3 | rev | cut -d\- -f3- | rev | tail -1)
-export CRABDEV_LATEST=$(curl -s http://cmsrep.cern.ch/cmssw/$COMP_REPO/RPMS/$DMWM_ARCH/ | cut -d\> -f6 | cut -d\" -f2 | grep crab-devtools | cut -d+ -f3 | rev | cut -d\- -f3- | rev | tail -1)
-
+export WMAGENT_LATEST=$(curl -s "http://cmsrep.cern.ch/cgi-bin/repos/$COMP_REPO/$DMWM_ARCH?C=M;O=D" | grep -oP "(?<=>cms\+wmagent-dev\+).*(?=-1-1)" | head -1)
+export CRABDEV_LATEST=$(curl -s "http://cmsrep.cern.ch/cgi-bin/repos/$COMP_REPO/$DMWM_ARCH?C=M;O=D" | grep -oP "(?<=>cms\+crab-devtools\+).*(?=-1-1)" | head -1)

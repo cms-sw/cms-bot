@@ -20,38 +20,40 @@ def read_json(infile):
     return json.load(json_data)
 
 def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
-  das_cmd = "das_client --format=json --limit=%s --query '%s | grep file.name | sort | unique' --retry=%s --threshold=%s" % (limit, query,retry, threshold)
+  field = query.split(" ",1)[0]
+  das_cmd = "das_client --format=json --limit=%s --query '%s | grep %s.name | sort | unique' --retry=%s --threshold=%s" % (limit, query, field, retry, threshold)
   err, out = getstatusoutput(das_cmd)
   if err:
     print out
     return False
   jdata = json.loads(out)
   if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata):
-    print out
+    print "Failed: %s\n  %s" % (query, out)
     return False
-  results = {'mtime' : time(), 'files' : []}
-  field = query.split(" ",1)[0]
+  write_json (outfile+".json", jdata)
+  results = {'mtime' : time(), 'results' : []}
   for item in jdata["data"]:
-    if (not item[field]) or (not 'name' in item[field][0]): continue
-    results['files'].append(item[field][0]["name"])
-  if (len(results['files'])==0) and ('site=T2_CH_CERN' in query):
+    if (not field in item) or (not item[field]) or (not 'name' in item[field][0]): continue
+    results['results'].append(item[field][0]["name"])
+  if (len(results['results'])==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()
-    print "Removed T2_CH_CERN restrictions and limit set to 10: %s" % query
-    return run_das_client(outfile, query, override, threshold, retry, limit=10)
-  if results['files'] or override:
-    print "  Success '%s', found %s files." % (query, len(results['files']))
-    if results['files']:
+    lmt = 0
+    if field == "file": lmt = 100
+    print "Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query)
+    return run_das_client(outfile, query, override, threshold, retry, limit=lmt)
+  if results['results'] or override:
+    print "  Success '%s', found %s results." % (query, len(results['results']))
+    if results['results']:
       write_json (outfile, results)
-      write_json (outfile+".json", jdata)
     else:
-      getstatusoutput("rm -f %s %s.json" % (outfile,outfile))
+      getstatusoutput("rm -f %s" % (outfile))
   return True
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <options>")
   parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", type=int, default=86400)
-  parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests in cache empty results are returned from das", action="store_true", default=False)
-  parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", default=-1)
+  parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests if cache empty results are returned from das", action="store_true", default=False)
+  parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", type=int, default=-1)
   parser.add_option("-s", "--store",      dest="store",     help="Name of object store directory to store the das queries results", default=None)
 
   opts, args = parser.parse_args()
@@ -101,14 +103,18 @@ if __name__ == "__main__":
     if exists(outfile):
       jdata = read_json (outfile)
       dtime = time()-jdata['mtime']
-      fcount = len(jdata['files'])
+      if 'files' in jdata:
+        jdata['results'] = jdata['files']
+        del jdata['files']
+        write_json (outfile, jdata)
+      fcount = len(jdata['results'])
       if (dtime<=opts.threshold) and (fcount>0):
-        uqueries[query] = jdata['files']
-        print "  Found in cache with %s files (age: %s src)" % (fcount , dtime)
+        uqueries[query] = jdata['results']
+        print "  Found in cache with %s results (age: %s src)" % (fcount , dtime)
         inCache += 1
         continue
       elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
-      else: print "  Retrying as cache with empty file list found."
+      else: print "  Retrying as cache with empty results found."
     else: print "  No cache file found %s" % sha
     
     DasSearch += 1

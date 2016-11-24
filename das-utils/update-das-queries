@@ -14,7 +14,7 @@ if [ ! -d das_results ] ; then
 fi
 
 rm -f $WORKSPACE/error
-$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} --jobs 2 ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
+$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} --jobs 4 ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
 pushd $WORKSPACE/das_results
   git add das_queries
   if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then

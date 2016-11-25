@@ -57,17 +57,18 @@ if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
 else
   QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| ||g;s|"||g;s|,||g')
-  [ $((get_parent_cmds $$ 0 2>&1 ||true) | grep '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
+  [ $((get_parent_cmds $$ 0 2>&1 || true) | grep '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
 fi
 
 if [ $(echo "${QUERY_RESULTS}" | grep '/store/' | wc -l) -gt 0 ] ; then
   if [ "$LIMIT_RESULTS" = "YES" ] ; then
-    echo "${QUERY_RESULTS}" | ibeos-lfn-sort
+    echo "${QUERY_RESULTS}" | ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   else
-    echo "${QUERY_RESULTS}"
+    echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
 elif [ "${FORMAT}" = "json" -o "$LIMIT_RESULTS" = "NO" ]  ; then
-  ${ORIG_DAS_CLIENT} "$@"
+  ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
 else
-  ${ORIG_DAS_CLIENT} "$@" | ibeos-lfn-sort
+  ${ORIG_DAS_CLIENT} "$@" | ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
 fi
+cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out

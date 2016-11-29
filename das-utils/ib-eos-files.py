@@ -112,6 +112,11 @@ def eos_exists(eos_file):
   if err: return False
   return True
 
+def eos_rename(name, new_name):
+  err, out = run_cmd("%s file rename %s %s" % (eos_cmd, name, new_name),exit_on_error=False,debug=False)
+  if err: return False
+  return True
+
 def eos_size(eos_file):
   if not eos_exists(eos_file): return -1
   err, out = run_cmd("%s ls -l %s | awk '{print $5}'" % (eos_cmd, eos_file), debug=True,exit_on_error=False)
@@ -148,26 +153,26 @@ def copy_lfns_to_eos(eos_lfns):
   total_lfns = len(eos_lfns)
   for lfn in eos_lfns:
     eos_file = "%s%s" % (eos_base, lfn)
-    if not eos_exists(eos_file):
-      if opts.dryRun:
-        print "DryRun: Copy %s -> %s" % (lfn, eos_file)
-        continue
-      while True:
-        threads = get_alive_threads(threads)
-        if(len(threads) < opts.jobs):
-          log_file=logdir+"/"+sha256(lfn).hexdigest()+".log"
-          all_logs[log_file]=lfn
-          t = Thread(name=lfn,target=copy_to_eos, args=(lfn, log_file))
-          job_monitor[lfn]=[int(time()), 0, 0,log_file]
-          t.start()
-          threads.append(t)
-          break
-        else:
-          check_dead_transfers(threads, job_monitor)
-          sleep(10)
-    else:
+    if eos_exists(eos_file) or (eos_exists(eos_file+".unused") and eos_rename(eos_file, eos_file+".unused")):
       already_done += 1
       print "OK (%s/%s): %s" % (already_done, total_lfns, lfn)
+      continue
+    if opts.dryRun:
+      print "DryRun: Copy %s -> %s" % (lfn, eos_file)
+      continue
+    while True:
+      threads = get_alive_threads(threads)
+      if(len(threads) < opts.jobs):
+        log_file=logdir+"/"+sha256(lfn).hexdigest()+".log"
+        all_logs[log_file]=lfn
+        t = Thread(name=lfn,target=copy_to_eos, args=(lfn, log_file))
+        job_monitor[lfn]=[int(time()), 0, 0,log_file]
+        t.start()
+        threads.append(t)
+        break
+      else:
+        check_dead_transfers(threads, job_monitor)
+        sleep(10)
   while len(threads)>0:
     sleep(10)
     threads = get_alive_threads(threads)

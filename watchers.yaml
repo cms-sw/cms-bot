@@ -107,9 +107,11 @@ makortel:
   - FWCore/Utilities
   - Geometry/Track
   - Geometry/CommonTopologies
+  - HLTrigger/Configuration
   - IgTools
   - PerfTools
   - RecoLocalTracker
+  - RecoParticleFlow/PFTracking
   - RecoPixelVertexing
   - RecoTracker
   - RecoVertex

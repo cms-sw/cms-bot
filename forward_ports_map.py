@@ -50,6 +50,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_8_1_X/gcc530"].append("IB/CMSSW_8_1_X/gcc5
 #Added explicitly by Shahzad MUZAFFAR
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_0_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_0_X"].append("CMSSW_9_0_ROOT6_X")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_0_X"].append("CMSSW_9_0_DEVEL_X")
 
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_0_X/gcc530"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_0_X/gcc530"].append("IB/CMSSW_9_0_X/gcc620")

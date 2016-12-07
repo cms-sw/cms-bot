@@ -1,6 +1,6 @@
 #!/bin/bash -ex
-
-eos_cmd="EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
+export EOS_MGM_URL="root://eoscms.cern.ch"
+eos_cmd="/usr/bin/eos"
 eos_base="/store/user/cmsbuild"
 xrd_eos_base="root://eoscms.cern.ch//eos/cms"
 lfn=$1

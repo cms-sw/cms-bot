@@ -48,6 +48,8 @@ for l in unused:
     print o
     continue
   e, o = run_cmd("%s file rename %s %s.unused" % (eos_cmd, pfn, pfn))
-  if e: print o
-  else: print "Renamed: ",l
-
+  if e:
+    print o
+  else:
+    print "Renamed: ",l
+    run_cmd("%s file touch %s.unused" % (eos_cmd, pfn))

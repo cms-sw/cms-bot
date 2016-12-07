@@ -153,7 +153,7 @@ def copy_lfns_to_eos(eos_lfns):
   total_lfns = len(eos_lfns)
   for lfn in eos_lfns:
     eos_file = "%s%s" % (eos_base, lfn)
-    if eos_exists(eos_file) or (eos_exists(eos_file+".unused") and eos_rename(eos_file, eos_file+".unused")):
+    if eos_exists(eos_file) or (eos_exists(eos_file+".unused") and eos_rename(eos_file+".unused", eos_file)):
       already_done += 1
       print "OK (%s/%s): %s" % (already_done, total_lfns, lfn)
       continue

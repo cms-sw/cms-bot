@@ -113,6 +113,7 @@ def eos_exists(eos_file):
   return True
 
 def eos_rename(name, new_name):
+  print "Rename: %s -> %s" % (name, new_name)
   err, out = run_cmd("%s file rename %s %s" % (eos_cmd, name, new_name),exit_on_error=False,debug=False)
   if err: return False
   return True

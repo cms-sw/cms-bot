@@ -22,6 +22,6 @@ cmsbuild23.cern.ch
 cmsbuild24.cern.ch
 cmsbuild25.cern.ch
 cmsbuild30.cern.ch
-test-builder01.cern.ch
+cmsbuild32.cern.ch
 vocms029.cern.ch
 vocms0315.cern.ch

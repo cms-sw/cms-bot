@@ -4,7 +4,7 @@ from sys import argv, exit
 from os.path import dirname, abspath
 from commands import getstatusoutput as run_cmd
 script_path = abspath(dirname(argv[0]))
-eos_cmd = "/afs/cern.ch/project/eos/installation/cms/bin/eos.select"
+eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"
 try:days=int(argv[1])
 except: days=10

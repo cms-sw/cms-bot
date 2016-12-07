@@ -13,7 +13,7 @@ if not all_dasfiles:
   print "\n".join(new_order)
   exit(0)
 
-eos_cmd = "/afs/cern.ch/project/eos/installation/cms/bin/eos.select"
+eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 EOS_BASE="/eos/cms/store/user/cmsbuild/store"
 eos_base_len = len(EOS_BASE)
 err, eos_files = run_cmd("%s find -f %s | sort" % (eos_cmd,EOS_BASE))

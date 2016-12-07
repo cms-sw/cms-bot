@@ -8,7 +8,7 @@ from time import sleep, time
 from commands import getstatusoutput
 import re
 
-eos_cmd = "/afs/cern.ch/project/eos/installation/cms/bin/eos.select"
+eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"
 opts = None
 

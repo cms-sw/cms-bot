@@ -44,7 +44,7 @@ print "Renaming unused files"
 for l in unused:
   pfn = "%s/%s" % (eos_base, l)
   e, o = run_cmd("%s stat -f %s" % (eos_cmd, pfn))
-  if err:
+  if e:
     print o
     continue
   e, o = run_cmd("%s file rename %s %s.unused" % (eos_cmd, pfn, pfn))

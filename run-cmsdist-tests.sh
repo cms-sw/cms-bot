@@ -156,15 +156,13 @@ pushd $CMSSW_IB/src
 mv ../config/toolbox/${ARCHITECTURE}/tools/selected ../config/toolbox/${ARCHITECTURE}/tools/selected.old
 cp -r $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCHITECTURE}/tools/selected
 scram setup
+
+grep '<tool name=' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|name=||;s|version=||;s|"||g;s|>||'  | sort | tr 'A-Z' 'a-z' > ../old.tools
+grep '<tool name=' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml     | sed 's|.*<tool *||;s|name=||;s|version=||;s|"||g;s|>||'  | sort | tr 'A-Z' 'a-z' > ../new.tools
+
 DEP_NAMES=""
-BUILD_TOOLS=$(find $WORKSPACE/$BUILD_DIR/BUILD/$ARCHITECTURE -maxdepth 3 -mindepth 3 -type d | sed "s|/BUILD/$ARCHITECTURE/|/$ARCHITECTURE/|")
-PR_TOOLS=$(for p in $PKGS ; do find $WORKSPACE/$BUILD_DIR/$ARCHITECTURE -maxdepth 3 -mindepth 3 -path "*/$p/*" -type d; done)
-for DIR in $(echo $BUILD_TOOLS $PR_TOOLS |  sort | uniq) ; do
-  if [ -d $DIR/etc/scram.d ]; then
-    for FILE in `find $DIR/etc/scram.d -name '*.xml'`; do
-      DEP_NAMES=$DEP_NAMES" echo_"$(echo $FILE | sed 's|.*/||;s|.xml$||')"_USED_BY"
-    done
-  fi
+for tool in $(diff ../new.tools ../old.tools  | awk '{print $2}' | sort -u | grep -v '^$')
+  DEP_NAMES=$DEP_NAMES" echo_"$($tool)"_USED_BY"
 done
 eval $(scram runtime -sh)
 

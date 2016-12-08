@@ -20,5 +20,5 @@ else
     esac
   done
 fi
-echo $IBEOS_FILES $NON_IBEOS_FILES | tr ' ' '\n' | grep '/store' | head -n 20
+echo $(echo $IBEOS_FILES | tr ' ' '\n' | sort -u) $(echo $NON_IBEOS_FILES | tr ' ' '\n' | sort -u) | tr ' ' '\n' | grep '/store' | head -n 20
 

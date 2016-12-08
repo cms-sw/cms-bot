@@ -161,7 +161,7 @@ grep '<tool name=' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | 
 grep '<tool name=' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml     | sed 's|.*<tool *||;s|name=||;s|version=||;s|"||g;s|>||'  | sort | tr 'A-Z' 'a-z' > ../new.tools
 
 DEP_NAMES=""
-for tool in $(diff ../new.tools ../old.tools  | awk '{print $2}' | sort -u | grep -v '^$')
+for tool in $(diff ../new.tools ../old.tools  | awk '{print $2}' | sort -u | grep -v '^$') ; do
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
 eval $(scram runtime -sh)

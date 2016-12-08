@@ -162,7 +162,7 @@ grep '<tool name=' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml     | 
 
 DEP_NAMES=""
 for tool in $(diff ../new.tools ../old.tools  | awk '{print $2}' | sort -u | grep -v '^$')
-  DEP_NAMES=$DEP_NAMES" echo_"$($tool)"_USED_BY"
+  DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
 eval $(scram runtime -sh)
 

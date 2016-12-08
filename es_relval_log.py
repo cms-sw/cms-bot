@@ -123,10 +123,10 @@ def es_parse_log(logFile):
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
           if (not "file:" in rootfile) and (not rootfile in datasets):
-            if (i+2)<total_lines:
-              if (rootfile in lines[i+1]) and (rootfile in lines[i+2]) and ("Successfully opened file " in lines[i+1]) and ("Closed file " in lines[i+2]):
-                print "File read with no valid events: %s" % rootfile
-                continue
+            #if (i+2)<total_lines:
+            #  if (rootfile in lines[i+1]) and (rootfile in lines[i+2]) and ("Successfully opened file " in lines[i+1]) and ("Closed file " in lines[i+2]):
+            #    print "File read with no valid events: %s" % rootfile
+            #    continue
             datasets.append(rootfile)
         except: pass
         continue

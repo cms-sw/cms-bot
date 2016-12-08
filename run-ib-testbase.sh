@@ -1,6 +1,5 @@
 #!/bin/bash
 echo "#!/bin/bash -ex"
-echo "set +x"
 echo "ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 || true"
 echo "ls /cvmfs/cms.cern.ch >/dev/null 2>&1 || true"
 echo "voms-proxy-init -voms cms || true"
@@ -10,9 +9,10 @@ echo "source /cvmfs/cms-ib.cern.ch/week1/cmsset_default.sh  || true"
 echo "scram -a $ARCHITECTURE project $RELEASE_FORMAT"
 echo "cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py"
 echo "cd $RELEASE_FORMAT"
+echo "set +x"
 echo 'eval `scram runtime -sh`'
+echo "set -x"
 echo "$WORKSPACE/cms-bot/das-utils/use-ibeos-sort"
 echo "export CMS_PATH=/cvmfs/cms-ib.cern.ch/week1"
 echo "export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH"
 echo "export FRONTIER_LOG_LEVEL=warning"
-echo "set -x"

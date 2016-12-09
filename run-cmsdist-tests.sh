@@ -157,11 +157,8 @@ mv ../config/toolbox/${ARCHITECTURE}/tools/selected ../config/toolbox/${ARCHITEC
 cp -r $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCHITECTURE}/tools/selected
 scram setup
 
-grep '<tool name=' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|name=||;s|version=||;s|"||g;s|>||'  | sort | tr 'A-Z' 'a-z' > ../old.tools
-grep '<tool name=' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml     | sed 's|.*<tool *||;s|name=||;s|version=||;s|"||g;s|>||'  | sort | tr 'A-Z' 'a-z' > ../new.tools
-
 DEP_NAMES=""
-for tool in $(diff ../new.tools ../old.tools  | awk '{print $2}' | sort -u | grep -v '^$') ; do
+for tool in  $(diff <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) | awk '{print $2}' | sort -u ) ; do
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
 eval $(scram runtime -sh)

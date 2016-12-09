@@ -145,7 +145,7 @@ which das_client
 if [ $(grep 'V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   git clone git@github.com:cms-sw/cmssw-config
   pushd cmssw-config
-    git checkout V05-05-13
+    git checkout V05-05-19
   popd
   mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
   cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
@@ -158,7 +158,7 @@ cp -r $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected  
 scram setup
 
 DEP_NAMES=""
-for tool in  $(diff <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) | awk '{print $2}' | sort -u ) ; do
+for tool in  $(diff <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) | awk '{print $2}' | sort -u )) ; do
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
 eval $(scram runtime -sh)

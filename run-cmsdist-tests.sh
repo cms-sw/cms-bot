@@ -158,7 +158,9 @@ cp -r $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected  
 scram setup
 
 DEP_NAMES=""
-for tool in `diff <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) <(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort) | awk '{print $2}' | sort -u` ; do
+grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml     | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort > new.txt
+grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort > old.txt
+for tool in $(diff new.txt old.txt | awk '{print $2}' | sort -u) ; do
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
 eval $(scram runtime -sh)

@@ -3,19 +3,20 @@ from re import match,IGNORECASE
 
 #Merge format: "user" : [ regexp for valid commands, regexp of allowed branches, regexp of not allowed branches ]
 CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
-COMP_BRANCHES    = ".+"
+ALL_BRANCHES     = ".+"
 WMAGENT_BRANCHES = "^comp_gcc493$"
 CMSDIST_PERMISSIONS = {
-  "BrunoCoimbra"   : [ ".+", COMP_BRANCHES ,CMSSW_BRANCHES ],
-  "h4d4"           : [ ".+", COMP_BRANCHES ,CMSSW_BRANCHES ],
-  "amaltaro"       : [ ".+", WMAGENT_BRANCHES ,CMSSW_BRANCHES ],
-  "ticoann"        : [ ".+", WMAGENT_BRANCHES ,CMSSW_BRANCHES ],
+  "BrunoCoimbra"   : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
+  "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
+  "amaltaro"       : [ ".+", WMAGENT_BRANCHES , CMSSW_BRANCHES ],
+  "ticoann"        : [ ".+", WMAGENT_BRANCHES , CMSSW_BRANCHES ],
 }
 
 VALID_COMMENTS = {
   "^(please(\s*,|)\s+|)merge$"    : "merge",
   "^(please(\s*,|)\s+|)close$"    : "close",
   "^(please(\s*,|)\s+|)(re|)open$": "open",
+  "^ping$"                        : "ping",
 }
 
 def getCommentCommand(comment):
@@ -28,8 +29,17 @@ def hasRights(user, branch, type):
   if not user in CMSDIST_PERMISSIONS: return False
   if not match(CMSDIST_PERMISSIONS[user][0], type): return False
   if branch:
-    if match(CMSDIST_PERMISSIONS[user][2],branch): return False
-    if not match(CMSDIST_PERMISSIONS[user][1],branch): return False
+    reg = CMSDIST_PERMISSIONS[user][2]
+    if reg and match(reg,branch): return False
+    reg = CMSDIST_PERMISSIONS[user][1]
+    if not match(reg,branch): return False
+  return True
+
+def isValidWebHook(payload):
+  if (not payload['repository']['full_name'] in ['cms-sw/cmsdist']): return False
+  if (not payload['comment']['user']['login'] in CMSDIST_PERMISSIONS.keys()): return False
+  comment_lines = [ l.strip() for l in payload['comment']['body'].encode("ascii", "ignore").split("\n") if l.strip() ][0:1]
+  if (not comment_lines) or (not getCommentCommand(comment_lines[0])): False
   return True
 
 USERS_TO_TRIGGER_HOOKS = set(CMSDIST_PERMISSIONS.keys())

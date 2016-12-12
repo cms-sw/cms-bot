@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from sys import exit
+from re import match
 from github import Github
 from os.path import expanduser
 from optparse import OptionParser
@@ -20,23 +21,32 @@ def process_pr(gh, repo, issue, dryRun):
     if pr.merged: return True
   for comment in issue.get_comments():
     commenter = comment.user.login
-    if not commenter in USERS_TO_TRIGGER_HOOKS: continue
+    if not commenter in USERS_TO_TRIGGER_HOOKS+["cmsbuild"]: continue
     comment_msg = comment.body.encode("ascii", "ignore")
-    comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ]
-    first_line = comment_lines[0:1]
-    print "FL: %s => %s" % (commenter, first_line)
-    if not first_line: continue
-    cmd = getCommentCommand(first_line[0])
+    comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ][0:1]
+    print "Comment first line: %s => %s" % (commenter, comment_lines)
+    if not comment_lines: continue
+    first_line = comment_lines[0]
+    if commenter == "cmsbuild":
+      if not cmdType: continue
+      if match("^Command\s+"+cmdType+"\s+acknowledged.$",first_line):
+        print "Acknowledged ",cmdType
+        cmdType = None
+      continue
+    cmd = getCommentCommand(first_line)
     if not cmd: continue
     if cmd == "merge" and not pr: continue
     if not hasRights (commenter, branch, cmd): continue
     cmdType = cmd
     print "Found: Command %s issued by %s" % (cmdType, commenter)
+  if not cmdType: return True
+  print "Processing ",cmdType
   if dryRun: return True
   if issue.state == "open":
     if cmdType == "merge": pr.merge()
     if cmdType == "close": issue.edit(state="closed")
   elif cmdType == "open": issue.edit(state="open")
+  issue.create_comment("Command "+cmdType+" acknowledged.")
   return True
 
 if __name__ == "__main__":

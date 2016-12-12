@@ -160,7 +160,7 @@ scram setup
 DEP_NAMES=""
 grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml     | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort > ../new.txt
 grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort > ../old.txt
-for tool in $(diff ../new.txt ../old.txt | awk '{print $2}' | sort -u) ; do
+for tool in $(diff ../new.txt ../old.txt | awk '{print $2}' | tr 'A-Z' 'a-z'  | grep -v '^cmssw$' | sort -u) ; do
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
 eval $(scram runtime -sh)

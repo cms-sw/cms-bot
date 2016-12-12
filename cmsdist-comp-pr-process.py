@@ -19,9 +19,10 @@ def process_pr(gh, repo, issue, dryRun):
     branch = pr.base.ref
     print "PR merged:", pr.merged
     if pr.merged: return True
+  USERS_TO_TRIGGER_HOOKS.add("cmsbuild")
   for comment in issue.get_comments():
     commenter = comment.user.login
-    if not commenter in USERS_TO_TRIGGER_HOOKS.add("cmsbuild"): continue
+    if not commenter in USERS_TO_TRIGGER_HOOKS: continue
     comment_msg = comment.body.encode("ascii", "ignore")
     comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ][0:1]
     print "Comment first line: %s => %s" % (commenter, comment_lines)

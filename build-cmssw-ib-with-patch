@@ -135,7 +135,8 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild $USE_DEV --debug --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
-./w/common/cmspkg -a $ARCHITECTURE -f upgrade || true
+./w/common/cmspkg -a $ARCHITECTURE -f upgrade
+./w/common/cmspkg -a $ARCHITECTURE -f update
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w
 for previous in $PREVIOUS_RELEASES; do

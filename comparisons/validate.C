@@ -692,6 +692,40 @@ void recoMuonsCos1Leg(TString var, bool notafunction = false){
   plotvar(v);
 }
 
+void superClusters(TString cName ){
+  plotvar("recoSuperClusters_"+cName+"_"+recoS+".obj@.size()");
+  plotvar("recoSuperClusters_"+cName+"_"+recoS+".obj.eta()");
+  plotvar("recoSuperClusters_"+cName+"_"+recoS+".obj.phi()");
+  plotvar("log10(recoSuperClusters_"+cName+"_"+recoS+".obj.energy())");
+  plotvar("log10(max(1e-5,recoSuperClusters_"+cName+"_"+recoS+".obj.correctedEnergy()))");
+  plotvar("log10(max(1e-5,recoSuperClusters_"+cName+"_"+recoS+".obj.correctedEnergyUncertainty()))");
+}
+
+void caloClusters(TString cName ){
+  plotvar("recoCaloClusters_"+cName+"_"+recoS+".obj@.size()");
+  plotvar("recoCaloClusters_"+cName+"_"+recoS+".obj.eta()");
+  plotvar("recoCaloClusters_"+cName+"_"+recoS+".obj.phi()");
+  plotvar("log10(recoCaloClusters_"+cName+"_"+recoS+".obj.energy())");
+  plotvar("log10(max(1e-5,recoCaloClusters_"+cName+"_"+recoS+".obj.correctedEnergy()))");
+  plotvar("log10(max(1e-5,recoCaloClusters_"+cName+"_"+recoS+".obj.correctedEnergyUncertainty()))");
+}
+
+void pfClusters(TString cName ){
+  plotvar("recoPFClusters_"+cName+"_"+recoS+".obj@.size()");
+  plotvar("recoPFClusters_"+cName+"_"+recoS+".obj.eta()");
+  plotvar("recoPFClusters_"+cName+"_"+recoS+".obj.phi()");
+  plotvar("log10(recoPFClusters_"+cName+"_"+recoS+".obj.energy())");
+  plotvar("recoPFClusters_"+cName+"_"+recoS+".obj.time()");
+}
+
+void hgcalMultiClusters(TString cName ){
+  plotvar("recoHGCalMultiClusters_"+cName+"_"+recoS+".obj@.size()");
+  plotvar("recoHGCalMultiClusters_"+cName+"_"+recoS+".obj.eta()");
+  plotvar("recoHGCalMultiClusters_"+cName+"_"+recoS+".obj.phi()");
+  plotvar("log10(recoHGCalMultiClusters_"+cName+"_"+recoS+".obj.energy())");
+  plotvar("recoHGCalMultiClusters_"+cName+"_"+recoS+".obj.time()");
+}
+
 void plotTrack(TString alias, TString var){
   TString v="recoTracks_"+alias+"."+var;
   if (!(v.Contains("(") && v.Contains(")") && !v.Contains("()")))
@@ -1395,6 +1429,16 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data@.size()");
       //plotvar("SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data.barycenter()");
       plotvar("SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data.charge()");
+      plotvar("log10(max(0.1,SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data.size()))");
+      plotvar("min(50,SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj.m_data.size())");
+
+      plotvar("Phase2TrackerCluster1DedmNewDetSetVector_siPhase2Clusters__"+recoS+".obj.m_data@.size()");
+      plotvar("log10(max(0.1,Phase2TrackerCluster1DedmNewDetSetVector_siPhase2Clusters__"+recoS+".obj.m_data.size()))");
+      plotvar("min(50,Phase2TrackerCluster1DedmNewDetSetVector_siPhase2Clusters__"+recoS+".obj.m_data.size())");
+
+      plotvar("Phase2ITPixelClusteredmNewDetSetVector_phase2ITPixelClusters__"+recoS+".obj.m_data@.size()");
+      plotvar("log10(max(0.1,Phase2ITPixelClusteredmNewDetSetVector_phase2ITPixelClusters__"+recoS+".obj.m_data.size()))");
+      plotvar("min(50,Phase2ITPixelClusteredmNewDetSetVector_phase2ITPixelClusters__"+recoS+".obj.m_data.size())");
 
       tbr="recoClusterCompatibility_hiClusterCompatibility__";
       plotvar(tbr+recoS+".obj.nValidPixelHits()");
@@ -1409,6 +1453,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     if ((step.Contains("all") || step.Contains("sistrip")) && !step.Contains("cosmic") ){
       plotvar("SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj.m_data@.size()");
       plotvar("SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj.m_data.barycenter()");
+      plotvar("log10(max(0.1,SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj.m_data.amplitudes_@.size()))");
+      plotvar("min(50,SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj.m_data.amplitudes_@.size())");
       //plotvar("SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj.m_data.amplitudes()[0]");
 
       tbr="ClusterSummary_clusterSummaryProducer__";
@@ -1750,140 +1796,36 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       // miniaod
       photonVars("slimmedPhotons_","patPhotons_");
 
-      plotvar("recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj@.size()");
-      plotvar("recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj.eta()");
-      plotvar("recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj.phi()");
-      plotvar("log10(recoCaloClusters_reducedEgamma_reducedEBEEClusters_"+recoS+".obj.energy())");
-
-      plotvar("recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj@.size()");
-      plotvar("recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj.eta()");
-      plotvar("recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj.phi()");
-      plotvar("log10(recoCaloClusters_reducedEgamma_reducedESClusters_"+recoS+".obj.energy())");
+      caloClusters("reducedEgamma_reducedEBEEClusters");
+      caloClusters("reducedEgamma_reducedESClusters");
 
       if (detailled){
 
-	
-	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj@.size()");
-	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.eta()");
-	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.energy()");
-	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.correctedEnergy()");
-	plotvar("recoSuperClusters_uncleanedHybridSuperClusters__"+recoS+".obj.correctedEnergyUncertainty()");
-	/* plotvar("recoSuperClusters_hybridSuperClusters__"+recoS+".obj@.size()");
-	   plotvar("recoSuperClusters_hybridSuperClusters__"+recoS+".obj.eta()");
-	   plotvar("TrackCandidates_conversionTrackCandidates_outInTracksFromConversions_"+recoS+".obj@.size()");
-	   plotvar("TrackCandidates_conversionTrackCandidates_inOutTracksFromConversions_"+recoS+".obj@.size()");
-	   allTracks("ckfOutInTracksFromConversions__"+recoS+"");
-	   allTracks("ckfInOutTracksFromConversions__"+recoS+"");
-	   plotvar("recoPhotonCores_photonCore__"+recoS+".obj@.size()");
-	*/
-
+	superClusters("uncleanedHybridSuperClusters_");
       }
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower_"+recoS+".obj.correctedEnergyUncertainty()))");
+      superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower");
+      superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap");
+      superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel");
+      superClusters("multi5x5SuperClusters_multi5x5EndcapSuperClusters");
+      superClusters("particleFlowEGamma_");
+      superClusters("pfElectronTranslator_pf");
+      superClusters("pfPhotonTranslator_pfphot");
+      superClusters("correctedMulti5x5SuperClustersWithPreshower_");
+      superClusters("correctedHybridSuperClusters_");
+      superClusters("hfEMClusters_");
+      superClusters("particleFlowSuperClusterHGCal_");
+      superClusters("particleFlowSuperClusterHGCal_particleFlowSuperClusterECALBarrel");
 
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap_"+recoS+".obj.correctedEnergyUncertainty()))");
+      caloClusters("particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap");
+      caloClusters("particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel");
+      caloClusters("hfEMClusters_");
+      caloClusters("multi5x5SuperClusters_multi5x5EndcapBasicClusters");
+      caloClusters("hybridSuperClusters_hybridBarrelBasicClusters");
+      caloClusters("particleFlowSuperClusterHGCal_");
+      caloClusters("particleFlowSuperClusterHGCal_particleFlowBasicClusterECALPreshower");
+      caloClusters("particleFlowSuperClusterHGCal_particleFlowBasicClusterECALBarrel");
+      caloClusters("hgcalLayerClusters_");
 
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_multi5x5SuperClusters_multi5x5EndcapSuperClusters_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoSuperClusters_particleFlowEGamma__"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_particleFlowEGamma__"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_particleFlowEGamma__"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_particleFlowEGamma__"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowEGamma__"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_particleFlowEGamma__"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_pfElectronTranslator_pf_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_pfPhotonTranslator_pfphot_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj@.size()");
-      plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.eta()");
-      plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.phi()");
-      plotvar("log10(recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj@.size()");
-      plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.eta()");
-      plotvar("recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.phi()");
-      plotvar("log10(recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoCaloClusters_particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_correctedMulti5x5SuperClustersWithPreshower__"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_correctedHybridSuperClusters__"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoCaloClusters_hfEMClusters__"+recoS+".obj@.size()");
-      plotvar("recoCaloClusters_hfEMClusters__"+recoS+".obj.eta()");
-      plotvar("recoCaloClusters_hfEMClusters__"+recoS+".obj.phi()");
-      plotvar("log10(recoCaloClusters_hfEMClusters__"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoCaloClusters_hfEMClusters__"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoCaloClusters_hfEMClusters__"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoSuperClusters_hfEMClusters__"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_hfEMClusters__"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_hfEMClusters__"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_hfEMClusters__"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoSuperClusters_hfEMClusters__"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoSuperClusters_hfEMClusters__"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj@.size()");
-      plotvar("recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.eta()");
-      plotvar("recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.phi()");
-      plotvar("log10(recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoCaloClusters_multi5x5SuperClusters_multi5x5EndcapBasicClusters_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      plotvar("recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj@.size()");
-      plotvar("recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.eta()");
-      plotvar("recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.phi()");
-      plotvar("log10(recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.energy())");
-      plotvar("log10(max(1e-5,recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.correctedEnergy()))");
-      plotvar("log10(max(1e-5,recoCaloClusters_hybridSuperClusters_hybridBarrelBasicClusters_"+recoS+".obj.correctedEnergyUncertainty()))");
-
-      
       plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj@.size()");
       plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.position_.eta()");
       plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.position_.phi()");
@@ -1908,42 +1850,17 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("log10(recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.energy())");
       plotvar("recoPFRecHits_particleFlowRecHitPS_Cleaned_"+recoS+".obj.time()");
 
+      pfClusters("particleFlowClusterECAL_");
+      pfClusters("particleFlowClusterHCAL_");
+      pfClusters("particleFlowClusterHO_");
+      pfClusters("particleFlowClusterHF_");
+      pfClusters("particleFlowClusterPS_");
+      pfClusters("particleFlowClusterHGCal_");
 
-      plotvar("recoPFClusters_particleFlowClusterECAL__"+recoS+".obj@.size()");
-      plotvar("recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.eta()");
-      plotvar("recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.phi()");
-      plotvar("log10(recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.energy())");
-      plotvar("recoPFClusters_particleFlowClusterECAL__"+recoS+".obj.time()");
-
-      plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj@.size()");
-      plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.eta()");
-      plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.phi()");
-      plotvar("log10(recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.energy())");
-      plotvar("recoPFClusters_particleFlowClusterHCAL__"+recoS+".obj.time()");
-
-      plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj@.size()");
-      plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj.eta()");
-      plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj.phi()");
-      plotvar("log10(recoPFClusters_particleFlowClusterHO__"+recoS+".obj.energy())");
-      plotvar("recoPFClusters_particleFlowClusterHO__"+recoS+".obj.time()");
-
-      plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj@.size()");
-      plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.eta()");
-      plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.phi()");
-      plotvar("log10(recoPFClusters_particleFlowClusterPS__"+recoS+".obj.energy())");
-      plotvar("recoPFClusters_particleFlowClusterPS__"+recoS+".obj.time()");
-
-      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj@.size()");
-      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.eta()");
-      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.phi()");
-      plotvar("log10(recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.energy())");
-      plotvar("recoPFClusters_particleFlowClusterHGCal__"+recoS+".obj.time()");
-
+      hgcalMultiClusters("hgcalLayerClusters_sharing");
+      hgcalMultiClusters("hgcalLayerClusters_");
       // miniaod
-      plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj@.size()");
-      plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj.eta()");
-      plotvar("recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj.phi()");
-      plotvar("log10(recoSuperClusters_reducedEgamma_reducedSuperClusters_"+recoS+".obj.energy())");
+      superClusters("reducedEgamma_reducedSuperClusters");
     }
 
     if ((step.Contains("all") || step.Contains("electron")) && !step.Contains("cosmic")){

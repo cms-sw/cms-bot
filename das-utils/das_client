@@ -54,14 +54,14 @@ if [ "X${LOCALRT}" != "X" ] ; then DAS_QUERY_DIR="${LOCALRT}/${DAS_QUERY_DIR}" ;
 mkdir -p ${DAS_QUERY_DIR}
 echo "${QUERY}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
 if [ "${FORMAT}" = "json" ]  ; then
-  QUERY_RESULTS=$(curl -L -s "${QUERY_URL}.json" || true)
+  QUERY_RESULTS=$(curl -f -L -s "${QUERY_URL}.json" || true)
   if [ "${QUERY_RESULTS}" = "" ] ; then
     ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   else
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
 else
-  QUERY_RESULTS=$((curl -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| ||g;s|"||g;s|,||g')
+  QUERY_RESULTS=$((curl -f -L -s "${QUERY_URL}" || true) | grep /store/ | sed 's| ||g;s|"||g;s|,||g')
   [ $((get_parent_cmds $$ 0 2>&1 || true) | grep '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
   if [ "${QUERY_RESULTS}" = "" ] ; then
     ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out

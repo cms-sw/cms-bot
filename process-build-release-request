@@ -47,7 +47,8 @@ ACK_MSG = 'Request received. I will start to build the release after one of the 
           '"build cmssw-tool-conf" in a comment. I will start to build cmssw-tool-conf and then wait for the "+1" ' \
           'to start the build of the release.\n' \
           'CMSSW Branch: {cmssw_queue}\n'\
-          'Architecture: {architecture}\n'
+          'Architecture: {architecture}\n'\
+          '{cmssw_commit_tag}'
 WATCHERS_MSG = '{watchers_list} you requested to watch the automated builds for {queue}' 
 QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s \n' \
                      'You can abort the build by writing "Abort" in a comment. I will delete the release, ' \
@@ -307,16 +308,17 @@ def get_release_github(repository, release_name):
     print 'There was an error while creating the release:\n', e
     return False
 
-def create_release_github( repository, release_name, branch):
+def create_release_github( repository, release_name, branch, commit=None):
   if get_release_github (repository, release_name): return True
   if opts.dryRun:
     print 'Not creating release (dry-run):\n %s' % release_name
     return True
 
   print 'Creating release:\n %s' % release_name
+  if not commit: commit=branch
   # creating releases will be available in the next version of pyGithub
   params = { "tag_name" : release_name, 
-           "target_commitish" : branch,
+           "target_commitish" : commit,
            "name" : release_name,
            "body" : 'cms-bot is going to build this release',
            "draft" : False, 
@@ -591,10 +593,10 @@ def triggerCleanup( issue, comments, release_name ):
 #
 # Creates the release in github, including the cmssw tag. It then creates the files to trigger the builds in jenkins
 #
-def start_release_build( issue, release_name, release_branch, architectures, docker_imgs ): 
+def start_release_build( issue, release_name, release_branch, architectures, docker_imgs, commit=None):
 
   cmssw_repo = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO)
-  release_created = create_release_github( cmssw_repo, release_name, release_branch )
+  release_created = create_release_github( cmssw_repo, release_name, release_branch, commit)
   if not release_created:
     msg = RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name )
     post_message( issue , RELEASE_CREATION_FAIL_MSG.format( rel_name=release_name ) )
@@ -818,6 +820,11 @@ if __name__ == "__main__":
 
     release_queue = "".join([x for x in rel_name_match.group(1,4)] + ["_X"] + [x.strip("0123456789") for x in rel_name_match.group(2)])
 
+  release_tag_commit = None
+  if "TAG_COMMIT:" in issue_body:
+    release_tag_commit = issue_body.split("TAG_COMMIT:",1)[1].split("\n",1)[0].strip()
+    print "Found forces commit:",release_tag_commit
+
   print release_queue
   specs = get_config_map_properties()
   architectures = [x["SCRAM_ARCH"] for x in specs
@@ -918,7 +925,9 @@ if __name__ == "__main__":
     watchers = ALL_WATCHERS.get( release_queue )
     xqueue = release_queue
     if release_queue != release_branch: xqueue =release_queue+"("+release_branch+")"
-    msg = ACK_MSG.format( approvers_list=approvers, cmssw_queue=xqueue, architecture=", ".join(architectures) )
+    cmssw_commit_tag=""
+    if release_tag_commit: cmssw_commit_tag="Release tag based on: %s\n" % release_tag_commit
+    msg = ACK_MSG.format( approvers_list=approvers, cmssw_queue=xqueue, architecture=", ".join(architectures), cmssw_commit_tag=cmssw_commit_tag )
 
     if watchers:
       watchers_l = ", ".join( [ "@"+x for x in watchers ] )
@@ -941,7 +950,7 @@ if __name__ == "__main__":
         start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs )
         go_to_state( issue, status, TOOLCONF_BUILDING )
     elif approval_comments:
-      start_release_build( issue, release_name, release_branch, architectures, docker_imgs )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit )
       go_to_state( issue, status, BUILD_IN_PROGRESS )
     else:
       print 'Build not approved or cmssw-tool-conf not requested yet'
@@ -963,7 +972,7 @@ if __name__ == "__main__":
         TOOL_CONF_WAITING.append( arch )
 
       go_to_state( issue, status, BUILD_IN_PROGRESS )
-      start_release_build( issue, release_name, release_branch, architectures, docker_imgs )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit )
 
   if status == BUILD_IN_PROGRESS:
 

@@ -1,7 +1,7 @@
 #!/bin/env python
 import sys
 if len(sys.argv) < 3:
-  print "Usage: releases.map cmssw_version [cmssw_vesion [...]] "
+  print "Usage: %s releases.map cmssw_version [cmssw_version [...]]" % sys.argv[0] 
   sys.exit(1)
 
 release_map = sys.argv[1]

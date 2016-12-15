@@ -12,16 +12,14 @@ parser.add_argument("-t", "--title", dest="title", help="Pull request title",typ
 parser.add_argument("-d", "--body", dest="body", help="Pull request body text, optional",type=str, default='')
 
 args = parser.parse_args()
-
 if not args.repo: parser.error("Missing Repo")
 if not args.base_branch: parser.error("Missing base branch name.")
 if not args.feature_branch: parser.error("Missing feature branch name.")
 if not args.title: parser.error("Missing PR title")
-
 print "Authenticating to Github and connecting to repo"
 gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
 print "Authentication succeeeded"
 gh_repo = gh.get_repo(args.repo)
 
 print "Creating pull request"
-gh_repo.create_pull(title = args.title, body = args.body, base = args.base_branch, head = args.feature_branch )
+gh_repo.create_pull(title = args.title, body = args.body, base = args.base_branch, head = args.feature_branch)

@@ -861,7 +861,7 @@ if __name__ == "__main__":
   possible_prod_arch = [x["SCRAM_ARCH"] for x in specs
                         if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x and "PROD_ARCH" in x]
 
-  err, production_architecture = getstatusoutput(CMS_BOT_DIR+"/get-production-arch %s" % release_name)
+  err, production_architecture = getstatusoutput(CMS_BOT_DIR+"/get-production-arch %s %s" % (release_name, release_queue))
   if err:
     print "Unable to find production architecture for the release"
     post_message( issue, "Unable to find production architecture for the release" )

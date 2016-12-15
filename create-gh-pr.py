@@ -1,17 +1,24 @@
 #!/usr/bin/env python
-import sys
-from github import Github, GithubException
+from github import Github
 from os.path import expanduser
+from sys import argv , exit
 
-#Get pull request info from cmdline
-pr_repo=sys.argv[1]
-pr_title = sys.argv[2]
-pr_base_branch= sys.argv[3]
-pr_new_branch = sys.argv[4]
-#authenticate to Github and connect to repo
+print "\nChecking arguments\n"
+if len(argv) < 5 :
+  print "Usage:  %s <user/repo_name> <pr_title> <base_branch> <feature_branch> \n" % argv[0]
+  exit(1)
+
+#Get pull request info
+pr_repo = argv[1]
+pr_title = argv[2]
+pr_base_branch = argv[3]
+pr_new_branch = argv[4]
+
+print "Authenticating to Github and connecting to repo"
 gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
+print "Authentication succeeeded"
 gh_repo = gh.get_repo(pr_repo)
 
-#make pull request
-gh_repo.create_pull(title = pr_title, body='' , base = pr_base_branch, head = pr_new_branch )
+print "Creating pull request"
+gh_repo.create_pull(title = pr_title, body = '' , base = pr_base_branch, head = pr_new_branch )
 

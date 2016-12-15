@@ -36,6 +36,7 @@ def process_pr(gh, repo, issue, dryRun):
       continue
     cmd = getCommentCommand(first_line)
     if not cmd: continue
+    if (cmd == "ping") and cmdType: continue
     if cmd == "merge" and not pr: continue
     if not hasRights (commenter, branch, cmd): continue
     cmdType = cmd

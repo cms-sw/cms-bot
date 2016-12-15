@@ -323,7 +323,7 @@ def create_release_github( repository, release_name, branch, commit=None):
            "body" : 'cms-bot is going to build this release',
            "draft" : False, 
            "prerelease" : False }
-
+  print params
   request = urllib2.Request("https://api.github.com/repos/" + GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO +"/releases",
   headers={"Authorization" : "token " + GH_TOKEN })
   request.get_method = lambda: 'POST'

@@ -14,7 +14,7 @@ from  datetime import datetime, timedelta
 from glob import glob
 from os.path import basename, dirname, abspath, join, exists
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits
+from github_utils import api_rate_limits, get_ref_commit, get_commit_info
 setdefaulttimeout(120)
 
 try:
@@ -315,7 +315,11 @@ def create_release_github( repository, release_name, branch, commit=None):
     return True
 
   print 'Creating release:\n %s' % release_name
-  if not commit: commit=branch
+  if commit:
+    if not get_commit_info(commit):
+      sha = get_ref_commit(commit)
+      if sha: commit = sha
+  else: commit=branch
   # creating releases will be available in the next version of pyGithub
   params = { "tag_name" : release_name, 
            "target_commitish" : commit,

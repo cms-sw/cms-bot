@@ -226,3 +226,21 @@ def read_prs_cache(cache_file):
   cache['dirty']=False
   return cache
 
+def get_ref_commit(repo, ref):
+  for n in ["tags", "heads"]:
+    error, out = getstatusoutput("curl -s -L https://api.github.com/repos/%s/git/refs/%s/%s" % (repo, n, ref))
+    if not error:
+      info = json.loads(out)
+      if "object" in info: return info["object"]["sha"]
+  print "Error: Unable to get sha for %s" % ref
+  return None
+
+def get_commit_info(repo, commit):
+  error, out = getstatusoutput("curl -s -L https://api.github.com/repos/%s/git/commits/%s" % (repo, commit))
+  if error:
+    print "Error, unable to get sha for tag %s" % tag
+    return {}
+  commit_info = json.loads(out)
+  if "sha" in commit_info: return commit_info
+  return {}
+

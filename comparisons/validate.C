@@ -79,6 +79,9 @@ double plotvar(TString v,TString cut=""){
   vn.ReplaceAll(recoS,refrecoS);
   TString refv=v;
   refv.ReplaceAll(recoS,refrecoS);
+  TString refselectionS(selection.GetTitle());
+  refselectionS.ReplaceAll(recoS,refrecoS);
+  TCut refselection(refselectionS);
   if (refv!=v)
     std::cout<<" changing reference variable to:"<<refv<<std::endl;
 
@@ -98,7 +101,7 @@ double plotvar(TString v,TString cut=""){
     TString reffn=refvn+"_refplot";
     if (cut!="") reffn+=count;
     refEvents->Draw(refv+">>"+reffn,
-		    selection,
+		    refselection,
 		    "",
 		    Nmax);
     refplot = (TH1F*)gROOT->Get(reffn);
@@ -1719,6 +1722,25 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("patTaus_slimmedTaus__"+recoS+".obj.etaAtEcalEntranceLeadChargedCand()");
       plotvar("patTaus_slimmedTaus__"+recoS+".obj.ptLeadChargedCand()");
       plotvar("patTaus_slimmedTaus__"+recoS+".obj.emFraction_MVA()");
+
+      // boosted tau reco
+      // miniaod
+      tauVars("slimmedTausBoosted_","patTaus_");
+      //pat::Tau specifics
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.dxy()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.dxy_error()");
+
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ip3d()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ip3d_error()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ecalEnergy()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.hcalEnergy()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.leadingTrackNormChi2()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ecalEnergyLeadChargedHadrCand()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.hcalEnergyLeadChargedHadrCand()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.etaAtEcalEntrance()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.etaAtEcalEntranceLeadChargedCand()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ptLeadChargedCand()");
+      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.emFraction_MVA()");
 
       //upstream discriminators
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByIsolationMVArun2v1PWdR03oldDMwLTraw__"+recoS+".obj.data_");

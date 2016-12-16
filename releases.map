@@ -1649,6 +1649,6 @@ architecture=slc7_amd64_gcc530;label=CMSSW_9_0_0_pre2;type=Development;state=Ann
 architecture=slc7_aarch64_gcc530;label=CMSSW_9_0_0_pre2;type=Development;state=Announced;prodarch=0;
 architecture=slc6_amd64_gcc472;label=CMSSW_5_3_35;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc530;label=CMSSW_9_0_0_pre2_ROOT6;type=Development;state=Announced;prodarch=1;
-architecture=slc6_amd64_gcc530;label=CMSSW_8_2_0;type=Production;state=Announced;prodarch=0;
+architecture=slc6_amd64_gcc530;label=CMSSW_8_2_0;type=Production;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc530;label=CMSSW_8_2_0;type=Production;state=Announced;prodarch=0;
 architecture=slc7_aarch64_gcc530;label=CMSSW_8_2_0;type=Production;state=Announced;prodarch=0;

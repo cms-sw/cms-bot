@@ -45,7 +45,7 @@ RELEASE_BRANCH_PRODUCTION = [
   "CMSSW_5_3_X",
 ]
 
-SPECIAL_RELEASE_MANAGERS = ["slava77", "smuzaffar"]
+SPECIAL_RELEASE_MANAGERS = ["davidlange6", "smuzaffar"]
 
 RELEASE_MANAGERS = {
   "CMSSW_8_0_X": ["smuzaffar"],

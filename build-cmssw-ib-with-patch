@@ -217,8 +217,13 @@ pushd CMSDIST
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
 # In case we have errors, we use an ERR tag in case we discover it's a full release later on.
 if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKSPACE/w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
-  git tag ALL/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
-  git push originrw ALL/$RELEASE_NAME/$ARCHITECTURE || true
+  GTAG="ALL/$RELEASE_NAME/$ARCHITECTURE"
+  if [ $(git tag | grep "^$GTAG$" | wc -l) -gt 0 ] ; then
+    git tag -d $GTAG
+    git push originrw :refs/tags/$GTAG
+  fi
+  git tag $GTAG $CMSDIST_HASH
+  git push originrw $GTAG || true  
   TAG_TYPE="IB"
 else
   TAG_TYPE="ERR"
@@ -226,8 +231,13 @@ fi
 
 # Check if it is a full release and tag depending on wether it had ERRors or not.
 if [ X$CMSSW_RELEASE_BASE = X$RELEASE_NAME ]; then
-  git tag $TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE $CMSDIST_HASH
-  git push originrw $TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE || true
+  GTAG="$TAG_TYPE/$RELEASE_NAME/$ARCHITECTURE"
+  if [ $(git tag | grep "^$GTAG$" | wc -l) -gt 0 ] ; then
+    git tag -d $GTAG
+    git push originrw :refs/tags/$GTAG
+  fi
+  git tag $GTAG $CMSDIST_HASH
+  git push originrw $GTAG || true
 fi
 popd
 

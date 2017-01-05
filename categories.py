@@ -1065,6 +1065,7 @@ CMSSW_CATEGORIES={
    "L1TriggerConfig/L1GtConfigProducers",
    "L1TriggerConfig/L1ScalesProducers",
    "L1TriggerConfig/L1TConfigProducers",
+   "L1TriggerConfig/XmlConfigTools",
    "L1TriggerConfig/L1TUtmTriggerMenuProducers",
    "L1TriggerConfig/RCTConfigProducers",
    "L1TriggerConfig/RPCTriggerConfig",

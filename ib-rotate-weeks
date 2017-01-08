@@ -4,7 +4,7 @@
 
 # We use %U rather than %W because the groovy macros expect
 # weeks to start on sunday, not monday.
-CURRENT_WEEK=$(echo "`date +%U` + 1" | bc)
+CURRENT_WEEK=$(echo "`date +%U`" | bc)
 WEEK_NO=`date +%Y`-$CURRENT_WEEK
 WEEK_FOUND=`grep "^$WEEK_NO\$" ib-weeks | wc -l`
 

@@ -70,8 +70,7 @@ for unused_file in all_files:
     print o
     continue
   unused_days = int((time()-float(o))/86400)
-  print "%s is %s days old" % (unused_file, unused_days)
   if unused_days<unused_days_threshold: continue
-  print "  Removing as it is not used for more than %s days" % unused_days_threshold
+  print "Removing %s: %s days" % (unused_file, unused_days)
   run_cmd("%s rm %s" % (eos_cmd, unused_file))
 

@@ -20,9 +20,10 @@ def read_json(infile):
     return json.load(json_data)
 
 def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
-  field = query.split(" ",1)[0]
+  fields = query.split(" ",1)[0].split(",")
   field_filter = ""
-  if len(field.split(","))==1:
+  field = fields[-1]
+  if len(fields)==1:
     field_filter = " | grep %s.name | sort | unique" % field
   das_cmd = "das_client --format=json --limit=%s --query '%s%s' --retry=%s --threshold=%s" % (limit, query, field_filter, retry, threshold)
   err, out = getstatusoutput(das_cmd)
@@ -41,7 +42,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
   if (len(results['results'])==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()
     lmt = 0
-    if "file" in field: lmt = 100
+    if "file" in fields: lmt = 100
     print "Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query)
     return run_das_client(outfile, query, override, threshold, retry, limit=lmt)
   if results['results'] or override:

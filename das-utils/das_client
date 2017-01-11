@@ -11,6 +11,8 @@ function get_parent_cmds ()
   [ "$XPID" = "" -o "$XPID" = "1" ] && return 0
   cat "/proc/$XPID/cmdline"
   echo ""
+  cat "/proc/$XPID/cmdline" >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
+  echo "" >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
   get_parent_cmds "$XPID" "$DEPTH"
 }
 
@@ -53,6 +55,7 @@ DAS_QUERY_DIR=das_query/$$
 if [ "X${LOCALRT}" != "X" ] ; then DAS_QUERY_DIR="${LOCALRT}/${DAS_QUERY_DIR}" ; fi
 mkdir -p ${DAS_QUERY_DIR}
 echo "${QUERY}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
+touch ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
 if [ "${FORMAT}" = "json" ]  ; then
   QUERY_RESULTS=$(curl -f -L -s "${QUERY_URL}.json" || true)
   if [ "${QUERY_RESULTS}" = "" ] ; then
@@ -69,6 +72,7 @@ else
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
 fi
+echo $LIMIT_RESULTS >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
 if [ "$LIMIT_RESULTS" = "YES" ] ; then
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out | ibeos-lfn-sort
 else

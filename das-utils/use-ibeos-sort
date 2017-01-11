@@ -12,6 +12,7 @@ for i in 0 1 2 3 4 5 6 7 8 9 ; do
 done
 
 [ -f ${LOCALRT}/ibeos_cache.txt ] || exit 0
+echo "OK: ${LOCALRT}/ibeos_cache.txt"
 
 CMSSW_PKG_BUILD=""
 if [ ! -e ${LOCALRT}/src/Configuration/PyReleaseValidation ] ; then

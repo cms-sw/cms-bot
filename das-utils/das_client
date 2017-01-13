@@ -7,7 +7,7 @@ function get_parent_cmds ()
   local DEPTH=$2
   let DEPTH=$DEPTH+1
   [ $DEPTH -gt 2 ] && return 0
-  local XPID=$(ps -p $1 -o ppid= | sed 's| ||;')
+  local XPID=$(ps -p $1 -o ppid= | sed 's| ||g;')
   [ "$XPID" = "" -o "$XPID" = "1" ] && return 0
   cat "/proc/$XPID/cmdline"
   echo ""

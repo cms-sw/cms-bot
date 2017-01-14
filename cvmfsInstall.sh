@@ -110,6 +110,8 @@ for t in 201 nweek- ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
       N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
       ln -s $BASEDIR/$w $BASEDIR/week$N
+      mkdir -p $BASEDIR/$w/logs
+      mv $BASEDIR/$w/bootstrap-$w-*.log $BASEDIR/$w/logs/ || true
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
@@ -165,13 +167,13 @@ for REPOSITORY in $REPOSITORIES; do
   echo "Checking week $REPOSITORY ($WEEK) for RPMS"
   if [ "X$TEST_INSTALL" = "XYes" ] ; then REPOSITORY="test" ; fi
   WORKDIR=$BASEDIR/$REPOSITORY
-  mkdir -p $WORKDIR
+  mkdir -p $WORKDIR/logs
   # Install all architectures of the most recent week first.
   for SCRAM_ARCH in $ARCHITECTURES; do
     CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH ${USE_DEV}"
     # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
     # This is because bootstraptmp is otherwise shared between different arches. Sigh.
-    LOGFILE=$WORKDIR/bootstrap-$REPOSITORY-$SCRAM_ARCH.log
+    LOGFILE=$WORKDIR/logs/bootstrap-$REPOSITORY-$SCRAM_ARCH.log
     #Recover from bad bootstrap arch
     if [ -f $LOGFILE -a ! -f $WORKDIR/$SCRAM_ARCH/cms/cms-common/1.0/etc/profile.d/init.sh ] ; then
       rm -f $LOGFILE

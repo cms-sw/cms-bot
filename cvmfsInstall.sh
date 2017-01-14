@@ -6,6 +6,8 @@ WORKSPACE=$4
 DEV=$5
 USE_DEV=""
 TEST_INSTALL=$7
+NUM_WEEKS=$8
+if [ "X$NUM_WEEKS" = "X" ] ; then NUM_WEEKS=2; fi
 if [ "X$DEV" = "Xtrue" ] ; then
   DEV="-dev"
   USE_DEV="--use-dev"
@@ -41,7 +43,6 @@ cd $WORKSPACE/cms-bot
 
 export CMSIB_CVMFS_REPO=cms-ib.cern.ch
 export BASEDIR=/cvmfs/$CMSIB_CVMFS_REPO
-export BASEDESTDIR=/cvmfs/$CMSIB_CVMFS_REPO
 export THISDIR=`pwd`
 export LANG=C
 # The disk where cvmfs is mounted
@@ -57,7 +58,7 @@ export INITIAL_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
 export PUBLISH_THRESHOLD=13000
 # The repositories we need to install are those for which we find the
 # timestamp files:
-REPOSITORIES=`tail -2 ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
+REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
 
 echo $REPOSITORIES
 ARCHITECTURES=$ARCHITECTURE
@@ -101,15 +102,21 @@ cat <<EOF > $BASEDIR/.cvmfsdirtab
 EOF
 fi
 
-if [ $(ls -d $BASEDIR/20* | wc -l) -gt 0 ] ; then
-  OLD_WEEKS=$(ls -d $BASEDIR/20*)
-  # Cleanup old weeks
-  find $BASEDIR/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) | grep "$BASEDIR/20[0-9][0-9]-[0-5][0-9]" | xargs rm -rf
-fi
-# Remove all existing links for week[0-1]
-for link in $(find $BASEDESTDIR/* -maxdepth 0 -type l); do unlink $link; done;
-# Recreate links week[0-1]
-for dir in $(find $BASEDESTDIR/* -maxdepth 0 -type d | grep -G "20[0-9][0-9]-[0-5][0-9]"); do ln -s $dir $( dirname $dir )/week$(( 10#$( echo $( basename $dir ) | cut -d"-" -f 2 )%2 )); done;
+#Recreate the links
+for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
+RUN_GC="NO"
+for t in 201 nweek- ; do
+  for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
+    if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
+      N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
+      ln -s $BASEDIR/$w $BASEDIR/week$N
+    else
+      echo "Deleting obsolete week $w"
+      rm -rf $BASEDIR/$w
+      RUN_GC="YES"
+    fi
+  done
+done
 
 dockerrun()
 {
@@ -149,7 +156,7 @@ dockerrun()
 TMP_PREFIX=/tmp/cvsmfs-$$
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
-  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % 2" | bc)
+  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % ${NUM_WEEKS}" | bc)
   #If CMS_WEEK was set then only check releases for that week
   if [ "X$CMS_WEEK" != "X" -a "$CMS_WEEK" != "cms.week$WEEK" ] ; then
     echo "Skipping week for $REPOSITORY"
@@ -234,26 +241,33 @@ for REPOSITORY in $REPOSITORIES; do
 
 done #End week repository
 
-# Cleanup old weeks
-find $BASEDIR/* -maxdepth 0 -type d -not \( -name "`echo $REPOSITORIES | awk '{print $1}'`" -or -name "`echo $REPOSITORIES | awk '{print $2}'`" \) |  grep "$BASEDIR/20[0-9][0-9]-[0-5][0-9]" | xargs rm -rf
-# Remove all existing links for week[0-1]
-for link in $(find $BASEDESTDIR/* -maxdepth 0 -type l); do unlink $link; done;
-# Recreate links week[0-1]
-for dir in $(find $BASEDESTDIR/* -maxdepth 0 -type d | grep -G "20[0-9][0-9]-[0-5][0-9]"); do ln -s $dir $( dirname $dir )/week$(( 10#$( echo $( basename $dir ) | cut -d"-" -f 2 )%2 )); done;
-if [ -f $BASEDIR/week0/etc/scramrc/links.db ] ; then
- [ -s $BASEDIR/week0/etc/scramrc/links.db ] || echo $BASEDIR/week1 > $BASEDIR/week0/etc/scramrc/links.db
-fi
-if [ -f $BASEDIR/week1/etc/scramrc/links.db ] ; then
- [ -s $BASEDIR/week1/etc/scramrc/links.db ] || echo $BASEDIR/week0 > $BASEDIR/week1/etc/scramrc/links.db
-fi
-
-
+#Recreate the links
+for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
+for t in 201 nweek- ; do
+  for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
+    N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
+    if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
+      ln -s $BASEDIR/$w $BASEDIR/week$N
+      [ -f $BASEDIR/week$N/etc/scramrc/links.db ] || continue
+      [ -s $BASEDIR/week$N/etc/scramrc/links.db ] && continue
+      for (( i=0; i<$NUM_WEEKS; i++ )) ; do
+        [ $i = $N ] && continue
+        echo "$BASEDIR/week$i" >> $BASEDIR/week$N/etc/scramrc/links.db
+      done
+    else
+      echo "Deleting obsolete week $w"
+      rm -rf $BASEDIR/$w
+      RUN_GC=YES
+    fi
+  done
+done
+echo "Run GC: $RUN_GC"
+ 
 # Write everything in the repository
 echo "Publishing started" `date`
 time cvmfs_server publish
 
-NEW_WEEKS=$(ls -d $BASEDIR/20*)
-if [ "X${OLD_WEEKS}" != "X${NEW_WEEKS}" ] ; then
+if [ "X$RUN_GC" = "XYES" ] ; then
   echo "Running garbage collector"
   time cvmfs_server gc -f
 fi

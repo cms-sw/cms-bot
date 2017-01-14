@@ -241,6 +241,13 @@ for REPOSITORY in $REPOSITORIES; do
 
 done #End week repository
 
+mkdir -p $BASEDIR/scramdb/etc/scramrc
+rm -f $BASEDIR/scramdb/etc/scramrc/links.db
+touch $BASEDIR/scramdb/etc/scramrc/links.db
+for (( i=0; i<$NUM_WEEKS; i++ )) ; do
+ echo "$BASEDIR/week$i" >> $BASEDIR/scramdb/etc/scramrc/links.db
+done
+
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
 for t in 201 nweek- ; do
@@ -249,11 +256,7 @@ for t in 201 nweek- ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
       ln -s $BASEDIR/$w $BASEDIR/week$N
       [ -f $BASEDIR/week$N/etc/scramrc/links.db ] || continue
-      [ -s $BASEDIR/week$N/etc/scramrc/links.db ] && continue
-      for (( i=0; i<$NUM_WEEKS; i++ )) ; do
-        [ $i = $N ] && continue
-        echo "$BASEDIR/week$i" >> $BASEDIR/week$N/etc/scramrc/links.db
-      done
+      echo "$BASEDIR/scramdb" > $BASEDIR/week$N/etc/scramrc/links.db
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
@@ -262,7 +265,7 @@ for t in 201 nweek- ; do
   done
 done
 echo "Run GC: $RUN_GC"
- 
+
 # Write everything in the repository
 echo "Publishing started" `date`
 time cvmfs_server publish

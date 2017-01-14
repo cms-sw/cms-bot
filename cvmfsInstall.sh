@@ -110,8 +110,6 @@ for t in 201 nweek- ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
       N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
       ln -s $BASEDIR/$w $BASEDIR/week$N
-      mkdir -p $BASEDIR/$w/logs
-      mv $BASEDIR/$w/bootstrap-$w-*.log $BASEDIR/$w/logs/ || true
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w

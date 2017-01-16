@@ -35,10 +35,11 @@ class PackageInfo(object):
         self.errInfo = []
         self.errSummary = {}
         self.errLines = {}
-        self.warnOnly = True
+        self.warnOnly = False
         
     def addErrInfo(self, errInfo, lineNo):
         """docstring for addErr"""
+        self.warnOnly = True
         if 'Error' in errInfo.errType: self.warnOnly = False
         self.errInfo.append( errInfo )
         if errInfo.errType not in self.errSummary.keys():
@@ -372,66 +373,64 @@ class LogFileAnalyzer(object):
         shLib = 'so'
         if os.uname()[0] == 'Darwin' :
             shLib = 'dylib'
-        errorInf ={ 
-            str('/usr/bin/ld: cannot find -l(.*?)$') : ['linkError', 'missing library "%s"'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/classes_rflx\.cpp')  : ['dictError', 'for package dictionary'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/.*?\.'+shLib)        : ['linkError', 'for package library'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/.*?\.o')             : ['compError', 'for package library'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/bin/(.*?)/.*?\.o')                      : ['compError', 'for executable %s'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/bin/(.*?)/\1')                          : ['linkError', 'for executable %s'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/bin/(.*?)/lib\1\.'+shLib)               : ['linkError', 'for shared library %s in bin'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/stubs/lib(.*?)\.'+shLib)           : ['linkError', 'for shared library %s in test/stubs'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)/.*?\.'+shLib)                : ['linkError', 'for shared library %s in test'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/stubs/.*?\.o')                     : ['compError', 'for library in test/stubs'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)/.*?\.o')                     : ['compError', 'for executable %s in test'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)\.'+shLib)                    : ['linkError', 'for shared library %s in test'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)\.o')                         : ['compError', 'for executable %s in test'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)/\1')                         : ['linkError', 'for executable %s in test'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/.*?\.o')                  : ['compError', 'for plugin %s in plugins'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/lib.*?\.'+shLib)          : ['linkError', 'for plugin library %s in plugins'],
-            # somehow the \1 replacement seems to not be working ... :(
-            # str('^gmake: \*\*\* .*?/rc/'+subsys+'/'+pkg+'/plugins/(.*?)/lib\1\.'+shLib)          : ['linkError', 'for plugin library %s in plugins'],
-            # better to look for the "Trace back " until the next "Compiling" ... 
-            str('^AttributeError: .*')                                                             : ['pythonError', 'importing another module'],
-            str('^ImportError: .*')                                                                : ['pythonError', 'importing another module'],
-            str('^SyntaxError: .*')                                                                : ['pythonError', 'syntax error in module'],
-            str('^NameError: .*')                                                                  : ['pythonError', 'name error in module'],
-            str('^TypeError: .*')                                                                  : ['pythonError', 'type error in module'],
-            str('^ValueError: .*')                                                                  : ['pythonError', 'value error in module'],
-            str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/data/download\.url')               : ['dwnlError', 'for file in data/download.url in test'],
-            str('^/.*?/src/'+subsys+'/'+pkg+'.*?\:\d*\: warning: ')                                : ['compWarning', 'for file in package'],
-            str('^/.*?/src/.*?\:\d+\:\d+\: warning: ')                                             : ['compWarning', 'for file in package'],
-            str('^/.*?/src/.*?\:\d+\: warning: ')                                                  : ['compWarning', 'for file in package'],
-            str('^Warning: ')                                                                      : ['compWarning', 'for file in package'],
-
-            str('^/.*?/src/'+subsys+'/'+pkg+'.*?\:\d+\: error: ')                                  : ['compError', 'for file in package'],
-
-            str('^tmp/.*?/src/'+subsys+'/'+pkg+'/src/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*')     : ['linkError', 'for package library %s '],
-            str('^tmp/.*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*') : ['linkError', 'for plugin library %s in plugins'],
-            str("^error: class '.*?' has a different checksum for ClassVersion") : ['compError', 'for a different checksum for ClassVersion'],
-            }    
+        errorInf =[
+            {str('/usr/bin/ld: cannot find -l(.*?)$') : ['linkError', 'missing library "%s"']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/classes_rflx\.cpp')  : ['dictError', 'for package dictionary']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/.*?\.'+shLib)        : ['linkError', 'for package library']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/.*?\.o')             : ['compError', 'for package library']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/bin/(.*?)/.*?\.o')                      : ['compError', 'for executable %s']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/bin/(.*?)/\1')                          : ['linkError', 'for executable %s']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/bin/(.*?)/lib\1\.'+shLib)               : ['linkError', 'for shared library %s in bin']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/stubs/lib(.*?)\.'+shLib)           : ['linkError', 'for shared library %s in test/stubs']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)/.*?\.'+shLib)                : ['linkError', 'for shared library %s in test']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/stubs/.*?\.o')                     : ['compError', 'for library in test/stubs']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)/.*?\.o')                     : ['compError', 'for executable %s in test']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)\.'+shLib)                    : ['linkError', 'for shared library %s in test']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)\.o')                         : ['compError', 'for executable %s in test']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)/\1')                         : ['linkError', 'for executable %s in test']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/.*?\.o')                  : ['compError', 'for plugin %s in plugins']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/lib.*?\.'+shLib)          : ['linkError', 'for plugin library %s in plugins']},
+            {str('^AttributeError: .*')                                                             : ['pythonError', 'importing another module']},
+            {str('^ImportError: .*')                                                                : ['pythonError', 'importing another module']},
+            {str('^SyntaxError: .*')                                                                : ['pythonError', 'syntax error in module']},
+            {str('^NameError: .*')                                                                  : ['pythonError', 'name error in module']},
+            {str('^TypeError: .*')                                                                  : ['pythonError', 'type error in module']},
+            {str('^ValueError: .*')                                                                 : ['pythonError', 'value error in module']},
+            {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/data/download\.url')               : ['dwnlError', 'for file in data/download.url in test']},
+            {str('^ */.*?/src/'+subsys+'/'+pkg+'.*?\:\d*\: warning: ')                              : ['compWarning', 'for file in package']},
+            {str('^ */.*?/src/.*?\:\d+\:\d+\: warning: ')                                           : ['compWarning', 'for file in package']},
+            {str('^ */.*?/src/.*?\:\d+\: warning: ')                                                : ['compWarning', 'for file in package']},
+            {str('^Warning: ')                                                                      : ['compWarning', 'for file in package']},
+            {str('^ */.*?/src/'+subsys+'/'+pkg+'.*?\:\d+\: error: ')                                : ['compError', 'for file in package']},
+            {str('^ *tmp/.*?/src/'+subsys+'/'+pkg+'/src/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*')     : ['linkError', 'for package library %s ']},
+            {str('^ *tmp/.*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*') : ['linkError', 'for plugin library %s in plugins']},
+            {str("^error: class '.*?' has a different checksum for ClassVersion")                   : ['compError', 'for a different checksum for ClassVersion']},
+          ]
 
         miscErrRe = re.compile('^gmake: \*\*\* (.*)$')
         genericLinkErrRe = re.compile('^gmake: \*\*\* \[tmp/.*?/lib.*?'+shLib+'\] Error 1')
         
         if ('_gcc46' in os.environ["SCRAM_ARCH"]):
-            errorInf[str('^.*?:\d+\: warning\: ')]=['compWarning', 'from external in package']
+            errorInf.append({str('^.*?:\d+\: warning\: ') : ['compWarning', 'from external in package']})
         else:
-            errorInf[str('^.*?:\d+\: warning\: ')]=['ignoreWarning', 'from external in package']
-        errors = {}
-        for err, val in errorInf.items():
-            # print "err = '"+err+"'"
-            errors[re.compile(err)] = val
+            errorInf.append({str('^.*?:\d+\: warning\: ') : ['ignoreWarning', 'from external in package']})
+        errors = []
+        for errI in errorInf:
+          for err, info in errI.items():
+            errors.append({re.compile(err) : info})
             
         pkgInfo = PackageInfo(subsys, pkg)
-        errFound = False
         lineNo = -1
         for line in lines:
             lineNo += 1
-            for errRe, info in errors.items():
+            errFound = False
+            for errI in errors:
+              isMatched = False
+              for errRe, info in errI.items():
                 errMatch = errRe.match(line)
                 if errMatch:
                     errFound = True
+                    isMatched = True
                     errTyp, msg = info
                     if '%s' in msg :
                         msg = info[1] % errMatch.groups(1)
@@ -440,7 +439,8 @@ class LogFileAnalyzer(object):
                     else:
                         self.nErrorInfo[errTyp] = 1    
                     pkgInfo.addErrInfo( ErrorInfo(errTyp, msg), lineNo )
-                    break;
+                    break
+              if isMatched: break
             if not errFound :
                 miscErrMatch = miscErrRe.match(line)
                 if miscErrMatch:

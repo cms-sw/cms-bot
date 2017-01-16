@@ -47,11 +47,6 @@ case $ARCHITECTURE in
   *_armv7hl_*) BUILD_JOBS=1; BUILD_NPROC=3 ;;
 esac
 
-# If you find a squid process, use it, assuming it has the default port.
-if pgrep squid >/dev/null ; then
-  export http_proxy=http://localhost:3128
-fi
-
 RELEASE_NAME=`date +$RELEASE_FORMAT`
 DAY=`date +%Y-%m-%d`
 HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`

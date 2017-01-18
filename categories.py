@@ -1110,6 +1110,8 @@ CMSSW_CATEGORIES={
    "DataFormats/LTCDigi", "DQMOffline/L1Trigger",
    "SimCalorimetry/EcalTrigPrimAlgos",
    "SimCalorimetry/EcalTrigPrimProducers",
+   "SimCalorimetry/EcalEBTrigPrimAlgos",
+   "SimCalorimetry/EcalEBTrigPrimProducers",
    "SimCalorimetry/HcalTrigPrimAlgos",
    "SimCalorimetry/HcalTrigPrimProducers",
    "Validation/EcalTriggerPrimitives",

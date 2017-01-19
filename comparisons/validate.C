@@ -695,13 +695,18 @@ void recoMuonsCos1Leg(TString var, bool notafunction = false){
   plotvar(v);
 }
 
-void superClusters(TString cName ){
+void superClusters(TString cName, bool plotPreshower = false ){
   plotvar("recoSuperClusters_"+cName+"_"+recoS+".obj@.size()");
   plotvar("recoSuperClusters_"+cName+"_"+recoS+".obj.eta()");
   plotvar("recoSuperClusters_"+cName+"_"+recoS+".obj.phi()");
   plotvar("log10(recoSuperClusters_"+cName+"_"+recoS+".obj.energy())");
   plotvar("log10(max(1e-5,recoSuperClusters_"+cName+"_"+recoS+".obj.correctedEnergy()))");
   plotvar("log10(max(1e-5,recoSuperClusters_"+cName+"_"+recoS+".obj.correctedEnergyUncertainty()))");
+
+  if (plotPreshower){
+    plotvar("log10(max(1e-5,recoSuperClusters_"+cName+"_"+recoS+".obj.preshowerEnergy()))");
+    plotvar("log10(max(1e-5,recoSuperClusters_"+cName+"_"+recoS+".obj.preshowerEnergyPlane1()))");
+  }
 }
 
 void caloClusters(TString cName ){
@@ -1023,6 +1028,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj._sets.data.getTx()");
       plotvar(tbr+recoS+".obj._sets.data.getTy()");
       plotvar(tbr+recoS+".obj._sets.data.getChiSquared()");
+
+      tbr="CTPPSLocalTrackLites_ctppsLocalTrackLiteProducer__";
+      plotvar(tbr+recoS+".obj@.size()");
+      plotvar(tbr+recoS+".obj.getX()");
+      plotvar(tbr+recoS+".obj.getXUnc()");
+      plotvar(tbr+recoS+".obj.getY()");
+      plotvar(tbr+recoS+".obj.getYUnc()");
+      plotvar(tbr+recoS+".obj.getTime()");
+      plotvar(tbr+recoS+".obj.getTimeUnc()");
     }
 
     if ((step.Contains("all") || step.Contains("halo"))){
@@ -1850,15 +1864,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
 	superClusters("uncleanedHybridSuperClusters_");
       }
-      superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower");
-      superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap");
+      superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcapWithPreshower", true);
+      superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALEndcap", true);
       superClusters("particleFlowSuperClusterECAL_particleFlowSuperClusterECALBarrel");
       superClusters("multi5x5SuperClusters_multi5x5EndcapSuperClusters");
-      superClusters("particleFlowEGamma_");
+      superClusters("particleFlowEGamma_", true);
       superClusters("pfElectronTranslator_pf");
       superClusters("pfPhotonTranslator_pfphot");
-      superClusters("correctedMulti5x5SuperClustersWithPreshower_");
-      superClusters("correctedHybridSuperClusters_");
+      superClusters("correctedMulti5x5SuperClustersWithPreshower_", true);
+      superClusters("correctedHybridSuperClusters_", true);
       superClusters("hfEMClusters_");
       superClusters("particleFlowSuperClusterHGCal_");
       superClusters("particleFlowSuperClusterHGCal_particleFlowSuperClusterECALBarrel");

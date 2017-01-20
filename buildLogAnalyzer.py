@@ -374,7 +374,7 @@ class LogFileAnalyzer(object):
         if os.uname()[0] == 'Darwin' :
             shLib = 'dylib'
         errorInf =[
-            {str('/usr/bin/ld: cannot find -l(.*?)$') : ['linkError', 'missing library "%s"']},
+            {str('^.*? cannot find -l(.*?)$') : ['linkError', 'missing library "%s"']},
             {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/classes_rflx\.cpp')  : ['dictError', 'for package dictionary']},
             {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/.*?\.'+shLib)        : ['linkError', 'for package library']},
             {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/src/'+subsys+pkg+'/.*?\.o')             : ['compError', 'for package library']},
@@ -397,11 +397,12 @@ class LogFileAnalyzer(object):
             {str('^TypeError: .*')                                                                  : ['pythonError', 'type error in module']},
             {str('^ValueError: .*')                                                                 : ['pythonError', 'value error in module']},
             {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/data/download\.url')               : ['dwnlError', 'for file in data/download.url in test']},
-            {str('^ */.*?/src/'+subsys+'/'+pkg+'.*?\:\d*\: warning: ')                              : ['compWarning', 'for file in package']},
-            {str('^ */.*?/src/.*?\:\d+\:\d+\: warning: ')                                           : ['compWarning', 'for file in package']},
-            {str('^ */.*?/src/.*?\:\d+\: warning: ')                                                : ['compWarning', 'for file in package']},
+            {str('^ */.*?/'+self.release+'/src/'+subsys+'/'+pkg+'.*?\:\d*\: warning: ')             : ['compWarning', 'for file in package']},
+            {str('^ */.*?/'+self.release+'/src/.*?\:\d+\: warning: ')                               : ['compWarning', 'for file in release']},
             {str('^Warning: ')                                                                      : ['compWarning', 'for file in package']},
-            {str('^ */.*?/src/'+subsys+'/'+pkg+'.*?\:\d+\: error: ')                                : ['compError', 'for file in package']},
+            {str('^ */.*?/'+self.release+'/src/'+subsys+'/'+pkg+'.*?\:\d+\: error: ')               : ['compError', 'for file in package']},
+            {str('^ */.*?/'+self.release+'/src/.*?\:\d+\: error: ')                                 : ['compError', 'for file in release']},
+            {str('^.*?\:\d+\: error: ')                                                             : ['compError', 'for file in externals']},
             {str('^ *tmp/.*?/src/'+subsys+'/'+pkg+'/src/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*')     : ['linkError', 'for package library %s ']},
             {str('^ *tmp/.*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*') : ['linkError', 'for plugin library %s in plugins']},
             {str("^error: class '.*?' has a different checksum for ClassVersion")                   : ['compError', 'for a different checksum for ClassVersion']},

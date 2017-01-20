@@ -96,7 +96,7 @@ CMSSW_CATEGORIES={
    "FWCore/Modules", "FWCore/ParameterSet",
    "FWCore/PluginManager",
    "FWCore/PrescaleService", "FWCore/Python",
-   "FWCore/PythonParameterSet",
+   "FWCore/PythonParameterSet", "FWCore/PythonFramework",
    "FWCore/PythonUtilities",
    "FWCore/RootAutoLibraryLoader",
    "FWCore/ROOTTests",

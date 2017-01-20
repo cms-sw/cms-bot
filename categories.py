@@ -9,7 +9,7 @@ GITHUB_BLACKLIST_AUTHORS = []
 CMSSW_L1 = ["davidlange6"]
 APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar", "slava77" ] + CMSSW_L1))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
-TRIGGER_PR_TESTS = list(set([ "lgray", "wmtan", "bsunanda", "VinInn", "kpedro88", "makortel" ] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
+TRIGGER_PR_TESTS = list(set([ "lgray", "wmtan", "bsunanda", "VinInn", "kpedro88", "makortel", "davidlt" ] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
 PR_HOLD_MANAGERS = [ "kpedro88" ]
 
 COMMON_CATEGORIES = [ "orp", "tests" ]

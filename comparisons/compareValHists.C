@@ -95,6 +95,7 @@ void compareInDir(TFile* f1, TFile* f2, std::string dirName,unsigned int logmod=
     if (dOpt%10 == 3 && (bDiff ==0 || 1.-ksProb < 0.001 )) continue;
     if (dOpt%10 == 4 && (bDiff ==0 || ksProb >0.9 )) continue;
     if (dOpt%10 == 5 && (bDiff ==0 || ksProb >0.5 )) continue;
+    if (dOpt%10 == 6 && (bDiff ==0 || ksProb >0.01 )) continue;
 
     if (cv == 0){
       cv = new TCanvas(dirName.c_str(),dirName.c_str());

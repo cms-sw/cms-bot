@@ -346,6 +346,7 @@ echapon:
 - RecoHI/Configuration
 - RecoHI/HiMuonAlgos
 - RecoHI/HiTracking
+- RecoMuon
 forthommel:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration

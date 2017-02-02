@@ -1,3 +1,5 @@
+#!/bin/bash
+
 baseA=$1
 baseB=$2
 diffN=$3
@@ -26,11 +28,22 @@ function waitForProcesses {
 
 
 echo Start processing at `date`
+
 touch missing_map.txt
-ls -d ${baseA}/[1-9]* | sed 's|.*/||' | while read -r d; do
-  grep  " $d/" ${inList} >& /dev/null || echo $d >> missing_map.txt
+dL=""
+#check from map patterns to the local
+while read -r dsN fNP procN comm; do 
+    dP=`echo "${fNP}" | sed -e 's?/[^/]*.root??g'`; d=`echo $dP | cut -d" " -f1 `  
+    [ -d "${d}" ] && dL="$dL ${d}/"
+done< <(grep root ${inList} |  grep -v "#")
+#check the found mapped list with all that we have
+ls -d [1-9]* | while read -r d; do 
+  echo "${dL}" | grep  " $d/" >& /dev/null || echo $d >> missing_map.txt
 done
-grep root ${inList} | grep -v "#" | while read -r dsN fN procN comm; do 
+
+grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
+    #fNP can be a pattern: path-expand it first
+    fN=`echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g"`
     [ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN}
     #process regular files first
     if [ -f "${baseA}/${fN}" ]; then

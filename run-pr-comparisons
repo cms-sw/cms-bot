@@ -141,11 +141,11 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   cd $JR_COMP_DIR
   cp $CMS_BOT_DIR/comparisons/validateJR.sh  $JR_COMP_DIR
   cp $CMS_BOT_DIR/comparisons/validate.C     $JR_COMP_DIR
-  cp $CMS_BOT_DIR/comparisons/matrix_70X.txt $JR_COMP_DIR
+  cp $CMS_BOT_DIR/comparisons/matrix_RE.txt $JR_COMP_DIR
   export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
-  echo  "source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_70X.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
-  (source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_70X.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
+  echo  "source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
+  (source $JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
   echo 'Finished with JR comparison:'
   echo 'Doing log and root comparison:'

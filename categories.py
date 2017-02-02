@@ -1427,11 +1427,7 @@ CMSSW_CATEGORIES={
     "SimTracker/SiPhase2Digitizer",
     "SLHCUpgradeSimulations/Configuration",
     "SLHCUpgradeSimulations/Geometry",
-    "Validation/HGCalValidation",
-    "Validation/MuonGEMDigis",
-    "Validation/MuonGEMHits",
-    "Validation/MuonGEMRecHits",
-    "Validation/MuonME0Validation",
+    "L1Trigger/TrackTrigger",
    ],
 }
 

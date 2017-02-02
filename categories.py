@@ -68,7 +68,7 @@ CMSSW_L2 = {
   "ghellwig" : ["alca"],
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],
-  "pedrok" : ["upgrade"],
+  "kpedro88" : ["upgrade"],
 }
 
 CMSSW_CATEGORIES={

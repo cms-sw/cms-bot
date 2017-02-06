@@ -105,7 +105,7 @@ fi
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
 RUN_GC="NO"
-for t in 201 nweek- ; do
+for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
       N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
@@ -250,7 +250,7 @@ done
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
-for t in 201 nweek- ; do
+for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
     N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then

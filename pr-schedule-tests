@@ -24,6 +24,7 @@ if [ "X$PULL_REQUEST" != "X" ] ; then
   fi
 else
   MLINES=true
+  MLC=1
   OUTPUT_FILE=${PROP_FILE}-${CMSDIST_PR}-${SCRAM_ARCH}.txt
 fi
 PROP_FILE=properties-pr

@@ -7,6 +7,7 @@ cd $WORKSPACE
 
 # The pull request number is $1
 PULL_REQUEST=$1
+PROP_FILE=properties-pr
 if [ "X$PULL_REQUEST" != "X" ] ; then
   OUTPUT_FILE=${PROP_FILE}-${PULL_REQUEST}-${SCRAM_ARCH}.txt
   # Use helper to get PR branch
@@ -27,7 +28,6 @@ else
   MLC=1
   OUTPUT_FILE=${PROP_FILE}-${CMSDIST_PR}-${SCRAM_ARCH}.txt
 fi
-PROP_FILE=properties-pr
 if [ $MLC -eq 1 ] ; then
     eval $MLINES
     if [ "X$CMSDIST_PR" != "X" ] ; then SCRAM_ARCH="" ; fi

@@ -31,6 +31,7 @@ PACKAGE_NAME=cmssw
 FORCE_PKGTOOLS_TAG=$6
 USE_DEV_CMSPKG=$7
 FORCE_BUILD_PATCH_RELEASE=$8
+CMSSW_TOOL_CONF_ONLY=$9
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
@@ -59,11 +60,6 @@ case $RELEASE_NAME in
   *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
 esac
 
-# Hardoce XROOTD special queue XROOTD
-case $RELEASE_NAME in
-  *XROOTD*) RELEASE_QUEUE=${RELEASE_QUEUE}ROOTD_X ;;
-esac
-
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 unset BUILD_PATCH_RELEASE
@@ -73,12 +69,6 @@ eval `cat $CMS_BOT_DIR/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "REL
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
 # are both branches. See below to handle the case in which they are actually tags.
 
-# In case github is down.
-# git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
-# git clone -b $PKGTOOLS_TAG https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
-
-#For now force V00-30 tags for all IBs unless it is overridden by FORCE_PKGTOOLS_TAG
-PKGTOOLS_TAG=V00-30-XX
 [ "$FORCE_PKGTOOLS_TAG" != "" ] && PKGTOOLS_TAG=$FORCE_PKGTOOLS_TAG
 USE_DEV=""
 [ "$USE_DEV_CMSPKG" = "true" ] && USE_DEV="--use-dev"
@@ -115,7 +105,6 @@ pushd CMSDIST
   fi
   # We checkout a few files from the default branch in any case.
   DEFAULT_CMSDIST_URL="https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD"
-  curl -L -s -k $DEFAULT_CMSDIST_URL/cmssw-validation.spec > cmssw-validation.spec
   curl -L -s -k $DEFAULT_CMSDIST_URL/cmssw-ib.spec > cmssw-ib.spec
   curl -L -s -k $DEFAULT_CMSDIST_URL/das-cache.file > das-cache.file
 popd
@@ -132,25 +121,25 @@ CMSBUILD_CMD="PKGTOOLS/cmsBuild $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC 
 $CMSBUILD_CMD --debug `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w
-for previous in $PREVIOUS_RELEASES; do
-  previous=`echo $previous | cut -f2 -d/`
-  echo "Checking if we can install $previous"
-  set +e
-  #CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
-  CMSSW_RELEASE_BASE=`./common/cmspkg -a $ARCHITECTURE -f search cms+cmssw+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
-  set -e
-  if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
-    PACKAGE_NAME=cmssw-patch
-    perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" ../CMSDIST/cmssw-ib.spec
-    perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" ../CMSDIST/cmssw-validation.spec
-    perl -p -i -e "s/%define baserelver[\s].*/%define baserelver $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
-    perl -p -i -e "s/%define baserelqueue[\s].*/%define baserelqueue $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
-    perl -p -i -e 's/CMSSW_ROOT/CMSSW_PATCH_ROOT/' ../CMSDIST/cmssw-ib.spec
-    perl -p -i -e 's/CMSSW_VERSION/CMSSW_PATCH_VERSION/' ../CMSDIST/cmssw-ib.spec
-    break
-  fi
-done
-
+if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
+  for previous in $PREVIOUS_RELEASES; do
+    previous=`echo $previous | cut -f2 -d/`
+    echo "Checking if we can install $previous"
+    set +e
+    #CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+    CMSSW_RELEASE_BASE=`./common/cmspkg -a $ARCHITECTURE -f search cms+cmssw+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
+    set -e
+    if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
+      PACKAGE_NAME=cmssw-patch
+      perl -p -i -e "s/BuildRequires: cmssw/BuildRequires: cmssw-patch/" ../CMSDIST/cmssw-ib.spec
+      perl -p -i -e "s/%define baserelver[\s].*/%define baserelver $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
+      perl -p -i -e "s/%define baserelqueue[\s].*/%define baserelqueue $CMSSW_RELEASE_BASE/" ../CMSDIST/cmssw-patch-build.file
+      perl -p -i -e 's/CMSSW_ROOT/CMSSW_PATCH_ROOT/' ../CMSDIST/cmssw-ib.spec
+      perl -p -i -e 's/CMSSW_VERSION/CMSSW_PATCH_VERSION/' ../CMSDIST/cmssw-ib.spec
+      break
+    fi
+  done
+fi
 # This is done to decide wether or not we actually need to build a release or
 # the same CMSDIST / PKGTOOLS / CMSSW tags were used to build an IB which
 # is already available in the apt repository.
@@ -185,7 +174,6 @@ pushd CMSDIST
   echo "### RPM cms dummy `date +%%s`\n%prep\n%build\n%install\n" > dummy.spec
   perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" cmssw.spec
   perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" cmssw-ib.spec
-  perl -p -i -e "s/### RPM cms cmssw-validation .*/### RPM cms cmssw-validation $RELEASE_NAME/" cmssw-validation.spec
   perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
 popd
 
@@ -201,6 +189,7 @@ if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
   $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
   echo DATE=`date`
 fi
+if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
 $CMSBUILD_CMD -k -j `echo "$BUILD_NPROC + 1" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
 echo DATE=`date`
 $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`

@@ -119,6 +119,7 @@ makortel:
   - SimDataFormats/Vertex
   - SimG4Core
   - SimG4CMS
+  - SimGeneral/MixingModule
   - SimGeneral/TrackingAnalysis
   - SimTracker
   - SLHCUpgradeSimulations/Configuration

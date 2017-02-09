@@ -68,7 +68,7 @@ def get_lfns_from_das(lfn_per_query=1):
     lfn_file = qfile[:-6]
     if not exists(lfn_file): continue
     lfn_count = 0
-    err, out = run_cmd("grep '/store/' %s" % lfn_file,debug=False)
+    err, out = run_cmd("grep '/store/' %s" % lfn_file,debug=False, exit_on_error=False)
     for lfn in out.split("\n"):
       if not "/store/" in lfn: continue
       lfn = lfn.strip("\n").replace('"',"").replace(',',"").strip(" ")

@@ -59,7 +59,6 @@ def get_lfns_from_kibana(days=7):
   return used_lfns.keys()
 
 def get_lfns_from_das(lfn_per_query=1):
-  return []
   if lfn_per_query<1: return []
   print "Getting information from DAS queries...."
   err, out = run_cmd("test -d cms-sw.github.io || git clone --depth 1 https://github.com/cms-sw/cms-sw.github.io.git")

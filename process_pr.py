@@ -266,6 +266,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   last_test_start_time = None
   body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
   abort_test = False
+  need_external = False
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,body_firstline):
     already_seen = True
@@ -342,6 +343,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     # Check for cmsbuild_user comments and tests requests only for pull requests
     if commenter == cmsbuild_user:
       if not issue.pull_request: continue
+      sec_line = comment_lines[1:2]
+      if not sec_line: sec_line = ""
+      else: sec_line = sec_line[0]
       if re.match("Comparison is ready", first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
       elif re.match("^Comparison not run.+",first_line):
@@ -360,9 +364,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         trigger_test_on_signature = False
         last_test_start_time = comment.created_at
         abort_test = False
+        need_external = False
+        if sec_line.startswith("Using externals from cms-sw/cmsdist#"): need_external = True
       elif re.match( TESTS_RESULTS_MSG, first_line):
-        test_sha = comment_lines[1:2]
-        if test_sha: test_sha = test_sha[0].replace("Tested at: ","").strip()
+        test_sha = sec_line.replace("Tested at: ","").strip()
         if (test_sha != last_commit.sha) and (test_sha != 'UNKNOWN'):
           print "Ignoring test results for sha:",test_sha
           continue
@@ -507,6 +512,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     labels.append("pending-signatures")
   elif not "pending-assignment" in labels:
     labels.append("fully-signed")
+  if need_external: labels.append("requires-external")
   labels = set(labels)
 
   print "The labels of the pull request should be:\n  "+"\n  ".join(labels)

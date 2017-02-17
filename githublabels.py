@@ -40,5 +40,6 @@ CMSSW_BUILD_LABELS = {
   "release-announced" : LABEL_TYPES["approved"],
   "toolconf-building" : "fef2c0",
   "uploading-builds" : "86A086",
+  "requires-external" : "0000ff",
 }
 

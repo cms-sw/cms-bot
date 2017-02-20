@@ -21,4 +21,9 @@ if __name__ == "__main__":
     print ex
     exit(1)
 
-  print pr.base.ref
+  if pr.base.ref == "master":
+    from commands import getstatusoutput
+    e, o = getstatusoutput("grep ';RELEASE_BRANCH=master;' %s | sed 's|.*;RELEASE_QUEUE=||;s|;.*||'" % args.number[1])
+    print o
+  else:
+    print pr.base.ref

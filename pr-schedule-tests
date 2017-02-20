@@ -11,7 +11,7 @@ PROP_FILE=properties-pr
 if [ "X$PULL_REQUEST" != "X" ] ; then
   OUTPUT_FILE=${PROP_FILE}-${PULL_REQUEST}-${SCRAM_ARCH}.txt
   # Use helper to get PR branch
-  RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST`
+  RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST $CMS_BOT_DIR/config.map`
   CONFIG_MAP_FILE="$CMS_BOT_DIR/config.map"
 
   COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')

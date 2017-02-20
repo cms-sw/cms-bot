@@ -450,7 +450,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         for sign in selected_cats:
           signatures[sign] = "rejected"
           has_categories_approval = False
-          if sign == "orp": mustClose = True
+          if sign == "orp": mustClose = False
       elif ctype == "reopen":
         if "orp" in CMSSW_L2[commenter]:
           signatures["orp"] = "pending"

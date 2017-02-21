@@ -10,7 +10,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   XUSER=`whoami`
   DOCKER_OPT=""
   case $XUSER in
-    cmsbld ) DOCKER_OPT=" -u 501:501 -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group " ;;
+    cmsbld ) DOCKER_OPT=" -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group " ;;
   esac
   DOCK_ARGS="cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS

@@ -3,10 +3,6 @@ CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 source $CMS_BOT_DIR/jenkins-artifacts
 
-CMSBUILD_KEY="/build/`whoami`/`whoami`.keytab"
-case $NODE_NAME in
-  lxplus* ) CMSBUILD_KEY="$CMSBUILD_KEYTAB/cmsbuild.keytab" ;;
-esac
 voms-proxy-init -voms cms -valid 24:00 || true
 
 function Jenkins_GetCPU ()
@@ -21,9 +17,6 @@ function Jenkins_GetCPU ()
   echo $ACTUAL_CPU
 }
 ls /cvmfs/cms-ib.cern.ch || true
-if [ ! X`which kinit` = X ]; then
-  kinit cmsbuild@CERN.CH -k -t $CMSBUILD_KEY || true
-fi
 
 # If a repo to comment on isn't specified use cmssw
 if [ "X$PUB_REPO" == X ] || [ "X$PULL_REQUEST" != X ]; then

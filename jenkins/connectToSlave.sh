@@ -7,7 +7,7 @@ SCRIPT_DIR=`dirname $0`
 
 kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
 SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-ssh -f $SSH_OPTS $TARGET mkdir -p $WORKSPACE
+ssh -f $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp
 ssh -f $SSH_OPTS $TARGET mkdir -p $WORKER_DIR
 ssh -f $SSH_OPTS $TARGET ls -la $WORKER_DIR
 ssh -f $SSH_OPTS $TARGET rm -f $WORKER_DIR/$WORKER_USER.keytab
@@ -18,4 +18,4 @@ HOST_CMS_ARCH=`ssh -f $SSH_OPTS $TARGET sh $WORKER_DIR/cmsos`
 WORKER_JENKINS_NAME=`echo $TARGET | sed s'|.*@||;s|\..*||'`
 java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -s http://localhost:8080/jenkins groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "$WORKER_JENKINS_NAME" "$HOST_ARCH" "$HOST_CMS_ARCH"
 sleep 1
-ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache /tmp/
+ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKSPACE/tmp

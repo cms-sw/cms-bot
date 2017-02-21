@@ -1,29 +1,24 @@
 #!/usr/bin/env python
 
-from argparse import ArgumentParser
-from sys import exit
+from sys import exit, argv
 from os.path import expanduser
 from github import Github
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 
 if __name__ == "__main__":
-  parser = ArgumentParser()
-  parser.add_argument("number", nargs=1)
-  args = parser.parse_args()
-
-  prId = int(args.number[0])
+  prId = int(argv[1])
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   try:
     pr = gh.get_repo( 'cms-sw/cmssw' ).get_pull(prId)
   except Exception as ex:
-    print "Could not find pull request. Maybe this is an issue"
+    print "Could not find pull request %s. Maybe this is an issue" % prId
     print ex
     exit(1)
 
   if pr.base.ref == "master":
     from commands import getstatusoutput
-    e, o = getstatusoutput("grep ';RELEASE_BRANCH=master;' %s | sed 's|.*;RELEASE_QUEUE=||;s|;.*||'" % args.number[1])
+    e, o = getstatusoutput("grep ';RELEASE_BRANCH=master;' %s | sed 's|.*;RELEASE_QUEUE=||;s|;.*||'" % argv[2])
     print o
   else:
     print pr.base.ref

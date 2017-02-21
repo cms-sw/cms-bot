@@ -5,6 +5,7 @@ RUN_NATIVE=
 if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
 fi
+if [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then DOCKER_IMG=$DOCKER_IMG_HOST ; fi
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   XUSER=`whoami`
   DOCKER_OPT=""

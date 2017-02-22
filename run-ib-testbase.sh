@@ -2,6 +2,7 @@
 echo "#!/bin/bash -ex"
 echo "ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 || true"
 echo "ls /cvmfs/cms.cern.ch >/dev/null 2>&1 || true"
+echo "ls /cvmfs/grid.cern.ch >/dev/null 2>&1 || true"
 echo "voms-proxy-init -voms cms || true"
 echo "export ARCHITECTURE=${ARCHITECTURE}"
 echo "export RELEASE_FORMAT=${RELEASE_FORMAT}"

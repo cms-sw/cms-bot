@@ -5,6 +5,7 @@ if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
 fi
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
+  docker pull $DOCKER_IMG
   XUSER=`whoami`
   DOCKER_OPT=""
   case $XUSER in

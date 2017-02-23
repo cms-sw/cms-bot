@@ -69,7 +69,7 @@ JENKINS_MACHINE_NAME = 'MACHINE_NAME'
 JENKINS_CMSSW_QUEUE = 'CMSSW_QUEUE'
 JENKINS_DOCKER_IMG = 'DOCKER_IMG'
 JENKINS_ONLY_TOOL_CONF = 'ONLY_BUILD_TOOLCONF'
-WRONG_NOTES_RELEASE_MSG = '{previous_release} does not appear to be a valid release name'
+WRONG_NOTES_RELEASE_MSG = 'Previous release "{previous_release}" does not appear to be a valid release name'
 PREVIOUS_RELEASE_NAME_MSG = 'Unable to find previous release for {release_name}. Please use "release-notes since <release>" in first line of the comment.'
 GENERATING_RELEASE_NOTES_MSG = 'Generating release notes since {previous_release}. \n' \
                                'You can see the progress here: \n' \

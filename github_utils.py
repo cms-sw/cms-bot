@@ -13,17 +13,13 @@ except Exception, e :
 
 def format(s, **kwds): return s % kwds
 
-def api_rate_limits(gh):
+def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime):
   from time import sleep, gmtime
   from calendar import timegm
   from datetime import datetime
   doSleep = 0
-  rate_limit = gh.rate_limiting[0]
-  rate_reset_sec = gh.rate_limiting_resettime - timegm(gmtime())
-  print 'API Rate Limit'
-  print 'Limit, Remaining: ', gh.rate_limiting
-  print 'Reset time (GMT): ', datetime.fromtimestamp(gh.rate_limiting_resettime)
-  print 'Reset time in sec: ', rate_reset_sec
+  rate_reset_sec = rate_limiting_resettime - timegm(gmtime()) + 5
+  print 'API Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime))
   if   rate_limit<50:   doSleep = rate_reset_sec
   elif rate_limit<100:  doSleep = 120
   elif rate_limit<500:  doSleep = 60
@@ -34,6 +30,13 @@ def api_rate_limits(gh):
     print "Slowing down for %s sec due to api rate limits %s approching zero" % (doSleep, rate_limit)
     sleep (doSleep)
   return
+
+def api_rate_limits_repo(repo):
+  check_rate_limits(int(repo.raw_headers['x-ratelimit-remaining']),int(repo.raw_headers['x-ratelimit-limit']),int(repo.raw_headers['x-ratelimit-reset']))
+
+def api_rate_limits(gh):
+  gh.get_rate_limit()
+  check_rate_limits(gh.rate_limiting[0], gh.rate_limiting[1], gh.rate_limiting_resettime)
 
 def get_ported_PRs(repo, src_branch, des_branch):
   done_prs_id = {}
@@ -151,7 +154,7 @@ def cache_invalid_pr (pr_id, cache):
   cache['invalid_prs'].append(pr_id)
   cache['dirty']=True
 
-def fill_notes_description(notes, repo, cache={}):
+def fill_notes_description(notes, repo, github, cache={}):
   new_notes = {}
   for log_line in notes.splitlines():
     items = log_line.split(" ")
@@ -166,6 +169,7 @@ def fill_notes_description(notes, repo, cache={}):
     if 'invalid_prs' in cache and pr_hash_id in cache['invalid_prs']: continue
     print "Checking ",pr_number,author,parent_hash
     try:
+      api_rate_limits(github)
       pr = repo.get_pull(int(pr_number))
       ok = True
       if pr.head.user.login!=author:
@@ -193,7 +197,7 @@ def fill_notes_description(notes, repo, cache={}):
       continue
   return new_notes
 
-def get_merge_prs(prev_tag, this_tag, git_dir, repo, cache={}):
+def get_merge_prs(prev_tag, this_tag, git_dir, repo, github, cache={}):
   print "Getting merged Pull Requests b/w",prev_tag, this_tag
   error, notes = getstatusoutput(format("GIT_DIR=%(git_dir)s"
                                       " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
@@ -207,7 +211,7 @@ def get_merge_prs(prev_tag, this_tag, git_dir, repo, cache={}):
     print "Error while getting release notes."
     print notes
     exit(1)
-  return fill_notes_description(notes, repo, cache)
+  return fill_notes_description(notes, repo, github, cache)
 
 def save_prs_cache(cache, cache_file):
   if cache['dirty']:

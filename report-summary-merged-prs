@@ -497,7 +497,7 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
   comp = {}
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
   comp[ 'release_name' ] = end_tag
-  notes = get_merge_prs(start_tag, end_tag, git_dir, repo, cache)
+  notes = get_merge_prs(start_tag, end_tag, git_dir, repo, github, cache)
   prs = []
   for pr_num in notes:
     pr={'is_merge_commit':False , 'from_merge_commit' : False}

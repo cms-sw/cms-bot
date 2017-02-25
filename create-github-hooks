@@ -5,6 +5,7 @@ from optparse import OptionParser
 #from process_pr import process_pr
 from github_hooks_config import GITHUB_HOOKS as hk_conf
 from github_hooks_config import REPO_HOOK_MAP
+from github_utils import api_rate_limits
 import hashlib, re
 from categories import EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS
 from sys import exit
@@ -57,12 +58,14 @@ if __name__ == "__main__":
     if opts.cmsdist: repos_names = repos_names + CMSDIST_REPOS
 
   gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
+  api_rate_limits(gh)
   #get repos to be processed
   repos = {}
   for r in set(repos_names):
     if not "/" in r:
       for repo in gh.get_user(r).get_repos():
         repos[repo.full_name]=repo
+      api_rate_limits(gh)
     else:
       repos[r]=None
 
@@ -100,7 +103,7 @@ if __name__ == "__main__":
     for hook in repo.get_hooks():
       if "name" in hook.config:
         repo_hooks_all[ hook.config['name'] ] = hook 
-
+    api_rate_limits(gh)
     for hook in hooks:
       print "checking for web hook" , hook
       hook_conf = hk_conf[hook]
@@ -112,11 +115,15 @@ if __name__ == "__main__":
       if hook in repo_hooks_all:
         old_hook = repo_hooks_all[hook]
         if opts.force or not match_config(hook_conf,old_hook):
-          if not opts.dryRun: old_hook.edit(**hook_conf)
+          if not opts.dryRun:
+            old_hook.edit(**hook_conf)
+            api_rate_limits(gh)
           print "hook updated"
         else:
           print "Hook configuration is same"
       else:
-        if not opts.dryRun: repo.create_hook(**hook_conf)
+        if not opts.dryRun:
+          repo.create_hook(**hook_conf)
+          api_rate_limits(gh)
         print "Hook created in github.....success"
   exit(error)

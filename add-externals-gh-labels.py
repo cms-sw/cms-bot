@@ -22,6 +22,7 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
     cur_labels = {}
     for lab in repo.get_labels():
       cur_labels [lab.name]=lab
+    api_rate_limits(gh)
     for lab in all_labels:
       if not lab in cur_labels:
         print "  Creating new label ",lab,"=>",all_labels[lab]
@@ -29,6 +30,7 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False):
       elif cur_labels[lab].color != all_labels[lab]:
         if not dryRun: cur_labels[lab].edit(lab, all_labels[lab])
         print "  Label ",lab," color updatd: ",cur_labels[lab].color ," => ",all_labels[lab]
+      api_rate_limits(gh)
 
 if __name__ == "__main__":
   from optparse import OptionParser

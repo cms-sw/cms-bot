@@ -99,26 +99,33 @@ if __name__ == "__main__":
   nquery = 0
   inCache = 0 
   DasSearch = 0
+  errors = 0
   for query in uqueries:
     nquery += 1
     sha = query_sha[query]
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     print "[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query)
     if exists(outfile):
-      jdata = read_json (outfile)
-      dtime = time()-jdata['mtime']
-      if 'files' in jdata:
-        jdata['results'] = jdata['files']
-        del jdata['files']
-        write_json (outfile, jdata)
-      fcount = len(jdata['results'])
-      if (dtime<=opts.threshold) and (fcount>0):
-        uqueries[query] = jdata['results']
-        print "  Found in cache with %s results (age: %s src)" % (fcount , dtime)
-        inCache += 1
-        continue
-      elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
-      else: print "  Retrying as cache with empty results found."
+      try:
+        jdata = read_json (outfile)
+        dtime = time()-jdata['mtime']
+        if 'files' in jdata:
+          jdata['results'] = jdata['files']
+          del jdata['files']
+          write_json (outfile, jdata)
+        fcount = len(jdata['results'])
+        if (dtime<=opts.threshold) and (fcount>0):
+          uqueries[query] = jdata['results']
+          print "  Found in cache with %s results (age: %s src)" % (fcount , dtime)
+          inCache += 1
+          continue
+        elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
+        else: print "  Retrying as cache with empty results found."
+      except IOError as e:
+        print e
+        getstatusoutput("cat %s" % outfile)
+        getstatusoutput("rm -f %s" % outfile)
+        errors += 1
     else: print "  No cache file found %s" % sha
     
     DasSearch += 1
@@ -134,6 +141,7 @@ if __name__ == "__main__":
           sleep(1)
         except Exception, e:
           print "ERROR threading das query cache: caught exception: " + str(e)
+          error += 1
         break
       else:
         sleep(10)
@@ -141,3 +149,4 @@ if __name__ == "__main__":
   print "Total queries: %s" % tqueries
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
+  exit(errors)

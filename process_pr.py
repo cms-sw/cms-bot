@@ -296,8 +296,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
       if (assign_type == "new categories assigned:") and (commenter == cmsbuild_user):
         for ex_cat in new_cats:
           if ex_cat in assign_cats: assign_cats[ex_cat] = 1
-      if ((commenter in CMSSW_L2) and [x for x in CMSSW_L2[commenter] if x in signing_categories]) or \
-          (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1):
+      if ((commenter in CMSSW_L2) or (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1)):
         if assign_type == "assign":
           for ex_cat in new_cats:
             if not ex_cat in signing_categories:

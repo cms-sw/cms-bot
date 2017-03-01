@@ -1,21 +1,23 @@
 #!/bin/bash
-echo "#!/bin/bash -ex"
-echo "ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 || true"
-echo "ls /cvmfs/cms.cern.ch >/dev/null 2>&1 || true"
-echo "ls /cvmfs/grid.cern.ch >/dev/null 2>&1 || true"
-echo "voms-proxy-init -voms cms || true"
-echo "export ARCHITECTURE=${ARCHITECTURE}"
-echo "export RELEASE_FORMAT=${RELEASE_FORMAT}"
-echo "source /cvmfs/cms-ib.cern.ch/week1/cmsset_default.sh  || true"
-echo "scram -a $ARCHITECTURE project $RELEASE_FORMAT"
-echo "cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py"
-echo "cd $RELEASE_FORMAT"
-echo "set +x"
-echo 'eval `scram runtime -sh`'
-echo "set -x"
-echo "$WORKSPACE/cms-bot/das-utils/use-ibeos-sort"
-echo "export CMS_PATH=/cvmfs/cms-ib.cern.ch/week1"
-echo "export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH"
-echo "which das_client"
-echo "grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true"
-echo "export FRONTIER_LOG_LEVEL=warning"
+cat <<EOF
+#!/bin/bash -ex
+for cvmfs_dir in \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
+  ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
+done
+voms-proxy-init -voms cms || true
+export ARCHITECTURE=${ARCHITECTURE}
+export RELEASE_FORMAT=${RELEASE_FORMAT}
+source /cvmfs/cms-ib.cern.ch/week1/cmsset_default.sh  || true
+scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
+cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
+cd ${RELEASE_FORMAT}
+set +x
+eval \$(scram runtime -sh)
+set -x
+$WORKSPACE/cms-bot/das-utils/use-ibeos-sort
+export CMS_PATH=/cvmfs/cms-ib.cern.ch/week1
+export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH
+which das_client
+grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true
+export FRONTIER_LOG_LEVEL=warning
+EOF

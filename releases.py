@@ -92,3 +92,10 @@ RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_0_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_0_ROOT6_X")
 RELEASE_MANAGERS["CMSSW_9_0_X"]=["smuzaffar"]
 
+######################################################################
+# Added by smuzafar for Development release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["master"]=65
+RELEASE_BRANCH_PRODUCTION.append("master")
+RELEASE_MANAGERS["master"]=["muzaffar"]
+

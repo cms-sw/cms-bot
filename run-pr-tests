@@ -2,7 +2,7 @@
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 source $CMS_BOT_DIR/jenkins-artifacts
-
+export PATH=$CMS_BOT_DIR:$PATH
 voms-proxy-init -voms cms -valid 24:00 || true
 
 function Jenkins_GetCPU ()
@@ -134,9 +134,8 @@ if [ "X$REQ_OK" = "XFalse" ] ; then
 fi
 
 case $RELEASE_FORMAT in
-  *SLHC*)
-     DO_ADDON_TESTS=false
-  ;;
+  *SLHC*) DO_ADDON_TESTS=false ;;
+  CMSSW_9_1_X_* ) export CMSSW_BRANCH=master ;;
 esac
 
 if [ ! -d CMSSW_* ]; then
@@ -151,6 +150,7 @@ sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine proces
 set +x
 eval $(scram run -sh) 
 set -x
+which git-cms-init
 cd src
 git config --global --replace-all merge.renamelimit 2500
 
@@ -329,6 +329,7 @@ else
 fi
 
 scram build clean
+
 git cms-checkdeps -A -a
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 ############################################
@@ -383,7 +384,7 @@ else
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
 fi
 
-#Copy the cmssw ib das_cleint wrapper in PATH
+#Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 ##FIXME: Remove the following das_client.py link once all IBs use das_client wrapper
 set +x ; eval $(scram run -sh) ;set -x

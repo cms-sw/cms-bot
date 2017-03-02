@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
   if pr.base.ref == "master":
     from commands import getstatusoutput
-    e, o = getstatusoutput("grep ';RELEASE_BRANCH=master;' %s | sed 's|.*;RELEASE_QUEUE=||;s|;.*||'" % argv[2])
+    e, o = getstatusoutput("grep ';RELEASE_BRANCH=master;' %s | grep 'PROD_ARCH=1;' | sed 's|.*;RELEASE_QUEUE=||;s|;.*||'" % argv[2])
     print o
   else:
     print pr.base.ref

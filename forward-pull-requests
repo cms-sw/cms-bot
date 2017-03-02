@@ -9,12 +9,14 @@ from os.path import expanduser
 from argparse import ArgumentParser
 from datetime import datetime
 import re
+import urllib2
 from time import sleep
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from github_utils import get_ported_PRs
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
+import json
 
 if __name__ == "__main__":
   parser = ArgumentParser()
@@ -37,7 +39,6 @@ if __name__ == "__main__":
   since = datetime (2000,1,1)
   if args.since:
     since = datetime.strptime(args.since, '%Y-%m-%dT%H:%M')
-
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
 
   try:
@@ -67,19 +68,28 @@ if __name__ == "__main__":
     newBody = pr.body + "\nAutomatically ported from " + args.source + " #%s (original by @%s)." % (pr.number, str(pr.head.user.login))
     try:
       newHead = "%s:%s" % (pr.head.user.login, pr.head.ref)
-      print newHead
       print '-----'
       print "Porting %s" % pr.number
       print pr.title.encode('utf-8')
       print newBody.encode('utf-8')
       print args.dest
-      print "%s:%s" % (pr.head.user.login, pr.head.ref)
+      print newHead
       print '---'
       if args.dryRun:
         print 'ATTENTION: Not creating new PR on Github (dry-run)'
         continue
-      newPR = gh_repo.create_pull(title = pr.title, body =newBody, base = args.dest, head = newHead )
-      print "New PR number", newPR.number
+      params = {
+      "title": pr.title,
+      "body": newBody,
+      "head": newHead,
+      "base": args.dest,
+      "maintainer_can_modify": False
+      }
+      request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/pulls",
+        headers={"Authorization" : "token " + GH_TOKEN })
+      request.get_method = lambda: 'POST'
+      newPR = json.loads(urllib2.urlopen( request, json.dumps(params)).read())
+      print "New PR number", newPR['number']
       sleep(15)
     except GithubException, e:
       print "Error while processing: ", pr.number

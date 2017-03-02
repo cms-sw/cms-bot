@@ -115,6 +115,7 @@ def get_config_map_params():
   f = open( CONFIG_MAP_FILE , 'r' )
   for line in f.readlines():
     params = parse_config_map_line ( line.rstrip() )
+    if not params: continue
     print params
 
     arch = params[ 'SCRAM_ARCH' ]

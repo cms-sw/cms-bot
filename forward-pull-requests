@@ -66,7 +66,7 @@ if __name__ == "__main__":
       print "Older than ",args.since
       continue
     print pr.number, pr.head.user.login, pr.head.ref, pr.created_at
-    newBody = pr.body + "\nAutomatically ported from " + args.source + " #%s (original by @%s)." % (pr.number, str(pr.head.user.login))
+    newBody = pr.body + "\nAutomatically ported from " + args.source + " #%s (original by @%s).\nPlease wait for a new IB (12 to 24H) before requesting to test this PR." % (pr.number, str(pr.head.user.login))
     try:
       newHead = "%s:%s" % (pr.head.user.login, pr.head.ref)
       print '-----'

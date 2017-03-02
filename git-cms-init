@@ -187,6 +187,7 @@ case $CMSSW_TAG in
     CMSSW_BRANCH=${CMSSW_BASE_BRANCH}_X ;;
 esac
 fi
+echo "Using branch $CMSSW_BRANCH"
 
 # This is not the case at FNAL. Disabling it for now.
 #IN_RELEASE=`echo $PWD | grep -q -e "^$CMSSW_BASE" 2> /dev/null && echo 1 || echo 0`

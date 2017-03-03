@@ -448,7 +448,7 @@ if [[ $RELEASE_FORMAT != CMSSW_5_3_X* ]] && [ "X$USE_JOB_REPORTS" = Xtrue ]; the
   JOB_REPORTS='--job-reports'
 fi
 
-export MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
 if [ ! "X$MATRIX_EXTRAS" = X ]; then
   MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
 fi

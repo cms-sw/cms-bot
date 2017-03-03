@@ -2,7 +2,6 @@
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 source $CMS_BOT_DIR/jenkins-artifacts
-export PATH=$CMS_BOT_DIR:$PATH
 voms-proxy-init -voms cms -valid 24:00 || true
 
 function Jenkins_GetCPU ()
@@ -135,7 +134,6 @@ fi
 
 case $RELEASE_FORMAT in
   *SLHC*) DO_ADDON_TESTS=false ;;
-  CMSSW_9_1_X_* ) export CMSSW_BRANCH=master ;;
 esac
 
 if [ ! -d CMSSW_* ]; then
@@ -150,7 +148,6 @@ sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine proces
 set +x
 eval $(scram run -sh) 
 set -x
-which git-cms-init
 cd src
 git config --global --replace-all merge.renamelimit 2500
 

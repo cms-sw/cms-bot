@@ -33,7 +33,7 @@ COMPARISON_MISSING_MAP = [ "slava77" ]
 CMSSW_L2 = {
   "Martin-Grunewald": ["hlt"],
   "silviodonato": ["hlt"],
-  "perrotta": ["hlt"],
+  "perrotta": ["reconstruction"],
   "fwyzard": ["hlt"],
   "slava77": ["reconstruction"],
   "civanch": ["simulation", "geometry", "fastsim"],
@@ -59,7 +59,6 @@ CMSSW_L2 = {
   "perrozzi": ["generators"],
   "davidlange6": ["operations"],
   "thuer": ["generators"],
-  "cvuosalo": ["reconstruction"],
   "vanbesien" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "iahmad-khan" : ["externals"],

@@ -1,5 +1,5 @@
 from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS
-from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED
+from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, DEVEL_RELEASE_CLOSED_BRANCH
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
@@ -148,6 +148,15 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if issue.pull_request:
     try:
       pr   = repo.get_pull(prId)
+      if pr.base.ref == DEVEL_RELEASE_CLOSED_BRANCH:
+        if pr.state != "closed":
+          print "This pull request must be closed."
+          if not dryRun:
+            issue.edit(state="closed")
+            msg = format("This branch is closed for updates. Closing this pull request.\n"
+                       "Please make a Pull request for master branch or bring this issue up in the ORP meeting if really needed.\n")
+            issue.create_comment(msg)
+        return
     except:
       print "Could not find the pull request ",prId,", may be it is an issue"
       return
@@ -386,8 +395,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
     if issue.pull_request:
       # Check if the release manager asked for merging this.
-      if (not mustClose) and (commenter in releaseManagers + CMSSW_L1) and re.match("^\s*(merge)\s*$", first_line, re.I):
+      if (commenter in releaseManagers + CMSSW_L1) and re.match("^\s*(merge)\s*$", first_line, re.I):
         mustMerge = True
+        mustClose = False
         continue
 
       # Check if the someone asked to trigger the tests

@@ -3,8 +3,14 @@
 #GIT_REPO_FWPORTS[repo][source-branch]=[destination-branch[:strategy]]
 #e.g
 #GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_6_X"]=["CMSSW_7_6_ROOT64_X", "CMSSW_8_0_X:ours"]
+from releases import DEVEL_RELEASE_CLOSED_BRANCH
 
 GIT_REPO_FWPORTS = {"cmsdist" : {},"cmssw" : {}}
+
+#Forward port master branch to latest dev branch
+#Master branch is always forward ported to one branch.
+GIT_REPO_FWPORTS["cmssw"]["master"]=[DEVEL_RELEASE_CLOSED_BRANCH]
+
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_6_2_X/stable"]=["IB/CMSSW_6_2_X/devel-gcc472"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_0_X/stable"]=["IB/CMSSW_7_1_X/stable"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_3_X/stable"]=["IB/CMSSW_7_3_X/gcc491","IB/CMSSW_7_3_X/root6","IB/CMSSW_7_3_X/next","IB/CMSSW_7_3_X/debug"]
@@ -71,8 +77,4 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc530"].append("IB/CMSSW_9_1_X/gcc6
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc630"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc630"].append("IB/CMSSW_9_1_X/gcc630next")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc630"].append("IB/CMSSW_9_1_X/gcc700")
-
-#Forward port master branch to latest dev branch
-GIT_REPO_FWPORTS["cmssw"]["master"]=[]
-GIT_REPO_FWPORTS["cmssw"]["master"].append("CMSSW_9_1_X")
 

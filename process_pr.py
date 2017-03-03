@@ -386,9 +386,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
     if issue.pull_request:
       # Check if the release manager asked for merging this.
-      if (commenter in releaseManagers + CMSSW_L1) and re.match("^\s*(merge)\s*$", first_line, re.I):
+      if (not mustClose) and (commenter in releaseManagers + CMSSW_L1) and re.match("^\s*(merge)\s*$", first_line, re.I):
         mustMerge = True
-        mustClose = False
         continue
 
       # Check if the someone asked to trigger the tests

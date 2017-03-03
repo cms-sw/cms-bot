@@ -154,7 +154,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           if not dryRun:
             issue.edit(state="closed")
             msg = format("This branch is closed for updates. Closing this pull request.\n"
-                       "Please make a Pull request for master branch or bring this issue up in the ORP meeting if really needed.\n")
+                       "@%(user)s, Please make a Pull request for master branch or bring this issue up in the ORP meeting if really needed.\n",
+                       user=issue.user.login.encode("ascii", "ignore"))
             issue.create_comment(msg)
         return
     except:

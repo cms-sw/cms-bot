@@ -46,13 +46,18 @@ git clean -fdx
 #checkout target branch and remove any local changes
 git checkout -q --force $TARGET_BRANCH
 git reset --hard origin/$TARGET_BRANCH
-STRATEGY_OPTS=""
+MERGE_OPTS=""
 DEFAULT_MERGE_COMMIT_MSG="Merge $SOURCE_BRANCH into $TARGET_BRANCH."
 #Depending on the commits, use either cherry-pick or merge
 if [ "X$COMMITS_LIST" = "X" ] ; then
   #We do not have the commits to just try to merge source branch in to target
-  [ "X$STRATEGY" = "X" ] || STRATEGY_OPTS="-X $STRATEGY"
-  git merge -m "$DEFAULT_MERGE_COMMIT_MSG" --no-ff $STRATEGY_OPTS origin/$SOURCE_BRANCH || (git diff >> $GIT_DIFF_LOGFILE && exit 1)
+  [ "X$STRATEGY" = "X" ] || MERGE_OPTS="-X $STRATEGY"
+  if [ "$SOURCE_BRANCH" = "master" ] ; then
+    MERGE_OPTS="--ff $MERGE_OPTS"
+  else
+    MERGE_OPTS="--no-ff $MERGE_OPTS"
+  fi
+  git merge -m "$DEFAULT_MERGE_COMMIT_MSG" $MERGE_OPTS origin/$SOURCE_BRANCH || (git diff >> $GIT_DIFF_LOGFILE && exit 1)
 else
   #We have the commits list, so do cherry picking by doing the following
   #  1. Create and checkout new dummy branch based on target branch
@@ -68,7 +73,7 @@ else
   DUMMY_BRANCH=$(whoami)-auto-forward-port-dummy-branch
   if [ ! "X$STRATEGY" = "X" ] ; then
     if [ ! "X$(git cherry-pick -h 2>&1 | grep 'strategy-option' | tail -1)" = "X" ] ; then
-      STRATEGY_OPTS="-X $STRATEGY"
+      MERGE_OPTS="-X $STRATEGY"
     fi
   fi
   #Delete dummy branch if exists
@@ -81,7 +86,7 @@ else
     IsMergeCommit=$([ $(git rev-list --parents -n 1 $c | wc -w) -lt 3 ] || echo YES)
     if [ "X$IsMergeCommit" = X ] ; then
       #Non-merge commit found; cherry pick it
-      if ! git cherry-pick -x $STRATEGY_OPTS $c ; then
+      if ! git cherry-pick -x $MERGE_OPTS $c ; then
         git diff >> $GIT_DIFF_LOGFILE
         [ $(git diff --name-only | wc -l) -eq 0 ] || exit 1
       fi

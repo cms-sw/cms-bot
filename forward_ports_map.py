@@ -61,9 +61,9 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_0_X/gcc620"].append("IB/CMSSW_9_0_X/gcc6
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_0_X/gcc620"].append("IB/CMSSW_9_0_X/gcc700")
 
 #Added explicitly by Shahzad MUZAFFAR
-GIT_REPO_FWPORTS["cmssw"]["master"]=[]
-GIT_REPO_FWPORTS["cmssw"]["master"].append("CMSSW_9_1_ROOT6_X")
-GIT_REPO_FWPORTS["cmssw"]["master"].append("CMSSW_9_1_DEVEL_X")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_1_X"]=[]
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_1_X"].append("CMSSW_9_1_ROOT6_X")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_1_X"].append("CMSSW_9_1_DEVEL_X")
 
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc530"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc530"].append("IB/CMSSW_9_1_X/root6")
@@ -71,4 +71,8 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc530"].append("IB/CMSSW_9_1_X/gcc6
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc630"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc630"].append("IB/CMSSW_9_1_X/gcc630next")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc630"].append("IB/CMSSW_9_1_X/gcc700")
+
+#Forward port master branch to latest dev branch
+GIT_REPO_FWPORTS["cmssw"]["master"]=[]
+GIT_REPO_FWPORTS["cmssw"]["master"].append("CMSSW_9_1_X")
 

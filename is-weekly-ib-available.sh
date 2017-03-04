@@ -13,6 +13,7 @@ if [ "X$MAX_WAIT" = "X" ]  ; then MAX_WAIT=7200; fi
 TOTAL_WAIT=0
 
 for dir in /cvmfs/cms-ib.cern.ch $IB_WEEK_DIR /cvmfs/grid.cern.ch ; do
+  ls ${dir} || true
   if [ ! -e ${dir} ] ; then echo "Error: No such directory: ${dir}"; exit 1; fi
 done
 END_WAIT=NO

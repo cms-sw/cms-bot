@@ -247,7 +247,7 @@ touch $BASEDIR/scramdb/etc/scramrc/links.db
 for (( i=0; i<$NUM_WEEKS; i++ )) ; do
  echo "$BASEDIR/week$i" >> $BASEDIR/scramdb/etc/scramrc/links.db
 done
-echo "/cvmfs/cms.cern.ch" > $BASEDIR/scramdb/etc/scramrc/links.db
+echo "/cvmfs/cms.cern.ch" >> $BASEDIR/scramdb/etc/scramrc/links.db
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done

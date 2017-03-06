@@ -20,6 +20,5 @@ print "Authenticating to Github and connecting to repo"
 gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
 print "Authentication succeeeded"
 gh_repo = gh.get_repo(args.repo)
-
 print "Creating pull request"
 gh_repo.create_pull(title = args.title, body = args.body, base = args.base_branch, head = args.feature_branch)

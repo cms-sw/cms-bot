@@ -11,7 +11,7 @@ if [ "X$ARCH" = "X" ]    ; then echo "Error: Missing architecture name"; echo "U
 if [ "X$WAIT_STEP" = "X" ] ; then WAIT_STEP=120; fi
 if [ "X$MAX_WAIT" = "X" ]  ; then MAX_WAIT=7200; fi
 TOTAL_WAIT=0
-
+hostname
 for dir in /cvmfs/cms-ib.cern.ch $IB_WEEK_DIR /cvmfs/grid.cern.ch ; do
   ls ${dir} >/dev/null || true
   if [ ! -e ${dir} ] ; then echo "Error: No such directory: ${dir}"; exit 1; fi

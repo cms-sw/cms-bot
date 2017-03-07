@@ -1,7 +1,5 @@
 #!/bin/bash -ex
-for cvmfs_dir in $(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
-  ls -l /cvmfs/${cvmfs_dir} >/dev/null 2>&1 || true
-done
+cvmfs_config probe
 RUN_NATIVE=
 if [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then DOCKER_IMG=$DOCKER_IMG_HOST ; fi
 if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then

@@ -2,9 +2,10 @@
 cat <<EOF
 #!/bin/bash -ex
 hostname
-for cvmfs_dir in \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
-  ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
-done
+#for cvmfs_dir in \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
+#  ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
+#done
+cvmfs_config probe
 voms-proxy-init -voms cms || true
 export ARCHITECTURE=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}

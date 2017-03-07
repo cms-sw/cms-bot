@@ -2,6 +2,7 @@
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
+CONFIG_MAP_FILE="$CMS_BOT_DIR/config.map"
 
 cd $WORKSPACE
 
@@ -12,7 +13,6 @@ if [ "X$PULL_REQUEST" != "X" ] ; then
   OUTPUT_FILE=${PROP_FILE}-${PULL_REQUEST}-${SCRAM_ARCH}.txt
   # Use helper to get PR branch
   RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST $CMS_BOT_DIR/config.map`
-  CONFIG_MAP_FILE="$CMS_BOT_DIR/config.map"
 
   COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
   COMP_ARCH=$(grep "RELEASE_QUEUE=$COMP_QUEUE;" $CONFIG_MAP_FILE | grep -v "DISABLED=" | grep "PROD_ARCH=1;" | tr ';' '\n' | grep "SCRAM_ARCH=" | sed 's|SCRAM_ARCH=||')
@@ -36,6 +36,9 @@ if [ $MLC -eq 1 ] ; then
     if [ "X$RELEASE_FORMAT" = X ] ; then
       echo RELEASE_FORMAT=${RELEASE_QUEUE} >> $OUTPUT_FILE
     else
+      if [ "X$NO_IB" = "X1" ] ; then
+        RELEASE_FORMAT=$(grep label=$(echo ${RELEASE_FORMAT} | sed 's|_X||') $CMS_BOT_DIR/releases.map | grep "architecture=${SCRAM_ARCH}" | tail -1 | sed 's|.*label=||;s|;.*||')
+      fi
       echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $OUTPUT_FILE
     fi
     echo DO_TESTS=${DO_TESTS} >> $OUTPUT_FILE

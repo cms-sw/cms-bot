@@ -149,5 +149,5 @@ if __name__ == "__main__":
   print "Total queries: %s" % tqueries
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
-  print errors
+  print "\n".join(errors)
   exit(len(errors))

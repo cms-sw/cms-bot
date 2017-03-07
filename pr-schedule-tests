@@ -34,11 +34,11 @@ if [ $MLC -eq 1 ] ; then
     echo PULL_REQUEST=${PULL_REQUEST} > $OUTPUT_FILE
     echo ARCHITECTURE=${SCRAM_ARCH} >> $OUTPUT_FILE
     if [ "X$RELEASE_FORMAT" = X ] ; then
+      if [ "X$NO_IB" = "X1" ] ; then
+        RELEASE_QUEUE=$(grep label=$(echo ${RELEASE_QUEUE} | sed 's|_X||') $CMS_BOT_DIR/releases.map | grep "architecture=${SCRAM_ARCH}" | tail -1 | sed 's|.*label=||;s|;.*||')
+      fi
       echo RELEASE_FORMAT=${RELEASE_QUEUE} >> $OUTPUT_FILE
     else
-      if [ "X$NO_IB" = "X1" ] ; then
-        RELEASE_FORMAT=$(grep label=$(echo ${RELEASE_FORMAT} | sed 's|_X||') $CMS_BOT_DIR/releases.map | grep "architecture=${SCRAM_ARCH}" | tail -1 | sed 's|.*label=||;s|;.*||')
-      fi
       echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $OUTPUT_FILE
     fi
     echo DO_TESTS=${DO_TESTS} >> $OUTPUT_FILE

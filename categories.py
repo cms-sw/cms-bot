@@ -1280,6 +1280,7 @@ CMSSW_CATEGORIES={
    "DataFormats/SiStripDetId",
    "DataFormats/SiStripDigi",
    "DataFormats/CTPPSDetId",
+   "DataFormats/CTPPSDigi",
    "DataFormats/TotemRPDetId",
    "DataFormats/CSCDigi",
    "SimCalorimetry/CaloSimAlgos",

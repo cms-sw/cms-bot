@@ -99,7 +99,7 @@ if __name__ == "__main__":
   nquery = 0
   inCache = 0 
   DasSearch = 0
-  errors = 0
+  errors = []
   for query in uqueries:
     nquery += 1
     sha = query_sha[query]
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         print e
         getstatusoutput("cat %s" % outfile)
         getstatusoutput("rm -f %s" % outfile)
-        errors += 1
+        errors.append("Failed: [%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))
     else: print "  No cache file found %s" % sha
     
     DasSearch += 1
@@ -149,4 +149,5 @@ if __name__ == "__main__":
   print "Total queries: %s" % tqueries
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
-  exit(errors)
+  print errors
+  exit(len(errors))

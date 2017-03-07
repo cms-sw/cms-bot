@@ -11,6 +11,7 @@ from glob import glob
 from github import Github
 from github_utils import prs2relnotes, get_merge_prs, save_prs_cache, read_prs_cache
 from cms_static import CMSDIST_REPO_NAME,CMSSW_REPO_NAME
+from releases import DEVEL_RELEASE_CLOSED_BRANCH
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 
@@ -125,6 +126,7 @@ def get_config_map_params():
     release_queue = params[ 'RELEASE_QUEUE' ]
     base_branch = params.get( 'RELEASE_BRANCH' )
     if base_branch:
+      if base_branch == "master": base_branch = DEVEL_RELEASE_CLOSED_BRANCH
       RELEASES_BRANCHES[ release_queue ] = base_branch
     else:
       RELEASES_BRANCHES[ release_queue ] = release_queue

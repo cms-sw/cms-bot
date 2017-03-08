@@ -166,11 +166,11 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
     done
     if [ X$CHG = X0 ] ; then continue ; fi
   elif [ -e ../config/toolbox/${ARCHITECTURE}/tools/selected/$name ] ; then
-    nver=$(grep '<tool ' $xml       | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-    over=$(grep '<tool ' $OLD/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+    nver=$(grep '<tool ' $xml | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+    over=$(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
     if [ "$nver" = "$over" ] ; then echo "NO Change: $tool $nvew" ; continue ; fi
   fi
-  cp $xml ../config/toolbox/${ARCHITECTURE}/tools/selected/$name
+  cp -f $xml ../config/toolbox/${ARCHITECTURE}/tools/selected/$name
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
   set -x
   scram setup $tool
@@ -180,8 +180,10 @@ set -x
 eval $(scram runtime -sh)
 
 # Search for CMSSW package that might depend on the compiled externals
-CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
-git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-
+touch $WORKSPACE/cmsswtoolconf.log
+if [ "X${DEP_NAMES}" = "X" ] ; then
+  CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+  git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+fi
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables
 $CMS_BOT_DIR/run-pr-tests

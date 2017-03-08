@@ -152,7 +152,7 @@ fi
 pushd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built
-set -x
+set +x
 DEP_NAMES=
 for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
   name=$(basename $xml)
@@ -160,23 +160,23 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   if [ $tool = "cmsswdata" ] ; then
     CHG=0
     for dd in $(grep 'CMSSW_DATA_PACKAGE=' $xml | sed 's|.*="||;s|".*||') ; do
-      if [ $(grep "=\"$dd\"" $OLD/$name | wc -l) -eq 1 ] ; then continue ; fi
+      if [ $(grep "=\"$dd\"" ../config/toolbox/${ARCHITECTURE}/tools/selected/$name | wc -l) -eq 1 ] ; then continue ; fi
       CHG=1
       break
     done
     if [ X$CHG = X0 ] ; then continue ; fi
-  elif [ -e $OLD/$name ] ; then
+  elif [ -e ../config/toolbox/${ARCHITECTURE}/tools/selected/$name ] ; then
     nver=$(grep '<tool ' $xml       | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
     over=$(grep '<tool ' $OLD/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
     if [ "$nver" = "$over" ] ; then echo "NO Change: $tool $nvew" ; continue ; fi
   fi
-  cp $xml $OLD/$name
+  cp $xml ../config/toolbox/${ARCHITECTURE}/tools/selected/$name
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
-  set +x
-  scram setup $tool
   set -x
+  scram setup $tool
+  set +x
 done
-set +x
+set -x
 eval $(scram runtime -sh)
 
 # Search for CMSSW package that might depend on the compiled externals

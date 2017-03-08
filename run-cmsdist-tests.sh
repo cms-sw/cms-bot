@@ -152,16 +152,31 @@ fi
 pushd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built
-mv ../config/toolbox/${ARCHITECTURE}/tools/selected ../config/toolbox/${ARCHITECTURE}/tools/selected.old
-cp -r $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected  ../config/toolbox/${ARCHITECTURE}/tools/selected
-scram setup
-
-DEP_NAMES=""
-grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/*.xml     | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort > ../new.txt
-grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected.old/*.xml | sed 's|.*<tool *||;s|"||g;s| *>||;s|name=||;s|version=||' | sort > ../old.txt
-for tool in $(diff ../new.txt ../old.txt | awk '{print $2}' | tr 'A-Z' 'a-z'  | grep -v '^cmssw$' | sort -u) ; do
+set -x
+DEP_NAMES=
+for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
+  name=$(basename $xml)
+  tool=$(echo $name | sed 's|.xml$||')
+  if [ $tool = "cmsswdata" ] ; then
+    CHG=0
+    for dd in $(grep 'CMSSW_DATA_PACKAGE=' $xml | sed 's|.*="||;s|".*||') ; do
+      if [ $(grep "=\"$dd\"" $OLD/$name | wc -l) -eq 1 ] ; then continue ; fi
+      CHG=1
+      break
+    done
+    if [ X$CHG = X0 ] ; then continue ; fi
+  elif [ -e $OLD/$name ] ; then
+    nver=$(grep '<tool ' $xml | sed 's|.* version="||;s|".*||')
+    over=$(grep '<tool ' $OLD/$name | sed 's|.* version="||;s|".*||')
+    if [ "$nver" = "$over" ] ; then echo "NO Change: $tool $nvew" ; continue ; fi
+  fi
+  cp $xml $OLD/$name
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+  set +x
+  scram setup $tool
+  set -x
 done
+set +x
 eval $(scram runtime -sh)
 
 # Search for CMSSW package that might depend on the compiled externals

@@ -99,7 +99,6 @@ if __name__ == "__main__":
   nquery = 0
   inCache = 0 
   DasSearch = 0
-  errors = []
   for query in uqueries:
     nquery += 1
     sha = query_sha[query]
@@ -122,10 +121,9 @@ if __name__ == "__main__":
         elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
         else: print "  Retrying as cache with empty results found."
       except IOError as e:
-        print e
-        getstatusoutput("cat %s" % outfile)
-        getstatusoutput("rm -f %s" % outfile)
-        errors.append("Failed: [%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))
+        print "  ERROR: [%s/%s] Reading json cached file %s" % (nquery, tqueries, outfile)
+        e, o = getstatusoutput("cat %s" % outfile)
+        print o
     else: print "  No cache file found %s" % sha
     
     DasSearch += 1
@@ -149,5 +147,3 @@ if __name__ == "__main__":
   print "Total queries: %s" % tqueries
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
-  print "\n".join(errors)
-  exit(len(errors))

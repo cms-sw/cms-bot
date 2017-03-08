@@ -139,45 +139,43 @@ fi
 export SCRAM_ARCH=$ARCHITECTURE
 scram -a $SCRAM_ARCH project $CMSSW_IB
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
-which das_client
 
 if [ $(grep 'V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   git clone git@github.com:cms-sw/cmssw-config
   pushd cmssw-config
-    git checkout V05-05-19
+    git checkout V05-05-22
   popd
   mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
   cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
 fi
-pushd $CMSSW_IB/src
+cd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built
 set +x
 DEP_NAMES=
+CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
 for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
   name=$(basename $xml)
   tool=$(echo $name | sed 's|.xml$||')
   if [ $tool = "cmsswdata" ] ; then
     CHG=0
     for dd in $(grep 'CMSSW_DATA_PACKAGE=' $xml | sed 's|.*="||;s|".*||') ; do
-      if [ $(grep "=\"$dd\"" ../config/toolbox/${ARCHITECTURE}/tools/selected/$name | wc -l) -eq 1 ] ; then continue ; fi
+      if [ $(grep "=\"$dd\"" $CTOOLS/$name | wc -l) -eq 1 ] ; then continue ; fi
       CHG=1
       break
     done
     if [ X$CHG = X0 ] ; then continue ; fi
-  elif [ -e ../config/toolbox/${ARCHITECTURE}/tools/selected/$name ] ; then
-    nver=$(grep '<tool ' $xml | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-    over=$(grep '<tool ' ../config/toolbox/${ARCHITECTURE}/tools/selected/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-    if [ "$nver" = "$over" ] ; then echo "NO Change: $tool $nvew" ; continue ; fi
+  elif [ -e $CTOOLS/$name ] ; then
+    nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+    over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+    if [ "$nver" = "$over" ] ; then continue ; fi
   fi
-  cp -f $xml ../config/toolbox/${ARCHITECTURE}/tools/selected/$name
+  cp -f $xml $CTOOLS/$name
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
-  set -x
   scram setup $tool
-  set +x
 done
-set -x
 eval $(scram runtime -sh)
+set -x
 
 # Search for CMSSW package that might depend on the compiled externals
 touch $WORKSPACE/cmsswtoolconf.log

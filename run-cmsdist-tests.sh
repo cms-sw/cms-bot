@@ -166,8 +166,8 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
     done
     if [ X$CHG = X0 ] ; then continue ; fi
   elif [ -e $OLD/$name ] ; then
-    nver=$(grep '<tool ' $xml | sed 's|.* version="||;s|".*||')
-    over=$(grep '<tool ' $OLD/$name | sed 's|.* version="||;s|".*||')
+    nver=$(grep '<tool ' $xml       | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+    over=$(grep '<tool ' $OLD/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
     if [ "$nver" = "$over" ] ; then echo "NO Change: $tool $nvew" ; continue ; fi
   fi
   cp $xml $OLD/$name

@@ -17,6 +17,7 @@ function Jenkins_GetCPU ()
   fi
   echo $ACTUAL_CPU
 }
+set +x
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
 GH_COMMITS=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR/commits)
 GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
@@ -24,6 +25,12 @@ TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
 CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
 CMSDIST_COMMITS=$($CMS_BOT_DIR/process-pull-request -c -r cms-sw/cmsdist $CMSDIST_PR)
+set -x
+echo CMS_WEEKLY_REPO=$CMS_WEEKLY_REPO
+echo TEST_USER=$TEST_USER
+echo TEST_BRANCH=$TEST_BRANCH
+echo CMSDIST_BRANCH=$CMSDIST_BRANCH
+echo CMSDIST_COMMITS=$CMSDIST_COMMITS
 
 if [ "X$TEST_USER" = "X" ] || [ "X$TEST_BRANCH" = "X" ]; then
   echo "Error: failed to retrieve user or branch to test."

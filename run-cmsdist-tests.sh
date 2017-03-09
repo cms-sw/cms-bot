@@ -172,6 +172,7 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   fi
   cp -f $xml $CTOOLS/$name
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+  echo "Setting up new tool: $tool"
   scram setup $tool
 done
 eval $(scram runtime -sh)

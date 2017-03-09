@@ -179,7 +179,7 @@ set -x
 
 # Search for CMSSW package that might depend on the compiled externals
 touch $WORKSPACE/cmsswtoolconf.log
-if [ "X${DEP_NAMES}" = "X" ] ; then
+if [ "X${DEP_NAMES}" != "X" ] ; then
   CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
   git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 fi

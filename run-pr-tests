@@ -289,23 +289,6 @@ if [ "X$CMSDIST_ONLY" == "Xfalse" ]; then # If a CMSSW specific PR was specified
 fi
 echo "CODE_RULES;${QA_RES}" >> $RESULTS_FILE
 
-#Duplicate dict
-QA_RES="NOTRUN"
-if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" ]; then
-  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Duplicate Dict Checks" $DRY_RUN
-  mkdir $WORKSPACE/dupDict
-  QA_RES="OK"
-  for type in dup lostDefs edmPD ; do
-    duplicateReflexLibrarySearch.py --${type} 2>&1 | grep -v ' SKIPPING ' > $WORKSPACE/dupDict/${type}.txt || true
-  done
-  QA_COUNT=$(cat $WORKSPACE/dupDict/dup.txt | grep '^  *[.]/[A-Z]' | sed 's|^  *./||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
-  if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
-  QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | sed 's|^./||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
-  if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
-  if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" ; fi
-fi
-echo "DUPLICATE_DICT_RULES;${QA_RES}" >> $RESULTS_FILE
-
 #
 # Static checks
 #
@@ -389,6 +372,23 @@ export PATH=$CMS_BOT_DIR/das-utils:$PATH
 which das_client
 
 [ "X$USE_DAS_SORT" = "XYES" ] && $CMS_BOT_DIR/das-utils/use-ibeos-sort
+
+#Duplicate dict
+QA_RES="NOTRUN"
+if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" ]; then
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Duplicate Dict Checks" $DRY_RUN
+  mkdir $WORKSPACE/dupDict
+  QA_RES="OK"
+  for type in dup lostDefs edmPD ; do
+    duplicateReflexLibrarySearch.py --${type} 2>&1 | grep -v ' SKIPPING ' > $WORKSPACE/dupDict/${type}.txt || true
+  done
+  QA_COUNT=$(cat $WORKSPACE/dupDict/dup.txt | grep '^  *[.]/[A-Z]' | sed 's|^  *./||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
+  if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
+  QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | sed 's|^./||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
+  if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
+  if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" ; fi
+fi
+echo "DUPLICATE_DICT_RULES;${QA_RES}" >> $RESULTS_FILE
 
 #
 # Unit tests

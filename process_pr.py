@@ -22,7 +22,8 @@ TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
-REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+with\s+"+CMSDIST_REPO_NAME+"#([0-9]+)|)\s*$", re.I)
+WF_PATERN="[1-9][0-9]*(\.[0-9]+|)"
+REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%s(\s*,\s*%s|)*)|)(\s+with\s+(#[0-9]+(\s*,\s*#[0-9]+|)*)(\s+%s#([0-9]+)|)|)\s*$" % (WF_PATERN, WF_PATERN, CMSDIST_REPO_NAME), re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
 CMSDIST_PR_INDEX = 5
@@ -35,7 +36,7 @@ def format(s, **kwds):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, dryRun, abort=False):
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False):
   req_type = "tests"
   if abort: req_type = "abort"
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repository.split("/")[1], pr_number)
@@ -44,11 +45,13 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, dryRun, abor
   else:
     print 'Creating properties file %s' % out_file_name
     out_file = open( out_file_name , 'w' )
+    out_file.write( '%s=%s\n' % ( 'MATRIX_EXTRAS', extra_wfs ) )
     if repository.endswith("/"+GH_CMSDIST_REPO):
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', pr_number ) )
     else:
       out_file.write( '%s=%s\n' % ( 'PULL_REQUEST_LIST', pr_number ) )
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', cmsdist_pr ) )
+      out_file.write( '%s=%s\n' % ( 'ADDITIONAL_PULL_REQUESTS', cmssw_prs ) )
     out_file.close()
 
 # Update the milestone for a given issue.
@@ -123,6 +126,18 @@ def check_extra_labels(first_line, extra_labels):
     extra_labels["urgent"]="urgent"
   elif "backport" in first_line:
     extra_labels["backport"]="backport"
+
+def check_test_cmd(first_line):
+  m = REGEX_TEST_REQ.match(first_line)
+  if m:
+    wfs = ""
+    cmssw_prs= ""
+    cmsdist_pr = ""
+    if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
+    if m.group(11): cmssw_prs = ",".join(set(m.group(11).replace("#","").replace(" ","").split(",")))
+    if m.group(14): cmsdist_pr = m.group(14)
+    return (True, cmsdist_pr, cmssw_prs, wfs)
+  return (False, "", "", "")
 
 def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   import yaml
@@ -270,6 +285,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   trigger_test_on_signature = True
   has_categories_approval = False
   cmsdist_pr = ''
+  cmssw_prs = ''
+  extra_wfs = ''
   assign_cats = {}
   hold = {}
   extra_labels = {}
@@ -403,9 +420,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
       # Check if the someone asked to trigger the tests
       if commenter in TRIGGER_PR_TESTS + CMSSW_L2.keys() + CMSSW_L1 + releaseManagers:
-        m = REGEX_TEST_REQ.match(first_line)
-        if m:
-          print 'Tests requested:', commenter, 'asked to test this PR'
+        ok, cmsdist_pr, cmssw_prs, extra_wfs = check_test_cmd(first_line)
+        if ok:
+          print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, extra_wfs)
           trigger_test_on_signature = False
           cmsdist_pr = ''
           if tests_already_queued:
@@ -419,9 +436,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
             tests_requested = True
             comparison_done = False
             comparison_notrun = False
-            if cmssw_repo:
-              cmsdist_pr = m.group(CMSDIST_PR_INDEX)
-              if not cmsdist_pr: cmsdist_pr = ''
+            if not cmssw_repo:
+              cmsdist_pr = ''
+              cmssw_prs = ''
             signatures["tests"] = "pending"
           else:
             print 'Tests already request for this PR'
@@ -604,12 +621,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, dryRun, abort=False)
+          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False)
       elif abort_test:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         if cmsdist_issue: cmsdist_issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, dryRun, abort=True)
+          create_properties_file_tests( repository, prId, cmsdist_pr, "", "", dryRun, abort=True)
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"

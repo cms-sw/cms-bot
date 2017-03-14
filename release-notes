@@ -10,6 +10,8 @@ import re
 from cms_static import CMSDIST_REPO_NAME,CMSSW_REPO_NAME
 from github_utils import prs2relnotes, get_merge_prs, api_rate_limits
 from socket import setdefaulttimeout
+from categories import TRIGGER_PR_TESTS,CMSSW_L2,CMSSW_L1
+from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 setdefaulttimeout(120)
 
 def format(s, **kwds): return s % kwds
@@ -23,7 +25,8 @@ def format(s, **kwds): return s % kwds
 def add_categories_notes(notes):
   for pr_number in notes:
     api_rate_limits(github)
-    categories = [ l.name.split('-')[0] for l in CMSSW_REPO.get_issue(int(pr_number)).labels if re.match("^[a-zA-Z0-9]+[-](approved|pending|hold|rejected)$", l.name)
+    issue = CMSSW_REPO.get_issue(int(pr_number))
+    categories = [ l.name.split('-')[0] for l in issue.labels if re.match("^[a-zA-Z0-9]+[-](approved|pending|hold|rejected)$", l.name)
                                                               and not re.match('^(tests|orp)-' , l.name) ]
     if len(categories) == 0:
       print "no categories for:",  pr_number
@@ -32,6 +35,14 @@ def add_categories_notes(notes):
     note = notes[pr_number]
     for cat in categories:
       note += " `%s` " % cat
+
+    rel_notes = ""
+    for comment in issue.get_comments():
+      if not (comment.user.login in TRIGGER_PR_TESTS + CMSSW_L2.keys() + CMSSW_L1 + [ issue.user.login ]): continue
+      msg = comment.body.encode("ascii", "ignore").strip()
+      if re.match('^release(-| )note(s|)\s*:\s*',msg,re.I):
+        rel_notes=rel_notes+re.sub('^release(-| )note(s|)\s*:\s*','',msg).strip()+"\n\n"
+    if rel_notes: note = note + "\n\n" + rel_notes
     notes[pr_number] = note
   return notes
 

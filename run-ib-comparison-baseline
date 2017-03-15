@@ -16,13 +16,7 @@ mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
   MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
   if [ ! "X$MATRIX_EXTRAS" = "X" ] ; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
-  case $RELEASE_FORMAT in 
-    *THREADED*)
-    echo "Threaded!"
-    THREADED_PARAM='--command \"--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe\"'
-    ;;
-  esac
-  CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py $THREADED_PARAM -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root | sort`
   for f in $ROOT_FILES

@@ -10,7 +10,7 @@ RELVAL_KEYS = {"dropNonMTSafe":{},
                "SLHC_WORKFLOWS":{},
               }
 THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc[6-9]_amd64_gcc(5[3-9]|[6-9])[0-9]+|_THREADED_X|_DEVEL_X|_ROOT6_X"
-RELVAL_KEYS["dropNonMTSafe"][THREADED_IBS]  = "--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe"
+#RELVAL_KEYS["dropNonMTSafe"][THREADED_IBS]  = "--customise FWCore/Concurrency/dropNonMTSafe.dropNonMTSafe"
 RELVAL_KEYS["customiseWithTimeMemorySummary"][".+"] = "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"
 RELVAL_KEYS["PREFIX"]["CMSSW_([89]|[1-9][0-9]+)_.+"] = "--prefix 'timeout --signal SIGTERM 7200 '"
 RELVAL_KEYS["PREFIX"]["CMSSW_[1-7]_.+"]              = "--prefix 'timeout --signal SIGSEGV 7200 '"
@@ -85,6 +85,8 @@ def FixWFArgs(release, arch, wf, args):
   if isThreaded(release, arch):
     NonThreadedWF = ["101.0","102.0"]
     if wf in NonThreadedWF:
-      args = args.replace(RELVAL_KEYS["THREADED"][THREADED_IBS],"").replace(RELVAL_KEYS["dropNonMTSafe"][THREADED_IBS],"")
+      for k in [ "THREADED", "dropNonMTSafe" ]:
+        if (k in RELVAL_KEYS) and (THREADED_IBS in RELVAL_KEYS[k]):
+          args = args.replace(RELVAL_KEYS[k][THREADED_IBS],"")
   return args
 

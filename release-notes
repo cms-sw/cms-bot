@@ -40,7 +40,7 @@ def add_categories_notes(notes):
     for comment in issue.get_comments():
       msg = comment.body.encode("ascii", "ignore").strip()
       if re.match('^release(-| )note(s|)\s*:\s*',msg,re.I):
-        #FIXME: Once status api is stable then reject the comment is -1 emoji is set for the comment
+        #FIXME: Once status api is stable then reject the comment if -1 emoji is set
         rel_notes=rel_notes+re.sub('^release(-| )note(s|)\s*:\s*','',msg).strip()+"\n\n"
     if rel_notes: note = note + "\n\n" + rel_notes
     notes[pr_number] = note

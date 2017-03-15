@@ -38,9 +38,9 @@ def add_categories_notes(notes):
 
     rel_notes = ""
     for comment in issue.get_comments():
-      if not (comment.user.login in TRIGGER_PR_TESTS + CMSSW_L2.keys() + CMSSW_L1 + [ issue.user.login ]): continue
       msg = comment.body.encode("ascii", "ignore").strip()
       if re.match('^release(-| )note(s|)\s*:\s*',msg,re.I):
+        #FIXME: Once status api is stable then reject the comment is -1 emoji is set for the comment
         rel_notes=rel_notes+re.sub('^release(-| )note(s|)\s*:\s*','',msg).strip()+"\n\n"
     if rel_notes: note = note + "\n\n" + rel_notes
     notes[pr_number] = note

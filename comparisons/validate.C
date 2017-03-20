@@ -309,6 +309,7 @@ void metVars(TString cName = "tcMet_", TString tName = "recoMETs_") {
   met("py",cName,tName);
   met("eta",cName,tName);
   met("phi",cName,tName);
+  met("sumEt",cName,tName);
   met("significance",cName,tName);
 }
 
@@ -470,6 +471,8 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("hcalDepth1OverEcal", cName, tName);
   electron("hcalDepth2OverEcal", cName, tName);
   electron("hcalOverEcalBc", cName, tName);
+  electron("eLeft", cName, tName);
+  electron("eTop", cName, tName);
   electron("full5x5_sigmaEtaEta", cName, tName);
   electron("full5x5_sigmaIetaIeta", cName, tName);
   electron("full5x5_sigmaIphiIphi", cName, tName);
@@ -477,6 +480,11 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("full5x5_hcalDepth1OverEcal", cName, tName);
   electron("full5x5_hcalDepth2OverEcal", cName, tName);
   electron("full5x5_hcalOverEcalBc", cName, tName);
+  electron("full5x5_e2x5Left", cName, tName);
+  electron("full5x5_eLeft", cName, tName);
+  electron("full5x5_e2x5Top", cName, tName);
+  electron("full5x5_eTop", cName, tName);
+  electron("nSaturatedXtals", cName, tName);
   electron("dr03TkSumPt", cName, tName);
   electron("dr03EcalRecHitSumEt", cName, tName);
   electron("dr03HcalDepth1TowerSumEt", cName, tName);
@@ -1029,6 +1037,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj._sets.data.getTy()");
       plotvar(tbr+recoS+".obj._sets.data.getChiSquared()");
 
+      tbr="CTPPSDiamondRecHitedmDetSetVector_ctppsDiamondRecHits__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getX()");
+      plotvar(tbr+recoS+".obj._sets.data.getY()");
+      plotvar(tbr+recoS+".obj._sets.data.getT()");
+      plotvar(tbr+recoS+".obj._sets.data.getXWidth()");
+      plotvar(tbr+recoS+".obj._sets.data.getYWidth()");
+
       tbr="CTPPSLocalTrackLites_ctppsLocalTrackLiteProducer__";
       plotvar(tbr+recoS+".obj@.size()");
       plotvar(tbr+recoS+".obj.getX()");
@@ -1036,7 +1053,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj.getY()");
       plotvar(tbr+recoS+".obj.getYUnc()");
       plotvar(tbr+recoS+".obj.getTime()");
-      plotvar(tbr+recoS+".obj.getTimeUnc()");
+      plotvar(tbr+recoS+".obj.getTimeUnc()");      
     }
 
     if ((step.Contains("all") || step.Contains("halo"))){
@@ -1121,6 +1138,31 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("log2(max(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.flags(),0.5))", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1");
       plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.time()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1");
       plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.chi2())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1");
+
+      if (step.Contains("hcalHEP17")){
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy()>0.001&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eraw()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eraw())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eaux()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eaux())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("log2(max(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.flags(),0.5))", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.time()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.chi2())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66");
+
+	//outside of HEP17
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.energy()>0.001&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eraw()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eraw())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eaux()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.eaux())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("log2(max(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.flags(),0.5))", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.time()", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+	plotvar("log10(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.chi2())", "HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().subdet()!=1&&!(HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()>=63&&HBHERecHitsSorted_hbhereco__"+recoS+".obj.obj.id().iphi()<=66)");
+      }
 
       plotvar("HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj@.size()");
       plotvar("HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.energy()");
@@ -2147,7 +2189,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       
     }
 
-    if (step.Contains("all") || step.Contains("calotower")){
+    if (step.Contains("all") || step.Contains("calotower") || step.Contains("HEP17")){
       //calo towers plot
 
       plotvar("CaloTowersSorted_towerMaker__"+recoS+".obj.obj@.size()");
@@ -2157,6 +2199,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("log10(CaloTowersSorted_towerMaker__"+recoS+".obj.obj.mass2())/2.");
       plotvar("CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()");
       plotvar("CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()");
+
+      if (step.Contains("HEP17")){
+	plotvar("log10(CaloTowersSorted_towerMaker__"+recoS+".obj.obj.energy())", "CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()>1.5&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()<3&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()<-0.435&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()>-0.960");
+	plotvar("log10(CaloTowersSorted_towerMaker__"+recoS+".obj.obj.emEnergy())", "CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()>1.5&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()<3&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()<-0.435&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()>-0.960");
+	plotvar("log10(CaloTowersSorted_towerMaker__"+recoS+".obj.obj.hadEnergy())", "CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()>1.5&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()<3&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()<-0.435&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()>-0.960");
+	plotvar("log10(CaloTowersSorted_towerMaker__"+recoS+".obj.obj.mass2())/2.", "CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()>1.5&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()<3&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()<-0.435&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()>-0.960");
+	plotvar("CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()", "CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()>1.5&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()<3&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()<-0.435&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()>-0.960");
+	plotvar("CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()", "CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()>1.5&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.eta()<3&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()<-0.435&&CaloTowersSorted_towerMaker__"+recoS+".obj.obj.phi()>-0.960");
+      }
 
       plotvar("Sum$(CaloTowersSorted_towerMaker__"+recoS+".obj.obj.energy()>0)");
       plotvar("log10(CaloTowersSorted_towerMaker__"+recoS+".obj.obj.energy())", "CaloTowersSorted_towerMaker__"+recoS+".obj.obj.energy()>0");

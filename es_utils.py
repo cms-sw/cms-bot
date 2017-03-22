@@ -24,7 +24,6 @@ def send_payload_new(index,document,id,payload,passwd_file="/data/secrets/cmssdt
     content = urllib2.urlopen(url,payload)
   except Exception as e:
     print "Couldn't send data to elastic search" , str(e)
-    print "Data:",payload
     return False
   return True
 
@@ -45,7 +44,6 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
     content = urllib2.urlopen(url,payload)
   except Exception as e:
     print "Couldn't send data to elastic search" , str(e)
-    print "Data:",payload
     return False
   return True
 

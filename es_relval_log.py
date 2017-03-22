@@ -113,6 +113,7 @@ def es_parse_log(logFile):
   inException = False
   inError = False
   datasets = []
+  error_count = 0
   if exists(logFile):
     lines = file(logFile).read().split("\n")
     payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+pathInfo[4]+'/'+pathInfo[8]+'/pyRelValMatrixLogs/run/'+pathInfo[-2]+'/'+pathInfo[-1]
@@ -143,7 +144,9 @@ def es_parse_log(logFile):
         continue
       if inError == True and l.startswith("%MSG"):
         inError = False
-        errors.append({"error": error, "kind": error_kind})
+        if len(errors)<10:
+          errors.append({"error": error, "kind": error_kind})
+        error_count += 1
         error = ""
         error_kind = ""
         continue
@@ -155,6 +158,7 @@ def es_parse_log(logFile):
     payload["exception"] = exception
   if errors:
     payload["errors"] = errors
+    payload["error_count"] = error_count
   try:
     payload = es_parse_jobreport(payload,logFile)
   except Exception, e:

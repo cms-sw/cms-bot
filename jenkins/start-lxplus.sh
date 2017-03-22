@@ -4,7 +4,7 @@ WORKER_USER=$2
 WORKER_DIR=$3
 DELETE_SLAVE=$4
 WORKER_JENKINS_NAME=$5
-MAX_WORKSPACE=30
+MAX_WORKSPACE=10
 JENKINS_MASTER_ROOT=/var/lib/jenkins
 SCRIPT_DIR=`dirname $0`
 SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"

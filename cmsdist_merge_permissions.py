@@ -4,12 +4,13 @@ from re import match,IGNORECASE
 #Merge format: "user" : [ regexp for valid commands, regexp of allowed branches, regexp of not allowed branches ]
 CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
 ALL_BRANCHES     = ".+"
-WMAGENT_BRANCHES = "^comp_gcc493$"
+COMP_BRANCHES = "^comp_gcc493$"
 CMSDIST_PERMISSIONS = {
   "BrunoCoimbra"   : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
   "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
-  "amaltaro"       : [ ".+", WMAGENT_BRANCHES , CMSSW_BRANCHES ],
-  "ticoann"        : [ ".+", WMAGENT_BRANCHES , CMSSW_BRANCHES ],
+  "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
+  "ticoann"        : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
+  "emaszs"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
 }
 
 VALID_COMMENTS = {

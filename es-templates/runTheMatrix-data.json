@@ -1,39 +1,96 @@
 {
-  "template" : "*ib-matrix-*",
-  "settings" : {
-      "number_of_shards" : 1
-  },
-  "mappings": {
-    "runTheMatrix-data": {
-      "properties": {
-        "workflow":{"type":"string", "index": "not_analyzed"},
-        "release":{"type":"string", "index": "not_analyzed"},
-        "architecture":{"type":"string", "index": "not_analyzed"},
-        "hostname":{"type":"string", "index": "not_analyzed"},
-        "events_read":{"type":"long"},
-        "total_events":{"type":"long"},
-        "AverageGrowthRateRss":{"type":"float"},
-        "AverageGrowthRateVsize":{"type":"float"},
-        "PeakValueVsize":{"type":"float"},
-        "PeakValueRss":{"type":"float"},
-        "AvgEventTime":{"type":"float"},
-        "EventThroughput":{"type":"float"},
-        "MaxEventTime":{"type":"float"},
-        "MinEventTime":{"type":"float"},
-        "TotalJobCPU":{"type":"float"},
-        "TotalJobTime":{"type":"float"},
-        "TotalLoopCPU":{"type":"float"},
-        "command":{"type":"string", "index": "not_analyzed"},
-        "exitcode":{"type":"long"},
-        "@timestamp":{"type":"date"},
-        "errors": {
-          "properties": {
-            "kind": {"type": "string", "index": "not_analyzed"},
-            "error": {"type": "string"}
+    "template": "*ib-matrix-*",
+    "settings": {
+      "index.number_of_shards": "1"
+    },
+    "mappings": {
+      "runTheMatrix-data": {
+        "properties": {
+          "AverageGrowthRateVsize": {
+            "type": "float"
+          },
+          "MaxEventTime": {
+            "type": "float"
+          },
+          "AvgEventTime": {
+            "type": "float"
+          },
+          "exception": {
+            "index": "not_analyzed",
+            "type": "string"
+          },
+          "PeakValueVsize": {
+            "type": "float"
+          },
+          "exitcode": {
+            "type": "long"
+          },
+          "hostname": {
+            "index": "not_analyzed",
+            "type": "string"
+          },
+          "architecture": {
+            "index": "not_analyzed",
+            "type": "string"
+          },
+          "total_events": {
+            "type": "long"
+          },
+          "workflow": {
+            "index": "not_analyzed",
+            "type": "string"
+          },
+          "TotalLoopCPU": {
+            "type": "float"
+          },
+          "TotalJobCPU": {
+            "type": "float"
+          },
+          "@timestamp": {
+            "type": "date"
+          },
+          "errors": {
+            "properties": {
+              "error": {
+                "type": "string"
+              },
+              "kind": {
+                "index": "not_analyzed",
+                "type": "string"
+              }
+            }
+          },
+          "events_read": {
+            "type": "long"
+          },
+          "EventThroughput": {
+            "type": "float"
+          },
+          "AverageGrowthRateRss": {
+            "type": "float"
+          },
+          "command": {
+            "index": "not_analyzed",
+            "type": "string"
+          },
+          "MinEventTime": {
+            "type": "float"
+          },
+          "release": {
+            "index": "not_analyzed",
+            "type": "string"
+          },
+          "PeakValueRss": {
+            "type": "float"
+          },
+          "TotalJobTime": {
+            "type": "float"
+          },
+          "error_count": {
+            "type": "long"
           }
-        },
-        "exception": {"type": "string", "index": "not_analyzed"}
+        }
       }
-    }
-  }
+    },
+    "aliases": {}
 }

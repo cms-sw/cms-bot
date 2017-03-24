@@ -140,6 +140,8 @@ def checkEventContent(r1,r2):
 
 def summaryJR(jrDir):
     nDiff=0
+    print jrDir
+    dirs=[]
     for root, dirs, files in os.walk(jrDir):
         break
 
@@ -155,6 +157,8 @@ def parseNum(s):
     
 
 def summaryComp(compDir):
+    print compDir
+    files=[]
     for root, dirs, files in os.walk(compDir):
         break
     comps=[]

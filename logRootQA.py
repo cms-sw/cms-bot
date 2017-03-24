@@ -235,7 +235,7 @@ if lChanges:
     qaIssues=True
 
 #### compare edmEventSize on each to look for new missing candidates
-commonRoots=[]#getCommonFiles(baseDir,testDir,'root')
+commonRoots=getCommonFiles(baseDir,testDir,'root')
 sameEvts=True
 nRoot=0
 for r in commonRoots:

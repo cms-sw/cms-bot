@@ -149,9 +149,6 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   ($JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
   echo 'Finished with JR comparison:'
-  echo 'Doing log and root comparison:'
-
-  (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} >> $JR_COMP_DIR/logRootQA.log 2>&1) || true
 fi
 
 # --------------------------------------------------------------------------
@@ -197,6 +194,13 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
   jobs
   wait || true
   echo 'Finished with default comparison'
+fi
+
+if [ "X$RUN_JR_COMP" = Xtrue ]; then
+  if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
+    echo 'Doing histogram, log and root comparison:'
+    (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $JR_COMP_DIR/logRootQA.log 2>&1) || true
+  fi
 fi
 
 # ----------------------------------------------------------------------------

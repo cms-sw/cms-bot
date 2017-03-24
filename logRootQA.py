@@ -138,6 +138,48 @@ def checkEventContent(r1,r2):
             retVal=False    
     return retVal
 
+def summaryJR(jrDir):
+    nDiff=0
+    for root, dirs, files in os.walk(jrDir):
+        break
+
+    for d in dirs:
+        diffs=getFiles(root+'/'+d,'png')
+        if len(diffs)>0:
+            print 'JR results differ',len(diffs),d,
+            nDiff=nDiff+len(diffs)
+    return nDiff
+
+def parseNum(s):
+    return int(s[1:-1].split('/')[0])
+    
+
+def summaryComp(compDir):
+    for root, dirs, files in os.walk(compDir):
+        break
+    comps=[]
+    for f in files:
+        if 'log' in f[-3:]:
+            comps.append(root+'/'+f)
+
+    results=[0,0,0,0,0,0,0]
+
+    for comp in comps:
+        loc=[0,0,0,0,0,0]
+        for l in open(comp):
+            if '- summary of' in l: loc[0]=int(l.split()[3])
+            if 'o Failiures:' in l: loc[1]=parseNum(l.split()[3])
+            if 'o Nulls:' in l: loc[2]=parseNum(l.split()[3])
+            if 'o Successes:' in l: loc[3]=parseNum(l.split()[3])
+            if 'o Skipped:' in l: loc[4]=parseNum(l.split()[3])
+            if 'o Missing objects:' in l: loc[5]=int(l.split()[3])
+        print 'Histogram comparison details',comp,loc
+        for i in range(0,5):
+            results[i]=results[i]+loc[i]
+        results[6]=results[6]+1
+    return results
+
+
 ##########################################
 #
 #
@@ -147,14 +189,23 @@ qaIssues=False
 #https://cmssdt.cern.ch/SDT/jenkins-artifacts/baseLineComparisons/CMSSW_9_0_X_2017-03-22-1100+18042/18957/validateJR/
 baseDir='../170322/orig'
 testDir='../170322/new'
-if len(sys.argv)==3:
+jrDir='../170322/jrlogs/validateJR'
+compDir='../170322/compDir'
+
+if len(sys.argv)==4:
     baseDir=sys.argv[1]
     testDir=sys.argv[2]
+    jrDir=sys.argv[3]
+    compDir=sys.argv[4]
 
 if baseDir[-1]=='/':
     baseDir=baseDir[:-1]
 if testDir[-1]=='/':
     testDir=testDir[:-1]
+if jrDir[-1]=='/':
+    jrDir=jrDir[:-1]
+if compDir[-1]=='/':
+    compDir=jrDir[:-1]
 
 commonLogs=getCommonFiles(baseDir,testDir,'log')
 
@@ -184,7 +235,7 @@ if lChanges:
     qaIssues=True
 
 #### compare edmEventSize on each to look for new missing candidates
-commonRoots=getCommonFiles(baseDir,testDir,'root')
+commonRoots=[]#getCommonFiles(baseDir,testDir,'root')
 sameEvts=True
 nRoot=0
 for r in commonRoots:
@@ -193,6 +244,21 @@ for r in commonRoots:
         nRoot=nRoot+1
 if not sameEvts:
     qaIssues=True
+
+
+# now check the JR comparisons for differences
+nDiff=summaryJR(jrDir)
+print 'JR results:',nDiff,'differences found in the comparisons' 
+
+compSummary=summaryComp(compDir)
+print 'QATests: Total files compared:',compSummary[6]
+print 'QATests: Total histograms compared:',compSummary[0]
+print 'QATests: Total failures:',compSummary[1]
+print 'QATests: Total nulls:',compSummary[2]
+print 'QATests: Total successes:',compSummary[3]
+print 'QATests: Total skipped:',compSummary[4]
+print 'QATests: Total Missing objects:',compSummary[5]
+
 
 #### conclude
 print "Checked",nLog,"log files and",nRoot,"root files"

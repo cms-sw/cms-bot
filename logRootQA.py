@@ -196,7 +196,7 @@ testDir='../170322/new'
 jrDir='../170322/jrlogs/validateJR'
 compDir='../170322/compDir'
 
-if len(sys.argv)==4:
+if len(sys.argv)==5:
     baseDir=sys.argv[1]
     testDir=sys.argv[2]
     jrDir=sys.argv[3]

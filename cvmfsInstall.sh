@@ -53,9 +53,6 @@ elif [ -d /var/spool/cvmfs/$CMSIB_CVMFS_REPO/$CMSIB_CVMFS_REPO/data/ ]; then
 else
   export DISK="/dev/vdc"
 fi
-export INITIAL_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
-# Size in Mb to trigger publishing, this avoid huge publishing time (note at 3.6 Mb/s 13000 Mb is roughly 1 hr)
-export PUBLISH_THRESHOLD=13000
 # The repositories we need to install are those for which we find the
 # timestamp files:
 REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
@@ -78,6 +75,9 @@ echo CVMFS filesystem is not writable. Aborting.
 echo " " | mail -s "$CMSIB_CVMFS_REPO cannot be set to transaction" cms-sdt-logs@cern.ch
 exit 1
 fi
+export INITIAL_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
+# Size in Mb to trigger publishing, this avoid huge publishing time (note at 3.6 Mb/s 13000 Mb is roughly 1 hr)
+export PUBLISH_THRESHOLD=13000
 hostname > $BASEDIR/stratum0
 if [ -d $BASEDIR/SITECONF ] ; then
   pushd $BASEDIR/SITECONF

@@ -224,7 +224,7 @@ for REPOSITORY in $REPOSITORIES; do
             fi
           done ;
         fi ;
-        CURRENT_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
+        CURRENT_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
         if (( $CURRENT_SIZE - $INITIAL_SIZE > $PUBLISH_THRESHOLD )); then
           # If we already installed more than the threshold publish, put again the repository in transaction and reset INITIAL_SIZE
           echo "Threshold passed, forcing publishing."

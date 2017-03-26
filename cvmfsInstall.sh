@@ -230,7 +230,7 @@ for REPOSITORY in $REPOSITORIES; do
           echo "Threshold passed, forcing publishing."
           time cvmfs_server publish
           cvmfs_server transaction
-          INITIAL_SIZE=`df -B 1M $DISK | grep /dev | awk {'print $3'}`
+          INITIAL_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
         fi
       done ;
       rm -f ${TMP_PREFIX}-installed.txt ;

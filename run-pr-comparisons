@@ -201,6 +201,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     echo 'Doing histogram, log and root comparison:'
     (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $JR_COMP_DIR/logRootQA.log 2>&1) || true
     (grep SUMMARY $JR_COMP_DIR/logRootQA.log | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
+    (grep SUMMARY $JR_COMP_DIR/logRootQA.log >> $JR_COMP_DIR/qaResultsSummarySUMM.log 2>&1) || true
   fi
 fi
 

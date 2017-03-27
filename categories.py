@@ -476,6 +476,7 @@ CMSSW_CATEGORIES={
    "CondFormats/SiStripObjects",
    "CondFormats/CTPPSReadoutObjects",
    "CondFormats/TotemReadoutObjects",
+   "CondFormats/PCLConfig",
    "CondTools/BeamSpot",
    "CondTools/BTau",
    "CondTools/DQM",
@@ -517,6 +518,7 @@ CMSSW_CATEGORIES={
    "CondCore/JetMETPlugins",
    "CondCore/L1TPlugins",
    "CondCore/LuminosityPlugins",
+   "CondCore/PCLConfigPlugins"
    "CondCore/MetaDataService",
    "CondCore/ORA",
    "CondCore/OptAlignPlugins",
@@ -1147,6 +1149,7 @@ CMSSW_CATEGORIES={
    "CondFormats/SiStripObjects",
    "CondFormats/CTPPSReadoutObjects",
    "CondFormats/TotemReadoutObjects",
+   "CondFormats/PCLConfig",
    "Configuration/AlCa",
    "CondCore/DBCommon", "CondCore/DBOutputService",
    "CondCore/ESSources",

@@ -266,7 +266,7 @@ for f in ${alt_dir}/command* ${alt_dir}/*.ps ${alt_dir}/*.gz ${alt_dir}/*.log ${
 done
 
 #JR-comparison
-for f in $(ls -d results/JR-comparison/command* results/JR-comparison/logRootQA.log results/JR-comparison/*/*.log results/JR-comparison/*/*.png | sed 's|results/JR-comparison/||') ; do
+for f in $(ls -d results/JR-comparison/command* results/JR-comparison/logRootQA.log results/JR-comparison/qaResultsSummary*.log results/JR-comparison/*/*.log results/JR-comparison/*/*.png | sed 's|results/JR-comparison/||') ; do
   d=$(dirname upload/validateJR/$f)
   if [ -e results/JR-comparison/$f ] ; then
     [ -d $d ] || mkdir -p $d

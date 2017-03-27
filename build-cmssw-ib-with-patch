@@ -1,23 +1,5 @@
 #!/bin/sh -ex
 
-function GetCmsBuildConfig ()
-{
-  pkg_tag=$1
-  type=$2
-  shift 2
-  case $pkg_tag in
-    V00-16-*)
-      echo -e "[bootstrap]\npriority: 10\ndoNotBootstrap: True" > cmsBuild.cfg
-      for p in  $@ ; do
-        echo -e "[$type $p]\npriority: 20" >> cmsBuild.cfg
-      done
-      echo "--cfg cmsBuild.cfg"
-      ;;
-    *)
-    echo "$type $@"
-    ;;
-  esac
-}
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
@@ -118,7 +100,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
-$CMSBUILD_CMD --debug `GetCmsBuildConfig $PKGTOOLS_TAG build SCRAMV1`
+$CMSBUILD_CMD --debug build SCRAMV1
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w
 if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
@@ -178,21 +160,27 @@ pushd CMSDIST
 popd
 
 #FIXME: Fix --specs-only option which is not available for PKGTOOLS V00-16.
-$CMSBUILD_CMD --specs-only `GetCmsBuildConfig $PKGTOOLS_TAG build $PACKAGE_NAME`
+$CMSBUILD_CMD --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
-$CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG build $TOOL_CONF_PACKAGES`
+EXTERNAL_FAILED=NO
+$CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
 echo DATE=`date`
+if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
+  BLD_PKGS=$(ls w/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2)
+  if [ "X$BLD_PKGS" != "X" ] ; then $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
+  exit 1
+fi 
 if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-  $CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload $TOOL_CONF_PACKAGES`
+  $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
   echo DATE=`date`
-  $CMSBUILD_CMD `GetCmsBuildConfig $PKGTOOLS_TAG deprecate-local $TOOL_CONF_PACKAGES`
+  $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
   echo DATE=`date`
 fi
 if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
-$CMSBUILD_CMD -k -j `echo "$BUILD_NPROC + 1" | bc` `GetCmsBuildConfig $PKGTOOLS_TAG build cmssw-ib`
+$CMSBUILD_CMD -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
 echo DATE=`date`
-$CMSBUILD_CMD --sync-back `GetCmsBuildConfig $PKGTOOLS_TAG upload cmssw-ib`
+$CMSBUILD_CMD --sync-back upload cmssw-ib
 echo DATE=`date`
 pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the

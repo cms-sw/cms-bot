@@ -75,14 +75,15 @@ def getRelevantDiff(l1,l2,maxInFile=20):
             newIn2.append(k)
 
     if len(newIn1)>0 or len(newIn2)>0:
-        print len(newIn1),'Only in',l1
+        print ''
+        print len(newIn1),'Lines only in',l1
         nPrint=0
         for l in newIn1: 
             nPrint=nPrint+1
             if nPrint>maxInFile: break
             print '  ',l
         nPrintTot=nPrint
-        print len(newIn2),'Only in',l2
+        print len(newIn2),'Lines only in',l2
         nPrint=0
         for l in newIn2: 
             nPrint=nPrint+1
@@ -224,7 +225,7 @@ for l in commonLogs:
     lines=lines+lCount
     if lChanges!=0:
         lChanges=True
-    if nPrintTot<400:
+    if nPrintTot<1000:
         nprint=getRelevantDiff(baseDir+l,testDir+l)
         nPrintTot=nPrintTot+nprint
     else:
@@ -234,10 +235,12 @@ for l in commonLogs:
     nLog=nLog+1    
 
 if lines >0 :
-    print "You added "+str(lines)+" lines to the logs" 
+    print "SUMMARY You added "+str(lines)+" lines to the logs" 
+else:
+    print "SUMMARY No significant changes to the logs found"
 if lChanges:
     qaIssues=True
-
+print '\n'
 #### compare edmEventSize on each to look for new missing candidates
 commonRoots=getCommonFiles(baseDir,testDir,'root')
 sameEvts=True
@@ -249,22 +252,23 @@ for r in commonRoots:
 if not sameEvts:
     qaIssues=True
 
-
+print '\n'
 # now check the JR comparisons for differences
 nDiff=summaryJR(jrDir)
-print 'JR results:',nDiff,'differences found in the comparisons' 
+print 'SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons' 
+print '\n'
 
 compSummary=summaryComp(compDir)
-print 'QATests: Total files compared:',compSummary[6]
-print 'QATests: Total histograms compared:',compSummary[0]
-print 'QATests: Total failures:',compSummary[1]
-print 'QATests: Total nulls:',compSummary[2]
-print 'QATests: Total successes:',compSummary[3]
-print 'QATests: Total skipped:',compSummary[4]
-print 'QATests: Total Missing objects:',compSummary[5]
+print 'SUMMARY DQMHistoTests: Total files compared:',compSummary[6]
+print 'SUMMARY DQMHistoTests: Total histograms compared:',compSummary[0]
+print 'SUMMARY DQMHistoTests: Total failures:',compSummary[1]
+print 'SUMMARY DQMHistoTests: Total nulls:',compSummary[2]
+print 'SUMMARY DQMHistoTests: Total successes:',compSummary[3]
+print 'SUMMARY DQMHistoTests: Total skipped:',compSummary[4]
+print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
 
 
 #### conclude
-print "Checked",nLog,"log files and",nRoot,"root files"
+print "SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,",compSummary[6]," DQM output files"
 if not qaIssues:
     print "No potential problems in log/root QA checks!"

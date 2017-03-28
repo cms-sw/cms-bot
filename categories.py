@@ -518,7 +518,7 @@ CMSSW_CATEGORIES={
    "CondCore/JetMETPlugins",
    "CondCore/L1TPlugins",
    "CondCore/LuminosityPlugins",
-   "CondCore/PCLConfigPlugins"
+   "CondCore/PCLConfigPlugins",
    "CondCore/MetaDataService",
    "CondCore/ORA",
    "CondCore/OptAlignPlugins",

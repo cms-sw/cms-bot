@@ -235,7 +235,7 @@ for l in commonLogs:
     nLog=nLog+1    
 
 if lines >0 :
-    print "SUMMARY You added "+str(lines)+" lines to the logs" 
+    print "SUMMARY You potentially added "+str(lines)+" lines to the logs" 
 else:
     print "SUMMARY No significant changes to the logs found"
 if lChanges:
@@ -251,6 +251,7 @@ for r in commonRoots:
         nRoot=nRoot+1
 if not sameEvts:
     qaIssues=True
+    print 'SUMMARY ROOTFileChecks: Some differences in event products or their sizes found'
 
 print '\n'
 # now check the JR comparisons for differences

@@ -1046,6 +1046,19 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj._sets.data.getXWidth()");
       plotvar(tbr+recoS+".obj._sets.data.getYWidth()");
 
+      tbr="CTPPSDiamondLocalTrackedmDetSetVector_ctppsDiamondLocalTracks__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getX0()");
+      plotvar(tbr+recoS+".obj._sets.data.getY0()");
+      plotvar(tbr+recoS+".obj._sets.data.getX0Sigma()");
+      plotvar(tbr+recoS+".obj._sets.data.getY0Sigma()");
+      plotvar(tbr+recoS+".obj._sets.data.getZ0()");
+      plotvar(tbr+recoS+".obj._sets.data.getChiSquared()");
+      plotvar(tbr+recoS+".obj._sets.data.getT()");
+      plotvar(tbr+recoS+".obj._sets.data.getTSigma()");
+      plotvar(tbr+recoS+".obj._sets.data.getOOTIndex()");
+
       tbr="CTPPSLocalTrackLites_ctppsLocalTrackLiteProducer__";
       plotvar(tbr+recoS+".obj@.size()");
       plotvar(tbr+recoS+".obj.getX()");

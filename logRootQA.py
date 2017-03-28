@@ -270,6 +270,6 @@ print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
 
 
 #### conclude
-print "SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,",compSummary[6]," DQM output files"
+print "SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,",compSummary[6],"DQM output files"
 if not qaIssues:
     print "No potential problems in log/root QA checks!"

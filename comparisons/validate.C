@@ -1008,6 +1008,40 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr="TotemTriggerCounters_totemTriggerRawToDigi__";
       plotvar(tbr+recoS+".obj.orbit_num");
 
+      //new names for totemRPRawToDigi since 9X
+      tbr="TotemFEDInfos_totemRPRawToDigi_TrackingStrip_";
+      plotvar(tbr+recoS+".obj@.size()");
+      plotvar(tbr+recoS+".obj.getFEDId()");
+      plotvar(tbr+recoS+".obj.getOptoRxId()");
+      plotvar(tbr+recoS+".obj.getFSize()");
+      tbr="TotemVFATStatusedmDetSetVector_totemRPRawToDigi_TrackingStrip_";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.isOK()");
+      plotvar(tbr+recoS+".obj._sets.data.getChipPosition()");
+      plotvar(tbr+recoS+".obj._sets.data.getNumberOfClusters()");
+      tbr="TotemRPDigiedmDetSetVector_totemRPRawToDigi_TrackingStrip_";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getStripNumber()");
+      //diamonds digis
+      tbr="TotemFEDInfos_ctppsDiamondRawToDigi_TimingDiamond_";
+      plotvar(tbr+recoS+".obj@.size()");
+      plotvar(tbr+recoS+".obj.getFEDId()");
+      plotvar(tbr+recoS+".obj.getOptoRxId()");
+      plotvar(tbr+recoS+".obj.getFSize()");
+      tbr="TotemVFATStatusedmDetSetVector_ctppsDiamondRawToDigi_TimingDiamond_";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.isOK()");
+      plotvar(tbr+recoS+".obj._sets.data.getChipPosition()");
+      plotvar(tbr+recoS+".obj._sets.data.getNumberOfClusters()");
+      tbr="CTPPSDiamondDigiedmDetSetVector_ctppsDiamondRawToDigi_TimingDiamond_";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.getStripNumber()");
+
+      //CTPPS reco
       tbr="TotemRPRecHitedmDetSetVector_totemRPRecHitProducer__";
       plotvar(tbr+recoS+".obj._sets@.size()");
       plotvar(tbr+recoS+".obj._sets.data@.size()");

@@ -200,14 +200,17 @@ def fill_notes_description(notes, repo, github, cache={}):
 
 def get_merge_prs(prev_tag, this_tag, git_dir, repo, github, cache={}):
   print "Getting merged Pull Requests b/w",prev_tag, this_tag
-  error, notes = getstatusoutput(format("GIT_DIR=%(git_dir)s"
-                                      " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
-                                      " grep ' Merge pull request #[1-9][0-9]* from ' | "
-                                      " sed 's|^.* Merge pull request #||' | "
-                                      " sed 's|/[^:]*:||;s|from ||'",
-                                      git_dir=git_dir,
-                                      previous=prev_tag,
-                                      release=this_tag))
+  cmd = format("GIT_DIR=%(git_dir)s"
+               " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
+               " grep ' Merge pull request #[1-9][0-9]* from ' | "
+               " sed 's|^.* Merge pull request #||' | "
+               " sed 's|/[^:]*:||;s|from ||'",
+               git_dir=git_dir,
+               previous=prev_tag,
+               release=this_tag)
+  error, notes = getstatusoutput(cmd)
+  print "Getting Merged Commits:",cmd
+  print notes
   if error:
     print "Error while getting release notes."
     print notes

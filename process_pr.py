@@ -18,7 +18,7 @@ except Exception, e :
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 IGNORING_TESTS_MSG = 'Ignoring test request.'
-TESTS_RESULTS_MSG = '^\s*[-|+]1\s*$'
+TESTS_RESULTS_MSG = '^\s*([-|+]1|I had the issue.*)\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
@@ -394,7 +394,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         if sec_line.startswith("Using externals from cms-sw/cmsdist#"): need_external = True
       elif re.match( TESTS_RESULTS_MSG, first_line):
         test_sha = sec_line.replace("Tested at: ","").strip()
-        if (test_sha != last_commit.sha) and (test_sha != 'UNKNOWN'):
+        if (test_sha != last_commit.sha) and (test_sha != 'UNKNOWN') and (not "I had the issue " in first_line):
           print "Ignoring test results for sha:",test_sha
           continue
         trigger_test_on_signature = False
@@ -402,10 +402,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         tests_requested = False
         comparison_done = False
         comparison_notrun = False
-        if re.match('^\s*[+]1\s*$', first_line):
+        if "+1" in first_line:
           signatures["tests"] = "approved"
-        else:
+        elif "-1" in first_line:
           signatures["tests"] = "rejected"
+        else:
+          signatures["tests"] = "pending"
         print 'Previous tests already finished, resetting test request state to ',signatures["tests"]
       elif re.match( TRIGERING_TESTS_ABORT_MSG, first_line):
         abort_test = False

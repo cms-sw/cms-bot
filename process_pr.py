@@ -426,7 +426,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         if ok:
           print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, extra_wfs)
           trigger_test_on_signature = False
-          cmsdist_pr = ''
           if tests_already_queued:
             print "Test results not obtained in ",comment.created_at-last_test_start_time
             diff = time.mktime(comment.created_at.timetuple()) - time.mktime(last_test_start_time.timetuple())

@@ -4,6 +4,21 @@ from cmsutils import doCmd
 from es_relval_log import es_parse_log
 from RelValArgs import FixWFArgs
 
+def runStep1Only(basedir, workflow, args=''):
+  args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
+  workdir = os.path.join(basedir, workflow)
+  matrixCmd = 'runTheMatrix.py --maxSteps=0 -l ' + workflow +' '+args
+  try:
+    if not os.path.isdir(workdir):
+      os.makedirs(workdir)
+  except Exception, e:
+    print "runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : can't create thread folder: " + str(e)
+  try:
+    ret = doCmd(matrixCmd, False, workdir)
+  except Exception, e:
+    print "runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : caught exception: " + str(e)
+  return
+
 def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
   if (not force) and logger and logger.relvalAlreadyDone(workflow):
     print "Message>> Not ruuning workflow ",workflow," as it is already ran"
@@ -27,7 +42,7 @@ def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
   outfolder = os.path.join(basedir,outfolders[0])
   wfdir     = os.path.join(workdir,outfolders[0])
   ret = doCmd("rm -rf " + outfolder + "; mkdir -p " + outfolder)
-  ret = doCmd("find . -mindepth 1 -maxdepth 1 -name '*.xml' -o -name '*.log' -o -name '*.py' -o -name 'cmdLog' -type f | xargs -i mv '{}' "+outfolder+"/", False, wfdir)
+  ret = doCmd("find . -mindepth 1 -maxdepth 1 -name '*.xml' -o -name '*.log' -o -name '*.py' -o -name '*.json' -o -name 'cmdLog' -type f | xargs -i mv '{}' "+outfolder+"/", False, wfdir)
   logRE = re.compile('^(.*/[0-9]+(\.[0-9]+|)_([^/]+))/step1_dasquery.log$')
   for logFile in glob.glob(outfolder+"/step1_dasquery.log"):
     m = logRE.match(logFile)
@@ -104,6 +119,25 @@ class PyRelValsThread(object):
       return workflows.split("\n")
     print "runPyRelVal> ERROR during test PyReleaseValidation : could not get output of " + workflowsCmd
     return []
+
+  def isNewRunTheMatrix(self):
+    e, o = doCmd("runTheMatrix.py --help | grep 'maxSteps=MAXSTEPS' | wc -l")
+    if e: return False
+    return o=="1"
+
+  def getWorkflowSteps(self, workflows):
+    threads = []
+    while(len(workflows) > 0):
+      threads = [t for t in threads if t.is_alive()]
+      if(len(threads) < self.jobs):
+        try:
+          t = threading.Thread(target=runStep1Only, args=(self.basedir, workflows.pop(), self.args['rest']+" "+self.args['w']))
+          t.start()
+          threads.append(t)
+        except Exception, e:
+          print "runPyRelVal> ERROR threading matrix step1 : caught exception: " + str(e)
+    for t in threads: t.join()
+    return
 
   def run_workflows(self, workflows=[], logger=None, force=False):
     if not workflows: return

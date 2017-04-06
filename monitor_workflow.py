@@ -34,7 +34,7 @@ def monitor(stop):
   from json import dump
   stat_file =open("wf_stats-%s.json" % stime,"w")
   dump(data, stat_file)
-  close(stat_file)
+  stat_file.close()
   return
 
 stop_monitoring = False

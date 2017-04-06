@@ -149,7 +149,7 @@ def summaryJR(jrDir):
     for d in dirs:
         diffs=getFiles(root+'/'+d,'png')
         if len(diffs)>0:
-            print 'JR results differ',len(diffs),d,
+            print 'JR results differ',len(diffs),d
             nDiff=nDiff+len(diffs)
     return nDiff
 

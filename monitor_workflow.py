@@ -13,11 +13,13 @@ def update_stats(proc, stats):
   if clds==0: return
   stats['processes'] += clds
   for cld in proc.children():
-    update_stats(cld, stats)
-    mem = cld.memory_full_info()
-    for a in ["rss", "vms", "shared", "data", "uss", "pss"]: stats[a]+=getattr(mem,a)
-    stats['num_fds'] += cld.num_fds()
-    stats['num_threads'] += cld.num_threads()
+    try:
+      mem = cld.memory_full_info()
+      for a in ["rss", "vms", "shared", "data", "uss", "pss"]: stats[a]+=getattr(mem,a)
+      stats['num_fds'] += cld.num_fds()
+      stats['num_threads'] += cld.num_threads()
+      update_stats(cld, stats)
+    except:pass
 
 def monitor(stop):
   p = psutil.Process(getpid())

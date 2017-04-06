@@ -1413,6 +1413,8 @@ CMSSW_CATEGORIES={
     "Geometry/HGCalGeometry",
     "Geometry/HGCalSimData",
     "L1Trigger/L1THGCal",
+    "L1Trigger/ME0Trigger",
+    "L1Trigger/TrackTrigger",
     "RecoLocalCalo/HGCalRecAlgos",
     "RecoLocalCalo/HGCalRecProducers",
     "RecoLocalFastTime/Configuration",
@@ -1435,7 +1437,6 @@ CMSSW_CATEGORIES={
     "SimTracker/SiPhase2Digitizer",
     "SLHCUpgradeSimulations/Configuration",
     "SLHCUpgradeSimulations/Geometry",
-    "L1Trigger/TrackTrigger",
    ],
 }
 

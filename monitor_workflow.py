@@ -25,9 +25,11 @@ def monitor(stop):
   stime = int(time())
   while not stop():
     xdata = {"rss":0, "vms":0, "shared":0, "data":0, "uss":0, "pss":0,"num_fds":0,"num_threads":0, "processes":0}
-    update_stats(p, xdata)
-    xdata['time'] = int(time()-stime)
-    data.append(xdata)
+    try:
+      update_stats(p, xdata)
+      xdata['time'] = int(time()-stime)
+      data.append(xdata)
+    except: pass
     for i in range(5):
       sleep(1)
       if stop(): break

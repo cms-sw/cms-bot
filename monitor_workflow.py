@@ -9,15 +9,18 @@ job = {'exit_code':0, 'command':'true'}
 def run_job(job): job['exit_code']=system(job['command'])
 
 def update_stats(proc, stats):
-  clds = len(proc.children())
+  children = proc.children()
+  clds = len(children)
   if clds==0: return
   stats['processes'] += clds
-  for cld in proc.children():
+  for cld in children:
     try:
-      mem = cld.memory_full_info()
+      mem   = cld.memory_full_info()
+      fds   = cld.num_fds()
+      thrds = cld.num_fds()
+      stats['num_fds'] += fds
+      stats['num_threads'] += thrds
       for a in ["rss", "vms", "shared", "data", "uss", "pss"]: stats[a]+=getattr(mem,a)
-      stats['num_fds'] += cld.num_fds()
-      stats['num_threads'] += cld.num_threads()
       update_stats(cld, stats)
     except:pass
 

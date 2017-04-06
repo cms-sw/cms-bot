@@ -9,7 +9,7 @@ job = {'exit_code':0, 'command':'true'}
 def run_job(job): job['exit_code']=system(job['command'])
 
 def update_stats(proc):
-  stats = {"rss":0, "vms":0, "shared":0, "data":0, "uss":0, "pss":0,"num_fds":0,"num_threads":0, "processes":0}
+  stats = {"rss":0, "vms":0, "shared":0, "data":0, "uss":0, "pss":0,"num_fds":0,"num_threads":0, "processes":0, "cpu": 0}
   children = proc.children(recursive=True)
   clds = len(children)
   if clds==0: return stats
@@ -19,8 +19,10 @@ def update_stats(proc):
       mem   = cld.memory_full_info()
       fds   = cld.num_fds()
       thrds = cld.num_threads()
+      cpu   = int(cld.cpu_percent())
       stats['num_fds'] += fds
       stats['num_threads'] += thrds
+      stats['cpu'] += cpu
       for a in ["rss", "vms", "shared", "data", "uss", "pss"]: stats[a]+=getattr(mem,a)
     except:pass
   return stats

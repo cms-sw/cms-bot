@@ -31,7 +31,7 @@ def monitor(stop):
   cmdline = " ".join(p.parent().cmdline())
   if "cmsDriver.py " in  cmdline:
     step = cmdline.split("cmsDriver.py ")[1].strip().split(" ")[0]
-    if not "step" in step: step=stime
+    if not "step" in step: step="step1"
   else: step=stime
   data = []
   while not stop():

@@ -17,7 +17,7 @@ def update_stats(proc, stats):
     try:
       mem   = cld.memory_full_info()
       fds   = cld.num_fds()
-      thrds = cld.num_fds()
+      thrds = cld.num_threads()
       stats['num_fds'] += fds
       stats['num_threads'] += thrds
       for a in ["rss", "vms", "shared", "data", "uss", "pss"]: stats[a]+=getattr(mem,a)

@@ -1115,6 +1115,7 @@ CMSSW_CATEGORIES={
    "L1Trigger/L1TMuonBarrel",
    "L1Trigger/L1TMuonEndCap",
    "L1Trigger/L1TMuonOverlap",
+   "L1Trigger/ME0Trigger",    
    "L1Trigger/RPCTechnicalTrigger",
    "L1Trigger/RPCTrigger",
    "L1Trigger/RegionalCaloTrigger",

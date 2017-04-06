@@ -25,8 +25,14 @@ def update_stats(proc):
     except:pass
   return stats
 
-def monitor(stop, stime):
+def monitor(stop):
+  stime = int(time())
   p = psutil.Process(getpid())
+  cmdline = " ".join(p.parent().cmdline())
+  if "cmsDriver.py " in  cmdline:
+    step = cmdline.split("cmsDriver.py ")[1].strip().split(" ")[0]
+    if not "step" in step: step=stime
+  else: step=stime
   data = []
   while not stop():
     try:
@@ -39,21 +45,15 @@ def monitor(stop, stime):
       sleep(1)
       if stop(): break
   from json import dump
-  stat_file =open("wf_stats-%s.json" % stime,"w")
+  stat_file =open("wf_stats-%s.json" % step,"w")
   dump(data, stat_file)
   stat_file.close()
   return
 
-stime = int(time())
-#Always create the stats file
-stat_file =open("wf_stats-%s.json" % stime,"w")
-stat_file.write("[]");
-stat_file.close()
-
 stop_monitoring = False
 job['command']=" ".join(argv[1:])
 job_thd = Thread(target=run_job, args=(job,))
-mon_thd = Thread(target=monitor, args=(lambda: stop_monitoring, stime))
+mon_thd = Thread(target=monitor, args=(lambda: stop_monitoring,))
 job_thd.start()
 mon_thd.start()
 job_thd.join()

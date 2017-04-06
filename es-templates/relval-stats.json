@@ -1,0 +1,61 @@
+{
+    "template": "relvals-*",
+    "settings": {
+      "index.number_of_shards": "1"
+    },
+    "mappings": {
+      "runtime-stats": {
+        "properties": {
+          "release": {
+            "type": "string"
+          },
+          "architecture": {
+            "type": "string"
+          },
+          "workflow": {
+            "type": "string"
+          },
+          "step": {
+            "type": "long"
+          },
+          "rss": {
+            "type": "long"
+          },
+          "vms": {
+            "type": "long"
+          },
+          "pss": {
+            "type": "long"
+          },
+          "uss": {
+            "type": "long"
+          },
+          "shared": {
+            "type": "longt"
+          },
+          "data": {
+            "type": "long"
+          },
+          "num_fds": {
+            "type": "long"
+          },
+          "num_threads": {
+            "type": "long"
+          },
+          "processes": {
+            "type": "long"
+          },
+          "cpu": {
+            "type": "long"
+          },
+          "time": {
+            "type": "long"
+          },          
+          "@timestamp": {
+            "type": "date"
+          }
+        }
+      }
+    },
+    "aliases": {}
+}

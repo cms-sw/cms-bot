@@ -1115,6 +1115,7 @@ CMSSW_CATEGORIES={
    "L1Trigger/L1TMuonBarrel",
    "L1Trigger/L1TMuonEndCap",
    "L1Trigger/L1TMuonOverlap",
+   "L1Trigger/ME0Trigger",    
    "L1Trigger/RPCTechnicalTrigger",
    "L1Trigger/RPCTrigger",
    "L1Trigger/RegionalCaloTrigger",
@@ -1412,6 +1413,8 @@ CMSSW_CATEGORIES={
     "Geometry/HGCalGeometry",
     "Geometry/HGCalSimData",
     "L1Trigger/L1THGCal",
+    "L1Trigger/ME0Trigger",
+    "L1Trigger/TrackTrigger",
     "RecoLocalCalo/HGCalRecAlgos",
     "RecoLocalCalo/HGCalRecProducers",
     "RecoLocalFastTime/Configuration",
@@ -1434,7 +1437,6 @@ CMSSW_CATEGORIES={
     "SimTracker/SiPhase2Digitizer",
     "SLHCUpgradeSimulations/Configuration",
     "SLHCUpgradeSimulations/Geometry",
-    "L1Trigger/TrackTrigger",
    ],
 }
 

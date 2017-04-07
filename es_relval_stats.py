@@ -39,13 +39,14 @@ for wf in o.split("\n"):
     step = s.split("/wf_stats-")[1][:-5]
     if step in steps: steps[step]=s
   for s in steps:
-    print release, arch, wfnum, s
     sfile =steps[s]
     if sfile=="": continue
     try:
       stats = json.load(open(sfile))
       xdata = {}
+      count=0
       for stat in stats:
+        count+=1
         for item in stat:
           try: xdata[item].append(stat[item])
           except:
@@ -61,6 +62,7 @@ for wf in o.split("\n"):
         del stat["time"]
         try:send_payload("relvals_stats_"+week,"runtime-stats",idx,json.dumps(stat))
         except Exception as e: print e
+      print release, arch, wfnum, s, count
       sdata = {"type":"full", "release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum}
       for x in xdata:
         data = sorted(xdata[x])

@@ -4,7 +4,6 @@ import os, sys,json , re , datetime
 from os import getenv
 from os.path import exists
 from time import strftime , strptime
-from socket import gethostname
 from es_utils import send_payload
 import xml.etree.ElementTree as ET
 

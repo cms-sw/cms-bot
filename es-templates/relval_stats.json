@@ -9,7 +9,7 @@
           "release": {"type": "string"},
           "architecture": {"type": "string"},
           "workflow": {"type": "string"},
-          "step": {"type": "long"},
+          "step": {"type": "string"},
           "rss": {"type": "long"},
           "vms": {"type": "long"},
           "pss": {"type": "long"},

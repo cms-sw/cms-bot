@@ -21,7 +21,6 @@ def percentile(percentage, data, dlen):
 
 def process(wfnum, s, sfile):
   global release, arch, rel_msec, week, ex_fields
-  print "Working on ",release, arch, wfnum, s
   try:
     stats = json.load(open(sfile))
     xdata = {}
@@ -41,6 +40,7 @@ def process(wfnum, s, sfile):
       del stat["time"]
       try:send_payload("relvals_stats_"+week,"runtime-stats",idx,json.dumps(stat))
       except Exception as e: print e
+    print "Working on ",release, arch, wfnum, s, len(stats)
     sdata = {"type":"full", "release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum}
     for x in xdata:
       data = sorted(xdata[x])

@@ -38,7 +38,7 @@ def process(wfnum, s, sfile):
       stat["architecture"]=arch
       idx = sha1(release + arch + wfnum + s + str(stat["time"])).hexdigest()
       del stat["time"]
-      try:send_payload("relvals_stats_details_"+week,"runtime-stats",idx,json.dumps(stat))
+      try:send_payload("relvals_stats_details_"+week,"runtime-stats-details",idx,json.dumps(stat))
       except Exception as e: print e
     print "Working on ",release, arch, wfnum, s, len(stats)
     sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum}
@@ -64,7 +64,7 @@ def process(wfnum, s, sfile):
           for t in ["25", "75", "avg", "median"]:
             sdata[x+"_"+t]=data[0]
     idx = sha1(release + arch + wfnum + s + str(rel_sec)).hexdigest()
-    try:send_payload("relvals_stats_summary_"+week,"runtime-stats",idx,json.dumps(sdata))
+    try:send_payload("relvals_stats_summary_"+week,"runtime-stats-summary",idx,json.dumps(sdata))
     except Exception as e: print e
   except Exception as e: print e
   return

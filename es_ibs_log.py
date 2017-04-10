@@ -6,6 +6,7 @@ from os.path import exists, dirname, getmtime
 from time import strftime , strptime
 from es_utils import send_payload
 import commands
+from cmsutils import cmsswIB2Week
 
 def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
@@ -25,8 +26,7 @@ def process_unittest_log(logFile):
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
   release = pathInfo[8]
-  dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
-  week = strftime("%U",strptime(dat,"%Y-%m-%d"))
+  week, rel_sec  = cmsswIB2Week (release)
   package = pathInfo[-3]+"/"+ pathInfo[-2]
   utname = None
   datasets = []
@@ -56,8 +56,7 @@ def process_addon_log(logFile):
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
   release = pathInfo[8]
-  dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
-  week = strftime("%U",strptime(dat,"%Y-%m-%d"))
+  week, rel_sec  = cmsswIB2Week (release)
   datasets = []
   payload = {"type" : "addon"}
   payload["release"]=release

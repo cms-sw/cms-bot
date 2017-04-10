@@ -6,6 +6,7 @@ from os.path import exists
 from time import strftime , strptime
 from es_utils import send_payload
 import xml.etree.ElementTree as ET
+from cmsutils import cmsswIB2Week
 
 def find_step_cmd(cmdfile,step):
   try:
@@ -85,8 +86,7 @@ def es_parse_log(logFile):
   release = pathInfo[8]
   workflow = pathInfo[10].split('_')[0]
   step = pathInfo[11].split('_')[0]
-  dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
-  week = strftime("%U",strptime(dat,"%Y-%m-%d"))
+  week, rel_sec  = cmsswIB2Week(release)
   index = "ib-matrix-" + week
   document = "runTheMatrix-data"
   id = sha1(release + architecture + workflow + str(step)).hexdigest()

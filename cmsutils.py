@@ -100,3 +100,8 @@ def getIBReleaseInfo(rel):
   hour = m.group(5)
   return (rc, day, hour)
 
+def cmsswIB2Week(release):
+  from datetime import datetime
+  rel_sec  = int(datetime.strptime(release.split("_")[-1], '%Y-%m-%d-%H%M').strftime('%s'))
+  return (str(int(((rel_sec/86400)+4)/7)), rel_sec)
+

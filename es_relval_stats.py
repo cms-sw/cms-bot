@@ -5,6 +5,7 @@ from os.path import isdir,basename,exists,join
 import json
 from datetime import datetime
 from es_utils import send_payload_old as send_payload
+from cmsutils import cmsswIB2Week
 from hashlib import sha1
 import threading
 from time import sleep
@@ -76,9 +77,8 @@ items = partial_log_dirpath.split("/")
 if items[-1]!="pyRelValPartialLogs": exit(1)
 release=items[-2]
 arch=items[-6]
-rel_sec  = int(datetime.strptime(release.split("_")[-1], '%Y-%m-%d-%H%M').strftime('%s'))
+week, rel_sec  = cmsswIB2Week(release)
 rel_msec = rel_sec*1000
-week     = str(int(((rel_sec/86400)+4)/7))
 ex_fields=["rss", "vms", "pss", "uss", "shared", "data", "cpu"]
 e, o = getstatusoutput("ls -d %s/*" % partial_log_dirpath)
 threads = []

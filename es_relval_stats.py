@@ -31,17 +31,16 @@ def process(wfnum, s, sfile):
           xdata[item]=[]
           xdata[item].append(stat[item])
       stat["@timestamp"]=rel_msec+(stat["time"]*1000)
-      stat["type"]="partial"
       stat["release"]=release
       stat["step"]=s
       stat["workflow"]=wfnum
       stat["architecture"]=arch
-      idx = sha1("partial" + release + arch + wfnum + s + str(stat["time"])).hexdigest()
+      idx = sha1(release + arch + wfnum + s + str(stat["time"])).hexdigest()
       del stat["time"]
-      try:send_payload("relvals_stats_"+week,"runtime-stats",idx,json.dumps(stat))
+      try:send_payload("relvals_stats_details_"+week,"runtime-stats",idx,json.dumps(stat))
       except Exception as e: print e
     print "Working on ",release, arch, wfnum, s, len(stats)
-    sdata = {"type":"full", "release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum}
+    sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum}
     for x in xdata:
       data = sorted(xdata[x])
       if x in ["time","num_threads","processes","num_fds"]:
@@ -49,7 +48,7 @@ def process(wfnum, s, sfile):
         continue
       if not x in ex_fields: continue
       dlen = len(data)
-      for t in ["min", "max", "avg", "median", "25", "50", "75", "80", "85", "90", "95"]: sdata[x+"_"+t]=0
+      for t in ["min", "max", "avg", "median", "25", "75"]: sdata[x+"_"+t]=0
       if dlen>0:
         sdata[x+"_min"]=data[0]
         sdata[x+"_max"]=data[-1]
@@ -58,13 +57,13 @@ def process(wfnum, s, sfile):
           if (dlen%2)==0: sdata[x+"_median"]=int((data[dlen2-1]+data[dlen2])/2)
           else: sdata[x+"_median"]=data[dlen2]
           sdata[x+"_avg"]=int(sum(data)/dlen)
-          for t in [25, 50, 75, 80, 85, 90, 95]:
+          for t in [25, 75]:
             sdata[x+"_"+str(t)]=int(percentile(t,data, dlen))
         else:
-          for t in ["25", "50", "75", "80", "85", "90", "95", "avg", "median"]:
+          for t in ["25", "75", "avg", "median"]:
             sdata[x+"_"+t]=data[0]
-    idx = sha1("full" + release + arch + wfnum + s + str(rel_sec)).hexdigest()
-    try:send_payload("relvals_stats_"+week,"runtime-stats",idx,json.dumps(sdata))
+    idx = sha1(release + arch + wfnum + s + str(rel_sec)).hexdigest()
+    try:send_payload("relvals_stats_summary_"+week,"runtime-stats",idx,json.dumps(sdata))
     except Exception as e: print e
   except Exception as e: print e
   return

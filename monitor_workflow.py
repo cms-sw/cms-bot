@@ -4,9 +4,10 @@ from sys import argv, exit
 from time import sleep, time
 import psutil
 from threading import Thread
+import subprocess
 
 job = {'exit_code':0, 'command':'true'}
-def run_job(job): job['exit_code']=system(job['command'])
+def run_job(job): job['exit_code']=subprocess.call(job['command'])
 
 def update_stats(proc):
   stats = {"rss":0, "vms":0, "shared":0, "data":0, "uss":0, "pss":0,"num_fds":0,"num_threads":0, "processes":0, "cpu": 0}
@@ -53,7 +54,7 @@ def monitor(stop):
   return
 
 stop_monitoring = False
-job['command']=" ".join(argv[1:])
+job['command']=argv[1:]
 job_thd = Thread(target=run_job, args=(job,))
 mon_thd = Thread(target=monitor, args=(lambda: stop_monitoring,))
 job_thd.start()

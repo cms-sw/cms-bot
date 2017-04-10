@@ -20,7 +20,7 @@ def percentile(percentage, data, dlen):
   if FR>0: res=(FR/100.0)*(data[IR]-res)+res
   return res
 
-def process(wfnum, s, sfile):
+def process(wfnum, s, sfile, details=False):
   global release, arch, rel_msec, week, ex_fields
   try:
     stats = json.load(open(sfile))
@@ -38,8 +38,9 @@ def process(wfnum, s, sfile):
       stat["architecture"]=arch
       idx = sha1(release + arch + wfnum + s + str(stat["time"])).hexdigest()
       del stat["time"]
-      try:send_payload("relvals_stats_details_"+week,"runtime-stats-details",idx,json.dumps(stat))
-      except Exception as e: print e
+      if details:
+        try:send_payload("relvals_stats_details_"+week,"runtime-stats-details",idx,json.dumps(stat))
+        except Exception as e: print e
     print "Working on ",release, arch, wfnum, s, len(stats)
     sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum}
     for x in xdata:

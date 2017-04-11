@@ -390,6 +390,7 @@ class LogFileAnalyzer(object):
             {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/test/(.*?)/\1')                         : ['linkError', 'for executable %s in test']},
             {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/.*?\.o')                  : ['compError', 'for plugin %s in plugins']},
             {str('^gmake: \*\*\* .*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/lib.*?\.'+shLib)          : ['linkError', 'for plugin library %s in plugins']},
+            {str('^ *\*\*\* Break \*\*\* illegal instruction')                                      : ['compError', 'Break illegal instruction']},
             {str('^AttributeError: .*')                                                             : ['pythonError', 'importing another module']},
             {str('^ImportError: .*')                                                                : ['pythonError', 'importing another module']},
             {str('^SyntaxError: .*')                                                                : ['pythonError', 'syntax error in module']},

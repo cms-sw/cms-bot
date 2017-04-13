@@ -59,8 +59,8 @@ for l in unused:
   if e:
     print o
   else:
-  print "Renamed: ",l
-  run_cmd("%s file touch %s.unused" % (eos_cmd, pfn))
+    print "Renamed: ",l
+    run_cmd("%s file touch %s.unused" % (eos_cmd, pfn))
 
 for unused_file in all_files:
   if not unused_file.endswith(".unused"): continue

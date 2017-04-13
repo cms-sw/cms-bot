@@ -633,25 +633,24 @@ void packedCandVar(TString var, TString cName = "packedPFCandidates_", TString t
 }
 
 void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_"){
-  //plotvar(tName+cName+"_"+recoS+".obj@.size()");
+  plotvar(tName+cName+"_"+recoS+".obj@.size()");
   //  packedCandVar("charge",cName,tName);
   //track parameters require vertex and it wouldnt unpack in our environment
   //  packedCandVar("dxy",cName,tName);
   //  packedCandVar("dxyError",cName,tName);
   //  packedCandVar("dz",cName,tName);
   //  packedCandVar("dzError",cName,tName);
-  /*
+  
   packedCandVar("energy",cName,tName);
   packedCandVar("et",cName,tName);
   packedCandVar("eta",cName,tName);
-  packedCandVar("isCaloMuon",cName,tName);
-  packedCandVar("isConvertedPhoton",cName,tName);
   packedCandVar("isElectron",cName,tName);
-  packedCandVar("isGlobalMuon",cName,tName);
+  packedCandVar("isPhoton",cName,tName);
+  packedCandVar("isConvertedPhoton",cName,tName);
   packedCandVar("isJet",cName,tName);
   packedCandVar("isMuon",cName,tName);
-  packedCandVar("isPhoton",cName,tName);
-  packedCandVar("isElectron",cName,tName);
+  packedCandVar("isCaloMuon",cName,tName);
+  packedCandVar("isGlobalMuon",cName,tName);
   packedCandVar("isStandAloneMuon",cName,tName);
   packedCandVar("isTrackerMuon",cName,tName);
   packedCandVar("mass",cName,tName);
@@ -660,17 +659,15 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("numberOfMothers",cName,tName);
   packedCandVar("numberOfHits",cName,tName);
   packedCandVar("numberOfPixelHits",cName,tName);
-  packedCandVar("p",cName,tName);
   packedCandVar("phi",cName,tName);
   packedCandVar("pt",cName,tName);
   packedCandVar("status",cName,tName);
-  packedCandVar("theta",cName,tName);
   packedCandVar("vertexChi2",cName,tName);
   packedCandVar("vertexNdof",cName,tName);
   packedCandVar("vx",cName,tName);
   packedCandVar("vy",cName,tName);
   packedCandVar("vz",cName,tName);
-  */
+  
   //try to get something from the branches without constructor calls
   packedCandVar("packedPt_",cName,tName, true); 
   packedCandVar("packedEta_",cName,tName, true); 
@@ -1024,6 +1021,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj._sets@.size()");
       plotvar(tbr+recoS+".obj._sets.data@.size()");
       plotvar(tbr+recoS+".obj._sets.data.getStripNumber()");
+      //pixel digis
+      tbr="CTPPSPixelDigiedmDetSetVector_ctppsPixelDigis__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.row()");
+      plotvar(tbr+recoS+".obj._sets.data.column()");
+      plotvar(tbr+recoS+".obj._sets.data.adc()");
       //diamonds digis
       tbr="TotemFEDInfos_ctppsDiamondRawToDigi_TimingDiamond_";
       plotvar(tbr+recoS+".obj@.size()");

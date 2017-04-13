@@ -13,4 +13,5 @@ ${eos_cmd} mkdir -p ${eos_dir}
 ${eos_cmd} rm ${eos_file}.tmp || true
 xrdcp --force --posc -v ${redirector}/${lfn} ${xrd_eos_base}/${eos_file}.tmp
 ${eos_cmd} file rename ${eos_file}.tmp ${eos_file}
+${eos_cmd} stat -f ${eos_file}
 echo ALL_OK

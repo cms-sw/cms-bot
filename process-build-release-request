@@ -670,11 +670,11 @@ def generate_announcement_link( announcement, release_name ):
   is_patch = 'patch' in release_name
   patch_str = 'patch ' if is_patch else ''
 
-  subject = ANNOUNCEMENT_EMAIL_SUBJECT.format( rel_type=type_str,
+  subject = urllib2.quote(ANNOUNCEMENT_EMAIL_SUBJECT.format( rel_type=type_str,
                                 is_patch=patch_str,
-                                rel_name=release_name).replace( ' ', '%20' )
+                                rel_name=release_name))
 
-  msg = announcement.replace( '\n', '%0D%0A' ).replace( ' ', '%20')
+  msg = urllib2.quote(announcement)
   link = MAILTO_TEMPLATE.format( destinatary=HN_REL_ANNOUNCE_EMAIL, 
                                         sub=subject,
                                         body=msg )

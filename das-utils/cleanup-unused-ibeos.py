@@ -5,7 +5,7 @@ from sys import argv, exit
 from os.path import dirname, abspath
 from commands import getstatusoutput as run_cmd
 script_path = abspath(dirname(argv[0]))
-eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
+eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select"
 eos_base = "/eos/cms/store/user/cmsbuild"
 unused_days_threshold = 60
 try:days=int(argv[1])
@@ -59,8 +59,8 @@ for l in unused:
   if e:
     print o
   else:
-    print "Renamed: ",l
-    run_cmd("%s file touch %s.unused" % (eos_cmd, pfn))
+  print "Renamed: ",l
+  run_cmd("%s file touch %s.unused" % (eos_cmd, pfn))
 
 for unused_file in all_files:
   if not unused_file.endswith(".unused"): continue

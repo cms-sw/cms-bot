@@ -37,11 +37,14 @@ def add_categories_notes(notes):
       note += " `%s` " % cat
 
     rel_notes = ""
+    REGEX_RN = re.compile('^release(-| )note(s|)\s*:\s*',re.I)
+    msg = issue.body.encode("ascii", "ignore").strip()
+    if REGEX_RN.match(msg): rel_notes=rel_notes+REGEX_RN.sub('',msg).strip()+"\n\n"
     for comment in issue.get_comments():
       msg = comment.body.encode("ascii", "ignore").strip()
-      if re.match('^release(-| )note(s|)\s*:\s*',msg,re.I):
+      if if REGEX_RN.match(msg):
         #FIXME: Once status api is stable then reject the comment if -1 emoji is set
-        rel_notes=rel_notes+re.sub('^release(-| )note(s|)\s*:\s*','',msg).strip()+"\n\n"
+        rel_notes=rel_notes+REGEX_RN.sub('',msg).strip()+"\n\n"
     if rel_notes: note = note + "\n\n" + rel_notes
     notes[pr_number] = note
   return notes

@@ -14,6 +14,7 @@
 #include "TCut.h"
 #include <cmath>
 
+
 bool detailled = true;
 bool detailled1 = false;//higher level of detail
 bool RemoveIdentical = true;
@@ -39,7 +40,7 @@ void print( TString step){
 
 }
 
-double plotvar(TString v,TString cut=""){
+double plotvar(TString v,TString cut="", bool tryCatch = false){
 
   std::cout<<"plotting variable: "<<v<<std::endl;
 
@@ -100,10 +101,19 @@ double plotvar(TString v,TString cut=""){
     
     TString reffn=refvn+"_refplot";
     if (cut!="") reffn+=count;
-    refEvents->Draw(refv+">>"+reffn,
-		    refselection,
-		    "",
-		    Nmax);
+    if(tryCatch){
+      try {
+	refEvents->Draw(refv+">>"+reffn,
+			refselection,
+			"",
+			Nmax);
+      } catch (...) {std::cout<<"Exception caught for refEvents"<<std::endl; return -9;}
+    } else {
+      refEvents->Draw(refv+">>"+reffn,
+		      refselection,
+		      "",
+		      Nmax);
+    }
     refplot = (TH1F*)gROOT->Get(reffn);
     
     if (refplot){
@@ -126,10 +136,19 @@ double plotvar(TString v,TString cut=""){
   plot->SetLineColor(2);
   
   if (Events!=0){
-    Events->Draw(v+">>"+fn,
-		 selection,
-		 "",
-		 Nmax);
+    if (tryCatch){
+      try {
+	Events->Draw(v+">>"+fn,
+		     selection,
+		     "",
+		     Nmax);
+      } catch (...) { std::cout<<"Exception caught for Events"<<std::endl; return -9;}
+    } else {
+      Events->Draw(v+">>"+fn,
+		   selection,
+		   "",
+		   Nmax);
+    }
     plotEntries = plot->GetEntries();
     plotMean = plot->GetMean();
     if ( plot->GetXaxis()->GetXmax() != refplot->GetXaxis()->GetXmax()){
@@ -624,16 +643,42 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   muonVar("stationMask",cName,tName);
   muonVar("type",cName,tName);
 
+  if (tName == "patMuons_"){
+    muonVar("puppiChargedHadronIso", cName,tName);
+    muonVar("puppiNeutralHadronIso", cName,tName);
+    muonVar("puppiPhotonIso", cName,tName);
+    muonVar("puppiNoLeptonsChargedHadronIso", cName,tName);
+    muonVar("puppiNoLeptonsNeutralHadronIso", cName,tName);
+    muonVar("puppiNoLeptonsPhotonIso", cName,tName);
+  }
 }
 
 void packedCandVar(TString var, TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_", bool notafunction = false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v);
+  plotvar(v, "", notafunction ? false : true);//ask for try/catch if it's a function
 }
 
 void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_"){
-  plotvar(tName+cName+"_"+recoS+".obj@.size()");
+  //try to get something from the branches without constructor calls
+  packedCandVar("packedPt_",cName,tName, true); 
+  packedCandVar("packedEta_",cName,tName, true); 
+  packedCandVar("packedPhi_",cName,tName, true); 
+  packedCandVar("packedM_",cName,tName, true); 
+  packedCandVar("packedDxy_",cName,tName, true); 
+  packedCandVar("packedDz_",cName,tName, true); 
+  packedCandVar("packedDPhi_",cName,tName, true); 
+  packedCandVar("packedPuppiweight_",cName,tName, true); 
+  packedCandVar("packedPuppiweightNoLepDiff_",cName,tName, true); 
+  packedCandVar("hcalFraction_",cName,tName, true); 
+  packedCandVar("pdgId_",cName,tName, true); 
+  packedCandVar("qualityFlags_",cName,tName, true); 
+  packedCandVar("pvRefKey_",cName,tName, true); 
+  packedCandVar("packedHits_",cName,tName, true); 
+  packedCandVar("normalizedChi2_",cName,tName, true); 
+
+  //for the rest do some exception checking (it apparently does not throw for a range of cases)
+  plotvar(tName+cName+"_"+recoS+".obj@.size()", "", true);//check for exception here
   //  packedCandVar("charge",cName,tName);
   //track parameters require vertex and it wouldnt unpack in our environment
   //  packedCandVar("dxy",cName,tName);
@@ -668,23 +713,6 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("vy",cName,tName);
   packedCandVar("vz",cName,tName);
   
-  //try to get something from the branches without constructor calls
-  packedCandVar("packedPt_",cName,tName, true); 
-  packedCandVar("packedEta_",cName,tName, true); 
-  packedCandVar("packedPhi_",cName,tName, true); 
-  packedCandVar("packedM_",cName,tName, true); 
-  packedCandVar("packedDxy_",cName,tName, true); 
-  packedCandVar("packedDz_",cName,tName, true); 
-  packedCandVar("packedDPhi_",cName,tName, true); 
-  packedCandVar("packedPuppiweight_",cName,tName, true); 
-  packedCandVar("packedPuppiweightNoLepDiff_",cName,tName, true); 
-  packedCandVar("hcalFraction_",cName,tName, true); 
-  packedCandVar("pdgId_",cName,tName, true); 
-  packedCandVar("qualityFlags_",cName,tName, true); 
-  packedCandVar("pvRefKey_",cName,tName, true); 
-  packedCandVar("packedHits_",cName,tName, true); 
-  packedCandVar("normalizedChi2_",cName,tName, true); 
-
 
 }
 
@@ -1659,6 +1687,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       allTracks("pixelTracks__"+recoS+"");
     }
 
+    if (step.Contains("all")) {
+      packedCand("packedPFCandidates_");
+      //packedCand("lostTracks_");
+    }
+    
     if ((step.Contains("all") || step.Contains("vertex")) && !step.Contains("cosmic") ){
       /// primary vertex plots
       vertexVars("recoVertexs_pixelVertices__");
@@ -2442,11 +2475,6 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoRecoEcalCandidates_hfRecoEcalCandidate__"+recoS+".obj.phi()");
     }
 
-    if (step.Contains("all")) {
-      packedCand("packedPFCandidates_");
-      //packedCand("lostTracks_");
-    }
-    
   }else{
     for (int i=0;i!=156;++i){
       TString b="edmTriggerResults_TriggerResults__"+recoS+".obj.paths_[";

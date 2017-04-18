@@ -68,6 +68,7 @@ CMSSW_L2 = {
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],
   "kpedro88" : ["upgrade"],
+  "mrodozov" : ["external"]
 }
 
 CMSSW_CATEGORIES={

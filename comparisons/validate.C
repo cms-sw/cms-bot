@@ -107,7 +107,7 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
 			refselection,
 			"",
 			Nmax);
-      } catch (...) {std::cout<<"Exception caught for refEvents"<<std::endl; return -9;}
+      } catch (...) {std::cout<<"Exception caught for refEvents"<<std::endl; delete c; return -9;}
     } else {
       refEvents->Draw(refv+">>"+reffn,
 		      refselection,
@@ -142,7 +142,7 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
 		     selection,
 		     "",
 		     Nmax);
-      } catch (...) { std::cout<<"Exception caught for Events"<<std::endl; return -9;}
+      } catch (...) { std::cout<<"Exception caught for Events"<<std::endl; delete c; return -9;}
     } else {
       Events->Draw(v+">>"+fn,
 		   selection,

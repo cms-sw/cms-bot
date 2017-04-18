@@ -709,9 +709,9 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("status",cName,tName);
   packedCandVar("vertexChi2",cName,tName);
   packedCandVar("vertexNdof",cName,tName);
-  packedCandVar("vx",cName,tName);
-  packedCandVar("vy",cName,tName);
-  packedCandVar("vz",cName,tName);
+  //  packedCandVar("vx",cName,tName);
+  //  packedCandVar("vy",cName,tName);
+  //  packedCandVar("vz",cName,tName);
   
 
 }

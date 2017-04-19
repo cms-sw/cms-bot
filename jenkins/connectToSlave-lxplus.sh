@@ -10,12 +10,10 @@ kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
 aklog
 klist
 SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-max_loop=30
-while [ true  ] ; do
-  max_loop=`expr ${max_loop} - 1`
-  [ "X${max_loop}" = "X0" ] && exit 0
-  NEW_TARGET="${WORKER_USER}@`ssh -f $SSH_OPTS -n $TARGET hostname`"
-  if [ "${NEW_TARGET}" = "${WORKER_USER}@" ] ; then sleep 10; continue ; fi
-  ${SCRIPT_DIR}/start-lxplus.sh $NEW_TARGET $WORKER_USER $WORKER_DIR $DELETE_SLAVE $WORKER_JENKINS_NAME || [ "X$?" = "X99" ] && sleep 30 && continue
+TARGET_HOST=$(echo $TARGET | sed 's|^.*@||')
+TARGET_USER=$(echo $TARGET | sed 's|@.*$||')
+for ip in $(host $TARGET_HOST | grep -v IPv6 | sed 's|^.* ||'); do
+  NEW_TARGET="${TARGET_USER}@$(host $ip | grep 'domain name' | sed 's|^.* ||;s|\.$||')"
+  ${SCRIPT_DIR}/start-lxplus.sh $NEW_TARGET $WORKER_USER $WORKER_DIR $DELETE_SLAVE $WORKER_JENKINS_NAME || [ "X$?" = "X99" ] && sleep 5 && continue
   exit 0
 done

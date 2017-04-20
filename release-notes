@@ -42,7 +42,7 @@ def add_categories_notes(notes):
     if REGEX_RN.match(msg): rel_notes=rel_notes+REGEX_RN.sub('',msg).strip()+"\n\n"
     for comment in issue.get_comments():
       msg = comment.body.encode("ascii", "ignore").strip()
-      if if REGEX_RN.match(msg):
+      if REGEX_RN.match(msg):
         #FIXME: Once status api is stable then reject the comment if -1 emoji is set
         rel_notes=rel_notes+REGEX_RN.sub('',msg).strip()+"\n\n"
     if rel_notes: note = note + "\n\n" + rel_notes

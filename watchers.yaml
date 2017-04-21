@@ -1083,7 +1083,7 @@ mtosi:
 - DQM/HLXMonitor
 - DQM/TrigXMonitor
 - DQM/TrigXMonitorClient
-- HLTriggerOffline/Common
+- HLTriggerOffline/
 - DQM/TrackingMonitor
 - DQM/TrackingMonitorSource
 - DQM/TrackingMonitorClient

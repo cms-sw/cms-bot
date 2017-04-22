@@ -640,6 +640,14 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   muonVar("pfSumDRIsoProfileR03().sumPUPt",cName,tName, true);
   muonVar("numberOfChambers",cName,tName);
   muonVar("numberOfMatches",cName,tName);
+  muonVar("muMatches_.detector",cName,tName);
+  muonVar("muMatches_.station",cName,tName);
+  muonVar("muMatches_.x",cName,tName, true);
+  muonVar("muMatches_.y",cName,tName, true);
+  muonVar("muMatches_.segmentMatches@.size",cName,tName);
+  muonVar("muMatches_.gemMatches@.size",cName,tName);
+  muonVar("muMatches_.me0Matches@.size",cName,tName);
+  muonVar("muMatches_.rpcMatches@.size",cName,tName);
   muonVar("stationMask",cName,tName);
   muonVar("type",cName,tName);
 
@@ -663,18 +671,10 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   //try to get something from the branches without constructor calls
   packedCandVar("packedPt_",cName,tName, true); 
   packedCandVar("packedEta_",cName,tName, true); 
-  packedCandVar("packedPhi_",cName,tName, true); 
-  packedCandVar("packedM_",cName,tName, true); 
   packedCandVar("packedDxy_",cName,tName, true); 
-  packedCandVar("packedDz_",cName,tName, true); 
-  packedCandVar("packedDPhi_",cName,tName, true); 
-  packedCandVar("packedPuppiweight_",cName,tName, true); 
-  packedCandVar("packedPuppiweightNoLepDiff_",cName,tName, true); 
-  packedCandVar("hcalFraction_",cName,tName, true); 
   packedCandVar("pdgId_",cName,tName, true); 
   packedCandVar("qualityFlags_",cName,tName, true); 
   packedCandVar("pvRefKey_",cName,tName, true); 
-  packedCandVar("packedHits_",cName,tName, true); 
   packedCandVar("normalizedChi2_",cName,tName, true); 
 
   //for the rest do some exception checking (it apparently does not throw for a range of cases)
@@ -689,23 +689,26 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("energy",cName,tName);
   packedCandVar("et",cName,tName);
   packedCandVar("eta",cName,tName);
-  packedCandVar("isElectron",cName,tName);
-  packedCandVar("isPhoton",cName,tName);
-  packedCandVar("isConvertedPhoton",cName,tName);
-  packedCandVar("isJet",cName,tName);
-  packedCandVar("isMuon",cName,tName);
-  packedCandVar("isCaloMuon",cName,tName);
+  packedCandVar("hcalFraction",cName,tName); 
+  //all false now//  packedCandVar("isElectron",cName,tName);
+  //all false now//  packedCandVar("isPhoton",cName,tName);
+  //all false now//  packedCandVar("isConvertedPhoton",cName,tName);
+  //all false now//  packedCandVar("isJet",cName,tName);
+  //all false now//  packedCandVar("isMuon",cName,tName);
+  //all false now//  packedCandVar("isCaloMuon",cName,tName);
   packedCandVar("isGlobalMuon",cName,tName);
   packedCandVar("isStandAloneMuon",cName,tName);
-  packedCandVar("isTrackerMuon",cName,tName);
+  //all false now//  packedCandVar("isTrackerMuon",cName,tName);
   packedCandVar("mass",cName,tName);
-  packedCandVar("mt",cName,tName);
-  packedCandVar("numberOfDaughters",cName,tName);
-  packedCandVar("numberOfMothers",cName,tName);
+  //useless now//    packedCandVar("mt",cName,tName);
+  //useless now//    packedCandVar("numberOfDaughters",cName,tName);
+  //useless now//    packedCandVar("numberOfMothers",cName,tName);
   packedCandVar("numberOfHits",cName,tName);
   packedCandVar("numberOfPixelHits",cName,tName);
   packedCandVar("phi",cName,tName);
   packedCandVar("pt",cName,tName);
+  packedCandVar("puppiWeight",cName,tName); 
+  packedCandVar("puppiWeightNoLep",cName,tName); 
   packedCandVar("status",cName,tName);
   packedCandVar("vertexChi2",cName,tName);
   packedCandVar("vertexNdof",cName,tName);
@@ -2140,6 +2143,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoPFBlocks_particleFlowBlock__"+recoS+".obj@.size()");
       plotvar("recoPFBlocks_particleFlowBlock__"+recoS+".obj.elements_@.size()");
       plotvar("recoPFBlocks_particleFlowBlock__"+recoS+".obj.linkData_@.size()");
+
+      plotvar("booledmValueMap_chargedHadronPFTrackIsolation__"+recoS+".obj.values_");
     }
     if (step.Contains("all") || step.Contains("EI")){
       /* this existed only in 610pre
@@ -2418,6 +2423,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       jetTagVar("pfDeepCSVJetTags_probb_");
       jetTagVar("pfDeepCSVJetTags_probc_");
       jetTagVar("pfDeepCSVJetTags_probbb_");
+      jetTagVar("pfDeepCMVAJetTags_probcc_");
+      jetTagVar("pfDeepCMVAJetTags_probudsg_");
+      jetTagVar("pfDeepCMVAJetTags_probb_");
+      jetTagVar("pfDeepCMVAJetTags_probc_");
+      jetTagVar("pfDeepCMVAJetTags_probbb_");
 
       secondaryVertexTagInfoVars("recoSecondaryVertexTagInfos_ghostTrackVertexTagInfos__");
       secondaryVertexTagInfoVars("recoSecondaryVertexTagInfos_secondaryVertexTagInfos__");

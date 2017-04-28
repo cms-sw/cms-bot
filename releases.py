@@ -99,5 +99,5 @@ RELEASE_MANAGERS["CMSSW_9_0_X"]=["smuzaffar"]
 ######################################################################
 RELEASE_BRANCH_MILESTONE["master"]=65
 RELEASE_BRANCH_PRODUCTION.append("master")
-RELEASE_MANAGERS["master"]=["muzaffar"]
+RELEASE_MANAGERS["master"]=["smuzaffar"]
 

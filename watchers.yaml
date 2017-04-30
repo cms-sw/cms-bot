@@ -868,8 +868,6 @@ Martin-Grunewald:
 - FastSimulation
 - EventFilter
 - Configuration
-apfeiffer1:
-- Cond
 jdolen:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET

@@ -3,7 +3,7 @@ from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEAS
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from releases import DEVEL_RELEASE_CYCLE
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
-from cms_static import CMSSW_PULL_REQUEST_COMMANDS, CMSSW_ISSUE_COMMANDS
+from cms_static import CMSSW_PULL_REQUEST_COMMANDS
 import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
@@ -586,12 +586,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
-                        "cms-bot commands are listed here %(issue_url)s\n",
+                        "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=issue.user.login.encode("ascii", "ignore"),
                         name=uname,
-                        l2s=l2s,
-                        issue_url=CMSSW_ISSUE_COMMANDS)
+                        l2s=l2s)
     elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):
       issueMessage = "This issue is fully signed and ready to be closed."
     print "Issue Message:",issueMessage
@@ -721,7 +720,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         "%(watchers)s"
                         "%(releaseManagers)s"
                         "%(patch_branch_warning)s\n"
-                        "cms-bot commands are listed here %(issue_url)s\n",
+                        "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                         msgPrefix=NEW_PR_PREFIX,
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
@@ -731,8 +730,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         new_package_message=new_package_message,
                         watchers=watchersMsg,
                         releaseManagers=releaseManagersMsg,
-                        patch_branch_warning=warning_msg,
-                        issue_url=CMSSW_PULL_REQUEST_COMMANDS)
+                        patch_branch_warning=warning_msg)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
                             " %(signers)s can you please check and sign again.",

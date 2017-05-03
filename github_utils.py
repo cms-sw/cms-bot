@@ -13,13 +13,13 @@ except Exception, e :
 
 def format(s, **kwds): return s % kwds
 
-def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime):
+def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime,msg=True):
   from time import sleep, gmtime
   from calendar import timegm
   from datetime import datetime
   doSleep = 0
   rate_reset_sec = rate_limiting_resettime - timegm(gmtime()) + 5
-  print 'API Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime))
+  if msg: print 'API Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime))
   if   rate_limit<100:  doSleep = rate_reset_sec
   elif rate_limit<500:  doSleep = 30
   elif rate_limit<1000: doSleep = 10
@@ -28,16 +28,16 @@ def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime):
   elif rate_limit<2500: doSleep = 1
   if (rate_reset_sec<doSleep) : doSleep=rate_reset_sec
   if doSleep>0:
-    print "Slowing down for %s sec due to api rate limits %s approching zero" % (doSleep, rate_limit)
+    if msg: print "Slowing down for %s sec due to api rate limits %s approching zero" % (doSleep, rate_limit)
     sleep (doSleep)
   return
 
-def api_rate_limits_repo(repo):
-  check_rate_limits(int(repo.raw_headers['x-ratelimit-remaining']),int(repo.raw_headers['x-ratelimit-limit']),int(repo.raw_headers['x-ratelimit-reset']))
+def api_rate_limits_repo(repo, msg=True):
+  check_rate_limits(int(repo.raw_headers['x-ratelimit-remaining']),int(repo.raw_headers['x-ratelimit-limit']),int(repo.raw_headers['x-ratelimit-reset']),msg)
 
-def api_rate_limits(gh):
+def api_rate_limits(gh, msg=True):
   gh.get_rate_limit()
-  check_rate_limits(gh.rate_limiting[0], gh.rate_limiting[1], gh.rate_limiting_resettime)
+  check_rate_limits(gh.rate_limiting[0], gh.rate_limiting[1], gh.rate_limiting_resettime, msg)
 
 def get_ported_PRs(repo, src_branch, des_branch):
   done_prs_id = {}
@@ -251,4 +251,23 @@ def get_commit_info(repo, commit):
   commit_info = json.loads(out)
   if "sha" in commit_info: return commit_info
   return {}
+
+def get_organization_members(token, org, role="all", filter="all"):
+  return github_api("/orgs/%s/members" % org,token,  params={"role":role, "filter": filter}, method="GET")
+
+def add_organization_member(token, org, member, role="member"):
+  return github_api("/orgs/%s/memberships/%s" % (org,member), token, params={"role":role}, method="PUT")
+
+def github_api(uri, token, params={}, method="POST"):
+  import urllib2
+  url = "https://api.github.com%s" % uri
+  data=""
+  if method=="GET":
+    import urllib
+    url=url+"?"+urllib.urlencode(params)
+  else:
+    data = json.dumps(params)
+  request = urllib2.Request(url, data=data, headers={"Authorization" : "token " + token })
+  request.get_method = lambda: method
+  return json.loads(urllib2.urlopen(request).read())
 

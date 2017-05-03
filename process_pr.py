@@ -329,11 +329,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
             if not ex_cat in signing_categories:
               assign_cats[ex_cat] = 0
               signing_categories.add(ex_cat)
+              signatures[ex_cat]="pending"
         elif assign_type == "unassign":
           for ex_cat in new_cats:
             if ex_cat in assign_cats:
               assign_cats.pop(ex_cat)
               signing_categories.remove(ex_cat)
+              signatures.pop(ex_cat)
       continue
 
     # Some of the special users can say "hold" prevent automatic merging of

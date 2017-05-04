@@ -35,7 +35,8 @@ if __name__ == "__main__":
   repo = gh.get_repo(args.repository)
   srcMilestone = repo.get_milestone(RELEASE_BRANCH_MILESTONE[args.source])
   desMilestone = repo.get_milestone(RELEASE_BRANCH_MILESTONE[args.dest])
-  if srcMilestone==desMilestone:
+  print srcMilestone, desMilestone
+  if srcMilestone.number==desMilestone.number:
     print "Error: Same milestone %s for %s and %s branches" % (srcMilestone,args.source,args.dest)
     exit(1)
 
@@ -43,7 +44,9 @@ if __name__ == "__main__":
   for pr in pulls:
     print "Wroking on PR ",pr.number,"with milestone",pr.milestone.number
     if pr.milestone.number == srcMilestone.number:
-      #if not args.dryRun: pr.edit(milestone=desMilestone)
+      if not args.dryRun:
+        issue = repo.get_issue(pr.number)
+        issue.edit(milestone=desMilestone)
       print "  Updated milestone:",desMilestone.number
     elif pr.milestone.number == desMilestone.number:
       continue

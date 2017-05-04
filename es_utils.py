@@ -6,14 +6,14 @@ from datetime import datetime
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)
 
-def send_payload_new(index,document,id,payload,passwd_file="/data/secrets/cmssdt-es-secret"):
+def send_payload_new(index,document,id,payload,passwd_file="/data/secrets/cmssdt-es-secret",es_server):
   index = 'cmssdt-' + index
   try:
     passw=open(passwd_file,'r').read().strip()
   except Exception as e:
     print "Couldn't read the secrets file" , str(e)
 
-  url = "https://%s/%s/%s/" % ('es-cmssdt.cern.ch:9203',index,document)
+  url = "https://%s/%s/%s/" % (es_server,index,document)
   if id: url = url+id
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'cmssdt', passw)
@@ -48,7 +48,8 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  send_payload_new(index,document,id,payload)
+  send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
+  send_payload_new(index,document,id,payload,'es-cmssdt5.cern.ch:9203')
   return send_payload_old(index,document,id,payload,passwd_file) 
 
 def get_payload(url,query):

@@ -6,6 +6,6 @@ export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$
 
 cmsRun $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/runP_Tracker_cfg.py >$LOCALRT/runP_Tracker_cfg.log 2>&1
 mkdir Images
-cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.C .
-root -b -q 'MaterialBudget.C("Tracker")' || true
+cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/MaterialBudget.py .
+python MaterialBudget.py -s -d Tracker || true
 

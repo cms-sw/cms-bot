@@ -16,7 +16,6 @@ setdefaulttimeout(120)
 import json
 
 def create_branch(repo, src_branch, des_branch, dryRun=False):
-  dryRun=True
   print "Creating new branch '%s' based on '%s'" % (des_branch, src_branch)
   base_ref = repo.get_branch(src_branch)
   print "  Base branch %s has sha %s" % (src_branch, base_ref.commit.sha)
@@ -27,7 +26,7 @@ def create_branch(repo, src_branch, des_branch, dryRun=False):
   except GithubException as e:
     if not "Branch not found" in e.data['message']: raise e
   if not dryRun:
-    #repo.create_git_ref ("refs/heads/"+des_branch, base_ref.commit.sha)
+    repo.create_git_ref ("refs/heads/"+des_branch, base_ref.commit.sha)
     print "  Created new branch ",des_branch," based on ",base_ref.commit.sha
   else:
     print "  DryRun: Creating new branch ",des_branch," based on ",base_ref.commit.sha

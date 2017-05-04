@@ -3,6 +3,7 @@ from copy import deepcopy
 from github import Github
 from os.path import expanduser
 from argparse import ArgumentParser
+from sys import exit
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api,add_organization_member
 setdefaulttimeout(120)
@@ -81,6 +82,7 @@ GH_TOKEN = open(expanduser("~/.github-token")).read().strip()
 gh = Github(login_or_token=GH_TOKEN)
 cache = {"users" : {}}
 total_changes=0
+err_code=0
 for org_name in CMS_ORGANIZATIONS:
   if args.organization!="*" and org_name!=args.organization: continue
   print "Wroking on Organization ",org_name
@@ -113,10 +115,7 @@ for org_name in CMS_ORGANIZATIONS:
     try: team_info = REPO_TEAMS[org_name][team.name]
     except:
       print "    WARNING: New team found on Github:",team.name
-      print "REPO_TEAMS[\"%s\"][\"%s\"] = {" % (org_name, team.name)
-      print "  \"members\"      : [ %s ]," % ",".join(['"'+m.login.encode("ascii", "ignore")+'"' for m in team.get_members() ])
-      print "  \"repositories\" : { %s : \"push\" }" % ",".join(['"'+repo.name+'"' for repo in team.get_repos() ])
-      print "}"
+      err_code=1
       continue
     members = team_info["members"]
     tm_members = [ mem for mem in team.get_members()]
@@ -197,4 +196,4 @@ for org_name in CMS_ORGANIZATIONS:
     if not chg_flag: print "        OK Team Repositories"
     total_changes+=chg_flag
 print "Total Updates:",total_changes
-
+exit(err_code)

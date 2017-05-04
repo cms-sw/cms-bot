@@ -6,7 +6,7 @@ from datetime import datetime
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)
 
-def send_payload_new(index,document,id,payload,passwd_file="/data/secrets/cmssdt-es-secret",es_server):
+def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secrets/cmssdt-es-secret"):
   index = 'cmssdt-' + index
   try:
     passw=open(passwd_file,'r').read().strip()

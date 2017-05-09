@@ -164,6 +164,7 @@ CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
 for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
   name=$(basename $xml)
   tool=$(echo $name | sed 's|.xml$||')
+  echo "Checking tool $tool ($xml)"
   if [ $tool = "cmsswdata" ] ; then
     CHG=0
     for dd in $(grep 'CMSSW_DATA_PACKAGE=' $xml | sed 's|.*="||;s|".*||') ; do
@@ -175,6 +176,7 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   elif [ -e $CTOOLS/$name ] ; then
     nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
     over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+    echo "Checking version in release: $over vs $nver"
     if [ "$nver" = "$over" ] ; then continue ; fi
     echo "Settings up $name: $over vs $nver" 
   fi

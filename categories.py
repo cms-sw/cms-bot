@@ -1258,6 +1258,7 @@ CMSSW_CATEGORIES={
    "Calibration/HcalIsolatedTrackReco",
    "Calibration/Hotline",
    "Calibration/IsolatedParticles",
+   "Calibration/LumiAlCaRecoProducers",
    "Calibration/TkAlCaRecoProducers",
    "Calibration/Tools",
    "CaloOnlineTools/EcalTools",

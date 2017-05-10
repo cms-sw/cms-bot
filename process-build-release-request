@@ -133,7 +133,9 @@ UPLOADING_BUILDS = 'uploading-builds'
 # the release has been announced
 RELEASE_ANNOUNCED = 'release-announced'
 # the release was build without issues. 
-PROCESS_COMPLETE = 'process-complete' 
+PROCESS_COMPLETE = 'process-complete'
+# Label for all Release Build Issue
+RELEASE_BUILD_ISSUE = 'release-build-request'
 
 # -------------------------------------------------------------------------------
 # Functions
@@ -940,6 +942,7 @@ if __name__ == "__main__":
 
     post_message( issue, msg)
     add_label( issue, PENDING_APPROVAL )
+    add_label( issue, RELEASE_BUILD_ISSUE )
     exit( 0 )
 
   if status == PENDING_APPROVAL:

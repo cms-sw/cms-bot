@@ -27,7 +27,8 @@ if __name__ == "__main__":
     queried_labels.append( repo.get_label( "tests-pending" ) )
     issues = repo.get_issues( state="open" , labels=queried_labels , sort="updated" , since=since )
   else:
-    issues = repo.get_issues(state="open", sort="updated", since=since)
+    label = [ repo.get_label("release-build-request") ]
+    issues = repo.get_issues(state="open", sort="updated", since=since, labels=label)
 
   if opts.only_issues:
     issues = [ i for i in issues if not i.pull_request ]

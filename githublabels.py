@@ -41,5 +41,6 @@ CMSSW_BUILD_LABELS = {
   "toolconf-building" : "fef2c0",
   "uploading-builds" : "86A086",
   "requires-external" : "0000ff",
+  "release-build-request" : LABEL_COLORS["approved"],
 }
 

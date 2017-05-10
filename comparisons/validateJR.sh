@@ -33,11 +33,11 @@ touch missing_map.txt
 dL=""
 #check from map patterns to the local
 while read -r dsN fNP procN comm; do 
-    dP=`echo "${fNP}" | sed -e 's?/[^/]*.root??g'`; d=`echo $dP | cut -d" " -f1 `  
+    dP=`echo "${fNP}" | sed -e 's?/[^/]*.root??g'`; d=`echo ${baseA}/$dP | cut -d" " -f1 `  
     [ -d "${d}" ] && dL="$dL ${d}/"
 done< <(grep root ${inList} |  grep -v "#")
 #check the found mapped list with all that we have
-ls -d [1-9]* | while read -r d; do 
+ls -d ${baseA}/[1-9]* | while read -r d; do 
   echo "${dL}" | grep  " $d/" >& /dev/null || echo $d >> missing_map.txt
 done
 

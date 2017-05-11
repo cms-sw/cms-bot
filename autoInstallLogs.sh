@@ -29,6 +29,7 @@ fi
 
 export LANG=C
 # Remove from AFS logs for releases older than 7 days.
+find $IB_BASEDIR -maxdepth 3 -mindepth 3 -mtime +6 -path '*/fwlite/CMSSW_*' -type d -exec rm -rf {} \; || true
 for ib in $(find $IB_BASEDIR -maxdepth 6 -mindepth 6 -mtime +6 -path '*/www/*/CMSSW_*/new' -type d | sed 's|/new$||') ; do
   rm -rf $ib
 done

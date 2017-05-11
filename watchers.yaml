@@ -662,6 +662,23 @@ tlampen:
 - Alignment/SurveyAnalysis
 - Alignment/TrackerAlignment
 - Alignment/TwoBodyDecay
+thomreis:
+- CondFormats/L1TObjects
+- DQM/Integration
+- DQM/L1TMonitor
+- DQM/L1TMonitorClient
+- DQMOffline/L1Trigger
+- DataFormats/L1TMuon
+- DataFormats/L1Trigger
+- EventFilter/L1TRawToDigi
+- L1Trigger/L1TCommon
+- L1Trigger/L1TMuon
+- L1Trigger/L1TMuonBarrel
+- L1Trigger/L1TMuonEndCap
+- L1Trigger/L1TMuonOverlap
+- L1Trigger/L1TNtuples
+- L1TriggerConfig/L1TConfigProducers
+- L1TriggerConfig/Utilities
 threus:
 - DQM/SiPixel
 - DQM/SiStrip

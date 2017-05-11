@@ -9,9 +9,9 @@ cd stitched
 LAST_COMMIT=$(cat .cmssw-commit)
 git remote add cmssw git@github.com:cms-sw/cmssw
 echo Fetching cmssw
-git fetch -q cmssw $BRANCH:$BRANCH
-git checkout -q $BRANCH
-git log --reverse --pretty=format:"%H" $LAST_COMMIT..$BRANCH > ../commits.txt
+git fetch -q cmssw $BRANCH:cmssw-$BRANCH
+git checkout -q cmssw-$BRANCH
+git log --reverse --pretty=format:"%H" $LAST_COMMIT..cmssw-$BRANCH > ../commits.txt
 echo Making a copy of cmssw
 rsync -a ../stitched/ ../cmssw/
 git checkout -q master

@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-BRANCH=CMSSW_8_1_X
+BRANCH=$1
 
 rm -rf stitched cmssw
 echo Cloning stitched

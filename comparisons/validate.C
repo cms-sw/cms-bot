@@ -554,6 +554,12 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
     electron("puppiNoLeptonsChargedHadronIso", cName,tName);
     electron("puppiNoLeptonsNeutralHadronIso", cName,tName);
     electron("puppiNoLeptonsPhotonIso", cName,tName);
+
+    electron("miniPFIsolation().chargedHadronIso", cName,tName);
+    electron("miniPFIsolation().neutralHadronIso", cName,tName);
+    electron("miniPFIsolation().photonIso", cName,tName);
+    electron("miniPFIsolation().puChargedHadronIso", cName,tName);
+
   }
 
 }
@@ -658,6 +664,11 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("puppiNoLeptonsChargedHadronIso", cName,tName);
     muonVar("puppiNoLeptonsNeutralHadronIso", cName,tName);
     muonVar("puppiNoLeptonsPhotonIso", cName,tName);
+
+    muonVar("miniPFIsolation().chargedHadronIso", cName,tName);
+    muonVar("miniPFIsolation().neutralHadronIso", cName,tName);
+    muonVar("miniPFIsolation().photonIso", cName,tName);
+    muonVar("miniPFIsolation().puChargedHadronIso", cName,tName);
   }
 }
 
@@ -690,6 +701,7 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("et",cName,tName);
   packedCandVar("eta",cName,tName);
   packedCandVar("hcalFraction",cName,tName); 
+  packedCandVar("rawCaloFraction",cName,tName); 
   //all false now//  packedCandVar("isElectron",cName,tName);
   //all false now//  packedCandVar("isPhoton",cName,tName);
   //all false now//  packedCandVar("isConvertedPhoton",cName,tName);
@@ -1693,6 +1705,17 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     if (step.Contains("all")) {
       packedCand("packedPFCandidates_");
       //packedCand("lostTracks_");
+
+      tbr="patIsolatedTracks_isolatedTracks__";
+      plotvar(tbr+recoS+".obj@.size()");
+      plotvar("log10("+tbr+recoS+".obj.pt())");
+      plotvar(tbr+recoS+".obj.eta()");
+      plotvar(tbr+recoS+".obj.dz()");
+      plotvar(tbr+recoS+".obj.pfIsolationDR03().chargedHadronIso()");
+      plotvar(tbr+recoS+".obj.pfIsolationDR03().photonIso()");//skiped NH and puCharged
+      plotvar(tbr+recoS+".obj.miniPFIsolation().chargedHadronIso()");
+      plotvar(tbr+recoS+".obj.miniPFIsolation().photonIso()");//skiped NH and puCharged
+
     }
     
     if ((step.Contains("all") || step.Contains("vertex")) && !step.Contains("cosmic") ){

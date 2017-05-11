@@ -29,7 +29,9 @@ fi
 
 export LANG=C
 # Remove from AFS logs for releases older than 7 days.
-find $IB_BASEDIR -maxdepth 5 -mindepth 5 -mtime +6 -path '*/www/*/CMSSW_*' -type d -exec rm -rf {} \; || true
+for ib in $(find $IB_BASEDIR -maxdepth 6 -mindepth 6 -mtime +6 -path '*/www/*/CMSSW_*/new' -type d | sed 's|/new$||') ; do
+  rm -rf $ib
+done
 # Remove empty <arch>/www/<day>/<rc>-<day>-<hour> directories
 find $IB_BASEDIR -mindepth 4 -maxdepth 5 -path '*/www/*/*' -o -path '*/www/*/*/CMSSW_*' -type d | sed 's|/CMSSW_.*||' | sort | uniq -c | grep '1 ' | awk '{print $2}' | grep /www/ | xargs rm -rf || true
 for WEEK in 0 1; do

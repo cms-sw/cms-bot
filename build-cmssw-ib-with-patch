@@ -178,7 +178,11 @@ if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
   echo DATE=`date`
 fi
 if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
-$CMSBUILD_CMD -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
+DEBUG_OPT=
+case $RELEASE_NAME in
+  *_DEVEL_*) DEBUG_OPT="--debug" ;;
+esac
+$CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
 echo DATE=`date`
 $CMSBUILD_CMD --sync-back upload cmssw-ib
 echo DATE=`date`

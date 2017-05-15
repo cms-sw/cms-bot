@@ -44,9 +44,9 @@ def monitor(stop):
         stats['time'] = int(time()-stime)
         data.append(stats)
     except: pass
-    for i in range(5):
-      sleep(1)
-      if stop(): break
+    #for i in range(5):
+    sleep(1)
+    #  if stop(): break
   from json import dump
   stat_file =open("wf_stats-%s.json" % step,"w")
   dump(data, stat_file)

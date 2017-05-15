@@ -55,7 +55,6 @@ CMSSW_L2 = {
   "cmsbuild": ["tests"],
   "lveldere": ["fastsim"],
   "ssekmen": ["fastsim"],
-  "mmusich": ["alca"],
   "govoni": ["generators"],
   "perrozzi": ["generators"],
   "davidlange6": ["operations"],

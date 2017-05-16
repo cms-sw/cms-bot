@@ -452,7 +452,8 @@ def post_message( issue , msg, checkIfRepeated=True ):
 # reads the comments and gets returns the status of the issue
 #
 def get_issue_status( issue ):
-  labels = [ l.name for l in issue.get_labels() ]
+  labels = [ l.name for l in issue.get_labels() if l.name != RELEASE_BUILD_ISSUE]
+  print "Issue Label: ",labels
 
   if not labels:
     return NEW_ISSUE

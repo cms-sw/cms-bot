@@ -578,7 +578,20 @@ mmusich:
 - Alignment/SurveyAnalysis
 - Alignment/TrackerAlignment
 - Alignment/TwoBodyDecay
+- CalibTracker/Configuration
+- CalibTracker/Records
+- CalibTracker/SiStrip
+- DataFormats/SiStrip
 - MuonAnalysis/MomentumScaleCalibration
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+- SimTracker/SiStripDigitizer
 mschrode:
 - Alignment
 - RecoTracker

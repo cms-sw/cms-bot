@@ -19,6 +19,6 @@ HOST_ARCH=`ssh -f $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|
 HOST_CMS_ARCH=`ssh -f $SSH_OPTS $TARGET sh $WORKER_DIR/cmsos`
 WORKER_JENKINS_NAME=`echo $TARGET | sed s'|.*@||;s|\..*||'`
 echo FIX LABELS
-echo java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -s http://localhost:8080/jenkins groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "$WORKER_JENKINS_NAME" "$HOST_ARCH" "$HOST_CMS_ARCH"
+java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -s http://localhost:8080/jenkins groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "$WORKER_JENKINS_NAME" "$HOST_ARCH" "$HOST_CMS_ARCH"
 sleep 1
 ssh $SSH_OPTS $TARGET k5start -U -f $WORKER_DIR/$WORKER_USER.keytab -K 10 -l 10h  -- java -jar $WORKER_DIR/slave.jar -jar-cache /tmp/

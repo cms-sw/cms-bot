@@ -28,8 +28,11 @@ PACKAGE_RE = "^([A-Z][0-9A-Za-z]*/[a-zA-Z][0-9A-Za-z]*|.gitignore)$"
 for (key, value) in CMSSW_CATEGORIES.items():
   assert(type(key) == str)
   assert(type(value) == list)
+  if key == "externals":
+    assert(len(value)>0)
+    continue
   for p in value:
-    assert(type(p) == str) 
+    assert(type(p) == str)
     assert(re.match(PACKAGE_RE, p))
 
 w = yaml.load(open("super-users.yaml", "r"))

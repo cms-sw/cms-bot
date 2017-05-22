@@ -25,6 +25,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     -v /cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security \
     -v /tmp:/tmp \
     -e WORKSPACE=$WORKSPACE \
+    -e USER=$USER \
     -e BUILD_NUMBER=$BUILD_NUMBER \
     $DOCKER_IMG sh -c "$DOCK_ARGS"
 else

@@ -19,7 +19,7 @@ def runStep1Only(basedir, workflow, args=''):
     print "runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : caught exception: " + str(e)
   return
 
-def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
+def runThreadMatrix(basedir, workflow, args='', logger=None, force=False, wf_err={}):
   if (not force) and logger and logger.relvalAlreadyDone(workflow):
     print "Message>> Not ruuning workflow ",workflow," as it is already ran"
     return
@@ -51,6 +51,7 @@ def runThreadMatrix(basedir, workflow, args='', logger=None, force=False):
   ret = doCmd("mv "+os.path.join(workdir,"runall-report-step*.log")+" "+os.path.join(outfolder,"workflow.log"))
   ret = doCmd("echo " + str(wftime) +" > " + os.path.join(outfolder,"time.log"))
   ret = doCmd("hostname -s > " + os.path.join(outfolder,"hostname"))
+  if wf_err: ret = doCmd("echo '%s' > %s/known_error.%s" % (wf_err["exitcode"],outfolder,wf_err["step"]))
   if logger: logger.updateRelValMatrixPartialLogs(basedir, outfolders[0])
   shutil.rmtree(workdir)
   return
@@ -139,7 +140,7 @@ class PyRelValsThread(object):
     for t in threads: t.join()
     return
 
-  def run_workflows(self, workflows=[], logger=None, force=False):
+  def run_workflows(self, workflows=[], logger=None, force=False,known_errors={}):
     if not workflows: return
     workflows = workflows[::-1]
     threads = []
@@ -147,7 +148,10 @@ class PyRelValsThread(object):
       threads = [t for t in threads if t.is_alive()]
       if(len(threads) < self.jobs):
         try:
-          t = threading.Thread(target=runThreadMatrix, args=(self.basedir, workflows.pop(), self.args['rest']+" "+self.args['w'], logger, force))
+          wf = workflows.pop()
+          wf_err = {}
+          if wf in known_errors: wf_err = known_errors[wf]
+          t = threading.Thread(target=runThreadMatrix, args=(self.basedir, wf, self.args['rest']+" "+self.args['w'], logger, force, wf_err))
           t.start()
           threads.append(t)
         except Exception, e:

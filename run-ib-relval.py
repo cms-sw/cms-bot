@@ -36,13 +36,13 @@ if __name__ == "__main__":
     print "Normal IB Found"
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
   known_errs = {}
-  cmssw_ver = environ["CMSSW_BASE"]
+  cmssw_ver = environ["CMSSW_VERSION"]
   arch = environ["SCRAM_ARCH"]
   for rel in KNOWN_ERRORS["relvals"]:
     if cmssw_ver.startswith(rel) and (arch in KNOWN_ERRORS["relvals"][rel]):
       known_errs = KNOWN_ERRORS["relvals"][rel][arch]
       break
-  matrix = PyRelValsThread(thrds, cmssw_ver+"/pyRelval", opts.jobid)
+  matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)
   matrix.setArgs(GetMatrixOptions(cmssw_ver,arch))
   matrix.run_workflows(opts.workflow.split(","),LogUpdater(environ["CMSSW_BASE"]),opts.force,known_errors=known_errs)
 

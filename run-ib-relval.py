@@ -22,22 +22,22 @@ if __name__ == "__main__":
     exit(1)
 
   thrds = cmsRunProcessCount
-  if isThreaded(environ["CMSSW_VERSION"],environ["SCRAM_ARCH"]):
+  cmssw_ver = environ["CMSSW_VERSION"]
+  arch = environ["SCRAM_ARCH"]
+  if isThreaded(cmssw_ver,arch):
     print "Threaded IB Found"
     thrds=int(MachineMemoryGB/4.5)
     if thrds==0: thrds=1
-  elif "fc24_ppc64le_" in environ["SCRAM_ARCH"]:
+  elif "fc24_ppc64le_" in arch:
     print "FC22 IB Found"
     thrds=int(MachineMemoryGB/4)
-  elif "fc24_ppc64le_" in environ["SCRAM_ARCH"]:
+  elif "fc24_ppc64le_" in arch:
     print "CentOS 7.2 + PPC64LE Found"
     thrds=int(MachineMemoryGB/3)
   else:
     print "Normal IB Found"
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
   known_errs = {}
-  cmssw_ver = environ["CMSSW_VERSION"]
-  arch = environ["SCRAM_ARCH"]
   for rel in KNOWN_ERRORS["relvals"]:
     if cmssw_ver.startswith(rel) and (arch in KNOWN_ERRORS["relvals"][rel]):
       known_errs = KNOWN_ERRORS["relvals"][rel][arch]

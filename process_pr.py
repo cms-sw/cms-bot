@@ -162,15 +162,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if issue.pull_request:
     try:
       pr   = repo.get_pull(prId)
-      if pr.base.ref == CMSSW_DEVEL_BRANCH:
+      if cmssw_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
         if pr.state != "closed":
-          print "This pull request must be closed."
+          print "This pull request must go in to master branch"
           if not dryRun:
-            issue.edit(state="closed")
-            msg = format("This branch is closed for updates. Closing this pull request.\n"
-                       "@%(user)s, Please make a Pull request for master branch or bring this issue up in the ORP meeting if really needed.\n",
-                       user=issue.user.login.encode("ascii", "ignore"))
-            issue.create_comment(msg)
+            issue.edit(base="master")
+            issue.create_comment("Changing PR branch to master.")
         return
     except:
       print "Could not find the pull request ",prId,", may be it is an issue"

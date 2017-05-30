@@ -258,6 +258,17 @@ def get_organization_members(token, org, role="all", filter="all"):
 def add_organization_member(token, org, member, role="member"):
   return github_api("/orgs/%s/memberships/%s" % (org,member), token, params={"role":role}, method="PUT")
 
+def get_token(github):
+  return github._Github__requester._Requester__authorizationHeader.split(" ")[-1]
+
+def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
+  params = {}
+  if title: params["title"]=title
+  if body: params["body"]=body
+  if base: params["base"]=base
+  if state: params["state"]=state
+  return github_api (uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
+
 def github_api(uri, token, params={}, method="POST"):
   import urllib2
   url = "https://api.github.com%s" % uri

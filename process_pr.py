@@ -7,6 +7,7 @@ import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
 from github import UnknownObjectException
+from github_utils import get_token, edit_pr
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 try:
@@ -166,7 +167,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         if pr.state != "closed":
           print "This pull request must go in to master branch"
           if not dryRun:
-            pr.edit(base="master")
+            edit_pr(get_token(gh), repo.full_name, prId, base="master")
             issue.create_comment("Changing PR branch to master.")
         return
     except:

@@ -168,7 +168,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
           print "This pull request must go in to master branch"
           if not dryRun:
             edit_pr(get_token(gh), repo.full_name, prId, base="master")
-            issue.create_comment("Changing PR branch to master.")
+            msg = format("@%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
+                         "In future, please use cmssw master branch to submit your changes.\n",
+                         user=issue.user.login.encode("ascii", "ignore"),
+                         dev_branch=CMSSW_DEVEL_BRANCH)
+            issue.create_comment(msg)
         return
     except:
       print "Could not find the pull request ",prId,", may be it is an issue"

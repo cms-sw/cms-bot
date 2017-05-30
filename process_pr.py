@@ -166,7 +166,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
         if pr.state != "closed":
           print "This pull request must go in to master branch"
           if not dryRun:
-            issue.edit(base="master")
+            pr.edit(base="master")
             issue.create_comment("Changing PR branch to master.")
         return
     except:

@@ -207,7 +207,7 @@ void compareInDir(TFile* f1, TFile* f2, std::string dirName,unsigned int logmod=
 }
 
 
-void cmpLRD(TFile* f1, TFile* f2, const char* dName, TPRegexp* patt = 0, unsigned int logmod=0, unsigned int dOpt=1){
+void cmpLRD(TFile* f1, TFile* f2, const char* dName, TPRegexp* patt = 0, TPRegexp* pattE = 0, unsigned int logmod=0, unsigned int dOpt=1){
   //  std::cout<<"cmpLRD In "<< dName<<std::endl;
   TDirectory* td = gROOT->GetDirectory(dName);
   if (td){
@@ -227,26 +227,29 @@ void cmpLRD(TFile* f1, TFile* f2, const char* dName, TPRegexp* patt = 0, unsigne
 	//	if(pRel.Index("/SiStrip/")>=0) continue; //this takes a huge time in alcareco and is irrelevant
 	///DQMData/Run 1/Btag
 	int mLength = 0;
-	if (patt==0 || (patt!=0 && pRel.Index(*patt, mLength)>=0)){
+	if ( ( patt==0 || (patt!=0 && pRel.Index(*patt, mLength)>=0) )
+	     && (pattE==0 || (pattE!=0 && pRel.Index(*pattE, mLength)<0) ) ){
 	  //	  std::cout<<"Comparing in " <<pRel.Data()<<std::endl;
 	  compareInDir(f1, f2, pRel.Data(),logmod,dOpt);
 	}
-	cmpLRD(f1, f2, tdcPFull.Data(), patt,logmod,dOpt);
+	cmpLRD(f1, f2, tdcPFull.Data(), patt, pattE, logmod,dOpt);
       }
     }
   }
 }
 
-void compareAll(TFile* f1, TFile* f2, unsigned int logmod=0, unsigned int dOpt=1, const char* dirPattern = 0){
+void compareAll(TFile* f1, TFile* f2, unsigned int logmod=0, unsigned int dOpt=1, const char* dirPattern = 0, const char* dirPatternExclude = 0){
   TCanvas dummyC;
   bool printPDF = (((dOpt/100)%10) & 2) == 0;//default prints all types. Set this bit to disable.
   dummyC.Print("diff.ps[");
   if (printPDF) dummyC.Print("diff.pdf[");
 
-  const char* dPatterns[10] {0, "/Muon", "/MuonIdentificationV", "/RecoMuon", "/RecoMuonV/MultiTrack", "/Muons", "/HLT/Run summary/Muon", dirPattern, 0, 0};
+  const char* dPatterns[10] {0, "/Muon", "/MuonIdentificationV", "/RecoMuon", "/RecoMuonV/MultiTrack", "/Muons", "/HLT/Run summary/Muon", dirPattern, 0, dirPattern};
+  const char* dPatternsExclude[10] {0, 0, 0, 0, 0, 0, 0, 0, dirPatternExclude, dirPatternExclude};
   int dpIndex = (dOpt/10)%10;
   TPRegexp* dirPatternRP = dPatterns[dpIndex] == 0 ? 0 : new TPRegexp(dPatterns[dpIndex]);
-  cmpLRD(f1, f2, f1->GetPath(), dirPatternRP, logmod, dOpt);
+  TPRegexp* dirPatternExcludeRP = dPatternsExclude[dpIndex] == 0 ? 0 : new TPRegexp(dPatternsExclude[dpIndex]);
+  cmpLRD(f1, f2, f1->GetPath(), dirPatternRP, dirPatternExcludeRP, logmod, dOpt);
 
   dummyC.Print("diff.ps]");
   if (printPDF) dummyC.Print("diff.pdf]");

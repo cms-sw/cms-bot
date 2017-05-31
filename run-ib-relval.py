@@ -6,7 +6,7 @@ from runPyRelValThread import PyRelValsThread
 from RelValArgs import GetMatrixOptions, isThreaded
 from logUpdater import LogUpdater
 from cmsutils import cmsRunProcessCount, MachineMemoryGB, doCmd
-from cmssw_known_errors import KNOWN_ERRORS
+from cmssw_known_errors import get_known_errors
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog -i|--id <jobid> -l|--list <list of workflows>")
@@ -37,11 +37,7 @@ if __name__ == "__main__":
   else:
     print "Normal IB Found"
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
-  known_errs = {}
-  for rel in KNOWN_ERRORS["relvals"]:
-    if cmssw_ver.startswith(rel) and (arch in KNOWN_ERRORS["relvals"][rel]):
-      known_errs = KNOWN_ERRORS["relvals"][rel][arch]
-      break
+  known_errs = get_known_errors(cmssw_ver, arch, "relvals")
   matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)
   matrix.setArgs(GetMatrixOptions(cmssw_ver,arch))
   matrix.run_workflows(opts.workflow.split(","),LogUpdater(environ["CMSSW_BASE"]),opts.force,known_errors=known_errs)

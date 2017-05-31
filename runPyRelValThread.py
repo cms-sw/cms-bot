@@ -3,6 +3,7 @@ import os, sys, glob, re, shutil, time, threading, json
 from cmsutils import doCmd
 from es_relval_log import es_parse_log
 from RelValArgs import FixWFArgs
+import json
 
 def runStep1Only(basedir, workflow, args=''):
   args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
@@ -51,7 +52,7 @@ def runThreadMatrix(basedir, workflow, args='', logger=None, force=False, wf_err
   ret = doCmd("mv "+os.path.join(workdir,"runall-report-step*.log")+" "+os.path.join(outfolder,"workflow.log"))
   ret = doCmd("echo " + str(wftime) +" > " + os.path.join(outfolder,"time.log"))
   ret = doCmd("hostname -s > " + os.path.join(outfolder,"hostname"))
-  if wf_err: ret = doCmd("echo '%s' > %s/known_error.%s" % (wf_err["exitcode"],outfolder,wf_err["step"]))
+  if wf_err: json.dump(wf_err, open("%s/known_error.json" % outfolder,"w"))
   if logger: logger.updateRelValMatrixPartialLogs(basedir, outfolders[0])
   shutil.rmtree(workdir)
   return

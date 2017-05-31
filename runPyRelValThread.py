@@ -165,6 +165,7 @@ class PyRelValsThread(object):
     return
   
   def update_runall(self):
+    self.update_known_errors()
     outFile    = open(os.path.join(self.outdir,"runall-report-step123-.log"),"w")
     status_ok  = []
     status_err = []
@@ -194,21 +195,30 @@ class PyRelValsThread(object):
     outFile.write(" ".join(str(x) for x in status_ok)+" tests passed, "+" ".join(str(x) for x in status_err)+" failed\n")
     outFile.close()
 
+  def update_known_errors(self):
+    known_errors = {}
+    for logFile in glob.glob(self.basedir+'/*/known_error.json'):
+      try:
+        wf = logFile.split("/")[-2].split("_")[0]
+        known_errors[wf] = json.load(open(logFile))
+      except Exception, e:
+        print "ERROR:",e 
+    outFile = open(os.path.join(self.outdir,"all_known_errors.json"),"w")
+    json.dump(known_errors, outFile)
+    outFile.close()
+
   def update_wftime(self):
     time_info = {}
-    logRE = re.compile('^.*/([1-9][0-9]*(\.[0-9]+|))_[^/]+/time\.log$')
     for logFile in glob.glob(self.basedir+'/*/time.log'):
-      m = logRE.match(logFile)
-      if not m: continue
-      wf = m.group(1)
-      inFile = open(logFile)
-      line  = inFile.readline().strip()
-      inFile.close()
       try:
+        wf = logFile.split("/")[-2].split("_")[0]
+        inFile = open(logFile)
+        line  = inFile.readline().strip()
+        inFile.close()
         m = re.match("^(\d+)\.\d+$",line)
         if m: time_info[wf]=int(m.group(1))
-      except:
-        pass
+      except Exception, e:
+        print "ERROR:",e 
     outFile = open(os.path.join(self.outdir,"relval-times.json"),"w")
     json.dump(time_info, outFile)
     outFile.close()

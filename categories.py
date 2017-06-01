@@ -981,6 +981,7 @@ CMSSW_CATEGORIES={
    "DQMOffline/Hcal",
    "DQMOffline/JetMET",
    "DQMOffline/L1Trigger",
+   "DQMOffline/Lumi",
    "DQMOffline/Muon",
    "DQMOffline/PFTau",
    "DQMOffline/RecoB",

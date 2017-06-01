@@ -196,6 +196,8 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
     }
   }else if (type == 'relvals'){
 
+      known_err = 0
+      if ("known_failed" in testDetails){known_err = testDetails.known_failed;}
       r_class = result? "label label-success" : "label label-danger"
       incomplete = file == 'not-ready'
 
@@ -212,6 +214,7 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
         r_class = "label label-danger"
         test_label = "Pass: " + testDetails.num_passed + " Fail: " + testDetails.num_failed
       }
+      if (known_err>0) {test_label = test_label +"("+known_err+")";}
       if ( result_tests.done == false )
       {
         r_class = "label label-primary"

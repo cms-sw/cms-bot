@@ -232,6 +232,7 @@ CMSSW_CATEGORIES={
    "JetMETCorrections/Type1MET",
    "PhysicsTools/PatAlgos",
    "PhysicsTools/PatUtils",
+   "PhysicsTools/SelectorUtils",
    "RecoCTPPS/Configuration",
    "RecoCTPPS/TotemRPLocal",
    "RecoLocalCalo/CaloRecCandCreator",

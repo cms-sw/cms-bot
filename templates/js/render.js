@@ -208,13 +208,14 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
         if ( result_tests.done == false ){
           test_label = "Pass: " + testDetails.num_passed
         }
-
+        if (known_err>0) {test_label = test_label +"("+known_err+")";}
       }else{
 
         r_class = "label label-danger"
-        test_label = "Pass: " + testDetails.num_passed + " Fail: " + testDetails.num_failed
+        test_label = "Pass: " + testDetails.num_passed
+        if (known_err>0) {test_label = test_label +"("+known_err+")";}
+        test_label = test_label + " Fail: " + testDetails.num_failed
       }
-      if (known_err>0) {test_label = test_label +"("+known_err+")";}
       if ( result_tests.done == false )
       {
         r_class = "label label-primary"

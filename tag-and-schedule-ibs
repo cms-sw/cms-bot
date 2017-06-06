@@ -7,6 +7,7 @@ CONFIG_MAP_PATH="$CMS_BOT_DIR/config.map"
 RELEASE_FILTER=${RELEASE_FILTER-.*}
 ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
 BUILD_PATCH=${BUILD_PATCH_FOR_NO_CHANGES-false}
+CMSSW_DEV_CYC=$(cd $CMS_BOT_DIR; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')
 
 RELEASE_QUEUES=""
 for q in `cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep -e "SCRAM_ARCH=$ARCHITECTURE_FILTER;" | grep -e "RELEASE_QUEUE=$RELEASE_FILTER;" | sed -e's/.*RELEASE_QUEUE=//;s/;.*//'` ; do
@@ -32,6 +33,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset DOCKER_IMG
     unset BUILD_PATCH_RELEASE
     unset NO_IB
+    unset PROD_ARCH
     eval "$IB_INFO"
     if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     if [ "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
@@ -79,6 +81,9 @@ for QUEUE in $RELEASE_QUEUES; do
     ORDER_INDEX=`expr $ORDER_INDEX + 1`
     BUILD_ORDER=`echo 000${ORDER_INDEX} | tail -c 4`
     mv $WORKSPACE/properties $WORKSPACE/properties-${BUILD_ORDER}-${RELEASE_NAME}-${SCRAM_ARCH}.txt
+    case ${PROD_ARCH}-${RELEASE_NAME} in
+      1-${CMSSW_DEV_CYC}_20*-2300 ) echo "RELEASE_FORMAT=$RELEASE_NAME" > $WORKSPACE/run-cmslxr ;;
+    esac
   done
 done
 

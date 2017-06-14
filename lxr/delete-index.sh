@@ -1,4 +1,4 @@
-#!/bin/bash -e 
+#!/bin/bash -ex 
 BASE_DIR=/data/lxr
 [ "X$1" = "X" ] && exit 1
 tag=$1

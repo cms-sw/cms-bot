@@ -246,9 +246,6 @@ acimmino:
 - DQM/RPCMonitorClient
 argiro:
 - .*[Ee][Cc][Aa][Ll]
-azsigmon:
-- RecoHI/HiCentralityAlgos
-- DataFormats/HeavyIonEvent
 bachtis:
 - RecoMuon
 - DataFormats/MuonReco

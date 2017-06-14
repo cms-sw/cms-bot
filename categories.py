@@ -60,6 +60,8 @@ CMSSW_L2 = {
   "davidlange6": ["operations"],
   "thuer": ["generators"],
   "vanbesien" : ["dqm"],
+  "kmaeshima" : ["dqm"],
+  "vazzolini" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "iahmad-khan" : ["externals"],
   "GurpreetSinghChahal" : ["pdmv"],

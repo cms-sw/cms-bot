@@ -18,5 +18,5 @@ if [ "X${DOCKER_LXR}" = "X" ] ; then
   sleep 120
   DOCKER_LXR=$(docker ps -a -q --filter 'name=lxr')
 fi
-docker exec -u lxr -t lxr /lxr/scripts/cleanup-db.sh "${tag}"
+docker exec -u lxr -t lxr /lxr/host_config/cleanup-db.sh "${tag}"
 

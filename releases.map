@@ -1815,3 +1815,4 @@ architecture=slc7_amd64_gcc630;label=CMSSW_9_2_3_patch2;type=Production;state=An
 architecture=slc7_aarch64_gcc530;label=CMSSW_9_2_3_patch2;type=Production;state=Announced;prodarch=0;
 architecture=slc6_amd64_gcc481;label=CMSSW_7_1_28;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc630;label=CMSSW_9_1_1_patch2;type=Production;state=Announced;prodarch=0;
+architecture=slc7_amd64_gcc630;label=CMSSW_9_1_1_patch2;type=Production;state=Announced;prodarch=0;

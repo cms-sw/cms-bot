@@ -6,6 +6,7 @@ CMSSW_DEVEL_BRANCH = "CMSSW_9_2_X"
 
 #Map of cmssw branch to milestone
 RELEASE_BRANCH_MILESTONE = {
+  "CMSSW_9_2_3_patchX": 68,
   "CMSSW_9_2_0_patchX": 67,
   "CMSSW_8_0_10_patchX": 63,
   "CMSSW_8_0_8_patchX": 62,

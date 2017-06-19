@@ -16,7 +16,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   esac
   DOCK_ARGS="voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
-  docker run --rm -h `hostname` $DOCKER_OPT \
+  docker run --rm -h `hostname -f` $DOCKER_OPT \
     -v /etc/localtime:/etc/localtime \
     -v /build/$XUSER:/build/$XUSER \
     -v /home/$XUSER:/home/$XUSER \

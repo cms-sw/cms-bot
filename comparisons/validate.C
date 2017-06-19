@@ -420,6 +420,10 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("energyCorrections().regression2EnergyError", cName,tName, true);
   photon("energyCorrections().candidateP4type", cName,tName, true);
 
+  photon("caloPosition().rho", cName,tName);
+  photon("caloPosition().phi", cName,tName);
+  photon("caloPosition().eta", cName,tName);
+
   if (tName == "patPhotons_"){
     photon("puppiChargedHadronIso", cName,tName);
     photon("puppiNeutralHadronIso", cName,tName);
@@ -1269,6 +1273,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.time()");
       plotvar("log10(HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj.obj.chi2())");
 
+      plotvar("HFPreRecHitsSorted_hfprereco__"+recoS+".obj.obj@.size()");
+      plotvar("HFPreRecHitsSorted_hfprereco__"+recoS+".obj.obj.energy()");
+      plotvar("log10(HFPreRecHitsSorted_hfprereco__"+recoS+".obj.obj.energy())");
+      plotvar("log10(HFPreRecHitsSorted_hfprereco__"+recoS+".obj.obj.energy())", "HFPreRecHitsSorted_hfprereco__"+recoS+".obj.obj.energy()>0.001");
+      plotvar("HFPreRecHitsSorted_hfprereco__"+recoS+".obj.obj.hasInfo_[0]");
+      plotvar("HFPreRecHitsSorted_hfprereco__"+recoS+".obj.obj.hasInfo_[1]");
+
       plotvar("HFRecHitsSorted_hfreco__"+recoS+".obj.obj@.size()");
       plotvar("HFRecHitsSorted_hfreco__"+recoS+".obj.obj.energy()");
       plotvar("log10(HFRecHitsSorted_hfreco__"+recoS+".obj.obj.energy())");
@@ -1710,12 +1721,17 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj@.size()");
       plotvar("log10("+tbr+recoS+".obj.pt())");
       plotvar(tbr+recoS+".obj.eta()");
-      plotvar(tbr+recoS+".obj.dz()");
+      plotvar("max(-25,min(25,"+tbr+recoS+".obj.dz()))");
       plotvar(tbr+recoS+".obj.pfIsolationDR03().chargedHadronIso()");
       plotvar(tbr+recoS+".obj.pfIsolationDR03().photonIso()");//skiped NH and puCharged
       plotvar(tbr+recoS+".obj.miniPFIsolation().chargedHadronIso()");
       plotvar(tbr+recoS+".obj.miniPFIsolation().photonIso()");//skiped NH and puCharged
-
+      plotvar(tbr+recoS+".obj.matchedCaloJetHadEnergy()");
+      plotvar(tbr+recoS+".obj.fromPV()");
+      plotvar(tbr+recoS+".obj.isHighPurityTrack()");
+      plotvar("min(30,"+tbr+recoS+".obj.dEdxStrip())");
+      plotvar("min(30,"+tbr+recoS+".obj.dEdxPixel())");
+      plotvar(tbr+recoS+".obj.deltaPhi()");
     }
     
     if ((step.Contains("all") || step.Contains("vertex")) && !step.Contains("cosmic") ){
@@ -1730,6 +1746,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       vertexVars("recoVertexs_offlinePrimaryVertices4D__");
       vertexVars("recoVertexs_offlinePrimaryVertices4DWithBS__");
 
+      vertexVars("recoVertexs_hiSelectedVertex__");
+      vertexVars("recoVertexs_hiSelectedPixelVertex__");
 
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj@.size()");
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.x()");
@@ -2002,6 +2020,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       //new ged stuff
       photonVars("gedPhotons_");
       photonVars("gedPhotonsTmp_");//HI names
+
+      //OOT photons
+      photonVars("ootPhotons_");
 
       //HI stuff
       plotvar("recoHIPhotonIsolationedmValueMap_photonIsolationHIProducer__"+recoS+".obj.values_.ecalClusterIsoR2()");

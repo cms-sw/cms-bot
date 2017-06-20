@@ -146,7 +146,7 @@ if [ "X$REQ_OK" = "XFalse" ] ; then
   popd
 fi
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
-cd src
+cd $WORKSPACE/$RELEASE_FORMAT/src
 git config --global --replace-all merge.renamelimit 2500
 
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result

@@ -92,7 +92,7 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]={
 }
 KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]["slc6_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 35584, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
 KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]["slc7_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 62720, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
-KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]["slc7_aarch64_gcc530"]={"534.0": { "step": 1, "exitcode": 256, "reason" : MSG_ARCH_INCOMPETIBILITYY}}
+KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]["slc7_aarch64_gcc530"]={"534.0": { "step": 1, "exitcode": 256, "reason" : MSG_ARCH_INCOMPETIBILITY}}
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}

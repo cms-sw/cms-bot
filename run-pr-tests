@@ -141,7 +141,7 @@ if [ "X$REQ_OK" = "XFalse" ] ; then
     if [ -z $PYTHONPATH ] ; then 
       export PYTHONPATH=$WORKSPACE/requests-2.3.0
     else
-      export PYTHONPATH=$WORKSPACE/requests-2.3.0:$PYTHONPATH
+      export PYTHONPATH=$PYTHONPATH:$WORKSPACE/requests-2.3.0
     fi
   popd
 fi

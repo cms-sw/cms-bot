@@ -213,7 +213,7 @@ add_tests_to_row = function( tests, row, arch, type, ib ){
 
         r_class = "label label-danger"
         test_label = "Pass: " + testDetails.num_passed
-        if (known_err>0) {test_label = test_label +" ( "+known_err+" )";}
+        if (known_err>0) {test_label = test_label +"&nbsp;(&nbsp;"+known_err+"&nbsp;)";}
         test_label = test_label + " Fail: " + testDetails.num_failed
       }
       if ( result_tests.done == false )

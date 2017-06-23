@@ -185,8 +185,10 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   echo "Setting up new tool: $tool"
   scram setup $tool
 done
+scram build -r
 eval $(scram runtime -sh)
 set -x
+echo $CMSSW_SEARCH_PATH
 
 # Search for CMSSW package that might depend on the compiled externals
 touch $WORKSPACE/cmsswtoolconf.log

@@ -147,13 +147,15 @@ export SCRAM_ARCH=$ARCHITECTURE
 scram -a $SCRAM_ARCH project $CMSSW_IB
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
 
-if [ $(grep 'V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
-  git clone git@github.com:cms-sw/cmssw-config
-  pushd cmssw-config
-    git checkout V05-05-22
-  popd
-  mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
-  cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
+if [ $(grep '^V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
+  if [ $(sed -e 's|^V05-05-||' $CMSSW_IB/config/config_tag) -lt 24 ] ; then
+    git clone git@github.com:cms-sw/cmssw-config
+    pushd cmssw-config
+      git checkout V05-05-24
+    popd
+    mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
+    cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
+  fi
 fi
 cd $CMSSW_IB/src
 

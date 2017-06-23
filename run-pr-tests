@@ -306,7 +306,6 @@ else
 fi
 
 scram build clean
-
 git cms-checkdeps -A -a
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 ############################################

@@ -17,6 +17,9 @@ if __name__ == "__main__":
     exit(1)
 
   if pr.base.ref == "master":
+    #Remove/Comment next 2 lines once CMSSW_9_3_X IB and comparison base line is available
+    print "CMSSW_9_2_X"
+    exit (0)
     from commands import getstatusoutput
     e, o = getstatusoutput("grep ';RELEASE_BRANCH=master;' %s | grep 'PROD_ARCH=1;' | sed 's|.*;RELEASE_QUEUE=||;s|;.*||'" % argv[2])
     print o

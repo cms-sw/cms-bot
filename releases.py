@@ -2,7 +2,7 @@
 # Changes from master branch will be merge in to it
 # Any PR open against this will be automatically closed by cms-bot (Pr should be made for master branch)
 # For new release cycle just change this and make sure to add its milestone and production branches
-CMSSW_DEVEL_BRANCH = "CMSSW_9_2_X"
+CMSSW_DEVEL_BRANCH = "CMSSW_9_3_X"
 
 #Map of cmssw branch to milestone
 RELEASE_BRANCH_MILESTONE = {
@@ -88,6 +88,12 @@ RELEASE_BRANCH_MILESTONE["CMSSW_9_2_X"]=66
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_2_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_2_ROOT6_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_2_DEVEL_X")
+
+#CMSSW_9_3_X release cycle
+RELEASE_BRANCH_MILESTONE["CMSSW_9_3_X"]=69
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_ROOT6_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_DEVEL_X")
 
 ######################################################################
 # Added by smuzafar for Development release cycle

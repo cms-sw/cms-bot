@@ -33,7 +33,12 @@ def monitor(stop):
   p = psutil.Process(getpid())
   cmdline = " ".join(p.parent().cmdline())
   if "cmsDriver.py " in  cmdline:
-    step = cmdline.split("cmsDriver.py ")[1].strip().split(" ")[0]
+    cmdargs=cmdline.split("cmsDriver.py ",1)[1].strip()
+    step=None
+    if cmdargs.startswith("step"):
+      step=cmdargs.split(" ")[0]
+    elif ' --fileout ' in cmdargs:
+      step =cmdargs.split(' --fileout ',1)[1].strip().split(" ")[0].replace("file:","").replace(".root","")
     if not "step" in step: step="step1"
   else: step=stime
   data = []

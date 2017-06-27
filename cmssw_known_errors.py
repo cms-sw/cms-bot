@@ -4,7 +4,7 @@ from copy import deepcopy
 MSG_GCC_ABI_INCOMPETIBILITY = "GCC ABI incompetibility. GridPacks were built with gcc4"
 MSG_ARCH_INCOMPETIBILITY = "Architecture incompetibility. GridPacks were built for x86_64"
 KNOWN_ERRORS = {"relvals":{}, "addons":{}, "unittests":{}}
-KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]={
+KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]={
   "slc._amd64_gcc630": {
     "512.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "513.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
@@ -90,9 +90,9 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]={
     "25213.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
   }
 }
-KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]["slc6_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 35584, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
-KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]["slc7_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 62720, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
-KNOWN_ERRORS["relvals"]["CMSSW_9_2_.+"]["slc7_aarch64_gcc530"]={"534.0": { "step": 1, "exitcode": 256, "reason" : MSG_ARCH_INCOMPETIBILITY}}
+KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc6_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 35584, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
+KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc7_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 62720, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
+KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc7_aarch64_gcc530"]={"534.0": { "step": 1, "exitcode": 256, "reason" : MSG_ARCH_INCOMPETIBILITY}}
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}

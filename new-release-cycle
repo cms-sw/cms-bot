@@ -32,7 +32,7 @@ def create_branch(repo, base_branch, new_branch, dryRun=False):
     print "DryRun: Creating new branch ",new_branch," based on ",base_ref.commit.sha
   return
 
-def get_milestone(milestone_name):
+def get_milestone(repo, milestone_name):
   milestones = repo.get_milestones()
   for item in repo.get_milestones():
     if milestone_name in item.title: return item
@@ -40,7 +40,7 @@ def get_milestone(milestone_name):
 
 def create_milestone(repo, milestone_name, dryRun=False):
   print "Creating new milestone '%s'" % milestone_name
-  milestone = get_milestone (milestone_name)
+  milestone = get_milestone (repo, milestone_name)
   if milestone: return milestone
   if not dryRun:
     milestone = repo.create_milestone (milestone_name)
@@ -63,24 +63,31 @@ def add_milestone_in_cmsbot(cycle, milestone, dryRun=False):
       relFile.write('RELEASE_BRANCH_MILESTONE["%s"]=%s\n' % (cycle, milestone.number))
       relFile.write('RELEASE_BRANCH_PRODUCTION.append("%s")\n' % (cycle))
     print "Wrote release milestone information for %s" % cycle
-    err, out = getstatusoutput("sed -i -e 's|^ *CMSSW_DEVEL_BRANCH *=.*$|CMSSW_DEVEL_BRANCH=%s|' %s" % (cycle,join(scriptPath,"releases.py")))
+    err, out = getstatusoutput("sed -i -e 's|^ *CMSSW_DEVEL_BRANCH *=.*$|CMSSW_DEVEL_BRANCH = \"%s\"|' %s" % (cycle,join(scriptPath,"releases.py")))
     print "Updated Development release cycle %s in releases.py file" % cycle
   else:
-    print "DryRun: RELEASE_BRANCH_MILESTONE[\"%s\"]=%s" % (cycle, milestone.number)
-    print "DryRun: CMSSW_DEVEL_BRANCH=%s" % cycle
+    print "DryRun: RELEASE_BRANCH_MILESTONE[\"%s\"] = MILESTONE_NUM" % cycle
+    print "DryRun: CMSSW_DEVEL_BRANCH=\"%s\"" % cycle
     print "DryRun: Writing release milestone information for %s" % cycle
   return
 
-def update_milestone(repo, source, srcMileStone, desMileStone):
+def update_config_map(devCycle, dryRun=False):
+  if not dryRun:
+    err, out = getstatusoutput("sed -i -e 's|RELEASE_BRANCH=master;|RELEASE_BRANCH=%s;|g' %s" % (devCycle,join(scriptPath,"config.map")))
+    print "Updated config.map to use %s branch (instead of master) for %s IBs" % (devCycle, devCycle)
+  else:
+    print "DryRun: Use %s branch for existing developement release cycle" % devCycle
+
+def update_milestone(repo, source, srcMilestone, desMilestone, dryRun=False):
   pulls = repo.get_pulls(base=source, state="open", sort="created", direction="asc")
   for pr in pulls:
-    if pr.milestone.number == desMilestone.number: continue
     print "Wroking on PR ",pr.number,"with milestone",pr.milestone.number
+    if (not dryRun) and (pr.milestone.number == desMilestone.number): continue
     if pr.milestone.number == srcMilestone.number:
-      if not args.dryRun:
+      if not dryRun:
         issue = repo.get_issue(pr.number)
         issue.edit(milestone=desMilestone)
-      print "  Updated milestone:",desMilestone.number
+      print "  Updated milestone for PR %s:",pr.number
     else:
       print "  Invalid Source Milestone:",pr.milestone.number
   return
@@ -88,7 +95,7 @@ def update_milestone(repo, source, srcMileStone, desMileStone):
 def process(cycle, dryRun):
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   cmssw_repo   = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO)
-  srcMileStone = get_milestone(CMSSW_DEVEL_BRANCH)
+  srcMileStone = get_milestone(cmssw_repo, CMSSW_DEVEL_BRANCH)
 
   if not srcMileStone:
     print "ERROR: Unable to get milestone for %s" % CMSSW_DEVEL_BRANCH
@@ -101,10 +108,13 @@ def process(cycle, dryRun):
   desMileStone = create_milestone(cmssw_repo, cycle, dryRun)
 
   #Update milestone for existing Open PRs
-  update_milestone(cmssw_repo, "master", srcMileStone, desMileStone)
+  update_milestone(cmssw_repo, "master", srcMileStone, desMileStone, dryRun)
 
   #Add milestone on
-  add_milestone_in_cmsbot (cycle, milestone, dryRun)
+  add_milestone_in_cmsbot (cycle, desMileStone, dryRun)
+
+  #make sure that existing dev IB use the dev branch instead of master branch
+  update_config_map(CMSSW_DEVEL_BRANCH, dryRun)
 
   err, out = getstatusoutput("cd %s; git diff origin" % scriptPath)
   print "GIT DIFF:\n",out

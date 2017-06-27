@@ -19,6 +19,7 @@ if __name__ == "__main__":
   parser.add_argument("-s", "--source", dest="source", help="Source repository, default is master", type=str, default="master")
   parser.add_argument("-d", "--dest")
   parser.add_argument("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default=gh_user+"/"+gh_cmssw)
+  parser.add_argument("-f", "--force",  dest="force", default=False, action="store_true")
   parser.add_argument("-n", "-dry-run", dest="dryRun", default=False, action="store_true")
   args = parser.parse_args()
 
@@ -40,12 +41,13 @@ if __name__ == "__main__":
     print "Error: Same milestone %s for %s and %s branches" % (srcMilestone,args.source,args.dest)
     exit(1)
 
-  pulls = repo.get_pulls(base=args.source, state="open")
+  pulls = repo.get_pulls(base=args.source, state="open", sort="created", direction="asc")
   for pr in pulls:
     print "Wroking on PR ",pr.number,"with milestone",pr.milestone.number
     if pr.milestone.number == srcMilestone.number:
       if not args.dryRun:
         issue = repo.get_issue(pr.number)
+        if args.force: issue.edit(milestone=None)
         issue.edit(milestone=desMilestone)
       print "  Updated milestone:",desMilestone.number
     elif pr.milestone.number == desMilestone.number:

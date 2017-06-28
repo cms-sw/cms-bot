@@ -17,8 +17,10 @@ if __name__ == "__main__":
     exit(1)
 
   if pr.base.ref == "master":
+    from releases import CMSSW_DEVEL_BRANCH
     from commands import getstatusoutput
-    e, o = getstatusoutput("grep ';RELEASE_BRANCH=master;' %s | grep 'PROD_ARCH=1;' | sed 's|.*;RELEASE_QUEUE=||;s|;.*||'" % argv[2])
+    e, o = getstatusoutput("curl -s -L https://cmssdt.cern.ch/SDT/BaselineDevRelease | grep '^CMSSW_'")
+    if not o: o = CMSSW_DEVEL_BRANCH
     print o
   else:
     print pr.base.ref

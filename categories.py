@@ -70,7 +70,8 @@ CMSSW_L2 = {
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],
   "kpedro88" : ["upgrade"],
-  "mrodozov" : ["externals"]
+  "mrodozov" : ["externals"],
+  "lpernie" : ["alca"]
 }
 
 CMSSW_CATEGORIES={

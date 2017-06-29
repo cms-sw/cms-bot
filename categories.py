@@ -57,7 +57,7 @@ CMSSW_L2 = {
   "ssekmen": ["fastsim"],
   "govoni": ["generators"],
   "perrozzi": ["generators"],
-  "efe": ["generators"],
+  "efeyazgan": ["generators"],
   "davidlange6": ["operations"],
   "thuer": ["generators"],
   "vanbesien" : ["dqm"],

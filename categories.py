@@ -238,6 +238,7 @@ CMSSW_CATEGORIES={
    "PhysicsTools/PatUtils",
    "PhysicsTools/SelectorUtils",
    "RecoCTPPS/Configuration",
+   "RecoCTPPS/PixelLocal",
    "RecoCTPPS/TotemRPLocal",
    "RecoLocalCalo/CaloRecCandCreator",
    "RecoLocalCalo/CaloTowersCreator",

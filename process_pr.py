@@ -139,6 +139,14 @@ def check_test_cmd(first_line):
     return (True, cmsdist_pr, cmssw_prs, wfs)
   return (False, "", "", "")
 
+def get_changed_files(pr):
+  if pr.changed_files<=300: return [f.filename for f in pr.get_files()]
+  from commands import getstatusoutput
+  cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq" % pr.number
+  e , o = getstatusoutput(cmd)
+  if e: return []
+  return o.split("\n")
+
 def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   import yaml
   if ignore_issue(repo, issue): return
@@ -182,8 +190,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     # Process the changes for the given pull request so that we can determine the
     # signatures it requires.
     if cmssw_repo:
-      packages = sorted([x for x in set(["/".join(x.filename.split("/", 2)[0:2])
-                           for x in pr.get_files()])])
+      packages = sorted([x for x in set(["/".join(f.split("/", 2)[0:2])
+                           for f in get_changed_files(pr)])])
+      print "First Package: ",packages[0]
       updateMilestone(repo, issue, pr, dryRun)
       create_test_property = True
     else:

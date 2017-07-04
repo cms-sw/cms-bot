@@ -102,6 +102,8 @@ makortel:
   - DataFormats/Si
   - DataFormats/Tra
   - DataFormats/VertexReco
+  - DQMServices/ClientConfig
+  - DQM/Integration
   - DQM/Track
   - EventFilter/Si
   - FWCore/Utilities

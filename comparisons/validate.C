@@ -1529,11 +1529,37 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("min("+tbr+recoS+".obj.collection_.data_.chi2(),99.99)");
       plotvar(tbr+recoS+".obj.collection_.data_.degreesOfFreedom()");
 
+      tbr="DTChamberIdDTRecSegment4DsOwnedRangeMap_slimmedMuons__";
+      plotvar(tbr+recoS+".obj.collection_.data_@.size()");
+      plotvar("min("+tbr+recoS+".obj.collection_.data_.chi2(),99.99)");
+      plotvar(tbr+recoS+".obj.collection_.data_.degreesOfFreedom()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().x()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().y()");
+      //plotvar(tbr+recoS+".obj.collection_.data.localPosition().z()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xx()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().yy()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xy()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localDirection().x()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localDirection().y()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localDirection().z()");
     }
 
     if ((step.Contains("all") || step.Contains("csc")) && !step.Contains("cosmic") ){
       //csc rechits
       tbr="CSCDetIdCSCSegmentsOwnedRangeMap_cscSegments__";
+      plotvar(tbr+recoS+".obj.collection_.data_@.size()");
+      if (detailled)      plotvar(tbr+recoS+".obj.collection_.data_.weight()");
+      plotvar("log10("+tbr+recoS+".obj.collection_.data_.chi2())");
+      plotvar(tbr+recoS+".obj.collection_.data_.chi2()");
+      plotvar(tbr+recoS+".obj.collection_.data_.degreesOfFreedom()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().x()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPosition().y()");
+      if (detailled)      plotvar(tbr+recoS+".obj.collection_.data_.type()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xx()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().yy()");
+      plotvar(tbr+recoS+".obj.collection_.data_.localPositionError().xy()");
+
+      tbr="CSCDetIdCSCSegmentsOwnedRangeMap_slimmedMuons__";
       plotvar(tbr+recoS+".obj.collection_.data_@.size()");
       if (detailled)      plotvar(tbr+recoS+".obj.collection_.data_.weight()");
       plotvar("log10("+tbr+recoS+".obj.collection_.data_.chi2())");
@@ -1715,7 +1741,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
     if (step.Contains("all")) {
       packedCand("packedPFCandidates_");
-      //packedCand("lostTracks_");
+      packedCand("lostTracks_");
+      packedCand("lostTracks_eleTracks");
+
 
       tbr="patIsolatedTracks_isolatedTracks__";
       plotvar(tbr+recoS+".obj@.size()");
@@ -2447,6 +2475,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       jets("patJets","slimmedJets");
       jets("patJets","slimmedJetsAK8");
       jets("patJets","slimmedJetsPuppi");
+      jets("recoCaloJets", "slimmedCaloJets");
       //jets("patJets","slimmedJetsAK8PFCHSSoftDropPacked_SubJets");
       //jets("patJets","slimmedJetsCMSTopTagCHSPacked_SubJets");
     }

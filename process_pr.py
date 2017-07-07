@@ -171,6 +171,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if issue.pull_request:
     try:
       pr   = repo.get_pull(prId)
+      if pr.changed_files==0:
+        print "Ignoring: PR with no files changed"
+        return
       if cmssw_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
         if pr.state != "closed":
           print "This pull request must go in to master branch"
@@ -190,9 +193,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     # Process the changes for the given pull request so that we can determine the
     # signatures it requires.
     if cmssw_repo:
-      if pr.changed_files==0:
-        print "Ignoring: PR with no files changed"
-        return
       packages = sorted([x for x in set(["/".join(f.split("/", 2)[0:2])
                            for f in get_changed_files(pr)])])
       print "First Package: ",packages[0]

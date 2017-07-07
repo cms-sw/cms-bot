@@ -26,7 +26,7 @@ else
 fi
 
 cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/TrackerMaterialBudgetComparison.C .
-root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > compare.log 2>&1 || cat compare.log
+root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > compare.log 2>&1 || (cat compare.log && exit 1)
 rm -f matbdg_Tracker*.root TrackerMaterialBudgetComparison.C
 if [ "$PR_TESTS" = "NO" ] ; then
   ln -sf ../../../../material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH} ref

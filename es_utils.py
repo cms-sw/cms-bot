@@ -95,5 +95,5 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
     for step in wf_stats[wf]:
       hits = wf_stats[wf][step]
       thits = len(hits)
-      wf_stats[wf][step] = [ int(sum([h[0] for h in hits])/thits), int(sum([h[1] for h in hits])/thits), int(sum([h[2] for h in hits])/thits) ]
+      wf_stats[wf][step] = { "time" : int(sum([h[0] for h in hits])/thits), "rss" : int(sum([h[1] for h in hits])/thits), "cpu" : int(sum([h[2] for h in hits])/thits) }
   return wf_stats

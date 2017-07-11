@@ -25,11 +25,9 @@ else
   get_jenkins_artifacts material-budget-ref/${REF_CMSSW_VERSION}/${SCRAM_ARCH}/matbdg_Tracker.root `pwd`/matbdg_Tracker_old.root || exit 1
 fi
 
-if [ -e $CMSSW_BASE/src/Validation/Geometry/test/TrackerMaterialBudgetComparison.C ] ; then
-  cp $CMSSW_BASE/src/Validation/Geometry/test/TrackerMaterialBudgetComparison.C .
-else
-  cp $CMSSW_RELEASE_BASE/src/Validation/Geometry/test/TrackerMaterialBudgetComparison.C .
-fi
+VGEO_DIR=$CMSSW_BASE/src/Validation/Geometry
+if [ ! -e $VGEO_DIR ] ; then VGEO_DIR=$CMSSW_RELEASE_BASE/src/Validation/Geometry ; fi
+cp ${VGEO_DIR}/test/TrackerMaterialBudgetComparison.C .
 root -l -b -q 'TrackerMaterialBudgetComparison.C("Tracker")' > compare.log 2>&1 || (cat compare.log && exit 1)
 rm -f matbdg_Tracker*.root TrackerMaterialBudgetComparison.C
 if [ "$PR_TESTS" = "NO" ] ; then

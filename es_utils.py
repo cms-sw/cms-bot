@@ -89,7 +89,7 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
     step = hit["step"]
     if not wf in wf_stats: wf_stats[wf]={}
     if not step in wf_stats[wf]:wf_stats[wf][step]=[]
-    wf_stats[wf][step].append([hit['time'], hit[rss], hit[cpu], (hit["rss_avg"]+hit["rss_max"])/2, (hit["cpu_avg"]+hit["cpu_max"])/2])
+    wf_stats[wf][step].append([hit['time'], hit[rss], hit[cpu], hit["rss_max"], hit["cpu_max"]])
 
   for wf in wf_stats:
     for step in wf_stats[wf]:
@@ -98,7 +98,7 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
       time_v = int(sum([h[0] for h in hits])/thits)
       rss_v = int(sum([h[1] for h in hits])/thits)
       cpu_v = int(sum([h[2] for h in hits])/thits)
-      if rss_v==0: int(sum([h[3] for h in hits])/thits)
-      if cpu_v==0: int(sum([h[4] for h in hits])/thits)
+      if rss_v<1024: rss_v = int(sum([h[3] for h in hits])/thits)
+      if cpu_v<10: cpu_v = int(sum([h[4] for h in hits])/thits)
       wf_stats[wf][step] = { "time" : time_v, "rss" : rss_v, "cpu" : cpu_v }
   return wf_stats

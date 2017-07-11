@@ -415,6 +415,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
     echo 'DQM_TESTS;NOTRUN' >> $RESULTS_FILE
   fi
 
+  TEST_ERRORS=$(grep -i 'had errors\|recipe for target' $WORKSPACE/unitTests.log | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
   TEST_ERRORS=`grep -i "had errors" $WORKSPACE/unitTests.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/unitTests.log` || true
 

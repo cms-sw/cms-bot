@@ -2,7 +2,8 @@
 
 kinit -R
 WORKSPACE=${WORKSPACE-$PWD}
-MIRROR=/afs/.cern.ch/cms/git-cmssw-mirror
+#MIRROR=/afs/.cern.ch/cms/git-cmssw-mirror
+MIRROR=/data/git-mirrors
 CERN_GIT=ssh://git@gitlab.cern.ch:7999/cms-sw
 GITHUB=https://github.com/cms-sw
 REPOS="cmssw:cmssw cmsdist:cmsdist pkgtools:pkgtools cmssw-config:cmssw-config SCRAM:SCRAM"
@@ -21,8 +22,12 @@ done
 cd ${WORKSPACE}
 rm -rf ${WORKSPACE}/repos
 
-/afs/cern.ch/cms/sdt/internal/requestHandler/requestGitMirrorSync.py
-du -sh /afs/.cern.ch/cms/git-cmssw-mirror
+case $MIRROR in
+  /afs/* )
+    /afs/cern.ch/cms/sdt/internal/requestHandler/requestGitMirrorSync.py
+    du -sh /afs/.cern.ch/cms/git-cmssw-mirror
+    ;;
+esac
 
 for item in $REPOS; do
   GH_REPO=`echo $item | sed 's|:.*||'`

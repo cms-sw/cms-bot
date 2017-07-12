@@ -280,9 +280,21 @@ if [ "X$CMSDIST_ONLY" == "Xfalse" ]; then # If a CMSSW specific PR was specified
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Code Rules Checks" $DRY_RUN
   mkdir $WORKSPACE/codeRules
   cmsCodeRulesChecker.py -s $WORKSPACE/codeRules -r 1,3 || true
-  QA_COUNT=$(cat $WORKSPACE/codeRules/cmsCodeRule*.txt | grep '^/' | sed 's|^/||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
-  QA_RES="ERROR"
-  if [ "X$QA_COUNT" = "X0" ] ; then QA_RES="OK" ; fi
+  QA_RES="OK"
+  for r in $(find $WORKSPACE/codeRules -name 'cmsCodeRule*.txt' -type f) ; do
+    QA_COUNT=$(grep '^/' $r | sed 's|^/||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
+    if [ "X$QA_COUNT" = "X0" ] ; then
+      rm -f $r
+    else
+      CRULE=$(echo $r | sed 's|.*/cmsCodeRule||;s|.txt$||')
+      echo "Rule$CRULE $description: https://raw.githubusercontent.com/cms-sw/cmssw/master/Utilities/ReleaseScripts/python/cmsCodeRules/config.py" > $r.new
+      python -c "from Utilities.ReleaseScripts.cmsCodeRules.config import Configuration as x;print x['$CRULE']['description']" >> $r.new
+      echo "" >> $r.new
+      cat $r >> $r.new
+      mv $r.new $r
+      QA_RES="ERROR"
+    fi
+  done
 fi
 echo "CODE_RULES;${QA_RES}" >> $RESULTS_FILE
 

@@ -4,7 +4,7 @@ kinit -R
 WORKSPACE=${WORKSPACE-$PWD}
 #MIRROR=/afs/.cern.ch/cms/git-cmssw-mirror
 MIRROR=/data/git-mirrors
-CERN_GIT=ssh://git@gitlab.cern.ch:7999/cms-sw
+CERN_GIT=https://:@gitlab.cern.ch:8443/cms-sw
 GITHUB=https://github.com/cms-sw
 REPOS="cmssw:cmssw cmsdist:cmsdist pkgtools:pkgtools cmssw-config:cmssw-config SCRAM:SCRAM"
 

@@ -353,6 +353,9 @@ forthommel:
 - RecoLocalTracker/Records
 - RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
+- RecoCTPPS/
+- EventFilter/CTPPSRawToDigi
+- CondFormats/CTPPSReadoutObjects
 gbenelli:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration

@@ -1167,6 +1167,18 @@ seemasharmafnal:
 - RecoMET/
 - Validation/RecoJets
 - Validation/RecoMET
+erikbutz:
+- DQM/SiStripCommissioningAnalysis
+- DQM/SiStripCommissioningClients
+- DQM/SiStripCommissioningDbClients
+- DQM/SiStripCommissioningSources
+- DQM/SiStripCommissioningSummary
+- DQM/SiStripCommon
+- OnlineDB/SiStripConfigDb
+- OnlineDB/SiStripESSources
+- OnlineDB/SiStripO2O
+- DataFormats/SiStripCommon
+- CondFormats/SiStripObjects
 DryRun:
 - DQM/HcalCommon
 - DQM/HcalTasks

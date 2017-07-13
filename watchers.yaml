@@ -1105,6 +1105,10 @@ felicepantaleo:
 - TrackPropagation
 - Validation/RecoTrack
 - Validation/RecoVertex
+- RecoLocalCalo/HGCalRecAlgos
+- DataFormats/HGCRecHit
+- RecoLocalCalo/HGCalRecProducers
+- RecoParticleFlow/PFClusterProducer
 mtosi:
 - DQMOffline/Trigger
 - DQM/HLTEvF

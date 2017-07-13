@@ -147,8 +147,10 @@ def get_config_map_params():
     additional_tests = params.get( 'ADDITIONAL_TESTS' )
 
     if additional_tests:
-      if not RELEASE_ADITIONAL_TESTS.get( release_queue ):
-        RELEASE_ADITIONAL_TESTS[ release_queue ] = {}
+      if RELEASE_ADITIONAL_TESTS.get( release_queue ): continue
+      RELEASE_ADITIONAL_TESTS[ release_queue ] = {}
+      #if not RELEASE_ADITIONAL_TESTS.get( release_queue ):
+      #  RELEASE_ADITIONAL_TESTS[ release_queue ] = {}
       RELEASE_ADITIONAL_TESTS[ release_queue ][ arch ] = [ test for test in additional_tests.split( ',' ) if test != 'dqm' ]
 
   SP_REL_REGEX = "|".join(SPECIAL_RELEASES)

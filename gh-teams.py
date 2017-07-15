@@ -37,7 +37,7 @@ REPO_TEAMS["cms-data"]["Developers"] =  {
 #Teams for cms-externals
 REPO_TEAMS["cms-externals"]["Developers"] = deepcopy(REPO_TEAMS["cms-data"]["Developers"])
 REPO_TEAMS["cms-externals"]["boost-developers"] = { "members": ["fwyzard"], "repositories" : { "boost" : "push" } }
-REPO_TEAMS["cms-externals"]["Developers"]["members"].appned("gartung")
+REPO_TEAMS["cms-externals"]["Developers"]["members"].append("gartung")
 
 #Teams for cms-sw
 REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = { 

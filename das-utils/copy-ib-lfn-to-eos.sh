@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 export EOS_MGM_URL="root://eoscms.cern.ch"
-eos_cmd="/afs/cern.ch/project/eos/installation/0.3.84-aquamarine/bin/eos.select"
+eos_cmd="/usr/bin/eos"
 eos_base="/store/user/cmsbuild"
 xrd_eos_base="root://eoscms.cern.ch//eos/cms"
 lfn=$1

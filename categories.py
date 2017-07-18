@@ -64,7 +64,6 @@ CMSSW_L2 = {
   "kmaeshima" : ["dqm"],
   "vazzolini" : ["dqm"],
   "fabozzi" : ["pdmv"],
-  "iahmad-khan" : ["externals"],
   "GurpreetSinghChahal" : ["pdmv"],
   "kkousour" : ["pdmv"],
   "ghellwig" : ["alca"],

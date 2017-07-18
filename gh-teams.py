@@ -9,7 +9,7 @@ from github_utils import api_rate_limits, github_api,add_organization_member
 setdefaulttimeout(120)
 
 CMS_OWNERS = [ "smuzaffar", "cmsbuild", "davidlange6" ]
-CMS_SDT    = [ "iahmad-khan", "mrodozov" ]
+CMS_SDT    = [ "mrodozov" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
 REPO_OWNERS = {}
@@ -21,8 +21,8 @@ for org in CMS_ORGANIZATIONS:
 #################################
 #Set Extra owners for repos     #
 #################################
-REPO_OWNERS["cms-data"]      += ["iahmad-khan"]
-REPO_OWNERS["cms-externals"] += ["iahmad-khan"]
+REPO_OWNERS["cms-data"]      += []
+REPO_OWNERS["cms-externals"] += []
 REPO_OWNERS["cms-sw"]        += [ "davidlt", "sextonkennedy" ]
 
 #################################

@@ -559,7 +559,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
   # We update labels only if they are different.
   old_labels = set([x.name for x in issue.labels])
+  print "Old Labels:",old_labels
   if ("backport-ok" in old_labels) and ("backport" in labels):
+    print "Replacing backport with backport-ok label"
     labels.remove("backport")
     labels.add("backport-ok")
   print "The labels of the pull request should be:\n  "+"\n  ".join(labels)

@@ -20,6 +20,7 @@ COMMON_LABELS = {
   "bug-fix" : "b8860b",
   "new-feature" : "0000ff",
   "backport" : "0000ff",
+  "backport-ok" : LABEL_COLORS["approved"],
   "urgent"   : "cc317c",
   "process-complete" : "006b75",
   "hold": LABEL_COLORS["hold"],

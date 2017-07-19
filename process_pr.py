@@ -557,10 +557,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if need_external: labels.append("requires-external")
   labels = set(labels)
 
-  print "The labels of the pull request should be:\n  "+"\n  ".join(labels)
-
   # We update labels only if they are different.
   old_labels = set([x.name for x in issue.labels])
+  if ("backport-ok" in old_labels) and ("backport" in labels):
+    labels.remove("backport")
+    labels.add("backport-ok")
+  print "The labels of the pull request should be:\n  "+"\n  ".join(labels)
+
   new_categories  = set ([])
   for nc_lab in pkg_categories:
     ncat = [ nc_lab for oc_lab in old_labels if oc_lab.startswith(nc_lab+'-') ]

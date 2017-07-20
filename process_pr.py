@@ -390,7 +390,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=CMSBUILD_GH_USER):
 
     # Ignore all other messages which are before last commit.
     if issue.pull_request and (comment.created_at < last_commit_date):
-      print "Ignoring comment done before the last commit."
       pull_request_updated = True
       continue
 

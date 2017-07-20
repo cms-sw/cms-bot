@@ -4,7 +4,10 @@ from commands import getstatusoutput
 from os.path import exists, dirname, abspath
 import re
 from cms_static import GH_CMSSW_ORGANIZATION
-from github import UnknownObjectException
+try:
+  from github import UnknownObjectException
+except:
+  class UnknownObjectException(Exception): pass
 
 try:
   scriptPath = dirname(abspath(__file__))
@@ -269,16 +272,28 @@ def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
   if state: params["state"]=state
   return github_api (uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
 
-def github_api(uri, token, params={}, method="POST"):
+def github_api(uri, token, params={}, method="POST", headers={}, page=1, page_range=[]):
   import urllib2
   url = "https://api.github.com%s" % uri
   data=""
   if method=="GET":
-    import urllib
-    url=url+"?"+urllib.urlencode(params)
+    if params:
+      import urllib
+      url=url+"?"+urllib.urlencode(params)
   else:
     data = json.dumps(params)
-  request = urllib2.Request(url, data=data, headers={"Authorization" : "token " + token })
+  if page>1:
+    if not "?" in url: url=url+"?"
+    url=url+"page="+str(page)
+  headers["Authorization"]="token " + token
+  request = urllib2.Request(url, data=data, headers=headers)
   request.get_method = lambda: method
-  return json.loads(urllib2.urlopen(request).read())
+  response = urllib2.urlopen(request)
+  if page<=1:
+    link =  response.info().getheader("Link")
+    if link:
+       pages=[ int(l.split("page=",1)[1].split(">")[0]) for l in link.split(" ") if "https://api.github.com" in l ]
+       if len(pages)==2: page_range += range(pages[0],pages[1]+1)
+       elif len(pages)==1: page_range += pages
+  return json.loads(response.read())
 

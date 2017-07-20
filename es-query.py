@@ -10,13 +10,13 @@ parser.add_option("-d", "--days",   dest="days",   default=7, type="int", help="
 parser.add_option("-o", "--offset", dest="offset", default=0, type="int", help="Number of days to offset from the current day. Default is 0")
 opts, args = parser.parse_args()
 
-end_time=1000*int(time())-(opts.offset*86400*1000)
-stats = es_query(index=opts.index,query=opts.query,start_time=end_time-(86400*opts.days*1000),end_time=end_time)
+end_time=int(time())-(opts.offset*86400)
+stats = es_query(index=opts.index,query=opts.query,start_time=1000*(end_time-(86400*opts.days)),end_time=end_time*1000)
 matched=[]
 for h in stats['hits']['hits']:
   hit = h["_source"]
   if 'TBranchElement::GetBasket' in hit['exception']: matched.append(hit)
 
 for hit in sorted(matched,key=itemgetter('@timestamp')):
-    print hit['release'],hit['architecture'],hit['workflow'],hit['step'],"\n",hit['exception'],
+    print "Release:",hit['release'],"\nArchitecture:",hit['architecture'],"\nWorkflow:",hit['workflow']+"/"+hit['step'],"\nException:",hit['exception'],"\n-----------------------------------------"
 

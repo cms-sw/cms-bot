@@ -2,7 +2,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, C
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, CMSSW_DEVEL_BRANCH
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
-from cms_static import CMSSW_PULL_REQUEST_COMMANDS
+from cms_static import CMSSW_PULL_REQUEST_COMMANDS, BACKPORT_STR, CMSBUILD_GH_USER
 import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
@@ -119,13 +119,16 @@ def ignore_issue(repo, issue):
 
 def check_extra_labels(first_line, extra_labels):
   if "bug" in first_line:
-    extra_labels["type"]="bug-fix"
+    extra_labels["type"]=["bug-fix"]
   elif "feature" in first_line:
-    extra_labels["type"]="new-feature"
+    extra_labels["type"]=["new-feature"]
   elif "urgent" in first_line:
-    extra_labels["urgent"]="urgent"
+    extra_labels["urgent"]=["urgent"]
   elif "backport" in first_line:
-    extra_labels["backport"]="backport"
+    bp_pr = ""
+    if "#" in first_line: bp_pr = first_line.split("#",1)[1].strip()
+    else: br_pr = first_line.split("/pull/",1)[1].strip("/").strip()
+    extra_labels["backport"]=["backport", bp_pr]
 
 def check_test_cmd(first_line):
   m = REGEX_TEST_REQ.match(first_line)
@@ -147,7 +150,13 @@ def get_changed_files(pr):
   if e: return []
   return o.split("\n")
 
-def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
+def get_backported_pr(msg):
+  if BACKPORT_STR in msg:
+    bp_num=msg.split(BACKPORT_STR,1)[-1].split("\n",1)[0].strip()
+    if re.match("^[1-9][0-9]*$",bp_num): return bp_num
+  return ""
+
+def process_pr(gh, repo, issue, dryRun, cmsbuild_user=CMSBUILD_GH_USER):
   import yaml
   if ignore_issue(repo, issue): return
   prId = issue.number
@@ -168,6 +177,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   watchers = []
   #Process Pull Request
   pkg_categories = set([])
+  REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   if issue.pull_request:
     try:
       pr   = repo.get_pull(prId)
@@ -287,7 +297,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
-  already_seen = False
+  already_seen = None
   pull_request_updated = False
   comparison_done = False
   comparison_notrun = False
@@ -307,10 +317,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
   abort_test = False
   need_external = False
+  backport_pr_num = ""
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,body_firstline):
-    already_seen = True
-  elif re.match("^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)#\d+$", body_firstline, re.I):
+    already_seen = issue
+    backport_pr_num = get_backported_pr(issue.body.encode("ascii", "ignore"))
+  elif re.match(REGEX_EX_CMDS, body_firstline, re.I):
     check_extra_labels(body_firstline.lower(), extra_labels)
   for comment in issue.get_comments():
     commenter = comment.user.login
@@ -322,7 +334,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     if not first_line: continue
     first_line = first_line[0]
     if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
-      already_seen = True
+      already_seen = comment
+      backport_pr_num = get_backported_pr(comment_msg)
       pull_request_updated = False
       if create_external_issue:
         external_issue_number=comment_msg.split("external issue "+CMSDIST_REPO_NAME+"#",2)[-1].split("\n")[0]
@@ -356,7 +369,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     if re.match("^hold$", first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + PR_HOLD_MANAGERS: hold[commenter]=1
       continue
-    if re.match("^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)#\d+$", first_line, re.I):
+    if re.match(REGEX_EX_CMDS, first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + [issue.user.login]:
         check_extra_labels(first_line.lower(), extra_labels)
       continue
@@ -527,8 +540,34 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   # Additional labels.
   if is_hold: labels.append("hold")
 
+  old_labels = set([x.name.encode("ascii", "ignore") for x in issue.labels])
+  print "Stats:",backport_pr_num,extra_labels
+  print "Old Labels:",sorted(old_labels)
+  if "backport" in extra_labels:
+    if backport_pr_num!=extra_labels["backport"][1]:
+      try:
+        bp_pr = repo.get_pull(int(extra_labels["backport"][1]))
+        backport_pr_num=extra_labels["backport"][1]
+        if bp_pr.merged: extra_labels["backport"][0]="backport-ok"
+      except Exception, e :
+        print "Error: Unknown PR", backport_pr_num,"\n",e
+        backport_pr_num=""
+        extra_labels.pop("backport")
+
+      if already_seen:
+        if dryRun: print "Update PR seen message to include backport PR number",backport_pr_num
+        else:
+          new_msg = ""
+          for l in already_seen.body.encode("ascii", "ignore").split("\n"):
+            if BACKPORT_STR in l: continue
+            new_msg += l+"\n"
+          if backport_pr_num: new_msg="%s%s%s\n" % (new_msg, BACKPORT_STR, backport_pr_num)
+          already_seen.edit(body=new_msg)
+    elif ("backport-ok" in old_labels):
+      extra_labels["backport"][0]="backport-ok"
+
   # Add additional labels
-  for lab in extra_labels: labels.append(extra_labels[lab])
+  for lab in extra_labels: labels.append(extra_labels[lab][0])
 
   if cmssw_repo and issue.pull_request:
     if comparison_done:
@@ -556,15 +595,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
     labels.append("fully-signed")
   if need_external: labels.append("requires-external")
   labels = set(labels)
-
-  # We update labels only if they are different.
-  old_labels = set([x.name for x in issue.labels])
-  print "Old Labels:",old_labels
-  if ("backport-ok" in old_labels) and ("backport" in labels):
-    print "Replacing backport with backport-ok label"
-    labels.remove("backport")
-    labels.add("backport-ok")
-  print "The labels of the pull request should be:\n  "+"\n  ".join(labels)
+  print "New Labels:",sorted(labels)
 
   new_categories  = set ([])
   for nc_lab in pkg_categories:
@@ -599,6 +630,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
   if not issue.pull_request:
     issueMessage = None
     if not already_seen:
+      backport_msg=""
+      if backport_pr_num: backport_msg="%s%s\n" % (BACKPORT_STR,backport_pr_num)
       uname = ""
       if issue.user.name: uname = issue.user.name.encode("ascii", "ignore")
       l2s = ", ".join([ "@" + name for name in CMSSW_ISSUES_TRACKERS ])
@@ -606,10 +639,11 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user="cmsbuild"):
                         " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
-                        "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n",
+                        "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n%(backport_msg)s",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=issue.user.login.encode("ascii", "ignore"),
                         name=uname,
+                        backport_msg=backport_msg,
                         l2s=l2s)
     elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):
       issueMessage = "This issue is fully signed and ready to be closed."

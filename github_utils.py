@@ -284,6 +284,7 @@ def github_api(uri, token, params={}, method="POST", headers={}, page=1, page_ra
     data = json.dumps(params)
   if page>1:
     if not "?" in url: url=url+"?"
+    else: url=url+"&"
     url=url+"page="+str(page)
   headers["Authorization"]="token " + token
   request = urllib2.Request(url, data=data, headers=headers)

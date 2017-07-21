@@ -159,6 +159,7 @@ def get_backported_pr(msg):
 def process_pr(gh, repo, issue, dryRun, cmsbuild_user=CMSBUILD_GH_USER):
   import yaml
   if ignore_issue(repo, issue): return
+  api_rate_limits(gh)
   prId = issue.number
   #if prId in [ 15876 ] : return
   repository = repo.full_name

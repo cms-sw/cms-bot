@@ -7,7 +7,7 @@ import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
 from github import UnknownObjectException
-from github_utils import get_token, edit_pr
+from github_utils import get_token, edit_pr, api_rate_limits
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 try:

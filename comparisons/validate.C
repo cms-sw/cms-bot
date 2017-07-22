@@ -6,6 +6,7 @@
 #include "TFile.h"
 #include "TROOT.h"
 #include "TH1F.h"
+#include "TGaxis.h"
 #include "TStyle.h"
 #include <iostream>
 #include <fstream>
@@ -90,6 +91,7 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
   gStyle->SetTitleY(1);
   gStyle->SetTitleW(1);
   gStyle->SetTitleH(0.06);
+  TGaxis::SetExponentOffset(-0.042,-0.035,"x");
 
   double refplotEntries = -1;
   double plotEntries = -1;
@@ -1143,6 +1145,14 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj._sets.data.getT()");
       plotvar(tbr+recoS+".obj._sets.data.getTSigma()");
       plotvar(tbr+recoS+".obj._sets.data.getOOTIndex()");
+
+      tbr="CTPPSPixelClusteredmDetSetVector_ctppsPixelClusters__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar("min(1e+5,"+tbr+recoS+".obj._sets.data.charge())");
+      plotvar(tbr+recoS+".obj._sets.data.size()");
+      plotvar(tbr+recoS+".obj._sets.data.sizeRow()");
+      plotvar(tbr+recoS+".obj._sets.data.sizeCol()");
 
       tbr="CTPPSLocalTrackLites_ctppsLocalTrackLiteProducer__";
       plotvar(tbr+recoS+".obj@.size()");
@@ -2470,6 +2480,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       jets("recoCaloJets", "akVs4CaloJets");
       jets("recoPFJets", "akVs4PFJets");
+      jets("recoPFJets", "akCs4PFJets");
+      jets("recoPFJets", "kt4PFJetsForRho");
+
+      allpf(-1, "akCs4PFJets_pfParticlesCs");
 
       // miniaod
       jets("patJets","slimmedJets");

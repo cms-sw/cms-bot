@@ -7,7 +7,7 @@ from es_utils import send_payload
 from hashlib import sha1
 
 ReDate = re.compile("DATE=[A-Z][a-z]{2}\s+([A-Z][a-z]{2}\s+[0-9]{1,2}\s+\d\d:\d\d:\d\d\s+)[A-Z]{3,4}\s+(\d\d\d\d)")
-ReUpload = re.compile("sync-back\s+upload\s+")
+ReUpload = re.compile("^.*sync-back\s+upload\s+.*")
 ReRel = re.compile("^[+]\s+RELEASE_FORMAT=(CMSSW_.+)")
 ReArch = re.compile("^[+]\s+ARCHITECTURE=(.+)")
 ReType = re.compile(".+specs-only\s+build\s+(cmssw-patch).*")
@@ -45,6 +45,7 @@ def process_build_any_ib(logFile):
         break
       if ReUpload.match(line):
         upload=True
+        print "Upload: ",stime,line
         continue
       if ReType.match(line): patch=1
       m=ReDate.match(line)

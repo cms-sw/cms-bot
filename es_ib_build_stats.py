@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import re, json
+import re, json, sys
 from datetime import datetime
 from os.path import getmtime, exists
 from commands import getstatusoutput
@@ -80,11 +80,17 @@ def process_build_any_ib(logFile):
   send_payload("jenkins-ibs","timings",id,json.dumps(payload))
   return finished
     
+force=False
+try:
+  x=sys.argv[1]
+  force=True
+except:
+  pass
 err, logs = getstatusoutput("find /build/jobs/build-any-ib/builds -maxdepth 2 -mindepth 2 -name log -type f")
 logs = logs.split('\n')
 for logFile in logs:
   flagFile = logFile + '.ib-build'
-  if not exists(flagFile):
+  if force or (not exists(flagFile)):
     print "Processing ",logFile
     done = True
     if re.match("^.+/builds/\d+/log$",logFile):

@@ -11,7 +11,7 @@ ReUpload = re.compile("^[+]{2}\s+type=upload")
 ReRel = re.compile("^[+]\s+RELEASE_FORMAT=(CMSSW_.+)")
 ReArch = re.compile("^[+]\s+ARCHITECTURE=(.+)")
 ReType = re.compile(".+specs-only\s+build\s+(cmssw-patch).*")
-ReFinish = re.compile("Finished:\s[A-Z]+")
+ReFinish = re.compile("Finished:\s+[A-Z]+")
 
 def process_build_any_ib(logFile):
   rel = ""
@@ -30,7 +30,6 @@ def process_build_any_ib(logFile):
         m=ReDate.match(line)
         if m:
           jstart = datetime.strptime(m.group(1)+m.group(2), "%b %d %H:%M:%S %Y")
-          print "date:",jstart
         continue
       if not arch:
         m=ReArch.match(line)

@@ -30,6 +30,7 @@ def process_build_any_ib(logFile):
         m=ReDate.match(line)
         if m:
           jstart = datetime.strptime(m.group(1)+m.group(2), "%b %d %H:%M:%S %Y")
+          print "date:",jstart
         continue
       if not arch:
         m=ReArch.match(line)
@@ -57,7 +58,7 @@ def process_build_any_ib(logFile):
         upload=False
         dtime = xtime - stime 
         uploadTime += dtime.seconds
-  print "FINISHED: ",finished,rel, arch,uploadTime
+  print "FINISHED: ",finished,rel, arch,uploadTime,jstart,upload,patch
   if not rel or not arch or not finished: return finished
   urlx = logFile.split("/")
   url = "https://cmssdt.cern.ch/jenkins/job/build-any-ib/"+logFile.split("/")[-2]+"/console"

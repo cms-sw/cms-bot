@@ -47,7 +47,7 @@ for issue in issues:
       print "  Backported PR merged:",pr.merged
       if pr.merged:
         labels = list(set([x.name for x in issue.labels if x.name!="backport"]+["backport-ok"]))
-        if not dryRun: issue.edit(labels=labels)
+        if not opts.dryRun: issue.edit(labels=labels)
         print issue.number,"New Labels:",labels
     except Exception, e:
       print e

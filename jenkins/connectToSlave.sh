@@ -14,10 +14,12 @@ scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/slave.jar $TARGET:$WORKER_DIR/slave.jar
 scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/cmsos $TARGET:$WORKER_DIR/cmsos
 HOST_ARCH=`ssh -f $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1`
 HOST_CMS_ARCH=`ssh -f $SSH_OPTS $TARGET sh $WORKER_DIR/cmsos`
+DOCKER=`ssh -f $SSH_OPTS $TARGET sh docker --version 2>/dev/null`
+if [ "X${DOCKER}" != "X" ] ; then DOCKER="docker" ; fi
 WORKER_JENKINS_NAME=`echo $TARGET | sed s'|.*@||;s|\..*||'`
 case $TARGET in
   *dmwm* ) echo "Skipping auto labels" ;;
-  * ) java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli-2.46.2.jar -s http://localhost:8080/jenkins -remoting groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "$WORKER_JENKINS_NAME" "$HOST_ARCH" "$HOST_CMS_ARCH" ;;
+  * ) java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli-2.46.2.jar -s http://localhost:8080/jenkins -remoting groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "$WORKER_JENKINS_NAME" "$HOST_ARCH" "$HOST_CMS_ARCH" "${DOCKER}" ;;
 esac
 sleep 1
 ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKSPACE/tmp

@@ -14,7 +14,7 @@ scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/slave.jar $TARGET:$WORKER_DIR/slave.jar
 scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/cmsos $TARGET:$WORKER_DIR/cmsos
 HOST_ARCH=`ssh -f $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1`
 HOST_CMS_ARCH=`ssh -f $SSH_OPTS $TARGET sh $WORKER_DIR/cmsos`
-DOCKER=`ssh -f $SSH_OPTS $TARGET sh docker --version 2>/dev/null`
+DOCKER=`ssh -f $SSH_OPTS $TARGET docker --version 2>/dev/null`
 if [ "X${DOCKER}" != "X" ] ; then DOCKER="docker" ; fi
 WORKER_JENKINS_NAME=`echo $TARGET | sed s'|.*@||;s|\..*||'`
 case $TARGET in

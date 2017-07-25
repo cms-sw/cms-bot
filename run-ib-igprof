@@ -5,13 +5,16 @@ for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
   runTheMatrix.py $WORKFLOWS --command "--profile $prof" > runTheMatrix.log
-  find . -type d | while read d; do
-    echo "processing dir $d"
-    for f in $d/*.gz ; do
-      echo "processing file $f"
-      OUTFILE=${f//.gz/.sql3}
-      echo $OUTFILE
-      igprof-analyse -d -c $f --sqlite | sqlite3 $OUTFILE > igprof-analyse.log
-    done
+  for f in $(find . -name '*.gz' -type f) ; do
+    echo "processing file $f"
+    OUTFILE=${f//.gz/.sql3}
+    echo $OUTFILE
+    igprof-analyse -d -c $f --sqlite > $f.sql
+    ERR=0
+    sqlite3 $OUTFILE < $f.sql > $f.log || ERR=1
+    if [ $ERR -gt 0 ] ; then
+      cat $f.log
+      exit 1
+    fi
   done
 done

@@ -12,9 +12,9 @@ if (!(cur_lab =~ /\s*no_label\s*/))
     {
       if (y.contains(items[1])) {continue;}
       new_labs1=new_labs1+" "+y;
-      println y
+      println y;
     }
-    new_lab = new_lab1.replaceAll(/\s*/,' ');
+    new_lab = new_labs1.replaceAll(/\s*/,' ');
     new_lab = new_lab.replaceAll(/\s*[^\s]+-(GenuineIntel|AuthenticAMD)\s*/,' ').replaceAll(/\s*([^\s]*-|)/+args[2]+/(-[^\s]+|)\s*/,' ')
     new_lab = new_lab + args[2] + " " + args[2]+"-"+args[1]
     if (slave.name =~ /^cmsbuild\d+$/) {new_lab = new_lab + " " + args[2] + "-cloud"}

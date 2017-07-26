@@ -10,6 +10,7 @@ SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerA
 ssh -f $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp
 ssh -f $SSH_OPTS $TARGET mkdir -p $WORKER_DIR
 ssh -f $SSH_OPTS $TARGET rm -f $WORKER_DIR/$WORKER_USER.keytab
+ssh -f $SSH_OPTS $TARGET rm -f $WORKER_DIR/cmsos
 scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/slave.jar $TARGET:$WORKER_DIR/slave.jar
 scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/cmsos $TARGET:$WORKER_DIR/cmsos
 HOST_ARCH=`ssh -f $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1`

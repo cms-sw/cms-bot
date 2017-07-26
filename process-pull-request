@@ -28,4 +28,5 @@ if __name__ == "__main__":
   else:
     gh_user = opts.repository.split("/")[0]
     if gh_user==GH_CMSSW_ORGANIZATION: gh_user=CMSBUILD_GH_USER
+    print "Repo User:",gh_user
     process_pr(gh, repo, repo.get_issue(prId), opts.dryRun, cmsbuild_user=gh_user)

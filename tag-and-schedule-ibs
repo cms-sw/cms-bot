@@ -36,12 +36,12 @@ for QUEUE in $RELEASE_QUEUES; do
     unset PROD_ARCH
     eval "$IB_INFO"
     if [ "X$NO_IB" = "X1" ] ; then continue ; fi
-    if [ "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
     if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
       BUILD_PATCH_RELEASE=true
     else
       BUILD_PATCH_RELEASE=false
     fi
+    if [ "X$BUILD_PATCH_RELEASE" = "Xfalse" -a "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     RELEASE_NAME="${QUEUE}_${DATE}"
     if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then

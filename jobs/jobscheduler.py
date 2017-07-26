@@ -6,9 +6,13 @@ from psutil import virtual_memory
 from copy import deepcopy
 import threading, json, os
 from optparse import OptionParser
+from subprocess import Popen
 
 def format(s, **kwds): return s % kwds
-def runJob(job): job["exit_code"] = os.system(job["command"])
+def runJob(job):
+  p = Popen(job["command"], shell=True)
+  job["exit_code"] = os.waitpid(p.pid,0)[1]
+
 def getFinalCommand(group, jobs, resources):
   if not "final" in group: group["final"] = deepcopy(jobs["final_per_group"])
   job = group.pop("final")

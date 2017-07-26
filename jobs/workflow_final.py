@@ -84,7 +84,7 @@ def upload_logs(workflow, workflow_dir):
   getstatusoutput("rm -f %s/*.root %s/core.*" % (workflow_dir,workflow_dir))
   final_log = os.path.join(basedir, workflow+"-final.log")
   if os.path.exists(final_log): getstatusoutput("mv %s %s/final.log" % (final_log, workflow_dir))
-  logger=LogUpdater(dirIn=os.environ["CMSSW_BASE"], dryRun=True)
+  logger=LogUpdater(dirIn=os.environ["CMSSW_BASE"])
   logger.updateRelValMatrixPartialLogs(basedir, os.path.basename(workflow_dir))
   
 jobs=json.load(open(sys.argv[1]))

@@ -32,7 +32,7 @@ def getJob(jobs, resources, order):
       if job["state"]=="Pending":
         if (job["rss"]<=resources["available"]["rss"]) and (job["cpu"]<=resources["available"]["cpu"]): pending_jobs.append(job)
         break
-      if job["exit_code"]!=0: return True,getFinalCommand(group, jobs)
+      if job["exit_code"]!=0: return True,getFinalCommand(group, jobs, resources)
   if not pending_jobs: return len(pending_groups)>0,{}
   sort_by = order
   if order=="dynamic":

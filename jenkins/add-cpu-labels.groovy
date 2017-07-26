@@ -6,30 +6,22 @@ if (!(cur_lab =~ /\s*no_label\s*/))
   if ((args[1]!="") && (args[2]!=""))
   {
     items = args[2].split("_");
-    println items;
     new_labs1="";
     for (String y : new_lab.split(" "))
     {
       if (y.contains(items[1])) {continue;}
       new_labs1=new_labs1+" "+y;
-      println y;
     }
     new_lab = new_labs1.replaceAll(/\s*/,' ');
-    println "1"+new_lab;
     new_lab = new_lab.replaceAll(/\s*[^\s]+-(GenuineIntel|AuthenticAMD)\s*/,' ').replaceAll(/\s*([^\s]*-|)/+args[2]+/(-[^\s]+|)\s*/,' ')
-    println "2"+new_lab;
     new_lab = new_lab + args[2] + " " + args[2]+"-"+args[1]
-    println "3"+new_lab;
     if (slave.name =~ /^cmsbuild\d+$/) {new_lab = new_lab + " " + args[2] + "-cloud"}
-    println "4"+new_lab;
     if (args[3]=="docker")
     {
       if (items.length==2){new_lab = new_lab + " docker docker-" + items[1]}
-      println "5"+new_lab;
     }
   }
   new_lab = new_lab.replaceAll(/\s\s+/,' ').trim()
-  println "6"+new_lab;
   if (new_lab != cur_lab)
   {
     slave.setLabelString(new_lab)

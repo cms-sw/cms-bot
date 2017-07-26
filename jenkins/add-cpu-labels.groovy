@@ -16,7 +16,7 @@ if (!(cur_lab =~ /\s*no_label\s*/))
     if (items.length==2)
     {
       xlabs.push("docker-"+items[1]);
-      if (args[1]!=""){xlabs.push("docker-"+items[1]+"-"+args[1];}
+      if (args[1]!=""){xlabs.push("docker-"+items[1]+"-"+args[1]);}
     }
     if (args[1]!=""){xlabs.push("docker-"+args[1]);}
   }

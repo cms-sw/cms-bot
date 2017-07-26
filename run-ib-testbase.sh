@@ -7,6 +7,7 @@ for cvmfs_dir in \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
 done
 voms-proxy-init -voms cms || true
+export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
 source /cvmfs/cms-ib.cern.ch/week1/cmsset_default.sh  || true

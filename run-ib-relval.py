@@ -1,12 +1,13 @@
 #! /usr/bin/env python
 from sys import exit, argv
 from optparse import OptionParser
-from os import environ, system
+from os import environ, system, waitpid
 from runPyRelValThread import PyRelValsThread
 from RelValArgs import GetMatrixOptions, isThreaded
 from logUpdater import LogUpdater
 from cmsutils import cmsRunProcessCount, MachineMemoryGB
 from cmssw_known_errors import get_known_errors
+from subprocess import Popen
 from os.path import abspath, dirname
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
@@ -29,9 +30,11 @@ if __name__ == "__main__":
   cmssw_base = environ["CMSSW_BASE"]
   logger=LogUpdater(dirIn=cmssw_base)
   if cmssw_ver.startswith("CMSSW_9_3_DEVEL_X") and arch=="slc6_amd64_gcc630":
-    e=system("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow))
+    p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
+    e=waitpid(p.pid,0)[1]
     if e: exit(e)
-    e = system("cd %s/pyRelval ; %s/jobs/jobscheduler.py -c 200 -m 95 -o dynamic" % (cmssw_base,SCRIPT_DIR))
+    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -c 200 -m 95 -o dynamic" % (cmssw_base,SCRIPT_DIR), shell=True)
+    e=waitpid(p.pid,0)[1]
     system("touch "+cmssw_base+"/done."+opts.jobid)
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
     exit(e)

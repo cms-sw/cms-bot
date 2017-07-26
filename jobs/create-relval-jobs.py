@@ -17,9 +17,13 @@ def createJob(workflow, cmssw_ver, arch):
   workflow_args = FixWFArgs(cmssw_ver, arch, workflow, GetMatrixOptions(cmssw_ver, arch))
   cmd = format("rm -rf %(workflow)s %(workflow)s_*; mkdir %(workflow)s; cd %(workflow)s; PATH=%(das_utils)s:$PATH runTheMatrix.py --maxSteps=0 -l %(workflow)s %(workflow_args)s",workflow=workflow,workflow_args=workflow_args, das_utils=CMS_BOT_DIR+"/das-utils")
   getstatusoutput(cmd)
-  workflow_dir = glob.glob(format("%(workflow)s/%(workflow)s_*", workflow=workflow))[0]
-  getstatusoutput(format("mv %(workflow)s/runall-report-step123-.log %(workflow_dir)s/workflow.log; touch %(workflow_dir)s/cmdLog; mv %(workflow_dir)s .; rm -rf %(workflow)s", workflow=workflow, workflow_dir=workflow_dir))
-  print "Commands for workflow %s generated" % workflow
+  try:
+    workflow_dir = glob.glob(format("%(workflow)s/%(workflow)s_*", workflow=workflow))[0]
+    getstatusoutput(format("mv %(workflow)s/runall-report-step123-.log %(workflow_dir)s/workflow.log; touch %(workflow_dir)s/cmdLog; mv %(workflow_dir)s .; rm -rf %(workflow)s", workflow=workflow, workflow_dir=workflow_dir))
+    print "Commands for workflow %s generated" % workflow
+  except Exception, e:
+    print "ERROR: Creating workflow job:",workflow,str(e)
+    getstatusoutput("rm -rf %s %s_*" % (workflow,workflow))
 
 pyRunDir=os.path.join(os.environ["CMSSW_BASE"],"pyRelval")
 getstatusoutput("rm -rf %s; mkdir -p %s" % (pyRunDir, pyRunDir))
@@ -31,7 +35,7 @@ arch = os.environ["SCRAM_ARCH"]
 thrds=[]
 jobs=cpu_count()
 wf_query=""
-print "Creating jobs ...."
+print "Creating jobs (%s) ...." % jobs
 for wf in sys.argv[1].split(","):
   wf_query+=" OR workflow:"+wf
   while len(thrds)>=jobs:
@@ -59,20 +63,21 @@ wf_stats = es_workflow_stats(stats)
 print "Creating jobs.json file ...."
 jobs = {}
 jobs["final_job"] = "echo All Done"
-jobs["final_per_group"] = {"command": SCRIPT_DIR+"/workflow_final.py %(jobs_results)s > %(group_name)s-final.log 2>&1", "cpu": 10,  "rss": 10*1024*1024, "time" : 30}
+jobs["final_per_group"] = {"command": SCRIPT_DIR+"/workflow_final.py %(jobs_results)s", "cpu": 10,  "rss": 10*1024*1024, "time" : 30}
 jobs["env"]={}
 jobs["jobs"]=[]
-e , o = getstatusoutput ("find . -name wf_steps.txt -type f | sed 's|^./||'")
-for cmds in o.split("\n"):
+e , o = getstatusoutput ("find . -name workflow.log -type f | sed 's|^./||'")
+for cmds_log in o.split("\n"):
+  cmds = os.path.join(os.path.dirname(cmds_log),"wf_steps.txt")
   wf = cmds.split("_")[0]
   group ={"name": wf, "commands":[]}
-  e, o = getstatusoutput ("cat %s | grep ^step" % cmds)
-  for c in o.split("\n"):
-    job = {"cpu" : 200, "rss" : 4*1024*1024*1024, "time" : 3600, "command" : re.sub("\s*;\s*$","",c.split(":",1)[-1])}
-    step = c.split(":")[0]
-    if (wf in wf_stats) and (step in wf_stats[wf]):
-      for x in ["cpu", "rss", "time"]: job[x] = wf_stats[wf][step][x]
-    group["commands"].append(job)
+  if os.path.exists(cmds):
+    e, o = getstatusoutput ("cat %s | grep ^step" % cmds)
+    for c in o.split("\n"):
+      job = {"cpu" : 200, "rss" : 4*1024*1024*1024, "time" : 3600, "command" : re.sub("\s*;\s*$","",c.split(":",1)[-1])}
+      step = c.split(":")[0]
+      if (wf in wf_stats) and (step in wf_stats[wf]):
+        for x in ["cpu", "rss", "time"]: job[x] = wf_stats[wf][step][x]
+      group["commands"].append(job)
   jobs["jobs"].append(group)
 dump(jobs, open("jobs.json","w"), sort_keys=True,indent=2)
-

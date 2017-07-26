@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, json, glob, os
+import sys, json, glob, os, re
 from commands import getstatusoutput
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -9,6 +9,7 @@ from cmssw_known_errors import get_known_errors
 from logUpdater import LogUpdater
 
 def update_cmdlog(workflow_dir, jobs):
+  if not jobs["commands"]: return
   workflow_cmdlog=os.path.join(workflow_dir,"cmdLog")
   if not os.path.exists(workflow_cmdlog): return
   wfile=open(workflow_cmdlog,"a")
@@ -20,7 +21,14 @@ def update_cmdlog(workflow_dir, jobs):
   wfile.close()
   return
 
+def fix_dasquery_log(workflow_dir):
+  das_log = os.path.join(workflow_dir,"step1_dasquery.log")
+  if os.path.exists(das_log):
+    workflow_id = os.path.basename(workflow_dir).split("_",1)[1]
+    getstatusoutput("cp %s %s/step1_%s.log" % (das_log, workflow_dir, workflow_id))
+
 def update_worklog(workflow_dir, jobs):
+  if not jobs["commands"]: return False
   workflow_logfile=os.path.join(workflow_dir,"workflow.log")
   if not os.path.exists(workflow_logfile): return False
   workflow_time=0
@@ -29,8 +37,6 @@ def update_worklog(workflow_dir, jobs):
   test_failed=""
   das_log = os.path.join(workflow_dir,"step1_dasquery.log")
   if os.path.exists(das_log):
-    workflow_id = os.path.basename(workflow_dir).split("_",1)[1]
-    getstatusoutput("cp %s %s/step1_%s.log" % (das_log, workflow_dir, workflow_id))
     e, o = getstatusoutput("grep ' tests passed' %s | grep '^1 ' | wc -l" % workflow_logfile)
     if o=="0": return False
     exit_codes="0"
@@ -64,7 +70,7 @@ def update_worklog(workflow_dir, jobs):
 
 def update_timelog(workflow_dir, jobs):
   workflow_time=os.path.join(workflow_dir,"time.log")
-  wf_time=1
+  wf_time=5
   for job in jobs["commands"]:
     if job["state"]=="Done": wf_time+=job["exec_time"]
   wfile = open(workflow_time,"w")
@@ -82,15 +88,14 @@ def update_known_error(worflow, workflow_dir):
 def upload_logs(workflow, workflow_dir):
   basedir = os.path.dirname(workflow_dir)
   getstatusoutput("rm -f %s/*.root %s/core.*" % (workflow_dir,workflow_dir))
-  final_log = os.path.join(basedir, workflow+"-final.log")
-  if os.path.exists(final_log): getstatusoutput("mv %s %s/final.log" % (final_log, workflow_dir))
   logger=LogUpdater(dirIn=os.environ["CMSSW_BASE"])
   logger.updateRelValMatrixPartialLogs(basedir, os.path.basename(workflow_dir))
-  
+
 jobs=json.load(open(sys.argv[1]))
 workflow = jobs["name"]
 workflow_dir=os.path.abspath(glob.glob("%s_*" % workflow)[0])
 getstatusoutput("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
+fix_dasquery_log(workflow_dir)
 if update_worklog(workflow_dir, jobs):
   update_cmdlog(workflow_dir, jobs)
 update_timelog(workflow_dir, jobs)

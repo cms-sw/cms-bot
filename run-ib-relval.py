@@ -1,12 +1,14 @@
 #! /usr/bin/env python
-from sys import exit
+from sys import exit, argv
 from optparse import OptionParser
-from os import environ
+from os import environ, system
 from runPyRelValThread import PyRelValsThread
 from RelValArgs import GetMatrixOptions, isThreaded
 from logUpdater import LogUpdater
-from cmsutils import cmsRunProcessCount, MachineMemoryGB, doCmd
+from cmsutils import cmsRunProcessCount, MachineMemoryGB
 from cmssw_known_errors import get_known_errors
+from os.path import abspath, dirname
+SCRIPT_DIR = dirname(abspath(argv[0]))
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog -i|--id <jobid> -l|--list <list of workflows>")
@@ -24,6 +26,15 @@ if __name__ == "__main__":
   thrds = cmsRunProcessCount
   cmssw_ver = environ["CMSSW_VERSION"]
   arch = environ["SCRAM_ARCH"]
+  cmssw_base = environ["CMSSW_BASE"]
+  logger=LogUpdater(dirIn=cmssw_base)
+  if cmssw_ver.startswith("CMSSW_9_3_DEVEL_X") and arch=="slc6_amd64_gcc630":
+    e=system("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow))
+    if e: exit(e)
+    e = system("cd %s/pyRelval ; %s/jobs/jobscheduler.py -c 200 -m 95 -o dynamic" % (cmssw_base,SCRIPT_DIR))
+    system("touch "+cmssw_base+"/done."+opts.jobid)
+    if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
+    exit(e)
   if isThreaded(cmssw_ver,arch):
     print "Threaded IB Found"
     thrds=int(MachineMemoryGB/4.5)
@@ -38,7 +49,7 @@ if __name__ == "__main__":
     print "Normal IB Found"
   if thrds>cmsRunProcessCount: thrds=cmsRunProcessCount
   known_errs = get_known_errors(cmssw_ver, arch, "relvals")
-  matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)
+  matrix = PyRelValsThread(thrds, cmssw_base+"/pyRelval", opts.jobid)
   matrix.setArgs(GetMatrixOptions(cmssw_ver,arch))
-  matrix.run_workflows(opts.workflow.split(","),LogUpdater(environ["CMSSW_BASE"]),opts.force,known_errors=known_errs)
+  matrix.run_workflows(opts.workflow.split(","),logger,opts.force,known_errors=known_errs)
 

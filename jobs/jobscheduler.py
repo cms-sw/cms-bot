@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from operator import itemgetter
 from time import sleep, time
-from commands import getstatusoutput
 from multiprocessing import cpu_count
 from psutil import virtual_memory
 from copy import deepcopy
@@ -9,7 +8,7 @@ import threading, json, os
 from optparse import OptionParser
 
 def format(s, **kwds): return s % kwds
-def runJob(job): job["exit_code"], out = getstatusoutput(job["command"])
+def runJob(job): job["exit_code"] = os.system(job["command"])
 def getFinalCommand(group, jobs, resources):
   if not "final" in group: group["final"] = deepcopy(jobs["final_per_group"])
   job = group.pop("final")
@@ -113,4 +112,4 @@ if __name__ == "__main__":
     if job: startJob(job, resources, thrds)
     else:   wait_for_jobs = True
   while len(thrds): checkJobs(thrds, resources)
-  print  getstatusoutput(jobs["final"])
+  os.system(jobs["final"])

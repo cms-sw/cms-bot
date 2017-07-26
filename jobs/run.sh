@@ -10,7 +10,7 @@ rm -rf all-pyRelval
 mkdir all-pyRelval
 for wfs in $(ls wf*of*) ; do
   rm -rf pyRelval*
-  ${CMSSW_BASE}/cms-bot/jobs/run-relval-jobs.py $(cat $wfs)
+  ${CMSSW_BASE}/cms-bot/jobs/create-relval-jobs.py $(cat $wfs)
   for type in cpu rss dynamic time ; do
     cp -r pyRelval pyRelval-${type}
     pushd pyRelval-${type}

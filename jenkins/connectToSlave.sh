@@ -4,7 +4,7 @@ WORKER_USER=${2-cmsbuild}
 WORKER_DIR=${3-/build1/cmsbuild}
 JENKINS_MASTER_ROOT=/var/lib/jenkins
 SCRIPT_DIR=`dirname $0`
-
+env
 kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
 SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 ssh -f $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp

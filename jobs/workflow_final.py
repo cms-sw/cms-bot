@@ -37,6 +37,7 @@ def update_worklog(workflow_dir, jobs):
     test_passed="1"
     test_failed="0"
   failed=False
+  steps_res=[]
   for job in jobs["commands"]:
     if job["exit_code"]==-1: failed=True
     if job["exit_code"]>0:
@@ -44,12 +45,17 @@ def update_worklog(workflow_dir, jobs):
       test_passed+=" 0"
       test_failed+=" 1"
       failed=True
+      steps_res.append("FAILED")
     else:
       exit_codes+=" 0"
       test_failed+=" 0"
       if failed: test_passed+=" 0"
       else: test_passed+=" 1"
+      steps_res.append("NORUN" if failed else "PASSED")
+  step_str = ""
+  for step, res in enumerate(steps_res): step_str = "%s Step%s-%s" % (step_str, step, res)
   e, o = getstatusoutput("grep ' exit: ' %s | sed 's|exit:.*$|exit: %s|'" % (workflow_logfile, exit_codes.strip()))
+  o = re.sub("\s+Step0-.+\s+-\s+time\s+",step_str+"  - time ",o)
   wfile = open(workflow_logfile,"w")
   wfile.write(o+"\n")
   wfile.write("%s tests passed, %s failed\n" % (test_passed.strip(), test_failed.strip()))

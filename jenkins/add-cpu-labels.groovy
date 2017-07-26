@@ -2,19 +2,19 @@ slave = hudson.model.Hudson.instance.slaves.find { slave -> slave.nodeName.equal
 def cur_lab = slave.labelString.replaceAll(/  +/,' ').trim()
 if (!(cur_lab =~ /\s*no_label\s*/))
 {
-  def new_lab = cur_lab.replaceAll(/\s*[^\s]+-cores(\d+)\s*/,' ').replaceAll(/\s*docker\s*/,' ').replaceAll(/\s*docker-[a-zA-Z0-9]+\s*/,' ')
+  def new_lab = cur_lab.replaceAll(/\s*docker\s*/,' ')
   if ((args[1]!="") && (args[2]!=""))
   {
     items = args[2].split("_");
     new_labs1="";
     for (String y : new_lab.split(" "))
     {
-      if (y.contains(items[1])) {continue;}
+      skip=false;
+      for (String x : items){if (y.contains(x)){skip=true;}}
+      if (skip){continue;}
       new_labs1=new_labs1+" "+y;
     }
-    new_lab = new_labs1.replaceAll(/\s*/,' ');
-    new_lab = new_lab.replaceAll(/\s*[^\s]+-(GenuineIntel|AuthenticAMD)\s*/,' ').replaceAll(/\s*([^\s]*-|)/+args[2]+/(-[^\s]+|)\s*/,' ')
-    new_lab = new_lab + args[2] + " " + args[2]+"-"+args[1]
+    new_lab = new_labs1 + " " + args[2] + " " + args[2]+"-"+args[1];
     if (slave.name =~ /^cmsbuild\d+$/) {new_lab = new_lab + " " + args[2] + "-cloud"}
     if (args[3]=="docker")
     {

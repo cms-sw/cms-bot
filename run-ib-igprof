@@ -1,4 +1,6 @@
 #!/bin/sh -ex
+CMS_BOT_DIR=$(dirname $0)
+case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 WORKFLOWS=$1
 PROFILES=$2
 for prof in ${PROFILES} ; do
@@ -11,7 +13,7 @@ for prof in ${PROFILES} ; do
     echo $OUTFILE
     igprof-analyse -d -c $f --sqlite > $f.sql
     ERR=0
-    sqlite3 $OUTFILE < $f.sql > $f.log || ERR=1
+    ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 $OUTFILE > $f.log || ERR=1
     if [ $ERR -gt 0 ] ; then
       cat $f.log
       exit 1

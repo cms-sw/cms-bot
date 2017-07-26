@@ -4,6 +4,7 @@ if (!(cur_lab =~ /\s*no_label\s*/))
 {
   def xlabs=[args[1], args[2]];
   def items = args[2].split("_");
+  if (cur_lab.contains("release-build")){xlabs.push("release-build");}
   for (String y : items){xlabs.push(y);}
   if (args[2]!="")
   {

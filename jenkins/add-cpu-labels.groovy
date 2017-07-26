@@ -2,12 +2,12 @@ slave = hudson.model.Hudson.instance.slaves.find { slave -> slave.nodeName.equal
 def cur_lab = slave.labelString.replaceAll(/  +/,' ').trim()
 if (!(cur_lab =~ /\s*no_label\s*/))
 {
-  def xlabs=[];
+  def xlabs=[args[1], args[2]];
   def items = args[2].split("_");
+  for (String y : items){xlabs.push(y);}
   if (args[2]!="")
   {
-    xlabs.push(args[2]);
-    if (slave.name =~ /^cmsbuild\d+$/){xlabs.push(args[2]+"-cloud");}
+    if (slave.name =~ /^cmsbuild\d+$/){xlabs.push(args[2]+"-cloud"); xlabs.push("cloud");}
     if (args[1]!=""){xlabs.push(args[2]+"-"+args[1]);}
   }
   if (args[3]=="docker")
@@ -20,7 +20,7 @@ if (!(cur_lab =~ /\s*no_label\s*/))
     }
     if (args[1]!=""){xlabs.push("docker-"+args[1]);}
   }
-  println xlabs;
+  println xlabs.join(" ").replaceAll(/\s\s+/,' ').trim();
 
   def new_lab = cur_lab.replaceAll(/\s*docker\s*/,' ')
   if ((args[1]!="") && (args[2]!=""))

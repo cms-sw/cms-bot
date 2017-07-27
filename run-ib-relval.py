@@ -29,7 +29,7 @@ if __name__ == "__main__":
   arch = environ["SCRAM_ARCH"]
   cmssw_base = environ["CMSSW_BASE"]
   logger=LogUpdater(dirIn=cmssw_base)
-  if cmssw_ver.startswith("CMSSW_9_3_DEVEL_X") and arch=="slc6_amd64_gcc630":
+  if cmssw_ver.startswith("CMSSW_9_3_"):
     p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
     if e: exit(e)

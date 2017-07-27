@@ -35,6 +35,7 @@ def update_worklog(workflow_dir, jobs):
   exit_codes=""
   test_passed=""
   test_failed=""
+  steps_res=[]
   das_log = os.path.join(workflow_dir,"step1_dasquery.log")
   if os.path.exists(das_log):
     e, o = getstatusoutput("grep ' tests passed' %s | grep '^1 ' | wc -l" % workflow_logfile)
@@ -42,8 +43,8 @@ def update_worklog(workflow_dir, jobs):
     exit_codes="0"
     test_passed="1"
     test_failed="0"
+    steps_res.append("PASSED")
   failed=False
-  steps_res=[]
   for job in jobs["commands"]:
     if job["exit_code"]==-1: failed=True
     if job["exit_code"]>0:

@@ -1,4 +1,4 @@
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, CMSSW_DEVEL_BRANCH
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
@@ -156,14 +156,17 @@ def get_backported_pr(msg):
     if re.match("^[1-9][0-9]*$",bp_num): return bp_num
   return ""
 
-def process_pr(gh, repo, issue, dryRun, cmsbuild_user=CMSBUILD_GH_USER):
+def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
   import yaml
   if ignore_issue(repo, issue): return
   api_rate_limits(gh)
   prId = issue.number
   #if prId in [ 15876 ] : return
   repository = repo.full_name
-  print "Working on ",repo.full_name," for PR/Issue ",prId
+  if not cmsbuild_user:
+    cmsbuild_user=repository.split("/")[0]
+    if cmsbuild_user in [ x.split("/")[0] for x in EXTERNAL_REPOS ]: cmsbuild_user=CMSBUILD_GH_USER
+  print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
   cmssw_repo = False
   create_test_property = False
   if repository.endswith("/"+GH_CMSSW_REPO): cmssw_repo = True

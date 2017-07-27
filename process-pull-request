@@ -5,7 +5,6 @@ from optparse import OptionParser
 from process_pr import process_pr
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
-from cms_static import GH_CMSSW_ORGANIZATION,CMSBUILD_GH_USER
 setdefaulttimeout(120)
 
 if __name__ == "__main__":
@@ -26,7 +25,4 @@ if __name__ == "__main__":
     pr   = repo.get_pull(prId)
     print pr.get_commits().reversed[0].commit.sha
   else:
-    gh_user = opts.repository.split("/")[0]
-    if gh_user==GH_CMSSW_ORGANIZATION: gh_user=CMSBUILD_GH_USER
-    print "Repo User:",gh_user
-    process_pr(gh, repo, repo.get_issue(prId), opts.dryRun, cmsbuild_user=gh_user)
+    process_pr(gh, repo, repo.get_issue(prId), opts.dryRun)

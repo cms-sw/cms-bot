@@ -49,7 +49,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
     if repository.endswith("/"+GH_CMSDIST_REPO):
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', pr_number ) )
     else:
-      out_file.write( '%s=%s\n' % ( 'PULL_REQUEST_LIST', pr_number ) )
+      out_file.write( '%s=%s\n' % ( 'PULL_REQUEST', pr_number ) )
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', cmsdist_pr ) )
       out_file.write( '%s=%s\n' % ( 'ADDITIONAL_PULL_REQUESTS', cmssw_prs ) )
     out_file.close()

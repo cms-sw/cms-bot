@@ -88,7 +88,8 @@ def update_known_error(worflow, workflow_dir):
 
 def upload_logs(workflow, workflow_dir):
   basedir = os.path.dirname(workflow_dir)
-  getstatusoutput("rm -f %s/*.root %s/core.* %s/*.tar %s/*.gz" % (workflow_dir,workflow_dir))
+  getstatusoutput("rm -f %s/*.root %s/core.* %s/*.tar %s/*.gz" % (workflow_dir,workflow_dir,workflow_dir,workflow_dir))
+  getstatusoutput("find %s -mindepth 1 -maxdepth 1 -type d | xargs --no-run-if-empt rm -rf" % (workflow_dir))
   logger=LogUpdater(dirIn=os.environ["CMSSW_BASE"])
   logger.updateRelValMatrixPartialLogs(basedir, os.path.basename(workflow_dir))
 

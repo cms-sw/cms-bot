@@ -88,8 +88,15 @@ def update_known_error(worflow, workflow_dir):
 
 def upload_logs(workflow, workflow_dir):
   basedir = os.path.dirname(workflow_dir)
-  getstatusoutput("rm -f %s/*.root %s/core.* %s/*.tar %s/*.gz" % (workflow_dir,workflow_dir,workflow_dir,workflow_dir))
-  getstatusoutput("find %s -mindepth 1 -maxdepth 1 -type d | xargs --no-run-if-empt rm -rf" % (workflow_dir))
+  for wf_file in glob.glob("%s/*" % workflow_dir):
+    found=False
+    for ext in [ ".txt", ".xml", ".log", ".py", ".json","/cmdLog", "/hostname",".done" ]:
+      if wf_file.endswith(ext):
+        found=True
+        break
+    if not found:
+      print "Removing ",wf_file
+      getstatusoutput("rm -rf %s" % wf_file)
   logger=LogUpdater(dirIn=os.environ["CMSSW_BASE"])
   logger.updateRelValMatrixPartialLogs(basedir, os.path.basename(workflow_dir))
 

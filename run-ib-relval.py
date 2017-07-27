@@ -33,7 +33,7 @@ if __name__ == "__main__":
     p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
     if e: exit(e)
-    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -c 200 -m 95 -o dynamic" % (cmssw_base,SCRIPT_DIR), shell=True)
+    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -c 200 -m 90 -o dynamic" % (cmssw_base,SCRIPT_DIR), shell=True)
     e=waitpid(p.pid,0)[1]
     system("touch "+cmssw_base+"/done."+opts.jobid)
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)

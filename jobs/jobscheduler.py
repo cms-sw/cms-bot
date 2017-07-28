@@ -80,6 +80,9 @@ def initJobs(jobs, resources, otype):
     for i in reversed(range(cmd_count)):
       total_jobs+=1
       job = group["commands"][i]
+      for x in ["rss","cpu"]:
+        for y in [x+"_avg", x+"_max"]:
+          if not y in job: job[y]=job[x]
       print ">>",group["name"],job
       for x in [ "rss", "cpu" ]: print "  ",x,int(job[x]*100/job[x+"_max"]),int(job[x+"_avg"]*100/job[x+"_max"])
       if otype:

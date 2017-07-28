@@ -67,7 +67,7 @@ def checkJobs(thrds, resources):
     for pram in ["rss", "cpu"]: resources["available"][pram]=resources["available"][pram]+job[pram]
     print "Done",len(thrds),job["jobid"],job["exec_time"],job["exit_code"],resources["available"],"JOBS:",resources["done_jobs"],"/",resources["total_jobs"],"GROUPS:",resources["done_groups"],"/",resources["total_groups"]
 
-def initJobs(jobs, resources):
+def initJobs(jobs, resources, otype):
   if not "final" in jobs: jobs["final"]="true"
   if not "final_per_group" in jobs: jobs["final_per_group"]={"command": "true", "cpu": 1,  "rss": 1, "time" : 1}
   for env,value in jobs["env"].iteritems(): os.putenv(env,value)
@@ -80,6 +80,8 @@ def initJobs(jobs, resources):
     for i in reversed(range(cmd_count)):
       total_jobs+=1
       job = group["commands"][i]
+      if otype:
+        for x in [ "rss", "cpu" ]: job[x] = job[ x + "_" + otype ] 
       job["state"]="Pending"
       job["exit_code"]=-1
       job["jobid"]=group["name"]+"(%s/%s)" % (i+1, cmd_count)
@@ -98,13 +100,15 @@ if __name__ == "__main__":
   parser.add_option("-c", "--cpu",    dest="cpu",    default=200, type="int", help="Percentage of total cpu available for jobs e.g. on a 8 core machine it can use 1600% cpu.")
   parser.add_option("-j", "--jobs",   dest="jobs",   default="jobs.json",     help="Json file path with groups/jobs to run")
   parser.add_option("-o", "--order",  dest="order",  default="dynamic",       help="Order the jobs based on selected criteria. Valid values are time|rss|cpu|dynamic. Default value dynamic")
+  parser.add_option("-t", "--type",   dest="type",   default="",              help="Order type. Valid values are avg|max. Default value ''")
   opts, args = parser.parse_args()
 
   if opts.memory>200: opts.memory=200
-  if opts.cpu>300:    opts.cpu=300 
+  if opts.cpu>300:    opts.cpu=300
+  if not opts.type in [ "", "avg", "max" ]: parser.error("Invalid -t|--type value '%s' provided." % opts.type)
   if not opts.order in ["dynamic", "time", "rss", "cpu"]: parser.error("Invalid -o|--order value '%s' provided." % opts.order)
   resources={"total": {"cpu" : cpu_count()*opts.cpu, "rss" : int(virtual_memory().total*opts.memory/100)}, "total_groups" : 0, "total_jobs" : 0, "done_groups" : 0, "done_jobs" : 0}
-  jobs=initJobs(json.load(open(opts.jobs)), resources)
+  jobs=initJobs(json.load(open(opts.jobs)), resources, opts.type)
   thrds={}
   wait_for_jobs = False
   has_jobs = True

@@ -78,7 +78,10 @@ for cmds_log in o.split("\n"):
       job = {"cpu" : 200, "rss" : 4*1024*1024*1024, "time" : 3600, "command" : re.sub("\s*;\s*$","",c.split(":",1)[-1])}
       step = c.split(":")[0]
       if (wf in wf_stats) and (step in wf_stats[wf]):
-        for x in ["cpu", "rss", "time"]: job[x] = wf_stats[wf][step][x]
+        job["time"] = wf_stats[wf][step]["time"]
+        for x in ["cpu", "rss"]:
+          job[x] = wf_stats[wf][step][x]
+          for t in [x+"_avg", x+"_max"]: job[t] = wf_stats[wf][step][t]
       group["commands"].append(job)
   jobs["jobs"].append(group)
 dump(jobs, open("jobs.json","w"), sort_keys=True,indent=2)

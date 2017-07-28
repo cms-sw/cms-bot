@@ -98,7 +98,9 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
       time_v = int(sum([h[0] for h in hits])/thits)
       rss_v = int(sum([h[1] for h in hits])/thits)
       cpu_v = int(sum([h[2] for h in hits])/thits)
-      if rss_v<1024: rss_v = int(sum([h[3] for h in hits])/thits)
-      if cpu_v<10: cpu_v = int(sum([h[4] for h in hits])/thits)
-      wf_stats[wf][step] = { "time" : time_v, "rss" : rss_v, "cpu" : cpu_v }
+      rss_m = int(sum([h[3] for h in hits])/thits)
+      cpu_m = int(sum([h[4] for h in hits])/thits)
+      if rss_v<1024: rss_v = rss_m
+      if cpu_v<10: cpu_v = cpu_m
+      wf_stats[wf][step] = { "time" : time_v, "rss" : rss_v, "cpu" : cpu_v, "rss_max" : rss_m, "cpu_max" : cpu_m }
   return wf_stats

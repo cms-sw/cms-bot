@@ -80,6 +80,8 @@ def initJobs(jobs, resources, otype):
     for i in reversed(range(cmd_count)):
       total_jobs+=1
       job = group["commands"][i]
+      print ">>",group["name"],job
+      for x in [ "rss", "cpu" ]: print "  ",x,int(job[x]*100/job[x+"_max"]),int(job[x+"_avg"]*100/job[x+"_max"])
       if otype:
         for x in [ "rss", "cpu" ]: job[x] = job[ x + "_" + otype ] 
       job["state"]="Pending"

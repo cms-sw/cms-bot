@@ -1176,6 +1176,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj.CSCTightHaloId2015()");
       plotvar(tbr+recoS+".obj.GlobalLooseHaloId()");
       plotvar(tbr+recoS+".obj.GlobalTightHaloId()");
+      plotvar(tbr+recoS+".obj.GlobalTightHaloId2016()");
+      plotvar(tbr+recoS+".obj.GlobalSuperTightHaloId2016()");
       plotvar(tbr+recoS+".obj.getProblematicStrips()@.size()");
       plotvar(tbr+recoS+".obj.getProblematicStrips().cellTowerIds@.size()");
       plotvar(tbr+recoS+".obj.getProblematicStrips().hadEt");

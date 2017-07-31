@@ -125,6 +125,8 @@ RunSinglePh2017B136p788 136.788_RunSinglePh2017B+*/step3.root reRECO
 #
 # 2017 workflows follow
 #
+Cosmics2017wf7p2 7.2_Cosmics_UP17+*/step3.root RECO
+CosmicsSPLoose2017wf7p3 7.3_CosmicsSPLoose_UP17+*/step3.root RECO
 SingleElectronPt35in2017wf10002p0 10002.0_SingleElectronPt35+SingleElectronPt35_pythia8_2017*/step3.root RECO
 SingleElectronPt1000in2017wf10003p0 10003.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2017*/step3.root RECO
 SingleGammaPt10in2017wf10004p0 10004.0_SingleGammaPt10+SingleGammaPt10_pythia8_2017*/step3.root RECO

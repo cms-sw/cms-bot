@@ -709,8 +709,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
                             " will not be merged. %(managers)s",
                             managers=releaseManagersList)
     elif ("orp" in signatures) and (signatures["orp"] != "approved"):
-      autoMergeMsg = format("This pull request requires discussion in the"
-                            " ORP meeting before it's merged. %(managers)s",
+      autoMergeMsg = format("This pull request will now be reviewed by the release team"
+                            " before it's merged. %(managers)s (and backports should be raised in the release meeting by the corresponding L2)",
                             managers=releaseManagersList)
 
   devReleaseRelVal = ""

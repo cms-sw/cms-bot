@@ -735,7 +735,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
                             for name, l2_categories in CMSSW_L2.items()
                             for signature in signing_categories
                             if signature in l2_categories
-                               and signature in unsigned]
+                               and signature in unsigned and signature not in ["orp"] ]
 
   missing_notifications = set(missing_notifications)
   # Construct message for the watchers

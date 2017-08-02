@@ -588,7 +588,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
                          and not x.startswith("tests")
                          and not x.startswith("pending-assignment")
                          and not x.startswith("comparison")
-                         and not x in ["backport", "urgent", "bug-fix", "new-feature"]]
+                         and not x in ["backport", "urgent", "bug-fix", "new-feature", "backport-ok"]]
 
   if not missingApprovals:
     print "The pull request is complete."

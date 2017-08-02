@@ -57,6 +57,7 @@ cat /proc/cpuinfo |  grep "model name" >> $DETAILS_FILE
 
 ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
+echo "Set up release area at `date`"
 scram project $RELEASE_FORMAT
 set +x
 cd $RELEASE_FORMAT
@@ -76,7 +77,7 @@ echo $WORKFLOWS_TO_COMPARE
 
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
 
-  echo '#######################################'
+  echo '####################################### at `date`'
   echo "downloading: $WF"
 
   WF_DIR=`echo $WF | cut -d "/" -f1`
@@ -124,7 +125,7 @@ done
 
 echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 
-echo 'Finished downloading files:'
+echo 'Finished downloading files at `date`:'
 
 get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/results/testsResults.txt
 sed -i "s/COMPARISON;QUEUED/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
@@ -145,17 +146,19 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   cp $CMS_BOT_DIR/comparisons/matrix_RE.txt $JR_COMP_DIR
   export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
+  echo 'Start JR comparison at `date`'
   echo  "$JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
   ($JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
-  echo 'Finished with JR comparison:'
+  echo 'Finished with JR comparison at `date`:'
 fi
 
 # --------------------------------------------------------------------------
 # Default Comparison
 # --------------------------------------------------------------------------
 if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
-
+  echo 'Started with default comparison at `date`'
+  
   RELMON_COMP_DIR=$WORKSPACE/results/default-comparison
   mkdir $RELMON_COMP_DIR
 
@@ -193,7 +196,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 
   jobs
   wait || true
-  echo 'Finished with default comparison'
+  echo 'Finished with default comparison at `date`'
 fi
 
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
@@ -209,7 +212,8 @@ fi
 # ----------------------------------------------------------------------------
 
 if [ "X$RUN_ALT_COMP" = Xtrue ]; then
-
+  echo 'Started with alternative comparison at `date`'
+  
   ALT_COMP_DIR=$WORKSPACE/results/alternative-comparison
   mkdir -p $ALT_COMP_DIR
   DQM_COMP_PARAMS_FILE=$ALT_COMP_DIR/comparisonParams.txt
@@ -247,7 +251,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
 
   jobs
   wait || true
-  echo 'Finished with alternative comparison:'
+  echo 'Finished with alternative comparison at `date`:'
 fi
 
 cd $WORKSPACE
@@ -293,5 +297,6 @@ if [ -e $WORKSPACE/results/testsResults.txt ] ; then
   sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
   send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
 fi
+echo "All done at `date`"
 touch $WORKSPACE/ALL_DONE
 

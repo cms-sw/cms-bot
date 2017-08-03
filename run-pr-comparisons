@@ -1,4 +1,5 @@
 #!/bin/sh -ex
+NUM_PROC=$(getconf _NPROCESSORS_ONLN)
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
@@ -191,6 +192,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     echo "compare_using_files.py $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE -o $OUTPUT_DIR --metas \" $RELEASE_FORMAT @@@ $RELEASE_FORMAT + $PULL_REQUEST_NUMBER \" --use_black_file -C -R -p --no_successes -s b2b $TH_PARAM--standalone >> ${OUTPUT_DIR}RelMonComp-$WF_NUMBER.log 2>&1" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "cp $OUTPUT_DIR/RelMonSummary.html $OUTPUT_DIR/index.html" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
     ($WORKSPACE/results/default-comparison/command-$WF_NUMBER || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
   done
 
@@ -245,6 +247,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
 
     chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
     ($ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
 
   done

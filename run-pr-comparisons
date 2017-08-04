@@ -243,7 +243,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     # create a mini script for running this comparisons in parallel
     echo '#!/bin/sh -ex' >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "cd $ALT_COMP_DIR/$WF_NUMBER" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "$ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 8$MOD "" "[0-9][0-9]/AlCaReco/Run summary/SiStrip/MechanicalView" || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "$ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.ps $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.pdf $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER

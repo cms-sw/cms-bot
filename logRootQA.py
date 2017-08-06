@@ -12,7 +12,9 @@ def getFiles(d,ending):
 
 def getCommonFiles(d1,d2,ending):
     l1=getFiles(d1,ending)
+    print "l1",l1
     l2=getFiles(d2,ending)
+    print "l2",l2
     common=[]
     for l in l1:
         lT=l[len(d1):]
@@ -213,6 +215,7 @@ if compDir[-1]=='/':
     compDir=jrDir[:-1]
 
 commonLogs=getCommonFiles(baseDir,testDir,'log')
+print commonLogs
 
 #### check the printouts
 lines=0

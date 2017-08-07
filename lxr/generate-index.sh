@@ -12,7 +12,7 @@ fi
 rm -rf ${BASE_DIR}/glimpse_index/lxr/${tag} || true
 mkdir -p ${BASE_DIR}/glimpse_index/lxr/${tag}
 echo $tag >> ${BASE_DIR}/host_config/versions
-cat ${BASE_DIR}/host_config/versions | sort | uniq > ${BASE_DIR}/host_config/versions.new
+cat ${BASE_DIR}/host_config/versions | sort | uniq | tac > ${BASE_DIR}/host_config/versions.new
 mv ${BASE_DIR}/host_config/versions.new ${BASE_DIR}/host_config/versions
 docker exec -u lxr -t lxr /lxr/genxref --url=//localhost/lxr --version=$tag
-tail -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default
+head -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default

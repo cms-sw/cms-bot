@@ -6,7 +6,7 @@ if [ $(grep "^$tag$" ${BASE_DIR}/host_config/versions | wc -l) -gt 0 ] ; then
   grep -v "^$tag$" ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/versions.new
   mv ${BASE_DIR}/host_config/versions.new ${BASE_DIR}/host_config/versions
 fi
-tail -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default
+head -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default
 
 [ -d ${BASE_DIR}/src/$tag ] && rm -rf /data/lxr/src/$tag
 [ -d ${BASE_DIR}/glimpse_index/lxr/${tag} ] && rm -rf ${BASE_DIR}/glimpse_index/lxr/${tag}

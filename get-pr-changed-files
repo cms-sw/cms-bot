@@ -1,0 +1,2 @@
+#!/bin/bash
+curl -s -L https://patch-diff.githubusercontent.com/raw/cms-sw/$1/pull/$2.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq

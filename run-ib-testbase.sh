@@ -13,15 +13,17 @@ export RELEASE_FORMAT=${RELEASE_FORMAT}
 IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | head -1)
 source \${IB_LAST_WEEK}/cmsset_default.sh  || true
 scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
-cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
 cd ${RELEASE_FORMAT}
 set +x
 eval \$(scram runtime -sh)
 set -x
-$WORKSPACE/cms-bot/das-utils/use-ibeos-sort
 export CMS_PATH=\${IB_LAST_WEEK}
-export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH
-which das_client
-grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true
 export FRONTIER_LOG_LEVEL=warning
+if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
+  cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
+  $WORKSPACE/cms-bot/das-utils/use-ibeos-sort
+  export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH
+  which das_client
+  grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true
+fi
 EOF

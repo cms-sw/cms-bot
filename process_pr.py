@@ -17,6 +17,7 @@ except Exception, e :
 
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
+TRIGERING_STYLE_TEST_MSG = 'The project style tests are being triggered in jenkins.'
 IGNORING_TESTS_MSG = 'Ignoring test request.'
 TESTS_RESULTS_MSG = '^\s*([-|+]1|I had the issue.*)\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'

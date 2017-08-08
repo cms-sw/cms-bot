@@ -10,8 +10,8 @@ voms-proxy-init -voms cms || true
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
-export IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | head -1)
-source ${_IB_LAST_WEEK}/cmsset_default.sh  || true
+IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | head -1)
+source \${IB_LAST_WEEK}/cmsset_default.sh  || true
 scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
 cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
 cd ${RELEASE_FORMAT}
@@ -19,7 +19,7 @@ set +x
 eval \$(scram runtime -sh)
 set -x
 $WORKSPACE/cms-bot/das-utils/use-ibeos-sort
-export CMS_PATH=${IB_LAST_WEEK}
+export CMS_PATH=\${IB_LAST_WEEK}
 export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH
 which das_client
 grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true

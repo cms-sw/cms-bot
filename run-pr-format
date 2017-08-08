@@ -1,5 +1,10 @@
 #!/bin/bash -ex
 PULL_REQUEST=$1
+USER_STYLE_CHECKS=$2
+if [ "${USER_STYLE_CHECKS}" = "" ] ; then 
+  USER_STYLE_CHECKS='boost-use-to-string,misc-string-compare,misc-uniqueptr-reset-release,modernize-deprecated-headers,modernize-make-shared,modernize-use-bool-literals,modernize-use-equals-delete,modernize-use-nullptr,modernize-use-override,performance-unnecessary-copy-initialization,readability-container-size-empty,readability-redundant-string-cstr,readability-static-definition-in-anonymous-namespace,readability-uniqueptr-delete-release'
+fi
+export USER_STYLE_CHECKS
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X${WORKSPACE}" = "X" ] ; then WORKSPACE=$(pwd) ; fi
@@ -21,7 +26,6 @@ for f in $(cat ${WORKSPACE}/upload/pr-changed-files-all.log | grep -v '/test/') 
 done
 USER_CODE_CHECK_FILES=$(cat ${WORKSPACE}/upload/pr-changed-files-selected.log | tr '\n' ' ')
 if [ "${USER_CODE_CHECK_FILES}" != "" ] ; then 
-  export USER_STYLE_CHECKS='boost-use-to-string,misc-string-compare,misc-uniqueptr-reset-release,modernize-deprecated-headers,modernize-make-shared,modernize-use-bool-literals,modernize-use-equals-delete,modernize-use-nullptr,modernize-use-override,performance-unnecessary-copy-initialization,readability-container-size-empty,readability-redundant-string-cstr,readability-static-definition-in-anonymous-namespace,readability-uniqueptr-delete-release'
   export USER_CODE_CHECK_FILES
   scram build -j ${NUM_PROC} style > ${WORKSPACE}/upload/clang-tidy.log 2>&1
   git diff > ${WORKSPACE}/upload/git-diff.patch

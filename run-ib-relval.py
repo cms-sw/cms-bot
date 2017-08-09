@@ -11,6 +11,9 @@ from subprocess import Popen
 from os.path import abspath, dirname
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
+def process_relvals(threads=None,cmssw_version=None,arch=None,cmssw_base=None,logger=None):
+  pass
+
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog -i|--id <jobid> -l|--list <list of workflows>")
   parser.add_option("-i", "--id",   dest="jobid", help="Job Id e.g. 1of3", default="1of1")
@@ -23,12 +26,23 @@ if __name__ == "__main__":
   if (not environ.has_key("CMSSW_VERSION")) or (not environ.has_key("CMSSW_BASE")) or (not environ.has_key("SCRAM_ARCH")):
     print "ERROR: Unable to file the release environment, please make sure you have set the cmssw environment before calling this script"
     exit(1)
-
+  
   thrds = cmsRunProcessCount
   cmssw_ver = environ["CMSSW_VERSION"]
   arch = environ["SCRAM_ARCH"]
   cmssw_base = environ["CMSSW_BASE"]
   logger=LogUpdater(dirIn=cmssw_base)
+  
+  if cmssw_ver.find('CLANG') is not -1:
+    p=Popen("python %s/rv_scheduler/prepareSteps.py -l %s" % (SCRIPT_DIR, opts.workflow),shell=True)
+    e=waitpid(p.pid,0)[1]
+    if e: exit(e)
+    p=Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver.rsplit('_',1)[0]), shell=True)
+    e=waitpid(p.pid,0)[1]
+    system("touch "+cmssw_base+"/done."+opts.jobid)
+    if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
+    exit(e)
+  
   if cmssw_ver.startswith("CMSSW_9_3_"):
     p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
@@ -55,4 +69,3 @@ if __name__ == "__main__":
   matrix = PyRelValsThread(thrds, cmssw_base+"/pyRelval", opts.jobid)
   matrix.setArgs(GetMatrixOptions(cmssw_ver,arch))
   matrix.run_workflows(opts.workflow.split(","),logger,opts.force,known_errors=known_errs)
-

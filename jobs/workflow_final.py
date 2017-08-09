@@ -100,15 +100,17 @@ def upload_logs(workflow, workflow_dir):
   logger=LogUpdater(dirIn=os.environ["CMSSW_BASE"])
   logger.updateRelValMatrixPartialLogs(basedir, os.path.basename(workflow_dir))
 
-jobs=json.load(open(sys.argv[1]))
-workflow = jobs["name"]
-workflow_dir=os.path.abspath(glob.glob("%s_*" % workflow)[0])
-getstatusoutput("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
-fix_dasquery_log(workflow_dir)
-if update_worklog(workflow_dir, jobs):
-  update_cmdlog(workflow_dir, jobs)
-update_timelog(workflow_dir, jobs)
-update_hostname(workflow_dir)
-update_known_error(workflow, workflow_dir)
-upload_logs(workflow, workflow_dir)
+if __name__ == "__main__":
+
+  jobs=json.load(open(sys.argv[1]))
+  workflow = jobs["name"]
+  workflow_dir=os.path.abspath(glob.glob("%s_*" % workflow)[0])
+  getstatusoutput("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
+  fix_dasquery_log(workflow_dir)
+  if update_worklog(workflow_dir, jobs):
+    update_cmdlog(workflow_dir, jobs)
+  update_timelog(workflow_dir, jobs)
+  update_hostname(workflow_dir)
+  update_known_error(workflow, workflow_dir)
+  upload_logs(workflow, workflow_dir)
 

@@ -49,11 +49,11 @@ for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-rele
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +15 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
-#Keep the following for 30 days
+#Keep the following for 60 days
 for dir in run-pr-format; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
-  find ${JENKINS_ARTIFACTS}/${dir} -mtime +30 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +60 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Keep the following for 8 days

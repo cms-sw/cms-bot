@@ -37,7 +37,7 @@ if __name__ == "__main__":
     p=Popen("python %s/rv_scheduler/prepareSteps.py -l %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
     if e: exit(e)
-    p=Popen("python %s/rv_scheduler/main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver.rsplit('_',1)[0]), shell=True)
+    p=Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver.rsplit('_',1)[0]), shell=True)
     e=waitpid(p.pid,0)[1]
     system("touch "+cmssw_base+"/done."+opts.jobid)
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)

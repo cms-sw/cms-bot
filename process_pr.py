@@ -37,8 +37,7 @@ def format(s, **kwds):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False):
-  req_type = "tests"
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests"):
   if abort: req_type = "abort"
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repository.split("/")[1], pr_number)
   if dryRun:
@@ -867,13 +866,18 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
                                " Please bring this up in the ORP"
                                " meeting if really needed.\n")
 
+  trigger_code_ckecks=False
   commentMsg = ""
   if (pr.base.ref in RELEASE_BRANCH_CLOSED) and (pr.state != "closed"):
     commentMsg = messageBranchClosed
   elif not already_seen:
     commentMsg = messageNewPR
+    if cmssw_repo and pr.base.ref=="master":
+      trigger_code_ckecks=True
   elif pull_request_updated or new_categories:
     commentMsg = messageUpdatedPR
+    if pull_request_updated and cmssw_repo and pr.base.ref=="master":
+      trigger_code_ckecks=True
   elif not missingApprovals:
     print "Pull request is already fully signed. Not sending message."
   else:
@@ -884,6 +888,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       print commentMsg.decode("ascii", "replace")
     except:
       pass
+
+  if trigger_code_ckecks:
+    create_properties_file_tests(repository, prId, "", "", "", dryRun, abort=False, req_type="codechecks")
 
   if commentMsg and not dryRun:
     issue.create_comment(commentMsg)

@@ -2061,6 +2061,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       photonVars("gedPhotons_");
       photonVars("gedPhotonsTmp_");//HI names
 
+      //phase 2 HGCAL dev
+      photonVars("photonsFromMultiCl_");
+
       //OOT photons
       photonVars("ootPhotons_");
 
@@ -2098,6 +2101,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       superClusters("hfEMClusters_");
       superClusters("particleFlowSuperClusterHGCal_");
       superClusters("particleFlowSuperClusterHGCal_particleFlowSuperClusterECALBarrel");
+      superClusters("particleFlowSuperClusterHGCalFromMultiCl_");
 
       caloClusters("particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap");
       caloClusters("particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel");
@@ -2111,6 +2115,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       caloClusters("particleFlowSuperClusterHGCal_");
       caloClusters("particleFlowSuperClusterHGCal_particleFlowBasicClusterECALPreshower");
       caloClusters("particleFlowSuperClusterHGCal_particleFlowBasicClusterECALBarrel");
+      caloClusters("particleFlowSuperClusterHGCalFromMultiCl_");
       caloClusters("hgcalLayerClusters_");
 
       plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj@.size()");
@@ -2143,6 +2148,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       pfClusters("particleFlowClusterHF_");
       pfClusters("particleFlowClusterPS_");
       pfClusters("particleFlowClusterHGCal_");
+      pfClusters("particleFlowClusterHGCalFromMultiCl_");
 
       hgcalMultiClusters("hgcalLayerClusters_sharing");
       hgcalMultiClusters("hgcalLayerClusters_");
@@ -2160,6 +2166,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       electronVars("gedGsfElectronsTmp_");
       electronVars("ecalDrivenGsfElectrons_");
       electronVars("mvaElectrons_");
+
+      //phase-2 HGCAL dev
+      electronVars("ecalDrivenGsfElectronsFromMultiCl_");
 
       // miniaod
       electronVars("slimmedElectrons_","patElectrons_");
@@ -2446,7 +2455,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       jets("recoBasicJets","ak8PFJetsCHSPruned"); 
       jets("recoBasicJets","cmsTopTagPFJetsCHS"); 
       
-      
+      jets("recoGenJets", "ak4GenJets");
+      jets("recoGenJets", "slimmedGenJets");
+
+      tbr="recoJetFlavourInfoMatchingCollection_slimmedGenJetsFlavourInfos__";
+      plotvar(tbr+recoS+".obj.data_.m_hadronFlavour");
+      plotvar(tbr+recoS+".obj.data_.m_partonFlavour");
+      plotvar(tbr+recoS+".obj.data_.m_partons.size()");
+      plotvar(tbr+recoS+".obj.data_.m_bHadrons.size()");
+
       plotvar("double_kt6PFJets_rho_"+recoS+".obj");
       plotvar("double_kt6CaloJets_rho_"+recoS+".obj");
       plotvar("double_fixedGridRhoFastjetAll__"+recoS+".obj");

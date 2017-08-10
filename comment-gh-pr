@@ -21,10 +21,14 @@ if __name__ == "__main__":
     parser.error("Missing pull request message: -m|--message <message>")
 
   try:
-    gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-    repo = gh.get_repo( opts.repository )
-    pr   = repo.get_pull(opts.pr)
-    pr.create_issue_comment(re.sub("@N@","\n",opts.msg))
+    msg = re.sub("@N@","\n",opts.msg)
+    if opts.dryRun:
+      print "Addeding Comments:",msg
+    else:
+      gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+      repo = gh.get_repo( opts.repository )
+      pr   = repo.get_issue(opts.pr)
+      pr.create_comment(msg)
   except Exception as e:
     print "Failed to add comment: ",e.message
     exit(1)

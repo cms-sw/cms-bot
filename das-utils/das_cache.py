@@ -26,6 +26,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
   if len(fields)==1:
     field_filter = " | grep %s.name | sort | unique" % field
   das_cmd = "das_client --format=json --limit=%s --query '%s%s' --retry=%s --threshold=%s" % (limit, query, field_filter, retry, threshold)
+  print "Running ",das_cmd
   err, out = getstatusoutput(das_cmd)
   if err:
     print out

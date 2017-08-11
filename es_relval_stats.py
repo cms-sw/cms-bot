@@ -20,7 +20,7 @@ def percentile(percentage, data, dlen):
   if FR>0: res=(FR/100.0)*(data[IR]-res)+res
   return res
 
-def process(wfnum, s, sfile, details=False):
+def process(wfnum, s, sfile, hostname, exit_code, details=False):
   global release, arch, rel_msec, week, ex_fields
   try:
     stats = json.load(open(sfile))
@@ -42,7 +42,7 @@ def process(wfnum, s, sfile, details=False):
         try:send_payload("relvals_stats_details_"+week,"runtime-stats-details",idx,json.dumps(stat))
         except Exception as e: print e
     print "Working on ",release, arch, wfnum, s, len(stats)
-    sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum}
+    sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum, "hostname":hostname, "exit_code":exit_code}
     for x in xdata:
       data = sorted(xdata[x])
       if x in ["time","num_threads","processes","num_fds"]:
@@ -87,6 +87,16 @@ for wf in o.split("\n"):
   if not isdir(wf): continue
   if exists(join(wf,"wf_stats.done")): continue
   wfnum = basename(wf).split("_",1)[0]
+  hostname=""
+  if exists(join(wf,"hostname")):
+    hostname=open(join(wf,"hostname")).read().split("\n")[0]
+  exit_codes={}
+  if exists(join(wf,"workflow.log")):
+    e, o = getstatusoutput("head -1 %s/workflow.log  | sed 's|.* exit: *||'" % wf)
+    istep=0
+    for e in [ int(x) for x in o.strip().split(" ") if x ]:
+      istep+=1
+      exit_codes["step%s" % istep ] = e
   e, o = getstatusoutput("ls %s/step*.log | sed 's|^.*/||'" % wf)
   steps = {}
   for log in o.split("\n"): steps[log.split("_")[0]]=""
@@ -97,11 +107,13 @@ for wf in o.split("\n"):
   for s in steps:
     sfile =steps[s]
     if sfile=="": continue
+    exit_code=-1
+    if s in exit_codes: exit_code = exit_codes[s]
     while True:
       threads = [t for t in threads if t.is_alive()]
       if(len(threads) >= jobs):sleep(0.5)
       else: break
-    t = threading.Thread(target=process, args=(wfnum, s, sfile))
+    t = threading.Thread(target=process, args=(wfnum, s, sfile, hostname, exit_code))
     t.start()
     threads.append(t)
   getstatusoutput("touch %s" % join(wf,"wf_stats.done"))

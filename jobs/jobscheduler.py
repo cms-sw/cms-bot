@@ -106,19 +106,21 @@ if __name__ == "__main__":
   parser.add_option("-j", "--jobs",   dest="jobs",   default="jobs.json",     help="Json file path with groups/jobs to run")
   parser.add_option("-o", "--order",  dest="order",  default="dynamic",       help="Order the jobs based on selected criteria. Valid values are time|rss|cpu|dynamic. Default value dynamic")
   parser.add_option("-t", "--type",   dest="type",   default="",              help="Order type. Valid values are avg|max. Default value ''")
+  parser.add_option("-M", "--max-jobs", dest="maxJobs", default=-1, type="int", help="Maximum jobs to run in parallel. Default is -1 which means no limit. Special value 0 means maximum jobs=CPU counts")
   opts, args = parser.parse_args()
 
   if opts.memory>200: opts.memory=200
   if opts.cpu>300:    opts.cpu=300
   if not opts.type in [ "", "avg", "max" ]: parser.error("Invalid -t|--type value '%s' provided." % opts.type)
   if not opts.order in ["dynamic", "time", "rss", "cpu"]: parser.error("Invalid -o|--order value '%s' provided." % opts.order)
+  if opts.maxJobs==0: opts.maxJobs=cpu_count()
   resources={"total": {"cpu" : cpu_count()*opts.cpu, "rss" : int(virtual_memory().total*opts.memory/100)}, "total_groups" : 0, "total_jobs" : 0, "done_groups" : 0, "done_jobs" : 0}
   jobs=initJobs(json.load(open(opts.jobs)), resources, opts.type)
   thrds={}
   wait_for_jobs = False
   has_jobs = True
   while has_jobs:
-    if wait_for_jobs:
+    while (wait_for_jobs or ((opts.maxJobs>0) and (len(thrds)>=opts.maxJobs))):
       wait_for_jobs = False
       checkJobs(thrds, resources)
     has_jobs, job = getJob(jobs,resources, opts.order)

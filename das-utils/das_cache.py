@@ -121,6 +121,7 @@ if __name__ == "__main__":
         if (dtime<=opts.threshold) and (fcount>0):
           jfile = "%s.json" % outfile
           okcache=exists(jfile)
+          print " JSON results found",sha,okcache
           if okcache:
             xdata = read_json (jfile)
             if (not "status" in xdata) or (xdata['status'] != 'ok') or (not "data" in xdata):

@@ -20,27 +20,28 @@ def read_json(infile):
     return json.load(json_data)
 
 def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0):
+  sha=basename(outfile)
   fields = query.split(" ",1)[0].split(",")
   field_filter = ""
   field = fields[-1]
   if len(fields)==1:
     field_filter = " | grep %s.name | sort | unique" % field
   das_cmd = "%s --format=json --limit=%s --query '%s%s' --retry=%s --threshold=%s" % (dasclient, limit, query, field_filter, retry, threshold)
-  print "Running: ",das_cmd
-  print "  Fields:",fields 
+  print "  Running: ",sha,das_cmd
+  print "  Fields:",sha,fields 
   err, out = getstatusoutput(das_cmd)
   if err:
-    print out
+    print "  ",sha,out
     return False
   jdata = json.loads(out)
   if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata):
-    print "Failed: %s\n  %s" % (query, out)
+    print "Failed: %s %s\n  %s" % (sha, query, out)
     return False
   results = {'mtime' : time(), 'results' : []}
   for item in jdata["data"]:
     if (not field in item) or (not item[field]) or (not 'name' in item[field][0]): continue
     results['results'].append(item[field][0]["name"])
-  print "  Results:",len(results['results'])
+  print "  Results:",sha,len(results['results'])
   if (len(results['results'])==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()
     lmt = 0
@@ -49,7 +50,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt)
   if results['results'] or override:
     write_json (outfile+".json", jdata)
-    print "  Success '%s', found %s results." % (query, len(results['results']))
+    print "  Success %s '%s', found %s results." % (sha, query, len(results['results']))
     if results['results']:
       write_json (outfile, results)
     else:

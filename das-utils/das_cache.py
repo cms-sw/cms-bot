@@ -127,13 +127,15 @@ if __name__ == "__main__":
             if (not "status" in xdata) or (xdata['status'] != 'ok') or (not "data" in xdata):
               okcache=False
             else:
-              for x in ["file", "lumi", "site"]:
-                if not x in xdata["data"]: continue
-                xlen = len(xdata["data"][x])
-                print "  Caches length %s %s %s" % (sha, x, xlen)
-                if xlen>0: continue
-                okcache=False
-                break
+              for item in xdata["data"]:
+                if not okcache: break
+                for x in ["file", "lumi", "site"]:
+                  if not x in item: continue
+                  xlen = len(item[x])
+                  print "  Caches length %s %s %s" % (sha, x, xlen)
+                  if xlen>0: continue
+                  okcache=False
+                  break
           if okcache:
             uqueries[query] = jdata['results']
             print "  %s Found in cache with %s results (age: %s src)" % (sha, fcount , dtime)

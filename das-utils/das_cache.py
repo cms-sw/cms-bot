@@ -41,6 +41,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   for item in jdata["data"]:
     if (not field in item) or (not item[field]) or (not 'name' in item[field][0]): continue
     results['results'].append(item[field][0]["name"])
+  print "  Results:",len(results['results'])
   if (len(results['results'])==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()
     lmt = 0
@@ -117,10 +118,23 @@ if __name__ == "__main__":
           write_json (outfile, jdata)
         fcount = len(jdata['results'])
         if (dtime<=opts.threshold) and (fcount>0):
-          uqueries[query] = jdata['results']
-          print "  Found in cache with %s results (age: %s src)" % (fcount , dtime)
-          inCache += 1
-          continue
+          okcache=True
+          jfile = "%s.json" % outfile
+          if exists(jfile):
+            xdata = read_json (jfile)
+            if (not "status" in xdata) or (xdata['status'] != 'ok') or (not "data" in xdata):
+              okcache=False
+            else:
+              for x in ["file", "lumi", "site"]:
+                if not x in xdata["data"]: continue
+                if len(xdata["data"][x])>0: continue
+                okcache=False
+          if okcache:
+            uqueries[query] = jdata['results']
+            print "  Found in cache with %s results (age: %s src)" % (fcount , dtime)
+            inCache += 1
+            continue
+          else: print "  Refreshing cache as previous Json was empty:", sha
         elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
         else: print "  Retrying as cache with empty results found."
       except IOError as e:

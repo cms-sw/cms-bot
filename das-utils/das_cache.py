@@ -118,9 +118,9 @@ if __name__ == "__main__":
           write_json (outfile, jdata)
         fcount = len(jdata['results'])
         if (dtime<=opts.threshold) and (fcount>0):
-          okcache=True
           jfile = "%s.json" % outfile
-          if exists(jfile):
+          okcache=exists(jfile)
+          if okcache:
             xdata = read_json (jfile)
             if (not "status" in xdata) or (xdata['status'] != 'ok') or (not "data" in xdata):
               okcache=False

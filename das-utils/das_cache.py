@@ -131,9 +131,7 @@ if __name__ == "__main__":
                 if not okcache: break
                 for x in ["file", "lumi", "site"]:
                   if not x in item: continue
-                  xlen = len(item[x])
-                  print "  Caches length %s %s %s" % (sha, x, xlen)
-                  if xlen>0: continue
+                  if len(item[x])>0: continue
                   okcache=False
                   break
           if okcache:

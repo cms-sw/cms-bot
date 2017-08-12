@@ -132,9 +132,10 @@ if __name__ == "__main__":
                 print "  Caches length %s %s %s" % (sha, x, xlen)
                 if xlen>0: continue
                 okcache=False
+                break
           if okcache:
             uqueries[query] = jdata['results']
-            print "  Found in cache with %s results (age: %s src)" % (fcount , dtime)
+            print "  %s Found in cache with %s results (age: %s src)" % (sha, fcount , dtime)
             inCache += 1
             continue
           else: print "  Refreshing cache as previous Json was empty:", sha

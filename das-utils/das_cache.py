@@ -128,7 +128,9 @@ if __name__ == "__main__":
             else:
               for x in ["file", "lumi", "site"]:
                 if not x in xdata["data"]: continue
-                if len(xdata["data"][x])>0: continue
+                xlen = len(xdata["data"][x])
+                print "  Caches length %s %s %s" % (sha, x, xlen)
+                if xlen>0: continue
                 okcache=False
           if okcache:
             uqueries[query] = jdata['results']

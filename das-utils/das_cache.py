@@ -19,13 +19,13 @@ def read_json(infile):
   with open(infile) as json_data:
     return json.load(json_data)
 
-def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
+def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0):
   fields = query.split(" ",1)[0].split(",")
   field_filter = ""
   field = fields[-1]
   if len(fields)==1:
     field_filter = " | grep %s.name | sort | unique" % field
-  das_cmd = "das_client --format=json --limit=%s --query '%s%s' --retry=%s --threshold=%s" % (limit, query, field_filter, retry, threshold)
+  das_cmd = "%s --format=json --limit=%s --query '%s%s' --retry=%s --threshold=%s" % (dasclient, limit, query, field_filter, retry, threshold)
   err, out = getstatusoutput(das_cmd)
   if err:
     print out
@@ -44,7 +44,7 @@ def run_das_client(outfile, query, override, threshold=900, retry=5, limit=0):
     lmt = 0
     if "file" in fields: lmt = 100
     print "Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query)
-    return run_das_client(outfile, query, override, threshold, retry, limit=lmt)
+    return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt)
   if results['results'] or override:
     print "  Success '%s', found %s results." % (query, len(results['results']))
     if results['results']:
@@ -59,6 +59,7 @@ if __name__ == "__main__":
   parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests if cache empty results are returned from das", action="store_true", default=False)
   parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", type=int, default=-1)
   parser.add_option("-s", "--store",      dest="store",     help="Name of object store directory to store the das queries results", default=None)
+  parser.add_option("-c", "--client",     dest="client",    help="Das client to use either das_client or dasgoclient", default="das_client")
 
   opts, args = parser.parse_args()
   if (not opts.store): parser.error("Missing store directory path to store das queries objects.")
@@ -133,7 +134,7 @@ if __name__ == "__main__":
       if(tcount < jobs):
         print "  Searching DAS (threads: %s)" % tcount
         try:
-          t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override))
+          t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client))
           t.start()
           threads.append(t)
           sleep(1)

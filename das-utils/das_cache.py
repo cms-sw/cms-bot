@@ -36,7 +36,6 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata):
     print "Failed: %s\n  %s" % (query, out)
     return False
-  write_json (outfile+".json", jdata)
   results = {'mtime' : time(), 'results' : []}
   for item in jdata["data"]:
     if (not field in item) or (not item[field]) or (not 'name' in item[field][0]): continue
@@ -49,6 +48,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     print "Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query)
     return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt)
   if results['results'] or override:
+    write_json (outfile+".json", jdata)
     print "  Success '%s', found %s results." % (query, len(results['results']))
     if results['results']:
       write_json (outfile, results)

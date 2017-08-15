@@ -6,6 +6,7 @@ from os.path import expanduser
 from optparse import OptionParser
 from socket import setdefaulttimeout
 from cmsdist_merge_permissions import USERS_TO_TRIGGER_HOOKS, getCommentCommand, hasRights
+from process_pr import get_changed_files
 setdefaulttimeout(120)
 
 def process_pr(gh, repo, issue, dryRun):
@@ -14,11 +15,13 @@ def process_pr(gh, repo, issue, dryRun):
   pr      = None
   branch  = None
   cmdType = None
+  chg_files= []
   if issue.pull_request:
     pr   = repo.get_pull(prId)
     branch = pr.base.ref
     print "PR merged:", pr.merged
     if pr.merged: return True
+    chg_files = process_pr(pr)
   USERS_TO_TRIGGER_HOOKS.add("cmsbuild")
   for comment in issue.get_comments():
     commenter = comment.user.login
@@ -38,7 +41,7 @@ def process_pr(gh, repo, issue, dryRun):
     if not cmd: continue
     if (cmd == "ping") and cmdType: continue
     if cmd == "merge" and not pr: continue
-    if not hasRights (commenter, branch, cmd): continue
+    if not hasRights (commenter, branch, cmd, chg_files): continue
     cmdType = cmd
     print "Found: Command %s issued by %s" % (cmdType, commenter)
   if not cmdType: return True

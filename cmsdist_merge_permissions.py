@@ -34,6 +34,9 @@ def hasRights(user, branch, type, files=[]):
     if reg and match(reg,branch): return False
     reg = CMSDIST_PERMISSIONS[user][1]
     if not match(reg,branch): return False
+    if type=="merge":
+      for f in files:
+        if not match(CMSDIST_PERMISSIONS[user][3], f): return False
   return True
 
 def isValidWebHook(payload):

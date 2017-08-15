@@ -1,7 +1,7 @@
 #cmsdist/comp rules
 from re import match,IGNORECASE
 
-#Merge format: "user" : [ regexp for valid commands, regexp of allowed branches, regexp of not allowed branches ]
+#Merge format: "user" : [ regexp for valid commands, regexp of allowed branches, regexp of not allowed branches, regex for files ]
 CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
 ALL_BRANCHES     = ".+"
 COMP_BRANCHES = "^comp_gcc493$"

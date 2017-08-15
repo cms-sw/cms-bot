@@ -1186,8 +1186,8 @@ swertz:
   - DQMOffline/Configuration
   - DQMOffline/RecoB
 jainshilpi:
-- RecoEgamma
-- RecoEcal
-- EgammaAnalysis
-- DataFormats/EgammaCandidates
-- DataFormats/EgammaReco
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+  - DataFormats/EgammaReco

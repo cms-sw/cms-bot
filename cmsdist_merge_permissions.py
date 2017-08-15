@@ -26,7 +26,7 @@ def getCommentCommand(comment):
     if match(regex,comment,IGNORECASE): return VALID_COMMENTS[regex]
   return None
 
-def hasRights(user, branch, type):
+def hasRights(user, branch, type, files=[]):
   if not user in CMSDIST_PERMISSIONS: return False
   if not match(CMSDIST_PERMISSIONS[user][0], type): return False
   if branch:

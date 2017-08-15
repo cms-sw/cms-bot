@@ -6,12 +6,12 @@ CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
 ALL_BRANCHES     = ".+"
 COMP_BRANCHES = "^comp_gcc493$"
 CMSDIST_PERMISSIONS = {
-  "BrunoCoimbra"   : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
-  "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
-  "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
-  "ticoann"        : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
-  "emaszs"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
-  "nataliaratnikova": [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
+  "BrunoCoimbra"   : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "ticoann"        : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "emaszs"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "nataliaratnikova": [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
 }
 
 VALID_COMMENTS = {
@@ -27,7 +27,7 @@ def getCommentCommand(comment):
     if match(regex,comment,IGNORECASE): return VALID_COMMENTS[regex]
   return None
 
-def hasRights(user, branch, type):
+def hasRights(user, branch, type, files=[]):
   if not user in CMSDIST_PERMISSIONS: return False
   if not match(CMSDIST_PERMISSIONS[user][0], type): return False
   if branch:
@@ -35,6 +35,9 @@ def hasRights(user, branch, type):
     if reg and match(reg,branch): return False
     reg = CMSDIST_PERMISSIONS[user][1]
     if not match(reg,branch): return False
+    if type=="merge":
+      for f in files:
+        if not match(CMSDIST_PERMISSIONS[user][3], f): return False
   return True
 
 def isValidWebHook(payload):
@@ -45,4 +48,3 @@ def isValidWebHook(payload):
   return True
 
 USERS_TO_TRIGGER_HOOKS = set(CMSDIST_PERMISSIONS.keys())
-

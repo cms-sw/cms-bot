@@ -1185,3 +1185,9 @@ swertz:
   - Validation/RecoB
   - DQMOffline/Configuration
   - DQMOffline/RecoB
+jainshilpi:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+  - DataFormats/EgammaReco

@@ -6,11 +6,11 @@ CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
 ALL_BRANCHES     = ".+"
 COMP_BRANCHES = "^comp_gcc493$"
 CMSDIST_PERMISSIONS = {
-  "BrunoCoimbra"   : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
-  "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES ],
-  "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
-  "ticoann"        : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
-  "emaszs"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
+  "BrunoCoimbra"   : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "ticoann"        : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "emaszs"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
 }
 
 VALID_COMMENTS = {
@@ -44,4 +44,3 @@ def isValidWebHook(payload):
   return True
 
 USERS_TO_TRIGGER_HOOKS = set(CMSDIST_PERMISSIONS.keys())
-

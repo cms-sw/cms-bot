@@ -11,6 +11,7 @@ CMSDIST_PERMISSIONS = {
   "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
   "ticoann"        : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
   "emaszs"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
+  "nataliaratnikova": [ ".+", COMP_BRANCHES , CMSSW_BRANCHES ],
 }
 
 VALID_COMMENTS = {

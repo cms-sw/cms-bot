@@ -43,7 +43,7 @@ if __name__ == "__main__":
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
     exit(e)
   
-  if cmssw_ver.startswith("CMSSW_9_3_") and (not "_ROOT6_" in cmssw_ver):
+  if cmssw_ver.startswith("CMSSW_9_3_") and (not "_XROOT6_" in cmssw_ver):
     p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
     if e: exit(e)

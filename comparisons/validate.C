@@ -701,7 +701,7 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
 void packedCandVar(TString var, TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_", bool notafunction = false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v, "", notafunction ? false : true);//ask for try/catch if it's a function
+  plotvar(v, "", true);//ask for try/catch regardless of the type of the plotted variables
 }
 
 void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_"){
@@ -2203,7 +2203,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       ///gsf tracks plots
       gsfTrackVars("electronGsfTracks_");
-      gsfTrackVars("electronGsfTracksFromMultiCl_");      
+      gsfTrackVars("electronGsfTracksFromMultiCl_");
+      gsfTrackVars("reducedEgamma_reducedGsfTracks");
     }
 
     if (step.Contains("all") || step.Contains("pflow")){

@@ -142,8 +142,8 @@ def check_test_cmd(first_line):
     return (True, cmsdist_pr, cmssw_prs, wfs)
   return (False, "", "", "")
 
-def get_changed_files(pr):
-  if pr.changed_files<=300: return [f.filename for f in pr.get_files()]
+def get_changed_files(pr, use_gh_patch=False):
+  if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
   from commands import getstatusoutput
   cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq" % pr.number
   e , o = getstatusoutput(cmd)

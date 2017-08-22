@@ -322,6 +322,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
   body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
   abort_test = False
   need_external = False
+  trigger_code_ckecks=False
   backport_pr_num = ""
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,body_firstline):
@@ -398,6 +399,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       pull_request_updated = True
       continue
 
+    if ("code-checks"==first_line) and ("code-checks" in signatures) and (signatures["code-checks"]=="pending"):
+      trigger_code_ckecks=True
+      continue
+
     # Check for cmsbuild_user comments and tests requests only for pull requests
     if commenter == cmsbuild_user:
       if not issue.pull_request: continue
@@ -406,9 +411,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       else: sec_line = sec_line[0]
       if re.match("Comparison is ready", first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
-      elif re.match("^[-]code-checks$",first_line):
+      elif "-code-checks" == first_line:
         signatures["code-checks"] = "rejected"
-      elif re.match("^[+]code-checks$",first_line):
+      elif "+code-checks" == first_line:
         signatures["code-checks"] = "approved"
       elif re.match("^Comparison not run.+",first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
@@ -870,7 +875,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
                                " Please bring this up in the ORP"
                                " meeting if really needed.\n")
 
-  trigger_code_ckecks=False
   commentMsg = ""
   if (pr.base.ref in RELEASE_BRANCH_CLOSED) and (pr.state != "closed"):
     commentMsg = messageBranchClosed

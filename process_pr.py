@@ -413,8 +413,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
       elif "-code-checks" == first_line:
         signatures["code-checks"] = "rejected"
+        trigger_code_ckecks=False
       elif "+code-checks" == first_line:
         signatures["code-checks"] = "approved"
+        trigger_code_ckecks=False
       elif re.match("^Comparison not run.+",first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
       elif re.match( FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
@@ -629,6 +631,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
     if not dryRun: issue.create_comment(HOLD_MSG+blockers+'\nThey need to issue an `unhold` command to remove the `hold` state or L1 can `unhold` it for all')
     print "Blockers:",blockers
 
+  print "Changed Labels:",labels-old_labels,old_labels-labels
   if old_labels == labels:
     print "Labels unchanged."
   elif not dryRun:

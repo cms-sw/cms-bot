@@ -200,9 +200,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
                          dev_branch=CMSSW_DEVEL_BRANCH)
             issue.create_comment(msg)
         return
-    except:
-      print "Could not find the pull request ",prId,", may be it is an issue"
-      return
+    except Exception, e :
+      print "Could not find the pull request ",prId,", may be it is an issue:", e
+      exit(1)
     # A pull request is by default closed if the branch is a closed one.
     if pr.base.ref in RELEASE_BRANCH_CLOSED: mustClose = True
     # Process the changes for the given pull request so that we can determine the

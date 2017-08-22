@@ -17,6 +17,7 @@ except Exception, e :
 
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
+TRIGERING_CODE_CHECK_MSG = 'The code-checks are being triggered in jenkins.'
 TRIGERING_STYLE_TEST_MSG = 'The project style tests are being triggered in jenkins.'
 IGNORING_TESTS_MSG = 'Ignoring test request.'
 TESTS_RESULTS_MSG = '^\s*([-|+]1|I had the issue.*)\s*$'
@@ -399,7 +400,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       pull_request_updated = True
       continue
 
-    if ("code-checks"==first_line) and ("code-checks" in signatures) and (signatures["code-checks"]=="pending"):
+    if ("code-checks"==first_line) and ("code-checks" in signatures):
+      signatures["code-checks"] = "pending"
       trigger_code_ckecks=True
       continue
 
@@ -417,6 +419,9 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       elif "+code-checks" == first_line:
         signatures["code-checks"] = "approved"
         trigger_code_ckecks=False
+      elif TRIGERING_CODE_CHECK_MSG == first_line:
+        trigger_code_ckecks=False
+        signatures["code-checks"] = "pending"
       elif re.match("^Comparison not run.+",first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
       elif re.match( FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
@@ -901,6 +906,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       pass
 
   if trigger_code_ckecks:
+    if not dryRun: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
+    else: print "Dryrun:",TRIGERING_CODE_CHECK_MSG
     create_properties_file_tests(repository, prId, "", "", "", dryRun, abort=False, req_type="codechecks")
 
   if commentMsg and not dryRun:

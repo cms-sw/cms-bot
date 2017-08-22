@@ -184,25 +184,21 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   if issue.pull_request:
-    try:
-      pr   = repo.get_pull(prId)
-      if pr.changed_files==0:
-        print "Ignoring: PR with no files changed"
-        return
-      if cmssw_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
-        if pr.state != "closed":
-          print "This pull request must go in to master branch"
-          if not dryRun:
-            edit_pr(get_token(gh), repo.full_name, prId, base="master")
-            msg = format("@%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
-                         "In future, please use cmssw master branch to submit your changes.\n",
-                         user=issue.user.login.encode("ascii", "ignore"),
-                         dev_branch=CMSSW_DEVEL_BRANCH)
-            issue.create_comment(msg)
-        return
-    except Exception, e :
-      print "Could not find the pull request ",prId,", may be it is an issue:", e
-      exit(1)
+    pr   = repo.get_pull(prId)
+    if pr.changed_files==0:
+      print "Ignoring: PR with no files changed"
+      return
+    if cmssw_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
+      if pr.state != "closed":
+        print "This pull request must go in to master branch"
+        if not dryRun:
+          edit_pr(get_token(gh), repo.full_name, prId, base="master")
+          msg = format("@%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
+                       "In future, please use cmssw master branch to submit your changes.\n",
+                       user=issue.user.login.encode("ascii", "ignore"),
+                       dev_branch=CMSSW_DEVEL_BRANCH)
+          issue.create_comment(msg)
+      return
     # A pull request is by default closed if the branch is a closed one.
     if pr.base.ref in RELEASE_BRANCH_CLOSED: mustClose = True
     # Process the changes for the given pull request so that we can determine the

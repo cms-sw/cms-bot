@@ -55,7 +55,7 @@ stats = es_query(index='relvals_stats_*',
                               architecture=arch,
                               workflows=wf_query[4:]
                              ),
-                 start_time=1000*int(time()-(86400*7)),
+                 start_time=1000*int(time()-(86400*10)),
                  end_time=1000*int(time()))
 
 wf_stats = es_workflow_stats(stats)

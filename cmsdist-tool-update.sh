@@ -124,6 +124,7 @@ pushd tool
       fi
       if [ "X$RES" = "XY" ] ; then
         git cherry-pick $commit
+        echo "Commited cherry-picked: $commit"
         break
       elif [ "X$RES" = "XN" ] ; then
         break

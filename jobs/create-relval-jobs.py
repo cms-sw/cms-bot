@@ -50,7 +50,7 @@ for t in thrds: t.join()
 #Get Workflow stats from ES
 print "Getting Workflow stats from ES....."
 stats = es_query(index='relvals_stats_*',
-                 query=format('release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
+                 query=format('exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
                               release_cycle=cmssw_ver.split("_X_")[0]+"_X_*",
                               architecture=arch,
                               workflows=wf_query[4:]

@@ -207,6 +207,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
     # Process the changes for the given pull request so that we can determine the
     # signatures it requires.
     if cmssw_repo:
+      if pr.base.ref=="master": signing_categories.add("code-checks")
       packages = sorted([x for x in set(["/".join(f.split("/", 2)[0:2])
                            for f in get_changed_files(pr)])])
       print "First Package: ",packages[0]
@@ -405,6 +406,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       else: sec_line = sec_line[0]
       if re.match("Comparison is ready", first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
+      elif re.match("^[-]code-checks$",first_line):
+        signatures["code-checks"] = "rejected"
+      elif re.match("^[+]code-checks$",first_line):
+        signatures["code-checks"] = "approved"
       elif re.match("^Comparison not run.+",first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
       elif re.match( FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
@@ -588,6 +593,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
                          and not x.startswith("tests")
                          and not x.startswith("pending-assignment")
                          and not x.startswith("comparison")
+                         and not x.startswith("code-checks")
                          and not x in ["backport", "urgent", "bug-fix", "new-feature", "backport-ok"]]
 
   if not missingApprovals:
@@ -618,9 +624,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
     if not dryRun: issue.create_comment(HOLD_MSG+blockers+'\nThey need to issue an `unhold` command to remove the `hold` state or L1 can `unhold` it for all')
     print "Blockers:",blockers
 
-  labels_changed = True
   if old_labels == labels:
-    labels_changed = False
     print "Labels unchanged."
   elif not dryRun:
     issue.edit(labels=list(labels))

@@ -12,7 +12,7 @@ REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = list(set([ "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "davidlt", "wddgit", "mtosi"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
 PR_HOLD_MANAGERS = [ "kpedro88" ]
 
-COMMON_CATEGORIES = [ "orp", "tests" ]
+COMMON_CATEGORIES = [ "orp", "tests", "code-checks" ]
 EXTERNAL_CATEGORIES = [ "externals" ]
 EXTERNAL_REPOS = [
   "cms-data",

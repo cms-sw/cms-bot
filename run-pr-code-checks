@@ -15,13 +15,11 @@ curl -s -L https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/${PULL
 echo "Changed files:"
 cat $CMSSW_BASE/code-checks-files.txt
 echo ""
-export USER_CODE_CHECKS_FILE="$CMSSW_BASE/code-checks-files.txt"
-export USER_CODE_CHECKS_CHANGE_ONLY=YES
 git clone --depth 1 git@github.com:cms-sw/cmssw-config
 mv config/SCRAM config/SCRAM.orig
 mv cmssw-config/SCRAM config/SCRAM
 git cms-checkout-topic -u ${PULL_REQUEST} 2>&1 | tee cms-checkout-topic.log
-scram build -j $NUM_PROC code-checks   2>&1 | tee code-checks.log
+scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_CHANGE_ONLY=YES USER_CODE_CHECKS_FILE="$CMSSW_BASE/code-checks-files.txt"  2>&1 | tee code-checks.log
 rm -rf ${CMSSW_BASE}/upload
 mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
 mv cms-checkout-topic.log ${CMSSW_BASE}/upload/

@@ -16,6 +16,7 @@ echo "Changed files:"
 cat $CMSSW_BASE/code-checks-files.txt
 echo ""
 export USER_CODE_CHECKS_FILE="$CMSSW_BASE/code-checks-files.txt"
+export USER_CODE_CHECKS_CHANGE_ONLY=YES
 git clone --depth 1 git@github.com:cms-sw/cmssw-config
 mv config/SCRAM config/SCRAM.orig
 mv cmssw-config/SCRAM config/SCRAM

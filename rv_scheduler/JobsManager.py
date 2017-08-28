@@ -134,9 +134,9 @@ def writeWorkflowLog(workflowFolder=None, workflowLogsJson=None):
         ' - time;'+' '+\
         'exit:'+' '+\
         ' '.join(exit_codes)+' '+\
-        '\n'+' '+\
-        ' '.join(passed) + ' test passed,'+' '+\
-        ' '.join(failed) +' tests failed'
+        '\n'+\
+        ' '.join(passed) + ' tests passed,'+' '+\
+        ' '.join(failed) +' failed'+'\n'
     print output_log
 
     with open(os.path.join(workflowFolder, 'workflow.log'), 'w') as wflog_output:
@@ -144,6 +144,8 @@ def writeWorkflowLog(workflowFolder=None, workflowLogsJson=None):
     #put also the hostname
     with open(os.path.join(workflowFolder, 'hostname'), 'w') as hostname_output:
         hostname_output.write(os.uname()[1])
+    
+
 
 def finilazeWorkflow(workflowFolder=None, workflowID=None):
 
@@ -165,6 +167,7 @@ class workerThread(Thread):
         #put the result when the task is finished
         #result = result+' '+self.name
         self.resultQueue.put(result)
+
 
 class JobsManager(object):
     
@@ -335,10 +338,18 @@ class JobsManager(object):
 
                     job_results = self.results[job['id']]
                     current_job_folder = self.jobs_result_folders[job['id']]
-                    getWorkflowDuration(current_job_folder)
-                    writeWorkflowLog(current_job_folder, job_results)
-                    upload_logs(job['id'], current_job_folder)
-                    finilazeWorkflow(current_job_folder, job['id'])
+                    getWorkflowDuration(current_job_folder)                    
+                    wf=job['id']
+                    os.chdir(current_job_folder+'/..')
+                    #create empty cmdLog
+                    with open(os.path.join(current_job_folder,'cmdLog'),'w') as cmdlog:
+                        cmdlog.write('')
+                    p=subprocess.Popen("%s/jobs/workflow_final.py %s" % (CMS_BOT_DIR, wf+'.json'), shell=True)
+                    e=os.waitpid(p.pid,0)[1]
+                    if e: exit(e)
+                    #writeWorkflowLog(current_job_folder, job_results)
+                    #upload_logs(job['id'], current_job_folder)
+                    #finilazeWorkflow(current_job_folder, job['id'])
 
 
     '''
@@ -404,7 +415,8 @@ if __name__ == "__main__":
     writeWorkflowLog(given_wf_folder, jobs_result)
 
     getWorkflowDuration(given_wf_folder)
-
+    
+    
 
     pass
 

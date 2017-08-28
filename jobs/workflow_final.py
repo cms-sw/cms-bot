@@ -104,7 +104,8 @@ if __name__ == "__main__":
 
   jobs=json.load(open(sys.argv[1]))
   workflow = jobs["name"]
-  workflow_dir=os.path.abspath(glob.glob("%s_*" % workflow)[0])
+  print 'printing directory', glob.glob("%s_*" % workflow)
+  workflow_dir=glob.glob("%s_*" % workflow)[0]
   getstatusoutput("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
   fix_dasquery_log(workflow_dir)
   if update_worklog(workflow_dir, jobs):

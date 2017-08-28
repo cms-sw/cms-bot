@@ -49,6 +49,8 @@ if (!(cur_lab =~ /\s*no_label\s*/))
     }
   }
   new_lab = new_lab.replaceAll(/\s\s+/,' ').trim()
+  println "New Labels:"+new_lab
+  println "Cur Labels:"+cur_lab
   if (new_lab != cur_lab)
   {
     slave.setLabelString(new_lab)

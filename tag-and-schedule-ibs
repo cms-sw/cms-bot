@@ -41,7 +41,9 @@ for QUEUE in $RELEASE_QUEUES; do
     else
       BUILD_PATCH_RELEASE=false
     fi
-    if [ "X$BUILD_PATCH_RELEASE" = "Xfalse" -a "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" -a "$BUILD_HOUR" != "$HOUR" ] ; then continue ; fi
+    if [ "X$BUILD_PATCH_RELEASE" = "Xfalse" -a "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" ] ; then
+      if [ $(echo " $BUILD_HOUR " | tr ',' ' ' | grep " $HOUR " | wc -l) -eq 0 ] ; then continue; fi
+    fi
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     RELEASE_NAME="${QUEUE}_${DATE}"
     if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then

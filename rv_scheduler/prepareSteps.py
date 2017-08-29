@@ -1,21 +1,23 @@
 #! /usr/bin/env python
-from sys import exit
-import sys
+from sys import exit, path, argv
 from optparse import OptionParser
-from os import environ
+from os import environ, system, waitpid
 import os
 from shutil import copyfile
+import json
+from subprocess import Popen
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(argv[0]))
 CMS_BOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR,'..'))
-sys.path.insert(0, CMS_BOT_DIR)
+path.insert(0, CMS_BOT_DIR)
+path.insert(0, os.path.join(CMS_BOT_DIR, 'jobs'))
 
 from runPyRelValThread import PyRelValsThread
 from RelValArgs import GetMatrixOptions, isThreaded, FixWFArgs
 from logUpdater import LogUpdater
 from cmsutils import cmsRunProcessCount, MachineMemoryGB, doCmd
 from cmssw_known_errors import get_known_errors
-
+from workflow_final import upload_logs
 
 def runStep1Only(basedir, workflow, args=''):
   args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
@@ -67,10 +69,8 @@ if __name__ == "__main__":
   matrix = PyRelValsThread(thrds, environ["CMSSW_BASE"]+"/pyRelval", opts.jobid)
   matrix.setArgs(GetMatrixOptions(cmssw_ver,arch))
   #print matrix.args
-  
   #print GetMatrixOptions(cmssw_ver,arch)
   #print matrix.args['rest']
-  
   wfs = opts.workflow.split(",")
   
   for wf in wfs:
@@ -82,13 +82,31 @@ if __name__ == "__main__":
     #print matrix.args['w']
     runStep1Only(matrix.basedir, wf, matrix.args['rest']+" "+matrix.args['w'])
     wf_folder = [f for f in os.listdir(matrix.basedir) if f.find(wf+'_') is not -1][0]
-    #print 'wf is:', wf, 'folder is', os.path.join(matrix.basedir,wf_folder)
+    print 'wf is:', wf, 'folder is', os.path.join(matrix.basedir,wf_folder)
     copyfile(os.path.join(matrix.basedir,'runall-report-step123-.log'),os.path.join(matrix.basedir,wf_folder,'workflow.log'))
-    
-    
+    with open(os.path.join(matrix.basedir, wf+'.json'),'w') as jsonjob_file:
+      wf_id = wf_folder.split('_')[0]
+      job_json = {'commands': [],'name': wf_id,'state': 'Done'}
+      jsonjob_file.write(json.dumps(job_json,indent=1))
+      
+    if not os.path.isfile(os.path.join(matrix.basedir,wf_folder,'wf_steps.txt')):
+      #das failed, wf_steps was not created, just upload the directory
+      #and maybe as second condition check the status of the failed steps on the second line of workflow.log in this dir
+      
+      #always create the job.json and then search for it with the JobsConstructor. If there is a wf_steps file - update the job.json
+      #if wf_steps file does not exist, run finilize workflow on it to upload the logs
+      #print CMS_BOT_DIR, os.path.join(matrix.basedir,wf_folder,'job.json')
+      os.chdir(matrix.basedir)
+      p=Popen("%s/jobs/workflow_final.py %s" % (CMS_BOT_DIR, wf+'.json'), shell=True)
+      e=waitpid(p.pid,0)[1]
+      if e: exit(e)
+      
+      #this is in case we want to insert empty job, u then we have to fix also the logs
+      #with open(os.path.join(matrix.basedir,wf_folder,'wf_steps.txt'),'w') as wf_file:
   
   #print matrix.args['w']
   #runStep1Only(matrix.basedir, matrix.args['rest']+" "+matrix.args['w'])
   #
   #matrix.run_workflows(opts.workflow.split(","),LogUpdater(environ["CMSSW_BASE"]),opts.force,known_errors=known_errs)
   #matrix.getWorkflowSteps(opts.workflow)
+  # 

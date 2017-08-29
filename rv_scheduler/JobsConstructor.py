@@ -78,13 +78,13 @@ class JobsConstructor(object):
         json_out = []
         info_request = False
         queryInfo = {}
-        
+
         queryInfo["end_time"] = int(time() * 1000)
         queryInfo["start_time"] = queryInfo["end_time"] - int(86400 * 1000 * lastNdays)
         queryInfo["architecture"] = arch
         queryInfo["release_cycle"] = release
         queryInfo["from"] = 0
-        
+
         if page_size < 1:
             info_request = True
             queryInfo["page_size"] = 2
@@ -92,7 +92,7 @@ class JobsConstructor(object):
             queryInfo["page_size"] = page_size
 
         total_hits = 0
-        
+
         while True:
             queryInfo["from"] = ent_from
             es_data = get_payload(query_url, self._format(query_datsets, **queryInfo))  # here
@@ -190,8 +190,6 @@ class JobsConstructor(object):
                     matrixMap[wf_id][step_id]['avg_time'] = 21600
                     matrixMap[wf_id][step_id]['avg_mem'] = 4500000000
                     matrixMap[wf_id][step_id]['avg_cpu'] = 400
-
-        #update wf.json in the results general folder()
 
         return matrixMap
 

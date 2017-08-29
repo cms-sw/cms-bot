@@ -145,8 +145,6 @@ def writeWorkflowLog(workflowFolder=None, workflowLogsJson=None):
     with open(os.path.join(workflowFolder, 'hostname'), 'w') as hostname_output:
         hostname_output.write(os.uname()[1])
     
-
-
 def finilazeWorkflow(workflowFolder=None, workflowID=None):
 
     pass
@@ -167,7 +165,6 @@ class workerThread(Thread):
         #put the result when the task is finished
         #result = result+' '+self.name
         self.resultQueue.put(result)
-
 
 class JobsManager(object):
     
@@ -415,8 +412,6 @@ if __name__ == "__main__":
     writeWorkflowLog(given_wf_folder, jobs_result)
 
     getWorkflowDuration(given_wf_folder)
-    
-    
 
     pass
 

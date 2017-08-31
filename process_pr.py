@@ -182,6 +182,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   #Process Pull Request
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
+  last_commit_date = None
   if issue.pull_request:
     pr   = repo.get_pull(prId)
     if pr.changed_files==0:
@@ -341,7 +342,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
       already_seen = comment
       backport_pr_num = get_backported_pr(comment_msg)
-      if (comment.created_at >= last_commit_date): pull_request_updated = False
+      if last_commit_date and (comment.created_at >= last_commit_date): pull_request_updated = False
       if create_external_issue:
         external_issue_number=comment_msg.split("external issue "+CMSDIST_REPO_NAME+"#",2)[-1].split("\n")[0]
         if not re.match("^[1-9][0-9]*$",external_issue_number):

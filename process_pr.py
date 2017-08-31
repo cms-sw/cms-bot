@@ -157,12 +157,11 @@ def get_backported_pr(msg):
     if re.match("^[1-9][0-9]*$",bp_num): return bp_num
   return ""
 
-def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
+def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   import yaml
-  if ignore_issue(repo, issue): return
+  if (not force) and ignore_issue(repo, issue): return
   api_rate_limits(gh)
   prId = issue.number
-  #if prId in [ 15876 ] : return
   repository = repo.full_name
   if not cmsbuild_user:
     cmsbuild_user=repository.split("/")[0]
@@ -299,6 +298,8 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
+  pre_checks = ("code-checks" in signing_categories)
+  pre_checks = False #Remove thsi on 11th of SEP 2017
   already_seen = None
   pull_request_updated = False
   comparison_done = False
@@ -320,6 +321,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
   abort_test = False
   need_external = False
   trigger_code_ckecks=False
+  triggerred_code_ckecks=False
   backport_pr_num = ""
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,body_firstline):
@@ -339,7 +341,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
     if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
       already_seen = comment
       backport_pr_num = get_backported_pr(comment_msg)
-      pull_request_updated = False
+      if (comment.created_at >= last_commit_date): pull_request_updated = False
       if create_external_issue:
         external_issue_number=comment_msg.split("external issue "+CMSDIST_REPO_NAME+"#",2)[-1].split("\n")[0]
         if not re.match("^[1-9][0-9]*$",external_issue_number):
@@ -396,7 +398,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       pull_request_updated = True
       continue
 
-    if ("code-checks"==first_line) and ("code-checks" in signatures):
+    if ("code-checks"==first_line) and ("code-checks" in signatures) and (not triggerred_code_ckecks):
       signatures["code-checks"] = "pending"
       trigger_code_ckecks=True
       continue
@@ -412,11 +414,14 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
       elif "-code-checks" == first_line:
         signatures["code-checks"] = "rejected"
         trigger_code_ckecks=False
+        triggerred_code_ckecks=False
       elif "+code-checks" == first_line:
         signatures["code-checks"] = "approved"
         trigger_code_ckecks=False
+        triggerred_code_ckecks=False
       elif TRIGERING_CODE_CHECK_MSG == first_line:
         trigger_code_ckecks=False
+        triggerred_code_ckecks=True
         signatures["code-checks"] = "pending"
       elif re.match("^Comparison not run.+",first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
@@ -556,6 +561,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
   # Additional labels.
   if is_hold: labels.append("hold")
 
+  dryRunOrig = dryRun
+  if pre_checks and ((not already_seen) or pull_request_updated):
+    for cat in ["code-checks"]:
+      if (cat in signatures) and (signatures[cat]!="approved"):
+        dryRun=True
+        break
+
   old_labels = set([x.name.encode("ascii", "ignore") for x in issue.labels])
   print "Stats:",backport_pr_num,extra_labels
   print "Old Labels:",sorted(old_labels)
@@ -635,13 +647,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
   print "Changed Labels:",labels-old_labels,old_labels-labels
   if old_labels == labels:
     print "Labels unchanged."
-  elif not dryRun:
+  elif not dryRunOrig:
     issue.edit(labels=list(labels))
 
   # Check if it needs to be automatically closed.
   if mustClose == True and issue.state == "open":
     print "This pull request must be closed."
-    if not dryRun: issue.edit(state="closed")
+    if not dryRunOrig: issue.edit(state="closed")
  
   if not issue.pull_request:
     issueMessage = None
@@ -882,14 +894,13 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
   commentMsg = ""
   if (pr.base.ref in RELEASE_BRANCH_CLOSED) and (pr.state != "closed"):
     commentMsg = messageBranchClosed
-  elif not already_seen:
-    commentMsg = messageNewPR
-    if cmssw_repo and pr.base.ref=="master":
+  elif (not already_seen) or pull_request_updated:
+    if not already_seen: commentMsg = messageNewPR
+    else: commentMsg = messageUpdatedPR
+    if (not triggerred_code_ckecks) and cmssw_repo and (pr.base.ref=="master") and ("code-checks" in signatures) and (signatures["code-checks"]=="pending"):
       trigger_code_ckecks=True
-  elif pull_request_updated or new_categories:
+  elif new_categories:
     commentMsg = messageUpdatedPR
-    if pull_request_updated and cmssw_repo and pr.base.ref=="master":
-      trigger_code_ckecks=True
   elif not missingApprovals:
     print "Pull request is already fully signed. Not sending message."
   else:
@@ -901,10 +912,10 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None):
     except:
       pass
 
-  if trigger_code_ckecks:
-    if not dryRun: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
+  if trigger_code_ckecks and not triggerred_code_ckecks:
+    if not dryRunOrig: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
     else: print "Dryrun:",TRIGERING_CODE_CHECK_MSG
-    create_properties_file_tests(repository, prId, "", "", "", dryRun, abort=False, req_type="codechecks")
+    create_properties_file_tests(repository, prId, "", "", "", dryRunOrig, abort=False, req_type="codechecks")
 
   if commentMsg and not dryRun:
     issue.create_comment(commentMsg)

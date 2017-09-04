@@ -49,10 +49,16 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]={
     "1361.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "1362.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "1363.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+    "1361.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+    "1362.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+    "1363.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "25210.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "25211.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "25212.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "25213.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+    "25211.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+    "25212.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+    "25213.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   },
   "slc._aarch64_.+":  {
     "512.0": { "step": 1, "exitcode": 16640, "reason" : MSG_ARCH_INCOMPETIBILITY},
@@ -84,10 +90,16 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]={
     "1361.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
     "1362.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
     "1363.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
+    "1361.17": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
+    "1362.17": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
+    "1363.17": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
     "25210.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
     "25211.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
     "25212.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
     "25213.0": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
+    "25211.17": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
+    "25212.17": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
+    "25213.17": { "step": 1, "exitcode": 64000, "reason" : MSG_ARCH_INCOMPETIBILITY},
   }
 }
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc6_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 35584, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}

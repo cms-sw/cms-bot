@@ -85,9 +85,10 @@ class UnitTester(IBThreadBase):
         if cmd: TEST_PATH=TEST_PATH+":"+cmd+"/test/"+os.environ['SCRAM_ARCH']
         print TEST_PATH
         try:
-            cmd = "cd "+self.startDir+"; sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
+            cmd = "cd "+self.startDir+"; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
             cmd += " if which timeout 2>/dev/null; then TIMEOUT=timeout; fi ; "
-            cmd += 'PATH='+TEST_PATH+':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j '+str(MachineCPUCount)+' unittests ' + skiptests + ' >unitTests1.log 2>&1 '
+            cmd += 'PATH='+TEST_PATH+':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j '+str(MachineCPUCount)+' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
+            cmd += 'touch nodelete.done; ls -l nodelete.*'
             print 'unitTest> Going to run '+cmd
             ret = runCmd(cmd)
             if ret != 0:

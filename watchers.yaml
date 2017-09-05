@@ -1191,3 +1191,6 @@ jainshilpi:
   - EgammaAnalysis
   - DataFormats/EgammaCandidates
   - DataFormats/EgammaReco
+edjtscott:
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers

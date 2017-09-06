@@ -75,7 +75,7 @@ for cmds_log in o.split("\n"):
   if os.path.exists(cmds):
     e, o = getstatusoutput ("cat %s | grep ^step" % cmds)
     for c in o.split("\n"):
-      job = {"cpu" : 200, "rss" : 6*1024*1024*1024, "time" : 3600, "command" : re.sub("\s*;\s*$","",c.split(":",1)[-1])}
+      job = {"cpu" : 300, "rss" : 6*1024*1024*1024, "time" : 3600, "command" : re.sub("\s*;\s*$","",c.split(":",1)[-1])}
       step = c.split(":")[0]
       if (wf in wf_stats) and (step in wf_stats[wf]):
         job["time"] = wf_stats[wf][step]["time"]

@@ -21,7 +21,8 @@ if exists(RelValtimes):
   owf = []
   max_tm=0
   with open(RelValtimes) as json_file:
-    json_data = json.load(json_file)
+    try: json_data = json.load(json_file)
+    except: json_data={"avg": []}
     for tm_str in sorted(json_data["avg"],key=int, reverse=True):
       tm=int(tm_str)
       if tm > max_tm : max_tm=tm

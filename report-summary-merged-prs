@@ -455,7 +455,7 @@ def get_output_command(command_to_execute):
 
 # Gets the tags between start_tag and end_tag, the release_queue is used as a filter
 # to ignore tags that are from other releases
-def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch ):
+def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch, ignore_tags=None ):
 
   print_verbose( 'Release Queue:' )
   print_verbose( release_queue )
@@ -499,7 +499,7 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
     tags.pop()
     tags += new_tags
 
-  tags = [t for t in reversed(tags)]
+  tags = [t for t in reversed(tags) if not ignore_tags or not re.match(ignore_tags,t) ]
 
   return tags
 
@@ -1208,7 +1208,7 @@ if __name__ == "__main__":
     release_queue_results[ 'base_branch' ] = release_branch
 
     print 'Identifying tags...'
-    tags = execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch )
+    tags = execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch, ignore_tags="^CMSSW_9_3_.+_2017-09-06-.+$" )
     originalTags = tags
     tags = [x for x in tags if x in installedReleases]
     tags.append( release_branch )

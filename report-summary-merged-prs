@@ -1208,7 +1208,7 @@ if __name__ == "__main__":
     release_queue_results[ 'base_branch' ] = release_branch
 
     print 'Identifying tags...'
-    tags = execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch, ignore_tags="^CMSSW_9_3_.+_2017-09-06-.+$" )
+    tags = execute_magic_command_tags( start_tag, end_tag, release_queue, release_branch, ignore_tags="^CMSSW_9_3_.+_2017-09-(06-2300|07-1100)$" )
     originalTags = tags
     tags = [x for x in tags if x in installedReleases]
     tags.append( release_branch )

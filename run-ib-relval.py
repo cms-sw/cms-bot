@@ -9,6 +9,7 @@ from cmsutils import cmsRunProcessCount, MachineMemoryGB
 from cmssw_known_errors import get_known_errors
 from subprocess import Popen
 from os.path import abspath, dirname
+import re
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
 def process_relvals(threads=None,cmssw_version=None,arch=None,cmssw_base=None,logger=None):
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
     exit(e)
   
-  if cmssw_ver.startswith("CMSSW_9_3_") and (not "_XROOT6_" in cmssw_ver):
+  if re.match("^CMSSW_(9|[1-9][0-9]+)_([3-9]|[1-9][0-9]+_.+$",cmssw_ver):
     p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
     if e: exit(e)

@@ -151,7 +151,7 @@ if [ $(grep '^V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   if [ $(sed -e 's|^V05-05-||' $CMSSW_IB/config/config_tag) -lt 24 ] ; then
     git clone git@github.com:cms-sw/cmssw-config
     pushd cmssw-config
-      git checkout V05-05-24
+      git checkout master
     popd
     mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
     cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
@@ -160,6 +160,8 @@ fi
 cd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built
+SET_ALL_TOOLS=NO
+if [ $(echo $CMSSW_IB | grep '^CMSSW_9' | wc -l) -gt 0 ] ; then SET_ALL_TOOLS=YES ; fi
 set +x
 DEP_NAMES=
 CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
@@ -174,12 +176,18 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
       CHG=1
       break
     done
-    if [ X$CHG = X0 ] ; then continue ; fi
+    if [ X$CHG = X0 ] ; then
+      if [ "$SET_ALL_TOOLS" = "YES" ] ; then cp -f $xml $CTOOLS/$name ; fi
+      continue 
+    fi
   elif [ -e $CTOOLS/$name ] ; then
     nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
     over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
     echo "Checking version in release: $over vs $nver"
-    if [ "$nver" = "$over" ] ; then continue ; fi
+    if [ "$nver" = "$over" ] ; then
+      if [ "${SET_ALL_TOOLS}" = "YES" ] ; then cp -f $xml $CTOOLS/$name ; fi
+      continue
+    fi
     echo "Settings up $name: $over vs $nver" 
   fi
   cp -f $xml $CTOOLS/$name
@@ -187,9 +195,10 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   echo "Setting up new tool: $tool"
   scram setup $tool
 done
+if [ "${SET_ALL_TOOLS}" = "YES" ] ; then scram setup ; fi
 #Move away gcc directory
 mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc-move-away
-scram build -r
+scram build -r 
 eval $(scram runtime -sh)
 set -x
 echo $CMSSW_SEARCH_PATH

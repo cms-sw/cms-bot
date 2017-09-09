@@ -195,9 +195,12 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   echo "Setting up new tool: $tool"
   scram setup $tool
 done
-if [ "${SET_ALL_TOOLS}" = "YES" ] ; then scram setup ; fi
-#Move away gcc directory
-mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc-move-away
+if [ "${SET_ALL_TOOLS}" = "YES" ] ; then 
+  scram setup
+else
+  #Move away gcc directory
+  mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc-move-away
+fi
 scram build -r 
 eval $(scram runtime -sh)
 set -x

@@ -1198,6 +1198,7 @@ CMSSW_CATEGORIES={
    "Alignment/CommonAlignmentMonitor",
    "Alignment/CommonAlignmentParametrization",
    "Alignment/CommonAlignmentProducer",
+   "Alignment/CTPPS",
    "Alignment/Geners",
    "Alignment/HIPAlignmentAlgorithm",
    "Alignment/KalmanAlignmentAlgorithm",

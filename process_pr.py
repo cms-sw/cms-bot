@@ -300,7 +300,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
   pre_checks = ("code-checks" in signing_categories)
-  pre_checks = False #Remove thsi on 11th of SEP 2017
+  #pre_checks = False #Remove this on 11th of SEP 2017
   already_seen = None
   pull_request_updated = False
   comparison_done = False

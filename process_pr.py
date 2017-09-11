@@ -57,22 +57,14 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
 
 # Update the milestone for a given issue.
 def updateMilestone(repo, issue, pr, dryRun):
-  if issue.milestone:
-    return
-  branch = pr.base.label.split(":")[1]
-  milestoneId = RELEASE_BRANCH_MILESTONE.get(branch, None)
+  milestoneId = RELEASE_BRANCH_MILESTONE.get(pr.base.label.split(":")[1], None)
   if not milestoneId:
     print "Unable to find a milestone for the given branch"
     return
+  if issue.milestone and issue.milestone.id==milestoneId: return
   milestone = repo.get_milestone(milestoneId)
-  if issue.milestone:
-    if issue.milestone == milestone:
-      return
-    else:
-      print "Changing milestone from ",issue.milestone," to ",milestone
   print "Setting milestone to %s" % milestone.title
-  if dryRun:
-    return
+  if dryRun: return
   issue.edit(milestone=milestone)
 
 def find_last_comment(issue, user, match):

@@ -9,14 +9,12 @@ fi
 function Jenkins_GetCPU ()
 {
   ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
-  case $NODE_NAME in
-    lxplus* ) ACTUAL_CPU=$(echo $ACTUAL_CPU / 2 | bc) ;;
-  esac
-  if [ "X$1" != "X" ] ; then
-    ACTUAL_CPU=$(echo "$ACTUAL_CPU*$1" | bc)
-  fi
+  case $(hostname) in lxplus* ) let ACTUAL_CPU=$ACTUAL_CPU/2 ;; esac
+  if [ "$ACTUAL_CPU" = "0" ] ; then ACTUAL_CPU=1; fi
+  if [ "X$1" != "X" ] ; then let ACTUAL_CPU=$ACTUAL_CPU$1 ; fi
   echo $ACTUAL_CPU
 }
+
 set +x
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
 GH_COMMITS=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR/commits)

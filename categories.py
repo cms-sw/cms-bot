@@ -114,6 +114,7 @@ CMSSW_CATEGORIES={
    "PerfTools/EdmEvent", "IOMC/Input",
    "IOMC/RandomEngine",
    "IOPool/Common", "IOPool/Input", "IOPool/Output",
+   "IOPool/Provenance",
    "IOPool/SecondaryInput",
    "IOPool/Streamer", "IOPool/TFileAdaptor",
    "IgTools/IgProf",

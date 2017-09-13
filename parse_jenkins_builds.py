@@ -18,7 +18,7 @@ def getParameters(root, payload):
     v=root.find('value')
     vv = "None"
     if v is not None: vv = str(v.text)
-    payload['paramter_'+n.text]=vv
+    payload['parameter_'+n.text]=vv
   else:
     for x in root: getParameters(x, payload)
 

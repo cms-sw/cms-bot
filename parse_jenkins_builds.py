@@ -4,6 +4,24 @@ import os , re , sys , json
 import xml.etree.ElementTree as ET
 from es_utils import send_payload
 from es_utils import get_payload
+
+def findParametersAction(root):
+  if root.tag=='parameters': return root
+  for x in root:
+    p=findParametersAction(x)
+    if p is not None: return p
+  return None
+
+def getParameters(root, payload):
+  n=root.find('name')
+  if n is not None:
+    v=root.find('value')
+    vv = "None"
+    if v is not None: vv = str(v.text)
+    payload['paramter_'+n.text]=vv
+  else:
+    for x in root: getParameters(x, payload)
+
 query_url='http://cmses-master01.cern.ch:9200/jenkins/_search'
 query_running_builds = """ {
   "query": {
@@ -70,6 +88,8 @@ for root, dirs, files in os.walk(path):
       try:
         tree = ET.parse(logFile)
         root = tree.getroot()
+        pa=findParametersAction(root)
+        if pa is not None: getParameters(pa, payload)
         payload['@timestamp'] = root.find('startTime').text
         payload['slave_node'] = root.find('builtOn').text
         build_result = root.find('result')

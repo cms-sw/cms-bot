@@ -26,7 +26,9 @@ def process (line, count):
     payload["bytes"]=int(items[9])
   except:
     payload["bytes"]=0
-  payload["@timestamp"]=int(mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())*1000)
+  tsec = mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())
+  week = str(int(tsec/(86400*7)))
+  payload["@timestamp"]=int(tsec*1000)
   if len(items)>10: payload["referrer"]=items[10][1:-1]
   if len(items)>11 and re.match('^"[0-9]+(\.[0-9]+)+"$', items[11]):
     payload["ip"]=items[11][1:-1]
@@ -36,12 +38,12 @@ def process (line, count):
       payload["agent_type"]=agent.replace(" ","-").split("/",1)[0].upper()
   id = sha1(line).hexdigest()
   if (count%1000)==0: print "Processed entries",count
-  if not send_payload("apache-cmssdt","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+  if not send_payload("apache-cmssdt-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
     return False
   if payload["request"].startswith("/SDT/releases.map?release="):
     xpayload = dict(item.split("=") for item in payload["request"].split("?",1)[1].split("&"))
     for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
-    return send_payload("scram-access","cmssw-releases", id, dumps(xpayload), passwd_file="/data/es/es_secret")
+    return send_payload("scram-access-"+week,"cmssw-releases", id, dumps(xpayload), passwd_file="/data/es/es_secret")
   return True
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmssdt_apache.py$' | wc -l",False)

@@ -30,10 +30,12 @@ def process (line, count):
   if "CMSPKG-v" in agent: agent = agent.replace("-v","/")
   payload["agent"]=agent
   payload["agent_type"]=agent.replace(" ","-").split("/",1)[0].upper()
-  payload["@timestamp"]=int(mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())*1000)
+  tsec = mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())
+  week = str(int(tsec/(86400*7)))
+  payload["@timestamp"]=int(tsec*1000)
   id = sha1(line).hexdigest()
   if (count%1000)==0: print "Processed entries",count
-  if not send_payload("apache-cmsrep","access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+  if not send_payload("apache-cmsrep-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
     return False
   if payload["verb"] != "GET": return True
   items = payload["request"].replace("/cms/cpt/Software/download/","/cmssw/",1).split("/")
@@ -56,7 +58,7 @@ def process (line, count):
   from urllib import unquote
   xpayload = {'dev' : dev, 'repository' : unquote(repo), 'architecture' : unquote(arch), 'package' : unquote(pkg).split("-1-",1)[0], 'cmspkg' : unquote(cmspkg)}
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
-  return send_payload("cmspkg-access","rpm-packages", id, dumps(xpayload), passwd_file="/data/es/es_secret")
+  return send_payload("cmspkg-access-"+week,"rpm-packages", id, dumps(xpayload), passwd_file="/data/es/es_secret")
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsrep_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)

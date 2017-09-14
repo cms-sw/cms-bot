@@ -32,13 +32,15 @@ for log in out.split("\n"):
   for line in out.split("\n"):
     m = ReTime.match(line)
     if m:
-      timestamp = int(datetime.strptime(m.group(1), "%b %d %H:%M:%S %Y").strftime('%s'))*1000
+      tsec = int(datetime.strptime(m.group(1), "%b %d %H:%M:%S %Y").strftime('%s'))
+      week = str(int(tsec/(86400*7)))
+      timestamp = tsec*1000
       payload = {}
       payload['@timestamp'] = timestamp
       payload['ip'] = m.group(2)
       payload['message'] = line
       id = sha1(str(timestamp)  + m.group(2)).hexdigest()
-      send_payload("hypernews","hn-timeouts",id, dumps(payload), passwd_file="/data/es/es_secret")
+      send_payload("hypernews-"+week,"hn-timeouts",id, dumps(payload), passwd_file="/data/es/es_secret")
 payload = {}
 payload['@timestamp'] = int(time()*1000)
 send_payload("hypernews","hn-heartbeat",str(payload['@timestamp']), dumps(payload), passwd_file="/data/es/es_secret")

@@ -120,7 +120,7 @@ def check_extra_labels(first_line, extra_labels):
   elif "backport" in first_line:
     bp_pr = ""
     if "#" in first_line: bp_pr = first_line.split("#",1)[1].strip()
-    else: br_pr = first_line.split("/pull/",1)[1].strip("/").strip()
+    else: bp_pr = first_line.split("/pull/",1)[1].strip("/").strip()
     extra_labels["backport"]=["backport", bp_pr]
 
 def check_test_cmd(first_line):

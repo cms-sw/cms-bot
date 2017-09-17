@@ -650,6 +650,20 @@ rovere:
 - Configuration/StandardSequences
 - Validation/RecoTrack
 - Validation/RecoVertex
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- RecoEgamma/EgammaPhotonProducers
+- RecoEgamma/EgammaElectronProducers
+- RecoEgamma/Configuration
+- RecoEcal/EgammaClusterProducers
+- RecoLocalCalo/Configuration
+- RecoLocalCalo/HGC
+- RecoParticleFlow/PFTracking
+- RecoParticleFlow/PFClusterProducer
+- DQMOffline/EGamma
+- DataFormats
+- SimDataFormats
 rylanC24:
 - Validation/RecoHI
 schoef:

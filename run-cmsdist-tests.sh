@@ -143,6 +143,7 @@ fi
 # Create an appropriate CMSSW area
 export SCRAM_ARCH=$ARCHITECTURE
 scram -a $SCRAM_ARCH project $CMSSW_IB
+echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
 
 if [ $(grep '^V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then

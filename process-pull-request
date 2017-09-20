@@ -3,9 +3,10 @@ from github import Github
 from os.path import expanduser
 from optparse import OptionParser
 from process_pr import process_pr
-from socket import setdefaulttimeout
+from socket import setdefaulttimeout,settimeout
 from github_utils import api_rate_limits
 setdefaulttimeout(120)
+settimeout(120)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")

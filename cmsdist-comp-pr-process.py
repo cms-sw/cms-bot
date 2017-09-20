@@ -21,7 +21,7 @@ def process_pr(gh, repo, issue, dryRun):
     branch = pr.base.ref
     print "PR merged:", pr.merged
     if pr.merged: return True
-    chg_files = process_pr(pr)
+    chg_files = get_changed_files(pr)
   USERS_TO_TRIGGER_HOOKS.add("cmsbuild")
   for comment in issue.get_comments():
     commenter = comment.user.login

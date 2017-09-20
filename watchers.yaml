@@ -452,6 +452,19 @@ jazzitup:
 jbsauvan:
 - DataFormats/L1THGCal
 - L1Trigger/L1THGCal
+jdamgov:
+- CondFormats/JetMETObjects
+- DQMOffline/JetMET
+- DataFormats/JetReco
+- DataFormats/METReco
+- JetMETCorrections
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoJets
+- RecoMET
+- Validation/RecoJets
+- Validation/RecoMET
 jhgoh:
 - Alignment/MuonAlignment
 - Alignment/MuonAlignmentAlgorithms

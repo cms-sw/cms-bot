@@ -4,7 +4,7 @@ from re import match,IGNORECASE
 #Merge format: "user" : [ regexp for valid commands, regexp of allowed branches, regexp of not allowed branches, regex for files ]
 CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
 ALL_BRANCHES     = ".+"
-COMP_BRANCHES = "^comp_gcc493$"
+COMP_BRANCHES = "^comp_gcc.+$"
 CMSDIST_PERMISSIONS = {
   "BrunoCoimbra"   : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],

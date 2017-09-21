@@ -14,7 +14,7 @@ cd $CMSSW_BASE
 curl -s -L https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $CMSSW_BASE/all-code-checks-files.txt
 grep -v '^[^/]*/[^/]*/test/' $CMSSW_BASE/all-code-checks-files.txt > $CMSSW_BASE/code-checks-files.txt          || true
 grep -v '^[^/]*/[^/]*/data/' $CMSSW_BASE/code-checks-files.txt     > $CMSSW_BASE/filename-code-checks-files.txt || true
-#$CMS_BOT_DIR/cms-filenames-checks.py $CMSSW_BASE/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src
+$CMS_BOT_DIR/cms-filename-checks.py $CMSSW_BASE/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > $CMSSW_BASE/invalid-filenames.txt || true
 echo "Changed files:"
 cat $CMSSW_BASE/code-checks-files.txt
 echo ""
@@ -33,8 +33,7 @@ if [ -s $CMSSW_BASE/code-checks-files.txt ] ; then
   git diff > ${CMSSW_BASE}/upload/git-diff.patch
 else
   mkdir ${CMSSW_BASE}/upload
-  mv $CMSSW_BASE/code-checks-files.txt ${CMSSW_BASE}/upload/changed-files-all.log
-  cp ${CMSSW_BASE}/upload/changed-files-all.log	${CMSSW_BASE}/upload/changed-files-selected.log
+  mv $CMSSW_BASE/*.txt ${CMSSW_BASE}/upload/
   touch ${CMSSW_BASE}/upload/git-diff.patch ${CMSSW_BASE}/upload/git-diff.patch
 fi
 source $CMS_BOT_DIR/jenkins-artifacts

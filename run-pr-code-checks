@@ -33,9 +33,9 @@ if [ -s $CMSSW_BASE/code-checks-files.txt ] ; then
   git diff > ${CMSSW_BASE}/upload/git-diff.patch
 else
   mkdir ${CMSSW_BASE}/upload
-  mv $CMSSW_BASE/*.txt ${CMSSW_BASE}/upload/
   touch ${CMSSW_BASE}/upload/git-diff.patch ${CMSSW_BASE}/upload/git-diff.patch
 fi
+mv $CMSSW_BASE/*.txt ${CMSSW_BASE}/upload/
 source $CMS_BOT_DIR/jenkins-artifacts
 send_jenkins_artifacts ${CMSSW_BASE}/upload pr-code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}
 RES="+code-checks"

@@ -1221,3 +1221,9 @@ jainshilpi:
 edjtscott:
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
+varuns23:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+  - DataFormats/EgammaReco

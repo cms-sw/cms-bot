@@ -34,7 +34,7 @@ if __name__ == "__main__":
   cmssw_base = environ["CMSSW_BASE"]
   logger=LogUpdater(dirIn=cmssw_base)
   
-  if cmssw_ver.find('_CLANG_') is not -1:
+  if cmssw_ver.find('_XXXCLANG_') is not -1:
     p=Popen("python %s/rv_scheduler/prepareSteps.py -l %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
     if e: exit(e)

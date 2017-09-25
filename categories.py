@@ -71,6 +71,7 @@ CMSSW_L2 = {
   "arunhep" : ["alca"],
   "kpedro88" : ["upgrade"],
   "mrodozov" : ["externals"],
+  "gudrutis" : ["externals"],
   "lpernie" : ["alca"]
 }
 

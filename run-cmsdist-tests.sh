@@ -203,7 +203,7 @@ fi
 scram build -r 
 eval $(scram runtime -sh)
 set -x
-echo $CMSSW_SEARCH_PATH
+echo $PYTHONPATH | tr ':' '\n'
 
 # Search for CMSSW package that might depend on the compiled externals
 touch $WORKSPACE/cmsswtoolconf.log

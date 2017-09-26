@@ -8,8 +8,7 @@ kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
 SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKER_DIR
-ssh -n $SSH_OPTS $TARGET rm -f "$WORKER_DIR/*.keytab" || true
-ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/cmsos || true
+ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/cmsos
 scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/slave.jar $TARGET:$WORKER_DIR/slave.jar
 scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/cmsos $TARGET:$WORKER_DIR/cmsos
 JENKINS_NODE=$(grep "${TARGET}" ${JENKINS_MASTER_ROOT}/nodes/*/config.xml | sed 's|/config.xml:.*||;s|.*/||' | tail -1)

@@ -9,7 +9,7 @@ JENKINS_NODE=$(grep "${TARGET}" ${JENKINS_MASTER_ROOT}/nodes/*/config.xml | sed 
 set -x
 if [ $(echo $TARGET | grep '@aiadm' | wc -l) -gt 0 ] ; then
   AIADM_NODE=$(host aiadm | grep 'has address' | sed 's|.* ||' | head -1 | xargs host | sed 's|.* ||;s|\.*$||')
-  TARGET=$(echo $TARGET | sed "s|@aiadm.*|@AIADM_NODE|")
+  TARGET=$(echo $TARGET | sed "s|@aiadm.*|@$AIADM_NODE|")
 fi
 kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
 SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"

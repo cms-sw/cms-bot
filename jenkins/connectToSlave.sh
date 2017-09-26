@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh -ex
 TARGET=$1
 WORKER_USER=${2-cmsbuild}
 WORKER_DIR=${3-/build1/cmsbuild}

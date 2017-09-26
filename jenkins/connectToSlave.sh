@@ -14,7 +14,7 @@ scp -p $SSH_OPTS ${JENKINS_MASTER_ROOT}/cmsos $TARGET:$WORKER_DIR/cmsos
 JENKINS_NODE=$(grep "${TARGET}" ${JENKINS_MASTER_ROOT}/nodes/*/config.xml | sed 's|/config.xml:.*||;s|.*/||' | tail -1)
 HOST_ARCH=`ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1`
 HOST_CMS_ARCH=`ssh -n $SSH_OPTS $TARGET sh $WORKER_DIR/cmsos`
-DOCKER=`ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null`
+DOCKER=`ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true`
 if [ "X${DOCKER}" != "X" ] ; then DOCKER="docker" ; fi
 WORKER_JENKINS_NAME=`echo $TARGET | sed s'|.*@||;s|\..*||'`
 case $TARGET in

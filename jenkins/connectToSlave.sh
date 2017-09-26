@@ -24,7 +24,6 @@ case $TARGET in
 esac
 if ! ssh -n $SSH_OPTS $TARGET test -f '~/jenkins-slave-setup' ; then
   java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli-2.46.2.jar -s http://localhost:8080/jenkins/ build 'test-jenkins-host' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
-  exit 1
+else
+  ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKSPACE/tmp
 fi
-sleep 1
-ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKSPACE/tmp

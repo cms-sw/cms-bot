@@ -3,7 +3,7 @@ def cur_lab = slave.labelString.replaceAll(/  +/,' ').trim()
 def release_build=cur_lab.contains("release-build");
 if (!(cur_lab =~ /\s*no_label\s*/))
 {
-  def xlabs=[args[1], args[2]];
+  def xlabs=[args[1], args[2], "auto-label"];
   def items = args[2].split("_");
   for (String y : items){xlabs.push(y);}
   if (args[2]!="")

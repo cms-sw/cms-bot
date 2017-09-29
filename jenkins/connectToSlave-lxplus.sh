@@ -9,7 +9,7 @@ SCRIPT_DIR=`dirname $0`
 kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
 aklog
 klist
-SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_OPTS="-q -o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 TARGET_HOST=$(echo $TARGET | sed 's|^.*@||')
 TARGET_USER=$(echo $TARGET | sed 's|@.*$||')
 for ip in $(host $TARGET_HOST | grep 'has address' | sed 's|^.* ||'); do

@@ -7,7 +7,7 @@ WORKER_JENKINS_NAME=$5
 MAX_WORKSPACE=10
 JENKINS_MASTER_ROOT=/var/lib/jenkins
 SCRIPT_DIR=`dirname $0`
-SSH_OPTS="-o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_OPTS="-q -o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 if [ `pgrep -f " $TARGET " | grep -v "$$" | wc -l` -gt 1 ] ; then
   exit 99

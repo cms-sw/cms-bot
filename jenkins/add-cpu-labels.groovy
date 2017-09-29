@@ -28,27 +28,7 @@ if (!(cur_lab =~ /\s*no_label\s*/))
     }
     if (args[1]!=""){xlabs.push("docker-"+args[1]);}
   }
-  println xlabs.join(" ").replaceAll(/\s\s+/,' ').trim();
-
-  def new_lab = cur_lab.replaceAll(/\s*docker\s*/,' ')
-  if ((args[1]!="") && (args[2]!=""))
-  {
-    new_labs1="";
-    for (String y : new_lab.split(" "))
-    {
-      skip=false;
-      for (String x : items){if (y.contains(x)){skip=true;}}
-      if (skip){continue;}
-      new_labs1=new_labs1+" "+y;
-    }
-    new_lab = new_labs1 + " " + args[2] + " " + args[2]+"-"+args[1];
-    if (slave.name =~ /^cmsbuild\d+$/) {new_lab = new_lab + " " + args[2] + "-cloud"}
-    if (args[3]=="docker")
-    {
-      if (items.length==2){new_lab = new_lab + " docker docker-" + items[1]}
-    }
-  }
-  new_lab = new_lab.replaceAll(/\s\s+/,' ').trim()
+  new_lab =  xlabs.join(" ").replaceAll(/\s\s+/,' ').trim();
   println "New Labels:"+new_lab
   println "Cur Labels:"+cur_lab
   if (new_lab != cur_lab)

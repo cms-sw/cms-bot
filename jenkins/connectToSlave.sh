@@ -12,7 +12,7 @@ if [ $(echo $TARGET | grep '@aiadm' | wc -l) -gt 0 ] ; then
   TARGET=$(echo $TARGET | sed "s|@aiadm.*|@$AIADM_NODE|")
 fi
 kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
-SSH_OPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_OPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKER_DIR
 ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/cmsos

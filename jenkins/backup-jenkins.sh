@@ -2,7 +2,7 @@
 
 PUSH_CHANGES=$1
 JENKINS_DIR="/var/lib/jenkins"
-JENKINS_VERSION=$(java -jar ${JENKINS_DIR}/jenkins-cli-2.46.2.jar -s http://localhost:8080/jenkins/ -remoting version)
+JENKINS_VERSION=$(java -jar ${JENKINS_DIR}/jenkins-cli-2.46.2.jar -i /home/jenkins/.ssh/id_dsa -s http://localhost:8080/jenkins/ -remoting version)
 [ "X$JENKINS_VERSION" = "X" ] && exit 1
 rm -rf cmsjenkins
 git clone https://:@gitlab.cern.ch:8443/cms-sw/cmsjenkins.git cmsjenkins

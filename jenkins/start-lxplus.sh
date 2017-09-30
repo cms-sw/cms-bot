@@ -20,13 +20,13 @@ case $WORKSPACE in
     ;;
 esac
 
-REAL_ARCH=`ssh -f $SSH_OPTS -n $TARGET cat /proc/cpuinfo | grep vendor_id | sort | uniq | awk '{print $3}'`
-CMS_ARCH=`ssh -f $SSH_OPTS -n $TARGET  sh -c 'cmsos'`
+REAL_ARCH=`ssh -n $SSH_OPTS -n $TARGET cat /proc/cpuinfo | grep vendor_id | sort | uniq | awk '{print $3}'`
+CMS_ARCH=`ssh -n $SSH_OPTS -n $TARGET  sh -c 'cmsos'`
 
 java -jar $JENKINS_MASTER_ROOT/jenkins-cli-2.46.2.jar -i /home/jenkins/.ssh/id_dsa -s http://localhost:8080/jenkins -remoting groovy $SCRIPT_DIR/lxplus-labels.groovy $WORKER_JENKINS_NAME "$REAL_ARCH" $DELETE_SLAVE `echo $TARGET | sed 's|.*@||'` $CMS_ARCH
-ssh -f $SSH_OPTS -n $TARGET "mkdir -p $WORKSPACE $WORKER_DIR/foo $WORKER_DIR/cache; rm -rf $WORKSPACE/workspace; ls -d $WORKER_DIR/* | grep -v $WORKER_DIR/cache | xargs rm -rf ; rm -rf /tmp/??"
-ssh -f $SSH_OPTS $TARGET mkdir -p $WORKSPACE/workspace
-ssh -f $SSH_OPTS $TARGET rm -f $WORKER_DIR/$WORKER_USER.keytab
+ssh -n $SSH_OPTS -n $TARGET "mkdir -p $WORKSPACE $WORKER_DIR/foo $WORKER_DIR/cache; rm -rf $WORKSPACE/workspace; ls -d $WORKER_DIR/* | grep -v $WORKER_DIR/cache | xargs rm -rf ; rm -rf /tmp/??"
+ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/workspace
+ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/$WORKER_USER.keytab
 scp -p $SSH_OPTS $JENKINS_MASTER_ROOT/slave.jar $TARGET:$WORKER_DIR/slave.jar
 sleep 1
 ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKER_DIR/cache

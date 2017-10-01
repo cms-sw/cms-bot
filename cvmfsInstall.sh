@@ -183,6 +183,7 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
       dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
+      dockerrun "${CMSPKG} -f install lcg+SCRAMV1+V2_2_7_pre3" || true
     fi
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade

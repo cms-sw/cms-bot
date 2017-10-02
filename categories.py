@@ -65,7 +65,7 @@ CMSSW_L2 = {
   "vazzolini" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "GurpreetSinghChahal" : ["pdmv"],
-  "kkousour" : ["pdmv"],
+  "prebello" : ["pdmv"],
   "ghellwig" : ["alca"],
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],

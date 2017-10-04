@@ -26,10 +26,10 @@ DAS_NON_CONSISTENT_WFS_FILE=wf_non_consistent_das.txt
 
 for wf in ${WORKFLOWS_LIST//,/ }
 do
-  WF_PATH=`grep -F $wf $WORKSPACE/$MAPPING_FILE` || true
+  WF_PATH=`grep -F "${wf}_" $WORKSPACE/$MAPPING_FILE` || true
 
   if [ "X$WF_PATH" = X ]; then
-    ERR_DETAILS=`grep $wf $WORKSPACE/$ERRORS_FILE` || true
+    ERR_DETAILS=`grep "$wf;" $WORKSPACE/$ERRORS_FILE` || true
     if [ "X$ERR_DETAILS" = X ]; then
       WFS_WITH_ERRORS=$ERR_DETAILS,$wf';1'
     else
@@ -97,9 +97,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   done
 
   mkdir -p $WORKSPACE/results/files/$WF_DIR
-  if [ ! -f $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE ] ; then
-    ln ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
-  fi
+  ln ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
 
   if [ -f ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log ] ; then
     ln ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log

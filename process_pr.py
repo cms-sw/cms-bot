@@ -460,6 +460,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
       if (commenter in releaseManagers + CMSSW_L1) and re.match("^\s*(merge)\s*$", first_line, re.I):
         mustMerge = True
         mustClose = False
+        if (commenter in CMSSW_L1) and ("orp" in signatures): signatures["orp"] = "approved"
         continue
 
       # Check if the someone asked to trigger the tests

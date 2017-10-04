@@ -97,7 +97,9 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   done
 
   mkdir -p $WORKSPACE/results/files/$WF_DIR
-  ln ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
+  if [ ! -f $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE ] ; then
+    ln ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
+  fi
 
   if [ -f ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log ] ; then
     ln ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log

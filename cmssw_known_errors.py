@@ -105,6 +105,8 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]={
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc6_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 35584, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc7_amd64_gcc630"]={"534.0": { "step": 1, "exitcode": 62720, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc7_aarch64_gcc530"]={"534.0": { "step": 1, "exitcode": 256, "reason" : MSG_ARCH_INCOMPETIBILITY}}
+KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]={}
+KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]["slc._amd64_gcc630"]={"534.0": {}}
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}
@@ -115,7 +117,11 @@ def get_known_errors(release, architecture, test_type):
     for arch in KNOWN_ERRORS[test_type][rel]:
       if not match(arch,architecture): continue
       for test in KNOWN_ERRORS[test_type][rel][arch]:
-        errs[test]=KNOWN_ERRORS[test_type][rel][arch][test]
+        obj = KNOWN_ERRORS[test_type][rel][arch][test]
+        if not obj:
+          if test in errs: del errs[test]
+        else:
+          errs[test]=obj
   return errs
 
 if __name__ == "__main__":

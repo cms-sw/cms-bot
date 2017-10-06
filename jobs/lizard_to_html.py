@@ -25,7 +25,7 @@ html_end = '''
 </html>
 '''
 
-link_root = 'www.github.com/test_link'
+link_root = 'https://github.com/cms-sw/cmssw/blob/master/'
 a_href = '<a href="{url}">{text}</a>'
 table = '''<table class="table-bordered">\n\t{0}\n</table>\n'''
 table_start = '''<table class="table-bordered">\n'''
@@ -46,7 +46,8 @@ regex_H1_no_warnings = 'No thresholds exceeded \('
 regex_H1_files = '^\d+ file analyzed'
 regex_split = "[ ]{2,}|[ ]*$]"
 regex_split_td = "[ ]{1,}|[ ]*$]"
-
+regex_line_to_url = "[a-zA-Z]"
+regex_has_line_numbers = "@.+@"
 
 
 def format_tag(tag, value):
@@ -86,7 +87,28 @@ def get_args():
     return source, output_d
 
 
-total_col_nr = 0 # global value
+total_col_nr = 0  # global value
+
+
+def text_with_href(url_base, line):
+    # if convertable to line
+
+    if bool(re.search(regex_line_to_url, line)):
+        line_numbers_group = re.search(regex_has_line_numbers, line)
+        if bool(line_numbers_group):
+            lines_string = line_numbers_group.group(0)
+            lines_string = lines_string.replace('@', '')
+            lines = lines_string.split('-')
+
+            line_split = re.split(regex_has_line_numbers, line)
+            url = url_base + line_split[1] \
+                  + "#" \
+                  + "L{0}-L{1}".format(lines[0], lines[1])
+            return a_href.format(url=url, text=line)
+        else:
+            return line  # TODO
+    else:
+        return line
 
 
 def parse(file, line_previous, line):
@@ -97,22 +119,26 @@ def parse(file, line_previous, line):
 
     elif bool(re.search(regex_th, line)):
         table_header_values = re.split(regex_split, line.strip())
-        header_table = ''
+        generated_row = ''
         for th_val in table_header_values:
-            header_table += th.format(th_val)
+            generated_row += th.format(th_val)
         file.write(
-            tr.format(header_table)
+            tr.format(generated_row)
         )
         total_col_nr = len(table_header_values) - 1
         return False
 
     elif bool(re.search(regex_td, line)):
         table_row_values = re.split(regex_split_td, line.strip(), maxsplit=total_col_nr)
-        header_table = ''
-        for td_val in table_row_values:
-            header_table += td.format(td_val)
+        generated_row = ''
+        for td_val in table_row_values[:-1]:
+            generated_row += td.format(td_val)
+        generated_row += td.format(
+            text_with_href(link_root, table_row_values[-1])
+        )
+
         file.write(
-            tr.format(header_table)
+            tr.format(generated_row)
         )
         return False
 

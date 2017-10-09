@@ -251,6 +251,8 @@ NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file
     196       8.3     2.2       58.7        23     Alignment/CommonAlignment/src/AlignmentParameters.cc
     434      19.9     5.5      196.8        21     Alignment/CommonAlignment/src/AlignableModifier.cc
 
+=============================================================================================
+No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or parameter_count > 100)
 ==========================================================================================
 Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt
 ------------------------------------------------------------------------------------------

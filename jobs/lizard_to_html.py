@@ -25,6 +25,8 @@ html_start = '''
 </head>
 <body>
     <div class="container">
+        <h1><b>{title}</b></h1>
+        <hr>
 '''
 
 html_end = '''
@@ -38,7 +40,7 @@ $(document).ready(function() {
 </html>
 '''
 
-link_root = 'https://github.com/cms-sw/cmssw/blob/master/'
+g_link_root = 'https://test/adress.com'
 a_href = '<a href="{url}">{text}</a>'
 table = '''<table class="table-bordered">\n\t{0}\n</table>\n'''
 table_start = '''<table id="table-id" class="table-bordered display">\n'''
@@ -47,15 +49,17 @@ table_end = '''</tbody>\n</table>\n'''
 tr = '<tr>\n{0}\n</tr>\n'  # row
 th = '<th>{0}</th>'  # label column
 td = '<td>{0}</td>'  # column
-h1 = '<h1>t{0}\n</h1>\n'
+h1_bold = '<h1><b>{0}\n</b></h1>\n'
+h2 = '<h2 {klass}>{0}\n</h2>\n'
 
 # regex
 regex_dashes = '^(-|=)*$'
 regex_td = '^[ ]*[\d *]+.*\..+$'
 # regex_th = '^[^\d\W]+$'
-regex_th = '.*(NLOC|Total nloc)'
+regex_th = '.*(NLOC)'
+regex_th_total = '^Total nloc'
 regex_H1_warnings = ' *^!+.*!+ *$'
-regex_H1_no_warnings = 'No thresholds exceeded \('
+regex_H1_no_warnings = '^No thresholds exceeded \('
 regex_H1_files = '^\d+ file analyzed'
 regex_split = "[ ]{2,}|[ ]*$]"
 regex_split_td = "[ ]{1,}|[ ]*$]"
@@ -79,6 +83,7 @@ def format_a_ref(url, text):
 
 def get_args():
     '''This function parses and return arguments passed in'''
+
     # Assign description to the help doc
     parser = argparse.ArgumentParser(
         description='Script converts lizard .txt output to .html')
@@ -87,7 +92,9 @@ def get_args():
     parser.add_argument(
         '-s', '--source', type=str, help='Source file', required=True)
     parser.add_argument(
-        '-d', '--dir', type=str, help='Output directory', required=True)
+        '-d', '--dir', type=str, help='Local output directory', required=True)
+    parser.add_argument(
+        '-l', '--link_root', type=str, help="Project's repository at Github", required=True)
 
     # Array for all arguments passed to script
     args = parser.parse_args()
@@ -97,7 +104,7 @@ def get_args():
     output_d = args.dir
 
     # Return all variable values
-    return source, output_d
+    return source, output_d, g_link_root
 
 
 total_col_nr = 0  # global value
@@ -119,7 +126,8 @@ def text_with_href(url_base, line):
                   + "L{0}-L{1}".format(lines[0], lines[1])
             return a_href.format(url=url, text=line)
         else:
-            return line  # TODO
+            url = url_base + line
+            return a_href.format(url=url, text=line)
     else:
         return line
 
@@ -130,15 +138,15 @@ def parse(file, line_previous, line):
     if bool(re.search(regex_dashes, line)):
         return False
 
+    elif bool(re.search(regex_H1_warnings, line)
+              or (re.search(regex_H1_no_warnings, line))
+              or (re.search(regex_th_total, line))
+              or re.search(regex_H1_files, line)
+              ):
+        return True
+
     elif bool(re.search(regex_th, line)):
-        table_header_values = re.split(regex_split, line.strip())
-        generated_row = ''
-        for th_val in table_header_values:
-            generated_row += th.format(th_val)
-        file.write(
-            '<thead>' + tr.format(generated_row) + '</thead>\n<tbody>'
-        )
-        total_col_nr = len(table_header_values) - 1
+        write_table_th(file, line)
         return False
 
     elif bool(re.search(regex_td, line)):
@@ -147,30 +155,42 @@ def parse(file, line_previous, line):
         for td_val in table_row_values[:-1]:
             generated_row += td.format(td_val)
         generated_row += td.format(
-            text_with_href(link_root, table_row_values[-1])
+            text_with_href(g_link_root, table_row_values[-1])
         )
-
         file.write(
             tr.format(generated_row)
         )
         return False
 
-    elif bool(re.search(regex_H1_files, line)):
-        return True
-
     return False
 
 
-def main(source_f_path, output_d):
+def write_table_th(file, line):
+    global total_col_nr
+    table_header_values = re.split(regex_split, line.strip())
+    generated_row = ''
+    for th_val in table_header_values:
+        generated_row += th.format(th_val)
+    file.write(
+        '<thead>' + tr.format(generated_row) + '</thead>\n<tbody>'
+    )
+    total_col_nr = len(table_header_values) - 1
+
+
+def main(source_f_path, output_d, link_root):
     """Main function"""
+    global g_link_root
+    g_link_root = link_root
 
     with open(source_f_path, 'r') as source_f:
 
         do_split = False
         previous_line = None
 
+        # --- { all_functions.html }
         html_0 = open(os.path.join(output_d, 'all_functions.html'), 'w')
-        html_0.write(html_start.format(title='all_functions'))
+        html_0.write(html_start.format(title='Statistics of all functions'))
+
         html_0.write(table_start)
         while do_split is False:
             line = source_f.readline()
@@ -181,16 +201,66 @@ def main(source_f_path, output_d):
         html_0.write(table_end)
         html_0.write(html_end)
         html_0.close()
-        # close open
+        # --- {END all_functions.html }
 
-        # open
+        # --- { file_statistics.html }
+        html_0 = open(os.path.join(output_d, 'file_statistics.html'), 'w')
+        html_0.write(html_start.format(title='Files statistics'))
+        html_0.write(h2.format(line, klass=''))
+        html_0.write(table_start)
+        do_split = False
+        while do_split is False:
+            line = source_f.readline()
+            do_split = parse(html_0, previous_line, line)
+            previous_line = line
+            if not line:
+                break
+        html_0.write(table_end)
+        html_0.write(html_end)
+        html_0.close()
+        # --- {END file_statistics.html }
 
-        # open document to read
+        # --- { warnings.html }
+        html_0 = open(os.path.join(output_d, 'warnings.html'), 'w')
+        html_0.write(html_start.format(title='Warnings'))
 
-        # open document to write
+        h1_klass = ''
+        if bool(re.search(regex_H1_warnings, line)):
+            h1_klass = 'class="alert alert-danger"'
 
-        # open document
+        html_0.write(h2.format(line, klass=h1_klass))
+        if bool(re.search(regex_H1_warnings, line)):
+            html_0.write(table_start)
+            do_split = False
+            while do_split is False:
+                line = source_f.readline()
+                do_split = parse(html_0, previous_line, line)
+                previous_line = line
+                if not line:
+                    break
+            html_0.write(table_end)
+
+        html_0.write(html_end)
+        html_0.close()
+        # --- {END warnings.html }
+
+        # --- { total.html }
+        html_0 = open(os.path.join(output_d, 'total.html'), 'w')
+        html_0.write(html_start.format(title='Total scan statistics'))
+        html_0.write(table_start)
+        write_table_th(html_0, line)
+        do_split = False
+        while do_split is False:
+            line = source_f.readline()
+            do_split = parse(html_0, previous_line, line)
+            previous_line = line
+            if not line:
+                break
+        html_0.write(table_end)
+        html_0.write(html_end)
+        html_0.close()
+        # --- {END total.html }
 
 
-if __name__ == '__main__':
-    main(get_args())
+        if __name__ == '__main__':
+            main(get_args())

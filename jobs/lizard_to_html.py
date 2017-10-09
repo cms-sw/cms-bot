@@ -12,15 +12,28 @@ html_start = '''
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
+    
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    
     <meta charset="UTF-8">
     <title>{title}</title>
 </head>
 <body>
+    <div class="container">
 '''
 
 html_end = '''
+    </div>
+<script>
+$(document).ready(function() {
+    $('#table-id').DataTable();
+} );
+</script>
 </body>
 </html>
 '''
@@ -28,8 +41,8 @@ html_end = '''
 link_root = 'https://github.com/cms-sw/cmssw/blob/master/'
 a_href = '<a href="{url}">{text}</a>'
 table = '''<table class="table-bordered">\n\t{0}\n</table>\n'''
-table_start = '''<table class="table-bordered">\n'''
-table_end = '''</table>\n'''
+table_start = '''<table id="table-id" class="table-bordered display">\n'''
+table_end = '''</tbody>\n</table>\n'''
 
 tr = '<tr>\n{0}\n</tr>\n'  # row
 th = '<th>{0}</th>'  # label column
@@ -123,7 +136,7 @@ def parse(file, line_previous, line):
         for th_val in table_header_values:
             generated_row += th.format(th_val)
         file.write(
-            tr.format(generated_row)
+            '<thead>' + tr.format(generated_row) + '</thead>\n<tbody>'
         )
         total_col_nr = len(table_header_values) - 1
         return False

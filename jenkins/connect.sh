@@ -5,7 +5,7 @@ WORKER_NODE=$3
 WORKER_DIR=$4
 
 SSH_OPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-JENKINS_MASTER_ROOT=/var/lib/jenkins
+JENKINS_MASTER_ROOT=/build
 SCRIPT_DIR=`dirname $0`
 
 if [ $(echo $WORKER_NODE | grep '^aiadm' | wc -l) -gt 0 ] ; then

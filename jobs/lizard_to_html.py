@@ -33,14 +33,24 @@ html_end = '''
     </div>
 <script>
 $(document).ready(function() {
-    $('#table-id').DataTable();
+    var data = {data};
+    $('#table-id').DataTable({
+            deferRender:    true,
+            scrollY:        200,
+            scrollCollapse: true,
+            scroller:       true
+        }
+    );
 } );
 </script>
 </body>
 </html>
 '''
 
+g_total_col_nr = 0  # global value
 g_link_root = 'https://test/adress.com'
+g_table_data = []
+
 a_href = '<a href="{url}">{text}</a>'
 table = '''<table class="table-bordered">\n\t{0}\n</table>\n'''
 table_start = '''<table id="table-id" class="table-bordered display">\n'''
@@ -102,17 +112,15 @@ def get_args():
     # Assign args to variables
     source = args.source
     output_d = args.dir
+    link_root = args.link_root
 
     # Return all variable values
-    return source, output_d, g_link_root
-
-
-total_col_nr = 0  # global value
+    return source, output_d, link_root
 
 
 def text_with_href(url_base, line):
-    # if convertable to line
 
+    # if convertable to line
     if bool(re.search(regex_line_to_url, line)):
         line_numbers_group = re.search(regex_has_line_numbers, line)
         if bool(line_numbers_group):
@@ -133,7 +141,7 @@ def text_with_href(url_base, line):
 
 
 def parse(file, line_previous, line):
-    global total_col_nr
+    global g_total_col_nr
 
     if bool(re.search(regex_dashes, line)):
         return False
@@ -150,7 +158,7 @@ def parse(file, line_previous, line):
         return False
 
     elif bool(re.search(regex_td, line)):
-        table_row_values = re.split(regex_split_td, line.strip(), maxsplit=total_col_nr)
+        table_row_values = re.split(regex_split_td, line.strip(), maxsplit=g_total_col_nr)
         generated_row = ''
         for td_val in table_row_values[:-1]:
             generated_row += td.format(td_val)
@@ -166,7 +174,7 @@ def parse(file, line_previous, line):
 
 
 def write_table_th(file, line):
-    global total_col_nr
+    global g_total_col_nr
     table_header_values = re.split(regex_split, line.strip())
     generated_row = ''
     for th_val in table_header_values:
@@ -174,7 +182,7 @@ def write_table_th(file, line):
     file.write(
         '<thead>' + tr.format(generated_row) + '</thead>\n<tbody>'
     )
-    total_col_nr = len(table_header_values) - 1
+    g_total_col_nr = len(table_header_values) - 1
 
 
 def main(source_f_path, output_d, link_root):
@@ -262,5 +270,5 @@ def main(source_f_path, output_d, link_root):
         # --- {END total.html }
 
 
-        if __name__ == '__main__':
-            main(get_args())
+if __name__ == '__main__':
+    main(*get_args())

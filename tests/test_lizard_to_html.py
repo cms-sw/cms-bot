@@ -42,7 +42,7 @@ line_files = '21 file analyzed.'
 
 class TestSequenceFunctions(unittest.TestCase):
     def test_main(self):
-        main('./data/lizard-test-output.txt', '/tmp', 'https://github.com/cms-sw/cmssw/blob/master/')
+        main(('./data/lizard-test-output.txt', '/tmp', 'https://github.com/cms-sw/cmssw/blob/master/'))
 
     def test_reg_th(self):
         for line in lines_th:

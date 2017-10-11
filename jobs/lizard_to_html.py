@@ -16,10 +16,8 @@ html_start = '''
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-    
     <meta charset="UTF-8">
     <title>{title}</title>
 </head>
@@ -30,18 +28,20 @@ html_start = '''
 '''
 
 html_end = '''
+        <hr>
     </div>
 <script>
-$(document).ready(function() {
+$(document).ready(function() {{
     var data = {data};
-    $('#table-id').DataTable({
+    $('#table-id').DataTable({{
+            data: data,
             deferRender:    true,
-            scrollY:        200,
+            {comment_out_scrollX}scrollX: true,
             scrollCollapse: true,
             scroller:       true
-        }
+        }}
     );
-} );
+}} );
 </script>
 </body>
 </html>
@@ -77,22 +77,10 @@ regex_line_to_url = "[a-zA-Z]"
 regex_has_line_numbers = "@.+@"
 
 
-def format_tag(tag, value):
-    return tag.format(value)
-
-
-def format_a_ref(url, text):
-    return a_href.format(url=url, text=text)
-
-
-#
-#
-# def format_html(title, content):
-#     return html.format(title=title, content=content)
-
-
 def get_args():
-    '''This function parses and return arguments passed in'''
+    """
+    This function parses and return arguments passed in
+    """
 
     # Assign description to the help doc
     parser = argparse.ArgumentParser(
@@ -119,8 +107,7 @@ def get_args():
 
 
 def text_with_href(url_base, line):
-
-    # if convertable to line
+    # if convertible to line
     if bool(re.search(regex_line_to_url, line)):
         line_numbers_group = re.search(regex_has_line_numbers, line)
         if bool(line_numbers_group):
@@ -140,8 +127,8 @@ def text_with_href(url_base, line):
         return line
 
 
-def parse(file, line_previous, line):
-    global g_total_col_nr
+def parse(f_out, line):
+    global g_total_col_nr, g_table_data
 
     if bool(re.search(regex_dashes, line)):
         return False
@@ -154,32 +141,30 @@ def parse(file, line_previous, line):
         return True
 
     elif bool(re.search(regex_th, line)):
-        write_table_th(file, line)
+        write_table_th(f_out, line)
         return False
 
     elif bool(re.search(regex_td, line)):
         table_row_values = re.split(regex_split_td, line.strip(), maxsplit=g_total_col_nr)
-        generated_row = ''
+        row_dataset = []
         for td_val in table_row_values[:-1]:
-            generated_row += td.format(td_val)
-        generated_row += td.format(
+            row_dataset.append(td_val)
+        row_dataset.append(
             text_with_href(g_link_root, table_row_values[-1])
         )
-        file.write(
-            tr.format(generated_row)
-        )
+        g_table_data.append(row_dataset)
         return False
 
     return False
 
 
-def write_table_th(file, line):
+def write_table_th(f_out, line):
     global g_total_col_nr
     table_header_values = re.split(regex_split, line.strip())
     generated_row = ''
     for th_val in table_header_values:
         generated_row += th.format(th_val)
-    file.write(
+    f_out.write(
         '<thead>' + tr.format(generated_row) + '</thead>\n<tbody>'
     )
     g_total_col_nr = len(table_header_values) - 1
@@ -187,13 +172,12 @@ def write_table_th(file, line):
 
 def main(source_f_path, output_d, link_root):
     """Main function"""
-    global g_link_root
+    global g_link_root, g_table_data
     g_link_root = link_root
 
     with open(source_f_path, 'r') as source_f:
 
         do_split = False
-        previous_line = None
 
         # --- { all_functions.html }
         html_0 = open(os.path.join(output_d, 'all_functions.html'), 'w')
@@ -202,13 +186,13 @@ def main(source_f_path, output_d, link_root):
         html_0.write(table_start)
         while do_split is False:
             line = source_f.readline()
-            do_split = parse(html_0, previous_line, line)
-            previous_line = line
+            do_split = parse(html_0, line)
             if not line:
                 break
         html_0.write(table_end)
-        html_0.write(html_end)
+        html_0.write(html_end.format(data=g_table_data, comment_out_scrollX=''))
         html_0.close()
+        g_table_data = []
         # --- {END all_functions.html }
 
         # --- { file_statistics.html }
@@ -219,37 +203,37 @@ def main(source_f_path, output_d, link_root):
         do_split = False
         while do_split is False:
             line = source_f.readline()
-            do_split = parse(html_0, previous_line, line)
-            previous_line = line
+            do_split = parse(html_0, line)
             if not line:
                 break
         html_0.write(table_end)
-        html_0.write(html_end)
+        html_0.write(html_end.format(data=g_table_data, comment_out_scrollX=''))
         html_0.close()
+        g_table_data = []
         # --- {END file_statistics.html }
 
         # --- { warnings.html }
         html_0 = open(os.path.join(output_d, 'warnings.html'), 'w')
         html_0.write(html_start.format(title='Warnings'))
 
-        h1_klass = ''
+        h1_class = ''
         if bool(re.search(regex_H1_warnings, line)):
-            h1_klass = 'class="alert alert-danger"'
+            h1_class = 'class="alert alert-danger"'
 
-        html_0.write(h2.format(line, klass=h1_klass))
+        html_0.write(h2.format(line, klass=h1_class))
         if bool(re.search(regex_H1_warnings, line)):
             html_0.write(table_start)
             do_split = False
             while do_split is False:
                 line = source_f.readline()
-                do_split = parse(html_0, previous_line, line)
-                previous_line = line
+                do_split = parse(html_0, line)
                 if not line:
                     break
             html_0.write(table_end)
 
-        html_0.write(html_end)
+        html_0.write(html_end.format(data=g_table_data, comment_out_scrollX=''))
         html_0.close()
+        g_table_data = []
         # --- {END warnings.html }
 
         # --- { total.html }
@@ -260,13 +244,13 @@ def main(source_f_path, output_d, link_root):
         do_split = False
         while do_split is False:
             line = source_f.readline()
-            do_split = parse(html_0, previous_line, line)
-            previous_line = line
+            do_split = parse(html_0, line)
             if not line:
                 break
         html_0.write(table_end)
-        html_0.write(html_end)
+        html_0.write(html_end.format(data=g_table_data, comment_out_scrollX='//'))
         html_0.close()
+        g_table_data = []
         # --- {END total.html }
 
 

@@ -7,25 +7,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
 from jobs.lizard_to_html import *
 
-# def test1():
-#     print(
-#         format_html('test_title',
-#                     format_tag(table,
-#                                (format_tag(tr,
-#                                            format_tag(th, "label1") + format_tag(th, 'label1') + format_tag(th,
-#                                                                                                             'label1')) +
-#                                 format_tag(tr,
-#                                            format_tag(td, 'label1') + format_tag(td, 'label1') + format_tag(td,
-#                                                                                                             'label1')) +
-#                                 format_tag(tr,
-#                                            format_tag(td, 'label1') + format_tag(td, 'label1') + format_tag(td,
-#                                                                                                             'label1'))
-#                                 )
-#                                )
-#                     )
-#     )
-
-
 lines_th = [
     "NLOC    CCN   token  PARAM  length  location  ",
     "NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file",
@@ -42,7 +23,7 @@ line_files = '21 file analyzed.'
 
 class TestSequenceFunctions(unittest.TestCase):
     def test_main(self):
-        main(('./data/lizard-test-output.txt', '/tmp', 'https://github.com/cms-sw/cmssw/blob/master/'))
+        main('./data/lizard-test-output.txt', '/tmp', 'https://github.com/cms-sw/cmssw/blob/master/')
 
     def test_reg_th(self):
         for line in lines_th:
@@ -77,8 +58,6 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEquals(len(re.split(regex_split, lines_th[0].strip())), 6)
         self.assertEquals(len(re.split(regex_split, lines_th[1].strip())), 6)
         self.assertEquals(len(re.split(regex_split, lines_th[2].strip())), 8)
-
-    # def test_get_url(self):
 
 
 if __name__ == '__main__':

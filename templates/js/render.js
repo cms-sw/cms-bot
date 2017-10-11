@@ -369,6 +369,25 @@ add_valgrind_tests_link = function ( title_cell, isFound, currentTag ){
 }
 
 /**
+ * Generates the lizard tests link and adds it to the cell for the IB
+ */
+add_lizard_tests_link = function ( title_cell, isFound, currentTag ){
+  if ( isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' Code complexity metrics')
+    return
+  }
+  if ( isFound == 'found' ){
+    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/lizard/' + currentTag
+    var sa_link = $("<a></a>").attr("href", url)
+    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+    sa_link.append($('<span></span>').text(' Code complexity metrics'))
+    title_cell.append(sa_link)
+    title_cell.append($("<br>"))
+  }
+}
+
+/**
  * Generates the material_budget tests link link and adds it to the cell for the IB
  */
 add_material_budget_tests_link = function ( title_cell, isFound, currentTag ){
@@ -526,6 +545,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
     add_dqm_tests_link( title_cell , comparison.dqm_tests , current_tag )
     add_hlt_tests_link( title_cell , comparison.hlt_tests , current_tag )
     add_valgrind_tests_link( title_cell , comparison.valgrind , current_tag )
+    add_lizard_tests_link( title_cell , comparison.lizard , current_tag )
     add_igprof_tests_link( title_cell , comparison.igprof , current_tag )
     add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
     add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )

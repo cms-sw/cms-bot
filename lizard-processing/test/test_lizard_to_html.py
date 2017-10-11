@@ -1,11 +1,10 @@
 import os
+import re
 import sys
 import unittest
-import re
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
-
-from jobs.lizard_to_html import *
+sys.path.append(os.path.join(os.path.dirname(__file__), "../src/"))
+from lizard_to_html import *
 
 lines_th = [
     "NLOC    CCN   token  PARAM  length  location  ",
@@ -23,7 +22,8 @@ line_files = '21 file analyzed.'
 
 class TestSequenceFunctions(unittest.TestCase):
     def test_main(self):
-        main('./data/lizard-test-output.txt', '/tmp', 'https://github.com/cms-sw/cmssw/blob/master/')
+        main(os.path.join(os.path.dirname(__file__), "../", './test-data/lizard-test-output.txt'), '/tmp',
+             'https://github.com/cms-sw/cmssw/blob/master/')
 
     def test_reg_th(self):
         for line in lines_th:

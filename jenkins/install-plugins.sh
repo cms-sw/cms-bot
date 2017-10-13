@@ -1,4 +1,4 @@
-#!/bin/bash -eu
+#!/bin/bash -eux
 
 # Resolve dependencies and download plugins given on the command line
 #

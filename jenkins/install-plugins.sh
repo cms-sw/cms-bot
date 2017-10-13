@@ -7,7 +7,7 @@
 
 set -o pipefail
 
-REF_DIR=${REF:-/build/userdata/plugins}
+REF_DIR=${REF:-/build/plugin-ref/plugins}
 FAILED="$REF_DIR/failed-plugins.txt"
 JENKINS_UC=https://updates.jenkins.io
 

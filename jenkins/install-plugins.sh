@@ -188,7 +188,20 @@ main() {
     local plugins=()
 
     mkdir -p "$REF_DIR" || exit 1
-    plugins=$(cat $1)
+
+    if [[ ($# -eq 0) ]]; then
+      while read -r line; do plugins="$plugins $line" ; done
+    elif [ -f $1 ] ; then
+      plugins=$(cat $1 | tr '\n' ' ')  
+    else
+      plugins="$@"
+    fi
+
+    if [ -f $1 ] ; then
+      plugins=$(cat $1)
+    else
+      plugins="$@"
+    fi
 
     # Create lockfile manually before first run to make sure any explicit version set is used.
     echo "Creating initial locks..."

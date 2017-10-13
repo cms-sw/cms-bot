@@ -188,19 +188,11 @@ main() {
     local plugins=()
 
     mkdir -p "$REF_DIR" || exit 1
-
-    # Read plugins from stdin or from the command line arguments
-    if [[ ($# -eq 0) ]]; then
-        while read -r line; do
-            plugins+=("${line}")
-        done
-    else
-        plugins=("$@")
-    fi
+    plugins=$(cat $1)
 
     # Create lockfile manually before first run to make sure any explicit version set is used.
     echo "Creating initial locks..."
-    for plugin in "${plugins[@]}"; do
+    for plugin in $plugins; do
         mkdir "$(getLockFile "${plugin%%:*}")"
     done
 
@@ -217,7 +209,7 @@ main() {
     fi
 
     echo "Downloading plugins..."
-    for plugin in "${plugins[@]}"; do
+    for plugin in $plugins; do
         while [ $(jobs -p | wc -l) -ge ${PARALLEL_JOBS} ] ; do sleep 1 ; done
         pluginVersion=""
 

@@ -10,6 +10,7 @@ set -o pipefail
 REF_DIR=${REF:-/build/plugin-ref/plugins}
 FAILED="$REF_DIR/failed-plugins.txt"
 JENKINS_UC=https://updates.jenkins.io
+let PARALLEL_JOBS=$(getconf _NPROCESSORS_ONLN)*2
 
 . $(dirname $0)/jenkins-support
 
@@ -217,13 +218,13 @@ main() {
 
     echo "Downloading plugins..."
     for plugin in "${plugins[@]}"; do
+        while [ $(jobs -p | wc -l) -ge ${PARALLEL_JOBS} ] ; do sleep 1 ; done
         pluginVersion=""
 
         if [[ $plugin =~ .*:.* ]]; then
             pluginVersion=$(versionFromPlugin "${plugin}")
             plugin="${plugin%%:*}"
         fi
-
         download "$plugin" "$pluginVersion" "true" &
     done
     wait

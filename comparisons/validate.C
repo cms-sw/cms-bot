@@ -695,6 +695,7 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   muonVar("muMatches_.rpcMatches@.size",cName,tName);
   muonVar("stationMask",cName,tName);
   muonVar("type",cName,tName);
+  plotvar("log2(max(0.5,"+tName+cName+"_"+recoS+".obj.selectors()))");
 
   if (tName == "patMuons_"){
     muonVar("puppiChargedHadronIso", cName,tName);
@@ -1852,6 +1853,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       vertexVars("recoVertexs_offlinePrimaryVertices__");
       vertexVars("recoVertexs_offlinePrimaryVerticesWithBS__");
       vertexVars("recoVertexs_inclusiveSecondaryVertices__");
+      vertexVars("recoVertexs_offlineSlimmedPrimaryVertices__");
       //phase-2 vertex reco
       vertexVars("recoVertexs_offlinePrimaryVertices1D__");
       vertexVars("recoVertexs_offlinePrimaryVertices1DWithBS__");

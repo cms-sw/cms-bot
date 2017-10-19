@@ -28,9 +28,6 @@ for item in $REPOS; do
 done
 cd ${WORKSPACE}
 rm -rf ${WORKSPACE}/repos
-ls -d ${MIRROR}/*
-ls -d ${MIRROR}/*/*
-exit 0
 
 case $MIRROR in
   /afs/* )

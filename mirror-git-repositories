@@ -24,7 +24,7 @@ for item in $REPOS; do
   rm -rf ${WORKSPACE}/repos/${GH_REPO}.git
   cd ${WORKSPACE}/repos/${repo_owner}
   git clone --bare ${GITHUB}/${GH_REPO}.git || (ERR=1 && continue)
-  rsync -a --delete ${GH_REPO}.git/ ${MIRROR}/${GH_REPO}.git/
+  rsync -a --delete ${WORKSPACE}/repos/${GH_REPO}.git/ ${MIRROR}/${GH_REPO}.git/
 done
 cd ${WORKSPACE}
 rm -rf ${WORKSPACE}/repos

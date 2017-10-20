@@ -10,7 +10,7 @@ if [ "X$1" != "X" ] ; then
   REPOS=$(echo $REPOS | tr ' ' '\n' | sed 's|:.*$||' | grep "$1" || true)
 fi
 
-let INDEX=0
+let INDEX=1
 for item in $REPOS; do
   let INDEX=$INDEX+1
   REPO=`echo $item | sed 's|:.*||'`

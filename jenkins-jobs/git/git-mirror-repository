@@ -1,0 +1,10 @@
+#!/bin/sh -ex
+kinit -R
+REPO="$1"
+MIRROR="$2"
+rm -rf mirror
+if git clone --bare "${REPO}" mirror ; then
+  git --git-dir=mirror push -f --mirror "${MIRROR}"
+fi
+rm -rf mirror
+

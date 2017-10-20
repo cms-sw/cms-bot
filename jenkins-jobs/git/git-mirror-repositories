@@ -7,7 +7,7 @@ if [ "X$1" != "X" ] ; then
     echo "WARNING: There is no gitlab mirror available for $1"
     exit 0
   fi
-  REPOS=$(echo $REPOS | tr ' ' '\n' | sed 's|:.*$||' | grep "$1" || true)
+  REPOS=$(echo $REPOS | tr ' ' '\n' | sed 's|:.*$||' | grep "^$1$" || true)
 fi
 
 let INDEX=1

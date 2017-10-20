@@ -2,12 +2,11 @@
 
 kinit -R
 WORKSPACE=${WORKSPACE-$PWD}
-MIRROR=/data/git-mirrors
-CERN_GIT=https://:@gitlab.cern.ch:8443
-GITHUB=https://github.com
+ORIGINAL_GIT=https://github.com
+MIRROR_GIT=https://:@gitlab.cern.ch:8443
 REPOS="cms-sw/cmssw cms-sw/cmsdist cms-sw/pkgtools cms-sw/cmssw-config cms-sw/SCRAM"
 if [ "X$1" != "X" ] ; then
-  if [ $(git ls-remote -h ${CERN_GIT}/$1 | grep 'refs/heads/' | wc -l) -eq 0 ] ; then
+  if [ $(git ls-remote -h ${MIRROR_GIT}/$1 | grep 'refs/heads/' | wc -l) -eq 0 ] ; then
     echo "WARNING: There is no gitlab mirror available for $REPO"
     exit 0
   fi
@@ -17,33 +16,18 @@ fi
 git config --global http.postBuffer 209715200
 ERR=0
 for item in $REPOS; do
-  GH_REPO=`echo $item | sed 's|:.*||'`
-  repo_owner=$(dirname $GH_REPO)
-  mkdir -p ${WORKSPACE}/repos/${repo_owner}
-  mkdir -p ${MIRROR}/${repo_owner}
-  rm -rf ${WORKSPACE}/repos/${GH_REPO}.git
-  cd ${WORKSPACE}/repos/${repo_owner}
-  git clone --bare ${GITHUB}/${GH_REPO}.git || (ERR=1 && continue)
-  rsync -a --delete ${WORKSPACE}/repos/${GH_REPO}.git/ ${MIRROR}/${GH_REPO}.git/
+  REPO=`echo $item | sed 's|:.*||'`
+  MIRROR_REPO=`echo $item | sed 's|.*:||'`
+  if [ "$MIRROR_REPO" = "" ] ; then MIRROR_REPO=$REPO ; fi
+  rm -rf ${WORKSPACE}/mirror-git-repo
+  if git clone --bare ${ORIGINAL_GIT}/${GH_REPO}.git ${WORKSPACE}/mirror-git-repo ; then
+    pushd ${WORKSPACE}/mirror-git-repo
+      echo git push -f --mirror ${MIRROR_GIT}/${MIRROR_REPO}.git || ERR=1
+    popd
+  else
+    ERR=1
+  fi
 done
-cd ${WORKSPACE}
-rm -rf ${WORKSPACE}/repos
-
-case $MIRROR in
-  /afs/* )
-    /afs/cern.ch/cms/sdt/internal/requestHandler/requestGitMirrorSync.py
-    du -sh /afs/.cern.ch/cms/git-cmssw-mirror
-    ;;
-esac
-
-for item in $REPOS; do
-  GH_REPO=`echo $item | sed 's|:.*||'`
-  CERN_REPO=`echo $item | sed 's|.*:||'`
-  if [ "$CERN_REPO" = "" ] ; then CERN_REPO=$GH_REPO ; fi 
-  [ -d ${MIRROR}/${GH_REPO}.git ] || continue
-  cd ${MIRROR}/${GH_REPO}.git
-  git push -f --mirror ${CERN_GIT}/${CERN_REPO}.git || (ERR=1 && continue)
-done
-
+rm -rf ${WORKSPACE}/mirror-git-repo
 exit $ERR
 

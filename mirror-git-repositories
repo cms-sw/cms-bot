@@ -22,7 +22,7 @@ for item in $REPOS; do
   rm -rf ${WORKSPACE}/mirror-git-repo
   if git clone --bare ${ORIGINAL_GIT}/${REPO}.git ${WORKSPACE}/mirror-git-repo ; then
     pushd ${WORKSPACE}/mirror-git-repo
-      echo git push -f --mirror ${MIRROR_GIT}/${MIRROR_REPO}.git || ERR=1
+      git push -f --mirror ${MIRROR_GIT}/${MIRROR_REPO}.git || ERR=1
     popd
   else
     ERR=1

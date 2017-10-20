@@ -20,7 +20,7 @@ for item in $REPOS; do
   MIRROR_REPO=`echo $item | sed 's|.*:||'`
   if [ "$MIRROR_REPO" = "" ] ; then MIRROR_REPO=$REPO ; fi
   rm -rf ${WORKSPACE}/mirror-git-repo
-  if git clone --bare ${ORIGINAL_GIT}/${GH_REPO}.git ${WORKSPACE}/mirror-git-repo ; then
+  if git clone --bare ${ORIGINAL_GIT}/${REPO}.git ${WORKSPACE}/mirror-git-repo ; then
     pushd ${WORKSPACE}/mirror-git-repo
       echo git push -f --mirror ${MIRROR_GIT}/${MIRROR_REPO}.git || ERR=1
     popd

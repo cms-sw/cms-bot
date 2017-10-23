@@ -34,6 +34,7 @@ html_end = '''
 $(document).ready(function() {{
     var data = {data};
     $('#table-id').DataTable({{
+            order: [1, 'desc'], // order on CCN
             data: data,
             deferRender:    true,
             {comment_out_scrollX}scrollX: true,

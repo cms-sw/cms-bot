@@ -231,10 +231,10 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
 }
 
 
-void jet(TString type, TString algo, TString var, bool log10Var = false){
+void jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false){
   TString v = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+".obj."+var+"()";
   if (log10Var) v = "log10(" + v + ")";
-  plotvar(v);
+  plotvar(v, "", trycatch);
 }
 
 void jets(TString type,TString algo){
@@ -242,21 +242,19 @@ void jets(TString type,TString algo){
   jet(type,algo,"et", true);
   jet(type,algo,"eta");
   jet(type,algo,"phi");
-  if (type!="recoPFJets" && type!="patJets"){
-    jet(type,algo,"emEnergyFraction");
-  }
-  else{
-    jet(type,algo,"neutralHadronEnergy");
 
-    jet(type,algo,"chargedHadronEnergyFraction");
-    jet(type,algo,"neutralHadronEnergyFraction");
-    jet(type,algo,"photonEnergyFraction");
-    jet(type,algo,"electronEnergyFraction");
-    jet(type,algo,"muonEnergyFraction");
-    jet(type,algo,"hoEnergyFraction");
-    jet(type,algo,"HFHadronEnergyFraction");
-    jet(type,algo,"HFEMEnergyFraction");
-  }
+  jet(type,algo,"emEnergyFraction", false, true);//the last "true" is to catch cases of unfilled specific
+  jet(type,algo,"neutralHadronEnergy", false, true);
+  
+  jet(type,algo,"chargedHadronEnergyFraction", false, true);
+  jet(type,algo,"neutralHadronEnergyFraction", false, true);
+  jet(type,algo,"photonEnergyFraction", false, true);
+  jet(type,algo,"electronEnergyFraction", false, true);
+  jet(type,algo,"muonEnergyFraction", false, true);
+  jet(type,algo,"hoEnergyFraction", false, true);
+  jet(type,algo,"HFHadronEnergyFraction", false, true);
+  jet(type,algo,"HFEMEnergyFraction", false, true);
+
   if (type == "patJets"){
     jet(type, algo, "userFloats_@.size");
     jet(type, algo, "userInts_@.size");
@@ -717,6 +715,14 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("userInts_@.size", cName,tName);
     muonVar("userCands_@.size", cName,tName);
     muonVar("isolations_@.size", cName,tName);
+
+    muonVar("simType", cName,tName);
+    muonVar("simExtType", cName,tName);
+    muonVar("simFlavour", cName,tName);
+    muonVar("simHeaviestMotherFlavour", cName,tName);
+    muonVar("simPdgId", cName,tName);
+    muonVar("simBX", cName,tName);
+    muonVar("simProdRho", cName,tName);
   }
 }
 
@@ -2030,6 +2036,16 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       plotvar("booledmValueMap_muons_muidGlobalMuonPromptTight_"+recoS+".obj.values_");
       plotvar("booledmValueMap_muons_muidTMLastStationAngTight_"+recoS+".obj.values_");
+
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.primaryClass");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.extendedClass");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.flavour");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.pdgId");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.g4processType");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.motherFlavour");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.tpEvent");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.tpBX");
+      plotvar("recoMuonSimInfoedmValueMap_muonSimClassifier__"+recoS+".obj.values_.tpAssoQuality");
 
       muonVars("muonsFromCosmics_");
       muonVars("muonsFromCosmics1Leg_");

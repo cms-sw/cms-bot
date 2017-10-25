@@ -28,6 +28,6 @@ case $TARGET in
   * ) java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/jenkins -remoting groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${JENKINS_NODE}" "$HOST_ARCH" "$HOST_CMS_ARCH" "${DOCKER}" ;;
 esac
 if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then
-  java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/jenkins/ -remoting build 'test-jenkins-host' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
+  java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/jenkins/ -remoting build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
 fi
 ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKSPACE/tmp

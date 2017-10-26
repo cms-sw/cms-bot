@@ -1101,10 +1101,12 @@ def identify_release_groups(results):
       groups.append(group)
     if not item[0] in group[1]: group[1].append(item[0])
 
-  results = {}
-  for g in groups: results[g[0]] = sorted(g[1], reverse=True)
-  results['all_prefixes'] = [ g[0] for g in groups ]
-  results['all_release_queues'] = [ r[0] for r in releases ]
+  results = {'all_release_queues' : [], 'all_prefixes' : []}
+  for g in groups:
+    rq = g[0]
+    results[rq] = sorted(g[1], reverse=True)
+    results['all_release_queues']+=results[rq]
+    results['all_prefixes'].append(rq)
   return results
 
 #-----------------------------------------------------------------------------------

@@ -1105,7 +1105,7 @@ def identify_release_groups(results):
   for g in groups:
     rq = g[0]
     results[rq] = sorted(g[1], reverse=True)
-    results['all_release_queues']+=results[rq]
+    results['all_release_queues']=results[rq]+results['all_release_queues']
     results['all_prefixes'].append(rq)
   return results
 

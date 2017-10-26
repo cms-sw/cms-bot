@@ -688,9 +688,10 @@ def add_tests_to_results( results, unit_tests, relvals_results,
       comp[ 'cmsdistTags' ] = cmsdist_tags if cmsdist_tags else {}
       comp[ 'isIB' ] = '-' in rel_name
       comp[ 'RVExceptions' ] = rv_Exceptions_Results.get( rel_name )
-      
-      comp[ 'inProgress' ] = False
+      if "_X_" in rel_name: comp[ 'ib_date' ] = rel_name.split("_X_",1)[-1]
+      else: comp[ 'ib_date' ] = ''
 
+      comp[ 'inProgress' ] = False
       if not comp.get( 'static_checks' ):
         comp[ 'static_checks' ] = 'not-found'
       if not comp.get( 'hlt_tests' ):
@@ -1080,24 +1081,31 @@ def generate_ib_json_short_summary( results ):
 # It returns a dictionary in which the keys are the release prefixes, and the values are
 # the release queues
 def identify_release_groups(results):
+  from operator import itemgetter
 
-  releases = [rq['release_name'] for rq in results]
-  releases.sort(reverse=True)
+  releases = []
+  for rq in results:
+    rn = rq['release_name']
+    releases.append([rn]+[int(x) for x in rn.split("_")[1:3]])
 
-  groups = {}
-
-  for rel in releases:
-    prefix  = rel[:10] + 'X'
-    group = groups.get(prefix)
+  groups = []
+  for item in sorted(releases, key=itemgetter(1, 2)):
+    prefix  = "CMSSW_"+"_".join([str(s) for s in item[1:3]])+"_X"
+    group = None
+    for g in groups:
+      if g[0]==prefix:
+        group=g
+        break
     if not group:
-      groups[prefix] = []
-    groups[prefix].append(rel)
+      group = [prefix,[]]
+      groups.append(group)
+    if not item[0] in group[1]: group[1].append(item[0])
 
-  keys = groups.keys()
-  keys.sort()
-  groups['all_prefixes'] = keys
-  groups['all_release_queues'] = releases
-  return groups
+  results = {}
+  for g in groups: results[g[0]] = sorted(g[1], reverse=True)
+  results['all_prefixes'] = [ g[0] for g in groups ]
+  results['all_release_queues'] = [ r[0] for r in releases ]
+  return results
 
 #-----------------------------------------------------------------------------------
 #---- Start of execution

@@ -104,6 +104,8 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]={
 }
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"][".+_amd64_gcc700"]={"534.0": { "step": 1, "exitcode": 35584, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}}
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"][".+_aarch64_.+"]={"534.0": { "step": 1, "exitcode": 256, "reason" : MSG_ARCH_INCOMPETIBILITY}}
+KNOWN_ERRORS["relvals"]["CMSSW_10_.+"]={}
+for arch in KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]: KNOWN_ERRORS["relvals"]["CMSSW_10_.+"][arch]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"][arch])
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}

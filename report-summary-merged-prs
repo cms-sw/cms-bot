@@ -1112,7 +1112,7 @@ def identify_release_groups(results):
   for rq in structure['all_prefixes'][::-1]:
     rn = structure[rq][0]
     if (rn in release_objs) and ('comparisons' in release_objs[rn]) and (release_objs[rn]['comparisons']):
-      if ('builds' in release_objs[rn]['comparisons'][0]) and (release_objs[rn]['comparisons'][0]['builds']:
+      if ('builds' in release_objs[rn]['comparisons'][0]) and (release_objs[rn]['comparisons'][0]['builds']):
         structure['default_release'] = rn
         break
   return structure

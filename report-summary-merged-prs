@@ -558,9 +558,6 @@ def execute_magic_command_get_cmsdist_tags():
         all_tags_found[ rel_name ] = {}
 
       all_tags_found[ rel_name ][ arch ] = line
-
-  print 'ALL TAGS'
-  print all_tags_found
   return all_tags_found
 
 
@@ -681,6 +678,7 @@ def add_tests_to_results( results, unit_tests, relvals_results,
       buildsres = build_results.get(rel_name)
       fwliteres = fwlite_results.get(rel_name)
       cmsdist_tags = cmsdist_tags_results.get(rel_name)
+      print "CMDIST ",rel_name,":",cmsdist_tags
 
       comp[ 'relvals' ] = rvsres if rvsres else []
       comp[ 'utests' ] = utres if utres else []

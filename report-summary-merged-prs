@@ -544,7 +544,7 @@ def execute_magic_command_get_cmsdist_tags():
     command_to_execute = MAGIC_COMMAND_CMSDIST_TAGS.replace( 'ARCHITECTURE' , arch )
     print "CMSDIST Tags: ",command_to_execute
     out,err,ret_code = get_output_command( command_to_execute )
-    print "Found: ",ret_code
+    print "Found: ",out
 
     for line in out.splitlines():
       m = re.search('CMSSW.*[0-9]/', line)
@@ -1125,7 +1125,7 @@ def identify_release_groups(results):
 
 if __name__ == "__main__":
 
-  MAGIC_COMMAND_CMSDIST_TAGS = "pushd %s; git tag -l */*/ARCHITECTURE | grep -E 'IB|ERR'; popd" % CMSDIST_REPO
+  MAGIC_COMMAND_CMSDIST_TAGS = "pushd %s; git tag -l '*/*/ARCHITECTURE' | grep -E 'IB|ERR'; popd" % CMSDIST_REPO
   CMSSDT_DIR = "/data/sdt"
   BUILD_LOG_DIR = CMSSDT_DIR+"/buildlogs"
   JENKINS_ARTIFACTS_SUBDIR = "SDT/jenkins-artifacts"

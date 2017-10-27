@@ -525,6 +525,7 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
 
 def compare_tags(branch, tags , git_dir, repo, cache):
   comparisons = []
+  if len(tags)>1: comparisons.append(execute_command_compare_tags(branch, tags[0], tags[0] , git_dir, repo, cache ))
   for i in range(len(tags)-1):
     comp = execute_command_compare_tags(branch, tags[i], tags[i+1] , git_dir, repo, cache  )
     comparisons.append(comp)

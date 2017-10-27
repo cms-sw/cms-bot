@@ -542,15 +542,11 @@ def execute_magic_command_get_cmsdist_tags():
   all_tags_found = {}
   for arch in ARCHITECTURES:
     command_to_execute = MAGIC_COMMAND_CMSDIST_TAGS.replace( 'ARCHITECTURE' , arch )
-    print "CMSDIST Tags: ",command_to_execute
     out,err,ret_code = get_output_command( command_to_execute )
-    print "Found: ",out
 
     for line in out.splitlines():
       m = re.search('CMSSW.*[0-9]/', line)
-      if not m:
-        print 'Ignoring line:\n%s' % line
-        continue
+      if not m: continue
 
       rel_name = line[m.start():m.end()-1]
 
@@ -558,6 +554,7 @@ def execute_magic_command_get_cmsdist_tags():
         all_tags_found[ rel_name ] = {}
 
       all_tags_found[ rel_name ][ arch ] = line
+      if "CMSSW_10_" in rel_name: print "CMSDIST ",rel_name,arch
   return all_tags_found
 
 

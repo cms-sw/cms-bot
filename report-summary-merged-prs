@@ -1084,8 +1084,10 @@ def identify_release_groups(results):
   from operator import itemgetter
 
   releases = []
+  release_objs = {}
   for rq in results:
     rn = rq['release_name']
+    release_objs[rn] = rq
     releases.append([rn]+[int(x) for x in rn.split("_")[1:3]])
 
   groups = []
@@ -1101,13 +1103,19 @@ def identify_release_groups(results):
       groups.append(group)
     if not item[0] in group[1]: group[1].append(item[0])
 
-  results = {'all_release_queues' : [], 'all_prefixes' : []}
+  structure = {'all_release_queues' : [], 'all_prefixes' : [], 'default_release' : ''}
   for g in groups:
     rq = g[0]
-    results[rq] = sorted(g[1], reverse=True)
-    results['all_release_queues']=results[rq]+results['all_release_queues']
-    results['all_prefixes'].append(rq)
-  return results
+    structure[rq] = sorted(g[1], reverse=True)
+    structure['all_release_queues']=structure[rq]+structure['all_release_queues']
+    structure['all_prefixes'].append(rq)
+  for rq in structure['all_prefixes'][::-1]:
+    rn = structure[rq][0]
+    if (rn in release_objs) and ('comparisons' in release_objs[rn]) and (release_objs[rn]['comparisons']):
+      if ('builds' in release_objs[rn]['comparisons'][0]) and (release_objs[rn]['comparisons'][0]['builds']:
+        structure['default_release'] = rn
+        break
+  return structure
 
 #-----------------------------------------------------------------------------------
 #---- Start of execution

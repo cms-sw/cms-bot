@@ -7,6 +7,12 @@ DEV=$5
 USE_DEV=""
 TEST_INSTALL=$7
 NUM_WEEKS=$8
+REINSTALL_COMMON=$9
+if [ "$REINSTALL_COMMON" = "true" ] ; then
+  REINSTALL_COMMON="--reinstall"
+else
+  REINSTALL_COMMON=""
+fi
 if [ "X$NUM_WEEKS" = "X" ] ; then NUM_WEEKS=2; fi
 if [ "X$DEV" = "Xtrue" ] ; then
   DEV="-dev"
@@ -201,7 +207,7 @@ for REPOSITORY in $REPOSITORIES; do
     # to interfere with the installation of a different one. For that reason we
     # ignore the exit code.
     (
-      dockerrun "${CMSPKG} update ; ${CMSPKG} -f install cms+cms-common+1.0 " ;
+      dockerrun "${CMSPKG} update ; ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 " ;
       REL_TO_INSTALL="" ;
       if [ "X$RELEASE_NAME" = "X" ] ; then 
         SEARCH="${CMSPKG} search cmssw-ib+CMSSW | cut -d'\' -f1 | sort > ${TMP_PREFIX}-onserver.txt ; \

@@ -1327,10 +1327,10 @@ if __name__ == "__main__":
                        rv_Exceptions_Results, fwlite_results )
 
   fill_missing_cmsdist_tags( results )
-  fix_results(results)
   print_results(results)
 
   structure = identify_release_groups( results )
+  fix_results(results)
   generate_separated_json_results( results )
   generate_ib_json_short_summary( results )
   

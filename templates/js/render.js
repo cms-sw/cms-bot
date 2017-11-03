@@ -769,7 +769,7 @@ paintComparisons = function(rqInfo){
   var tab_pane = $("#"+rqInfo.release_name)
   var comparisons = rqInfo.comparisons
 
-  for(var j =comparisons.length-1; j >= 0; j--){
+  for(var j =0; j < comparisons.length; j++){
 
     write_comparison( comparisons[j] , tab_pane )
   

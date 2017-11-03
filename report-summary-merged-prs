@@ -1115,6 +1115,23 @@ def identify_release_groups(results):
         break
   return structure
 
+def fix_results(results):
+  for rq in results:
+    prev_ib_date = ''
+    release_count = 0
+    for comp in rq['comparisons']:
+      comp['release_queue']=rq['release_name']
+      comp['base_branch']=rq['base_branch']
+      if comp['ib_date']:
+        prev_ib_date=comp['ib_date']
+        release_count = 0
+      else:
+        release_count += 1
+      comp['ib_date']=prev_ib_date+'-'+str(format(release_count, '04d'))
+      comp['next_ib']=False
+      if comp['release_name']==rq['base_branch']: comp['next_ib']=True
+    rq['comparisons'].reverse()
+
 #-----------------------------------------------------------------------------------
 #---- Start of execution
 #-----------------------------------------------------------------------------------
@@ -1307,8 +1324,9 @@ if __name__ == "__main__":
                        rv_Exceptions_Results, fwlite_results )
 
   fill_missing_cmsdist_tags( results )
+  fix_results(results)
   print_results(results)
-  
+
   structure = identify_release_groups( results )
   generate_separated_json_results( results )
   generate_ib_json_short_summary( results )

@@ -72,7 +72,8 @@ CMSSW_L2 = {
   "kpedro88" : ["upgrade"],
   "mrodozov" : ["externals"],
   "gudrutis" : ["externals"],
-  "lpernie" : ["alca"]
+  "lpernie" : ["alca"],
+  "jfernan2": ["dqm"]
 }
 
 CMSSW_CATEGORIES={

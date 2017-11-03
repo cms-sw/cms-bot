@@ -1128,8 +1128,9 @@ def fix_results(results):
         comp['ib_date']=prev_ib_date+'-0000'
       else:
         release_count += 1
-        if not prev_ib_date: comp['ib_date']='0000-'+comp['release_name']
-        else: comp['ib_date']=prev_ib_date+'-'+str(format(release_count, '04d'))
+        xstr = str(format(release_count, '04d'))
+        if not prev_ib_date: comp['ib_date']=xstr+'-'+comp['release_name']
+        else: comp['ib_date']=prev_ib_date+'-'+xstr
       comp['next_ib']=False
       if comp['release_name']==rq['base_branch']: comp['next_ib']=True
     rq['comparisons'].reverse()

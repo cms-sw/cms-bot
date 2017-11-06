@@ -24,8 +24,9 @@ TESTS_RESULTS_MSG = '^\s*([-|+]1|I had the issue.*)\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
-WF_PATERN="[1-9][0-9]*(\.[0-9]+|)"
-REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%s(\s*,\s*%s|)*)|)(\s+with(\s+#[0-9]+(\s*,\s*#[0-9]+|)*|)(\s+%s#([0-9]+)|)|)\s*$" % (WF_PATERN, WF_PATERN, CMSDIST_REPO_NAME), re.I)
+WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
+CMSDIST_PR_PATTERN="(\s+%s#[0-9]+|\s+https://+github.com/+%s/+pull/+[0-9]+/*|)" % (CMSDIST_REPO_NAME, CMSDIST_REPO_NAME)
+REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%s(\s*,\s*%s|)*)|)(\s+with(\s+#[0-9]+(\s*,\s*#[0-9]+|)*|)%s|)\s*$" % (WF_PATTERN, WF_PATTERN, CMSDIST_PR_PATTERN), re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
 CMSDIST_PR_INDEX = 5

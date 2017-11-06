@@ -82,7 +82,8 @@ TOOL_REG_TAG=$6
 TOOL_FORK_REPO=$7
 TOOL_REPO_NAME=$(echo $TOOL_FORK_REPO | sed 's|.*/||')
 TOOL_DOWNOAD_CMD="git clone git@github.com:${TOOL_FORK_REPO} ${TOOL_REPO_NAME}; cd ${TOOL_REPO_NAME}; ${TOOL_CHECKOUT_CMD}"
-OLD_TOOL_HASH=$(get_rpm_marco_value cmsdist/${TOOL}.spec ${TOOL_REG_BRANCH} | sed 's|cms/||')
+OLD_CMS_BRANCH=$(get_rpm_marco_value cmsdist/${TOOL}.spec ${TOOL_REG_BRANCH} | grep '^cms/')
+OLD_TOOL_HASH=$(echo $OLD_CMS_BRANCH  | sed 's|^cms.*/||')
 if [ "X$OLD_TOOL_HASH" = "X" ] ; then
    echo "Error: Unable to get OLD_TOOL_HASH using cmsdist/$CMSDIST_BRANCH/$TOOL.spec"
    exit 1
@@ -102,17 +103,18 @@ pushd tool
     git init
     git add .
   fi
+  NEW_CMS_BRANCH=cms/$TOOL_BRANCH/$NEW_TOOL_HASH
   git remote add cms git@github.com:${TOOL_CMS_REPO}
-  git fetch cms cms/$NEW_TOOL_HASH:cms/$NEW_TOOL_HASH || true
+  git fetch cms $NEW_CMS_BRANCH:$NEW_CMS_BRANCH || true
   git branch
-  if [ "X`git branch | grep \"^  *cms/$NEW_TOOL_HASH\$\"`" != "X" ] ; then
-    echo "cms/$NEW_TOOL_HASH already exists in cms-sw/$TOOL.git"
+  if [ "X`git branch | grep \"^  *$NEW_CMS_BRANCH\$\"`" != "X" ] ; then
+    echo "$NEW_CMS_BRANCH already exists in cms-sw/$TOOL.git"
     exit 1
   fi
-  git checkout -b cms/$NEW_TOOL_HASH
-  git fetch cms cms/$OLD_TOOL_HASH:cms/$OLD_TOOL_HASH
+  git checkout -b $NEW_CMS_BRANCH
+  git fetch cms $OLD_CMS_BRANCH:$OLD_CMS_BRANCH
   echo CMS Changes
-  git log --oneline $OLD_TOOL_HASH..cms/$OLD_TOOL_HASH | awk '{print $1}' > ../commits
+  git log --oneline $OLD_TOOL_HASH..$OLD_CMS_BRANCH | awk '{print $1}' > ../commits
   for commit in $(tac ../commits); do
     git show --oneline $commit  | head -1
     while [ true ] ; do
@@ -134,11 +136,11 @@ pushd tool
     done
   done
   echo "cd $(/bin/pwd)" >> $PUSH_CMDS_FILE
-  echo "git push cms cms/$NEW_TOOL_HASH" >> $PUSH_CMDS_FILE
+  echo "git push cms $NEW_CMS_BRANCH" >> $PUSH_CMDS_FILE
   TOOL_TAG=`git log | head -1 | awk '{print $2}'`
 popd
 
-sed -i -e "s|^%define  *${TOOL_REG_BRANCH}  *cms/.*$|%define ${TOOL_REG_BRANCH} cms/$NEW_TOOL_HASH|" cmsdist/$TOOL.spec
+sed -i -e "s|^%define  *${TOOL_REG_BRANCH}  *cms/.*$|%define ${TOOL_REG_BRANCH} $NEW_CMS_BRANCH|" cmsdist/$TOOL.spec
 sed -i -e "s|^%define  *${TOOL_REG_TAG} .*$|%define ${TOOL_REG_TAG} $TOOL_TAG|" cmsdist/$TOOL.spec
 if [ "$COMMIT_CMSDIST" = "YES" ] ; then
   commit_cmsdist $TOOL ${TOOL_BRANCH} $PUSH_CMDS_FILE

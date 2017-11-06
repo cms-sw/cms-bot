@@ -15,6 +15,10 @@ try:
 except Exception, e :
   SCRIPT_DIR = dirname(abspath(argv[0]))
 
+# Prepare various comments regardless of whether they will be made or not.
+def format(s, **kwds):
+  return s % kwds
+
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TRIGERING_CODE_CHECK_MSG = 'The code-checks are being triggered in jenkins.'
@@ -25,16 +29,17 @@ FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
-CMSDIST_PR_PATTERN="(\s+%s#[0-9]+|\s+https://+github.com/+%s/+pull/+[0-9]+/*|)" % (CMSDIST_REPO_NAME, CMSDIST_REPO_NAME)
-REGEX_TEST_REQ = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%s(\s*,\s*%s|)*)|)(\s+with(\s+#[0-9]+(\s*,\s*#[0-9]+|)*|)%s|)\s*$" % (WF_PATTERN, WF_PATTERN, CMSDIST_PR_PATTERN), re.I)
+CMSSW_PR_PATTERN=format("(#[0-9]+|https://+github.com/+%(cmssw_repo)s/+pull/+[0-9]+/*|)", cmssw_repo=CMSSW_REPO_NAME)
+CMSDIST_PR_PATTERN=format("(%(cmsdist_repo)s#[0-9]+|https://+github.com/+%(cmsdist_repo)s/+pull/+[0-9]+/*|)", cmsdist_repo=CMSDIST_REPO_NAME)
+TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|)|)\s*$",
+                     workflow=WF_PATTERN,
+                     cmssw_pr=CMSSW_PR_PATTERN,
+                     cmsdist_pr=CMSDIST_PR_PATTERN)
+REGEX_TEST_REQ = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 #Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
 CMSDIST_PR_INDEX = 5
 TEST_WAIT_GAP=720
-
-# Prepare various comments regardless of whether they will be made or not.
-def format(s, **kwds):
-  return s % kwds
 
 #
 # creates a properties file to trigger the test of the pull request
@@ -124,6 +129,14 @@ def check_extra_labels(first_line, extra_labels):
     else: bp_pr = first_line.split("/pull/",1)[1].strip("/").strip()
     extra_labels["backport"]=["backport", bp_pr]
 
+def get_test_prs(test_command):
+  prs = []
+  for x in [ i.strip() for i in test_command.split(",") if i ]:
+    if "#" in x: x = x.split("#")[-1]
+    elif "/pull/" in x: x = x.split("/pull/")[-1].strip("/")
+    if not x in prs: prs.append(x)
+  return ",".join(prs)
+
 def check_test_cmd(first_line):
   m = REGEX_TEST_REQ.match(first_line)
   if m:
@@ -131,8 +144,8 @@ def check_test_cmd(first_line):
     cmssw_prs= ""
     cmsdist_pr = ""
     if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
-    if m.group(11): cmssw_prs = ",".join(set(m.group(11).replace("#","").replace(" ","").split(",")))
-    if m.group(14): cmsdist_pr = m.group(14)
+    if m.group(11): cmssw_prs = get_test_prs(m.group(11))
+    if m.group(16): cmsdist_pr = get_test_prs(m.group(16))
     return (True, cmsdist_pr, cmssw_prs, wfs)
   return (False, "", "", "")
 

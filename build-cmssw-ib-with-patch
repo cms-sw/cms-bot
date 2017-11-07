@@ -100,6 +100,12 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
+  if [ $(date +%u) -gt 0 ] ; then
+    REF_REPO=$(readlink /cvmfs/cms-ib.cern.ch/$(echo $REPOSITORY | sed 's|cms.||'))
+    CMSBUILD_CMD="$CMSBUILD_CMD --reference $REF_REPO"
+  fi
+fi
 $CMSBUILD_CMD --debug build SCRAMV1
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w

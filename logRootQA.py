@@ -223,6 +223,16 @@ def summaryComp(compDir):
 #
 qaIssues=False
 
+# one way to set up for local tests..
+#login to ssh cmssdtprod.cern.ch
+#copy out data from a recent pull request comparison 
+#cd /data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/CMSSW_10_0_X_2017-11-05-2300/slc6_amd64_gcc630/-GenuineIntel
+#scp -r matrix-results/ dlange@cmsdev01:/build/dlange/171103/t1/ 
+#cd ../../../../pull-request-integration/PR-21181/24200/
+#scp -r runTheMatrix-results/ dlange@cmsdev01:/build/dlange/171103/t1/.
+#cd ../../../../baseLineComparions/CMSSW_10_0_X_2017-11-05-2300+21181/
+#scp -r 23485 dlange@cmsdev01:/build/dlange/171103/t1/.
+
 #https://cmssdt.cern.ch/SDT/jenkins-artifacts/baseLineComparisons/CMSSW_9_0_X_2017-03-22-1100+18042/18957/validateJR/
 baseDir='../t1/runTheMatrix-results'
 testDir='../t1/matrix-results'

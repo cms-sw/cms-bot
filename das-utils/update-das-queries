@@ -6,6 +6,7 @@ voms-proxy-init
 WORKSPACE="${WORKSPACE-$PWD}"
 JOBS=$(getconf _NPROCESSORS_ONLN)
 USE_DASGO=$3
+PUSH_RESULTS=$4
 if [ "$USE_DASGO" = "true" ] ; then 
   USE_DASGO="-c dasgoclient"
 else
@@ -22,15 +23,16 @@ fi
 
 rm -f $WORKSPACE/error
 $CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
-pushd $WORKSPACE/das_results
+if [ "$PUSH_RESULTS" = "true" ] ; then
+  pushd $WORKSPACE/das_results
   git add das_queries
   if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then
     git commit -a -m "Updated das queries"
     git pull --rebase
     git push origin
   fi
-popd
-
+  popd
+fi
 if [ -e $WORKSPACE/error ] ; then
   exit 1
 fi

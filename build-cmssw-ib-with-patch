@@ -101,9 +101,13 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
+  #Do not use reference repo for Sunday, as we cleanup weekly repo on that day
   if [ $(date +%u) -gt 0 ] ; then
-    REF_REPO=$(readlink /cvmfs/cms-ib.cern.ch/$(echo $REPOSITORY | sed 's|cms.||'))
-    CMSBUILD_CMD="$CMSBUILD_CMD --reference $REF_REPO"
+    WEEKLY_REPO=/cvmfs/cms-ib.cern.ch/$(echo $REPOSITORY | sed 's|cms.||')
+    if [ -d ${WEEKLY_REPO}/$ARCHITECTURE/cms/cmssw ] ; then
+      if [ -L $WEEKLY_REPO ] ; then WEEKLY_REPO=$(readlink $WEEKLY_REPO) ; fi
+      CMSBUILD_CMD="$CMSBUILD_CMD --reference $WEEKLY_REPO"
+    fi
   fi
 fi
 $CMSBUILD_CMD --debug build SCRAMV1

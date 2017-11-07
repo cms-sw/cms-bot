@@ -141,6 +141,36 @@ def checkEventContent(r1,r2):
             retVal=False    
     return retVal
 
+def checkDQMSize(r1,r2):
+    haveDQMChecker=False
+    for path in os.environ["PATH"].split(os.pathsep):
+        path = path.strip('"')
+        exe_file = os.path.join(path, 'dqmMemoryStats.py')
+        if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
+            haveDQMChecker=True
+            break
+    if not haveDQMChecker: 
+        print 'Missing dqmMemoryStats in this release'
+        return -1
+
+    output1=runCommand(['dqmMemoryStats.py','-x','-i',r1])
+    output2=runCommand(['dqmMemoryStats.py','-x','-i',r2])
+#    print r
+#    print output1[0],
+#    print output2[0],
+    sp=output1[0].split()
+    sp2=output2[0].split()
+    if len(sp)<3 or len(sp2)<3: 
+        print 'Weird output',r
+        print output1,
+        print output2,
+        return -2
+    mib1=float(sp[2])
+    mib2=float(sp2[2])
+    
+    return mib2-mib1
+
+
 def summaryJR(jrDir):
     nDiff=0
     print jrDir
@@ -194,10 +224,10 @@ def summaryComp(compDir):
 qaIssues=False
 
 #https://cmssdt.cern.ch/SDT/jenkins-artifacts/baseLineComparisons/CMSSW_9_0_X_2017-03-22-1100+18042/18957/validateJR/
-baseDir='../170322/orig'
-testDir='../170322/new'
-jrDir='../170322/jrlogs/validateJR'
-compDir='../170322/compDir'
+baseDir='../t1/runTheMatrix-results'
+testDir='../t1/matrix-results'
+jrDir='../t1/23485/validateJR'
+compDir='../t1/23485'
 
 if len(sys.argv)==5:
     baseDir=sys.argv[1]
@@ -249,7 +279,8 @@ commonRoots=getCommonFiles(baseDir,testDir,'root')
 sameEvts=True
 nRoot=0
 for r in commonRoots:
-    if '50' in r or '25' in r:
+#    print 'I could have tested',r
+    if 'PU' in r and 'DQM' not in r:
         sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
         nRoot=nRoot+1
 if not sameEvts:
@@ -270,6 +301,17 @@ print 'SUMMARY DQMHistoTests: Total nulls:',compSummary[2]
 print 'SUMMARY DQMHistoTests: Total successes:',compSummary[3]
 print 'SUMMARY DQMHistoTests: Total skipped:',compSummary[4]
 print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
+
+newDQM=0
+nDQM=0
+for r in commonRoots:
+    if 'inDQM' in r:
+        t=checkDQMSize(baseDir+r,testDir+r)
+        if t>=0: 
+            newDQM=newDQM+t
+            nDQM=nDQM+1
+
+print 'SUMMARY DQMHistoSizes: Histogram bins added:',newDQM,'(',nDQM,'files compared)'
 
 
 #### conclude

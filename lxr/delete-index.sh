@@ -3,7 +3,8 @@ BASE_DIR=/data/lxr
 [ "X$1" = "X" ] && exit 1
 tag=$1
 if [ $(grep "^$tag$" ${BASE_DIR}/host_config/versions | wc -l) -gt 0 ] ; then
-  grep -v "^$tag$" ${BASE_DIR}/host_config/versions | sort | uniq | tac > ${BASE_DIR}/host_config/versions.new
+  grep    '_X_' ${BASE_DIR}/host_config/versions | grep -v "^$tag$" | sort | uniq | tac  > ${BASE_DIR}/host_config/versions.new
+  grep -v '_X_' ${BASE_DIR}/host_config/versions | grep -v "^$tag$" | sort | uniq | tac >> ${BASE_DIR}/host_config/versions.new
   mv ${BASE_DIR}/host_config/versions.new ${BASE_DIR}/host_config/versions
 fi
 head -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default

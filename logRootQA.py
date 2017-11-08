@@ -163,8 +163,8 @@ def checkDQMSize(r1,r2):
     sp2=output2[0].split()
     if len(sp)<3 or len(sp2)<3: 
         print 'Weird output',r
-        print output1,
-        print output2,
+        print output1
+        print output2
         return -2
     mib1=float(sp[2])
     mib2=float(sp2[2])

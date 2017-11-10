@@ -527,7 +527,7 @@ CMSSW_CATEGORIES={
    "CondCore/EcalPlugins",
    "CondCore/EgammaPlugins",
    "CondCore/GeometryPlugins",
-   "CondCore/GEMPlugins
+   "CondCore/GEMPlugins",
    "CondCore/HIPlugins",
    "CondCore/HLTPlugins",
    "CondCore/HcalPlugins",

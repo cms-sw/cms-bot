@@ -219,7 +219,7 @@ def determine_build_warning(nErrorInfo):
 def get_results_one_addOn_file(file):
   look_for_err_cmd = 'grep "failed" %s' %file
   result,err,ret_code = get_output_command(look_for_err_cmd)
-  if '0 failed' in result:
+  if ' 0 failed' in result:
     return True
   else:
     return False

@@ -1957,3 +1957,4 @@ architecture=slc6_amd64_gcc530;label=CMSSW_9_2_14_patch1;type=Production;state=A
 architecture=slc7_amd64_gcc530;label=CMSSW_9_2_14_patch1;type=Production;state=Announced;prodarch=0;
 architecture=slc6_amd64_gcc630;label=CMSSW_9_2_14_patch1;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc630;label=CMSSW_9_2_14_patch1;type=Production;state=Announced;prodarch=0;
+architecture=slc7_amd64_gcc630;label=CMSSW_9_4_0;type=Production;state=Announced;prodarch=0;

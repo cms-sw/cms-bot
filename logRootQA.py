@@ -154,8 +154,8 @@ def checkDQMSize(r1,r2):
         print 'Missing dqmMemoryStats in this release'
         return -1
 
-    output1=runCommand(['dqmMemoryStats.py','-x','-i',r1])
-    output2=runCommand(['dqmMemoryStats.py','-x','-i',r2])
+    output1=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-i',r1])
+    output2=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-i',r2])
 #    print r
 #    print output1[0],
 #    print output2[0],
@@ -166,10 +166,10 @@ def checkDQMSize(r1,r2):
         print output1
         print output2
         return -2
-    mib1=float(sp[2])
-    mib2=float(sp2[2])
+    kib1=float(sp[2])
+    kib2=float(sp2[2])
     
-    return mib2-mib1
+    return kib2-kib1
 
 
 def summaryJR(jrDir):
@@ -322,7 +322,7 @@ for r in commonRoots:
             newDQM=newDQM+t
             nDQM=nDQM+1
 
-print 'SUMMARY DQMHistoSizes: Histogram bins added:',newDQM,'(',nDQM,'files compared)'
+print 'SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files compared)'
 
 
 #### conclude

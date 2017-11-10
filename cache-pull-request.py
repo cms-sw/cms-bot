@@ -13,13 +13,16 @@ if __name__ == "__main__":
   parser.add_option("-c", "--commit",     dest="commit",     action="store_true", help="Get last commit of the PR", default=False)
   parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
   parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
+  parser.add_option("-u", "--user",       dest="user",       help="GH API user.", type=str, default="")
   opts, args = parser.parse_args()
 
   if len(args) != 1:
     parser.error("Too many/few arguments")
   prId = int(args[0])
-  
-  gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  ghtoken=".github-token"
+  if opts.user: ghtoken=".github-token-"+opts.user
+
+  gh = Github(login_or_token=open(expanduser("~/"+ghtoken)).read().strip())
   if not opts.commit: api_rate_limits(gh)
   repo = gh.get_repo(opts.repository)
   issue = repo.get_issue(prId)

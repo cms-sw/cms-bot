@@ -15,33 +15,33 @@ def process(repo, prId):
     print "WARNING: Only cache Pull requests, %s is an issue." % prId
     return data
   pr = repo.get_pull(prId)
-  if not pr.merged:
-    print "WARNING: PR %s is not merged yet" % prId
-    return data
-  body = ""
-  if issue.body: body = issue.body.encode("ascii", "ignore")
-  data['user']=issue.user.login.encode("ascii", "ignore")
-  data['title']=issue.title.encode("ascii", "ignore")
-  data['body']=body
-  data['branch']=pr.base.ref.encode("ascii", "ignore")
-  data['created_at']=pr.created_at.strftime("%s")
-  data['updated_at']=pr.updated_at.strftime("%s")
-  data['merged_at']=pr.merged_at.strftime("%s")
-  data['merged_by']=pr.merged_by.login.encode("ascii", "ignore")
-  if pr.merge_commit_sha:data['merge_commit_sha']=pr.merge_commit_sha.encode("ascii", "ignore")
-  data['merge_commit_sha']=""
+  data['user']     = issue.user.login.encode("ascii", "ignore")
+  data['title']    = issue.title.encode("ascii", "ignore")
+  data['comments'] = issue.comments
+  data['labels']   = [x.name.encode("ascii", "ignore") for x in issue.labels]
+  if issue.body: data['body']=issue.body.encode("ascii", "ignore")
+  else: data['body']=""
   if issue.milestone: data['milestone']=issue.milestone.title.encode("ascii", "ignore")
-  data['merged_by']=pr.merged_by.login.encode("ascii", "ignore")
-  data['author']=pr.head.user.login.encode("ascii", "ignore")
-  data['auther_ref']=pr.head.ref.encode("ascii", "ignore")
-  data['auther_sha']=pr.head.sha.encode("ascii", "ignore")
-  data['comments']=issue.comments
-  data['review_comments']=pr.review_comments
-  data['commits']=pr.commits
-  data['additions']=pr.additions
-  data['deletions']=pr.deletions
-  data['changed_files']=pr.changed_files
-  data['labels']=[x.name.encode("ascii", "ignore") for x in issue.labels]
+
+  data['branch']          = pr.base.ref.encode("ascii", "ignore")
+  data['created_at']      = pr.created_at.strftime("%s")
+  data['updated_at']      = pr.updated_at.strftime("%s")
+  data['author']          = pr.head.user.login.encode("ascii", "ignore")
+  data['auther_ref']      = pr.head.ref.encode("ascii", "ignore")
+  data['auther_sha']      = pr.head.sha.encode("ascii", "ignore")
+  data['review_comments'] = pr.review_comments
+  data['commits']         = pr.commits
+  data['additions']       = pr.additions
+  data['deletions']       = pr.deletions
+  data['changed_files']   = pr.changed_files
+  data['state']           = pr.state
+  if pr.state == "closed":
+    data['closed_at'] = pr.closed_at.strftime("%s")
+    if pr.merged:
+      data['merged_at'] = pr.merged_at.strftime("%s")
+      data['merged_by'] = pr.merged_by.login.encode("ascii", "ignore")
+      if pr.merge_commit_sha:data['merge_commit_sha'] = pr.merge_commit_sha.encode("ascii", "ignore")
+      else: data['merge_commit_sha']=""
   return data
 
 if __name__ == "__main__":

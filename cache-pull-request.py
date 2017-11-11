@@ -18,9 +18,11 @@ def process(repo, prId):
   if not pr.merged:
     print "WARNING: PR %s is not merged yet" % prId
     return data
+  body = ""
+  if issue.body: body = issue.body.encode("ascii", "ignore")
   data['user']=issue.user.login.encode("ascii", "ignore")
   data['title']=issue.title.encode("ascii", "ignore")
-  data['body']=issue.body.encode("ascii", "ignore")
+  data['body']=body
   data['branch']=pr.base.ref.encode("ascii", "ignore")
   data['created_at']=pr.created_at.strftime("%s")
   data['updated_at']=pr.updated_at.strftime("%s")

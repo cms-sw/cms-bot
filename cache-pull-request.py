@@ -28,7 +28,8 @@ def process(repo, prId):
   data['updated_at']=pr.updated_at.strftime("%s")
   data['merged_at']=pr.merged_at.strftime("%s")
   data['merged_by']=pr.merged_by.login.encode("ascii", "ignore")
-  data['merge_commit_sha']=pr.merge_commit_sha.encode("ascii", "ignore")
+  if pr.merge_commit_sha:data['merge_commit_sha']=pr.merge_commit_sha.encode("ascii", "ignore")
+  data['merge_commit_sha']=""
   if issue.milestone: data['milestone']=issue.milestone.title.encode("ascii", "ignore")
   data['merged_by']=pr.merged_by.login.encode("ascii", "ignore")
   data['author']=pr.head.user.login.encode("ascii", "ignore")

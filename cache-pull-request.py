@@ -27,12 +27,12 @@ if __name__ == "__main__":
   repo = gh.get_repo(opts.repository)
   issue = repo.get_issue(prId)
   if not issue.pull_request:
-    print "ERROR: Only cache Pull requests, %s is an issue." % prId
-    exit(1)
+    print "WARNING: Only cache Pull requests, %s is an issue." % prId
+    exit(0)
   pr = repo.get_pull(prId)
   if not pr.merged:
-    print "ERROR: PR is not merged yet"
-    exit(1)
+    print "WARNING: PR %s is not merged yet" % prId
+    exit(0)
   data = {}
   data['user']=issue.user.login.encode("ascii", "ignore")
   data['title']=issue.title.encode("ascii", "ignore")

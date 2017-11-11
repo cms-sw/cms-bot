@@ -8,32 +8,16 @@ from sys import exit
 from json import dumps
 setdefaulttimeout(120)
 
-if __name__ == "__main__":
-  parser = OptionParser(usage="%prog <pull-request-id>")
-  parser.add_option("-c", "--commit",     dest="commit",     action="store_true", help="Get last commit of the PR", default=False)
-  parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
-  parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
-  parser.add_option("-u", "--user",       dest="user",       help="GH API user.", type=str, default="")
-  opts, args = parser.parse_args()
-
-  if len(args) != 1:
-    parser.error("Too many/few arguments")
-  prId = int(args[0])
-  ghtoken=".github-token"
-  if opts.user: ghtoken=".github-token-"+opts.user
-
-  gh = Github(login_or_token=open(expanduser("~/"+ghtoken)).read().strip())
-  if not opts.commit: api_rate_limits(gh)
-  repo = gh.get_repo(opts.repository)
+def process(repo, prId):
+  data = {}
   issue = repo.get_issue(prId)
   if not issue.pull_request:
     print "WARNING: Only cache Pull requests, %s is an issue." % prId
-    exit(0)
+    return data
   pr = repo.get_pull(prId)
   if not pr.merged:
     print "WARNING: PR %s is not merged yet" % prId
-    exit(0)
-  data = {}
+    return data
   data['user']=issue.user.login.encode("ascii", "ignore")
   data['title']=issue.title.encode("ascii", "ignore")
   data['body']=issue.body.encode("ascii", "ignore")
@@ -55,6 +39,25 @@ if __name__ == "__main__":
   data['deletions']=pr.deletions
   data['changed_files']=pr.changed_files
   data['labels']=[x.name.encode("ascii", "ignore") for x in issue.labels]
+  return data
+
+if __name__ == "__main__":
+  parser = OptionParser(usage="%prog <pull-request-id>")
+  parser.add_option("-c", "--commit",     dest="commit",     action="store_true", help="Get last commit of the PR", default=False)
+  parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
+  parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
+  parser.add_option("-u", "--user",       dest="user",       help="GH API user.", type=str, default="")
+  opts, args = parser.parse_args()
+
+  if len(args) != 1:
+    parser.error("Too many/few arguments")
+  prId = int(args[0])
+  ghtoken=".github-token"
+  if opts.user: ghtoken=".github-token-"+opts.user
+
+  gh = Github(login_or_token=open(expanduser("~/"+ghtoken)).read().strip())
+  api_rate_limits(gh)
+  data = process(gh.get_repo(opts.repository), prId)
   if opts.dryRun: print dumps(data)
   else:
     j = open(args[0]+".json","w")

@@ -26,7 +26,7 @@ def process(repo, prId):
   data['branch']          = pr.base.ref.encode("ascii", "ignore")
   data['created_at']      = pr.created_at.strftime("%s")
   data['updated_at']      = pr.updated_at.strftime("%s")
-  data['author']          = pr.head.user.login.encode("ascii", "ignore")
+  if pr.head.user: data['author'] = pr.head.user.login.encode("ascii", "ignore")
   data['auther_ref']      = pr.head.ref.encode("ascii", "ignore")
   data['auther_sha']      = pr.head.sha.encode("ascii", "ignore")
   data['review_comments'] = pr.review_comments

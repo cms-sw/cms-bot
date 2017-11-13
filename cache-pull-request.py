@@ -15,6 +15,7 @@ def process(repo, prId):
     print "WARNING: Only cache Pull requests, %s is an issue." % prId
     return data
   pr = repo.get_pull(prId)
+  data['number']   = issue.number
   data['user']     = issue.user.login.encode("ascii", "ignore")
   data['title']    = issue.title.encode("ascii", "ignore")
   data['comments'] = issue.comments

@@ -318,6 +318,7 @@ nDQM=0
 for r in commonRoots:
     if 'inDQM' in r:
         t=checkDQMSize(baseDir+r,testDir+r)
+        print r,t
         if t>=0: 
             newDQM=newDQM+t
             nDQM=nDQM+1

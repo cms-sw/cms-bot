@@ -714,6 +714,8 @@ thomreis:
 - DataFormats/L1TMuon
 - DataFormats/L1Trigger
 - EventFilter/L1TRawToDigi
+- EventFilter/L1TXRawToDigi
+- EventFilter/RPCRawToDigi
 - L1Trigger/L1TCommon
 - L1Trigger/L1TMuon
 - L1Trigger/L1TMuonBarrel
@@ -722,6 +724,7 @@ thomreis:
 - L1Trigger/L1TNtuples
 - L1TriggerConfig/L1TConfigProducers
 - L1TriggerConfig/Utilities
+- Validation/L1T
 threus:
 - DQM/SiPixel
 - DQM/SiStrip

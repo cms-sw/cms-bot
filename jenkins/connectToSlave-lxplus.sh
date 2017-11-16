@@ -1,12 +1,13 @@
 #!/bin/sh -x
 TARGET=$1
 WORKER_USER=${2-cmsbuild}
-WORKER_DIR=${3-/build1/cmsbuild}
+WORKER_DIR=${3-/tmp/$WORKER_USER}
 DELETE_SLAVE=${4-yes}
 WORKER_JENKINS_NAME=$5
-JENKINS_MASTER_ROOT=/var/lib/jenkins
 SCRIPT_DIR=`dirname $0`
-kinit cmsbuild@CERN.CH -k -t ${JENKINS_MASTER_ROOT}/cmsbuild.keytab
+KTAB=${HOME}/keytabs/${WORKER_USER}.keytab
+KPRINCIPAL=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)@CERN.CH
+kinit ${KPRINCIPAL} -k -t ${KTAB}
 aklog
 klist
 SSH_OPTS="-q -o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"

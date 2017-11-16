@@ -11,6 +11,7 @@ if [ $(echo $TARGET | grep '@aiadm' | wc -l) -gt 0 ] ; then
   TARGET=$(echo $TARGET | sed "s|@aiadm.*|@$AIADM_NODE|")
 fi
 KTAB=${HOME}/keytabs/${WORKER_USER}.keytab
+if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi
 KPRINCIPAL=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)@CERN.CH
 kinit ${KPRINCIPAL} -k -t ${KTAB}
 SSH_OPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"

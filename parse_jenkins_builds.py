@@ -101,7 +101,7 @@ for root, dirs, files in os.walk(path):
         else:
           payload['job_status'] = 'Running'
           all_local.append(id)
-        send_payload(index,document,id,json.dumps(payload))
+        send_payload(index,document,id,json.dumps(payload), passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
       except Exception as e:
         print "Xml parsing error" , e
 running_builds_elastic=list()
@@ -115,6 +115,6 @@ else:
     running_builds_elastic.append(str(content_hash["hits"]["hits"][i]["_id"]))
 for build in running_builds_elastic:
   if build not in all_local:
-    send_payload(index,document,build,'{"job_status":"Failed"}')
+    send_payload(index,document,build,'{"job_status":"Failed"}', passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
     print "job status marked as Failed"
 

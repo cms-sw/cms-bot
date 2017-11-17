@@ -78,7 +78,7 @@ def process_build_any_ib(logFile):
   payload["url"]=url
   print payload
   id = sha1(rel + arch).hexdigest()
-  send_payload("jenkins-ibs","timings",id,json.dumps(payload))
+  send_payload("jenkins-ibs","timings",id,json.dumps(payload), passwd_file="/data/secrets/github_hook_secret_cmsbot")
   return finished
     
 force=False

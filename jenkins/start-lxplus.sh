@@ -27,6 +27,7 @@ java -jar $JENKINS_MASTER_ROOT/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id
 ssh -n $SSH_OPTS $TARGET "mkdir -p $WORKSPACE $WORKER_DIR/foo $WORKER_DIR/cache; rm -rf $WORKSPACE/workspace; ls -d $WORKER_DIR/* | grep -v $WORKER_DIR/cache | xargs rm -rf ; rm -rf /tmp/??"
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/workspace
 ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/$WORKER_USER.keytab
+ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/slave.jar
 scp -p $SSH_OPTS $JENKINS_MASTER_ROOT/slave.jar $TARGET:$WORKER_DIR/slave.jar
 sleep 1
 ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKER_DIR/cache

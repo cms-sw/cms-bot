@@ -18,6 +18,7 @@ SSH_OPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o Serv
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKER_DIR
 ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/cmsos
+ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/slave.jar
 scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKER_DIR/slave.jar
 scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKER_DIR/cmsos
 HOST_ARCH=`ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1`

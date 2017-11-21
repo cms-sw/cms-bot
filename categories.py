@@ -803,6 +803,10 @@ CMSSW_CATEGORIES={
    "FastSimulation/CalorimeterProperties",
    "FastSimulation/Calorimetry",
    "FastSimulation/Configuration",
+   "FastSimulation/CTPPSFastGeometry
+   "FastSimulation/CTPPSFastTrackingProducer",
+   "FastSimulation/CTPPSRecHitProducer",
+   "FastSimulation/CTPPSSimHitProducer",
    "FastSimulation/EgammaElectronAlgos",
    "FastSimulation/Event",
    "FastSimulation/EventProducer",

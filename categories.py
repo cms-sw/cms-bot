@@ -1278,6 +1278,7 @@ CMSSW_CATEGORIES={
    "CalibTracker/SiStripHitEfficiency",
    "CalibTracker/SiStripLorentzAngle",
    "CalibTracker/SiStripQuality",
+   "CalibTracker/StandaloneTrackerTopology",
    "Calibration/EcalAlCaRecoProducers",
    "Calibration/EcalCalibAlgos",
    "Calibration/EcalTBTools",

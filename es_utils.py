@@ -29,9 +29,9 @@ def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secr
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)
   except Exception as e:
-    print "Couldn't send data to elastic search:" , es_server,str(e)
+    print "ERROR:",es_server,str(e)
     return False
-  print "Data sent:",es_server
+  print "OK:",es_server
   return True
 
 def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
@@ -50,9 +50,9 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)
   except Exception as e:
-    print "Couldn't send data to elastic search:cmses-master01.cern.ch:9200", str(e)
+    print "ERROR: cmses-master01.cern.ch:9200", str(e)
     return False
-  print "Data sent:cmses-master01.cern.ch:9200"
+  print "OK: cmses-master01.cern.ch:9200"
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):

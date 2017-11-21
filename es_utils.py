@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys,urllib2 , json
 from datetime import datetime
+from os.path import exists
 #Function to store data in elasticsearch
 
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
@@ -8,10 +9,15 @@ def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
 
 def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secrets/cmssdt-es-secret"):
   index = 'cmssdt-' + index
+  for psfile in [passwd_file, "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret"]:
+    if exists(psfile):
+      passwd_file=psfile
+      break
   try:
     passw=open(passwd_file,'r').read().strip()
   except Exception as e:
     print "Couldn't read the secrets file" , str(e)
+    return False
 
   url = "https://%s/%s/%s/" % (es_server,index,document)
   if id: url = url+id

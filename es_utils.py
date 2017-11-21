@@ -31,6 +31,7 @@ def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secr
   except Exception as e:
     print "Couldn't send data to elastic search" , str(e)
     return False
+  print "Data sent:",es_server
   return True
 
 def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
@@ -51,6 +52,7 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   except Exception as e:
     print "Couldn't send data to elastic search" , str(e)
     return False
+  print "Data sent:cmses-master01.cern.ch:9200"
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):

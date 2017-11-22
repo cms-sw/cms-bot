@@ -34,6 +34,7 @@ def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secr
   return True
 
 def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
+  return True
   try:
     passw=open(passwd_file,'r').read().strip()
   except Exception as e:

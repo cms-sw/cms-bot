@@ -50,6 +50,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     if "file" in fields: lmt = 100
     print "Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query)
     return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt)
+  if dasclient=="dasgoclient": override=True
   if results['results'] or override:
     write_json (outfile+".json", jdata)
     print "  Success %s '%s', found %s results." % (sha, query, len(results['results']))

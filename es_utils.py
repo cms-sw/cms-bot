@@ -51,7 +51,6 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   except Exception as e:
     print "ERROR: cmses-master01.cern.ch:9200", str(e)
     return False
-  print "OK: cmses-master01.cern.ch:9200"
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):

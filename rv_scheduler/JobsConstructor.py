@@ -35,7 +35,7 @@ class JobsConstructor(object):
 
     def getWorkflowStatsFromES(self, release='*', arch='*', lastNdays=7, page_size=0):
 
-        query_url = 'http://cmses-master01.cern.ch:9200/relvals_stats_*/_search'
+        query_url = 'http://cmses-master02.cern.ch:9200/relvals_stats_*/_search'
 
         query_datsets = """
         {

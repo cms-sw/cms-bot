@@ -22,7 +22,7 @@ def getParameters(root, payload):
   else:
     for x in root: getParameters(x, payload)
 
-query_url='http://cmses-master01.cern.ch:9200/jenkins/_search'
+query_url='http://cmses-master02.cern.ch:9200/jenkins/_search'
 query_running_builds = """ {
   "query": {
     "filtered": {

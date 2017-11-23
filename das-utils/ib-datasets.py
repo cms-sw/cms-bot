@@ -7,7 +7,7 @@ from commands import getstatusoutput
 from es_utils import get_payload
 
 def format(s, **kwds): return s % kwds
-query_url='http://cmses-master01.cern.ch:9200/ib-dataset-*/_search'
+query_url='http://cmses-master02.cern.ch:9200/ib-dataset-*/_search'
 query_datsets = """
 {
   "query": {

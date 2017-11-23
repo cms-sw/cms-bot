@@ -29,19 +29,18 @@ def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secr
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)
   except Exception as e:
-    print "ERROR:",es_server,str(e)
+    print "ERROR:",url,str(e)
     return False
   print "ES OK",url
   return True
 
 def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  return True
   try:
     passw=open(passwd_file,'r').read().strip()
   except Exception as e:
     print "Couldn't read the secrets file" , str(e)
 
-  url = "http://%s/%s/%s/" % ('cmses-master01.cern.ch:9200',index,document)
+  url = "http://%s/%s/%s/" % ('cmses-master02.cern.ch:9200',index,document)
   if id: url = url+id
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'elasticsearch', passw)
@@ -51,8 +50,9 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
     urllib2.install_opener(opener)
     content = urllib2.urlopen(url,payload)
   except Exception as e:
-    print "ERROR: cmses-master01.cern.ch:9200", str(e)
+    print "ERROR: ",url, str(e)
     return False
+  print "ES OK",url
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
@@ -74,7 +74,7 @@ def get_payload(url,query):
     return ""
 
 def format(s, **kwds): return s % kwds
-def es_query(index,query,start_time,end_time,page_start=0,page_size=100000,timestamp_field="@timestamp",lowercase_expanded_terms='false', es_host='http://cmses-master01.cern.ch:9200'):
+def es_query(index,query,start_time,end_time,page_start=0,page_size=100000,timestamp_field="@timestamp",lowercase_expanded_terms='false', es_host='http://cmses-master02.cern.ch:9200'):
   query_url='%s/%s/_search' % (es_host, index)
   query_tmpl = """{
   "query": {

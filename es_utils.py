@@ -31,6 +31,7 @@ def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secr
   except Exception as e:
     print "ERROR:",url,str(e)
     return False
+  print "OK",index,document
   return True
 
 def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
@@ -51,6 +52,7 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   except Exception as e:
     print "ERROR: ",url, str(e)
     return False
+  print "OK:",index,document
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):

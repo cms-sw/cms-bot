@@ -4,7 +4,7 @@ from commands import getstatusoutput
 from os.path import isdir,basename,exists,join
 import json
 from datetime import datetime
-from es_utils import send_payload_old as send_payload
+from es_utils import send_payload
 from cmsutils import cmsswIB2Week
 from hashlib import sha1
 import threading

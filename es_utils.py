@@ -56,7 +56,6 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  print "ES:",index,document
   send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
   #send_payload_new(index,document,id,payload,'es-cmssdt5.cern.ch:9203')
   return send_payload_old(index,document,id,payload,passwd_file) 

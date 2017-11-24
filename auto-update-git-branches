@@ -70,8 +70,8 @@ repo=`echo $REPO_NAME |sed 's|.*/||'`
 echo "Working on ${REPO_NAME} ..."
 cd "$WORKSPACE"
 REF_REPO=""
-if [ -d /afs/cern.ch/cms/git-cmssw-mirror/${repo}.git ] ; then
-  REF_REPO="--reference /afs/cern.ch/cms/git-cmssw-mirror/${repo}.git"
+if [ -d /cvmfs/cms-ib.cern.ch/git/cms-sw/${repo}.git ] ; then
+  REF_REPO="--reference /cvmfs/cms-ib.cern.ch/git/cms-sw/${repo}.git"
 fi
 #Clone repo if not already done
 if [ ! -d $repo ] ; then

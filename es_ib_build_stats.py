@@ -5,6 +5,7 @@ from os.path import getmtime, exists
 from commands import getstatusoutput
 from es_utils import send_payload
 from hashlib import sha1
+from cmsutils import cmsswIB2Week
 
 ReDate = re.compile("DATE=[A-Z][a-z]{2}\s+([A-Z][a-z]{2}\s+[0-9]{1,2}\s+\d\d:\d\d:\d\d\s+)[A-Z]{3,4}\s+(\d\d\d\d)")
 ReUpload = re.compile("^.*sync-back\s+upload\s+.*")
@@ -76,9 +77,10 @@ def process_build_any_ib(logFile):
   payload["patch"] = patch
   payload["@timestamp"] = int(timestp*1000)
   payload["url"]=url
+  week, rel_sec = cmsswIB2Week(rel)
   print payload
   id = sha1(rel + arch).hexdigest()
-  send_payload("jenkins-ibs","timings",id,json.dumps(payload),passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
+  send_payload("jenkins-ibs-"+week,"timings",id,json.dumps(payload),passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
   return finished
     
 force=False

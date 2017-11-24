@@ -2,7 +2,7 @@
 from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
-from es_utils import send_payload,get_payload,resent_payload
+from es_utils import send_payload,get_payload,resend_payload
 
 def findParametersAction(root):
   if root.tag=='parameters': return root

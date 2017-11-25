@@ -8,19 +8,9 @@ SSH_OPTS="-o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKey
 function has_jenkins_artifacts ()
 {
   local SRC=$1
-  local TYPE=$2
-  [ "X$TYPE" = "X" ] && TYPE="-e"
-  ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "test ${TYPE} ${ARTIFACT_BASE_DIR}/${SRC}" && echo "JA_STATUS=OK" && return 0
-  echo "JA_STATUS=ERROR"
-  return 1
-}
-
-function has_jenkins_artifacts1 ()
-{
-  local SRC=$1
   for i in 1 2 3 4 5 ;  do
     if [ $(ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "ls -d ${ARTIFACT_BASE_DIR}/${SRC} || echo FAIL" | grep "^FAIL\$" | wc -l) -gt 0 ] ; then
-      sleep 60
+      sleep 30
     else
       echo "JA_STATUS=OK"
       return 0
@@ -54,10 +44,10 @@ function get_jenkins_artifacts ()
     */) mkdir -p $DES ; DES="${DES}/";;
     * ) mkdir -p $(dirname $DES) ;;
   esac
-  has_jenkins_artifacts1 $1 || return 1
+  has_jenkins_artifacts $1 || return 1
   for i in 1 2 3 4 5 ;  do
     rsync -az -e "ssh $SSH_OPTS" ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${SRC} ${DES} && echo "JA_STATUS=OK" && return
-    sleep 120
+    sleep 30
   done
   echo "JA_STATUS=ERROR"
   return 1

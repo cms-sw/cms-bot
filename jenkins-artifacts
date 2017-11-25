@@ -3,7 +3,7 @@ ARTIFACTS_USER=$(whoami)
 if [ "$ARTIFACTS_USER" = "cmsbld" ] ; then ARTIFACTS_USER="cmsbuild" ; fi
 ARTIFACTS_MACHINE=${ARTIFACTS_USER}@cmssdt02.cern.ch
 ARTIFACT_BASE_DIR=/data/sdt/SDT/jenkins-artifacts
-SSH_OPTS="-o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_OPTS="-q -o ConnectTimeout=60 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 function has_jenkins_artifacts ()
 {

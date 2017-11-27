@@ -24,11 +24,12 @@ HOST_ARCH=`ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|
 HOST_CMS_ARCH=`ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos`
 DOCKER=`ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true`
 if [ "X${DOCKER}" != "X" ] ; then DOCKER="docker" ; fi
+JENKINS_PREFIX=$(cat ${HOME}/jenkins_prefix)
 case $WORKER_NODE in
   *dmwm* ) echo "Skipping auto labels" ;;
-  * ) java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/jenkins -remoting groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${WORKER_NAME}" "${HOST_ARCH}" "${HOST_CMS_ARCH}" "${DOCKER}" ;;
+  * ) java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/${JENKINS_PREFIX} -remoting groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${WORKER_NAME}" "${HOST_ARCH}" "${HOST_CMS_ARCH}" "${DOCKER}" ;;
 esac
 if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then
-  java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/jenkins/ -remoting build 'test-jenkins-host' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
+  java -jar ${JENKINS_MASTER_ROOT}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/${JENKINS_PREFIX}/ -remoting build 'test-jenkins-host' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
 fi
 ssh $SSH_OPTS $TARGET java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp

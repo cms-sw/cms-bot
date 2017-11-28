@@ -23,7 +23,7 @@ for (key, value) in w.items():
 assert(CMSSW_CATEGORIES)
 assert(type(CMSSW_CATEGORIES) == dict)
 
-PACKAGE_RE = "^([A-Z][0-9A-Za-z]*/[a-zA-Z][0-9A-Za-z]*|.gitignore)$"
+PACKAGE_RE = "^([A-Z][0-9A-Za-z]*/[a-zA-Z][0-9A-Za-z]*|.gitignore|.clang-[^/]+)$"
 
 for (key, value) in CMSSW_CATEGORIES.items():
   assert(type(key) == str)

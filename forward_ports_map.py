@@ -80,7 +80,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc630"].append("IB/CMSSW_9_1_X/gcc7
 
 #Added explicitly by Shahzad MUZAFFAR
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_2_X"]=[]
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_2_X"].append("CMSSW_9_2_ROOT6_X")
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_2_X"].append("CMSSW_9_2_ROOT6_X")
 #GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_2_X"].append("CMSSW_9_2_DEVEL_X")
 
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_2_X/gcc530"]=[]
@@ -92,25 +92,25 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_2_X/gcc630"].append("IB/CMSSW_9_2_X/gcc7
 
 #Added explicitly by Shahzad MUZAFFAR
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_3_X"]=[]
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_3_X"].append("CMSSW_9_3_ROOT6_X")
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_3_X"].append("CMSSW_9_3_DEVEL_X")
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_3_X"].append("CMSSW_9_3_ROOT6_X")
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_3_X"].append("CMSSW_9_3_DEVEL_X")
 
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc530"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc530"].append("IB/CMSSW_9_3_X/root6")
+#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc530"].append("IB/CMSSW_9_3_X/root6")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc530"].append("IB/CMSSW_9_3_X/gcc630")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/rootgcc6")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/gcc630next")
+#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/rootgcc6")
+#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/gcc630next")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/gcc700")
 
 #Added explicitly by Shahzad MUZAFFAR
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_4_X"]=[]
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_4_X"].append("CMSSW_9_4_ROOT6_X")
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_4_X"].append("CMSSW_9_4_DEVEL_X")
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_4_X"].append("CMSSW_9_4_ROOT6_X")
+#GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_4_X"].append("CMSSW_9_4_DEVEL_X")
 
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_4_X/gcc630"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_4_X/gcc630"].append("IB/CMSSW_9_4_X/rootgcc6")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_4_X/gcc630"].append("IB/CMSSW_9_4_X/gcc630next")
+#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_4_X/gcc630"].append("IB/CMSSW_9_4_X/rootgcc6")
+#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_4_X/gcc630"].append("IB/CMSSW_9_4_X/gcc630next")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_4_X/gcc630"].append("IB/CMSSW_9_4_X/gcc700")
 
 #Added explicitly by Shahzad MUZAFFAR

@@ -93,6 +93,7 @@ CMSSW_CATEGORIES={
    "DPGAnalysis/Skims"],
   "core": [
    ".gitignore",
+   ".clang-tidy",
    "BigProducts/Simulation",
    "Configuration/SVSuite",
    "FWCore/Concurrency",

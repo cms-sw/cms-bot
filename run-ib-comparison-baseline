@@ -45,6 +45,7 @@ mv $ERRORS_FILE $WORKSPACE/matrix-results/
 [ -f ${LOCALRT}/used-ibeos-sort ] && mv ${LOCALRT}/used-ibeos-sort $WORKSPACE/matrix-results/
 source $CMS_BOT_DIR/jenkins-artifacts
 send_jenkins_artifacts $WORKSPACE/matrix-results/ ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix-results 
+echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/cvmfs-deploy-baseline
 
 REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
 DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')

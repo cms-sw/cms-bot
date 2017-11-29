@@ -93,21 +93,8 @@ else
   git clone https://github.com/cms-sw/siteconf.git $BASEDIR/SITECONF
 fi
 
-# Create Nested Catalogs file if it doesn't exist
-if [ ! -f $BASEDIR/.cvmfsdirtab ]; then
-cat <<EOF > $BASEDIR/.cvmfsdirtab
-/ib-baseline-tests/*
-/*/share
-/*/*_*_*/external
-/*/*_*_*/external/blackhat/*
-/*/*_*_*/external/geant4/*
-/*/*_*_*/external/boost/*
-/*/*_*_*/cms
-/*/*_*_*/lcg
-/*/*_*_*/cms/cmssw/*
-/*/*_*_*/cms/cmssw-patch/*
-EOF
-fi
+# Create Nested Catalogs file
+cp -f $WORKSPACE/cms-bot/cvmfsdirtab $BASEDIR/.cvmfsdirtab
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done

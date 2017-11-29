@@ -85,6 +85,7 @@ btv-pog:
   - SimTracker/TrackHistory
   - Validation/RecoB
 makortel:
+  - .clang-tidy
   - CommonTools/CandAlgos
   - CommonTools/CandUtils
   - CommonTools/RecoAlgos
@@ -92,7 +93,9 @@ makortel:
   - CommonTools/UtilAlgos
   - CommonTools/Utils
   - Configuration/AlCa
+  - Configuration/Applications
   - Configuration/Eras
+  - Configuration/ProcessModifiers
   - Configuration/PyReleaseValidation
   - Configuration/StandardSequences
   - DataFormats/Common
@@ -106,7 +109,7 @@ makortel:
   - DQM/Integration
   - DQM/Track
   - EventFilter/Si
-  - FWCore/Utilities
+  - FWCore
   - Geometry/Track
   - Geometry/CommonTopologies
   - HLTrigger/Configuration
@@ -121,6 +124,7 @@ makortel:
   - SimDataFormats/Vertex
   - SimG4Core
   - SimG4CMS
+  - SimGeneral/DataMixingModule
   - SimGeneral/MixingModule
   - SimGeneral/TrackingAnalysis
   - SimTracker

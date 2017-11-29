@@ -96,6 +96,7 @@ fi
 # Create Nested Catalogs file if it doesn't exist
 if [ ! -f $BASEDIR/.cvmfsdirtab ]; then
 cat <<EOF > $BASEDIR/.cvmfsdirtab
+/ib-baseline-tests/*
 /*/share
 /*/*_*_*/external
 /*/*_*_*/external/blackhat/*

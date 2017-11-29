@@ -52,7 +52,7 @@ CMSSW_L2 = {
   "emeschi": ["daq"],
   "rekovic": ["l1"],
   "thomreis": ["l1"],
-  "nsmith": ["l1"],  
+  "nsmith-": ["l1"],  
   "cmsbuild": ["tests", "code-checks" ],
   "lveldere": ["fastsim"],
   "ssekmen": ["fastsim"],

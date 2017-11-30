@@ -56,11 +56,9 @@ CMSSW_L2 = {
   "cmsbuild": ["tests", "code-checks" ],
   "lveldere": ["fastsim"],
   "ssekmen": ["fastsim"],
-  "govoni": ["generators"],
   "perrozzi": ["generators"],
   "efeyazgan": ["generators"],
   "davidlange6": ["operations"],
-  "thuer": ["generators"],
   "vanbesien" : ["dqm"],
   "kmaeshima" : ["dqm"],
   "vazzolini" : ["dqm"],
@@ -875,9 +873,11 @@ CMSSW_CATEGORIES={
    "GeneratorInterface/TauolaInterface",
    "GeneratorInterface/ThePEGInterface",
    "GeneratorInterface/Hydjet2Interface",
-   "DataFormats/HepMCCandidate", "SimDataFormats/GeneratorProducts",
+   "DataFormats/HepMCCandidate", 
+   "SimDataFormats/GeneratorProducts",
    "Validation/EventGenerator",
-   "IOMC/ParticleGuns"
+   "IOMC/ParticleGuns",
+   "SimDataFormats/HTXS"
   ], "daq": [
    "Configuration/SiStripDAQ",
    "EventFilter/AutoBU",

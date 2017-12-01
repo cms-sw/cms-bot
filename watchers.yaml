@@ -360,6 +360,8 @@ forthommel:
 - RecoCTPPS/
 - EventFilter/CTPPSRawToDigi
 - CondFormats/CTPPSReadoutObjects
+fwyzard:
+- FWCore/ServiceRegistry
 gbenelli:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration

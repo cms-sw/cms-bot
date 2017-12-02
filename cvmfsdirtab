@@ -1,4 +1,4 @@
-/ib-baseline-tests/*
+/jenkins-artifacts/ib-baseline-tests/*
 /*/share
 /*/*_*_*/external
 /*/*_*_*/external/blackhat/*

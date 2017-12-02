@@ -48,6 +48,19 @@ function get_jenkins_artifacts ()
 {
   local SRC=$1
   local DES=$2
+  if [ "X$3" = "X" -a -e /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$SRC ] ; then
+    if [ -d /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$SRC ] ; then
+      local XSRC=$(echo $SRC | sed 's|/*$||')
+      local XDES=$(echo $DES | sed 's|/*$||')
+      mkdir -p $XDES && rm -rf $XDES
+      ln -s /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$XSRC $XDES
+    else
+      mkdir -p $(dirname $DES)
+      cp -f /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$SRC $DES
+    fi
+    echo "JA_STATUS=OK"
+    return
+  fi
   case $SRC in
     */) mkdir -p $DES ; DES="${DES}/";;
     * ) mkdir -p $(dirname $DES) ;;

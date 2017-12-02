@@ -76,12 +76,12 @@ mkdir -p $WORKSPACE/results/files
 cd $WORKSPACE/results
 echo $WORKFLOWS_TO_COMPARE
 
+echo "Downloading Ref: `date`"
 get_jenkins_artifacts ${BASELINE_DIR}/    ${JR_COMP_DIR}/$RELEASE_FORMAT/ || true
+echo "Downloading PR: `date`"
 get_jenkins_artifacts ${PR_BASELINE_DIR}/ ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/ || true
+echo "Done Downloading `date`"
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
-
-  echo "####################################### at `date`"
-  echo "downloading: $WF"
 
   WF_DIR=`echo $WF | cut -d "/" -f1`
   WF_NUMBER=`echo $WF | cut -d'_' -f1`

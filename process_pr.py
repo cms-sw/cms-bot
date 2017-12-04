@@ -259,6 +259,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Add watchers.yaml information to the WATCHERS dict.
     WATCHERS = (yaml.load(file(join(repo_config.CONFIG_DIR, "watchers.yaml"))))
+    if not WATCHERS: WATCHERS={}
     # Given the packages check if there are additional developers watching one or more.
     author = pr.user.login
     watchers = set([user for package in packages
@@ -266,7 +267,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          for regexp in watched_regexp
                          if re.match("^" + regexp + ".*", package) and user != author])
     #Handle category watchers
-    for user, cats in (yaml.load(file(join(repo_config.CONFIG_DIR, "category-watchers.yaml")))).items():
+    catWatchers = (yaml.load(file(join(repo_config.CONFIG_DIR, "category-watchers.yaml"))))
+    if not catWatchers: catWatchers={}
+    for user, cats in catWatchers.items():
       for cat in cats:
         if cat in signing_categories:
           print "Added ",user, " to watch due to cat",cat
@@ -274,6 +277,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Handle watchers
     watchingGroups = yaml.load(file(join(repo_config.CONFIG_DIR, "groups.yaml")))
+    if not watchingGroups: watchingGroups={}
     for watcher in [x for x in watchers]:
       if not watcher in watchingGroups: continue
       watchers.remove(watcher)
@@ -685,6 +689,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   # get release managers
   SUPER_USERS = (yaml.load(file(join(repo_config.CONFIG_DIR, "super-users.yaml"))))
+  if not SUPER_USERS:SUPER_USERS=[]
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

@@ -2,7 +2,6 @@
 from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
-from process_pr import process_pr
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 setdefaulttimeout(120)
@@ -24,7 +23,6 @@ if __name__ == "__main__":
   repo_dir = join(SCRIPT_DIR,'repos',opts.repository)
   if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
   import repo_config
-  
   gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
   if not opts.commit: api_rate_limits(gh)
   repo = gh.get_repo(opts.repository)
@@ -32,4 +30,5 @@ if __name__ == "__main__":
     pr   = repo.get_pull(prId)
     print pr.get_commits().reversed[0].commit.sha
   else:
+    from process_pr import process_pr
     process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)

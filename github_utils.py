@@ -3,7 +3,6 @@ import json
 from commands import getstatusoutput
 from os.path import exists, dirname, abspath
 import re
-from cms_static import GH_CMSSW_ORGANIZATION
 try:
   from github import UnknownObjectException
 except:
@@ -127,6 +126,7 @@ def port_pr(repo, pr_num, des_branch, dryRun=False):
     if err: return False
   else:
     print "DryRun: should have push %s branch" % new_branch
+  from cms_static import GH_CMSSW_ORGANIZATION
   newHead = "%s:%s" % (GH_CMSSW_ORGANIZATION, new_branch)
   newBody = pr.body + "\nAutomatically ported from " + pr.base.ref + " #%s (original by @%s)." % (pr_num, str(pr.head.user.login))
   print newHead

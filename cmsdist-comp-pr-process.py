@@ -5,12 +5,11 @@ from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from socket import setdefaulttimeout
-from cmsdist_merge_permissions import USERS_TO_TRIGGER_HOOKS, getCommentCommand, hasRights
-from process_pr import get_changed_files
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
 def process_pr(gh, repo, issue, dryRun):
+  from cmsdist_merge_permissions import USERS_TO_TRIGGER_HOOKS, getCommentCommand, hasRights
   print "Issue state:", issue.state
   prId    = issue.number
   pr      = None
@@ -22,6 +21,7 @@ def process_pr(gh, repo, issue, dryRun):
     branch = pr.base.ref
     print "PR merged:", pr.merged
     if pr.merged: return True
+    from process_pr import get_changed_files
     chg_files = get_changed_files(repo, pr)
   USERS_TO_TRIGGER_HOOKS.add("cmsbuild")
   for comment in issue.get_comments():

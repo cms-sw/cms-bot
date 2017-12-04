@@ -3,8 +3,6 @@ from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 import sys
-from process_pr import modify_comment, find_last_comment
-from process_pr import TRIGERING_TESTS_MSG, TRIGERING_STYLE_TEST_MSG
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
@@ -29,6 +27,8 @@ if __name__ == "__main__":
   repo_dir = join(SCRIPT_DIR,'repos',opts.repository)
   if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
   import repo_config
+  from process_pr import modify_comment, find_last_comment
+  from process_pr import TRIGERING_TESTS_MSG, TRIGERING_STYLE_TEST_MSG
   gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
   issue = gh.get_repo(opts.repository).get_issue(int(args[0]))
   last_comment = find_last_comment(issue, "cmsbuild" ,valid_types[opts.msgtype][0])

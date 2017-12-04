@@ -939,8 +939,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     mustMerge = True
   else:
     print "This pull request will not be automatically merged."
-
   if mustMerge == True:
     print "This pull request must be merged."
-    if not dryRun: pr.merge()
+    if not dryRun and (pr.state != "closed"): pr.merge()
 

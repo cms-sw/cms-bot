@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 from github import Github
-from os.path import expanduser
+from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from process_pr import process_pr
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 setdefaulttimeout(120)
+import sys
+SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")
@@ -18,12 +20,16 @@ if __name__ == "__main__":
   if len(args) != 1:
     parser.error("Too many/few arguments")
   prId = int(args[0])
+
+  repo_dir = join(SCRIPT_DIR,'repos',opts.repository)
+  if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+  import repo_config
   
-  gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+  gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
   if not opts.commit: api_rate_limits(gh)
   repo = gh.get_repo(opts.repository)
   if opts.commit:
     pr   = repo.get_pull(prId)
     print pr.get_commits().reversed[0].commit.sha
   else:
-    process_pr(gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)
+    process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)

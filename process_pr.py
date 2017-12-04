@@ -1,23 +1,21 @@
 from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, CMSSW_DEVEL_BRANCH
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
-from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
-from cms_static import BACKPORT_STR, CMSBUILD_GH_USER
+from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG
+from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION
+from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from sys import exit, argv
 from os.path import abspath, dirname, join
 from github import UnknownObjectException
 from github_utils import get_token, edit_pr, api_rate_limits
 from socket import setdefaulttimeout
-setdefaulttimeout(120)
-try:
-  SCRIPT_DIR = dirname(abspath(__file__))
-except Exception, e :
-  SCRIPT_DIR = dirname(abspath(argv[0]))
+setdefaulttimeout(300)
+CMSDIST_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
+CMSSW_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 
 # Prepare various comments regardless of whether they will be made or not.
-def format(s, **kwds):
-  return s % kwds
+def format(s, **kwds): return s % kwds
 
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
@@ -37,8 +35,6 @@ TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+wo
                      cmsdist_pr=CMSDIST_PR_PATTERN)
 REGEX_TEST_REQ = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
-#Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
-CMSDIST_PR_INDEX = 5
 TEST_WAIT_GAP=720
 
 #
@@ -107,8 +103,9 @@ def get_assign_categories(line):
     return (assgin_type.strip(), new_cats)
   return ('', [])
 
-def ignore_issue(repo, issue):
-  if (repo.full_name in GITHUB_IGNORE_ISSUES) and (issue.number in GITHUB_IGNORE_ISSUES[repo.full_name]):
+def ignore_issue(repo_config, repo, issue):
+  if issue.number in repo_config.IGNORE_ISSUES: return True
+  if (repo.full_name in repo_config.IGNORE_ISSUES) and (issue.number in repo_config.IGNORE_ISSUES[repo.full_name]):
     return True
   if re.match(BUILD_REL, issue.title):
     return True
@@ -149,10 +146,10 @@ def check_test_cmd(first_line):
     return (True, cmsdist_pr, cmssw_prs, wfs)
   return (False, "", "", "")
 
-def get_changed_files(pr, use_gh_patch=False):
+def get_changed_files(repo, pr, use_gh_patch=False):
   if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
   from commands import getstatusoutput
-  cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq" % pr.number
+  cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/%s/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq" % (repo.full_name,pr.number)
   e , o = getstatusoutput(cmd)
   if e: return []
   return o.split("\n")
@@ -163,19 +160,18 @@ def get_backported_pr(msg):
     if re.match("^[1-9][0-9]*$",bp_num): return bp_num
   return ""
 
-def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
+def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   import yaml
-  if (not force) and ignore_issue(repo, issue): return
+  if (not force) and ignore_issue(repo_config, repo, issue): return
   api_rate_limits(gh)
   prId = issue.number
   repository = repo.full_name
-  if not cmsbuild_user:
-    cmsbuild_user=repository.split("/")[0]
-    if cmsbuild_user in [ x.split("/")[0] for x in EXTERNAL_REPOS ]: cmsbuild_user=CMSBUILD_GH_USER
+  repo_org, repo_name = repository.split("/",1)
+  if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
-  cmssw_repo = False
+  cmssw_repo = (repo_name==GH_CMSSW_REPO)
+  official_repo = (repo_org==GH_CMSSW_ORGANIZATION)
   create_test_property = False
-  if repository.endswith("/"+GH_CMSSW_REPO): cmssw_repo = True
   packages = set([])
   create_external_issue = False
   add_external_category = False
@@ -194,7 +190,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     if pr.changed_files==0:
       print "Ignoring: PR with no files changed"
       return
-    if cmssw_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
+    if cmssw_repo and official_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
       if pr.state != "closed":
         print "This pull request must go in to master branch"
         if not dryRun:
@@ -211,16 +207,16 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     # signatures it requires.
     if cmssw_repo:
       if pr.base.ref=="master": signing_categories.add("code-checks")
-      packages = sorted([x for x in set(["/".join(f.split("/", 2)[0:2])
-                           for f in get_changed_files(pr)])])
+      packages = sorted([x for x in set([repo_config.file2Package(f)
+                           for f in get_changed_files(repo, pr)])])
       print "First Package: ",packages[0]
       updateMilestone(repo, issue, pr, dryRun)
       create_test_property = True
     else:
       add_external_category = True
       packages = set (["externals/"+repository])
-      if repository != CMSDIST_REPO_NAME:
-        if not repository.endswith("/cms-bot"): create_external_issue = True
+      if repo_name != GH_CMSDIST_REPO:
+        if repo_name != "cms-bot": create_external_issue = repo_config.CREAT_EXTERNAL_ISSUE
       else:
         create_test_property = True
         if not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref):
@@ -239,7 +235,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     if add_external_category: signing_categories.add("externals")
     # We require ORP approval for releases which are in production.
     # or all externals package
-    if (not cmssw_repo) or (pr.base.ref in RELEASE_BRANCH_PRODUCTION):
+    if official_repo and ((not cmssw_repo) or (pr.base.ref in RELEASE_BRANCH_PRODUCTION)):
       print "This pull request requires ORP approval"
       signing_categories.add("orp")
       for l1 in CMSSW_L1:
@@ -262,7 +258,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
         signing_categories.add("new-package")
 
     # Add watchers.yaml information to the WATCHERS dict.
-    WATCHERS = (yaml.load(file(join(SCRIPT_DIR, "watchers.yaml"))))
+    WATCHERS = (yaml.load(file(join(repo_config.CONFIG_DIR, "watchers.yaml"))))
     # Given the packages check if there are additional developers watching one or more.
     author = pr.user.login
     watchers = set([user for package in packages
@@ -270,14 +266,14 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
                          for regexp in watched_regexp
                          if re.match("^" + regexp + ".*", package) and user != author])
     #Handle category watchers
-    for user, cats in (yaml.load(file(join(SCRIPT_DIR, "category-watchers.yaml")))).items():
+    for user, cats in (yaml.load(file(join(repo_config.CONFIG_DIR, "category-watchers.yaml")))).items():
       for cat in cats:
         if cat in signing_categories:
           print "Added ",user, " to watch due to cat",cat
           watchers.add(user)
 
     # Handle watchers
-    watchingGroups = yaml.load(file(join(SCRIPT_DIR, "groups.yaml")))
+    watchingGroups = yaml.load(file(join(repo_config.CONFIG_DIR, "groups.yaml")))
     for watcher in [x for x in watchers]:
       if not watcher in watchingGroups: continue
       watchers.remove(watcher)
@@ -688,7 +684,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     return
 
   # get release managers
-  SUPER_USERS = (yaml.load(file(join(SCRIPT_DIR, "super-users.yaml"))))
+  SUPER_USERS = (yaml.load(file(join(repo_config.CONFIG_DIR, "super-users.yaml"))))
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

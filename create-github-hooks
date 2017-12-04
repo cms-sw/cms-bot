@@ -2,7 +2,6 @@
 from github import Github
 from os.path import expanduser , exists
 from optparse import OptionParser
-#from process_pr import process_pr
 from github_hooks_config import GITHUB_HOOKS as hk_conf
 from github_hooks_config import REPO_HOOK_MAP
 from github_utils import api_rate_limits

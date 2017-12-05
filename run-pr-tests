@@ -129,6 +129,7 @@ sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine proces
 set +x
 eval $(scram run -sh) 
 set -x
+python -c 'from requests import __version__ as v;print v;x=v.split(".");print int(x[0])*10000+int(x[1])*100+int(x[2])' || true
 REQ_OK=$(python -c 'from requests import __version__ as v;x=v.split(".");print int(x[0])*10000+int(x[1])*100+int(x[2])>=20300' 2>/dev/null || echo False)
 REQ_OK=True
 if [ "X$REQ_OK" = "XFalse" ] ; then

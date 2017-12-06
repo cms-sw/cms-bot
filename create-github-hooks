@@ -36,6 +36,7 @@ if __name__ == "__main__":
   parser.add_option("-f", "--force",     dest="force",     action="store_true", help="Force update github hook", default=False)
   parser.add_option("-r", "--repository",dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default=None)
   parser.add_option("-e", "--externals", dest="externals", action="store_true", help="Only process CMS externals repositories", default=False)
+  parser.add_option("-u", "--users",     dest="users",     action="store_true", help="Only process USER externals repositories", default=False)
   parser.add_option("-c", "--cmssw",     dest="cmssw",     action="store_true", help="Only process "+",".join(CMSSW_REPOS)+" repository", default=False)
   parser.add_option("-d", "--cmsdist",   dest="cmsdist",   action="store_true", help="Only process "+",".join(CMSDIST_REPOS)+" repository", default=False)
   parser.add_option("-a", "--all",       dest="all",       action="store_true", help="Process all CMS repository i.e. externals, cmsdist and cmssw", default=False)
@@ -49,17 +50,18 @@ if __name__ == "__main__":
     opts.externals = True
     opts.cmssw = True
     opts.cmsdist = True
-  elif (not opts.externals) and (not opts.cmssw) and (not opts.cmsdist):
-    parser.error("Too few arguments, please use either -e, -c or -d")
+    opts.users = True
+  elif (not opts.externals) and (not opts.cmssw) and (not opts.cmsdist) and (not opts.users):
+    parser.error("Too few arguments, please use either -e, -c , -u or -d")
 
   if not repos_names:
-    if opts.externals:
-      repos_names = repos_names + EXTERNAL_REPOS
+    if opts.externals: repos_names = repos_names + EXTERNAL_REPOS
+    if opts.cmssw: repos_names = repos_names + CMSSW_REPOS
+    if opts.cmsdist: repos_names = repos_names + CMSDIST_REPOS
+    if opts.users:
       from glob import glob
       for rconf in glob(join(SCRIPT_DIR,"repos","*","*","repo_config.py")):
         repos_names.append(join(rconf.split("/")[-3:-1]))
-    if opts.cmssw: repos_names = repos_names + CMSSW_REPOS
-    if opts.cmsdist: repos_names = repos_names + CMSDIST_REPOS
 
   gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
   api_rate_limits(gh)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from github import Github
 from os.path import expanduser , exists, join, dirname, abspath
+from os import environ
 from optparse import OptionParser
 from github_hooks_config import GITHUB_HOOKS as hk_conf
 from github_hooks_config import REPO_HOOK_MAP
@@ -14,6 +15,7 @@ SCRIPT_DIR = dirname(abspath(argv[0]))
 
 #Get secret from file
 def get_secret(hook_name):
+  if "GH_HOOK_SECRET_FILE" in environ: return environ['GH_HOOK_SECRET_FILE']
   secret_file = '/data/secrets/' + hook_name
   if not exists(secret_file):
     secret_file = '/data/secrets/github_hook_secret_cmsbot' 

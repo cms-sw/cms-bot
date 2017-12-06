@@ -1980,3 +1980,4 @@ architecture=slc6_amd64_gcc630;label=CMSSW_9_2_15;type=Production;state=Announce
 architecture=slc7_amd64_gcc530;label=CMSSW_9_2_15;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc630;label=CMSSW_9_2_15;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc630;label=CMSSW_9_3_5;type=Production;state=Announced;prodarch=0;
+architecture=slc6_amd64_gcc630;label=CMSSW_9_3_5;type=Production;state=Announced;prodarch=1;

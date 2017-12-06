@@ -4,7 +4,6 @@
 # For new release cycle just change this and make sure to add its milestone and production branches
 
 CMSSW_DEVEL_BRANCH = "CMSSW_10_0_X"
-SPECIAL_RELEASE_MANAGERS
 RELEASE_BRANCH_MILESTONE={}
 RELEASE_BRANCH_CLOSED=[]
 RELEASE_BRANCH_PRODUCTION=[]

@@ -6,6 +6,6 @@ CONFIG_DIR=dirname(abspath(__file__))
 CMSBUILD_USER="cmsbot"
 GH_REPO_ORGANIZATION=basename(dirname(CONFIG_DIR))
 CREAT_EXTERNAL_ISSUE=False
-JENKINS_SERVER="http://cmsjenkins05.cern.ch:8080/jenkins"
+JENKINS_SERVER="http://cmsjenkins05.cern.ch:8080/cms-jenkins"
 IGNORE_ISSUES = [10]
 def file2Package(filename): return GH_REPO_ORGANIZATION

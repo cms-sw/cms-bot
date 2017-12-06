@@ -52,7 +52,6 @@ if __name__ == "__main__":
     opts.externals = True
     opts.cmssw = True
     opts.cmsdist = True
-    opts.users = True
   elif (not opts.externals) and (not opts.cmssw) and (not opts.cmsdist) and (not opts.users):
     parser.error("Too few arguments, please use either -e, -c , -u or -d")
 

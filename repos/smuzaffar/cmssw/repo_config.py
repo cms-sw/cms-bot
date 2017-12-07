@@ -7,5 +7,6 @@ CMSBUILD_USER="cmsbot"
 GH_REPO_ORGANIZATION=basename(dirname(CONFIG_DIR))
 CREAT_EXTERNAL_ISSUE=False
 JENKINS_SERVER="http://cmsjenkins05.cern.ch:8080/cms-jenkins"
+GITHUB_WEBHOOK_TOKEN='U2FsdGVkX1+fA6t3cCNyXMa3Ldsbz3B+4jcxgFbVi9E4RmR5FMoAO9GoHq3fXrIo'
 IGNORE_ISSUES = [10]
 def file2Package(filename): return GH_REPO_ORGANIZATION

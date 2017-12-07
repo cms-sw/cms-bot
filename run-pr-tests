@@ -76,7 +76,7 @@ if [ ! -d CMSSW_* ]; then
       fi
     fi
   else
-    RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST $CMS_BOT_DIR/config.map`
+    RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST ${PUB_USER}/cmssw`
   fi
 else
   RELEASE_FORMAT=$( find $WORKSPACE -maxdepth 1 -name "CMSSW_*" -printf '%f\n' )

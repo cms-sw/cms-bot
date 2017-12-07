@@ -12,7 +12,7 @@ CMSDIST_PR=$2
 PROP_FILE=${PULL_REQUEST}
 if [ "X$PULL_REQUEST" != "X" ] ; then
   # Use helper to get PR branch
-  RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST $CMS_BOT_DIR/config.map`
+  RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST`
 
   COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
   COMP_ARCH=$(grep "RELEASE_QUEUE=$COMP_QUEUE;" $CONFIG_MAP_FILE | grep -v "DISABLED=" | grep "PROD_ARCH=1;" | tr ';' '\n' | grep "SCRAM_ARCH=" | sed 's|SCRAM_ARCH=||')

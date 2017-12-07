@@ -329,7 +329,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
   abort_test = False
   need_external = False
-  trigger_code_ckecks=False
+  trigger_code_checks=False
   triggerred_code_ckecks=False
   backport_pr_num = ""
   if (issue.user.login == cmsbuild_user) and \
@@ -409,7 +409,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     if ("code-checks"==first_line) and ("code-checks" in signatures):
       signatures["code-checks"] = "pending"
-      trigger_code_ckecks=True
+      trigger_code_checks=True
       continue
 
     # Check for cmsbuild_user comments and tests requests only for pull requests
@@ -422,14 +422,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
       elif "-code-checks" == first_line:
         signatures["code-checks"] = "rejected"
-        trigger_code_ckecks=False
+        trigger_code_checks=False
         triggerred_code_ckecks=False
       elif "+code-checks" == first_line:
         signatures["code-checks"] = "approved"
-        trigger_code_ckecks=False
+        trigger_code_checks=False
         triggerred_code_ckecks=False
       elif TRIGERING_CODE_CHECK_MSG == first_line:
-        trigger_code_ckecks=False
+        trigger_code_checks=False
         triggerred_code_ckecks=True
         signatures["code-checks"] = "pending"
       elif re.match("^Comparison not run.+",first_line):
@@ -909,7 +909,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if not already_seen: commentMsg = messageNewPR
     else: commentMsg = messageUpdatedPR
     if (not triggerred_code_ckecks) and cmssw_repo and (pr.base.ref=="master") and ("code-checks" in signatures) and (signatures["code-checks"]=="pending"):
-      trigger_code_ckecks=True
+      trigger_code_checks=True
   elif new_categories:
     commentMsg = messageUpdatedPR
   elif not missingApprovals:
@@ -923,7 +923,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     except:
       pass
 
-  if trigger_code_ckecks and not triggerred_code_ckecks:
+  if trigger_code_checks and not triggerred_code_ckecks:
     if not dryRunOrig: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
     else: print "Dryrun:",TRIGERING_CODE_CHECK_MSG
     create_properties_file_tests(repository, prId, "", "", "", dryRunOrig, abort=False, req_type="codechecks")

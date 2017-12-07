@@ -12,11 +12,6 @@ from multiprocessing import cpu_count
 import os
 import sys
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
-CMS_BOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR,'..'))
-sys.path.insert(0, CMS_BOT_DIR)
-sys.path.insert(0, os.path.join(CMS_BOT_DIR, 'jobs'))
-
 from cmssw_known_errors import get_known_errors
 
 if __name__ == "__main__":

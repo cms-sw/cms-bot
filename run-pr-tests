@@ -14,19 +14,18 @@ function Jenkins_GetCPU ()
 }
 ls /cvmfs/cms-ib.cern.ch || true
 
-# If a repo to comment on isn't specified use cmssw
-if [ "X$PUB_REPO" == X ] || [ "X$PULL_REQUEST" != X ]; then
-  PUB_REPO="cms-sw/cmssw"
-fi
+if [ "X${PUB_USER}" = X ]; then PUB_USER="cms-sw" ; fi
+
 ### this is for triggering the comparison with the baseline
 CMSDIST_ONLY=false
 if [ "X$PULL_REQUEST" != X ]; then
   PULL_REQUEST_NUMBER=$PULL_REQUEST
-  PUB_REPO="cms-sw/cmssw"
+  PUB_REPO="${PUB_USER}/cmssw"
 else
   # If PULL_REQUEST is empty then we are only testing a CMSDIST PR, take that
   PULL_REQUEST_NUMBER=$CMSDIST_PR
   CMSDIST_ONLY=true
+  PUB_REPO="${PUB_USER}/cmsdist"
 fi
 PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
 # Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
@@ -36,10 +35,6 @@ fi
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'
-fi
-
-if [ "X$CMS_GIT_TOOLS_REPO" == X ]; then
-  CMS_GIT_TOOLS_REPO="cms-sw"
 fi
 
 cd $WORKSPACE
@@ -105,7 +100,7 @@ has_jenkins_artifacts ib-baseline-tests/$COMPARISON_REL/$COMPARISON_ARCH/$REAL_A
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
 cp $CMS_BOT_DIR/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
 if [ "X$CMSDIST_ONLY" == Xtrue ]; then
-  sed -i 's|https:\/\/github.com\/cms-sw\/cmssw/\pull\/|https:\/\/github.com\/cms-sw\/cmsdist\/pull\/|g' $WORKSPACE/renderPRTests.js
+  sed -i "s|https:\/\/github.com\/${PUB_USER}\/cmssw/\pull\/|https:\/\/github.com\/${PUB_USER}\/cmsdist\/pull\/|g" $WORKSPACE/renderPRTests.js
 fi
 RESULTS_FILE=$WORKSPACE/testsResults.txt
 touch $RESULTS_FILE
@@ -153,9 +148,13 @@ RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits
 MB_COMPARISON=NO
 touch $RECENT_COMMITS_FILE
 # use the branch name if necesary
-if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
+if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
   if [ "X$BRANCH_NAME" = X ]; then
-    (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    if [ "${PUB_USER}" = "cms-sw" ]; then
+      (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    else
+      (/afs/cern.ch/user/m/muzaffar/public/bin/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    fi
   else
     (git cms-merge-topic -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
   fi
@@ -164,7 +163,11 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then # If a CMSSW specific PR was specified
   for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do
     echo 'I will add the following pull request to the test'
     echo $PR;
-    git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    if [ "${PUB_USER}" = "cms-sw" ]; then
+      git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    else
+      /afs/cern.ch/user/m/muzaffar/public/bin/git-cms-merge-topic -u ${PUB_USER}:${PR} 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    fi
   done
 
   if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
@@ -218,11 +221,11 @@ fi
 CMSSW_COMMIT=
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   #get the latest commit and mark it as pending
-  LAST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r cms-sw/cmssw $PULL_REQUEST)
+  LAST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmssw $PULL_REQUEST)
   if [ "X${LAST_COMMIT}" = "X" ]  ; then
     pushd $WORKSPACE/$RELEASE_FORMAT/src
       if [ "X$BRANCH_NAME" = X ]; then
-        LAST_COMMIT=`git log cms-sw/refs/pull/$PULL_REQUEST/head --pretty="%H" | head -n1`
+        LAST_COMMIT=`git log ${PUB_USER}/refs/pull/$PULL_REQUEST/head --pretty="%H" | head -n1`
       else
         LAST_COMMIT=`git log ${BRANCH_NAME//:/\/} --pretty="%H" | head -n1`
       fi
@@ -286,7 +289,7 @@ if [ "X$CMSDIST_ONLY" == "Xfalse" ]; then # If a CMSSW specific PR was specified
       rm -f $r
     else
       CRULE=$(echo $r | sed 's|.*/cmsCodeRule||;s|.txt$||')
-      echo "Rule$CRULE $description: https://raw.githubusercontent.com/cms-sw/cmssw/master/Utilities/ReleaseScripts/python/cmsCodeRules/config.py" > $r.new
+      echo "Rule$CRULE $description: https://raw.githubusercontent.com/${PUB_USER}/cmssw/master/Utilities/ReleaseScripts/python/cmsCodeRules/config.py" > $r.new
       python -c "from Utilities.ReleaseScripts.cmsCodeRules.config import Configuration as x;print x['$CRULE']['description']" >> $r.new
       echo "" >> $r.new
       cat $r >> $r.new
@@ -629,7 +632,7 @@ REPEAT=1
 REPORT_PR=$PULL_REQUEST_NUMBER
 if [ "X$PULL_REQUEST" == X ]; then
   COMMITS[1]=$CMSDIST_COMMIT
-  REPOS[1]="cms-sw/cmsdist"
+  REPOS[1]="${PUB_USER}/cmsdist"
   PR[1]=$CMSDIST_PR
   REPORT_PR=$CMSDIST_PR
 elif [ "X$CMSDIST_PR" != X ]; then
@@ -637,7 +640,7 @@ elif [ "X$CMSDIST_PR" != X ]; then
   REPOS[1]=$PUB_REPO
   PR[1]=$PULL_REQUEST_NUMBER
   COMMITS[2]=$CMSDIST_COMMIT
-  REPOS[2]="cms-sw/cmsdist"
+  REPOS[2]="${PUB_USER}/cmsdist"
   PR[2]=$CMSDIST_PR
   REPEAT=2
 else
@@ -730,8 +733,8 @@ if [ $(grep 'COMPARISON;NOTRUN' $WORKSPACE/upload/testsResults.txt | wc -l) -gt 
   COMP_MSG="Comparison not run due to ${ERR_MSG} (RelVals and Igprof tests were also skipped)"
 fi
 if [ "X$PULL_REQUEST" != X ] ; then
-  $CMS_BOT_DIR/comment-gh-pr -r cms-sw/cmssw   -p $PULL_REQUEST -m "${COMP_MSG}" || true
+  $CMS_BOT_DIR/comment-gh-pr -r ${PUB_USER}/cmssw   -p $PULL_REQUEST -m "${COMP_MSG}" || true
 fi
 if [ "X$CMSDIST_PR" != X ] ; then
-  $CMS_BOT_DIR/comment-gh-pr -r cms-sw/cmsdist -p $CMSDIST_PR   -m "${COMP_MSG}" || true
+  $CMS_BOT_DIR/comment-gh-pr -r ${PUB_USER}/cmsdist -p $CMSDIST_PR   -m "${COMP_MSG}" || true
 fi

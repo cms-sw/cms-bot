@@ -58,4 +58,4 @@ if [ -s ${CMSSW_BASE}/upload/git-diff.patch ] ; then
   HOW_TO_RUN="${HOW_TO_RUN}@N@@N@You can run \`scram build code-checks\` to apply code checks directly"
 fi
 MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}"
-${CMS_BOT_DIR}/comment-gh-pr $DRY_RUN -r cms-sw/cmssw -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
+${CMS_BOT_DIR}/comment-gh-pr $DRY_RUN -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"

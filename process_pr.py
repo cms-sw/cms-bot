@@ -44,7 +44,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
   if (repo_parts[0] == GH_CMSSW_ORGANIZATION) and (repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): repo_parts=repo_parts[1]
-  else: repo_parts=repo_parts.replace("/","-")
+  else: repo_parts=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_parts, pr_number)
   if dryRun:
     print 'Not creating cleanup properties file (dry-run): %s' % out_file_name

@@ -12,7 +12,9 @@ import os
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 setdefaulttimeout(120)
-
+JENKINS_PREFIX="jenkins"
+try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
+except: JENKINS_PREFIX="jenkins"
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
@@ -596,9 +598,9 @@ GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of t
 MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
 MATRIX_WORKFLOW_STEP_NA = 'N/A'
 COMMITS_BASE_URL='https://github.com/cms-sw/cmssw/commit/{hash}'
-GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits'
-GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result'
-JENKINS_LOG_URL='https://cmssdt.cern.ch/jenkins/job/{job_name}/{job_id}/console'
+GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits' % JENKINS_PREFIX
+GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result' % JENKINS_PREFIX
+JENKINS_LOG_URL='https://cmssdt.cern.ch/%s/job/{job_name}/{job_id}/console' % JENKINS_PREFIX
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
 #---------------------------------------------------------------------------------------
@@ -636,7 +638,7 @@ else:
 destination_repo = github.get_repo( options.custom_repo )
 COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/'+destination_repo.full_name+'/statuses/%s'
 
-tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (options.report_pr_number,pr_job_id)
+tests_results_url = 'https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (JENKINS_PREFIX, options.report_pr_number,pr_job_id)
 
 if (options.cmsdist_pr > -1):
   pr_number = options.cmsdist_pr
@@ -660,7 +662,7 @@ elif ( ACTION == 'TESTS_RUNNING' ):
 elif ( ACTION == 'RELEASE_NOT_FOUND' ):
   release_not_found_for_tests(destination_repo, tests_results_url)
 elif ( ACTION == 'EXTERNALS_PR_READY' ):
-  tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/%d' % (pr_job_id)
+  tests_results_url = 'https://cmssdt.cern.ch/SDT/%s-artifacts/cms-externals-pr-integration/%d' % (JENKINS_PREFIX, pr_job_id)
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'IGPROF_READY' ):
   send_igprof_ready_message( destination_repo , pr_number , tests_results_url )

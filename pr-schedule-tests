@@ -9,10 +9,12 @@ cd $WORKSPACE
 # The pull request number is $1
 PULL_REQUEST=$1
 CMSDIST_PR=$2
+if [ "X$PUB_USER" = "" ] ; then PUB_USER="cms-sw"; fi
 PROP_FILE=${PULL_REQUEST}
+PUB_REPO="${PUB_USER}/cmssw"
 if [ "X$PULL_REQUEST" != "X" ] ; then
   # Use helper to get PR branch
-  RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST`
+  RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST ${PUB_REPO}`
 
   COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
   COMP_ARCH=$(grep "RELEASE_QUEUE=$COMP_QUEUE;" $CONFIG_MAP_FILE | grep -v "DISABLED=" | grep "PROD_ARCH=1;" | tr ';' '\n' | grep "SCRAM_ARCH=" | sed 's|SCRAM_ARCH=||')
@@ -23,8 +25,9 @@ if [ "X$PULL_REQUEST" != "X" ] ; then
     MLINES=$(grep "=$RELEASE_QUEUE;" $CONFIG_MAP_FILE | grep -v DISABLED= |  grep "SCRAM_ARCH=$COMP_ARCH;" | grep "PROD_ARCH=1")
   fi
 else
+  PUB_REPO="${PUB_USER}/cmsdist"
   PROP_FILE=${CMSDIST_PR}
-  GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
+  GH_JSON=$(curl -s https://api.github.com/repos/${PUB_REPO}/pulls/$CMSDIST_PR)
   CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
   if [ $(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | wc -l) -gt 1 ] ; then
     MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1")
@@ -62,7 +65,8 @@ if [ $MLC -eq 1 ] ; then
     echo CMSDIST_PR=${CMSDIST_PR} >> $OUTPUT_FILE
     echo FULL_TOOLCONF=true >> $OUTPUT_FILE
     echo COMPARISON_ARCH=${COMP_ARCH} >> $OUTPUT_FILE
+    echo PUB_USER=${PUB_USER} >> $OUTPUT_FILE
 else
-  $CMS_BOT_DIR/report-pull-request-results RELEASE_NOT_FOUND --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
+  $CMS_BOT_DIR/report-pull-request-results RELEASE_NOT_FOUND --repo ${PUB_REPO} --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
 fi
 

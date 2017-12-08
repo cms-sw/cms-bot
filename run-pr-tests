@@ -232,10 +232,10 @@ if [ "X$CMSDIST_ONLY" == Xfalse ]; then
     popd
   fi
   CMSSW_COMMIT=$LAST_COMMIT
-  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
   git log --oneline --merges ${CMSSW_VERSION}..
-  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" $DRY_RUN
 else
   LAST_COMMIT=$CMSDIST_COMMIT
 fi
@@ -617,7 +617,7 @@ fi
 # Valgrind tests
 #
 for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
-  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Valgrind" $DRY_RUN
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Valgrind" $DRY_RUN
 
   echo 'I will run valgrind for the following workflow'
   echo $WF;

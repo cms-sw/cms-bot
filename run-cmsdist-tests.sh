@@ -16,6 +16,8 @@ function Jenkins_GetCPU ()
 }
 
 set +x
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
 GH_COMMITS=$(curl -s https://api.github.com/repos/${PUB_USER}/cmsdist/pulls/$CMSDIST_PR/commits)
@@ -76,10 +78,10 @@ done
 
 BUILD_DIR="testBuildDir"
 
-$CMS_BOT_DIR/modify_comment.py -r ${PUB_USER}/cmsdist -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $CMSDIST_PR || true
+$CMS_BOT_DIR/modify_comment.py -r ${PUB_USER}/cmsdist -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console" $CMSDIST_PR || true
 # If a CMSSW PR is also being tested update the comment on its page too
 if [ "X$PULL_REQUEST" != X ]; then
-  $CMS_BOT_DIR/modify_comment.py -r ${PUB_USER}/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST || true
+  $CMS_BOT_DIR/modify_comment.py -r ${PUB_USER}/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST || true
 fi
 git clone git@github.com:${PUB_USER}/cmsdist $WORKSPACE/CMSDIST -b $CMSDIST_BRANCH
 git clone git@github.com:cms-sw/pkgtools $WORKSPACE/PKGTOOLS -b $PKGTOOLS_BRANCH

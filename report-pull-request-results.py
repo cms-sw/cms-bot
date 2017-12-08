@@ -203,7 +203,7 @@ def get_recent_merges_message():
       git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
       #Ignore the first line, the first line is the merge commit that comes from git-cms-merge-topic
       for l in lines[ 1: ]:
-        commit_url = COMMITS_BASE_URL.format( hash=l.strip() )
+        commit_url = COMMITS_BASE_URL.format( repo=options.custom_repo, hash=l.strip() )
         message += commit_url + '\n'
 
       message += 'You can see more details here:\n'
@@ -597,7 +597,7 @@ GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of t
 
 MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
 MATRIX_WORKFLOW_STEP_NA = 'N/A'
-COMMITS_BASE_URL='https://github.com/cms-sw/cmssw/commit/{hash}'
+COMMITS_BASE_URL='https://github.com/{repo}/commit/{hash}'
 GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits' % JENKINS_PREFIX
 GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result' % JENKINS_PREFIX
 JENKINS_LOG_URL='https://cmssdt.cern.ch/%s/job/{job_name}/{job_id}/console' % JENKINS_PREFIX

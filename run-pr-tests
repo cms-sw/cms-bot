@@ -13,7 +13,8 @@ function Jenkins_GetCPU ()
   echo $ACTUAL_CPU
 }
 ls /cvmfs/cms-ib.cern.ch || true
-
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 if [ "X${PUB_USER}" = X ]; then PUB_USER="cms-sw" ; fi
 
 ### this is for triggering the comparison with the baseline
@@ -30,7 +31,7 @@ fi
 PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
 # Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
 if [ "X$CMSDIST_PR" = X ] ; then
-  $CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST_NUMBER || true
+  $CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST_NUMBER || true
 fi
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then

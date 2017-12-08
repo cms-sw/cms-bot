@@ -25,7 +25,10 @@ if __name__ == "__main__":
     if opts.dryRun:
       print "Addeding Comments:",msg
     else:
-      gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+      repo_dir = join(SCRIPT_DIR,'repos',opts.repository)
+      if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+      import repo_config
+      gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       repo = gh.get_repo( opts.repository )
       pr   = repo.get_issue(opts.pr)
       pr.create_comment(msg)

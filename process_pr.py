@@ -43,6 +43,7 @@ TEST_WAIT_GAP=720
 def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests"):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
+  if (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "noncms-"+req_type
   if (repo_parts[0] == GH_CMSSW_ORGANIZATION) and (repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): repo_parts=repo_parts[1]
   else: repo_parts=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_parts, pr_number)

@@ -33,7 +33,7 @@ if [ -s $CMSSW_BASE/code-checks-files.txt ] ; then
   if [ "X${REPO_USER}" = "X" ] ; then
     git cms-checkout-topic -u ${PULL_REQUEST} 2>&1 | tee cms-checkout-topic.log
   else
-    /afs/cern.ch/user/m/muzaffar/public/bin/git-cms-checkout-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee cms-checkout-topic.log
+    /cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-checkout-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee cms-checkout-topic.log
   fi
   scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/code-checks-files.txt"  2>&1 | tee code-checks.log
   rm -rf ${CMSSW_BASE}/upload

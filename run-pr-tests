@@ -154,7 +154,7 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
     if [ "${PUB_USER}" = "cms-sw" ]; then
       (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
-      (/afs/cern.ch/user/m/muzaffar/public/bin/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      (/cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
   else
     (git cms-merge-topic -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
@@ -167,7 +167,7 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
     if [ "${PUB_USER}" = "cms-sw" ]; then
       git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
-      /afs/cern.ch/user/m/muzaffar/public/bin/git-cms-merge-topic -u ${PUB_USER}:${PR} 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      /cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PR} 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
   done
 

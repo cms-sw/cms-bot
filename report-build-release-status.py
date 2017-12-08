@@ -59,10 +59,10 @@ TOOL_CONF_ERROR_MSG='There was an error building cmssw-tool-conf for {architectu
              'You can see the log for the build here: \n' \
              '{log_url} \n'
 UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
-              'You can see the progress here: https://cmssdt.cern.ch/%s/job/upload-release/{jk_build_number}/console'
+              'You can see the progress here: https://cmssdt.cern.ch/%s/job/upload-release/{jk_build_number}/console' % JENKINS_PREFIX
 UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'The release is now being installed, you can see the progress here: \n ' \
-              'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' % JENKINS_PREFIX
+              'https://cmssdt.cern.ch/%s/job/release-deploy-afs/ \n' % JENKINS_PREFIX
 INSTALLATION_OK_MSG='The installation has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\>", in the first line of your comment.\n ' \
               'I will generate the release notes based on the release that you provide. You don\'t need to provide the architectue ' \

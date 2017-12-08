@@ -15,7 +15,7 @@ function has_jenkins_artifacts ()
   local SRC=$1
   local TYPE=$2
   local AFDIR=$3
-  [ "X$AFDIR" = "X" ] && TYPE="${ARTIFACT_BASE_DIR}"
+  [ "X$AFDIR" = "X" ] && AFDIR="${ARTIFACT_BASE_DIR}"
   [ "X$TYPE" = "X" ] && TYPE="-e"
   for i in 1 2 3 4 5 6 7 8 9 ;  do
     RES=$(ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "echo JA_RUN${i}=CONN && test ${TYPE} ${AFDIR}/${SRC} || echo JA_RUN${i}=FAIL" | grep "^JA_RUN${i}=" | wc -l)

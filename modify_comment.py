@@ -33,7 +33,7 @@ if __name__ == "__main__":
   valid_types['JENKINS_STYLE_URL']=[ "^\s*"+TRIGERING_STYLE_TEST_MSG+".*$", None ]
   gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
   issue = gh.get_repo(opts.repository).get_issue(int(args[0]))
-  last_comment = find_last_comment(issue, "cmsbuild" ,valid_types[opts.msgtype][0])
+  last_comment = find_last_comment(issue, repo_config.CMSBUILD_USER ,valid_types[opts.msgtype][0])
   if not last_comment:
     print "Warning: Not comment matched"
     sys.exit(1)

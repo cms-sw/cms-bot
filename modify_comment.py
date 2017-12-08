@@ -8,8 +8,8 @@ setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 valid_types = {}
-valid_types['JENKINS_TEST_URL']=[ "^\s*"+TRIGERING_TESTS_MSG+".*$", None ]
-valid_types['JENKINS_STYLE_URL']=[ "^\s*"+TRIGERING_STYLE_TEST_MSG+".*$", None ]
+valid_types['JENKINS_TEST_URL']=[ "", None ]
+valid_types['JENKINS_STYLE_URL']=[ "", None ]
 all_types = "|".join(valid_types)
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-n|--dry-run] [-r|--repository <repo>] -t|--type "+all_types+" -m|--message <message> <pull-request-id>")
@@ -29,6 +29,8 @@ if __name__ == "__main__":
   import repo_config
   from process_pr import modify_comment, find_last_comment
   from process_pr import TRIGERING_TESTS_MSG, TRIGERING_STYLE_TEST_MSG
+  valid_types['JENKINS_TEST_URL']=[ "^\s*"+TRIGERING_TESTS_MSG+".*$", None ]
+  valid_types['JENKINS_STYLE_URL']=[ "^\s*"+TRIGERING_STYLE_TEST_MSG+".*$", None ]
   gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
   issue = gh.get_repo(opts.repository).get_issue(int(args[0]))
   last_comment = find_last_comment(issue, "cmsbuild" ,valid_types[opts.msgtype][0])

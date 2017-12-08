@@ -9,7 +9,7 @@ cd $WORKSPACE
 # The pull request number is $1
 PULL_REQUEST=$1
 CMSDIST_PR=$2
-if [ "X$PUB_USER" = "" ] ; then PUB_USER="cms-sw"; fi
+if [ "X$PUB_USER" = "X" ] ; then PUB_USER="cms-sw"; fi
 PROP_FILE=${PULL_REQUEST}
 PUB_REPO="${PUB_USER}/cmssw"
 if [ "X$PULL_REQUEST" != "X" ] ; then

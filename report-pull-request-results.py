@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from os.path import expanduser, dirname, join, exists
+from os.path import expanduser, dirname, join, exists, abspath
 from optparse import OptionParser
 from commands import getstatusoutput as run_cmd
 from github import Github
@@ -8,13 +8,14 @@ import re
 import requests
 import json
 import random
-import os
+import os, sys
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 setdefaulttimeout(120)
 JENKINS_PREFIX="jenkins"
 try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
 except: JENKINS_PREFIX="jenkins"
+SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
@@ -40,7 +41,7 @@ parser.add_option("--report-file", action="store", type="string", dest="report_f
 parser.add_option("--report-pr", action="store", type="int", dest="report_pr_number", help="The number of the pull request to use for report", default=0)
 
 (options, args) = parser.parse_args()
-repo_dir = join(SCRIPT_DIR,'repos',opts.repository)
+repo_dir = join(SCRIPT_DIR,'repos',options.repository)
 if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
 import repo_config
 if options.report_pr_number==0: options.report_pr_number = options.pr_number

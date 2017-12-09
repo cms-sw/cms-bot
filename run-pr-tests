@@ -99,10 +99,7 @@ has_jenkins_artifacts ib-baseline-tests/$COMPARISON_REL/$COMPARISON_ARCH/$REAL_A
 
 # creation of results summary file
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
-cp $CMS_BOT_DIR/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
-if [ "X$CMSDIST_ONLY" == Xtrue ]; then
-  sed -i "s|https:\/\/github.com\/${PUB_USER}\/cmssw/\pull\/|https:\/\/github.com\/${PUB_USER}\/cmsdist\/pull\/|g" $WORKSPACE/renderPRTests.js
-fi
+sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js
 RESULTS_FILE=$WORKSPACE/testsResults.txt
 touch $RESULTS_FILE
 echo 'PR_NUMBER;'$PULL_REQUEST_NUMBER >> $RESULTS_FILE

@@ -5,7 +5,7 @@ getResultRow = function( resultsDict , resultsKey ){
 
   var column1Label = LABELS[ resultsKey ]
   var column2Label = LABELS2[ resultsKey ]
-  var linkURL = BASE_RESULTS_URL + 'PR-' + resultsDict[ PR_NUMBER_KEY ] + '/' + resultsDict[ BUILD_NUMBER_KEY ] + '/'+LOCATIONS[ resultsKey ]
+  var linkURL = LOCATIONS[ resultsKey ]
  
   var testResult = resultsDict[ resultsKey ]
   hadErrors = testResult == 'ERROR'
@@ -132,7 +132,7 @@ getHeader = function( resultsDict ){
   header.append( baselineSubtitle )
   var baselineLink = $( "<a>" ).text( "See baseline used for the comparisons" )
   baselineSubtitle.append( baselineLink )
-  baselineLink.attr( 'href' , 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-baseline-tests/' + resultsDict[ BASE_IB_KEY ] )
+  baselineLink.attr( 'href' , '/SDT/jenkins-artifacts/ib-baseline-tests/' + resultsDict[ BASE_IB_KEY ] )
 
   header.append( $( '<br>' ) )
 
@@ -193,9 +193,8 @@ DUPLICATE_DICT_RULES_KEY = 'DUPLICATE_DICT_RULES'
 MATERIAL_BUDGET_TESTS_KEY = 'MATERIAL_BUDGET'
 
 CLANG_COMPILATION_KEY = 'CLANG_COMPILATION_RESULTS'
-BASE_IB_URL = 'https://cmssdt.cern.ch/SDT/html/showIB.html'
-BASE_PR_URL = 'https://github.com/cms-sw/cmssw/pull/'
-BASE_RESULTS_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/'
+BASE_IB_URL = '/SDT/html/showIB.html'
+BASE_PR_URL = 'https://github.com/@REPOSITORY@/pull/'
 
 LABELS = {}
 LABELS[ CMSSWTOOLCONF_RESULTS_KEY ] = 'Externals compilation'
@@ -242,4 +241,4 @@ LOCATIONS[ CODE_RULES_TESTS_KEY ] = 'codeRules'
 LOCATIONS[ DUPLICATE_DICT_RULES_KEY ] = 'dupDict'
 LOCATIONS[ MATERIAL_BUDGET_TESTS_KEY ] = 'material-budget'
 
-BASE_COMPARISONS_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/baseLineComparisons/'
+BASE_COMPARISONS_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisons/'

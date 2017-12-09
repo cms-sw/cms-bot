@@ -19,6 +19,8 @@ set +x
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
+PUB_REPO="${PUB_USER}/cmsdist"
+if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
 GH_COMMITS=$(curl -s https://api.github.com/repos/${PUB_USER}/cmsdist/pulls/$CMSDIST_PR/commits)
 GH_JSON=$(curl -s https://api.github.com/repos/${PUB_USER}/cmsdist/pulls/$CMSDIST_PR)
@@ -136,7 +138,7 @@ if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
   echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
   # creation of results summary file, normally done in run-pr-tests, here just to let close the process
   cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
-  cp $CMS_BOT_DIR/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
+  sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js
   exit 0
 else
   echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE

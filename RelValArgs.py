@@ -17,7 +17,7 @@ RELVAL_KEYS = {"customiseWithTimeMemorySummary":{},
                "SLHC_WORKFLOWS":{},
               }
 THREADED_ROOT="CMSSW_9_[1-9]_ROOT6_X_.+"
-THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc[6-9]_amd64_gcc(5[3-9]|[6-9])[0-9]+|_THREADED_X|_DEVEL_X|_ROOT6_X"
+THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc[6-9]_amd64_gcc(5[3-9]|[6-9])[0-9]+|_THREADED_X|_DEVEL_X|_ROOT6_X|_ROOT612_X"
 RELVAL_KEYS["customiseWithTimeMemorySummary"][".+"] = "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"
 RELVAL_KEYS["PREFIX"]["CMSSW_([89]|[1-9][0-9]+)_.+"] = "--prefix '%s timeout --signal SIGTERM 7200 '" % monitor_script
 RELVAL_KEYS["PREFIX"]["CMSSW_[1-7]_.+"]              = "--prefix '%s timeout --signal SIGSEGV 7200 '" % monitor_script

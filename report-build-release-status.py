@@ -85,8 +85,8 @@ RELEASE_NOTES_ERROR_MSG='There was an error generating the release notes, please
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED = 'build-release-started'
 BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/"+JENKINS_PREFIX+"-artifacts/auto-build-release/%s-%s/%d'
-BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/"+JENKINS_PREFIX"+-artifacts/auto-upload-release/%s-%s/%d'
-BASE_CLEANUP_LOG_URL = 'https://cmssdt.cern.ch/SDT/"+JENKINS_PREFIX"+-artifacts/cleanup-auto-build/%s-%s/%d'
+BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/"+JENKINS_PREFIX+"-artifacts/auto-upload-release/%s-%s/%d'
+BASE_CLEANUP_LOG_URL = 'https://cmssdt.cern.ch/SDT/"+JENKINS_PREFIX+"-artifacts/cleanup-auto-build/%s-%s/%d'
 BASE_INSTALLATION_URL = 'https://cmssdt.cern.ch/SDT/%s-artifacts/deploy-release-afs/{rel_name}/{architecture}/{job_id}/' % JENKINS_PREFIX
 
 # -------------------------------------------------------------------------------

@@ -84,6 +84,7 @@ if __name__ == "__main__":
     gh = ghx
     if exists (join(SCRIPT_DIR,"repos",repo_name,"repo_config.py")):
       exec 'from repos.'+repo_name.replace("/",".")+' import repo_config'
+      if not repo_config.ADD_WEB_HOOK: continue
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       repo_name = repo_config.GH_REPO_FULLNAME
     print "Checking for repo ",repo_name

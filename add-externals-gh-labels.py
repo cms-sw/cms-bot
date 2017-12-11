@@ -92,6 +92,7 @@ if __name__ == "__main__":
       repo_data = rconf.split("/")[-4:-1]
       exec 'from '+".".join(repo_data)+' import categories, repo_config'
       print repo_config.GH_TOKEN, repo_config.GH_REPO_FULLNAME
+      if not repo_config.ADD_LABELS: continue
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       all_labels = COMMON_LABELS
       for lab in COMPARISON_LABELS:

@@ -181,6 +181,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
+  cmsdist_repo = (repo_name==GH_CMSDIST_REPO)
   official_repo = (repo_org==GH_CMSSW_ORGANIZATION)
   create_test_property = False
   packages = set([])
@@ -216,12 +217,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if pr.base.ref in RELEASE_BRANCH_CLOSED: mustClose = True
     # Process the changes for the given pull request so that we can determine the
     # signatures it requires.
-    if cmssw_repo:
-      if pr.base.ref=="master": signing_categories.add("code-checks")
+    if cmssw_repo or not cmsdist_repo:
+      if cmssw_repo and (pr.base.ref=="master"): signing_categories.add("code-checks")
       packages = sorted([x for x in set([cmssw_file2Package(repo_config, f)
                            for f in get_changed_files(repo, pr)])])
       print "First Package: ",packages[0]
-      updateMilestone(repo, issue, pr, dryRun)
+      if cmssw_repo: updateMilestone(repo, issue, pr, dryRun)
       create_test_property = True
     else:
       add_external_category = True

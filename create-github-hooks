@@ -82,7 +82,7 @@ if __name__ == "__main__":
   error = 0
   for repo_name in repos:
     gh = ghx
-    if exists (join(SCRIPT_DIR,"repos",repo_name.,"repo_config.py")):
+    if exists (join(SCRIPT_DIR,"repos",repo_name,"repo_config.py")):
       exec 'from repos.'+repo_name.replace("/",".")+' import repo_config'
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       repo_name = repo_config.GH_REPO_FULLNAME

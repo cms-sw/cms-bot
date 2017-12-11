@@ -10,4 +10,3 @@ JENKINS_SERVER="http://cmsjenkins03.cern.ch:8080/jenkins"
 IGNORE_ISSUES = {
   GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO : [12368],
 }
-def file2Package(filename): return "/".join(filename.split("/", 2)[0:2])

@@ -165,6 +165,12 @@ def get_backported_pr(msg):
     if re.match("^[1-9][0-9]*$",bp_num): return bp_num
   return ""
 
+def cmssw_file2Package(repo_config, filename):
+  try:
+    return repo_config.file2Package(filename)
+  except:
+    return "/".join(filename.split("/", 2)[0:2])
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   import yaml
   if (not force) and ignore_issue(repo_config, repo, issue): return
@@ -212,7 +218,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # signatures it requires.
     if cmssw_repo:
       if pr.base.ref=="master": signing_categories.add("code-checks")
-      packages = sorted([x for x in set([repo_config.file2Package(f)
+      packages = sorted([x for x in set([cmssw_file2Package(repo_config, f)
                            for f in get_changed_files(repo, pr)])])
       print "First Package: ",packages[0]
       updateMilestone(repo, issue, pr, dryRun)

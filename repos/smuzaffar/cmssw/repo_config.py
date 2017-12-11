@@ -9,4 +9,3 @@ CREAT_EXTERNAL_ISSUE=False
 JENKINS_SERVER="http://cmsjenkins05.cern.ch:8080/cms-jenkins"
 GITHUB_WEBHOOK_TOKEN='U2FsdGVkX1+GEHdp/Cmu73+ctvrzSGXc9OvL+8bZyjOe6ZPkqr/GIPgpJHiEp+hR'
 IGNORE_ISSUES = [10]
-def file2Package(filename): return GH_REPO_ORGANIZATION

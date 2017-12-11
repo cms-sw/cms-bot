@@ -90,8 +90,8 @@ if __name__ == "__main__":
     from glob import glob
     for rconf in glob(join(SCRIPT_DIR,"repos","*","*","repo_config.py")):
       repo_data = rconf.split("/")[-4:-1]
-      exec 'from '+".".join(repo_data).replace("-","_")+' import categories, repo_config'
-      print repo_config.GH_TOKEN
+      exec 'from '+".".join(repo_data)+' import categories, repo_config'
+      print repo_config.GH_TOKEN, repo_config.GH_REPO_FULLNAME
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       all_labels = COMMON_LABELS
       for lab in COMPARISON_LABELS:
@@ -99,5 +99,5 @@ if __name__ == "__main__":
       for cat in categories.COMMON_CATEGORIES+categories.CMSSW_CATEGORIES.keys():
         for lab in LABEL_TYPES:
           all_labels[cat+"-"+lab]=LABEL_TYPES[lab]
-      setRepoLabels (gh, "/".join(repo_data[-2:]), all_labels, opts.dryRun)
+      setRepoLabels (gh, repo_config.GH_REPO_FULLNAME, all_labels, opts.dryRun)
 

@@ -4,6 +4,7 @@ from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from categories_map import CMSSW_CATEGORIES
+from repo_config import CMSBUILD_USER
 
 authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
@@ -54,7 +55,6 @@ CMSSW_L2 = {
   "rekovic": ["l1"],
   "thomreis": ["l1"],
   "nsmith-": ["l1"],  
-  "cmsbuild": ["tests", "code-checks" ],
   "lveldere": ["fastsim"],
   "ssekmen": ["fastsim"],
   "perrozzi": ["generators"],
@@ -73,7 +73,8 @@ CMSSW_L2 = {
   "mrodozov" : ["externals"],
   "gudrutis" : ["externals"],
   "lpernie" : ["alca"],
-  "jfernan2": ["dqm"]
+  "jfernan2": ["dqm"],
+  CMSBUILD_USER: ["tests", "code-checks" ],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + CMSSW_L2.keys())

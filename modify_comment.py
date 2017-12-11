@@ -24,7 +24,7 @@ if __name__ == "__main__":
   if not opts.msgtype:  parser.error("Missing message type")
   if not opts.msgtype in valid_types:  parser.error("Invalid message type "+opts.msgtype)
   
-  repo_dir = join(SCRIPT_DIR,'repos',opts.repository)
+  repo_dir = join(SCRIPT_DIR,'repos',opts.repository.replace("-","_"))
   if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
   import repo_config
   from process_pr import modify_comment, find_last_comment

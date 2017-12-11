@@ -17,7 +17,7 @@ opts, args = parser.parse_args()
 
 if len(args) != 0: parser.error("Too many/few arguments")
 
-repo_dir = join(SCRIPT_DIR,'repos',opts.repository)
+repo_dir = join(SCRIPT_DIR,'repos',opts.repository.replace("-","_"))
 if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
 import repo_config
 from process_pr import get_backported_pr

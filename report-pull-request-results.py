@@ -41,7 +41,7 @@ parser.add_option("--report-file", action="store", type="string", dest="report_f
 parser.add_option("--report-pr", action="store", type="int", dest="report_pr_number", help="The number of the pull request to use for report", default=0)
 
 (options, args) = parser.parse_args()
-repo_dir = join(SCRIPT_DIR,'repos',options.custom_repo)
+repo_dir = join(SCRIPT_DIR,'repos',options.custom_repo.replace("-","_"))
 if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
 import repo_config
 if options.report_pr_number==0: options.report_pr_number = options.pr_number

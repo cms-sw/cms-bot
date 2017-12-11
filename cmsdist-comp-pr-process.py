@@ -65,7 +65,7 @@ if __name__ == "__main__":
     parser.error("Too many/few arguments")
   prId = int(args[0])
   
-  repo_dir = join(SCRIPT_DIR,'repos',"cms-sw/cmsdist")
+  repo_dir = join(SCRIPT_DIR,'repos',"cms-sw/cmsdist".replace("-","_"))
   if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
   import repo_config
 

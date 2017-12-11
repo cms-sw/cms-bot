@@ -89,8 +89,8 @@ if __name__ == "__main__":
   if opts.users:
     from glob import glob
     for rconf in glob(join(SCRIPT_DIR,"repos","*","*","repo_config.py")):
-      repo_data = join(rconf.split("/")[-4:-1])
-      exec 'from '+".".join(repo_data)+' import categories, repo_config'
+      repo_data = rconf.split("/")[-4:-1]
+      exec 'from '+".".join(repo_data).replace("-","_")+' import categories, repo_config'
       print repo_config.GH_TOKEN
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       all_labels = COMMON_LABELS

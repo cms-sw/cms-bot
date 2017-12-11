@@ -1,6 +1,7 @@
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from repo_config import GH_REPO_ORGANIZATION as gh_user
+from categories_map import CMSSW_CATEGORIES
 
 CMSSW_L1 = []
 APPROVE_BUILD_RELEASE =  list(set([  ] + CMSSW_L1))
@@ -20,12 +21,7 @@ COMPARISON_MISSING_MAP = []
 #github_user:[list of categories]
 CMSSW_L2 = {
   "cmsbot": ["tests", "code-checks" ],
-  gh_user : [gh_user],
-}
-
-#Categories:[list of packages]
-CMSSW_CATEGORIES={
-  gh_user: [gh_user],
+  gh_user : CMSSW_CATEGORIES.keys(),
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + CMSSW_L2.keys())

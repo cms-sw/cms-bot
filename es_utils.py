@@ -2,27 +2,33 @@
 import sys,urllib2 , json
 from datetime import datetime
 from os.path import exists
+from os import getenv
 #Function to store data in elasticsearch
 
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)
 
-def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secrets/cmssdt-es-secret"):
-  index = 'cmssdt-' + index
-  for psfile in [passwd_file, "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret"]:
+def es_get_passwd(passwd_file=None):
+  for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/github_hook_secret_cmsbot", "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret"]:
+    if not psfile: continue
     if exists(psfile):
       passwd_file=psfile
       break
   try:
-    passw=open(passwd_file,'r').read().strip()
+    return open(passwd_file,'r').read().strip()
   except Exception as e:
     print "Couldn't read the secrets file" , str(e)
-    return False
+    return ""
+
+def send_payload_new(index,document,id,payload,es_server,passwd_file=None):
+  index = 'cmssdt-' + index
+  passwd=es_get_passwd(passwd_file)
+  if not passwd: return False
 
   url = "https://%s/%s/%s/" % (es_server,index,document)
   if id: url = url+id
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-  passman.add_password(None,url, 'cmssdt', passw)
+  passman.add_password(None,url, 'cmssdt', passwd)
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
   opener = urllib2.build_opener(auth_handler)
   try:
@@ -34,16 +40,14 @@ def send_payload_new(index,document,id,payload,es_server,passwd_file="/data/secr
   print "OK",index,document
   return True
 
-def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  try:
-    passw=open(passwd_file,'r').read().strip()
-  except Exception as e:
-    print "Couldn't read the secrets file" , str(e)
+def send_payload_old(index,document,id,payload,passwd_file=None):
+  passwd=es_get_passwd(passwd_file)
+  if not passwd: return False
 
   url = "http://%s/%s/%s/" % ('cmses-master02.cern.ch:9200',index,document)
   if id: url = url+id
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-  passman.add_password(None,url, 'elasticsearch', passw)
+  passman.add_password(None,url, 'elasticsearch', passwd)
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
   opener = urllib2.build_opener(auth_handler)
   try:
@@ -55,9 +59,28 @@ def send_payload_old(index,document,id,payload,passwd_file="/data/secrets/github
   print "OK:",index,document
   return True
 
+def delete_hit(hit,passwd_file=None):
+  passwd=es_get_passwd(passwd_file)
+  if not passwd: return False
+
+  url = "http://%s/%s/%s/%s" % ('cmses-master02.cern.ch:9200',hit["_index"], hit["_type"], hit["_id"])
+  passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+  passman.add_password(None,url, 'elasticsearch', passwd)
+  auth_handler = urllib2.HTTPBasicAuthHandler(passman)
+  opener = urllib2.build_opener(auth_handler)
+  try:
+    urllib2.install_opener(opener)
+    request = urllib2.Request(url)
+    request.get_method = lambda: 'DELETE'
+    content = urllib2.urlopen(request)
+  except Exception as e:
+    print "ERROR: ",url, str(e)
+    return False
+  print "DELETE:",hit["_id"]
+  return True
+
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
-  #send_payload_new(index,document,id,payload,'es-cmssdt5.cern.ch:9203')
   return send_payload_old(index,document,id,payload,passwd_file) 
 
 def get_payload(url,query):

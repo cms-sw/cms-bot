@@ -13,15 +13,15 @@ if __name__ == "__main__":
   parser.add_option("-r", "--repository",  dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.",  type=str, default="cms-sw/cmssw")
   parser.add_option("-p", "--pullrequest", dest="pr",         help="Github Pull Request Number e.g. 10500",     type="int", metavar="N")
   parser.add_option("-m", "--message",     dest="msg",        help="Message to be added for Github Pull Request", type="str")
+  parser.add_option("-R", "--report-file", dest="report_file",help="Message from the file to be added for Github Pull Request", type="str")
   opts, args = parser.parse_args()
 
-  if not opts.pr:
-    parser.error("Missing pull request number : -p|--pullrequest <number>")
-  if not opts.msg:
-    parser.error("Missing pull request message: -m|--message <message>")
-
+  if not opts.pr: parser.error("Missing pull request number : -p|--pullrequest <number>")
   try:
-    msg = re.sub("@N@","\n",opts.msg)
+    msg = ""
+    if opts.msg: msg = re.sub("@N@","\n",opts.msg)
+    elif opts.report_file: msg = open(opts.report_file).read()
+    else: parser.error("Missing pull request message: -m|--message <message> OR -R|--report-file <file-path>")
     if opts.dryRun:
       print "Addeding Comments:",msg
     else:
@@ -33,6 +33,6 @@ if __name__ == "__main__":
       pr   = repo.get_issue(opts.pr)
       pr.create_comment(msg)
   except Exception as e:
-    print "Failed to add comment: ",e.message
+    print "Failed to add comment: ",e
     exit(1)
 

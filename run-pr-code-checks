@@ -1,18 +1,16 @@
 #!/bin/bash -ex
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
-
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|jenkins/*$||;s|.*/||')
 PULL_REQUEST=$1
 export USER_CODE_CHECKS=$2
 BUILD_NUMBER=$3
 DRY_RUN=$4
 REPOSITORY=$5
-REPO_USER=""
 if [ "X${REPOSITORY}" = "X" ] ; then
   REPOSITORY="cms-sw/cmssw"
-else
-  REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
 fi
+REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
 if [ "$BUILD_NUMBER" = "" ] ; then BUILD_NUMBER=$(date +%s); fi
 NUM_PROC=$(getconf _NPROCESSORS_ONLN)
 case $(hostname) in lxplus* ) let NUM_PROC=$NUM_PROC/2 ;; esac
@@ -30,11 +28,7 @@ if [ -s $CMSSW_BASE/code-checks-files.txt ] ; then
   git clone --depth 1 git@github.com:cms-sw/cmssw-config
   mv config/SCRAM config/SCRAM.orig
   mv cmssw-config/SCRAM config/SCRAM
-  if [ "X${REPO_USER}" = "X" ] ; then
-    git cms-checkout-topic -u ${PULL_REQUEST} 2>&1 | tee cms-checkout-topic.log
-  else
-    /cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-checkout-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee cms-checkout-topic.log
-  fi
+  /cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-checkout-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee cms-checkout-topic.log
   scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/code-checks-files.txt"  2>&1 | tee code-checks.log
   rm -rf ${CMSSW_BASE}/upload
   mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
@@ -48,14 +42,14 @@ else
 fi
 mv $CMSSW_BASE/*.txt ${CMSSW_BASE}/upload/
 source $CMS_BOT_DIR/jenkins-artifacts
-send_jenkins_artifacts ${CMSSW_BASE}/upload pr-code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}
+send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
 RES="+code-checks"
 HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/git-diff.patch ] ; then
   RES="-code-checks"
   HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying a patch in https://cmssdt.cern.ch/SDT/code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch"
-  HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch | patch -p1\`"
+  HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch | patch -p1\`"
   HOW_TO_RUN="${HOW_TO_RUN}@N@@N@You can run \`scram build code-checks\` to apply code checks directly"
 fi
-MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}"
+MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"
 ${CMS_BOT_DIR}/comment-gh-pr $DRY_RUN -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"

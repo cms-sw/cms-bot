@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
-JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|jenkins/*$||;s|.*/||')
+export JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|jenkins/*$||;s|.*/||')
 PULL_REQUEST=$1
 export USER_CODE_CHECKS=$2
 BUILD_NUMBER=$3

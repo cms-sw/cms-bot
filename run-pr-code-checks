@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
-export JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|jenkins/*$||;s|.*/||')
+export JENKINS_PREFIX_STR=$(echo "${JENKINS_URL}" | sed 's|jenkins/*$||;s|.*/||')
 PULL_REQUEST=$1
 export USER_CODE_CHECKS=$2
 BUILD_NUMBER=$3
@@ -48,8 +48,8 @@ HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/git-diff.patch ] ; then
   RES="-code-checks"
   HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying a patch in https://cmssdt.cern.ch/SDT/code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch"
-  HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch | patch -p1\`"
+  HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch | patch -p1\`"
   HOW_TO_RUN="${HOW_TO_RUN}@N@@N@You can run \`scram build code-checks\` to apply code checks directly"
 fi
-MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"
+MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"
 ${CMS_BOT_DIR}/comment-gh-pr $DRY_RUN -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"

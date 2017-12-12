@@ -1,4 +1,4 @@
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, CMSSW_DEVEL_BRANCH
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG
@@ -181,7 +181,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
-  cmsdist_repo = (repo_name==GH_CMSDIST_REPO)
+  external_repo = len([e for e in EXTERNAL_REPOS+CMSDIST_REPOS if (repository==e) or (repo_org==e)])>0
   official_repo = (repo_org==GH_CMSSW_ORGANIZATION)
   create_test_property = False
   packages = set([])
@@ -217,7 +217,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if pr.base.ref in RELEASE_BRANCH_CLOSED: mustClose = True
     # Process the changes for the given pull request so that we can determine the
     # signatures it requires.
-    if cmssw_repo or not cmsdist_repo:
+    if cmssw_repo or not external_repo:
       if cmssw_repo and (pr.base.ref=="master"): signing_categories.add("code-checks")
       packages = sorted([x for x in set([cmssw_file2Package(repo_config, f)
                            for f in get_changed_files(repo, pr)])])
@@ -228,7 +228,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       add_external_category = True
       packages = set (["externals/"+repository])
       if repo_name != GH_CMSDIST_REPO:
-        if repo_name != "cms-bot": create_external_issue = repo_config.CREAT_EXTERNAL_ISSUE
+        if repo_name != "cms-bot": create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
       else:
         create_test_property = True
         if not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref):

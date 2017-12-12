@@ -11,7 +11,7 @@ git merge CHANGES_${PULL_REQUEST}
 mkdir $WORKSPACE/upload
 ERR=0
 REPO_DIR=$CMS_BOT_DIR/repos/$(echo $REPOSITORY | tr '-' '_')
-COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r $R{EPOSITORY} ${PULL_REQUEST})
+COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
 $CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
   -t JENKINS_TEST_URL \
   -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true

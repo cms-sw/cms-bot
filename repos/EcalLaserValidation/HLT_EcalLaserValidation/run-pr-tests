@@ -1,9 +1,3 @@
 #!/bin/bash -ex
-REPOSITORY=$1
-PR=$2
-git clone https://github.com/${REPOSITORY} repo
-cd repo
-git fetch origin pull/$PR/head:CHANGES_${PR}
-git merge CHANGES_${PR}
 ./steps.sh
 

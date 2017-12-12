@@ -1,4 +1,9 @@
 #!/bin/bash -ex
-echo OK
-echo -e "+1\n\nAll OK" > $WORKSPACE/result.txt
+REPOSITORY=$1
+PR=$2
+git clone https://github.com/${REPOSITORY} repo
+cd repo
+git fetch origin pull/$PR/head:CHANGES_${PR}
+git merge CHANGES_${PR}
+./steps.sh
 

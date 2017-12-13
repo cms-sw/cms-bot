@@ -2,7 +2,7 @@
 ERR=0
 ./steps.sh || ERR=1
 CMSSW_DIR=$(ls -d CMSSW_*)
-if [ "X${CMSSW_DIR}" = "X" ] ; then exit 0; fi
+if [ "X${CMSSW_DIR}" = "X" ] ; then exit $ERR; fi
 mv ${CMSSW_DIR}/src ${WORKSPACE}/upload/${CMSSW_DIR}
 find ${WORKSPACE}/upload/${CMSSW_DIR} -name '*.root' -type f | xargs --no-run-if-empty rm -f
 JOB_SUMMARY_LOG="${WORKSPACE}/summary.txt"

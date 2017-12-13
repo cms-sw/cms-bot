@@ -30,7 +30,9 @@ else
   else
     echo -e "-1\nTested at: ${COMMIT}\n\nJenkins test failed\n" >> ${RESULT_LOG}
   fi
-  send_jenkins_artifacts ${WORKSPACE}/upload/ ${JOB_NAME}/${PULL_REQUEST}/${BUILD_NUMBER}/
+  UPDIR="${JOB_NAME}/${PULL_REQUEST}/${BUILD_NUMBER}"
+  echo -e "Test logs are available at:\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/${UPDIR}" >> ${RESULT_LOG}
+  send_jenkins_artifacts ${WORKSPACE}/upload/ ${UPDIR}/
 fi
 
 JOB_RESULT_LOG="${WORKSPACE}/results.txt"

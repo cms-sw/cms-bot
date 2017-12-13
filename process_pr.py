@@ -6,7 +6,7 @@ from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from sys import exit, argv
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, exists
 from github import UnknownObjectException
 from github_utils import get_token, edit_pr, api_rate_limits
 from socket import setdefaulttimeout
@@ -36,6 +36,16 @@ TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+wo
 REGEX_TEST_REQ = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
+
+#Read a yaml file
+def read_repo_file(repo_config, repo_file, default=None):
+  import yaml
+  file_path = join(repo_config.CONFIG_DIR, repo_file)
+  contents = default
+  if exists(file_path):
+    contents = (yaml.load(file(file_path)))
+    if not contents: contents = default
+  return contents
 
 #
 # creates a properties file to trigger the test of the pull request
@@ -172,7 +182,6 @@ def cmssw_file2Package(repo_config, filename):
     return "/".join(filename.split("/", 2)[0:2])
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
-  import yaml
   if (not force) and ignore_issue(repo_config, repo, issue): return
   api_rate_limits(gh)
   prId = issue.number
@@ -270,8 +279,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         signing_categories.add("new-package")
 
     # Add watchers.yaml information to the WATCHERS dict.
-    WATCHERS = (yaml.load(file(join(repo_config.CONFIG_DIR, "watchers.yaml"))))
-    if not WATCHERS: WATCHERS={}
+    WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
     # Given the packages check if there are additional developers watching one or more.
     author = pr.user.login
     watchers = set([user for package in packages
@@ -279,8 +287,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          for regexp in watched_regexp
                          if re.match("^" + regexp + ".*", package) and user != author])
     #Handle category watchers
-    catWatchers = (yaml.load(file(join(repo_config.CONFIG_DIR, "category-watchers.yaml"))))
-    if not catWatchers: catWatchers={}
+    catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
     for user, cats in catWatchers.items():
       for cat in cats:
         if cat in signing_categories:
@@ -288,8 +295,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           watchers.add(user)
 
     # Handle watchers
-    watchingGroups = yaml.load(file(join(repo_config.CONFIG_DIR, "groups.yaml")))
-    if not watchingGroups: watchingGroups={}
+    watchingGroups = read_repo_file(repo_config, "groups.yaml", {})
     for watcher in [x for x in watchers]:
       if not watcher in watchingGroups: continue
       watchers.remove(watcher)
@@ -699,8 +705,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     return
 
   # get release managers
-  SUPER_USERS = (yaml.load(file(join(repo_config.CONFIG_DIR, "super-users.yaml"))))
-  if not SUPER_USERS:SUPER_USERS=[]
+  SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

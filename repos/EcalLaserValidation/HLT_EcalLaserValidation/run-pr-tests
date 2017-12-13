@@ -5,8 +5,10 @@ if [ "X${CMSSW_DIR}" = "X" ] ; then exit 0; fi
 mv ${CMSSW_DIR}/src ${WORKSPACE}/upload/${CMSSW_DIR}
 rm -rf ${WORKSPACE}/upload/${CMSSW_DIR}/*.root || true
 JOB_SUMMARY_LOG="${WORKSPACE}/summary.txt"
-touch $JOB_SUMMARY_LOG
+echo "## Differences found for various paths" > ${JOB_SUMMARY_LOG}
 for path in $(find ${WORKSPACE}/upload/${CMSSW_DIR} -name '*_diff.log' -type f | sed 's|_diff.log||') ; do
-  echo ">> Differences for ${path}" >> ${JOB_SUMMARY_LOG}
+  echo "### $path" >> ${JOB_SUMMARY_LOG}
+  echo '```' >> ${JOB_SUMMARY_LOG}
   cat ${path}_diff.log >> ${JOB_SUMMARY_LOG}
+  echo '```' >> ${JOB_SUMMARY_LOG}
 done

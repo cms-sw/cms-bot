@@ -10,4 +10,3 @@ for path in $(find ${WORKSPACE}/upload/${CMSSW_DIR} -name '*_diff.log' -type f |
   echo ">> Differences for ${path}" >> ${JOB_SUMMARY_LOG}
   cat ${path}_diff.log >> ${JOB_SUMMARY_LOG}
 done
-

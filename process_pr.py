@@ -810,6 +810,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   # Add a Warning if the pull request was done against a patch branch
   size_msg = "This PR increases repository size by %sK (%s -> %s)\n" % (size_diff,repo_size,pr_size)
+  print size_msg
   if cmssw_repo:
     warning_msg = ''
     if 'patchX' in pr.base.ref:

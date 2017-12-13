@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from os.path import expanduser, dirname, join, exists
+from os.path import expanduser, dirname, join, exists, abspath
 from optparse import OptionParser
 from commands import getstatusoutput as run_cmd
 from github import Github
@@ -8,11 +8,14 @@ import re
 import requests
 import json
 import random
-import os
+import os, sys
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 setdefaulttimeout(120)
-
+JENKINS_PREFIX="jenkins"
+try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
+except: JENKINS_PREFIX="jenkins"
+SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 #---- Parser Options
 #-----------------------------------------------------------------------------------
@@ -38,6 +41,9 @@ parser.add_option("--report-file", action="store", type="string", dest="report_f
 parser.add_option("--report-pr", action="store", type="int", dest="report_pr_number", help="The number of the pull request to use for report", default=0)
 
 (options, args) = parser.parse_args()
+repo_dir = join(SCRIPT_DIR,'repos',options.custom_repo.replace("-","_"))
+if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+import repo_config
 if options.report_pr_number==0: options.report_pr_number = options.pr_number
 
 #
@@ -201,7 +207,7 @@ def get_recent_merges_message():
       git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
       #Ignore the first line, the first line is the merge commit that comes from git-cms-merge-topic
       for l in lines[ 1: ]:
-        commit_url = COMMITS_BASE_URL.format( hash=l.strip() )
+        commit_url = COMMITS_BASE_URL.format( repo=options.custom_repo, hash=l.strip() )
         message += commit_url + '\n'
 
       message += 'You can see more details here:\n'
@@ -595,10 +601,10 @@ GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of t
 
 MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
 MATRIX_WORKFLOW_STEP_NA = 'N/A'
-COMMITS_BASE_URL='https://github.com/cms-sw/cmssw/commit/{hash}'
-GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits'
-GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result'
-JENKINS_LOG_URL='https://cmssdt.cern.ch/jenkins/job/{job_name}/{job_id}/console'
+COMMITS_BASE_URL='https://github.com/{repo}/commit/{hash}'
+GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits' % JENKINS_PREFIX
+GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result' % JENKINS_PREFIX
+JENKINS_LOG_URL='https://cmssdt.cern.ch/%s/job/{job_name}/{job_id}/console' % JENKINS_PREFIX
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
 #---------------------------------------------------------------------------------------
@@ -617,7 +623,7 @@ if (ACTION == 'prBot.py'):
 
 print 'you chose the action %s' % ACTION
 
-TOKEN = open(expanduser("~/.github-token")).read().strip()
+TOKEN = open(expanduser(repo_config.GH_TOKEN)).read().strip()
 github = Github( login_or_token = TOKEN )
 api_rate_limits(github)
 
@@ -636,7 +642,7 @@ else:
 destination_repo = github.get_repo( options.custom_repo )
 COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/'+destination_repo.full_name+'/statuses/%s'
 
-tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (options.report_pr_number,pr_job_id)
+tests_results_url = 'https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (JENKINS_PREFIX, options.report_pr_number,pr_job_id)
 
 if (options.cmsdist_pr > -1):
   pr_number = options.cmsdist_pr
@@ -660,7 +666,7 @@ elif ( ACTION == 'TESTS_RUNNING' ):
 elif ( ACTION == 'RELEASE_NOT_FOUND' ):
   release_not_found_for_tests(destination_repo, tests_results_url)
 elif ( ACTION == 'EXTERNALS_PR_READY' ):
-  tests_results_url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/%d' % (pr_job_id)
+  tests_results_url = 'https://cmssdt.cern.ch/SDT/%s-artifacts/cms-externals-pr-integration/%d' % (JENKINS_PREFIX, pr_job_id)
   send_externals_pr_finished_message( destination_repo , pr_number , tests_results_url )
 elif ( ACTION == 'IGPROF_READY' ):
   send_igprof_ready_message( destination_repo , pr_number , tests_results_url )

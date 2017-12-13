@@ -76,37 +76,28 @@ mkdir -p $WORKSPACE/results/files
 cd $WORKSPACE/results
 echo $WORKFLOWS_TO_COMPARE
 
+echo "Downloading Ref: `date`"
+get_jenkins_artifacts ${BASELINE_DIR}/    ${JR_COMP_DIR}/$RELEASE_FORMAT/ || true
+echo "Downloading PR: `date`"
+get_jenkins_artifacts ${PR_BASELINE_DIR}/ ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/ || true
+echo "Done Downloading `date`"
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
-
-  echo "####################################### at `date`"
-  echo "downloading: $WF"
 
   WF_DIR=`echo $WF | cut -d "/" -f1`
   WF_NUMBER=`echo $WF | cut -d'_' -f1`
   WF_FILE=$(basename $WF)
 
-  get_jenkins_artifacts ${BASELINE_DIR}/${WF_DIR}/    ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF_DIR}/ || true
-  get_jenkins_artifacts ${PR_BASELINE_DIR}/${WF_DIR}/ ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/${WF_DIR}/ || true
-
-  for dir in "${JR_COMP_DIR}/$RELEASE_FORMAT/${WF_DIR}" "${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/${WF_DIR}" ; do
-    [ -d $dir ] || continue
-    for das_log in $(find ${dir} -name 'step1_dasquery.log') ; do
-      grep '/store/' $das_log > ${das_log}.new || true
-      mv ${das_log}.new $das_log
-    done
-  done
-
   mkdir -p $WORKSPACE/results/files/$WF_DIR
-  ln ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
+  ln -s ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
 
   if [ -f ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log ] ; then
-    ln ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log
+    grep '/store/' ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log || true
   fi
   if [ -f ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF ] ; then
-    ln ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
+    ln -s ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
   fi
   if [ -f ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF_DIR/step1_dasquery.log ] ; then
-    ln ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF_DIR/step1_dasquery.log $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-step1_dasquery.log
+    grep '/store/' ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-step1_dasquery.log || true
   fi
 
   # check that the step1_dasquery.log files are correct.

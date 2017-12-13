@@ -33,26 +33,23 @@ if __name__ == "__main__":
   arch = environ["SCRAM_ARCH"]
   cmssw_base = environ["CMSSW_BASE"]
   logger=LogUpdater(dirIn=cmssw_base)
-  
-  if cmssw_ver.find('_XXXCLANG_') is not -1:
-    p=Popen("python %s/rv_scheduler/prepareSteps.py -l %s" % (SCRIPT_DIR, opts.workflow),shell=True)
-    e=waitpid(p.pid,0)[1]
-    if e: exit(e)
-    p=Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver.rsplit('_',1)[0]), shell=True)
-    e=waitpid(p.pid,0)[1]
-    system("touch "+cmssw_base+"/done."+opts.jobid)
-    if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
-    exit(e)
-  
+
   if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$",cmssw_ver):
     p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
     if e: exit(e)
-    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 175 -m 90 -o dynamic -t avg" % (cmssw_base,SCRIPT_DIR), shell=True)
+
+    p = None
+    if cmssw_ver.find('_CLANG_') is not -1:
+      p = Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver.rsplit('_',1)[0]), shell=True)
+    else:
+      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 175 -m 90 -o dynamic -t avg" % (cmssw_base,SCRIPT_DIR), shell=True)
+
     e=waitpid(p.pid,0)[1]
     system("touch "+cmssw_base+"/done."+opts.jobid)
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
     exit(e)
+  
   if isThreaded(cmssw_ver,arch):
     print "Threaded IB Found"
     thrds=int(MachineMemoryGB/4.5)

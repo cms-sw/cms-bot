@@ -1,7 +1,6 @@
 #!/bin/sh -ex
 TARGET=$1
-WORKER_USER=${2-cmsbuild}
-WORKER_DIR=${3-/build1/cmsbuild}
+WORKER_USER=$(echo $TARGET | sed 's|@.*||')
 SCRIPT_DIR=`dirname $0`
 set +x
 JENKINS_NODE=$(grep "${TARGET}" ${HOME}/nodes/*/config.xml | sed 's|/config.xml:.*||;s|.*/||' | tail -1)
@@ -16,13 +15,13 @@ KPRINCIPAL=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)@C
 kinit ${KPRINCIPAL} -k -t ${KTAB}
 SSH_OPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp
-ssh -n $SSH_OPTS $TARGET mkdir -p $WORKER_DIR
-ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/cmsos
-ssh -n $SSH_OPTS $TARGET rm -f $WORKER_DIR/slave.jar
-scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKER_DIR/slave.jar
-scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKER_DIR/cmsos
+ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/workspace
+ssh -n $SSH_OPTS $TARGET rm -f $WORKSPACE/cmsos
+ssh -n $SSH_OPTS $TARGET rm -f $WORKSPACE/slave.jar
+scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar
+scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
 HOST_ARCH=`ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1`
-HOST_CMS_ARCH=`ssh -n $SSH_OPTS $TARGET sh $WORKER_DIR/cmsos`
+HOST_CMS_ARCH=`ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos`
 DOCKER=`ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true`
 if [ "X${DOCKER}" != "X" ] ; then DOCKER="docker" ; fi
 WORKER_JENKINS_NAME=`echo $TARGET | sed s'|.*@||;s|\..*||'`
@@ -34,4 +33,4 @@ esac
 if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then
   java -jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/${JENKINS_PREFIX}/ -remoting build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
 fi
-ssh $SSH_OPTS $TARGET java -jar $WORKER_DIR/slave.jar -jar-cache $WORKSPACE/tmp
+ssh $SSH_OPTS $TARGET java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp

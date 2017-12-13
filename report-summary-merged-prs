@@ -10,10 +10,11 @@ from os.path import basename, dirname, exists, join, expanduser
 from glob import glob
 from github import Github
 from github_utils import prs2relnotes, get_merge_prs, save_prs_cache, read_prs_cache
-from cms_static import CMSDIST_REPO_NAME,CMSSW_REPO_NAME
+from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
+CMSSW_REPO_NAME=join(GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO)
 
 #-----------------------------------------------------------------------------------
 #---- Parser Options

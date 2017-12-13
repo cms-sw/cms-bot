@@ -16,13 +16,18 @@ function Jenkins_GetCPU ()
 }
 
 set +x
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
+if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
+PUB_REPO="${PUB_USER}/cmsdist"
+if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
-GH_COMMITS=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR/commits)
-GH_JSON=$(curl -s https://api.github.com/repos/cms-sw/cmsdist/pulls/$CMSDIST_PR)
+GH_COMMITS=$(curl -s https://api.github.com/repos/${PUB_USER}/cmsdist/pulls/$CMSDIST_PR/commits)
+GH_JSON=$(curl -s https://api.github.com/repos/${PUB_USER}/cmsdist/pulls/$CMSDIST_PR)
 TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
 TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
 CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
-CMSDIST_COMMITS=$($CMS_BOT_DIR/process-pull-request -c -r cms-sw/cmsdist $CMSDIST_PR)
+CMSDIST_COMMITS=$($CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmsdist $CMSDIST_PR)
 set -x
 echo CMS_WEEKLY_REPO=$CMS_WEEKLY_REPO
 echo TEST_USER=$TEST_USER
@@ -74,14 +79,13 @@ done
 [ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
 
 BUILD_DIR="testBuildDir"
-export PUB_REPO="cms-sw/cmsdist"
 
-$CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $CMSDIST_PR || true
+$CMS_BOT_DIR/modify_comment.py -r ${PUB_USER}/cmsdist -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console" $CMSDIST_PR || true
 # If a CMSSW PR is also being tested update the comment on its page too
 if [ "X$PULL_REQUEST" != X ]; then
-  $CMS_BOT_DIR/modify_comment.py -r cms-sw/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST || true
+  $CMS_BOT_DIR/modify_comment.py -r ${PUB_USER}/cmssw -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console" $PULL_REQUEST || true
 fi
-git clone git@github.com:cms-sw/cmsdist $WORKSPACE/CMSDIST -b $CMSDIST_BRANCH
+git clone git@github.com:${PUB_USER}/cmsdist $WORKSPACE/CMSDIST -b $CMSDIST_BRANCH
 git clone git@github.com:cms-sw/pkgtools $WORKSPACE/PKGTOOLS -b $PKGTOOLS_BRANCH
 
 cd $WORKSPACE/CMSDIST
@@ -89,7 +93,7 @@ git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
 # Check which packages the PR changes
 PKGS=
 for c in $CMSDIST_COMMITS ; do
-  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|') ; do
+  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|' | grep -v '^cmssw-toolfile' | grep -v '^cmssw-patch') ; do
     [ -f $WORKSPACE/CMSDIST/$p.spec ] || continue
     PKGS="$PKGS $p"
   done
@@ -100,7 +104,7 @@ export CMSDIST_COMMIT=$(echo $CMSDIST_COMMITS | sed 's|.* ||')
 cd $WORKSPACE
 
 # Notify github that the script will start testing now
-$CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
+$CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_USER/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
 if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $CMS_BOT_DIR/config.map | grep "RELEASE_QUEUE=$CMSSW_CYCLE;" | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
   DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $CMS_BOT_DIR/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
@@ -123,9 +127,9 @@ TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
 GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
 if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
-  $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --repo $PUB_REPO --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
+  $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --report-pr $CMSDIST_PR --repo ${PUB_USER}/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
   if [ "X$PULL_REQUEST" != X ]; then
-    $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --repo cms-sw/cmssw --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
+    $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --report-pr $CMSDIST_PR  --repo ${PUB_USER}/cmssw --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
   fi
   echo 'PR_NUMBER;'$CMSDIST_PR >> $RESULTS_FILE
   echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
@@ -134,7 +138,7 @@ if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
   echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
   # creation of results summary file, normally done in run-pr-tests, here just to let close the process
   cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
-  cp $CMS_BOT_DIR/templates/js/renderPRTests.js $WORKSPACE/renderPRTests.js
+  sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js
   exit 0
 else
   echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE

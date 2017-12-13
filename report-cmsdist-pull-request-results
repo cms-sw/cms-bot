@@ -7,7 +7,10 @@ import requests
 import json
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
-
+from os import environ
+JENKINS_PREFIX="jenkins"
+try:    JENKINS_PREFIX=environ['JENKINS_URL'].strip("/").split("/")[-1]
+except: JENKINS_PREFIX="jenkins"
 #
 # Posts a message in the github issue that triggered the build
 # The structure of the message depends on the option used
@@ -28,8 +31,8 @@ CMSDIST_COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/cms-sw/cmsdist/st
 COMMIT_STATES_DESCRIPTION = { POST_TESTS_OK : [ 'success' , 'Tests OK' ],
                               POST_TESTS_FAILED : [ 'failure', 'Tests Failed' ],
                               POST_TESTING : [ 'pending', 'cms-bot is testing this pull request' ] }
-BASE_TESTS_URL='https://cmssdt.cern.ch/SDT/jenkins-artifacts/cms-externals-pr-integration/{jk_build_number}/results/build.log'
-BASE_TESTING_URL='https://cmssdt.cern.ch/jenkins/job/test-externals-prs/{jk_build_number}/'
+BASE_TESTS_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/cms-externals-pr-integration/{jk_build_number}/results/build.log' % JENKINS_PREFIX
+BASE_TESTING_URL='https://cmssdt.cern.ch/%s/job/test-externals-prs/{jk_build_number}/' % JENKINS_PREFIX
 
 # -------------------------------------------------------------------------------
 # Functions

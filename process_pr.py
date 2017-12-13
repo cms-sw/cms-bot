@@ -1,23 +1,21 @@
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, CMSSW_DEVEL_BRANCH
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
-from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSDIST_REPO_NAME, CMSSW_REPO_NAME, CMSBOT_IGNORE_MSG, GITHUB_IGNORE_ISSUES
-from cms_static import BACKPORT_STR, CMSBUILD_GH_USER
+from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG
+from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION
+from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from sys import exit, argv
-from os.path import abspath, dirname, join
+from os.path import abspath, dirname, join, exists
 from github import UnknownObjectException
 from github_utils import get_token, edit_pr, api_rate_limits
 from socket import setdefaulttimeout
-setdefaulttimeout(120)
-try:
-  SCRIPT_DIR = dirname(abspath(__file__))
-except Exception, e :
-  SCRIPT_DIR = dirname(abspath(argv[0]))
+setdefaulttimeout(300)
+CMSDIST_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
+CMSSW_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 
 # Prepare various comments regardless of whether they will be made or not.
-def format(s, **kwds):
-  return s % kwds
+def format(s, **kwds): return s % kwds
 
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
@@ -37,22 +35,35 @@ TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+wo
                      cmsdist_pr=CMSDIST_PR_PATTERN)
 REGEX_TEST_REQ = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
-#Change the CMSDIST_PR_INDEX if you update the TEST_REQ regexp
-CMSDIST_PR_INDEX = 5
 TEST_WAIT_GAP=720
+
+#Read a yaml file
+def read_repo_file(repo_config, repo_file, default=None):
+  import yaml
+  file_path = join(repo_config.CONFIG_DIR, repo_file)
+  contents = default
+  if exists(file_path):
+    contents = (yaml.load(file(file_path)))
+    if not contents: contents = default
+  return contents
 
 #
 # creates a properties file to trigger the test of the pull request
 #
 def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests"):
   if abort: req_type = "abort"
-  out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repository.split("/")[1], pr_number)
+  repo_parts = repository.split("/")
+  if (req_type in "tests") and (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
+  if (repo_parts[0] == GH_CMSSW_ORGANIZATION) and (repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): repo_partsX=repo_parts[1]
+  else: repo_partsX=repository.replace("/","-")
+  out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)
   if dryRun:
     print 'Not creating cleanup properties file (dry-run): %s' % out_file_name
   else:
     print 'Creating properties file %s' % out_file_name
     out_file = open( out_file_name , 'w' )
     out_file.write( '%s=%s\n' % ( 'MATRIX_EXTRAS', extra_wfs ) )
+    out_file.write( '%s=%s\n' % ( 'PUB_USER', repo_parts[0] ) )
     if repository.endswith("/"+GH_CMSDIST_REPO):
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', pr_number ) )
     else:
@@ -107,8 +118,9 @@ def get_assign_categories(line):
     return (assgin_type.strip(), new_cats)
   return ('', [])
 
-def ignore_issue(repo, issue):
-  if (repo.full_name in GITHUB_IGNORE_ISSUES) and (issue.number in GITHUB_IGNORE_ISSUES[repo.full_name]):
+def ignore_issue(repo_config, repo, issue):
+  if issue.number in repo_config.IGNORE_ISSUES: return True
+  if (repo.full_name in repo_config.IGNORE_ISSUES) and (issue.number in repo_config.IGNORE_ISSUES[repo.full_name]):
     return True
   if re.match(BUILD_REL, issue.title):
     return True
@@ -149,10 +161,10 @@ def check_test_cmd(first_line):
     return (True, cmsdist_pr, cmssw_prs, wfs)
   return (False, "", "", "")
 
-def get_changed_files(pr, use_gh_patch=False):
+def get_changed_files(repo, pr, use_gh_patch=False):
   if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
   from commands import getstatusoutput
-  cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/cms-sw/cmssw/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq" % pr.number
+  cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/%s/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq" % (repo.full_name,pr.number)
   e , o = getstatusoutput(cmd)
   if e: return []
   return o.split("\n")
@@ -163,19 +175,24 @@ def get_backported_pr(msg):
     if re.match("^[1-9][0-9]*$",bp_num): return bp_num
   return ""
 
-def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
-  import yaml
-  if (not force) and ignore_issue(repo, issue): return
+def cmssw_file2Package(repo_config, filename):
+  try:
+    return repo_config.file2Package(filename)
+  except:
+    return "/".join(filename.split("/", 2)[0:2])
+
+def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
+  if (not force) and ignore_issue(repo_config, repo, issue): return
   api_rate_limits(gh)
   prId = issue.number
   repository = repo.full_name
-  if not cmsbuild_user:
-    cmsbuild_user=repository.split("/")[0]
-    if cmsbuild_user in [ x.split("/")[0] for x in EXTERNAL_REPOS ]: cmsbuild_user=CMSBUILD_GH_USER
+  repo_org, repo_name = repository.split("/",1)
+  if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
-  cmssw_repo = False
+  cmssw_repo = (repo_name==GH_CMSSW_REPO)
+  external_repo = len([e for e in EXTERNAL_REPOS+CMSDIST_REPOS if (repository==e) or (repo_org==e)])>0
+  official_repo = (repo_org==GH_CMSSW_ORGANIZATION)
   create_test_property = False
-  if repository.endswith("/"+GH_CMSSW_REPO): cmssw_repo = True
   packages = set([])
   create_external_issue = False
   add_external_category = False
@@ -194,7 +211,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     if pr.changed_files==0:
       print "Ignoring: PR with no files changed"
       return
-    if cmssw_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
+    if cmssw_repo and official_repo and (pr.base.ref == CMSSW_DEVEL_BRANCH):
       if pr.state != "closed":
         print "This pull request must go in to master branch"
         if not dryRun:
@@ -209,18 +226,18 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     if pr.base.ref in RELEASE_BRANCH_CLOSED: mustClose = True
     # Process the changes for the given pull request so that we can determine the
     # signatures it requires.
-    if cmssw_repo:
-      if pr.base.ref=="master": signing_categories.add("code-checks")
-      packages = sorted([x for x in set(["/".join(f.split("/", 2)[0:2])
-                           for f in get_changed_files(pr)])])
+    if cmssw_repo or not external_repo:
+      if cmssw_repo and (pr.base.ref=="master"): signing_categories.add("code-checks")
+      packages = sorted([x for x in set([cmssw_file2Package(repo_config, f)
+                           for f in get_changed_files(repo, pr)])])
       print "First Package: ",packages[0]
-      updateMilestone(repo, issue, pr, dryRun)
+      if cmssw_repo: updateMilestone(repo, issue, pr, dryRun)
       create_test_property = True
     else:
       add_external_category = True
       packages = set (["externals/"+repository])
-      if repository != CMSDIST_REPO_NAME:
-        if not repository.endswith("/cms-bot"): create_external_issue = True
+      if repo_name != GH_CMSDIST_REPO:
+        if repo_name != "cms-bot": create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
       else:
         create_test_property = True
         if not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref):
@@ -239,7 +256,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     if add_external_category: signing_categories.add("externals")
     # We require ORP approval for releases which are in production.
     # or all externals package
-    if (not cmssw_repo) or (pr.base.ref in RELEASE_BRANCH_PRODUCTION):
+    if official_repo and ((not cmssw_repo) or (pr.base.ref in RELEASE_BRANCH_PRODUCTION)):
       print "This pull request requires ORP approval"
       signing_categories.add("orp")
       for l1 in CMSSW_L1:
@@ -257,12 +274,12 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
       if not has_category:
         new_package_message = "\nThe following packages do not have a category, yet:\n\n"
         new_package_message += "\n".join([package for package in packages if not package in all_packages]) + "\n"
-        new_package_message += "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories.py to assign category\n"
+        new_package_message += "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py to assign category\n"
         print new_package_message
         signing_categories.add("new-package")
 
     # Add watchers.yaml information to the WATCHERS dict.
-    WATCHERS = (yaml.load(file(join(SCRIPT_DIR, "watchers.yaml"))))
+    WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
     # Given the packages check if there are additional developers watching one or more.
     author = pr.user.login
     watchers = set([user for package in packages
@@ -270,14 +287,15 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
                          for regexp in watched_regexp
                          if re.match("^" + regexp + ".*", package) and user != author])
     #Handle category watchers
-    for user, cats in (yaml.load(file(join(SCRIPT_DIR, "category-watchers.yaml")))).items():
+    catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
+    for user, cats in catWatchers.items():
       for cat in cats:
         if cat in signing_categories:
           print "Added ",user, " to watch due to cat",cat
           watchers.add(user)
 
     # Handle watchers
-    watchingGroups = yaml.load(file(join(SCRIPT_DIR, "groups.yaml")))
+    watchingGroups = read_repo_file(repo_config, "groups.yaml", {})
     for watcher in [x for x in watchers]:
       if not watcher in watchingGroups: continue
       watchers.remove(watcher)
@@ -306,7 +324,6 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
   pre_checks = ("code-checks" in signing_categories)
-  #pre_checks = False #Remove this on 11th of SEP 2017
   already_seen = None
   pull_request_updated = False
   comparison_done = False
@@ -327,7 +344,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
   abort_test = False
   need_external = False
-  trigger_code_ckecks=False
+  trigger_code_checks=False
   triggerred_code_ckecks=False
   backport_pr_num = ""
   if (issue.user.login == cmsbuild_user) and \
@@ -407,7 +424,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
 
     if ("code-checks"==first_line) and ("code-checks" in signatures):
       signatures["code-checks"] = "pending"
-      trigger_code_ckecks=True
+      trigger_code_checks=True
       continue
 
     # Check for cmsbuild_user comments and tests requests only for pull requests
@@ -420,14 +437,14 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
       elif "-code-checks" == first_line:
         signatures["code-checks"] = "rejected"
-        trigger_code_ckecks=False
+        trigger_code_checks=False
         triggerred_code_ckecks=False
       elif "+code-checks" == first_line:
         signatures["code-checks"] = "approved"
-        trigger_code_ckecks=False
+        trigger_code_checks=False
         triggerred_code_ckecks=False
       elif TRIGERING_CODE_CHECK_MSG == first_line:
-        trigger_code_ckecks=False
+        trigger_code_checks=False
         triggerred_code_ckecks=True
         signatures["code-checks"] = "pending"
       elif re.match("^Comparison not run.+",first_line):
@@ -478,7 +495,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
         continue
 
       # Check if the someone asked to trigger the tests
-      if commenter in TRIGGER_PR_TESTS + CMSSW_L2.keys() + CMSSW_L1 + releaseManagers:
+      if commenter in TRIGGER_PR_TESTS + CMSSW_L2.keys() + CMSSW_L1 + releaseManagers + [repo_org]:
         ok, cmsdist_pr, cmssw_prs, extra_wfs = check_test_cmd(first_line)
         if ok:
           print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, extra_wfs)
@@ -688,7 +705,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     return
 
   # get release managers
-  SUPER_USERS = (yaml.load(file(join(SCRIPT_DIR, "super-users.yaml"))))
+  SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
@@ -906,7 +923,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     if not already_seen: commentMsg = messageNewPR
     else: commentMsg = messageUpdatedPR
     if (not triggerred_code_ckecks) and cmssw_repo and (pr.base.ref=="master") and ("code-checks" in signatures) and (signatures["code-checks"]=="pending"):
-      trigger_code_ckecks=True
+      trigger_code_checks=True
   elif new_categories:
     commentMsg = messageUpdatedPR
   elif not missingApprovals:
@@ -920,7 +937,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     except:
       pass
 
-  if trigger_code_ckecks and not triggerred_code_ckecks:
+  if trigger_code_checks and not triggerred_code_ckecks:
     if not dryRunOrig: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
     else: print "Dryrun:",TRIGERING_CODE_CHECK_MSG
     create_properties_file_tests(repository, prId, "", "", "", dryRunOrig, abort=False, req_type="codechecks")
@@ -938,12 +955,7 @@ def process_pr(gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     mustMerge = True
   else:
     print "This pull request will not be automatically merged."
-
   if mustMerge == True:
     print "This pull request must be merged."
-    if not dryRun:
-        try:
-          pr.merge()
-        except:
-          pass
+    if not dryRun and (pr.state == "open"): pr.merge()
 

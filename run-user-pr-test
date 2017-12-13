@@ -1,0 +1,43 @@
+#!/bin/bash -ex
+cd $WORKSPACE
+curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | \
+   grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > changed-files.txt
+
+cat changed-files.txt
+git clone https://github.com/${REPOSITORY} userrepo
+cd userrepo
+git fetch origin pull/${PULL_REQUEST}/head:CHANGES_${PULL_REQUEST}
+git merge CHANGES_${PULL_REQUEST}
+mkdir $WORKSPACE/upload
+ERR=0
+REPO_DIR=$CMS_BOT_DIR/repos/$(echo $REPOSITORY | tr '-' '_')
+COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
+$CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
+  -t JENKINS_TEST_URL \
+  -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
+voms-proxy-init -voms=cms
+${REPO_DIR}/run-pr-tests > $WORKSPACE/upload/run.log 2>&1 || ERR=1
+source $CMS_BOT_DIR/jenkins-artifacts
+
+UPLOAD_SIZE=$(du -s -m $WORKSPACE/upload | sed 's|\s.*$||')
+RESULT_LOG="$WORKSPACE/upload/full-results.txt"
+touch ${RESULT_LOG}
+if [ $UPLOAD_SIZE -gt 2048 ] ; then
+  echo "-1\nTested at: ${COMMIT}\n\nUpload size exceeded the max size limit of 2048MB\n" > ${RESULT_LOG}
+else
+  if [ $ERR = 0 ] ; then
+    echo -e "+1\nTested at: ${COMMIT}\n\nJenkins test ran sucessfully\n" >> ${RESULT_LOG}
+  else
+    echo -e "-1\nTested at: ${COMMIT}\n\nJenkins test failed\n" >> ${RESULT_LOG}
+  fi
+  UPDIR="${JOB_NAME}/${PULL_REQUEST}/${BUILD_NUMBER}"
+  echo -e "Test logs are available at:\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/${UPDIR}" >> ${RESULT_LOG}
+  send_jenkins_artifacts ${WORKSPACE}/upload/ ${UPDIR}/
+fi
+
+JOB_SUMMARY_LOG="${WORKSPACE}/summary.txt"
+touch ${JOB_SUMMARY_LOG}
+
+cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
+$WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
+

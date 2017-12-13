@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import re
 from github import Github
-from os.path import expanduser
+from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
-from process_pr import get_backported_pr
 from cms_static import ISSUE_SEEN_MSG, CMSBUILD_GH_USER
 setdefaulttimeout(120)
+import sys
+SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 parser = OptionParser(usage="%prog <pull-request-id>")
 parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
@@ -15,8 +16,13 @@ parser.add_option("-r", "--repository", dest="repository", help="Github Reposito
 opts, args = parser.parse_args()
 
 if len(args) != 0: parser.error("Too many/few arguments")
+
+repo_dir = join(SCRIPT_DIR,'repos',opts.repository.replace("-","_"))
+if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+import repo_config
+from process_pr import get_backported_pr
   
-gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
+gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 repo = gh.get_repo(opts.repository)
 label = [ repo.get_label("backport") ]
 issues = repo.get_issues(state="open", sort="updated", labels=label)

@@ -5,8 +5,11 @@ from github import Github
 from os.path import expanduser
 from datetime import datetime
 from socket import setdefaulttimeout
+from os import environ
 setdefaulttimeout(120)
-
+JENKINS_PREFIX="jenkins"
+try:    JENKINS_PREFIX=environ['JENKINS_URL'].strip("/").split("/")[-1]
+except: JENKINS_PREFIX="jenkins"
 #
 # Posts a message in the github issue that triggered the build
 # The structure of the message depends on the option used
@@ -38,11 +41,11 @@ INSTALLATION_ERROR='INSTALLATION_ERROR'
 # it is independent from the tests results
 TESTS_ERROR='TESTS_ERROR'
 BUILDING_MSG='The build has started for {architecture} in {machine}. \n' \
-             'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console \n' \
-             '{details}'
+             'You can see the progress here: https://cmssdt.cern.ch/%s/job/build-release/{jk_build_number}/console \n' \
+             '{details}' % JENKINS_PREFIX
 BUILDING_TOOL_CONF_MSG='The cmssw-tool-conf build has started for {architecture} in {machine}. \n' \
-             'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/build-release/{jk_build_number}/console \n' \
-             '{details}'
+             'You can see the progress here: https://cmssdt.cern.ch/%s/job/build-release/{jk_build_number}/console \n' \
+             '{details}' % JENKINS_PREFIX
 BUILD_OK_MSG='The build has finished sucessfully for the architecture {architecture} and is ready to be uploaded. \n' \
              'You can start the uploads by writing the comment: "upload all". I will upload all the architectures as soon as the build finishes successfully.\n' \
              'You can see the log for the build here: \n' \
@@ -56,10 +59,10 @@ TOOL_CONF_ERROR_MSG='There was an error building cmssw-tool-conf for {architectu
              'You can see the log for the build here: \n' \
              '{log_url} \n'
 UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
-              'You can see the progress here: https://cmssdt.cern.ch/jenkins/job/upload-release/{jk_build_number}/console'
+              'You can see the progress here: https://cmssdt.cern.ch/%s/job/upload-release/{jk_build_number}/console' % JENKINS_PREFIX
 UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'The release is now being installed, you can see the progress here: \n ' \
-              'https://cmssdt.cern.ch/jenkins/job/release-deploy-afs/ \n' 
+              'https://cmssdt.cern.ch/%s/job/release-deploy-afs/ \n' % JENKINS_PREFIX
 INSTALLATION_OK_MSG='The installation has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\>", in the first line of your comment.\n ' \
               'I will generate the release notes based on the release that you provide. You don\'t need to provide the architectue ' \
@@ -81,10 +84,10 @@ RELEASE_NOTES_OK_MSG='The release notes are ready: https://github.com/cms-sw/cms
 RELEASE_NOTES_ERROR_MSG='There was an error generating the release notes, please look into the logs'
 BUILD_QUEUED_LABEL = 'build-release-queued'
 BUILD_STARTED = 'build-release-started'
-BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-build-release/%s-%s/%d'
-BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/auto-upload-release/%s-%s/%d'
-BASE_CLEANUP_LOG_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/cleanup-auto-build/%s-%s/%d'
-BASE_INSTALLATION_URL = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/deploy-release-afs/{rel_name}/{architecture}/{job_id}/'
+BASE_BUILD_LOG_URL = 'https://cmssdt.cern.ch/SDT/'+JENKINS_PREFIX+'-artifacts/auto-build-release/%s-%s/%d'
+BASE_UPLOAD_LOG_URL = 'https://cmssdt.cern.ch/SDT/'+JENKINS_PREFIX+'-artifacts/auto-upload-release/%s-%s/%d'
+BASE_CLEANUP_LOG_URL = 'https://cmssdt.cern.ch/SDT/'+JENKINS_PREFIX+'-artifacts/cleanup-auto-build/%s-%s/%d'
+BASE_INSTALLATION_URL = 'https://cmssdt.cern.ch/SDT/%s-artifacts/deploy-release-afs/{rel_name}/{architecture}/{job_id}/' % JENKINS_PREFIX
 
 # -------------------------------------------------------------------------------
 # Functions

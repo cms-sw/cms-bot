@@ -3,6 +3,9 @@ from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
 from es_utils import send_payload,get_payload,resend_payload
+JENKINS_PREFIX="jenkins"
+try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
+except: JENKINS_PREFIX="jenkins"
 
 def findParametersAction(root):
   if root.tag=='parameters': return root
@@ -81,7 +84,7 @@ for root, dirs, files in os.walk(path):
       job_info = root.split('/')
       payload['job_name'] = job_info[3]
       payload['build_number'] = job_info[-1]
-      payload['url'] = "https://cmssdt.cern.ch/jenkins/job/" + job_info[3] + "/" + job_info[-1] + "/"
+      payload['url'] = "https://cmssdt.cern.ch/%s/job/" + job_info[3] + "/" + job_info[-1] + "/" % JENKINS_PREFIX
       id = sha1(root).hexdigest()
       try:
         tree = ET.parse(logFile)

@@ -15,7 +15,8 @@ COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
 $CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
   -t JENKINS_TEST_URL \
   -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
-${REPO_DIR}/run-pr-tests ${REPOSITORY} ${PULL_REQUEST} > $WORKSPACE/upload/run.log 2>&1 || ERR=1
+voms-proxy-init -voms=cms
+${REPO_DIR}/run-pr-tests > $WORKSPACE/upload/run.log 2>&1 || ERR=1
 source $CMS_BOT_DIR/jenkins-artifacts
 
 UPLOAD_SIZE=$(du -s -m $WORKSPACE/upload | sed 's|\s.*$||')

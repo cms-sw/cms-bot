@@ -36,7 +36,7 @@ else
 fi
 
 JOB_SUMMARY_LOG="${WORKSPACE}/summary.txt"
-touch ${JOB_SUMMARY_LOGG}
+touch ${JOB_SUMMARY_LOG}
 
 cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
 $WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}

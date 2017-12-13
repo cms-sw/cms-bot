@@ -92,13 +92,14 @@ cd $WORKSPACE/CMSDIST
 git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
 # Check which packages the PR changes
 PKGS=
-for c in $CMSDIST_COMMITS ; do
-  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|' | grep -v '^cmssw-toolfile' | grep -v '^cmssw-patch') ; do
-    [ -f $WORKSPACE/CMSDIST/$p.spec ] || continue
-    PKGS="$PKGS $p"
-  done
-done
-PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
+## For now only build cmssw-tool-conf
+#for c in $CMSDIST_COMMITS ; do
+#  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|' | grep -v '^cmssw-toolfile' | grep -v '^cmssw-patch') ; do
+#    [ -f $WORKSPACE/CMSDIST/$p.spec ] || continue
+#    PKGS="$PKGS $p"
+#  done
+#done
+#PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
 
 export CMSDIST_COMMIT=$(echo $CMSDIST_COMMITS | sed 's|.* ||')
 cd $WORKSPACE

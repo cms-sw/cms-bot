@@ -206,8 +206,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   last_commit_date = None
+  repo_size = repo.size
+  pr_size = 0
+  size_diff = 0
   if issue.pull_request:
     pr   = repo.get_pull(prId)
+    pr_size = pr.head.repo.size
+    size_diff = pr_size - repo_size
     if pr.changed_files==0:
       print "Ignoring: PR with no files changed"
       return
@@ -648,6 +653,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   elif not "pending-assignment" in labels:
     labels.append("fully-signed")
   if need_external: labels.append("requires-external")
+  #if size_diff>100: labels.append("large-size-pr")
   labels = set(labels)
   print "New Labels:",sorted(labels)
 
@@ -803,6 +809,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                 managers = managers)
 
   # Add a Warning if the pull request was done against a patch branch
+  size_msg = "This PR increases repository size by %sK (%s -> %s)\n" % (size_diff,repo_size,pr_size)
   if cmssw_repo:
     warning_msg = ''
     if 'patchX' in pr.base.ref:
@@ -827,7 +834,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "%(watchers)s"
                         "%(releaseManagers)s"
                         "%(patch_branch_warning)s\n"
-                        "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
+                        "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n"
+                        "%(size_msg)s",
                         msgPrefix=NEW_PR_PREFIX,
                         user=pr.user.login,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
@@ -836,12 +844,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         packages="\n".join(packages),
                         new_package_message=new_package_message,
                         watchers=watchersMsg,
+                        size_msg=size_msg,
                         releaseManagers=releaseManagersMsg,
                         patch_branch_warning=warning_msg)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
-                            " %(signers)s can you please check and sign again.",
+                            " %(signers)s can you please check and sign again.\n"
+                            "%(size_msg)s",
                             pr=pr.number,
+                            size_msg=size_msg,
                             signers=", ".join(missing_notifications))
   else:
     if create_external_issue:
@@ -895,19 +906,23 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           " '+1' in the first line of your reply.\n"
                           "You can reject by replying  to this message having"
                           " '-1' in the first line of your reply."
-                          "%(cmsdist_issue)s",
+                          "%(cmsdist_issue)s\n"
+                          "%(size_msg)s",
                           msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,
+                          size_msg=size_msg,
                           title=pr.title.encode("ascii", "ignore"),
                           l2s=", ".join(missing_notifications),
                           watchers=watchersMsg,
                           cmsdist_issue=cmsdist_issue)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
-                              "%(cmsdist_issue)s",
+                              "%(cmsdist_issue)s\n"
+                              "%(size_msg)s",
                               pr=pr.number,
+                              size_msg=size_msg,
                               cmsdist_issue=cmsdist_issue)
 
   # Finally decide whether or not we should close the pull request:

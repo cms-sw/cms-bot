@@ -1,3 +1,6 @@
 #!/bin/bash -ex
 ./steps.sh
-
+CMSSW_DIR=$(ls -d CMSSW_*)
+if [ "X${CMSSW_DIR}" = "X" ] ; then exit 0; fi
+mv ${CMSSW_DIR}/src ${WORKSPACE}/upload/${CMSSW_DIR}
+rm -rf ${WORKSPACE}/upload/${CMSSW_DIR}/*.root || true

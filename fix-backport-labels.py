@@ -10,7 +10,7 @@ setdefaulttimeout(120)
 import sys
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
-parser = OptionParser(usage="%prog <pull-request-id>")
+parser = OptionParser(usage="%prog")
 parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
 parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
 opts, args = parser.parse_args()

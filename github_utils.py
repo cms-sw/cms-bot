@@ -1,7 +1,8 @@
 from urllib2 import urlopen
+from hashlib import md5
 import json
 from commands import getstatusoutput
-from os.path import exists, dirname, abspath
+from os.path import exists, dirname, abspath, join
 import re
 try:
   from github import UnknownObjectException
@@ -158,14 +159,14 @@ def cache_invalid_pr (pr_id, cache):
   cache['invalid_prs'].append(pr_id)
   cache['dirty']=True
 
-def fill_notes_description(notes, repo, github, cache={}):
+def fill_notes_description(notes, repo_name, cmsprs, cache={}):
   new_notes = {}
   for log_line in notes.splitlines():
     items = log_line.split(" ")
     author = items[1]
     pr_number= items[0]
     if cache and (pr_number in cache):
-      new_notes[pr_number]=cache[pr_number]
+      new_notes[pr_number]=cache[pr_number]['notes']
       print 'Read from cache ',pr_number
       continue
     parent_hash = items.pop()
@@ -173,14 +174,23 @@ def fill_notes_description(notes, repo, github, cache={}):
     if 'invalid_prs' in cache and pr_hash_id in cache['invalid_prs']: continue
     print "Checking ",pr_number,author,parent_hash
     try:
-      api_rate_limits(github)
-      pr = repo.get_pull(int(pr_number))
+      pr_md5 = md5(pr_number+"\n").hexdigest()
+      pr_cache = join(cmsprs,repo_name, pr_md5[0:2],pr_md5[2:]+".json")
+      if not exists (pr_cache):
+        print "  Invalid/Indirect PR",pr
+        cache_invalid_pr (pr_hash_id,cache)
+        continue
+      pr = json.load(open(pr_cache))
+      if not 'auther_sha' in pr:
+        print "  Invalid/Indirect PR",pr
+        cache_invalid_pr (pr_hash_id,cache)
+        continue
       ok = True
-      if pr.head.user.login!=author:
-        print "  Author mismatch:",pr.head.user.login
+      if pr['author']!=author:
+        print "  Author mismatch:",pr['author']
         ok=False
-      if pr.head.sha!=parent_hash:
-        print "  sha mismatch:",pr.head.sha
+      if pr['auther_sha']!=parent_hash:
+        print "  sha mismatch:",pr['auther_sha']
         ok=False
       if not ok:
         print "  Invalid/Indirect PR"
@@ -188,12 +198,14 @@ def fill_notes_description(notes, repo, github, cache={}):
         continue
       new_notes[pr_number]={
         'author' : author,
-        'title' : pr.title.encode("ascii", "ignore"),
-        'user_ref' : pr.head.ref.encode("ascii", "ignore"),
+        'title' : pr['title'],
+        'user_ref' : pr['auther_ref'],
         'hash' : parent_hash,
-        'branch' : pr.base.ref.encode("ascii", "ignore") }
+        'branch' : pr['branch']}
       if not pr_number in cache:
-        cache[pr_number]=new_notes[pr_number]
+        cache[pr_number]={}
+        cache[pr_number]['notes']=new_notes[pr_number]
+        cache[pr_number]['pr']=pr
         cache['dirty']=True
     except UnknownObjectException as e:
       print "ERR:",e
@@ -201,7 +213,7 @@ def fill_notes_description(notes, repo, github, cache={}):
       continue
   return new_notes
 
-def get_merge_prs(prev_tag, this_tag, git_dir, repo, github, cache={}):
+def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache={}):
   print "Getting merged Pull Requests b/w",prev_tag, this_tag
   cmd = format("GIT_DIR=%(git_dir)s"
                " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
@@ -218,7 +230,7 @@ def get_merge_prs(prev_tag, this_tag, git_dir, repo, github, cache={}):
     print "Error while getting release notes."
     print notes
     exit(1)
-  return fill_notes_description(notes, repo, github, cache)
+  return fill_notes_description(notes, "cms-sw/"+git_dir[:-4], cmsprs, cache)
 
 def save_prs_cache(cache, cache_file):
   if cache['dirty']:

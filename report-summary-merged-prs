@@ -9,7 +9,7 @@ from pickle import Unpickler
 from os.path import basename, dirname, exists, join, expanduser
 from glob import glob
 from github import Github
-from github_utils import prs2relnotes, get_merge_prs, save_prs_cache, read_prs_cache
+from github_utils import get_merge_prs
 from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
 from socket import setdefaulttimeout
@@ -31,8 +31,6 @@ parser = OptionParser(usage="usage: %prog CMSSW_REPO GITHUB_IO_REPO START_DATE"
                             "\n ARTIFACTS_MACHINE: the artifacts machine to use to look for static checks and hlt tests")
 
 parser.add_option( "-v" , "--verbose" , dest="verbose"  , action="store_true", help="Do not post on Github", default=False )
-parser.add_option( "-c" , "--cmssw-prs"   , dest="cmssw_pr_cache" , help="File with PRs cache information for cmssw", type=str, default='cmssw-prs-cache.json')
-parser.add_option( "-d" , "--cmsdist-prs"   , dest="cmsdist_pr_cache" , help="File with PRs cache information for cmssw", type=str, default='cmsdist-prs-cache.json')
 
 (options, args) = parser.parse_args()
 
@@ -81,7 +79,6 @@ GITHUB_IO_REPO = args[ 1 ]
 CMSDIST_REPO = args[ 2 ]
 START_DATE = args[ 3 ]
 ARTIFACTS_MACHINE = "cmssdtprod.cern.ch"
-PRS_CACHE_FILE = options.cmssw_pr_cache
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions
@@ -504,11 +501,11 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
 
   return tags
 
-def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache):
+def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache={}):
   comp = {}
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
   comp[ 'release_name' ] = end_tag
-  notes = get_merge_prs(start_tag, end_tag, git_dir, repo, github, cache)
+  notes = get_merge_prs(start_tag, end_tag, git_dir, "cms-prs", cache)
   prs = []
   for pr_num in notes:
     pr={'is_merge_commit':False , 'from_merge_commit' : False}
@@ -521,10 +518,9 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
     pr['url'] = 'https://github.com/cms-sw/cmssw/pull/%s' % pr_num
     prs.append(pr)
   comp['merged_prs'] = prs
-  save_prs_cache(cache, PRS_CACHE_FILE)
   return comp
 
-def compare_tags(branch, tags , git_dir, repo, cache):
+def compare_tags(branch, tags , git_dir, repo, cache={}):
   comparisons = []
   if len(tags)>1: comparisons.append(execute_command_compare_tags(branch, tags[0], tags[0] , git_dir, repo, cache ))
   for i in range(len(tags)-1):
@@ -1244,7 +1240,6 @@ if __name__ == "__main__":
   print_verbose( 'Installed Releases:' )
   print_verbose( installedReleases )
   prs_file = GITHUB_IO_REPO + "/_data/prs_cmssw_cache.json"
-  PRS_CACHE = read_prs_cache(PRS_CACHE_FILE)
   token = open(expanduser("~/.github-token")).read().strip()
   github = Github( login_or_token = token )
   CMSSW_REPO = github.get_repo(CMSSW_REPO_NAME)
@@ -1278,7 +1273,7 @@ if __name__ == "__main__":
     print tags 
 
     print 'Getting merged pull requests between tags...'
-    release_queue_results['comparisons'] = compare_tags(release_branch, tags , 'cmssw.git', CMSSW_REPO , PRS_CACHE  )
+    release_queue_results['comparisons'] = compare_tags(release_branch, tags , 'cmssw.git', CMSSW_REPO )
     print 'Done'
 
     #it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
@@ -1303,8 +1298,6 @@ if __name__ == "__main__":
     find_dqm_tests_results( release_queue_results['comparisons'] ) 
     results.append(release_queue_results)
   
-  save_prs_cache(PRS_CACHE, PRS_CACHE_FILE)
-
   cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
   
   build_results = {}

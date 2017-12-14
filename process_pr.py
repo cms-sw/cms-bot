@@ -813,6 +813,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if size_diff>0:
     size_msg = "This PR increases repository size by %sK (%s -> %s)\n" % (size_diff,repo_size,pr_size)
   print "Size Msg:",size_msg
+  size_msg=""
   if cmssw_repo:
     warning_msg = ''
     if 'patchX' in pr.base.ref:

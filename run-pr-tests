@@ -193,9 +193,9 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
   ############################################
   RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 
-  IB_DATE=$(git show ${RELEASE_FORMAT} --pretty='format:%ai')
-  git rev-list --after="$IB_DATE" HEAD --merges 2>&1 | head -n -1 | tee -a $RECENT_COMMITS_FILE
-  git log --after="$IB_DATE" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
+  #IB_DATE=$(git show ${RELEASE_FORMAT} --pretty='format:%ai')
+  git rev-list ${RELEASE_FORMAT}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
+  git log ${RELEASE_FORMAT}..HEAD --merges 2>&1      | tee -a $RECENT_COMMITS_LOG_FILE
   if [ $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     has_jenkins_artifacts material-budget/$RELEASE_FORMAT/$SCRAM_ARCH/Images && MB_COMPARISON=YES
   fi

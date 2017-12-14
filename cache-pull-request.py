@@ -46,9 +46,11 @@ def process(repo, prId):
       else: data['merge_commit_sha']=""
   data['release-notes'] = []
   REGEX_RN = re.compile('^release(-| )note(s|)\s*:\s*',re.I)
-  msg = issue.body.encode("ascii", "ignore").strip()
-  if REGEX_RN.match(msg): data['release-notes'].append(REGEX_RN.sub('',msg).strip())
+  if issue.body:
+    msg = issue.body.encode("ascii", "ignore").strip()
+    if REGEX_RN.match(msg): data['release-notes'].append(REGEX_RN.sub('',msg).strip())
   for comment in issue.get_comments():
+    if not comment.body: continue
     msg = comment.body.encode("ascii", "ignore").strip()
     if REGEX_RN.match(msg):
       data['release-notes'].append(REGEX_RN.sub('',msg).strip())

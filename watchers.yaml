@@ -1348,3 +1348,15 @@ varuns23:
   - EgammaAnalysis
   - DataFormats/EgammaCandidates
   - DataFormats/EgammaReco
+dildick:
+- L1Trigger/CSCTriggerPrimitives
+- L1Trigger/CSCCommonTrigger
+- L1Trigger/ME0Trigger
+- SimMuon/GEMDigitizer
+- SimMuon/CSCDigitizer
+- SimMuon/Configuration
+- DataFormats/CSCDigi
+- DataFormats/GEMDigi
+- CondFormats/CSCObjects
+- Geometry/GEMGeometryBuilder
+- Geometry/GEMGeometry

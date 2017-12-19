@@ -19,8 +19,10 @@ Release = namedtuple("Release", ["major", "minor", "subminor", "pre", "cand", "p
 DEBUG = True
 
 def head(title, release):
+  rel_link=title.replace("CMSSW_","")
   ret = "---\n"
   ret += "layout: post\n"
+  ret += 'rel_link:  "{rel_link}"\n'.format(rel_link=rel_link)
   ret += 'title:  "{title}"\n'.format(title=title)
   ret += "date:   {published_at}\n".format(published_at=time.strftime("%Y-%m-%d %H:%M:%S",time.strptime(release.published_at,"%Y-%m-%dT%H:%M:%SZ")))
   ret += "categories: cmssw\n"
@@ -102,7 +104,7 @@ def getReleasesNotes(opts):
                   int(rel_numbers.group(3)),rel_numbers.group(4),
                   rel_numbers.group(5),rel_numbers.group(6),release['published_at'])
       out_rel = open(rel_file, 'w')
-      out_rel.write(head(rel_name.replace("CMSSW_",""), r))
+      out_rel.write(head(rel_name, r))
       out_rel.write('# %s\n%s' % (rel_name, "\n".join(release_notes)))
       out_rel.close()
       print "  Created release notes:",rel_name

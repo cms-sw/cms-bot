@@ -353,7 +353,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     backport_pr_num = get_backported_pr(issue.body.encode("ascii", "ignore"))
   elif re.match(REGEX_EX_CMDS, body_firstline, re.I):
     check_extra_labels(body_firstline.lower(), extra_labels)
-  for comment in issue.get_comments():
+  all_comments = [issue]
+  for c in issue.get_comments(): all_comments.append(c)
+  for comment in all_comments:
     commenter = comment.user.login
     comment_msg = comment.body.encode("ascii", "ignore")
 

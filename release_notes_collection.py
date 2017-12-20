@@ -49,7 +49,7 @@ def getReleasesNotes(opts):
   page = 1
   pages = []
   notes = []
-  error_releases = []
+  error_releases = {}
   while page>0:
     print "Reading releases page",page
     rel_opt=""
@@ -60,19 +60,23 @@ def getReleasesNotes(opts):
     else: page=0
     for release in releases:
       rel_name = release['name']
-      rel_cyc = "_".join(rel_name.split("_")[0:2])
+      rel_id = str(release['id'])
       print "Checking release", rel_name
+      if " " in rel_name:
+        error_releases[rel_name]="Space in name:"+rel_id
+        print "  Skipping release (contains space in name):",rel_name
+        continue
+      rel_cyc = "_".join(rel_name.split("_")[0:2])
       rel_numbers = re.match(RX_RELEASE, rel_name)
       if not rel_numbers:
-        error_releases.append(rel_name)
+        error_releases[rel_name]="Does not match release regexp:"+rel_id
         print "  Skipping release (does not match release regexp):",rel_name
         continue
       if (not 'body' in release) or (not release['body']):
-        error_releases.append(rel_name)
-        print "  Skipping release (empty release body message):",rel_name        
+        error_releases[rel_name]="Empty release body message:"+rel_id
+        print "  Skipping release (empty release body message):",rel_name
         continue
       if not re.match('^%s$' % opts.release_filter, rel_name):
-        error_releases.append(rel_name)
         print "  Skipping release (release does not match filter):",rel_name                
         continue
       rel_file = join(opts.release_notes_dir,rel_cyc,"%s.md" % rel_name)

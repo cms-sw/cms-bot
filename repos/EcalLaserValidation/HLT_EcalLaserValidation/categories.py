@@ -23,6 +23,7 @@ CMSSW_L2 = {
   CMSBUILD_USER : ["tests", "code-checks" ],
   'degrutto' : ['ecal-laser'],
   'ndaci' : ['ecal-laser'],
+  'zghiche' : ['ecal-laser'],
 }
 
 CMSSW_CATEGORIES={

@@ -105,7 +105,7 @@ ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
                         '{rest_of_archs}'\
                         'The release notes of what changed with respect to {prev_release} can be found at:\n\n'\
                         'https://github.com/cms-sw/cmssw/releases/{rel_name}\n'\
-                        'https://cmssdt.cern.ch/SDT/{rel_cyc}/{rel_name}.html\n'\
+                        'https://cmssdt.cern.ch/SDT/ReleaseNotes/{rel_cyc}/{rel_name}.html\n'\
                         '{description}'\
                         'Cheers,\n'\
                         'cms-bot'

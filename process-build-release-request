@@ -646,7 +646,7 @@ def go_to_state( issue, current_state, new_state ):
 #
 def fix_release_description(issue):
   if not issue.body: return '\n'
-  desc_str = '\n' + issue.body + '\n\n'
+  desc_str = '\n' + issue.body.encode("ascii", "ignore").strip() + '\n\n'
   desc_lines = []
   for l in desc_str.split('\n'):
     if "RELEASE_QUEUE:" in l: continue

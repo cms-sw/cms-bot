@@ -651,6 +651,7 @@ def fix_release_description(issue):
   for l in desc_str.split('\n'):
     if "RELEASE_QUEUE:" in l: continue
     if "ARCHITECTURE:" in l: continue
+    if "TAG_COMMIT:" in l: continue
     desc_lines.append(l)
   return "\n".join(desc_lines)
   

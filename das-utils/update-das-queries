@@ -22,7 +22,7 @@ if [ ! -d das_results ] ; then
 fi
 
 rm -f $WORKSPACE/error
-$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
+$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries --query "$5" || touch $WORKSPACE/error
 if [ "$PUSH_RESULTS" = "true" ] ; then
   pushd $WORKSPACE/das_results
   git add das_queries

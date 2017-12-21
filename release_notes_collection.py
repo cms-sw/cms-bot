@@ -12,7 +12,7 @@ import time
 RX_RELEASE = re.compile('CMSSW_(\d+)_(\d+)_(\d+)(_pre[0-9]+)*(_cand[0-9]+)*(_patch[0-9]+)*')
 RX_AUTHOR = re.compile("(.*)(@[a-zA-Z-_0-9]+)")
 RX_COMPARE = re.compile("(https://github.*compare.*\.\.\..*)")
-RX_COMMIT  = re.compile("^-\s+([^/]+\/[^/]+|)\#(\d{0,5})( from.*)")
+RX_COMMIT  = re.compile("^-\s+(:arrow_right:\s*|)([^/]+\/[^/]+|)\#(\d{0,5})( from.*)")
 
 Release = namedtuple("Release", ["major", "minor", "subminor", "pre", "cand", "patch","published_at"])
 
@@ -86,24 +86,27 @@ def getReleasesNotes(opts):
       release_notes = []
       prepo = ""
       count = 0
+      forward_port_sym = '<span class="glyphicon glyphicon-arrow-right"></span>'
       for line in release['body'].encode("ascii", "ignore").split('\n'):
         line = re.sub(RX_AUTHOR, '\\1**\\2**', line)
         m = RX_COMMIT.match(line)
         if m:
           repo = opts.repository
-          if m.group(1): repo = m.group(1)
+          forward_port = ""
+          if m.group(1): forward_port = forward_port_sym
+          if m.group(2): repo = m.group(2)
           if repo != prepo: count = 0
           prepo=repo
           count+=1
-          line = '\n{count}. [{pr}](http://github.com/{repo}/pull/{pr})'.format(count=count,repo=repo,pr=m.group(2))+'{:target="_blank"} '+m.group(3)
-          pr = get_pr(m.group(2), repo, opts.prs_dir)
-          print "  PR found: "+repo+"#"+m.group(2)
+          line = '\n{count}. {forward_port}[{pr}](http://github.com/{repo}/pull/{pr})'.format(forward_port=forward_port,count=count,repo=repo,pr=m.group(3))+'{:target="_blank"} '+m.group(4)
+          pr = get_pr(m.group(3), repo, opts.prs_dir)
+          print "  PR found: "+repo+"#"+m.group(3)
           if 'created_at' in pr:line+=" created: "+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(float(pr['created_at'])))
           if 'merged_at' in pr:line+=" merged: "+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(float(pr['merged_at'])))
         elif RX_COMPARE.match(line):
           line = re.sub(RX_COMPARE, '[compare to previous](\\1)\n\n', line)
 
-        release_notes.append(line)
+        release_notes.append(line.replace(':arrow_right:',forward_port_sym))
       r = Release(int(rel_numbers.group(1)), int(rel_numbers.group(2)),
                   int(rel_numbers.group(3)),rel_numbers.group(4),
                   rel_numbers.group(5),rel_numbers.group(6),release['published_at'])

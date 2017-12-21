@@ -644,6 +644,16 @@ def go_to_state( issue, current_state, new_state ):
 #
 # Generates an announcement prototype
 #
+def fix_release_description(issue):
+  if not issue.body: return '\n'
+  desc_str = '\n' + issue.body + '\n\n'
+  desc_lines = []
+  for l in desc_str.split('\n'):
+    if "RELEASE_QUEUE:" in l: continue
+    if "ARCHITECTURE:" in l: continue
+    desc_lines.append(l)
+  return "\n".join(desc_lines)
+  
 def generate_announcement( release_name, previous_release_name, production_architecture, architectures ):
 
   print '\nGenerating announcement template...\n'
@@ -654,7 +664,7 @@ def generate_announcement( release_name, previous_release_name, production_archi
   patch_str = 'patch ' if is_patch else ''
   print 'Is patch: ', is_patch
   # The description of the issue should explain the reason for building the release
-  desc = '\n' + issue.body + '\n\n' if issue.body else '\n'
+  desc = fix_release_description(issue)
   print 'Description: \n', desc
 
   architectures.remove( production_architecture )

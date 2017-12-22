@@ -9,7 +9,7 @@ def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)
 
 def es_get_passwd(passwd_file=None):
-  for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/github_hook_secret_cmsbot", "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret"]:
+  for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret", "/data/secrets/github_hook_secret_cmsbot"]:
     if not psfile: continue
     if exists(psfile):
       passwd_file=psfile

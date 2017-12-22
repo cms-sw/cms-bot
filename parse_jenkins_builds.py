@@ -106,7 +106,7 @@ for root, dirs, files in os.walk(path):
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
         send_payload(weekindex,document,id,json.dumps(payload), passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
       except Exception as e:
-        print "Xml parsing error" , e
+        print "Xml parsing error",logFile , e
 running_builds_elastic={}
 content = get_payload(query_url,query_running_builds)
 if content == "":

@@ -121,7 +121,7 @@ else:
 for build in running_builds_elastic:
   if build not in all_local:
     hit = running_builds_elastic[build]
-    hit["job_status"]="Failed"
+    hit["_source"]["job_status"]="Failed"
     resend_payload(hit,passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
     print "job status marked as Failed"
 

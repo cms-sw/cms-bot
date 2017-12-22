@@ -2,10 +2,11 @@
  
 import os
 from cmsutils import doCmd, getIBReleaseInfo
+from time import sleep
 
 class LogUpdater():
 
-    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdtprod.cern.ch", webDir="/data/sdt/buildlogs/"):
+    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt02.cern.ch", webDir="/data/sdt/buildlogs/"):
         self.dryRun = dryRun
         self.remote = remote
         self.cmsswBuildDir = dirIn
@@ -106,11 +107,17 @@ class LogUpdater():
         return self.copy2RemoteHost(src,des,self.remote)
 
     def runRemoteHostCmd(self, cmd, host):
-        cmd ="ssh -Y "+self.ssh_opt+" "+host+" "+cmd
+        cmd ="ssh -Y "+self.ssh_opt+" "+host+" 'echo REMOTE_CMD=CONN_OK && "+cmd+" && echo REMOTE_CMD=OK'"
         try:
             if self.dryRun:
               print "CMD>>",cmd
             else:
+              for i in range (10):
+                err,out = doCmd(cmd)
+                if not err: return (err,out)
+                for l in out.split("\n"):
+                  if "REMOTE_CMD=CONN_OK" in l: return (err,out)
+                sleep(60)
               return doCmd(cmd)
         except Exception, e:
             print "Ignoring exception during runRemoteCmd:", str(e)
@@ -122,6 +129,10 @@ class LogUpdater():
             if self.dryRun:
               print "CMD>>",cmd
             else:
+              for i in range (10):
+                err,out = doCmd(cmd)
+                if not err: return (err,out)
+                sleep(60)
               return doCmd(cmd)
         except Exception, e:
             print "Ignoring exception during copy2Remote:", str(e)

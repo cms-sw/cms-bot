@@ -61,7 +61,7 @@ query_running_builds = """ {
       "@end-highlight@"
     ]
   },
-  "size": 500,
+  "size": 5000,
   "sort": [
     {
       "_score": {

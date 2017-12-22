@@ -107,7 +107,7 @@ class LogUpdater():
         return self.copy2RemoteHost(src,des,self.remote)
 
     def runRemoteHostCmd(self, cmd, host):
-        cmd ="ssh -Y "+self.ssh_opt+" "+host+" 'echo REMOTE_CMD=CONN_OK && "+cmd+" && echo REMOTE_CMD=OK'"
+        cmd ="ssh -Y "+self.ssh_opt+" "+host+" 'echo CONNECTION=OK && "+cmd+"'"
         try:
             if self.dryRun:
               print "CMD>>",cmd
@@ -116,7 +116,7 @@ class LogUpdater():
                 err,out = doCmd(cmd)
                 if not err: return (err,out)
                 for l in out.split("\n"):
-                  if "REMOTE_CMD=CONN_OK" in l: return (err,out)
+                  if "CONNECTION=OK" in l: return (err,out)
                 sleep(60)
               return doCmd(cmd)
         except Exception, e:

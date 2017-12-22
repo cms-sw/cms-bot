@@ -115,6 +115,8 @@ else:
   content_hash = json.loads(content)
   for hit in content_hash['hits']['hits']:
     if hit["_index"]=="jenkins" or hit["_index"].startswith("jenkins-jobs-"):
+      try:print "Running:",hit["_source"]['job_name'],hit["_source"]['build_number']
+      except: pass
       running_builds_elastic[hit['_id']]=hit
 for build in running_builds_elastic:
   if build not in all_local:

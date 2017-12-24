@@ -80,7 +80,7 @@ def delete_hit(hit,passwd_file=None):
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  return send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
+  send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
   return send_payload_old(index,document,id,payload,passwd_file) 
 
 def get_payload(url,query):

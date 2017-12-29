@@ -1873,12 +1873,14 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.x()");
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.y()");
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.z()");
+      plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.t()");
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.vertexNormalizedChi2()");
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.vertexNdof()");
       plotvar("recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.numberOfDaughters()");
       plotvar("log10(recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.vertexCovariance(0,0))/2");
       plotvar("log10(recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.vertexCovariance(1,1))/2");
       plotvar("log10(recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.vertexCovariance(2,2))/2");
+      plotvar("log10(recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj.vertexCovariance(3,3))/2");
 
       plotvar("recoPFDisplacedVertexs_particleFlowDisplacedVertex__"+recoS+".obj@.size()");
       plotvar("recoPFDisplacedVertexs_particleFlowDisplacedVertex__"+recoS+".obj.x()");
@@ -1899,12 +1901,14 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.x()");
       plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.y()");
       plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.z()");
+      plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.t()");
       plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexNormalizedChi2()");
       plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexNdof()");
       plotvar("recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.numberOfDaughters()");
       plotvar("log10(recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexCovariance(0,0))/2");
       plotvar("log10(recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexCovariance(1,1))/2");
       plotvar("log10(recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexCovariance(2,2))/2");
+      plotvar("log10(recoVertexCompositePtrCandidates_slimmedSecondaryVertices__"+recoS+".obj.vertexCovariance(3,3))/2");
     }
 
     if ((step.Contains("all") || step.Contains("track")) && step.Contains("cosmic") ){
@@ -2175,6 +2179,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       // miniaod
       photonVars("slimmedPhotons_","patPhotons_");
       photonVars("slimmedOOTPhotons_","patPhotons_");
+      photonVars("slimmedPhotonsFromMultiCl_","patPhotons_");
 
       caloClusters("reducedEgamma_reducedEBEEClusters");
       caloClusters("reducedEgamma_reducedESClusters");
@@ -2270,6 +2275,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       // miniaod
       electronVars("slimmedElectrons_","patElectrons_");
+      electronVars("slimmedElectronsFromMultiCl_","patElectrons_");
 
       plotvar("floatedmValueMap_eidLoose__"+recoS+".obj.values_");
 

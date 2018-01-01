@@ -77,9 +77,12 @@ def initJobs(jobs, resources, otype):
     total_groups+=1
     group["state"]="Pending"
     cmd_count = len(group["commands"])
+    job_time=0
     for i in reversed(range(cmd_count)):
       total_jobs+=1
       job = group["commands"][i]
+      job_time += job["time"]
+      job["time"] = job_time
       for x in ["rss","cpu"]:
         for y in [x+"_avg", x+"_max"]:
           if not y in job: job[y]=job[x]

@@ -43,7 +43,7 @@ if __name__ == "__main__":
     if cmssw_ver.find('_CLANG_') is not -1:
       p = Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver.rsplit('_',1)[0]), shell=True)
     else:
-      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 175 -m 90 -o dynamic -t avg" % (cmssw_base,SCRIPT_DIR), shell=True)
+      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 175 -m 90 -o time -t avg" % (cmssw_base,SCRIPT_DIR), shell=True)
 
     e=waitpid(p.pid,0)[1]
     system("touch "+cmssw_base+"/done."+opts.jobid)

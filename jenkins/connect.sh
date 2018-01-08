@@ -2,14 +2,8 @@
 TARGET=$1 ; shift
 JENKINS_SLAVE_NAME=$1; shift
 if [ "${JENKINS_SLAVE_NAME}" = "" ] ; then
-  set +x
-  JENKINS_NODES=$(grep "${TARGET}" ${HOME}/nodes/*/config.xml | sed 's|/config.xml:.*||;s|.*/||' | sort | uniq)
-  set -x
-  if [ $(echo $JENKINS_NODES | wc -l) -ne 1 ] ; then
-    echo "Usage: $0 <jenins-slave-name> <remote-user@remote-node> [cleanup]"
-    exit 1
-  fi
-  JENKINS_SLAVE_NAME=${JENKINS_NODES}
+  echo "Usage: $0 <jenins-slave-name> <remote-user@remote-node> [cleanup]"
+  exit 1
 fi
 
 KTAB=${HOME}/keytabs/$(echo $TARGET | sed 's|@.*||').keytab

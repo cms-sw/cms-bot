@@ -52,8 +52,8 @@ case ${SLAVE_TYPE} in
     for p in $(echo ${HOST_CMS_ARCH} | tr '_' ' ') ; do
       new_labs="${new_labs} ${p}"
     done
-    #java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${new_labs}"
-    java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${JENKINS_SLAVE_NAME}" "${HOST_ARCH}" "${HOST_CMS_ARCH}" "${DOCKER}"
+    java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${new_labs}"
+    #java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${JENKINS_SLAVE_NAME}" "${HOST_ARCH}" "${HOST_CMS_ARCH}" "${DOCKER}"
     ;;
 esac
 if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then

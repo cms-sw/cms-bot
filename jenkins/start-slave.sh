@@ -46,7 +46,7 @@ case ${SLAVE_TYPE} in
       if [ $(ssh -n $SSH_OPTS $TARGET id | grep '[0-9]*(docker)' | wc -l) -gt 0 ] ; then
         DOCKER="docker"
         DOCKER_OS=$(grep -A1 '> *DOCKER_IMG_HOST *<' ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep 'cmssw/' | tail -1 | sed 's|.*>cmssw/||;s|-builder.*||' | sed 's|.*-||')
-        if [ "$DOCKER_OS" != "X" ] ; then
+        if [ "$DOCKER_OS" != "" ] ; then
           HOST_CMS_ARCH="${DOCKER_OS}_$(echo $HOST_CMS_ARCH | sed 's|^.*_||')"
         fi
       fi

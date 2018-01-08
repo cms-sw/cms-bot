@@ -30,7 +30,7 @@ scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
 HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1)
 HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
 JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
-case ${TARGET} in
+case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
   *lxplus* )
     case ${CMS_ARCH} in 

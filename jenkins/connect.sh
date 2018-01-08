@@ -9,13 +9,13 @@ export SLAVE_UNIQUE_TARGET=""
 export SLAVE_MAX_WORKSPACE_SIZE=""
 export JENKINS_SLAVE_NAME
 SCRIPT_DIR=`dirname $0`
-if [ $(echo $TARGET | grep '@lxplus\|@aiadm' | wc -l) -gt 0 ] ; then
-  TARGET_HOST=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
+export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
+if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   export SLAVE_UNIQUE_TARGET="YES"
-  case ${TARGET_HOST} in 
+  case ${SLAVE_TYPE} in 
     lxplus* ) export SLAVE_MAX_WORKSPACE_SIZE=10;;
   esac
-  for ip in $(host $TARGET_HOST | grep 'has address' | sed 's|^.* ||'); do
+  for ip in $(host $SLAVE_TYPE | grep 'has address' | sed 's|^.* ||'); do
     NEW_TARGET=$(echo $TARGET | sed "s|@.*|@$ip|")
     ${SCRIPT_DIR}/start-slave.sh "${NEW_TARGET}" "$@" || [ "X$?" = "X99" ] && sleep 5 && continue
     exit 0

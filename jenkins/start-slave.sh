@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 TARGET=$1
 CLEANUP_WORKSPACE=$2
-SSH_OPTS="-q -o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 #Check unique slave conenction
 if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then

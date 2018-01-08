@@ -52,10 +52,12 @@ case ${SLAVE_TYPE} in
       fi
     fi
     new_labs="auto-label ${DOCKER} ${HOST_ARCH} ${HOST_CMS_ARCH}"
-    case ${SLAVE_TYPE}-${HOST_CMS_ARCH} in
-      cmsbuild*|vocms*|cmsdev11-* ) new_labs="${new_labs} cloud cmsbuild release-build";;
-      cmsdev* ) new_labs="${new_labs} cloud cmsdev";;
-      *-aarch64|-*ppc64le ) new_labs="${new_labs} release-build cmsbuild";;
+    case ${SLAVE_TYPE} in
+      cmsbuild*|vocms*|cmsdev11 ) new_labs="${new_labs} cloud cmsbuild release-build";;
+      cmsdev*   ) new_labs="${new_labs} cloud cmsdev";;
+    esac
+    case ${HOST_CMS_ARCH} in
+      *_aarch64|*_ppc64le ) new_labs="${new_labs} release-build cmsbuild";;
     esac
     for p in $(echo ${HOST_CMS_ARCH} | tr '_' ' ') ; do
       new_labs="${new_labs} ${p}"

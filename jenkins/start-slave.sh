@@ -55,6 +55,7 @@ case ${SLAVE_TYPE} in
     case ${SLAVE_TYPE} in
       cmsbuild*|vocms*|cmsdev11 ) new_labs="${new_labs} cloud cmsbuild release-build";;
       cmsdev*   ) new_labs="${new_labs} cloud cmsdev";;
+      *arm64*|*ppc64le* ) new_labs="${new_labs} release-build cmsbuild";;
     esac
     for p in $(echo ${HOST_CMS_ARCH} | tr '_' ' ') ; do
       new_labs="${new_labs} ${p}"

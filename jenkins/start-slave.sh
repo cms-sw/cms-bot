@@ -40,8 +40,9 @@ case ${SLAVE_TYPE} in
     java ${JENKINS_CLI_OPTS} groovy $SCRIPT_DIR/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${new_labs} $(echo $TARGET | sed 's|.*@||')"
     ;;
   * )
-    DOCKER=$(ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true)
-    if [ "${DOCKER}" != "" ] ; then
+    DOCKER_V=$(ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true)
+    DOCKER=""
+    if [ "${DOCKER_V}" != "" ] ; then
       if [ $(ssh -n $SSH_OPTS $TARGET id | grep '[0-9]*(docker)' | wc -l) -gt 0 ] ; then DOCKER="docker" ; fi
     fi
     new_labs="auto-label ${DOCKER} ${HOST_ARCH} ${HOST_CMS_ARCH}"

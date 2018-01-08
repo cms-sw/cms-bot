@@ -8,7 +8,7 @@ SCRIPT_DIR=`dirname $0`
 KTAB=${HOME}/keytabs/${WORKER_USER}.keytab
 KPRINCIPAL=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)@CERN.CH
 kinit ${KPRINCIPAL} -k -t ${KTAB}
-SSH_OPTS="-q -o IdentitiesOnly=yes -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 TARGET_HOST=$(echo $TARGET | sed 's|^.*@||')
 TARGET_USER=$(echo $TARGET | sed 's|@.*$||')
 for ip in $(host $TARGET_HOST | grep 'has address' | sed 's|^.* ||'); do

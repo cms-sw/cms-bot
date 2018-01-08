@@ -35,7 +35,7 @@ case ${SLAVE_TYPE} in
     if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
       new_labs="lxplus-scripts ${lxplus_type}-scripts"
     else
-      new_labs="${lxplus_type} ${CMS_ARCH}-lxplus ${CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"
+      new_labs="${lxplus_type} ${HOST_CMS_ARCH}-lxplus ${HOST_CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"
     fi
     java ${JENKINS_CLI_OPTS} groovy $SCRIPT_DIR/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${new_labs} $(echo $TARGET | sed 's|.*@||')"
     ;;

@@ -47,7 +47,7 @@ case ${SLAVE_TYPE} in
         DOCKER="docker"
         DOCKER_OS=$(grep -A1 '> *DOCKER_IMG_HOST *<' ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep 'cmssw/' | tail -1 | sed 's|.*>cmssw/||;s|-builder.*||' | sed 's|.*-||')
         if [ "$DOCKER_OS" != "X" ] ; then
-          HOST_CMS_ARCH="${HOST_CMS_ARCH} ${DOCKER_OS}_$(echo $HOST_CMS_ARCH | sed 's|^.*_||')"
+          HOST_CMS_ARCH="${DOCKER_OS}_$(echo $HOST_CMS_ARCH | sed 's|^.*_||')"
         fi
       fi
     fi

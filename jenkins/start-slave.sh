@@ -16,12 +16,7 @@ if [ "${SLAVE_MAX_WORKSPACE_SIZE}" != "" ] ; then
   if [ $(echo "$TMP_SPACE/(1024*1024)" | bc) -lt $SLAVE_MAX_WORKSPACE_SIZE ] ; then exit 99 ; fi
 fi
 
-WORKER_USER=$(echo $TARGET | sed 's|@.*||')
 SCRIPT_DIR=`dirname $0`
-KTAB=${HOME}/keytabs/${WORKER_USER}.keytab
-if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi
-KPRINCIPAL=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)@CERN.CH
-kinit ${KPRINCIPAL} -k -t ${KTAB}
 if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then ssh -n $SSH_OPTS $TARGET rm -rf $WORKSPACE ; fi
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 ssh -n $SSH_OPTS $TARGET rm -f $WORKSPACE/cmsos $WORKSPACE/slave.jar

@@ -12,8 +12,8 @@ fi
 
 #Check slave workspace size in GB
 if [ "${SLAVE_MAX_WORKSPACE_SIZE}" != "" ] ; then
-  TMP_SPACE=`ssh -f $SSH_OPTS -n $TARGET df -k $WORKSPACE | tail -1 | sed 's|^/[^ ]*  *||' | awk '{print $3}'`
-  if [ `echo "$TMP_SPACE/(1024*1024)" | bc` -lt $SLAVE_MAX_WORKSPACE_SIZE ] ; then exit 99 ; fi
+  TMP_SPACE=$(ssh -f $SSH_OPTS -n $TARGET df -k $WORKSPACE | tail -1 | sed 's|^/[^ ]*  *||' | awk '{print $3}')
+  if [ $(echo "$TMP_SPACE/(1024*1024)" | bc) -lt $SLAVE_MAX_WORKSPACE_SIZE ] ; then exit 99 ; fi
 fi
 
 WORKER_USER=$(echo $TARGET | sed 's|@.*||')
@@ -27,15 +27,30 @@ ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 ssh -n $SSH_OPTS $TARGET rm -f $WORKSPACE/cmsos $WORKSPACE/slave.jar
 scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar
 scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
-HOST_ARCH=`ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1`
-HOST_CMS_ARCH=`ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos`
-DOCKER=`ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true`
-if [ "X${DOCKER}" != "X" ] ; then DOCKER="docker" ; fi
+HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1)
+HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
 JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
-case $TARGET in
+case ${TARGET} in
   *dmwm* ) echo "Skipping auto labels" ;;
-  *lxplus* ) java ${JENKINS_CLI_OPTS} groovy $SCRIPT_DIR/lxplus-labels.groovy "${JENKINS_SLAVE_NAME}" "$HOST_ARCH" $DELETE_SLAVE `echo $TARGET | sed 's|.*@||'` $CMS_ARCH
-  * )        java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${JENKINS_SLAVE_NAME}" "$HOST_ARCH" "$HOST_CMS_ARCH" "${DOCKER}" ;;
+  *lxplus* )
+    case ${CMS_ARCH} in 
+      slc6_*) lxplus_type="lxplus6";;
+      slc7_*) lxplus_type="lxplus7";;
+    esac
+    if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then
+      new_labs="lxplus-scripts ${lxplus_type}-scripts"
+    else
+      new_labs="${lxplus_type} ${CMS_ARCH}-lxplus ${CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"
+    fi
+    java ${JENKINS_CLI_OPTS} groovy $SCRIPT_DIR/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${new_labs} $(echo $TARGET | sed 's|.*@||')"
+    ;;
+  * )
+    DOCKER=$(ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true)
+    if [ "${DOCKER}" != "" ] ; then
+      if [ $(ssh -n $SSH_OPTS $TARGET id | grep '[0-9]*(docker)' | wc -l) -gt 0 ] ; then DOCKER="docker" ; fi
+    fi
+    java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${JENKINS_SLAVE_NAME}" "${HOST_ARCH}" "${HOST_CMS_ARCH}" "${DOCKER}"
+    ;;
 esac
 if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then
   java ${JENKINS_CLI_OPTS} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true

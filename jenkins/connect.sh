@@ -2,7 +2,7 @@
 TARGET=$1 ; shift
 JENKINS_SLAVE_NAME=$1; shift
 if [ "${JENKINS_SLAVE_NAME}" = "" ] ; then
-  echo "Usage: $0 jenins-slave-name remote-user@remote-node [cleanup]"
+  echo "Usage: $0 <jenins-slave-name> <remote-user@remote-node> [cleanup]"
   exit 1
 fi
 export SLAVE_UNIQUE_TARGET=""

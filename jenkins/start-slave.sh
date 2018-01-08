@@ -12,7 +12,7 @@ fi
 
 #Check slave workspace size in GB
 if [ "${SLAVE_MAX_WORKSPACE_SIZE}" != "" ] ; then
-  TMP_SPACE=$(ssh -f $SSH_OPTS -n $TARGET df -k $WORKSPACE | tail -1 | sed 's|^/[^ ]*  *||' | awk '{print $3}')
+  TMP_SPACE=$(ssh -f $SSH_OPTS -n $TARGET df -k $(dirname $WORKSPACE) | tail -1 | sed 's|^/[^ ]*  *||' | awk '{print $3}')
   if [ $(echo "$TMP_SPACE/(1024*1024)" | bc) -lt $SLAVE_MAX_WORKSPACE_SIZE ] ; then exit 99 ; fi
 fi
 
@@ -29,7 +29,7 @@ scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar
 scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
 HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1)
 HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
-JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${JENKINS_MASTER_ROOT}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
+JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
 case ${TARGET} in
   *dmwm* ) echo "Skipping auto labels" ;;
   *lxplus* )

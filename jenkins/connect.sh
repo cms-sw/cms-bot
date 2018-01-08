@@ -16,7 +16,8 @@ if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
     lxplus* ) export SLAVE_MAX_WORKSPACE_SIZE=10;;
   esac
   for ip in $(host $SLAVE_TYPE | grep 'has address' | sed 's|^.* ||'); do
-    NEW_TARGET=$(echo $TARGET | sed "s|@.*|@$ip|")
+    hname=$(host $ip | grep 'domain name' | sed 's|^.* ||;s|\.$||')"
+    NEW_TARGET=$(echo $TARGET | sed "s|@.*|@$hname|")
     ${SCRIPT_DIR}/start-slave.sh "${NEW_TARGET}" "$@" || [ "X$?" = "X99" ] && sleep 5 && continue
     exit 0
   done

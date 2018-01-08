@@ -28,7 +28,7 @@ JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://
 case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
   *lxplus* )
-    case ${CMS_ARCH} in 
+    case ${HOST_CMS_ARCH} in 
       slc6_*) lxplus_type="lxplus6";;
       slc7_*) lxplus_type="lxplus7";;
     esac

@@ -32,7 +32,7 @@ case ${SLAVE_TYPE} in
       slc6_*) lxplus_type="lxplus6";;
       slc7_*) lxplus_type="lxplus7";;
     esac
-    if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then
+    if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
       new_labs="lxplus-scripts ${lxplus_type}-scripts"
     else
       new_labs="${lxplus_type} ${CMS_ARCH}-lxplus ${CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"

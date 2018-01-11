@@ -6,7 +6,7 @@ from time import sleep
 
 class LogUpdater():
 
-    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt02.cern.ch", webDir="/data/sdt/buildlogs/"):
+    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt03.cern.ch", webDir="/data/sdt/buildlogs/"):
         self.dryRun = dryRun
         self.remote = remote
         self.cmsswBuildDir = dirIn

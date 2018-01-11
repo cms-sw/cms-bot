@@ -5,7 +5,7 @@ case ${ARTIFACTS_USER} in
 esac
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins" ; fi
-ARTIFACTS_MACHINE="${ARTIFACTS_USER}@cmssdt02.cern.ch"
+ARTIFACTS_MACHINE="${ARTIFACTS_USER}@cmssdt03.cern.ch"
 ARTIFACT_BASE_DIR_MAIN="/data/sdt/SDT/jenkins-artifacts"
 ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
 SSH_OPTS="-q -o ConnectTimeout=60 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"

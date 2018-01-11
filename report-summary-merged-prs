@@ -78,7 +78,7 @@ CMSSW_REPO = args[ 0 ]
 GITHUB_IO_REPO = args[ 1 ]
 CMSDIST_REPO = args[ 2 ]
 START_DATE = args[ 3 ]
-ARTIFACTS_MACHINE = "cmssdt02.cern.ch"
+ARTIFACTS_MACHINE = "cmssdt03.cern.ch"
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions

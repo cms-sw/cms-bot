@@ -502,11 +502,13 @@ gpetruc:
 - DataFormats/PatCandidates
 - DataFormats/Track
 - DataFormats/Trajectory
+- DataFormats/NanoAOD
 - RecoLocalTracker
 - RecoTracker
 - TrackingTools
 - PhysicsTools/PatUtils
 - PhysicsTools/PatAlgos
+- PhysicsTools/NanoAOD
 HuguesBrun:
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit

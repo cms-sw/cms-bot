@@ -253,7 +253,7 @@ def check_if_already_processed( issue ):
 #  Creates the properties files to trigger the build in Jenkins
 # if only_toolconf is selected, it adds a parameter to tell the script to only build cmssw-tool-conf
 #
-def create_properties_files( issue, release_name, architectures, issue_number, queue, docker_imgs, only_toolconf=False):
+def create_properties_files( issue, release_name, architectures, issue_number, queue, docker_imgs, only_toolconf=False, cmsdist_commit=None):
  
   if not only_toolconf: 
     for arch in architectures:
@@ -277,6 +277,7 @@ def create_properties_files( issue, release_name, architectures, issue_number, q
     out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img) )
     tool_conf_param = 'true' if only_toolconf else 'false'
     out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, tool_conf_param ) )
+    if cmsdist_commit: out_file.write( 'CMSDIST_HASH=%s\n' % cmsdist_commit )
 
 
 #
@@ -604,7 +605,7 @@ def triggerCleanup( issue, comments, release_name ):
 #
 # Creates the release in github, including the cmssw tag. It then creates the files to trigger the builds in jenkins
 #
-def start_release_build( issue, release_name, release_branch, architectures, docker_imgs, commit=None):
+def start_release_build( issue, release_name, release_branch, architectures, docker_imgs, commit=None, cmsdist_commit=None):
 
   cmssw_repo = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO)
   release_created = create_release_github( cmssw_repo, release_name, release_branch, commit)
@@ -618,7 +619,7 @@ def start_release_build( issue, release_name, release_branch, architectures, doc
   post_message( issue , msg )
 
   ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
-  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue, docker_imgs, only_toolconf=False )
+  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue, docker_imgs, only_toolconf=False, cmsdist_commit=cmsdist_commit )
   if ready_to_build:
     msg = QUEUING_BUILDS_MSG % ', '.join( ready_to_build )
     post_message( issue , msg )
@@ -626,9 +627,9 @@ def start_release_build( issue, release_name, release_branch, architectures, doc
 #
 # Creates the files to trigger the build of cmssw-tool-conf in jenkins.
 #
-def start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs ):
+def start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs, cmsdist_commit=None):
 
-  create_properties_files( issue, release_name, architectures, issue.number, release_queue, docker_imgs, only_toolconf=True )
+  create_properties_files( issue, release_name, architectures, issue.number, release_queue, docker_imgs, only_toolconf=True, cmsdist_commit=cmsdist_commit)
   msg = QUEUING_TOOLCONF_MSG % ', '.join( architectures )
   post_message( issue , msg )
   
@@ -648,9 +649,7 @@ def fix_release_description(issue):
   desc_str = '\n' + issue.body.encode("ascii", "ignore").strip() + '\n\n'
   desc_lines = []
   for l in desc_str.split('\n'):
-    if "RELEASE_QUEUE:" in l: continue
-    if "ARCHITECTURE:" in l: continue
-    if "TAG_COMMIT:" in l: continue
+    if l in ["RELEASE_QUEUE:","ARCHITECTURE:","TAG_COMMIT:","CMSDIST_COMMIT:"]: continue
     desc_lines.append(l)
   return "\n".join(desc_lines)
   
@@ -849,6 +848,11 @@ if __name__ == "__main__":
     release_tag_commit = issue_body.split("TAG_COMMIT:",1)[1].split("\n",1)[0].strip()
     print "Found forces commit:",release_tag_commit
 
+  cmsdist_tag_commit = None
+  if "CMSDIST_COMMIT:" in issue_body:
+    cmsdist_tag_commit = issue_body.split("CMSDIST_COMMIT:",1)[1].split("\n",1)[0].strip()
+    print "Found forces cmsdist commit:",cmsdist_tag_commit
+
   sel_archs = []
   if "ARCHITECTURE:" in issue_body:
     sel_archs = set(issue_body.split("ARCHITECTURE:",1)[1].split("\n",1)[0].strip().split(","))
@@ -979,10 +983,10 @@ if __name__ == "__main__":
       if is_patch:
         post_message( issue, NOT_TOOLCONF_FOR_PATCH_MSG )
       else:
-        start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs )
+        start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs, cmsdist_commit=cmsdist_tag_commit)
         go_to_state( issue, status, TOOLCONF_BUILDING )
     elif approval_comments:
-      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit, cmsdist_commit=cmsdist_tag_commit)
       go_to_state( issue, status, BUILD_IN_PROGRESS )
     else:
       print 'Build not approved or cmssw-tool-conf not requested yet'
@@ -1004,7 +1008,7 @@ if __name__ == "__main__":
         TOOL_CONF_WAITING.append( arch )
 
       go_to_state( issue, status, BUILD_IN_PROGRESS )
-      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit, cmsdist_commit=cmsdist_tag_commit )
 
   if status == BUILD_IN_PROGRESS:
 

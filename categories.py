@@ -60,6 +60,7 @@ CMSSW_L2 = {
   "perrozzi": ["generators"],
   "efeyazgan": ["generators"],
   "davidlange6": ["operations"],
+  "fabiocos": ["operations"],
   "vanbesien" : ["dqm"],
   "kmaeshima" : ["dqm"],
   "vazzolini" : ["dqm"],

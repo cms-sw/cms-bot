@@ -65,7 +65,7 @@ add_qa_link_to_row = function(row, arch,release_name){
   
   var result_cell = $('<td>')
   row.append(result_cell)
-  var url = 'http://cmssdt.cern.ch/SDT/cgi-bin//newQA.py?arch='+arch+'&release='+release_name
+  var url = '/SDT/cgi-bin//newQA.py?arch='+arch+'&release='+release_name
   var r_link = $("<a></a>").attr("href", url)
   var label_link = $("<span></span>")
   
@@ -88,7 +88,7 @@ get_tests_url = function( type, file, arch, ib ) {
       details_link = "http://cms-sw.github.io/scramDetail.html#" + arch + ";" + ib 
     }else{
 
-      details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/" + link_parts[si] + '/'
+      details_link="/SDT/cgi-bin/showBuildLogs.py/" + link_parts[si] + '/'
                                                                 +link_parts[si+1]+'/'+link_parts[si+2]+'/'+link_parts[si+3]
                                                                 +'/'+link_parts[si+4]
    }
@@ -103,12 +103,12 @@ get_tests_url = function( type, file, arch, ib ) {
     if ( file == 'not-ready' ){
       details_link=""
     }else {
-      details_link="https://cmssdt.cern.ch/SDT/cgi-bin/showBuildLogs.py/fwlite/" + link_parts[si] + '/'
+      details_link="/SDT/cgi-bin/showBuildLogs.py/fwlite/" + link_parts[si] + '/'
                                                                 +link_parts[si+1]+'/'+link_parts[si+2]+'/'+link_parts[si+3]
                                                                 +'/'+link_parts[si+4]
     }
   }else if(type == 'addons'){
-    details_link = "https://cmssdt.cern.ch/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[si] + '/'
+    details_link = "/SDT/cgi-bin//showAddOnLogs.py/" + link_parts[si] + '/'
                                                                 +link_parts[si+1]+'/'+link_parts[si+2]+'/'+link_parts[si+3]+'/'+link_parts[si+4]
                                                                 +'/'+'addOnTests'+'/'
 
@@ -262,7 +262,7 @@ add_static_analyzer_link = function ( title_cell , isFound , currentTag ){
   }
   found_items = isFound.trim().split(":")
   isFound = found_items[0]
-  var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/'+isFound+'/llvm-analysis/index.html'
+  var url = '/SDT/jenkins-artifacts/ib-static-analysis/' + currentTag + '/'+isFound+'/llvm-analysis/index.html'
   var sa_link = $("<a></a>").attr("href", url)
   sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
   sa_link.append($('<span></span>').text(' Static Analyzer'))
@@ -321,7 +321,7 @@ add_hlt_tests_link = function ( title_cell, isFound, currentTag ){
     return
   }
   if (isFound == 'found' ){
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/HLT-Validation/' + currentTag 
+    var url = '/SDT/jenkins-artifacts/HLT-Validation/' + currentTag 
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' HLT Validation'))
@@ -340,7 +340,7 @@ add_dqm_tests_link = function ( title_cell, isFound, currentTag ){
     return
   }
   if (isFound == 'found' ){
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/ib-dqm-tests/' + currentTag
+    var url = '/SDT/jenkins-artifacts/ib-dqm-tests/' + currentTag
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' DQM Tests'))
@@ -359,7 +359,7 @@ add_valgrind_tests_link = function ( title_cell, isFound, currentTag ){
     return
   }
   if ( isFound == 'found' ){
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/valgrind/' + currentTag 
+    var url = '/SDT/jenkins-artifacts/valgrind/' + currentTag 
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' Valgrind'))
@@ -378,7 +378,7 @@ add_lizard_tests_link = function ( title_cell, isFound, currentTag ){
     return
   }
   if ( isFound == 'found' ){
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/lizard/' + currentTag
+    var url = '/SDT/jenkins-artifacts/lizard/' + currentTag
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' Code complexity metrics'))
@@ -398,7 +398,7 @@ add_material_budget_tests_link = function ( title_cell, isFound, currentTag ){
   }
   found_items = isFound.trim().split(":")
   arch = found_items[0]
-  var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/material-budget/' + currentTag + '/' + arch
+  var url = '/SDT/jenkins-artifacts/material-budget/' + currentTag + '/' + arch
   var sa_link = $("<a></a>").attr("href", url)
   sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
   sa_link.append($('<span></span>').text(' Material Budget'))
@@ -426,7 +426,7 @@ add_igprof_tests_link = function ( title_cell, isFound, currentTag ){
     return
   }
   if ( isFound == 'found' ){
-    var url = 'https://cmssdt.cern.ch/SDT/jenkins-artifacts/igprof/' + currentTag 
+    var url = '/SDT/jenkins-artifacts/igprof/' + currentTag 
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' IgProf'))

@@ -323,8 +323,8 @@ def create_release_github( repository, release_name, branch, commit=None):
 
   print 'Creating release:\n %s' % release_name
   if commit:
-    if not get_commit_info(commit):
-      sha = get_ref_commit(commit)
+    if not get_commit_info(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO, commit):
+      sha = get_ref_commit(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO, commit)
       if sha: commit = sha
   else: commit=branch
   # creating releases will be available in the next version of pyGithub

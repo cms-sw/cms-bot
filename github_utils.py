@@ -24,11 +24,11 @@ def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime,msg=Tr
   rate_reset_sec = rate_limiting_resettime - timegm(gmtime()) + 5
   if msg: print 'API Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime))
   if   rate_limit<100:  doSleep = rate_reset_sec
-  elif rate_limit<500:  doSleep = 30
-  elif rate_limit<1000: doSleep = 10
-  elif rate_limit<1500: doSleep = 5
-  elif rate_limit<2000: doSleep = 3
-  elif rate_limit<2500: doSleep = 1
+  elif rate_limit<250:  doSleep = 30
+  elif rate_limit<500:  doSleep = 10
+  elif rate_limit<750:  doSleep = 5
+  elif rate_limit<1000: doSleep = 2
+  elif rate_limit<1500: doSleep = 1
   if (rate_reset_sec<doSleep) : doSleep=rate_reset_sec
   if doSleep>0:
     if msg: print "Slowing down for %s sec due to api rate limits %s approching zero" % (doSleep, rate_limit)

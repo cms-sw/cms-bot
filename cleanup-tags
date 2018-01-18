@@ -1,55 +1,41 @@
-#!/bin/sh -ex
+#!/bin/sh -e
 
-if [ X$DRY_RUN = Xtrue ]; then
-  ECHO=echo
-fi
+function cleanup_git_tag ()
+{
+  local tag="$1"
+  local d=$(echo "$tag" | sed 's|.*_X||;s|/.*||;s|.*_2|2|')
+  local DEL_TAG=$(python -c "import os;from time import time;from datetime import datetime;print int(datetime.strptime('$d', '%Y-%m-%d-%H%M').strftime('%s'))<(time()-(${DAYS_TO_KEEP}*86400))")
+  if [ "${DEL_TAG}" = "True" ] ; then
+    $ECHO git push origin :$tag 
+  else
+    echo "Keeping tag $tag"
+  fi
+}
 
-cd $WORKSPACE
+#Keep only last 21 days/3 weeks of IB tags
+DAYS_TO_KEEP=21
+ECHO=
+if [ "X$DRY_RUN" = "Xtrue" ]; then ECHO=echo; fi
+rm -rf cmssw cmsdist cmssw-tags cmsdist-tags
 
-if [ ! -d cmssw ]; then
-  git init cmssw
-  cd cmssw
-  git remote add origin git@github.com:cms-sw/cmssw
-else
-  cd cmssw
-fi
-
-# Get the list of queues. Notice we need to use the date in the matching to
-# avoid CMSSW_6_2_X matching CMSSW_6_2_X_SLHC
-QUEUES=`git ls-remote --tags origin "CMSSW_*X*" | grep refs/tags | sed -e 's|.*refs/tags/||;s|_2[0-1][0-9][0-9]-[0-1][0-9].*||' | sort -u`
-
-for QUEUE in $QUEUES; do
-  # List the tags we are going to delete.
-  git ls-remote --tags origin "${QUEUE}_2*" \
-      | head -n -30
-
-  # Keep 30 tags per QUEUE.
-  git ls-remote --tags origin "${QUEUE}_2*" \
-      | sed -e "s/.*$QUEUE/:$QUEUE/" \
-      | head -n -30 \
-      | xargs -r $ECHO git push origin 
+echo "Working on cmssw tags"
+git init cmssw
+pushd cmssw
+git remote add origin git@github.com:cms-sw/cmssw
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '^CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../cmssw-tags
+for tag in $(grep '^CMSSW_' ../cmssw-tags) ; do
+  cleanup_git_tag $tag
 done
+echo "Done cmssw tags"
+popd
 
-cd $WORKSPACE
-
-if [ ! -d cmsdist ]; then
-  git init cmsdist
-  cd cmsdist
-  git remote add origin git@github.com:cms-sw/cmsdist
-else
-  cd cmsdist
-fi
-
-CMSDIST_QUEUES=`git ls-remote --tags origin "*/CMSSW_*X*" | grep refs/tags | grep "\(ERR\|IB\|ALL\)" | sed -e 's|.*refs/tags/||;s|20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]|2*|' | sort -u`
-
-for QUEUE in $CMSDIST_QUEUES; do
-  # List the tags we are going to delete.
-  git ls-remote --tags origin "$QUEUE" \
-      | head -n -30
-
-  # Keep 30 tags per QUEUE.
-  git ls-remote --tags origin "$QUEUE" \
-      | sed -e "s|.*refs/tags/|:|" \
-      | head -n -30 \
-      | xargs -r $ECHO git push origin 
+echo "Working on cmsdist tags"
+git init cmsdist
+pushd cmsdist
+git remote add origin git@github.com:cms-sw/cmsdist
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '/CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../cmsdist-tags
+for tag in $(grep '^\(IB\|ALL\|ERR\)/' ../cmsdist-tags) ; do 
+  cleanup_git_tag $tag
 done
+echo "Done cmsdist tags"
+

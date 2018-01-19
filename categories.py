@@ -25,6 +25,7 @@ EXTERNAL_REPOS = [
   gh_user+"/cms-git-tools",
   gh_user+"/apt-rpm",
   gh_user+"/cms-bot",
+  gh_user+"/cms-docker",
   gh_user+"/cmssdt-web"
 ]
 

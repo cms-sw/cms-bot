@@ -42,7 +42,7 @@ if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-n|--dry-run] [-e|--externals] [-c|--cmssw]  [-d|--cmsdist] [-a|--all]")
   parser.add_option("-n", "--dry-run",   dest="dryRun",    action="store_true", help="Do not modify Github", default=False)
   parser.add_option("-e", "--externals", dest="externals", action="store_true", help="Only process CMS externals repositories", default=False)
-  parser.add_option("-u", "--userss",    dest="users",     action="store_true", help="Only process Users externals repositories", default=False)
+  parser.add_option("-u", "--users",     dest="users",     action="store_true", help="Only process Users externals repositories", default=False)
   parser.add_option("-c", "--cmssw",     dest="cmssw",     action="store_true", help="Only process "+",".join(CMSSW_REPOS)+" repository", default=False)
   parser.add_option("-d", "--cmsdist",   dest="cmsdist",   action="store_true", help="Only process "+",".join(CMSDIST_REPOS)+" repository", default=False)
   parser.add_option("-a", "--all",       dest="all",       action="store_true", help="Process all CMS repository i.e. externals, cmsdist and cmssw", default=False)

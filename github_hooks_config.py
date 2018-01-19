@@ -21,6 +21,7 @@ GITHUB_HOOKS["Jenkins_Github_Hook_Push"] = {
 REPO_HOOK_MAP = []
 REPO_HOOK_MAP.append(["cms-sw/cmssdt-web", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/cms-bot", ["Jenkins_Github_Hook_Push"]])
+REPO_HOOK_MAP.append(["cms-sw/cms-docker", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/cmssw",   ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/cmsdist", ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append([".+", ["Jenkins_Github_Hook"]])

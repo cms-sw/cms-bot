@@ -9,6 +9,8 @@ LOCAL_LOGDIR=$WORKSPACE/cmsBuild_BUILD_logs
 if [ -d "${LOG_SRC}" ] ; then
   mkdir ${LOCAL_LOGDIR}
   HAS_LOGS=NO
+  if [ -f $WORKSPACE/summary.html ] ; then cp $WORKSPACE/summary.html ${LOCAL_LOGDIR}/ ; fi
+  if [ -f $WORKSPACE/renderPRTests.js ] then cp $WORKSPACE/renderPRTests.js ${LOCAL_LOGDIR}/ ; fi
   pushd $LOG_SRC
     for log in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|^./||') ; do
       dir=$(dirname $log)

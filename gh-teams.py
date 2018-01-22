@@ -41,7 +41,7 @@ REPO_TEAMS["cms-externals"]["Developers"]["members"].append("gartung")
 
 #Teams for cms-sw
 REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = { 
-  "members" : ["xiezhen"],
+  "members" : [],
   "repositories" : { "RecoLuminosity-LumiDB": "admin"}
 }
 REPO_TEAMS["cms-sw"]["generators-l2"] = { 

@@ -24,6 +24,7 @@ CMSSW_L2 = {
   'degrutto' : ['ecal-laser'],
   'ndaci' : ['ecal-laser'],
   'zghiche' : ['ecal-laser'],
+  'gennai' : ['ecal-laser'],
 }
 
 CMSSW_CATEGORIES={

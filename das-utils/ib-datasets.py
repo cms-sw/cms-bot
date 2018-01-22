@@ -2,8 +2,13 @@
 from os.path import dirname, basename, join, exists, abspath
 from sys import exit, argv
 from time import time, sleep
-import json
+import json, sys
 from commands import getstatusoutput
+cmsbot_dir=None
+if __file__: cmsbot_dir=dirname(dirname(abspath(__file__)))
+else: cmsbot_dir=dirname(dirname(abspath(argv[0])))
+sys.path.insert(0,cmsbot_dir)
+
 from es_utils import get_payload
 
 def format(s, **kwds): return s % kwds

@@ -27,7 +27,8 @@ HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
 JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
 case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
-  *lxplus* )
+  aiadm* ) echo "Skipping auto labels" ;;
+  lxplus* )
     case ${HOST_CMS_ARCH} in 
       slc6_*) lxplus_type="lxplus6";;
       slc7_*) lxplus_type="lxplus7";;

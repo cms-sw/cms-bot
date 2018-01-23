@@ -20,15 +20,14 @@ SCRIPT_DIR=`dirname $0`
 if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then ssh -n $SSH_OPTS $TARGET rm -rf $WORKSPACE ; fi
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 ssh -n $SSH_OPTS $TARGET rm -f $WORKSPACE/cmsos $WORKSPACE/slave.jar
-scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar
-scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
-HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1)
-HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
 JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
 case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
   aiadm* ) echo "Skipping auto labels" ;;
   lxplus* )
+    scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
+    HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1)
+    HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
     case ${HOST_CMS_ARCH} in 
       slc6_*) lxplus_type="lxplus6";;
       slc7_*) lxplus_type="lxplus7";;
@@ -41,6 +40,9 @@ case ${SLAVE_TYPE} in
     java ${JENKINS_CLI_OPTS} groovy $SCRIPT_DIR/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${new_labs} $(echo $TARGET | sed 's|.*@||')"
     ;;
   * )
+    scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
+    HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1)
+    HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
     DOCKER_V=$(ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true)
     DOCKER=""
     if [ "${DOCKER_V}" != "" ] ; then
@@ -64,10 +66,10 @@ case ${SLAVE_TYPE} in
       new_labs="${new_labs} ${p}"
     done
     java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${new_labs}"
-    #java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/add-cpu-labels.groovy "${JENKINS_SLAVE_NAME}" "${HOST_ARCH}" "${HOST_CMS_ARCH}" "${DOCKER}"
     ;;
 esac
 if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then
   java ${JENKINS_CLI_OPTS} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
 fi
+scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar
 ssh $SSH_OPTS $TARGET java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp

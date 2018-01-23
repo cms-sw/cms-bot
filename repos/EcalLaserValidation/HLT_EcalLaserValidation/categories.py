@@ -25,6 +25,9 @@ CMSSW_L2 = {
   'ndaci' : ['ecal-laser'],
   'zghiche' : ['ecal-laser'],
   'gennai' : ['ecal-laser'],
+  'zhenbinwu' : ['ecal-laser'],
+  'wang-hui' : ['ecal-laser'],
+  'abrinke1' : ['ecal-laser'],
 }
 
 CMSSW_CATEGORIES={

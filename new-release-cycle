@@ -80,7 +80,7 @@ def add_milestone_in_cmsbot(new_br, cmssw_brs, milestone, dryRun=False):
     relFile.write('\n######################################################################\n')
     relFile.write('# Automatically added by cms-bot for %s release cycle\n' % (new_br))
     relFile.write('######################################################################\n')
-    relFile.write('RELEASE_BRANCH_MILESTONE["%s"]=%s\n' % (new_br, milestone.number))
+    relFile.write('RELEASE_BRANCH_MILESTONE["%s"]=%s\n' % (new_br, 0 if dryRun else milestone.number))
     relFile.write('RELEASE_BRANCH_PRODUCTION.append("%s")\n' % (new_br))
     for br in cmssw_brs:
       if new_br!=br: relFile.write('RELEASE_BRANCH_PRODUCTION.append("%s")\n' % (br))
@@ -233,5 +233,4 @@ if __name__ == "__main__":
   if len(args) > 0: parser.error("Too many arguments")
   if not opts.cycle or not opts.cycle.endswith("_X"): parser.error("Invalid cycle '"+str(opts.cycle)+"' it must end with _X")
   if opts.old_cycle != CMSSW_DEVEL_BRANCH: CMSSW_DEVEL_BRANCH=opts.old_cycle
-  opts.dryRun=True
   process (opts.cycle, opts.dryRun)

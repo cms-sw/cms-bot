@@ -1,3 +1,4 @@
+architecture=slc6_amd64_gcc630;label=CMSSW_10_1_X;type=Development;state=IB;prodarch=1;
 architecture=slc6_amd64_gcc472;label=CMSSW_5_3_X;type=Development;state=IB;prodarch=1;
 architecture=slc6_amd64_gcc472;label=CMSSW_6_2_X_SLHC;type=Development;state=IB;prodarch=1;
 architecture=slc6_amd64_gcc472;label=CMSSW_6_2_X;type=Development;state=IB;prodarch=1;

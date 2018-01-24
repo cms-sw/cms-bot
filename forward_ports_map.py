@@ -123,3 +123,13 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_0_X/gcc630"].append("IB/CMSSW_10_0_X/ro
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_0_X/gcc630"].append("IB/CMSSW_10_0_X/rootgcc6")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_0_X/gcc630"].append("IB/CMSSW_10_0_X/gcc630next")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_0_X/gcc630"].append("IB/CMSSW_10_0_X/gcc700")
+
+#Automatically added
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_10_1_X"]=[]
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_10_1_X"].append("CMSSW_10_1_ROOT6_X")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_10_1_X"].append("CMSSW_10_1_DEVEL_X")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_1_X/gcc630"]=[]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_1_X/gcc630"].append("IB/CMSSW_10_1_X/root612")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_1_X/gcc630"].append("IB/CMSSW_10_1_X/rootgcc6")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_1_X/gcc630"].append("IB/CMSSW_10_1_X/gcc630next")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_1_X/gcc630"].append("IB/CMSSW_10_1_X/gcc700")

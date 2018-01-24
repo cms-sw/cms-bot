@@ -91,6 +91,11 @@ def copy_to_eos(lfn, log_file):
   print "Transferring %s" % lfn
   cmd = "%s/copy-ib-lfn-to-eos.sh %s %s >%s 2>&1" % (CMS_BOT_DIR, lfn, opts.redirector,log_file)
   run_cmd(cmd,exit_on_error=False,debug=False)
+  e, o = run_cmd("grep ' echo ALL_OK' %s" % log_file, exit_on_error=False,debug=False)
+  if 'ALL_OK' in o:
+    print "Success: %s" % lfn
+  else:
+    print "Failed: %s" % lfn
   return
 
 def kill_xrootd(lfn):

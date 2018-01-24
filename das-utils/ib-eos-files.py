@@ -17,14 +17,12 @@ if version_info < (2,6):
     alive = []
     for t in threads:
       if t.isAlive(): alive.append(t)
-      else: print "Finish: %s" % t.name
     return alive
 else:
   def get_alive_threads(threads):
     alive = []
     for t in threads:
       if t.is_alive(): alive.append(t)
-      else: print "Finish: %s" % t.name
     return alive
 
 try:

@@ -99,6 +99,7 @@ def config_map_branches(new_br, dev_br, config_file):
   new_ibs    = []
   new_config = []
   for l in [ l.strip() for l in open(config_file).readlines()]:
+    if "RELEASE_QUEUE="+new_cyc in l: continue
     l = l.replace("RELEASE_BRANCH=master;","RELEASE_BRANCH=%s;" % dev_br)
     new_config.append(l)
     if ("RELEASE_BRANCH="+dev_cyc in l) and (not 'DISABLED=' in l):

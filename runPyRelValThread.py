@@ -268,8 +268,8 @@ class PyRelValsThread(object):
           except Exception as e:
             print "Sending log information to elasticsearch failed" , str(e)
           inFile = open(logFile)
-          for index, line in enumerate(inFile):
-            config_list = add_exception_to_config(line, index, config_list)
+          for line_nr, line in enumerate(inFile):
+            config_list = add_exception_to_config(line, line_nr, config_list)
             if '%MSG-w' in line: data[1]=data[1]+1
             if '%MSG-e' in line: data[2]=data[2]+1
             if 'Begin processing the ' in line: data[0]=data[0]+1

@@ -7,6 +7,7 @@ from time import strftime , strptime
 from es_utils import send_payload
 import commands
 from cmsutils import cmsswIB2Week
+from logreaderUtils import write_config_file, add_exception_to_config
 
 def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
@@ -35,7 +36,13 @@ def process_unittest_log(logFile):
   payload["architecture"]=architecture
   payload["@timestamp"]=timestp
   id = None
-  for l in file(logFile).read().split("\n"):
+  config_list = []
+  custom_rule_set = [
+    {"str_to_match": "test (.*) had ERRORS", "name": "{0} failed"},
+    {"str_to_match": '===== Test "([^\s]+)" ====', "name": "{0}"}
+  ]
+  for index, l in enumerate(file(logFile).read().split("\n")):
+    config_list = add_exception_to_config(l,index,config_list,custom_rule_set)
     if l.startswith('===== Test "') and l.endswith('" ===='):
       if utname: send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week, "unittest-dataset")
       datasets = []
@@ -48,6 +55,7 @@ def process_unittest_log(logFile):
         if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
       except: pass
   if datasets: send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"unittest-dataset")
+  write_config_file(logFile + "-read_config", config_list)
   return
 
 def process_addon_log(logFile):
@@ -64,13 +72,16 @@ def process_addon_log(logFile):
   payload["@timestamp"]=timestp
   payload["name"] = pathInfo[-1].split("-")[1].split("_cmsRun_")[0].split("_cmsDriver.py_")[0]
   id = sha1(release + architecture + "addon" + payload["name"]).hexdigest()
-  for l in file(logFile).read().split("\n"):
+  config_list = []
+  for index, l in enumerate(file(logFile).read().split("\n")):
+    config_list = add_exception_to_config(l,index, config_list)
     if " Initiating request to open file " in l:
       try:
         rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
         if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
       except: pass
   send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"addon-dataset")
+  write_config_file(logFile + "-read_config", config_list)
   return
 
 def process_ib_utests(logFile):

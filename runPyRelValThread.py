@@ -4,6 +4,7 @@ from cmsutils import doCmd
 from es_relval_log import es_parse_log
 from RelValArgs import FixWFArgs
 import json
+from logreaderUtils import write_config_file, add_exception_to_config
 
 def runStep1Only(basedir, workflow, args=''):
   args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
@@ -22,7 +23,7 @@ def runStep1Only(basedir, workflow, args=''):
 
 def runThreadMatrix(basedir, workflow, args='', logger=None, force=False, wf_err={}):
   if (not force) and logger and logger.relvalAlreadyDone(workflow):
-    print "Message>> Not ruuning workflow ",workflow," as it is already ran"
+    print "Message>> Not runing workflow ",workflow," as it is already ran"
     return
   args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
   workdir = os.path.join(basedir, workflow)
@@ -249,6 +250,8 @@ class PyRelValsThread(object):
         data = [0, 0, 0]
         logFile = logData[wf]['steps'][step]
         json_cache = os.path.dirname(logFile)+"/logcache_"+str(step)+".json"
+        log_reader_config_path = logFile + "-read_config"
+        config_list = []
         cache_ok = False
         if (os.path.exists(json_cache)) and (os.path.getmtime(logFile)<=os.path.getmtime(json_cache)):
           try:
@@ -265,7 +268,8 @@ class PyRelValsThread(object):
           except Exception as e:
             print "Sending log information to elasticsearch failed" , str(e)
           inFile = open(logFile)
-          for line in inFile:
+          for index, line in enumerate(inFile):
+            config_list = add_exception_to_config(line, index, config_list)
             if '%MSG-w' in line: data[1]=data[1]+1
             if '%MSG-e' in line: data[2]=data[2]+1
             if 'Begin processing the ' in line: data[0]=data[0]+1
@@ -273,6 +277,7 @@ class PyRelValsThread(object):
           jfile = open(json_cache,"w")
           json.dump(data,jfile)
           jfile.close()
+          write_config_file(log_reader_config_path,config_list)
           log_processed+=1
         logData[wf]['events'][index] = data[0]
         logData[wf]['failed'][index] = data[2]

@@ -155,6 +155,7 @@ for logFile in logs:
         commands.getstatusoutput("touch %s" % flagFile)
     except Exception as e:
       print "ERROR:",e
+    commands.getstatusoutput("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
     commands.getstatusoutput("rm -rf %s/UT" % utdir)
 
 logs = commands.getstatusoutput("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'addOnTests.zip'")
@@ -174,5 +175,6 @@ for logFile in logs:
         commands.getstatusoutput("touch %s" % flagFile)
     except Exception as e:
       print "ERROR:",e
+    commands.getstatusoutput("cd %s/AO ; zip -r ../addOnTests.zip ." % utdir)
     commands.getstatusoutput("rm -rf %s/AO" % utdir)
 

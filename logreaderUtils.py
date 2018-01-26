@@ -10,6 +10,7 @@ def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
         # {"str_to_match": "\sException", "name": "Exception"},
         {"str_to_match": "edm::service::InitRootHandlers", "name": "Segmentation fault"}
     ]
+    line_nr = index+1
     for rule in default_rules_list + custom_rule_list:
         match = re.search(rule["str_to_match"], line, re.IGNORECASE);
         if match:
@@ -18,9 +19,9 @@ def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
             except:
                 name = rule["name"]
             new_exception_config = {
-                "lineStart": index,
-                "lineEnd": index,
-                "name": name + " at line #" + str(index + 1)
+                "lineStart": line_nr,
+                "lineEnd": line_nr,
+                "name": name + " at line #" + str(line_nr)
             }
             config_list.append(new_exception_config)
             return config_list

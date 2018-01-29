@@ -1,5 +1,8 @@
 /jenkins-artifacts/ib-baseline-tests/*
 /*/share
+/*/share/cms/data-L1Trigger-L1TMuon
+/*/share/cms/data-GeneratorInterface-EvtGenInterface
+/*/share/cms/data-MagneticField-Interpolation/*
 /*/*_*_*/external
 /*/*_*_*/external/blackhat/*
 /*/*_*_*/external/boost/*

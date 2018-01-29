@@ -215,7 +215,6 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   DQM_COMP_PARAMS_FILE=$ALT_COMP_DIR/comparisonParams.txt
 
   $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE >> $ALT_COMP_DIR/assignedParameters.log 2>&1
-  chmod +x $CMS_BOT_DIR/comparisons/makeDiff.sh
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
 
     WF_FILE=$(basename $WF)

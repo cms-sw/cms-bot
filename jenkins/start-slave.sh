@@ -57,7 +57,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
     fi
     new_labs="auto-label ${DOCKER} ${HOST_ARCH} ${HOST_CMS_ARCH}"
     case ${SLAVE_TYPE} in
-      cmsbuild*|vocms*|cmsdev11 ) new_labs="${new_labs} cloud cmsbuild release-build";;
+      cmsbuild*|vocms* ) new_labs="${new_labs} cloud cmsbuild release-build";;
       cmsdev*   ) new_labs="${new_labs} cloud cmsdev";;
     esac
     case ${HOST_CMS_ARCH} in

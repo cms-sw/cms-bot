@@ -4,7 +4,10 @@
 /*/*_*_*/external/blackhat/*
 /*/*_*_*/external/geant4/*
 /*/*_*_*/external/boost/*
+/*/*_*_*/external/py2-pippkgs_depscipy/*
+/*/*_*_*/external/py2-pippkgs/*
 /*/*_*_*/cms
 /*/*_*_*/lcg
+/*/*_*_*/lcg/root
 /*/*_*_*/cms/cmssw/*
 /*/*_*_*/cms/cmssw-patch/*

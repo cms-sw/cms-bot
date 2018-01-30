@@ -82,7 +82,7 @@ class JobsConstructor(object):
         queryInfo["end_time"] = int(time() * 1000)
         queryInfo["start_time"] = queryInfo["end_time"] - int(86400 * 1000 * lastNdays)
         queryInfo["architecture"] = arch
-        queryInfo["release_cycle"] = release
+        queryInfo["release_cycle"] = 'CMSSW_10_1_X*'
         queryInfo["from"] = 0
 
         if page_size < 1:

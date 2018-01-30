@@ -231,8 +231,8 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
 }
 
 
-void jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false){
-  TString v = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+".obj."+var+"()";
+void jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false, bool notafunction = false){
+  TString v = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+".obj."+var+(notafunction? "" : "()");
   if (log10Var) v = "log10(" + v + ")";
   plotvar(v, "", trycatch);
 }
@@ -257,9 +257,18 @@ void jets(TString type,TString algo){
 
   if (type == "patJets"){
     jet(type, algo, "userFloats_@.size");
+    for (int i = 0; i< 32; ++i){
+      plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
+    }
     jet(type, algo, "userInts_@.size");
+    for (int i = 0; i< 32; ++i){
+      plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userInts_[%d]",i), "", true);
+    }
     jet(type, algo, "userCands_@.size");
     jet(type, algo, "pairDiscriVector_@.size");
+    for (int i = 0; i< 32; ++i){
+      plotvar("min(2,max(-2,"+type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].pairDiscriVector_[%d].second))",i), "", true);
+    }
   }
 }
 
@@ -397,6 +406,8 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("sumNeutralHadronEtHighThreshold", cName,tName);
   photon("sumPhotonEtHighThreshold", cName,tName);
   photon("sumPUPt", cName,tName);
+  photon("ecalPFClusterIso", cName,tName);
+  photon("hcalPFClusterIso", cName,tName);
   photon("nClusterOutsideMustache", cName,tName);
   photon("etOutsideMustache", cName,tName);
   photon("pfMVA", cName,tName);
@@ -532,6 +543,8 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("pfIsolationVariables().sumNeutralHadronEtHighThreshold", cName, tName, true);
   electron("pfIsolationVariables().sumPhotonEtHighThreshold", cName, tName, true);
   electron("pfIsolationVariables().sumPUPt", cName, tName, true);
+  electron("pfIsolationVariables().sumEcalClusterEt", cName, tName, true);
+  electron("pfIsolationVariables().sumHcalClusterEt", cName, tName, true);
 
   electron("mvaInput().earlyBrem", cName, tName, true);
   electron("mvaOutput().mva", cName, tName, true);
@@ -1125,6 +1138,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+recoS+".obj._sets.data.row()");
       plotvar(tbr+recoS+".obj._sets.data.column()");
       plotvar(tbr+recoS+".obj._sets.data.adc()");
+      tbr="CTPPSPixelDataErroredmDetSetVector_ctppsPixelDigis__";
+      plotvar(tbr+recoS+".obj._sets@.size()");
+      plotvar(tbr+recoS+".obj._sets.data@.size()");
+      plotvar(tbr+recoS+".obj._sets.data.errorType()");
+      plotvar(tbr+recoS+".obj._sets.data.fedId()");
       //diamonds digis
       tbr="TotemFEDInfos_ctppsDiamondRawToDigi_TimingDiamond_";
       plotvar(tbr+recoS+".obj@.size()");

@@ -31,7 +31,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   das_cmd = "%s --format=json --limit=%s --query '%s%s' %s --threshold=%s" % (dasclient, limit, query, field_filter, retry_str, threshold)
   print "  Running: ",sha,das_cmd
   print "  Fields:",sha,fields 
-  err, out = getstatusoutput(das_cmd + " | grep -v '^WARNING: '")
+  err, out = getstatusoutput(das_cmd)
   if err:
     print "  ",sha,out
     return False

@@ -39,7 +39,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     jdata = json.loads(out)
   except Exception, e:
     print "  Failed to load josn output:%s:%s" %(sha,out)
-    return False
+    raise e
   if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata):
     print "Failed: %s %s\n  %s" % (sha, query, out)
     return False

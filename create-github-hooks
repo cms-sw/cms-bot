@@ -3,8 +3,7 @@ from github import Github
 from os.path import expanduser , exists, join, dirname, abspath
 from os import environ
 from optparse import OptionParser
-from github_hooks_config import GITHUB_HOOKS as hk_conf
-from github_hooks_config import REPO_HOOK_MAP
+from github_hooks_config import get_repository_hooks
 from github_utils import api_rate_limits
 import hashlib, re
 from categories import EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS
@@ -25,7 +24,7 @@ def get_secret(hook_name):
 def match_config(new,old):
   if new["active"] != old.active:
     return False
-  elif new["events"] != old.events:
+  elif set(new["events"]) != set(old.events):
     return False
   for key in new["config"]:
     if (not key in old.config) or (key!='secret' and new["config"][key] != old.config[key]):
@@ -88,26 +87,10 @@ if __name__ == "__main__":
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       repo_name = repo_config.GH_REPO_FULLNAME
     print "Checking for repo ",repo_name
-    hooks = []
-    for r in REPO_HOOK_MAP:
-      if re.match(r[0],repo_name):
-        if opts.hook and opts.hook in r[1]:
-          hooks.append(opts.hook)
-          break
-        elif not opts.hook:
-          for h in r[1]: hooks.append(h)
-        break
+    hk_conf = get_repository_hooks (repo_name, opts.hook)
+    hooks = hk_conf.keys()
     if not hooks:
       print "==>Warning: No hook found for repository",repo_name
-      error = 1
-      continue
-
-    err = 0
-    for h in hooks:
-      if not h in hk_conf:
-        print "==>Error: No hook name ",h," found for repository ",repo_name
-        err = 1
-    if err:
       error = 1
       continue
 
@@ -119,6 +102,7 @@ if __name__ == "__main__":
       if "name" in hook.config:
         repo_hooks_all[ hook.config['name'] ] = hook 
     api_rate_limits(gh)
+    print "Dryrun:",opts.dryRun
     for hook in hooks:
       print "checking for web hook" , hook
       hook_conf = hk_conf[hook]
@@ -133,12 +117,12 @@ if __name__ == "__main__":
           if not opts.dryRun:
             old_hook.edit(**hook_conf)
             api_rate_limits(gh)
-          print "hook updated"
+          print "hook updated",hook
         else:
-          print "Hook configuration is same"
+          print "Hook configuration is same",hook
       else:
         if not opts.dryRun:
           repo.create_hook(**hook_conf)
           api_rate_limits(gh)
-        print "Hook created in github.....success"
+        print "Hook created in github.....success",hook
   exit(error)

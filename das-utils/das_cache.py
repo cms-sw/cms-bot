@@ -118,6 +118,7 @@ if __name__ == "__main__":
   nquery = 0
   inCache = 0 
   DasSearch = 0
+  error = 0
   for query in uqueries:
     nquery += 1
     sha = query_sha[query]
@@ -178,8 +179,9 @@ if __name__ == "__main__":
           error += 1
         break
       else:
-        sleep(10)
+        sleep(2)
   for t in threads: t.join()
   print "Total queries: %s" % tqueries
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
+  exit(error)

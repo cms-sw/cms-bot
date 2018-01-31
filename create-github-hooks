@@ -78,7 +78,6 @@ if __name__ == "__main__":
       repos[r]=None
 
   #process repos
-  error = 0
   for repo_name in repos:
     gh = ghx
     if exists (join(SCRIPT_DIR,"repos",repo_name,"repo_config.py")):
@@ -91,7 +90,6 @@ if __name__ == "__main__":
     hooks = hk_conf.keys()
     if not hooks:
       print "==>Warning: No hook found for repository",repo_name
-      error = 1
       continue
 
     print "Found hooks:",hooks
@@ -125,4 +123,4 @@ if __name__ == "__main__":
           repo.create_hook(**hook_conf)
           api_rate_limits(gh)
         print "Hook created in github.....success",hook
-  exit(error)
+

@@ -190,8 +190,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
-  external_repo = len([e for e in EXTERNAL_REPOS+CMSDIST_REPOS if (repository==e) or (repo_org==e)])>0
   official_repo = (repo_org==GH_CMSSW_ORGANIZATION)
+  external_repo = (repository!=CMSSW_REPO_NAME) and (len([e for e in EXTERNAL_REPOS if repo_org==e])>0)
   create_test_property = False
   packages = set([])
   create_external_issue = False

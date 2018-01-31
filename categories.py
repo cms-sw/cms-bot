@@ -16,18 +16,7 @@ PR_HOLD_MANAGERS = [ "kpedro88" ]
 
 COMMON_CATEGORIES = [ "orp", "tests", "code-checks" ]
 EXTERNAL_CATEGORIES = [ "externals" ]
-EXTERNAL_REPOS = [
-  "cms-data",
-  "cms-externals",
-  gh_user+"/root",
-  gh_user+"/cmssw-config",
-  gh_user+"/SCRAM",
-  gh_user+"/cms-git-tools",
-  gh_user+"/apt-rpm",
-  gh_user+"/cms-bot",
-  gh_user+"/cms-docker",
-  gh_user+"/cmssdt-web"
-]
+EXTERNAL_REPOS = [ "cms-data", "cms-externals", gh_user]
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
 CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]

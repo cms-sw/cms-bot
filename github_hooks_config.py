@@ -19,6 +19,8 @@ GITHUB_HOOKS["Jenkins_Github_Hook_Push"] = {
 
 #First repository name matches wins
 REPO_HOOK_MAP = []
+REPO_HOOK_MAP.append(["cms-sw/cms-sw.github.io", []])
+REPO_HOOK_MAP.append(["cms-sw/cms-prs", []])
 REPO_HOOK_MAP.append(["cms-sw/.+", ["Jenkins_Github_Hook","Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-data/.+", ["Jenkins_Github_Hook","Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-externals/.+", ["Jenkins_Github_Hook","Jenkins_Github_Hook_Push"]])

@@ -5,12 +5,14 @@ from optparse import OptionParser
 from datetime import datetime, timedelta
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
+from github_hooks_config import get_repository_hooks
 setdefaulttimeout(None)
 import sys
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 def check_prs(gh, repo, since, process_issue, dryRun):
-  print "Working on Repository: ",repo.full_name 
+  print "Working on Repository: ",repo.full_name
+  if not get_repository_hooks(repo.full_name,"Jenkins_Github_Hook"): return
   if since:
     issues = repo.get_issues(state="open", sort="updated", since=since)
   else:

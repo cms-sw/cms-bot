@@ -1,6 +1,6 @@
 #!/bin/sh
 #CMSSDT_DAS_CLIENT_SIGN:12345678901234567890ABCDEFABCDEF
-#Do not change the above magic line. It is signature for the cmssw ibs das_cleint wrapper
+#Do not change the above magic line. It is signature for the cmssw ibs das_client wrapper
 function get_parent_cmds ()
 {
   local DEPTH=$2
@@ -53,6 +53,7 @@ QUERY_SHA=$(echo "${QUERY_SHA_HASH}" | sed 's|^\(..\)|\1/\1|')
 QUERY_URL="https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/${QUERY_SHA}"
 DAS_QUERY_DIR=das_query/$$
 if [ "X${LOCALRT}" != "X" ] ; then DAS_QUERY_DIR="${LOCALRT}/${DAS_QUERY_DIR}" ; fi
+rm -rf ${DAS_QUERY_DIR}
 mkdir -p ${DAS_QUERY_DIR}
 echo "${QUERY}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
 touch ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info

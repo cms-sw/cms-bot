@@ -10,7 +10,7 @@ CMSDIST_PERMISSIONS = {
   "h4d4"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "ticoann"        : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
-  "emaszs"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "todor-ivanov"   : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "nataliaratnikova": [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
 }
 

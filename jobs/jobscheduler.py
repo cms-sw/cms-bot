@@ -93,7 +93,6 @@ def initJobs(jobs, resources, otype):
       job["state"]="Pending"
       job["exit_code"]=-1
       job["jobid"]=group["name"]+"(%s/%s)" % (i+1, cmd_count)
-      if (i>0): group["commands"][i-1]["time"]=group["commands"][i-1]["time"]+job["time"]
       for item in ["rss", "cpu"]:
         if resources["total"][item]<job[item]: resources["total"][item]=job[item]+1
   resources["available"]=deepcopy(resources["total"])

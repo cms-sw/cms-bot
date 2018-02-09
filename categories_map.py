@@ -749,6 +749,7 @@ CMSSW_CATEGORIES={
    "FastSimulation/ParticleFlow",
    "FastSimulation/ParticlePropagator",
    "FastSimulation/PileUpProducer",
+   "FastSimulation/SimplifiedGeometryPropagator",
    "FastSimulation/ShowerDevelopment",
    "FastSimulation/TrackerSetup",
    "FastSimulation/Tracking",

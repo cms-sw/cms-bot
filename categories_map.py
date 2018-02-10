@@ -36,6 +36,7 @@ CMSSW_CATEGORIES={
    "FWCore/Sources", "FWCore/TFWLiteSelector",
    "FWCore/TFWLiteSelectorTest",
    "FWCore/Utilities", "FWCore/Version",
+   "HeterogeneousCore/CUDAServices",
    "PerfTools/Callgrind",
    "PerfTools/EdmEvent", "IOMC/Input",
    "IOMC/RandomEngine",

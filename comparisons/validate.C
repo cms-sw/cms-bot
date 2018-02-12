@@ -445,6 +445,25 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
     photon("puppiChargedHadronIso", cName,tName);
     photon("puppiNeutralHadronIso", cName,tName);
     photon("puppiPhotonIso", cName,tName);
+
+    photon("userFloats_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
+    }
+    photon("userInts_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
+    }
+    photon("userCands_@.size", cName,tName);
+    photon("isolations_@.size", cName,tName);
+    for (int i = 0; i< 12; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
+    }
+    photon("photonIDs_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].photonIDs_[%d].second",i), "", true);
+    }
+
   }
 }
 
@@ -587,9 +606,22 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
     electron("dB(pat::Electron::PVDZ)", cName,tName, true);
 
     electron("userFloats_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
+    }
     electron("userInts_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
+    }
     electron("userCands_@.size", cName,tName);
     electron("isolations_@.size", cName,tName);
+    for (int i = 0; i< 12; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
+    }
+    electron("electronIDs_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].electronIDs_[%d].second",i), "", true);
+    }
   }
 
 }
@@ -725,9 +757,18 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("dB(pat::Muon::PVDZ)", cName,tName, true);
 
     muonVar("userFloats_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
+    }
     muonVar("userInts_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
+    }
     muonVar("userCands_@.size", cName,tName);
     muonVar("isolations_@.size", cName,tName);
+    for (int i = 0; i< 12; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
+    }
 
     muonVar("simType", cName,tName);
     muonVar("simExtType", cName,tName);

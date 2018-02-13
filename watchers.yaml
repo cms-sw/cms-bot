@@ -113,6 +113,7 @@ makortel:
   - Geometry/Track
   - Geometry/CommonTopologies
   - HLTrigger/Configuration
+  - HeterogeneousCore
   - IgTools
   - PerfTools
   - RecoLocalTracker

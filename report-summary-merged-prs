@@ -140,7 +140,7 @@ def get_config_map_params():
       RELEASES_ARCHS[ release_queue ].append( arch )
       if release_queue not in RELEASE_QUEUES:
         RELEASE_QUEUES.append( release_queue )
-      
+
 
     additional_tests = params.get( 'ADDITIONAL_TESTS' )
 
@@ -153,7 +153,7 @@ def get_config_map_params():
 
   SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
   RELEASE_QUEUES.sort()
- 
+
   print
   print '---------------------------'
   print 'Read config.map:'
@@ -370,7 +370,7 @@ def execute_magic_command_find_rv_exceptions_results( ):
   for line in out.splitlines():
     line_parts = line.split( '/' )
     ib_name = line_parts[ -1 ].replace( 'EXCEPTIONS.json', '' ) + line_parts[ -2 ]
-    rv_exception_results[ ib_name ] = True 
+    rv_exception_results[ ib_name ] = True
 
   return rv_exception_results
 
@@ -661,8 +661,8 @@ def fill_missing_cmsdist_tags( results ):
 # merges the results of the tests with the structure of the IBs tags and the pull requests
 # it also marks the comparisons that correspond to an IB
 #
-def add_tests_to_results( results, unit_tests, relvals_results, 
-                          addon_results , build_results, cmsdist_tags_results, 
+def add_tests_to_results( results, unit_tests, relvals_results,
+                          addon_results , build_results, cmsdist_tags_results,
                           rv_Exceptions_Results, fwlite_results ):
   for rq in results:
     for comp in rq['comparisons']:
@@ -706,8 +706,12 @@ def add_tests_to_results( results, unit_tests, relvals_results,
       # custom details for new IB page
       if not comp.get( 'material_budget_v2' ):
         comp['material_budget_v2' ] = 'not-found'
+      if not comp.get('material_budget_comparison'):
+        comp['material_budget_comparison'] = 'not-found'
       if not comp.get( 'static_checks_v2' ):
         comp['static_checks_v2' ] = 'not-found'
+      if not comp.get( 'static_checks_failures' ):
+        comp['static_checks_failures'] = 'not-found'
 
       a = [t['arch'] for t in utres] if utres else []
       b = [t['arch'] for t in rvsres] if rvsres else []
@@ -753,7 +757,7 @@ def find_material_budget_results( comparisons , architecture ):
       'arch':arch
     }
     if (comparison is None) or (comparison is '-1'):
-      comp['material_budget_comparison'] = 'not-found'
+      pass
     elif(comparison == "0"):
       comp['material_budget_comparison'] = {'status': 'found', 'results': 'warning', 'arch': arch}
     else:
@@ -791,6 +795,25 @@ def find_static_results( comparisons , architecture ):
     rel_name = comp['compared_tags'].split('-->')[1]
     print 'Looking for static tests results for ', rel_name
     comp['static_checks'] = find_one_static_check( rel_name , architecture )
+    # For new IB page
+    if(comp['static_checks'] == 'not-found' or comp['static_checks'] == 'inprogress'):
+      comp['static_checks_v2'] = comp['static_checks']
+    else:
+      resultList = comp['static_checks'].split(":")
+      comp['static_checks_v2'] = {'status':"passed", 'arch': resultList[0]}
+      iterable = []
+      for i in range(1, len(resultList)):
+        result = resultList[i]
+        if result == '':
+          continue
+        iterable.append(result)
+      if(len(iterable) > 0):
+        comp['static_checks_failures'] = {
+          'status': "found",
+          'arch': resultList[0],
+          'iterable': iterable
+        }
+
 #
 # Finds for an IB the results of the HLT tests
 #
@@ -979,11 +1002,11 @@ def generate_separated_json_results( results ):
                                    if (comp['release_name'] != rq['base_branch']) and comp['isIB'] ]
 
     all_ibs_list.extend( ibs )
-    
+
     # Ignore forward ported prs, and merge commits
     only_prs_list = []
     for comp in rq['comparisons']:
-      only_prs_list.extend( [ pr['number'] for pr in comp['merged_prs'] 
+      only_prs_list.extend( [ pr['number'] for pr in comp['merged_prs']
                                    if not ( pr['is_merge_commit'] or pr['from_merge_commit'] ) ] )
 
     all_prs_list.extend( only_prs_list )
@@ -993,7 +1016,7 @@ def generate_separated_json_results( results ):
     f_summary.write( "NumPRs:%d\n" % len(only_prs_list) )
     f_summary.close()
 
-  all_ibs_list = list( set(all_ibs_list) ) 
+  all_ibs_list = list( set(all_ibs_list) )
   all_ibs_list.sort()
 
   all_prs_list = list( set(all_prs_list) )
@@ -1005,7 +1028,7 @@ def generate_separated_json_results( results ):
 
   f_summary_all.write( "PRs:%s\n" % all_prs_list )
   f_summary_all.write( "NumPRs:%d\n" % len(all_prs_list) )
-  
+
 
 #
 # Generates a json file with the global status of the last IB for each architecture, 
@@ -1042,15 +1065,15 @@ def generate_ib_json_short_summary( results ):
         build_info = [ b for b in latest_IB_info[ "builds" ] if b[ 'arch' ] == arch ]
         if len( build_info ) == 0:
           build_passed = 'unknown'
-        else: 
+        else:
           build_passed = build_info[ 0 ][ "passed" ]
-       
+
         fwlite_info = [ b for b in latest_IB_info[ "fwlite" ] if b[ 'arch' ] == arch ]
         if len( fwlite_info ) == 0:
           fwlite_passed = 'unknown'
-        else: 
+        else:
           fwlite_passed = build_info[ 0 ][ "passed" ]
-       
+
         unit_tests_info = [ u for u in latest_IB_info[ "utests" ] if u[ 'arch' ] == arch ]
         if len( unit_tests_info ) == 0:
           utests_passed = 'unknown'
@@ -1069,7 +1092,7 @@ def generate_ib_json_short_summary( results ):
         short_summary[ rq_name ][ arch ][ "latest_IB" ] = latest_IB_name
 
         merged_statuses = "%s-%s-%s" % (build_passed,utests_passed,relvals_passed)
-       
+
         if 'unknown' in merged_statuses:
           ib_status = 'unknown'
         elif 'failed' in merged_statuses or 'False' in merged_statuses:
@@ -1245,7 +1268,7 @@ if __name__ == "__main__":
     PASSED = 'passed'
     FAILED = 'failed'
     UNKNOWN = 'unknown'
- 
+
   results = []
 
   get_config_map_params()
@@ -1279,7 +1302,7 @@ if __name__ == "__main__":
       release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
     else:
       release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]
-  
+
     print '####################################################################'
     print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
 
@@ -1294,7 +1317,7 @@ if __name__ == "__main__":
     tags = [x for x in tags if x in installedReleases]
     tags.append( release_branch )
     print 'I got these tags: '
-    print tags 
+    print tags
 
     print 'Getting merged pull requests between tags...'
     release_queue_results['comparisons'] = compare_tags(release_branch, tags , 'cmssw.git', CMSSW_REPO )
@@ -1319,29 +1342,29 @@ if __name__ == "__main__":
           find_comparison_baseline_results( release_queue_results['comparisons'] , arch )
         if 'igprof' in tests_to_find:
           find_igprof_results( release_queue_results['comparisons'] , arch )
-    find_dqm_tests_results( release_queue_results['comparisons'] ) 
+    find_dqm_tests_results( release_queue_results['comparisons'] )
     results.append(release_queue_results)
-  
+
   cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
-  
+
   build_results = {}
   execute_magic_command_find_results( build_results , 'builds' )
-  
+
   fwlite_results = {}
   execute_magic_command_find_results( fwlite_results , 'fwlite' )
-  
+
   relvals_results = {}
   execute_magic_command_find_results( relvals_results , 'relvals' )
-  
+
   unit_tests_results = {}
   execute_magic_command_find_results( unit_tests_results , 'utests' )
-  
+
   addOn_tests_results = {}
   execute_magic_command_find_results( addOn_tests_results ,'addOn' )
 
-  rv_Exceptions_Results = execute_magic_command_find_rv_exceptions_results() 
- 
-  add_tests_to_results( results, unit_tests_results, relvals_results, 
+  rv_Exceptions_Results = execute_magic_command_find_rv_exceptions_results()
+
+  add_tests_to_results( results, unit_tests_results, relvals_results,
                        addOn_tests_results, build_results, cmsdist_tags_results,
                        rv_Exceptions_Results, fwlite_results )
 
@@ -1352,7 +1375,7 @@ if __name__ == "__main__":
   fix_results(results)
   generate_separated_json_results( results )
   generate_ib_json_short_summary( results )
-  
+
   out_json = open("merged_prs_summary.json", "w")
   json.dump(results,out_json,indent=4)
   out_json.close()

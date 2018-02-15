@@ -347,10 +347,12 @@ void metVars(TString cName = "tcMet_", TString tName = "recoMETs_") {
   met("significance",cName,tName);
 }
 
-void tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_",  bool notafunction=false){
+void tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_", 
+         bool log10Var = false, bool trycatch = false, bool notafunction = false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
-  plotvar(v);
+  if (log10Var) v = "log10(" + v + ")";
+  plotvar(v, "", trycatch);
 }
 
 void tauVars(TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_"){
@@ -360,6 +362,41 @@ void tauVars(TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_")
   tau("eta",cName,tName);
   tau("phi",cName,tName);
   if (tName!="patTaus_") tau("emFraction",cName,tName);//crashes now for patTaus
+
+  if (tName == "patTaus_"){
+    tau("dxy", cName, tName);
+    tau("dxy_error", cName, tName);
+
+    tau("ip3d", cName, tName);
+    tau("ip3d_error", cName, tName);
+    tau("ecalEnergy", cName, tName);
+    tau("hcalEnergy", cName, tName);
+    tau("leadingTrackNormChi2", cName, tName);
+    tau("ecalEnergyLeadChargedHadrCand", cName, tName);
+    tau("hcalEnergyLeadChargedHadrCand", cName, tName);
+    tau("etaAtEcalEntrance", cName, tName);
+    tau("etaAtEcalEntranceLeadChargedCand", cName, tName);
+    tau("ptLeadChargedCand", cName, tName);
+    tau("emFraction_MVA", cName, tName);
+
+    tau("userFloats_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
+    }
+    tau("userInts_@.size", cName,tName);
+    for (int i = 0; i< 32; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
+    }
+    tau("userCands_@.size", cName,tName);
+    tau("isolations_@.size", cName,tName);
+    for (int i = 0; i< 12; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
+    }
+    tau("tauIDs_@.size", cName,tName);
+    for (int i = 0; i< 82; ++i){
+      plotvar(tName+cName+"_"+recoS+Form(".obj[].tauIDs_[%d].second",i), "", true);
+    }
+  }
 }
 
 void photon(TString var, TString cName = "photons_", TString tName = "recoPhotons_", bool notafunction=false){
@@ -2121,40 +2158,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tauVars("hpsPFTauProducer_");
       // miniaod
       tauVars("slimmedTaus_","patTaus_");
-      //pat::Tau specifics
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.dxy()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.dxy_error()");
-
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ip3d()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ip3d_error()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ecalEnergy()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.hcalEnergy()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.leadingTrackNormChi2()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ecalEnergyLeadChargedHadrCand()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.hcalEnergyLeadChargedHadrCand()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.etaAtEcalEntrance()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.etaAtEcalEntranceLeadChargedCand()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.ptLeadChargedCand()");
-      plotvar("patTaus_slimmedTaus__"+recoS+".obj.emFraction_MVA()");
-
       // boosted tau reco
-      // miniaod
       tauVars("slimmedTausBoosted_","patTaus_");
-      //pat::Tau specifics
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.dxy()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.dxy_error()");
-
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ip3d()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ip3d_error()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ecalEnergy()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.hcalEnergy()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.leadingTrackNormChi2()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ecalEnergyLeadChargedHadrCand()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.hcalEnergyLeadChargedHadrCand()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.etaAtEcalEntrance()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.etaAtEcalEntranceLeadChargedCand()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.ptLeadChargedCand()");
-      plotvar("patTaus_slimmedTausBoosted__"+recoS+".obj.emFraction_MVA()");
 
       //upstream discriminators
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByIsolationMVArun2v1PWdR03oldDMwLTraw__"+recoS+".obj.data_");

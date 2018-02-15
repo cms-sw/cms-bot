@@ -22,3 +22,5 @@ ADD_WEB_HOOK=False
 IGNORE_ISSUES = [10]
 #Set the Jenkins slave label is your tests needs special machines to run.
 JENKINS_SLAVE_LABEL=""
+#For cmsdist/cmssw repos , set it to False if you do not want to run standard cms pr tests
+CMS_STANDARD_TESTS=True

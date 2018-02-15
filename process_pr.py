@@ -53,7 +53,11 @@ def read_repo_file(repo_config, repo_file, default=None):
 def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
-  if (req_type in "tests") and (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
+  if (req_type in "tests"):
+    try:
+      if (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
+      elif not repo_config.CMS_STANDARD_TESTS: req_type = "user-"+req_type
+    except: pass
   if (repo_parts[0] == GH_CMSSW_ORGANIZATION) and (repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): repo_partsX=repo_parts[1]
   else: repo_partsX=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)

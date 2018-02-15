@@ -14,6 +14,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   case $XUSER in
     cmsbld ) DOCKER_OPT=" -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group " ;;
   esac
+  if [ -e /etc/tnsnames.ora ] ; then
+    DOCKER_OPT="$DOCKER_OPT -v /etc/tnsnames.ora:/etc/tnsnames.ora "
+  fi 
   DOCK_ARGS="voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
   docker run --rm -h `hostname -f` $DOCKER_OPT \
@@ -24,7 +27,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     -v /cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses \
     -v /cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security \
     -v /tmp:/tmp \
-    -v /etc/tnsnames.ora:/etc/tnsnames.ora \
     -e WORKSPACE=$WORKSPACE \
     -e USER=$USER \
     -e BUILD_NUMBER=$BUILD_NUMBER \

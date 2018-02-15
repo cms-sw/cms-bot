@@ -3,7 +3,9 @@
 - Make a PR to add your repository configuration in cms-bot/repos/**your_github_user/your_repository**
   - If you have '-' in your github user or repository name then replace it with '_'
 - It is better to copy existing configuration and change it accordingly e.g. copy repos/smuzaffar/cmssw in to repos/**your_repository**
-- Allow cmsbot to update your repository. If you have a github organization then please add github user "cmsbot" in to a team with write (or admin) rights. OR if it is not a organization then please add "cmsbot" as Collaborators (under the Settings of your repository).
+- Allow cmsbot to update your repository
+  - If you have a github organization then please add github user "cmsbot" in to a team with write (or admin) rights
+  - If it is not a organization then please add "cmsbot" as Collaborators (under the Settings of your repository).
 - Add github webhook so that cms-bot can be notified. 
   - If you have given admin rights to cms-bot and set **ADD_WEB_HOOK=True** in repos/**your_repo/repo_config.py** then cms-bot can add web-hook
   - If cms-bot does not have admin rights to your repository then please add yourself the github webhook (under Settings of your repository) and send us the "Secret" pass phrase so that cms-bot only recognize valid web hooks

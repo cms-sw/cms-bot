@@ -50,7 +50,7 @@ def read_repo_file(repo_config, repo_file, default=None):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests"):
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
   if (req_type in "tests") and (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
@@ -70,6 +70,9 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
       out_file.write( '%s=%s\n' % ( 'PULL_REQUEST', pr_number ) )
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', cmsdist_pr ) )
       out_file.write( '%s=%s\n' % ( 'ADDITIONAL_PULL_REQUESTS', cmssw_prs ) )
+    try:
+      if repo_config.JENKINS_SLAVE_LABEL: out_file.write( '%s=%s\n' % ('RUN_LABEL', repo_config.JENKINS_SLAVE_LABEL))
+    except: pass
     out_file.close()
 
 # Update the milestone for a given issue.
@@ -730,7 +733,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False)
+          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config)
       elif abort_test:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         if cmsdist_issue: cmsdist_issue.create_comment( TRIGERING_TESTS_ABORT_MSG )

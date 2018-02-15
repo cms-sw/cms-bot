@@ -18,7 +18,7 @@
       - Issues, Issue comment, Pull request 
 
 ### Pull request Testing:
-- For `user/cmssw` repository , bot can run standard PR tests.
+- For `user/cmssw` and `user/cmsdist` repositories , bot can run standard PR tests.
   - If you do not want to run standard cms PR tests then set `CMS_STANDARD_TESTS=False` in your `repo_config.py` file.
 - For `user/non-cmssw` repository, you need to provide `repos/your_repository/run-pr-tests` script which bot can run.
   - bot will clone your repository in `$WORKSPACE/userrepo` and will merge your pull request on top of your default branch

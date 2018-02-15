@@ -1,6 +1,6 @@
 ## Setting up Pull Requests testing for CMS user repositories
 ### Setup you repository
-- Make a PR to add your repository configuration in `cms-bot/repos/your_github_user/your_repository`
+- Make a Pull Request to add your repository configuration in `cms-bot/repos/your_github_user/your_repository`
   - If you have `-` in your github user or repository name then replace it with `_`
 - It is better to copy existing configuration and change it accordingly e.g. copy `repos/smuzaffar/cmssw` in to `repos/your_repository`
 - Allow `cmsbot` to update your repository
@@ -22,6 +22,6 @@
   - If you do not want to run standard cms PR tests then set `CMS_STANDARD_TESTS=False` in your `repo_config.py` file.
 - For `user/non-cmssw` repository, you need to provide `repos/your_repository/run-pr-tests` script which bot can run.
   - bot will clone your repository in `$WORKSPACE/userrepo` and will merge your pull request on top of your default branch
-  - A file `$WORKSPACE/changed-files.txt` will contains the list of changed file in the Pull Request
+  - A file `$WORKSPACE/changed-files.txt` will contain the list of changed file in the Pull Request
   - If you want to upload job logs (max 1G) then copy them under `$WORKSPACE/upload`
 - cmsbot commands are listed here http://cms-sw.github.io/cms-bot-cmssw-cmds.html

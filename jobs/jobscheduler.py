@@ -11,7 +11,6 @@ from subprocess import Popen
 global simulation_time
 global simulation
 def gettime(addtime=0):
-  print "SS:",simulation,simulation_time,addtime
   if not simulation: return int(time())
   global simulation_time
   simulation_time+=addtime

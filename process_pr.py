@@ -508,6 +508,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ok, cmsdist_pr, cmssw_prs, extra_wfs = check_test_cmd(first_line)
         if ok:
           print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, extra_wfs)
+          print "Comment message",first_line
           trigger_test_on_signature = False
           if tests_already_queued:
             print "Test results not obtained in ",comment.created_at-last_test_start_time

@@ -120,7 +120,7 @@ echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 echo "Finished downloading files at `date`:"
 
 get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/results/testsResults.txt
-sed -i "s/COMPARISON;QUEUED/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
+sed -i "s/COMPARISON;.*/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
 BASE_IB=$(grep '^BASE_IB;' $WORKSPACE/results/testsResults.txt | sed 's|.*;||')
 if [ "X${BASE_IB}" = "X" ] ; then BASE_IB=$RELEASE_FORMAT ; fi
 send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt

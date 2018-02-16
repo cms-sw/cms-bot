@@ -50,7 +50,10 @@ REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
 
 COMPARISON_REL=
-COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
+case $RELEASE_FORMAT in
+  CMSSW_9_4_MAOD_X_* ) COMP_QUEUE="CMSSW_9_4_MAOD_X" ;;
+  * ) COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|') ;;
+esac
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then

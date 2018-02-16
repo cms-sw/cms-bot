@@ -37,6 +37,7 @@ def send_payload_new(index,document,id,payload,es_server,passwd_file=None):
   except Exception as e:
     print "ERROR:",url,str(e)
     return False
+  print "OK ",index
   return True
 
 def send_payload_old(index,document,id,payload,passwd_file=None):
@@ -55,6 +56,7 @@ def send_payload_old(index,document,id,payload,passwd_file=None):
   except Exception as e:
     print "ERROR: ",url, str(e)
     return False
+  print "OK ",index
   return True
 
 def delete_hit(hit,passwd_file=None):

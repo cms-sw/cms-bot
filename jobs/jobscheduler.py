@@ -8,9 +8,10 @@ import threading, json, os
 from optparse import OptionParser
 from subprocess import Popen
 
-simulation_time = 0
-simulation = False
+global simulation_time
+global simulation
 def gettime(addtime=0):
+  print "SS:",simulation,simulation_time,addtime
   if not simulation: return int(time())
   global simulation_time
   simulation_time+=addtime
@@ -148,7 +149,7 @@ if __name__ == "__main__":
   parser.add_option("-M", "--max-jobs", dest="maxJobs", default=-1, type="int", help="Maximum jobs to run in parallel. Default is -1 which means no limit. Special value 0 means maximum jobs=CPU counts")
   parser.add_option("-s", "--simulate", dest="simulate", action="store_true", help="Do not run the jobs but simulate the timings.", default=False)
   opts, args = parser.parse_args()
-  global simulation
+  simulation_time = 0
   simulation = opts.simulate
   if opts.memory>200: opts.memory=200
   if opts.cpu>300:    opts.cpu=300

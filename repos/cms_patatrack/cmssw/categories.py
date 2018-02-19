@@ -7,7 +7,7 @@ from categories_map import CMSSW_CATEGORIES
 CMSSW_L1 = []
 APPROVE_BUILD_RELEASE =  list(set([  ] + CMSSW_L1))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
-TRIGGER_PR_TESTS = list(set([] + REQUEST_BUILD_RELEASE))
+TRIGGER_PR_TESTS = list(set(['smuzaffar'] + REQUEST_BUILD_RELEASE))
 PR_HOLD_MANAGERS = [ ]
 
 COMMON_CATEGORIES = [ "tests", "code-checks" ]
@@ -22,7 +22,7 @@ COMPARISON_MISSING_MAP = []
 #github_user:[list of categories]
 CMSSW_L2 = {
   CMSBUILD_USER : ["tests", "code-checks" ],
-  gh_user : CMSSW_CATEGORIES.keys(),
+  'fwyzard'     : CMSSW_CATEGORIES.keys(),
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + CMSSW_L2.keys())

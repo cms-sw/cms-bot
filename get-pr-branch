@@ -33,6 +33,6 @@ if __name__ == "__main__":
       if exists(join(repo_dir,"repo_config.py")):
         path.insert(0,repo_dir)
         import repo_config
-        pr_branch = repo_config.PR_TEST_CMSSW_BRANCH[pr.base.ref]
+        pr_branch = repo_config.CMS_BRANCH_MAP[pr.base.ref]
     except: pass
     print pr_branch

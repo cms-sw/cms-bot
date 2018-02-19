@@ -22,7 +22,7 @@ ADD_WEB_HOOK=False
 #List of issues/pr which bot should ignore
 IGNORE_ISSUES = []
 #Set the Jenkins slave label is your tests needs special machines to run.
-JENKINS_SLAVE_LABEL=""
+JENKINS_SLAVE_LABEL="slc7_amd64 && GPU"
 #For cmsdist/cmssw repos , set it to False if you do not want to run standard cms pr tests
 CMS_STANDARD_TESTS=True
 #Map your branches with cmssw branches for tests

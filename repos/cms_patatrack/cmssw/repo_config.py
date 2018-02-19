@@ -25,3 +25,7 @@ IGNORE_ISSUES = []
 JENKINS_SLAVE_LABEL=""
 #For cmsdist/cmssw repos , set it to False if you do not want to run standard cms pr tests
 CMS_STANDARD_TESTS=True
+#Map your branches with cmssw branches for tests
+PR_TEST_CMSSW_BRANCH={
+  'CMSSW_10_1_X_Patatrack' : 'CMSSW_10_1_X'
+}

@@ -26,6 +26,10 @@ JENKINS_SLAVE_LABEL="slc7_amd64 && GPU"
 #For cmsdist/cmssw repos , set it to False if you do not want to run standard cms pr tests
 CMS_STANDARD_TESTS=True
 #Map your branches with cmssw branches for tests
+#User Branch => CMSSW/CMSDIST Bracnh
 CMS_BRANCH_MAP={
   'CMSSW_10_1_X_Patatrack' : 'CMSSW_10_1_X'
 }
+#Valid Web hooks e.g. '.+' to match all event
+VALID_WEB_HOOKS=['.+']
+

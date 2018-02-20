@@ -24,3 +24,10 @@ IGNORE_ISSUES = [10]
 JENKINS_SLAVE_LABEL=""
 #For cmsdist/cmssw repos , set it to False if you do not want to run standard cms pr tests
 CMS_STANDARD_TESTS=True
+#Map your branches with cmssw branches for tests
+#User Branch => CMSSW/CMSDIST Bracnh
+CMS_BRANCH_MAP={
+}
+#Valid Web hooks e.g. '.+' to match all event
+VALID_WEB_HOOKS=['.+']
+

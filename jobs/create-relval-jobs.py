@@ -51,7 +51,6 @@ for t in thrds: t.join()
 print "Getting Workflow stats from ES....."
 stats = {}
 release_cycle=cmssw_ver.split("_X_")[0]+"_X"
-if release_cycle=="CMSSW_9_4_MAOD_X": release_cycle="CMSSW_9_4_X"
 while True:
   stats = es_query(index='relvals_stats_*',
                  query=format('exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
@@ -65,9 +64,10 @@ while True:
     xrelease_cycle = "_".join(cmssw_ver.split("_",4)[0:3])+"_X"
     if xrelease_cycle!=release_cycle:
       release_cycle=xrelease_cycle
+      print "Retry: Setting release cycle to ",release_cycle
       continue
   break
-  
+
 wf_stats = es_workflow_stats(stats)
 
 #Create Jobs

@@ -49,15 +49,25 @@ for t in thrds: t.join()
 
 #Get Workflow stats from ES
 print "Getting Workflow stats from ES....."
-stats = es_query(index='relvals_stats_*',
+stats = {}
+release_cycle=cmssw_ver.split("_X_")[0]+"_X"
+if release_cycle=="CMSSW_9_4_MAOD_X": release_cycle="CMSSW_9_4_X"
+while True:
+  stats = es_query(index='relvals_stats_*',
                  query=format('exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
-                              release_cycle=cmssw_ver.split("_X_")[0]+"_X_*",
+                              release_cycle=release_cycle+"_*",
                               architecture=arch,
                               workflows=wf_query[4:]
                              ),
                  start_time=1000*int(time()-(86400*10)),
                  end_time=1000*int(time()))
-
+  if (not 'hits' in stats) or (not 'hits' in stats['hits']) or (not stats['hits']['hits']):
+    xrelease_cycle = "_".join(cmssw_ver.split("_",4)[0:3])+"_X"
+    if xrelease_cycle!=release_cycle:
+      release_cycle=xrelease_cycle
+      continue
+  break
+  
 wf_stats = es_workflow_stats(stats)
 
 #Create Jobs

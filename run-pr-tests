@@ -50,7 +50,10 @@ REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
 
 COMPARISON_REL=
-COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
+case $RELEASE_FORMAT in
+  CMSSW_9_4_MAOD_X* ) COMP_QUEUE="CMSSW_9_4_MAOD_X" ;;
+  * ) COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|') ;;
+esac
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
@@ -62,7 +65,11 @@ if [ ! -d CMSSW_* ]; then
       if [ "X$COMP_ARCH" = "X" ] ; then COMP_ARCH=$ARCHITECTURE ; fi
     fi
     for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
-      COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+      if [ "$(echo $SCRAM_REL | sed 's|_X_.*|_X|')" = "$COMP_QUEUE" ] ; then
+        COMP_REL=$SCRAM_REL
+      else
+        COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+      fi
       has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
       RELEASE_FORMAT=$SCRAM_REL
       COMPARISON_ARCH=$COMP_ARCH

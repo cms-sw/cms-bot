@@ -17,6 +17,9 @@ WFS_WITH_ERRORS=''
 
 MAPPING_FILE=wf_mapping.txt
 get_jenkins_artifacts ${BASELINE_DIR}/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE
+get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/results/testsResults.txt
+BASE_IB=$(grep '^BASE_IB;' $WORKSPACE/results/testsResults.txt | sed 's|.*;||')
+if [ "X${BASE_IB}" = "X" ] ; then BASE_IB=$RELEASE_FORMAT ; fi
 
 ERRORS_FILE=wf_errors.txt
 get_jenkins_artifacts ${BASELINE_DIR}/$ERRORS_FILE $WORKSPACE/$ERRORS_FILE
@@ -59,9 +62,9 @@ cat /proc/cpuinfo |  grep "model name" >> $DETAILS_FILE
 ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
 echo "Set up release area at `date`"
-scram project $RELEASE_FORMAT
+scram project $BASE_IB
 set +x
-cd $RELEASE_FORMAT
+cd $BASE_IB
 eval `scram run -sh`
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
   mkdir -p src/Utilities/RelMon
@@ -119,8 +122,7 @@ echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 
 echo "Finished downloading files at `date`:"
 
-get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/results/testsResults.txt
-sed -i "s/COMPARISON;QUEUED/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
+sed -i "s/COMPARISON;.*/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
 send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
 
 # --------------------------------------------------------------------------
@@ -290,7 +292,7 @@ if [ -e results/files ] ; then
   done
 fi
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
-send_jenkins_artifacts $WORKSPACE/upload/ baseLineComparisons/${RELEASE_FORMAT}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
+send_jenkins_artifacts $WORKSPACE/upload/ baseLineComparisons/${BASE_IB}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
 if [ -e $WORKSPACE/results/testsResults.txt ] ; then
   sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
   send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt

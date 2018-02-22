@@ -50,10 +50,14 @@ def read_repo_file(repo_config, repo_file, default=None):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests"):
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
-  if (req_type in "tests") and (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
+  if (req_type in "tests"):
+    try:
+      if (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
+      elif not repo_config.CMS_STANDARD_TESTS: req_type = "user-"+req_type
+    except: pass
   if (repo_parts[0] == GH_CMSSW_ORGANIZATION) and (repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): repo_partsX=repo_parts[1]
   else: repo_partsX=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)
@@ -70,6 +74,9 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
       out_file.write( '%s=%s\n' % ( 'PULL_REQUEST', pr_number ) )
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', cmsdist_pr ) )
       out_file.write( '%s=%s\n' % ( 'ADDITIONAL_PULL_REQUESTS', cmssw_prs ) )
+    try:
+      if repo_config.JENKINS_SLAVE_LABEL: out_file.write( '%s=%s\n' % ('RUN_LABEL', repo_config.JENKINS_SLAVE_LABEL))
+    except: pass
     out_file.close()
 
 # Update the milestone for a given issue.
@@ -501,6 +508,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ok, cmsdist_pr, cmssw_prs, extra_wfs = check_test_cmd(first_line)
         if ok:
           print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, extra_wfs)
+          print "Comment message:",first_line
           trigger_test_on_signature = False
           if tests_already_queued:
             print "Test results not obtained in ",comment.created_at-last_test_start_time
@@ -730,7 +738,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False)
+          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config)
       elif abort_test:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         if cmsdist_issue: cmsdist_issue.create_comment( TRIGERING_TESTS_ABORT_MSG )

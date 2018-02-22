@@ -53,6 +53,7 @@ HydjetQMinBiaswf140p0 140.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/ste
 ZEEMMHIwf140p4 140.4_ZEEMM_13_HI+ZEEMM_13_HI*/step3.root RECO
 ZEEMMHIwf302p0 302.0_Pyquen_ZeemumuJets_pt10_2760GeV+Pyquen_ZeemumuJets_pt10_2760GeV+*/step3.root RECO
 EPOSPPb8160GeVwf281p0 281.0_EPOS_PPb_8160GeV_MinimumBias+*/step3.root RECO
+HydjetQB12in2018wf150p0 150.0_HydjetQ_B12_5020GeV_*/step3.root RECO
 #
 #  Run2 MC
 #
@@ -73,6 +74,7 @@ SingleMu13Pt1000wf1322p0 1322.0_SingleMuPt1000_UP15+*/step3.root RECO
 TTbar13wf1325p0 1325.0_TTbar_13+TTbar_13*/step3.root RECO
 TTbar13wf11325p0 11325.0_TTbar_13_unsch+TTbar_13*/step3.root RECO
 TTbar13reMINIAODwf1325p5 1325.5_TTbar_13_reminiaod*/step2.root PAT
+TTbar13nanoAODwf1325p7 1325.7_TTbar_13_94XNanoAODINPUT+*/step2.root DQM
 ZMM13TeVwf1330p0 1330.0_ZMM_13+*/step3.root RECO
 H125GG13TeVwf1332p0 1332.0_H125GGgluonfusion_13+*/step3.root RECO
 VBFH125BB13TeVwf1363p0 1363.0_VBFHToBB_M125_Pow_py8_Evt_13*/step3.root RECO
@@ -116,6 +118,7 @@ RunJetHT2016EreMINIAODwf136p7611 136.7611_RunJetHT2016E_reminiaod+*/step2.root P
 RunMET2016Ewf136p762 136.762_RunMET2016E+*/step3.root reRECO
 RunSinglePh2016Ewf136p766 136.766_RunSinglePh2016E+*/step3.root reRECO
 RunJetHT2016Hwf136p772 136.772_RunJetHT2016H+*/step3.root reRECO
+RunJetHT2016HreMINIAODwf136p7721 136.7721_RunJetHT2016H_reminiaod+*/step2.root PAT
 #
 # 2017 data
 #

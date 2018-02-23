@@ -92,6 +92,10 @@ def checkJobs(thrds, resources):
     job["end_time"]=gettime(0 if not simulation else job["time2finish"])
     job["state"]="Done"
     job["exec_time"]=job["end_time"]-job["start_time"]
+    if not simulation:
+      dtime = job["exec_time"]-job["origtime"]
+      if dtime > 60:
+        print "===> SLOW JOB:",job["exec_time"],"secs vs ",job["origtime"],"secs. Diff:",dtime
     resources["done_jobs"]=resources["done_jobs"]+1
     for pram in ["rss", "cpu"]: resources["available"][pram]=resources["available"][pram]+job[pram]
     if not simulation:
@@ -111,9 +115,8 @@ def initJobs(jobs, resources, otype):
     for i in reversed(range(cmd_count)):
       total_jobs+=1
       job = group["commands"][i]
-      if simulation:
-        job["time2finish"] = job["time"]
-        job["origtime"] = job["time"]
+      job["origtime"] = job["time"]
+      if simulation: job["time2finish"] = job["time"]
       job_time += job["time"]
       job["time"] = job_time
       for x in ["rss","cpu"]:

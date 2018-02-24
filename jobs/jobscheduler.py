@@ -52,6 +52,7 @@ def getFinalCommand(group, jobs, resources):
   resources["done_groups"]=resources["done_groups"]+1
   job["command"]=format(job["command"],group_name=group["name"],jobs_results=jobs_results)
   if simulation: job["time2finish"]=10
+  job["origtime"]=60
   return job
 
 def getJob(jobs, resources, order):

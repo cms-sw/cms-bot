@@ -28,6 +28,7 @@ PACKAGE_RE = "^([A-Z][0-9A-Za-z]*/[a-zA-Z][0-9A-Za-z]*|.gitignore|.clang-[^/]+)$
 for (key, value) in CMSSW_CATEGORIES.items():
   assert(type(key) == str)
   assert(type(value) == list)
+  if len(value)==0:continue
   if key == "externals":
     assert(len(value)>0)
     continue

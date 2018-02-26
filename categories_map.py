@@ -603,6 +603,7 @@ CMSSW_CATEGORIES={
    "RecoMuon/L3TrackFinder",
    "RecoTauTag/HLTProducers",
  ],
+ "xpog": [""],
  "analysis": [
    "EgammaAnalysis/ElectronTools",
    "CondFormats/JetMETObjects",

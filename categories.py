@@ -65,6 +65,8 @@ CMSSW_L2 = {
   "gudrutis" : ["externals"],
   "lpernie" : ["alca"],
   "jfernan2": ["dqm"],
+  "arizzi": ["xpog"],
+  "gpetruc": ["xpog"],
   CMSBUILD_USER: ["tests", "code-checks" ],
 }
 

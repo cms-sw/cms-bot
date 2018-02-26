@@ -602,8 +602,9 @@ CMSSW_CATEGORIES={
    "RecoMuon/L3MuonProducer",
    "RecoMuon/L3TrackFinder",
    "RecoTauTag/HLTProducers",
- ],
- "analysis": [
+  ],
+  "xpog": [],
+  "analysis": [
    "EgammaAnalysis/ElectronTools",
    "CondFormats/JetMETObjects",
    "HiggsAnalysis/CombinedLimit",

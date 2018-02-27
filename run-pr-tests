@@ -93,7 +93,10 @@ fi
 [ "X$COMP_QUEUE" = "X" ] && COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
 
 if [ "X$COMPARISON_REL" = "X" ] ; then
-  COMPARISON_REL=$(echo $RELEASE_FORMAT | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+  case $RELEASE_FORMAT in
+    CMSSW_9_4_MAOD_X* ) COMPARISON_REL=$RELEASE_FORMAT ;;
+    * ) COMPARISON_REL=$(echo $RELEASE_FORMAT | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+  esac
 fi
 
 if [ "X$COMPARISON_ARCH" = "X" ] ; then

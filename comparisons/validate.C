@@ -230,7 +230,6 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
   return countDiff;
 }
 
-
 void jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false, bool notafunction = false){
   TString v = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+".obj."+var+(notafunction? "" : "()");
   if (log10Var) v = "log10(" + v + ")";
@@ -331,10 +330,10 @@ void calomet(TString algo, TString var, bool doLog10 = false){
   plotvar(v);
 }
 
-void met(TString var, TString cName = "tcMet_", TString tName = "recoMETs_",  bool notafunction=false){
-  TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
-    tName+cName+"_"+recoS+".obj."+var+"()";
-  plotvar(v);
+void met(TString var, TString cName = "tcMet_", TString tName = "recoMETs_",  bool log10Var = false, bool trycatch = false, bool notafunction=false){
+  TString v = tName+cName+"_"+recoS+".obj."+var+(notafunction? "" : "()");
+  if (log10Var) v = "log10(" + v + ")";
+  plotvar(v, "", trycatch);
 }
 
 void metVars(TString cName = "tcMet_", TString tName = "recoMETs_") {
@@ -345,6 +344,37 @@ void metVars(TString cName = "tcMet_", TString tName = "recoMETs_") {
   met("phi",cName,tName);
   met("sumEt",cName,tName);
   met("significance",cName,tName);
+}
+
+void patMetVars(TString cName){
+  const TString tName = "patMETs_";
+  metVars(cName, tName);
+  
+  met("userFloats_@.size", cName, tName);
+  for (int i = 0; i< 32; ++i){
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].userFloats_[%d]",i), "", true);
+  }
+  met("userInts_@.size", cName, tName);
+  for (int i = 0; i< 32; ++i){
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].userInts_[%d]",i), "", true);
+  }
+  met("userCands_@.size", cName, tName);
+
+  met("pfMET_[0].NeutralEMFraction", cName, tName, false, true, true);
+  met("pfMET_[0].NeutralHadFraction", cName, tName, false, true, true);
+  met("pfMET_[0].ChargedEMFraction", cName, tName, false, true, true);
+  met("pfMET_[0].ChargedHadFraction", cName, tName, false, true, true);
+  met("pfMET_[0].MuonFraction", cName, tName, false, true, true);
+  met("pfMET_[0].Type6Fraction", cName, tName, false, true, true);
+  met("pfMET_[0].Type7Fraction", cName, tName, false, true, true);
+
+  for (int i = 0; i< 24; ++i){
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dpx()",i), "", true);
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dsumEt()",i), "", true);
+
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dpx()",i), "", true);
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dsumEt()",i), "", true);
+  }
 }
 
 void tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_", 
@@ -2291,6 +2321,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("log10(recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.energy())");
       plotvar("recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj.time()");
 
+      plotvar("recoPFRecHits_particleFlowRecHitECAL__"+recoS+".obj@.size()");
+      plotvar("recoPFRecHits_particleFlowRecHitECAL__"+recoS+".obj.position_.eta()");
+      plotvar("recoPFRecHits_particleFlowRecHitECAL__"+recoS+".obj.position_.phi()");
+      plotvar("log10(recoPFRecHits_particleFlowRecHitECAL__"+recoS+".obj.energy())");
+      plotvar("recoPFRecHits_particleFlowRecHitECAL__"+recoS+".obj.time()");
+
       plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj@.size()");
       plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.position_.eta()");
       plotvar("recoPFRecHits_particleFlowRecHitECAL_Cleaned_"+recoS+".obj.position_.phi()");
@@ -2488,10 +2524,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       metVars("htMetAK7_");
 
       // miniaod
-      metVars("slimmedMETs_","patMETs_");
-      metVars("slimmedMETsPuppi_","patMETs_");
+      patMetVars("slimmedMETs_");
+      patMetVars("slimmedMETsPuppi_");
       // miniaod debug
-      metVars("patMETsPuppi_","patMETs_");
+      patMetVars("patMETsPuppi_");
       metVars("pfMetT1Puppi_","recoPFMETs_");
       metVars("pfMetPuppi_","recoPFMETs_");
 

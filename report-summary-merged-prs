@@ -9,6 +9,8 @@ from pickle import Unpickler
 from os.path import basename, dirname, exists, join, expanduser
 from glob import glob
 from github import Github
+
+from cmsutils import get_config_map_properties
 from github_utils import get_merge_prs
 from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
@@ -1030,6 +1032,14 @@ def generate_separated_json_results( results ):
   f_summary_all.write( "NumPRs:%d\n" % len(all_prs_list) )
 
 
+def get_production_archs(config_map):
+  archs = {}
+  for release in config_map:
+    if ('PROD_ARCH' in release and 'DISABLED' not in release):
+      archs[release['RELEASE_QUEUE']] = release['SCRAM_ARCH']
+  return archs
+
+
 #
 # Generates a json file with the global status of the last IB for each architecture, 
 # per each  Release Queue
@@ -1102,6 +1112,7 @@ def generate_ib_json_short_summary( results ):
         short_summary[ rq_name ][ arch ][ "status" ] = ib_status
 
   short_summary[ 'all_archs' ] = ARCHITECTURES
+  short_summary['prod_archs'] =  get_production_archs(get_config_map_properties())
   out_json = open( 'LatestIBsSummary.json' , "w" )
   json.dump( short_summary , out_json , indent=4 )
   out_json.close()

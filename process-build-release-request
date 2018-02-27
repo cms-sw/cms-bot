@@ -1,20 +1,22 @@
 #!/usr/bin/env python
-from optparse import OptionParser
-from github import Github
-from os.path import expanduser
-from categories import REQUEST_BUILD_RELEASE,CMSSW_L1,APPROVE_BUILD_RELEASE
-from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
-from commands import getstatusoutput
-import re
 import json
+import re
 import urllib2
-import yaml
-import os.path
+from commands import getstatusoutput
 from  datetime import datetime, timedelta
-from glob import glob
-from os.path import basename, dirname, abspath, join, exists
+from optparse import OptionParser
+from os.path import dirname, abspath, exists
+from os.path import expanduser
 from socket import setdefaulttimeout
+
+import yaml
+from github import Github
+
+from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
+from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
+from cmsutils import get_config_map_properties
 from github_utils import api_rate_limits, get_ref_commit, get_commit_info
+
 setdefaulttimeout(120)
 from os import environ
 JENKINS_PREFIX="jenkins"
@@ -43,7 +45,7 @@ RELEASE_BASE_URL = 'https://github.com/cms-sw/cmssw/releases/tag/%s'
 BASE_BRANCH_URL = ' https://github.com/cms-sw/cmssw/tree/%s'
 RELEASE_CREATED_MSG = 'Release created: {rel_name}. The tag was created on top of branch: {base_branch}'
 RELEASE_CREATION_FAIL_MSG = 'There was an error while attempting to create {rel_name}. ' \
-                            'Please check if it already exists https://github.com/cms-sw/cmssw/releases' 
+                            'Please check if it already exists https://github.com/cms-sw/cmssw/releases'
 WRONG_RELEASE_NAME_MSG = 'The release name is malformed. Please check for typos.'
 ACK_MSG = 'Request received. I will start to build the release after one of the following approve ' \
           'the issue: {approvers_list}. You can do this by writing "+1" in a ' \
@@ -414,19 +416,6 @@ def delete_cmsdist_tags_github( release_name, architectures ):
       continue
     result += '\n\n -' + delete_tag(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO, tag_to_delete)
   return result
-#
-# Reads config.map and returns a list of the architectures for which a release needs to be built.
-# If the list is empty it means that it didn't find any architecture for that release queue, or 
-# that the IBs are disabled.
-#
-def get_config_map_properties():
-  specs = []
-  f = open( CONFIG_MAP_FILE , 'r' )
-  lines = [l.strip(" \n\t;") for l in f.read().split("\n") if l.strip(" \n\t;")]
-  for line in lines:
-    entry = dict(x.split("=",1) for x in line.split(";") if x)
-    specs.append(entry)
-  return specs
 
 #
 # Adds a label to the issue in github

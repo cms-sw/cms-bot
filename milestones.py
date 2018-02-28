@@ -118,3 +118,9 @@ RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_1_DEVEL_X")
 RELEASE_BRANCH_MILESTONE["CMSSW_9_4_MAOD_X"]=74
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_4_MAOD_X")
 
+######################################################################
+# Manually added by Shahzad MUZAFFAR for CMSSW_9_4_AN_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_9_4_AN_X"]=75
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_4_AN_X")
+

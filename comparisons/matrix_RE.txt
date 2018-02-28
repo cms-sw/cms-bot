@@ -74,7 +74,9 @@ SingleMu13Pt1000wf1322p0 1322.0_SingleMuPt1000_UP15+*/step3.root RECO
 TTbar13wf1325p0 1325.0_TTbar_13+TTbar_13*/step3.root RECO
 TTbar13wf11325p0 11325.0_TTbar_13_unsch+TTbar_13*/step3.root RECO
 TTbar13reMINIAODwf1325p5 1325.5_TTbar_13_reminiaod*/step2.root PAT
-TTbar13nanoAODwf1325p7 1325.7_TTbar_13_94XNanoAODINPUT+*/step2.root DQM
+ZEE13reMINIAODwf1325p5 1325.5_ProdZEE_13_reminiaod*/step2.root PAT
+TTbar13reMINIAODwf1325p51 1325.51_TTbar_13_94Xreminiaod*/step2.root PAT
+TTbar13nanoAODwf1325p7 1325.7_TTbar_13_94XNanoAOD*/step2.root DQM
 ZMM13TeVwf1330p0 1330.0_ZMM_13+*/step3.root RECO
 H125GG13TeVwf1332p0 1332.0_H125GGgluonfusion_13+*/step3.root RECO
 VBFH125BB13TeVwf1363p0 1363.0_VBFHToBB_M125_Pow_py8_Evt_13*/step3.root RECO
@@ -132,6 +134,7 @@ RunSinglePh2017B136p788 136.788_RunSinglePh2017B+*/step3.root reRECO
 RunDoubleEG2017Fwf136p829 136.829_RunDoubleEG2017F+*/step3.root reRECO
 RunDoubleMuon2017Fwf136p83 136.83_RunDoubleMuon2017F+*/step3.root reRECO
 RunJetHT2017F136p831 136.831_RunJetHT2017F+*/step3.root reRECO
+RunJetHT2017FreMINIAOD136p8311 136.8311_RunJetHT2017F_reminiaod+*/step2.root PAT
 RunMET2017F136p832 136.832_RunMET2017F+*/step3.root reRECO
 #
 # 2017 workflows follow

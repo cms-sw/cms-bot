@@ -369,11 +369,11 @@ void patMetVars(TString cName){
   met("pfMET_[0].Type7Fraction", cName, tName, false, true, true);
 
   for (int i = 0; i< 24; ++i){
-    plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dpx()",i), "", true);
-    plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dsumEt()",i), "", true);
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dpx()",i), tName+cName+"_"+recoS+Form(".obj[0].uncertainties_@.size()>%d",i), true);
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dsumEt()",i), tName+cName+"_"+recoS+Form(".obj[0].uncertainties_@.size()>%d",i), true);
 
-    plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dpx()",i), "", true);
-    plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dsumEt()",i), "", true);
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dpx()",i), tName+cName+"_"+recoS+Form(".obj[0].corrections_@.size()>%d",i), true);
+    plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dsumEt()",i), tName+cName+"_"+recoS+Form(".obj[0].corrections_@.size()>%d",i), true);
   }
 }
 

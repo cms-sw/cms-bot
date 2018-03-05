@@ -1209,6 +1209,7 @@ CMSSW_CATEGORIES={
    "CalibTracker/SiPixelGainCalibration",
    "CalibTracker/SiPixelIsAliveCalibration",
    "CalibTracker/SiPixelLorentzAngle",
+   "CalibTracker/SiPixelQuality",
    "CalibTracker/SiPixelSCurveCalibration",
    "CalibTracker/SiPixelTools",
    "CalibTracker/SiStripAPVAnalysis",

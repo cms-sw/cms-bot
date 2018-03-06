@@ -102,10 +102,12 @@ def filterElasticSearchResult(ES_result=None, list_of_fields=None):
     for element in ES_result:
 
         source_object = element['_source']
-
+        if source_object['exit_code'] is not 0: continue
+        
         stamp = source_object['@timestamp']
         flow = source_object['workflow']
         step = source_object['step']
+        
 
         if not stamp in final_struct:
             final_struct.update({stamp: {}})
@@ -126,7 +128,7 @@ deeper in this context :)  ,this function
 2. for each sub-step key found tries to find the same in both objects and to make the difference between their values
 '''
 
-def compareMetrics(firstObject=None, secondObject=None):
+def compareMetrics(firstObject=None, secondObject=None,workflow=None,stepnum=None):
 
     fields = []
     comparison_results = {}
@@ -144,7 +146,9 @@ def compareMetrics(firstObject=None, secondObject=None):
 
     for stamp in firstObject:
         for wf in firstObject[stamp]:
+            if workflow and workflow is not wf: continue
             for step in firstObject[stamp][wf]:
+                if stepnum and stepnum is not step: continue
                 for field in firstObject[stamp][wf][step]:
                     #print field
                     if stamp in secondObject and wf in secondObject[stamp] \
@@ -152,11 +156,14 @@ def compareMetrics(firstObject=None, secondObject=None):
                             and field in secondObject[stamp][wf][step]:
                         first_metric = firstObject[stamp][wf][step][field]
                         second_metric = secondObject[stamp][wf][step][field]
+
                         if field is 'time' or 'cpu_avg':
                             difference = first_metric - second_metric
-                        if field is 'rss_avg':
-                            difference = float( float(first_metric) / float(second_metric) ) * 100
-                        
+                        if field is 'rss_max' or 'rss_avg' or 'rss_75' or 'rss_25':
+                            if second_metric is 0: continue #sometimes the result is zero even when the exit_code is non 0
+                            #difference = 100 - ( float( float(first_metric) / float(second_metric) ) * 100 )
+                            difference = (first_metric - second_metric) / 1048576
+
                         comparison_results[field].append(difference)
 
     return comparison_results
@@ -165,31 +172,29 @@ if __name__ == "__main__":
 
     opts = None
     release = None
-    fields = ['time', 'rss_avg', 'cpu_avg']
+    fields = ['time', 'rss_max', 'cpu_avg', 'rss_75' , 'rss_25' , 'rss_avg' ]
 
     arch = 'slc6_amd64_gcc630'
-    days = 7
+    days = int(sys.argv[5])
     page_size = 0
     limit = 20
 
-    #release_one = 'CMSSW_10_1_X_2018-*'
-    #release_two = 'CMSSW_10_1_ROOT612_X_2018-*'
     release_one = sys.argv[1]
     release_two = sys.argv[2]
+    archone = sys.argv[3]
+    archtwo = sys.argv[4]
+    
+    json_out_first = getWorkflowStatsFromES(release_one, archone, days, page_size)
+    json_out_second = getWorkflowStatsFromES(release_two, archtwo, days, page_size)
 
-    json_out_first = getWorkflowStatsFromES(release_one, arch, days, page_size)
-    json_out_second = getWorkflowStatsFromES(release_two, arch, days, page_size)
-
-    filtered_first = filterElasticSearchResult(json_out_first,fields)
-    filtered_second = filterElasticSearchResult(json_out_second,fields)
+    filtered_first = filterElasticSearchResult(json_out_first, fields)
+    filtered_second = filterElasticSearchResult(json_out_second, fields)
 
     comp_results = compareMetrics(filtered_first, filtered_second)
     print json.dumps(comp_results, indent=2, sort_keys=True, separators=(',', ': '))
-    
-    c1 = TCanvas( 'c1', '', 200, 10, 700, 500 )
 
     for hist in comp_results:
-        histo = TH1F(hist, hist, 10000, -500, 500)
+        histo = TH1F(hist, hist, 100000, -5000, 5000)
         for i in comp_results[hist]:
             histo.Fill(i)
         histo.SaveAs(hist+".root")

@@ -1,5 +1,5 @@
 #!/bin/bash
-eval $(scram unset -sh)
+eval $(scram unset -sh) || true
 for x in 0 1 2 ; do
   $(dirname $0)/report-pull-request-results.py "$@" && exit 0
   sleep 30

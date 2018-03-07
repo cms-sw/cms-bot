@@ -229,7 +229,7 @@ fi
 CMSSW_COMMIT=
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   #get the latest commit and mark it as pending
-  LAST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmssw $PULL_REQUEST)
+  LAST_COMMIT=$(eval $(scram unset -sh); $CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmssw $PULL_REQUEST)
   if [ "X${LAST_COMMIT}" = "X" ]  ; then
     pushd $WORKSPACE/$RELEASE_FORMAT/src
       if [ "X$BRANCH_NAME" = X ]; then

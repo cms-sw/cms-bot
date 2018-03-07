@@ -28,8 +28,11 @@ if [ "$PUSH_RESULTS" = "true" ] ; then
   git add das_queries
   if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then
     git commit -a -m "Updated das queries"
-    git pull --rebase
-    git push origin
+    for tries in 0 1 2 3 4 ; do
+      git pull --rebase || continue
+      git push origin   || continue
+      break
+    done
   fi
   popd
 fi

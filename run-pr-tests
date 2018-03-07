@@ -159,12 +159,12 @@ touch $RECENT_COMMITS_FILE
 if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
   if [ "X$BRANCH_NAME" = X ]; then
     if [ "${PUB_USER}" = "cms-sw" ]; then
-      (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      (git cms-merge-topic --ssh -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
       (/cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
   else
-    (git cms-merge-topic -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    (git cms-merge-topic --ssh -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
   fi
 
   # this is to test several pull requests at the same time
@@ -172,7 +172,7 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
     echo 'I will add the following pull request to the test'
     echo $PR;
     if [ "${PUB_USER}" = "cms-sw" ]; then
-      git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      git cms-merge-topic --ssh -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
       /cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PR} 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
@@ -316,7 +316,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_PR"
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   pushd $WORKSPACE/$RELEASE_FORMAT
-  git cms-addpkg Utilities/StaticAnalyzers
+  git cms-addpkg --ssh Utilities/StaticAnalyzers
   mkdir $WORKSPACE/llvm-analysis
   SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU *2) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
   cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
@@ -340,11 +340,11 @@ if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep -i -E "dqm.*|HLTriggerOffline|Valida
       if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
         echo "and DQMServices/Components is there"
       else
-        git cms-addpkg DQMServices/Components
+        git cms-addpkg --ssh DQMServices/Components
       fi
   else
     echo "checking out DQMServices"
-    git cms-addpkg DQMServices
+    git cms-addpkg --ssh DQMServices
   fi
 fi
 #############################################

@@ -219,7 +219,7 @@ touch $WORKSPACE/cmsswtoolconf.log
 if [ "X${DEP_NAMES}" != "X" ] ; then
   CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
   if [ "X${CMSSW_DEP}" != "X" ] ; then
-    git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+    git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
   fi
 fi
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables

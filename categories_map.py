@@ -927,6 +927,7 @@ CMSSW_CATEGORIES={
    "DQM/SiPixelPhase1TrackClusters",
    "DQM/SiPixelPhase1TrackEfficiency",
    "DQM/SiPixelPhase1TrackResiduals",
+   "DQM/SiPixelPhase1DeadFEDChannels",
    "DQM/Phase2OuterTracker",
    "DQM/TrackerCommon",
    "DQM/TrackerMonitorTrack",

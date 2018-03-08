@@ -120,9 +120,11 @@ def initJobs(jobs, resources, otype):
       if simulation: job["time2finish"] = job["time"]
       job_time += job["time"]
       job["time"] = job_time
+      if job['cpu']==0: job['cpu']=300
+      if job['rss']==0: job['rss']=1024*1024*1024*6
       for x in ["rss","cpu"]:
         for y in [x+"_avg", x+"_max"]:
-          if not y in job: job[y]=job[x]
+          if (not y in job) or (job[y]==0): job[y]=job[x]
       if not simulation:
         print ">>",group["name"],job
         for x in [ "rss", "cpu" ]: print "  ",x,int(job[x]*100/job[x+"_max"]),int(job[x+"_avg"]*100/job[x+"_max"])

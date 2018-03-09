@@ -1,20 +1,24 @@
 #!/bin/bash -ex
 cd $WORKSPACE
-curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | \
-   grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > changed-files.txt
-
-cat changed-files.txt
-git clone https://github.com/${REPOSITORY} userrepo
-cd userrepo
-git fetch origin pull/${PULL_REQUEST}/head:CHANGES_${PULL_REQUEST}
-git merge CHANGES_${PULL_REQUEST}
+rm -rf * || true
 mkdir $WORKSPACE/upload
-ERR=0
 REPO_DIR=$CMS_BOT_DIR/repos/$(echo $REPOSITORY | tr '-' '_')
-COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
-$CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
-  -t JENKINS_TEST_URL \
-  -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
+git clone https://github.com/${REPOSITORY} userrepo
+if [ "X${PULL_REQUEST}" != "X" ] ; then
+  curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | \
+     grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/upload/changed-files.txt
+  cat $WORKSPACE/upload/changed-files.txt
+  cd userrepo
+  git fetch origin pull/${PULL_REQUEST}/head:CHANGES_${PULL_REQUEST}
+  git merge CHANGES_${PULL_REQUEST}
+  ERR=0
+  COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
+  $CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
+    -t JENKINS_TEST_URL \
+    -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
+else
+  cd userrepo
+fi
 voms-proxy-init -voms=cms
 ${REPO_DIR}/run-pr-tests > $WORKSPACE/upload/run.log 2>&1 || ERR=1
 source $CMS_BOT_DIR/jenkins-artifacts
@@ -37,8 +41,15 @@ else
 fi
 
 JOB_SUMMARY_LOG="${WORKSPACE}/summary.txt"
-touch ${JOB_SUMMARY_LOG}
-
-cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
-$WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
+if [ -f ${JOB_SUMMARY_LOG} ] ; then
+  cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
+fi
+if [ "X${PULL_REQUEST}" != "X" ] ; then
+  $WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
+else
+  NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL=||;s|["]||g' || true)
+  if [ "X${NOTIFY_EMAIL}" != "X" ] ; then
+    cat ${RESULT_LOG} | mail -s "[Jenkins]: $REPOSITORY tests finished" "${NOTIFY_EMAIL}"
+  fi
+fi
 

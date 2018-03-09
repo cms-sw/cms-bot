@@ -5,15 +5,15 @@ GH_TOKEN_READONLY="~/.github-token-readonly"
 CONFIG_DIR=dirname(abspath(__file__))
 CMSBUILD_USER="cmsbot"
 GH_REPO_ORGANIZATION="EcalLaserValidation"
-GH_REPO_NAME="HLT_EcalLaserValidation"
+GH_REPO_NAME="TPG_EcalLaserValidation"
 GH_REPO_FULLNAME=GH_REPO_ORGANIZATION+"/"+GH_REPO_NAME
 CREATE_EXTERNAL_ISSUE=False
 JENKINS_SERVER="http://cmsjenkins05.cern.ch:8080/cms-jenkins"
 GITHUB_WEBHOOK_TOKEN='U2FsdGVkX18uyTkiQtIOYUfVj2PQLV34u5hQAbfNhl8='
 ADD_LABELS=True
 ADD_WEB_HOOK=False
-JENKINS_UPLOAD_DIRECTORY="EcalLaserValidation/HLT_EcalLaserValidation"
+JENKINS_UPLOAD_DIRECTORY="EcalLaserValidation/TPG_EcalLaserValidation"
 IGNORE_ISSUES = []
 #Valid Web hooks
-VALID_WEB_HOOKS=['.*']
+VALID_WEB_HOOKS=['push']
 def file2Package(filename): return GH_REPO_NAME

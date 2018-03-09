@@ -1,6 +1,5 @@
 #!/bin/bash -ex
 cd $WORKSPACE
-rm -rf * || true
 mkdir $WORKSPACE/upload
 REPO_DIR=$CMS_BOT_DIR/repos/$(echo $REPOSITORY | tr '-' '_')
 git clone https://github.com/${REPOSITORY} userrepo

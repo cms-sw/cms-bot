@@ -20,10 +20,21 @@ else
 fi
 voms-proxy-init -voms=cms
 ${REPO_DIR}/run-pr-tests > $WORKSPACE/upload/run.log 2>&1 || ERR=1
+UPLOAD_DIR=$(find $WORKSPACE/upload -name '.jenkins-upload' -type f | sed 's|/.jenkins-upload$||' || true)
+UPLOAD_REF=""
+if [ "X$UPLOAD_DIR" != "X" ] ; then
+  UPLOAD_REF=$(basename $UPLOAD_DIR)
+  rm -rf $WORKSPACE/ref-upload
+  mkdir $WORKSPACE/ref-upload
+  mv $UPLOAD_DIR $WORKSPACE/ref-upload/${UPLOAD_REF}
+  mv $WORKSPACE/upload/* $WORKSPACE/ref-upload/${UPLOAD_REF}/ || true
+  rm -rf $WORKSPACE/upload
+  mv $WORKSPACE/ref-upload $WORKSPACE/upload
+fi
 source $CMS_BOT_DIR/jenkins-artifacts
 
 UPLOAD_SIZE=$(du -s -m $WORKSPACE/upload | sed 's|\s.*$||')
-RESULT_LOG="$WORKSPACE/upload/full-results.txt"
+RESULT_LOG="$WORKSPACE/upload/${UPLOAD_REF}/full-results.txt"
 touch ${RESULT_LOG}
 if [ $UPLOAD_SIZE -gt 2048 ] ; then
   echo "-1\nTested at: ${COMMIT}\n\nUpload size exceeded the max size limit of 2048MB\n" > ${RESULT_LOG}
@@ -35,7 +46,7 @@ else
   fi
   UPDIR=$(grep '^ *JENKINS_UPLOAD_DIRECTORY=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_UPLOAD_DIRECTORY=||;s|["]||g' || true)
   if [ "X$UPDIR" = "X" ] ; then UPDIR="${JOB_NAME}/${PULL_REQUEST}/${BUILD_NUMBER}" ; fi
-  echo -e "Test logs are available at:\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/${UPDIR}" >> ${RESULT_LOG}
+  echo -e "Test logs are available at:\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/${UPDIR}/${UPLOAD_REF}" >> ${RESULT_LOG}
   send_jenkins_artifacts ${WORKSPACE}/upload/ ${UPDIR}/
 fi
 

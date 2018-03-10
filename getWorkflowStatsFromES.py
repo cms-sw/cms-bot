@@ -146,9 +146,12 @@ def compareMetrics(firstObject=None, secondObject=None,workflow=None,stepnum=Non
 
     for stamp in firstObject:
         for wf in firstObject[stamp]:
-            if workflow and workflow is not wf: continue
+            if workflow:
+                if (float(wf) != float(workflow)): continue
             for step in firstObject[stamp][wf]:
-                if stepnum and stepnum is not step: continue
+                if stepnum:
+                    #print stepnum, step
+                    if str(stepnum) != str(step): continue
                 for field in firstObject[stamp][wf][step]:
                     #print field
                     if stamp in secondObject and wf in secondObject[stamp] \
@@ -183,6 +186,11 @@ if __name__ == "__main__":
     release_two = sys.argv[2]
     archone = sys.argv[3]
     archtwo = sys.argv[4]
+    wf_n = None
+    step_n = None
+    if len(sys.argv) > 6: wf_n = sys.argv[6]
+    if len(sys.argv) > 7: step_n = sys.argv[7]
+    print wf_n, step_n
     
     json_out_first = getWorkflowStatsFromES(release_one, archone, days, page_size)
     json_out_second = getWorkflowStatsFromES(release_two, archtwo, days, page_size)
@@ -190,7 +198,7 @@ if __name__ == "__main__":
     filtered_first = filterElasticSearchResult(json_out_first, fields)
     filtered_second = filterElasticSearchResult(json_out_second, fields)
 
-    comp_results = compareMetrics(filtered_first, filtered_second)
+    comp_results = compareMetrics(filtered_first, filtered_second, wf_n, step_n)
     print json.dumps(comp_results, indent=2, sort_keys=True, separators=(',', ': '))
 
     for hist in comp_results:

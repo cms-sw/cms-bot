@@ -22,7 +22,7 @@ fi
 rm -rf cmssw
 git clone --reference /cvmfs/cms.cern.ch/cmssw.git.daily git@github.com:cms-sw/cmssw.git cmssw
 cd cmssw
-
+WEEK_DAY=`date +%w`
 DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
 HOUR=`echo $DATE | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
 ORDER_INDEX=0
@@ -34,6 +34,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset BUILD_PATCH_RELEASE
     unset NO_IB
     unset PROD_ARCH
+    unset BUILD_DAY
     eval "$IB_INFO"
     if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
@@ -41,8 +42,13 @@ for QUEUE in $RELEASE_QUEUES; do
     else
       BUILD_PATCH_RELEASE=false
     fi
-    if [ "X$BUILD_PATCH_RELEASE" = "Xfalse" -a "X$FORCE_FULL_IB" = "Xfalse" -a "X$BUILD_HOUR" != "X" ] ; then
-      if [ $(echo " $BUILD_HOUR " | tr ',' ' ' | grep " $HOUR " | wc -l) -eq 0 ] ; then continue; fi
+    if [ "X$BUILD_PATCH_RELEASE" = "Xfalse" -a "X$FORCE_FULL_IB" = "Xfalse" ] ; then
+      if [ "X$BUILD_HOUR" != "X" ] ; then
+        if [ $(echo " $BUILD_HOUR " | tr ',' ' ' | grep " $HOUR " | wc -l) -eq 0 ] ; then continue; fi
+      fi
+      if [ "X$BUILD_DAY" != "X" ] ; then
+        if [ $(echo " $BUILD_DAY "  | tr ',' ' ' | grep " $WEEK_DAY " | wc -l) -eq 0 ] ; then continue; fi
+      fi
     fi
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     RELEASE_NAME="${QUEUE}_${DATE}"

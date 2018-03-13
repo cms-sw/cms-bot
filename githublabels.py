@@ -1,5 +1,5 @@
 LABEL_COLORS = {
-  "hold" : "eb6420",
+  "hold" : "ff9933",
   "pending":  "fbca04",
   "approved": "009800",
   "rejected": "e11d21",

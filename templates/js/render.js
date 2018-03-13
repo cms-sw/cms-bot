@@ -427,7 +427,7 @@ add_igprof_tests_link = function ( title_cell, isFound, currentTag ){
     return
   }
   if ( isFound == 'found' ){
-    var url = CMSSDT_SERVER+'/SDT/jenkins-artifacts/igprof/' + currentTag 
+    var url = CMSSDT_SERVER+'/SDT/cgi-bin/igprof-navigator/' + currentTag
     var sa_link = $("<a></a>").attr("href", url)
     sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
     sa_link.append($('<span></span>').text(' IgProf'))

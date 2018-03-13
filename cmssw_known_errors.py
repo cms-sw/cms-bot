@@ -4,7 +4,7 @@ from copy import deepcopy
 MSG_GCC_ABI_INCOMPETIBILITY = "GCC ABI incompetibility. GridPacks were built with gcc4"
 MSG_ARCH_INCOMPETIBILITY = "Architecture incompetibility. GridPacks were built for x86_64"
 KNOWN_ERRORS = {"relvals":{}, "addons":{}, "unittests":{}}
-KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]={
+KNOWN_ERRORS["relvals"]["CMSSW_9_[2-3]_.+"]={
   "slc._amd64_gcc630": {
     "512.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
     "513.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
@@ -21,9 +21,10 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]={
     "534.0": { "step": 1, "exitcode": 35584, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   }
 }
+KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_9_[2-3]_.+"])
+KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]["slc._amd64_gcc630"].pop("534.0", None)
 KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]={}
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc630"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_9_[2-9]_.+"]["slc._amd64_gcc630"])
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc630"].pop("534.0", None)
+KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc630"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]["slc._amd64_gcc630"])
 KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_amd64_gcc700"]={
   "514.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "517.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},

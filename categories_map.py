@@ -6,7 +6,7 @@ CMSSW_CATEGORIES={
    "Configuration/Eras",
    "Configuration/EventContent",
    "Configuration/GlobalRuns",
-   "Configuration/ProcessModifiers", 
+   "Configuration/ProcessModifiers",
    "Configuration/StandardSequences",
   ],
   "pdmv": [
@@ -70,7 +70,7 @@ CMSSW_CATEGORIES={
  "docs": [
    "Documentation/CodingRules",
    "Documentation/PhysicsTools",
-   "Documentation/ReferenceManualScripts", 
+   "Documentation/ReferenceManualScripts",
    "Documentation/DataFormats"
  ],
  "reconstruction": [
@@ -759,7 +759,7 @@ CMSSW_CATEGORIES={
    "FastSimulation/TrajectoryManager",
    "FastSimulation/Utilities",
    "FastSimulation/Validation"
-  ], 
+  ],
   "visualization": [
    "Fireworks/Calo",
    "Fireworks/Candidates", "Fireworks/Core",
@@ -804,7 +804,7 @@ CMSSW_CATEGORIES={
    "GeneratorInterface/TauolaInterface",
    "GeneratorInterface/ThePEGInterface",
    "GeneratorInterface/Hydjet2Interface",
-   "DataFormats/HepMCCandidate", 
+   "DataFormats/HepMCCandidate",
    "SimDataFormats/GeneratorProducts",
    "Validation/EventGenerator",
    "IOMC/ParticleGuns",
@@ -1087,7 +1087,7 @@ CMSSW_CATEGORIES={
    "L1Trigger/L1TMuonBarrel",
    "L1Trigger/L1TMuonEndCap",
    "L1Trigger/L1TMuonOverlap",
-   "L1Trigger/ME0Trigger",    
+   "L1Trigger/ME0Trigger",
    "L1Trigger/RPCTechnicalTrigger",
    "L1Trigger/RPCTrigger",
    "L1Trigger/RegionalCaloTrigger",
@@ -1107,7 +1107,7 @@ CMSSW_CATEGORIES={
    "SimCalorimetry/HcalTrigPrimAlgos",
    "SimCalorimetry/HcalTrigPrimProducers",
    "Validation/EcalTriggerPrimitives",
-   "SLHCUpgradeSimulations/L1CaloTrigger"], 
+   "SLHCUpgradeSimulations/L1CaloTrigger"],
   "alca":
    ["CondFormats/EgammaObjects",
    "CondFormats/GeometryObjects",
@@ -1241,14 +1241,14 @@ CMSSW_CATEGORIES={
    "IORawData/SiPixelInputSources",
    "DataFormats/HcalCalibObjects",
    "DataFormats/Alignment",
-   "RecoVertex/BeamSpotProducer"], 
+   "RecoVertex/BeamSpotProducer"],
    "simulation":
    ["Mixing/Base",
    "IOMC/EventVertexGenerators", "DataFormats/DTDigi",
    "DataFormats/DetId",
    "DataFormats/EcalDetId",
    "DataFormats/EcalDigi",
-   "DataFormats/EcalRawData", 
+   "DataFormats/EcalRawData",
    "DataFormats/HGCDigi", "DataFormats/FP420Digi",
    "DataFormats/GEMDigi","DataFormats/GeometryCommonDetAlgo",
    "DataFormats/GeometrySurface",
@@ -1306,7 +1306,7 @@ CMSSW_CATEGORIES={
    "SimDataFormats/TrackingAnalysis",
    "SimDataFormats/TrackingHit",
    "SimDataFormats/ValidationFormats",
-   "SimDataFormats/Vertex", 
+   "SimDataFormats/Vertex",
    "SimFastTiming/Configuration",
    "SimFastTiming/FastTimingCommon",
    "SimG4CMS/Calo",
@@ -1335,6 +1335,7 @@ CMSSW_CATEGORIES={
    "SimG4Core/Watcher",
    "SimGeneral/Configuration", "SimGeneral/DataMixingModule",
    "SimGeneral/CaloAnalysis",
+   "SimGeneral/Debugging",
    "SimGeneral/GFlash",
    "SimGeneral/HepPDTESSource", "SimGeneral/HepPDTRecord",
    "SimGeneral/MixingModule",

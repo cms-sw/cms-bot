@@ -445,11 +445,6 @@ cbaus:
 - GeneratorInterface/HiGenCommon
 - GeneratorInterface/HydjetInterface
 - GeneratorInterface/PyquenInterface
-cnuttens:
-- SimTracker/SiStripDigitizer
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
 dkotlins:
 - RecoLocalTracker/SiPixelClusterizer
 - RecoLocalTracker/SiPixelRecHits
@@ -624,28 +619,10 @@ jhgoh:
 - Validation/RecoMuon
 - Validation/RPCRecHits
 - Validation/MuonRPCDigis
-jlagram:
-- RecoLocalTracker/ClusterParameterEstimator
-- RecoLocalTracker/Configuration
-- RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip
-- RecoLocalTracker/SubCollectionProducers
-- CalibTracker/SiStrip
-- CalibTracker/Configuration
-- CalibTracker/Records
-- SimTracker/SiStripDigitizer
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
 kkrajczar:
 - Validation/RecoHI
 kurtejung:
 - RecoHI
-lbeck:
-- SimTracker/SiStripDigitizer
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
 lgray:
 - RecoEcal
 - RecoEgamma
@@ -813,8 +790,6 @@ schoef:
 - RecoMET
 - Validation/RecoJets
 - Validation/RecoMET
-sdevissc:
-- SimTracker/
 tlampen:
 - Alignment/CommonAlignment
 - Alignment/CommonAlignmentAlgorithm

@@ -88,7 +88,7 @@ def update_known_error(worflow, workflow_dir):
 
 def upload_logs(workflow, workflow_dir,exit_code):
   files_to_keep = [ ".txt", ".xml", ".log", ".py", ".json","/cmdLog", "/hostname",".done" ]
-  if (exit_code in [34304, 35584]) and os.getenv("CMSSW_VERSION","").startswith("CMSSW_10_1_"):
+  if (exit_code in [34304, 35584, 22016]) and os.getenv("CMSSW_VERSION","").startswith("CMSSW_10_1_"):
     files_to_keep.append(".root")
   basedir = os.path.dirname(workflow_dir)
   for wf_file in glob.glob("%s/*" % workflow_dir):

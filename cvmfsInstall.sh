@@ -267,8 +267,8 @@ echo "Run GC: $RUN_GC"
 echo "Publishing started" `date`
 time cvmfs_server publish
 
-if [ "X$RUN_GC" = "XYES" ] ; then
-  echo "Running garbage collector"
-  time cvmfs_server gc -f
-fi
+#if [ "X$RUN_GC" = "XYES" ] ; then
+#  echo "Running garbage collector"
+#  time cvmfs_server gc -f
+#fi
 

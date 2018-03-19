@@ -16,6 +16,7 @@ from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
 from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 from cmsutils import get_config_map_properties
 from github_utils import api_rate_limits, get_ref_commit, get_commit_info
+from milestones import RELEASE_MANAGERS
 
 setdefaulttimeout(120)
 from os import environ
@@ -92,7 +93,6 @@ ABORT_COMMENT = '^[Aa]bort$'
 RELEASE_NOTES_COMMENT = '^release-notes([ ]+since[ ]+[^ ]+)?$'
 BUILD_TOOLCONF = '^[Bb]uild cmssw-tool-conf'
 APPROVAL_COMMENT =  '^[+]1$'
-DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
 RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
 ANNOUNCEMENT_GENERATED_LBL = 'release-notes-requested'
 JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
@@ -808,12 +808,6 @@ if __name__ == "__main__":
     print 'This issue is not for building a release, ignoring.'
     exit( 0 )
   
-  # 3. Is the author authorized to trigger a build?
-  if not issue.user.login in REQUEST_BUILD_RELEASE:
-    print 'User not authorized'
-    post_message( issue , NOT_AUTHORIZED_MSG )
-    exit( 0 )
-
   ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
   print "All labels:",ALL_LABELS
   comments = [ c for c in issue.get_comments( ) ]
@@ -913,6 +907,17 @@ if __name__ == "__main__":
       print 'This is a patch release and the branch %s was found. It will be used as base branch.' % possible_branch
       release_branch = possible_branch
     
+
+  if release_branch in RELEASE_MANAGERS:
+    for rm in RELEASE_MANAGERS[release_branch]:
+      if not rm in APPROVE_BUILD_RELEASE: APPROVE_BUILD_RELEASE.append(rm)
+      if not rm in REQUEST_BUILD_RELEASE: REQUEST_BUILD_RELEASE.append(rm)
+
+  # 3. Is the author authorized to trigger a build?
+  if not issue.user.login in REQUEST_BUILD_RELEASE:
+    print 'User not authorized'
+    post_message( issue , NOT_AUTHORIZED_MSG )
+    exit( 0 )
 
   # Get the status of this issue.
   status = get_issue_status( issue ) 

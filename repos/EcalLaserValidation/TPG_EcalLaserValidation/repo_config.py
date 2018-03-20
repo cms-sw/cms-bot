@@ -18,5 +18,5 @@ IGNORE_ISSUES = []
 #Valid Web hooks
 VALID_WEB_HOOKS=['push']
 #Set the Jenkins slave label is your tests needs special machines to run.
-JENKINS_SLAVE_LABEL="slc6 && amd64 && cmsbuild"
+JENKINS_SLAVE_LABEL="slc6 && amd64 && cmsbuilder"
 def file2Package(filename): return GH_REPO_NAME

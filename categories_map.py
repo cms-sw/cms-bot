@@ -1033,6 +1033,7 @@ CMSSW_CATEGORIES={
    "L1Trigger/L1TCalorimeter",
    "L1Trigger/L1THGCal",
    "L1Trigger/L1TCommon",
+   "L1Trigger/L1TMuonCPPF", 
    "L1Trigger/L1TTwinMux",
    "L1Trigger/TrackFindingTracklet",
    "L1Trigger/TrackTrigger",

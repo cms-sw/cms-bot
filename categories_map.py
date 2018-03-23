@@ -346,7 +346,6 @@ CMSSW_CATEGORIES={
    "TrackingTools/TransientTrack",
    "TrackingTools/TransientTrackingRecHit",
    "Utilities/RelMon",
-   "Validation/Configuration",
    "RecoBTag/BTagTools",
    "RecoBTag/Configuration",
    "RecoBTag/Combined",

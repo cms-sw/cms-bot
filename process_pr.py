@@ -683,7 +683,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if old_labels == labels:
     print "Labels unchanged."
   elif not dryRunOrig:
-    issue.edit(labels=list(labels))
+    add_labels = True
+    try: add_labels = repo_config.ADD_LABELS
+    except: pass
+    if add_labels: issue.edit(labels=list(labels))
 
   # Check if it needs to be automatically closed.
   if mustClose == True and issue.state == "open":

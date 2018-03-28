@@ -2,7 +2,7 @@
 cd $WORKSPACE
 mkdir $WORKSPACE/upload
 REPO_DIR=$CMS_BOT_DIR/repos/$(echo $REPOSITORY | tr '-' '_')
-git clone https://github.com/${REPOSITORY} userrepo
+git clone git@github.com:${REPOSITORY} userrepo
 if [ "X${PULL_REQUEST}" != "X" ] ; then
   curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | \
      grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/upload/changed-files.txt

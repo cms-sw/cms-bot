@@ -47,7 +47,15 @@ else
     echo -e "-1\nTested at: ${COMMIT}\n" >> ${RESULT_LOG}
   fi
   UPDIR=$(grep '^ *JENKINS_UPLOAD_DIRECTORY=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_UPLOAD_DIRECTORY=||;s|["]||g' || true)
-  if [ "X$UPDIR" = "X" ] ; then UPDIR="${JOB_NAME}/${PULL_REQUEST}/${BUILD_NUMBER}" ; fi
+  if [ "X${UPDIR}" = "X" ] ; then
+    if [ "X${PULL_REQUEST}" != "X" ] ; then
+      UPDIR="${JOB_NAME}/PR-${PULL_REQUEST}/${BUILD_NUMBER}"
+    else
+      UPDIR="${JOB_NAME}/PUSH-${BUILD_NUMBER}"
+    fi
+  elif [ "X${UPLOAD_REF}" = "X" ] ; then
+    UPDIR="${UPDIR}/BUILD-${BUILD_NUMBER}"
+  fi
   echo -e "Test logs are available at:\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/${UPDIR}/${UPLOAD_REF}" >> ${RESULT_LOG}
   send_jenkins_artifacts ${WORKSPACE}/upload/ ${UPDIR}/
 fi

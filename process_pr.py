@@ -326,7 +326,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print "Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date
     print "Latest commit message: ",last_commit.message.encode("ascii", "ignore")
     print "Latest commit sha: ",last_commit.sha
-    releaseManagers=list(set(RELEASE_MANAGERS.get(pr.base.ref, [])+SPECIAL_RELEASE_MANAGERS))
+    extra_rm = RELEASE_MANAGERS.get(pr.base.ref, [])
+    if repository==CMSDIST_REPO_NAME:
+      br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:2])+"_X"
+      if br: extra_rm=extra_rm+RELEASE_MANAGERS.get(br, [])
+    releaseManagers=list(set(extra_rm+SPECIAL_RELEASE_MANAGERS))
+
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])

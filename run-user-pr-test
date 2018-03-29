@@ -67,9 +67,14 @@ fi
 if [ "X${PULL_REQUEST}" != "X" ] ; then
   $WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
 else
-  NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL=||;s|["]||g' || true)
-  if [ "X${NOTIFY_EMAIL}" != "X" ] ; then
-    cat ${RESULT_LOG} | mail -s "[Jenkins]: $REPOSITORY tests finished" "${NOTIFY_EMAIL}"
+  OPEN_ISSUE=$(grep '^ *OPEN_ISSUE_FOR_PUSH_TESTS *=' $REPO_DIR/repo_config.py | sed 's|^.*OPEN_ISSUE_FOR_PUSH_TESTS *=||;s| ||g' || true)
+  if [ "X${OPEN_ISSUE}" = "XTrue" ] ; then
+    $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "[Jenkins CI] Test results $(date)" -R ${RESULT_LOG}
+  else
+    NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL=||;s|["]||g' || true)
+    if [ "X${NOTIFY_EMAIL}" != "X" ] ; then
+      cat ${RESULT_LOG} | mail -s "[Jenkins]: $REPOSITORY tests finished" "${NOTIFY_EMAIL}"
+    fi
   fi
 fi
 

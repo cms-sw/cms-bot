@@ -23,14 +23,14 @@ for org in CMS_ORGANIZATIONS:
 #################################
 REPO_OWNERS["cms-data"]      += []
 REPO_OWNERS["cms-externals"] += []
-REPO_OWNERS["cms-sw"]        += [ "davidlt", "sextonkennedy" ]
+REPO_OWNERS["cms-sw"]        += [ "sextonkennedy" ]
 
 #################################
 #Set Teams for organizations    #
 #################################
 #Teams for cms-data
 REPO_TEAMS["cms-data"]["Developers"] =  {
-  "members"      : [ "davidlt" ] + CMS_SDT,
+  "members"      : CMS_SDT,
   "repositories" : { "*" : "push" }
 }
 

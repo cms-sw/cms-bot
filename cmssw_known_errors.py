@@ -70,6 +70,9 @@ KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc700"]={
   "528.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "529.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
 }
+for wf in KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc700"]:
+  KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"][wf] = deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc700"][wf])
+
 for wf in KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"]:
   KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"][wf]["reason"]=MSG_ARCH_INCOMPETIBILITY
 

@@ -484,13 +484,6 @@ gbenelli:
 - SimTracker/Records
 geoff-smith:
 - HLTrigger/Configuration
-ghellwig:
-- Alignment
-- CalibTracker/Configuration
-- CondCore
-- Configuration
-- Geometry
-- RecoTracker
 ghugo83:
 - Geometry/TrackerCommonData
 gpetruc:

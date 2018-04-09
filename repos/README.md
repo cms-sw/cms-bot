@@ -16,6 +16,7 @@
     - Disable SSL Verification
     - Let me select individual events: Select
       - Issues, Issue comment, Pull request 
+      - Pushes (for push based events)
 
 ### Pull request Testing:
 - For `user/cmssw` and `user/cmsdist` repositories , bot can run standard PR tests.
@@ -25,3 +26,6 @@
   - A file `$WORKSPACE/changed-files.txt` will contain the list of changed file in the Pull Request
   - If you want to upload job logs (max 1G) then copy them under `$WORKSPACE/upload`
 - cmsbot commands are listed here http://cms-sw.github.io/cms-bot-cmssw-cmds.html
+
+### Push based testsing
+- You can have your repository setup to trigger the tests whenever you push some changes to your repo. In this case, please make sure that github webhook for *Pushes* is active.

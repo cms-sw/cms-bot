@@ -2,23 +2,24 @@
 
 from os import listdir
 from os.path import isfile, join
+from fnmatch import fnmatch
 import os
 import subprocess
 import sys
 
-def getFiles(d,ending):
-    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(d) for f in filenames if os.path.splitext(f)[1] == '.'+ending]
+def getFiles(d,pattern):
+    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(d) for f in filenames if fnmatch(f, pattern)]
 #    return  [ f for f in listdir(d) if isfile(join(d,f)) ]
 
-def getCommonFiles(d1,d2,ending):
-    l1=getFiles(d1,ending)
+def getCommonFiles(d1,d2,pattern):
+    l1=getFiles(d1,pattern)
     print "l1",l1
-    l2=getFiles(d2,ending)
+    l2=getFiles(d2,pattern)
     print "l2",l2
     common=[]
     for l in l1:
         lT=l[len(d1):]
-        if 'step' not in lT or 'runall' in lT or 'dasquery' in lT: continue
+        if 'runall' in lT or 'dasquery' in lT: continue
         if d2+lT in l2:
             common.append(lT)
     return common
@@ -180,7 +181,7 @@ def summaryJR(jrDir):
         break
 
     for d in dirs:
-        diffs=getFiles(root+'/'+d,'png')
+        diffs=getFiles(root+'/'+d,'*.png')
         if len(diffs)>0:
             print 'JR results differ',len(diffs),d
             nDiff=nDiff+len(diffs)
@@ -255,7 +256,7 @@ if jrDir[-1]=='/':
 if compDir[-1]=='/':
     compDir=jrDir[:-1]
 
-commonLogs=getCommonFiles(baseDir,testDir,'log')
+commonLogs=getCommonFiles(baseDir,testDir,'step*.log')
 print commonLogs
 
 #### check the printouts
@@ -286,7 +287,7 @@ if lChanges:
     qaIssues=True
 print '\n'
 #### compare edmEventSize on each to look for new missing candidates
-commonRoots=getCommonFiles(baseDir,testDir,'root')
+commonRoots=getCommonFiles(baseDir,testDir,'step*.root')
 sameEvts=True
 nRoot=0
 for r in commonRoots:
@@ -313,10 +314,10 @@ print '\n'
 #print 'SUMMARY DQMHistoTests: Total skipped:',compSummary[4]
 #print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
 
+commonDQMs=getCommonFiles(baseDir,testDir,'DQM*.root')
 newDQM=0
 nDQM=0
-for r in commonRoots:
-    if 'inDQM' in r:
+for r in commonDQMs:
         t=checkDQMSize(baseDir+r,testDir+r)
         print r,t
         if t>=0: 

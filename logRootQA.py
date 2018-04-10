@@ -235,8 +235,8 @@ qaIssues=False
 #scp -r 23485 dlange@cmsdev01:/build/dlange/171103/t1/.
 
 #https://cmssdt.cern.ch/SDT/jenkins-artifacts/baseLineComparisons/CMSSW_9_0_X_2017-03-22-1100+18042/18957/validateJR/
-baseDir='../t1/runTheMatrix-results'
-testDir='../t1/matrix-results'
+baseDir='base/'
+testDir='test/'
 jrDir='../t1/23485/validateJR'
 compDir='../t1/23485'
 
@@ -300,18 +300,18 @@ if not sameEvts:
 
 print '\n'
 # now check the JR comparisons for differences
-nDiff=summaryJR(jrDir)
-print 'SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons' 
-print '\n'
+#nDiff=summaryJR(jrDir)
+#print 'SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons' 
+#print '\n'
 
-compSummary=summaryComp(compDir)
-print 'SUMMARY DQMHistoTests: Total files compared:',compSummary[6]
-print 'SUMMARY DQMHistoTests: Total histograms compared:',compSummary[0]
-print 'SUMMARY DQMHistoTests: Total failures:',compSummary[1]
-print 'SUMMARY DQMHistoTests: Total nulls:',compSummary[2]
-print 'SUMMARY DQMHistoTests: Total successes:',compSummary[3]
-print 'SUMMARY DQMHistoTests: Total skipped:',compSummary[4]
-print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
+#compSummary=summaryComp(compDir)
+#print 'SUMMARY DQMHistoTests: Total files compared:',compSummary[6]
+#print 'SUMMARY DQMHistoTests: Total histograms compared:',compSummary[0]
+#print 'SUMMARY DQMHistoTests: Total failures:',compSummary[1]
+#print 'SUMMARY DQMHistoTests: Total nulls:',compSummary[2]
+#print 'SUMMARY DQMHistoTests: Total successes:',compSummary[3]
+#print 'SUMMARY DQMHistoTests: Total skipped:',compSummary[4]
+#print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
 
 newDQM=0
 nDQM=0
@@ -327,6 +327,6 @@ print 'SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files
 
 
 #### conclude
-print "SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,",compSummary[6],"DQM output files"
+print "SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,","DQM output files"
 if not qaIssues:
     print "No potential problems in log/root QA checks!"

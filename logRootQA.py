@@ -4,6 +4,7 @@ from os import listdir
 from os.path import isfile, join
 from fnmatch import fnmatch
 import os
+import re
 import subprocess
 import sys
 
@@ -142,7 +143,7 @@ def checkEventContent(r1,r2):
             retVal=False    
     return retVal
 
-def checkDQMSize(r1,r2):
+def checkDQMSize(r1,r2,diff):
     haveDQMChecker=False
     for path in os.environ["PATH"].split(os.pathsep):
         path = path.strip('"')
@@ -155,22 +156,23 @@ def checkDQMSize(r1,r2):
         print 'Missing dqmMemoryStats in this release'
         return -1
 
-    output1=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-i',r1])
-    output2=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-i',r2])
-#    print r
-#    print output1[0],
-#    print output2[0],
-    sp=output1[0].split()
-    sp2=output2[0].split()
-    if len(sp)<3 or len(sp2)<3: 
+    output,error=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-p3','-c0','-d3','--summary','-r',r1,'-i',r2])
+    lines = output.splitlines()
+    total = re.search("\d+\.\d+", lines[-1])
+    if not total:
         print 'Weird output',r
-        print output1
-        print output2
+        print output
         return -2
-    kib1=float(sp[2])
-    kib2=float(sp2[2])
+    kib = float(total.group())
+
+    print lines, diff
+    for line in lines:
+        if len(diff) >= 10: break # limit amount of output
+        if re.match("\s*-?\d+.*", line): # normal output line
+            if line not in diff:
+                diff.append(line)
     
-    return kib2-kib1
+    return kib
 
 
 def summaryJR(jrDir):
@@ -317,14 +319,16 @@ print '\n'
 commonDQMs=getCommonFiles(baseDir,testDir,'DQM*.root')
 newDQM=0
 nDQM=0
+diff=[]
 for r in commonDQMs:
-        t=checkDQMSize(baseDir+r,testDir+r)
+        t=checkDQMSize(baseDir+r,testDir+r,diff)
         print r,t
-        if t>=0: 
-            newDQM=newDQM+t
-            nDQM=nDQM+1
+        newDQM=newDQM+t
+        nDQM=nDQM+1
 
 print 'SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files compared)'
+for line in diff:
+    print 'SUMMARY DQMHistoSizes: changed:',line
 
 
 #### conclude

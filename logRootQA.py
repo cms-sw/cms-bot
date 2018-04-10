@@ -25,6 +25,12 @@ def getCommonFiles(d1,d2,pattern):
             common.append(lT)
     return common
 
+def getWorkflow(f):
+    m = re.search("/\d+\.\d+_", f)
+    if not m: return "(none)"
+    return m.group().replace("/","").replace("_", "")
+
+
 def checkLines(l1,l2):
     lines=0
     for l in open(l2):
@@ -143,7 +149,7 @@ def checkEventContent(r1,r2):
             retVal=False    
     return retVal
 
-def checkDQMSize(r1,r2,diff):
+def checkDQMSize(r1,r2,diff, wfs):
     haveDQMChecker=False
     for path in os.environ["PATH"].split(os.pathsep):
         path = path.strip('"')
@@ -160,17 +166,25 @@ def checkDQMSize(r1,r2,diff):
     lines = output.splitlines()
     total = re.search("\d+\.\d+", lines[-1])
     if not total:
-        print 'Weird output',r
+        print 'Weird output',r1
         print output
         return -2
     kib = float(total.group())
 
     print lines, diff
+    maxdiff = 10
     for line in lines:
-        if len(diff) >= 10: break # limit amount of output
+        if len(diff) >= maxdiff: break # limit amount of output
         if re.match("\s*-?\d+.*", line): # normal output line
             if line not in diff:
                 diff.append(line)
+                wfs.append(getWorkflow(r1))
+                if len(diff) == maxdiff:
+                    diff[-1] += " <truncated>"
+            else:
+                idx = diff.index(line)
+                if not wfs[idx].endswith(",..."):
+                    wfs[idx] += ",..."
     
     return kib
 
@@ -319,16 +333,16 @@ print '\n'
 commonDQMs=getCommonFiles(baseDir,testDir,'DQM*.root')
 newDQM=0
 nDQM=0
-diff=[]
+diff,wfs=[],[]
 for r in commonDQMs:
-        t=checkDQMSize(baseDir+r,testDir+r,diff)
+        t=checkDQMSize(baseDir+r,testDir+r,diff,wfs)
         print r,t
         newDQM=newDQM+t
         nDQM=nDQM+1
 
 print 'SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files compared)'
-for line in diff:
-    print 'SUMMARY DQMHistoSizes: changed:',line
+for line, wf in zip(diff,wfs):
+    print 'SUMMARY DQMHistoSizes: changed (',wf,'):',line
 
 
 #### conclude

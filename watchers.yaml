@@ -468,6 +468,7 @@ forthommel:
 - RecoCTPPS/
 - EventFilter/CTPPSRawToDigi
 - CondFormats/CTPPSReadoutObjects
+- DQM/CTPPS
 fwyzard:
 - FWCore/ServiceRegistry
 gbenelli:

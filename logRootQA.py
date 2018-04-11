@@ -162,7 +162,7 @@ def checkDQMSize(r1,r2,diff, wfs):
         print 'Missing dqmMemoryStats in this release'
         return -1
 
-    output,error=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-p3','-c0','-d3','--summary','-r',r1,'-i',r2])
+    output,error=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-p3','-c0','-d2','--summary','-r',r1,'-i',r2])
     lines = output.splitlines()
     total = re.search("\d+\.\d+", lines[-1])
     if not total:
@@ -174,13 +174,14 @@ def checkDQMSize(r1,r2,diff, wfs):
     print lines, diff
     maxdiff = 10
     for line in lines:
-        if len(diff) >= maxdiff: break # limit amount of output
         if re.match("\s*-?\d+.*", line): # normal output line
             if line not in diff:
+                if len(diff) == maxdiff:
+                    diff.append(" ... <truncated>");
+                    wfs.append(getWorkflow(r1))
+                if len(diff) >= maxdiff: continue # limit amount of output
                 diff.append(line)
                 wfs.append(getWorkflow(r1))
-                if len(diff) == maxdiff:
-                    diff[-1] += " <truncated>"
             else:
                 idx = diff.index(line)
                 if not wfs[idx].endswith(",..."):

@@ -1336,6 +1336,7 @@ CMSSW_CATEGORIES={
    "SimG4Core/TrackingVerbose",
    "SimG4Core/Watcher",
    "SimGeneral/Configuration", "SimGeneral/DataMixingModule",
+   "SimGeneral/PreMixingModule",
    "SimGeneral/CaloAnalysis",
    "SimGeneral/Debugging",
    "SimGeneral/GFlash",

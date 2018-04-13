@@ -192,6 +192,7 @@ DEBUG_OPT=
 case $RELEASE_NAME in
   *_DEVEL_*) DEBUG_OPT="--debug" ;;
 esac
+export SCRAM_HOOKS_DEBUG=1
 $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
 echo DATE=`date`
 $CMSBUILD_CMD --sync-back upload cmssw-ib

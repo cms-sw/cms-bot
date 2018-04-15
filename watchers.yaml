@@ -555,8 +555,6 @@ HuguesBrun:
 - Validation/MuonIdentification
 - Validation/MuonIsolation
 - Validation/RecoMuon
-jalimena:
-- HLTrigger/Configuration
 jazzitup:
 - RecoHI
 jbsauvan:

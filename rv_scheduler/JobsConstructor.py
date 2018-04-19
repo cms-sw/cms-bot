@@ -19,7 +19,7 @@ CMS_BOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR,'..'))
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
 
-from es_utils import get_payload
+from es_utils import get_payload_kerberos_exe
 
 class JobsConstructor(object):
 
@@ -33,85 +33,48 @@ class JobsConstructor(object):
     def _format(self, s, **kwds):
         return s % kwds
 
-    def getWorkflowStatsFromES(self, release='*', arch='*', lastNdays=7, page_size=0):
+    def getWorkflowStatsFromES(self, release='*', arch='*', lastNdays=7, page_size=10000):
+        query_url = 'https://es-cmssdt.cern.ch/krb/cmssdt-relvals_stats_summary*/_search?scroll=1m'
 
-        query_url = 'http://cmses-master02.cern.ch:9200/relvals_stats_*/_search'
+        queryInfo = {}
+        millisecday=86400*1000
+        queryInfo["end_time"] = int(time()*1000)-(millisecday*lastNdays)
+        queryInfo["start_time"] = queryInfo["end_time"] - int(millisecday * lastNdays)
+        queryInfo["architecture"] = arch.lower()
+        queryInfo["release_cycle"] = release.lower()
+        queryInfo["from"] = 0
+        queryInfo["page_size"] = page_size #default
+        print queryInfo["start_time"],queryInfo["end_time"]
 
-        query_datsets = """
-        {
-          "query": {
-            "filtered": {
-              "query": {
-                "bool": {
-                  "should": [
-                    {
-                      "query_string": {
-                        "query": "release:%(release_cycle)s AND architecture:%(architecture)s", 
-                        "lowercase_expanded_terms": false
-                      }
-                    }
-                  ]
-                }
-              },
-              "filter": {
-                "bool": {
-                  "must": [
-                    {
-                      "range": {
-                        "@timestamp": {
-                          "from": %(start_time)s,
-                          "to": %(end_time)s
-                        }
-                      }
-                    }
-                  ]
+        query= """{
+        "query": {
+        "bool": {
+          "filter": [
+            {
+              "range": {
+                "@timestamp": {
+                  "gte": "%(start_time)s"
                 }
               }
             }
-          },
-          "from": %(from)s,
-          "size": %(page_size)s
+          ],
+          "must": {
+            "query_string": {
+              "query": "release:/%(release_cycle)s.*/ AND architecture:/%(architecture)s.*/ "
+            }
+          }
+        }
+        },
+        "from": 0,
+        "size": %(page_size)s
         }
         """
-        datasets = {}
-        ent_from = 0
-        json_out = []
-        info_request = False
-        queryInfo = {}
-
-        queryInfo["end_time"] = int(time() * 1000)
-        queryInfo["start_time"] = queryInfo["end_time"] - int(86400 * 1000 * lastNdays)
-        queryInfo["architecture"] = arch
-        queryInfo["release_cycle"] = release
-        queryInfo["from"] = 0
-
-        if page_size < 1:
-            info_request = True
-            queryInfo["page_size"] = 2
-        else:
-            queryInfo["page_size"] = page_size
-
-        total_hits = 0
-
-        while True:
-            queryInfo["from"] = ent_from
-            es_data = get_payload(query_url, self._format(query_datsets, **queryInfo))  # here
-            content = json.loads(es_data)
-            content.pop("_shards", None)
-            total_hits = content['hits']['total']
-            if info_request:
-                info_request = False
-                queryInfo["page_size"] = total_hits
-                continue
-            hits = len(content['hits']['hits'])
-            if hits == 0: break
-            ent_from = ent_from + hits
-            json_out.append(content)
-            if ent_from >= total_hits:
-                break
-
-        return json_out[0]['hits']['hits']
-
+        query = self._format(query, **queryInfo)
+        #print query
+        es_data = get_payload_kerberos_exe(query_url, query)
+        #print es_data
+        return es_data['hits']['hits']
+        
     def getJobsCommands(self, workflow_matrix_list=None,workflows_limit=None, workflows_dir=os.environ["CMSSW_BASE"]+"/pyRelval/"):
         #run runTheMatrix and parse the output for each workflow, example results structure in resources/wf.json
         #for now, get it from the file resources/wf.json
@@ -196,16 +159,21 @@ class JobsConstructor(object):
 if __name__ == "__main__":
 
     opts = None
-    release = 'CMSSW_9_3_X*'
+    release = 'CMSSW_10_2_CLANG'
     arch = 'slc6_amd64_gcc630'
     days = 7
     page_size = 0
+    jk = JobsConstructor()
+    
+    result = jk.getWorkflowStatsFromES(release=release, arch=arch, lastNdays=7, page_size=10000)
+    print json.dumps(result, indent=2, sort_keys=True, separators=(',', ': '))
+    
+    exit(0)
 
     wf_list = None
     with open('resources/wf_slc6_530.txt') as wf_list_file:
         wf_list = wf_list_file.read().replace('\n', ',')
         wf_list = wf_list[:-1]
-
     
     known_errors = get_known_errors(release, arch, 'relvals')
 

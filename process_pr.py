@@ -328,7 +328,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print "Latest commit sha: ",last_commit.sha
     extra_rm = RELEASE_MANAGERS.get(pr.base.ref, [])
     if repository==CMSDIST_REPO_NAME:
-      br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:2])+"_X"
+      br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3])+"_X"
       if br: extra_rm=extra_rm+RELEASE_MANAGERS.get(br, [])
     releaseManagers=list(set(extra_rm+SPECIAL_RELEASE_MANAGERS))
 

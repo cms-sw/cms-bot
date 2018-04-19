@@ -6,6 +6,7 @@ REPO_SHORT_NAME=$(echo $REPOSITORY | sed 's|.*/||')
 git clone git@github.com:${REPOSITORY} userrepo
 ln -s userrepo ${REPO_SHORT_NAME}
 ERR=0
+ISSUE_TITLE=""
 if [ "X${PULL_REQUEST}" != "X" ] ; then
   curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | \
      grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/upload/changed-files.txt
@@ -19,6 +20,10 @@ if [ "X${PULL_REQUEST}" != "X" ] ; then
     -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
 else
   cd userrepo
+  if [ -f "${REPO_DIR}/check-for-valid-push" ] ; then
+    ${REPO_DIR}/check-for-valid-push || exit 0
+  fi
+  ISSUE_TITLE="[Jenkins CI] Testing commit: $(git log --pretty=format:'%h' -n 1)"
 fi
 voms-proxy-init -voms=cms
 ${REPO_DIR}/run-pr-tests > $WORKSPACE/upload/run.log 2>&1 || ERR=1
@@ -70,6 +75,7 @@ else
   OPEN_ISSUE=$(grep '^ *OPEN_ISSUE_FOR_PUSH_TESTS *=' $REPO_DIR/repo_config.py | sed 's|^.*OPEN_ISSUE_FOR_PUSH_TESTS *=||;s| ||g' || true)
   if [ "X${OPEN_ISSUE}" = "XTrue" ] ; then
     $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "[Jenkins CI] Test results $(date)" -R ${RESULT_LOG}
+    #$WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -R ${RESULT_LOG}
   else
     NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL=||;s|["]||g' || true)
     if [ "X${NOTIFY_EMAIL}" != "X" ] ; then

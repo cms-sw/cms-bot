@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys, urllib2, json, requests
 from datetime import datetime
-from time import time
 from os.path import exists
 from os import getenv
 

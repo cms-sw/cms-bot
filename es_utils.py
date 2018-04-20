@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-import sys, urllib2, json, requests, urllib3
+import sys, urllib2, json, requests
 from datetime import datetime
 from time import time
 from os.path import exists
 from os import getenv
-#from requests_kerberos import HTTPKerberosAuth, REQUIRED
-#NOTE: requests_kerberos IS NOT !!! part of requests. It brings requests as requrement and not only
-#Function to store data in elasticsearch
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)

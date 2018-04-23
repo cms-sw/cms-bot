@@ -28,7 +28,7 @@ import repo_config
 gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 print "Authentication succeeeded"
 gh_repo = gh.get_repo(args.repo)
-e, o = cmd("curl -s 'https://api.github.com/search/issues?q=%s+repo:%s+in:title+type:issue' | grep '\"number\"' | sed 's|.*: ||;s|,.*|" % (urllib.quote(args.title),args.repo))
+e, o = cmd("curl -s 'https://api.github.com/search/issues?q=%s+repo:%s+in:title+type:issue' | grep '\"number\"' | sed 's|.*: ||;s|,.*|'" % (urllib.quote(args.title),args.repo))
 issue = None
 if not e:
   try:issue = gh_repo.get_issue(int(o))

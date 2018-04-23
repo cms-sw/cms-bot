@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from github import Github
 from os.path import expanduser, abspath, dirname, join, exists
-import sys
+import sys, re
 from argparse import ArgumentParser
+from commands import getstatusoutput as cmd
+import urllib
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 parser = ArgumentParser()
@@ -26,6 +28,15 @@ import repo_config
 gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 print "Authentication succeeeded"
 gh_repo = gh.get_repo(args.repo)
-print "Creating issue request"
-gh_repo.create_issue(args.title, msg)
+e, o = cmd("curl -s 'https://api.github.com/search/issues?q=%s+repo:%s+in:title+type:issue' | grep '\"number\"' | sed 's|.*: ||;s|,.*|" % (urllib.quote(args.title),args.repo))
+issue = None
+if not e:
+  try:issue = gh_repo.get_issue(int(o))
+  except: pass
+if issue:
+  print "Updaing comment"
+  issue.create_comment(msg)
+else:
+  print "Creating issue request"
+  gh_repo.create_issue(args.title, msg)
 

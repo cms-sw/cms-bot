@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-import sys, urllib2, json, requests
+import sys, urllib2, json
 from datetime import datetime
-from os.path import exists
+from os.path import exists, join as path_join, dirname, abspath
 from os import getenv
 
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
@@ -97,8 +97,16 @@ def get_payload(url,query):
 
 def get_payload_kerberos_exe(url, query):
   from commands import getstatusoutput as cmd
-  e, o = cmd("eval `scram unset -sh`; python ./get_pl_krb.py '%s' '%s' 2>&1 | grep JSON_OUT= | sed 's|.*JSON_OUT= *||'" % (url, query))
-  print e, o
+  script_path = path_join(dirname(abspath(__file__)),'get_pl_krb.py')
+  e, o = cmd("eval `scram unset -sh`; python '%s' '%s' '%s' 2>&1 | grep JSON_OUT= | sed 's|.*JSON_OUT= *||'" % (script_path,url, query))
+  #print e, o
+  return json.loads(o)
+
+def es_krb_query_exe(index, query, start_time, end_time, page_start=0, page_size=10000, timestamp_field="@timestamp",lowercase_expanded_terms='false', es_host='https://es-cmssdt.cern.ch/krb'):
+  from commands import getstatusoutput as cmd
+  script_path = path_join(dirname(abspath(__file__)),'es_query_krb.py')
+  e, o = cmd("eval `scram unset -sh`; python '%s' '%s' '%s' '%s' '%s' 2>&1 | grep JSON_OUT= | sed 's|.*JSON_OUT= *||'" % (script_path, index, query,start_time,end_time))
+  #print e, o
   return json.loads(o)
 
 def format(s, **kwds): return s % kwds
@@ -116,38 +124,8 @@ def es_query(index,query,start_time,end_time,page_start=0,page_size=100000,times
     "size": %(page_size)s
   }"""
   query_str = format(query_tmpl, query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field,lowercase_expanded_terms=lowercase_expanded_terms)
-  print 'query url is ', query_url
+  #print 'query url is ', query_url
   return json.loads(get_payload(query_url, query_str))
-
-def es_krb_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp",lowercase_expanded_terms='false', es_host='https://es-cmssdt.cern.ch/krb'):
-  query_url='%s/%s/_search?scroll=1m' % (es_host, index)
-  query_tmpl = """{
-  "query": {
-    "bool": {
-      "filter": [
-        {
-          "range": {
-            "%(timestamp_field)s": {
-              "gte": %(start_time)s,
-              "lt":%(end_time)s
-            }
-          }
-        }
-      ],
-      "must": {
-        "query_string": {
-          "query": "%(query)s"
-        }
-      }
-    }
-  },
-  "from": %(page_start)s,
-  "size": %(page_size)s
-  }"""
-
-  query_str = format(query_tmpl, query=query, start_time=start_time, end_time=end_time, page_start=page_start,
-                     page_size=page_size, timestamp_field=timestamp_field, lowercase_expanded_terms=lowercase_expanded_terms)
-  return get_payload_kerberos(query_url, query_str)
 
 def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
   wf_stats = {}
@@ -179,3 +157,4 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
                              "cpu_avg" : int((cpu_v+cpu_m)/2)
                            }
   return wf_stats
+

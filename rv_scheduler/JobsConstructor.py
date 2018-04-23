@@ -44,7 +44,7 @@ class JobsConstructor(object):
         queryInfo["release_cycle"] = release.lower()
         queryInfo["from"] = 0
         queryInfo["page_size"] = page_size #default
-        print queryInfo["start_time"],queryInfo["end_time"]
+        #print queryInfo["start_time"],queryInfo["end_time"]
 
         query= """{
         "query": {
@@ -66,13 +66,11 @@ class JobsConstructor(object):
         }
         },
         "from": 0,
-        "size": %(page_size)s
+        "size": 10000
         }
         """
         query = self._format(query, **queryInfo)
-        #print query
         es_data = get_payload_kerberos_exe(query_url, query)
-        #print es_data
         return es_data['hits']['hits']
         
     def getJobsCommands(self, workflow_matrix_list=None,workflows_limit=None, workflows_dir=os.environ["CMSSW_BASE"]+"/pyRelval/"):

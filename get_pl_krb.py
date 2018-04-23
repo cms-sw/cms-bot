@@ -1,19 +1,37 @@
 #!/usr/bin/env python
-import sys, urllib2, json, requests, urllib3
-from datetime import datetime
-from time import time
-from os.path import exists
-from os import getenv
-from requests_kerberos import HTTPKerberosAuth, REQUIRED
+import requests, json
+from requests_kerberos import HTTPKerberosAuth, DISABLED
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+class KerberosTicket:
+  def __init__(self, service):
+    __, krb_context = kerberos.authGSSClientInit(service)
+    kerberos.authGSSClientStep(krb_context, "")
+    self._krb_context = krb_context
+    self.auth_header = ("Negotiate " +
+                        kerberos.authGSSClientResponse(krb_context))
+  def verify_response(self, auth_header):
+    # Handle comma-separated lists of authentication fields
+     for field in auth_header.split(","):
+      kind, __, details = field.strip().partition(" ")
+      if kind.lower() == "negotiate":
+        auth_details = details.strip()
+        break
+      else:
+        raise ValueError("Negotiate not found in %s" % auth_header)
+      # Finish the Kerberos handshake
+      krb_context = self._krb_context
+      if krb_context is None:
+        raise RuntimeError("Ticket already used for verification")
+      self._krb_context = None
+      kerberos.authGSSClientClean(krb_context)
+
 
 def get_payload_kerberos(url, query):
   #short_url = url.split('/')[2]
   #krb = KerberosTicket("HTTP@"+short_url)
   #headers = {"Authorization": krb.auth_header}
   #r = requests.post(url, headers=headers, verify=False, data=query)
-  kerb_auth = HTTPKerberosAuth(mutual_authentication=REQUIRED)
+  kerb_auth = HTTPKerberosAuth(mutual_authentication=DISABLED)
   r = requests.post(url, auth=kerb_auth, verify=False, data=query)
   es_data = json.loads(r.text)
   #print es_data
@@ -36,7 +54,6 @@ def get_payload_kerberos(url, query):
 
 if __name__ == "__main__":
   
+  import sys
   result = get_payload_kerberos(sys.argv[1],sys.argv[2])
   print "JSON_OUT="+json.dumps(result)
-  #with open('josnresult.json', 'w') as resfile:
-  #  resultfile.write(json.dumps(result))

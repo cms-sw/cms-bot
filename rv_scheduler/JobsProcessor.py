@@ -49,7 +49,6 @@ class JobsProcessor(Thread):
         self.startProcess.join()
         #print ''
 
-
 if __name__ == "__main__":
 
     toProcessQueue = Queue.Queue()

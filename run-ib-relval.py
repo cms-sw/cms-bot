@@ -27,7 +27,7 @@ if __name__ == "__main__":
   if (not environ.has_key("CMSSW_VERSION")) or (not environ.has_key("CMSSW_BASE")) or (not environ.has_key("SCRAM_ARCH")):
     print "ERROR: Unable to file the release environment, please make sure you have set the cmssw environment before calling this script"
     exit(1)
-  
+
   thrds = cmsRunProcessCount
   cmssw_ver = environ["CMSSW_VERSION"]
   arch = environ["SCRAM_ARCH"]

@@ -46,7 +46,7 @@ UPLOAD_SIZE=$(du -s -m $WORKSPACE/upload | sed 's|\s.*$||')
 RESULT_LOG="$WORKSPACE/upload/${UPLOAD_REF}/full-results.txt"
 touch ${RESULT_LOG}
 if [ $UPLOAD_SIZE -gt 2048 ] ; then
-  echo "-1\nTested at: ${COMMIT}\n\nUpload size exceeded the max size limit of 2048MB\n" > ${RESULT_LOG}
+  echo -e "-1\nTested at: ${COMMIT}\n\nUpload size exceeded the max size limit of 2048MB\n" > ${RESULT_LOG}
 else
   if [ $ERR = 0 ] ; then
     echo -e "+1\nTested at: ${COMMIT}\n" >> ${RESULT_LOG}

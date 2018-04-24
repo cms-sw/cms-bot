@@ -61,7 +61,7 @@ query_running_builds = """ {
       "@end-highlight@"
     ]
   },
-  "size": 500,
+  "size": 5000,
   "sort": [
     {
       "_score": {
@@ -84,7 +84,7 @@ for root, dirs, files in os.walk(path):
       job_info = root.split('/')
       payload['job_name'] = job_info[3]
       payload['build_number'] = job_info[-1]
-      payload['url'] = "https://cmssdt.cern.ch/%s/job/" + job_info[3] + "/" + job_info[-1] + "/" % JENKINS_PREFIX
+      payload['url'] = "https://cmssdt.cern.ch/"+JENKINS_PREFIX+"/job/" + job_info[3] + "/" + job_info[-1] + "/"
       id = sha1(root).hexdigest()
       try:
         tree = ET.parse(logFile)
@@ -106,7 +106,7 @@ for root, dirs, files in os.walk(path):
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
         send_payload(weekindex,document,id,json.dumps(payload), passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
       except Exception as e:
-        print "Xml parsing error" , e
+        print "Xml parsing error",logFile , e
 running_builds_elastic={}
 content = get_payload(query_url,query_running_builds)
 if content == "":
@@ -115,11 +115,13 @@ else:
   content_hash = json.loads(content)
   for hit in content_hash['hits']['hits']:
     if hit["_index"]=="jenkins" or hit["_index"].startswith("jenkins-jobs-"):
+      try:print "Running:",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id']
+      except: pass
       running_builds_elastic[hit['_id']]=hit
 for build in running_builds_elastic:
   if build not in all_local:
     hit = running_builds_elastic[build]
-    hit["job_status"]="Failed"
+    hit["_source"]["job_status"]="Failed"
     resend_payload(hit,passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
     print "job status marked as Failed"
 

@@ -113,6 +113,7 @@ makortel:
   - Geometry/Track
   - Geometry/CommonTopologies
   - HLTrigger/Configuration
+  - HeterogeneousCore
   - IgTools
   - PerfTools
   - RecoLocalTracker
@@ -444,11 +445,6 @@ cbaus:
 - GeneratorInterface/HiGenCommon
 - GeneratorInterface/HydjetInterface
 - GeneratorInterface/PyquenInterface
-cnuttens:
-- SimTracker/SiStripDigitizer
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
 dkotlins:
 - RecoLocalTracker/SiPixelClusterizer
 - RecoLocalTracker/SiPixelRecHits
@@ -472,6 +468,7 @@ forthommel:
 - RecoCTPPS/
 - EventFilter/CTPPSRawToDigi
 - CondFormats/CTPPSReadoutObjects
+- DQM/CTPPS
 fwyzard:
 - FWCore/ServiceRegistry
 gbenelli:
@@ -488,13 +485,6 @@ gbenelli:
 - SimTracker/Records
 geoff-smith:
 - HLTrigger/Configuration
-ghellwig:
-- Alignment
-- CalibTracker/Configuration
-- CondCore
-- Configuration
-- Geometry
-- RecoTracker
 ghugo83:
 - Geometry/TrackerCommonData
 gpetruc:
@@ -502,11 +492,13 @@ gpetruc:
 - DataFormats/PatCandidates
 - DataFormats/Track
 - DataFormats/Trajectory
+- DataFormats/NanoAOD
 - RecoLocalTracker
 - RecoTracker
 - TrackingTools
 - PhysicsTools/PatUtils
 - PhysicsTools/PatAlgos
+- PhysicsTools/NanoAOD
 HuguesBrun:
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit
@@ -563,8 +555,6 @@ HuguesBrun:
 - Validation/MuonIdentification
 - Validation/MuonIsolation
 - Validation/RecoMuon
-jalimena:
-- HLTrigger/Configuration
 jazzitup:
 - RecoHI
 jbsauvan:
@@ -621,28 +611,10 @@ jhgoh:
 - Validation/RecoMuon
 - Validation/RPCRecHits
 - Validation/MuonRPCDigis
-jlagram:
-- RecoLocalTracker/ClusterParameterEstimator
-- RecoLocalTracker/Configuration
-- RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip
-- RecoLocalTracker/SubCollectionProducers
-- CalibTracker/SiStrip
-- CalibTracker/Configuration
-- CalibTracker/Records
-- SimTracker/SiStripDigitizer
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
 kkrajczar:
 - Validation/RecoHI
 kurtejung:
 - RecoHI
-lbeck:
-- SimTracker/SiStripDigitizer
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
 lgray:
 - RecoEcal
 - RecoEgamma
@@ -810,8 +782,6 @@ schoef:
 - RecoMET
 - Validation/RecoJets
 - Validation/RecoMET
-sdevissc:
-- SimTracker/
 tlampen:
 - Alignment/CommonAlignment
 - Alignment/CommonAlignmentAlgorithm
@@ -1264,32 +1234,16 @@ mtosi:
 - Validation/RecoTrack
 - Validation/RecoVertex
 ebrondol:
-  - Configuration/Eras
-  - Configuration/PyReleaseValidation
-  - Configuration/StandardSequences
-  - DataFormats/Common
-  - DataFormats/GsfTrackReco
-  - DataFormats/Math
-  - DataFormats/RecoCandidate
-  - DataFormats/Si
-  - DataFormats/Tra
-  - DataFormats/VertexReco
   - DPGAnalysis/SiStripTools
-  - DQM/Track
-  - EventFilter/Si
-  - FWCore/Utilities
   - Geometry/Track
   - Geometry/CommonTopologies
   - RecoLocalTracker
-  - RecoParticleFlow/PFTracking
   - RecoPixelVertexing
   - RecoTracker
   - RecoVertex
   - SimDataFormats/DigiSimLinks
   - SimDataFormats/Track
   - SimDataFormats/Vertex
-  - SimGeneral/MixingModule
-  - SimGeneral/TrackingAnalysis
   - SimTracker
   - SLHCUpgradeSimulations/Configuration
   - TrackingTools
@@ -1348,3 +1302,30 @@ varuns23:
   - EgammaAnalysis
   - DataFormats/EgammaCandidates
   - DataFormats/EgammaReco
+dildick:
+- L1Trigger/CSCTriggerPrimitives
+- L1Trigger/CSCCommonTrigger
+- L1Trigger/ME0Trigger
+- SimMuon/GEMDigitizer
+- SimMuon/CSCDigitizer
+- SimMuon/Configuration
+- DataFormats/CSCDigi
+- DataFormats/GEMDigi
+- CondFormats/CSCObjects
+- Geometry/GEMGeometryBuilder
+- Geometry/GEMGeometry
+echabert:
+- CalibTracker/Configuration
+- CalibTracker/Records
+- CalibTracker/SiStrip
+- DataFormats/SiStrip
+- DPGAnalysis/SiStripTools
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+- SimTracker/SiStripDigitizer

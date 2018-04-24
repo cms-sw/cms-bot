@@ -14,6 +14,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   case $XUSER in
     cmsbld ) DOCKER_OPT=" -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group " ;;
   esac
+  if [ -e /etc/tnsnames.ora ] ; then
+    DOCKER_OPT="$DOCKER_OPT -v /etc/tnsnames.ora:/etc/tnsnames.ora "
+  fi 
   DOCK_ARGS="voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
   docker run --rm -h `hostname -f` $DOCKER_OPT \

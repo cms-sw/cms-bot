@@ -31,6 +31,9 @@ else
   CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
   if [ $(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | wc -l) -gt 1 ] ; then
     MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1")
+    if [ $(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -gt 1 ] ; then
+      MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1" | grep 'RELEASE_QUEUE=CMSSW_[0-9][0-9]*_[0-9][0-9]*_X')
+    fi
   else
     MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};")
   fi

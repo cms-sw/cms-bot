@@ -3,7 +3,7 @@ import re
 from sys import exit
 from datetime import datetime
 from time import mktime
-from es_utils import send_payload
+from es_utils import send_payload_new
 from hashlib import sha1
 from json import dumps
 from logwatch import logwatch, run_cmd, LOGWATCH_APACHE_IGNORE_AGENTS
@@ -38,12 +38,12 @@ def process (line, count):
       payload["agent_type"]=agent.replace(" ","-").split("/",1)[0].upper()
   id = sha1(line).hexdigest()
   if (count%1000)==0: print "Processed entries",count
-  if not send_payload("apache-cmssdt-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+  if not send_payload_new("apache-cmssdt-"+week,"access_log", id, dumps(payload), 'es-cmssdt.cern.ch:9203'):
     return False
   if payload["request"].startswith("/SDT/releases.map?release="):
     xpayload = dict(item.split("=") for item in payload["request"].split("?",1)[1].split("&"))
     for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
-    return send_payload("scram-access-"+week,"cmssw-releases", id, dumps(xpayload), passwd_file="/data/es/es_secret")
+    return send_payload_new("scram-access-"+week,"cmssw-releases", id, dumps(xpayload), 'es-cmssdt.cern.ch:9203')
   return True
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmssdt_apache.py$' | wc -l",False)

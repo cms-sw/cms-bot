@@ -8,7 +8,7 @@ from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api,add_organization_member
 setdefaulttimeout(120)
 
-CMS_OWNERS = [ "smuzaffar", "cmsbuild", "davidlange6" ]
+CMS_OWNERS = [ "smuzaffar", "cmsbuild", "davidlange6", "fabiocos" ]
 CMS_SDT    = [ "mrodozov", "gudrutis" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
@@ -23,14 +23,14 @@ for org in CMS_ORGANIZATIONS:
 #################################
 REPO_OWNERS["cms-data"]      += []
 REPO_OWNERS["cms-externals"] += []
-REPO_OWNERS["cms-sw"]        += [ "davidlt", "sextonkennedy" ]
+REPO_OWNERS["cms-sw"]        += [ "sextonkennedy" ]
 
 #################################
 #Set Teams for organizations    #
 #################################
 #Teams for cms-data
 REPO_TEAMS["cms-data"]["Developers"] =  {
-  "members"      : [ "davidlt" ] + CMS_SDT,
+  "members"      : CMS_SDT,
   "repositories" : { "*" : "push" }
 }
 
@@ -38,14 +38,15 @@ REPO_TEAMS["cms-data"]["Developers"] =  {
 REPO_TEAMS["cms-externals"]["Developers"] = deepcopy(REPO_TEAMS["cms-data"]["Developers"])
 REPO_TEAMS["cms-externals"]["boost-developers"] = { "members": ["fwyzard"], "repositories" : { "boost" : "push" } }
 REPO_TEAMS["cms-externals"]["Developers"]["members"].append("gartung")
+REPO_TEAMS["cms-externals"]["Developers"]["members"].append("fwyzard")
 
 #Teams for cms-sw
 REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = { 
-  "members" : ["xiezhen"],
+  "members" : [],
   "repositories" : { "RecoLuminosity-LumiDB": "admin"}
 }
 REPO_TEAMS["cms-sw"]["generators-l2"] = { 
-  "members" : ["bendavid","covarell","govoni","vciulli"], 
+  "members" : ["perrozzi","efeyazgan"], 
   "repositories" :  { "genproductions" : "admin",
                       "xsecdb" : "admin"}
 }
@@ -139,7 +140,11 @@ for org_name in CMS_ORGANIZATIONS:
       for login in [ l for l in members if not l in ok_mems ]:
         api_rate_limits(gh,msg=False)
         if not login in cache["users"]: cache["users"][login] = gh.get_user(login)
-        if not args.dryRun: team.add_to_members(cache["users"][login])
+        if not args.dryRun:
+          try: team.add_to_members(cache["users"][login])
+          except Exception as e:
+            print e
+            err_code=1
         print "      =>Added member:",login
         chg_flag+=1
     total_changes+=chg_flag

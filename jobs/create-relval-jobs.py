@@ -11,13 +11,14 @@ CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
 from RelValArgs import GetMatrixOptions, FixWFArgs
-from es_utils import es_query, format, es_workflow_stats
+from es_utils import es_query, es_krb_query_exe, format, es_workflow_stats
 
 def createJob(workflow, cmssw_ver, arch):
   workflow_args = FixWFArgs(cmssw_ver, arch, workflow, GetMatrixOptions(cmssw_ver, arch))
   cmd = format("rm -rf %(workflow)s %(workflow)s_*; mkdir %(workflow)s; cd %(workflow)s; PATH=%(das_utils)s:$PATH runTheMatrix.py --maxSteps=0 -l %(workflow)s %(workflow_args)s",workflow=workflow,workflow_args=workflow_args, das_utils=CMS_BOT_DIR+"/das-utils")
   print "Running ",cmd
-  getstatusoutput(cmd)
+  e, o = getstatusoutput(cmd)
+  if e: print "ERROR:%s:%s" % (workflow, o)
   try:
     workflow_dir = glob.glob(format("%(workflow)s/%(workflow)s_*", workflow=workflow))[0]
     getstatusoutput(format("mv %(workflow)s/runall-report-step123-.log %(workflow_dir)s/workflow.log; touch %(workflow_dir)s/cmdLog; mv %(workflow_dir)s .; rm -rf %(workflow)s", workflow=workflow, workflow_dir=workflow_dir))
@@ -49,14 +50,33 @@ for t in thrds: t.join()
 
 #Get Workflow stats from ES
 print "Getting Workflow stats from ES....."
-stats = es_query(index='relvals_stats_*',
-                 query=format('exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
-                              release_cycle=cmssw_ver.split("_X_")[0]+"_X_*",
-                              architecture=arch,
-                              workflows=wf_query[4:]
-                             ),
-                 start_time=1000*int(time()-(86400*10)),
-                 end_time=1000*int(time()))
+
+stats = {}
+release_cycle=cmssw_ver.split("_X_")[0]+"_X"
+st = 1000*int(time()-(86400*10))
+et = 1000*int(time())
+use_krb = False
+
+while True:
+  
+  es_q = format('exit_code:0 AND release:%(release_cycle)s* AND architecture:%(architecture)s AND (%(workflows)s)', release_cycle=release_cycle, architecture=arch, workflows=wf_query[4:])
+  if '_DEVEL_' in cmssw_ver:
+    use_krb = True
+    release_cycle=(cmssw_ver.split("_X_")[0]+"_X").lower()
+    es_q = format('exit_code:0 AND release:/%(release_cycle)s.*/ AND architecture:/%(architecture)s.*/ AND (%(workflows)s)', release_cycle=release_cycle, architecture=arch, workflows=wf_query[4:])
+
+  if use_krb:
+    stats = es_krb_query_exe(index='cmssdt-relvals_stats_summary*', query=es_q, start_time=st, end_time=et)
+  else:
+    stats = es_query(index='relvals_stats_*', query=es_q, start_time=st, end_time=et)
+  
+  if (not 'hits' in stats) or (not 'hits' in stats['hits']) or (not stats['hits']['hits']):
+    xrelease_cycle = "_".join(cmssw_ver.split("_",4)[0:3])+"_X"
+    if xrelease_cycle!=release_cycle:
+      release_cycle=xrelease_cycle
+      print "Retry: Setting release cycle to ",release_cycle
+      continue
+  break
 
 wf_stats = es_workflow_stats(stats)
 
@@ -75,7 +95,7 @@ for cmds_log in o.split("\n"):
   if os.path.exists(cmds):
     e, o = getstatusoutput ("cat %s | grep ^step" % cmds)
     for c in o.split("\n"):
-      job = {"cpu" : 300, "rss" : 6*1024*1024*1024, "time" : 3600, "command" : re.sub("\s*;\s*$","",c.split(":",1)[-1])}
+      job = {"cpu" : 300, "rss" : 4.5*1024*1024*1024, "time" : 120, "command" : re.sub("\s*;\s*$","",c.split(":",1)[-1])}
       step = c.split(":")[0]
       if (wf in wf_stats) and (step in wf_stats[wf]):
         job["time"] = wf_stats[wf][step]["time"]

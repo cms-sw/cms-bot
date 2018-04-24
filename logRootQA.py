@@ -2,26 +2,34 @@
 
 from os import listdir
 from os.path import isfile, join
+from fnmatch import fnmatch
 import os
+import re
 import subprocess
 import sys
 
-def getFiles(d,ending):
-    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(d) for f in filenames if os.path.splitext(f)[1] == '.'+ending]
+def getFiles(d,pattern):
+    return [os.path.join(dp, f) for dp, dn, filenames in os.walk(d) for f in filenames if fnmatch(f, pattern)]
 #    return  [ f for f in listdir(d) if isfile(join(d,f)) ]
 
-def getCommonFiles(d1,d2,ending):
-    l1=getFiles(d1,ending)
+def getCommonFiles(d1,d2,pattern):
+    l1=getFiles(d1,pattern)
     print "l1",l1
-    l2=getFiles(d2,ending)
+    l2=getFiles(d2,pattern)
     print "l2",l2
     common=[]
     for l in l1:
         lT=l[len(d1):]
-        if 'step' not in lT or 'runall' in lT or 'dasquery' in lT: continue
+        if 'runall' in lT or 'dasquery' in lT: continue
         if d2+lT in l2:
             common.append(lT)
     return common
+
+def getWorkflow(f):
+    m = re.search("/\d+\.\d+_", f)
+    if not m: return "(none)"
+    return m.group().replace("/","").replace("_", "")
+
 
 def checkLines(l1,l2):
     lines=0
@@ -141,7 +149,7 @@ def checkEventContent(r1,r2):
             retVal=False    
     return retVal
 
-def checkDQMSize(r1,r2):
+def checkDQMSize(r1,r2,diff, wfs):
     haveDQMChecker=False
     for path in os.environ["PATH"].split(os.pathsep):
         path = path.strip('"')
@@ -154,22 +162,32 @@ def checkDQMSize(r1,r2):
         print 'Missing dqmMemoryStats in this release'
         return -1
 
-    output1=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-i',r1])
-    output2=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-i',r2])
-#    print r
-#    print output1[0],
-#    print output2[0],
-    sp=output1[0].split()
-    sp2=output2[0].split()
-    if len(sp)<3 or len(sp2)<3: 
-        print 'Weird output',r
-        print output1
-        print output2
+    output,error=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-p3','-c0','-d2','--summary','-r',r1,'-i',r2])
+    lines = output.splitlines()
+    total = re.search("\d+\.\d+", lines[-1])
+    if not total:
+        print 'Weird output',r1
+        print output
         return -2
-    kib1=float(sp[2])
-    kib2=float(sp2[2])
+    kib = float(total.group())
+
+    print lines, diff
+    maxdiff = 10
+    for line in lines:
+        if re.match("\s*-?\d+.*", line): # normal output line
+            if line not in diff:
+                if len(diff) == maxdiff:
+                    diff.append(" ... <truncated>");
+                    wfs.append(getWorkflow(r1))
+                if len(diff) >= maxdiff: continue # limit amount of output
+                diff.append(line)
+                wfs.append(getWorkflow(r1))
+            else:
+                idx = diff.index(line)
+                if not wfs[idx].endswith(",..."):
+                    wfs[idx] += ",..."
     
-    return kib2-kib1
+    return kib
 
 
 def summaryJR(jrDir):
@@ -180,7 +198,7 @@ def summaryJR(jrDir):
         break
 
     for d in dirs:
-        diffs=getFiles(root+'/'+d,'png')
+        diffs=getFiles(root+'/'+d,'*.png')
         if len(diffs)>0:
             print 'JR results differ',len(diffs),d
             nDiff=nDiff+len(diffs)
@@ -225,7 +243,7 @@ def summaryComp(compDir):
 qaIssues=False
 
 # one way to set up for local tests..
-#login to ssh cmssdtprod.cern.ch
+#login to ssh cmssdt03.cern.ch
 #copy out data from a recent pull request comparison 
 #cd /data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/CMSSW_10_0_X_2017-11-05-2300/slc6_amd64_gcc630/-GenuineIntel
 #scp -r matrix-results/ dlange@cmsdev01:/build/dlange/171103/t1/ 
@@ -255,7 +273,7 @@ if jrDir[-1]=='/':
 if compDir[-1]=='/':
     compDir=jrDir[:-1]
 
-commonLogs=getCommonFiles(baseDir,testDir,'log')
+commonLogs=getCommonFiles(baseDir,testDir,'step*.log')
 print commonLogs
 
 #### check the printouts
@@ -286,7 +304,7 @@ if lChanges:
     qaIssues=True
 print '\n'
 #### compare edmEventSize on each to look for new missing candidates
-commonRoots=getCommonFiles(baseDir,testDir,'root')
+commonRoots=getCommonFiles(baseDir,testDir,'step*.root')
 sameEvts=True
 nRoot=0
 for r in commonRoots:
@@ -313,17 +331,19 @@ print 'SUMMARY DQMHistoTests: Total successes:',compSummary[3]
 print 'SUMMARY DQMHistoTests: Total skipped:',compSummary[4]
 print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
 
+commonDQMs=getCommonFiles(baseDir,testDir,'DQM*.root')
 newDQM=0
 nDQM=0
-for r in commonRoots:
-    if 'inDQM' in r:
-        t=checkDQMSize(baseDir+r,testDir+r)
+diff,wfs=[],[]
+for r in commonDQMs:
+        t=checkDQMSize(baseDir+r,testDir+r,diff,wfs)
         print r,t
-        if t>=0: 
-            newDQM=newDQM+t
-            nDQM=nDQM+1
+        newDQM=newDQM+t
+        nDQM=nDQM+1
 
 print 'SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files compared)'
+for line, wf in zip(diff,wfs):
+    print 'SUMMARY DQMHistoSizes: changed (',wf,'):',line
 
 
 #### conclude

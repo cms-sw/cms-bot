@@ -46,7 +46,11 @@ if [ "X$ARCHITECTURE" != X ]; then
 fi
 
 if [ $(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | wc -l) -gt 1 ] ; then
-  CONFIG_LINE=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | grep "PR_TESTS=1")
+  if [ "$RELEASE_FORMAT" = "" ] ; then
+    CONFIG_LINE=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | grep "PR_TESTS=1" | head -1)
+  else
+    CONFIG_LINE=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "RELEASE_QUEUE=$RELEASE_FORMAT;" | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}" | grep "PR_TESTS=1" | head -1)
+  fi
 else
   CONFIG_LINE=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "${ARCH_MATCH}")
 fi
@@ -92,13 +96,14 @@ cd $WORKSPACE/CMSDIST
 git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
 # Check which packages the PR changes
 PKGS=
-for c in $CMSDIST_COMMITS ; do
-  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|' | grep -v '^cmssw-toolfile' | grep -v '^cmssw-patch') ; do
-    [ -f $WORKSPACE/CMSDIST/$p.spec ] || continue
-    PKGS="$PKGS $p"
-  done
-done
-PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
+## For now only build cmssw-tool-conf
+#for c in $CMSDIST_COMMITS ; do
+#  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|' | grep -v '^cmssw-toolfile' | grep -v '^cmssw-patch') ; do
+#    [ -f $WORKSPACE/CMSDIST/$p.spec ] || continue
+#    PKGS="$PKGS $p"
+#  done
+#done
+#PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
 
 export CMSDIST_COMMIT=$(echo $CMSDIST_COMMITS | sed 's|.* ||')
 cd $WORKSPACE
@@ -150,16 +155,16 @@ scram -a $SCRAM_ARCH project $CMSSW_IB
 echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
 
-if [ $(grep '^V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
-  if [ $(sed -e 's|^V05-05-||' $CMSSW_IB/config/config_tag) -lt 74 ] ; then
-    git clone git@github.com:cms-sw/cmssw-config
-    pushd cmssw-config
-      git checkout master
-    popd
-    mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
-    cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
-  fi
-fi
+#if [ $(grep '^V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
+#  if [ $(sed -e 's|^V05-05-||;s|-.*||' $CMSSW_IB/config/config_tag) -lt 84 ] ; then
+#    git clone git@github.com:cms-sw/cmssw-config
+#    pushd cmssw-config
+#      git checkout master
+#    popd
+#    mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
+#    cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
+#  fi
+#fi
 cd $CMSSW_IB/src
 
 # Setup all the toolfiles previously built
@@ -214,7 +219,7 @@ touch $WORKSPACE/cmsswtoolconf.log
 if [ "X${DEP_NAMES}" != "X" ] ; then
   CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
   if [ "X${CMSSW_DEP}" != "X" ] ; then
-    git cms-addpkg $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+    git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
   fi
 fi
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables

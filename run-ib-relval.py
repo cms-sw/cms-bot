@@ -27,7 +27,7 @@ if __name__ == "__main__":
   if (not environ.has_key("CMSSW_VERSION")) or (not environ.has_key("CMSSW_BASE")) or (not environ.has_key("SCRAM_ARCH")):
     print "ERROR: Unable to file the release environment, please make sure you have set the cmssw environment before calling this script"
     exit(1)
-  
+
   thrds = cmsRunProcessCount
   cmssw_ver = environ["CMSSW_VERSION"]
   arch = environ["SCRAM_ARCH"]
@@ -41,9 +41,10 @@ if __name__ == "__main__":
 
     p = None
     if cmssw_ver.find('_CLANG_') is not -1:
-      p = Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver.rsplit('_',1)[0]), shell=True)
+      cmssw_ver = cmssw_ver.rsplit('_',1)[0]
+      p = Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver), shell=True)
     else:
-      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 175 -m 90 -o dynamic -t avg" % (cmssw_base,SCRIPT_DIR), shell=True)
+      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 175 -m 85 -o time" % (cmssw_base,SCRIPT_DIR), shell=True)
 
     e=waitpid(p.pid,0)[1]
     system("touch "+cmssw_base+"/done."+opts.jobid)

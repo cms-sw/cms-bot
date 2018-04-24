@@ -8,25 +8,15 @@ from repo_config import CMSBUILD_USER
 
 authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
-CMSSW_L1 = ["davidlange6"]
+CMSSW_L1 = ["davidlange6", "fabiocos"]
 APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar", "slava77" ] + CMSSW_L1))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
-TRIGGER_PR_TESTS = list(set([ "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "davidlt", "wddgit", "mtosi", "gpetruc"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
+TRIGGER_PR_TESTS = list(set([ "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
 PR_HOLD_MANAGERS = [ "kpedro88" ]
 
 COMMON_CATEGORIES = [ "orp", "tests", "code-checks" ]
 EXTERNAL_CATEGORIES = [ "externals" ]
-EXTERNAL_REPOS = [
-  "cms-data",
-  "cms-externals",
-  gh_user+"/root",
-  gh_user+"/cmssw-config",
-  gh_user+"/SCRAM",
-  gh_user+"/cms-git-tools",
-  gh_user+"/apt-rpm",
-  gh_user+"/cms-bot",
-  gh_user+"/cmssdt-web"
-]
+EXTERNAL_REPOS = [ "cms-data", "cms-externals", gh_user]
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
 CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
@@ -60,13 +50,13 @@ CMSSW_L2 = {
   "perrozzi": ["generators"],
   "efeyazgan": ["generators"],
   "davidlange6": ["operations"],
+  "fabiocos": ["operations"],
   "vanbesien" : ["dqm"],
   "kmaeshima" : ["dqm"],
   "vazzolini" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "GurpreetSinghChahal" : ["pdmv"],
   "prebello" : ["pdmv"],
-  "ghellwig" : ["alca"],
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],
   "kpedro88" : ["upgrade"],
@@ -74,6 +64,8 @@ CMSSW_L2 = {
   "gudrutis" : ["externals"],
   "lpernie" : ["alca"],
   "jfernan2": ["dqm"],
+  "arizzi": ["analysis"],
+  "gpetruc": ["analysis"],
   CMSBUILD_USER: ["tests", "code-checks" ],
 }
 

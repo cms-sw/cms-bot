@@ -1,20 +1,23 @@
 #!/usr/bin/env python
-from optparse import OptionParser
-from github import Github
-from os.path import expanduser
-from categories import REQUEST_BUILD_RELEASE,CMSSW_L1,APPROVE_BUILD_RELEASE
-from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
-from commands import getstatusoutput
-import re
 import json
+import re
 import urllib2
-import yaml
-import os.path
+from commands import getstatusoutput
 from  datetime import datetime, timedelta
-from glob import glob
-from os.path import basename, dirname, abspath, join, exists
+from optparse import OptionParser
+from os.path import dirname, abspath, exists
+from os.path import expanduser
 from socket import setdefaulttimeout
+
+import yaml
+from github import Github
+
+from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
+from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
+from cmsutils import get_config_map_properties
 from github_utils import api_rate_limits, get_ref_commit, get_commit_info
+from milestones import RELEASE_MANAGERS
+
 setdefaulttimeout(120)
 from os import environ
 JENKINS_PREFIX="jenkins"
@@ -43,7 +46,7 @@ RELEASE_BASE_URL = 'https://github.com/cms-sw/cmssw/releases/tag/%s'
 BASE_BRANCH_URL = ' https://github.com/cms-sw/cmssw/tree/%s'
 RELEASE_CREATED_MSG = 'Release created: {rel_name}. The tag was created on top of branch: {base_branch}'
 RELEASE_CREATION_FAIL_MSG = 'There was an error while attempting to create {rel_name}. ' \
-                            'Please check if it already exists https://github.com/cms-sw/cmssw/releases' 
+                            'Please check if it already exists https://github.com/cms-sw/cmssw/releases'
 WRONG_RELEASE_NAME_MSG = 'The release name is malformed. Please check for typos.'
 ACK_MSG = 'Request received. I will start to build the release after one of the following approve ' \
           'the issue: {approvers_list}. You can do this by writing "+1" in a ' \
@@ -90,7 +93,6 @@ ABORT_COMMENT = '^[Aa]bort$'
 RELEASE_NOTES_COMMENT = '^release-notes([ ]+since[ ]+[^ ]+)?$'
 BUILD_TOOLCONF = '^[Bb]uild cmssw-tool-conf'
 APPROVAL_COMMENT =  '^[+]1$'
-DEFAULT_CHECK_COMMENT = ( REQUEST_BUILD_RELEASE + [ 'cmsbuild' ] )
 RELEASE_NOTES_GENERATED_LBL = 'release-notes-requested'
 ANNOUNCEMENT_GENERATED_LBL = 'release-notes-requested'
 JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
@@ -253,7 +255,7 @@ def check_if_already_processed( issue ):
 #  Creates the properties files to trigger the build in Jenkins
 # if only_toolconf is selected, it adds a parameter to tell the script to only build cmssw-tool-conf
 #
-def create_properties_files( issue, release_name, architectures, issue_number, queue, docker_imgs, only_toolconf=False):
+def create_properties_files( issue, release_name, architectures, issue_number, queue, docker_imgs, only_toolconf=False, cmsdist_commit=None):
  
   if not only_toolconf: 
     for arch in architectures:
@@ -277,6 +279,7 @@ def create_properties_files( issue, release_name, architectures, issue_number, q
     out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img) )
     tool_conf_param = 'true' if only_toolconf else 'false'
     out_file.write( '%s=%s\n' % ( JENKINS_ONLY_TOOL_CONF, tool_conf_param ) )
+    if cmsdist_commit: out_file.write( 'CMSDIST_HASH=%s\n' % cmsdist_commit )
 
 
 #
@@ -322,8 +325,8 @@ def create_release_github( repository, release_name, branch, commit=None):
 
   print 'Creating release:\n %s' % release_name
   if commit:
-    if not get_commit_info(commit):
-      sha = get_ref_commit(commit)
+    if not get_commit_info(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO, commit):
+      sha = get_ref_commit(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO, commit)
       if sha: commit = sha
   else: commit=branch
   # creating releases will be available in the next version of pyGithub
@@ -413,19 +416,6 @@ def delete_cmsdist_tags_github( release_name, architectures ):
       continue
     result += '\n\n -' + delete_tag(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO, tag_to_delete)
   return result
-#
-# Reads config.map and returns a list of the architectures for which a release needs to be built.
-# If the list is empty it means that it didn't find any architecture for that release queue, or 
-# that the IBs are disabled.
-#
-def get_config_map_properties():
-  specs = []
-  f = open( CONFIG_MAP_FILE , 'r' )
-  lines = [l.strip(" \n\t;") for l in f.read().split("\n") if l.strip(" \n\t;")]
-  for line in lines:
-    entry = dict(x.split("=",1) for x in line.split(";") if x)
-    specs.append(entry)
-  return specs
 
 #
 # Adds a label to the issue in github
@@ -604,7 +594,7 @@ def triggerCleanup( issue, comments, release_name ):
 #
 # Creates the release in github, including the cmssw tag. It then creates the files to trigger the builds in jenkins
 #
-def start_release_build( issue, release_name, release_branch, architectures, docker_imgs, commit=None):
+def start_release_build( issue, release_name, release_branch, architectures, docker_imgs, commit=None, cmsdist_commit=None):
 
   cmssw_repo = gh.get_repo(GH_CMSSW_ORGANIZATION+"/"+GH_CMSSW_REPO)
   release_created = create_release_github( cmssw_repo, release_name, release_branch, commit)
@@ -618,7 +608,7 @@ def start_release_build( issue, release_name, release_branch, architectures, doc
   post_message( issue , msg )
 
   ready_to_build = list( set( architectures ) - set( TOOL_CONF_WAITING ) - set( TOOL_CONF_ERROR ) - set( TOOL_CONF_BUILDING ) )
-  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue, docker_imgs, only_toolconf=False )
+  create_properties_files( issue, release_name, ready_to_build, issue.number, release_queue, docker_imgs, only_toolconf=False, cmsdist_commit=cmsdist_commit )
   if ready_to_build:
     msg = QUEUING_BUILDS_MSG % ', '.join( ready_to_build )
     post_message( issue , msg )
@@ -626,9 +616,9 @@ def start_release_build( issue, release_name, release_branch, architectures, doc
 #
 # Creates the files to trigger the build of cmssw-tool-conf in jenkins.
 #
-def start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs ):
+def start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs, cmsdist_commit=None):
 
-  create_properties_files( issue, release_name, architectures, issue.number, release_queue, docker_imgs, only_toolconf=True )
+  create_properties_files( issue, release_name, architectures, issue.number, release_queue, docker_imgs, only_toolconf=True, cmsdist_commit=cmsdist_commit)
   msg = QUEUING_TOOLCONF_MSG % ', '.join( architectures )
   post_message( issue , msg )
   
@@ -643,6 +633,19 @@ def go_to_state( issue, current_state, new_state ):
 #
 # Generates an announcement prototype
 #
+def fix_release_description(issue):
+  if not issue.body: return '\n'
+  desc_str = '\n' + issue.body.encode("ascii", "ignore").strip() + '\n\n'
+  desc_lines = []
+  for l in desc_str.split('\n'):
+    if "RELEASE_QUEUE:" in l: continue
+    if "ARCHITECTURE:" in l: continue
+    if "TAG_COMMIT:" in l: continue
+    if "CMSSW_COMMIT:" in l: continue
+    if "CMSDIST_COMMIT:" in l: continue
+    desc_lines.append(l)
+  return "\n".join(desc_lines)
+  
 def generate_announcement( release_name, previous_release_name, production_architecture, architectures ):
 
   print '\nGenerating announcement template...\n'
@@ -653,14 +656,16 @@ def generate_announcement( release_name, previous_release_name, production_archi
   patch_str = 'patch ' if is_patch else ''
   print 'Is patch: ', is_patch
   # The description of the issue should explain the reason for building the release
-  desc = '\n' + issue.body + '\n\n' if issue.body else '\n'
+  desc = fix_release_description(issue)
   print 'Description: \n', desc
 
   architectures.remove( production_architecture )
   rest_of_archs = '\n'.join(architectures) + '\n\n' if architectures else '\n'
+  rel_cyc = "_".join(release_name.split("_")[:2])
   announcement = ANNOUNCEMENT_TEMPLATE.format( rel_type=type_str,
                                 is_patch=patch_str,
                                 rel_name=release_name,
+                                rel_cyc=rel_cyc,
                                 production_arch=production_architecture,
                                 rest_of_archs=rest_of_archs,
                                 prev_release=previous_release_name,
@@ -803,12 +808,6 @@ if __name__ == "__main__":
     print 'This issue is not for building a release, ignoring.'
     exit( 0 )
   
-  # 3. Is the author authorized to trigger a build?
-  if not issue.user.login in REQUEST_BUILD_RELEASE:
-    print 'User not authorized'
-    post_message( issue , NOT_AUTHORIZED_MSG )
-    exit( 0 )
-
   ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
   print "All labels:",ALL_LABELS
   comments = [ c for c in issue.get_comments( ) ]
@@ -836,7 +835,21 @@ if __name__ == "__main__":
     release_tag_commit = issue_body.split("TAG_COMMIT:",1)[1].split("\n",1)[0].strip()
     print "Found forces commit:",release_tag_commit
 
-  print release_queue
+  if "CMSSW_COMMIT:" in issue_body:
+    release_tag_commit = issue_body.split("CMSSW_COMMIT:",1)[1].split("\n",1)[0].strip()
+    print "Found forces commit:",release_tag_commit
+
+  cmsdist_tag_commit = None
+  if "CMSDIST_COMMIT:" in issue_body:
+    cmsdist_tag_commit = issue_body.split("CMSDIST_COMMIT:",1)[1].split("\n",1)[0].strip()
+    print "Found forces cmsdist commit:",cmsdist_tag_commit
+
+  sel_archs = []
+  if "ARCHITECTURE:" in issue_body:
+    sel_archs = set(issue_body.split("ARCHITECTURE:",1)[1].split("\n",1)[0].strip().split(","))
+    print "Found forces architectures:",sel_archs
+
+  print release_queue,sel_archs
   specs = get_config_map_properties()
   architectures = [x["SCRAM_ARCH"] for x in specs
                    if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x]
@@ -847,6 +860,8 @@ if __name__ == "__main__":
     architectures = [x["SCRAM_ARCH"] for x in specs
                    if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x]
 
+  if sel_archs:
+    architectures = [ a for a in architectures if a in sel_archs ]
   # Check if we have at least one architecture to build and complain if not.
   if not architectures:
     print 'no archs found for the requested release'
@@ -892,6 +907,17 @@ if __name__ == "__main__":
       print 'This is a patch release and the branch %s was found. It will be used as base branch.' % possible_branch
       release_branch = possible_branch
     
+
+  if release_branch in RELEASE_MANAGERS:
+    for rm in RELEASE_MANAGERS[release_branch]:
+      if not rm in APPROVE_BUILD_RELEASE: APPROVE_BUILD_RELEASE.append(rm)
+      if not rm in REQUEST_BUILD_RELEASE: REQUEST_BUILD_RELEASE.append(rm)
+
+  # 3. Is the author authorized to trigger a build?
+  if not issue.user.login in REQUEST_BUILD_RELEASE:
+    print 'User not authorized'
+    post_message( issue , NOT_AUTHORIZED_MSG )
+    exit( 0 )
 
   # Get the status of this issue.
   status = get_issue_status( issue ) 
@@ -959,10 +985,10 @@ if __name__ == "__main__":
       if is_patch:
         post_message( issue, NOT_TOOLCONF_FOR_PATCH_MSG )
       else:
-        start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs )
+        start_tool_conf_build( issue, release_name, release_branch, architectures, docker_imgs, cmsdist_commit=cmsdist_tag_commit)
         go_to_state( issue, status, TOOLCONF_BUILDING )
     elif approval_comments:
-      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit, cmsdist_commit=cmsdist_tag_commit)
       go_to_state( issue, status, BUILD_IN_PROGRESS )
     else:
       print 'Build not approved or cmssw-tool-conf not requested yet'
@@ -984,7 +1010,7 @@ if __name__ == "__main__":
         TOOL_CONF_WAITING.append( arch )
 
       go_to_state( issue, status, BUILD_IN_PROGRESS )
-      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit )
+      start_release_build( issue, release_name, release_branch, architectures, docker_imgs, release_tag_commit, cmsdist_commit=cmsdist_tag_commit )
 
   if status == BUILD_IN_PROGRESS:
 

@@ -47,7 +47,7 @@ RES="+code-checks"
 HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/git-diff.patch ] ; then
   RES="-code-checks"
-  HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying a patch in https://cmssdt.cern.ch/SDT/code-checks/PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch"
+  HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying a patch in https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch"
   HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch | patch -p1\`"
   HOW_TO_RUN="${HOW_TO_RUN}@N@@N@You can run \`scram build code-checks\` to apply code checks directly"
 fi

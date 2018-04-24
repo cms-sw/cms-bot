@@ -86,11 +86,14 @@ def update_known_error(worflow, workflow_dir):
     json.dump(known_errors[workflow], open("%s/known_error.json" % workflow_dir,"w"))
   return
 
-def upload_logs(workflow, workflow_dir):
+def upload_logs(workflow, workflow_dir,exit_code):
+  files_to_keep = [ ".txt", ".xml", ".log", ".py", ".json","/cmdLog", "/hostname",".done" ]
+  if (exit_code in [34304, 35584, 22016]) and os.getenv("CMSSW_VERSION","").startswith("CMSSW_10_1_"):
+    files_to_keep.append(".root")
   basedir = os.path.dirname(workflow_dir)
   for wf_file in glob.glob("%s/*" % workflow_dir):
     found=False
-    for ext in [ ".txt", ".xml", ".log", ".py", ".json","/cmdLog", "/hostname",".done" ]:
+    for ext in files_to_keep:
       if wf_file.endswith(ext):
         found=True
         break
@@ -101,8 +104,12 @@ def upload_logs(workflow, workflow_dir):
   logger.updateRelValMatrixPartialLogs(basedir, os.path.basename(workflow_dir))
 
 if __name__ == "__main__":
-
   jobs=json.load(open(sys.argv[1]))
+  exit_code = 0
+  for cmd in jobs["commands"]:
+    if cmd["exit_code"]>0:
+      exit_code=cmd["exit_code"]
+      break
   workflow = jobs["name"]
   workflow_dir=os.path.abspath(glob.glob("%s_*" % workflow)[0])
   getstatusoutput("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
@@ -112,5 +119,5 @@ if __name__ == "__main__":
   update_timelog(workflow_dir, jobs)
   update_hostname(workflow_dir)
   update_known_error(workflow, workflow_dir)
-  upload_logs(workflow, workflow_dir)
+  upload_logs(workflow, workflow_dir, exit_code)
 

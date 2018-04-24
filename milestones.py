@@ -51,7 +51,7 @@ RELEASE_BRANCH_PRODUCTION = [
   "CMSSW_5_3_X",
 ]
 
-SPECIAL_RELEASE_MANAGERS = ["davidlange6", "slava77"]
+SPECIAL_RELEASE_MANAGERS = ["davidlange6", "slava77", "fabiocos"]
 
 RELEASE_MANAGERS={}
 ######################################################################
@@ -89,6 +89,7 @@ RELEASE_BRANCH_MILESTONE["CMSSW_9_3_X"]=69
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_ROOT6_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_DEVEL_X")
+RELEASE_MANAGERS["CMSSW_9_3_X"]=["kpedro88"]
 
 #CMSSW_9_4_X release cycle
 RELEASE_BRANCH_MILESTONE["CMSSW_9_4_X"]=71
@@ -103,3 +104,32 @@ RELEASE_BRANCH_MILESTONE["CMSSW_10_0_X"]=72
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_0_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_0_ROOT6_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_0_DEVEL_X")
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_10_1_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_10_1_X"]=73
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_1_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_1_ROOT6_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_1_DEVEL_X")
+
+######################################################################
+# Manually added by Shahzad MUZAFFAR for CMSSW_9_4_MAOD_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_9_4_MAOD_X"]=74
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_4_MAOD_X")
+
+######################################################################
+# Manually added by Shahzad MUZAFFAR for CMSSW_9_4_AN_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_9_4_AN_X"]=75
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_4_AN_X")
+
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_10_2_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_10_2_X"]=76
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_2_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_2_ROOT6_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_2_DEVEL_X")

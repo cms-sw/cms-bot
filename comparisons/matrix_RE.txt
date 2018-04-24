@@ -51,41 +51,45 @@ RunHI2011wf140p53 140.53_RunHI2011+RunHI2011+*/step2.root reRECO
 HydjetQwf40p0 40.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/step3.root RECO
 HydjetQMinBiaswf140p0 140.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/step3.root RECO
 ZEEMMHIwf140p4 140.4_ZEEMM_13_HI+ZEEMM_13_HI*/step3.root RECO
-ZEEMMHIwf302p0 302.0_Pyquen_ZeemumuJets_pt10_2760GeV+Pyquen_ZeemumuJets_pt10_2760GeV+*/step3.root RECO
-EPOSPPb8160GeVwf281p0 281.0_EPOS_PPb_8160GeV_MinimumBias+*/step3.root RECO
+ZEEMMHIwf302p0 302.0_Pyquen_ZeemumuJets_pt10_2760GeV+Pyquen_ZeemumuJets_pt10_2760GeV*/step3.root RECO
+EPOSPPb8160GeVwf281p0 281.0_EPOS_PPb_8160GeV_MinimumBias*/step3.root RECO
+HydjetQB12in2018wf150p0 150.0_HydjetQ_B12_5020GeV_*/step3.root RECO
 #
 #  Run2 MC
 #
-QCD13TeVPt3Ts3T5wf1313p0 1313.0_QCD_Pt_3000_3500_13+*/step3.root RECO
+QCD13TeVPt3Ts3T5wf1313p0 1313.0_QCD_Pt_3000_3500_13*/step3.root RECO
 ZpEE2250wf1344p0 1344.0_ZpEE_2250_13TeV+ZpEE_2250_13TeV*/step3.root RECO
 ZpTT1500wf1345p0 1345.0_ZpTT_1500_13TeV*/step3.root RECO
 CosmicsUP15wf1307p0 1307.0_Cosmics*/step3.root RECO
 BeamHalo13wf1308p0 1308.0_BeamHalo_13+BeamHalo_13*/step3.root RECO
 BuJpsiK13TeVwf1340p0 1340.0_BuJpsiK_13+BuJpsiK_13*/step3.root RECO
-QCD13TeVFlatPt15s3000wf1338p0 1338.0_QCD_FlatPt_15_3000HS_13+*/step3.root RECO
-SingleElectron13Pt1000wf1316p0 1316.0_SingleElectronPt1000_UP15+*/step3.root RECO
-SingleElectron13Pt35wf1317p0 1317.0_SingleElectronPt35_UP15+*/step3.root RECO
-SingleGamma13Pt10wf1318p0 1318.0_SingleGammaPt10_UP15+*/step3.root RECO
-SingleGamma13Pt35wf1319p0 1319.0_SingleGammaPt35_UP15+*/step3.root RECO
-SingleMu13Pt10wf1320p0 1320.0_SingleMuPt10_UP15+*/step3.root RECO
+QCD13TeVFlatPt15s3000wf1338p0 1338.0_QCD_FlatPt_15_3000HS_13*/step3.root RECO
+SingleElectron13Pt1000wf1316p0 1316.0_SingleElectronPt1000_UP15*/step3.root RECO
+SingleElectron13Pt35wf1317p0 1317.0_SingleElectronPt35_UP15*/step3.root RECO
+SingleGamma13Pt10wf1318p0 1318.0_SingleGammaPt10_UP15*/step3.root RECO
+SingleGamma13Pt35wf1319p0 1319.0_SingleGammaPt35_UP15*/step3.root RECO
+SingleMu13Pt10wf1320p0 1320.0_SingleMuPt10_UP15*/step3.root RECO
 SingleMu13Pt100wf1321p0 1321.0_SingleMuPt100_UP15+SingleMuPt100_UP15*/step3.root RECO
-SingleMu13Pt1000wf1322p0 1322.0_SingleMuPt1000_UP15+*/step3.root RECO
+SingleMu13Pt1000wf1322p0 1322.0_SingleMuPt1000_UP15*/step3.root RECO
 TTbar13wf1325p0 1325.0_TTbar_13+TTbar_13*/step3.root RECO
 TTbar13wf11325p0 11325.0_TTbar_13_unsch+TTbar_13*/step3.root RECO
 TTbar13reMINIAODwf1325p5 1325.5_TTbar_13_reminiaod*/step2.root PAT
-ZMM13TeVwf1330p0 1330.0_ZMM_13+*/step3.root RECO
-H125GG13TeVwf1332p0 1332.0_H125GGgluonfusion_13+*/step3.root RECO
+ZEE13reMINIAODwf1325p5 1325.5_ProdZEE_13_reminiaod*/step2.root PAT
+TTbar13reMINIAODwf1325p51 1325.51_TTbar_13_94Xreminiaod*/step2.root PAT
+TTbar13nanoAODwf1325p7 1325.7_TTbar_13_94X*NanoAOD*/step2.root DQM
+ZMM13TeVwf1330p0 1330.0_ZMM_13*/step3.root RECO
+H125GG13TeVwf1332p0 1332.0_H125GGgluonfusion_13*/step3.root RECO
 VBFH125BB13TeVwf1363p0 1363.0_VBFHToBB_M125_Pow_py8_Evt_13*/step3.root RECO
 BsToJpsiPhi13TeVwf1366p0 1366.0_BsToJpsiPhi_13+BsToJpsiPhi_13*/step3.root RECO
-SingleMu13Pt1wf1306p0 1306.0_SingleMuPt1_UP15+*/step3.root RECO
-ZEEFS13wf135p4 135.4_ZEE_13+ZEEFS_13+*/step1.root HLT
+SingleMu13Pt1wf1306p0 1306.0_SingleMuPt1_UP15*/step3.root RECO
+ZEEFS13wf135p4 135.4_ZEE_13+ZEEFS_13*/step1.root HLT
 ZEEPUwf25200p0 25200.0_ZEE_13+ZEE_13*/step3.root RECO
 TTbarPUwf25202p0 25202.0_TTbar_13+TTbar_13*/step3.root RECO
 TTbarPUwf50202p0 50202.0_TTbar_13+TTbar_13*/step3.root RECO
 H125GG13TeVPUwf25203p0 25203.0_H125GGgluonfusion_13+H125GGgluonfusion_13*/step3.root RECO
 ZMMPUwf25206p0 25206.0_ZMM_13+ZMM_13*/step3.root RECO
 QCD13TeVFlatPt15s3000PUwf25209p0 25209.0_QCD_FlatPt_15_3000HS_13+QCD_FlatPt_15_3000HS_13*/step3.root RECO
-VBFH125BB13TeVPUwf25213p0 25213.0_VBFHToBB_M125_Pow_py8_Evt_13+*/step3.root RECO
+VBFH125BB13TeVPUwf25213p0 25213.0_VBFHToBB_M125_Pow_py8_Evt_13*/step3.root RECO
 ProdZEE13TeVPUpmxwf250200p1 250200.1_ProdZEE_13*/step3.root RECO
 TTbar13TeVPUpmxwf250202p0 250202.0_TTbar_13*/step3.root RECO
 ProdTTbar13TeVPUpmxwf250202p1 250202.1_ProdTTbar_13*/step3.root RECO
@@ -116,6 +120,7 @@ RunJetHT2016EreMINIAODwf136p7611 136.7611_RunJetHT2016E_reminiaod+*/step2.root P
 RunMET2016Ewf136p762 136.762_RunMET2016E+*/step3.root reRECO
 RunSinglePh2016Ewf136p766 136.766_RunSinglePh2016E+*/step3.root reRECO
 RunJetHT2016Hwf136p772 136.772_RunJetHT2016H+*/step3.root reRECO
+RunJetHT2016HreMINIAODwf136p7721 136.7721_RunJetHT2016H_reminiaod+*/step2.root PAT
 #
 # 2017 data
 #
@@ -126,11 +131,16 @@ RunJetHT2017B136p783 136.783_RunJetHT2017B+*/step3.root reRECO
 RunMET2017B136p784 136.784_RunMET2017B+*/step3.root reRECO
 RunSingleMuon2017B136p787 136.787_RunSingleMu2017B+*/step3.root reRECO
 RunSinglePh2017B136p788 136.788_RunSinglePh2017B+*/step3.root reRECO
+RunDoubleEG2017Fwf136p829 136.829_RunDoubleEG2017F+*/step3.root reRECO
+RunDoubleMuon2017Fwf136p83 136.83_RunDoubleMuon2017F+*/step3.root reRECO
+RunJetHT2017F136p831 136.831_RunJetHT2017F+*/step3.root reRECO
+RunJetHT2017FreMINIAOD136p8311 136.8311_RunJetHT2017F_reminiaod+*/step2.root PAT
+RunMET2017F136p832 136.832_RunMET2017F+*/step3.root reRECO
 #
 # 2017 workflows follow
 #
-Cosmics2017wf7p2 7.2_Cosmics_UP17+*/step3.root RECO
-CosmicsSPLoose2017wf7p3 7.3_CosmicsSPLoose_UP17+*/step3.root RECO
+Cosmics2017wf7p2 7.2_Cosmics_UP17*/step3.root RECO
+CosmicsSPLoose2017wf7p3 7.3_CosmicsSPLoose_UP17*/step3.root RECO
 SingleElectronPt35in2017wf10002p0 10002.0_SingleElectronPt35+SingleElectronPt35_pythia8_2017*/step3.root RECO
 SingleElectronPt1000in2017wf10003p0 10003.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2017*/step3.root RECO
 SingleGammaPt10in2017wf10004p0 10004.0_SingleGammaPt10+SingleGammaPt10_pythia8_2017*/step3.root RECO
@@ -138,9 +148,7 @@ SingleGammaPt35in2017wf10005p0 10005.0_SingleGammaPt35+SingleGammaPt35_pythia8_2
 SingleMuPt10in2017wf10007p0 10007.0_SingleMuPt10+SingleMuPt10_pythia8_2017*/step3.root RECO
 SingleMuPt1000in2017wf10009p0 10009.0_SingleMuPt1000+SingleMuPt1000_pythia8_2017*/step3.root RECO
 TenMuE2017wf10021p0 10021.0_TenMuE_0_200+TenMuE_0_200_pythia8_2017*/step3.root RECO
-TenMuE2017wf10021p0 10021.0_TenMuE_0_200+TenMuE_0_200_pythia8_2017*/step3.root RECO
 MinBias13TeV2017wf10023p0 10023.0_MinBias_13+MinBias_13TeV_pythia8_TuneCUETP8M1_2017*/step3.root RECO
-TTbar13TeV2017wf10024p0 10024.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017*/step3.root RECO
 TTbar13TeV2017wf10024p0 10024.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017*/step3.root RECO
 ZEE13TeV2017wf10025p0 10025.0_ZEE_13+ZEE_13TeV_TuneCUETP8M1_2017*/step3.root RECO
 QCD600to800in13TeV2017wf10026p0 10026.0_QCD_Pt_600_800_13+QCD_Pt_600_800_13TeV_TuneCUETP8M1_2017*/step3.root RECO
@@ -157,10 +165,13 @@ MinBias14TeV2017wf10046p0 10046.0_MinBias_TuneZ2star_14TeV+MinBias_TuneZ2star_14
 #
 QCD13TeVPt3Ts3T5in2017wf10059p0 10059.0_QCD_Pt_3000_3500_13+QCD_Pt_3000_3500_13TeV_TuneCUETP8M1_2017*/step3.root RECO
 TenMuE2017wf10060p0 10060.0_TenMuE_0_200+TenMuE_0_200_pythia8_2017*/step3.root RECO
-TenMuE2017wf10060p0 10060.0_TenMuE_0_200+TenMuE_0_200_pythia8_2017*/step3.root RECO
+WpMNu2000in2017wf10060p0 10060.0_WpM_13+WpM_13TeV_TuneCUETP8M1_2017*/step3.root RECO
 T1ttttMGl1500in2017wf10070p0 10070.0_SMS-T1tttt_mGl-1500_mLSP-100_13+SMS-T1tttt_mGl-1500_mLSP-100_13TeV-pythia8_2017*/step3.root RECO
 QCD13TeVFlatPt15s3000in2017wf10071p0 10071.0_QCD_FlatPt_15_3000HS_13+QCDForPF_13TeV_TuneCUETP8M1_2017*/step3.root RECO
 RSKKGl3000in2017wf10073p0 10073.0_RSKKGluon_m3000GeV_13+RSKKGluon_m3000GeV_13TeV_TuneCUETP8M1_2017*/step3.root RECO
+ZpMM2250in2017wf10074p0 10074.0_ZpMM_2250_13+ZpMM_2250_13TeV_TuneCUETP8M1_2017*/step3.root RECO
+ZpEE2250in2017wf10075p0 10075.0_ZpEE_2250_13+ZpEE_2250_13TeV_TuneCUETP8M1_2017*/step3.root RECO
+WpENu2000in2017wf10083p0 10083.0_WpToENu_M-2000_13+WprimeToENu_M-2000_TuneCUETP8M1_13TeV-pythia8_2017*/step3.root RECO
 #
 #  2017 MC with PU
 #
@@ -175,10 +186,7 @@ ProdTTbar13TeVPUpmx2017wf250202p117 250202.117_ProdTTbar_13*/step3.root RECO
 # Some short-lived experimental 2017 MC
 #
 TTbar13TeV2017NewFPixwf10424p0 10424.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017NewFPix*/step3.root RECO
-TTbar13TeV2017NewFPixwf10424p0 10424.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017NewFPix*/step3.root RECO
 TTbar13TeV2017HCALdevwf10624p0 10624.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017HCALdev*/step3.root RECO
-TTbar13TeV2017HCALdevwf10624p0 10624.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017HCALdev*/step3.root RECO
-TTbar13TeV2017AllNewwf10824p0 10824.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017AllNew*/step3.root RECO
 TTbar13TeV2017AllNewwf10824p0 10824.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017AllNew*/step3.root RECO
 #
 # 2018 workflows follow
@@ -189,6 +197,7 @@ SingleGammaPt10in2018wf10804p0 10804.0_SingleGammaPt10+SingleGammaPt10_pythia8_2
 SingleGammaPt35in2018wf10805p0 10805.0_SingleGammaPt35+SingleGammaPt35_pythia8_2018*_GenSimFull*+*/step3.root RECO
 SingleMuPt10in2018wf10807p0 10807.0_SingleMuPt10+SingleMuPt10_pythia8_2018*_GenSimFull*+*/step3.root RECO
 SingleMuPt1000in2018wf10809p0 10809.0_SingleMuPt1000+SingleMuPt1000_pythia8_2018*_GenSimFull*+*/step3.root RECO
+TenMuExtendedE2018wf10811p0 10811.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2018*_GenSimFull*+*/step3.root RECO
 TenMuE2018wf10821p0 10821.0_TenMuE_0_200+TenMuE_0_200_pythia8_2018*_GenSimFull*+*/step3.root RECO
 MinBias13TeV2018wf10823p0 10823.0_MinBias_13+MinBias_13TeV_pythia8_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
 TTbar13TeV2018wf10824p0 10824.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
@@ -519,14 +528,14 @@ TTbar14TeV2023D18PUwf23434p0 23434.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D1
 #
 #   D17
 #
-SingleElectronPt35in2023D17wf20002p0 20002.0_SingleElectronPt35+SingleElectronPt35_pythia8_2023D17_GenSimHLBeamSpotFull+*/step3.root RECO
-SingleElectronPt1000in2023D17wf20003p0 20003.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2023D17_GenSimHLBeamSpotFull+*/step3.root RECO
-SingleMuPt10in2023D17wf20007p0 20007.0_SingleMuPt10+SingleMuPt10_pythia8_2023D17_GenSimHLBeamSpotFull+*/step3.root RECO
-SingleMuPt1000in2023D17wf20009p0 20009.0_SingleMuPt1000+SingleMuPt1000_pythia8_2023D17_GenSimHLBeamSpotFull+*/step3.root RECO
-TenMuExtendedE2023D17wf20011p0 20011.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D17_GenSimHLBeamSpotFull+*/step3.root RECO
-TTbar14TeV2023D17wf20034p0 20034.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D17_GenSimHLBeamSpotFull14+*/step3.root RECO
-ZEE14TeV2023D17wf20046p0 20046.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D17_GenSimHLBeamSpotFull14+*/step3.root RECO
-QCD600to800in14TeV2023D17wf20053p0 20053.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D17_GenSimHLBeamSpotFull14+*/step3.root RECO
+SingleElectronPt35in2023D17wf20002p0 20002.0_SingleElectronPt35+SingleElectronPt35_pythia8_2023D17_GenSimHLBeamSpotFull*/step3.root RECO
+SingleElectronPt1000in2023D17wf20003p0 20003.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2023D17_GenSimHLBeamSpotFull*/step3.root RECO
+SingleMuPt10in2023D17wf20007p0 20007.0_SingleMuPt10+SingleMuPt10_pythia8_2023D17_GenSimHLBeamSpotFull*/step3.root RECO
+SingleMuPt1000in2023D17wf20009p0 20009.0_SingleMuPt1000+SingleMuPt1000_pythia8_2023D17_GenSimHLBeamSpotFull*/step3.root RECO
+TenMuExtendedE2023D17wf20011p0 20011.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D17_GenSimHLBeamSpotFull*/step3.root RECO
+TTbar14TeV2023D17wf20034p0 20034.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D17_GenSimHLBeamSpotFull14*/step3.root RECO
+ZEE14TeV2023D17wf20046p0 20046.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D17_GenSimHLBeamSpotFull14*/step3.root RECO
+QCD600to800in14TeV2023D17wf20053p0 20053.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D17_GenSimHLBeamSpotFull14*/step3.root RECO
 #
 #   D17Timing
 #
@@ -534,10 +543,10 @@ TTbar14TeV2023D17Timingwf20034p2 20034.2_TTbar_14TeV_Timing+TTbar_14TeV_TuneCUET
 #
 #   D17PU
 #
-TenMuExtendedE2023D17PUwf20211p0 20211.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D17PU_GenSimHLBeamSpotFull+*/step3.root RECO
-TTbar14TeV2023D17PUwf20234p0 20234.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D17PU_GenSimHLBeamSpotFull14+*/step3.root RECO
-ZEE14TeV2023D17PUwf20246p0 20246.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D17PU_GenSimHLBeamSpotFull14+*/step3.root RECO
-QCD600to800in14TeV2023D17PUwf20253p0 20253.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D17PU_GenSimHLBeamSpotFull14+*/step3.root RECO
+TenMuExtendedE2023D17PUwf20211p0 20211.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D17PU_GenSimHLBeamSpotFull*/step3.root RECO
+TTbar14TeV2023D17PUwf20234p0 20234.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D17PU_GenSimHLBeamSpotFull14*/step3.root RECO
+ZEE14TeV2023D17PUwf20246p0 20246.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D17PU_GenSimHLBeamSpotFull14*/step3.root RECO
+QCD600to800in14TeV2023D17PUwf20253p0 20253.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D17PU_GenSimHLBeamSpotFull14*/step3.root RECO
 #
 #   D17PUTiming
 #
@@ -545,14 +554,14 @@ TTbar14TeV2023D17PUTimingwf20234p2 20234.2_TTbar_14TeV_Timing+TTbar_14TeV_TuneCU
 #
 #   D19
 #
-SingleElectronPt35in2023D19wf20402p0 20402.0_SingleElectronPt35+SingleElectronPt35_pythia8_2023D19_GenSimHLBeamSpotFull+*/step3.root RECO
-SingleElectronPt1000in2023D19wf20403p0 20403.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2023D19_GenSimHLBeamSpotFull+*/step3.root RECO
-SingleMuPt10in2023D19wf20407p0 20407.0_SingleMuPt10+SingleMuPt10_pythia8_2023D19_GenSimHLBeamSpotFull+*/step3.root RECO
-SingleMuPt1000in2023D19wf20409p0 20409.0_SingleMuPt1000+SingleMuPt1000_pythia8_2023D19_GenSimHLBeamSpotFull+*/step3.root RECO
-TenMuExtendedE2023D19wf20411p0 20411.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D19_GenSimHLBeamSpotFull+*/step3.root RECO
-TTbar14TeV2023D19wf20434p0 20434.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D19_GenSimHLBeamSpotFull14+*/step3.root RECO
-ZEE14TeV2023D19wf20446p0 20446.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D19_GenSimHLBeamSpotFull14+*/step3.root RECO
-QCD600to800in14TeV2023D19wf20453p0 20453.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D19_GenSimHLBeamSpotFull14+*/step3.root RECO
+SingleElectronPt35in2023D19wf20402p0 20402.0_SingleElectronPt35+SingleElectronPt35_pythia8_2023D19_GenSimHLBeamSpotFull*/step3.root RECO
+SingleElectronPt1000in2023D19wf20403p0 20403.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2023D19_GenSimHLBeamSpotFull*/step3.root RECO
+SingleMuPt10in2023D19wf20407p0 20407.0_SingleMuPt10+SingleMuPt10_pythia8_2023D19_GenSimHLBeamSpotFull*/step3.root RECO
+SingleMuPt1000in2023D19wf20409p0 20409.0_SingleMuPt1000+SingleMuPt1000_pythia8_2023D19_GenSimHLBeamSpotFull*/step3.root RECO
+TenMuExtendedE2023D19wf20411p0 20411.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D19_GenSimHLBeamSpotFull*/step3.root RECO
+TTbar14TeV2023D19wf20434p0 20434.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D19_GenSimHLBeamSpotFull14*/step3.root RECO
+ZEE14TeV2023D19wf20446p0 20446.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D19_GenSimHLBeamSpotFull14*/step3.root RECO
+QCD600to800in14TeV2023D19wf20453p0 20453.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D19_GenSimHLBeamSpotFull14*/step3.root RECO
 #
 #   D19Timing
 #
@@ -560,19 +569,19 @@ TTbar14TeV2023D19Timingwf20434p2 20434.2_TTbar_14TeV_Timing+TTbar_14TeV_TuneCUET
 #
 #   D19PU
 #
-TenMuExtendedE2023D19PUwf20611p0 20611.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D19PU_GenSimHLBeamSpotFull+*/step3.root RECO
-TTbar14TeV2023D19PUwf20634p0 20634.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14+*/step3.root RECO
-ZEE14TeV2023D19PUwf20646p0 20646.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14+*/step3.root RECO
-QCD600to800in14TeV2023D19PUwf20653p0 20653.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14+*/step3.root RECO
+TenMuExtendedE2023D19PUwf20611p0 20611.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D19PU_GenSimHLBeamSpotFull*/step3.root RECO
+TTbar14TeV2023D19PUwf20634p0 20634.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14*/step3.root RECO
+ZEE14TeV2023D19PUwf20646p0 20646.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14*/step3.root RECO
+QCD600to800in14TeV2023D19PUwf20653p0 20653.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14*/step3.root RECO
 #
 #   D19PUTiming
 #
-TTbar14TeV2023D19PUTimingwf20634p2 20634.2_TTbar_14TeV_Timing+TTbar_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14_Timing+*/step3.root RECO
+TTbar14TeV2023D19PUTimingwf20634p2 20634.2_TTbar_14TeV_Timing+TTbar_14TeV_TuneCUETP8M1_2023D19PU_GenSimHLBeamSpotFull14_Timing*/step3.root RECO
 #
 #   D20
 #
-TenMuExtendedE2023D20wf20811p0 20811.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D20_GenSimHLBeamSpotFull+*/step3.root RECO
-TTbar14TeV2023D20wf20834p0 20834.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D20_GenSimHLBeamSpotFull14+*/step3.root RECO
+TenMuExtendedE2023D20wf20811p0 20811.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D20_GenSimHLBeamSpotFull*/step3.root RECO
+TTbar14TeV2023D20wf20834p0 20834.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D20_GenSimHLBeamSpotFull14*/step3.root RECO
 #
 #   D21
 #

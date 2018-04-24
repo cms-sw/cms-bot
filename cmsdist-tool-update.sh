@@ -21,8 +21,9 @@ function get_rpm_marco_value (){
 function get_package_info (){
   #Needs the spec file path in $1
   #Returns cmsrepo:branch:commit:fork_repo
+  gh_user=$(get_rpm_marco_value $1 github_user)
   for line in $(grep '^Source' ${1} | grep 'github.com' | sed 's|.*github.com/||;s| .*$||') ; do
-     local cmsrep=$(echo $line      | sed 's|\?.*$||;s|\.git$||;s|\%||;s|{||;s|}||;s|github_user|cms-sw|')
+     local cmsrep=$(echo $line      | sed "s|\?.*$||;s|\.git$||;s|\%||;s|{||;s|}||;s|github_user|${gh_user}|")
      local objinfo=$(echo $line     | sed 's|.*obj=||;s|&.*$||')
      local branch=$(echo ${objinfo} | sed 's|/.*$||;s|\%||;s|{||;s|}||')
      local commit=$(echo ${objinfo} | sed 's|^.*/||;s|\%||;s|{||;s|}||')

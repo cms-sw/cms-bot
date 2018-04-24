@@ -22,14 +22,20 @@ if [ ! -d das_results ] ; then
 fi
 
 rm -f $WORKSPACE/error
-$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries || touch $WORKSPACE/error
+$CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries --query "$5" || touch $WORKSPACE/error
 if [ "$PUSH_RESULTS" = "true" ] ; then
   pushd $WORKSPACE/das_results
   git add das_queries
   if [ $(git diff --name-only origin/master | wc -l) -gt 0 ] ; then
     git commit -a -m "Updated das queries"
-    git pull --rebase
-    git push origin
+    ERR=1
+    for tries in 0 1 2 3 4 ; do
+      git pull --rebase || continue
+      git push origin   || continue
+      ERR=0
+      break
+    done
+    if [ $ERR -gt 0 ] ; then touch $WORKSPACE/error ; fi
   fi
   popd
 fi

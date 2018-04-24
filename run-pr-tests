@@ -50,7 +50,10 @@ REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
 
 COMPARISON_REL=
-COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
+case $RELEASE_FORMAT in
+  CMSSW_9_4_MAOD_X*|CMSSW_9_4_AN_X* ) COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|') ;;
+  * ) COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|') ;;
+esac
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
@@ -62,7 +65,11 @@ if [ ! -d CMSSW_* ]; then
       if [ "X$COMP_ARCH" = "X" ] ; then COMP_ARCH=$ARCHITECTURE ; fi
     fi
     for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r) ;  do
-      COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+      if [ "$(echo $SCRAM_REL | sed 's|_X_.*|_X|')" = "$COMP_QUEUE" ] ; then
+        COMP_REL=$SCRAM_REL
+      else
+        COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+      fi
       has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
       RELEASE_FORMAT=$SCRAM_REL
       COMPARISON_ARCH=$COMP_ARCH
@@ -86,7 +93,10 @@ fi
 [ "X$COMP_QUEUE" = "X" ] && COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
 
 if [ "X$COMPARISON_REL" = "X" ] ; then
-  COMPARISON_REL=$(echo $RELEASE_FORMAT | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+  case $RELEASE_FORMAT in
+    CMSSW_9_4_MAOD_X*|CMSSW_9_4_AN_X* ) COMPARISON_REL=$RELEASE_FORMAT ;;
+    * ) COMPARISON_REL=$(echo $RELEASE_FORMAT | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+  esac
 fi
 
 if [ "X$COMPARISON_ARCH" = "X" ] ; then
@@ -149,12 +159,12 @@ touch $RECENT_COMMITS_FILE
 if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
   if [ "X$BRANCH_NAME" = X ]; then
     if [ "${PUB_USER}" = "cms-sw" ]; then
-      (git cms-merge-topic -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      (git cms-merge-topic --ssh -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
       (/cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
   else
-    (git cms-merge-topic -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    (git cms-merge-topic --ssh -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
   fi
 
   # this is to test several pull requests at the same time
@@ -162,7 +172,7 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
     echo 'I will add the following pull request to the test'
     echo $PR;
     if [ "${PUB_USER}" = "cms-sw" ]; then
-      git cms-merge-topic -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      git cms-merge-topic --ssh -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
       /cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PR} 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
@@ -193,9 +203,9 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
   ############################################
   RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 
-  IB_DATE=$(git show ${RELEASE_FORMAT} --pretty='format:%ai')
-  git rev-list --after="$IB_DATE" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
-  git log --after="$IB_DATE" HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
+  #IB_DATE=$(git show ${RELEASE_FORMAT} --pretty='format:%ai')
+  git rev-list ${RELEASE_FORMAT}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
+  git log ${RELEASE_FORMAT}..HEAD --merges 2>&1      | tee -a $RECENT_COMMITS_LOG_FILE
   if [ $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     has_jenkins_artifacts material-budget/$RELEASE_FORMAT/$SCRAM_ARCH/Images && MB_COMPARISON=YES
   fi
@@ -219,7 +229,7 @@ fi
 CMSSW_COMMIT=
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   #get the latest commit and mark it as pending
-  LAST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmssw $PULL_REQUEST)
+  LAST_COMMIT=$(eval $(scram unset -sh); $CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmssw $PULL_REQUEST)
   if [ "X${LAST_COMMIT}" = "X" ]  ; then
     pushd $WORKSPACE/$RELEASE_FORMAT/src
       if [ "X$BRANCH_NAME" = X ]; then
@@ -306,7 +316,7 @@ if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_PR"
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   pushd $WORKSPACE/$RELEASE_FORMAT
-  git cms-addpkg Utilities/StaticAnalyzers
+  git cms-addpkg --ssh Utilities/StaticAnalyzers
   mkdir $WORKSPACE/llvm-analysis
   SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU *2) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
   cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
@@ -330,11 +340,11 @@ if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep -i -E "dqm.*|HLTriggerOffline|Valida
       if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
         echo "and DQMServices/Components is there"
       else
-        git cms-addpkg DQMServices/Components
+        git cms-addpkg --ssh DQMServices/Components
       fi
   else
     echo "checking out DQMServices"
-    git cms-addpkg DQMServices
+    git cms-addpkg --ssh DQMServices
   fi
 fi
 #############################################

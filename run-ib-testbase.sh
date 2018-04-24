@@ -10,7 +10,12 @@ voms-proxy-init -voms cms || true
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
-IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | head -1)
+#Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
+if [ $(date +%w) -lt 2 ] ; then
+  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | head -1)
+else
+  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | tail -1)
+fi
 source \${IB_LAST_WEEK}/cmsset_default.sh  || true
 scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
 cd ${RELEASE_FORMAT}

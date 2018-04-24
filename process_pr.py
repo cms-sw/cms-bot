@@ -50,10 +50,14 @@ def read_repo_file(repo_config, repo_file, default=None):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests"):
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
-  if (req_type in "tests") and (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
+  if (req_type in "tests"):
+    try:
+      if (not repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): req_type = "user-"+req_type
+      elif not repo_config.CMS_STANDARD_TESTS: req_type = "user-"+req_type
+    except: pass
   if (repo_parts[0] == GH_CMSSW_ORGANIZATION) and (repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): repo_partsX=repo_parts[1]
   else: repo_partsX=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)
@@ -70,6 +74,9 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
       out_file.write( '%s=%s\n' % ( 'PULL_REQUEST', pr_number ) )
       out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', cmsdist_pr ) )
       out_file.write( '%s=%s\n' % ( 'ADDITIONAL_PULL_REQUESTS', cmssw_prs ) )
+    try:
+      if repo_config.JENKINS_SLAVE_LABEL: out_file.write( '%s=%s\n' % ('RUN_LABEL', repo_config.JENKINS_SLAVE_LABEL))
+    except: pass
     out_file.close()
 
 # Update the milestone for a given issue.
@@ -190,8 +197,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
-  external_repo = len([e for e in EXTERNAL_REPOS+CMSDIST_REPOS if (repository==e) or (repo_org==e)])>0
   official_repo = (repo_org==GH_CMSSW_ORGANIZATION)
+  external_repo = (repository!=CMSSW_REPO_NAME) and (len([e for e in EXTERNAL_REPOS if repo_org==e])>0)
   create_test_property = False
   packages = set([])
   create_external_issue = False
@@ -319,7 +326,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print "Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date
     print "Latest commit message: ",last_commit.message.encode("ascii", "ignore")
     print "Latest commit sha: ",last_commit.sha
-    releaseManagers=list(set(RELEASE_MANAGERS.get(pr.base.ref, [])+SPECIAL_RELEASE_MANAGERS))
+    extra_rm = RELEASE_MANAGERS.get(pr.base.ref, [])
+    if repository==CMSDIST_REPO_NAME:
+      br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3])+"_X"
+      if br: extra_rm=extra_rm+RELEASE_MANAGERS.get(br, [])
+    releaseManagers=list(set(extra_rm+SPECIAL_RELEASE_MANAGERS))
+
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
@@ -353,7 +365,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     backport_pr_num = get_backported_pr(issue.body.encode("ascii", "ignore"))
   elif re.match(REGEX_EX_CMDS, body_firstline, re.I):
     check_extra_labels(body_firstline.lower(), extra_labels)
-  for comment in issue.get_comments():
+  all_comments = [issue]
+  for c in issue.get_comments(): all_comments.append(c)
+  for comment in all_comments:
     commenter = comment.user.login
     comment_msg = comment.body.encode("ascii", "ignore")
 
@@ -499,6 +513,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ok, cmsdist_pr, cmssw_prs, extra_wfs = check_test_cmd(first_line)
         if ok:
           print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, extra_wfs)
+          print "Comment message:",first_line
           trigger_test_on_signature = False
           if tests_already_queued:
             print "Test results not obtained in ",comment.created_at-last_test_start_time
@@ -673,7 +688,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if old_labels == labels:
     print "Labels unchanged."
   elif not dryRunOrig:
-    issue.edit(labels=list(labels))
+    add_labels = True
+    try: add_labels = repo_config.ADD_LABELS
+    except: pass
+    if add_labels: issue.edit(labels=list(labels))
 
   # Check if it needs to be automatically closed.
   if mustClose == True and issue.state == "open":
@@ -728,7 +746,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False)
+          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config)
       elif abort_test:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         if cmsdist_issue: cmsdist_issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
@@ -840,7 +858,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         patch_branch_warning=warning_msg)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
-                            " %(signers)s can you please check and sign again.",
+                            " %(signers)s can you please check and sign again.\n",
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
   else:
@@ -895,7 +913,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           " '+1' in the first line of your reply.\n"
                           "You can reject by replying  to this message having"
                           " '-1' in the first line of your reply."
-                          "%(cmsdist_issue)s",
+                          "%(cmsdist_issue)s\n",
                           msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,
                           name=pr.user.name and "(%s)" % pr.user.name or "",
@@ -906,7 +924,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           cmsdist_issue=cmsdist_issue)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
-                              "%(cmsdist_issue)s",
+                              "%(cmsdist_issue)s\n",
                               pr=pr.number,
                               cmsdist_issue=cmsdist_issue)
 

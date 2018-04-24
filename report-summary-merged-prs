@@ -9,7 +9,9 @@ from pickle import Unpickler
 from os.path import basename, dirname, exists, join, expanduser
 from glob import glob
 from github import Github
-from github_utils import prs2relnotes, get_merge_prs, save_prs_cache, read_prs_cache
+
+from cmsutils import get_config_map_properties
+from github_utils import get_merge_prs
 from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
 from socket import setdefaulttimeout
@@ -31,8 +33,6 @@ parser = OptionParser(usage="usage: %prog CMSSW_REPO GITHUB_IO_REPO START_DATE"
                             "\n ARTIFACTS_MACHINE: the artifacts machine to use to look for static checks and hlt tests")
 
 parser.add_option( "-v" , "--verbose" , dest="verbose"  , action="store_true", help="Do not post on Github", default=False )
-parser.add_option( "-c" , "--cmssw-prs"   , dest="cmssw_pr_cache" , help="File with PRs cache information for cmssw", type=str, default='cmssw-prs-cache.json')
-parser.add_option( "-d" , "--cmsdist-prs"   , dest="cmsdist_pr_cache" , help="File with PRs cache information for cmssw", type=str, default='cmsdist-prs-cache.json')
 
 (options, args) = parser.parse_args()
 
@@ -80,8 +80,7 @@ CMSSW_REPO = args[ 0 ]
 GITHUB_IO_REPO = args[ 1 ]
 CMSDIST_REPO = args[ 2 ]
 START_DATE = args[ 3 ]
-ARTIFACTS_MACHINE = "cmssdtprod.cern.ch"
-PRS_CACHE_FILE = options.cmssw_pr_cache
+ARTIFACTS_MACHINE = "cmssdt03.cern.ch"
 
 #-----------------------------------------------------------------------------------
 #---- Fuctions
@@ -143,7 +142,7 @@ def get_config_map_params():
       RELEASES_ARCHS[ release_queue ].append( arch )
       if release_queue not in RELEASE_QUEUES:
         RELEASE_QUEUES.append( release_queue )
-      
+
 
     additional_tests = params.get( 'ADDITIONAL_TESTS' )
 
@@ -156,7 +155,7 @@ def get_config_map_params():
 
   SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
   RELEASE_QUEUES.sort()
- 
+
   print
   print '---------------------------'
   print 'Read config.map:'
@@ -246,7 +245,7 @@ def get_results_one_unitTests_file(file):
 # given a runall-report-step123-.log file it returns the result of the relvals
 # it returns a tuple, the first element indicates if the tests passed or not
 # the second element is a dictionary which shows the details of how many relvals pased
-# and how meny failed
+# and how many failed
 #
 def get_results_one_relval_file(filename):
   summary_file = filename.replace("/runall-report-step123-.log","/summary.json")
@@ -282,7 +281,7 @@ def get_results_one_relval_file(filename):
 #
 # Given a logAnalysis.pkl file, it determines if the tests passed or not
 # it returns a tuple, the first element is one of the values of PossibleBuildResults
-# The second element is a dictionary contaning the details of the results.
+# The second element is a dictionary containing the details of the results.
 # If the tests are all ok this dictionary is empty
 #
 def get_results_details_one_build_file(file):
@@ -373,7 +372,7 @@ def execute_magic_command_find_rv_exceptions_results( ):
   for line in out.splitlines():
     line_parts = line.split( '/' )
     ib_name = line_parts[ -1 ].replace( 'EXCEPTIONS.json', '' ) + line_parts[ -2 ]
-    rv_exception_results[ ib_name ] = True 
+    rv_exception_results[ ib_name ] = True
 
   return rv_exception_results
 
@@ -504,11 +503,11 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
 
   return tags
 
-def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache):
+def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache={}):
   comp = {}
   comp['compared_tags'] = '%s-->%s' % (start_tag,end_tag)
   comp[ 'release_name' ] = end_tag
-  notes = get_merge_prs(start_tag, end_tag, git_dir, repo, github, cache)
+  notes = get_merge_prs(start_tag, end_tag, git_dir, "cms-prs", cache)
   prs = []
   for pr_num in notes:
     pr={'is_merge_commit':False , 'from_merge_commit' : False}
@@ -521,10 +520,9 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
     pr['url'] = 'https://github.com/cms-sw/cmssw/pull/%s' % pr_num
     prs.append(pr)
   comp['merged_prs'] = prs
-  save_prs_cache(cache, PRS_CACHE_FILE)
   return comp
 
-def compare_tags(branch, tags , git_dir, repo, cache):
+def compare_tags(branch, tags , git_dir, repo, cache={}):
   comparisons = []
   if len(tags)>1: comparisons.append(execute_command_compare_tags(branch, tags[0], tags[0] , git_dir, repo, cache ))
   for i in range(len(tags)-1):
@@ -665,8 +663,8 @@ def fill_missing_cmsdist_tags( results ):
 # merges the results of the tests with the structure of the IBs tags and the pull requests
 # it also marks the comparisons that correspond to an IB
 #
-def add_tests_to_results( results, unit_tests, relvals_results, 
-                          addon_results , build_results, cmsdist_tags_results, 
+def add_tests_to_results( results, unit_tests, relvals_results,
+                          addon_results , build_results, cmsdist_tags_results,
                           rv_Exceptions_Results, fwlite_results ):
   for rq in results:
     for comp in rq['comparisons']:
@@ -706,6 +704,16 @@ def add_tests_to_results( results, unit_tests, relvals_results,
         comp['comp_baseline_state' ] = 'errors'
       if not comp.get( 'dqm_tests' ):
         comp['dqm_tests' ] = 'not-found'
+      # TODO FlawFinder (add later)
+      # custom details for new IB page
+      if not comp.get( 'material_budget_v2' ):
+        comp['material_budget_v2' ] = 'not-found'
+      if not comp.get('material_budget_comparison'):
+        comp['material_budget_comparison'] = 'not-found'
+      if not comp.get( 'static_checks_v2' ):
+        comp['static_checks_v2' ] = 'not-found'
+      if not comp.get( 'static_checks_failures' ):
+        comp['static_checks_failures'] = 'not-found'
 
       a = [t['arch'] for t in utres] if utres else []
       b = [t['arch'] for t in rvsres] if rvsres else []
@@ -741,7 +749,22 @@ def find_material_budget_results( comparisons , architecture ):
   for comp in comparisons:
     rel_name = comp['compared_tags'].split('-->')[1]
     print 'Looking for material_budget results for ', rel_name
-    comp['material_budget'] = find_one_material_budget( rel_name , architecture )
+    arch, comparison, status = find_one_material_budget( rel_name , architecture )
+    if (arch is None):
+      comp['material_budget'] = status # returns 'inprogress'
+    else:
+      comp['material_budget'] = arch + ":" + comparison
+    comp['material_budget_v2'] = {
+      'status':status,
+      'arch':arch
+    }
+    if (comparison is None) or (comparison is '-1'):
+      pass
+    elif(comparison == "0"):
+      comp['material_budget_comparison'] = {'status': 'found', 'results': 'ok', 'arch': arch}
+    else:
+      comp['material_budget_comparison'] = {'status': 'found', 'results': 'warning', 'arch': arch}
+
 #
 # Finds for an IB the results of the valgrind
 #
@@ -759,6 +782,14 @@ def find_lizard_results( comparisons , architecture ):
     print 'Looking for lizard results for ', rel_name
     comp['lizard'] = find_one_lizard( rel_name , architecture )
 #
+# Finds for an IB the results of the lizard
+#
+def find_flawfinder_results( comparisons , architecture ):
+  for comp in comparisons:
+    rel_name = comp['compared_tags'].split('-->')[1]
+    print 'Looking for flawfinder results for ', rel_name
+    comp['flawfinder'] = find_one_flawfinder( rel_name , architecture )
+#
 # Finds for an IB the results of the igprof
 #
 def find_igprof_results( comparisons , architecture ):
@@ -774,6 +805,25 @@ def find_static_results( comparisons , architecture ):
     rel_name = comp['compared_tags'].split('-->')[1]
     print 'Looking for static tests results for ', rel_name
     comp['static_checks'] = find_one_static_check( rel_name , architecture )
+    # For new IB page
+    if(comp['static_checks'] == 'not-found' or comp['static_checks'] == 'inprogress'):
+      comp['static_checks_v2'] = comp['static_checks']
+    else:
+      resultList = comp['static_checks'].split(":")
+      comp['static_checks_v2'] = {'status':"passed", 'arch': resultList[0]}
+      iterable = []
+      for i in range(1, len(resultList)):
+        result = resultList[i]
+        if result == '':
+          continue
+        iterable.append(result)
+      if(len(iterable) > 0):
+        comp['static_checks_failures'] = {
+          'status': "found",
+          'arch': resultList[0],
+          'iterable': iterable
+        }
+
 #
 # Finds for an IB the results of the HLT tests
 #
@@ -825,6 +875,9 @@ def find_one_static_check( release_name , architecture ):
 # Looks for one material_budget result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
 #
 def find_one_material_budget( release_name , architecture ):
+  """
+  :return: ( arch, comparison, status)
+  """
   command_to_execute = MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
   print "Running ",command_to_execute
@@ -837,10 +890,10 @@ def find_one_material_budget( release_name , architecture ):
     print "Running ",command_to_execute
     out,err,ret_code = get_output_command(command_to_execute)
     if ret_code == 0:
-      return arch+":"+out.split()[0]
-    return arch+":-1"
+      return (arch, out.split()[0], 'found')
+    return (arch,"-1", 'found')
   print 'inprogress'
-  return 'inprogress'
+  return (None, None, 'inprogress')
 
 #
 # Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
@@ -858,10 +911,25 @@ def find_one_valgrind( release_name , architecture ):
   return 'inprogress'
 
 #
-# Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+# Looks for one lizard result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
 #
 def find_one_lizard( release_name , architecture ):
   command_to_execute = MAGIC_COMMAND_FIND_LIZARD.replace('RELEASE_NAME',release_name)
+  command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
+  print "Running ",command_to_execute
+  out,err,ret_code = get_output_command(command_to_execute)
+  print "Ran:",out,err,ret_code,command_to_execute
+  if ret_code == 0:
+    print 'found'
+    return 'found'
+  print 'inprogress'
+  return 'inprogress'
+
+#
+# Looks for one flawfinder result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#
+def find_one_flawfinder( release_name , architecture ):
+  command_to_execute = MAGIC_COMMAND_FIND_FLAWFINDER.replace('RELEASE_NAME',release_name)
   command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture )
   print "Running ",command_to_execute
   out,err,ret_code = get_output_command(command_to_execute)
@@ -959,11 +1027,11 @@ def generate_separated_json_results( results ):
                                    if (comp['release_name'] != rq['base_branch']) and comp['isIB'] ]
 
     all_ibs_list.extend( ibs )
-    
+
     # Ignore forward ported prs, and merge commits
     only_prs_list = []
     for comp in rq['comparisons']:
-      only_prs_list.extend( [ pr['number'] for pr in comp['merged_prs'] 
+      only_prs_list.extend( [ pr['number'] for pr in comp['merged_prs']
                                    if not ( pr['is_merge_commit'] or pr['from_merge_commit'] ) ] )
 
     all_prs_list.extend( only_prs_list )
@@ -973,7 +1041,7 @@ def generate_separated_json_results( results ):
     f_summary.write( "NumPRs:%d\n" % len(only_prs_list) )
     f_summary.close()
 
-  all_ibs_list = list( set(all_ibs_list) ) 
+  all_ibs_list = list( set(all_ibs_list) )
   all_ibs_list.sort()
 
   all_prs_list = list( set(all_prs_list) )
@@ -985,7 +1053,15 @@ def generate_separated_json_results( results ):
 
   f_summary_all.write( "PRs:%s\n" % all_prs_list )
   f_summary_all.write( "NumPRs:%d\n" % len(all_prs_list) )
-  
+
+
+def get_production_archs(config_map):
+  archs = {}
+  for release in config_map:
+    if ('PROD_ARCH' in release and 'DISABLED' not in release):
+      archs[release['RELEASE_QUEUE']] = release['SCRAM_ARCH']
+  return archs
+
 
 #
 # Generates a json file with the global status of the last IB for each architecture, 
@@ -1022,15 +1098,15 @@ def generate_ib_json_short_summary( results ):
         build_info = [ b for b in latest_IB_info[ "builds" ] if b[ 'arch' ] == arch ]
         if len( build_info ) == 0:
           build_passed = 'unknown'
-        else: 
+        else:
           build_passed = build_info[ 0 ][ "passed" ]
-       
+
         fwlite_info = [ b for b in latest_IB_info[ "fwlite" ] if b[ 'arch' ] == arch ]
         if len( fwlite_info ) == 0:
           fwlite_passed = 'unknown'
-        else: 
+        else:
           fwlite_passed = build_info[ 0 ][ "passed" ]
-       
+
         unit_tests_info = [ u for u in latest_IB_info[ "utests" ] if u[ 'arch' ] == arch ]
         if len( unit_tests_info ) == 0:
           utests_passed = 'unknown'
@@ -1049,7 +1125,7 @@ def generate_ib_json_short_summary( results ):
         short_summary[ rq_name ][ arch ][ "latest_IB" ] = latest_IB_name
 
         merged_statuses = "%s-%s-%s" % (build_passed,utests_passed,relvals_passed)
-       
+
         if 'unknown' in merged_statuses:
           ib_status = 'unknown'
         elif 'failed' in merged_statuses or 'False' in merged_statuses:
@@ -1059,6 +1135,7 @@ def generate_ib_json_short_summary( results ):
         short_summary[ rq_name ][ arch ][ "status" ] = ib_status
 
   short_summary[ 'all_archs' ] = ARCHITECTURES
+  short_summary['prod_archs'] =  get_production_archs(get_config_map_properties())
   out_json = open( 'LatestIBsSummary.json' , "w" )
   json.dump( short_summary , out_json , indent=4 )
   out_json.close()
@@ -1169,6 +1246,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_HLT_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/HLT-Validation/RELEASE_NAME'
   MAGIC_COMMAND_FIND_DQM_TESTS = 'test -d '+JENKINS_ARTIFACTS_DIR+'/ib-dqm-tests/RELEASE_NAME'
   MAGIC_COMMAND_FIND_LIZARD = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/lizard/RELEASE_NAME/ARCHITECTURE'
+  MAGIC_COMMAND_FIND_FLAWFINDER = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/flawfinder/RELEASE_NAME/ARCHITECTURE'
   CONFIG_MAP_FILE = 'config.map'
   # this will be filled using config.map by get_config_map_params()
   ARCHITECTURES = []
@@ -1225,7 +1303,7 @@ if __name__ == "__main__":
     PASSED = 'passed'
     FAILED = 'failed'
     UNKNOWN = 'unknown'
- 
+
   results = []
 
   get_config_map_params()
@@ -1244,7 +1322,6 @@ if __name__ == "__main__":
   print_verbose( 'Installed Releases:' )
   print_verbose( installedReleases )
   prs_file = GITHUB_IO_REPO + "/_data/prs_cmssw_cache.json"
-  PRS_CACHE = read_prs_cache(PRS_CACHE_FILE)
   token = open(expanduser("~/.github-token")).read().strip()
   github = Github( login_or_token = token )
   CMSSW_REPO = github.get_repo(CMSSW_REPO_NAME)
@@ -1260,7 +1337,7 @@ if __name__ == "__main__":
       release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (4), release_queue).groups()[0]
     else:
       release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]
-  
+
     print '####################################################################'
     print "I will analyze %s from %s to %s:" % (release_queue,start_tag,end_tag)
 
@@ -1275,10 +1352,10 @@ if __name__ == "__main__":
     tags = [x for x in tags if x in installedReleases]
     tags.append( release_branch )
     print 'I got these tags: '
-    print tags 
+    print tags
 
     print 'Getting merged pull requests between tags...'
-    release_queue_results['comparisons'] = compare_tags(release_branch, tags , 'cmssw.git', CMSSW_REPO , PRS_CACHE  )
+    release_queue_results['comparisons'] = compare_tags(release_branch, tags , 'cmssw.git', CMSSW_REPO )
     print 'Done'
 
     #it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
@@ -1294,37 +1371,37 @@ if __name__ == "__main__":
           find_valgrind_results( release_queue_results['comparisons'] , arch )
         if 'lizard' in tests_to_find:
           find_lizard_results( release_queue_results['comparisons'] , arch )
+        if 'flawfinder' in tests_to_find:
+          find_flawfinder_results( release_queue_results['comparisons'] , arch )
         if 'material-budget' in tests_to_find:
           find_material_budget_results( release_queue_results['comparisons'] , arch )
         if 'baseline' in tests_to_find:
           find_comparison_baseline_results( release_queue_results['comparisons'] , arch )
         if 'igprof' in tests_to_find:
           find_igprof_results( release_queue_results['comparisons'] , arch )
-    find_dqm_tests_results( release_queue_results['comparisons'] ) 
+    find_dqm_tests_results( release_queue_results['comparisons'] )
     results.append(release_queue_results)
-  
-  save_prs_cache(PRS_CACHE, PRS_CACHE_FILE)
 
   cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
-  
+
   build_results = {}
   execute_magic_command_find_results( build_results , 'builds' )
-  
+
   fwlite_results = {}
   execute_magic_command_find_results( fwlite_results , 'fwlite' )
-  
+
   relvals_results = {}
   execute_magic_command_find_results( relvals_results , 'relvals' )
-  
+
   unit_tests_results = {}
   execute_magic_command_find_results( unit_tests_results , 'utests' )
-  
+
   addOn_tests_results = {}
   execute_magic_command_find_results( addOn_tests_results ,'addOn' )
 
-  rv_Exceptions_Results = execute_magic_command_find_rv_exceptions_results() 
- 
-  add_tests_to_results( results, unit_tests_results, relvals_results, 
+  rv_Exceptions_Results = execute_magic_command_find_rv_exceptions_results()
+
+  add_tests_to_results( results, unit_tests_results, relvals_results,
                        addOn_tests_results, build_results, cmsdist_tags_results,
                        rv_Exceptions_Results, fwlite_results )
 
@@ -1335,7 +1412,7 @@ if __name__ == "__main__":
   fix_results(results)
   generate_separated_json_results( results )
   generate_ib_json_short_summary( results )
-  
+
   out_json = open("merged_prs_summary.json", "w")
   json.dump(results,out_json,indent=4)
   out_json.close()

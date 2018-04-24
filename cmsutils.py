@@ -3,6 +3,13 @@ from os import getcwd
 from time import asctime, time, strftime, gmtime
 import sys, re
 from sys import platform
+from os.path import dirname, abspath
+
+try:
+  CMS_BOT_DIR = dirname(abspath(__file__))
+except Exception, e :
+  from sys import argv
+  CMS_BOT_DIR = dirname( abspath(argv[0]))
 
 def getHostDomain():
     site = ''
@@ -105,3 +112,17 @@ def cmsswIB2Week(release):
   rel_sec  = int(datetime.strptime(release.split("_")[-1], '%Y-%m-%d-%H%M').strftime('%s'))
   return (str(int(((rel_sec/86400)+4)/7)), rel_sec)
 
+#
+# Reads config.map and returns a list of the architectures for which a release needs to be built.
+# If the list is empty it means that it didn't find any architecture for that release queue, or
+# that the IBs are disabled.
+#
+def get_config_map_properties():
+  CONFIG_MAP_FILE = CMS_BOT_DIR + '/config.map'
+  specs = []
+  f = open( CONFIG_MAP_FILE , 'r' )
+  lines = [l.strip(" \n\t;") for l in f.read().split("\n") if l.strip(" \n\t;")]
+  for line in lines:
+    entry = dict(x.split("=",1) for x in line.split(";") if x)
+    specs.append(entry)
+  return specs

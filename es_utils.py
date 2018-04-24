@@ -105,9 +105,6 @@ def get_payload_kerberos_exe(url, query):
 def es_krb_query_exe(index, query, start_time, end_time, page_start=0, page_size=10000, timestamp_field="@timestamp",lowercase_expanded_terms='false', es_host='https://es-cmssdt.cern.ch/krb'):
   from commands import getstatusoutput as cmd
   script_path = path_join(dirname(abspath(__file__)),'es_query_krb.py')
-  e, o = cmd("eval `scram unset -sh`; python '%s' '%s' '%s' '%s' '%s' 2>&1" % (script_path, index, query,start_time,end_time))
-  print "CMD: eval `scram unset -sh`; python '%s' '%s' '%s' '%s' '%s' 2>&1" % (script_path, index, query,start_time,end_time)
-  print e,o
   e, o = cmd("eval `scram unset -sh`; python '%s' '%s' '%s' '%s' '%s' 2>&1 | grep JSON_OUT= | sed 's|.*JSON_OUT= *||'" % (script_path, index, query,start_time,end_time))
   #print e, o
   return json.loads(o)

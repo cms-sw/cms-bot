@@ -49,6 +49,7 @@ CMSSW_L2 = {
   "ssekmen": ["fastsim"],
   "perrozzi": ["generators"],
   "efeyazgan": ["generators"],
+  "alberto-sanchez": ["generators"],
   "davidlange6": ["operations"],
   "fabiocos": ["operations"],
   "vanbesien" : ["dqm"],

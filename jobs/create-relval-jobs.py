@@ -55,16 +55,16 @@ stats = {}
 release_cycle=cmssw_ver.split("_X_")[0]+"_X"
 st = 1000*int(time()-(86400*10))
 et = 1000*int(time())
-es_q = format('exit_code:0 AND release:%(release_cycle)s* AND architecture:%(architecture)s AND (%(workflows)s)', release_cycle=release_cycle, architecture=arch, workflows=wf_query[4:])
 use_krb = False
-
-if '_DEVEL_' in cmssw_ver:
-  use_krb = True
-  release_cycle=(cmssw_ver.split("_X_")[0]+"_X").lower()
-  es_q = format('exit_code:0 AND release:/%(release_cycle)s.*/ AND architecture:/%(architecture)s.*/ AND (%(workflows)s)', release_cycle=release_cycle, architecture=arch, workflows=wf_query[4:])
 
 while True:
   
+  es_q = format('exit_code:0 AND release:%(release_cycle)s* AND architecture:%(architecture)s AND (%(workflows)s)', release_cycle=release_cycle, architecture=arch, workflows=wf_query[4:])
+  if '_DEVEL_' in cmssw_ver:
+    use_krb = True
+    release_cycle=(cmssw_ver.split("_X_")[0]+"_X").lower()
+    es_q = format('exit_code:0 AND release:/%(release_cycle)s.*/ AND architecture:/%(architecture)s.*/ AND (%(workflows)s)', release_cycle=release_cycle, architecture=arch, workflows=wf_query[4:])
+
   if use_krb:
     stats = es_krb_query_exe(index='cmssdt-relvals_stats_summary*', query=es_q, start_time=st, end_time=et)
   else:

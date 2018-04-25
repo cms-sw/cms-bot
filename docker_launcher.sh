@@ -31,6 +31,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     -e USER=$USER \
     -e BUILD_NUMBER=$BUILD_NUMBER \
     -e JOB_NAME=$JOB_NAME \
+    -e KRB5CCNAME=$KRB5CCNAME \
     $DOCKER_IMG sh -c "$DOCK_ARGS"
 else
   voms-proxy-init -voms cms -valid 24:00 || true

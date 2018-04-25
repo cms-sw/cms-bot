@@ -20,7 +20,9 @@ def update_stats(proc):
       mem   = cld.memory_full_info()
       fds   = cld.num_fds()
       thrds = cld.num_threads()
-      cpu   = int(cld.cpu_percent())
+      cld.cpu_percent(interval=None)
+      sleep(0.1)
+      cpu   = int(cld.cpu_percent(interval=None))
       stats['num_fds'] += fds
       stats['num_threads'] += thrds
       stats['cpu'] += cpu
@@ -45,13 +47,12 @@ def monitor(stop):
   while not stop():
     try:
       stats = update_stats(p)
-      if stats['processes']>0:
-        stats['time'] = int(time()-stime)
-        data.append(stats)
+      if stats['processes']==0: break
+      stats['time'] = int(time()-stime)
+      data.append(stats)
     except: pass
-    #for i in range(5):
-    sleep(1)
-    #  if stop(): break
+    sleep_time = 1.0-stats['processes']*0.1
+    if sleep_time>0.1: sleep(sleep_time)
   from json import dump
   stat_file =open("wf_stats-%s.json" % step,"w")
   dump(data, stat_file)
@@ -63,6 +64,7 @@ job['command']=argv[1:]
 job_thd = Thread(target=run_job, args=(job,))
 mon_thd = Thread(target=monitor, args=(lambda: stop_monitoring,))
 job_thd.start()
+sleep(1)
 mon_thd.start()
 job_thd.join()
 stop_monitoring = True

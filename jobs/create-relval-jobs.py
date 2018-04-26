@@ -11,7 +11,7 @@ CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
 from RelValArgs import GetMatrixOptions, FixWFArgs
-from es_utils import es_query, format, es_workflow_stats
+from es_utils import es_query, es_query_new, format, es_workflow_stats
 
 def createJob(workflow, cmssw_ver, arch):
   workflow_args = FixWFArgs(cmssw_ver, arch, workflow, GetMatrixOptions(cmssw_ver, arch))
@@ -52,8 +52,14 @@ for t in thrds: t.join()
 print "Getting Workflow stats from ES....."
 stats = {}
 release_cycle=cmssw_ver.split("_X_")[0]+"_X"
+query_func = es_query
+use_new_query = False
+if "_DEVEL_" in cmssw_ver:
+  use_new_query = True
+  query_func = es_query_new
+  release_cycle = release_cycle.lower()
 while True:
-  stats = es_query(index='relvals_stats_*',
+  stats = query_func(index='relvals_stats_*',
                  query=format('exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
                               release_cycle=release_cycle+"_*",
                               architecture=arch,
@@ -63,6 +69,7 @@ while True:
                  end_time=1000*int(time()))
   if (not 'hits' in stats) or (not 'hits' in stats['hits']) or (not stats['hits']['hits']):
     xrelease_cycle = "_".join(cmssw_ver.split("_",4)[0:3])+"_X"
+    if use_new_query: xrelease_cycle = xrelease_cycle.lower()
     if xrelease_cycle!=release_cycle:
       release_cycle=xrelease_cycle
       print "Retry: Setting release cycle to ",release_cycle

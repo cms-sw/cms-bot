@@ -48,7 +48,7 @@ def get_lfns_from_kibana(days=7):
   err, from_kibaba = run_cmd(cmd)
   print "Collecting unique LFN from Kibana ...."
   used_lfns = {}
-  for hit in json.loads(from_kibaba)[0]["hits"]["hits"]:
+  for hit in json.loads(from_kibaba)["hits"]["hits"]:
     if not "_source"  in hit: continue
     if not "lfn" in hit["_source"]: continue
     lfn = hit["_source"]["lfn"]

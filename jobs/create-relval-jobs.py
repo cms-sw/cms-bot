@@ -60,7 +60,7 @@ if "_DEVEL_" in cmssw_ver:
   release_cycle = release_cycle.lower()
 while True:
   stats = query_func(index='relvals_stats_*',
-                 query=format('exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
+                 query=format('(NOT cpu_max:0) AND exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
                               release_cycle=release_cycle+"_*",
                               architecture=arch,
                               workflows=wf_query[4:]

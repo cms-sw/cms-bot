@@ -164,7 +164,7 @@ def checkDQMSize(r1,r2,diff, wfs):
 
     output,error=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-p3','-c0','-d2','--summary','-r',r1,'-i',r2])
     lines = output.splitlines()
-    total = re.search("\d+\.\d+", lines[-1])
+    total = re.search("-?\d+\.\d+", lines[-1])
     if not total:
         print 'Weird output',r1
         print output

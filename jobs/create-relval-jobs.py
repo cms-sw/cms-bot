@@ -54,7 +54,7 @@ stats = {}
 release_cycle=cmssw_ver.split("_X_")[0]+"_X"
 query_func = es_query
 use_new_query = False
-if "_DUMMY_DEVEL_" in cmssw_ver:
+if "_DEVEL_" in cmssw_ver:
   use_new_query = True
   query_func = es_query_new
   release_cycle = release_cycle.lower()

@@ -54,7 +54,7 @@ stats = {}
 release_cycle=cmssw_ver.split("_X_")[0]+"_X"
 query_func = es_query
 use_new_query = False
-if "_DEVEL_" in cmssw_ver:
+if release_cycle.split("_")[-2] in ["DEVEL","ASAN","TSAN","UBSAN","ROOT6","CLANG"]:
   use_new_query = True
   query_func = es_query_new
   release_cycle = release_cycle.lower()

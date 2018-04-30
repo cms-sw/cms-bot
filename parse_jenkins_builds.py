@@ -68,7 +68,7 @@ if content == "":
 else:
   content_hash = json.loads(content)
   for hit in content_hash['hits']['hits']:
-    if hit["_index"]=="jenkins" or hit["_index"].startswith("jenkins-jobs-"):
+    if hit["_index"].startswith("jenkins-jobs-") or hit["_index"].startswith("cmssdt-jenkins-jobs-"):
       try:print "Running:",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id']
       except: pass
       running_builds_elastic[hit['_id']]=hit
@@ -76,6 +76,6 @@ for build in running_builds_elastic:
   if build not in all_local:
     hit = running_builds_elastic[build]
     hit["_source"]["job_status"]="Failed"
-    resend_payload_new(hit,passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
+    resend_payload_new(hit)
     print "job status marked as Failed"
 

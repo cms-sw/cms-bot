@@ -67,6 +67,9 @@ if content == "":
   running_builds_elastic = []
 else:
   content_hash = json.loads(content)
+  if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits'])
+    print "ERROR: ",content
+    sys.exit(1)
   for hit in content_hash['hits']['hits']:
     if hit["_index"].startswith("jenkins-jobs-") or hit["_index"].startswith("cmssdt-jenkins-jobs-"):
       try:print "Running:",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id']

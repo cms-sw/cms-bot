@@ -66,7 +66,7 @@ def es_get_passwd(passwd_file=None):
     return ""
 
 def send_payload_new(index, document, id, payload, es_server, passwd_file=None):
-  index = 'cmssdt-' + index
+  if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
 

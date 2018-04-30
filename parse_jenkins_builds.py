@@ -23,7 +23,11 @@ def getParameters(root, payload):
     payload['parameter_'+n.text]=vv
   else:
     for x in root: getParameters(x, payload)
-query_running_builds = """{"query": {"bool": {"must": {"query_string": {"query": "job_status:running"}}}}}"""
+query_running_builds = """{
+"query": {"bool": {"must": {"query_string": {"query": "job_status:running"}}}},
+"from": 0,
+"size": 10000
+}"""
 
 all_local = list() 
 path = '/build/jobs'

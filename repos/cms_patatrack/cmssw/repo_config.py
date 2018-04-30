@@ -28,7 +28,8 @@ CMS_STANDARD_TESTS=True
 #Map your branches with cmssw branches for tests
 #User Branch => CMSSW/CMSDIST Bracnh
 CMS_BRANCH_MAP={
-  'CMSSW_10_1_X_Patatrack' : 'CMSSW_10_1_X'
+  'CMSSW_10_1_X_Patatrack' : 'CMSSW_10_1_X',
+  'CMSSW_10_2_X_Patatrack' : 'CMSSW_10_2_X'
 }
 #Valid Web hooks e.g. '.+' to match all event
 VALID_WEB_HOOKS=['.+']

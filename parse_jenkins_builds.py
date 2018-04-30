@@ -17,12 +17,14 @@ def findParametersAction(root):
 def getParameters(root, payload):
   n=root.find('name')
   if n is not None:
+    if n.text is None: return
     v=root.find('value')
     vv = "None"
     if v is not None: vv = str(v.text)
     payload['parameter_'+n.text]=vv
   else:
     for x in root: getParameters(x, payload)
+
 query_running_builds = """{
 "query": {"bool": {"must": {"query_string": {"query": "job_status:running"}}}},
 "from": 0,

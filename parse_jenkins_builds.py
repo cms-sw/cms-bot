@@ -2,7 +2,7 @@
 from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
-from es_utils import send_payload,get_payload_new,resend_payload_new
+from es_utils import send_payload,get_payload_new,resend_payload
 JENKINS_PREFIX="jenkins"
 try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
 except: JENKINS_PREFIX="jenkins"
@@ -83,6 +83,6 @@ for build in running_builds_elastic:
   if build not in all_local:
     hit = running_builds_elastic[build]
     hit["_source"]["job_status"]="Failed"
-    resend_payload_new(hit)
+    resend_payload(hit)
     print "job status marked as Failed"
 

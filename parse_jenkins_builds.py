@@ -2,7 +2,7 @@
 from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
-from es_utils import send_payload,get_payload,resend_payload
+from es_utils import send_payload,get_payload_new,resend_payload_new
 JENKINS_PREFIX="jenkins"
 try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
 except: JENKINS_PREFIX="jenkins"
@@ -23,54 +23,8 @@ def getParameters(root, payload):
     payload['parameter_'+n.text]=vv
   else:
     for x in root: getParameters(x, payload)
+query_running_builds = """{"query": {"bool": {"must": {"query_string": {"query": "job_status:running"}}}}}"""
 
-query_url='http://cmses-master02.cern.ch:9200/jenkins-*/_search'
-query_running_builds = """ {
-  "query": {
-    "filtered": {
-      "query": {
-        "bool": {
-          "should": [
-            {
-              "query_string": {
-                "query": "job_status:Running",
-                "lowercase_expanded_terms": false
-              }
-            }
-          ]
-        }
-      },
-      "filter": {
-        "bool": {
-          "must": [
-            {
-              "match_all": {}
-            }
-          ]
-        }
-      }
-    }
-  },
-  "highlight": {
-    "fields": {},
-    "fragment_size": 2147483647,
-    "pre_tags": [
-      "@start-highlight@"
-    ],
-    "post_tags": [
-      "@end-highlight@"
-    ]
-  },
-  "size": 5000,
-  "sort": [
-    {
-      "_score": {
-        "order": "desc",
-        "ignore_unmapped": true
-      }
-    }
-  ]
-} """
 all_local = list() 
 path = '/build/jobs'
 document = "builds-data"
@@ -108,7 +62,7 @@ for root, dirs, files in os.walk(path):
       except Exception as e:
         print "Xml parsing error",logFile , e
 running_builds_elastic={}
-content = get_payload(query_url,query_running_builds)
+content = get_payload_new('jenkins-*',query_running_builds)
 if content == "":
   running_builds_elastic = []
 else:
@@ -122,6 +76,6 @@ for build in running_builds_elastic:
   if build not in all_local:
     hit = running_builds_elastic[build]
     hit["_source"]["job_status"]="Failed"
-    resend_payload(hit,passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
+    resend_payload_new(hit,passwd_file="/var/lib/jenkins/secrets/github_hook_secret_cmsbot")
     print "job status marked as Failed"
 

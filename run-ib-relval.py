@@ -40,7 +40,7 @@ if __name__ == "__main__":
     if e: exit(e)
 
     p = None
-    if cmssw_ver.find('_CLANG_') is not -1:
+    if cmssw_ver.find('_DUMMYCLANG_') is not -1:
       cmssw_ver = cmssw_ver.rsplit('_',1)[0]+'*'
       p = Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver), shell=True)
     else:

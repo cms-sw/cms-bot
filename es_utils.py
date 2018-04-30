@@ -50,6 +50,9 @@ def get_es_query(es5=False, query="", start_time=0, end_time=0, page_start=0, pa
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file)
 
+def resend_payload_new(hit):
+  return send_payload_new(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),'es-cmssdt.cern.ch:9203')
+
 def es_get_passwd(passwd_file=None):
   for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret", "/data/secrets/github_hook_secret_cmsbot"]:
     if not psfile: continue
@@ -122,8 +125,8 @@ def delete_hit(hit,passwd_file=None):
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
-  return send_payload_old(index,document,id,payload,passwd_file)
+  send_payload_old(index,document,id,payload,passwd_file)
+  return send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
 
 def get_payload(url,query):
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()

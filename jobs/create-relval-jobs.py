@@ -51,15 +51,9 @@ for t in thrds: t.join()
 #Get Workflow stats from ES
 print "Getting Workflow stats from ES....."
 stats = {}
-release_cycle=cmssw_ver.split("_X_")[0]+"_X"
-query_func = es_query
-use_new_query = False
-if release_cycle.split("_")[-2] in ["DEVEL","ASAN","TSAN","UBSAN","ROOT6","CLANG"]:
-  use_new_query = True
-  query_func = es_query_new
-  release_cycle = release_cycle.lower()
+release_cycle=str.lower(cmssw_ver.split("_X_")[0]+"_X")
 while True:
-  stats = query_func(index='relvals_stats_*',
+  stats = es_query_new(index='relvals_stats_*',
                  query=format('(NOT cpu_max:0) AND exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
                               release_cycle=release_cycle+"_*",
                               architecture=arch,
@@ -68,8 +62,7 @@ while True:
                  start_time=1000*int(time()-(86400*10)),
                  end_time=1000*int(time()))
   if (not 'hits' in stats) or (not 'hits' in stats['hits']) or (not stats['hits']['hits']):
-    xrelease_cycle = "_".join(cmssw_ver.split("_",4)[0:3])+"_X"
-    if use_new_query: xrelease_cycle = xrelease_cycle.lower()
+    xrelease_cycle = str.lower("_".join(cmssw_ver.split("_",4)[0:3])+"_X")
     if xrelease_cycle!=release_cycle:
       release_cycle=xrelease_cycle
       print "Retry: Setting release cycle to ",release_cycle

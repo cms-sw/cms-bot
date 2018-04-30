@@ -67,7 +67,7 @@ if content == "":
   running_builds_elastic = []
 else:
   content_hash = json.loads(content)
-  if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits'])
+  if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
     print "ERROR: ",content
     sys.exit(1)
   for hit in content_hash['hits']['hits']:

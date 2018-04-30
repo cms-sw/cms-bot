@@ -83,7 +83,7 @@ def send_payload_new(index, document, id, payload, es_server, passwd_file=None):
   return True
 
 def send_payload_old(index,document,id,payload,passwd_file=None):
-  if index.staswith('cmssdt-'): index = index[7:]
+  if index.startwith('cmssdt-'): index = index[7:]
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
 

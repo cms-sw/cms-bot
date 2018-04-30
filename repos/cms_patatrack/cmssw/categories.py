@@ -7,7 +7,7 @@ from categories_map import CMSSW_CATEGORIES
 CMSSW_L1 = []
 APPROVE_BUILD_RELEASE =  list(set([  ] + CMSSW_L1))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
-TRIGGER_PR_TESTS = list(set(['smuzaffar'] + REQUEST_BUILD_RELEASE))
+TRIGGER_PR_TESTS = list(set(['smuzaffar','felicepantaleo'] + REQUEST_BUILD_RELEASE))
 PR_HOLD_MANAGERS = [ ]
 
 COMMON_CATEGORIES = [ "tests", "code-checks" ]

@@ -1986,7 +1986,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       packedCand("packedPFCandidates_");
       packedCand("lostTracks_");
       packedCand("lostTracks_eleTracks");
-
+      packedCand("packedPFCandidatesDiscarded_");
 
       tbr="patIsolatedTracks_isolatedTracks__";
       plotvar(tbr+recoS+".obj@.size()");

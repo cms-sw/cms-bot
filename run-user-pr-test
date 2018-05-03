@@ -27,7 +27,7 @@ else
   ISSUE_TITLE="[Jenkins CI] Testing commit: ${GH_COMMIT}"
   $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -m "Jenkins tests started for ${GH_COMMIT} at $(date '+%Y/%m/%d %H:%M')@N@@N@Build logs are available at: https://cmssdt.cern.ch/cms-jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console"
 fi
-voms-proxy-init -voms=cms
+voms-proxy-init -voms cms
 ${REPO_DIR}/run-pr-tests > $WORKSPACE/upload/run.log 2>&1 || ERR=1
 UPLOAD_DIR=$(find $WORKSPACE/upload -name '.jenkins-upload' -type f | sed 's|/.jenkins-upload$||' || true)
 UPLOAD_REF=""

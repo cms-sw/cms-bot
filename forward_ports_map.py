@@ -145,3 +145,4 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_2_X/gcc630"].append("IB/CMSSW_10_2_X/ro
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_2_X/gcc630"].append("IB/CMSSW_10_2_X/rootgcc6")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_2_X/gcc630"].append("IB/CMSSW_10_2_X/gcc630next")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_2_X/gcc630"].append("IB/CMSSW_10_2_X/gcc700")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_2_X/gcc630"].append("IB/CMSSW_10_2_X/gcc810")

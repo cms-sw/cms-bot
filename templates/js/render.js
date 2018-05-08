@@ -468,6 +468,25 @@ get_rv_exceptions_link_rq = function ( releaseQueue ){
 }
 
 /**
+ * Generates the header check link and adds it to the cell for the IB
+ */
+add_header_check_link = function ( title_cell, isFound, currentTag ){
+  if ( isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' Header Consistency')
+    return
+  }
+  if ( isFound == 'found' ){
+    var url = CMSSDT_SERVER+'/SDT/jenkins-artifacts/check_headers/' + currentTag
+    var sa_link = $("<a></a>").attr("href", url)
+    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+    sa_link.append($('<span></span>').text(' Header Consistency'))
+    title_cell.append(sa_link)
+    title_cell.append($("<br>"))
+  }
+}
+
+/**
  * Adds a link to the tag of the IB in github
  */
 addTagLink = function( titleCell , currentTag ){

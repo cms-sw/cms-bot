@@ -570,6 +570,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
     add_static_analyzer_link( title_cell , comparison.static_checks , current_tag )
     add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )
     add_material_budget_tests_link( title_cell , comparison.material_budget , current_tag )
+    add_header_check_link( title_cell , comparison.check_headers , current_tag )
   }
 
   var title_row = $('<tr>')

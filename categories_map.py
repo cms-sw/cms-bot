@@ -34,7 +34,7 @@ CMSSW_CATEGORIES={
    "FWCore/ServiceRegistry", "FWCore/Services",
    "FWCore/Skeletons",
    "FWCore/Sources", "FWCore/TFWLiteSelector",
-   "FWCore/TFWLiteSelectorTest",
+   "FWCore/TFWLiteSelectorTest", "FWCore/TestProcessor",
    "FWCore/Utilities", "FWCore/Version",
    "HeterogeneousCore/CUDAServices",
    "PerfTools/Callgrind",

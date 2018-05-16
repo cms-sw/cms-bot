@@ -262,7 +262,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
-  CLANG_CMD="scram b vclean && scram build -k -j $(Jenkins_GetCPU *2) USER_CXXFLAGS='-fsyntax-only' COMPILER='llvm compile'"
+  CLANG_CMD="scram b vclean && USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j $(Jenkins_GetCPU *2) COMPILER='llvm compile'"
   echo $CLANG_CMD > $WORKSPACE/buildClang.log
 
   (eval $CLANG_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log

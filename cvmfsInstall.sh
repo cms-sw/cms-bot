@@ -182,16 +182,11 @@ for REPOSITORY in $REPOSITORIES; do
     fi
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
-    case "${SCRAM_ARCH}" in
-      *_gcc8* ) echo "Skip setting mutex max size" ;;
-      * )
-        RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
-        if [ ! -e $RPM_CONFIG ] ; then
-          echo "mutex_set_max 10000000" > $RPM_CONFIG
-          dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
-        fi
-        ;;
-    esac
+    RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
+    if [ ! -e $RPM_CONFIG ] ; then
+      echo "mutex_set_max 10000000" > $RPM_CONFIG
+      dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
+    fi
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.
     #

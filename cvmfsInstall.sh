@@ -162,7 +162,7 @@ for REPOSITORY in $REPOSITORIES; do
   mkdir -p $WORKDIR/logs
   # Install all architectures of the most recent week first.
   for SCRAM_ARCH in $ARCHITECTURES; do
-    CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH ${USE_DEV}"
+    CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH ${USE_DEV} --ignore-known"
     # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
     # This is because bootstraptmp is otherwise shared between different arches. Sigh.
     LOGFILE=$WORKDIR/logs/bootstrap-$REPOSITORY-$SCRAM_ARCH.log

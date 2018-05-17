@@ -49,7 +49,7 @@ if __name__ == "__main__":
   #-----------------------------------------------------------------------------------
 
   RESULTS_DIR = args[0]
-  WF_REGEXP = '[0-9]*p[0-9]*'
+  WF_REGEXP = '[0-9]{1,}p[0-9]{1,}'
   BASE_WF_NUM_PARAM = 'FOR_WF'
   PARAMS_FILE = args[1]
   ALT_COMP_PARAMS = { 0:'MOD=0', 2:'MOD=2', 3:'MOD=3' }

@@ -921,6 +921,7 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("numberOfPixelHits",cName,tName);
   packedCandVar("phi",cName,tName);
   packedCandVar("pt",cName,tName);
+  plotvar("log10("+tName+cName+"_"+recoS+".obj.pt())", "", true);
   packedCandVar("puppiWeight",cName,tName); 
   packedCandVar("puppiWeightNoLep",cName,tName); 
   packedCandVar("status",cName,tName);

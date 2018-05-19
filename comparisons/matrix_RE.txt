@@ -137,6 +137,15 @@ RunJetHT2017F136p831 136.831_RunJetHT2017F+*/step3.root reRECO
 RunJetHT2017FreMINIAOD136p8311 136.8311_RunJetHT2017F_reminiaod+*/step2.root PAT
 RunMET2017F136p832 136.832_RunMET2017F+*/step3.root reRECO
 #
+# 2018 data
+#
+RunHLTPhy2018Awf136p849 136.849_RunHLTPhy2018A+*/step3.root reRECO
+RunEGamma2018Awf136p85 136.85_RunEGamma2018A+*/step3.root reRECO
+RunDoubleMuon2018Awf136p851 136.851_RunDoubleMuon2018A+*/step3.root reRECO
+RunJetHT2018A136p852 136.852_RunJetHT2018A+*/step3.root reRECO
+RunMET2018A136p853 136.853_RunMET2018A+*/step3.root reRECO
+RunSingleMu2018A136p855 136.855_RunSingleMu2018A+*/step3.root reRECO
+#
 # 2017 workflows follow
 #
 Cosmics2017wf7p2 7.2_Cosmics_UP17*/step3.root RECO

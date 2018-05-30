@@ -1321,3 +1321,11 @@ echabert:
 - SimTracker/Configuration
 - SimTracker/Records
 - SimTracker/SiStripDigitizer
+jandrea:
+- DQM/SiPixel
+- DQM/SiStripCommon
+- DQM/SiStripHistoricInfoClient
+- DQM/SiStripMonitor
+- DQM/Tracker
+- DQM/TrackingMonitor
+- DPGAnalysis/SiStripTools

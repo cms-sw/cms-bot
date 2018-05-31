@@ -183,7 +183,7 @@ done
 mv ${CTOOLS} ${CTOOLS}.backup
 mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
 scram setup
-SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/V*/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
+SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_version)/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
 scram build -r 
 eval $(scram runtime -sh)
 set -x

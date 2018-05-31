@@ -130,7 +130,8 @@ fi
 
 sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
 set +x
-eval $(scram run -sh) 
+eval $(scram run -sh)
+if [ -e $WORKSPACE/cmsswtoolconf.log ]  ; then export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed "s|:$CMSSW_RELEASE_BASE/external/$SCRAM_ARCH/lib||") ; fi
 set -x
 python -c 'from requests import __version__ as v;print v;x=v.split(".");print int(x[0])*10000+int(x[1])*100+int(x[2])' || true
 REQ_OK=$(python -c 'from requests import __version__ as v;x=v.split(".");print int(x[0])*10000+int(x[1])*100+int(x[2])>=20300' 2>/dev/null || echo False)
@@ -386,6 +387,7 @@ fi
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 ##FIXME: Remove the following das_client.py link once all IBs use das_client wrapper
 set +x ; eval $(scram run -sh) ;set -x
+if [ -e $WORKSPACE/cmsswtoolconf.log ]  ; then export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | sed "s|:$CMSSW_RELEASE_BASE/external/$SCRAM_ARCH/lib||") ; fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH
 which das_client
 

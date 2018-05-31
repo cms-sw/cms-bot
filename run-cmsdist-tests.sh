@@ -177,38 +177,18 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   name=$(basename $xml)
   tool=$(echo $name | sed 's|.xml$||')
   echo "Checking tool $tool ($xml)"
-  if [ $tool = "cmsswdata" ] ; then
-    CHG=0
-    for dd in $(grep 'CMSSW_DATA_PACKAGE=' $xml | sed 's|.*="||;s|".*||') ; do
-      if [ $(grep "=\"$dd\"" $CTOOLS/$name | wc -l) -eq 1 ] ; then continue ; fi
-      CHG=1
-      break
-    done
-    if [ X$CHG = X0 ] ; then
-      if [ "$SET_ALL_TOOLS" = "YES" ] ; then cp -f $xml $CTOOLS/$name ; fi
-      continue 
-    fi
-  elif [ -e $CTOOLS/$name ] ; then
-    nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-    over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-    echo "Checking version in release: $over vs $nver"
-    if [ "$nver" = "$over" ] ; then
-      if [ "${SET_ALL_TOOLS}" = "YES" ] ; then cp -f $xml $CTOOLS/$name ; fi
-      continue
-    fi
-    echo "Settings up $name: $over vs $nver" 
-  fi
-  cp -f $xml $CTOOLS/$name
+  if [ ! -e $CTOOLS/$name ] ; then continue ; fi
+  nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+  over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+  echo "Checking version in release: $over vs $nver"
+  if [ "$nver" = "$over" ] ; then continue fi
+  echo "Settings up $name: $over vs $nver"
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
-  echo "Setting up new tool: $tool"
-  scram setup $tool
 done
-if [ "${SET_ALL_TOOLS}" = "YES" ] ; then 
-  scram setup
-else
-  #Move away gcc directory
-  mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/external/gcc-move-away
-fi
+mv ${CTOOLS} ${CTOOLS}.backup
+mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
+scram setup
+SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/V*/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
 scram build -r 
 eval $(scram runtime -sh)
 set -x

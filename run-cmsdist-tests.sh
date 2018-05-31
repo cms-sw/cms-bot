@@ -176,7 +176,7 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
   over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
   echo "Checking version in release: $over vs $nver"
-  if [ "$nver" = "$over" ] ; then continue fi
+  if [ "$nver" = "$over" ] ; then continue ; fi
   echo "Settings up $name: $over vs $nver"
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done

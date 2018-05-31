@@ -94,16 +94,6 @@ git clone git@github.com:cms-sw/pkgtools $WORKSPACE/PKGTOOLS -b $PKGTOOLS_BRANCH
 
 cd $WORKSPACE/CMSDIST
 git pull git://github.com/$TEST_USER/cmsdist.git $TEST_BRANCH
-# Check which packages the PR changes
-PKGS=
-## For now only build cmssw-tool-conf
-#for c in $CMSDIST_COMMITS ; do
-#  for p in $(git show --pretty='format:' --name-only $c | grep '.spec$'  | sed 's|.spec$|-toolfile|' | grep -v '^cmssw-toolfile' | grep -v '^cmssw-patch') ; do
-#    [ -f $WORKSPACE/CMSDIST/$p.spec ] || continue
-#    PKGS="$PKGS $p"
-#  done
-#done
-#PKGS=$(echo $PKGS |  tr ' ' '\n' | sort | uniq)
 
 export CMSDIST_COMMIT=$(echo $CMSDIST_COMMITS | sed 's|.* ||')
 cd $WORKSPACE
@@ -118,8 +108,13 @@ if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $CMS_BOT_DIR/config.map | grep "RELEA
   popd
 fi
 
+REF_REPO=
+if [ $PKGTOOLS_BRANCH = "V00-32-XX" ] ; then
+  REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
+fi
+
 # Build the whole cmssw-tool-conf toolchain
-COMPILATION_CMD="PKGTOOLS/cmsBuild --builders 3 -i $WORKSPACE/$BUILD_DIR --repository $CMS_WEEKLY_REPO  --arch $ARCHITECTURE -j $(Jenkins_GetCPU) build $PKGS cmssw-tool-conf"
+COMPILATION_CMD="PKGTOOLS/cmsBuild --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO  --arch $ARCHITECTURE -j $(Jenkins_GetCPU) build cmssw-tool-conf"
 echo $COMPILATION_CMD > $WORKSPACE/cmsswtoolconf.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 echo 'END OF BUILD LOG'

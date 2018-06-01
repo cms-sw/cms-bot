@@ -358,6 +358,7 @@ CMSSW_CATEGORIES={
    "RecoBTag/SecondaryVertex",
    "RecoBTag/Skimming",
    "RecoBTag/SoftLepton",
+   "RecoBTag/TensorFlow",
    "RecoBTag/TrackProbability",
    "RecoBTag/XMLCalibration",
    "RecoBTau/Configuration",

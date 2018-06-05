@@ -72,6 +72,9 @@ if [ "X$ARCHITECTURE" = X ]; then
   exit 1
 fi
 export ARCHITECTURE
+export SCRAM_ARCH=$ARCHITECTURE
+ls /cvmfs/cern.ch
+which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 CMSSW_IB=
@@ -145,7 +148,6 @@ else
 fi
 
 # Create an appropriate CMSSW area
-export SCRAM_ARCH=$ARCHITECTURE
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
 echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
 scram -a $SCRAM_ARCH project $CMSSW_IB

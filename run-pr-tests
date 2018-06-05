@@ -48,7 +48,7 @@ RELVALS_OK=true
 ADDON_OK=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
-which scram 2>/dev/null || source /cvmfs/cms-ib.cern.ch/cmsset_default.sh
+which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 COMPARISON_REL=
 case $RELEASE_FORMAT in

@@ -69,6 +69,7 @@ if [ $MLC -eq 1 ] ; then
     echo FULL_TOOLCONF=true >> $OUTPUT_FILE
     echo COMPARISON_ARCH=${COMP_ARCH} >> $OUTPUT_FILE
     echo PUB_USER=${PUB_USER} >> $OUTPUT_FILE
+    echo DOCKER_IMG=${DOCKER_IMG} >> $OUTPUT_FILE
 else
   $CMS_BOT_DIR/report-pull-request-results RELEASE_NOT_FOUND --repo ${PUB_REPO} --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
 fi

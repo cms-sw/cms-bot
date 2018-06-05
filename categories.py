@@ -60,6 +60,7 @@ CMSSW_L2 = {
   "prebello" : ["pdmv"],
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],
+  "pohsun" : ["alca"],
   "kpedro88" : ["upgrade"],
   "mrodozov" : ["externals"],
   "gudrutis" : ["externals"],

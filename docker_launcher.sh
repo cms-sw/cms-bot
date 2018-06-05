@@ -8,6 +8,8 @@ if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
 fi
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
+  DOCKER_EXTRA_ENV=""
+  for e in $DOCKER_JOB_ENV ; do DOCKER_EXTRA_ENV="${DOCKER_EXTRA_ENV} -e $e=$(eval echo \$$e)"; done
   docker pull $DOCKER_IMG
   XUSER=`whoami`
   DOCKER_OPT=""
@@ -31,7 +33,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     -e USER=$USER \
     -e BUILD_NUMBER=$BUILD_NUMBER \
     -e JOB_NAME=$JOB_NAME \
-    -e KRB5CCNAME=$KRB5CCNAME $DOCKER_JOB_ENV \
+    -e KRB5CCNAME=$KRB5CCNAME $DOCKER_EXTRA_ENV \
     $DOCKER_IMG sh -c "$DOCK_ARGS"
 else
   voms-proxy-init -voms cms -valid 24:00 || true

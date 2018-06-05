@@ -73,7 +73,7 @@ if [ "X$ARCHITECTURE" = X ]; then
 fi
 export ARCHITECTURE
 export SCRAM_ARCH=$ARCHITECTURE
-ls /cvmfs/cern.ch
+ls /cvmfs/cms.cern.ch
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`

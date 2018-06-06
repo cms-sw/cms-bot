@@ -89,6 +89,7 @@ pushd CMSDIST
   DEFAULT_CMSDIST_URL="https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD"
   curl -L -s -k $DEFAULT_CMSDIST_URL/cmssw-ib.spec > cmssw-ib.spec
   curl -L -s -k $DEFAULT_CMSDIST_URL/das-cache.file > das-cache.file
+  sed -i -e 's|Source: .*/buildLogAnalyzer.py|Source: https://raw.githubusercontent.com/cms-sw/cms-bot/master/buildLogAnalyzer.py|' cmssw-ib.spec
 popd
 
 CMS_TAG=""

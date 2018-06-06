@@ -493,7 +493,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         comp_warnings = False
         if "+1" in first_line:
           signatures["tests"] = "approved"
-          comp_warnings = len([1 for l in comment_lines if 'Compilation Warnings: YES' in l ])>0
+          comp_warnings = len([1 for l in comment_lines if 'Compilation Warnings: Yes' in l ])>0
         elif "-1" in first_line:
           signatures["tests"] = "rejected"
         else:
@@ -640,6 +640,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   # Add additional labels
   for lab in extra_labels: labels.append(extra_labels[lab][0])
+  if comp_warnings: labels.append("compilation-warnings")
 
   if cmssw_repo and issue.pull_request:
     if comparison_done:
@@ -658,7 +659,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          and not x.startswith("pending-assignment")
                          and not x.startswith("comparison")
                          and not x.startswith("code-checks")
-                         and not x in ["backport", "urgent", "bug-fix", "new-feature", "backport-ok"]]
+                         and not x in ["backport", "urgent", "bug-fix", "new-feature", "backport-ok", "compilation-warnings"]]
 
   if not missingApprovals:
     print "The pull request is complete."

@@ -24,6 +24,7 @@ COMMON_LABELS = {
   "urgent"   : "cc317c",
   "process-complete" : "006b75",
   "hold": LABEL_COLORS["hold"],
+  "compilation-warnings": LABEL_COLORS["hold"],
 }
 
 COMPARISON_LABELS = {

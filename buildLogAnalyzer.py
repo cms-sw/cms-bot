@@ -120,22 +120,11 @@ class LogFileAnalyzer(object):
         
     def getTagList(self):
 
-        try:
-            tf = open(self.pkgsList,'r')
-            lines = tf.readlines()
-            tf.close()
-            for line in lines:
-                pkg,tag = line.split()
-                self.tagList[pkg.strip()] = tag.strip()
-
-        except Exception, e:
-            print "Error when reading tagFile:", str(e)
-            print "Getting package list from src directory"
-            import glob
-            srcdir = os.path.dirname(self.pkgsList)+"/"
-            for pkg in glob.glob(srcdir+'*/*'):
-                pkg = pkg.replace(srcdir,"")
-                self.tagList[pkg] = ""
+        import glob
+        srcdir = os.path.dirname(self.pkgsList)+"/"
+        for pkg in glob.glob(srcdir+'*/*'):
+          pkg = pkg.replace(srcdir,"")
+          self.tagList[pkg] = ""
         return
         
     def analyze(self):

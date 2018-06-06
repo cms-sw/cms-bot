@@ -365,7 +365,7 @@ class LogFileAnalyzer(object):
     def analyzeFile(self, fileNameIn):
         """read in file and check for errors"""
         subsys, pkg, logFile = fileNameIn.split('/')
-        
+
         if self.verbose > 5 : print "analyzing file : ", fileNameIn
         
         fileIn = open(fileNameIn, 'r')
@@ -486,10 +486,11 @@ class Usage(Exception):
 
 def main(argv=None):
     logDir = '.'
-    topURL = None
+    topURL = './'
     verbose = -1
-    pkgList = None
-    rel = None
+    pkgList = os.getenv("CMSSW_BASE",None)
+    if pkgList: pkgList+="/src/PackageList.cmssw"
+    rel = os.getenv("CMSSW_VERSION",None)
     if argv is None:
         argv = sys.argv
 

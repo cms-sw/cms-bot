@@ -361,9 +361,11 @@ fi
 # test compilation with GCC
 # ############################################
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
-COMPILATION_CMD="scram b vclean && scram b -k -j $(Jenkins_GetCPU)"
+BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
+ANALOG_CMD="($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD}"
 if [ "X$CMSDIST_PR" != X -a $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
-  COMPILATION_CMD="scram b vclean && SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && scram b -k -j $(Jenkins_GetCPU) edm_checks"
+  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD} && scram b -k -j $(Jenkins_GetCPU) edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
@@ -373,6 +375,7 @@ echo '--------------------------------------'
 TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
 GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
+BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
     echo 'COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
@@ -381,7 +384,13 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
 else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
+    if [ -e ${BUILD_LOG_DIR}/html/index.html ] ; then
+      if [ $(grep '<td> *[1-9][0-9]* *</td>' ${BUILD_LOG_DIR}/html/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
+        BUILD_LOG_RES="OK"
+      fi
+    fi
 fi
+echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
@@ -678,6 +687,7 @@ fi
 
 cd $WORKSPACE
 mkdir -p upload
+if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html upload/build-logs ; fi
 for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
   [ -e $f ] && mv $f upload/$f
 done
@@ -689,7 +699,12 @@ rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
   REPORT_OPTS="--report-pr ${REPORT_PR} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
-    REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS}"
+    if [ "${BUILD_LOG_RES}" eq "ERROR" ] ; then
+      BUILD_LOG_RES=" --add-message 'Compilation warnings found'"
+    else
+      BUILD_LOG_RES=""
+    fi
+    REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
   else 
     echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"

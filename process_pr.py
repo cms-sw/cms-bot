@@ -359,6 +359,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   trigger_code_checks=False
   triggerred_code_ckecks=False
   backport_pr_num = ""
+  comp_warnings = False
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,body_firstline):
     already_seen = issue
@@ -489,8 +490,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         tests_requested = False
         comparison_done = False
         comparison_notrun = False
+        comp_warnings = False
         if "+1" in first_line:
           signatures["tests"] = "approved"
+          comp_warnings = len([1 for l in comment_lines if 'Compilation Warnings: YES' in l ])>0
         elif "-1" in first_line:
           signatures["tests"] = "rejected"
         else:
@@ -611,6 +614,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   old_labels = set([x.name.encode("ascii", "ignore") for x in issue.labels])
   print "Stats:",backport_pr_num,extra_labels
   print "Old Labels:",sorted(old_labels)
+  print "Compilation Warnings: ",comp_warnings
   if "backport" in extra_labels:
     if backport_pr_num!=extra_labels["backport"][1]:
       try:

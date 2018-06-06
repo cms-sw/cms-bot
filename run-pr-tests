@@ -700,9 +700,9 @@ for i in $( seq 1 $REPEAT); do
   REPORT_OPTS="--report-pr ${REPORT_PR} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
     if [ "${BUILD_LOG_RES}" eq "ERROR" ] ; then
-      BUILD_LOG_RES=" --add-message 'Compilation warnings found'"
+      BUILD_LOG_RES=" --add-message 'Compilation Warnings: YES'"
     else
-      BUILD_LOG_RES=""
+      BUILD_LOG_RES=" --add-message 'Compilation Warnings: NO'"
     fi
     REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
   else 

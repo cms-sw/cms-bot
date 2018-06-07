@@ -188,7 +188,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "Jobs Running: $(jobs -p | wc -l)"
     set +x
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 10 ; done
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
     set -x
     ($WORKSPACE/results/default-comparison/command-$WF_NUMBER || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
   done
@@ -245,7 +245,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
     echo "Jobs Running: $(jobs -p | wc -l)"
     set +x
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 10 ; done
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
     set -x
     ($ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
 
@@ -260,10 +260,23 @@ cd $WORKSPACE
 mkdir -p upload/alternative-comparisons
 
 #default-comparison
-for f in results/default-comparison/* ; do
-  [ -e $f ] && mv $f upload/
-done
-
+if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
+  for f in results/default-comparison/* ; do
+    if [ -f $f ] ; then
+      mv $f upload/
+    elif [ -d $f ] ; then
+      set +x
+      while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
+      set -x
+      $CMS_BOT_DIR/comparisons/filter-failed-comparison.sh $f $WORKSPACE/upload &
+    fi
+  done
+  wait || true
+else
+  for f in results/default-comparison/* ; do
+    [ -e $f ] && mv $f upload/
+  done
+fi
 #alternative-comparison
 alt_dir=results/alternative-comparison
 for f in $(find ${alt_dir} -maxdepth 1 -name 'command*' -o -name '*.ps' -o -name '*.gz' -o -name '*.log' -o -name '*.txt') ; do

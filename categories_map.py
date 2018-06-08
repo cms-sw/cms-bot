@@ -424,6 +424,7 @@ CMSSW_CATEGORIES={
    "CondFormats/PCLConfig",
    "CondTools/BeamSpot",
    "CondTools/BTau",
+   "CondTools/CTPPS",
    "CondTools/DQM",
    "CondTools/DT",
    "CondTools/Ecal",

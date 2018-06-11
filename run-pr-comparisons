@@ -264,11 +264,13 @@ if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
   for f in results/default-comparison/* ; do
     if [ -f $f ] ; then
       mv $f upload/
+    elif [ ! -f $f/index.html ] ; then
+      mv $f upload/
     elif [ -d $f ] ; then
       set +x
       while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
       set -x
-      $CMS_BOT_DIR/comparisons/filter-failed-comparison.sh $f $WORKSPACE/upload &
+      $CMS_BOT_DIR/comparisons/filter-failed-comparison.py $f $WORKSPACE/upload &
     fi
   done
   wait || true

@@ -99,7 +99,10 @@ makortel:
   - Configuration/PyReleaseValidation
   - Configuration/StandardSequences
   - DataFormats/Common
+  - DataFormats/DetId
   - DataFormats/GsfTrackReco
+  - DataFormats/HcalDetId
+  - DataFormats/HcalDigi
   - DataFormats/Math
   - DataFormats/RecoCandidate
   - DataFormats/Si
@@ -121,10 +124,14 @@ makortel:
   - RecoPixelVertexing
   - RecoTracker
   - RecoVertex
+  - SimCalorimetry/EcalSimProducers
+  - SimCalorimetry/HGCalSimProducers
+  - SimCalorimetry/HcalSimProducers
   - SimDataFormats/Track
   - SimDataFormats/Vertex
   - SimG4Core
   - SimG4CMS
+  - SimGeneral/CaloAnalysis
   - SimGeneral/DataMixingModule
   - SimGeneral/MixingModule
   - SimGeneral/TrackingAnalysis

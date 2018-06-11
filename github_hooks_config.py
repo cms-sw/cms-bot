@@ -31,7 +31,6 @@ REPO_HOOK_MAP.append(["cms-sw/.+", ["Jenkins_Github_Hook","Jenkins_Github_Hook_P
 REPO_HOOK_MAP.append(["cms-sw/.+", ["Jenkins_Github_Hook","Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-data/.+", ["Jenkins_Github_Hook","Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-externals/.+", ["Jenkins_Github_Hook","Jenkins_Github_Hook_Push"]])
-REPO_HOOK_MAP.append(["EcalLaserValidation/RECO_EcalPulseShapeValidation", ["Jenkins_Github_Hook"]])
 REPO_HOOK_MAP.append(["EcalLaserValidation/.+", ["Jenkins_Github_Hook_Push"]])
 
 def is_valid_gh_repo(repo_name):

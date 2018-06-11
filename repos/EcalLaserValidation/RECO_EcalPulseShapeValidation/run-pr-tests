@@ -1,2 +1,2 @@
 #!/bin/bash -ex
-echo "Test started"
+$WORKSPACE/userrepo/run-pr-tests.sh "$@"

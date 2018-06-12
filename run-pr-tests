@@ -699,7 +699,7 @@ rm -f $WORKSPACE/report.txt
 for i in $( seq 1 $REPEAT); do
   REPORT_OPTS="--report-pr ${REPORT_PR} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
   if $ALL_OK ; then
-    if [ "${BUILD_LOG_RES}" eq "ERROR" ] ; then
+    if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
       BUILD_LOG_RES=" --add-comment 'Compilation Warnings: Yes'"
     else
       BUILD_LOG_RES=""

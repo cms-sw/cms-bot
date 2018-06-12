@@ -21,11 +21,11 @@ COMPARISON_MISSING_MAP = []
 #github_user:[list of categories]
 CMSSW_L2 = {
   CMSBUILD_USER : ["tests", "code-checks" ],
-  'smuzaffar' : ['ecal-laser'],
+  'emanueledimarco' : ['ecal-pulse-shape'],
 }
 
 CMSSW_CATEGORIES={
-  'ecal-laser': [GH_REPO_NAME],
+  'ecal-pulse-shape': [GH_REPO_NAME],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + CMSSW_L2.keys())

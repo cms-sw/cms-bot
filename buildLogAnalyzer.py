@@ -260,6 +260,7 @@ class LogFileAnalyzer(object):
             pkgList.sort(pkgCmp)
             
             for pkg in pkgList:
+                if not pkg.name() in self.tagList: continue
                 styleClass = 'ok'
                 for cKey in self.errorKeys :
                     if styleClass == 'ok'  and cKey in pkg.errSummary.keys(): styleClass = self.styleClass[cKey]

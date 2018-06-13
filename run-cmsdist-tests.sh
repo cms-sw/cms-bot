@@ -151,7 +151,7 @@ fi
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
 echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
 scram -a $SCRAM_ARCH project $CMSSW_IB
-
+echo $(scram version) > $CMSSW_IB/config/scram_version
 #if [ $(grep '^V05-05-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
 #  if [ $(sed -e 's|^V05-05-||;s|-.*||' $CMSSW_IB/config/config_tag) -lt 84 ] ; then
 #    git clone git@github.com:cms-sw/cmssw-config

@@ -388,6 +388,8 @@ else
       if [ $(grep '<td> *[1-9][0-9]* *</td>' ${BUILD_LOG_DIR}/html/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
         BUILD_LOG_RES="OK"
       fi
+    elif [ ! -d ${BUILD_LOG_DIR}/src ] ; then
+      BUILD_LOG_RES="OK"
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE

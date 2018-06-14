@@ -507,7 +507,9 @@ def main(argv=None):
 
         if not topURL:
             raise Usage(help_message)
-        
+
+        if not os.path.exists(logDir): return
+
         lfa = LogFileAnalyzer(logDir, topURL, verbose, pkgList, rel)
         lfa.analyze()
         lfa.report()

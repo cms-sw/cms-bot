@@ -10,6 +10,7 @@ from cmssw_known_errors import get_known_errors
 from subprocess import Popen
 from os.path import abspath, dirname
 import re
+from time import time
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
 def process_relvals(threads=None,cmssw_version=None,arch=None,cmssw_base=None,logger=None):
@@ -35,11 +36,14 @@ if __name__ == "__main__":
   logger=LogUpdater(dirIn=cmssw_base)
 
   if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$",cmssw_ver):
+    stime = time()
     p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
     e=waitpid(p.pid,0)[1]
+    print "Time took to create jobs:",int(time()-stime),"sec"
     if e: exit(e)
 
     p = None
+    stime = time()
     if cmssw_ver.find('_DUMMYCLANG_') is not -1:
       cmssw_ver = cmssw_ver.rsplit('_',1)[0]+'*'
       p = Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver), shell=True)
@@ -47,6 +51,7 @@ if __name__ == "__main__":
       p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 150 -m 80 -o time" % (cmssw_base,SCRIPT_DIR), shell=True)
 
     e=waitpid(p.pid,0)[1]
+    print "Time took to create jobs:",int(time()-stime),"sec"
     system("touch "+cmssw_base+"/done."+opts.jobid)
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
     exit(e)

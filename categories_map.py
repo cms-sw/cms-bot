@@ -549,6 +549,8 @@ CMSSW_CATEGORIES={
    "Geometry/HcalTestBeamData",
    "Geometry/HcalTowerAlgo",
    "Geometry/MTCCTrackerCommonData",
+   "Geometry/MTDCommonData",
+   "Geometry/MTDSimData",
    "Geometry/MuonCommonData",
    "Geometry/MuonNumbering",
    "Geometry/MuonSimData",

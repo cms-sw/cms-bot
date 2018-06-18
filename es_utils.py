@@ -123,10 +123,10 @@ def delete_hit(hit,passwd_file=None):
   return True
 
 def send_payload(index,document,id,payload,passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  send_payload_old(index,document,id,payload,passwd_file)
+  #send_payload_old(index,document,id,payload,passwd_file)
   return send_payload_new(index,document,id,payload,'es-cmssdt.cern.ch:9203')
 
-def get_payload(url,query):
+def get_payloadX(url,query):
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'kibana', 'kibana')
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
@@ -163,7 +163,7 @@ def es_query_new(index,query,start_time,end_time,page_start=0,page_size=10000,ti
   if scroll: return get_payload_wscroll(index, query_str)
   return json.loads(get_payload_new(index, query_str))
 
-def es_query(index,query,start_time,end_time,page_start=0,page_size=100000,timestamp_field="@timestamp",lowercase_expanded_terms='false', es_host='http://cmses-master02.cern.ch:9200'):
+def es_queryX(index,query,start_time,end_time,page_start=0,page_size=100000,timestamp_field="@timestamp",lowercase_expanded_terms='false', es_host='http://cmses-master02.cern.ch:9200'):
   query_url='%s/%s/_search' % (es_host, index)
   query_tmpl = """{
   "query": {
@@ -176,7 +176,7 @@ def es_query(index,query,start_time,end_time,page_start=0,page_size=100000,times
     "size": %(page_size)s
   }"""
   query_str = format(query_tmpl, query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field,lowercase_expanded_terms=lowercase_expanded_terms)
-  return json.loads(get_payload(query_url, query_str))
+  return json.loads(get_payloadX(query_url, query_str))
 
 def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
   wf_stats = {}

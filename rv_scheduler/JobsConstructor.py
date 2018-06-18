@@ -34,83 +34,14 @@ class JobsConstructor(object):
         return s % kwds
 
     def getWorkflowStatsFromES(self, release='*', arch='*', lastNdays=7, page_size=10000):
-        query_url = 'http://cmses-master02.cern.ch:9200/relvals_stats_*/_search'
-
-        query_datsets = """
-        {
-          "query": {
-            "filtered": {
-              "query": {
-                "bool": {
-                  "should": [
-                    {
-                      "query_string": {
-                        "query": "release:%(release_cycle)s AND architecture:%(architecture)s", 
-                        "lowercase_expanded_terms": false
-                      }
-                    }
-                  ]
-                }
-              },
-              "filter": {
-                "bool": {
-                  "must": [
-                    {
-                      "range": {
-                        "@timestamp": {
-                          "from": %(start_time)s,
-                          "to": %(end_time)s
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "from": %(from)s,
-          "size": 10000
-        }
-        """
-        datasets = {}
-        ent_from = 0
-        json_out = []
-        info_request = False
-        queryInfo = {}
-
-        queryInfo["end_time"] = int(time() * 1000)
-        queryInfo["start_time"] = queryInfo["end_time"] - int(86400 * 1000 * lastNdays)
-        queryInfo["architecture"] = arch
-        queryInfo["release_cycle"] = release
-        queryInfo["from"] = 0
-
-        if page_size < 1:
-            info_request = True
-            queryInfo["page_size"] = 2
-        else:
-            queryInfo["page_size"] = page_size
-
-        total_hits = 0
-
-        while True:
-            queryInfo["from"] = ent_from
-            es_data = get_payload(query_url, self._format(query_datsets, **queryInfo))  # here
-            content = json.loads(es_data)
-            content.pop("_shards", None)
-            total_hits = content['hits']['total']
-            if info_request:
-                info_request = False
-                queryInfo["page_size"] = total_hits
-                continue
-            hits = len(content['hits']['hits'])
-            if hits == 0: break
-            ent_from = ent_from + hits
-            json_out.append(content)
-            if ent_from >= total_hits:
-                break
-        
-        return json_out[0]['hits']['hits']
-
+        stats = es_query_new(index='relvals_stats_*',
+                 query=format('(NOT cpu_max:0) AND (exit_code:0) AND release:%(release_cycle)s AND architecture:%(architecture)s',
+                              release_cycle=release+"_*",
+                              architecture=arch
+                             ),
+                 start_time=1000*int(time()-(86400*lastNdays)),
+                 end_time=1000*int(time()))
+        return stats['hits']['hits']
         
     def getJobsCommands(self, workflow_matrix_list=None,workflows_limit=None, workflows_dir=os.environ["CMSSW_BASE"]+"/pyRelval/"):
         #run runTheMatrix and parse the output for each workflow, example results structure in resources/wf.json

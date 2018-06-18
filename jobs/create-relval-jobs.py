@@ -11,7 +11,7 @@ CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
 from RelValArgs import GetMatrixOptions, FixWFArgs
-from es_utils import es_query, es_query_new, format, es_workflow_stats
+from es_utils import es_query_new, format, es_workflow_stats
 
 def createJob(workflow, cmssw_ver, arch):
   workflow_args = FixWFArgs(cmssw_ver, arch, workflow, GetMatrixOptions(cmssw_ver, arch))

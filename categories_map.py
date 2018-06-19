@@ -74,8 +74,6 @@ CMSSW_CATEGORIES={
    "Documentation/DataFormats"
  ],
  "reconstruction": [
-   "Configuration/EcalTB",
-   "Configuration/JetMET",
    "CommonTools/CandAlgos",
    "CommonTools/CandUtils", "CommonTools/Clustering1D",
    "CommonTools/ParticleFlow", "CommonTools/PileupAlgos",
@@ -83,6 +81,9 @@ CMSSW_CATEGORIES={
    "CommonTools/TrackerMap",
    "CommonTools/TriggerUtils", "CommonTools/UtilAlgos",
    "CommonTools/Utils",
+   "CondFormats/SiPixelTransient",
+   "Configuration/EcalTB",
+   "Configuration/JetMET",
    "EventFilter/CSCRawToDigi",
    "EventFilter/CastorRawToDigi",
    "EventFilter/DTRawToDigi",
@@ -110,6 +111,7 @@ CMSSW_CATEGORIES={
    "MagneticField/UniformEngine",
    "MagneticField/VolumeBasedEngine",
    "MagneticField/VolumeGeometry",
+   "DataFormats/Candidate"
    "DataFormats/CTPPSReco",
    "DataFormats/CTPPSDigi",
    "DataFormats/DTRecHit",
@@ -397,7 +399,6 @@ CMSSW_CATEGORIES={
    "RecoJets/JetAssociationProducers",
    "RecoJets/JetPlusTracks",
    "RecoJets/JetProducers",
-   "DataFormats/Candidate"
  ],
  "db": [
    "CondFormats/EgammaObjects",
@@ -418,6 +419,7 @@ CMSSW_CATEGORIES={
    "CondFormats/RecoMuonObjects",
    "CondFormats/RunInfo",
    "CondFormats/SiPixelObjects",
+   "CondFormats/SiPixelTransient",
    "CondFormats/SiStripObjects",
    "CondFormats/CTPPSReadoutObjects",
    "CondFormats/TotemReadoutObjects",

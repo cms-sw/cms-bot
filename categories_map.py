@@ -398,7 +398,7 @@ CMSSW_CATEGORIES={
    "RecoJets/JetAssociationAlgorithms",
    "RecoJets/JetAssociationProducers",
    "RecoJets/JetPlusTracks",
-   "RecoJets/JetProducers",
+   "RecoJets/JetProducers"
  ],
  "db": [
    "CondFormats/EgammaObjects",

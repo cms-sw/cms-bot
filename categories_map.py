@@ -111,7 +111,7 @@ CMSSW_CATEGORIES={
    "MagneticField/UniformEngine",
    "MagneticField/VolumeBasedEngine",
    "MagneticField/VolumeGeometry",
-   "DataFormats/Candidate"
+   "DataFormats/Candidate",
    "DataFormats/CTPPSReco",
    "DataFormats/CTPPSDigi",
    "DataFormats/DTRecHit",

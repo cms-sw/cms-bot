@@ -9,7 +9,7 @@ if __file__: cmsbot_dir=dirname(dirname(abspath(__file__)))
 else: cmsbot_dir=dirname(dirname(abspath(argv[0])))
 sys.path.insert(0,cmsbot_dir)
 
-from es_utils import es_query_new
+from es_utils import es_query
 
 if __name__ == "__main__":
   from optparse import OptionParser  
@@ -33,6 +33,6 @@ if __name__ == "__main__":
   end_time = int(time()*1000)
   start_time = end_time -int(86400*1000*opts.days)
   query = "release:/%s/ AND architecture:/%s/" % (opts.release.lower(), opts.arch)
-  es_data = es_query_new('ib-dataset-*', query, start_time,end_time,scroll=True,page_size=10000)
+  es_data = es_query('ib-dataset-*', query, start_time,end_time,scroll=True,page_size=10000)
   print json.dumps(es_data, indent=2, sort_keys=True, separators=(',',': '))
 

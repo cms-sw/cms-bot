@@ -19,7 +19,7 @@ CMS_BOT_DIR = os.path.abspath(os.path.join(SCRIPT_DIR,'..'))
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
 
-from es_utils import get_payload
+from es_utils import get_payload, es_query
 
 class JobsConstructor(object):
 
@@ -34,7 +34,7 @@ class JobsConstructor(object):
         return s % kwds
 
     def getWorkflowStatsFromES(self, release='*', arch='*', lastNdays=7, page_size=10000):
-        stats = es_query_new(index='relvals_stats_*',
+        stats = es_query(index='relvals_stats_*',
                  query=format('(NOT cpu_max:0) AND (exit_code:0) AND release:%(release_cycle)s AND architecture:%(architecture)s',
                               release_cycle=release+"_*",
                               architecture=arch

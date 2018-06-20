@@ -11,7 +11,7 @@ CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
 from RelValArgs import GetMatrixOptions, FixWFArgs
-from es_utils import es_query_new, format, es_workflow_stats
+from es_utils import es_query, format, es_workflow_stats
 
 def createJob(workflow, cmssw_ver, arch):
   workflow_args = FixWFArgs(cmssw_ver, arch, workflow, GetMatrixOptions(cmssw_ver, arch))
@@ -53,7 +53,7 @@ print "Getting Workflow stats from ES....."
 stats = {}
 release_cycle=str.lower(cmssw_ver.split("_X_")[0]+"_X")
 while True:
-  stats = es_query_new(index='relvals_stats_*',
+  stats = es_query(index='relvals_stats_*',
                  query=format('(NOT cpu_max:0) AND exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
                               release_cycle=release_cycle+"_*",
                               architecture=arch,

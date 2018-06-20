@@ -2,7 +2,7 @@
 from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
-from es_utils import send_payload,get_payload_new,resend_payload
+from es_utils import send_payload,get_payload,resend_payload
 JENKINS_PREFIX="jenkins"
 try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
 except: JENKINS_PREFIX="jenkins"
@@ -68,7 +68,7 @@ for root, dirs, files in os.walk(path):
       except Exception as e:
         print "Xml parsing error",logFile , e
 running_builds_elastic={}
-content = get_payload_new('jenkins-*',query_running_builds)
+content = get_payload('jenkins-*',query_running_builds)
 if content == "":
   running_builds_elastic = []
 else:

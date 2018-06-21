@@ -165,7 +165,7 @@ parseResultsIntoDict = function( results ){
         var key = lineParts[0].trim()
         var vParts = lineParts[1].trim().split(',')
         dict[ key ] = vParts[0].trim()
-        if (!(key in LABELS))
+        if (!(key in LABELS) && !IGNORE_KEYS.includes(key))
         {
           if (vParts.length > 1){LABELS[key] = vParts[1].trim()}
           else{LABELS[key] = key}

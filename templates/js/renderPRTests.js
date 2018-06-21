@@ -162,6 +162,7 @@ parseResultsIntoDict = function( results ){
     if( line != '' ){  
         var lineParts = line.split( ';' )
         var key = lineParts[0].trim()
+        if (key in IGNORE_KEYS){continue;}
         var vParts = lineParts[1].trim().split(',')
         dict[ key ] = vParts[0].trim()
         if (!(key in LABELS))
@@ -184,7 +185,7 @@ parseResultsIntoDict = function( results ){
 //----------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------
-
+IGNORE_KEYS=["PR_NUMBER","ADDITIONAL_PRS","BASE_IB","BUILD_NUMBER"]
 BASE_IB_KEY = 'BASE_IB'
 PR_NUMBER_KEY = 'PR_NUMBER'
 BUILD_NUMBER_KEY = 'BUILD_NUMBER'

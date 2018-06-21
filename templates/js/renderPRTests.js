@@ -157,12 +157,22 @@ parseResultsIntoDict = function( results ){
 
   for ( index in lines ){
 
-    var line = lines[ index ] 
+    var line = lines[ index ].trim()
 
     if( line != '' ){  
         var lineParts = line.split( ';' )
-        dict[ lineParts[ 0 ] ] = lineParts[ 1 ]
-
+        var key = lineParts[0].trim()
+        var vParts = lineParts[1].trim().split(',')
+        dict[ key ] = vParts[0].trim()
+        if (!(key in LABELS))
+        {
+          if (vParts.length > 1){LABELS[key] = vParts[1].trim()}
+          else{LABELS[key] = key}
+          if (vParts.length > 2){LABELS2[key] = vParts[2].trim()}
+          else{LABELS2[key] = 'See Log'}
+          if (vParts.length > 3){LOCATIONS[key] = vParts[3].trim()}
+          else{LOCATIONS[key] = 'unknown.log'}
+        }
     }
 
   }

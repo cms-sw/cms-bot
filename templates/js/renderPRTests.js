@@ -66,9 +66,10 @@ getResultRow = function( resultsDict , resultsKey ){
 fillResultsTable = function( resultsDict, table ){
 
   $.each( LABELS , function( key, value ){
+    if (!IGNORE_KEYS.includes(key)){
     var resultsRow = getResultRow( resultsDict , key )
     table.append( resultsRow )
-
+    }
   })
   
 
@@ -162,7 +163,6 @@ parseResultsIntoDict = function( results ){
     if( line != '' ){  
         var lineParts = line.split( ';' )
         var key = lineParts[0].trim()
-        if (key in IGNORE_KEYS){continue;}
         var vParts = lineParts[1].trim().split(',')
         dict[ key ] = vParts[0].trim()
         if (!(key in LABELS))

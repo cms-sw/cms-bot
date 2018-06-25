@@ -74,6 +74,10 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
   "members" : CMS_SDT,
   "repositories" : { "*":"push", "!cmssw" : "pull", "!cmsdist" : "pull" }
 }
+REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
+  "members" : [ "smuzaffar", "gudrutis" ],
+  "repositories" : { "cms-sw/cmssdt-wiki ":"admin" }
+}
 #################################
 parser = ArgumentParser()
 parser.add_argument("-o", "--organization", dest="organization", help="Github Organization name e.g. cms-sw. Default is * i.e. all cms origanizations", type=str, default="*")

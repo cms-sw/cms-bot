@@ -358,27 +358,6 @@ if [ "X$DISABLE_POISON" = Xtrue ]; then
 fi
 
 # #############################################
-# test header checks tests
-# ############################################
-CHK_HEADER_LOG_RES="NOTRUN"
-CHK_HEADER_OK=true
-if [ -f $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.chk_headers ] ; then
-  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" $DRY_RUN
-  COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i' scram build -k -j $(Jenkins_GetCPU) check-headers"
-  echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
-  (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/headers_chks.log
-  echo 'END OF HEADER CHEKS LOG'
-  TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/headers_chks.log` || true
-  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/headers_chks.log` || true
-  CHK_HEADER_LOG_RES="OK"
-  CHK_HEADER_OK=true
-  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
-    CHK_HEADER_LOG_RES="ERROR"
-    CHK_HEADER_OK=false
-  fi
-fi
-echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> $RESULTS_FILE
-# #############################################
 # test compilation with GCC
 # ############################################
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
@@ -414,6 +393,28 @@ else
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE
+# #############################################
+# test header checks tests
+# ############################################
+CHK_HEADER_LOG_RES="NOTRUN"
+CHK_HEADER_OK=true
+if [ -f $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.chk_headers ] ; then
+  $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" $DRY_RUN
+  COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i' scram build -k -j $(Jenkins_GetCPU) check-headers"
+  echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
+  (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/headers_chks.log
+  echo 'END OF HEADER CHEKS LOG'
+  TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/headers_chks.log` || true
+  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/headers_chks.log` || true
+  CHK_HEADER_LOG_RES="OK"
+  CHK_HEADER_OK=true
+  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
+    CHK_HEADER_LOG_RES="ERROR"
+    CHK_HEADER_OK=false
+    BUILD_OK=false
+  fi
+fi
+echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> $RESULTS_FILE
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
@@ -694,6 +695,9 @@ fi
 TESTS_FAILED="Failed tests:"
 if [ "X$BUILD_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  Build"
+  if [ "X$CHK_HEADER_OK" = Xfalse ] ; then
+    TESTS_FAILED="$TESTS_FAILED  HeaderConsistency"
+  fi
 fi
 if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  UnitTests"

@@ -76,7 +76,7 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
   "members" : [ "smuzaffar", "gudrutis" ],
-  "repositories" : { "cms-sw/cmssdt-wiki ":"admin" }
+  "repositories" : { "cmssdt-wiki ":"admin" }
 }
 #################################
 parser = ArgumentParser()

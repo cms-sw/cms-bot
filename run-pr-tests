@@ -374,7 +374,6 @@ if [ -f $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.chk_headers ] ; t
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     CHK_HEADER_LOG_RES="ERROR"
     CHK_HEADER_OK=false
-    BUILD_OK=false
   fi
 fi
 echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> $RESULTS_FILE

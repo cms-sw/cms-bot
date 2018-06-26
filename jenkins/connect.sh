@@ -8,14 +8,16 @@ fi
 
 KTAB=${HOME}/keytabs/$(echo $TARGET | sed 's|@.*||').keytab
 if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi
-KPRINCIPAL=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)@CERN.CH
+KINIT_USER=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)
+export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
+export KRB5CCNAME=FILE:/tmp/krb5cc_$(id -u)_${KINIT_USER}_${SLAVE_TYPE}
+KPRINCIPAL=${KINIT_USER}@CERN.CH
 kinit ${KPRINCIPAL} -k -t ${KTAB}
 
 export SLAVE_UNIQUE_TARGET=""
 export SLAVE_MAX_WORKSPACE_SIZE=""
 export JENKINS_SLAVE_NAME
 SCRIPT_DIR=`dirname $0`
-export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
 if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   export SLAVE_UNIQUE_TARGET="YES"
   case ${SLAVE_TYPE} in 

@@ -52,7 +52,7 @@ for root, dirs, files in os.walk(path):
         pa=findParametersAction(root)
         if pa is not None: getParameters(pa, payload)
         jstime = root.find('startTime').text
-        payload['@timestamp'] = jstime
+        payload['@timestamp'] = int(jstime)
         payload['slave_node'] = root.find('builtOn').text
         build_result = root.find('result')
         if build_result is not None:

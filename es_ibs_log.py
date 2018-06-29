@@ -91,8 +91,8 @@ def process_ib_utests(logFile):
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
   release = pathInfo[8]
-  #dat = re.findall('\d{4}-\d{2}-\d{2}',release)[0]
-  index = "ibs"
+  week, rel_sec  = cmsswIB2Week (release)
+  index = "ibs-"+week
   document = "unittests"
   payload["release"] = release
   payload["architecture"] = architecture

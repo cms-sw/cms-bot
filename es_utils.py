@@ -5,6 +5,7 @@ from os.path import exists, join as path_join, dirname, abspath
 from os import getenv
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
+ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false'):
@@ -37,44 +38,35 @@ def es_get_passwd(passwd_file=None):
     print "Couldn't read the secrets file" , str(e)
     return ""
 
-def send_payload(index, document, id, payload, passwd_file=None):
-  es_server='es-cmssdt.cern.ch:9203'
-  if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
+def send_request(uri, payload=None, passwd_file=None, method=None):
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
-
-  url = "https://%s/%s/%s/" % (es_server,index,document)
-  if id: url = url+id
+  url = "%s/%s" % (ES_SERVER,uri)
   passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'cmssdt', passwd)
   auth_handler = urllib2.HTTPBasicAuthHandler(passman)
   opener = urllib2.build_opener(auth_handler)
   try:
     urllib2.install_opener(opener)
-    content = urllib2.urlopen(url,payload)
+    request = urllib2.Request(url, payload)
+    if method: request.get_method = lambda: method
+    content = urllib2.urlopen(request)
   except Exception as e:
     print "ERROR:",url,str(e)
     return False
+  return True
+
+def send_payload(index, document, id, payload, passwd_file=None):
+  if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
+  uri = "%s/%s/" % (index,document)
+  if id: uri = uri+id
+  if not send_request(uri, payload=payload, passwd_file=passwd_file): return False
   print "OK ",index
   return True
 
 def delete_hit(hit,passwd_file=None):
-  passwd=es_get_passwd(passwd_file)
-  if not passwd: return False
-
-  url = "http://%s/%s/%s/%s" % ('es-cmssdt.cern.ch:9203',hit["_index"], hit["_type"], hit["_id"])
-  passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
-  passman.add_password(None,url, 'cmssdt', passwd)
-  auth_handler = urllib2.HTTPBasicAuthHandler(passman)
-  opener = urllib2.build_opener(auth_handler)
-  try:
-    urllib2.install_opener(opener)
-    request = urllib2.Request(url)
-    request.get_method = lambda: 'DELETE'
-    content = urllib2.urlopen(request)
-  except Exception as e:
-    print "ERROR: ",url, str(e)
-    return False
+  uri = "%s/%s/%s" % (hit["_index"], hit["_type"], hit["_id"])
+  if not send_request(uri, passwd_file=passwd_file, method='DELETE'): return False
   print "DELETE:",hit["_id"]
   return True
 
@@ -98,8 +90,20 @@ def get_payload_wscroll(index, query):
   return es_data
 
 def get_template(index=''):
-  data = {'index':index, 'api': '/_template'}
+  data = {'index':index, 'api': '/_template', 'prefix': True}
   return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+
+def get_indexes(index='cmssdt-*'):
+  data = {'index':index, 'api': '/_cat', 'prefix': True}
+  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+
+def close_index(index):
+  if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
+  send_request(index+'/_close',method='POST')
+
+def delete_index(index):
+  if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
+  send_request(index+'/',method='DELETE')
 
 def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False):
   query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field)

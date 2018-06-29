@@ -40,20 +40,24 @@ def link_to_view(value):
     return jenkins_home + "view/" + value
 
 
+def link_to_project(value):
+    return jenkins_home + "job/" + value
+
+
 def write_markdown_file(view_data_dict, all_project_dict):
     view_name = view_data_dict['name']
 
     with open(markdown_output_dir + view_name + ".md", 'w') as output_f:
-        output_f.write(h1_str(view_name))
+
+        # write view description
+        output_f.write("# [{0}]({1})\n\n".format(view_name, link_to_view(view_name)))
         output_f.write("**View description:** {0}\n\n".format(view_data_dict['description']))
         output_f.write("**View type:** {0}\n\n".format(view_data_dict['view_type']))
-        output_f.write("[See view]({0})\n\n".format(link_to_view(view_name)))
 
         # write project description
         for project in view_data_dict['project_names']:
             project_data = all_project_dict[project]
-
-            output_f.write(h2_str(project))
+            output_f.write("## [{0}]({1})\n\n".format(project, link_to_project(project)))
 
             output_f.write("**Description:** {0}\n\n".format(
                 project_data['project_desc'] if project_data['project_desc'] else None

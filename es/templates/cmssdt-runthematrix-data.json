@@ -1,0 +1,97 @@
+{
+  "aliases": {},
+  "mappings": {
+    "cmssdt-runTheMatrix-data": {
+      "properties": {
+        "@timestamp": {
+          "format": "yyyy-MM-dd HH:mm:ss",
+          "type": "date"
+        },
+        "AverageGrowthRateRss": {
+          "type": "float"
+        },
+        "AverageGrowthRateVsize": {
+          "type": "float"
+        },
+        "AvgEventTime": {
+          "type": "float"
+        },
+        "EventThroughput": {
+          "type": "float"
+        },
+        "MaxEventTime": {
+          "type": "float"
+        },
+        "MinEventTime": {
+          "type": "float"
+        },
+        "PeakValueRss": {
+          "type": "float"
+        },
+        "PeakValueVsize": {
+          "type": "float"
+        },
+        "TotalJobCPU": {
+          "type": "float"
+        },
+        "TotalJobTime": {
+          "type": "float"
+        },
+        "TotalLoopCPU": {
+          "type": "float"
+        },
+        "architecture": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "command": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "errors": {
+          "properties": {
+            "error": {
+              "type": "string"
+            },
+            "kind": {
+              "index": "not_analyzed",
+              "type": "string"
+            }
+          }
+        },
+        "events_read": {
+          "type": "long"
+        },
+        "exception": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "exitcode": {
+          "type": "long"
+        },
+        "hostname": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "release": {
+          "index": "not_analyzed",
+          "type": "string"
+        },
+        "total_events": {
+          "type": "long"
+        },
+        "workflow": {
+          "index": "not_analyzed",
+          "type": "string"
+        }
+      }
+    }
+  },
+  "order": 0,
+  "settings": {
+    "index": {
+      "number_of_shards": "1"
+    }
+  },
+  "template": "cmssdt-ib-matrix-*"
+}

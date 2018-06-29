@@ -2132,3 +2132,4 @@ architecture=slc7_amd64_gcc630;label=CMSSW_9_3_11;type=Production;state=Announce
 architecture=slc6_amd64_gcc630;label=CMSSW_9_3_11;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc481;label=CMSSW_7_1_34;type=Production;state=Announced;prodarch=1;
 architecture=slc6_amd64_gcc700;label=CMSSW_10_2_0_pre6;type=Development;state=Announced;prodarch=0;
+architecture=slc6_amd64_gcc630;label=CMSSW_10_2_0_pre6;type=Development;state=Announced;prodarch=1;

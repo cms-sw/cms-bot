@@ -4,6 +4,7 @@ from datetime import datetime
 from os.path import exists, join as path_join, dirname, abspath
 from os import getenv
 
+CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false'):
@@ -79,7 +80,7 @@ def delete_hit(hit,passwd_file=None):
 
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
-  return urllib2.urlopen('https://cmssdt.cern.ch/SDT/cgi-bin/es_query',json.dumps(data)).read()
+  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
 
 def get_payload_wscroll(index, query):
   es_data = json.loads(get_payload(index, query,scroll=1))
@@ -95,6 +96,10 @@ def get_payload_wscroll(index, query):
     scroll_size = len(es_xdata['hits']['hits'])
     if (scroll_size > 0): es_data['hits']['hits']+=es_xdata['hits']['hits']
   return es_data
+
+def get_template(index=''):
+  data = {'index':index, 'api': '/_template'}
+  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
 
 def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False):
   query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field)

@@ -18,6 +18,7 @@ Hudson.instance.getViews().each() { vIt ->
     def viewDescription = [:]
     viewDescription['name'] = vIt.getDisplayName()
     viewDescription['view_type'] = vIt.getDescriptor().getDisplayName()
+    viewDescription['description'] = vIt.getDescription()
     viewDescription['project_names'] = []
     vIt.items.each() { pIt ->
         viewDescription['project_names'] << pIt.getDisplayName()

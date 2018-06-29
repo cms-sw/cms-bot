@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, urllib2, json
+import sys, urllib2, json, re
 from datetime import datetime
 from os.path import exists, join as path_join, dirname, abspath
 from os import getenv
@@ -92,6 +92,23 @@ def get_payload_wscroll(index, query):
 def get_template(index=''):
   data = {'index':index, 'api': '/_template', 'prefix': True}
   return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+
+def find_indexes(index):
+  idxs = {}
+  for line in get_indexes(index).split("\n"):
+    line=re.sub("\s\s+"," ",line.strip())
+    if not line: continue
+    data =line.split(" ")
+    idx = ""
+    st = data[0]
+    if st == "close":
+      idx = data[1]
+    else:
+      st = data[1]
+      idx = data[2]
+    if not st in idxs: idxs[st]=[]
+    idxs[st].append(idx)
+  return idxs
 
 def get_indexes(index='cmssdt-*'):
   data = {'index':index, 'api': '/_cat', 'prefix': True}

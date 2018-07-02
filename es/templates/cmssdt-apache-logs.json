@@ -3,9 +3,6 @@
   "mappings": {
     "cmssdt-apache-*": {
       "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
         "agent": {
           "index": "not_analyzed",
           "type": "string"

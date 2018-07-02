@@ -3,9 +3,6 @@
   "mappings": {
     "cmssdt-iwyu-stats": {
       "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
         "architecture": {
           "index": "not_analyzed",
           "type": "string"

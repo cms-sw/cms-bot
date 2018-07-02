@@ -3,9 +3,6 @@
   "mappings": {
     "cmssdt-jenkins-builds-data": {
       "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
         "build_duration": {
           "type": "long"
         },

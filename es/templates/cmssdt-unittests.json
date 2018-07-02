@@ -3,10 +3,6 @@
   "mappings": {
     "cmssdt-unittests": {
       "properties": {
-        "@timestamp": {
-          "format": "yyyy-MM-dd HH:mm:ss",
-          "type": "date"
-        },
         "architecture": {
           "index": "not_analyzed",
           "type": "string"

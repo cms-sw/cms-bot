@@ -3,9 +3,6 @@
   "mappings": {
     "cmssdt-runTheMatrix-data": {
       "properties": {
-        "@timestamp": {
-          "type": "date"
-        },
         "AverageGrowthRateRss": {
           "type": "float"
         },

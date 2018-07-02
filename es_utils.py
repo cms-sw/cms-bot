@@ -118,6 +118,10 @@ def close_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   send_request(index+'/_close',method='POST')
 
+def open_index(index):
+  if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
+  send_request(index+'/_open',method='POST')
+
 def delete_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   send_request(index+'/',method='DELETE')

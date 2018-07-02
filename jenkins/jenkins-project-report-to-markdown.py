@@ -54,6 +54,9 @@ def write_markdown_file(view_data_dict, all_project_dict):
         output_f.write("**View description:** {0}\n\n".format(view_data_dict['description']))
         output_f.write("**View type:** {0}\n\n".format(view_data_dict['view_type']))
 
+        output_f.write("---\n\n")
+        output_f.write("# Projects:\n\n")
+
         # write project description
         for project in view_data_dict['project_names']:
             project_data = all_project_dict[project]

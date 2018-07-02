@@ -1,7 +1,7 @@
 {
   "aliases": {},
   "mappings": {
-    "cmssdt-apache-*": {
+    "cmssdt-apache": {
       "properties": {
         "agent": {
           "index": "not_analyzed",
@@ -54,5 +54,5 @@
       "number_of_shards": "1"
     }
   },
-  "template": "cmssdt-apachelogs"
+  "template": "cmssdt-apache-*"
 }

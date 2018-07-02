@@ -35,5 +35,5 @@
       "number_of_shards": "1"
     }
   },
-  "template": "cmssdt-ibs"
+  "template": "cmssdt-ibs-*"
 }

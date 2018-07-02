@@ -38,5 +38,5 @@
       "number_of_shards": "1"
     }
   },
-  "template": "cmssdt-jenkins"
+  "template": "cmssdt-jenkins-*"
 }

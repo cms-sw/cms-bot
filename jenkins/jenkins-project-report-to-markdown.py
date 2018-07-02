@@ -53,7 +53,7 @@ def link_to_project(value):
 def write_markdown_file(view_data_dict, all_project_dict, markdown_output_dir):
     view_name = view_data_dict['name']
 
-    with open(markdown_output_dir + view_name.replace(' ', '-') + ".md", 'w') as output_f:
+    with open(markdown_output_dir + '/' + view_name.replace(' ', '-') + ".md", 'w') as output_f:
 
         # write view description
         output_f.write("# [{0}]({1})\n\n".format(view_name, link_to_view(view_name)))
@@ -99,7 +99,7 @@ This is automatically generated documentation of Jenkins jobs. **All changes in 
 by scheduled job.** In oder to update the documentation, edit project description in Jenkins instead.
 
 """.format(project_report_section_name)
-    with open(markdown_output_dir + "README.md", "w") as output_f:
+    with open(markdown_output_dir + "/README.md", "w") as output_f:
         output_f.write(readme_message)
 
 

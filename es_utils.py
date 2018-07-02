@@ -64,6 +64,13 @@ def send_payload(index, document, id, payload, passwd_file=None):
   print "OK ",index
   return True
 
+def send_template(name, payload, passwd_file=None):
+  if not name.startswith('cmssdt-'): name = 'cmssdt-' + name
+  uri = "_template/%s" % name
+  if not send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT'): return False
+  print "OK ",name
+  return True
+
 def delete_hit(hit,passwd_file=None):
   uri = "%s/%s/%s" % (hit["_index"], hit["_type"], hit["_id"])
   if not send_request(uri, passwd_file=passwd_file, method='DELETE'): return False

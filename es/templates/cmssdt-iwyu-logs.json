@@ -4,7 +4,6 @@
     "cmssdt-iwyu-stats": {
       "properties": {
         "@timestamp": {
-          "format": "yyyy-MM-dd HH:mm:ss",
           "type": "date"
         },
         "architecture": {
@@ -41,5 +40,5 @@
       "number_of_shards": "2"
     }
   },
-  "template": "cmssdt-iwyu-*"
+  "template": "cmssdt-iwyu"
 }

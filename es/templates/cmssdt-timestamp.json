@@ -1,0 +1,20 @@
+{
+  "aliases": {},
+  "mappings": {
+    "cmssdt-timestamp": {
+      "properties": {
+        "@timestamp": {
+          "format": "yyyy-MM-dd HH:mm:ss",
+          "type": "date"
+        }
+      }
+    }
+  },
+  "order": 0,
+  "settings": {
+    "index": {
+      "number_of_shards": "1"
+    }
+  },
+  "template": "cmssdt-*"
+}

@@ -1,7 +1,7 @@
 {
   "aliases": {},
   "mappings": {
-    "cmssdt-apache-logs": {
+    "cmssdt-apache-*": {
       "properties": {
         "@timestamp": {
           "type": "date"
@@ -57,5 +57,5 @@
       "number_of_shards": "1"
     }
   },
-  "template": "cmssdt-apache-*"
+  "template": "cmssdt-apachelogs"
 }

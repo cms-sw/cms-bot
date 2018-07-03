@@ -124,7 +124,7 @@ def create_uncategorized_view(view_dict, all_project_dict):
     return {
         'name': "Uncategorized",
         'view_type': "Custom",
-        'description': "This view contains all projects that were not categorized",
+        'description': "This view contains all projects that were not categorized.",
         'project_names': uncategorized_p_list
     }
 
@@ -156,8 +156,7 @@ def main(args):
     # loads data to dictionary
     data_dict = json.loads(txt)
 
-    print(create_uncategorized_view(data_dict['views'], data_dict['projects']))
-
+    data_dict['views']['uncategorized'] = create_uncategorized_view(data_dict['views'], data_dict['projects'])
     # create README.md for folder
     write_readme(markdown_output_dir)
 

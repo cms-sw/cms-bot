@@ -35,6 +35,7 @@ for (p in Jenkins.instance.projects) {
     projectDescription['triggers_from'] = []
     projectDescription['subprojects'] = []
     projectDescription['build_parameters'] = []
+    projectDescription['scheduled_triggers'] = []
 
     p.getUpstreamProjects().each { project -> projectDescription['upstream'] << project.getDisplayName() }
     p.getDownstreamProjects().each { project -> projectDescription['downstream'] << project.getDisplayName() }
@@ -55,6 +56,9 @@ for (p in Jenkins.instance.projects) {
                 projectDescription['build_parameters'] << buildParametersMap
             }
         }
+    }
+    p.getTriggers().each() { k, v ->
+        projectDescription['scheduled_triggers'] << [k.getDisplayName(), v.getSpec()]
     }
 
     projectMap[p.getDisplayName()] = projectDescription

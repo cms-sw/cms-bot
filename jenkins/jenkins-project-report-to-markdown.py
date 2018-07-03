@@ -92,7 +92,13 @@ def write_markdown_file(view_data_dict, all_project_dict, markdown_output_dir):
 
             cron_tabs_list = project_data['scheduled_triggers']
             cron_message = cron_tabs_list[0][1] if len(cron_tabs_list) > 0 else "Not periodically build"
-            output_f.write("**Periodic builds:** {0}\n\n".format(cron_message))
+            periodic_builds_message = """
+**Periodic builds:**
+```bash
+{0}
+```
+            """.format(cron_message)
+            output_f.write("**Periodic builds:**\n {0}\n\n".format(periodic_builds_message))
 
 
 def write_readme(markdown_output_dir):

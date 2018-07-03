@@ -107,6 +107,28 @@ by scheduled job.** In oder to update the documentation, edit project descriptio
         output_f.write(readme_message)
 
 
+def create_uncategorized_view(view_dict, all_project_dict):
+    uncategorized_p_list = []
+
+    for _, project in all_project_dict.items():
+        is_uncategorized = True
+        for _, view_data_dict in view_dict.items():
+            if view_data_dict['name'] == "All":
+                continue
+            if project['project_name'] in view_data_dict['project_names']:
+                is_uncategorized = False
+                break
+        if is_uncategorized:
+            uncategorized_p_list.append(project['project_name'])
+
+    return {
+        'name': "Uncategorized",
+        'view_type': "Custom",
+        'description': "This view contains all projects that were not categorized",
+        'project_names': uncategorized_p_list
+    }
+
+
 def main(args):
     """
     :param args:
@@ -114,6 +136,7 @@ def main(args):
         2: path to output dir
         3: path to wiki dir
     """
+    global sum_f
     data_json_f_path = args[0]
     markdown_output_dir = args[1]
     wiki_dir = args[2]
@@ -130,16 +153,18 @@ def main(args):
     if not os.path.exists(markdown_output_dir):
         os.makedirs(markdown_output_dir)
 
-    # loads date to dictionary
+    # loads data to dictionary
     data_dict = json.loads(txt)
+
+    print(create_uncategorized_view(data_dict['views'], data_dict['projects']))
+
+    # create README.md for folder
+    write_readme(markdown_output_dir)
 
     # create markdown files
     for view_key, view_data_dict in data_dict['views'].items():
         write_markdown_file(view_data_dict, data_dict['projects'], markdown_output_dir)
         views_names_list.append(view_data_dict['name'])
-
-    # creat README.md for folder
-    write_readme(markdown_output_dir)
 
     # edit summary.md in wiki dir to include generated report
     try:

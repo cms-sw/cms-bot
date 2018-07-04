@@ -73,9 +73,8 @@ def write_markdown_file(view_data_dict, all_project_dict, markdown_output_dir):
             ))
 
             # is project disabled
-            status = '<span style="color:red">disabled</span>' if project_data[
-                'is_disabled'] else '<span style="color:green">enabled</span>'
-            output_f.write("**Project is {0}.**\n\n".format(status))
+            status = 'disabled' if project_data['is_disabled'] else 'enabled'
+            output_f.write("**Project is `{0}`.**\n\n".format(status))
 
             output_f.write("**Upstream projects:**\n")
             for pr in project_data['upstream']:
@@ -102,8 +101,11 @@ def write_markdown_file(view_data_dict, all_project_dict, markdown_output_dir):
 ```bash
 {0}
 ```
-            """.format(cron_message)
-            output_f.write("**Periodic builds:**\n {0}\n\n".format(periodic_builds_message))
+
+---
+
+""".format(cron_message)
+            output_f.write(periodic_builds_message)
 
 
 def write_readme(markdown_output_dir):

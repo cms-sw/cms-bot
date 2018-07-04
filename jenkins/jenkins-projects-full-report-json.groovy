@@ -36,6 +36,7 @@ for (p in Jenkins.instance.projects) {
     projectDescription['subprojects'] = []
     projectDescription['build_parameters'] = []
     projectDescription['scheduled_triggers'] = []
+    projectDescription['is_disabled'] = p.isDisabled()
 
     p.getUpstreamProjects().each { project -> projectDescription['upstream'] << project.getDisplayName() }
     p.getDownstreamProjects().each { project -> projectDescription['downstream'] << project.getDisplayName() }

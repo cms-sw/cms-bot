@@ -72,6 +72,11 @@ def write_markdown_file(view_data_dict, all_project_dict, markdown_output_dir):
                 project_data['project_desc'] if project_data['project_desc'] else None
             ))
 
+            # is project disabled
+            status = '<span style="color:red">disabled</span>' if project_data[
+                'is_disabled'] else '<span style="color:green">enabled</span>'
+            output_f.write("**Project is {0}.**\n\n".format(status))
+
             output_f.write("**Upstream projects:**\n")
             for pr in project_data['upstream']:
                 output_f.write("* [{0}](#{0}):\n".format(pr))

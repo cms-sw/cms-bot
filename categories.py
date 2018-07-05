@@ -58,6 +58,8 @@ CMSSW_L2 = {
   "fabozzi" : ["pdmv"],
   "GurpreetSinghChahal" : ["pdmv"],
   "prebello" : ["pdmv"],
+  "pgunnell" : ["pdmv"],
+  "zhenhu" : ["pdmv"],
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],
   "pohsun" : ["alca"],

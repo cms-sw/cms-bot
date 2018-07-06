@@ -1,5 +1,9 @@
 #!/bin/bash -ex
 
+# This script waits until IB is available on CVMFS for future processing. 
+# It basicly loops over to see if selected directory is accesable.
+# If it is greater then $MAX_WAIT, it will exit with error code.
+
 IB_WEEK_DIR="/cvmfs/cms-ib.cern.ch/week0 /cvmfs/cms-ib.cern.ch/week1 /cvmfs/cms.cern.ch"
 RELEASE=$1
 ARCH=$2

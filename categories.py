@@ -52,7 +52,7 @@ CMSSW_L2 = {
   "alberto-sanchez": ["generators"],
   "davidlange6": ["operations"],
   "fabiocos": ["operations"],
-  "vanbesien" : ["dqm"],
+  "schneiml" : ["dqm"],
   "kmaeshima" : ["dqm"],
   "vazzolini" : ["dqm"],
   "fabozzi" : ["pdmv"],

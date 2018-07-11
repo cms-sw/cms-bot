@@ -23,9 +23,11 @@ KNOWN_ERRORS["relvals"]["CMSSW_9_[2-3]_.+"]={
 }
 KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_9_[2-3]_.+"])
 KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]["slc._amd64_gcc630"].pop("534.0", None)
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]={}
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc630"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]["slc._amd64_gcc630"])
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_amd64_gcc700"]={
+
+#10.0.X and 10.1.X
+KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]={}
+KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]["slc7_amd64_gcc630"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_9_[4-9]_.+"]["slc._amd64_gcc630"])
+KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_amd64_gcc700"]={
   "514.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "517.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "520.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
@@ -54,9 +56,9 @@ KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_amd64_gcc700"]={
   "25212.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "25213.17": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
 }
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_amd64_gcc700"])
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"]["534.0"]={ "step": 1, "exitcode": 256, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}
-KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc700"]={
+KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_amd64_gcc700"])
+KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"]["534.0"]={ "step": 1, "exitcode": 256, "reason" : MSG_GCC_ABI_INCOMPETIBILITY}
+KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]["slc7_amd64_gcc700"]={
   "512.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "513.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "515.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
@@ -70,15 +72,34 @@ KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc700"]={
   "528.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
   "529.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
 }
-for wf in KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc700"]:
-  KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"][wf] = deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"]["slc7_amd64_gcc700"][wf])
+for wf in KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]["slc7_amd64_gcc700"]:
+  KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"][wf] = deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]["slc7_amd64_gcc700"][wf])
 
-for wf in KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"]:
-  KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"][wf]["reason"]=MSG_ARCH_INCOMPETIBILITY
+for wf in KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"]:
+  KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"][wf]["reason"]=MSG_ARCH_INCOMPETIBILITY
 
 for xwf in ["136","2521"]:
-  for wf in KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"]:
-    if wf.startswith(xwf): KNOWN_ERRORS["relvals"]["CMSSW_[1-9][0-9]+_.+"][".+_aarch64_.+"][wf]["exitcode"]=64000
+  for wf in KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"]:
+    if wf.startswith(xwf): KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"][wf]["exitcode"]=64000
+
+#10.2.X and above
+KNOWN_ERRORS["relvals"]["CMSSW_(10_[2-9]|[1-9][1-9])_.+"]={}
+KNOWN_ERRORS["relvals"]["CMSSW_(10_[2-9]|[1-9][1-9])_.+"][".+_aarch64_.+"] = deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"])
+KNOWN_ERRORS["relvals"]["CMSSW_(10_[2-9]|[1-9][1-9])_.+"]["slc7_amd64_630"]= deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]["slc7_amd64_gcc630"])
+KNOWN_ERRORS["relvals"]["CMSSW_(10_[2-9]|[1-9][1-9])_.+"]["slc7_amd64_700"]= deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]["slc7_amd64_gcc700"])
+for wf in ["523.0", "551.0","554.0","555.0","562.0","1360.0","25210.0"]:
+  KNOWN_ERRORS["relvals"]["CMSSW_(10_[2-9]|[1-9][1-9])_.+"]["slc7_amd64_700"][wf]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_amd64_gcc700"][wf])
+
+KNOWN_ERRORS["relvals"]["CMSSW_(10_[2-9]|[1-9][1-9])_.+"]["slc6_amd64_[7-9][0-9]+"]= {
+  "523.0": { "step": 1, "exitcode": 31744, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+  "551.0": { "step": 1, "exitcode": 31744, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+  "554.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+  "555.0": { "step": 1, "exitcode": 31744, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+  "562.0": { "step": 1, "exitcode": 16640, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+  "1360.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+  "25210.0": { "step": 1, "exitcode": 34304, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
+}
+
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}

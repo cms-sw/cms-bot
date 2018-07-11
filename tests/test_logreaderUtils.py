@@ -5,7 +5,7 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
-from logreaderUtils import write_config_file, add_exception_to_config
+from logreaderUtils import transform_and_write_config_file, add_exception_to_config, ResultTypeEnum
 
 unittestlog = """
 ===== Test "Para_" ====
@@ -69,51 +69,16 @@ OK (1)
 
 
 class TestSequenceFunctions(unittest.TestCase):
+
     def test_unittestlogs(self):
         config_list = []
         custom_rule_set = [
-            {"str_to_match": "test (.*) had ERRORS", "name": "{0}{1}{2} failed"},
-            {"str_to_match": '===== Test "([^\s]+)" ====', "name": "{0}"}
+            {"str_to_match": "test (.*) had ERRORS", "name": "{0}{1}{2} failed", "control_type": ResultTypeEnum.ISSUE},
+            {"str_to_match": '===== Test "([^\s]+)" ====', "name": "{0}", "control_type": ResultTypeEnum.TEST}
         ]
         for index, l in enumerate(unittestlog.split("\n")):
             config_list = add_exception_to_config(l, index, config_list, custom_rule_set)
-        write_config_file("tmp/unittestlogs.log" + "-read_config", config_list)
-
-        # def test_reg_th(self):
-        #     for line in lines_th:
-        #         line = line.strip()
-        #         self.assertTrue(re.search(regex_th, line))
-        #         self.assertFalse(re.search(regex_td, line))
-        #     self.assertFalse(re.search(regex_th, line_files))
-        #     self.assertFalse(re.search(regex_th, line_td))
-        #
-
-
-# def readLog():
-#     config_list = []
-#     data = [0, 0, 0]
-#     # hardcoding
-#     logFile = "/home/zmatonis/Downloads/procesLogTestFolder/1234/step10.log"
-#     step = "step"
-#     json_cache = os.path.dirname(logFile) + "/logcache_" + str(step) + ".json"
-#     log_reader_config_path = logFile + "-read_config"
-#
-#     inFile = open(logFile)
-#     for index, line in enumerate(inFile):
-#         config_list = add_exception_to_config(line, index, config_list)
-#         if '%MSG-w' in line: data[1] = data[1] + 1
-#         if '%MSG-e' in line: data[2] = data[2] + 1
-#         if 'Begin processing the ' in line: data[0] = data[0] + 1
-#     inFile.close()
-#     jfile = open(json_cache, "w")
-#     json.dump(data, jfile)
-#     jfile.close()
-#
-#     log_reader_config_f = open(log_reader_config_path, "w")
-#     json.dump({"list_to_show": config_list}, log_reader_config_f)
-#     log_reader_config_f.close()
-
-# readLog()
+        transform_and_write_config_file("/tmp/unittestlogs.log" + "-read_config", config_list)
 
 
 if __name__ == '__main__':

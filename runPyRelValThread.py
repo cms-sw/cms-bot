@@ -4,7 +4,7 @@ from cmsutils import doCmd
 from es_relval_log import es_parse_log
 from RelValArgs import FixWFArgs
 import json
-from logreaderUtils import write_config_file, add_exception_to_config
+from logreaderUtils import transform_and_write_config_file, add_exception_to_config
 
 def runStep1Only(basedir, workflow, args=''):
   args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
@@ -277,7 +277,7 @@ class PyRelValsThread(object):
           jfile = open(json_cache,"w")
           json.dump(data,jfile)
           jfile.close()
-          write_config_file(log_reader_config_path,config_list)
+          transform_and_write_config_file(log_reader_config_path, config_list)
           log_processed+=1
         logData[wf]['events'][index] = data[0]
         logData[wf]['failed'][index] = data[2]

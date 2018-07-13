@@ -1,4 +1,4 @@
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS, COMMENT_CONVERSION
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, CMSSW_DEVEL_BRANCH
 from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG
@@ -371,7 +371,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   for comment in all_comments:
     commenter = comment.user.login
     comment_msg = comment.body.encode("ascii", "ignore")
-
+    if (commenter in COMMENT_CONVERSION) and (comment.created_at<=COMMENT_CONVERSION[commenter]['comments_before']):
+      orig_msg = comment_msg
+      for cmt in COMMENT_CONVERSION[commenter]['comments']:
+        comment_msg = comment_msg.replace(cmt[0],cmt[1])
+      if (orig_msg != comment_msg): print "==>Updated Comment:",commenter,comment.created_at,"\n",comment_msg
     # The first line is an invariant.
     comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ]
     first_line = comment_lines[0:1]

@@ -75,3 +75,6 @@ CMSSW_L2 = {
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + CMSSW_L2.keys())
 CMS_REPOS = set(CMSDIST_REPOS + CMSSW_REPOS + EXTERNAL_REPOS)
+from datetime import datetime
+COMMENT_CONVERSION = {}
+COMMENT_CONVERSION['kpedro88']={'comments_before': datetime.strptime('2018-07-11','%Y-%m-%d'), 'comments':[('+1', '+upgrade')]}

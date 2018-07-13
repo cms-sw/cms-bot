@@ -54,7 +54,7 @@ CMSSW_L2 = {
   "fabiocos": ["operations"],
   "schneiml" : ["dqm"],
   "kmaeshima" : ["dqm"],
-  "vazzolini" : ["dqm"],
+  "andrius-k" : ["dqm"],
   "fabozzi" : ["pdmv"],
   "GurpreetSinghChahal" : ["pdmv"],
   "prebello" : ["pdmv"],

@@ -4,7 +4,7 @@
 # ARCHITECTURE
 # RELEASE_FORMAT
 # WORKSPACE
-#voms-proxy-init
+mkdir -p $WORKSPACE/results
 ls /cvmfs/cms-ib.cern.ch || true
 SCRAM_ARCH=$ARCHITECTURE
 scram -a $ARCHITECTURE p $RELEASE_FORMAT
@@ -17,6 +17,5 @@ ls
 ./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log
 ./examLogs.csh | tee -a $WORKSPACE/results/examLogs.out
 ls
-mkdir -p $WORKSPACE/results
 cp *.log $WORKSPACE/results
 cp *.out $WORKSPACE/results

@@ -63,6 +63,7 @@ CMSSW_L2 = {
   "monttj" : ["analysis"],
   "arunhep" : ["alca"],
   "pohsun" : ["alca"],
+  "tocheng" : ["alca"],
   "kpedro88" : ["upgrade"],
   "mrodozov" : ["externals"],
   "gudrutis" : ["externals"],

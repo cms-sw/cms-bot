@@ -4,10 +4,10 @@
 # ARCHITECTURE
 # RELEASE_FORMAT
 # WORKSPACE
-voms-proxy-init
+#voms-proxy-init
 ls /cvmfs/cms-ib.cern.ch || true
 SCRAM_ARCH=$ARCHITECTURE
-scram p $RELEASE_FORMAT
+scram -a $ARCHITECTURE p $RELEASE_FORMAT
 cd $RELEASE_FORMAT/src
 eval `scram run -sh`
 git cms-addpkg HLTrigger/Configuration

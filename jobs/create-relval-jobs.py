@@ -59,7 +59,7 @@ while True:
                               architecture=arch,
                               workflows=wf_query[4:]
                              ),
-                 start_time=1000*int(time()-(86400*10)),
+                 start_time=1000*int(time()-(86400*30)),
                  end_time=1000*int(time()))
   if (not 'hits' in stats) or (not 'hits' in stats['hits']) or (not stats['hits']['hits']):
     xrelease_cycle = str.lower("_".join(cmssw_ver.split("_",4)[0:3])+"_X")

@@ -184,7 +184,8 @@ for REPOSITORY in $REPOSITORIES; do
     $CMSPKG -y upgrade
     RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     case $SCRAM_ARCH in
-    *_gcc810 )
+    *_gcc810 );;
+    *)
     if [ ! -e $RPM_CONFIG ] ; then
       echo "mutex_set_max 10000000" > $RPM_CONFIG
       dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"

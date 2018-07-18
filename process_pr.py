@@ -131,8 +131,9 @@ def ignore_issue(repo_config, repo, issue):
     return True
   if re.match(BUILD_REL, issue.title):
     return True
-  if re.match(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
-    return True
+  if issue.body:
+    if re.match(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+      return True
   return False
 
 def check_extra_labels(first_line, extra_labels):
@@ -353,7 +354,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   hold = {}
   extra_labels = {}
   last_test_start_time = None
-  body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip()
+  body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() if issue.body else ""
   abort_test = False
   need_external = False
   trigger_code_checks=False
@@ -363,7 +364,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if (issue.user.login == cmsbuild_user) and \
      re.match(ISSUE_SEEN_MSG,body_firstline):
     already_seen = issue
-    backport_pr_num = get_backported_pr(issue.body.encode("ascii", "ignore"))
+    backport_pr_num = get_backported_pr(issue.body.encode("ascii", "ignore")) if issue.body else ""
   elif re.match(REGEX_EX_CMDS, body_firstline, re.I):
     check_extra_labels(body_firstline.lower(), extra_labels)
   all_comments = [issue]

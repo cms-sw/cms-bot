@@ -31,7 +31,7 @@ for issue in issues:
   if not issue.pull_request: continue
   api_rate_limits(gh)
   backport_pr=None
-  issue_body = issue.body.encode("ascii", "ignore")
+  issue_body = issue.body.encode("ascii", "ignore") if issue.body else ""
   if (issue.user.login == CMSBUILD_GH_USER) and re.match(ISSUE_SEEN_MSG,issue_body.split("\n",1)[0].strip()):
      backport_pr=get_backported_pr(issue_body)
   else:

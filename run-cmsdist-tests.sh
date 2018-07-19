@@ -167,7 +167,6 @@ cd $CMSSW_IB/src
 # Setup all the toolfiles previously built
 SET_ALL_TOOLS=NO
 if [ $(echo $CMSSW_IB | grep '^CMSSW_9' | wc -l) -gt 0 ] ; then SET_ALL_TOOLS=YES ; fi
-set +x
 DEP_NAMES=
 CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
 for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
@@ -190,7 +189,6 @@ scram setup self
 SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_version)/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
 scram build -r 
 eval $(scram runtime -sh)
-set -x
 echo $PYTHONPATH | tr ':' '\n'
 
 # Search for CMSSW package that might depend on the compiled externals

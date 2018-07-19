@@ -94,7 +94,7 @@ def updateMilestone(repo, issue, pr, dryRun):
 def find_last_comment(issue, user, match):
   last_comment = None
   for comment in issue.get_comments():
-    if user != comment.user.login:
+    if (user != comment.user.login) or (not comment.body):
       continue
     if not re.match(match,comment.body.encode("ascii", "ignore").strip("\n\t\r "),re.MULTILINE):
       continue
@@ -103,7 +103,7 @@ def find_last_comment(issue, user, match):
   return last_comment
 
 def modify_comment(comment, match, replace, dryRun):
-  comment_msg = comment.body.encode("ascii", "ignore")
+  comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
   if match:
     new_comment_msg = re.sub(match,replace,comment_msg)
   else:
@@ -371,7 +371,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   for c in issue.get_comments(): all_comments.append(c)
   for comment in all_comments:
     commenter = comment.user.login
-    comment_msg = comment.body.encode("ascii", "ignore")
+    comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
     if (commenter in COMMENT_CONVERSION) and (comment.created_at<=COMMENT_CONVERSION[commenter]['comments_before']):
       orig_msg = comment_msg
       for cmt in COMMENT_CONVERSION[commenter]['comments']:

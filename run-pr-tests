@@ -606,9 +606,26 @@ fi
 #
 if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
+  #Some data files in cmssw_7_1/src directory are newer then cmsswdata. We make sure that we pick up these files from src instead of data.
+  #Without this hack, pat1 addOnTest fails.
+  EX_DATA_SEARCH="$CMSSW_SEARCH_PATH"
+  case $RELEASE_FORMAT in
+    CMSSW_7_1_* )
+      for xdata_pkg in Geometry/CMSCommonData Geometry/ForwardCommonData Geometry/HcalCommonData Geometry/MuonCommonData Geometry/TrackerCommonData ; do
+        if [ -e ${CMSSW_BASE}/external/${SCRAM_ARCH}/data/${xdata_pkg}/data ] ; then
+          if [ ! -e ${CMSSW_BASE}/src/${xdata_pkg}/data ] ; then
+            mkdir -p ${CMSSW_BASE}/xdata/${xdata_pkg}
+            ln -s $CMSSW_RELEASE_BASE/src/${xdata_pkg}/data ${CMSSW_BASE}/xdata/${xdata_pkg}/data
+            EX_DATA_SEARCH="${CMSSW_BASE}/xdata:$CMSSW_SEARCH_PATH"
+          fi
+        fi
+      done
+    ;;
+  esac
+  #End of 71x data hack
   echo '--------------------------------------'
   date
-  ADDON_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout 7200 addOnTests.py -j $(Jenkins_GetCPU) "
+  ADDON_CMD="CMSSW_SEARCH_PATH=$EX_DATA_SEARCH CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout 7200 addOnTests.py -j $(Jenkins_GetCPU) "
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
   date

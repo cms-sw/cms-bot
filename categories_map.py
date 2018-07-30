@@ -513,6 +513,7 @@ CMSSW_CATEGORIES={
    "DetectorDescription/Base",
    "DetectorDescription/Core",
    "DetectorDescription/DDCMS",
+   "DetectorDescription/DDVecCMS",
    "DetectorDescription/ExprAlgo",
    "DetectorDescription/OfflineDBLoader",
    "DetectorDescription/OnlineDBLoader",

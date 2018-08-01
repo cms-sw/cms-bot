@@ -119,6 +119,7 @@ makortel:
   - HeterogeneousCore
   - IgTools
   - PerfTools
+  - PhysicsTools/TensorFlow
   - RecoLocalTracker
   - RecoParticleFlow/PFTracking
   - RecoPixelVertexing

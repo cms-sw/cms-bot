@@ -35,6 +35,7 @@ CMSSW_L2 = {
   "smuzaffar": ["core", "externals"],
   "alja": ["visualization"],
   "ianna": ["geometry"],
+  "cvuosalo": ["geometry"],
   "ggovi": ["db"],
   "franzoni": ["operations","alca"],
   "cmsdoxy": ["docs"],

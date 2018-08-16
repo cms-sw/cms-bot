@@ -9,7 +9,7 @@ fi
 
 JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 DIRS_PROCESSED=
-JOBS_TO_KEEP=150
+JOBS_TO_KEEP=120
 RUNS_TO_KEEP=2
 #Keep $JOBS_TO_KEEP of these
 for dir in pull-request-integration cmsdist-pr ; do
@@ -42,18 +42,18 @@ for dir in material-budget-ref ; do
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
-#Keep the following for 15 days
+#Keep the following for 8 days
 for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-release-afs build-fwlite lizard flawfinder; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
-  find ${JENKINS_ARTIFACTS}/${dir} -mtime +15 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
-#Keep the following for 60 days
+#Keep the following for 30 days
 for dir in run-pr-format pr-code-checks ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
-  find ${JENKINS_ARTIFACTS}/${dir} -mtime +60 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+  find ${JENKINS_ARTIFACTS}/${dir} -mtime +30 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Keep the following for 8 days

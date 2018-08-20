@@ -1074,6 +1074,14 @@ OlivierBondu:
 - RecoLocalTracker/SubCollectionProducers
 - DataFormats/SiStrip
 - CalibTracker/SiStripChannelGain
+alesaggio:
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- DataFormats/SiStrip
+- CalibTracker/SiStripChannelGain
 agrohsje:
 - GeneratorInterface
 mverzett:

@@ -465,6 +465,13 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   if (detailed)    photon("pz", cName,tName);
   photon("eta", cName,tName);
   photon("phi", cName,tName);
+
+  photon("hadronicDepth1OverEm", cName,tName);
+  photon("hadronicDepth2OverEm", cName,tName);
+  photon("hadronicOverEmValid", cName,tName);
+  photon("hadTowDepth1OverEm", cName,tName);
+  photon("hadTowDepth2OverEm", cName,tName);
+  photon("hadTowOverEmValid", cName,tName);
   
   photon("e1x5", cName,tName);
   photon("e2x5", cName,tName);
@@ -618,6 +625,7 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("hcalDepth1OverEcal", cName, tName);
   electron("hcalDepth2OverEcal", cName, tName);
   electron("hcalOverEcalBc", cName, tName);
+  electron("hcalOverEcalValid", cName, tName);
   electron("eLeft", cName, tName);
   electron("eTop", cName, tName);
   electron("full5x5_sigmaEtaEta", cName, tName);
@@ -627,6 +635,7 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("full5x5_hcalDepth1OverEcal", cName, tName);
   electron("full5x5_hcalDepth2OverEcal", cName, tName);
   electron("full5x5_hcalOverEcalBc", cName, tName);
+  electron("full5x5_hcalOverEcalValid", cName, tName);
   electron("full5x5_e2x5Left", cName, tName);
   electron("full5x5_eLeft", cName, tName);
   electron("full5x5_e2x5Top", cName, tName);
@@ -761,6 +770,7 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   muonVar("outerTrack().index",cName,tName);
   muonVar("globalTrack().index",cName,tName);
   muonVar("pt",cName,tName);
+  plotvar("log10("+tName+cName+"_"+recoS+".obj.pt())");
   muonVar("eta",cName,tName);
   muonVar("phi",cName,tName);
   muonVar("calEnergy().towerS9",cName,tName, true);
@@ -1734,7 +1744,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.recoFlag()");
       plotvar("log2(max(EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.flagBits_,0.5))");
       plotvar("EcalRecHitsSorted_reducedEgamma_reducedESRecHits_"+recoS+".obj.obj.flags()");
-      
+    }
+
+    if ((stepContainsNU(step, "all") || stepContainsNU(step, "mtd") || stepContainsNU(step, "ftl")) && !stepContainsNU(step, "cosmic") ){       
       //FTL rechit plots
       plotvar("FTLRecHitsSorted_ftlRecHits_FTLBarrel_"+recoS+".obj.obj@.size()");
       plotvar("log10(FTLRecHitsSorted_ftlRecHits_FTLBarrel_"+recoS+".obj.obj.energy())");
@@ -1749,7 +1761,21 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("FTLRecHitsSorted_ftlRecHits_FTLEndcap_"+recoS+".obj.obj.time()");
       plotvar("FTLRecHitsSorted_ftlRecHits_FTLEndcap_"+recoS+".obj.obj.timeError()");      
       plotvar("log2(max(FTLRecHitsSorted_ftlRecHits_FTLEndcap_"+recoS+".obj.obj.flagBits_,0.5))");      
-    }
+      //FTL rechits with a different name
+      plotvar("FTLRecHitsSorted_mtdRecHits_FTLBarrel_"+recoS+".obj.obj@.size()");
+      plotvar("log10(FTLRecHitsSorted_mtdRecHits_FTLBarrel_"+recoS+".obj.obj.energy())");
+      plotvar("log10(FTLRecHitsSorted_mtdRecHits_FTLBarrel_"+recoS+".obj.obj.energy())", "FTLRecHitsSorted_mtdRecHits_FTLBarrel_"+recoS+".obj.obj.energy()>0.001");
+      plotvar("FTLRecHitsSorted_mtdRecHits_FTLBarrel_"+recoS+".obj.obj.time()");
+      plotvar("FTLRecHitsSorted_mtdRecHits_FTLBarrel_"+recoS+".obj.obj.timeError()");      
+      plotvar("log2(max(FTLRecHitsSorted_mtdRecHits_FTLBarrel_"+recoS+".obj.obj.flagBits_,0.5))");      
+
+      plotvar("FTLRecHitsSorted_mtdRecHits_FTLEndcap_"+recoS+".obj.obj@.size()");
+      plotvar("log10(FTLRecHitsSorted_mtdRecHits_FTLEndcap_"+recoS+".obj.obj.energy())");
+      plotvar("log10(FTLRecHitsSorted_mtdRecHits_FTLEndcap_"+recoS+".obj.obj.energy())", "FTLRecHitsSorted_mtdRecHits_FTLEndcap_"+recoS+".obj.obj.energy()>0.001");
+      plotvar("FTLRecHitsSorted_mtdRecHits_FTLEndcap_"+recoS+".obj.obj.time()");
+      plotvar("FTLRecHitsSorted_mtdRecHits_FTLEndcap_"+recoS+".obj.obj.timeError()");      
+      plotvar("log2(max(FTLRecHitsSorted_mtdRecHits_FTLEndcap_"+recoS+".obj.obj.flagBits_,0.5))");      
+   }
 
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "dt")) && !stepContainsNU(step, "cosmic") ){
@@ -1978,9 +2004,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       allTracks("cosmicDCTracks__"+recoS+"");
       allTracks("displacedGlobalMuons__"+recoS+"");
     }
-    if ((stepContainsNU(step, "all") || stepContainsNU(step, "pixeltrack")) && !stepContainsNU(step, "cosmic") ){
+    if ((stepContainsNU(step, "all") || stepContainsNU(step, "pixelTrack")) && !stepContainsNU(step, "cosmic") ){
       /// general track plots
       allTracks("pixelTracks__"+recoS+"");
+      allTracks("hiConformalPixelTracks__"+recoS+"");
     }
 
     if (stepContainsNU(step, "all")) {

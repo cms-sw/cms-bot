@@ -108,10 +108,6 @@ KNOWN_ERRORS["relvals"]["CMSSW_(10_[3-9]|[1-9][0-9])_.+"]["slc7_amd64_gcc[7-9][0
 for wf in ["523.0", "551.0","555.0","562.0","1360.0","25210.0"]:
   KNOWN_ERRORS["relvals"]["CMSSW_(10_[3-9]|[1-9][0-9])_.+"]["slc7_amd64_gcc[7-9][0-9]+"][wf]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_amd64_gcc700"][wf])
 
-KNOWN_ERRORS["relvals"]["CMSSW_(10_[3-9]|[1-9][0-9])_.+"]["slc6_amd64_gcc[7-9][0-9]+"]= {
-  "555.0": { "step": 1, "exitcode": 31744, "reason" : MSG_GCC_ABI_INCOMPETIBILITY},
-}
-
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}

@@ -20,7 +20,8 @@ CMSSW_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 def format(s, **kwds): return s % kwds
 
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
-TRIGERING_TESTS_MSG = '^(The tests are being triggered in jenkins.|Jenkins tests started for )'
+TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
+TRIGERING_TESTS_MSG1 = 'Jenkins tests started for '
 TRIGERING_CODE_CHECK_MSG = 'The code-checks are being triggered in jenkins.'
 TRIGERING_STYLE_TEST_MSG = 'The project style tests are being triggered in jenkins.'
 IGNORING_TESTS_MSG = 'Ignoring test request.'
@@ -500,7 +501,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         trigger_test_on_signature = False
       elif re.match("Pull request ([^ #]+|)[#][0-9]+ was updated[.].*", first_line):
         pull_request_updated = False
-      elif re.match( TRIGERING_TESTS_MSG, first_line):
+      elif re.match( TRIGERING_TESTS_MSG, first_line) or re.match( TRIGERING_TESTS_MSG1, first_line):
         tests_already_queued = True
         tests_requested = False
         signatures["tests"] = "started"

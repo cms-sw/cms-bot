@@ -607,7 +607,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
 
   if push_test_issue:
-    if (issue.state == "open") and ('tests' in signatures) and ((signatures["tests"] in ["approved","rejected"]) or abort_test):
+    auto_close_push_test_issue = True
+    try: auto_close_push_test_issue=repo_config.AUTO_CLOSE_PUSH_TESTS_ISSUE
+    except: pass
+    if auto_close_push_test_issue and (issue.state == "open") and ('tests' in signatures) and ((signatures["tests"] in ["approved","rejected"]) or abort_test):
       print "Closing the issue as it has been tested/aborted"
       if not dryRun: issue.edit(state="closed")
     if abort_test:

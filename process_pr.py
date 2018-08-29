@@ -20,12 +20,13 @@ CMSSW_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 def format(s, **kwds): return s % kwds
 
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
-TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
+TRIGERING_TESTS_MSG = '^(The tests are being triggered in jenkins.|Jenkins tests started for )'
 TRIGERING_CODE_CHECK_MSG = 'The code-checks are being triggered in jenkins.'
 TRIGERING_STYLE_TEST_MSG = 'The project style tests are being triggered in jenkins.'
 IGNORING_TESTS_MSG = 'Ignoring test request.'
 TESTS_RESULTS_MSG = '^\s*([-|+]1|I had the issue.*)\s*$'
 FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
+PUSH_TEST_ISSUE_MSG='^\[Jenkins CI\] Testing commit: [0-9a-f]+$'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
@@ -63,23 +64,28 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   if (repo_parts[0] == GH_CMSSW_ORGANIZATION) and (repo_parts[1] in [GH_CMSDIST_REPO,GH_CMSSW_REPO]): repo_partsX=repo_parts[1]
   else: repo_partsX=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)
+  parameters = {}
+  parameters['MATRIX_EXTRAS']=extra_wfs
+  parameters['PUB_USER']=repo_parts[0]
+  if repository.endswith("/"+GH_CMSDIST_REPO):
+    parameters['CMSDIST_PR']=pr_number
+  else:
+    parameters['PULL_REQUEST']=pr_number
+    parameters['CMSDIST_PR']=cmsdist_pr
+    parameters['ADDITIONAL_PULL_REQUESTS']=cmssw_prs
+  try:
+    if repo_config.JENKINS_SLAVE_LABEL: parameters['RUN_LABEL']=repo_config.JENKINS_SLAVE_LABEL
+  except: pass
+  create_property_file(out_file_name, parameters, dryRun)
+
+def create_property_file(out_file_name,parameters, dryRun):
   if dryRun:
     print 'Not creating cleanup properties file (dry-run): %s' % out_file_name
-  else:
-    print 'Creating properties file %s' % out_file_name
-    out_file = open( out_file_name , 'w' )
-    out_file.write( '%s=%s\n' % ( 'MATRIX_EXTRAS', extra_wfs ) )
-    out_file.write( '%s=%s\n' % ( 'PUB_USER', repo_parts[0] ) )
-    if repository.endswith("/"+GH_CMSDIST_REPO):
-      out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', pr_number ) )
-    else:
-      out_file.write( '%s=%s\n' % ( 'PULL_REQUEST', pr_number ) )
-      out_file.write( '%s=%s\n' % ( 'CMSDIST_PR', cmsdist_pr ) )
-      out_file.write( '%s=%s\n' % ( 'ADDITIONAL_PULL_REQUESTS', cmssw_prs ) )
-    try:
-      if repo_config.JENKINS_SLAVE_LABEL: out_file.write( '%s=%s\n' % ('RUN_LABEL', repo_config.JENKINS_SLAVE_LABEL))
-    except: pass
-    out_file.close()
+    return
+  print 'Creating properties file %s' % out_file_name
+  out_file = open(out_file_name , 'w' )
+  for k in parameters: out_file.write( '%s=%s\n' % (k,parameters[k]))
+  out_file.close()
 
 # Update the milestone for a given issue.
 def updateMilestone(repo, issue, pr, dryRun):
@@ -191,6 +197,16 @@ def cmssw_file2Package(repo_config, filename):
   except:
     return "/".join(filename.split("/", 2)[0:2])
 
+def get_jenkins_job(issue):
+  test_line=""
+  for line in [l.strip() for l in issue.body.encode("ascii", "ignore").split("\n")]:
+    if line.startswith("Build logs are available at:"): test_line=line
+  if test_line:
+    test_line=test_line.split("Build logs are available at: ",1)[-1].split("/")
+    if test_line[-4]=="job" and test_line[-1]=="console":
+      return test_line[-3],test_line[-2]
+  return "",""
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   if (not force) and ignore_issue(repo_config, repo, issue): return
   api_rate_limits(gh)
@@ -216,6 +232,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   last_commit_date = None
+  push_test_issue = False
   if issue.pull_request:
     pr   = repo.get_pull(prId)
     if pr.changed_files==0:
@@ -334,7 +351,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3])+"_X"
       if br: extra_rm=extra_rm+RELEASE_MANAGERS.get(br, [])
     releaseManagers=list(set(extra_rm+SPECIAL_RELEASE_MANAGERS))
-
+  else:
+    try:
+      if (repo_config.OPEN_ISSUE_FOR_PUSH_TESTS) and (issue.user.login == cmsbuild_user) and re.match(PUSH_TEST_ISSUE_MSG,issue.title):
+        signing_categories.add("tests")
+        push_test_issue = True
+    except: pass
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
@@ -451,7 +473,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Check for cmsbuild_user comments and tests requests only for pull requests
     if commenter == cmsbuild_user:
-      if not issue.pull_request: continue
+      if not issue.pull_request and not push_test_issue: continue
       sec_line = comment_lines[1:2]
       if not sec_line: sec_line = ""
       else: sec_line = sec_line[0]
@@ -489,7 +511,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if sec_line.startswith("Using externals from cms-sw/cmsdist#"): need_external = True
       elif re.match( TESTS_RESULTS_MSG, first_line):
         test_sha = sec_line.replace("Tested at: ","").strip()
-        if (test_sha != last_commit.sha) and (test_sha != 'UNKNOWN') and (not "I had the issue " in first_line):
+        if (not push_test_issue) and (test_sha != last_commit.sha) and (test_sha != 'UNKNOWN') and (not "I had the issue " in first_line):
           print "Ignoring test results for sha:",test_sha
           continue
         trigger_test_on_signature = False
@@ -510,7 +532,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         abort_test = False
       continue
 
-    if issue.pull_request:
+    if issue.pull_request or push_test_issue:
       # Check if the release manager asked for merging this.
       if (commenter in releaseManagers + CMSSW_L1) and re.match("^\s*(merge)\s*$", first_line, re.I):
         mustMerge = True
@@ -545,7 +567,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           continue
         elif (REGEX_TEST_ABORT.match(first_line) and 
               ((signatures["tests"] == "started") or 
-               ((signatures["tests"] != "pending") and (not comparison_done)))):
+               ((signatures["tests"] != "pending") and (not comparison_done) and (not push_test_issue)))):
           tests_already_queued = False
           abort_test = True
           signatures["tests"] = "pending"
@@ -582,6 +604,19 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           signatures["orp"] = "pending"
           mustClose = False
       continue
+
+  if push_test_issue:
+    if (issue.state == "open") and ('tests' in signatures) and ((signatures["tests"] in ["approved","rejected"]) or abort_test):
+      print "Closing the issue as it has been tested/aborted"
+      if not dryRun: issue.edit(state="closed")
+    if abort_test:
+      job, bnum = get_jenkins_job(issue)
+      if job and bnum:
+        params = {}
+        params["JENKINS_PROJECT_TO_KILL"]=job
+        params["JENKINS_BUILD_NUMBER"]=bnum
+        create_property_file("trigger-abort-%s" % job, params, dryRun)
+    return
 
   is_hold = len(hold)>0
   new_blocker = False

@@ -55,6 +55,8 @@ for l in unused:
   if e:
     print o
     continue
+  print "Unused file:",pfn
+  continue
   e, o = run_cmd("%s file rename %s %s.unused" % (eos_cmd, pfn, pfn))
   if e:
     print o
@@ -72,5 +74,5 @@ for unused_file in all_files:
   unused_days = int((time()-float(o))/86400)
   if unused_days<unused_days_threshold: continue
   print "Removing %s: %s days" % (unused_file, unused_days)
-  run_cmd("%s rm %s" % (eos_cmd, unused_file))
+  #run_cmd("%s rm %s" % (eos_cmd, unused_file))
 

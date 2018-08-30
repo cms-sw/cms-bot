@@ -7,7 +7,7 @@ from commands import getstatusoutput as run_cmd
 script_path = abspath(dirname(argv[0]))
 eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"
-unused_days_threshold = 60
+unused_days_threshold = 180
 try:days=int(argv[1])
 except: days=10
 if days<10: days=10

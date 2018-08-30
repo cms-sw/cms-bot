@@ -18,7 +18,7 @@ if e:
 
 jdata = json.loads(o)
 used = {}
-for o in jdata[0]['hits']['hits']:
+for o in jdata['hits']['hits']:
   used[o['_source']['lfn']]=1
 
 e, o = run_cmd("%s find -f %s" % (eos_cmd, eos_base))

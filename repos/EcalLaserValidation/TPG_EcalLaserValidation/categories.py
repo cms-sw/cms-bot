@@ -29,6 +29,7 @@ CMSSW_L2 = {
   'wang-hui' : ['ecal-laser'],
   'abrinke1' : ['ecal-laser'],
   'mkovac' : ['ecal-laser'],
+  'InnaKucher' : ['ecal-laser'],
 }
 
 CMSSW_CATEGORIES={

@@ -173,7 +173,7 @@ popd
 
 $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
-if [ $(echo $CMSSW_RELEASE_BASE | cut -d_ -f2) -gt 9 ] ; then TOOL_CONF_PACKAGES="cms-common ${TOOL_CONF_PACKAGES}" ; fi
+#if [ $(echo $CMSSW_RELEASE_BASE | cut -d_ -f2) -gt 9 ] ; then TOOL_CONF_PACKAGES="cms-common ${TOOL_CONF_PACKAGES}" ; fi
 echo DATE=`date`
 EXTERNAL_FAILED=NO
 $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES

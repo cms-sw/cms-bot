@@ -7,7 +7,7 @@ from commands import getstatusoutput as run_cmd
 script_path = abspath(dirname(argv[0]))
 eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"
-unused_days_threshold = 365
+unused_days_threshold = 180
 try:days=int(argv[1])
 except: days=30
 if days<30: days=30
@@ -55,8 +55,6 @@ for l in unused:
   if e:
     print o
     continue
-  print "Unused file:",pfn
-  continue
   e, o = run_cmd("%s file rename %s %s.unused" % (eos_cmd, pfn, pfn))
   if e:
     print o
@@ -69,10 +67,9 @@ for unused_file in all_files:
   unused_file = "%s/%s" % (eos_base, unused_file)
   e, o = run_cmd("%s fileinfo %s | grep 'Modify:' | sed 's|.* Timestamp: ||'" % (eos_cmd, unused_file))
   if e or (o == ""):
-    print o
+    print "Error: Getting timestamp for %s\n%s" % (unused_file, o)
     continue
   unused_days = int((time()-float(o))/86400)
   if unused_days<unused_days_threshold: continue
-  print "Removing %s: %s days" % (unused_file, unused_days)
+  print "Dryrun: Removing %s: %s days" % (unused_file, unused_days)
   #run_cmd("%s rm %s" % (eos_cmd, unused_file))
-

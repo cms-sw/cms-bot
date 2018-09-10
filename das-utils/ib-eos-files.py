@@ -86,7 +86,6 @@ def get_lfns_for_cmsbuild_eos(lfn_per_query=1, days=7):
   return eos_lfns.keys()
 
 def copy_to_eos(lfn, log_file):
-  print "Transferring %s" % lfn
   cmd = "%s/copy-ib-lfn-to-eos.sh %s %s >%s 2>&1" % (CMS_BOT_DIR, lfn, opts.redirector,log_file)
   run_cmd(cmd,exit_on_error=False,debug=False)
   e, o = run_cmd("grep ' echo ALL_OK' %s" % log_file, exit_on_error=False,debug=False)
@@ -172,6 +171,7 @@ def copy_lfns_to_eos(eos_lfns):
       if(len(threads) < opts.jobs):
         log_file=logdir+"/"+sha256(lfn).hexdigest()+".log"
         all_logs[log_file]=lfn
+        print "Copy (%s/%s): %s" % (already_done+len(all_logs), total_lfns, lfn)
         t = Thread(name=lfn,target=copy_to_eos, args=(lfn, log_file))
         job_monitor[lfn]=[int(time()), 0, 0,log_file]
         t.start()

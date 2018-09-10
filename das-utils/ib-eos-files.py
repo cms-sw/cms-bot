@@ -154,15 +154,19 @@ def copy_lfns_to_eos(eos_lfns):
   job_monitor = {}
   already_done =0
   total_lfns = len(eos_lfns)
+  eos_lfns_to_copy = []
   for lfn in eos_lfns:
     eos_file = "%s%s" % (eos_base, lfn)
     if eos_exists(eos_file) or (eos_exists(eos_file+".unused") and eos_rename(eos_file+".unused", eos_file)):
       already_done += 1
       print "OK (%s/%s): %s" % (already_done, total_lfns, lfn)
-      continue
-    if opts.dryRun:
+    elif opts.dryRun:
       print "DryRun: Copy %s -> %s" % (lfn, eos_file)
       continue
+    else:
+      eos_lfns_to_copy.append(lfn)
+  for lfn in eos_lfns_to_copy:
+    eos_file = "%s%s" % (eos_base, lfn)
     while True:
       threads = get_alive_threads(threads)
       if(len(threads) < opts.jobs):

@@ -126,8 +126,11 @@ def eos_size(eos_file):
   return int(out)
 
 def check_dead_transfers(threads, info, progress_check=300, init_transfer_wait=300):
+  thds_done = False
   for t in threads:
-    if not t.is_alive():continue
+    if not t.is_alive():
+      thds_done = True
+      continue
     lfn = t.name
     pcheck = int(time())-info[lfn][0]
     if pcheck<init_transfer_wait: continue
@@ -143,7 +146,8 @@ def check_dead_transfers(threads, info, progress_check=300, init_transfer_wait=3
       else:
         print "  Transfer stopped: %s %s" % (lfn, out)
         kill_xrootd(lfn)
-  return
+        thds_done = True
+  return thds_done
 
 def copy_lfns_to_eos(eos_lfns):
   threads = []
@@ -177,8 +181,7 @@ def copy_lfns_to_eos(eos_lfns):
         t.start()
         threads.append(t)
         break
-      else:
-        check_dead_transfers(threads, job_monitor)
+      elif not check_dead_transfers(threads, job_monitor):
         sleep(10)
   while len(threads)>0:
     sleep(10)

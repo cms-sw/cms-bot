@@ -361,7 +361,7 @@ CMSSW_CATEGORIES={
    "RecoBTag/FeatureTools",
    "RecoBTag/ImpactParameter",
    "RecoBTag/ImpactParameterLearning",
-   "PhysicsTools/MXNet",
+   "RecoBTag/MXNet",
    "RecoBTag/PerformanceDB",
    "RecoBTag/Records",
    "RecoBTag/SecondaryVertex",

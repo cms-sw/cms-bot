@@ -90,13 +90,13 @@ def copy_to_eos(lfn, log_file):
   run_cmd(cmd,exit_on_error=False,debug=False)
   e, o = run_cmd("grep ' echo ALL_OK' %s" % log_file, exit_on_error=False,debug=False)
   if 'ALL_OK' in o:
-    print "Success: %s" % lfn
+    print "  Success: %s" % lfn
   else:
-    print "Failed: %s" % lfn
+    print "  Failed: %s" % lfn
   return
 
 def kill_xrootd(lfn):
-  print "Requested to kill %s" % lfn
+  print "  Requested to kill %s" % lfn
   err, out = run_cmd("pgrep -l -f '.*/copy-ib-lfn-to-eos.sh %s .*'" % lfn)
   pids = ""
   for process in out.split("\n"):
@@ -104,7 +104,7 @@ def kill_xrootd(lfn):
     items = process.split(" ",1)
     pids = pids+" "+process.split(" ",1)[0]
   if pids:
-    print "Killing %s" % pids
+    print "  Killing %s" % pids
     run_cmd("kill -9 %s" % pids,exit_on_error=False,debug=False)
     run_cmd("%s rm %s%s.tmp" % (eos_cmd,eos_base, lfn),exit_on_error=False,debug=False)
 
@@ -114,7 +114,7 @@ def eos_exists(eos_file):
   return True
 
 def eos_rename(name, new_name):
-  print "Rename: %s -> %s" % (name, new_name)
+  print "  Rename: %s -> %s" % (name, new_name)
   err, out = run_cmd("%s file rename %s %s" % (eos_cmd, name, new_name),exit_on_error=False,debug=False)
   if err: return False
   return True
@@ -139,9 +139,9 @@ def check_dead_transfers(threads, info, progress_check=300, init_transfer_wait=3
       out = re.sub("^.*\[","",re.sub("\].*$","", out.split("\n")[-1].split("\r")[-1]))
       if mtime!=info[lfn][2]:
         info[lfn][2]=mtime
-        print "In progress: %s %s" % (lfn,out)
+        print "  In progress: %s %s" % (lfn,out)
       else:
-        print "Transfer stopped: %s %s" % (lfn, out)
+        print "  Transfer stopped: %s %s" % (lfn, out)
         kill_xrootd(lfn)
   return
 

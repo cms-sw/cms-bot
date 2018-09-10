@@ -670,6 +670,7 @@ CMSSW_CATEGORIES={
    "PhysicsTools/JetMCAlgos",
    "PhysicsTools/JetMCUtils",
    "PhysicsTools/KinFitter",
+   "PhysicsTools/MXNet",
    "PhysicsTools/MVAComputer",
    "PhysicsTools/MVATrainer",
    "PhysicsTools/NanoAOD",

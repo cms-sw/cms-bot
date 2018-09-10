@@ -61,7 +61,6 @@ CMSSW_L2 = {
   "pgunnell" : ["pdmv"],
   "zhenhu" : ["pdmv"],
   "monttj" : ["analysis"],
-  "arunhep" : ["alca"],
   "pohsun" : ["alca"],
   "tocheng" : ["alca"],
   "kpedro88" : ["upgrade"],

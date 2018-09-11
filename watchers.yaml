@@ -1354,3 +1354,7 @@ pieterdavid:
 - SimTracker/Configuration
 - SimTracker/Records
 - SimTracker/SiStripDigitizer
+hqucms:
+- PhysicsTools/MXNet
+- RecoBTag/MXNet
+- RecoBTag/FeatureTools

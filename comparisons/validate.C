@@ -286,7 +286,7 @@ void jets(TString type,TString algo){
     }
     jet(type, algo, "userCands_@.size");
     jet(type, algo, "pairDiscriVector_@.size");
-    for (int i = 0; i< 32; ++i){
+    for (int i = 0; i< 64; ++i){
       plotvar("min(2,max(-2,"+type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].pairDiscriVector_[%d].second))",i), "", true);
     }
   }
@@ -1045,7 +1045,7 @@ void generalTrack(TString var){
 }
 
 
-void pf(TString var,int type=-1, TString cName = "particleFlow_", bool hadDebug = false){ 
+void pf(TString var,int type=-1, TString cName = "particleFlow_", float ptMin = 0){ 
   TString v="recoPFCandidates_"+cName+"_"+recoS+".obj."+var+"()";
   if (var == "p" || var == "pt"){
     v = "log10("+v+")";
@@ -1062,23 +1062,24 @@ void pf(TString var,int type=-1, TString cName = "particleFlow_", bool hadDebug 
   }else{
     TString sel="recoPFCandidates_"+cName+"_"+recoS+".obj.particleId()==";
     sel+=type;
+    if (ptMin>0) sel+= "&&recoPFCandidates_"+cName+"_"+recoS+".obj.pt()>"+Form("%f",ptMin);
     //std::cout<<"selecting "<<sel<<std::endl;
     plotvar(v,sel);
 
   }
 }
 
-void allpf(int type=-1, TString cName  = "particleFlow_"){
-  pf("particleId",type, cName);
-  pf("eta",type, cName);
-  pf("phi",type, cName);
-  pf("pt",type, cName);
-  pf("p",type, cName);
-  pf("time",type, cName);
-  pf("time wide",type, cName);
-  if (detailed1)      pf("px",type, cName);
-  if (detailed1)      pf("py",type, cName);
-  if (detailed1)      pf("pz",type, cName);
+void allpf(int type=-1, TString cName  = "particleFlow_", float ptMin = 0){
+  pf("particleId",type, cName, ptMin);
+  pf("eta",type, cName, ptMin);
+  pf("phi",type, cName, ptMin);
+  pf("pt",type, cName, ptMin);
+  pf("p",type, cName, ptMin);
+  pf("time",type, cName, ptMin);
+  pf("time wide",type, cName, ptMin);
+  if (detailed1)      pf("px",type, cName, ptMin);
+  if (detailed1)      pf("py",type, cName, ptMin);
+  if (detailed1)      pf("pz",type, cName, ptMin);
 }
 
 
@@ -2471,6 +2472,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log10(Sum$("+v+"*("+sel2+")))");
       }
     }//stepContainsNU(step, "pfdebug")
+
+    if (stepContainsNU(step, "pfpt3")){
+      //for each sub category ...
+      for (int t=1;t!=8;t++)	allpf(t, "particleFlow_", 3);//with a pt cut
+    }
+    if (stepContainsNU(step, "pfpt10")){
+      //for each sub category ...
+      for (int t=1;t!=8;t++)	allpf(t, "particleFlow_", 10);//with a pt cut
+    }
 
     if (stepContainsNU(step, "all") || stepContainsNU(step, "pflow")){
       ///particle flow objects

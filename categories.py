@@ -54,8 +54,6 @@ CMSSW_L2 = {
   "schneiml" : ["dqm"],
   "kmaeshima" : ["dqm"],
   "andrius-k" : ["dqm"],
-  "fabozzi" : ["pdmv"],
-  "GurpreetSinghChahal" : ["pdmv"],
   "prebello" : ["pdmv"],
   "pgunnell" : ["pdmv"],
   "zhenhu" : ["pdmv"],

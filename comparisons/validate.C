@@ -13,6 +13,8 @@
 #include "TLegend.h"
 #include "TPaveText.h"
 #include "TCut.h"
+#include "TSQLResult.h"
+#include "TSQLRow.h"
 #include <cmath>
 
 
@@ -58,7 +60,38 @@ bool stepContainsNU(const TString& s, TString v){
   }
 }
 
-double plotvar(TString v,TString cut="", bool tryCatch = false){
+bool checkBranchAND(const TString& b){
+  return Events->GetBranch(b) != nullptr && refEvents->GetBranch(b) != nullptr;
+}
+
+bool checkBranchOR(const TString& b){
+  return Events->GetBranch(b) != nullptr || refEvents->GetBranch(b) != nullptr;
+}
+
+struct PlotStats {
+  int status;
+  double countDiff;
+  double ksProb;
+  int new_entries;
+  int ref_entries;
+  double new_mean;
+  double ref_mean;
+  double new_rms;
+  double ref_rms;
+  double new_xmax;
+  double ref_xmax;
+  double new_xmin;
+  double ref_xmin;
+  PlotStats() : status(-1), 
+                countDiff(0.), ksProb(0), 
+                new_entries(0), ref_entries(0), 
+                new_mean(0.), ref_mean(0.), new_rms(0.), ref_rms(0.),
+                new_xmax(0.), ref_xmax(0.), new_xmin(0.), ref_xmin(0.)
+  {}
+};
+
+PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
+  PlotStats res;
 
   std::cout<<"plotting variable: "<<v<<std::endl;
 
@@ -85,6 +118,8 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
   vn.ReplaceAll("<","LT");
   vn.ReplaceAll("$","");
   vn.ReplaceAll("&","N");
+  vn.ReplaceAll("*\"","_");
+  vn.ReplaceAll("\"!=\"\"","_");
 
   if (limit!="")
     selection *= limit;
@@ -114,11 +149,11 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
   gStyle->SetTitleH(0.06);
   TGaxis::SetExponentOffset(-0.042,-0.035,"x");
 
-  double refplotEntries = -1;
-  double plotEntries = -1;
+  res.ref_entries = -1;
+  res.new_entries = -1;
 
-  double refplotMean = -1e12;
-  double plotMean = -1e12;
+  res.ref_mean = -1e12;
+  res.new_mean = -1e12;
   
   if (refEvents!=0){
     
@@ -130,7 +165,7 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
 			refselection,
 			"",
 			Nmax);
-      } catch (...) {std::cout<<"Exception caught for refEvents"<<std::endl; delete c; return -9;}
+      } catch (...) {std::cout<<"Exception caught for refEvents"<<std::endl; delete c; res.status = -9; return res;}
     } else {
       refEvents->Draw(refv+">>"+reffn,
 		      refselection,
@@ -141,13 +176,16 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
     
     if (refplot){
       refplot->SetLineColor(1);
-      refplotEntries = refplot->GetEntries();
-      refplotMean = refplot->GetMean();//something inside the histo makes it to make more sense
+      res.ref_entries = refplot->GetEntries();
+      res.ref_mean = refplot->GetMean();//something inside the histo makes it to make more sense
+      res.ref_rms = refplot->GetRMS();
+      res.ref_xmin = refplot->GetXaxis()->GetXmin();
+      res.ref_xmax = refplot->GetXaxis()->GetXmax();
     }
-    else {std::cout<<"Comparison died "<<std::endl; if (cleanEmpties) delete c; return -1;}
+    else {std::cout<<"Comparison died "<<std::endl; if (cleanEmpties) delete c; res.status = -1; return res;}
   } else {
     std::cout<<"cannot do things for "<<refv<<std::endl;
-    return -1;
+    res.status = -1; return res;
   }
   
   TString fn=vn+"_plot";
@@ -165,15 +203,19 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
 		     selection,
 		     "",
 		     Nmax);
-      } catch (...) { std::cout<<"Exception caught for Events"<<std::endl; delete c; return -9;}
+      } catch (...) { std::cout<<"Exception caught for Events"<<std::endl; delete c; res.status = -9; return res;}
     } else {
       Events->Draw(v+">>"+fn,
 		   selection,
 		   "",
 		   Nmax);
     }
-    plotEntries = plot->GetEntries();
-    plotMean = plot->GetMean();
+    res.new_entries = plot->GetEntries();
+    res.new_mean = plot->GetMean();
+    res.new_rms = plot->GetRMS();
+    //unclear if it can really ever be different from ref_xmin or ref_xmax
+    res.new_xmin = plot->GetXaxis()->GetXmin();
+    res.new_xmax = plot->GetXaxis()->GetXmax();
     if ( plot->GetXaxis()->GetXmax() != refplot->GetXaxis()->GetXmax()){
       std::cout<<"ERROR: DRAW RANGE IS INCONSISTENT !!!"<<std::endl;
     }
@@ -181,7 +223,7 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
   }
   
   
-  double countDiff=0;
+  res.countDiff=0;
   if (refplot && plot) {
     refplot->Draw("he");
     refplot->SetMinimum(-0.05*refplot->GetMaximum() );
@@ -209,15 +251,14 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
     diff->Draw("same p e");
     
     for (int ib=1;ib<=diff->GetNbinsX();++ib){
-      countDiff+=std::abs(diff->GetBinContent(ib));
+      res.countDiff+=std::abs(diff->GetBinContent(ib));
     }
 
-    double ksscore = refplot->KolmogorovTest(plot);
-    int refentries = refplot->GetEntries();
-    int newentries = plot->GetEntries();
+    res.ksProb = refplot->KolmogorovTest(plot);
     
     TString outtext;
-    outtext.Form("Ref: %i, New: %i, De: %g, Diff: %g, 1-KS: %6.4g",refentries,newentries,refentries>0? (newentries-refentries)/double(refentries):0, countDiff,1-ksscore);
+    outtext.Form("Ref: %i, New: %i, De: %g, Diff: %g, 1-KS: %6.4g",res.ref_entries,res.new_entries,
+                 res.ref_entries>0? (res.new_entries-res.ref_entries)/double(res.ref_entries):0, res.countDiff,1-res.ksProb);
 
     TPaveText * pt = new TPaveText(0.01,0.89,0.71,0.93,"NDC");
     pt->AddText(outtext);
@@ -235,11 +276,11 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
     
   }else{ 
     std::cout<<"cannot do things for "<<v<<std::endl;
-    return -1;
+    res.status = -1; return res;
   }
-  if (countDiff!=0)
+  if (res.countDiff!=0)
     {
-      std::cout<<v<<" has "<< countDiff <<" differences"<<std::endl;
+      std::cout<<v<<" has "<< res.countDiff <<" differences"<<std::endl;
     }
   else
     {
@@ -248,7 +289,7 @@ double plotvar(TString v,TString cut="", bool tryCatch = false){
 	delete c;
       }
     }
-  return countDiff;
+  return res;
 }
 
 void jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false, bool notafunction = false){
@@ -1088,6 +1129,42 @@ void V0(TString res, TString var){
   plotvar(v);
 }
 
+
+void flatTable(const TString& shortName){
+  const TString tName = "nanoaodFlatTable_"+shortName;
+  plotvar(tName+"_"+recoS+".obj.size_");
+  PlotStats res = plotvar(tName+"_"+recoS+".obj.columns_@.size()");
+  if (res.new_mean == 0 && res.new_entries != 0){ //over/underflow case
+    std::cout<<"WARNING: Branch "<<tName<<" columns_@.size() is off scale vs ref"<<std::endl;
+  }
+  int nCols = res.ref_mean;
+  if (res.ref_rms != 0){//size varies event to event => use xmax instead
+    nCols = res.ref_xmax;
+  }
+  
+  refEvents->SetAlias("xN", tName+"_"+recoS+".obj.size_");
+  Events->SetAlias("xN", tName+"_"+recoS+".obj.size_");
+  for (int i = 0; i< nCols; ++i){
+    res = plotvar(tName+"_"+recoS+Form(".obj.columns_[%i].type", i));
+    if (res.new_mean == res.ref_mean && res.new_entries != 0 && res.ref_entries != 0){//plot only matching content
+      const char* cName = Events->Query(tName+"_"+recoS+Form(".obj.columnName(%i)", i), "", "", 1)->Next()->GetField(0);
+
+      refEvents->SetAlias(Form("xC%i", i), tName+"_"+recoS+Form(".obj.columns_[%i].firstIndex", i));
+      Events->SetAlias(Form("xC%i", i), tName+"_"+recoS+Form(".obj.columns_[%i].firstIndex", i));
+
+      if (res.new_mean == 0){
+        plotvar(tName+"_"+recoS+Form(".obj.floats_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
+      } else if (res.new_mean == 1){
+        plotvar(tName+"_"+recoS+Form(".obj.ints_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
+      } else {
+        plotvar(tName+"_"+recoS+Form(".obj.uint8s_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
+      }
+    }
+  }
+}
+
+
+
 void readFileList(TString file,TChain * ch){
   std::ifstream in(file.Data());
   TString f;
@@ -1212,6 +1289,72 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
   std::cout<<"Start making plots for Events with "<<Nnew<<" events and refEvents with "<<Nref<<" events ==> check  "<<Nmax<<std::endl;
 
   if (!stepContainsNU(step, "hlt")){
+
+    //Check if it's a NANOEDM 
+    if (checkBranchAND("nanoaodFlatTable_muonTable__"+recoS+".")){
+      const int nTabs = 52;
+      TString tNames[nTabs] = {
+        "btagWeightTable_",                      //0
+        "caloMetTable_",                         //1
+        "electronMCTable_",                      //2
+        "electronTable_",                        //3
+        "fatJetTable_",                          //4
+        "genJetAK8FlavourTable_",                //5
+        "genJetAK8Table_",                       //6
+        "genJetFlavourTable_",                   //7
+        "genJetTable_",                          //8
+        "genParticleTable_",                     //9
+        "genSubJetAK8Table_",                    //10
+        "genTable_",                             //11
+        "genVisTauTable_",                       //12
+        "genWeightsTable_",                      //13
+        "genWeightsTable_LHENamed",              //14
+        "genWeightsTable_LHEPdf",                //15
+        "genWeightsTable_LHEScale",              //16
+        "genWeightsTable_PS",                    //17
+        "isoTrackTable_",                        //18
+        "jetMCTable_",                           //19
+        "jetTable_",                             //20
+        "lheInfoTable_LHE",                      //21
+        "lheInfoTable_LHEPart",                  //22
+        "metMCTable_",                           //23
+        "metTable_",                             //24
+        "muonMCTable_",                          //25
+        "muonTable_",                            //26
+        "photonMCTable_",                        //27
+        "photonTable_",                          //28
+        "puTable_",                              //29
+        "puppiMetTable_",                        //30
+        "rawMetTable_",                          //31
+        "rhoTable_",                             //32
+        "rivetLeptonTable_",                     //33
+        "rivetMetTable_",                        //34
+        "saJetTable_",                           //35
+        "saTable_",                              //36
+        "simpleCleanerTable_electrons",          //37
+        "simpleCleanerTable_jets",               //38
+        "simpleCleanerTable_muons",              //39
+        "simpleCleanerTable_photons",            //40
+        "simpleCleanerTable_taus",               //41
+        "subJetTable_",                          //42
+        "svCandidateTable_",                     //43
+        "tauMCTable_",                           //44
+        "tauTable_",                             //45
+        "tkMetTable_",                           //46
+        "triggerObjectTable_",                   //47
+        "ttbarCategoryTable_",                   //48
+        "vertexTable_otherPVs",                  //49
+        "vertexTable_pv",                        //50
+        "vertexTable_svs",                       //51
+      };
+      for (int iT = 0; iT < nTabs; ++iT){
+        flatTable(tNames[iT]);
+      }
+      
+      std::cout<<"Done comparing nano-EDM"<<std::endl;
+      return;
+    }
+
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "error"))){
       tbr="edmErrorSummaryEntrys_logErrorHarvester__";
@@ -2886,9 +3029,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       TString b="edmTriggerResults_TriggerResults__"+recoS+".obj.paths_[";
       b+=i;
       b+="].accept()";
-      double ct=plotvar(b);
-      if (ct!=0) 
-	std::cout<<b<<" has diff count different than 0 : "<< ct<<std::endl;
+      PlotStats res = plotvar(b);
+      if (res.countDiff!=0) 
+	std::cout<<b<<" has diff count different than 0 : "<< res.countDiff<<std::endl;
       
 
     }

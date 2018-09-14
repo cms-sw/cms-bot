@@ -418,6 +418,11 @@ echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 ##FIXME: Remove the following das_client.py link once all IBs use das_client wrapper
 set +x ; eval $(scram run -sh) ;set -x
+#Drop RELEASE_TOP/external/SCRAM_ARCH/data if LOCALTOP/external/SCRAM_ARCH/data exists
+#to make sure external packages removed files are not picked up from release directory
+if [ "X$CMSDIST_PR" != "X" ] ; then
+  export CMSSW_SEARCH_PATH=$(echo $CMSSW_SEARCH_PATH | tr ':' '\n'  | grep -v "$CMSSW_RELEASE_BASE/external/" | tr '\n' ':')
+fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH
 which das_client
 

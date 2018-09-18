@@ -77,7 +77,11 @@ TTbar13wf11325p0 11325.0_TTbar_13_unsch+TTbar_13*/step3.root RECO
 TTbar13reMINIAODwf1325p5 1325.5_TTbar_13_reminiaod*/step2.root PAT
 ZEE13reMINIAODwf1325p5 1325.5_ProdZEE_13_reminiaod*/step2.root PAT
 TTbar13reMINIAODwf1325p51 1325.51_TTbar_13_94Xreminiaod*/step2.root PAT
-TTbar13nanoAODwf1325p7 1325.7_TTbar_13_94X*NanoAOD*/step2.root DQM
+TTbar13nanoAODin2017wf1325p6 1325.6_TTbar_13_94X*NanoAOD*NANOAOD*/step2.root DQM
+TTbar13nanoEDMin2017wf1325p7 1325.7_TTbar_13_94X*NanoAOD*NANOEDM*/step2.root DQM
+TTbar13nanoEDMin2017wf1325p8 1325.8_TTbar_13_94X*NanoAOD*NANOEDM*/step2.root DQM
+TTbar13nanoEDMin2017wf1325p9 1325.9_TTbar_13_92X*NanoAOD*NANOEDM*/step2.root DQM
+ZEE13nanoEDMin2016wf1329p1 1329.1_ZEE_13_80X*NanoAOD*NANOEDM*/step2.root DQM
 ZMM13TeVwf1330p0 1330.0_ZMM_13*/step3.root RECO
 H125GG13TeVwf1332p0 1332.0_H125GGgluonfusion_13*/step3.root RECO
 VBFH125BB13TeVwf1363p0 1363.0_VBFHToBB_M125_Pow_py8_Evt_13*/step3.root RECO
@@ -122,34 +126,37 @@ RunMET2016Ewf136p762 136.762_RunMET2016E+*/step3.root reRECO
 RunSinglePh2016Ewf136p766 136.766_RunSinglePh2016E+*/step3.root reRECO
 RunJetHT2016Hwf136p772 136.772_RunJetHT2016H+*/step3.root reRECO
 RunJetHT2016HreMINIAODwf136p7721 136.7721_RunJetHT2016H_reminiaod+*/step2.root PAT
+RunJetHT2016HnanoEDMwf136p7722 136.7722_RunJetHT2016H*NANOEDM*/step2.root DQM
 #
 # 2017 data
 #
 RunHLTPhy2017Bwf136p78 136.78_RunHLTPhy2017B+*/step3.root reRECO
 RunDoubleEG2017Bwf136p781 136.781_RunDoubleEG2017B+*/step3.root reRECO
 RunDoubleMuon2017Bwf136p782 136.782_RunDoubleMuon2017B+*/step3.root reRECO
-RunJetHT2017B136p783 136.783_RunJetHT2017B+*/step3.root reRECO
-RunMET2017B136p784 136.784_RunMET2017B+*/step3.root reRECO
-RunSingleMuon2017B136p787 136.787_RunSingleMu2017B+*/step3.root reRECO
-RunSinglePh2017B136p788 136.788_RunSinglePh2017B+*/step3.root reRECO
+RunJetHT2017Bwf136p783 136.783_RunJetHT2017B+*/step3.root reRECO
+RunMET2017Bwf136p784 136.784_RunMET2017B+*/step3.root reRECO
+RunSingleMuon2017Bwf136p787 136.787_RunSingleMu2017B+*/step3.root reRECO
+RunSinglePh2017Bwf136p788 136.788_RunSinglePh2017B+*/step3.root reRECO
+RunJetHT2017CnanoEDMwf136p7952 136.7952_RunJetHT2017C*NANOEDM*/step2.root DQM
 RunDoubleEG2017Fwf136p829 136.829_RunDoubleEG2017F+*/step3.root reRECO
 RunDoubleMuon2017Fwf136p83 136.83_RunDoubleMuon2017F+*/step3.root reRECO
-RunJetHT2017F136p831 136.831_RunJetHT2017F+*/step3.root reRECO
-RunJetHT2017FreMINIAOD136p8311 136.8311_RunJetHT2017F_reminiaod+*/step2.root PAT
-RunMET2017F136p832 136.832_RunMET2017F+*/step3.root reRECO
+RunJetHT2017Fwf136p831 136.831_RunJetHT2017F+*/step3.root reRECO
+RunJetHT2017FreMINIAODwf136p8311 136.8311_RunJetHT2017F_reminiaod+*/step2.root PAT
+RunMET2017Fwf136p832 136.832_RunMET2017F+*/step3.root reRECO
 #
 # 2018 data
 #
 RunHLTPhy2018Awf136p849 136.849_RunHLTPhy2018A+*/step3.root reRECO
 RunEGamma2018Awf136p85 136.85_RunEGamma2018A+*/step3.root reRECO
 RunDoubleMuon2018Awf136p851 136.851_RunDoubleMuon2018A+*/step3.root reRECO
-RunJetHT2018A136p852 136.852_RunJetHT2018A+*/step3.root reRECO
-RunMET2018A136p853 136.853_RunMET2018A+*/step3.root reRECO
-RunSingleMu2018A136p855 136.855_RunSingleMu2018A+*/step3.root reRECO
+RunJetHT2018Awf136p852 136.852_RunJetHT2018A+*/step3.root reRECO
+RunJetHT2018AnanoEDMwf136p8521 136.8521_RunJetHT2018A*NANOEDM*/step2.root DQM
+RunMET2018Awf136p853 136.853_RunMET2018A+*/step3.root reRECO
+RunSingleMu2018Awf136p855 136.855_RunSingleMu2018A+*/step3.root reRECO
 RunEGamma2018Bwf136p862 136.862_RunEGamma2018B+*/step3.root reRECO
 RunDoubleMuon2018Bwf136p863 136.863_RunDoubleMuon2018B+*/step3.root reRECO
-RunJetHT2018B136p864 136.864_RunJetHT2018B+*/step3.root reRECO
-RunMET2018B136p865 136.865_RunMET2018B+*/step3.root reRECO
+RunJetHT2018Bwf136p864 136.864_RunJetHT2018B+*/step3.root reRECO
+RunMET2018Bwf136p865 136.865_RunMET2018B+*/step3.root reRECO
 #
 # 2017 workflows follow
 #
@@ -207,26 +214,44 @@ TTbar13TeV2017AllNewwf10824p0 10824.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017AllN
 # 2018 workflows follow
 #
 SingleElectronPt35in2018wf10802p0 10802.0_SingleElectronPt35+SingleElectronPt35_pythia8_2018*_GenSimFull*+*/step3.root RECO
+SingleElectronPt35in2018nanoEDMwf10802p0 10802.0_SingleElectronPt35+SingleElectronPt35_pythia8_2018*_GenSimFull*+*/step6.root NANO
 SingleElectronPt1000in2018wf10803p0 10803.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2018*_GenSimFull*+*/step3.root RECO
+SingleElectronPt1000in2018nanoEDMwf10803p0 10803.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2018*_GenSimFull*+*/step6.root NANO
 SingleGammaPt10in2018wf10804p0 10804.0_SingleGammaPt10+SingleGammaPt10_pythia8_2018*_GenSimFull*+*/step3.root RECO
+SingleGammaPt10in2018nanoEDMwf10804p0 10804.0_SingleGammaPt10+SingleGammaPt10_pythia8_2018*_GenSimFull*+*/step6.root NANO
 SingleGammaPt35in2018wf10805p0 10805.0_SingleGammaPt35+SingleGammaPt35_pythia8_2018*_GenSimFull*+*/step3.root RECO
+SingleGammaPt35in2018wfnanoEDM10805p0 10805.0_SingleGammaPt35+SingleGammaPt35_pythia8_2018*_GenSimFull*+*/step6.root NANO
 SingleMuPt10in2018wf10807p0 10807.0_SingleMuPt10+SingleMuPt10_pythia8_2018*_GenSimFull*+*/step3.root RECO
+SingleMuPt10in2018nanoEDMwf10807p0 10807.0_SingleMuPt10+SingleMuPt10_pythia8_2018*_GenSimFull*+*/step6.root NANO
 SingleMuPt1000in2018wf10809p0 10809.0_SingleMuPt1000+SingleMuPt1000_pythia8_2018*_GenSimFull*+*/step3.root RECO
+SingleMuPt1000in2018nanoEDMwf10809p0 10809.0_SingleMuPt1000+SingleMuPt1000_pythia8_2018*_GenSimFull*+*/step6.root NANO
 TenMuExtendedE2018wf10811p0 10811.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2018*_GenSimFull*+*/step3.root RECO
+TenMuExtendedE2018nanoEDMwf10811p0 10811.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2018*_GenSimFull*+*/step6.root NANO
 TenMuE2018wf10821p0 10821.0_TenMuE_0_200+TenMuE_0_200_pythia8_2018*_GenSimFull*+*/step3.root RECO
+TenMuE2018nanoEDMwf10821p0 10821.0_TenMuE_0_200+TenMuE_0_200_pythia8_2018*_GenSimFull*+*/step6.root NANO
 MinBias13TeV2018wf10823p0 10823.0_MinBias_13+MinBias_13TeV_pythia8_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
+MinBias13TeV2018nanoEDMwf10823p0 10823.0_MinBias_13+MinBias_13TeV_pythia8_TuneCUETP8M1_2018*_GenSimFull*+*/step6.root NANO
 TTbar13TeV2018wf10824p0 10824.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
+TTbar13TeV2018nanoEDMwf10824p0 10824.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step6.root NANO
 ZEE13TeV2018wf10825p0 10825.0_ZEE_13+ZEE_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
+ZEE13TeV2018nanoEDMwf10825p0 10825.0_ZEE_13+ZEE_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step6.root NANO
 QCD600to800in13TeV2018wf10826p0 10826.0_QCD_Pt_600_800_13+QCD_Pt_600_800_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
+QCD600to800in13TeV2018nanoEDMwf10826p0 10826.0_QCD_Pt_600_800_13+QCD_Pt_600_800_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step6.root NANO
 QCD13TeVPt3Ts3T5in2018wf10859p0 10859.0_QCD_Pt_3000_3500_13+QCD_Pt_3000_3500_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
+QCD13TeVPt3Ts3T5in2018nanoEDMwf10859p0 10859.0_QCD_Pt_3000_3500_13+QCD_Pt_3000_3500_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step6.root NANO
 T1ttttMGl1500in2018wf10870p0 10870.0_SMS-T1tttt_mGl-1500_mLSP-100_13+SMS-T1tttt_mGl-1500_mLSP-100_13TeV-pythia8_2018*_GenSimFull*+*/step3.root RECO
+T1ttttMGl1500in2018nanoEDMwf10870p0 10870.0_SMS-T1tttt_mGl-1500_mLSP-100_13+SMS-T1tttt_mGl-1500_mLSP-100_13TeV-pythia8_2018*_GenSimFull*+*/step6.root NANO
 QCD13TeVFlatPt15s3000in2018wf10871p0 10871.0_QCD_FlatPt_15_3000HS_13+QCDForPF_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
+QCD13TeVFlatPt15s3000in2018nanoEDMwf10871p0 10871.0_QCD_FlatPt_15_3000HS_13+QCDForPF_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step6.root NANO
 RSKKGl3000in2018wf10873p0 10873.0_RSKKGluon_m3000GeV_13+RSKKGluon_m3000GeV_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step3.root RECO
+RSKKGl3000in2018nanoEDMwf10873p0 10873.0_RSKKGluon_m3000GeV_13+RSKKGluon_m3000GeV_13TeV_TuneCUETP8M1_2018*_GenSimFull*+*/step6.root NANO
 #
 #  2018 MC with PU
 #
 TTbar13TeVPU2018wf11024p0 11024.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2018[DP]*U_GenSimFull*+*/step3.root RECO
+TTbar13TeVPU2018nanoEDMwf11024p0 11024.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2018[DP]*U_GenSimFull*+*/step5.root NANO
 ZEE13TeVPU2018wf11025p0 11025.0_ZEE_13+ZEE_13TeV_TuneCUETP8M1_2018[DP]*U_GenSimFull*+*/step3.root RECO
+ZEE13TeVPU2018nanoEDMwf11025p0 11025.0_ZEE_13+ZEE_13TeV_TuneCUETP8M1_2018[DP]*U_GenSimFull*+*/step5.root NANO
 TTbar13TeVPUpmx2018wf250202p18 250202.18_TTbar_13*/step3.root RECO
 TTbar13TeVPUppmx2018wf250202p181 250202.181_TTbar_13*/step4.root RECO
 ProdTTbar13TeVPUpmx2018wf250202p118 250202.118_ProdTTbar_13*/step3.root RECO

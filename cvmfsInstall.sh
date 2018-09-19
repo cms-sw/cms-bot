@@ -97,20 +97,20 @@ fi
 cp -f $WORKSPACE/cms-bot/cvmfsdirtab $BASEDIR/.cvmfsdirtab
 
 #Recreate the links
-#for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
+for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
 RUN_GC="NO"
-#for t in nweek- ; do
-#  for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
-#    if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
-#      N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
-#      ln -s $BASEDIR/$w $BASEDIR/week$N
-#    else
-#      echo "Deleting obsolete week $w"
-#      rm -rf $BASEDIR/$w
-#      RUN_GC="YES"
-#    fi
-#  done
-#done
+for t in nweek- ; do
+  for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
+    if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
+      N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
+      ln -s $BASEDIR/$w $BASEDIR/week$N
+    else
+      echo "Deleting obsolete week $w"
+      rm -rf $BASEDIR/$w
+      RUN_GC="YES"
+    fi
+  done
+done
 
 dockerrun()
 {
@@ -246,21 +246,21 @@ done
 echo "/cvmfs/cms.cern.ch" >> $BASEDIR/scramdb/etc/scramrc/links.db
 
 #Recreate the links
-#for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
-#for t in nweek- ; do
-#  for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
-#    N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
-#    if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
-#      ln -s $BASEDIR/$w $BASEDIR/week$N
-#      [ -f $BASEDIR/week$N/etc/scramrc/links.db ] || continue
-#      echo "$BASEDIR/scramdb" > $BASEDIR/week$N/etc/scramrc/links.db
-#    else
-#      echo "Deleting obsolete week $w"
-#      rm -rf $BASEDIR/$w
-#      RUN_GC=YES
-#    fi
-#  done
-#done
+for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
+for t in nweek- ; do
+  for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
+    N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
+    if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
+      ln -s $BASEDIR/$w $BASEDIR/week$N
+      [ -f $BASEDIR/week$N/etc/scramrc/links.db ] || continue
+      echo "$BASEDIR/scramdb" > $BASEDIR/week$N/etc/scramrc/links.db
+    else
+      echo "Deleting obsolete week $w"
+      rm -rf $BASEDIR/$w
+      RUN_GC=YES
+    fi
+  done
+done
 echo "Run GC: $RUN_GC"
 
 # Write everything in the repository

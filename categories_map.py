@@ -76,6 +76,7 @@ CMSSW_CATEGORIES={
  "reconstruction": [
    "CommonTools/CandAlgos",
    "CommonTools/CandUtils", "CommonTools/Clustering1D",
+   "CommonTools/MVAUtils",
    "CommonTools/ParticleFlow", "CommonTools/PileupAlgos",
    "CommonTools/RecoAlgos", "CommonTools/Statistics",
    "CommonTools/TrackerMap",
@@ -625,6 +626,7 @@ CMSSW_CATEGORIES={
    "DPGAnalysis/SiStripTools",
    "CommonTools/CandAlgos", "CommonTools/CandUtils",
    "CommonTools/Clustering1D",
+   "CommonTools/MVAUtils",
    "CommonTools/ParticleFlow", "CommonTools/PileupAlgos",
    "CommonTools/RecoUtils",
    "CommonTools/Statistics", "CommonTools/TriggerUtils",

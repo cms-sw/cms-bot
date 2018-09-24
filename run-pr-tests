@@ -148,6 +148,8 @@ if [ "X$REQ_OK" = "XFalse" ] ; then
     fi
   popd
 fi
+BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
+ANALOG_CMD="($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $RELEASE_FORMAT for $SCRAM_ARCH" $DRY_RUN
 cd $WORKSPACE/$RELEASE_FORMAT/src
 git config --global --replace-all merge.renamelimit 2500
@@ -263,14 +265,17 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
-  CLANG_CMD="scram b vclean && USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j $(Jenkins_GetCPU *2) COMPILER='llvm compile'"
+  CLANG_CMD="scram b vclean && USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j $(Jenkins_GetCPU *2) COMPILER='llvm compile' BUILD_LOG=yes && scram build outputlog && ${ANALOG_CMD}"
   echo $CLANG_CMD > $WORKSPACE/buildClang.log
 
   (eval $CLANG_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
-
+  if [ -d ${BUILD_LOG_DIR}/html ] ; then
+    mv ${BUILD_LOG_DIR}/html ${CMSSW_BASE}/clang-logs
+    echo 'CLANG_LOG;OK,Clang Warnings,See Log,clang-logs' >> $RESULTS_FILE
+  fi
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when testing compilation with clang"
     echo 'CLANG_COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
@@ -381,14 +386,13 @@ echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chk
 # test compilation with GCC
 # ############################################
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
-BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
-ANALOG_CMD="($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD}"
 if [ "X$CMSDIST_PR" != X -a $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD} && scram b -k -j $(Jenkins_GetCPU) edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
+if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${CMSSW_BASE}/build-logs ; fi
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
 
@@ -404,8 +408,8 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
 else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
-    if [ -e ${BUILD_LOG_DIR}/html/index.html ] ; then
-      if [ $(grep '<td> *[1-9][0-9]* *</td>' ${BUILD_LOG_DIR}/html/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
+    if [ -e ${CMSSW_BASE}/build-logs/index.html ] ; then
+      if [ $(grep '<td> *[1-9][0-9]* *</td>' ${CMSSW_BASE}/build-logs/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
         BUILD_LOG_RES="OK"
       fi
     elif [ ! -d ${BUILD_LOG_DIR}/src ] ; then
@@ -734,8 +738,7 @@ fi
 
 cd $WORKSPACE
 mkdir -p upload
-if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html upload/build-logs ; fi
-for f in runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
+for f in build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
   [ -e $f ] && mv $f upload/$f
 done
 [ -e upload/renderPRTests.js ] && mkdir -p upload/js && mv upload/renderPRTests.js upload/js/

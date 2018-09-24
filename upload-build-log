@@ -6,24 +6,20 @@ WORKSPACE=$1
 LOG_SRC=$2
 LOG_DES=$3
 LOCAL_LOGDIR=$WORKSPACE/cmsBuild_BUILD_logs
+mkdir ${LOCAL_LOGDIR}
+if [ -f $WORKSPACE/summary.html ] ; then cp $WORKSPACE/summary.html ${LOCAL_LOGDIR}/ ; fi
+if [ -f $WORKSPACE/renderPRTests.js ] ; then cp $WORKSPACE/renderPRTests.js ${LOCAL_LOGDIR}/ ; fi
+if [ -f $WORKSPACE/testsResults.txt ] ; then cp $WORKSPACE/testsResults.txt ${LOCAL_LOGDIR}/ ; fi
 if [ -d "${LOG_SRC}" ] ; then
-  mkdir ${LOCAL_LOGDIR}
-  HAS_LOGS=NO
-  if [ -f $WORKSPACE/summary.html ] ; then cp $WORKSPACE/summary.html ${LOCAL_LOGDIR}/ ; fi
-  if [ -f $WORKSPACE/renderPRTests.js ] ; then cp $WORKSPACE/renderPRTests.js ${LOCAL_LOGDIR}/ ; fi
-  if [ -f $WORKSPACE/testsResults.txt ] ; then cp $WORKSPACE/testsResults.txt ${LOCAL_LOGDIR}/ ; fi
   pushd $LOG_SRC
     for log in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|^./||') ; do
       dir=$(dirname $log)
       mkdir -p ${LOCAL_LOGDIR}/${dir}
       mv $log ${LOCAL_LOGDIR}/${dir}/
-      HAS_LOGS=YES
       [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
     done
   popd
-  if [ "$HAS_LOGS" = "YES" ] ; then
-    source $CMS_BOT_DIR/jenkins-artifacts || true
-    send_jenkins_artifacts ${LOCAL_LOGDIR}/ ${LOG_DES}/ || true
-  fi
 fi
+source $CMS_BOT_DIR/jenkins-artifacts || true
+send_jenkins_artifacts ${LOCAL_LOGDIR}/ ${LOG_DES}/ || true
 

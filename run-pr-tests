@@ -272,7 +272,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
-  ALL_CLANG_WARNINGS=`grep ": warning: " $WORKSPACE/buildClang.log | grep "/$RELEASE_FORMAT/" | sed "s|.*/$RELEASE_FORMAT/src/||;s|:.*||" | sort -u)
+  ALL_CLANG_WARNINGS=$(grep ": warning: " $WORKSPACE/buildClang.log | grep "/$RELEASE_FORMAT/" | sed "s|.*/$RELEASE_FORMAT/src/||;s|:.*||" | sort -u)
   clang_new_warnings_status="OK"
   touch $WORKSPACE/clang-new-warnings
   for i in $ALL_CLANG_WARNINGS

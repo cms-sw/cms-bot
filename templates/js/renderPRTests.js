@@ -64,8 +64,9 @@ getResultRow = function( resultsDict , resultsKey ){
  * Fills the results table
  */
 fillResultsTable = function( resultsDict, table ){
-
-  $.each( LABELS , function( key, value ){
+  var keys = Object.keys(LABELS);
+  keys.sort();
+  $.each( keys , function( key, value ){
     if (!IGNORE_KEYS.includes(key)){
     var resultsRow = getResultRow( resultsDict , key )
     table.append( resultsRow )

@@ -66,15 +66,12 @@ getResultRow = function( resultsDict , resultsKey ){
 fillResultsTable = function( resultsDict, table ){
   var keys = Object.keys(LABELS);
   keys.sort();
-  $.each( keys , function( key, value ){
+  $.each (keys, function(index, key){
     if (!IGNORE_KEYS.includes(key)){
     var resultsRow = getResultRow( resultsDict , key )
     table.append( resultsRow )
     }
   })
-  
-
-
 }
 
 /**

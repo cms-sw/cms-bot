@@ -1,6 +1,7 @@
 #!/bin/bash
 cat <<EOF
 #!/bin/bash -ex
+klist || true
 hostname
 cvmfs_config probe || true
 for cvmfs_dir in \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do

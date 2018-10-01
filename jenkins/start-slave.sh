@@ -20,6 +20,8 @@ SCRIPT_DIR=`dirname $0`
 if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then ssh -n $SSH_OPTS $TARGET rm -rf $WORKSPACE ; fi
 ssh -n $SSH_OPTS $TARGET mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 ssh -n $SSH_OPTS $TARGET rm -f $WORKSPACE/cmsos $WORKSPACE/slave.jar
+REMOTE_USER_ID=$(ssh -n $SSH_OPTS $TARGET id -u)
+KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
 if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   case ${SLAVE_TYPE} in
@@ -74,4 +76,5 @@ if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then
   java ${JENKINS_CLI_OPTS} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
 fi
 scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar
+scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 ssh $SSH_OPTS $TARGET java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp

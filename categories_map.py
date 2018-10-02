@@ -24,6 +24,7 @@ CMSSW_CATEGORIES={
    "FWCore/Integration", "FWCore/MessageLogger",
    "FWCore/MessageService",
    "FWCore/Modules", "FWCore/ParameterSet",
+   "FWCore/ParameterSetReader",
    "FWCore/PluginManager",
    "FWCore/PrescaleService", "FWCore/Python",
    "FWCore/PythonParameterSet", "FWCore/PythonFramework",

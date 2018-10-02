@@ -18,7 +18,10 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   esac
   if [ -e /etc/tnsnames.ora ] ; then
     DOCKER_OPT="$DOCKER_OPT -v /etc/tnsnames.ora:/etc/tnsnames.ora "
-  fi 
+  fi
+  if [ "$KRB5CCNAME" = "X" ] ; then 
+    DOCKER_OPT="$DOCKER_OPT -e KRB5CCNAME=$KRB5CCNAME "
+  fi
   DOCK_ARGS="voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
   echo "Passing to docker the args: "$DOCK_ARGS
   docker run --rm -h `hostname -f` $DOCKER_OPT \
@@ -33,7 +36,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     -e USER=$USER \
     -e BUILD_NUMBER=$BUILD_NUMBER \
     -e JOB_NAME=$JOB_NAME \
-    -e KRB5CCNAME=$KRB5CCNAME $DOCKER_EXTRA_ENV \
+    $DOCKER_EXTRA_ENV \
     $DOCKER_IMG sh -c "$DOCK_ARGS"
 else
   voms-proxy-init -voms cms -valid 24:00 || true

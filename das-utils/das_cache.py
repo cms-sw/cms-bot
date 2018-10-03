@@ -20,6 +20,7 @@ def read_json(infile):
     return json.load(json_data)
 
 def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0):
+  field_map = {'file':'name', 'lumi':'number', 'site':'name', 'run':'run_number', 'dataset':'name'}
   sha=basename(outfile)
   fields = query.split(" ",1)[0].split(",")
   field_filter = ""
@@ -43,10 +44,21 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata):
     print "Failed: %s %s\n  %s" % (sha, query, out)
     return False
+  all_ok = True
+  for fx in fields:
+    if not fx in field_map:
+      print "WARNING: Please add mapping for field: ",fx
+      continue
+    fn = field_map[fx]
+    for item in jdata['data']:
+      if (not fx in item) or (not item[fx]) or (not fn in item[fx][0]) or (item[fx][0][fn] is None): all_ok = False
+  if not all_ok:
+    print "  DAS WRONG Results:",fields,sha,out
+    return False
   results = {'mtime' : time(), 'results' : []}
   for item in jdata["data"]:
-    if (not field in item) or (not item[field]) or (not 'name' in item[field][0]): continue
-    results['results'].append(item[field][0]["name"])
+    if (not field in field_map) or (not field in item) or (not item[field]) or (not field_map[field] in item[field][0]): continue
+    results['results'].append(item[field][0][field_map[field]])
   print "  Results:",sha,len(results['results'])
   if (len(results['results'])==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()

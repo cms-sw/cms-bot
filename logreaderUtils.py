@@ -18,7 +18,6 @@ all_controls = [
 
 def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
     default_rules_list = [
-
         {
             # will ignore " IgnoreCompletely" messages
             "str_to_match": "Begin(?! IgnoreCompletely)(.*Exception)",
@@ -28,6 +27,11 @@ def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
         {
             "str_to_match": "edm::service::InitRootHandlers",
             "name": "Segmentation fault",
+            "control_type": ResultTypeEnum.ISSUE
+        },
+        {
+            "str_to_match": "sig_dostack_then_abort",
+            "name": "sig_dostack_then_abort",
             "control_type": ResultTypeEnum.ISSUE
         }
     ]

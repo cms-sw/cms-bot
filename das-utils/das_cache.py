@@ -103,13 +103,14 @@ if __name__ == "__main__":
           for q in qs: ofile.write("%s\n" % q)
           ofile.close()
 
+  xqueries = {}
   for query in uqueries:
     if 'site=T2_CH_CERN' in query:
       query = query.replace('site=T2_CH_CERN','').strip()
       if not query in uqueries:
         from hashlib import sha256
         sha = sha256(query).hexdigest()
-        uqueries[query] =[]
+        xqueries[query] = 1
         query_sha[query]=sha
         qdir = join(opts.store, sha[:2])
         getstatusoutput("mkdir -p %s" % qdir)
@@ -117,7 +118,9 @@ if __name__ == "__main__":
         if ofile:
           ofile.write("%s\n" % query)
           ofile.close()
-        print "Added new query: %s => %s" % (query_sha[query], query)
+  for query in xqueries:
+    uqueries[query] = []
+    print "Added new query: %s => %s" % (query_sha[query], query)
   tqueries = len(uqueries)
   print "Found %s unique queries" % (tqueries)
   jobs = opts.jobs

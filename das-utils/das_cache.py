@@ -33,7 +33,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   print "  Fields:",sha,fields 
   err, out = getstatusoutput(das_cmd)
   if err:
-    print "  ",sha,out
+    print "  DAS ERROR:",sha,out
     return False
   try:
     jdata = json.loads(out)

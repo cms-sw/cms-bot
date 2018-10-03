@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from sys import exit, argv
 from commands import getstatusoutput
-from os.path import exists, getmtime, dirname, basename
+from os.path import exists, getmtime, dirname, basename, join
 from os import environ
 from time import time, sleep
 import json, threading, re
@@ -103,6 +103,21 @@ if __name__ == "__main__":
           for q in qs: ofile.write("%s\n" % q)
           ofile.close()
 
+  for query in uqueries:
+    if 'site=T2_CH_CERN' in query:
+      query = query.replace('site=T2_CH_CERN','').strip()
+      if not query in uqueries:
+        from hashlib import sha256
+        sha = sha256(query).hexdigest()
+        uqueries[query] =[]
+        query_sha[query]=sha
+        qdir = join(opts.store, sha[:2])
+        getstatusoutput("mkdir -p %s" % qdir)
+        ofile = open(join(qdir, sha+'.query'), 'w')
+        if ofile:
+          ofile.write("%s\n" % query)
+          ofile.close()
+        print "Added new query: %s => %s" % (query_sha[query], query)
   tqueries = len(uqueries)
   print "Found %s unique queries" % (tqueries)
   jobs = opts.jobs

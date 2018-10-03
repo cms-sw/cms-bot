@@ -106,7 +106,7 @@ if __name__ == "__main__":
   xqueries = {}
   for query in uqueries:
     if 'site=T2_CH_CERN' in query:
-      query = query.replace('site=T2_CH_CERN','').strip()
+      query = re.sub("  +"," ",query.replace('site=T2_CH_CERN','').strip())
       if not query in uqueries:
         from hashlib import sha256
         sha = sha256(query).hexdigest()

@@ -46,9 +46,6 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     return False
   all_ok = True
   for fx in fields:
-    if not fx in field_map:
-      print "WARNING: Please add mapping for field: ",fx
-      continue
     fn = field_map[fx]
     for item in jdata['data']:
       if (not fx in item) or (not item[fx]) or (not fn in item[fx][0]) or (item[fx][0][fn] is None): all_ok = False
@@ -57,8 +54,11 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     return False
   results = {'mtime' : time(), 'results' : []}
   for item in jdata["data"]:
-    if (not field in field_map) or (not field in item) or (not item[field]) or (not field_map[field] in item[field][0]): continue
-    results['results'].append(item[field][0][field_map[field]])
+    res = item[field][0][field_map[field]]
+    xf = 'lumi'
+    if (len(fields)>1) and (fields[0]==xf):
+      res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
+    results['results'].append(res)
   print "  Results:",sha,len(results['results'])
   if (len(results['results'])==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()

@@ -48,6 +48,7 @@ RROldTTbarwf1103p0 1103.0_RR+OldTTbar*/step2.root reRECO
 #
 RunHI2010wf140p51 140.51_RunHI2010+RunHI2010+*/step3.root ZStoRECO
 RunHI2011wf140p53 140.53_RunHI2011+RunHI2011+*/step2.root reRECO
+RunHI2015repackVRwf140p55 140.55_RunHI2015VR+RunHI2015VR*/step4.root reRECO
 HydjetQwf40p0 40.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/step3.root RECO
 HydjetQMinBiaswf140p0 140.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/step3.root RECO
 ZEEMMHIwf140p4 140.4_ZEEMM_13_HI+ZEEMM_13_HI*/step3.root RECO
@@ -151,6 +152,8 @@ RunEGamma2018Awf136p85 136.85_RunEGamma2018A+*/step3.root reRECO
 RunDoubleMuon2018Awf136p851 136.851_RunDoubleMuon2018A+*/step3.root reRECO
 RunJetHT2018Awf136p852 136.852_RunJetHT2018A+*/step3.root reRECO
 RunJetHT2018AnanoEDMwf136p8521 136.8521_RunJetHT2018A*NANOEDM*/step2.root DQM
+RunZeroBias2018hBStarTKwf136p8561 136.8561_RunZeroBias_hBStarTk*/step3.root reRECO
+RunZeroBias2018hBStarRPwf136p8562 136.8562_RunZeroBias1_hBStarRP*/step3.root reRECO
 RunMET2018Awf136p853 136.853_RunMET2018A+*/step3.root reRECO
 RunSingleMu2018Awf136p855 136.855_RunSingleMu2018A+*/step3.root reRECO
 RunEGamma2018Bwf136p862 136.862_RunEGamma2018B+*/step3.root reRECO

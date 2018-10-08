@@ -261,6 +261,7 @@ if __name__ == "__main__":
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
   print "Total Queries Failed:",failed_queries
+  print "Process state:",error
   if not error:update_timestamp(timestramps, timestramps_file, opts.store)
   else:  cleanup_timestamps (opts.store)
   exit(error)

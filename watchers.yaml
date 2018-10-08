@@ -1172,7 +1172,6 @@ sviret:
 - L1Trigger/TrackFindingAM
 - SLHCUpgradeSimulations/Configuration
 felicepantaleo:
-- Configuration/PyReleaseValidation
 - Configuration/StandardSequences
 - DataFormats/Math
 - FWCore/Utilities
@@ -1181,9 +1180,6 @@ felicepantaleo:
 - RecoLocalTracker
 - RecoPixelVertexing
 - RecoTracker
-- RecoVertex
-- SimDataFormats/Track
-- SimDataFormats/Vertex
 - TrackingTools
 - TrackPropagation
 - Validation/RecoTrack

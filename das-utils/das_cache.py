@@ -7,6 +7,8 @@ from time import time, sleep
 import json, threading, re
 from optparse import OptionParser
 
+field_map = {'file':'name', 'lumi':'number', 'site':'name', 'run':'run_number', 'dataset':'name'}
+
 def write_json(outfile, cache):
   outdir = dirname(outfile)
   if not exists(outdir): getstatusoutput("mkdir -p %s" % outdir)
@@ -20,27 +22,31 @@ def read_json(infile):
     return json.load(json_data)
 
 def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0):
-  field_map = {'file':'name', 'lumi':'number', 'site':'name', 'run':'run_number', 'dataset':'name'}
   sha=basename(outfile)
-  fields = query.split(" ",1)[0].split(",")
+  field = query.split(" ",1)[0]
+  if "=" in field: field=field.split("=",1)[0]
+  fields = field.split(",")
   field_filter = ""
   field = fields[-1]
-  if len(fields)==1:
-    field_filter = " | grep %s.name | sort | unique" % field
+  if field in ["file", "site", "dataset"]:
+    field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
   retry_str=""
   if dasclient=="das_client":retry_str="--retry=%s" % retry
   das_cmd = "%s --format=json --limit=%s --query '%s%s' %s --threshold=%s" % (dasclient, limit, query, field_filter, retry_str, threshold)
   print "  Running: ",sha,das_cmd
   print "  Fields:",sha,fields 
   err, out = getstatusoutput(das_cmd)
+  efile = "%s.error" % outfile
+  with open(efile, "w") as ofile:
+    ofile.write(out)
   if err:
-    print "  DAS ERROR:",sha,out
+    print "  DAS ERROR:",sha
     return False
   try:
     jdata = json.loads(out)
   except Exception, e:
-    print "  Failed to load das output:%s:%s" %(sha,out)
-    raise e
+    print "  Failed to load das output:",sha,e
+    return False
   if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata):
     print "Failed: %s %s\n  %s" % (sha, query, out)
     return False
@@ -52,34 +58,67 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   if not all_ok:
     print "  DAS WRONG Results:",fields,sha,out
     return False
-  results = {'mtime' : time(), 'results' : []}
+  getstatusoutput("rm -f %s" % efile)
+  results = []
   for item in jdata["data"]:
-    res = item[field][0][field_map[field]]
+    res = str(item[field][0][field_map[field]])
     xf = 'lumi'
     if (len(fields)>1) and (fields[0]==xf):
       res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
-    results['results'].append(res)
-  print "  Results:",sha,len(results['results'])
-  if (len(results['results'])==0) and ('site=T2_CH_CERN' in query):
+    if not res in results: results.append(res)
+  print "  Results:",sha,len(results)
+  if (len(results)==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()
     lmt = 0
     if "file" in fields: lmt = 100
     print "Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query)
     return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt)
-  if results['results'] or override:
-    write_json (outfile+".json", jdata)
-    print "  Success %s '%s', found %s results." % (sha, query, len(results['results']))
-    if results['results']:
-      write_json (outfile, results)
+  if results or override:
+    xfile = outfile+".json"
+    write_json (xfile+".tmp", jdata)
+    if exists (xfile):
+      e, o = getstatusoutput("diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'" % (xfile,xfile))
+      if o:
+        getstatusoutput("mv %s.tmp %s" % (xfile,xfile))
+      else:
+        getstatusoutput("rm %s.tmp" % xfile)
+    else:
+      getstatusoutput("mv %s.tmp %s" % (xfile,xfile))
+    print "  Success %s '%s', found %s results." % (sha, query, len(results))
+    if results:
+      with open(outfile, "w") as ofile:
+        for res in sorted(results):
+          ofile.write(res+'\n')
+      getstatusoutput("echo '%s' > %s.timestamp" % (int(time()), outfile))
     else:
       getstatusoutput("rm -f %s" % (outfile))
   return True
+
+def cleanup_timestamps(store):
+  getstatusoutput("find %s -name '*.timestamp' | xargs rm -f" % store)
+  getstatusoutput("find %s -name '*.tmp'       | xargs rm -f" % store)
+  getstatusoutput("find %s -name '*.error'     | xargs rm -f" % store)
+
+def read_timestramps(timestramps_file):
+  timestramps = {}
+  if exists (timestramps_file): timestramps = read_json (timestramps_file)
+  return timestramps
+
+def update_timestamp(timestramps, timestramps_file, store):
+  e, o = getstatusoutput("find %s -name '*.timestamp'" % store)
+  for ts_file in o.split("\n"):
+    if not ts_file.endswith('.timestamp'): continue
+    sha = basename(ts_file).replace(".timestamp","")
+    with open(ts_file) as f:
+      timestramps[sha] = int(float(f.readlines()[0].strip()))
+  write_json(timestramps_file, timestramps)
+  cleanup_timestamps(store)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <options>")
   parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", type=int, default=86400)
   parser.add_option("-o", "--override",   dest="override",  help="Override previous cache requests if cache empty results are returned from das", action="store_true", default=False)
-  parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 8", type=int, default=-1)
+  parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 32", type=int, default=-1)
   parser.add_option("-s", "--store",      dest="store",     help="Name of object store directory to store the das queries results", default=None)
   parser.add_option("-c", "--client",     dest="client",    help="Das client to use either das_client or dasgoclient", default="das_client")
   parser.add_option("-q", "--query",      dest="query",     help="Only process this query", default=None)
@@ -87,12 +126,10 @@ if __name__ == "__main__":
   opts, args = parser.parse_args()
   if (not opts.store): parser.error("Missing store directory path to store das queries objects.")
 
-  uqueries = {}
   query_sha = {}
   if opts.query:
     import hashlib
     query = re.sub("= ","=",re.sub(" =","=",re.sub("  +"," ",opts.query.strip())))
-    uqueries[query] = []
     query_sha[query] = hashlib.sha256(query).hexdigest()
   else:
     err, qout = getstatusoutput("find %s -name '*.query' -type f" % opts.store)
@@ -106,7 +143,6 @@ if __name__ == "__main__":
           query = query.split("--query ")[1].split("'")[1]
           rewrite = True
         query = re.sub("= ","=",re.sub(" =","=",re.sub("  +"," ",query)))
-        uqueries[query] = []
         query_sha[query]=sha
         qs[query]=1
       if rewrite:
@@ -116,30 +152,27 @@ if __name__ == "__main__":
           ofile.close()
 
   xqueries = {}
-  for query in uqueries:
+  for query in query_sha:
     if 'site=T2_CH_CERN' in query:
       query = re.sub("  +"," ",query.replace('site=T2_CH_CERN','').strip())
-      if not query in uqueries:
+      if not query in query_sha:
         from hashlib import sha256
         sha = sha256(query).hexdigest()
-        xqueries[query] = 1
-        query_sha[query]=sha
+        xqueries[query] = sha
         qdir = join(opts.store, sha[:2])
         getstatusoutput("mkdir -p %s" % qdir)
-        ofile = open(join(qdir, sha+'.query'), 'w')
-        if ofile:
+        with open(join(qdir, sha+'.query'), "w") as ofile:
           ofile.write("%s\n" % query)
-          ofile.close()
   for query in xqueries:
-    uqueries[query] = []
+    query_sha[query] = xqueries[query]
     print "Added new query: %s => %s" % (query_sha[query], query)
-  tqueries = len(uqueries)
+  tqueries = len(query_sha)
   print "Found %s unique queries" % (tqueries)
   jobs = opts.jobs
   if jobs <= 0:
     e, o = getstatusoutput("nproc")
     jobs = int(o)
-  if jobs>8: jobs=8
+  if jobs>32: jobs=32
   print "Parallel jobs:", jobs
 
   getstatusoutput("mkdir -p %s" % opts.store)
@@ -148,20 +181,39 @@ if __name__ == "__main__":
   inCache = 0 
   DasSearch = 0
   error = 0
-  for query in uqueries:
+  cleanup_timestamps (opts.store)
+  timestramps_file = join (opts.store, "timestamps.json")
+  timestramps = read_timestramps (timestramps_file)
+  for query in query_sha:
     nquery += 1
     sha = query_sha[query]
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     print "[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query)
     if exists(outfile):
       try:
-        jdata = read_json (outfile)
-        dtime = time()-jdata['mtime']
-        if 'files' in jdata:
-          jdata['results'] = jdata['files']
-          del jdata['files']
-          write_json (outfile, jdata)
-        fcount = len(jdata['results'])
+        xtime  = 0
+        fcount = 0
+        if sha in timestramps:
+          xtime = timestramps[sha]
+          with open(outfile) as ofile:
+            fcount = len(ofile.readlines())
+        else:
+          jdata = read_json (outfile)
+          if 'files' in jdata:
+            jdata['results'] = jdata['files']
+            del jdata['files']
+          xtime = jdata['mtime']
+          try:
+            with open(outfile, "w") as ofile:
+              for res in jdata['results']:
+                ofile.write(str(res)+'\n')
+                fcount += 1
+          except:
+             print outfile
+             print jdata
+             exit (1)
+          getstatusoutput("echo '%s' > %s.timestamp" % (xtime, outfile))
+        dtime = int(time())-xtime
         if (dtime<=opts.threshold) and (fcount>0):
           jfile = "%s.json" % outfile
           okcache=exists(jfile)
@@ -173,13 +225,12 @@ if __name__ == "__main__":
             else:
               for item in xdata["data"]:
                 if not okcache: break
-                for x in ["file", "lumi", "site"]:
+                for x in field_map:
                   if not x in item: continue
                   if len(item[x])>0: continue
                   okcache=False
                   break
           if okcache:
-            uqueries[query] = jdata['results']
             print "  %s Found in cache with %s results (age: %s src)" % (sha, fcount , dtime)
             inCache += 1
             continue
@@ -191,10 +242,9 @@ if __name__ == "__main__":
         e, o = getstatusoutput("cat %s" % outfile)
         print o
     else: print "  No cache file found %s" % sha
-    
+
     DasSearch += 1
     while True:
-      threads = [t for t in threads if t.is_alive()]
       tcount = len(threads)
       if(tcount < jobs):
         print "  Searching DAS (threads: %s)" % tcount
@@ -208,9 +258,22 @@ if __name__ == "__main__":
           error += 1
         break
       else:
-        sleep(2)
+        threads = [t for t in threads if t.is_alive()]
+        sleep(0.2)
   for t in threads: t.join()
+  failed_queries = 0
+  e , o = getstatusoutput("find %s -name '*.error'" % opts.store)
+  for f in o.split("\n"):
+    if not f.endswith(".error"): continue
+    qf = f.replace(".error",".query")
+    print "########################################"
+    e , o = getstatusoutput("cat %s ; cat %s" % (qf, f))
+    print o
+    failed_queries += 1
   print "Total queries: %s" % tqueries
   print "Found in object store: %s" % inCache
   print "DAS Search: %s" % DasSearch
+  print "Total Queries Failed:",failed_queries
+  if not error:update_timestamp(timestramps, timestramps_file, opts.store)
+  else:  cleanup_timestamps (opts.store)
   exit(error)

@@ -135,6 +135,7 @@ if __name__ == "__main__":
     err, qout = getstatusoutput("find %s -name '*.query' -type f" % opts.store)
     for qfile in qout.split("\n"):
       sha = basename(qfile).replace(".query","")
+      if not sha: continue
       qs = {}
       rewrite = False
       for query in [line.rstrip('\n').strip() for line in open(qfile)]:
@@ -163,6 +164,7 @@ if __name__ == "__main__":
         getstatusoutput("mkdir -p %s" % qdir)
         with open(join(qdir, sha+'.query'), "w") as ofile:
           ofile.write("%s\n" % query)
+
   for query in xqueries:
     query_sha[query] = xqueries[query]
     print "Added new query: %s => %s" % (query_sha[query], query)
@@ -190,35 +192,19 @@ if __name__ == "__main__":
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     print "[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query)
     if exists(outfile):
-      try:
-        xtime  = 0
-        fcount = 0
-        if sha in timestramps:
-          xtime = timestramps[sha]
-          with open(outfile) as ofile:
-            fcount = len(ofile.readlines())
-        else:
-          jdata = read_json (outfile)
-          if 'files' in jdata:
-            jdata['results'] = jdata['files']
-            del jdata['files']
-          xtime = jdata['mtime']
+      xtime  = 0
+      fcount = 0
+      if sha in timestramps:
+        xtime = timestramps[sha]
+        with open(outfile) as ofile:
+          fcount = len(ofile.readlines())
+      dtime = int(time())-xtime
+      if (dtime<=opts.threshold) and (fcount>0):
+        jfile = "%s.json" % outfile
+        okcache=exists(jfile)
+        print " JSON results found",sha,okcache
+        if okcache:
           try:
-            with open(outfile, "w") as ofile:
-              for res in jdata['results']:
-                ofile.write(str(res)+'\n')
-                fcount += 1
-          except:
-             print outfile
-             print jdata
-             exit (1)
-          getstatusoutput("echo '%s' > %s.timestamp" % (xtime, outfile))
-        dtime = int(time())-xtime
-        if (dtime<=opts.threshold) and (fcount>0):
-          jfile = "%s.json" % outfile
-          okcache=exists(jfile)
-          print " JSON results found",sha,okcache
-          if okcache:
             xdata = read_json (jfile)
             if (not "status" in xdata) or (xdata['status'] != 'ok') or (not "data" in xdata):
               okcache=False
@@ -230,17 +216,18 @@ if __name__ == "__main__":
                   if len(item[x])>0: continue
                   okcache=False
                   break
-          if okcache:
-            print "  %s Found in cache with %s results (age: %s src)" % (sha, fcount , dtime)
-            inCache += 1
-            continue
-          else: print "  Refreshing cache as previous Json was empty:", sha
-        elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
-        else: print "  Retrying as cache with empty results found."
-      except IOError as e:
-        print "  ERROR: [%s/%s] Reading json cached file %s" % (nquery, tqueries, outfile)
-        e, o = getstatusoutput("cat %s" % outfile)
-        print o
+          except IOError as e:
+            print "  ERROR: [%s/%s] Reading json cached file %s" % (nquery, tqueries, outfile)
+            e, o = getstatusoutput("cat %s" % outfile)
+            print o
+            okcache=False
+        if okcache:
+          print "  %s Found in cache with %s results (age: %s src)" % (sha, fcount , dtime)
+          inCache += 1
+          continue
+        else: print "  Refreshing cache as previous Json was empty:", sha
+      elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
+      else: print "  Retrying as cache with empty results found."
     else: print "  No cache file found %s" % sha
 
     DasSearch += 1

@@ -61,6 +61,8 @@ esac
 IS_DEV_BRANCH=false
 DEV_BRANCH=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' $CMS_BOT_DIR/releases.py | sed 's| ||g;s|.*=||;s|"||g')
 if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
+#Disabled dev branch checks for now: enable it on wednesday 10/10/2018
+IS_DEV_BRANCH=false
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
@@ -333,7 +335,7 @@ echo "CODE_RULES;${QA_RES}" >> $RESULTS_FILE
 #
 # Static checks
 #
-if [ "X$DO_STATIC_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_PR" = X ]; then
+if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_PR" = X -a "$RUN_TESTS" = "true" ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" $DRY_RUN
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
@@ -459,7 +461,7 @@ which das_client
 
 #Duplicate dict
 QA_RES="NOTRUN"
-if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" ]; then
+if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" -a "$RUN_TESTS" = "true" ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Duplicate Dict Checks" $DRY_RUN
   mkdir $WORKSPACE/dupDict
   QA_RES="OK"
@@ -477,7 +479,7 @@ echo "DUPLICATE_DICT_RULES;${QA_RES}" >> $RESULTS_FILE
 #
 # Unit tests
 #
-if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
+if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
@@ -533,7 +535,7 @@ if [ ! "X$MATRIX_EXTRAS" = X ]; then
   MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
 fi
 
-if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false ]; then
+if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false -a "$RUN_TESTS" = "true" ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" $DRY_RUN
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
@@ -638,7 +640,7 @@ fi
 #
 # AddOn Tetss
 #
-if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue ]; then
+if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" $DRY_RUN
   #Some data files in cmssw_7_1/src directory are newer then cmsswdata. We make sure that we pick up these files from src instead of data.
   #Without this hack, pat1 addOnTest fails.
@@ -685,7 +687,7 @@ else
 fi
 
 MB_TESTS_OK=NOTRUN
-if [ "$MB_COMPARISON" = "YES" -a "X$BUILD_OK" = "Xtrue" ] ; then
+if [ "$MB_COMPARISON" = "YES" -a "X$BUILD_OK" = "Xtrue" -a "$RUN_TESTS" = "true" ] ; then
   if has_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/Images ; then
     mkdir $LOCALRT/material-budget
     MB_TESTS_OK=OK

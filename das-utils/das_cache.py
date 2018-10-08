@@ -47,7 +47,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   except Exception, e:
     print "  Failed to load das output:",sha,e
     return False
-  if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata):
+  if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata) or (("ecode" in jdata) and (jdata['ecode']!="")):
     print "Failed: %s %s\n  %s" % (sha, query, out)
     return False
   all_ok = True

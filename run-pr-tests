@@ -46,6 +46,8 @@ BUILD_OK=true
 UNIT_TESTS_OK=true
 RELVALS_OK=true
 ADDON_OK=true
+CLANG_BUILD_OK=true
+RUN_TESTS=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 export SCRAM_ARCH=$ARCHITECTURE
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
@@ -55,6 +57,10 @@ case $RELEASE_FORMAT in
   CMSSW_9_4_MAOD_X*|CMSSW_9_4_AN_X* ) COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|') ;;
   * ) COMP_QUEUE=$(echo $RELEASE_FORMAT | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|') ;;
 esac
+
+IS_DEV_BRANCH=false
+DEV_BRANCH=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' $CMS_BOT_DIR/releases.py | sed 's| ||g;s|.*=||;s|"||g')
+if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
@@ -272,28 +278,27 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
-  ALL_CLANG_WARNINGS=$(grep ": warning: " $WORKSPACE/buildClang.log | grep "/$RELEASE_FORMAT/" | sed "s|.*/$RELEASE_FORMAT/src/||;s|:.*||" | sort -u)
-  clang_new_warnings_status="OK"
-  touch $WORKSPACE/clang-new-warnings.log
-  for i in $ALL_CLANG_WARNINGS ; do
+  for i in $(grep ": warning: " $WORKSPACE/buildClang.log | grep "/$RELEASE_FORMAT/" | sed "s|.*/$RELEASE_FORMAT/src/||;s|:.*||" | sort -u) ; do
     if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
       echo $i >> $WORKSPACE/clang-new-warnings.log
-      clang_new_warnings_status="ERROR"
     fi
   done
-  echo 'CLANG_NEW_WARNINGS;${clang_new_warnings_status},Clang Warnings,See Log,clang-new-warnings.log' >> $RESULTS_FILE
+  if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then
+    echo 'CLANG_NEW_WARNINGS;ERROR,Clang Warnings to fix,See Log,clang-new-warnings.log' >> $RESULTS_FILE
+  fi
 
   if [ -d ${BUILD_LOG_DIR}/html ] ; then
     mv ${BUILD_LOG_DIR}/html $WORKSPACE/clang-logs
-    echo 'CLANG_LOG;OK,Clang all warnings,See Log,clang-logs' >> $RESULTS_FILE
+    echo 'CLANG_LOG;OK,Clang warnings summary,See Log,clang-logs' >> $RESULTS_FILE
   fi
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when testing compilation with clang"
     echo 'CLANG_COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
+    if $IS_DEV_BRANCH && $RUN_TESTS ; then RUN_TESTS=false ; fi
     ALL_OK=false
     CLANG_BUILD_OK=false
   else
-    echo "the clan compilation had no errors!!"
+    echo "the clang compilation had no errors/warnings!!"
     echo 'CLANG_COMPILATION_RESULTS;OK' >> $RESULTS_FILE
   fi
 else
@@ -410,10 +415,19 @@ echo '--------------------------------------'
 TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
 GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
+for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$RELEASE_FORMAT/" | sed "s|.*/$RELEASE_FORMAT/src/||;s|:.*||" | sort -u) ; do
+  if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
+    echo $i >> $WORKSPACE/new-build-warnings.log
+  fi
+done
+if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
+    echo 'BUILD_NEW_WARNINGS;ERROR,Build Warnings to fix,See Log,new-build-warnings.log' >> $RESULTS_FILE
+fi
 BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
     echo 'COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
+    if $IS_DEV_BRANCH && $RUN_TESTS ; then RUN_TESTS=false ; fi
     ALL_OK=false
     BUILD_OK=false
 else

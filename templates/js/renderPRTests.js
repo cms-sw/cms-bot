@@ -64,9 +64,12 @@ getResultRow = function( resultsDict , resultsKey ){
  * Fills the results table
  */
 fillResultsTable = function( resultsDict, table ){
-  var keys = Object.keys(LABELS);
-  keys.sort();
-  $.each (keys, function(index, key){
+  var valuex = {}
+  for (k in LABELS){valuex[LABELS[k]]=k;}
+  var values = Object.keys(valuex);
+  values.sort();
+  $.each (values, function(index, value){
+    key = valuex[value];
     if (!IGNORE_KEYS.includes(key)){
     var resultsRow = getResultRow( resultsDict , key )
     table.append( resultsRow )
@@ -208,8 +211,8 @@ BASE_PR_URL = 'https://github.com/@REPOSITORY@/pull/'
 
 LABELS = {}
 LABELS[ CMSSWTOOLCONF_RESULTS_KEY ] = 'Externals compilation'
-LABELS[ COMPILATION_RESULTS_KEY ] = 'Compilation'
-LABELS[ BUILD_LOG_KEY ] = 'Build Warnings'
+LABELS[ COMPILATION_RESULTS_KEY ] = 'Compilation log'
+LABELS[ BUILD_LOG_KEY ] = 'Compilation warnings summary'
 LABELS[ UNIT_TEST_RESULTS_KEY ] = 'Unit Tests'
 LABELS[ MATRIX_TESTS_KEY ] = 'Matrix Tests Outputs'
 LABELS[ ADDON_TESTS_KEY ] = 'AddOn Tests Outputs'

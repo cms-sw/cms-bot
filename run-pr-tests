@@ -410,7 +410,7 @@ if [ "X$CMSDIST_PR" != X -a $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/con
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
-if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${CMSSW_BASE}/build-logs ; fi
+if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${WORKSPACE}/build-logs ; fi
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
 
@@ -435,8 +435,8 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
 else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
-    if [ -e ${CMSSW_BASE}/build-logs/index.html ] ; then
-      if [ $(grep '<td> *[1-9][0-9]* *</td>' ${CMSSW_BASE}/build-logs/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
+    if [ -e ${WORKSPACE}/build-logs/index.html ] ; then
+      if [ $(grep '<td> *[1-9][0-9]* *</td>' ${WORKSPACE}/build-logs/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
         BUILD_LOG_RES="OK"
       fi
     elif [ ! -d ${BUILD_LOG_DIR}/src ] ; then

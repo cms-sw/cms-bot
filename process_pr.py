@@ -236,7 +236,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   #Process Pull Request
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
-  REGEX_EX_IGNORE_CHKS="^ignore\s+(clang-warnings|none)$"
+  REGEX_EX_IGNORE_CHKS="^ignore\s+(build-warnings|clang-warnings|none)$"
   last_commit_date = None
   push_test_issue = False
   requestor = issue.user.login.encode("ascii", "ignore")

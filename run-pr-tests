@@ -61,8 +61,6 @@ esac
 IS_DEV_BRANCH=false
 DEV_BRANCH=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' $CMS_BOT_DIR/releases.py | sed 's| ||g;s|.*=||;s|"||g')
 if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
-#Disabled dev branch checks for now: enable it on wednesday 10/10/2018
-IS_DEV_BRANCH=false
 
 #If a CMSSW area already exists use it as it has been prepared by the CMSDIST test script
 if [ ! -d CMSSW_* ]; then
@@ -287,6 +285,11 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
   done
   if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then
     echo 'CLANG_NEW_WARNINGS;ERROR,Clang Warnings to fix,See Log,clang-new-warnings.log' >> $RESULTS_FILE
+    if $IS_DEV_BRANCH && [ $(echo "$IGNORE_BOT_TESTS" | tr ',' '\n' | grep '^CLANG-WARNINGS$' | wc -l) -eq 0 ] ; then
+      RUN_TESTS=false
+      ALL_OK=false
+      CLANG_BUILD_OK=false
+    fi
   fi
 
   if [ -d ${BUILD_LOG_DIR}/html ] ; then
@@ -296,7 +299,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when testing compilation with clang"
     echo 'CLANG_COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
-    if $IS_DEV_BRANCH && $RUN_TESTS ; then RUN_TESTS=false ; fi
+    RUN_TESTS=false
     ALL_OK=false
     CLANG_BUILD_OK=false
   else
@@ -424,12 +427,17 @@ for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$RELEASE_FORMAT/" | 
 done
 if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
     echo 'BUILD_NEW_WARNINGS;ERROR,Build Warnings to fix,See Log,new-build-warnings.log' >> $RESULTS_FILE
+    if $IS_DEV_BRANCH && [ $(echo "$IGNORE_BOT_TESTS" | tr ',' '\n' | grep '^BUILD-WARNINGS$' | wc -l) -eq 0 ] ; then
+      RUN_TESTS=false
+      ALL_OK=false
+      BUILD_OK=false
+    fi
 fi
 BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
     echo 'COMPILATION_RESULTS;ERROR' >> $RESULTS_FILE
-    if $IS_DEV_BRANCH && $RUN_TESTS ; then RUN_TESTS=false ; fi
+    RUN_TESTS=false
     ALL_OK=false
     BUILD_OK=false
 else

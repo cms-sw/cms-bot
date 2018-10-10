@@ -54,7 +54,7 @@ def read_repo_file(repo_config, repo_file, default=None):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None):
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None, ignore_tests=[]):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
   if (req_type in "tests"):
@@ -66,6 +66,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   else: repo_partsX=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)
   parameters = {}
+  parameters['IGNORE_BOT_TESTS']=",".join(ignore_tests)
   parameters['MATRIX_EXTRAS']=extra_wfs
   parameters['PUB_USER']=repo_parts[0]
   if repository.endswith("/"+GH_CMSDIST_REPO):
@@ -158,6 +159,9 @@ def check_extra_labels(first_line, extra_labels):
     else: bp_pr = first_line.split("/pull/",1)[1].strip("/").strip()
     extra_labels["backport"]=["backport", bp_pr]
 
+def check_ignore_test(first_line):
+  return first_line.split(" ",1)[-1].replace(" ","").split(",")
+
 def get_test_prs(test_command):
   prs = []
   for x in [ i.strip() for i in test_command.split(",") if i ]:
@@ -232,9 +236,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   #Process Pull Request
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
+  REGEX_EX_IGNORE_CHKS="^ignore\s+(clang-warnings|none)$"
   last_commit_date = None
   push_test_issue = False
   requestor = issue.user.login.encode("ascii", "ignore")
+  ignore_tests = []
   if issue.pull_request:
     pr   = repo.get_pull(prId)
     if pr.changed_files==0:
@@ -449,6 +455,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if re.match(REGEX_EX_CMDS, first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers + [requestor]:
         check_extra_labels(first_line.lower(), extra_labels)
+      continue
+    if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
+      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
+        ignore_tests = check_ignore_test (first_line.upper())
       continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:
@@ -801,7 +811,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config)
+          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config, ignore_tests=ignore_tests)
       elif abort_test:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         if cmsdist_issue: cmsdist_issue.create_comment( TRIGERING_TESTS_ABORT_MSG )

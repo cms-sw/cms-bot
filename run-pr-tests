@@ -426,7 +426,7 @@ for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$RELEASE_FORMAT/" | 
   fi
 done
 if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
-    echo 'BUILD_NEW_WARNINGS;ERROR,Build Warnings to fix,See Log,new-build-warnings.log' >> $RESULTS_FILE
+    echo 'BUILD_NEW_WARNINGS;ERROR,Compilation Warnings to fix,See Log,new-build-warnings.log' >> $RESULTS_FILE
     if $IS_DEV_BRANCH && [ $(echo "$IGNORE_BOT_TESTS" | tr ',' '\n' | grep '^BUILD-WARNINGS$' | wc -l) -eq 0 ] ; then
       RUN_TESTS=false
       ALL_OK=false

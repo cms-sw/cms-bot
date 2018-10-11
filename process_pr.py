@@ -236,7 +236,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   #Process Pull Request
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
-  REGEX_EX_IGNORE_CHKS="^ignore\s+(build-warnings|clang-warnings|none)$"
+  known_ignore_tests='build-warnings|clang-warnings|none'
+  REGEX_EX_IGNORE_CHKS='^ignore\s+(%s)(\s*,\s*(%s))*$' % (known_ignore_tests, known_ignore_tests)
   last_commit_date = None
   push_test_issue = False
   requestor = issue.user.login.encode("ascii", "ignore")
@@ -459,6 +460,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
         ignore_tests = check_ignore_test (first_line.upper())
+        if 'NONE' in ignore_tests: ignore_tests=[]
       continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:

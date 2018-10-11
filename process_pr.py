@@ -651,6 +651,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   print "All assigned cats:",",".join(assign_cats.keys())
   print "Newly assigned cats:",",".join(new_assign_cats)
+  print "Ignore tests:",ignore_tests
 
   # Labels coming from signature.
   labels = []

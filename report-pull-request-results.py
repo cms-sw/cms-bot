@@ -273,16 +273,19 @@ def read_build_log_file( repo, build_log, tests_url, isClang ):
   if isClang:
     cmd = open( build_log ).readline()
     message += '\n* **Clang**:\n\nI found '+err_type+' while trying to compile with clang: \n'
-    message += 'I used this command: \n ' + cmd + '\n\n <pre>'
+    message += 'I used this command: \n ' + cmd +"\n "
   else:
-    message += '\n* **Build**:\n\nI found '+err_type+' when building: \n \n <pre>'
+    message += '\n* **Build**:\n\nI found '+err_type+' when building: '
 
   if error_found:
+    message += '\n\n<pre>'
     for line in lines_before:
       message += line + '\f'
     for line in lines_after:
       message += line + '\f'
-  message += '</pre>'
+    message += '</pre>'
+  else:
+    message += " See details on the summary page."
 
   send_message_pr( pull_request, message, tests_url )
   mark_commit_if_needed( ACTION, tests_url )

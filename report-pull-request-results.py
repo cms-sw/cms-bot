@@ -236,7 +236,6 @@ def send_error_report_message(repo, report_file, tests_url):
 #
 def read_build_log_file( repo, build_log, tests_url, isClang ):
   pull_request = repo.get_pull(pr_number)
-  error_found = False
   line_number = 0
   error_line = 0
   lines_to_keep_before=5
@@ -269,18 +268,20 @@ def read_build_log_file( repo, build_log, tests_url, isClang ):
   if not options.report_file:
     message = '-1\n'
     if options.commit_hash: message += '\nTested at: ' + options.commit_hash+"\n"
-
+  err_type = "compilation warning"
+  if error_found: err_type = "compilation error"
   if isClang:
     cmd = open( build_log ).readline()
-    message += '\n* **Clang**:\n\nI found a compilation error while trying to compile with clang: \n'
+    message += '\n* **Clang**:\n\nI found '+err_type+' while trying to compile with clang: \n'
     message += 'I used this command: \n ' + cmd + '\n\n <pre>'
   else:
-    message += '\n* **Build**:\n\nI found an error when building: \n \n <pre>'
+    message += '\n* **Build**:\n\nI found '+err_type+' when building: \n \n <pre>'
 
-  for line in lines_before:
-    message += line + '\f'
-  for line in lines_after:
-    message += line + '\f'
+  if error_found:
+    for line in lines_before:
+      message += line + '\f'
+    for line in lines_after:
+      message += line + '\f'
   message += '</pre>'
 
   send_message_pr( pull_request, message, tests_url )

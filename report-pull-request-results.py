@@ -272,8 +272,8 @@ def read_build_log_file( repo, build_log, tests_url, isClang ):
   if error_found: err_type = "compilation error"
   if isClang:
     cmd = open( build_log ).readline()
-    message += '\n* **Clang**:\n\nI found '+err_type+' while trying to compile with clang: \n'
-    message += 'I used this command:\n`' + cmd +"`\n"
+    message += '\n* **Clang**:\n\nI found '+err_type+' while trying to compile with clang. '
+    message += 'Command used:\n```\n' + cmd +'\n```\n'
   else:
     message += '\n* **Build**:\n\nI found '+err_type+' when building: '
 

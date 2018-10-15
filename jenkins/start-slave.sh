@@ -49,7 +49,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
     DOCKER_V=$(ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true)
     DOCKER=""
     if [ "${DOCKER_V}" != "" ] ; then
-      if [ $(ssh -n $SSH_OPTS $TARGET id | grep '[0-9]*(docker)' | wc -l) -gt 0 ] ; then
+      if [ $(ssh -n $SSH_OPTS $TARGET id -Gn | grep docker | wc -l) -gt 0 ] ; then
         DOCKER="docker"
         DOCKER_OS=$(grep -A1 '> *DOCKER_IMG_HOST *<' ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep 'cmssw/' | tail -1 | sed 's|.*>cmssw/||;s|-builder.*||' | sed 's|.*-||')
         if [ "$DOCKER_OS" != "" ] ; then

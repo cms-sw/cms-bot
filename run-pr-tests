@@ -282,7 +282,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
   for i in $(grep ": warning: " $WORKSPACE/buildClang.log | grep "/$RELEASE_FORMAT/" | sed "s|.*/$RELEASE_FORMAT/src/||;s|:.*||" | sort -u) ; do
     if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
       echo $i >> $WORKSPACE/clang-new-warnings.log
-      grep ": warning: " $WORKSPACE/buildClang.log | grep "/$i" >> $WORKSPACE/new-build-warnings.log
+      grep ": warning: " $WORKSPACE/buildClang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
     fi
   done
   if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then

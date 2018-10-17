@@ -30,4 +30,4 @@ OUTPUT=$(echo $SOURCES  | sed 's/ .*//' | sed 's/&.*//')
 SOURCE_NAME=$(echo $OUTPUT | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo $OUTPUT | sed 's/.*=//')
 
-echo "--source $PKG_NAME:$SOURCE_NAME=$DIR_NAME" > get_source_flag_result.txt
+echo "--source $PKG_NAME:$SOURCE_NAME=$(pwd)/$DIR_NAME" > get_source_flag_result.txt

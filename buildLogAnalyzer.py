@@ -397,6 +397,7 @@ class LogFileAnalyzer(object):
             {str('^ *tmp/.*?/src/'+subsys+'/'+pkg+'/src/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*')     : ['linkError', 'for package library %s ']},
             {str('^ *tmp/.*?/src/'+subsys+'/'+pkg+'/plugins/(.*?)/lib.*?\.'+shLib+'\: undefined reference to .*') : ['linkError', 'for plugin library %s in plugins']},
             {str("^error: class '.*?' has a different checksum for ClassVersion")                   : ['compError', 'for a different checksum for ClassVersion']},
+            {str('^.*: (more undefined references to|undefined reference to).*')                     : ['compError', 'Missing symbols in a package']},
           ]
 
         miscErrRe = re.compile('^gmake: \*\*\* (.*)$')

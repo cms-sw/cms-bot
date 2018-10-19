@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+kinit -R || true
 for cvmfs_dir in $(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
   ls -l /cvmfs/${cvmfs_dir} >/dev/null 2>&1 || true
 done

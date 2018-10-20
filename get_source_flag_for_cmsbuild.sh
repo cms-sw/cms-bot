@@ -10,7 +10,6 @@
 # TODO - not all packages have matching repo name with project name
 # We should create a map in cmsdist for such pacakges
 
-set -x # TODO remove
 EXTERNAL_REPO=$1
 EXTERNAL_PR=$2
 CMS_SW_TAG=$3
@@ -55,7 +54,7 @@ if [ $(echo ${FILTERED_CONF} | grep -c -i ${CMS_SW_TAG}) -ne 1 ]; then
 fi
 
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
-ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH==//' | sed 's/;.*//' )
+ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
 
 git clone -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
 git clone -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
@@ -63,8 +62,7 @@ git clone -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 ./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME}
 
 SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
-            grep -i "^${PKG_NAME}:source" | grep github.com/ )
-#                        grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} )
+                        grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} )
 
 N=$(echo ${SOURCES} | grep -cve '^\s*$' )
 echo "Number of sources: " ${N}
@@ -77,7 +75,6 @@ if [ ${N} -eq 0 ]; then
 elif [ ${N} -eq 1 ]; then
    echo "One source found"
 else
-   # TODO
    echo "ERROR: More then one external source is found"
    exit 1
 fi

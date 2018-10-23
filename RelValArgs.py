@@ -8,25 +8,26 @@ try:
 except:
  print "Monitering of relval steps disabled: import psutils failed"
 
-RELVAL_KEYS = {"customiseWithTimeMemorySummary":{},
-               "enableIMT":{},
-               "PREFIX":{},
-               "JOB_REPORT":{},
-               "USE_INPUT":{},
-               "THREADED":{},
-               "SLHC_WORKFLOWS":{},
+RELVAL_KEYS = {"customiseWithTimeMemorySummary":[],
+               "enableIMT":[],
+               "PREFIX":[],
+               "JOB_REPORT":[],
+               "USE_INPUT":[],
+               "THREADED":[],
+               "SLHC_WORKFLOWS":[],
               }
 THREADED_ROOT="CMSSW_9_[1-9]_ROOT6_X_.+"
 THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc[6-9]_amd64_gcc(5[3-9]|[6-9])[0-9]+|_THREADED_X|_DEVEL_X|_ROOT6_X|_ROOT612_X"
-RELVAL_KEYS["customiseWithTimeMemorySummary"][".+"] = "--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"
-RELVAL_KEYS["PREFIX"]["CMSSW_([89]|[1-9][0-9]+)_.+"] = "--prefix '%s timeout --signal SIGTERM 7200 '" % monitor_script
-RELVAL_KEYS["PREFIX"]["CMSSW_[1-7]_.+"]              = "--prefix '%s timeout --signal SIGSEGV 7200 '" % monitor_script
-RELVAL_KEYS["JOB_REPORT"][".+"]             = "--job-reports"
-RELVAL_KEYS["USE_INPUT"][".+"]              = "--useInput all"
-RELVAL_KEYS["THREADED"][THREADED_IBS]       = "-t 4"
-RELVAL_KEYS["SLHC_WORKFLOWS"]["_SLHCDEV_"]  = "-w upgrade -l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
-RELVAL_KEYS["SLHC_WORKFLOWS"]["_SLHC_"]     = "-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
-RELVAL_KEYS["enableIMT"][THREADED_ROOT]     = "--customise FWCore/Concurrency/enableIMT.enableIMT"
+RELVAL_KEYS["customiseWithTimeMemorySummary"].append([".+" ,"--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"])
+RELVAL_KEYS["PREFIX"].append(["_ASAN_.+"                   ,"--prefix '%s timeout --signal SIGTERM 10800 '" % monitor_script])
+RELVAL_KEYS["PREFIX"].append(["CMSSW_([89]|[1-9][0-9]+)_.+","--prefix '%s timeout --signal SIGTERM 7200 '" % monitor_script])
+RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix '%s timeout --signal SIGSEGV 7200 '" % monitor_script])
+RELVAL_KEYS["JOB_REPORT"].append([".+"                     ,"--job-reports"])
+RELVAL_KEYS["USE_INPUT"].append([".+"                      ,"--useInput all"])
+RELVAL_KEYS["THREADED"].append([THREADED_IBS               ,"-t 4"])
+RELVAL_KEYS["SLHC_WORKFLOWS"].append(["_SLHCDEV_"         ,"-w upgrade -l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"])
+RELVAL_KEYS["SLHC_WORKFLOWS"].append(["_SLHC_"             ,"-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"])
+RELVAL_KEYS["enableIMT"].append([THREADED_ROOT             ,"--customise FWCore/Concurrency/enableIMT.enableIMT"])
 
 RELVAL_ARGS = []
 RELVAL_ARGS.append({})
@@ -74,8 +75,10 @@ def GetMatrixOptions(release, arch, dasfile=None):
     key = m.group(2)
     val = ""
     if RELVAL_KEYS.has_key(key):
-      for exp in RELVAL_KEYS[key]:
-        if re.search(exp,rel_arch): val = val + RELVAL_KEYS[key][exp] + " "
+      for exp,data in RELVAL_KEYS[key]:
+        if re.search(exp,rel_arch):
+          val = data + " "
+          break
     cmd = cmd.replace(m.group(1), val)
     m=re.search("(@([a-zA-Z_]+)@)",cmd)
   
@@ -87,9 +90,11 @@ def FixWFArgs(release, arch, wf, args):
     if wf in NonThreadedWF:
       for k in [ "THREADED", "enableIMT" ]:
         if (k in RELVAL_KEYS):
-          if (THREADED_IBS in RELVAL_KEYS[k]):
-            args = args.replace(RELVAL_KEYS[k][THREADED_IBS],"")
-          elif (THREADED_ROOT in RELVAL_KEYS[k]):
-            args = args.replace(RELVAL_KEYS[k][THREADED_ROOT],"")
+          thds  = [d for e,d in RELVAL_KEYS[k] if THREADED_IBS == e]
+          roots = [d for e,d in RELVAL_KEYS[k] if THREADED_ROOT == e]
+          if thds:
+            args = args.replace(thds[0],"")
+          elif roots:
+            args = args.replace(roots[0],"")
   return args
 

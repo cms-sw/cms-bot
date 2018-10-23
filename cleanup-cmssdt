@@ -69,10 +69,9 @@ for dir in ib-baseline-tests ; do
   ls ${CVMFS_DIR} >/dev/null 2>&1 || true
   if [ -d ${CVMFS_DIR} ] ; then
     for ver in $(find ${JENKINS_ARTIFACTS}/${dir} -maxdepth 1 -mindepth 1 -name 'CMSSW_*' -type d | sed "s|${JENKINS_ARTIFACTS}/${dir}/||") ; do
-      if [ -d ${CVMFS_DIR}/${var} ] ; then
+      if [ -d ${CVMFS_DIR}/${ver} ] ; then
         $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${dir}/${ver}
-        $DRY_RUN ln -s  ${CVMFS_DIR}/${var} ${JENKINS_ARTIFACTS}/${dir}/${ver}
-      fi
+        $DRY_RUN ln -s  ${CVMFS_DIR}/${ver} ${JENKINS_ARTIFACTS}/${dir}/${ver}
     done
   fi
 done

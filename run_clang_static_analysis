@@ -23,6 +23,11 @@ cp -pv $LOCALRT/tmp/bloom.bin $LOCALRT/src/Utilities/StaticAnalyzers/scripts/blo
 
 mv $LOCALRT/llvm-analysis/* $WORKSPACE/llvm-analysis
 chmod -R a+r $WORKSPACE/llvm-analysis
+cp -p postprocess-scan-build.py $WORKSPACE/llvm-analysis
+cd $WORKSPACE/llvm-analysis
+move index.html index_full.html
+./postprocess-scan-build.py >index.html 2>&1
+cd -
 
 ./create_statics_esd_reports.sh
 ls -ltrh

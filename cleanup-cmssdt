@@ -72,6 +72,7 @@ for dir in ib-baseline-tests ; do
       if [ -d ${CVMFS_DIR}/${ver} ] ; then
         $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${dir}/${ver}
         $DRY_RUN ln -s  ${CVMFS_DIR}/${ver} ${JENKINS_ARTIFACTS}/${dir}/${ver}
+      fi
     done
   fi
 done

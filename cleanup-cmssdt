@@ -63,6 +63,19 @@ for dir in check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
+#Cleanup dirs which are available on CVMFS
+for dir in ib-baseline-tests ; do
+  CVMFS_DIR=/cvmfs/cms-ib.cern.ch/jenkins-artifacts/${dir}
+  ls ${CVMFS_DIR} >/dev/null 2>&1 || true
+  if [ -d ${CVMFS_DIR} ] ; then
+    for ver in $(find ${JENKINS_ARTIFACTS}/${dir} -maxdepth 1 -mindepth 1 -name 'CMSSW_*' -type d | sed "s|${JENKINS_ARTIFACTS}/${dir}/||") ; do
+      if [ -d ${CVMFS_DIR}/${var} ] ; then
+        echo "Deleting: ${JENKINS_ARTIFACTS}/${dir}/${ver}"
+      fi
+    done
+  fi
+done
+
 NEW_DIRS=""
 for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 1 -type d | sed 's|.*/||'`; do
   if [ "X`echo ${DIRS_PROCESSED} | grep ${dir}`" = "X" ] ; then

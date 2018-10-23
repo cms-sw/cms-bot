@@ -74,10 +74,10 @@ else
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
 fi
-echo $LIMIT_RESULTS >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
 if [ "$LIMIT_RESULTS" = "YES" ] ; then
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out | ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected
 else
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
 fi
+rm -f ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out >/dev/null 2>&1 || true

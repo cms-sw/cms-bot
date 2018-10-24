@@ -80,4 +80,4 @@ if [ "$LIMIT_RESULTS" = "YES" ] ; then
 else
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
 fi
-rm -f ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out >/dev/null 2>&1 || true
+rm -f ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info >/dev/null 2>&1 || true

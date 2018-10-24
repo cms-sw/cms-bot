@@ -66,7 +66,6 @@ CMSSW_CATEGORIES={
    "Utilities/StorageFactory",
    "Utilities/Testing", "Utilities/Timing",
    "Utilities/XrdAdaptor",
-   "Utilities/PPS",
    "Validation/Tools"
  ],
  "docs": [
@@ -1393,7 +1392,9 @@ CMSSW_CATEGORIES={
    "SimTracker/VertexAssociation",
    "SimTracker/VertexAssociatorESProducer",
    "SimTracker/TrackTriggerAssociation",
-   "SimTransport/HectorProducer","SimTransport/PPSProtonTransport","SimTransport/TotemRPProtonTransportParametrization",
+   "SimTransport/HectorProducer",
+   "SimTransport/PPSProtonTransport",
+   "SimTransport/TotemRPProtonTransportParametrization",
    "SLHCUpgradeSimulations/Configuration",
    "TauAnalysis/MCEmbeddingTools",
    "TrackPropagation/Geant4e",

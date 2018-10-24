@@ -172,7 +172,10 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   name=$(basename $xml)
   tool=$(echo $name | sed 's|.xml$||')
   echo "Checking tool $tool ($xml)"
-  if [ ! -e $CTOOLS/$name ] ; then continue ; fi
+  if [ ! -e $CTOOLS/$name ] ; then
+    scram setup $xml
+    continue
+  fi
   nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
   over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
   echo "Checking version in release: $over vs $nver"

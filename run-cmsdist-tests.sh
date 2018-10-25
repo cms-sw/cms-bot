@@ -112,7 +112,7 @@ if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $CMS_BOT_DIR/config.map | grep "RELEA
 fi
 
 REF_REPO=
-if [ $PKGTOOLS_BRANCH = "V00-32-XX" ] ; then
+if [ $(echo $PKGTOOLS_BRANCH | grep "V00-32-" | wc -l) -gt 0 ] ; then
   REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
 fi
 

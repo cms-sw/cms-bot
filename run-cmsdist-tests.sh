@@ -152,6 +152,10 @@ fi
 source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
 echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
 scram -a $SCRAM_ARCH project $CMSSW_IB
+
+#TO make sure we always pick scram from local area
+rm -f $CMSSW_IB/config/scram_basedir
+
 echo $(scram version) > $CMSSW_IB/config/scram_version
 if [ $(grep '^V05-07-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   git clone git@github.com:cms-sw/cmssw-config

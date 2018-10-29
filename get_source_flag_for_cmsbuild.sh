@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This script will be us by jenkins job (TODO INSERT JOB HERE)
+# This script will be us by jenkins job (https://cmssdt.cern.ch/jenkins/job/ib-any-integration)
 # It will generate --sources flag for pkgtools/build.py script
 #
 # $EXTERNAL_REPO - Github repo if the external
@@ -37,7 +37,7 @@ TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin
 TEST_REPO=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["repo"]["full_name"]')
 EXTERNAL_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
 
-git clone https://github.com/${EXTERNAL_REPO} ${PKG_NAME} -b ${EXTERNAL_BRANCH}
+git clone --depth 1 https://github.com/${EXTERNAL_REPO} ${PKG_NAME} -b ${EXTERNAL_BRANCH}
 pushd ${PKG_NAME}
     git pull git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
     rm -rf .git
@@ -56,8 +56,8 @@ fi
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
 ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
 
-git clone -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
-git clone -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
+git clone --depth 1 -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
+git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 
 ./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME}
 

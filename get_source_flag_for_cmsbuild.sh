@@ -37,7 +37,7 @@ TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin
 TEST_REPO=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["repo"]["full_name"]')
 EXTERNAL_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
 
-git clone --depth 1 https://github.com/${EXTERNAL_REPO} ${PKG_NAME} -b ${EXTERNAL_BRANCH}
+git clone https://github.com/${EXTERNAL_REPO} ${PKG_NAME} -b ${EXTERNAL_BRANCH}
 pushd ${PKG_NAME}
     git pull git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
     rm -rf .git

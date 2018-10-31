@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -ex
 
 # This script will be us by jenkins job (https://cmssdt.cern.ch/jenkins/job/ib-any-integration)
 # It will generate --sources flag for pkgtools/build.py script

@@ -13,11 +13,11 @@
 EXTERNAL_REPO=$1
 EXTERNAL_PR=$2
 CMS_SW_TAG=$3
-ARCH=${4:-'slc6_amd64_gcc700'}  # if not passed, use 'slc6_amd64_gcc700'
-PKG_TOOL_BRANCH="V00-32-XX"
+ARCH=$4
+# PKG_TOOL_BRANCH
 BUILD_DIR="testBuildDir"
 
-CMS_BOT_DIR=$(dirname $(dirname $0))
+CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
 
 #Checked if variables are passed
 if [[ -z "$1" || -z "$2" || -z "$3" ]]; then
@@ -46,9 +46,11 @@ pushd ${PKG_NAME}
 popd
 
 FILTERED_CONF=$(CMS_BOT_DIR/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCH}" )
-
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
-ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
+if [[ -z ARCH ]] ; then
+  ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
+fi
+PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 
 git clone --depth 1 -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
 git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
@@ -56,7 +58,7 @@ git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 ./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME}
 
 SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
-                        grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} \ tr '\n' '#' )
+                        grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} | tr '\n' '#' )
 
 N=$(echo ${SOURCES} | tr '#' '\n' | grep -c ':source' )
 echo "Number of sources: " ${N}

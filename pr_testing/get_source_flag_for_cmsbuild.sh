@@ -45,7 +45,7 @@ pushd ${PKG_NAME}
     rm -rf .git
 popd
 
-FILTERED_CONF=$(CMS_BOT_DIR/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCH}" )
+FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCH}" )
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
 if [[ -z ARCH ]] ; then
   ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )

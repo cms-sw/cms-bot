@@ -60,7 +60,7 @@ git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
                         grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} | tr '\n' '#' )
 
-N=$(echo ${SOURCES} | tr '#' '\n' | grep -c ':source' )
+N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' )
 echo "Number of sources: " ${N}
 echo "Sources:"
 echo ${SOURCES}

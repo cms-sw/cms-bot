@@ -13,14 +13,16 @@
 EXTERNAL_REPO=$1
 EXTERNAL_PR=$2
 CMS_SW_TAG=$3
-ARCH=slc6_amd64_gcc700 # Hardcode since cmsbuild always needs an architecture
-PKG_TOOL_BRANCH="V00-32-DEVEL"
+ARCH=${4:-'slc6_amd64_gcc700'}  # if not passed, use 'slc6_amd64_gcc700'
+PKG_TOOL_BRANCH="V00-32-XX"
 BUILD_DIR="testBuildDir"
+
+CMS_BOT_DIR=$(dirname $(dirname $0))
 
 #Checked if variables are passed
 if [[ -z "$1" || -z "$2" || -z "$3" ]]; then
-    echo "empty parameters"
-    echo "EXTERNAL_REPO: '${EXTERNAL_REPO}', EXTERNAL_PR: '${EXTERNAL_PR}', CMS_SW_TAG: '${CMS_SW_TAG}'"
+    >&2 echo "empty parameters"
+    >&2 echo "EXTERNAL_REPO: '${EXTERNAL_REPO}', EXTERNAL_PR: '${EXTERNAL_PR}', CMS_SW_TAG: '${CMS_SW_TAG}'"
     exit 1
 fi
 
@@ -28,8 +30,8 @@ PKG_NAME=$(echo ${EXTERNAL_REPO} | sed 's|.*/||') # package name from variable
 GH_JSON=$(curl -s https://api.github.com/repos/${EXTERNAL_REPO}/pulls/${EXTERNAL_PR})
 
 if [ $( echo $GH_JSON | grep -c '"message": "Not Found"' ) -eq 1 ]; then
-    echo "ERROR: external pull request not found"
-    exit 1
+    >&2 echo "ERROR: external pull request not found"
+    >&2 echo 1
 fi
 
 # TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
@@ -43,15 +45,7 @@ pushd ${PKG_NAME}
     rm -rf .git
 popd
 
-#find correct CMS_DIST_TAG
-FILTERED_CONF=$(cat cms-bot/config.map | grep -i ${CMS_SW_TAG} | grep -v DISABLED=1)
-if [ $(echo ${FILTERED_CONF} | grep -c -i ${CMS_SW_TAG}) -ne 1 ]; then
-    FILTERED_CONF=$(echo ${FILTERED_CONF} | grep  PROD_ARCH=1 )
-    if [ $(echo ${FILTERED_CONF} | grep -c -i ${CMS_SW_TAG}) -ne 1 ]; then
-        echo "ERROR: Could not match correct CMSDIST_TAG"
-        exit 1
-    fi
-fi
+FILTERED_CONF=$(CMS_BOT_DIR/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCH}" )
 
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
 ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
@@ -62,24 +56,24 @@ git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 ./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME}
 
 SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
-                        grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} )
+                        grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} \ tr '\n' '#' )
 
-N=$(echo ${SOURCES} | grep -cve '^\s*$' )
+N=$(echo ${SOURCES} | tr '#' '\n' | grep -c ':source' )
 echo "Number of sources: " ${N}
 echo "Sources:"
 echo ${SOURCES}
 
 if [ ${N} -eq 0 ]; then
-   echo "ERROR: External sources not found"
+   >&2 echo "ERROR: External sources not found"
    exit 1
 elif [ ${N} -eq 1 ]; then
    echo "One source found"
 else
-   echo "ERROR: More then one external source is found"
+   >&2 echo  "ERROR: More then one external source is found"
    exit 1
 fi
 
-OUTPUT=$(echo ${SOURCES}  | sed 's/ .*//' )
+OUTPUT=$(echo ${SOURCES}  | sed 's/ .*//' | tr '#' '\n' )
 # PKG_NAME=$( echo ${OUTPUT} | sed 's/:.*//')
 SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')

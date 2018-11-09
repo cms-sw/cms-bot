@@ -90,5 +90,6 @@ DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
 
 # Move to other path
 OUT_PATH=$RANDOM
+mkdir ${OUT_PATH}
 mv ${PKG_NAME} ${OUT_PATH}/${DIR_NAME}
 echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${OUT_PATH}/${DIR_NAME}" >> get_source_flag_result.txt

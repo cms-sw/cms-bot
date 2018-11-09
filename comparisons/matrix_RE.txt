@@ -48,6 +48,8 @@ RROldTTbarwf1103p0 1103.0_RR+OldTTbar*/step2.root reRECO
 #
 RunHI2010wf140p51 140.51_RunHI2010+RunHI2010+*/step3.root ZStoRECO
 RunHI2011wf140p53 140.53_RunHI2011+RunHI2011+*/step2.root reRECO
+RunHI2018wf140p56 140.56_RunHI2018+RunHI2018+*/step2.root reRECO
+RunHI2018Reducedwf140p57 140.57_RunHI2018Reduced+*/step2.root reRECO
 RunHI2015repackVRwf140p55 140.55_RunHI2015VR+RunHI2015VR*/step4.root reRECO
 HydjetQwf40p0 40.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/step3.root RECO
 HydjetQMinBiaswf140p0 140.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/step3.root RECO
@@ -216,6 +218,9 @@ TTbar13TeV2017AllNewwf10824p0 10824.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2017AllN
 #
 # 2018 workflows follow
 #
+Cosmics2018wf7p2 7.2_Cosmics_UP18*/step3.root RECO
+CosmicsSPLoose2018wf7p3 7.3_CosmicsSPLoose_UP18*/step3.root RECO
+CosmicsPEAK2018wf7p4 7.4_Cosmics_UP18*/step3.root RECO
 SingleElectronPt35in2018wf10802p0 10802.0_SingleElectronPt35+SingleElectronPt35_pythia8_2018*_GenSimFull*+*/step3.root RECO
 SingleElectronPt35in2018nanoEDMwf10802p0 10802.0_SingleElectronPt35+SingleElectronPt35_pythia8_2018*_GenSimFull*+*/step6.root NANO
 SingleElectronPt1000in2018wf10803p0 10803.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2018*_GenSimFull*+*/step3.root RECO

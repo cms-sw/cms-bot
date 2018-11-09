@@ -1,4 +1,20 @@
 #!/bin/bash -ex
+
+# This script will update CMSSW external, whose version we keep patched
+# It expects that git username is setuped locally
+# Parameters:
+# $1 - external(tool) name, (ex: root, dd4hep)
+# $2 - external branch from where we want to take changes (ex: master)
+# $3 - CMSSW tag (ex: CMSSW_10_4_X)
+#
+#
+# During execution, script will ask if to cherry-pick specific commits
+# After execution it creates 'push-branches.sh' and 'tool' directory
+# You can check 'tool' if merge was successful and then execute 'push-branches.sh'
+# This will push the changes as separate branches. Then you will need to make a PR.
+#
+# TODO: external branch could be taken from spec file
+
 TOOL=$1
 TOOL_BRANCH=$(echo $2| sed 's|:.*||')
 CMSDIST_BRANCH=$3

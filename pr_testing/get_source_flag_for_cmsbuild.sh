@@ -88,12 +88,7 @@ OUTPUT=$(echo ${SOURCES}  | sed 's/ .*//' | tr '#' '\n' )
 SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
 
-# move external to new place
-pwd
-ls -l
-if [ ${PKG_NAME} != ${DIR_NAME} ]; then
-    mv ${PKG_NAME} ${DIR_NAME}
-fi
-# Output result
-
-echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt
+# Move to other path
+OUT_PATH=$RANDOM
+mv PKG_NAME ${OUT_PATH}/${DIR_NAME}
+echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${OUT_PATH}/${DIR_NAME}" >> get_source_flag_result.txt

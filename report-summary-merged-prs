@@ -500,6 +500,7 @@ def execute_magic_command_tags( start_tag, end_tag, release_queue, release_branc
     tags += new_tags
 
   tags = [t for t in reversed(tags) if not ignore_tags or not re.match(ignore_tags,t) ]
+  print "Found Tags:",tags
 
   return tags
 

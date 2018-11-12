@@ -7,6 +7,11 @@ RPMS_REPO=$3
 PACKAGE_NAME=$4
 REINSTALL=$5
 
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$4" ] ; then
+    echo "empty var, set it up, exit"
+exit -1
+fi
+
 if [ "$REINSTALL" = true ] ; then
     REINSTALL="--reinstall"
 else

@@ -34,11 +34,11 @@ if [ $( echo $GH_JSON | grep -c '"message": "Not Found"' ) -eq 1 ]; then
 fi
 
 # TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
-TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')  # PR branch
-TEST_REPO=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["repo"]["full_name"]')
-EXTERNAL_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')  # where to merge
+BASE_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')  # where to merge
+TEST_REPO=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["full_name"]')
+TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')   # PR branch
 
-git clone https://github.com/${EXTERNAL_REPO} ${PKG_NAME} -b ${EXTERNAL_BRANCH}
+git clone https://github.com/${EXTERNAL_REPO} ${PKG_NAME} -b ${BASE_BRANCH}
 pushd ${PKG_NAME}
     git pull git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
     rm -rf .git

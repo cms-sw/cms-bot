@@ -22,6 +22,13 @@ if [ ! -d $INSTALL_PATH ] ; then
     mkdir -p $INSTALL_PATH
 fi
 
+#  check if RPMS_REPO matches the one in install path
+if [[ -f ${INSTALL_PATH}/common/cmspkg ]] &&  [[ `grep "repository ${RPMS_REPO}" ${INSTALL_PATH}/common/cmspkg | wc -l` -ne "1" ]]; then
+    echo "Install path is bootstraped for another RPM REPO, abort"
+    exit -1
+fi
+
+
 SCRAM_ARCH=$ARCHITECTURE #  for dockerrun function
 #  PROOT_DIR= jenkins machine variable
 #  CMS_BOT_DIR= jenkins machine variable, repo on cvmfs

@@ -23,7 +23,7 @@ if [ ! -d $INSTALL_PATH ] ; then
 fi
 
 #  check if RPMS_REPO matches the one in install path
-if [[ -f ${INSTALL_PATH}/common/cmspkg ]] &&  [[ `grep "repository ${RPMS_REPO}" ${INSTALL_PATH}/common/cmspkg | wc -l` -ne "1" ]]; then
+if [[ -f ${INSTALL_PATH}/common/cmspkg ]] &&  [[ `grep "repository ${RPMS_REPO} " ${INSTALL_PATH}/common/cmspkg | wc -l` -ne "1" ]]; then
     echo "Install path is bootstraped for another RPM REPO, abort"
     exit -1
 fi

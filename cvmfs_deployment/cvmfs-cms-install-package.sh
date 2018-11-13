@@ -7,7 +7,7 @@ RPMS_REPO=$3
 PACKAGE_NAME=$4
 REINSTALL=$5
 
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$4" ] ; then
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] ; then
     echo "empty var, set it up, exit"
 exit -1
 fi
@@ -21,6 +21,13 @@ fi
 if [ ! -d $INSTALL_PATH ] ; then
     mkdir -p $INSTALL_PATH
 fi
+
+#  check if RPMS_REPO matches the one in install path
+if [[ -f ${INSTALL_PATH}/common/cmspkg ]] &&  [[ `grep "repository ${RPMS_REPO}" ${INSTALL_PATH}/common/cmspkg | wc -l` -ne "1" ]]; then
+    echo "Install path is bootstraped for another RPM REPO, abort"
+    exit -1
+fi
+
 
 SCRAM_ARCH=$ARCHITECTURE #  for dockerrun function
 #  PROOT_DIR= jenkins machine variable

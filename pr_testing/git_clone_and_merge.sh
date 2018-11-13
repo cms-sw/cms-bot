@@ -4,7 +4,7 @@
 # ---
 
 CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
-WORKSPACE=../${CMS_BOT_DIR}
+WORKSPACE=${CMS_BOT_DIR}/../
 CACHED_GH=${WORKSPACE}/CACHED_GH
 # ---
 

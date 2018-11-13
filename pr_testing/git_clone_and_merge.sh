@@ -23,6 +23,6 @@ pushd ${WORKSPACE}
         git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH}
     fi
     pushd ${BASE_REPO_NAME}
-        git pull --no-edit git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
+        git pull --rebase git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
     popd
 popd

@@ -44,7 +44,7 @@ ${CMS_BOT_DIR}/cvmfs_deployment/bootstrap_dir_for_arch.sh $INSTALL_PATH $ARCHITE
 RPM_CONFIG=${INSTALL_PATH}/${ARCHITECTURE}/var/lib/rpm/DB_CONFIG
 if [ ! -e $RPM_CONFIG ] ; then
     echo "mutex_set_max 10000000" > $RPM_CONFIG
-    dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
+    dockerrun "${INSTALL_PATH}/common/cmspkg rpmenv -- rpmdb --rebuilddb"
 fi
 
 #  check how many packages are available

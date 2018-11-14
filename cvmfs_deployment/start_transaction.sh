@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 
+cvmfs_repo=cms-ib.cern.ch
+
 lock=~/cron_install_cmssw.lock
 CPID=""
 while [ "$CPID" != "$1" ]  ; do
@@ -12,5 +14,4 @@ while [ "$CPID" != "$1" ]  ; do
   CPID=$(cat $lock | tail -1)
 done
 
-exit 0
-#cvmfs_server trasaction || cvmfs_server abort && cvmfs_server transaction
+cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/${cvmfs_repo}/is_publishing.lock) && cvmfs_server transaction)

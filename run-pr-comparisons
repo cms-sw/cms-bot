@@ -208,7 +208,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     echo "<html><body><h3>Default comparison: Workflows with failed comparisons</h3>" > $WORKSPACE/upload/validateJR.html
     echo "<table><tr><td>WF #</td><td>Failed</td></tr>" >> $WORKSPACE/upload/validateJR.html
     grep 'Histogram comparison details' $JR_COMP_DIR/logRootQA.log  | grep '\.log *\[[1-9][0-9]* *, *[1-9][0-9]*'  | sed 's|.*/default-comparison/\(\([^_]*\)_.*\)RelMonComp.*.log \[[1-9][0-9]* *, *\([1-9][0-9]*\) *,.*|<tr><td><a href="\1">\2</a></td><td align="right">\3</td><tr>|' >> $WORKSPACE/upload/validateJR.html
-    if [ $(cat $WORKSPACE/results/validateJR.html | wc -l) -eq 2 ] ; then
+    if [ $(cat $WORKSPACE/upload/validateJR.html | wc -l) -eq 2 ] ; then
       echo "<tr><td>ALL OK</td><td>No errors</td></tr></table>" >> $WORKSPACE/upload/validateJR.html
     else
       echo "<tr></tr></table></body></html>" >> $WORKSPACE/upload/validateJR.html
@@ -321,7 +321,7 @@ fi
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
 send_jenkins_artifacts $WORKSPACE/upload/ ${COMP_UPLOAD_DIR}/
 if [ -e $WORKSPACE/results/testsResults.txt ] ; then
-  sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
+  sed -i "s/^COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
   send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
 fi
 echo "All done at `date`"

@@ -1,15 +1,17 @@
 #!/bin/bash -ex
 # Echos metadata of PR taken from github. It also caches it in specific location
 # ---
-CMS_BOT_DIR=$(dirname $(dirname $0))  # To get CMS_BOT dir path
-WORKSPACE=${CMS_BOT_DIR}/../
-CACHED_GH=${WORKSPACE}/CACHED_GH
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
+CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+WORKSPACE=$(dirname ${CMS_BOT_DIR} )
+CACHED=${WORKSPACE}/CACHED
+
 PR=$1  # ex. cms-sw/dist#100
 # ---
 
 REPO=$( echo ${PR} | sed 's/#.*//' )
 PR=$(echo ${PR} | sed 's/.*#//')
-DEST_D=${CACHED_GH}/${REPO}/${PR}/
+DEST_D=${CACHED}/${REPO}/${PR}/
 GH_JSON=${DEST_D}/GH_JSON.json
 mkdir -p ${DEST_D}
 if ! [ -f  ${GH_JSON} ]; then

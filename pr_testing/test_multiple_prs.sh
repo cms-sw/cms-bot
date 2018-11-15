@@ -4,13 +4,15 @@
 # 1) will merge multiple PRs for multiple repos
 # 2) run tests and post result on github
 # ---
-CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
+CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+WORKSPACE=$(dirname ${CMS_BOT_DIR} )
+CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
-WORKSPACE=${CMS_BOT_DIR}/../
-CACHED_GH=${WORKSPACE}/CACHED_GH
-PULL_REQUESTS=$1 # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
-RELEASE_FORMAT=$2    # CMS SW TAG found in config_map.py
-ARCHITECTURE=$3          # architecture (ex. slc6_amd64_gcc700)
+
+PULL_REQUESTS=$1            # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
+RELEASE_FORMAT=$2           # CMS SW TAG found in config_map.py
+ARCHITECTURE=$3             # architecture (ex. slc6_amd64_gcc700)
 # ---
 
 function fail_if_empty(){
@@ -71,10 +73,9 @@ for U_REPO in ${UNIQ_REPOS}; do
 		;;
 		*)
 		    echo "external"
-			PR_REPO=$(echo ${PR} | sed 's/#.*//')
-			PR_NUMBER=$(echo ${PR} | sed 's/.*#//')
-			PKG_NAME=$(echo $PR_REPO | sed 's|.*/||')
-			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_NAME" "$RELEASE_FORMAT" "$ARCHITECTURE"
+			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
+			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
+			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$RELEASE_FORMAT" "$ARCHITECTURE"
 		;;
 	esac
 done

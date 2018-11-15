@@ -1,9 +1,11 @@
 #!/bin/bash -ex
 # Takes GH_json as input and then clones base repo and merge PR into it
 # ---
-CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
-WORKSPACE=${CMS_BOT_DIR}/../
-CACHED_GH=${WORKSPACE}/CACHED_GH
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
+CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+WORKSPACE=$(dirname ${CMS_BOT_DIR} )
+CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
+
 GH_JSON=$1  # JSON format text with PR data from github
 # ---
 

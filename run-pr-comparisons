@@ -5,6 +5,7 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
 source $CMS_BOT_DIR/jenkins-artifacts
 cd $WORKSPACE
+mkdir -p $WORKSPACE/upload
 rm -f $WORKSPACE/ALL_DONE
 
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$RELEASE_FORMAT; fi
@@ -21,6 +22,7 @@ get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/results/
 BASE_IB=$(grep '^BASE_IB;' $WORKSPACE/results/testsResults.txt | sed 's|.*;||')
 if [ "X${BASE_IB}" = "X" ] ; then BASE_IB=$RELEASE_FORMAT ; fi
 
+COMP_UPLOAD_DIR="baseLineComparisons/${BASE_IB}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}"
 ERRORS_FILE=wf_errors.txt
 get_jenkins_artifacts ${BASELINE_DIR}/$ERRORS_FILE $WORKSPACE/$ERRORS_FILE
 
@@ -203,6 +205,15 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     echo 'Doing histogram, log and root comparison:'
     (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $JR_COMP_DIR/logRootQA.log 2>&1) || true
     (grep SUMMARY $JR_COMP_DIR/logRootQA.log | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
+    echo "<html><body><h3>Default comparison: Workflows with failed comparisons</h3>" > $WORKSPACE/upload/validateJR.html
+    echo "<table><tr><td>WF #</td><td>Failed</td></tr>" >> $WORKSPACE/upload/validateJR.html
+    grep 'Histogram comparison details' $JR_COMP_DIR/logRootQA.log  | grep '\.log *\[[1-9][0-9]* *, *[1-9][0-9]*'  | sed 's|.*/default-comparison/\(\([^_]*\)_.*\)RelMonComp.*.log \[[1-9][0-9]* *, *\([1-9][0-9]*\) *,.*|<tr><td><a href="\1">\2</a></td><td>\3</td><tr>|' >> $WORKSPACE/upload/validateJR.html
+    if [ $(cat $WORKSPACE/results/validateJR.html | wc -l) -eq 2 ] ; then
+      echo "<tr><td>ALL OK</td><td>No errors</td></tr></table>" >> $WORKSPACE/upload/validateJR.html
+    else
+      echo "<tr></tr></table></body></html>" >> $WORKSPACE/upload/validateJR.html
+    fi
+    echo "FAILED_COMPARISON;OK,Comparison failed,See Log,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/validateJR.html" >> $WORKSPACE/results/testsResults.txt
   fi
 fi
 
@@ -308,7 +319,7 @@ if [ -e results/files ] ; then
   done
 fi
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
-send_jenkins_artifacts $WORKSPACE/upload/ baseLineComparisons/${BASE_IB}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/
+send_jenkins_artifacts $WORKSPACE/upload/ ${COMP_UPLOAD_DIR}/
 if [ -e $WORKSPACE/results/testsResults.txt ] ; then
   sed -i "s/COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
   send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt

@@ -4,7 +4,7 @@
 # TODO - not all packages have matching repo name with project name
 # TODO We should create a map in cmsdist for such pacakges
 # ---
-SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
+SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 WORKSPACE=$(dirname ${CMS_BOT_DIR} )
 CACHED=${WORKSPACE}/CACHED
@@ -23,10 +23,8 @@ if [[ -z "$PKG_REPO" || -z "$PKG_NAME" || -z "$CMS_SW_TAG" ]]; then
     exit 1
 fi
 
-pushd ${WORKSPACE}
-pushd ${PKG_NAME}
-    rm -rf .git
-popd
+cd ${WORKSPACE}
+rm -rf ${PKG_NAME}/.git
 
 FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCH}" )
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
@@ -37,7 +35,15 @@ PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.
 
 if ! [ -d "cmsdist" ]; then
     git clone --depth 1 -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
-    # TODO check branch
+else
+    # check if existing cmsdist repo points to correct branch
+    pushd cmsdist
+        ACTUAL_BRANCH=$(git branch | head -1 | sed 's|\*\s*||')
+        if [ ${ACTUAL_BRANCH} != ${CMSDIST_BRANCH} ] ; then
+            >&2 echo "Expected CMSDIST branch to be ${CMSDIST_BRANCH}, actual branch is ${ACTUAL_BRANCH} "
+            exit 1
+        fi
+    popd
 fi
 
 if ! [ -d "pkgtools" ]; then
@@ -68,9 +74,8 @@ SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
 
 # Move to other path
-OUT_PATH=${RANDOM}
-mkdir ${OUT_PATH}
-mv ${PKG_NAME} ${OUT_PATH}/${DIR_NAME}
-echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${OUT_PATH}/${DIR_NAME}" >> get_source_flag_result.txt
+if [ ${PKG_NAME} != ${DIR_NAME} ]; then
+    mv ${PKG_NAME} ${DIR_NAME}
+fi
+echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt
 
-popd # ${WORKSPACE}

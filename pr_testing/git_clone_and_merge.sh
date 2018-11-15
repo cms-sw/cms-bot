@@ -1,14 +1,11 @@
 #!/bin/bash -ex
-
-# Takes GH_json as input and then clones and merges repos
+# Takes GH_json as input and then clones base repo and merge PR into it
 # ---
-
 CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
 WORKSPACE=${CMS_BOT_DIR}/../
 CACHED_GH=${WORKSPACE}/CACHED_GH
+GH_JSON=$1  # JSON format text with PR data from github
 # ---
-
-GH_JSON=$1
 
 # TEST_USER=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
 BASE_REPO_NAME=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["repo"]["name"]')

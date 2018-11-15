@@ -1,22 +1,16 @@
 #!/bin/bash -ex
-
 # This script will be us by jenkins job (https://cmssdt.cern.ch/jenkins/job/ib-any-integration)
 # It will generate --sources flag for pkgtools/build.py script
-#
-# $EXTERNAL_REPO - Github repo if the external
-# $EXTERNAL_PR - pull request number
-# $CMS_SW_TAG - CMS SW TAG found in config_map.py
-
 # TODO - not all packages have matching repo name with project name
-# We should create a map in cmsdist for such pacakges
-
+# TODO We should create a map in cmsdist for such pacakges
+# ---
 CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
-EXTERNAL_REPO=$1
-EXTERNAL_PR=$2
-CMS_SW_TAG=$3
+EXTERNAL_REPO=$1  # Github repo if the external
+EXTERNAL_PR=$2    # pull request number
+CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
 ARCH=$4
-# PKG_TOOL_BRANCH
-BUILD_DIR="testBuildDir"
+BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
+# ---
 
 #Checked if variables are passed
 if [[ -z "$1" || -z "$2" || -z "$3" ]]; then
@@ -54,7 +48,6 @@ PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.
 if ! [ -d "cmsdist" ]; then
     git clone --depth 1 -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
 fi
-
 
 if ! [ -d "pkgtools" ]; then
     git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git

@@ -1,9 +1,17 @@
 #!/bin/bash -ex
-
+# This script will be called by Jenkins job ( TODO what job)
+# and
+# 1) will merge multiple PRs for multiple repos
+# 2) run tests and post result on github
+# ---
 CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 WORKSPACE=${CMS_BOT_DIR}/../
-CACHED_GH=$WORKSPACE/CACHED_GH
+CACHED_GH=${WORKSPACE}/CACHED_GH
+PULL_REQUESTS=$1 # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
+RELEASE_FORMAT=$2    # CMS SW TAG found in config_map.py
+ARCHITECTURE=$3          # architecture (ex. slc6_amd64_gcc700)
+# ---
 
 function fail_if_empty(){
     if [ -z "$1" ]; then
@@ -13,7 +21,7 @@ function fail_if_empty(){
 }
 
 function get_base_branch(){
-    # get branch to which to merge
+    # get branch to which to merge from GH PR json
     REPO=$( echo $1 | sed 's/#.*//' )
     PR=$(echo $1 | sed 's/.*#//')
     EXTERNAL_BRANCH=$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh $1 | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
@@ -21,19 +29,13 @@ function get_base_branch(){
     echo ${EXTERNAL_BRANCH}
 }
 
-
-#PULL_REQUESTS="cms-sw/root#122,cms-sw/root#126,cms-sw/cmssw#24918,cms-sw/cmsdist#4432,cms-sw/cmssw#24918,cms-sw/root#1222,cms-sw/cmsdist#4432s,cms-sw/cmsdist#4432"
-#PULL_REQUESTS="cms-sw/cmsdist#4378,cms-sw/cmsdist#4479,cms-sw/cmsdist#4405"
-#PULL_REQUESTS="cms-sw/cmsdist#4479"
-
-PULL_REQUESTS="cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116" # Same branch PR
-#PULL_REQUESTS="cms-sw/root#116" # Same branch PR
-
-
+# -- MAIN --
 PULL_REQUESTS=$(echo $PULL_REQUESTS | sed 's/ //g' | tr ',' ' ')
 UNIQ_REPOS=$(echo $PULL_REQUESTS |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )
 fail_if_empty "${UNIQ_REPOS}"
 export IFS=" "
+
+# Filter PR for specific repo and then check if its PRs point to same base branch
 for U_REPO in ${UNIQ_REPOS}; do
     FILTERED_PRS=$(echo $PULL_REQUESTS | tr ' ' '\n' | grep $U_REPO | tr '\n' ' ' )
     MASTER_LIST=""
@@ -47,10 +49,32 @@ for U_REPO in ${UNIQ_REPOS}; do
         >&2 echo "ERROR: PRs for  repo '${U_REPO}' wants to merge to different branches: ${UNIQ_MASTERS}"
         exit 1
     fi
+done
+
+# Do git pull --rebase for each PR
+for U_REPO in ${UNIQ_REPOS}; do
+    FILTERED_PRS=$(echo $PULL_REQUESTS | tr ' ' '\n' | grep $U_REPO | tr '\n' ' ')
     for PR in ${FILTERED_PRS}; do
         GH_JSON="$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh ${PR})"
         ${PR_TESTING_DIR}/git_clone_and_merge.sh "${GH_JSON}"
     done
 done
 
-echo "DONE"
+# Preparations depending on from repo type
+for U_REPO in ${UNIQ_REPOS}; do
+    case "$U_REPO" in
+		cms-sw/cmssw)
+			PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )
+		;;
+		cms-sw/cmsdist)
+			CMSDIST_PR=$(echo ${PR} | sed 's/.*#//' )
+		;;
+		*)
+		    echo "external"
+			PR_REPO=$(echo ${PR} | sed 's/#.*//')
+			PR_NUMBER=$(echo ${PR} | sed 's/.*#//')
+			PKG_NAME=$(echo $PR_REPO | sed 's|.*/||')
+			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_NAME" "$RELEASE_FORMAT" "$ARCHITECTURE"
+		;;
+	esac
+done

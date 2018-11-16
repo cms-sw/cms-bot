@@ -21,11 +21,14 @@ def update_cmdlog(workflow_dir, jobs):
   wfile.close()
   return
 
-def fix_dasquery_log(workflow_dir):
-  das_log = os.path.join(workflow_dir,"step1_dasquery.log")
-  if os.path.exists(das_log):
-    workflow_id = os.path.basename(workflow_dir).split("_",1)[1]
-    getstatusoutput("cp %s %s/step1_%s.log" % (das_log, workflow_dir, workflow_id))
+def fix_lognames(workflow_dir):
+  workflow_id = os.path.basename(workflow_dir).split("_",1)[1]
+  for log in glob.glob(os.path.join(workflow_dir,"step*_*.log")):
+    logname = os.path.basename(log)
+    step = logname.split("_",1)[0]
+    deslog = step+".log"
+    if logname.endswith('_dasquery.log'): deslog = '%s_%s.log' % (step, workflow_id)
+    getstatusoutput("cp %s %s/%s" % (log, workflow_dir, deslog))
 
 def update_worklog(workflow_dir, jobs):
   if not jobs["commands"]: return False
@@ -36,16 +39,32 @@ def update_worklog(workflow_dir, jobs):
   test_passed=""
   test_failed=""
   steps_res=[]
-  das_log = os.path.join(workflow_dir,"step1_dasquery.log")
-  if os.path.exists(das_log):
-    e, o = getstatusoutput("grep ' tests passed' %s | grep '^1 ' | wc -l" % workflow_logfile)
-    if o=="0": return False
-    exit_codes="0"
-    test_passed="1"
-    test_failed="0"
-    steps_res.append("PASSED")
   failed=False
+  step_num = 0
   for job in jobs["commands"]:
+    step_num+=1
+    try:
+      cmd_step = int(job['command'].split(" step",1)[-1].strip().split(" ")[0])
+      while cmd_step>step_num:
+        das_log = os.path.join(workflow_dir,"step%s_dasquery.log" % step_num)
+        step_num+=1
+        if os.path.exists(das_log):
+          e, o = getstatusoutput("grep ' tests passed,' %s" % workflow_logfile)
+          if o=="": return False
+          ecodes = o.split()
+          if ecodes[step_num-2]=="0":
+            exit_codes+=" 1"
+            test_passed+=" 0"
+            test_failed+=" 1"
+            failed=True
+            steps_res.append("FAILED")
+            continue
+        exit_codes+=" 0"
+        test_passed+=" 1"
+        test_failed+=" 0"
+        steps_res.append("PASSED")
+    except Exception, e:
+      pass
     if job["exit_code"]==-1: failed=True
     if job["exit_code"]>0:
       exit_codes+=" "+str(job["exit_code"])
@@ -113,7 +132,7 @@ if __name__ == "__main__":
   workflow = jobs["name"]
   workflow_dir=os.path.abspath(glob.glob("%s_*" % workflow)[0])
   getstatusoutput("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
-  fix_dasquery_log(workflow_dir)
+  fix_lognames(workflow_dir)
   if update_worklog(workflow_dir, jobs):
     update_cmdlog(workflow_dir, jobs)
   update_timelog(workflow_dir, jobs)

@@ -18,4 +18,5 @@ if ! [ -f  ${GH_JSON} ]; then
     # TODO retry if curl fails do to external glitch
     curl -s https://api.github.com/repos/${REPO}/pulls/${PR} > ${GH_JSON}
 fi
+set +x
 cat ${GH_JSON}

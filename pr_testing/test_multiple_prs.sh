@@ -26,7 +26,9 @@ function get_base_branch(){
     # get branch to which to merge from GH PR json
     REPO=$( echo $1 | sed 's/#.*//' )
     PR=$(echo $1 | sed 's/.*#//')
+    set +x
     EXTERNAL_BRANCH=$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh $1 | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
+    set -x
     fail_if_empty ${EXTERNAL_BRANCH}
     echo ${EXTERNAL_BRANCH}
 }

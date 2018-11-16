@@ -6,18 +6,17 @@ CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 WORKSPACE=$(dirname ${CMS_BOT_DIR} )
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 
-GH_JSON=$1  # JSON format text with PR data from github
+PR_METADATA_PATH=$1  # Absolute path to JSON format text with PR data from github
 # ---
 
-set +x
-# TEST_USER=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
-BASE_REPO_NAME=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["repo"]["name"]')
-BASE_BRANCH=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')  # where to merge
-BASE_REPO=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["repo"]["full_name"]')
+# TEST_USER=$(echo ${GH_JSON} | python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['repo']['owner']['login']")
+BASE_REPO_NAME=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['repo']['name']")
+BASE_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")  # where to merge
+BASE_REPO=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['repo']['full_name']")
 
-TEST_BRANCH=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')  # PR branch
-TEST_REPO=$(echo ${GH_JSON} | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["full_name"]')
-set -x
+TEST_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['ref']")  # PR branch
+TEST_REPO=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['repo']['full_name']")
+
 
 pushd ${WORKSPACE}
     if  [ ! -d ${BASE_REPO_NAME} ]; then

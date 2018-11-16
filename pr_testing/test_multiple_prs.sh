@@ -17,19 +17,18 @@ ARCHITECTURE=$3             # architecture (ex. slc6_amd64_gcc700)
 
 function fail_if_empty(){
     if [ -z "$1" ]; then
-        >&2 echo "ERROR: empty parameter"
+        ERROR_MESSAGE=$2
+        >&2 echo "ERROR: empty parameter, ${2}"
         exit 1
     fi
 }
 
 function get_base_branch(){
     # get branch to which to merge from GH PR json
-    REPO=$( echo $1 | sed 's/#.*//' )
-    PR=$(echo $1 | sed 's/.*#//')
-    set +x
-    EXTERNAL_BRANCH=$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh $1 | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
-    set -x
-    fail_if_empty ${EXTERNAL_BRANCH}
+    PR_METADATA_PATH=$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh "$1")
+    echo $PR_METADATA_PATH
+    EXTERNAL_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
+    fail_if_empty "${EXTERNAL_BRANCH}" "PR had errors - ${1}"
     echo ${EXTERNAL_BRANCH}
 }
 
@@ -45,7 +44,7 @@ if [ $(echo $UNIQ_REPO_NAMES  | grep -v '1 ' | wc -w ) -gt 0 ]; then
     exit 1
 fi
 
-fail_if_empty "${UNIQ_REPOS}"
+fail_if_empty "${UNIQ_REPOS}" "There was no unique repos"
 
 # Filter PR for specific repo and then check if its PRs point to same base branch
 for U_REPO in ${UNIQ_REPOS}; do

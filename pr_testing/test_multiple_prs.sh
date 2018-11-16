@@ -64,11 +64,13 @@ done
 
 # Preparations depending on from repo type
 for U_REPO in ${UNIQ_REPOS}; do
-    case "$U_REPO" in
-		cms-sw/cmssw)
+    PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
+    PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
+    case "$PKG_NAME" in  # We do not care where the repo is kept
+		cmssw)
 			PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )
 		;;
-		cms-sw/cmsdist)
+		cmsdist)
 			CMSDIST_PR=$(echo ${PR} | sed 's/.*#//' )
 		;;
 		*)

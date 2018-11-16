@@ -63,11 +63,10 @@ for U_REPO in ${UNIQ_REPOS}; do
 done
 
 # Do git pull --rebase for each PR
-for U_REPO in ${UNIQ_REPOS}; do
+for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
     FILTERED_PRS=$(echo $PULL_REQUESTS | tr ' ' '\n' | grep $U_REPO | tr '\n' ' ')
     for PR in ${FILTERED_PRS}; do
-        GH_JSON="$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh ${PR})"
-        ${PR_TESTING_DIR}/git_clone_and_merge.sh "${GH_JSON}"
+        ${PR_TESTING_DIR}/git_clone_and_merge.sh "$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${PR}")"
     done
 done
 

@@ -36,8 +36,15 @@ function get_base_branch(){
 # -- MAIN --
 PULL_REQUESTS=$(echo $PULL_REQUESTS | sed 's/ //g' | tr ',' ' ')
 UNIQ_REPOS=$(echo $PULL_REQUESTS |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )
+UNIQ_REPO_NAMES=$(echo $UNIQ_REPOS | tr ' ' '\n' | sed 's|.*/||' | sort | uniq -c )
+
+if [ $(echo $UNIQ_REPO_NAMES  | grep -v ' 1 ' | wc -l ) -gt 0 ]; then
+    >&2 echo "ERROR: multiple PRs from different organisations but same repos:"
+    >$2 echo $UNIQ_REPO_NAMES
+    exit 1
+fi
+
 fail_if_empty "${UNIQ_REPOS}"
-export IFS=" "
 
 # Filter PR for specific repo and then check if its PRs point to same base branch
 for U_REPO in ${UNIQ_REPOS}; do

@@ -6,9 +6,9 @@ WORKSPACE=$1
 LOG_SRC=$2
 LOG_DES=$3
 LOCAL_LOGDIR=$WORKSPACE/cmsBuild_BUILD_logs
-mkdir ${LOCAL_LOGDIR}
+mkdir ${LOCAL_LOGDIR}/js
 if [ -f $WORKSPACE/summary.html ] ; then cp $WORKSPACE/summary.html ${LOCAL_LOGDIR}/ ; fi
-if [ -f $WORKSPACE/renderPRTests.js ] ; then cp $WORKSPACE/renderPRTests.js ${LOCAL_LOGDIR}/ ; fi
+if [ -f $WORKSPACE/renderPRTests.js ] ; then cp $WORKSPACE/renderPRTests.js ${LOCAL_LOGDIR}/js/ ; fi
 if [ -f $WORKSPACE/testsResults.txt ] ; then cp $WORKSPACE/testsResults.txt ${LOCAL_LOGDIR}/ ; fi
 if [ -d "${LOG_SRC}" ] ; then
   pushd $LOG_SRC

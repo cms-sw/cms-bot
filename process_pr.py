@@ -480,6 +480,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ignore_tests = check_ignore_test (first_line.upper())
         if 'NONE' in ignore_tests: ignore_tests=[]
       continue
+    if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
+      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
+        TRIGGER_PR_TESTS.append(first_line.split("@",1)[-1].split(" ",1)[0])
+      continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:
         hold = {}

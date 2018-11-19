@@ -775,7 +775,15 @@ if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
 fi
 
 cd $WORKSPACE
-mkdir -p upload
+if [ -d ${WORKSPACE}/upload ] ; then
+  for ut in $(find $WORKSPACE/upload -mindepth 1 -maxdepth 1 -name '*' -type d | sed 's|.*/||') ; do
+    UT_STATUS="OK"
+    if [ -f $WORKSPACE/upload/${ut}/status ] ; then UT_STATUS=$(cat $WORKSPACE/upload/${ut}/status) ; fi
+    echo "USER_TEST_${ul};${UT_STATUS},User Test ${ut},See Log,${ut}" >> $RESULTS_FILE
+  done
+else
+  mkdir -p upload
+fi
 for f in build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
   [ -e $f ] && mv $f upload/$f
 done

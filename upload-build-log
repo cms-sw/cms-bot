@@ -6,7 +6,7 @@ WORKSPACE=$1
 LOG_SRC=$2
 LOG_DES=$3
 LOCAL_LOGDIR=$WORKSPACE/cmsBuild_BUILD_logs
-mkdir ${LOCAL_LOGDIR}/js
+mkdir -p ${LOCAL_LOGDIR}/js
 if [ -f $WORKSPACE/renderPRTests.js ] ; then cp $WORKSPACE/renderPRTests.js ${LOCAL_LOGDIR}/js/ ; fi
 for f in summary.html testsResults.txt cmsswtoolconf.log ; do
   if [ -f $WORKSPACE/$f ] ; then cp $WORKSPACE/$f ${LOCAL_LOGDIR}/ ; fi

@@ -12,7 +12,7 @@ CACHED=${WORKSPACE}/CACHED
 PKG_REPO=$1       # Repo of external (ex. cms-sw/root)
 PKG_NAME=$2       # Name of external (ex. root)
 CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
-ARCH=$4
+ARCHITECTURE=$4           # Architecture (ex. slc7_amd64_gcc700)
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 # ---
 
@@ -26,13 +26,17 @@ fi
 cd ${WORKSPACE}
 rm -rf ${PKG_NAME}/.git
 
-FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCH}" )
+FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCHITECTURE}" )
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
-if [[ -z ${ARCH} ]] ; then
-  ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
+if [[ -z ${ARCHITECTURE} ]] ; then
+  ARCHITECTURE=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
 fi
 PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
-
+PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
+if [ ${PKG_TOOL_VERSION} -lt 32 ] ; then
+    >&2 echo "ERROR: CMS_SW_TG ${CMS_SW_TAG} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
+    exit 1
+fi
 if ! [ -d "cmsdist" ]; then
     git clone --depth 1 -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
 else
@@ -50,11 +54,11 @@ if ! [ -d "pkgtools" ]; then
     git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 fi
 
-./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME}
-SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
-                        grep -i "^${PKG_NAME}:source" | grep github.com/${PKG_REPO} | tr '\n' '#' )
+./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME}
+SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
+                        grep -i "^${PKG_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
-N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' )
+N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true
 echo "Number of sources: " ${N}
 echo "Sources:"
 echo ${SOURCES}

@@ -2849,7 +2849,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       calomet("caloMetBE","phi");
       calomet("caloMetBE","metSignificance");
       
-      
+
+      //PAT filters (almost all are MET filters)
+      tbr = "edmTriggerResults_TriggerResults__";
+      PlotStats res = plotvar(tbr+recoS+".obj.paths_@.size()");
+      for (int i = 0; i< std::max(res.ref_xmax,res.new_xmax) && i < 64; ++i){//restrict to 64, 
+        plotvar(tbr+recoS+Form(".obj.paths_[%d].accept()",i), "", true);
+      }
     }
 
     if (stepContainsNU(step, "all") || stepContainsNU(step, "calotower") || stepContainsNU(step, "HEP17")){

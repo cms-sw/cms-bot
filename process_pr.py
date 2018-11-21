@@ -411,13 +411,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   triggerred_code_checks=False
   backport_pr_num = ""
   comp_warnings = False
-  #body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() if issue.body else ""
-  #if (requestor == cmsbuild_user) and \
-  #   re.match(ISSUE_SEEN_MSG,body_firstline):
-  #  already_seen = issue
-  #  backport_pr_num = get_backported_pr(issue.body.encode("ascii", "ignore")) if issue.body else ""
-  #elif re.match(REGEX_EX_CMDS, body_firstline, re.I):
-  #  check_extra_labels(body_firstline.lower(), extra_labels)
+  extra_testers = []
   all_comments = [issue]
   for c in issue.get_comments(): all_comments.append(c)
   for comment in all_comments:
@@ -482,8 +476,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
-        TRIGGER_PR_TESTS.append(first_line.split("@",1)[-1].split(" ",1)[0])
-        print "Added user in test category:",TRIGGER_PR_TESTS[-1]
+        tester = first_line.split("@",1)[-1].split(" ",1)[0]
+        if not tester in TRIGGER_PR_TESTS:
+          TRIGGER_PR_TESTS.append(tester)
+          extra_testers.append(tester)
+          print "Added user in test category:",tester
       continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:
@@ -725,6 +722,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       extra_labels["backport"][0]="backport-ok"
 
   # Add additional labels
+  for lab in extra_testers: labels.append("allow-"+lab)
   for lab in extra_labels: labels.append(extra_labels[lab][0])
   if comp_warnings: labels.append("compilation-warnings")
 
@@ -745,6 +743,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          and not x.startswith("pending-assignment")
                          and not x.startswith("comparison")
                          and not x.startswith("code-checks")
+                         and not x.startswith("allow-")
                          and not x in ["backport", "urgent", "bug-fix", "new-feature", "backport-ok", "compilation-warnings"]]
 
   if not missingApprovals:

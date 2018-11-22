@@ -110,6 +110,9 @@ def updateMilestone(repo, issue, pr, dryRun):
   if not milestoneId:
     print "Unable to find a milestone for the given branch"
     return
+  if pr.state != "open":
+    print "PR not open, not setting/checking milestone"
+    return
   if issue.milestone and issue.milestone.id==milestoneId: return
   milestone = repo.get_milestone(milestoneId)
   print "Setting milestone to %s" % milestone.title

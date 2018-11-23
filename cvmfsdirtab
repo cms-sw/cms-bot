@@ -3,7 +3,7 @@
 /nweek-*/share/cms/data-L1Trigger-L1TMuon
 /nweek-*/share/cms/data-GeneratorInterface-EvtGenInterface
 /nweek-*/share/cms/data-MagneticField-Interpolation/*
-/nweek-*/*_*_*/external
+/nweek-*/*_*_*/external/*
 /nweek-*/*_*_*/external/blackhat/*
 /nweek-*/*_*_*/external/boost/*
 /nweek-*/*_*_*/external/cuda/*

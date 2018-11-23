@@ -4,12 +4,17 @@
 # 1) will merge multiple PRs for multiple repos
 # 2) run tests and post result on github
 # ---
+# Constants
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 WORKSPACE=$(dirname ${CMS_BOT_DIR} )
+
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
-
+COMMON=${CMS_BOT_DIR}/common
+BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
+# ---
+# Input variable
 PULL_REQUESTS=$1            # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
 CMS_SW_TAG=$2           # CMS SW TAG found in config_map.py
 ARCHITECTURE=$3             # architecture (ex. slc6_amd64_gcc700)
@@ -32,13 +37,42 @@ function get_base_branch(){
     echo ${EXTERNAL_BRANCH}
 }
 
+
 # -- MAIN --
+
+echo_section "Variable setup"
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )
 fail_if_empty "${UNIQ_REPOS}" "There was no unique repos"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
 
+CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
+
+CMSSW_IB=
+for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests"  | awk '{print $2":"$3}' | sort -r | sed 's|^.*:||') ; do
+  [ -e $relpath/build-errors ] && continue
+  CMSSW_IB=$(basename $relpath)
+  break
+done
+[ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
+
+if [ "X$CMSSW_CYCLE" = X ]; then
+  CMSSW_CYCLE=$(echo "$CONFIG_LINE" | tr ';' '\n' | grep RELEASE_QUEUE= | sed 's|RELEASE_QUEUE=||')
+fi
+
+export ARCHITECTURE
+export SCRAM_ARCH=${ARCHITECTURE}
+ls /cvmfs/cms.cern.ch
+which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
+
+PUB_REPO="${PUB_USER}/cmsdist"
+if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
+CMSDIST_BRANCH= # TODO
+
+echo_section "Pull reguest checks"
 # Check if same organization/repo PRs
 if [ $(echo $UNIQ_REPO_NAMES_WITH_COUNT  | grep -v '1 ' | wc -w ) -gt 0 ]; then
     >&2 echo "ERROR: multiple PRs from different organisations but same repos:"
@@ -69,7 +103,7 @@ for U_REPO in ${UNIQ_REPOS}; do
     fi
 done
 
-# Do git pull --rebase for each PR
+# Do git pull --rebase for each PR except for /cmssw
 for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
     FILTERED_PRS=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep ${U_REPO} | tr '\n' ' ')
     for PR in ${FILTERED_PRS}; do
@@ -83,13 +117,13 @@ for U_REPO in ${UNIQ_REPOS}; do
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
 		cmssw)
-			PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )
+		# ignore
+			# PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ? 
 		;;
 		cmsdist)
-			CMSDIST_PR=$(echo ${PR} | sed 's/.*#//' )
+			# CMSDIST_PR=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ?
 		;;
 		*)
-		    echo "external"
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
 			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMS_SW_TAG" "$ARCHITECTURE"

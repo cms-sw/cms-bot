@@ -1,8 +1,8 @@
 #!/bin/bash
+# Will run report-pull-request-results.py with all parameters passed 3 times
 if [ "X${SCRAMRT_SET}" != "X" ] ; then eval $(scram unset -sh) ; fi
 for x in 0 1 2 ; do
   $(dirname $0)/report-pull-request-results.py "$@" && exit 0
   sleep 30
 done
 exit 1
-

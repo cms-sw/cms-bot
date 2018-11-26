@@ -202,26 +202,28 @@ fi
 
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
+    QALOG=$JR_COMP_DIR/logRootQA.log
+    JRHTML=$WORKSPACE/upload/validateJR.html
     echo 'Doing histogram, log and root comparison:'
-    (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $JR_COMP_DIR/logRootQA.log 2>&1) || true
-    (grep SUMMARY $JR_COMP_DIR/logRootQA.log | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
-    echo "<html><body><h3>Default comparison: Workflows with failed comparisons</h3>" > $WORKSPACE/upload/validateJR.html
-    echo "<table><tr><td>WF #</td><td>Failed</td></tr>" >> $WORKSPACE/upload/validateJR.html
-    grep 'Histogram comparison details' $JR_COMP_DIR/logRootQA.log  | grep '\.log *\[[1-9][0-9]* *, *[1-9][0-9]*'  | sed 's|.*/default-comparison/\(\([^_]*\)_.*\)RelMonComp.*.log \[[1-9][0-9]* *, *\([1-9][0-9]*\) *,.*|<tr><td><a href="\1">\2</a></td><td align="right">\3</td></tr>|' >> $WORKSPACE/upload/validateJR.html
-    if [ $(cat $WORKSPACE/upload/validateJR.html | wc -l) -eq 2 ] ; then
-      echo "<tr><td>ALL OK</td><td>No errors</td></tr></table>" >> $WORKSPACE/upload/validateJR.html
+    (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $QALOG 2>&1) || true
+    (grep SUMMARY $QALOG | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
+    echo "<html><body><h3>Default comparison: Workflows with failed comparisons</h3>" > $JRHTML
+    echo "<table><tr><td>WF #</td><td>Failed</td></tr>" >> $JRHTML
+    grep 'Histogram comparison details' $QALOG  | grep '\.log *\[[1-9][0-9]* *, *[1-9][0-9]*'  | sed 's|.*/default-comparison/\(\([^_]*\)_.*\)RelMonComp.*.log \[[1-9][0-9]* *, *\([1-9][0-9]*\) *,.*|<tr><td><a href="\1">\2</a></td><td align="right">\3</td></tr>|' >> $JRHTML
+    if [ $(cat $JRHTML | wc -l) -eq 2 ] ; then
+      echo "<tr><td>ALL OK</td><td>No errors</td></tr></table>" >> $JRHTML
     else
-      echo "</table>" >> $WORKSPACE/upload/validateJR.html
+      echo "</table>" >> $JRHTML
     fi
-    echo "<h3>Default comparison: Workflows with reco comparison differences</h3>" >> $WORKSPACE/upload/validateJR.html
-    echo "<table><tr><td>WF #</td><td>Differences</td></tr>" >> $WORKSPACE/upload/validateJR.html
-    grep 'JR results differ' $JR_COMP_DIR/logRootQA.log | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[5]"\">"a[5]"</a></td><td align=\"right\">"a[4]"</td></tr>" }' >> $WORKSPACE/upload/validateJR.html
-    if grep -q "Differences" <(tail -n 1 $WORKSPACE/upload/validateJR.html) ; then
-      echo "<tr><td>ALL OK</td><td>No differences</td></tr></table>" >> $WORKSPACE/upload/validateJR.html
+    echo "<h3>Default comparison: Workflows with reco comparison differences</h3>" >> $JRHTML
+    echo "<table><tr><td>WF #</td><td>Differences</td></tr>" >> $JRHTML
+    grep 'JR results differ' $QALOG | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[5]"\">"a[5]"</a></td><td align=\"right\">"a[4]"</td></tr>" }' >> $JRHTML
+    if grep -q "Differences" <(tail -n 1 $JRHTML) ; then
+      echo "<tr><td>ALL OK</td><td>No differences</td></tr></table>" >> $JRHTML
     else
-      echo "</table>" >> $WORKSPACE/upload/validateJR.html
+      echo "</table>" >> $JRHTML
     fi
-    echo "</body></html>" >> $WORKSPACE/upload/validateJR.html
+    echo "</body></html>" >> $JRHTML
     echo "FAILED_COMPARISON;OK,Comparison failed,See failed,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/validateJR.html" >> $WORKSPACE/results/testsResults.txt
   fi
 fi

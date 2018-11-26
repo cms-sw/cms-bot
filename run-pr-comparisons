@@ -211,8 +211,17 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     if [ $(cat $WORKSPACE/upload/validateJR.html | wc -l) -eq 2 ] ; then
       echo "<tr><td>ALL OK</td><td>No errors</td></tr></table>" >> $WORKSPACE/upload/validateJR.html
     else
-      echo "<tr></tr></table></body></html>" >> $WORKSPACE/upload/validateJR.html
+      echo "</table>" >> $WORKSPACE/upload/validateJR.html
     fi
+    echo "<h3>Default comparison: Workflows with reco comparison differences</h3>" >> $WORKSPACE/upload/validateJR.html
+    echo "<table><tr><td>WF #</td><td>Differences</td></tr>" >> $WORKSPACE/upload/validateJR.html
+    grep 'JR results differ' $JR_COMP_DIR/logRootQA.log | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[5]"\">"a[5]"</a></td><td align=\"right\">"a[4]"</td></tr>" }' >> $WORKSPACE/upload/validateJR.html
+    if grep -q "Differences" <(tail -n 1 $WORKSPACE/upload/validateJR.html) ; then
+      echo "<tr><td>ALL OK</td><td>No differences</td></tr></table>" >> $WORKSPACE/upload/validateJR.html
+    else
+      echo "</table>" >> $WORKSPACE/upload/validateJR.html
+    fi
+    echo "</body></html>" >> $WORKSPACE/upload/validateJR.html
     echo "FAILED_COMPARISON;OK,Comparison failed,See failed,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/validateJR.html" >> $WORKSPACE/results/testsResults.txt
   fi
 fi

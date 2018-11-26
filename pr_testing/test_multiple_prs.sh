@@ -37,8 +37,8 @@ function get_base_branch(){
     echo ${EXTERNAL_BRANCH}
 }
 
-
 # -- MAIN --
+CMSSW_CYCLE=$(echo $RELEASE_FORMAT} | sed 's/_X.*/_X/') # CMSSW_CYCLE is Release format  # todo move somewhere else
 
 echo_section "Variable setup"
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')
@@ -48,20 +48,8 @@ UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
 
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
-JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')  #TODO where is JENKINS_URL
 if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
-
-CMSSW_IB=
-for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests"  | awk '{print $2":"$3}' | sort -r | sed 's|^.*:||') ; do
-  [ -e $relpath/build-errors ] && continue
-  CMSSW_IB=$(basename $relpath)
-  break
-done
-[ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
-
-if [ "X$CMSSW_CYCLE" = X ]; then
-  CMSSW_CYCLE=$(echo "$CONFIG_LINE" | tr ';' '\n' | grep RELEASE_QUEUE= | sed 's|RELEASE_QUEUE=||')
-fi
 
 export ARCHITECTURE
 export SCRAM_ARCH=${ARCHITECTURE}
@@ -70,20 +58,12 @@ which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 PUB_REPO="${PUB_USER}/cmsdist"
 if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
-CMSDIST_BRANCH= # TODO
 
 echo_section "Pull reguest checks"
 # Check if same organization/repo PRs
 if [ $(echo $UNIQ_REPO_NAMES_WITH_COUNT  | grep -v '1 ' | wc -w ) -gt 0 ]; then
     >&2 echo "ERROR: multiple PRs from different organisations but same repos:"
     >$2 echo $UNIQ_REPO_NAMES_WITH_COUNT
-    exit 1
-fi
-FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCHITECTURE}" )
-PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
-PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
-if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} |  tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist ) ]] ; then
-    >&2 echo "ERROR: CMS_SW_TG ${CMS_SW_TAG} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
     exit 1
 fi
 
@@ -103,6 +83,42 @@ for U_REPO in ${UNIQ_REPOS}; do
     fi
 done
 
+# If CMSSW_CYCLE is not set, get it from CMSSW or CMSDIST. Else, fail.
+if [ -z ${CMSSW_CYCLE} ]; then
+     CMSDIST_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
+     CMSSW_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
+     if [ -z ${CMSDIST_PR} ] ; then
+        PR_METADATA_PATH=$(CMDIST${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${CMSDIST_PR}")
+        # CMSSW branch name is release cycle
+        CMSSW_CYCLE=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
+     elif [[ ! -z ${CMSSW_PR} && -z ${CMSSW_CYCLE} ]] ; then
+        CMSSW_METADATA_PATH=$(CMDIST${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${CMSSW_PR}")
+        SW_BASE_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
+        CONFIG_LINE=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "" "${SW_BASE_BRANCH}" "${ARCHITECTURE}")
+        CMSSW_CYCLE=$(echo ${CONFIG_LINE} | sed 's/^.*RELEASE_QUEUE=//' | sed 's/;.*//' )
+     fi
+fi
+fail_if_empty "${CMSSW_CYCLE}" "ERROR: CMSSW release cycle unsent and could not be determined:"
+
+CMSSW_IB=  # We are getting CMSSW_IB, so that we wont rebuild all the software
+for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests"  | awk '{print $2":"$3}' | sort -r | sed 's|^.*:||') ; do
+  [ -e $relpath/build-errors ] && continue
+  CMSSW_IB=$(basename $relpath)
+  break
+done
+[ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c ${CMSSW_CYCLE} | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
+
+if [ -z ${CONFIG_LINE} ] ; then  # Get config line
+    CONFIG_LINE=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMSSW_CYCLE}" "" "${ARCHITECTURE}" )
+fi
+PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
+PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
+if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist ) ]] ; then
+    # If low version and but there are external repos to test, fail
+    >&2 echo "ERROR: RELEASE_FORMAT ${RELEASE_FORMAT} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
+    exit 1
+fi
+
 # Do git pull --rebase for each PR except for /cmssw
 for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
     FILTERED_PRS=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep ${U_REPO} | tr '\n' ' ')
@@ -118,7 +134,7 @@ for U_REPO in ${UNIQ_REPOS}; do
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
 		cmssw)
 		# ignore
-			# PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ? 
+			# PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ?
 		;;
 		cmsdist)
 			# CMSDIST_PR=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ?
@@ -126,7 +142,7 @@ for U_REPO in ${UNIQ_REPOS}; do
 		*)
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
-			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMS_SW_TAG" "$ARCHITECTURE"
+			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$RELEASE_FORMAT" "$ARCHITECTURE"
 		;;
 	esac
 done

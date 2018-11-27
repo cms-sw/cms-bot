@@ -218,7 +218,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     echo "<h3>Default comparison: Workflows with reco comparison differences</h3>" >> $JRHTML
     echo "<table><tr><td>WF #</td><td>Differences</td></tr>" >> $JRHTML
     grep 'JR results differ' $QALOG | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[5]"\">"a[5]"</a></td><td align=\"right\">"a[4]"</td></tr>" }' >> $JRHTML
-    if grep -q "Differences" <(tail -n 1 $JRHTML) ; then
+    if [ $(tail -1 $JRHTML | grep "Differences" | wc -l) -eq 1 ] ; then
       echo "<tr><td>ALL OK</td><td>No differences</td></tr></table>" >> $JRHTML
     else
       echo "</table>" >> $JRHTML

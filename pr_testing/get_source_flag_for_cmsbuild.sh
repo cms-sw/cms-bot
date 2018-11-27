@@ -24,8 +24,6 @@ if [[ -z "$PKG_REPO" || -z "$PKG_NAME" || -z "$CMS_SW_TAG" ]]; then
 fi
 
 cd ${WORKSPACE}
-rm -rf ${PKG_NAME}/.git
-
 FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCHITECTURE}" )
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
 if [[ -z ${ARCHITECTURE} ]] ; then
@@ -33,6 +31,7 @@ if [[ -z ${ARCHITECTURE} ]] ; then
 fi
 PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
+# Check if PKG_TOOL_VERSION high enough
 if [ ${PKG_TOOL_VERSION} -lt 32 ] ; then
     >&2 echo "ERROR: CMS_SW_TG ${CMS_SW_TAG} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
     exit 1
@@ -78,6 +77,7 @@ SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
 
 # Move to other path
+rm -rf ${PKG_NAME}/.git  # remove git metadata - we wont need it when packing.
 if [ ${PKG_NAME} != ${DIR_NAME} ]; then
     mv ${PKG_NAME} ${DIR_NAME}
 fi

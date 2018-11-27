@@ -10,7 +10,7 @@ function formatFilter {
    fi
 }
 
-CMS_SW_TAG=$1
+RELEASE_QUEUE=$1
 CMS_DIST_TAG=$2
 ARCHITECTURE=$3
 
@@ -18,13 +18,13 @@ CMS_BOT_DIR=$(dirname $(dirname $0))
 CONFIG_MAP=${CMS_BOT_DIR}/config.map
 
 #Checked if variables are passed
-if [[ -z "$CMS_SW_TAG" && -z "$CMS_DIST_TAG"  ]]; then
-    >&2 echo "ERROR: either CMS_SW_TAG or CMS_DIST_TAG must be given."
+if [[ -z "$RELEASE_QUEUE" && -z "$CMS_DIST_TAG"  ]]; then
+    >&2 echo "ERROR: either RELEASE_QUEUE or CMS_DIST_TAG must be given."
     exit 1
 fi
 
 ARCH_MATCH=$(formatFilter 'SCRAM_ARCH' ${ARCHITECTURE})
-CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' ${CMS_SW_TAG})
+CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' ${RELEASE_QUEUE})
 CMSDIST_TAG_MATCH=$(formatFilter 'CMSDIST_TAG' ${CMS_DIST_TAG})
 
 FILTERED_LINES=$(cat ${CONFIG_MAP} | grep -v '^ *#' | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep ${CMS_SW_TAG_MATCH} | grep ${CMSDIST_TAG_MATCH} | grep ${ARCH_MATCH} | tr '\n' '#' )

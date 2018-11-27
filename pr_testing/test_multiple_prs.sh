@@ -21,9 +21,8 @@ ARCHITECTURE=$3             # architecture (ex. slc6_amd64_gcc700)
 # ---
 
 function fail_if_empty(){
-    if [ -z "$1" ]; then
-        ERROR_MESSAGE=$2
-        >&2 echo "ERROR: empty parameter, ${2}"
+    if [ -z $(echo "$1" | tr -d ' ' ) ]; then
+        >&2 echo "ERROR: empty variable. ${2}."
         exit 1
     fi
 }
@@ -38,12 +37,11 @@ function get_base_branch(){
 }
 
 # -- MAIN --
-CMSSW_CYCLE=$(echo $RELEASE_FORMAT} | sed 's/_X.*/_X/') # CMSSW_CYCLE is Release format  # todo move somewhere else
-
 echo_section "Variable setup"
+CMSSW_CYCLE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )
-fail_if_empty "${UNIQ_REPOS}" "There was no unique repos"
+fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
 
@@ -59,11 +57,11 @@ which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 PUB_REPO="${PUB_USER}/cmsdist"
 if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
 
-echo_section "Pull reguest checks"
+echo_section "Pull request checks"
 # Check if same organization/repo PRs
-if [ $(echo $UNIQ_REPO_NAMES_WITH_COUNT  | grep -v '1 ' | wc -w ) -gt 0 ]; then
+if [ $(echo ${UNIQ_REPO_NAMES_WITH_COUNT}  | grep -v '1 ' | wc -w ) -gt 0 ]; then
     >&2 echo "ERROR: multiple PRs from different organisations but same repos:"
-    >$2 echo $UNIQ_REPO_NAMES_WITH_COUNT
+    >$2 echo ${UNIQ_REPO_NAMES_WITH_COUNT}
     exit 1
 fi
 
@@ -87,18 +85,18 @@ done
 if [ -z ${CMSSW_CYCLE} ]; then
      CMSDIST_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
      CMSSW_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
-     if [ -z ${CMSDIST_PR} ] ; then
-        PR_METADATA_PATH=$(CMDIST${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${CMSDIST_PR}")
+     if [ ! -z ${CMSDIST_PR} ] ; then
+        PR_METADATA_PATH=$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${CMSDIST_PR}")
         # CMSSW branch name is release cycle
         CMSSW_CYCLE=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
      elif [[ ! -z ${CMSSW_PR} && -z ${CMSSW_CYCLE} ]] ; then
-        CMSSW_METADATA_PATH=$(CMDIST${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${CMSSW_PR}")
+        CMSSW_METADATA_PATH=$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${CMSSW_PR}")
         SW_BASE_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
         CONFIG_LINE=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "" "${SW_BASE_BRANCH}" "${ARCHITECTURE}")
         CMSSW_CYCLE=$(echo ${CONFIG_LINE} | sed 's/^.*RELEASE_QUEUE=//' | sed 's/;.*//' )
      fi
 fi
-fail_if_empty "${CMSSW_CYCLE}" "ERROR: CMSSW release cycle unsent and could not be determined:"
+fail_if_empty "${CMSSW_CYCLE}" "CMSSW release cycle unsent and could not be determined."
 
 CMSSW_IB=  # We are getting CMSSW_IB, so that we wont rebuild all the software
 for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests"  | awk '{print $2":"$3}' | sort -r | sed 's|^.*:||') ; do
@@ -142,7 +140,7 @@ for U_REPO in ${UNIQ_REPOS}; do
 		*)
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
-			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$RELEASE_FORMAT" "$ARCHITECTURE"
+			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE"
 		;;
 	esac
 done

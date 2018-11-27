@@ -17,7 +17,6 @@ BASE_REPO=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}')
 TEST_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['ref']")  # PR branch
 TEST_REPO=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['repo']['full_name']")
 
-
 pushd ${WORKSPACE}
     if  [ ! -d ${BASE_REPO_NAME} ]; then
         git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH}

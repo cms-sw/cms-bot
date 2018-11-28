@@ -14,11 +14,50 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 # ---
+
+## TODO check if the variable there
+
 # Input variable
-PULL_REQUESTS=$1            # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
-CMS_SW_TAG=$2           # CMS SW TAG found in config_map.py
-ARCHITECTURE=$3             # architecture (ex. slc6_amd64_gcc700)
-# ---
+PULL_REQUESTS=$PULL_REQUESTS              # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
+RELEASE_FORMAT=$RELEASE_FORMAT             # CMS SW TAG found in config_map.py
+#PULL_REQUEST=$PULL_REQUEST
+CMSDIST_PR=$CMSDIST_PR
+ARCHITECTURE=$ARCHITECTURE               # architecture (ex. slc6_amd64_gcc700)
+# RELEASE_FORMAT=           # RELEASE_QUEUE found in config_map.py (ex. CMSSW_10_4_ROOT6_X )
+# DO_TESTS=
+# DO_SHORT_MATRIX=
+# DO_STATIC_CHECKS=
+# DO_DUPLICATE_CHECKS=
+# MATRIX_EXTRAS=
+ADDITIONAL_PULL_REQUESTS=$ADDITIONAL_PULL_REQUESTS   # aditonal CMSSW PRs
+# WORKFLOWS_FOR_VALGRIND_TEST=
+# AUTO_POST_MESSAGE=
+# RUN_CONFIG_VIEWER=
+# USE_DAS_CACHE=
+# BRANCH_NAME=
+# APPLY_FIREWORKS_RULE=
+# RUN_IGPROF=
+# TEST_CLANG_COMPILATION=
+# MATRIX_TIMEOUT=
+# EXTRA_MATRIX_ARGS=
+# DO_ADDON_TESTS=
+# RUN_ON_SLAVE=
+# COMPARISON_ARCH=
+# DISABLE_POISON=
+# FULL_TOOLCONF=
+PUB_USER=$PUB_USER
+DRY_RUN=$DRY_RUN
+
+WORKSPACE=$WORKSPACE
+USER=$USER
+BUILD_NUMBER=$BUILD_NUMBER
+JOB_NAME=$JOB_NAME
+
+
+# -- Functions
+function echo_section(){
+    echo "---------|  $1  |----------"
+}
 
 function fail_if_empty(){
     if [ -z $(echo "$1" | tr -d ' ' ) ]; then
@@ -40,7 +79,7 @@ function get_base_branch(){
 echo_section "Variable setup"
 CMSSW_CYCLE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')
-UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )
+UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )  # Repos without pull number
 fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
@@ -53,9 +92,6 @@ export ARCHITECTURE
 export SCRAM_ARCH=${ARCHITECTURE}
 ls /cvmfs/cms.cern.ch
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
-
-PUB_REPO="${PUB_USER}/cmsdist"
-if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
 
 echo_section "Pull request checks"
 # Check if same organization/repo PRs
@@ -131,7 +167,9 @@ for U_REPO in ${UNIQ_REPOS}; do
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
 		cmssw)
-		# ignore
+            PUB_REPO="${PUB_USER}/cmsdist" # PUB_REPO is used for publishing results
+            if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
+		    # ignore
 			# PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ?
 		;;
 		cmsdist)
@@ -145,26 +183,37 @@ for U_REPO in ${UNIQ_REPOS}; do
 	esac
 done
 
-# TODO  logig from run-cmsdist-test.sh
+echo_section "Building, testing and commenting status to github"
+
 # add special flags for pkgtools/cmsbuild if version is high enough
 if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
   REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
   SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
 fi
-echo_section "Building, testing and commenting status to github"
-# -- TODO iterate through all PR, put in the directory with PRs
-CMSDIST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmsdist $CMSDIST_PR)  # TODO
-export CMSDIST_COMMIT=$(echo $CMSDIST_COMMIT | sed 's|.* ||')  # TODO
+if [ -z ${DRY_RUN} ] ; then
+    for PR in ${PULL_REQUESTS}; do
+        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+        PR_NR=$(echo ${PR} | sed 's/.*#//' )
+        COMMIT=$(${PR_NAME_AND_REPO}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
+        # if CMSDIST commit, export it
+        if [[ -z $( echo ${PR_NAME_AND_REPO} | sed 's|.*/||' | grep -w cmsdist ) ]] ; then
+            export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')
+        fi
+    done
+fi
+# CMSDIST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmsdist $CMSDIST_PR)
+# export CMSDIST_COMMIT=$(echo $CMSDIST_COMMIT | sed 's|.* ||')  # TODO it is used in run-pr-test.sh
 # -- TODO iterate through all PR, put in the directory with PRs
 
 # Notify github that the script will start testing now
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_USER/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
 
 # TODO - what are we really doing here
-# By default, ibs are build with debug flag. However, som
+# Not all packages are build with debug flag. If the current IB should be build with debug flag, we need to do some 'magic'
+# otherwise everything will be rebuild.
 if [ $( echo $CONFIG_LINE | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
   DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $CMS_BOT_DIR/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
-  pushd $WORKSPACE/CMSDIST
+  pushd ${WORKSPACE}/CMSDIST
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
   popd
 fi

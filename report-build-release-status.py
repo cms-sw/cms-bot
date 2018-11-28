@@ -65,12 +65,12 @@ UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You ca
               'https://cmssdt.cern.ch/%s/job/release-deploy-afs/ \n' % JENKINS_PREFIX
 INSTALLATION_OK_MSG='The installation has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\>", in the first line of your comment.\n ' \
-              'I will generate the release notes based on the release that you provide. You don\'t need to provide the architectue ' \
+              'I will generate the release notes based on the release that you provide. You don\'t need to provide the architecture ' \
               'I will use the production architecture to infer the cmsdist tag.\n' \
               'Alternatively, you can just write "release-notes", I will try to guess the previous release.'
 INSTALLATION_SKIP_MSG='CERN AFS installation skipped for {architecture} as no CMSSW releases are now deployed on AFS. \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\>", in the first line of your comment.\n ' \
-              'I will generate the release notes based on the release that you provide. You don\'t need to provide the architectue ' \
+              'I will generate the release notes based on the release that you provide. You don\'t need to provide the architecture ' \
               'I will use the production architecture to infer the cmsdist tag.\n' \
               'Alternatively, you can just write "release-notes", I will try to guess the previous release.'
 UPLOAD_ERROR_MSG='The was error uploading {architecture}. \n You can see the log here: \n {log_url}'

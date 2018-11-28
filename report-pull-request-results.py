@@ -155,7 +155,7 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
     message +=  'The relvals timed out after 2 hours.\n'
     
   if workflows_with_error:
-    message += 'When I ran the RelVals I found an error in the following worklfows:\n'
+    message += 'When I ran the RelVals I found an error in the following workflows:\n'
 
   for wf in workflows_with_error:
     message += wf[ 'number' ] +' '+ wf[ 'step' ]+'\n' + '<pre>' + wf[ 'message' ] + '</pre>'

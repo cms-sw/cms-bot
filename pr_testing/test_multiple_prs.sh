@@ -85,7 +85,7 @@ UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
 
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
-JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')  #TODO where is JENKINS_URL
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
 
 export ARCHITECTURE
@@ -128,7 +128,7 @@ if [ -z ${CMSSW_CYCLE} ]; then
      elif [[ ! -z ${CMSSW_PR} && -z ${CMSSW_CYCLE} ]] ; then
         CMSSW_METADATA_PATH=$(${PR_TESTING_DIR}/get_cached_GH_JSON.sh "${CMSSW_PR}")
         SW_BASE_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
-        CONFIG_LINE=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "" "${SW_BASE_BRANCH}" "${ARCHITECTURE}")
+        CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "" "${SW_BASE_BRANCH}" "${ARCHITECTURE}")
         CMSSW_CYCLE=$(echo ${CONFIG_LINE} | sed 's/^.*RELEASE_QUEUE=//' | sed 's/;.*//' )
      fi
 fi
@@ -143,7 +143,7 @@ done
 [ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c ${CMSSW_CYCLE} | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
 
 if [ -z ${CONFIG_LINE} ] ; then  # Get config line
-    CONFIG_LINE=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMSSW_CYCLE}" "" "${ARCHITECTURE}" )
+    CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "${CMSSW_CYCLE}" "" "${ARCHITECTURE}" )
 fi
 PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
@@ -167,13 +167,10 @@ for U_REPO in ${UNIQ_REPOS}; do
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
 		cmssw)
-            PUB_REPO="${PUB_USER}/cmsdist" # PUB_REPO is used for publishing results
-            if [ "X$PULL_REQUEST" != X ]; then PUB_REPO="${PUB_USER}/cmssw" ; fi
-		    # ignore
-			# PULL_REQUEST=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ?
+            PUB_REPO=${PKG_REPO}  # PUB_REPO is used for publishing results
 		;;
 		cmsdist)
-			# CMSDIST_PR=$(echo ${PR} | sed 's/.*#//' )  # TODO need it ?
+            if [ -z ${PUB_REPO} ] ; then PUB_REPO=${PKG_REPO} ; fi  # if PUB_REPO repo not set to cmssw, use cmsdist
 		;;
 		*)
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
@@ -184,49 +181,43 @@ for U_REPO in ${UNIQ_REPOS}; do
 done
 
 echo_section "Building, testing and commenting status to github"
-
 # add special flags for pkgtools/cmsbuild if version is high enough
 if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
   REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
   SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
 fi
-if [ -z ${DRY_RUN} ] ; then
+if [ -z ${DRY_RUN} ] ; then  # if NOT dry run, comment
     for PR in ${PULL_REQUESTS}; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        COMMIT=$(${PR_NAME_AND_REPO}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
-        # if CMSDIST commit, export it
+        COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
+        # if CMSDIST commit, export it to available in run-pr-test
         if [[ -z $( echo ${PR_NAME_AND_REPO} | sed 's|.*/||' | grep -w cmsdist ) ]] ; then
-            export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')
+            echo "TODO"
+            export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')  # TODO do I need CMSDIST_COMMIT in run-pr-test ?
         fi
+        # Notify github that the script will start testing now
+        $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${COMMIT} --pr-job-id ${BUILD_NUMBER}
     done
 fi
-# CMSDIST_COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${PUB_USER}/cmsdist $CMSDIST_PR)
-# export CMSDIST_COMMIT=$(echo $CMSDIST_COMMIT | sed 's|.* ||')  # TODO it is used in run-pr-test.sh
-# -- TODO iterate through all PR, put in the directory with PRs
 
-# Notify github that the script will start testing now
-$CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_USER/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} $DRY_RUN
-
-# TODO - what are we really doing here
 # Not all packages are build with debug flag. If the current IB should be build with debug flag, we need to do some 'magic'
 # otherwise everything will be rebuild.
 if [ $( echo $CONFIG_LINE | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
   DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $CMS_BOT_DIR/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
-  pushd ${WORKSPACE}/CMSDIST
+  pushd ${WORKSPACE}/cmsdist
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
   popd
 fi
 
 # Build the whole cmssw-tool-conf toolchain
-COMPILATION_CMD="PKGTOOLS/cmsBuild --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
-    $SOURCE_FLAG --arch $ARCHITECTURE -j $(COMMON/get_cpu_number.sh) build cms-common cms-git-tools cmssw-tool-conf"
-echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log
+COMPILATION_CMD="pkgtools/cmsBuild --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
+    $SOURCE_FLAG --arch $ARCHITECTURE -j $(${COMMON}/get_cpu_number.sh) build cms-common cms-git-tools cmssw-tool-conf"
+echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
+# run the command and both log it to file and display it
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
 echo_section 'END OF BUILD LOG'
 
-# TODO GITHUB copy past from run-cmsdist-test
-# Reuse from here, copy by changing variables
 RESULTS_FILE=$WORKSPACE/testsResults.txt
 touch $RESULTS_FILE
 

@@ -12,14 +12,6 @@ source ${CMS_BOT_DIR}/jenkins-artifacts
 
 voms-proxy-init -voms cms -valid 24:00 || true
 
-function Jenkins_GetCPU ()
-{
-  ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
-  case $(hostname) in lxplus* ) let ACTUAL_CPU=$ACTUAL_CPU/2 ;; esac
-  if [ "$ACTUAL_CPU" = "0" ] ; then ACTUAL_CPU=1; fi
-  if [ "X$1" != "X" ] ; then let ACTUAL_CPU=$ACTUAL_CPU$1 ; fi
-  echo $ACTUAL_CPU
-}
 ls /cvmfs/cms-ib.cern.ch || true
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
@@ -279,7 +271,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" $DRY_RUN
 
   #first, add the command to the log
-  CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j $(Jenkins_GetCPU *2) COMPILER='llvm compile'"
+  CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j $(${COMMON}/get_cpu_number.sh) *2) COMPILER='llvm compile'"
   CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes && ${ANALOG_CMD}"
   echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
 
@@ -355,7 +347,7 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_P
   pushd $WORKSPACE/$RELEASE_FORMAT
   git cms-addpkg --ssh Utilities/StaticAnalyzers
   mkdir $WORKSPACE/llvm-analysis
-  USER_CXXFLAGS='-Wno-register' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU *2) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
+  USER_CXXFLAGS='-Wno-register' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(${COMMON}/get_cpu_number.sh) *2) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
   cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
@@ -399,7 +391,7 @@ CHK_HEADER_LOG_RES="NOTRUN"
 CHK_HEADER_OK=true
 if [ -f $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.chk_headers ] ; then
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" $DRY_RUN
-  COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i' scram build -k -j $(Jenkins_GetCPU) check-headers"
+  COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i' scram build -k -j $(${COMMON}/get_cpu_number.sh)) check-headers"
   echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
   (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/headers_chks.log
   echo 'END OF HEADER CHEKS LOG'
@@ -417,9 +409,9 @@ echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chk
 # test compilation with GCC
 # ############################################
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD}"
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(${COMMON}/get_cpu_number.sh)) && ${ANALOG_CMD}"
 if [ "X$CMSDIST_PR" != X -a $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
-  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD} && scram b -k -j $(Jenkins_GetCPU) edm_checks"
+  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(${COMMON}/get_cpu_number.sh)) && ${ANALOG_CMD} && scram b -k -j $(${COMMON}/get_cpu_number.sh)) edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
@@ -502,7 +494,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
   $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" $DRY_RUN
   echo '--------------------------------------'
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
-  UTESTS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout ${UT_TIMEOUT} scram b -k -j $(Jenkins_GetCPU)  runtests "
+  UTESTS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout ${UT_TIMEOUT} scram b -k -j $(${COMMON}/get_cpu_number.sh))  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests.log 2>&1
   echo 'END OF UNIT TESTS'
@@ -576,7 +568,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     # MATRIX_TIMEOUT is set by jenkins
     dateBefore=$(date +"%s")
     [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--job-reports $EXTRA_MATRIX_ARGS"
-    RELVALS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $SLHC_PARAM -j $(Jenkins_GetCPU -2) $WF_LIST"
+    RELVALS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $SLHC_PARAM -j $(${COMMON}/get_cpu_number.sh) -2) $WF_LIST"
     echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
     (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
     WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' $WORKSPACE/matrixTests.log | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
@@ -680,7 +672,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true"
   #End of 71x data hack
   echo '--------------------------------------'
   date
-  ADDON_CMD="CMSSW_SEARCH_PATH=$EX_DATA_SEARCH CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout 7200 addOnTests.py -j $(Jenkins_GetCPU) "
+  ADDON_CMD="CMSSW_SEARCH_PATH=$EX_DATA_SEARCH CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout 7200 addOnTests.py -j $(${COMMON}/get_cpu_number.sh)) "
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
   date

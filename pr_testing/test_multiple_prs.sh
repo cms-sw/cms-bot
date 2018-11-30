@@ -16,12 +16,11 @@ BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 # ---
 
 ## TODO check if the variable there
-
 # Input variable
 PULL_REQUESTS=$PULL_REQUESTS              # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
 RELEASE_FORMAT=$RELEASE_FORMAT             # CMS SW TAG found in config_map.py
-#PULL_REQUEST=$PULL_REQUEST
-CMSDIST_PR=$CMSDIST_PR
+# PULL_REQUEST=$PULL_REQUEST              # CMSSW PR number, should avoid
+# CMSDIST_PR=$CMSDIST_PR                  # CMSDIST PR number, should avoid
 ARCHITECTURE=$ARCHITECTURE               # architecture (ex. slc6_amd64_gcc700)
 # RELEASE_FORMAT=           # RELEASE_QUEUE found in config_map.py (ex. CMSSW_10_4_ROOT6_X )
 # DO_TESTS=
@@ -29,9 +28,9 @@ ARCHITECTURE=$ARCHITECTURE               # architecture (ex. slc6_amd64_gcc700)
 # DO_STATIC_CHECKS=
 # DO_DUPLICATE_CHECKS=
 # MATRIX_EXTRAS=
-ADDITIONAL_PULL_REQUESTS=$ADDITIONAL_PULL_REQUESTS   # aditonal CMSSW PRs
+# ADDITIONAL_PULL_REQUESTS=$ADDITIONAL_PULL_REQUESTS   # aditonal CMSSW PRs
 # WORKFLOWS_FOR_VALGRIND_TEST=
-# AUTO_POST_MESSAGE=
+AUTO_POST_MESSAGE=$AUTO_POST_MESSAGE
 # RUN_CONFIG_VIEWER=
 # USE_DAS_CACHE=
 # BRANCH_NAME=
@@ -47,12 +46,13 @@ ADDITIONAL_PULL_REQUESTS=$ADDITIONAL_PULL_REQUESTS   # aditonal CMSSW PRs
 # FULL_TOOLCONF=
 PUB_USER=$PUB_USER
 DRY_RUN=$DRY_RUN
+JENKINS_URL=$JENKINS_URL
 
 WORKSPACE=$WORKSPACE
 USER=$USER
 BUILD_NUMBER=$BUILD_NUMBER
 JOB_NAME=$JOB_NAME
-
+# TODO delete after
 
 # -- Functions
 function echo_section(){
@@ -76,6 +76,10 @@ function get_base_branch(){
 }
 
 # -- MAIN --
+DRY_RUN=
+if [ ! $AUTO_POST_MESSAGE ]; then
+  DRY_RUN='--no-post'
+fi
 echo_section "Variable setup"
 CMSSW_CYCLE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')
@@ -88,8 +92,6 @@ CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') 
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
 
-export ARCHITECTURE
-export SCRAM_ARCH=${ARCHITECTURE}
 ls /cvmfs/cms.cern.ch
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
@@ -133,6 +135,15 @@ if [ -z ${CMSSW_CYCLE} ]; then
      fi
 fi
 fail_if_empty "${CMSSW_CYCLE}" "CMSSW release cycle unsent and could not be determined."
+if [ -z ${CONFIG_LINE} ] ; then  # Get config line
+    CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "${CMSSW_CYCLE}" "" "${ARCHITECTURE}" )
+fi
+
+if [ -z ${ARCHITECTURE} ] ; then
+    ARCHITECTURE=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
+fi
+export ARCHITECTURE
+export SCRAM_ARCH=${ARCHITECTURE}
 
 CMSSW_IB=  # We are getting CMSSW_IB, so that we wont rebuild all the software
 for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests"  | awk '{print $2":"$3}' | sort -r | sed 's|^.*:||') ; do
@@ -142,9 +153,6 @@ for relpath in $(scram -a $ARCHITECTURE l -c $CMSSW_CYCLE | grep -v -f "$CMS_BOT
 done
 [ "X$CMSSW_IB" = "X" ] && CMSSW_IB=$(scram -a $ARCHITECTURE l -c ${CMSSW_CYCLE} | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | tail -n 1)
 
-if [ -z ${CONFIG_LINE} ] ; then  # Get config line
-    CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "${CMSSW_CYCLE}" "" "${ARCHITECTURE}" )
-fi
 PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist ) ]] ; then
@@ -186,20 +194,18 @@ if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
   REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
   SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
 fi
-if [ -z ${DRY_RUN} ] ; then  # if NOT dry run, comment
-    for PR in ${PULL_REQUESTS}; do
-        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
-        PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
-        # if CMSDIST commit, export it to available in run-pr-test
-        if [[ -z $( echo ${PR_NAME_AND_REPO} | sed 's|.*/||' | grep -w cmsdist ) ]] ; then
-            echo "TODO"
-            export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')  # TODO do I need CMSDIST_COMMIT in run-pr-test ?
-        fi
-        # Notify github that the script will start testing now
-        $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${COMMIT} --pr-job-id ${BUILD_NUMBER}
-    done
-fi
+for PR in ${PULL_REQUESTS}; do
+    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+    PR_NR=$(echo ${PR} | sed 's/.*#//' )
+    COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
+    # if CMSDIST commit, export it to available in run-pr-test
+    if [[ -z $( echo ${PR_NAME_AND_REPO} | grep '/cmsdist$' ) ]] ; then
+        export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')  # TODO do I need CMSDIST_COMMIT in run-cmssw-pr-test ?
+    fi
+    # Notify github that the script will start testing now
+    $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${COMMIT} \
+        --pr-job-id ${BUILD_NUMBER} ${DRY_RUN}
+done
 
 # Not all packages are build with debug flag. If the current IB should be build with debug flag, we need to do some 'magic'
 # otherwise everything will be rebuild.
@@ -225,19 +231,22 @@ TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
 GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
 echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,..' >> $RESULTS_FILE
-if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
-  $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --report-pr $CMSDIST_PR --repo ${PUB_USER}/cmsdist --pr $CMSDIST_PR -c $CMSDIST_COMMIT --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
-  if [ "X$PULL_REQUEST" != X ]; then
-    $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --report-pr $CMSDIST_PR  --repo ${PUB_USER}/cmssw --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER} --unit-tests-file $WORKSPACE/cmsswtoolconf.log
-  fi
-  echo 'PR_NUMBER;'$CMSDIST_PR >> $RESULTS_FILE
-  echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE
+  if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
+  for PR in ${PULL_REQUESTS}; do
+    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+    PR_NR=$(echo ${PR} | sed 's/.*#//' )
+    $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --report-pr ${PR_NR} --repo ${PR_NAME_AND_REPO} \
+        --pr ${PR_NR} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}
+  done
+  # echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE # TODO do not need it, Should fix template
+  echo 'PULL_REQUESTS;' ${PULL_REQUESTS} >> $RESULTS_FILE
   echo 'BASE_IB;'$CMSSW_IB >> $RESULTS_FILE
   echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
   echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
   # creation of results summary file, normally done in run-pr-tests, here just to let close the process
   cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
-  sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js
+  # TODO REPOSITORY is used to link either to CMSDIST or CMSSW repository
+  sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js  # TODO with whom replace $PUB_REPO when there is no CMSSW or CMSDIST commit?
   exit 0
 else
   echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE
@@ -300,5 +309,6 @@ if [ "X${DEP_NAMES}" != "X" ] ; then
     git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
   fi
 fi
-# Launch the standard ru-pr-tests to check CMSSW side passing on the global variables
-# $CMS_BOT_DIR/run-pr-tests  # TODO - fix jenkins artifacts do nothing
+
+# Launch the pr-tests to check CMSSW by passing on the global variables
+${PR_TESTING_DIR}/run-cmssw-pr-tests

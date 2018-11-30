@@ -8,6 +8,44 @@ CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 CMS_BOT_DIR=$(dirname $0)
 # ---
 
+## TODO check if the variable there
+# Input variable
+PULL_REQUESTS=$PULL_REQUESTS              # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
+RELEASE_FORMAT=$RELEASE_FORMAT             # CMS SW TAG found in config_map.py
+# PULL_REQUEST=$PULL_REQUEST              # CMSSW PR number, should avoid
+# CMSDIST_PR=$CMSDIST_PR                  # CMSDIST PR number, should avoid
+ARCHITECTURE=$ARCHITECTURE               # architecture (ex. slc6_amd64_gcc700)
+# RELEASE_FORMAT=           # RELEASE_QUEUE found in config_map.py (ex. CMSSW_10_4_ROOT6_X )
+# DO_TESTS=
+# DO_SHORT_MATRIX=
+# DO_STATIC_CHECKS=
+# DO_DUPLICATE_CHECKS=
+# MATRIX_EXTRAS=
+# ADDITIONAL_PULL_REQUESTS=$ADDITIONAL_PULL_REQUESTS   # aditonal CMSSW PRs
+# WORKFLOWS_FOR_VALGRIND_TEST=
+AUTO_POST_MESSAGE=$AUTO_POST_MESSAGE
+# RUN_CONFIG_VIEWER=
+# USE_DAS_CACHE=
+# BRANCH_NAME=
+# APPLY_FIREWORKS_RULE=
+# RUN_IGPROF=
+# TEST_CLANG_COMPILATION=
+# MATRIX_TIMEOUT=
+# EXTRA_MATRIX_ARGS=
+# DO_ADDON_TESTS=
+# RUN_ON_SLAVE=
+# COMPARISON_ARCH=
+# DISABLE_POISON=
+# FULL_TOOLCONF=
+PUB_USER=$PUB_USER
+JENKINS_URL=$JENKINS_URL
+
+WORKSPACE=$WORKSPACE
+USER=$USER
+BUILD_NUMBER=$BUILD_NUMBER
+JOB_NAME=$JOB_NAME
+# TODO delete after
+
 source ${CMS_BOT_DIR}/jenkins-artifacts
 
 voms-proxy-init -voms cms -valid 24:00 || true
@@ -34,6 +72,7 @@ if [ "X$CMSDIST_PR" = X ] ; then
   $CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST_NUMBER || true
 fi
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
+DRY_RUN=
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'
 fi
@@ -818,9 +857,11 @@ for i in $( seq 1 $REPEAT); do
   fi
 done
 rm -f all_done
-send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} && touch all_done
-if [ -d $LOCALRT/das_query ] ; then
-  send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/PR || true
+if [ -z ${DRY_RUN} ]; then
+    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} && touch all_done
+    if [ -d $LOCALRT/das_query ] ; then
+      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/PR || true
+    fi
 fi
 if [ -f all_done ] ; then
   rm -f all_done
@@ -846,8 +887,8 @@ if [ $(grep 'COMPARISON;NOTRUN' $WORKSPACE/upload/testsResults.txt | wc -l) -gt 
   COMP_MSG="Comparison not run due to ${ERR_MSG} (RelVals and Igprof tests were also skipped)"
 fi
 if [ "X$PULL_REQUEST" != X ] ; then
-  $CMS_BOT_DIR/comment-gh-pr -r ${PUB_USER}/cmssw   -p $PULL_REQUEST -m "${COMP_MSG}" || true
+  $CMS_BOT_DIR/comment-gh-pr -r ${PUB_USER}/cmssw   -p $PULL_REQUEST -m "${COMP_MSG}" ${DRY_RUN} || true
 fi
 if [ "X$CMSDIST_PR" != X ] ; then
-  $CMS_BOT_DIR/comment-gh-pr -r ${PUB_USER}/cmsdist -p $CMSDIST_PR   -m "${COMP_MSG}" || true
+  $CMS_BOT_DIR/comment-gh-pr -r ${PUB_USER}/cmsdist -p $CMSDIST_PR   -m "${COMP_MSG}" ${DRY_RUN} || true
 fi

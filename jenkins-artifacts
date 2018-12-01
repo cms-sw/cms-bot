@@ -80,4 +80,3 @@ function get_jenkins_artifacts ()
   echo "JA_STATUS=ERROR"
   return 1
 }
-

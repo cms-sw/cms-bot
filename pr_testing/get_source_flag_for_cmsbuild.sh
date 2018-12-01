@@ -1,74 +1,62 @@
 #!/bin/bash -ex
-
 # This script will be us by jenkins job (https://cmssdt.cern.ch/jenkins/job/ib-any-integration)
-# It will generate --sources flag for pkgtools/build.py script
-#
-# $EXTERNAL_REPO - Github repo if the external
-# $EXTERNAL_PR - pull request number
-# $CMS_SW_TAG - CMS SW TAG found in config_map.py
-
+# It will generate --sources flag for pkgtools/build.py script and move package to specific directory
 # TODO - not all packages have matching repo name with project name
-# We should create a map in cmsdist for such pacakges
+# TODO We should create a map in cmsdist for such pacakges
+# ---
+SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
+CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+WORKSPACE=$(dirname ${CMS_BOT_DIR} )
+CACHED=${WORKSPACE}/CACHED
 
-EXTERNAL_REPO=$1
-EXTERNAL_PR=$2
-CMS_SW_TAG=$3
-ARCH=$4
-# PKG_TOOL_BRANCH
-BUILD_DIR="testBuildDir"
+PKG_REPO=$1       # Repo of external (ex. cms-sw/root)
+PKG_NAME=$2       # Name of external (ex. root)
+CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
+ARCHITECTURE=$4           # Architecture (ex. slc7_amd64_gcc700)
+BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
+# ---
 
-CMS_BOT_DIR=$(dirname $(dirname $0)) # To get CMS_BOT dir path
-
-#Checked if variables are passed
-if [[ -z "$1" || -z "$2" || -z "$3" ]]; then
+# Checked if variables are passed
+if [[ -z "$PKG_REPO" || -z "$PKG_NAME" || -z "$CMS_SW_TAG" ]]; then
     >&2 echo "empty parameters"
-    >&2 echo "EXTERNAL_REPO: '${EXTERNAL_REPO}', EXTERNAL_PR: '${EXTERNAL_PR}', CMS_SW_TAG: '${CMS_SW_TAG}'"
+    >&2 echo "EXTERNAL_REPO: '${PKG_REPO}', PKG_NAME: '${PKG_NAME}', CMS_SW_TAG: '${CMS_SW_TAG}'"
     exit 1
 fi
 
-PKG_NAME=$(echo ${EXTERNAL_REPO} | sed 's|.*/||') # package name from variable
-GH_JSON=$(curl -s https://api.github.com/repos/${EXTERNAL_REPO}/pulls/${EXTERNAL_PR})
-
-if [ $( echo $GH_JSON | grep -c '"message": "Not Found"' ) -eq 1 ]; then
-    >&2 echo "ERROR: external pull request not found"
-    >&2 echo 1
-fi
-
-# TEST_USER=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["repo"]["owner"]["login"]')
-TEST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["head"]["ref"]')
-TEST_REPO=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["repo"]["full_name"]')
-EXTERNAL_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
-
-git clone https://github.com/${EXTERNAL_REPO} ${PKG_NAME} -b ${EXTERNAL_BRANCH}
-pushd ${PKG_NAME}
-    git pull git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
-    rm -rf .git
-popd
-
-FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCH}" )
+cd ${WORKSPACE}
+FILTERED_CONF=$(${CMS_BOT_DIR}/common/get_config_map_line.sh "${CMS_SW_TAG}" "" "${ARCHITECTURE}" )
 CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
-if [[ -z ${ARCH} ]] ; then
-  ARCH=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
+if [[ -z ${ARCHITECTURE} ]] ; then
+  ARCHITECTURE=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
 fi
 PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
-
+PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
+# Check if PKG_TOOL_VERSION high enough
+if [ ${PKG_TOOL_VERSION} -lt 32 ] ; then
+    >&2 echo "ERROR: CMS_SW_TG ${CMS_SW_TAG} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
+    exit 1
+fi
 if ! [ -d "cmsdist" ]; then
     git clone --depth 1 -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
+else
+    # check if existing cmsdist repo points to correct branch
+    pushd cmsdist
+        ACTUAL_BRANCH=$(git branch | head -1 | sed 's|\*\s*||')
+        if [ ${ACTUAL_BRANCH} != ${CMSDIST_BRANCH} ] ; then
+            >&2 echo "Expected CMSDIST branch to be ${CMSDIST_BRANCH}, actual branch is ${ACTUAL_BRANCH} "
+            exit 1
+        fi
+    popd
 fi
-
 
 if ! [ -d "pkgtools" ]; then
     git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 fi
 
+SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
+                        grep -i "^${PKG_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
-
-./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME}
-
-SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCH} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
-                        grep -i "^${PKG_NAME}:source" | grep github.com/${EXTERNAL_REPO} | tr '\n' '#' )
-
-N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' )
+N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true
 echo "Number of sources: " ${N}
 echo "Sources:"
 echo ${SOURCES}
@@ -84,12 +72,12 @@ else
 fi
 
 OUTPUT=$(echo ${SOURCES}  | sed 's/ .*//' | tr '#' '\n' )
-# PKG_NAME=$( echo ${OUTPUT} | sed 's/:.*//')
 SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
 
 # Move to other path
-OUT_PATH=$RANDOM
-mkdir ${OUT_PATH}
-mv ${PKG_NAME} ${OUT_PATH}/${DIR_NAME}
-echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${OUT_PATH}/${DIR_NAME}" >> get_source_flag_result.txt
+rm -rf ${PKG_NAME}/.git  # remove git metadata - we wont need it when packing.
+if [ ${PKG_NAME} != ${DIR_NAME} ]; then
+    mv ${PKG_NAME} ${DIR_NAME}
+fi
+echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt

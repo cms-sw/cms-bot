@@ -112,7 +112,7 @@ getHeader = function( resultsDict ){
   subtitle.append( ibLink ).append( $( '<span>' ).text( ' + ' ) ).append( prLink ) 
 
   var adittionalPRS = resultsDict[ ADDITIONAL_PRS_KEY ]
-  if ( adittionalPRS != '' ){
+  if ( adittionalPRS && adittionalPRS !== '' ){
   
     addPRParts = adittionalPRS.split( ',' )
     $.each( addPRParts , function( index ){
@@ -161,7 +161,7 @@ parseResultsIntoDict = function( results ){
 
     var line = lines[ index ].trim()
 
-    if( line != '' ){  
+    if( line && line !== '' ){
         var lineParts = line.split( ';' )
         var key = lineParts[0].trim()
         var vParts = lineParts[1].trim().split(',')

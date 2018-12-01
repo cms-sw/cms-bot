@@ -61,7 +61,7 @@ QUEUING_BUILDS_MSG = 'Queuing Jenkins build for the following architectures: %s 
                      'You can abort the build by writing "Abort" in a comment. I will delete the release, ' \
                      'the cmssw and cmsdist tag, and close the issue. You can\'t abort the upload once at' \
                      ' least one achitecture is being uploaded. \n' \
-                     'If you are building cmssw-tool-conf first, I will wait for each acrhitecture to finish to start the build of cmssw.'
+                     'If you are building cmssw-tool-conf first, I will wait for each architecture to finish to start the build of cmssw.'
 QUEUING_TOOLCONF_MSG = 'Queuing Jenkins build for cmssw-tool-conf for the following architectures: %s \n' \
                      'Be aware that I am building only cmssw-tool-conf. You still need to "+1" this issue to ' \
                      'make me start the build of the release. For each architecture, I will only start to build ' \

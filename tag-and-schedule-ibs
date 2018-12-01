@@ -20,7 +20,8 @@ if [ "X$RELEASE_QUEUES" = X ]; then
   exit 1
 fi
 rm -rf cmssw
-git clone --reference /cvmfs/cms.cern.ch/cmssw.git.daily git@github.com:cms-sw/cmssw.git cmssw
+ls /cvmfs/cms-ib.cern.ch
+git clone --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git git@github.com:cms-sw/cmssw.git cmssw
 cd cmssw
 WEEK_DAY=`date +%w`
 DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`

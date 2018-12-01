@@ -5,6 +5,7 @@ from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, 
 from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
+from datetime import datetime
 from sys import exit, argv
 from os.path import abspath, dirname, join, exists
 from github import UnknownObjectException
@@ -40,6 +41,20 @@ TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+wo
 REGEX_TEST_REQ = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
+
+def get_last_commit(pr):
+  last_commit = None
+  try:
+    # This requires at least PyGithub 1.23.0. Making it optional for the moment.
+    last_commit = pr.get_commits().reversed[0].commit
+  except:
+    # This seems to fail for more than 250 commits. Not sure if the
+    # problem is github itself or the bindings.
+    try:
+      last_commit = pr.get_commits()[pr.commits - 1].commit
+    except IndexError:
+      print "Index error: May be PR with no commits"
+  return last_commit
 
 #Read a yaml file
 def read_repo_file(repo_config, repo_file, default=None):
@@ -94,6 +109,9 @@ def updateMilestone(repo, issue, pr, dryRun):
   milestoneId = RELEASE_BRANCH_MILESTONE.get(pr.base.label.split(":")[1], None)
   if not milestoneId:
     print "Unable to find a milestone for the given branch"
+    return
+  if pr.state != "open":
+    print "PR not open, not setting/checking milestone"
     return
   if issue.milestone and issue.milestone.id==milestoneId: return
   milestone = repo.get_milestone(milestoneId)
@@ -339,22 +357,25 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     watchers = set(["@" + u for u in watchers])
     print "Watchers " + ", ".join(watchers)
 
-    last_commit = None
-    try:
-      # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-      last_commit = pr.get_commits().reversed[0].commit
-    except:
-      # This seems to fail for more than 250 commits. Not sure if the
-      # problem is github itself or the bindings.
-      try:
-        last_commit = pr.get_commits()[pr.commits - 1].commit
-      except IndexError:
-        print "Index error: May be PR with no commits"
-        return
+    last_commit = get_last_commit(pr)
+    if last_commit is None: return
     last_commit_date = last_commit.committer.date
     print "Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date
     print "Latest commit message: ",last_commit.message.encode("ascii", "ignore")
     print "Latest commit sha: ",last_commit.sha
+    print "PR update time",pr.updated_at
+    print "Time UTC:",datetime.utcnow()
+    if last_commit_date>datetime.utcnow():
+      print "==== Future commit found ===="
+      add_labels = True
+      try: add_labels = repo_config.ADD_LABELS
+      except: pass
+      if (not dryRun) and add_labels:
+        labels = [x.name.encode("ascii", "ignore") for x in issue.labels]
+        if not 'future-commit' in labels:
+          labels.append('future-commit')
+          issue.edit(labels=labels)
+      return
     extra_rm = RELEASE_MANAGERS.get(pr.base.ref, [])
     if repository==CMSDIST_REPO_NAME:
       br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3])+"_X"
@@ -387,19 +408,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   hold = {}
   extra_labels = {}
   last_test_start_time = None
-  body_firstline = issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() if issue.body else ""
   abort_test = False
   need_external = False
   trigger_code_checks=False
   triggerred_code_checks=False
   backport_pr_num = ""
   comp_warnings = False
-  if (requestor == cmsbuild_user) and \
-     re.match(ISSUE_SEEN_MSG,body_firstline):
-    already_seen = issue
-    backport_pr_num = get_backported_pr(issue.body.encode("ascii", "ignore")) if issue.body else ""
-  elif re.match(REGEX_EX_CMDS, body_firstline, re.I):
-    check_extra_labels(body_firstline.lower(), extra_labels)
+  extra_testers = []
   all_comments = [issue]
   for c in issue.get_comments(): all_comments.append(c)
   for comment in all_comments:
@@ -461,6 +476,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
         ignore_tests = check_ignore_test (first_line.upper())
         if 'NONE' in ignore_tests: ignore_tests=[]
+      continue
+    if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
+      if commenter in CMSSW_L1 + CMSSW_L2.keys() + releaseManagers:
+        tester = first_line.split("@",1)[-1].split(" ",1)[0]
+        if not tester in TRIGGER_PR_TESTS:
+          TRIGGER_PR_TESTS.append(tester)
+          extra_testers.append(tester)
+          print "Added user in test category:",tester
       continue
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:
@@ -702,6 +725,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       extra_labels["backport"][0]="backport-ok"
 
   # Add additional labels
+  for lab in extra_testers: labels.append("allow-"+lab)
   for lab in extra_labels: labels.append(extra_labels[lab][0])
   if comp_warnings: labels.append("compilation-warnings")
 
@@ -722,6 +746,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          and not x.startswith("pending-assignment")
                          and not x.startswith("comparison")
                          and not x.startswith("code-checks")
+                         and not x.startswith("allow-")
                          and not x in ["backport", "urgent", "bug-fix", "new-feature", "backport-ok", "compilation-warnings"]]
 
   if not missingApprovals:

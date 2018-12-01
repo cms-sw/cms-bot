@@ -272,10 +272,11 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
 
   #first, add the command to the log
   CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j $(Jenkins_GetCPU *2) COMPILER='llvm compile'"
-  CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes && ${ANALOG_CMD}"
+  CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
   echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
 
   (eval $CLANG_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
+  (eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/buildClang.log
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
@@ -409,12 +410,13 @@ echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chk
 # test compilation with GCC
 # ############################################
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD}"
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(Jenkins_GetCPU)"
 if [ "X$CMSDIST_PR" != X -a $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
-  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && ${ANALOG_CMD} && scram b -k -j $(Jenkins_GetCPU) edm_checks"
+  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && scram b -k -j $(Jenkins_GetCPU) edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
+(eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/build.log
 if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${WORKSPACE}/build-logs ; fi
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
@@ -607,6 +609,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
     echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
     echo "PUB_REPO=$PUB_REPO" >> $TRIGGER_COMPARISON_FILE
+    echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
 
     #####################################################################
     #### Run igprof
@@ -775,7 +778,15 @@ if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
 fi
 
 cd $WORKSPACE
-mkdir -p upload
+if [ -d ${WORKSPACE}/upload ] ; then
+  for ut in $(find $WORKSPACE/upload -mindepth 1 -maxdepth 1 -name '*' -type d | sed 's|.*/||') ; do
+    UT_STATUS="OK"
+    if [ -f $WORKSPACE/upload/${ut}/status ] ; then UT_STATUS=$(cat $WORKSPACE/upload/${ut}/status) ; fi
+    echo "USER_TEST_${ul};${UT_STATUS},User Test ${ut},See Log,${ut}" >> $RESULTS_FILE
+  done
+else
+  mkdir -p upload
+fi
 for f in build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
   [ -e $f ] && mv $f upload/$f
 done

@@ -1346,3 +1346,7 @@ vargasa:
 - Configuration/Geometry
 - Geometry/TrackerCommonData
 - Validation/Geometry
+rbartek:
+- Validation/Geometry
+rishabhCMS:
+- Validation/Geometry

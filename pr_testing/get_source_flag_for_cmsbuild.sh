@@ -81,4 +81,3 @@ if [ ${PKG_NAME} != ${DIR_NAME} ]; then
     mv ${PKG_NAME} ${DIR_NAME}
 fi
 echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt
-

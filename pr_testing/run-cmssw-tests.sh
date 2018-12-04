@@ -5,7 +5,6 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 WORKSPACE=$(dirname ${CMS_BOT_DIR} )
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
-CMS_BOT_DIR=$(dirname $0)
 # ---
 
 ## TODO check if the variable there

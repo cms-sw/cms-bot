@@ -311,4 +311,4 @@ if [ "X${DEP_NAMES}" != "X" ] ; then
 fi
 
 # Launch the pr-tests to check CMSSW by passing on the global variables
-${PR_TESTING_DIR}/run-cmssw-pr-tests
+${PR_TESTING_DIR}/run-cmssw-tests.sh

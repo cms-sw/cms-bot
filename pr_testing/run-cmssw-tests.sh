@@ -65,15 +65,17 @@ else
   CMSDIST_ONLY=true
   PUB_REPO="${PUB_USER}/cmsdist"
 fi
-PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
-# Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
-if [ "X$CMSDIST_PR" = X ] ; then
-  $CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST_NUMBER || true
-fi
 # to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
 DRY_RUN=
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'
+fi
+PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
+# Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
+if [ "X$CMSDIST_PR" = X ] ; then
+  # TODO - putting comments to file and iterating actually makes more sence.
+  $CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL \
+    -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST_NUMBER $DRY_RUN || true
 fi
 
 cd $WORKSPACE

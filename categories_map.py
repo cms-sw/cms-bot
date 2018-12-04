@@ -1399,7 +1399,7 @@ CMSSW_CATEGORIES={
    "TauAnalysis/MCEmbeddingTools",
    "TrackPropagation/Geant4e",
    "Validation/Configuration",
-   "SLHCUpgradeSimulations/L1CaloTrigger"],
+   "SLHCUpgradeSimulations/L1CaloTrigger", "Utilities/PPS"],
    "upgrade": [
     "Configuration/Geometry",
     "Configuration/PyReleaseValidation",

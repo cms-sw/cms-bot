@@ -207,15 +207,7 @@ MB_COMPARISON=NO
 touch $RECENT_COMMITS_FILE
 # use the branch name if necesary
 if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
-  if [ "X$BRANCH_NAME" = X ]; then
-    if [ "${PUB_USER}" = "cms-sw" ]; then
-      (git cms-merge-topic --ssh -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
-    else
-      (/cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
-    fi
-  else
-    (git cms-merge-topic --ssh -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
-  fi
+  (git cms-merge-topic --ssh -u ${PUB_USER}:$PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
 
   # this is to test several pull requests at the same time
   for PR in ${ADDITIONAL_PULL_REQUESTS//,/ }; do

@@ -53,7 +53,7 @@ if ! [ -d "pkgtools" ]; then
     git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 fi
 
-SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources --no-bootstrap build  ${PKG_NAME} | \
+SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${PKG_NAME} | \
                         grep -i "^${PKG_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
 N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true

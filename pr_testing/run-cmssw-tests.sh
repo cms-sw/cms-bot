@@ -47,7 +47,7 @@ JOB_NAME=$JOB_NAME
 
 source ${CMS_BOT_DIR}/jenkins-artifacts
 
-voms-proxy-init -voms cms -valid 24:00 || true
+# voms-proxy-init -voms cms -valid 24:00 || true
 
 ls /cvmfs/cms-ib.cern.ch || true
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')

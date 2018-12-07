@@ -21,7 +21,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ -e /etc/tnsnames.ora ] ; then
     DOCKER_OPT="$DOCKER_OPT -v /etc/tnsnames.ora:/etc/tnsnames.ora "
   fi
-  if [ "$KRB5CCNAME" = "X" ] ; then 
+  if [ "X$KRB5CCNAME" != "X" ] ; then 
     DOCKER_OPT="$DOCKER_OPT -e KRB5CCNAME=$KRB5CCNAME "
   fi
   DOCK_ARGS="voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"

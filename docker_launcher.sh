@@ -9,6 +9,7 @@ if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
 fi
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
+  export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
   DOCKER_EXTRA_ENV=""
   for e in $DOCKER_JOB_ENV ; do DOCKER_EXTRA_ENV="${DOCKER_EXTRA_ENV} -e $e=$(eval echo \$$e)"; done
   docker pull $DOCKER_IMG

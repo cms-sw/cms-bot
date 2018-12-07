@@ -51,7 +51,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
     if [ "${DOCKER_V}" != "" ] ; then
       if [ $(ssh -n $SSH_OPTS $TARGET id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then
         DOCKER="docker"
-        DOCKER_OS=$(grep -A1 '> *DOCKER_IMG_HOST *<' ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep 'cmssw/' | tail -1 | sed 's|.*>cmssw/||;s|-builder.*||' | sed 's|.*-||')
+        DOCKER_OS=$(grep -A1 '> *DOCKER_IMG_HOST *<' ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | tail -1 | sed 's|.*cmssw/||;s|-.*||;s|cc7|slc7|')
         if [ "$DOCKER_OS" != "" ] ; then
           HOST_CMS_ARCH="${DOCKER_OS}_$(echo $HOST_CMS_ARCH | sed 's|^.*_||')"
         fi

@@ -29,8 +29,8 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
   aiadm* ) echo "Skipping auto labels" ;;
   lxplus* )
     scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
-    HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo | grep vendor_id | sed 's|.*: *||' | tail -1)
-    HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos)
+    HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo 2> /dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
+    HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos 2>/dev/null)
     case ${HOST_CMS_ARCH} in 
       slc6_*) lxplus_type="lxplus6";;
       slc7_*) lxplus_type="lxplus7";;

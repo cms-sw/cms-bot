@@ -45,7 +45,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
   * )
     scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
     HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo 2>/dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
-    HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos2>/dev/null )
+    HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos 2>/dev/null )
     DOCKER_V=$(ssh -n $SSH_OPTS $TARGET docker --version 2>/dev/null || true)
     DOCKER=""
     if [ "${DOCKER_V}" != "" ] ; then

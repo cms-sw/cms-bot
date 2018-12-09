@@ -32,9 +32,9 @@ query_running_builds = """{
 }"""
 
 all_local = list() 
-path = '/build/jobs'
+path = '/build/builds'
 document = "builds-data"
-rematch = re.compile(".*/builds/\d+$")
+rematch = re.compile(".*/\d+$")
 for root, dirs, files in os.walk(path):
   if rematch.match(root):
     logFile = root + '/build.xml'

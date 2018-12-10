@@ -1548,4 +1548,8 @@ CMSSW_CATEGORIES = {
     "Fireworks/Tracks",
     "Fireworks/Vertices",
   ],
+  "xpog": [
+    "DataFormats/NanoAOD",
+    "PhysicsTools/NanoAOD",
+  ],
 }

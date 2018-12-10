@@ -11,6 +11,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")
   parser.add_option("-c", "--commit",     dest="commit",     action="store_true", help="Get last commit of the PR", default=False)
+  parser.add_option("-a", "--all",        dest="all",        action="store_true", help="Get all commits of the PR", default=False)
   parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
   parser.add_option("-f", "--force",      dest="force",      action="store_true", help="Force process the issue/PR even if it is ignored.", default=False)
   parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
@@ -28,7 +29,11 @@ if __name__ == "__main__":
   repo = gh.get_repo(opts.repository)
   if opts.commit:
     pr   = repo.get_pull(prId)
-    print pr.get_commits().reversed[0].commit.sha
+    if opts.all:
+      for c in pr.get_commits():
+        print c.sha
+    else:
+      print pr.get_commits().reversed[0].commit.sha
   else:
     from process_pr import process_pr
     process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)

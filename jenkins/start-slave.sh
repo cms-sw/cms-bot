@@ -24,12 +24,14 @@ REMOTE_USER_ID=$(ssh -n $SSH_OPTS $TARGET id -u)
 KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
 xenv=""
+case ${SLAVE_TYPE} in
+  aiadm*|lxplus* ) xenv="env";; 
+esac
 if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
-  aiadm* ) echo "Skipping auto labels" ; xenv="env";;
+  aiadm* ) echo "Skipping auto labels" ;;
   lxplus* )
-    xenv="env"
     scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
     HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo 2> /dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
     HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos 2>/dev/null)

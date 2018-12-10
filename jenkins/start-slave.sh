@@ -23,11 +23,13 @@ ssh -n $SSH_OPTS $TARGET rm -f $WORKSPACE/cmsos $WORKSPACE/slave.jar
 REMOTE_USER_ID=$(ssh -n $SSH_OPTS $TARGET id -u)
 KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s http://localhost:8080/$(cat ${HOME}/jenkins_prefix) -remoting"
+xenv=""
 if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
-  aiadm* ) echo "Skipping auto labels" ;;
+  aiadm* ) echo "Skipping auto labels" ; xenv="env";;
   lxplus* )
+    xenv="env"
     scp -p $SSH_OPTS ${HOME}/cmsos $TARGET:$WORKSPACE/cmsos
     HOST_ARCH=$(ssh -n $SSH_OPTS $TARGET cat /proc/cpuinfo 2> /dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
     HOST_CMS_ARCH=$(ssh -n $SSH_OPTS $TARGET sh $WORKSPACE/cmsos 2>/dev/null)
@@ -77,4 +79,4 @@ if ! ssh -n $SSH_OPTS $TARGET test -f '~/.jenkins-slave-setup' ; then
 fi
 scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar
 scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
-ssh $SSH_OPTS $TARGET "KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"
+ssh $SSH_OPTS $TARGET "$xenv KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

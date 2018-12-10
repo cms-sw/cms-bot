@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+Modifies last cmsbot message on Github
+"""
 from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser

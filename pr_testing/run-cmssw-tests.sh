@@ -34,7 +34,7 @@ AUTO_POST_MESSAGE=$AUTO_POST_MESSAGE
 # EXTRA_MATRIX_ARGS=
 # DO_ADDON_TESTS=
 # RUN_ON_SLAVE=
-# COMPARISON_ARCH=
+COMPARISON_ARCH= # TODO needs to be exported
 # DISABLE_POISON=
 # FULL_TOOLCONF=
 PUB_USER=$PUB_USER
@@ -46,38 +46,42 @@ BUILD_NUMBER=$BUILD_NUMBER
 JOB_NAME=$JOB_NAME
 # TODO delete after
 
+function modify_comment_all_prs() {
+    # modify all PR's with message that job has been triggered and add a link to jobs console
+    for PR in ${PULL_REQUESTS} ; do
+        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+        PR_NR=$(echo ${PR} | sed 's/.*#//' )
+        $CMS_BOT_DIR/modify_comment.py -r ${PR_NAME_AND_REPO} -t JENKINS_TEST_URL \
+            -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" ${PR_NR} $DRY_RUN || true
+    done
+}
+
+# to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
+DRY_RUN=
+if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
+  DRY_RUN='--no-post'
+fi
 source ${CMS_BOT_DIR}/jenkins-artifacts
-
-voms-proxy-init -voms cms -valid 24:00 || true
-
+voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artifact machine
 ls /cvmfs/cms-ib.cern.ch || true
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 if [ "X${PUB_USER}" = X ]; then PUB_USER="cms-sw" ; fi
 
 ### this is for triggering the comparison with the baseline
-CMSDIST_ONLY=false
-if [ "X$PULL_REQUEST" != X ]; then
-  PULL_REQUEST_NUMBER=$PULL_REQUEST
-  PUB_REPO="${PUB_USER}/cmssw"
+CMSDIST_ONLY=false  #
+if [ "X$PULL_REQUEST" != X ]; then  # TODO PULL_reuqest should be done something with it
+  PULL_REQUEST_NUMBER=$PULL_REQUEST  # Used mostly to comment
+  PUB_REPO="${PUB_USER}/cmssw" # Repo to which comments will be published
 else
   # If PULL_REQUEST is empty then we are only testing a CMSDIST PR, take that
   PULL_REQUEST_NUMBER=$CMSDIST_PR
   CMSDIST_ONLY=true
   PUB_REPO="${PUB_USER}/cmsdist"
 fi
-# to not modify the behavior of other scripts that use the AUTO_POST_MESSAGE parameter
-DRY_RUN=
-if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
-  DRY_RUN='--no-post'
-fi
-PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
-# Do not update twice the comment when testing CMSDIST only PR or also CMSDIST
-# if [ "X$CMSDIST_PR" = X ] ; then
-  # TODO - putting comments to file and iterating actually makes more sence.
-  # $CMS_BOT_DIR/modify_comment.py -r $PUB_REPO -t JENKINS_TEST_URL \
-  #   -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST_NUMBER $DRY_RUN || true
-# fi
+
+# PULL_REQUEST_JOB_ID=${BUILD_NUMBER}  # TODO Not used
+modify_comment_all_prs # modify comments that test are being triggered by Jenkins
 
 cd $WORKSPACE
 CONFIG_MAP=$CMS_BOT_DIR/config.map

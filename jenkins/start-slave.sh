@@ -51,7 +51,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
       cmsbuild*|vocms* ) slave_labels="${slave_labels} cloud cmsbuild release-build";;
       cmsdev*   ) slave_labels="${slave_labels} cloud cmsdev";;
     esac
-    case ${HOST_CMS_ARCH} in
+    case $(get_data HOST_CMS_ARCH) in
       *_aarch64|*_ppc64le ) slave_labels="${slave_labels} release-build cmsbuild";;
     esac
     ;;

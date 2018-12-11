@@ -107,7 +107,7 @@ if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
   if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
     SLAVE_LABELS="$hname lxplus-scripts ${lxplus_type}-scripts"
   else 
-    SLAVE_LABELS="lxplus ${lxplus_type} ${HOST_CMS_ARCH}-lxplus ${HOST_CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"
+    SLAVE_LABELS="$hname lxplus ${lxplus_type} ${HOST_CMS_ARCH}-lxplus ${HOST_CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"
   fi
 fi
 

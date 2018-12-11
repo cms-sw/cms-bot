@@ -66,5 +66,5 @@ for (p in Jenkins.instance.getAllItems(AbstractItem.class)) {
     projectMap[p.getDisplayName()] = projectDescription
 }
 def json = JsonOutput.toJson(mainMap)
-def file1 = new File(System.getProperty("user.dir"),'report_data.json')
+def file1 = new File(args[0])
 file1.write json

@@ -6,7 +6,7 @@ WORKSPACE="$2"
 DOCKER_IMG_HOST="$3"
 CLEANUP_WORKSPACE="$4"
 if [ "X$WORKSPACE" = "X" ] ; then echo DATA_ERROR="Missing workspace directory." ;  exit 1; fi
-if [ "${CLEANUP_WORKSPACE}" = "true" ] ; then rm -rf $WORKSPACE ; fi
+if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
 mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 rm -f $WORKSPACE/cmsos
 
@@ -104,7 +104,7 @@ if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
     slc6_*) lxplus_type="lxplus6";;
     slc7_*) lxplus_type="lxplus7";;
   esac
-  if [ "${CLEANUP_WORKSPACE}" = "true" ] ; then
+  if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
     SLAVE_LABELS="$hname lxplus-scripts ${lxplus_type}-scripts"
   else 
     SLAVE_LABELS="lxplus ${lxplus_type} ${HOST_CMS_ARCH}-lxplus ${HOST_CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"

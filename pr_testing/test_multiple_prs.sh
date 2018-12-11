@@ -170,145 +170,170 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
 done
 
 # Preparations depending on from repo type
+CMSSW_ORG=
+BUILD_EXTERNAL=false
 for U_REPO in ${UNIQ_REPOS}; do
     PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
 		cmssw)
-            PUB_REPO=${PKG_REPO}  # PUB_REPO is used for publishing results
+		    # TODO PUB Repo would like to avoid
+            CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
 		;;
 		cmsdist)
-            if [ -z ${PUB_REPO} ] ; then PUB_REPO=${PKG_REPO} ; fi  # if PUB_REPO repo not set to cmssw, use cmsdist
+		    BUILD_EXTERNAL=true
 		;;
 		*)
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
 			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE"
+			BUILD_EXTERNAL=true
 		;;
 	esac
 done
-
-echo_section "Building, testing and commenting status to github"
-# add special flags for pkgtools/cmsbuild if version is high enough
-if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
-  REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
-  SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
+CMSDIST_ONLY=true
+if [ ! -z ${CMSSW_ORG} ] ; then
+  CMSDIST_ONLY=false
 fi
-for PR in ${PULL_REQUESTS}; do
-    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
-    PR_NR=$(echo ${PR} | sed 's/.*#//' )
-    COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
-    # if CMSDIST commit, export it to available in run-pr-test
-    if [[ -z $( echo ${PR_NAME_AND_REPO} | grep '/cmsdist$' ) ]] ; then
-        export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')  # TODO do I need CMSDIST_COMMIT in run-cmssw-pr-test ?
+export CMSDIST_ONLY
+export CMSSW_ORG
+export CMSSW_IB
+if ${BUILD_EXTERNAL} ; then
+    echo_section "Building, testing and commenting status to github"
+    # add special flags for pkgtools/cmsbuild if version is high enough
+    if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
+      REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
+      SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
     fi
-    # Notify github that the script will start testing now
-    $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${COMMIT} \
-        --pr-job-id ${BUILD_NUMBER} ${DRY_RUN}
-done
 
-# Not all packages are build with debug flag. If the current IB should be build with debug flag, we need to do some 'magic'
-# otherwise everything will be rebuild.
-if [ $( echo $CONFIG_LINE | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
-  DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $CMS_BOT_DIR/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
-  pushd ${WORKSPACE}/cmsdist
-    perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
-  popd
-fi
+    for PR in ${PULL_REQUESTS}; do
+        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+        PR_NR=$(echo ${PR} | sed 's/.*#//' )
+        COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
+        echo ${COMMIT} | sed 's|.* ||' > "$(${PR_TESTING_DIR}/get_path_to_pr_metadata.sh ${PR})/COMMIT"
+        # if CMSDIST commit, export it to available in run-pr-test
+        if [[ -z $( echo ${PR_NAME_AND_REPO} | grep '/cmsdist$' ) ]] ; then
+            export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')  # TODO do I need CMSDIST_COMMIT in run-cmssw-pr-test ?
+        fi
+        # Notify github that the script will start testing now
+        $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${COMMIT} \
+            --pr-job-id ${BUILD_NUMBER} ${DRY_RUN}
+    done
 
-# Build the whole cmssw-tool-conf toolchain
-COMPILATION_CMD="pkgtools/cmsBuild --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
-    $SOURCE_FLAG --arch $ARCHITECTURE -j $(${COMMON}/get_cpu_number.sh) build cms-common cms-git-tools cmssw-tool-conf"
-echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
-# run the command and both log it to file and display it
-(eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-echo_section 'END OF BUILD LOG'
+    # Not all packages are build with debug flag. If the current IB should be build with debug flag, we need to do some 'magic'
+    # otherwise everything will be rebuild.
+    if [ $( echo $CONFIG_LINE | grep ";ENABLE_DEBUG=" | wc -l) -eq 0 ] ; then
+      DEBUG_SUBPACKS=$(grep '^ *DEBUG_SUBPACKS=' $CMS_BOT_DIR/build-cmssw-ib-with-patch | sed 's|.*DEBUG_SUBPACKS="||;s|".*$||')
+      pushd ${WORKSPACE}/cmsdist
+        perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' $DEBUG_SUBPACKS
+      popd
+    fi
 
-RESULTS_FILE=$WORKSPACE/testsResults.txt
-touch $RESULTS_FILE
+    # Build the whole cmssw-tool-conf toolchain
+    COMPILATION_CMD="pkgtools/cmsBuild --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
+        $SOURCE_FLAG --arch $ARCHITECTURE -j $(${COMMON}/get_cpu_number.sh) build cms-common cms-git-tools cmssw-tool-conf"
+    echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
+    # run the command and both log it to file and display it
+    (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+    echo_section 'END OF BUILD LOG'
 
-TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
-GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
+    RESULTS_FILE=$WORKSPACE/testsResults.txt
+    touch $RESULTS_FILE
 
-echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,..' >> $RESULTS_FILE
-  if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
-  for PR in ${PULL_REQUESTS}; do
-    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
-    PR_NR=$(echo ${PR} | sed 's/.*#//' )
-    $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL --report-pr ${PR_NR} --repo ${PR_NAME_AND_REPO} \
-        --pr ${PR_NR} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}
-  done
-  # echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE # TODO do not need it, Should fix template
-  echo 'PULL_REQUESTS;' ${PULL_REQUESTS} >> $RESULTS_FILE
-  echo 'BASE_IB;'$CMSSW_IB >> $RESULTS_FILE
-  echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
-  echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
-  # creation of results summary file, normally done in run-pr-tests, here just to let close the process
-  cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
-  # TODO REPOSITORY is used to link either to CMSDIST or CMSSW repository
-  sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js  # TODO with whom replace $PUB_REPO when there is no CMSSW or CMSDIST commit?
-  exit 0
-else
-  echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE
-fi
+    TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
+    GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
-# Create an appropriate CMSSW area
-source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
-echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
-scram -a $SCRAM_ARCH project $CMSSW_IB
+    echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,..' >> $RESULTS_FILE
+    if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
+      for PR in ${PULL_REQUESTS}; do
+        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+        PR_NR=$(echo ${PR} | sed 's/.*#//' )
+        # Report github that job failed and then exit
+        ${CMS_BOT_DIR}/report-pull-request-results PARSE_BUILD_FAIL --report-pr ${PR_NR} --repo ${PR_NAME_AND_REPO} \
+            --pr ${PR_NR} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}
+      done
+      # TODO there is dublication in run-cmssw.sh
+      # echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE # TODO do not need it, Should fix template or make new one
+      echo 'PULL_REQUESTS;' ${PULL_REQUESTS} >> $RESULTS_FILE
+      echo 'BASE_IB;'$CMSSW_IB >> $RESULTS_FILE
+      echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
+      echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
+      # creation of results summary file, normally done in run-pr-tests, here just to let close the process
+      cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
+      # TODO REPOSITORY is used to link either to CMSDIST or CMSSW repository
+      sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js  # TODO with whom replace $PUB_REPO when there is no CMSSW or CMSDIST commit?
+      # -- end TODO
+      exit 0
+    else
+      echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE
+    fi
 
-# TO make sure we always pick scram from local area
-rm -f $CMSSW_IB/config/scram_basedir
+    # Create an appropriate CMSSW area
+    source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
+    echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
+    scram -a $SCRAM_ARCH project $CMSSW_IB
 
-echo $(scram version) > $CMSSW_IB/config/scram_version
-if [ $(grep '^V05-07-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
-  git clone git@github.com:cms-sw/cmssw-config
-  pushd cmssw-config
-    git checkout master
-  popd
-  mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
-  cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
-fi
-cd $CMSSW_IB/src
+    # To make sure we always pick scram from local area
+    rm -f $CMSSW_IB/config/scram_basedir
 
-# Setup all the toolfiles previously built
-SET_ALL_TOOLS=NO
-if [ $(echo $CMSSW_IB | grep '^CMSSW_9' | wc -l) -gt 0 ] ; then SET_ALL_TOOLS=YES ; fi
-DEP_NAMES=
-CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
-for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
-  name=$(basename $xml)
-  tool=$(echo $name | sed 's|.xml$||')
-  echo "Checking tool $tool ($xml)"
-  if [ ! -e $CTOOLS/$name ] ; then
-    scram setup $xml
-    continue
-  fi
-  nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-  over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-  echo "Checking version in release: $over vs $nver"
-  if [ "$nver" = "$over" ] ; then continue ; fi
-  echo "Settings up $name: $over vs $nver"
-  DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
-done
-mv ${CTOOLS} ${CTOOLS}.backup
-mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
-sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
-scram setup
-scram setup self
-SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_version)/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
-scram build -r
-eval $(scram runtime -sh)
-echo $PYTHONPATH | tr ':' '\n'
+    echo $(scram version) > $CMSSW_IB/config/scram_version
+    if [ $(grep '^V05-07-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
+      git clone git@github.com:cms-sw/cmssw-config
+      pushd cmssw-config
+        git checkout master
+      popd
+      mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
+      cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
+    fi
+    cd $CMSSW_IB/src
 
-# Search for CMSSW package that might depend on the compiled externals
-touch $WORKSPACE/cmsswtoolconf.log
-if [ "X${DEP_NAMES}" != "X" ] ; then
-  CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
-  if [ "X${CMSSW_DEP}" != "X" ] ; then
-    git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-  fi
+    # Setup all the toolfiles previously built
+    SET_ALL_TOOLS=NO
+    if [ $(echo $CMSSW_IB | grep '^CMSSW_9' | wc -l) -gt 0 ] ; then SET_ALL_TOOLS=YES ; fi
+    DEP_NAMES=
+    CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
+    for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
+      name=$(basename $xml)
+      tool=$(echo $name | sed 's|.xml$||')
+      echo "Checking tool $tool ($xml)"
+      if [ ! -e $CTOOLS/$name ] ; then
+        scram setup $xml
+        continue
+      fi
+      nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+      over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+      echo "Checking version in release: $over vs $nver"
+      if [ "$nver" = "$over" ] ; then continue ; fi
+      echo "Settings up $name: $over vs $nver"
+      DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+    done
+    mv ${CTOOLS} ${CTOOLS}.backup
+    mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
+    sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
+    scram setup
+    scram setup self
+    SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_version)/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
+    scram build -r
+    eval $(scram runtime -sh)
+    echo $PYTHONPATH | tr ':' '\n'
+
+    # Search for CMSSW package that might depend on the compiled externals
+    touch $WORKSPACE/cmsswtoolconf.log
+    if [ "X${DEP_NAMES}" != "X" ] ; then
+      CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+      if [ "X${CMSSW_DEP}" != "X" ] ; then
+        git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+      fi
+    fi
+fi # end of build external
+
+# TODO DELETE AFTER DEVELOPMENT
+if [ ! -z COPY_STATUS ] ; then
+    rm -rf ${WORKSPACE}/../SNAPSHOT/1/
+    mkdir -p ${WORKSPACE}/../SNAPSHOT/1/
+    cp -rf ${WORKSPACE}/* ${WORKSPACE}/../SNAPSHOT/1
 fi
 
 # Launch the pr-tests to check CMSSW by passing on the global variables
+# Merge into one script
 ${PR_TESTING_DIR}/run-cmssw-tests.sh

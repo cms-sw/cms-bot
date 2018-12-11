@@ -23,11 +23,6 @@ if [ $(get_data ERROR | wc -l) -gt 0 ] ; then
   exit 1
 fi
 
-xenv=""
-case $(get_data SHELL) in
-  */tcsh|*/csh) xenv="env" ;;
-esac
-
 #Check slave workspace size in GB
 if [ "${SLAVE_MAX_WORKSPACE_SIZE}" != "" ] ; then
   if [ $(get_data WORKSPACE_SIZE) -lt $SLAVE_MAX_WORKSPACE_SIZE ] ; then exit 99 ; fi
@@ -66,8 +61,12 @@ KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar ; fi
 scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 rm -f ${KRB5_FILENAME}
-extra_env="KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}"
+
+pre_cmd=""
 case $(get_data SHELL) in
-  */tcsh|*/csh) extra_env="env ${extra_env}" ;;
+  */tcsh|*/csh) pre_cmd="setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  *) pre_cmd="export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
 esac
-ssh $SSH_OPTS $TARGET "${xenv} KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"
+
+pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
+ssh $SSH_OPTS $TARGET "${pre_cmd} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

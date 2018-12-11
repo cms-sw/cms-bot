@@ -60,7 +60,6 @@ fi
 KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar ; fi
 scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
-rm -f ${KRB5_FILENAME}
 
 pre_cmd=""
 case $(get_data SHELL) in

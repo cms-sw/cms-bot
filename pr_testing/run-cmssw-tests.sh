@@ -219,8 +219,7 @@ touch $RECENT_COMMITS_FILE
 if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified #
 
   # this is to test several pull requests at the same time
-  # TODO I have 2 choices - merge it myself and ignore this part or put part of PR's to here
-  for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do  # TODO reuse loop for all CMSSW PRs
+  for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
     echo 'I will add the following pull request to the test'
     PR_NR=$(echo ${PR} | sed 's/.*#//' )
     (git cms-merge-topic -u ${CMSSW_ORG}:${PR_NR} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
@@ -758,7 +757,7 @@ done
 
 # TODO DELETE AFTER DEVELOPMENT
 if [ ! -z COPY_STATUS ] ; then
-    rm -rf -p ${WORKSPACE}/../SNAPSHOT/2/
+    rm -rf ${WORKSPACE}/../SNAPSHOT/2/
     mkdir -p ${WORKSPACE}/../SNAPSHOT/2/
     cp -rf ${WORKSPACE}/* ${WORKSPACE}/../SNAPSHOT/2/
 fi
@@ -885,7 +884,7 @@ if [ $(grep 'COMPARISON;NOTRUN' $WORKSPACE/upload/testsResults.txt | wc -l) -gt 
   COMP_MSG="Comparison not run due to ${ERR_MSG} (RelVals and Igprof tests were also skipped)"
 fi
 
-# Leave finall comment
+# Leave final comment
 for PR in ${PULL_REQUESTS} ; do
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
     PR_NR=$(echo ${PR} | sed 's/.*#//' )

@@ -9,7 +9,6 @@ CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_METADATA_PATH=$1  # Absolute path to JSON format text with PR data from github
 # ---
 
-# TEST_USER=$(echo ${GH_JSON} | python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['repo']['owner']['login']")
 BASE_REPO_NAME=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['repo']['name']")
 BASE_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")  # where to merge
 BASE_REPO=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['repo']['full_name']")

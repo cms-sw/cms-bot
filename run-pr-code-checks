@@ -29,7 +29,7 @@ DSIZE=0
 pushd $CMSSW_BASE/src
   git repack -a -d
   OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
-  git cms-checkout-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee $CMSSW_BASE/cms-checkout-topic.log
+  git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee $CMSSW_BASE/cms-checkout-topic.log
   git repack -a -d
   NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   let DSIZE=${NSIZE}-${OSIZE}

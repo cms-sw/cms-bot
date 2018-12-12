@@ -28,10 +28,10 @@ git cms-init --upstream-only
 DSIZE=0
 pushd $CMSSW_BASE/src
   git repack -a -d
-  OSIZE=$(du -sk .git/objects/pack | sed 's| .*||')
+  OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   git cms-checkout-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee $CMSSW_BASE/cms-checkout-topic.log
   git repack -a -d
-  NSIZE=$(du -sk .git/objects/pack | sed 's| .*||')
+  NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   let DSIZE=${NSIZE}-${OSIZE}
   if [ $DSIZE -lt 0 ] ; then DSIZE=0 ; fi
   $CMS_BOT_DIR/pr-checks/check-pr-files -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/invalid_files.txt || true

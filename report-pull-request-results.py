@@ -152,7 +152,7 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
   # check if it was timeout
   message += "\n* **RelVals**:\n\n"
   if 'ERROR TIMEOUT' in line:
-    message +=  'The relvals timed out after 2 hours.\n'
+    message +=  'The relvals timed out after 4 hours.\n'
     
   if workflows_with_error:
     message += 'When I ran the RelVals I found an error in the following workflows:\n'

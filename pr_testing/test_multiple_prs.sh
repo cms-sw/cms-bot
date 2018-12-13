@@ -31,27 +31,26 @@ ARCHITECTURE=$ARCHITECTURE               # architecture (ex. slc6_amd64_gcc700)
 # ADDITIONAL_PULL_REQUESTS=$ADDITIONAL_PULL_REQUESTS   # aditonal CMSSW PRs
 # WORKFLOWS_FOR_VALGRIND_TEST=
 AUTO_POST_MESSAGE=$AUTO_POST_MESSAGE
-# RUN_CONFIG_VIEWER=
-# USE_DAS_CACHE=
-# BRANCH_NAME=
-# APPLY_FIREWORKS_RULE=
-# RUN_IGPROF=
-# TEST_CLANG_COMPILATION=
-# MATRIX_TIMEOUT=
-# EXTRA_MATRIX_ARGS=
-# DO_ADDON_TESTS=
-# RUN_ON_SLAVE=
-# COMPARISON_ARCH=
-# DISABLE_POISON=
-# FULL_TOOLCONF=
-PUB_USER=$PUB_USER
-DRY_RUN=$DRY_RUN
-JENKINS_URL=$JENKINS_URL
+RUN_CONFIG_VIEWER=${RUN_CONFIG_VIEWER}
+USE_DAS_CACHE=${USE_DAS_CACHE}
+BRANCH_NAME=${BRANCH_NAME}
+APPLY_FIREWORKS_RULE=${APPLY_FIREWORKS_RULE}
+RUN_IGPROF=${RUN_IGPROF}
+TEST_CLANG_COMPILATION=${TEST_CLANG_COMPILATION}
+MATRIX_TIMEOUT=${MATRIX_TIMEOUT}
+EXTRA_MATRIX_ARGS=${EXTRA_MATRIX_ARGS}
+DO_ADDON_TESTS=${DO_ADDON_TESTS}
+RUN_ON_SLAVE=${RUN_ON_SLAVE}
+FULL_TOOLCONF=${FULL_TOOLCONF}
+COMPARISON_ARCH=${COMPARISON_ARCH}
+DISABLE_POISON=${DISABLE_POISON}
+DRY_RUN=${DRY_RUN}
+JENKINS_URL=${JENKINS_URL}
 
-WORKSPACE=$WORKSPACE
-USER=$USER
-BUILD_NUMBER=$BUILD_NUMBER
-JOB_NAME=$JOB_NAME
+WORKSPACE=${WORKSPACE}
+USER=${USER}
+BUILD_NUMBER=${BUILD_NUMBER}
+JOB_NAME=${JOB_NAME}
 # TODO delete after
 
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
@@ -144,6 +143,7 @@ if [ -z ${CMSSW_CYCLE} ]; then
         CMSSW_CYCLE=$(echo ${CONFIG_LINE} | sed 's/^.*RELEASE_QUEUE=//' | sed 's/;.*//' )
      fi
 fi
+
 fail_if_empty "${CMSSW_CYCLE}" "CMSSW release cycle unsent and could not be determined."
 if [ -z ${CONFIG_LINE} ] ; then  # Get config line
     CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "${CMSSW_CYCLE}" "" "${ARCHITECTURE}" )
@@ -1026,26 +1026,9 @@ if [ ! -z COPY_STATUS ] ; then
 fi
 # TODO DELETE AFTER DEVELOPMENT
 #evaluate results
+
 REPEAT=1
-REPORT_PR=$PULL_REQUEST_NUMBER
-if [ "X$PULL_REQUEST" == X ]; then  # if
-  COMMITS[1]=$CMSDIST_COMMIT
-  REPOS[1]="${PUB_USER}/cmsdist"
-  PR[1]=$CMSDIST_PR
-  REPORT_PR=$CMSDIST_PR
-elif [ "X$CMSDIST_PR" != X ]; then
-  COMMITS[1]=$CMSSW_COMMIT
-  REPOS[1]=$PUB_REPO
-  PR[1]=$PULL_REQUEST_NUMBER
-  COMMITS[2]=$CMSDIST_COMMIT
-  REPOS[2]="${PUB_USER}/cmsdist"
-  PR[2]=$CMSDIST_PR
-  REPEAT=2
-else
-  COMMITS[1]=$LAST_COMMIT
-  REPOS[1]=$PUB_REPO
-  PR[1]=$PULL_REQUEST_NUMBER
-fi
+REPORT_H_CODE=$( echo ${PULL_REQUESTS} | md5sum | sed 's| .*||' )      # Used to to create link to folder where uploaded files are.
 
 TESTS_FAILED="Failed tests:"
 if [ "X$BUILD_OK" = Xfalse ]; then
@@ -1076,58 +1059,58 @@ done
 [ -e upload/matrixTests.log  ] && mkdir -p upload/runTheMatrix-results && mv upload/matrixTests.log upload/runTheMatrix-results/
 [ -d upload/addOnTests       ] && find upload/addOnTests -name '*.root' -type f | xargs rm -f
 
-rm -f $WORKSPACE/report.txt
-for i in $( seq 1 $REPEAT); do  # for range of 1 to $REAPEAT( 1 or 2)
-  REPORT_OPTS="--report-pr ${REPORT_PR} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
-  if $ALL_OK ; then
+rm -f ${WORKSPACE}/report.txt
+REPORT_OPTS="--report-pr ${REPORT_H_CODE} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
+
+if ${ALL_OK} ; then
     if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
-      BUILD_LOG_RES=" --add-comment 'Compilation Warnings: Yes'"
+        BUILD_LOG_RES=" --add-comment 'Compilation Warnings: Yes'"
     else
-      BUILD_LOG_RES=""
+        BUILD_LOG_RES=""
     fi
     REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
-  else
+else
     echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
     if [ "X$BUILD_OK" = Xfalse ]; then
-      $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}    # TODO expects some options
-      report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}
+        report-pull-request-results_all_prs_with_commit
     fi
     if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-      $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_OPTS}
-      report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_OPTS}
+        report-pull-request-results_all_prs_with_commit
     fi
     if [ "X$RELVALS_OK" = Xfalse ]; then
-      $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_OPTS}
-      report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_OPTS}
+        report-pull-request-results_all_prs_with_commit
     fi
     if [ "X$ADDON_OK" = Xfalse ]; then
-      $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_OPTS}
-      report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_OPTS}
+        report-pull-request-results_all_prs_with_commit
     fi
     if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-      $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
-      report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
+        report-pull-request-results_all_prs_with_commit
     fi
     if [ "X$MB_TESTS_OK" = Xfalse ]; then
-      $CMS_BOT_DIR/report-pull-request-results MATERIAL_BUDGET        -f $WORKSPACE/upload/material-budget.log ${REPORT_OPTS}
-      report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results MATERIAL_BUDGET        -f $WORKSPACE/upload/material-budget.log ${REPORT_OPTS}
+        report-pull-request-results_all_prs_with_commit
     fi
     REPORT_OPTS[$i]="REPORT_ERRORS ${REPORT_OPTS}"  # TODO no idea what is happening here
-  fi
-done
-rm -f all_done
+fi
+
+rm -f all_done  # delete file
 if [ -z ${DRY_RUN} ]; then
-    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER} && touch all_done  # TODO aha, what to do here ?
+    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER} && touch all_done  # TODO aha, what to do here ?
     if [ -d $LOCALRT/das_query ] ; then
-      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}/PR || true
+      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/PR || true  # TODO make a hash
     fi
 fi
 if [ -f all_done ] ; then
   rm -f all_done
-#  for i in $( seq 1 $REPEAT); do
-#    $CMS_BOT_DIR/report-pull-request-results ${REPORT_OPTS[$i]}  # TODO how does it actually work ?
-#  done
+  for i in $( seq 1 $REPEAT); do
+    $CMS_BOT_DIR/report-pull-request-results ${REPORT_OPTS[$i]}  # TODO how does it actually work ?
+  done
 else
   exit 1
 fi

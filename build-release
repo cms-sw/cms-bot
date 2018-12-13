@@ -20,6 +20,7 @@ mkdir -p $BUILD_DIR
 BUILD_NPROC=$(getconf _NPROCESSORS_ONLN)
 QUEUE=$CMSSW_QUEUE
 
+kinit -R || true
 echo $$ > $WORKSPACE/BUILD_PID
 
 if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then

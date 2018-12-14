@@ -15,6 +15,7 @@ try:
 except:
   max_wf=100
 relval_args = GetMatrixOptions(environ["CMSSW_VERSION"], environ["SCRAM_ARCH"])
+if 'RELVAL_WORKFLOWS' in  environ: relval_args=relval_args+' '+environ["RELVAL_WORKFLOWS"]
 matrix =  PyRelValsThread(1,environ["CMSSW_BASE"])
 workflows = matrix.getWorkFlows(relval_args)
 if exists(RelValtimes):

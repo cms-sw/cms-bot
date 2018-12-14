@@ -19,7 +19,8 @@ def process_relvals(threads=None,cmssw_version=None,arch=None,cmssw_base=None,lo
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog -i|--id <jobid> -l|--list <list of workflows>")
   parser.add_option("-i", "--id",   dest="jobid", help="Job Id e.g. 1of3", default="1of1")
-  parser.add_option("-l", "--list", dest="workflow", help="List of workflows to run e.g. 1.0,2.0,3.0", type=str, default=None)
+  parser.add_option("-l", "--list", dest="workflow", help="List of workflows to run e.g. 1.0,2.0,3.0 or -s", type=str, default=None)
+  parser.add_option("-n", "--dry-run",dest="dryRun", action="store_true", help="Do not upload results", default=False)
   parser.add_option("-f", "--force",dest="force", help="Force running of workflows without checking the server for previous run", action="store_true", default=False)
   opts, args = parser.parse_args()
 

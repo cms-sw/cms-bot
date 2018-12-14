@@ -111,11 +111,15 @@ class PyRelValsThread(object):
     args, self.args['w'], tmp = find_argv(args,"-w|--what")
     args, self.args['l'], tmp = find_argv(args,"-l|--list")
     args, self.args['j'], tmp = find_argv(args,"-j|--nproc")
+    if ' -s ' in args:
+      self.args['s']='-s'
+      args = args.replace(' -s ','')
+    else: self.args['s']= ""
     self.args['rest'] = args
 
   def getWorkFlows(self, args):
     self.setArgs(args)
-    workflowsCmd = "runTheMatrix.py -n "+self.args['w']+" "+self.args['l']+" |  grep -v ' workflows with ' | grep -E '^[0-9][0-9]*(\.[0-9][0-9]*|)\s\s*' | sort -nr | awk '{print $1}'"
+    workflowsCmd = "runTheMatrix.py -n "+self.args['w']+" "+self.args['s']+" "+self.args['l']+" |  grep -v ' workflows with ' | grep -E '^[0-9][0-9]*(\.[0-9][0-9]*|)\s\s*' | sort -nr | awk '{print $1}'"
     print "RunTheMatrix>>",workflowsCmd
     cmsstat, workflows = doCmd(workflowsCmd)
     if not cmsstat:

@@ -22,6 +22,7 @@ if __name__ == "__main__":
   parser.add_option("-l", "--list", dest="workflow", help="List of workflows to run e.g. 1.0,2.0,3.0 or -s", type=str, default=None)
   parser.add_option("-n", "--dry-run",dest="dryRun", action="store_true", help="Do not upload results", default=False)
   parser.add_option("-f", "--force",dest="force", help="Force running of workflows without checking the server for previous run", action="store_true", default=False)
+  parser.add_option("-N", "--non-threaded",dest="nonThreaded", action="store_true", help="Do not run in threaded mode", default=False)
   opts, args = parser.parse_args()
 
   if len(args) > 0: parser.error("Too many/few arguments")
@@ -30,11 +31,15 @@ if __name__ == "__main__":
     print "ERROR: Unable to file the release environment, please make sure you have set the cmssw environment before calling this script"
     exit(1)
 
+  if opts.dryRun: environ["CMSSW_DRY_RUN"]="true"
+  if opts.nonThreaded: environ["CMSSW_NON_THREADED"]="true"
+  elif "CMSSW_NON_THREADED" in environ: del os.environ['CMSSW_NON_THREADED']
   thrds = cmsRunProcessCount
   cmssw_ver = environ["CMSSW_VERSION"]
   arch = environ["SCRAM_ARCH"]
   cmssw_base = environ["CMSSW_BASE"]
-  logger=LogUpdater(dirIn=cmssw_base)
+  logger=None
+  if not opts.dryRun: logger=LogUpdater(dirIn=cmssw_base)
 
   if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$",cmssw_ver):
     stime = time()

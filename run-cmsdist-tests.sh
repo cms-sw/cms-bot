@@ -112,9 +112,9 @@ if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $CMS_BOT_DIR/config.map | grep "RELEA
 fi
 
 REF_REPO=
-if [ $(echo $PKGTOOLS_BRANCH | grep "V00-32-" | wc -l) -gt 0 ] ; then
-  REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
-fi
+#if [ $(echo $PKGTOOLS_BRANCH | grep "V00-32-" | wc -l) -gt 0 ] ; then
+#  REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
+#fi
 
 # Build the whole cmssw-tool-conf toolchain
 COMPILATION_CMD="PKGTOOLS/cmsBuild --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO  --arch $ARCHITECTURE -j $(Jenkins_GetCPU) build cms-common cms-git-tools cmssw-tool-conf"

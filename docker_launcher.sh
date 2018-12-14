@@ -19,7 +19,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   XUSER=`whoami`
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
-    DOCKER_OPT="-e USER=$XUSER"
+    DOCKER_OPT="-e USER=$XUSER -e DOCKER_IMG=$DOCKER_IMG"
     case $XUSER in
       cmsbld ) DOCKER_OPT="${DOCKER_OPT} -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group" ;;
     esac

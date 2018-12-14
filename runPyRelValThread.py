@@ -217,9 +217,7 @@ class PyRelValsThread(object):
         line  = inFile.readline().strip()
         inFile.close()
         m = re.match("^(\d+)(\.\d+|)$",line)
-        if m:
-          time_info[wf]=int(m.group(1))
-          print "Time: ",wf,m.group(1)
+        if m: time_info[wf]=int(m.group(1))
       except Exception, e:
         print "ERROR:",e 
     outFile = open(os.path.join(self.outdir,"relval-times.json"),"w")

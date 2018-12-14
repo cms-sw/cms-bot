@@ -66,7 +66,6 @@ def process(wfnum, s, sfile, hostname, exit_code, details=False):
           for t in ["25", "75", "avg", "median"]:
             sdata[x+"_"+t]=data[0]
     idx = sha1(release + arch + wfnum + s + str(rel_sec)).hexdigest()
-    print sdata
     try:send_payload("relvals_stats_summary-"+week,"runtime-stats-summary",idx,json.dumps(sdata))
     except Exception as e: print e
   except Exception as e: print e

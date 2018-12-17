@@ -44,7 +44,6 @@ RUN_ON_SLAVE=${RUN_ON_SLAVE}
 FULL_TOOLCONF=${FULL_TOOLCONF}
 COMPARISON_ARCH=${COMPARISON_ARCH}
 DISABLE_POISON=${DISABLE_POISON}
-DRY_RUN=${DRY_RUN}
 JENKINS_URL=${JENKINS_URL}
 
 WORKSPACE=${WORKSPACE}
@@ -84,12 +83,12 @@ function report-pull-request-results_all_prs_with_commit() {
     done
 }
 
+echo_section "Variable setup"
 # -- MAIN --
 DRY_RUN=
-if [ ! $AUTO_POST_MESSAGE ]; then
+if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'
 fi
-echo_section "Variable setup"
 CMSSW_CYCLE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )  # Repos without pull number

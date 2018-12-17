@@ -47,7 +47,7 @@ DISABLE_POISON=${DISABLE_POISON}
 JENKINS_URL=${JENKINS_URL}
 
 WORKSPACE=${WORKSPACE}
-USER=${USER}
+# USER=${USER}
 BUILD_NUMBER=${BUILD_NUMBER}
 JOB_NAME=${JOB_NAME}
 # TODO delete after
@@ -342,7 +342,7 @@ fi
 
 # Launch the pr-tests to check CMSSW by passing on the global variables
 # Merge into one script
-# ------ included run-cmssw.sh
+# ------ TODO included run-cmssw.sh
 
 source ${CMS_BOT_DIR}/jenkins-artifacts
 voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artifact machine
@@ -363,7 +363,7 @@ else
   PUB_REPO="${PUB_USER}/cmsdist"
 fi
 
-# PULL_REQUEST_JOB_ID=${BUILD_NUMBER}  # TODO Not used
+# PULL_REQUEST_JOB_ID=${BUILD_NUMBER}  # TODO Not use
 modify_comment_all_prs # modify comments that test are being triggered by Jenkins
 
 cd $WORKSPACE
@@ -1059,43 +1059,43 @@ done
 [ -d upload/addOnTests       ] && find upload/addOnTests -name '*.root' -type f | xargs rm -f
 
 rm -f ${WORKSPACE}/report.txt
-REPORT_OPTS="--report-pr ${REPORT_H_CODE} --repo ${REPOS[$i]} --pr ${PR[$i]} -c ${COMMITS[$i]} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
+REPORT_OPTS="--report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $DRY_RUN"
 
-if ${ALL_OK} ; then
+if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to false)
     if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
         BUILD_LOG_RES=" --add-comment 'Compilation Warnings: Yes'"
     else
         BUILD_LOG_RES=""
     fi
-    REPORT_OPTS[$i]="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
+    REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
 else
-    echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
+    # Doc: in case some test failed, we check each test log specifically and generate combined message
+    # which is stored in $WORKSPACE/report.txt
+    # $WORKSPACE/report.txt - is used to write message to unless its 'REPORT_ERRORS', then it is read from to upload comment
     REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
+    # Doc: --repo and --pr are not used in report, but is a must for script, so I put a placeholder
+    REPORT_GEN_OPTS="--repo cms-sw/cmssw --pr 1 ${REPORT_OPTS} "  #
+
+    echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
     if [ "X$BUILD_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_OPTS}
-        report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_GEN_OPTS}
     fi
     if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_OPTS}
-        report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_GEN_OPTS}
     fi
     if [ "X$RELVALS_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_OPTS}
-        report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_GEN_OPTS}
     fi
     if [ "X$ADDON_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_OPTS}
-        report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_GEN_OPTS}
     fi
     if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_OPTS}
-        report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_GEN_OPTS}
     fi
     if [ "X$MB_TESTS_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results MATERIAL_BUDGET        -f $WORKSPACE/upload/material-budget.log ${REPORT_OPTS}
-        report-pull-request-results_all_prs_with_commit
+        $CMS_BOT_DIR/report-pull-request-results MATERIAL_BUDGET        -f $WORKSPACE/upload/material-budget.log ${REPORT_GEN_OPTS}
     fi
-    REPORT_OPTS[$i]="REPORT_ERRORS ${REPORT_OPTS}"  # TODO no idea what is happening here
+    REPORT_OPTS="REPORT_ERRORS ${REPORT_OPTS}" # Doc:
 fi
 
 rm -f all_done  # delete file
@@ -1105,13 +1105,15 @@ if [ -z ${DRY_RUN} ]; then
       send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/PR || true  # TODO make a hash
     fi
 fi
+
 if [ -f all_done ] ; then
   rm -f all_done
   for i in $( seq 1 $REPEAT); do
-    $CMS_BOT_DIR/report-pull-request-results ${REPORT_OPTS[$i]}  # TODO how does it actually work ?
+    # Doc: report everything back unless no matter if ALL_OK was true or false.
+    report-pull-request-results_all_prs_with_commit ${REPORT_OPTS}
   done
 else
-  exit 1
+  exit 1 # Doc: if upload to jenkins failed, exit with error
 fi
 
 COMP_MSG="Comparison job queued."

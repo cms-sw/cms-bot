@@ -38,7 +38,7 @@ parser.add_option("--add-comment", action="store", dest="additional_comment", he
 parser.add_option("--repo", action="store", dest="custom_repo", help="Tells me to use a custom repository from the user cms-sw", default="cms-sw/cmssw" )
 parser.add_option("--cmsdist-pr", action="store", type="int", dest="cmsdist_pr", help="Tells me an optional CMSDIST PR to print a message too", default=-1)
 parser.add_option("--report-file", action="store", type="string", dest="report_file", help="Report the github comment in report file instead of github", default=None)
-parser.add_option("--report-pr", action="store", type="int", dest="report_pr_number", help="The number of the pull request to use for report", default=0)  # TODO used only for formating url to result html
+parser.add_option("--report-pr", action="store", type="string", dest="report_pr_number", help="The number of the pull request to use for report", default=0)  # TODO used only for formating url to result html
 
 (options, args) = parser.parse_args()
 repo_dir = join(SCRIPT_DIR,'repos',options.custom_repo.replace("-","_"))
@@ -646,7 +646,7 @@ else:
 destination_repo = github.get_repo( options.custom_repo )
 COMMIT_STATUS_BASE_URL = 'https://api.github.com/repos/'+destination_repo.full_name+'/statuses/%s'
 
-tests_results_url = 'https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-%d/%d/summary.html' % (JENKINS_PREFIX, options.report_pr_number,pr_job_id)
+tests_results_url = 'https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-%s/%d/summary.html' % (JENKINS_PREFIX, options.report_pr_number, pr_job_id)
 
 if (options.cmsdist_pr > -1):
   pr_number = options.cmsdist_pr

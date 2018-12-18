@@ -59,6 +59,7 @@ CMSSW_L2 = {
   "prebello":         ["pdmv"],
   "qliphy":           ["generators"],
   "rekovic":          ["l1"],
+  "santocch":         ["analysis"],
   "schneiml":         ["dqm"],
   "slava77":          ["reconstruction"],
   "smuzaffar":        ["core", "externals"],

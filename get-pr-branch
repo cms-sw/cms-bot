@@ -1,5 +1,11 @@
 #!/usr/bin/env python
+"""
+Get the branch of pull request. It was made in mind that it will be used to get branch-name for CMSSW repo.
 
+Arguments:
+argv[1] - Pull request ID
+argv[2] - Repository (optional)
+"""
 from sys import exit, argv, path
 from os.path import expanduser,dirname,abspath,join, exists
 from github import Github

@@ -7,7 +7,7 @@
 # Constants
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
-WORKSPACE=$(dirname ${CMS_BOT_DIR} )  # TODO use jenkins variable
+# WORKSPACE=$(dirname ${CMS_BOT_DIR} )  # TODO use jenkins variable
 
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
@@ -83,14 +83,17 @@ function report-pull-request-results_all_prs_with_commit() {
     done
 }
 
-echo_section "Variable setup"
+# ----------
 # -- MAIN --
+# ----------
+echo_section "Variable setup"
+
 DRY_RUN=
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--no-post'
 fi
 CMSSW_CYCLE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
-PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')
+PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ')  # to make consistent separation in list
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )  # Repos without pull number
 fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
@@ -98,7 +101,7 @@ UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
 
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
-if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi
+if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi  # TODO-export PUB_USER should be avoided ?
 
 ls /cvmfs/cms.cern.ch
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
@@ -151,7 +154,6 @@ fi
 if [ -z ${ARCHITECTURE} ] ; then
     ARCHITECTURE=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
 fi
-export ARCHITECTURE
 export SCRAM_ARCH=${ARCHITECTURE}
 
 CMSSW_IB=  # We are getting CMSSW_IB, so that we wont rebuild all the software
@@ -186,7 +188,6 @@ for U_REPO in ${UNIQ_REPOS}; do
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
 		cmssw)
-		    # TODO PUB Repo would like to avoid
             CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
 		;;
 		cmsdist)
@@ -200,6 +201,8 @@ for U_REPO in ${UNIQ_REPOS}; do
 		;;
 	esac
 done
+rm -rf ${BUILD_DIR}  #  get_source_flag_for_cmsbuild.sh boostraps without using --repository to correct repo,
+                     #  so wrong repository is used during boostrap which foreces to rebuild everything
 CMSDIST_ONLY=true
 if [ ! -z ${CMSSW_ORG} ] ; then
   CMSDIST_ONLY=false
@@ -217,10 +220,6 @@ if ${BUILD_EXTERNAL} ; then
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
         echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
-        # if CMSDIST commit, export it to available in run-pr-test
-        if [[ -z $( echo ${PR_NAME_AND_REPO} | grep '/cmsdist$' ) ]] ; then
-            export CMSDIST_COMMIT=$(echo ${COMMIT} | sed 's|.* ||')  # TODO do I need CMSDIST_COMMIT in run-cmssw-pr-test ?
-        fi
         # Notify github that the script will start testing now
         $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${COMMIT} \
             --pr-job-id ${BUILD_NUMBER} ${DRY_RUN}
@@ -349,7 +348,7 @@ voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artif
 ls /cvmfs/cms-ib.cern.ch || true
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
-if [ "X${PUB_USER}" = X ]; then PUB_USER="cms-sw" ; fi
+if [ "X${PUB_USER}" = X ]; then PUB_USER="cms-sw" ; fi  # TODO I need it ?
 
 ### this is for triggering the comparison with the baseline
 CMSDIST_ONLY=false  #
@@ -377,7 +376,6 @@ ADDON_OK=true
 CLANG_BUILD_OK=true
 RUN_TESTS=true
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
-export SCRAM_ARCH=$ARCHITECTURE
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 COMPARISON_REL=
@@ -1025,8 +1023,6 @@ if [ ! -z COPY_STATUS ] ; then
 fi
 # TODO DELETE AFTER DEVELOPMENT
 #evaluate results
-
-REPEAT=1
 REPORT_H_CODE=$( echo ${PULL_REQUESTS} | md5sum | sed 's| .*||' )      # Used to to create link to folder where uploaded files are.
 
 TESTS_FAILED="Failed tests:"
@@ -1108,10 +1104,8 @@ fi
 
 if [ -f all_done ] ; then
   rm -f all_done
-  for i in $( seq 1 $REPEAT); do
     # Doc: report everything back unless no matter if ALL_OK was true or false.
     report-pull-request-results_all_prs_with_commit ${REPORT_OPTS}
-  done
 else
   exit 1 # Doc: if upload to jenkins failed, exit with error
 fi

@@ -38,7 +38,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
     export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"
-    singularity exec docker://$DOCKER_IMG sh -c "$CMD2RUN"
+    singularity exec $SINGULARITY_OPTIONS docker://$DOCKER_IMG sh -c "$CMD2RUN"
   fi
 else
   voms-proxy-init -voms cms -valid 24:00 || true

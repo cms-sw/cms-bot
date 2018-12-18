@@ -37,10 +37,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
-    export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws:/build"
-    if [ "$ws" != "/build" ] ; then
-      export WORKSPACE=$(echo $WORKSPACE | sed "s|^$ws/|/build|")
-    fi
+    export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"
     singularity exec docker://$DOCKER_IMG sh -c "$CMD2RUN"
   fi
 else

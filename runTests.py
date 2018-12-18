@@ -33,10 +33,11 @@ class IBThreadBase(Thread):
 
 # ================================================================================
 class UnitTester(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps= []):
+    def __init__(self, startDirIn, Logger, deps= [], xType=""):
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
 	self.logger = Logger
+        self.xType = xType
         return
     
     # --------------------------------------------------------------------------------
@@ -78,6 +79,12 @@ class UnitTester(IBThreadBase):
         if platform.system() == 'Darwin':
             print 'unitTest> Skipping unit tests for MacOS'
             return
+        if self.xType=='GPU':
+          cmd = "cd "+self.startDir+"; scram b -f echo_cuda_USED_BY | tr ' ' '\\n' | grep '^self/' | cut -d/ -f2-3 > cuda_pkgs.txt; mv src src.full;"
+          cmd = cmd+" for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram build -r echo_CXX"
+          ret = runCmd(cmd)
+          if ret != 0:
+            print "ERROR when getting GPU unit-tests sources: cmd returned " + str(ret)
         skiptests=""
         if 'lxplus' in getHostName(): skiptests='SKIP_UNITTESTS=ExpressionEvaluatorUnitTest'
         TEST_PATH=os.environ['CMSSW_RELEASE_BASE']+"/test/"+os.environ['SCRAM_ARCH']
@@ -112,7 +119,7 @@ class UnitTester(IBThreadBase):
                 runCmd("echo '>> Tests for package %s ran.' >> %s" % (pack,logFile))
         except Exception, e: pass
         self.checkTestLogs()
-        self.logger.updateUnitTestLogs()
+        self.logger.updateUnitTestLogs(self.xType)
         return
 
 # ================================================================================
@@ -413,6 +420,10 @@ class ReleaseTester():
       print '\n'+80*'-'+' unit \n'
       self.threadList['unit'] = self.runUnitTests()
 
+    if not only or 'gpu_unit' in only:
+      print '\n'+80*'-'+' gpu_unit \n'
+      self.threadList['gpu_unit'] = self.runUnitTests(self.getDepThreads(['unit']), 'GPU')
+
     if not only or 'codeRules' in only:
       print '\n'+80*'-'+' codeRules \n'
       self.threadList['codeRules'] = self.runCodeRulesChecker()
@@ -528,11 +539,11 @@ class ReleaseTester():
     return thd
     
   # --------------------------------------------------------------------------------
-  def runUnitTests(self, deps = []):
+  def runUnitTests(self, deps = [], xType=""):
     print "runTests> Going to run units tests ... "
     thrd = None
     try:
-      thrd = UnitTester( self.cmsswBuildDir,self.logger, deps )
+      thrd = UnitTester( self.cmsswBuildDir,self.logger, deps, xType )
       thrd.start()
     except Exception, e :
       print "ERROR during run unittests : caught exception: " + str(e)

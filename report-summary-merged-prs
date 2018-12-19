@@ -1439,7 +1439,7 @@ if __name__ == "__main__":
   execute_magic_command_find_results( unit_tests_results , 'utests' )
 
   gpu_unit_tests_results = {}
-  execute_magic_command_find_results( unit_tests_results , 'gpu_utests' )
+  execute_magic_command_find_results( gpu_unit_tests_results , 'gpu_utests' )
 
   addOn_tests_results = {}
   execute_magic_command_find_results( addOn_tests_results ,'addOn' )

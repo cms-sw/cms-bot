@@ -541,6 +541,7 @@ def mark_commit( action , commit_hash , tests_url ):
   headers = {"Authorization" : "token " + TOKEN }
   
   params = {}
+  if 'JENKINS_CI_CONTEXT' in os.environ: params[ 'context' ] = os.environ['JENKINS_CI_CONTEXT']
   params[ 'state' ] = COMMIT_STATES_DESCRIPTION[ action ][ 0 ]
   if tests_url != '':
     params[ 'target_url' ] = tests_url

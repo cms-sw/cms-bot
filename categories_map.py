@@ -1196,7 +1196,7 @@ CMSSW_CATEGORIES = {
     "RecoMTD/Records",
     "RecoMTD/MeasurementDet",
     "RecoMTD/TrackExtender",
-    "RecoMTD/TransientTrackingRecHit,
+    "RecoMTD/TransientTrackingRecHit",
     "RecoMuon/Configuration",
     "RecoMuon/CosmicMuonProducer",
     "RecoMuon/DetLayers",

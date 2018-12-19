@@ -33,6 +33,9 @@ else
     MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1")
     if [ $(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -gt 1 ] ; then
       MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1" | grep 'RELEASE_QUEUE=CMSSW_[0-9][0-9]*_[0-9][0-9]*_X')
+      if [ $(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -gt 1 ] ; then
+        MLINES=$(cat $CMS_BOT_DIR/config.map | grep 'PROD_ARCH=1;' | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1" | grep 'RELEASE_QUEUE=CMSSW_[0-9][0-9]*_[0-9][0-9]*_X')      
+      fi
     fi
   else
     MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};")

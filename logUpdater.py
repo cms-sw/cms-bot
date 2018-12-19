@@ -17,14 +17,14 @@ class LogUpdater():
         self.ssh_opt = "-o CheckHostIP=no -o ConnectTimeout=60 -o ConnectionAttempts=5 -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no"
         return
 
-    def updateUnitTestLogs(self):
+    def updateUnitTestLogs(self, subdir=""):
         
         print "\n--> going to copy unit test logs to", self.webTargetDir, '... \n'
         # copy back the test and relval logs to the install area
         # check size first ... sometimes the log _grows_ to tens of GB !!
         testLogs = ['unitTestLogs.zip','unitTests-summary.log','unitTestResults.pkl']
         for tl in testLogs:
-            self.copyLogs(tl, '.', self.webTargetDir)
+            self.copyLogs(tl, '.', self.webTargetDir+"/"+subdir)
 	return
 
     def updateGeomTestLogs(self):

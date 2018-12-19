@@ -112,8 +112,10 @@ if [ $(grep "CMSDIST_TAG=$CMSDIST_BRANCH;" $CMS_BOT_DIR/config.map | grep "RELEA
 fi
 
 REF_REPO=
-if [ $(echo $PKGTOOLS_BRANCH | grep "V00-32-" | wc -l) -gt 0 ] ; then
-  REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
+if [ "X$USE_CMSPKG_REFERENCE" = "Xtrue" ] ; then
+  if [ $(echo $PKGTOOLS_BRANCH | grep "V00-32-" | wc -l) -gt 0 ] ; then
+    REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
+  fi
 fi
 
 # Build the whole cmssw-tool-conf toolchain

@@ -36,6 +36,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset NO_IB
     unset PROD_ARCH
     unset BUILD_DAY
+    unset SLAVE_LABELS
     eval "$IB_INFO"
     if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
@@ -82,6 +83,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "BUILD_PATCH_RELEASE=$BUILD_PATCH_RELEASE" >> $WORKSPACE/properties
     echo "FORCE_FULL_IB=$FORCE_FULL_IB" >> $WORKSPACE/properties
     echo "CMSSW_TOOL_CONF_ONLY=$CMSSW_TOOL_CONF_ONLY" >> $WORKSPACE/properties
+    echo "SLAVE_LABELS=$SLAVE_LABELS" >> $WORKSPACE/properties
     if [ "X$ALWAYS_BUILD" = X ]; then
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties
     else

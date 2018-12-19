@@ -32,9 +32,9 @@ query_running_builds = """{
 }"""
 
 all_local = list() 
-path = '/build/jobs'
+path = '/build/builds'
 document = "builds-data"
-rematch = re.compile(".*/builds/\d+$")
+rematch = re.compile(".*/\d+$")
 for root, dirs, files in os.walk(path):
   if rematch.match(root):
     logFile = root + '/build.xml'
@@ -44,6 +44,7 @@ for root, dirs, files in os.walk(path):
       job_info = root.split('/')
       payload['job_name'] = job_info[3]
       payload['build_number'] = job_info[-1]
+      print payload
       payload['url'] = "https://cmssdt.cern.ch/"+JENKINS_PREFIX+"/job/" + job_info[3] + "/" + job_info[-1] + "/"
       id = sha1(root).hexdigest()
       try:

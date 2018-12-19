@@ -21,7 +21,7 @@ def percentile(percentage, data, dlen):
   return res
 
 def process(wfnum, s, sfile, hostname, exit_code, details=False):
-  global release, arch, rel_msec, week, ex_fields
+  global release, arch, rel_msec, week, ex_fields, cmsThreads
   try:
     stats = json.load(open(sfile))
     xdata = {}
@@ -35,6 +35,7 @@ def process(wfnum, s, sfile, hostname, exit_code, details=False):
       stat["release"]=release
       stat["step"]=s
       stat["workflow"]=wfnum
+      stat["cmsthreads"]=cmsThreads
       stat["architecture"]=arch
       idx = sha1(release + arch + wfnum + s + str(stat["time"])).hexdigest()
       del stat["time"]
@@ -42,7 +43,7 @@ def process(wfnum, s, sfile, hostname, exit_code, details=False):
         try:send_payload("relvals_stats_details-"+week,"runtime-stats-details",idx,json.dumps(stat))
         except Exception as e: print e
     print "Working on ",release, arch, wfnum, s, len(stats)
-    sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum, "hostname":hostname, "exit_code":exit_code}
+    sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum, "hostname":hostname, "exit_code":exit_code, "cmsthreads":cmsThreads}
     for x in xdata:
       data = sorted(xdata[x])
       if x in ["time","num_threads","processes","num_fds"]:
@@ -81,6 +82,19 @@ arch=items[-6]
 week, rel_sec  = cmsswIB2Week(release)
 rel_msec = rel_sec*1000
 ex_fields=["rss", "vms", "pss", "uss", "shared", "data", "cpu"]
+if not exists("%s/threads.txt" % partial_log_dirpath):
+   e, o = getstatusoutput("grep ' --nThreads ' %s/*/cmdLog  | tail -1  | sed 's|.* *--nThreads *||;s| .*||'" % partial_log_dirpath)
+   if e:
+     print o
+     exit(1)
+   if not o: o="1"
+   getstatusoutput("echo %s > %s/threads.txt" % (o, partial_log_dirpath))
+
+e, o = getstatusoutput("head -1 %s/threads.txt" % partial_log_dirpath)
+if e:
+  print o
+  exit(1)
+cmsThreads = o.strip('\n')
 e, o = getstatusoutput("ls -d %s/*" % partial_log_dirpath)
 threads = []
 for wf in o.split("\n"):

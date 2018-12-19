@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import re
+from os import environ
 from os.path import dirname, abspath
 monitor_script = ""
 try:
@@ -16,8 +17,11 @@ RELVAL_KEYS = {"customiseWithTimeMemorySummary":[],
                "THREADED":[],
                "SLHC_WORKFLOWS":[],
               }
-THREADED_ROOT="CMSSW_9_[1-9]_ROOT6_X_.+"
-THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc[6-9]_amd64_gcc(5[3-9]|[6-9])[0-9]+|_THREADED_X|_DEVEL_X|_ROOT6_X|_ROOT612_X"
+THREADED_ROOT="NON_THREADED_CMSSW"
+THREADED_IBS="NON_THREADED_CMSSW"
+if not 'CMSSW_NON_THREADED' in environ:
+  THREADED_ROOT="CMSSW_9_[1-9]_ROOT6_X_.+"
+  THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_X_.+:slc[6-9]_amd64_gcc(5[3-9]|[6-9])[0-9]+|_THREADED_X|_DEVEL_X|_ROOT6_X|_ROOT612_X"
 RELVAL_KEYS["customiseWithTimeMemorySummary"].append([".+" ,"--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"])
 RELVAL_KEYS["PREFIX"].append(["_ASAN_.+"                   ,"--prefix '%s timeout --signal SIGTERM 10800 '" % monitor_script])
 RELVAL_KEYS["PREFIX"].append(["CMSSW_([89]|[1-9][0-9]+)_.+","--prefix '%s timeout --signal SIGTERM 7200 '" % monitor_script])

@@ -152,7 +152,7 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
   # check if it was timeout
   message += "\n* **RelVals**:\n\n"
   if 'ERROR TIMEOUT' in line:
-    message +=  'The relvals timed out after 2 hours.\n'
+    message +=  'The relvals timed out after 4 hours.\n'
     
   if workflows_with_error:
     message += 'When I ran the RelVals I found an error in the following workflows:\n'
@@ -541,6 +541,7 @@ def mark_commit( action , commit_hash , tests_url ):
   headers = {"Authorization" : "token " + TOKEN }
   
   params = {}
+  if 'JENKINS_CI_CONTEXT' in os.environ: params[ 'context' ] = os.environ['JENKINS_CI_CONTEXT']
   params[ 'state' ] = COMMIT_STATES_DESCRIPTION[ action ][ 0 ]
   if tests_url != '':
     params[ 'target_url' ] = tests_url

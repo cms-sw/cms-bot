@@ -17,7 +17,7 @@ kinit ${KPRINCIPAL} -k -t ${KTAB}
 export SLAVE_UNIQUE_TARGET=""
 export SLAVE_MAX_WORKSPACE_SIZE=""
 export JENKINS_SLAVE_NAME
-SCRIPT_DIR=`dirname $0`
+SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   export SLAVE_UNIQUE_TARGET="YES"
   case ${SLAVE_TYPE} in 

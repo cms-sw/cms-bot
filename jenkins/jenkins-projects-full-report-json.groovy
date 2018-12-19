@@ -26,7 +26,8 @@ Hudson.instance.getViews().each() { vIt ->
     viewMap[vIt.getDisplayName()] = viewDescription
 }
 
-for (p in Jenkins.instance.projects) {
+
+for (p in Jenkins.instance.getAllItems(AbstractItem.class)) {
     def projectDescription = [:]
     projectDescription['project_name'] = p.getDisplayName()
     projectDescription['project_desc'] = p.description
@@ -64,7 +65,6 @@ for (p in Jenkins.instance.projects) {
 
     projectMap[p.getDisplayName()] = projectDescription
 }
-
 def json = JsonOutput.toJson(mainMap)
-def file1 = new File('/tmp/report_data.json')
+def file1 = new File(args[0])
 file1.write json

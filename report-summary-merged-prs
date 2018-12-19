@@ -53,6 +53,7 @@ parser.add_option( "-v" , "--verbose" , dest="verbose"  , action="store_true", h
 #    "fwlite": [],
 #    "compared_tags": "",
 #    "utests": [],
+#    "gpu_utests": [],
 #    "cmsdistTags": {},
 #    "relvals": [],
 #    "static_checks": "",
@@ -306,7 +307,7 @@ def get_results_details_one_build_file(file):
 # parses the tests results for each file in output. It distinguishes if it is
 # build, unit tests, relvals, or addon tests logs. The the result of the parsing
 # is saved in the parameter results.
-# type can be 'relvals', 'utests', 'addON', 'builds', 'fwlite'
+# type can be 'relvals', 'utests', 'gpu_tests', 'addON', 'builds', 'fwlite'
 #
 # schema of results:
 # {
@@ -340,6 +341,8 @@ def analyze_tests_results( output, results, arch, type ):
       if exists(join(dirname(line),"done")):
         result_arch['done']=True
     elif type == 'utests':
+      passed,details = get_results_one_unitTests_file(line)
+    elif type == 'gpu_utests':
       passed,details = get_results_one_unitTests_file(line)
     elif type == 'addOn':
       passed = get_results_one_addOn_file(line)
@@ -563,7 +566,7 @@ def execute_magic_command_get_cmsdist_tags():
 # Executes the a command to get the results for the relvals, unit tests,
 # addon tests, and compitlation tests
 # It saves the results in the parameter 'results'
-# type can be 'relvals', 'utests', 'addON', 'builds'
+# type can be 'relvals', 'utests', 'gpu_tests', 'addON', 'builds'
 #
 def execute_magic_command_find_results( results, type ):
   for arch in ARCHITECTURES:
@@ -571,6 +574,8 @@ def execute_magic_command_find_results( results, type ):
       base_command = MAGIC_COMMAD_FIND_RESULTS_RELVALS
     elif type == 'utests':
       base_command = MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS
+    elif type == 'gpu_utests':
+      base_command = MAGIC_COMMAND_FIND_RESULTS_GPU_UNIT_TESTS
     elif type == 'addOn':
       base_command = MAGIC_COMMAND_FIND_RESULTS_ADDON
     elif type == 'builds':
@@ -622,6 +627,9 @@ def print_results(results):
       utests_results = [res['arch']+':'+str(res['passed']) +':'+str(res['details']) for res in comp['utests'] ]
       print '\t' + 'UnitTests:' + str(utests_results)
 
+      gpu_utests_results = [res['arch']+':'+str(res['passed']) +':'+str(res['details']) for res in comp['gpu_utests'] ]
+      print '\t' + 'GPUUnitTests:' + str(gpu_utests_results)
+
       addons_results = [res['arch']+':'+str(res['passed']) for res in comp['addons'] ]
       print '\t' + 'AddOns:' + str(addons_results)
 
@@ -666,12 +674,13 @@ def fill_missing_cmsdist_tags( results ):
 #
 def add_tests_to_results( results, unit_tests, relvals_results,
                           addon_results , build_results, cmsdist_tags_results,
-                          rv_Exceptions_Results, fwlite_results ):
+                          rv_Exceptions_Results, fwlite_results, gpu_unit_tests ):
   for rq in results:
     for comp in rq['comparisons']:
       rel_name = comp['compared_tags'].split('-->')[1]
       rvsres = relvals_results.get(rel_name)
       utres = unit_tests.get(rel_name)
+      gpu_utres = gpu_unit_tests.get(rel_name)
       adonres = addon_results.get(rel_name)
       buildsres = build_results.get(rel_name)
       fwliteres = fwlite_results.get(rel_name)
@@ -680,6 +689,7 @@ def add_tests_to_results( results, unit_tests, relvals_results,
 
       comp[ 'relvals' ] = rvsres if rvsres else []
       comp[ 'utests' ] = utres if utres else []
+      comp[ 'gpu_utests' ] = gpu_utres if gpu_utres else []
       comp[ 'addons' ] = adonres if adonres else []
       comp[ 'builds' ] = buildsres if buildsres else []
       comp[ 'fwlite' ] = fwliteres if fwliteres else []
@@ -1135,6 +1145,12 @@ def generate_ib_json_short_summary( results ):
         else:
           utests_passed = unit_tests_info[ 0 ][ "passed" ]
 
+        gpu_unit_tests_info = [ u for u in latest_IB_info[ "gpu_utests" ] if u[ 'arch' ] == arch ]
+        if len( gpu_unit_tests_info ) == 0:
+          gpu_utests_passed = 'unknown'
+        else:
+          gpu_utests_passed = gpu_unit_tests_info[ 0 ][ "passed" ]
+
         relvals_info = [ r for r in latest_IB_info[ "relvals" ] if r[ 'arch' ] == arch ]
         if len( relvals_info ) == 0:
           relvals_passed = 'unknown'
@@ -1146,7 +1162,7 @@ def generate_ib_json_short_summary( results ):
         short_summary[ rq_name ][ arch ] = {}
         short_summary[ rq_name ][ arch ][ "latest_IB" ] = latest_IB_name
 
-        merged_statuses = "%s-%s-%s" % (build_passed,utests_passed,relvals_passed)
+        merged_statuses = "%s-%s-%s-%s" % (build_passed,utests_passed,relvals_passed, gpu_utests_passed)
 
         if 'unknown' in merged_statuses:
           ib_status = 'unknown'
@@ -1253,6 +1269,7 @@ if __name__ == "__main__":
   MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS ="find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
   MAGIC_COMMAND_TAGS = 'GIT_DIR='+CMSSW_REPO+' git log --merges  --pretty=\'"%s", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge "'
   MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name unitTests-summary.log'
+  MAGIC_COMMAND_FIND_RESULTS_GPU_UNIT_TESTS = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 5 -maxdepth 5 -name unitTests-summary.log | grep "/GPU/"'
   MAGIC_COMMAND_FIND_RESULTS_ADDON  = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name addOnTests.log'
   MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
   MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find '+BUILD_LOG_DIR+'/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
@@ -1421,6 +1438,9 @@ if __name__ == "__main__":
   unit_tests_results = {}
   execute_magic_command_find_results( unit_tests_results , 'utests' )
 
+  gpu_unit_tests_results = {}
+  execute_magic_command_find_results( gpu_unit_tests_results , 'gpu_utests' )
+
   addOn_tests_results = {}
   execute_magic_command_find_results( addOn_tests_results ,'addOn' )
 
@@ -1428,7 +1448,7 @@ if __name__ == "__main__":
 
   add_tests_to_results( results, unit_tests_results, relvals_results,
                        addOn_tests_results, build_results, cmsdist_tags_results,
-                       rv_Exceptions_Results, fwlite_results )
+                       rv_Exceptions_Results, fwlite_results, gpu_unit_tests_results)
 
   fill_missing_cmsdist_tags( results )
   print_results(results)

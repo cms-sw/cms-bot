@@ -54,6 +54,23 @@ JOB_NAME=${JOB_NAME}
 
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 
+function fail_if_empty(){
+    if [ -z $(echo "$1" | tr -d ' ' ) ]; then
+        >&2 echo "ERROR: empty variable. ${2}."
+        # TODO if failed, comment back to github
+        exit 1
+    fi
+}
+
+function get_base_branch(){
+    # get branch to which to merge from GH PR json
+    PR_METADATA_PATH=$(get_cached_GH_JSON "$1")
+    echo ${PR_METADATA_PATH}
+    EXTERNAL_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
+    fail_if_empty "${EXTERNAL_BRANCH}" "PR had errors - ${1}"
+    echo ${EXTERNAL_BRANCH}
+}
+
 # Functions unique to script
 function modify_comment_all_prs() {
     # modify all PR's with message that job has been triggered and add a link to jobs console
@@ -130,25 +147,22 @@ for U_REPO in ${UNIQ_REPOS}; do
     fi
 done
 
-# If CMSSW_CYCLE is not set, get it from CMSSW or CMSDIST. Else, fail.
-if [ -z ${CMSSW_CYCLE} ]; then
-     CMSDIST_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
-     CMSSW_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
-     if [ ! -z ${CMSDIST_PR} ] ; then
-        PR_METADATA_PATH=$(get_cached_GH_JSON "${CMSDIST_PR}")
-        # CMSSW branch name is release cycle
-        CMSSW_CYCLE=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
-     elif [[ ! -z ${CMSSW_PR} && -z ${CMSSW_CYCLE} ]] ; then
-        CMSSW_METADATA_PATH=$(get_cached_GH_JSON "${CMSSW_PR}")
-        SW_BASE_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
-        CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "" "${SW_BASE_BRANCH}" "${ARCHITECTURE}")
-        CMSSW_CYCLE=$(echo ${CONFIG_LINE} | sed 's/^.*RELEASE_QUEUE=//' | sed 's/;.*//' )
-     fi
+CMSDIST_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
+CMSSW_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
+if [ ! -z ${CMSDIST_PR} ] ; then
+    CMSDIST_TAG=$(get_base_branch "$CMSDIST_PR" )
 fi
+if [[ ! -z ${CMSSW_PR} ]] ; then
+    CMSSW_BR=$(get_base_branch $CMSSW_PR)
+fi
+CONFIG_LINE=$(${COMMON}/get_config_map_line.sh  "$CMSSW_BR" "$CMSDIST_TAG" "${ARCHITECTURE}") || true
+fail_if_empty "${CONFIG_LINE}"
 
-fail_if_empty "${CMSSW_CYCLE}" "CMSSW release cycle unsent and could not be determined."
-if [ -z ${CONFIG_LINE} ] ; then  # Get config line
-    CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "${CMSSW_CYCLE}" "" "${ARCHITECTURE}" )
+# If CMSSW_CYCLE is not set, get it from CMSSW or CMSDIST. Else, fail.
+# if someone starts jenkins job without scheduler directly from Jenkins
+if [ -z ${CMSSW_CYCLE} ]; then
+     CMSSW_CYCLE=$(echo ${CONFIG_LINE} | sed 's/^.*RELEASE_QUEUE=//' | sed 's/;.*//' )
+     fail_if_empty "${CMSSW_CYCLE}" "CMSSW release cycle unsent and could not be determined."
 fi
 
 if [ -z ${ARCHITECTURE} ] ; then
@@ -168,8 +182,8 @@ PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*/
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist ) ]] ; then
     # If low version and but there are external repos to test, fail
-    >&2 echo "ERROR: RELEASE_FORMAT ${RELEASE_FORMAT} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
-    exit 1
+    >&2 echo "ERROR: RELEASE_FORMAT ${CMSSW_CYCLE} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
+    exit 1  # TODO comment back (funtionc)
 fi
 
 # Do git pull --rebase for each PR except for /cmssw
@@ -190,26 +204,36 @@ for U_REPO in ${UNIQ_REPOS}; do
 		cmssw)
             CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
 		;;
-		cmsdist)
+		cmsdist|pkgtools)
 		    BUILD_EXTERNAL=true
 		;;
 		*)
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
-			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE"
+			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE" ||
 			BUILD_EXTERNAL=true
 		;;
 	esac
 done
 rm -rf ${BUILD_DIR}  #  get_source_flag_for_cmsbuild.sh boostraps without using --repository to correct repo,
                      #  so wrong repository is used during boostrap which foreces to rebuild everything
+
 CMSDIST_ONLY=true
 if [ ! -z ${CMSSW_ORG} ] ; then
   CMSDIST_ONLY=false
 fi
 if ${BUILD_EXTERNAL} ; then
+    if [ -d "pkgtools" ] ; then
+        git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
+    fi
+    if [ -d "cmsdist" ] ; then
+        git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_BRANCH
+    fi
+
     echo_section "Building, testing and commenting status to github"
     # add special flags for pkgtools/cmsbuild if version is high enough
+    REF_REPO=
+    SOURCE_FLAG=
     if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
       REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
       SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )

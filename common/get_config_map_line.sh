@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/bash -ex
 # This script will parse config.map and give back 1 matching line based on search criteria
 # Otherwise it will fail.
 
@@ -21,6 +21,10 @@ CONFIG_MAP=${CMS_BOT_DIR}/config.map
 if [[ -z "$RELEASE_QUEUE" && -z "$CMS_DIST_TAG"  ]]; then
     >&2 echo "ERROR: either RELEASE_QUEUE or CMS_DIST_TAG must be given."
     exit 1
+fi
+
+if [[ "$RELEASE_QUEUE" == "master" ]] ; then
+    RELEASE_QUEUE=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' ${CMS_BOT_DIR}/releases.py | sed 's/.*= *//;s/"//g;s/ //g'  )
 fi
 
 ARCH_MATCH=$(formatFilter 'SCRAM_ARCH' ${ARCHITECTURE})

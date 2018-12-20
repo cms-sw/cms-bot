@@ -1,6 +1,4 @@
 #!/bin/bash -x
-ARCHITECTURE=$1
-RELEASE_FORMAT=$2
 WORKSPACE="${WORKSPACE-$PWD}"
 export J=$(getconf _NPROCESSORS_ONLN)
 export LC_ALL=C

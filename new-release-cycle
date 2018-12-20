@@ -58,14 +58,13 @@ def update_milestone(repo, source, srcMilestone, desMilestone, dryRun=False):
   pulls = repo.get_pulls(base=source, state="open", sort="created", direction="asc")
   for pr in pulls:
     print "Wroking on PR ",pr.number,"with milestone",pr.milestone.number
-    if (pr.milestone.number == desMilestone.number):
-      print "  Milestone already updated for PR:",pr.number
-      continue
     if pr.milestone.number == srcMilestone.number:
       if not dryRun:
         issue = repo.get_issue(pr.number)
         issue.edit(milestone=desMilestone)
       print "  Updated milestone for PR:",pr.number
+    elif (pr.milestone.number == desMilestone.number):
+      print "  Milestone already updated for PR:",pr.number
     else:
       print "  Invalid Source Milestone:",pr.milestone.number
   return

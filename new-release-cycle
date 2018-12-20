@@ -203,6 +203,7 @@ def process(cycle, dryRun):
   create_branch (cmssw_repo, "master", cycle, dryRun)
 
   #Update milestone for existing Open PRs
+  if dryRun: desMileStone = srcMileStone
   update_milestone(cmssw_repo, "master", srcMileStone, desMileStone, dryRun)
 
   #create cmssw branches

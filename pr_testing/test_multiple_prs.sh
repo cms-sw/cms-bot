@@ -70,7 +70,7 @@ function report-pull-request-results_all_prs() {
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        ${CMS_BOT_DIR}/report-pull-request-results $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}  # $@ - pass all parameters given to function
+        ${CMS_BOT_DIR}/report-pull-request-results "$@" --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}  # $@ - pass all parameters given to function
     done
 }
 
@@ -79,7 +79,7 @@ function report-pull-request-results_all_prs_with_commit() {
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
-        ${CMS_BOT_DIR}/report-pull-request-results $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${LAST_PR_COMMIT}
+        ${CMS_BOT_DIR}/report-pull-request-results "$@" --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${LAST_PR_COMMIT}
     done
 }
 
@@ -468,7 +468,7 @@ eval $(scram run -sh)
 set -x
 BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
 ANALOG_CMD="scram build outputlog && ($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
-report-pull-request-results_all_prs "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $CMSSW_IB for $SCRAM_ARCH" ${DRY_RUN}
+report-pull-request-results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $CMSSW_IB for $SCRAM_ARCH" ${DRY_RUN}
 
 cd $WORKSPACE/$CMSSW_IB/src
 git config --global --replace-all merge.renamelimit 2500

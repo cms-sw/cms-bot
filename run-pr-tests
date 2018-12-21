@@ -566,7 +566,7 @@ fi
 # Matrix tests
 #
 
-if [ "$TEST_CONTEXT" != "" ] ; then
+if [ "X$TEST_CONTEXT" = "X" ] ; then
   MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
 else
   MATRIX_EXTRAS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${TEST_CONTEXT}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')

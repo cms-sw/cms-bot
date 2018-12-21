@@ -56,10 +56,19 @@ source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 
 function fail_if_empty(){
     if [ -z $(echo "$1" | tr -d ' ' ) ]; then
-        >&2 echo "ERROR: empty variable. ${2}."
-        # TODO if failed, comment back to github
+        exit_with_report_failure_main_pr -m "ERROR: empty variable. ${2}." ${DRY_RUN} || true
         exit 1
     fi
+}
+
+function exit_with_report_failure_main_pr(){
+    # $@ - aditonal options
+    # report that job failed to the first PR (that should be our main PR)
+    PR=$(echo ${PULL_REQUESTS} | sed 's/,.*//' ) #get main(first) pr
+    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//')
+    PR_NR=$(echo ${PR} | sed 's/.*#//')
+    ${CMS_BOT_DIR}/comment-gh-pr -r ${PR_NAME_AND_REPO} -p ${PR_NR} "$@"
+    exit 1
 }
 
 function get_base_branch(){
@@ -115,6 +124,7 @@ UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uni
 fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
+REPORT_H_CODE=$( echo ${PULL_REQUESTS} | md5sum | sed 's| .*||' )      # Used to to create link to folder where uploaded files are.
 
 CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') % 2 | bc)
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
@@ -126,9 +136,7 @@ which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 echo_section "Pull request checks"
 # Check if same organization/repo PRs
 if [ $(echo ${UNIQ_REPO_NAMES_WITH_COUNT}  | grep -v '1 ' | wc -w ) -gt 0 ]; then
-    >&2 echo "ERROR: multiple PRs from different organisations but same repos:"
-    >$2 echo ${UNIQ_REPO_NAMES_WITH_COUNT}
-    exit 1
+    exit_with_report_failure_main_pr  ${DRY_RUN} -m "ERROR: multiple PRs from different organisations but same repos:    ${UNIQ_REPO_NAMES_WITH_COUNT}"
 fi
 
 # Filter PR for specific repo and then check if its PRs point to same base branch
@@ -142,8 +150,7 @@ for U_REPO in ${UNIQ_REPOS}; do
     if [ -z ${UNIQ_MASTERS} ]; then continue ; fi
     NUMBER_U_M=$(echo ${UNIQ_MASTERS} | wc -l )
     if  [ ! ${NUMBER_U_M}  -eq 1 ]; then
-        >&2 echo "ERROR: PRs for  repo '${U_REPO}' wants to merge to different branches: ${UNIQ_MASTERS}"
-        exit 1
+        exit_with_report_failure_main_pr  ${DRY_RUN} -m  "ERROR: PRs for  repo '${U_REPO}' wants to merge to different branches: ${UNIQ_MASTERS}"
     fi
 done
 
@@ -183,8 +190,7 @@ PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*/
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist ) ]] ; then
     # If low version and but there are external repos to test, fail
-    >&2 echo "ERROR: RELEASE_FORMAT ${CMSSW_CYCLE} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
-    exit 1  # TODO comment back (funtionc)
+    exit_with_report_failure_main_pr ${DRY_RUN} -m "ERROR: RELEASE_FORMAT ${CMSSW_CYCLE} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
 fi
 
 # Do git pull --rebase for each PR except for /cmssw
@@ -211,7 +217,9 @@ for U_REPO in ${UNIQ_REPOS}; do
 		*)
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
-			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE" || true # TODO if failed, exit if message
+			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE" ||
+			        exit_with_report_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
+			        cmsBuild '--source' flag for package $PKG_NAME from $PKG_REPO repo."
 			BUILD_EXTERNAL=true
 		;;
 	esac
@@ -286,13 +294,9 @@ if ${BUILD_EXTERNAL} ; then
 
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,..' >> $RESULTS_FILE
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
-      for PR in ${PULL_REQUESTS}; do
-        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
-        PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        # Report github that job failed and then exit
-        ${CMS_BOT_DIR}/report-pull-request-results PARSE_BUILD_FAIL --report-pr ${PR_NR} --repo ${PR_NAME_AND_REPO} \
-            --pr ${PR_NR} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}  # TODO generates wrong link
-      done
+      # Report github that job failed
+      report-pull-request-results_all_prs PARSE_BUILD_FAIL --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}
+
       # TODO there is dublication in run-cmssw.sh
       # echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE # TODO do not need it, Should fix template or make new one
       echo 'PULL_REQUESTS;' ${PULL_REQUESTS} >> $RESULTS_FILE
@@ -447,7 +451,6 @@ if [ ! -d CMSSW_* ]; then
       fi
     fi
   else
-
     RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST ${PUB_USER}/cmssw` # TODO What i am doing here with cms_pull request
   fi
 else
@@ -1047,8 +1050,6 @@ for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
 done
 
 #evaluate results
-REPORT_H_CODE=$( echo ${PULL_REQUESTS} | md5sum | sed 's| .*||' )      # Used to to create link to folder where uploaded files are.
-
 TESTS_FAILED="Failed tests:"
 if [ "X$BUILD_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  Build"

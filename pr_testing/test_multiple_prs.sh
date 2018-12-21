@@ -211,7 +211,7 @@ for U_REPO in ${UNIQ_REPOS}; do
 		*)
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
-			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE" ||
+			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$PKG_NAME" "$CMSSW_CYCLE" "$ARCHITECTURE" || true # TODO if failed, exit if message
 			BUILD_EXTERNAL=true
 		;;
 	esac
@@ -283,7 +283,7 @@ if ${BUILD_EXTERNAL} ; then
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         # Report github that job failed and then exit
         ${CMS_BOT_DIR}/report-pull-request-results PARSE_BUILD_FAIL --report-pr ${PR_NR} --repo ${PR_NAME_AND_REPO} \
-            --pr ${PR_NR} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}
+            --pr ${PR_NR} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}  # TODO generates wrong link
       done
       # TODO there is dublication in run-cmssw.sh
       # echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $RESULTS_FILE # TODO do not need it, Should fix template or make new one
@@ -295,7 +295,7 @@ if ${BUILD_EXTERNAL} ; then
       cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
       # TODO REPOSITORY is used to link either to CMSDIST or CMSSW repository
       sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js  # TODO with whom replace $PUB_REPO when there is no CMSSW or CMSDIST commit?
-      # -- end TODO
+      # -- end TODO we write the date but do not upload it, why???
       exit 0
     else
       echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE

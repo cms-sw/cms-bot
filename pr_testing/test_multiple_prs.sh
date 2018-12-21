@@ -243,6 +243,14 @@ if ${BUILD_EXTERNAL} ; then
       SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
     fi
 
+    # Put hashcodes of last commits to a file. Mostly used for commenting back
+    for PR in ${PULL_REQUESTS}; do
+        COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
+        echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
+    done
+    # Notify github that the script will start testing now
+    report-pull-request-results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} ${DRY_RUN}
+
     for PR in ${PULL_REQUESTS}; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
@@ -439,6 +447,7 @@ if [ ! -d CMSSW_* ]; then
       fi
     fi
   else
+
     RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST ${PUB_USER}/cmssw` # TODO What i am doing here with cms_pull request
   fi
 else

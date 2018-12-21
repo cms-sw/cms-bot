@@ -4,6 +4,7 @@ RELEASE_FORMAT=$2
 REPOSITORY=$3
 PKGTOOLS_HASH=$4
 CMSDIST_HASH=$5
+export SCRAM_ARCH=$ARCHITECTURE
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE=${WORKSPACE-$PWD}

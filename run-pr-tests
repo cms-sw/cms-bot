@@ -46,6 +46,7 @@ else
   PULL_REQUEST_NUMBER=$CMSDIST_PR
   CMSDIST_ONLY=true
   PUB_REPO="${PUB_USER}/cmsdist"
+  CHECK_HEADER_TESTS=false
 fi
 PULL_REQUEST_JOB_ID=${BUILD_NUMBER}
 # Do not update twice the comment when testing CMSDIST only PR or also CMSDIST

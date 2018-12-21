@@ -14,6 +14,8 @@ RELEASE_QUEUE=$1
 CMS_DIST_TAG=$2
 ARCHITECTURE=$3
 
+# TODO if  CMS_DIST_TAG and  RELEASE_QUEUE are empty, use release $RELEASE_QUEUE=master
+
 CMS_BOT_DIR=$(dirname $(dirname $0))
 CONFIG_MAP=${CMS_BOT_DIR}/config.map
 

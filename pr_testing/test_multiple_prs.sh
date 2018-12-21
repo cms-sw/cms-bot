@@ -149,6 +149,7 @@ done
 
 CMSDIST_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
 CMSSW_PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
+CMSDIST_TAG=  # To make sure no one set to different value by accident.
 if [ ! -z ${CMSDIST_PR} ] ; then
     CMSDIST_TAG=$(get_base_branch "$CMSDIST_PR" )
 fi
@@ -215,7 +216,7 @@ for U_REPO in ${UNIQ_REPOS}; do
 		;;
 	esac
 done
-rm -rf ${BUILD_DIR}  #  get_source_flag_for_cmsbuild.sh boostraps without using --repository to correct repo,
+rm -rf ${BUILD_DIR}  #  get_source_flag_for_cmsbuild.sh boostraps without using `--repository` to correct repo,
                      #  so wrong repository is used during boostrap which foreces to rebuild everything
 
 CMSDIST_ONLY=true
@@ -223,11 +224,14 @@ if [ ! -z ${CMSSW_ORG} ] ; then
   CMSDIST_ONLY=false
 fi
 if ${BUILD_EXTERNAL} ; then
-    if [ -d "pkgtools" ] ; then
+    if [ ! -d "pkgtools" ] ; then
         git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
     fi
-    if [ -d "cmsdist" ] ; then
-        git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_BRANCH
+    if [ -z $CMSDIST_TAG ] ; then  # if CMSDIST_TAG not set from PR, take it from config map
+        CMSDIST_TAG=$(echo ${CONFIG_LINE} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
+    fi
+    if [ ! -d "cmsdist" ] ; then
+        git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
     fi
 
     echo_section "Building, testing and commenting status to github"
@@ -356,12 +360,6 @@ if ${BUILD_EXTERNAL} ; then
     fi
 fi # end of build external
 echo_section "end of build external"
-# TODO DELETE AFTER DEVELOPMENT
-if [ ! -z COPY_STATUS ] ; then
-    rm -rf ${WORKSPACE}/../SNAPSHOT/1/
-    mkdir -p ${WORKSPACE}/../SNAPSHOT/1/
-    cp -rf ${WORKSPACE}/* ${WORKSPACE}/../SNAPSHOT/1
-fi
 
 # Launch the pr-tests to check CMSSW by passing on the global variables
 # Merge into one script
@@ -1039,13 +1037,6 @@ for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
   popd
 done
 
-# TODO DELETE AFTER DEVELOPMENT
-if [ ! -z COPY_STATUS ] ; then
-    rm -rf ${WORKSPACE}/../SNAPSHOT/2/
-    mkdir -p ${WORKSPACE}/../SNAPSHOT/2/
-    cp -rf ${WORKSPACE}/* ${WORKSPACE}/../SNAPSHOT/2/
-fi
-# TODO DELETE AFTER DEVELOPMENT
 #evaluate results
 REPORT_H_CODE=$( echo ${PULL_REQUESTS} | md5sum | sed 's| .*||' )      # Used to to create link to folder where uploaded files are.
 

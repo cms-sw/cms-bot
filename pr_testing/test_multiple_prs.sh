@@ -155,7 +155,7 @@ fi
 if [[ ! -z ${CMSSW_PR} ]] ; then
     CMSSW_BR=$(get_base_branch $CMSSW_PR)
 fi
-CONFIG_LINE=$(${COMMON}/get_config_map_line.sh  "$CMSSW_BR" "$CMSDIST_TAG" "${ARCHITECTURE}") || true
+CONFIG_LINE=$(${COMMON}/get_config_map_line.sh  "${CMSSW_CYCLE-$CMSSW_BR}" "$CMSDIST_TAG" "${ARCHITECTURE}")
 fail_if_empty "${CONFIG_LINE}"
 
 # If CMSSW_CYCLE is not set, get it from CMSSW or CMSDIST. Else, fail.

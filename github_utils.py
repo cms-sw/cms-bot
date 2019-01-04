@@ -162,6 +162,7 @@ def cache_invalid_pr (pr_id, cache):
 def fill_notes_description(notes, repo_name, cmsprs, cache={}):
   new_notes = {}
   for log_line in notes.splitlines():
+    print "Log:",log_line
     items = log_line.split(" ")
     author = items[1]
     pr_number= items[0]

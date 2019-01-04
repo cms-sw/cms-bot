@@ -220,6 +220,7 @@ def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache={}):
                " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
                " grep ' Merge pull request #[1-9][0-9]* from ' | "
                " sed 's|^.* Merge pull request #||' | "
+               " sed 's|Dr15Jones:clangRecoParticleFlowPFProducer:|Dr15Jones/clangRecoParticleFlowPFProducer:|' | "
                " sed 's|/[^:]*:||;s|from ||'",
                git_dir=git_dir,
                previous=prev_tag,

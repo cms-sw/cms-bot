@@ -28,10 +28,11 @@ git cms-init --upstream-only
 DSIZE=0
 pushd $CMSSW_BASE/src
   git checkout $(git branch  | grep -v '^[*]' | grep 'CMSSW_' | head -1)
-  git repack -a -d
+  git repack -a -d --threads ${NUM_PROC}
+  git repack -a -d --threads ${NUM_PROC}
   OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee $CMSSW_BASE/cms-checkout-topic.log
-  git repack -a -d
+  git repack -d --threads ${NUM_PROC}
   NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
   if [ $DSIZE -lt 0 ] ; then DSIZE=0 ; fi

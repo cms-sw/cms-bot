@@ -20,7 +20,7 @@ def getWorkflowStatsFromES(release='*', arch='*', lastNdays=7, page_size=0):
                               architecture=arch
                              ),
                  start_time=1000*int(time()-(86400*lastNdays)),
-                 end_time=1000*int(time()))
+                     end_time=1000*int(time()),scroll=True)
     return stats['hits']['hits']
 
 '''

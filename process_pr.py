@@ -521,6 +521,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       signatures["code-checks"] = "pending"
       trigger_code_checks=True
       triggerred_code_checks=False
+      print "Found:Code Checks"
       continue
 
     # Check for cmsbuild_user comments and tests requests only for pull requests

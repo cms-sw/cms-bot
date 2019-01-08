@@ -158,7 +158,7 @@ scram -a $SCRAM_ARCH project $CMSSW_IB
 #TO make sure we always pick scram from local area
 rm -f $CMSSW_IB/config/scram_basedir
 
-echo $(scram version) > $CMSSW_IB/config/scram_version
+ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
 if [ $(grep '^V05-07-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
   git clone git@github.com:cms-sw/cmssw-config
   pushd cmssw-config

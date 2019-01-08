@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, urllib2, json, re
+import sys, urllib2, json, re, ssl
 from datetime import datetime
 from os.path import exists, join as path_join, dirname, abspath
 from os import getenv
@@ -79,7 +79,7 @@ def delete_hit(hit,passwd_file=None):
 
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
-  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data), context=ssl._create_unverified_context()).read()
 
 def get_payload_wscroll(index, query):
   es_data = json.loads(get_payload(index, query,scroll=1))

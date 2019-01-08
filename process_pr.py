@@ -1061,7 +1061,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       print commentMsg.decode("ascii", "replace")
     except:
       pass
-
+  print "Code Checks:", trigger_code_checks, triggerred_code_checks
   if trigger_code_checks and not triggerred_code_checks:
     if not dryRunOrig: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
     else: print "Dryrun:",TRIGERING_CODE_CHECK_MSG

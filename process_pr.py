@@ -517,7 +517,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       pull_request_updated = True
       continue
 
-    if ("code-checks"==first_line) and ("code-checks" in signatures):
+    if ("code-checks"==first_line):
       signatures["code-checks"] = "pending"
       trigger_code_checks=True
       triggerred_code_checks=False

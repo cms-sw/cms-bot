@@ -16,7 +16,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ -e /etc/tnsnames.ora ] ; then MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora" ; fi
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then
-    HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
+    if [ $(id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then
+      HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
+    fi
   fi
   CMD2RUN="voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
   XUSER=`whoami`

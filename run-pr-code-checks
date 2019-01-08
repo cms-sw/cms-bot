@@ -36,7 +36,7 @@ pushd $CMSSW_BASE/src
   NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
   if [ $DSIZE -lt 0 ] ; then DSIZE=0 ; fi
-  $CMS_BOT_DIR/pr-checks/check-pr-files -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/invalid_files.txt || true
+  $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/invalid_files.txt || true
 popd
 
 #If we have any non-tests changed files

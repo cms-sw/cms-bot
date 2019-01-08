@@ -22,6 +22,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   XUSER=`whoami`
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
+    set +x
     DOCKER_OPT="-e USER=$XUSER -e DOCKER_IMG=$DOCKER_IMG"
     case $XUSER in
       cmsbld ) DOCKER_OPT="${DOCKER_OPT} -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group" ;;
@@ -32,6 +33,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       DOCKER_OPT="${DOCKER_OPT} -v $m"
     done
     if [ "X$KRB5CCNAME" != "X" ] ; then DOCKER_OPT="${DOCKER_OPT} -e KRB5CCNAME=$KRB5CCNAME" ; fi
+    set -x
     echo "Passing to docker the args: "$CMD2RUN
     docker run --rm -h `hostname -f` $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
   else

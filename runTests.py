@@ -421,7 +421,7 @@ class ReleaseTester():
       self.threadList['unit'] = self.runUnitTests()
 
     #We only want to explicitly run this test.
-    if not only and 'gpu_unit' in only:
+    if only and 'gpu_unit' in only:
       print '\n'+80*'-'+' gpu_unit \n'
       self.threadList['gpu_unit'] = self.runUnitTests([], 'GPU')
 

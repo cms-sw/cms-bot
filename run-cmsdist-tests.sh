@@ -190,7 +190,6 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   echo "Settings up $name: $over vs $nver"
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
-set -x
 mv ${CTOOLS} ${CTOOLS}.backup
 mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
 sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
@@ -200,6 +199,7 @@ SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_ve
 scram build -r 
 eval $(scram runtime -sh)
 echo $PYTHONPATH | tr ':' '\n'
+set -x
 
 # Search for CMSSW package that might depend on the compiled externals
 touch $WORKSPACE/cmsswtoolconf.log

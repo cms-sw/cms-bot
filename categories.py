@@ -64,7 +64,6 @@ CMSSW_L2 = {
   "slava77":          ["reconstruction"],
   "smuzaffar":        ["core", "externals"],
   "ssekmen":          ["fastsim"],
-  "thomreis":         ["l1"],
   "tocheng":          ["alca"],
   "zhenhu":           ["pdmv"],
   CMSBUILD_USER:      ["tests", "code-checks" ],

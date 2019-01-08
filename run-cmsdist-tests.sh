@@ -198,18 +198,21 @@ scram setup self
 SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_version)/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
 scram build -r 
 eval $(scram runtime -sh)
-echo $PYTHONPATH | tr ':' '\n'
-set -x
 
 # Search for CMSSW package that might depend on the compiled externals
 touch $WORKSPACE/cmsswtoolconf.log
 if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   git cms-addpkg --ssh '*'
+  rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
+  scram setup self
+  scram setup
+  eval $(scram runtime -sh)
 elif [ "X${DEP_NAMES}" != "X" ] ; then
   CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
   if [ "X${CMSSW_DEP}" != "X" ] ; then
     git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
   fi
 fi
+set -x
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables
 $CMS_BOT_DIR/run-pr-tests

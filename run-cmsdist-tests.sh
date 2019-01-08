@@ -174,6 +174,7 @@ SET_ALL_TOOLS=NO
 if [ $(echo $CMSSW_IB | grep '^CMSSW_9' | wc -l) -gt 0 ] ; then SET_ALL_TOOLS=YES ; fi
 DEP_NAMES=
 CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
+set +x
 for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
   name=$(basename $xml)
   tool=$(echo $name | sed 's|.xml$||')
@@ -189,6 +190,7 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   echo "Settings up $name: $over vs $nver"
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
+set -x
 mv ${CTOOLS} ${CTOOLS}.backup
 mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
 sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml

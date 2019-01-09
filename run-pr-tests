@@ -379,7 +379,7 @@ else
 fi
 
 scram build clean
-git cms-checkdeps -A -a
+if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then git cms-checkdeps -A -a ; fi
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 ############################################
 # Force the run of DQM tests if necessary

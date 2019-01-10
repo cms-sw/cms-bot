@@ -79,7 +79,13 @@ def delete_hit(hit,passwd_file=None):
 
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
-  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data), context=ssl._create_unverified_context()).read()
+  sslcon = None
+  try:
+    sslcon = ssl._create_unverified_context()
+  except Exception as e:
+    sslcon =  None
+  if sslcon: return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data), context=sslcon).read()
+  else: return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
 
 def get_payload_wscroll(index, query):
   es_data = json.loads(get_payload(index, query,scroll=1))

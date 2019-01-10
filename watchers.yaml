@@ -100,16 +100,21 @@ makortel:
   - Configuration/StandardSequences
   - DataFormats/Common
   - DataFormats/DetId
+  - DataFormats/FEDRawData
+  - DataFormats/FWLite
   - DataFormats/GsfTrackReco
   - DataFormats/HcalDetId
   - DataFormats/HcalDigi
   - DataFormats/Math
+  - DataFormats/Provenance
   - DataFormats/RecoCandidate
   - DataFormats/Si
+  - DataFormats/StdDictionaries
+  - DataFormats/Streamer
+  - DataFormats/TestObjects
   - DataFormats/Tra
   - DataFormats/VertexReco
-  - DQMServices/ClientConfig
-  - DQM/Integration
+  - DataFormats/WrappedStdDictionaries
   - DQM/Track
   - EventFilter/Si
   - FWCore
@@ -118,6 +123,8 @@ makortel:
   - HLTrigger/Configuration
   - HeterogeneousCore
   - IgTools
+  - IOMC/RandomEngine
+  - IOPool
   - PerfTools
   - PhysicsTools/TensorFlow
   - RecoLocalTracker
@@ -128,6 +135,7 @@ makortel:
   - SimCalorimetry/EcalSimProducers
   - SimCalorimetry/HGCalSimProducers
   - SimCalorimetry/HcalSimProducers
+  - SimDataFormats/RandomEngine
   - SimDataFormats/Track
   - SimDataFormats/Vertex
   - SimG4Core
@@ -140,6 +148,12 @@ makortel:
   - SLHCUpgradeSimulations/Configuration
   - TrackingTools
   - TrackPropagation
+  - Utilities/DCacheAdaptor
+  - Utilities/General
+  - Utilities/LStoreAdaptor
+  - Utilities/StorageFactory
+  - Utilities/Testing
+  - Utilities/XrdAdaptor
   - Validation/RecoTrack
   - Validation/RecoVertex
 GiacomoSguazzoni:

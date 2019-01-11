@@ -32,11 +32,11 @@ def get_docker_manifest(repo, tag):
 def fix_mode(full_fname, mode_num, st=None):
   if not st: st = lstat(full_fname)
   n_mode = mode_num*100
-  mode = mode_num + mode_num*10 + n_mode
+  #mode = mode_num + mode_num*10 + n_mode
   old_mode = stat.S_IMODE(st.st_mode)
-  if (old_mode & mode) == 0:
+  if (old_mode & n_mode) == 0:
     new_mode = old_mode | n_mode
-    print "Fixing mode of", full_fname, "to", oct(new_mode)
+    print "Fixing mode of: %s: %s -> %s" % (full_fname, oct(old_mode), oct(new_mode))
     chmod(full_fname, new_mode)
 
 def fix_modes(img_dir):

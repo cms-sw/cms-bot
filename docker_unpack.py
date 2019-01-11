@@ -55,13 +55,6 @@ def fix_modes(img_dir):
         fix_mode (full_dname, 2, st)
   return
 
-def create_image_link(outdir, img_sdir, image):
-  e, o = runCmd("cd %s; rm -rf %s; mkdir -p %s; rm -rf %s; ln -sf ../%s %s" % (outdir, image, image, image, img_sdir, image))
-  if e:
-    print o
-    exit(1)
-  return
-
 def process(image, outdir):  
   container = image.split(":",1)[0]
   tag = image.split(":",1)[-1]
@@ -74,9 +67,7 @@ def process(image, outdir):
 
   img_sdir = join(".images", image_hash[0:2], image_hash)
   img_dir = join(outdir, img_sdir)
-  if exists(img_dir):
-    create_image_link(outdir, img_sdir, image)
-    exit(0)
+  if exists(img_dir): return
 
   print "Starting Container %s" % image
   tmpdir = join(outdir, ".images", "tmp")
@@ -106,10 +97,6 @@ def process(image, outdir):
   
   print "Fixing file modes ...."
   fix_modes (img_dir)
-
-  print "Creating container symlink ...."
-  create_image_link(outdir, img_sdir, image)
-  return
 
 if __name__ == "__main__":
   from optparse import OptionParser

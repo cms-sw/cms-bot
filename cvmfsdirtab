@@ -21,3 +21,4 @@
 /nweek-*/*_*_*/cms/cmssw/*
 /nweek-*/*_*_*/cms/cmssw-patch/*
 /git/*
+/docker/.images/*/*

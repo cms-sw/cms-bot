@@ -41,18 +41,23 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     CLEAN_UP_CACHE=false
-    if test -w ${BUILD_BASEDIR} ; then
-      export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
+    if [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
+      DOCKER_IMG=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
     else
-      CLEAN_UP_CACHE=true
-      export SINGULARITY_CACHEDIR="${WORKSPACE}/singularity"
+      DOCKER_IMG="docker://$DOCKER_IMG"
+      if test -w ${BUILD_BASEDIR} ; then
+        export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
+      else
+        CLEAN_UP_CACHE=true
+        export SINGULARITY_CACHEDIR="${WORKSPACE}/singularity"
+      fi
     fi
     export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"
     if [ $(whoami) = "cmsbuild" -a $(echo $HOME | grep /afs/ | wc -l) -gt 0 ] ; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi
     ERR=0
-    singularity exec $SINGULARITY_OPTIONS docker://$DOCKER_IMG sh -c "$CMD2RUN" || ERR=$?
+    singularity exec $SINGULARITY_OPTIONS $DOCKER_IMG sh -c "$CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi

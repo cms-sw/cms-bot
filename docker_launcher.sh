@@ -40,16 +40,21 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     docker run --rm -h `hostname -f` $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
+    CLEAN_UP_CACHE=false
     if test -w ${BUILD_BASEDIR} ; then
       export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
     else
+      CLEAN_UP_CACHE=true
       export SINGULARITY_CACHEDIR="${WORKSPACE}/singularity"
     fi
     export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"
     if [ $(whoami) = "cmsbuild" -a $(echo $HOME | grep /afs/ | wc -l) -gt 0 ] ; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi
-    singularity exec $SINGULARITY_OPTIONS docker://$DOCKER_IMG sh -c "$CMD2RUN"
+    ERR=0
+    singularity exec $SINGULARITY_OPTIONS docker://$DOCKER_IMG sh -c "$CMD2RUN" || ERR=$?
+    if CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    exit $ERR
   fi
 else
   voms-proxy-init -voms cms -valid 24:00 || true

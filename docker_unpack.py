@@ -67,12 +67,12 @@ def process(image, outdir):
   tag = image.split(":",1)[-1]
   if container==tag: tag="latest"
 
-  manifest = get_docker_manifest(container,tag)
-  hasher = hashlib.sha256()
-  for layerinfo in manifest['fsLayers']: hasher.update(layerinfo['blobSum'].split(":")[-1])
-  image_hash = hasher.hexdigest()
+  e, image_hash = runCmd("docker pull %s 2>&1 >/dev/null; docker images %s | grep '^%s ' | grep ' %s ' | sed 's|  *|:|g' | cut -d: -f3" % (image, container, container, tag))
+  if e:
+    print image_hash
+    exit(1)
 
-  img_sdir = join(".images", image_hash[0:2], image_hash[2:])
+  img_sdir = join(".images", image_hash[0:2], image_hash)
   img_dir = join(outdir, img_sdir)
   if exists(img_dir):
     create_image_link(outdir, img_sdir, image)
@@ -107,7 +107,7 @@ def process(image, outdir):
   print "Fixing file modes ...."
   fix_modes (img_dir)
 
-  print "Creating container synlink ...."
+  print "Creating container symlink ...."
   create_image_link(outdir, img_sdir, image)
   return
 

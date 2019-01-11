@@ -40,7 +40,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     docker run --rm -h `hostname -f` $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
-    export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
+    if test -w ${BUILD_BASEDIR} ; then
+      export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
+    else
+      export SINGULARITY_CACHEDIR="${WORKSPACE}/singularity"
+    fi
     export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"
     if [ $(whoami) = "cmsbuild" -a $(echo $HOME | grep /afs/ | wc -l) -gt 0 ] ; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"

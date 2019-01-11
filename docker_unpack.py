@@ -104,7 +104,7 @@ def process(image, outdir):
     sdir = join(img_dir, xdir)
     if not exists(sdir): runCmd('mkdir %s' % sdir)
   
-  print "Fixng file modes ...."
+  print "Fixing file modes ...."
   fix_modes (img_dir)
 
   print "Creating container synlink ...."

@@ -109,5 +109,3 @@ if __name__ == "__main__":
   process(opts.container, opts.outdir)
   print "All OK"
 
-  
-

@@ -53,7 +53,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     fi
     ERR=0
     singularity exec $SINGULARITY_OPTIONS docker://$DOCKER_IMG sh -c "$CMD2RUN" || ERR=$?
-    if CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+    if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi
 else

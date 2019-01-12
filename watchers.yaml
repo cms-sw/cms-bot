@@ -481,6 +481,16 @@ gpetruc:
 - PhysicsTools/PatUtils
 - PhysicsTools/PatAlgos
 - PhysicsTools/NanoAOD
+hatakeyamak:
+- RecoParticleFlow
+- Validation/RecoParticleFlow
+- Validation/HcalDigis
+- Validation/HcalHits
+- Validation/HcalRecHits
+- Validation/CaloTowers
+- DataFormats/ParticleFlowCandidate
+- DataFormats/ParticleFlowReco
+- DataFormats/PatCandidates
 HuguesBrun:
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit

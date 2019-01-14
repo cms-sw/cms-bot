@@ -34,6 +34,7 @@ let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 KERBEROS_REFRESH=0
 FORCE_EXIT=false
 CHK_GAP=60
+set +x
 while true ; do
   sleep $CHK_GAP
   CTIME=$(date +%s)
@@ -41,6 +42,7 @@ while true ; do
     if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
     if [ $CTIME -gt ${FORCE_EXIT_AT} ]     ; then break ; fi
   elif [ $CTIME -gt ${OFFLINE_NOTICE_TIME} ] ; then
+    echo "Sending going to Offline notification"
     echo exit > ${WORKSPACE}/.auto-load
     FORCE_EXIT=true
     SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|offline|')
@@ -48,10 +50,13 @@ while true ; do
   fi
   let KERBEROS_REFRESH_GAP=$CTIME-$KERBEROS_REFRESH
   if [ $KERBEROS_REFRESH_GAP -gt 21600 ] ; then
+    echo "Refreshing kerberose token"
     kinit -R
     KERBEROS_REFRESH=$CTIME
   fi
 done
+echo "Going to shutdown."
+set -x
 rm -rf ${WORKSPACE}
 SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|shutdown|')
 curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"

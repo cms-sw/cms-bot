@@ -10,7 +10,7 @@ fi
 
 cWD=`pwd`
 export pidList=""
-nProc=$(getconf _NPROCESSORS_ONLN)
+nProc=$(nproc)
 
 function waitForProcesses {  
     pidList=${pidList}" "${!}

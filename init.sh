@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 function Jenkins_GetCPU ()
 {
-  ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
+  ACTUAL_CPU=$(nproc)
   case $NODE_NAME in
     lxplus* ) ACTUAL_CPU=$(echo $ACTUAL_CPU / 2 | bc) ;;
   esac

@@ -1,6 +1,6 @@
 #!/bin/bash -x
 WORKSPACE="${WORKSPACE-$PWD}"
-export J=$(getconf _NPROCESSORS_ONLN)
+export J=$(nproc)
 export LC_ALL=C
 cd $CMSSW_BASE
 rm -rf src

@@ -4,7 +4,7 @@ THRESHOLD_TIME=""
 EXTRA_OPTS="$2"
 voms-proxy-init
 WORKSPACE="${WORKSPACE-$PWD}"
-JOBS=$(getconf _NPROCESSORS_ONLN)
+JOBS=$(nproc)
 USE_DASGO=$3
 PUSH_RESULTS=$4
 if [ "$USE_DASGO" = "true" ] ; then 

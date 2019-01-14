@@ -23,7 +23,7 @@ cd $WORKSPACE
 rm -rf w/SPECS
 
 BUILD_JOBS=4
-BUILD_NPROC=$(getconf _NPROCESSORS_ONLN)
+BUILD_NPROC=$(nproc)
 
 case $ARCHITECTURE in
   *_mic_*) export BUILD_ARCH=`echo $ARCHITECTURE | cut -f1,2 -d_` ;;

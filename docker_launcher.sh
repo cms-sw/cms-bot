@@ -13,6 +13,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   BUILD_BASEDIR=$(echo $WORKSPACE |  cut -d/ -f1-3)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
   MOUNT_POINTS="/cvmfs,/tmp,/cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses,/cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security"
+  if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
   if [ -e /etc/tnsnames.ora ] ; then MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora" ; fi
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then

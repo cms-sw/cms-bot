@@ -246,9 +246,11 @@ if ${BUILD_EXTERNAL} ; then
     # add special flags for pkgtools/cmsbuild if version is high enough
     REF_REPO=
     SOURCE_FLAG=
-    if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
-      REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
-      SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
+    if [ "X$USE_CMSPKG_REFERENCE" = "Xtrue" ] ; then
+      if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
+        REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
+        SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
+      fi
     fi
 
     # Put hashcodes of last commits to a file. Mostly used for commenting back
@@ -292,7 +294,7 @@ if ${BUILD_EXTERNAL} ; then
     TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
     GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
 
-    echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,..' >> $RESULTS_FILE
+    echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> $RESULTS_FILE
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       # Report github that job failed
       report-pull-request-results_all_prs PARSE_BUILD_FAIL --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --unit-tests-file ${WORKSPACE}/cmsswtoolconf.log ${DRY_RUN}
@@ -321,7 +323,7 @@ if ${BUILD_EXTERNAL} ; then
     # To make sure we always pick scram from local area
     rm -f $CMSSW_IB/config/scram_basedir
 
-    echo $(scram version) > $CMSSW_IB/config/scram_version
+    ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
     if [ $(grep '^V05-07-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
       git clone git@github.com:cms-sw/cmssw-config
       pushd cmssw-config
@@ -337,6 +339,7 @@ if ${BUILD_EXTERNAL} ; then
     if [ $(echo $CMSSW_IB | grep '^CMSSW_9' | wc -l) -gt 0 ] ; then SET_ALL_TOOLS=YES ; fi
     DEP_NAMES=
     CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
+    set +x
     for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
       name=$(basename $xml)
       tool=$(echo $name | sed 's|.xml$||')
@@ -360,16 +363,22 @@ if ${BUILD_EXTERNAL} ; then
     SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_version)/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
     scram build -r
     eval $(scram runtime -sh)
-    echo $PYTHONPATH | tr ':' '\n'
 
     # Search for CMSSW package that might depend on the compiled externals
     touch $WORKSPACE/cmsswtoolconf.log
-    if [ "X${DEP_NAMES}" != "X" ] ; then
+    if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
+      git cms-addpkg --ssh '*'
+      rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
+      scram setup self
+      scram setup
+      eval $(scram runtime -sh)
+    elif [ "X${DEP_NAMES}" != "X" ] ; then
       CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
       if [ "X${CMSSW_DEP}" != "X" ] ; then
         git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       fi
     fi
+    set -x
 fi # end of build external
 echo_section "end of build external"
 

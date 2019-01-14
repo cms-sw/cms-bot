@@ -71,9 +71,9 @@ while true ; do
   sleep $WAIT_GAP
   JOB_STATUS=$(condor_q -json -attributes JobStatus $JOBID | grep 'JobStatus' | sed 's|.*: *||;s| ||g')
   eval JOB_STATUS_MSG=$(echo \$$(echo JOBS_STATUS_${JOB_STATUS}))
-  if [ "${PREV_JOB_STATUS}" != "${JOB_STATUS}" ] ; then
+  if [ "${PREV_JOB_STATUS}" != "${JOB_STATUS}${ERROR_COUNT}" ] ; then
     echo "Job Status(${ERROR_COUNT}): $JOB_STATUS: ${JOB_STATUS_MSG}"
-    PREV_JOB_STATUS="${JOB_STATUS}"
+    PREV_JOB_STATUS="${JOB_STATUS}${ERROR_COUNT}"
   fi
   if [ "$JOB_STATUS" = "1" -o "$JOB_STATUS" = "2" ] ;  then
     ERROR_COUNT=0

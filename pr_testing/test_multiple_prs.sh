@@ -393,6 +393,25 @@ JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 if [ "X${PUB_USER}" = X ]; then PUB_USER="cms-sw" ; fi  # TODO I need it ?
 
+DO_COMPARISON=true
+DO_MB_COMPARISON=false
+if [ "$TEST_CONTEXT" = "GPU" ] ; then
+  APPLY_FIREWORKS_RULE=false
+  TEST_CLANG_COMPILATION=false
+  CODE_RULES=false
+  CHECK_HEADER_TESTS=false
+  DO_STATIC_CHECKS=false
+  DQM_TESTS=false
+  DO_DUPLICATE_CHECKS=false
+  DO_ADDON_TESTS=false
+  RUN_IGPROF=false
+  RUN_CONFIG_VIEWER=false
+  DO_COMPARISON=false
+  DO_ADDON_TESTS=false
+  DO_MB_COMPARISON=false
+  WORKFLOWS_FOR_VALGRIND_TEST=""
+fi
+
 ### this is for triggering the comparison with the baseline
 CMSDIST_ONLY=false  #
 if [ "X$PULL_REQUEST" != X ]; then   # TODO PULL_reuqest should be done something with it
@@ -403,6 +422,7 @@ else
   PULL_REQUEST_NUMBER=$CMSDIST_PR
   CMSDIST_ONLY=true
   PUB_REPO="${PUB_USER}/cmsdist"
+  CHECK_HEADER_TESTS=false
 fi
 
 # PULL_REQUEST_JOB_ID=${BUILD_NUMBER}  # TODO Not use
@@ -518,7 +538,6 @@ git config --global --replace-all merge.renamelimit 2500
 
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits
-MB_COMPARISON=NO
 touch $RECENT_COMMITS_FILE
 # use the branch name if necesary
 if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified #
@@ -558,8 +577,10 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified #
   #IB_DATE=$(git show ${CMSSW_IB} --pretty='format:%ai')
   git rev-list ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
   git log ${CMSSW_IB}..HEAD --merges 2>&1      | tee -a $RECENT_COMMITS_LOG_FILE
-  if [ $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
-    has_jenkins_artifacts material-budget/$CMSSW_IB/$SCRAM_ARCH/Images && MB_COMPARISON=YES
+  if [ $DO_MB_COMPARISON -a $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
+    has_jenkins_artifacts material-budget/$RELEASE_FORMAT/$SCRAM_ARCH/Images || DO_MB_COMPARISON=false  # TODO $CMSSW_IB
+  else
+    DO_MB_COMPARISON=false
   fi
 fi
 
@@ -599,10 +620,11 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSDIST
 
   #first, add the command to the log
   CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j $(${COMMON}/get_cpu_number.sh *2) COMPILER='llvm compile'"
-  CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes && ${ANALOG_CMD}"
+  CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
   echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
 
   (eval $CLANG_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
+  (eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/buildClang.log
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
@@ -642,7 +664,7 @@ fi
 #Do QA checks
 #Code Rules
 QA_RES="NOTRUN"
-if [ "X$CMSDIST_ONLY" == "Xfalse" ]; then # If a CMSSW specific PR was specified
+if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" ]; then # If a CMSSW specific PR was specified
   report-pull-request-results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} --add-message "Running Code Rules Checks" ${DRY_RUN}
   mkdir $WORKSPACE/codeRules
   cmsCodeRulesChecker.py -s $WORKSPACE/codeRules -r 1,3 || true
@@ -685,23 +707,26 @@ else
 fi
 
 scram build clean
-git cms-checkdeps -A -a
+if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then git cms-checkdeps -A -a ; fi
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 ############################################
 # Force the run of DQM tests if necessary
 ############################################
-if ls $WORKSPACE/$CMSSW_IB/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
-  echo "I will make sure that DQM tests will be run"
-  if ls $WORKSPACE/$CMSSW_IB/src/| grep "DQMServices"; then
-    echo DQMServices is already there
-      if ls $WORKSPACE/$CMSSW_IB/src/DQMServices/| grep "Components"; then
-        echo "and DQMServices/Components is there"
-      else
-        git cms-addpkg --ssh DQMServices/Components
-      fi
-  else
-    echo "checking out DQMServices"
-    git cms-addpkg --ssh DQMServices
+if [ "X$DQM_TESTS" = "Xtrue" ] ; then
+  # TODO change $RELEASE_FORMAT to $CMSSW_IB
+  if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep -i -E "dqm.*|HLTriggerOffline|Validation"; then
+    echo "I will make sure that DQM tests will be run"
+    if ls $WORKSPACE/$RELEASE_FORMAT/src/| grep "DQMServices"; then
+      echo DQMServices is already there
+        if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
+          echo "and DQMServices/Components is there"
+        else
+          git cms-addpkg --ssh DQMServices/Components
+        fi
+    else
+      echo "checking out DQMServices"
+      git cms-addpkg --ssh DQMServices
+    fi
   fi
 fi
 #############################################
@@ -717,7 +742,7 @@ fi
 # ############################################
 CHK_HEADER_LOG_RES="NOTRUN"
 CHK_HEADER_OK=true
-if [ -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers ] ; then
+if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.chk_headers ] ; then
   report-pull-request-results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" ${DRY_RUN}
   COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i' scram build -k -j $(${COMMON}/get_cpu_number.sh) check-headers"
   echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
@@ -737,12 +762,13 @@ echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chk
 # test compilation with GCC
 # ############################################
 report-pull-request-results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" ${DRY_RUN}
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(${COMMON}/get_cpu_number.sh) && ${ANALOG_CMD}"
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(${COMMON}/get_cpu_number.sh)"
 if [ "X$CMSDIST_PR" != X -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
-  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(${COMMON}/get_cpu_number.sh) && ${ANALOG_CMD} && scram b -k -j $(${COMMON}/get_cpu_number.sh) edm_checks"
+  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(${COMMON}/get_cpu_number.sh) && scram b -k -j $(${COMMON}/get_cpu_number.sh) edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
+(eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/build.log
 if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${WORKSPACE}/build-logs ; fi
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'
@@ -791,7 +817,9 @@ set +x ; eval $(scram run -sh) ;set -x
 #Drop RELEASE_TOP/external/SCRAM_ARCH/data if LOCALTOP/external/SCRAM_ARCH/data exists
 #to make sure external packages removed files are not picked up from release directory
 if [ "X$CMSDIST_PR" != "X" ] ; then
-  export CMSSW_SEARCH_PATH=$(echo $CMSSW_SEARCH_PATH | tr ':' '\n'  | grep -v "$CMSSW_RELEASE_BASE/external/" | tr '\n' ':')
+  if [ "X${CMSSW_RELEASE_BASE}" != "X" ] ; then
+    export CMSSW_SEARCH_PATH=$(echo $CMSSW_SEARCH_PATH | tr ':' '\n'  | grep -v "$CMSSW_RELEASE_BASE/external/" | tr '\n' ':')
+  fi
 fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH
 which das_client
@@ -867,7 +895,11 @@ fi
 # Matrix tests
 #
 
-MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+if [ "X$TEST_CONTEXT" = "X" ] ; then
+  MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+else
+  MATRIX_EXTRAS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${TEST_CONTEXT}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+fi
 if [ ! "X$MATRIX_EXTRAS" = X ]; then
   MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
 fi
@@ -877,17 +909,20 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
-    case $CMSSW_IB in
-      *SLHCDEV*)
+    case $TEST_CONTEXT-$RELEASE_FORMAT in
+      -*SLHCDEV*)
         SLHC_PARAM='-w upgrade'
         WF_LIST="-l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
         ;;
-      *SLHC*)
+      -*SLHC*)
         SLHC_PARAM='-w upgrade'
         WF_LIST="-l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
         ;;
-      *)
+      -*)
         WF_LIST="-s $MATRIX_EXTRAS"
+        ;;
+      GPU-*)
+        WF_LIST="$MATRIX_EXTRAS"
         ;;
     esac
 
@@ -920,19 +955,24 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
   else
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK' >> $RESULTS_FILE
-    echo 'COMPARISON;QUEUED' >> $RESULTS_FILE
 
-    TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
-    echo "Creating properties file $TRIGGER_COMPARISON_FILE"
-    echo "CMSSW_IB=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> $TRIGGER_COMPARISON_FILE
-    echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_COMPARISON_FILE  # TODO how to substitute
-    echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
-    echo "REAL_ARCH=$REAL_ARCH" >> $TRIGGER_COMPARISON_FILE
-    echo "WORKFLOWS_LIST=${WORKFLOW_TO_COMPARE}" >> $TRIGGER_COMPARISON_FILE
-    echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
-    echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
-    echo "PUB_REPO=$PUB_REPO" >> $TRIGGER_COMPARISON_FILE
+    if $DO_COMPARISON ; then
+      echo 'COMPARISON;QUEUED' >> $RESULTS_FILE
+      TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
+      echo "Creating properties file $TRIGGER_COMPARISON_FILE"
+      echo "RELEASE_FORMAT=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE
+      echo "ARCHITECTURE=${ARCHITECTURE}" >> $TRIGGER_COMPARISON_FILE
+      echo "PULL_REQUEST_NUMBER=$PULL_REQUEST_NUMBER" >> $TRIGGER_COMPARISON_FILE
+      echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
+      echo "REAL_ARCH=$REAL_ARCH" >> $TRIGGER_COMPARISON_FILE
+      echo "WORKFLOWS_LIST=${WORKFLOW_TO_COMPARE}" >> $TRIGGER_COMPARISON_FILE
+      echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
+      echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
+      echo "PUB_REPO=$PUB_REPO" >> $TRIGGER_COMPARISON_FILE
+      echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
+    else
+      echo 'COMPARISON;NOTRUN' >> $RESULTS_FILE
+    fi
 
     #####################################################################
     #### Run igprof
@@ -1024,7 +1064,7 @@ else
 fi
 
 MB_TESTS_OK=NOTRUN
-if [ "$MB_COMPARISON" = "YES" -a "X$BUILD_OK" = "Xtrue" -a "$RUN_TESTS" = "true" ] ; then
+if [ $DO_MB_COMPARISON=false -a "X$BUILD_OK" = "Xtrue" -a "$RUN_TESTS" = "true" ] ; then
   if has_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/Images ; then
     mkdir $LOCALRT/material-budget
     MB_TESTS_OK=OK
@@ -1080,7 +1120,15 @@ if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
 fi
 
 cd $WORKSPACE
-mkdir -p upload
+if [ -d ${WORKSPACE}/upload ] ; then
+  for ut in $(find $WORKSPACE/upload -mindepth 1 -maxdepth 1 -name '*' -type d | sed 's|.*/||') ; do
+    UT_STATUS="OK"
+    if [ -f $WORKSPACE/upload/${ut}/status ] ; then UT_STATUS=$(cat $WORKSPACE/upload/${ut}/status) ; fi
+    echo "USER_TEST_${ul};${UT_STATUS},User Test ${ut},See Log,${ut}" >> $RESULTS_FILE
+  done
+else
+  mkdir -p upload
+fi
 for f in build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
   [ -e $f ] && mv $f upload/$f
 done

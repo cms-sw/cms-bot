@@ -1,0 +1,13 @@
+universe                = @REQUEST_UNIVERSE@
++MaxRuntime             = @REQUEST_MAXRUNTIME@
+request_cpus            = @REQUEST_CPUS@
+executable              = @SCRIPT_NAME@.sh
+transfer_input_files    = @X509_PROXY_FILE@
+should_transfer_files   = yes
+when_to_transfer_output = on_exit
+output                  = @SCRIPT_NAME@.stdout
+error                   = @SCRIPT_NAME@.stdout
+log                     = @SCRIPT_NAME@.log
+getenv                  = True
+queue 1
+

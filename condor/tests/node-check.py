@@ -17,7 +17,7 @@ def do_load(obj):
     for j in range(1024):
       for k in range(1024):
           x=j*k
-    sleep(0.05)
+    sleep(0.01)
 
 class LoadMaster (object):
   def __init__ (self, memory, max_child, pipe_in):

@@ -18,6 +18,7 @@ BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 ## TODO check if the variable there
 # Input variable
 PULL_REQUESTS=$PULL_REQUESTS              # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
+# TODO are CMSSW_IB and RELEASE_FORMAT interchangeable
 RELEASE_FORMAT=$RELEASE_FORMAT             # CMS SW TAG found in config_map.py
 # PULL_REQUEST=$PULL_REQUEST              # CMSSW PR number, should avoid
 # CMSDIST_PR=$CMSDIST_PR                  # CMSDIST PR number, should avoid
@@ -255,6 +256,8 @@ if ${BUILD_EXTERNAL} ; then
 
     # Put hashcodes of last commits to a file. Mostly used for commenting back
     for PR in ${PULL_REQUESTS}; do
+        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+        PR_NR=$(echo ${PR} | sed 's/.*#//')
         COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
         echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
     done

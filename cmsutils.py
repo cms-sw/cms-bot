@@ -29,7 +29,7 @@ def _getCPUCount():
     if platform == "darwin":
       cmd = "sysctl -n hw.ncpu"
     elif platform.startswith("linux"):
-      cmd = "cat /proc/cpuinfo | grep '^processor' | wc -l"
+      cmd = "nproc"
     error, count = getstatusoutput(cmd)
     if error:
       print "Warning: unable to detect cpu count. Using 4 as default value"

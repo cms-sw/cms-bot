@@ -26,7 +26,7 @@ SIGNATURE=$(echo -n "${JOB_ID}:${WORKSPACE} ${TOKEN}" | sha256sum | sed 's| .*||
 JENKINS_PAYLOAD='{"jenkins_url":"@JENKINS_CALLBACK@","signature":"'${SIGNATURE}'","work_dir":"'${WORKSPACE}'", "condor_job_id":"'${JOB_ID}'", "labels":"'${SLAVE_LABELS}'", "status":"@STATE@"}'
 
 CURL_OPTS='-s -k -f --retry 3 --retry-delay 5 --max-time 30 -X POST'
-if [ ! -f ${LOCAL_DATA}/online ] then
+if [ ! -f ${LOCAL_DATA}/online ] ; then
   SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|online|')
   curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
   touch ${LOCAL_DATA}/online

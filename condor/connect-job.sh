@@ -47,7 +47,7 @@ let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 KERBEROS_REFRESH=0
 FORCE_EXIT=false
 CHK_GAP=60
-if [ ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
+if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 set +x
 while true ; do
   sleep $CHK_GAP

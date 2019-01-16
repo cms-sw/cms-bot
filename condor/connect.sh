@@ -75,7 +75,6 @@ echo "$JOBID" > job.id
 EXIT_CODE=1
 PREV_JOB_STATUS=""
 while true ; do
-  sleep $WAIT_GAP
   JOB_STATUS=$(condor_q -json -attributes JobStatus $JOBID | grep 'JobStatus' | sed 's|.*: *||;s| ||g')
   eval JOB_STATUS_MSG=$(echo \$$(echo JOBS_STATUS_${JOB_STATUS}))
   if [ "${PREV_JOB_STATUS}" != "${JOB_STATUS}${ERROR_COUNT}" ] ; then
@@ -99,6 +98,7 @@ while true ; do
     condor_q -json -attributes $JOBID || true
     break
   fi
+  sleep $WAIT_GAP
 done
 echo EXIT_CODE $EXIT_CODE
 condor_q

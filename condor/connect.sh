@@ -64,7 +64,9 @@ if [ "${JOBID}" = "" ] ; then
 else
   echo "Watching Condor Job Id: ${JOBID}"
   if [ "$SHUTDOWN" = "true" ] ; then
+    echo "Trying to shutdown the node"
     condor_ssh_to_job -auto-retry ${JOBID} 'touch ./jenkins/.shut-down' || condor_ssh_to_job -auto-retry ${JOBID} 'touch ./jenkins/.shut-down'  || true
+    condor_status
   fi
 fi
 
@@ -98,6 +100,7 @@ while true ; do
   fi
 done
 echo EXIT_CODE $EXIT_CODE
+condor_status
 condor_transfer_data $JOBID || true
 ls -l
 if [ -f log.stdout ] ; then cat log.stdout ; fi

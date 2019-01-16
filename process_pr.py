@@ -203,6 +203,7 @@ def check_test_cmd(first_line):
     cmssw_prs= ""
     cmsdist_pr = ""
     cmssw_que = ""
+    print m.groups()
     if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
     if m.group(11): cmssw_prs = get_test_prs(m.group(11))
     if m.group(16): cmsdist_pr = get_test_prs(m.group(16))

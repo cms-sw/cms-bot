@@ -25,6 +25,7 @@ if [ $REQUEST_MAXRUNTIME -lt 3600 ] ; then REQUEST_MAXRUNTIME=3600 ; fi
 ##########################################
 here=$(dirname $0)
 JOBID=$(echo $1 | sed 's|\.[0-9]*$||')
+SHUTDOWN=$2
 cd $WORKSPACE
 
 if [ "${JOBID}" = "" ] ; then
@@ -61,7 +62,10 @@ if [ "${JOBID}" = "" ] ; then
   if [ "$JOBID" = "" ] ; then exit 1 ; fi
   sleep $WAIT_GAP
 else
-  echo "Warhcing Condor Job Id: ${JOBID}"
+  echo "Watching Condor Job Id: ${JOBID}"
+  if [ "$SHUTDOWN" = "true" ] ; then
+    condor_ssh_to_job -auto-retry ${JOBID} 'touch ./jenkins/.shut-down' || condor_ssh_to_job -auto-retry ${JOBID} 'touch ./jenkins/.shut-down'  || true
+  fi
 fi
 
 echo "$JOBID" > job.id
@@ -69,6 +73,7 @@ echo "$JOBID" > job.id
 EXIT_CODE=1
 PREV_JOB_STATUS=""
 while true ; do
+  sleep $WAIT_GAP
   JOB_STATUS=$(condor_q -json -attributes JobStatus $JOBID | grep 'JobStatus' | sed 's|.*: *||;s| ||g')
   eval JOB_STATUS_MSG=$(echo \$$(echo JOBS_STATUS_${JOB_STATUS}))
   if [ "${PREV_JOB_STATUS}" != "${JOB_STATUS}${ERROR_COUNT}" ] ; then
@@ -91,7 +96,6 @@ while true ; do
     condor_q -json -attributes $JOBID || true
     break
   fi
-  sleep $WAIT_GAP
 done
 echo EXIT_CODE $EXIT_CODE
 condor_transfer_data $JOBID || true

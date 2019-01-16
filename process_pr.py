@@ -207,7 +207,7 @@ def check_test_cmd(first_line):
     if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
     if m.group(11): cmssw_prs = get_test_prs(m.group(11))
     if m.group(16): cmsdist_pr = get_test_prs(m.group(16))
-    if m.group(19): cmsdist_pr = cmssw_que=m.group(19)
+    if m.group(19): cmssw_que = m.group(19)
     return (True, cmsdist_pr, cmssw_prs, wfs, cmssw_que)
   return (False, "", "", "", "")
 

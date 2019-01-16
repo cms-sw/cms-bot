@@ -133,7 +133,10 @@ CMS_WEEKLY_REPO=cms.week$(echo $(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||') 
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${PUB_USER}" = X ] ; then export PUB_USER="cms-sw" ; fi  # TODO-export PUB_USER should be avoided ?
 
+# this is to automount directories in cvmfs, otherwise they wont show up
 ls /cvmfs/cms.cern.ch
+ls /cvmfs/cms-ib.cern.ch || true
+
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 echo_section "Pull request checks"
@@ -387,13 +390,10 @@ if ${BUILD_EXTERNAL} ; then
 fi # end of build external
 echo_section "end of build external"
 
-# Launch the pr-tests to check CMSSW by passing on the global variables
-# Merge into one script
-# ------ TODO included run-cmssw.sh
-
+# This part responsible for testing CMSSW
+echo_section "Testing CMSSW"
 source ${CMS_BOT_DIR}/jenkins-artifacts
 voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artifact machine
-ls /cvmfs/cms-ib.cern.ch || true
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 if [ "X${PUB_USER}" = X ]; then PUB_USER="cms-sw" ; fi  # TODO I need it ?

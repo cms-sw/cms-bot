@@ -36,6 +36,7 @@ CMSSW_PR_PATTERN=format("(#[0-9]+|https://+github.com/+%(cmssw_repo)s/+pull/+[0-
 CMSDIST_PR_PATTERN=format("(%(cmsdist_repo)s#[0-9]+|https://+github.com/+%(cmsdist_repo)s/+pull/+[0-9]+/*|)", cmsdist_repo=CMSDIST_REPO_NAME)
 CMSSW_RELEASE_QUEUE_PATTERN='(CMSSW_[1-9][0-9]*_[1-9][0-9]*_([A-Z][A-Z0-9]+_|)X)'
 TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|)|)(\s+for(\s+%(release_queue)s)|)\s*$",
+                     workflow=WF_PATTERN,
                      cmssw_pr=CMSSW_PR_PATTERN,
                      cmsdist_pr=CMSDIST_PR_PATTERN,
                      release_queue=CMSSW_RELEASE_QUEUE_PATTERN)

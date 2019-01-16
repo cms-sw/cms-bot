@@ -34,9 +34,8 @@ HOLD_MSG = "Pull request has been put on hold by "
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_PR_PATTERN=format("(#[0-9]+|https://+github.com/+%(cmssw_repo)s/+pull/+[0-9]+/*|)", cmssw_repo=CMSSW_REPO_NAME)
 CMSDIST_PR_PATTERN=format("(%(cmsdist_repo)s#[0-9]+|https://+github.com/+%(cmsdist_repo)s/+pull/+[0-9]+/*|)", cmsdist_repo=CMSDIST_REPO_NAME)
-CMSSW_RELEASE_QUEUE_PATTERN='CMSSW_[1-9][0-9]*_[1-9][0-9]*_([A-Z][A-Z0-9]+_|)X'
-TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|\s+%(release_queue)s|)|)\s*$",
-                     workflow=WF_PATTERN,
+CMSSW_RELEASE_QUEUE_PATTERN='(CMSSW_[1-9][0-9]*_[1-9][0-9]*_([A-Z][A-Z0-9]+_|)X)'
+TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|)|)(\s+for(\s+%(release_queue)s)|)\s*$",
                      cmssw_pr=CMSSW_PR_PATTERN,
                      cmsdist_pr=CMSDIST_PR_PATTERN,
                      release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
@@ -205,9 +204,8 @@ def check_test_cmd(first_line):
     cmssw_que = ""
     if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
     if m.group(11): cmssw_prs = get_test_prs(m.group(11))
-    if m.group(16):
-      if REL_QUEUE_REG.match(m.group(16)): cmssw_que=m.group(16)
-      else: cmsdist_pr = get_test_prs(m.group(16))
+    if m.group(16): cmsdist_pr = get_test_prs(m.group(16))
+    if m.group(19): cmsdist_pr = cmssw_que=m.group(16)
     return (True, cmsdist_pr, cmssw_prs, wfs, cmssw_que)
   return (False, "", "", "", "")
 

@@ -45,15 +45,15 @@ let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 
 KERBEROS_REFRESH=0
 FORCE_EXIT=false
-CHK_GAP=60
+CHK_GAP=10
 if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 set +x
 while true ; do
   sleep $CHK_GAP
+  if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)
-  if $FORCE_EXIT ; then
-    if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
-    if [ $CTIME -gt ${FORCE_EXIT_AT} ]     ; then break ; fi
+  if [ $CTIME -gt ${FORCE_EXIT_AT} ] ; then
+    break
   elif [ $CTIME -gt ${OFFLINE_NOTICE_TIME} ] ; then
     echo "Sending going to Offline notification"
     echo exit > ${WORKSPACE}/.auto-load

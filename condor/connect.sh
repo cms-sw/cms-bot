@@ -65,6 +65,7 @@ else
   echo "Watching Condor Job Id: ${JOBID}"
   if [ "$SHUTDOWN" = "true" ] ; then
     echo "Trying to shutdown the node"
+    set -x
     condor_ssh_to_job -auto-retry ${JOBID} 'touch ./jenkins/.shut-down' || condor_ssh_to_job -auto-retry ${JOBID} 'touch ./jenkins/.shut-down'  || true
     condor_q 
   fi

@@ -93,6 +93,7 @@ while true ; do
   else
     if [ "$JOB_STATUS" = "5" ] ; then condor_q -json -attributes HoldReason $JOBID | grep 'HoldReason' | sed 's|"||g;s|^ *HoldReason: *||' || true ; fi
     let ERROR_COUNT=$ERROR_COUNT+1
+    if [ "$SHUTDOWN" = "true" ] ; then ERROR_COUNT=$MAX_ERROR_COUNT ; fi
   fi
   if [ $ERROR_COUNT -ge $MAX_ERROR_COUNT ] ; then
     condor_q -json -attributes $JOBID || true

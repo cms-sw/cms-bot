@@ -35,7 +35,6 @@ else
   curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
 fi
 
-JENKINS_PAYLOAD='{"jenkins_url":"@JENKINS_CALLBACK@","signature":"'${SIGNATURE}'","work_dir":"", "condor_job_id":"'${JOB_ID}'", "labels":"", "status":"@STATE@"}'
 REQUEST_MAXRUNTIME=$(grep '^ *MaxRuntime *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
 let OFFLINE_NOTICE_SEC="${REQUEST_MAXRUNTIME}/10"
 let FORCE_EXIT_SEC="${OFFLINE_NOTICE_SEC}/10"

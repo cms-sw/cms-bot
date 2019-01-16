@@ -34,11 +34,14 @@ HOLD_MSG = "Pull request has been put on hold by "
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_PR_PATTERN=format("(#[0-9]+|https://+github.com/+%(cmssw_repo)s/+pull/+[0-9]+/*|)", cmssw_repo=CMSSW_REPO_NAME)
 CMSDIST_PR_PATTERN=format("(%(cmsdist_repo)s#[0-9]+|https://+github.com/+%(cmsdist_repo)s/+pull/+[0-9]+/*|)", cmsdist_repo=CMSDIST_REPO_NAME)
-TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|)|)\s*$",
+CMSSW_RELEASE_QUEUE_PATTERN='CMSSW_[1-9][0-9]*_[1-9][0-9]*_([A-Z][A-Z0-9]+_|)X'
+TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|\s+%(release_queue)s|)|)\s*$",
                      workflow=WF_PATTERN,
                      cmssw_pr=CMSSW_PR_PATTERN,
-                     cmsdist_pr=CMSDIST_PR_PATTERN)
-REGEX_TEST_REQ = re.compile(TEST_REGEXP, re.I)
+                     cmsdist_pr=CMSDIST_PR_PATTERN,
+                     release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
+REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
+REL_QUEUE_REG=re.compile('^'+CMSSW_RELEASE_QUEUE_PATTERN+'$')
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
 
@@ -69,7 +72,7 @@ def read_repo_file(repo_config, repo_file, default=None):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None, ignore_tests=[], enabled_tests=[]):
+def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, req_type="tests", repo_config=None, ignore_tests=[], enabled_tests=[], release_queue=''):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
   if (req_type in "tests"):
@@ -85,6 +88,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   parameters['ENABLE_BOT_TESTS']=",".join(enabled_tests)
   parameters['MATRIX_EXTRAS']=extra_wfs
   parameters['PUB_USER']=repo_parts[0]
+  parameters['RELEASE_FORMAT']=release_queue
   if repository.endswith("/"+GH_CMSDIST_REPO):
     parameters['CMSDIST_PR']=pr_number
   else:
@@ -193,16 +197,19 @@ def get_test_prs(test_command):
   return ",".join(prs)
 
 def check_test_cmd(first_line):
-  m = REGEX_TEST_REQ.match(first_line)
+  m = REGEX_TEST_REG.match(first_line)
   if m:
     wfs = ""
     cmssw_prs= ""
     cmsdist_pr = ""
+    cmssw_que = ""
     if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
     if m.group(11): cmssw_prs = get_test_prs(m.group(11))
-    if m.group(16): cmsdist_pr = get_test_prs(m.group(16))
-    return (True, cmsdist_pr, cmssw_prs, wfs)
-  return (False, "", "", "")
+    if m.group(16):
+      if REL_QUEUE_REG.match(m.group(16)): cmssw_que=m.group(16)
+      else: cmsdist_pr = get_test_prs(m.group(16))
+    return (True, cmsdist_pr, cmssw_prs, wfs, cmssw_que)
+  return (False, "", "", "", "")
 
 def get_changed_files(repo, pr, use_gh_patch=False):
   if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
@@ -408,6 +415,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   external_issue_number=""
   trigger_test_on_signature = True
   has_categories_approval = False
+  release_queue = ''
   cmsdist_pr = ''
   cmssw_prs = ''
   extra_wfs = ''
@@ -595,9 +603,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
       # Check if the someone asked to trigger the tests
       if valid_commenter:
-        ok, cmsdist_pr, cmssw_prs, extra_wfs = check_test_cmd(first_line)
+        ok, cmsdist_pr, cmssw_prs, extra_wfs,release_queue = check_test_cmd(first_line)
         if ok:
-          print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, extra_wfs)
+          print 'Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s, release_queue=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, release_queue, extra_wfs)
           print "Comment message:",first_line
           trigger_test_on_signature = False
           if tests_already_queued:
@@ -853,7 +861,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         issue.create_comment( test_msg )
         if cmsdist_issue: cmsdist_issue.create_comment(TRIGERING_TESTS_MSG+"\nUsing cmssw from "+CMSSW_REPO_NAME+"#"+str(prId))
         if (not cmsdist_pr) or cmsdist_issue:
-          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config, ignore_tests=ignore_tests, enabled_tests=enabled_tests)
+          create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config, ignore_tests=ignore_tests, enabled_tests=enabled_tests, release_queue=release_queue)
       elif abort_test:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         if cmsdist_issue: cmsdist_issue.create_comment( TRIGERING_TESTS_ABORT_MSG )

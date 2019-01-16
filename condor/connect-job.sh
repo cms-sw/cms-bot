@@ -1,5 +1,12 @@
 #!/bin/bash -ex
-START_TIME=$(date +%s)
+LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
+mkdir -p ${LOCAL_DATA}
+if [ -f ${LOCAL_DATA}/start_time ] ; then
+  START_TIME=$(cat ${LOCAL_DATA}/start_time | head -1)
+else
+  START_TIME=$(date +%s)
+  echo "$START_TIME" > ${LOCAL_DATA}/start_time
+fi
 export WORKSPACE=${_CONDOR_SCRATCH_DIR}/jenkins
 rm -rf ${WORKSPACE}
 mkdir -p $WORKSPACE/cache $WORKSPACE/workspace ${WORKSPACE}/tmp
@@ -19,8 +26,14 @@ SIGNATURE=$(echo -n "${JOB_ID}:${WORKSPACE} ${TOKEN}" | sha256sum | sed 's| .*||
 JENKINS_PAYLOAD='{"jenkins_url":"@JENKINS_CALLBACK@","signature":"'${SIGNATURE}'","work_dir":"'${WORKSPACE}'", "condor_job_id":"'${JOB_ID}'", "labels":"'${SLAVE_LABELS}'", "status":"@STATE@"}'
 
 CURL_OPTS='-s -k -f --retry 3 --retry-delay 5 --max-time 30 -X POST'
-SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|online|')
-curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+if [ ! -f ${LOCAL_DATA}/online ] then
+  SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|online|')
+  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+  touch ${LOCAL_DATA}/online
+else
+  SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|reconfigure|')
+  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+fi
 
 JENKINS_PAYLOAD='{"jenkins_url":"@JENKINS_CALLBACK@","signature":"'${SIGNATURE}'","work_dir":"", "condor_job_id":"'${JOB_ID}'", "labels":"", "status":"@STATE@"}'
 REQUEST_MAXRUNTIME=$(grep '^ *MaxRuntime *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
@@ -34,6 +47,7 @@ let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 KERBEROS_REFRESH=0
 FORCE_EXIT=false
 CHK_GAP=60
+if [ ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 set +x
 while true ; do
   sleep $CHK_GAP
@@ -47,6 +61,7 @@ while true ; do
     FORCE_EXIT=true
     SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|offline|')
     curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+    touch ${LOCAL_DATA}/offline
   fi
   let KERBEROS_REFRESH_GAP=$CTIME-$KERBEROS_REFRESH
   if [ $KERBEROS_REFRESH_GAP -gt 21600 ] ; then

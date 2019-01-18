@@ -109,22 +109,16 @@ getHeader = function( resultsDict ){
   ibLink.attr( 'href' , getLinkToIB( resultsDict[ BASE_IB_KEY ] ) )
 
   var subtitle = $( '<h3>' )
-  subtitle.append( ibLink ).append( $( '<span>' ).text( '<br/>' ) )
+  subtitle.append( ibLink ).append( $( '<br/>' ))
 
-   // for ( var pr in resultsDict[ PR_NUMBERS_KEY ].split(',') ){
-   //   var prLink = $( "<a>" ).text( pr );
-   //   prLink.attr( 'href' , getLinkToPR( pr ) );
-   //   subtitle.append(prLink).append("<br/>")
-   // }
+    PRS = resultsDict[ PR_NUMBERS_KEY ].split(' ')
+    $.each( PRS , function( index ){
 
-    addPRParts = resultsDict[ PR_NUMBERS_KEY ].split( ',' )
-    $.each( addPRParts , function( index ){
-      
-      var pr = addPRParts[ index ]
+      var pr = PRS[ index ]
       var addPrLink = $( "<a>" ).text( pr )
       addPrLink.attr( 'href' , getLinkToPR( pr ) )
-      subtitle.append( $( '<span>' ).text( ', ' ) ).append( addPrLink )
-  
+      subtitle.append( $( '<span>' ).text( ' ' ) ).append( addPrLink )
+
     })
 
 
@@ -141,7 +135,7 @@ getHeader = function( resultsDict ){
   header.append( $( '<br>' ) )
 
   return header
- 
+
 
 }
 
@@ -260,3 +254,4 @@ LOCATIONS[ DUPLICATE_DICT_RULES_KEY ] = 'dupDict'
 LOCATIONS[ MATERIAL_BUDGET_TESTS_KEY ] = 'material-budget'
 
 BASE_COMPARISONS_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisons/'
+

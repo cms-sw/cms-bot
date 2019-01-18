@@ -327,6 +327,8 @@ CMSSW_CATEGORIES = {
     "IOPool/Streamer",
     "IOPool/TFileAdaptor",
     "IgTools/IgProf",
+    "LICENSE",
+    "NOTICE",
     "PerfTools/Callgrind",
     "PerfTools/EdmEvent",
     "Utilities/DCacheAdaptor",

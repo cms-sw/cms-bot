@@ -1090,7 +1090,7 @@ def generate_separated_json_results( results ):
 def get_production_archs(config_map):
   archs = {}
   for release in config_map:
-    if ('PROD_ARCH' in release and (('DISABLED' not in release) or ('IB_WEB_PAGE' in release)):
+    if (('PROD_ARCH' in release) and (('DISABLED' not in release) or ('IB_WEB_PAGE' in release))):
       archs[release['RELEASE_QUEUE']] = release['SCRAM_ARCH']
   return archs
 

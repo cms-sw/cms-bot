@@ -1,0 +1,7 @@
+#Map between groups and github users, format of this file is
+#groupname:
+#  - gh_user
+#  - gh_user
+#groupname:
+#  - gh_user
+#  - gh_user

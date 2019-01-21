@@ -30,8 +30,8 @@ if [[ "$RELEASE_QUEUE" == "master" ]] ; then
 fi
 
 ARCH_MATCH=$(formatFilter 'SCRAM_ARCH' "${ARCHITECTURE}")
-CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' ${RELEASE_QUEUE})
-CMSDIST_TAG_MATCH=$(formatFilter 'CMSDIST_TAG' ${CMS_DIST_TAG})
+CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' "${RELEASE_QUEUE}")
+CMSDIST_TAG_MATCH=$(formatFilter 'CMSDIST_TAG' "${CMS_DIST_TAG}")
 
 FILTERED_LINES=$(cat ${CONFIG_MAP} | grep -v '^ *#' | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep ${CMS_SW_TAG_MATCH} | grep ${CMSDIST_TAG_MATCH} | grep ${ARCH_MATCH} | tr '\n' '#' )
 if [ $(echo "${FILTERED_LINES}" | tr '#' '\n' | grep -c "$ARCH_MATCH" ) -gt 1 ] ; then

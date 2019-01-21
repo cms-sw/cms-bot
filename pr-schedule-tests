@@ -26,16 +26,15 @@ if [ ! -z ${GITHUB_PR_TO_SEARCH} ] ; then
     CMSDIST_TAG=$(get_base_branch "$GITHUB_PR_TO_SEARCH" )
 fi
 GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
-if [[ ! -z ${GITHUB_PR_TO_SEARCH} ]] ; then
+if [ ! -z ${GITHUB_PR_TO_SEARCH} ] ; then
     CMSSW_BR=$(get_base_branch ${GITHUB_PR_TO_SEARCH})
 fi
 if [ "$RELEASE_FORMAT" != "" ] ; then
     RELEASE_QUEUE="$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|')"
 fi
-XVZ=${RELEASE_QUEUE-$CMSSW_BR}
 CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "${RELEASE_QUEUE-$CMSSW_BR}" "$CMSDIST_TAG" "${ARCHITECTURE_FILTER}") || true
 if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; then
-    eval $MLINES
+    eval $CONFIG_LINE
     OUTPUT_FILE=properties-pr-test-${SCRAM_ARCH}.txt
     echo PULL_REQUEST=${PULL_REQUEST} > $OUTPUT_FILE
     echo PULL_REQUESTS=${PULL_REQUESTS} >> $OUTPUT_FILE
@@ -66,6 +65,6 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo DOCKER_IMG=${DOCKER_IMG} >> $OUTPUT_FILE
     echo IGNORE_BOT_TESTS=${IGNORE_BOT_TESTS} >> $OUTPUT_FILE
 else
-    exit_with_report_failure_main_pr "RELEASE_NOT_FOUND" --pr-job-id ${BUILD_NUMBER} --no-post
+    exit_with_report_failure_main_pr "RELEASE_NOT_FOUND" --pr-job-id ${BUILD_NUMBER}
 fi
 

@@ -54,7 +54,7 @@ function git_clone_and_merge (){
 function get_base_branch(){
     # get branch to which to merge from GH PR json
     PR_METADATA_PATH=$(get_cached_GH_JSON "$1")
-    echo ${PR_METADATA_PATH}
+    # echo ${PR_METADATA_PATH}
     EXTERNAL_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
     fail_if_empty "${EXTERNAL_BRANCH}" "PR had errors - ${1}"
     echo ${EXTERNAL_BRANCH}
@@ -64,5 +64,11 @@ function echo_section(){
     echo "---------|  $@  |----------"
 }
 
+function fail_if_empty(){
+    if [ -z $(echo "$1" | tr -d ' ' ) ]; then
+        exit_with_comment_failure_main_pr -m "ERROR: empty variable. ${2}." ${DRY_RUN} || true
+        exit 1
+    fi
+}
 
 

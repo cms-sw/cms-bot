@@ -11,7 +11,7 @@ function modify_comment_all_prs() {
     done
 }
 
-function report-pull-request-results_all_prs() {
+function report_pull_request_results_all_prs() {
     # post message of test status on Github on all PR's
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
@@ -20,7 +20,7 @@ function report-pull-request-results_all_prs() {
     done
 }
 
-function report-pull-request-results_all_prs_with_commit() {
+function report_pull_request_results_all_prs_with_commit() {
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )

@@ -78,7 +78,7 @@ if [ -z ${RELEASE_FORMAT} ]; then
 fi
 
 CMSSW_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
-PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ' | tr ' ' '/n' |  grep -v '^$' | tr '\n' ' ')  # to make consistent separation in list
+PULL_REQUESTS=$(echo ${PULL_REQUESTS} | sed 's/ //g' | tr ',' ' ' | sed 's/^ *//;s/ *$//' )  # to make consistent separation in list
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )  # Repos without pull number
 fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )

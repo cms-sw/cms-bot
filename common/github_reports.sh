@@ -32,7 +32,7 @@ function report_pull_request_results_all_prs_with_commit() {
 function exit_with_comment_failure_main_pr(){
     # $@ - aditonal options
     # report that job failed to the first PR (that should be our main PR)
-    PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | head -1  ) # get main(first) pr
+    PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '^$' | head -1  ) # get main(first) pr
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//')
     PR_NR=$(echo ${PR} | sed 's/.*#//')
     ${CMS_BOT_DIR}/comment-gh-pr -r ${PR_NAME_AND_REPO} -p ${PR_NR} "$@"
@@ -42,7 +42,7 @@ function exit_with_comment_failure_main_pr(){
 function exit_with_report_failure_main_pr(){
     # $@ - aditonal options
     # report that job failed to the first PR (that should be our main PR)
-    PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | head -1  ) # get main(first) pr
+    PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '^$' | head -1  ) # get main(first) pr
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//')
     PR_NR=$(echo ${PR} | sed 's/.*#//')
     ${CMS_BOT_DIR}/report-pull-request-results  "$@" --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}

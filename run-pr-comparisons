@@ -51,16 +51,6 @@ done
 #remove first ,
 WORKFLOWS_TO_COMPARE=`echo $WORKFLOWS_TO_COMPARE | sed 's/^.//'`
 
-DETAILS_FILE=$WORKSPACE/'comparisonDetails.txt'
-echo 'BASE_IB;'$RELEASE_FORMAT >> $DETAILS_FILE
-echo 'PR_NUMBER;'$PULL_REQUEST_NUMBER >> $DETAILS_FILE
-echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $DETAILS_FILE
-echo 'ARCHITECTURE;'$ARCHITECTURE >> $DETAILS_FILE
-echo 'REAL_ARCH;'$REAL_ARCH >> $DETAILS_FILE
-echo 'COMPARISON_ARCH;'$COMPARISON_ARCH >> $DETAILS_FILE
-echo 'MACHINE ARCHITECTURE:' >> $DETAILS_FILE
-cat /proc/cpuinfo |  grep "model name" >> $DETAILS_FILE
-
 ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh

@@ -29,7 +29,7 @@ if [[ "$RELEASE_QUEUE" == "master" ]] ; then
     RELEASE_QUEUE=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' ${CMS_BOT_DIR}/releases.py | sed 's/.*= *//;s/"//g;s/ //g'  )
 fi
 
-ARCH_MATCH=$(formatFilter 'SCRAM_ARCH' ${ARCHITECTURE})
+ARCH_MATCH=$(formatFilter 'SCRAM_ARCH' "${ARCHITECTURE}")
 CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' ${RELEASE_QUEUE})
 CMSDIST_TAG_MATCH=$(formatFilter 'CMSDIST_TAG' ${CMS_DIST_TAG})
 

@@ -20,6 +20,7 @@ if [ "X$PULL_REQUESTS" = "X" ] ; then
         PULL_REQUESTS="$PULL_REQUESTS cms-sw/cmsdist#$CMSDIST_PR"
     fi
 fi
+PULL_REQUESTS=$(echo $PULL_REQUESTS | sed 's/^ *//;s/ *$//')
 GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
 CMSDIST_TAG=  # To make sure no one set to different value by accident.
 if [ ! -z ${GITHUB_PR_TO_SEARCH} ] ; then

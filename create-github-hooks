@@ -3,7 +3,7 @@ from github import Github
 from os.path import expanduser , exists, join, dirname, abspath
 from os import environ
 from optparse import OptionParser
-from github_hooks_config import get_repository_hooks
+from github_hooks_config import get_repository_hooks, get_event_hooks
 from github_utils import api_rate_limits
 import hashlib, re
 from categories import EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS
@@ -80,15 +80,20 @@ if __name__ == "__main__":
   #process repos
   for repo_name in repos:
     gh = ghx
+    isUserRepo = False
     if exists (join(SCRIPT_DIR,"repos",repo_name,"repo_config.py")):
       exec 'from repos.'+repo_name.replace("/",".")+' import repo_config'
       if not repo_config.ADD_WEB_HOOK:
         print "Skipped Web hook:",repo_name
         continue
+      isUserRepo = True
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       repo_name = repo_config.GH_REPO_FULLNAME
     print "Checking for repo ",repo_name
-    hk_conf = get_repository_hooks (repo_name, opts.hook)
+    if isUserRepo:
+      hk_conf = get_event_hooks(repo_config.VALID_WEB_HOOKS)
+    else:
+      hk_conf = get_repository_hooks (repo_name, opts.hook)
     hooks = hk_conf.keys()
     if not hooks:
       print "==>Warning: No hook found for repository",repo_name
@@ -125,4 +130,3 @@ if __name__ == "__main__":
           repo.create_hook(**hook_conf)
           api_rate_limits(gh)
         print "Hook created in github.....success",hook
-

@@ -15,7 +15,7 @@ JENKINS_SERVER="http://cmsjenkins05.cern.ch:8080/cms-jenkins"
 #GH Web hook pass phrase. This is encrypeted used bot keys.
 GITHUB_WEBHOOK_TOKEN='U2FsdGVkX1+GEHdp/Cmu73+ctvrzSGXc9OvL+8bZyjOe6ZPkqr/GIPgpJHiEp+hR'
 #Set to True if you want bot to add build/test labels to your repo
-ADD_LABELS=True
+ADD_LABELS=False
 #Set to True if you want bot to add GH webhooks. cmsbot needs admin rights
 ADD_WEB_HOOK=False
 #List of issues/pr which bot should ignore

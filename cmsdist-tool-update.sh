@@ -75,7 +75,7 @@ if [ "$TOOL_BRANCH" = "" ] ; then
   TOOL_BRANCH=$(get_rpm_marco_value cmsdist/${TOOL}.spec branch |  cut -d/ -f2)
 fi
 if [ "X$TOOL_BRANCH" = "X" ] ; then echo "Missing tool branch name"; exit 1; fi
-
+TOOL_CHECKOUT_CMD="; git checkout $TOOL_BRANCH"
 if [ $(echo $3 | grep ':' | wc -l) -gt 0 ] ; then
   TOOL_CHECKOUT_CMD="${TOOL_CHECKOUT_CMD} ; git checkout $(echo $3 | sed 's|.*:||')"
 fi
@@ -102,7 +102,7 @@ TOOL_REG_BRANCH=$5
 TOOL_REG_TAG=$6
 TOOL_FORK_REPO=$7
 TOOL_REPO_NAME=$(echo $TOOL_FORK_REPO | sed 's|.*/||')
-TOOL_DOWNOAD_CMD="git clone git@github.com:${TOOL_FORK_REPO} ${TOOL_REPO_NAME}; cd ${TOOL_REPO_NAME}; ${TOOL_CHECKOUT_CMD}"
+TOOL_DOWNOAD_CMD="git clone git@github.com:${TOOL_FORK_REPO} ${TOOL_REPO_NAME}; cd ${TOOL_REPO_NAME} ${TOOL_CHECKOUT_CMD}"
 OLD_CMS_BRANCH=$(get_rpm_marco_value cmsdist/${TOOL}.spec ${TOOL_REG_BRANCH} | grep '^cms/')
 OLD_TOOL_HASH=$(echo $OLD_CMS_BRANCH  | sed 's|^cms.*/||')
 if [ "X$OLD_TOOL_HASH" = "X" ] ; then

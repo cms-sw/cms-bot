@@ -42,9 +42,10 @@ function prepare_upload_results (){
     for f in build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
-    [ -e upload/renderPRTests.js ] && mkdir -p upload/js && mv upload/renderPRTests.js upload/js/
-    [ -e upload/matrixTests.log  ] && mkdir -p upload/runTheMatrix-results && mv upload/matrixTests.log upload/runTheMatrix-results/
-    [ -d upload/addOnTests       ] && find upload/addOnTests -name '*.root' -type f | xargs rm -f
+    if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
+    if [ -e upload/matrixTests.log  ] ; then mkdir -p upload/runTheMatrix-results && mv upload/matrixTests.log upload/runTheMatrix-results/ ; fi
+    if [ -d upload/addOnTests       ] ; then find upload/addOnTests -name '*.root' -type f | xargs rm -f ; fi
+    echo "Preparation done"
 }
 
 function prepare_upload_comment_exit(){

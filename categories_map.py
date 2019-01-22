@@ -624,6 +624,7 @@ CMSSW_CATEGORIES = {
     "Validation/GlobalDigis",
     "Validation/GlobalHits",
     "Validation/GlobalRecHits",
+    "Validation/HGCalTriggerPrimitives",
     "Validation/HGCalValidation",
     "Validation/HcalDigis",
     "Validation/HcalHits",

@@ -50,3 +50,11 @@ def get_repository_hooks(repo_name, hook=""):
       break
   return hooks
 
+def get_event_hooks(events):
+  hooks = {}
+  for ev in events:
+    hook = None
+    if ev in ["push"]: hook="Jenkins_Github_Hook_Push"
+    elif ev in ["issues","pull_request","issue_comment"]: hook="Jenkins_Github_Hook"
+    if hook: hooks[hook] = GITHUB_HOOKS[hook]
+  return hooks

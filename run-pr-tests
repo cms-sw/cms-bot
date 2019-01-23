@@ -187,9 +187,9 @@ touch $RECENT_COMMITS_FILE
 if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
   if [ "X$BRANCH_NAME" = X ]; then
     if [ "${PUB_USER}" = "cms-sw" ]; then
-      (git cms-merge-topic --ssh -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      (git cms-merge-topic --debug --ssh -u $PULL_REQUEST && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
-      (/cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      (/cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic --debug -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
   else
     (git cms-merge-topic --debug --ssh -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
@@ -367,7 +367,7 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_P
   echo 'STATIC_CHECKS;OK' >> $RESULTS_FILE
   echo '--------------------------------------'
   pushd $WORKSPACE/$RELEASE_FORMAT
-  git cms-addpkg --ssh Utilities/StaticAnalyzers
+  git cms-addpkg --debug --ssh Utilities/StaticAnalyzers
   mkdir $WORKSPACE/llvm-analysis
   USER_CXXFLAGS='-Wno-register' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" scram b -k -j $(Jenkins_GetCPU *2) checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
   cp -R $WORKSPACE/$RELEASE_FORMAT/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
@@ -392,11 +392,11 @@ if [ "X$DQM_TESTS" = "Xtrue" ] ; then
         if ls $WORKSPACE/$RELEASE_FORMAT/src/DQMServices/| grep "Components"; then
           echo "and DQMServices/Components is there"
         else
-          git cms-addpkg --ssh DQMServices/Components
+          git cms-addpkg --debug  --ssh DQMServices/Components
         fi
     else
       echo "checking out DQMServices"
-      git cms-addpkg --ssh DQMServices
+      git cms-addpkg --debug  --ssh DQMServices
     fi
   fi
 fi

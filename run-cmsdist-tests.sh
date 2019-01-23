@@ -203,7 +203,7 @@ eval $(scram runtime -sh)
 touch $WORKSPACE/cmsswtoolconf.log
 echo "DEP_NAMES: ${DEP_NAMES}"
 if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
-  git cms-addpkg --ssh '*'
+  git cms-addpkg  --debug --ssh '*'
   rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
   scram setup self
   scram setup

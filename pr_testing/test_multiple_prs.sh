@@ -1013,7 +1013,7 @@ else
 fi
 
 rm -f all_done  # delete file
-if [ -z ${NO_POST} ]; then
+if [ -z ${NO_POST} ] ; then
     send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER} && touch all_done
     if [ -d $LOCALRT/das_query ] ; then
       send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/PR || true
@@ -1024,8 +1024,12 @@ if [ -f all_done ] ; then
   rm -f all_done
     # Doc: report everything back unless no matter if ALL_OK was true or false.
     report_pull_request_results_all_prs_with_commit ${REPORT_OPTS}
+elif [ ! -z ${NO_POST} ] ; then
+    # Doc: if --no-post flag is set, output comments and continue to next code block.
+    report_pull_request_results_all_prs_with_commit ${REPORT_OPTS}
 else
-  exit 1 # Doc: if upload to jenkins failed, exit with error
+  echo "Error: upload to Jenkins server failed."
+  exit 1
 fi
 
 COMP_MSG="Comparison job queued."

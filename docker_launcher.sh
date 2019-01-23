@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 kinit -R || true
-for repo in cms cms-ib grid projects ; do
+for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
 RUN_NATIVE=
@@ -42,7 +42,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     CLEAN_UP_CACHE=false
-    if [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
+    if [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
+      DOCKER_IMG=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
+    elif [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
       DOCKER_IMG=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
     else
       DOCKER_IMG="docker://$DOCKER_IMG"

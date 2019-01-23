@@ -201,6 +201,7 @@ eval $(scram runtime -sh)
 
 # Search for CMSSW package that might depend on the compiled externals
 touch $WORKSPACE/cmsswtoolconf.log
+echo "DEP_NAMES: ${DEP_NAMES}"
 if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   git cms-addpkg --ssh '*'
   rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
@@ -209,8 +210,9 @@ if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   eval $(scram runtime -sh)
 elif [ "X${DEP_NAMES}" != "X" ] ; then
   CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+  echo "CMSSW Packages: ${CMSSW_DEP}"
   if [ "X${CMSSW_DEP}" != "X" ] ; then
-    git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+    git cms-addpkg --debug --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
   fi
 fi
 set -x

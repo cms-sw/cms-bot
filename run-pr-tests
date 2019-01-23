@@ -192,7 +192,7 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
       (/cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PULL_REQUEST} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi
   else
-    (git cms-merge-topic --ssh -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    (git cms-merge-topic --debug --ssh -u $BRANCH_NAME && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
   fi
 
   # this is to test several pull requests at the same time
@@ -200,7 +200,7 @@ if [ "X$CMSDIST_ONLY" = Xfalse ]; then # If a CMSSW specific PR was specified
     echo 'I will add the following pull request to the test'
     echo $PR;
     if [ "${PUB_USER}" = "cms-sw" ]; then
-      git cms-merge-topic --ssh -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+      git cms-merge-topic --debug --ssh -u $PR 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     else
       /cvmfs/cms-ib.cern.ch/jenkins-env/git-tools/git-cms-merge-topic -u ${PUB_USER}:${PR} 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
     fi

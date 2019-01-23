@@ -37,6 +37,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset PROD_ARCH
     unset BUILD_DAY
     unset SLAVE_LABELS
+    unset SINGULARITY
     eval "$IB_INFO"
     if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
@@ -88,6 +89,9 @@ for QUEUE in $RELEASE_QUEUES; do
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties
     else
       echo "RELEASE_LIST=" >> $WORKSPACE/properties
+    fi
+    if [ "X$SINGULARITY" = "X1" ] ; then
+      echo "USE_SINGULARITY=true" >> $WORKSPACE/properties
     fi
     ORDER_INDEX=`expr $ORDER_INDEX + 1`
     BUILD_ORDER=`echo 000${ORDER_INDEX} | tail -c 4`

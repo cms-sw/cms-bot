@@ -30,7 +30,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     case $XUSER in
       cmsbld ) DOCKER_OPT="${DOCKER_OPT} -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group" ;;
     esac
-    for e in $DOCKER_JOB_ENV WORKSPACE BUILD_NUMBER JOB_NAME; do DOCKER_OPT="${DOCKER_OPT} -e $e=$(eval echo \$$e)"; done
+    for e in $DOCKER_JOB_ENV WORKSPACE BUILD_NUMBER JOB_NAME; do DOCKER_OPT="${DOCKER_OPT} -e $e=\"$(eval echo \$$e)\""; done
     for m in $(echo $MOUNT_POINTS,/etc/localtime,${BUILD_BASEDIR},/home/$XUSER | tr ',' '\n') ; do
       if [ $(echo $m | grep ':' | wc -l) -eq 0 ] ; then m="$m:$m";fi
       DOCKER_OPT="${DOCKER_OPT} -v $m"

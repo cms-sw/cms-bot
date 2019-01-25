@@ -12,7 +12,7 @@
   <launcher class="hudson.slaves.CommandLauncher" plugin="command-launcher@1.2">
     <agentCommand>@CMS_BOT_DIR@/condor/jenkins/connect.sh @CONDOR_USER@@@CONDOR_SUMBITTER_SYSTEM@ @CONDOR_JOB_ID@.0</agentCommand>
   </launcher>
-  <label>condor</label>
+  <label>@LABELS@</label>
   <nodeProperties>
     <hudson.slaves.EnvironmentVariablesNodeProperty>
       <envVars serialization="custom">

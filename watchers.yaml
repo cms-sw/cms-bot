@@ -1273,11 +1273,6 @@ erikbutz:
 DryRun:
 - DQM/HcalCommon
 - DQM/HcalTasks
-swertz:
-  - Validation/Configuration
-  - Validation/RecoB
-  - DQMOffline/Configuration
-  - DQMOffline/RecoB
 jainshilpi:
   - RecoEgamma
   - RecoEcal

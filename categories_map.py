@@ -382,6 +382,7 @@ CMSSW_CATEGORIES = {
     "CondCore/BTauPlugins",
     "CondCore/BeamSpotPlugins",
     "CondCore/CSCPlugins",
+    "CondCore/CTPPSPlugins",
     "CondCore/CalibPlugins",
     "CondCore/CastorPlugins",
     "CondCore/CondDB",

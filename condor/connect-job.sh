@@ -54,7 +54,7 @@ while true ; do
   CTIME=$(date +%s)
   if [ $CTIME -gt ${FORCE_EXIT_AT} ] ; then
     break
-  elif [ $CTIME -gt ${OFFLINE_NOTICE_TIME} ] ; then
+  elif [ $CTIME -gt ${OFFLINE_NOTICE_TIME} -a "$FORCE_EXIT" = "false" ] ; then
     echo "Sending going to Offline notification"
     echo exit > ${WORKSPACE}/.auto-load
     FORCE_EXIT=true

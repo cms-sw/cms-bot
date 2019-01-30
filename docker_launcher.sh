@@ -60,7 +60,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi
     ERR=0
-    singularity exec $SINGULARITY_OPTIONS $DOCKER_IMG sh -c "$CMD2RUN" || ERR=$?
+    singularity exec $SINGULARITY_OPTIONS $DOCKER_IMG sh -c "source /cvmfs/cms.cern.ch/cmsset_default.sh ; $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi

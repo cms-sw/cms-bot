@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* | head -n -1 | xargs --no-run-if-empty echo rm -rf || true
 SCRIPT_DIR=$(dirname $0)
 START_TIME=$(date +%s)
 MAX_RUMTIME=${MAX_RUMTIME-1800}

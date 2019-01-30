@@ -873,7 +873,7 @@ fi
 if [ -f all_done ] ; then
   rm -f all_done
   for i in $( seq 1 $REPEAT); do
-    $CMS_BOT_DIR/report-pull-request-results ${REPORT_OPTS[$i]}
+    eval $CMS_BOT_DIR/report-pull-request-results "${REPORT_OPTS[$i]}"
   done
 else
   exit 1

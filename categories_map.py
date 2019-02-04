@@ -345,6 +345,7 @@ CMSSW_CATEGORIES = {
     "Utilities/XrdAdaptor",
     "Validation/Performance",
     "Validation/Tools",
+    "pull_request_template.md",
   ],
   "daq": [
     "Configuration/SiStripDAQ",

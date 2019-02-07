@@ -84,7 +84,10 @@ while true ; do
   fi
   if [ "$JOB_STATUS" = "1" -o "$JOB_STATUS" = "2" ] ;  then
     ERROR_COUNT=0
-    if [ "$JOB_STATUS" = "2" ] ;  then exit 0; fi
+    if [ "$JOB_STATUS" = "2" ] ;  then 
+      if [ "$SHUTDOWN" != "true" ] ; then exit 0 ; fi
+      break
+    fi
   elif [ "$JOB_STATUS" = "4" ] ; then
     EXIT_CODE=$(condor_q -json -attributes ExitCode $JOBID | grep 'ExitCode' | sed 's|.*: *||;s| ||g')
     break

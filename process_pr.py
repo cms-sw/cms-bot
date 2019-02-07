@@ -91,7 +91,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   parameters['RELEASE_FORMAT']=release_queue
   cmssw_prs="%s %s" % (pr_number, cmssw_prs)
   prs = []
-  for pr in [p for p in prs.split(' ') if p]:
+  for pr in [p for p in cmssw_prs.split(' ') if p]:
     prs.append("%s#%s" % (repository, pr))
   if cmsdist_pr:
     prs.append("%s/%s#%s" % (repo_parts[0], "cmsdist", cmsdist_pr))

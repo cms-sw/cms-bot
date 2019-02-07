@@ -46,12 +46,27 @@ function prepare_upload_results (){
     if [ -e upload/matrixTests.log  ] ; then mkdir -p upload/runTheMatrix-results && mv upload/matrixTests.log upload/runTheMatrix-results/ ; fi
     if [ -d upload/addOnTests       ] ; then find upload/addOnTests -name '*.root' -type f | xargs rm -f ; fi
     echo "Preparation done"
+
+    # for uploading CMSDIST build logs
+    LOG_SRC="${WORKSPACE}/${BUILD_DIR}/BUILD/${ARCHITECTURE}"
+    LOCAL_LOGDIR="${WORKSPACE}/upload"
+    if [ -d "${LOG_SRC}" ] ; then
+      pushd ${LOG_SRC}
+        for log in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|^./||') ; do
+          dir=$(dirname $log)
+          mkdir -p ${LOCAL_LOGDIR}/${dir}
+          mv $log ${LOCAL_LOGDIR}/${dir}/
+          [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
+        done
+      popd
+    fi
+
 }
 
 function prepare_upload_comment_exit(){
     prepare_upload_results
     if [ -z ${NO_POST} ]; then
-        send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
+        send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
     fi
     report_pull_request_results_all_prs "$1" --pr-job-id ${BUILD_NUMBER} ${NO_POST}
     exit 0

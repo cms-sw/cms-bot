@@ -66,8 +66,8 @@ else
   if [ "$SHUTDOWN" = "true" ] ; then
     echo "Trying to shutdown the node"
     set -x
-    condor_ssh_to_job ${JOBID} 'touch ./jenkins/.shut-down' || true
-    condor_q 
+    timeout 300 condor_ssh_to_job ${JOBID} 'touch ./jenkins/.shut-down' || true
+    condor_q
   fi
 fi
 

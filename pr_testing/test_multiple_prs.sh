@@ -282,7 +282,9 @@ if ${BUILD_EXTERNAL} ; then
     if [ "X$USE_CMSPKG_REFERENCE" = "Xtrue" ] ; then
       if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
         REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
-        SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
+        if [ -e ${WORKSPACE}/get_source_flag_result.txt ] ; then
+          SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
+        fi
       fi
     fi
 

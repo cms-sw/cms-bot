@@ -89,6 +89,13 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   parameters['MATRIX_EXTRAS']=extra_wfs
   parameters['PUB_USER']=repo_parts[0]
   parameters['RELEASE_FORMAT']=release_queue
+  cmssw_prs="%s %s" % (pr_number, cmssw_prs)
+  prs = []
+  for pr in [p for p in prs.split(' ') if p]:
+    prs.append("%s#%s" % (repository, pr))
+  if cmsdist_pr:
+    prs.append("%s/%s#%s" % (repo_parts[0], "cmsdist", cmsdist_pr))
+  parameters['PULL_REQUESTS']=" ".join(prs)
   if repository.endswith("/"+GH_CMSDIST_REPO):
     parameters['CMSDIST_PR']=pr_number
   else:

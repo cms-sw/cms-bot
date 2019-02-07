@@ -106,6 +106,7 @@ let WEEK_NUM=$(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||;s|^0*||')%2 || true
 CMS_WEEKLY_REPO=cms.week${WEEK_NUM}
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
+export JENKINS_PREFIX
 
 # this is to automount directories in cvmfs, otherwise they wont show up
 ls /cvmfs/cms.cern.ch

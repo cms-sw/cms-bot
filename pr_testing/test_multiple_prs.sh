@@ -84,6 +84,7 @@ if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   NO_POST='--no-post'
   DRY_RUN='--dry-run'
 fi
+export NO_POST ; export DRY_RUN
 
 # If RELEASE_FORMAT is not set, use the CMSSW_DEVEL_BRANCH.
 # if someone starts jenkins job without scheduler directly from Jenkins

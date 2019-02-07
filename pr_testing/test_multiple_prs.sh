@@ -100,7 +100,7 @@ UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uni
 fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
-REPORT_H_CODE=$( echo ${PULL_REQUESTS} | tr ',' '\n' | sort | md5sum | sed 's| .*||' )      # Used to to create link to folder where uploaded files are.
+REPORT_H_CODE=$( echo ${PULL_REQUESTS} | tr ',' '\n' | sort | md5sum | sed 's| .*||' | cut -c27-33 )      # Used to to create link to folder where uploaded files are.
 
 let WEEK_NUM=$(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||;s|^0*||')%2 || true
 CMS_WEEKLY_REPO=cms.week${WEEK_NUM}

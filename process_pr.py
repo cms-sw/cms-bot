@@ -89,6 +89,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   parameters['MATRIX_EXTRAS']=extra_wfs
   parameters['PUB_USER']=repo_parts[0]
   parameters['RELEASE_FORMAT']=release_queue
+  prs="%s %s %s" % (pr_number, cmssw_prs,cmsdist_pr)
   if repository.endswith("/"+GH_CMSDIST_REPO):
     parameters['CMSDIST_PR']=pr_number
   else:
@@ -98,6 +99,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
   try:
     if repo_config.JENKINS_SLAVE_LABEL: parameters['RUN_LABEL']=repo_config.JENKINS_SLAVE_LABEL
   except: pass
+  parameters['PULL_REQUESTS']=prs.strip()
   create_property_file(out_file_name, parameters, dryRun)
 
 def create_property_file(out_file_name,parameters, dryRun):

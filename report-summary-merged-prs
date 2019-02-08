@@ -212,11 +212,12 @@ def determine_build_error(nErrorInfo):
   d = BuildResultsKeys.DWNL_ERROR in nErrorInfo.keys()
   e = BuildResultsKeys.DICT_ERROR in nErrorInfo.keys()
   f = BuildResultsKeys.PYTHON_ERROR in nErrorInfo.keys()
-  g = BuildResultsKeys.PYTHON3_ERROR in nErrorInfo.keys()
-  return a or b or c or d or e or f or g
+  return a or b or c or d or e or f
 
 def determine_build_warning(nErrorInfo):
-  return BuildResultsKeys.COMP_WARNING in nErrorInfo.keys()
+  a = BuildResultsKeys.PYTHON3_ERROR in nErrorInfo.keys()
+  b = BuildResultsKeys.COMP_WARNING in nErrorInfo.keys()
+  return a or b
 
 def get_results_one_addOn_file(file):
   look_for_err_cmd = 'grep "failed" %s' %file

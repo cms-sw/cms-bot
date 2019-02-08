@@ -1,0 +1,14 @@
+#!/bin/bash -ex
+
+cd $CMSSW_BASE
+rm -rf src cfipython
+curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/${CMSSW_VERSION}.tar.gz
+tar -xzf src.tar.gz
+rm -rf src.tar.gz
+mv cmssw-${CMSSW_VERSION} src
+mkdir -p ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/
+rsync -a $CMSSW_RELEASE_BASE/cfipython/${SCRAM_ARCH}/ ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/
+find ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/ -type l | xargs --no-run-if-empty rm -f
+sed -i -e 's|^CMD_python *:=.*|CMD_python:=$(PYTHON3_BASE)/bin/python3|' config/SCRAM/GMake/Makefile.rules
+scram b -r -v -k -j $(nproc) CompilePython
+

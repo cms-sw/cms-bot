@@ -298,7 +298,7 @@ def get_results_details_one_build_file(file, type):
     py3_log = join(dirname(dirname(file)),'python3.log')
     if exists (py3_log):
       py3 = open(py3_log, 'r')
-      nErrorInfo[PYTHON3_ERROR]=len([l for l in py3.readlines() if ' Error compiling ' in l])
+      nErrorInfo[BuildResultsKeys.PYTHON3_ERROR]=len([l for l in py3.readlines() if ' Error compiling ' in l])
 
   if determine_build_error(nErrorInfo):
     return PossibleBuildResults.ERROR,nErrorInfo

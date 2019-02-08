@@ -212,7 +212,8 @@ def determine_build_error(nErrorInfo):
   d = BuildResultsKeys.DWNL_ERROR in nErrorInfo.keys()
   e = BuildResultsKeys.DICT_ERROR in nErrorInfo.keys()
   f = BuildResultsKeys.PYTHON_ERROR in nErrorInfo.keys()
-  return a or b or c or d or e or f
+  g = BuildResultsKeys.PYTHON3_ERROR in nErrorInfo.keys()
+  return a or b or c or d or e or f or g
 
 def determine_build_warning(nErrorInfo):
   return BuildResultsKeys.COMP_WARNING in nErrorInfo.keys()
@@ -285,13 +286,18 @@ def get_results_one_relval_file(filename):
 # The second element is a dictionary containing the details of the results.
 # If the tests are all ok this dictionary is empty
 #
-def get_results_details_one_build_file(file):
+def get_results_details_one_build_file(file, type):
   summFile = open(file,'r')
   pklr = Unpickler(summFile)
   [rel, plat, anaTime]   = pklr.load()
   errorKeys   = pklr.load()
   nErrorInfo  = pklr.load()
   summFile.close()
+  if type=='builds':
+    py3_log = join(dirname(dirname(file)),'python3.log')
+    if exists (py3_log):
+      py3 = open(py3_log, 'r')
+      nErrorInfo[PYTHON3_ERROR]=len([l for l in log.readlines() if ' Error compiling ' in l])
 
   if determine_build_error(nErrorInfo):
     return PossibleBuildResults.ERROR,nErrorInfo
@@ -347,9 +353,9 @@ def analyze_tests_results( output, results, arch, type ):
     elif type == 'addOn':
       passed = get_results_one_addOn_file(line)
     elif type == 'builds':
-      passed,details = get_results_details_one_build_file(line)
+      passed,details = get_results_details_one_build_file(line,type)
     elif type == 'fwlite':
-      passed,details = get_results_details_one_build_file(line)
+      passed,details = get_results_details_one_build_file(line, type)
     else:
       print 'not a valid test type %s' %type
       exit(1)
@@ -1333,6 +1339,7 @@ if __name__ == "__main__":
     MISC_ERROR = 'miscError'
     IGNORE_WARNING = 'ignoreWarning'
     PYTHON_ERROR = 'pythonError'
+    PYTHON3_ERROR = 'python3Error'
 
   class PossibleBuildResults:
     PASSED = 'passed'

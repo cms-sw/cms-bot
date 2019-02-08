@@ -96,7 +96,8 @@ class LogUpdater():
         self.copyLogs(appType ,'BuildSet',wwwBSDir)
         return
 
-    def copyLogs(self, what, logSubDir, tgtDirIn):
+    def copyLogs(self, what, logSubDir="", tgtDirIn=None):
+        if not tgtDirIn: tgtDirIn=self.webTargetDir
         self.runRemoteCmd("mkdir -p "+tgtDirIn)
         self.copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what),tgtDirIn+"/")
 

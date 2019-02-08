@@ -1340,7 +1340,7 @@ if __name__ == "__main__":
     MISC_ERROR = 'miscError'
     IGNORE_WARNING = 'ignoreWarning'
     PYTHON_ERROR = 'pythonError'
-    PYTHON3_ERROR = 'python3Error'
+    PYTHON3_ERROR = 'python3Warning'
 
   class PossibleBuildResults:
     PASSED = 'passed'

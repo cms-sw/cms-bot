@@ -125,7 +125,7 @@ def eos_size(eos_file):
   if err or not re.match("^\d+$",out): return -1
   return int(out)
 
-def check_dead_transfers(threads, info, progress_check=300, init_transfer_wait=300):
+def check_dead_transfers(threads, info, progress_check=600, init_transfer_wait=600):
   thds_done = False
   for t in threads:
     if not t.is_alive():

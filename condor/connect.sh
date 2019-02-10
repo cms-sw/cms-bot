@@ -24,55 +24,38 @@ if [ $REQUEST_CPUS -lt 1 ] ; then REQUEST_CPUS=1 ; fi
 if [ $REQUEST_MAXRUNTIME -lt 3600 ] ; then REQUEST_MAXRUNTIME=3600 ; fi
 ##########################################
 here=$(dirname $0)
-JOBID=$(echo $1 | sed 's|\.[0-9]*$||')
-SHUTDOWN=$2
 cd $WORKSPACE
 
-if [ "${JOBID}" = "" ] ; then
-  script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
-  SLAVE_JAR_DIR="${WORKSPACE}"
-  while [ ! -e ${SLAVE_JAR_DIR}/slave.jar ] ; do
-    SLAVE_JAR_DIR=$(dirname $SLAVE_JAR_DIR)
-  done
-  cp $SLAVE_JAR_DIR/slave.jar slave.jar
-  cp ${here}/connect.sub job.sub
-  cp ${here}/connect-job.sh  ${script_name}.sh
-  sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" ${script_name}.sh
-  sed -i -e "s|@JENKINS_CALLBACK@|$JENKINS_CALLBACK|" ${script_name}.sh
-  chmod +x ${script_name}.sh
+script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
+SLAVE_JAR_DIR="${WORKSPACE}"
+while [ ! -e ${SLAVE_JAR_DIR}/slave.jar ] ; do
+  SLAVE_JAR_DIR=$(dirname $SLAVE_JAR_DIR)
+done
+cp $SLAVE_JAR_DIR/slave.jar slave.jar
+cp ${here}/connect.sub job.sub
+cp ${here}/connect-job.sh  ${script_name}.sh
+sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" ${script_name}.sh
+sed -i -e "s|@JENKINS_CALLBACK@|$JENKINS_CALLBACK|" ${script_name}.sh
+chmod +x ${script_name}.sh
 
-  sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
-  sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
-  sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
-  sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
-  echo "############# JOB Configuration file ###############"
-  cat job.sub
-  echo "####################################################"
-fi
+sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
+sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
+sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
+sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
+echo "############# JOB Configuration file ###############"
+cat job.sub
+echo "####################################################"
 
 if [ "$DEBUG" = "true" ] ; then
   export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
   set -x
 fi
 
-if [ "${JOBID}" = "" ] ; then
-  condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1
-  cat submit.log
-  JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
-  if [ "$JOBID" = "" ] ; then exit 1 ; fi
-  sleep $WAIT_GAP
-else
-  echo "Watching Condor Job Id: ${JOBID}"
-  if [ "$SHUTDOWN" = "true" ] ; then
-    echo "Trying to shutdown the node"
-    set -x
-    timeout 300 condor_ssh_to_job ${JOBID} 'touch ./jenkins/.shut-down' || true
-    sleep 120
-    condor_rm $JOBID || true
-    condor_q
-  fi
-fi
-
+condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1
+cat submit.log
+JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
+if [ "$JOBID" = "" ] ; then exit 1 ; fi
+sleep $WAIT_GAP
 echo "$JOBID" > job.id
 
 EXIT_CODE=1
@@ -86,10 +69,7 @@ while true ; do
   fi
   if [ "$JOB_STATUS" = "1" -o "$JOB_STATUS" = "2" ] ;  then
     ERROR_COUNT=0
-    if [ "$JOB_STATUS" = "2" ] ;  then 
-      if [ "$SHUTDOWN" != "true" ] ; then exit 0 ; fi
-      break
-    fi
+    if [ "$JOB_STATUS" = "2" ] ;  then exit 0 ; fi
   elif [ "$JOB_STATUS" = "4" ] ; then
     EXIT_CODE=$(condor_q -json -attributes ExitCode $JOBID | grep 'ExitCode' | sed 's|.*: *||;s| ||g')
     break
@@ -98,7 +78,6 @@ while true ; do
   else
     if [ "$JOB_STATUS" = "5" ] ; then condor_q -json -attributes HoldReason $JOBID | grep 'HoldReason' | sed 's|"||g;s|^ *HoldReason: *||' || true ; fi
     let ERROR_COUNT=$ERROR_COUNT+1
-    if [ "$SHUTDOWN" = "true" ] ; then ERROR_COUNT=$MAX_ERROR_COUNT ; fi
   fi
   if [ $ERROR_COUNT -ge $MAX_ERROR_COUNT ] ; then
     condor_q -json -attributes $JOBID || true
@@ -113,3 +92,4 @@ if [ -f log.stdout ] ; then cat log.stdout ; fi
 condor_rm $JOBID || true
 condor_q
 exit $EXIT_CODE
+

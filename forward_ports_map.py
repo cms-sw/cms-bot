@@ -101,7 +101,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_2_X/gcc530"].append("IB/CMSSW_9_2_X/gcc6
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"]=[]
 #GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/rootgcc6")
 #GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/gcc630next")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/gcc700")
+#GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_3_X/gcc630"].append("IB/CMSSW_9_3_X/gcc700")
 
 #Added explicitly by Shahzad MUZAFFAR
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_9_4_X"]=[]

@@ -442,12 +442,6 @@ echapon:
 - RecoHI/HiTracking
 - RecoMuon
 forthommel:
-- RecoLocalTracker/ClusterParameterEstimator
-- RecoLocalTracker/Configuration
-- RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip
-- RecoLocalTracker/SubCollectionProducers
-- CalibPPS
 - CondFormats/CTPPSReadoutObjects
 - DataFormats/CTPPSDigi
 - DataFormats/CTPPSReco

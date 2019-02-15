@@ -300,6 +300,7 @@ CMSSW_CATEGORIES = {
     "FWCore/ParameterSetReader",
     "FWCore/PluginManager",
     "FWCore/PrescaleService",
+    "FWCore/PyDevParameterSet",
     "FWCore/Python",
     "FWCore/PythonFramework",
     "FWCore/PythonParameterSet",

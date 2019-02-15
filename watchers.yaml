@@ -442,15 +442,15 @@ echapon:
 - RecoHI/HiTracking
 - RecoMuon
 forthommel:
-- RecoLocalTracker/ClusterParameterEstimator
-- RecoLocalTracker/Configuration
-- RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip
-- RecoLocalTracker/SubCollectionProducers
-- RecoCTPPS/
-- EventFilter/CTPPSRawToDigi
 - CondFormats/CTPPSReadoutObjects
+- DataFormats/CTPPSDigi
+- DataFormats/CTPPSReco
 - DQM/CTPPS
+- EventFilter/CTPPSRawToDigi
+- Geometry/VeryForwardData
+- Geometry/VeryForwardGeometry
+- Geometry/VeryForwardGeometryBuilder
+- RecoCTPPS
 fwyzard:
 - FWCore/ServiceRegistry
 gbenelli:

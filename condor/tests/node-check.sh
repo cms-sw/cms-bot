@@ -6,7 +6,7 @@ MAX_RUMTIME=${MAX_RUMTIME-1800}
 let END_TIME=${START_TIME}+${MAX_RUMTIME}
 MAX_CPUS=$(grep -i '^ *RequestCpus *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
 MAX_MEMORY=$(grep -i '^ *RequestMemory *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
-let MEMORY_PER_CPU="${MAX_MEMORY}/${MAX_CPUS}"
+let MEMORY_PER_CPU="${MAX_MEMORY}/(${MAX_CPUS}+1)"
 let WAIT_GAP=${MAX_RUMTIME}/100 || true
 if [ $WAIT_GAP -lt 60 ] ; then WAIT_GAP=60 ; fi
 

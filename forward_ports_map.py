@@ -180,3 +180,4 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_5_X/gcc700"].append("IB/CMSSW_10_5_X/gc
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_5_X/gcc700"].append("IB/CMSSW_10_5_X/gcc820")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_5_X/gcc700"].append("IB/CMSSW_10_5_X/geant4")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_5_X/gcc700"].append("IB/CMSSW_10_5_X/cxxmodule")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_5_X/gcc700"].append("IB/CMSSW_10_5_X/geant104")

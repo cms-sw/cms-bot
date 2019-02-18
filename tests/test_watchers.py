@@ -23,7 +23,7 @@ for (key, value) in w.items():
 assert(CMSSW_CATEGORIES)
 assert(type(CMSSW_CATEGORIES) == dict)
 
-PACKAGE_RE = "^([A-Z][0-9A-Za-z]*(/[a-zA-Z][0-9A-Za-z]*|)|.gitignore|.clang-[^/]+)$"
+PACKAGE_RE = "^([A-Z][0-9A-Za-z]*(/[a-zA-Z][0-9A-Za-z]*|)|.gitignore|pull_request_template.md|.clang-[^/]+)$"
 
 for (key, value) in CMSSW_CATEGORIES.items():
   assert(type(key) == str)
@@ -33,6 +33,7 @@ for (key, value) in CMSSW_CATEGORIES.items():
     assert(len(value)>0)
     continue
   for p in value:
+    print "checking",p
     assert(type(p) == str)
     assert(re.match(PACKAGE_RE, p))
 

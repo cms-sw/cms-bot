@@ -44,6 +44,7 @@ CMSSW_L2 = {
   "ianna":            ["geometry"],
   "jfernan2":         ["dqm"],
   "kmaeshima":        ["dqm"],
+  "fioriNTU":         ["dqm"],
   "kpedro88":         ["upgrade"],
   "lveldere":         ["fastsim"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],

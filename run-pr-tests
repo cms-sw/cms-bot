@@ -378,8 +378,18 @@ else
   echo 'STATIC_CHECKS;NOTRUN' >> $RESULTS_FILE
 fi
 
+
 scram build clean
 if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then git cms-checkdeps -A -a ; fi
+
+#Get latest Module map for CXXMODULE_IBS
+if [ $(echo $RELEASE_FORMAT | grep '_CXXMODULE_X' | wc -l) -gt 0 ] ; then
+  pushd $WORKSPACE/$RELEASE_FORMAT
+    git clone git@github.com:cms-sw/cmssw-modulemap modulemap
+    cp $WORKSPACE/$RELEASE_FORMAT/modulemap/module.modulemap $WORKSPACE/$RELEASE_FORMAT/src/
+  popd
+fi
+
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 ############################################
 # Force the run of DQM tests if necessary

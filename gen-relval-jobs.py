@@ -39,6 +39,9 @@ if exists(RelValtimes):
 if workflows:
   workflows = splitWorkflows(workflows, max_wf)
   print workflows
+  on_grid = 0
+  if '_DEVEL_X' in environ['CMSSW_VERSION']:
+    on_grid = 2
   total = len(workflows)
   try:
     for i in range(1, total+1):
@@ -47,5 +50,8 @@ if workflows:
       jobfile = workdir+"/ib-run-relval-"+jobid
       doCmd("echo WORKFLOWS="+wf+" >"+jobfile)
       doCmd("echo JOBID="+jobid+" >>"+jobfile)
+      if on_grid>0:
+        doCmd("echo 'SLAVE_LABELS=(condor&&cpu-8)' >>"+jobfile)
+        on_grid=on_grid-1
   except Exception as e:
     print "Error " , e

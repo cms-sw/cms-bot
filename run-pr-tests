@@ -443,10 +443,10 @@ echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chk
 # test compilation with GCC
 # ############################################
 $CMS_BOT_DIR/report-pull-request-results TESTS_RUNNING --repo $PUB_REPO --pr $PULL_REQUEST_NUMBER -c $LAST_COMMIT --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" $DRY_RUN
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j $(Jenkins_GetCPU)"
-if [ $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
-  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && scram b -k -j $(Jenkins_GetCPU) edm_checks"
-fi
+COMPILATION_CMD="scram b vclean && SCRAM_NOPLUGINREFRESH=yes BUILD_LOG=yes scram b -k -j $(Jenkins_GetCPU) && edmPluginRefresh"
+#if [ $(grep '^edm_checks:' $WORKSPACE/$RELEASE_FORMAT/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
+#  COMPILATION_CMD="scram b vclean && SCRAM_NOPLUGINREFRESH=yes BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j $(Jenkins_GetCPU) && edmPluginRefresh && scram b -k -j $(Jenkins_GetCPU) edm_checks"
+#fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
 (eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/build.log

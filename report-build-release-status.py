@@ -60,9 +60,7 @@ TOOL_CONF_ERROR_MSG='There was an error building cmssw-tool-conf for {architectu
              '{log_url} \n'
 UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
               'You can see the progress here: https://cmssdt.cern.ch/%s/job/upload-release/{jk_build_number}/console' % JENKINS_PREFIX
-UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
-              'The release is now being installed, you can see the progress here: \n ' \
-              'https://cmssdt.cern.ch/%s/job/release-deploy-afs/ \n' % JENKINS_PREFIX
+UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url}'
 INSTALLATION_OK_MSG='The installation has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\>", in the first line of your comment.\n ' \
               'I will generate the release notes based on the release that you provide. You don\'t need to provide the architecture ' \
@@ -303,10 +301,10 @@ if __name__ == "__main__":
     results_url = BASE_INSTALLATION_URL.format( rel_name=release_name,
                                                      architecture=arch,
                                                      job_id=jenkins_build_number )
-    msg = INSTALLATION_OK_MSG.format( architecture=arch , log_url=results_url )
-    if action == INSTALLATION_SKIP:
-      msg = INSTALLATION_SKIP_MSG.format( architecture=arch , log_url=results_url )
-    post_message( issue, msg )
+    #msg = INSTALLATION_OK_MSG.format( architecture=arch , log_url=results_url )
+    #if action == INSTALLATION_SKIP:
+    #  msg = INSTALLATION_SKIP_MSG.format( architecture=arch , log_url=results_url )
+    #post_message( issue, msg )
     remove_label( issue, arch+'-upload-ok' )
     remove_label( issue, arch+'-installation-error' )
     add_label( issue,  arch+'-installation-ok' )

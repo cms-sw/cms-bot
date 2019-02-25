@@ -78,7 +78,7 @@ echo "DATA_CPUS=${val}"
 SLAVE_LABELS="${SLAVE_LABELS} cpu-${val} cpu-tiny"
 for t in 2:small 4:medium 8:large 16:xlarge 24:x2large 32:x3large 64:huge; do
   c=$(echo $t | sed 's|:.*||')
-  if [ $val -gt $c ] ; then SLAVE_LABELS="${SLAVE_LABELS} cpu-$(echo $t | sed 's|.*:||')" ; fi
+  if [ $val -ge $c ] ; then SLAVE_LABELS="${SLAVE_LABELS} cpu-$(echo $t | sed 's|.*:||')" ; fi
 done
 
 CPU_VECTOR_SET=$(cat /proc/cpuinfo | grep '^flags' | tail -1 | tr ' ' '\n' | grep '^sss*e\|^avx' | tr '\n' ' ')

@@ -36,12 +36,6 @@ if [ "$TEST_CONTEXT" = "GPU" ] ; then
   WORKFLOWS_FOR_VALGRIND_TEST=""
 fi
 
-if [ "25987" = "$PULL_REQUEST" ] ; then
-    TEST_CLANG_COMPILATION=false
-    CHECK_HEADER_TESTS=false
-    DO_STATIC_CHECKS=false
-fi
-
 ### this is for triggering the comparison with the baseline
 CMSDIST_ONLY=false
 if [ "X$PULL_REQUEST" != X ]; then
@@ -581,10 +575,6 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
     UNIT_TESTS_OK=false
   else
     echo 'UNIT_TEST_RESULTS;OK' >> $RESULTS_FILE
-  fi
-
-  if [ "25987" = "$PULL_REQUEST" ] ; then
-    exit 0
   fi
 else
 

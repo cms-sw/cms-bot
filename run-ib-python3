@@ -9,6 +9,6 @@ mv cmssw-${CMSSW_VERSION} src
 mkdir -p ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/
 rsync -a $CMSSW_RELEASE_BASE/cfipython/${SCRAM_ARCH}/ ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/
 find ${CMSSW_BASE}/cfipython/${SCRAM_ARCH}/ -type l | xargs --no-run-if-empty rm -f
-sed -i -e 's|^CMD_python *:=.*|CMD_python:=$(PYTHON3_BASE)/bin/python3|' config/SCRAM/GMake/Makefile.rules
-scram b -r -v -k -j $(nproc) CompilePython > python3.log 2>&1
+#sed -i -e 's|^CMD_python *:=.*|CMD_python:=$(PYTHON3_BASE)/bin/python3|' config/SCRAM/GMake/Makefile.rules
+CMD_python=python3 scram b -r -v -k -j $(nproc) CompilePython > python3.log 2>&1
 

@@ -85,7 +85,7 @@ for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 1 -type d | sed 's|.
 done
 
 if [ "X${NEW_DIRS}" != "X" ] ; then
-  echo "New directories: ${NEW_DIRS}" | mail -s '[CMSSDT] Found new Directories to cleanup' cms-sdt-logs@cern.ch
+  echo -e "${BUILD_URL}\nNew directories: ${NEW_DIRS}" | mail -s '[CMSSDT] Found new Directories to cleanup' cms-sdt-logs@cern.ch
 fi
 
 WEB_LOG_DIR=/data/sdt/buildlogs

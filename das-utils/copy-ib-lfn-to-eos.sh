@@ -17,7 +17,6 @@ if [ "$force" != "true" ] ; then
 fi
 eos_dir=$(dirname ${eos_base}/${lfn})
 ${eos_cmd} mkdir -p ${eos_dir}
-${eos_cmd} stat -f ${eos_file}.tmp >/dev/null 2>&1 && ${eos_cmd} rm ${eos_file}.tmp >/dev/null 2>&1 || true
 ERR=0
 for rd in ${redirector} $(echo ${redirector} root://cms-xrd-global.cern.ch root://cmsxrootd.fnal.gov root://eoscms.cern.ch root://xrootd-cms.infn.it | tr ' ' '\n' | sort | uniq | grep 'root:' | grep -v "^${redirector}") ; do
   ERR=0

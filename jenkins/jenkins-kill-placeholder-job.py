@@ -13,7 +13,7 @@ from os import environ
 RX_Project = re.compile('.+\/job\/(.+)\/(\d+)\/')
 RX_Queue_why = re.compile(ur'^Waiting for next available executor.*\u2018(.*)\u2019')
 JENKINS_URL = environ['LOCAL_JENKINS_URL']
-running_job_xml = JENKINS_URL + 'api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&xpath=/hudson/job/build[building="true"]&wrapper=builds'
+running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&xpath=/hudson/job/build[building="true"]&wrapper=builds'
 job_que_json = JENKINS_URL + '/queue/api/json?tree=items[url,why]'
 
 

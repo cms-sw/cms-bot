@@ -512,6 +512,9 @@ if [ "X$CMSDIST_PR" != "X" ] ; then
     export CMSSW_SEARCH_PATH=$(echo $CMSSW_SEARCH_PATH | tr ':' '\n'  | grep -v "$CMSSW_RELEASE_BASE/external/" | tr '\n' ':')
   fi
 fi
+if [ "X${CMSSW_RELEASE_BASE}" = "X" ] ; then
+  export CMSSW_RELEASE_BASE=${CMSSW_BASE}
+fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH
 which das_client
 

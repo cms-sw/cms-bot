@@ -13,6 +13,7 @@ from os import environ
 RX_Project = re.compile('.+\/job\/(.+)\/(\d+)\/')
 RX_Queue_why = re.compile(ur'^Waiting for next available executor.*\u2018(.*)\u2019')
 JENKINS_URL = environ['LOCAL_JENKINS_URL']
+WORKSPACE = environ['WORKSPACE']
 running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
 job_que_json = JENKINS_URL + '/queue/api/json?tree=items[url,why]'
 
@@ -79,8 +80,7 @@ def main():
 
     # create property file for each job to be killed
     for i in range(0, min(que_to_free, len(jobs_to_kill))):
-
-        with open("job-to-kill-{0}.txt".format(i), 'w') as f:
+        with open("{0}/job-to-kill-{1}.txt".format(WORKSPACE, i), 'w') as f:
             f.write("JENKINS_PROJECT_TO_KILL={0}\nBUILD_NR={1}\n".format(*jobs_to_kill[i]))
 
 

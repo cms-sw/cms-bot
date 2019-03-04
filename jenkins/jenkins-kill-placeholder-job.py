@@ -46,6 +46,7 @@ def main():
     que_to_free = 0
 
     # get jobs that are waiting for a specific executor
+    print("Queued jobs:")
     pprint(r_json.json())
     print("----")
     que_job_list = r_json.json()['items']
@@ -56,13 +57,14 @@ def main():
             label = m.group(0)
             if 'condor' in label:
                 que_to_free += 1
+    print("Number jobs needed to free")
     pprint(que_to_free)
     print("----\n")
 
     # get running placeholder job
     xml = ET.XML(r_xml.text)
     parsed_dict = etree_to_dict(xml)
-    pprint(parsed_dict['jobs']['build'])
+    pprint(parsed_dict)
     jobs_to_kill = []
     for el in parsed_dict['jobs']['build']:
         match = RX_Project.match(el['url'])
@@ -71,11 +73,13 @@ def main():
         if 'grid-keep-node-busy' != project:
             continue
         jobs_to_kill.append([project, j_number])
+    print("Jobs to kill:")
     pprint(jobs_to_kill)
-    pprint(len(jobs_to_kill))
+    pprint("size" + len(jobs_to_kill))
 
     # create property file for each job to be killed
     for i in range(0, min(que_to_free, len(jobs_to_kill))):
+
         with open("job-to-kill-{0}.txt".format(i), 'w') as f:
             f.write("JENKINS_PROJECT_TO_KILL={0}\nBUILD_NR={1}\n".format(*jobs_to_kill[i]))
 

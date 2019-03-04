@@ -75,7 +75,7 @@ def main():
         jobs_to_kill.append([project, j_number])
     print("Jobs to kill:")
     pprint(jobs_to_kill)
-    pprint("size" + len(jobs_to_kill))
+    print("size:" + str(len(jobs_to_kill)))
 
     # create property file for each job to be killed
     for i in range(0, min(que_to_free, len(jobs_to_kill))):

@@ -325,14 +325,13 @@ if ${BUILD_EXTERNAL} ; then
     rm -f $CMSSW_IB/config/scram_basedir
 
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
-    if [ $(grep '^V05-07-' $CMSSW_IB/config/config_tag | wc -l) -gt 0 ] ; then
-      git clone git@github.com:cms-sw/cmssw-config
-      pushd cmssw-config
-        git checkout master
-      popd
-      mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
-      cp -r cmssw-config/SCRAM $CMSSW_IB/config/SCRAM
-    fi
+    git clone git@github.com:cms-sw/cmssw-config scram-buildrules
+    pushd scram-buildrules
+      git checkout $(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+    popd
+    mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
+    cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
+    rm -rf scram-buildrules
     cd $CMSSW_IB/src
 
     # Setup all the toolfiles previously built

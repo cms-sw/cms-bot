@@ -207,6 +207,7 @@ if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   scram setup self
   scram setup
   eval $(scram runtime -sh)
+  export CMSSW_RELEASE_BASE=$CMSSW_BASE
 elif [ "X${DEP_NAMES}" != "X" ] ; then
   CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
   echo "CMSSW Packages: ${CMSSW_DEP}"

@@ -71,5 +71,5 @@ for unused_file in all_files:
     continue
   unused_days = int((time()-float(o))/86400)
   if unused_days<unused_days_threshold: continue
-  #print "Dryrun: Removing %s: %s days" % (unused_file, unused_days)
+  print "Removing %s: %s days" % (unused_file, unused_days)
   run_cmd("%s rm %s" % (eos_cmd, unused_file))

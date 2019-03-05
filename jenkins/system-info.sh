@@ -51,12 +51,15 @@ if [ "${DOCKER}${SINGULARITY}" != "" ] && [ "$DOCKER_IMG_HOST" != "" ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} ${os}"
   if [ "$os" = "cc7" ] ; then os="slc7" ; fi
   HOST_CMS_ARCH=${os}_${arch}
+  echo "host arch is " $HOST_CMS_ARCH
 else
   rm -f $WORKSPACE/cmsos
+  default_branch=`curl -s https://api.github.com/repos/cms-sw/cmsdist | grep default | awk '{print $2}'`
+  default_branch=${default_branch:1:22}
   if wget --help >/dev/null 2>&1 ; then
-    wget -q -O  $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cmsdist/master/cmsos.file
+    wget -q -O  $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cmsdist/${default_branch}/cmsos.file
   else
-    curl -s -k -L -o $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cmsdist/master/cmsos.file
+    curl -s -k -L -o $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cmsdist/${default_branch}/cmsos.file
   fi
   chmod +x $WORKSPACE/cmsos
   HOST_CMS_ARCH=$($WORKSPACE/cmsos 2>/dev/null)

@@ -51,7 +51,6 @@ if [ "${DOCKER}${SINGULARITY}" != "" ] && [ "$DOCKER_IMG_HOST" != "" ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} ${os}"
   if [ "$os" = "cc7" ] ; then os="slc7" ; fi
   HOST_CMS_ARCH=${os}_${arch}
-  echo "host arch is " $HOST_CMS_ARCH
 else
   rm -f $WORKSPACE/cmsos
   default_branch=`curl -s https://api.github.com/repos/cms-sw/cmsdist | grep default | awk '{print $2}'`

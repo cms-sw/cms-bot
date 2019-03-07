@@ -16,7 +16,10 @@ def getHostDomain():
     import socket
     site = socket.getfqdn()
     fqdn = site.split('.')
-    return fqdn[0], fqdn[-2]+'.'+fqdn[-1]
+    hname = fqdn[0]
+    dname = 'cern.ch'
+    if len(fqdn)>2: dname = fqdn[-2]+'.'+fqdn[-1]
+    return hname, dname
 
 def getDomain():
     return getHostDomain()[1]

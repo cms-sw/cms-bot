@@ -2,11 +2,13 @@
 from operator import itemgetter
 from time import sleep, time
 from multiprocessing import cpu_count
-from psutil import virtual_memory
 from copy import deepcopy
 import threading, json, os
 from optparse import OptionParser
 from subprocess import Popen
+from os.path import abspath, dirname
+sys.path.append(dirname(dirname(abspath(argv[0]))))
+from cmsutils import MachineCPUCount, MachineMemoryGB
 
 global simulation_time
 global simulation
@@ -163,8 +165,8 @@ if __name__ == "__main__":
   if opts.maxJobs==0: opts.maxJobs=cpu_count()
   resources={"total":
     {
-     "cpu" : opts.maxcpu if (opts.maxcpu>0) else cpu_count()*opts.cpu,
-     "rss" : opts.maxmemory if (opts.maxmemory>0) else int(virtual_memory().total*opts.memory/100)
+     "cpu" : opts.maxcpu if (opts.maxcpu>0) else MachineCPUCount*opts.cpu,
+     "rss" : opts.maxmemory if (opts.maxmemory>0) else int(MachineMemoryGB*opts.memory/100)
     },
     "total_groups" : 0, "total_jobs" : 0, "done_groups" : 0, "done_jobs" : 0
   }

@@ -60,7 +60,7 @@ def process(image, outdir):
   tag = image.split(":",1)[-1]
   if container==tag: tag="latest"
 
-  e, image_hash = runCmd("docker pull %s 2>&1 >/dev/null; docker images %s | grep '^%s ' | grep ' %s ' | sed 's|  *|:|g' | cut -d: -f3" % (image, container, container, tag))
+  e, image_hash = runCmd("docker pull %s 2>&1 >/dev/null; docker images %s | grep '^%s \|/%s ' | grep ' %s ' | sed 's|  *|:|g' | cut -d: -f3" % (image, container, container, container, tag))
   if e:
     print image_hash
     exit(1)

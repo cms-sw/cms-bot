@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import os, sys, glob, re
 from commands import getstatusoutput
-from multiprocessing import cpu_count
 from time import sleep, time
 from json import loads, dump
 from copy import deepcopy
@@ -10,6 +9,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
+from cmsutils import cmsRunProcessCount
 from RelValArgs import GetMatrixOptions, FixWFArgs
 from es_utils import es_query, format, es_workflow_stats
 
@@ -35,7 +35,7 @@ cmssw_ver = os.environ["CMSSW_VERSION"]
 arch = os.environ["SCRAM_ARCH"]
 #Run runTheMatrix with maxStep=0
 thrds=[]
-jobs=cpu_count()
+jobs=cmsRunProcessCount
 wf_query=""
 print "Creating jobs (%s) ...." % jobs
 for wf in sys.argv[1].split(","):

@@ -7,6 +7,7 @@ import threading, json, os
 from optparse import OptionParser
 from subprocess import Popen
 from os.path import abspath, dirname
+import sys
 sys.path.append(dirname(dirname(abspath(argv[0]))))
 from cmsutils import MachineCPUCount, MachineMemoryGB
 

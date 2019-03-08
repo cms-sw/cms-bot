@@ -326,25 +326,6 @@ def get_results_details_one_build_file(file, type):
     return True, nErrorInfo
 
 
-#
-# given a unitTests-summary.log it determines if the test passed or not
-# it returns a tuple, the first element is one of the possible values of PossibleUnitTestResults
-# The second element is a dictionary which indicates how many tests failed
-#
-def get_results_one_unitTests_file(file):
-    look_for_err_cmd = 'grep -c "ERROR" %s' % file
-    result, err, ret_code = get_output_command(look_for_err_cmd)
-
-    result = result.rstrip()
-
-    details = {'num_fails': result}
-
-    if result != '0':
-        return PossibleUnitTestResults.FAILED, details
-    else:
-        return PossibleUnitTestResults.PASSED, details
-
-
 
 #
 # parses the tests results for each file in output. It distinguishes if it is

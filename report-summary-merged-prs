@@ -1,5 +1,7 @@
 #! /usr/bin/env python
-
+"""
+This script generates json file (like CMSSW_10_0_X.json) which is then used to render cmssdt ib page.
+"""
 from optparse import OptionParser
 import subprocess
 import re
@@ -92,7 +94,7 @@ ARTIFACTS_MACHINE = "cmssdt03.cern.ch"
 # -----------------------------------------------------------------------------------
 
 #
-# Takes into account the verbose option. If the option is activated it douesn't print anything. 
+# Takes into account the verbose option. If the option is activated it doesn't print anything.
 #
 def print_verbose(msg):
     if options.verbose:
@@ -202,7 +204,7 @@ def get_tags_from_line(line, release_queue):
         # I also have to remove the branch name because it otherwise will always appear
         # I also remove tags that have the  string _DEBUG_TEST, they are used to create test IBs
         tags = [t for t in tags if re.match(filter, t.strip()) and (t.strip().replace('"', '') != release_queue) and (
-                    'DEBUG_TEST' not in t)]
+                'DEBUG_TEST' not in t)]
         return [t.replace('"', '').replace('tag:', '').strip() for t in tags]
     else:
         return []
@@ -242,8 +244,8 @@ def get_results_one_addOn_file(file):
 # it returns a tuple, the first element is one of the possible values of PossibleUnitTestResults
 # The second element is a dictionary which indicates how many tests failed
 #
-def get_results_one_unitTests_file(file):
-    look_for_err_cmd = 'grep -c "ERROR" %s' % file
+def get_results_one_unitTests_file(file, grep_str="ERROR"):
+    look_for_err_cmd = 'grep -c "%s" %s' % (grep_str, file)
     result, err, ret_code = get_output_command(look_for_err_cmd)
 
     result = result.rstrip()
@@ -325,6 +327,26 @@ def get_results_details_one_build_file(file, type):
 
 
 #
+# given a unitTests-summary.log it determines if the test passed or not
+# it returns a tuple, the first element is one of the possible values of PossibleUnitTestResults
+# The second element is a dictionary which indicates how many tests failed
+#
+def get_results_one_unitTests_file(file):
+    look_for_err_cmd = 'grep -c "ERROR" %s' % file
+    result, err, ret_code = get_output_command(look_for_err_cmd)
+
+    result = result.rstrip()
+
+    details = {'num_fails': result}
+
+    if result != '0':
+        return PossibleUnitTestResults.FAILED, details
+    else:
+        return PossibleUnitTestResults.PASSED, details
+
+
+
+#
 # parses the tests results for each file in output. It distinguishes if it is
 # build, unit tests, relvals, or addon tests logs. The the result of the parsing
 # is saved in the parameter results.
@@ -371,6 +393,8 @@ def analyze_tests_results(output, results, arch, type):
             passed, details = get_results_details_one_build_file(line, type)
         elif type == 'fwlite':
             passed, details = get_results_details_one_build_file(line, type)
+        elif type == 'python3':
+            passed, details = get_results_one_unitTests_file(line, " Error compiling ")
         else:
             print 'not a valid test type %s' % type
             exit(1)
@@ -599,28 +623,27 @@ def execute_magic_command_get_cmsdist_tags():
 # It saves the results in the parameter 'results'
 # type can be 'relvals', 'utests', 'gpu_tests', 'addON', 'builds'
 #
-def execute_magic_command_find_results(results, type):
+def execute_magic_command_find_results(type):
+    ex_magix_comand_finf_setuls_dict = {
+        'relvals': MAGIC_COMMAD_FIND_RESULTS_RELVALS,
+        'utests': MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS,
+        'gpu_utests': MAGIC_COMMAND_FIND_RESULTS_GPU_UNIT_TESTS,
+        'addOn': MAGIC_COMMAND_FIND_RESULTS_ADDON,
+        'builds': MAGIC_COMMAND_FIND_RESULTS_BUILD,
+        'fwlite': MAGIC_COMMAND_FIND_RESULTS_FWLITE,
+        'python3': MAGIC_COMMAND_FIND_RESULTS_PYTHON3
+    }
+    if type not in ex_magix_comand_finf_setuls_dict:
+        print 'not a valid test type %s' % type
+        exit(1)
+    results = {}
     for arch in ARCHITECTURES:
-        if type == 'relvals':
-            base_command = MAGIC_COMMAD_FIND_RESULTS_RELVALS
-        elif type == 'utests':
-            base_command = MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS
-        elif type == 'gpu_utests':
-            base_command = MAGIC_COMMAND_FIND_RESULTS_GPU_UNIT_TESTS
-        elif type == 'addOn':
-            base_command = MAGIC_COMMAND_FIND_RESULTS_ADDON
-        elif type == 'builds':
-            base_command = MAGIC_COMMAND_FIND_RESULTS_BUILD
-        elif type == 'fwlite':
-            base_command = MAGIC_COMMAND_FIND_RESULTS_FWLITE
-        else:
-            print 'not a valid test type %s' % type
-            exit(1)
-
+        base_command = ex_magix_comand_finf_setuls_dict[type]
         command_to_execute = base_command.replace('ARCHITECTURE', arch)
         print "Run>>", command_to_execute
         out, err, ret_code = get_output_command(command_to_execute)
         analyze_tests_results(out, results, arch, type)
+    return results
 
 
 def print_results(results):
@@ -705,27 +728,43 @@ def fill_missing_cmsdist_tags(results):
 
 
 #
-# merges the results of the tests with the structure of the IBs tags and the pull requests
-# it also marks the comparisons that correspond to an IB
+
 #
 def add_tests_to_results(results, unit_tests, relvals_results,
                          addon_results, build_results, cmsdist_tags_results,
-                         rv_Exceptions_Results, fwlite_results, gpu_unit_tests):
+                         rv_Exceptions_Results, fwlite_results, gpu_unit_tests, python3_results):
+    """
+    merges the results of the tests with the structure of the IBs tags and the pull requests
+    it also marks the comparisons that correspond to an IB
+    :param results:
+    :param unit_tests:
+    :param relvals_results:
+    :param addon_results:
+    :param build_results:
+    :param cmsdist_tags_results:
+    :param rv_Exceptions_Results:
+    :param fwlite_results:
+    :param gpu_unit_tests:
+    :return:
+    """
     for rq in results:
         for comp in rq['comparisons']:
             rel_name = comp['compared_tags'].split('-->')[1]
             rvsres = relvals_results.get(rel_name)
             utres = unit_tests.get(rel_name)
             gpu_utres = gpu_unit_tests.get(rel_name)
+            python3_res = python3_results.get(rel_name)
             adonres = addon_results.get(rel_name)
             buildsres = build_results.get(rel_name)
             fwliteres = fwlite_results.get(rel_name)
             cmsdist_tags = cmsdist_tags_results.get(rel_name)
             print "CMDIST ", rel_name, ":", cmsdist_tags
 
+            # for tests with arrays
             comp['relvals'] = rvsres if rvsres else []
             comp['utests'] = utres if utres else []
             comp['gpu_utests'] = gpu_utres if gpu_utres else []
+            comp['python3_tests'] = python3_res if python3_res else []
             comp['addons'] = adonres if adonres else []
             comp['builds'] = buildsres if buildsres else []
             comp['fwlite'] = fwliteres if fwliteres else []
@@ -1346,6 +1385,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_RESULTS_ADDON = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name addOnTests.log'
     MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
     MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
+    MAGIC_COMMAND_FIND_RESULTS_PYTHON3 = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name python3.log'
     MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/ib-static-analysis/RELEASE_NAME && ls ' + JENKINS_ARTIFACTS_DIR + '/ib-static-analysis/RELEASE_NAME/'
     MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/reports/modules2statics-filter1.txt && echo reports/modules2statics-filter1.txt'
     MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/material-budget/RELEASE_NAME && ls ' + JENKINS_ARTIFACTS_DIR + '/material-budget/RELEASE_NAME/'
@@ -1361,7 +1401,6 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_CHECK_HEADERS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE'
     MAGIC_COMMAND_FIND_FLAWFINDER = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/flawfinder/RELEASE_NAME/ARCHITECTURE'
     CONFIG_MAP_FILE = 'config.map'
-    MAGIC_COMMAND_FIND_RESULTS_PYTHON3 = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name python3.log'
     # this will be filled using config.map by get_config_map_params()
     ARCHITECTURES = []
     # this will be filled using config.map by get_config_map_params()
@@ -1503,31 +1542,17 @@ if __name__ == "__main__":
         find_dqm_tests_results(release_queue_results['comparisons'])
         results.append(release_queue_results)
 
-    cmsdist_tags_results = execute_magic_command_get_cmsdist_tags()
-
-    build_results = {}
-    execute_magic_command_find_results(build_results, 'builds')
-
-    fwlite_results = {}
-    execute_magic_command_find_results(fwlite_results, 'fwlite')
-
-    relvals_results = {}
-    execute_magic_command_find_results(relvals_results, 'relvals')
-
-    unit_tests_results = {}
-    execute_magic_command_find_results(unit_tests_results, 'utests')
-
-    gpu_unit_tests_results = {}
-    execute_magic_command_find_results(gpu_unit_tests_results, 'gpu_utests')
-
-    addOn_tests_results = {}
-    execute_magic_command_find_results(addOn_tests_results, 'addOn')
-
-    rv_Exceptions_Results = execute_magic_command_find_rv_exceptions_results()
-
-    add_tests_to_results(results, unit_tests_results, relvals_results,
-                         addOn_tests_results, build_results, cmsdist_tags_results,
-                         rv_Exceptions_Results, fwlite_results, gpu_unit_tests_results)
+    add_tests_to_results(results,
+                         execute_magic_command_find_results('utests'),
+                         execute_magic_command_find_results('relvals'),
+                         execute_magic_command_find_results('addOn'),
+                         execute_magic_command_find_results('builds'),
+                         execute_magic_command_get_cmsdist_tags(),
+                         execute_magic_command_find_rv_exceptions_results(),  # rv_Exceptions_Results
+                         execute_magic_command_find_results('fwlite'),
+                         execute_magic_command_find_results('gpu_utests'),
+                         execute_magic_command_find_results('python3')
+                         )
 
     fill_missing_cmsdist_tags(results)
     print_results(results)

@@ -876,6 +876,10 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   muonVar("calEnergy().hoS9",cName,tName, true);
   muonVar("calEnergy().ecal_time",cName,tName, true);
   muonVar("calEnergy().hcal_time",cName,tName, true);
+  muonVar("calEnergy().crossedHadRecHits@.size()",cName,tName, true);
+  plotvar("log10("+tName+cName+"_"+recoS+".obj.calEnergy().crossedHadRecHits.energy)");
+  plotvar("min(200,max(-100,"+tName+cName+"_"+recoS+".obj.calEnergy().crossedHadRecHits.time))");
+  muonVar("calEnergy().crossedHadRecHits.detId.ietaAbs()",cName,tName, true);
   muonVar("combinedQuality().trkKink",cName,tName, true);
   muonVar("combinedQuality().glbKink",cName,tName, true);
   muonVar("combinedQuality().localDistance",cName,tName, true);
@@ -1732,7 +1736,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".getTxUnc()");
         plotvar(tbr+".getTy()");
         plotvar(tbr+".getTyUnc()");
-        plotvar(tbr+".getRecoInfo()");
+        plotvar(tbr+".getPixelTrackRecoInfo()");
         plotvar(tbr+".getChiSquaredOverNDF()");
         plotvar(tbr+".getNumberOfPointsUsedForFit()");
       }
@@ -2841,6 +2845,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       //converstion plots
       conversionVars("conversions_");
       conversionVars("allConversions_");
+      conversionVars("gsfTracksOpenConversions_gsfTracksOpenConversions");
 
       // miniaod
       conversionVars("reducedEgamma_reducedConversions");
@@ -2913,6 +2918,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       superClusters("particleFlowSuperClusterHGCal_");
       superClusters("particleFlowSuperClusterHGCal_particleFlowSuperClusterECALBarrel");
       superClusters("particleFlowSuperClusterHGCalFromMultiCl_");
+      superClusters("lowPtGsfElectronSuperClusters_");
 
       caloClusters("particleFlowSuperClusterECAL_particleFlowBasicClusterECALEndcap");
       caloClusters("particleFlowSuperClusterECAL_particleFlowBasicClusterECALBarrel");
@@ -2927,6 +2933,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       caloClusters("particleFlowSuperClusterHGCal_particleFlowBasicClusterECALPreshower");
       caloClusters("particleFlowSuperClusterHGCal_particleFlowBasicClusterECALBarrel");
       caloClusters("particleFlowSuperClusterHGCalFromMultiCl_");
+      caloClusters("lowPtGsfElectronSuperClusters_");
 
       caloClusters("hgcalLayerClusters_");
       plotvar("min(15,max(-2,floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_))");
@@ -2996,6 +3003,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       ///electron plots
       electronVars("gsfElectrons_");
       electronVars("gedGsfElectrons_");
+      electronVars("lowPtGsfElectrons_");
 
       //HI collections
       electronVars("gedGsfElectronsTmp_");
@@ -3008,8 +3016,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       // miniaod
       electronVars("slimmedElectrons_","patElectrons_");
       electronVars("slimmedElectronsFromMultiCl_","patElectrons_");
+      electronVars("slimmedLowPtElectrons_","patElectrons_");
 
       plotvar("floatedmValueMap_eidLoose__"+recoS+".obj.values_");
+      plotvar("floatedmValueMap_lowPtGsfElectronID__"+recoS+".obj.values_");
 
       tbr="recoElectronSeeds_electronMergedSeeds__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3024,6 +3034,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       gsfTrackVars("electronGsfTracks_");
       gsfTrackVars("electronGsfTracksFromMultiCl_");
       gsfTrackVars("reducedEgamma_reducedGsfTracks");
+      gsfTrackVars("lowPtGsfEleGsfTracks_");
     }
 
     if (stepContainsNU(step, "pfdebug")){

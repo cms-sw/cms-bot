@@ -78,6 +78,7 @@ The schema of the dictionary is as folows:
 # -----------------------------------------------------------------------------------
 # ---- Review of arguments
 # -----------------------------------------------------------------------------------
+
 if (len(args) < 4):
     print 'not enough arguments\n'
     parser.print_help()
@@ -329,7 +330,7 @@ def get_results_details_one_build_file(file, type):
     else:
         return PossibleBuildResults.PASSED, nErrorInfo
 
-    # return True, nErrorInfo  # unreachable
+    return True, nErrorInfo
 
 
 def analyze_tests_results(output, results, arch, type):
@@ -528,6 +529,7 @@ def execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch
     print_verbose(start_tag)
     print_verbose('End tag:')
     print_verbose(real_end_tag)
+    tags = []
     command_to_execute = MAGIC_COMMAND_TAGS.replace('START_TAG', start_tag).replace('END_TAG', real_end_tag)
     print "Running:", command_to_execute
     out, err, ret_code = get_output_command(command_to_execute)
@@ -1218,10 +1220,8 @@ def generate_ib_json_short_summary(results):
             ib_status = 'ok'
 
             if len(ibs_for_current_arch) == 0:
-                pass
-                # TODO unused
-                # latest_IB = 'N/A'
-                # ib_status = 'unknown'
+                latest_IB = 'N/A'
+                ib_status = 'unknown'
             else:
                 latest_IB_info = ibs_for_current_arch[-1]
                 latest_IB_name = latest_IB_info['release_name']
@@ -1233,11 +1233,10 @@ def generate_ib_json_short_summary(results):
                     build_passed = build_info[0]["passed"]
 
                 fwlite_info = [b for b in latest_IB_info["fwlite"] if b['arch'] == arch]
-                # TODO unused
-                # if len(fwlite_info) == 0:
-                #     fwlite_passed = 'unknown'
-                # else:
-                #     fwlite_passed = build_info[0]["passed"]
+                if len(fwlite_info) == 0:
+                    fwlite_passed = 'unknown'
+                else:
+                    fwlite_passed = build_info[0]["passed"]
 
                 unit_tests_info = [u for u in latest_IB_info["utests"] if u['arch'] == arch]
                 if len(unit_tests_info) == 0:
@@ -1402,7 +1401,7 @@ if __name__ == "__main__":
     # this will be filled using config.map by get_config_map_params() SLHC releases have a different format, so it is hardcoded
     SPECIAL_RELEASES = ['SLHC']
     # this will be filled using config.map by get_config_map_params()
-    SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
+    SP_REL_REGEX = ""
     # These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
     RELEASE_QUEUES = []
     # These are the ibs and archs for which the aditional tests need to be shown
@@ -1458,6 +1457,7 @@ if __name__ == "__main__":
     results = []
 
     get_config_map_params()
+    SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     REQUESTED_COMPARISONS = [('%s_%s..%s' % (rq, START_DATE, rq)) for rq in RELEASE_QUEUES]
 
     AFS_IB_INSTALLATION = "/cvmfs/cms-ib.cern.ch/week*/*/cms"
@@ -1534,7 +1534,6 @@ if __name__ == "__main__":
                     find_igprof_results(release_queue_results['comparisons'], arch)
                 if 'check-headers' in tests_to_find:
                     find_check_headers_results(release_queue_results['comparisons'], arch)
-
         find_dqm_tests_results(release_queue_results['comparisons'])
         results.append(release_queue_results)
 

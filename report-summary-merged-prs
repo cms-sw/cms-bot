@@ -41,41 +41,43 @@ parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="
 
 (options, args) = parser.parse_args()
 
-# -----------------------------------------------------------------------------------
-# ---- Output Schema
-# -----------------------------------------------------------------------------------
-#
-# comparisons": [ <DictA>, <DictB>, <DictC> ]
-#
-# Each dict contains the result of the comparison between 2 tags in cmssw. For example 
-# CMSSW_5_3_X_2015-02-03-0200 with CMSSW_5_3_X_2015-02-04-0200 which correspond 
-# to the IB CMSSW_5_3_X_2015-02-04-0200
-#
-# The schema of the dictionary is as folows:
-# {
-#    "addons": [],
-#    "builds": [],
-#    "fwlite": [],
-#    "compared_tags": "",
-#    "utests": [],
-#    "gpu_utests": [],
-#    "cmsdistTags": {},
-#    "relvals": [],
-#    "static_checks": "",
-#    "valgrind": "",
-#    "material_budget" : "",
-#    "isIB": Boolean,
-#    "tests_archs": [],
-#    "release_name": "",
-#    "merged_prs": [],
-#    "RVExceptions" : Boolean
-#
-# }
+"""
+-----------------------------------------------------------------------------------
+---- Output Schema
+-----------------------------------------------------------------------------------
+
+comparisons": [ <DictA>, <DictB>, <DictC> ]
+
+Each dict contains the result of the comparison between 2 tags in cmssw. For example 
+CMSSW_5_3_X_2015-02-03-0200 with CMSSW_5_3_X_2015-02-04-0200 which correspond 
+to the IB CMSSW_5_3_X_2015-02-04-0200
+
+The schema of the dictionary is as folows:
+{
+   "addons": [],
+   "builds": [],
+   "fwlite": [],
+   "compared_tags": "",
+   "utests": [],
+   "gpu_utests": [],
+   "cmsdistTags": {},
+   "relvals": [],
+   "static_checks": "",
+   "valgrind": "",
+   "material_budget" : "",
+   "isIB": Boolean,
+   "tests_archs": [],
+   "release_name": "",
+   "merged_prs": [],
+   "RVExceptions" : Boolean
+
+}
+"""
+
 
 # -----------------------------------------------------------------------------------
 # ---- Review of arguments
 # -----------------------------------------------------------------------------------
-
 if (len(args) < 4):
     print 'not enough arguments\n'
     parser.print_help()
@@ -92,17 +94,18 @@ ARTIFACTS_MACHINE = "cmssdt03.cern.ch"
 # -----------------------------------------------------------------------------------
 # ---- Fuctions
 # -----------------------------------------------------------------------------------
-
-#
-# Takes into account the verbose option. If the option is activated it doesn't print anything.
-#
 def print_verbose(msg):
+    """
+    Takes into account the verbose option. If the option is activated it doesn't print anything.
+    """
     if options.verbose:
         print (msg)
 
 
-# reads a line of config.map and returns a dictionary with is parameters
 def parse_config_map_line(line):
+    """
+    reads a line of config.map and returns a dictionary with is parameters
+    """
     params = {}
     parts = line.split(';')
 
@@ -116,11 +119,13 @@ def parse_config_map_line(line):
     return params
 
 
-# gets the list of architectures by reading config.map, they are saved in ARCHITECTURES
-# gets the releases branches from config.map, they are saved in RELEASES_BRANCHES
-# it maps the branches for all the releases this is to take into account the case in which the base branch
-# is different from the release queue
 def get_config_map_params():
+    """
+    gets the list of architectures by reading config.map, they are saved in ARCHITECTURES
+    gets the releases branches from config.map, they are saved in RELEASES_BRANCHES
+    it maps the branches for all the releases this is to take into account the case in which the base branch
+    is different from the release queue
+    """
     f = open(CONFIG_MAP_FILE, 'r')
     for line in f.readlines():
         params = parse_config_map_line(line.rstrip())
@@ -183,11 +188,13 @@ def get_config_map_params():
     print
 
 
-# reads a line of the output of git log and returns the tags that it contains
-# if there are no tags it returns an empty list
-# it applies filters according to the release queue to only get the
-# tags related to the current release queue
 def get_tags_from_line(line, release_queue):
+    """
+    # reads a line of the output of git log and returns the tags that it contains
+    # if there are no tags it returns an empty list
+    # it applies filters according to the release queue to only get the
+    # tags related to the current release queue
+    """
     if 'tags->' not in line:
         return []
     tags_str = line.split('tags->')[1]
@@ -211,9 +218,8 @@ def get_tags_from_line(line, release_queue):
 
 
 # -----------------------------------------------------------------------------------
-# ---- Fuctions -- Analize Git ouputs
+# ---- Fuctions -- Analize Git outputs
 # -----------------------------------------------------------------------------------
-
 def determine_build_error(nErrorInfo):
     a = BuildResultsKeys.COMP_ERROR in nErrorInfo.keys()
     b = BuildResultsKeys.LINK_ERROR in nErrorInfo.keys()
@@ -239,12 +245,12 @@ def get_results_one_addOn_file(file):
         return False
 
 
-#
-# given a unitTests-summary.log it determines if the test passed or not
-# it returns a tuple, the first element is one of the possible values of PossibleUnitTestResults
-# The second element is a dictionary which indicates how many tests failed
-#
 def get_results_one_unitTests_file(file, grep_str="ERROR"):
+    """
+    given a unitTests-summary.log it determines if the test passed or not
+    it returns a tuple, the first element is one of the possible values of PossibleUnitTestResults
+    The second element is a dictionary which indicates how many tests failed
+    """
     look_for_err_cmd = 'grep -c "%s" %s' % (grep_str, file)
     result, err, ret_code = get_output_command(look_for_err_cmd)
 
@@ -258,13 +264,13 @@ def get_results_one_unitTests_file(file, grep_str="ERROR"):
         return PossibleUnitTestResults.PASSED, details
 
 
-#
-# given a runall-report-step123-.log file it returns the result of the relvals
-# it returns a tuple, the first element indicates if the tests passed or not
-# the second element is a dictionary which shows the details of how many relvals pased
-# and how many failed
-#
 def get_results_one_relval_file(filename):
+    """
+    given a runall-report-step123-.log file it returns the result of the relvals
+    it returns a tuple, the first element indicates if the tests passed or not
+    the second element is a dictionary which shows the details of how many relvals pased
+    and how many failed
+    """
     summary_file = filename.replace("/runall-report-step123-.log", "/summary.json")
     if exists(summary_file):
         try:
@@ -297,13 +303,13 @@ def get_results_one_relval_file(filename):
     return details["num_failed"] == 0, details
 
 
-#
-# Given a logAnalysis.pkl file, it determines if the tests passed or not
-# it returns a tuple, the first element is one of the values of PossibleBuildResults
-# The second element is a dictionary containing the details of the results.
-# If the tests are all ok this dictionary is empty
-#
 def get_results_details_one_build_file(file, type):
+    """
+    Given a logAnalysis.pkl file, it determines if the tests passed or not
+    it returns a tuple, the first element is one of the values of PossibleBuildResults
+    The second element is a dictionary containing the details of the results.
+    If the tests are all ok this dictionary is empty
+    """
     summFile = open(file, 'r')
     pklr = Unpickler(summFile)
     [rel, plat, anaTime] = pklr.load()
@@ -323,29 +329,28 @@ def get_results_details_one_build_file(file, type):
     else:
         return PossibleBuildResults.PASSED, nErrorInfo
 
-    return True, nErrorInfo
+    # return True, nErrorInfo  # unreachable
 
 
-
-#
-# parses the tests results for each file in output. It distinguishes if it is
-# build, unit tests, relvals, or addon tests logs. The the result of the parsing
-# is saved in the parameter results.
-# type can be 'relvals', 'utests', 'gpu_tests', 'addON', 'builds', 'fwlite'
-#
-# schema of results:
-# {
-#   "<IBName>": [ result_arch1, result_arch2, ... result_archN ]
-# }
-# schema of result_arch
-# {
-#   "arch"    : "<architecture>"
-#   "file"    : "<location of the result>"
-#   "passed"  : <true or false> ( if not applicable the value is true )
-#   "details" : <details for the tests> ( can be empty if not applicable, but not undefined )
-# }
-#
 def analyze_tests_results(output, results, arch, type):
+    """
+    parses the tests results for each file in output. It distinguishes if it is
+    build, unit tests, relvals, or addon tests logs. The the result of the parsing
+    is saved in the parameter results.
+    type can be 'relvals', 'utests', 'gpu_tests', 'addON', 'builds', 'fwlite'
+
+    schema of results:
+    {
+      "<IBName>": [ result_arch1, result_arch2, ... result_archN ]
+    }
+    schema of result_arch
+    {
+      "arch"    : "<architecture>"
+      "file"    : "<location of the result>"
+      "passed"  : <true or false> ( if not applicable the value is true )
+      "details" : <details for the tests> ( can be empty if not applicable, but not undefined )
+    }
+    """
     for line in output.splitlines():
         m = re.search('CMSSW.*[0-9]/', line)
         if not m:
@@ -389,10 +394,10 @@ def analyze_tests_results(output, results, arch, type):
         results[rel_name].append(result_arch)
 
 
-#
-# Searchs in github.io for the results for relvals exceptions
-#
 def execute_magic_command_find_rv_exceptions_results():
+    """
+    Searchs in github.io for the results for relvals exceptions
+    """
     print ('Finding relval exceptions results...')
     command_to_execute = MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS
     out, err, ret_code = get_output_command(command_to_execute)
@@ -407,11 +412,14 @@ def execute_magic_command_find_rv_exceptions_results():
     return rv_exception_results
 
 
-# returns a list of tags based on git log output
-# It uses the release queue name to filter the tags, this avoids having
-# in the result tags from other queues that may come from automatic merges.
-# For example, if release_queue is 7_2_X, it will drop tags like CMSSW_7_2_THREADED_X_2014-09-15-0200
+
 def get_tags(git_log_output, release_queue):
+    """
+    returns a list of tags based on git log output
+    It uses the release queue name to filter the tags, this avoids having
+    in the result tags from other queues that may come from automatic merges.
+    For example, if release_queue is 7_2_X, it will drop tags like CMSSW_7_2_THREADED_X_2014-09-15-0200
+    """
     tags = []
     for line in git_log_output.splitlines():
         tags += get_tags_from_line(line, release_queue)
@@ -428,9 +436,11 @@ def get_tags(git_log_output, release_queue):
     return tags
 
 
-# returns the number of the day of a tag
-# if it is not an IB tag, it returns -1
 def get_day_number_tag(tag):
+    """
+    returns the number of the day of a tag
+    if it is not an IB tag, it returns -1
+    """
     parts = tag.split("-")
     if len(parts) == 1:
         return -1
@@ -442,8 +452,10 @@ def get_day_number_tag(tag):
             return -1
 
 
-# uses some heuristics to tell if the list of tags seems to be too short
 def is_tag_list_suspicious(tags):
+    """
+    uses some heuristics to tell if the list of tags seems to be too short
+    """
     if len(tags) < 7:
         return True
     day_first_tag = get_day_number_tag(tags[-1])
@@ -451,10 +463,12 @@ def is_tag_list_suspicious(tags):
     return day_second_tag - day_first_tag > 1
 
 
-# determines if  the error is because one of the tags does not exist
-# this can happen when the branch that is being analyzed has been
-# created recently
 def is_recent_branch(err):
+    """
+    determines if  the error is because one of the tags does not exist
+    this can happen when the branch that is being analyzed has been
+    created recently
+    """
     return "unknown revision or path not in the working tree" in err
 
 
@@ -462,18 +476,22 @@ def is_recent_branch(err):
 # ---- Fuctions -- Execute Magic commands
 # -----------------------------------------------------------------------------------
 
-# this calls the git log command with the first tag to look for missing
-# tags that were not found previously
 def look_for_missing_tags(start_tag, release_queue):
+    """
+    this calls the git log command with the first tag to look for missing
+    tags that were not found previously
+    """
     command_to_execute = MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG.replace('END_TAG', start_tag)
     out, err, ret_code = get_output_command(command_to_execute)
     tags = get_tags_from_line(out, release_queue)
     return tags
 
 
-# Executes the command that is given as parameter, returns a tuple out,err,ret_code
-# with the output, error and return code obtained
 def get_output_command(command_to_execute):
+    """
+    Executes the command that is given as parameter, returns a tuple out,err,ret_code
+    with the output, error and return code obtained
+    """
     print_verbose('Executing:')
     print_verbose(command_to_execute)
 
@@ -489,9 +507,11 @@ def get_output_command(command_to_execute):
     return out, err, ret_code
 
 
-# Gets the tags between start_tag and end_tag, the release_queue is used as a filter
-# to ignore tags that are from other releases
 def execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch, ignore_tags=None):
+    """
+    Gets the tags between start_tag and end_tag, the release_queue is used as a filter
+    to ignore tags that are from other releases
+    """
     print_verbose('Release Queue:')
     print_verbose(release_queue)
     print_verbose('Release Branch:')
@@ -508,7 +528,6 @@ def execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch
     print_verbose(start_tag)
     print_verbose('End tag:')
     print_verbose(real_end_tag)
-    tags = []
     command_to_execute = MAGIC_COMMAND_TAGS.replace('START_TAG', start_tag).replace('END_TAG', real_end_tag)
     print "Running:", command_to_execute
     out, err, ret_code = get_output_command(command_to_execute)
@@ -570,15 +589,16 @@ def compare_tags(branch, tags, git_dir, repo, cache={}):
     return comparisons
 
 
-#
-# Executes the command to get the tags
-# schema of all_tags_found:
-# {
-#   "<IBName>": {
-#                 "<arch_name>" : "<tag_name>"
-#               }
-# }
 def execute_magic_command_get_cmsdist_tags():
+    """
+    Executes the command to get the tags
+    schema of all_tags_found:
+    {
+      "<IBName>": {
+                    "<arch_name>" : "<tag_name>"
+                  }
+    }
+    """
     all_tags_found = {}
     for arch in ARCHITECTURES:
         command_to_execute = MAGIC_COMMAND_CMSDIST_TAGS.replace('ARCHITECTURE', arch)
@@ -598,13 +618,13 @@ def execute_magic_command_get_cmsdist_tags():
     return all_tags_found
 
 
-#
-# Executes the a command to get the results for the relvals, unit tests,
-# addon tests, and compitlation tests
-# It saves the results in the parameter 'results'
-# type can be 'relvals', 'utests', 'gpu_tests', 'addON', 'builds'
-#
 def execute_magic_command_find_results(type):
+    """
+    Executes the a command to get the results for the relvals, unit tests,
+    addon tests, and compitlation tests
+    It saves the results in the parameter 'results'
+    type can be 'relvals', 'utests', 'gpu_tests', 'addON', 'builds'
+    """
     ex_magix_comand_finf_setuls_dict = {
         'relvals': MAGIC_COMMAD_FIND_RESULTS_RELVALS,
         'utests': MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS,
@@ -683,19 +703,19 @@ def print_results(results):
             print '\t' + 'inProgress: ' + str(comp.get('inProgress'))
 
 
-#
-# Iterates over the IBs comparisons, if an IB doesn't have a tag for an architecture, the previous tag is
-# assigned. For example, for arch slc6_amd64_gcc481
-# 1. CMSSW_7_1_X_2014-10-02-1500 was built using the tag IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481
-# 2. There is no tag for CMSSW_7_1_X_2014-10-03-0200 in cmsdist
-#
-# Then, it assumes that the tag used for CMSSW_7_1_X_2014-10-03-0200 was IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481
-#
 def fill_missing_cmsdist_tags(results):
+    """
+    Iterates over the IBs comparisons, if an IB doesn't have a tag for an architecture, the previous tag is
+    assigned. For example, for arch slc6_amd64_gcc481
+    1. CMSSW_7_1_X_2014-10-02-1500 was built using the tag IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481
+    2. There is no tag for CMSSW_7_1_X_2014-10-03-0200 in cmsdist
+    Then, it assumes that the tag used for CMSSW_7_1_X_2014-10-03-0200 was IB/CMSSW_7_1_X_2014-10-02-1500/slc6_amd64_gcc481
+    """
     for rq in results:
         previous_cmsdist_tags = {}
         for comp in rq['comparisons']:
-            rel_name = comp['compared_tags'].split('-->')[1]
+            # TODO unused
+            # rel_name = comp['compared_tags'].split('-->')[1]
 
             for arch in comp['tests_archs']:
                 current_ib_tag_arch = comp['cmsdistTags'].get(arch)
@@ -717,16 +737,6 @@ def add_tests_to_results(results, unit_tests, relvals_results,
     """
     merges the results of the tests with the structure of the IBs tags and the pull requests
     it also marks the comparisons that correspond to an IB
-    :param results:
-    :param unit_tests:
-    :param relvals_results:
-    :param addon_results:
-    :param build_results:
-    :param cmsdist_tags_results:
-    :param rv_Exceptions_Results:
-    :param fwlite_results:
-    :param gpu_unit_tests:
-    :return:
     """
     for rq in results:
         for comp in rq['comparisons']:
@@ -773,7 +783,6 @@ def add_tests_to_results(results, unit_tests, relvals_results,
                 comp['comp_baseline_state'] = 'errors'
             if not comp.get('dqm_tests'):
                 comp['dqm_tests'] = 'not-found'
-            # TODO FlawFinder (add later)
             # custom details for new IB page
             if not comp.get('material_budget_v2'):
                 comp['material_budget_v2'] = 'not-found'
@@ -947,10 +956,10 @@ def find_one_static_filter_check(release_name, architecture, magic_cmd):
     return out
 
 
-#
-# Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_static_check(release_name, architecture):
+    """
+    Looks for one static-tests result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+    """
     command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -965,12 +974,9 @@ def find_one_static_check(release_name, architecture):
     return 'inprogress'
 
 
-#
-# Looks for one material_budget result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_material_budget(release_name, architecture):
     """
-    :return: ( arch, comparison, status)
+    Looks for one material_budget result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
     """
     command_to_execute = MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
@@ -992,10 +998,10 @@ def find_one_material_budget(release_name, architecture):
     return (None, None, 'inprogress')
 
 
-#
-# Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_valgrind(release_name, architecture):
+    """
+    Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+    """
     command_to_execute = MAGIC_COMMAND_FIND_VALGRIND.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1008,10 +1014,10 @@ def find_one_valgrind(release_name, architecture):
     return 'inprogress'
 
 
-#
-# Looks for one lizard result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_lizard(release_name, architecture):
+    """
+    Looks for one lizard result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+    """
     command_to_execute = MAGIC_COMMAND_FIND_LIZARD.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1024,10 +1030,10 @@ def find_one_lizard(release_name, architecture):
     return 'inprogress'
 
 
-#
-# Looks for one check headers result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_check_headers(release_name, architecture):
+    """
+    Looks for one check headers result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+    """
     command_to_execute = MAGIC_COMMAND_FIND_CHECK_HEADERS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1040,10 +1046,10 @@ def find_one_check_headers(release_name, architecture):
     return 'inprogress'
 
 
-#
-# Looks for one flawfinder result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_flawfinder(release_name, architecture):
+    """
+    Looks for one flawfinder result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+    """
     command_to_execute = MAGIC_COMMAND_FIND_FLAWFINDER.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1056,10 +1062,10 @@ def find_one_flawfinder(release_name, architecture):
     return 'inprogress'
 
 
-#
-# Looks for one igprof result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_igprof(release_name, architecture):
+    """
+    Looks for one igprof result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+    """
     command_to_execute = MAGIC_COMMAND_FIND_IGPROF.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1072,10 +1078,10 @@ def find_one_igprof(release_name, architecture):
     return 'inprogress'
 
 
-#
-# Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not, the value is 'errors'
-#
 def find_one_comparison_baseline_errors(release_name, architecture):
+    """
+    Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not, the value is 'errors'
+    """
     command_to_execute = MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1087,10 +1093,10 @@ def find_one_comparison_baseline_errors(release_name, architecture):
         return "errors"
 
 
-#
-# Looks for one comparison baseline result for the IB, if it finds it, the value is 'found' if not, the value is ''
-#
 def find_one_comparison_baseline(release_name, architecture):
+    """
+    Looks for one comparison baseline result for the IB, if it finds it, the value is 'found' if not, the value is ''
+    """
     command_to_execute = MAGIC_COMMAND_FIND_COMPARISON_BASELINE.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1103,10 +1109,10 @@ def find_one_comparison_baseline(release_name, architecture):
     return 'inprogress'
 
 
-#
-# Looks for one hlt test result for the IB, if it finds it, the value is 'found' if not, the value is ''
-#
 def find_one_hlt_test(release_name):
+    """
+    Looks for one hlt test result for the IB, if it finds it, the value is 'found' if not, the value is ''
+    """
     command = MAGIC_COMMAND_FIND_HLT_TESTS.replace('RELEASE_NAME', release_name)
     out, err, ret_code = get_output_command(command)
     if ret_code == 0:
@@ -1116,10 +1122,10 @@ def find_one_hlt_test(release_name):
     return 'inprogress'
 
 
-#
-# Looks for one dqm test result for the IB, if it finds it, the value is 'found' if not, the value is ''
-#
 def find_one_dqm_test(release_name):
+    """
+    Looks for one dqm test result for the IB, if it finds it, the value is 'found' if not, the value is ''
+    """
     command = MAGIC_COMMAND_FIND_DQM_TESTS.replace('RELEASE_NAME', release_name)
     out, err, ret_code = get_output_command(command)
     if ret_code == 0:
@@ -1129,9 +1135,11 @@ def find_one_dqm_test(release_name):
     return 'inprogress'
 
 
-# reads the results and generates a separated json for each release_queue
-# it also generates a csv file with statistics per release_queue and a general one
 def generate_separated_json_results(results):
+    """
+    reads the results and generates a separated json for each release_queue
+    it also generates a csv file with statistics per release_queue and a general one
+    """
     all_ibs_list = []
     all_prs_list = []
 
@@ -1183,21 +1191,22 @@ def get_production_archs(config_map):
     return archs
 
 
-#
-# Generates a json file with the global status of the last IB for each architecture, 
-# per each  Release Queue
-# Schema of short_summary
-# [ releaseQueue1, releaseQueue2, ... , releaseQueueN ]
-# Schema of releaseQueueN
-# {
-#    "<ReleaseQueue>": {
-#                        "<arch>": {
-#                                    "status": "ok|warning|error|unknown"
-#                                    "latest_IB" : "<latest IB>"
-#                                  }
-#                      }
-# }
 def generate_ib_json_short_summary(results):
+    """
+    Generates a json file with the global status of the last IB for each architecture,
+    per each  Release Queue
+    Schema of short_summary
+    [ releaseQueue1, releaseQueue2, ... , releaseQueueN ]
+    Schema of releaseQueueN
+    {
+       "<ReleaseQueue>": {
+                           "<arch>": {
+                                       "status": "ok|warning|error|unknown"
+                                       "latest_IB" : "<latest IB>"
+                                     }
+                         }
+    }
+    """
     short_summary = {}
     for rq in results:
         # this should not be called 'release name', this should be fixed
@@ -1209,8 +1218,10 @@ def generate_ib_json_short_summary(results):
             ib_status = 'ok'
 
             if len(ibs_for_current_arch) == 0:
-                latest_IB = 'N/A'
-                ib_status = 'unknown'
+                pass
+                # TODO unused
+                # latest_IB = 'N/A'
+                # ib_status = 'unknown'
             else:
                 latest_IB_info = ibs_for_current_arch[-1]
                 latest_IB_name = latest_IB_info['release_name']
@@ -1222,10 +1233,11 @@ def generate_ib_json_short_summary(results):
                     build_passed = build_info[0]["passed"]
 
                 fwlite_info = [b for b in latest_IB_info["fwlite"] if b['arch'] == arch]
-                if len(fwlite_info) == 0:
-                    fwlite_passed = 'unknown'
-                else:
-                    fwlite_passed = build_info[0]["passed"]
+                # TODO unused
+                # if len(fwlite_info) == 0:
+                #     fwlite_passed = 'unknown'
+                # else:
+                #     fwlite_passed = build_info[0]["passed"]
 
                 unit_tests_info = [u for u in latest_IB_info["utests"] if u['arch'] == arch]
                 if len(unit_tests_info) == 0:
@@ -1267,23 +1279,24 @@ def generate_ib_json_short_summary(results):
     out_json.close()
 
 
-# Identifies and groups the releases accodring to their prefix
-# For example if the release queues are:
-# CMSSW_7_1_X, CMSSW_7_0_X, CMSSW_6_2_X, CMSSW_5_3_X, CMSSW_7_1_THREADED_X
-# CMSSW_7_1_BOOSTIO_X, CMSSW_7_1_ROOT6_X, CMSSW_7_1_GEANT10_X, CMSSW_6_2_X_SLHC
-# CMSSW_7_1_DEVEL_X, CMSSW_7_1_CLANG_X, CMSSW_7_2_X, CMSSW_7_2_DEVEL_X, CMSSW_7_2_CLANG_X
-# CMSSW_7_2_GEANT10_X
-# It will organize them like this:
-# CMSSW_5_3_X: CMSSW_5_3_X
-# CMSSW_7_2_X: CMSSW_7_2_X, CMSSW_7_2_DEVEL_X, CMSSW_7_2_CLANG_X, CMSSW_7_2_GEANT10_X
-# CMSSW_6_2_X: CMSSW_6_2_X CMSSW_6_2_X_SLHC
-# CMSSW_7_0_X: CMSSW_7_0_X
-# CMSSW_7_1_X: CMSSW_7_1_X, CMSSW_7_1_THREADED_X, CMSSW_7_1_BOOSTIO_X, CMSSW_7_1_ROOT6_X',
-#              CMSSW_7_1_GEANT10_X, CMSSW_7_1_DEVEL_X, CMSSW_7_1_CLANG_X
-#
-# It returns a dictionary in which the keys are the release prefixes, and the values are
-# the release queues
 def identify_release_groups(results):
+    """
+    Identifies and groups the releases accodring to their prefix
+    For example if the release queues are:
+    CMSSW_7_1_X, CMSSW_7_0_X, CMSSW_6_2_X, CMSSW_5_3_X, CMSSW_7_1_THREADED_X
+    CMSSW_7_1_BOOSTIO_X, CMSSW_7_1_ROOT6_X, CMSSW_7_1_GEANT10_X, CMSSW_6_2_X_SLHC
+    CMSSW_7_1_DEVEL_X, CMSSW_7_1_CLANG_X, CMSSW_7_2_X, CMSSW_7_2_DEVEL_X, CMSSW_7_2_CLANG_X
+    CMSSW_7_2_GEANT10_X
+    It will organize them like this:
+    CMSSW_5_3_X: CMSSW_5_3_X
+    CMSSW_7_2_X: CMSSW_7_2_X, CMSSW_7_2_DEVEL_X, CMSSW_7_2_CLANG_X, CMSSW_7_2_GEANT10_X
+    CMSSW_6_2_X: CMSSW_6_2_X CMSSW_6_2_X_SLHC
+    CMSSW_7_0_X: CMSSW_7_0_X
+    CMSSW_7_1_X: CMSSW_7_1_X, CMSSW_7_1_THREADED_X, CMSSW_7_1_BOOSTIO_X, CMSSW_7_1_ROOT6_X',
+                 CMSSW_7_1_GEANT10_X, CMSSW_7_1_DEVEL_X, CMSSW_7_1_CLANG_X
+    It returns a dictionary in which the keys are the release prefixes, and the values are
+    the release queues
+    """
     from operator import itemgetter
 
     releases = []
@@ -1389,7 +1402,7 @@ if __name__ == "__main__":
     # this will be filled using config.map by get_config_map_params() SLHC releases have a different format, so it is hardcoded
     SPECIAL_RELEASES = ['SLHC']
     # this will be filled using config.map by get_config_map_params()
-    SP_REL_REGEX = ""
+    SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     # These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
     RELEASE_QUEUES = []
     # These are the ibs and archs for which the aditional tests need to be shown
@@ -1445,7 +1458,6 @@ if __name__ == "__main__":
     results = []
 
     get_config_map_params()
-    SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     REQUESTED_COMPARISONS = [('%s_%s..%s' % (rq, START_DATE, rq)) for rq in RELEASE_QUEUES]
 
     AFS_IB_INSTALLATION = "/cvmfs/cms-ib.cern.ch/week*/*/cms"
@@ -1497,7 +1509,9 @@ if __name__ == "__main__":
         release_queue_results['comparisons'] = compare_tags(release_branch, tags, 'cmssw.git', CMSSW_REPO)
         print 'Done'
 
-        # it checks if the tests are being run for that architectue, if they don't, it doesn't look for them
+        # It checks if the tests are being run for that architecture, if they don't, it doesn't look for them.
+        # Then it goes over each selected tests, executes 'magic' command to look for tests results, interprets it
+        # and writes back in to 'release_queue_results['comparisons']'. Finally, it appends it back to results object.
         additional_tests = RELEASE_ADITIONAL_TESTS.get(release_queue)
         if additional_tests:
             for arch in additional_tests.keys():
@@ -1520,20 +1534,22 @@ if __name__ == "__main__":
                     find_igprof_results(release_queue_results['comparisons'], arch)
                 if 'check-headers' in tests_to_find:
                     find_check_headers_results(release_queue_results['comparisons'], arch)
+
         find_dqm_tests_results(release_queue_results['comparisons'])
         results.append(release_queue_results)
 
-    add_tests_to_results(results,
-                         execute_magic_command_find_results('utests'),
-                         execute_magic_command_find_results('relvals'),
-                         execute_magic_command_find_results('addOn'),
-                         execute_magic_command_find_results('builds'),
-                         execute_magic_command_get_cmsdist_tags(),
-                         execute_magic_command_find_rv_exceptions_results(),  # rv_Exceptions_Results
-                         execute_magic_command_find_results('fwlite'),
-                         execute_magic_command_find_results('gpu_utests'),
-                         execute_magic_command_find_results('python3')
-                         )
+    add_tests_to_results(
+        results,
+        execute_magic_command_find_results('utests'),
+        execute_magic_command_find_results('relvals'),
+        execute_magic_command_find_results('addOn'),
+        execute_magic_command_find_results('builds'),
+        execute_magic_command_get_cmsdist_tags(),
+        execute_magic_command_find_rv_exceptions_results(),  # rv_Exceptions_Results
+        execute_magic_command_find_results('fwlite'),
+        execute_magic_command_find_results('gpu_utests'),
+        execute_magic_command_find_results('python3')
+    )
 
     fill_missing_cmsdist_tags(results)
     print_results(results)

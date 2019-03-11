@@ -167,7 +167,6 @@ def get_config_map_params():
             RELEASE_ADITIONAL_TESTS[release_queue][arch] = [test for test in additional_tests.split(',') if
                                                             test != 'dqm']
 
-    SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     RELEASE_QUEUES.sort()
 
     print
@@ -1400,7 +1399,7 @@ if __name__ == "__main__":
     # this will be filled using config.map by get_config_map_params() SLHC releases have a different format, so it is hardcoded
     SPECIAL_RELEASES = ['SLHC']
     # this will be filled using config.map by get_config_map_params()
-    SP_REL_REGEX = ""
+    SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     # These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
     RELEASE_QUEUES = []
     # These are the ibs and archs for which the aditional tests need to be shown
@@ -1456,7 +1455,6 @@ if __name__ == "__main__":
     results = []
 
     get_config_map_params()
-    SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     REQUESTED_COMPARISONS = [('%s_%s..%s' % (rq, START_DATE, rq)) for rq in RELEASE_QUEUES]
 
     AFS_IB_INSTALLATION = "/cvmfs/cms-ib.cern.ch/week*/*/cms"

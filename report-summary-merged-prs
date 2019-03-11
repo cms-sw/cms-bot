@@ -1218,8 +1218,10 @@ def generate_ib_json_short_summary(results):
             ib_status = 'ok'
 
             if len(ibs_for_current_arch) == 0:
-                latest_IB = 'N/A'
-                ib_status = 'unknown'
+                pass
+                # TODO unused
+                # latest_IB = 'N/A'
+                # ib_status = 'unknown'
             else:
                 latest_IB_info = ibs_for_current_arch[-1]
                 latest_IB_name = latest_IB_info['release_name']
@@ -1231,10 +1233,11 @@ def generate_ib_json_short_summary(results):
                     build_passed = build_info[0]["passed"]
 
                 fwlite_info = [b for b in latest_IB_info["fwlite"] if b['arch'] == arch]
-                if len(fwlite_info) == 0:
-                    fwlite_passed = 'unknown'
-                else:
-                    fwlite_passed = build_info[0]["passed"]
+                # TODO unused
+                # if len(fwlite_info) == 0:
+                #     fwlite_passed = 'unknown'
+                # else:
+                #     fwlite_passed = build_info[0]["passed"]
 
                 unit_tests_info = [u for u in latest_IB_info["utests"] if u['arch'] == arch]
                 if len(unit_tests_info) == 0:

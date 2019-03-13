@@ -841,54 +841,163 @@ def find_material_budget_results(comparisons, architecture):
             comp['material_budget_comparison'] = {'status': 'found', 'results': 'warning', 'arch': arch}
 
 
-def find_valgrind_results(comparisons, architecture):
+def find_general_test_results(test_field, comparisons, architecture,  magic_command):
     """
-    Finds for an IB the results of the valgrind
+    Finds for results for the test_field. Modifies comparisons dict in place.
+    :param comparisons: comparison dictionary
+    :param architecture: arch
+    :param magic_command: string with bash command to execute
+    :param test_field: field to write back the results to
     """
+    def find_one_test_results(release_name):
+        command_to_execute = magic_command.replace('RELEASE_NAME', release_name)
+        command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
+        print "Running ", command_to_execute
+        out, err, ret_code = get_output_command(command_to_execute)
+        print "Ran:", out, err, ret_code, command_to_execute
+        if ret_code == 0:
+            print 'found'
+            return 'found'
+        print 'inprogress'
+        return 'inprogress'
+
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for valgrind results for ', rel_name
-        comp['valgrind'] = find_one_valgrind(rel_name, architecture)
+        comp[test_field] = find_one_test_results(rel_name)
 
 
-def find_lizard_results(comparisons, architecture):
-    """
-    Finds for an IB the results of the lizard
-    """
-    for comp in comparisons:
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for lizard results for ', rel_name
-        comp['lizard'] = find_one_lizard(rel_name, architecture)
+## formated
+# def find_valgrind_results(comparisons, architecture):
+#     """
+#     Finds for an IB the results of the valgrind
+#     """
+#     for comp in comparisons:
+#         rel_name = comp['compared_tags'].split('-->')[1]
+#         print 'Looking for valgrind results for ', rel_name
+#         comp['valgrind'] = find_one_valgrind(rel_name, architecture)
+#
+#
+# def find_lizard_results(comparisons, architecture):  # done
+#     """
+#     Finds for an IB the results of the lizard
+#     """
+#     for comp in comparisons:
+#         rel_name = comp['compared_tags'].split('-->')[1]
+#         print 'Looking for lizard results for ', rel_name
+#         comp['lizard'] = find_one_lizard(rel_name, architecture)
+#
+#
+# def find_check_headers_results(comparisons, architecture):
+#     """
+#     Finds for an IB the results of the check_headers
+#     """
+#     for comp in comparisons:
+#         rel_name = comp['compared_tags'].split('-->')[1]
+#         print 'Looking for check headers results for ', rel_name
+#         comp['check_headers'] = find_one_check_headers(rel_name, architecture)
+#
+#
+# def find_flawfinder_results(comparisons, architecture):
+#     """
+#     Finds for an IB the results of the lizard
+#     """
+#     for comp in comparisons:
+#         rel_name = comp['compared_tags'].split('-->')[1]
+#         print 'Looking for flawfinder results for ', rel_name
+#         comp['flawfinder'] = find_one_flawfinder(rel_name, architecture)
+#
+#
+# def find_igprof_results(comparisons, architecture):  # done
+#     """
+#     Finds for an IB the results of the igprof
+#     """
+#     for comp in comparisons:
+#         rel_name = comp['compared_tags'].split('-->')[1]
+#         print 'Looking for igprof results for ', rel_name
+#         comp['igprof'] = find_one_igprof(rel_name, architecture)
+## --end formated
 
 
-def find_check_headers_results(comparisons, architecture):
-    """
-    Finds for an IB the results of the check_headers
-    """
-    for comp in comparisons:
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for check headers results for ', rel_name
-        comp['check_headers'] = find_one_check_headers(rel_name, architecture)
+## --- could be formated
+# def find_one_valgrind(release_name, architecture):
+#     """
+#     Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#     """
+#     command_to_execute = MAGIC_COMMAND_FIND_VALGRIND.replace('RELEASE_NAME', release_name)
+#     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
+#     print "Running ", command_to_execute
+#     out, err, ret_code = get_output_command(command_to_execute)
+#     print "Ran:", out, err, ret_code, command_to_execute
+#     if ret_code == 0:
+#         print 'found'
+#         return 'found'
+#     print 'inprogress'
+#     return 'inprogress'
 
 
-def find_flawfinder_results(comparisons, architecture):
-    """
-    Finds for an IB the results of the lizard
-    """
-    for comp in comparisons:
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for flawfinder results for ', rel_name
-        comp['flawfinder'] = find_one_flawfinder(rel_name, architecture)
+# def find_one_lizard(release_name, architecture):
+#     """
+#     Looks for one lizard result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#     """
+#     command_to_execute = MAGIC_COMMAND_FIND_LIZARD.replace('RELEASE_NAME', release_name)
+#     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
+#     print "Running ", command_to_execute
+#     out, err, ret_code = get_output_command(command_to_execute)
+#     print "Ran:", out, err, ret_code, command_to_execute
+#     if ret_code == 0:
+#         print 'found'
+#         return 'found'
+#     print 'inprogress'
+#     return 'inprogress'
 
 
-def find_igprof_results(comparisons, architecture):
-    """
-    Finds for an IB the results of the igprof
-    """
-    for comp in comparisons:
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for igprof results for ', rel_name
-        comp['igprof'] = find_one_igprof(rel_name, architecture)
+# def find_one_check_headers(release_name, architecture):
+#     """
+#     Looks for one check headers result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#     """
+#     command_to_execute = MAGIC_COMMAND_FIND_CHECK_HEADERS.replace('RELEASE_NAME', release_name)
+#     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
+#     print "Running ", command_to_execute
+#     out, err, ret_code = get_output_command(command_to_execute)
+#     print "Ran:", out, err, ret_code, command_to_execute
+#     if ret_code == 0:
+#         print 'found'
+#         return 'found'
+#     print 'inprogress'
+#     return 'inprogress'
+
+
+# def find_one_flawfinder(release_name, architecture):
+#     """
+#     Looks for one flawfinder result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#     """
+#     command_to_execute = MAGIC_COMMAND_FIND_FLAWFINDER.replace('RELEASE_NAME', release_name)
+#     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
+#     print "Running ", command_to_execute
+#     out, err, ret_code = get_output_command(command_to_execute)
+#     print "Ran:", out, err, ret_code, command_to_execute
+#     if ret_code == 0:
+#         print 'found'
+#         return 'found'
+#     print 'inprogress'
+#     return 'inprogress'
+
+
+# def find_one_igprof(release_name, architecture):
+#     """
+#     Looks for one igprof result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+#     """
+#     command_to_execute = MAGIC_COMMAND_FIND_IGPROF.replace('RELEASE_NAME', release_name)
+#     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
+#     print "Running ", command_to_execute
+#     out, err, ret_code = get_output_command(command_to_execute)
+#     print "Ran:", out, err, ret_code, command_to_execute
+#     if ret_code == 0:
+#         print 'found'
+#         return 'found'
+#     print 'inprogress'
+#     return 'inprogress'
 
 
 def find_hlt_tests_results(comparisons):
@@ -993,86 +1102,6 @@ def find_one_material_budget(release_name, architecture):
     return (None, None, 'inprogress')
 
 
-def find_one_valgrind(release_name, architecture):
-    """
-    Looks for one valgrind result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-    """
-    command_to_execute = MAGIC_COMMAND_FIND_VALGRIND.replace('RELEASE_NAME', release_name)
-    command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
-    out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
-    if ret_code == 0:
-        print 'found'
-        return 'found'
-    print 'inprogress'
-    return 'inprogress'
-
-
-def find_one_lizard(release_name, architecture):
-    """
-    Looks for one lizard result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-    """
-    command_to_execute = MAGIC_COMMAND_FIND_LIZARD.replace('RELEASE_NAME', release_name)
-    command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
-    out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
-    if ret_code == 0:
-        print 'found'
-        return 'found'
-    print 'inprogress'
-    return 'inprogress'
-
-
-def find_one_check_headers(release_name, architecture):
-    """
-    Looks for one check headers result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-    """
-    command_to_execute = MAGIC_COMMAND_FIND_CHECK_HEADERS.replace('RELEASE_NAME', release_name)
-    command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
-    out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
-    if ret_code == 0:
-        print 'found'
-        return 'found'
-    print 'inprogress'
-    return 'inprogress'
-
-
-def find_one_flawfinder(release_name, architecture):
-    """
-    Looks for one flawfinder result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-    """
-    command_to_execute = MAGIC_COMMAND_FIND_FLAWFINDER.replace('RELEASE_NAME', release_name)
-    command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
-    out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
-    if ret_code == 0:
-        print 'found'
-        return 'found'
-    print 'inprogress'
-    return 'inprogress'
-
-
-def find_one_igprof(release_name, architecture):
-    """
-    Looks for one igprof result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-    """
-    command_to_execute = MAGIC_COMMAND_FIND_IGPROF.replace('RELEASE_NAME', release_name)
-    command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
-    out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
-    if ret_code == 0:
-        print 'found'
-        return 'found'
-    print 'inprogress'
-    return 'inprogress'
-
-
 def find_one_comparison_baseline_errors(release_name, architecture):
     """
     Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not,
@@ -1104,7 +1133,7 @@ def find_one_comparison_baseline(release_name, architecture):
     print 'inprogress'
     return 'inprogress'
 
-
+## maybe formated
 def find_one_hlt_test(release_name):
     """
     Looks for one hlt test result for the IB, if it finds it, the value is 'found' if not, the value is ''
@@ -1130,6 +1159,7 @@ def find_one_dqm_test(release_name):
     print 'inprogress'
     return 'inprogress'
 
+## <end> maybe formated
 
 def generate_separated_json_results(results):
     """
@@ -1517,20 +1547,30 @@ if __name__ == "__main__":
                     find_hlt_tests_results(release_queue_results['comparisons'])
                 if 'static-checks' in tests_to_find:
                     find_static_results(release_queue_results['comparisons'], arch)
-                if 'valgrind' in tests_to_find:
-                    find_valgrind_results(release_queue_results['comparisons'], arch)
-                if 'lizard' in tests_to_find:
-                    find_lizard_results(release_queue_results['comparisons'], arch)
-                if 'flawfinder' in tests_to_find:
-                    find_flawfinder_results(release_queue_results['comparisons'], arch)
                 if 'material-budget' in tests_to_find:
                     find_material_budget_results(release_queue_results['comparisons'], arch)
                 if 'baseline' in tests_to_find:
                     find_comparison_baseline_results(release_queue_results['comparisons'], arch)
+                if 'valgrind' in tests_to_find:
+                    find_general_test_results(
+                        'valgrind', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_VALGRIND
+                    )
+                if 'lizard' in tests_to_find:
+                    find_general_test_results(
+                        'lizard', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_LIZARD
+                    )
+                if 'flawfinder' in tests_to_find:
+                    find_general_test_results(
+                        'flawfinder',  release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_FLAWFINDER
+                    )
                 if 'igprof' in tests_to_find:
-                    find_igprof_results(release_queue_results['comparisons'], arch)
+                    find_general_test_results(
+                        'igprof', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_IGPROF
+                    )
                 if 'check-headers' in tests_to_find:
-                    find_check_headers_results(release_queue_results['comparisons'], arch)
+                    find_general_test_results(
+                        'check-headers',  release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_CHECK_HEADERS
+                    )
         find_dqm_tests_results(release_queue_results['comparisons'])
         results.append(release_queue_results)
 

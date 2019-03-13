@@ -881,10 +881,10 @@ def find_flawfinder_results(comparisons, architecture):
         comp['flawfinder'] = find_one_flawfinder(rel_name, architecture)
 
 
-#
-# Finds for an IB the results of the igprof
-#
 def find_igprof_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the igprof
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for igprof results for ', rel_name
@@ -939,7 +939,6 @@ def find_static_results(comparisons, architecture):
                 }
 
 
-#
 def find_one_static_filter_check(release_name, architecture, magic_cmd):
     """
     Looks for one static-tests-filter result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'

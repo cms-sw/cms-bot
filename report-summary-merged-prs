@@ -191,10 +191,10 @@ def get_config_map_params():
 
 def get_tags_from_line(line, release_queue):
     """
-    # reads a line of the output of git log and returns the tags that it contains
-    # if there are no tags it returns an empty list
-    # it applies filters according to the release queue to only get the
-    # tags related to the current release queue
+    reads a line of the output of git log and returns the tags that it contains
+    if there are no tags it returns an empty list
+    it applies filters according to the release queue to only get the
+    tags related to the current release queue
     """
     if 'tags->' not in line:
         return []
@@ -330,8 +330,6 @@ def get_results_details_one_build_file(file, type):
     else:
         return PossibleBuildResults.PASSED, nErrorInfo
 
-    return True, nErrorInfo
-
 
 def analyze_tests_results(output, results, arch, type):
     """
@@ -365,6 +363,7 @@ def analyze_tests_results(output, results, arch, type):
         result_arch['file'] = line
 
         details = {}
+        passed = None
         if type == 'relvals':
             passed, details = get_results_one_relval_file(line)
             result_arch['done'] = False
@@ -411,7 +410,6 @@ def execute_magic_command_find_rv_exceptions_results():
         rv_exception_results[ib_name] = True
 
     return rv_exception_results
-
 
 
 def get_tags(git_log_output, release_queue):
@@ -592,8 +590,7 @@ def compare_tags(branch, tags, git_dir, repo, cache={}):
 
 def execute_magic_command_get_cmsdist_tags():
     """
-    Executes the command to get the tags
-    schema of all_tags_found:
+    Executes the command to get the tags schema of all_tags_found:
     {
       "<IBName>": {
                     "<arch_name>" : "<tag_name>"
@@ -729,9 +726,6 @@ def fill_missing_cmsdist_tags(results):
                         comp['cmsdistTags'][arch] = 'Not Found'
 
 
-#
-
-#
 def add_tests_to_results(results, unit_tests, relvals_results,
                          addon_results, build_results, cmsdist_tags_results,
                          rv_Exceptions_Results, fwlite_results, gpu_unit_tests, python3_results):
@@ -810,10 +804,10 @@ def add_tests_to_results(results, unit_tests, relvals_results,
             comp['tests_archs'] = list(set(a + b + c))
 
 
-#
-# Finds for an IB the results of the Comparison BaseLine
-#
 def find_comparison_baseline_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the Comparison BaseLine
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for comparison baseline results for ', rel_name
@@ -823,10 +817,10 @@ def find_comparison_baseline_results(comparisons, architecture):
             comp['comp_baseline_state'] = find_one_comparison_baseline_errors(rel_name, architecture)
 
 
-#
-# Finds for an IB the results of the material_budget
-#
 def find_material_budget_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the material_budget
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for material_budget results for ', rel_name
@@ -847,40 +841,40 @@ def find_material_budget_results(comparisons, architecture):
             comp['material_budget_comparison'] = {'status': 'found', 'results': 'warning', 'arch': arch}
 
 
-#
-# Finds for an IB the results of the valgrind
-#
 def find_valgrind_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the valgrind
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for valgrind results for ', rel_name
         comp['valgrind'] = find_one_valgrind(rel_name, architecture)
 
 
-#
-# Finds for an IB the results of the lizard
-#
 def find_lizard_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the lizard
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for lizard results for ', rel_name
         comp['lizard'] = find_one_lizard(rel_name, architecture)
 
 
-#
-# Finds for an IB the results of the check_headers
-#
 def find_check_headers_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the check_headers
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for check headers results for ', rel_name
         comp['check_headers'] = find_one_check_headers(rel_name, architecture)
 
 
-#
-# Finds for an IB the results of the lizard
-#
 def find_flawfinder_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the lizard
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for flawfinder results for ', rel_name
@@ -897,10 +891,30 @@ def find_igprof_results(comparisons, architecture):
         comp['igprof'] = find_one_igprof(rel_name, architecture)
 
 
-#
-# Finds for an IB the results of the static tests
-#
+def find_hlt_tests_results(comparisons):
+    """
+    Finds for an IB the results of the HLT tests
+    """
+    for comp in comparisons:
+        rel_name = comp['compared_tags'].split('-->')[1]
+        print 'Looking for HLT tests results for ', rel_name
+        comp['hlt_tests'] = find_one_hlt_test(rel_name)
+
+
+def find_dqm_tests_results(comparisons):
+    """
+    Finds for an IB the results of the HLT tests
+    """
+    for comp in comparisons:
+        rel_name = comp['compared_tags'].split('-->')[1]
+        print 'Looking for DQM tests results for ', rel_name
+        comp['dqm_tests'] = find_one_dqm_test(rel_name)
+
+
 def find_static_results(comparisons, architecture):
+    """
+    Finds for an IB the results of the static tests
+    """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print 'Looking for static tests results for ', rel_name
@@ -926,29 +940,10 @@ def find_static_results(comparisons, architecture):
 
 
 #
-# Finds for an IB the results of the HLT tests
-#
-def find_hlt_tests_results(comparisons):
-    for comp in comparisons:
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for HLT tests results for ', rel_name
-        comp['hlt_tests'] = find_one_hlt_test(rel_name)
-
-
-#
-# Finds for an IB the results of the HLT tests
-#
-def find_dqm_tests_results(comparisons):
-    for comp in comparisons:
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for DQM tests results for ', rel_name
-        comp['dqm_tests'] = find_one_dqm_test(rel_name)
-
-
-#
-# Looks for one static-tests-filter result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
-#
 def find_one_static_filter_check(release_name, architecture, magic_cmd):
+    """
+    Looks for one static-tests-filter result for the IB, if it finds it, the value is 'found' if not, the value is 'inprogress'
+    """
     command_to_execute = magic_cmd.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
     print "Running ", command_to_execute
@@ -1081,7 +1076,8 @@ def find_one_igprof(release_name, architecture):
 
 def find_one_comparison_baseline_errors(release_name, architecture):
     """
-    Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not, the value is 'errors'
+    Looks for one comparison baseline errors result for the IB, if no errors then value is 'ok' if not,
+    the value is 'errors'
     """
     command_to_execute = MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
@@ -1403,7 +1399,7 @@ if __name__ == "__main__":
     # this will be filled using config.map by get_config_map_params() SLHC releases have a different format, so it is hardcoded
     SPECIAL_RELEASES = ['SLHC']
     # this will be filled using config.map by get_config_map_params()
-    SP_REL_REGEX = ""
+    SP_REL_REGEX = ""  # Needs to be declared empty before using
     # These are the release queues that need to be shown, this this will be filled using config.map by get_config_map_params()
     RELEASE_QUEUES = []
     # These are the ibs and archs for which the aditional tests need to be shown

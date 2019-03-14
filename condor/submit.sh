@@ -27,7 +27,6 @@ fi
 cd $WORKSPACE
 
 here=$(dirname $0)
-job_to_run=$0
 script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
 
 X509_PROXY_FILE="x509up_u$(id -u)"
@@ -37,7 +36,7 @@ chmod 0600 $X509_PROXY_FILE
 echo '#!/bin/bash -ex' > ${script_name}.sh
 echo 'export WORKSPACE=${_CONDOR_SCRATCH_DIR}' >> ${script_name}.sh
 echo "export X509_USER_PROXY=\${WORKSPACE}/$X509_PROXY_FILE" >> ${script_name}.sh
-cat $job_to_run | grep -v "$0 *" >> ${script_name}.sh
+cat $1 | grep -v "$0 *" >> ${script_name}.sh
 chmod +x ${script_name}.sh
 cp ${here}/submit.sub job.sub
 sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub

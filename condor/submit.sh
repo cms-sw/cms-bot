@@ -44,10 +44,13 @@ sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
 sed -i -e "s|@X509_PROXY_FILE@|$X509_PROXY_FILE|"       job.sub
-echo "############# JOB Configuration file ###############"
-cat job.sub
-echo "####################################################"
-
+if [ "$DEBUG" = "true" ] ; then
+  echo "############# JOB Configuration file ###############"
+  cat job.sub
+  echo "####################################################"
+  cat ${script_name}.sh
+  echo "####################################################"
+fi
 condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1
 cat submit.log
 rm -f $X509_PROXY_FILE

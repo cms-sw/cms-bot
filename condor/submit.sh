@@ -27,7 +27,7 @@ fi
 cd $WORKSPACE
 
 here=$(dirname $0)
-job_to_run=$1
+job_to_run=$0
 script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
 
 X509_PROXY_FILE="x509up_u$(id -u)"

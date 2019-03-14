@@ -25,6 +25,7 @@ if [ $REQUEST_MAXRUNTIME -lt 3600 ] ; then REQUEST_MAXRUNTIME=3600 ; fi
 ##########################################
 here=$(dirname $0)
 cd $WORKSPACE
+mkdir -p logs
 
 script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
 SLAVE_JAR_DIR="${WORKSPACE}"

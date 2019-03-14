@@ -56,17 +56,20 @@ cat submit.log
 rm -f $X509_PROXY_FILE
 JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
 if [ "$JOBID" = "" ] ; then exit 1 ; fi
+sleep $WAIT_GAP
 echo "$JOBID" > job.id
 
 EXIT_CODE=1
+PREV_JOB_STATUS=""
 while true ; do
-  sleep $WAIT_GAP
   JOB_STATUS=$(condor_q -json -attributes JobStatus $JOBID | grep 'JobStatus' | sed 's|.*: *||;s| ||g')
   eval JOB_STATUS_MSG=$(echo \$$(echo JOBS_STATUS_${JOB_STATUS}))
-  echo "Job Status(${ERROR_COUNT}): $JOB_STATUS: ${JOB_STATUS_MSG}"
+  if [ "${PREV_JOB_STATUS}" != "${JOB_STATUS}${ERROR_COUNT}" ] ; then
+    echo "Job Status(${ERROR_COUNT}): $JOB_STATUS: ${JOB_STATUS_MSG}"
+    PREV_JOB_STATUS="${JOB_STATUS}${ERROR_COUNT}"
+  fi
   if [ "$JOB_STATUS" = "1" -o "$JOB_STATUS" = "2" ] ;  then
     ERROR_COUNT=0
-    if [ "$JOB_STATUS" = "2" ] ;  then WAIT_GAP=5 ; fi
   elif [ "$JOB_STATUS" = "4" ] ; then
     EXIT_CODE=$(condor_q -json -attributes ExitCode $JOBID | grep 'ExitCode' | sed 's|.*: *||;s| ||g')
     break
@@ -75,12 +78,12 @@ while true ; do
   else
     if [ "$JOB_STATUS" = "5" ] ; then condor_q -json -attributes HoldReason $JOBID | grep 'HoldReason' | sed 's|"||g;s|^ *HoldReason: *||' || true ; fi
     let ERROR_COUNT=$ERROR_COUNT+1
-    WAIT_GAP=10
   fi
   if [ $ERROR_COUNT -ge $MAX_ERROR_COUNT ] ; then
     condor_q -json -attributes $JOBID || true
     break
   fi
+  sleep $WAIT_GAP
 done
 echo EXIT_CODE $EXIT_CODE
 condor_transfer_data $JOBID || true

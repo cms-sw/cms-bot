@@ -73,5 +73,8 @@ done
 echo "Going to shutdown."
 set -x
 rm -rf ${WORKSPACE}
-SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|shutdown|')
-curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+if [ ! -f ${WORKSPACE}/.shut-down ] ; then
+  SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|shutdown|')
+  curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
+fi
+rm -rf ${WORKSPACE}

@@ -18,11 +18,6 @@ BUILD_NUMBER="${BUILD_NUMBER-0}"
 REQUEST_CPUS="${REQUEST_CPUS-1}"
 REQUEST_UNIVERSE="${REQUEST_UNIVERSE-vanilla}"
 REQUEST_MAXRUNTIME="${REQUEST_MAXRUNTIME-7200}"
-DEBUG="${DEBUG-false}"
-if [ "$DEBUG" = "true" ] ; then
-  export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-  set -x
-fi
 ##########################################
 cd $WORKSPACE
 

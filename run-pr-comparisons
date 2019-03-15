@@ -78,12 +78,6 @@ echo "Downloading PR: `date`"
 get_jenkins_artifacts ${PR_BASELINE_DIR}/ ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/ || true
 echo "Done Downloading `date`"
 
-if $DQM_COMPARISON_TEST ; then 
-  voms-proxy-init
-  $CMS_BOT_DIR/dqm-comparison/compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -n $PULL_REQUEST_NUMBER -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC 2> $WORKSPACE/upload/dqmBinByBinLog.log || true
-  echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> $WORKSPACE/results/testsResults.txt
-fi
-
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
 
   WF_DIR=`echo $WF | cut -d "/" -f1`
@@ -123,6 +117,12 @@ echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 echo "Finished downloading files at `date`:"
 sed -i '/COMPARISON;/d' $WORKSPACE/results/testsResults.txt
 send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
+
+if $DQM_COMPARISON_TEST ; then 
+  voms-proxy-init
+  python $CMS_BOT_DIR/dqm-comparison/compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -n $PULL_REQUEST_NUMBER -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC 2> $WORKSPACE/upload/dqmBinByBinLog.log || true
+  echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> $WORKSPACE/results/testsResults.txt
+fi
 
 # --------------------------------------------------------------------------
 # JR-Comparison

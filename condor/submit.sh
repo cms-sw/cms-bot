@@ -82,8 +82,8 @@ while true ; do
   sleep $WAIT_GAP
 done
 echo EXIT_CODE $EXIT_CODE
-condor_transfer_data $JOBID || true
+condor_transfer_data $JOBID || condor_transfer_data $JOBID || condor_transfer_data $JOBID || condor_transfer_data $JOBID true
 ls -l
 if [ -f ${script_name}.stdout ] ; then cat ${script_name}.stdout ; fi
-condor_rm $JOBID || true
+condor_rm $JOBID || condor_rm $JOBID || condor_rm $JOBID || condor_rm $JOBID || true
 exit $EXIT_CODE

@@ -16,6 +16,7 @@ for dir in pull-request-integration cmsdist-pr ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
+  find . -maxdepth 3 -mindepth 3 -name '.keep' -type f | sed 's|^./||;s|/.*||' | xargs -i --no-run-if-empty touch "./{}"
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"

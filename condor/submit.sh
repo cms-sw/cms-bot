@@ -31,6 +31,7 @@ chmod 0600 $X509_PROXY_FILE
 echo '#!/bin/bash -ex' > ${script_name}.sh
 echo 'export WORKSPACE=${_CONDOR_SCRATCH_DIR}' >> ${script_name}.sh
 echo "export X509_USER_PROXY=\${WORKSPACE}/$X509_PROXY_FILE" >> ${script_name}.sh
+echo "#### User Script #### " >> ${script_name}.sh
 cat $1 | grep -v "/condor/submit.sh  *" >> ${script_name}.sh
 chmod +x ${script_name}.sh
 cp ${here}/submit.sub job.sub

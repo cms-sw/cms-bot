@@ -115,6 +115,7 @@ echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 
 echo "Finished downloading files at `date`:"
 sed -i '/COMPARISON;/d' $WORKSPACE/results/testsResults.txt
+echo "COMPARISON;RUNNING" >> $WORKSPACE/results/testsResults.txt
 send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
 
 if $DQM_COMPARISON_TEST ; then 

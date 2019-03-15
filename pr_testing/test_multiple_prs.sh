@@ -635,7 +635,11 @@ CHK_HEADER_LOG_RES="NOTRUN"
 CHK_HEADER_OK=true
 if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers ] ; then
   report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" ${NO_POST}
-  COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i' scram build -k -j $(${COMMON}/get_cpu_number.sh) check-headers"
+  IGNORE_HDRS="%.i"
+  if [ -e "$WORKSPACE/$RELEASE_FORMAT/src/TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h" ] ; then
+    IGNORE_HDRS="TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i"
+  fi
+  COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='${IGNORE_HDRS}' scram build -k -j $(Jenkins_GetCPU) check-headers"
   echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
   (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/headers_chks.log
   echo 'END OF HEADER CHEKS LOG'

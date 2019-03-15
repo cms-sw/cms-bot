@@ -51,6 +51,7 @@ if [ "$DEBUG" = "true" ] ; then
   cat ${script_name}.sh
   echo "####################################################"
 fi
+unset REQUEST_MAXRUNTIME REQUEST_UNIVERSE REQUEST_CPUS DEBUG X509_PROXY_FILE
 condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1
 cat submit.log
 rm -f $X509_PROXY_FILE

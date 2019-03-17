@@ -9,7 +9,7 @@ if [ $(condor_q ${JOBID} |  grep "^$(whoami) " | wc -l) -gt 0 ] ; then
 fi
 mkdir -p $WORKSPACE/../grid-create-node/logs
 condor_transfer_data $JOBID || true
-cat $WORKSPACE/../grid-create-node/log.* || true
+cat $WORKSPACE/../grid-create-node/logs/log.* || true
 rm -rf $WORKSPACE/../grid-create-node/logs
 condor_rm ${JOBID} || true
 condor_q

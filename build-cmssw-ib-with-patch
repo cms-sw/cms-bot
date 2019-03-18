@@ -37,9 +37,11 @@ HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
 RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/_X.*/_X/'`
 
 # Hardcode special queues like SLHC one.
+EXTRA_REPOS=""
 case $RELEASE_NAME in
   *SLHCDEV*) ;;
   *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
+  *DEVEL*) EXTRA_REPOS="--extra-repositories cms.week0,cms.week1" ;;
 esac
 
 CMSDIST_REPO=cms-sw
@@ -100,7 +102,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   esac
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-CMSBUILD_CMD="PKGTOOLS/cmsBuild $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
   #Do not use reference repo for Sunday, as we cleanup weekly repo on that day
   if [ $(date +%u) -lt 7 ] ; then

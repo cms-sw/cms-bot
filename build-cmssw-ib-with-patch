@@ -41,7 +41,7 @@ EXTRA_REPOS=""
 case $RELEASE_NAME in
   *SLHCDEV*) ;;
   *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
-  *DEVEL*) EXTRA_REPOS="--extra-repositories cms.week0,cms.week1" ;;
+  *_DEVEL_X_*) EXTRA_REPOS="--extra-repositories cms.week0,cms.week1" ;;
 esac
 
 CMSDIST_REPO=cms-sw

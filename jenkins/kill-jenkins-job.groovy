@@ -1,5 +1,14 @@
-boolean isJobMatched(prams, data)
+/*
+  Kills jobs with matching parameters accept for ignored ID.
+  Kills both in que and started jobs.
+  args[0] = project name
+  args[1] = parameters "key1=value1;key2=value2"
+  args[2] = job id not to kill
+*/
+
+boolean isJobMatched(params, data)
 {
+  // check if given job parameters are matching with a running job.
   def all_ok = true;
   for (p in params)
   {

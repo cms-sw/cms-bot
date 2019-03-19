@@ -729,9 +729,9 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_
   for type in dup lostDefs edmPD ; do
     duplicateReflexLibrarySearch.py --${type} 2>&1 | grep -v ' SKIPPING ' > $WORKSPACE/dupDict/${type}.txt || true
   done
-  QA_COUNT=$(cat $WORKSPACE/dupDict/dup.txt | grep '^  *[.]/[A-Z]' | sed 's|^  *./||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
+  QA_COUNT=$(cat $WORKSPACE/dupDict/dup.txt | grep '^  *[.]/[A-Z]' | sed 's|^  *./||' | sort | uniq | wc -l)
   if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
-  QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | sed 's|^./||' | sort | uniq | xargs -i grep '{}' $WORKSPACE/changed-files  | wc -l)
+  QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | sed 's|^./||' | sort | uniq | wc -l)
   if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
   if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" ; fi
 fi

@@ -4,7 +4,6 @@
   args[0] = project name
   args[1] = parameters "key1=value1;key2=value2"
   args[2] = job id not to kill
- 
  */
 
 boolean isJobMatched(params_to_match, job_parameters)
@@ -16,7 +15,7 @@ boolean isJobMatched(params_to_match, job_parameters)
     def cv="";
     try {
       cv = job_parameters[p.key];
-      if (! m ==~ p.value){all_ok=false;}
+      if (! cv ==~ p.value){all_ok=false;}
     }
     catch ( e ) {all_ok=false; println "    "+e;}
     if (all_ok){println "    Matched   : "+p;}

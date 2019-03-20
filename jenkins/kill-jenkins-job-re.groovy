@@ -16,7 +16,7 @@ boolean isJobMatched(params_to_match, job_parameters)
     try {
       cv = job_parameters[p.key];
       println "Comp. Real: '" + cv + "' ,given: '" + p.value + "'"
-      if (! cv ==~ p.value){all_ok=false;}  // todo need to be surounded by / /
+      if ( ! (cv ==~ p.value) ){all_ok=false;}
     }
     catch ( e ) {all_ok=false; println "    "+e;}
     if (all_ok){println "    Matched   : "+p;}
@@ -32,7 +32,7 @@ params = [:];
 for (p in args[1].tokenize(";")){
   def x=p.tokenize("=");
   def v="";
-  if (x[1]!=null){v="/"+x[1]+"/";}
+  if (x[1]!=null){v=x[1];}
   params[x[0]]=v;
 }
 try {id2ignore=args[2].toInteger();}

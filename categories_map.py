@@ -684,6 +684,7 @@ CMSSW_CATEGORIES = {
     "FastSimDataFormats/External",
     "FastSimDataFormats/L1GlobalMuonTrigger",
     "FastSimDataFormats/NuclearInteractions",
+    "FastSimulation/BaseParticlePropagator",
     "FastSimDataFormats/PileUpEvents",
     "FastSimulation/CTPPSFastGeometry",
     "FastSimulation/CTPPSFastSim",

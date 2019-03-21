@@ -680,11 +680,11 @@ CMSSW_CATEGORIES = {
     "",
   ],
   "fastsim": [
+    "CommonTools/BaseParticlePropagator",
     "FastSimDataFormats/External",
     "FastSimDataFormats/L1GlobalMuonTrigger",
     "FastSimDataFormats/NuclearInteractions",
     "FastSimDataFormats/PileUpEvents",
-    "FastSimulation/BaseParticlePropagator",
     "FastSimulation/CTPPSFastGeometry",
     "FastSimulation/CTPPSFastSim",
     "FastSimulation/CTPPSFastTrackingProducer",
@@ -981,6 +981,7 @@ CMSSW_CATEGORIES = {
     "DPGAnalysis/Skims",
   ],
   "reconstruction": [
+    "CommonTools/BaseParticlePropagator",
     "CommonTools/CandAlgos",
     "CommonTools/CandUtils",
     "CommonTools/Clustering1D",

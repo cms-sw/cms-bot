@@ -163,7 +163,7 @@ git clone git@github.com:cms-sw/cmssw-config scram-buildrules
 pushd scram-buildrules
   config_tag=$(grep '%define *configtag *V' $WORKSPACE/CMSDIST/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
   git checkout ${config_tag}
-  echo ${config_tag} > $CMSSW_IB/config/config_tag
+  echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
 popd
 mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
 cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM

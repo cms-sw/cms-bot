@@ -502,6 +502,15 @@ else
     elif [ ! -d ${BUILD_LOG_DIR}/src ] ; then
       BUILD_LOG_RES="OK"
     fi
+
+    #Check Build Rule: Make sure nothing rebuilds after last build
+    if [ $(cat $WORKSPACE/$RELEASE_FORMAT/config/config_tag  | sed 's|V||;s|-||g;s|^0*||') -gt 50807 ] ; then
+        scram build -f -j $(Jenkins_GetCPU) -d  >${WORKSPACE}/scram-rebuild.log 2>&1
+        grep ' newer ' ${WORKSPACE}/scram-rebuild.log | grep -v '/cache/xlibs.backup' > ${WORKSPACE}/newer-than-target.log || true
+        if [ -s ${WORKSPACE}/newer-than-target.log ] ; then
+            echo "SCRAM_REBUILD;ERROR,Build Rules,See Log,newer-than-target.log" >> $RESULTS_FILE
+        fi
+    fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE
 

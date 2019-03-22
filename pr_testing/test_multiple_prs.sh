@@ -327,7 +327,9 @@ if ${BUILD_EXTERNAL} ; then
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
     git clone git@github.com:cms-sw/cmssw-config scram-buildrules
     pushd scram-buildrules
-      git checkout $(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+      config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+      git checkout ${config_tag}
+      echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
     popd
     mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
     cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
@@ -702,6 +704,14 @@ else
     elif [ ! -d ${BUILD_LOG_DIR}/src ] ; then
       BUILD_LOG_RES="OK"
     fi
+    #Check Build Rule: Make sure nothing rebuilds after last build
+    if [ $(cat $WORKSPACE/$CMSSW_IB/config/config_tag  | sed 's|V||;s|-||g;s|^0*||') -gt 50807 ] ; then
+        scram build -f -j $(${COMMON}/get_cpu_number.sh) -d  >${WORKSPACE}/scram-rebuild.log 2>&1
+        grep ' newer ' ${WORKSPACE}/scram-rebuild.log | grep -v '/cache/xlibs.backup' > ${WORKSPACE}/newer-than-target.log || true
+        if [ -s ${WORKSPACE}/newer-than-target.log ] ; then
+            echo "SCRAM_REBUILD;ERROR,Build Rules,See Log,newer-than-target.log" >> $RESULTS_FILE
+        fi
+    fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE
 
@@ -729,10 +739,10 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_
   for type in dup lostDefs edmPD ; do
     duplicateReflexLibrarySearch.py --${type} 2>&1 | grep -v ' SKIPPING ' > $WORKSPACE/dupDict/${type}.txt || true
   done
-  QA_COUNT=$(cat $WORKSPACE/dupDict/dup.txt | grep '^  *[.]/[A-Z]' | sed 's|^  *./||' | sort | uniq | wc -l)
+  QA_COUNT=$(cat $WORKSPACE/dupDict/dup.txt | grep '^  *[.]/[A-Z]' | grep '.xml' | sed 's|^  *./||' | sort | uniq | wc -l)
   if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
-  QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | sed 's|^./||' | sort | uniq | wc -l)
-  if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
+  QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | grep '.xml' | sed 's|^./||' | sort | uniq | wc -l)
+if [ "X$QA_COUNT" != "X0" ] ; then QA_RES="ERROR" ; fi
   if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" ; fi
 fi
 echo "DUPLICATE_DICT_RULES;${QA_RES}" >> $RESULTS_FILE

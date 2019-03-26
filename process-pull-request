@@ -17,6 +17,7 @@ if __name__ == "__main__":
   parser.add_option("-a", "--all",        dest="all",        action="store_true", help="Get all commits of the PR", default=False)
   parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
   parser.add_option("-f", "--force",      dest="force",      action="store_true", help="Force process the issue/PR even if it is ignored.", default=False)
+  parser.add_option("-N", "--new",        dest="new",        action="store_true", help="Use new test proceedure.", default=False)
   parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
   opts, args = parser.parse_args()
 
@@ -39,4 +40,4 @@ if __name__ == "__main__":
       print pr.get_commits().reversed[0].commit.sha
   else:
     from process_pr import process_pr
-    process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)
+    process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force, new_tests=opts.new)

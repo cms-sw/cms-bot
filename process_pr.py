@@ -337,7 +337,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       add_external_category = True
       packages = set (["externals/"+repository])
       if (repo_org!=GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
-          create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
+          if repo_name != GH_CMSDIST_REPO:
+            create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
           create_test_property = True
       if (repo_name == GH_CMSDIST_REPO) and (not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref)):
           print "Skipping PR as it does not belong to valid CMSDIST branch"

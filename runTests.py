@@ -358,7 +358,8 @@ class CodeRulesChecker(IBThreadBase):
         IBThreadBase.run(self)
         try:
             cmd  = 'cd '+ self.startDir +'; rm -rf  codeRules; mkdir codeRules; cd codeRules; '
-	    cmd += 'cmsCodeRulesChecker.py -d '+os.environ['CMSSW_RELEASE_BASE']+'/src -S . -html 2>&1 >CodeRulesChecker.log '
+	    cmd += 'cmsCodeRulesChecker.py -d '+os.environ['CMSSW_RELEASE_BASE']+'/src -S . -html 2>&1 >CodeRulesChecker.log ;'
+            cmd += "find . -name log.html -type f | xargs --no-run-if-empty sed -i -e 's|cmslxr.fnal.gov|cmssdt.cern.ch|'"
             print 'CodeRulesChecker: in: ', os.getcwd()
             print ' ... going to execute:',cmd
             ret = runCmd(cmd)

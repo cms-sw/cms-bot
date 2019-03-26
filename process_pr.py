@@ -1010,19 +1010,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           cissue = cmsdist_repo.create_issue(cmsdist_title, cmsdist_body)
           external_issue_number = str(cissue.number)
           print "Created a new issue ",CMSDIST_REPO_NAME,"#",external_issue_number
-      if pull_request_updated and external_issue_number:
-        if dryRun:
-          print "Should add an update message for issue ",CMSDIST_REPO_NAME,"#",external_issue_number
-        else:
-          cmsdist_repo  = gh.get_repo(CMSDIST_REPO_NAME)
-          cissue = cmsdist_repo.get_issue(int(external_issue_number))
-          cmsdist_body = format("Pull request %(repo)s#%(pr)s was updated.\n"
-                                "Latest update by %(name)s with commit message\n%(message)s",
-                                repo=repository,
-                                pr=pr.number,
-                                name=last_commit.committer.name.encode("ascii", "ignore"),
-                                message=last_commit.message.encode("ascii", "ignore"))
-          cissue.create_comment(cmsdist_body)
     cmsdist_issue = ""
     if external_issue_number:
       cmsdist_issue="\n\nexternal issue "+CMSDIST_REPO_NAME+"#"+external_issue_number

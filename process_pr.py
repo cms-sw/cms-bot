@@ -101,6 +101,7 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, e
       if '#' not in pr: pr='%s#%s' % (repository, pr)
       prs.append(pr)
     parameters['PULL_REQUESTS']=" ".join(prs)
+    parameters['USE_MULTIPLE_PRS_JOB']='true'
   else:
     parameters['PUB_USER']=repo_parts[0]
     if repo_parts[1] == GH_CMSDIST_REPO:

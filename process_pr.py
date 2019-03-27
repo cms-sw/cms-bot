@@ -784,7 +784,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   for lab in extra_labels: labels.append(extra_labels[lab][0])
   if comp_warnings: labels.append("compilation-warnings")
 
-  if cmssw_repo and issue.pull_request:
+  if cms_repo and issue.pull_request:
     if comparison_done:
       labels.append("comparison-available")
     elif comparison_notrun:

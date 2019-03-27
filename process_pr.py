@@ -279,7 +279,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   prId = issue.number
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
-  new_tests = (prId==4811 and repo_name==GH_CMSDIST_REPO)
+  new_tests = (prId==4811 and repo_name==GH_CMSDIST_REPO) or (prId==119 and repo_name=='root')
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
   cmssw_repo = (repo_name==GH_CMSSW_REPO)

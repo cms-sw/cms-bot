@@ -286,6 +286,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   cms_repo = (repo_org in EXTERNAL_REPOS)
   external_repo = (repository!=CMSSW_REPO_NAME) and (len([e for e in EXTERNAL_REPOS if repo_org==e])>0)
   create_test_property = False
+  repo_cache = {repository: repo}
   packages = set([])
   create_external_issue = False
   add_external_category = False
@@ -604,6 +605,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         abort_test = False
         need_external = False
         if sec_line.startswith("Using externals from cms-sw/cmsdist#"): need_external = True
+        elif sec_line.startswith('Tested with other pull request'): need_external = True
+        elif sec_line.startswith('Using extra pull request'): need_external = True
       elif re.match( TESTS_RESULTS_MSG, first_line):
         test_sha = sec_line.replace("Tested at: ","").strip()
         if (not push_test_issue) and (test_sha != last_commit.sha) and (test_sha != 'UNKNOWN') and (not "I had the issue " in first_line):
@@ -878,16 +881,35 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if create_test_property:
     # trigger the tests and inform it in the thread.
     if trigger_test_on_signature and has_categories_approval: tests_requested = True
-    if not dryRun:
-      if tests_requested:
-        test_msg = TRIGERING_TESTS_MSG
-        if cmsdist_pr: test_msg = test_msg+"\nUsing externals from "+CMSDIST_REPO_NAME+"#"+cmsdist_pr
-        elif cmssw_prs: test_msg += "\nUsing extra pull request(s) %s" % cmssw_prs
-        issue.create_comment( test_msg )
+    if tests_requested:
+      prs = ['%s#%s' % (repository,prId)]
+      for p in [x for x in cmsdist_pr.replace(' ','').split(',') if x]:
+        if '#' not in p: p='%s/cmsdist#%s' % (repo_org, p)
+        prs.append(p)
+      for p in [x for x in cmssw_prs.replace(' ','').split(',') if x]:
+        if '#' not in p: p='%s/cmssw#%s' % (repo_org, p)
+        prs.append(p)
+      for xpr in prs:
+        repo_name,pr_num = xpr.split('#',1)
+        pr_num = int(pr_num)
+        rest_pr = [p for p in prs if p!=xpr]
+        ex_msg = ''
+        if rest_pr: ex_msg = "\nTested with other pull request(s) %s" % ','.join(rest_pr)
+        if not repo_name in repo_cache: repo_cache[repo_name] = gh.get_repo(repo_name)
+        pr_issue = issue
+        if (repo_name!=repository) or (pr_num!=prId): pr_issue=repo_cache[repo_name].get_issue(pr_num)
+        if not dryRun:
+          pr_issue.create_comment( TRIGERING_TESTS_MSG+ex_msg)
+        else:
+          print 'DryRun: Creating comment:%s\n\n%s' % (xpr, TRIGERING_TESTS_MSG+ex_msg)
+      if not dryRun:
         create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, extra_wfs, dryRun, abort=False, repo_config=repo_config, ignore_tests=ignore_tests, enabled_tests=enabled_tests, release_queue=release_queue, new_tests=new_tests)
-      elif abort_test:
+    elif abort_test:
+      if not dryRun:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
         create_properties_file_tests( repository, prId, cmsdist_pr, "", "", dryRun, abort=True, new_tests=new_tests)
+      else:
+        print 'Dryrun: Aborting tests'
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"

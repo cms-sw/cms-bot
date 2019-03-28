@@ -34,17 +34,17 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False, ignore=[]):
     cur_labels = {}
     for lab in repo.get_labels():
       cur_labels [lab.name]=lab
-    api_rate_limits_repo(repo)
+    api_rate_limits(gh)
     for lab in all_labels:
       if not lab in cur_labels:
         print "  Creating new label ",lab,"=>",all_labels[lab]
         if not dryRun:
           repo.create_label(lab, all_labels[lab])
-          api_rate_limits_repo(repo)
+          api_rate_limits(gh)
       elif cur_labels[lab].color != all_labels[lab]:
         if not dryRun:
           cur_labels[lab].edit(lab, all_labels[lab])
-          api_rate_limits_repo(repo)
+          api_rate_limits(gh)
         print "  Label ",lab," color updated: ",cur_labels[lab].color ," => ",all_labels[lab]
 
 if __name__ == "__main__":

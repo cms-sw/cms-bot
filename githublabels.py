@@ -34,14 +34,14 @@ COMPARISON_LABELS = {
 }
 
 CMSSW_BUILD_LABELS = {
-  "build-aborted" : "5319e7",
-  "build-in-progress" : LABEL_TYPES["pending"],
-  "build-pending-approval" : "fef2c0",
+  "build-aborted" : LABEL_COLORS["rejected"],
+  "build-in-progress" : LABEL_COLORS["hold"],
+  "build-pending-approval" : LABEL_TYPES["pending"],
   "build-successful" : LABEL_TYPES["approved"],
-  "release-notes-requested" : "bfe5bf",
+  "release-notes-requested" : LABEL_TYPES["approved"],
   "release-announced" : LABEL_TYPES["approved"],
-  "toolconf-building" : "fef2c0",
-  "uploading-builds" : "86A086",
+  "toolconf-building" : LABEL_COLORS["hold"],
+  "uploading-builds" : LABEL_COLORS["hold"],
   "requires-external" : "0000ff",
   "release-build-request" : LABEL_COLORS["approved"],
 }

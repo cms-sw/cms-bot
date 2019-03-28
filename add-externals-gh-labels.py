@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 from github import Github
 from os.path import expanduser, dirname, abspath, join
-from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS
+from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS, LABEL_COLORS
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
 from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS, GH_CMSSW_ORGANIZATION
 from datetime import datetime
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits, api_rate_limits_repo
+from cmsutils import get_config_map_properties
 from sys import argv
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
@@ -82,6 +83,17 @@ if __name__ == "__main__":
   if opts.cmssw:
     for lab in CMSSW_BUILD_LABELS:
       all_labels[lab] = CMSSW_BUILD_LABELS[lab]
+    specs = get_config_map_properties()
+    for s in specs:
+      if 'DISABLED' in s: continue
+      if 'IB_ONLY' in s: continue
+      arch = s['SCRAM_ARCH']
+      for ltype in ['build', 'installation', 'tool-conf', 'upload']:
+        all_labels['%s-%s-error' % (arch, ltype)] = LABEL_COLORS["rejected"]
+        all_labels['%s-%s-ok' % (arch, ltype)] =    LABEL_COLORS["approved"]
+      for inproc in [ 'building', 'tool-conf-building', 'uploading', 'build-queued', 'tool-conf-waiting']:
+        all_labels[arch+'-'+inproc] = LABEL_COLORS["hold"]
+      all_labels[arch+'-finished'] = LABEL_COLORS["approved"]
     for repo_name in CMSSW_REPOS:
       setRepoLabels (gh, repo_name, all_labels, opts.dryRun)
 

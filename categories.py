@@ -73,3 +73,10 @@ CMS_REPOS = set(CMSDIST_REPOS + CMSSW_REPOS + EXTERNAL_REPOS)
 from datetime import datetime
 COMMENT_CONVERSION = {}
 COMMENT_CONVERSION['kpedro88']={'comments_before': datetime.strptime('2018-07-13','%Y-%m-%d'), 'comments':[('+1', '+upgrade')]}
+
+
+def external_to_package(repo_fullname):
+  org, repo = repo_fullname.split("/",1)
+  if org == "cms-data":
+    return repo.replace('-','/')
+  return ''

@@ -6,7 +6,7 @@ from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, C
 from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS, GH_CMSSW_ORGANIZATION
 from datetime import datetime
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits
+from github_utils import api_rate_limits, api_rate_limits_repo
 from sys import argv
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
@@ -34,17 +34,17 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False, ignore=[]):
     cur_labels = {}
     for lab in repo.get_labels():
       cur_labels [lab.name]=lab
-    api_rate_limits(gh)
+    api_rate_limits_repo(repo)
     for lab in all_labels:
       if not lab in cur_labels:
         print "  Creating new label ",lab,"=>",all_labels[lab]
         if not dryRun:
           repo.create_label(lab, all_labels[lab])
-          api_rate_limits(gh)
+          api_rate_limits_repo(repo)
       elif cur_labels[lab].color != all_labels[lab]:
         if not dryRun:
           cur_labels[lab].edit(lab, all_labels[lab])
-          api_rate_limits(gh)
+          api_rate_limits_repo(repo)
         print "  Label ",lab," color updated: ",cur_labels[lab].color ," => ",all_labels[lab]
 
 if __name__ == "__main__":

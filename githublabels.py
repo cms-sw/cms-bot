@@ -3,6 +3,7 @@ LABEL_COLORS = {
   "pending":  "fbca04",
   "approved": "2cbe4e",
   "rejected": "e11d21",
+  "info": "0000ff",
 }
 
 LABEL_TYPES = {
@@ -18,11 +19,11 @@ COMMON_LABELS = {
   "pending-assignment": LABEL_COLORS["hold"],
   "new-package-pending" : LABEL_COLORS["rejected"],
   "bug-fix" : "b8860b",
-  "new-feature" : "0000ff",
-  "backport" : "0000ff",
+  "new-feature" : LABEL_COLORS["info"],
+  "backport" : LABEL_COLORS["info"],
   "backport-ok" : LABEL_COLORS["approved"],
   "urgent"   : "cc317c",
-  "process-complete" : "006b75",
+  "process-complete" : LABEL_COLORS["approved"],
   "hold": LABEL_COLORS["hold"],
   "compilation-warnings": LABEL_COLORS["hold"],
 }
@@ -42,7 +43,7 @@ CMSSW_BUILD_LABELS = {
   "release-announced" : LABEL_TYPES["approved"],
   "toolconf-building" : LABEL_COLORS["hold"],
   "uploading-builds" : LABEL_COLORS["hold"],
-  "requires-external" : "0000ff",
+  "requires-external" : LABEL_COLORS["info"],
   "release-build-request" : LABEL_COLORS["approved"],
 }
 

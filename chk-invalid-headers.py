@@ -71,19 +71,20 @@ for e in errs:
   if pkg not in pkg_errs: pkg_errs[pkg] = {}
   pkg_errs[pkg][e]=errs[e]
 
-run_cmd('rm -f invalid_includes; mkdir invalid_includes')
+outdir = 'invalid_includes'
+run_cmd('rm -f %s; mkdir %s' % (outdir, outdir))
 all_count = {}
 for p in sorted(pkg_errs):
   all_count[p]=len(pkg_errs[p])
   for e in sorted(pkg_errs[p]):
-    xdir = join('invalid_includes', dirname(e))
+    xdir = join(outdir, dirname(e))
     if not exists(xdir): run_cmd('mkdir -p %s' % xdir)
-    with open(join('invalid_includes', e),'w') as ref:
+    with open(join(outdir, e+'.html'),'w') as ref:
       ref.write("<html><head></head><body>\n")
       for inc in sorted(errs[e].keys()):
         url = 'https://github.com/cms-sw/cmssw/blob/%s/%s#L%s' % (environ['CMSSW_VERSION'],e,errs[e][inc])
         ref.write('<a href="%s">%s</a></br>\n' % (url, inc))
       ref.write("</body></html>\n")
 
-dump(all_count, open('invalid_includes/summary.json','w'))
+dump(all_count, open(outdir+'/summary.json','w'), indent=2, sort_keys=True, separators=(',', ': '))
 

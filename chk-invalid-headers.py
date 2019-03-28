@@ -84,8 +84,8 @@ for p in sorted(pkg_errs):
       ref.write("<h3>%s:</h3>\n" % e)
       for inc in sorted(errs[e].keys()):
         url = 'https://github.com/cms-sw/cmssw/blob/%s/%s#L%s' % (environ['CMSSW_VERSION'],e,errs[e][inc])
-        ref.write('<l1><a href="%s">%s</a></l1>\n' % (url, inc))
-      ref.write("</ul>\n")
+        ref.write('<l1><a href="%s">%s</a></l1></br>\n' % (url, inc))
+      ref.write("</ul></br>\n")
     ref.write("</body></html>\n")
 
 dump(all_count, open(outdir+'/summary.json','w'), indent=2, sort_keys=True, separators=(',', ': '))

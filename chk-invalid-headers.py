@@ -76,15 +76,17 @@ run_cmd('rm -f %s; mkdir %s' % (outdir, outdir))
 all_count = {}
 for p in sorted(pkg_errs):
   all_count[p]=len(pkg_errs[p])
-  for e in sorted(pkg_errs[p]):
-    xdir = join(outdir, dirname(e))
-    if not exists(xdir): run_cmd('mkdir -p %s' % xdir)
-    with open(join(outdir, e+'.html'),'w') as ref:
-      ref.write("<html><head></head><body>\n")
+  pdir = join(outdir, p)
+  run_cmd('mkdir -p %s' % pdir)
+  with open(join(pdir, 'index.html'),'w') as ref:
+    ref.write("<html><head></head><body>\n")
+    for e in sorted(pkg_errs[p]):
+      ref.write("<h3>%s:</h3>\n" % e)
       for inc in sorted(errs[e].keys()):
         url = 'https://github.com/cms-sw/cmssw/blob/%s/%s#L%s' % (environ['CMSSW_VERSION'],e,errs[e][inc])
-        ref.write('<a href="%s">%s</a></br>\n' % (url, inc))
-      ref.write("</body></html>\n")
+        ref.write('<l1><a href="%s">%s</a></l1>\n' % (url, inc))
+      ref.write("</ul>\n")
+    ref.write("</body></html>\n")
 
 dump(all_count, open(outdir+'/summary.json','w'), indent=2, sort_keys=True, separators=(',', ': '))
 

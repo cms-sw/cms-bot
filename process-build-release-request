@@ -850,15 +850,15 @@ if __name__ == "__main__":
     print "Found forces architectures:",sel_archs
 
   print release_queue,sel_archs
-  specs = get_config_map_properties()
+  specs = get_config_map_properties({"DISABLED": "1", "IB_ONLY": "1"})
   architectures = [x["SCRAM_ARCH"] for x in specs
-                   if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x]
+                   if x["RELEASE_QUEUE"] == release_queue]
   if not architectures:
     print "Trying default queue"
     release_queue = "".join([x for x in rel_name_match.group(1,2)] + ["_X"])
     print release_queue
     architectures = [x["SCRAM_ARCH"] for x in specs
-                   if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x]
+                   if x["RELEASE_QUEUE"] == release_queue]
 
   if sel_archs:
     architectures = [ a for a in architectures if a in sel_archs ]
@@ -872,16 +872,16 @@ if __name__ == "__main__":
   #Find out the docker images to be used for each arch
   docker_imgs = {}
   for x in specs:
-    if (x["RELEASE_QUEUE"] == release_queue) and (not "DISABLED" in x) and ("DOCKER_IMG" in x) and (x["SCRAM_ARCH"] in architectures):
+    if (x["RELEASE_QUEUE"] == release_queue) and ("DOCKER_IMG" in x) and (x["SCRAM_ARCH"] in architectures):
       docker_imgs[x["SCRAM_ARCH"]] = x["DOCKER_IMG"]
 
   # Determine the release branch (which is the same as the release queue if not
   # specified) and start the build if needed.
   release_branches = [x["RELEASE_BRANCH"] for x in specs
-                      if x["RELEASE_QUEUE"] == release_queue and "RELEASE_BRANCH" in x and not "DISABLED" in x]
+                      if (x["RELEASE_QUEUE"] == release_queue) and ("RELEASE_BRANCH" in x)]
 
   possible_prod_arch = [x["SCRAM_ARCH"] for x in specs
-                        if x["RELEASE_QUEUE"] == release_queue and not "DISABLED" in x and "PROD_ARCH" in x]
+                        if (x["RELEASE_QUEUE"] == release_queue) and ("PROD_ARCH" in x)]
 
   err, production_architecture = getstatusoutput(CMS_BOT_DIR+"/get-production-arch %s %s" % (release_name, release_queue))
   if err:

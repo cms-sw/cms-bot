@@ -120,12 +120,18 @@ def cmsswIB2Week(release):
 # If the list is empty it means that it didn't find any architecture for that release queue, or
 # that the IBs are disabled.
 #
-def get_config_map_properties():
+def get_config_map_properties(filters=None):
   CONFIG_MAP_FILE = CMS_BOT_DIR + '/config.map'
   specs = []
   f = open( CONFIG_MAP_FILE , 'r' )
   lines = [l.strip(" \n\t;") for l in f.read().split("\n") if l.strip(" \n\t;")]
   for line in lines:
     entry = dict(x.split("=",1) for x in line.split(";") if x)
-    specs.append(entry)
+    skip = False
+    if filters:
+      for k in filters:
+        if (k in entry) and (entry[k]==filters[k]):
+          skip = True
+          break
+    if not skip: specs.append(entry)
   return specs

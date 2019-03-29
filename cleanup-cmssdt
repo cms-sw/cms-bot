@@ -44,7 +44,7 @@ for dir in material-budget-ref ; do
 done
 
 #Keep the following for 8 days
-for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-release-afs build-fwlite lizard flawfinder; do
+for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-release-afs build-fwlite lizard flawfinder invalid-includes; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'

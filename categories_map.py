@@ -1143,6 +1143,7 @@ CMSSW_CATEGORIES = {
     "RecoEgamma/ElectronIdentification",
     "RecoEgamma/Examples",
     "RecoEgamma/PhotonIdentification",
+    "RecoHGCal/TICL",
     "RecoHI/Configuration",
     "RecoHI/HiCentralityAlgos",
     "RecoHI/HiEgammaAlgos",

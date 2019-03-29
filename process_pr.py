@@ -282,7 +282,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   prId = issue.number
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
-  new_tests = (prId==4811 and repo_name==GH_CMSDIST_REPO) or (prId==119 and repo_name=='root')
+  new_tests = False
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print "Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
@@ -347,7 +347,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if (repo_org!=GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
           if repo_name != GH_CMSDIST_REPO:
             create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
-          create_test_property = True
+          else:
+            #Remove `else` for new tests and always set create_test_property 
+            create_test_property = True
       if (repo_name == GH_CMSDIST_REPO) and (not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref)):
           print "Skipping PR as it does not belong to valid CMSDIST branch"
           return

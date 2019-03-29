@@ -16,10 +16,18 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     #echo "REAL_ARCH=-AuthenticAMD" >> $BASELINE_FILE_AMD
 
   else
-    echo "Creating property file $WORKSPACE/$x-properties."
-    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/auto-$x-properties
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/auto-$x-properties
-    echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/auto-$x-properties
-  fi  
+    pfile="$WORKSPACE/auto-$x-properties"
+    echo "Creating property file ${pfile}"
+    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > ${pfile}
+    echo "ARCHITECTURE=${ARCHITECTURE}" >> ${pfile}
+    echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> ${pfile}
+    if [ "$x" = "gpu" ] ; then
+      echo "SLAVE_LABELS=nvidia" >> ${pfile}
+      echo "QA_TESTS=gpu_unit" >> ${pfile}
+      echo "ADDITIONAL_TEST_NAME=qa" >> ${pfile}
+    else
+      echo "ADDITIONAL_TEST_NAME=$x" >> ${pfile}
+    fi
+  fi
 done
 

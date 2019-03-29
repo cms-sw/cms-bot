@@ -1529,6 +1529,7 @@ CMSSW_CATEGORIES = {
     "L1Trigger/L1THGCal",
     "L1Trigger/ME0Trigger",
     "L1Trigger/TrackTrigger",
+    "RecoHGCal/TICL",
     "RecoLocalCalo/HGCalRecAlgos",
     "RecoLocalCalo/HGCalRecProducers",
     "RecoLocalFastTime/Configuration",

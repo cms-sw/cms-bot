@@ -21,13 +21,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > ${pfile}
     echo "ARCHITECTURE=${ARCHITECTURE}" >> ${pfile}
     echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> ${pfile}
-    if [ "$x" = "gpu" ] ; then
-      echo "SLAVE_LABELS=nvidia" >> ${pfile}
-      echo "QA_TESTS=gpu_unit" >> ${pfile}
-      echo "ADDITIONAL_TEST_NAME=qa" >> ${pfile}
-    else
-      echo "ADDITIONAL_TEST_NAME=$x" >> ${pfile}
-    fi
+    echo "ADDITIONAL_TEST_NAME=$x" >> ${pfile}
   fi
 done
 

@@ -2,7 +2,7 @@
 CONFIG_MAP=$(dirname $0)/config.map
 for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
   if [ "$x" == "baseline" ]; then
-    BASELINE_FILE_INTEL=$WORKSPACE/$x-GenuineIntel-properties
+    BASELINE_FILE_INTEL=$WORKSPACE/baseline-$x-GenuineIntel-properties
     echo "Creating property file $BASELINE_FILE_INTEL"
     echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $BASELINE_FILE_INTEL
     echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_INTEL
@@ -17,9 +17,9 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
 
   else
     echo "Creating property file $WORKSPACE/$x-properties."
-    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/$x-properties
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/$x-properties
-    echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/$x-properties
+    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/auto-$x-properties
+    echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/auto-$x-properties
+    echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/auto-$x-properties
   fi  
 done
 

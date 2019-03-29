@@ -736,7 +736,7 @@ def fill_missing_cmsdist_tags(results):
 
 def add_tests_to_results(results, unit_tests, relvals_results,
                          addon_results, build_results, cmsdist_tags_results,
-                         rv_Exceptions_Results, fwlite_results, gpu_unit_tests, python3_results):
+                         rv_Exceptions_Results, fwlite_results, gpu_unit_tests, python3_results, invalid_includes):
     """
     merges the results of the tests with the structure of the IBs tags and the pull requests
     it also marks the comparisons that correspond to an IB
@@ -748,6 +748,7 @@ def add_tests_to_results(results, unit_tests, relvals_results,
             utres = unit_tests.get(rel_name)
             gpu_utres = gpu_unit_tests.get(rel_name)
             python3_res = python3_results.get(rel_name)
+            invalid_includes_res = invalid_includes.get(rel_name)
             adonres = addon_results.get(rel_name)
             buildsres = build_results.get(rel_name)
             fwliteres = fwlite_results.get(rel_name)
@@ -759,6 +760,7 @@ def add_tests_to_results(results, unit_tests, relvals_results,
             comp['utests'] = utres if utres else []
             comp['gpu_utests'] = gpu_utres if gpu_utres else []
             comp['python3_tests'] = python3_res if python3_res else []
+            comp['invalid_includes'] = invalid_includes_res if invalid_includes_res else []
             comp['addons'] = adonres if adonres else []
             comp['builds'] = buildsres if buildsres else []
             comp['fwlite'] = fwliteres if fwliteres else []
@@ -1434,7 +1436,7 @@ if __name__ == "__main__":
         execute_magic_command_find_results('fwlite'),
         execute_magic_command_find_results('gpu_utests'),
         execute_magic_command_find_results('python3'),
-        execute_magic_command_find_results('invalid-includes'),
+        execute_magic_command_find_results('invalid-includes')
     )
 
     fill_missing_cmsdist_tags(results)

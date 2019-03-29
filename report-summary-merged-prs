@@ -351,13 +351,13 @@ def analyze_tests_results(output, results, arch, type):
     }
     """
     for line in output.splitlines():
-        m = re.search('CMSSW.*[0-9]/', line)
+        m = re.search('/(CMSSW_[^/]+)/', line)
         if not m:
             print_verbose('Ignoring file:\n%s' % line)
             continue
 
         print "Processing ", type, ":", line
-        rel_name = line[m.start():m.end() - 1]
+        rel_name = m.group(1)
         result_arch = {}
         result_arch['arch'] = arch
         result_arch['file'] = line
@@ -381,6 +381,13 @@ def analyze_tests_results(output, results, arch, type):
             passed, details = get_results_details_one_build_file(line, type)
         elif type == 'python3':
             passed, details = get_results_one_unitTests_file(line, " Error compiling ")
+        elif type == 'invalid-includes':
+            errs = len(json.load(open(line)))
+            if errs:
+                passed = PossibleUnitTestResults.FAILED
+                details = {'num_fails': str(errs)}
+            else:
+                passed = PossibleUnitTestResults.PASSED
         else:
             print 'not a valid test type %s' % type
             exit(1)
@@ -630,7 +637,8 @@ def execute_magic_command_find_results(type):
         'addOn': MAGIC_COMMAND_FIND_RESULTS_ADDON,
         'builds': MAGIC_COMMAND_FIND_RESULTS_BUILD,
         'fwlite': MAGIC_COMMAND_FIND_RESULTS_FWLITE,
-        'python3': MAGIC_COMMAND_FIND_RESULTS_PYTHON3
+        'python3': MAGIC_COMMAND_FIND_RESULTS_PYTHON3,
+        'invalid-includes' : MAGIC_COMMAND_FIND_INVALID_INCLUDES
     }
     if type not in ex_magix_comand_finf_setuls_dict:
         print 'not a valid test type %s' % type
@@ -1242,6 +1250,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_RESULTS_BUILD = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new/logAnalysis.pkl"'
     MAGIC_COMMAND_FIND_RESULTS_FWLITE = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www  -mindepth 5 -maxdepth 5 -path "*/new_FWLITE/logAnalysis.pkl"'
     MAGIC_COMMAND_FIND_RESULTS_PYTHON3 = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name python3.log'
+    MAGIC_COMMAND_FIND_INVALID_INCLUDES = 'find ' + JENKINS_ARTIFACTS_DIR + '/invalid-includes -maxdepth 3 -mindepth 3 -path "*/ARCHITECTURE/summary.json" -type f'
     MAGIC_COMMAND_FIND_STATIC_CHECKS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/ib-static-analysis/RELEASE_NAME && ls ' + JENKINS_ARTIFACTS_DIR + '/ib-static-analysis/RELEASE_NAME/'
     MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/ib-static-analysis/RELEASE_NAME/ARCHITECTURE/reports/modules2statics-filter1.txt && echo reports/modules2statics-filter1.txt'
     MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/material-budget/RELEASE_NAME && ls ' + JENKINS_ARTIFACTS_DIR + '/material-budget/RELEASE_NAME/'
@@ -1424,7 +1433,8 @@ if __name__ == "__main__":
         execute_magic_command_find_rv_exceptions_results(),  # rv_Exceptions_Results
         execute_magic_command_find_results('fwlite'),
         execute_magic_command_find_results('gpu_utests'),
-        execute_magic_command_find_results('python3')
+        execute_magic_command_find_results('python3'),
+        execute_magic_command_find_results('invalid-includes'),
     )
 
     fill_missing_cmsdist_tags(results)

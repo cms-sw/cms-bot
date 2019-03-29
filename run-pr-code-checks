@@ -16,6 +16,13 @@ NUM_PROC=$(nproc)
 case $(hostname) in lxplus* ) let NUM_PROC=$NUM_PROC/2 ;; esac
 if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
 cd $CMSSW_BASE
+CONFIG_TAG=$(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g' )
+if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050800 ] ; then
+  git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules
+  mv $CMSSW_BASE/config/SCRAM $CMSSW_BASE/config/SCRAM.old
+  mv scram-buildrules/SCRAM  $CMSSW_BASE/config/SCRAM
+fi
+
 curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $CMSSW_BASE/all-code-checks-files.txt
 grep -v '^[^/]*/[^/]*/test/' $CMSSW_BASE/all-code-checks-files.txt > $CMSSW_BASE/code-checks-files.txt          || true
 grep -v '^[^/]*/[^/]*/data/' $CMSSW_BASE/code-checks-files.txt     > $CMSSW_BASE/filename-code-checks-files.txt || true

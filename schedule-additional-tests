@@ -1,27 +1,14 @@
 #!/bin/sh -ex
 CONFIG_MAP=$(dirname $0)/config.map
 for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
+  pfile="$WORKSPACE/auto-$x-properties"
+  echo "Creating property file ${pfile}"
+  echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > ${pfile}
+  echo "ARCHITECTURE=${ARCHITECTURE}" >> ${pfile}
+  echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> ${pfile}
+  echo "ADDITIONAL_TEST_NAME=$x" >> ${pfile}
   if [ "$x" == "baseline" ]; then
-    BASELINE_FILE_INTEL=$WORKSPACE/baseline-$x-GenuineIntel-properties
-    echo "Creating property file $BASELINE_FILE_INTEL"
-    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $BASELINE_FILE_INTEL
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_INTEL
-    echo "REAL_ARCH=-GenuineIntel" >> $BASELINE_FILE_INTEL
-
-    #For now only run it for GenuineIntel
-    #BASELINE_FILE_AMD=$WORKSPACE/$x-AuthenticAMD-properties
-    #echo "Creating property file $BASELINE_FILE_AMD"
-    #echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $BASELINE_FILE_AMD
-    #echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_AMD
-    #echo "REAL_ARCH=-AuthenticAMD" >> $BASELINE_FILE_AMD
-
-  else
-    pfile="$WORKSPACE/auto-$x-properties"
-    echo "Creating property file ${pfile}"
-    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > ${pfile}
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> ${pfile}
-    echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> ${pfile}
-    echo "ADDITIONAL_TEST_NAME=$x" >> ${pfile}
+    echo "REAL_ARCH=-GenuineIntel" >> ${pfile}
   fi
 done
 

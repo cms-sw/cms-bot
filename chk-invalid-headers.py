@@ -71,7 +71,7 @@ for e in errs:
   if pkg not in pkg_errs: pkg_errs[pkg] = {}
   pkg_errs[pkg][e]=errs[e]
 
-outdir = 'invalid_includes'
+outdir = 'invalid-includes'
 run_cmd('rm -f %s; mkdir %s' % (outdir, outdir))
 all_count = {}
 for p in sorted(pkg_errs):

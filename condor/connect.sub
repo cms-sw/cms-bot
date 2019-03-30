@@ -1,12 +1,11 @@
-universe                = vanilla
-+MaxRuntime             = 3600
-request_cpus            = 1
-executable              = test.sh
+universe                = @REQUEST_UNIVERSE@
++MaxRuntime             = @REQUEST_MAXRUNTIME@
+request_cpus            = @REQUEST_CPUS@
+executable              = @SCRIPT_NAME@.sh
+transfer_input_files    = slave.jar
 should_transfer_files   = yes
 when_to_transfer_output = on_exit
-output                  = log.stdout
-error                   = log.stdout
-log                     = log.job
-requirements = (OpSysAndVer =?= "CentOS7")
+output                  = logs/log.stdout
+error                   = logs/log.stdout
+log                     = logs/log.job
 queue 1
-

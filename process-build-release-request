@@ -868,12 +868,14 @@ if __name__ == "__main__":
     msg = NO_ARCHS_FOUND_MSG.format( rel_name=release_name, queue=release_queue )
     post_message( issue, msg )
     exit( 0 )
+  print "Archs: ", architectures
 
   #Find out the docker images to be used for each arch
   docker_imgs = {}
   for x in specs:
     if (x["RELEASE_QUEUE"] == release_queue) and ("DOCKER_IMG" in x) and (x["SCRAM_ARCH"] in architectures):
       docker_imgs[x["SCRAM_ARCH"]] = x["DOCKER_IMG"]
+  print "Dockers:",docker_imgs
 
   # Determine the release branch (which is the same as the release queue if not
   # specified) and start the build if needed.

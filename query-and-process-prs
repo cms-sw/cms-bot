@@ -11,7 +11,7 @@ import sys
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 def check_prs(gh, repo, since, process_issue, dryRun):
-  if repo.full_name in ["cms-sw/cmsdist", "cms-sw/cmssw"]: return
+  #if repo.full_name in ["cms-sw/cmsdist", "cms-sw/cmssw"]: return
   if not get_repository_hooks(repo.full_name,"Jenkins_Github_Hook"): return  
   print "Working on Repository: ",repo.full_name
   if since:

@@ -209,7 +209,7 @@ if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   git cms-addpkg  --debug --ssh '*'
   rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
   scram tool remote cmssw || true
-  rm -f $CMSSW_BASE/external
+  rm -rf $CMSSW_BASE/external
   scram setup self
   scram setup
   eval $(scram runtime -sh)

@@ -8,4 +8,3 @@ when_to_transfer_output = on_exit
 output                  = logs/log.stdout
 error                   = logs/log.stdout
 log                     = logs/log.job
-queue 1

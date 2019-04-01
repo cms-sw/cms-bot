@@ -43,6 +43,15 @@ sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
 sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
+if [ "X${CONDOR_JOB_CONF}" != "X" -a -f ${CONDOR_JOB_CONF} ] ; then
+  if [ -f  ${CONDOR_JOB_CONF} ] ; then
+    cat ${CONDOR_JOB_CONF} >> job.sub
+  else
+    echo "ERROR: Missing condir job configuration file : ${CONDOR_JOB_CONF}"
+    exit 1
+  fi
+fi
+echo "queue 1" >> job.sub
 echo "############# JOB Configuration file ###############"
 cat job.sub
 echo "####################################################"

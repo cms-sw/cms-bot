@@ -1222,6 +1222,26 @@ void mtdHits(TString cName){
   plotvar("log2(max("+bObj+".obj.flagBits_,0.5))");
 }
 
+void forwardProtons(TString cName ){
+  TString bObj = "recoForwardProtons_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+  plotvar(bObj+"@.size()");
+  plotvar(bObj+".vx()");
+  plotvar(bObj+".vy()");
+  plotvar(bObj+".vz()");
+  plotvar("log10("+bObj+".pt())");
+  plotvar(bObj+".momentum().eta()");
+  plotvar(bObj+".momentum().phi()");
+  plotvar("min(50,"+bObj+".normalizedChi2())");
+  plotvar(bObj+".ndof");
+  plotvar(bObj+".xi()");
+  plotvar(bObj+".thetaX()");
+  plotvar(bObj+".thetaY()");
+  plotvar("log10("+bObj+".xiError())");
+  plotvar(bObj+".t()");
+  plotvar(bObj+".time()");
+}
+
 void flatTable(const TString& shortName){
   const TString tName = "nanoaodFlatTable_"+shortName;
   plotvar(tName+"_"+recoS+".obj.size_");
@@ -1740,6 +1760,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".getChiSquaredOverNDF()");
         plotvar(tbr+".getNumberOfPointsUsedForFit()");
       }
+
+      forwardProtons("ctppsProtons_multiRP");
+      forwardProtons("ctppsProtons_singleRP");
     }
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "halo"))){

@@ -208,7 +208,7 @@ echo "DEP_NAMES: ${DEP_NAMES}"
 if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   git cms-addpkg  --debug --ssh '*'
   rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
-  scram tool remote cmssw || true
+  scram tool remove cmssw || true
   rm -rf $CMSSW_BASE/external
   scram setup self
   scram setup

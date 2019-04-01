@@ -116,10 +116,12 @@ RunMET2015Dwf134p905 134.905_RunMET2015D+*/step3.root reRECO
 RunSinglePh2015Dwf134p911 134.911_RunSinglePh2015D+*/step3.root reRECO
 RunDoubleEG2016Bwf136p722 136.722_RunDoubleEG2016B+*/step3.root reRECO
 RunDoubleMuon2016Bwf136p723 136.723_RunDoubleMuon2016B+*/step3.root reRECO
+RunJetHT2016Bwf136p724 136.724_RunJetHT2016B+*/step3.root reRECO
 RunMET2016Bwf136p725 136.725_RunMET2016B+*/step3.root reRECO
 RunDoubleEG2016BZEEwf136p727 136.727_RunDoubleEGPrpt2016B+*/step3.root reRECO
 RunSingleMu2016BZMMwf136p728 136.728_RunSingleMuPrpt2016B+*/step3.root reRECO
 RunSinglePh2016Bwf136p731 136.731_RunSinglePh2016B+*/step3.root reRECO
+RunJetHT2016Cwf136p739 136.739_RunJetHT2016C+*/step3.root reRECO
 RunJetHT2016Dwf136p75 136.75_RunJetHT2016D+*/step3.root reRECO
 RunDoubleEG2016Ewf136p759 136.759_RunDoubleEG2016E+*/step3.root reRECO
 RunDoubleMuon2016Ewf136p76 136.76_RunDoubleMuon2016E+*/step3.root reRECO
@@ -140,7 +142,10 @@ RunJetHT2017Bwf136p783 136.783_RunJetHT2017B+*/step3.root reRECO
 RunMET2017Bwf136p784 136.784_RunMET2017B+*/step3.root reRECO
 RunSingleMuon2017Bwf136p787 136.787_RunSingleMu2017B+*/step3.root reRECO
 RunSinglePh2017Bwf136p788 136.788_RunSinglePh2017B+*/step3.root reRECO
+RunJetHT2017Cwf136p795 136.795_RunJetHT2017C+*/step3.root reRECO
 RunJetHT2017CnanoEDMwf136p7952 136.7952_RunJetHT2017C*NANOEDM*/step2.root DQM
+RunJetHT2017Dwf136p807 136.807_RunJetHT2017D+*/step3.root reRECO
+RunJetHT2017Ewf136p819 136.819_RunJetHT2017E+*/step3.root reRECO
 RunDoubleEG2017Fwf136p829 136.829_RunDoubleEG2017F+*/step3.root reRECO
 RunDoubleMuon2017Fwf136p83 136.83_RunDoubleMuon2017F+*/step3.root reRECO
 RunJetHT2017Fwf136p831 136.831_RunJetHT2017F+*/step3.root reRECO
@@ -162,6 +167,8 @@ RunEGamma2018Bwf136p862 136.862_RunEGamma2018B+*/step3.root reRECO
 RunDoubleMuon2018Bwf136p863 136.863_RunDoubleMuon2018B+*/step3.root reRECO
 RunJetHT2018Bwf136p864 136.864_RunJetHT2018B+*/step3.root reRECO
 RunMET2018Bwf136p865 136.865_RunMET2018B+*/step3.root reRECO
+RunJetHT2018Cwf136p876 136.876_RunJetHT2018C+*/step3.root reRECO
+RunJetHT2018Dwf136p888 136.888_RunJetHT2018D+*/step3.root reRECO
 #
 # 2017 workflows follow
 #

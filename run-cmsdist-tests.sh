@@ -176,6 +176,7 @@ if [ $(echo $CMSSW_IB | grep '^CMSSW_9' | wc -l) -gt 0 ] ; then SET_ALL_TOOLS=YE
 DEP_NAMES=
 CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
 set +x
+if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
 for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
   name=$(basename $xml)
   tool=$(echo $name | sed 's|.xml$||')
@@ -191,6 +192,7 @@ for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/
   echo "Settings up $name: $over vs $nver"
   DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
 done
+fi
 mv ${CTOOLS} ${CTOOLS}.backup
 mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
 sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
@@ -206,9 +208,12 @@ echo "DEP_NAMES: ${DEP_NAMES}"
 if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   git cms-addpkg  --debug --ssh '*'
   rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
+  scram tool remote cmssw || true
+  rm -f $CMSSW_BASE/external
   scram setup self
   scram setup
   eval $(scram runtime -sh)
+  scram build -r echo_CXX
 elif [ "X${DEP_NAMES}" != "X" ] ; then
   CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
   echo "CMSSW Packages: ${CMSSW_DEP}"
@@ -216,6 +221,7 @@ elif [ "X${DEP_NAMES}" != "X" ] ; then
     git cms-addpkg --debug --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
   fi
 fi
+echo $LD_LIBRARY_PATH
 set -x
 # Launch the standard ru-pr-tests to check CMSSW side passing on the global variables
 $CMS_BOT_DIR/run-pr-tests

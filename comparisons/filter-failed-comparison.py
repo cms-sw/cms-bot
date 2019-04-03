@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 import sys, glob
 from os.path import basename,join
-from commands import getstatusoutput
+if sys.version_info[0] == 2:
+  from commands import getstatusoutput
+else:
+  from subprocess import getstatusoutput
 
 WF_PATH=sys.argv[1]
 WF_DIR=basename(WF_PATH)
@@ -26,9 +29,9 @@ for h in sorted(htmls):
     else:
       all_ok.append("%s_" % h)
   else:
-    print "ERROR: %s/%s\n%s" %(WF_DIR,h,o)
+    print("ERROR: %s/%s\n%s" %(WF_DIR,h,o))
 
 if DES_DIR_CREATED:
   getstatusoutput("mv %s/*.png %s/" % (WF_PATH, DES_DIR))
   getstatusoutput("echo ErrorDocument 404 /SDT/html/pr_comparison_ok.html > %s/.htaccess" % DES_DIR)
-print "DONE:", WF_DIR
+print("DONE:", WF_DIR)

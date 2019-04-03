@@ -4,7 +4,7 @@ import sys, json
 
 cmsbot_dir=None
 if __file__: cmsbot_dir=dirname(dirname(abspath(__file__)))
-else: cmsbot_dir=dirname(dirname(abspath(argv[0])))
+else: cmsbot_dir=dirname(dirname(abspath(sys.argv[0])))
 sys.path.insert(0,cmsbot_dir)
 
 from es_utils import send_template

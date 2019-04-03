@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 """
 This job will check if there i
@@ -11,7 +11,7 @@ from collections import defaultdict
 from os import environ
 
 RX_Project = re.compile('.+\/job\/(.+)\/(\d+)\/')
-RX_Queue_why = re.compile(ur'^Waiting for next available executor.*\u2018(.*)\u2019')
+RX_Queue_why = re.compile(r'^Waiting for next available executor.*\u2018(.*)\u2019')
 JENKINS_URL = environ['LOCAL_JENKINS_URL']
 WORKSPACE = environ['WORKSPACE']
 running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
@@ -54,7 +54,7 @@ def main():
     for j in que_job_list:
         m = RX_Queue_why.match(j['why'])
         if m:
-            print(m.groups())
+            print((m.groups()))
             label = m.group(0)
             if 'condor' in label:
                 que_to_free += 1
@@ -76,7 +76,7 @@ def main():
         jobs_to_kill.append([project, j_number])
     print("Jobs to kill:")
     pprint(jobs_to_kill)
-    print("size:" + str(len(jobs_to_kill)))
+    print(("size:" + str(len(jobs_to_kill))))
 
     # create property file for each job to be killed
     for i in range(0, min(que_to_free, len(jobs_to_kill))):

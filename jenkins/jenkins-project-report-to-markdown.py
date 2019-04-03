@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
 File       : jenkins-project-report-to-markdown.py
 Author     : Zygimantas Matonis
@@ -160,7 +160,7 @@ def main(args):
         fd = open(data_json_f_path)
         txt = fd.read()
     except Exception as e:
-        print "Error reading the file" + e
+        print("Error reading the file" + e)
 
     # creates ouput directory if it doesn't exist already
     if not os.path.exists(markdown_output_dir):
@@ -183,7 +183,7 @@ def main(args):
         sum_f = open(wiki_dir + '/SUMMARY.md', "r+")
         summary_lines = sum_f.readlines()
     except Exception as e:
-        print "Error reading the SUMMARY.md file" + e
+        print("Error reading the SUMMARY.md file" + e)
 
     sum_f.seek(0)
     summary_iterator = iter(summary_lines)

@@ -38,7 +38,7 @@ def process (line, count):
       payload["agent_type"]=agent.replace(" ","-").split("/",1)[0].upper()
   id = sha1(line).hexdigest()
   if (count%1000)==0: print "Processed entries",count
-  return send_payload("apache-cmsdoxygen-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+  return send_payload("apache-cmsdoxygen-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret")
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsdoxygen_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)

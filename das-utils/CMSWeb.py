@@ -4,6 +4,7 @@ from os import getuid
 import json
 from urllib import urlencode
 
+# FIXME - is this script is used ?
 def format(s, **kwds): return s % kwds
 class CMSWeb (object):
   def __init__ (self):
@@ -55,7 +56,9 @@ class CMSWeb (object):
 
     # Check if dataset/block exists at T2_CH_CERN and belongs to IB RelVals group
     status, res = self.search_block(block)
-    if status: for x in res: lfn_data[x] = res[x]
+    if status:
+      for x in res:
+        lfn_data[x] = res[x]
     return lfn_data
 
   def search_block(self, block):

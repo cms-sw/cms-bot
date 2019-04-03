@@ -1,11 +1,14 @@
 #!/usr/bin/env python
-from sys import exit, argv
-from commands import getstatusoutput
-from os.path import exists, getmtime, dirname, basename, join
-from os import environ
+from sys import exit, version_info
+from os.path import exists, dirname, basename, join
 from time import time, sleep
 import json, threading, re
 from optparse import OptionParser
+
+if version_info[0] == 2:
+  from commands import getstatusoutput
+else:
+  from subprocess import getstatusoutput
 
 field_map = {'file':'name', 'lumi':'number', 'site':'name', 'run':'run_number', 'dataset':'name'}
 
@@ -33,22 +36,22 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   retry_str=""
   if dasclient=="das_client":retry_str="--retry=%s" % retry
   das_cmd = "%s --format=json --limit=%s --query '%s%s' %s --threshold=%s" % (dasclient, limit, query, field_filter, retry_str, threshold)
-  print "  Running: ",sha,das_cmd
-  print "  Fields:",sha,fields 
+  print("  Running: ",sha,das_cmd)
+  print("  Fields:",sha,fields) 
   err, out = getstatusoutput(das_cmd)
   efile = "%s.error" % outfile
   with open(efile, "w") as ofile:
     ofile.write(out)
   if err:
-    print "  DAS ERROR:",sha
+    print("  DAS ERROR:",sha)
     return False
   try:
     jdata = json.loads(out)
-  except Exception, e:
-    print "  Failed to load das output:",sha,e
+  except Exception as e:
+    print("  Failed to load das output:",sha,e)
     return False
   if (not "status" in jdata) or (jdata['status'] != 'ok') or (not "data" in jdata) or (("ecode" in jdata) and (jdata['ecode']!="")):
-    print "Failed: %s %s\n  %s" % (sha, query, out)
+    print("Failed: %s %s\n  %s" % (sha, query, out))
     return False
   all_ok = True
   for fx in fields:
@@ -56,7 +59,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     for item in jdata['data']:
       if (not fx in item) or (not item[fx]) or (not fn in item[fx][0]) or (item[fx][0][fn] is None): all_ok = False
   if not all_ok:
-    print "  DAS WRONG Results:",fields,sha,out
+    print("  DAS WRONG Results:",fields,sha,out)
     return False
   getstatusoutput("rm -f %s" % efile)
   results = []
@@ -66,12 +69,12 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     if (len(fields)>1) and (fields[0]==xf):
       res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
     if not res in results: results.append(res)
-  print "  Results:",sha,len(results)
+  print("  Results:",sha,len(results))
   if (len(results)==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()
     lmt = 0
     if "file" in fields: lmt = 100
-    print "Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query)
+    print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
     return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt)
   if results or override:
     xfile = outfile+".json"
@@ -84,7 +87,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
         getstatusoutput("rm %s.tmp" % xfile)
     else:
       getstatusoutput("mv %s.tmp %s" % (xfile,xfile))
-    print "  Success %s '%s', found %s results." % (sha, query, len(results))
+    print("  Success %s '%s', found %s results." % (sha, query, len(results)))
     if results:
       with open(outfile, "w") as ofile:
         for res in sorted(results):
@@ -167,15 +170,15 @@ if __name__ == "__main__":
 
   for query in xqueries:
     query_sha[query] = xqueries[query]
-    print "Added new query: %s => %s" % (query_sha[query], query)
+    print("Added new query: %s => %s" % (query_sha[query], query))
   tqueries = len(query_sha)
-  print "Found %s unique queries" % (tqueries)
+  print("Found %s unique queries" % (tqueries))
   jobs = opts.jobs
   if jobs <= 0:
     e, o = getstatusoutput("nproc")
     jobs = int(o)
   if jobs>32: jobs=32
-  print "Parallel jobs:", jobs
+  print("Parallel jobs:", jobs)
 
   getstatusoutput("mkdir -p %s" % opts.store)
   threads = []
@@ -190,7 +193,7 @@ if __name__ == "__main__":
     nquery += 1
     sha = query_sha[query]
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
-    print "[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query)
+    print("[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))
     if exists(outfile):
       xtime  = 0
       fcount = 0
@@ -202,7 +205,7 @@ if __name__ == "__main__":
       if (dtime<=opts.threshold) and (fcount>0):
         jfile = "%s.json" % outfile
         okcache=exists(jfile)
-        print " JSON results found",sha,okcache
+        print(" JSON results found",sha,okcache)
         if okcache:
           try:
             xdata = read_json (jfile)
@@ -217,31 +220,31 @@ if __name__ == "__main__":
                   okcache=False
                   break
           except IOError as e:
-            print "  ERROR: [%s/%s] Reading json cached file %s" % (nquery, tqueries, outfile)
+            print("  ERROR: [%s/%s] Reading json cached file %s" % (nquery, tqueries, outfile))
             e, o = getstatusoutput("cat %s" % outfile)
-            print o
+            print(o)
             okcache=False
         if okcache:
-          print "  %s Found in cache with %s results (age: %s src)" % (sha, fcount , dtime)
+          print("  %s Found in cache with %s results (age: %s src)" % (sha, fcount , dtime))
           inCache += 1
           continue
-        else: print "  Refreshing cache as previous Json was empty:", sha
-      elif fcount>0: print "  Refreshing as cache expired (age: %s sec)" % dtime
-      else: print "  Retrying as cache with empty results found."
-    else: print "  No cache file found %s" % sha
+        else: print("  Refreshing cache as previous Json was empty:", sha)
+      elif fcount>0: print("  Refreshing as cache expired (age: %s sec)" % dtime)
+      else: print("  Retrying as cache with empty results found.")
+    else: print("  No cache file found %s" % sha)
 
     DasSearch += 1
     while True:
       tcount = len(threads)
       if(tcount < jobs):
-        print "  Searching DAS (threads: %s)" % tcount
+        print("  Searching DAS (threads: %s)" % tcount)
         try:
           t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client))
           t.start()
           threads.append(t)
           sleep(1)
-        except Exception, e:
-          print "ERROR threading das query cache: caught exception: " + str(e)
+        except Exception as e:
+          print("ERROR threading das query cache: caught exception: " + str(e))
           error += 1
         break
       else:
@@ -253,15 +256,15 @@ if __name__ == "__main__":
   for f in o.split("\n"):
     if not f.endswith(".error"): continue
     qf = f.replace(".error",".query")
-    print "########################################"
+    print("########################################")
     e , o = getstatusoutput("cat %s ; cat %s" % (qf, f))
-    print o
+    print(o)
     failed_queries += 1
-  print "Total queries: %s" % tqueries
-  print "Found in object store: %s" % inCache
-  print "DAS Search: %s" % DasSearch
-  print "Total Queries Failed:",failed_queries
-  print "Process state:",error
+  print("Total queries: %s" % tqueries)
+  print("Found in object store: %s" % inCache)
+  print("DAS Search: %s" % DasSearch)
+  print("Total Queries Failed:",failed_queries)
+  print("Process state:",error)
   if not error:update_timestamp(timestramps, timestramps_file, opts.store)
   else:  cleanup_timestamps (opts.store)
   exit(error)

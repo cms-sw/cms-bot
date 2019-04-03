@@ -1,8 +1,13 @@
 #!/usr/bin/python
-from httplib import HTTPSConnection
 from os import getuid
 import json
-from urllib import urlencode
+from sys import version_info
+if version_info[0] == 2:
+  from httplib import HTTPSConnection
+  from urllib import urlencode
+else:
+  from urllib.parse import urlencode
+  from http.client import HTTPSConnection
 
 # FIXME - is this script is used ?
 def format(s, **kwds): return s % kwds
@@ -30,12 +35,12 @@ class CMSWeb (object):
       msg = self.conn.getresponse()
       if msg.status!=200:
         self.errors = self.errors + 1
-        print 'Result: {0} {1}: {2}'.format(msg.status, msg.reason, url)
+        print('Result: {0} {1}: {2}'.format(msg.status, msg.reason, url))
         return False, {}
       self.reply_cache[url]=json.loads(msg.read())
       return True, self.reply_cache[url]
-    except Exception, e:
-      print "Error:", e, url
+    except Exception as e:
+      print("Error:", e, url)
       self.errors = self.errors + 1
       return False, {}
 
@@ -113,7 +118,7 @@ if __name__ == "__main__":
       cmsweb.search_dataset(data.split("#")[0])
       if "#" in data: cmsweb.search_block(data)
     info = {data : cmsweb.reply_cache}
-    print json.dumps(info, indent=2, sort_keys=True, separators=(',',': '))
+    print(json.dumps(info, indent=2, sort_keys=True, separators=(',',': ')))
     cmsweb.reply_cache = {}
 
 

@@ -6,10 +6,9 @@ from hashlib import sha256
 from threading import Thread
 from time import sleep, time
 import re
-if version_info[0] == 2:
-  from commands import getstatusoutput
-else:
-  from subprocess import getstatusoutput
+import sys
+sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
+from _py2with3compatibility import getstatusoutput
 
 eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"

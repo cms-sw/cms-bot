@@ -1,13 +1,10 @@
 #!/usr/bin/python
 from os import getuid
 import json
-from sys import version_info
-if version_info[0] == 2:
-  from httplib import HTTPSConnection
-  from urllib import urlencode
-else:
-  from urllib.parse import urlencode
-  from http.client import HTTPSConnection
+import sys
+from os.path import dirname, abspath
+sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
+from _py2with3compatibility import urlencode, HTTPSConnection
 
 # FIXME - is this script is used ?
 def format(s, **kwds): return s % kwds

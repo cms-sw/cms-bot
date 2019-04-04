@@ -1,20 +1,19 @@
 #!/usr/bin/env python
-from sys import exit, version_info
-from os.path import exists, dirname, basename, join
+from sys import exit
+from os.path import exists,  dirname, abspath ,basename, join
 from time import time, sleep
 import json, threading, re
 from optparse import OptionParser
 
-if version_info[0] == 2:
-  from commands import getstatusoutput
-else:
-  from subprocess import getstatusoutput
+import sys
+sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
+from _py2with3compatibility import run_cmd
 
 field_map = {'file':'name', 'lumi':'number', 'site':'name', 'run':'run_number', 'dataset':'name'}
 
 def write_json(outfile, cache):
   outdir = dirname(outfile)
-  if not exists(outdir): getstatusoutput("mkdir -p %s" % outdir)
+  if not exists(outdir): run_cmd("mkdir -p %s" % outdir)
   ofile = open(outfile, 'w')
   if ofile:
     ofile.write(json.dumps(cache, sort_keys=True, indent=2,separators=(',',': ')))
@@ -38,7 +37,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   das_cmd = "%s --format=json --limit=%s --query '%s%s' %s --threshold=%s" % (dasclient, limit, query, field_filter, retry_str, threshold)
   print("  Running: ",sha,das_cmd)
   print("  Fields:",sha,fields) 
-  err, out = getstatusoutput(das_cmd)
+  err, out = run_cmd(das_cmd)
   efile = "%s.error" % outfile
   with open(efile, "w") as ofile:
     ofile.write(out)
@@ -61,7 +60,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   if not all_ok:
     print("  DAS WRONG Results:",fields,sha,out)
     return False
-  getstatusoutput("rm -f %s" % efile)
+  run_cmd("rm -f %s" % efile)
   results = []
   for item in jdata["data"]:
     res = str(item[field][0][field_map[field]])
@@ -80,27 +79,27 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     xfile = outfile+".json"
     write_json (xfile+".tmp", jdata)
     if exists (xfile):
-      e, o = getstatusoutput("diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'" % (xfile,xfile))
+      e, o = run_cmd("diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'" % (xfile,xfile))
       if o:
-        getstatusoutput("mv %s.tmp %s" % (xfile,xfile))
+        run_cmd("mv %s.tmp %s" % (xfile,xfile))
       else:
-        getstatusoutput("rm %s.tmp" % xfile)
+        run_cmd("rm %s.tmp" % xfile)
     else:
-      getstatusoutput("mv %s.tmp %s" % (xfile,xfile))
+      run_cmd("mv %s.tmp %s" % (xfile,xfile))
     print("  Success %s '%s', found %s results." % (sha, query, len(results)))
     if results:
       with open(outfile, "w") as ofile:
         for res in sorted(results):
           ofile.write(res+'\n')
-      getstatusoutput("echo '%s' > %s.timestamp" % (int(time()), outfile))
+      run_cmd("echo '%s' > %s.timestamp" % (int(time()), outfile))
     else:
-      getstatusoutput("rm -f %s" % (outfile))
+      run_cmd("rm -f %s" % (outfile))
   return True
 
 def cleanup_timestamps(store):
-  getstatusoutput("find %s -name '*.timestamp' | xargs rm -f" % store)
-  getstatusoutput("find %s -name '*.tmp'       | xargs rm -f" % store)
-  getstatusoutput("find %s -name '*.error'     | xargs rm -f" % store)
+  run_cmd("find %s -name '*.timestamp' | xargs rm -f" % store)
+  run_cmd("find %s -name '*.tmp'       | xargs rm -f" % store)
+  run_cmd("find %s -name '*.error'     | xargs rm -f" % store)
 
 def read_timestramps(timestramps_file):
   timestramps = {}
@@ -108,7 +107,7 @@ def read_timestramps(timestramps_file):
   return timestramps
 
 def update_timestamp(timestramps, timestramps_file, store):
-  e, o = getstatusoutput("find %s -name '*.timestamp'" % store)
+  e, o = run_cmd("find %s -name '*.timestamp'" % store)
   for ts_file in o.split("\n"):
     if not ts_file.endswith('.timestamp'): continue
     sha = basename(ts_file).replace(".timestamp","")
@@ -135,7 +134,7 @@ if __name__ == "__main__":
     query = re.sub("= ","=",re.sub(" =","=",re.sub("  +"," ",opts.query.strip())))
     query_sha[query] = hashlib.sha256(query).hexdigest()
   else:
-    err, qout = getstatusoutput("find %s -name '*.query' -type f" % opts.store)
+    err, qout = run_cmd("find %s -name '*.query' -type f" % opts.store)
     for qfile in qout.split("\n"):
       sha = basename(qfile).replace(".query","")
       if not sha: continue
@@ -164,7 +163,7 @@ if __name__ == "__main__":
         sha = sha256(query).hexdigest()
         xqueries[query] = sha
         qdir = join(opts.store, sha[:2])
-        getstatusoutput("mkdir -p %s" % qdir)
+        run_cmd("mkdir -p %s" % qdir)
         with open(join(qdir, sha+'.query'), "w") as ofile:
           ofile.write("%s\n" % query)
 
@@ -175,12 +174,12 @@ if __name__ == "__main__":
   print("Found %s unique queries" % (tqueries))
   jobs = opts.jobs
   if jobs <= 0:
-    e, o = getstatusoutput("nproc")
+    e, o = run_cmd("nproc")
     jobs = int(o)
   if jobs>32: jobs=32
   print("Parallel jobs:", jobs)
 
-  getstatusoutput("mkdir -p %s" % opts.store)
+  run_cmd("mkdir -p %s" % opts.store)
   threads = []
   nquery = 0
   inCache = 0 
@@ -221,7 +220,7 @@ if __name__ == "__main__":
                   break
           except IOError as e:
             print("  ERROR: [%s/%s] Reading json cached file %s" % (nquery, tqueries, outfile))
-            e, o = getstatusoutput("cat %s" % outfile)
+            e, o = run_cmd("cat %s" % outfile)
             print(o)
             okcache=False
         if okcache:
@@ -252,12 +251,12 @@ if __name__ == "__main__":
         sleep(0.2)
   for t in threads: t.join()
   failed_queries = 0
-  e , o = getstatusoutput("find %s -name '*.error'" % opts.store)
+  e , o = run_cmd("find %s -name '*.error'" % opts.store)
   for f in o.split("\n"):
     if not f.endswith(".error"): continue
     qf = f.replace(".error",".query")
     print("########################################")
-    e , o = getstatusoutput("cat %s ; cat %s" % (qf, f))
+    e , o = run_cmd("cat %s ; cat %s" % (qf, f))
     print(o)
     failed_queries += 1
   print("Total queries: %s" % tqueries)

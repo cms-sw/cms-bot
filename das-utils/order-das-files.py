@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-from sys import stdin, exit, version_info
-if version_info[0] == 2:
-  from commands import getstatusoutput as run_cmd
-else:
-  from subprocess import getstatusoutput as run_cmd
+import sys
+from sys import stdin, exit
+
+from os.path import dirname, abspath
+sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
+from _py2with3compatibility import run_cmd
+
 all_dasfiles = []
 new_order    = []
 for line in stdin:

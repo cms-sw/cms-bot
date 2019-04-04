@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from sys import exit, argv, version_info
+from __future__ import print_function
+from sys import exit, argv
 from os import pipe, close, fork, fdopen, write, waitpid
 from os.path import exists
 from time import sleep
@@ -7,10 +8,10 @@ from threading import Thread
 from re import match
 from array import array
 
-if version_info[0] == 2:
-  from commands import getstatusoutput as run_cmd
-else:
-  from subprocess import getstatusoutput as run_cmd
+from os.path import dirname, abspath
+import sys
+sys.path.append(dirname(dirname(dirname(abspath(__file__)))))  # in order to import cms-bot level modules
+from _py2with3compatibility import run_cmd
 
 def do_load(obj):
   mem_size = obj.memory*1024*1024
@@ -110,8 +111,7 @@ class LoadClient (object):
 
 childs=int(argv[1])
 memory=int(argv[2])
-
 master = LoadMaster(memory, childs, None)
 master.start()
-print "ALL OK"
+print("ALL OK")
 

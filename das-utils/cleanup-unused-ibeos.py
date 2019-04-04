@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 import json
 from time import time
-from sys import argv, exit, version_info
+from sys import argv, exit
 from os.path import dirname, abspath
-
-if version_info[0] == 2:
-  from commands import getstatusoutput as run_cmd
-else:
-  from subprocess import getstatusoutput as run_cmd
+import sys
+sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import top level modules
+from _py2with3compatibility import run_cmd
 
 script_path = abspath(dirname(argv[0]))
 eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"

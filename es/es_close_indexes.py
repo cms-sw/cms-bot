@@ -1,10 +1,12 @@
 #!/usr/bin/python
-from os.path import dirname, basename, abspath, join
+from __future__ import print_function
+from os.path import dirname, abspath
 import sys, re
 
+# TODO are these script used?
 cmsbot_dir=None
 if __file__: cmsbot_dir=dirname(dirname(abspath(__file__)))
-else: cmsbot_dir=dirname(dirname(abspath(argv[0])))
+else: cmsbot_dir=dirname(dirname(abspath(sys.argv[0])))
 sys.path.insert(0,cmsbot_dir)
 
 from es_utils import get_indexes, close_index, find_indexes
@@ -36,12 +38,12 @@ except:
         if not k in rest: rest[k]=[]
         rest[k].append(idx)
   for k in rest:
-    print "REST:",k,":",sorted(rest[k])
+    print("REST:", k, ":", sorted(rest[k]))
   for k in types:
     for ix in sorted(types[k].keys()):
-      print "WEEK:",k,":",ix,sorted(types[k][ix])
+      print("WEEK:",k,":",ix,sorted(types[k][ix]))
 
 for idx in sorted(idxs):
-  print "Closing ",idx
+  print("Closing ",idx)
   close_index(idx)
-  print "  ",get_indexes(idx).strip()
+  print("  ",get_indexes(idx).strip())

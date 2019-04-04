@@ -1,12 +1,13 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys, json, glob, os, re
-from commands import getstatusoutput
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0,CMS_BOT_DIR)
 sys.path.insert(0,SCRIPT_DIR)
 from cmssw_known_errors import get_known_errors
 from logUpdater import LogUpdater
+from _py2with3compatibility import run_cmd
 
 def update_cmdlog(workflow_dir, jobs):
   if not jobs["commands"]: return
@@ -28,7 +29,7 @@ def fix_lognames(workflow_dir):
     step = logname.split("_",1)[0]
     deslog = step+".log"
     if logname.endswith('_dasquery.log'): deslog = '%s_%s.log' % (step, workflow_id)
-    getstatusoutput("cp %s %s/%s" % (log, workflow_dir, deslog))
+    run_cmd("cp %s %s/%s" % (log, workflow_dir, deslog))
 
 def update_worklog(workflow_dir, jobs):
   if not jobs["commands"]: return False
@@ -49,7 +50,7 @@ def update_worklog(workflow_dir, jobs):
         das_log = os.path.join(workflow_dir,"step%s_dasquery.log" % step_num)
         step_num+=1
         if os.path.exists(das_log):
-          e, o = getstatusoutput("grep ' tests passed,' %s" % workflow_logfile)
+          e, o = run_cmd("grep ' tests passed,' %s" % workflow_logfile)
           if o=="": return False
           ecodes = o.split()
           if ecodes[step_num-2]=="0":
@@ -63,7 +64,7 @@ def update_worklog(workflow_dir, jobs):
         test_passed+=" 1"
         test_failed+=" 0"
         steps_res.append("PASSED")
-    except Exception, e:
+    except Exception as e:
       pass
     if job["exit_code"]==-1: failed=True
     if job["exit_code"]>0:
@@ -80,7 +81,7 @@ def update_worklog(workflow_dir, jobs):
       steps_res.append("NORUN" if failed else "PASSED")
   step_str = ""
   for step, res in enumerate(steps_res): step_str = "%s Step%s-%s" % (step_str, step, res)
-  e, o = getstatusoutput("grep ' exit: ' %s | sed 's|exit:.*$|exit: %s|'" % (workflow_logfile, exit_codes.strip()))
+  e, o = run_cmd("grep ' exit: ' %s | sed 's|exit:.*$|exit: %s|'" % (workflow_logfile, exit_codes.strip()))
   o = re.sub("\s+Step0-.+\s+-\s+time\s+",step_str+"  - time ",o)
   wfile = open(workflow_logfile,"w")
   wfile.write(o+"\n")
@@ -97,7 +98,7 @@ def update_timelog(workflow_dir, jobs):
   wfile.write("%s\n" % wf_time)
   wfile.close()
 
-def update_hostname(workflow_dir): getstatusoutput("hostname > %s/hostname" % workflow_dir)
+def update_hostname(workflow_dir): run_cmd("hostname > %s/hostname" % workflow_dir)
 
 def update_known_error(worflow, workflow_dir):
   known_errors = get_known_errors(os.environ["CMSSW_VERSION"], os.environ["SCRAM_ARCH"], "relvals")
@@ -117,8 +118,8 @@ def upload_logs(workflow, workflow_dir,exit_code):
         found=True
         break
     if not found:
-      print "Removing ",wf_file
-      getstatusoutput("rm -rf %s" % wf_file)
+      print("Removing ",wf_file)
+      run_cmd("rm -rf %s" % wf_file)
   logger=LogUpdater(dirIn=os.environ["CMSSW_BASE"])
   logger.updateRelValMatrixPartialLogs(basedir, os.path.basename(workflow_dir))
 
@@ -131,7 +132,7 @@ if __name__ == "__main__":
       break
   workflow = jobs["name"]
   workflow_dir=os.path.abspath(glob.glob("%s_*" % workflow)[0])
-  getstatusoutput("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
+  run_cmd("mv %s %s/job.json" % (sys.argv[1], workflow_dir))
   fix_lognames(workflow_dir)
   if update_worklog(workflow_dir, jobs):
     update_cmdlog(workflow_dir, jobs)

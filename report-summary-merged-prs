@@ -1412,7 +1412,7 @@ if __name__ == "__main__":
                     find_general_test_results(
                         'flawfinder',  release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_FLAWFINDER
                     )
-                if 'igprof' in tests_to_find:
+                if ('igprof-mp' in tests_to_find) or ('igprof-pp' in tests_to_find):
                     find_general_test_results(
                         'igprof', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_IGPROF
                     )

@@ -2,6 +2,7 @@
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
+from categories_map import CMSSW_CATEGORIES
 from repo_config import CMSBUILD_USER
 
 authors = {}

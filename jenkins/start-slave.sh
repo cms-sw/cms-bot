@@ -62,7 +62,7 @@ if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar
 scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 
 pre_cmd=""
-if [ $(get_data DATA_CPUS) -gt 32 ] ; then
+if [ $(get_data CPUS) -gt 32 ] ; then
   pre_cmd="ulimit -s 16000 -u 14000 >/dev/null 2>&1 || true;"
 fi
 case $(get_data SHELL) in

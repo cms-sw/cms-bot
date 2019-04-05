@@ -6,9 +6,11 @@ untitled.py
 Created by Andreas Pfeiffer on 2008-08-05.
 Copyright (c) 2008 CERN. All rights reserved.
 """
-
+from __future__ import print_function
+from past.builtins import cmp
 import sys, os, re, time
 import getopt
+
 
 def pkgCmp(a,b):
     if a.subsys == b.subsys: return cmp(a.pkg, b.pkg)
@@ -65,7 +67,7 @@ class LogFileAnalyzer(object):
         if not pkgsList:  pkgsList = "../../../../../src/PackageList.cmssw"
         if self.topURL != '' :
             if self.topURL[-1] != '/' : self.topURL += '/'
-            if not release: release = self.topURL.split('/')[-3]
+            if not release: release = self.topURL.split('/')[-3]  # TODO no error catching
         self.release = release
         self.pkgsList = pkgsList
         self.verbose = verbose
@@ -138,7 +140,7 @@ class LogFileAnalyzer(object):
         start = time.time()
         packageList = glob.glob('*/*/build.log')
 
-        if self.verbose > 0: print "going to analyze ", len(packageList), 'files.'
+        if self.verbose > 0: print("going to analyze ", len(packageList), 'files.')
 
         for logFile in packageList:
             self.analyzeFile(logFile)
@@ -151,7 +153,7 @@ class LogFileAnalyzer(object):
                 for key in self.errorKeys:
                     if key in pkg.errSummary.keys() :
                         self.errMapAll[key].append(pkg)
-                    if key in pkg.errSummary.keys() and pkg not in pkgDone: 
+                    if key in pkg.errSummary.keys() and pkg not in pkgDone:
                         self.errMap[key].append(pkg)
                         pkgDone.append(pkg)
             else:    
@@ -164,17 +166,17 @@ class LogFileAnalyzer(object):
     def report(self):
         """show collected info"""
         
-        print 'analyzed ', len(self.packageList), 'log files in', str(self.anaTime), 'sec.'
+        print('analyzed ', len(self.packageList), 'log files in', str(self.anaTime), 'sec.')
         totErr = 0
         for key, val in self.nErrorInfo.items():
             totErr += int(val)
             
-        print 'found ', totErr, ' errors and warnings in total, by type:'
+        print('found ', totErr, ' errors and warnings in total, by type:')
         for key, val in self.nErrorInfo.items():
-            print '\t', key, ' : ', val, ' in ', len(self.errMapAll[key]), 'packages'
+            print('\t', key, ' : ', val, ' in ', len(self.errMapAll[key]), 'packages')
         
-        print 'found ', len(self.pkgOK),  'packages without errors/warnings.'
-        print 'found ', len(self.pkgErr), 'packages with errors or warnings, ', len(self.pkgWarn), ' with warnings only.'
+        print('found ', len(self.pkgOK),  'packages without errors/warnings.')
+        print('found ', len(self.pkgErr), 'packages with errors or warnings, ', len(self.pkgWarn), ' with warnings only.')
 #        for pkg in pkgErr:
 #            print '\t',pkg.name(), ' : ',
 #            for key in ['dictError', 'compError', 'linkError']:
@@ -201,7 +203,7 @@ class LogFileAnalyzer(object):
         for pkg in self.pkgOK:
             self.makeHTMLLogFile(pkg)
         stop = time.time()
-        print "creating html pages took ", str(stop-start), 'sec.'
+        print("creating html pages took ", str(stop-start), 'sec.')
         
     def makeHTMLSummaryPage(self):
 
@@ -356,10 +358,9 @@ class LogFileAnalyzer(object):
         """read in file and check for errors"""
         subsys, pkg, logFile = fileNameIn.split('/')
 
-        if self.verbose > 5 : print "analyzing file : ", fileNameIn
+        if self.verbose > 5 : print("analyzing file : ", fileNameIn)
         
         fileIn = open(fileNameIn, 'r')
-        lines = fileIn.xreadlines()
         shLib = 'so'
         if os.uname()[0] == 'Darwin' :
             shLib = 'dylib'
@@ -414,7 +415,7 @@ class LogFileAnalyzer(object):
             
         pkgInfo = PackageInfo(subsys, pkg)
         lineNo = -1
-        for line in lines:
+        for line in fileIn:
             lineNo += 1
             errFound = False
             for errI in errors:
@@ -488,7 +489,7 @@ def main(argv=None):
     try:
         try:
             opts, args = getopt.getopt(argv[1:], "hv:l:t:p:r:", ["help", "verbose=", "logDir=", "topURL=", "pkgList=", "release="])
-        except getopt.error, msg:
+        except getopt.error as msg:
             raise Usage(msg)
 
         # option processing
@@ -515,10 +516,11 @@ def main(argv=None):
         lfa.analyze()
         lfa.report()
 
-    except Usage, err:
-        print >> sys.stderr, sys.argv[0].split("/")[-1] + ": " + str(err.msg)
-        print >> sys.stderr, "\t for help use --help"
+    except Usage as err:
+        print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
+        print("\t for help use --help", file=sys.stderr)
         return 2
+
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

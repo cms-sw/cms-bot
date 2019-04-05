@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-
+# TODO is this script used ?
+from __future__ import print_function
 import os, sys, re
-from commands import getstatusoutput
+from _py2with3compatibility import getstatusoutput
 
 scriptPath = os.path.dirname(os.path.abspath(sys.argv[0]))
 
@@ -30,7 +31,7 @@ class AppBuildSet(object):
         outFile = open(self.appDir + '/status', 'w')
         outFile.write(status)
         outFile.close()
-        print message
+        print(message)
         return
 
     def getRefFiles(self):
@@ -58,9 +59,9 @@ class AppBuildSet(object):
             for xsec in ['binary', 'source']:
                 cmd += ' ; MakeBuildSet -f ./RefAppSet -o ' + xtype + ' -D ' + xsec + ' -d ' + ignominyDir + ' | sort > ' + xtype + '_' + xsec
 
-        print self.appType + 'BuildSet> Going to run ' + cmd
+        print(self.appType + 'BuildSet> Going to run ' + cmd)
         ret, outX = getstatusoutput(cmd)
-        if outX: print outX
+        if outX: print(outX)
         if ret != 0:
             err = "ERROR when running MakeBuildSet: cmd returned " + str(ret)
             self.setStatus('error', err)
@@ -88,11 +89,11 @@ class AppBuildSet(object):
 
     def getPackageDetail(self, pack, pData):
         pinfo = [0, 0, 0, 0]
-        if self.AppSet.has_key(pack): pinfo[3] = 1
-        if self.BldSet.has_key(pack): pinfo[2] = 1
+        if pack in self.AppSet: pinfo[3] = 1
+        if pack in self.BldSet: pinfo[2] = 1
         index = 1
         for xsec in ['binary', 'source']:
-            if pData[xsec]['packages'].has_key(pack): pinfo[index] = 1
+            if pack in pData[xsec]['packages']: pinfo[index] = 1
             index -= 1
         return pinfo
 
@@ -110,27 +111,27 @@ class AppBuildSet(object):
             for xtype in ['packages', 'tools']:
                 pData[xsec][xtype] = self.readPackages(self.appDir + '/' + xtype + '_' + xsec, pData['all'][xtype])
 
-        packs = pData['all']['packages'].keys()
+        packs = list(pData['all']['packages'].keys())
         packs.sort()
 
         res = []
         for i in range(0, 6): res.append([])
         for pk in packs:
             offset = 0
-            if self.AppSet.has_key(pk) and self.BldSet.has_key(pk):
+            if pk in self.AppSet and pk in self.BldSet:
                 res[4].append(pk)
                 continue
-            elif self.BldSet.has_key(pk):
+            elif pk in self.BldSet:
                 offset = 2
-            if pData['binary']['packages'].has_key(pk):
+            if pk in pData['binary']['packages']:
                 res[offset + 1].append(pk)
             else:
                 res[offset].append(pk)
 
-        packs = self.BldSet.keys()
+        packs = list(self.BldSet.keys())
         packs.sort()
         for pk in packs:
-            if pData['all']['packages'].has_key(pk): continue
+            if pk in pData['all']['packages']: continue
             res[5].append(pk)
 
         release = os.path.basename(self.startDir)
@@ -211,8 +212,8 @@ class AppBuildSet(object):
 # ================================================================================
 
 def usage():
-    print "usage:", os.path.basename(
-        sys.argv[0]), " --ignominy <ignominyDir> --release <releaseDir> --cmsdist <dir> --application <fwlite|online>"
+    print("usage:", os.path.basename(
+        sys.argv[0]), " --ignominy <ignominyDir> --release <releaseDir> --cmsdist <dir> --application <fwlite|online>")
     return
 
 
@@ -224,8 +225,8 @@ def main():
     try:
         opts, args = getopt.getopt(options, 'h',
                                    ['help', 'ignominy=', 'release=', 'cmsdist=', 'application='])
-    except getopt.GetoptError, msg:
-        print msg
+    except getopt.GetoptError as msg:
+        print(msg)
         usage()
         sys.exit(-2)
 
@@ -252,7 +253,7 @@ def main():
             app = a
 
     if not (rel and cmsdist and ignominyDir):
-        print "ERROR: Missing command-line arguments."
+        print("ERROR: Missing command-line arguments.")
         usage()
         sys.exit(-2)
 
@@ -260,8 +261,8 @@ def main():
     try:
         ab.run(ignominyDir)
         ab.generateHTML()
-    except Exception, e:
-        print "ERROR: Caught exception: " + str(e)
+    except Exception as e:
+        print("ERROR: Caught exception: " + str(e))
 
     return
 

@@ -1,9 +1,7 @@
 # A ridicously long mapping for categories. Good enough for now.
-import re
+from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from cms_static import GH_CMSDIST_REPO as gh_cmsdist
-from categories_map import CMSSW_CATEGORIES
 from repo_config import CMSBUILD_USER
 
 authors = {}
@@ -68,7 +66,7 @@ CMSSW_L2 = {
   CMSBUILD_USER:      ["tests", "code-checks" ],
 }
 
-USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + CMSSW_L2.keys())
+USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))
 CMS_REPOS = set(CMSDIST_REPOS + CMSSW_REPOS + EXTERNAL_REPOS)
 from datetime import datetime
 COMMENT_CONVERSION = {}

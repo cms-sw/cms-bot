@@ -1,4 +1,5 @@
 #!/bin/bash -e
+if [ -d $HOME/bin ] ; then export PATH=$HOME/bin:$PATH ; fi
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 
 JENKINS_SLAVE_JAR_MD5="$1"

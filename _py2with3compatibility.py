@@ -8,7 +8,7 @@ if sys.version_info[0] == 2:
     from commands import getstatusoutput
     from urllib import urlencode, quote_plus, quote
     from httplib import HTTPSConnection
-    from urllib2 import Request, urlopen, error
+    from urllib2 import Request, urlopen
 
 else:
     # python 3 modules

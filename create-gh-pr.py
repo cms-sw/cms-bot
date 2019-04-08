@@ -1,7 +1,7 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from github import Github
 from os.path import expanduser
-from sys import argv , exit
 from argparse import ArgumentParser
 
 parser = ArgumentParser()
@@ -16,9 +16,9 @@ if not args.repo: parser.error("Missing Repo")
 if not args.base_branch: parser.error("Missing base branch name.")
 if not args.feature_branch: parser.error("Missing feature branch name.")
 if not args.title: parser.error("Missing PR title")
-print "Authenticating to Github and connecting to repo"
+print("Authenticating to Github and connecting to repo")
 gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
-print "Authentication succeeeded"
+print("Authentication succeeeded")
 gh_repo = gh.get_repo(args.repo)
-print "Creating pull request"
+print("Creating pull request")
 gh_repo.create_pull(title = args.title, body = args.body, base = args.base_branch, head = args.feature_branch)

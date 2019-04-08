@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-import sys
-from os.path import exists, join, dirname
+from os.path import exists, join
 from os import environ
-from re import compile
-from commands import getstatusoutput as run_cmd
+from _py2with3compatibility import run_cmd
 import gzip
 import re
 from json import dump

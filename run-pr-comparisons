@@ -59,6 +59,7 @@ scram project $BASE_IB
 set +x
 cd $BASE_IB
 eval `scram run -sh`
+set -x
 if $DQM_COMPARISON_TEST ; then
   if [ ! -e $CMSSW_RELEASE_BASE/bin/$SCRAM_ARCH/compareDQMOutput.py ] ; then
     DQM_COMPARISON_TEST=false
@@ -77,7 +78,6 @@ if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
   cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/* src/Utilities/RelMon/
   sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' src/Utilities/RelMon/python/directories2html.py
 fi
-set -x
 JR_COMP_DIR=$WORKSPACE/results/JR-comparison
 mkdir -p $JR_COMP_DIR
 mkdir -p $WORKSPACE/results/files

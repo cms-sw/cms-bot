@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
 import re
 
@@ -30,4 +31,4 @@ for line in open(sys.argv[1]).readlines():
       xline=line
       continue
     else: line=fix_file(line)
-  print line
+  print(line)

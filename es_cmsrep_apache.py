@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from sys import exit
 from datetime import datetime
 from time import mktime
@@ -34,7 +35,7 @@ def process (line, count):
   week = str(int(tsec/(86400*7)))
   payload["@timestamp"]=int(tsec*1000)
   id = sha1(line).hexdigest()
-  if (count%1000)==0: print "Processed entries",count
+  if (count%1000)==0: print("Processed entries",count)
   if not send_payload("apache-cmsrep-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
     return False
   if payload["verb"] != "GET": return True
@@ -55,7 +56,7 @@ def process (line, count):
     repo, arch = items[2], items[4]
   else:
     return True
-  from urllib import unquote
+  from _py2with3compatibility import unquote
   xpayload = {'dev' : dev, 'repository' : unquote(repo), 'architecture' : unquote(arch), 'package' : unquote(pkg).split("-1-",1)[0], 'cmspkg' : unquote(cmspkg)}
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
   return send_payload("cmspkg-access-"+week,"rpm-packages", id, dumps(xpayload), passwd_file="/data/es/es_secret")
@@ -65,5 +66,5 @@ if int(count)>1: exit(0)
 logs = run_cmd("ls -rt /var/log/httpd/access_log* | grep -v '[.]gz$'").split("\n")
 log = logwatch("httpd",log_dir="/data/es")
 s,c=log.process(logs, process)
-print "Total entries processed",c
+print("Total entries processed",c)
 

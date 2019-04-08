@@ -14,8 +14,9 @@
 # - The action to perform when the index is old enough. For the moment it can be
 #     - delete: delete the index.
 
+from __future__ import print_function
 from argparse import ArgumentParser
-from commands import getstatusoutput
+from _py2with3compatibility import run_cmd
 from datetime import datetime
 import re
 from os import getenv
@@ -75,33 +76,33 @@ if __name__ == "__main__":
                proxy_string=proxy_string,
                server=args.server,
                user_string=user_string)
-  err, out = getstatusoutput(cmd)
+  err, out = run_cmd(cmd)
   if err:
-    print "Error while getting indices"
-    print out
+    print("Error while getting indices")
+    print(out)
     exit(0)
   indices = [re.split("[ ]+", l)[2] for l in out.split("\n")]
   for c in CONFIG:
     pattern, timeout, action = c
     m = re.match("([0-9]*)([YmdHM])", timeout)
     if not m:
-      print "Malformed timeout %s" % timeout
+      print("Malformed timeout %s" % timeout)
       exit(1)
     time, unit = m.groups()
     timedelta = int(time)*timeunits[unit]
     for index in indices:
       try:
         d = datetime.strptime(index, pattern) 
-      except ValueError, e:
+      except ValueError as e:
         continue
-      print index, "matches", pattern
+      print(index, "matches", pattern)
       now = datetime.now()
       td = (now-d)
       total_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
       if total_seconds < timedelta:
-        print index, "is recent enough. Keeping."
+        print(index, "is recent enough. Keeping.")
         continue
-      print index, "is older than", timeout, ". Deleting"
+      print(index, "is older than", timeout, ". Deleting")
       if not args.dryrun:
         cmd = format("curl -s -X DELETE %(proxy_string)s %(server)s/%(index)s"
                      " %(user_string)s",
@@ -109,9 +110,9 @@ if __name__ == "__main__":
                      server=args.server,
                      index=index,
                      user_string=user_string)
-        err, out = getstatusoutput(cmd)
+        err, out = run_cmd(cmd)
         if err:
-          print "Error while deleting."
-          print out
+          print("Error while deleting.")
+          print(out)
           exit(1)
-        print index, "deleted."
+        print(index, "deleted.")

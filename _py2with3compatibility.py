@@ -8,12 +8,11 @@ if sys.version_info[0] == 2:
     from commands import getstatusoutput
     from urllib import urlencode, quote_plus, quote
     from httplib import HTTPSConnection
-    from urllib2 import Request, urlopen
-
+    from urllib2 import Request, urlopen, HTTPSHandler, build_opener, install_opener
 else:
     # python 3 modules
     from subprocess import getstatusoutput as run_cmd
     from subprocess import getstatusoutput
     from urllib.parse import urlencode, quote_plus, quote
     from http.client import HTTPSConnection
-    from urllib.request import Request, urlopen
+    from urllib.request import Request, urlopen, HTTPSHandler, build_opener, install_opener

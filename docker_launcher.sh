@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 kinit -R || true
+ulimit -n 4096 -s 16000 -u 14000 || true
+ulimit -a || true
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
@@ -27,7 +29,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   CMD2RUN=""
   XUSER=`whoami`
   if [ -d $HOME/bin ] ; then
-    if [ $(echo $PATH | tr ':' '\n' | grep $HOME/bin | wc -l) -gt 0 ] ; then
+    if [ $(echo $PATH | tr ':' '\n' | grep $HOME/bin | wc -l) -eq 0 ] ; then
       CMD2RUN="export PATH=$HOME/bin:$PATH; "
     fi
   fi

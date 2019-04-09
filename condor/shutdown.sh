@@ -11,5 +11,5 @@ mkdir -p $WORKSPACE/../grid-create-node/logs
 condor_transfer_data $JOBID || true
 cat $WORKSPACE/../grid-create-node/logs/log.* || true
 rm -rf $WORKSPACE/../grid-create-node/logs
-condor_rm ${JOBID} || true
+condor_rm  -forcex ${JOBID} || true
 condor_q

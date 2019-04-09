@@ -3,6 +3,7 @@
 """
 This job will check if there i
 """
+from __future__ import print_function
 from pprint import pprint
 import re
 from xml.etree import cElementTree as ET
@@ -11,10 +12,10 @@ from collections import defaultdict
 from os import environ
 
 RX_Project = re.compile('.+\/job\/(.+)\/(\d+)\/')
-RX_Queue_why = re.compile(r'^Waiting for next available executor.*\u2018(.*)\u2019')
+RX_Queue_why = re.compile(u'^Waiting for next available executor.*\u2018(.*)\u2019')
 JENKINS_URL = environ['LOCAL_JENKINS_URL']
 WORKSPACE = environ['WORKSPACE']
-running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
+running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
 job_que_json = JENKINS_URL + '/queue/api/json?tree=items[url,why]'
 
 
@@ -47,7 +48,7 @@ def main():
     que_to_free = 0
 
     # get jobs that are waiting for a specific executor
-    print("Queued jobs:")
+    print("Queued jobs:", job_que_json)
     pprint(r_json.json())
     print("----")
     que_job_list = r_json.json()['items']
@@ -65,6 +66,7 @@ def main():
     # get running placeholder job
     xml = ET.XML(r_xml.text)
     parsed_dict = etree_to_dict(xml)
+    print("Running jobs", running_job_xml )
     pprint(parsed_dict)
     jobs_to_kill = []
     for el in parsed_dict['jobs']['build']:
@@ -76,7 +78,7 @@ def main():
         jobs_to_kill.append([project, j_number])
     print("Jobs to kill:")
     pprint(jobs_to_kill)
-    print(("size:" + str(len(jobs_to_kill))))
+    print("size:" + str(len(jobs_to_kill)))
 
     # create property file for each job to be killed
     for i in range(0, min(que_to_free, len(jobs_to_kill))):

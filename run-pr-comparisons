@@ -59,13 +59,25 @@ scram project $BASE_IB
 set +x
 cd $BASE_IB
 eval `scram run -sh`
+set -x
+if $DQM_COMPARISON_TEST ; then
+  if [ ! -e $CMSSW_RELEASE_BASE/bin/$SCRAM_ARCH/compareDQMOutput.py ] ; then
+    DQM_COMPARISON_TEST=false
+    if [ $(echo "$PULL_REQUESTS" | tr ' ' '\n' | grep '^cms-sw/cmssw#26283$' | wc -l) -gt 0 ] ; then
+      pushd $CMSSW_BASE
+        git cms-merge-topic -u 26283
+        cp -r src/DQMServices/FileIO/scripts/* bin/${SCRAM_ARCH}/
+        DQM_COMPARISON_TEST=true
+        which compareDQMOutput.py || true
+      popd
+    fi
+  fi
+fi
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
   mkdir -p src/Utilities/RelMon
   cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/* src/Utilities/RelMon/
   sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' src/Utilities/RelMon/python/directories2html.py
-  scram build clean
 fi
-set -x
 JR_COMP_DIR=$WORKSPACE/results/JR-comparison
 mkdir -p $JR_COMP_DIR
 mkdir -p $WORKSPACE/results/files
@@ -119,10 +131,8 @@ echo "COMPARISON;RUNNING" >> $WORKSPACE/results/testsResults.txt
 send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
 
 if $DQM_COMPARISON_TEST ; then
-  if [ -e $CMSSW_RELEASE_BASE/bin/$SCRAM_ARCH/compareDQMOutput.py ] ; then
-    compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -n $PULL_REQUEST_NUMBER -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC &> $WORKSPACE/upload/dqmBinByBinLog.log || true
-    echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> $WORKSPACE/results/testsResults.txt
-  fi
+  compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -n $PULL_REQUEST_NUMBER -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC &> $WORKSPACE/upload/dqmBinByBinLog.log || true
+  echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> $WORKSPACE/results/testsResults.txt
 fi
 
 # --------------------------------------------------------------------------

@@ -67,8 +67,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       fi
     fi
     if [ "X$TEST_CONTEXT" = "XGPU" ] ; then
-      if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-nv$' | wc -l) -eq 0 ] ; then
-        SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -nv"
+      if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
+        SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
       fi
     fi
     export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"

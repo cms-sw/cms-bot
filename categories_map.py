@@ -653,6 +653,7 @@ CMSSW_CATEGORIES = {
     "Validation/MuonME0RecHits",
     "Validation/MuonME0Validation",
     "Validation/MuonRPCDigis",
+    "Validation/MtdValidation",
     "Validation/RPCRecHits",
     "Validation/RecoB",
     "Validation/RecoEgamma",

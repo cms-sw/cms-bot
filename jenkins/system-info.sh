@@ -37,7 +37,12 @@ SLAVE_LABELS="${SLAVE_LABELS} ${arch} ${HOST_ARCH}"
 
 DOCKER=""
 if docker --version >/dev/null 2>&1 ; then
-  if [ $(id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then DOCKER="docker" ; fi
+  if [ $(id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then
+    DOCKER="docker"
+    if [ -e $HOME/.docker/config.json ] ; then
+      SLAVE_LABELS="${SLAVE_LABELS} docker-build"
+    fi
+  fi
 fi
 echo "DATA_DOCKER=${DOCKER}"
 SLAVE_LABELS="${SLAVE_LABELS} ${DOCKER}"

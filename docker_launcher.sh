@@ -19,7 +19,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     MOUNT_POINTS="$MOUNT_POINTS,/home"
   fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
-  if [ -e /etc/tnsnames.ora ] ; then MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora" ; fi
+  if [ "$(uname -m)" = "x86_64" ] ; then
+    if [ -e /etc/tnsnames.ora ] ; then MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora" ; fi
+  fi
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then
     if [ $(id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then
@@ -64,6 +66,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       else
         CLEAN_UP_CACHE=true
         export SINGULARITY_CACHEDIR="${WORKSPACE}/singularity"
+      fi
+    fi
+    if [ "X$TEST_CONTEXT" = "XGPU" ] ; then
+      if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
+        SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
       fi
     fi
     export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"

@@ -63,8 +63,11 @@ scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 
 pre_cmd=""
 if [ $(get_data CPUS) -gt 32 ] ; then
-  pre_cmd="ulimit -n 4096 -s 16000 -u 14000 >/dev/null 2>&1 || true; ulimit -a || true"
-fi
+  case $(get_data SHELL) in
+    */tcsh|*/csh) pre_cmd="ulimit -n 4096 -s 16000 -u 14000 >& /dev/null || true; ulimit -a || true" ;;
+    *) pre_cmd="ulimit -n 4096 -s 16000 -u 14000 >/dev/null 2>&1 || true; ulimit -a || true" ;;
+  esac
+ fi
 case $(get_data SHELL) in
   */tcsh|*/csh) pre_cmd="${pre_cmd} setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
   *) pre_cmd="${pre_cmd} export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;

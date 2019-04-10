@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-# This script will be called by Jenkins job ( TODO what job)
+# This script will be called by Jenkins job 'ib-run-pr-tests'
 # and
 # 1) will merge multiple PRs for multiple repos
 # 2) run tests and post result on github
@@ -223,6 +223,9 @@ for U_REPO in ${UNIQ_REPOS}; do
             CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
             CMSDIST_ONLY=false
             CHECK_HEADER_TESTS=true
+		;;
+        cms-bot)
+            # do nothing
 		;;
 		cmsdist|pkgtools)
 		    BUILD_EXTERNAL=true

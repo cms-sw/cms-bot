@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os, sys, re, time
 
 class LogSplitter(object):
@@ -7,7 +8,7 @@ class LogSplitter(object):
 
         self.outFile=sys.stdout
         if outFileIn:
-            print "Summary file:", outFileIn
+            print("Summary file:", outFileIn)
             self.outFile=open(outFileIn, 'w')
 
         self.verbose = verbIn
@@ -44,12 +45,12 @@ class LogSplitter(object):
         
         baseDir = os.path.split(logFile)[0]
 	logDirs = os.path.join( baseDir,'unitTestLogs')
-        print "logDirs ", logDirs
+        print("logDirs ", logDirs)
         if not os.path.exists(logDirs):
             os.makedirs(logDirs)
 
         lf = open(logFile,'r')
-        lines = lf.xreadlines()
+        lines = lf
 
         startTime = time.time()
         nLines = 0
@@ -78,9 +79,9 @@ class LogSplitter(object):
             subsysMatch = subsysRe.match(line)
             if subsysMatch:
                 subsys, pkg = subsysMatch.group(1).split('/')
-                if not pkgSubsysMap.has_key(pkg) : 
+                if pkg not in pkgSubsysMap : 
                     pkgSubsysMap[pkg] = subsys
-                if subsysPkgMap.has_key(subsys) :
+                if subsys in subsysPkgMap :
                     subsysPkgMap[subsys].append(pkg)
                 else:
                     subsysPkgMap[subsys] = [pkg]
@@ -120,7 +121,7 @@ class LogSplitter(object):
                 actTest = tst
                 actTstLines = 0
                 pkgTests[actPkg] += 1
-                if testNames.has_key(actPkg):
+                if actPkg in testNames:
                     testNames[actPkg].append(actTest)
                 else:
                     testNames[actPkg] = [actTest]
@@ -140,10 +141,10 @@ class LogSplitter(object):
         self.outFile.write( "found a total of "+ str(nLines)+ ' lines in logfile.\n')
         self.outFile.write( "analysis took "+str(stopTime-startTime)+ ' sec.\n')
 
-        self.outFile.write( "total number of tests: " +str( len(results.keys()) ) + '\n')
+        self.outFile.write( "total number of tests: " +str( len(list(results.keys())) ) + '\n')
         nMax = 1000
         self.outFile.write( "tests with more than " +str(nMax) + " lines of logs:\n")
-        for pkg, lines in testLines.items():
+        for pkg, lines in list(testLines.items()):
             if lines > nMax : self.outFile.write( "  "+ pkg+ ' : ' + str(lines) +'\n')
 
         self.outFile.write( "Number of tests for packages: \n" )
@@ -153,7 +154,7 @@ class LogSplitter(object):
         totalOK = 0
         totalFail = 0
         unitTestResults = {}
-        for pkg, nTst in pkgTests.items():
+        for pkg, nTst in list(pkgTests.items()):
             if nTst == 0:
                 noTests += 1
             else:
@@ -174,8 +175,8 @@ class LogSplitter(object):
                 self.outFile.write( indent + str(len(testNames[pkg]) ) + ' tests in total,  OK:'+str(nOK)+ ' fail:'+str(len(testNames[pkg])-nOK) +'\n')
                 unitTestResults[pkg] = [testNames[pkg], nOK, len(testNames[pkg])-nOK ]
                 
-        self.outFile.write( indent+str(nrTests)+" packages  with   tests ("+str(float(nrTests)/float(len(pkgTests.keys())) )+")\n")
-        self.outFile.write( indent+str(noTests)+" packages without tests ("+str(float(noTests)/float(len(pkgTests.keys())) )+")\n")
+        self.outFile.write( indent+str(nrTests)+" packages  with   tests ("+str(float(nrTests)/float(len(list(pkgTests.keys()))) )+")\n")
+        self.outFile.write( indent+str(noTests)+" packages without tests ("+str(float(noTests)/float(len(list(pkgTests.keys()))) )+")\n")
         self.outFile.write( indent+"in total:  tests OK : "+str(totalOK)+' tests FAIL : '+str(totalFail)+'\n')
 
         try:
@@ -185,16 +186,16 @@ class LogSplitter(object):
             pklr.dump(unitTestResults)
             pklr.dump(results)
             resFile.close()
-            print "Successfully pickled results for unit tests ! "
-        except Exception, e:
-            print "ERROR during pickling results for unit tests:", str(e)
+            print("Successfully pickled results for unit tests ! ")
+        except Exception as e:
+            print("ERROR during pickling results for unit tests:", str(e))
             
         return
 
 # ================================================================================
 
 def usage():
-    print "usage: "+ os.path.basename(sys.argv[0])+" --logFile <logFileName> [--verbose]\n"
+    print("usage: "+ os.path.basename(sys.argv[0])+" --logFile <logFileName> [--verbose]\n")
     return
 
 if __name__ == "__main__" :

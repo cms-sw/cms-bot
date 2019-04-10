@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from optparse import OptionParser
 import json
 import re
@@ -6,7 +7,6 @@ from github_utils import github_api
 from collections import namedtuple
 from os.path import expanduser, join, exists
 from hashlib import md5
-from sys import exit
 import time
 
 RX_RELEASE = re.compile('CMSSW_(\d+)_(\d+)_(\d+)(_pre[0-9]+)*(_cand[0-9]+)*(_patch[0-9]+)*')
@@ -51,7 +51,7 @@ def getReleasesNotes(opts):
   notes = []
   error_releases = {}
   while page>0:
-    print "Reading releases page",page
+    print("Reading releases page",page)
     rel_opt=""
     if opts.release: rel_opt="/tags/%s" % opts.release
     releases=github_api("/repos/%s/releases%s" % (opts.repository, rel_opt), login_or_token, method="GET", page=page, page_range=pages)
@@ -61,27 +61,27 @@ def getReleasesNotes(opts):
     for release in releases:
       rel_name = release['name']
       rel_id = str(release['id'])
-      print "Checking release", rel_name
+      print("Checking release", rel_name)
       if " " in rel_name:
         error_releases[rel_name]="Space in name:"+rel_id
-        print "  Skipping release (contains space in name):",rel_name
+        print("  Skipping release (contains space in name):",rel_name)
         continue
       rel_cyc = "_".join(rel_name.split("_")[0:2])
       rel_numbers = re.match(RX_RELEASE, rel_name)
       if not rel_numbers:
         error_releases[rel_name]="Does not match release regexp:"+rel_id
-        print "  Skipping release (does not match release regexp):",rel_name
+        print("  Skipping release (does not match release regexp):",rel_name)
         continue
       if (not 'body' in release) or (not release['body']):
         error_releases[rel_name]="Empty release body message:"+rel_id
-        print "  Skipping release (empty release body message):",rel_name
+        print("  Skipping release (empty release body message):",rel_name)
         continue
       if not re.match('^%s$' % opts.release_filter, rel_name):
-        print "  Skipping release (release does not match filter):",rel_name                
+        print("  Skipping release (release does not match filter):",rel_name)                
         continue
       rel_file = join(opts.release_notes_dir,rel_cyc,"%s.md" % rel_name)
       if (not opts.force) and exists(rel_file):
-        print "  Skipping release (already exists):",rel_name
+        print("  Skipping release (already exists):",rel_name)
         continue
       release_notes = []
       prepo = ""
@@ -100,7 +100,7 @@ def getReleasesNotes(opts):
           count+=1
           line = '\n{count}. {forward_port}[{pr}](http://github.com/{repo}/pull/{pr})'.format(forward_port=forward_port,count=count,repo=repo,pr=m.group(3))+'{:target="_blank"} '+m.group(4)
           pr = get_pr(m.group(3), repo, opts.prs_dir)
-          print "  PR found: "+repo+"#"+m.group(3)
+          print("  PR found: "+repo+"#"+m.group(3))
           if 'created_at' in pr:line+=" created: "+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(float(pr['created_at'])))
           if 'merged_at' in pr:line+=" merged: "+time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(float(pr['merged_at'])))
         elif RX_COMPARE.match(line):
@@ -114,8 +114,8 @@ def getReleasesNotes(opts):
       out_rel.write(head(rel_name, r))
       out_rel.write('# %s\n%s' % (rel_name, "\n".join(release_notes)))
       out_rel.close()
-      print "  Created release notes:",rel_name
-  if error_releases: print "Releases with errors:",error_releases
+      print("  Created release notes:",rel_name)
+  if error_releases: print("Releases with errors:",error_releases)
 
 if __name__ == '__main__':
   parser = OptionParser(usage="%prog")

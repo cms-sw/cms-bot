@@ -1,16 +1,17 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from os.path import exists, join, basename, getmtime
 from sys import exit
-from commands import getstatusoutput
+from _py2with3compatibility import getstatusoutput
 from hashlib import sha256
 from time import time
 
 LOGWATCH_APACHE_IGNORE_AGENTS = ["www.google.com/bot.html", "ahrefs.com", "yandex.com", "www.exabot.com", "www.bing.com"]
 
 def run_cmd (cmd, exit_on_error=True):
-  err, out = getstatusoutput (cmd)
+  err, out = getstatusoutput(cmd)
   if err and exit_on_error:
-    print out
+    print(out)
     exit (1)
   return out
 
@@ -47,7 +48,7 @@ class logwatch (object):
       lnum, service_log = item[2], item[1]
       get_lines_cmd = "tail -n +%s %s" % (str(lnum),  service_log)
       if lnum<=1: get_lines_cmd = "cat %s" % service_log
-      print "Processing %s:%s" % (item[0], str(lnum))
+      print("Processing %s:%s" % (item[0], str(lnum)))
       lnum -= 1
       xlines = 0
       for line in run_cmd (get_lines_cmd).split ("\n"):

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from github import Github
 from os.path import expanduser
 from optparse import OptionParser
-import yaml
 import re
 from sys import exit
 from releases import RELEASE_MANAGERS
@@ -40,7 +40,7 @@ def updateLabels( issue, pr ):
     comment_date = comment.created_at
     commenter = comment.user.login    
     if comment_date < last_commit_date:
-      print "Ignoring comment done before the last commit."
+      print("Ignoring comment done before the last commit.")
       pull_request_updated = True
       continue
     first_line = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
@@ -57,7 +57,7 @@ def updateLabels( issue, pr ):
         new_labels.add( "tests-rejected" )
  
   if old_labels == new_labels:
-    print 'labels unchanged'
+    print('labels unchanged')
   else:
     remove_labels( issue )
     add_labels_list( issue, list( new_labels ) )
@@ -84,13 +84,13 @@ def updateMilestone(repo, issue, pr):
   for milestone in milestones:
     if milestone.title == milestoneName:
       if opts.dryRun:
-        print "Not assigning to milestone (dry-run): " + str(milestone.number)
+        print("Not assigning to milestone (dry-run): " + str(milestone.number))
         return
-      print "Assign to milestone " + str(milestone.number)
+      print("Assign to milestone " + str(milestone.number))
       issue.edit(milestone=milestone)
       return
 
-  print "Creating milestone " + milestoneName
+  print("Creating milestone " + milestoneName)
   milestone = repo.create_milestone(title=milestoneName)
   issue.edit(milestone=milestone)
 
@@ -98,17 +98,17 @@ def updateMilestone(repo, issue, pr):
 # if dry-run is selected it doesn't add the label and just prints it
 def add_label( issue, label ):
   if opts.dryRun:
-    print 'Not adding label (dry-run):\n %s' % label
+    print('Not adding label (dry-run):\n %s' % label)
     return
-  print 'Adding label:\n %s' % label
+  print('Adding label:\n %s' % label)
   issue.add_to_labels( label )
 
 # Adds the labels to the issue on gthub from the list passed as parameter
 def add_labels_list( issue, new_labels_list ):
   if opts.dryRun:
-    print 'Not adding labels (dry-run):\n %s' % ",".join( new_labels_list )
+    print('Not adding labels (dry-run):\n %s' % ",".join( new_labels_list ))
     return
-  print 'Adding labels:\n %s' % ",".join( new_labels_list )
+  print('Adding labels:\n %s' % ",".join( new_labels_list ))
   issue.add_to_labels( *new_labels_list )
 
 #
@@ -116,9 +116,9 @@ def add_labels_list( issue, new_labels_list ):
 #
 def remove_labels( issue ):
   if opts.dryRun:
-    print 'Not removing issue labels (dry-run)'
+    print('Not removing issue labels (dry-run)')
     return
-  print 'Removing Labels'
+  print('Removing Labels')
   issue.delete_labels()
 
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
   try:
     pr = gh.get_organization("cms-sw").get_repo("cmsdist").get_pull(prId)
   except:
-    print "Could not find pull request. Maybe this is an issue"
+    print("Could not find pull request. Maybe this is an issue")
     exit(0)
 
   repo = gh.get_organization("cms-sw").get_repo("cmsdist")

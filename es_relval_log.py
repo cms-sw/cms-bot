@@ -1,28 +1,28 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from hashlib import sha1
-import os, sys,json , re , datetime
-from os import getenv
+import os, sys,json , re
 from os.path import exists
-from time import strftime , strptime
 from es_utils import send_payload
 import xml.etree.ElementTree as ET
 from cmsutils import cmsswIB2Week
+
 
 def find_step_cmd(cmdfile,step):
   try:
     cmd = ''
     data=open(cmdfile,'r')
     get = iter(data)
-    line = get.next()
+    line = next(get)
     while line:
       if step=='step1' and 'das_client' in line:
         while 'step1_dasquery.log' not in line:
           cmd = cmd + line
-          line = get.next()
+          line = next(get)
         return (cmd + line).strip()
       elif 'file:'+step in line:
         return line.strip()
-      line=get.next()
+      line=next(get)
   except:
     return None
 
@@ -31,7 +31,7 @@ def get_exit_code(workflow_log,step):
     d=open(workflow_log,'r')
     for line in d:
       if 'exit:' in line:
-        codes = map(int,line.split('exit:')[-1].strip().split())
+        codes = list(map(int,line.split('exit:')[-1].strip().split()))
         return int(codes[step-1])
   except:
     pass
@@ -41,7 +41,7 @@ def get_exit_code(workflow_log,step):
 def es_parse_jobreport(payload,logFile):
   xmlFile = "/".join(logFile.split('/')[:-1]) + "/JobReport"+logFile.split('/')[-1].split("_")[0][-1]+".xml"
   if not os.path.exists(xmlFile):
-    if not '/JobReport1.xml' in xmlFile: print "No JR File:",xmlFile
+    if not '/JobReport1.xml' in xmlFile: print("No JR File:",xmlFile)
     return payload
   payload['jobreport'] = '/'.join(payload["url"].split('/')[:-1])+'/'+xmlFile.split('/')[-1]
   tree = ET.parse(xmlFile)
@@ -114,7 +114,8 @@ def es_parse_log(logFile):
   datasets = []
   error_count = 0
   if exists(logFile):
-    lines = file(logFile).read().split("\n")
+    with open(logFile) as f:
+      lines = f.readlines()
     payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+pathInfo[4]+'/'+pathInfo[8]+'/pyRelValMatrixLogs/run/'+pathInfo[-2]+'/'+pathInfo[-1]
     total_lines = len(lines)
     for i in range(total_lines):
@@ -160,9 +161,9 @@ def es_parse_log(logFile):
   payload["error_count"] = error_count
   try:
     payload = es_parse_jobreport(payload,logFile)
-  except Exception, e:
-    print e
-  print "sending data for ",logFile
+  except Exception as e:
+    print(e)
+  print("sending data for ",logFile)
   try:send_payload(index,document,id,json.dumps(payload))
   except:pass
   if datasets:
@@ -178,9 +179,9 @@ def es_parse_log(logFile):
       dataset["protocol_opts"]=ds_items[1]
       dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
       idx = sha1(id + ds).hexdigest()
-      print dataset
+      print(dataset)
       send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))
 
 if __name__ == "__main__":
-  print "Processing ",sys.argv[1]
+  print("Processing ",sys.argv[1])
   es_parse_log(sys.argv[1])

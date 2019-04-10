@@ -6,17 +6,15 @@
 # Parses github issues looking for past errors.
 # Updates past errors to match the current status.
 
+from __future__ import print_function
 from argparse import ArgumentParser
 from glob import glob
 from github import Github, Label
 from os.path import basename, join, expanduser, exists
-from pickle import load
-from json import loads, dumps
-from commands import getstatusoutput
-import sys
+from _py2with3compatibility import run_cmd
 import re
 import hashlib
-from operator import itemgetter, attrgetter
+from operator import itemgetter
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 
@@ -53,7 +51,7 @@ def parseSteps(buf):
     m = re.match(ISSUE_LINK_MATCHER, l)
     if not m:
       continue
-    print m.groups()
+    print(m.groups())
     results.append({"workflow": str(m.group(1)), "step": int(m.group(2))})
   return results
 
@@ -79,7 +77,7 @@ def readWorkflows(f):
 
 def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=None, workflows=[], current_release=None, error_hash=None, error_text=None, **kwds):
   steps = ""
-  print "foo" + str(workflows[0])
+  print("foo" + str(workflows[0]))
   workflows.sort(key=itemgetter("workflowId"))
   for info in workflows[:20]:
     steps += format(RELVAL_ISSUE_LINK_TEMPLATE,
@@ -99,17 +97,17 @@ def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=No
                  steps=steps,
                  full_message_url="foo",
                 )
-  print "\n---"
-  print "The following message will be added:"
-  print title
-  print body
+  print("\n---")
+  print("The following message will be added:")
+  print(title)
+  print(body)
   if dryRun:
-    print "--dry-run specified. Not adding new messages"
+    print("--dry-run specified. Not adding new messages")
     return
   repo.create_issue(title=title, body=body, labels=labels)
 
 def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwds):
-  print workflows
+  print(workflows)
   workflows.sort(key=itemgetter("workflowId"))
   links = [RELVAL_ISSUE_LINK_TEMPLATE % s for s in workflows]
   if len(links) > 20:
@@ -120,27 +118,27 @@ def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwd
                 steps=steps,
                 full_message_url="foo"
                )
-  print "Issue %s will be updated as follows" % issue.number
-  print body
+  print("Issue %s will be updated as follows" % issue.number)
+  print(body)
   oldBody = issue.body.split("\n")
 
   if dryRun:
-    print "--dry-run specified. Not adding new messages"
+    print("--dry-run specified. Not adding new messages")
     return
   issue.edit(body=body)
 
 def getZippedLog(name, t, p, info):
   zippedLogs = "%s/pyRelValMatrixLogs.zip" % p
-  print info
+  print(info)
   info["step"] = info["steps"][0]
   logFile = "%(workflowId)s_%(name)s/step%(step)s_%(name)s.log" % info
-  print logFile
-  print join(p, "pyRelValMatrixLogs.zip")
+  print(logFile)
+  print(join(p, "pyRelValMatrixLogs.zip"))
   if not exists(join(p, "pyRelValMatrixLogs.zip")):
     return None
   cmd = "unzip -cx %s %s" % (zippedLogs, logFile)
-  print cmd
-  err, out = getstatusoutput("unzip -cx %s %s" % (zippedLogs, logFile))
+  print(cmd)
+  err, out = run_cmd("unzip -cx %s %s" % (zippedLogs, logFile))
   if err:
     return None
   return out
@@ -155,7 +153,7 @@ def understandAssertion(name, t, p, info):
   if len(checkAssertion) == 0:
     return None
 
-  print "Reporting this as an assertion"
+  print("Reporting this as an assertion")
   errorTitle = "failed assertion"
   uniqueMessage = checkAssertion[0][1]
   errorMessage = "%s: Assertion `%s' failed." % checkAssertion[0]
@@ -164,13 +162,13 @@ def understandAssertion(name, t, p, info):
 
 # Understand fatal root errors
 def understandFatalRootError(name, t, p, info):
-  print "Attempt with root error"
+  print("Attempt with root error")
   log = getZippedLog(name, t, p, info)
   if not log:
-    print "Log not found"
+    print("Log not found")
     return None
-  print len(log)
-  print not "----- Begin Fatal Exception" in log
+  print(len(log))
+  print(not "----- Begin Fatal Exception" in log)
   if not "----- Begin Fatal Exception" in log:
     return None
   matcher = str(".*An exception of category 'FatalRootError' occurred.*"
@@ -178,14 +176,14 @@ def understandFatalRootError(name, t, p, info):
   s = log.split("----- Begin Fatal Exception")[1].split("----- End Fatal Exception")[0]
   s = s.split("\n", 1)[1]
   checkRootError = re.findall(matcher, s, re.DOTALL)
-  print "root error %s" % str(checkRootError)
+  print("root error %s" % str(checkRootError))
   if not checkRootError:
     return None
   errorTitle = re.sub("/.*/", "", checkRootError[0][1].strip("\n"))
   # Remove any paths.
   errorMessage = re.sub("/.*/", "", s).strip("\n")
   h = hashlib.sha1(name + errorTitle + errorMessage).hexdigest()[:10]
-  print h
+  print(h)
   return (h, errorTitle, errorMessage)
 
 # Understand if there was a missing input file error.
@@ -198,8 +196,8 @@ def understandStep1Error(name, t, p, info):
   if not exists(join(p, "pyRelValMatrixLogs.zip")):
     return None
   cmd = "unzip -qq -cx %s %s 2>/dev/null" % (zippedLogs, logFile)
-  print cmd
-  err, out = getstatusoutput(cmd)
+  print(cmd)
+  err, out = run_cmd(cmd)
   if err:
     return None
   if out.strip():
@@ -243,12 +241,12 @@ if __name__ == "__main__":
   parser.add_argument("--filter", type=str, default="")
   parser.add_argument("-n", "--dry-run", dest="dryRun", action="store_true", default=False)
   args = parser.parse_args()
-  print args.dryRun
+  print(args.dryRun)
 
   # Generate a tuple with
   # (<release-name>, <release-queue>, <release-path>)
   globExpr = join(args.logdir, "*/www/*/*/*")
-  print globExpr
+  print(globExpr)
   releases = [r for r in glob(globExpr) if re.match(".*" + args.filter + ".*", r)]
   RESULTS_PATH = "pyRelValMatrixLogs/run/runall-report-step123-.log"
   releases = [r for r in releases if exists(join(r, RESULTS_PATH))]
@@ -272,20 +270,20 @@ if __name__ == "__main__":
   release_info = zip(last_names, types, last_releases)
 
   for x in release_info:
-    print "The following releases will be considered: "
-    print "\n".join(["- %s for %s" % (x[0], x[1]) for x in release_info])
+    print("The following releases will be considered: ")
+    print("\n".join(["- %s for %s" % (x[0], x[1]) for x in release_info]))
 
   # Iterate on the latest releases and find out if they have issues, producing
   # a map of workflows steps which are broken.
-  print "Parsing new issues"
+  print("Parsing new issues")
   validErrorReport={}
   for (name, t, p) in release_info:
     errorLogPath = join(p, "pyRelValMatrixLogs/run/runall-report-step123-.log")
     if not exists(errorLogPath):
-      print "Cannot find %s" % errorLogPath
+      print("Cannot find %s" % errorLogPath)
       continue
     #print errorLogPath
-    print "Processing %s" % errorLogPath
+    print("Processing %s" % errorLogPath)
     workflows = readWorkflows(open(errorLogPath))
     if not workflows:
       continue
@@ -303,11 +301,11 @@ if __name__ == "__main__":
                                  "error_hash": h,
                                  "workflows": []
                                 }
-      print workflow, step
+      print(workflow, step)
       stepInfo = {"workflowId": info["workflowId"], "name": info["name"], "step": step}
       validErrorReport[h]["workflows"].append(stepInfo)
 
-  print "Parsing old issues."
+  print("Parsing old issues.")
   # Get from github all the issues which are associated to failing relvals.
   # Parse them to have an understanding of current status.
   issues = []
@@ -316,12 +314,12 @@ if __name__ == "__main__":
   labels = repo.get_labels()
   relvalIssueLabel = [x for x in labels if x.name == "relval"]
   issues = repo.get_issues(labels=relvalIssueLabel)
-  print "Old issues found: " + ", ".join(["#%s" % x.number for x in issues])
+  print("Old issues found: " + ", ".join(["#%s" % x.number for x in issues]))
   pastIssues = {}
   for issue in issues:
     tm = re.match(ISSUE_TITLE_MATCHER, issue.title, re.DOTALL)
     if not tm:
-      print "Unable to parse title %s for issue %s" % (issue.title, issue.number)
+      print("Unable to parse title %s for issue %s" % (issue.title, issue.number))
       continue
     parts = tm.groups()
     queue, error_title, first_release, error_hash = parts
@@ -339,13 +337,13 @@ if __name__ == "__main__":
     # the body completely.
     bm = re.match(ISSUE_BODY_MATCHER, issue.body, re.DOTALL)
     if not bm:
-      print "Unable to parse body for issue %s. Issue will be updated" % (issue.number)
+      print("Unable to parse body for issue %s. Issue will be updated" % (issue.number))
       continue
     parts = bm.groups()
     error_message, workflows = parts
     pastIssues[error_hash]["workflows"] = parseSteps(workflows)
 
-  print "Updating current status"
+  print("Updating current status")
   # Do the matching between current status and old status.
   # Iterate on new status:
   # - If an error was not reported. Add a new message
@@ -355,7 +353,7 @@ if __name__ == "__main__":
   #
   for h, payload in validErrorReport.items():
     if not h in pastIssues:
-      print "New error detected for %s. Will post a message" % payload["queue"]
+      print("New error detected for %s. Will post a message" % payload["queue"])
       postNewMessage(dryRun=args.dryRun, repo=repo, labels=relvalIssueLabel, **payload)
       continue
 
@@ -365,21 +363,21 @@ if __name__ == "__main__":
     pastSteps = sorted([(float(x["workflow"]), x["step"]) for x in pastSteps])
 
     if currentSteps == pastSteps:
-      print "No changes in issue %s." % pastIssues[h]["issue"].number
+      print("No changes in issue %s." % pastIssues[h]["issue"].number)
       continue
 
     issue = pastIssues[h]["issue"]
-    print "Error %s is already found in github, but changed. Adapting description." % issue.number
+    print("Error %s is already found in github, but changed. Adapting description." % issue.number)
     updateBugReport(dryRun=args.dryRun, issue=issue, **payload)
 
-  for h, payload in pastIssues.items():
+  for h, payload in list(pastIssues.items()):
     if h in validErrorReport:
       continue
     # Skip the queues which we have filtered.
     if not re.match(".*" + args.filter + ".*", payload["queue"]):
       continue
     if args.dryRun:
-      print "Issue %s should really be closed." % payload["issue"].number
+      print("Issue %s should really be closed." % payload["issue"].number)
     else:
-      print "Closing issue %s." % payload["issue"].number
+      print("Closing issue %s." % payload["issue"].number)
       issue.edit(state="closed")

@@ -1,10 +1,11 @@
 #!/usr/bin/env python
  
+from __future__ import print_function
 import os
 from cmsutils import doCmd, getIBReleaseInfo
 from time import sleep
 
-class LogUpdater():
+class LogUpdater(object):
 
     def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt03.cern.ch", webDir="/data/sdt/buildlogs/"):
         self.dryRun = dryRun
@@ -19,7 +20,7 @@ class LogUpdater():
 
     def updateUnitTestLogs(self, subdir=""):
         
-        print "\n--> going to copy unit test logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy unit test logs to", self.webTargetDir, '... \n')
         # copy back the test and relval logs to the install area
         # check size first ... sometimes the log _grows_ to tens of GB !!
         testLogs = ['unitTestLogs.zip','unitTests-summary.log','unitTestResults.pkl']
@@ -28,7 +29,7 @@ class LogUpdater():
 	return
 
     def updateGeomTestLogs(self):
-        print "\n--> going to copy Geom test logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy Geom test logs to", self.webTargetDir, '... \n')
         testLogs = ['dddreport.log', 'domcount.log']
         for tl in testLogs:
             self.copyLogs(tl, '.', self.webTargetDir)
@@ -36,7 +37,7 @@ class LogUpdater():
         return
 
     def updateDupDictTestLogs(self):
-        print "\n--> going to copy dup dict test logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy dup dict test logs to", self.webTargetDir, '... \n')
         testLogs = ['dupDict-*.log']
         for tl in testLogs:
             self.copyLogs(tl, '.', self.webTargetDir)
@@ -46,18 +47,18 @@ class LogUpdater():
     def updateLogFile(self,fileIn,subTrgDir=None):
         desdir =  self.webTargetDir
         if subTrgDir: desdir = os.path.join(desdir, subTrgDir)
-        print "\n--> going to copy "+fileIn+" log to ", desdir, '... \n'
+        print("\n--> going to copy "+fileIn+" log to ", desdir, '... \n')
         self.copyLogs(fileIn,'.', desdir)
         return
 
     def updateCodeRulesCheckerLogs(self):
-        print "\n--> going to copy cms code rules logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy cms code rules logs to", self.webTargetDir, '... \n')
         self.copyLogs('codeRules', '.',self.webTargetDir)
         return
 
     def updateRelValMatrixPartialLogs(self, partialSubDir, dirToSend):
         destination = os.path.join(self.webTargetDir,'pyRelValPartialLogs') 
-        print "\n--> going to copy pyrelval partial matrix logs to", destination, '... \n'
+        print("\n--> going to copy pyrelval partial matrix logs to", destination, '... \n')
         self.copyLogs(dirToSend, partialSubDir, destination)
         self.runRemoteCmd("touch "+os.path.join(destination,dirToSend,"wf.done"))
         return
@@ -69,21 +70,21 @@ class LogUpdater():
         return ((code == 0) and out.endswith(wfDoneFile))
    
     def updateAddOnTestsLogs(self):
-        print "\n--> going to copy addOn logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy addOn logs to", self.webTargetDir, '... \n')
         self.copyLogs('addOnTests.log' ,'.',self.webTargetDir)
         self.copyLogs('addOnTests.zip' ,'addOnTests/logs',self.webTargetDir)
         self.copyLogs('addOnTests.pkl' ,'addOnTests/logs',os.path.join(self.webTargetDir, 'addOnTests/logs'))
         return
 
     def updateIgnominyLogs(self):
-        print "\n--> going to copy ignominy logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy ignominy logs to", self.webTargetDir, '... \n')
         testLogs = ['dependencies.txt.gz','products.txt.gz','logwarnings.gz','metrics']
         for tl in testLogs:
             self.copyLogs(tl, 'igRun', os.path.join( self.webTargetDir, 'igRun'))
         return
 
     def updateProductionRelValLogs(self,workFlows):
-        print "\n--> going to copy Production RelVals logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy Production RelVals logs to", self.webTargetDir, '... \n')
         wwwProdDir = os.path.join( self.webTargetDir, 'prodRelVal')
         self.copyLogs('prodRelVal.log' ,'.',wwwProdDir)
         for wf in workFlows:
@@ -91,7 +92,7 @@ class LogUpdater():
         return
 
     def updateBuildSetLogs(self,appType='fwlite'):
-        print "\n--> going to copy BuildSet logs to", self.webTargetDir, '... \n'
+        print("\n--> going to copy BuildSet logs to", self.webTargetDir, '... \n')
         wwwBSDir = os.path.join( self.webTargetDir, 'BuildSet')
         self.copyLogs(appType ,'BuildSet',wwwBSDir)
         return
@@ -111,7 +112,7 @@ class LogUpdater():
         cmd ="ssh -Y "+self.ssh_opt+" "+host+" 'echo CONNECTION=OK && "+cmd+"'"
         try:
             if self.dryRun:
-              print "CMD>>",cmd
+              print("CMD>>",cmd)
             else:
               for i in range (10):
                 err,out = doCmd(cmd)
@@ -120,22 +121,22 @@ class LogUpdater():
                   if "CONNECTION=OK" in l: return (err,out)
                 sleep(60)
               return doCmd(cmd)
-        except Exception, e:
-            print "Ignoring exception during runRemoteCmd:", str(e)
+        except Exception as e:
+            print("Ignoring exception during runRemoteCmd:", str(e))
             return (1,str(e))
 
     def copy2RemoteHost(self, src, des, host):
         cmd ="scp "+self.ssh_opt+" -r "+src+" "+host+":"+des
         try:
             if self.dryRun:
-              print "CMD>>",cmd
+              print("CMD>>",cmd)
             else:
               for i in range (10):
                 err,out = doCmd(cmd)
                 if not err: return (err,out)
                 sleep(60)
               return doCmd(cmd)
-        except Exception, e:
-            print "Ignoring exception during copy2Remote:", str(e)
+        except Exception as e:
+            print("Ignoring exception during copy2Remote:", str(e))
             return (1,str(e))
 

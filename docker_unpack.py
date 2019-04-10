@@ -63,7 +63,8 @@ def process(image, outdir):
   tag = image.split(":",1)[-1]
   if container==tag: tag="latest"
 
-  e, image_hash = run_cmd("docker pull %s 2>&1 >/dev/null; docker images %s | grep '^%s \|/%s ' | grep ' %s ' | sed 's|  *|:|g' | cut -d: -f3" % (image, container, container, container, tag))
+  e, image_hash = run_cmd("docker pull %s 2>&1 >/dev/null; docker images %s | grep '^%s \|/%s ' | grep ' %s ' | tail -1 | sed 's|  *|:|g' | cut -d: -f3" % (image, container, container, container, tag))
+  print ("Image hash: %s" % image_hash)
   if e:
     print(image_hash)
     exit(1)
@@ -72,7 +73,7 @@ def process(image, outdir):
   img_dir = join(outdir, img_sdir)
   if exists(img_dir): return
 
-  print("Starting Container %s" % image)
+  print ("Starting Container %s with %s hash" % (image, image_hash))
   tmpdir = join(outdir, ".images", "tmp")
   e, o = run_cmd('docker run --name %s %s echo OK' % (image_hash,image))
   if e: cleanup_exit(o, [tmpdir], image_hash)
@@ -111,4 +112,4 @@ if __name__ == "__main__":
   if len(args) != 0: parser.error("Too many/few arguments")
   process(opts.container, opts.outdir)
   print("All OK")
-
+  

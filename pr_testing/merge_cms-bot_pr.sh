@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash -ex
 # This script should check if there are cms-bot PR and merge into current repo
 # Kept as a minimum to avoid chicken and egg problem
 # ---

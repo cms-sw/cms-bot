@@ -1,9 +1,6 @@
 #!/usr/bin/env python2
 
 from __future__ import print_function
-from builtins import str
-from builtins import range
-from builtins import object
 import os, sys, re, time
 
 class LogChecker(object) :

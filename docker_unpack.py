@@ -8,7 +8,7 @@ from commands import getstatusoutput as runCmd
 
 def cleanup_exit(msg, tmpdirs=[], image_hash="", exit_code=1):
   if msg:    print msg
-  for tdir in tmpdir: runCmd("rm -rf %s" % tdir)
+  for tdir in tmpdirs: runCmd("rm -rf %s" % tdir)
   if image_hash: runCmd("docker rm -f %s" % image_hash)
   exit(exit_code)
 

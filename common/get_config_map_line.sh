@@ -18,8 +18,8 @@ CONFIG_MAP=${CMS_BOT_DIR}/config.map
 
 #Checked if variables are passed
 if [[ -z "$RELEASE_QUEUE" && -z "$CMS_DIST_TAG"  ]]; then
-    >&2 echo "ERROR: either RELEASE_QUEUE or CMS_DIST_TAG must be given."
-    exit 1
+    >&2 echo "WARNING: both RELEASE_QUEUE and CMS_DIST_TAG empty, setting RELEASE_QUEUE to master."
+    RELEASE_QUEUE='master'
 fi
 if [[ "$RELEASE_QUEUE" == "master" ]] ; then
     RELEASE_QUEUE=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' ${CMS_BOT_DIR}/releases.py | sed 's/.*= *//;s/"//g;s/ //g'  )

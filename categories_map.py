@@ -1438,6 +1438,7 @@ CMSSW_CATEGORIES = {
     "SimG4Core/Configuration",
     "SimG4Core/CountProcesses",
     "SimG4Core/CustomPhysics",
+    "SimG4Core/DD4hepGeometry",
     "SimG4Core/GFlash",
     "SimG4Core/Generators",
     "SimG4Core/Geometry",

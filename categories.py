@@ -65,6 +65,7 @@ CMSSW_L2 = {
   "ssekmen":          ["fastsim"],
   "tocheng":          ["alca"],
   "zhenhu":           ["pdmv"],
+  "christopheralanwest": ["alca"],
   CMSBUILD_USER:      ["tests", "code-checks" ],
 }
 

@@ -29,37 +29,36 @@ def process_unittest_log(logFile):
   architecture = pathInfo[4]
   release = pathInfo[8]
   week, rel_sec  = cmsswIB2Week (release)
-  print("DEBUG:",pathInfo[-3],week, rel_sec)
   package = pathInfo[-3]+"/"+ pathInfo[-2]
-  utname = None
-  datasets = []
   payload = {"type" : "unittest"}
   payload["release"]=release
   payload["architecture"]=architecture
   payload["@timestamp"]=timestp
-  id = None
   config_list = []
   custom_rule_set = [
     {"str_to_match": "test (.*) had ERRORS", "name": "{0} failed", 'control_type': ResultTypeEnum.ISSUE },
     {"str_to_match": '===== Test "([^\s]+)" ====', "name": "{0}", 'control_type': ResultTypeEnum.TEST }
   ]
   with open(logFile) as f:
+    utname = None
+    datasets = []
+    xid = None
     for index, l in enumerate(f):
       config_list = add_exception_to_config(l,index,config_list,custom_rule_set)
       if l.startswith('===== Test "') and l.endswith('" ===='):
-        if utname: send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week, "unittest-dataset")
+        if utname: send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week, "unittest-dataset")
         datasets = []
         utname = l.split('"')[1]
         payload["name"] = "%s/%s" % (package, utname)
-        id = sha1(release + architecture + package + str(utname)).hexdigest()
+        xid = sha1(release + architecture + package + str(utname)).hexdigest()
       elif " Initiating request to open file " in l:
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
           if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
         except:
           pass
-  if datasets:
-    send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"unittest-dataset")
+    if datasets and xid:
+      send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week,"unittest-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
   return
 

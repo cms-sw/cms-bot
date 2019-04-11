@@ -19,6 +19,7 @@ def send_unittest_dataset(datasets, payload, id, index, doc):
     payload["protocol"]=ds_items[0].split("/store/",1)[0]+ibeos
     payload["protocol_opts"]=ds_items[1]
     payload["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
+    print ("Sending",index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
     send_payload(index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
 
 def process_unittest_log(logFile):
@@ -124,6 +125,7 @@ def process_ib_utests(logFile):
               payload["package"] = pkg
               payload["name"] = utest
               id = sha1(release + architecture + utest).hexdigest()
+              print("Sending: ",index,document,id,json.dumps(payload))
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:

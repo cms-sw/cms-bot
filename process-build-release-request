@@ -978,7 +978,8 @@ if __name__ == "__main__":
     if release_queue != release_branch: xqueue =release_queue+"("+release_branch+")"
     cmssw_commit_tag=""
     if release_tag_commit: cmssw_commit_tag="Release tag based on: %s\n" % release_tag_commit
-    msg = ACK_MSG.format( approvers_list=approvers, cmssw_queue=xqueue, architecture=", ".join(architectures), cmssw_commit_tag=cmssw_commit_tag )
+    arch_msg = ", ".join([ a if a!=production_architecture else '%s(%s)' % (a,'Production') for a in architectures ])
+    msg = ACK_MSG.format( approvers_list=approvers, cmssw_queue=xqueue, architecture=arch_msg, cmssw_commit_tag=cmssw_commit_tag )
 
     if watchers:
       watchers_l = ", ".join( [ "@"+x for x in watchers ] )

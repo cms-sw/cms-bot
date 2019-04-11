@@ -99,6 +99,7 @@ JENKINS_PREV_RELEASE='PREVIOUS_RELEASE'
 JENKINS_RELEASE='RELEASE'
 JENKINS_PREV_CMSDIST_TAG='PREVIOUS_CMSDIST_TAG'
 JENKINS_CMSDIST_TAG='CMSDIST_TAG'
+JENKINS_PRODUCTION_ARCH='PRODUCTION_ARCH'
 JENKINS_BUILD_DIR='BUILD_DIR'
 ANNOUNCEMENT_TEMPLATE = 'Hi all,\n\n' \
                         'The {rel_type} {is_patch}release {rel_name} is now available '\
@@ -170,7 +171,7 @@ def create_properties_file_cleanup( release_name, arch, issue_number, machine_na
 # Creates a properties file in Jenkins to trigger the upload
 # it needs to know the machine that was used for the build
 #
-def create_properties_files_upload( release_name, arch, issue_number, machine_name, docker_imgs ):
+def create_properties_files_upload( release_name, arch, issue_number, machine_name, docker_imgs, prod ):
 
   docker_img = ''
   if arch in docker_imgs: docker_img = docker_imgs[arch]
@@ -185,6 +186,7 @@ def create_properties_files_upload( release_name, arch, issue_number, machine_na
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
     out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img ) )
     out_file.write( '%s=%s\n' % ( JENKINS_MACHINE_NAME , machine_name ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_PRODUCTION_ARCH , 'true ' if prod else 'false' ) )
 
 
 #
@@ -710,7 +712,7 @@ def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
 #
 # checks the issue for archs to be uploaded
 #
-def check_archs_to_upload( release_name, issue, docker_imgs ):
+def check_archs_to_upload( release_name, issue, docker_imgs, production_architecture):
   print('Looking for archs ready to be uploaded...\n')
   for arch in BUILD_OK:
     print('Ready to upload %s' % arch)
@@ -722,8 +724,8 @@ def check_archs_to_upload( release_name, issue, docker_imgs ):
  
     first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
     build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
-    print('Triggering upload for %s' % arch)
-    create_properties_files_upload( release_name , arch , issue.number , build_machine, docker_imgs )
+    print('Triggering upload for %s (prod arch: %s)' % (arch, arch==production_architecture))
+    create_properties_files_upload( release_name , arch , issue.number , build_machine, docker_imgs, arch==production_architecture )
     post_message( issue , QUEING_UPLOADS_MSG.format( architecture=arch ) )
     remove_label( issue, arch + '-build-ok' )
     add_label( issue, arch + '-uploading' )
@@ -890,8 +892,18 @@ if __name__ == "__main__":
     print("Unable to find production architecture for the release")
     post_message( issue, "Unable to find production architecture for the release" )
     exit(0)
-  print("debug production arch: ",production_architecture.split("\n"))
   production_architecture = production_architecture.split("\n")[-1]
+
+  if "PRODUCTION_ARCHITECTURE:" in issue_body:
+    req_arch = issue_body.split("PRODUCTION_ARCHITECTURE:",1)[1].split("\n",1)[0].strip()
+    if not req_arch in architectures:
+        msg = "You requested production architecutre to be %s but this is not a valid architecture for this release cycle." % req_arch
+        print(msg)
+        post_message( issue, msg)
+        exit(0)
+    production_architecture = req_arch
+    print("Found production architecture:",production_architecture)
+  print("debug production arch: ",production_architecture)
 
   release_branch = release_queue
 
@@ -1051,7 +1063,7 @@ if __name__ == "__main__":
     upload_all_requested = search_in_comments( comments, APPROVE_BUILD_RELEASE, UPLOAD_ALL_COMMENT, True )
 
     if upload_all_requested:
-      check_archs_to_upload( release_name, issue, docker_imgs )
+      check_archs_to_upload( release_name, issue, docker_imgs, production_architecture )
       go_to_state( issue, status, UPLOADING_BUILDS )
     else:    
       print('Upload not requested yet')
@@ -1059,7 +1071,7 @@ if __name__ == "__main__":
   if status == UPLOADING_BUILDS:
 
     #upload archs as soon as they get ready
-    check_archs_to_upload( release_name, issue, docker_imgs )
+    check_archs_to_upload( release_name, issue, docker_imgs, production_architecture )
 
     #Check if someone asked for release notes, go to next state after generating notes.
     #At least one architecture must have been successfully installed
@@ -1101,7 +1113,7 @@ if __name__ == "__main__":
   if status == RELEASE_ANNOUNCED:
 
     #upload archs as soon as they get ready
-    check_archs_to_upload( release_name, issue, docker_imgs )
+    check_archs_to_upload( release_name, issue, docker_imgs, production_architecture )
 
     print('checking if someone asked again for the release notes')
     release_notes_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE, RELEASE_NOTES_COMMENT, True )

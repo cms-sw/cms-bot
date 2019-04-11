@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import re
 from os import environ
 from os.path import dirname, abspath
@@ -7,7 +8,7 @@ try:
   import psutil
   monitor_script = dirname(abspath(__file__))+"/monitor_workflow.py"
 except:
- print "Monitering of relval steps disabled: import psutils failed"
+ print("Monitering of relval steps disabled: import psutils failed")
 
 RELVAL_KEYS = {"customiseWithTimeMemorySummary":[],
                "enableIMT":[],
@@ -78,7 +79,7 @@ def GetMatrixOptions(release, arch, dasfile=None):
   while m:
     key = m.group(2)
     val = ""
-    if RELVAL_KEYS.has_key(key):
+    if key in RELVAL_KEYS:
       for exp,data in RELVAL_KEYS[key]:
         if re.search(exp,rel_arch):
           val = data + " "

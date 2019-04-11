@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-print "Content-Type: text/html\n"
-
-import os , sys , cgi , json , pycurl , hmac, re
+from __future__ import print_function
 from hashlib import sha1
-import urllib2, urllib
+from _py2with3compatibility import Request, urlopen, urlencode
+import os, sys, json, hmac, re
 
+print("Content-Type: text/html\n")
 BASE_DIRECTORY = "/data"
 
 def check_event(data):
@@ -47,10 +47,10 @@ def check_signature(data):
   try:
     secret = open(BASE_DIRECTORY+'/secrets/github_hook_secret','r').read().split('\n')[0].strip()
   except Exception as e:
-    print "Unable to read secret file"
+    print("Unable to read secret file")
     return False
   mac = hmac.new(str(secret), msg=data, digestmod=sha1)
-  print str(mac.hexdigest()) , str(signature)
+  print(str(mac.hexdigest()) , str(signature))
   return str(mac.hexdigest()) == str(signature)
 
 #check source ip in white list fucntion
@@ -58,7 +58,7 @@ def check_ip():
   try:
     ip_net = open(BASE_DIRECTORY+'/sdt/github-hook-meta.txt','r').read().split('\n')[0].strip()
   except Exception as e:
-    print "Unable to read github hoot meta information, using hard coded value"
+    print("Unable to read github hoot meta information, using hard coded value")
     ip_net ="192.30.252.0/22"
 
   ip, mask = ip_net.split('/')
@@ -113,7 +113,7 @@ data = sys.stdin.read()
 try:
   payload = json.loads(data)
 except Exception as e:
-  print "Invalid data, can not read json input"
+  print("Invalid data, can not read json input")
   sys.exit()
 
 #check valid data, ip and signature of source
@@ -125,14 +125,14 @@ if (not valid) or (not check_ip()) or (not check_signature(data)):
 jenkins_parameters, job = get_parameters(payload, event)
 if job:
   url = 'http://cmsjenkins.cern.ch:8080/jenkins/job/'+ job + '/build'
-  print jenkins_parameters,job
+  print(jenkins_parameters,job)
   data = {
               "json": jenkins_parameters,
               "Submit": "Build"
          }
   try:
-    data=urllib.urlencode(data)
-    req = urllib2.Request(url=url,data=data,headers={"ADFS_LOGIN" : "cmssdt"})
-    content = urllib2.urlopen(req).read()
+    data = urlencode(data)
+    req = Request(url=url,data=data,headers={"ADFS_LOGIN" : "cmssdt"})
+    content = urlopen(req).read()
   except Exception as e:
-    print "Unable to start jenkins job"
+    print("Unable to start jenkins job")

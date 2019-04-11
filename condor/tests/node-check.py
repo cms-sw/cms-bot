@@ -1,17 +1,22 @@
 #!/usr/bin/env python
-from sys import exit, argv, stdin
-from os import pipe, close, fork, fdopen, write, waitpid, remove
+from __future__ import print_function
+from sys import exit, argv
+from os import pipe, close, fork, fdopen, write, waitpid
 from os.path import exists
 from time import sleep
 from threading import Thread
 from re import match
 from array import array
-from commands import getstatusoutput as run_cmd
+
+from os.path import dirname, abspath
+import sys
+sys.path.append(dirname(dirname(dirname(abspath(__file__)))))  # in order to import cms-bot level modules
+from _py2with3compatibility import run_cmd
 
 def do_load(obj):
   mem_size = obj.memory*1024*1024
   cache = array('B', [0]) * mem_size
-  print "Run: ", obj.id
+  print("Run: ", obj.id)
   while obj.state:
     x=0
     for j in range(1024):
@@ -39,7 +44,7 @@ class LoadMaster (object):
     write(self.childs[-1][1], 'stop\n')
     waitpid(self.childs[-1][0], 0)
     self.childs.pop()
-    print "Childs:",len(self.childs)
+    print("Childs:",len(self.childs))
 
   def remove_childs(self, count):
     for c in range(count): self.remove_child()
@@ -59,7 +64,7 @@ class LoadMaster (object):
     else:
       close(pin)
       self.childs.append([pid, pout])
-      print "Childs:",len(self.childs)
+      print("Childs:",len(self.childs))
 
   def add_childs(self, count):
     for c in range(count): self.add_child()
@@ -70,7 +75,7 @@ class LoadMaster (object):
   def start(self):
     while True:
       cmd = self.get_command()
-      print "master: %s" % cmd
+      print("master: %s" % cmd)
       if cmd in ['stop', 'exit']: self.remove_all()
       elif cmd=='start': self.add_all()
       else:
@@ -97,17 +102,16 @@ class LoadClient (object):
     pin = fdopen(pipe_in)
     while self.state:
       cmd = pin.readline().strip()
-      print "%s: %s" % (self.id, cmd)
+      print("%s: %s" % (self.id, cmd))
       if cmd=='stop': self.state = False
     pin.close()
     thr.join()
-    print "Done:",self.id
+    print("Done:",self.id)
     exit(0)
 
 childs=int(argv[1])
 memory=int(argv[2])
-
 master = LoadMaster(memory, childs, None)
 master.start()
-print "ALL OK"
+print("ALL OK")
 

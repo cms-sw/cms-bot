@@ -1,12 +1,13 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import re
 from sys import argv, exit
-from commands import getstatusoutput as run_cmd
+from _py2with3compatibility import run_cmd
 
 def parse_workflows(workflow_file):
   err, out = run_cmd("cat %s" % workflow_file)
   if err:
-    print out
+    print(out)
     exit(1)
 
   wf = ""
@@ -24,7 +25,7 @@ def parse_workflows(workflow_file):
     if not wf in wfs: wfs[wf]={}
     wfs[wf][step]=re.sub("  +"," ",cmd)
     steps += 1
-  print "%s: %s workflows, %s steps" % (workflow_file, len(wfs), steps)
+  print("%s: %s workflows, %s steps" % (workflow_file, len(wfs), steps))
   return wfs
 
 orig_workflows = argv[1]
@@ -49,8 +50,8 @@ for wf in wfs["new"]:
         chg_step.append(wf)
         break
 
-print "New workflows:%s: %s" % (len(new_wf), ",".join(new_wf))
-print "Workflows with new steps:%s: %s" % (len(new_step), ",".join(new_step))
-print "Wrokflows with changed steps:%s: %s" % (len(chg_step), ",".join(chg_step))
-print "WORKFLOWS TO RUN:",",".join(new_wf+new_step+chg_step)
+print("New workflows:%s: %s" % (len(new_wf), ",".join(new_wf)))
+print("Workflows with new steps:%s: %s" % (len(new_step), ",".join(new_step)))
+print("Wrokflows with changed steps:%s: %s" % (len(chg_step), ",".join(chg_step)))
+print("WORKFLOWS TO RUN:",",".join(new_wf+new_step+chg_step))
 

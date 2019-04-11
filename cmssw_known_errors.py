@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from copy import deepcopy
 
 MSG_GCC_ABI_INCOMPETIBILITY = "GCC ABI incompetibility. GridPacks were built with gcc4"
@@ -133,5 +134,5 @@ def get_known_errors(release, architecture, test_type):
 
 if __name__ == "__main__":
   from json import dumps
-  print dumps(KNOWN_ERRORS,sort_keys=True,indent=2)
+  print(dumps(KNOWN_ERRORS,sort_keys=True,indent=2))
 

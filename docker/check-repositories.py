@@ -1,9 +1,12 @@
 #!/usr/bin/env python
-from commands import getstatusoutput as run_cmd
+from __future__ import print_function
+import sys
+from os.path import exists, dirname, abspath
 import yaml, json
 from sys import exit
-from os.path import exists
 from optparse import OptionParser
+sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
+from _py2with3compatibility import run_cmd
 
 def get_repos(user, cache):
   if user not in cache:
@@ -27,7 +30,7 @@ def process(repos, dryRun, cache):
       existing_repos = get_repos(u, cache)
       for r in data[u]:
         if r not in existing_repos:
-          print "%s/%s NEW" % (u, r)
+          print("%s/%s NEW" % (u, r))
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <pull-request-id>")

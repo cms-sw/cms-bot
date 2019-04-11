@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 #test commit
+from __future__ import print_function
 from github import Github, GithubException
 from os.path import expanduser
 from optparse import OptionParser
@@ -30,27 +31,27 @@ if __name__ == "__main__":
 
   gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
   rate_limit = gh.get_rate_limit().rate
-  print 'API Rate Limit'
-  print 'Limit: ', rate_limit.limit
-  print 'Remaining: ', rate_limit.remaining
-  print 'Reset time (GMT): ', rate_limit.reset
+  print('API Rate Limit')
+  print('Limit: ', rate_limit.limit)
+  print('Remaining: ', rate_limit.remaining)
+  print('Reset time (GMT): ', rate_limit.reset)
 
   repo =  gh.get_repo('cms-sw/cmssw')
   commits = repo.get_commits(sha=opts.branch, until=commit_date)
   sha = commits[0].sha
-  print 'Found Commit :',sha,commits[0].author.login,'(',commits[0].author.name,')'
+  print('Found Commit :',sha,commits[0].author.login,'(',commits[0].author.name,')')
   if not opts.dryRun:
     try:
       repo.create_git_tag(opts.tag, "Release", sha, "commit")
       repo.create_git_ref("refs/tags/"+opts.tag,sha)
-      print "Created Tag ",opts.tag," based on ",sha
-    except GithubException, e:
+      print("Created Tag ",opts.tag," based on ",sha)
+    except GithubException as e:
       msg = e.data['message'].encode("ascii", "ignore")
-      print "Message: ",msg
+      print("Message: ",msg)
       if re.match('^.*Reference already exists.*$',msg,re.M):
         exit(0)
-      print "ERROR: unable to create tag ",opts.tag
+      print("ERROR: unable to create tag ",opts.tag)
       exit (1)
   else:
-    print "Dry run, would have created tag ",opts.tag," based on ",sha
+    print("Dry run, would have created tag ",opts.tag," based on ",sha)
   exit(0)

@@ -1,31 +1,34 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from json import loads
-from sys import exit, argv
-import hashlib, stat
+from sys import exit
+import stat
 from os.path import exists, join
-from os import makedirs, walk, lstat, chmod
-from commands import getstatusoutput as runCmd
+from os import walk, lstat, chmod
+from _py2with3compatibility import run_cmd
 
-def cleanup_exit(msg, tmpdirs=[], image_hash="", exit_code=1):
-  if msg:    print msg
-  for tdir in tmpdirs: runCmd("rm -rf %s" % tdir)
-  if image_hash: runCmd("docker rm -f %s" % image_hash)
+def cleanup_exit(msg, tmpdirs=None, image_hash="", exit_code=1):
+  if not tmpdirs:
+    tmpdirs = []
+  if msg: print(msg)
+  for tdir in tmpdirs: run_cmd("rm -rf %s" % tdir)
+  if image_hash: run_cmd("docker rm -f %s" % image_hash)
   exit(exit_code)
 
 def get_docker_token(repo):
-  print "Getting docker.io token ...."
-  e, o = runCmd('curl --silent --request "GET" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull"' % repo)
+  print("Getting docker.io token ....")
+  e, o = run_cmd('curl --silent --request "GET" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s:pull"' % repo)
   if e:
-    print o
+    print(o)
     exit(1)
   return loads(o)['token']
 
 def get_docker_manifest(repo, tag):
   token = get_docker_token(repo)
-  print "Getting manifest for %s/%s" % (repo, tag)
-  e, o = runCmd('curl --silent --request "GET" --header "Authorization: Bearer %s" "https://registry-1.docker.io/v2/%s/manifests/%s"' % (get_docker_token(repo), repo, tag))
+  print("Getting manifest for %s/%s" % (repo, tag))
+  e, o = run_cmd('curl --silent --request "GET" --header "Authorization: Bearer %s" "https://registry-1.docker.io/v2/%s/manifests/%s"' % (get_docker_token(repo), repo, tag))
   if e:
-    print o
+    print(o)
     exit(1)
   return loads(o)
 
@@ -36,7 +39,7 @@ def fix_mode(full_fname, mode_num, st=None):
   old_mode = stat.S_IMODE(st.st_mode)
   if (old_mode & n_mode) == 0:
     new_mode = old_mode | n_mode
-    print "Fixing mode of: %s: %s -> %s" % (full_fname, oct(old_mode), oct(new_mode))
+    print("Fixing mode of: %s: %s -> %s" % (full_fname, oct(old_mode), oct(new_mode)))
     chmod(full_fname, new_mode)
 
 def fix_modes(img_dir):
@@ -49,9 +52,9 @@ def fix_modes(img_dir):
       st = lstat(full_dname)
       if not stat.S_ISDIR(st.st_mode): continue
       old_mode = stat.S_IMODE(st.st_mode)
-      if old_mode & 0111 == 0:
+      if old_mode & 0o111 == 0:
         fix_mode (full_dname, 1, st)
-      if old_mode & 0222 == 0:
+      if old_mode & 0o222 == 0:
         fix_mode (full_dname, 2, st)
   return
 
@@ -60,10 +63,10 @@ def process(image, outdir):
   tag = image.split(":",1)[-1]
   if container==tag: tag="latest"
 
-  e, image_hash = runCmd("docker pull %s 2>&1 >/dev/null; docker images %s | grep '^%s \|/%s ' | grep ' %s ' | tail -1 | sed 's|  *|:|g' | cut -d: -f3" % (image, container, container, container, tag))
+  e, image_hash = run_cmd("docker pull %s 2>&1 >/dev/null; docker images %s | grep '^%s \|/%s ' | grep ' %s ' | tail -1 | sed 's|  *|:|g' | cut -d: -f3" % (image, container, container, container, tag))
   print ("Image hash: %s" % image_hash)
   if e:
-    print image_hash
+    print(image_hash)
     exit(1)
 
   img_sdir = join(".images", image_hash[0:2], image_hash)
@@ -72,31 +75,31 @@ def process(image, outdir):
 
   print ("Starting Container %s with %s hash" % (image, image_hash))
   tmpdir = join(outdir, ".images", "tmp")
-  e, o = runCmd('docker run --name %s %s echo OK' % (image_hash,image))
+  e, o = run_cmd('docker run --name %s %s echo OK' % (image_hash,image))
   if e: cleanup_exit(o, [tmpdir], image_hash)
 
-  print "Getting Container Id"
-  e, o = runCmd('docker ps -aq --filter name=%s' % image_hash)
+  print("Getting Container Id")
+  e, o = run_cmd('docker ps -aq --filter name=%s' % image_hash)
   if e: cleanup_exit(o, [tmpdir], image_hash)
   container_id = o
 
-  print "Exporting Container ",container_id
-  e, o = runCmd('rm -rf %s; mkdir -p %s; cd %s; docker export -o %s.tar %s' % (tmpdir, tmpdir, tmpdir,image_hash, container_id))
+  print("Exporting Container ",container_id)
+  e, o = run_cmd('rm -rf %s; mkdir -p %s; cd %s; docker export -o %s.tar %s' % (tmpdir, tmpdir, tmpdir,image_hash, container_id))
   if e: cleanup_exit(o, [tmpdir], image_hash)
 
-  print "Cleaning up container ",image_hash
-  runCmd('docker rm -f %s' % image_hash)
+  print("Cleaning up container ",image_hash)
+  run_cmd('docker rm -f %s' % image_hash)
 
-  print "Unpacking exported container ...."
-  e, o = runCmd('mkdir -p %s; cd %s; tar -xf %s/%s.tar' % (img_dir, img_dir, tmpdir, image_hash))
+  print("Unpacking exported container ....")
+  e, o = run_cmd('mkdir -p %s; cd %s; tar -xf %s/%s.tar' % (img_dir, img_dir, tmpdir, image_hash))
   if e: cleanup_exit(o, [tmpdir, img_dir])
-  runCmd('rm -rf %s' % tmpdir)
+  run_cmd('rm -rf %s' % tmpdir)
 
   for xdir in [ "srv", "cvmfs", "dev", "proc", "sys", "build", "data", "pool" ]:
     sdir = join(img_dir, xdir)
-    if not exists(sdir): runCmd('mkdir %s' % sdir)
+    if not exists(sdir): run_cmd('mkdir %s' % sdir)
   
-  print "Fixing file modes ...."
+  print("Fixing file modes ....")
   fix_modes (img_dir)
 
 if __name__ == "__main__":
@@ -108,5 +111,5 @@ if __name__ == "__main__":
 
   if len(args) != 0: parser.error("Too many/few arguments")
   process(opts.container, opts.outdir)
-  print "All OK"
-
+  print("All OK")
+  

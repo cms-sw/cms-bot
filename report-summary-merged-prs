@@ -2,6 +2,7 @@
 """
 This script generates json file (like CMSSW_10_0_X.json) which is then used to render cmssdt ib page.
 """
+from __future__ import print_function
 from optparse import OptionParser
 import subprocess
 import re
@@ -80,7 +81,7 @@ The schema of the dictionary is as folows:
 # -----------------------------------------------------------------------------------
 
 if (len(args) < 4):
-    print 'not enough arguments\n'
+    print('not enough arguments\n')
     parser.print_help()
     exit()
 
@@ -131,7 +132,7 @@ def get_config_map_params():
     for line in f.readlines():
         params = parse_config_map_line(line.rstrip())
         if not params: continue
-        print params
+        print(params)
 
         arch = params['SCRAM_ARCH']
         if arch not in ARCHITECTURES:
@@ -170,23 +171,23 @@ def get_config_map_params():
     SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     RELEASE_QUEUES.sort()
 
-    print
-    print '---------------------------'
-    print 'Read config.map:'
-    print 'ARCHS:'
-    print ARCHITECTURES
-    print '--'
-    print RELEASES_ARCHS
-    print 'RELEASES_BRANCHES:'
-    print RELEASES_BRANCHES
-    print 'special releases'
-    print SPECIAL_RELEASES
-    print 'aditional tests'
-    print RELEASE_ADITIONAL_TESTS
-    print 'I am going to show:'
-    print RELEASE_QUEUES
-    print '---------------------------'
-    print
+    print()
+    print('---------------------------')
+    print('Read config.map:')
+    print('ARCHS:')
+    print(ARCHITECTURES)
+    print('--')
+    print(RELEASES_ARCHS)
+    print('RELEASES_BRANCHES:')
+    print(RELEASES_BRANCHES)
+    print('special releases')
+    print(SPECIAL_RELEASES)
+    print('aditional tests')
+    print(RELEASE_ADITIONAL_TESTS)
+    print('I am going to show:')
+    print(RELEASE_QUEUES)
+    print('---------------------------')
+    print()
 
 
 def get_tags_from_line(line, release_queue):
@@ -296,9 +297,9 @@ def get_results_one_relval_file(filename):
     try:
         details["num_passed"] = sum([int(num) for num in num_passed_sep.split(' ')])
         details["num_failed"] = sum([int(num) for num in num_failed_sep.split(' ')])
-    except ValueError, e:
-        print "Error while reading file %s" % filename
-        print e
+    except ValueError as e:
+        print("Error while reading file %s" % filename)
+        print(e)
         return False, details
 
     return details["num_failed"] == 0, details
@@ -356,7 +357,7 @@ def analyze_tests_results(output, results, arch, type):
             print_verbose('Ignoring file:\n%s' % line)
             continue
 
-        print "Processing ", type, ":", line
+        print("Processing ", type, ":", line)
         rel_name = m.group(1)
         result_arch = {}
         result_arch['arch'] = arch
@@ -389,7 +390,7 @@ def analyze_tests_results(output, results, arch, type):
             else:
                 passed = PossibleUnitTestResults.PASSED
         else:
-            print 'not a valid test type %s' % type
+            print('not a valid test type %s' % type)
             exit(1)
 
         result_arch['passed'] = passed
@@ -431,13 +432,13 @@ def get_tags(git_log_output, release_queue):
         tags += get_tags_from_line(line, release_queue)
 
     if (len(tags) == 0):
-        print "ATTENTION:"
-        print "looks like %s has not changed between the tags specified!" % release_queue
+        print("ATTENTION:")
+        print("looks like %s has not changed between the tags specified!" % release_queue)
         command_to_execute = MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG.replace('END_TAG', release_queue)
         out, err, ret_code = get_output_command(command_to_execute)
-        print out
+        print(out)
         tags = get_tags_from_line(out, release_queue)
-        print tags
+        print(tags)
 
     return tags
 
@@ -535,7 +536,7 @@ def execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch
     print_verbose('End tag:')
     print_verbose(real_end_tag)
     command_to_execute = MAGIC_COMMAND_TAGS.replace('START_TAG', start_tag).replace('END_TAG', real_end_tag)
-    print "Running:", command_to_execute
+    print("Running:", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
 
     # check if the end_tag exists, but the start_tag doesn't
@@ -545,7 +546,7 @@ def execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch
             print_verbose('looks like this branch has been created recently')
             command_to_execute = MAGIC_COMMAND_FIND_ALL_TAGS.replace('END_TAG', real_end_tag).replace('RELEASE_QUEUE',
                                                                                                       release_queue)
-            print "Running:", command_to_execute
+            print("Running:", command_to_execute)
             out, err, ret_code = get_output_command(command_to_execute)
 
     tags = get_tags(out, release_queue)
@@ -561,7 +562,7 @@ def execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch
         tags += new_tags
 
     tags = [t for t in reversed(tags) if not ignore_tags or not re.match(ignore_tags, t)]
-    print "Found Tags:", tags
+    print("Found Tags:", tags)
 
     return tags
 
@@ -619,7 +620,7 @@ def execute_magic_command_get_cmsdist_tags():
                 all_tags_found[rel_name] = {}
 
             all_tags_found[rel_name][arch] = line
-            if "CMSSW_10_" in rel_name: print "CMSDIST ", rel_name, arch
+            if "CMSSW_10_" in rel_name: print("CMSDIST ", rel_name, arch)
     return all_tags_found
 
 
@@ -641,72 +642,72 @@ def execute_magic_command_find_results(type):
         'invalid-includes' : MAGIC_COMMAND_FIND_INVALID_INCLUDES
     }
     if type not in ex_magix_comand_finf_setuls_dict:
-        print 'not a valid test type %s' % type
+        print('not a valid test type %s' % type)
         exit(1)
     results = {}
     for arch in ARCHITECTURES:
         base_command = ex_magix_comand_finf_setuls_dict[type]
         command_to_execute = base_command.replace('ARCHITECTURE', arch)
-        print "Run>>", command_to_execute
+        print("Run>>", command_to_execute)
         out, err, ret_code = get_output_command(command_to_execute)
         analyze_tests_results(out, results, arch, type)
     return results
 
 
 def print_results(results):
-    print "Results:"
-    print
-    print
+    print("Results:")
+    print()
+    print()
     for rq in results:
-        print
-        print rq['release_name']
-        print '/////////////////////////'
+        print()
+        print(rq['release_name'])
+        print('/////////////////////////')
         for comp in rq['comparisons']:
-            print comp['compared_tags']
+            print(comp['compared_tags'])
 
-            print '\t' + 'HLT Tests: ' + comp['hlt_tests']
-            print '\t' + 'DQM Tests: ' + comp['dqm_tests']
-            print '\t' + 'Static Checks: ' + comp['static_checks']
-            print '\t' + 'Valgrind: ' + comp['valgrind']
-            print '\t' + 'Material budget: ' + comp['material_budget']
-            print '\t' + 'Igprof: ' + comp['igprof']
-            print '\t' + 'Comparison Baseline: ' + comp['comp_baseline']
-            print '\t' + 'Comparison Baseline State: ' + comp['comp_baseline_state']
+            print('\t' + 'HLT Tests: ' + comp['hlt_tests'])
+            print('\t' + 'DQM Tests: ' + comp['dqm_tests'])
+            print('\t' + 'Static Checks: ' + comp['static_checks'])
+            print('\t' + 'Valgrind: ' + comp['valgrind'])
+            print('\t' + 'Material budget: ' + comp['material_budget'])
+            print('\t' + 'Igprof: ' + comp['igprof'])
+            print('\t' + 'Comparison Baseline: ' + comp['comp_baseline'])
+            print('\t' + 'Comparison Baseline State: ' + comp['comp_baseline_state'])
 
             cmsdist_tags = comp['cmsdistTags']
-            print '\t' + 'cmsdist Tags:' + str(cmsdist_tags)
+            print('\t' + 'cmsdist Tags:' + str(cmsdist_tags))
 
             builds_results = [res['arch'] + ':' + str(res['passed']) + ':' + str(res['details']) for res in
                               comp['builds']]
-            print '\t' + 'Builds:' + str(builds_results)
+            print('\t' + 'Builds:' + str(builds_results))
 
             fwlite_results = [res['arch'] + ':' + str(res['passed']) + ':' + str(res['details']) for res in
                               comp['fwlite']]
-            print '\t' + 'FWLite:' + str(fwlite_results)
+            print('\t' + 'FWLite:' + str(fwlite_results))
 
             relvals_results = [res['arch'] + ':' + str(res['passed']) + ":" + str(res['details']) for res in
                                comp['relvals']]
-            print '\t' + 'RelVals:' + str(relvals_results)
+            print('\t' + 'RelVals:' + str(relvals_results))
 
             utests_results = [res['arch'] + ':' + str(res['passed']) + ':' + str(res['details']) for res in
                               comp['utests']]
-            print '\t' + 'UnitTests:' + str(utests_results)
+            print('\t' + 'UnitTests:' + str(utests_results))
 
             gpu_utests_results = [res['arch'] + ':' + str(res['passed']) + ':' + str(res['details']) for res in
                                   comp['gpu_utests']]
-            print '\t' + 'GPUUnitTests:' + str(gpu_utests_results)
+            print('\t' + 'GPUUnitTests:' + str(gpu_utests_results))
 
             addons_results = [res['arch'] + ':' + str(res['passed']) for res in comp['addons']]
-            print '\t' + 'AddOns:' + str(addons_results)
+            print('\t' + 'AddOns:' + str(addons_results))
 
             merged_prs = [pr['number'] for pr in comp['merged_prs']]
-            print '\t' + 'PRs:' + str(merged_prs)
+            print('\t' + 'PRs:' + str(merged_prs))
 
             from_merge_commit = [pr['number'] for pr in comp['merged_prs'] if pr['from_merge_commit']]
-            print '\t' + 'From merge commit' + str(from_merge_commit)
+            print('\t' + 'From merge commit' + str(from_merge_commit))
 
-            print '\t' + 'RVExceptions: ' + str(comp.get('RVExceptions'))
-            print '\t' + 'inProgress: ' + str(comp.get('inProgress'))
+            print('\t' + 'RVExceptions: ' + str(comp.get('RVExceptions')))
+            print('\t' + 'inProgress: ' + str(comp.get('inProgress')))
 
 
 def fill_missing_cmsdist_tags(results):
@@ -753,7 +754,7 @@ def add_tests_to_results(results, unit_tests, relvals_results,
             buildsres = build_results.get(rel_name)
             fwliteres = fwlite_results.get(rel_name)
             cmsdist_tags = cmsdist_tags_results.get(rel_name)
-            print "CMDIST ", rel_name, ":", cmsdist_tags
+            print("CMDIST ", rel_name, ":", cmsdist_tags)
 
             # for tests with arrays
             comp['relvals'] = rvsres if rvsres else []
@@ -820,7 +821,7 @@ def find_comparison_baseline_results(comparisons, architecture):
     """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for comparison baseline results for ', rel_name
+        print('Looking for comparison baseline results for ', rel_name)
         comp['comp_baseline'] = find_one_comparison_baseline(rel_name, architecture)
         comp['comp_baseline_state'] = "errors"
         if comp['comp_baseline'] != 'not-found':
@@ -833,7 +834,7 @@ def find_material_budget_results(comparisons, architecture):
     """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for material_budget results for ', rel_name
+        print('Looking for material_budget results for ', rel_name)
         arch, comparison, status = find_one_material_budget(rel_name, architecture)
         if (arch is None):
             comp['material_budget'] = status  # returns 'inprogress'
@@ -862,13 +863,13 @@ def find_general_test_results(test_field, comparisons, architecture,  magic_comm
     def find_one_test_results(release_name):
         command_to_execute = magic_command.replace('RELEASE_NAME', release_name)
         command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-        print "Running ", command_to_execute
+        print("Running ", command_to_execute)
         out, err, ret_code = get_output_command(command_to_execute)
-        print "Ran:", out, err, ret_code, command_to_execute
+        print("Ran:", out, err, ret_code, command_to_execute)
         if ret_code == 0:
-            print 'found'
+            print('found')
             return 'found'
-        print 'inprogress'
+        print('inprogress')
         return 'inprogress'
 
     for comp in comparisons:
@@ -882,9 +883,9 @@ def find_general_test_results_2(test_field, comparisons, magic_command):
         command = magic_command.replace('RELEASE_NAME', release_name)
         out, err, ret_code = get_output_command(command)
         if ret_code == 0:
-            print 'found'
+            print('found')
             return 'found'
-        print 'inprogress'
+        print('inprogress')
         return 'inprogress'
 
     for comp in comparisons:
@@ -899,7 +900,7 @@ def find_static_results(comparisons, architecture):
     """
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
-        print 'Looking for static tests results for ', rel_name
+        print('Looking for static tests results for ', rel_name)
         comp['static_checks'] = find_one_static_check(rel_name, architecture)
         # For new IB page
         if (comp['static_checks'] == 'not-found' or comp['static_checks'] == 'inprogress'):
@@ -927,9 +928,9 @@ def find_one_static_filter_check(release_name, architecture, magic_cmd):
     """
     command_to_execute = magic_cmd.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
+    print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
+    print("Ran:", out, err, ret_code, command_to_execute)
     return out
 
 
@@ -939,15 +940,15 @@ def find_one_static_check(release_name, architecture):
     """
     command_to_execute = MAGIC_COMMAND_FIND_STATIC_CHECKS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
+    print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
+    print("Ran:", out, err, ret_code, command_to_execute)
     if ret_code == 0:
         arch = out.split()[0]
-        print 'found', arch
+        print('found', arch)
         filter1 = find_one_static_filter_check(release_name, arch, MAGIC_COMMAND_FIND_STATIC_CHECKS_FILTER1)
         return arch + ":" + filter1
-    print 'inprogress'
+    print('inprogress')
     return 'inprogress'
 
 
@@ -957,21 +958,21 @@ def find_one_material_budget(release_name, architecture):
     """
     command_to_execute = MAGIC_COMMAND_FIND_MATERIL_BUDGET_CHECKS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
+    print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
+    print("Ran:", out, err, ret_code, command_to_execute)
     if ret_code == 0:
         arch = out.split()[0]
-        print 'found', arch
+        print('found', arch)
         command_to_execute = MAGIC_COMMAND_FIND_MATERIL_BUDGET_COMPARISON_CHECKS.replace('RELEASE_NAME',
                                                                                          release_name).replace(
             'ARCHITECTURE', architecture)
-        print "Running ", command_to_execute
+        print("Running ", command_to_execute)
         out, err, ret_code = get_output_command(command_to_execute)
         if ret_code == 0:
             return (arch, out.split()[0], 'found')
         return (arch, "-1", 'found')
-    print 'inprogress'
+    print('inprogress')
     return (None, None, 'inprogress')
 
 
@@ -982,9 +983,9 @@ def find_one_comparison_baseline_errors(release_name, architecture):
     """
     command_to_execute = MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
+    print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
+    print("Ran:", out, err, ret_code, command_to_execute)
     if out == "":
         return "ok"
     else:
@@ -997,13 +998,13 @@ def find_one_comparison_baseline(release_name, architecture):
     """
     command_to_execute = MAGIC_COMMAND_FIND_COMPARISON_BASELINE.replace('RELEASE_NAME', release_name)
     command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-    print "Running ", command_to_execute
+    print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
-    print "Ran:", out, err, ret_code, command_to_execute
+    print("Ran:", out, err, ret_code, command_to_execute)
     if ret_code == 0:
-        print 'found'
+        print('found')
         return COMPARISON_BASELINE_TESTS_URL.replace('RELEASE_NAME', release_name).replace('ARCHITECTURE', architecture)
-    print 'inprogress'
+    print('inprogress')
     return 'inprogress'
 
 
@@ -1304,7 +1305,7 @@ if __name__ == "__main__":
     AUTO_FORWARD_PORT_REGEX = '^.*Merge CMSSW.+ into CMSSW.+$'
 
 
-    class BuildResultsKeys:
+    class BuildResultsKeys(object):
         DICT_ERROR = 'dictError'
         COMP_ERROR = 'compError'
         LINK_ERROR = 'linkError'
@@ -1316,13 +1317,13 @@ if __name__ == "__main__":
         PYTHON3_ERROR = 'python3Warning'
 
 
-    class PossibleBuildResults:
+    class PossibleBuildResults(object):
         PASSED = 'passed'
         WARNING = 'warning'
         ERROR = 'error'
 
 
-    class PossibleUnitTestResults:
+    class PossibleUnitTestResults(object):
         PASSED = 'passed'
         FAILED = 'failed'
         UNKNOWN = 'unknown'
@@ -1362,26 +1363,26 @@ if __name__ == "__main__":
         else:
             release_queue = re.match(r'^((?:[^_]*_){%d}[^_]*)_(.*)' % (3), release_queue).groups()[0]
 
-        print '####################################################################'
-        print "I will analyze %s from %s to %s:" % (release_queue, start_tag, end_tag)
+        print('####################################################################')
+        print("I will analyze %s from %s to %s:" % (release_queue, start_tag, end_tag))
 
         release_branch = RELEASES_BRANCHES[release_queue]
         release_queue_results = {}
         release_queue_results['release_name'] = release_queue
         release_queue_results['base_branch'] = release_branch
 
-        print 'Identifying tags...'
+        print('Identifying tags...')
         tags = execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch,
                                           ignore_tags="^CMSSW_9_3_.+_2017-09-(06-2300|07-1100)$")
         originalTags = tags
         tags = [x for x in tags if x in installedReleases]
         tags.append(release_branch)
-        print 'I got these tags: '
-        print tags
+        print('I got these tags: ')
+        print(tags)
 
-        print 'Getting merged pull requests between tags...'
+        print('Getting merged pull requests between tags...')
         release_queue_results['comparisons'] = compare_tags(release_branch, tags, 'cmssw.git', CMSSW_REPO)
-        print 'Done'
+        print('Done')
 
         # It checks if the tests are being run for that architecture, if they don't, it doesn't look for them.
         # Then it goes over each selected tests, executes 'magic' command to look for tests results, interprets it

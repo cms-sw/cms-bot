@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import re
 from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
@@ -47,13 +48,13 @@ for issue in issues:
         backport_pr=get_backported_pr(comment_msg)
         break
   if backport_pr and re.match("^[1-9][0-9]+$",backport_pr):
-    print issue.number, backport_pr
+    print(issue.number, backport_pr)
     try:
       pr   = repo.get_pull(int(backport_pr))
-      print "  Backported PR merged:",pr.merged
+      print("  Backported PR merged:",pr.merged)
       if pr.merged:
         labels = list(set([x.name for x in issue.labels if x.name!="backport"]+["backport-ok"]))
         if not opts.dryRun: issue.edit(labels=labels)
-        print issue.number,"New Labels:",labels
-    except Exception, e:
-      print e
+        print(issue.number,"New Labels:",labels)
+    except Exception as e:
+      print(e)

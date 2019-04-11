@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+from __future__ import print_function
 import os, sys, re, time
 
 class LogChecker(object) :
@@ -37,7 +38,7 @@ class LogChecker(object) :
         except IOError:
             prepFile = open('prebuild.log','r')
         except IOError:
-            print "no nohup.out or prebuild.log found in . "
+            print("no nohup.out or prebuild.log found in . ")
             raise
         lines = prepFile.readlines()
         prepFile.close()
@@ -52,7 +53,7 @@ class LogChecker(object) :
                 stat = pkgTagMatch.group(3).strip()
                 self.pkgVers[pkg] = vers
                 if stat.lower() != "successful":
-                    print "WARNING: problems checking out ", pkg, vers, stat, "("+line+')'
+                    print("WARNING: problems checking out ", pkg, vers, stat, "("+line+')')
 
         # print "found ", str(len(self.pkgVers.keys())), 'tags'
         # for key, val in self.pkgVers.items():
@@ -75,10 +76,10 @@ class LogChecker(object) :
 
         self.fileIndex += 1
 
-        print "\n================================================================================"
-        print "in :",os.getcwd()
-        print "checking file ", logFileName
-        print "================================================================================\n"
+        print("\n================================================================================")
+        print("in :",os.getcwd())
+        print("checking file ", logFileName)
+        print("================================================================================\n")
         htmlFileName = logFileName.replace('/','_').replace(".",'-') + ".html"
         if (self.htmlOut and self.sumLog ) :
             self.sumLog.write( '<image src="http://cern.ch/pfeiffer/aaLibrarian/colline.gif" width="90%" height="3"></image>\n')
@@ -94,11 +95,11 @@ class LogChecker(object) :
         lines = logFile.readlines()
         logFile.close()
 
-	if len(lines) < 200 :
-            if (self.htmlOut and self.sumLog ) :
-                self.sumLog.write( '<font color="#ff0000"><b>Warning:</b> suspiciously short log file!</font>\n')
-    
-        nErr  = 0
+        if len(lines) < 200:
+            if (self.htmlOut and self.sumLog):
+                self.sumLog.write('<font color="#ff0000"><b>Warning:</b> suspiciously short log file!</font>\n')
+
+        nErr = 0
         nWarn = 0
         errorList = {}
         errorList['make'] = []
@@ -122,8 +123,8 @@ class LogChecker(object) :
                 fileName = mMk.group(3)
 #                print "error found for ", subsys, pkg, ":\n     ", line
                 errorList["make"].append(index)
-                if subSysCompErr.has_key(subsys) :
-                    subSysCompErr[subsys].append( (pkg, fileName, index, line) )
+                if subsys in subSysCompErr:
+                    subSysCompErr[subsys].append((pkg, fileName, index, line) )
                 else:
                     subSysCompErr[subsys] = [(pkg, fileName, index, line)]
 
@@ -136,7 +137,7 @@ class LogChecker(object) :
                 fileName = mMk.group(3)
 #                print "error found for ", subsys, pkg, ":\n     ", line
                 errorList["make"].append(index)
-                if subSysTestErr.has_key(subsys) :
+                if subsys in subSysTestErr :
                     subSysTestErr[subsys].append( (pkg, fileName, index, line) )
                 else:
                     subSysTestErr[subsys] = [(pkg, fileName, index, line)]
@@ -150,7 +151,7 @@ class LogChecker(object) :
                 libName = mMk.group(3)
 #                print "error found for ", subsys, pkg, ":\n     ", line
                 errorList["make"].append(index)
-                if subSysLinkErr.has_key(subsys) :
+                if subsys in subSysLinkErr :
                     subSysLinkErr[subsys].append( (pkg, libName, index, line) )
                 else:
                     subSysLinkErr[subsys] = [(pkg, libName, index, line)]
@@ -165,31 +166,31 @@ class LogChecker(object) :
                     libName = "unknown"
 #                    print "UNKNOWN error found for ", subsys, pkg, ":\n     ", line
                     errorList["make"].append(index)
-                    if subSysGenErr.has_key(subsys) :
+                    if subsys in subSysGenErr :
                         subSysGenErr[subsys].append( (pkg, libName, index, line) )
                     else:
                         subSysGenErr[subsys] = [(pkg, libName, index, line)]
 
-        print "--------------------------------------------------------------------------------"
+        print("--------------------------------------------------------------------------------")
         nCompErr = 0
         compErrPkg = []
         for key, val in subSysCompErr.items():
-            print str(len(val)) + " ERRORs building lib found for subsystem", key
+            print(str(len(val)) + " ERRORs building lib found for subsystem", key)
             for item in val:
                 if item[0] not in compErrPkg :
                     compErrPkg.append(item[0])
                 startIndex = len(key)+len(item[0])+1
-                print "      " + item[0]+ ' ('+str(item[1])[startIndex:]+')'
-        print "--------------------------------------------------------------------------------"
+                print("      " + item[0]+ ' ('+str(item[1])[startIndex:]+')')
+        print("--------------------------------------------------------------------------------")
         nTestErr = 0
         testErrPkg = []
         for key, val in subSysTestErr.items():
-            print str(len(val)) + " ERRORs building tests found for subsystem", key
+            print(str(len(val)) + " ERRORs building tests found for subsystem", key)
             for item in val:
                 if item[0] not in testErrPkg :
                     testErrPkg.append(item[0])
-                print "      " + item[0]+ ' ('+str(item[1])+')'
-        print "--------------------------------------------------------------------------------"
+                print("      " + item[0]+ ' ('+str(item[1])+')')
+        print("--------------------------------------------------------------------------------")
         nLinkErr = 0
         for key, val in subSysLinkErr.items():
 
@@ -197,24 +198,24 @@ class LogChecker(object) :
             if ( ( subSys not in subSysCompErr.keys() ) and
                  ( subSys not in subSysTestErr.keys() ) ) :
                 nLinkErr += 1
-                print str(len(val)) + " ERRORs in link-step found for subsystem", subSys
+                print(str(len(val)) + " ERRORs in link-step found for subsystem", subSys)
                 for item in val:
-                    print "      " + item[0]+ ' ('+str(item[1])+')'
-        print "--------------------------------------------------------------------------------"
+                    print("      " + item[0]+ ' ('+str(item[1])+')')
+        print("--------------------------------------------------------------------------------")
         nGenErr = 0
         genErrPkg = []
-        for key, val in subSysGenErr.items():
-            print str(len(val)) + " UNKNOWN ERRORs found "
+        for key, val in list(subSysGenErr.items()):
+            print(str(len(val)) + " UNKNOWN ERRORs found ")
             for item in val:
                 if item[0] not in genErrPkg :
                     genErrPkg.append(item[0])
-                print "      " + item[0]+ ' ('+str(item[3])+')'
-        print "--------------------------------------------------------------------------------"
-        print "\nA total of ", len(compErrPkg), " packages failed compilation."
-        print "\nA total of ", len(testErrPkg), " packages failed compiling tetsts."
-        print "\nA total of ", nLinkErr, " packages failed linking(only)."
-        print "\nA total of ", len(genErrPkg), " unknown  errors."
-        print "\n"
+                print("      " + item[0]+ ' ('+str(item[3])+')')
+        print("--------------------------------------------------------------------------------")
+        print("\nA total of ", len(compErrPkg), " packages failed compilation.")
+        print("\nA total of ", len(testErrPkg), " packages failed compiling tetsts.")
+        print("\nA total of ", nLinkErr, " packages failed linking(only).")
+        print("\nA total of ", len(genErrPkg), " unknown  errors.")
+        print("\n")
         
         # file analyzed, now prepreare printout
 
@@ -228,7 +229,7 @@ class LogChecker(object) :
             try:
                 htmlFile = open( os.path.join(self.logDir, htmlFileName),'w')
             except IOError:
-                print "ERROR opening htmlFile ", os.path.join(self.logDir, htmlFileName)
+                print("ERROR opening htmlFile ", os.path.join(self.logDir, htmlFileName))
                 raise
             
             htmlFile.write("<html>\n<head><title>LogCheck for " + logFileName + "</title></head>\n<body>\n")
@@ -299,7 +300,7 @@ class LogChecker(object) :
             htmlFile.write("</pre>\n</body>\n</html>")
             htmlFile.close()
 
-            print "\nhtml-ified log file created at:", htmlFileName, " (in", self.logDir ,")\n"
+            print("\nhtml-ified log file created at:", htmlFileName, " (in", self.logDir ,")\n")
 
         # check if we have too many errors ....
 
@@ -311,18 +312,18 @@ class LogChecker(object) :
 
         if self.verbose > 0 and not errLimit :
             for key, value in errorList.items() :
-                print "++++++++++", key
+                print("++++++++++", key)
                 for index in value:
                     if (self.htmlOut and self.sumLog ) :
                         self.sumLog.write( '<a name="' + pkgName + '"></a>\n')
                         self.sumLog.write( "<hr />\n")
                         self.sumLog.write( '<a href="file'+str(self.fileIndex)+'.html#line_' + str(index) + '">\n' )
                     try:
-                        print "------------------------------------------"
+                        print("------------------------------------------")
                         for delta in range(-2,2) :
                             if (self.htmlOut and self.sumLog ) :
                                 self.sumLog.write( str(index+delta) + " : " + lines[index+delta])
-                            print " ", index+delta, ":", lines[index+delta],                            
+                            print(" ", index+delta, ":", lines[index+delta], end=' ')                            
                     except IndexError:
                         pass
                     if (self.htmlOut and self.sumLog ) :
@@ -342,7 +343,7 @@ class LogChecker(object) :
 
         msg += " found in " + str(len(lines)) + " lines."
     
-        print msg
+        print(msg)
         if (self.htmlOut and self.sumLog ) :
             self.sumLog.write( msg + "\n")
             self.sumLog.write( '</p>\n' )
@@ -354,7 +355,7 @@ class LogChecker(object) :
     
     def checkFiles(self, fileList=[]) :
 
-        print "going to check ", len(fileList), ' files:', fileList
+        print("going to check ", len(fileList), ' files:', fileList)
 
         import socket
         hostName = socket.gethostname().lower()
@@ -389,7 +390,7 @@ class LogChecker(object) :
             try:
                 nErr, nWarn = self.checkLog(file)
             except IOError:
-                print " IOError found !?!? "
+                print(" IOError found !?!? ")
                 raise
             nFiles += 1
             totErr += nErr
@@ -398,19 +399,19 @@ class LogChecker(object) :
             if nErr > 0 : nFilErr += 1
             if nWarn > 0 : nFilWarn += 1
     
-        print "\n================================================================================\n"
+        print("\n================================================================================\n")
     
         if nFiles > 0 :
-            print "Checked a total of ", nFiles, "log files."
-            print "A total of ", totErr, "errors in ", nFilErr, 'files.'
-            print "A total of ", totWarn, "warnings in ", nFilWarn, 'files.'
+            print("Checked a total of ", nFiles, "log files.")
+            print("A total of ", totErr, "errors in ", nFilErr, 'files.')
+            print("A total of ", totWarn, "warnings in ", nFilWarn, 'files.')
 #            print "Files with errors: "
 #            for f in self.errFiles:
 #                print "\t", f
 #            print
         else:
-            print "No files found to check"
-            print ""
+            print("No files found to check")
+            print("")
     
         if self.htmlOut and self.sumLog :
             self.sumLog.write('<a name="summary"></a><hr />\n')
@@ -434,7 +435,7 @@ class LogChecker(object) :
 
 def usage():
     
-    print sys.argv[0],"[--hmtl] <logFile> [<logFile> ...]"
+    print(sys.argv[0],"[--hmtl] <logFile> [<logFile> ...]")
 
     return
 

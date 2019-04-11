@@ -1,7 +1,9 @@
 language: python
 python:
   - "2.7"
+  - "3.4"
 install: "pip install PyYaml"
 script: 
   - PYTHONPATH=. python tests/test_watchers.py
   - PYTHONPATH=. python tests/test_config-map.py
+  - python -m compileall  ./

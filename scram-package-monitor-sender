@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-import os, sys, json, socket, errno, re, urllib2, base64
+from __future__ import print_function
+import os, sys, json, socket, re, base64
 from glob import glob
-from datetime import datetime
 from optparse import OptionParser
-from os.path import basename, getctime, join, exists
+from os.path import basename, join
 from os import getenv
-from time import strftime, localtime, strptime, mktime, sleep
+from time import strftime, localtime, strptime, sleep
 from hashlib import sha1
-from commands import getstatusoutput
+from _py2with3compatibility import run_cmd, Request, urlopen, HTTPError
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.0"
 SLEEP_CYCLE = 2 # seconds
@@ -22,18 +22,18 @@ def esReportPackages(results):
 
   url = "https://%s/_bulk" % (es_hostname)
 
-  request = urllib2.Request(url)
+  request = Request(url)
   if es_auth:
     base64string = base64.encodestring(es_auth).replace('\n', '')
     request.add_header("Authorization", "Basic %s" % base64string)
   request.get_method = lambda: 'POST'
   data = "\n".join(results) + "\n"
   try:
-    result = urllib2.urlopen(request, data=data)
-  except urllib2.HTTPError, e:
-    print e
+    result = urlopen(request, data=data)
+  except  HTTPError as e:
+    print(e)
     try:
-      print result.read()
+      print(result.read())
     except:
       pass
 
@@ -56,10 +56,10 @@ if __name__ == "__main__":
                "scram_arch": SCRAM_ARCH,
                "cmssw_version": CMSSW_VERSION,
              }
-  print "Workspace: " + WORKSPACE + " workdir: " + WORK_DIR
+  print("Workspace: " + WORKSPACE + " workdir: " + WORK_DIR)
   while(True):
       sleep(SLEEP_CYCLE)
-      print "New cycle, finding timestamps to send."
+      print("New cycle, finding timestamps to send.")
       timestamps = sorted([int(basename(x).split("_")[1].split("-")[0])
                             for x in glob(join(WORK_DIR, "st*"))])
       job_done = os.path.isfile(join(WORK_DIR, TERM_CMD))
@@ -103,13 +103,13 @@ if __name__ == "__main__":
     
       # Actually do the push to ES.
       if opts.dryrun:
-        print "Dry run specified, what I would have sent:\n" + "\n".join(results)
+        print("Dry run specified, what I would have sent:\n" + "\n".join(results))
       else:
         esReportPackages(results)
     
       for x in removables:
         cmd = "find %s -name \"*%s\" -delete" % (WORK_DIR, x)
-        err, out = getstatusoutput(cmd)
+        err, out = run_cmd(cmd)
       # Terminate this program when 
       if len(os.listdir(WORK_DIR)) == 1 and job_done:
         sys.exit(0)

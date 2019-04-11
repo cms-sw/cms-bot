@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
-from os import listdir
-from os.path import isfile, join
+from __future__ import print_function
 from fnmatch import fnmatch
 import os
 import re
-import subprocess
 import sys
+import subprocess as sub
 
 def getFiles(d,pattern):
     return [os.path.join(dp, f) for dp, dn, filenames in os.walk(d) for f in filenames if fnmatch(f, pattern)]
@@ -14,9 +13,9 @@ def getFiles(d,pattern):
 
 def getCommonFiles(d1,d2,pattern):
     l1=getFiles(d1,pattern)
-    print "l1",l1
+    print("l1",l1)
     l2=getFiles(d2,pattern)
-    print "l2",l2
+    print("l2",l2)
     common=[]
     for l in l1:
         lT=l[len(d1):]
@@ -38,9 +37,9 @@ def checkLines(l1,l2):
     for l in open(l1):
         lines=lines-1
     if lines>0:
-        print "You added "+str(lines)+" to "+l2
+        print("You added "+str(lines)+" to "+l2)
     if lines<0:
-        print "You removed "+str(-1*lines)+" to "+l2
+        print("You removed "+str(-1*lines)+" to "+l2)
         
     return lines
 
@@ -85,24 +84,24 @@ def getRelevantDiff(l1,l2,maxInFile=20):
             newIn2.append(k)
 
     if len(newIn1)>0 or len(newIn2)>0:
-        print ''
-        print len(newIn1),'Lines only in',l1
+        print('')
+        print(len(newIn1),'Lines only in',l1)
         nPrint=0
         for l in newIn1: 
             nPrint=nPrint+1
             if nPrint>maxInFile: break
-            print '  ',l
+            print('  ',l)
         nPrintTot=nPrint
-        print len(newIn2),'Lines only in',l2
+        print(len(newIn2),'Lines only in',l2)
         nPrint=0
         for l in newIn2: 
             nPrint=nPrint+1
             if nPrint>maxInFile: break
-            print '  ',l
+            print('  ',l)
         nPrintTot=nPrintTot+nPrint
     return nPrintTot
 
-import subprocess as sub
+
 
 def runCommand(c):
     p=sub.Popen(c,stdout=sub.PIPE,stderr=sub.PIPE)
@@ -117,7 +116,7 @@ def checkEventContent(r1,r2):
     s1=output1[0].split()[4]
     s2=output2[0].split()[4]
     if abs(float(s2)-float(s1))>0.1*float(s1):
-        print "Big output file size change?",s1,s2
+        print("Big output file size change?",s1,s2)
         retVal=False
 
     output1=runCommand(['edmEventSize','-v',r1])
@@ -141,11 +140,11 @@ def checkEventContent(r1,r2):
         for p in p1:
             if p in p2: common.append(p)
         if len(common)!=len(p1) or len(common)!=len(p2):
-            print 'Change in products found in',r1
+            print('Change in products found in',r1)
             for p in p1:
-                if p not in common: print '    Product missing '+p
+                if p not in common: print('    Product missing '+p)
             for p in p2:
-                if p not in common: print '    Product added '+p
+                if p not in common: print('    Product added '+p)
             retVal=False    
     return retVal
 
@@ -153,25 +152,25 @@ def checkDQMSize(r1,r2,diff, wfs):
     haveDQMChecker=False
     for path in os.environ["PATH"].split(os.pathsep):
         path = path.strip('"')
-        print path
+        print(path)
         exe_file = os.path.join(path, 'dqmMemoryStats.py')
         if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
             haveDQMChecker=True
             break
     if not haveDQMChecker: 
-        print 'Missing dqmMemoryStats in this release'
+        print('Missing dqmMemoryStats in this release')
         return -1
 
     output,error=runCommand(['dqmMemoryStats.py','-x','-u','KiB','-p3','-c0','-d2','--summary','-r',r1,'-i',r2])
     lines = output.splitlines()
     total = re.search("-?\d+\.\d+", lines[-1])
     if not total:
-        print 'Weird output',r1
-        print output
+        print('Weird output',r1)
+        print(output)
         return -2
     kib = float(total.group())
 
-    print lines, diff
+    print(lines, diff)
     maxdiff = 10
     for line in lines:
         if re.match("\s*-?\d+.*", line): # normal output line
@@ -192,7 +191,7 @@ def checkDQMSize(r1,r2,diff, wfs):
 
 def summaryJR(jrDir):
     nDiff=0
-    print jrDir
+    print(jrDir)
     dirs=[]
     for root, dirs, files in os.walk(jrDir):
         break
@@ -200,7 +199,7 @@ def summaryJR(jrDir):
     for d in dirs:
         diffs=getFiles(root+'/'+d,'*.png')
         if len(diffs)>0:
-            print 'JR results differ',len(diffs),d
+            print('JR results differ',len(diffs),d)
             nDiff=nDiff+len(diffs)
     return nDiff
 
@@ -209,7 +208,7 @@ def parseNum(s):
     
 
 def summaryComp(compDir):
-    print compDir
+    print(compDir)
     files=[]
     for root, dirs, files in os.walk(compDir):
         break
@@ -229,7 +228,7 @@ def summaryComp(compDir):
             if 'o Successes:' in l: loc[3]=parseNum(l.split()[3])
             if 'o Skipped:' in l: loc[4]=parseNum(l.split()[3])
             if 'o Missing objects:' in l: loc[5]=int(l.split()[3])
-        print 'Histogram comparison details',comp,loc
+        print('Histogram comparison details',comp,loc)
         for i in range(0,5):
             results[i]=results[i]+loc[i]
         results[6]=results[6]+1
@@ -274,7 +273,7 @@ if compDir[-1]=='/':
     compDir=jrDir[:-1]
 
 commonLogs=getCommonFiles(baseDir,testDir,'step*.log')
-print commonLogs
+print(commonLogs)
 
 #### check the printouts
 lines=0
@@ -292,17 +291,17 @@ for l in commonLogs:
         nPrintTot=nPrintTot+nprint
     else:
         if stopPrint==0:
-            print 'Skipping further diff comparisons. Too many diffs'
+            print('Skipping further diff comparisons. Too many diffs')
             stopPrint=1
     nLog=nLog+1    
 
 if lines >0 :
-    print "SUMMARY You potentially added "+str(lines)+" lines to the logs" 
+    print("SUMMARY You potentially added "+str(lines)+" lines to the logs") 
 else:
-    print "SUMMARY No significant changes to the logs found"
+    print("SUMMARY No significant changes to the logs found")
 if lChanges:
     qaIssues=True
-print '\n'
+print('\n')
 #### compare edmEventSize on each to look for new missing candidates
 commonRoots=getCommonFiles(baseDir,testDir,'step*.root')
 sameEvts=True
@@ -314,22 +313,22 @@ for r in commonRoots:
         nRoot=nRoot+1
 if not sameEvts:
     qaIssues=True
-    print 'SUMMARY ROOTFileChecks: Some differences in event products or their sizes found'
+    print('SUMMARY ROOTFileChecks: Some differences in event products or their sizes found')
 
-print '\n'
+print('\n')
 # now check the JR comparisons for differences
 nDiff=summaryJR(jrDir)
-print 'SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons' 
-print '\n'
+print('SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons') 
+print('\n')
 
 compSummary=summaryComp(compDir)
-print 'SUMMARY DQMHistoTests: Total files compared:',compSummary[6]
-print 'SUMMARY DQMHistoTests: Total histograms compared:',compSummary[0]
-print 'SUMMARY DQMHistoTests: Total failures:',compSummary[1]
-print 'SUMMARY DQMHistoTests: Total nulls:',compSummary[2]
-print 'SUMMARY DQMHistoTests: Total successes:',compSummary[3]
-print 'SUMMARY DQMHistoTests: Total skipped:',compSummary[4]
-print 'SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5]
+print('SUMMARY DQMHistoTests: Total files compared:',compSummary[6])
+print('SUMMARY DQMHistoTests: Total histograms compared:',compSummary[0])
+print('SUMMARY DQMHistoTests: Total failures:',compSummary[1])
+print('SUMMARY DQMHistoTests: Total nulls:',compSummary[2])
+print('SUMMARY DQMHistoTests: Total successes:',compSummary[3])
+print('SUMMARY DQMHistoTests: Total skipped:',compSummary[4])
+print('SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5])
 
 commonDQMs=getCommonFiles(baseDir,testDir,'DQM*.root')
 newDQM=0
@@ -337,16 +336,16 @@ nDQM=0
 diff,wfs=[],[]
 for r in commonDQMs:
         t=checkDQMSize(baseDir+r,testDir+r,diff,wfs)
-        print r,t
+        print(r,t)
         newDQM=newDQM+t
         nDQM=nDQM+1
 
-print 'SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files compared)'
+print('SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files compared)')
 for line, wf in zip(diff,wfs):
-    print 'SUMMARY DQMHistoSizes: changed (',wf,'):',line
+    print('SUMMARY DQMHistoSizes: changed (',wf,'):',line)
 
 
 #### conclude
-print "SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,",compSummary[6],"DQM output files"
+print("SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,",compSummary[6],"DQM output files")
 if not qaIssues:
-    print "No potential problems in log/root QA checks!"
+    print("No potential problems in log/root QA checks!")

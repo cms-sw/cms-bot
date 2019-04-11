@@ -1,5 +1,6 @@
 #! /usr/bin/env python
-import os, sys, glob, re, shutil, time, threading, json
+from __future__ import print_function
+import os, glob, re, shutil, time, threading
 from cmsutils import doCmd
 from es_relval_log import es_parse_log
 from RelValArgs import FixWFArgs
@@ -13,17 +14,17 @@ def runStep1Only(basedir, workflow, args=''):
   try:
     if not os.path.isdir(workdir):
       os.makedirs(workdir)
-  except Exception, e:
-    print "runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : can't create thread folder: " + str(e)
+  except Exception as e:
+    print("runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : can't create thread folder: " + str(e))
   try:
     ret = doCmd(matrixCmd, False, workdir)
-  except Exception, e:
-    print "runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : caught exception: " + str(e)
+  except Exception as e:
+    print("runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : caught exception: " + str(e))
   return
 
 def runThreadMatrix(basedir, workflow, args='', logger=None, force=False, wf_err={}):
   if (not force) and logger and logger.relvalAlreadyDone(workflow):
-    print "Message>> Not runing workflow ",workflow," as it is already ran"
+    print("Message>> Not runing workflow ",workflow," as it is already ran")
     return
   args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
   workdir = os.path.join(basedir, workflow)
@@ -31,13 +32,13 @@ def runThreadMatrix(basedir, workflow, args='', logger=None, force=False, wf_err
   try:
     if not os.path.isdir(workdir):
       os.makedirs(workdir)
-  except Exception, e: 
-    print "runPyRelVal> ERROR during test PyReleaseValidation, workflow "+str(workflow)+" : can't create thread folder: " + str(e)
+  except Exception as e: 
+    print("runPyRelVal> ERROR during test PyReleaseValidation, workflow "+str(workflow)+" : can't create thread folder: " + str(e))
   wftime = time.time()
   try:
     ret = doCmd(matrixCmd, False, workdir)
-  except Exception, e:
-    print "runPyRelVal> ERROR during test PyReleaseValidation, workflow "+str(workflow)+" : caught exception: " + str(e)
+  except Exception as e:
+    print("runPyRelVal> ERROR during test PyReleaseValidation, workflow "+str(workflow)+" : caught exception: " + str(e))
   wftime = time.time() - wftime
   outfolders = [file for file in os.listdir(workdir) if re.match("^" + str(workflow) + "_", file)]
   if len(outfolders)==0: return
@@ -120,11 +121,11 @@ class PyRelValsThread(object):
   def getWorkFlows(self, args):
     self.setArgs(args)
     workflowsCmd = "runTheMatrix.py -n "+self.args['w']+" "+self.args['s']+" "+self.args['l']+" |  grep -v ' workflows with ' | grep -E '^[0-9][0-9]*(\.[0-9][0-9]*|)\s\s*' | sort -nr | awk '{print $1}'"
-    print "RunTheMatrix>>",workflowsCmd
+    print("RunTheMatrix>>",workflowsCmd)
     cmsstat, workflows = doCmd(workflowsCmd)
     if not cmsstat:
       return workflows.split("\n")
-    print "runPyRelVal> ERROR during test PyReleaseValidation : could not get output of " + workflowsCmd
+    print("runPyRelVal> ERROR during test PyReleaseValidation : could not get output of " + workflowsCmd)
     return []
 
   def isNewRunTheMatrix(self):
@@ -141,8 +142,8 @@ class PyRelValsThread(object):
           t = threading.Thread(target=runStep1Only, args=(self.basedir, workflows.pop(), self.args['rest']+" "+self.args['w']))
           t.start()
           threads.append(t)
-        except Exception, e:
-          print "runPyRelVal> ERROR threading matrix step1 : caught exception: " + str(e)
+        except Exception as e:
+          print("runPyRelVal> ERROR threading matrix step1 : caught exception: " + str(e))
     for t in threads: t.join()
     return
 
@@ -160,8 +161,8 @@ class PyRelValsThread(object):
           t = threading.Thread(target=runThreadMatrix, args=(self.basedir, wf, self.args['rest']+" "+self.args['w'], logger, force, wf_err))
           t.start()
           threads.append(t)
-        except Exception, e:
-          print "runPyRelVal> ERROR threading matrix : caught exception: " + str(e)
+        except Exception as e:
+          print("runPyRelVal> ERROR threading matrix : caught exception: " + str(e))
       else:
         time.sleep(5)
     for t in threads: t.join()
@@ -206,8 +207,8 @@ class PyRelValsThread(object):
       try:
         wf = logFile.split("/")[-2].split("_")[0]
         known_errors[wf] = json.load(open(logFile))
-      except Exception, e:
-        print "ERROR:",e 
+      except Exception as e:
+        print("ERROR:",e) 
     outFile = open(os.path.join(self.outdir,"all_known_errors.json"),"w")
     json.dump(known_errors, outFile)
     outFile.close()
@@ -222,8 +223,8 @@ class PyRelValsThread(object):
         inFile.close()
         m = re.match("^(\d+)(\.\d+|)$",line)
         if m: time_info[wf]=int(m.group(1))
-      except Exception, e:
-        print "ERROR:",e 
+      except Exception as e:
+        print("ERROR:",e) 
     outFile = open(os.path.join(self.outdir,"relval-times.json"),"w")
     json.dump(time_info, outFile)
     outFile.close()
@@ -238,9 +239,9 @@ class PyRelValsThread(object):
       wf = m.group(1)
       step = int(m.group(3))
       if step>max_steps: max_steps=step
-      if not logData.has_key(wf):
+      if wf not in logData:
         logData[wf] = {'steps': {}, 'events' : [], 'failed' : [], 'warning' : []}
-      if not logData[wf]['steps'].has_key(step):
+      if step not in logData[wf]['steps']:
         logData[wf]['steps'][step]=logFile
     cache_read=0
     log_processed=0
@@ -270,7 +271,7 @@ class PyRelValsThread(object):
           try:
             es_parse_log(logFile)
           except Exception as e:
-            print "Sending log information to elasticsearch failed" , str(e)
+            print("Sending log information to elasticsearch failed" , str(e))
           inFile = open(logFile)
           for line_nr, line in enumerate(inFile):
             config_list = add_exception_to_config(line, line_nr, config_list)
@@ -289,8 +290,8 @@ class PyRelValsThread(object):
         index+=1
       del logData[wf]['steps']
 
-    print "Log processed: ",log_processed
-    print "Caches read:",cache_read
+    print("Log processed: ",log_processed)
+    print("Caches read:",cache_read)
     from pickle import Pickler
     outFile = open(os.path.join(self.outdir,'runTheMatrixMsgs.pkl'), 'w')
     pklFile = Pickler(outFile)

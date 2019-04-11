@@ -1,12 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from github import Github
 from os.path import expanduser, dirname, abspath, join
 from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS, LABEL_COLORS
-from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS, CMSSW_CATEGORIES
+from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSSW_CATEGORIES
 from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS, GH_CMSSW_ORGANIZATION
-from datetime import datetime
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits, api_rate_limits_repo
+from github_utils import api_rate_limits
 from cmsutils import get_config_map_properties
 from sys import argv
 setdefaulttimeout(120)
@@ -24,21 +24,21 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False, ignore=[]):
         if repo.name not in VALID_CMS_SW_REPOS_FOR_TESTS:
           skip = True
       if skip:
-        print "Ignoring repo:",repo.full_name
+        print("Ignoring repo:",repo.full_name)
         continue
       repos.append(repo)
   else:
     repos.append(gh.get_repo(repo_name))
   api_rate_limits(gh)
   for repo in repos:
-    print "Checking repository ", repo.full_name, ", DryRun:",dryRun
+    print("Checking repository ", repo.full_name, ", DryRun:",dryRun)
     cur_labels = {}
     for lab in repo.get_labels():
       cur_labels [lab.name]=lab
     api_rate_limits(gh)
     for lab in all_labels:
       if not lab in cur_labels:
-        print "  Creating new label ",lab,"=>",all_labels[lab]
+        print("  Creating new label ",lab,"=>",all_labels[lab])
         if not dryRun:
           repo.create_label(lab, all_labels[lab])
           api_rate_limits(gh)
@@ -46,7 +46,7 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False, ignore=[]):
         if not dryRun:
           cur_labels[lab].edit(lab, all_labels[lab])
           api_rate_limits(gh)
-        print "  Label ",lab," color updated: ",cur_labels[lab].color ," => ",all_labels[lab]
+        print("  Label ",lab," color updated: ",cur_labels[lab].color ," => ",all_labels[lab])
 
 if __name__ == "__main__":
   from optparse import OptionParser
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
   if opts.cmssw or opts.externals:
     all_labels = COMMON_LABELS
-    for cat in COMMON_CATEGORIES+EXTERNAL_CATEGORIES+CMSSW_CATEGORIES.keys():
+    for cat in COMMON_CATEGORIES+EXTERNAL_CATEGORIES+list(CMSSW_CATEGORIES.keys()):
       for lab in LABEL_TYPES:
         all_labels[cat+"-"+lab]=LABEL_TYPES[lab]
     for lab in COMPARISON_LABELS:
@@ -101,14 +101,14 @@ if __name__ == "__main__":
     from glob import glob
     for rconf in glob(join(SCRIPT_DIR,"repos","*","*","repo_config.py")):
       repo_data = rconf.split("/")[-4:-1]
-      exec 'from '+".".join(repo_data)+' import categories, repo_config'
-      print repo_config.GH_TOKEN, repo_config.GH_REPO_FULLNAME
+      exec('from '+".".join(repo_data)+' import categories, repo_config')
+      print(repo_config.GH_TOKEN, repo_config.GH_REPO_FULLNAME)
       if not repo_config.ADD_LABELS: continue
       gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
       all_labels = COMMON_LABELS
       for lab in COMPARISON_LABELS:
         all_labels[lab] = COMPARISON_LABELS[lab]
-      for cat in categories.COMMON_CATEGORIES+categories.CMSSW_CATEGORIES.keys():
+      for cat in categories.COMMON_CATEGORIES+list(categories.CMSSW_CATEGORIES.keys()):
         for lab in LABEL_TYPES:
           all_labels[cat+"-"+lab]=LABEL_TYPES[lab]
       setRepoLabels (gh, repo_config.GH_REPO_FULLNAME, all_labels, opts.dryRun)

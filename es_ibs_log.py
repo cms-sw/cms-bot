@@ -1,11 +1,10 @@
 #!/bin/env python
+from __future__ import print_function
 from hashlib import sha1
-import os, sys,json , re , datetime
-from os import getenv
+import os, json,  datetime
 from os.path import exists, dirname, getmtime
-from time import strftime , strptime
 from es_utils import send_payload
-import commands
+from _py2with3compatibility import run_cmd
 from cmsutils import cmsswIB2Week
 from logreaderUtils import transform_and_write_config_file, add_exception_to_config, ResultTypeEnum
 
@@ -42,20 +41,23 @@ def process_unittest_log(logFile):
     {"str_to_match": "test (.*) had ERRORS", "name": "{0} failed", 'control_type': ResultTypeEnum.ISSUE },
     {"str_to_match": '===== Test "([^\s]+)" ====', "name": "{0}", 'control_type': ResultTypeEnum.TEST }
   ]
-  for index, l in enumerate(file(logFile).read().split("\n")):
-    config_list = add_exception_to_config(l,index,config_list,custom_rule_set)
-    if l.startswith('===== Test "') and l.endswith('" ===='):
-      if utname: send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week, "unittest-dataset")
-      datasets = []
-      utname = l.split('"')[1]
-      payload["name"] = "%s/%s" % (package, utname)
-      id = sha1(release + architecture + package + str(utname)).hexdigest()
-    elif " Initiating request to open file " in l:
-      try:
-        rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-        if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
-      except: pass
-  if datasets: send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"unittest-dataset")
+  with open(logFile) as f:
+    for index, l in enumerate(f):
+      config_list = add_exception_to_config(l,index,config_list,custom_rule_set)
+      if l.startswith('===== Test "') and l.endswith('" ===='):
+        if utname: send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week, "unittest-dataset")
+        datasets = []
+        utname = l.split('"')[1]
+        payload["name"] = "%s/%s" % (package, utname)
+        id = sha1(release + architecture + package + str(utname)).hexdigest()
+      elif " Initiating request to open file " in l:
+        try:
+          rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
+          if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
+        except:
+          pass
+  if datasets:
+    send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"unittest-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
   return
 
@@ -74,13 +76,14 @@ def process_addon_log(logFile):
   payload["name"] = pathInfo[-1].split("-")[1].split("_cmsRun_")[0].split("_cmsDriver.py_")[0]
   id = sha1(release + architecture + "addon" + payload["name"]).hexdigest()
   config_list = []
-  for index, l in enumerate(file(logFile).read().split("\n")):
-    config_list = add_exception_to_config(l,index, config_list)
-    if " Initiating request to open file " in l:
-      try:
-        rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-        if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
-      except: pass
+  with open(logFile) as f:
+    for index, l in enumerate(f):
+      config_list = add_exception_to_config(l,index, config_list)
+      if " Initiating request to open file " in l:
+        try:
+          rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
+          if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
+        except: pass
   send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"addon-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
   return
@@ -103,9 +106,9 @@ def process_ib_utests(logFile):
     with open(logFile) as f:
       try:
         it = iter(f)
-        line = it.next()
+        line = next(it)
         while '--------' not in line:
-          line = it.next()
+          line = next(it)
         while True:
           line=it.next().strip()
           if ":" in line:
@@ -124,58 +127,58 @@ def process_ib_utests(logFile):
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:
-        print "File processed:", e
+        print("File processed:", e)
   else:
-    print "Invalid File Path"
+    print("Invalid File Path")
 
 #get log files
-logs = commands.getstatusoutput("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'unitTests-summary.log'")
+logs = run_cmd("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'unitTests-summary.log'")
 logs = logs[1].split('\n')
 #process log files
 for logFile in logs:
   flagFile = logFile + '.checked'
   if not exists(flagFile):
-    print "Working on ",logFile
+    print("Working on ",logFile)
     process_ib_utests(logFile)
     os.system('touch "' + flagFile + '"')
 
-logs = commands.getstatusoutput("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'unitTestLogs.zip'")
+logs = run_cmd("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'unitTestLogs.zip'")
 logs = logs[1].split('\n')
 #process zip log files
 for logFile in logs:
   flagFile = logFile + '.checked'
   if not exists(flagFile):
     utdir = dirname(logFile)
-    print "Working on ",logFile
+    print("Working on ",logFile)
     try:
-      err, utlogs = commands.getstatusoutput("cd %s; rm -rf UT; mkdir UT; cd UT; unzip ../unitTestLogs.zip" % utdir)
-      err, utlogs = commands.getstatusoutput("find %s/UT -name 'unitTest.log' -type f" % utdir)
+      err, utlogs = run_cmd("cd %s; rm -rf UT; mkdir UT; cd UT; unzip ../unitTestLogs.zip" % utdir)
+      err, utlogs = run_cmd("find %s/UT -name 'unitTest.log' -type f" % utdir)
       if not err:
         for utlog in utlogs.split("\n"):
           process_unittest_log(utlog)
-        commands.getstatusoutput("touch %s" % flagFile)
+        run_cmd("touch %s" % flagFile)
     except Exception as e:
-      print "ERROR:",e
-    commands.getstatusoutput("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
-    commands.getstatusoutput("rm -rf %s/UT" % utdir)
+      print("ERROR:",e)
+    run_cmd("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
+    run_cmd("rm -rf %s/UT" % utdir)
 
-logs = commands.getstatusoutput("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'addOnTests.zip'")
+logs = run_cmd("find /data/sdt/buildlogs -mindepth 6 -maxdepth 6 -name 'addOnTests.zip'")
 logs = logs[1].split('\n')
 #process zip log files
 for logFile in logs:
   flagFile = logFile + '.checked'
   if not exists(flagFile):
     utdir = dirname(logFile)
-    print "Working on ",logFile
+    print("Working on ",logFile)
     try:
-      err, utlogs = commands.getstatusoutput("cd %s; rm -rf AO; mkdir AO; cd AO; unzip ../addOnTests.zip" % utdir)
-      err, utlogs = commands.getstatusoutput("find %s/AO -name '*.log' -type f" % utdir)
+      err, utlogs = run_cmd("cd %s; rm -rf AO; mkdir AO; cd AO; unzip ../addOnTests.zip" % utdir)
+      err, utlogs = run_cmd("find %s/AO -name '*.log' -type f" % utdir)
       if not err:
         for utlog in utlogs.split("\n"):
           process_addon_log(utlog)
-        commands.getstatusoutput("touch %s" % flagFile)
+        run_cmd("touch %s" % flagFile)
     except Exception as e:
-      print "ERROR:",e
-    commands.getstatusoutput("cd %s/AO ; zip -r ../addOnTests.zip ." % utdir)
-    commands.getstatusoutput("rm -rf %s/AO" % utdir)
+      print("ERROR:",e)
+    run_cmd("cd %s/AO ; zip -r ../addOnTests.zip ." % utdir)
+    run_cmd("rm -rf %s/AO" % utdir)
 

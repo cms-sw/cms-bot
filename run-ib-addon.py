@@ -1,11 +1,12 @@
 #! /usr/bin/env python
+from __future__ import print_function
 from sys import exit, argv
 from os import environ
 from cmsutils import cmsRunProcessCount, doCmd
 from logUpdater import LogUpdater
 
-if (not environ.has_key("CMSSW_BASE")) or (not environ.has_key("SCRAM_ARCH")):
-  print "ERROR: Unable to file the release environment, please make sure you have set the cmssw environment before calling this script"
+if ("CMSSW_BASE" not in environ) or ("SCRAM_ARCH" not in environ):
+  print("ERROR: Unable to file the release environment, please make sure you have set the cmssw environment before calling this script")
   exit(1)
 
 timeout=7200

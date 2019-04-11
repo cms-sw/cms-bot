@@ -1,14 +1,16 @@
 #!/usr/bin/env python
-from sys import argv, exit
+from __future__ import print_function
+from os.path import abspath, dirname
+from sys import argv, exit, path
 from os import environ
-from urllib2 import Request, urlopen
-from urllib import quote_plus
-from commands import getstatusoutput
+
+path.append(dirname(dirname(dirname(abspath(__file__)))))  # in order to import top level modules
+from _py2with3compatibility import run_cmd, Request, urlopen, quote_plus
 
 repo = argv[1]
-e, o = getstatusoutput('git ls-remote -h "https://:@gitlab.cern.ch:8443/%s" 2>&1 | grep "refs/heads/" | wc -l' % repo)
+e, o = run_cmd('git ls-remote -h "https://:@gitlab.cern.ch:8443/%s" 2>&1 | grep "refs/heads/" | wc -l' % repo)
 if o=='0':
-  print "Mirror repository not found:", repo
+  print("Mirror repository not found:", repo)
   exit(0)
 
 TOKEN_FILE="/data/secrets/cmsbuild-gitlab-secret"
@@ -18,5 +20,5 @@ headers= {"PRIVATE-TOKEN": open(TOKEN_FILE).read().strip()}
 request = Request(url, headers=headers)
 request.get_method = lambda: "POST"
 response = urlopen(request)
-print response.read()
+print(response.read())
 

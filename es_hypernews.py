@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys, os, re
 from datetime import datetime,timedelta
-from commands import getstatusoutput
+from _py2with3compatibility import run_cmd
 from es_utils import send_payload
 from hashlib import sha1
 from json import dumps
@@ -21,14 +22,14 @@ if len(sys.argv)==1:
   prev_hour = datetime.now()-timedelta(hours=1)
   filter_search = " | grep '"+prev_hour.strftime("^\[%a %b %d %H:[0-5][0-9]:[0-5][0-9] %Y\] ")+"'"
 
-err, out = getstatusoutput(cmd_to_get_logs)
+err, out = run_cmd(cmd_to_get_logs)
 if err:
-  print out
+  print(out)
   sys.exit(1)
 ReTime = re.compile('^\[[A-Za-z]{3} ([A-Za-z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4})\] \[[^\]]+\] \[client (.+)\]\s(.+)')
 for log in out.split("\n"):
   find_cmd = "grep '%s' %s %s" % (search_for, log, filter_search)
-  err, out = getstatusoutput(find_cmd)
+  err, out = run_cmd(find_cmd)
   for line in out.split("\n"):
     m = ReTime.match(line)
     if m:

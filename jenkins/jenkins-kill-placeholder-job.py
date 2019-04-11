@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-
 """
-This job will check if there i
+This job will check if there are queued jobs for jenkins slaves with 'condor' label and how many.
+Then it will kill needed amount of placeholder jobs.
 """
 from __future__ import print_function
 from pprint import pprint

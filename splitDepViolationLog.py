@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os, sys, re, time
 
 class DepViolSplitter(object):
@@ -7,7 +8,7 @@ class DepViolSplitter(object):
 
         self.outFile=sys.stdout
         if outFileIn:
-            print "Summary file:", outFileIn
+            print("Summary file:", outFileIn)
             self.outFile=open(outFileIn, 'w')
 
         self.verbose = verbIn
@@ -38,12 +39,12 @@ class DepViolSplitter(object):
         subsysPkgMap = {}
         
         logDirs = os.path.join( os.path.split(logFile)[0],'depViolationLogs')
-        print "logDirs ", logDirs
+        print("logDirs ", logDirs)
         if not os.path.exists(logDirs):
             os.makedirs(logDirs)
 
         lf = open(logFile,'r')
-        lines = lf.xreadlines()
+        lines = lf
 
         startTime = time.time()
         nLines = 0
@@ -99,7 +100,7 @@ class DepViolSplitter(object):
         self.outFile.write( "found a total of "+ str(nLines)+ ' lines in logfile.\n')
         self.outFile.write( "analysis took "+str(stopTime-startTime)+ ' sec.\n')
 
-        self.outFile.write( "total number of packages with violations: " +str( len(pkgViol.keys()) ) + '\n')
+        self.outFile.write( "total number of packages with violations: " +str( len(list(pkgViol.keys())) ) + '\n')
 
         import pprint
         pprint.pprint(pkgViol)
@@ -110,16 +111,16 @@ class DepViolSplitter(object):
             pklr = Pickler(resFile)
             pklr.dump(pkgViol)
             resFile.close()
-            print "Successfully pickled results for dependency violations ! "
-        except Exception, e:
-            print "ERROR during pickling results for dependency violations:", str(e)
+            print("Successfully pickled results for dependency violations ! ")
+        except Exception as e:
+            print("ERROR during pickling results for dependency violations:", str(e))
             
         return
 
 # ================================================================================
 
 def usage():
-    print "usage: "+ os.path.basename(sys.argv[0])+" --logFile <logFileName> [--verbose]\n"
+    print("usage: "+ os.path.basename(sys.argv[0])+" --logFile <logFileName> [--verbose]\n")
     return
 
 if __name__ == "__main__" :

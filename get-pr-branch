@@ -28,8 +28,8 @@ if __name__ == "__main__":
 
   if pr.base.ref == "master":
     from releases import CMSSW_DEVEL_BRANCH
-    from subprocess import getstatusoutput
-    e, o = getstatusoutput("curl -s -L https://cmssdt.cern.ch/SDT/BaselineDevRelease | grep '^CMSSW_'")
+    from _py2with3compatibility import run_cmd
+    e, o = run_cmd("curl -s -L https://cmssdt.cern.ch/SDT/BaselineDevRelease | grep '^CMSSW_'")
     if not o: o = CMSSW_DEVEL_BRANCH
     print(o)
   else:

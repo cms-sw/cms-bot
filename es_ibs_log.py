@@ -91,7 +91,7 @@ def process_addon_log(logFile):
 
 def process_ib_utests(logFile):
   t = getmtime(logFile)
-  timestp = datetime.datetime.fromtimestamp(int(t)).strftime('%Y-%m-%d %H:%M:%S')
+  timestp = int(t*1000)
   payload = {}
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
@@ -125,7 +125,6 @@ def process_ib_utests(logFile):
               payload["package"] = pkg
               payload["name"] = utest
               id = sha1(release + architecture + utest).hexdigest()
-              print("Sending: ",index,document,id,json.dumps(payload))
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:

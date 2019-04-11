@@ -105,5 +105,5 @@ if [ -s ${CMSSW_BASE}/upload/invalid_files.txt ] ; then
   MSG="${MSG}@N@@N@- Found files with invalid states:@N@$(cat ${CMSSW_BASE}/upload/invalid_files.txt | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
 fi
 if [ "$DRY_RUN" != "true" ] ; then
-  echo ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
+  ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
 fi

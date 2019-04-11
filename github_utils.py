@@ -354,3 +354,31 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
             elif len(pages) == 1:
                 page_range += pages
     return json.loads(response.read())
+
+
+def get_pull_requests(gh_repo, branch="master", status='open'):
+    """
+    Get all pull request for the current branch of the repo
+    :return:
+    """
+    pulls = gh_repo.get_pulls(base=branch, state=status, sort="created", direction="asc")
+    return pulls
+
+
+def get_changed_files(pulls):
+    """
+    Returns union of changed file names on PR
+    """
+    rez = set()
+    for pr in pulls:
+        for f in pr.get_files():
+            rez.add(f.filename)
+    return sorted(rez)
+
+
+def pr_get_changed_files(pr):
+    rez = set()
+    for f in pr.get_files():
+        rez.add(f.filename)
+    return rez
+

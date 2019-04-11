@@ -901,6 +901,11 @@ if __name__ == "__main__":
         print(msg)
         post_message( issue, msg)
         exit(0)
+    if ('patch' in release_name) and (production_architecture != req_arch):
+        msg="You can not override production architecture for a patch release.\nProdction architecture for this release should be %s" % production_architecture
+        print(msg)
+        post_message( issue, msg)
+        exit(0)
     production_architecture = req_arch
     print("Found production architecture:",production_architecture)
   print("debug production arch: ",production_architecture)

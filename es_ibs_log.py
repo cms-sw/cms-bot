@@ -29,6 +29,7 @@ def process_unittest_log(logFile):
   architecture = pathInfo[4]
   release = pathInfo[8]
   week, rel_sec  = cmsswIB2Week (release)
+  print("DEBUG:",pathInfo[-3],week, rel_sec)
   package = pathInfo[-3]+"/"+ pathInfo[-2]
   utname = None
   datasets = []

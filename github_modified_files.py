@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Writes all change files for a file
+Gets list of files that will be modified by all PRs for the branch
 """
 
 from github import Github

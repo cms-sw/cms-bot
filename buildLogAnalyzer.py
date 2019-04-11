@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-untitled.py
-
 Created by Andreas Pfeiffer on 2008-08-05.
 Copyright (c) 2008 CERN. All rights reserved.
 """
 from __future__ import print_function
-#from past.builtins import cmp
+from _py2with3compatibility import cmp
 import sys, os, re, time
 import getopt
 

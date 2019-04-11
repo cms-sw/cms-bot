@@ -25,8 +25,3 @@ else:
         HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler
     from urllib.error import HTTPError
 
-if sys.version_info[0] == 3:
-    def cmp(a,b):
-        return ((a > b) - (a < b))
-else:
-    cmp = cmp

@@ -5,9 +5,12 @@ Created by Andreas Pfeiffer on 2008-08-05.
 Copyright (c) 2008 CERN. All rights reserved.
 """
 from __future__ import print_function
-from _py2with3compatibility import cmp
 import sys, os, re, time
 import getopt
+
+if sys.version_info[0] == 3:
+    def cmp(a,b):
+        return ((a > b) - (a < b))
 
 
 def pkgCmp(a,b):

@@ -4,7 +4,6 @@ File       : jenkins-project-report-to-markdown.py
 Author     : Zygimantas Matonis
 Description: This script will generate markdown files from Jenkins project reports
 """
-
 import json
 import os
 import re

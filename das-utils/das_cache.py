@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from sys import exit
 from os.path import exists,  dirname, abspath ,basename, join
 from time import time, sleep

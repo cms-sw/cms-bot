@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 from os import getuid
 import json
 import sys

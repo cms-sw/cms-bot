@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys, glob
 from os.path import basename,join
 from os.path import dirname, abspath

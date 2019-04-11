@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import json
 from time import time
 from sys import argv, exit

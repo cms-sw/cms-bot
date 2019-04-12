@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-Gets list of files that will be modified by all PRs for the branch
+Gets list of files that will be modified by all PRs for the branch.
+Dumps to file to be loaded by other script.
 """
 
 from github import Github
@@ -9,17 +10,6 @@ from os.path import expanduser
 from repo_config import GH_TOKEN
 from argparse import ArgumentParser
 import json
-
-
-def get_changed_modules(filename_it):
-    chanched_m = set()
-    for f_n in filename_it:
-        s_l = f_n.split('/')
-        if len(s_l) <= 2:
-            chanched_m.add(f_n)
-        else:
-            chanched_m.add(s_l[0] + "/" + s_l[1])
-    return chanched_m
 
 
 def main():
@@ -46,19 +36,6 @@ def main():
         with open(args.destination, 'w') as d:
             json.dump(rez, d)
 
-    elif args.mode == 2:
-        fc_set = get_changed_files(pr_list)
-        changed_modules_set = get_changed_modules(fc_set)
-        with open(args.destination, 'w') as d:
-            for f_name in changed_modules_set:
-                d.write(f_name + "\n")
-
-    elif args.mode == 3:
-        fc_set = get_changed_files(pr_list)
-        changed_modules_set = get_changed_modules(fc_set)
-        with open(args.destination, 'w') as d:
-            for f_name in changed_modules_set:
-                d.write(f_name + "\n")
 
 
 if __name__ == '__main__':

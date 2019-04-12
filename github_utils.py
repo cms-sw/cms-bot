@@ -377,8 +377,8 @@ def get_changed_files(pulls):
 
 
 def pr_get_changed_files(pr):
-    rez = set()
+    rez = []
     for f in pr.get_files():
-        rez.add(f.filename)
+        rez.append(f.filename)
     return rez
 

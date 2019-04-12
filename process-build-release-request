@@ -186,7 +186,7 @@ def create_properties_files_upload( release_name, arch, issue_number, machine_na
     out_file.write( '%s=%s\n' % ( JENKINS_ISSUE_NUMBER , issue_number ) )
     out_file.write( '%s=%s\n' % ( JENKINS_DOCKER_IMG , docker_img ) )
     out_file.write( '%s=%s\n' % ( JENKINS_MACHINE_NAME , machine_name ) )
-    out_file.write( '%s=%s\n' % ( JENKINS_PRODUCTION_ARCH , 'true ' if prod else 'false' ) )
+    out_file.write( '%s=%s\n' % ( JENKINS_PRODUCTION_ARCH , 'true' if prod else 'false' ) )
 
 
 #

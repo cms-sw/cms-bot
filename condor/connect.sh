@@ -1,4 +1,8 @@
-#!/bin/bash -ex
+#!/bin/bash -e
+if [ "$DEBUG" = "true" ] ; then
+  export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+  set -x
+fi
 #########################################
 JOBS_STATUS_0='Unexpanded'
 JOBS_STATUS_1='Idle'
@@ -55,11 +59,6 @@ echo "queue 1" >> job.sub
 echo "############# JOB Configuration file ###############"
 cat job.sub
 echo "####################################################"
-
-if [ "$DEBUG" = "true" ] ; then
-  export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-  set -x
-fi
 
 condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1 || true
 cat submit.log

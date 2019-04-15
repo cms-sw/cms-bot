@@ -61,7 +61,7 @@ if [ "$DEBUG" = "true" ] ; then
   set -x
 fi
 
-condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1
+condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1 || true
 cat submit.log
 JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
 if [ "$JOBID" = "" ] ; then exit 1 ; fi

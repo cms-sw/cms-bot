@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 #########################################
 JOBS_STATUS_0='Unexpanded'
 JOBS_STATUS_1='Idle'

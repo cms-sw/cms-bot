@@ -1369,3 +1369,7 @@ rbartek:
 - Validation/Geometry
 rishabhCMS:
 - Validation/Geometry
+peruzzim:
+- DataFormats/PatCandidates
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils

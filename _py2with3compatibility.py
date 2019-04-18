@@ -25,3 +25,6 @@ else:
         HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler
     from urllib.error import HTTPError
 
+
+def cmp_f(a, b):
+    return ((a > b) - (a < b))

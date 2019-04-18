@@ -2,7 +2,10 @@
 """
 Gets list of files that will be modified by all PRs for the branch.
 Dumps to file to be loaded by other script.
+We assume that all PRs we are interested in are made for the master branch.
 """
+
+# TODO check if it is not an issue
 
 from github import Github
 from github_utils import *

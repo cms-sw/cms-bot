@@ -935,6 +935,7 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   muonVar("muMatches_.gemMatches@.size",cName,tName);
   muonVar("muMatches_.me0Matches@.size",cName,tName);
   muonVar("muMatches_.rpcMatches@.size",cName,tName);
+  muonVar("muMatches_.nDigisInRange",cName,tName, true);
   muonVar("stationMask",cName,tName);
   muonVar("type",cName,tName);
   plotvar("log2(max(0.5,"+tName+cName+"_"+recoS+".obj.selectors()))");

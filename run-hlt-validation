@@ -6,7 +6,7 @@
 # WORKSPACE
 mkdir -p $WORKSPACE/results
 ls /cvmfs/cms-ib.cern.ch || true
-source /cvmfs/cms-ib.cern.ch/cmsset_default.sh
+source /cvmfs/cms.cern.ch/cmsset_default.sh
 SCRAM_ARCH=$ARCHITECTURE
 scram -a $ARCHITECTURE p $RELEASE_FORMAT
 cd $RELEASE_FORMAT/src

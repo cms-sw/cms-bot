@@ -108,9 +108,9 @@ if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
     slc7_*) lxplus_type="lxplus7";;
   esac
   if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
-    SLAVE_LABELS="$hname lxplus-scripts ${lxplus_type}-scripts"
+    SLAVE_LABELS="$hname lxplus-scripts ${lxplus_type}-scripts ${SLAVE_LABELS}"
   else 
-    SLAVE_LABELS="$hname lxplus ${lxplus_type} ${HOST_CMS_ARCH}-lxplus ${HOST_CMS_ARCH}-${lxplus_type} ${HOST_ARCH}"
+    SLAVE_LABELS="$hname lxplus ${lxplus_type} ${SLAVE_LABELS}"
   fi
 fi
 

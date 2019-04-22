@@ -75,9 +75,6 @@ def _cmsRunProcesses():
 
 compilationPrcoessCount = _compilationProcesses()
 cmsRunProcessCount = _cmsRunProcesses()
-if "lxplus" in getHostName():
-  cmsRunProcessCount = int(cmsRunProcessCount/2)+1
-  MachineCPUCount = int(MachineCPUCount/2)+1
 
 def doCmd(cmd, dryRun=False, inDir=None):
   if not inDir:

@@ -16,7 +16,6 @@ fi
 REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
 if [ "$BUILD_NUMBER" = "" ] ; then BUILD_NUMBER=$(date +%s); fi
 NUM_PROC=$(nproc)
-case $(hostname) in lxplus* ) let NUM_PROC=$NUM_PROC/2 ;; esac
 if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
 cd $CMSSW_BASE
 rm -rf ${CMSSW_BASE}/upload

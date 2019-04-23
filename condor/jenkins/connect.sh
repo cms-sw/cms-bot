@@ -1,4 +1,6 @@
 #!/bin/bash -ex
+export _CONDOR_SCHEDD_HOST=bigbird15.cern.ch
+export _CONDOR_CREDD_HOST=bigbird15.cern.ch
 echo $WORKSPACE
 TARGET="${1-cmsbuild@lxplus.cern.ch}"
 REMOTE_USER=$(echo $TARGET | sed 's|@.*||')

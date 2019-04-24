@@ -25,6 +25,7 @@ def main():
     repo = gh.get_repo(args.repo)
     pr_list = get_pull_requests(repo)
 
+    print("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
     rez = {}
     for pr in pr_list:
         rez[int(pr.number)] = {
@@ -36,6 +37,8 @@ def main():
         }
     with open(args.destination, 'w') as d:
         json.dump(rez, d)
+
+    print("GitHub API rate limit after: {}".format(gh.get_rate_limit()))
 
 
 if __name__ == '__main__':

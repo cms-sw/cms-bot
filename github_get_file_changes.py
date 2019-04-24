@@ -107,6 +107,7 @@ def main():
     repo = gh.get_repo(args.repo_name)
     pr_list = get_pull_requests(repo)
 
+    logger.debug("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
     old_prs_dict = {}
     try:
         with open(args.cached_pr) as f:
@@ -151,6 +152,7 @@ def main():
         with open(args.output, 'w') as f:
             for i in unmodified_modules_sorted_by_time:
                 f.write("{} {}\n".format(i[0], i[1]))
+    logger.debug("GitHub API rate limit after: {}".format(gh.get_rate_limit()))
 
 
 if __name__ == '__main__':

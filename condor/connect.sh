@@ -51,7 +51,7 @@ if [ "X${CONDOR_JOB_CONF}" != "X" ] ; then
   if [ -f  ${CONDOR_JOB_CONF} ] ; then
     cat ${CONDOR_JOB_CONF} >> job.sub
   else
-    echo "ERROR: Missing condir job configuration file : ${CONDOR_JOB_CONF}"
+    echo "ERROR: Missing condor job configuration file : ${CONDOR_JOB_CONF}"
     exit 1
   fi
 fi

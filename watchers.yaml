@@ -1373,3 +1373,18 @@ peruzzim:
 - DataFormats/PatCandidates
 - PhysicsTools/PatAlgos
 - PhysicsTools/PatUtils
+jshlee:
+- CondCore/GEMPlugins
+- CondFormats/GEMObjects
+- L1Trigger/ME0Trigger
+- SimMuon/GEMDigitizer
+- DataFormats/GEMDigi
+- DataFormats/GEMRecHit
+- EventFilter/GEMRawToDigi
+- Geometry/GEMGeometryBuilder
+- Geometry/GEMGeometry
+- RecoLocalMuon/GEMRecHit
+- RecoLocalMuon/GEMSegment
+- Validation/MuonGEMDigis
+- Validation/MuonGEMHits
+- Validation/MuonGEMRecHits

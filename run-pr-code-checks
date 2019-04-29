@@ -8,11 +8,11 @@ BUILD_NUMBER=$3
 DRY_RUN=$4
 REPOSITORY=$5
 CODE_FORMAT=$6
+CODE_CHECKS=$7
+if [ "X$CODE_CHECKS" = "X" ] ; then CODE_CHECKS=true ; fi
 if [ "X$CODE_FORMAT" = "X" ] ; then CODE_FORMAT=false ; fi
 if [ "X$DRY_RUN" = "X" ] ; then DRY_RUN=false ; fi
-if [ "X${REPOSITORY}" = "X" ] ; then
-  REPOSITORY="cms-sw/cmssw"
-fi
+if [ "X${REPOSITORY}" = "X" ] ; then REPOSITORY="cms-sw/cmssw" ;fi
 REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
 if [ "$BUILD_NUMBER" = "" ] ; then BUILD_NUMBER=$(date +%s); fi
 NUM_PROC=$(nproc)
@@ -52,6 +52,21 @@ pushd $CMSSW_BASE/src
   $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/upload/invalid_files.txt || true
 popd
 
+#If we have any non-tests changed files
+touch ${CMSSW_BASE}/upload/code-checks.patch
+if $CODE_CHECKS ; then
+  if [ -s $CMSSW_BASE/upload/code-checks-files.txt ] ; then
+    scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt"  2>&1 | tee ${CMSSW_BASE}/upload/code-checks.log
+    mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
+    pushd $CMSSW_BASE/src
+      git diff > ${CMSSW_BASE}/upload/code-checks.patch
+      if [ -s ${CMSSW_BASE}/upload/code-checks.patch ] ; then
+        git commit -a -m 'code-checks'
+      fi
+    popd
+  fi
+fi
+
 touch ${CMSSW_BASE}/upload/code-format.patch
 if $CODE_FORMAT ; then
   if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
@@ -68,14 +83,6 @@ if $CODE_FORMAT ; then
   fi
 fi
 
-#If we have any non-tests changed files
-touch ${CMSSW_BASE}/upload/code-checks.patch
-if [ -s $CMSSW_BASE/upload/code-checks-files.txt ] ; then
-  scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt"  2>&1 | tee ${CMSSW_BASE}/upload/code-checks.log
-  mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
-  cd $CMSSW_BASE/src
-  git diff > ${CMSSW_BASE}/upload/code-checks.patch
-fi
 if [ "$DRY_RUN" != "true" ] ; then
   source $CMS_BOT_DIR/jenkins-artifacts
   send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
@@ -85,17 +92,17 @@ HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/code-checks.patch -o -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
   RES="-code-checks"
   HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying following patch(s)"
-  if [ -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
-    HOW_TO_RUN="${HOW_TO_RUN}@N@- **code-format**:"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@You can also run \`scram build code-format\` to apply code format directly"
-  fi
   if [ -s ${CMSSW_BASE}/upload/code-checks.patch ] ; then
     HOW_TO_RUN="${HOW_TO_RUN}@N@- **code-checks**:"
     HOW_TO_RUN="${HOW_TO_RUN}@N@https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch"
     HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch | patch -p1\`"
     HOW_TO_RUN="${HOW_TO_RUN}@N@You can also run \`scram build code-checks\` to apply code checks directly"
+  fi
+  if [ -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
+    HOW_TO_RUN="${HOW_TO_RUN}@N@- **code-format**:"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@You can also run \`scram build code-format\` to apply code format directly"
   fi
 fi
 MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"

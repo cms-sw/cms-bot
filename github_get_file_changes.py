@@ -61,7 +61,7 @@ def get_changed_filenames_by_pr(old_prs_dict, pr_list):
         if nr in old_prs_dict.keys():
             logger.debug("! Pr {} cached, but needed to be updated.".format(nr))
         else:
-            logger.debug("! Pr {} was not cached.".format(nr ))
+            logger.debug("! Pr {} was not cached.".format(nr))
 
     return changed_file_set
 
@@ -78,7 +78,10 @@ def get_modules_with_mt(path):
     cwd = os.getcwd()
     try:
         os.chdir(path)
-        status, result = run_cmd('ls -1 -d */*/')  # only list directories 2 levels deep
+        bash_cmd = ("cmd=\"find . -iname '*.cc' \" ; for i in cpp cxx h hh ; do cmd=\"${cmd} -o -iname '*.$i' \"; done ; " +
+                    "eval $cmd | cut -d \"/\" -f1-3 | uniq")
+
+        status, result = run_cmd(bash_cmd)  # only list directories 2 levels deep
     except Exception as e:
         logger.error("Error reading cloned repo files" + str(e))
         sys.exit(1)
@@ -139,14 +142,15 @@ def main():
     logger.debug("modules_mod_by_prs")
     logger.debug(pformat(modules_mod_by_prs))
     logger.debug("---")
-    print(pformat("Modules modified by prs: {} \nAll modules: {} \nModules not touched by prs: {} \nNew modules: {}".format(
-        len(modules_mod_by_prs), len(all_branch_modules_w_mt), len(non_changed_modules), len(new_files)))
+    print(pformat(
+        "Modules modified by prs: {} \nAll modules: {} \nModules not touched by prs: {} \nNew modules: {}".format(
+            len(modules_mod_by_prs), len(all_branch_modules_w_mt), len(non_changed_modules), len(new_files)))
     )
 
     unmodified_modules_sorted_by_time = [x for x in all_branch_modules_w_mt if x[0] not in modules_mod_by_prs]
     unmodified_modules_sorted_by_time = sorted(unmodified_modules_sorted_by_time, cmp=lambda x, y: cmp_f(x[1], y[1]))
 
-    logger.debug("Modules modified by prs:")
+    logger.debug("Modules not modified by prs:")
     logger.debug(pformat(unmodified_modules_sorted_by_time))
     if args.output:
         with open(args.output, 'w') as f:

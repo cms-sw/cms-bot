@@ -14,6 +14,11 @@ PKG_NAME=$2       # Name of external (ex. root)
 CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
 ARCHITECTURE=$4           # Architecture (ex. slc7_amd64_gcc700)
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
+
+SPEC_NAME=${PKG_NAME}
+case ${PKG_REPO} in
+  cms-data/*) SPEC_NAME="data-${PKG_NAME}" ;;
+esac
 # ---
 
 # Checked if variables are passed
@@ -53,8 +58,8 @@ if ! [ -d "pkgtools" ]; then
     git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 fi
 
-SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${PKG_NAME} | \
-                        grep -i "^${PKG_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
+SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
+                        grep -i "^${SPEC_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
 N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true
 echo "Number of sources: " ${N}
@@ -80,4 +85,4 @@ rm -rf ${PKG_NAME}/.git  # remove git metadata - we wont need it when packing.
 if [ ${PKG_NAME} != ${DIR_NAME} ]; then
     mv ${PKG_NAME} ${DIR_NAME}
 fi
-echo "--source ${PKG_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt
+echo "--source ${SPEC_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt

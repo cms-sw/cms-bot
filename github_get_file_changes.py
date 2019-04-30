@@ -79,7 +79,7 @@ def get_modules_with_mt(path):
     try:
         os.chdir(path)
         bash_cmd = ("cmd=\"find . -iname '*.cc' \" ; for i in cpp cxx h hh ; do cmd=\"${cmd} -o -iname '*.$i' \"; done ; " +
-                    "eval $cmd | cut -d \"/\" -f1-3 | uniq")
+                    "eval $cmd | cut -d \"/\" -f1-3 | uniq | cut -c 3- ")
 
         status, result = run_cmd(bash_cmd)  # only list directories 2 levels deep
     except Exception as e:

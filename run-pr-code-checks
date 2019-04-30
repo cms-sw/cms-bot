@@ -57,7 +57,9 @@ touch ${CMSSW_BASE}/upload/code-checks.patch
 if $CODE_CHECKS ; then
   if [ -s $CMSSW_BASE/upload/code-checks-files.txt ] ; then
     scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt"  2>&1 | tee ${CMSSW_BASE}/upload/code-checks.log
-    mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
+    if [ -e ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ] ; then
+      mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
+    fi
     pushd $CMSSW_BASE/src
       git diff > ${CMSSW_BASE}/upload/code-checks.patch
       if [ -s ${CMSSW_BASE}/upload/code-checks.patch ] ; then

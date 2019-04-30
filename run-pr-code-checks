@@ -57,7 +57,9 @@ touch ${CMSSW_BASE}/upload/code-checks.patch
 if $CODE_CHECKS ; then
   if [ -s $CMSSW_BASE/upload/code-checks-files.txt ] ; then
     scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt"  2>&1 | tee ${CMSSW_BASE}/upload/code-checks.log
-    mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
+    if [ -e ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ] ; then
+      mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
+    fi
     pushd $CMSSW_BASE/src
       git diff > ${CMSSW_BASE}/upload/code-checks.patch
       if [ -s ${CMSSW_BASE}/upload/code-checks.patch ] ; then
@@ -70,7 +72,7 @@ fi
 touch ${CMSSW_BASE}/upload/code-format.patch
 if $CODE_FORMAT ; then
   if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
-    grep '.*\.\(cpp\|cc\|cxx\|h\|hpp\|hh\)$' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-format-files.txt || true
+    grep -E -i '\.(cpp|cc|cxx|h|hpp|hh)$' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-format-files.txt || true
     if [ -s $CMSSW_BASE/upload/code-format-files.txt ] ; then
       scram build -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="$CMSSW_BASE/upload/code-format-files.txt"  2>&1 | tee $CMSSW_BASE/upload/code-format.log
       pushd $CMSSW_BASE/src

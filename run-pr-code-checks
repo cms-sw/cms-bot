@@ -70,7 +70,7 @@ fi
 touch ${CMSSW_BASE}/upload/code-format.patch
 if $CODE_FORMAT ; then
   if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
-    grep '.*\.\(cpp\|cc\|cxx\|h\|hpp\|hh\)$' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-format-files.txt || true
+    grep -E -i '\.(cpp|cc|cxx|h|hpp|hh)$' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-format-files.txt || true
     if [ -s $CMSSW_BASE/upload/code-format-files.txt ] ; then
       scram build -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="$CMSSW_BASE/upload/code-format-files.txt"  2>&1 | tee $CMSSW_BASE/upload/code-format.log
       pushd $CMSSW_BASE/src

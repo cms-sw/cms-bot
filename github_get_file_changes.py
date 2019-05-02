@@ -84,7 +84,7 @@ def get_modules_with_mt(path,depth=2):
         if l in unique_list: continue
         data_list.append([l, get_git_mt(path, l)])
         unique_list[l]=1
-    return data_list.keys()
+    return data_list
 
 
 def main():

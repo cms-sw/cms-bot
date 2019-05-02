@@ -11,8 +11,10 @@ from github_utils import *
 from os.path import expanduser
 from repo_config import GH_TOKEN
 from argparse import ArgumentParser
+from glob import glob
 import json
 from _py2with3compatibility import run_cmd, cmp_f
+from categories_map import CMSSW_CATEGORIES
 import logging
 import os
 import sys
@@ -33,7 +35,8 @@ def get_changed_modules(filename_it):
             # It is not a module, ignore
             pass
         else:
-            changed_m.add(s_l[0] + "/" + s_l[1] + '/')
+            changed_m.add(s_l[0] + "/" + s_l[1])
+
     return changed_m
 
 
@@ -66,33 +69,20 @@ def get_changed_filenames_by_pr(old_prs_dict, pr_list):
     return changed_file_set
 
 
-def get_git_mt(filename):
-    status, rez = run_cmd('git log -1 --format="%ad" --date=unix -- ' + filename)
+def get_git_mt(path, filename):
+    status, rez = run_cmd('cd %s; git log -1 --format="%%ad" --date=unix -- %s' % (path, filename))
     if status is not 0:
         print("ERROR, " + rez)
         sys.exit(1)  # todo throws an exception
     return rez
 
 
-def get_modules_with_mt(path):
-    cwd = os.getcwd()
-    try:
-        os.chdir(path)
-        bash_cmd = ("cmd=\"find . -iname '*.cc' \" ; for i in cpp cxx h hh ; do cmd=\"${cmd} -o -iname '*.$i' \"; done ; " +
-                    "eval $cmd | cut -d \"/\" -f1-3 | uniq | sed 's|$|/|' | cut -c 3- ")
-
-        status, result = run_cmd(bash_cmd)  # only list directories 2 levels deep
-    except Exception as e:
-        logger.error("Error reading cloned repo files" + str(e))
-        sys.exit(1)
-
-    data_list = []
-    for l in result.split('\n'):
-        timestamp = get_git_mt(l)
-        data_list.append([l, timestamp])
-
-    os.chdir(cwd)
-    return data_list
+def get_modules_with_mt(path,depth=2):
+    data_list = {}
+    for l in ['/'.join(d.split('/')[-depth:]) for d in glob('%s/*/*' % path)]:
+        if l in data_list: continue
+        data_list.append([l, get_git_mt(path, l)])
+    return data_list.keys()
 
 
 def main():
@@ -153,9 +143,19 @@ def main():
     logger.debug("Modules not modified by prs:")
     logger.debug(pformat(unmodified_modules_sorted_by_time))
     if args.output:
+        package2categories={}
+        for cat in CMSSW_CATEGORIES:
+           for pack in CMSSW_CATEGORIES[cat]:
+               if pack not in package2categories:
+                   package2categories[pack] = set([])
+               package2categories[pack].add(cat)
+        categories = {}
+        for pack in package2categories:
+            categories[pack] = "-".join(sorted(package2categories[pack]))
         with open(args.output, 'w') as f:
             for i in unmodified_modules_sorted_by_time:
-                f.write("{} {}\n".format(i[0], i[1]))
+                cat = categories[i[0]] if i[0] in categories else 'unknown'
+                f.write("{} {}\n".format(cat, i[0]))
     logger.debug("GitHub API rate limit after: {}".format(gh.get_rate_limit()))
 
 

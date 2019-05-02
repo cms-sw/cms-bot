@@ -78,10 +78,12 @@ def get_git_mt(path, filename):
 
 
 def get_modules_with_mt(path,depth=2):
-    data_list = {}
+    data_list = []
+    unique_list = {}
     for l in ['/'.join(d.split('/')[-depth:]) for d in glob('%s/*/*' % path)]:
-        if l in data_list: continue
+        if l in unique_list: continue
         data_list.append([l, get_git_mt(path, l)])
+        unique_list[l]=1
     return data_list.keys()
 
 

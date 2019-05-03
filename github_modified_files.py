@@ -66,7 +66,7 @@ def main():
         rez[pr.number]['changed_files_names'] = pr_get_changed_files(pr)
 
     with open(args.destination, 'w') as d:
-        json.dump(rez, d)
+        json.dump(rez, d, sort_keys=True, indent=4)
 
     print("GitHub API rate limit after: {}".format(gh.get_rate_limit()))
 

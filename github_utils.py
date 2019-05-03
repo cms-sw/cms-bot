@@ -382,3 +382,6 @@ def pr_get_changed_files(pr):
         rez.append(f.filename)
     return rez
 
+
+def get_unix_time(data_obj):
+    return data_obj.strftime("%s")

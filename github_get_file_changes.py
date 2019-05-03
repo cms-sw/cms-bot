@@ -40,9 +40,6 @@ def get_changed_modules(filename_it):
     return changed_m
 
 
-def _get_unix_time(data_obj):
-    return data_obj.strftime("%s")
-
 
 def get_changed_filenames_by_pr(old_prs_dict, pr_list):
     """
@@ -54,7 +51,7 @@ def get_changed_filenames_by_pr(old_prs_dict, pr_list):
         nr = str(pr.number)
         if nr in old_prs_dict.keys():
             pr_old = old_prs_dict[nr]
-            if int(_get_unix_time(pr.updated_at)) == pr_old['updated_at']:
+            if int(get_unix_time(pr.updated_at)) == pr_old['updated_at']:
                 changed_file_set = changed_file_set.union(pr_old['changed_files_names'])
                 logger.debug("  Pr {} was cached".format(nr))
                 continue  # we used cached files, ignore the rest of the loop

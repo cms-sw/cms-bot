@@ -8,6 +8,7 @@ We assume that all PRs we are interested in are made for the master branch.
 from github import Github
 from github_utils import *
 from os.path import expanduser
+
 from repo_config import GH_TOKEN
 from argparse import ArgumentParser
 import json
@@ -24,6 +25,7 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("-r", "--repo")
     parser.add_argument("-d", "--destination")
+    parser.add_argument("-c", "--cached_pr", default=None)
     parser.add_argument("-b", "--branch", default='master')
     parser.add_argument("-l", "--logging", default="DEBUG", choices=logging._levelNames, help="Set level of logging")
     args = parser.parse_args()
@@ -33,16 +35,36 @@ def main():
     repo = gh.get_repo(args.repo)
     pr_list = get_pull_requests(repo, branch=args.branch)
 
+    old_prs_dict = {}
+    if args.cached_pr:
+        try:
+            with open(args.cached_pr) as f:
+                old_prs_dict = json.load(f)
+        except Exception as e:
+            logger.warning('Could not load a dumped prs', str(e))
+
+
     print("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
     rez = {}
     for pr in pr_list:
-        rez[int(pr.number)] = {
+        rez[pr.number] = {
             'number': int(pr.number),
             'state': pr.state,
             'created_at': int(pr.created_at.strftime("%s")),
             'updated_at': int(pr.updated_at.strftime("%s")),
-            'changed_files_names': pr_get_changed_files(pr)
         }
+
+        # to check for cached PRs
+        nr = str(pr.number)
+        if nr in old_prs_dict.keys():
+            pr_old = old_prs_dict[nr]
+            if int(get_unix_time(pr.updated_at)) == pr_old['updated_at']:
+                rez[pr.number]['changed_files_names'] = pr_old['changed_files_names']
+                logger.debug(" Using from cache".format(nr))
+                continue
+        logger.debug("!PR was updated".format(nr))
+        rez[pr.number]['changed_files_names'] = pr_get_changed_files(pr)
+
     with open(args.destination, 'w') as d:
         json.dump(rez, d)
 

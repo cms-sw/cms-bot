@@ -10,6 +10,7 @@ parser.add_argument("-b", "--base_branch", dest="base_branch",help="Repository b
 parser.add_argument("-f", "--feature_branch", dest="feature_branch",help="New feature branch to be merged",type=str)
 parser.add_argument("-t", "--title", dest="title", help="Pull request title",type=str)
 parser.add_argument("-d", "--body", dest="body", help="Pull request body text, optional",type=str, default='')
+parser.add_argument("-c", "--comment", dest="comment", help="Extra comment after creating Pull requests e.g. please tests",type=str, default='')
 
 args = parser.parse_args()
 if not args.repo: parser.error("Missing Repo")
@@ -21,4 +22,6 @@ gh = Github(login_or_token = open(expanduser("~/.github-token")).read().strip())
 print("Authentication succeeeded")
 gh_repo = gh.get_repo(args.repo)
 print("Creating pull request")
-gh_repo.create_pull(title = args.title, body = args.body.replace('@N@','\n'), base = args.base_branch, head = args.feature_branch)
+pr = gh_repo.create_pull(title = args.title, body = args.body.replace('@N@','\n'), base = args.base_branch, head = args.feature_branch)
+if args.comment:
+  pr.create_issue_comment(body=args.comment)

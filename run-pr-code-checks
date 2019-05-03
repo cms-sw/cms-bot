@@ -21,6 +21,16 @@ cd $CMSSW_BASE
 rm -rf ${CMSSW_BASE}/upload
 mkdir ${CMSSW_BASE}/upload
 
+#Enable code format if PR is made by cmsbuild
+if ! $CODE_FORMAT ; then
+  curl -s https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} > ${PULL_REQUEST}.txt
+  if [ $(grep '"title": ' ${PULL_REQUEST}.txt | grep '"Running code-format for ' | wc -l) -eq 1 ] ; then
+    if [ $(grep '"login": ' ${PULL_REQUEST}.txt | grep '"cmsbuild"' | wc -l) -eq 1 ] ; then
+      CODE_FORMAT=true
+    fi
+  fi
+fi
+
 if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050800 ] ; then
   rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
   git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules

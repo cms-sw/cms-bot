@@ -636,7 +636,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print('Previous tests already finished, resetting test request state to ',signatures["tests"])
       elif re.match( TRIGERING_TESTS_ABORT_MSG, first_line):
         abort_test = False
-      continue
+      #continue
 
     if issue.pull_request or push_test_issue:
       # Check if the release manager asked for merging this.

@@ -66,7 +66,7 @@ CMSSW_L2 = {
   "tocheng":          ["alca"],
   "zhenhu":           ["pdmv"],
   "christopheralanwest": ["alca"],
-  CMSBUILD_USER:      ["tests", "code-checks" ],
+  CMSBUILD_USER:      ["tests" ],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))

@@ -61,16 +61,8 @@ cd $BASE_IB
 eval `scram run -sh`
 set -x
 if $DQM_COMPARISON_TEST ; then
-  if [ ! -e $CMSSW_RELEASE_BASE/bin/$SCRAM_ARCH/compareDQMOutput.py ] ; then
+  if [ ! -e $CMSSW_RELEASE_BASE/src/DQMServices/FileIO/scripts/compareDQMOutput.py ] ; then
     DQM_COMPARISON_TEST=false
-    if [ $(echo "$PULL_REQUESTS" | tr ' ' '\n' | grep '^cms-sw/cmssw#26283$' | wc -l) -gt 0 ] ; then
-      pushd $CMSSW_BASE
-        git cms-merge-topic -u 26283
-        cp -r src/DQMServices/FileIO/scripts/* bin/${SCRAM_ARCH}/
-        DQM_COMPARISON_TEST=true
-        which compareDQMOutput.py || true
-      popd
-    fi
   fi
 fi
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then

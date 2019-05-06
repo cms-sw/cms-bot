@@ -34,7 +34,6 @@ if [ "$TEST_CONTEXT" = "GPU" ] ; then
   DO_MB_COMPARISON=false
   WORKFLOWS_FOR_VALGRIND_TEST=""
 fi
-CHECK_HEADER_TESTS=false
 
 ### this is for triggering the comparison with the baseline
 CMSDIST_ONLY=false

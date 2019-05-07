@@ -8,6 +8,7 @@ from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from datetime import datetime
 from os.path import join, exists
+from os import environ
 from github_utils import get_token, edit_pr, api_rate_limits
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
@@ -283,6 +284,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
   new_tests = False
+  if 'CMS_BOT_MULTI_PR_TESTS' in environ: new_tests = True
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
@@ -342,13 +344,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     else:
       add_external_category = True
       packages = set (["externals/"+repository])
-      ex_pkg = external_to_package(repository)
-      #if ex_pkg: packages.add(ex_pkg)
+      if new_tests:
+        ex_pkg = external_to_package(repository)
+        if ex_pkg: packages.add(ex_pkg)
       if (repo_org!=GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
           if repo_name != GH_CMSDIST_REPO:
             create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
+            create_test_property = new_tests
           else:
-            #Remove `else` for new tests and always set create_test_property
             create_test_property = True
       if (repo_name == GH_CMSDIST_REPO) and (not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref)):
           print("Skipping PR as it does not belong to valid CMSDIST branch")

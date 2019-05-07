@@ -6,6 +6,7 @@ ARRAY=(
 #   Array of packages to keep track of
 #   "REPO_NAME:SPECK_NAME"
     "cms-externals/llvm-project:llvm"
+    "cms-sw/SCRAM:SCRAMV1"
     )
 
 case ${PKG_REPO} in

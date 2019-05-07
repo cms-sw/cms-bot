@@ -234,7 +234,7 @@ for U_REPO in ${UNIQ_REPOS}; do
 			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
 			SPEC_NAME=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
 			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" ||
-			        exit_with_report_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
+			        exit_with_report_failure_main_pr "PARSE_BUILD_FAIL" ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
 			        cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo."
 			BUILD_EXTERNAL=true
 		;;

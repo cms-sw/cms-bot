@@ -26,6 +26,7 @@ COMMON_LABELS = {
   "process-complete" : LABEL_COLORS["approved"],
   "hold": LABEL_COLORS["hold"],
   "compilation-warnings": LABEL_COLORS["hold"],
+  "requires-external" : LABEL_COLORS["info"],
 }
 
 COMPARISON_LABELS = {
@@ -43,7 +44,6 @@ CMSSW_BUILD_LABELS = {
   "release-announced" : LABEL_TYPES["approved"],
   "toolconf-building" : LABEL_COLORS["hold"],
   "uploading-builds" : LABEL_COLORS["hold"],
-  "requires-external" : LABEL_COLORS["info"],
   "release-build-request" : LABEL_COLORS["approved"],
 }
 

@@ -45,7 +45,7 @@ TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+wo
                      cmsdist_pr=CMSDIST_PR_PATTERN,
                      release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
 
-CMS_PR_PATTERN=format('(#[1-9][0-9]+|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]+|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]+)',
+CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
                       cmsorgs='|'.join(EXTERNAL_REPOS))
 TEST_REGEXP_NEW = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)\s*$",
                      workflow=WF_PATTERN,

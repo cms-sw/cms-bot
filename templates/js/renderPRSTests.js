@@ -114,7 +114,7 @@ getHeader = function( resultsDict ){
   ibLink.attr( 'href' , getLinkToIB( resultsDict[ BASE_IB_KEY ] ) )
 
   var subtitle = $( '<h3>' )
-  subtitle.append( ibLink ).append( $( '<br/>' ))
+  subtitle.append( ibLink );
 
     PRS = resultsDict[ PR_NUMBERS_KEY ].split(' ')
     $.each( PRS , function( index ){
@@ -122,7 +122,7 @@ getHeader = function( resultsDict ){
       var pr = PRS[ index ]
       var addPrLink = $( "<a>" ).text( pr )
       addPrLink.attr( 'href' , getLinkToPR( pr ) )
-      subtitle.append( $( '<span>' ).text( ' ' ) ).append( addPrLink )
+      subtitle.append( $( '</br>' )).append( addPrLink )
 
     })
 

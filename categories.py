@@ -26,6 +26,7 @@ CMSSW_L2 = {
   "Dr15Jones":        ["core", "visualization", "geometry"],
   "Martin-Grunewald": ["hlt"],
   "alberto-sanchez":  ["generators"],
+  "agrohsje":         ["generators"],
   "alja":             ["visualization"],
   "andrius-k":        ["dqm"],
   "civanch":          ["simulation", "geometry", "fastsim"],

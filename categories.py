@@ -50,7 +50,6 @@ CMSSW_L2 = {
   "mommsen":          ["daq"],
   "mrodozov":         ["externals"],
   "perrotta":         ["reconstruction"],
-  "perrozzi":         ["generators"],
   "peruzzim":         ["xpog"],
   "pgunnell":         ["pdmv"],
   "pohsun":           ["alca"],

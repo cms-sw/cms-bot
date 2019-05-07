@@ -8,23 +8,18 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 WORKSPACE=$(dirname ${CMS_BOT_DIR} )
 CACHED=${WORKSPACE}/CACHED
-
-PKG_REPO=$1       # Repo of external (ex. cms-sw/root)
-PKG_NAME=$2       # Name of external (ex. root)
-CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
-ARCHITECTURE=$4           # Architecture (ex. slc7_amd64_gcc700)
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 
-SPEC_NAME=${PKG_NAME}
-case ${PKG_REPO} in
-  cms-data/*) SPEC_NAME="data-${PKG_NAME}" ;;
-esac
-# ---
+PKG_REPO=$1       # Repo of external (ex. cms-sw/root)
+SPEC_NAME=$2      # Name of external spec file without extension (ex. root)
+CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
+ARCHITECTURE=$4   # Architecture (ex. slc7_amd64_gcc700)
+PKG_NAME=$(echo ${PKG_REPO} | sed 's|.*/||')      # Repo of external (ex. cms-sw/root)
 
 # Checked if variables are passed
-if [[ -z "$PKG_REPO" || -z "$PKG_NAME" || -z "$CMS_SW_TAG" ]]; then
+if [[ -z "$PKG_REPO" || -z "$SPEC_NAME" || -z "$CMS_SW_TAG" ]]; then
     >&2 echo "empty parameters"
-    >&2 echo "EXTERNAL_REPO: '${PKG_REPO}', PKG_NAME: '${PKG_NAME}', CMS_SW_TAG: '${CMS_SW_TAG}'"
+    >&2 echo "EXTERNAL_REPO: '${PKG_REPO}', SPEC_NAME: '${SPEC_NAME}', CMS_SW_TAG: '${CMS_SW_TAG}'"
     exit 1
 fi
 

@@ -187,7 +187,7 @@ parseResultsIntoDict = function( results ){
 //----------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------
-IGNORE_KEYS=["PR_NUMBER","ADDITIONAL_PRS","BASE_IB","BUILD_NUMBER"];  // Keys to ignore in testsResults.txt
+IGNORE_KEYS=["PR_NUMBER", "PR_NUMBERS","ADDITIONAL_PRS","BASE_IB","BUILD_NUMBER"];  // Keys to ignore in testsResults.txt
 BASE_IB_KEY = 'BASE_IB';
 PR_NUMBER_KEY = 'PR_NUMBER';
 PR_NUMBERS_KEY = 'PR_NUMBERS';

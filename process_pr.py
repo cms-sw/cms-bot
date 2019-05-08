@@ -571,7 +571,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Ignore all other messages which are before last commit.
     if issue.pull_request and (comment.created_at < last_commit_date):
-      #pull_request_updated = True
       continue
 
     if ("code-checks"==first_line and cmssw_repo):
@@ -1106,6 +1105,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                " meeting if really needed.\n")
 
   commentMsg = ""
+  print("Status: Not see= %s, Updated: %s" % (already_seen, pull_request_updated))
   if (pr.base.ref in RELEASE_BRANCH_CLOSED) and (pr.state != "closed"):
     commentMsg = messageBranchClosed
   elif (not already_seen) or pull_request_updated:

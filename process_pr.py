@@ -494,6 +494,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     first_line = comment_lines[0:1]
     if not first_line: continue
     first_line = first_line[0]
+    print("DEBUG: comment:",commenter,":",first_line)
     if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
       already_seen = comment
       backport_pr_num = get_backported_pr(comment_msg)
@@ -573,6 +574,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if issue.pull_request and (comment.created_at < last_commit_date):
       continue
 
+    print("  DEBUG: Processing as newer than commit time.")
     if ("code-checks"==first_line and cmssw_repo):
       signatures["code-checks"] = "pending"
       trigger_code_checks=True

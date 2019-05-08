@@ -4,10 +4,9 @@ PKG_REPO=$1
 PKG_NAME=$(echo ${PKG_REPO} | sed 's|.*/||')
 ARRAY=(
 #   Array of packages to keep track of
-#   Needs to be all lowercase
 #   "REPO_NAME:SPECK_NAME"
     "cms-externals/llvm-project:llvm"
-    "cms-sw/scram:SCRAMV1"
+    "cms-sw/SCRAM:SCRAMV1"
     )
 
 case ${PKG_REPO} in

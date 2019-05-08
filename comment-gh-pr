@@ -4,7 +4,7 @@ Makes a comment on Pull request on Github
 """
 from __future__ import print_function
 from github import Github
-from os.path import expanduser, dirname, abspath,join,exists
+from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from sys import exit
 import re, sys

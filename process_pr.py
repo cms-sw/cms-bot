@@ -569,7 +569,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Ignore all other messages which are before last commit.
     if issue.pull_request and (comment.created_at < last_commit_date):
-      pull_request_updated = True
+      #pull_request_updated = True
       continue
 
     if ("code-checks"==first_line and cmssw_repo):

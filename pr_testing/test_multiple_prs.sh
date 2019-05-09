@@ -68,7 +68,7 @@ function prepare_upload_comment_exit(){
     if [ -z ${NO_POST} ]; then
         send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
     fi
-    report_pull_request_results_all_prs "$1" --pr-job-id ${BUILD_NUMBER} ${NO_POST}
+    report_pull_request_results_all_prs $@ --pr-job-id ${BUILD_NUMBER} ${NO_POST}
     exit 0
 }
 
@@ -315,7 +315,7 @@ if ${BUILD_EXTERNAL} ; then
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> $RESULTS_FILE
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
-      prepare_upload_comment_exit "PARSE_BUILD_FAIL"
+      prepare_upload_comment_exit "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log
     else
       echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE
     fi

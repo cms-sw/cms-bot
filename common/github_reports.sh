@@ -16,7 +16,7 @@ function report_pull_request_results_all_prs() {
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        ${CMS_BOT_DIR}/report-pull-request-results "$@" --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}  # $@ - pass all parameters given to function
+        ${CMS_BOT_DIR}/report-pull-request-results $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}  # $@ - pass all parameters given to function
     done
 }
 
@@ -25,7 +25,7 @@ function report_pull_request_results_all_prs_with_commit() {
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
-        ${CMS_BOT_DIR}/report-pull-request-results "$@" --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${LAST_PR_COMMIT}
+        ${CMS_BOT_DIR}/report-pull-request-results $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${LAST_PR_COMMIT}
     done
 }
 
@@ -45,6 +45,6 @@ function exit_with_report_failure_main_pr(){
     PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '^$' | head -1  ) # get main(first) pr
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//')
     PR_NR=$(echo ${PR} | sed 's/.*#//')
-    ${CMS_BOT_DIR}/report-pull-request-results  "$@" --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}
+    ${CMS_BOT_DIR}/report-pull-request-results  $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}
     exit 0
 }

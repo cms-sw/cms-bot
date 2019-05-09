@@ -123,7 +123,7 @@ echo "COMPARISON;RUNNING" >> $WORKSPACE/results/testsResults.txt
 send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
 
 if $DQM_COMPARISON_TEST ; then
-  compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -n $PULL_REQUEST_NUMBER -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC &> $WORKSPACE/upload/dqmBinByBinLog.log || true
+  (compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -n $PULL_REQUEST_NUMBER -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1) || true
   echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> $WORKSPACE/results/testsResults.txt
 fi
 

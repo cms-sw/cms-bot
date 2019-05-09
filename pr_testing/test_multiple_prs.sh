@@ -259,7 +259,8 @@ report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BU
 
 # Prepera html templates
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
-cp $CMS_BOT_DIR/templates/js/renderPRSTests.js $WORKSPACE/renderPRTests.js
+sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRSTests.js > $WORKSPACE/renderPRTests.js
+
 
 touch $RESULTS_FILE
 echo "PR_NUMBERS;$PULL_REQUESTS" >> $RESULTS_FILE

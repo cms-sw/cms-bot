@@ -576,6 +576,8 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("trkSumPtSolidConeDR03", cName,tName);
   photon("trkSumPtHollowConeDR03", cName,tName);
   photon("chargedHadronIso", cName,tName);
+  photon("chargedHadronWorstVtxIso", cName,tName);
+  photon("chargedHadronPFPVIso", cName,tName);
   photon("neutralHadronIso", cName,tName);
   photon("photonIso", cName,tName);
   photon("sumChargedParticlePt", cName,tName);
@@ -602,6 +604,7 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("showerShapeVariables().e2x5Right",cName,tName, true);
   photon("showerShapeVariables().e2x5Top",cName,tName, true);
   photon("showerShapeVariables().e2x5Bottom",cName,tName, true);
+  photon("showerShapeVariables().smMajor",cName,tName, true);
 
   photon("energyCorrections().scEcalEnergy", cName,tName, true);
   photon("energyCorrections().scEcalEnergyError", cName,tName, true);
@@ -729,6 +732,7 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("full5x5_eTop", cName, tName);
   electron("nSaturatedXtals", cName, tName);
   electron("dr03TkSumPt", cName, tName);
+  electron("dr03TkSumPtHEEP", cName, tName);
   electron("dr03EcalRecHitSumEt", cName, tName);
   electron("dr03HcalDepth1TowerSumEt", cName, tName);
   electron("dr03HcalTowerSumEt", cName, tName);
@@ -736,6 +740,7 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("dr03HcalTowerSumEtBc", cName, tName);
   electron("convDist", cName, tName);
   electron("convRadius", cName, tName);
+  electron("convVtxFitProb", cName, tName);
   electron("pfIsolationVariables().chargedHadronIso", cName, tName, true);
   electron("pfIsolationVariables().neutralHadronIso", cName, tName, true);
   electron("pfIsolationVariables().photonIso", cName, tName, true);
@@ -974,6 +979,7 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("jetPtRatio", cName,tName);
     muonVar("jetPtRel", cName,tName);
     muonVar("mvaValue", cName,tName);
+    muonVar("lowptMvaValue", cName,tName);
     muonVar("softMvaValue", cName,tName);
 
     muonVar("simType", cName,tName);
@@ -1019,6 +1025,7 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("eta",cName,tName);
   packedCandVar("hcalFraction",cName,tName); 
   packedCandVar("rawCaloFraction",cName,tName); 
+  packedCandVar("caloFraction",cName,tName); 
   //all false now//  packedCandVar("isElectron",cName,tName);
   //all false now//  packedCandVar("isPhoton",cName,tName);
   //all false now//  packedCandVar("isConvertedPhoton",cName,tName);
@@ -2549,6 +2556,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       packedCand("lostTracks_eleTracks");
       packedCand("packedPFCandidatesDiscarded_");
 
+      tbr="patHcalDepthEnergyFractionsedmValueMap_packedPFCandidates_hcalDepthEnergyFractions_"+recoS+".obj";
+      if (checkBranchOR(tbr, true)){
+        plotvar(tbr+".values_.fraction(0)");
+        plotvar(tbr+".values_.fraction(0)", tbr+".values_.fraction(0)>=0");
+      }
+
       tbr="patIsolatedTracks_isolatedTracks__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
@@ -2568,6 +2581,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".pfLepOverlap()");
         plotvar("min(30,"+tbr+".pfNeutralSum())");
       }
+
+      //L1 prefire weights in miniAOD
+      plotvar("double_prefiringweight_nonPrefiringProb_"+recoS+".obj");
+      plotvar("double_prefiringweight_nonPrefiringProbUp_"+recoS+".obj");
     }
     
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "vertex")) && !stepContainsNU(step, "cosmic") ){
@@ -3336,6 +3353,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("double_kt6PFJets_rho_"+recoS+".obj");
       plotvar("double_kt6CaloJets_rho_"+recoS+".obj");
       plotvar("double_fixedGridRhoFastjetAll__"+recoS+".obj");
+      plotvar("double_fixedGridRhoFastjetAllTmp__"+recoS+".obj");
       plotvar("double_fixedGridRhoAll__"+recoS+".obj");
 
       tbr="recoJetIDedmValueMap_ak5JetID__"+recoS+".obj";

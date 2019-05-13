@@ -167,6 +167,7 @@ RunEGamma2018Bwf136p862 136.862_RunEGamma2018B+*/step3.root reRECO
 RunDoubleMuon2018Bwf136p863 136.863_RunDoubleMuon2018B+*/step3.root reRECO
 RunJetHT2018Bwf136p864 136.864_RunJetHT2018B+*/step3.root reRECO
 RunMET2018Bwf136p865 136.865_RunMET2018B+*/step3.root reRECO
+RunEGamma2018Cwf136p874 136.874_RunEGamma2018C+*/step3.root reRECO
 RunJetHT2018Cwf136p876 136.876_RunJetHT2018C+*/step3.root reRECO
 RunEGamma2018Dwf136p886 136.886_RunEGamma2018D+*/step3.root reRECO
 RunJetHT2018Dwf136p888 136.888_RunJetHT2018D+*/step3.root reRECO
@@ -279,6 +280,7 @@ ProdTTbar13TeVPUpmx2018wf250202p118 250202.118_ProdTTbar_13*/step3.root RECO
 #  2019 MC
 #
 TTbar13TeV2019wf11624p0 11624.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2019*/step3.root RECO
+TTbar13TeV2021wf11624p0 11624.0_TTbar_13+TTbar_13TeV_TuneCUETP8M1_2021*/step3.root RECO
 #
 #2023 workflows follow
 #

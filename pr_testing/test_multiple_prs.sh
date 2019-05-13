@@ -315,7 +315,7 @@ if ${BUILD_EXTERNAL} ; then
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> $RESULTS_FILE
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> $RESULTS_FILE
-      prepare_upload_comment_exit "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log
+      prepare_upload_comment_exit "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/upload/cmsswtoolconf.log
     else
       echo 'CMSSWTOOLCONF_RESULTS;OK' >> $RESULTS_FILE
     fi

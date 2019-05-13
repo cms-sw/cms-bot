@@ -7,7 +7,6 @@ from optparse import OptionParser
 import subprocess
 import re
 import json
-import pickle
 from pickle import Unpickler
 from os.path import basename, dirname, exists, join, expanduser
 from glob import glob

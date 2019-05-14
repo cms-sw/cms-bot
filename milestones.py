@@ -162,3 +162,12 @@ RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_5_X")
 ######################################################################
 RELEASE_BRANCH_MILESTONE["CMSSW_10_6_X"]=80
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_10_6_X")
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_11_0_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_11_0_X"]=81
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_DEVEL_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_CXXMODULE_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_ROOT614_X")

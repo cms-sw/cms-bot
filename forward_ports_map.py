@@ -186,7 +186,6 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_5_X/gcc700"].append("IB/CMSSW_10_5_X/gc
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_10_6_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_10_6_X"].append("CMSSW_10_6_DEVEL_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_10_6_X"].append("CMSSW_10_6_ROOT614_X")
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_10_6_X"].append("CMSSW_10_6_CXXMODULE_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_6_X/gcc700"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_6_X/gcc700"].append("IB/CMSSW_10_6_X/rootnext")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_6_X/gcc700"].append("IB/CMSSW_10_6_X/rootmaster")
@@ -196,3 +195,17 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_6_X/gcc700"].append("IB/CMSSW_10_6_X/ge
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_6_X/gcc700"].append("IB/CMSSW_10_6_X/cxxmodule")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_6_X/gcc700"].append("IB/CMSSW_10_6_X/geant104")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_10_6_X/gcc700"].append("IB/CMSSW_10_6_X/gcc9")
+
+#Automatically added
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_0_X"]=[]
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_0_X"].append("CMSSW_11_0_DEVEL_X")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_0_X"].append("CMSSW_11_0_ROOT614_X")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"]=[]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/rootnext")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/rootmaster")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/gcc700next")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/gcc820")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/geant4")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/cxxmodule")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/geant104")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/gcc9")

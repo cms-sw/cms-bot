@@ -10,6 +10,7 @@ while [ $# -gt 0 ]; do
     -c|--current )          SET_CURRENT="yes"     ;        shift;;
     -C|--rucio-config-url ) RUCIO_CONFIG_URL="$2" ; shift; shift;;
     -v|--rucio-version )    RUCIO_VERSION="$2"    ; shift; shift;;
+    * ) echo "Error: Unknown arg '$1'"; exit 1;;
   esac
 done
 

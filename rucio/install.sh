@@ -37,3 +37,6 @@ if [ "$SET_CURRENT" = "yes" ] ; then
   ln -s ${RUCIO_VERSION} ${INSTALL_DIR}/${PIP_PKG}/current
 fi
 
+cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/${PIP_PKG}/setup.sh
+chmod 0644 ${INSTALL_DIR}/${PIP_PKG}/setup.sh
+

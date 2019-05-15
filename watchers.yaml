@@ -1212,6 +1212,7 @@ felicepantaleo:
 - DataFormats/HGCRecHit
 - RecoLocalCalo/HGCalRecProducers
 - RecoParticleFlow/PFClusterProducer
+- RecoHGCal
 mtosi:
 - DQMOffline/Trigger
 - DQM/HLTEvF

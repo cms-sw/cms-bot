@@ -1,5 +1,4 @@
 #!/bin/bash -ex
-PYTHON_DIR="/cvmfs/cms.cern.ch/slc7_amd64_gcc700/external/py2-pip/9.0.3-pafccj"
 RUCIO_CONFIG_URL="https://raw.githubusercontent.com/cms-sw/cmsdist/comp_gcc630/rucio-config.file"
 INSTALL_DIR=$(/bin/pwd)
 SET_CURRENT="no"
@@ -10,14 +9,11 @@ while [ $# -gt 0 ]; do
     -i|--install-dir )      INSTALL_DIR="$2"      ; shift; shift;;
     -c|--current )          SET_CURRENT="yes"     ;        shift;;
     -C|--rucio-config-url ) RUCIO_CONFIG_URL="$2" ; shift; shift;;
-    -p|--python )           PYTHON_DIR="$2"       ; shift; shift;;
     -v|--rucio-version )    RUCIO_VERSION="$2"    ; shift; shift;;
   esac
 done
 
 if [ ! -e ${INSTALL_DIR}/current ] ; then SET_CURRENT="yes" ; fi
-
-set +x ; source ${PYTHON_DIR}/etc/profile.d/init.sh ;set -x
 
 if [ "${RUCIO_VERSION}" = "latest" ] ; then
   RUCIO_VERSION=$(pip search rucio-clients 2>&1 | grep '^rucio-clients ' | sed 's|).*||;s|.*(||')

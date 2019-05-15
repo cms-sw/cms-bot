@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 THISDIR=$(/bin/cd $(dirname $0); /bin/pwd)
 SELECTED_VERSION=${1-current}
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then

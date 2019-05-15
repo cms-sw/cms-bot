@@ -1,5 +1,5 @@
-#!/bin/bash -ex
-THISDIR=$(/bin/cd $(dirname $0); /bin/pwd)
+#!/bin/bash
+THISDIR=$(dirname $(realpath $0))
 SELECTED_VERSION=${1-current}
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then
   echo "Error: Unable to find rucio version '${SELECTED_VERSION}'" >&2

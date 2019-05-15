@@ -200,7 +200,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
             pr_md5 = md5(pr_number + "\n").hexdigest()
             pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
             if not exists(pr_cache):
-                print("  Invalid/Indirect PR", pr)
+                print("  Chache does not exists: ", pr_cache)
                 cache_invalid_pr(pr_hash_id, cache)
                 continue
             pr = json.load(open(pr_cache))

@@ -32,12 +32,14 @@ rm -f ${PYTHONUSERBASE}/etc/rucio.cfg
 ln -s ../../rucio.cfg ${PYTHONUSERBASE}/etc/rucio.cfg
 rm -rf ${TMPDIR}
 
+cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup.sh
+chmod 0644 ${INSTALL_DIR}/setup.sh
+
 if [ "$SET_CURRENT" = "yes" ] ; then
   rm -f ${INSTALL_DIR}/current
   ln -s ${RUCIO_VERSION} ${INSTALL_DIR}/current
+  /bin/bash ${INSTALL_DIR}/setup.sh
+else
+  /bin/bash ${INSTALL_DIR}/setup.sh ${RUCIO_VERSION}
 fi
-
-cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup.sh
-chmod 0644 ${INSTALL_DIR}/setup.sh
-bash ${INSTALL_DIR}/setup.sh
 

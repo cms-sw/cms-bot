@@ -39,4 +39,5 @@ fi
 
 cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup.sh
 chmod 0644 ${INSTALL_DIR}/setup.sh
+bash ${INSTALL_DIR}/setup.sh
 

@@ -15,6 +15,8 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+if [ ! -e ${INSTALL_DIR}/current ] ; then SET_CURRENT="yes" ; fi
+
 set +x ; source ${PYTHON_DIR}/etc/profile.d/init.sh ;set -x
 
 if [ "${RUCIO_VERSION}" = "latest" ] ; then

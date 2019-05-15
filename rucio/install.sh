@@ -16,14 +16,14 @@ done
 if [ ! -e ${INSTALL_DIR}/current ] ; then SET_CURRENT="yes" ; fi
 
 if [ "${RUCIO_VERSION}" = "latest" ] ; then
-  RUCIO_VERSION=$(pip search rucio-clients 2>&1 | grep '^rucio-clients ' | sed 's|).*||;s|.*(||')
+  RUCIO_VERSION=$(pip search --disable-pip-version-check rucio-clients 2>&1 | grep '^rucio-clients ' | sed 's|).*||;s|.*(||')
 fi
 
 PIP_PKG=rucio-clients
 export PYTHONUSERBASE="${INSTALL_DIR}/${RUCIO_VERSION}"
 mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
 export TMPDIR="${INSTALL_DIR}/tmp"
-pip install --user ${PIP_PKG}
+pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
 rm -f ${INSTALL_DIR}/rucio.cfg
 curl -s -o ${INSTALL_DIR}/rucio.cfg ${RUCIO_CONFIG_URL}
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg

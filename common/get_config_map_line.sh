@@ -22,7 +22,10 @@ if [[ -z "$RELEASE_QUEUE" && -z "$CMS_DIST_TAG"  ]]; then
     RELEASE_QUEUE='master'
 fi
 if [[ "$RELEASE_QUEUE" == "master" ]] ; then
-    RELEASE_QUEUE=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' ${CMS_BOT_DIR}/releases.py | sed 's/.*= *//;s/"//g;s/ //g'  )
+    RELEASE_QUEUE=$(curl -s -L https://cmssdt.cern.ch/SDT/BaselineDevRelease | grep '^CMSSW_')
+    if [[ -z "$RELEASE_QUEUE" ]] ; then
+        RELEASE_QUEUE=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' ${CMS_BOT_DIR}/releases.py | sed 's/.*= *//;s/"//g;s/ //g'  )
+    fi
 fi
 ARCH_MATCH=$(formatFilter 'SCRAM_ARCH' "${ARCHITECTURE}")
 CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' "${RELEASE_QUEUE}")
@@ -54,3 +57,4 @@ fi
 
 # we deleted `#` and ignore the last empty line
 echo "${SUB_FILTERED_LINES}" | tr '#' '\n' | head -1
+

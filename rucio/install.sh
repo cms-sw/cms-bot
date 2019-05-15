@@ -33,7 +33,7 @@ rm -rf ${TMPDIR}
 
 cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup.sh
 chmod 0644 ${INSTALL_DIR}/setup.sh
-touch ${PYTHONUSERBASE}/.cvmfscatalog
+#touch ${PYTHONUSERBASE}/.cvmfscatalog
 
 if [ "$SET_CURRENT" = "yes" ] ; then
   rm -f ${INSTALL_DIR}/current

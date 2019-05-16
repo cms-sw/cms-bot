@@ -8,7 +8,7 @@ and will ignore upper level files or directories.
 from __future__ import print_function
 from github import Github
 from github_utils import *
-from os.path import expanduser
+from os.path import expanduser, exists
 from repo_config import GH_TOKEN
 from argparse import ArgumentParser
 from glob import glob
@@ -91,6 +91,7 @@ def main():
     parser.add_argument("-r", "--cloned_repo", help="Path to cloned git repository")
     parser.add_argument("-l", "--logging", default="DEBUG", choices=logging._levelNames, help="Set level of logging")
     parser.add_argument("-o", "--output", default=None, help="Set level of logging")
+    parser.add_argument("-i", "--ignore_modules", default=None, help="Ignore modules which are already done.")
     args = parser.parse_args()
 
     logger.setLevel(args.logging)
@@ -121,6 +122,9 @@ def main():
         logger.debug(pformat(new_files))
 
     non_changed_modules = all_branch_modules_names.difference(modules_mod_by_prs)
+    already_done_modules = set([])
+    if args.ignore_modules and exists(args.ignore_modules):
+        already_done_modules = set(['/'.join(d.split('/')[-2:]) for d in glob('%s/*/*' % args.ignore_modules)])
 
     logger.debug("modules_mod_by_prs")
     logger.debug(pformat(modules_mod_by_prs))
@@ -128,15 +132,15 @@ def main():
     logger.debug("all_branch_modules_w_mt")
     logger.debug(pformat(all_branch_modules_w_mt))
     logger.debug("---")
-    logger.debug("modules_mod_by_prs")
-    logger.debug(pformat(modules_mod_by_prs))
+    logger.debug("non_changed_module")
+    logger.debug(pformat(non_changed_modules))
     logger.debug("---")
     print(pformat(
         "Modules modified by prs: {} \nAll modules: {} \nModules not touched by prs: {} \nNew modules: {}".format(
             len(modules_mod_by_prs), len(all_branch_modules_w_mt), len(non_changed_modules), len(new_files)))
     )
 
-    unmodified_modules_sorted_by_time = [x for x in all_branch_modules_w_mt if x[0] not in modules_mod_by_prs]
+    unmodified_modules_sorted_by_time = [x for x in all_branch_modules_w_mt if (x[0] not in modules_mod_by_prs) and (x[0] not in already_done_modules)]
     unmodified_modules_sorted_by_time = sorted(unmodified_modules_sorted_by_time, cmp=lambda x, y: cmp_f(x[1], y[1]))
 
     logger.debug("Modules not modified by prs:")

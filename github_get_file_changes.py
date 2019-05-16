@@ -125,7 +125,7 @@ def main():
     if args.ignore_modules and exists(args.ignore_modules):
         non_changed_modules_filtered = set([])
         for non_changed_module in non_changed_modules:
-            if exists(join(args.ignore_modules, non_changed_module, 'done'):
+            if exists(join(args.ignore_modules, non_changed_module, 'done')):
                 continue
             non_changed_modules_filtered.add(non_changed_module)
         non_changed_modules = non_changed_modules_filtered

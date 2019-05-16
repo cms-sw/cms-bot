@@ -133,7 +133,7 @@ def main():
     logger.debug(pformat(all_branch_modules_w_mt))
     logger.debug("---")
     logger.debug("non_changed_module")
-    logger.debug(pformat(non_changed_module))
+    logger.debug(pformat(non_changed_modules))
     logger.debug("---")
     print(pformat(
         "Modules modified by prs: {} \nAll modules: {} \nModules not touched by prs: {} \nNew modules: {}".format(

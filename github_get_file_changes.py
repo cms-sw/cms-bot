@@ -8,7 +8,7 @@ and will ignore upper level files or directories.
 from __future__ import print_function
 from github import Github
 from github_utils import *
-from os.path import expanduser
+from os.path import expanduser, join, exists
 from repo_config import GH_TOKEN
 from argparse import ArgumentParser
 from glob import glob
@@ -91,6 +91,7 @@ def main():
     parser.add_argument("-r", "--cloned_repo", help="Path to cloned git repository")
     parser.add_argument("-l", "--logging", default="DEBUG", choices=logging._levelNames, help="Set level of logging")
     parser.add_argument("-o", "--output", default=None, help="Set level of logging")
+    parser.add_argument("-i", "--ignore_modules", default=None, help="Ignore modules which are already done.")
     args = parser.parse_args()
 
     logger.setLevel(args.logging)
@@ -121,6 +122,13 @@ def main():
         logger.debug(pformat(new_files))
 
     non_changed_modules = all_branch_modules_names.difference(modules_mod_by_prs)
+    if args.ignore_modules and exists(args.ignore_modules):
+        non_changed_modules_filtered = set([])
+        for non_changed_module in non_changed_modules:
+            if exists(join(args.ignore_modules, non_changed_module, 'done'):
+                continue
+            non_changed_modules_filtered.add(non_changed_module)
+        non_changed_modules = non_changed_modules_filtered
 
     logger.debug("modules_mod_by_prs")
     logger.debug(pformat(modules_mod_by_prs))

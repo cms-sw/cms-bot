@@ -3,7 +3,7 @@ from sys import argv
 from hashlib import md5
 import json
 from _py2with3compatibility import run_cmd, urlopen, Request
-from os.path import exists, dirname, abspath, join
+from os.path import exists, dirname, abspath, join, basename
 import re
 
 try:
@@ -255,7 +255,8 @@ def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache={}):
         print("Error while getting release notes.")
         print(notes)
         exit(1)
-    return fill_notes_description(notes, "cms-sw/" + git_dir[:-4], cmsprs, cache)
+    repo_name = basename(git_dir[:-4])
+    return fill_notes_description(notes, "cms-sw/" + repo_name, cmsprs, cache)
 
 
 def save_prs_cache(cache, cache_file):

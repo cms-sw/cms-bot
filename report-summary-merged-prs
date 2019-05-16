@@ -11,6 +11,7 @@ from pickle import Unpickler
 from os.path import basename, dirname, exists, join, expanduser
 from glob import glob
 from github import Github
+from pprint import pformat
 
 from cmsutils import get_config_map_properties
 from github_utils import get_merge_prs
@@ -85,10 +86,14 @@ if (len(args) < 4):
     exit()
 
 # Remember that the cmssw repo is a bare clone while cmsdist is a complete clone
-CMSSW_REPO = args[0]
+CMSSW_REPO_LOCAL = args[0]
 GITHUB_IO_REPO = args[1]
 CMSDIST_REPO = args[2]
 START_DATE = args[3]
+if len(args) >= 5:
+    CMS_PRS = args[4]
+else:
+    CMS_PRS = "cms-prs"
 ARTIFACTS_MACHINE = "cmssdt03.cern.ch"
 
 
@@ -152,8 +157,10 @@ def get_config_map_params():
 
         if (not params.get('DISABLED') or params.get('IB_WEB_PAGE')) and (not params.get('NO_IB')):
             if not RELEASES_ARCHS.get(release_queue):
+                RELEASES_ARCHS_WITH_DIST_BRANCH[release_queue] = {}
                 RELEASES_ARCHS[release_queue] = []
             RELEASES_ARCHS[release_queue].append(arch)
+            RELEASES_ARCHS_WITH_DIST_BRANCH[release_queue][arch] = params['CMSDIST_TAG']
             if release_queue not in RELEASE_QUEUES:
                 RELEASE_QUEUES.append(release_queue)
 
@@ -570,7 +577,7 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
     comp = {}
     comp['compared_tags'] = '%s-->%s' % (start_tag, end_tag)
     comp['release_name'] = end_tag
-    notes = get_merge_prs(start_tag, end_tag, git_dir, "cms-prs", cache)
+    notes = get_merge_prs(start_tag, end_tag, git_dir, CMS_PRS, cache)
     prs = []
     for pr_num in notes:
         pr = {'is_merge_commit': False, 'from_merge_commit': False}
@@ -701,6 +708,7 @@ def print_results(results):
 
             merged_prs = [pr['number'] for pr in comp['merged_prs']]
             print('\t' + 'PRs:' + str(merged_prs))
+            print(pformat(comp['cmsdist_merged_prs']))
 
             from_merge_commit = [pr['number'] for pr in comp['merged_prs'] if pr['from_merge_commit']]
             print('\t' + 'From merge commit' + str(from_merge_commit))
@@ -720,9 +728,6 @@ def fill_missing_cmsdist_tags(results):
     for rq in results:
         previous_cmsdist_tags = {}
         for comp in rq['comparisons']:
-            # TODO unused
-            # rel_name = comp['compared_tags'].split('-->')[1]
-
             for arch in comp['tests_archs']:
                 current_ib_tag_arch = comp['cmsdistTags'].get(arch)
                 if current_ib_tag_arch:
@@ -732,6 +737,56 @@ def fill_missing_cmsdist_tags(results):
                         comp['cmsdistTags'][arch] = previous_cmsdist_tags[arch]
                     else:
                         comp['cmsdistTags'][arch] = 'Not Found'
+
+
+def get_cmsdist_merge_commits(results):
+    """
+    Will modiffy object in place
+    """
+    for release_queue in results:
+        previous_cmsdist_tags = {}
+        release_queue_name = release_queue['release_name']
+        for pos, comp in enumerate(release_queue['comparisons'], start=1):
+            comp['cmsdist_merged_prs'] = {}
+
+            if pos == len(release_queue['comparisons']):
+                # this is special case when we want to compare unreleased IB with branch head
+                # sinces it is not an IB, there are no build archs yet.
+                archs_to_iterate_over = RELEASES_ARCHS[release_queue_name]
+            else:
+                archs_to_iterate_over = comp['tests_archs']
+
+            for arch in archs_to_iterate_over:
+                cmsdist_branch = RELEASES_ARCHS_WITH_DIST_BRANCH[release_queue_name][arch]
+                if pos == len(release_queue['comparisons']):
+                    # if this last comparison, it means its not yet an IB
+                    # we want to compare branch HEAD with last tag
+                    # we will compare with remote branch to avoid checking out all the time, this is the reason for
+                    # remotes/origin/{BRANCH_NAME}
+                    current_ib_tag_arch = "remotes/origin/" + cmsdist_branch
+                else:
+                    # else, just use current cmsdistTag
+                    current_ib_tag_arch = comp['cmsdistTags'].get(arch)
+                if arch in previous_cmsdist_tags:
+                    previous_cmsdist_tag = previous_cmsdist_tags[arch]
+                else:
+                    previous_cmsdist_tag = current_ib_tag_arch
+
+                previous_cmsdist_tags[arch] = current_ib_tag_arch
+                notes = get_merge_prs(previous_cmsdist_tag, current_ib_tag_arch, "{0}/.git".format(CMSDIST_REPO), CMS_PRS)
+                prs = []
+                for pr_num in notes:
+                    pr = {'is_merge_commit': False, 'from_merge_commit': False}
+                    if notes[pr_num]['branch'] != "master":
+                        if notes[pr_num]['branch'] != cmsdist_branch:
+                            pr['from_merge_commit'] = True
+                    pr['number'] = pr_num
+                    pr['hash'] = notes[pr_num]['hash']
+                    pr['author_login'] = notes[pr_num]['author']
+                    pr['title'] = notes[pr_num]['title']
+                    pr['url'] = 'https://github.com/cms-sw/cmsdist/pull/%s' % pr_num
+                    prs.append(pr)
+                comp['cmsdist_merged_prs'][arch] = prs
 
 
 def add_tests_to_results(results, unit_tests, relvals_results,
@@ -1242,10 +1297,10 @@ if __name__ == "__main__":
     JENKINS_ARTIFACTS_SUBDIR = "SDT/jenkins-artifacts"
     JENKINS_ARTIFACTS_DIR = CMSSDT_DIR + "/" + JENKINS_ARTIFACTS_SUBDIR
     # I used this type of concatenation because the string has %s inside
-    MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR=' + CMSSW_REPO + ' git log --merges  --pretty=\'"%s", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
+    MAGIC_COMMAND_FIND_FIRST_MERGE_WITH_TAG = 'GIT_DIR=' + CMSSW_REPO_LOCAL + ' git log --merges  --pretty=\'"%s", "tags->,%d"\' END_TAG | grep "tags->" | head -n1'
     MAGIC_COMMAD_FIND_RESULTS_RELVALS = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www  -mindepth 6 -maxdepth 6 -path "*/pyRelValMatrixLogs/run/runall-report-step123-.log"'
     MAGIC_COMMAND_FIND_EXCEPTIONS_RESULTS_RELVALS = "find cms-sw.github.io/data/relvals/ -name '*EXCEPTIONS.json'"
-    MAGIC_COMMAND_TAGS = 'GIT_DIR=' + CMSSW_REPO + ' git log --merges  --pretty=\'"%s", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge "'
+    MAGIC_COMMAND_TAGS = 'GIT_DIR=' + CMSSW_REPO_LOCAL + ' git log --merges  --pretty=\'"%s", "tags->,%d"\' START_TAG..END_TAG | grep -E "Merge "'
     MAGIC_COMMAND_FIND_RESULTS_UNIT_TESTS = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name unitTests-summary.log'
     MAGIC_COMMAND_FIND_RESULTS_GPU_UNIT_TESTS = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www -mindepth 5 -maxdepth 5 -name unitTests-summary.log | grep "/GPU/"'
     MAGIC_COMMAND_FIND_RESULTS_ADDON = 'find ' + BUILD_LOG_DIR + '/ARCHITECTURE/www -mindepth 4 -maxdepth 4 -name addOnTests.log'
@@ -1294,12 +1349,18 @@ if __name__ == "__main__":
     # }
     # will be filled using config.map by get_config_map_params()
     RELEASES_ARCHS = {}
+    """
+    {
+        "RELEASE_QUE" : { "ARCH1" : "CMSDIST_BRANCH", "ARCH2" : "CMSDIST_BRANCH2" } 
+    }
+    """
+    RELEASES_ARCHS_WITH_DIST_BRANCH = {}
     # The IBs and arch for which relval results are availavle
     # The schema is:
     # {
     #   "<IBName>": [ "arch1" , "arch2" , ... ,"archN" ]
     # }
-    MAGIC_COMMAND_FIND_ALL_TAGS = 'GIT_DIR=' + CMSSW_REPO + ' git log --merges  --pretty=\'"%s", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
+    MAGIC_COMMAND_FIND_ALL_TAGS = 'GIT_DIR=' + CMSSW_REPO_LOCAL + ' git log --merges  --pretty=\'"%s", "tags->,%d"\' END_TAG | grep -E "Merge " | grep -E "RELEASE_QUEUE"'
     # This regular expression allows to identify if a merge commit is an automatic forward port
     AUTO_FORWARD_PORT_REGEX = '^.*Merge CMSSW.+ into CMSSW.+$'
 
@@ -1374,13 +1435,13 @@ if __name__ == "__main__":
         tags = execute_magic_command_tags(start_tag, end_tag, release_queue, release_branch,
                                           ignore_tags="^CMSSW_9_3_.+_2017-09-(06-2300|07-1100)$")
         originalTags = tags
-        tags = [x for x in tags if x in installedReleases]
+        tags = [x for x in tags if x in installedReleases]  # NOTE: comment out on local development
         tags.append(release_branch)
         print('I got these tags: ')
         print(tags)
 
         print('Getting merged pull requests between tags...')
-        release_queue_results['comparisons'] = compare_tags(release_branch, tags, 'cmssw.git', CMSSW_REPO)
+        release_queue_results['comparisons'] = compare_tags(release_branch, tags, CMSSW_REPO_LOCAL, CMSSW_REPO)
         print('Done')
 
         # It checks if the tests are being run for that architecture, if they don't, it doesn't look for them.
@@ -1440,6 +1501,7 @@ if __name__ == "__main__":
     )
 
     fill_missing_cmsdist_tags(results)
+    get_cmsdist_merge_commits(results)
     print_results(results)
 
     structure = identify_release_groups(results)

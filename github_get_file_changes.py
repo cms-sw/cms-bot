@@ -123,9 +123,11 @@ def main():
 
     non_changed_modules = all_branch_modules_names.difference(modules_mod_by_prs)
     if args.ignore_modules and exists(args.ignore_modules):
+        logger.debug("Checking for already done modules: " + args.ignore_modules)
         non_changed_modules_filtered = set([])
         for non_changed_module in non_changed_modules:
             if exists(join(args.ignore_modules, non_changed_module, 'done')):
+                logger.debug("  Already done " + non_changed_module)
                 continue
             non_changed_modules_filtered.add(non_changed_module)
         non_changed_modules = non_changed_modules_filtered

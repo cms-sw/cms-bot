@@ -708,7 +708,8 @@ def print_results(results):
 
             merged_prs = [pr['number'] for pr in comp['merged_prs']]
             print('\t' + 'PRs:' + str(merged_prs))
-            print(pformat(comp['cmsdist_merged_prs']))
+            print('\t' + "Cmsdist compared tags: " + pformat(comp['cmsdist_compared_tags']))
+            print('\t' + "Cmsdist merged prs: " + pformat(comp['cmsdist_merged_prs']))
 
             from_merge_commit = [pr['number'] for pr in comp['merged_prs'] if pr['from_merge_commit']]
             print('\t' + 'From merge commit' + str(from_merge_commit))
@@ -748,6 +749,7 @@ def get_cmsdist_merge_commits(results):
         release_queue_name = release_queue['release_name']
         for pos, comp in enumerate(release_queue['comparisons'], start=1):
             comp['cmsdist_merged_prs'] = {}
+            comp['cmsdist_compared_tags'] = []
 
             if pos == len(release_queue['comparisons']):
                 # this is special case when we want to compare unreleased IB with branch head
@@ -787,6 +789,7 @@ def get_cmsdist_merge_commits(results):
                     pr['url'] = 'https://github.com/cms-sw/cmsdist/pull/%s' % pr_num
                     prs.append(pr)
                 comp['cmsdist_merged_prs'][arch] = prs
+                comp['cmsdist_compared_tags'].append("{}-->{}".format(previous_cmsdist_tag,current_ib_tag_arch))
 
 
 def add_tests_to_results(results, unit_tests, relvals_results,

@@ -338,9 +338,9 @@ if ${BUILD_EXTERNAL} ; then
     mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
     cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
     rm -rf scram-buildrules
-    cd $CMSSW_IB/src
+    cd $WORKSPACE/$CMSSW_IB/src
     touch $WORKSPACE/cmsswtoolconf.log
-    CTOOLS=$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
+    CTOOLS=$WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
     BTOOLS=${CTOOLS}.backup
     mv ${CTOOLS} ${BTOOLS}
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
@@ -370,14 +370,14 @@ if ${BUILD_EXTERNAL} ; then
         git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       fi
     else
-      rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
+      rm -f $WORKSPACE/$CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
       scram setup self
       scram setup
       scram tool remove cmssw || true
       git cms-addpkg --ssh '*'
     fi
     eval $(scram runtime -sh)
-    rm -rf $CMSSW_BASE/external
+    rm -rf $WORKSPACE/$CMSSW_BASE/external
     scram b clean
     scram b -r echo_CXX
 fi # end of build external

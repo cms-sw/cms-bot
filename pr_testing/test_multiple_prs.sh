@@ -365,6 +365,7 @@ if ${BUILD_EXTERNAL} ; then
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
       scram setup
       scram setup self
+      set +x ; eval $(scram runtime -sh) ; set -x
       CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
       if [ "X${CMSSW_DEP}" != "X" ] ; then
         git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
@@ -374,9 +375,9 @@ if ${BUILD_EXTERNAL} ; then
       scram setup self
       scram setup
       scram tool remove cmssw || true
+      set +x ; eval $(scram runtime -sh) ; set -x
       git cms-addpkg --ssh '*'
     fi
-    eval $(scram runtime -sh)
     rm -rf $WORKSPACE/$CMSSW_BASE/external
     scram b clean
     scram b -r echo_CXX

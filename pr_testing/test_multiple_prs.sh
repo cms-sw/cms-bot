@@ -339,48 +339,47 @@ if ${BUILD_EXTERNAL} ; then
     cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
     rm -rf scram-buildrules
     cd $CMSSW_IB/src
-
-    # Setup all the toolfiles previously built
-    DEP_NAMES=
-    CTOOLS=../config/toolbox/${ARCHITECTURE}/tools/selected
-    for xml in $(ls $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected/*.xml) ; do
-      name=$(basename $xml)
-      tool=$(echo $name | sed 's|.xml$||')
-      echo "Checking tool $tool ($xml)"
-      if [ ! -e $CTOOLS/$name ] ; then
-        scram setup $xml
-        continue
-      fi
-      nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-      over=$(grep '<tool ' $CTOOLS/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
-      echo "Checking version in release: $over vs $nver"
-      if [ "$nver" = "$over" ] ; then continue ; fi
-      echo "Settings up $name: $over vs $nver"
-      DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
-    done
-    mv ${CTOOLS} ${CTOOLS}.backup
-    mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
-    sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
-    scram setup
-    scram setup self
-    SCRAM_TOOL_HOME=$WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1/$(cat ../config/scram_version)/src ../config/SCRAM/linkexternal.pl --arch $ARCHITECTURE --all
-    scram build -r
-    eval $(scram runtime -sh)
-
-    # Search for CMSSW package that might depend on the compiled externals
     touch $WORKSPACE/cmsswtoolconf.log
-    if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
-      git cms-addpkg --ssh '*'
-      rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
-      scram setup self
+    CTOOLS=$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
+    BTOOLS=${CTOOLS}.backup
+    mv ${CTOOLS} ${BTOOLS}
+    mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
+    if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
+      # Setup all the toolfiles previously built
+      DEP_NAMES=
+      for xml in $(ls ${CTOOLS}/*.xml) ; do
+        name=$(basename $xml)
+        tool=$(echo $name | sed 's|.xml$||')
+        echo "Checking tool $tool ($xml)"
+        if [ ! -e ${BTOOLS}/$name ] ; then
+          scram setup $xml
+          continue
+        fi
+        nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+        over=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
+        echo "Checking version in release: $over vs $nver"
+        if [ "$nver" = "$over" ] ; then continue ; fi
+        echo "Settings up $name: $over vs $nver"
+        DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+      done
+      sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
       scram setup
-      eval $(scram runtime -sh)
-    elif [ "X${DEP_NAMES}" != "X" ] ; then
+      scram setup self
       CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
       if [ "X${CMSSW_DEP}" != "X" ] ; then
         git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       fi
+    else
+      rm -f $CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
+      scram setup self
+      scram setup
+      scram tool remove cmssw || true
+      git cms-addpkg --ssh '*'
     fi
+    eval $(scram runtime -sh)
+    rm -rf $CMSSW_BASE/external
+    scram b clean
+    scram b -r echo_CXX
 fi # end of build external
 echo_section "end of build external"
 

@@ -18,7 +18,7 @@ def send_unittest_dataset(datasets, payload, id, index, doc):
     else: ibeos=""
     payload["protocol"]=ds_items[0].split("/store/",1)[0]+ibeos
     payload["protocol_opts"]=ds_items[1]
-    payload["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
+    payload["lfn"]="/store/"+ds_items[0].split("/store/",1)[1].strip()
     print ("Sending",index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
     send_payload(index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
 

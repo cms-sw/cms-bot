@@ -26,7 +26,7 @@ if e:
 jdata = json.loads(o)
 used = {}
 for o in jdata['hits']['hits']:
-  used[o['_source']['lfn']]=1
+  used[o['_source']['lfn'].strip()]=1
 
 e, o = run_cmd("%s find -f %s" % (eos_cmd, eos_base))
 if e:

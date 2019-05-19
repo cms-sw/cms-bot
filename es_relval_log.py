@@ -177,7 +177,7 @@ def es_parse_log(logFile):
       else: ibeos=""
       dataset["protocol"]=ds_items[0].split("/store/",1)[0]+ibeos
       dataset["protocol_opts"]=ds_items[1]
-      dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
+      dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1].strip()
       idx = sha1(id + ds).hexdigest()
       print(dataset)
       send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))

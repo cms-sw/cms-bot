@@ -1,4 +1,4 @@
-#!/usr/bin/python -u
+#!/usr/bin/env python
 from sys import exit, version_info
 from os.path import abspath, dirname, exists, getmtime
 import json
@@ -53,7 +53,7 @@ def get_lfns_from_kibana(days=7):
   for hit in json.loads(from_kibaba)["hits"]["hits"]:
     if not "_source"  in hit: continue
     if not "lfn" in hit["_source"]: continue
-    lfn = hit["_source"]["lfn"]
+    lfn = hit["_source"]["lfn"].strip()
     if (not lfn) or ("/store/user/cmsbuild" in lfn): continue
     used_lfns[lfn]=1
   return list(used_lfns.keys())
@@ -65,7 +65,7 @@ def get_lfns_from_das(lfn_per_query=1):
   err, qfiles = run_cmd("ls cms-sw.github.io/das_queries/*/*.query")
   used_lfns = {}
   for qfile in qfiles.split("\n"):
-    lfn_file = qfile[:-6]
+    lfn_file = qfile.strip()[:-6]
     if not exists(lfn_file): continue
     lfn_count = 0
     err, out = run_cmd("grep '/store/' %s" % lfn_file,debug=False, exit_on_error=False)
@@ -81,7 +81,7 @@ def get_lfns_for_cmsbuild_eos(lfn_per_query=1, days=7):
   das_lfns    = get_lfns_from_das(lfn_per_query)
   kibana_lfns = get_lfns_from_kibana(days)
   eos_lfns = {}
-  for lfn in kibana_lfns+das_lfns: eos_lfns[lfn]=1
+  for lfn in kibana_lfns+das_lfns: eos_lfns[lfn.strip()]=1
   print("LFNs from Kibana: %s" % len(kibana_lfns))
   print("LFNs from DAS Queries: %s" % len(das_lfns))
   print("Total LFNs: %s" % len(eos_lfns))

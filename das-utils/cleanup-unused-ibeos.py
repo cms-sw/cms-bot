@@ -11,13 +11,15 @@ from _py2with3compatibility import run_cmd
 script_path = abspath(dirname(argv[0]))
 eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"
-unused_days_threshold = 180
+unused_days_threshold = 120
 try:
   days=int(argv[1])
 except:
   days=30
 if days<30:
   days=30
+if (unused_days_threshold-days)<30: unused_days_threshold=days+30
+
 e , o = run_cmd("PYTHONPATH=%s/.. %s/ib-datasets.py --days %s" % (script_path, script_path, days))
 if e:
   print(o)
@@ -68,7 +70,7 @@ for l in unused:
   else:
     print("Renamed: ",l)
     run_cmd("%s file touch %s.unused" % (eos_cmd, pfn))
-
+print("Removing %s days old unused files." % unused_days_threshold)
 for unused_file in all_files:
   if not unused_file.endswith(".unused"): continue
   unused_file = "%s/%s" % (eos_base, unused_file)
@@ -77,6 +79,7 @@ for unused_file in all_files:
     print("Error: Getting timestamp for %s\n%s" % (unused_file, o))
     continue
   unused_days = int((time()-float(o))/86400)
+  print("Unused for last %s days: %s" % (unused_days, unused_file))
   if unused_days<unused_days_threshold: continue
-  print("Removing %s: %s days" % (unused_file, unused_days))
+  print("  Deleting")
   run_cmd("%s rm %s" % (eos_cmd, unused_file))

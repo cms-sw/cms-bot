@@ -81,5 +81,5 @@ for unused_file in all_files:
   unused_days = int((time()-float(o))/86400)
   print("Unused for last %s days: %s" % (unused_days, unused_file))
   if unused_days<unused_days_threshold: continue
-  print("  Deleting")
+  print("Deleting as unused for last %s days: %s" % (unused_days, unused_file))
   run_cmd("%s rm %s" % (eos_cmd, unused_file))

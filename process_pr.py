@@ -566,11 +566,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       for u in first_line.split(HOLD_MSG,2)[1].split(","):
         u = u.strip().lstrip("@")
         if u in hold: hold[u]=0
-    #if CLOSE_REQUEST.match(first_line):
-    #  if (commenter in list(CMSSW_L2.keys())+CMSSW_L1+releaseManagers) or
-    #     ((not issue.pull_request) and (commenter in  CMSSW_ISSUES_TRACKERS)):
-    #     mustClose = True
-    #  continue
+    if CLOSE_REQUEST.match(first_line):
+      if (commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers) or \
+         ((not issue.pull_request) and (commenter in  CMSSW_ISSUES_TRACKERS)):
+         mustClose = True
+         print("==>Closing requested received from %s" % commenter)
+      continue
 
     # Ignore all other messages which are before last commit.
     if issue.pull_request and (comment.created_at < last_commit_date):

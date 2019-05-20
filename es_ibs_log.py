@@ -34,6 +34,7 @@ def process_unittest_log(logFile):
   payload["release"]=release
   payload["architecture"]=architecture
   payload["@timestamp"]=timestp
+  print ("Payload",payload)
   config_list = []
   custom_rule_set = [
     {"str_to_match": "test (.*) had ERRORS", "name": "{0} failed", 'control_type': ResultTypeEnum.ISSUE },
@@ -44,6 +45,7 @@ def process_unittest_log(logFile):
     datasets = []
     xid = None
     for index, l in enumerate(f):
+      l = l.strip()
       config_list = add_exception_to_config(l,index,config_list,custom_rule_set)
       if l.startswith('===== Test "') and l.endswith('" ===='):
         if utname: send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week, "unittest-dataset")
@@ -54,9 +56,10 @@ def process_unittest_log(logFile):
       elif " Initiating request to open file " in l:
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
+          print ("LFN:",rootfile)
           if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
-        except:
-          pass
+        except Exception as e:
+          print("ERROR: ",e)
     if datasets and xid:
       send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week,"unittest-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
@@ -79,6 +82,7 @@ def process_addon_log(logFile):
   config_list = []
   with open(logFile) as f:
     for index, l in enumerate(f):
+      l = l.strip()
       config_list = add_exception_to_config(l,index, config_list)
       if " Initiating request to open file " in l:
         try:

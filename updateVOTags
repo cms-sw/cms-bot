@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # This script can be used to sync the production releases which are
 # declared as announced in the tag collector and 
 from __future__ import print_function

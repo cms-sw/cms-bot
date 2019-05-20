@@ -18,6 +18,8 @@ except:
   days=30
 if days<30:
   days=30
+if (unused_days_threshold-days)<30: unused_days_threshold=days+30
+
 e , o = run_cmd("PYTHONPATH=%s/.. %s/ib-datasets.py --days %s" % (script_path, script_path, days))
 if e:
   print(o)
@@ -26,7 +28,7 @@ if e:
 jdata = json.loads(o)
 used = {}
 for o in jdata['hits']['hits']:
-  used[o['_source']['lfn']]=1
+  used[o['_source']['lfn'].strip()]=1
 
 e, o = run_cmd("%s find -f %s" % (eos_cmd, eos_base))
 if e:
@@ -68,7 +70,7 @@ for l in unused:
   else:
     print("Renamed: ",l)
     run_cmd("%s file touch %s.unused" % (eos_cmd, pfn))
-
+print("Removing %s days old unused files." % unused_days_threshold)
 for unused_file in all_files:
   if not unused_file.endswith(".unused"): continue
   unused_file = "%s/%s" % (eos_base, unused_file)
@@ -78,5 +80,5 @@ for unused_file in all_files:
     continue
   unused_days = int((time()-float(o))/86400)
   if unused_days<unused_days_threshold: continue
-  print("Removing %s: %s days" % (unused_file, unused_days))
+  print("Deleting as unused for last %s days: %s" % (unused_days, unused_file))
   run_cmd("%s rm %s" % (eos_cmd, unused_file))

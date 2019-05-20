@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 from os.path import dirname, abspath
 from sys import argv
 from time import time

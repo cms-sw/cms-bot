@@ -119,7 +119,7 @@ def es_parse_log(logFile):
     payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+pathInfo[4]+'/'+pathInfo[8]+'/pyRelValMatrixLogs/run/'+pathInfo[-2]+'/'+pathInfo[-1]
     total_lines = len(lines)
     for i in range(total_lines):
-      l = lines[i]
+      l = lines[i].strip()
       if " Initiating request to open file " in l:
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
@@ -177,7 +177,7 @@ def es_parse_log(logFile):
       else: ibeos=""
       dataset["protocol"]=ds_items[0].split("/store/",1)[0]+ibeos
       dataset["protocol_opts"]=ds_items[1]
-      dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
+      dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1].strip()
       idx = sha1(id + ds).hexdigest()
       print(dataset)
       send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))

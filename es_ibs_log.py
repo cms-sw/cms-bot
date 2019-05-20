@@ -18,7 +18,7 @@ def send_unittest_dataset(datasets, payload, id, index, doc):
     else: ibeos=""
     payload["protocol"]=ds_items[0].split("/store/",1)[0]+ibeos
     payload["protocol_opts"]=ds_items[1]
-    payload["lfn"]="/store/"+ds_items[0].split("/store/",1)[1]
+    payload["lfn"]="/store/"+ds_items[0].split("/store/",1)[1].strip()
     print ("Sending",index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
     send_payload(index, doc, sha1(id + ds).hexdigest(), json.dumps(payload))
 
@@ -44,6 +44,7 @@ def process_unittest_log(logFile):
     datasets = []
     xid = None
     for index, l in enumerate(f):
+      l = l.strip()
       config_list = add_exception_to_config(l,index,config_list,custom_rule_set)
       if l.startswith('===== Test "') and l.endswith('" ===='):
         if utname: send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week, "unittest-dataset")
@@ -55,8 +56,8 @@ def process_unittest_log(logFile):
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
           if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
-        except:
-          pass
+        except Exception as e:
+          print("ERROR: ",e)
     if datasets and xid:
       send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week,"unittest-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
@@ -79,6 +80,7 @@ def process_addon_log(logFile):
   config_list = []
   with open(logFile) as f:
     for index, l in enumerate(f):
+      l = l.strip()
       config_list = add_exception_to_config(l,index, config_list)
       if " Initiating request to open file " in l:
         try:

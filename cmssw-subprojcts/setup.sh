@@ -19,7 +19,7 @@ fi
 sed -e "s|@PROJECT@|${SUBPROJECT}|;s|@PROJECT_FILTER@|${FILTER}|;s|@BRANCH@|${BRANCH}|" $(dirname $0)/git_filter.cfg > ${SUBPROJECT}.cfg
 git clone git@github.com:cms-sw/git_filter
 pushd git_filter
-  gmake -j $(nproc)
+  gmake
 popd
 git clone git@github.com:cms-sw/cmssw
 ./git_filter/git_filter ${SUBPROJECT}.cfg

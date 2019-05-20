@@ -3,7 +3,7 @@ from sys import argv
 from hashlib import md5
 import json
 from _py2with3compatibility import run_cmd, urlopen, Request
-from os.path import exists, dirname, abspath, join
+from os.path import exists, dirname, abspath, join, basename
 import re
 
 try:
@@ -199,6 +199,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
         try:
             pr_md5 = md5(pr_number + "\n").hexdigest()
             pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
+            print("Checking cached file: " + pr_cache)
             if not exists(pr_cache):
                 print("  Chache does not exists: ", pr_cache)
                 cache_invalid_pr(pr_hash_id, cache)
@@ -237,7 +238,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
     return new_notes
 
 
-def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache={}):
+def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache={}, repo_name=None):
     print("Getting merged Pull Requests b/w", prev_tag, this_tag)
     cmd = format("GIT_DIR=%(git_dir)s"
                  " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
@@ -255,7 +256,9 @@ def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache={}):
         print("Error while getting release notes.")
         print(notes)
         exit(1)
-    return fill_notes_description(notes, "cms-sw/" + git_dir[:-4], cmsprs, cache)
+    if not repo_name:
+        repo_name = basename(git_dir[:-4])
+    return fill_notes_description(notes, "cms-sw/" + repo_name, cmsprs, cache)
 
 
 def save_prs_cache(cache, cache_file):

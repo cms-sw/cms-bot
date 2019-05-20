@@ -119,7 +119,7 @@ def es_parse_log(logFile):
     payload["url"] = 'https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/'+pathInfo[4]+'/'+pathInfo[8]+'/pyRelValMatrixLogs/run/'+pathInfo[-2]+'/'+pathInfo[-1]
     total_lines = len(lines)
     for i in range(total_lines):
-      l = lines[i]
+      l = lines[i].strip()
       if " Initiating request to open file " in l:
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]

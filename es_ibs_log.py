@@ -34,7 +34,6 @@ def process_unittest_log(logFile):
   payload["release"]=release
   payload["architecture"]=architecture
   payload["@timestamp"]=timestp
-  print ("Payload",payload)
   config_list = []
   custom_rule_set = [
     {"str_to_match": "test (.*) had ERRORS", "name": "{0} failed", 'control_type': ResultTypeEnum.ISSUE },
@@ -56,7 +55,6 @@ def process_unittest_log(logFile):
       elif " Initiating request to open file " in l:
         try:
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-          print ("LFN:",rootfile)
           if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
         except Exception as e:
           print("ERROR: ",e)

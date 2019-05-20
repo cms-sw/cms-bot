@@ -7,7 +7,7 @@ if [ "X${BRANCH}" = "X" ] ; then BRANCH=master; fi
 
 if [ "X${SUBPROJECT}" = "X" -o "X${FILTER}" = "X" ] ; then
   echo "Error: Missing sub-project name"
-  echo "Usage: $0 <Stitch|FWLite> <filter-file>"
+  echo "Usage: $0 <Stitch|FWLite> <filter-file> [branch]"
   exit 1
 fi
 

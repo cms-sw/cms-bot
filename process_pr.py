@@ -39,6 +39,7 @@ CMSDIST_PR_PATTERN=format("(%(cmsdist_repo)s#[0-9]+|https://+github.com/+%(cmsdi
 CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
+CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
 TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|)|)(\s+for(\s+%(release_queue)s)|)\s*$",
                      workflow=WF_PATTERN,
                      cmssw_pr=CMSSW_PR_PATTERN,
@@ -565,9 +566,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       for u in first_line.split(HOLD_MSG,2)[1].split(","):
         u = u.strip().lstrip("@")
         if u in hold: hold[u]=0
-    if re.match("^close$", first_line, re.I):
-      if (not issue.pull_request and (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1)):
-        mustClose = True
+    if CLOSE_REQUEST.match(first_line):
+      if (commenter in list(CMSSW_L2.keys())+CMSSW_L1+releaseManagers) or
+         ((not issue.pull_request) and (commenter in  CMSSW_ISSUES_TRACKERS)):
+         mustClose = True
       continue
 
     # Ignore all other messages which are before last commit.

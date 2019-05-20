@@ -1274,6 +1274,7 @@ CMSSW_CATEGORIES = {
     "RecoTauTag/ImpactParameter",
     "RecoTauTag/RecoTau",
     "RecoTauTag/TauTagTools",
+    "RecoTauTag/TrainingFiles",
     "RecoTracker/CkfPattern",
     "RecoTracker/Configuration",
     "RecoTracker/ConversionSeedGenerators",

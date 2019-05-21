@@ -636,7 +636,9 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     # MATRIX_TIMEOUT is set by jenkins
     dateBefore=$(date +"%s")
     [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--job-reports $EXTRA_MATRIX_ARGS"
-    [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $EXTRA_MATRIX_ARGS"
+    if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
+        [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $EXTRA_MATRIX_ARGS"
+    fi 
     RELVALS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $SLHC_PARAM -j $(Jenkins_GetCPU -2) $WF_LIST"
     echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
     (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log

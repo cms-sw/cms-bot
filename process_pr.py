@@ -351,7 +351,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if ex_pkg: packages.add(ex_pkg)
       if (repo_org!=GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
           if repo_name != GH_CMSDIST_REPO:
-            create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
+            #Disabled creation of external Issues: Instead use
+            #https://github.com/pulls?utf8=%E2%9C%93&q=is%3Apr+archived%3Afalse+org%3Acms-data+org%3Acms-externals+org%3Acms-sw+-repo%3Acms-sw%2Fcmssw+is%3Aopen+label%3Aorp-pending+
+            #create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
             create_test_property = new_tests
           else:
             create_test_property = True
@@ -1084,19 +1086,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           "%(l2s)s can you please review it and eventually sign?"
                           " Thanks.\n"
                           "%(watchers)s"
-                          "You can sign-off by replying to this message having"
-                          " '+1' in the first line of your reply.\n"
-                          "You can reject by replying  to this message having"
-                          " '-1' in the first line of your reply."
-                          "%(cmsdist_issue)s\n",
+                          "%(releaseManagers)s"
+                          "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                           msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,
-                          title=pr.title.encode("ascii", "ignore"),
                           l2s=", ".join(missing_notifications),
-                          watchers=watchersMsg,
-                          cmsdist_issue=cmsdist_issue)
+                          watchers=watchersMsg)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated."
                               "%(cmsdist_issue)s\n",

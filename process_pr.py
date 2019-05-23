@@ -1086,7 +1086,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           "%(l2s)s can you please review it and eventually sign?"
                           " Thanks.\n"
                           "%(watchers)s"
-                          "%(releaseManagers)s"
                           "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                           msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,

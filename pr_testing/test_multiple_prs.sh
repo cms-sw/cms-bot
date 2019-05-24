@@ -446,7 +446,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
     echo 'I will add the following pull request to the test'
     PR_NR=$(echo ${PR} | sed 's/.*#//' )
-    (git cms-merge-topic -u ${CMSSW_ORG}:${PR_NR} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
+    (git cms-merge-topic --debug --ssh -u ${CMSSW_ORG}:${PR_NR} && echo 'ALL_OK') 2>&1 | tee -a $GIT_MERGE_RESULT_FILE
   done
 
   if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then

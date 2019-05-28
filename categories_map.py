@@ -938,6 +938,7 @@ CMSSW_CATEGORIES = {
     "L1Trigger/ME0Trigger",
     "L1Trigger/RPCTechnicalTrigger",
     "L1Trigger/RPCTrigger",
+    "L1Trigger/RPCTriggerPrimitives",
     "L1Trigger/RegionalCaloTrigger",
     "L1Trigger/Skimmer",
     "L1Trigger/TextToDigi",

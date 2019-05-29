@@ -96,10 +96,18 @@ getLinkToPR = function( pr ){
 /**
  * returns a link to the IB in the IB Pages
  */
+// old version
+//getLinkToIB = function( baseIB ){
+//
+//  return BASE_IB_URL + '#' + baseIB
+//
+//}
+
+// point to new version
 getLinkToIB = function( baseIB ){
-
-  return BASE_IB_URL + '#' + baseIB
-
+  var reReleaseInfo = /^([a-zA-Z]+_[0-9]+_[0-9])+_(.*)_(\d{4}-\d{2}-\d{2}-\d{4})/;
+  var releaseQueue = baseIB.match(reReleaseInfo)[1];
+  return IB_PAGE_V2 + releaseQueue + '_X';
 }
 
 /**
@@ -135,7 +143,7 @@ getHeader = function( resultsDict ){
   header.append( baselineSubtitle )
   var baselineLink = $( "<a>" ).text( "See baseline used for the comparisons" )
   baselineSubtitle.append( baselineLink )
-  baselineLink.attr( 'href' , '/SDT/jenkins-artifacts/ib-baseline-tests/' + resultsDict[ BASE_IB_KEY ] )
+  baselineLink.attr( 'href' , '/SDT/jenkins-artifacts/ib-baseline-tests/' + resultsDict[ COMPARISON_IB_KEY ] )
 
   header.append( $( '<br>' ) )
 
@@ -187,7 +195,8 @@ parseResultsIntoDict = function( results ){
 //----------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------
-IGNORE_KEYS=["PR_NUMBER", "PR_NUMBERS", "ADDITIONAL_PRS", "BASE_IB", "BUILD_NUMBER"];  // Keys to ignore in testsResults.txt
+// Keys to ignore in testsResults.txt
+IGNORE_KEYS=["PR_NUMBER", "PR_NUMBERS", "ADDITIONAL_PRS", "BASE_IB", "BUILD_NUMBER", "COMPARISON_IB"];
 BASE_IB_KEY = 'BASE_IB';
 PR_NUMBER_KEY = 'PR_NUMBER';
 PR_NUMBERS_KEY = 'PR_NUMBERS';
@@ -208,6 +217,8 @@ DUPLICATE_DICT_RULES_KEY = 'DUPLICATE_DICT_RULES';
 MATERIAL_BUDGET_TESTS_KEY = 'MATERIAL_BUDGET';
 CLANG_COMPILATION_KEY = 'CLANG_COMPILATION_RESULTS';
 BASE_IB_URL = '/SDT/html/showIB.html';
+COMPARISON_IB_KEY = "COMPARISON_IB"
+IB_PAGE_V2 = 'SDT/html/cmssdt-ib/#/ib/';
 
 LABELS = {};
 LABELS[CMSSWTOOLCONF_RESULTS_KEY] = 'Externals compilation';

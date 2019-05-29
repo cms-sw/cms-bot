@@ -267,6 +267,12 @@ echo "PR_NUMBERS;$PULL_REQUESTS" >> $RESULTS_FILE
 echo 'BASE_IB;'$CMSSW_IB >> $RESULTS_FILE
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> $RESULTS_FILE
 echo "PR_NUMBER;$REPORT_H_CODE" >> $RESULTS_FILE
+if [ "X$COMPARISON_REL" == "X" ]
+then
+    echo "COMPARISON_IB;$BASE_IB" >> $RESULTS_FILE
+else
+    echo "COMPARISON_IB;$COMPARISON_REL" >> $RESULTS_FILE
+fi
 
 if ${BUILD_EXTERNAL} ; then
     if [ ! -d "pkgtools" ] ; then

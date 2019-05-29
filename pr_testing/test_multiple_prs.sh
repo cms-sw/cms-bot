@@ -378,7 +378,7 @@ if ${BUILD_EXTERNAL} ; then
       set +x ; eval $(scram runtime -sh) ; set -x
       git cms-addpkg --ssh '*'
     fi
-    rm -rf $WORKSPACE/$CMSSW_BASE/external
+    rm -rf $WORKSPACE/$CMSSW_IB/external
     scram b clean
     scram b -r echo_CXX
 fi # end of build external

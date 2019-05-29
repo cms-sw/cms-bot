@@ -371,7 +371,7 @@ if ${BUILD_EXTERNAL} ; then
         git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       fi
     else
-      rm -f $WORKSPACE/$CMSSW_BASE/.SCRAM/$ARCHITECTURE/Environment
+      rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
       scram setup self
       scram setup
       scram tool remove cmssw || true

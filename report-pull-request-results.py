@@ -198,16 +198,17 @@ def read_material_budget_log_file(repo, unit_tests_file,tests_url):
 def get_recent_merges_message():
   message = ""
   if options.recent_merges_file:
-    lines = open( options.recent_merges_file ).readlines()
-    if len( lines ) > 1:
+    extra_msg = []
+    json_obj = json.load(open(options.recent_merges_file))
+    for pr in json_obj: extra_msg.append(" - #%s\n  @%s: %s" % (pr, json_obj[pr]['author'], json_obj[pr]['title']))
+
+    if extra_msg:
       message += '\n\nThe following merge commits were also included on top of IB + this PR '\
                  'after doing git cms-merge-topic: \n'
-      git_log_url = GITLOG_FILE_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
-      git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
-      #Ignore the first line, the first line is the merge commit that comes from git-cms-merge-topic
-      for l in lines[ 1: ]:
-        commit_url = COMMITS_BASE_URL.format( repo=options.custom_repo, hash=l.strip() )
-        message += commit_url + '\n'
+      git_log_url = GITLOG_FILE_BASE_URL.format( pr_number=options.report_pr_number, job_id=options.pr_job_id )
+      git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.report_pr_number, job_id=options.pr_job_id )
+
+      for l in extra_msg: message += l + '\n'
 
       message += 'You can see more details here:\n'
       message += git_log_url +'\n'

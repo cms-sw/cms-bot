@@ -443,8 +443,8 @@ cd $WORKSPACE/$CMSSW_IB/src
 git config --global --replace-all merge.renamelimit 2500
 
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
-RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits
-touch $RECENT_COMMITS_FILE
+RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits.json
+echo '{}' > $RECENT_COMMITS_FILE
 # use the branch name if necesary
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
 
@@ -477,8 +477,10 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   ############################################
   RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 
-  #IB_DATE=$(git show ${CMSSW_IB} --pretty='format:%ai')
-  git rev-list ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_FILE
+  if [ ! -d $WORKSPACE/cms-prs ]  ; then
+    git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs
+  fi
+  $SCRIPTPATH/get-merged-prs.py -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs/cms-sw/cmssw -o $RECENT_COMMITS_FILE
   git log ${CMSSW_IB}..HEAD --merges 2>&1      | tee -a $RECENT_COMMITS_LOG_FILE
   if [ $DO_MB_COMPARISON -a $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     has_jenkins_artifacts material-budget/$CMSSW_IB/$SCRAM_ARCH/Images || DO_MB_COMPARISON=false

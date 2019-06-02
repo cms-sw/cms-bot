@@ -307,7 +307,8 @@ def get_results_one_relval_file(filename):
         print("Error while reading file %s" % filename)
         print(e)
         return False, details
-    json.dump(details, open(summary_file, "w"))
+    with open(summary_file, "w") as ref:
+      json.dump(details, ref)
     return details["num_failed"] == 0, details
 
 

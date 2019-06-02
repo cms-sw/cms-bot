@@ -8,7 +8,7 @@ import subprocess
 import re
 import json
 from pickle import Unpickler
-from os.path import basename, dirname, exists, join, expanduser
+from os.path import basename, dirname, exists, join, expanduser, getmtime
 from glob import glob
 from github import Github
 from pprint import pformat
@@ -280,7 +280,7 @@ def get_results_one_relval_file(filename):
     and how many failed
     """
     summary_file = filename.replace("/runall-report-step123-.log", "/summary.json")
-    if exists(summary_file):
+    if exists(summary_file) and getmtime(summary_file)>getmtime(filename):
         try:
             details = json.load(open(summary_file))
             return details['num_failed'] == 0, details
@@ -307,7 +307,7 @@ def get_results_one_relval_file(filename):
         print("Error while reading file %s" % filename)
         print(e)
         return False, details
-
+    json.dump(details, open(summary_file, "w"))
     return details["num_failed"] == 0, details
 
 

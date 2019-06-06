@@ -375,7 +375,7 @@ def analyze_tests_results(output, results, arch, type):
         if type == 'relvals':
             passed, details = get_results_one_relval_file(line)
             result_arch['done'] = False
-            if exists(join(dirname(line), "done")):
+            if exists(join(dirname(line), "done")) or exists(join(dirname(line), "all.pages")):
                 result_arch['done'] = True
         elif type == 'utests':
             passed, details = get_results_one_unitTests_file(line)

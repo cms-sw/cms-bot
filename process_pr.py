@@ -662,10 +662,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if valid_commenter:
         test_cmd_func = check_test_cmd
         if new_tests: test_cmd_func = check_test_cmd_new
-        cmsdist_pr=''
-        cmssw_prs=''
-        extra_wfs=''
-        release_queue=''
         ok, cmsdist_pr, cmssw_prs, extra_wfs,release_queue = test_cmd_func(first_line, repository)
         if ok:
           release_arch = ''

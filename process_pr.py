@@ -662,8 +662,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if valid_commenter:
         test_cmd_func = check_test_cmd
         if new_tests: test_cmd_func = check_test_cmd_new
-        ok, cmsdist_pr, cmssw_prs, extra_wfs,release_queue = test_cmd_func(first_line, repository)
+        ok, v1, v2, v3, v4 = test_cmd_func(first_line, repository)
         if ok:
+          cmsdist_pr = v1
+          cmssw_pr = v2
+          extra_wfs = v3
+          release_queu = v4
           release_arch = ''
           if '/' in release_queue:
             release_queue, release_arch = release_queue.split('/',1)

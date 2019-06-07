@@ -663,10 +663,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         test_cmd_func = check_test_cmd
         if new_tests: test_cmd_func = check_test_cmd_new
         ok, v1, v2, v3, v4 = test_cmd_func(first_line, repository)
-        print("new stat:",v1, v2, v3, v4 )
         if ok:
           cmsdist_pr = v1
-          cmssw_pr = v2
+          cmssw_prs = v2
           extra_wfs = v3
           release_queue = v4
           release_arch = ''
@@ -923,7 +922,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         prs.append(p)
       for xpr in prs:
         repo_name,pr_num = xpr.split('#',1)
-        print("Checking Pr: %s#%s" % (repo_name,pr_num))
         pr_num = int(pr_num)
         rest_pr = [p for p in prs if p!=xpr]
         ex_msg = ''

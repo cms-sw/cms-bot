@@ -918,6 +918,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         prs.append(p)
       for xpr in prs:
         repo_name,pr_num = xpr.split('#',1)
+        print("Checking Pr: %s#%s" % (repo_name,pr_num))
         pr_num = int(pr_num)
         rest_pr = [p for p in prs if p!=xpr]
         ex_msg = ''

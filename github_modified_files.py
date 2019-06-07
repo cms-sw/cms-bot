@@ -26,7 +26,7 @@ def main():
     parser.add_argument("-r", "--repo")
     parser.add_argument("-d", "--destination")
     parser.add_argument("-c", "--cached_pr", default=None)
-    parser.add_argument("-b", "--branch", default='master')
+    parser.add_argument("-b", "--branch", default=None)
     parser.add_argument("-l", "--logging", default="DEBUG", choices=logging._levelNames, help="Set level of logging")
     args = parser.parse_args()
     logger.setLevel(args.logging)
@@ -52,6 +52,7 @@ def main():
             'state': pr.state,
             'created_at': int(pr.created_at.strftime("%s")),
             'updated_at': int(pr.updated_at.strftime("%s")),
+            'base_branch': pr.base.ref
         }
 
         # to check for cached PRs

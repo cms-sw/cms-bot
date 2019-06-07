@@ -40,7 +40,6 @@ def get_changed_modules(filename_it):
     return changed_m
 
 
-
 def get_changed_filenames_by_pr(old_prs_dict, pr_list):
     """
     Returns union of all changed filenames by prs
@@ -98,7 +97,7 @@ def main():
     logger.debug(args.repo_name)
     gh = Github(login_or_token=open(expanduser(GH_TOKEN)).read().strip())
     repo = gh.get_repo(args.repo_name)
-    pr_list = get_pull_requests(repo)
+    pr_list = get_pull_requests(repo, branch='master')
 
     logger.debug("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
     old_prs_dict = {}

@@ -28,7 +28,7 @@ def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=T
     doSleep = 0
     rate_reset_sec = rate_limiting_resettime - timegm(gmtime()) + 5
     if msg: print('API Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (
-    rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime)))
+        rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime)))
     if rate_limit < 100:
         doSleep = rate_reset_sec
     elif rate_limit < 250:
@@ -148,7 +148,7 @@ def port_pr(repo, pr_num, des_branch, dryRun=False):
     from cms_static import GH_CMSSW_ORGANIZATION
     newHead = "%s:%s" % (GH_CMSSW_ORGANIZATION, new_branch)
     newBody = pr.body + "\nAutomatically ported from " + pr.base.ref + " #%s (original by @%s)." % (
-    pr_num, str(pr.head.user.login))
+        pr_num, str(pr.head.user.login))
     print(newHead)
     print(newBody)
     if not dryRun:
@@ -359,12 +359,15 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
     return json.loads(response.read())
 
 
-def get_pull_requests(gh_repo, branch="master", status='open'):
+def get_pull_requests(gh_repo, branch=None, status='open'):
     """
     Get all pull request for the current branch of the repo
     :return:
     """
-    pulls = gh_repo.get_pulls(base=branch, state=status, sort="created", direction="asc")
+    params = {"state": status, "sort": "created", "direction": "asc"}
+    if branch:
+        params["base"] = branch
+    pulls = gh_repo.get_pulls(**params)
     return pulls
 
 

@@ -663,6 +663,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         test_cmd_func = check_test_cmd
         if new_tests: test_cmd_func = check_test_cmd_new
         ok, v1, v2, v3, v4 = test_cmd_func(first_line, repository)
+        print("Prev stat:",cmsdist_pr, cmssw_pr, extra_wfs, release_queue)
         if ok:
           cmsdist_pr = v1
           cmssw_pr = v2
@@ -698,8 +699,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           tests_already_queued = False
           abort_test = True
           signatures["tests"] = "pending"
-        else:
-          print("Other command",cmsdist_pr, cmssw_pr, extra_wfs, release_queue)
 
     # Check L2 signoff for users in this PR signing categories
     if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:

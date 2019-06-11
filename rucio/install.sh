@@ -16,7 +16,7 @@ while [ $# -gt 0 ]; do
 Usage: ${PIP_PKG}-$(basename $0)
   -i|--install-dir <path>       Install ${PIP_PKG} under <path>.
                                 Default is currect working directory
-  -c|--rucio-version <version>  ${PIP_PKG} version to install
+  -v|--rucio-version <version>  ${PIP_PKG} version to install
                                 Default is latest available version
   -C|--rucio-config-url <url>   URL to get ${PIP_PKG} config file
                                 Default is ${RUCIO_CONFIG_URL}

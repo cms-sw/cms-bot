@@ -23,21 +23,16 @@ if __name__ == "__main__":
 
   parser.add_option("-r", "--data-repo", dest="data_repo", help="Github data repositoy name e.g. cms-data/RecoTauTag-TrainingFiles.",
                     type=str, default=None)
-  parser.add_option("-d", "--dist-repo", dest="dist_repo", help="Github dist repositoy name e.g. npcbot/cmsdist.",
+  parser.add_option("-d", "--dist-repo", dest="dist_repo", help="Github dist repositoy name e.g. cms-sw/cmsdist.",
                     type=str, default='')
   parser.add_option("-p", "--pull-request", dest="pull_request", help="Pull request number",
                     type=str, default=None)
   opts, args = parser.parse_args()
 
-  #TODO change those default values !
-  opts.pull_request = '8'
-  opts.dist_repo = 'npcbot/cmsdist'
-  opts.data_repo = 'npc-data/PhysicsTools-NanoAOD'
-  data_prid = int(opts.pull_request)
-
   gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 
   data_repo = gh.get_repo(opts.data_repo)
+  data_prid = int(opts.pull_request)
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
 
@@ -77,9 +72,8 @@ if __name__ == "__main__":
       # message should be referencing the PR that triggers this job
       new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False, 'master')
 
-  # how to
   last_release_tag = data_repo.get_latest_release().tag_name
-  default_cms_dist_branch = 'IB/CMSSW_11_0_X/gcc700' # give it as and argument to the script, maybe
+  default_cms_dist_branch = dist_repo.default_branch
   repo_name_only = opts.data_repo.split('/')[1]
   repo_tag_pr_branch = 'update-'+repo_name_only+'-to-'+last_release_tag
 
@@ -100,8 +94,6 @@ if __name__ == "__main__":
   cmsswdatafile_raw = content_file.decoded_content
   new_content = ''
   # remove the existing line no matter where it is and put the new line right under default
-  #see if the tag is the same in the file content, meaning it's already being updated on cmsdist
-  #if cmsswdatafile_raw.find(repo_name_only+'='+new_tag):
 
   count = 0 # omit first line linebreaker
   for line in cmsswdatafile_raw.splitlines():

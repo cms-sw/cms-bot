@@ -219,29 +219,27 @@ for U_REPO in ${UNIQ_REPOS}; do
     PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
     PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
     case "$PKG_NAME" in  # We do not care where the repo is kept (ex. cmssw organisation or other)
-		cmssw)
-            CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
-            CMSDIST_ONLY=false
-            CHECK_HEADER_TESTS=true
-		;;
+	cmssw)
+          CMSSW_ORG=$(echo ${PKG_REPO} | sed 's|/.*||')
+          CMSDIST_ONLY=false
+          CHECK_HEADER_TESTS=true
+	;;
         cms-bot)
-            # do nothing
-		;;
-		cmsdist|pkgtools)
-		    BUILD_EXTERNAL=true
-		;;
-		*)
-			PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
-			SPEC_NAME=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
-			${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" ||
-			        exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
-			        cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo."
-			BUILD_EXTERNAL=true
-		;;
+          # do nothing
+	;;
+	cmsdist|pkgtools)
+	  BUILD_EXTERNAL=true
+	;;
+	*)
+	  PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
+	  SPEC_NAME=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
+	  ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ||
+	    exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
+	    cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo."
+	  BUILD_EXTERNAL=true
+	;;
 	esac
 done
-rm -rf ${BUILD_DIR}  #  get_source_flag_for_cmsbuild.sh boostraps without using `--repository` to correct repo,
-                     #  so wrong repository is used during boostrap which for each to rebuild everything
 
 # Put hashcodes of last commits to a file. Mostly used for commenting back
 for PR in ${PULL_REQUESTS}; do
@@ -283,20 +281,6 @@ if ${BUILD_EXTERNAL} ; then
     fi
     if [ ! -d "cmsdist" ] ; then
         git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
-    fi
-
-    if [ -e cmsdist/data/cmsswdata.txt ] ; then
-      for U_REPO in ${UNIQ_REPOS}; do
-        PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
-        case ${U_REPO} in
-          cms-data/* )
-            data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt)
-            sed -i -e "/^ *${PKG_NAME}=.*/d;s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
-            touch cmsdist/data/data-${PKG_NAME}.file
-            rm -f cmsdist/data/data-${PKG_NAME}.*
-          ;;
-        esac
-      done
     fi
 
     echo_section "Building, testing and commenting status to github"

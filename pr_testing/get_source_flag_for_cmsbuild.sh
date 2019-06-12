@@ -6,12 +6,15 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 WORKSPACE=$(dirname ${CMS_BOT_DIR} )
 CACHED=${WORKSPACE}/CACHED
-BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 
 PKG_REPO=$1       # Repo of external (ex. cms-sw/root)
 SPEC_NAME=$2      # Name of external spec file without extension (ex. root)
 CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
 ARCHITECTURE=$4   # Architecture (ex. slc7_amd64_gcc700)
+CMS_REPO=$5       # cms repository (ex cms.week0)
+BUILD_DIR=$6      # Where pkgtools/cmsBuild builds software
+if [ "${CMS_REPO}" != "" ] ; then CMS_REPO="--repository ${CMS_REPO}" ; fi
+if [ "${BUILD_DIR}" = "" ] ; then BUILD_DIR="testBuildDir" ; fi
 PKG_NAME=$(echo ${PKG_REPO} | sed 's|.*/||')      # Repo of external (ex. cms-sw/root)
 
 # Checked if variables are passed
@@ -49,25 +52,18 @@ if ! [ -d "pkgtools" ]; then
     git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
 fi
 if [ -e cmsdist/data/cmsswdata.txt ] ; then
-  cp cmsdist/data/cmsswdata.txt cmsdist/data/cmsswdata.txt.orig
   case ${PKG_REPO} in
     cms-data/*)
       data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt)
       sed -i -e "/^ *${PKG_NAME}=.*/d;s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
-      for dfile in $(find cmsdist/data -name "data-${PKG_NAME}.*" -type f) ; do
-        mv $dfile ${dfile}.orig
-      done
+      touch cmsdist/data/data-${PKG_NAME}.file
+      rm -rf cmsdist/data/data-${PKG_NAME}.* 
     ;;
   esac
 fi
-SOURCES=$(./pkgtools/cmsBuild -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
+SOURCES=$(./pkgtools/cmsBuild ${CMS_REPO} -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
                         grep -i "^${SPEC_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
-if [ -e cmsdist/data/cmsswdata.txt ] ; then
-  for dfile in $(find cmsdist/data -name "*.orig" -type f | sed 's|.orig$||') ; do
-    mv ${dfile}.orig ${dfile}
-  done
-fi
 N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true
 echo "Number of sources: " ${N}
 echo "Sources:"

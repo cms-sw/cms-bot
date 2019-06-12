@@ -54,7 +54,8 @@ def main():
 
     print("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
     for pr in pr_list:
-        rez[pr.number] = {
+        nr = str(pr.number)
+        rez[nr] = {
             'number': int(pr.number),
             'state': pr.state,
             'created_at': int(pr.created_at.strftime("%s")),
@@ -63,15 +64,14 @@ def main():
         }
 
         # to check for cached PRs
-        nr = str(pr.number)
         if nr in old_prs_dict.keys():
             pr_old = old_prs_dict[nr]
             if int(get_unix_time(pr.updated_at)) == pr_old['updated_at']:
-                rez[pr.number]['changed_files_names'] = pr_old['changed_files_names']
+                rez[nr]['changed_files_names'] = pr_old['changed_files_names']
                 logger.debug(" Using from cache %s" % nr)
                 continue
         logger.debug("!PR was updated %s" % nr)
-        rez[pr.number]['changed_files_names'] = pr_get_changed_files(pr)
+        rez[nr]['changed_files_names'] = pr_get_changed_files(pr)
 
     with open(args.destination, 'w') as d:
         json.dump(rez, d, sort_keys=True, indent=4)

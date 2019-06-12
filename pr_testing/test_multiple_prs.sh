@@ -285,6 +285,20 @@ if ${BUILD_EXTERNAL} ; then
         git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
     fi
 
+    if [ -e cmsdist/data/cmsswdata.txt ] ; then
+      for U_REPO in ${UNIQ_REPOS}; do
+        PKG_NAME=$(echo ${U_REPO} | sed 's|.*/||')
+        case ${U_REPO} in
+          cms-data/* )
+            data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt)
+            sed -i -e "/^ *${PKG_NAME}=.*/d;s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
+            touch cmsdist/data/data-${PKG_NAME}.file
+            rm -f cmsdist/data/data-${PKG_NAME}.*
+          ;;
+        esac
+      done
+    fi
+
     echo_section "Building, testing and commenting status to github"
     # add special flags for pkgtools/cmsbuild if version is high enough
     REF_REPO=

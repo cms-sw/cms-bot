@@ -27,13 +27,13 @@ def main():
     parser.add_argument("-d", "--destination")
     parser.add_argument("-c", "--cached_pr", default=None)
     parser.add_argument("-b", "--branch", default=None)
+    parser.add_argument("-p", "--pull", default=None)
     parser.add_argument("-l", "--logging", default="DEBUG", choices=logging._levelNames, help="Set level of logging")
     args = parser.parse_args()
     logger.setLevel(args.logging)
 
     gh = Github(login_or_token=open(expanduser(GH_TOKEN)).read().strip())
     repo = gh.get_repo(args.repo)
-    pr_list = get_pull_requests(repo, branch=args.branch)
 
     old_prs_dict = {}
     if args.cached_pr:
@@ -43,9 +43,16 @@ def main():
         except Exception as e:
             logger.warning('Could not load a dumped prs', str(e))
 
+    pr_list = []
+    rez = {}
+    if args.pull:
+        import copy
+        rez = copy.deepcopy(old_prs_dict)
+        pr_list = [ repo.get_pull(int(args.pull)) ]
+    else:
+        pr_list = get_pull_requests(repo, branch=args.branch)
 
     print("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
-    rez = {}
     for pr in pr_list:
         rez[pr.number] = {
             'number': int(pr.number),

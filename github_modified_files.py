@@ -68,9 +68,9 @@ def main():
             pr_old = old_prs_dict[nr]
             if int(get_unix_time(pr.updated_at)) == pr_old['updated_at']:
                 rez[pr.number]['changed_files_names'] = pr_old['changed_files_names']
-                logger.debug(" Using from cache".format(nr))
+                logger.debug(" Using from cache %s" % nr)
                 continue
-        logger.debug("!PR was updated".format(nr))
+        logger.debug("!PR was updated %s" % nr)
         rez[pr.number]['changed_files_names'] = pr_get_changed_files(pr)
 
     with open(args.destination, 'w') as d:

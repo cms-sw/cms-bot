@@ -4,9 +4,6 @@ from optparse import OptionParser
 import repo_config
 from os.path import expanduser
 from urllib2 import urlopen
-import json
-
-#, dirname, abspath, join, exists #remove later
 
 def update_tag_version(current_version=None):
     updated_version = None

@@ -4,6 +4,7 @@ import os, glob, re, shutil, time, threading
 from cmsutils import doCmd
 from es_relval_log import es_parse_log
 from RelValArgs import FixWFArgs
+from _py2with3compatibility import run_cmd
 import json
 from logreaderUtils import transform_and_write_config_file, add_exception_to_config
 
@@ -172,7 +173,8 @@ class PyRelValsThread(object):
   
   def update_runall(self):
     self.update_known_errors()
-    outFile    = open(os.path.join(self.outdir,"runall-report-step123-.log"),"w")
+    runall = os.path.join(self.outdir,"runall-report-step123-.log")
+    outFile    = open(runall+".tmp","w")
     status_ok  = []
     status_err = []
     len_ok  = 0
@@ -200,6 +202,12 @@ class PyRelValsThread(object):
       inFile.close()
     outFile.write(" ".join(str(x) for x in status_ok)+" tests passed, "+" ".join(str(x) for x in status_err)+" failed\n")
     outFile.close()
+    save = False
+    if os.path.exists(runall):
+      e, o = run_cmd("diff %s.tmp %s |wc -l" % (runall, runall))
+      if o!="0": save=True
+    if save: run_cmd("mv %s.tmp %s" % (runall, runall))
+    return
 
   def update_known_errors(self):
     known_errors = {}

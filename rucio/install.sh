@@ -44,7 +44,10 @@ mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
 export TMPDIR="${INSTALL_DIR}/tmp"
 pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
 rm -f ${INSTALL_DIR}/rucio.cfg
-curl -s -o ${INSTALL_DIR}/rucio.cfg ${RUCIO_CONFIG_URL}
+case ${RUCIO_CONFIG_URL} in
+  file://*) cp -f $(echo ${RUCIO_CONFIG_URL} | sed 's|^file://||') ${INSTALL_DIR}/rucio.cfg ;;
+  *) curl -s -o ${INSTALL_DIR}/rucio.cfg ${RUCIO_CONFIG_URL} ;;
+esac
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg
 ln -s ../../rucio.cfg ${PYTHONUSERBASE}/etc/rucio.cfg
 rm -rf ${TMPDIR}

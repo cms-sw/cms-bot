@@ -53,7 +53,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
     ;;
   esac
   slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
-  if [ "X${slave_labels}" != "X" ] ; then ${JENKINS_CLI_CMD} groovy ${SCRIPT_DIR}/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${slave_labels}" ; fi
+  if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = "${JENKINS_SLAVE_NAME}" "${slave_labels}" ; fi
 fi
 if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
   ${JENKINS_CLI_CMD} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true

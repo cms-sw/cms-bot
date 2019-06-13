@@ -1015,11 +1015,9 @@ matt-komm:
 - FastSimulation
 Martin-Grunewald:
 - Utilities
-- SLHCUpgradeSimulations
 - L1Trig
 - HLTrigger/
 - FWCore
-- FastSimulation
 - EventFilter
 - Configuration
 jdolen:

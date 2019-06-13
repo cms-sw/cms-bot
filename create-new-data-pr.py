@@ -37,7 +37,11 @@ if __name__ == "__main__":
       print('Branch has not been merged !')
       exit(0)
 
-  last_release_tag = data_repo.get_latest_release().tag_name
+  last_release_tag = None
+  releases = data_repo.get_releases()
+  for i in releases:
+      last_release_tag = (i.tag_name)
+      break
 
   comparison = data_repo.compare('master', last_release_tag)
   print('commits behind ', comparison.behind_by)
@@ -52,7 +56,7 @@ if __name__ == "__main__":
   only_new_files=True if files_created == files_modified else False
 
   # if the latest tag/release compared with master(base) or the pr(head) branch is behind then make new tag
-  new_tag = last_release_tag # in case
+  new_tag = last_release_tag # in case the tag doesnt change
   if create_new_tag:
       nums_only = last_release_tag.strip('V').split('-')
       first, sec, thrd = tuple(nums_only)
@@ -67,9 +71,16 @@ if __name__ == "__main__":
           print('files were modified, update mid version and reset minor', sec, thrd)
       new_tag = 'V'+first+'-'+sec+'-'+thrd
       # message should be referencing the PR that triggers this job
-      new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False, 'master')
+      new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
 
-  last_release_tag = data_repo.get_latest_release().tag_name
+  last_release_tag = None
+  last_release_id = None
+  releases = data_repo.get_releases()
+  for i in releases:
+      last_release_tag = i.tag_name
+      last_release_id = i.id
+      break
+
   default_cms_dist_branch = dist_repo.default_branch
   repo_name_only = opts.data_repo.split('/')[1]
   repo_tag_pr_branch = 'update-'+repo_name_only+'-to-'+last_release_tag
@@ -107,12 +118,8 @@ if __name__ == "__main__":
       count=count+1
       new_content = new_content+updated_line
 
-  update_file_object = dist_repo.update_file(content_file.path, 'Update tag for '+repo_name_only+' to '+new_tag, new_content,
-                        content_file.sha, branch=repo_tag_pr_branch)
-  #print(update_file_object)
-  change_tag_pull_request = dist_repo.create_pull('Update tag for '+repo_name_only+' to '+new_tag,
-                                   'Move '+repo_name_only+' data to new tag, see \n'
-                                                  + data_repo_pr.html_url + '\n'
-                                                  +' and \n' +data_repo.get_latest_release().html_url +'\n',
-                                   base=default_cms_dist_branch, head=repo_tag_pr_branch,
-                                   maintainer_can_modify=True)
+  mssg = 'Update tag for '+repo_name_only+' to '+new_tag
+  update_file_object = dist_repo.update_file("/data/cmsswdata.txt", mssg, new_content, content_file.sha, repo_tag_pr_branch)
+  title = 'Update tag for '+repo_name_only+' to '+new_tag
+  body = 'Move '+repo_name_only+" data to new tag, see \n" + data_repo_pr.html_url + '\n' + "and \n" + data_repo.get_release(last_release_id).html_url +'\n'
+  change_tag_pull_request = dist_repo.create_pull(title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch)

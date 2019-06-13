@@ -74,11 +74,11 @@ if __name__ == "__main__":
       new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
 
   last_release_tag = None
-  last_release_id = None
+  last_release_url = None
   releases = data_repo.get_releases()
   for i in releases:
       last_release_tag = i.tag_name
-      last_release_id = i.id
+      last_release_url = i.url
       break
 
   default_cms_dist_branch = dist_repo.default_branch
@@ -121,5 +121,5 @@ if __name__ == "__main__":
   mssg = 'Update tag for '+repo_name_only+' to '+new_tag
   update_file_object = dist_repo.update_file("/data/cmsswdata.txt", mssg, new_content, content_file.sha, repo_tag_pr_branch)
   title = 'Update tag for '+repo_name_only+' to '+new_tag
-  body = 'Move '+repo_name_only+" data to new tag, see \n" + data_repo_pr.html_url + '\n' + "and \n" + data_repo.get_release(last_release_id).html_url +'\n'
+  body = 'Move '+repo_name_only+" data to new tag, see \n" + data_repo_pr.html_url + '\n' + "and \n" + last_release_url +'\n'
   change_tag_pull_request = dist_repo.create_pull(title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch)

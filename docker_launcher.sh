@@ -14,7 +14,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
   BUILD_BASEDIR=$(echo $WORKSPACE |  cut -d/ -f1-3)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
-  MOUNT_POINTS="/cvmfs,/tmp,/cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses,/cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security"
+  MOUNT_POINTS="/cvmfs,/tmp"
+  for xdir in /cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses /cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security ; do
+    ldir=$(echo $xdir | sed 's|.*:||')
+    if [ -d $ldir ] ; then xdir=$ldir ; fi
+    MOUNT_POINTS="$MOUNT_POINTS,${ldir}"
+  done
   if [ $(echo $HOME |  grep '^/home/' | wc -l)  -gt 0 ] ; then
     MOUNT_POINTS="$MOUNT_POINTS,/home"
   fi

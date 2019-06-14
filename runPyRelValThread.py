@@ -202,11 +202,11 @@ class PyRelValsThread(object):
       inFile.close()
     outFile.write(" ".join(str(x) for x in status_ok)+" tests passed, "+" ".join(str(x) for x in status_err)+" failed\n")
     outFile.close()
-    save = False
+    save = True
     if os.path.exists(runall):
-      e, o = run_cmd("diff %s.tmp %s |wc -l" % (runall, runall))
-      if o!="0": save=True
-    if save: run_cmd("cp %s.tmp %s" % (runall, runall))
+      e, o = run_cmd("diff %s.tmp %s | wc -l" % (runall, runall))
+      if o=="0": save=False
+    if save: run_cmd("mv %s.tmp %s" % (runall, runall))
     return
 
   def update_known_errors(self):

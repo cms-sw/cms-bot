@@ -961,11 +961,18 @@ def find_check_headers(comparisons, architecture):
         path = path.replace('ARCHITECTURE', architecture)
         _, _, t_ret_code = get_output_command('test -f ' + path)
         if t_ret_code == 0:
-            out, _, _ = get_output_command('wc -l ' + path + '| cut -d ' ' -f1')
-            if int(out) == 0:
-                result = 'passed'
-            else:
-                result = 'error'
+            cmd = 'wc -l ' + path + '| cut -d \' \' -f1'
+            out, err, ret_code = get_output_command(cmd)
+            try:
+                # if the file is empty, means there was no issues with header checks
+                if int(out) == 0:
+                    result = 'passed'
+                else:
+                    result = 'error'
+            except:
+                print("ERROR running command: " + cmd)
+                print(out, err, ret_code)
+                result = 'error'  # this will make sure to check what is wrong with the file
         else:
             result = 'inprogress'
         print(result)

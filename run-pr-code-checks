@@ -7,10 +7,15 @@ export USER_CODE_CHECKS=$2
 BUILD_NUMBER=$3
 DRY_RUN=$4
 REPOSITORY=$5
-CODE_FORMAT=$6
-CODE_CHECKS=$7
-if [ "X$CODE_CHECKS" = "X" ] ; then CODE_CHECKS=true ; fi
-if [ "X$CODE_FORMAT" = "X" ] ; then CODE_FORMAT=false ; fi
+CODE_CHECKS=true
+CODE_FORMAT=false
+if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050850 ] ; then
+  CODE_FORMAT=true
+  rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
+  git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules
+  mv scram-buildrules/SCRAM  $CMSSW_BASE/config/SCRAM
+fi
+
 if [ "X$DRY_RUN" = "X" ] ; then DRY_RUN=false ; fi
 if [ "X${REPOSITORY}" = "X" ] ; then REPOSITORY="cms-sw/cmssw" ;fi
 REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
@@ -20,22 +25,6 @@ if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
 cd $CMSSW_BASE
 rm -rf ${CMSSW_BASE}/upload
 mkdir ${CMSSW_BASE}/upload
-
-#Enable code format if PR is made by cmsbuild
-if ! $CODE_FORMAT ; then
-  curl -s https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} > ${PULL_REQUEST}.txt
-  if [ $(grep '"title": ' ${PULL_REQUEST}.txt | grep '"Running code-format for ' | wc -l) -eq 1 ] ; then
-    if [ $(grep '"login": ' ${PULL_REQUEST}.txt | grep '"cmsbuild"' | wc -l) -eq 1 ] ; then
-      CODE_FORMAT=true
-    fi
-  fi
-fi
-
-if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050800 ] ; then
-  rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
-  git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules
-  mv scram-buildrules/SCRAM  $CMSSW_BASE/config/SCRAM
-fi
 
 curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $CMSSW_BASE/upload/all-changed-files.txt
 grep -v '^[^/]*/[^/]*/test/' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-checks-files.txt          || true

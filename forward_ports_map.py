@@ -208,3 +208,6 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/ge
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/cxxmodule")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/geant104")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/gcc9")
+
+#Added explicitly by Zygimantas Matonis
+GIT_REPO_FWPORTS["cms-sw.github.io"]["code_copy"].append("master_copy")

@@ -17,7 +17,7 @@ pushd "$WORKSPACE/matrix-results"
   if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
       [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_EXTRAS"
   fi 
-  CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root | sort`
   for f in $ROOT_FILES

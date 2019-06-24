@@ -9,6 +9,8 @@ DRY_RUN=$4
 REPOSITORY=$5
 CODE_CHECKS=true
 CODE_FORMAT=false
+MULTIPLE_FILES_CHANGES=true
+
 if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050850 ] ; then
   CODE_FORMAT=true
   rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
@@ -84,6 +86,11 @@ if $CODE_FORMAT ; then
   fi
 fi
 
+if ${MULTIPLE_FILES_CHANGES} ; then
+    ${CMS_BOT_DIR}/github_scripts/simultaneous_files_modifications_by_PRs.py ${PULL_REQUEST} > \
+        ${CMSSW_BASE}/upload/multiple_files_changes.txt || true
+fi
+
 if [ "$DRY_RUN" != "true" ] ; then
   source $CMS_BOT_DIR/jenkins-artifacts
   send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
@@ -111,6 +118,13 @@ if [ $DSIZE -gt 0 ] ; then MSG="${MSG}@N@@N@- This PR adds an extra ${DSIZE}KB t
 if [ -s ${CMSSW_BASE}/upload/invalid_files.txt ] ; then
   MSG="${MSG}@N@@N@- Found files with invalid states:@N@$(cat ${CMSSW_BASE}/upload/invalid_files.txt | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
 fi
+
+# TODO uncomment when ready
+#if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
+#    MSG="${MSG}@N@@N@- This PR modifies files simultaneously with other PRs: "
+#    while read l ; do echo "${MSG}@N@  -$l" ; done < ${CMSSW_BASE}/upload/multiple_file_changes.txt
+#fi
+
 if [ "$DRY_RUN" != "true" ] ; then
   ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
 fi

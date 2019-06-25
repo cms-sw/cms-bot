@@ -31,7 +31,7 @@ def build_open_file_list(prs_dict, branch):
 def check_pr_dict(prs_dict, prs_list, pr_number):
     for my_file in prs_dict[pr_number]['changed_files_names']:
         if len(prs_list[my_file]) > 1:
-            print("File ", my_file, " modified in PRs # ", prs_list[my_file])
+            print("File ", my_file, " modified in PR(s):", ', '.join(['#'+p  for p in  prs_list[my_file] if p!=pr_number]))
 
 
 if __name__ == '__main__':

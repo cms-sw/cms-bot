@@ -120,8 +120,8 @@ if [ -s ${CMSSW_BASE}/upload/invalid_files.txt ] ; then
 fi
 
 if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
-    MSG="${MSG}@N@@N@- This PR modifies files simultaneously with other PRs: "
-    MSG="${MSG}@N@$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')
+    MSG="${MSG}@N@@N@- There are other open Pull requests which might conflict with changes you have proposed:"
+    MSG="${MSG}@N@$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
 fi
 
 if [ "$DRY_RUN" != "true" ] ; then

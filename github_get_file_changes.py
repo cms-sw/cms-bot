@@ -89,7 +89,8 @@ def main():
     parser.add_argument("-c", "--cached_pr", help="Path to cached pr list")
     parser.add_argument("-r", "--cloned_repo", help="Path to cloned git repository")
     parser.add_argument("-l", "--logging", default="DEBUG", choices=logging._levelNames, help="Set level of logging")
-    parser.add_argument("-o", "--output", default=None, help="Set level of logging")
+    parser.add_argument("-o", "--output", default=None, help="Output result, which is a list of modules that are not"
+                                                             " being modified by other PRs.")
     parser.add_argument("-i", "--ignore_modules", default=None, help="Ignore modules which are already done.")
     args = parser.parse_args()
 

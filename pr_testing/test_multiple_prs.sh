@@ -68,7 +68,7 @@ function prepare_upload_comment_exit(){
     if [ -z ${NO_POST} ]; then
         send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
     fi
-    report_pull_request_results_all_prs $@ --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
+    report_pull_request_results_all_prs_with_commit $@ --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
     exit 0
 }
 
@@ -183,7 +183,7 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
     if [ "X$CMSSW_IB" = "X" ] ; then
       CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$CMSSW_IB" = "X" ] ; then
-        report_pull_request_results_all_prs "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
+        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
         exit 0
       fi
       COMPARISON_ARCH=$ARCHITECTURE

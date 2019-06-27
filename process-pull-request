@@ -32,7 +32,7 @@ if __name__ == "__main__":
   if not opts.commit: api_rate_limits(gh)
   repo = gh.get_repo(opts.repository)
   if opts.commit:
-    pr   = repo.get_pull(prId)
+    pr = repo.get_pull(prId)
     if opts.all:
       for c in pr.get_commits():
         print(c.sha)

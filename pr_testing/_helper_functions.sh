@@ -15,6 +15,8 @@ function get_path_to_pr_metadata(){
 }
 
 function get_cached_GH_JSON (){
+    # gives path to cached PR json file
+    # if it is the first time a file is requested, it will download it
     PR=$1  # ex. cms-sw/dist#100
     # ---
     REPO=$( echo ${PR} | sed 's/#.*//' )

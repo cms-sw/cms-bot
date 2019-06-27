@@ -202,11 +202,20 @@ if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n'
     exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: RELEASE_FORMAT ${CMSSW_QUEUE} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
 fi
 
+# Put hashcodes of last commits to a file. Mostly used for commenting back
+for PR in ${PULL_REQUESTS}; do
+    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+    PR_NR=$(echo ${PR} | sed 's/.*#//')
+    COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
+    echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
+done
+
 # Do git pull --rebase for each PR except for /cmssw
 for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
     FILTERED_PRS=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep ${U_REPO} | tr '\n' ' ')
     for PR in ${FILTERED_PRS}; do
-        git_clone_and_merge "$(get_cached_GH_JSON "${PR}")"
+        git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
+        exit_with_comment_failure_main_pr  ${DRY_RUN} -m "ERROR: failed to merge ${PR} PR"
     done
 done
 
@@ -239,14 +248,6 @@ for U_REPO in ${UNIQ_REPOS}; do
 	  BUILD_EXTERNAL=true
 	;;
 	esac
-done
-
-# Put hashcodes of last commits to a file. Mostly used for commenting back
-for PR in ${PULL_REQUESTS}; do
-    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
-    PR_NR=$(echo ${PR} | sed 's/.*#//')
-    COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
-    echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
 done
 
 # modify comments that test are being triggered by Jenkins

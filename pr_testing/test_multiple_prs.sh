@@ -85,7 +85,7 @@ if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--dry-run'
 fi
 export NO_POST ; export DRY_RUN
-export PYTHONPATH=$CMS_BOT_DIR:PYTHONPATH
+export PYTHONPATH=$CMS_BOT_DIR:$PYTHONPATH
 
 # If RELEASE_FORMAT is not set, use the CMSSW_DEVEL_BRANCH.
 # if someone starts jenkins job without scheduler directly from Jenkins
@@ -207,9 +207,9 @@ fi
 for PR in ${PULL_REQUESTS}; do
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
     PR_NR=$(echo ${PR} | sed 's/.*#//')
-#    ${CMS_BOT_DIR}/github_scripts/get_Github_API_rate.py
+    ${CMS_BOT_DIR}/github_scripts/get_Github_API_rate.py
     COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
-#    ${CMS_BOT_DIR}/github_scripts/get_Github_API_rate.py
+    ${CMS_BOT_DIR}/github_scripts/get_Github_API_rate.py
     echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
 done
 

@@ -217,8 +217,11 @@ done
 for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
     FILTERED_PRS=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep ${U_REPO} | tr '\n' ' ')
     for PR in ${FILTERED_PRS}; do
+        ERR=false
         git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
-#        exit_with_comment_failure_main_pr  ${DRY_RUN} -m "ERROR: failed to merge ${PR} PR"
+        if ${ERR} ;
+            then exit_with_comment_failure_main_pr  ${DRY_RUN} -m "ERROR: failed to merge ${PR} PR" ;
+        fi
     done
 done
 

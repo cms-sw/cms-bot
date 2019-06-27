@@ -85,6 +85,7 @@ if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--dry-run'
 fi
 export NO_POST ; export DRY_RUN
+export PYTHONPATH=$CMS_BOT_DIR:PYTHONPATH
 
 # If RELEASE_FORMAT is not set, use the CMSSW_DEVEL_BRANCH.
 # if someone starts jenkins job without scheduler directly from Jenkins

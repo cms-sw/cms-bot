@@ -167,19 +167,6 @@ GiacomoSguazzoni:
 - Configuration/StandardSequences
 - Validation/RecoTrack
 - Validation/RecoVertex
-TaiSakuma:
-- CondFormats/JetMETObjects
-- DQMOffline/JetMET
-- DataFormats/JetReco
-- DataFormats/METReco
-- JetMETCorrections
-- PhysicsTools/PatAlgos
-- PhysicsTools/PatUtils
-- PhysicsTools/RecoAlgos
-- RecoJets
-- RecoMET
-- Validation/RecoJets
-- Validation/RecoMET
 VinInn:
 - RecoTracker
 - RecoLocalTracker

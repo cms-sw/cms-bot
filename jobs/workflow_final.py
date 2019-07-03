@@ -148,5 +148,6 @@ if __name__ == "__main__":
   update_timelog(workflow_dir, jobs)
   update_hostname(workflow_dir)
   update_known_error(workflow, workflow_dir)
-  if not 'CMSSW_DRY_RUN' in os.environ: upload_logs(workflow, workflow_dir, exit_code)
-
+  if not 'CMSSW_DRY_RUN' in os.environ:
+    upload_logs(workflow, workflow_dir, exit_code)
+  run_cmd("touch %s/workflow_upload_done" % workflow_dir)

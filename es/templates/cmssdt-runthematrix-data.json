@@ -9,35 +9,45 @@
           "mapping": {
             "type": "integer"
           }
-        },
+        }
+      },
+      {
         "mappings_run": {
           "match_pattern": "regex",
           "match": "*-b-RUN",
           "mapping": {
             "type": "integer"
           }
-        },
+        }
+      },
+      {
         "mappings_event": {
           "match_pattern": "regex",
           "match": "*-c-EVENT",
           "mapping": {
             "type": "integer"
           }
-        },
+        }
+      },
+      {
         "mappings_vsize": {
           "match_pattern": "regex",
           "match": "*-d-VSIZE",
           "mapping": {
             "type": "float"
           }
-        },
+        }
+      },
+      {
         "mappings_deltv": {
           "match_pattern": "regex",
           "match": "*-e-DELTV",
           "mapping": {
             "type": "float"
           }
-        },
+        }
+      },
+      {
         "mappings_rss": {
           "match_pattern": "regex",
           "match": "*-f-RSS",

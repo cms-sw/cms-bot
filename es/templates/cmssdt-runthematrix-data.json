@@ -4,7 +4,7 @@
     "cmssdt-runTheMatrix-data": {
       "dynamic_templates": [{
         "mappings_count": {
-          "match_pattern": "regex",
+          "match_mapping_type": "string",
           "match": "*-a-COUNT",
           "mapping": {
             "type": "integer"
@@ -13,7 +13,7 @@
       },
       {
         "mappings_run": {
-          "match_pattern": "regex",
+          "match_mapping_type": "string",
           "match": "*-b-RUN",
           "mapping": {
             "type": "integer"
@@ -22,7 +22,7 @@
       },
       {
         "mappings_event": {
-          "match_pattern": "regex",
+          "match_mapping_type": "string",
           "match": "*-c-EVENT",
           "mapping": {
             "type": "integer"
@@ -31,7 +31,7 @@
       },
       {
         "mappings_vsize": {
-          "match_pattern": "regex",
+          "match_mapping_type": "string",
           "match": "*-d-VSIZE",
           "mapping": {
             "type": "float"
@@ -40,7 +40,7 @@
       },
       {
         "mappings_deltv": {
-          "match_pattern": "regex",
+          "match_mapping_type": "string",
           "match": "*-e-DELTV",
           "mapping": {
             "type": "float"
@@ -49,7 +49,7 @@
       },
       {
         "mappings_rss": {
-          "match_pattern": "regex",
+          "match_mapping_type": "string",
           "match": "*-f-RSS",
           "mapping": {
             "type": "float"

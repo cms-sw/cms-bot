@@ -163,7 +163,9 @@ def es_parse_log(logFile):
   except Exception as e:
     print(e)
   print("sending data for ",logFile)
-  try:send_payload(index,document,id,json.dumps(payload))
+  try:
+    send_payload(index,document,id,json.dumps(payload))
+    send_payload(index+'-new',document,id,json.dumps(payload))
   except:pass
   if datasets:
     dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"])}

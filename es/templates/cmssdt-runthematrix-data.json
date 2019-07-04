@@ -2,6 +2,60 @@
   "aliases": {},
   "mappings": {
     "cmssdt-runTheMatrix-data": {
+      "dynamic_templates": [{
+        "mappings_count": {
+          "match_mapping_type": "string",
+          "match": "*-a-COUNT",
+          "mapping": {
+            "type": "integer"
+          }
+        }
+      },
+      {
+        "mappings_run": {
+          "match_mapping_type": "string",
+          "match": "*-b-RUN",
+          "mapping": {
+            "type": "integer"
+          }
+        }
+      },
+      {
+        "mappings_event": {
+          "match_mapping_type": "string",
+          "match": "*-c-EVENT",
+          "mapping": {
+            "type": "integer"
+          }
+        }
+      },
+      {
+        "mappings_vsize": {
+          "match_mapping_type": "string",
+          "match": "*-d-VSIZE",
+          "mapping": {
+            "type": "float"
+          }
+        }
+      },
+      {
+        "mappings_deltv": {
+          "match_mapping_type": "string",
+          "match": "*-e-DELTV",
+          "mapping": {
+            "type": "float"
+          }
+        }
+      },
+      {
+        "mappings_rss": {
+          "match_mapping_type": "string",
+          "match": "*-f-RSS",
+          "mapping": {
+            "type": "float"
+          }
+        }
+      }],
       "properties": {
         "@timestamp": {
           "type": "date"
@@ -39,78 +93,6 @@
         "HEAP_USED_BYTES": {
           "type": "integer"
         },
-        "LargestIncreaseRssEvent-a-COUNT": {
-          "type": "integer"
-        },
-        "LargestIncreaseRssEvent-b-RUN": {
-          "type": "integer"
-        },
-        "LargestIncreaseRssEvent-c-EVENT": {
-          "type": "integer"
-        },
-        "LargestIncreaseRssEvent-d-VSIZE": {
-          "type": "float"
-        },
-        "LargestIncreaseRssEvent-e-DELTV": {
-          "type": "float"
-        },
-        "LargestIncreaseRssEvent-f-RSS": {
-          "type": "float"
-        },
-        "LargestRssEvent-a-COUNT": {
-          "type": "integer"
-        },
-        "LargestRssEvent-b-RUN": {
-          "type": "integer"
-        },
-        "LargestRssEvent-c-EVENT": {
-          "type": "integer"
-        },
-        "LargestRssEvent-d-VSIZE": {
-          "type": "float"
-        },
-        "LargestRssEvent-e-DELTV": {
-          "type": "float"
-        },
-        "LargestRssEvent-f-RSS": {
-          "type": "float"
-        },
-        "LargestVsizeEventT1-a-COUNT": {
-          "type": "integer"
-        },
-        "LargestVsizeEventT1-b-RUN": {
-          "type": "integer"
-        },
-        "LargestVsizeEventT1-c-EVENT": {
-          "type": "integer"
-        },
-        "LargestVsizeEventT1-d-VSIZE": {
-          "type": "float"
-        },
-        "LargestVsizeEventT1-e-DELTV": {
-          "type": "float"
-        },
-        "LargestVsizeEventT1-f-RSS": {
-          "type": "float"
-        },
-        "LargestVsizeIncreaseEvent-a-COUNT": {
-          "type": "integer"
-        },
-        "LargestVsizeIncreaseEvent-b-RUN": {
-          "type": "integer"
-        },
-        "LargestVsizeIncreaseEvent-c-EVENT": {
-          "type": "integer"
-        },
-        "LargestVsizeIncreaseEvent-d-VSIZE": {
-          "type": "float"
-        },
-        "LargestVsizeIncreaseEvent-e-DELTV": {
-          "type": "float"
-        },
-        "LargestVsizeIncreaseEvent-f-RSS": {
-          "type": "float"
-        },
         "MaxEventTime": {
           "type": "float"
         },
@@ -121,78 +103,6 @@
           "type": "float"
         },
         "PeakValueVsize": {
-          "type": "float"
-        },
-        "SecondLargestRssEvent-a-COUNT": {
-          "type": "integer"
-        },
-        "SecondLargestRssEvent-b-RUN": {
-          "type": "integer"
-        },
-        "SecondLargestRssEvent-c-EVENT": {
-          "type": "integer"
-        },
-        "SecondLargestRssEvent-d-VSIZE": {
-          "type": "float"
-        },
-        "SecondLargestRssEvent-e-DELTV": {
-          "type": "float"
-        },
-        "SecondLargestRssEvent-f-RSS": {
-          "type": "float"
-        },
-        "SecondLargestVsizeEventT2-a-COUNT": {
-          "type": "integer"
-        },
-        "SecondLargestVsizeEventT2-b-RUN": {
-          "type": "integer"
-        },
-        "SecondLargestVsizeEventT2-c-EVENT": {
-          "type": "integer"
-        },
-        "SecondLargestVsizeEventT2-d-VSIZE": {
-          "type": "float"
-        },
-        "SecondLargestVsizeEventT2-e-DELTV": {
-          "type": "float"
-        },
-        "SecondLargestVsizeEventT2-f-RSS": {
-          "type": "float"
-        },
-        "ThirdLargestRssEvent-a-COUNT": {
-          "type": "integer"
-        },
-        "ThirdLargestRssEvent-b-RUN": {
-          "type": "integer"
-        },
-        "ThirdLargestRssEvent-c-EVENT": {
-          "type": "integer"
-        },
-        "ThirdLargestRssEvent-d-VSIZE": {
-          "type": "float"
-        },
-        "ThirdLargestRssEvent-e-DELTV": {
-          "type": "float"
-        },
-        "ThirdLargestRssEvent-f-RSS": {
-          "type": "float"
-        },
-        "ThirdLargestVsizeEventT3-a-COUNT": {
-          "type": "integer"
-        },
-        "ThirdLargestVsizeEventT3-b-RUN": {
-          "type": "integer"
-        },
-        "ThirdLargestVsizeEventT3-c-EVENT": {
-          "type": "integer"
-        },
-        "ThirdLargestVsizeEventT3-d-VSIZE": {
-          "type": "float"
-        },
-        "ThirdLargestVsizeEventT3-e-DELTV": {
-          "type": "float"
-        },
-        "ThirdLargestVsizeEventT3-f-RSS": {
           "type": "float"
         },
         "TotalJobCPU": {

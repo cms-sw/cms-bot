@@ -165,7 +165,7 @@ def es_parse_log(logFile):
   print("sending data for ",logFile)
   try:
     send_payload(index,document,id,json.dumps(payload))
-    send_payload(index+'-new',document,id,json.dumps(payload))
+    send_payload(index+'-test-idx',document,id,json.dumps(payload))
   except:pass
   if datasets:
     dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"])}

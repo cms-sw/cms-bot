@@ -1,7 +1,7 @@
 {
   "aliases": {},
   "mappings": {
-    "runTheMatrix-data": {
+    "cmssdt-runTheMatrix-data": {
       "properties": {
         "@timestamp": {
           "type": "date"

@@ -1,61 +1,63 @@
 {
   "aliases": {},
   "mappings": {
-    "cmssdt-runTheMatrix-data": {
-      "dynamic_templates": [{
-        "mappings_count": {
-          "match_mapping_type": "string",
-          "match": "*-a-COUNT",
-          "mapping": {
-            "type": "integer"
+    "runTheMatrix-data": {
+      "dynamic_templates": [
+        {
+          "mappings_count": {
+            "mapping": {
+              "type": "integer"
+            },
+            "match": "*-a-COUNT",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_run": {
+            "mapping": {
+              "type": "integer"
+            },
+            "match": "*-b-RUN",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_event": {
+            "mapping": {
+              "type": "integer"
+            },
+            "match": "*-c-EVENT",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_vsize": {
+            "mapping": {
+              "type": "float"
+            },
+            "match": "*-d-VSIZE",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_deltv": {
+            "mapping": {
+              "type": "float"
+            },
+            "match": "*-e-DELTV",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_rss": {
+            "mapping": {
+              "type": "float"
+            },
+            "match": "*-f-RSS",
+            "match_mapping_type": "string"
           }
         }
-      },
-      {
-        "mappings_run": {
-          "match_mapping_type": "string",
-          "match": "*-b-RUN",
-          "mapping": {
-            "type": "integer"
-          }
-        }
-      },
-      {
-        "mappings_event": {
-          "match_mapping_type": "string",
-          "match": "*-c-EVENT",
-          "mapping": {
-            "type": "integer"
-          }
-        }
-      },
-      {
-        "mappings_vsize": {
-          "match_mapping_type": "string",
-          "match": "*-d-VSIZE",
-          "mapping": {
-            "type": "float"
-          }
-        }
-      },
-      {
-        "mappings_deltv": {
-          "match_mapping_type": "string",
-          "match": "*-e-DELTV",
-          "mapping": {
-            "type": "float"
-          }
-        }
-      },
-      {
-        "mappings_rss": {
-          "match_mapping_type": "string",
-          "match": "*-f-RSS",
-          "mapping": {
-            "type": "float"
-          }
-        }
-      }],
+      ],
       "properties": {
         "@timestamp": {
           "type": "date"

@@ -697,20 +697,20 @@ QCD600to800in14TeV2023D35wf27453p0 27453.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14Te
 #
 TTbar14TeV2023D35PUwf27634p0 27634.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D35PU_*/step3.root RECO
 #
-#   D35 (New wf numbers after July 10 2019)
+#   D35 (New wf numbers after July 10 2019; 2026 from July 17)
 #
-SingleElectronPt35in2023D35wf20002p0 20002.0_SingleElectronPt35+SingleElectronPt35_pythia8_2023D35_GenSim*+*/step3.root RECO
-SingleElectronPt1000in2023D35wf20003p0 20003.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2023D35_GenSim*+*/step3.root RECO
-SingleMuPt10in2023D35wf20007p0 20007.0_SingleMuPt10+SingleMuPt10_pythia8_2023D35_GenSim*+*/step3.root RECO
-SingleMuPt1000in2023D35wf20009p0 20009.0_SingleMuPt1000+SingleMuPt1000_pythia8_2023D35_GenSim*+*/step3.root RECO
-TenMuExtendedE2023D35wf20011p0 20011.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D35_GenSim*+*/step3.root RECO
-TTbar14TeV2023D35wf20034p0 20034.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D35_GenSim*+*/step3.root RECO
-ZEE14TeV2023D35wf20046p0 20046.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D35_GenSim*+*/step3.root RECO
-QCD600to800in14TeV2023D35wf20053p0 20053.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D35_GenSim*+*/step3.root RECO
+SingleElectronPt35in2026D35wf20002p0 20002.0_SingleElectronPt35+SingleElectronPt35_pythia8_2026D35_GenSim*+*/step3.root RECO
+SingleElectronPt1000in2026D35wf20003p0 20003.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2026D35_GenSim*+*/step3.root RECO
+SingleMuPt10in2026D35wf20007p0 20007.0_SingleMuPt10+SingleMuPt10_pythia8_2026D35_GenSim*+*/step3.root RECO
+SingleMuPt1000in2026D35wf20009p0 20009.0_SingleMuPt1000+SingleMuPt1000_pythia8_2026D35_GenSim*+*/step3.root RECO
+TenMuExtendedE2026D35wf20011p0 20011.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2026D35_GenSim*+*/step3.root RECO
+TTbar14TeV2026D35wf20034p0 20034.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2026D35_GenSim*+*/step3.root RECO
+ZEE14TeV2026D35wf20046p0 20046.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2026D35_GenSim*+*/step3.root RECO
+QCD600to800in14TeV2026D35wf20053p0 20053.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2026D35_GenSim*+*/step3.root RECO
 #
-#  D35PU (New wf numbers after July 10 2019)
+#  D35PU (New wf numbers after July 10 2019; 2026 from July 17)
 #
-TTbar14TeV2023D35PUwf20234p0 20234.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D35PU_*/step3.root RECO
+TTbar14TeV2026D35PUwf20234p0 20234.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2026D35PU_*/step3.root RECO
 #
 #   D41
 #
@@ -728,33 +728,33 @@ CloseByPhoton2023D41wf29093p52 29093.52_CloseByParticleGun+CloseByParticle_Photo
 #
 TTbar14TeV2023D41PUwf29234p0 29234.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D41PU_*/step3.root RECO
 #
-#   D41 (New wf numbers after July 10 2019)
+#   D41 (New wf numbers after July 10 2019; 2026 from July 17)
 #
-SingleElectronPt35in2023D41wf20402p0 20402.0_SingleElectronPt35+SingleElectronPt35_pythia8_2023D41_GenSim*+*/step3.root RECO
-SingleElectronPt1000in2023D41wf20403p0 20403.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2023D41_GenSim*+*/step3.root RECO
-SingleMuPt10in2023D41wf20407p0 20407.0_SingleMuPt10+SingleMuPt10_pythia8_2023D41_GenSim*+*/step3.root RECO
-SingleMuPt1000in2023D41wf20409p0 20409.0_SingleMuPt1000+SingleMuPt1000_pythia8_2023D41_GenSim*+*/step3.root RECO
-TenMuExtendedE2023D41wf20411p0 20411.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D41_GenSim*+*/step3.root RECO
-TTbar14TeV2023D41wf20434p0 20434.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D41_GenSim*+*/step3.root RECO
-ZEE14TeV2023D41wf20446p0 20446.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D41_GenSim*+*/step3.root RECO
-QCD600to800in14TeV2023D41wf20453p0 20453.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D41_GenSim*+*/step3.root RECO
-CloseByPhoton2023D41wf20493p52 20493.52_CloseByParticleGun+CloseByParticle_Photon_ERZRanges_2023D41_*/step3.root RECO
+SingleElectronPt35in2026D41wf20402p0 20402.0_SingleElectronPt35+SingleElectronPt35_pythia8_2026D41_GenSim*+*/step3.root RECO
+SingleElectronPt1000in2026D41wf20403p0 20403.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2026D41_GenSim*+*/step3.root RECO
+SingleMuPt10in2026D41wf20407p0 20407.0_SingleMuPt10+SingleMuPt10_pythia8_2026D41_GenSim*+*/step3.root RECO
+SingleMuPt1000in2026D41wf20409p0 20409.0_SingleMuPt1000+SingleMuPt1000_pythia8_2026D41_GenSim*+*/step3.root RECO
+TenMuExtendedE2026D41wf20411p0 20411.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2026D41_GenSim*+*/step3.root RECO
+TTbar14TeV2026D41wf20434p0 20434.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2026D41_GenSim*+*/step3.root RECO
+ZEE14TeV2026D41wf20446p0 20446.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2026D41_GenSim*+*/step3.root RECO
+QCD600to800in14TeV2026D41wf20453p0 20453.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2026D41_GenSim*+*/step3.root RECO
+CloseByPhoton2026D41wf20493p52 20493.52_CloseByParticleGun+CloseByParticle_Photon_ERZRanges_2026D41_*/step3.root RECO
 #
-#  D41PU (New wf numbers after July 10 2019)
+#  D41PU (New wf numbers after July 10 2019; 2026 from July 17)
 #
-TTbar14TeV2023D41PUwf20634p0 20634.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D41PU_*/step3.root RECO
+TTbar14TeV2026D41PUwf20634p0 20634.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2026D41PU_*/step3.root RECO
 #
 #   D44
 #
-SingleElectronPt35in2023D44wf21202p0 21202.0_SingleElectronPt35+SingleElectronPt35_pythia8_2023D44_GenSim*+*/step3.root RECO
-SingleElectronPt1000in2023D44wf21203p0 21203.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2023D44_GenSim*+*/step3.root RECO
-SingleMuPt10in2023D44wf21207p0 21207.0_SingleMuPt10+SingleMuPt10_pythia8_2023D44_GenSim*+*/step3.root RECO
-SingleMuPt1000in2023D44wf21209p0 21209.0_SingleMuPt1000+SingleMuPt1000_pythia8_2023D44_GenSim*+*/step3.root RECO
-TenMuExtendedE2023D44wf21211p0 21211.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2023D44_GenSim*+*/step3.root RECO
-TTbar14TeV2023D44wf21234p0 21234.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D44_GenSim*+*/step3.root RECO
-ZEE14TeV2023D44wf21246p0 21246.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2023D44_GenSim*+*/step3.root RECO
-QCD600to800in14TeV2023D44wf21253p0 21253.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2023D44_GenSim*+*/step3.root RECO
+SingleElectronPt35in2026D44wf21202p0 21202.0_SingleElectronPt35+SingleElectronPt35_pythia8_2026D44_GenSim*+*/step3.root RECO
+SingleElectronPt1000in2026D44wf21203p0 21203.0_SingleElectronPt1000+SingleElectronPt1000_pythia8_2026D44_GenSim*+*/step3.root RECO
+SingleMuPt10in2026D44wf21207p0 21207.0_SingleMuPt10+SingleMuPt10_pythia8_2026D44_GenSim*+*/step3.root RECO
+SingleMuPt1000in2026D44wf21209p0 21209.0_SingleMuPt1000+SingleMuPt1000_pythia8_2026D44_GenSim*+*/step3.root RECO
+TenMuExtendedE2026D44wf21211p0 21211.0_TenMuExtendedE_0_200+TenMuExtendedE_0_200_pythia8_2026D44_GenSim*+*/step3.root RECO
+TTbar14TeV2026D44wf21234p0 21234.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2026D44_GenSim*+*/step3.root RECO
+ZEE14TeV2026D44wf21246p0 21246.0_ZEE_14+ZEE_14TeV_TuneCUETP8M1_2026D44_GenSim*+*/step3.root RECO
+QCD600to800in14TeV2026D44wf21253p0 21253.0_QCD_Pt_600_800_14+QCD_Pt_600_800_14TeV_TuneCUETP8M1_2026D44_GenSim*+*/step3.root RECO
 #
 #  D44PU
 #
-TTbar14TeV2023D44PUwf21434p0 21434.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2023D44PU_*/step3.root RECO
+TTbar14TeV2026D44PUwf21434p0 21434.0_TTbar_14TeV+TTbar_14TeV_TuneCUETP8M1_2026D44PU_*/step3.root RECO

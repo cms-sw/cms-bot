@@ -1116,8 +1116,13 @@ idebruyn:
 - DQM/Tracker
 - DQM/TrackingMonitor
 deguio:
-- DQM/HcalCommon
-- DQM/HcalTasks
+- SimCalorimetry/HGCalSimAlgos
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
 gouskos:
 - DataFormats/RecoCandidate
 - DataFormats/PatCandidates

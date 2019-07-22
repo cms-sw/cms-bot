@@ -22,7 +22,7 @@ try:
       for i in ixs["open"]: idxs.append(i)
 except:
   types = {"close":{}, "open":{}}
-  rest  = {"close":{}, "open":{}}
+  rest  = {"close":[], "open":[]}
   ixs = find_indexes('cmssdt-*')
   for k in ixs:
     for idx in ixs[k]:

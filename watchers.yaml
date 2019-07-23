@@ -413,7 +413,13 @@ echapon:
 - RecoHI/HiTracking
 - RecoMuon
 forthommel:
+- Alignment/CTPPS
+- CalibPPS
+- CondCore/CTPPSPlugins
 - CondFormats/CTPPSReadoutObjects
+- CondTools/CTPPS
+- DataFormats/CTPPSAlignment
+- DataFormats/CTPPSDetId
 - DataFormats/CTPPSDigi
 - DataFormats/CTPPSReco
 - DQM/CTPPS
@@ -421,6 +427,7 @@ forthommel:
 - Geometry/VeryForwardData
 - Geometry/VeryForwardGeometry
 - Geometry/VeryForwardGeometryBuilder
+- Geometry/VeryForwardRPTopology
 - RecoCTPPS
 fwyzard:
 - FWCore/ServiceRegistry

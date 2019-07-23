@@ -133,7 +133,8 @@ dockerrun()
       ;;
     slc7_ppc64le_* )
       ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R $PROOTDIR/centos-7.2.1511-ppc64le-rootfs -b /tmp:/tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
+      #$PROOTDIR/proot -R $PROOTDIR/centos-7.2.1511-ppc64le-rootfs -b /tmp:/tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
+      $PROOTDIR/proot -R /cvmfs/cms-ib.cern.ch/docker/cmssw/cc7-ppc64le:latest -b /tmp:/tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
       ;;
     * )
       eval $@

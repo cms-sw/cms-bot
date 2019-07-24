@@ -956,6 +956,11 @@ clelange:
 - CommonTools/PileupAlgos
 - CommonTools/RecoAlgos
 - FWCore/GuiBrowsers
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+- DataFormats/HGCRecHit
+- RecoParticleFlow/PFClusterProducer
+- RecoHGCal
 gkasieczka:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET

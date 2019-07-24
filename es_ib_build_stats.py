@@ -90,7 +90,7 @@ try:
   force=True
 except:
   pass
-err, logs = run_cmd("find /build/jobs/build-any-ib/builds -maxdepth 2 -mindepth 2 -name log -type f")
+err, logs = run_cmd("find /build/jobs/build-any-ib/builds -follow -maxdepth 2 -mindepth 2 -name log -type f")
 logs = logs.split('\n')
 for logFile in logs:
   flagFile = logFile + '.ib-build'

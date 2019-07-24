@@ -73,7 +73,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
         export SINGULARITY_CACHEDIR="${WORKSPACE}/singularity"
       fi
     fi
-    if [ "X$TEST_CONTEXT" = "XGPU" ] ; then
+    if [ "X$TEST_CONTEXT" = "XGPU" -o -e "/proc/driver/nvidia/version" ] ; then
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
       fi

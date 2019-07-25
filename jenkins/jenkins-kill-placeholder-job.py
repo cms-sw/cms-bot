@@ -61,7 +61,7 @@ def auto_node_schedule(auto_jobs):
     count=0
     for job in auto_jobs:
         jid = auto_jobs[job]
-        err, out = run_cmd("cat %s/jenkins/find-jenkins-job.groovy | %s groovy = '%s' 'AUTO_NODE_JOB_ID=%s'" % (CMS_BOT_DIR, environ['JENKINS_CLI_CMD'],job,jid))
+        err, out = run_cmd("cat %s/jenkins/find-jenkins-job.groovy | %s groovy = '%s' 'JENKINS_DYNAMIC_JOB_ID=%s'" % (CMS_BOT_DIR, environ['JENKINS_CLI_CMD'],job,jid))
         if err:
              count+=1
              prop_file = "jenkins-trigger-dynamic-job-%s.txt" % count

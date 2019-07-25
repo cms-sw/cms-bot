@@ -64,10 +64,10 @@ def auto_node_schedule(auto_jobs):
         err, out = run_cmd("cat %s/jenkins/find-jenkins-job.groovy | %s groovy = '%s' 'AUTO_NODE_JOB_ID=%s'" % (CMS_BOT_DIR, environ['JENKINS_CLI_CMD'],job,jid))
         if err:
              count+=1
-             prop_file = "auto-nodes-%s-%s.txt" % (job, count)
+             prop_file = "jenkins-trigger-dynamic-job-%s.txt" % (job, count)
              jpram = join(SCRIPT_DIR, 'auto-nodes', job)
-             run_cmd("echo 'AUTO_NODE_JOB_NAME=%s' > %s" % (job, prop_file))
-             run_cmd("echo 'AUTO_NODE_JOB_ID=%s' >> %s" % (jid, prop_file))
+             run_cmd("echo 'JENKINS_DYNAMIC_JOB_NAME=%s' > %s" % (job, prop_file))
+             run_cmd("echo 'JENKINS_DYNAMIC_JOB_ID=%s' >> %s" % (jid, prop_file))
              if exists (jpram):
                  run_cmd("cat %s >> %s" % (jpram, prop_file))
         else:

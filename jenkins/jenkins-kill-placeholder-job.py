@@ -5,14 +5,20 @@ Then it will kill needed amount of placeholder jobs.
 """
 from __future__ import print_function
 from pprint import pprint
-import re
+import re, sys
+from os.path import dirname, abspath, join, exists
+SCRIPT_DIR = dirname(abspath(sys.argv[0]))
+CMS_BOT_DIR = dirname(SCRIPT_DIR)
+sys.path.insert(0,CMS_BOT_DIR)
 from xml.etree import cElementTree as ET
 import requests
 from collections import defaultdict
 from os import environ
+from _py2with3compatibility import run_cmd
 
 RX_Project = re.compile('.+\/job\/(.+)\/(\d+)\/')
 RX_Queue_why = re.compile(u'^Waiting for next available executor.*\u2018(.*)\u2019')
+RX_Queue_nolabel = re.compile(u'^There are no nodes with the label.*\u2018(.*)\u2019')
 JENKINS_URL = environ['LOCAL_JENKINS_URL']
 WORKSPACE = environ['WORKSPACE']
 running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
@@ -41,8 +47,33 @@ def etree_to_dict(t):
             d[t.tag] = text
     return d
 
+def read_auto_nodes():
+  nodes_jobs = {}
+  auto_nodes = join(SCRIPT_DIR, 'auto-nodes.txt')
+  if exists(auto_nodes):
+    for line in open(auto_nodes).readlines():
+      if '=' not in line: continue
+      reg, job = line.strip().split('=',1)
+      nodes_jobs[re.compile(reg.strip())] = job.strip()
+  return nodes_jobs
+
+def auto_node_schedule(auto_jobs):
+    count=0
+    for job in auto_jobs:
+        jid = auto_jobs[job]
+        err, out = run_cmd("cat %s/jenkins/find-jenkins-job.groovy | %s groovy = '%s' 'AUTO_NODE_JOB_ID=%s'" % (CMS_BOT_DIR, environ['JENKINS_CLI_CMD'],job,jid))
+        if err:
+             count+=1
+             prop_file = "auto-nodes-%s-%s.txt" % (job, count)
+             jpram = join(SCRIPT_DIR, 'auto-nodes', job)
+             run_cmd("echo 'AUTO_NODE_JOB_NAME=%s' > %s" % (job, prop_file))
+             run_cmd("echo 'AUTO_NODE_JOB_ID=%s' >> %s" % (jid, prop_file))
+             if exists (jpram):
+                 run_cmd("cat %s >> %s" % (jpram, prop_file))
+    return
 
 def main():
+    auto_nodes = read_auto_nodes()
     r_xml = requests.get(running_job_xml)
     r_json = requests.get(job_que_json)
     que_to_free = 0
@@ -52,16 +83,28 @@ def main():
     pprint(r_json.json())
     print("----")
     que_job_list = r_json.json()['items']
+    auto_jobs = {}
     for j in que_job_list:
         m = RX_Queue_why.match(j['why'])
-        if m:
-            print((m.groups()))
-            label = m.group(0)
+        m1 = RX_Queue_nolabel.match(j['why'])
+        label = ""
+        if m: label = m.group(0)
+        elif m1: label = m1.group(0)
+        if label:
             if 'condor' in label:
                 que_to_free += 1
+            for reg in auto_nodes:
+                if reg.search(label):
+                    auto_jobs[auto_nodes[reg]] = j['url']
+                    break
+
     print("Number jobs needed to free")
     pprint(que_to_free)
     print("----\n")
+    print("Auto Jobs")
+    pprint(auto_jobs)
+    if auto_jobs:
+        auto_node_schedule(auto_jobs)
 
     # get running placeholder job
     xml = ET.XML(r_xml.text)

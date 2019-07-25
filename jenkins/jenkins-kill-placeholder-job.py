@@ -70,6 +70,8 @@ def auto_node_schedule(auto_jobs):
              run_cmd("echo 'AUTO_NODE_JOB_ID=%s' >> %s" % (jid, prop_file))
              if exists (jpram):
                  run_cmd("cat %s >> %s" % (jpram, prop_file))
+        else:
+            print(out)
     return
 
 def main():

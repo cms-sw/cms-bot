@@ -24,6 +24,7 @@ REQUEST_UNIVERSE="${REQUEST_UNIVERSE-vanilla}"
 REQUEST_MAXRUNTIME="${REQUEST_MAXRUNTIME-432000}"
 DEBUG="${DEBUG-false}"
 JENKINS_CALLBACK="${JENKINS_CALLBACK-http://cmsjenkins03.cern.ch:8080/jenkins/}"
+
 if [ $REQUEST_CPUS -lt 1 ] ; then REQUEST_CPUS=1 ; fi
 if [ $REQUEST_MAXRUNTIME -lt 3600 ] ; then REQUEST_MAXRUNTIME=3600 ; fi
 ##########################################
@@ -47,6 +48,8 @@ sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
 sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
+echo "environment = \"EXTRA_LABELS='${EXTRA_LABELS}' JENKINS_CALLBACK=${JENKINS_CALLBACK} REQUEST_MAXRUNTIME=${REQUEST_MAXRUNTIME}\"" >> job.sub
+
 if [ "X${CONDOR_JOB_CONF}" != "X" ] ; then
   if [ -f  ${CONDOR_JOB_CONF} ] ; then
     cat ${CONDOR_JOB_CONF} >> job.sub

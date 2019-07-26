@@ -40,8 +40,6 @@ done
 cp $SLAVE_JAR_DIR/slave.jar slave.jar
 cp ${here}/connect.sub job.sub
 cp ${here}/connect-job.sh  ${script_name}.sh
-sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" ${script_name}.sh
-sed -i -e "s|@JENKINS_CALLBACK@|$JENKINS_CALLBACK|" ${script_name}.sh
 chmod +x ${script_name}.sh
 
 sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub

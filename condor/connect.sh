@@ -70,6 +70,8 @@ echo "$JOBID" > job.id
 
 EXIT_CODE=1
 PREV_JOB_STATUS=""
+KINIT_COUNT=0
+kinit -R
 while true ; do
   JOB_STATUS=$(condor_q -json -attributes JobStatus $JOBID | grep 'JobStatus' | sed 's|.*: *||;s| ||g')
   eval JOB_STATUS_MSG=$(echo \$$(echo JOBS_STATUS_${JOB_STATUS}))
@@ -94,6 +96,12 @@ while true ; do
     break
   fi
   sleep $WAIT_GAP
+  let KINIT_COUNT=KINIT_COUNT+1
+  if [ $KINIT_COUNT -ge 120 ] ; then
+    KINIT_COUNT=0
+    kinit -R
+    klist
+  fi
 done
 echo EXIT_CODE $EXIT_CODE
 condor_transfer_data $JOBID || true

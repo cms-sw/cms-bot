@@ -14,6 +14,7 @@ ReRel = re.compile("^[+]\s+RELEASE_FORMAT=(CMSSW_.+)")
 ReArch = re.compile("^[+]\s+ARCHITECTURE=(.+)")
 ReType = re.compile(".+specs-only\s+build\s+(cmssw-patch).*")
 ReFinish = re.compile("Finished:\s+[A-Z]+")
+ReReleaseQueue = re.compile('(.*_X)')
 
 def process_build_any_ib(logFile):
   rel = ""
@@ -76,6 +77,7 @@ def process_build_any_ib(logFile):
   payload["total_time"] = ttime
   payload["upload_time"] = uploadTime
   payload["patch"] = patch
+  payload["release_queue"] = ReReleaseQueue.match(rel).group(1)
   payload["@timestamp"] = int(timestp*1000)
   payload["url"]=url
   week, rel_sec = cmsswIB2Week(rel)

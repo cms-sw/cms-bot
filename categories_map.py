@@ -1354,6 +1354,7 @@ CMSSW_CATEGORIES = {
     "Utilities/RelMon",
   ],
   "simulation": [
+    "BigProducts/Simulation",
     "DataFormats/CSCDigi",
     "DataFormats/CTPPSDetId",
     "DataFormats/CTPPSDigi",

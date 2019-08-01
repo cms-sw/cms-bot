@@ -9,6 +9,9 @@ from cmsutils import cmsswIB2Week
 from hashlib import sha1
 import threading
 from time import sleep
+import re
+
+ReReleaseQueue = re.compile('(.*_X)_')
 
 def percentile(percentage, data, dlen):
   R=(dlen+1)*percentage/100.0
@@ -22,6 +25,8 @@ def percentile(percentage, data, dlen):
 
 def process(wfnum, s, sfile, hostname, exit_code, details=False):
   global release, arch, rel_msec, week, ex_fields, cmsThreads
+  release_queue = ReReleaseQueue.match(release).group(1)
+
   try:
     stats = json.load(open(sfile))
     xdata = {}
@@ -33,6 +38,7 @@ def process(wfnum, s, sfile, hostname, exit_code, details=False):
           xdata[item].append(stat[item])
       stat["@timestamp"]=rel_msec+(stat["time"]*1000)
       stat["release"]=release
+      stat["release_queue"] = release_queue
       stat["step"]=s
       stat["workflow"]=wfnum
       stat["cmsthreads"]=cmsThreads
@@ -43,7 +49,8 @@ def process(wfnum, s, sfile, hostname, exit_code, details=False):
         try:send_payload("relvals_stats_details-"+week,"runtime-stats-details",idx,json.dumps(stat))
         except Exception as e: print(e)
     print("Working on ",release, arch, wfnum, s, len(stats))
-    sdata = {"release":release, "architecture":arch, "step":s, "@timestamp":rel_msec, "workflow":wfnum, "hostname":hostname, "exit_code":exit_code, "cmsthreads":cmsThreads}
+    sdata = {"release":release, "release_queue": release_queue,"architecture":arch, "step":s, "@timestamp":rel_msec,
+             "workflow":wfnum, "hostname":hostname, "exit_code":exit_code, "cmsthreads":cmsThreads}
     for x in xdata:
       data = sorted(xdata[x])
       if x in ["time","num_threads","processes","num_fds"]:

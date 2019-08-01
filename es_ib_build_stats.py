@@ -8,7 +8,7 @@ from es_utils import send_payload
 from hashlib import sha1
 from cmsutils import cmsswIB2Week
 
-ReDate = re.compile("DATE=[A-Z][a-z]{2}\s+([A-Z][a-z]{2}\s+[0-9]{1,2}\s+\d\d:\d\d:\d\d\s+)[A-Z]{3,4}\s+(\d\d\d\d)")
+ReDate = re.compile("^.* DATE=[A-Z][a-z]{2}\s+([A-Z][a-z]{2}\s+[0-9]{1,2}\s+\d\d:\d\d:\d\d\s+)[A-Z]{3,4}\s+(\d\d\d\d)")
 ReUpload = re.compile("^.*sync-back\s+upload\s+.*")
 ReRel = re.compile("^[+]\s+RELEASE_FORMAT=(CMSSW_.+)")
 ReArch = re.compile("^[+]\s+ARCHITECTURE=(.+)")

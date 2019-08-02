@@ -539,7 +539,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
-  for i in $(grep ": warning: " $WORKSPACE/buildClang.log | grep "/$CMSSW_IB/" | sed "s|.*/$CMSSW_IB/src/||;s|:.*||" | sort -u) ; do
+  for i in $(grep ": warning: " $WORKSPACE/buildClang.log | grep "/$CMSSW_IB/" | sed "s|.*/$CMSSW_IB/src/||;s|:.*||;s| ||g" | sort -u) ; do
     if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
       echo $i >> $WORKSPACE/clang-new-warnings.log
       grep ": warning: " $WORKSPACE/buildClang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
@@ -690,7 +690,7 @@ echo '--------------------------------------'
 TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
 GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
-for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$CMSSW_IB/" | sed "s|.*/$CMSSW_IB/src/||;s|:.*||" | sort -u) ; do
+for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$CMSSW_IB/" | sed "s|.*/$CMSSW_IB/src/||;s|:.*||;s| ||g" | sort -u) ; do
   if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     echo $i >> $WORKSPACE/new-build-warnings.log
     grep ": warning: " $WORKSPACE/build.log | grep "/$i" >> $WORKSPACE/new-build-warnings.log

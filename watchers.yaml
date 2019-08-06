@@ -1352,6 +1352,7 @@ adewit:
 vargasa:
 - Configuration/Geometry
 - Geometry/TrackerCommonData
+- DetectorDescription/DDCMS
 - Validation/Geometry
 rbartek:
 - Validation/Geometry

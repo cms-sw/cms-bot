@@ -76,7 +76,11 @@ JENKINS_SLAVE_SETUP=false
 if [ -f ~/.jenkins-slave-setup ] ; then JENKINS_SLAVE_SETUP=true ; fi
 echo "DATA_JENKINS_SLAVE_SETUP=${JENKINS_SLAVE_SETUP}"
 
-val=$(/bin/nproc)
+if [ -e /bin/nproc ] ; then
+  val=$(/bin/nproc)
+else
+  val=$(/usr/bin/nproc)
+fi
 echo "DATA_ACTUAL_CPUS=${val}"
 SLAVE_LABELS="${SLAVE_LABELS} real-cpu-${val}"
 val=$(nproc)

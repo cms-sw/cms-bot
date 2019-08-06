@@ -1,6 +1,5 @@
 #!/bin/bash -ex
 kinit -R || true
-ulimit -n 4096 -s 16000 -u 14000 || true
 ulimit -a || true
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true

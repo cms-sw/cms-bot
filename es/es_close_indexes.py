@@ -33,7 +33,7 @@ except:
         if not k in types: types[k]={}
         if not ix in types[k]:types[k][ix]=[]
         types[k][ix].append(wk)
-        if (k == "open") and ((cur_week-int(wk))>4): idxs.append(idx)
+        if (k == "open") and ((cur_week-int(wk))>12): idxs.append(idx)
       else:
         if not k in rest: rest[k]=[]
         rest[k].append(idx)

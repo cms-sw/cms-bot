@@ -63,15 +63,9 @@ if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar
 scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 
 pre_cmd=""
-if [ $(get_data ACTUAL_CPUS) -gt 32 ] ; then
-  case $(get_data SHELL) in
-    */tcsh|*/csh) pre_cmd="ulimit -n 4096 -s 16000 -u 32000 >& /dev/null || true; ulimit -a || true;" ;;
-    *) pre_cmd="ulimit -n 4096 -s 16000 -u 32000 >/dev/null 2>&1 || true; ulimit -a || true;" ;;
-  esac
- fi
 case $(get_data SHELL) in
-  */tcsh|*/csh) pre_cmd="${pre_cmd} setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
-  *) pre_cmd="${pre_cmd} export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  */tcsh|*/csh) pre_cmd="ulimit $(get_data LIMITS) >& /dev/null || true; ulimit -a || true; setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  *) pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1         || true; ulimit -a || true; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "

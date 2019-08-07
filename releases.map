@@ -2409,3 +2409,4 @@ architecture=slc6_amd64_gcc481;label=CMSSW_7_1_43;type=Production;state=Announce
 architecture=slc7_aarch64_gcc700;label=CMSSW_11_0_0_pre5;type=Development;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc820;label=CMSSW_11_0_0_pre5;type=Development;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc900;label=CMSSW_11_0_0_pre5;type=Development;state=Announced;prodarch=0;
+architecture=slc7_amd64_gcc700;label=CMSSW_11_0_0_pre5;type=Development;state=Announced;prodarch=1;

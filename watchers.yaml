@@ -759,25 +759,16 @@ tlampen:
 - Alignment/TrackerAlignment
 - Alignment/TwoBodyDecay
 thomreis:
-- CondFormats/L1TObjects
-- DQM/Integration
-- DQM/L1TMonitor
-- DQM/L1TMonitorClient
-- DQMOffline/L1Trigger
+- DataFormats/EcalDigi
 - DataFormats/L1TMuon
 - DataFormats/L1Trigger
 - EventFilter/L1TRawToDigi
-- EventFilter/L1TXRawToDigi
-- EventFilter/RPCRawToDigi
 - L1Trigger/L1TCommon
 - L1Trigger/L1TMuon
-- L1Trigger/L1TMuonBarrel
-- L1Trigger/L1TMuonEndCap
-- L1Trigger/L1TMuonOverlap
 - L1Trigger/L1TNtuples
-- L1TriggerConfig/L1TConfigProducers
-- L1TriggerConfig/Utilities
-- Validation/L1T
+- SimCalorimetry/Configuration
+- SimCalorimetry/EcalEBTrigPrimAlgos
+- SimCalorimetry/EcalEBTrigPrimProducers
 threus:
 - DQM/SiPixel
 - DQM/SiStrip

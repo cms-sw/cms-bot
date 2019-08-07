@@ -123,3 +123,10 @@ fi
 
 echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"
 
+#Search for Hard limits
+val=""
+for o in n s u ; do
+  val="-$o $(ulimit -H -$o) ${val}"
+done
+echo "DATA_LIMITS=${val}"
+

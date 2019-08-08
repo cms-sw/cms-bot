@@ -30,6 +30,7 @@ CMSSW_L2 = {
   "alja":             ["visualization"],
   "andrius-k":        ["dqm"],
   "benkrikler":       ["l1"],
+  "chayanit":         ["pdmv"],
   "civanch":          ["simulation", "geometry", "fastsim"],
   "cmsdoxy":          ["docs"],
   "cvuosalo":         ["geometry"],

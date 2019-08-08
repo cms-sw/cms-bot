@@ -7,3 +7,4 @@ script:
   - PYTHONPATH=. python tests/test_watchers.py
   - PYTHONPATH=. python tests/test_config-map.py
   - python -m compileall $( ls | grep -v v_scheduler | grep -v venv)
+  - echo "this will brake tests" && false

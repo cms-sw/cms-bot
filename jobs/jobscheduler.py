@@ -2,7 +2,6 @@
 from __future__ import print_function
 from operator import itemgetter
 from time import sleep, time
-from multiprocessing import cpu_count
 from copy import deepcopy
 import threading, json, os
 from optparse import OptionParser
@@ -164,7 +163,7 @@ if __name__ == "__main__":
   if opts.cpu>300:    opts.cpu=300
   if not opts.type in [ "", "avg", "max" ]: parser.error("Invalid -t|--type value '%s' provided." % opts.type)
   if not opts.order in ["dynamic", "time", "rss", "cpu"]: parser.error("Invalid -o|--order value '%s' provided." % opts.order)
-  if opts.maxJobs<=0: opts.maxJobs=cpu_count()
+  if opts.maxJobs<=0: opts.maxJobs=MachineCPUCount
   resources={"total":
     {
      "cpu" : opts.maxcpu if (opts.maxcpu>0) else MachineCPUCount*opts.cpu,

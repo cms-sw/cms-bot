@@ -1,3 +1,9 @@
+notifications:
+  email:
+    recipients:
+      - sdt-logs@cern.ch
+    on_success: change # default: change
+    on_failure: always # default: always
 language: python
 python:
   - "2.7"

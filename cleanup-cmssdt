@@ -90,5 +90,6 @@ if [ "X${NEW_DIRS}" != "X" ] ; then
 fi
 
 WEB_LOG_DIR=/data/sdt/buildlogs
-find /data/sdt/buildlogs -mtime +8 -maxdepth 3 -maxdepth 3 -path '*/fwlite/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+find /data/sdt/buildlogs -mindepth 3 -maxdepth 3 -mtime +8  -path '*/fwlite/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+find /data/sdt/buildlogs -mindepth 5 -maxdepth 5 -mtime +8  -path '*/www/*/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 

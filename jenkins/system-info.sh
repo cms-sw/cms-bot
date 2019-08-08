@@ -76,6 +76,13 @@ JENKINS_SLAVE_SETUP=false
 if [ -f ~/.jenkins-slave-setup ] ; then JENKINS_SLAVE_SETUP=true ; fi
 echo "DATA_JENKINS_SLAVE_SETUP=${JENKINS_SLAVE_SETUP}"
 
+if [ -e /bin/nproc ] ; then
+  val=$(/bin/nproc)
+else
+  val=$(/usr/bin/nproc)
+fi
+echo "DATA_ACTUAL_CPUS=${val}"
+SLAVE_LABELS="${SLAVE_LABELS} real-cpu-${val}"
 val=$(nproc)
 echo "DATA_CPUS=${val}"
 SLAVE_LABELS="${SLAVE_LABELS} cpu-${val} cpu-tiny"
@@ -115,4 +122,11 @@ if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
 fi
 
 echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"
+
+#Search for Hard limits
+val=""
+for o in n s u ; do
+  val="-$o $(ulimit -H -$o) ${val}"
+done
+echo "DATA_LIMITS=${val}"
 

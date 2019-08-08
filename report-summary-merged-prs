@@ -914,30 +914,45 @@ def find_material_budget_results(comparisons, architecture):
             comp['material_budget_comparison'] = {'status': 'found', 'results': 'warning', 'arch': arch}
 
 
-def find_general_test_results(test_field, comparisons, architecture,  magic_command):
+def find_one_test_results(command_to_execute):
+    print("Running ", command_to_execute)
+    out, err, ret_code = get_output_command(command_to_execute)
+    print("Ran:", out, err, ret_code, command_to_execute)
+    if ret_code == 0:
+        print('found')
+        return 'found'
+    print('inprogress')
+    return 'inprogress'
+
+
+def find_dup_dict_result(command_to_execute):
+    print("Running ", command_to_execute)
+    out, err, ret_code = get_output_command(command_to_execute)
+    print("Ran:", out, err, ret_code, command_to_execute)
+    if ret_code == 0:
+        if out == 0:
+            print('passed')
+            return 'passed'
+        else:
+            print('error')
+            return 'error'
+
+
+def find_general_test_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):
     """
     Finds for results for the test_field. Modifies `comparisons` dict in place.
     :param comparisons: comparison dictionary
     :param architecture: arch
     :param magic_command: string with bash command to execute
     :param test_field: field to write back the results to
+    :param results_function: function how to process results
     """
-    def find_one_test_results(release_name):
-        command_to_execute = magic_command.replace('RELEASE_NAME', release_name)
-        command_to_execute = command_to_execute.replace('ARCHITECTURE', architecture)
-        print("Running ", command_to_execute)
-        out, err, ret_code = get_output_command(command_to_execute)
-        print("Ran:", out, err, ret_code, command_to_execute)
-        if ret_code == 0:
-            print('found')
-            return 'found'
-        print('inprogress')
-        return 'inprogress'
 
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print("Looking for {0} results for {1}.".format(test_field,rel_name))
-        comp[test_field] = find_one_test_results(rel_name)
+        command_to_execute = magic_command.replace('RELEASE_NAME', rel_name).replace('ARCHITECTURE', architecture)
+        comp[test_field] = results_function(command_to_execute)
 
 
 def find_general_test_results_2(test_field, comparisons, magic_command):
@@ -1360,6 +1375,8 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_CHECK_HEADERS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE'
     CHECK_HEADERS_PATH = JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE/headers_with_error.log'
     MAGIC_COMMAND_FIND_FLAWFINDER = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/flawfinder/RELEASE_NAME/ARCHITECTURE'
+    MAGIC_COMMAND_FIND_DUP_DICT = ("grep -v '^Searching for '  " + BUILD_LOG_DIR + "/ARCHITECTURE/www/*/*/RELEASE_NAME/testLogs/dup*.log" +
+        " |  grep -v '^:**** SKIPPING ' | grep -v '^ *$'  | wc -l ")
     CONFIG_MAP_FILE = 'config.map'
     # this will be filled using config.map by get_config_map_params()
     ARCHITECTURES = []
@@ -1485,6 +1502,7 @@ if __name__ == "__main__":
         # It checks if the tests are being run for that architecture, if they don't, it doesn't look for them.
         # Then it goes over each selected tests, executes 'magic' command to look for tests results, interprets it
         # and writes back in to 'release_queue_results['comparisons']'. Finally, it appends it back to results object.
+        # (check config.map file)
         additional_tests = RELEASE_ADITIONAL_TESTS.get(release_queue)
         if additional_tests:
             for arch in additional_tests.keys():
@@ -1517,6 +1535,11 @@ if __name__ == "__main__":
                     )
                 if 'check-headers' in tests_to_find:
                     find_check_headers(release_queue_results['comparisons'], arch)
+                # will run every time for Q/A, that is why not checked if it is in tests to find
+                find_general_test_results(
+                    'dupDict', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_DUP_DICT,
+                    find_dup_dict_result
+                )
 
         find_general_test_results_2(
             'dqm_tests', release_queue_results['comparisons'], MAGIC_COMMAND_FIND_DQM_TESTS

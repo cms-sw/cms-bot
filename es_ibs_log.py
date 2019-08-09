@@ -60,7 +60,7 @@ def process_unittest_log(logFile):
           if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
         except Exception as e:
           print("ERROR: ",logFile,e)
-          traceback.print_exc()
+          traceback.print_exc(file=sys.stdout)
     if datasets and xid:
       send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week,"unittest-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
@@ -165,7 +165,7 @@ for logFile in logs:
         run_cmd("touch %s" % flagFile)
     except Exception as e:
         print("ERROR: ",logFile,e)
-        traceback.print_exc()
+        traceback.print_exc(file=sys.stdout)
     run_cmd("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
     run_cmd("rm -rf %s/UT" % utdir)
 

@@ -12,6 +12,7 @@ import traceback
 def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
     print("Processing ",ds)
+    if not 'root://' in ds: continue
     ds_items = ds.split("?",1)
     ds_items.append("")
     ibeos = "/store/user/cmsbuild"

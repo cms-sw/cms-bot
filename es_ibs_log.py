@@ -7,7 +7,7 @@ from es_utils import send_payload
 from _py2with3compatibility import run_cmd
 from cmsutils import cmsswIB2Week
 from logreaderUtils import transform_and_write_config_file, add_exception_to_config, ResultTypeEnum
-
+import traceback
 
 def send_unittest_dataset(datasets, payload, id, index, doc):
   for ds in datasets:
@@ -162,6 +162,7 @@ for logFile in logs:
         run_cmd("touch %s" % flagFile)
     except Exception as e:
       print("ERROR:",e)
+      traceback.print_tb(e.__traceback__)
     run_cmd("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
     run_cmd("rm -rf %s/UT" % utdir)
 

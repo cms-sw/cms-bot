@@ -57,7 +57,8 @@ def process_unittest_log(logFile):
           rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
           if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
         except Exception as e:
-          print("ERROR: ",e)
+          print("ERROR: ",logFile,e)
+          traceback.print_exc()
     if datasets and xid:
       send_unittest_dataset(datasets, payload, xid, "ib-dataset-"+week,"unittest-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
@@ -130,7 +131,7 @@ def process_ib_utests(logFile):
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:
-        print("File processed:", e)
+        print("ERROR: File processed:", e)
   else:
     print("Invalid File Path")
 
@@ -161,8 +162,8 @@ for logFile in logs:
           process_unittest_log(utlog)
         run_cmd("touch %s" % flagFile)
     except Exception as e:
-      print("ERROR:",e)
-      traceback.print_tb(e.__traceback__)
+        print("ERROR: ",logFile,e)
+        traceback.print_exc()
     run_cmd("cd %s/UT ; zip -r ../unitTestLogs.zip ." % utdir)
     run_cmd("rm -rf %s/UT" % utdir)
 

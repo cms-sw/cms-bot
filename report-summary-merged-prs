@@ -936,6 +936,8 @@ def find_dup_dict_result(command_to_execute):
         else:
             print('error')
             return 'error'
+    print("not-found")
+    return("not-found")
 
 
 def find_general_test_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):
@@ -1376,7 +1378,7 @@ if __name__ == "__main__":
     CHECK_HEADERS_PATH = JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE/headers_with_error.log'
     MAGIC_COMMAND_FIND_FLAWFINDER = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/flawfinder/RELEASE_NAME/ARCHITECTURE'
     MAGIC_COMMAND_FIND_DUP_DICT = ("grep -v '^Searching for '  " + BUILD_LOG_DIR + "/ARCHITECTURE/www/*/*/RELEASE_NAME/testLogs/dup*.log" +
-        " |  grep -v '^:**** SKIPPING ' | grep -v '^ *$'  | wc -l ")
+        " |  grep -v ':**** SKIPPING ' | grep -v '^ *$'  | wc -l ")
     CONFIG_MAP_FILE = 'config.map'
     # this will be filled using config.map by get_config_map_params()
     ARCHITECTURES = []

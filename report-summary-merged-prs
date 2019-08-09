@@ -930,7 +930,7 @@ def find_dup_dict_result(command_to_execute):
     out, err, ret_code = get_output_command(command_to_execute)
     print("Ran:", out, err, ret_code, command_to_execute)
     if ret_code == 0:
-        if out == "0":
+        if int(out) == 0:
             print('passed')
             return 'passed'
         else:

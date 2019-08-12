@@ -1115,6 +1115,7 @@ CMSSW_CATEGORIES = {
     "RecoBTag/ImpactParameterLearning",
     "RecoBTag/MXNet",
     "RecoBTag/PerformanceDB",
+    "RecoBTag/PixelCluster",
     "RecoBTag/Records",
     "RecoBTag/SecondaryVertex",
     "RecoBTag/Skimming",

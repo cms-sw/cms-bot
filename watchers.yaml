@@ -1373,7 +1373,7 @@ apsallid:
 - Validation/Geometry
 - Validation/HGCalValidation
 - RecoLocalCalo/Configuration
-- RecoLocalCalo/
+- RecoLocalCalo
 - DataFormats/HGCDigi
 - DataFormats/HGCRecHit
 - DataFormats/ForwardDetId

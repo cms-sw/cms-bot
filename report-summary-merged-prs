@@ -941,9 +941,9 @@ def find_one_test_results(command_to_execute):
 #     return("not-found")
 
 
-def find_dup_dict_result(comparisons, architecture):
+def find_dup_dict_result(comparisons):
     """
-    Looks if dupDict
+    Will check for duplicated dictionary (CMSSW specific test) for each architecture
     """
     def get_status(command_to_execute):
         print("Running ", command_to_execute)
@@ -962,17 +962,14 @@ def find_dup_dict_result(comparisons, architecture):
     test_field = "dupDict"
     for comp in comparisons:
         if test_field not in comp:
-            comp[test_field] = []
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print("Looking for {0} results for {1}.".format(test_field,rel_name))
-        command_to_execute = MAGIC_COMMAND_FIND_DUP_DICT.replace('RELEASE_NAME', rel_name).replace(
-            'ARCHITECTURE', architecture
-        )
-        rez = {
-            "arch": architecture,
-            "status": get_status(command_to_execute)
-        }
-        comp[test_field].append(rez)
+            comp[test_field] = {}
+        for architecture in comp["tests_archs"]:
+            rel_name = comp['compared_tags'].split('-->')[1]
+            print("Looking for {0} results for {1}.".format(test_field,rel_name))
+            command_to_execute = MAGIC_COMMAND_FIND_DUP_DICT.replace('RELEASE_NAME', rel_name).replace(
+                'ARCHITECTURE', architecture
+            )
+            comp[test_field][architecture] = get_status(command_to_execute)
 
 
 def find_general_test_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):
@@ -1573,8 +1570,8 @@ if __name__ == "__main__":
                 if 'check-headers' in tests_to_find:
                     find_check_headers(release_queue_results['comparisons'], arch)
                 # will run every time for Q/A, that is why not checked if it is in tests to find
-                find_dup_dict_result(release_queue_results['comparisons'], arch)
 
+        find_dup_dict_result(release_queue_results['comparisons'])
         find_general_test_results_2(
             'dqm_tests', release_queue_results['comparisons'], MAGIC_COMMAND_FIND_DQM_TESTS
         )

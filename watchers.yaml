@@ -1368,3 +1368,16 @@ jshlee:
 - Validation/MuonGEMDigis
 - Validation/MuonGEMHits
 - Validation/MuonGEMRecHits
+apsallid:
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- RecoLocalCalo/Configuration
+- RecoLocalCalo
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- DataFormats/ForwardDetId
+- RecoHGCal
+- SimTracker/TrackerMaterialAnalysis
+- SimCalorimetry/HGCalSimProducers
+- SimDataFormats

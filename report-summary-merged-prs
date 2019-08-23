@@ -1590,10 +1590,8 @@ if __name__ == "__main__":
         execute_magic_command_find_results('invalid-includes')
     )
 
-    for rq in results:
-        # needs 'tests_archs' field
-        for comp in rq['comparisons']:
-            find_dup_dict_result(comp)
+    for release_queue_results in results:
+        find_dup_dict_result(release_queue_results['comparisons'])
 
     fill_missing_cmsdist_tags(results)
     get_cmsdist_merge_commits(results)

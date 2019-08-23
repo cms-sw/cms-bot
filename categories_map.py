@@ -620,6 +620,7 @@ CMSSW_CATEGORIES = {
     "HLTriggerOffline/SUSYBSM",
     "HLTriggerOffline/Tau",
     "HLTriggerOffline/Top",
+    "Utilities/RelMon",
     "Validation/CSCRecHits",
     "Validation/CTPPS",
     "Validation/CaloTowers",
@@ -1352,7 +1353,6 @@ CMSSW_CATEGORIES = {
     "TrackingTools/TrajectoryState",
     "TrackingTools/TransientTrack",
     "TrackingTools/TransientTrackingRecHit",
-    "Utilities/RelMon",
   ],
   "simulation": [
     "BigProducts/Simulation",

@@ -961,7 +961,6 @@ def find_dup_dict_result(comparisons):
 
     test_field = "dupDict"
     for comp in comparisons:
-        print(comp)
         if test_field not in comp:
             comp[test_field] = {}
         for architecture in comp["tests_archs"]:
@@ -1572,7 +1571,6 @@ if __name__ == "__main__":
                     find_check_headers(release_queue_results['comparisons'], arch)
                 # will run every time for Q/A, that is why not checked if it is in tests to find
 
-        find_dup_dict_result(release_queue_results['comparisons'])
         find_general_test_results_2(
             'dqm_tests', release_queue_results['comparisons'], MAGIC_COMMAND_FIND_DQM_TESTS
         )
@@ -1591,6 +1589,11 @@ if __name__ == "__main__":
         execute_magic_command_find_results('python3'),
         execute_magic_command_find_results('invalid-includes')
     )
+
+    for rq in results:
+        # needs 'tests_archs' field
+        for comp in rq['comparisons']:
+            find_dup_dict_result(comp)
 
     fill_missing_cmsdist_tags(results)
     get_cmsdist_merge_commits(results)

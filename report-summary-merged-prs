@@ -961,6 +961,7 @@ def find_dup_dict_result(comparisons):
 
     test_field = "dupDict"
     for comp in comparisons:
+        print(comp)
         if test_field not in comp:
             comp[test_field] = {}
         for architecture in comp["tests_archs"]:

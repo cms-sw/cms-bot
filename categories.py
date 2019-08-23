@@ -47,7 +47,7 @@ CMSSW_L2 = {
   "jfernan2":         ["dqm"],
   "kmaeshima":        ["dqm"],
   "fioriNTU":         ["dqm"],
-  "kpedro88":         ["upgrade"],
+  "kpedro88":         ["upgrade","operations"],
   "lveldere":         ["fastsim"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "mommsen":          ["daq"],

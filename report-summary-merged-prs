@@ -962,14 +962,17 @@ def find_dup_dict_result(comparisons):
     test_field = "dupDict"
     for comp in comparisons:
         if test_field not in comp:
-            comp[test_field] = {}
+            comp[test_field] = []
         for architecture in comp["tests_archs"]:
             rel_name = comp['compared_tags'].split('-->')[1]
             print("Looking for {0} results for {1}.".format(test_field,rel_name))
             command_to_execute = MAGIC_COMMAND_FIND_DUP_DICT.replace('RELEASE_NAME', rel_name).replace(
                 'ARCHITECTURE', architecture
             )
-            comp[test_field][architecture] = get_status(command_to_execute)
+            comp[test_field].append({
+                "passed": get_status(command_to_execute),
+                "arch": architecture
+            })
 
 
 def find_general_test_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):

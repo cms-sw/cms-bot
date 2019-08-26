@@ -42,7 +42,6 @@ CMSSW_L2 = {
   "franzoni":         ["operations", "alca"],
   "fwyzard":          ["hlt"],
   "ggovi":            ["db"],
-  "gudrutis":         ["externals"],
   "ianna":            ["geometry"],
   "jfernan2":         ["dqm"],
   "kmaeshima":        ["dqm"],

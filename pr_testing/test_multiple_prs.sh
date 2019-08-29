@@ -604,7 +604,7 @@ echo "CODE_RULES;${QA_RES}" >> $RESULTS_FILE
 if $IS_DEV_BRANCH ; then
   PYTHON3_RES="OK"
   CMD_python=$(which python3) scram b -r -k -j ${NCPU} CompilePython > $WORKSPACE/python3.log 2>&1
-  if [ $(grep -n ' Error compiling ' $WORKSPACE/python3.log | wc -l) -gt 0 ] ; then
+  if [ $(grep ' Error compiling ' $WORKSPACE/python3.log | wc -l) -gt 0 ] ; then
     PYTHON3_RES="ERROR"
     PYTHON3_BUILD_OK=false
     RUN_TESTS=false

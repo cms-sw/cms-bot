@@ -666,28 +666,31 @@ fi
 # #############################################
 # test header checks tests
 # ############################################
-CHK_HEADER_LOG_RES="NOTRUN"
 CHK_HEADER_OK=true
-if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers ] ; then
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" ${NO_POST}
-  IGNORE_HDRS="%.i"
-  if [ -e "$WORKSPACE/$RELEASE_FORMAT/src/TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h" ] ; then
-    IGNORE_HDRS="TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i"
+if $IS_DEV_BRANCH ; then
+  CHK_HEADER_LOG_RES="NOTRUN"
+  if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers ] ; then
+    report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" ${NO_POST}
+    IGNORE_HDRS="%.i"
+    if [ -e "$WORKSPACE/$RELEASE_FORMAT/src/TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h" ] ; then
+      IGNORE_HDRS="TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i"
+    fi
+    COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='${IGNORE_HDRS}' scram build -k -j ${NCPU} check-headers"
+    echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
+    (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/headers_chks.log
+    echo 'END OF HEADER CHEKS LOG'
+    TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/headers_chks.log` || true
+    GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/headers_chks.log` || true
+    CHK_HEADER_LOG_RES="OK"
+    CHK_HEADER_OK=true
+    if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
+      CHK_HEADER_LOG_RES="ERROR"
+      CHK_HEADER_OK=false
+      ALL_OK=false
+    fi
   fi
-  COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='${IGNORE_HDRS}' scram build -k -j ${NCPU} check-headers"
-  echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
-  (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/headers_chks.log
-  echo 'END OF HEADER CHEKS LOG'
-  TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/headers_chks.log` || true
-  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/headers_chks.log` || true
-  CHK_HEADER_LOG_RES="OK"
-  CHK_HEADER_OK=true
-  if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
-    CHK_HEADER_LOG_RES="ERROR"
-    CHK_HEADER_OK=false
-  fi
+  echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> $RESULTS_FILE
 fi
-echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> $RESULTS_FILE
 # #############################################
 # test compilation with GCC
 # ############################################
@@ -1022,9 +1025,9 @@ done
 TESTS_FAILED="Failed tests:"
 if [ "X$BUILD_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  Build"
-  if [ "X$CHK_HEADER_OK" = Xfalse ] ; then
-    TESTS_FAILED="$TESTS_FAILED  HeaderConsistency"
-  fi
+fi
+if [ "X$CHK_HEADER_OK" = Xfalse ] ; then
+  TESTS_FAILED="$TESTS_FAILED  HeaderConsistency"
 fi
 if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  UnitTests"
@@ -1037,6 +1040,9 @@ if [ "X$ADDON_OK" = Xfalse ]; then
 fi
 if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
   TESTS_FAILED="$TESTS_FAILED  ClangBuild"
+fi
+if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then
+  TESTS_FAILED="$TESTS_FAILED  Python3"
 fi
 
 prepare_upload_results

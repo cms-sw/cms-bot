@@ -1391,7 +1391,10 @@ riga:
 - PhysicsTools/PatUtils
 - PhysicsTools/RecoAlgos
 - PhysicsTools/TensorFlow
+- RecoBTag/Combined
+- RecoBTag/TensorFlow
 - RecoHGCal
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
 - RecoParticleFlow/PFClusterProducer
+- RecoTauTag/RecoTau

@@ -74,10 +74,10 @@ pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
 
 if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   while true ; do
-    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -a -f '^java  *-jar  *.*/slave.jar .*' | wc -l") -gt 0 ] ; then break ; fi
+    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '^java  *-jar  *.*/slave.jar .*' | wc -l") -gt 0 ] ; then break ; fi
     sleep 30
   done
-  pre_cmd="pgrep -a -f  '^java  *-jar  *.*/slave.jar .*' || exit 1 && ${pre_cmd}"
+  pre_cmd="pgrep -f  '^java  *-jar  *.*/slave.jar .*' || exit 1 && ${pre_cmd}"
 fi
 
 ssh $SSH_OPTS $TARGET "${pre_cmd} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

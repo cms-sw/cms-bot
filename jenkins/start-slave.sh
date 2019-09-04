@@ -15,6 +15,8 @@ if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
   if [ `pgrep -f "@${TARGET_HOST} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
 fi
 DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+MULI_MASTER_SLAVE=$(grep '>MULI_MASTER_SLAVE<' -A1 ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${HOME}/slave.jar | sed 's| .*||')
 scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:~/system-info.sh"
 SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "~/system-info.sh '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
@@ -69,4 +71,13 @@ case $(get_data SHELL) in
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
+
+if [ "${MULI_MASTER_SLAVE}" != "X" ] ; then
+  while true ; do
+    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -a -f '^java  *-jar  *.*/slave.jar .*' | wc -l") -gt 0 ] ; then break ; fi
+    sleep 30
+  done
+  pre_cmd="pgrep -a -f  '^java  *-jar  *.*/slave.jar .*' || exit 1 && ${pre_cmd}"
+fi
+
 ssh $SSH_OPTS $TARGET "${pre_cmd} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

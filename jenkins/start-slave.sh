@@ -79,7 +79,7 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
     sleep 30
   done
   set -x
-  pre_cmd="pgrep -f  '^java  *-jar  *.*/slave.jar .*' || exit 1 && ${pre_cmd}"
+  pre_cmd="pgrep -f  '^java  *-jar  *.*/slave.jar .*' && exit 1 || ${pre_cmd}"
 fi
 
 ssh $SSH_OPTS $TARGET "${pre_cmd} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

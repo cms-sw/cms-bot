@@ -69,11 +69,13 @@ for dir in ib-baseline-tests ; do
   CVMFS_DIR=/cvmfs/cms-ib.cern.ch/jenkins-artifacts/${dir}
   ls ${CVMFS_DIR} >/dev/null 2>&1 || true
   if [ -d ${CVMFS_DIR} ] ; then
-    for ver in $(find ${JENKINS_ARTIFACTS}/${dir} -maxdepth 1 -mindepth 1 -name 'CMSSW_*' -type d | sed "s|${JENKINS_ARTIFACTS}/${dir}/||") ; do
-      if [ -d ${CVMFS_DIR}/${ver} ] ; then
-        $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${dir}/${ver}
-        $DRY_RUN ln -s  ${CVMFS_DIR}/${ver} ${JENKINS_ARTIFACTS}/${dir}/${ver}
-      fi
+    for ver1 in $(find ${JENKINS_ARTIFACTS}/${dir} -maxdepth 1 -mindepth 1 -name 'CMSSW_*' -type d) ; do
+      for ver in $(find ${ver1} -maxdepth 1 -mindepth 1 -type d | sed "s|${JENKINS_ARTIFACTS}/${dir}/||") ; do
+        if [ -d ${CVMFS_DIR}/${ver} ] ; then
+          $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${dir}/${ver}
+          $DRY_RUN ln -s  ${CVMFS_DIR}/${ver} ${JENKINS_ARTIFACTS}/${dir}/${ver}
+        fi
+      done
     done
   fi
 done

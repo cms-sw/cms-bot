@@ -171,7 +171,7 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
       COMP_ARCH=$(cat $CONFIG_MAP | grep "=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep "SCRAM_ARCH=${ARCHITECTURE};" | grep ",baseline," | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
       if [ "X$COMP_ARCH" = "X" ] ; then
         COMP_ARCH=$(cat $CONFIG_MAP | grep $COMP_QUEUE | grep -v "DISABLED=1" | grep ",baseline," | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
-        if [ "X$COMP_ARCH" = "X" ] ; then ; COMP_ARCH=$ARCHITECTURE ; fi
+        if [ "X$COMP_ARCH" = "X" ] ; then COMP_ARCH=$ARCHITECTURE ; fi
       fi
     fi
     for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" |  awk '{print $2":"$3}' | sort -r | sed 's|:.*$||') ;  do

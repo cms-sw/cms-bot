@@ -74,14 +74,21 @@ pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
 EXTRA_JAVA_ARGS=""
 if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   set +x
-  date
+  let MAX_WAIT_TIME=60*60*12
+  WAIT_GAP=60
+  SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+-jar\s+.*/slave.jar\s+"
   while true ; do
-    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '^java  *-jar  *.*/slave.jar .*' | wc -l") -eq 0 ] ; then break ; fi
-    sleep 60
+    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+    echo "$(date): Waiting $MAX_WAIT_TIME ..."
+    if [ $MAX_WAIT_TIME -gt 0 ] ; then
+      let MAX_WAIT_TIME=$MAX_WAIT_TIME-$WAIT_GAP
+      sleep $WAIT_GAP
+    else
+      exit 1
+    fi
   done
-  date
   set -x
-  pre_cmd="${pre_cmd} && pgrep -f  '^java  *-jar  *.*/slave.jar .*' && exit 1 || "
+  pre_cmd="${pre_cmd} pgrep -f  '${SLAVE_CMD_REGEX}' && exit 1 || "
   EXTRA_JAVA_ARGS="-DMULTI_MASTER_SLAVE=true"
 fi
 

@@ -202,10 +202,10 @@ GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_0_X"].append("CMSSW_11_0_DEVEL_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/rootnext")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/rootmaster")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc820"].append("IB/CMSSW_11_0_X/devel")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/gcc820")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/devel")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/gcc8")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/geant4")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc820"].append("IB/CMSSW_11_0_X/rootmodule")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/rootmodule")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/geant104")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/gcc700"].append("IB/CMSSW_11_0_X/gcc9")
 

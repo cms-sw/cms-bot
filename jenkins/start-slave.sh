@@ -71,7 +71,7 @@ case $(get_data SHELL) in
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
-
+EXTRA_JAVA_ARGS=""
 if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   set +x
   date
@@ -81,7 +81,8 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   done
   date
   set -x
-  pre_cmd="pgrep -f  '^java  *-jar  *.*/slave.jar .*' && exit 1 || ${pre_cmd}"
+  pre_cmd="${pre_cmd} && pgrep -f  '^java  *-jar  *.*/slave.jar .*' && exit 1 || "
+  EXTRA_JAVA_ARGS="-DMULTI_MASTER_SLAVE=true"
 fi
 
-ssh $SSH_OPTS $TARGET "${pre_cmd} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"
+ssh $SSH_OPTS $TARGET "${pre_cmd} java ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

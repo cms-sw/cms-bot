@@ -168,9 +168,9 @@ COMPARISON_REL=
 if [[ $RELEASE_FORMAT != *-* ]]; then
     COMP_ARCH=$COMPARISON_ARCH
     if [ "X$COMP_ARCH" = "X" ] ; then
-      COMP_ARCH=$(cat $CONFIG_MAP | grep "=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep "SCRAM_ARCH=${ARCHITECTURE};" | grep ",baseline," | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
+      COMP_ARCH=$(cat $CONFIG_MAP | grep "=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep "SCRAM_ARCH=${ARCHITECTURE};" | grep "ADDITIONAL_TESTS=.*baseline" | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
       if [ "X$COMP_ARCH" = "X" ] ; then
-        COMP_ARCH=$(cat $CONFIG_MAP | grep $COMP_QUEUE | grep -v "DISABLED=1" | grep ",baseline," | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
+        COMP_ARCH=$(cat $CONFIG_MAP | grep $COMP_QUEUE | grep -v "DISABLED=1" | grep "ADDITIONAL_TESTS=.*baseline" | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
         if [ "X$COMP_ARCH" = "X" ] ; then COMP_ARCH=$ARCHITECTURE ; fi
       fi
     fi

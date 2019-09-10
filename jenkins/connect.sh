@@ -1,12 +1,9 @@
 #!/bin/sh -ex
 TARGET=$1 ; shift
-if [ "${NODE_NAME}X" != "X" ] ; then
-  JENKINS_SLAVE_NAME="${NODE_NAME}"
-else
-  JENKINS_SLAVE_NAME=$1; shift
-fi
+JENKINS_SLAVE_NAME="${NODE_NAME}"
+if [ "$1" = "${NODE_NAME}" ] ; then shift; fi
 if [ "${JENKINS_SLAVE_NAME}" = "" ] ; then
-  echo "Usage: $0 <jenins-slave-name> <remote-user@remote-node> [cleanup]"
+  echo "Usage: $0 <remote-user@remote-node> [cleanup]"
   exit 1
 fi
 

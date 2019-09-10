@@ -55,7 +55,6 @@ CMSSW_L2 = {
   "peruzzim":         ["xpog"],
   "pgunnell":         ["pdmv"],
   "pohsun":           ["alca"],
-  "prebello":         ["pdmv"],
   "qliphy":           ["generators"],
   "rekovic":          ["l1"],
   "santocch":         ["analysis"],

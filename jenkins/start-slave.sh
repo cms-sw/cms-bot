@@ -7,6 +7,7 @@ function get_data ()
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 TARGET=$1
 CLEANUP_WORKSPACE=$2
+REMOTE_USER=$(echo $TARGET | sed 's|@.*||')
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 #Check unique slave conenction
@@ -57,7 +58,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
   slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${JENKINS_SLAVE_NAME} ${slave_labels} ; fi
 fi
-if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
+if [ $(get_data JENKINS_SLAVE_SETUP) = "false" -a "${REMOTE_USER}" != "cmst1" ] ; then
   ${JENKINS_CLI_CMD} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
 fi
 KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')

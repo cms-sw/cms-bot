@@ -31,7 +31,7 @@ fi
 
 git clone git@github.com:cms-sw/cmsdist.git $BUILD_DIR/CMSDIST
 pushd $BUILD_DIR/CMSDIST
-  eval $(cat $WORKSPACE/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$QUEUE;")
+  eval $(cat $WORKSPACE/config.map | grep -v "DISABLED="| grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$QUEUE;")
 
   # a patch release uses the same cmsdist tag as its base release
   case $CMSSW_X_Y_Z in

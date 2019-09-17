@@ -47,7 +47,7 @@ esac
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 unset BUILD_PATCH_RELEASE
-eval `cat $CMS_BOT_DIR/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+eval `cat $CMS_BOT_DIR/config.map | grep -v 'DISABLED=' | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 [ "X$BUILD_PATCH_RELEASE" = "X1" ] && FORCE_BUILD_PATCH_RELEASE=true
 
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,

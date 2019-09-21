@@ -16,6 +16,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   MOUNT_POINTS="/cvmfs,/tmp"
   for xdir in /cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses /cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security ; do
     ldir=$(echo $xdir | sed 's|.*:||')
+    if [ $(echo "${IGNORE_MOUNTS}" | tr ' ' '\n' | grep "^${ldir}$" | wc -l) -gt 0 ] ; then
+      continue
+    fi
     if [ -d $ldir -a $(ls $ldir |wc -l) -gt 0 ] ; then xdir=$ldir; fi
     MOUNT_POINTS="$MOUNT_POINTS,${xdir}"
   done

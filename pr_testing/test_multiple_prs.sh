@@ -318,7 +318,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    COMPILATION_CMD="pkgtools/cmsBuild --force-tag --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
+    COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --force-tag --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} build cms-common cms-git-tools cmssw-tool-conf"
     echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
     # run the command and both log it to file and display it

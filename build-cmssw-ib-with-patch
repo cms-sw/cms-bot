@@ -102,7 +102,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   esac
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+CMSBUILD_CMD="PYTHONPATH= PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
   #Do not use reference repo for Sunday, as we cleanup weekly repo on that day
   if [ $(date +%u) -lt 7 ] ; then

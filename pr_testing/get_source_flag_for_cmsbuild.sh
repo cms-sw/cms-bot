@@ -61,7 +61,7 @@ if [ -e cmsdist/data/cmsswdata.txt ] ; then
     ;;
   esac
 fi
-SOURCES=$(./pkgtools/cmsBuild ${CMS_REPO} -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
+SOURCES=$(PYTHONPATH= ./pkgtools/cmsBuild ${CMS_REPO} -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
                         grep -i "^${SPEC_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
 N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true

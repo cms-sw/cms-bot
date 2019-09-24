@@ -73,7 +73,7 @@ pushd $BUILD_DIR
     CMS_TAG="--tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
   echo DATE=`date`
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 2 -j $BUILD_NPROC $CMS_TAG"
+  CMSBUILD_CMD="PYTHONPATH= PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 2 -j $BUILD_NPROC $CMS_TAG"
   $CMSBUILD_CMD --specs-only build cmssw$PATCH
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`

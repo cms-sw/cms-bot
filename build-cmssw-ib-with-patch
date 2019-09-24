@@ -102,7 +102,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   esac
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-CMSBUILD_CMD="PYTHONPATH= PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
   #Do not use reference repo for Sunday, as we cleanup weekly repo on that day
   if [ $(date +%u) -lt 7 ] ; then
@@ -114,7 +114,7 @@ if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
     fi
   fi
 fi
-$CMSBUILD_CMD --debug build SCRAMV1
+PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1
 # Decide if we already have a release which uses the same CMSDIST.
 pushd w
 if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
@@ -173,22 +173,22 @@ pushd CMSDIST
   perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
 popd
 
-$CMSBUILD_CMD --specs-only build $PACKAGE_NAME
+PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 #if [ $(echo $CMSSW_RELEASE_BASE | cut -d_ -f2) -gt 9 ] ; then TOOL_CONF_PACKAGES="cms-common ${TOOL_CONF_PACKAGES}" ; fi
 echo DATE=`date`
 EXTERNAL_FAILED=NO
-$CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
+PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
 echo DATE=`date`
 if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
   BLD_PKGS=$(ls w/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2)
-  if [ "X$BLD_PKGS" != "X" ] ; then $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
+  if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
   exit 1
 fi 
 if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-  $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+  PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
   echo DATE=`date`
-  $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
+  PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
   echo DATE=`date`
 fi
 if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
@@ -197,9 +197,9 @@ case $RELEASE_NAME in
   *_DEVEL_*) DEBUG_OPT="--debug" ;;
 esac
 export SCRAM_HOOKS_DEBUG=1
-$CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
+PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
 echo DATE=`date`
-$CMSBUILD_CMD --sync-back upload cmssw-ib
+PYTHONPATH= $CMSBUILD_CMD --sync-back upload cmssw-ib
 echo DATE=`date`
 pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the

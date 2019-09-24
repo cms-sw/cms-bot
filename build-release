@@ -73,16 +73,16 @@ pushd $BUILD_DIR
     CMS_TAG="--tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
   echo DATE=`date`
-  CMSBUILD_CMD="PYTHONPATH= PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 2 -j $BUILD_NPROC $CMS_TAG"
-  $CMSBUILD_CMD --specs-only build cmssw$PATCH
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 2 -j $BUILD_NPROC $CMS_TAG"
+  PYTHONPATH= $CMSBUILD_CMD --specs-only build cmssw$PATCH
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
-  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES
+  PYTHONPATH= $CMSBUILD_CMD build $TOOL_CONF_PACKAGES
   echo DATE=`date`
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-    $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
-    $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
   fi
 
@@ -98,7 +98,7 @@ pushd $BUILD_DIR
     exit 0
   fi
 
-  $CMSBUILD_CMD -j `echo "$BUILD_NPROC + 1" | bc` build local-cern-siteconf cmssw$PATCH
+  PYTHONPATH= $CMSBUILD_CMD -j `echo "$BUILD_NPROC + 1" | bc` build local-cern-siteconf cmssw$PATCH
   echo DATE=`date`
 popd
 echo DATE=`date`

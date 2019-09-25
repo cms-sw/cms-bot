@@ -64,7 +64,7 @@ multiline_comments_map = { "workflow(s|)" : [format('^\s*%(workflow)s(\s*,\s*%(w
               "pull_request(s|)" : [format('%(cms_pr)s(\s*,\s*%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ), "pull_requests" ],
               "full_cmssw" : ['true|false', "full_release"],
               "jenkins_slave" : [ '[a-zA-Z][a-zA-Z0-9_-]+' , "jenkins_slave"],
-              #"queue" : [ format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN), "release_queue"]
+              #"queue" : [ CMSSW_QUEUE_PATTERN, "cmssw_queue"]
                       }
 
 def get_last_commit(pr):
@@ -269,16 +269,12 @@ def get_prs_list_from_string(pr_string="", repo_string=""):
 
 def parse_extra_params(first_line, full_comment, repo):
   # check first line
-  # if not "test parameters" in full_comment.splitlines()[0]:
-  print ('full comment first line', full_comment[0])
-
   if not "test parameters" in first_line:
-    print("not a proper multiline comment")
+    #print("not a proper multiline comment")
     return {}  # return empty
 
   error_lines = []
   matched_extra_args = dict()
-  #for l in full_comment.splitlines():
 
   for l in full_comment[1:]:
     if not '=' in l:
@@ -295,7 +291,6 @@ def parse_extra_params(first_line, full_comment, repo):
       key_is_matching = re.match(k, line_args[0], re.I)
       values_are_matching = re.match(pttrn[0], line_args[1], re.I)
 
-      print(line_args, k, pttrn)
       if not key_is_matching and not values_are_matching:
         # none is matching because maybe its not the proper line yet
         continue
@@ -319,28 +314,21 @@ def parse_extra_params(first_line, full_comment, repo):
 
   if error_lines:
     matched_extra_args['errors'] = error_lines
-    print('errors are:')
-    for er in error_lines: print(er)
 
   return matched_extra_args
 
 def multiline_check_function(first_line, comment_lines, repository):
-  # few trivial checks that doesn not belong in the parsin function
+  # few trivial checks that does not belong in the parsing function
   multiline_comment_ok = False
 
   if not "test parameters" in first_line or len(comment_lines) < 2:
-    print('non proper multiline comment')
     return multiline_comment_ok, {}
 
   extra_params = parse_extra_params(first_line, comment_lines, repository)
 
-  print('comment lines size: ' , len(comment_lines))  # prints the length of the list
   # first line might be right, but none of the provided lines that follows. check number of meaningful params
   if len(extra_params.keys()) > 0 and not "errors" in extra_params:
     multiline_comment_ok = True
-
-  # add ml comment true for printing prurposes
-  #multiline_comment_ok = True
 
   return multiline_comment_ok, extra_params
 
@@ -381,7 +369,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   repo_org, repo_name = repository.split("/",1)
   new_tests = False
   if 'CMS_BOT_MULTI_PR_TESTS' in environ: new_tests = True
-  multiline_comment = True #
   print("New Tests:", new_tests)
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
@@ -579,9 +566,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   extra_testers = []
   all_comments = [issue]
 
-  '''
-  start of parsing comments section
-  '''
+  #start of parsing comments section
 
   for c in issue.get_comments(): all_comments.append(c)
   for comment in all_comments:
@@ -599,8 +584,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     first_line = comment_lines[0:1]
     if not first_line: continue
     first_line = first_line[0]
-    print("DEBUG: first line comment:",commenter,":",first_line)
-    print("DEBUG: full comment ", commenter, ":", comment_lines)
     if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
       already_seen = comment
       backport_pr_num = get_backported_pr(comment_msg)
@@ -766,22 +749,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
         if valid_multiline_comment:
           global_test_params = test_params
-          print("valid multiline comments:")
-          print(json.dumps(test_params, indent=1, sort_keys=True))
           continue
 
         test_cmd_func = check_test_cmd
         if new_tests: test_cmd_func = check_test_cmd_new
         ok, v1, v2, v3, v4 = test_cmd_func(first_line, repository)
-
-        #  if valid global params were set and not overwritten by the last comment, use them
-        if ok and global_test_params and first_line == "please test":
-          #  overwrite function args and ok
-          print("get the parameters from global params")
-          print("current defaults:", global_test_params)
-
         if ok:
-
           cmsdist_pr = v1
           cmssw_prs = v2
           extra_wfs = v3
@@ -850,12 +823,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           mustClose = False
       continue
 
-  '''
-  end of parsing comments section
-  '''
-
-  #global_test_params:
-  #if cmsdist_pr
+  # end of parsing comments section
 
   if push_test_issue:
     auto_close_push_test_issue = True
@@ -1033,49 +1001,24 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
-  print('printing default values before reassigning')
-  print(global_test_params)
-
-  # add extra cmsdist, cmssw prs and workflows for testing
-
-  cmsdist_pr = "cms-sw/cmsdist#124, cms-sw/cmsdist#125"
-  cmssw_prs = "cms-sw/cmssw#135, cms-sw/cmssw#136"
-  extra_wfs = "136.76, 136.761"
-  release_arch = "slc7_amd64_gcc900"
-
   if global_test_params:
     if cmsdist_pr:
       prs = get_prs_list_from_string(cmsdist_pr, repo_org+'/cmsdist')
-      print('add latest cmsdist prs to existing defaults ... ')
-      print(prs)
       global_test_params['pull_requests'] = global_test_params['pull_requests'] + ',' + ",".join(prs)
       # overwrite cmsdist prs variable to use in create property function before using the default global params
       cmsdist_pr = ','.join([pullr for pullr in global_test_params['pull_requests'].split(',') if pullr.find('cmsdist') is not -1])
-      print('cmsdist prs: ', cmsdist_pr)
 
     if cmssw_prs:
       prs = get_prs_list_from_string(cmssw_prs, repo_org+'/cmssw')
-      print('add latest cmssw prs to existing defaults ...')
-      print(prs)
       global_test_params['pull_requests'] = global_test_params['pull_requests'] + ',' + ",".join(prs)
       # see above section, same story
       cmssw_prs = ','.join([pullr for pullr in global_test_params['pull_requests'].split(',') if pullr.find('cmssw') is not -1])
-      print('cmssw prs: ', cmssw_prs)
 
     if extra_wfs:
-      print('add extra wfs to existing defaults ...')
-      print(extra_wfs)
       global_test_params['workflow'] = global_test_params['workflow'] + "," + extra_wfs.replace(" ", "")
 
     if release_arch:
-      print('change release archs with')
-      print(release_arch)
       global_test_params['release'] = release_arch
-
-  print('printing default values after reassigning')
-  print(global_test_params)
-
-  # if global params exist, change the please test provided params with global test params
 
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
   if create_test_property:

@@ -1404,3 +1404,10 @@ afiqaize:
 - EgammaAnalysis
 - DataFormats/EgammaCandidates
 - DataFormats/EgammaReco
+missirol:
+- DQMOffline/Trigger
+- DQM/HLTEvF
+- DQM/HLXMonitor
+- DQM/TrigXMonitor
+- DQM/TrigXMonitorClient
+- HLTriggerOffline

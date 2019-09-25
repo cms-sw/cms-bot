@@ -9,9 +9,9 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   rm -rf dummybuild
   mkdir dummybuild
   pushd dummybuild
-    ARCHITECTURE=slc6_amd64_gcc700
-    git clone -b IB/CMSSW_10_2_X/gcc700 git://github.com/cms-sw/cmsdist.git CMSDIST   || git clone -b IB/CMSSW_10_2_X/gcc700 https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
-    git clone -b V00-32-XX              git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone -b V00-32-XX             https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
+    eval `cat config.map | grep -v 'DISABLED=1' | grep 'RELEASE_BRANCH=master' | grep  'PROD_ARCH=1;'`
+    git clone -b $CMSDIST_TAG           git://github.com/cms-sw/cmsdist.git CMSDIST   || git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
+    git clone -b $PKGTOOLS_TAG          git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone -b $PKGTOOLS_TAG             https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
     if [ $(sh ./CMSDIST/cmsos.file | grep slc7_ | wc -l) -gt 0 ] ; then ARCHITECTURE=slc7_amd64_gcc700 ; fi
     echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
     PKGTOOLS/cmsBuild --debug --repository cms --architecture $ARCHITECTURE --work-dir w build dummy

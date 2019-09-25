@@ -1398,3 +1398,9 @@ riga:
 - RecoLocalCalo/HGCalRecProducers
 - RecoParticleFlow/PFClusterProducer
 - RecoTauTag/RecoTau
+afiqaize:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco

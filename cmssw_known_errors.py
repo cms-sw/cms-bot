@@ -110,11 +110,12 @@ for wf in ["523.0", "551.0","555.0","562.0","1360.0","25210.0"]:
   KNOWN_ERRORS["relvals"][RelFilter]["slc7_amd64_gcc[7-9][0-9]+"][wf]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_amd64_gcc700"][wf])
 
 #10.4 and above
-RelFilter="CMSSW_(10_[4-9]|[1-9][0-9])_.+"
+RelFilter="CMSSW_(10_([4-9]|[1-9][0-9]+)|1[1-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"
 KNOWN_ERRORS["relvals"][RelFilter]={}
 KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"] = deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"])
 for wf in ["535.0", "536.0","1361.18","1362.18","1363.18","25211.18","25212.18", "25213.18"]:
   KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"][wf] = deepcopy(KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"]["512.0"])
+KNOWN_ERRORS["relvals"][RelFilter][".+_ppc64le_.+"] = deepcopy(KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"])
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}

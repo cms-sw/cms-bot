@@ -86,8 +86,8 @@ def get_payload(index, query, scroll=0):
     sslcon = ssl._create_unverified_context()
   except Exception as e:
     sslcon =  None
-  if sslcon: return urlopen(CMSSDT_ES_QUERY,json.dumps(data), context=sslcon).read()
-  else: return urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  if sslcon: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"), context=sslcon).read()
+  else: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore")).read()
 
 def get_payload_wscroll(index, query):
   es_data = json.loads(get_payload(index, query,scroll=1))

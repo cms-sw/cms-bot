@@ -60,11 +60,11 @@ REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)a
 TEST_WAIT_GAP=720
 
 multiline_comments_map = { "workflow(s|)" : [format('^\s*%(workflow)s(\s*,\s*%(workflow)s|)*\s*$', workflow= WF_PATTERN), "workflow"  ],
-              "(arch(itecture(s|))|release)" : [ARCH_PATTERN, "release"],
+              #"(arch(itecture(s|))|release)" : [ARCH_PATTERN, "release"],
               "pull_request(s|)" : [format('%(cms_pr)s(\s*,\s*%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ), "pull_requests" ],
               "full_cmssw" : ['true|false', "full_release"],
               "jenkins_slave" : [ '[a-zA-Z][a-zA-Z0-9_-]+' , "jenkins_slave"],
-              #"queue" : [ CMSSW_QUEUE_PATTERN, "cmssw_queue"]
+              "(arch(itecture(s|))|release|arch/release)" : [ CMSSW_RELEASE_QUEUE_PATTERN, "cmssw_release_queue"]
                       }
 
 def get_last_commit(pr):
@@ -321,8 +321,12 @@ def multiline_check_function(first_line, comment_lines, repository):
   # few trivial checks that does not belong in the parsing function
   multiline_comment_ok = False
 
-  if not "test parameters" in first_line or len(comment_lines) < 2:
-    return multiline_comment_ok, {}
+  if len(comment_lines) < 2:
+    if not "test parameters" in first_line:
+      return False, {}
+    else:
+      # reset
+      return True, {}
 
   extra_params = parse_extra_params(first_line, comment_lines, repository)
 
@@ -1001,31 +1005,34 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
+  # the function check_test_cmd_new adds all prs in cmssw_prs variable , so put all prs in one place
+  print('DEBUG print: global params before reassigning:', json.dumps(global_test_params, indent=1, sort_keys=True))
   if global_test_params:
-    if cmsdist_pr:
-      prs = get_prs_list_from_string(cmsdist_pr, repo_org+'/cmsdist')
-      global_test_params['pull_requests'] = global_test_params['pull_requests'] + ',' + ",".join(prs)
-      # overwrite cmsdist prs variable to use in create property function before using the default global params
-      cmsdist_pr = ','.join([pullr for pullr in global_test_params['pull_requests'].split(',') if pullr.find('cmsdist') is not -1])
 
     if cmssw_prs:
-      prs = get_prs_list_from_string(cmssw_prs, repo_org+'/cmssw')
-      global_test_params['pull_requests'] = global_test_params['pull_requests'] + ',' + ",".join(prs)
-      # see above section, same story
-      cmssw_prs = ','.join([pullr for pullr in global_test_params['pull_requests'].split(',') if pullr.find('cmssw') is not -1])
+      # funtion check test cmd new formats the list, so just add the prs to the global defaults
+      cmssw_prs = cmssw_prs.replace(' ', '')
+      global_test_params['pull_requests'] = global_test_params['pull_requests'] + ',' + ",".join(cmssw_prs.split(','))
+      # cmssw_prs variable is used for now, so assign all prs to it, to use it for testing
+      cmssw_prs = global_test_params
 
     if extra_wfs:
-      global_test_params['workflow'] = global_test_params['workflow'] + "," + extra_wfs.replace(" ", "")
+      global_test_params['workflow'] = global_test_params['workflow'] + "," + extra_wfs.replace(' ', '')
+      # same comment as above, use existing variable for testing
+      extra_wfs = global_test_params['workflow']
 
-    if release_arch:
-      global_test_params['release'] = release_arch
+    if release_queue:
+      global_test_params['cmssw_release_queue'] = release_queue
+      # same comment as above, use existing variable for testing
+      release_queue = global_test_params['cmssw_release_queue']
+  print('DEBUG print: global params after reassigning:', json.dumps(global_test_params, indent=1, sort_keys=True))
 
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
   if create_test_property:
     # trigger the tests and inform it in the thread.
     if trigger_test_on_signature and has_categories_approval: tests_requested = True
     if tests_requested:
-      prs = ['%s#%s' % (repository,prId)]
+      prs = ['%s#%s' % (repository, prId)]
 
       for p in [x for x in cmsdist_pr.replace(' ','').split(',') if x]:
         if '#' not in p: p='%s/cmsdist#%s' % (repo_org, p)

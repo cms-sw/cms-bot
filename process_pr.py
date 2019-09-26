@@ -1004,13 +1004,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
-  cmssw_prs = "cms-sw/cmssw#135, cms-sw/cmssw#136   ,cms-sw/cmsdist#124,       cms-sw/cmsdist#125"
-  extra_wfs = "136.76, 136.761"
-  release_queue = "slc7_amd64_gcc900"
-
-  # the function check_test_cmd_new adds all prs in cmssw_prs variable , so put all prs in one place
   print('DEBUG print: global params before reassigning:', json.dumps(global_test_params, indent=1, sort_keys=True))
-  # now global_test_params are always defined so don't check
 
   if cmssw_prs:
     #cmssw_prs = cmssw_prs.replace(' ', '')

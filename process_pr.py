@@ -60,11 +60,10 @@ REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)a
 TEST_WAIT_GAP=720
 
 multiline_comments_map = { "workflow(s|)" : [format('^\s*%(workflow)s(\s*,\s*%(workflow)s|)*\s*$', workflow= WF_PATTERN), "workflow"  ],
-              #"(arch(itecture(s|))|release)" : [ARCH_PATTERN, "release"],
               "pull_request(s|)" : [format('%(cms_pr)s(\s*,\s*%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ), "pull_requests" ],
               "full_cmssw" : ['true|false', "full_release"],
               "jenkins_slave" : [ '[a-zA-Z][a-zA-Z0-9_-]+' , "jenkins_slave"],
-              "(arch(itecture(s|))|release|arch/release)" : [ CMSSW_RELEASE_QUEUE_PATTERN, "cmssw_release_queue"]
+              "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN, "cmssw_release_queue"]
                       }
 
 def get_last_commit(pr):
@@ -95,7 +94,7 @@ def read_repo_file(repo_config, repo_file, default=None):
 # creates a properties file to trigger the test of the pull request
 #
 
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, dryRun, abort=False, req_type="tests", repo_config=None, extra_prop=None , new_tests=False):
+def create_properties_file_tests(repository, pr_number, parameters, dryRun, abort=False, req_type="tests", repo_config=None):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
   if (req_type in "tests"):
@@ -105,25 +104,15 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, d
     except: pass
   repo_partsX=repository.replace("/","-")
   out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)
-  parameters = {}
-  if extra_prop:
-    for x in extra_prop:
-      parameters[x]=extra_prop[x]
-  if new_tests:
-    prs = ['%s#%s' % (repository,pr_number)]
-    for pr in [p for p in cmssw_prs.split(',') if p]:
-      if '#' not in pr: pr='%s#%s' % (repository, pr)
-      prs.append(pr)
-    parameters['PULL_REQUESTS']=" ".join(prs)
-    parameters['USE_MULTIPLE_PRS_JOB']='true'
-  else:
-    parameters['PUB_USER']=repo_parts[0]
-    if repo_parts[1] == GH_CMSDIST_REPO:
-      parameters['CMSDIST_PR']=pr_number
-    else:
-      parameters['PULL_REQUEST']=pr_number
-      parameters['CMSDIST_PR']=cmsdist_pr
-      parameters['ADDITIONAL_PULL_REQUESTS']=cmssw_prs
+  cmssw_prs = parameters['pull_requests']
+
+  prs = ['%s#%s' % (repository,pr_number)]
+  for pr in [p for p in cmssw_prs.split(',') if p]:
+    if '#' not in pr: pr='%s#%s' % (repository, pr)
+    prs.append(pr)
+  parameters['PULL_REQUESTS']=" ".join(prs)
+  parameters['USE_MULTIPLE_PRS_JOB']='true'
+
   try:
     if repo_config.JENKINS_SLAVE_LABEL: parameters['RUN_LABEL']=repo_config.JENKINS_SLAVE_LABEL
   except: pass
@@ -317,18 +306,27 @@ def parse_extra_params(first_line, full_comment, repo):
 
   return matched_extra_args
 
-def multiline_check_function(first_line, comment_lines, repository):
+def multiline_check_function(first_line, comment_lines, repository, multiline_comments_map):
   # few trivial checks that does not belong in the parsing function
   multiline_comment_ok = False
+  extra_params = {}
+  #init empty map with only keys
+  for k in multiline_comments_map:
+    pattern_key = multiline_comments_map[k][1]
+    extra_params[pattern_key] = ''
 
   if len(comment_lines) < 2:
     if not "test parameters" in first_line:
-      return False, {}
+      return False, extra_params
     else:
       # reset
-      return True, {}
+      return True, extra_params
 
-  extra_params = parse_extra_params(first_line, comment_lines, repository)
+  params_from_comment = parse_extra_params(first_line, comment_lines, repository)
+  print(params_from_comment)
+  for k in params_from_comment:
+    if params_from_comment[k] is not '':
+      extra_params[k] = params_from_comment[k]
 
   # first line might be right, but none of the provided lines that follows. check number of meaningful params
   if len(extra_params.keys()) > 0 and not "errors" in extra_params:
@@ -556,7 +554,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   cmsdist_pr = ''
   cmssw_prs = ''
   extra_wfs = ''
-  global_test_params = {}
+  global_test_params = dict([(x, None) for x in multiline_comments_map])
   assign_cats = {}
   hold = {}
   extra_labels = {}
@@ -750,7 +748,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
       # Check if the someone asked to trigger the tests
       if valid_commenter:
-        valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
+        valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository,
+                                                                         multiline_comments_map)
         if valid_multiline_comment:
           global_test_params = test_params
           continue
@@ -1005,26 +1004,25 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
+  cmssw_prs = "cms-sw/cmssw#135, cms-sw/cmssw#136   ,cms-sw/cmsdist#124,       cms-sw/cmsdist#125"
+  extra_wfs = "136.76, 136.761"
+  release_queue = "slc7_amd64_gcc900"
+
   # the function check_test_cmd_new adds all prs in cmssw_prs variable , so put all prs in one place
   print('DEBUG print: global params before reassigning:', json.dumps(global_test_params, indent=1, sort_keys=True))
-  if global_test_params:
+  # now global_test_params are always defined so don't check
 
-    if cmssw_prs:
-      # funtion check test cmd new formats the list, so just add the prs to the global defaults
-      cmssw_prs = cmssw_prs.replace(' ', '')
-      global_test_params['pull_requests'] = global_test_params['pull_requests'] + ',' + ",".join(cmssw_prs.split(','))
-      # cmssw_prs variable is used for now, so assign all prs to it, to use it for testing
-      cmssw_prs = global_test_params
+  if cmssw_prs:
+    #cmssw_prs = cmssw_prs.replace(' ', '')
+    if global_test_params['pull_requests'] is '': global_test_params['pull_requests'] = cmssw_prs
+    else:
+      global_test_params['pull_requests'] = global_test_params['pull_requests'] + ',' + \
+                                          ",".join(cmssw_prs.replace(' ', '').split(','))
+  if extra_wfs:
+    global_test_params['workflow'] = global_test_params['workflow'] + "," + extra_wfs.replace(' ', '')
+  if release_queue:
+    global_test_params['cmssw_release_queue'] = release_queue
 
-    if extra_wfs:
-      global_test_params['workflow'] = global_test_params['workflow'] + "," + extra_wfs.replace(' ', '')
-      # same comment as above, use existing variable for testing
-      extra_wfs = global_test_params['workflow']
-
-    if release_queue:
-      global_test_params['cmssw_release_queue'] = release_queue
-      # same comment as above, use existing variable for testing
-      release_queue = global_test_params['cmssw_release_queue']
   print('DEBUG print: global params after reassigning:', json.dumps(global_test_params, indent=1, sort_keys=True))
 
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
@@ -1054,19 +1052,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         else:
           print('DryRun: Creating comment:%s\n\n%s' % (xpr, TRIGERING_TESTS_MSG+ex_msg))
       if not dryRun:
-        extra_prop = {}
-        if release_queue: extra_prop['RELEASE_FORMAT'] = release_queue
-        if release_arch: extra_prop['ARCHITECTURE_FILTER'] = release_arch
-        if ignore_tests: extra_prop['IGNORE_BOT_TESTS'] = ",".join(ignore_tests)
-        if enabled_tests: extra_prop['ENABLE_BOT_TESTS'] = ",".join(enabled_tests)
-        if extra_wfs: extra_prop['MATRIX_EXTRAS'] = extra_wfs
-        if global_test_params['full_cmssw'] : extra_prop['BUILD_WITH_FULL_CMSSW'] = global_test_params['full_cmssw']
-        if global_test_params['jenkins_slave'] : extra_prop['USE_JENKINS_SLAVE'] = global_test_params['jenkins_slave']
-        create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, dryRun, abort=False, repo_config=repo_config, extra_prop=extra_prop, new_tests=new_tests)
+
+        if release_arch: global_test_params['ARCHITECTURE_FILTER'] = release_arch
+        if ignore_tests: global_test_params['IGNORE_BOT_TESTS'] = ",".join(ignore_tests)
+        if enabled_tests: global_test_params['ENABLE_BOT_TESTS'] = ",".join(enabled_tests)
+        global_test_params['RELEASE_FORMAT'] =  global_test_params['cmssw_release_queue']
+        global_test_params['MATRIX_EXTRAS'] = global_test_params['workflow']
+        create_properties_file_tests(repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config)
+
     elif abort_test:
       if not dryRun:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
-        create_properties_file_tests( repository, prId, cmsdist_pr, "", dryRun, abort=True, new_tests=new_tests)
+        create_properties_file_tests(repository, prId, global_test_params, dryRun, abort=True)
       else:
         print('Dryrun: Aborting tests')
 

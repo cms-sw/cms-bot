@@ -1411,3 +1411,10 @@ missirol:
 - DQM/TrigXMonitor
 - DQM/TrigXMonitorClient
 - HLTriggerOffline
+sobhatta:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+- RecoHGCal

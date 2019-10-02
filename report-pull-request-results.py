@@ -131,7 +131,7 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
   for line in open( matrix_log ):
     if 'ERROR executing' in line:
       print('processing: %s' % line) 
-      parts = line.split(" ")
+      parts = line.replace("  "," ").split(" ")
       workflow_info = parse_workflow_info( parts )
       workflows_with_error.append( workflow_info )
     elif ' Step0-DAS_ERROR ' in line:

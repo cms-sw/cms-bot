@@ -187,8 +187,8 @@ class LogSplitter(object):
 
         try:
             from pickle import Pickler
-            resFile = open(baseDir + '/unitTestResults.pkl', 'w')
-            pklr = Pickler(resFile)
+            resFile = open(baseDir + '/unitTestResults.pkl', 'wb')
+            pklr = Pickler(resFile, protocol=2)
             pklr.dump(unitTestResults)
             pklr.dump(results)
             resFile.close()

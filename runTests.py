@@ -3,6 +3,7 @@
 from __future__ import print_function
 import os, sys, platform, glob
 from _py2with3compatibility import run_cmd
+import traceback
 
 try:
     scriptPath = os.path.dirname(os.path.abspath(__file__))
@@ -58,6 +59,7 @@ class UnitTester(IBThreadBase):
         try:
             self.splitUnitTestLogs()
         except Exception as e:
+            traceback.print_exc()
             print("ERROR splitting unit test logs :", str(e))
         return
 

@@ -50,7 +50,7 @@ if __name__ == "__main__":
     print('create new tag ? ', create_new_tag)
   else:
     create_new_tag = True
-    last_release_tag = "V00-00-01"
+    last_release_tag = "V00-00-00"
 
   # if created files and modified files are the same count, all files are new
 

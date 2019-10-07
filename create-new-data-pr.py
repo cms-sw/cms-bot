@@ -43,10 +43,14 @@ if __name__ == "__main__":
       last_release_tag = (i.tag_name)
       break
 
-  comparison = data_repo.compare('master', last_release_tag)
-  print('commits behind ', comparison.behind_by)
-  create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
-  print('create new tag ? ', create_new_tag)
+  if last_release_tag:
+    comparison = data_repo.compare('master', last_release_tag)
+    print('commits behind ', comparison.behind_by)
+    create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
+    print('create new tag ? ', create_new_tag)
+  else:
+    create_new_tag = True
+    last_release_tag = "V00-00-01"
 
   # if created files and modified files are the same count, all files are new
 

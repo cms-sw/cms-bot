@@ -56,6 +56,9 @@ if [ -e cmsdist/data/cmsswdata.txt ] ; then
     cms-data/*)
       data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt)
       sed -i -e "/^ *${PKG_NAME}=.*/d;s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
+      if [ $(grep "Requires:  *data-${PKG_NAME} *$"  cmsdist/cmsswdata.spec | wc -l) -eq 0 ] ; then
+        sed -i -e "s/^%prep *$/Requires: data-${PKG_NAME}\n%prep/" cmsdist/cmsswdata.spec
+      fi
       touch cmsdist/data/data-${PKG_NAME}.file
       rm -rf cmsdist/data/data-${PKG_NAME}.* 
     ;;

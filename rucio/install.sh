@@ -42,7 +42,7 @@ fi
 export PYTHONUSERBASE="${INSTALL_DIR}/${RUCIO_VERSION}"
 mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
 export TMPDIR="${INSTALL_DIR}/tmp"
-pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
+pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION} gfal2-python
 rm -f ${INSTALL_DIR}/rucio.cfg
 case ${RUCIO_CONFIG_URL} in
   file://*) cp -f $(echo ${RUCIO_CONFIG_URL} | sed 's|^file://||') ${INSTALL_DIR}/rucio.cfg ;;

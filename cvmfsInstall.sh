@@ -114,6 +114,7 @@ done
 
 dockerrun()
 {
+  DOC_ARG="run --net=host --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) -v /etc/group:/etc/group -v /etc/passwd:/etc/passwd"
   case "$SCRAM_ARCH" in
     slc6_amd64_* )
       ARGS="cd $THISDIR; $@"
@@ -122,6 +123,10 @@ dockerrun()
     slc7_amd64_* )
       ARGS="cd $THISDIR; $@"
       docker run --net=host --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-installer:latest sh -c "$ARGS"
+      ;;
+    cc8_amd64_* )
+      ARGS="cd $THISDIR; $@"
+      docker $DOC_ARG cmssw/cc8:latest sh -c "$ARGS"
       ;;
     slc7_aarch64_* )
       ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"

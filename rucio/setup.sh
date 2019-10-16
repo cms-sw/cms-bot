@@ -1,4 +1,4 @@
-THISDIR=$(dirname $BASH_SOURCE)
+THISDIR=$(dirname ${BASH_SOURCE:-${(%):-%N}})
 SELECTED_VERSION=${1-current}
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then
   echo "Error: Unable to find rucio version '${SELECTED_VERSION}'" >&2

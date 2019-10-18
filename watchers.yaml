@@ -387,7 +387,7 @@ cericeci:
 - Validation/MuonIdentification
 - Validation/MuonIsolation
 - Validation/RecoMuon
-fedespring:
+Fedespring:
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit
 - DataFormats/DTRecHit

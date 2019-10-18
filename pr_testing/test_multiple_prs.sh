@@ -697,6 +697,9 @@ fi
 # #############################################
 # test compilation with GCC
 # ############################################
+if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
+  git cms-addpkg $EXTRA_CMSSW_PACKAGES || true
+fi
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" ${NO_POST}
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then

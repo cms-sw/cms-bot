@@ -63,11 +63,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     CLEAN_UP_CACHE=false
     if [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
-      DOCKER_IMG=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
+      DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     elif [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
-      DOCKER_IMG=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
+      DOCKER_IMGX=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
     else
-      DOCKER_IMG="docker://$DOCKER_IMG"
+      DOCKER_IMGX="docker://$DOCKER_IMG"
       if test -w ${BUILD_BASEDIR} ; then
         export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
       else
@@ -85,7 +85,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi
     ERR=0
-    singularity exec $SINGULARITY_OPTIONS $DOCKER_IMG sh -c "source /cvmfs/cms.cern.ch/cmsset_default.sh ; $CMD2RUN" || ERR=$?
+    singularity exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "source /cvmfs/cms.cern.ch/cmsset_default.sh ; $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi

@@ -23,6 +23,7 @@ function dockerrun()
   SIN_MOUNT=$(echo $THISDIR | cut -d/ -f1,2)
   case $CONTAINER_TYPE in
     docker)
+      docker pull ${IMG}
       DOC_ARG="run --net=host -u $(id -u):$(id -g) --rm -t"
       DOC_ARG="${DOC_ARG} -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR}"
       DOC_ARG="${DOC_ARG} -e TMPDIR=${TMPDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x}"

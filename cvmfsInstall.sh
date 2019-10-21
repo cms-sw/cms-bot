@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-source $(dirname $0)/dockerrun
+source $(dirname $0)/dockerrun.sh
 ARCHITECTURE=$1
 CMS_WEEK=$2
 RELEASE_NAME=$3

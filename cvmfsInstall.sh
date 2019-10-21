@@ -1,4 +1,5 @@
 #!/bin/sh -ex
+source $(dirname $0)/dockerrun
 ARCHITECTURE=$1
 CMS_WEEK=$2
 RELEASE_NAME=$3
@@ -111,41 +112,6 @@ for t in nweek- ; do
     fi
   done
 done
-
-dockerrun()
-{
-  DOC_ARG="run --net=host --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) -v /etc/group:/etc/group -v /etc/passwd:/etc/passwd"
-  case "$SCRAM_ARCH" in
-    slc6_amd64_* )
-      ARGS="cd $THISDIR; $@"
-      docker run --net=host --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc6-installer:latest sh -c "$ARGS"
-      ;;
-    slc7_amd64_* )
-      ARGS="cd $THISDIR; $@"
-      docker run --net=host --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-installer:latest sh -c "$ARGS"
-      ;;
-    cc8_amd64_* )
-      ARGS="cd $THISDIR; $@"
-      docker $DOC_ARG cmssw/cc8:latest sh -c "$ARGS"
-      ;;
-    slc7_aarch64_* )
-      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R /cvmfs/cms-ib.cern.ch/docker/cmssw/cc7-aarch64:latest -b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-aarch64 -cpu cortex-a57" sh -c "$ARGS"
-      ;;
-    fc24_ppc64le_* )
-      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R $PROOTDIR/fedora-24-ppc64le-rootfs -b /tmp:/tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
-      ;;
-    slc7_ppc64le_* )
-      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R /cvmfs/cms-ib.cern.ch/docker/cmssw/cc7-ppc64le:latest -b /tmp:/tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
-      ;;
-    * )
-      eval $@
-      ;;
-  esac
-}
-
 
 # We install packages for both weeks. We reset every two week, alternating.
 # Notice that the biweekly period for week 1 is shifted by 1 week for this

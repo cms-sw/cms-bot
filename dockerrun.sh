@@ -28,7 +28,7 @@ function dockerrun()
       DOC_ARG="${DOC_ARG} -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR}"
       DOC_ARG="${DOC_ARG} -e TMPDIR=${TMPDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x}"
       DOC_ARG="${DOC_ARG} -v $SIN_MOUNT:$SIN_MOUNT:Z"
-      ARGS="cd $THISDIR; for o in n s u ; do val=\"-$o $(ulimit -H -$o) ${val}\"; done; ulimit ${val}; $@"
+      ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; $@"
       docker $DOC_ARG ${IMG} sh -c "$ARGS"
       ;;
     singularity)
@@ -38,7 +38,7 @@ function dockerrun()
       if [ ! -e ${UNPACK_IMG} ] ; then
         UNPACK_IMG="/cvmfs/cms-ib.cern.ch/docker/${IMG}"
       fi
-      ARGS="cd $THISDIR; for o in n s u ; do val=\"-$o $(ulimit -H -$o) ${val}\"; done; ulimit ${val}; $@"
+      ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; $@"
       singularity -s exec -B $SIN_MOUNT:$SIN_MOUNT ${UNPACK_IMG} sh -c "$ARGS"
       ;;
     qemu)

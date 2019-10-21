@@ -27,7 +27,7 @@ function dockerrun()
       DOC_ARG="run --net=host -u $(id -u):$(id -g) --rm -t"
       DOC_ARG="${DOC_ARG} -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR}"
       DOC_ARG="${DOC_ARG} -e TMPDIR=${TMPDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x}"
-      DOC_ARG="${DOC_ARG} -v $SIN_MOUNT:$SIN_MOUNT:Z"
+      DOC_ARG="${DOC_ARG} -v ${THISDIR}:${THISDIR} -v /cvmfs:/cvmfs -v ${WORKDIR}:${THISDIR}"
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; $@"
       docker $DOC_ARG ${IMG} sh -c "$ARGS"
       ;;

@@ -39,7 +39,7 @@ function dockerrun()
         UNPACK_IMG="/cvmfs/cms-ib.cern.ch/docker/${IMG}"
       fi
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; $@"
-      singularity -s exec -B $SIN_MOUNT:$SIN_MOUNT ${UNPACK_IMG} sh -c "$ARGS"
+      singularity -s exec -B /cvmfs -B $SIN_MOUNT:$SIN_MOUNT ${UNPACK_IMG} sh -c "$ARGS"
       ;;
     qemu)
       ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1

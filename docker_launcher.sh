@@ -67,8 +67,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     elif [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
-    if
-    if [ "$DOCKER_IMGX" = "" ] || [ $(echo $DOCKER_IMG | grep '/cc8:' |wc -l) -gt 0 ] ; then
+    fi
+    if [ "$DOCKER_IMGX" = "" ] || [ $(echo "$DOCKER_IMG" | grep '/cc8:' |wc -l) -gt 0 ] ; then
       DOCKER_IMGX="docker://$DOCKER_IMG"
       if test -w ${BUILD_BASEDIR} ; then
         export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/.singularity"

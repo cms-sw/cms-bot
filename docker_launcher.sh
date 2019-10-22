@@ -11,7 +11,7 @@ if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
 fi
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
-  BUILD_BASEDIR=$(echo $WORKSPACE |  cut -d/ -f1-3)
+  BUILD_BASEDIR=$(dirname $WORKSPACE)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
   MOUNT_POINTS="/cvmfs,/tmp"
   for xdir in /cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses /cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security ; do
@@ -62,17 +62,19 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     CLEAN_UP_CACHE=false
+    DOCKER_IMGX=""
     if [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     elif [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
-    else
+    if
+    if [ "$DOCKER_IMGX" = "" ] || [ $(echo $DOCKER_IMG | grep '/cc8:' |wc -l) -gt 0 ] ; then
       DOCKER_IMGX="docker://$DOCKER_IMG"
       if test -w ${BUILD_BASEDIR} ; then
-        export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/singularity"
+        export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/.singularity"
       else
         CLEAN_UP_CACHE=true
-        export SINGULARITY_CACHEDIR="${WORKSPACE}/singularity"
+        export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
       fi
     fi
     if [ "X$TEST_CONTEXT" = "XGPU" -o -e "/proc/driver/nvidia/version" ] ; then

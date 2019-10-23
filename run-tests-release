@@ -20,7 +20,7 @@ TEST_DIR=$HERE/$CMSSW_X_Y_Z-tests
 source $BUILD_DIR/cmsset_default.sh
 mkdir -p $TEST_DIR
 pushd $TEST_DIR
-  scram p $CMSSW_X_Y_Z
+  scram -a ${ARCHITECTURE} p $CMSSW_X_Y_Z
   pushd $TEST_DIR/$CMSSW_X_Y_Z
     set +x ; cmsenv ; set -x
   popd

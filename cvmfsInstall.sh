@@ -92,7 +92,6 @@ cp -f $WORKSPACE/cms-bot/cvmfsdirtab $BASEDIR/.cvmfsdirtab
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
-RUN_GC="NO"
 for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
@@ -101,7 +100,6 @@ for t in nweek- ; do
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
-      RUN_GC="YES"
     fi
   done
 done
@@ -221,11 +219,9 @@ for t in nweek- ; do
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
-      RUN_GC=YES
     fi
   done
 done
-echo "Run GC: $RUN_GC"
 
 # Write everything in the repository
 echo "Publishing started" `date`

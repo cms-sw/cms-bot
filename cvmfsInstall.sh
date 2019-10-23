@@ -28,22 +28,15 @@ if [ "X$PROOTDIR" = "X" ] ; then
 fi
 
 export PROOTDIR
-cd $PROOTDIR
-PROOT_URL="https://cmssdt.cern.ch/proot/"
-echo "[PROOT] Mirroring files from "$PROOT_URL
-NEW_PKG=$(wget -nv -r -nH -nd -np -m -R *.html* $PROOT_URL 2>&1 | grep -v html | grep URL | grep tar.bz2 | cut -d\" -f2)
-#Unpack any new/updated archive downloaded
-for arch in $NEW_PKG; do
-  DIR=$( echo $arch | sed -r 's/.tar.bz2//')
-  if [ -d $DIR ]; then
-    echo "[PROOT] Removing obsolete unpacked dir"
-    mv $DIR removeMe
-    chmod -R 700 removeMe
-    rm -rf removeMe
+[ -d $PROOTDIR ] || mkdir -p $PROOTDIR
+PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
+for x in proot qemu-aarch64 qemu-ppc64le ; do
+  if [ ! -x $PROOTDIR/$x ] ; then
+    rm -rf $PROOTDIR/$x
+    wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
+    chmod +x $PROOTDIR/$x
   fi
-  echo "[PROOT] Unpacking "$arch
-  tar xjf $arch
-done
+fi
 
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1

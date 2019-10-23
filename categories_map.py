@@ -532,6 +532,7 @@ CMSSW_CATEGORIES = {
     "DQM/Integration",
     "DQM/L1TMonitor",
     "DQM/L1TMonitorClient",
+    "DQM/MuonMonitor",
     "DQM/Phase2OuterTracker",
     "DQM/Physics",
     "DQM/PhysicsHWW",

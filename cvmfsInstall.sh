@@ -144,10 +144,12 @@ for REPOSITORY in $REPOSITORIES; do
     fi
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
-    RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
-    if [ ! -e $RPM_CONFIG ] ; then
-      echo "mutex_set_max 10000000" > $RPM_CONFIG
-      dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
+    if [ $(echo "${SCRAM_ARCH}" | grep '^cc' | wc -l) -eq 0 ] ; then
+      RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
+      if [ ! -e $RPM_CONFIG ] ; then
+        echo "mutex_set_max 10000000" > $RPM_CONFIG
+        dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
+      fi
     fi
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.

@@ -356,6 +356,9 @@ if ${BUILD_EXTERNAL} ; then
     cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
     if [ -f $CMSSW_IB/config/SCRAM.orig/GMake/CXXModules.mk ] ; then
       cp $WORKSPACE/cmsdist/CXXModules.mk.file $CMSSW_IB/config/SCRAM/GMake/CXXModules.mk
+      if [ "X${CLING_PREBUILT_MODULE_PATH}" = "X" ] ; then
+        export CLING_PREBUILT_MODULE_PATH="${WORKSPACE}/${CMSSW_IB}/lib/${SCRAM_ARCH}"
+      fi
     fi
     rm -rf scram-buildrules
     cd $WORKSPACE/$CMSSW_IB/src

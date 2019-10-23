@@ -36,7 +36,7 @@ for x in proot qemu-aarch64 qemu-ppc64le ; do
     wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
     chmod +x $PROOTDIR/$x
   fi
-fi
+done
 
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1

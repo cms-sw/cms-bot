@@ -99,7 +99,7 @@ if __name__ == "__main__":
       print('Branch exists')
 
   # file with tags on the default branch
-  cmsswdatafile = "data/cmsswdata.txt"
+  cmsswdatafile = "/data/cmsswdata.txt"
   content_file = dist_repo.get_contents(cmsswdatafile, repo_tag_pr_branch)
   cmsswdatafile_raw = content_file.decoded_content
   new_content = ''
@@ -121,7 +121,29 @@ if __name__ == "__main__":
       new_content = new_content+updated_line
 
   mssg = 'Update tag for '+repo_name_only+' to '+new_tag
-  update_file_object = dist_repo.update_file("/data/cmsswdata.txt", mssg, new_content, content_file.sha, repo_tag_pr_branch)
+  update_file_object = dist_repo.update_file(cmsswdatafile, mssg, new_content, content_file.sha, repo_tag_pr_branch)
+
+  # file with tags on the default branch
+  cmsswdataspec = "/cmsswdata.spec"
+  content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
+  cmsswdatafile_raw = content_file.decoded_content
+  new_content = []
+  data_pkg = 'data-'+repo_name_only
+  flag = 0
+  for line in cmsswdatafile_raw.splitlines():
+      new_content.append(line)
+      if flag==0:
+        if data_pkg in line:
+          flag = 2
+          break
+        if line.startswith('Requires: '):
+          flag=1
+          new_content.append('Requires: '+data_pkg)
+
+  if flag==1:
+    mssg = 'Update cmssdata spec for '+data_pkg
+    update_file_object = dist_repo.update_file(cmsswdataspec, mssg, '\n'.join(new_content), content_file.sha, repo_tag_pr_branch)
+
   title = 'Update tag for '+repo_name_only+' to '+new_tag
   body = 'Move '+repo_name_only+" data to new tag, see \n" + data_repo_pr.html_url + '\n'
   change_tag_pull_request = dist_repo.create_pull(title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch)

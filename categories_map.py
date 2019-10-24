@@ -929,6 +929,7 @@ CMSSW_CATEGORIES = {
     "L1Trigger/L1TCalorimeter",
     "L1Trigger/L1TCommon",
     "L1Trigger/L1TGlobal",
+    "L1Trigger/L1TGEM",
     "L1Trigger/L1THGCal",
     "L1Trigger/L1THGCalUtilities",
     "L1Trigger/L1TMuon",

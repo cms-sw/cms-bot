@@ -1678,7 +1678,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.getProjection()");
         plotvar(tbr+"._sets.data.getA()");
         plotvar(tbr+"._sets.data.getB()");
-        plotvar(tbr+"._sets.data.getB()");
+        plotvar(tbr+"._sets.data.getW()");
         plotvar(tbr+"._sets.data.getFittable()");
         // 110X+ data format
         plotvar(tbr+"._sets.data.projection()");

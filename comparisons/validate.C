@@ -1519,6 +1519,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr="TotemFEDInfos_totemRPRawToDigi_RP_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
+        plotvar(tbr+".getFEDId()");
+        plotvar(tbr+".getOptoRxId()");
+        plotvar(tbr+".getFSize()");
+        // new data format
         plotvar(tbr+".fedId()");
         plotvar(tbr+".optoRxId()");
         plotvar(tbr+".fSize()");
@@ -1528,6 +1533,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
         plotvar(tbr+"._sets.data.isOK()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getChipPosition()");
+        plotvar(tbr+"._sets.data.getNumberOfClusters()");
+        // new data format
         plotvar(tbr+"._sets.data.chipPosition()");
         plotvar(tbr+"._sets.data.numberOfClusters()");
       }
@@ -1535,7 +1544,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.stripNumber()");
+        plotvar(tbr+"._sets.data.getStripNumber()"); // legacy data format
+        plotvar(tbr+"._sets.data.stripNumber()"); // new data format
       }
       tbr="TotemTriggerCounters_totemTriggerRawToDigi__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -1546,6 +1556,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr="TotemFEDInfos_totemRPRawToDigi_TrackingStrip_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
+        plotvar(tbr+".getFEDId()");
+        plotvar(tbr+".getOptoRxId()");
+        plotvar(tbr+".getFSize()");
+        // new data format
         plotvar(tbr+".fedId()");
         plotvar(tbr+".optoRxId()");
         plotvar(tbr+".fSize()");
@@ -1555,6 +1570,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
         plotvar(tbr+"._sets.data.isOK()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getChipPosition()");
+        plotvar(tbr+"._sets.data.getNumberOfClusters()");
+        // new data format
         plotvar(tbr+"._sets.data.chipPosition()");
         plotvar(tbr+"._sets.data.numberOfClusters()");
       }
@@ -1562,17 +1581,22 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.stripNumber()");
+        plotvar(tbr+"._sets.data.getStripNumber()"); // legacy data format
+        plotvar(tbr+"._sets.data.stripNumber()"); // new data format
       }
       //TOTEM timing
       tbr="TotemTimingDigiedmDetSetVector_totemTimingRawToDigi_TotemTiming_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.hardwareId()");
-        plotvar(tbr+"._sets.data.cellInfo()");
         plotvar(tbr+"._sets.data.samples_@.size()");
         plotvar(tbr+"._sets.data.samples_");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getHardwareId()");
+        plotvar(tbr+"._sets.data.getCellInfo()");
+        // new data format
+        plotvar(tbr+"._sets.data.hardwareId()");
+        plotvar(tbr+"._sets.data.cellInfo()");
       }
       //pixel digis
       tbr="CTPPSPixelDigiedmDetSetVector_ctppsPixelDigis__"+recoS+".obj";
@@ -1594,6 +1618,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr="TotemFEDInfos_ctppsDiamondRawToDigi_TimingDiamond_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
+        plotvar(tbr+".getFEDId()");
+        plotvar(tbr+".getOptoRxId()");
+        plotvar(tbr+".getFSize()");
+        // new data format
         plotvar(tbr+".fedId()");
         plotvar(tbr+".optoRxId()");
         plotvar(tbr+".fSize()");
@@ -1603,6 +1632,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
         plotvar(tbr+"._sets.data.isOK()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getChipPosition()");
+        plotvar(tbr+"._sets.data.getNumberOfClusters()");
+        // new data format
         plotvar(tbr+"._sets.data.chipPosition()");
         plotvar(tbr+"._sets.data.numberOfClusters()");
       }
@@ -1610,7 +1643,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.stripNumber()");
+        plotvar(tbr+"._sets.data.getStripNumber()"); // legacy data format
+        plotvar(tbr+"._sets.data.stripNumber()"); // new data format
       }
 
       //CTPPS reco
@@ -1618,6 +1652,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getPosition()");
+        plotvar(tbr+"._sets.data.getSigma()");
+        // new data format
         plotvar(tbr+"._sets.data.position()");
         plotvar(tbr+"._sets.data.sigma()");
       }
@@ -1625,6 +1663,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getStripBegin()");
+        plotvar(tbr+"._sets.data.getNumberOfStrips()");
+        // new data format
         plotvar(tbr+"._sets.data.stripBegin()");
         plotvar(tbr+"._sets.data.numberOfStrips()");
       }
@@ -1632,6 +1674,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getProjection()");
+        plotvar(tbr+"._sets.data.getA()");
+        plotvar(tbr+"._sets.data.getB()");
+        plotvar(tbr+"._sets.data.getB()");
+        plotvar(tbr+"._sets.data.getFittable()");
+        // new data format
         plotvar(tbr+"._sets.data.projection()");
         plotvar(tbr+"._sets.data.a()");
         plotvar(tbr+"._sets.data.b()");
@@ -1642,6 +1691,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getHits()@.size()");
+        plotvar(tbr+"._sets.data.getX0()");
+        plotvar(tbr+"._sets.data.getY0()");
+        plotvar(tbr+"._sets.data.getZ0()");
+        plotvar(tbr+"._sets.data.getTx()");
+        plotvar(tbr+"._sets.data.getTy()");
+        plotvar(tbr+"._sets.data.getChiSquared()");
+        // new data format
         plotvar(tbr+"._sets.data.hits()@.size()");
         plotvar(tbr+"._sets.data.x0()");
         plotvar(tbr+"._sets.data.y0()");
@@ -1655,6 +1713,16 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getX()");
+        plotvar(tbr+"._sets.data.getY()");
+        plotvar(tbr+"._sets.data.getT()");
+        plotvar(tbr+"._sets.data.getXWidth()");
+        plotvar(tbr+"._sets.data.getYWidth()");
+        plotvar(tbr+"._sets.data.getSampicThresholdTime()");
+        plotvar(tbr+"._sets.data.getAmplitude()");
+        plotvar(tbr+"._sets.data.getTimingAlgorithm()");
+        // new data format
         plotvar(tbr+"._sets.data.x()");
         plotvar(tbr+"._sets.data.y()");
         plotvar(tbr+"._sets.data.time()");
@@ -1669,6 +1737,16 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getX()");
+        plotvar(tbr+"._sets.data.getY()");
+        plotvar(tbr+"._sets.data.getT()");
+        plotvar(tbr+"._sets.data.getXWidth()");
+        plotvar(tbr+"._sets.data.getYWidth()");
+        plotvar(tbr+"._sets.data.getToT()");
+        plotvar(tbr+"._sets.data.getTPrecision()");
+        plotvar(tbr+"._sets.data.getOOTIndex()");
+        // new data format
         plotvar(tbr+"._sets.data.x()");
         plotvar(tbr+"._sets.data.y()");
         plotvar(tbr+"._sets.data.time()");
@@ -1683,6 +1761,17 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getX0()");
+        plotvar(tbr+"._sets.data.getY0()");
+        plotvar(tbr+"._sets.data.getX0Sigma()");
+        plotvar(tbr+"._sets.data.getY0Sigma()");
+        plotvar(tbr+"._sets.data.getZ0()");
+        plotvar(tbr+"._sets.data.getChiSquared()");
+        plotvar(tbr+"._sets.data.getT()");
+        plotvar(tbr+"._sets.data.getTSigma()");
+        plotvar(tbr+"._sets.data.getOOTIndex()");
+        // new data format
         plotvar(tbr+"._sets.data.x0()");
         plotvar(tbr+"._sets.data.y0()");
         plotvar(tbr+"._sets.data.x0Sigma()");
@@ -1698,6 +1787,16 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getX0()");
+        plotvar(tbr+"._sets.data.getY0()");
+        plotvar(tbr+"._sets.data.getX0Sigma()");
+        plotvar(tbr+"._sets.data.getY0Sigma()");
+        plotvar(tbr+"._sets.data.getZ0()");
+        plotvar(tbr+"._sets.data.getChiSquared()");
+        plotvar(tbr+"._sets.data.getT()");
+        plotvar(tbr+"._sets.data.getTSigma()");
+        // new data format
         plotvar(tbr+"._sets.data.x0()");
         plotvar(tbr+"._sets.data.y0()");
         plotvar(tbr+"._sets.data.x0Sigma()");
@@ -1726,6 +1825,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.minPixelRow()");
         plotvar(tbr+"._sets.data.minPixelCol()");
         plotvar(tbr+"._sets.data.clusterSize()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getPoint().x()");
+        plotvar(tbr+"._sets.data.getPoint().y()");
+        plotvar("log10("+tbr+"._sets.data.getError().xx())");
+        plotvar("log10("+tbr+"._sets.data.getError().yy())");
+        // new data format
         plotvar(tbr+"._sets.data.point().x()");
         plotvar(tbr+"._sets.data.point().y()");
         plotvar("log10("+tbr+"._sets.data.error().xx())");
@@ -1736,8 +1841,23 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        plotvar(tbr+"._sets.data.isValid()");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getX0()");
+        plotvar("log10("+tbr+"._sets.data.getX0Sigma())");
+        plotvar(tbr+"._sets.data.getY0()");
+        plotvar("log10("+tbr+"._sets.data.getY0Sigma())");
+        plotvar(tbr+"._sets.data.getZ0()");
+        plotvar(tbr+"._sets.data.getTx()");
+        plotvar("log10("+tbr+"._sets.data.getTxSigma())");
+        plotvar(tbr+"._sets.data.getTy()");
+        plotvar("log10("+tbr+"._sets.data.getTySigma())");
+        plotvar("min(20,"+tbr+"._sets.data.getChiSquaredOverNDF())");
+        plotvar(tbr+"._sets.data.getNDF()");
+        plotvar(tbr+"._sets.data.getRecoInfo()");
+        // new data format
         plotvar(tbr+"._sets.data.x0()");
-        plotvar("log10("+tbr+"._sets.data.y0Sigma())");
+        plotvar("log10("+tbr+"._sets.data.x0Sigma())");
         plotvar(tbr+"._sets.data.y0()");
         plotvar("log10("+tbr+"._sets.data.y0Sigma())");
         plotvar(tbr+"._sets.data.z0()");
@@ -1748,12 +1868,26 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("min(20,"+tbr+"._sets.data.chiSquaredOverNDF())");
         plotvar(tbr+"._sets.data.ndf()");
         plotvar(tbr+"._sets.data.recoInfo()");
-        plotvar(tbr+"._sets.data.isValid()");
       }
 
       tbr="CTPPSLocalTrackLites_ctppsLocalTrackLiteProducer__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
+        plotvar(tbr+".getX()");
+        plotvar(tbr+".getXUnc()");
+        plotvar(tbr+".getY()");
+        plotvar(tbr+".getYUnc()");
+        plotvar(tbr+".getTime()");
+        plotvar(tbr+".getTimeUnc()");
+        plotvar(tbr+".getTx()");
+        plotvar(tbr+".getTxUnc()");
+        plotvar(tbr+".getTy()");
+        plotvar(tbr+".getTyUnc()");
+        plotvar(tbr+".getPixelTrackRecoInfo()");
+        plotvar(tbr+".getChiSquaredOverNDF()");
+        plotvar(tbr+".getNumberOfPointsUsedForFit()");
+        // new data format
         plotvar(tbr+".x()");
         plotvar(tbr+".xUnc()");
         plotvar(tbr+".y()");

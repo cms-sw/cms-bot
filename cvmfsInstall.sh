@@ -99,7 +99,7 @@ for t in nweek- ; do
       ln -s $BASEDIR/$w $BASEDIR/week$N
     else
       echo "Deleting obsolete week $w"
-      rm -rf $BASEDIR/$w
+      echo rm -rf $BASEDIR/$w
     fi
   done
 done
@@ -220,7 +220,7 @@ for t in nweek- ; do
       echo "$BASEDIR/scramdb" > $BASEDIR/week$N/etc/scramrc/links.db
     else
       echo "Deleting obsolete week $w"
-      rm -rf $BASEDIR/$w
+      echo rm -rf $BASEDIR/$w
     fi
   done
 done

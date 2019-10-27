@@ -34,7 +34,7 @@ RELVAL_KEYS["SLHC_WORKFLOWS"].append(["_SLHCDEV_"          ,"-w upgrade -l 10000
 RELVAL_KEYS["SLHC_WORKFLOWS"].append(["_SLHC_"             ,"-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"])
 RELVAL_KEYS["enableIMT"].append([THREADED_ROOT             ,"--customise FWCore/Concurrency/enableIMT.enableIMT"])
 RELVAL_KEYS["TIMEOUT"].append(["(_ASAN_|_ppc64|_aarch64_)" ,"14400"])
-RELVAL_KEYS["TIMEOUT"].append([".+"                        ,"7200"])
+RELVAL_KEYS["TIMEOUT"].append([".+"                        ,"9000"])
 
 RELVAL_ARGS = []
 RELVAL_ARGS.append({})

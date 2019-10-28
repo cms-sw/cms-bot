@@ -1,5 +1,6 @@
 #!/bin/bash -e
 if [ -d $HOME/bin ] ; then export PATH=$HOME/bin:$PATH ; fi
+$(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs kill -9) || true
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done

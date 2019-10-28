@@ -27,7 +27,7 @@
           <string>CMSSW_GIT_REFERENCE</string>
           <string>/cvmfs/cms.cern.ch/cmssw.git.daily</string>
           <string>PYTHONPATH</string>
-          <string>/cvmfs/cms-ib.cern.ch/jenkins-env/python/shared</string>
+          <string>/cvmfs/cms-ib.cern.ch/jenkins-env/python/PyGithub</string>
         </tree-map>
       </envVars>
     </hudson.slaves.EnvironmentVariablesNodeProperty>

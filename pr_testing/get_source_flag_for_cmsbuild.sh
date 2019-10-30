@@ -54,7 +54,7 @@ fi
 if [ -e cmsdist/data/cmsswdata.txt ] ; then
   case ${PKG_REPO} in
     cms-data/*)
-      data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt)
+      data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt || echo "${PKG_NAME}=V00-00-00")
       sed -i -e "/^ *${PKG_NAME}=.*/d;s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
       if [ $(grep "Requires:  *data-${PKG_NAME} *$"  cmsdist/cmsswdata.spec | wc -l) -eq 0 ] ; then
         sed -i -e "s/^%prep *$/Requires: data-${PKG_NAME}\n%prep/" cmsdist/cmsswdata.spec

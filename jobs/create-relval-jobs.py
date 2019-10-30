@@ -45,7 +45,7 @@ print("Creating jobs (%s) ...." % jobs)
 for wf in sys.argv[1].split(","):
   wf_query+=" OR workflow:"+wf
   while len(thrds)>=jobs:
-    sleep(1)
+    sleep(0.1)
     thrds = [ t for t in thrds if t.is_alive() ]
   t = threading.Thread(target=createJob, args=(wf, cmssw_ver, arch))
   thrds.append(t)
@@ -64,7 +64,8 @@ while True:
                               workflows=wf_query[4:]
                              ),
                  start_time=1000*int(time()-(86400*30)),
-                 end_time=1000*int(time()))
+                 end_time=1000*int(time()),
+                 scroll=True)
   if (not 'hits' in stats) or (not 'hits' in stats['hits']) or (not stats['hits']['hits']):
     xrelease_cycle = str.lower("_".join(cmssw_ver.split("_",4)[0:3])+"_X")
     if xrelease_cycle!=release_cycle:

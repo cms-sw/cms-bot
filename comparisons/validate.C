@@ -296,10 +296,17 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
   return res;
 }
 
-void jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false, bool notafunction = false){
+int maxSize(const PlotStats& res){
+  int ref_max = res.ref_rms == 0 ? res.ref_mean : res.ref_xmax;
+  int new_max = res.new_rms == 0 ? res.new_mean : res.new_xmax;
+  
+  return std::max(ref_max, new_max);
+}
+
+PlotStats jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false, bool notafunction = false){
   TString v = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+".obj."+var+(notafunction? "" : "()");
   if (log10Var) v = "log10(" + v + ")";
-  plotvar(v, "", trycatch);
+  return plotvar(v, "", trycatch);
 }
 
 void jets(TString type,TString algo){
@@ -323,18 +330,18 @@ void jets(TString type,TString algo){
   jet(type,algo,"HFHadronEnergyFraction", false, true);
   jet(type,algo,"HFEMEnergyFraction", false, true);
 
-  if (type == "patJets"){
-    jet(type, algo, "userFloats_@.size");
-    for (int i = 0; i< 32; ++i){
+  if (type == "patJets"){    
+    PlotStats res = jet(type, algo, "userFloats_@.size");
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    jet(type, algo, "userInts_@.size");
-    for (int i = 0; i< 32; ++i){
+    res = jet(type, algo, "userInts_@.size");
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     jet(type, algo, "userCands_@.size");
-    jet(type, algo, "pairDiscriVector_@.size");
-    for (int i = 0; i< 64; ++i){
+    res = jet(type, algo, "pairDiscriVector_@.size");
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar("min(2,max(-2,"+type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].pairDiscriVector_[%d].second))",i), "", true);
     }
   }
@@ -420,10 +427,10 @@ void caloMetVars(TString cName){
   calomet(cName,"metSignificance");
 }
 
-void met(TString var, TString cName = "tcMet_", TString tName = "recoMETs_",  bool log10Var = false, bool trycatch = false, bool notafunction=false){
+PlotStats met(TString var, TString cName = "tcMet_", TString tName = "recoMETs_",  bool log10Var = false, bool trycatch = false, bool notafunction=false){
   TString v = tName+cName+"_"+recoS+".obj."+var+(notafunction? "" : "()");
   if (log10Var) v = "log10(" + v + ")";
-  plotvar(v, "", trycatch);
+  return plotvar(v, "", trycatch);
 }
 
 void metVars(TString cName = "tcMet_", TString tName = "recoMETs_") {
@@ -445,13 +452,13 @@ void patMetVars(TString cName){
   if (! checkBranchOR(bObj, true)) return;
 
   metVars(cName, tName);
-
-  met("userFloats_@.size", cName, tName);
-  for (int i = 0; i< 32; ++i){
+  
+  PlotStats res = met("userFloats_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].userFloats_[%d]",i), "", true);
   }
-  met("userInts_@.size", cName, tName);
-  for (int i = 0; i< 32; ++i){
+  res = met("userInts_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].userInts_[%d]",i), "", true);
   }
   met("userCands_@.size", cName, tName);
@@ -464,21 +471,24 @@ void patMetVars(TString cName){
   met("pfMET_[0].Type6Fraction", cName, tName, false, true, true);
   met("pfMET_[0].Type7Fraction", cName, tName, false, true, true);
 
-  for (int i = 0; i< 24; ++i){
+  res = met("uncertainties_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dpx()",i), tName+cName+"_"+recoS+Form(".obj[0].uncertainties_@.size()>%d",i), true);
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dsumEt()",i), tName+cName+"_"+recoS+Form(".obj[0].uncertainties_@.size()>%d",i), true);
-
+  }
+  res = met("corrections_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dpx()",i), tName+cName+"_"+recoS+Form(".obj[0].corrections_@.size()>%d",i), true);
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dsumEt()",i), tName+cName+"_"+recoS+Form(".obj[0].corrections_@.size()>%d",i), true);
   }
 }
 
-void tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_",
-         bool log10Var = false, bool trycatch = false, bool notafunction = false){
+PlotStats tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_", 
+              bool log10Var = false, bool trycatch = false, bool notafunction = false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
   if (log10Var) v = "log10(" + v + ")";
-  plotvar(v, "", trycatch);
+  return plotvar(v, "", trycatch);
 }
 
 void tauVars(TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_"){
@@ -508,30 +518,30 @@ void tauVars(TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_")
     tau("ptLeadChargedCand", cName, tName);
     tau("emFraction_MVA", cName, tName);
 
-    tau("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = tau("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    tau("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = tau("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     tau("userCands_@.size", cName,tName);
-    tau("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = tau("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
-    tau("tauIDs_@.size", cName,tName);
-    for (int i = 0; i< 82; ++i){
+    res = tau("tauIDs_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].tauIDs_[%d].second",i), "", true);
     }
   }
 }
 
-void photon(TString var, TString cName = "photons_", TString tName = "recoPhotons_", bool notafunction=false){
+PlotStats photon(TString var, TString cName = "photons_", TString tName = "recoPhotons_", bool notafunction=false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v);
+  return plotvar(v);
 }
 
 void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
@@ -625,31 +635,31 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
     photon("puppiNeutralHadronIso", cName,tName);
     photon("puppiPhotonIso", cName,tName);
 
-    photon("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = photon("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    photon("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = photon("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     photon("userCands_@.size", cName,tName);
-    photon("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = photon("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
-    photon("photonIDs_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = photon("photonIDs_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].photonIDs_[%d].second",i), "", true);
     }
 
   }
 }
 
-void conversion(TString var, TString cName = "conversions_", TString tName = "recoConversions_",  bool notafunction=false){
+PlotStats conversion(TString var, TString cName = "conversions_", TString tName = "recoConversions_",  bool notafunction=false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
-  plotvar(v);
+  return plotvar(v);
 
 }
 
@@ -667,10 +677,10 @@ void conversionVars(TString cName = "conversions_", TString tName = "recoConvers
       conversion("MVAout", cName,tName);
 }
 
-void electron(TString var, TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_",  bool notafunction=false){
+PlotStats electron(TString var, TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_",  bool notafunction=false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
-  plotvar(v);
+  return plotvar(v);
 }
 
 void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_"){
@@ -794,32 +804,32 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
     electron("dB(pat::Electron::PV3D)", cName,tName, true);
     electron("dB(pat::Electron::PVDZ)", cName,tName, true);
 
-    electron("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = electron("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    electron("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = electron("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     electron("userCands_@.size", cName,tName);
-    electron("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = electron("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
-    electron("electronIDs_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = electron("electronIDs_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].electronIDs_[%d].second",i), "", true);
     }
   }
 
 }
 
-void gsfTracks(TString var, bool doLog10 = false, TString cName = "electronGsfTracks_", TString tName = "recoGsfTracks_",  bool notafunction=false){
+PlotStats gsfTracks(TString var, bool doLog10 = false, TString cName = "electronGsfTracks_", TString tName = "recoGsfTracks_",  bool notafunction=false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
   if (doLog10) v = "log10("+v+")";
-  plotvar(v);
+  return plotvar(v);
 }
 
 void gsfTrackVars(TString cName = "electronGsfTracks_", TString tName = "recoGsfTracks_"){
@@ -856,10 +866,10 @@ void staMuons(TString var){
   plotvar(v);
 }
 
-void muonVar(TString var, TString cName = "muons_", TString tName = "recoMuons_", bool notafunction = false){
+PlotStats muonVar(TString var, TString cName = "muons_", TString tName = "recoMuons_", bool notafunction = false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v);
+  return plotvar(v);
 }
 
 void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
@@ -961,17 +971,17 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("dB(pat::Muon::PV3D)", cName,tName, true);
     muonVar("dB(pat::Muon::PVDZ)", cName,tName, true);
 
-    muonVar("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = muonVar("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    muonVar("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = muonVar("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     muonVar("userCands_@.size", cName,tName);
-    muonVar("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = muonVar("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
 
@@ -981,6 +991,8 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("mvaValue", cName,tName);
     muonVar("lowptMvaValue", cName,tName);
     muonVar("softMvaValue", cName,tName);
+    muonVar("inverseBeta", cName,tName);
+    muonVar("inverseBetaErr", cName,tName);
 
     muonVar("simType", cName,tName);
     muonVar("simExtType", cName,tName);
@@ -992,10 +1004,10 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   }
 }
 
-void packedCandVar(TString var, TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_", bool notafunction = false){
+PlotStats packedCandVar(TString var, TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_", bool notafunction = false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v, "", true);//ask for try/catch regardless of the type of the plotted variables
+  return plotvar(v, "", true);//ask for try/catch regardless of the type of the plotted variables
 }
 
 void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_"){
@@ -3169,6 +3181,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       hgcalMultiClusters("hgcalLayerClusters_sharing");
       hgcalMultiClusters("hgcalLayerClusters_");
+      //ticl
+      hgcalMultiClusters("multiClustersFromTracksters_MultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersHAD_MultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersEM_MultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersTrk_TrkMultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersMIP_MIPMultiClustersFromTracksterByCA");
+
       // miniaod
       superClusters("reducedEgamma_reducedSuperClusters");
       superClusters("reducedEgamma_reducedOOTSuperClusters");
@@ -3391,7 +3410,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr = "edmTriggerResults_TriggerResults__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         PlotStats res = plotvar(tbr+".paths_@.size()");
-        for (int i = 0; i< std::max(res.ref_xmax,res.new_xmax) && i < 64; ++i){//restrict to 64,
+        for (int i = 0; i< maxSize(res) && i < 64; ++i){//restrict to 64, 
           plotvar(tbr+Form(".paths_[%d].accept()",i), "", true);
         }
       }

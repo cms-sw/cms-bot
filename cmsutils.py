@@ -29,11 +29,9 @@ def getHostName():
     return getHostDomain()[0]
 
 def _getCPUCount():
-    cmd = ""
+    cmd = "nproc"
     if platform == "darwin":
       cmd = "sysctl -n hw.ncpu"
-    elif platform.startswith("linux"):
-      cmd = "nproc"
     error, count = run_cmd(cmd)
     if error:
       print("Warning: unable to detect cpu count. Using 4 as default value")

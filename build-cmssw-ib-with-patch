@@ -181,7 +181,7 @@ EXTERNAL_FAILED=NO
 PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
 echo DATE=`date`
 if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
-  BLD_PKGS=$(ls w/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2)
+  BLD_PKGS=$(ls w/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
   exit 1
 fi 

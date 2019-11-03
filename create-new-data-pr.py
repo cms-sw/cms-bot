@@ -128,20 +128,20 @@ if __name__ == "__main__":
   content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
   cmsswdatafile_raw = content_file.decoded_content
   new_content = []
-  data_pkg = 'data-'+repo_name_only
+  data_pkg = ' data-'+repo_name_only
   flag = 0
   for line in cmsswdatafile_raw.splitlines():
       new_content.append(line)
+      if not line.startswith('Requires: '): continue
+      if data_pkg in line:
+        flag = 2
+        break
       if flag==0:
-        if data_pkg in line:
-          flag = 2
-          break
-        if line.startswith('Requires: '):
-          flag=1
-          new_content.append('Requires: '+data_pkg)
+        flag=1
+        new_content.append('Requires:'+data_pkg)
 
   if flag==1:
-    mssg = 'Update cmssdata spec for '+data_pkg
+    mssg = 'Update cmssdata spec for'+data_pkg
     update_file_object = dist_repo.update_file(cmsswdataspec, mssg, '\n'.join(new_content), content_file.sha, repo_tag_pr_branch)
 
   title = 'Update tag for '+repo_name_only+' to '+new_tag

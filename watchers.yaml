@@ -812,6 +812,21 @@ prolay:
 - SimTracker/Common
 - SimTracker/Configuration
 - SimTracker/Records
+robervalwalsh: 
+- CalibTracker/Configuration
+- CalibTracker/Records
+- CalibTracker/SiStrip
+- DataFormats/SiStrip
+- DPGAnalysis/SiStripTools
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+- SimTracker/SiStripDigitizer
 rociovilar:
 - Validation/RecoMuon
 - Validation/MuonIdentification

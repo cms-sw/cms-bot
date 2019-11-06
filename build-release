@@ -28,7 +28,9 @@ if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
 else
   POST_ACTION='BUILDING'
 fi
-
+if [ -d /cvmfs/cms.cern.ch/cmssw.git.daily ] ; then
+  export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
+fi
 git clone git@github.com:cms-sw/cmsdist.git $BUILD_DIR/CMSDIST
 pushd $BUILD_DIR/CMSDIST
   eval $(cat $WORKSPACE/config.map | grep -v "DISABLED="| grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$QUEUE;")

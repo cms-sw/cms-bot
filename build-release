@@ -65,7 +65,7 @@ pushd $BUILD_DIR
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' CMSDIST/cmssw.spec CMSDIST/cmssw-patch.spec CMSDIST/coral.spec
     (cd CMSDIST ; git commit -m 'Coherent debug package setup.' cmssw.spec cmssw-patch.spec coral.spec)
   fi
-  sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE 2>&1 | tee -a $WORKSPACE/prepare-cmsdist.log
+  sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
   CMS_TAG=""
   if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
     case `uname -s` in
@@ -100,7 +100,7 @@ pushd $BUILD_DIR
     exit 0
   fi
 
-  PYTHONPATH= $CMSBUILD_CMD -j `echo "$BUILD_NPROC + 1" | bc` build local-cern-siteconf cmssw$PATCH
+  PYTHONPATH= $CMSBUILD_CMD -j $BUILD_NPROC build local-cern-siteconf cmssw$PATCH
   echo DATE=`date`
 popd
 echo DATE=`date`

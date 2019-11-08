@@ -32,4 +32,5 @@ pushd $BUILD_DIR
   PYTHONPATH= PKGTOOLS/cmsBuild --architecture=$ARCHITECTURE --sync-back upload cmssw$PATCH
 popd
 
+rm -rf $WORKSPACE
 echo 'ALL_OK'

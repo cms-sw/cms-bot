@@ -103,16 +103,9 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
-if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
-  #Do not use reference repo for Sunday, as we cleanup weekly repo on that day
-  if [ $(date +%u) -lt 7 ] ; then
-    WEEKLY_REPO=/cvmfs/cms-ib.cern.ch/$(echo $REPOSITORY | sed 's|cms.||')
-    if [ -d ${WEEKLY_REPO}/$ARCHITECTURE/cms/cmssw ] ; then
-      if [ -L $WEEKLY_REPO ] ; then WEEKLY_REPO=$(readlink $WEEKLY_REPO) ; fi
-      #disabled ref repo for now
-      #CMSBUILD_CMD="$CMSBUILD_CMD --reference $WEEKLY_REPO"
-    fi
-  fi
+PKGTOOLS_VER=$(echo $PKGTOOLS_TAG | cut -d- -f2)
+if [ ${PKGTOOLS_VER} -gt 32 ] ; then
+  CMSBUILD_CMD="$CMSBUILD_CMD --delete-build-directory"
 fi
 PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1
 # Decide if we already have a release which uses the same CMSDIST.

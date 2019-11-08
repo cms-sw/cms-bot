@@ -15,6 +15,13 @@ if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
 mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 rm -f $WORKSPACE/cmsos
 
+#Delete old failed builds
+if [ -d ${WORKSPACE}/workspace/auto-builds ] ; then
+  for failed in $(find ${WORKSPACE}/workspace/auto-builds -mindepth 2 -maxdepth 2 -name 'BUILD_FAILED' -type f | sed 's|/BUILD_FAILED$||') ; do
+    rm -rf ${failed} >/dev/null 2>&1 || true
+  done
+fi
+
 echo "DATA_SHELL=${SHELL}"
 
 slave_jar=false

@@ -29,7 +29,9 @@ CMSDIST_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*/
 if [[ -z ${ARCHITECTURE} ]] ; then
   ARCHITECTURE=$(echo ${FILTERED_CONF} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
 fi
-PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
+if [ "$PKG_TOOL_BRANCH" = "" ] ; then
+  PKG_TOOL_BRANCH=$(echo ${FILTERED_CONF} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
+fi
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 # Check if PKG_TOOL_VERSION high enough
 if [ ${PKG_TOOL_VERSION} -lt 32 ] ; then

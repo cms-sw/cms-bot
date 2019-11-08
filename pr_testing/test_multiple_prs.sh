@@ -201,7 +201,7 @@ else
   COMPARISON_REL=$CMSSW_IB
 fi
 
-PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
+export PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 if [ ${PKG_TOOL_VERSION} -eq 31 ] ; then
   PKG_TOOL_BRANCH=V00-32-XX

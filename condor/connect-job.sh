@@ -53,6 +53,9 @@ if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set +x ; fi
 while true ; do
   sleep $CHK_GAP
+  if [ -e "${HOME}/${JOB_ID}.sh" ] ; then
+    sh -ex ${HOME}/${JOB_ID}.sh | true
+  fi
   if [ "${JENKINS_DEBUG}" = "true" ] ; then
     pgrep 'java' -a || true
     pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" || true

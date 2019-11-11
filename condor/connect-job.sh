@@ -54,10 +54,10 @@ if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set +x ; fi
 while true ; do
   sleep $CHK_GAP
-  if [ -e "/afs/cern.ch/user/c/cmsbuild/${JOB_ID}.sh" ] ; then
-    sh -ex /afs/cern.ch/user/c/cmsbuild/${JOB_ID}.sh | true
-  fi
   if [ "${JENKINS_DEBUG}" = "true" ] ; then
+    if [ -e "/afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh" ] ; then
+      sh -ex /afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh || true
+    fi
     pgrep 'java' -a || true
     pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" || true
     pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l

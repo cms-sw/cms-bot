@@ -55,7 +55,9 @@ while true ; do
   sleep $CHK_GAP
   if [ $(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l) -gt 0 ] ; then
     JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"
+    echo "Jenkins Slave has been conencted: $(date)"
   elif [ "${JENKINS_JOB_STATE}" = "true-true" ] ; then
+    echo "Jenkins Slave has been disconencted: $(date)"
     break
   fi
   ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* | head -n -1 | xargs --no-run-if-empty rm -rf || true

@@ -50,10 +50,10 @@ FORCE_EXIT=false
 CHK_GAP=10
 JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-false"
 if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
-if [ "${JENKINS_DEBUG}" = "" ] ; then set +x ; fi
+if [ "${JENKINS_DEBUG}" != "true" ] ; then set +x ; fi
 while true ; do
   sleep $CHK_GAP
-  if [ "${JENKINS_DEBUG}" != "" ] ; then
+  if [ "${JENKINS_DEBUG}" = "true" ] ; then
     pgrep 'java' -a || true
     pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" || true
     pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l
@@ -86,7 +86,7 @@ while true ; do
   fi
 done
 echo "Going to shutdown."
-if [ "${JENKINS_DEBUG}" = "" ] ; then set -x ; fi
+if [ "${JENKINS_DEBUG}" != "true" ] ; then set -x ; fi
 rm -rf ${WORKSPACE}
 if [ ! -f ${WORKSPACE}/.shut-down ] ; then
   SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|shutdown|')

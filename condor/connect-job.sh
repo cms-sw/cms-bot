@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+env
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}
 if [ -f ${LOCAL_DATA}/start_time ] ; then
@@ -53,8 +54,8 @@ if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set +x ; fi
 while true ; do
   sleep $CHK_GAP
-  if [ -e "${HOME}/${JOB_ID}.sh" ] ; then
-    sh -ex ${HOME}/${JOB_ID}.sh | true
+  if [ -e "/afs/cern.ch/user/c/cmsbuild/${JOB_ID}.sh" ] ; then
+    sh -ex /afs/cern.ch/user/c/cmsbuild/${JOB_ID}.sh | true
   fi
   if [ "${JENKINS_DEBUG}" = "true" ] ; then
     pgrep 'java' -a || true

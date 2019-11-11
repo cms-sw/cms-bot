@@ -48,10 +48,16 @@ let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 KERBEROS_REFRESH=0
 FORCE_EXIT=false
 CHK_GAP=10
+JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-false"
 if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 set +x
 while true ; do
   sleep $CHK_GAP
+  if [ $(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l) -gt 0 ] ; then
+    JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"
+  elif [ "${JENKINS_JOB_STATE}" = "true-true" ] ; then
+    break
+  fi
   ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* | head -n -1 | xargs --no-run-if-empty rm -rf || true
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)

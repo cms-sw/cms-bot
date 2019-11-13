@@ -81,6 +81,7 @@ pushd $BUILD_DIR
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   PYTHONPATH= $CMSBUILD_CMD --builders 4 build $TOOL_CONF_PACKAGES
   echo DATE=`date`
+  rm -rf tmp/pip*
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
     PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
@@ -94,6 +95,7 @@ pushd $BUILD_DIR
       git tag  REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
       git push origin REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
     popd
+    rm -rf tmp
     # If it reaches here it is because there were no errors
     echo 'ALL_OK'
     exit 0

@@ -17,10 +17,11 @@ CMSSW_TOOL_CONF_ONLY=$9
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
+WRKDIR=w
 
 rm -rf $WORKSPACE/../build-cache &
 cd $WORKSPACE
-rm -rf w/SPECS
+rm -rf ${WRKDIR}/SPECS
 
 BUILD_JOBS=4
 BUILD_NPROC=$(nproc)
@@ -102,20 +103,20 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   esac
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
+
+CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
 PKGTOOLS_VER=$(echo $PKGTOOLS_TAG | cut -d- -f2)
 if [ ${PKGTOOLS_VER} -gt 31 ] ; then
   CMSBUILD_CMD="$CMSBUILD_CMD --delete-build-directory"
 fi
 PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1
 # Decide if we already have a release which uses the same CMSDIST.
-pushd w
+pushd ${WRKDIR}
 if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
   for previous in $PREVIOUS_RELEASES; do
     previous=`echo $previous | cut -f2 -d/`
     echo "Checking if we can install $previous"
     set +e
-    #CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
     CMSSW_RELEASE_BASE=`./common/cmspkg -a $ARCHITECTURE -f search cms+cmssw+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
     set -e
     if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
@@ -167,18 +168,20 @@ pushd CMSDIST
 popd
 
 PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
-TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
+TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 #if [ $(echo $CMSSW_RELEASE_BASE | cut -d_ -f2) -gt 9 ] ; then TOOL_CONF_PACKAGES="cms-common ${TOOL_CONF_PACKAGES}" ; fi
 echo DATE=`date`
 EXTERNAL_FAILED=NO
 PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
 echo DATE=`date`
+rm -rf ${WRKDIR}/tmp/pip*
 if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
-  BLD_PKGS=$(ls w/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
+  BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
+  rm -rf  ${WRKDIR}/tmp
   exit 1
-fi 
-if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
+fi
+if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
   PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
   echo DATE=`date`
   PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
@@ -194,11 +197,12 @@ PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build 
 echo DATE=`date`
 PYTHONPATH= $CMSBUILD_CMD --sync-back upload cmssw-ib
 echo DATE=`date`
+rm -rf ${WRKDIR}/tmp
 pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
 # In case we have errors, we use an ERR tag in case we discover it's a full release later on.
-if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKSPACE/w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
+if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKSPACE/${WRKDIR}/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   GTAG="ALL/$RELEASE_NAME/$ARCHITECTURE"
   if [ $(git tag | grep "^$GTAG$" | wc -l) -gt 0 ] ; then
     git tag -d $GTAG

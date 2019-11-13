@@ -326,6 +326,9 @@ if ${BUILD_EXTERNAL} ; then
     # run the command and both log it to file and display it
     (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
     echo_section 'END OF BUILD LOG'
+    for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
+      rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
+    done
 
     TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
     GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true

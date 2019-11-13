@@ -104,7 +104,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
 fi
 CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
 PKGTOOLS_VER=$(echo $PKGTOOLS_TAG | cut -d- -f2)
-if [ ${PKGTOOLS_VER} -gt 32 ] ; then
+if [ ${PKGTOOLS_VER} -gt 31 ] ; then
   CMSBUILD_CMD="$CMSBUILD_CMD --delete-build-directory"
 fi
 PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1

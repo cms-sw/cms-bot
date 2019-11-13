@@ -66,23 +66,23 @@ pushd $BUILD_DIR
     (cd CMSDIST ; git commit -m 'Coherent debug package setup.' cmssw.spec cmssw-patch.spec coral.spec)
   fi
   sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
-  CMS_TAG=""
-  if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
-    case `uname -s` in
-      Darwin ) MD5_CMD=md5;;
-      * )      MD5_CMD=md5sum;;
-    esac
-    CMS_TAG="--tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
-  fi
   echo DATE=`date`
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 2 -j $BUILD_NPROC $CMS_TAG"
-  PYTHONPATH= $CMSBUILD_CMD --specs-only build cmssw$PATCH
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC"
+  case `uname -s` in
+    Darwin ) MD5_CMD=md5;;
+    * )      MD5_CMD=md5sum;;
+  esac
+  CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
+  if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
+    CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory"
+  fi
+  PYTHONPATH= $CMSBUILD_CMD --debug --specs-only build cmssw$PATCH
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
-  PYTHONPATH= $CMSBUILD_CMD build $TOOL_CONF_PACKAGES
+  PYTHONPATH= $CMSBUILD_CMD --builders 4 build $TOOL_CONF_PACKAGES
   echo DATE=`date`
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-    PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
@@ -90,7 +90,6 @@ pushd $BUILD_DIR
 
   if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
     echo 'I was asked to build only cmssw-tool-conf, exiting without building cmssw'
-
     pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
       git tag  REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
       git push origin REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
@@ -99,7 +98,6 @@ pushd $BUILD_DIR
     echo 'ALL_OK'
     exit 0
   fi
-
   PYTHONPATH= $CMSBUILD_CMD -j $BUILD_NPROC build local-cern-siteconf cmssw$PATCH
   echo DATE=`date`
 popd

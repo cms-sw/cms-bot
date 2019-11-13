@@ -58,9 +58,6 @@ while true ; do
     if [ -e "/afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh" ] ; then
       sh -ex /afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh || true
     fi
-    pgrep 'java' -a || true
-    pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" || true
-    pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l
   fi
   if [ $(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l) -gt 0 ] ; then
     JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"

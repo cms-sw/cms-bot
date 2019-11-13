@@ -319,7 +319,7 @@ if ${BUILD_EXTERNAL} ; then
 
     # Build the whole cmssw-tool-conf toolchain
     CMSBUILD_ARGS=""
-    if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then CMSBUILD_ARGS="--force-tag" ; fi
+    if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then CMSBUILD_ARGS="--force-tag --delete-build-directory" ; fi
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild ${CMSBUILD_ARGS} --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} build cms-common cms-git-tools cmssw-tool-conf"
     echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run

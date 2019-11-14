@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     p = None
     stime = time()
-    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 100 -m 85 -o time %s" % (cmssw_base,SCRIPT_DIR,opts.jobConfi), shell=True)
+    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 100 -m 85 -o time %s" % (cmssw_base,SCRIPT_DIR,opts.jobConfig), shell=True)
     e=waitpid(p.pid,0)[1]
     print("Time took to create jobs:",int(time()-stime),"sec")
     system("touch "+cmssw_base+"/done."+opts.jobid)

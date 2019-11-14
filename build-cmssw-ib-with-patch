@@ -14,7 +14,7 @@ FORCE_PKGTOOLS_TAG=$6
 USE_DEV_CMSPKG=$7
 FORCE_BUILD_PATCH_RELEASE=$8
 CMSSW_TOOL_CONF_ONLY=$9
-DRY_RUN=$10
+DRY_RUN="${10}"
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"

@@ -74,6 +74,7 @@ while True:
       continue
   break
 
+dump(stats, open("all.json","w"), sort_keys=True,indent=2)
 wf_stats = es_workflow_stats(stats)
 
 #Create Jobs

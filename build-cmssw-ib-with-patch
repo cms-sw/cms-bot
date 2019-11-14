@@ -14,6 +14,7 @@ FORCE_PKGTOOLS_TAG=$6
 USE_DEV_CMSPKG=$7
 FORCE_BUILD_PATCH_RELEASE=$8
 CMSSW_TOOL_CONF_ONLY=$9
+DRY_RUN=$10
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
@@ -169,23 +170,25 @@ popd
 
 PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
-#if [ $(echo $CMSSW_RELEASE_BASE | cut -d_ -f2) -gt 9 ] ; then TOOL_CONF_PACKAGES="cms-common ${TOOL_CONF_PACKAGES}" ; fi
 echo DATE=`date`
 EXTERNAL_FAILED=NO
 PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp/pip*
 if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
+  if [ "${DRY_RUN}" != "" ] ; then exit 1 ; fi
   BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
   rm -rf  ${WRKDIR}/tmp
   exit 1
 fi
-if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-  PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
-  echo DATE=`date`
-  PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
-  echo DATE=`date`
+if [ "${DRY_RUN}" = "" ] ; then
+  if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
+    PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+    echo DATE=`date`
+    PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
+    echo DATE=`date`
+  fi
 fi
 if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
 DEBUG_OPT=
@@ -195,6 +198,7 @@ esac
 export SCRAM_HOOKS_DEBUG=1
 PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
 echo DATE=`date`
+if [ "${DRY_RUN}" != "" ] ; then exit 0 ; fi
 PYTHONPATH= $CMSBUILD_CMD --sync-back upload cmssw-ib
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp

@@ -555,8 +555,6 @@ gbenelli:
 - SimTracker/Common
 - SimTracker/Configuration
 - SimTracker/Records
-geoff-smith:
-- HLTrigger/Configuration
 ghugo83:
 - Geometry/TrackerCommonData
 gpetruc:

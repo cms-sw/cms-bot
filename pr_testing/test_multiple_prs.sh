@@ -768,6 +768,20 @@ else
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE
 
+#Work around for Simulation.so plugin
+if [ -e $CMSSW_BASE/biglib/${SCRAM_ARCH}/Simulation.edmplugin ] ; then
+  for p in SimDataFormatsValidationFormats_xr_rdict.pcm ; do
+    if [ ! -e $CMSSW_BASE/biglib/${SCRAM_ARCH}/$p ] ; then
+      for d in $CMSSW_RELEASE_BASE $CMSSW_FULL_RELEASE_BASE ; do
+        if [ -e $d/biglib/${SCRAM_ARCH}/$p ] ; then
+          ln -s $d/biglib/${SCRAM_ARCH}/$p $CMSSW_BASE/biglib/${SCRAM_ARCH}/$p
+          break
+        fi
+      done
+    fi
+  done
+fi
+
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 set +x ; eval $(scram run -sh) ;set -x

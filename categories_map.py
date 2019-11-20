@@ -582,7 +582,7 @@ CMSSW_CATEGORIES = {
     "DQM/TrackingMonitor",
     "DQM/TrackingMonitorClient",
     "DQM/TrackingMonitorSource",
-    "DQM/TrackerPhase2",
+    "DQM/SiTrackerPhase2",
     "DQM/TrigXMonitor",
     "DQM/TrigXMonitorClient",
     "DQMOffline/Alignment",

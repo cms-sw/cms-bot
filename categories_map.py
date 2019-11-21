@@ -579,6 +579,7 @@ CMSSW_CATEGORIES = {
     "DQM/SiStripMonitorTrack",
     "DQM/TrackerCommon",
     "DQM/TrackerMonitorTrack",
+    "DQM/TrackerPhase2",
     "DQM/TrackingMonitor",
     "DQM/TrackingMonitorClient",
     "DQM/TrackingMonitorSource",

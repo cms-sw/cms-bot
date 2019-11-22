@@ -4,16 +4,16 @@ function dockerrun()
   if [ "$USE_SINGULARITY" = "true" ] ; then CONTAINER_TYPE=singularity ; fi
   case "$SCRAM_ARCH" in
     slc6_amd64_* ) IMG="cmssw/slc6:latest" ;;
-    slc7_amd64_* ) IMG="cmssw/cc7:latest" ;;
-    cc8_amd64_* ) IMG="cmssw/cc8:latest" ;;
+    slc7_amd64_* ) IMG="cmssw/cc7:amd64" ;;
+    cc8_amd64_* ) IMG="cmssw/cc8:amd64" ;;
     slc7_aarch64_* )
       CONTAINER_TYPE="qemu"
-      IMG="cmssw/cc7-aarch64:latest"
+      IMG="cmssw/cc7:aarch64"
       QEMU_ARGS="$PROOTDIR/qemu-aarch64 -cpu cortex-a57"
       ;;
     slc7_ppc64le_* )
       CONTAINER_TYPE="qemu"
-      IMG="cmssw/cc7-ppc64le:latest"
+      IMG="cmssw/cc7:ppc64le"
       QEMU_ARGS="$PROOTDIR/qemu-ppc64le -cpu POWER8"
       ;;
     * )

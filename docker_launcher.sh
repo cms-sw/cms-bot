@@ -84,6 +84,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ "X$TEST_CONTEXT" = "XGPU" -o -e "/proc/driver/nvidia/version" ] ; then
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
+        cuda_libs_pkg=$(rpm -qa | grep nvidia-driver | grep cuda-libs || true)
+        if [ "${cuda_libs_pkg}" != "" ] ; then
+          for l in $(rpm -ql ${cuda_libs_pkg} | grep /libcuda.so || true) ; do
+            SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $l"
+          done
+        fi
       fi
     fi
     export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"

@@ -84,10 +84,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ "X$TEST_CONTEXT" = "XGPU" -o -e "/proc/driver/nvidia/version" ] ; then
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
-        cuda_libs_pkg=$(rpm -qa | grep nvidia-driver | grep cuda-libs || true)
-        if [ "${cuda_libs_pkg}" != "" ] ; then
-          for l in $(rpm -ql ${cuda_libs_pkg} | grep /libcuda.so || true) ; do
-            SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $l"
+        cuda_libs=$(ldconfig -p | grep "libcuda.so" | sed 's|.* ||')
+        if [ "${cuda_libs}" != "" ] ; then
+          xcuda_libs=$(echo ${cuda_libs} | tr ' ' '\n' | xargs -i readlink '{}')
+          for cuda_lib in $(echo ${cuda_libs} ${xcuda_libs} | tr ' ' '\n' | sort | uniq) ; do
+            SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B ${cuda_lib}"
           done
         fi
       fi

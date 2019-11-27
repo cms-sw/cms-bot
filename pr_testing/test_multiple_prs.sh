@@ -376,10 +376,8 @@ if ${BUILD_EXTERNAL} ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=
       if [ -e "${BTOOLS}/cmssw.xml" ] ; then cp ${BTOOLS}/cmssw.xml ${CTOOLS}/cmssw.xml ; fi
-      if [ -d "$WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime" ] ; then
-        RMV_CMSSW_EXTERNAL="$WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/99-cmssw-external-lib"
-        echo '#!/bin/bash' > ${RMV_CMSSW_EXTERNAL}
-        echo 'echo "RUNTIME:path:remove:LD_LIBRARY_PATH=${RELEASETOP}/external/${SCRAM_ARCH}/lib"' >> ${RMV_CMSSW_EXTERNAL}
+      RMV_CMSSW_EXTERNAL="$WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/99-remove-release-external-lib"
+      if [ -f "${RMV_CMSSW_EXTERNAL}" ] ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
       for xml in $(ls ${CTOOLS}/*.xml) ; do

@@ -375,6 +375,11 @@ if ${BUILD_EXTERNAL} ; then
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=
+      if [ -e "${BTOOLS}/cmssw.xml" ] ; then cp ${BTOOLS}/cmssw.xml ${CTOOLS}/cmssw.xml ; fi
+      RMV_CMSSW_EXTERNAL="$WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/99-remove-release-external-lib"
+      if [ -f "${RMV_CMSSW_EXTERNAL}" ] ; then
+        chmod +x ${RMV_CMSSW_EXTERNAL}
+      fi
       for xml in $(ls ${CTOOLS}/*.xml) ; do
         name=$(basename $xml)
         tool=$(echo $name | sed 's|.xml$||')
@@ -458,6 +463,7 @@ sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine proces
 set +x
 eval $(scram run -sh)
 set -x
+echo $LD_LIBRARY_PATH | tr ':' '\n'
 BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
 ANALOG_CMD="scram build outputlog && ($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $CMSSW_IB for $SCRAM_ARCH" ${NO_POST}

@@ -469,7 +469,7 @@ ANALOG_CMD="scram build outputlog && ($CMS_BOT_DIR/buildLogAnalyzer.py --logDir 
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $CMSSW_IB for $SCRAM_ARCH" ${NO_POST}
 
 cd $WORKSPACE/$CMSSW_IB/src
-git config --global --replace-all merge.renamelimit 2500
+git config --global --replace-all merge.renamelimit 2500 || true
 
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits.json

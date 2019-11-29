@@ -25,7 +25,6 @@ set +x
 eval \$(scram runtime -sh)
 set -x
 export CMS_PATH=\${IB_LAST_WEEK}
-export FRONTIER_LOG_LEVEL=warning
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
   $WORKSPACE/cms-bot/das-utils/use-ibeos-sort

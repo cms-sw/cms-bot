@@ -14,7 +14,7 @@ export ARCHITECTURE=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
 #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
 if [ $(date +%w) -lt 2 ] ; then
-  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | head -1)
+  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | tail -2 | head -1)
 else
   IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | tail -1)
 fi

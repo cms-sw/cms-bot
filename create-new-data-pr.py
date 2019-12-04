@@ -5,6 +5,7 @@ from optparse import OptionParser
 import repo_config
 from os.path import expanduser
 from urllib2 import urlopen
+from json import loads
 
 def update_tag_version(current_version=None):
     updated_version = None
@@ -55,10 +56,11 @@ if __name__ == "__main__":
 
   # if created files and modified files are the same count, all files are new
 
-  response = urlopen(data_repo_pr.patch_url)
-  files_created = response.read().count('create mode ')
-  files_modified = data_repo_pr.changed_files
-  only_new_files=True if files_created == files_modified else False
+  response = urlopen("https://api.github.com/repos/%s/pulls/%s" % (opts.data_repo, opts.pull_request))
+  res_json = loads(response.read())
+  files_created = res_json['additions']
+  files_modified = res_json['changed_files']+res_json['deletions']
+  only_new_files=(files_modified==0)
 
   # if the latest tag/release compared with master(base) or the pr(head) branch is behind then make new tag
   new_tag = last_release_tag # in case the tag doesnt change

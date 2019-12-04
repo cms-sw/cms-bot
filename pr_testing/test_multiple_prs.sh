@@ -372,6 +372,27 @@ if ${BUILD_EXTERNAL} ; then
     BTOOLS=${CTOOLS}.backup
     mv ${CTOOLS} ${BTOOLS}
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
+
+    #Generate External Tools Status
+    echo '<html><head><link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet"></head>' > $WORKSPACE/upload/external-tools.html
+    echo '<body><h2>External tools build Statistics</h2><br/><table class="table table-striped"><tr><td>Tool Name</td><td>#Files(new)</td><td>#Files(old)</td><td>Size(new)</td><td>Size(old)</td></tr>' >> $WORKSPACE/upload/external-tools.html
+    for pkg in $(find ${WORKSPACE}/${BUILD_DIR}/BUILD/${ARCHITECTURE} -maxdepth 3 -mindepth 3 -type d | sed "s|$WORKSPACE/$BUILD_DIR/BUILD/||") ; do
+      ltpath="${WORKSPACE}/${BUILD_DIR}/${pkg}"
+      [ -d ${ltpath} ] || continue
+      tdir=$(dirname $pkg)
+      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep _BASE | tail -1 | sed 's|.* default="||;s|".*||')
+      [ "${rtpath}" = "" ]  && continue
+      [ -d "${rtpath}" ]  || continue
+      l_tc=$(find ${ltpath} -follow | wc -l)
+      l_ts=$(du -sh ${ltpath} | awk '{print $1}')
+      r_tc=$(find ${rtpath} -follow | wc -l)
+      r_ts=$(du -sh ${rtpath} | awk '{print $1}')
+      tool=$(basename $tdir)
+      echo "<tr><td>${tool}</td><td>$l_tc</td><td>$r_tc</td><td>$l_ts</td><td>$r_ts</td></tr>" >> $WORKSPACE/upload/external-tools.html
+    done
+    echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
+    echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> $RESULTS_FILE
+
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=

@@ -27,7 +27,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
   if [ "$(uname -m)" = "x86_64" ] ; then
-    if [ -e /etc/tnsnames.ora ] ; then MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora" ; fi
+    if [ -e /etc/tnsnames.ora ] ; then
+      MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora"
+    elif [ -e ${HOME}/tnsnames.ora ] ; then
+      MOUNT_POINTS="${MOUNT_POINTS},${HOME}/tnsnames.ora:/etc/tnsnames.ora"
+    fi
   fi
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then

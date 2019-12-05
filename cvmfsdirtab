@@ -22,3 +22,5 @@
 /nweek-*/*_*_*/cms/cmssw-patch/*
 /git/*
 /docker/.images/*/*
+/rucio/*
+

@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from _py2with3compatibility import getoutput
 from optparse import OptionParser
 from github import Github
 from os.path import expanduser
@@ -60,9 +62,7 @@ TOOL_CONF_ERROR_MSG='There was an error building cmssw-tool-conf for {architectu
              '{log_url} \n'
 UPLOADING_MSG='The upload has started for {architecture} in {machine}. \n' \
               'You can see the progress here: https://cmssdt.cern.ch/%s/job/upload-release/{jk_build_number}/console' % JENKINS_PREFIX
-UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
-              'The release is now being installed, you can see the progress here: \n ' \
-              'https://cmssdt.cern.ch/%s/job/release-deploy-afs/ \n' % JENKINS_PREFIX
+UPLOAD_OK_MSG='The upload has successfully finished for {architecture} \n You can see the log here: \n {log_url}'
 INSTALLATION_OK_MSG='The installation has successfully finished for {architecture} \n You can see the log here: \n {log_url} \n' \
               'To generate the release notes for the release write "release-notes since \\<previous-release\\>", in the first line of your comment.\n ' \
               'I will generate the release notes based on the release that you provide. You don\'t need to provide the architecture ' \
@@ -99,9 +99,9 @@ BASE_INSTALLATION_URL = 'https://cmssdt.cern.ch/SDT/%s-artifacts/deploy-release-
 #
 def post_message( issue, msg ):
   if opts.dryRun:
-    print 'Not posting message (dry-run):\n %s' % msg
+    print('Not posting message (dry-run):\n %s' % msg)
   else:
-    print 'Posting message:\n %s' % msg
+    print('Posting message:\n %s' % msg)
     issue.create_comment( msg )
 
 
@@ -110,22 +110,22 @@ def post_message( issue, msg ):
 # if dry-run is selected it doesn't add the label and just prints it
 def add_label( issue, label ):
   if opts.dryRun:
-    print 'Not adding label (dry-run):\n %s' % label
+    print('Not adding label (dry-run):\n %s' % label)
     return
-  print 'Adding label:\n %s' % label
+  print('Adding label:\n %s' % label)
   issue.add_to_labels( label )
 
 # Removes a label form the issue
 def remove_label( issue, label ):
   if opts.dryRun:
-    print 'Not removing label (dry-run):\n %s' % label
+    print('Not removing label (dry-run):\n %s' % label)
     return
 
   if label not in ALL_LABELS:
-    print 'label ', label, ' does not exist. Not attempting to remove'
+    print('label ', label, ' does not exist. Not attempting to remove')
     return
 
-  print 'Removing label: %s' % label
+  print('Removing label: %s' % label)
   try:
     issue.remove_from_labels( label) 
   except Exception as e:
@@ -136,7 +136,7 @@ def remove_label( issue, label ):
 #
 def remove_labels( issue ):
   if opts.dryRun:
-    print 'Not removing issue labels (dry-run)'
+    print('Not removing issue labels (dry-run)')
     return
   issue.delete_labels()
 
@@ -151,7 +151,6 @@ def get_test_log(logfile):
   try:
     logfile = join(getenv('WORKSPACE'),logfile)
     try:
-      from commands import getoutput
       logmsg = '\n\nTests results:\n'+getoutput("grep 'ERROR\| tests passed' "+logfile)
     except:
       logmsg = '\n\nUnable to read tests log: No such file '+logfile
@@ -182,9 +181,9 @@ if __name__ == "__main__":
 
   GH = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
   cmssw_repo = GH.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
-  print 'API Rate Limit'
-  print 'Limit, Remaining: ', GH.rate_limiting
-  print 'Reset time (GMT): ', datetime.fromtimestamp(GH.rate_limiting_resettime)
+  print('API Rate Limit')
+  print('Limit, Remaining: ', GH.rate_limiting)
+  print('Reset time (GMT): ', datetime.fromtimestamp(GH.rate_limiting_resettime))
   issue = cmssw_repo.get_issue( issue_id )
   ALL_LABELS = [ l.name for l in issue.get_labels() ]
   test_logfile = "build/"+release_name+"-tests/matrixTests/runall-report-step123-.log"
@@ -303,10 +302,10 @@ if __name__ == "__main__":
     results_url = BASE_INSTALLATION_URL.format( rel_name=release_name,
                                                      architecture=arch,
                                                      job_id=jenkins_build_number )
-    msg = INSTALLATION_OK_MSG.format( architecture=arch , log_url=results_url )
-    if action == INSTALLATION_SKIP:
-      msg = INSTALLATION_SKIP_MSG.format( architecture=arch , log_url=results_url )
-    post_message( issue, msg )
+    #msg = INSTALLATION_OK_MSG.format( architecture=arch , log_url=results_url )
+    #if action == INSTALLATION_SKIP:
+    #  msg = INSTALLATION_SKIP_MSG.format( architecture=arch , log_url=results_url )
+    #post_message( issue, msg )
     remove_label( issue, arch+'-upload-ok' )
     remove_label( issue, arch+'-installation-error' )
     add_label( issue,  arch+'-installation-ok' )

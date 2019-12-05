@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 # A script to generate the list of releases to deprecate, via a set of regexp.
-
-from urllib2 import urlopen
+# TODO unused
+from __future__ import print_function
+from _py2with3compatibility import urlopen
 from xml.sax import make_parser, handler
 import re
 from optparse import OptionParser
@@ -78,13 +79,13 @@ if __name__ == "__main__":
     excludedReleases = set([x["cmssw_release"] for x in exclude_list["results"]]).union(WHITELIST)
     excludedBaseReleases = set([re.sub("_[a-zA-Z0-9]*patch[0-9]*", "", x) for x in excludedReleases])
     whitelist = excludedBaseReleases.union(excludedReleases)
-    print whitelist
+    print(whitelist)
   releases = urlopen("https://cmstags.cern.ch/tc/ReleasesXML?anytype=1")
   parser = make_parser()
   handler = ReleasesDeprecator(whitelist)
   parser.setContentHandler(handler)
   parser.parse(releases)
-  print INCIPIT
-  print "\n\n# The following **production** releases will be removed:\n\n%s" % "\n".join(sorted(handler.prod_deprecated))
-  print "\n\n# The following **development** releases will be removed:\n\n%s" % "\n".join(sorted(handler.devel_deprecated))
-  print "\n\n# The following releases will be untouched:\n\n%s" % "\n".join(sorted(handler.survival))
+  print(INCIPIT)
+  print("\n\n# The following **production** releases will be removed:\n\n%s" % "\n".join(sorted(handler.prod_deprecated)))
+  print("\n\n# The following **development** releases will be removed:\n\n%s" % "\n".join(sorted(handler.devel_deprecated)))
+  print("\n\n# The following releases will be untouched:\n\n%s" % "\n".join(sorted(handler.survival)))

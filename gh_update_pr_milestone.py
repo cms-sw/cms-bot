@@ -1,17 +1,13 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from github import Github, GithubException
 from sys import exit
 from os.path import expanduser
 from argparse import ArgumentParser
-from datetime import datetime
-import re
-import urllib2
-from time import sleep
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
-import json
 
 if __name__ == "__main__":
   parser = ArgumentParser()
@@ -23,10 +19,10 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   if args.source == args.dest:
-    print "Source and destination branches are same"
+    print("Source and destination branches are same")
     exit(1)
   elif (not args.source) or (not args.dest):
-    print "Missing source or destination branch"
+    print("Missing source or destination branch")
     exit(1)
 
   GH_TOKEN = open(expanduser("~/.github-token")).read().strip()
@@ -40,15 +36,15 @@ if __name__ == "__main__":
       desMilestone = item
       break
   if not desMilestone:
-    print "ERROR: Unable to find milestone for with title %s" % args.dest
-  print "Found milestone: %s" % desMilestone.number
+    print("ERROR: Unable to find milestone for with title %s" % args.dest)
+  print("Found milestone: %s" % desMilestone.number)
   pulls = repo.get_pulls(base=args.source, state="open", sort="created", direction="asc")
   for pr in pulls:
-    print "Wroking on PR ",pr.number,"with milestone",pr.milestone.number
+    print("Wroking on PR ",pr.number,"with milestone",pr.milestone.number)
     if (not args.force) and (pr.milestone.number == desMilestone.number): continue
     if not args.dryRun:
       issue = repo.get_issue(pr.number)
       if args.force: issue.edit(milestone=None)
       issue.edit(milestone=desMilestone)
-    print "  Updated milestone:",desMilestone.number
+    print("  Updated milestone:",desMilestone.number)
 

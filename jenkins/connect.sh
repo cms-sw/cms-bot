@@ -1,10 +1,7 @@
 #!/bin/sh -ex
 TARGET=$1 ; shift
-JENKINS_SLAVE_NAME=$1; shift
-if [ "${JENKINS_SLAVE_NAME}" = "" ] ; then
-  echo "Usage: $0 <jenins-slave-name> <remote-user@remote-node> [cleanup]"
-  exit 1
-fi
+JENKINS_SLAVE_NAME="${NODE_NAME}"
+if [ "$1" = "${NODE_NAME}" ] ; then shift; fi
 
 KTAB=${HOME}/keytabs/$(echo $TARGET | sed 's|@.*||').keytab
 if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi

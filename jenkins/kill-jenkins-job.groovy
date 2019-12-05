@@ -1,12 +1,22 @@
-boolean isJobMatched(prams, data)
+/*
+  Kills jobs with matching parameters accept for ignored ID.
+  Kills both in que and started jobs.
+  args[0] = project name
+  args[1] = parameters "key1=value1;key2=value2"
+  args[2] = job id not to kill
+*/
+
+boolean isJobMatched(params_to_match, job_parameters)
 {
+  // check if given job parameters are matching with a running job.
   def all_ok = true;
-  for (p in params)
+  for (p in params_to_match)
   {
     def cv="";
     try {
-      cv = data[p.key];
-      if (cv != p.value){all_ok=false;}
+      cv = job_parameters[p.key];
+      println "Comp. Real: '" + cv + "' ,given: '" + p.value + "'"
+      if ( ! (cv ==~ p.value) ){all_ok=false;}
     }
     catch ( e ) {all_ok=false; println "    "+e;}
     if (all_ok){println "    Matched   : "+p;}
@@ -16,6 +26,7 @@ boolean isJobMatched(prams, data)
   return all_ok;
 }
 
+// ---- starting point
 proj=args[0];
 params = [:];
 for (p in args[1].tokenize(";")){
@@ -27,7 +38,7 @@ for (p in args[1].tokenize(";")){
 try {id2ignore=args[2].toInteger();}
 catch ( e ) {id2ignore=0;}
 
-println "Procject:"+proj;
+println "Project:"+proj;
 println "Params:"+params
 
 println "Checking jobs in queue";

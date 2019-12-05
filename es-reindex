@@ -3,15 +3,12 @@
 # A script which creates a new index using a new mapping and create an alias
 # for the old index name.
 
+from __future__ import print_function
+from _py2with3compatibility import run_cmd, Request, HTTPSHandler, build_opener, install_opener
 from argparse import ArgumentParser
-from commands import getstatusoutput
-from datetime import datetime
-import re
 import json
-import urllib2
 import base64
 from os import getenv
-
 # Avoid checking for certificate since we execute this only inside CERN.
 # Drop the following stanza if not.
 import ssl
@@ -23,20 +20,20 @@ def format(s, **kwds):
 
 def writeToES(server, data):
   url = format("%(server)s/_bulk", server=server)
-  handler=urllib2.HTTPSHandler(debuglevel=0)
-  opener = urllib2.build_opener(handler)
-  urllib2.install_opener(opener)
+  handler= HTTPSHandler(debuglevel=0)
+  opener = build_opener(handler)
+  install_opener(opener)
 
-  request = urllib2.Request(url, data)
-  request.get_method = lambda : "PUT"
+  new_request = Request(url, data)
+  new_request.get_method = lambda : "PUT"
   base64string = base64.encodestring(getenv("ES_AUTH")).replace('\n', '')
-  request.add_header("Authorization", "Basic %s" % base64string)
+  new_request.add_header("Authorization", "Basic %s" % base64string)
   try:
-    response = opener.open(request)
-  except Exception, e:
-    print e
+    response = opener.open(new_request)
+    print(response.read())
+  except Exception as e:
+    print(e)
     exit(1)
-  print response.read()
 
 # - Get the index via scan and scroll.
 # - Push items to the new index.
@@ -55,7 +52,7 @@ if __name__ == "__main__":
   proxy_string = ""
 
   if not getenv("ES_AUTH"):
-    print "ES_AUTH not specified"
+    print("ES_AUTH not specified")
     exit(1)
 
   user_string = "--user %s" % getenv("ES_AUTH")
@@ -69,11 +66,11 @@ if __name__ == "__main__":
                query=json.dumps(query),
                server=args.server,
                user_string=user_string)
-  print cmd
-  err, out = getstatusoutput(cmd)
+  print(cmd)
+  err, out = run_cmd(cmd)
   if err:
-    print "Error while getting indices"
-    print out
+    print("Error while getting indices")
+    print(out)
     exit(0)
   result = json.loads(out)
 
@@ -84,14 +81,14 @@ if __name__ == "__main__":
                  server=args.server,
                  user_string=user_string,
                  scroll_id=result["_scroll_id"])
-    err, out = getstatusoutput(cmd)
+    err, out = run_cmd(cmd)
     if err:
-      print "Error while getting entries"
-      print out
+      print("Error while getting entries")
+      print(out)
       exit(1)
     result = json.loads(out)
     if result.get("status", 200) != 200:
-      print out
+      print(out)
       exit(1)
     
     # Exit when there are not results
@@ -114,4 +111,3 @@ if __name__ == "__main__":
       line = ""
     if line:
       writeToES(server=args.server, data=line)
-     

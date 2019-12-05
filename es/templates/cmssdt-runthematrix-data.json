@@ -2,7 +2,66 @@
   "aliases": {},
   "mappings": {
     "cmssdt-runTheMatrix-data": {
+      "dynamic_templates": [
+        {
+          "mappings_count": {
+            "mapping": {
+              "type": "integer"
+            },
+            "match": "*-a-COUNT",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_run": {
+            "mapping": {
+              "type": "integer"
+            },
+            "match": "*-b-RUN",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_event": {
+            "mapping": {
+              "type": "integer"
+            },
+            "match": "*-c-EVENT",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_vsize": {
+            "mapping": {
+              "type": "float"
+            },
+            "match": "*-d-VSIZE",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_deltv": {
+            "mapping": {
+              "type": "float"
+            },
+            "match": "*-e-DELTV",
+            "match_mapping_type": "string"
+          }
+        },
+        {
+          "mappings_rss": {
+            "mapping": {
+              "type": "float"
+            },
+            "match": "*-f-RSS",
+            "match_mapping_type": "string"
+          }
+        }
+      ],
       "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
         "AverageGrowthRateRss": {
           "type": "float"
         },
@@ -14,6 +73,27 @@
         },
         "EventThroughput": {
           "type": "float"
+        },
+        "HEAP_ARENA_N_UNUSED_CHUNKS": {
+          "type": "integer"
+        },
+        "HEAP_ARENA_SIZE_BYTES": {
+          "type": "integer"
+        },
+        "HEAP_MAPPED_N_CHUNKS": {
+          "type": "integer"
+        },
+        "HEAP_MAPPED_SIZE_BYTES": {
+          "type": "integer"
+        },
+        "HEAP_TOP_FREE_BYTES": {
+          "type": "integer"
+        },
+        "HEAP_UNUSED_BYTES": {
+          "type": "integer"
+        },
+        "HEAP_USED_BYTES": {
+          "type": "integer"
         },
         "MaxEventTime": {
           "type": "float"

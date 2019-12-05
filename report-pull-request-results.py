@@ -1,13 +1,12 @@
 #! /usr/bin/env python
+from __future__ import print_function
 from os.path import expanduser, dirname, join, exists, abspath
 from optparse import OptionParser
-from commands import getstatusoutput as run_cmd
+from _py2with3compatibility import run_cmd
 from github import Github
-from datetime import datetime
 import re
 import requests
 import json
-import random
 import os, sys
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
@@ -21,7 +20,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | RELEASE_NOT_FOUND "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
-                            "| PARSE_ADDON_FAIL | REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE | MATERIAL_BUDGET | REPORT_ERRORS")
+                            "| PARSE_ADDON_FAIL | REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE | MATERIAL_BUDGET | REPORT_ERRORS | PYTHON3_FAIL")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -131,12 +130,12 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
 
   for line in open( matrix_log ):
     if 'ERROR executing' in line:
-      print 'processing: %s' % line 
-      parts = line.split(" ")
+      print('processing: %s' % line) 
+      parts = re.sub("\s+"," ",line).split(" ")
       workflow_info = parse_workflow_info( parts )
       workflows_with_error.append( workflow_info )
     elif ' Step0-DAS_ERROR ' in line:
-      print 'processing: %s' % line
+      print('processing: %s' % line)
       parts = line.split("_",2)
       workflow_info = {}
       workflow_info[ 'step' ] = "step1"
@@ -199,18 +198,19 @@ def read_material_budget_log_file(repo, unit_tests_file,tests_url):
 def get_recent_merges_message():
   message = ""
   if options.recent_merges_file:
-    lines = open( options.recent_merges_file ).readlines()
-    if len( lines ) > 1:
+    extra_msg = []
+    json_obj = json.load(open(options.recent_merges_file))
+    for pr in json_obj: extra_msg.append(" - #%s @%s: %s" % (pr, json_obj[pr]['author'], json_obj[pr]['title']))
+
+    if extra_msg:
       message += '\n\nThe following merge commits were also included on top of IB + this PR '\
                  'after doing git cms-merge-topic: \n'
-      git_log_url = GITLOG_FILE_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
-      git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.pr_number, job_id=options.pr_job_id )
-      #Ignore the first line, the first line is the merge commit that comes from git-cms-merge-topic
-      for l in lines[ 1: ]:
-        commit_url = COMMITS_BASE_URL.format( repo=options.custom_repo, hash=l.strip() )
-        message += commit_url + '\n'
+      git_log_url = GITLOG_FILE_BASE_URL.format( pr_number=options.report_pr_number, job_id=options.pr_job_id )
+      git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.report_pr_number, job_id=options.pr_job_id )
 
-      message += 'You can see more details here:\n'
+      for l in extra_msg: message += l + '\n'
+
+      message += '\nYou can see more details here:\n'
       message += git_log_url +'\n'
       message += git_cms_merge_topic_url + '\n'
   return message
@@ -319,20 +319,41 @@ def read_unit_tests_file(repo,unit_tests_file,tests_url):
   send_message_pr( pull_request, message, tests_url )
   mark_commit_if_needed( ACTION, tests_url )
 
+
+#
+# reads the python3 file and gets the tests that failed
+#
+def read_python3_file(repo,python3_file,tests_url):
+  pull_request = repo.get_pull(pr_number)
+  errors_found=''
+  for line in open(python3_file):
+    if( ' Error compiling ' in line):
+      errors_found = errors_found + line
+
+  message = ""
+  if not options.report_file:
+    message = '-1\n'
+    if options.commit_hash: message += '\nTested at: ' + options.commit_hash+"\n"
+
+  message += '\n* **Python3**:\n\nI found errors: \n \n %s' % errors_found
+
+  send_message_pr( pull_request, message, tests_url )
+  mark_commit_if_needed( ACTION, tests_url )
+
 #
 # Marks the commit if it is not dry-run and the has of the commit was set
 #
 def mark_commit_if_needed( action, details ):
 
   if not options.commit_hash:
-    print 'No commit to mark'
+    print('No commit to mark')
     return
 
   if options.no_post_mesage:
-    print 'Not marking commit(dry-run): ', options.commit_hash, ' with \n', action, '\n', details
+    print('Not marking commit(dry-run): ', options.commit_hash, ' with \n', action, '\n', details)
     return
  
-  print 'Marking commit ', options.commit_hash 
+  print('Marking commit ', options.commit_hash) 
   mark_commit( ACTION, options.commit_hash, details )
 
 #
@@ -342,14 +363,14 @@ def mark_commit_if_needed( action, details ):
 #
 def send_message_pr( pr, message, tests_url=None, checkDuplicateMessage=False ):
   if options.no_post_mesage:
-    print 'Not posting message (dry-run): \n ', message
+    print('Not posting message (dry-run): \n ', message)
     return
 
   if checkDuplicateMessage:
     comments = [ c for c in pr.get_issue_comments( ) ]
-    print 'Checking if the message is already in the thread...'
+    print('Checking if the message is already in the thread...')
     if search_in_comments( comments, [ 'cmsbuild' ], message, False):
-      print 'Message already in the thread. \nNot posting'
+      print('Message already in the thread. \nNot posting')
       return
 
   if options.report_file:
@@ -366,8 +387,8 @@ def send_message_pr( pr, message, tests_url=None, checkDuplicateMessage=False ):
 def mark_commit_testing( ):
 
   if options.no_post_mesage:
-    print 'Not marking commit ( dry-run ): \n ', options.commit_hash, ' as', \
-          COMMIT_STATES_DESCRIPTION[ ACTION ][ 0 ], ': ', COMMIT_STATES_DESCRIPTION[ ACTION ][ 1 ]
+    print('Not marking commit ( dry-run ): \n ', options.commit_hash, ' as', \
+          COMMIT_STATES_DESCRIPTION[ ACTION ][ 0 ], ': ', COMMIT_STATES_DESCRIPTION[ ACTION ][ 1 ])
     return
   jk_log_url = JENKINS_LOG_URL.format( job_id=options.pr_job_id, job_name=os.getenv('JOB_NAME', 'ib-any-integration') )
   mark_commit( ACTION , options.commit_hash , jk_log_url ) 
@@ -379,7 +400,7 @@ def mark_commit_testing( ):
 #
 def send_externals_pr_finished_message( repo, pr_number, tests_url ):
   pull_request = repo.get_pull( pr_number )
-  print 'I will notifiy that the PR %d of the repo %s is ready' % (pr_number,repo.full_name)
+  print('I will notifiy that the PR %d of the repo %s is ready' % (pr_number,repo.full_name))
   message = 'Results are ready: ' 
   if options.commit_hash:
     message += '\nTested at: ' + options.commit_hash
@@ -389,8 +410,8 @@ def send_externals_pr_finished_message( repo, pr_number, tests_url ):
   if not options.no_post_mesage:
     pull_request.create_issue_comment( message )
 
-  print 'Message:'
-  print message
+  print('Message:')
+  print(message)
 
 #
 # sends a message informing that the pull request cannot be merged automatically
@@ -430,8 +451,8 @@ def send_remote_ref_issue_message( repo, pr_number):
             '<pre> Couldn\'t find remote ref refs/pull/' \
             + str( pr_number ) +'/head</pre> Please restart the tests in jenkins' \
             ' providing the complete branch name' 
-  print 'Posting message:'
-  print message
+  print('Posting message:')
+  print(message)
 
   send_message_pr( pull_request, message, tests_url=None, checkDuplicateMessage=True )
 
@@ -488,19 +509,19 @@ def send_comparison_ready_message(repo, pr_number, tests_results_url, comparison
       message += "\n\n"+map_notify+" comparisons for the following workflows were not done due to missing matrix map:\n"+"\n".join(missing)
 
   alt_comp_dir = join(dirname(comparison_errors_file), "upload","alternative-comparisons")
-  print "Alt comparison directory: ",alt_comp_dir
+  print("Alt comparison directory: ",alt_comp_dir)
   if exists(alt_comp_dir):
     err, out = run_cmd("grep ' Compilation failed' %s/runDQMComp-*.log" % alt_comp_dir)
-    print out
+    print(out)
     if not err:
       err_wfs = {}
       for line in out.split("\n"):
         wf = line.split(".log:",1)[0].split("runDQMComp-")[-1]
         err_wfs [wf]=1
-      if err_wfs: message += "\n\nAlternative comparison was/were failed for workflow(s):\n"+"\n".join(err_wfs.keys())
+      if err_wfs: message += "\n\nAlternative comparison was/were failed for workflow(s):\n"+"\n".join(list(err_wfs.keys()))
 
   JRCompSummaryLog = join(dirname(comparison_errors_file), "upload/validateJR/qaResultsSummary.log")
-  print "JR comparison Summary: ",JRCompSummaryLog
+  print("JR comparison Summary: ",JRCompSummaryLog)
   if exists(JRCompSummaryLog):
     err, out = run_cmd("cat %s" % JRCompSummaryLog)
     if (not err) and out:
@@ -512,7 +533,7 @@ def send_comparison_ready_message(repo, pr_number, tests_results_url, comparison
 
 def send_igprof_ready_message( repo , pr_number , tests_results_url ):
   pull_request = repo.get_pull( pr_number )
-  print 'I will notify that igprof is ready for PR %d:' % pr_number
+  print('I will notify that igprof is ready for PR %d:' % pr_number)
   message = IGPROF_READY_MSG +'\n' + tests_results_url
 
   send_message_pr( pull_request, message )
@@ -520,14 +541,14 @@ def send_igprof_ready_message( repo , pr_number , tests_results_url ):
 
 def send_std_cout_found_message(repo,pr_number,tests_results_url):
   pull_request = repo.get_pull(pr_number)
-  print 'I will notify that I found a std::cout on PR %d:' % pr_number
+  print('I will notify that I found a std::cout on PR %d:' % pr_number)
   message = STD_COUT_FOUND_MSG
   send_message_pr( pull_request, message )
 
 def complain_missing_param(param_name):
-  print '\n'
-  print 'I need a %s to continue' % param_name
-  print '\n'
+  print('\n')
+  print('I need a %s to continue' % param_name)
+  print('\n')
   parser.print_help()
   exit()
 
@@ -540,7 +561,7 @@ def mark_commit( action , commit_hash , tests_url ):
  
   headers = {"Authorization" : "token " + TOKEN }
   
-  params = {}
+  params = { 'context' : 'default' }
   if 'JENKINS_CI_CONTEXT' in os.environ: params[ 'context' ] = os.environ['JENKINS_CI_CONTEXT']
   if not params[ 'context' ]: params[ 'context' ] = 'default'
   params[ 'state' ] = COMMIT_STATES_DESCRIPTION[ action ][ 0 ]
@@ -553,14 +574,14 @@ def mark_commit( action , commit_hash , tests_url ):
     params[ 'description' ] = params[ 'description' ] + ' (' + options.additional_message + ')'
 
   data = json.dumps(params)
-  print params 
+  print(params) 
   
-  print ' setting status to %s ' % COMMIT_STATES_DESCRIPTION[ action ][ 0 ]
-  print url
+  print(' setting status to %s ' % COMMIT_STATES_DESCRIPTION[ action ][ 0 ])
+  print(url)
 
   r = requests.post(url, data=data, headers=headers)
 
-  print r.text
+  print(r.text)
 
 
 #----------------------------------------------------------------------------------------
@@ -586,6 +607,7 @@ COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : [ 'success' , 'Tests OK' 
                               'RELEASE_NOT_FOUND'    : [ 'failure' , 'Release area error' ] ,
                               'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ],
                               'PARSE_CLANG_BUILD_FAIL' : [ 'failure' , 'Clang error' ],
+                              'PYTHON3_FAIL'         : [ 'failure' , 'Python3 error' ],
                               'MATERIAL_BUDGET'      : [ 'failure' , 'Material Budget error' ] }
 
 GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of the test...',
@@ -616,18 +638,18 @@ JENKINS_LOG_URL='https://cmssdt.cern.ch/%s/job/{job_name}/{job_id}/console' % JE
 #---------------------------------------------------------------------------------------
 
 if (len(args)==0):
-  print 'you have to choose an action'
+  print('you have to choose an action')
   parser.print_help()
   exit()
 
 ACTION = args[0]
 
 if (ACTION == 'prBot.py'):
-  print 'you have to choose an action'
+  print('you have to choose an action')
   parser.print_help()
   exit()
 
-print 'you chose the action %s' % ACTION
+print('you chose the action %s' % ACTION)
 
 TOKEN = open(expanduser(repo_config.GH_TOKEN)).read().strip()
 github = Github( login_or_token = TOKEN )
@@ -682,6 +704,8 @@ elif( ACTION == 'REMOTE_REF_ISSUE'):
   send_remote_ref_issue_message( destination_repo, pr_number )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
   read_build_log_file( destination_repo, options.unit_tests_file, tests_results_url, True )
+elif( ACTION == 'PYTHON3_FAIL'):
+  read_python3_file( destination_repo, options.unit_tests_file, tests_results_url )
 elif( ACTION == 'MATERIAL_BUDGET'):
   read_material_budget_log_file( destination_repo, options.unit_tests_file, tests_results_url)
 elif( ACTION == 'GIT_CMS_MERGE_TOPIC_ISSUE' ):
@@ -689,4 +713,4 @@ elif( ACTION == 'GIT_CMS_MERGE_TOPIC_ISSUE' ):
 elif( ACTION == 'REPORT_ERRORS' ):
   send_error_report_message( destination_repo , options.report_file , tests_results_url )
 else:
-  print "I don't recognize that action!"
+  print("I don't recognize that action!")

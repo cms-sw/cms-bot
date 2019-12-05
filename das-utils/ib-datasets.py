@@ -1,15 +1,16 @@
-#!/usr/bin/python
-from os.path import dirname, basename, join, exists, abspath
-from sys import exit, argv
-from time import time, sleep
+#!/usr/bin/env python
+from os.path import dirname, abspath
+from sys import argv
+from time import time
 import json, sys
-from commands import getstatusoutput
+
 cmsbot_dir=None
 if __file__: cmsbot_dir=dirname(dirname(abspath(__file__)))
 else: cmsbot_dir=dirname(dirname(abspath(argv[0])))
 sys.path.insert(0,cmsbot_dir)
 
 from es_utils import es_query
+from _py2with3compatibility import run_cmd
 
 if __name__ == "__main__":
   from optparse import OptionParser  
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     if opts.release==".*": opts.arch=".*"
     else:
       script_path = abspath(dirname(argv[0]))
-      err, out = getstatusoutput("grep 'RELEASE_QUEUE=%s;' %s/config.map | grep -v 'DISABLED=1;' | grep 'PROD_ARCH=1;' | tr ';' '\n' | grep 'SCRAM_ARCH=' | sed 's|.*=||'" % (opts.release, script_path))
+      err, out = run_cmd("grep 'RELEASE_QUEUE=%s;' %s/config.map | grep -v 'DISABLED=1;' | grep 'PROD_ARCH=1;' | tr ';' '\n' | grep 'SCRAM_ARCH=' | sed 's|.*=||'" % (opts.release, script_path))
       if err: opts.arch="slc6_amd64_gcc530"
       else: opts.arch=out
   if opts.release!=".*": opts.release=opts.release+".*"
@@ -34,5 +35,5 @@ if __name__ == "__main__":
   start_time = end_time -int(86400*1000*opts.days)
   query = "release:/%s/ AND architecture:/%s/" % (opts.release.lower(), opts.arch)
   es_data = es_query('ib-dataset-*', query, start_time,end_time,scroll=True,page_size=10000)
-  print json.dumps(es_data, indent=2, sort_keys=True, separators=(',',': '))
+  print(json.dumps(es_data, indent=2, sort_keys=True, separators=(',',': ')))
 

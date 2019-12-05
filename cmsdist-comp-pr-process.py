@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from sys import exit,argv
 from re import match
 from github import Github
@@ -10,7 +11,7 @@ SCRIPT_DIR = dirname(abspath(argv[0]))
 
 def process_pr(gh, repo, issue, dryRun):
   from cmsdist_merge_permissions import USERS_TO_TRIGGER_HOOKS, getCommentCommand, hasRights
-  print "Issue state:", issue.state
+  print("Issue state:", issue.state)
   prId    = issue.number
   pr      = None
   branch  = None
@@ -19,7 +20,7 @@ def process_pr(gh, repo, issue, dryRun):
   if issue.pull_request:
     pr   = repo.get_pull(prId)
     branch = pr.base.ref
-    print "PR merged:", pr.merged
+    print("PR merged:", pr.merged)
     if pr.merged: return True
     from process_pr import get_changed_files
     chg_files = get_changed_files(repo, pr)
@@ -29,13 +30,13 @@ def process_pr(gh, repo, issue, dryRun):
     if not commenter in USERS_TO_TRIGGER_HOOKS: continue
     comment_msg = comment.body.encode("ascii", "ignore")
     comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ][0:1]
-    print "Comment first line: %s => %s" % (commenter, comment_lines)
+    print("Comment first line: %s => %s" % (commenter, comment_lines))
     if not comment_lines: continue
     first_line = comment_lines[0]
     if commenter == "cmsbuild":
       if not cmdType: continue
       if match("^Command\s+"+cmdType+"\s+acknowledged.$",first_line):
-        print "Acknowledged ",cmdType
+        print("Acknowledged ",cmdType)
         cmdType = None
       continue
     cmd = getCommentCommand(first_line)
@@ -44,9 +45,9 @@ def process_pr(gh, repo, issue, dryRun):
     if cmd == "merge" and not pr: continue
     if not hasRights (commenter, branch, cmd, chg_files): continue
     cmdType = cmd
-    print "Found: Command %s issued by %s" % (cmdType, commenter)
+    print("Found: Command %s issued by %s" % (cmdType, commenter))
   if not cmdType: return True
-  print "Processing ",cmdType
+  print("Processing ",cmdType)
   if dryRun: return True
   if issue.state == "open":
     if cmdType == "merge": pr.merge()

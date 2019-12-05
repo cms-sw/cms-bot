@@ -1,8 +1,13 @@
 #!/usr/bin/env python
+from __future__ import print_function
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
 from releases import *
 from categories import *
 import yaml
+
 import re
 # Validate the schema of watchers.
 
@@ -23,7 +28,7 @@ for (key, value) in w.items():
 assert(CMSSW_CATEGORIES)
 assert(type(CMSSW_CATEGORIES) == dict)
 
-PACKAGE_RE = "^([A-Z][0-9A-Za-z]*(/[a-zA-Z][0-9A-Za-z]*|)|.gitignore|.clang-[^/]+)$"
+PACKAGE_RE = "^([A-Z][0-9A-Za-z]*(/[a-zA-Z][0-9A-Za-z]*|)|.gitignore|pull_request_template.md|.clang-[^/]+)$"
 
 for (key, value) in CMSSW_CATEGORIES.items():
   assert(type(key) == str)
@@ -33,6 +38,7 @@ for (key, value) in CMSSW_CATEGORIES.items():
     assert(len(value)>0)
     continue
   for p in value:
+    print("checking", p)
     assert(type(p) == str)
     assert(re.match(PACKAGE_RE, p))
 
@@ -42,3 +48,5 @@ assert(type(w) == list)
 for p in w:
   assert(type(p) == str)
   assert(re.match(KEY_RE, p))
+
+print("Finished with success")

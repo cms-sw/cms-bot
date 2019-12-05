@@ -2,6 +2,7 @@
 """
 Returns top commit of a PR (mostly used to comments)
 """
+from __future__ import print_function
 from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
@@ -31,12 +32,12 @@ if __name__ == "__main__":
   if not opts.commit: api_rate_limits(gh)
   repo = gh.get_repo(opts.repository)
   if opts.commit:
-    pr   = repo.get_pull(prId)
+    pr = repo.get_pull(prId)
     if opts.all:
       for c in pr.get_commits():
-        print c.sha
+        print(c.sha)
     else:
-      print pr.get_commits().reversed[0].commit.sha
+      print(pr.get_commits().reversed[0].commit.sha)
   else:
     from process_pr import process_pr
     process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)

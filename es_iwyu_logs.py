@@ -1,4 +1,5 @@
 #!/bin/env python
+from __future__ import print_function
 import sys , json , os
 from es_utils import send_payload
 timestp = os.path.getmtime(sys.argv[1])
@@ -8,7 +9,7 @@ rel = items[-2]
 try:
   data = json.loads(open(sys.argv[1]).read().strip())
 except:
-  print 'json file not found/processed'
+  print('json file not found/processed')
 payload = {}
 payload['architecture'] = arch
 payload['release'] = rel

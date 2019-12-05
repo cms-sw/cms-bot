@@ -1,0 +1,35 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<slave>
+  <name>@NODE_NAME@</name>
+  <description></description>
+  <remoteFS>@WORK_DIR@</remoteFS>
+  <numExecutors>1</numExecutors>
+  <mode>NORMAL</mode>
+  <retentionStrategy class="hudson.slaves.RetentionStrategy$Demand">
+    <inDemandDelay>0</inDemandDelay>
+    <idleDelay>1</idleDelay>
+  </retentionStrategy>
+  <launcher class="hudson.slaves.CommandLauncher" plugin="command-launcher@1.2">
+    <agentCommand>@CMS_BOT_DIR@/condor/jenkins/connect.sh @CONDOR_USER@@@CONDOR_SUMBITTER_SYSTEM@ @CONDOR_JOB_ID@.0 @SCHEDD_NAME@</agentCommand>
+  </launcher>
+  <label>@LABELS@</label>
+  <nodeProperties>
+    <hudson.slaves.EnvironmentVariablesNodeProperty>
+      <envVars serialization="custom">
+        <unserializable-parents/>
+        <tree-map>
+          <default>
+            <comparator class="hudson.util.CaseInsensitiveComparator"/>
+          </default>
+          <int>3</int>
+          <string>CMS_BOT_DIR</string>
+          <string>@WORK_DIR@/cache/cms-bot</string>
+          <string>CMSSW_GIT_REFERENCE</string>
+          <string>/cvmfs/cms.cern.ch/cmssw.git.daily</string>
+          <string>PYTHONPATH</string>
+          <string>/cvmfs/cms-ib.cern.ch/jenkins-env/python/PyGithub</string>
+        </tree-map>
+      </envVars>
+    </hudson.slaves.EnvironmentVariablesNodeProperty>
+  </nodeProperties>
+</slave>

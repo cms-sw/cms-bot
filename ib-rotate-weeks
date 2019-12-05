@@ -8,21 +8,20 @@ WEEK_FOUND=`grep "^$WEEK_NO\$" ib-weeks | wc -l`
 if [ "X$WEEK_FOUND" = "X0" ] ; then
   rm -rf dummybuild
   mkdir dummybuild
+  eval `cat $(dirname $0)/config.map | grep -v 'DISABLED=1' | grep 'RELEASE_BRANCH=master' | grep  'PROD_ARCH=1;'`
   pushd dummybuild
-    ARCHITECTURE=slc6_amd64_gcc700
-    git clone -b IB/CMSSW_10_2_X/gcc700 git://github.com/cms-sw/cmsdist.git CMSDIST   || git clone -b IB/CMSSW_10_2_X/gcc700 https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
-    git clone -b V00-32-XX              git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone -b V00-32-XX             https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
-    if [ $(sh ./CMSDIST/cmsos.file | grep slc7_ | wc -l) -gt 0 ] ; then ARCHITECTURE=slc7_amd64_gcc700 ; fi
+    git clone -b $CMSDIST_TAG           git://github.com/cms-sw/cmsdist.git CMSDIST   || git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
+    git clone -b $PKGTOOLS_TAG          git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone -b $PKGTOOLS_TAG             https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
     echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
-    PKGTOOLS/cmsBuild --debug --repository cms --architecture $ARCHITECTURE --work-dir w build dummy
-    PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $ARCHITECTURE --work-dir w upload dummy
+    PKGTOOLS/cmsBuild --debug --repository cms --architecture $SCRAM_ARCH --work-dir w build dummy
+    PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $SCRAM_ARCH --work-dir w upload dummy
   popd
   rm -rf dummybuild
   echo "$WEEK_NO" >> ib-weeks
   git commit -m "Added new ib-week $WEEK_NO" ib-weeks
   git pull --rebase
   git push origin
-  echo "ARCHITECTURE=${ARCHITECTURE}" > cvmfs-reset-week 
+  echo "ARCHITECTURE=${SCRAM_ARCH}" > cvmfs-reset-week 
   echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> cvmfs-reset-week
   echo "RELEASE_FORMAT=" >> cvmfs-reset-week
   echo "CMSDIST_HASH=" >> cvmfs-reset-week

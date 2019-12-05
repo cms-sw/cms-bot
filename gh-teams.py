@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from copy import deepcopy
 from github import Github
 from os.path import expanduser
@@ -9,7 +10,7 @@ from github_utils import api_rate_limits, github_api,add_organization_member
 setdefaulttimeout(120)
 
 CMS_OWNERS = [ "smuzaffar", "cmsbuild", "davidlange6", "fabiocos" ]
-CMS_SDT    = [ "mrodozov", "gudrutis" ]
+CMS_SDT    = [ "mrodozov" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
 REPO_OWNERS = {}
@@ -46,7 +47,7 @@ REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = {
   "repositories" : { "RecoLuminosity-LumiDB": "admin"}
 }
 REPO_TEAMS["cms-sw"]["generators-l2"] = { 
-  "members" : ["perrozzi","efeyazgan","qliphy"], 
+  "members" : ["agrohsje","efeyazgan","qliphy"], 
   "repositories" :  { "genproductions" : "admin",
                       "xsecdb" : "admin"}
 }
@@ -59,7 +60,7 @@ REPO_TEAMS["cms-sw"]["configdb-owners"] = {
   "repositories" : { "hlt-confdb":"admin", "web-confdb":"admin"}
 }
 REPO_TEAMS["cms-sw"]["cmsdist-writers"] = {
-  "members" : [ "h4d4" ] + CMS_SDT,
+  "members" : [ "h4d4", "muhammadimranfarooqi" ] + CMS_SDT,
   "repositories" : { "cmsdist":"push" }
 }
 REPO_TEAMS["cms-sw"]["cmssw-l2"] = {
@@ -75,8 +76,8 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
   "repositories" : { "*":"push", "!cmssw" : "pull", "!cmsdist" : "pull" }
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
-  "members" : [ "smuzaffar", "gudrutis" ],
-  "repositories" : { "cmssdt-wiki ":"admin" }
+  "members" : [ "smuzaffar" ],
+  "repositories" : { "cmssdt-wiki":"admin" }
 }
 #################################
 parser = ArgumentParser()
@@ -91,43 +92,43 @@ total_changes=0
 err_code=0
 for org_name in CMS_ORGANIZATIONS:
   if args.organization!="*" and org_name!=args.organization: continue
-  print "Wroking on Organization ",org_name
+  print("Wroking on Organization ",org_name)
   api_rate_limits(gh)
   org = gh.get_organization(org_name)
   ok_mems = []
-  print "  Looking for owners:",REPO_OWNERS[org_name]
+  print("  Looking for owners:",REPO_OWNERS[org_name])
   chg_flag=0
   for mem in org.get_members(role="admin"):
     login = mem.login.encode("ascii", "ignore")
     if not login in cache["users"]: cache["users"][login] = mem
     if not login in REPO_OWNERS[org_name]:
       if not args.dryRun: add_organization_member(GH_TOKEN, org_name, login, role="member")
-      print "    =>Remove owner:",login
+      print("    =>Remove owner:",login)
       chg_flag+=1
     else:
       ok_mems.append(login)
   for login in [ l for l in REPO_OWNERS[org_name] if not l in ok_mems ]:
     if not args.dryRun: add_organization_member(GH_TOKEN, org_name, login, role="admin")
-    print "    =>Add owner:",login
+    print("    =>Add owner:",login)
     chg_flag+=1
   total_changes+=chg_flag
-  if not chg_flag: print "    OK Owners"
-  print "  Looking for teams:",REPO_TEAMS[org_name].keys()
+  if not chg_flag: print("    OK Owners")
+  print("  Looking for teams:",list(REPO_TEAMS[org_name].keys()))
   org_repos =  [ repo for repo in org.get_repos() ]
   for team in org.get_teams():
-    print "    Checking team:",team.name
+    print("    Checking team:",team.name)
     api_rate_limits(gh,msg=False)
     team_info = {}
     try: team_info = REPO_TEAMS[org_name][team.name]
     except:
-      print "    WARNING: New team found on Github:",team.name
+      print("    WARNING: New team found on Github:",team.name)
       err_code=1
       continue
     members = team_info["members"]
     tm_members = [ mem for mem in team.get_members()]
     tm_members_login = [ mem.login.encode("ascii", "ignore") for mem in tm_members ]
-    print "      Valid Members:",members
-    print "      Existing Members:",tm_members_login
+    print("      Valid Members:",members)
+    print("      Existing Members:",tm_members_login)
     ok_mems = ["*"]
     chg_flag=0
     if not "*" in members:
@@ -139,7 +140,7 @@ for org_name in CMS_ORGANIZATIONS:
           ok_mems.append(login)
         else:
           if not args.dryRun: team.remove_from_members(mem)
-          print "      =>Removed member:",login
+          print("      =>Removed member:",login)
           chg_flag+=1
       for login in [ l for l in members if not l in ok_mems ]:
         api_rate_limits(gh,msg=False)
@@ -147,17 +148,17 @@ for org_name in CMS_ORGANIZATIONS:
         if not args.dryRun:
           try: team.add_to_members(cache["users"][login])
           except Exception as e:
-            print e
+            print(e)
             err_code=1
-        print "      =>Added member:",login
+        print("      =>Added member:",login)
         chg_flag+=1
     total_changes+=chg_flag
-    if not chg_flag: print "      OK Team members"
+    if not chg_flag: print("      OK Team members")
     team_repos      = [ repo for repo in team.get_repos() ]
     team_repos_name = [ repo.name.encode("ascii", "ignore") for repo in team_repos ]
-    print "      Checking team repositories"
-    print "        Valid Repos:",team_info["repositories"].keys()
-    print "        Existing Repos:",team_repos_name
+    print("      Checking team repositories")
+    print("        Valid Repos:",list(team_info["repositories"].keys()))
+    print("        Existing Repos:",team_repos_name)
     repo_to_check = team_repos_name[:]
     for repo in team_info["repositories"]:
       if repo=="*":              repo_to_check += [ r.name.encode("ascii", "ignore") for r in org_repos ]
@@ -177,7 +178,7 @@ for org_name in CMS_ORGANIZATIONS:
            if not args.dryRun:
              if not repo: repo.append(gh.get_repo(org_name+"/"+repo_name))
              team.set_repo_permission(repo[0], prem)
-           print "        =>Added repo:",repo_name,prem
+           print("        =>Added repo:",repo_name,prem)
            chg_flag+=1
          else:
            curperm = repo[0].permissions
@@ -195,15 +196,15 @@ for org_name in CMS_ORGANIZATIONS:
              if not args.dryRun:
                if not repo: repo.append(gh.get_repo(org_name+"/"+repo_name))
                team.set_repo_permission(repo[0], prem)
-             print "        =>Set Permission:",repo_name,curperm_name,"=>",prem
+             print("        =>Set Permission:",repo_name,curperm_name,"=>",prem)
              chg_flag+=1
       elif repo_name in team_repos_name:
         if not args.dryRun:
           if not repo: repo.append(gh.get_repo(org_name+"/"+repo_name))
           team.remove_from_repos(repo[0])
-        print "        =>Removed repository:",repo_name
+        print("        =>Removed repository:",repo_name)
         chg_flag+=1
-    if not chg_flag: print "        OK Team Repositories"
+    if not chg_flag: print("        OK Team Repositories")
     total_changes+=chg_flag
-print "Total Updates:",total_changes
+print("Total Updates:",total_changes)
 exit(err_code)

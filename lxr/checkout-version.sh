@@ -1,32 +1,30 @@
-#!/bin/bash -e 
-BASE_DIR=/data/lxr
-GITDIR=${BASE_DIR}/cmssw.git
+#!/bin/bash -e
 
-function update_timestamp()
+function set_time()
 {
-  timestamp=$(git --git-dir=${GITDIR} log -n 1 --pretty=format:%at -- $1)
+  file=$1
+  timestamp=$(git --git-dir=${GITDIR} log -n1 --pretty=format:%at -- $file)
   file_time=$(date -d @${timestamp} '+%Y%m%d%H%M.%S')
-  touch -t ${file_time} $1
+  touch -t ${file_time} $file
 }
 
-[ "X$1" = "X" ] && exit 1
-tag=$1
-cd /data/lxr/src
-if [ ! -d "$tag" ] ; then
-  git clone ${GITDIR} ${tag}
-  cd $tag
-  git checkout $tag
-  rm -rf .git
-else
-  cd $tag
-fi
-COUNT=0
-TOTAL=$(find . -type f |wc -l)
-for file in $(find . -type f) ; do
-  let COUNT=$COUNT+1
-  echo $file $COUNT/$TOTAL
-  while [ $(jobs | wc -l) -gt 4 ] ; do sleep 0.01 ; done
-  update_timestamp $file &
+GITDIR=$1
+tag=$2
+[ "X$1" = "X" -o "X$2" = "X" ] && exit 1
+
+let NUM_PROC=$(nproc)*2
+WORKSPACE="${WORKSPACE-$PWD}"
+git clone --depth 1 -b $tag file://${GITDIR} ${WORKSPACE}/${tag}
+rm -r ${WORKSPACE}/${tag}/.git
+cd ${WORKSPACE}/${tag}
+
+find . -type f | sed 's|^./||' > ${WORKSPACE}/files.txt
+TFILES=$(cat ${WORKSPACE}/files.txt | wc -l)
+NFILE=0
+for file in $(cat ${WORKSPACE}/files.txt) ; do
+  while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.001 ; done
+  let NFILE=${NFILE}+1
+  echo "[${NFILE}/${TFILES}] $file"
+  set_time $file &
 done
 wait
-

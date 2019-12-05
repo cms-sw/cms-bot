@@ -5,12 +5,18 @@ eos_base="/store/user/cmsbuild"
 xrd_eos_base="root://eoscms.cern.ch//eos/cms"
 lfn=$1
 redirector=$2
+force=$3
 
 if [ "$redirector" = "" ] ; then redirector="root://cms-xrd-global.cern.ch"; fi
 eos_file="${eos_base}${lfn}"
+if [ "$force" != "true" ] ; then
+  if ${eos_cmd} stat -f ${eos_file} >/dev/null 2>&1 ; then
+    echo "Already exists: ${lfn}"
+    exit 0
+  fi
+fi
 eos_dir=$(dirname ${eos_base}/${lfn})
 ${eos_cmd} mkdir -p ${eos_dir}
-${eos_cmd} stat -f ${eos_file}.tmp >/dev/null 2>&1 && ${eos_cmd} rm ${eos_file}.tmp >/dev/null 2>&1 || true
 ERR=0
 for rd in ${redirector} $(echo ${redirector} root://cms-xrd-global.cern.ch root://cmsxrootd.fnal.gov root://eoscms.cern.ch root://xrootd-cms.infn.it | tr ' ' '\n' | sort | uniq | grep 'root:' | grep -v "^${redirector}") ; do
   ERR=0

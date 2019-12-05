@@ -1,5 +1,5 @@
 #!/bin/sh -ex
-NUM_PROC=$(getconf _NPROCESSORS_ONLN)
+NUM_PROC=$(nproc)
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
@@ -51,16 +51,6 @@ done
 #remove first ,
 WORKFLOWS_TO_COMPARE=`echo $WORKFLOWS_TO_COMPARE | sed 's/^.//'`
 
-DETAILS_FILE=$WORKSPACE/'comparisonDetails.txt'
-echo 'BASE_IB;'$RELEASE_FORMAT >> $DETAILS_FILE
-echo 'PR_NUMBER;'$PULL_REQUEST_NUMBER >> $DETAILS_FILE
-echo 'ADDITIONAL_PRS;'$ADDITIONAL_PULL_REQUESTS >> $DETAILS_FILE
-echo 'ARCHITECTURE;'$ARCHITECTURE >> $DETAILS_FILE
-echo 'REAL_ARCH;'$REAL_ARCH >> $DETAILS_FILE
-echo 'COMPARISON_ARCH;'$COMPARISON_ARCH >> $DETAILS_FILE
-echo 'MACHINE ARCHITECTURE:' >> $DETAILS_FILE
-cat /proc/cpuinfo |  grep "model name" >> $DETAILS_FILE
-
 ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
@@ -69,13 +59,17 @@ scram project $BASE_IB
 set +x
 cd $BASE_IB
 eval `scram run -sh`
+set -x
+if $DQM_COMPARISON_TEST ; then
+  if [ ! -e $CMSSW_RELEASE_BASE/src/DQMServices/FileIO/scripts/compareDQMOutput.py ] ; then
+    DQM_COMPARISON_TEST=false
+  fi
+fi
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
   mkdir -p src/Utilities/RelMon
   cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/* src/Utilities/RelMon/
   sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' src/Utilities/RelMon/python/directories2html.py
-  scram build clean
 fi
-set -x
 JR_COMP_DIR=$WORKSPACE/results/JR-comparison
 mkdir -p $JR_COMP_DIR
 mkdir -p $WORKSPACE/results/files
@@ -124,9 +118,14 @@ done
 echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 
 echo "Finished downloading files at `date`:"
-
-sed -i "s/COMPARISON;.*/COMPARISON;RUNNING/g" $WORKSPACE/results/testsResults.txt
+sed -i '/COMPARISON;/d' $WORKSPACE/results/testsResults.txt
+echo "COMPARISON;RUNNING" >> $WORKSPACE/results/testsResults.txt
 send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
+
+if $DQM_COMPARISON_TEST ; then
+  (compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -l "$PULL_REQUESTS" -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1) || true
+  echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> $WORKSPACE/results/testsResults.txt
+fi
 
 # --------------------------------------------------------------------------
 # JR-Comparison

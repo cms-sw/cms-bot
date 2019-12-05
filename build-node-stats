@@ -1,8 +1,9 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
-sys.exit(0)
+sys.exit(0)  # TODO script not run anymore?
 
-from commands import getstatusoutput
+from _py2with3compatibility import run_cmd
 from socket import gethostname
 from argparse import ArgumentParser
 import time
@@ -11,7 +12,7 @@ import struct
 import socket
 
 def chunks(l, n):
-  for i in xrange(0, len(l), n):
+  for i in range(0, len(l), n):
     yield l[i:i+n]
 
 def format(s, **kwds):
@@ -24,11 +25,11 @@ CARBON_PORT=2004
 def sendMetrics(metrics):
   for l in chunks(metrics, 100):
     payload = pickle.dumps(l)
-    print len(payload)
+    print(len(payload))
     header = struct.pack("!L", len(payload))
     message = header + payload
     sock = socket.socket()
-    print CARBON_SERVER, CARBON_PORT
+    print(CARBON_SERVER, CARBON_PORT)
     sock.connect((CARBON_SERVER, CARBON_PORT))
     sock.sendall(message)
     sock.close()
@@ -36,13 +37,13 @@ def sendMetrics(metrics):
 def aggregate(metrics):
   aggregated = {}
   for x in metrics:
-    print x[0]
-    if x[0] in aggregated.keys():
+    print(x[0])
+    if x[0] in list(aggregated.keys()):
       aggregated[x[0]][1][1] += x[1][1]
-      print x[0],"now", aggregated[x[0]][1][1]
+      print(x[0],"now", aggregated[x[0]][1][1])
     else:
       aggregated[x[0]] = x
-  return [x for x in aggregated.values()]
+  return [x for x in list(aggregated.values())]
 
 if __name__ == "__main__":
   parser = ArgumentParser()
@@ -56,15 +57,15 @@ if __name__ == "__main__":
   
   fields = ("pid", "comm", "pcpu", "rss", "vsize")
   cmd = 'ps -U cmsbuild -o %s= -o %s= -o %s= -o %s= -o %s=' % fields
-  err, out = getstatusoutput(cmd)
+  err, out = run_cmd(cmd)
   if err:
-    print "Error while reading process data"
+    print("Error while reading process data")
     exit(1)
-  print out
+  print(out)
   metrics = []
   timestamp = time.time()
   for l in out.split("\n"):
-    data = dict(zip(fields, [x for x in l.split(" ") if x]))
+    data = dict(list(zip(fields, [x for x in l.split(" ") if x])))
     try:
       data["pid"] = int(data["pid"])
       data["pcpu"] = float(data["pcpu"])

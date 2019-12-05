@@ -2,8 +2,6 @@
 
 from __future__ import print_function, division
 
-import os
-
 with open('addedFiles.txt', 'r') as addedFiles:
     for fileName in addedFiles:
         fileName = fileName.strip()

@@ -1,3 +1,4 @@
+from __future__ import print_function
 MATERIAL_BUDGET_REF = {
   "CMSSW_8_1_X" : "CMSSW_8_1_X_2017-03-12-0000",
   "CMSSW_9_0_X" : "CMSSW_9_0_X_2017-03-14-1100",
@@ -11,8 +12,11 @@ MATERIAL_BUDGET_REF = {
   "CMSSW_10_3_X" : "CMSSW_9_0_X_2017-03-14-1100",
   "CMSSW_10_4_X" : "CMSSW_9_0_X_2017-03-14-1100",
   "CMSSW_10_5_X" : "CMSSW_9_0_X_2017-03-14-1100",
+  "CMSSW_10_6_X" : "CMSSW_9_0_X_2017-03-14-1100",
+  "CMSSW_11_0_X" : "CMSSW_9_0_X_2017-03-14-1100",
+  "CMSSW_11_1_X" : "CMSSW_9_0_X_2017-03-14-1100",
 }
 
 def get_ref():
   from os import environ
-  print MATERIAL_BUDGET_REF["_".join(environ['CMSSW_VERSION'].split("_")[0:3])+"_X"]
+  print(MATERIAL_BUDGET_REF["_".join(environ['CMSSW_VERSION'].split("_")[0:3])+"_X"])

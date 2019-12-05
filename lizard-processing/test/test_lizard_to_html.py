@@ -55,10 +55,9 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertTrue(re.search(regex_H1_files, line_files))
 
     def test_split_1(self):
-        self.assertEquals(len(re.split(regex_split, lines_th[0].strip())), 6)
-        self.assertEquals(len(re.split(regex_split, lines_th[1].strip())), 6)
-        self.assertEquals(len(re.split(regex_split, lines_th[2].strip())), 8)
-
+        self.assertEqual(len(re.split(regex_split, lines_th[0].strip())), 6)
+        self.assertEqual(len(re.split(regex_split, lines_th[1].strip())), 6)
+        self.assertEqual(len(re.split(regex_split, lines_th[2].strip())), 8)
 
 if __name__ == '__main__':
     unittest.main()

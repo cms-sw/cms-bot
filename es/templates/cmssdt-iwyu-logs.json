@@ -3,6 +3,9 @@
   "mappings": {
     "cmssdt-iwyu-stats": {
       "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
         "architecture": {
           "index": "not_analyzed",
           "type": "string"
@@ -37,5 +40,5 @@
       "number_of_shards": "2"
     }
   },
-  "template": "cmssdt-iwyu-*"
+  "template": "cmssdt-iwyu"
 }

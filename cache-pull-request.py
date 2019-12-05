@@ -1,10 +1,10 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from github import Github
 from os.path import expanduser, exists
 from optparse import OptionParser
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
-from sys import exit
 from json import dumps, load
 import re
 setdefaulttimeout(120)
@@ -13,7 +13,7 @@ def process(repo, prId, prCache):
   data = {}
   issue = repo.get_issue(prId)
   if not issue.pull_request:
-    print "WARNING: Only cache Pull requests, %s is an issue." % prId
+    print("WARNING: Only cache Pull requests, %s is an issue." % prId)
     return data
   pr = repo.get_pull(prId)
   if prCache and exists(prCache):
@@ -79,7 +79,7 @@ if __name__ == "__main__":
   gh = Github(login_or_token=open(expanduser("~/"+ghtoken)).read().strip())
   api_rate_limits(gh)
   data = process(gh.get_repo(opts.repository), prId, args[1])
-  if opts.dryRun: print dumps(data)
+  if opts.dryRun: print(dumps(data))
   else:
     j = open(args[0]+".json","w")
     j.write(dumps(data,sort_keys=True))

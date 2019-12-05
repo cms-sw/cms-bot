@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-from glob import glob
-from commands import getstatusoutput
+from __future__ import print_function
+from _py2with3compatibility import run_cmd
 from os.path import dirname
 from xml.sax import parseString, ContentHandler
 import argparse
@@ -18,6 +18,7 @@ CARBON_PORT = 2004
 
 class JobReportHandler(ContentHandler):
   def __init__(self, what, step, architecture, release, workflow, timestamp):
+    ContentHandler.__init__(self)
     self.counters = dict((k, "") for k in what)
     self.step = step
     self.architecture = architecture
@@ -43,6 +44,7 @@ class JobReportHandler(ContentHandler):
 
 class SchemaDumper(ContentHandler):
   def __init__(self, schema):
+    ContentHandler.__init__(self)
     self.schema = schema
 
   def startElement(self, name, attrs):
@@ -53,7 +55,7 @@ class SchemaDumper(ContentHandler):
 IB_BASE_DIR="/afs/cern.ch/cms/sw/ReleaseCandidates"
 
 def chunks(l, n):
-  for i in xrange(0, len(l), n):
+  for i in range(0, len(l), n):
     yield l[i:i+n]
 
 def format(s, **kwds):
@@ -63,7 +65,7 @@ def format(s, **kwds):
 def sendMetrics(metrics, server, port):
   for l in chunks(metrics, 100):
     payload = pickle.dumps(l)
-    print len(payload)
+    print(len(payload))
     header = struct.pack("!L", len(payload))
     message = header + payload
     sock = socket.socket()
@@ -79,7 +81,7 @@ def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease, args
                releasePath=releasePath,
                fullRelease=fullRelease,
                architecture=architecture)
-  error, out = getstatusoutput(format(cmd))
+  error, out = run_cmd(format(cmd))
   if error:
     return
   if not out.strip():
@@ -108,15 +110,15 @@ if __name__ == "__main__":
                       help='What to dump from the logs')
   args = parser.parse_args()
 
-  print >> sys.stderr, "Parsing files"
+  print("Parsing files", file=sys.stderr)
   cmd = "find %s/slc* -name 'pyRelValMatrixLogs.zip' | sort -r" % IB_BASE_DIR
-  print cmd
-  error, files = getstatusoutput(cmd)
+  print(cmd)
+  error, files = run_cmd(cmd)
   files = [x for x in files.split("\n") if x]
   schema = set()
   beginning = (date.today() - timedelta(args.days)).timetuple()
   for f in files:
-    print >> sys.stderr, f
+    print(f, file=sys.stderr)
     releasePath = dirname(f)
     architecture = re.sub(".*/((slc|osx|fc)[^/]*)/.*", "\\1", f)
     fullRelease = re.sub(".*/(CMSSW_[^/]*)/.*", "\\1", f)
@@ -129,13 +131,13 @@ if __name__ == "__main__":
       continue
     if not re.match(args.filterRelease, release):
       continue
-    error, reports = getstatusoutput("unzip -l %s | grep JobReport | awk '{print $4}'" % f)
+    error, reports = run_cmd("unzip -l %s | grep JobReport | awk '{print $4}'" % f)
     calculateFileSizeMetrics(release, architecture, timestamp, fullRelease, args)
     
     metrics = []
     for r in [x for x in reports.split("\n") if x]:
       cmd = "unzip -p %s %s" % (f, r)
-      error, report = getstatusoutput(cmd)
+      error, report = run_cmd(cmd)
       workflow = re.sub("^([^/]*).*", "\\1", r).replace(".","_")
       if not re.match(args.filterWorkflows, workflow):
         continue
@@ -150,9 +152,9 @@ if __name__ == "__main__":
         continue
       metrics += handler.metrics
       if schema:
-        print "\n".join(sorted(schema))
+        print("\n".join(sorted(schema)))
         exit(0)
     if not len(metrics):
       continue
-    print "Sending %s metrics." % len(metrics)
+    print("Sending %s metrics." % len(metrics))
     sendMetrics(metrics, args.server, args.port)

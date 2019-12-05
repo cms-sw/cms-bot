@@ -1,7 +1,8 @@
+from __future__ import print_function
 
-import json, sys
+import sys
 from time import time
-from es_utils import get_payload, es_query, format
+from es_utils import es_query, format
 
 from ROOT import *
 
@@ -97,7 +98,7 @@ def compareMetrics(firstObject=None, secondObject=None,workflow=None,stepnum=Non
                         if field.startswith('rss'):
                             if second_metric is 0: continue #sometimes the result is zero even when the exit_code is non 0
                             #difference = 100 - ( float( float(first_metric) / float(second_metric) ) * 100 )
-                            difference = (first_metric - second_metric) / 1048576
+                            difference = int((first_metric - second_metric) / 1048576)
                         else:
                             difference = first_metric - second_metric
 
@@ -124,7 +125,7 @@ if __name__ == "__main__":
     step_n = None
     if len(sys.argv) > 6: wf_n = sys.argv[6]
     if len(sys.argv) > 7: step_n = sys.argv[7]
-    print wf_n, step_n
+    print(wf_n, step_n)
     
     json_out_first = getWorkflowStatsFromES(release_one, archone, days, page_size)
     json_out_second = getWorkflowStatsFromES(release_two, archtwo, days, page_size)
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     #print json.dumps(comp_results, indent=2, sort_keys=True, separators=(',', ': '))
 
     for hist in comp_results:
-        print hist
+        print(hist)
         histo = TH1F(hist, release_one + ' - ' + release_two + '['+ hist +']', 100000, -5000, 5000)
 
         if hist.startswith('rss'):

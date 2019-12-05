@@ -7,21 +7,33 @@ export USER_CODE_CHECKS=$2
 BUILD_NUMBER=$3
 DRY_RUN=$4
 REPOSITORY=$5
-if [ "X${REPOSITORY}" = "X" ] ; then
-  REPOSITORY="cms-sw/cmssw"
+CODE_CHECKS=true
+CODE_FORMAT=false
+MULTIPLE_FILES_CHANGES=true
+
+if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050850 ] ; then
+  CODE_FORMAT=true
+  rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
+  git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules
+  mv scram-buildrules/SCRAM  $CMSSW_BASE/config/SCRAM
 fi
+
+if [ "X$DRY_RUN" = "X" ] ; then DRY_RUN=false ; fi
+if [ "X${REPOSITORY}" = "X" ] ; then REPOSITORY="cms-sw/cmssw" ;fi
 REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
 if [ "$BUILD_NUMBER" = "" ] ; then BUILD_NUMBER=$(date +%s); fi
-NUM_PROC=$(getconf _NPROCESSORS_ONLN)
-case $(hostname) in lxplus* ) let NUM_PROC=$NUM_PROC/2 ;; esac
+NUM_PROC=$(nproc)
 if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
 cd $CMSSW_BASE
-curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $CMSSW_BASE/all-code-checks-files.txt
-grep -v '^[^/]*/[^/]*/test/' $CMSSW_BASE/all-code-checks-files.txt > $CMSSW_BASE/code-checks-files.txt          || true
-grep -v '^[^/]*/[^/]*/data/' $CMSSW_BASE/code-checks-files.txt     > $CMSSW_BASE/filename-code-checks-files.txt || true
-$CMS_BOT_DIR/cms-filename-checks.py $CMSSW_BASE/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > $CMSSW_BASE/invalid-filenames.txt || true
+rm -rf ${CMSSW_BASE}/upload
+mkdir ${CMSSW_BASE}/upload
+
+curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $CMSSW_BASE/upload/all-changed-files.txt
+grep -v '^[^/]*/[^/]*/test/' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-checks-files.txt          || true
+grep -v '^[^/]*/[^/]*/data/' $CMSSW_BASE/upload/code-checks-files.txt     > $CMSSW_BASE/upload/filename-code-checks-files.txt || true
+$CMS_BOT_DIR/cms-filename-checks.py $CMSSW_BASE/upload/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > $CMSSW_BASE/upload/invalid-filenames.txt || true
 echo "Changed files:"
-cat $CMSSW_BASE/code-checks-files.txt
+cat $CMSSW_BASE/upload/code-checks-files.txt
 echo ""
 
 git cms-init --upstream-only
@@ -33,42 +45,85 @@ pushd $CMSSW_BASE/src
   git repack -a -d ${THRDS}
   git repack -a -d ${THRDS}
   OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
-  git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee $CMSSW_BASE/cms-checkout-topic.log
+  git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee $CMSSW_BASE/upload/cms-checkout-topic.log
   git repack -d ${THRDS}
   NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
   if [ $DSIZE -lt 0 ] ; then DSIZE=0 ; fi
-  $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/invalid_files.txt || true
+  $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/upload/invalid_files.txt || true
 popd
 
 #If we have any non-tests changed files
-if [ -s $CMSSW_BASE/code-checks-files.txt ] ; then
-  scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/code-checks-files.txt"  2>&1 | tee code-checks.log
-  rm -rf ${CMSSW_BASE}/upload
-  mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
-  mv cms-checkout-topic.log ${CMSSW_BASE}/upload/
-  mv code-checks.log ${CMSSW_BASE}/upload/
-  cd $CMSSW_BASE/src
-  git diff > ${CMSSW_BASE}/upload/git-diff.patch
-else
-  mkdir ${CMSSW_BASE}/upload
-  touch ${CMSSW_BASE}/upload/git-diff.patch ${CMSSW_BASE}/upload/git-diff.patch
-fi
-mv $CMSSW_BASE/*.txt ${CMSSW_BASE}/upload/
-source $CMS_BOT_DIR/jenkins-artifacts
-send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
-RES="+code-checks"
-HOW_TO_RUN=""
-if [ -s ${CMSSW_BASE}/upload/git-diff.patch ] ; then
-  RES="-code-checks"
-  HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying a patch in https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch"
-  HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/git-diff.patch | patch -p1\`"
-  HOW_TO_RUN="${HOW_TO_RUN}@N@@N@You can run \`scram build code-checks\` to apply code checks directly"
+touch ${CMSSW_BASE}/upload/code-checks.patch
+if $CODE_CHECKS ; then
+  if [ -s $CMSSW_BASE/upload/code-checks-files.txt ] ; then
+    scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt"  2>&1 | tee ${CMSSW_BASE}/upload/code-checks.log
+    if [ -e ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ] ; then
+      mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
+    fi
+    pushd $CMSSW_BASE/src
+      git diff > ${CMSSW_BASE}/upload/code-checks.patch
+      if [ -s ${CMSSW_BASE}/upload/code-checks.patch ] ; then
+        git commit -a -m 'code-checks'
+      fi
+    popd
+  fi
 fi
 
+touch ${CMSSW_BASE}/upload/code-format.patch
+if $CODE_FORMAT ; then
+  if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
+    grep -E -i '\.(cpp|cc|cxx|h|hpp|hh)$' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-format-files.txt || true
+    if [ -s $CMSSW_BASE/upload/code-format-files.txt ] ; then
+      scram build -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="$CMSSW_BASE/upload/code-format-files.txt"  2>&1 | tee $CMSSW_BASE/upload/code-format.log
+      pushd $CMSSW_BASE/src
+        git diff > ${CMSSW_BASE}/upload/code-format.patch
+        if [ -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
+          git commit -a -m 'code-formats'
+        fi
+      popd
+    fi
+  fi
+fi
+
+if ${MULTIPLE_FILES_CHANGES} ; then
+    ${CMS_BOT_DIR}/github_scripts/simultaneous_files_modifications_by_PRs.py ${PULL_REQUEST} > \
+        ${CMSSW_BASE}/upload/multiple_files_changes.txt || true
+fi
+
+if [ "$DRY_RUN" != "true" ] ; then
+  source $CMS_BOT_DIR/jenkins-artifacts
+  send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+fi
+RES="+code-checks"
+HOW_TO_RUN=""
+if [ -s ${CMSSW_BASE}/upload/code-checks.patch -o -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
+  RES="-code-checks"
+  HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying following patch(s)"
+  if [ -s ${CMSSW_BASE}/upload/code-checks.patch ] ; then
+    HOW_TO_RUN="${HOW_TO_RUN}@N@- **code-checks**:"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@You can also run \`scram build code-checks\` to apply code checks directly"
+  fi
+  if [ -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
+    HOW_TO_RUN="${HOW_TO_RUN}@N@- **code-format**:"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}@N@You can also run \`scram build code-format\` to apply code format directly"
+  fi
+fi
 MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"
 if [ $DSIZE -gt 0 ] ; then MSG="${MSG}@N@@N@- This PR adds an extra ${DSIZE}KB to repository" ; fi
 if [ -s ${CMSSW_BASE}/upload/invalid_files.txt ] ; then
   MSG="${MSG}@N@@N@- Found files with invalid states:@N@$(cat ${CMSSW_BASE}/upload/invalid_files.txt | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
 fi
-${CMS_BOT_DIR}/comment-gh-pr $DRY_RUN -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
+
+if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
+    MSG="${MSG}@N@@N@- There are other open Pull requests which might conflict with changes you have proposed:"
+    MSG="${MSG}@N@$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
+fi
+
+if [ "$DRY_RUN" != "true" ] ; then
+  ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
+fi

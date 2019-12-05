@@ -6,9 +6,6 @@ rm -rf src
 cp -r $CMSSW_RELEASE_BASE/src src
 find src -maxdepth 2 -type l -exec rm -f {} \;
 CPUS=`nproc`
-if [ `hostname | grep '^lxplus' | wc -l` = '1' ]; then
-  let CPUS=$CPUS/2
-fi
 BUILD_LOG=yes scram b -k -j $CPUS compile COMPILER=iwyu || true
 scram build -f buildlog
 if [ -d tmp/$SCRAM_ARCH/cache/log/src ] ; then

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from os.path import dirname, abspath
 from optparse import OptionParser
 import sys, re
-from commands import getstatusoutput as run_cmd
+sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
+from _py2with3compatibility import run_cmd
 CMS_BOT_DIR = dirname(dirname(abspath(sys.argv[0])))
 
 def check_commits_files(repo, pr, detail=False):
@@ -19,14 +21,14 @@ def check_commits_files(repo, pr, detail=False):
   all_ok = False
   e, o = run_cmd('%s/process-pull-request -a -c -r %s %s' % (CMS_BOT_DIR, repo, pr))
   if e: 
-    print o
+    print(o)
     return all_ok
   details= {}
   data = {}
   for c in o.split('\n'):
     e , o = run_cmd('git diff-tree --no-commit-id --name-status -r %s' % c)
     if e:
-      print o
+      print(o)
       return all_ok
     for l in [re.sub("\s+"," ",x.strip()) for x in o.split('\n') if x.strip()]:
       (t,f)=l.split(' ')
@@ -42,11 +44,11 @@ def check_commits_files(repo, pr, detail=False):
     for s in invalid_status:
       if len([1 for x in s if x in data[f]])>1:
         if not detail:
-          print "%s: %s" % (f, ', '.join([status_map[x] for x in data[f]]))
+          print("%s: %s" % (f, ', '.join([status_map[x] for x in data[f]])))
         if detail:
-          print "%s:" % f
+          print("%s:" % f)
           for x in data[f]:
-            print "  %s: %s" % (status_map[x], ", ".join(details[f][x]))
+            print("  %s: %s" % (status_map[x], ", ".join(details[f][x])))
         all_ok = False
   return all_ok
 def process(repo, pr, detail=False):

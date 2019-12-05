@@ -20,7 +20,7 @@ TEST_DIR=$HERE/$CMSSW_X_Y_Z-tests
 source $BUILD_DIR/cmsset_default.sh
 mkdir -p $TEST_DIR
 pushd $TEST_DIR
-  scram p $CMSSW_X_Y_Z
+  scram -a ${ARCHITECTURE} p $CMSSW_X_Y_Z
   pushd $TEST_DIR/$CMSSW_X_Y_Z
     set +x ; cmsenv ; set -x
   popd
@@ -28,7 +28,6 @@ popd
 cp $WORKSPACE/das-utils/das_client $WORKSPACE/das-utils/das_client.py || true
 $WORKSPACE/das-utils/use-ibeos-sort
 export CMS_PATH=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | head -1)
-export FRONTIER_LOG_LEVEL=warning
 export PATH=$WORKSPACE/das-utils:$PATH
 which das_client
 mkdir $TEST_DIR/matrixTests

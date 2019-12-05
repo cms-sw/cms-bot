@@ -15,6 +15,8 @@ function get_path_to_pr_metadata(){
 }
 
 function get_cached_GH_JSON (){
+    # gives path to cached PR json file
+    # if it is the first time a file is requested, it will download it
     PR=$1  # ex. cms-sw/dist#100
     # ---
     REPO=$( echo ${PR} | sed 's/#.*//' )
@@ -46,14 +48,29 @@ function git_clone_and_merge (){
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH}
         fi
         pushd ${BASE_REPO_NAME}
-            git pull --rebase git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
+            git pull  git://github.com/${TEST_REPO}.git ${TEST_BRANCH}
         popd
     popd
+}
+
+function get_base_branch(){
+    # get branch to which to merge from GH PR json
+    PR_METADATA_PATH=$(get_cached_GH_JSON "$1")
+    # echo ${PR_METADATA_PATH}
+    EXTERNAL_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
+    fail_if_empty "${EXTERNAL_BRANCH}" "PR had errors - ${1}"
+    echo ${EXTERNAL_BRANCH}
 }
 
 function echo_section(){
     echo "---------|  $@  |----------"
 }
 
+function fail_if_empty(){
+    if [ -z $(echo "$1" | tr -d ' ' ) ]; then
+        exit_with_comment_failure_main_pr -m "ERROR: empty variable. ${2}." ${DRY_RUN} || true
+        exit 1
+    fi
+}
 
 

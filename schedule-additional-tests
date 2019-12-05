@@ -1,25 +1,30 @@
 #!/bin/sh -ex
 CONFIG_MAP=$(dirname $0)/config.map
-for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n'`; do
+for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n' | grep -v 'fwlite'`; do
+  pfile="$WORKSPACE/auto-$x-properties"
+  echo "Creating property file ${pfile}"
+  echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > ${pfile}
+  echo "ARCHITECTURE=${ARCHITECTURE}" >> ${pfile}
+  echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> ${pfile}
+  echo "ADDITIONAL_TEST_NAME=$x" >> ${pfile}
   if [ "$x" == "baseline" ]; then
-    BASELINE_FILE_INTEL=$WORKSPACE/$x-GenuineIntel-properties
-    echo "Creating property file $BASELINE_FILE_INTEL"
-    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $BASELINE_FILE_INTEL
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_INTEL
-    echo "REAL_ARCH=-GenuineIntel" >> $BASELINE_FILE_INTEL
-
-    #For now only run it for GenuineIntel
-    #BASELINE_FILE_AMD=$WORKSPACE/$x-AuthenticAMD-properties
-    #echo "Creating property file $BASELINE_FILE_AMD"
-    #echo "RELEASE_FORMAT=${RELEASE_QUEUE}_${DATE_FORMAT}" > $BASELINE_FILE_AMD
-    #echo "ARCHITECTURE=${ARCHITECTURE}" >> $BASELINE_FILE_AMD
-    #echo "REAL_ARCH=-AuthenticAMD" >> $BASELINE_FILE_AMD
-
-  else
-    echo "Creating property file $WORKSPACE/$x-properties."
-    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/$x-properties
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/$x-properties
-    echo "RELEASE_QUEUE=${RELEASE_QUEUE}" >> $WORKSPACE/$x-properties
-  fi  
+    echo "REAL_ARCH=-GenuineIntel" >> ${pfile}
+  fi
+  if [ "$x" = "igprof-pp" -o  "$x" = "igprof-mp"  ] ; then
+    prof=$(echo $x | sed 's|igprof-||')
+    sed -i -e "s|ADDITIONAL_TEST_NAME=$x|ADDITIONAL_TEST_NAME=igprof|" ${pfile}
+    echo "PROFILE=$prof" >> ${pfile}
+    wf="136.731"
+    nfile=$WORKSPACE/auto-$x-${wf}-properties
+    cp ${pfile} ${nfile}
+    echo "WORKFLOWS=-i all -l $wf" >> ${nfile}
+    echo "EVENTS=100" >> ${nfile}
+    wf="21234.0"
+    nfile=$WORKSPACE/auto-$x-${wf}-properties
+    cp ${pfile} ${nfile}
+    echo "WORKFLOWS=-l $wf" >> ${nfile}
+    echo "EVENTS=10" >> ${nfile}
+    rm -f ${pfile}
+  fi
 done
 

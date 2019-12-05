@@ -9,7 +9,7 @@ GH_REPO_FULLNAME="smuzaffar/int-build"
 CREATE_EXTERNAL_ISSUE=False
 JENKINS_SERVER="http://cmsjenkins05.cern.ch:8080/cms-jenkins"
 GITHUB_WEBHOOK_TOKEN='U2FsdGVkX1+GEHdp/Cmu73+ctvrzSGXc9OvL+8bZyjOe6ZPkqr/GIPgpJHiEp+hR'
-ADD_LABELS=True
+ADD_LABELS=False
 ADD_WEB_HOOK=False
 IGNORE_ISSUES = []
 def file2Package(filename): return GH_REPO_ORGANIZATION

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 from optparse import OptionParser
 from github import Github
 from os.path import expanduser
@@ -43,7 +44,7 @@ BASE_TESTING_URL='https://cmssdt.cern.ch/%s/job/test-externals-prs/{jk_build_num
 #
 def mark_commit( action, commit_hash, tests_url ):
   if opts.dryRun:
-    print 'Not adding status to commit %s (dry-run):\n %s' % ( commit_hash, action )
+    print('Not adding status to commit %s (dry-run):\n %s' % ( commit_hash, action ))
     return
 
   url = CMSDIST_COMMIT_STATUS_BASE_URL % commit_hash
@@ -54,10 +55,10 @@ def mark_commit( action, commit_hash, tests_url ):
   params[ 'description' ] = COMMIT_STATES_DESCRIPTION[ action ][ 1 ]
 
   data = json.dumps(params)
-  print 'Setting status to %s ' % COMMIT_STATES_DESCRIPTION[ action ][ 0 ]
-  print url
+  print('Setting status to %s ' % COMMIT_STATES_DESCRIPTION[ action ][ 0 ])
+  print(url)
   r = requests.post(url, data=data, headers=headers)
-  print r.text
+  print(r.text)
 
 
 #
@@ -66,9 +67,9 @@ def mark_commit( action, commit_hash, tests_url ):
 #
 def post_message( issue, msg ):
   if opts.dryRun:
-    print 'Not posting message (dry-run):\n %s' % msg
+    print('Not posting message (dry-run):\n %s' % msg)
   else:
-    print 'Posting message:\n %s' % msg
+    print('Posting message:\n %s' % msg)
     issue.create_comment( msg )
 
 # -------------------------------------------------------------------------------

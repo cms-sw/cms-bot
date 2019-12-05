@@ -1,7 +1,15 @@
+notifications:
+  email:
+    recipients:
+      - cms-sdt-logs@cern.ch
+    on_success: change # default: change
+    on_failure: always # default: always
 language: python
 python:
   - "2.7"
+  - "3.4"
 install: "pip install PyYaml"
 script: 
   - PYTHONPATH=. python tests/test_watchers.py
   - PYTHONPATH=. python tests/test_config-map.py
+  - python -m compileall $( ls | grep -v v_scheduler | grep -v venv)

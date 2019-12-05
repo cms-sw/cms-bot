@@ -1,4 +1,5 @@
-from commands import getstatusoutput
+from __future__ import print_function
+from _py2with3compatibility import run_cmd
 from os import getcwd
 from time import asctime, time, strftime, gmtime
 import sys, re
@@ -7,7 +8,7 @@ from os.path import dirname, abspath
 
 try:
   CMS_BOT_DIR = dirname(abspath(__file__))
-except Exception, e :
+except Exception as e:
   from sys import argv
   CMS_BOT_DIR = dirname( abspath(argv[0]))
 
@@ -16,7 +17,10 @@ def getHostDomain():
     import socket
     site = socket.getfqdn()
     fqdn = site.split('.')
-    return fqdn[0], fqdn[-2]+'.'+fqdn[-1]
+    hname = fqdn[0]
+    dname = 'cern.ch'
+    if len(fqdn)>2: dname = fqdn[-2]+'.'+fqdn[-1]
+    return hname, dname
 
 def getDomain():
     return getHostDomain()[1]
@@ -25,14 +29,12 @@ def getHostName():
     return getHostDomain()[0]
 
 def _getCPUCount():
-    cmd = ""
+    cmd = "nproc"
     if platform == "darwin":
       cmd = "sysctl -n hw.ncpu"
-    elif platform.startswith("linux"):
-      cmd = "cat /proc/cpuinfo | grep '^processor' | wc -l"
-    error, count = getstatusoutput(cmd)
+    error, count = run_cmd(cmd)
     if error:
-      print "Warning: unable to detect cpu count. Using 4 as default value"
+      print("Warning: unable to detect cpu count. Using 4 as default value")
       out = "4"
     if not count.isdigit():
       return 4
@@ -44,9 +46,9 @@ def _memorySizeGB():
       cmd = "sysctl -n hw.memsize"
     elif platform.startswith("linux"):
       cmd = "free -t -m | grep '^Mem: *' | awk '{print $2}'"
-    error, out = getstatusoutput(cmd)
+    error, out = run_cmd(cmd)
     if error:
-      print "Warning: unable to detect memory info. Using 8GB as default value"
+      print("Warning: unable to detect memory info. Using 8GB as default value")
       return 8
     if not out.isdigit():
       return 8
@@ -71,15 +73,12 @@ def _cmsRunProcesses():
 
 compilationPrcoessCount = _compilationProcesses()
 cmsRunProcessCount = _cmsRunProcesses()
-if "lxplus" in getHostName():
-  cmsRunProcessCount = int(cmsRunProcessCount/2)+1
-  MachineCPUCount = int (MachineCPUCount/2)+1
 
 def doCmd(cmd, dryRun=False, inDir=None):
   if not inDir:
-    print "--> "+asctime()+ " in ", getcwd() ," executing ", cmd
+    print("--> "+asctime()+ " in ", getcwd() ," executing ", cmd)
   else:
-    print "--> "+asctime()+ " in " + inDir + " executing ", cmd
+    print("--> "+asctime()+ " in " + inDir + " executing ", cmd)
     cmd = "cd " + inDir + "; "+cmd
   sys.stdout.flush()
   sys.stderr.flush()
@@ -88,12 +87,12 @@ def doCmd(cmd, dryRun=False, inDir=None):
   outX = ""
   while cmd.endswith(";"): cmd=cmd[:-1]
   if dryRun:
-    print "DryRun for: "+cmd
+    print("DryRun for: "+cmd)
   else:
-    ret, outX = getstatusoutput(cmd)
-    print outX
+    ret, outX = run_cmd(cmd)
+    print(outX)
   stop = time()
-  print "--> "+asctime()+" cmd took", stop-start, "sec. ("+strftime("%H:%M:%S",gmtime(stop-start))+")"
+  print("--> "+asctime()+" cmd took", stop-start, "sec. ("+strftime("%H:%M:%S",gmtime(stop-start))+")")
   sys.stdout.flush()
   sys.stderr.flush()
   return (ret,outX)
@@ -117,12 +116,18 @@ def cmsswIB2Week(release):
 # If the list is empty it means that it didn't find any architecture for that release queue, or
 # that the IBs are disabled.
 #
-def get_config_map_properties():
+def get_config_map_properties(filters=None):
   CONFIG_MAP_FILE = CMS_BOT_DIR + '/config.map'
   specs = []
   f = open( CONFIG_MAP_FILE , 'r' )
   lines = [l.strip(" \n\t;") for l in f.read().split("\n") if l.strip(" \n\t;")]
   for line in lines:
     entry = dict(x.split("=",1) for x in line.split(";") if x)
-    specs.append(entry)
+    skip = False
+    if filters:
+      for k in filters:
+        if (k in entry) and (entry[k]==filters[k]):
+          skip = True
+          break
+    if not skip: specs.append(entry)
   return specs

@@ -1,11 +1,20 @@
 #!/bin/sh -ex
 CMSSW_X_Y_Z=$1
 ARCHITECTURE=$2
+PROD_ARCH=$3
 
-SCRAM_ARCH=`./get-production-arch $CMSSW_X_Y_Z | tail -1`
+if [ "X${PROD_ARCH}" = "X" ] ; then
+  PROD_ARCH=false
+  if [ "$(./get-production-arch $CMSSW_X_Y_Z | tail -1)" = "$ARCHITECTURE" ]; then PROD_ARCH=true ; fi
+fi
+
 prodarch=0
 archtype='non-production'
-if [ "$SCRAM_ARCH" = "$ARCHITECTURE" ]; then prodarch=1 ;  archtype='production' ; fi
+if ${PROD_ARCH} ; then
+  prodarch=1
+  archtype='production'
+fi
+
 
 RELEASE_TYPE=Development
 if [ X`echo $CMSSW_X_Y_Z | grep -e '_pre[0-9][0-9]*'` = X ] ; then RELEASE_TYPE=Production ; fi

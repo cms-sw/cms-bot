@@ -8,7 +8,7 @@ if [ "X$EVENTS" = "X" ] ; then EVENTS=1000; fi
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
-  runTheMatrix.py $WORKFLOWS --command "-n $EVENTS --profile $prof" > runTheMatrix.log
+  runTheMatrix.py $WORKFLOWS --command "-n $EVENTS --profile $prof" | tee runTheMatrix.log
   for f in $(find . -name '*.gz' -type f) ; do
     echo "processing file $f"
     OUTFILE=${f//.gz/.sql3}

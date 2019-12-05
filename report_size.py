@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
 #run this command for once to create the data file or directly pipe its output to this script
 #for releases
@@ -24,9 +25,9 @@ for line in sys.stdin:
 max_volume_len = max_volume_len + 4
 max_path_len = max_path_len + 4
 
-print "Total Volumes  :",volumes
-print "Allocated Space:",int(allocated/1000000),"GB"
-print "Used Space     :",int(used/1000000),"GB"
+print ("Total Volumes  :",volumes)
+print ("Allocated Space:",int(allocated/1000000),"GB")
+print ("Used Space     :",int(used/1000000),"GB")
 for vol in sorted(data):
   msg = "{0:<"+str(max_volume_len)+"}{1:<"+str(max_path_len)+"}"
-  print msg.format(vol, data[vol][1]),data[vol][4]+"/"+data[vol][3]
+  print(msg.format(vol, data[vol][1]),data[vol][4]+"/"+data[vol][3])

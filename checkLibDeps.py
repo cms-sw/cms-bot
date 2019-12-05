@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+# TODO is this file used?
+from __future__ import print_function
 import os, sys, re
 
 class LibDepChecker(object):
@@ -20,8 +21,8 @@ class LibDepChecker(object):
             if missing: errMap[pkg] = missing
 
         from pickle import Pickler
-        summFile = open('libchk.pkl','w')
-        pklr = Pickler(summFile)
+        summFile = open('libchk.pkl','wb')
+        pklr = Pickler(summFile, protocol=2)
         pklr.dump(errMap)
         summFile.close()
 
@@ -30,7 +31,7 @@ class LibDepChecker(object):
         if not os.path.exists(self.startDir+'/lib/'+self.plat+'/'+libName) : return []
         cmd = '(cd '+self.startDir+'/lib/' + self.plat + ';'
         cmd += 'libchecker.pl '+libName+' )'
-        print "in ", os.getcwd(), " executing :'"+cmd+"'"
+        print("in ", os.getcwd(), " executing :'"+cmd+"'")
         log = os.popen(cmd).readlines()
         return log
         
@@ -42,8 +43,8 @@ def main():
     try:
         opts, args = getopt.getopt(options, 'hnp:d:', 
                                    ['help', 'dryRun','platform=','startDir='])
-    except getopt.GetoptError, e:
-        print e.msg
+    except getopt.GetoptError as e:
+        print(e.msg)
         usage()
         sys.exit(-2)
 

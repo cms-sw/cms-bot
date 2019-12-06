@@ -379,14 +379,17 @@ if ${BUILD_EXTERNAL} ; then
     for pkg in $(find ${WORKSPACE}/${BUILD_DIR}/BUILD/${ARCHITECTURE} -maxdepth 3 -mindepth 3 -type d | sed "s|$WORKSPACE/$BUILD_DIR/BUILD/||") ; do
       ltpath="${WORKSPACE}/${BUILD_DIR}/${pkg}"
       [ -d ${ltpath} ] || continue
-      tdir=$(dirname $pkg)
-      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep _BASE | tail -1 | sed 's|.* default="||;s|".*||')
-      [ "${rtpath}" = "" ]  && continue
-      [ -d "${rtpath}" ]  || continue
       l_tc=$(find ${ltpath} -follow | wc -l)
-      l_ts=$(du -sh ${ltpath} | awk '{print $1}')
-      r_tc=$(find ${rtpath} -follow | wc -l)
-      r_ts=$(du -sh ${rtpath} | awk '{print $1}')
+      l_ts=$(du -shL ${ltpath} | awk '{print $1}')
+      tdir=$(dirname $pkg)
+      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep '_BASE\|CMSSW_SEARCH_PATH' | tail -1 | sed 's|.* default="||;s|".*||')
+      if [ "${rtpath}" = "" ] || [ ! -d "${rtpath}" ] ; then
+        r_tc=0
+        r_ts=0
+      else
+        r_tc=$(find ${rtpath} -follow | wc -l)
+        r_ts=$(du -shL ${rtpath} | awk '{print $1}')
+      fi
       tool=$(basename $tdir)
       echo "<tr><td>${tool}</td><td>$l_tc</td><td>$r_tc</td><td>$l_ts</td><td>$r_ts</td></tr>" >> $WORKSPACE/upload/external-tools.html
     done

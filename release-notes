@@ -1,14 +1,14 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from optparse import OptionParser
 from os.path import exists,expanduser,join
-from commands import getstatusoutput
+from _py2with3compatibility import run_cmd, Request, urlopen
 from github import Github
 import json
-import urllib2
 from sys import exit
 import re
 from cms_static import GH_CMSSW_REPO, GH_CMSDIST_REPO, GH_CMSSW_ORGANIZATION
-from github_utils import prs2relnotes, get_merge_prs, api_rate_limits
+from github_utils import prs2relnotes, get_merge_prs
 from socket import setdefaulttimeout
 setdefaulttimeout(120)
 CMSDIST_REPO_NAME=join(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO)
@@ -29,9 +29,9 @@ def add_categories_notes(notes, cache):
                                        if re.match("^[a-zA-Z0-9]+[-](approved|pending|hold|rejected)$", l)
                                           and not re.match('^(tests|orp)-' , l) ]
     if len(categories) == 0:
-      print "no categories for:",  pr_number
+      print("no categories for:",  pr_number)
     else:
-      print "Labels for %s: %s" % (pr_number, categories)
+      print("Labels for %s: %s" % (pr_number, categories))
     note = notes[pr_number]
     for cat in categories:
       note += " `%s` " % cat
@@ -44,9 +44,9 @@ def add_categories_notes(notes, cache):
 
 def get_cmssw_notes( previous_release , this_release, cache ):
   if not exists("cmssw.git"):
-    error, out = getstatusoutput("git clone --bare --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git git@github.com:cms-sw/cmssw.git")
+    error, out = run_cmd("git clone --bare --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git git@github.com:cms-sw/cmssw.git")
     if error: parser.error("Error while checking out the repository:\n" + out)
-  getstatusoutput("GIT_DIR=cmssw.git git fetch --all --tags")
+  run_cmd("GIT_DIR=cmssw.git git fetch --all --tags")
   return prs2relnotes(get_merge_prs(previous_release, this_release, "cmssw.git", "cms-prs", cache))
 
 #
@@ -54,9 +54,9 @@ def get_cmssw_notes( previous_release , this_release, cache ):
 #
 def get_cmsdist_notes( prev_cmsdist_tag , curr_cmsdist_tag, cache ):
   if not exists("cmsdist.git"):
-    error, out = getstatusoutput("git clone --bare git@github.com:cms-sw/cmsdist.git")
+    error, out = run_cmd("git clone --bare git@github.com:cms-sw/cmsdist.git")
     if error: parser.error("Error while checking out the cmsdist repository:\n" + out)
-  getstatusoutput("GIT_DIR=cmsdist.git git fetch --all --tags")
+  run_cmd("GIT_DIR=cmsdist.git git fetch --all --tags")
   return prs2relnotes(get_merge_prs(prev_cmsdist_tag, curr_cmsdist_tag, "cmsdist.git", "cms-prs", cache), "cms-sw/cmsdist")
 
 #
@@ -95,7 +95,7 @@ if __name__ == "__main__":
   CMSDIST_REPO =  github.get_repo(CMSDIST_REPO_NAME)
  
   if not exists("cms-prs"):
-    error, out = getstatusoutput("git clone --depth 1 git@github.com:cms-sw/cms-prs")
+    error, out = run_cmd("git clone --depth 1 git@github.com:cms-sw/cms-prs")
     if error: parser.error("Error while checking out cms-sw/cms-prs repository:\n" + out)
   cmssw_cache = {}
   cmsdist_cache = {}
@@ -105,28 +105,28 @@ if __name__ == "__main__":
   cmssw_notes = add_categories_notes(cmssw_notes, cmssw_cache)
   cmssw_notes_str = ""
   cmsdist_notes_str = ""
-  for pr in sorted(cmssw_notes.keys(), reverse=True):
+  for pr in sorted(list(cmssw_notes.keys()), reverse=True):
     cmssw_notes_str += cmssw_notes[pr]+'\n'
-  for pr in sorted(cmsdist_notes.keys(), reverse=True):
+  for pr in sorted(list(cmsdist_notes.keys()), reverse=True):
     cmsdist_notes_str += cmsdist_notes[pr]+'\n'
-  request = urllib2.Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
+  request = Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
                             headers={"Authorization" : "token " + token})
-  releases = json.loads(urllib2.urlopen(request).read())
+  releases = json.loads(urlopen(request).read())
   matchingRelease = [x["id"] for x in releases if x["name"] == curr_release]
   if len(matchingRelease) < 1:
-    print "Release %s not found." % curr_release
+    print("Release %s not found." % curr_release)
     exit(1)
   releaseId = matchingRelease[0]
   url = "https://api.github.com/repos/cms-sw/cmssw/releases/%s" % releaseId
-  request = urllib2.Request(url, headers={"Authorization" : "token " + token})
+  request = Request(url, headers={"Authorization" : "token " + token})
   request.get_method = lambda: 'PATCH'
-  print "Modifying release notes for %s at %s" % (curr_release, url)
+  print("Modifying release notes for %s at %s" % (curr_release, url))
   if opts.dryRun:
-    print cmssw_notes_str
-    print "\n cmsdist: \n"
-    print cmsdist_notes_str
-    print "--dry-run specified, quitting without modifying release."
-    print 'ALL_OK'
+    print(cmssw_notes_str)
+    print("\n cmsdist: \n")
+    print(cmsdist_notes_str)
+    print("--dry-run specified, quitting without modifying release.")
+    print('ALL_OK')
     exit(0)
 
   header = "#### Changes since %s:\n%s\n" %  \
@@ -134,5 +134,5 @@ if __name__ == "__main__":
 
   cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \
                    ( prev_cmsdist_tag , curr_cmsdist_tag , get_comparison_url( prev_cmsdist_tag, curr_cmsdist_tag , 'cmsdist' ) )
-  print urllib2.urlopen(request, json.dumps({"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str })).read()
-  print 'ALL_OK'
+  print(urlopen(request, json.dumps({"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str })).read())
+  print('ALL_OK')

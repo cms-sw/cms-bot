@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import os, sys, re, time
+
+# TODO is this file used?
 
 class TestLogChecker(object):
     def __init__(self, outFileIn=None, verbIn=False):
 
         self.outFile=sys.stdout
         if outFileIn:
-            print "Summary file:", outFileIn
+            print("Summary file:", outFileIn)
             self.outFile=open(outFileIn, 'w')
 
         self.verbose = verbIn
@@ -40,7 +43,6 @@ class TestLogChecker(object):
         noExportRe = re.compile('^WARNING: ([A-Za-a].*)/BuildFile does not export anything:')
 
         lf = open(logFile,'r')
-        lines = lf.xreadlines()
 
         startTime = time.time()
         nLines = 0
@@ -50,7 +52,7 @@ class TestLogChecker(object):
         testLines = {}
         pkgLines = {}
         prevLine = ""
-        for line in lines:
+        for line in lf:
             nLines += 1
             # merge with the previous line (w/o the <endline> to get the two-line warnings from scram
             both = prevLine[:-1] + line
@@ -110,7 +112,6 @@ class TestLogChecker(object):
         subsysPkgMap = {}
         
         lf = open(logFile,'r')
-        lines = lf.xreadlines()
 
         startTime = time.time()
         nLines = 0
@@ -124,16 +125,16 @@ class TestLogChecker(object):
         actTest  = "None"
         actTstLines = 0
         actPkgLines = 0
-        for line in lines:
+        for line in lf:
             nLines += 1
             actTstLines += 1
             actPkgLines += 1
             subsysMatch = subsysRe.match(line)
             if subsysMatch:
                 subsys, pkg = subsysMatch.group(1).split('/')
-                if not pkgSubsysMap.has_key(pkg) : 
+                if pkg not in pkgSubsysMap:
                     pkgSubsysMap[pkg] = subsys
-                if subsysPkgMap.has_key(subsys) :
+                if subsys in subsysPkgMap:
                     subsysPkgMap[subsys].append(pkg)
                 else:
                     subsysPkgMap[subsys] = [pkg]
@@ -163,7 +164,7 @@ class TestLogChecker(object):
                 actTest = tst
                 actTstLines = 0
                 pkgTests[actPkg] += 1
-                if testNames.has_key(actPkg):
+                if actPkg in testNames:
                     testNames[actPkg].append(actTest)
                 else:
                     testNames[actPkg] = [actTest]
@@ -183,7 +184,7 @@ class TestLogChecker(object):
         self.outFile.write( "found a total of "+ str(nLines)+ ' lines in logfile.\n')
         self.outFile.write( "analysis took "+str(stopTime-startTime)+ ' sec.\n')
 
-        self.outFile.write( "total number of tests: " +str( len(results.keys()) ) + '\n')
+        self.outFile.write( "total number of tests: " +str( len(list(results.keys())) ) + '\n')
         nMax = 1000
         self.outFile.write( "tests with more than " +str(nMax) + " lines of logs:\n")
         for pkg, lines in testLines.items():
@@ -222,9 +223,11 @@ class TestLogChecker(object):
 
 # ================================================================================
 
+
 def usage():
-    print "usage: "+ os.path.basename(sys.argv[0])+" --logFile <logFileName> [--verbose]\n"
+    print("usage: "+ os.path.basename(sys.argv[0])+" --logFile <logFileName> [--verbose]\n")
     return
+
 
 if __name__ == "__main__" :
     import getopt
@@ -266,4 +269,4 @@ if __name__ == "__main__" :
     if chkScram:
         tlc.checkScramWarnings(logFile, verb)
     tlc.check(logFile)
-    
+

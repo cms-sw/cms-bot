@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-
 from optparse import OptionParser
 from os import listdir
 import re
@@ -40,7 +39,7 @@ if __name__ == "__main__":
 
   if ( len(args) < 2 ):
 
-    print 'not enough arguments\n'
+    print('not enough arguments\n')
     parser.print_help()
     exit()
 
@@ -60,13 +59,13 @@ if __name__ == "__main__":
 
   for current_dir in [ dir for dir in listdir( RESULTS_DIR ) if dir.startswith( 'all_Old' ) ]:
   
-    print 'Processing: %s' % current_dir
+    print('Processing: %s' % current_dir)
 
     current_wf = re.search( WF_REGEXP , current_dir ).group( 0 ).replace( 'p' , '.' )
-    print 'Workflow number is: %s' % current_wf
+    print('Workflow number is: %s' % current_wf)
 
     num_diffs = len( [ file_name for file_name in listdir( RESULTS_DIR + '/' + current_dir ) if '.png' in file_name ] )
-    print 'It had %s diffs' % num_diffs
+    print('It had %s diffs' % num_diffs)
 
     if num_diffs < 10:
       mod = 0
@@ -75,7 +74,7 @@ if __name__ == "__main__":
     else:
       mod = 2
 
-    print 'This needs to be run with %s' % params_dict [ mod ]
+    print('This needs to be run with %s' % params_dict [ mod ])
 
     line = BASE_WF_NUM_PARAM + '=' + current_wf + ';' + params_dict [ mod ] + '\n'
 

@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+"""
+Makes a comment on Pull request on Github
+"""
+from __future__ import print_function
 from github import Github
-from os.path import expanduser, dirname, abspath,join,exists
+from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from sys import exit
 import re, sys
@@ -23,7 +27,7 @@ if __name__ == "__main__":
     elif opts.report_file: msg = open(opts.report_file).read()
     else: parser.error("Missing pull request message: -m|--message <message> OR -R|--report-file <file-path>")
     if opts.dryRun:
-      print "Addeding Comments:",msg
+      print("Addeding Comments:",msg)
     else:
       repo_dir = join(SCRIPT_DIR,'repos',opts.repository.replace("-","_"))
       if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
@@ -33,6 +37,6 @@ if __name__ == "__main__":
       pr   = repo.get_issue(opts.pr)
       pr.create_comment(msg)
   except Exception as e:
-    print "Failed to add comment: ",e
+    print("Failed to add comment: ",e)
     exit(1)
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
@@ -6,21 +7,21 @@ from datetime import datetime, timedelta
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 from github_hooks_config import get_repository_hooks
-setdefaulttimeout(None)
 import sys
+setdefaulttimeout(None)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 def check_prs(gh, repo, since, process_issue, dryRun):
-  if repo.full_name in ["cms-sw/cmsdist", "cms-sw/cmssw"]: return
+  #if repo.full_name in ["cms-sw/cmsdist", "cms-sw/cmssw"]: return
   if not get_repository_hooks(repo.full_name,"Jenkins_Github_Hook"): return  
-  print "Working on Repository: ",repo.full_name
+  print("Working on Repository: ",repo.full_name)
   if since:
     issues = repo.get_issues(state="open", sort="updated", since=since)
   else:
     issues = repo.get_issues(state="open", sort="updated")
   for issue in issues:
     if not process_issue and not issue.pull_request:
-      print "Only processing PRs, skipped issue: ",issue.number
+      print("Only processing PRs, skipped issue: ",issue.number)
       continue
     process_pr(repo_config, gh, repo, issue, dryRun)
     

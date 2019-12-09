@@ -1,8 +1,6 @@
-#!/bin/sh -ex
+#!/bin/bash -ex
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
-ARCHITECTURE_FILTER=${ARCHITECTURE_FILTER-.*}
-CONFIG_MAP_FILE="$CMS_BOT_DIR/config.map"
 
 cd $WORKSPACE
 
@@ -10,51 +8,46 @@ cd $WORKSPACE
 PULL_REQUEST=$1
 CMSDIST_PR=$2
 if [ "X$PUB_USER" = "X" ] ; then PUB_USER="cms-sw"; fi
-PROP_FILE=${PULL_REQUEST}
 PUB_REPO="${PUB_USER}/cmssw"
-if [ "X$PULL_REQUEST" != "X" ] ; then
-  # Use helper to get PR branch
-  RELEASE_QUEUE=`$CMS_BOT_DIR/get-pr-branch $PULL_REQUEST ${PUB_REPO}`
 
-  COMP_QUEUE=$(echo $RELEASE_QUEUE | sed 's|^\(CMSSW_[0-9]*_[0-9]*\)_.*|\1_X|')
-  COMP_ARCH=$(grep "RELEASE_QUEUE=$COMP_QUEUE;" $CONFIG_MAP_FILE | grep -v "DISABLED=" | grep "PROD_ARCH=1;" | tr ';' '\n' | grep "SCRAM_ARCH=" | sed 's|SCRAM_ARCH=||')
-
-  MLINES=`grep "=$RELEASE_QUEUE;" $CONFIG_MAP_FILE | grep -v DISABLED= | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;"`
-  MLC=$(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l)
-  if [ $MLC -gt 1 ] ; then
-    MLINES=$(grep "=$RELEASE_QUEUE;" $CONFIG_MAP_FILE | grep -v DISABLED= |  grep "SCRAM_ARCH=$COMP_ARCH;" | grep "PROD_ARCH=1")
-  fi
-else
-  PUB_REPO="${PUB_USER}/cmsdist"
-  PROP_FILE=${CMSDIST_PR}
-  GH_JSON=$(curl -s https://api.github.com/repos/${PUB_REPO}/pulls/$CMSDIST_PR)
-  CMSDIST_BRANCH=$(echo $GH_JSON | python -c 'import json,sys;obj=json.load(sys.stdin);print obj["base"]["ref"]')
-  if [ $(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | wc -l) -gt 1 ] ; then
-    MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1")
-    if [ $(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -gt 1 ] ; then
-      MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1" | grep 'RELEASE_QUEUE=CMSSW_[0-9][0-9]*_[0-9][0-9]*_X')
-      if [ $(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -gt 1 ] ; then
-        MLINES=$(cat $CMS_BOT_DIR/config.map | grep 'PROD_ARCH=1;' | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};" | grep "PR_TESTS=1" | grep 'RELEASE_QUEUE=CMSSW_[0-9][0-9]*_[0-9][0-9]*_X')      
-      fi
+source $CMS_BOT_DIR/pr_testing/_helper_functions.sh
+source $CMS_BOT_DIR/common/github_reports.sh
+if [ "X$PULL_REQUESTS" = "X" ] ; then
+    if [ ! -z $PULL_REQUEST ] ; then
+        PULL_REQUESTS="cms-sw/cmssw#$PULL_REQUEST"
     fi
-  else
-    MLINES=$(cat $CMS_BOT_DIR/config.map | grep -v 'NO_IB='| grep -v 'DISABLED=1;' | grep "CMSDIST_TAG=${CMSDIST_BRANCH};")
-  fi
+    if [ ! -z $CMSDIST_PR ] ; then
+        PULL_REQUESTS="$PULL_REQUESTS cms-sw/cmsdist#$CMSDIST_PR"
+    fi
 fi
-MLC=$(echo $MLINES | tr ';' '\n' | grep SCRAM_ARCH= | wc -l)
-if [ $MLC -eq 1 ] ; then
-    eval $MLINES
-    OUTPUT_FILE=properties-pr-${PROP_FILE}-${SCRAM_ARCH}.txt
+PULL_REQUESTS=$(echo $PULL_REQUESTS | sed 's/^ *//;s/ *$//')  # to make sure there are no surouding spaces
+GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
+CMSDIST_TAG=  # To make sure no one set to different value by accident.
+if [ ! -z ${GITHUB_PR_TO_SEARCH} ] ; then
+    CMSDIST_TAG=$(get_base_branch "$GITHUB_PR_TO_SEARCH" )
+fi
+GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)
+if [ ! -z ${GITHUB_PR_TO_SEARCH} ] ; then
+    CMSSW_BR=$(get_base_branch ${GITHUB_PR_TO_SEARCH})
+fi
+if [ "$RELEASE_FORMAT" != "" ] ; then
+    RELEASE_QUEUE="$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|')"
+fi
+CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "${RELEASE_QUEUE-$CMSSW_BR}" "$CMSDIST_TAG" "${ARCHITECTURE_FILTER}") || true
+if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; then
+    eval $CONFIG_LINE
+    OUTPUT_FILE=properties-pr-test-${SCRAM_ARCH}.txt
     echo PULL_REQUEST=${PULL_REQUEST} > $OUTPUT_FILE
+    echo PULL_REQUESTS=${PULL_REQUESTS} >> $OUTPUT_FILE
     echo ARCHITECTURE=${SCRAM_ARCH} >> $OUTPUT_FILE
     if [ "X$RELEASE_FORMAT" = X ] ; then
       if [ "X$NO_IB" = "X1" ] ; then
-        RELEASE_QUEUE=$(grep label=$(echo ${RELEASE_QUEUE} | sed 's|_X||') $CMS_BOT_DIR/releases.map | grep "architecture=${SCRAM_ARCH}" | tail -1 | sed 's|.*label=||;s|;.*||')
+        RELEASE_FORMAT=$(grep label=$(echo ${RELEASE_QUEUE} | sed 's|_X||') $CMS_BOT_DIR/releases.map | grep "architecture=${SCRAM_ARCH}" | tail -1 | sed 's|.*label=||;s|;.*||')
+       else
+        RELEASE_FORMAT="${RELEASE_QUEUE}"
       fi
-      echo RELEASE_FORMAT=${RELEASE_QUEUE} >> $OUTPUT_FILE
-    else
-      echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $OUTPUT_FILE
     fi
+    echo RELEASE_FORMAT=${RELEASE_FORMAT} >> $OUTPUT_FILE
     echo DO_TESTS=${DO_TESTS} >> $OUTPUT_FILE
     echo DO_SHORT_MATRIX=${DO_SHORT_MATRIX} >> $OUTPUT_FILE
     echo DO_STATIC_CHECKS=${DO_STATIC_CHECKS} >> $OUTPUT_FILE
@@ -75,6 +68,6 @@ if [ $MLC -eq 1 ] ; then
     echo DOCKER_IMG=${DOCKER_IMG} >> $OUTPUT_FILE
     echo IGNORE_BOT_TESTS=${IGNORE_BOT_TESTS} >> $OUTPUT_FILE
 else
-  $CMS_BOT_DIR/report-pull-request-results RELEASE_NOT_FOUND --repo ${PUB_REPO} --pr $PULL_REQUEST --pr-job-id ${BUILD_NUMBER}
+    exit_with_report_failure_main_pr "RELEASE_NOT_FOUND" --pr-job-id ${BUILD_NUMBER}
 fi
 

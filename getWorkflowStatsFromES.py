@@ -1,6 +1,9 @@
-import json, sys
+from __future__ import print_function
+
+import sys
 from time import time
-from es_utils import get_payload
+from es_utils import es_query, format
+
 from ROOT import *
 
 '''
@@ -12,82 +15,14 @@ def _format(s, **kwds):
 
 def getWorkflowStatsFromES(release='*', arch='*', lastNdays=7, page_size=0):
 
-    query_url = 'http://cmses-master02.cern.ch:9200/relvals_stats_*/_search'
-
-    query_datsets = """
-        {
-          "query": {
-            "filtered": {
-              "query": {
-                "bool": {
-                  "should": [
-                    {
-                      "query_string": {
-                        "query": "release:%(release_cycle)s AND architecture:%(architecture)s", 
-                        "lowercase_expanded_terms": false
-                      }
-                    }
-                  ]
-                }
-              },
-              "filter": {
-                "bool": {
-                  "must": [
-                    {
-                      "range": {
-                        "@timestamp": {
-                          "from": %(start_time)s,
-                          "to": %(end_time)s
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "from": %(from)s,
-          "size": %(page_size)s
-        }
-        """
-    datasets = {}
-    ent_from = 0
-    json_out = []
-    info_request = False
-    queryInfo = {}
-
-    queryInfo["end_time"] = int(time() * 1000)
-    queryInfo["start_time"] = queryInfo["end_time"] - int(86400 * 1000 * lastNdays)
-    queryInfo["architecture"] = arch
-    queryInfo["release_cycle"] = release
-    queryInfo["from"] = 0
-
-    if page_size < 1:
-        info_request = True
-        queryInfo["page_size"] = 2
-    else:
-        queryInfo["page_size"] = page_size
-
-    total_hits = 0
-
-    while True:
-        queryInfo["from"] = ent_from
-        es_data = get_payload(query_url, _format(query_datsets, **queryInfo))  # here
-        content = json.loads(es_data)
-        content.pop("_shards", None)
-        total_hits = content['hits']['total']
-        if info_request:
-            info_request = False
-            queryInfo["page_size"] = total_hits
-            continue
-        hits = len(content['hits']['hits'])
-        if hits == 0: break
-        ent_from = ent_from + hits
-        json_out.append(content)
-        if ent_from >= total_hits:
-            break
-
-    return json_out[0]['hits']['hits']
+    stats = es_query(index='relvals_stats_*',
+                 query=format('(NOT cpu_max:0) AND (exit_code:0) AND release:%(release_cycle)s AND architecture:%(architecture)s',
+                              release_cycle=release+"_*",
+                              architecture=arch
+                             ),
+                 start_time=1000*int(time()-(86400*lastNdays)),
+                     end_time=1000*int(time()),scroll=True)
+    return stats['hits']['hits']
 
 '''
 have a function that narrows the result to fields of interest, described in a list and in the given order
@@ -160,12 +95,12 @@ def compareMetrics(firstObject=None, secondObject=None,workflow=None,stepnum=Non
                         first_metric = firstObject[stamp][wf][step][field]
                         second_metric = secondObject[stamp][wf][step][field]
 
-                        if field is 'time' or 'cpu_avg':
-                            difference = first_metric - second_metric
-                        if field is 'rss_max' or 'rss_avg' or 'rss_75' or 'rss_25':
+                        if field.startswith('rss'):
                             if second_metric is 0: continue #sometimes the result is zero even when the exit_code is non 0
                             #difference = 100 - ( float( float(first_metric) / float(second_metric) ) * 100 )
-                            difference = (first_metric - second_metric) / 1048576
+                            difference = int((first_metric - second_metric) / 1048576)
+                        else:
+                            difference = first_metric - second_metric
 
                         comparison_results[field].append(difference)
 
@@ -177,7 +112,7 @@ if __name__ == "__main__":
     release = None
     fields = ['time', 'rss_max', 'cpu_avg', 'rss_75' , 'rss_25' , 'rss_avg' ]
 
-    arch = 'slc6_amd64_gcc630'
+    arch = 'slc7_amd64_gcc700'
     days = int(sys.argv[5])
     page_size = 0
     limit = 20
@@ -190,7 +125,7 @@ if __name__ == "__main__":
     step_n = None
     if len(sys.argv) > 6: wf_n = sys.argv[6]
     if len(sys.argv) > 7: step_n = sys.argv[7]
-    print wf_n, step_n
+    print(wf_n, step_n)
     
     json_out_first = getWorkflowStatsFromES(release_one, archone, days, page_size)
     json_out_second = getWorkflowStatsFromES(release_two, archtwo, days, page_size)
@@ -199,10 +134,24 @@ if __name__ == "__main__":
     filtered_second = filterElasticSearchResult(json_out_second, fields)
 
     comp_results = compareMetrics(filtered_first, filtered_second, wf_n, step_n)
-    print json.dumps(comp_results, indent=2, sort_keys=True, separators=(',', ': '))
+    #print json.dumps(comp_results, indent=2, sort_keys=True, separators=(',', ': '))
 
     for hist in comp_results:
-        histo = TH1F(hist, hist, 100000, -5000, 5000)
+        print(hist)
+        histo = TH1F(hist, release_one + ' - ' + release_two + '['+ hist +']', 100000, -5000, 5000)
+
+        if hist.startswith('rss'):
+            histo.GetXaxis().SetTitle('Difference in MB')
+            #print 'title set for', hist
+        if hist is 'time':
+            histo.GetXaxis().SetTitle('Difference in seconds')
+        if hist.startswith('cpu'):
+            histo.GetXaxis().SetTitle('Difference in cpu time')
+
         for i in comp_results[hist]:
             histo.Fill(i)
         histo.SaveAs(hist+".root")
+
+    # setup any CMSSW first (to get pyROOT in path)
+    # example usage:
+    # python getWorkflowStatsFromES.py CMSSW_10_5_ROOT6_X CMSSW_10_5_ROOT614_X slc7_amd64_gcc700 slc7_amd64_gcc700 14

@@ -1,12 +1,15 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from operator import itemgetter
 from time import sleep, time
-from multiprocessing import cpu_count
-from psutil import virtual_memory
 from copy import deepcopy
 import threading, json, os
 from optparse import OptionParser
 from subprocess import Popen
+from os.path import abspath, dirname
+import sys
+sys.path.append(dirname(dirname(abspath(sys.argv[0]))))
+from cmsutils import MachineCPUCount, MachineMemoryGB
 
 global simulation_time
 global simulation
@@ -17,7 +20,7 @@ def gettime(addtime=0):
   return simulation_time
 def simulate_done_job(thrds, resources):
   thdtime = 99999999
-  print gettime(),":",len(thrds),":",",".join([ str(n) for n in sorted([thrds[t]["time2finish"] for t in thrds])]),resources["available"]
+  print(gettime(),":",len(thrds),":",",".join([ str(n) for n in sorted([thrds[t]["time2finish"] for t in thrds])]),resources["available"])
   for t in thrds:
     if thrds[t]["time2finish"]<thdtime: thdtime = thrds[t]["time2finish"]
   if thdtime >= 9999999: return []
@@ -72,7 +75,7 @@ def getJob(jobs, resources, order):
     rss_v = 100.0*resources["available"]["rss"]/resources["total"]["rss"]
     cpu_v = 100.0*resources["available"]["cpu"]/resources["total"]["cpu"]
     sort_by = "rss" if rss_v>cpu_v else "cpu"
-    if not simulation: print "Sort by ",sort_by,rss_v,"vs",cpu_v
+    if not simulation: print("Sort by ",sort_by,rss_v,"vs",cpu_v)
   return True, sorted(pending_jobs,key=itemgetter(sort_by),reverse=True)[0]
 
 def startJob(job, resources, thrds):
@@ -81,7 +84,7 @@ def startJob(job, resources, thrds):
   for pram in ["rss", "cpu"]: resources["available"][pram]=resources["available"][pram]-job[pram]
   t = threading.Thread(target=runJob, args=(job,))
   thrds[t]=job
-  if not simulation: print "Run",len(thrds),job["jobid"],job["rss"],job["cpu"],job["time"],resources["available"]
+  if not simulation: print("Run",len(thrds),job["jobid"],job["rss"],job["cpu"],job["time"],resources["available"])
   t.start()
 
 def checkJobs(thrds, resources):
@@ -96,16 +99,16 @@ def checkJobs(thrds, resources):
     if not simulation:
       dtime = job["exec_time"]-job["origtime"]
       if dtime > 60:
-        print "===> SLOW JOB:",job["exec_time"],"secs vs ",job["origtime"],"secs. Diff:",dtime
+        print("===> SLOW JOB:",job["exec_time"],"secs vs ",job["origtime"],"secs. Diff:",dtime)
     resources["done_jobs"]=resources["done_jobs"]+1
     for pram in ["rss", "cpu"]: resources["available"][pram]=resources["available"][pram]+job[pram]
     if not simulation:
-      print "Done",len(thrds),job["jobid"],job["exec_time"],job["exit_code"],resources["available"],"JOBS:",resources["done_jobs"],"/",resources["total_jobs"],"GROUPS:",resources["done_groups"],"/",resources["total_groups"]
+      print("Done",len(thrds),job["jobid"],job["exec_time"],job["exit_code"],resources["available"],"JOBS:",resources["done_jobs"],"/",resources["total_jobs"],"GROUPS:",resources["done_groups"],"/",resources["total_groups"])
 
 def initJobs(jobs, resources, otype):
   if not "final" in jobs: jobs["final"]="true"
   if not "final_per_group" in jobs: jobs["final_per_group"]={"command": "true", "cpu": 1,  "rss": 1, "time" : 1}
-  for env,value in jobs["env"].iteritems(): os.putenv(env,value)
+  for env,value in jobs["env"].items(): os.putenv(env,value)
   total_groups=0
   total_jobs=0
   for group in jobs["jobs"]:
@@ -113,7 +116,7 @@ def initJobs(jobs, resources, otype):
     group["state"]="Pending"
     cmd_count = len(group["commands"])
     job_time=0
-    for i in reversed(range(cmd_count)):
+    for i in reversed(list(range(cmd_count))):
       total_jobs+=1
       job = group["commands"][i]
       job["origtime"] = job["time"]
@@ -126,8 +129,8 @@ def initJobs(jobs, resources, otype):
         for y in [x+"_avg", x+"_max"]:
           if (not y in job) or (job[y]==0): job[y]=job[x]
       if not simulation:
-        print ">>",group["name"],job
-        for x in [ "rss", "cpu" ]: print "  ",x,int(job[x]*100/job[x+"_max"]),int(job[x+"_avg"]*100/job[x+"_max"])
+        print (">>",group["name"],job)
+        for x in [ "rss", "cpu" ]: print ("  ",x,int(job[x]*100/job[x+"_max"]),int(job[x+"_avg"]*100/job[x+"_max"]))
       if otype:
         for x in [ "rss", "cpu" ]: job[x] = job[ x + "_" + otype ] 
       job["state"]="Pending"
@@ -139,7 +142,7 @@ def initJobs(jobs, resources, otype):
   resources["available"]=deepcopy(resources["total"])
   resources["total_groups"] = total_groups
   resources["total_jobs"] = total_jobs+total_groups
-  print "Total Resources:",resources["available"]
+  print("Total Resources:",resources["available"])
   return jobs
 
 if __name__ == "__main__":
@@ -160,14 +163,15 @@ if __name__ == "__main__":
   if opts.cpu>300:    opts.cpu=300
   if not opts.type in [ "", "avg", "max" ]: parser.error("Invalid -t|--type value '%s' provided." % opts.type)
   if not opts.order in ["dynamic", "time", "rss", "cpu"]: parser.error("Invalid -o|--order value '%s' provided." % opts.order)
-  if opts.maxJobs==0: opts.maxJobs=cpu_count()
+  if opts.maxJobs<=0: opts.maxJobs=MachineCPUCount
   resources={"total":
     {
-     "cpu" : opts.maxcpu if (opts.maxcpu>0) else cpu_count()*opts.cpu,
-     "rss" : opts.maxmemory if (opts.maxmemory>0) else int(virtual_memory().total*opts.memory/100)
+     "cpu" : opts.maxcpu if (opts.maxcpu>0) else MachineCPUCount*opts.cpu,
+     "rss" : opts.maxmemory if (opts.maxmemory>0) else int(MachineMemoryGB*1024*1024*10.24*opts.memory)
     },
     "total_groups" : 0, "total_jobs" : 0, "done_groups" : 0, "done_jobs" : 0
   }
+  print(MachineCPUCount,MachineMemoryGB,resources)
   jobs=initJobs(json.load(open(opts.jobs)), resources, opts.type)
   thrds={}
   wait_for_jobs = False

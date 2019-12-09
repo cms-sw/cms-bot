@@ -1,7 +1,7 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from sys import argv
 from os.path import join, exists
-from re import compile
 exceptions_regexp = []
 
 uniq_paths = []
@@ -15,5 +15,5 @@ for file_path in [ f.strip("\n").strip("/") for f in open(argv[1]).readlines()]:
     if exists(join(argv[2],xpath)): break
     if not xpath in uniq_paths: uniq_paths.append(xpath)
     break
-print "\n".join(uniq_paths)
+print("\n".join(uniq_paths))
 

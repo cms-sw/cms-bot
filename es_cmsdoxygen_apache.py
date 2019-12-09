@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import re
 from sys import exit
 from datetime import datetime
@@ -37,13 +38,14 @@ def process (line, count):
       payload["agent"] = agent
       payload["agent_type"]=agent.replace(" ","-").split("/",1)[0].upper()
   id = sha1(line).hexdigest()
-  if (count%1000)==0: print "Processed entries",count
-  return send_payload("apache-cmsdoxygen-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+  if (count%1000)==0:
+    print("Processed entries",count)
+  return send_payload("apache-cmsdoxygen-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret")
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsdoxygen_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)
 logs = run_cmd("ls -rt /var/log/httpd/sdt-access_log* | grep -v '[.]gz$'").split("\n")
 log = logwatch("httpd",log_dir="/data/es")
 s,c=log.process(logs, process)
-print "Total entries processed",c
+print("Total entries processed",c)
 

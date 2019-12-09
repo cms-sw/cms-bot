@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
 import json
 from os import environ
@@ -6,15 +7,16 @@ from os.path import exists
 from RelValArgs import GetMatrixOptions
 from runPyRelValThread import PyRelValsThread, splitWorkflows
 from cmsutils import doCmd
-print "Diving workflows"
+print("Diving workflows")
 workdir = sys.argv[1]
 RelValtimes = sys.argv[2]
-print RelValtimes
+print(RelValtimes)
 try:
   max_wf=int(sys.argv[3])
 except:
   max_wf=100
 relval_args = GetMatrixOptions(environ["CMSSW_VERSION"], environ["SCRAM_ARCH"])
+if 'RELVAL_WORKFLOWS' in  environ: relval_args=relval_args+' '+environ["RELVAL_WORKFLOWS"]
 matrix =  PyRelValsThread(1,environ["CMSSW_BASE"])
 workflows = matrix.getWorkFlows(relval_args)
 if exists(RelValtimes):
@@ -23,7 +25,7 @@ if exists(RelValtimes):
   with open(RelValtimes) as json_file:
     try: json_data = json.load(json_file)
     except:
-      print "Error reading RelVal Times"
+      print("Error reading RelVal Times")
       json_data={"avg": []}
     for tm_str in sorted(json_data["avg"],key=int, reverse=True):
       tm=int(tm_str)
@@ -37,7 +39,10 @@ if exists(RelValtimes):
   workflows = uwf + owf
 if workflows:
   workflows = splitWorkflows(workflows, max_wf)
-  print workflows
+  print(workflows)
+  on_grid = 0
+  #if '_DEVEL_X' in environ['CMSSW_VERSION']:
+  #  on_grid = 2
   total = len(workflows)
   try:
     for i in range(1, total+1):
@@ -46,5 +51,8 @@ if workflows:
       jobfile = workdir+"/ib-run-relval-"+jobid
       doCmd("echo WORKFLOWS="+wf+" >"+jobfile)
       doCmd("echo JOBID="+jobid+" >>"+jobfile)
+      if on_grid>0:
+        doCmd("echo 'SLAVE_LABELS=(condor&&cpu-8)' >>"+jobfile)
+        on_grid=on_grid-1
   except Exception as e:
-    print "Error " , e
+    print("Error " , e)

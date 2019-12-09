@@ -1,0 +1,12 @@
+#  Map between github username and the list of packages to watch.
+# Package is a regular expression which will be automatically delimited by ".*"
+# Format of this file is
+#ghuser:
+#  - subsystem1/
+#  - subsystem/package1
+#ghuser:
+#  - subsystem2/package1
+#  - subsystem2/package2
+smuzaffar:
+  - ConditionsValidation
+

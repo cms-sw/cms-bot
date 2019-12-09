@@ -112,7 +112,7 @@ for src in $SRC_BRANCH; do
       HAS_ERRORS=1
       if [ ! "X$PUSH_UPDATES" = "X" ] ; then
         cat $LOG_COMMANDS
-        cat $LOG_COMMANDS | mail -s "[$(echo $repo | tr '[a-z]' '[A-Z]')] Merge Conflict: $src -> $(echo $des | sed 's|:.*||')" cms-sdt-logs@cern.ch
+        echo -e "${BUILD_URL}\n$(cat $LOG_COMMANDS)" | mail -s "[$(echo $repo | tr '[a-z]' '[A-Z]')] Merge Conflict: $src -> $(echo $des | sed 's|:.*||')" cms-sdt-logs@cern.ch
       fi
       break
     fi

@@ -1,4 +1,5 @@
 #!/bin/sh -ex
+source $(dirname $0)/dockerrun.sh
 ARCHITECTURE=$1
 CMS_WEEK=$2
 RELEASE_NAME=$3
@@ -27,21 +28,14 @@ if [ "X$PROOTDIR" = "X" ] ; then
 fi
 
 export PROOTDIR
-cd $PROOTDIR
-PROOT_URL="https://cmssdt.cern.ch/proot/"
-echo "[PROOT] Mirroring files from "$PROOT_URL
-NEW_PKG=$(wget -nv -r -nH -nd -np -m -R *.html* $PROOT_URL 2>&1 | grep -v html | grep URL | grep tar.bz2 | cut -d\" -f2)
-#Unpack any new/updated archive downloaded
-for arch in $NEW_PKG; do
-  DIR=$( echo $arch | sed -r 's/.tar.bz2//')
-  if [ -d $DIR ]; then
-    echo "[PROOT] Removing obsolete unpacked dir"
-    mv $DIR removeMe
-    chmod -R 700 removeMe
-    rm -rf removeMe
+[ -d $PROOTDIR ] || mkdir -p $PROOTDIR
+PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
+for x in proot qemu-aarch64 qemu-ppc64le ; do
+  if [ ! -x $PROOTDIR/$x ] ; then
+    rm -rf $PROOTDIR/$x
+    wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
+    chmod +x $PROOTDIR/$x
   fi
-  echo "[PROOT] Unpacking "$arch
-  tar xjf $arch
 done
 
 cd $WORKSPACE/cms-bot
@@ -98,7 +92,6 @@ cp -f $WORKSPACE/cms-bot/cvmfsdirtab $BASEDIR/.cvmfsdirtab
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
-RUN_GC="NO"
 for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
@@ -107,40 +100,9 @@ for t in nweek- ; do
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
-      RUN_GC="YES"
     fi
   done
 done
-
-dockerrun()
-{
-  case "$SCRAM_ARCH" in
-    slc6_amd64_* )
-      ARGS="cd $THISDIR; $@"
-      docker run --net=host --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc6-installer:latest sh -c "$ARGS"
-      ;;
-    slc7_amd64_* )
-      ARGS="cd $THISDIR; $@"
-      docker run --net=host --rm -t -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH} -e x=${x} -v /tmp:/tmp -v ${WORKDIR}:${WORKDIR} -v ${THISDIR}:${THISDIR} -u $(whoami) cmssw/slc7-installer:latest sh -c "$ARGS"
-      ;;
-    slc7_aarch64_* )
-      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R $PROOTDIR/centos-7.2.1511-aarch64-rootfs -b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-aarch64 -cpu cortex-a57" sh -c "$ARGS"
-      ;;
-    fc24_ppc64le_* )
-      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R $PROOTDIR/fedora-24-ppc64le-rootfs -b /tmp:/tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
-      ;;
-    slc7_ppc64le_* )
-      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R $PROOTDIR/centos-7.2.1511-ppc64le-rootfs -b /tmp:/tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "$PROOTDIR/qemu-ppc64le -cpu POWER8" sh -c "$ARGS"
-      ;;
-    * )
-      eval $@
-      ;;
-  esac
-}
-
 
 # We install packages for both weeks. We reset every two week, alternating.
 # Notice that the biweekly period for week 1 is shifted by 1 week for this
@@ -182,10 +144,12 @@ for REPOSITORY in $REPOSITORIES; do
     fi
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
-    RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
-    if [ ! -e $RPM_CONFIG ] ; then
-      echo "mutex_set_max 10000000" > $RPM_CONFIG
-      dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
+    if [ $(echo "${SCRAM_ARCH}" | grep '^cc' | wc -l) -eq 0 ] ; then
+      RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
+      if [ ! -e $RPM_CONFIG ] ; then
+        echo "mutex_set_max 10000000" > $RPM_CONFIG
+        dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
+      fi
     fi
     # Since we are installing on a local disk, no need to worry about
     # the rpm database.
@@ -257,18 +221,11 @@ for t in nweek- ; do
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
-      RUN_GC=YES
     fi
   done
 done
-echo "Run GC: $RUN_GC"
 
 # Write everything in the repository
 echo "Publishing started" `date`
 time cvmfs_server publish
-
-#if [ "X$RUN_GC" = "XYES" ] ; then
-#  echo "Running garbage collector"
-#  time cvmfs_server gc -f
-#fi
 

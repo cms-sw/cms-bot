@@ -1,21 +1,12 @@
 #!/bin/bash -x
-ARCHITECTURE=$1
-RELEASE_FORMAT=$2
 WORKSPACE="${WORKSPACE-$PWD}"
-ls /cvmfs/cms-ib.cern.ch || true
-cd $WORKSPACE
-rm -rf llvm-analysis reports
-
+export J=$(nproc)
 export LC_ALL=C
-export SCRAM_ARCH=$ARCHITECTURE
-export J=$(getconf _NPROCESSORS_ONLN)
-scram -a $SCRAM_ARCH project $RELEASE_FORMAT
-cd $RELEASE_FORMAT
-eval `scram run -sh`
+cd $CMSSW_BASE
 rm -rf src
 git clone --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git  --depth 1 git@github.com:cms-sw/cmssw src
 cd src
-git checkout $RELEASE_FORMAT
+git checkout $CMSSW_VERSION
 rm -rf .git
 
 cp -pv Utilities/StaticAnalyzers/scripts/*  $LOCALRT/tmp

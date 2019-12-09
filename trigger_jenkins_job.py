@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from optparse import OptionParser
-import urllib2, urllib
+from _py2with3compatibility import urlencode, Request, urlopen
 from json import dumps
 
 def process(opts):
@@ -11,11 +12,11 @@ def process(opts):
   data = {"json":dumps({"parameter":xparam}),"Submit": "Build"}
   try:
     url = opts.server+'/job/'+opts.job+'/build'
-    data=urllib.urlencode(data)
-    req = urllib2.Request(url=url,data=data,headers={"ADFS_LOGIN" : opts.user})
-    content = urllib2.urlopen(req).read()
+    data = urlencode(data)
+    req = Request(url=url,data=data,headers={"ADFS_LOGIN" : opts.user})
+    content = urlopen(req).read()
   except Exception as e:
-    print "Unable to start jenkins job:",e
+    print("Unable to start jenkins job:",e)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog")

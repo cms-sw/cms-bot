@@ -3,10 +3,7 @@ CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 function Jenkins_GetCPU ()
 {
-  ACTUAL_CPU=$(getconf _NPROCESSORS_ONLN)
-  case $NODE_NAME in
-    lxplus* ) ACTUAL_CPU=$(echo $ACTUAL_CPU / 2 | bc) ;;
-  esac
+  ACTUAL_CPU=$(nproc)
   if [ "X$1" != "X" ] ; then
     ACTUAL_CPU=$(echo "$ACTUAL_CPU*$1" | bc)
   fi
@@ -17,7 +14,10 @@ pushd "$WORKSPACE/matrix-results"
   MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
   if [ ! "X$MATRIX_EXTRAS" = "X" ] ; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
   [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--job-reports $MATRIX_EXTRAS"
-  CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
+      [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_EXTRAS"
+  fi 
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root | sort`
   for f in $ROOT_FILES
@@ -46,6 +46,7 @@ mv $ERRORS_FILE $WORKSPACE/matrix-results/
 source $CMS_BOT_DIR/jenkins-artifacts
 send_jenkins_artifacts $WORKSPACE/matrix-results/ ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix-results 
 echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/cvmfs-deploy-baseline
+echo "ARCHITECTURE=${ARCHITECTURE}"    >> $WORKSPACE/cvmfs-deploy-baseline
 
 REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
 DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')

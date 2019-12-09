@@ -1,3 +1,9 @@
+function arrayIncludes(array, value){
+  if (array.indexOf(value) >= 0) {
+    return true;
+  }
+}
+
 /**
  * creates a row with the information about a test result
  */
@@ -70,7 +76,7 @@ fillResultsTable = function( resultsDict, table ){
   values.sort();
   $.each (values, function(index, value){
     key = valuex[value];
-    if (!IGNORE_KEYS.includes(key)){
+    if (! arrayIncludes(IGNORE_KEYS, key)){
     var resultsRow = getResultRow( resultsDict , key )
     table.append( resultsRow )
     }
@@ -112,7 +118,7 @@ getHeader = function( resultsDict ){
   subtitle.append( ibLink ).append( $( '<span>' ).text( ' + ' ) ).append( prLink ) 
 
   var adittionalPRS = resultsDict[ ADDITIONAL_PRS_KEY ]
-  if ( adittionalPRS != '' ){
+  if ( adittionalPRS && adittionalPRS !== '' ){
   
     addPRParts = adittionalPRS.split( ',' )
     $.each( addPRParts , function( index ){
@@ -161,12 +167,12 @@ parseResultsIntoDict = function( results ){
 
     var line = lines[ index ].trim()
 
-    if( line != '' ){  
+    if( line && line !== '' ){
         var lineParts = line.split( ';' )
         var key = lineParts[0].trim()
         var vParts = lineParts[1].trim().split(',')
         dict[ key ] = vParts[0].trim()
-        if (!(key in LABELS) && !IGNORE_KEYS.includes(key))
+        if (!(key in LABELS) && ! arrayIncludes(IGNORE_KEYS, key))
         {
           if (vParts.length > 1){LABELS[key] = vParts[1].trim()}
           else{LABELS[key] = key}

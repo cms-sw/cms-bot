@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 export LC_ALL=C
-if [ $# -eq 0 ] ;then J=$(getconf _NPROCESSORS_ONLN); else J=$1; fi
+if [ $# -eq 0 ] ;then J=$(nproc); else J=$1; fi
 
 eval `scram runtime -sh`
 for file in `cmsglimpse -l -F src/classes.*.h$ include | sed -e 's|^src/||'`;do 

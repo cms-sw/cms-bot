@@ -7,13 +7,17 @@ function get_data ()
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 TARGET=$1
 CLEANUP_WORKSPACE=$2
+REMOTE_USER=$(echo $TARGET | sed 's|@.*||')
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 #Check unique slave conenction
 if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
-  if [ `pgrep -f " ${TARGET} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
+  TARGET_HOST=$(echo $TARGET | sed 's|.*@||')
+  if [ `pgrep -f "@${TARGET_HOST} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
 fi
 DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+MULTI_MASTER_SLAVE=$(grep '>MULTI_MASTER_SLAVE<' -A1 ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${HOME}/slave.jar | sed 's| .*||')
 scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:~/system-info.sh"
 SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "~/system-info.sh '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
@@ -30,8 +34,8 @@ fi
 
 REMOTE_USER_ID=$(get_data REMOTE_USER_ID)
 JENKINS_PORT=$(pgrep -x -a  -f ".*httpPort=.*" | tail -1 | tr ' ' '\n' | grep httpPort | sed 's|.*=||')
-JENKINS_URL_LOCAL=$(echo ${JENKINS_URL} | sed "s|.*://[^/]*/|http://localhost:${JENKINS_PORT}/|")
-JENKINS_CLI_OPTS="-jar ${HOME}/jenkins-cli.jar -i ${HOME}/.ssh/id_dsa -s ${JENKINS_URL_LOCAL} -remoting"
+SSHD_PORT=$(grep '<port>' ${HOME}/org.jenkinsci.main.modules.sshd.SSHD.xml | sed 's|</.*||;s|.*>||')
+JENKINS_CLI_CMD="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_dsa -l localcli -p ${SSHD_PORT} localhost"
 if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   slave_labels=""
   case ${SLAVE_TYPE} in
@@ -52,10 +56,10 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
     ;;
   esac
   slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
-  if [ "X${slave_labels}" != "X" ] ; then java ${JENKINS_CLI_OPTS} groovy ${SCRIPT_DIR}/set-slave-labels.groovy "${JENKINS_SLAVE_NAME}" "${slave_labels}" ; fi
+  if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${JENKINS_SLAVE_NAME} ${slave_labels} ; fi
 fi
-if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
-  java ${JENKINS_CLI_OPTS} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
+if [ $(get_data JENKINS_SLAVE_SETUP) = "false" -a "${REMOTE_USER}" != "cmst1" ] ; then
+  ${JENKINS_CLI_CMD} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
 fi
 KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar ; fi
@@ -63,9 +67,30 @@ scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 
 pre_cmd=""
 case $(get_data SHELL) in
-  */tcsh|*/csh) pre_cmd="setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
-  *) pre_cmd="export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  */tcsh|*/csh) pre_cmd="ulimit $(get_data LIMITS) >& /dev/null || true; ulimit -a || true; setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  *) pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1         || true; ulimit -a || true; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
-ssh $SSH_OPTS $TARGET "${pre_cmd} java -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"
+EXTRA_JAVA_ARGS=""
+if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
+  set +x
+  let MAX_WAIT_TIME=60*60*12
+  WAIT_GAP=60
+  SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+-jar\s+.*/slave.*\s+"
+  while true ; do
+    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+    echo "$(date): Waiting $MAX_WAIT_TIME ..."
+    if [ $MAX_WAIT_TIME -gt 0 ] ; then
+      let MAX_WAIT_TIME=$MAX_WAIT_TIME-$WAIT_GAP
+      sleep $WAIT_GAP
+    else
+      exit 1
+    fi
+  done
+  set -x
+  pre_cmd="${pre_cmd} pgrep -f  '${SLAVE_CMD_REGEX}' && exit 1 || "
+  EXTRA_JAVA_ARGS="-DMULTI_MASTER_SLAVE=true"
+fi
+
+ssh $SSH_OPTS $TARGET "${pre_cmd} java ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

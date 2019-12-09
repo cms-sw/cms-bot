@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-import subprocess
-from commands import getstatusoutput
+from __future__ import print_function
+from _py2with3compatibility import run_cmd
 import re
 
 #
@@ -25,7 +25,7 @@ AUTO_FORWARD_PORT_REGEX='Merge CMSSW.+ into CMSSW.+'
 def load_graph(release_queue , maxNodes):
   command = MAGIC_COMMAND_GRAPH.replace('RELEASE_QUEUE',release_queue)
 
-  error, out = getstatusoutput(command)
+  error, out = run_cmd(command)
 
   prev_node_lane = {}
 
@@ -110,7 +110,7 @@ def link_nodes( parent, son):
 # a commit into the release queue
 #
 def identify_automated_merges(nodes):
-  commits_from_merge = [n for n in nodes.values() if n.is_from_merge]
+  commits_from_merge = [n for n in list(nodes.values()) if n.is_from_merge]
   
   for commit in commits_from_merge:
     if not commit.brought_by:
@@ -122,7 +122,7 @@ def identify_automated_merges(nodes):
 
   #print '-'.join( [ '%s by %s' % (c.hash,c.brought_by.hash) for c in commits_from_merge if c.brought_by] )
 
-  automated_merges = [n for n in nodes.values() if n.is_automated_merge]
+  # automated_merges = [n for n in list(nodes.values()) if n.is_automated_merge]
 
   #for auto_merge in automated_merges:
   #  auto_merge.printme()
@@ -132,7 +132,7 @@ def identify_automated_merges(nodes):
 # identifies the automated merge that was responsible for binging the commit
 #
 def identify_responsible_automated_merge(commit):
-  children = commit.children.values()
+  children = list(commit.children.values())
   
   if len( children ) == 0:
     return commit
@@ -148,16 +148,16 @@ def identify_responsible_automated_merge(commit):
 # returns a list of commits(Nodes) of the pull requests that come from a merge commit
 #
 def get_prs_from_merge_commit( graph ):
-  return [ c for c in graph.values() if c.is_from_merge and c.is_pr ] 
+  return [ c for c in list(graph.values()) if c.is_from_merge and c.is_pr ] 
 
 #
 # returns a list of pr numbers that were brougth by a commit given its hash
 #
 def get_prs_brought_by_commit( graph , commit_hash ):
-  return [ c for c in graph.values() if c.is_pr and c.is_from_merge and c.brought_by.hash == commit_hash ]
+  return [ c for c in list(graph.values()) if c.is_pr and c.is_from_merge and c.brought_by.hash == commit_hash ]
 
 
-class Node:
+class Node(object):
   
   # initializes the node with a hash, the lane (line in history), and a description
   def __init__(self, hash, desc,lane):
@@ -196,21 +196,21 @@ class Node:
     for l in range(self.lane-1):
       spaces += ' '
 
-    print '%s %d;%s-%s' % (spaces,self.lane,self.hash,self.desc)
-    print 'parents: %s'% '-'.join(self.parents.keys())
-    print 'children: %s'% '-'.join(self.children.keys())
-    print 'is automated merge: %s' % self.is_automated_merge
-    print 'is from merge commit: %s' % self.is_from_merge
-    print 'is pr: %s' % self.is_pr 
-    print 'pr number: %s' % self.pr_number
+    print('%s %d;%s-%s' % (spaces,self.lane,self.hash,self.desc))
+    print('parents: %s'% '-'.join(list(self.parents.keys())))
+    print('children: %s'% '-'.join(list(self.children.keys())))
+    print('is automated merge: %s' % self.is_automated_merge)
+    print('is from merge commit: %s' % self.is_from_merge)
+    print('is pr: %s' % self.is_pr) 
+    print('pr number: %s' % self.pr_number)
     if self.is_automated_merge:
-      print 'Is responsible for: '
-      print ' - '.join([ c.hash for c in self.brought_commits ])
-      print
-      print
+      print('Is responsible for: ')
+      print(' - '.join([ c.hash for c in self.brought_commits ]))
+      print()
+      print()
     if self.is_from_merge:
-      print 'brought by: '
-      print self.brought_by.hash
+      print('brought by: ')
+      print(self.brought_by.hash)
 
 
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
-from commands import getstatusoutput
+from _py2with3compatibility import run_cmd
 from pickle import Pickler
 
 def doDu(what):
-  error, out = getstatusoutput('du -k -s %s' % what)
+  error, out = run_cmd('du -k -s %s' % what)
   if error:
-    print "Error while getting directory size."
+    print("Error while getting directory size.")
     sys.exit(1)
   results = [l.split() for l in out.split("\n")]
   return dict([(pkg.strip().replace("src/", ''), int(sz.strip()*1024))
@@ -14,12 +15,12 @@ def doDu(what):
 
 if __name__ == '__main__':
   try:
-    f = open('dirSizeInfo.pkl', 'w')
-    pklr = Pickler(f)
+    f = open('dirSizeInfo.pkl', 'wb')
+    pklr = Pickler(f, protocol=2)
     pklr.dump(doDu("src lib bin"))
     pklr.dump(doDu("src/*/*"))
     f.close()
-  except Exception, e:
-    print "ERROR during pickling results for dir size:", str(e)
+  except Exception as e:
+    print("ERROR during pickling results for dir size:", str(e))
     sys.exit(1)
-  print "Successfully pickled results for dir size !"
+  print("Successfully pickled results for dir size !")

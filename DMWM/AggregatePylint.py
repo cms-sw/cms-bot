@@ -37,7 +37,7 @@ with open('pylint.out', 'r') as pylintFile:
                 if filename and label:
                     report[filename][label]['score'] = score
             except NameError:
-                print "Score of %s found, but no filename" % score
+                print("Score of %s found, but no filename" % score)
 
         parts = line.split(':')
         if len(parts) != 3:

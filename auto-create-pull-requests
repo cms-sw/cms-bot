@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Creates pull requests to automatically forward port from one release to another.
+from __future__ import print_function
 from github import Github, GithubException
 from sys import exit
 from os.path import expanduser
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     try:
       gh_repo = gh.get_organization("cms-sw").get_repo(repo)
     except:
-      print "Could not find repository."
+      print("Could not find repository.")
       exit(0)
     for (head, base) in MAPPINGS[repo]:
       title = "Forward port %s into %s" % (head, base)
@@ -41,13 +42,13 @@ if __name__ == "__main__":
                                  body="",
                                  base=base,
                                  head=head)
-      except GithubException, e:
+      except GithubException as e:
         if e.data[u"errors"][0][u"message"].startswith("No commits between"):
-          print "%s already in %s" % (head, base)
+          print("%s already in %s" % (head, base))
         elif e.data[u"errors"][0][u"message"].startswith("A pull request already exists"):
-          print "%s is already pending for merge in %s" % (head, base)
+          print("%s is already pending for merge in %s" % (head, base))
         else:
-          print e.data
+          print(e.data)
           exit(1)
       if pr:
-        print pr
+        print(pr)

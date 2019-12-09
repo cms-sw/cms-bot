@@ -6,12 +6,14 @@
 # WORKSPACE
 mkdir -p $WORKSPACE/results
 ls /cvmfs/cms-ib.cern.ch || true
+source /cvmfs/cms.cern.ch/cmsset_default.sh
 SCRAM_ARCH=$ARCHITECTURE
 scram -a $ARCHITECTURE p $RELEASE_FORMAT
 cd $RELEASE_FORMAT/src
 eval `scram run -sh`
-git cms-addpkg HLTrigger/Configuration
-scram build -j $(getconf _NPROCESSORS_ONLN)
+mkdir -p $CMSSW_BASE/src/HLTrigger
+cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger/Configuration/
+scram build -j $(nproc)
 cd HLTrigger/Configuration/test/
 ls
 ./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-import sys, urllib2, json, re
-from datetime import datetime
-from os.path import exists, join as path_join, dirname, abspath
+from __future__ import print_function
+import json, re, ssl
+from os.path import exists
 from os import getenv
+from _py2with3compatibility import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, install_opener, Request, \
+  urlopen, build_opener
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
@@ -35,24 +37,24 @@ def es_get_passwd(passwd_file=None):
   try:
     return open(passwd_file,'r').read().strip()
   except Exception as e:
-    print "Couldn't read the secrets file" , str(e)
+    print("Couldn't read the secrets file" , str(e))
     return ""
 
 def send_request(uri, payload=None, passwd_file=None, method=None):
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
   url = "%s/%s" % (ES_SERVER,uri)
-  passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+  passman = HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'cmssdt', passwd)
-  auth_handler = urllib2.HTTPBasicAuthHandler(passman)
-  opener = urllib2.build_opener(auth_handler)
+  auth_handler = HTTPBasicAuthHandler(passman)
+  opener = build_opener(auth_handler)
   try:
-    urllib2.install_opener(opener)
-    request = urllib2.Request(url, payload)
+    install_opener(opener)
+    request = Request(url, payload)
     if method: request.get_method = lambda: method
-    content = urllib2.urlopen(request)
+    content = urlopen(request)
   except Exception as e:
-    print "ERROR:",url,str(e)
+    print("ERROR:",url,str(e))
     return False
   return True
 
@@ -61,25 +63,31 @@ def send_payload(index, document, id, payload, passwd_file=None):
   uri = "%s/%s/" % (index,document)
   if id: uri = uri+id
   if not send_request(uri, payload=payload, passwd_file=passwd_file): return False
-  print "OK ",index
+  print("OK ",index)
   return True
 
 def send_template(name, payload, passwd_file=None):
   if not name.startswith('cmssdt-'): name = 'cmssdt-' + name
   uri = "_template/%s" % name
   if not send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT'): return False
-  print "OK ",name
+  print("OK ",name)
   return True
 
 def delete_hit(hit,passwd_file=None):
   uri = "%s/%s/%s" % (hit["_index"], hit["_type"], hit["_id"])
   if not send_request(uri, passwd_file=passwd_file, method='DELETE'): return False
-  print "DELETE:",hit["_id"]
+  print("DELETE:",hit["_id"])
   return True
 
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
-  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  sslcon = None
+  try:
+    sslcon = ssl._create_unverified_context()
+  except Exception as e:
+    sslcon =  None
+  if sslcon: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"), context=sslcon).read()
+  else: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore")).read()
 
 def get_payload_wscroll(index, query):
   es_data = json.loads(get_payload(index, query,scroll=1))
@@ -98,7 +106,7 @@ def get_payload_wscroll(index, query):
 
 def get_template(index=''):
   data = {'index':index, 'api': '/_template', 'prefix': True}
-  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  return urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
 
 def find_indexes(index):
   idxs = {}
@@ -119,7 +127,7 @@ def find_indexes(index):
 
 def get_indexes(index='cmssdt-*'):
   data = {'index':index, 'api': '/_cat', 'prefix': True}
-  return urllib2.urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  return urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
 
 def close_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index

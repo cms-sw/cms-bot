@@ -8,14 +8,16 @@ else
 fi
 
 JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
+CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
 DIRS_PROCESSED=
 JOBS_TO_KEEP=150
 RUNS_TO_KEEP=2
 #Keep $JOBS_TO_KEEP of these
-for dir in pull-request-integration cmsdist-pr ; do
+for dir in pull-request-integration ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir
+  find . -maxdepth 3 -mindepth 3 -name '.keep' -type f | sed 's|^./||;s|/.*||' | xargs -i --no-run-if-empty touch "./{}"
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
   for run in `ls -d *`; do
     ls -d $run/* | sed 's|.*/||' | sort -n | head -n -$RUNS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf "$run/{}"
@@ -43,14 +45,14 @@ for dir in material-budget-ref ; do
 done
 
 #Keep the following for 8 days
-for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-release-afs build-fwlite lizard flawfinder; do
+for dir in auto-build-release auto-upload-release cleanup-auto-build deploy-release-afs build-fwlite lizard flawfinder invalid-includes; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
 #Keep the following for 30 days
-for dir in run-pr-format pr-code-checks ; do
+for dir in run-pr-format pr-code-checks jenkins-test-code-format; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +30 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
@@ -65,16 +67,17 @@ done
 
 #Cleanup dirs which are available on CVMFS
 for dir in ib-baseline-tests ; do
-  CVMFS_DIR=/cvmfs/cms-ib.cern.ch/jenkins-artifacts/${dir}
-  ls ${CVMFS_DIR} >/dev/null 2>&1 || true
-  if [ -d ${CVMFS_DIR} ] ; then
-    for ver in $(find ${JENKINS_ARTIFACTS}/${dir} -maxdepth 1 -mindepth 1 -name 'CMSSW_*' -type d | sed "s|${JENKINS_ARTIFACTS}/${dir}/||") ; do
-      if [ -d ${CVMFS_DIR}/${ver} ] ; then
-        $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${dir}/${ver}
-        $DRY_RUN ln -s  ${CVMFS_DIR}/${ver} ${JENKINS_ARTIFACTS}/${dir}/${ver}
-      fi
-    done
-  fi
+  for ver in $(find ${JENKINS_ARTIFACTS}/${dir}  -maxdepth 2 -mindepth 2 -path "*/${dir}/CMSSW_*/*" -type d | sed "s|${JENKINS_ARTIFACTS}/||") ; do
+    if [ -d ${CVMFS_JENKINS_ARTIFACTS}/${ver} ] ; then
+      $DRY_RUN rm -rf ${JENKINS_ARTIFACTS}/${ver}
+      $DRY_RUN ln -s ${CVMFS_JENKINS_ARTIFACTS}/${ver} ${JENKINS_ARTIFACTS}/${ver}
+    fi
+  done
+  for l in $(ls -d ${JENKINS_ARTIFACTS}/${dir}/CMSSW_*) ; do 
+    if  [ -L $l -a ! -e $l ] ; then
+      rm -f $l
+    fi
+  done
 done
 
 NEW_DIRS=""
@@ -85,9 +88,10 @@ for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 1 -type d | sed 's|.
 done
 
 if [ "X${NEW_DIRS}" != "X" ] ; then
-  echo "New directories: ${NEW_DIRS}" | mail -s '[CMSSDT] Found new Directories to cleanup' cms-sdt-logs@cern.ch
+  echo -e "${BUILD_URL}\nNew directories: ${NEW_DIRS}" | mail -s '[CMSSDT] Found new Directories to cleanup' cms-sdt-logs@cern.ch
 fi
 
 WEB_LOG_DIR=/data/sdt/buildlogs
-find /data/sdt/buildlogs -mtime +8 -maxdepth 3 -maxdepth 3 -path '*/fwlite/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+find /data/sdt/buildlogs -mindepth 3 -maxdepth 3 -mtime +8  -path '*/fwlite/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
+find /data/sdt/buildlogs -mindepth 5 -maxdepth 5 -mtime +8  -path '*/www/*/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 

@@ -53,6 +53,7 @@ MULTILINE_COMMENTS_MAP = {
               "workflow(s|)":     [format('^\s*%(workflow)s(\s*,\s*%(workflow)s|)*\s*$', workflow= WF_PATTERN), "MATRIX_EXTRAS"],
               "pull_request(s|)": [format('%(cms_pr)s(\s*,\s*%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),            "PULL_REQUESTS"],
               "full_cmssw":       ['true|false',                                                                "BUILD_FULL_CMSSW"],
+              "dry_run":          ['true|false',                                                                "DRY_RUN"],
               "jenkins_slave":    ['[a-zA-Z][a-zA-Z0-9_-]+' ,                                                   "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],
               "enable_test(s|)":  ["gpu",                                                                       "ENABLE_BOT_TESTS"],
@@ -196,6 +197,17 @@ def check_enable_bot_tests(first_line, *args):
 def check_pull_requests(first_line, repo, *args):
   return " ".join(get_prs_list_from_string(first_line, repo))
 
+def check_release_format(first_line, repo, params, *args):
+  rq = first_line
+  ra = ''
+  if '/' in rq:
+    rq, ra = rq.split('/',1)
+  elif re.match('^'+ARCH_PATTERN+'$', rq):
+    ra = rq
+    rq = ''
+  params['ARCHITECTURE_FILTER'] = ra
+  return rq
+
 def check_test_cmd(first_line, repo):
   m = REGEX_TEST_REG.match(first_line)
   if m:
@@ -241,7 +253,7 @@ def parse_extra_params(full_comment, repo):
       try:
         func = 'check_%s' % pttrn[1].lower()
         if func in ALL_CHECK_FUNCTIONS:
-          line_args[1] = ALL_CHECK_FUNCTIONS[func](line_args[1], repo)
+          line_args[1] = ALL_CHECK_FUNCTIONS[func](line_args[1], repo, matched_extra_args)
       except:
         pass
       matched_extra_args[pttrn[1]] = line_args[1]
@@ -256,16 +268,6 @@ def multiline_check_function(first_line, comment_lines, repository):
   extra_params = parse_extra_params(comment_lines, repository)
   print(extra_params)
   if 'errors' in extra_params: return False, {}
-  if 'RELEASE_FORMAT' in extra_params:
-    rq = extra_params['RELEASE_FORMAT']
-    ra = ''
-    if '/' in rq:
-      rq, ra = rq.split('/',1)
-    elif re.match('^'+ARCH_PATTERN+'$', rq):
-      ra = rq
-      rq = ''
-    extra_params['ARCHITECTURE_FILTER'] = ra
-    extra_params['RELEASE_FORMAT'] = rq
   return True, extra_params
 
 def get_changed_files(repo, pr, use_gh_patch=False):
@@ -945,6 +947,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         rest_pr = [p for p in prs if p!=xpr]
         ex_msg = ''
         if rest_pr: ex_msg = "\nTested with other pull request(s) %s" % ','.join(rest_pr)
+        if len(global_test_params)>1:
+          ex_msg = "\nTest Parameters:"
+          for p in global_test_params:
+            if == 'PULL_REQUESTS': continue
+            ex_msg = "\n  - **%s** = %s" % (p, global_test_params[p])
         if not repo_name in repo_cache: repo_cache[repo_name] = gh.get_repo(repo_name)
         pr_issue = issue
         if (repo_name!=repository) or (pr_num!=prId): pr_issue=repo_cache[repo_name].get_issue(pr_num)

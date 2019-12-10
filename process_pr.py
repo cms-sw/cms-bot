@@ -931,7 +931,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     global_test_params['ENABLE_BOT_TESTS'] = enable_tests
   if release_arch:
     global_test_params['ARCHITECTURE_FILTER'] = release_arch
-
+    
+  print("All Parameters:",global_test_params)
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
   if create_test_property:
     # trigger the tests and inform it in the thread.

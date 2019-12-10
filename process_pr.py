@@ -948,7 +948,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         ex_msg = ''
         if rest_pr: ex_msg = "\nTested with other pull request(s) %s" % ','.join(rest_pr)
         if len(global_test_params)>1:
-          ex_msg = "\nTest Parameters:"
+          ex_msg = ex_msg+"\nTest Parameters:"
           for p in global_test_params:
             if (p == 'PULL_REQUESTS') or (not global_test_params[p]): continue
             ex_msg = ex_msg+"\n  - **%s** = %s" % (p, global_test_params[p])

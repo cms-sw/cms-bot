@@ -951,7 +951,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           ex_msg = "\nTest Parameters:"
           for p in global_test_params:
             if p == 'PULL_REQUESTS': continue
-            ex_msg = "\n  - **%s** = %s" % (p, global_test_params[p])
+            ex_msg = ex_msg+"\n  - **%s** = %s" % (p, global_test_params[p])
         if not repo_name in repo_cache: repo_cache[repo_name] = gh.get_repo(repo_name)
         pr_issue = issue
         if (repo_name!=repository) or (pr_num!=prId): pr_issue=repo_cache[repo_name].get_issue(pr_num)

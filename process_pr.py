@@ -34,29 +34,31 @@ PUSH_TEST_ISSUE_MSG='^\[Jenkins CI\] Testing commit: [0-9a-f]+$'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
-CMSSW_PR_PATTERN=format("(#[0-9]+|https://+github.com/+%(cmssw_repo)s/+pull/+[0-9]+/*|)", cmssw_repo=CMSSW_REPO_NAME)
-CMSDIST_PR_PATTERN=format("(%(cmsdist_repo)s#[0-9]+|https://+github.com/+%(cmsdist_repo)s/+pull/+[0-9]+/*|)", cmsdist_repo=CMSDIST_REPO_NAME)
 CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
-TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with(\s+%(cmssw_pr)s(\s*,\s*%(cmssw_pr)s|)*|)(\s+%(cmsdist_pr)s|)|)(\s+for(\s+%(release_queue)s)|)\s*$",
-                     workflow=WF_PATTERN,
-                     cmssw_pr=CMSSW_PR_PATTERN,
-                     cmsdist_pr=CMSDIST_PR_PATTERN,
-                     release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
-
 CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
                       cmsorgs='|'.join(EXTERNAL_REPOS))
-TEST_REGEXP_NEW = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)\s*$",
+TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)\s*$",
                      workflow=WF_PATTERN,
                      cms_pr=CMS_PR_PATTERN,
                      release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
 
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
-REGEX_TEST_REG_NEW = re.compile(TEST_REGEXP_NEW, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
+ALL_CHECK_FUNCTIONS = None
+MULTILINE_COMMENTS_MAP = {
+              "workflow(s|)":     [format('^\s*%(workflow)s(\s*,\s*%(workflow)s|)*\s*$', workflow= WF_PATTERN), "MATRIX_EXTRAS"],
+              "pull_request(s|)": [format('%(cms_pr)s(\s*,\s*%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),            "PULL_REQUESTS"],
+              "full_cmssw":       ['true|false',                                                                "BUILD_FULL_CMSSW"],
+              "dry_run":          ['true|false',                                                                "DRY_RUN"],
+              "jenkins_slave":    ['[a-zA-Z][a-zA-Z0-9_-]+' ,                                                   "RUN_ON_SLAVE"],
+              "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],
+              "enable_test(s|)":  ["gpu",                                                                       "ENABLE_BOT_TESTS"],
+              "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"]
+              }
 
 def get_last_commit(pr):
   last_commit = None
@@ -85,7 +87,8 @@ def read_repo_file(repo_config, repo_file, default=None):
 #
 # creates a properties file to trigger the test of the pull request
 #
-def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, dryRun, abort=False, req_type="tests", repo_config=None, extra_prop=None , new_tests=False):
+
+def create_properties_file_tests(repository, pr_number, parameters, dryRun, abort=False, req_type="tests", repo_config=None):
   if abort: req_type = "abort"
   repo_parts = repository.split("/")
   if (req_type in "tests"):
@@ -93,27 +96,9 @@ def create_properties_file_tests(repository, pr_number, cmsdist_pr, cmssw_prs, d
       if (not repo_parts[0] in EXTERNAL_REPOS): req_type = "user-"+req_type
       elif not repo_config.CMS_STANDARD_TESTS: req_type = "user-"+req_type
     except: pass
-  repo_partsX=repository.replace("/","-")
-  out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repo_partsX, pr_number)
-  parameters = {}
-  if extra_prop:
-    for x in extra_prop:
-      parameters[x]=extra_prop[x]
-  if new_tests:
-    prs = ['%s#%s' % (repository,pr_number)]
-    for pr in [p for p in cmssw_prs.split(',') if p]:
-      if '#' not in pr: pr='%s#%s' % (repository, pr)
-      prs.append(pr)
-    parameters['PULL_REQUESTS']=" ".join(prs)
-    parameters['USE_MULTIPLE_PRS_JOB']='true'
-  else:
-    parameters['PUB_USER']=repo_parts[0]
-    if repo_parts[1] == GH_CMSDIST_REPO:
-      parameters['CMSDIST_PR']=pr_number
-    else:
-      parameters['PULL_REQUEST']=pr_number
-      parameters['CMSDIST_PR']=cmsdist_pr
-      parameters['ADDITIONAL_PULL_REQUESTS']=cmssw_prs
+  out_file_name = 'trigger-%s-%s-%s.properties' % (req_type, repository.replace("/","-"), pr_number)
+  parameters['USE_MULTIPLE_PRS_JOB']='true'
+
   try:
     if repo_config.JENKINS_SLAVE_LABEL: parameters['RUN_LABEL']=repo_config.JENKINS_SLAVE_LABEL
   except: pass
@@ -203,51 +188,87 @@ def check_extra_labels(first_line, extra_labels):
     else: bp_pr = first_line.split("/pull/",1)[1].strip("/").strip()
     extra_labels["backport"]=["backport", bp_pr]
 
-def check_ignore_test(first_line):
-  return first_line.split(" ",1)[-1].replace(" ","").split(",")
+def check_ignore_bot_tests(first_line, *args):
+  return first_line.upper().replace(" ","")
 
-def check_enable_test(first_line):
-  return first_line.split(" ",1)[-1].replace(" ","").split(",")
+def check_enable_bot_tests(first_line, *args):
+  return first_line.upper().replace(" ","")
 
-def get_test_prs(test_command):
-  prs = []
-  for x in [ i.strip() for i in test_command.split(",") if i ]:
-    if "#" in x: x = x.split("#")[-1]
-    elif "/pull/" in x: x = x.split("/pull/")[-1].strip("/")
-    if not x in prs: prs.append(x)
-  return ",".join(prs)
+def check_pull_requests(first_line, repo, *args):
+  return " ".join(get_prs_list_from_string(first_line, repo))
+
+def check_release_format(first_line, repo, params, *args):
+  rq = first_line
+  ra = ''
+  if '/' in rq:
+    rq, ra = rq.split('/',1)
+  elif re.match('^'+ARCH_PATTERN+'$', rq):
+    ra = rq
+    rq = ''
+  params['ARCHITECTURE_FILTER'] = ra
+  return rq
 
 def check_test_cmd(first_line, repo):
   m = REGEX_TEST_REG.match(first_line)
-  if m:
-    wfs = ""
-    cmssw_prs= ""
-    cmsdist_pr = ""
-    cmssw_que = ""
-    print(m.groups())
-    if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
-    if m.group(11): cmssw_prs = get_test_prs(m.group(11))
-    if m.group(16): cmsdist_pr = get_test_prs(m.group(16))
-    if m.group(19): cmssw_que = m.group(19)
-    return (True, cmsdist_pr, cmssw_prs, wfs, cmssw_que)
-  return (False, "", "", "", "")
-
-def check_test_cmd_new(first_line, repo):
-  m = REGEX_TEST_REG_NEW.match(first_line)
   if m:
     wfs = ""
     prs= []
     cmssw_que = ""
     print(m.groups())
     if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
-    if m.group(11):
-      for pr in [x.strip().split('/github.com/',1)[-1].replace('/pull/','#').strip('/') for x in m.group(11).split(",")]:
-        while '//' in pr: pr = pr.repalce('//','/')
-        if pr.startswith('#'): pr = repo+pr
-        prs.append(pr)
+    if m.group(11): prs = get_prs_list_from_string(m.group(11), repo)
     if m.group(20): cmssw_que = m.group(20)
-    return (True, "", ','.join(prs), wfs, cmssw_que)
-  return (False, "", "", "", "")
+    return (True, " ".join(prs), wfs, cmssw_que)
+  return (False, "", "", "")
+
+def get_prs_list_from_string(pr_string="", repo_string=""):
+  prs = []
+  for pr in [x.strip().split('/github.com/',1)[-1].replace('/pull/','#').strip('/') for x in pr_string.split(",") if x.strip()]:
+    while '//' in pr: pr = pr.replace('//','/')
+    if pr.startswith('#'): pr = repo_string+pr
+    prs.append(pr)
+  return prs
+
+def parse_extra_params(full_comment, repo):
+  global ALL_CHECK_FUNCTIONS
+  error_lines = []
+  matched_extra_args = {}
+  if ALL_CHECK_FUNCTIONS is None:
+    all_globals = globals()
+    ALL_CHECK_FUNCTIONS = dict([(f,all_globals[f]) for f in all_globals if f.startswith('check_') and callable(all_globals[f])])
+  for l in full_comment[1:]:
+    l = l.replace(' ', '')
+    if l.startswith('-'): l = l[1:]
+    if l=='': continue
+    if not '=' in l:
+      error_lines.append('"=" not found in line arg: ' + l)
+      continue
+
+    for k, pttrn in MULTILINE_COMMENTS_MAP.items():
+      line_args = l.split('=', 1)
+      if not re.match(k, line_args[0], re.I): continue
+      if not re.match(pttrn[0], line_args[1], re.I):
+        error_lines.append('Invalid value "%s" for parameter "%s" used.' % (line_args[1], line_args[0]))
+        break
+      try:
+        func = 'check_%s' % pttrn[1].lower()
+        if func in ALL_CHECK_FUNCTIONS:
+          line_args[1] = ALL_CHECK_FUNCTIONS[func](line_args[1], repo, matched_extra_args)
+      except:
+        pass
+      matched_extra_args[pttrn[1]] = line_args[1]
+      break
+  if error_lines:
+    matched_extra_args = {"errors" : error_lines}
+  return matched_extra_args
+
+def multiline_check_function(first_line, comment_lines, repository):
+  if not "test parameters" in first_line.lower():
+    return False, {}
+  extra_params = parse_extra_params(comment_lines, repository)
+  print(extra_params)
+  if 'errors' in extra_params: return False, {}
+  return True, extra_params
 
 def get_changed_files(repo, pr, use_gh_patch=False):
   if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
@@ -284,9 +305,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   prId = issue.number
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
-  new_tests = False
-  if 'CMS_BOT_MULTI_PR_TESTS' in environ: new_tests = True
-  print("New Tests:", new_tests)
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
@@ -295,7 +313,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   create_test_property = False
   repo_cache = {repository: repo}
   packages = set([])
-  create_external_issue = False
   add_external_category = False
   signing_categories = set([])
   new_package_message = ""
@@ -306,15 +323,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   #Process Pull Request
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
-  known_ignore_tests='build-warnings|clang-warnings|none'
-  known_enable_tests='gpu|none'
-  REGEX_EX_IGNORE_CHKS='^ignore\s+(%s)(\s*,\s*(%s))*$' % (known_ignore_tests, known_ignore_tests)
-  REGEX_EX_ENABLE_TESTS='^enable\s+(%s)(\s*,\s*(%s))*$' % (known_enable_tests, known_enable_tests)
+  known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"]
+  known_enable_tests=MULTILINE_COMMENTS_MAP["enable_test(s|)"]
+  REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
+  REGEX_EX_ENABLE_TESTS='^enable\s+((%s)(\s*,\s*(%s))*|none)$' % (known_enable_tests, known_enable_tests)
   last_commit_date = None
   push_test_issue = False
   requestor = issue.user.login.encode("ascii", "ignore")
-  ignore_tests = []
-  enabled_tests = []
+  ignore_tests = ''
+  enable_tests = ''
   if issue.pull_request:
     pr   = repo.get_pull(prId)
     if pr.changed_files==0:
@@ -346,17 +363,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     else:
       add_external_category = True
       packages = set (["externals/"+repository])
-      if new_tests:
-        ex_pkg = external_to_package(repository)
-        if ex_pkg: packages.add(ex_pkg)
+      ex_pkg = external_to_package(repository)
+      if ex_pkg: packages.add(ex_pkg)
       if (repo_org!=GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
-          if repo_name != GH_CMSDIST_REPO:
-            #Disabled creation of external Issues: Instead use
-            #https://github.com/pulls?utf8=%E2%9C%93&q=is%3Apr+archived%3Afalse+org%3Acms-data+org%3Acms-externals+org%3Acms-sw+-repo%3Acms-sw%2Fcmssw+is%3Aopen+label%3Aorp-pending+
-            #create_external_issue = repo_config.CREATE_EXTERNAL_ISSUE
-            create_test_property = new_tests
-          else:
-            create_test_property = True
+          create_test_property = True
       if (repo_name == GH_CMSDIST_REPO) and (not re.match(VALID_CMSDIST_BRANCHES,pr.base.ref)):
           print("Skipping PR as it does not belong to valid CMSDIST branch")
           return
@@ -461,14 +471,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   tests_already_queued = False
   tests_requested = False
   mustMerge = False
-  external_issue_number=""
   trigger_test_on_signature = True
   has_categories_approval = False
   release_queue = ''
   release_arch = ''
-  cmsdist_pr = ''
   cmssw_prs = ''
   extra_wfs = ''
+  global_test_params = {}
   assign_cats = {}
   hold = {}
   extra_labels = {}
@@ -481,6 +490,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   comp_warnings = False
   extra_testers = []
   all_comments = [issue]
+
+  #start of parsing comments section
+
   for c in issue.get_comments(): all_comments.append(c)
   for comment in all_comments:
     commenter = comment.user.login.encode("ascii", "ignore")
@@ -497,18 +509,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     first_line = comment_lines[0:1]
     if not first_line: continue
     first_line = first_line[0]
-    print("DEBUG: comment:",commenter,":",first_line)
     if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
       already_seen = comment
       backport_pr_num = get_backported_pr(comment_msg)
       if issue.pull_request and last_commit_date:
         if (comment.created_at >= last_commit_date): pull_request_updated = False
         else: pull_request_updated = True
-      if create_external_issue:
-        external_issue_number=comment_msg.split("external issue "+CMSDIST_REPO_NAME+"#",2)[-1].split("\n")[0]
-        if not re.match("^[1-9][0-9]*$",external_issue_number):
-          print("ERROR: Unknow external issue PR format:",external_issue_number)
-          external_issue_number=""
       continue
 
     assign_type, new_cats = get_assign_categories(first_line)
@@ -542,13 +548,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
       if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
-        ignore_tests = check_ignore_test (first_line.upper())
-        if 'NONE' in ignore_tests: ignore_tests=[]
+        ignore_tests = check_ignore_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
       if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
-        enabled_tests = check_enable_test (first_line.upper())
-        if 'NONE' in enabled_tests: enabled_tests=[]
+        enable_tests = check_enable_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
       if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
@@ -579,7 +583,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if issue.pull_request and (comment.created_at < last_commit_date):
       continue
 
-    print("  DEBUG: Processing as newer than commit time.")
     if ("code-checks"==first_line and cmssw_repo):
       signatures["code-checks"] = "pending"
       trigger_code_checks=True
@@ -660,11 +663,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
       # Check if the someone asked to trigger the tests
       if valid_commenter:
-        test_cmd_func = check_test_cmd
-        if new_tests: test_cmd_func = check_test_cmd_new
-        ok, v1, v2, v3, v4 = test_cmd_func(first_line, repository)
+        valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
+        if valid_multiline_comment:
+          global_test_params = dict(test_params)
+          continue
+
+        ok, v2, v3, v4 = check_test_cmd(first_line, repository)
         if ok:
-          cmsdist_pr = v1
           cmssw_prs = v2
           extra_wfs = v3
           release_queue = v4
@@ -674,7 +679,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           elif re.match('^'+ARCH_PATTERN+'$', release_queue):
             release_arch = release_queue
             release_queue = ''
-          print('Tests requested:', commenter, 'asked to test this PR with cmsdist_pr=%s, cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s' % (cmsdist_pr, cmssw_prs, release_queue, release_arch, extra_wfs))
+          print('Tests requested:', commenter, 'asked to test this PR with cmssw_prs=%s, release_queue=%s, arch=%s and workflows=%s' % (cmssw_prs, release_queue, release_arch, extra_wfs))
           print("Comment message:",first_line)
           trigger_test_on_signature = False
           if tests_already_queued:
@@ -732,6 +737,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           mustClose = False
       continue
 
+  # end of parsing comments section
+
   if push_test_issue:
     auto_close_push_test_issue = True
     try: auto_close_push_test_issue=repo_config.AUTO_CLOSE_PUSH_TESTS_ISSUE
@@ -764,8 +771,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   print("All assigned cats:",",".join(list(assign_cats.keys())))
   print("Newly assigned cats:",",".join(new_assign_cats))
   print("Ignore tests:",ignore_tests)
-  print("Enabled tests:",enabled_tests)
-  print("Tests: %s, %s" % (cmsdist_pr, cmssw_prs))
+  print("Enable tests:",enable_tests)
+  print("Tests: %s" % (cmssw_prs))
 
   # Labels coming from signature.
   labels = []
@@ -846,7 +853,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     labels.append("fully-signed")
   if need_external: labels.append("requires-external")
   labels = set(labels)
-  print("New Labels:",sorted(labels))
+  print("New Labels:", sorted(labels))
 
   new_categories  = set ([])
   for nc_lab in pkg_categories:
@@ -908,24 +915,43 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
   releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
 
+  if cmssw_prs:
+    global_test_params['PULL_REQUESTS'] = cmssw_prs
+  if extra_wfs:
+    global_test_params['MATRIX_EXTRAS'] = extra_wfs
+  if release_queue:
+    global_test_params['RELEASE_FORMAT'] = release_queue
+  if not 'PULL_REQUESTS' in global_test_params:
+    global_test_params['PULL_REQUESTS'] = '%s#%s' % (repository, prId)
+  else:
+    global_test_params['PULL_REQUESTS'] = '%s#%s %s' % (repository, prId, global_test_params['PULL_REQUESTS'])
+  if ignore_tests:
+    if ignore_tests == 'NONE': ignore_tests = ''
+    global_test_params['IGNORE_BOT_TESTS'] = ignore_tests
+  if enable_tests:
+    if enable_tests == 'NONE': enable_tests = ''
+    global_test_params['ENABLE_BOT_TESTS'] = enable_tests
+  if release_arch:
+    global_test_params['ARCHITECTURE_FILTER'] = release_arch
+    
+  print("All Parameters:",global_test_params)
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
   if create_test_property:
     # trigger the tests and inform it in the thread.
     if trigger_test_on_signature and has_categories_approval: tests_requested = True
     if tests_requested:
-      prs = ['%s#%s' % (repository,prId)]
-      for p in [x for x in cmsdist_pr.replace(' ','').split(',') if x]:
-        if '#' not in p: p='%s/cmsdist#%s' % (repo_org, p)
-        prs.append(p)
-      for p in [x for x in cmssw_prs.replace(' ','').split(',') if x]:
-        if '#' not in p: p='%s/cmssw#%s' % (repo_org, p)
-        prs.append(p)
+      prs = global_test_params['PULL_REQUESTS'].strip().split(" ")
       for xpr in prs:
         repo_name,pr_num = xpr.split('#',1)
         pr_num = int(pr_num)
         rest_pr = [p for p in prs if p!=xpr]
         ex_msg = ''
         if rest_pr: ex_msg = "\nTested with other pull request(s) %s" % ','.join(rest_pr)
+        if len(global_test_params)>1:
+          ex_msg = ex_msg+"\nTest Parameters:"
+          for p in global_test_params:
+            if (p == 'PULL_REQUESTS') or (not global_test_params[p]): continue
+            ex_msg = ex_msg+"\n  - **%s** = %s" % (p, global_test_params[p])
         if not repo_name in repo_cache: repo_cache[repo_name] = gh.get_repo(repo_name)
         pr_issue = issue
         if (repo_name!=repository) or (pr_num!=prId): pr_issue=repo_cache[repo_name].get_issue(pr_num)
@@ -934,17 +960,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         else:
           print('DryRun: Creating comment:%s\n\n%s' % (xpr, TRIGERING_TESTS_MSG+ex_msg))
       if not dryRun:
-        extra_prop = {}
-        if release_queue: extra_prop['RELEASE_FORMAT'] = release_queue
-        if release_arch: extra_prop['ARCHITECTURE_FILTER'] = release_arch
-        if ignore_tests: extra_prop['IGNORE_BOT_TESTS'] = ",".join(ignore_tests)
-        if enabled_tests: extra_prop['ENABLE_BOT_TESTS'] = ",".join(enabled_tests)
-        if extra_wfs: extra_prop['MATRIX_EXTRAS'] = extra_wfs
-        create_properties_file_tests( repository, prId, cmsdist_pr, cmssw_prs, dryRun, abort=False, repo_config=repo_config, extra_prop=extra_prop, new_tests=new_tests)
+        create_properties_file_tests(repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config)
+
     elif abort_test:
       if not dryRun:
         issue.create_comment( TRIGERING_TESTS_ABORT_MSG )
-        create_properties_file_tests( repository, prId, cmsdist_pr, "", dryRun, abort=True, new_tests=new_tests)
+        create_properties_file_tests(repository, prId, global_test_params, dryRun, abort=True)
       else:
         print('Dryrun: Aborting tests')
 
@@ -1057,35 +1078,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
   else:
-    if create_external_issue:
-      if not already_seen:
-        if dryRun:
-          print("Should create a new issue in ",CMSDIST_REPO_NAME," for this PR")
-        else:
-          external_managers = ["@" + name for name, l2_categories in list(CMSSW_L2.items()) if "externals" in l2_categories]
-          cmsdist_repo  = gh.get_repo(CMSDIST_REPO_NAME)
-          cmsdist_title = format("%(repo)s#%(pr)s: %(title)s",
-                                 title=pr.title.encode("ascii", "ignore"),
-                                 repo=repository,
-                                 pr=pr.number)
-          cmsdist_body = format("%(msgPrefix)s @%(user)s"
-                                " %(name)s for branch %(branch)s.\n\n"
-                                "Pull Request Reference: %(repo)s#%(pr)s\n\n"
-                                "%(externals_l2s)s can you please review it and eventually sign? Thanks.\n",
-                                msgPrefix=NEW_PR_PREFIX,
-                                repo=repository,
-                                user=pr.user.login,
-                                name=pr.user.name and "(%s)" % pr.user.name or "",
-                                branch=pr.base.ref,
-                                externals_l2s=", ".join(external_managers),
-                                pr=pr.number)
-          cissue = cmsdist_repo.create_issue(cmsdist_title, cmsdist_body)
-          external_issue_number = str(cissue.number)
-          print("Created a new issue ",CMSDIST_REPO_NAME,"#",external_issue_number)
-    cmsdist_issue = ""
-    if external_issue_number:
-      cmsdist_issue="\n\nexternal issue "+CMSDIST_REPO_NAME+"#"+external_issue_number
-
     messageNewPR = format("%(msgPrefix)s @%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"
                           "%(l2s)s can you please review it and eventually sign?"
@@ -1099,10 +1091,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           l2s=", ".join(missing_notifications),
                           watchers=watchersMsg)
 
-    messageUpdatedPR = format("Pull request #%(pr)s was updated."
-                              "%(cmsdist_issue)s\n",
-                              pr=pr.number,
-                              cmsdist_issue=cmsdist_issue)
+    messageUpdatedPR = format("Pull request #%(pr)s was updated.",
+                              pr=pr.number)
 
   # Finally decide whether or not we should close the pull request:
   messageBranchClosed = format("This branch is closed for updates."
@@ -1135,7 +1125,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if trigger_code_checks and not triggerred_code_checks:
     if not dryRunOrig: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
     else: print("Dryrun:",TRIGERING_CODE_CHECK_MSG)
-    create_properties_file_tests(repository, prId, "", "", dryRunOrig, abort=False, req_type="codechecks")
+    params = {"PULL_REQUEST" : "%s" % (prId)}
+    create_properties_file_tests(repository, prId, params, dryRunOrig, abort=False, req_type="codechecks")
 
   if commentMsg and not dryRun:
     issue.create_comment(commentMsg)

@@ -89,18 +89,20 @@ def get_payload(index, query, scroll=0):
   if sslcon: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"), context=sslcon).read()
   else: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore")).read()
 
-def get_payload_wscroll(index, query):
+def get_payload_wscroll(index, query, max_count=100000):
   es_data = json.loads(get_payload(index, query,scroll=1))
   if 'proxy-error' in es_data: return es_data
   es_data.pop("_shards", None)
   scroll_size = es_data['hits']['total']
   scroll_id = es_data.pop('_scroll_id')
-  while (scroll_size > 0):
+  tcount = 0
+  while ((scroll_size > 0) and (tcount<max_count)):
     query = '{"scroll_id": "%s","scroll":"1m"}' % scroll_id
     es_xdata = json.loads(get_payload(index,query,scroll=2))
     if 'proxy-error' in es_xdata: return es_xdata
     scroll_id = es_xdata.pop('_scroll_id')
     scroll_size = len(es_xdata['hits']['hits'])
+    tcount += scroll_size
     if (scroll_size > 0): es_data['hits']['hits']+=es_xdata['hits']['hits']
   return es_data
 
@@ -141,9 +143,9 @@ def delete_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   send_request(index+'/',method='DELETE')
 
-def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False):
+def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False, max_count=100000):
   query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field)
-  if scroll: return get_payload_wscroll(index, query_str)
+  if scroll: return get_payload_wscroll(index, query_str, max_count)
   return json.loads(get_payload(index, query_str))
 
 def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):

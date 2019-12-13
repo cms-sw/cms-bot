@@ -1109,6 +1109,7 @@ fi
 prepare_upload_results
 
 rm -f ${WORKSPACE}/report.txt
+env | grep 'CMSSW_'
 REPORT_OPTS="--report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
 
 if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to false)

@@ -34,6 +34,6 @@ if __name__ == "__main__":
   end_time = int(time()*1000)
   start_time = end_time -int(86400*1000*opts.days)
   query = "release:/%s/ AND architecture:/%s/" % (opts.release.lower(), opts.arch)
-  es_data = es_query('ib-dataset-*', query, start_time,end_time,scroll=True,page_size=10000)
+  es_data = es_query('ib-dataset-*', query, start_time,end_time,scroll=True,fields=["lfn"])
   print(json.dumps(es_data, indent=2, sort_keys=True, separators=(',',': ')))
 

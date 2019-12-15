@@ -578,6 +578,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
          mustClose = True
          print("==>Closing requested received from %s" % commenter)
       continue
+    if valid_commenter:
+      valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
+      if valid_multiline_comment:
+        global_test_params = dict(test_params)
+        continue
 
     # Ignore all other messages which are before last commit.
     if issue.pull_request and (comment.created_at < last_commit_date):
@@ -663,11 +668,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
       # Check if the someone asked to trigger the tests
       if valid_commenter:
-        valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
-        if valid_multiline_comment:
-          global_test_params = dict(test_params)
-          continue
-
         ok, v2, v3, v4 = check_test_cmd(first_line, repository)
         if ok:
           cmssw_prs = v2

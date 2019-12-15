@@ -17,8 +17,8 @@ cur_week=int(((time()/86400)+4)/7)
 
 idxs=[]
 try:
-  if sys.argv[1]:
-    for ix in sys.argv[1:]:
+  if sys.argv[2]:
+    for ix in sys.argv[2:]:
       ixs = find_indexes(ix)
       if not "open" in ixs: continue
       for i in ixs["open"]: idxs.append(i)

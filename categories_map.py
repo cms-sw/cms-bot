@@ -851,6 +851,7 @@ CMSSW_CATEGORIES = {
     "CUDADataFormats/SiPixelDigi",
     "HeterogeneousCore/CUDACore",
     "HeterogeneousCore/CUDAServices",
+    "HeterogeneousCore/CUDATest",
     "HeterogeneousCore/CUDAUtilities",
     "HeterogeneousCore/MPICore",
     "HeterogeneousCore/MPIServices",

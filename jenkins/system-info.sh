@@ -10,6 +10,7 @@ JENKINS_SLAVE_JAR_MD5="$1"
 WORKSPACE="$2"
 DOCKER_IMG_HOST="$3"
 CLEANUP_WORKSPACE="$4"
+USER_HOME_MD5="$5"
 if [ "X$WORKSPACE" = "X" ] ; then echo DATA_ERROR="Missing workspace directory." ;  exit 1; fi
 if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
 mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
@@ -23,6 +24,17 @@ if [ -d ${WORKSPACE}/workspace/auto-builds ] ; then
 fi
 
 echo "DATA_SHELL=${SHELL}"
+
+RSYNC_SLAVE=false
+if [ "${USER_HOME_MD5}" != "" ] ; then
+  RSYNC_SLAVE_FILE="${HOME}/.jenkins_slave_md5"
+  if [ ! -f ${RSYNC_SLAVE_FILE} ] ; then
+    RSYNC_SLAVE=true
+  elif [ $(cat ${RSYNC_SLAVE_FILE}) != "${USER_HOME_MD5}" ] ; then
+    RSYNC_SLAVE=true
+  fi
+fi
+echo "DATA_RSYNC_SLAVE=${RSYNC_SLAVE}"
 
 slave_jar=false
 if [ -e $WORKSPACE/slave.jar ] ; then

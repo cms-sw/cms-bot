@@ -602,6 +602,7 @@ CMSSW_CATEGORIES = {
     "DQMServices/ClientConfig",
     "DQMServices/Components",
     "DQMServices/Core",
+    "DQMServices/Demo",
     "DQMServices/Diagnostic",
     "DQMServices/Examples",
     "DQMServices/FileIO",

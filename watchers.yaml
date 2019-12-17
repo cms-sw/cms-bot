@@ -151,6 +151,7 @@ makortel:
   - Utilities/DCacheAdaptor
   - Utilities/General
   - Utilities/LStoreAdaptor
+  - Utilities/StaticAnalyzers
   - Utilities/StorageFactory
   - Utilities/Testing
   - Utilities/XrdAdaptor

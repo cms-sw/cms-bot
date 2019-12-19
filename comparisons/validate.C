@@ -2193,6 +2193,20 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.chi2()");
         plotvar(tbr+".obj.outOfTimeChi2()");
       }
+
+      tbr="HGCRecHitsSorted_HGCalRecHit_HGCHFNoseRecHits_"+recoS+".obj";
+      if (checkBranchOR(tbr, true)){
+        plotvar(tbr+".obj@.size()");
+        plotvar(tbr+".obj.energy()");
+        plotvar("log10("+tbr+".obj.energy())");
+        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
+        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
+        plotvar(tbr+".obj.time()");
+        plotvar(tbr+".obj.timeError()");
+        plotvar(tbr+".obj.outOfTimeEnergy()");
+        plotvar(tbr+".obj.chi2()");
+        plotvar(tbr+".obj.outOfTimeChi2()");
+      }
     }
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "preshower")) && !stepContainsNU(step, "cosmic") ){
@@ -3124,7 +3138,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       caloClusters("hgcalLayerClusters_");
       plotvar("min(15,max(-2,floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_))");
-      plotvar("floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_", "floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_>-10");
+      plotvar("floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_",
+              "floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_>-10");
+
+      caloClusters("hgcalLayerClustersHFNose_");
+      plotvar("min(15,max(-2,floatedmValueMap_hgcalLayerClustersHFNose_timeLayerCluster_"+recoS+".obj.values_))");
+      plotvar("floatedmValueMap_hgcalLayerClustersHFNose_timeLayerCluster_"+recoS+".obj.values_",
+              "floatedmValueMap_hgcalLayerClustersHFNose_timeLayerCluster_"+recoS+".obj.values_>-10");
 
       tbr="recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3179,8 +3199,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       pfClusters("particleFlowClusterHGCal_");
       pfClusters("particleFlowClusterHGCalFromMultiCl_");
 
+      //active before 102X
       hgcalMultiClusters("hgcalLayerClusters_sharing");
       hgcalMultiClusters("hgcalLayerClusters_");
+      //
+      hgcalMultiClusters("hgcalMultiClusters_sharing");
+      hgcalMultiClusters("hgcalMultiClusters_");
       //ticl
       hgcalMultiClusters("multiClustersFromTracksters_MultiClustersFromTracksterByCA");
       hgcalMultiClusters("multiClustersFromTrackstersHAD_MultiClustersFromTracksterByCA");

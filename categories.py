@@ -63,7 +63,7 @@ CMSSW_L2 = {
   "sbein":            ["fastsim"],
   "schneiml":         ["dqm"],
   "SiewYan":          ["generators"], 
-  "silviodonato":         ["operations"],
+  "silviodonato":     ["operations"],
   "slava77":          ["reconstruction"],
   "smuzaffar":        ["core", "externals"],
   "ssekmen":          ["fastsim"],

@@ -108,10 +108,8 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
 fi
 
 CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
-PKGTOOLS_VER=$(echo $PKGTOOLS_TAG | cut -d- -f2)
-if [ ${PKGTOOLS_VER} -gt 31 ] ; then
-  CMSBUILD_CMD="$CMSBUILD_CMD --delete-build-directory"
-fi
+if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --monitor" ; fi
+if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-delete-build-directory' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory" ; fi
 PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1
 # Decide if we already have a release which uses the same CMSDIST.
 pushd ${WRKDIR}

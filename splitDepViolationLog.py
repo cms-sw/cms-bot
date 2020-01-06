@@ -108,8 +108,8 @@ class DepViolSplitter(object):
 
         try:
             from pickle import Pickler
-            resFile = open('depViolationSummary.pkl', 'w')
-            pklr = Pickler(resFile)
+            resFile = open('depViolationSummary.pkl', 'wb')
+            pklr = Pickler(resFile, protocol=2)
             pklr.dump(pkgViol)
             resFile.close()
             print("Successfully pickled results for dependency violations ! ")

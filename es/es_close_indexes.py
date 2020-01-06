@@ -11,12 +11,14 @@ sys.path.insert(0,cmsbot_dir)
 
 from es_utils import get_indexes, close_index, find_indexes
 from time import time
+try: weeks=int(sys.argv[1])
+except: weeks=20
 cur_week=int(((time()/86400)+4)/7)
 
 idxs=[]
 try:
-  if sys.argv[1]:
-    for ix in sys.argv[1:]:
+  if sys.argv[2]:
+    for ix in sys.argv[2:]:
       ixs = find_indexes(ix)
       if not "open" in ixs: continue
       for i in ixs["open"]: idxs.append(i)
@@ -33,7 +35,7 @@ except:
         if not k in types: types[k]={}
         if not ix in types[k]:types[k][ix]=[]
         types[k][ix].append(wk)
-        if (k == "open") and ((cur_week-int(wk))>12): idxs.append(idx)
+        if (k == "open") and ((cur_week-int(wk))>weeks): idxs.append(idx)
       else:
         if not k in rest: rest[k]=[]
         rest[k].append(idx)

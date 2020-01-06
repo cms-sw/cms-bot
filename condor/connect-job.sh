@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+env
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}
 if [ -f ${LOCAL_DATA}/start_time ] ; then
@@ -48,10 +49,23 @@ let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 KERBEROS_REFRESH=0
 FORCE_EXIT=false
 CHK_GAP=10
+JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-false"
 if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
-set +x
+if [ "${JENKINS_DEBUG}" != "true" ] ; then set +x ; fi
 while true ; do
   sleep $CHK_GAP
+  if [ "${JENKINS_DEBUG}" = "true" ] ; then
+    if [ -e "/afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh" ] ; then
+      sh -ex /afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh || true
+    fi
+  fi
+  if [ $(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l) -gt 0 ] ; then
+    JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"
+    echo "Jenkins Slave has been conencted: $(date)"
+  elif [ "${JENKINS_JOB_STATE}" = "true-true" ] ; then
+    echo "Jenkins Slave has been disconencted: $(date)"
+    break
+  fi
   ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* | head -n -1 | xargs --no-run-if-empty rm -rf || true
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)
@@ -73,7 +87,7 @@ while true ; do
   fi
 done
 echo "Going to shutdown."
-set -x
+if [ "${JENKINS_DEBUG}" != "true" ] ; then set -x ; fi
 rm -rf ${WORKSPACE}
 if [ ! -f ${WORKSPACE}/.shut-down ] ; then
   SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|shutdown|')

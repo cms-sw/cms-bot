@@ -4,7 +4,7 @@
 # ---
 SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
-WORKSPACE=$(dirname ${CMS_BOT_DIR} )
+if [ -z $WORKSPACE ] ; then WORKSPACE=$(dirname ${CMS_BOT_DIR} ) ; fi
 CACHED=${WORKSPACE}/CACHED
 
 PKG_REPO=$1       # Repo of external (ex. cms-sw/root)
@@ -13,7 +13,11 @@ CMS_SW_TAG=$3     # CMS SW TAG found in config_map.py
 ARCHITECTURE=$4   # Architecture (ex. slc7_amd64_gcc700)
 CMS_REPO=$5       # cms repository (ex cms.week0)
 BUILD_DIR=$6      # Where pkgtools/cmsBuild builds software
-if [ "${CMS_REPO}" != "" ] ; then CMS_REPO="--repository ${CMS_REPO}" ; fi
+if [ "${CMS_REPO}" != "" ] ; then
+  CMS_REPO="--repository ${CMS_REPO}"
+else
+  CMS_REPO="--weekly"
+fi
 if [ "${BUILD_DIR}" = "" ] ; then BUILD_DIR="testBuildDir" ; fi
 PKG_NAME=$(echo ${PKG_REPO} | sed 's|.*/||')      # Repo of external (ex. cms-sw/root)
 
@@ -54,14 +58,17 @@ fi
 if [ -e cmsdist/data/cmsswdata.txt ] ; then
   case ${PKG_REPO} in
     cms-data/*)
-      data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt)
+      data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt || echo "${PKG_NAME}=V00-00-00")
       sed -i -e "/^ *${PKG_NAME}=.*/d;s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
+      if [ $(grep "Requires:  *data-${PKG_NAME} *$"  cmsdist/cmsswdata.spec | wc -l) -eq 0 ] ; then
+        sed -i -e "s/^%prep *$/Requires: data-${PKG_NAME}\n%prep/" cmsdist/cmsswdata.spec
+      fi
       touch cmsdist/data/data-${PKG_NAME}.file
       rm -rf cmsdist/data/data-${PKG_NAME}.* 
     ;;
   esac
 fi
-SOURCES=$(./pkgtools/cmsBuild ${CMS_REPO} -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
+SOURCES=$(PYTHONPATH= ./pkgtools/cmsBuild ${CMS_REPO} -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
                         grep -i "^${SPEC_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
 N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true
@@ -82,8 +89,13 @@ OUTPUT=$(echo ${SOURCES}  | sed 's/ .*//' | tr '#' '\n' )
 SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
 # Move to other path
-rm -rf ${PKG_NAME}/.git  # remove git metadata - we wont need it when packing.
+if [ "$KEEP_SOURCE_GIT" != "true" ] ; then
+    rm -rf ${PKG_NAME}/.git  # remove git metadata - we wont need it when packing.
+fi
 if [ ${PKG_NAME} != ${DIR_NAME} ]; then
-    mv ${PKG_NAME} ${DIR_NAME}
+    if [ ! -e ${DIR_NAME} ] ; then
+        mv ${PKG_NAME} ${DIR_NAME}
+        ln -s ${DIR_NAME} ${PKG_NAME}
+    fi
 fi
 echo "--source ${SPEC_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt

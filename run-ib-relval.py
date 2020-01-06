@@ -24,6 +24,7 @@ if __name__ == "__main__":
   parser.add_option("-n", "--dry-run",dest="dryRun", action="store_true", help="Do not upload results", default=False)
   parser.add_option("-f", "--force",dest="force", help="Force running of workflows without checking the server for previous run", action="store_true", default=False)
   parser.add_option("-N", "--non-threaded",dest="nonThreaded", action="store_true", help="Do not run in threaded mode", default=False)
+  parser.add_option("-J", "--job-config", dest="jobConfig", help="Extra arguments to pass to jobscheduler", type=str, default='')
   opts, args = parser.parse_args()
 
   if len(args) > 0: parser.error("Too many/few arguments")
@@ -51,12 +52,7 @@ if __name__ == "__main__":
 
     p = None
     stime = time()
-    if cmssw_ver.find('_DUMMYCLANG_') is not -1:
-      cmssw_ver = cmssw_ver.rsplit('_',1)[0]+'*'
-      p = Popen("python %s/rv_scheduler/relval_main.py -a %s -r %s -d 7" % (SCRIPT_DIR, arch, cmssw_ver), shell=True)
-    else:
-      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 150 -m 80 -o time" % (cmssw_base,SCRIPT_DIR), shell=True)
-
+    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 100 -m 85 -o time %s" % (cmssw_base,SCRIPT_DIR,opts.jobConfig), shell=True)
     e=waitpid(p.pid,0)[1]
     print("Time took to create jobs:",int(time()-stime),"sec")
     system("touch "+cmssw_base+"/done."+opts.jobid)

@@ -46,7 +46,7 @@ sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
 sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
-echo "environment = \"EXTRA_LABELS='${EXTRA_LABELS}' JENKINS_CALLBACK=${JENKINS_CALLBACK} REQUEST_MAXRUNTIME=${REQUEST_MAXRUNTIME}\"" >> job.sub
+echo "environment = \"JENKINS_DEBUG='${JENKINS_DEBUG}' JENKINS_AUTO_DELETE='${JENKINS_AUTO_DELETE}' EXTRA_LABELS='${EXTRA_LABELS}' JENKINS_CALLBACK=${JENKINS_CALLBACK} REQUEST_MAXRUNTIME=${REQUEST_MAXRUNTIME}\"" >> job.sub
 
 if [ "X${CONDOR_JOB_CONF}" != "X" ] ; then
   if [ -f  ${CONDOR_JOB_CONF} ] ; then
@@ -61,9 +61,27 @@ echo "############# JOB Configuration file ###############"
 cat job.sub
 echo "####################################################"
 
-condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1 || true
-cat submit.log
-JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
+JOBID=""
+if [ "$USE_PENDING_REQUEST" = "true" ] ; then
+  for x in $(condor_q `whoami` -global -format "%s:" JobStatus -format "%s:" ClusterId -format "%s\n" Cmd | grep ":${JOB_NAME}") ; do
+    status=$(echo $x | cut -d: -f1)
+    jid=$(echo $x | cut -d: -f2)
+    if [ $status -gt 2 -o $status -eq 0 ] ; then
+      ${here}/shutdown.sh $jid || true
+    elif [ $status -eq 1 ] ; then
+      JOBID="${jid}.0"
+      echo "Using existing job $JOBID"
+    else
+      echo "Already running $jid"
+      exit 0
+    fi
+  done
+fi
+if [ "${JOBID}" = "" ] ; then
+  condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1 || true
+  cat submit.log
+  JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
+fi
 if [ "$JOBID" = "" ] ; then exit 1 ; fi
 sleep $WAIT_GAP
 echo "$JOBID" > job.id

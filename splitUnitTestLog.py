@@ -50,7 +50,7 @@ class LogSplitter(object):
         if not os.path.exists(logDirs):
             os.makedirs(logDirs)
 
-        lf = open(logFile, 'r')
+        lf = open(logFile,"rb")
         lines = lf
 
         startTime = time.time()
@@ -69,7 +69,7 @@ class LogSplitter(object):
         actLogLines = []
         startFound = False
         for line in lines:
-
+            line = line.decode("ascii", errors='ignore')
             # write out log to individual log file ...
             if startFound and ">> Leaving Package " not in line:
                 actLogLines.append(line)
@@ -187,8 +187,8 @@ class LogSplitter(object):
 
         try:
             from pickle import Pickler
-            resFile = open(baseDir + '/unitTestResults.pkl', 'w')
-            pklr = Pickler(resFile)
+            resFile = open(baseDir + '/unitTestResults.pkl', 'wb')
+            pklr = Pickler(resFile, protocol=2)
             pklr.dump(unitTestResults)
             pklr.dump(results)
             resFile.close()

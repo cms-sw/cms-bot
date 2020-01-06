@@ -60,7 +60,7 @@ REPO_TEAMS["cms-sw"]["configdb-owners"] = {
   "repositories" : { "hlt-confdb":"admin", "web-confdb":"admin"}
 }
 REPO_TEAMS["cms-sw"]["cmsdist-writers"] = {
-  "members" : [ "h4d4" ] + CMS_SDT,
+  "members" : [ "h4d4", "muhammadimranfarooqi" ] + CMS_SDT,
   "repositories" : { "cmsdist":"push" }
 }
 REPO_TEAMS["cms-sw"]["cmssw-l2"] = {
@@ -77,7 +77,7 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
   "members" : [ "smuzaffar", "tulamor" ],
-  "repositories" : { "cmssdt-wiki ":"admin" }
+  "repositories" : { "cmssdt-wiki":"admin" }
 }
 #################################
 parser = ArgumentParser()

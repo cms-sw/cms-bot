@@ -10,8 +10,9 @@ CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
 def format(s, **kwds): return s % kwds
 
-def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false'):
+def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
   es5_query_tmpl="""{
+  "_source": [%(fields_list)s],
   "query":
     {
     "bool":
@@ -20,9 +21,12 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
         "must": { "range":  { "%(timestamp_field)s": { "gte": %(start_time)s, "lte":%(end_time)s}}}
       }
     },
+    "sort": [{"%(timestamp_field)s": "desc" }],
     "from" : %(page_start)s,
     "size" : %(page_size)s
   }"""
+  if not fields: fields = ["*"]
+  fields_list = ",".join([ '"%s"' % f for f in fields])
   return format(es5_query_tmpl, **locals ())
 
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
@@ -86,21 +90,23 @@ def get_payload(index, query, scroll=0):
     sslcon = ssl._create_unverified_context()
   except Exception as e:
     sslcon =  None
-  if sslcon: return urlopen(CMSSDT_ES_QUERY,json.dumps(data), context=sslcon).read()
-  else: return urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  if sslcon: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"), context=sslcon).read()
+  else: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore")).read()
 
-def get_payload_wscroll(index, query):
+def get_payload_wscroll(index, query, max_count=-1):
   es_data = json.loads(get_payload(index, query,scroll=1))
   if 'proxy-error' in es_data: return es_data
   es_data.pop("_shards", None)
   scroll_size = es_data['hits']['total']
   scroll_id = es_data.pop('_scroll_id')
-  while (scroll_size > 0):
+  tcount = 0
+  while ((scroll_size > 0) and ((max_count<0) or (tcount<max_count))):
     query = '{"scroll_id": "%s","scroll":"1m"}' % scroll_id
     es_xdata = json.loads(get_payload(index,query,scroll=2))
     if 'proxy-error' in es_xdata: return es_xdata
     scroll_id = es_xdata.pop('_scroll_id')
     scroll_size = len(es_xdata['hits']['hits'])
+    tcount += scroll_size
     if (scroll_size > 0): es_data['hits']['hits']+=es_xdata['hits']['hits']
   return es_data
 
@@ -141,9 +147,9 @@ def delete_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   send_request(index+'/',method='DELETE')
 
-def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False):
-  query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field)
-  if scroll: return get_payload_wscroll(index, query_str)
+def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False, max_count=-1, fields=None):
+  query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field, fields=fields)
+  if scroll: return get_payload_wscroll(index, query_str, max_count)
   return json.loads(get_payload(index, query_str))
 
 def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):

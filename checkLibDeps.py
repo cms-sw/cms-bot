@@ -21,8 +21,8 @@ class LibDepChecker(object):
             if missing: errMap[pkg] = missing
 
         from pickle import Pickler
-        summFile = open('libchk.pkl','w')
-        pklr = Pickler(summFile)
+        summFile = open('libchk.pkl','wb')
+        pklr = Pickler(summFile, protocol=2)
         pklr.dump(errMap)
         summFile.close()
 

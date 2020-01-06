@@ -59,6 +59,8 @@ function prepare_upload_results (){
           mkdir -p ${LOCAL_LOGDIR}/${dir}
           mv $log ${LOCAL_LOGDIR}/${dir}/
           [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
+          json=$(basename $(dirname $dir)).json
+          [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${dir}/
         done
       popd
     fi
@@ -318,12 +320,18 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    COMPILATION_CMD="pkgtools/cmsBuild --force-tag --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
+    CMSBUILD_ARGS=""
+    if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then CMSBUILD_ARGS="--force-tag --delete-build-directory" ; fi
+    if [ $(./pkgtools/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor" ; fi
+    COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild ${CMSBUILD_ARGS} --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} build cms-common cms-git-tools cmssw-tool-conf"
     echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
     # run the command and both log it to file and display it
     (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
     echo_section 'END OF BUILD LOG'
+    for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
+      rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
+    done
 
     TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
     GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
@@ -354,6 +362,12 @@ if ${BUILD_EXTERNAL} ; then
     mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
     cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
     cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
+    if [ -f $CMSSW_IB/config/SCRAM.orig/GMake/CXXModules.mk ] ; then
+      cp $WORKSPACE/cmsdist/CXXModules.mk.file $CMSSW_IB/config/SCRAM/GMake/CXXModules.mk
+      if [ "X${CLING_PREBUILT_MODULE_PATH}" = "X" ] ; then
+        export CLING_PREBUILT_MODULE_PATH="${WORKSPACE}/${CMSSW_IB}/lib/${SCRAM_ARCH}"
+      fi
+    fi
     rm -rf scram-buildrules
     cd $WORKSPACE/$CMSSW_IB/src
     touch $WORKSPACE/cmsswtoolconf.log
@@ -361,9 +375,38 @@ if ${BUILD_EXTERNAL} ; then
     BTOOLS=${CTOOLS}.backup
     mv ${CTOOLS} ${BTOOLS}
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
+
+    #Generate External Tools Status
+    echo '<html><head><link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet"></head>' > $WORKSPACE/upload/external-tools.html
+    echo '<body><h2>External tools build Statistics</h2><br/><table class="table table-striped"><tr><td>Tool Name</td><td>#Files(new)</td><td>#Files(old)</td><td>Size(new)</td><td>Size(old)</td></tr>' >> $WORKSPACE/upload/external-tools.html
+    for pkg in $(find ${WORKSPACE}/${BUILD_DIR}/BUILD/${ARCHITECTURE} -maxdepth 3 -mindepth 3 -type d | sed "s|$WORKSPACE/$BUILD_DIR/BUILD/||") ; do
+      ltpath="${WORKSPACE}/${BUILD_DIR}/${pkg}"
+      [ -d ${ltpath} ] || continue
+      l_tc=$(find ${ltpath} -follow | wc -l)
+      l_ts=$(du -shL ${ltpath} | awk '{print $1}')
+      tdir=$(dirname $pkg)
+      rtpath=$(grep -R ${tdir} ${BTOOLS} | grep '_BASE\|CMSSW_SEARCH_PATH' | tail -1 | sed 's|.* default="||;s|".*||')
+      if [ "${rtpath}" = "" ] || [ ! -d "${rtpath}" ] ; then
+        r_tc=0
+        r_ts=0
+      else
+        r_tc=$(find ${rtpath} -follow | wc -l)
+        r_ts=$(du -shL ${rtpath} | awk '{print $1}')
+      fi
+      tool=$(basename $tdir)
+      echo "<tr><td>${tool}</td><td>$l_tc</td><td>$r_tc</td><td>$l_ts</td><td>$r_ts</td></tr>" >> $WORKSPACE/upload/external-tools.html
+    done
+    echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
+    echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> $RESULTS_FILE
+
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=
+      if [ -e "${BTOOLS}/cmssw.xml" ] ; then cp ${BTOOLS}/cmssw.xml ${CTOOLS}/cmssw.xml ; fi
+      RMV_CMSSW_EXTERNAL="$WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/99-remove-release-external-lib"
+      if [ -f "${RMV_CMSSW_EXTERNAL}" ] ; then
+        chmod +x ${RMV_CMSSW_EXTERNAL}
+      fi
       for xml in $(ls ${CTOOLS}/*.xml) ; do
         name=$(basename $xml)
         tool=$(echo $name | sed 's|.xml$||')
@@ -447,12 +490,13 @@ sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine proces
 set +x
 eval $(scram run -sh)
 set -x
+echo $LD_LIBRARY_PATH | tr ':' '\n'
 BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
 ANALOG_CMD="scram build outputlog && ($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $CMSSW_IB for $SCRAM_ARCH" ${NO_POST}
 
 cd $WORKSPACE/$CMSSW_IB/src
-git config --global --replace-all merge.renamelimit 2500
+git config --global --replace-all merge.renamelimit 2500 || true
 
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits.json
@@ -697,6 +741,9 @@ fi
 # #############################################
 # test compilation with GCC
 # ############################################
+if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
+  git cms-addpkg $EXTRA_CMSSW_PACKAGES || true
+fi
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" ${NO_POST}
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
@@ -753,6 +800,20 @@ else
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES}" >> $RESULTS_FILE
+
+#Work around for Simulation.so plugin
+if [ -e $CMSSW_BASE/biglib/${SCRAM_ARCH}/Simulation.edmplugin ] ; then
+  for p in SimDataFormatsValidationFormats_xr_rdict.pcm ; do
+    if [ ! -e $CMSSW_BASE/biglib/${SCRAM_ARCH}/$p ] ; then
+      for d in $CMSSW_RELEASE_BASE $CMSSW_FULL_RELEASE_BASE ; do
+        if [ -e $d/biglib/${SCRAM_ARCH}/$p ] ; then
+          ln -s $d/biglib/${SCRAM_ARCH}/$p $CMSSW_BASE/biglib/${SCRAM_ARCH}/$p
+          break
+        fi
+      done
+    fi
+  done
+fi
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
@@ -1051,6 +1112,7 @@ fi
 prepare_upload_results
 
 rm -f ${WORKSPACE}/report.txt
+env | grep 'CMSSW_'
 REPORT_OPTS="--report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
 
 if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to false)

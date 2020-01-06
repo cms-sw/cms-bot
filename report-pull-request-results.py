@@ -131,7 +131,7 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
   for line in open( matrix_log ):
     if 'ERROR executing' in line:
       print('processing: %s' % line) 
-      parts = line.split(" ")
+      parts = re.sub("\s+"," ",line).split(" ")
       workflow_info = parse_workflow_info( parts )
       workflows_with_error.append( workflow_info )
     elif ' Step0-DAS_ERROR ' in line:
@@ -222,6 +222,10 @@ def send_error_report_message(repo, report_file, tests_url):
   pull_request = repo.get_pull(pr_number)
   message = '-1\n'
   if options.commit_hash: message += '\nTested at: ' + options.commit_hash+"\n"
+  if 'CMSSW_VERSION' in os.environ:
+    message+= '\nCMSSW: ' + os.environ['CMSSW_VERSION']
+  if 'SCRAM_ARCH' in os.environ:
+    message+= '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
   message += get_recent_merges_message()
   message += '\nYou can see the results of the tests here:\n%s\n' % tests_url
   message += '\nI found follow errors while testing this PR\n\n'
@@ -467,6 +471,10 @@ def send_tests_approved_pr_message( repo, pr_number, tests_url ):
     message += '\nTested at: ' + options.commit_hash
 
   message += '\n' + tests_url
+  if 'CMSSW_VERSION' in os.environ:
+    message+= '\nCMSSW: ' + os.environ['CMSSW_VERSION']
+  if 'SCRAM_ARCH' in os.environ:
+    message+= '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
   if options.additional_comment:
     message += '\nAdditional comment: ' + options.additional_comment
 

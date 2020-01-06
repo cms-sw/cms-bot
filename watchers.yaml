@@ -151,6 +151,7 @@ makortel:
   - Utilities/DCacheAdaptor
   - Utilities/General
   - Utilities/LStoreAdaptor
+  - Utilities/StaticAnalyzers
   - Utilities/StorageFactory
   - Utilities/Testing
   - Utilities/XrdAdaptor
@@ -331,6 +332,118 @@ battibass:
 - Validation/MuonIdentification
 - Validation/MuonIsolation
 - Validation/RecoMuon
+cericeci:
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoEgamma/EgammaHLTProducers
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
+Fedespring:
+- DataFormats/CSCRecHit
+- DataFormats/GEMRecHit
+- DataFormats/DTRecHit
+- DataFormats/MuonDetId
+- DataFormats/MuonReco
+- DataFormats/MuonSeed
+- DataFormats/RPCRecHit
+- DQMOffline/Muon
+- DQMOffline/Trigger
+- HLTrigger/Muon
+- HLTriggerOffline/Muon
+- MuonAnalysis/MuonAssociators
+- RecoEgamma/EgammaHLTProducers
+- RecoMuon/Configuration
+- RecoMuon/CosmicMuonProducer
+- RecoMuon/DetLayers
+- RecoMuon/GlobalMuonProducer
+- RecoMuon/GlobalTrackFinder
+- RecoMuon/GlobalTrackingTools
+- RecoMuon/L2MuonIsolationProducer
+- RecoMuon/L2MuonProducer
+- RecoMuon/L2MuonSeedGenerator
+- RecoMuon/L3MuonIsolationProducer
+- RecoMuon/L3MuonProducer
+- RecoMuon/L3TrackFinder
+- RecoMuon/MeasurementDet
+- RecoMuon/MuonIdentification
+- RecoMuon/MuonIsolation
+- RecoMuon/MuonIsolationProducers
+- RecoMuon/MuonSeedGenerator
+- RecoMuon/Navigation
+- RecoMuon/Records
+- RecoMuon/StandAloneMuonProducer
+- RecoMuon/StandAloneTrackFinder
+- RecoMuon/TrackerSeedGenerator
+- RecoMuon/TrackingTools
+- RecoMuon/TransientTrackingRecHit
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/RPCDigiSimLink
+- SimDataFormats/TrackerDigiSimLink
+- SimDataFormats/TrackingAnalysis
+- SimGeneral/TrackingAnalysis
+- SimMuon/Configuration
+- SimMuon/MCTruth
+- TrackingTools/KalmanUpdators
+- TrackingTools/PatternTools
+- TrackingTools/TrackAssociator
+- TrackingTools/TrackFitters
+- TrackingTools/TrackRefitter
+- TrackingTools/TrajectoryState
+- TrackingTools/TransientTrack
+- TrackingTools/TransientTrackingRecHit
+- Validation/MuonIdentification
+- Validation/MuonIsolation
+- Validation/RecoMuon
 folguera:
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit
@@ -443,8 +556,6 @@ gbenelli:
 - SimTracker/Common
 - SimTracker/Configuration
 - SimTracker/Records
-geoff-smith:
-- HLTrigger/Configuration
 ghugo83:
 - Geometry/TrackerCommonData
 gpetruc:
@@ -470,6 +581,19 @@ hatakeyamak:
 - DataFormats/ParticleFlowCandidate
 - DataFormats/ParticleFlowReco
 - DataFormats/PatCandidates
+- CommonTools/ParticleFlow
+- CommonTools/PileupAlgos
+- CommonTools/RecoAlgos
+- PhysicsTools/PatAlgos
+- PhysicsTools/PatUtils
+- PhysicsTools/RecoAlgos
+- RecoLocalCalo/HGC
+- SimCalorimetry/HGCalSimProducers
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- Validation/HGCalValidation
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
 HuguesBrun:
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit
@@ -700,6 +824,21 @@ prolay:
 - SimTracker/Common
 - SimTracker/Configuration
 - SimTracker/Records
+robervalwalsh: 
+- CalibTracker/Configuration
+- CalibTracker/Records
+- CalibTracker/SiStrip
+- DataFormats/SiStrip
+- DPGAnalysis/SiStripTools
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
+- SimTracker/Common
+- SimTracker/Configuration
+- SimTracker/Records
+- SimTracker/SiStripDigitizer
 rociovilar:
 - Validation/RecoMuon
 - Validation/MuonIdentification
@@ -989,10 +1128,8 @@ rappoccio:
 matt-komm:
 - FastSimulation
 Martin-Grunewald:
-- Utilities
 - L1Trig
 - HLTrigger/
-- FWCore
 - EventFilter
 - Configuration
 jdolen:
@@ -1398,3 +1535,23 @@ riga:
 - RecoLocalCalo/HGCalRecProducers
 - RecoParticleFlow/PFClusterProducer
 - RecoTauTag/RecoTau
+afiqaize:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+missirol:
+- DQMOffline/Trigger
+- DQM/HLTEvF
+- DQM/HLXMonitor
+- DQM/TrigXMonitor
+- DQM/TrigXMonitorClient
+- HLTriggerOffline
+sobhatta:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+- RecoHGCal

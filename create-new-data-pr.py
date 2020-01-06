@@ -1,9 +1,11 @@
+#!/usr/bin/env python
 from __future__ import print_function
 from github import Github
 from optparse import OptionParser
 import repo_config
 from os.path import expanduser
 from urllib2 import urlopen
+from json import loads
 
 def update_tag_version(current_version=None):
     updated_version = None
@@ -43,17 +45,22 @@ if __name__ == "__main__":
       last_release_tag = (i.tag_name)
       break
 
-  comparison = data_repo.compare('master', last_release_tag)
-  print('commits behind ', comparison.behind_by)
-  create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
-  print('create new tag ? ', create_new_tag)
+  if last_release_tag:
+    comparison = data_repo.compare('master', last_release_tag)
+    print('commits behind ', comparison.behind_by)
+    create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
+    print('create new tag ? ', create_new_tag)
+  else:
+    create_new_tag = True
+    last_release_tag = "V00-00-00"
 
   # if created files and modified files are the same count, all files are new
 
-  response = urlopen(data_repo_pr.patch_url)
-  files_created = response.read().count('create mode ')
-  files_modified = data_repo_pr.changed_files
-  only_new_files=True if files_created == files_modified else False
+  response = urlopen("https://api.github.com/repos/%s/pulls/%s" % (opts.data_repo, opts.pull_request))
+  res_json = loads(response.read())
+  files_created = res_json['additions']
+  files_modified = res_json['changed_files']+res_json['deletions']
+  only_new_files=(files_modified==0)
 
   # if the latest tag/release compared with master(base) or the pr(head) branch is behind then make new tag
   new_tag = last_release_tag # in case the tag doesnt change
@@ -95,7 +102,7 @@ if __name__ == "__main__":
       print('Branch exists')
 
   # file with tags on the default branch
-  cmsswdatafile = "data/cmsswdata.txt"
+  cmsswdatafile = "/data/cmsswdata.txt"
   content_file = dist_repo.get_contents(cmsswdatafile, repo_tag_pr_branch)
   cmsswdatafile_raw = content_file.decoded_content
   new_content = ''
@@ -117,7 +124,29 @@ if __name__ == "__main__":
       new_content = new_content+updated_line
 
   mssg = 'Update tag for '+repo_name_only+' to '+new_tag
-  update_file_object = dist_repo.update_file("/data/cmsswdata.txt", mssg, new_content, content_file.sha, repo_tag_pr_branch)
+  update_file_object = dist_repo.update_file(cmsswdatafile, mssg, new_content, content_file.sha, repo_tag_pr_branch)
+
+  # file with tags on the default branch
+  cmsswdataspec = "/cmsswdata.spec"
+  content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
+  cmsswdatafile_raw = content_file.decoded_content
+  new_content = []
+  data_pkg = ' data-'+repo_name_only
+  added_pkg = False 
+  for line in cmsswdatafile_raw.splitlines():
+      new_content.append(line)
+      if not line.startswith('Requires: '): continue
+      if data_pkg in line:
+        added_pkg = False
+        break
+      if not added_pkg:
+        added_pkg = True
+        new_content.append('Requires:'+data_pkg)
+
+  if added_pkg:
+    mssg = 'Update cmssdata spec for'+data_pkg
+    update_file_object = dist_repo.update_file(cmsswdataspec, mssg, '\n'.join(new_content), content_file.sha, repo_tag_pr_branch)
+
   title = 'Update tag for '+repo_name_only+' to '+new_tag
   body = 'Move '+repo_name_only+" data to new tag, see \n" + data_repo_pr.html_url + '\n'
   change_tag_pull_request = dist_repo.create_pull(title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch)

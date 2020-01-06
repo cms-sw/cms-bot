@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # This script will parse config.map and give back 1 matching line based on search criteria
 # Otherwise it will fail.
 

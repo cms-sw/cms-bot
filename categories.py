@@ -7,7 +7,7 @@ from repo_config import CMSBUILD_USER
 
 authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
-CMSSW_L1 = ["davidlange6", "fabiocos", "kpedro88"]
+CMSSW_L1 = ["davidlange6", "fabiocos", "kpedro88", "silviodonato"]
 APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar", "slava77" ] + CMSSW_L1))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
@@ -40,7 +40,7 @@ CMSSW_L2 = {
   "fabiocos":         ["operations"],
   "fgolf":            ["xpog"],
   "franzoni":         ["operations", "alca"],
-  "fwyzard":          ["hlt"],
+  "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
   "ianna":            ["geometry"],
   "jfernan2":         ["dqm"],
@@ -48,19 +48,22 @@ CMSSW_L2 = {
   "fioriNTU":         ["dqm"],
   "kpedro88":         ["upgrade","operations"],
   "lveldere":         ["fastsim"],
+  "makortel":         ["heterogeneous"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
+  "mkirsano":         ["generators"],   
   "mommsen":          ["daq"],
   "mrodozov":         ["externals"],
   "perrotta":         ["reconstruction"],
   "peruzzim":         ["xpog"],
   "pgunnell":         ["pdmv"],
   "pohsun":           ["alca"],
-  "prebello":         ["pdmv"],
   "qliphy":           ["generators"],
   "rekovic":          ["l1"],
   "santocch":         ["analysis"],
   "sbein":            ["fastsim"],
   "schneiml":         ["dqm"],
+  "SiewYan":          ["generators"], 
+  "silviodonato":     ["operations"],
   "slava77":          ["reconstruction"],
   "smuzaffar":        ["core", "externals"],
   "tulamor":          ["externals"],

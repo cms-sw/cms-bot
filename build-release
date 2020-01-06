@@ -28,10 +28,12 @@ if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
 else
   POST_ACTION='BUILDING'
 fi
-
+if [ -d /cvmfs/cms.cern.ch/cmssw.git.daily ] ; then
+  export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
+fi
 git clone git@github.com:cms-sw/cmsdist.git $BUILD_DIR/CMSDIST
 pushd $BUILD_DIR/CMSDIST
-  eval $(cat $WORKSPACE/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$QUEUE;")
+  eval $(cat $WORKSPACE/config.map | grep -v "DISABLED="| grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$QUEUE;")
 
   # a patch release uses the same cmsdist tag as its base release
   case $CMSSW_X_Y_Z in
@@ -54,7 +56,8 @@ popd
 git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS
 echo DATE=`date`
 BRANCH_DETAILS="CMSDIST Branch: [$CMSDIST_TAG](https://github.com/cms-sw/cmsdist/commits/$CMSDIST_TAG), PKGTOOLS Branch: [$PKGTOOLS_TAG](https://github.com/cms-sw/pkgtools/commits/$PKGTOOLS_TAG)"
-WORKER=`hostname -s`
+WORKER="${NODE_NAME}"
+if [ "${WORKER}" = "" ] ; then WORKER=`hostname -s` ; fi
 ./report-build-release-status ${BUILD_NUMBER} $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z $POST_ACTION $DRY_RUN_PARAM -d "$BRANCH_DETAILS"
 echo DATE=`date`
 pushd $BUILD_DIR
@@ -63,42 +66,42 @@ pushd $BUILD_DIR
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' CMSDIST/cmssw.spec CMSDIST/cmssw-patch.spec CMSDIST/coral.spec
     (cd CMSDIST ; git commit -m 'Coherent debug package setup.' cmssw.spec cmssw-patch.spec coral.spec)
   fi
-  sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE 2>&1 | tee -a $WORKSPACE/prepare-cmsdist.log
-  CMS_TAG=""
-  if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
-    case `uname -s` in
-      Darwin ) MD5_CMD=md5;;
-      * )      MD5_CMD=md5sum;;
-    esac
-    CMS_TAG="--tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
-  fi
+  sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
   echo DATE=`date`
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --debug --architecture=$ARCHITECTURE --builders 2 -j $BUILD_NPROC $CMS_TAG"
-  $CMSBUILD_CMD --specs-only build cmssw$PATCH
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC"
+  case `uname -s` in
+    Darwin ) MD5_CMD=md5;;
+    * )      MD5_CMD=md5sum;;
+  esac
+  CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
+  if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
+    CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory"
+  fi
+  PYTHONPATH= $CMSBUILD_CMD --debug --specs-only build cmssw$PATCH
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
-  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES
+  PYTHONPATH= $CMSBUILD_CMD --builders 4 build $TOOL_CONF_PACKAGES
   echo DATE=`date`
+  rm -rf tmp/pip*
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-    $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
-    $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
   fi
 
   if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
     echo 'I was asked to build only cmssw-tool-conf, exiting without building cmssw'
-
     pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
       git tag  REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
       git push origin REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
     popd
+    rm -rf tmp
     # If it reaches here it is because there were no errors
     echo 'ALL_OK'
     exit 0
   fi
-
-  $CMSBUILD_CMD -j `echo "$BUILD_NPROC + 1" | bc` build local-cern-siteconf cmssw$PATCH
+  PYTHONPATH= $CMSBUILD_CMD -j $BUILD_NPROC build local-cern-siteconf cmssw$PATCH
   echo DATE=`date`
 popd
 echo DATE=`date`

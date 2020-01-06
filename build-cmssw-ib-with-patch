@@ -14,13 +14,15 @@ FORCE_PKGTOOLS_TAG=$6
 USE_DEV_CMSPKG=$7
 FORCE_BUILD_PATCH_RELEASE=$8
 CMSSW_TOOL_CONF_ONLY=$9
+DRY_RUN="${10}"
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
+WRKDIR=w
 
 rm -rf $WORKSPACE/../build-cache &
 cd $WORKSPACE
-rm -rf w/SPECS
+rm -rf ${WRKDIR}/SPECS
 
 BUILD_JOBS=4
 BUILD_NPROC=$(nproc)
@@ -38,16 +40,18 @@ RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/_X.*/_X/'`
 
 # Hardcode special queues like SLHC one.
 EXTRA_REPOS=""
+CMS_COMMON="cms-common"
 case $RELEASE_NAME in
   *SLHCDEV*) ;;
   *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
   *_DEVEL_X_*) EXTRA_REPOS="--extra-repositories cms.week0,cms.week1" ;;
+  CMSSW_5_*) CMS_COMMON="";;
 esac
 
 CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 unset BUILD_PATCH_RELEASE
-eval `cat $CMS_BOT_DIR/config.map | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
+eval `cat $CMS_BOT_DIR/config.map | grep -v 'DISABLED=' | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 [ "X$BUILD_PATCH_RELEASE" = "X1" ] && FORCE_BUILD_PATCH_RELEASE=true
 
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
@@ -102,27 +106,18 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   esac
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
-CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir w $CMS_TAG"
-if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
-  #Do not use reference repo for Sunday, as we cleanup weekly repo on that day
-  if [ $(date +%u) -lt 7 ] ; then
-    WEEKLY_REPO=/cvmfs/cms-ib.cern.ch/$(echo $REPOSITORY | sed 's|cms.||')
-    if [ -d ${WEEKLY_REPO}/$ARCHITECTURE/cms/cmssw ] ; then
-      if [ -L $WEEKLY_REPO ] ; then WEEKLY_REPO=$(readlink $WEEKLY_REPO) ; fi
-      #disabled ref repo for now
-      #CMSBUILD_CMD="$CMSBUILD_CMD --reference $WEEKLY_REPO"
-    fi
-  fi
-fi
-$CMSBUILD_CMD --debug build SCRAMV1
+
+CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
+if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --monitor" ; fi
+if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-delete-build-directory' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory" ; fi
+PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1
 # Decide if we already have a release which uses the same CMSDIST.
-pushd w
+pushd ${WRKDIR}
 if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
   for previous in $PREVIOUS_RELEASES; do
     previous=`echo $previous | cut -f2 -d/`
     echo "Checking if we can install $previous"
     set +e
-    #CMSSW_RELEASE_BASE=`source $ARCHITECTURE/apt-init.sh; apt-cache search cms\\\+cmssw\\\+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
     CMSSW_RELEASE_BASE=`./common/cmspkg -a $ARCHITECTURE -f search cms+cmssw+$previous | grep 'cms[+]cmssw[+]' | cut -f1 -d\  | cut -f3 -d+ | grep -e "^$previous\$"`
     set -e
     if [ ! "X$CMSSW_RELEASE_BASE" = X ]; then
@@ -173,23 +168,27 @@ pushd CMSDIST
   perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
 popd
 
-$CMSBUILD_CMD --specs-only build $PACKAGE_NAME
-TOOL_CONF_PACKAGES="local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' w/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
-#if [ $(echo $CMSSW_RELEASE_BASE | cut -d_ -f2) -gt 9 ] ; then TOOL_CONF_PACKAGES="cms-common ${TOOL_CONF_PACKAGES}" ; fi
+PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
+TOOL_CONF_PACKAGES="${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
 EXTERNAL_FAILED=NO
-$CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
+PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES || EXTERNAL_FAILED=YES
 echo DATE=`date`
+rm -rf ${WRKDIR}/tmp/pip*
 if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
-  BLD_PKGS=$(ls w/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2)
-  if [ "X$BLD_PKGS" != "X" ] ; then $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
+  if [ "${DRY_RUN}" != "" ] ; then exit 1 ; fi
+  BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
+  if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
+  rm -rf  ${WRKDIR}/tmp
   exit 1
-fi 
-if [ `ls w/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-  $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
-  echo DATE=`date`
-  $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
-  echo DATE=`date`
+fi
+if [ "${DRY_RUN}" = "" ] ; then
+  if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
+    PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+    echo DATE=`date`
+    PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
+    echo DATE=`date`
+  fi
 fi
 if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
 DEBUG_OPT=
@@ -197,15 +196,17 @@ case $RELEASE_NAME in
   *_DEVEL_*) DEBUG_OPT="--debug" ;;
 esac
 export SCRAM_HOOKS_DEBUG=1
-$CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
+PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
 echo DATE=`date`
-$CMSBUILD_CMD --sync-back upload cmssw-ib
+if [ "${DRY_RUN}" != "" ] ; then exit 0 ; fi
+PYTHONPATH= $CMSBUILD_CMD --sync-back upload cmssw-ib
 echo DATE=`date`
+rm -rf ${WRKDIR}/tmp
 pushd CMSDIST
 # In case we do not have errors in the full release, or in case we are forcing the
 # tagging we create an ALL tag and use IB if we discover it's a full release later on.
 # In case we have errors, we use an ERR tag in case we discover it's a full release later on.
-if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKSPACE/w/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
+if [ "X$ALWAYS_TAG_CMSSW" != "X" ] || [ ! -e $WORKSPACE/${WRKDIR}/$ARCHITECTURE/cms/cmssw/$RELEASE_NAME/build-errors ]; then
   GTAG="ALL/$RELEASE_NAME/$ARCHITECTURE"
   if [ $(git tag | grep "^$GTAG$" | wc -l) -gt 0 ] ; then
     git tag -d $GTAG

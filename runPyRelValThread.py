@@ -301,8 +301,8 @@ class PyRelValsThread(object):
     print("Log processed: ",log_processed)
     print("Caches read:",cache_read)
     from pickle import Pickler
-    outFile = open(os.path.join(self.outdir,'runTheMatrixMsgs.pkl'), 'w')
-    pklFile = Pickler(outFile)
+    outFile = open(os.path.join(self.outdir,'runTheMatrixMsgs.pkl'), 'wb')
+    pklFile = Pickler(outFile, protocol=2)
     pklFile.dump(logData)
     outFile.close()
     return

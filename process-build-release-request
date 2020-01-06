@@ -702,7 +702,7 @@ def check_if_prod_arch_ready( issue, prev_rel_name, production_architecture ):
   if ( production_architecture in INSTALL_OK ):
     print('Production architecture successfully installed..')
     #For now, it assumes that the release is being installed and it will be installed successfully
-    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, INSTALL_OK )
+    announcement = generate_announcement( release_name, prev_rel_name, production_architecture, list(set(INSTALL_OK+UPLOAD_OK)) )
     mailto = generate_announcement_link( announcement, release_name )
     msg = 'You can use this template for announcing the release:\n\n%s\n\n' \
           'You can also click %s to send the email.' % (announcement, mailto)

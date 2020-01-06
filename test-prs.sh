@@ -124,7 +124,7 @@ fi
 
 #Checkout any CMSSW PRs
 for PR in $(echo $@ | tr ' ' '\n' | grep '/cmssw#' | sed 's|#|:|') ; do
-  git cms-merge-topic --debug --ssh -u ${$PR}
+  git cms-merge-topic --debug --ssh -u $PR
 done
 echo "Please go to $CMSSW_BASE and checkout any extra CMSSW packages and rebuild."
 

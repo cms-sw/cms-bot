@@ -1,7 +1,7 @@
 {
   "aliases": {},
   "mappings": {
-    "cmssdt-runTheMatrix-data": {
+    "runTheMatrix-data": {
       "dynamic_templates": [
         {
           "mappings_count": {

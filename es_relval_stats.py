@@ -63,7 +63,8 @@ for wf in o.split("\n"):
       threads = [t for t in threads if t.is_alive()]
       if(len(threads) >= jobs):sleep(0.5)
       else: break
-    t = threading.Thread(target=es_send_resource_stats, args=(release, arch, wfnum, s, sfile, hostname, exit_code, params={"cmsthreads":cmsThreads}))
+    params={"cmsthreads":cmsThreads}
+    t = threading.Thread(target=es_send_resource_stats, args=(release, arch, wfnum, s, sfile, hostname, exit_code, params))
     t.start()
     threads.append(t)
   run_cmd("touch %s" % join(wf,"wf_stats.done"))

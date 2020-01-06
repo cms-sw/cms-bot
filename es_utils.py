@@ -218,7 +218,7 @@ def es_send_resource_stats(release, arch, name, version, sfile,
       dlen = len(data)
       if (x=="cpu") and (cpu_normalize>1) and (data[-1]>100):
         data = [d/cpu_normalize for d in data]
-      for t in ["min", "max", "avg", "median", "25", "75", 90]: sdata[x+"_"+t]=0
+      for t in ["min", "max", "avg", "median", "25", "75", "90"]: sdata[x+"_"+t]=0
       if dlen>0:
         sdata[x+"_min"]=data[0]
         sdata[x+"_max"]=data[-1]

@@ -66,6 +66,7 @@ CMSSW_L2 = {
   "silviodonato":     ["operations"],
   "slava77":          ["reconstruction"],
   "smuzaffar":        ["core", "externals"],
+  "tulamor":          ["externals"],
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
   "tocheng":          ["alca"],

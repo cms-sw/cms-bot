@@ -10,7 +10,7 @@ from github_utils import api_rate_limits, github_api,add_organization_member
 setdefaulttimeout(120)
 
 CMS_OWNERS = [ "smuzaffar", "cmsbuild", "davidlange6", "fabiocos" ]
-CMS_SDT    = [ "mrodozov" ]
+CMS_SDT    = [ "mrodozov", "tulamor" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
 REPO_OWNERS = {}
@@ -76,7 +76,7 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
   "repositories" : { "*":"push", "!cmssw" : "pull", "!cmsdist" : "pull" }
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
-  "members" : [ "smuzaffar" ],
+  "members" : [ "smuzaffar", "tulamor" ],
   "repositories" : { "cmssdt-wiki":"admin" }
 }
 #################################

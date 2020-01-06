@@ -2,7 +2,7 @@
 export WORKSPACE=$(/bin/pwd)
 export KEEP_SOURCE_GIT=true
 export BUILD_DIR=externals
-if [ "$@" = "" ] ; then
+if [ "$@" == "" ] ; then
   echo "Usage: $0 repo#PR repo/PR"
   exit 1
 fi

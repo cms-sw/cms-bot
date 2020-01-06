@@ -131,3 +131,14 @@ def get_config_map_properties(filters=None):
           break
     if not skip: specs.append(entry)
   return specs
+
+def percentile(percentage, data, dlen):
+  R=(dlen+1)*percentage/100.0
+  IR=int(R)
+  if IR>=dlen: return data[-1]
+  elif IR==0: return data[0]
+  FR=int((R-IR)*100)
+  res = data[IR-1]
+  if FR>0: res=(FR/100.0)*(data[IR]-res)+res
+  return res
+

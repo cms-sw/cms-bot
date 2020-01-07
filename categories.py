@@ -48,7 +48,7 @@ CMSSW_L2 = {
   "fioriNTU":         ["dqm"],
   "kpedro88":         ["upgrade","operations"],
   "lveldere":         ["fastsim"],
-  "makortel":         ["heterogeneous"],
+  "makortel":         ["heterogeneous", "core", "visualization", "geometry"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "mkirsano":         ["generators"],   
   "mommsen":          ["daq"],

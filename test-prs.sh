@@ -123,8 +123,8 @@ if [ "X${CMSSW_DEP}" != "X" ] ; then
 fi
 
 #Checkout any CMSSW PRs
-for PR in $(echo $@ | tr ' ' '\n' | grep '/cmssw#' | sed 's|#|:|') ; do
-  git cms-merge-topic --debug --ssh -u $PR
+for PR in $(echo $@ | tr ' ' '\n' | grep '/cmssw#' | sed 's|/cmssw#|:|') ; do
+  git cms-merge-topic --ssh -u $PR
 done
 echo "Please go to $CMSSW_BASE and checkout any extra CMSSW packages and rebuild."
 

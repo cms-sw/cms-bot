@@ -61,6 +61,7 @@ function prepare_upload_results (){
           [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
           json=$(basename $(dirname $dir)).json
           [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${dir}/
+          [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${dir}/
         done
       popd
     fi

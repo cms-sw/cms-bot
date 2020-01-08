@@ -19,7 +19,7 @@ EXTERNAL_REPOS = [ "cms-data", "cms-externals", gh_user]
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
 CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
-CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + [ "smuzaffar", "Dr15Jones" ]))
+CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + [ "smuzaffar", "Dr15Jones", "makortel" ]))
 COMPARISON_MISSING_MAP = [ "slava77" ]
 
 CMSSW_L2 = {

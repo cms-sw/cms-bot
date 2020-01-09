@@ -51,7 +51,7 @@ RELEASE_BRANCH_PRODUCTION = [
   "CMSSW_5_3_X",
 ]
 
-SPECIAL_RELEASE_MANAGERS = ["davidlange6", "slava77", "fabiocos", "silviodonato"]
+SPECIAL_RELEASE_MANAGERS = ["davidlange6", "slava77", "fabiocos", "silviodonato", "kpedro88"]
 
 RELEASE_MANAGERS={}
 ######################################################################

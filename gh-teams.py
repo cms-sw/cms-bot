@@ -7,9 +7,10 @@ from argparse import ArgumentParser
 from sys import exit
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api,add_organization_member
+from categories import CMSSW_L1
 setdefaulttimeout(120)
 
-CMS_OWNERS = [ "smuzaffar", "cmsbuild", "davidlange6", "fabiocos" ]
+CMS_OWNERS = [ "smuzaffar", "cmsbuild" ] + CMSSW_L1
 CMS_SDT    = [ "mrodozov", "tulamor" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 

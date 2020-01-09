@@ -453,7 +453,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if repository==CMSDIST_REPO_NAME:
       br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3])+"_X"
       if br: extra_rm=extra_rm+RELEASE_MANAGERS.get(br, [])
-    releaseManagers=list(set(extra_rm+SPECIAL_RELEASE_MANAGERS))
+    releaseManagers=list(set(extra_rm+CMSSW_L1))
   else:
     try:
       if (repo_config.OPEN_ISSUE_FOR_PUSH_TESTS) and (requestor == cmsbuild_user) and re.match(PUSH_TEST_ISSUE_MSG,issue.title):

@@ -4,11 +4,12 @@ from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from categories_map import CMSSW_CATEGORIES
 from repo_config import CMSBUILD_USER
+from releases import SPECIAL_RELEASE_MANAGERS
 
 authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
 CMSSW_L1 = ["davidlange6", "fabiocos", "silviodonato"]
-APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar", "slava77" ] + CMSSW_L1))
+APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar"] + CMSSW_L1 + SPECIAL_RELEASE_MANAGERS))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
 PR_HOLD_MANAGERS = [ "kpedro88" ]

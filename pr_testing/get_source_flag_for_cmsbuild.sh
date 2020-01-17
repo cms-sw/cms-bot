@@ -92,6 +92,12 @@ fi
 OUTPUT=$(echo ${SOURCES}  | sed 's/ .*//' | tr '#' '\n' )
 SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
+#check for submodules
+if $submodules; then
+    pushd ${PKG_NAME}
+    git submodule update --init --recursive
+    popd
+fi
 # Move to other path
 if [ "$KEEP_SOURCE_GIT" != "true" ] ; then
     rm -rf ${PKG_NAME}/.git  # remove git metadata - we wont need it when packing.
@@ -101,10 +107,5 @@ if [ ${PKG_NAME} != ${DIR_NAME} ]; then
         mv ${PKG_NAME} ${DIR_NAME}
         ln -s ${DIR_NAME} ${PKG_NAME}
     fi
-fi
-if $submodules; then
-    pushd ${DIR_NAME}
-    git submodule update --init --recursive
-    popd
 fi
 echo "--source ${SPEC_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt

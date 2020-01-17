@@ -75,6 +75,10 @@ N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true
 echo "Number of sources: " ${N}
 echo "Sources:"
 echo ${SOURCES}
+submodules=false
+if [ `grep "submodules=1" <<< ${SOURCES} | wc -l` != 0 ]; then
+    submodules=true
+fi
 
 if [ ${N} -eq 0 ]; then
    >&2 echo "ERROR: External sources not found"
@@ -88,6 +92,12 @@ fi
 OUTPUT=$(echo ${SOURCES}  | sed 's/ .*//' | tr '#' '\n' )
 SOURCE_NAME=$(echo ${OUTPUT} | sed 's/.*://' | sed 's/=.*//')
 DIR_NAME=$(echo ${OUTPUT} | sed 's/.*=//')
+#check for submodules
+if $submodules; then
+    pushd ${PKG_NAME}
+    git submodule update --init --recursive
+    popd
+fi
 # Move to other path
 if [ "$KEEP_SOURCE_GIT" != "true" ] ; then
     rm -rf ${PKG_NAME}/.git  # remove git metadata - we wont need it when packing.

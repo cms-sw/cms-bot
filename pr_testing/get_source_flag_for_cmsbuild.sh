@@ -75,6 +75,10 @@ N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true
 echo "Number of sources: " ${N}
 echo "Sources:"
 echo ${SOURCES}
+submodules=false
+if [ `grep "submodules=1" <<< ${SOURCES} | wc -l` != 0 ]; then
+    submodules=true
+fi
 
 if [ ${N} -eq 0 ]; then
    >&2 echo "ERROR: External sources not found"
@@ -97,5 +101,10 @@ if [ ${PKG_NAME} != ${DIR_NAME} ]; then
         mv ${PKG_NAME} ${DIR_NAME}
         ln -s ${DIR_NAME} ${PKG_NAME}
     fi
+fi
+if $submodules; then
+    pushd ${DIR_NAME}
+    git submodule update --init --recursive
+    popd
 fi
 echo "--source ${SPEC_NAME}:${SOURCE_NAME}=$(pwd)/${DIR_NAME}" >> get_source_flag_result.txt

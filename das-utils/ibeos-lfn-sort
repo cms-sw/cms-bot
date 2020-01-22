@@ -20,5 +20,7 @@ else
     esac
   done
 fi
-echo $(echo $IBEOS_FILES | tr ' ' '\n' | sort -u) $(echo $NON_IBEOS_FILES | tr ' ' '\n' | sort -u) | tr ' ' '\n' | grep '/store' | head -n 20
+IBEOS_FILES=$(echo $IBEOS_FILES | tr ' ' '\n' | grep '/store' | sort -u)
+NON_IBEOS_FILES=$(echo $NON_IBEOS_FILES | tr ' ' '\n' | grep '/store' | sort -u)
+echo "$IBEOS_FILES $NON_IBEOS_FILES" | tr ' ' '\n' | grep '/store' | head -n 20
 

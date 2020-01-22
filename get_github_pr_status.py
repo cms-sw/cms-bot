@@ -25,9 +25,12 @@ def get_overall_status_state(gh_pr_obj=None, overall_status_context_name='overal
     #skip the overall status
     filtered_list = [sts for sts in status_list.statuses if sts.context != overall_status_context_name]
     states = [i.state for i in filtered_list]
-    if 'failed' or 'error' in states:
-        return 'failed'
-    if 'pending' in states in states:
+    print("overall states: ")
+    for i in states:
+        print(i)
+    if 'failure' in states or 'error' in states:
+        return 'failure'
+    if 'pending' in states:
         return 'pending'
     else:
         return "success"
@@ -49,5 +52,5 @@ if __name__ == "__main__":
     for i in cs_list.statuses:
         print("context: ", i.context, " state: ", i.state)
 
-    #add_status_for_pr(gh_pr_obj=pr_object, context="overall", state="pending",
-    #                          description="overall status description", target_url="http://www.example.com")
+    overall_state = get_overall_status_state(pr_object, 'overall')
+    print("overall state is: ", overall_state)

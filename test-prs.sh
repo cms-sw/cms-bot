@@ -92,7 +92,9 @@ fi
 #Build externals
 COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --weekly -i ${BUILD_DIR} ${SOURCE_FLAG} --arch $SCRAM_ARCH -j ${NCPU} build cmssw-tool-conf"
 echo "${COMPILATION_CMD}"
-eval $COMPILATION_CMD
+[ -e $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log ] && mv $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log.$(date +%s)
+eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log
+TOOL_CONF_VER=$(grep 'Generated cache: cms+cmssw-tool-conf+' $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log | tail -1 | sed 's|.*Generated cache: *cms+cmssw-tool-conf+||;s| ||g')
 
 #Find CMSSW IB to use to test externals
 CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "${CMS_BOT_DIR}/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
@@ -107,7 +109,7 @@ CONF="config/toolbox/${SCRAM_ARCH}/tools/selected"
 CONF_BACK="config/toolbox/${SCRAM_ARCH}/tools/selected.backup"
 if [ ! -d ${CONF_BACK} ] ; then mv ${CONF} ${CONF_BACK} ; fi
 rm -rf ${CONF}
-TOOL_CONF=$(ls -td $WORKSPACE/$BUILD_DIR/$SCRAM_ARCH/cms/cmssw-tool-conf/*/tools/selected | head -1)
+TOOL_CONF="$WORKSPACE/$BUILD_DIR/$SCRAM_ARCH/cms/cmssw-tool-conf/${TOOL_CONF_VER}/tools/selected"
 rsync -a ${TOOL_CONF}/ ${CONF}/
 if [ -e "${CONF_BACK}/cmssw.xml" ] ; then cp ${CONF_BACK}/cmssw.xml ${CONF}/cmssw.xml ; fi
 RMV_CMSSW_EXTERNAL="config/SCRAM/hooks/runtime/99-remove-release-external-lib"

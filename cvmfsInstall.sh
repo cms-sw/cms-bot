@@ -58,15 +58,17 @@ exit 1
 fi
 
 export PROOTDIR
-[ -d $PROOTDIR ] || mkdir -p $PROOTDIR
-PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
-for x in proot qemu-aarch64 qemu-ppc64le ; do
-  if [ ! -x $PROOTDIR/$x ] ; then
-    rm -rf $PROOTDIR/$x
-    wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
-    chmod +x $PROOTDIR/$x
-  fi
-done
+if [ $(echo $PROOTDIR | grep $BASEDIR | wc -l) -gt 0 ] ; then
+  [ -d $PROOTDIR ] || mkdir -p $PROOTDIR
+  PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
+  for x in proot qemu-aarch64 qemu-ppc64le ; do
+    if [ ! -x $PROOTDIR/$x ] ; then
+      rm -rf $PROOTDIR/$x
+      wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
+      chmod +x $PROOTDIR/$x
+    fi
+  done
+fi
 
 hostname > $BASEDIR/stratum0
 if [ -d $BASEDIR/SITECONF ] ; then

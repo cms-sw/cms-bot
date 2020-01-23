@@ -1,21 +1,40 @@
 #!/bin/bash -e
-export WORKSPACE=$(/bin/pwd)
+export WORKSPACE=$(/bin/pwd -P)
 export KEEP_SOURCE_GIT=true
 export BUILD_DIR=externals
-if [ "$@" == "" ] ; then
-  echo "Usage: $0 repo#PR repo/PR"
+ARCH=""
+CMSDIST_BR=""
+PRS=""
+while [ "$#" != 0 ]; do
+  case "$1" in
+    -h|--help)
+      echo "Usage: $0 [-c|--cmsdist branch] [-a|--architecture architecture] repo#PR [repo#PR]"
+      exit 0
+      ;;
+    -c|--cmsdist)
+      CMSDIST_BR=$2 ; shift ; shift
+      ;;
+    -a|--architecture)
+      ARCH=$2 ; shift ; shift
+      ;;
+    *)
+      PRS="$PRS $1" ; shift
+      ;;
+  esac
+done
+
+if [ "$PRS" == "" ] ; then
+  echo "Usage: $0 [-c|--cmsdist branch] [-a|--architecture architecture] repo#PR [repo#PR]"
   exit 1
 fi
 
 CMS_BOT_DIR=$(cd $(dirname $0); /bin/pwd -P)
 COMMON=${CMS_BOT_DIR}/common
-export WORPSPACE=$(/bin/pwd -P)
 source ${CMS_BOT_DIR}/pr_testing/_helper_functions.sh
 let NCPU=$(${COMMON}/get_cpu_number.sh)/2
 
 #Clone and merge PRs
-CMSDIST_BR=""
-for PR in $(echo $@ | tr ' ' '\n' | grep -v '/cmssw#') ; do
+for PR in $(echo $PRS | tr ' ' '\n' | grep -v '/cmssw#') ; do
   REPO=$(echo ${PR} | sed 's|#.*||;s|.*/||')
   if [ ! -e ${REPO} ] ; then
     echo "Cloning ${REPO} and merging ${PR}"
@@ -27,7 +46,7 @@ for PR in $(echo $@ | tr ' ' '\n' | grep -v '/cmssw#') ; do
 done
 
 #Find CMSSW configuration
-CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "" "$CMSDIST_BR" "")
+CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "" "${CMSDIST_BR}" "${ARCH}")
 if [ "$CONFIG_LINE" = "" ] ; then
   echo "ERROR: Unable to find configuration for cmsdist branch ${CMSDIST_BR} in ${CMS_BOT_DIR}/config.map"
   exit 1
@@ -51,7 +70,7 @@ export SCRAM_ARCH=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*/
 export CMSSW_QUEUE=$(echo ${CONFIG_LINE} | sed 's/^.*RELEASE_QUEUE=//' | sed 's/;.*//' )
 
 #Download external tools sources to be used to build any externals
-for PKG_REPO in $(echo $@ | tr ' ' '\n' | sed 's|#.*||' | sort | uniq) ; do
+for PKG_REPO in $(echo $PRS | tr ' ' '\n' | sed 's|#.*||' | sort | uniq) ; do
   PKG_NAME=$(echo ${PKG_REPO} | sed 's|.*/||')
   case "$PKG_NAME" in
     cmsdist|pkgtools|cms-bot|cmssw ) ;;
@@ -123,7 +142,7 @@ if [ "X${CMSSW_DEP}" != "X" ] ; then
 fi
 
 #Checkout any CMSSW PRs
-for PR in $(echo $@ | tr ' ' '\n' | grep '/cmssw#' | sed 's|/cmssw#|:|') ; do
+for PR in $(echo $PRS | tr ' ' '\n' | grep '/cmssw#' | sed 's|/cmssw#|:|') ; do
   git cms-merge-topic --ssh -u $PR
 done
 echo "Please go to $CMSSW_BASE and checkout any extra CMSSW packages and rebuild."

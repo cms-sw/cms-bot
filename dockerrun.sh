@@ -30,9 +30,9 @@ function dockerrun()
       docker $DOC_ARG ${IMG} sh -c "$ARGS"
       ;;
     singularity)
-      UNPACK_IMG="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/${IMG}"
+      UNPACK_IMG="/cvmfs/cms-ib.cern.ch/docker/${IMG}"
       if [ ! -e ${UNPACK_IMG} ] ; then
-        UNPACK_IMG="/cvmfs/cms-ib.cern.ch/docker/${IMG}"
+        UNPACK_IMG="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/${IMG}"
       fi
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u; $@"
       singularity -s exec -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${THISDIR} ${UNPACK_IMG} sh -c "$ARGS"

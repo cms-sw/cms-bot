@@ -33,7 +33,8 @@ export PATH=$WORKSPACE/das-utils:$PATH
 which das_client
 mkdir $TEST_DIR/matrixTests
 pushd $TEST_DIR/matrixTests
-  runTheMatrix.py -s 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  NCPU=$($WORKSPACE/common/get_cpu_number.sh)
+  runTheMatrix.py -s -j $NCPU 2>&1 | tee -a $WORKSPACE/matrixTests.log
 popd
 
 # If it reaches here it is because there were no errors

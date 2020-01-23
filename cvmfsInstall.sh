@@ -1,11 +1,16 @@
 #!/bin/sh -ex
 source $(dirname $0)/dockerrun.sh
+export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
+export THISDIR=$(/bin/pwd -P)
+export LANG=C
+
 ARCHITECTURE=$1
 CMS_WEEK=$2
 RELEASE_NAME=$3
 WORKSPACE=$4
 DEV=$5
 USE_DEV=""
+PROOTDIR=$6
 TEST_INSTALL=$7
 NUM_WEEKS=$8
 REINSTALL_COMMON=$9
@@ -22,37 +27,13 @@ else
   DEV=""
 fi
 
-PROOTDIR=$6
 if [ "X$PROOTDIR" = "X" ] ; then
-  PROOTDIR=/build/cmsbuild/proot
+  PROOTDIR=${BASEDIR}/proot
 fi
-
-export PROOTDIR
-[ -d $PROOTDIR ] || mkdir -p $PROOTDIR
-PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
-for x in proot qemu-aarch64 qemu-ppc64le ; do
-  if [ ! -x $PROOTDIR/$x ] ; then
-    rm -rf $PROOTDIR/$x
-    wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
-    chmod +x $PROOTDIR/$x
-  fi
-done
 
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1
 
-export CMSIB_CVMFS_REPO=cms-ib.cern.ch
-export BASEDIR=/cvmfs/$CMSIB_CVMFS_REPO
-export THISDIR=`pwd`
-export LANG=C
-# The disk where cvmfs is mounted
-if [ -d /srv/cvmfs/$CMSIB_CVMFS_REPO/data/ ]; then
-  export DISK="/srv/cvmfs/$CMSIB_CVMFS_REPO/data/"
-elif [ -d /var/spool/cvmfs/$CMSIB_CVMFS_REPO/$CMSIB_CVMFS_REPO/data/ ]; then
-  export DISK="/var/spool/cvmfs/$CMSIB_CVMFS_REPO/$CMSIB_CVMFS_REPO/data/"
-else
-  export DISK="/dev/vdc"
-fi
 # The repositories we need to install are those for which we find the
 # timestamp files:
 REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
@@ -66,18 +47,27 @@ fi
 
 echo $ARCHITECTURES
 # Prepare the cvmfs repository in read/write mode
-cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/cms-ib.cern.ch/is_publishing.lock) && cvmfs_server transaction)
+cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
 # Check if the transaction really happened
 if [ `touch $BASEDIR/is_writable 2> /dev/null; echo "$?"` -eq 0 ]; then
 rm $BASEDIR/is_writable
 else
 echo CVMFS filesystem is not writable. Aborting.
-echo " " | mail -s "$CMSIB_CVMFS_REPO cannot be set to transaction" cms-sdt-logs@cern.ch
+echo " " | mail -s "$CVMFS_REPOSITORY cannot be set to transaction" cms-sdt-logs@cern.ch
 exit 1
 fi
-export INITIAL_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
-# Size in Mb to trigger publishing, this avoid huge publishing time (note at 3.6 Mb/s 13000 Mb is roughly 1 hr)
-export PUBLISH_THRESHOLD=13000
+
+export PROOTDIR
+[ -d $PROOTDIR ] || mkdir -p $PROOTDIR
+PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
+for x in proot qemu-aarch64 qemu-ppc64le ; do
+  if [ ! -x $PROOTDIR/$x ] ; then
+    rm -rf $PROOTDIR/$x
+    wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
+    chmod +x $PROOTDIR/$x
+  fi
+done
+
 hostname > $BASEDIR/stratum0
 if [ -d $BASEDIR/SITECONF ] ; then
   pushd $BASEDIR/SITECONF
@@ -105,10 +95,6 @@ for t in nweek- ; do
 done
 
 # We install packages for both weeks. We reset every two week, alternating.
-# Notice that the biweekly period for week 1 is shifted by 1 week for this
-# reason we move it away from the 0 into 52 and take the modulo 52 afterward.
-# Potentially we could separate the installation of the two volumes so that
-# we don't need a huge local disk, but we can scatter this on different machienes.
 TMP_PREFIX=/tmp/cvsmfs-$$
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
@@ -184,14 +170,6 @@ for REPOSITORY in $REPOSITORIES; do
             fi
           done ;
         fi ;
-        CURRENT_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
-        if (( $CURRENT_SIZE - $INITIAL_SIZE > $PUBLISH_THRESHOLD )); then
-          # If we already installed more than the threshold publish, put again the repository in transaction and reset INITIAL_SIZE
-          echo "Threshold passed, forcing publishing."
-          time cvmfs_server publish
-          cvmfs_server transaction
-          INITIAL_SIZE=`df -B 1M $DISK | awk '{print $3}' | tail -1`
-        fi
       done ;
       rm -f ${TMP_PREFIX}-installed.txt ;
       rm -f ${TMP_PREFIX}-onserver.txt

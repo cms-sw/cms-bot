@@ -30,7 +30,7 @@ function report_pull_request_results_all_prs_with_commit() {
 }
 
 function mark_commit_status_all_prs () {
-    CONEXT=$1; shift
+    CONTEXT=$1; shift
     STATE=$1; shift
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )

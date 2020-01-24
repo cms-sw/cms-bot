@@ -1,9 +1,9 @@
 from __future__ import print_function
 from sys import argv
 from hashlib import md5
-import json
+import json, sys
 from _py2with3compatibility import run_cmd, urlopen, Request
-from os.path import exists, dirname, abspath, join, basename
+from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
 
 try:
@@ -347,7 +347,7 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
-    if page <= 1:
+    if (page <= 1) and (method=='GET'):
         link = response.info().getheader("Link")
         if link:
             pages = [int(l.split("page=", 1)[1].split(">")[0]) for l in link.split(" ") if
@@ -391,3 +391,17 @@ def pr_get_changed_files(pr):
 
 def get_unix_time(data_obj):
     return data_obj.strftime("%s")
+
+
+def get_gh_token(repository=None):
+  if repository:
+    repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
+    if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+  import repo_config
+  return open(expanduser(repo_config.GH_TOKEN)).read().strip()
+
+
+def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None):
+  if not token: token = get_gh_token(repository)
+  params = {'state': state, 'target_url': url, 'description': description, 'context': context}
+  github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)

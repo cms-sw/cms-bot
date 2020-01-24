@@ -29,6 +29,17 @@ function report_pull_request_results_all_prs_with_commit() {
     done
 }
 
+function mark_commit_status_all_prs () {
+    CONEXT=$1; shift
+    STATE=$1; shift
+    for PR in ${PULL_REQUESTS} ; do
+        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+        PR_NR=$(echo ${PR} | sed 's/.*#//' )
+        LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
+        ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "${CMSSW_QUEUE}/${SCRAM_ARCH}/${CONTEXT}" -s "${STATE}" $@
+    done
+}
+
 function exit_with_comment_failure_main_pr(){
     # $@ - aditonal options
     # report that job failed to the first PR (that should be our main PR)

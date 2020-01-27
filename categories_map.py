@@ -315,6 +315,7 @@ CMSSW_CATEGORIES = {
     "FWCore/SOA",
     "FWCore/ServiceRegistry",
     "FWCore/Services",
+    "FWCore/SharedMemory",
     "FWCore/Skeletons",
     "FWCore/Sources",
     "FWCore/TFWLiteSelector",

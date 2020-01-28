@@ -9,8 +9,6 @@ if __name__ == "__main__":
 
     stats_json_f = argv[1]
     opts_json_f = argv[2]
-    # stats_json_f = "/home/mrodozov/Downloads/all/build_zstd/BUILD/slc7_amd64_gcc820/external/cmake/3.14.5-cms/cmake.json"
-    # opts_json_f = "/home/mrodozov/Downloads/all/build_zstd/BUILD/slc7_amd64_gcc820/external/cmake/3.14.5-cms/opts.json"
     with open(stats_json_f, "r") as stats_json_file: stats_json = json.load(stats_json_file)
     with open(opts_json_f, "r") as opts_json_file: opts_json = json.load(opts_json_file)
     file_stamp = int(tstat(stats_json_f).st_mtime)  # get the file stamp from the file

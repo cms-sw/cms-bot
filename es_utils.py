@@ -245,8 +245,7 @@ def es_send_resource_stats(release, arch, name, version, sfile,
   sdata.update(average_stats)
   if params: sdata.update(params)
   idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
-  try: print(json.dumps(sdata, indent=1, sort_keys=True))
-  #try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
+  try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
   except Exception as e: print(e.message)
 
 def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='',
@@ -255,6 +254,5 @@ def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='',
   index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])).hexdigest()
   sdata = get_summary_stats_from_dictionary(stats_dict, cpu_normalize)
   sdata.update(opts_dict)
-  try: print(json.dumps(sdata, indent=1, sort_keys=True))
-  #try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
+  try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)

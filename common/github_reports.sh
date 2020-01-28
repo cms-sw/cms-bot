@@ -30,13 +30,15 @@ function report_pull_request_results_all_prs_with_commit() {
 }
 
 function mark_commit_status_all_prs () {
-    CONTEXT=$1; shift
+    CONTEXT="${SCRAM_ARCH}/$1"; shift
     STATE=$1; shift
+    CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
+    if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
-        ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "${CMSSW_QUEUE}/${SCRAM_ARCH}/${CONTEXT}" -s "${STATE}" "$@"
+        ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "${CONTEXT}" -s "${STATE}" "$@"
     done
 }
 

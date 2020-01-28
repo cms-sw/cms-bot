@@ -237,15 +237,13 @@ def es_send_resource_stats(release, arch, name, version, sfile,
     release_queue = release.split("_X_",1)[0]+"_X"
   else:
     release_queue = "_".join(release.split("_")[:3])+"_X"
-
   sdata = {"release": release, "release_queue": release_queue, "architecture": arch,
            "step": version, "@timestamp": rel_msec, "workflow": name,
            "hostname": hostname, "exit_code": exit_code}
-  if params:
-    for p in params: sdata[p] = params[p]
   stats = json.load(open(sfile))
   average_stats = get_summary_stats_from_dictionary(stats, cpu_normalize)
   sdata.update(average_stats)
+  if params: sdata.update(params)
   idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
   try: print(json.dumps(sdata, indent=1, sort_keys=True))
   #try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))

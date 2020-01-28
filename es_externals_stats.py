@@ -17,5 +17,4 @@ if __name__ == "__main__":
     week = str((file_stamp / 86400 + 4) / 7)
     index_name = "externals_build_runtime_stats_summary_testindex"
     doc_name= "external-runtime-stats-summary-document_testdoc"
-    sdata = es_send_external_stats(stats_json, opts_json, 1, week, es_index_name=index_name, es_doc_name=doc_name)
-    print(json.dumps(sdata, indent=1, sort_keys=True))
+    es_send_external_stats(stats_json, opts_json, 1, week, es_index_name=index_name, es_doc_name=doc_name)

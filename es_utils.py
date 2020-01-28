@@ -7,6 +7,8 @@ from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile
 from _py2with3compatibility import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, install_opener, Request, \
   urlopen, build_opener
+from os import stat as tstat
+from datetime import datetime
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
@@ -185,55 +187,89 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
                            }
   return wf_stats
 
+def get_summary_stats_from_dictionary(stats_dict, cpu_normalize):
+  sdata = None
+  try:
+    xdata = {}
+    for stat in stats_dict:
+      for item in stat:
+        try:
+          xdata[item].append(stat[item])
+        except:
+          xdata[item] = []
+          xdata[item].append(stat[item])
+    sdata = {}
+    for x in xdata:
+      data = sorted(xdata[x])
+      if x in ["time", "num_threads", "processes", "num_fds"]:
+        sdata[x] = data[-1]
+        continue
+      if not x in ["rss", "vms", "pss", "uss", "shared", "data", "cpu"]: continue
+      dlen = len(data)
+      if (x == "cpu") and (cpu_normalize > 1) and (data[-1] > 100):
+        data = [d / cpu_normalize for d in data]
+      for t in ["min", "max", "avg", "median", "25", "75", "90"]: sdata[x + "_" + t] = 0
+      if dlen > 0:
+        sdata[x + "_min"] = data[0]
+        sdata[x + "_max"] = data[-1]
+        if dlen > 1:
+          dlen2 = int(dlen / 2)
+          if (dlen % 2) == 0:
+            sdata[x + "_median"] = int((data[dlen2 - 1] + data[dlen2]) / 2)
+          else:
+            sdata[x + "_median"] = data[dlen2]
+          sdata[x + "_avg"] = int(sum(data) / dlen)
+          for t in [25, 75, 90]:
+            sdata[x + "_" + str(t)] = int(percentile(t, data, dlen))
+        else:
+          for t in ["25", "75", "90", "avg", "median"]:
+            sdata[x + "_" + t] = data[0]
+  except Exception as e:
+    print(e.message)
+  return sdata
+
 def es_send_resource_stats(release, arch, name, version, sfile,
                            hostname, exit_code, params=None,
                            cpu_normalize=1, index="relvals_stats_summary", doc="runtime-stats-summary"):
   week, rel_sec  = cmsswIB2Week(release)
   rel_msec = rel_sec*1000
-  release_queue = ""
   if "_X_" in release:
     release_queue = release.split("_X_",1)[0]+"_X"
   else:
     release_queue = "_".join(release.split("_")[:3])+"_X"
-  try:
-    stats = json.load(open(sfile))
-    xdata = {}
-    for stat in stats:
-      for item in stat:
-        try: xdata[item].append(stat[item])
-        except:
-          xdata[item]=[]
-          xdata[item].append(stat[item])
-    sdata = {"release":release, "release_queue": release_queue,"architecture":arch,
-             "step":version, "@timestamp":rel_msec, "workflow":name,
-             "hostname":hostname, "exit_code":exit_code}
-    if params:
-      for p in params: sdata[p] = params[p]
-    for x in xdata:
-      data = sorted(xdata[x])
-      if x in ["time","num_threads","processes","num_fds"]:
-        sdata[x]=data[-1]
-        continue
-      if not x in ["rss", "vms", "pss", "uss", "shared", "data", "cpu"]: continue
-      dlen = len(data)
-      if (x=="cpu") and (cpu_normalize>1) and (data[-1]>100):
-        data = [d/cpu_normalize for d in data]
-      for t in ["min", "max", "avg", "median", "25", "75", "90"]: sdata[x+"_"+t]=0
-      if dlen>0:
-        sdata[x+"_min"]=data[0]
-        sdata[x+"_max"]=data[-1]
-        if dlen>1:
-          dlen2=int(dlen/2)
-          if (dlen%2)==0: sdata[x+"_median"]=int((data[dlen2-1]+data[dlen2])/2)
-          else: sdata[x+"_median"]=data[dlen2]
-          sdata[x+"_avg"]=int(sum(data)/dlen)
-          for t in [25, 75, 90]:
-            sdata[x+"_"+str(t)]=int(percentile(t,data, dlen))
-        else:
-          for t in ["25", "75", "90", "avg", "median"]:
-            sdata[x+"_"+t]=data[0]
-    idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
-    try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
-    except Exception as e: print(e)
-  except Exception as e: print(e)
-  return
+
+  sdata = {"release": release, "release_queue": release_queue, "architecture": arch,
+           "step": version, "@timestamp": rel_msec, "workflow": name,
+           "hostname": hostname, "exit_code": exit_code}
+  if params:
+    for p in params: sdata[p] = params[p]
+  stats = json.load(open(sfile))
+  average_stats = get_summary_stats_from_dictionary(stats, cpu_normalize)
+  sdata.update(average_stats)
+  idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
+  try: print(json.dumps(sdata, indent=1, sort_keys=True))
+  #try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
+  except Exception as e: print(e.message)
+
+def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='',
+                           es_index_name='externals_stats_summary_testindex',
+                           es_doc_name='externals-runtime-stats-summary-testdoc'):
+  index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])).hexdigest()
+  sdata = get_summary_stats_from_dictionary(stats_dict, cpu_normalize)
+  sdata.update(opts_dict)
+  try: print(json.dumps(sdata, indent=1, sort_keys=True))
+  #try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
+  except Exception as e: print(e.message)
+
+if __name__ == "__main__":
+
+  stats_json_file = "/home/mrodozov/Downloads/all/build_zstd/BUILD/slc7_amd64_gcc820/external/cmake/3.14.5-cms/cmake.json"
+  opts_json_file = "/home/mrodozov/Downloads/all/build_zstd/BUILD/slc7_amd64_gcc820/external/cmake/3.14.5-cms/opts.json"
+  #with open(stats_json_file, "r") as stats_json_file: stats_json = json.load(stats_json_file)
+  with open(stats_json_file, "r") as stats_json_f: stats_json = json.load(stats_json_f)
+  with open(opts_json_file, "r") as opts_json_f: opts_json = json.load(opts_json_f)
+  file_stamp = int(tstat(stats_json_file).st_mtime)  # get the file stamp from the file
+  week = str((file_stamp / 86400 + 4) / 7)
+  #read the data
+  es_send_resource_stats("CMSSW_10_2_X_2020-01-24-1100", "slc7_amd64_gcc820", "step1", "1", stats_json_file, "hostname", 0, params=None, cpu_normalize=1, index="index_name", doc="doc_name")
+  es_send_external_stats(stats_json, opts_json, 1, week)

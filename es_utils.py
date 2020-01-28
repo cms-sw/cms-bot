@@ -260,16 +260,3 @@ def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='',
   try: print(json.dumps(sdata, indent=1, sort_keys=True))
   #try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)
-
-if __name__ == "__main__":
-
-  stats_json_file = "/home/mrodozov/Downloads/all/build_zstd/BUILD/slc7_amd64_gcc820/external/cmake/3.14.5-cms/cmake.json"
-  opts_json_file = "/home/mrodozov/Downloads/all/build_zstd/BUILD/slc7_amd64_gcc820/external/cmake/3.14.5-cms/opts.json"
-  #with open(stats_json_file, "r") as stats_json_file: stats_json = json.load(stats_json_file)
-  with open(stats_json_file, "r") as stats_json_f: stats_json = json.load(stats_json_f)
-  with open(opts_json_file, "r") as opts_json_f: opts_json = json.load(opts_json_f)
-  file_stamp = int(tstat(stats_json_file).st_mtime)  # get the file stamp from the file
-  week = str((file_stamp / 86400 + 4) / 7)
-  #read the data
-  es_send_resource_stats("CMSSW_10_2_X_2020-01-24-1100", "slc7_amd64_gcc820", "step1", "1", stats_json_file, "hostname", 0, params=None, cpu_normalize=1, index="index_name", doc="doc_name")
-  es_send_external_stats(stats_json, opts_json, 1, week)

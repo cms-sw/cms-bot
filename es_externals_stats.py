@@ -13,4 +13,4 @@ if __name__ == "__main__":
     with open(opts_json_f, "r") as opts_json_file: opts_json = json.load(opts_json_file)
     file_stamp = int(tstat(stats_json_f).st_mtime)  # get the file stamp from the file
     week = str((file_stamp / 86400 + 4) / 7)
-    es_send_external_stats(stats_json, opts_json, 1, week)
+    es_send_external_stats(stats_json, opts_json, 1, week, file_stamp)

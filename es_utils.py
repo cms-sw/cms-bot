@@ -248,11 +248,12 @@ def es_send_resource_stats(release, arch, name, version, sfile,
   try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
   except Exception as e: print(e.message)
 
-def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='',
+def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='', file_timestamp=0,
                            es_index_name='externals_stats_summary_testindex',
                            es_doc_name='externals-runtime-stats-summary-testdoc'):
   index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])).hexdigest()
   sdata = get_summary_stats_from_dictionary(stats_dict, cpu_normalize)
   sdata.update(opts_dict)
+  sdata["@timestamp"]=file_timestamp
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)

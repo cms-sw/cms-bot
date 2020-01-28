@@ -611,6 +611,7 @@ CMSSW_CATEGORIES = {
     "DQMServices/StreamerIO",
     "DQMServices/XdaqCollector",
     "DataFormats/Histograms",
+    "DPGAnalysis/HcalTools",
     "HLTriggerOffline/B2G",
     "HLTriggerOffline/Btag",
     "HLTriggerOffline/Common",

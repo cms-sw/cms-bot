@@ -814,7 +814,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     BUILD_OK=false
     mark_commit_status_all_prs 'compilation' 'error' -u "${BUILD_URL}" -d "Found compilation errors." || true
 else
-    mark_commit_status_all_prs 'compilation' 'success' -u "${BUILD_URL}" -d "Running tests" || true
+    mark_commit_status_all_prs 'compilation' 'success' -u "${BUILD_URL}" -d "All OK" || true
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK' >> $RESULTS_FILE
     if [ -e ${WORKSPACE}/build-logs/index.html ] ; then
@@ -882,7 +882,7 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_
   if [ $QA_COUNT -gt 0 ] ; then QA_RES="ERROR" ; fi
   QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | grep '.xml' | sed 's|^./||' | sort | uniq | wc -l)
   if [ $QA_COUNT -gt 0 ] ; then  QA_RES="ERROR" ; fi
-  if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" fi
+  if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" ; fi
   if [ "${QA_RES}" == "ERROR" ] ; then
     mark_commit_status_all_prs 'dup-dict' 'error' -u "${BUILD_URL}" -d "Duplicate dictionaries found" || true
   else
@@ -1178,7 +1178,7 @@ if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to fals
         BUILD_LOG_RES=""
     fi
     REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
-    mark_commit_status_all_prs 'overall' 'success' -u "${BUILD_URL}" -d "All tests Passed" || true
+    mark_commit_status_all_prs 'overall' 'success' -u "${BUILD_URL}" -d "All OK" || true
 else
     # Doc: in case some test failed, we check each test log specifically and generate combined message
     # which is stored in $WORKSPACE/report.txt

@@ -185,55 +185,73 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
                            }
   return wf_stats
 
+def get_summary_stats_from_dictionary(stats_dict, cpu_normalize):
+  sdata = None
+  try:
+    xdata = {}
+    for stat in stats_dict:
+      for item in stat:
+        try:
+          xdata[item].append(stat[item])
+        except:
+          xdata[item] = []
+          xdata[item].append(stat[item])
+    sdata = {}
+    for x in xdata:
+      data = sorted(xdata[x])
+      if x in ["time", "num_threads", "processes", "num_fds"]:
+        sdata[x] = data[-1]
+        continue
+      if not x in ["rss", "vms", "pss", "uss", "shared", "data", "cpu"]: continue
+      dlen = len(data)
+      if (x == "cpu") and (cpu_normalize > 1) and (data[-1] > 100):
+        data = [d / cpu_normalize for d in data]
+      for t in ["min", "max", "avg", "median", "25", "75", "90"]: sdata[x + "_" + t] = 0
+      if dlen > 0:
+        sdata[x + "_min"] = data[0]
+        sdata[x + "_max"] = data[-1]
+        if dlen > 1:
+          dlen2 = int(dlen / 2)
+          if (dlen % 2) == 0:
+            sdata[x + "_median"] = int((data[dlen2 - 1] + data[dlen2]) / 2)
+          else:
+            sdata[x + "_median"] = data[dlen2]
+          sdata[x + "_avg"] = int(sum(data) / dlen)
+          for t in [25, 75, 90]:
+            sdata[x + "_" + str(t)] = int(percentile(t, data, dlen))
+        else:
+          for t in ["25", "75", "90", "avg", "median"]:
+            sdata[x + "_" + t] = data[0]
+  except Exception as e:
+    print(e.message)
+  return sdata
+
 def es_send_resource_stats(release, arch, name, version, sfile,
                            hostname, exit_code, params=None,
                            cpu_normalize=1, index="relvals_stats_summary", doc="runtime-stats-summary"):
   week, rel_sec  = cmsswIB2Week(release)
   rel_msec = rel_sec*1000
-  release_queue = ""
   if "_X_" in release:
     release_queue = release.split("_X_",1)[0]+"_X"
   else:
     release_queue = "_".join(release.split("_")[:3])+"_X"
-  try:
-    stats = json.load(open(sfile))
-    xdata = {}
-    for stat in stats:
-      for item in stat:
-        try: xdata[item].append(stat[item])
-        except:
-          xdata[item]=[]
-          xdata[item].append(stat[item])
-    sdata = {"release":release, "release_queue": release_queue,"architecture":arch,
-             "step":version, "@timestamp":rel_msec, "workflow":name,
-             "hostname":hostname, "exit_code":exit_code}
-    if params:
-      for p in params: sdata[p] = params[p]
-    for x in xdata:
-      data = sorted(xdata[x])
-      if x in ["time","num_threads","processes","num_fds"]:
-        sdata[x]=data[-1]
-        continue
-      if not x in ["rss", "vms", "pss", "uss", "shared", "data", "cpu"]: continue
-      dlen = len(data)
-      if (x=="cpu") and (cpu_normalize>1) and (data[-1]>100):
-        data = [d/cpu_normalize for d in data]
-      for t in ["min", "max", "avg", "median", "25", "75", "90"]: sdata[x+"_"+t]=0
-      if dlen>0:
-        sdata[x+"_min"]=data[0]
-        sdata[x+"_max"]=data[-1]
-        if dlen>1:
-          dlen2=int(dlen/2)
-          if (dlen%2)==0: sdata[x+"_median"]=int((data[dlen2-1]+data[dlen2])/2)
-          else: sdata[x+"_median"]=data[dlen2]
-          sdata[x+"_avg"]=int(sum(data)/dlen)
-          for t in [25, 75, 90]:
-            sdata[x+"_"+str(t)]=int(percentile(t,data, dlen))
-        else:
-          for t in ["25", "75", "90", "avg", "median"]:
-            sdata[x+"_"+t]=data[0]
-    idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
-    try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
-    except Exception as e: print(e)
-  except Exception as e: print(e)
-  return
+  sdata = {"release": release, "release_queue": release_queue, "architecture": arch,
+           "step": version, "@timestamp": rel_msec, "workflow": name,
+           "hostname": hostname, "exit_code": exit_code}
+  stats = json.load(open(sfile))
+  average_stats = get_summary_stats_from_dictionary(stats, cpu_normalize)
+  sdata.update(average_stats)
+  if params: sdata.update(params)
+  idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
+  try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
+  except Exception as e: print(e.message)
+
+def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='', file_timestamp=0,
+                           es_index_name='externals_stats_summary_testindex',
+                           es_doc_name='externals-runtime-stats-summary-testdoc'):
+  index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])).hexdigest()
+  sdata = get_summary_stats_from_dictionary(stats_dict, cpu_normalize)
+  sdata.update(opts_dict)
+  sdata["@timestamp"]=file_timestamp*1000
+  try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
+  except Exception as e: print(e.message)

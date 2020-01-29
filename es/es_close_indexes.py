@@ -14,7 +14,7 @@ from time import time
 try: weeks=int(sys.argv[1])
 except: weeks=20
 cur_week=int(((time()/86400)+4)/7)
-ignore_index=["cmssdt-ib"]
+ignore_index=["cmssdt-ibs"]
 idxs=[]
 try:
   if sys.argv[2]:

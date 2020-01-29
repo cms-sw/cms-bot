@@ -254,6 +254,6 @@ def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='', file
   index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])).hexdigest()
   sdata = get_summary_stats_from_dictionary(stats_dict, cpu_normalize)
   sdata.update(opts_dict)
-  sdata["@timestamp"]=file_timestamp
+  sdata["@timestamp"]=file_timestamp*1000
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)

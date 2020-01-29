@@ -2057,6 +2057,19 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.time()");
         plotvar("log10("+tbr+".obj.chi2())");
       }
+      tbr="HBHERecHitsSorted_reducedEgamma_reducedHBHEHits_"+recoS+".obj";
+      if (checkBranchOR(tbr, true)){
+        plotvar(tbr+".obj@.size()");
+        plotvar(tbr+".obj.energy()");
+        plotvar("log10("+tbr+".obj.energy())");
+        plotvar(tbr+".obj.eraw()");
+        plotvar("log10("+tbr+".obj.eraw())");
+        plotvar(tbr+".obj.eaux()");
+        plotvar("log10("+tbr+".obj.eaux())");
+        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
+        plotvar(tbr+".obj.time()");
+        plotvar("log10("+tbr+".obj.chi2())");
+      }
 
       tbr="HFPreRecHitsSorted_hfprereco__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){

@@ -35,6 +35,7 @@ RELEASE_BRANCH_CLOSED = [
   "CMSSW_6_1_X_SLHC",
   "CMSSW_6_2_X",
   "CMSSW_7_0_X",
+  "CMSSW_.+_Patatrack_X",
 ]
 
 #All these releases require ORP signicatures
@@ -54,6 +55,7 @@ RELEASE_BRANCH_PRODUCTION = [
 SPECIAL_RELEASE_MANAGERS = ["slava77", "kpedro88"]
 
 RELEASE_MANAGERS={}
+RELEASE_MANAGERS["CMSSW_.+_Patatrack_X"]=["fwyzard"]
 ######################################################################
 # Automatically added by cms-bot for CMSSW_8_1_X release cycle
 ######################################################################

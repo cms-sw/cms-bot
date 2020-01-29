@@ -1,7 +1,7 @@
 from __future__ import print_function
 from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS, external_to_package
-from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, RELEASE_BRANCH_CLOSED, CMSSW_DEVEL_BRANCH
-from releases import RELEASE_MANAGERS, SPECIAL_RELEASE_MANAGERS
+from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
+from releases import get_release_managers, is_closed_branch
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS
 from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION
 from repo_config import GH_REPO_ORGANIZATION
@@ -349,7 +349,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           issue.create_comment(msg)
       return
     # A pull request is by default closed if the branch is a closed one.
-    if pr.base.ref in RELEASE_BRANCH_CLOSED: mustClose = True
+    if is_closed_branch(pr.base.ref): mustClose = True
     # Process the changes for the given pull request so that we can determine the
     # signatures it requires.
     if cmssw_repo or not external_repo:
@@ -449,10 +449,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           labels.append('future-commit')
           issue.edit(labels=labels)
       return
-    extra_rm = RELEASE_MANAGERS.get(pr.base.ref, [])
+    extra_rm = get_release_managers (pr.base.ref)
     if repository==CMSDIST_REPO_NAME:
       br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3])+"_X"
-      if br: extra_rm=extra_rm+RELEASE_MANAGERS.get(br, [])
+      if br: extra_rm=extra_rm+get_release_managers (br)
     releaseManagers=list(set(extra_rm+CMSSW_L1))
   else:
     try:
@@ -1102,7 +1102,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   commentMsg = ""
   print("Status: Not see= %s, Updated: %s" % (already_seen, pull_request_updated))
-  if (pr.base.ref in RELEASE_BRANCH_CLOSED) and (pr.state != "closed"):
+  if is_closed_branch(pr.base.ref) and (pr.state != "closed"):
     commentMsg = messageBranchClosed
   elif (not already_seen) or pull_request_updated:
     if not already_seen: commentMsg = messageNewPR

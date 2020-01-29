@@ -16,7 +16,7 @@ from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
 from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 from cmsutils import get_config_map_properties
 from github_utils import api_rate_limits, get_ref_commit, get_commit_info
-from milestones import RELEASE_MANAGERS
+from releases import get_release_managers
 
 setdefaulttimeout(120)
 from os import environ
@@ -927,10 +927,9 @@ if __name__ == "__main__":
       release_branch = possible_branch
     
 
-  if release_branch in RELEASE_MANAGERS:
-    for rm in RELEASE_MANAGERS[release_branch]:
-      if not rm in APPROVE_BUILD_RELEASE: APPROVE_BUILD_RELEASE.append(rm)
-      if not rm in REQUEST_BUILD_RELEASE: REQUEST_BUILD_RELEASE.append(rm)
+  for rm in get_release_managers(release_branch):
+    if not rm in APPROVE_BUILD_RELEASE: APPROVE_BUILD_RELEASE.append(rm)
+    if not rm in REQUEST_BUILD_RELEASE: REQUEST_BUILD_RELEASE.append(rm)
 
   # 3. Is the author authorized to trigger a build?
   if not issue.user.login in REQUEST_BUILD_RELEASE:

@@ -92,7 +92,7 @@ fi
 #Build externals
 COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --weekly -i ${BUILD_DIR} ${SOURCE_FLAG} --arch $SCRAM_ARCH -j ${NCPU} build cmssw-tool-conf"
 echo "${COMPILATION_CMD}"
-[ -e $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log ] && mv $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log.$(date +%s)
+[ -e $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log ] && mv $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log.$(date +%s)
 eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log
 TOOL_CONF_VER=$(grep 'Generated cache: cms+cmssw-tool-conf+' $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log | tail -1 | sed 's|.*Generated cache: *cms+cmssw-tool-conf+||;s| ||g')
 

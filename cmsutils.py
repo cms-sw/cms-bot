@@ -98,7 +98,7 @@ def doCmd(cmd, dryRun=False, inDir=None):
   return (ret,outX)
 
 def getIBReleaseInfo(rel):
-  m = re.match("^CMSSW_(\d+_\d+(_[A-Z0-9]+|))_X(_[A-Z]+|)_(\d\d\d\d-\d\d-\d\d-(\d\d)\d\d)",rel)
+  m = re.match("^CMSSW_(\d+_\d+(_[A-Z][A-Za-z0-9]+|))_X(_[A-Z]+|)_(\d\d\d\d-\d\d-\d\d-(\d\d)\d\d)",rel)
   if not m: return ("","","")
   rc = m.group(1).replace("_",".")
   from datetime import datetime

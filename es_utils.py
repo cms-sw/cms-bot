@@ -7,7 +7,7 @@ from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile
 from _py2with3compatibility import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, install_opener, Request, \
   urlopen, build_opener
-
+from os import stat as tstat
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
@@ -186,7 +186,8 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
                            }
   return wf_stats
 
-def get_summary_stats_from_dictionary(stats_dict, cpu_normalize):
+def get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize):
+  with open(stats_dict_file_path, 'r') as stas_d_f: stats_dict = json.load(stas_d_f)
   sdata = None
   try:
     xdata = {}
@@ -239,20 +240,22 @@ def es_send_resource_stats(release, arch, name, version, sfile,
   sdata = {"release": release, "release_queue": release_queue, "architecture": arch,
            "step": version, "@timestamp": rel_msec, "workflow": name,
            "hostname": hostname, "exit_code": exit_code}
-  stats = json.load(open(sfile))
-  average_stats = get_summary_stats_from_dictionary(stats, cpu_normalize)
+  average_stats = get_summary_stats_from_json_file(sfile, cpu_normalize)
   sdata.update(average_stats)
   if params: sdata.update(params)
   idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
   try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
   except Exception as e: print(e.message)
 
-def es_send_external_stats(stats_dict, opts_dict, cpu_normalize=1, week='', file_timestamp=0,
+def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normalize=1,
                            es_index_name='externals_stats_summary_testindex',
                            es_doc_name='externals-runtime-stats-summary-testdoc'):
-  index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])).hexdigest()
-  sdata = get_summary_stats_from_dictionary(stats_dict, cpu_normalize)
+  file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
+  week = str((file_stamp / 86400 + 4) / 7)
+  with open(opts_dict_file_path, 'r') as opts_dict_f: opts_dict = json.load(opts_dict_f)
+  index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])+stats_dict_file_path).hexdigest()
+  sdata = get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize)
   sdata.update(opts_dict)
-  sdata["@timestamp"]=file_timestamp*1000
+  sdata["@timestamp"]=file_stamp*1000
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)

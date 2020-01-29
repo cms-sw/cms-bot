@@ -8,6 +8,7 @@ from cmsutils import cmsswIB2Week, percentile
 from _py2with3compatibility import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, install_opener, Request, \
   urlopen, build_opener
 
+
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
 def format(s, **kwds): return s % kwds

@@ -14,7 +14,7 @@ from time import time
 try: weeks=int(sys.argv[1])
 except: weeks=20
 cur_week=int(((time()/86400)+4)/7)
-
+ignore_index=["cmssdt-ib"]
 idxs=[]
 try:
   if sys.argv[2]:
@@ -35,6 +35,7 @@ except:
         if not k in types: types[k]={}
         if not ix in types[k]:types[k][ix]=[]
         types[k][ix].append(wk)
+        if ix in ignore_index: continue
         if (k == "open") and ((cur_week-int(wk))>weeks): idxs.append(idx)
       else:
         if not k in rest: rest[k]=[]

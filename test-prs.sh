@@ -94,7 +94,7 @@ COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --weekly -i ${BUILD_DIR} ${SOUR
 echo "${COMPILATION_CMD}"
 [ -e $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log ] && mv $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log.$(date +%s)
 eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log
-TOOL_CONF_VER=$(grep 'Generated cache: cms+cmssw-tool-conf+' $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log | tail -1 | sed 's|.*Generated cache: *cms+cmssw-tool-conf+||;s| ||g')
+TOOL_CONF_VER=$(grep 'Package cms+cmssw-tool-conf+' $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log | tail -1 | sed 's|.*Package cms+cmssw-tool-conf+||;s| ||g')
 
 #Find CMSSW IB to use to test externals
 CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "${CMS_BOT_DIR}/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)

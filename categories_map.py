@@ -1588,6 +1588,7 @@ CMSSW_CATEGORIES = {
     "RecoMTD/MeasurementDet",
     "RecoMTD/Navigation",
     "RecoMTD/Records",
+    "RecoMTD/TimingIDTools",
     "RecoMTD/TrackExtender",
     "RecoMTD/TransientTrackingRecHit",
     "SLHCUpgradeSimulations/Configuration",

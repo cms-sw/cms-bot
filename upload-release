@@ -31,6 +31,9 @@ $WORKSPACE/report-build-release-status $BUILD_NUMBER $WORKER $ISSUE_NUMBER $ARCH
 pushd $BUILD_DIR
   PYTHONPATH= PKGTOOLS/cmsBuild --architecture=$ARCHITECTURE --sync-back upload cmssw$PATCH
 popd
-
-rm -rf $WORKSPACE
+if [ -e $WORKSPACE/TEST.DONE ] ; then
+  rm -rf $WORKSPACE
+else
+  touch $WORKSPACE/UPLOAD.DONE
+fi
 echo 'ALL_OK'

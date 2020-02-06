@@ -258,13 +258,15 @@ for U_REPO in ${UNIQ_REPOS}; do
 	;;
 	*)
 	  PKG_REPO=$(echo ${U_REPO} | sed 's/#.*//')
-	  SPEC_NAME=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
+	  SPEC_NAMES=$( ${CMS_BOT_DIR}/pr_testing/get_external_name.sh ${PKG_REPO} )
 	  BUILD_EXTERNAL=true
-	  if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
-            mark_commit_status_all_prs 'setup' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}" || true
-	    exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
-	      cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo."
-          fi
+          for SPEC_NAME in ${SPEC_NAMES} ; do
+	    if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
+              mark_commit_status_all_prs 'setup' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}" || true
+	      exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
+	        cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo."
+            fi
+          done
 	;;
 	esac
 done

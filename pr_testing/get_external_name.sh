@@ -7,6 +7,7 @@ ARRAY=(
 #   "REPO_NAME:SPECK_NAME"
     "cms-externals/llvm-project:llvm"
     "cms-sw/SCRAM:SCRAMV1"
+    "cms-externals/tensorflow:tensorflow-sources tensorflow-python3-sources"
     )
 
 case ${PKG_REPO} in

@@ -710,6 +710,27 @@ kkrajczar:
 - Validation/RecoHI
 kurtejung:
 - RecoHI
+lecriste:
+- Configuration/StandardSequences
+- DataFormats/HGCRecHit
+- DQMOffline/EGamma
+- RecoEgamma/EgammaPhotonProducers
+- RecoEgamma/EgammaElectronProducers
+- RecoEgamma/Configuration
+- RecoEcal/EgammaClusterProducers
+- RecoHGCal
+- RecoLocalCalo/Configuration
+- RecoLocalCalo/HGC
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+- RecoParticleFlow/PFTracking
+- RecoParticleFlow/PFClusterProducer
+- SimDataFormats
+- TrackingTools
+- TrackPropagation
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
 lgray:
 - RecoEcal
 - RecoEgamma

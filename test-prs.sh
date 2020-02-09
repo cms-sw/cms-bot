@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 export WORKSPACE=$(/bin/pwd -P)
 export KEEP_SOURCE_GIT=true
 export BUILD_DIR=externals
@@ -92,9 +92,9 @@ fi
 #Build externals
 COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --weekly -i ${BUILD_DIR} ${SOURCE_FLAG} --arch $SCRAM_ARCH -j ${NCPU} build cmssw-tool-conf"
 echo "${COMPILATION_CMD}"
-[ -e $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log ] && mv $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log.$(date +%s)
-eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log
-TOOL_CONF_VER=$(grep 'Package cms+cmssw-tool-conf+' $WORKSPACE/$BUILD_DIR/cmsswtoolconf.log | head -1 | sed 's|.*Package cms+cmssw-tool-conf+||;s| .*||g')
+[ -e $WORKSPACE/cmsswtoolconf.log ] && mv $WORKSPACE/cmsswtoolconf.log $WORKSPACE/cmsswtoolconf.log.$(date +%s)
+eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/cmsswtoolconf.log
+TOOL_CONF_VER=$(grep ' cms+cmssw-tool-conf+' $WORKSPACE/cmsswtoolconf.log | head -1 | sed 's|.* cms+cmssw-tool-conf+||;s| .*||g')
 
 #Find CMSSW IB to use to test externals
 CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "${CMS_BOT_DIR}/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)

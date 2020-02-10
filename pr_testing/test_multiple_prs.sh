@@ -1252,5 +1252,5 @@ fi
 for PR in ${PULL_REQUESTS} ; do
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
     PR_NR=$(echo ${PR} | sed 's/.*#//' )
-    ${CMS_BOT_DIR}/comment-gh-pr -r ${PR_NAME_AND_REPO} -p ${PR_NR} -m "${COMP_MSG}" ${DRY_RUN} || true
+    ${CMS_BOT_DIR}/comment-github-pullrequest -r ${PR_NAME_AND_REPO} -p ${PR_NR} -m "${COMP_MSG}" ${DRY_RUN} || true
 done

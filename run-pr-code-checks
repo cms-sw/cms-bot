@@ -125,5 +125,5 @@ if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
 fi
 
 if [ "$DRY_RUN" != "true" ] ; then
-  ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
+  ${CMS_BOT_DIR}/comment-github-pullrequests -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
 fi

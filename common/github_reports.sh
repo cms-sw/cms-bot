@@ -52,7 +52,7 @@ function exit_with_comment_failure_main_pr(){
     PR=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '^$' | head -1  ) # get main(first) pr
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//')
     PR_NR=$(echo ${PR} | sed 's/.*#//')
-    ${CMS_BOT_DIR}/comment-gh-pr -r ${PR_NAME_AND_REPO} -p ${PR_NR} "$@"
+    ${CMS_BOT_DIR}/comment-github-pullrequest -r ${PR_NAME_AND_REPO} -p ${PR_NR} "$@"
     exit 0
 }
 

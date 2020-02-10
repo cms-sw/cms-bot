@@ -72,7 +72,7 @@ if [ -f ${JOB_SUMMARY_LOG} ] ; then
   cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
 fi
 if [ "X${PULL_REQUEST}" != "X" ] ; then
-  $WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
+  $WORKSPACE/cms-bot/comment-github-pullrequest -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
 else
   OPEN_ISSUE=$(grep '^ *OPEN_ISSUE_FOR_PUSH_TESTS *=' $REPO_DIR/repo_config.py | sed 's|^.*OPEN_ISSUE_FOR_PUSH_TESTS *=||;s| ||g' || true)
   if [ "X${OPEN_ISSUE}" = "XTrue" ] ; then

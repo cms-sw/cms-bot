@@ -14,6 +14,7 @@ PROOTDIR=$6
 TEST_INSTALL=$7
 NUM_WEEKS=$8
 REINSTALL_COMMON=$9
+INSTALL_PACKAGES="${10}"
 if [ "$REINSTALL_COMMON" = "true" ] ; then
   REINSTALL_COMMON="--reinstall"
 else
@@ -125,10 +126,15 @@ for REPOSITORY in $REPOSITORIES; do
     if [ ! -f $LOGFILE ]; then
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
-      wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
-      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
-      SCRAM_PKG=$(${CMSPKG} search SCRAMV1 | sed 's| .*||' | grep 'SCRAMV1' | sort | tail -1)
-      if [ "X${SCRAM_PKG}" != "X" ] ; then dockerrun "${CMSPKG} -f install ${SCRAM_PKG}" || true ; fi
+      if [ "${INSTALL_PACKAGES}" = "" ] ; then
+        wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
+        dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
+        INSTALL_PACKAGES=$(${CMSPKG} search SCRAMV1 | sed 's| .*||' | grep 'SCRAMV1' | sort | tail -1)
+      fi
+      if [ "X${INSTALL_PACKAGES}" != "X" ] ; then
+        dockerrun "${CMSPKG} -f install ${INSTALL_PACKAGES}" || true
+        INSTALL_PACKAGES=""
+      fi
     fi
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
@@ -139,25 +145,10 @@ for REPOSITORY in $REPOSITORIES; do
         dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
       fi
     fi
-    # Since we are installing on a local disk, no need to worry about
-    # the rpm database.
-    #
-    # Make sure we do not mess up environment.
-    # Also we do not want the installation of one release (which can be broken)
-    # to interfere with the installation of a different one. For that reason we
-    # ignore the exit code.
     (
-      dockerrun "${CMSPKG} update ; ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 " ;
-      REL_TO_INSTALL="" ;
-      if [ "X$RELEASE_NAME" = "X" ] ; then 
-        SEARCH="${CMSPKG} search cmssw-ib+CMSSW | cut -d'\' -f1 | sort > ${TMP_PREFIX}-onserver.txt ; \
-        ${CMSPKG} rpm -- -qa --queryformat '%{NAME}\n' | grep cmssw-ib | sort > ${TMP_PREFIX}-installed.txt  " ;
-        dockerrun $SEARCH ;
-        REL_TO_INSTALL=`diff -u ${TMP_PREFIX}-onserver.txt ${TMP_PREFIX}-installed.txt | awk '{print $1}'| grep -e '^-[^-]' | sed -e 's/^-//'` ;
-      else
-        REL_TO_INSTALL="cms+cmssw-ib+$RELEASE_NAME" ;
-      fi ;
-      for x in $REL_TO_INSTALL; do
+      dockerrun "${CMSPKG} update ; ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 ${INSTALL_PACKAGES}" ;
+      if [ "X$RELEASE_NAME" != "X" ] ; then
+        x="cms+cmssw-ib+$RELEASE_NAME" ;
         INSTALL="${CMSPKG} install -y $x || true; \
         time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
         time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true; \
@@ -172,9 +163,7 @@ for REPOSITORY in $REPOSITORIES; do
             fi
           done ;
         fi ;
-      done ;
-      rm -f ${TMP_PREFIX}-installed.txt ;
-      rm -f ${TMP_PREFIX}-onserver.txt
+      fi
     ) || true
 
   done  #End architecture
@@ -204,6 +193,8 @@ for t in nweek- ; do
     fi
   done
 done
+rm -f $BASEDIR/latest
+ln -s $(grep "^nweek-" $WORKSPACE/cms-bot/ib-weeks | tail -1) $BASEDIR/latest
 
 # Write everything in the repository
 echo "Publishing started" `date`

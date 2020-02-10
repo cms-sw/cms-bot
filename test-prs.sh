@@ -36,10 +36,8 @@ let NCPU=$(${COMMON}/get_cpu_number.sh)/2
 #Clone and merge PRs
 for PR in $(echo $PRS | tr ' ' '\n' | grep -v '/cmssw#') ; do
   REPO=$(echo ${PR} | sed 's|#.*||;s|.*/||')
-  if [ ! -e ${REPO} ] ; then
-    echo "Cloning ${REPO} and merging ${PR}"
-    git_clone_and_merge $(get_cached_GH_JSON ${PR}) </dev/null
-  fi
+  echo "Cloning ${REPO} and merging ${PR}"
+  git_clone_and_merge $(get_cached_GH_JSON ${PR}) </dev/null
   if [ "$CMSDIST_BR" = "" -a $(echo "$PR" | grep "/cmsdist#" | wc -l) -gt 0 ] ; then
     CMSDIST_BR=$(get_base_branch ${PR})
   fi

@@ -35,9 +35,10 @@ if __name__ == "__main__":
       repo_dir = join(SCRIPT_DIR,'repos',opts.repository.replace("-","_"))
       if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
       import repo_config
+      gh = Github(gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip()))
       from comment_gh_pr import comment_gh_pr
       try:
-          comment_gh_pr(opts.repository, opts.pr, msg)
+          comment_gh_pr(gh, opts.repository, opts.pr, msg)
       except Exception as e:
           print("Failed to add comment: ",e)
           exit(1)

@@ -299,7 +299,6 @@ fi
 jobs
 wait || true
 
-exit 0
 cd $WORKSPACE
 mkdir -p upload/alternative-comparisons
 

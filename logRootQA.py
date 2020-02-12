@@ -104,7 +104,7 @@ def getRelevantDiff(l1,l2,maxInFile=20):
 
 
 def runCommand(c):
-    p=sub.Popen(c,stdout=sub.PIPE,stderr=sub.PIPE)
+    p=sub.Popen(c,stdout=sub.PIPE,stderr=sub.PIPE,universal_newlines=True)
     output=p.communicate()
     return output
 

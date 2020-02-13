@@ -5,7 +5,9 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
 source $CMS_BOT_DIR/jenkins-artifacts
 cd $WORKSPACE
-mkdir -p $WORKSPACE/upload
+rm -rf $WORKSPACE/results $WORKSPACE/upload
+JR_COMP_DIR=$WORKSPACE/results/JR-comparison
+mkdir -p $WORKSPACE/upload ${JR_COMP_DIR} $WORKSPACE/data
 rm -f $WORKSPACE/ALL_DONE
 
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$RELEASE_FORMAT; fi
@@ -55,7 +57,7 @@ ls /cvmfs/cms-ib.cern.ch || true
 export SCRAM_ARCH=$ARCHITECTURE
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 echo "Set up release area at `date`"
-scram project $BASE_IB
+rm -rf $BASE_IB; scram project $BASE_IB
 set +x
 cd $BASE_IB
 eval `scram run -sh`
@@ -65,21 +67,26 @@ if $DQM_COMPARISON_TEST ; then
     DQM_COMPARISON_TEST=false
   fi
 fi
+if [ "$COMPARISON_PRS" != "" ] ; then
+  for pr in $(echo $COMPARISON_PRS | tr ' ' '\n' | grep "/cmssw#" | sed 's|.*#||') ; do
+    git cms-merge-topic --debug --ssh -u cms-sw:${pr}
+  done
+fi
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
-  mkdir -p src/Utilities/RelMon
-  cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/* src/Utilities/RelMon/
+  if [ ! -e src/Utilities/RelMon ] ; then
+    mkdir -p src/Utilities/RelMon
+    cp -r $CMSSW_RELEASE_BASE/src/Utilities/RelMon/* src/Utilities/RelMon/
+  fi
   sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' src/Utilities/RelMon/python/directories2html.py
 fi
-JR_COMP_DIR=$WORKSPACE/results/JR-comparison
-mkdir -p $JR_COMP_DIR
-mkdir -p $WORKSPACE/results/files
+scram build -j ${NUM_PROC}
 cd $WORKSPACE/results
 echo $WORKFLOWS_TO_COMPARE
 
 echo "Downloading Ref: `date`"
-get_jenkins_artifacts ${BASELINE_DIR}/    ${JR_COMP_DIR}/$RELEASE_FORMAT/ || true
+get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$RELEASE_FORMAT/ || true
 echo "Downloading PR: `date`"
-get_jenkins_artifacts ${PR_BASELINE_DIR}/ ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/ || true
+get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER}/ || true
 echo "Done Downloading `date`"
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
 
@@ -88,16 +95,16 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   WF_FILE=$(basename $WF)
 
   mkdir -p $WORKSPACE/results/files/$WF_DIR
-  ln -s ${JR_COMP_DIR}/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
+  ln -s $WORKSPACE/data/$RELEASE_FORMAT/${WF} $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
 
-  if [ -f ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log ] ; then
-    grep '/store/' ${JR_COMP_DIR}/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log || true
+  if [ -f $WORKSPACE/data/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log ] ; then
+    grep '/store/' $WORKSPACE/data/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log || true
   fi
-  if [ -f ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF ] ; then
-    ln -s ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
+  if [ -f $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER}/$WF ] ; then
+    ln -s $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER}/$WF $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
   fi
-  if [ -f ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF_DIR/step1_dasquery.log ] ; then
-    grep '/store/' ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER}/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-step1_dasquery.log || true
+  if [ -f $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER}/$WF_DIR/step1_dasquery.log ] ; then
+    grep '/store/' $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER}/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-step1_dasquery.log || true
   fi
 
   # check that the step1_dasquery.log files are correct.
@@ -120,10 +127,12 @@ echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 echo "Finished downloading files at `date`:"
 sed -i '/COMPARISON;/d' $WORKSPACE/results/testsResults.txt
 echo "COMPARISON;RUNNING" >> $WORKSPACE/results/testsResults.txt
-send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
+if [ "$DRY_RUN" != "true" ] ; then
+  send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
+fi
 
 if $DQM_COMPARISON_TEST ; then
-  (compareDQMOutput.py -b ${JR_COMP_DIR}/$RELEASE_FORMAT/ -p ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -l "$PULL_REQUESTS" -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1) || true
+  (compareDQMOutput.py -b $WORKSPACE/data/$RELEASE_FORMAT/ -p $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -l "$PULL_REQUESTS" -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1) || true
   echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> $WORKSPACE/results/testsResults.txt
 fi
 
@@ -143,12 +152,13 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
   echo "Start JR comparison at `date`"
-  echo  "$JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
-  ($JR_COMP_DIR/validateJR.sh $JR_COMP_DIR/PR-$PULL_REQUEST_NUMBER $JR_COMP_DIR/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
+  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PULL_REQUEST_NUMBER $WORKSPACE/data/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
+  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PULL_REQUEST_NUMBER $WORKSPACE/data/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
   echo "Finished with JR comparison at `date`:"
 fi
 
+set +x
 # --------------------------------------------------------------------------
 # Default Comparison
 # --------------------------------------------------------------------------
@@ -163,6 +173,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R >> $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1
   fi
 
+  touch $WORKSPACE/results/default-comparison/done-0
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
 
     WF_FILE=$(basename $WF)
@@ -176,35 +187,93 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     # If there is a file assigning custom thresholds from the results of the FWlite (JR) comparison, use it
     if [ "X$RUN_JR_COMP" = Xtrue ]; then
       eval $( cat $RELMON_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
-      echo $TH
+      echo "TH=$TH"
       TH_PARAM="-t $TH "
     fi
 
     #requires checking out Utilities/RelMon from the release. It has already been done at the begining of this script. 
 
     # create a mini script for running this comparisons in parallel
-    echo '#!/bin/sh -ex' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    echo "compare_using_files.py -B DQM/TimerService@3 $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE -o $OUTPUT_DIR --metas \" $RELEASE_FORMAT @@@ $RELEASE_FORMAT + $PULL_REQUEST_NUMBER \" --use_black_file -C -R -p --no_successes -s b2b $TH_PARAM--standalone >> ${OUTPUT_DIR}RelMonComp-$WF_NUMBER.log 2>&1" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    echo "cp $OUTPUT_DIR/RelMonSummary.html $OUTPUT_DIR/index.html" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo '#!/bin/sh -ex' > $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo "ERR=0" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo "compare_using_files.py -B DQM/TimerService@3 $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE -o $OUTPUT_DIR --metas \" $RELEASE_FORMAT @@@ $RELEASE_FORMAT + $PULL_REQUEST_NUMBER \" --use_black_file -C -R -p --no_successes -s b2b $TH_PARAM --standalone >> ${OUTPUT_DIR}RelMonComp-$WF_NUMBER.log 2>&1 || ERR=1" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo "cp $OUTPUT_DIR/RelMonSummary.html $OUTPUT_DIR/index.html || true" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo "touch $WORKSPACE/results/default-comparison/done-$WF_NUMBER" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo 'exit $ERR' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    echo "Jobs Running: $(jobs -p | wc -l)"
-    set +x
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
-    set -x
-    ($WORKSPACE/results/default-comparison/command-$WF_NUMBER || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 5 ; done
+    echo "Running $WORKSPACE/results/default-comparison/command-$WF_NUMBER"
+    ($WORKSPACE/results/default-comparison/command-$WF_NUMBER > ${OUTPUT_DIR}/cmd.log 2>&1 || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
   done
-
-  jobs
-  wait || true
-  echo "Finished with default comparison at `date`"
 fi
 
+# ----------------------------------------------------------------------------
+# Alternative Comparison
+# ----------------------------------------------------------------------------
+
+if [ "X$RUN_ALT_COMP" = Xtrue ]; then
+  echo "Started with alternative comparison at `date`"
+  
+  ALT_COMP_DIR=$WORKSPACE/results/alternative-comparison
+  mkdir -p $ALT_COMP_DIR
+  DQM_COMP_PARAMS_FILE=$ALT_COMP_DIR/comparisonParams.txt
+
+  if [ "X$RUN_JR_COMP" = Xtrue ]; then
+    $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE >> $ALT_COMP_DIR/assignedParameters.log 2>&1
+  fi
+  for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
+
+    WF_FILE=$(basename $WF)
+    WF_DIR=`echo $WF | cut -d "/" -f1`
+    WF_NUMBER=`echo $WF | cut -d'_' -f1`
+    BASE_FILE=$WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
+    COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
+  
+    mkdir -p $ALT_COMP_DIR/$WF_NUMBER
+    cp $CMS_BOT_DIR/comparisons/compareValHists.C $ALT_COMP_DIR/$WF_NUMBER
+    cp $CMS_BOT_DIR/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
+
+    eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
+    echo "MOD=$MOD"
+
+    # create a mini script for running this comparisons in parallel
+    echo '#!/bin/sh -ex' > $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "ERR=0" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "cd $ALT_COMP_DIR/$WF_NUMBER" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "$ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD || ERR=1" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "mv diff.ps $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "mv diff.pdf $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo 'exit $ERR' >> $ALT_COMP_DIR/command-$WF_NUMBER
+
+    chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 5 ; done
+    echo "Running $ALT_COMP_DIR/command-$WF_NUMBER"
+    ($ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
+  done
+fi
+
+if [ -e $WORKSPACE/results/default-comparison/done-0 ] ; then
+  while [ $(ls -d $WORKSPACE/results/default-comparison/done-* | wc -l) -le $(ls -d $WORKSPACE/results/default-comparison/command-* | wc -l) ] ; do
+    sleep 60
+    echo "Jobs Running: $(jobs -p | wc -l)"
+  done
+  rm -f $WORKSPACE/results/default-comparison/done-*
+  rm -f $WORKSPACE/results/default-comparison/cmdlog-*
+  echo "Finished with default comparison at `date`"
+fi
+set -x
+
+#----------------------------------
+# Comparison summary
+#----------------------------------
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     QALOG=$JR_COMP_DIR/logRootQA.log
     JRHTML=$WORKSPACE/upload/validateJR.html
     echo 'Doing histogram, log and root comparison:'
-    (python $CMS_BOT_DIR/logRootQA.py ${JR_COMP_DIR}/${RELEASE_FORMAT} ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $QALOG 2>&1) || true
+    (python $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${RELEASE_FORMAT} $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $QALOG 2>&1) || true
     (grep SUMMARY $QALOG | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
     echo "<html><body><h3>Default comparison: Workflows with failed comparisons</h3>" > $JRHTML
     echo "<table><tr><td>WF #</td><td>Failed</td></tr>" >> $JRHTML
@@ -227,55 +296,8 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   fi
 fi
 
-# ----------------------------------------------------------------------------
-# Alternative Comparison
-# ----------------------------------------------------------------------------
-
-if [ "X$RUN_ALT_COMP" = Xtrue ]; then
-  echo "Started with alternative comparison at `date`"
-  
-  ALT_COMP_DIR=$WORKSPACE/results/alternative-comparison
-  mkdir -p $ALT_COMP_DIR
-  DQM_COMP_PARAMS_FILE=$ALT_COMP_DIR/comparisonParams.txt
-
-  $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE >> $ALT_COMP_DIR/assignedParameters.log 2>&1
-  for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
-
-    WF_FILE=$(basename $WF)
-    WF_DIR=`echo $WF | cut -d "/" -f1`
-    WF_NUMBER=`echo $WF | cut -d'_' -f1`
-    BASE_FILE=$WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
-    COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST_NUMBER-$WF_FILE
-  
-    mkdir -p $ALT_COMP_DIR/$WF_NUMBER
-    cp $CMS_BOT_DIR/comparisons/compareValHists.C $ALT_COMP_DIR/$WF_NUMBER
-    cp $CMS_BOT_DIR/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
-
-    eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
-    echo $MOD
-
-    # create a mini script for running this comparisons in parallel
-    echo '#!/bin/sh -ex' >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "cd $ALT_COMP_DIR/$WF_NUMBER" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "$ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "mv diff.ps $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "mv diff.pdf $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
-
-    chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "Jobs Running: $(jobs -p | wc -l)"
-    set +x
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
-    set -x
-    ($ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
-
-  done
-
-  jobs
-  wait || true
-  echo "Finished with alternative comparison at `date`:"
-fi
+jobs
+wait || true
 
 cd $WORKSPACE
 mkdir -p upload/alternative-comparisons
@@ -300,6 +322,7 @@ else
     [ -e $f ] && mv $f upload/
   done
 fi
+
 #alternative-comparison
 alt_dir=results/alternative-comparison
 for f in $(find ${alt_dir} -maxdepth 1 -name 'command*' -o -name '*.ps' -o -name '*.gz' -o -name '*.log' -o -name '*.txt') ; do
@@ -329,10 +352,12 @@ if [ -e results/files ] ; then
   done
 fi
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
-send_jenkins_artifacts $WORKSPACE/upload/ ${COMP_UPLOAD_DIR}/
-if [ -e $WORKSPACE/results/testsResults.txt ] ; then
-  sed -i "s/^COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
-  send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
+if [ "$DRY_RUN" != "true" ] ; then
+  send_jenkins_artifacts $WORKSPACE/upload/ ${COMP_UPLOAD_DIR}/
+  if [ -e $WORKSPACE/results/testsResults.txt ] ; then
+    sed -i "s/^COMPARISON;.*/COMPARISON;$BUILD_NUMBER/g" $WORKSPACE/results/testsResults.txt
+    send_jenkins_artifacts $WORKSPACE/results/testsResults.txt ${PR_BASELINE_JOBDIR}/testsResults.txt
+  fi
 fi
 echo "All done at `date`"
 touch $WORKSPACE/ALL_DONE

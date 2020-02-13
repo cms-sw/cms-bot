@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-ARTIFACTS_USER=$(whoami)
+if [ "$ARTIFACTS_USER" = "" ] ; then ARTIFACTS_USER=$(whoami) ; fi
 case ${ARTIFACTS_USER} in
   cmsbld|cvcmsib|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;
 esac

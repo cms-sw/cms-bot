@@ -1201,13 +1201,6 @@ sethzenz:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
-kpedro88:
-- SimCalorimetry/HGCalSimProducers
-- DataFormats/HGCDigi
-- DataFormats/HGCRecHit
-- Validation/HGCalValidation
-- RecoLocalCalo/HGCalRecAlgos
-- RecoLocalCalo/HGCalRecProducers
 cseez:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi

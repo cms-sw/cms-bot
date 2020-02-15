@@ -12,9 +12,19 @@ function dockerrun()
       IMG="cmssw/cc7:aarch64"
       QEMU_ARGS="$PROOTDIR/qemu-aarch64 -cpu cortex-a57"
       ;;
+    cc8_aarch64_* )
+      CONTAINER_TYPE="qemu"
+      IMG="cmssw/cc8:aarch64"
+      QEMU_ARGS="$PROOTDIR/qemu-aarch64 -cpu cortex-a57"
+      ;;
     slc7_ppc64le_* )
       CONTAINER_TYPE="qemu"
       IMG="cmssw/cc7:ppc64le"
+      QEMU_ARGS="$PROOTDIR/qemu-ppc64le -cpu POWER8"
+      ;;
+    cc8_ppc64le_* )
+      CONTAINER_TYPE="qemu"
+      IMG="cmssw/cc8:ppc64le"
       QEMU_ARGS="$PROOTDIR/qemu-ppc64le -cpu POWER8"
       ;;
     * )

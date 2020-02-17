@@ -5,6 +5,7 @@ export BUILD_DIR=externals
 ARCH=""
 CMSDIST_BR=""
 PRS=""
+RELEASE_QUEUE=""
 while [ "$#" != 0 ]; do
   case "$1" in
     -h|--help)
@@ -16,6 +17,9 @@ while [ "$#" != 0 ]; do
       ;;
     -a|--architecture)
       ARCH=$2 ; shift ; shift
+      ;;
+    -r|--release)
+      RELEASE_QUEUE=$2 ; shift ; shift
       ;;
     *)
       PRS="$PRS $1" ; shift
@@ -44,7 +48,7 @@ for PR in $(echo $PRS | tr ' ' '\n' | grep -v '/cmssw#') ; do
 done
 
 #Find CMSSW configuration
-CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "" "${CMSDIST_BR}" "${ARCH}")
+CONFIG_LINE=$(${COMMON}/get_config_map_line.sh "${RELEASE_QUEUE}" "${CMSDIST_BR}" "${ARCH}")
 if [ "$CONFIG_LINE" = "" ] ; then
   echo "ERROR: Unable to find configuration for cmsdist branch ${CMSDIST_BR} in ${CMS_BOT_DIR}/config.map"
   exit 1

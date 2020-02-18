@@ -22,7 +22,7 @@ while [ "$#" != 0 ]; do
       RELEASE_QUEUE=$2 ; shift ; shift
       ;;
     *)
-      PRS="$PRS $1" ; shift
+      PRS="$PRS $(echo $1 | tr ',' ' ')" ; shift
       ;;
   esac
 done

@@ -753,6 +753,8 @@ rovere:
 - DQMOffline/EGamma
 - DataFormats
 - SimDataFormats
+- SimG4CMS
+- SimG4Core
 rylanC24:
 - Validation/RecoHI
 schoef:

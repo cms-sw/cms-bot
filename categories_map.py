@@ -1294,7 +1294,7 @@ CMSSW_CATEGORIES = {
     "RecoPixelVertexing/PixelTriplets",
     "RecoPixelVertexing/PixelVertexFinding",
     "RecoPPS/Configuration",
-    "RecoPPS/PixelLocal",
+    "RecoPPS/Local",
     "RecoPPS/ProtonReconstruction",
     "RecoRomanPot/Configuration",
     "RecoRomanPot/RecoFP420",

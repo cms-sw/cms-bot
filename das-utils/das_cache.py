@@ -252,14 +252,14 @@ if __name__ == "__main__":
           t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client))
           t.start()
           threads.append(t)
-          sleep(1)
+          sleep(0.1)
         except Exception as e:
           print("ERROR threading das query cache: caught exception: " + str(e))
           error += 1
         break
       else:
         threads = [t for t in threads if t.is_alive()]
-        sleep(0.2)
+        sleep(0.1)
   for t in threads: t.join()
   failed_queries = 0
   e , o = run_cmd("find %s -name '*.error'" % opts.store)

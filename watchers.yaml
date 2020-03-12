@@ -894,6 +894,7 @@ rovere:
 - SimDataFormats
 - SimG4CMS
 - SimG4Core
+- SimCalorimetry
 rylanC24:
 - Validation/RecoHI
 schoef:

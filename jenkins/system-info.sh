@@ -82,9 +82,7 @@ if [ "${DOCKER}${SINGULARITY}" != "" ] && [ "$DOCKER_IMG_HOST" != "" ] ; then
   HOST_CMS_ARCH=${os}_${arch}
 else
   rm -f $WORKSPACE/cmsos
-  #default_branch=`curl -s https://api.github.com/repos/cms-sw/cmsdist | grep '"default_branch"' | sed 's|.*: *"||;s|".*||'`
-  default_branch="IB/CMSSW_11_1_X/master"
-  curl -s -k -L -o $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cmsdist/${default_branch}/cmsos.file
+  curl -s -k -L -o $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cms-common/master/common/cmsos
   chmod +x $WORKSPACE/cmsos
   HOST_CMS_ARCH=$($WORKSPACE/cmsos 2>/dev/null)
 fi

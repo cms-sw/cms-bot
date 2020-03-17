@@ -50,8 +50,10 @@ def es_get_passwd(passwd_file=None):
 
 def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   es_ser = ES7_SERVER
+  header = {"Content-Type": "application/json"}
   if not es7:
     send_request(uri, payload, passwd_file, method, True)
+    header = {}
     es_ser = ES_SERVER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
@@ -62,7 +64,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   opener = build_opener(auth_handler)
   try:
     install_opener(opener)
-    request = Request(url, payload)
+    request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
   except Exception as e:

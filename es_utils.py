@@ -70,6 +70,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   except Exception as e:
     print("ERROR:",url,str(e))
     return False
+  if es7: print("OK:",url)
   return True
 
 def send_payload(index, document, id, payload, passwd_file=None):

@@ -11,6 +11,7 @@ from os import stat as tstat
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
+ES7_SERVER = 'https://es-cmssdt7.cern.ch:9203'
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
@@ -47,10 +48,14 @@ def es_get_passwd(passwd_file=None):
     print("Couldn't read the secrets file" , str(e))
     return ""
 
-def send_request(uri, payload=None, passwd_file=None, method=None):
+def send_request(uri, payload=None, passwd_file=None, method=None, es7=false):
+  es_ser = ES7_SERVER
+  if not es7:
+    send_request(uri, payload, passwd_file, method, true)
+    es_ser = ES_SERVER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
-  url = "%s/%s" % (ES_SERVER,uri)
+  url = "%s/%s" % (es_ser,uri)
   passman = HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'cmssdt', passwd)
   auth_handler = HTTPBasicAuthHandler(passman)

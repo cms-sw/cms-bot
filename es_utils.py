@@ -48,10 +48,10 @@ def es_get_passwd(passwd_file=None):
     print("Couldn't read the secrets file" , str(e))
     return ""
 
-def send_request(uri, payload=None, passwd_file=None, method=None, es7=false):
+def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   es_ser = ES7_SERVER
   if not es7:
-    send_request(uri, payload, passwd_file, method, true)
+    send_request(uri, payload, passwd_file, method, True)
     es_ser = ES_SERVER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False

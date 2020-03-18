@@ -112,7 +112,10 @@ def get_payload_wscroll(index, query, max_count=-1):
   es_data = json.loads(get_payload(index, query,scroll=1))
   if 'proxy-error' in es_data: return es_data
   es_data.pop("_shards", None)
-  scroll_size = es_data['hits']['total']
+  if type(es_data['hits']['total']) == int:
+    scroll_size = es_data['hits']['total']
+  else:
+    scroll_size = es_data['hits']['total']['value']
   scroll_id = es_data.pop('_scroll_id')
   tcount = 0
   while ((scroll_size > 0) and ((max_count<0) or (tcount<max_count))):

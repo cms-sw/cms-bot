@@ -9,10 +9,7 @@ if [ $(grep "^$tag$" ${BASE_DIR}/host_config/versions | wc -l) -gt 0 ] ; then
 fi
 head -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default
 
-if [ -d ${BASE_DIR}/src/$tag ] ; then
-  find ${BASE_DIR}/src/${tag} -type d -print | xargs chmod 775  
-  rm -rf ${BASE_DIR}/src/$tag
-fi
+[ -d ${BASE_DIR}/src/$tag ] && rm -rf ${BASE_DIR}/src/$tag
 [ -d ${BASE_DIR}/glimpse_index/lxr/${tag} ] && rm -rf ${BASE_DIR}/glimpse_index/lxr/${tag}
 
 DOCKER_LXR=$(docker ps -a -q --filter 'name=lxr')

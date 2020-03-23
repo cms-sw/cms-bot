@@ -13,8 +13,9 @@ tag=$2
 
 let NUM_PROC=$(nproc)*2
 WORKSPACE="${WORKSPACE-$PWD}"
-git clone --depth 1 -b $tag file://${GITDIR} ${WORKSPACE}/${tag}
-rm -rf ${WORKSPACE}/${tag}/.git
+wget -q https://github.com/cms-sw/cmssw/archive/${tag}.tar.gz
+tar -xzf ${tag}.tar.gz
+mv cmssw-${tag} ${tag}
 cd ${WORKSPACE}/${tag}
 
 find . -type f | sed 's|^./||' > ${WORKSPACE}/files.txt
@@ -27,4 +28,3 @@ for file in $(cat ${WORKSPACE}/files.txt) ; do
   set_time $file $tag &
 done
 wait
-find ${WORKSPACE}/${tag} -mindepth 1 -type d -print | xargs chmod 555

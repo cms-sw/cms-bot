@@ -27,4 +27,4 @@ for file in $(cat ${WORKSPACE}/files.txt) ; do
   set_time $file $tag &
 done
 wait
-find ${WORKSPACE}/${tag} -type d -print | xargs chmod 555
+find ${WORKSPACE}/${tag} -mindepth 1 -type d -print | xargs chmod 555

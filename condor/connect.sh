@@ -124,7 +124,8 @@ done
 echo EXIT_CODE $EXIT_CODE
 condor_transfer_data $JOBID || true
 ls -l
-if [ -f log.stdout ] ; then cat log.stdout ; fi
+cat logs/log.* || true
+cat log.job || true
 condor_rm $JOBID || true
 condor_q
 exit $EXIT_CODE

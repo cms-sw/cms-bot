@@ -11,7 +11,7 @@ fi
 export WORKSPACE=${_CONDOR_SCRATCH_DIR}/jenkins
 rm -rf ${WORKSPACE}
 mkdir -p $WORKSPACE/cache $WORKSPACE/workspace ${WORKSPACE}/tmp
-git clone --depth 1 git@github.com:cms-sw/cms-bot $WORKSPACE/cache/cms-bot
+git clone --depth 1 https://github.com/cms-sw/cms-bot $WORKSPACE/cache/cms-bot
 mv slave.jar ${WORKSPACE}/
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${WORKSPACE}/slave.jar | sed 's| .*||')
 $WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}"

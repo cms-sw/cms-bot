@@ -1,12 +1,10 @@
 #!/bin/bash -ex 
+source $(dirname $0)/version_utils.sh
 BASE_DIR=/data/lxr
 [ "X$1" = "X" ] && exit 1
 tag=$1
-if [ $(grep "^$tag$" ${BASE_DIR}/host_config/versions | wc -l) -gt 0 ] ; then
-  grep    '_X_' ${BASE_DIR}/host_config/versions | grep -v "^$tag$" | sort | uniq | tac  > ${BASE_DIR}/host_config/versions.new
-  grep -v '_X_' ${BASE_DIR}/host_config/versions | grep -v "^$tag$" | sort | uniq | tac >> ${BASE_DIR}/host_config/versions.new
-  mv ${BASE_DIR}/host_config/versions.new ${BASE_DIR}/host_config/versions
-fi
+delete_version ${BASE_DIR}/host_config/versions ${tag}
+sort_version   ${BASE_DIR}/host_config/versions
 head -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default
 
 [ -d ${BASE_DIR}/src/$tag ] && rm -rf ${BASE_DIR}/src/$tag

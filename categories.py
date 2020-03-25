@@ -40,7 +40,7 @@ CMSSW_L2 = {
   "emeschi":          ["daq"],
   "fabiocos":         ["operations"],
   "fgolf":            ["xpog"],
-  "franzoni":         ["operations", "alca"],
+  "franzoni":         ["operations"],
   "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
   "ianna":            ["geometry"],
@@ -71,7 +71,7 @@ CMSSW_L2 = {
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
   "tocheng":          ["alca"],
-  "zhenhu":           ["pdmv"],
+  "wajidalikhan":     ["pdmv"],
   "christopheralanwest": ["alca"],
   CMSBUILD_USER:      ["tests" ],
 }

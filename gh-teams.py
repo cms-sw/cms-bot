@@ -33,7 +33,7 @@ REPO_OWNERS["cms-sw"]        += [ "sextonkennedy" ]
 #Teams for cms-data
 REPO_TEAMS["cms-data"]["Developers"] =  {
   "members"      : CMS_SDT,
-  "repositories" : { "*" : "admin" }
+  "repositories" : { "*" : "push" }
 }
 
 #Teams for cms-externals

@@ -15,6 +15,7 @@ let NUM_PROC=$(nproc)*2
 WORKSPACE="${WORKSPACE-$PWD}"
 wget -q https://github.com/cms-sw/cmssw/archive/${tag}.tar.gz
 tar -xzf ${tag}.tar.gz
+rm -f ${tag}.tar.gz
 mv cmssw-${tag} ${tag}
 cd ${WORKSPACE}/${tag}
 

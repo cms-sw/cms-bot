@@ -332,17 +332,23 @@ void jets(TString type,TString algo){
 
   if (type == "patJets"){    
     PlotStats res = jet(type, algo, "userFloats_@.size");
+    TString jetBName = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS;
     for (int i = 0; i< maxSize(res); ++i){
-      plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
+      plotvar(jetBName+Form(".obj[].userFloats_[%d]",i), "", true);
     }
     res = jet(type, algo, "userInts_@.size");
     for (int i = 0; i< maxSize(res); ++i){
-      plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userInts_[%d]",i), "", true);
+      plotvar(jetBName+Form(".obj[].userInts_[%d]",i), "", true);
     }
     jet(type, algo, "userCands_@.size");
     res = jet(type, algo, "pairDiscriVector_@.size");
     for (int i = 0; i< maxSize(res); ++i){
-      plotvar("min(2,max(-2,"+type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].pairDiscriVector_[%d].second))",i), "", true);
+      plotvar("min(2,max(-2,"+jetBName+Form(".obj[].pairDiscriVector_[%d].second))",i), "", true);
+    }
+    if (algo.Contains("AK8")){//many discriminants are valid only for high pt
+      for (int i = 0; i< maxSize(res); ++i){
+        plotvar("min(2,max(-2,"+jetBName+Form(".obj[].pairDiscriVector_[%d].second))",i), jetBName+".obj[].pt()>200", true);
+      }
     }
   }
 }
@@ -3504,6 +3510,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     }
 
     if (stepContainsNU(step, "all") || stepContainsNU(step, "jet")){
+      ///puppi info
+      plotvar("floatedmValueMap_puppi__"+recoS+".obj.values_");
 
       ///jet plots
       jets("recoCaloJets","iterativeCone5CaloJets");
@@ -3520,19 +3528,27 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       jets("recoPFJets", "ak4PFJets");
       jets("recoPFJets", "ak4PFJetsCHS");
+      jets("recoPFJets", "ak4PFJetsPuppi");
       jets("recoPFJets", "ak8PFJets");
       jets("recoPFJets", "ak8PFJetsCHS");
-      jets("recoPFJets", "ak8PFJetsCHSSoftDrop");
+      jets("recoPFJets", "ak8PFJetsPuppi");
       jets("recoPFJets", "ca8PFJetsCHS");
 
       jets("recoPFJets", "ca8PFJetsCHSPruned_SubJets");
       jets("recoPFJets", "ak8PFJetsCHSPruned_SubJets");
+      jets("recoPFJets", "ak8PFJetsCHSSoftDrop_SubJets");
+      jets("recoPFJets", "ak8PFJetsPuppiSoftDrop_SubJets");
       jets("recoPFJets", "cmsTopTagPFJetsCHS_caTopSubJets");
 
       jets("recoBasicJets","ak7BasicJets"); //Castor jets
+      jets("recoBasicJets","ak5CastorJets");
+      jets("recoBasicJets","ak7CastorJets");
       jets("recoBasicJets","ca8PFJetsCHSPruned");
       jets("recoBasicJets","ak8PFJetsCHSPruned");
+      jets("recoBasicJets","ak8PFJetsCHSSoftDrop");
+      jets("recoBasicJets","ak8PFJetsPuppiSoftDrop");
       jets("recoBasicJets","cmsTopTagPFJetsCHS");
+
 
       jets("recoGenJets", "ak4GenJets");
       jets("recoGenJets", "slimmedGenJets");

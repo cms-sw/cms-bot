@@ -263,12 +263,6 @@ acimmino:
 - DQM/RPCMonitorClient
 argiro:
 - .*[Ee][Cc][Aa][Ll]
-bachtis:
-- RecoMuon
-- DataFormats/MuonReco
-- DataFormats/ParticleFlowReco
-- DataFormats/ParticleFlowCandidate
-- RecoParticleFlow
 barvic:
 - EventFilter/CSCRawToDigi
 - DQM/CSCMonitorModule

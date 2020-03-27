@@ -1568,3 +1568,25 @@ sobhatta:
 - RecoHGCal
 kpedro88:
 - HeterogeneousCore/SonicCore
+fabiocos:
+- CondFormats/GeometryObjects
+- Configuration
+- DataFormats/DetId
+- DataFormats/ForwardDetId
+- DataFormats/FTLDigi
+- DataFormats/FTLRecHit
+- DataFormats/Math
+- DetectorDescription
+- Geometry
+- IOMC
+- Mixing
+- RecoLocalFastTime
+- RecoMTD
+- SimDataFormats
+- SimFastTiming
+- SimG4CMS
+- SimG4Core
+- SimGeneral
+- Utilities/RelMon
+- Validation/Geometry
+- Validation/MtdValidation

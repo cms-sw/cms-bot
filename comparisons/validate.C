@@ -62,7 +62,7 @@ bool stepContainsNU(const TString& s, TString v){
 
 bool checkBranchAND(const TString& b, bool verboseFalse = false){
   bool res = Events->GetBranch(b) != nullptr && refEvents->GetBranch(b) != nullptr;
-  if (!res && verboseFalse) std::cout<<"Branch "<<b.Data()<<" is not found one of the inputs. Skip."<<std::endl;
+  if (!res && verboseFalse) std::cout<<"Branch "<<b.Data()<<" is not found in one of the inputs. Skip."<<std::endl;
   return res;
 }
 
@@ -1266,6 +1266,21 @@ void forwardProtons(TString cName ){
   plotvar("log10("+bObj+".xiError())");
   plotvar(bObj+".t()");
   plotvar(bObj+".time()");
+}
+
+void tauIDContainer(const TString& bName){
+  const TString bObj = "recoSingleTauDiscriminatorContaineredmValueMap_"+bName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  const TString tbr=bObj+".values_[]";
+  PlotStats res = plotvar(tbr+".rawValues@.size()");
+  for (int i = 0; i< maxSize(res) && i < 64; ++i){//restrict to 64
+    plotvar(tbr+Form(".rawValues[%d]",i), "", true);
+  }
+  res = plotvar(tbr+".workingPoints@.size()");
+  for (int i = 0; i< maxSize(res) && i < 64; ++i){//restrict to 64
+    plotvar(tbr+Form(".workingPoints[%d]",i), "", true);
+  }
 }
 
 void flatTable(const TString& shortName){
@@ -3055,6 +3070,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       // downstream discriminators (depend on the above)
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolation__"+recoS+".obj.data_");
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolationMVA__"+recoS+".obj.data_");
+
+      //new style IDs
+      tauIDContainer("hpsPFTauBasicDiscriminators_");
+      tauIDContainer("hpsPFTauBasicDiscriminatorsdR03_");
+      tauIDContainer("hpsPFTauDiscriminationByMuonRejection3_");
+      tauIDContainer("hpsPFTauDiscriminationByMVA6ElectronRejection_");
+      tauIDContainer("hpsPFTauDiscriminationByIsolationMVArun2v1DBoldDMwLT_");
+      tauIDContainer("hpsPFTauDiscriminationByIsolationMVArun2v1DBdR03oldDMwLT_");
+      tauIDContainer("hpsPFTauDiscriminationByIsolationMVArun2v1DBnewDMwLT_");
 
       plotvar("recoRecoTauPiZeros_hpsPFTauProducer_pizeros_"+recoS+".obj@.size()");
       plotvar("log10(recoRecoTauPiZeros_hpsPFTauProducer_pizeros_"+recoS+".obj.pt())");

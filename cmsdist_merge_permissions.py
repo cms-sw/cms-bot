@@ -13,6 +13,7 @@ CMSDIST_PERMISSIONS = {
   "belforte"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "ddaina"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "nataliaratnikova": [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "germanfgv"      : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
 }
 
 VALID_COMMENTS = {

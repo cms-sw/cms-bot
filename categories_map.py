@@ -861,6 +861,7 @@ CMSSW_CATEGORIES = {
     "HeterogeneousCore/MPIServices",
     "HeterogeneousCore/Producer",
     "HeterogeneousCore/Product",
+    "HeterogeneousCore/SonicCore",
   ],
   "hlt": [
     "CondCore/HLTPlugins",
@@ -1180,6 +1181,7 @@ CMSSW_CATEGORIES = {
     "RecoEgamma/ElectronIdentification",
     "RecoEgamma/Examples",
     "RecoEgamma/PhotonIdentification",
+    "RecoHGCal/Configuration",
     "RecoHGCal/TICL",
     "RecoHI/Configuration",
     "RecoHI/HiCentralityAlgos",
@@ -1578,6 +1580,7 @@ CMSSW_CATEGORIES = {
     "L1Trigger/ME0Trigger",
     "L1Trigger/TrackTrigger",
     "L1Trigger/TrackerDTC",
+    "RecoHGCal/Configuration",
     "RecoHGCal/TICL",
     "RecoLocalCalo/HGCalRecAlgos",
     "RecoLocalCalo/HGCalRecProducers",

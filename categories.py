@@ -8,7 +8,7 @@ from releases import SPECIAL_RELEASE_MANAGERS
 
 authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
-CMSSW_L1 = ["davidlange6", "fabiocos", "silviodonato"]
+CMSSW_L1 = ["fabiocos", "silviodonato"]
 APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar"] + CMSSW_L1 + SPECIAL_RELEASE_MANAGERS))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
@@ -40,7 +40,7 @@ CMSSW_L2 = {
   "emeschi":          ["daq"],
   "fabiocos":         ["operations"],
   "fgolf":            ["xpog"],
-  "franzoni":         ["operations", "alca"],
+  "franzoni":         ["operations"],
   "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
   "ianna":            ["geometry"],
@@ -71,7 +71,7 @@ CMSSW_L2 = {
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
   "tocheng":          ["alca"],
-  "zhenhu":           ["pdmv"],
+  "wajidalikhan":     ["pdmv"],
   "christopheralanwest": ["alca"],
   CMSBUILD_USER:      ["tests" ],
 }

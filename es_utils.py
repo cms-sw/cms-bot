@@ -11,26 +11,30 @@ from os import stat as tstat
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
+ES7_SERVER = 'https://es-cmssdt7.cern.ch:9203'
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
-  es5_query_tmpl="""{
-  "_source": [%(fields_list)s],
-  "query":
-    {
-    "bool":
-      {
-        "must": { "query_string": { "query": "%(query)s"}},
-        "must": { "range":  { "%(timestamp_field)s": { "gte": %(start_time)s, "lte":%(end_time)s}}}
-      }
-    },
-    "sort": [{"%(timestamp_field)s": "desc" }],
-    "from" : %(page_start)s,
-    "size" : %(page_size)s
-  }"""
+  es5_query_tmpl="""
+{
+"_source": [%(fields_list)s],
+"query": {
+  "bool": {
+    "must": [
+      {"query_string": {"query": "%(query)s"}},
+      {"range": {"%(timestamp_field)s": {"gte": %(start_time)s, "lte": %(end_time)s}}}
+    ]
+  }
+},
+"sort": [{"%(timestamp_field)s": "desc"}],
+"from" : %(page_start)s,
+"size" : %(page_size)s
+}
+"""
   if not fields: fields = ["*"]
   fields_list = ",".join([ '"%s"' % f for f in fields])
   return format(es5_query_tmpl, **locals ())
+
 
 def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file=passwd_file)
@@ -47,22 +51,30 @@ def es_get_passwd(passwd_file=None):
     print("Couldn't read the secrets file" , str(e))
     return ""
 
-def send_request(uri, payload=None, passwd_file=None, method=None):
+def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
+  es_ser = ES7_SERVER
+  header = {"Content-Type": "application/json"}
+  if not es7:
+    send_request(uri, payload, passwd_file, method, True)
+    header = {}
+    es_ser = ES_SERVER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
-  url = "%s/%s" % (ES_SERVER,uri)
+  url = "%s/%s" % (es_ser,uri)
   passman = HTTPPasswordMgrWithDefaultRealm()
   passman.add_password(None,url, 'cmssdt', passwd)
   auth_handler = HTTPBasicAuthHandler(passman)
   opener = build_opener(auth_handler)
   try:
     install_opener(opener)
-    request = Request(url, payload)
+    request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
   except Exception as e:
     print("ERROR:",url,str(e))
+    print(payload)
     return False
+  if es7: print("OK:",url)
   return True
 
 def send_payload(index, document, id, payload, passwd_file=None):
@@ -88,6 +100,7 @@ def delete_hit(hit,passwd_file=None):
 
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
+  if getenv("USE_ES_CMSSDT7","false")=="true": data["es_server"]=ES7_SERVER
   sslcon = None
   try:
     sslcon = ssl._create_unverified_context()
@@ -100,7 +113,10 @@ def get_payload_wscroll(index, query, max_count=-1):
   es_data = json.loads(get_payload(index, query,scroll=1))
   if 'proxy-error' in es_data: return es_data
   es_data.pop("_shards", None)
-  scroll_size = es_data['hits']['total']
+  if type(es_data['hits']['total']) == int:
+    scroll_size = es_data['hits']['total']
+  else:
+    scroll_size = es_data['hits']['total']['value']
   scroll_id = es_data.pop('_scroll_id')
   tcount = 0
   while ((scroll_size > 0) and ((max_count<0) or (tcount<max_count))):

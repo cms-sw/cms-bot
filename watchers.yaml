@@ -263,12 +263,6 @@ acimmino:
 - DQM/RPCMonitorClient
 argiro:
 - .*[Ee][Cc][Aa][Ll]
-bachtis:
-- RecoMuon
-- DataFormats/MuonReco
-- DataFormats/ParticleFlowReco
-- DataFormats/ParticleFlowCandidate
-- RecoParticleFlow
 barvic:
 - EventFilter/CSCRawToDigi
 - DQM/CSCMonitorModule
@@ -894,6 +888,7 @@ rovere:
 - SimDataFormats
 - SimG4CMS
 - SimG4Core
+- SimCalorimetry
 rylanC24:
 - Validation/RecoHI
 schoef:
@@ -1571,3 +1566,27 @@ sobhatta:
 - DataFormats/EgammaCandidates
 - DataFormats/EgammaReco
 - RecoHGCal
+kpedro88:
+- HeterogeneousCore/SonicCore
+fabiocos:
+- CondFormats/GeometryObjects
+- Configuration
+- DataFormats/DetId
+- DataFormats/ForwardDetId
+- DataFormats/FTLDigi
+- DataFormats/FTLRecHit
+- DataFormats/Math
+- DetectorDescription
+- Geometry
+- IOMC
+- Mixing
+- RecoLocalFastTime
+- RecoMTD
+- SimDataFormats
+- SimFastTiming
+- SimG4CMS
+- SimG4Core
+- SimGeneral
+- Utilities/RelMon
+- Validation/Geometry
+- Validation/MtdValidation

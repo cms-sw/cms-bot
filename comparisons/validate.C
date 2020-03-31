@@ -477,6 +477,8 @@ void patMetVars(TString cName){
   met("pfMET_[0].Type6Fraction", cName, tName, false, true, true);
   met("pfMET_[0].Type7Fraction", cName, tName, false, true, true);
 
+  met("metSumPtUnclustered", cName, tName, true, true, false);
+
   res = met("uncertainties_@.size", cName, tName);
   for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dpx()",i), tName+cName+"_"+recoS+Form(".obj[0].uncertainties_@.size()>%d",i), true);

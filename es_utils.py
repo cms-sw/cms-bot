@@ -72,6 +72,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
     content = urlopen(request)
   except Exception as e:
     print("ERROR:",url,str(e))
+    print(payload)
     return False
   if es7: print("OK:",url)
   return True

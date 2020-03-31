@@ -55,7 +55,9 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   es_ser = ES7_SERVER
   header = {"Content-Type": "application/json"}
   if not es7:
-    send_request(uri, payload, passwd_file, method, True)
+    xuri = uri.split("/")
+    xuri[1] = "_doc"
+    send_request("/".join(xuri), payload, passwd_file, method, True)
     header = {}
     es_ser = ES_SERVER
   passwd=es_get_passwd(passwd_file)
@@ -65,20 +67,14 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   passman.add_password(None,url, 'cmssdt', passwd)
   auth_handler = HTTPBasicAuthHandler(passman)
   opener = build_opener(auth_handler)
-  xpayload = payload
   try:
     install_opener(opener)
-    #Fix for ES7
-    #if es7:
-    #  obj = json.loads(payload)
-    #  obj["_type"]="_doc"
-    #  xpayload = json.dumps(obj)
-    request = Request(url, xpayload, header)
+    request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
   except Exception as e:
     print("ERROR:",url,str(e))
-    print(xpayload)
+    print(payload)
     return False
   if es7: print("OK:",url)
   return True

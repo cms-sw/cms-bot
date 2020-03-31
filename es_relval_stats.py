@@ -42,7 +42,8 @@ for wf in o.split("\n"):
     hostname=open(join(wf,"hostname")).read().split("\n")[0]
   exit_codes={}
   if exists(join(wf,"workflow.log")):
-    e, o = run_cmd("head -1 %s/workflow.log  | sed 's|.* exit: *||'" % wf)
+    e, o = run_cmd("grep '^%s_' %s/workflow.log | head -1 | sed 's|.* exit: *||'" % (wfnum, wf))
+    if not o: o="256"
     istep=0
     for e in [ int(x) for x in o.strip().split(" ") if x ]:
       istep+=1

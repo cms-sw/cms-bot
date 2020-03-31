@@ -82,7 +82,7 @@ while true ; do
   let KERBEROS_REFRESH_GAP=$CTIME-$KERBEROS_REFRESH
   if [ $KERBEROS_REFRESH_GAP -gt 21600 ] ; then
     echo "Refreshing kerberose token"
-    kinit -R
+    kinit -R || true
     KERBEROS_REFRESH=$CTIME
   fi
 done

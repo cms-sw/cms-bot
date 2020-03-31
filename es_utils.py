@@ -65,14 +65,20 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   passman.add_password(None,url, 'cmssdt', passwd)
   auth_handler = HTTPBasicAuthHandler(passman)
   opener = build_opener(auth_handler)
+  xpayload = payload
   try:
     install_opener(opener)
-    request = Request(url, payload, header)
+    #Fix for ES7
+    if es7:
+      obj = json.loads(payload)
+      obj["_type"]="_doc"
+      xpayload = json.dumps(obj)
+    request = Request(url, xpayload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
   except Exception as e:
     print("ERROR:",url,str(e))
-    print(payload)
+    print(xpayload)
     return False
   if es7: print("OK:",url)
   return True

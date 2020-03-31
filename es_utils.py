@@ -69,10 +69,10 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   try:
     install_opener(opener)
     #Fix for ES7
-    if es7:
-      obj = json.loads(payload)
-      obj["_type"]="_doc"
-      xpayload = json.dumps(obj)
+    #if es7:
+    #  obj = json.loads(payload)
+    #  obj["_type"]="_doc"
+    #  xpayload = json.dumps(obj)
     request = Request(url, xpayload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)

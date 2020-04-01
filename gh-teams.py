@@ -10,7 +10,7 @@ from github_utils import api_rate_limits, github_api,add_organization_member
 from categories import CMSSW_L1
 setdefaulttimeout(120)
 
-CMS_OWNERS = [ "smuzaffar", "cmsbuild" ] + CMSSW_L1
+CMS_OWNERS = [ "davidlange6", "smuzaffar", "cmsbuild" ] + CMSSW_L1
 CMS_SDT    = [ "mrodozov", "tulamor" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 

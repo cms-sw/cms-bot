@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-cvmfs_repo=cms-ib.cern.ch
+cvmfs_repo=$1
 
 lock=~/cron_install_cmssw.lock
 CPID=""

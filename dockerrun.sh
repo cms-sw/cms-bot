@@ -1,55 +1,42 @@
 function dockerrun()
 {
-  CONTAINER_TYPE=docker
-  IMAGE_BASE="/cvmfs/cms-ib.cern.ch"
-  if [ "$USE_SINGULARITY" = "true" ] ; then CONTAINER_TYPE=singularity ; fi
-  case "$SCRAM_ARCH" in
-    slc6_amd64_* ) IMG="cmssw/slc6:latest" ;;
-    slc7_amd64_* ) IMG="cmssw/cc7:amd64" ;;
-    cc8_amd64_* ) IMG="cmssw/cc8:amd64" ;;
-    slc7_aarch64_* )
+  if [ -z "${CONTAINER_TYPE}" ] ; then
+    CONTAINER_TYPE=docker
+    [ "$USE_SINGULARITY" = "true" ] && CONTAINER_TYPE=singularity
+    if [ -z "${IMAGE_BASE}" ] ; then IMAGE_BASE="/cvmfs/cms-ib.cern.ch/docker" ; fi
+    if [ -z "${PROOTDIR}" ]   ; then PROOTDIR="/cvmfs/cms-ib.cern.ch/proot" ; fi
+    if [ -z "${THISDIR}" ]    ; then THISDIR=$(/bin/pwd -P) ; fi
+    if [ -z "${WORKDIR}" ]    ; then WORKDIR=$(/bin/pwd -P) ; fi
+    arch=$(echo $SCRAM_ARCH | cut -d_ -f2)
+    os=$(echo $SCRAM_ARCH | cut -d_ -f1 | sed 's|slc7|cc7|')
+    IMG="cmssw/${os}:${arch}"
+    if [ "${arch}" != "amd64" ] ; then
       CONTAINER_TYPE="qemu"
-      IMG="cmssw/cc7:aarch64"
-      QEMU_ARGS="$PROOTDIR/qemu-aarch64 -cpu cortex-a57"
-      ;;
-    cc8_aarch64_* )
-      CONTAINER_TYPE="qemu"
-      IMG="cmssw/cc8:aarch64"
-      QEMU_ARGS="$PROOTDIR/qemu-aarch64 -cpu cortex-a57"
-      ;;
-    slc7_ppc64le_* )
-      CONTAINER_TYPE="qemu"
-      IMG="cmssw/cc7:ppc64le"
-      QEMU_ARGS="$PROOTDIR/qemu-ppc64le -cpu POWER8"
-      ;;
-    cc8_ppc64le_* )
-      CONTAINER_TYPE="qemu"
-      IMG="cmssw/cc8:ppc64le"
-      QEMU_ARGS="$PROOTDIR/qemu-ppc64le -cpu POWER8"
-      ;;
-    * )
-      CONTAINER_TYPE="host"
-      ;;
-  esac
+      QEMU_ARGS="$PROOTDIR/qemu-${arch}"
+      if [ "${arch}" = "aarch64" ] ; then
+        QEMU_ARGS="${QEMU_ARGS} -cpu cortex-a57"
+      elif [ "${arch}" = "ppc64le" ] ; then
+        QEMU_ARGS="${QEMU_ARGS} -cpu POWER8"
+      fi
+    fi
+  fi
   case $CONTAINER_TYPE in
     docker)
       docker pull ${IMG}
       DOC_ARG="run --net=host -u $(id -u):$(id -g) --rm -t"
-      DOC_ARG="${DOC_ARG} -e THISDIR=${THISDIR} -e WORKDIR=${WORKDIR} -e SCRAM_ARCH=${SCRAM_ARCH}"
-      DOC_ARG="${DOC_ARG} -v ${THISDIR}:${THISDIR} -v /cvmfs:/cvmfs -v ${WORKDIR}:${WORKDIR}"
-      ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u; $@"
+      DOC_ARG="${DOC_ARG} -v ${THISDIR}:${THISDIR} -v /tmp:/tmp -v /cvmfs:/cvmfs -v ${WORKDIR}:${WORKDIR}"
+      ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u >/dev/null 2>&1; $@"
       docker $DOC_ARG ${IMG} sh -c "$ARGS"
       ;;
     singularity)
-      UNPACK_IMG="${IMAGE_BASE}/docker/${IMG}"
-      ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u; $@"
-      singularity -s exec -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${THISDIR} ${UNPACK_IMG} sh -c "$ARGS"
+      UNPACK_IMG="${IMAGE_BASE}/${IMG}"
+      ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u >/dev/null 2>&1; $@"
+      singularity -s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR} ${UNPACK_IMG} sh -c "$ARGS"
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1
-      ARGS="export THISDIR=${THISDIR}; export WORKDIR=${WORKDIR}; export SCRAM_ARCH=${SCRAM_ARCH}; export x=${x}; cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R ${IMAGE_BASE}/docker/${IMG} -b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "${QEMU_ARGS}" sh -c "$ARGS"
+      $PROOTDIR/proot -R ${IMAGE_BASE}/${IMG} -b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "${QEMU_ARGS}" sh -c "cd ${THISDIR}; $@"
       ;;
-    host) eval $@;;
+    *) eval $@;;
   esac
 }

@@ -20,7 +20,7 @@ CMSPKG="${INSTALL_PATH}/common/cmspkg -a ${SCRAM_ARCH}"
 if [ $(echo "${SCRAM_ARCH}" | grep '^cc' | wc -l) -eq 0 ] ; then
     RPM_CONFIG=${INSTALL_PATH}/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     if [ ! -e ${RPM_CONFIG} ] ; then
-        echo "==For nor ignore fixing mutex_set_max==="
+        echo "WARNING: For now ignore fixing mutex_set_max"
         #echo "mutex_set_max 10000000" > $RPM_CONFIG
         #dockerrun "${CMSPKG} env -- rpmdb --rebuilddb"
     fi

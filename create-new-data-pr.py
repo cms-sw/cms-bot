@@ -34,6 +34,9 @@ if __name__ == "__main__":
   data_prid = int(opts.pull_request)
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
+  if data_repo_pr.base.ref != "master":
+    print("I do not know how to tag a non-master branch %s" % data_repo_pr.base.ref)
+    exit(1)
 
   if not data_repo_pr.merged:
       print('Branch has not been merged !')

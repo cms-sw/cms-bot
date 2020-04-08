@@ -1076,16 +1076,20 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true"
   esac
   #End of 71x data hack
   echo '--------------------------------------'
-  date
   ADDON_CMD="CMSSW_SEARCH_PATH=$EX_DATA_SEARCH CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout 7200 addOnTests.py -j ${NCPU}"
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
+  STIME=$(date +%s)
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log
-  date
+  set DTIME=$(date +%s)-$STIME
   echo 'END OF ADDON TESTS'
   echo '--------------------------------------'
   if [ -d addOnTests ] ; then
     mv addOnTests $WORKSPACE/addOnTests
   fi
+  if [ $(grep ' tests passed, ' $WORKSPACE/addOnTests.log | wc -l) -eq 0 ] ; then
+    echo "AddOnTest might have timed out: FAILED - $DTIME secs" >>  $WORKSPACE/addOnTests.log
+  fi
+
   TEST_ERRORS=`grep -i -E ": FAILED .*" $WORKSPACE/addOnTests.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/addOnTests.log` || true
 

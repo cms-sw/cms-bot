@@ -1491,8 +1491,10 @@ adewit:
 vargasa:
 - Configuration/Geometry
 - Geometry/TrackerCommonData
+- Geometry/TrackerNumberingBuilder
 - DetectorDescription/DDCMS
 - Validation/Geometry
+- SimTracker/TrackerMaterialAnalysis
 rbartek:
 - Validation/Geometry
 rishabhCMS:

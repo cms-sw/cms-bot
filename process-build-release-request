@@ -908,6 +908,8 @@ if __name__ == "__main__":
         exit(0)
     production_architecture = req_arch
     print("Found production architecture:",production_architecture)
+  if not production_architecture and len(architectures)==1:
+    production_architecture = architectures[0]
   print("debug production arch: ",production_architecture)
 
   release_branch = release_queue

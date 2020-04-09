@@ -839,7 +839,7 @@ prolay:
 - SimTracker/Common
 - SimTracker/Configuration
 - SimTracker/Records
-robervalwalsh: 
+robervalwalsh:
 - CalibTracker/Configuration
 - CalibTracker/Records
 - CalibTracker/SiStrip
@@ -862,6 +862,8 @@ rociovilar:
 - RecoMuon
 - DQMOffline
 rovere:
+- HeterogeneousCore
+- CUDADataFormats
 - RecoTracker
 - RecoLocalTracker
 - TrackingTools

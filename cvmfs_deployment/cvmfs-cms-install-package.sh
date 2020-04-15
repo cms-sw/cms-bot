@@ -32,4 +32,8 @@ CMSPKG_OPTS=""
 dockerrun "${CMSPKG} ${CMSPKG_OPT} install -y ${PACKAGE_NAME}"
 BOOK_KEEPING="/cvmfs/${CVMFS_REPOSITORY}/cvmfs-cms.cern.ch-updates"
 touch ${BOOK_KEEPING}
-echo "$(echo ${PACKAGE_NAME} | cut -d+ -f3) ${SCRAM_ARCH} $(date +%s) $(date)" >> ${BOOK_KEEPING}
+BOOK_KEEPING_PKG="${PACKAGE_NAME}"
+if [ $(echo "${PACKAGE_NAME}" | grep 'tool-conf' | wc -l) -eq 0 ] ; then
+  BOOK_KEEPING_PKG=$(echo "${PACKAGE_NAME}" | cut -d+ -f3)
+fi
+echo "${BOOK_KEEPING_PKG} ${SCRAM_ARCH} $(date +%s) $(date)" >> ${BOOK_KEEPING}

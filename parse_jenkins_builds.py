@@ -79,7 +79,7 @@ else:
     print("ERROR: ",content)
     sys.exit(1)
   for hit in content_hash['hits']['hits']:
-    if hit["_index"].startswith("jenkins-jobs-") or hit["_index"].startswith("cmssdt-jenkins-jobs-"):
+    if hit["_index"].startswith("cmssdt-jenkins-jobs-"):
       try:print("Running:",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
       except Exception as e: print("Error:", e)
       running_builds_elastic[hit['_id']]=hit

@@ -102,7 +102,7 @@ def delete_hit(hit,passwd_file=None):
 
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
-  if scroll==1: data['params'] = 'ignore_unavailable=true'
+  if scroll<=1: data['params'] = 'ignore_unavailable=true'
   #if getenv("USE_ES_CMSSDT7","false")=="true": data["es_server"]=ES7_SERVER
   data["es_server"]=ES7_SERVER
   sslcon = None

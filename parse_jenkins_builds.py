@@ -55,6 +55,7 @@ for root, dirs, files in os.walk(path):
         jstime = root.find('startTime').text
         payload['@timestamp'] = int(jstime)
         payload['slave_node'] = root.find('builtOn').text
+        payload['jenkins_server'] = JENKINS_PREFIX
         build_result = root.find('result')
         if build_result is not None:
           payload['build_result'] = build_result.text
@@ -65,7 +66,6 @@ for root, dirs, files in os.walk(path):
           payload['job_status'] = 'Running'
           all_local.append(id)
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
-        print(payload)
         send_payload(weekindex,document,id,json.dumps(payload))
       except Exception as e:
         print("Xml parsing error",logFile , e)
@@ -80,6 +80,7 @@ else:
     sys.exit(1)
   for hit in content_hash['hits']['hits']:
     if hit["_index"].startswith("cmssdt-jenkins-jobs-"):
+      if not "jenkins_server" in hit["_source"]: hit["_source"]["jenkins_server"] = JENKINS_PREFIX
       try:print("Running:",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
       except Exception as e: print("Error:", e)
       running_builds_elastic[hit['_id']]=hit

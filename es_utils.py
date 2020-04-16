@@ -10,8 +10,8 @@ from _py2with3compatibility import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAut
 from os import stat as tstat
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
-ES_SERVER = 'https://es-cmssdt.cern.ch:9203'
-ES7_SERVER = 'https://es-cmssdt7.cern.ch:9203'
+ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
+ES_NEW_SERVER = 'https://es-cmssdt7.cern.ch:9203'
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
@@ -51,15 +51,12 @@ def es_get_passwd(passwd_file=None):
     print("Couldn't read the secrets file" , str(e))
     return ""
 
-def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
-  es_ser = ES7_SERVER
+def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER):
   header = {"Content-Type": "application/json"}
-  if not es7:
-    xuri = uri.split("/")
+  xuri = uri.split("/")
+  if xuri[1] != "_doc":
     xuri[1] = "_doc"
-    return send_request("/".join(xuri), payload, passwd_file, method, True)
-    #header = {}
-    #es_ser = ES_SERVER
+    uri = "/".join(xuri)
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
   url = "%s/%s" % (es_ser,uri)
@@ -76,23 +73,19 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
     print("ERROR:",url,str(e))
     print(payload)
     return False
-  if es7: print("OK:",url)
+  print("OK:",url)
   return True
 
 def send_payload(index, document, id, payload, passwd_file=None):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   uri = "%s/%s/" % (index,document)
   if id: uri = uri+id
-  if not send_request(uri, payload=payload, passwd_file=passwd_file): return False
-  print("OK ",index)
-  return True
+  return send_request(uri, payload=payload, passwd_file=passwd_file)
 
 def send_template(name, payload, passwd_file=None):
   if not name.startswith('cmssdt-'): name = 'cmssdt-' + name
   uri = "_template/%s" % name
-  if not send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT'): return False
-  print("OK ",name)
-  return True
+  return send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT')
 
 def delete_hit(hit,passwd_file=None):
   uri = "%s/%s/%s" % (hit["_index"], hit["_type"], hit["_id"])
@@ -103,8 +96,7 @@ def delete_hit(hit,passwd_file=None):
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
   if scroll<=1: data['params'] = 'ignore_unavailable=true'
-  #if getenv("USE_ES_CMSSDT7","false")=="true": data["es_server"]=ES7_SERVER
-  data["es_server"]=ES7_SERVER
+  data["es_server"]=ES_SERVER
   sslcon = None
   try:
     sslcon = ssl._create_unverified_context()

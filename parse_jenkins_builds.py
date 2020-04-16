@@ -27,7 +27,7 @@ def getParameters(root, payload):
     for x in root: getParameters(x, payload)
 
 query_running_builds = """{
-"query": {"bool": {"must": {"query_string": {"query": "job_status:Running AND jenkins_server:%s"}}}},
+"query": {"bool": {"must": {"query_string": {"query": "job_status:Running AND jenkins_server:%s", "default_operator": "AND"}}}},
 "from": 0,
 "size": 10000
 }""" % JENKINS_PREFIX
@@ -78,9 +78,11 @@ else:
   if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
     print("ERROR: ",content)
     sys.exit(1)
+  print("Found:", len(content_hash['hits']['hits']))
   for hit in content_hash['hits']['hits']:
     if hit["_index"].startswith("cmssdt-jenkins-jobs-"):
       if not "jenkins_server" in hit["_source"]: hit["_source"]["jenkins_server"] = JENKINS_PREFIX
+      if hit["_source"]["jenkins_server"]!=JENKINS_PREFIX: continue
       try:print("Running:",hit["_source"]["jenkins_server"],":",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
       except Exception as e: print("Error:", e)
       running_builds_elastic[hit['_id']]=hit

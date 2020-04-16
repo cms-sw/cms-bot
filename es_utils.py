@@ -58,8 +58,9 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
     xuri = uri.split("/")
     xuri[1] = "_doc"
     send_request("/".join(xuri), payload, passwd_file, method, True)
-    header = {}
-    es_ser = ES_SERVER
+    return
+    #header = {}
+    #es_ser = ES_SERVER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
   url = "%s/%s" % (es_ser,uri)
@@ -103,7 +104,8 @@ def delete_hit(hit,passwd_file=None):
 def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
   if scroll==1: data['params'] = 'ignore_unavailable=true'
-  if getenv("USE_ES_CMSSDT7","false")=="true": data["es_server"]=ES7_SERVER
+  #if getenv("USE_ES_CMSSDT7","false")=="true": data["es_server"]=ES7_SERVER
+  data["es_server"]=ES7_SERVER
   sslcon = None
   try:
     sslcon = ssl._create_unverified_context()

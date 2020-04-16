@@ -27,10 +27,10 @@ def getParameters(root, payload):
     for x in root: getParameters(x, payload)
 
 query_running_builds = """{
-"query": {"bool": {"must": {"query_string": {"query": "job_status:Running"}}}},
+"query": {"bool": {"must": {"query_string": {"query": "job_status:Running AND jenkins_server:%s"}}}},
 "from": 0,
 "size": 10000
-}"""
+}""" % JENKINS_PREFIX
 
 all_local = list() 
 path = '/build/builds'

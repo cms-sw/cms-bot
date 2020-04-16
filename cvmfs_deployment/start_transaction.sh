@@ -4,12 +4,12 @@ cvmfs_repo=${CVMFS_REPOSITORY}
 
 lock=~/cron_install_cmssw.lock
 CPID=""
-while [ "$CPID" != "$1" ]  ; do
+while [ "$CPID" != "JENKINS:$1" ]  ; do
   while [ -f $lock ]; do
       echo Waiting for lock ...
       sleep 30
   done
-  echo $1 > $lock
+  echo "JENKINS:$1" > $lock
   sleep 1
   CPID=$(cat $lock | tail -1)
 done

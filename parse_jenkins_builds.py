@@ -81,7 +81,7 @@ else:
   for hit in content_hash['hits']['hits']:
     if hit["_index"].startswith("cmssdt-jenkins-jobs-"):
       if not "jenkins_server" in hit["_source"]: hit["_source"]["jenkins_server"] = JENKINS_PREFIX
-      try:print("Running:",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
+      try:print("Running:",hit["_source"]["jenkins_server"],":",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
       except Exception as e: print("Error:", e)
       running_builds_elastic[hit['_id']]=hit
 for build in running_builds_elastic:

@@ -27,7 +27,7 @@ def getParameters(root, payload):
     for x in root: getParameters(x, payload)
 
 query_running_builds = """{
-"query": {"bool": {"must": {"query_string": {"query": "job_status:running"}}}},
+"query": {"bool": {"must": {"query_string": {"query": "job_status:Running"}}}},
 "from": 0,
 "size": 10000
 }"""

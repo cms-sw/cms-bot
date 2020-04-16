@@ -57,8 +57,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es7=False):
   if not es7:
     xuri = uri.split("/")
     xuri[1] = "_doc"
-    send_request("/".join(xuri), payload, passwd_file, method, True)
-    return
+    return send_request("/".join(xuri), payload, passwd_file, method, True)
     #header = {}
     #es_ser = ES_SERVER
   passwd=es_get_passwd(passwd_file)

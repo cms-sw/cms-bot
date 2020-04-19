@@ -51,11 +51,11 @@ echo $ARCHITECTURES
 cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
 # Check if the transaction really happened
 if [ `touch $BASEDIR/is_writable 2> /dev/null; echo "$?"` -eq 0 ]; then
-rm $BASEDIR/is_writable
+  rm $BASEDIR/is_writable
 else
-echo CVMFS filesystem is not writable. Aborting.
-echo " " | mail -s "$CVMFS_REPOSITORY cannot be set to transaction" cms-sdt-logs@cern.ch
-exit 1
+  echo CVMFS filesystem is not writable. Aborting.
+  echo " " | mail -s "$CVMFS_REPOSITORY cannot be set to transaction" cms-sdt-logs@cern.ch
+  exit 1
 fi
 
 export PROOTDIR
@@ -114,26 +114,19 @@ for REPOSITORY in $REPOSITORIES; do
   # Install all architectures of the most recent week first.
   for SCRAM_ARCH in $ARCHITECTURES; do
     CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH ${USE_DEV}"
-    # Due to a bug in bootstrap.sh I need to install separate archs in separate directories.
-    # This is because bootstraptmp is otherwise shared between different arches. Sigh.
     LOGFILE=$WORKDIR/logs/bootstrap-$REPOSITORY-$SCRAM_ARCH.log
     #Recover from bad bootstrap arch
     if [ -f $LOGFILE -a ! -f $WORKDIR/$SCRAM_ARCH/cms/cms-common/1.0/etc/profile.d/init.sh ] ; then
       rm -f $LOGFILE
     fi
-    # If the bootstrap log for the current two week period is not there
-    # rebootstrap the area.
+    # If the bootstrap log for the current week is not their rebootstrap the area.
     if [ ! -f $LOGFILE ]; then
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
+      wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
+      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       if [ "${INSTALL_PACKAGES}" = "" ] ; then
-        wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
-        dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
         INSTALL_PACKAGES=$(${CMSPKG} search SCRAMV1 | sed 's| .*||' | grep 'SCRAMV1' | sort | tail -1)
-      fi
-      if [ "X${INSTALL_PACKAGES}" != "X" ] ; then
-        dockerrun "${CMSPKG} -f install ${INSTALL_PACKAGES}" || true
-        INSTALL_PACKAGES=""
       fi
     fi
     ln -sfT ../SITECONF $WORKDIR/SITECONF
@@ -165,16 +158,14 @@ for REPOSITORY in $REPOSITORIES; do
         fi ;
       fi
     ) || true
-
   done  #End architecture
-
 done #End week repository
 
 mkdir -p $BASEDIR/scramdb/etc/scramrc
 rm -f $BASEDIR/scramdb/etc/scramrc/links.db
 touch $BASEDIR/scramdb/etc/scramrc/links.db
 for (( i=0; i<$NUM_WEEKS; i++ )) ; do
- echo "$BASEDIR/week$i" >> $BASEDIR/scramdb/etc/scramrc/links.db
+  echo "$BASEDIR/week$i" >> $BASEDIR/scramdb/etc/scramrc/links.db
 done
 echo "/cvmfs/cms.cern.ch" >> $BASEDIR/scramdb/etc/scramrc/links.db
 
@@ -199,4 +190,3 @@ ln -s $(grep "^nweek-" $WORKSPACE/cms-bot/ib-weeks | tail -1) $BASEDIR/latest
 # Write everything in the repository
 echo "Publishing started" `date`
 time cvmfs_server publish
-

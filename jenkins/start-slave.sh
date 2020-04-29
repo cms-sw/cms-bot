@@ -77,8 +77,8 @@ scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 
 pre_cmd=""
 case $(get_data SHELL) in
-  */tcsh|*/csh) pre_cmd="ulimit $(get_data LIMITS) >& /dev/null || true; ulimit -a || true; setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
-  *) pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1         || true; ulimit -a || true; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  */tcsh|*/csh) pre_cmd="unlimit; limit; setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  *) pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1; ulimit -a; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "

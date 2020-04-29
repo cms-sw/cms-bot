@@ -147,8 +147,10 @@ echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | so
 
 #Search for Hard limits
 val=""
-for o in n s u ; do
-  val="-$o $(ulimit -H -$o) ${val}"
-done
+if [ $(echo "${SHELL}" | grep '/csh\|/tcsh' | wc -l) -eq 0 ] ; then
+  for o in n s u ; do
+    val="-$o $(ulimit -H -$o) ${val}"
+  done
+fi
 echo "DATA_LIMITS=${val}"
 

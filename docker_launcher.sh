@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-if ulimit ; then
+if ulimit -a ; then
   opts=""
   for o in n s u ; do
     opts="-$o $(ulimit -H -$o) ${opts}"

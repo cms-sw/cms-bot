@@ -1,7 +1,14 @@
 #!/bin/sh -ex
 TARGET=$1 ; shift
-JENKINS_SLAVE_NAME="${NODE_NAME}"
-if [ "$1" = "${NODE_NAME}" ] ; then shift; fi
+if [ "$1" != "${NODE_NAME}" ] ; then exec $0 "${TARGET}" "${NODE_NAME}" "$@"; fi
+opts="$0 +${TARGET} +${NODE_NAME}"
+if [ $(pgrep -f "$opts" | wc -l) -gt 2 ] ; then
+  pgrep -af "$opts" | grep -v "^$$ "
+  echo "WARNING: There is already a process trying to connect. please wait for that process to finish first"
+  exit 0
+else
+  shift
+fi
 
 KTAB=${HOME}/keytabs/$(echo $TARGET | sed 's|@.*||').keytab
 if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi
@@ -13,7 +20,6 @@ kinit ${KPRINCIPAL} -k -t ${KTAB}
 
 export SLAVE_UNIQUE_TARGET=""
 export SLAVE_MAX_WORKSPACE_SIZE=""
-export JENKINS_SLAVE_NAME
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   export SLAVE_UNIQUE_TARGET="YES"

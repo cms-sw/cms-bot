@@ -15,8 +15,8 @@ if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
   TARGET_HOST=$(echo $TARGET | sed 's|.*@||')
   if [ `pgrep -f "@${TARGET_HOST} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
 fi
-DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
-MULTI_MASTER_SLAVE=$(grep '>MULTI_MASTER_SLAVE<' -A1 ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+MULTI_MASTER_SLAVE=$(grep '>MULTI_MASTER_SLAVE<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
 
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${HOME}/slave.jar | sed 's| .*||')
 USER_HOME_MD5=""
@@ -46,7 +46,7 @@ REMOTE_USER_ID=$(get_data REMOTE_USER_ID)
 JENKINS_PORT=$(pgrep -x -a  -f ".*httpPort=.*" | tail -1 | tr ' ' '\n' | grep httpPort | sed 's|.*=||')
 SSHD_PORT=$(grep '<port>' ${HOME}/org.jenkinsci.main.modules.sshd.SSHD.xml | sed 's|</.*||;s|.*>||')
 JENKINS_CLI_CMD="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_dsa -l localcli -p ${SSHD_PORT} localhost"
-if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
+if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   slave_labels=""
   case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
@@ -66,7 +66,7 @@ if [ $(cat ${HOME}/nodes/${JENKINS_SLAVE_NAME}/config.xml | grep '<label>' | gre
     ;;
   esac
   slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
-  if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${JENKINS_SLAVE_NAME} ${slave_labels} ; fi
+  if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
 if [ $(get_data JENKINS_SLAVE_SETUP) = "false" -a "${REMOTE_USER}" != "cmst1" ] ; then
   ${JENKINS_CLI_CMD} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
@@ -94,6 +94,10 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
     if [ $MAX_WAIT_TIME -gt 0 ] ; then
       let MAX_WAIT_TIME=$MAX_WAIT_TIME-$WAIT_GAP
       sleep $WAIT_GAP
+      if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/$i{NODE_NAME}/config.xml | wc -l) -gt 0 ] ; then
+        echo "ERROR: Node is marked temporary Offline, so exiting without connecting."
+        exit 0
+      fi
     else
       exit 1
     fi
@@ -102,5 +106,8 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   pre_cmd="${pre_cmd} pgrep -f  '${SLAVE_CMD_REGEX}' && exit 1 || "
   EXTRA_JAVA_ARGS="-DMULTI_MASTER_SLAVE=true"
 fi
-
+if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | wc -l) -gt 0 ] ; then
+  echo "ERROR: Node is marked temporary Offline, so exiting without connecting."
+  exit 0
+fi
 ssh $SSH_OPTS $TARGET "${pre_cmd} java ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

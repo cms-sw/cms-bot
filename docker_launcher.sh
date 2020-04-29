@@ -1,6 +1,13 @@
 #!/bin/bash -ex
+if ulimit ; then
+  opts=""
+  for o in n s u ; do
+    opts="-$o $(ulimit -H -$o) ${opts}"
+  done
+  ulimit ${opts}
+  ulimit -a
+fi
 kinit -R || true
-ulimit -a || true
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done

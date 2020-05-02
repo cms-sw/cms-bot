@@ -43,6 +43,7 @@ CMSSW_L2 = {
   "franzoni":         ["operations"],
   "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
+  "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
   "jfernan2":         ["dqm"],
   "kmaeshima":        ["dqm"],

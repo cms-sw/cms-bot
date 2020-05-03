@@ -51,10 +51,10 @@ def es_get_passwd(passwd_file=None):
     print("Couldn't read the secrets file" , str(e))
     return ""
 
-def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER):
+def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False):
   header = {"Content-Type": "application/json"}
   xuri = uri.split("/")
-  if xuri[1] != "_doc":
+  if (not ignore_doc) and (xuri[1] != "_doc"):
     xuri[1] = "_doc"
     uri = "/".join(xuri)
   passwd=es_get_passwd(passwd_file)
@@ -85,7 +85,7 @@ def send_payload(index, document, id, payload, passwd_file=None):
 def send_template(name, payload, passwd_file=None):
   if not name.startswith('cmssdt-'): name = 'cmssdt-' + name
   uri = "_template/%s" % name
-  return send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT')
+  return send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT', ignore_doc=True)
 
 def delete_hit(hit,passwd_file=None):
   uri = "%s/%s/%s" % (hit["_index"], hit["_type"], hit["_id"])
@@ -152,15 +152,15 @@ def get_indexes(index='cmssdt-*'):
 
 def close_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/_close',method='POST')
+  send_request(index+'/_close',method='POST', ignore_doc=True)
 
 def open_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/_open',method='POST')
+  send_request(index+'/_open',method='POST', ignore_doc=True)
 
 def delete_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/',method='DELETE')
+  send_request(index+'/',method='DELETE', ignore_doc=True)
 
 def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False, max_count=-1, fields=None):
   query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field, fields=fields)

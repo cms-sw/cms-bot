@@ -1611,4 +1611,24 @@ abdoulline:
 - Validation/HcalHits
 - Validation/HcalRecHits
 - Validation/CaloTowers
-
+slomeo:
+- Configuration/Geometry
+- Configuration/PyReleaseValidation
+- Configuration/StandardSequences
+- DetectorDescription/DDCMS
+- Geometry/CMSCommonData
+- Geometry/CSCGeometry
+- Geometry/CSCGeometryBuilder
+- Geometry/DTGeometry
+- Geometry/DTGeometryBuilder
+- Geometry/GEMGeometry
+- Geometry/GEMGeometryBuilder
+- Geometry/MuonCommonData
+- Geometry/MuonNumbering
+- Geometry/MuonSimData
+- Geometry/RPCGeometry
+- Geometry/RPCGeometryBuilder
+- SimG4CMS/
+- SimG4Core/
+- SimGeneral/
+- SimMuon/

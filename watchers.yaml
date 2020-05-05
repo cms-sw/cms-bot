@@ -1074,6 +1074,8 @@ ahinzmann:
 - CommonTools/PileupAlgos
 - CommonTools/RecoAlgos
 - FWCore/GuiBrowsers
+rchatter:
+- .*[Ee][Cc][Aa][Ll]
 clelange:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET

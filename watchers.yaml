@@ -1155,12 +1155,9 @@ jdolen:
 - CommonTools/PileupAlgos
 - CommonTools/RecoAlgos
 kreczko:
-- AnalysisDataFormats/TopObjects
 - DataFormats/L1Trigger
-- DQMOffline/L1Trigger
 - L1Trigger/L1TNtuples
 - L1TriggerOffline
-- TopQuarkAnalysis
 pfs:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi

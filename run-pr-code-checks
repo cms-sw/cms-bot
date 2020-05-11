@@ -113,7 +113,6 @@ if ${MULTIPLE_FILES_CHANGES} ; then
 fi
 
 if [ "$DRY_RUN" != "true" ] ; then
-  source $CMS_BOT_DIR/jenkins-artifacts
   send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
 fi
 RES="+code-checks"

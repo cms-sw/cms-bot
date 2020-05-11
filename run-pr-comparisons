@@ -11,6 +11,7 @@ mkdir -p $WORKSPACE/upload ${JR_COMP_DIR} $WORKSPACE/data
 rm -f $WORKSPACE/ALL_DONE
 
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$RELEASE_FORMAT; fi
+if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="-GenuineIntel"; fi
 
 BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix-results
 PR_BASELINE_JOBDIR=pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID

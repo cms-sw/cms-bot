@@ -54,7 +54,6 @@ pushd $CMSSW_BASE/src
   $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/upload/invalid_files.txt || true
 popd
 
-sed -i -e 's/ code-checks-internal *$/ code-checks-internal || $(CMD_true)/' ${CMSSW_BASE}/config/SCRAM/GMake/Makefile.coderules
 source $CMS_BOT_DIR/jenkins-artifacts
 
 #If we have any non-tests changed files

@@ -63,7 +63,7 @@ if $CODE_CHECKS ; then
   if [ -s $CMSSW_BASE/upload/code-checks-files.txt ] ; then
     ERR=false
     scram build -k -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt" > ${CMSSW_BASE}/upload/code-checks.log 2>&1 || ERR=true
-    if $ERR then
+    if $ERR ; then
       echo '-code-checks' > ${CMSSW_BASE}/upload/code-checks-err.log
       echo '' >> ${CMSSW_BASE}/upload/code-checks-err.log
       echo 'ERROR: Build errors found during clang-tidy run.' >> ${CMSSW_BASE}/upload/code-checks-err.log

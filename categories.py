@@ -36,7 +36,6 @@ CMSSW_L2 = {
   "cmsdoxy":          ["docs"],
   "cvuosalo":         ["geometry"],
   "davidlange6":      ["operations"],
-  "efeyazgan":        ["generators"],
   "emeschi":          ["daq"],
   "fabiocos":         ["operations"],
   "fgolf":            ["xpog"],

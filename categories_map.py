@@ -1025,6 +1025,7 @@ CMSSW_CATEGORIES = {
     "CommonTools/CandAlgos",
     "CommonTools/CandUtils",
     "CommonTools/Clustering1D",
+    "CommonTools/Egamma",
     "CommonTools/MVAUtils",
     "CommonTools/ParticleFlow",
     "CommonTools/PileupAlgos",

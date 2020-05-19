@@ -105,8 +105,28 @@ if [ ! -d ${CMSSW_IB} ] ; then
   scram -a $SCRAM_ARCH project ${CMSSW_IB}
 fi
 
-#Setup newly build tools
 cd ${CMSSW_IB}
+config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
+  git clone git@github.com:cms-sw/cmssw-config scram-buildrules
+  pushd scram-buildrules
+    git checkout ${config_tag}
+    echo ${config_tag} > ../config/config_tag
+  popd
+  mv config/SCRAM config/SCRAM.orig
+  cp -r scram-buildrules/SCRAM config/SCRAM
+  cp -f scram-buildrules/CMSSW_BuildFile.xml config/BuildFile.xml
+  cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm config/SCRAM_ExtraBuildRule.pm
+  if [ -f config/SCRAM.orig/GMake/CXXModules.mk ] ; then
+    cp $WORKSPACE/cmsdist/CXXModules.mk.file config/SCRAM/GMake/CXXModules.mk
+    if [ "X${CLING_PREBUILT_MODULE_PATH}" = "X" ] ; then
+      export CLING_PREBUILT_MODULE_PATH="${WORKSPACE}/${CMSSW_IB}/lib/${SCRAM_ARCH}"
+    fi
+  fi
+  rm -rf scram-buildrules
+fi
+
+#Setup newly build tools
 CONF="config/toolbox/${SCRAM_ARCH}/tools/selected"
 CONF_BACK="config/toolbox/${SCRAM_ARCH}/tools/selected.backup"
 if [ ! -d ${CONF_BACK} ] ; then mv ${CONF} ${CONF_BACK} ; fi
@@ -114,7 +134,7 @@ rm -rf ${CONF}
 TOOL_CONF="$WORKSPACE/$BUILD_DIR/$SCRAM_ARCH/cms/cmssw-tool-conf/${TOOL_CONF_VER}/tools/selected"
 rsync -a ${TOOL_CONF}/ ${CONF}/
 if [ -e "${CONF_BACK}/cmssw.xml" ] ; then cp ${CONF_BACK}/cmssw.xml ${CONF}/cmssw.xml ; fi
-RMV_CMSSW_EXTERNAL="config/SCRAM/hooks/runtime/99-remove-release-external-lib"
+RMV_CMSSW_EXTERNAL="$(ls -d config/SCRAM/hooks/runtime/*-remove-release-external-lib)"
 if [ -f "${RMV_CMSSW_EXTERNAL}" ] ; then chmod +x ${RMV_CMSSW_EXTERNAL} ; fi
 echo "Setting up newly build tools"
 DEP_NAMES=

@@ -364,20 +364,19 @@ if ${BUILD_EXTERNAL} ; then
     rm -f $CMSSW_IB/config/scram_basedir
 
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
-    git clone git@github.com:cms-sw/cmssw-config scram-buildrules
-    pushd scram-buildrules
-      config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
-      git checkout ${config_tag}
-      echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
-    popd
-    mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
-    cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
-    cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
-    cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
-    if [ -f $CMSSW_IB/config/SCRAM.orig/GMake/CXXModules.mk ] ; then
-      cp $WORKSPACE/cmsdist/CXXModules.mk.file $CMSSW_IB/config/SCRAM/GMake/CXXModules.mk
-      if [ "X${CLING_PREBUILT_MODULE_PATH}" = "X" ] ; then
-        export CLING_PREBUILT_MODULE_PATH="${WORKSPACE}/${CMSSW_IB}/lib/${SCRAM_ARCH}"
+    config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+    if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
+      git clone git@github.com:cms-sw/cmssw-config scram-buildrules
+      pushd scram-buildrules
+        git checkout ${config_tag}
+        echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
+      popd
+      mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
+      cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
+      cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
+      cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
+      if [ -f $CMSSW_IB/config/SCRAM.orig/GMake/CXXModules.mk ] ; then
+        cp $WORKSPACE/cmsdist/CXXModules.mk.file $CMSSW_IB/config/SCRAM/GMake/CXXModules.mk
       fi
     fi
     rm -rf scram-buildrules

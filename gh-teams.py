@@ -57,7 +57,7 @@ REPO_TEAMS["cms-sw"]["Dqm-Integration-developers"] = {
   "repositories" : { "DQM-Integration": "push"}
 }
 REPO_TEAMS["cms-sw"]["configdb-owners"] = {
-  "members" : ["fwyzard", "Martin-Grunewald", "vinnie87"],
+  "members" : ["fwyzard", "Martin-Grunewald", "vinnie87", "Sam-Harper"],
   "repositories" : { "hlt-confdb":"admin", "web-confdb":"admin"}
 }
 REPO_TEAMS["cms-sw"]["cmsdist-writers"] = {

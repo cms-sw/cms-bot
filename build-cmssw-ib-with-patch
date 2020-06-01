@@ -172,7 +172,7 @@ PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
 EXTERNAL_FAILED=NO
-(PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES 2>&1 | tee -a ${WRKDIR}/cmsswtoolconf.log) || EXTERNAL_FAILED=YES
+(PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES 2>&1 | tee -a ${WORKSPACE}/cmsswtoolconf.log) || EXTERNAL_FAILED=YES
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp/pip*
 if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
@@ -183,7 +183,7 @@ if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
   exit 1
 fi
 if [ "${DRY_RUN}" = "" ] ; then
-  timeout 60 ${CMS_BOT_DIR}/create_json.py -logfile ${WRKDIR}/cmsswtoolconf.log -jsonfile ${WRKDIR}/${RELEASE_NAME}_${ARCHITECTURE}_deps.json || true
+  timeout 60 ${CMS_BOT_DIR}/create_json.py -logfile ${WORKSPACE}/cmsswtoolconf.log -jsonfile ${WORKSPACE}/${RELEASE_NAME}_${ARCHITECTURE}_deps.json || true
   if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
     PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`

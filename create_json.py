@@ -28,5 +28,5 @@ def extract_data(inputfile):
   return json.dumps(list_of_dicts, sort_keys=True, indent=2)
 
 
-with open("%s.json" % args.jsonfile, 'w' ) as file:
+with open(args.jsonfile, 'w' ) as file:
   file.write(extract_data(args.logfile))

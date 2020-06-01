@@ -185,9 +185,9 @@ fi
 if [ "${DRY_RUN}" = "" ] ; then
   if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
     PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
-    ./pkgtools/cmsBuild -i build_pretend_cmssw_tool_conf/ -c cmsdist/ --repository $REPOSITORY \
-    --arch $ARCHITECTURE -j 16 --pretend build TOOL_CONF_PACKAGES  | tee logfile
-    timeout 60 ./create_json.py -logfile ./pkgtools/cmsBuild/logfile -jsonfile $REALEASENAME
+    ./PKGTOOLS/cmsBuild -i ${WRKDIR}/pretend-build -c CMSDIST --repository $REPOSITORY \
+    --arch $ARCHITECTURE -j 16 --pretend build $TOOL_CONF_PACKAGES > ${WRKDIR}/externals.log
+    timeout 60 ./create_json.py -logfile ${WRKDIR}/externals.log -jsonfile ${WRKDIR}/${RELEASE_NAME}_${RELEASE_FORMAT}_${ARCHITECTURE}_log.json || true
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`

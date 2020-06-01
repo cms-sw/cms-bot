@@ -3,12 +3,12 @@
 import sys, re, json
 from os import environ, popen
 from os.path import dirname, realpath
-from argparse import ArgumentParser
+from optparse import OptionParser
 
-parser = ArgumentParser()
-parser.add_argument('-logfile')
-parser.add_argument('-jsonfile')
-args = parser.parse_args()
+parser = OptionParser()
+parser.add_option('--logfile')
+parser.add_option('--jsonfile')
+(options, args) = parser.parse_args()
 
 def extract_data(inputfile):
   list_of_dicts = []
@@ -28,5 +28,5 @@ def extract_data(inputfile):
   return json.dumps(list_of_dicts, sort_keys=True, indent=2)
 
 
-with open("%s.json" % args.jsonfile, 'w' ) as file:
-  file.write(extract_data(args.logfile))
+with open(options.jsonfile, 'w' ) as file:
+  file.write(extract_data(options.logfile))

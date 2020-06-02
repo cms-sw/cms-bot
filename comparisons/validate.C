@@ -3517,6 +3517,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       // miniaod
       patMetVars("slimmedMETs_");
+      patMetVars("slimmedMETsNoHF_");
       patMetVars("slimmedMETsPuppi_");
       // miniaod debug
       patMetVars("patMETsPuppi_");

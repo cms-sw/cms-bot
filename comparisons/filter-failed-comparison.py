@@ -16,10 +16,12 @@ DES_DIR_CREATED=False
 for h in sorted(htmls):
   for s in all_ok[::-1]:
     if h.startswith(s):
+      print("All OK:%s (%s)" % (h, s))
       h = None
       break
   if not h: continue
   e, o = run_cmd("grep 'Skipped:\|Null:\|Fail:' '%s/%s.html' | wc -l" % (WF_PATH,h))
+  print("Working on %s:%s: %s" % (h,e,o))
   if not e:
     if int(o)>0:
       if not DES_DIR_CREATED:

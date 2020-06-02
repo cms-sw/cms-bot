@@ -305,6 +305,7 @@ mkdir -p upload/alternative-comparisons
 
 #default-comparison
 if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
+  mkdir -p $WORKSPACE/upload/extras
   for f in results/default-comparison/* ; do
     if [ -f $f ] ; then
       mv $f upload/
@@ -314,7 +315,8 @@ if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
       set +x
       while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
       set -x
-      $CMS_BOT_DIR/comparisons/filter-failed-comparison.py $f $WORKSPACE/upload &
+      wf=$(basename $f)
+      $CMS_BOT_DIR/comparisons/filter-failed-comparison.py $f $WORKSPACE/upload >$WORKSPACE/upload/extras/$wf.log 2>&1 &
     fi
   done
   wait || true

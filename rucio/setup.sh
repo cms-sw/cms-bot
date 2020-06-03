@@ -3,7 +3,7 @@ THISDIR=$(cd $(dirname ${BASH_SOURCE:-${(%):-%N}}) >/dev/null 2>&1; /bin/pwd)
 SELECTED_VERSION=${1-current}
 if [ ! -e ${THISDIR}/${ARCH}/current ] ; then
   echo "ERROR: Unsupported architecture ${ARCH}. Supported architectures are:"
-  echo $(find /build/muz/r -maxdepth 3 -mindepth 3 -name current | sed "s|/current||;s|${THISDIR}/||")
+  echo $(find ${THISDIR} -maxdepth 3 -mindepth 3 -name current | sed "s|/current||;s|${THISDIR}/||")
   return
 fi
 THISDIR="${THISDIR}/${ARCH}"

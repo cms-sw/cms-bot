@@ -43,7 +43,8 @@ mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
 export TMPDIR="${INSTALL_DIR}/tmp"
 if [ $(which python | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
   pip install --upgrade --user pip
-  export PATH=${PYTHONUSERBASE}/bin:$PATH
+  mv ${PYTHONUSERBASE}/bin ${PYTHONUSERBASE}/pip-bin
+  export PATH=${PYTHONUSERBASE}/pip-bin:$PATH
   [ "$DEPS" ] && pip install --upgrade --user $DEPS
   pip install --upgrade --user setuptools
 fi

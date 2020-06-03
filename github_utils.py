@@ -197,7 +197,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
         if 'invalid_prs' in cache and pr_hash_id in cache['invalid_prs']: continue
         print("Checking ", pr_number, author, parent_hash)
         try:
-            pr_md5 = md5(pr_number + "\n").hexdigest()
+            pr_md5 = md5((pr_number + "\n").encode()).hexdigest()
             pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
             print("Checking cached file: " + pr_cache)
             if not exists(pr_cache):

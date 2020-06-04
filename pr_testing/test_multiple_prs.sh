@@ -414,8 +414,8 @@ if ${BUILD_EXTERNAL} ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=
       if [ -e "${BTOOLS}/cmssw.xml" ] ; then cp ${BTOOLS}/cmssw.xml ${CTOOLS}/cmssw.xml ; fi
-      RMV_CMSSW_EXTERNAL="$(ls -d $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/*-remove-release-external-lib)"
-      if [ -f "${RMV_CMSSW_EXTERNAL}" ] ; then
+      RMV_CMSSW_EXTERNAL="$(ls -d $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/*-remove-release-external-lib 2>/dev/null || true)"
+      if [ "${RMV_CMSSW_EXTERNAL}" != "" ] ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
       for xml in $(ls ${CTOOLS}/*.xml) ; do

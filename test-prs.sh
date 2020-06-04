@@ -134,8 +134,8 @@ rm -rf ${CONF}
 TOOL_CONF="$WORKSPACE/$BUILD_DIR/$SCRAM_ARCH/cms/cmssw-tool-conf/${TOOL_CONF_VER}/tools/selected"
 rsync -a ${TOOL_CONF}/ ${CONF}/
 if [ -e "${CONF_BACK}/cmssw.xml" ] ; then cp ${CONF_BACK}/cmssw.xml ${CONF}/cmssw.xml ; fi
-RMV_CMSSW_EXTERNAL="$(ls -d config/SCRAM/hooks/runtime/*-remove-release-external-lib)"
-if [ -f "${RMV_CMSSW_EXTERNAL}" ] ; then chmod +x ${RMV_CMSSW_EXTERNAL} ; fi
+RMV_CMSSW_EXTERNAL="$(ls -d config/SCRAM/hooks/runtime/*-remove-release-external-lib 2>/dev/null || true)"
+if [ "${RMV_CMSSW_EXTERNAL}" != "" ] ; then chmod +x ${RMV_CMSSW_EXTERNAL} ; fi
 echo "Setting up newly build tools"
 DEP_NAMES=
 for xml in $(ls ${CONF}/*.xml) ; do

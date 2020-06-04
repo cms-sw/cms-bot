@@ -1284,6 +1284,8 @@ void mtdHits(TString cName){
   plotvar("log10("+bObj+".obj.energy())", bObj+".obj.energy()>0.001");
   plotvar(bObj+".obj.time()");
   plotvar(bObj+".obj.timeError()");
+  plotvar(bObj+".obj.position()");
+  plotvar("log10("+bObj+".obj.positionError())");
   plotvar("log2(max("+bObj+".obj.flagBits_,0.5))");
 }
 

@@ -171,11 +171,12 @@ popd
 PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
-EXTERNAL_FAILED=NO
-(PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES 2>&1 | tee -a ${WORKSPACE}/cmsswtoolconf.log) || EXTERNAL_FAILED=YES
+EXTERNAL_FAILED=false
+(PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
+[ -e ${WRKDIR}/ok.txt ] && EXTERNAL_FAILED=true
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp/pip*
-if [ "X${EXTERNAL_FAILED}" = "XYES" ] ; then
+if [ ${EXTERNAL_FAILED} ] ; then
   if [ "${DRY_RUN}" != "" ] ; then exit 1 ; fi
   BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi

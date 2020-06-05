@@ -173,10 +173,10 @@ TOOL_CONF_PACKAGES="${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\
 echo DATE=`date`
 EXTERNAL_FAILED=false
 (PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
-[ -e ${WRKDIR}/ok.txt ] && EXTERNAL_FAILED=true
+[ ! -e ${WRKDIR}/ok.txt ] && EXTERNAL_FAILED=true
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp/pip*
-if [ ${EXTERNAL_FAILED} ] ; then
+if ${EXTERNAL_FAILED} ; then
   if [ "${DRY_RUN}" != "" ] ; then exit 1 ; fi
   BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi

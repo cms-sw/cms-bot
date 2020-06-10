@@ -25,6 +25,7 @@ if [ "${REMOTE_USER}" = "cmsbld" ] ; then
 elif [ "${REMOTE_USER}" = "cmsbuild" ] ; then
   ssh -n $SSH_OPTS $TARGET aklog || true
 fi
+ssh -n $SSH_OPTS $TARGET aklog || true
 scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:~/system-info.sh"
 SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "~/system-info.sh '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}' '${USER_HOME_MD5}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
 

@@ -353,6 +353,36 @@ void jets(TString type,TString algo){
   }
 }
 
+void caloTowers(TString br, bool addHEP17 = false){
+  TString bObj = "CaloTowersSorted_"+br+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  TString tObj = bObj+".obj";
+  plotvar(tObj+"@.size()");
+  plotvar("log10("+tObj+".energy())");
+  plotvar("log10("+tObj+".emEnergy())");
+  plotvar("log10("+tObj+".hadEnergy())");
+  plotvar("log10("+tObj+".massSqr())/2.");
+  plotvar(tObj+".eta()");
+  plotvar(tObj+".phi()");
+  
+  if (addHEP17){
+    plotvar("log10("+tObj+".energy())", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar("log10("+tObj+".emEnergy())", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar("log10("+tObj+".hadEnergy())", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar("log10("+tObj+".massSqr())/2.", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar(tObj+".eta()", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar(tObj+".phi()", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+  }
+  
+  plotvar("Sum$("+tObj+".energy()>0)");
+  plotvar("log10("+tObj+".energy())", tObj+".energy()>0");
+  plotvar("log10("+tObj+".emEnergy())", tObj+".energy()>0");
+  plotvar("log10("+tObj+".hadEnergy())", tObj+".energy()>0");
+  plotvar("log10("+tObj+".massSqr())/2.", tObj+".energy()>0");
+  plotvar(tObj+".eta()", tObj+".energy()>0");
+  plotvar(tObj+".phi()", tObj+".energy()>0");
+}
 
 void secondaryVertexTagInfoVars(TString br){
   TString bObj = br+recoS+".obj";
@@ -3547,33 +3577,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     if (stepContainsNU(step, "all") || stepContainsNU(step, "calotower") || stepContainsNU(step, "HEP17")){
       //calo towers plot
 
-      tbr="CaloTowersSorted_towerMaker__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.emEnergy())");
-        plotvar("log10("+tbr+".obj.hadEnergy())");
-        plotvar("log10("+tbr+".obj.mass2())/2.");
-        plotvar(tbr+".obj.eta()");
-        plotvar(tbr+".obj.phi()");
-
-        if (stepContainsNU(step, "HEP17")){
-          plotvar("log10("+tbr+".obj.energy())", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar("log10("+tbr+".obj.emEnergy())", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar("log10("+tbr+".obj.hadEnergy())", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar("log10("+tbr+".obj.mass2())/2.", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar(tbr+".obj.eta()", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar(tbr+".obj.phi()", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-        }
-
-        plotvar("Sum$("+tbr+".obj.energy()>0)");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0");
-        plotvar("log10("+tbr+".obj.emEnergy())", tbr+".obj.energy()>0");
-        plotvar("log10("+tbr+".obj.hadEnergy())", tbr+".obj.energy()>0");
-        plotvar("log10("+tbr+".obj.mass2())/2.", tbr+".obj.energy()>0");
-        plotvar(tbr+".obj.eta()", tbr+".obj.energy()>0");
-        plotvar(tbr+".obj.phi()", tbr+".obj.energy()>0");
-      }
+      caloTowers("towerMaker_", stepContainsNU(step, "HEP17"));
+      caloTowers("PFTowers_");
 
       tbr="recoCastorTowers_CastorTowerReco__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3582,7 +3587,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log10("+tbr+".energy())");
         plotvar("log10("+tbr+".emEnergy())");
         plotvar("log10("+tbr+".hadEnergy())");
-        plotvar("log10("+tbr+".mass2())/2.");
+        plotvar("log10("+tbr+".massSqr())/2.");
         plotvar(tbr+".eta()");
         plotvar(tbr+".phi()");
       }

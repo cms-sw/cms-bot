@@ -153,6 +153,8 @@ fi
 CONFIG_LINE=$(${COMMON}/get_config_map_line.sh  "${CMSSW_QUEUE-$CMSSW_BR}" "$CMSDIST_TAG" "${ARCHITECTURE}")
 fail_if_empty "${CONFIG_LINE}"
 
+CMSDIST_TAG=$(echo ${CONFIG_LINE} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//')
+
 if [ -z ${ARCHITECTURE} ] ; then
     ARCHITECTURE=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
 fi
@@ -299,9 +301,6 @@ if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs 'externals' 'pending' -u "${BUILD_URL}" -d "Building externals" || true
     if [ ! -d "pkgtools" ] ; then
         git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
-    fi
-    if [ -z $CMSDIST_TAG ] ; then  # if CMSDIST_TAG not set from PR, take it from config map
-        CMSDIST_TAG=$(echo ${CONFIG_LINE} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//' )
     fi
     if [ ! -d "cmsdist" ] ; then
         git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG

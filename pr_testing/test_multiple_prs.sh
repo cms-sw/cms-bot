@@ -275,7 +275,7 @@ done
 mark_commit_status_all_prs 'setup' 'success' -u "${BUILD_URL}" -d "All OK: $CMSSW_IB" || true
 
 # modify comments that test are being triggered by Jenkins
-modify_comment_all_prs
+modify_comment_all_prs "- ${CMSSW_IB}/${SCRAM_ARCH}: "
 
 # Notify github that the script will start testing now
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}

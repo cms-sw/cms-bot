@@ -48,6 +48,9 @@ function git_clone_and_merge (){
     TEST_REPO=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['repo']['full_name']")
 
     pushd ${WORKSPACE} >/dev/null 2>&1
+        if [ $(echo $BASE_REPO | grep '/cmsdist$' | wc -l) -gt 0 ] ; then
+          [ ! -z "${CMSDIST_TAG}" ] && BASE_BRANCH="${CMSDIST_TAG}"
+        fi
         if  [ ! -d ${BASE_REPO_NAME} ]; then
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH}
         fi

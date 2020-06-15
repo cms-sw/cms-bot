@@ -1631,3 +1631,22 @@ slomeo:
 - SimG4Core/
 - SimGeneral/
 - SimMuon/
+JanFSchulte:
+- DPGAnalysis/SiStripTools
+- Geometry/Track
+- Geometry/CommonTopologies
+- RecoLocalTracker
+- RecoPixelVertexing
+- RecoTracker
+- RecoVertex
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/Track
+- SimDataFormats/Vertex
+- SimTracker
+- TrackingTools
+- TrackPropagation
+- Validation/RecoTrack
+- Validation/RecoVertex
+- DQM/TrackingMonitor
+- DQM/TrackingMonitorSource
+- DQM/TrackingMonitorClient 

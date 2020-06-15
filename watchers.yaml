@@ -1336,6 +1336,23 @@ mtosi:
 - DQM/TrackingMonitorClient
 - Validation/RecoTrack
 - Validation/RecoVertex
+- Validation/TrackerRecHits
+- Configuration/StandardSequences
+- DPGAnalysis/SiStripTools
+- Geometry/Track
+- Geometry/CommonTopologies
+- RecoLocalTracker
+- RecoPixelVertexing
+- RecoTracker
+- RecoVertex
+- SimDataFormats/DigiSimLinks
+- SimDataFormats/Track
+- SimDataFormats/Vertex
+- SimGeneral/TrackingAnalysis
+- SimTracker
+- SLHCUpgradeSimulations/Configuration
+- TrackingTools
+- TrackPropagation
 ebrondol:
   - DPGAnalysis/SiStripTools
   - Geometry/Track

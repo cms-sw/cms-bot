@@ -239,6 +239,7 @@ def parse_extra_params(full_comment, repo):
   for l in full_comment[1:]:
     l = l.replace(' ', '')
     if l.startswith('-'): l = l[1:]
+    elif l.startswith('*'): l = l[1:]
     if l=='': continue
     if not '=' in l:
       error_lines.append('"=" not found in line arg: ' + l)

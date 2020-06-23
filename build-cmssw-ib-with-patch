@@ -171,8 +171,10 @@ popd
 PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
+CMSBUILD_DEPS_OPTION=""
+if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-log-deps' | wc -l) -gt 0 ] ; then CMSBUILD_DEPS_OPTION="--log-deps" ; fi
 EXTERNAL_FAILED=false
-(PYTHONPATH=  $CMSBUILD_CMD build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
+(PYTHONPATH=  $CMSBUILD_CMD ${CMSBUILD_DEPS_OPTION} build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
 [ ! -e ${WRKDIR}/ok.txt ] && EXTERNAL_FAILED=true
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp/pip*

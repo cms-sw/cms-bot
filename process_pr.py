@@ -35,6 +35,7 @@ HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
+CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+/[a-zA-Z0-9]+'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
@@ -50,14 +51,15 @@ REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)a
 TEST_WAIT_GAP=720
 ALL_CHECK_FUNCTIONS = None
 MULTILINE_COMMENTS_MAP = {
-              "workflow(s|)":     [format('^\s*%(workflow)s(\s*,\s*%(workflow)s|)*\s*$', workflow= WF_PATTERN), "MATRIX_EXTRAS"],
-              "pull_request(s|)": [format('%(cms_pr)s(\s*,\s*%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),            "PULL_REQUESTS"],
-              "full_cmssw":       ['true|false',                                                                "BUILD_FULL_CMSSW"],
+              "workflow(s|)":     [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
+              "pull_request(s|)": [format('%(cms_pr)s(,%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),                  "PULL_REQUESTS"],
+              "full_cmssw|full":  ['true|false',                                                                "BUILD_FULL_CMSSW"],
               "dry_run":          ['true|false',                                                                "DRY_RUN"],
               "jenkins_slave":    ['[a-zA-Z][a-zA-Z0-9_-]+' ,                                                   "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],
               "enable_test(s|)":  ["gpu",                                                                       "ENABLE_BOT_TESTS"],
-              "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"]
+              "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
+              "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"]
               }
 
 def get_last_commit(pr):

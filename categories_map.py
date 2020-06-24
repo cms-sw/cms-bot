@@ -1585,6 +1585,7 @@ CMSSW_CATEGORIES = {
     "Geometry/MTDGeometryBuilder",
     "Geometry/MTDNumberingBuilder",
     "Geometry/MTDSimData",
+    "L1Trigger/DTTriggerPhase2",
     "L1Trigger/L1THGCal",
     "L1Trigger/L1THGCalUtilities",
     "L1Trigger/ME0Trigger",

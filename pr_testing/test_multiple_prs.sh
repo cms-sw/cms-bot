@@ -779,7 +779,7 @@ fi
 # test compilation with GCC
 # ############################################
 if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
-  git cms-addpkg $EXTRA_CMSSW_PACKAGES || true
+  git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs 'compilation' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" ${NO_POST}

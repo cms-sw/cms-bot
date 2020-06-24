@@ -939,6 +939,7 @@ CMSSW_CATEGORIES = {
     "L1Trigger/DTTrackFinder",
     "L1Trigger/DTTraco",
     "L1Trigger/DTTrigger",
+    "L1Trigger/DTTriggerPhase2",
     "L1Trigger/DTTriggerServerPhi",
     "L1Trigger/DTTriggerServerTheta",
     "L1Trigger/DTUtilities",

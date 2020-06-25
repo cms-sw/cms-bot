@@ -1597,6 +1597,7 @@ sobhatta:
 - RecoHGCal
 kpedro88:
 - HeterogeneousCore/SonicCore
+- HeterogeneousCore/SonicTriton
 fabiocos:
 - CondFormats/GeometryObjects
 - Configuration

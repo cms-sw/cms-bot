@@ -862,6 +862,7 @@ CMSSW_CATEGORIES = {
     "HeterogeneousCore/Producer",
     "HeterogeneousCore/Product",
     "HeterogeneousCore/SonicCore",
+    "HeterogeneousCore/SonicTriton",
   ],
   "hlt": [
     "CondCore/HLTPlugins",

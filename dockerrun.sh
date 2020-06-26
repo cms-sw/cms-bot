@@ -3,7 +3,7 @@ function dockerrun()
   if [ -z "${CONTAINER_TYPE}" ] ; then
     CONTAINER_TYPE=docker
     [ "$USE_SINGULARITY" = "true" ] && CONTAINER_TYPE=singularity
-    if [ -z "${IMAGE_BASE}" ] ; then IMAGE_BASE="/cvmfs/cms-ib.cern.ch/docker" ; fi
+    if [ -z "${IMAGE_BASE}" ] ; then IMAGE_BASE="/cvmfs/unpacked.cern.ch/registry.hub.docker.com" ; fi
     if [ -z "${PROOTDIR}" ]   ; then PROOTDIR="/cvmfs/cms-ib.cern.ch/proot" ; fi
     if [ -z "${THISDIR}" ]    ; then THISDIR=$(/bin/pwd -P) ; fi
     if [ -z "${WORKDIR}" ]    ; then WORKDIR=$(/bin/pwd -P) ; fi
@@ -18,6 +18,8 @@ function dockerrun()
       elif [ "${arch}" = "ppc64le" ] ; then
         QEMU_ARGS="${QEMU_ARGS} -cpu POWER8"
       fi
+    elif [ -e "${IMAGE_BASE}/${IMG}-latest" ] ; then
+      IMG="${IMG}-latest"
     fi
   fi
   case $CONTAINER_TYPE in

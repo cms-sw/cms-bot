@@ -50,6 +50,7 @@ RROldTTbarwf1103p0 1103.0_RR+OldTTbar*/step2.root reRECO
 RunHI2010wf140p51 140.51_RunHI2010+RunHI2010+*/step3.root ZStoRECO
 RunHI2011wf140p53 140.53_RunHI2011+RunHI2011+*/step2.root reRECO
 RunHI2018wf140p56 140.56_RunHI2018+RunHI2018+*/step2.root reRECO
+RunHI2018reMINIAODwf140p5611 140.5611_RunHI2018AOD+*REMINIAODHID18+*/step2.root PAT
 RunHI2018Reducedwf140p57 140.57_RunHI2018Reduced+*/step2.root reRECO
 RunHI2015repackVRwf140p55 140.55_RunHI2015VR+RunHI2015VR*/step4.root reRECO
 HydjetQwf40p0 40.0_HydjetQ_MinBias_2760GeV+HydjetQ_MinBias_2760GeV*/step3.root RECO
@@ -59,6 +60,7 @@ ZEEMMHIwf302p0 302.0_Pyquen_ZeemumuJets_pt10_2760GeV+Pyquen_ZeemumuJets_pt10_276
 EPOSPPb8160GeVwf281p0 281.0_EPOS_PPb_8160GeV_MinimumBias*/step3.root RECO
 HydjetQB12in2018wf150p0 150.0_HydjetQ_B12_5020GeV_*/step3.root RECO
 HydjetQB12ppRECOin2018wf158p0 158.0_HydjetQ_B12_5020GeV_*/step3.root RECO
+HydjetQB12ppRECOin2018reMINIAODwf158p01 158.01_HydjetQ_reminiaodPbPb2018_*/step2.root PAT
 #
 #  Run2 MC
 #

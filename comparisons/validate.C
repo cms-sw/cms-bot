@@ -2546,8 +2546,6 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+"probPi_"+recoS+".obj.values_");
       plotvar(tbr+"probK_"+recoS+".obj.values_");
       plotvar(tbr+"probP_"+recoS+".obj.values_");
-      plotvar(tbr+"etlMatchChi2_"+recoS+".obj.values_");
-      plotvar(tbr+"btlMatchChi2_"+recoS+".obj.values_");
 
       tbr="floatedmValueMap_mtdTrackQualityMVA_mtdQualMVA_";
       plotvar(tbr+recoS+".obj.values_");

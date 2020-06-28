@@ -127,9 +127,9 @@ for REPOSITORY in $REPOSITORIES; do
       dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       if [ "${INSTALL_PACKAGES}" = "" ] ; then
         INSTALL_PACKAGES=$(${CMSPKG} search SCRAMV1 | sed 's| .*||' | grep 'SCRAMV1' | sort | tail -1)
-        INSTALL_PACKAGES="${INSTALL_PACKAGES} $(${CMSPKG} search gcc-fixincudes | sed 's| .*||' | grep 'gcc-fixincudes' | sort | tail -1)"
       fi
     fi
+    INSTALL_PACKAGES="${INSTALL_PACKAGES} $(${CMSPKG} search gcc-fixincludes | sed 's| .*||' | grep 'gcc-fixincludes' | sort | tail -1)"
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
     if [ $(echo "${SCRAM_ARCH}" | grep '^cc' | wc -l) -eq 0 ] ; then

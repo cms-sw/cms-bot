@@ -42,6 +42,7 @@ CMSSW_L2 = {
   "franzoni":         ["operations"],
   "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
+  "gouskos":          ["xpog"]
   "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
   "jfernan2":         ["dqm"],
@@ -51,6 +52,7 @@ CMSSW_L2 = {
   "kpedro88":         ["upgrade"],
   "lveldere":         ["fastsim"],
   "makortel":         ["heterogeneous", "core", "visualization", "geometry"],
+  "mariadalfonso":    ["xpog"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "mkirsano":         ["generators"],   
   "mommsen":          ["daq"],

@@ -47,6 +47,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
         RELEASE_FORMAT="${RELEASE_QUEUE}"
       fi
     fi
+    if [ "${DOCKER_IMGAGE}" != "" ] ; then  DOCKER_IMG="${DOCKER_IMGAGE}" ; fi
     echo "DRY_RUN=${DRY_RUN}" >> $OUTPUT_FILE
     echo "ENABLE_BOT_TESTS=${ENABLE_BOT_TESTS}" >> $OUTPUT_FILE
     echo "DISABLE_POISON=${DISABLE_POISON}" >> $OUTPUT_FILE

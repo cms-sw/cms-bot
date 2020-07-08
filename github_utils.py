@@ -301,6 +301,14 @@ def get_commit_info(repo, commit):
     return {}
 
 
+def create_team(token, org, team, description):
+    params = {"name": team, "description": description, "permission": "admin", "privacy": "closed"}
+    return github_api("/orgs/%s/teams" % org, token, params, method="POST")
+
+def get_pending_members(token, org):
+    return github_api("/orgs/%s/invitations" % org, token, method="GET")
+
+
 def get_organization_members(token, org, role="all", filter="all"):
     return github_api("/orgs/%s/members" % org, token, params={"role": role, "filter": filter}, method="GET")
 

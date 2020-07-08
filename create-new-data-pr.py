@@ -48,7 +48,7 @@ if __name__ == "__main__":
   for i in releases:
       if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
           continue #loop until it finds a tag matching the pattern
-      last_release_tag = (i.tag_name)
+      last_release_tag = i.tag_name
       break
 
   if last_release_tag:

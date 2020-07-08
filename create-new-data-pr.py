@@ -46,9 +46,9 @@ if __name__ == "__main__":
   last_release_tag = None
   releases = data_repo.get_releases()
   for i in releases:
-      last_release_tag = (i.tag_name)
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", last_release_tag)):
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
           continue #loop until it finds a tag matching the pattern
+      last_release_tag = (i.tag_name)
       break
 
   if last_release_tag:
@@ -89,9 +89,9 @@ if __name__ == "__main__":
   last_release_tag = None
   releases = data_repo.get_releases()
   for i in releases:
-      last_release_tag = i.tag_name
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", last_release_tag)):
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
           continue #loop until it finds a tag matching the pattern
+      last_release_tag = i.tag_name
       break
 
   default_cms_dist_branch = dist_repo.default_branch

@@ -69,7 +69,7 @@ if __name__ == "__main__":
   new_tag = last_release_tag # in case the tag doesnt change
   if create_new_tag:
       nums_only = last_release_tag.strip('V').split('-')
-      first, sec, thrd = tuple(nums_only)
+      first, sec, thrd = tuple(nums_only)[:3]
       print(first, sec, thrd)
       # update minor for now
       if only_new_files:

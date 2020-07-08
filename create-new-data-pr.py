@@ -6,6 +6,7 @@ import repo_config
 from os.path import expanduser
 from urllib2 import urlopen
 from json import loads
+import re
 
 def update_tag_version(current_version=None):
     updated_version = None
@@ -45,7 +46,9 @@ if __name__ == "__main__":
   last_release_tag = None
   releases = data_repo.get_releases()
   for i in releases:
-      last_release_tag = (i.tag_name)
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+          continue #loop until it finds a tag matching the pattern
+      last_release_tag = i.tag_name
       break
 
   if last_release_tag:
@@ -86,6 +89,8 @@ if __name__ == "__main__":
   last_release_tag = None
   releases = data_repo.get_releases()
   for i in releases:
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+          continue #loop until it finds a tag matching the pattern
       last_release_tag = i.tag_name
       break
 

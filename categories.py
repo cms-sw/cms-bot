@@ -33,7 +33,6 @@ CMSSW_L2 = {
   "benkrikler":       ["l1"],
   "chayanit":         ["pdmv"],
   "civanch":          ["simulation", "geometry", "fastsim"],
-  "cmsdoxy":          ["docs"],
   "cvuosalo":         ["geometry"],
   "davidlange6":      ["operations"],
   "emeschi":          ["daq"],

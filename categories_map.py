@@ -291,6 +291,10 @@ CMSSW_CATEGORIES = {
     "DataFormats/Streamer",
     "DataFormats/TestObjects",
     "DataFormats/WrappedStdDictionaries",
+    "Documentation/CodingRules",
+    "Documentation/DataFormats",
+    "Documentation/PhysicsTools",
+    "Documentation/ReferenceManualScripts",
     "FWCore/Catalog",
     "FWCore/Common",
     "FWCore/Concurrency",
@@ -490,12 +494,6 @@ CMSSW_CATEGORIES = {
     "OnlineDB/SiStripESSources",
     "OnlineDB/SiStripO2O",
     "RecoLuminosity/LumiDB",
-  ],
-  "docs": [
-    "Documentation/CodingRules",
-    "Documentation/DataFormats",
-    "Documentation/PhysicsTools",
-    "Documentation/ReferenceManualScripts",
   ],
   "dqm": [
     "CommonTools/TrackerMap",

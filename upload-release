@@ -32,6 +32,7 @@ pushd $BUILD_DIR
   PYTHONPATH= PKGTOOLS/cmsBuild --architecture=$ARCHITECTURE --sync-back upload cmssw$PATCH
 popd
 if [ -e $WORKSPACE/TEST.DONE ] ; then
+  chmod -R +w $WORKSPACE
   rm -rf $WORKSPACE
 else
   touch $WORKSPACE/UPLOAD.DONE

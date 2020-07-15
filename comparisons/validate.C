@@ -2862,6 +2862,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".values_.fraction(0)", tbr+".values_.fraction(0)>=0");
       }
 
+      //HI miniAOD
+      plotvar("floatedmValueMap_packedPFCandidateTrackChi2__"+recoS+".obj.values_");
+      plotvar("floatedmValueMap_lostTrackChi2__"+recoS+".obj.values_");
+
       tbr="patIsolatedTracks_isolatedTracks__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");

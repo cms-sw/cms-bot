@@ -890,6 +890,7 @@ rovere:
 - RecoEgamma/EgammaElectronProducers
 - RecoEgamma/Configuration
 - RecoEcal/EgammaClusterProducers
+- RecoHGCal
 - RecoLocalCalo/Configuration
 - RecoLocalCalo/HGC
 - RecoParticleFlow/PFTracking

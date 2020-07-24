@@ -83,6 +83,7 @@ CMS_REPOS = set(CMSDIST_REPOS + CMSSW_REPOS + EXTERNAL_REPOS)
 from datetime import datetime
 COMMENT_CONVERSION = {}
 COMMENT_CONVERSION['kpedro88']={'comments_before': datetime.strptime('2018-07-13','%Y-%m-%d'), 'comments':[('+1', '+upgrade')]}
+COMMENT_CONVERSION['qliphy']={'comments_before': datetime.strptime('2020-07-24','%Y-%m-%d'), 'comments':[('+1', '+generators'),('-1', '-generators')]}
 
 
 def external_to_package(repo_fullname):

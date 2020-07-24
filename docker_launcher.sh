@@ -64,6 +64,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     for e in $DOCKER_JOB_ENV WORKSPACE BUILD_NUMBER JOB_NAME NODE_NAME NODE_LABELS DOCKER_IMG; do DOCKER_OPT="${DOCKER_OPT} -e $e"; done
     if [ "${PYTHONPATH}" != "" ] ; then DOCKER_OPT="${DOCKER_OPT} -e PYTHONPATH" ; fi
     for m in $(echo $MOUNT_POINTS,/etc/localtime,${BUILD_BASEDIR},/home/$XUSER | tr ',' '\n') ; do
+      x=$(echo $m | sed 's|:.*||')
+      [ -e $x ] || continue
       if [ $(echo $m | grep ':' | wc -l) -eq 0 ] ; then m="$m:$m";fi
       DOCKER_OPT="${DOCKER_OPT} -v $m"
     done
@@ -105,7 +107,13 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
         #fi
       fi
     fi
-    export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"
+    SINGULARITY_BINDPATH=""
+    for m in $(echo "$MOUNT_POINTS" | tr ',' '\n') ; do
+      x=$(echo $m | sed 's|:.*||')
+      [ -e $x ] || continue
+      SINGULARITY_BINDPATH=${SINGULARITY_BINDPATH}${m},
+    done
+    export SINGULARITY_BINDPATH="${SINGULARITY_BINDPATH},$ws"
     if [ $(whoami) = "cmsbuild" -a $(echo $HOME | grep /afs/ | wc -l) -gt 0 ] ; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi

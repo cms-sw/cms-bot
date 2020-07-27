@@ -287,6 +287,7 @@ class LogFileAnalyzer(object):
         pkgList.sort(pkgCmp)
         
         for pkg in pkgList:
+            if not pkg.name() in self.tagList: continue
             htmlFile.write(' <tr>')
             htmlFile.write('<td class="ok">&nbsp;</td>')
             htmlFile.write('<td>')

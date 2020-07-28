@@ -113,7 +113,7 @@ if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
   pushd scram-buildrules
     git checkout ${config_tag}
     echo ${config_tag} > ../config/config_tag
-    if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 51100 ] ; then
+    if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 60000 ] ; then
       for f in find-deps-tree findDependencies linkexternal projectAreaRename updateToolMK ; do
         case $(cat ../config/scram_version) in
           V2_*) mv SCRAM/$f.pl $f ;;

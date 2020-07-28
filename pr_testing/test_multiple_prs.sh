@@ -370,7 +370,7 @@ if ${BUILD_EXTERNAL} ; then
       pushd scram-buildrules
         git checkout ${config_tag}
         echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
-        if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 51100 ] ; then
+        if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 60000 ] ; then
           for f in find-deps-tree findDependencies linkexternal projectAreaRename updateToolMK ; do
             case $(cat $WORKSPACE/$CMSSW_IB/config/scram_version) in
               V2_*) mv SCRAM/$f.pl $f ;;

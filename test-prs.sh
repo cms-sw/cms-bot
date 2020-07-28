@@ -106,6 +106,7 @@ if [ ! -d ${CMSSW_IB} ] ; then
 fi
 
 cd ${CMSSW_IB}
+ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > config/scram_version
 config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
 if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
   git clone git@github.com:cms-sw/cmssw-config scram-buildrules
@@ -114,7 +115,7 @@ if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
     echo ${config_tag} > ../config/config_tag
     if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 51100 ] ; then
       for f in find-deps-tree findDependencies linkexternal projectAreaRename updateToolMK ; do
-        case $(cat $CMSSW_IB/config/scram_version) in
+        case $(cat ../config/scram_version) in
           V2_*) mv SCRAM/$f.pl $f ;;
           * )   mv SCRAM/$f.py $f ;;
         esac

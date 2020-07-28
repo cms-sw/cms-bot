@@ -372,7 +372,7 @@ if ${BUILD_EXTERNAL} ; then
         echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
         if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 51100 ] ; then
           for f in find-deps-tree findDependencies linkexternal projectAreaRename updateToolMK ; do
-            case $(cat $CMSSW_IB/config/scram_version) in
+            case $(cat $WORKSPACE/$CMSSW_IB/config/scram_version) in
               V2_*) mv SCRAM/$f.pl $f ;;
               * )   mv SCRAM/$f.py $f ;;
             esac

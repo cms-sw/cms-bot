@@ -112,11 +112,24 @@ if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
   pushd scram-buildrules
     git checkout ${config_tag}
     echo ${config_tag} > ../config/config_tag
+    if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 51100 ] ; then
+      for f in find-deps-tree findDependencies linkexternal projectAreaRename updateToolMK ; do
+        case $(cat $CMSSW_IB/config/scram_version) in
+          V2_*) mv SCRAM/$f.pl $f ;;
+          * )   mv SCRAM/$f.py $f ;;
+        esac
+      done
+    fi
   popd
   mv config/SCRAM config/SCRAM.orig
   cp -r scram-buildrules/SCRAM config/SCRAM
-  cp -f scram-buildrules/CMSSW_BuildFile.xml config/BuildFile.xml
-  cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm config/SCRAM_ExtraBuildRule.pm
+  if [ -d scram-buildrules/Projects/CMSSW ] ; then
+    cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml $CMSSW_IB/config/BuildFile.xml
+    cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
+  else
+    cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
+    cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
+  fi
   if [ -f config/SCRAM.orig/GMake/CXXModules.mk ] ; then
     cp $WORKSPACE/cmsdist/CXXModules.mk.file config/SCRAM/GMake/CXXModules.mk
     if [ "X${CLING_PREBUILT_MODULE_PATH}" = "X" ] ; then

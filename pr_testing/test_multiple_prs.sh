@@ -370,6 +370,14 @@ if ${BUILD_EXTERNAL} ; then
       pushd scram-buildrules
         git checkout ${config_tag}
         echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
+        if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 51100 ] ; then
+          for f in find-deps-tree findDependencies linkexternal projectAreaRename updateToolMK ; do
+            case $(cat $CMSSW_IB/config/scram_version) in
+              V2_*) mv SCRAM/$f.pl $f ;;
+              * )   mv SCRAM/$f.py $f ;;
+            esac
+          done
+        fi
       popd
       mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
       cp -r scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM

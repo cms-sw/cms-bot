@@ -113,17 +113,9 @@ if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
   pushd scram-buildrules
     git checkout ${config_tag}
     echo ${config_tag} > ../config/config_tag
-    if [ $(echo ${config_tag} | sed 's|^V||;s|-||g;s|^0*||') -ge 60000 ] ; then
-      for f in find-deps-tree findDependencies linkexternal projectAreaRename updateToolMK ; do
-        case $(cat ../config/scram_version) in
-          V2_*) mv SCRAM/$f.pl SCRAM/$f ;;
-          * )   mv SCRAM/$f.py SCRAM/$f ;;
-        esac
-      done
-    fi
   popd
   mv config/SCRAM config/SCRAM.orig
-  cp -r scram-buildrules/SCRAM config/SCRAM
+  cp -r $WORKSPACE/$BUILD_DIR/${ARCHITECTURE}/cms/coral/*/config/SCRAM $CMSSW_IB/config/SCRAM
   if [ -d scram-buildrules/Projects/CMSSW ] ; then
     cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml $CMSSW_IB/config/BuildFile.xml
     cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm

@@ -28,7 +28,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     echo "EVENTS=100" >> ${nfile}
     case $RELEASE_QUEUE in
         CMSSW_11_2_*)
-            wf="23434.0"
+            wf="23434.21"
             ;;
         *)
             wf="21234.0"

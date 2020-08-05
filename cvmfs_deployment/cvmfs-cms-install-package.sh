@@ -29,7 +29,7 @@ fi
 CMSPKG_OPTS=""
 [ "${REINSTALL}" = true ] && CMSPKG_OPTS="--reinstall"
 
-dockerrun "${CMSPKG} ${CMSPKG_OPT} install -y ${PACKAGE_NAME}"
+dockerrun "${CMSPKG} ${CMSPKG_OPTS} install -y ${PACKAGE_NAME}"
 BOOK_KEEPING="/cvmfs/${CVMFS_REPOSITORY}/cvmfs-cms.cern.ch-updates"
 touch ${BOOK_KEEPING}
 BOOK_KEEPING_PKG="${PACKAGE_NAME}"

@@ -114,6 +114,10 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       SINGULARITY_BINDPATH=${SINGULARITY_BINDPATH}${m},
     done
     export SINGULARITY_BINDPATH="${SINGULARITY_BINDPATH},$ws"
+    if [ "X$OUTPUTCMD" != "X" ]; then
+      echo "#!/bin/bash" > run_singularity.sh
+      echo export SINGULARITY_BINDPATH="${SINGULARITY_BINDPATH},$ws" >>run_singularity.sh
+    fi
     if [ $(whoami) = "cmsbuild" -a $(echo $HOME | grep /afs/ | wc -l) -gt 0 ] ; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi
@@ -122,9 +126,16 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
       precmd="source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
     fi
-    singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
-    if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
-    exit $ERR
+    if [ "X$OUTPUTCMD" != "X" ]; then
+      echo singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c \"${precmd} $CMD2RUN\"  >> run_singularity.sh
+      chmod +x ./run_singularity.sh;
+      echo "run ./run_singulaity.sh"
+      exit $ERR
+    else
+      singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
+      if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
+      exit $ERR
+    fi
   fi
 else
   voms-proxy-init -voms cms -valid 24:00 || true

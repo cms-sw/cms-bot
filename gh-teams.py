@@ -112,7 +112,7 @@ for org_name in CMS_ORGANIZATIONS:
   for user in get_pending_members(GH_TOKEN, org_name):
     user = user['login'].encode("ascii", "ignore")
     pending_members.append(user)
-  print("Pending Invitatiosn: %s" % ",".join(["@%s" % u for u in pending_members]))
+  print("Pending Invitations: %s" % ",".join(["@%s" % u for u in pending_members]))
   api_rate_limits(gh)
   org = gh.get_organization(org_name)
   ok_mems = []

@@ -150,6 +150,7 @@ for org_name in CMS_ORGANIZATIONS:
       chg_flag+=1
   total_changes+=chg_flag
   org_members = [ mem.login.encode("ascii", "ignore") for mem in org.get_members() ]
+  print("  All members: ",org_members)
   if chg_flag: teams = org.get_teams()
   for team in teams:
     print("    Checking team:",team.name)
@@ -183,7 +184,7 @@ for org_name in CMS_ORGANIZATIONS:
         if login in pending_members:
           print("    => Can not add member, pending invitation: %s" % login)
           continue
-        if not login in org_members:
+        if login not in org_members:
             if not args.dryRun: add_organization_member(GH_TOKEN, org_name, login, role="member")
             print("      =>Inviting member:",login)
             continue

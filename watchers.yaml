@@ -849,6 +849,7 @@ prolay:
 - SimTracker/Configuration
 - SimTracker/Records
 robervalwalsh:
+- EventFilter/SiStripRawToDigi
 - CalibTracker/Configuration
 - CalibTracker/Records
 - CalibTracker/SiStrip
@@ -1500,6 +1501,7 @@ jan-kaspar:
 - RecoCTPPS/TotemRPLocal
 - RecoCTPPS/PixelLocal
 pieterdavid:
+- EventFilter/SiStripRawToDigi
 - CalibTracker/Configuration
 - CalibTracker/Records
 - CalibTracker/SiStrip

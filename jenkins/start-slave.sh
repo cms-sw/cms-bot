@@ -82,9 +82,16 @@ if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar
 scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
 
 pre_cmd=""
+
+case $TARGET in
+  cmsdev*)
+    limits="-a";;
+  *)
+    limits=$(get_data LIMITS);;
+
 case $(get_data SHELL) in
   */tcsh|*/csh) pre_cmd="unlimit; limit; setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
-  *) pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1; ulimit -a; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  *) pre_cmd="ulimit $limits >/dev/null 2>&1; ulimit -a; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "

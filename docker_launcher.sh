@@ -1,6 +1,10 @@
 #!/bin/bash -ex
 if [ "X$ADDITIONAL_TEST_NAME" != "Xigprof" ] ; then
   if ulimit -a ; then
+    ulimit -a
+  fi 
+else
+  if ulimit -a ; then
     opts=""
     for o in n s u ; do
       opts="-$o $(ulimit -H -$o) ${opts}"

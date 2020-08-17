@@ -1,8 +1,8 @@
 #!/bin/bash -ex
-if [ "X$ADDITIONAL_TEST_NAME" != "Xigprof" ] ; then
+if [ "X$ADDITIONAL_TEST_NAME" = "Xigprof" ] ; then
   if ulimit -a ; then
     ulimit -a
-  fi 
+  fi
 else
   if ulimit -a ; then
     opts=""

@@ -1,11 +1,17 @@
 #!/bin/bash -ex
-if ulimit -a ; then
-  opts=""
-  for o in n s u ; do
-    opts="-$o $(ulimit -H -$o) ${opts}"
-  done
-  ulimit ${opts}
-  ulimit -a
+if [ "X$ADDITIONAL_TEST_NAME" = "Xigprof" ] ; then
+  if ulimit -a ; then
+    ulimit -a
+  fi
+else
+  if ulimit -a ; then
+    opts=""
+    for o in n s u ; do
+      opts="-$o $(ulimit -H -$o) ${opts}"
+    done
+    ulimit ${opts}
+    ulimit -a
+  fi
 fi
 kinit -R || true
 for repo in cms cms-ib grid projects unpacked ; do

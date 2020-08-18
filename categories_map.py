@@ -850,6 +850,7 @@ CMSSW_CATEGORIES = {
   ],
   "heterogeneous": [
     "CUDADataFormats/Common",
+    "CUDADataFormats/BeamSpot",
     "CUDADataFormats/SiPixelCluster",
     "CUDADataFormats/SiPixelDigi",
     "HeterogeneousCore/CUDACore",
@@ -1023,6 +1024,7 @@ CMSSW_CATEGORIES = {
     "DPGAnalysis/Skims",
   ],
   "reconstruction": [
+    "CUDADataFormats/BeamSpot",
     "CUDADataFormats/SiPixelCluster",
     "CUDADataFormats/SiPixelDigi",
     "CommonTools/BaseParticlePropagator",

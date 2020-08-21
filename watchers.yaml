@@ -1227,8 +1227,6 @@ alesaggio:
 - CalibTracker/SiStripChannelGain
 agrohsje:
 - GeneratorInterface
-mverzett:
-- CalibTracker/SiStripCommon
 cbernet:
 - CommonTools/ParticleFlow
 - DataFormats/ParticleFlowCandidate

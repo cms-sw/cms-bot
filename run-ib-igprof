@@ -13,12 +13,11 @@ for prof in ${PROFILES} ; do
     echo "processing file $f"
     OUTFILE=${f//.gz/.sql3}
     echo $OUTFILE
-    igprof-analyse -d -c $f --sqlite > $f.sql
     ERR=0
+    ( igprof-analyse -d -c $f --sqlite > $f.sql ) || ERR=1
     ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 "$OUTFILE" > $f.log || ERR=1
     if [ $ERR -gt 0 ] ; then
       cat $f.log
-      exit 1
     fi
   done
 done

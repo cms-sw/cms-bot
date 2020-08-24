@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 if [ "X$ADDITIONAL_TEST_NAME" = "Xigprof" ] ; then
   if ulimit -a ; then
+    ulimit -n 4096 -s 81920
     ulimit -a
   fi
 else

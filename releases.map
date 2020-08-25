@@ -2697,3 +2697,4 @@ architecture=slc7_amd64_gcc900;label=CMSSW_11_2_0_pre5;type=Development;state=An
 architecture=slc7_amd64_gcc820;label=CMSSW_11_2_0_pre5;type=Development;state=Announced;prodarch=1;
 architecture=slc7_ppc64le_gcc820;label=CMSSW_11_2_0_pre5;type=Development;state=Announced;prodarch=0;
 architecture=cc8_amd64_gcc8;label=CMSSW_11_2_0_pre5;type=Development;state=Announced;prodarch=0;
+architecture=slc7_amd64_gcc820;label=CMSSW_11_2_0_pre5_GEANT106;type=Development;state=Announced;prodarch=1;

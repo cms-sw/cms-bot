@@ -679,6 +679,7 @@ def print_results(results):
             print('\t' + 'Valgrind: ' + comp['valgrind'])
             print('\t' + 'Material budget: ' + comp['material_budget'])
             print('\t' + 'Igprof: ' + comp['igprof'])
+            print('\t' + 'Profiling: ' + comp['profiling'])
             print('\t' + 'Comparison Baseline: ' + comp['comp_baseline'])
             print('\t' + 'Comparison Baseline State: ' + comp['comp_baseline_state'])
 
@@ -847,6 +848,8 @@ def add_tests_to_results(results, unit_tests, relvals_results,
                 comp['material_budget'] = 'not-found'
             if not comp.get('igprof'):
                 comp['igprof'] = 'not-found'
+            if not comp.get('profiling'):
+                comp['profiling'] = 'not-found'
             if not comp.get('comp_baseline'):
                 comp['comp_baseline'] = 'not-found'
                 comp['comp_baseline_state'] = 'errors'

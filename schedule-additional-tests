@@ -43,7 +43,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
   if [ "$x" = "profiling" ] ; then
     prof="pp"
     echo "PROFILE=$prof" >> ${pfile}
-        case $RELEASE_QUEUE in
+    case $RELEASE_QUEUE in
         CMSSW_11_2_*)
             wf="23434.21"
             ;;

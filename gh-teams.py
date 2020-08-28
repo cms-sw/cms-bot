@@ -49,7 +49,7 @@ REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = {
   "repositories" : { "RecoLuminosity-LumiDB": "admin"}
 }
 REPO_TEAMS["cms-sw"]["generators-l2"] = { 
-  "members" : ["agrohsje","qliphy"], 
+  "members" : ["GurpreetSinghChahal","agrohsje"], 
   "repositories" :  { "genproductions" : "admin",
                       "xsecdb" : "admin"}
 }

@@ -60,7 +60,7 @@ CMSSW_L2 = {
   "perrotta":         ["reconstruction"],
   "peruzzim":         ["xpog"],
   "pohsun":           ["alca"],
-  "qliphy":           ["generators", "operations"],
+  "qliphy":           ["operations"],
   "rekovic":          ["l1"],
   "santocch":         ["analysis"],
   "sbein":            ["fastsim"],

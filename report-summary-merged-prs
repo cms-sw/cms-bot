@@ -1575,14 +1575,13 @@ if __name__ == "__main__":
                     find_general_test_results(
                         'igprof', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_IGPROF
                     )
-                if ('profiling' in tests_to_find:
+                if ('profiling' in tests_to_find):
                     find_general_test_results(
                         'piechart', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1
                         )
                     find_general_test_results(
                         'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2
                         )
-                    )
                 if 'check-headers' in tests_to_find:
                     find_check_headers(release_queue_results['comparisons'], arch)
                 # will run every time for Q/A, that is why not checked if it is in tests to find

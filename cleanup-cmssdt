@@ -59,7 +59,7 @@ for dir in run-pr-format pr-code-checks jenkins-test-code-format; do
 done
 
 #Keep the following for 8 days
-for dir in check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof iwyu material-budget das_query build-any-ib; do
+for dir in check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof profiling iwyu material-budget das_query build-any-ib; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +8 -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'

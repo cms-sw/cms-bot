@@ -979,6 +979,23 @@ def find_dup_dict_result(comparisons):
             })
 
 
+def find_profiling_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):
+    """
+    Finds for results for the test_field. Modifies `comparisons` dict in place.
+    :param comparisons: comparison dictionary
+    :param architecture: arch
+    :param magic_command: string with bash command to execute
+    :param test_field: field to write back the results to
+    :param results_function: function how to process results
+    """
+
+    for comp in comparisons:
+        rel_name = comp['compared_tags'].split('-->')[1]
+        print("Looking for {0} results for {1}.".format(test_field,rel_name))
+        command_to_execute = magic_command.replace('RELEASE_NAME', rel_name).replace('ARCHITECTURE', architecture)
+        comp[test_field] = { "result": results_function(command_to_execute),
+                                  "arch": architecture }
+
 def find_general_test_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):
     """
     Finds for results for the test_field. Modifies `comparisons` dict in place.
@@ -1576,10 +1593,10 @@ if __name__ == "__main__":
                         'igprof', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_IGPROF
                     )
                 if ('profiling' in tests_to_find):
-                    find_general_test_results(
+                    find_profiling_results(
                         'piechart', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1
                         )
-                    find_general_test_results(
+                    find_profiling_results(
                         'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2
                         )
                 if 'check-headers' in tests_to_find:

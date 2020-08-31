@@ -988,7 +988,7 @@ def find_one_profiling_result(magic_command):
     out, err, ret_code = get_output_command(command_to_execute)
     print("Ran:", out, err, ret_code, command_to_execute)
     if ret_code == 0:
-        file = out.split()[0]
+        file = out
         print('found', file)
         return {'status' : 'passed', 'data' : file}
     print('inprogress')

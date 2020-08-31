@@ -1423,6 +1423,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_MATERIL_BUDGET_COMPARISON_CHECKS = "TEST_FILE=" + JENKINS_ARTIFACTS_DIR + "/material-budget/RELEASE_NAME/ARCHITECTURE/comparison/Images/MBDiff.txt && test -f $TEST_FILE && grep '0$' $TEST_FILE | wc -l"
     MAGIC_COMMAND_FIND_VALGRIND = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/valgrind/RELEASE_NAME'
     MAGIC_COMMAND_FIND_IGPROF = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME'
+    MAGIC_COMMAND_FIND_PROFILING = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME'
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PU.resources.json && echo ARCHITECTURE/WORKFLOW/step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PU.resources&resource=time_thread\&colours=default\&groups=reco\_PhaseII&threshold=0'
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt && echo ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt'
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
@@ -1594,7 +1595,10 @@ if __name__ == "__main__":
                     )
                 if ('profiling' in tests_to_find):
                     find_general_test_results(
-                        'profiling', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1, find_one_profiling_result
+                        'profiling', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING
+                        )
+                    find_general_test_results(
+                        'piechart', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1, find_one_profiling_result
                         )
                     find_general_test_results(
                         'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2, find_one_profiling_result

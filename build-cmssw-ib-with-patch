@@ -192,6 +192,7 @@ if [ "${DRY_RUN}" = "" ] ; then
   if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
     PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
+    rm -rf ${WRKDIR}/tmp
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
   fi

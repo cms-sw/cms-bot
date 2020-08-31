@@ -979,22 +979,22 @@ def find_dup_dict_result(comparisons):
             })
 
 
-def find_profiling_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):
+def find_one_profiling_result(magic_command):
     """
-    Finds for results for the test_field. Modifies `comparisons` dict in place.
-    :param comparisons: comparison dictionary
-    :param architecture: arch
-    :param magic_command: string with bash command to execute
-    :param test_field: field to write back the results to
-    :param results_function: function how to process results
+    Looks for one profiling result
     """
+    command_to_execute = magic_command.replace('WORKFLOW', '23434.21')
+    print("Running ", command_to_execute)
+    out, err, ret_code = get_output_command(command_to_execute)
+    print("Ran:", out, err, ret_code, command_to_execute)
+    if ret_code == 0:
+        file = out.split()[0]
+        print('found', file)
+        return {'status' : 'passed', 'data' : file}
+    print('inprogress')
+    return 'inprogress'
 
-    for comp in comparisons:
-        rel_name = comp['compared_tags'].split('-->')[1]
-        print("Looking for {0} results for {1}.".format(test_field,rel_name))
-        command_to_execute = magic_command.replace('RELEASE_NAME', rel_name).replace('ARCHITECTURE', architecture)
-        comp[test_field] = { "result": results_function(command_to_execute),
-                                  "arch": architecture }
+
 
 def find_general_test_results(test_field, comparisons, architecture, magic_command, results_function=find_one_test_results):
     """
@@ -1057,7 +1057,7 @@ def find_check_headers(comparisons, architecture):
         print("Looking for {0} results for {1}.".format('check-headers', rel_name))
         comp['check-headers'] = find_one_test_results(rel_name)
 
-        
+
 def find_static_results(comparisons, architecture):
     """
     Finds for an IB the results of the static tests
@@ -1423,8 +1423,8 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_MATERIL_BUDGET_COMPARISON_CHECKS = "TEST_FILE=" + JENKINS_ARTIFACTS_DIR + "/material-budget/RELEASE_NAME/ARCHITECTURE/comparison/Images/MBDiff.txt && test -f $TEST_FILE && grep '0$' $TEST_FILE | wc -l"
     MAGIC_COMMAND_FIND_VALGRIND = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/valgrind/RELEASE_NAME'
     MAGIC_COMMAND_FIND_IGPROF = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME'
-    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME/ARCHITECTURE/23434.21/step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PU.resources.json'
-    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/23434.21/sorted_RES_CPU_step3.txt'
+    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PU.resources.json && echo ARCHITECTURE/WORKFLOW/step3_RAW2DIGI_L1Reco_RECO_RECOSIM_PU.resources&resource=time_thread\&colours=default\&groups=reco\_PhaseII&threshold=0'
+    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt && echo ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt'
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     COMPARISON_BASELINE_TESTS_URL = 'https://cmssdt.cern.ch/' + JENKINS_ARTIFACTS_SUBDIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'
@@ -1593,11 +1593,11 @@ if __name__ == "__main__":
                         'igprof', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_IGPROF
                     )
                 if ('profiling' in tests_to_find):
-                    find_profiling_results(
-                        'piechart', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1
+                    find_general_test_results(
+                        'piechart', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1, find_one_profiling_result
                         )
-                    find_profiling_results(
-                        'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2
+                    find_general_test_results(
+                        'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2, find_one_profiling_result
                         )
                 if 'check-headers' in tests_to_find:
                     find_check_headers(release_queue_results['comparisons'], arch)

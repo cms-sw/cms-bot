@@ -1594,7 +1594,7 @@ if __name__ == "__main__":
                     )
                 if ('profiling' in tests_to_find):
                     find_general_test_results(
-                        'piechart', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1, find_one_profiling_result
+                        'profiling', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1, find_one_profiling_result
                         )
                     find_general_test_results(
                         'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2, find_one_profiling_result

@@ -5,7 +5,8 @@
 # ARCHITECTURE: architecture for the build
 # ISSUE_NUMBER: the number of the issue that triggered the build
 # DRY_RUN_PARAM: parameter that to use dry-run
-# ONLY_BUILD_TOOLCONF: if True, tells me to only build cmssw-tool-conf 
+# ONLY_BUILD_TOOLCONF: if True, tells me to only build cmssw-tool-conf
+source $(dirname $0)/cmsrep.sh
 CMSSW_X_Y_Z=$1
 ARCHITECTURE=$2
 CMSSW_QUEUE=$3
@@ -68,7 +69,7 @@ pushd $BUILD_DIR
   fi
   sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
   echo DATE=`date`
-  CMSBUILD_CMD="PKGTOOLS/cmsBuild --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC"
+  CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER} --repo cms --architecture=$ARCHITECTURE -j $BUILD_NPROC"
   case `uname -s` in
     Darwin ) MD5_CMD=md5;;
     * )      MD5_CMD=md5sum;;

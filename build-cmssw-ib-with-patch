@@ -1,6 +1,7 @@
 #!/bin/sh -ex
 
 CMS_BOT_DIR=$(dirname $0)
+source $CMS_BOT_DIR/cmsrep.sh
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
 echo DATE=`date`
@@ -107,7 +108,7 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 
-CMSBUILD_CMD="PKGTOOLS/cmsBuild $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
+CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
 if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --monitor" ; fi
 if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-delete-build-directory' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory" ; fi
 GCC_FIXINCLUDE=""

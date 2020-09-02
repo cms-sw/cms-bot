@@ -1,4 +1,5 @@
 #!/bin/sh -ex
+source $(dirname $0)/cmsrep.sh
 ARCHITECTURE=$1
 RELEASE_FORMAT=$2
 REPOSITORY=$3
@@ -46,7 +47,7 @@ DOW=`python -c "import os;from datetime import datetime;print datetime.strptime(
 HOUR=`python -c "import os;from datetime import datetime;print datetime.strptime(os.environ['RELEASE_NAME'].replace('_X_SLHC_', '_X_').rsplit('_X_')[1], '%Y-%m-%d-%H00').strftime('%H').lower()"`
 CMSSW_MAJOR_MINOR=`echo $RELEASE_NAME | sed -e 's/CMSSW_\([0-9]*\)_\([0-9]*\).*/\1.\2/g'`
 
-PYTHONPATH= PKGTOOLS/cmsBuild -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
+PYTHONPATH= PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build  fwlite
 
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src
   tar xzf src-logs.tgz

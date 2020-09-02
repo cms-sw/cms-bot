@@ -4,6 +4,7 @@
 # ---
 SCRIPTPATH="$( cd "$(dirname "$0")" ; /bin/pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+source ${CMS_BOT_DIR}/cmsrep.sh
 if [ -z $WORKSPACE ] ; then WORKSPACE=$(dirname ${CMS_BOT_DIR} ) ; fi
 CACHED=${WORKSPACE}/CACHED
 
@@ -68,7 +69,7 @@ if [ -e cmsdist/data/cmsswdata.txt ] ; then
     ;;
   esac
 fi
-SOURCES=$(PYTHONPATH= ./pkgtools/cmsBuild ${CMS_REPO} -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
+SOURCES=$(PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} ${CMS_REPO} -c cmsdist/ -a ${ARCHITECTURE} -i ${BUILD_DIR} -j 8 --sources build  ${SPEC_NAME} | \
                         grep -i "^${SPEC_NAME}:source" | grep github.com/.*/${PKG_NAME}\.git | tr '\n' '#' )
 
 N=$(echo ${SOURCES} | tr '#' '\n' | grep -ci ':source' ) || true

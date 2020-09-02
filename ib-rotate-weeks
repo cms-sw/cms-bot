@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 
 [ -f ib-weeks ] || exit 1
-
+source $(dirname $0)/cmsrep.sh
 WEEK_NO="nweek-${CMS_WEEK_NUM}"
 WEEK_FOUND=`grep "^$WEEK_NO\$" ib-weeks | wc -l`
 
@@ -14,8 +14,8 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
     git clone -b $CMSDIST_TAG           git://github.com/cms-sw/cmsdist.git CMSDIST   || git clone -b $CMSDIST_TAG https://:@git.cern.ch/kerberos/CMSDIST.git CMSDIST
     git clone -b $PKGTOOLS_TAG          git://github.com/cms-sw/pkgtools.git PKGTOOLS || git clone -b $PKGTOOLS_TAG             https://:@git.cern.ch/kerberos/PKGTOOLS.git PKGTOOLS
     echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
-    PKGTOOLS/cmsBuild --debug --repository cms --architecture $SCRAM_ARCH --work-dir w build dummy SCRAMV1 crab
-    PKGTOOLS/cmsBuild --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $SCRAM_ARCH --work-dir w upload dummy SCRAMV1 crab
+    PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --architecture $SCRAM_ARCH --work-dir w build dummy SCRAMV1 crab
+    PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $SCRAM_ARCH --work-dir w upload dummy SCRAMV1 crab
     PKGS=$(ls -d w/${SCRAM_ARCH}/cms/crab/*/etc w/${SCRAM_ARCH}/lcg/SCRAMV1/*/etc | sed "s|^w/${SCRAM_ARCH}/||;s|/etc$||;s|/|+|g")
   popd
   rm -rf dummybuild

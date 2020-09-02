@@ -2,6 +2,7 @@
 export WORKSPACE=$(/bin/pwd -P)
 export KEEP_SOURCE_GIT=true
 export BUILD_DIR=externals
+source $(dirname $0)/cmsrep.sh
 ARCH=""
 CMSDIST_BR=""
 PRS=""
@@ -92,7 +93,7 @@ if [ -e get_source_flag_result.txt ] ; then
 fi
 
 #Build externals
-COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --delete-build-directory --weekly -i ${BUILD_DIR} ${SOURCE_FLAG} --arch $SCRAM_ARCH -j ${NCPU} build cmssw-tool-conf"
+COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --delete-build-directory --weekly -i ${BUILD_DIR} ${SOURCE_FLAG} --arch $SCRAM_ARCH -j ${NCPU} build cmssw-tool-conf"
 echo "${COMPILATION_CMD}"
 [ -e $WORKSPACE/cmsswtoolconf.log ] && mv $WORKSPACE/cmsswtoolconf.log $WORKSPACE/cmsswtoolconf.log.$(date +%s)
 eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/cmsswtoolconf.log

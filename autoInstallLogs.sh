@@ -41,9 +41,9 @@ for WEEK in 0 1; do
   # We only sync the last 7 days.
   XREPO_PATH=$REPO_PATH
   XDEPTH=2
-  ssh $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK && XREPO_PATH="$REPO_PATH/repos" && XDEPTH=4 || true
-  for logdir in $(ssh $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/ -mindepth 2 -maxdepth $XDEPTH -path '*/WEB/build-logs' -type d) ; do
-  BUILDS=`ssh $REPO_USER@$REPO_SERVER find $logdir -mtime -7 -mindepth 2 -maxdepth 2 -type d | sed 's|^.*/WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
+  ssh -o StrictHostKeyChecking=no  $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK && XREPO_PATH="$REPO_PATH/repos" && XDEPTH=4 || true
+  for logdir in $(ssh -o StrictHostKeyChecking=no  $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/ -mindepth 2 -maxdepth $XDEPTH -path '*/WEB/build-logs' -type d) ; do
+  BUILDS=`ssh -o StrictHostKeyChecking=no  $REPO_USER@$REPO_SERVER find $logdir -mtime -7 -mindepth 2 -maxdepth 2 -type d | sed 's|^.*/WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
   for x in $BUILDS; do
     SCRAM_ARCH=`echo $x | cut -f1 -d/`
     REL_NAME=`echo $x | cut -f2 -d/`

@@ -171,6 +171,7 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
   wf_stats = {}
   for h in es_hits['hits']['hits']:
     hit = h["_source"]
+    if 'time' not in hit: continue
     wf = hit["workflow"]
     step = hit["step"]
     if not wf in wf_stats: wf_stats[wf]={}

@@ -17,11 +17,13 @@ for prof in ${PROFILES} ; do
     ( igprof-analyse -d -c $f --sqlite > $f.sql ) || ERR=1
     ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 "$OUTFILE" > $f.log || ERR=1
 
+    OUTFILE="$(basename $f).txt"
+    echo $OUTFILE
     if [ "$prof" = "pp" ]; then
-        ( igprof-analyse -v -d -g $f > RES_CPU_${f//.gz/.txt} ) || ERR=1
+        ( igprof-analyse -v -d -g $f > "RES_CPU_${OUTFILE}" ) || ERR=1
     fi
     if [ "$prof" = "mp" ]; then
-        ( igprof-analyse -v -d -g -r MEM_LIVE $f > RES_MEM_${f//.gz/.txt} ) || ERR=1
+        ( igprof-analyse -v -d -g -r MEM_LIVE $f > "RES_MEM_${OUTFILE}") || ERR=1
     fi
 
     if [ $ERR -gt 0 ] ; then

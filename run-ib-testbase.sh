@@ -21,9 +21,7 @@ fi
 source \${IB_LAST_WEEK}/cmsset_default.sh  || true
 scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
 cd ${RELEASE_FORMAT}
-set +x
 eval \$(scram runtime -sh)
-set -x
 export CMS_PATH=\${IB_LAST_WEEK}
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py

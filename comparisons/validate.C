@@ -151,7 +151,8 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
   gStyle->SetTitleY(1);
   gStyle->SetTitleW(1);
   gStyle->SetTitleH(0.06);
-  TGaxis::SetExponentOffset(-0.042,-0.035,"x");
+  TGaxis::SetExponentOffset(-0.052,-0.060,"x");
+  TGaxis::SetExponentOffset(-0.052,0.010,"y");
 
   res.ref_entries = -1;
   res.new_entries = -1;
@@ -261,10 +262,10 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
     res.ksProb = refplot->KolmogorovTest(plot);
 
     TString outtext;
-    outtext.Form("Ref: %i, New: %i, De: %g, Diff: %g, 1-KS: %6.4g",res.ref_entries,res.new_entries,
+    outtext.Form("Ref: %i, New: %i, De: %6.4g, Diff: %g, 1-KS: %6.4g",res.ref_entries,res.new_entries,
                  res.ref_entries>0? (res.new_entries-res.ref_entries)/double(res.ref_entries):0, res.countDiff,1-res.ksProb);
 
-    TPaveText * pt = new TPaveText(0.01,0.89,0.71,0.93,"NDC");
+    TPaveText * pt = new TPaveText(0.05,0.89,0.71,0.93,"NDC");
     pt->AddText(outtext);
     pt->SetBorderSize(0);
     pt->SetFillStyle(0);
@@ -839,6 +840,8 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
     electron("miniPFIsolation().photonIso", cName,tName);
     electron("miniPFIsolation().puChargedHadronIso", cName,tName);
 
+    electron("dB(pat::Electron::PV2D)", cName,tName, true);
+    electron("dB(pat::Electron::BS2D)", cName,tName, true);
     electron("dB(pat::Electron::PV3D)", cName,tName, true);
     electron("dB(pat::Electron::PVDZ)", cName,tName, true);
 
@@ -1006,6 +1009,8 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("miniPFIsolation().photonIso", cName,tName);
     muonVar("miniPFIsolation().puChargedHadronIso", cName,tName);
 
+    muonVar("dB(pat::Muon::PV2D)", cName,tName, true);
+    muonVar("dB(pat::Muon::BS2D)", cName,tName, true);
     muonVar("dB(pat::Muon::PV3D)", cName,tName, true);
     muonVar("dB(pat::Muon::PVDZ)", cName,tName, true);
 
@@ -1304,6 +1309,25 @@ void V0(TString res, TString var){
   plotvar(v);
 }
 
+void caloHitsGeneric(TString tName, TString cName){
+  TString bObj=tName+"_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+".obj@.size()");
+  plotvar(bObj+".obj.energy()");
+  plotvar("log10("+bObj+".obj.energy())");
+  plotvar("log10("+bObj+".obj.energy())", bObj+".obj.energy()>0.001");
+  if (tName == "HBHERecHitsSorted"){
+    plotvar(bObj+".obj.eraw()");
+    plotvar("log10("+bObj+".obj.eraw())");
+    plotvar(bObj+".obj.eaux()");
+    plotvar("log10("+bObj+".obj.eaux())");
+    plotvar("log10("+bObj+".obj.chi2())");
+  }
+  plotvar("log2(max("+bObj+".obj.flags(),0.5))");
+  plotvar(bObj+".obj.time()");
+}
+
 void mtdHits(TString cName){
   TString tbr="FTLRecHitsSorted_"+cName+"_";
   TString bObj = tbr+recoS+".obj";
@@ -1317,6 +1341,41 @@ void mtdHits(TString cName){
   plotvar(bObj+".obj.position()");
   plotvar("log10("+bObj+".obj.positionError())");
   plotvar("log2(max("+bObj+".obj.flagBits_,0.5))");
+}
+
+void siStripClusters(TString cName){
+  TString bObj="SiStripClusteredmNewDetSetVector_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+".m_data@.size()");
+  plotvar(bObj+".m_data.barycenter()");
+  plotvar("log10(max(0.1,"+bObj+".m_data.amplitudes_@.size()))");
+  plotvar("min(50,"+bObj+".m_data.amplitudes_@.size())");
+}
+
+void siPixelClusters(TString cName){
+  TString bObj="SiPixelClusteredmNewDetSetVector_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+".m_data@.size()");
+  plotvar(bObj+".m_data.charge()");
+  plotvar("log10(max(0.1,"+bObj+".m_data.size()))");
+  plotvar("min(50,"+bObj+".m_data.size())");
+}
+
+void trackExtras(TString cName){
+  TString bObj="recoTrackExtras_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+"@.size()");
+  plotvar(bObj+".recHitsSize()");
+  plotvar(bObj+".innerOk()+2*"+bObj+".outerOk()+");
+  plotvar(bObj+".innerPosition().z()", bObj+".innerOk()");
+  plotvar(bObj+".innerPosition().rho()", bObj+".innerOk()");
+  plotvar("log10("+bObj+".innerMomentum().pt())", bObj+".innerOk()");
+  plotvar(bObj+".outerPosition().z()", bObj+".outerOk()");
+  plotvar(bObj+".outerPosition().rho()", bObj+".outerOk()");
+  plotvar("log10("+bObj+".outerMomentum().pt())", bObj+".outerOk()");
 }
 
 void forwardProtons(TString cName ){
@@ -2090,19 +2149,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     }
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "hcal")) && !stepContainsNU(step, "cosmic") ){
       //hcal rechit plots
-      tbr="HBHERecHitsSorted_hbheprereco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar(tbr+".obj.eraw()");
-        plotvar("log10("+tbr+".obj.eraw())");
-        plotvar(tbr+".obj.eaux()");
-        plotvar("log10("+tbr+".obj.eaux())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-        plotvar("log10("+tbr+".obj.chi2())");
-      }
+      caloHitsGeneric("HBHERecHitsSorted", "hbheprereco_");
 
       tbr="HBHERecHitsSorted_hbhereco__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2117,6 +2164,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log2(max("+tbr+".obj.flags(),0.5))", tbr+".obj.detid().subdetId()==1");
         plotvar(tbr+".obj.time()", tbr+".obj.detid().subdetId()==1");
         plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.detid().subdetId()==1");
+        plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.energy()>0.001&&"+tbr+".obj.detid().subdetId()==1");
 
         plotvar(tbr+".obj.energy()", tbr+".obj.detid().subdetId()!=1");
         plotvar("log10("+tbr+".obj.energy())", tbr+".obj.detid().subdetId()!=1");
@@ -2128,6 +2176,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log2(max("+tbr+".obj.flags(),0.5))", tbr+".obj.detid().subdetId()!=1");
         plotvar(tbr+".obj.time()", tbr+".obj.detid().subdetId()!=1");
         plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.detid().subdetId()!=1");
+        plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.energy()>0.001&&"+tbr+".obj.detid().subdetId()!=1");
 
         if (stepContainsNU(step, "HEP17")){
           plotvar(tbr+".obj.energy()", tbr+".obj.detid().subdetId()!=1&&"+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66");
@@ -2155,32 +2204,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         }
       }//check HBHERecHitsSorted_hbhereco__ is available
 
-      tbr="HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar(tbr+".obj.eraw()");
-        plotvar("log10("+tbr+".obj.eraw())");
-        plotvar(tbr+".obj.eaux()");
-        plotvar("log10("+tbr+".obj.eaux())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-        plotvar("log10("+tbr+".obj.chi2())");
-      }
-      tbr="HBHERecHitsSorted_reducedEgamma_reducedHBHEHits_"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar(tbr+".obj.eraw()");
-        plotvar("log10("+tbr+".obj.eraw())");
-        plotvar(tbr+".obj.eaux()");
-        plotvar("log10("+tbr+".obj.eaux())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-        plotvar("log10("+tbr+".obj.chi2())");
-      }
+      caloHitsGeneric("HBHERecHitsSorted", "reducedHcalRecHits_hbhereco");
+      caloHitsGeneric("HBHERecHitsSorted", "reducedEgamma_reducedHBHEHits");
+      caloHitsGeneric("HBHERecHitsSorted", "slimmedHcalRecHits_reducedHcalRecHits");
 
       tbr="HFPreRecHitsSorted_hfprereco__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2192,63 +2218,16 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.hasInfo_[1]");
       }
 
-      tbr="HFRecHitsSorted_hfreco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
+      caloHitsGeneric("HFRecHitsSorted", "hfreco_");
+      caloHitsGeneric("HFRecHitsSorted", "reducedHcalRecHits_hfreco");
+      caloHitsGeneric("HFRecHitsSorted", "slimmedHcalRecHits_reducedHcalRecHits");
 
-      tbr="HFRecHitsSorted_reducedHcalRecHits_hfreco_"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
+      caloHitsGeneric("HORecHitsSorted", "horeco_");
+      caloHitsGeneric("HORecHitsSorted", "reducedHcalRecHits_horeco");
+      caloHitsGeneric("HORecHitsSorted", "slimmedHcalRecHits_reducedHcalRecHits");
 
-      tbr="HORecHitsSorted_horeco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
-
-      tbr="HORecHitsSorted_reducedHcalRecHits_horeco_"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
-
-      tbr="CastorRecHitsSorted_castorreco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
-
-      tbr="ZDCRecHitsSorted_zdcreco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
+      caloHitsGeneric("CastorRecHitsSorted", "castorreco_");
+      caloHitsGeneric("ZDCRecHitsSorted", "zdcreco_");
 
       tbr="HcalNoiseSummary_hcalnoise__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2705,14 +2684,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       }
     }
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "sipixel")) && !stepContainsNU(step, "cosmic") ){
-      tbr="SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".m_data@.size()");
-        //plotvar(tbr+".m_data.barycenter()");
-        plotvar(tbr+".m_data.charge()");
-        plotvar("log10(max(0.1,"+tbr+".m_data.size()))");
-        plotvar("min(50,"+tbr+".m_data.size())");
-      }
+      siPixelClusters("siPixelClusters_");
+      siPixelClusters("muonReducedTrackExtras_");
+      siPixelClusters("slimmedMuonTrackExtras_");
 
       tbr="Phase2TrackerCluster1DedmNewDetSetVector_siPhase2Clusters__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2741,14 +2715,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       }
     }
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "sistrip")) && !stepContainsNU(step, "cosmic") ){
-      tbr="SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".m_data@.size()");
-        plotvar(tbr+".m_data.barycenter()");
-        plotvar("log10(max(0.1,"+tbr+".m_data.amplitudes_@.size()))");
-        plotvar("min(50,"+tbr+".m_data.amplitudes_@.size())");
-        //plotvar(tbr+".m_data.amplitudes()[0]");
-      }
+      siStripClusters("siStripClusters_");
+      siStripClusters("muonReducedTrackExtras_");
+      siStripClusters("slimmedMuonTrackExtras_");
 
       tbr="ClusterSummary_clusterSummaryProducer__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2813,7 +2782,6 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 	//	allTracks("thWithMaterialTracks__"+recoS);
 	//	allTracks("secWithMaterialTracks__"+recoS);
       }
-
     }
     if (stepContainsNU(step, "all")){
       allTracks("regionalCosmicTracks__"+recoS);
@@ -3067,6 +3035,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       allTracks("tevMuons_dyt_"+recoS);
       allTracks("tevMuons_picky_"+recoS);
       allTracks("standAloneSETMuons_UpdatedAtVtx_"+recoS);
+
+      trackExtras("muonReducedTrackExtras_");
+      trackExtras("slimmedMuonTrackExtras_");
 
       ///tracker muons
       tbr="recoMuons_muons__"+recoS+".obj";

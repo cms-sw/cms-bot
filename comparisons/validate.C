@@ -1369,13 +1369,13 @@ void trackExtras(TString cName){
 
   plotvar(bObj+"@.size()");
   plotvar(bObj+".recHitsSize()");
-  plotvar(bObj+".innerOk()+2*"+bObj+".outerOk()+");
+  plotvar(bObj+".innerOk()+2*"+bObj+".outerOk()");
   plotvar(bObj+".innerPosition().z()", bObj+".innerOk()");
   plotvar(bObj+".innerPosition().rho()", bObj+".innerOk()");
-  plotvar("log10("+bObj+".innerMomentum().pt())", bObj+".innerOk()");
+  plotvar("log10("+bObj+".innerMomentum().rho())", bObj+".innerOk()");
   plotvar(bObj+".outerPosition().z()", bObj+".outerOk()");
   plotvar(bObj+".outerPosition().rho()", bObj+".outerOk()");
-  plotvar("log10("+bObj+".outerMomentum().pt())", bObj+".outerOk()");
+  plotvar("log10("+bObj+".outerMomentum().rho())", bObj+".outerOk()");
 }
 
 void forwardProtons(TString cName ){

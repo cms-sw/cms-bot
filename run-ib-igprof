@@ -21,6 +21,11 @@ for prof in ${PROFILES} ; do
     echo $OUTFILE
     if [ "$prof" = "pp" ]; then
         ( igprof-analyse -v -d -g $f > "RES_CPU_${OUTFILE}" ) || ERR=1
+        if [[ $OUTFILE == "step3"*"_EndOfJob.gz"  && $WORKFLOWS != "-i all -l 13"* ]];then
+            export IGREP=RES_CPU_${OUTFILE}.txt
+            export IGSORT=sorted_RES_CPU_step3.txt
+            awk -v module=doEvent 'BEGIN { total = 0; } { if(substr(\$0,0,1)=="-"){good = 0;}; if(good&&length(\$0)>0){print \$0; total += \$3;}; if(substr(\$0,0,1)=="["&&index(\$0,module)!=0) {good = 1;} } END { print "Total: "total } ' \${IGREP} | sort -n -r -k1 | awk '{ if(index(\$0,"Total: ")!=0){total=\$0;} else{print \$0;} } END { print total; }' > \${IGSORT} 2>&1
+        fi
     fi
     if [ "$prof" = "mp" ]; then
         ( igprof-analyse -v -d -g -r MEM_LIVE $f > "RES_MEM_${OUTFILE}") || ERR=1

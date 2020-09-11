@@ -60,7 +60,7 @@ ZEEMMHIwf302p0 302.0_Pyquen_ZeemumuJets_pt10_2760GeV+Pyquen_ZeemumuJets_pt10_276
 EPOSPPb8160GeVwf281p0 281.0_EPOS_PPb_8160GeV_MinimumBias*/step3.root RECO
 HydjetQB12in2018wf150p0 150.0_HydjetQ_B12_5020GeV_*/step3.root RECO
 HydjetQB12ppRECOin2018wf158p0 158.0_HydjetQ_B12_5020GeV_*/step3.root RECO
-HydjetQB12ppRECOin2018reMINIAODwf158p01 158.01_HydjetQ_reminiaodPbPb2018_*/step2.root PAT
+HydjetQB12ppRECOin2018reMINIAODwf158p01 158.01_HydjetQ_reminiaodPbPb2018_*/step2.root DQM
 #
 #  Run2 MC
 #

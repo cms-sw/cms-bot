@@ -1184,12 +1184,12 @@ for BT in ${ENABLE_BOT_TESTS}; do
              $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_IB}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare.txt || true
              popd
              pushd $WORKSPACE/$CMSSW_IB/src || true
-             for f in $(find TimeMemory -type f -name '*.sql3' -o -name '*.log' -o -name '*RES*.txt' -o -name '*.json' -o -name 'sorted*.txt') ; do
+             for f in $(find TimeMemory -type f -name '*.sql3' -o -name '*.log' -o -name '*.json' -o -name '*.txt') ; do
                d=$(dirname $f)
                mkdir -p $WORKSPACE/upload/profiling/$d || true
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
              done
-             for f in $(find $PROFILING_WORKFLOW -type f -name '*.sql3' -o -name '*.log' -o -name '*RES*.txt' -o -name '*.json' -o -name 'sorted*.txt') ; do
+             for f in $(find $PROFILING_WORKFLOW -type f -name '*.sql3' -o -name '*.log' -o -name '*.json' -o -name '*.txt') ; do
                d=$(dirname $f)
                mkdir -p $WORKSPACE/upload/profiling/$d || true
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true

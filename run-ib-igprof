@@ -23,7 +23,7 @@ for prof in ${PROFILES} ; do
     echo $OUTFILE
     if [ "$prof" = "pp" ]; then
         ( igprof-analyse -v -d -g $f > "RES_CPU_${OUTFILE}" ) || ERR=1
-        if [[ $OUTFILE == "step3"*"_EndOfJob.gz.txt"  && $WORKFLOWS != "-i all -l 13"* ]];then
+        if [[ $OUTFILE == "step3"*"_EndOfJob.txt"  && $WORKFLOWS != "-i all -l 13"* ]];then
             mv RES_CPU_$OUTFILE RES_CPU_step3.txt
             export IGREP=RES_CPU_step3.txt
             export IGSORT=sorted_RES_CPU_step3.txt

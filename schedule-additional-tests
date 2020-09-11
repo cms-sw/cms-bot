@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/bash -ex
 CONFIG_MAP=$(dirname $0)/config.map
 for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n' | grep -v 'fwlite'`; do
   pfile="$WORKSPACE/auto-$x-properties"
@@ -14,44 +14,25 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     prof=$(echo $x | sed 's|igprof-||')
     sed -i -e "s|ADDITIONAL_TEST_NAME=$x|ADDITIONAL_TEST_NAME=igprof|" ${pfile}
     echo "PROFILE=$prof" >> ${pfile}
-    case $RELEASE_QUEUE in
-        CMSSW_11_2_*)
-            wf="136.836"
-            ;;
-        *)
-            wf="136.731"
-            ;;
-    esac
+    wf="136.731"
     nfile=$WORKSPACE/auto-$x-${wf}-properties
     cp ${pfile} ${nfile}
     echo "WORKFLOWS=-i all -l $wf" >> ${nfile}
     echo "EVENTS=100" >> ${nfile}
-    case $RELEASE_QUEUE in
-        CMSSW_11_2_*)
-            wf="23434.21"
-            ;;
-        *)
-            wf="21234.0"
-            ;;
-    esac
-    nfile=$WORKSPACE/auto-$x-${wf}-properties
-    cp ${pfile} ${nfile}
-    echo "WORKFLOWS=-l $wf" >> ${nfile}
-    echo "EVENTS=10" >> ${nfile}
+    PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+    for wf in PROFILING_WORKFLOWS; do
+      nfile=$WORKSPACE/auto-$x-${wf}-properties
+      cp ${pfile} ${nfile}
+      echo "WORKFLOWS=-l $wf" >> ${nfile}
+      echo "EVENTS=10" >> ${nfile}
+    done
     rm -f ${pfile}
   fi
   if [ "$x" = "profiling" ] ; then
+    PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
     prof="pp"
     echo "PROFILE=$prof" >> ${pfile}
-    case $RELEASE_QUEUE in
-        CMSSW_11_2_*)
-            wf="23434.21"
-            ;;
-        *)
-            wf="21234.0"
-            ;;
-    esac
-    echo "WORKFLOWS=-l $wf" >> ${pfile}
-    echo "EVENTS=10" >> ${pfile}
+    echo "PROFILING_WORKFLOWS=$PROFILING_WORKFLOWS" >> ${pfile}
+    echo "EVENTS=20" >> ${pfile}
   fi
 done

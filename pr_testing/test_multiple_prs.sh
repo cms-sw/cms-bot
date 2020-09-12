@@ -29,6 +29,9 @@ source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
 NCPU=$(${COMMON}/get_cpu_number.sh)
+if [[  $NODE_NAME == *"cms-cmpwg-0"* ]]; then
+   let NCPU=${NCPU}/2
+fi
 let NCPU2=${NCPU}*2
 
 function prepare_upload_results (){
@@ -1158,6 +1161,46 @@ for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
   mark_commit_status_all_prs 'valgrind' 'success' -u "${BUILD_URL}" -d "All OK" || true
   popd
 done
+
+
+#
+# Enabled bot tests
+#
+for BT in ${ENABLE_BOT_TESTS}; do
+    if [ "$BT" = "PROFILING" ]; then
+        PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+         pushd $WORKSPACE 
+         git clone https://github.com/cms-cmpwg/profiling.git
+         popd
+         mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
+         report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Profling" ${NO_POST}
+         for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
+             $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_IB || true
+             $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_IB || true
+             $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_IB || true
+             pushd $WORKSPACE/$CMSSW_IB/src/$PROFILING_WORKFLOW
+             ./profile.sh $CMSSW_IB || true
+             get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/RES_CPU_step3.txt  ${CMSSW_IB}_RES_CPU_step3.txt || true
+             $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_IB}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare.txt || true
+             popd
+             pushd $WORKSPACE/$CMSSW_IB/src || true
+             for f in $(find TimeMemory -type f -name '*.sql3' -o -name '*.log' -o -name '*.json' -o -name '*.txt') ; do
+               d=$(dirname $f)
+               mkdir -p $WORKSPACE/upload/profiling/$d || true
+               cp -p $f $WORKSPACE/upload/profiling/$d/ || true
+             done
+             for f in $(find $PROFILING_WORKFLOW -type f -name '*.sql3' -o -name '*.log' -o -name '*.json' -o -name '*.txt') ; do
+               d=$(dirname $f)
+               mkdir -p $WORKSPACE/upload/profiling/$d || true
+               cp -p $f $WORKSPACE/upload/profiling/$d/ || true
+             done
+             popd
+         done
+         mark_commit_status_all_prs 'profiling' 'success' -u "${BUILD_URL}" -d "All OK" || true
+         echo 'CMSSW_PROFILING;OK,Profiling Results,See Log,profiling' >> $RESULTS_FILE
+    fi
+done
+
 
 #evaluate results
 TESTS_FAILED="Failed tests:"

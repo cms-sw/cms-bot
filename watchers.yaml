@@ -1225,8 +1225,6 @@ alesaggio:
 - RecoLocalTracker/SubCollectionProducers
 - DataFormats/SiStrip
 - CalibTracker/SiStripChannelGain
-agrohsje:
-- GeneratorInterface
 cbernet:
 - CommonTools/ParticleFlow
 - DataFormats/ParticleFlowCandidate

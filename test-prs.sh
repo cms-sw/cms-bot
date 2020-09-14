@@ -97,7 +97,7 @@ COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SER
 echo "${COMPILATION_CMD}"
 [ -e $WORKSPACE/cmsswtoolconf.log ] && mv $WORKSPACE/cmsswtoolconf.log $WORKSPACE/cmsswtoolconf.log.$(date +%s)
 eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/cmsswtoolconf.log
-TOOL_CONF_VER=$(grep ' cms+cmssw-tool-conf+' $WORKSPACE/cmsswtoolconf.log | head -1 | sed 's|.* cms+cmssw-tool-conf+||;s| .*||g')
+TOOL_CONF_VER=$(ls -d $WORKSPACE/externals/${SCRAM_ARCH}/cms/cmssw-tool-conf/* | sed 's|.*/||')
 
 #Find CMSSW IB to use to test externals
 CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "${CMS_BOT_DIR}/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)

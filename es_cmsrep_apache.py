@@ -63,7 +63,7 @@ def process (line, count):
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsrep_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)
-logs = run_cmd("ls -rt /var/log/httpd/access_log* | grep -v '[.]gz$'").split("\n")
+logs = run_cmd("ls -rt /var/log/httpd/cmsrep-non-ssl_access.log* | grep -v '[.]gz$'").split("\n")
 log = logwatch("httpd",log_dir="/data/es")
 s,c=log.process(logs, process)
 print("Total entries processed",c)

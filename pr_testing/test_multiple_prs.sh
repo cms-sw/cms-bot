@@ -374,8 +374,8 @@ if ${BUILD_EXTERNAL} ; then
       git clone git@github.com:cms-sw/cmssw-config scram-buildrules
       pushd scram-buildrules
         git checkout ${config_tag}
-        echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
       popd
+      echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
       mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
       cp -r $WORKSPACE/$BUILD_DIR/${ARCHITECTURE}/cms/coral/*/config/SCRAM $CMSSW_IB/config/SCRAM
       if [ -d scram-buildrules/Projects/CMSSW ] ; then

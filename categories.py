@@ -36,6 +36,7 @@ CMSSW_L2 = {
   "cvuosalo":         ["geometry"],
   "davidlange6":      ["operations"],
   "emeschi":          ["daq"],
+  "ErnestaP":         ["dqm"],
   "fabiocos":         ["operations"],
   "fgolf":            ["xpog"],
   "franzoni":         ["operations"],

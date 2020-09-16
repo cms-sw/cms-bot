@@ -1481,21 +1481,24 @@ jandrea:
 - DPGAnalysis/SiStripTools
 jan-kaspar:
 - Alignment/CTPPS
-- CondFormats/CTPPSReadoutObjects
+- CalibPPS/ESProducers
+- CondFormats/PPSObjects
 - DQM/CTPPS
-- DataFormats/CTPPSAlignment
 - DataFormats/CTPPSDetId
 - DataFormats/CTPPSDigi
 - DataFormats/CTPPSReco
+- DataFormats/ProtonReco
 - EventFilter/CTPPSRawToDigi
 - Geometry/VeryForwardData
 - Geometry/VeryForwardGeometry
 - Geometry/VeryForwardGeometryBuilder
 - Geometry/VeryForwardRPTopology
-- RecoCTPPS/Configuration
-- RecoCTPPS/ProtonReconstruction
-- RecoCTPPS/TotemRPLocal
-- RecoCTPPS/PixelLocal
+- IOMC/EventVertexGenerators
+- IOMC/ParticleGuns
+- RecoPPS/Configuration
+- RecoPPS/ProtonReconstruction
+- RecoPPS/Local
+- Validation/CTPPS
 pieterdavid:
 - EventFilter/SiStripRawToDigi
 - CalibTracker/Configuration

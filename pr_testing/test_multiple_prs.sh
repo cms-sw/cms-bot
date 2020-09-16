@@ -1195,9 +1195,10 @@ for BT in ${ENABLE_BOT_TESTS}; do
                mkdir -p $WORKSPACE/upload/profiling/$d || true
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
                mkdir -p $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER} || true
-			ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/profiling/$d/$(basename $f) $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$(basename $f) || true
-               ls -l $WORKSPACE/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$(basename $f) || true
-               echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$(basename $f)\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index.html
+               BASENAME=$(basename $f)
+			ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
+               ls -l $WORKSPACE/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
+               echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              done
              for f in $(find $PROFILING_WORKFLOW -type f -name '*.json' ) ; do
                d=$(dirname $f)

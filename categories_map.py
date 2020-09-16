@@ -1140,6 +1140,7 @@ CMSSW_CATEGORIES = {
     "MagneticField/VolumeBasedEngine",
     "MagneticField/VolumeGeometry",
     "PhysicsTools/MXNet",
+    "PhysicsTools/IsolationAlgos",
     "PhysicsTools/ONNXRuntime",
     "PhysicsTools/PatAlgos",
     "PhysicsTools/PatUtils",

@@ -12,7 +12,7 @@ from categories import CMSSW_L1, CMSSW_L2
 setdefaulttimeout(120)
 
 CMS_OWNERS = [ "davidlange6", "smuzaffar", "cmsbuild" ] + CMSSW_L1
-CMS_SDT    = [ "mrodozov", "tulamor" ]
+CMS_SDT    = [ "mrodozov" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
 REPO_OWNERS = {}
@@ -78,7 +78,7 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
   "repositories" : { "*":"push", "!cmssw" : "pull", "!cmsdist" : "pull" }
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
-  "members" : [ "smuzaffar", "tulamor" ],
+  "members" : [ "smuzaffar" ],
   "repositories" : { "cmssdt-wiki":"admin" }
 }
 

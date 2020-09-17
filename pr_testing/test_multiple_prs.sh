@@ -996,7 +996,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     # MATRIX_TIMEOUT is set by jenkins
     dateBefore=$(date +"%s")
     [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--job-reports $EXTRA_MATRIX_ARGS"
-    if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
+    if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
         [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $EXTRA_MATRIX_ARGS"
     fi
     RELVALS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $SLHC_PARAM -j $(${COMMON}/get_cpu_number.sh -2) $WF_LIST"
@@ -1169,27 +1169,51 @@ done
 for BT in ${ENABLE_BOT_TESTS}; do
     if [ "$BT" = "PROFILING" ]; then
         PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-         pushd $WORKSPACE 
+         pushd $WORKSPACE
          git clone https://github.com/cms-cmpwg/profiling.git
          popd
          mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
          report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Profling" ${NO_POST}
+         mkdir -p $WORKSPACE/upload/profiling/
+         echo "<html><head></head><title>Profiling results</title><body><ul>" > $WORKSPACE/upload/profiling/index.html
          for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
              $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_IB || true
              $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_IB || true
              $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_IB || true
              pushd $WORKSPACE/$CMSSW_IB/src/$PROFILING_WORKFLOW
              ./profile.sh $CMSSW_IB || true
+             echo "<li><a href=\"$PROFILING_WORKFLOW/\">$PROFILING_WORKFLOW/</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/RES_CPU_step3.txt  ${CMSSW_IB}_RES_CPU_step3.txt || true
-             $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_IB}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare.txt || true
+             $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_IB}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare_$PROFILING_WORKFLOW.txt || true
+             mkdir -p $WORKSPACE/upload/profiling/
+             cp -p RES_CPU_compare_$PROFILING_WORKFLOW.txt $WORKSPACE/upload/profiling/$d/ || true
+             echo "<li><a href=\"$PROFILING_WORKFLOW/RES_CPU_compare_$PROFILING_WORKFLOW.txt\">Igprof Comparison cpu usage RECO produce methods.</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              popd
              pushd $WORKSPACE/$CMSSW_IB/src || true
-             for f in $(find TimeMemory -type f -name '*.sql3' -o -name '*.log' -o -name '*.json' -o -name '*.txt') ; do
+             for f in $(find $PROFILING_WORKFLOW -type f -name '*.sql3') ; do
                d=$(dirname $f)
                mkdir -p $WORKSPACE/upload/profiling/$d || true
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
+               mkdir -p $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER} || true
+               BASENAME=$(basename $f)
+			ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
+               ls -l $WORKSPACE/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
+               echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              done
-             for f in $(find $PROFILING_WORKFLOW -type f -name '*.sql3' -o -name '*.log' -o -name '*.json' -o -name '*.txt') ; do
+             for f in $(find $PROFILING_WORKFLOW -type f -name '*.json' ) ; do
+               d=$(dirname $f)
+               mkdir -p $WORKSPACE/upload/profiling/$d || true
+               cp -p $f $WORKSPACE/upload/profiling/$d/ || true
+               mkdir -p $WORKSPACE/upload/profiles/$d || true
+               BASENAME=$(basename $f)
+               mkdir -p $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER} || true
+               ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
+               ls -l $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
+               AMP="&"
+               echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?local=false${AMP}dataset=${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index.html
+             done
+             echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index.html
+             for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt') ; do
                d=$(dirname $f)
                mkdir -p $WORKSPACE/upload/profiling/$d || true
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
@@ -1197,8 +1221,8 @@ for BT in ${ENABLE_BOT_TESTS}; do
              popd
          done
          mark_commit_status_all_prs 'profiling' 'success' -u "${BUILD_URL}" -d "All OK" || true
-         echo 'CMSSW_PROFILING;OK,Profiling Results,See Log,profiling' >> $RESULTS_FILE
-    fi
+         echo 'CMSSW_PROFILING;OK,Profiling Results,See Logs,profiling' >> $RESULTS_FILE
+   fi
 done
 
 
@@ -1279,6 +1303,12 @@ if [ -z ${NO_POST} ] ; then
     send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER} && touch all_done
     if [ -d $LOCALRT/das_query ] ; then
       send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/PR || true
+    fi
+    if [ -d $LOCALRT/profiling ]; then
+        send_jenkins_artifacts $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE} profiling/${CMSSW_IB}/${ARCHITECTURE}/
+    fi
+    if [ -d $LOCALRT/igprof ]; then
+        send_jenkins_artifacts $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/
     fi
 fi
 

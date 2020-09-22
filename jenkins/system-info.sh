@@ -32,6 +32,12 @@ if [ "${USER_HOME_MD5}" != "" ] ; then
     RSYNC_SLAVE=true
   elif [ $(cat ${RSYNC_SLAVE_FILE}) != "${USER_HOME_MD5}" ] ; then
     RSYNC_SLAVE=true
+  else
+    HN=$(hostname -s)
+    if [ -e "${HOME}/.ssh/authorized_keys-${HN}" ] ; then
+      cat ${HOME}/.ssh/authorized_keys-${HN} >> ${HOME}/.ssh/authorized_keys
+      rm -f ${HOME}/.ssh/authorized_keys-${HN}
+    fi
   fi
 fi
 echo "DATA_RSYNC_SLAVE=${RSYNC_SLAVE}"

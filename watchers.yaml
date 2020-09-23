@@ -514,7 +514,7 @@ cbaus:
 - GeneratorInterface/HiGenCommon
 - GeneratorInterface/HydjetInterface
 - GeneratorInterface/PyquenInterface
-dkotlins:
+pixel-offline:
 - RecoLocalTracker/SiPixelClusterizer
 - RecoLocalTracker/SiPixelRecHits
 - SimTracker/SiPixelDigitizer

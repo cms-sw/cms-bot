@@ -446,13 +446,19 @@ if ${BUILD_EXTERNAL} ; then
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
       scram setup
       scram setup self
+      which scram
+      scram version
       set +x ; eval $(scram runtime -sh) ; set -x
+      which scram
+      scram version
       echo $LD_LIBRARY_PATH
       if [ -e $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers ] ; then
         SCRAM=scram bash -ex $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers || true
       fi
       CMSSW_DEP="FWCore/Version"
       if [ "${DEP_NAMES}" != "" ] ; then
+        X=$(which scram; scram version)
+	echo $X
         CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
       fi
       if [ "X${CMSSW_DEP}" != "X" ] ; then

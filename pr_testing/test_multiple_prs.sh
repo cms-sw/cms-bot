@@ -444,6 +444,7 @@ if ${BUILD_EXTERNAL} ; then
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
+      touch $CTOOLS/*.xml
       scram setup
       scram setup self
       if [ "${DEP_NAMES}" != "" ] ; then
@@ -453,6 +454,7 @@ if ${BUILD_EXTERNAL} ; then
       fi
     else
       rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
+      touch $CTOOLS/*.xml
       scram setup self
       scram setup
       scram tool remove cmssw || true

@@ -447,7 +447,10 @@ if ${BUILD_EXTERNAL} ; then
       scram setup
       scram setup self
       set +x ; eval $(scram runtime -sh) ; set -x
-      CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+      CMSSW_DEP="FWCore/Version"
+      if [ "${DEP_NAMES}" != "" ] ; then
+        CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+      fi
       if [ "X${CMSSW_DEP}" != "X" ] ; then
         git cms-addpkg --ssh $CMSSW_DEP 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
       fi

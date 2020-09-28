@@ -377,7 +377,7 @@ if ${BUILD_EXTERNAL} ; then
       popd
       echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
       mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
-      cp -r $WORKSPACE/$BUILD_DIR/${ARCHITECTURE}/cms/coral/*/config/SCRAM $CMSSW_IB/config/SCRAM
+      mv scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
       if [ -d scram-buildrules/Projects/CMSSW ] ; then
         cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml $CMSSW_IB/config/BuildFile.xml
         cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm

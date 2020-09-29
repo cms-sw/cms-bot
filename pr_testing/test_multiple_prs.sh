@@ -367,7 +367,6 @@ if ${BUILD_EXTERNAL} ; then
 
     # To make sure we always pick scram from local area
     rm -f $CMSSW_IB/config/scram_basedir
-    echo $WORKSPACE/$BUILD_DIR > $CMSSW_IB/config/scram_basedir
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
     config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
     if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
@@ -450,8 +449,6 @@ if ${BUILD_EXTERNAL} ; then
       rm -rf $WORKSPACE/$CMSSW_IB/external
       scram build -r echo_CXX 
       if [ "${DEP_NAMES}" != "" ] ; then
-        X=$(which scram; scram version)
-	echo "$X"
         CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
       fi
     else
@@ -464,8 +461,6 @@ if ${BUILD_EXTERNAL} ; then
       scram build -r echo_CXX 
       CMSSW_DEP="*"
     fi
-    which scram
-    scram version
     set +x ; eval $(scram runtime -sh) ; set -x
     echo $LD_LIBRARY_PATH
     if [ -e $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers ] ; then

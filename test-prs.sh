@@ -97,7 +97,10 @@ COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SER
 echo "${COMPILATION_CMD}"
 [ -e $WORKSPACE/cmsswtoolconf.log ] && mv $WORKSPACE/cmsswtoolconf.log $WORKSPACE/cmsswtoolconf.log.$(date +%s)
 eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/cmsswtoolconf.log
-TOOL_CONF_VER=$(ls -d $WORKSPACE/externals/${SCRAM_ARCH}/cms/cmssw-tool-conf/* | sed 's|.*/||')
+TOOL_CONF_VER=$(ls -d $WORKSPACE/${BUILD_DIR}/${SCRAM_ARCH}/cms/cmssw-tool-conf/* | sed 's|.*/||')
+
+source $WORKSPACE/${BUILD_DIR}/cmsset_default.sh
+echo /cvmfs/cms.cern.ch > $WORKSPACE/${BUILD_DIR}/etc/scramrc/links.db
 
 #Find CMSSW IB to use to test externals
 CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "${CMS_BOT_DIR}/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
@@ -107,7 +110,9 @@ if [ ! -d ${CMSSW_IB} ] ; then
 fi
 
 cd ${CMSSW_IB}
-ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > config/scram_version
+ls $WORKSPACE/${BUILD_DIR}/share/lcg/SCRAMV1 > config/scram_version
+rm -f config/scram_basedir
+
 config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
 if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
   git clone git@github.com:cms-sw/cmssw-config scram-buildrules
@@ -116,13 +121,13 @@ if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
     echo ${config_tag} > ../config/config_tag
   popd
   mv config/SCRAM config/SCRAM.orig
-  cp -r $WORKSPACE/$BUILD_DIR/${ARCHITECTURE}/cms/coral/*/config/SCRAM $CMSSW_IB/config/SCRAM
+  cp -r scram-buildrules/SCRAM config/SCRAM
   if [ -d scram-buildrules/Projects/CMSSW ] ; then
-    cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml $CMSSW_IB/config/BuildFile.xml
-    cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
+    cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml config/BuildFile.xml
+    cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm config/SCRAM_ExtraBuildRule.pm
   else
-    cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
-    cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
+    cp -f scram-buildrules/CMSSW_BuildFile.xml config/BuildFile.xml
+    cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm config/SCRAM_ExtraBuildRule.pm
   fi
   if [ -f config/SCRAM.orig/GMake/CXXModules.mk ] ; then
     cp $WORKSPACE/cmsdist/CXXModules.mk.file config/SCRAM/GMake/CXXModules.mk
@@ -161,10 +166,12 @@ for xml in $(ls ${CONF}/*.xml) ; do
 done
 
 #Setup new tools
+touch ${CONF}/*.xml
 scram setup
 scram setup self
-eval `scram run -sh`
+rm -rf external
 scram b echo_CXX >/dev/null 2>&1
+eval `scram run -sh`
 
 #Find and checkout CMSSW packages which needs to be rebuild
 CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
@@ -177,5 +184,3 @@ for PR in $(echo $PRS | tr ' ' '\n' | grep '/cmssw#' | sed 's|/cmssw#|:|') ; do
   git cms-merge-topic --ssh -u $PR
 done
 echo "Please go to $CMSSW_BASE and checkout any extra CMSSW packages and rebuild."
-
-

@@ -460,6 +460,8 @@ if ${BUILD_EXTERNAL} ; then
       scram setup self
       scram setup
       scram tool remove cmssw || true
+      rm -rf $WORKSPACE/$CMSSW_IB/external
+      scram build -r echo_CXX 
       CMSSW_DEP="*"
     fi
     which scram

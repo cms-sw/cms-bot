@@ -447,6 +447,8 @@ if ${BUILD_EXTERNAL} ; then
       touch $CTOOLS/*.xml
       scram setup
       scram setup self
+      rm -rf $WORKSPACE/$CMSSW_IB/external
+      scram build -r echo_CXX 
       if [ "${DEP_NAMES}" != "" ] ; then
         X=$(which scram; scram version)
 	echo "$X"

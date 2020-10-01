@@ -81,6 +81,7 @@ pushd $BUILD_DIR
   PYTHONPATH= $CMSBUILD_CMD --debug --specs-only build cmssw$PATCH
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
+  [ -e CMSDIST/gcc-fixincludes.spec ] && TOOL_CONF_PACKAGES="gcc-fixincludes ${TOOL_CONF_PACKAGES}"
   EXT_FAILED=false
   PYTHONPATH= $CMSBUILD_CMD --builders 4 build $TOOL_CONF_PACKAGES || EXT_FAILED=true
   echo DATE=`date`

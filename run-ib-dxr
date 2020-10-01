@@ -25,4 +25,3 @@ rsync -aL --exclude '.scram' --exclude '*.pyc' ${CMSSW_RELEASE_BASE}/cfipython/$
 find src/cfipython -type d -empty -delete || true
 sed -i -r 's| -v | |' config/dxr.config
 scram b -j $(nproc) -k dxr || true
-mv dxr/target/trees/CMSSW dxr/${CMSSW_VERSION}

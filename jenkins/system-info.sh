@@ -5,7 +5,7 @@ for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
 #cleanup old /tmp files
-#find /tmp -maxdepth 1 -mindepth 1 -type f -mtime +2 -user $(whoami) -exec rm -f {} \;
+find /tmp -maxdepth 1 -mindepth 1 -type f -mtime +2 -user $(whoami) -exec rm -f {} \; || true
 
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 git config --global cms.protocol "mixed" || true

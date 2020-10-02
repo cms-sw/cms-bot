@@ -15,3 +15,11 @@ function delete_version()
   fi
 }
 
+function set_default()
+{
+  default_version=$(grep '_X_' ${1}/versions | head -1)
+  if [ "${default_version}" = "" ] ; then
+    default_version=$(head -1 ${1}/versions)
+  fi
+  echo "${default_version}" > ${1}/default
+}

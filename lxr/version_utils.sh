@@ -17,9 +17,9 @@ function delete_version()
 
 function set_default()
 {
-  default_version=$(grep '_X_' ${1}/versions | head -1)
+  default_version=$(grep '_X_' ${1} | head -1)
   if [ "${default_version}" = "" ] ; then
-    default_version=$(head -1 ${1}/versions)
+    default_version=$(head -1 ${1})
   fi
-  echo "${default_version}" > ${1}/default
+  echo "${default_version}" > ${2}
 }

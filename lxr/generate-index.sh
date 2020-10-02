@@ -15,8 +15,4 @@ mkdir -p ${BASE_DIR}/glimpse_index/lxr/${tag}
 echo $tag >> ${BASE_DIR}/host_config/versions
 sort_version ${BASE_DIR}/host_config/versions
 docker exec -u lxr -t lxr /lxr/genxref --url=//localhost/lxr --version=$tag
-default_version=$(grep '_X_' ${BASE_DIR}/host_config/versions | head -1)
-if [ "${default_version}" = "" ] ; then
-  default_version=$(head -1 ${BASE_DIR}/host_config/versions)
-fi
-echo "${default_version}" > ${BASE_DIR}/host_config/default
+set_default ${BASE_DIR}/host_config/versions ${BASE_DIR}/host_config/default

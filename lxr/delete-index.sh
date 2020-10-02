@@ -5,7 +5,7 @@ BASE_DIR=/data/lxr
 tag=$1
 delete_version ${BASE_DIR}/host_config/versions ${tag}
 sort_version   ${BASE_DIR}/host_config/versions
-head -1 ${BASE_DIR}/host_config/versions > ${BASE_DIR}/host_config/default
+set_default    ${BASE_DIR}/host_config/versions ${BASE_DIR}/host_config/default
 
 [ -d ${BASE_DIR}/src/$tag ] && rm -rf ${BASE_DIR}/src/$tag
 [ -d ${BASE_DIR}/glimpse_index/lxr/${tag} ] && rm -rf ${BASE_DIR}/glimpse_index/lxr/${tag}

@@ -6,7 +6,7 @@ from commands import getstatusoutput as cmd
 e, total =cmd("find . -type f | grep -v '/.git/' |wc -l")
 e, o = cmd ('git log --name-only  --pretty=format:"T:%at"')
 if e:
-  print o
+  print (o)
   exit(1)
 
 cache = {}
@@ -22,6 +22,6 @@ for l in o.split("\n"):
     cnt += 1
     cache[l]=time
     utime(l, (time, time))
-    print "[%s/%s] %s: %s" % (cnt, total, l, time)
+    print ("[%s/%s] %s: %s" % (cnt, total, l, time))
   else:
     cache[l]=0

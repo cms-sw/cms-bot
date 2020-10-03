@@ -929,16 +929,16 @@ tlampen:
 - Alignment/TrackerAlignment
 - Alignment/TwoBodyDecay
 thomreis:
-- DataFormats/EcalDigi
+- .*[Ee][Cc][Aa][Ll]
+- CondFormats/ESObjects
 - DataFormats/L1TMuon
 - DataFormats/L1Trigger
 - EventFilter/L1TRawToDigi
+- EventFilter/ESDigiToRaw
+- EventFilter/ESRawToDigi
 - L1Trigger/L1TCommon
 - L1Trigger/L1TMuon
 - L1Trigger/L1TNtuples
-- SimCalorimetry/Configuration
-- SimCalorimetry/EcalEBTrigPrimAlgos
-- SimCalorimetry/EcalEBTrigPrimProducers
 threus:
 - DQM/SiPixel
 - DQM/SiStrip

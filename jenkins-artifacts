@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-source $(dirname $0)/cmssdt.sh
+CMSSDT_SERVER="cmssdt03.cern.ch"
 if [ "$ARTIFACTS_USER" = "" ] ; then ARTIFACTS_USER=$(whoami) ; fi
 case ${ARTIFACTS_USER} in
   cmsbld|cvcmsib|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;

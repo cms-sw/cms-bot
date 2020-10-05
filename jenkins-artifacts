@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+#can not source  cmssdt.sh as this script is also sourced
 CMSSDT_SERVER="cmssdt01.cern.ch"
 if [ "$ARTIFACTS_USER" = "" ] ; then ARTIFACTS_USER=$(whoami) ; fi
 case ${ARTIFACTS_USER} in

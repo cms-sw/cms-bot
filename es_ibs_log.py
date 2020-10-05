@@ -109,7 +109,6 @@ def process_ib_utests(logFile):
   payload["@timestamp"] = timestp
 
   if exists(logFile):
-    print("File: ", logFile)
     with open(logFile) as f:
       try:
         it = iter(f)
@@ -134,7 +133,7 @@ def process_ib_utests(logFile):
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:
-        print("ERROR: File processed:", e)
+        print("ERROR: File processed: %s" % e)
   else:
     print("Invalid File Path")
 

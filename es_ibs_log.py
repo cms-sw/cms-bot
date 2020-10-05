@@ -109,6 +109,7 @@ def process_ib_utests(logFile):
   payload["@timestamp"] = timestp
 
   if exists(logFile):
+    print("File: ", logFile)
     with open(logFile) as f:
       try:
         it = iter(f)

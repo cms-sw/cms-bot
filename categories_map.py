@@ -853,6 +853,7 @@ CMSSW_CATEGORIES = {
     "CUDADataFormats/BeamSpot",
     "CUDADataFormats/SiPixelCluster",
     "CUDADataFormats/SiPixelDigi",
+    "CUDADataFormats/StdDictionaries",
     "HeterogeneousCore/CUDACore",
     "HeterogeneousCore/CUDAServices",
     "HeterogeneousCore/CUDATest",

@@ -1533,9 +1533,8 @@ rbartek:
 rishabhCMS:
 - Validation/Geometry
 peruzzim:
-- DataFormats/PatCandidates
-- PhysicsTools/PatAlgos
-- PhysicsTools/PatUtils
+- DataFormats/NanoAOD
+- PhysicsTools/NanoAOD
 jshlee:
 - CondCore/GEMPlugins
 - CondFormats/GEMObjects

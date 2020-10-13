@@ -91,7 +91,7 @@ esac
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
 EXTRA_JAVA_ARGS=""
 if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
-  set +x
+  #set +x
   let MAX_WAIT_TIME=60*60*12
   WAIT_GAP=60
   SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+-jar\s+.*/slave.*\s+"

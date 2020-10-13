@@ -98,7 +98,9 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+-jar\s+.*/slave.*\s+"
   START_ALL_SHARED=true
   while true ; do
-    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+    if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | wc -l) -eq 0 ] ; then
+      if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+    fi
     if $START_ALL_SHARED ; then
       START_ALL_SHARED=false
       shared_labels=$(curl -s ${JENKINS_API_URL}/computer/${NODE_NAME}/api/xml  | sed 's|<assignedLabel>|\n|g' | sed 's|</name>.*||;s|<name>||' | grep '^shared-')

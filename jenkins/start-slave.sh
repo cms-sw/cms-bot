@@ -47,6 +47,7 @@ REMOTE_USER_ID=$(get_data REMOTE_USER_ID)
 JENKINS_PORT=$(pgrep -x -a  -f ".*httpPort=.*" | tail -1 | tr ' ' '\n' | grep httpPort | sed 's|.*=||')
 SSHD_PORT=$(grep '<port>' ${HOME}/org.jenkinsci.main.modules.sshd.SSHD.xml | sed 's|</.*||;s|.*>||')
 JENKINS_CLI_CMD="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_dsa -l localcli -p ${SSHD_PORT} localhost"
+JENKINS_API_URL=$(echo ${JENKINS_URL} | sed "s|^https://[^/]*/|http://localhost:${JENKINS_PORT}/|")
 if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   slave_labels=""
   case ${SLAVE_TYPE} in
@@ -94,8 +95,23 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   let MAX_WAIT_TIME=60*60*12
   WAIT_GAP=60
   SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+-jar\s+.*/slave.*\s+"
+  START_ALL_SHARED=true
   while true ; do
     if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+    if $START_ALL_SHARED ; then
+      START_ALL_SHARED=false
+      shared_labels=$(curl -s ${JENKINS_API_URL}/computer/${NODE_NAME}/api/xml  | sed 's|<assignedLabel>|\n|g' | sed 's|</name>.*||;s|<name>||' | grep '^shared-')
+      for s in ${shared_labels} ; do
+        for node in $(curl -s ${JENKINS_API_URL}/label/$s/api/xml | sed 's|<nodeName>|\n|g' | grep '</nodeName>' | sed 's|</nodeName>.*||') ; do
+          [ "${node}" = "${NODE_NAME}" ] && continue
+          pgrep -f " +${node}\s*\$" || true
+          if [ $(pgrep -f " +${node}\s*\$" | wc -l) -gt 0 ] ; then
+            (nohup ${JENKINS_CLI_CMD} connect-node $node >/dev/null 2>&1  &) || true
+            sleep 5
+          fi
+        done
+      done
+    fi
     echo "$(date): Waiting $MAX_WAIT_TIME ..."
     if [ $MAX_WAIT_TIME -gt 0 ] ; then
       let MAX_WAIT_TIME=$MAX_WAIT_TIME-$WAIT_GAP

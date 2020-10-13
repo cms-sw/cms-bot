@@ -108,7 +108,7 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
           pgrep -f " +${node}\s*\$" || true
           if [ $(pgrep -f " +${node}\s*\$" | wc -l) -eq 0 ] ; then
             (nohup ${JENKINS_CLI_CMD} connect-node $node >/dev/null 2>&1  &) || true
-            sleep 5
+            break
           fi
         done
       done

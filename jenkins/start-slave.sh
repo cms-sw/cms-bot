@@ -116,7 +116,7 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
     if [ $MAX_WAIT_TIME -gt 0 ] ; then
       let MAX_WAIT_TIME=$MAX_WAIT_TIME-$WAIT_GAP
       sleep $WAIT_GAP
-      if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/$i{NODE_NAME}/config.xml | wc -l) -gt 0 ] ; then
+      if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | wc -l) -gt 0 ] ; then
         echo "ERROR: Node is marked temporary Offline, so exiting without connecting."
         exit 0
       fi

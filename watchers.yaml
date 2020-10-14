@@ -1755,3 +1755,8 @@ trk-dqm:
 - Validation/TrackerDigis
 - Validation/TrackerHits
 - Validation/TrackerRecHits
+skinnari:
+- L1Trigger/TrackFindingTMTT
+- L1Trigger/TrackFindingTracklet
+- L1Trigger/TrackTrigger
+- L1Trigger/TrackerDTC

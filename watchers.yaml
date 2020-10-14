@@ -523,11 +523,6 @@ pixel-offline:
 - CondCore/SiPixelPlugins
 - CondFormats/SiPixelObjects
 - CondTools/SiPixel
-echapon:
-- RecoHI/Configuration
-- RecoHI/HiMuonAlgos
-- RecoHI/HiTracking
-- RecoMuon
 forthommel:
 - Alignment/CTPPS
 - CalibPPS

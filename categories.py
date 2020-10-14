@@ -58,7 +58,6 @@ CMSSW_L2 = {
   "mkirsano":         ["generators"],   
   "mrodozov":         ["externals"],
   "perrotta":         ["reconstruction"],
-  "peruzzim":         ["xpog"],
   "pohsun":           ["alca"],
   "qliphy":           ["operations"],
   "rekovic":          ["l1"],

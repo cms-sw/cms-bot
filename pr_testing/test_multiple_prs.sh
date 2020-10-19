@@ -286,7 +286,7 @@ report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${RE
 
 # Prepera html templates
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
-sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;s|@REPOSITORY@|$PUB_REPO|g" $CMS_BOT_DIR/templates/js/renderPRSTests.js > $WORKSPACE/renderPRTests.js
+sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js
 
 
 touch $RESULTS_FILE

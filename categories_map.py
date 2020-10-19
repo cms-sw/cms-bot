@@ -1,7 +1,6 @@
 CMSSW_CATEGORIES = {
   "alca": [
     "Alignment/APEEstimation",
-    "Alignment/CTPPS",
     "Alignment/CocoaAnalysis",
     "Alignment/CocoaApplication",
     "Alignment/CocoaDDLObjects",

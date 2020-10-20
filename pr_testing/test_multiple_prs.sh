@@ -341,9 +341,9 @@ if ${BUILD_EXTERNAL} ; then
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU}"
-    TMP_REPO="PR-${REPORT_H_CODE}-${CMSSW_QUEUE}-${ARCHITECTURE}"
+    TMP_REPO="$(echo PR_${REPORT_H_CODE}_${CMSSW_QUEUE}_${ARCHITECTURE} | tr '-' '_')"
     UPLOAD_OPTS="--upload-tmp-repository ${TMP_REPO}"
-    if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${TMP_REPO}/${ARCHITECTURE}/latest 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
+    if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${TMP_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
       UPLOAD_OPTS="--sync-back"
       COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}.${TMP_REPO}"
     else
@@ -359,7 +359,7 @@ if ${BUILD_EXTERNAL} ; then
 
     #upload packages build
     BLD_PKGS=$(ls $WORKSPACE/$BUILD_DIR/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
-    eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${PKGS}
+    eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS}
     for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
       rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
     done
@@ -930,6 +930,7 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_
 fi
 echo "DUPLICATE_DICT_RULES;${QA_RES}" >> $RESULTS_FILE
 
+export CMS_PATH=/cvmfs/cms-ib.cern.ch
 #
 # Unit tests
 #
@@ -938,7 +939,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
   report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" ${NO_POST}
   echo '--------------------------------------'
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
-  UTESTS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
+  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests.log
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests.log 2>&1 || true
   echo 'END OF UNIT TESTS'
@@ -1021,7 +1022,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
         [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $EXTRA_MATRIX_ARGS"
     fi
-    RELVALS_CMD="CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $SLHC_PARAM -j $(${COMMON}/get_cpu_number.sh -2) $WF_LIST"
+    RELVALS_CMD="timeout $MATRIX_TIMEOUT runTheMatrix.py $EXTRA_MATRIX_ARGS $SLHC_PARAM -j $(${COMMON}/get_cpu_number.sh -2) $WF_LIST"
     echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
     (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log
     WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' $WORKSPACE/matrixTests.log | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
@@ -1113,7 +1114,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true"
   esac
   #End of 71x data hack
   echo '--------------------------------------'
-  ADDON_CMD="CMSSW_SEARCH_PATH=$EX_DATA_SEARCH CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 timeout 7200 addOnTests.py -j ${NCPU}"
+  ADDON_CMD="CMSSW_SEARCH_PATH=$EX_DATA_SEARCH timeout 7200 addOnTests.py -j ${NCPU}"
   echo $ADDON_CMD > $WORKSPACE/addOnTests.log
   STIME=$(date +%s)
   (eval $ADDON_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/addOnTests.log

@@ -1193,7 +1193,7 @@ for BT in ${ENABLE_BOT_TESTS}; do
     if [ "$BT" = "PROFILING" ]; then
         PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
          pushd $WORKSPACE
-         git clone https://github.com/cms-cmpwg/profiling.git
+         git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
          popd
          mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
          report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Profling" ${NO_POST}

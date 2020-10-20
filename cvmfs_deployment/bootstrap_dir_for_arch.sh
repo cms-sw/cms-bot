@@ -16,6 +16,10 @@ fi
 if [ ! -f ${INSTALL_PATH}/${SCRAM_ARCH}/cms/cms-common/1.0/etc/profile.d/init.sh ] ; then
     mkdir -p $INSTALL_PATH
     rm -f ${INSTALL_PATH}/bootstrap.sh
+    OPTS=""
+    if [ "${USE_DEV_CMSPKG}" = "true" ] ; then
+      OPTS="-dev"
+    fi
     wget --tries=5 --waitretry=60 -O ${INSTALL_PATH}/bootstrap.sh http://cmsrep.cern.ch/cmssw/bootstrap.sh
-    dockerrun "sh -ex ${INSTALL_PATH}/bootstrap.sh -a ${SCRAM_ARCH} -repository ${RPMS_REPO} -path ${INSTALL_PATH} setup"
+    dockerrun "sh -ex ${INSTALL_PATH}/bootstrap.sh -a ${SCRAM_ARCH} ${OPTS} -repository ${RPMS_REPO} -path ${INSTALL_PATH} setup"
 fi

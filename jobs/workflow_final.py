@@ -45,7 +45,15 @@ def update_worklog(workflow_dir, jobs):
   for job in jobs["commands"]:
     step_num+=1
     try:
-      cmd_step = int(job['command'].split(" step",1)[-1].strip().split(" ")[0])
+      m = re.match("^.*\s+step([1-9][0-9]*)\s+.*$",job['command'])
+      if m:
+        cmd_step = int(m.group(1))
+      else:
+        m = re.match(".*\s*>\s*step([1-9][0-9]*)_[^\s]+\.log.*$",job['command'])
+        if m:
+          cmd_step = int(m.group(1))
+        else:
+          cmd_step = int(job['command'].split(" step",1)[-1].strip().split(" ")[0])
       while cmd_step>step_num:
         das_log = os.path.join(workflow_dir,"step%s_dasquery.log" % step_num)
         step_num+=1
@@ -65,6 +73,7 @@ def update_worklog(workflow_dir, jobs):
         test_failed+=" 0"
         steps_res.append("PASSED")
     except Exception as e:
+      print("ERROR: Unable to find step number:", job['command'])
       pass
     if job["exit_code"]==-1: failed=True
     if job["exit_code"]>0:
@@ -108,8 +117,6 @@ def update_known_error(worflow, workflow_dir):
 
 def upload_logs(workflow, workflow_dir,exit_code):
   files_to_keep = [ ".txt", ".xml", ".log", ".py", ".json","/cmdLog", "/hostname",".done" ]
-  if (exit_code in [34304, 35584, 22016]) and os.getenv("CMSSW_VERSION","").startswith("CMSSW_10_1_"):
-    files_to_keep.append(".root")
   basedir = os.path.dirname(workflow_dir)
   for wf_file in glob.glob("%s/*" % workflow_dir):
     found=False
@@ -139,5 +146,6 @@ if __name__ == "__main__":
   update_timelog(workflow_dir, jobs)
   update_hostname(workflow_dir)
   update_known_error(workflow, workflow_dir)
-  if not 'CMSSW_DRY_RUN' in os.environ: upload_logs(workflow, workflow_dir, exit_code)
-
+  if not 'CMSSW_DRY_RUN' in os.environ:
+    upload_logs(workflow, workflow_dir, exit_code)
+  run_cmd("touch %s/workflow_upload_done" % workflow_dir)

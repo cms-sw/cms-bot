@@ -9,20 +9,23 @@ if __file__: cmsbot_dir=dirname(dirname(abspath(__file__)))
 else: cmsbot_dir=dirname(dirname(abspath(sys.argv[0])))
 sys.path.insert(0,cmsbot_dir)
 
-from es_utils import get_indexes, close_index, find_indexes
+from es_utils import get_indexes, close_index, find_indexes, open_index
 from time import time
+try: weeks=int(sys.argv[1])
+except: weeks=20
 cur_week=int(((time()/86400)+4)/7)
-
+ignore_index=["cmssdt-ibs"]
 idxs=[]
+odxs=[]
 try:
-  if sys.argv[1]:
-    for ix in sys.argv[1:]:
+  if sys.argv[2]:
+    for ix in sys.argv[2:]:
       ixs = find_indexes(ix)
       if not "open" in ixs: continue
       for i in ixs["open"]: idxs.append(i)
 except:
   types = {"close":{}, "open":{}}
-  rest  = {"close":{}, "open":{}}
+  rest  = {"close":[], "open":[]}
   ixs = find_indexes('cmssdt-*')
   for k in ixs:
     for idx in ixs[k]:
@@ -33,7 +36,9 @@ except:
         if not k in types: types[k]={}
         if not ix in types[k]:types[k][ix]=[]
         types[k][ix].append(wk)
-        if (k == "open") and ((cur_week-int(wk))>4): idxs.append(idx)
+        if ix in ignore_index: continue
+        if (k == "open") and ((cur_week-int(wk))>weeks): idxs.append(idx)
+        if (k == "close") and ((cur_week-int(wk))<=weeks): odxs.append(idx)
       else:
         if not k in rest: rest[k]=[]
         rest[k].append(idx)
@@ -46,4 +51,9 @@ except:
 for idx in sorted(idxs):
   print("Closing ",idx)
   close_index(idx)
+  print("  ",get_indexes(idx).strip())
+
+for idx in sorted(odxs):
+  print("Opening ",idx)
+  open_index(idx)
   print("  ",get_indexes(idx).strip())

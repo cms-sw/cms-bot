@@ -8,27 +8,7 @@ if [ "X$VALIDATE_C_SCRIPT" = "X" ] ; then
   VALIDATE_C_SCRIPT="${HOME}/tools/validate.C"
 fi
 
-cWD=`pwd`
-export pidList=""
 nProc=$(nproc)
-
-function waitForProcesses {  
-    pidList=${pidList}" "${!}
-    export pidList
-    echo $pidList
-    nRunning=`ps -p $pidList | grep -c "^[ ]*[1-9]"`
-    while [ "$nRunning" -ge "$nProc"  ]; do
-        nRunning=`ps -p $pidList | grep -c "^[ ]*[1-9]"`
-	echo "limiting number of parallel processes"
-        sleep 10
-    done
-    cd ${cWD}
-    echo $pidList > lastlist.txt
-}
-
-
-echo Start processing at `date`
-
 touch missing_map.txt
 dL=""
 #check from map patterns to the local
@@ -49,14 +29,14 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     if [ -f "${baseA}/${fN}" ]; then
 	extN=all_${diffN}_${dsN}
 	mkdir -p ${extN}
-	cd ${cWD}/${extN}
-	cp ${VALIDATE_C_SCRIPT} ./
-	echo "Will run on ${fN} in ${cWD}/${extN}"
-	echo "Now in `pwd`"
-	g++ -shared -o validate.so validate.C `root-config --cflags ` -fPIC
-	echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n 
-    .x validate.C+(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log &
-	waitForProcesses
+	pushd ${extN}
+	  cp ${VALIDATE_C_SCRIPT} ./
+	  echo "Will run on ${fN} in ${extN}"
+	  g++ -shared -o validate.so validate.C `root-config --cflags ` -fPIC
+	  echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
+                  .x validate.C+(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log &
+        popd
+        while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi
     #process miniAOD files now
     fNBase=`echo ${fN} | sed -e 's/.root$//g'`
@@ -68,23 +48,13 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
 	echo $mFN
 	extmN=all_mini_${diffN}_${dsN}
 	mkdir -p ${extmN}
-	cd ${cWD}/${extmN}
-	cp ${VALIDATE_C_SCRIPT} ./
-	echo "Will run on ${mFN} in ${cWD}/${extmN}"
-	echo "Now in `pwd`"
-	echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
-        .x validate.C+(\"${extmN}\", \"${baseA}/${mFN}\", \"${baseB}/${mFN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extmN}.log &
-	waitForProcesses
+	pushd ${extmN}
+	  cp ${VALIDATE_C_SCRIPT} ./
+	  echo "Will run on ${mFN} in ${extmN}"
+	  echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
+                  .x validate.C+(\"${extmN}\", \"${baseA}/${mFN}\", \"${baseB}/${mFN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extmN}.log &
+        popd
+        while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi
-
 done
-allPids=`cat lastlist.txt`
-nRunning=1
-timeWaiting=0
-while [ "$nRunning" -gt "0" -a "$timeWaiting" -lt "3600" ]; do
-    nRunning=`ps -p $allPids | grep -c root`
-    echo "waiting maximum 1 more Hour for the processes to finish"
-    sleep 30
-    timeWaiting=$((timeWaiting + 30))
-done
-echo done at `date`
+wait

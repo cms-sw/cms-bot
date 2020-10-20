@@ -3,6 +3,7 @@
 from __future__ import print_function
 import os, sys, platform, glob
 from _py2with3compatibility import run_cmd
+import traceback
 
 try:
     scriptPath = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +13,7 @@ if scriptPath not in sys.path:
     sys.path.append(scriptPath)
 
 from cmsutils import doCmd, MachineCPUCount, getHostName
+if MachineCPUCount<=0: MachineCPUCount=2
 
 
 # TODO IDE says "Unresolved reference 'ActionError'", where it is defined?
@@ -58,6 +60,7 @@ class UnitTester(IBThreadBase):
         try:
             self.splitUnitTestLogs()
         except Exception as e:
+            traceback.print_exc()
             print("ERROR splitting unit test logs :", str(e))
         return
 
@@ -89,7 +92,8 @@ class UnitTester(IBThreadBase):
             print('unitTest> Skipping unit tests for MacOS')
             return
         if self.xType == 'GPU':
-            cmd = "cd " + self.startDir + "; scram b -f echo_cuda_USED_BY | tr ' ' '\\n' | grep '^self/' | cut -d/ -f2-3 > cuda_pkgs.txt; mv src src.full;"
+            cmd = "cd " + self.startDir + "; scram b -f echo_cuda_USED_BY | tr ' ' '\\n' | grep '^\\(self\\|cmssw\\)/' | cut -d/ -f2-3 > cuda_pkgs.txt; "
+            cmd = cmd + " cat  cuda_pkgs.txt; mv src src.full;"
             cmd = cmd + " for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram build -r echo_CXX"
             ret = runCmd(cmd)
             if ret != 0:
@@ -104,8 +108,7 @@ class UnitTester(IBThreadBase):
         try:
             cmd = "cd " + self.startDir + "; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
             cmd += " if which timeout 2>/dev/null; then TIMEOUT=timeout; fi ; "
-            cmd += 'PATH=' + TEST_PATH + ':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j ' + str(
-                MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
+            cmd += 'PATH=' + TEST_PATH + ':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j ' + str(MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
             cmd += 'touch nodelete.done; ls -l nodelete.*'
             print('unitTest> Going to run ' + cmd)
             ret = runCmd(cmd)

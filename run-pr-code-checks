@@ -7,10 +7,17 @@ export USER_CODE_CHECKS=$2
 BUILD_NUMBER=$3
 DRY_RUN=$4
 REPOSITORY=$5
-CODE_FORMAT=$6
-CODE_CHECKS=$7
-if [ "X$CODE_CHECKS" = "X" ] ; then CODE_CHECKS=true ; fi
-if [ "X$CODE_FORMAT" = "X" ] ; then CODE_FORMAT=false ; fi
+CODE_CHECKS=true
+CODE_FORMAT=false
+MULTIPLE_FILES_CHANGES=true
+
+if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050850 ] ; then
+  CODE_FORMAT=true
+  rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
+  git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules
+  mv scram-buildrules/SCRAM  $CMSSW_BASE/config/SCRAM
+fi
+
 if [ "X$DRY_RUN" = "X" ] ; then DRY_RUN=false ; fi
 if [ "X${REPOSITORY}" = "X" ] ; then REPOSITORY="cms-sw/cmssw" ;fi
 REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
@@ -20,26 +27,11 @@ if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
 cd $CMSSW_BASE
 rm -rf ${CMSSW_BASE}/upload
 mkdir ${CMSSW_BASE}/upload
-
-#Enable code format if PR is made by cmsbuild
-if ! $CODE_FORMAT ; then
-  curl -s https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} > ${PULL_REQUEST}.txt
-  if [ $(grep '"title": ' ${PULL_REQUEST}.txt | grep '"Running code-format for ' | wc -l) -eq 1 ] ; then
-    if [ $(grep '"login": ' ${PULL_REQUEST}.txt | grep '"cmsbuild"' | wc -l) -eq 1 ] ; then
-      CODE_FORMAT=true
-    fi
-  fi
-fi
-
-if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050800 ] ; then
-  rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
-  git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules
-  mv scram-buildrules/SCRAM  $CMSSW_BASE/config/SCRAM
-fi
+runTheMatrix.py -n -e -i all > $CMSSW_BASE/upload/wf_orig.txt 2>&1 || true
 
 curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $CMSSW_BASE/upload/all-changed-files.txt
 grep -v '^[^/]*/[^/]*/test/' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-checks-files.txt          || true
-grep -v '^[^/]*/[^/]*/data/' $CMSSW_BASE/upload/code-checks-files.txt     > $CMSSW_BASE/upload/filename-code-checks-files.txt || true
+grep -v '^[^/]*/[^/]*/data/' $CMSSW_BASE/upload/code-checks-files.txt > $CMSSW_BASE/upload/filename-code-checks-files.txt || true
 $CMS_BOT_DIR/cms-filename-checks.py $CMSSW_BASE/upload/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > $CMSSW_BASE/upload/invalid-filenames.txt || true
 echo "Changed files:"
 cat $CMSSW_BASE/upload/code-checks-files.txt
@@ -62,11 +54,27 @@ pushd $CMSSW_BASE/src
   $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > $CMSSW_BASE/upload/invalid_files.txt || true
 popd
 
+source $CMS_BOT_DIR/jenkins-artifacts
+
 #If we have any non-tests changed files
 touch ${CMSSW_BASE}/upload/code-checks.patch
 if $CODE_CHECKS ; then
   if [ -s $CMSSW_BASE/upload/code-checks-files.txt ] ; then
-    scram build -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt"  2>&1 | tee ${CMSSW_BASE}/upload/code-checks.log
+    ERR=false
+    scram build -k -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt" > ${CMSSW_BASE}/upload/code-checks.log 2>&1 || ERR=true
+    if $ERR ; then
+      echo '-code-checks' > ${CMSSW_BASE}/upload/code-checks-err.log
+      echo '' >> ${CMSSW_BASE}/upload/code-checks-err.log
+      echo 'ERROR: Build errors found during clang-tidy run.' >> ${CMSSW_BASE}/upload/code-checks-err.log
+      echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
+      grep -A 3 ': error: \|gmake: \*\*\*' ${CMSSW_BASE}/upload/code-checks.log | sed "s|$CMSSW_BASE/src/||" >> ${CMSSW_BASE}/upload/code-checks-err.log
+      echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
+      if [ "$DRY_RUN" != "true" ] ; then
+        send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+        ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${CMSSW_BASE}/upload/code-checks-err.log
+      fi
+      exit 0
+    fi
     if [ -e ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ] ; then
       mv ${CMSSW_BASE}/tmp/${SCRAM_ARCH}/code-checks-logs ${CMSSW_BASE}/upload
     fi
@@ -82,9 +90,9 @@ fi
 touch ${CMSSW_BASE}/upload/code-format.patch
 if $CODE_FORMAT ; then
   if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
-    grep -E -i '\.(cpp|cc|cxx|h|hpp|hh)$' $CMSSW_BASE/upload/all-changed-files.txt > $CMSSW_BASE/upload/code-format-files.txt || true
+    cp $CMSSW_BASE/upload/all-changed-files.txt $CMSSW_BASE/upload/code-format-files.txt
     if [ -s $CMSSW_BASE/upload/code-format-files.txt ] ; then
-      scram build -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="$CMSSW_BASE/upload/code-format-files.txt"  2>&1 | tee $CMSSW_BASE/upload/code-format.log
+      scram build -k -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="$CMSSW_BASE/upload/code-format-files.txt" > $CMSSW_BASE/upload/code-format.log 2>&1
       pushd $CMSSW_BASE/src
         git diff > ${CMSSW_BASE}/upload/code-format.patch
         if [ -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
@@ -95,8 +103,16 @@ if $CODE_FORMAT ; then
   fi
 fi
 
+scram build -j $NUM_PROC CompilePython > ${CMSSW_BASE}/upload/scram_build.log 2>&1 || true
+runTheMatrix.py -n -e -i all > ${CMSSW_BASE}/upload/wf_new.txt 2>&1 || true
+$CMS_BOT_DIR/pr-checks/find-changed-workflows.py $CMSSW_BASE/upload/wf_orig.txt ${CMSSW_BASE}/upload/wf_new.txt > ${CMSSW_BASE}/upload/wf_diff.txt 2>&1 || true
+
+if ${MULTIPLE_FILES_CHANGES} ; then
+    ${CMS_BOT_DIR}/github_scripts/simultaneous_files_modifications_by_PRs.py ${PULL_REQUEST} > \
+        ${CMSSW_BASE}/upload/multiple_files_changes.txt || true
+fi
+
 if [ "$DRY_RUN" != "true" ] ; then
-  source $CMS_BOT_DIR/jenkins-artifacts
   send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
 fi
 RES="+code-checks"
@@ -122,6 +138,12 @@ if [ $DSIZE -gt 0 ] ; then MSG="${MSG}@N@@N@- This PR adds an extra ${DSIZE}KB t
 if [ -s ${CMSSW_BASE}/upload/invalid_files.txt ] ; then
   MSG="${MSG}@N@@N@- Found files with invalid states:@N@$(cat ${CMSSW_BASE}/upload/invalid_files.txt | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
 fi
+
+if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
+    MSG="${MSG}@N@@N@- There are other open Pull requests which might conflict with changes you have proposed:"
+    MSG="${MSG}@N@$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
+fi
+
 if [ "$DRY_RUN" != "true" ] ; then
   ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
 fi

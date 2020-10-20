@@ -27,13 +27,13 @@ def main():
     parser.add_argument("-d", "--destination")
     parser.add_argument("-c", "--cached_pr", default=None)
     parser.add_argument("-b", "--branch", default=None)
+    parser.add_argument("-p", "--pull", default=None)
     parser.add_argument("-l", "--logging", default="DEBUG", choices=logging._levelNames, help="Set level of logging")
     args = parser.parse_args()
     logger.setLevel(args.logging)
 
     gh = Github(login_or_token=open(expanduser(GH_TOKEN)).read().strip())
     repo = gh.get_repo(args.repo)
-    pr_list = get_pull_requests(repo, branch=args.branch)
 
     old_prs_dict = {}
     if args.cached_pr:
@@ -43,12 +43,23 @@ def main():
         except Exception as e:
             logger.warning('Could not load a dumped prs', str(e))
 
+    pr_list = []
+    rez = {}
+    if args.pull:
+        import copy
+        rez = copy.deepcopy(old_prs_dict)
+        pr_list = [ repo.get_pull(int(args.pull)) ]
+    else:
+        pr_list = get_pull_requests(repo, branch=args.branch)
 
     print("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
-    rez = {}
     for pr in pr_list:
-        rez[pr.number] = {
-            'number': int(pr.number),
+        nr = str(pr.number)
+        if pr.state == 'closed':
+            if nr in rez: del rez[nr]
+            continue
+        rez[nr] = {
+            'number': int(nr),
             'state': pr.state,
             'created_at': int(pr.created_at.strftime("%s")),
             'updated_at': int(pr.updated_at.strftime("%s")),
@@ -56,15 +67,14 @@ def main():
         }
 
         # to check for cached PRs
-        nr = str(pr.number)
         if nr in old_prs_dict.keys():
             pr_old = old_prs_dict[nr]
             if int(get_unix_time(pr.updated_at)) == pr_old['updated_at']:
-                rez[pr.number]['changed_files_names'] = pr_old['changed_files_names']
-                logger.debug(" Using from cache".format(nr))
+                rez[nr]['changed_files_names'] = pr_old['changed_files_names']
+                logger.debug(" Using from cache %s" % nr)
                 continue
-        logger.debug("!PR was updated".format(nr))
-        rez[pr.number]['changed_files_names'] = pr_get_changed_files(pr)
+        logger.debug("!PR was updated %s" % nr)
+        rez[nr]['changed_files_names'] = pr_get_changed_files(pr)
 
     with open(args.destination, 'w') as d:
         json.dump(rez, d, sort_keys=True, indent=4)

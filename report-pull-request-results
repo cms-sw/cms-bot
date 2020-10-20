@@ -1,6 +1,12 @@
 #!/bin/bash
 # Will run report-pull-request-results.py with all parameters passed
-if [ "X${SCRAMRT_SET}" != "X" ] ; then eval $(scram unset -sh) ; fi
+if [ "X${SCRAMRT_SET}" != "X" ] ; then
+  OLD_SCRAM_ARCH="${SCRAM_ARCH}"
+  OLD_CMSSW_VERSION="${CMSSW_VERSION}"
+  eval $(scram unset -sh)
+  export CMSSW_VERSION="${OLD_CMSSW_VERSION}"
+  export SCRAM_ARCH="${OLD_SCRAM_ARCH}"
+fi
 for x in 0 1 2 ; do
   # Retry 3 times to avoid Github glitches. Exit if successful
   $(dirname $0)/report-pull-request-results.py "$@" && exit 0

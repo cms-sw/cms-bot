@@ -1,4 +1,5 @@
 #!/bin/sh -ex
+
 function Jenkins_GetCPU ()
 {
   ACTUAL_CPU=$(nproc)

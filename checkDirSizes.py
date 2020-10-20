@@ -15,8 +15,8 @@ def doDu(what):
 
 if __name__ == '__main__':
   try:
-    f = open('dirSizeInfo.pkl', 'w')
-    pklr = Pickler(f)
+    f = open('dirSizeInfo.pkl', 'wb')
+    pklr = Pickler(f, protocol=2)
     pklr.dump(doDu("src lib bin"))
     pklr.dump(doDu("src/*/*"))
     f.close()

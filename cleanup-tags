@@ -16,26 +16,44 @@ function cleanup_git_tag ()
 DAYS_TO_KEEP=21
 ECHO=
 if [ "X$DRY_RUN" = "Xtrue" ]; then ECHO=echo; fi
-rm -rf cmssw cmsdist cmssw-tags cmsdist-tags
 
-echo "Working on cmssw tags"
-git init cmssw
-pushd cmssw
-git remote add origin git@github.com:cms-sw/cmssw
-git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '^CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../cmssw-tags
-for tag in $(grep '^CMSSW_' ../cmssw-tags) ; do
+repo="cmssw"
+echo "Working on ${repo} tags"
+rm -rf ${repo} ${repo}-tags
+git init ${repo}
+pushd ${repo}
+git remote add origin git@github.com:cms-sw/${repo}
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '^CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../${repo}-tags
+for tag in $(grep '^CMSSW_' ../${repo}-tags) ; do
   cleanup_git_tag $tag
 done
-echo "Done cmssw tags"
+echo "Done ${repo} tags"
 popd
+rm -rf ${repo} ${repo}-tags
 
-echo "Working on cmsdist tags"
-git init cmsdist
-pushd cmsdist
-git remote add origin git@github.com:cms-sw/cmsdist
-git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '/CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../cmsdist-tags
-for tag in $(grep '^\(IB\|ALL\|ERR\)/' ../cmsdist-tags) ; do 
+repo="cmssw-cfipython"
+echo "Working on ${repo} tags"
+rm -rf ${repo} ${repo}-tags
+git init ${repo}
+pushd ${repo}
+git remote add origin git@github.com:cms-sw/${repo}
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '^CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../${repo}-tags
+for tag in $(grep '^CMSSW_' ../${repo}-tags) ; do
   cleanup_git_tag $tag
 done
-echo "Done cmsdist tags"
+echo "Done ${repo} tags"
+popd
+rm -rf ${repo} ${repo}-tags
 
+repo="cmsdist"
+echo "Working on ${repo} tags"
+rm -rf ${repo} ${repo}-tags
+git init ${repo}
+pushd ${repo}
+git remote add origin git@github.com:cms-sw/${repo}
+git ls-remote --tags origin | grep refs/tags | sed -e 's|.*refs/tags/||' | grep '/CMSSW_' | grep '_X_' | grep '_2[0-9][0-9][0-9]-[0-1][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]' | sort > ../${repo}-tags
+for tag in $(grep '^\(IB\|ALL\|ERR\)/' ../${repo}-tags) ; do 
+  cleanup_git_tag $tag
+done
+echo "Done ${repo} tags"
+rm -rf ${repo} ${repo}-tags

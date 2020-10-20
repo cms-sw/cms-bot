@@ -21,13 +21,15 @@
           <default>
             <comparator class="hudson.util.CaseInsensitiveComparator"/>
           </default>
-          <int>3</int>
+          <int>4</int>
           <string>CMS_BOT_DIR</string>
           <string>@WORK_DIR@/cache/cms-bot</string>
           <string>CMSSW_GIT_REFERENCE</string>
           <string>/cvmfs/cms.cern.ch/cmssw.git.daily</string>
           <string>PYTHONPATH</string>
-          <string>/cvmfs/cms-ib.cern.ch/jenkins-env/python/shared</string>
+          <string>/cvmfs/cms-ib.cern.ch/jenkins-env/python/PyGithub</string>
+          <string>SINGULARITY_OPTIONS</string>
+          <string>--nv</string>
         </tree-map>
       </envVars>
     </hudson.slaves.EnvironmentVariablesNodeProperty>

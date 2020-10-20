@@ -104,7 +104,7 @@ def getRelevantDiff(l1,l2,maxInFile=20):
 
 
 def runCommand(c):
-    p=sub.Popen(c,stdout=sub.PIPE,stderr=sub.PIPE)
+    p=sub.Popen(c,stdout=sub.PIPE,stderr=sub.PIPE,universal_newlines=True)
     output=p.communicate()
     return output
 
@@ -242,7 +242,7 @@ def summaryComp(compDir):
 qaIssues=False
 
 # one way to set up for local tests..
-#login to ssh cmssdt03.cern.ch
+#login to ssh cmssdt server (see CMSSDT_SERVER in ./cmssdt.sh for server name)
 #copy out data from a recent pull request comparison 
 #cd /data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/CMSSW_10_0_X_2017-11-05-2300/slc6_amd64_gcc630/-GenuineIntel
 #scp -r matrix-results/ dlange@cmsdev01:/build/dlange/171103/t1/ 

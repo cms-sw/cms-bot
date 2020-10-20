@@ -7,7 +7,7 @@ function modify_comment_all_prs() {
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         ${CMS_BOT_DIR}/modify_comment.py -r ${PR_NAME_AND_REPO} -t JENKINS_TEST_URL \
-            -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" ${PR_NR} ${DRY_RUN} || true
+            -m "${1}https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" ${PR_NR} ${DRY_RUN} || true
     done
 }
 
@@ -26,6 +26,23 @@ function report_pull_request_results_all_prs_with_commit() {
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
         ${CMS_BOT_DIR}/report-pull-request-results $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR} -c ${LAST_PR_COMMIT}
+    done
+}
+
+function  mark_commit_status_all_prs () {
+  echo "skipped:  mark_commit_status_all_prs"
+}
+
+function mark_commit_status_all_prsX () {
+    CONTEXT="${SCRAM_ARCH}/$1"; shift
+    STATE=$1; shift
+    CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
+    if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
+    for PR in ${PULL_REQUESTS} ; do
+        PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
+        PR_NR=$(echo ${PR} | sed 's/.*#//' )
+        LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
+        ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "${CONTEXT}" -s "${STATE}" "$@"
     done
 }
 

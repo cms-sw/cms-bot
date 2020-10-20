@@ -1,5 +1,12 @@
-THISDIR=$(dirname $BASH_SOURCE)
+ARCH=$(uname -m)/$(cmsos | cut -d_ -f1)
+THISDIR=$(cd $(dirname ${BASH_SOURCE:-${(%):-%N}}) >/dev/null 2>&1; /bin/pwd)
 SELECTED_VERSION=${1-current}
+if [ ! -e ${THISDIR}/${ARCH}/current ] ; then
+  echo "ERROR: Unsupported architecture ${ARCH}. Supported architectures are:"
+  echo $(find ${THISDIR} -maxdepth 3 -mindepth 3 -name current | sed "s|/current||;s|${THISDIR}/||")
+  return
+fi
+THISDIR="${THISDIR}/${ARCH}"
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then
   echo "Error: Unable to find rucio version '${SELECTED_VERSION}'" >&2
   return
@@ -8,7 +15,7 @@ PYTHON_DIR=$(grep '#!/' ${THISDIR}/${SELECTED_VERSION}/bin/rucio | sed 's|^#!||;
 if [ -e ${PYTHON_DIR}/etc/profile.d/init.sh ] ; then
   source ${PYTHON_DIR}/etc/profile.d/init.sh
 fi
-PY_PATH=$(ls -d ${THISDIR}/${SELECTED_VERSION}/lib/python*/site-packages)
+PY_PATH=$(ls -d --color=never ${THISDIR}/${SELECTED_VERSION}/lib/python*/site-packages)
 export PATH=${THISDIR}/${SELECTED_VERSION}/bin${PATH:+:$PATH}
 export PYTHONPATH=${PY_PATH}${PYTHONPATH:+:$PYTHONPATH}
 export RUCIO_HOME=${THISDIR}/${SELECTED_VERSION}

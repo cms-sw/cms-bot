@@ -7,8 +7,9 @@ LOG_SRC=$2
 LOG_DES=$3
 LOCAL_LOGDIR=$WORKSPACE/cmsBuild_BUILD_logs
 mkdir -p ${LOCAL_LOGDIR}/js
+if [ -d ${LOG_SRC}/../../DEPS ] ; then mv ${LOG_SRC}/../../DEPS ${LOCAL_LOGDIR}/DEPS ; fi
 if [ -f $WORKSPACE/renderPRTests.js ] ; then cp $WORKSPACE/renderPRTests.js ${LOCAL_LOGDIR}/js/ ; fi
-for f in summary.html testsResults.txt cmsswtoolconf.log ; do
+for f in summary.html testsResults.txt cmsswtoolconf.log externals.json ; do
   if [ -f $WORKSPACE/$f ] ; then cp $WORKSPACE/$f ${LOCAL_LOGDIR}/ ; fi
 done
 if [ -d "${LOG_SRC}" ] ; then
@@ -18,6 +19,9 @@ if [ -d "${LOG_SRC}" ] ; then
       mkdir -p ${LOCAL_LOGDIR}/${dir}
       mv $log ${LOCAL_LOGDIR}/${dir}/
       [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
+      json=$(basename $(dirname $dir)).json
+      [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${dir}/
+      [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${dir}/
     done
   popd
 fi

@@ -3,6 +3,10 @@
   "mappings": {
     "cmssdt-unittests": {
       "properties": {
+        "@timestamp": {
+          "format": "yyyy-MM-dd HH:mm:ss",
+          "type": "date"
+        },
         "architecture": {
           "index": "not_analyzed",
           "type": "string"
@@ -35,5 +39,5 @@
       "number_of_shards": "1"
     }
   },
-  "template": "cmssdt-ibs-*"
+  "template": "cmssdt-ibs"
 }

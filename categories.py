@@ -4,13 +4,14 @@ from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
 from categories_map import CMSSW_CATEGORIES
 from repo_config import CMSBUILD_USER
+from releases import SPECIAL_RELEASE_MANAGERS
 
 authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
-CMSSW_L1 = ["davidlange6", "fabiocos", "kpedro88"]
-APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar", "slava77" ] + CMSSW_L1))
+CMSSW_L1 = ["dpiparo", "silviodonato","qliphy"]
+APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar"] + CMSSW_L1 + SPECIAL_RELEASE_MANAGERS))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
-TRIGGER_PR_TESTS = list(set([ "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
+TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-","mmusich"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
 PR_HOLD_MANAGERS = [ "kpedro88" ]
 
 COMMON_CATEGORIES = [ "orp", "tests", "code-checks" ]
@@ -19,7 +20,7 @@ EXTERNAL_REPOS = [ "cms-data", "cms-externals", gh_user]
 
 CMSSW_REPOS = [ gh_user+"/"+gh_cmssw ]
 CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
-CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + [ "smuzaffar", "Dr15Jones" ]))
+CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + [ "smuzaffar", "Dr15Jones", "makortel" ]))
 COMPARISON_MISSING_MAP = [ "slava77" ]
 
 CMSSW_L2 = {
@@ -30,43 +31,49 @@ CMSSW_L2 = {
   "alja":             ["visualization"],
   "andrius-k":        ["dqm"],
   "benkrikler":       ["l1"],
+  "chayanit":         ["pdmv"],
   "civanch":          ["simulation", "geometry", "fastsim"],
-  "cmsdoxy":          ["docs"],
   "cvuosalo":         ["geometry"],
   "davidlange6":      ["operations"],
-  "efeyazgan":        ["generators"],
   "emeschi":          ["daq"],
+  "ErnestaP":         ["dqm"],
   "fabiocos":         ["operations"],
   "fgolf":            ["xpog"],
-  "franzoni":         ["operations", "alca"],
-  "fwyzard":          ["hlt"],
+  "franzoni":         ["operations"],
+  "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
-  "gudrutis":         ["externals"],
+  "gouskos":          ["xpog"],
+  "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
   "jfernan2":         ["dqm"],
+  "jordan-martins":   ["pdmv"],
+  "jpata":            ["reconstruction"],
   "kmaeshima":        ["dqm"],
   "fioriNTU":         ["dqm"],
   "kpedro88":         ["upgrade"],
   "lveldere":         ["fastsim"],
+  "makortel":         ["heterogeneous", "core", "visualization", "geometry"],
+  "mariadalfonso":    ["xpog"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
-  "mommsen":          ["daq"],
+  "mkirsano":         ["generators"],   
   "mrodozov":         ["externals"],
   "perrotta":         ["reconstruction"],
-  "peruzzim":         ["xpog"],
-  "pgunnell":         ["pdmv"],
   "pohsun":           ["alca"],
-  "prebello":         ["pdmv"],
-  "qliphy":           ["generators"],
+  "qliphy":           ["operations"],
   "rekovic":          ["l1"],
   "santocch":         ["analysis"],
-  "schneiml":         ["dqm"],
+  "sbein":            ["fastsim"],
+  "SiewYan":          ["generators"], 
+  "silviodonato":     ["operations"],
   "slava77":          ["reconstruction"],
+  "smorovic":         ["daq"],
   "smuzaffar":        ["core", "externals"],
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
   "tocheng":          ["alca"],
-  "zhenhu":           ["pdmv"],
+  "wajidalikhan":     ["pdmv"],
   "christopheralanwest": ["alca"],
+  "yuanchao":         ["alca"],
   CMSBUILD_USER:      ["tests" ],
 }
 
@@ -75,6 +82,7 @@ CMS_REPOS = set(CMSDIST_REPOS + CMSSW_REPOS + EXTERNAL_REPOS)
 from datetime import datetime
 COMMENT_CONVERSION = {}
 COMMENT_CONVERSION['kpedro88']={'comments_before': datetime.strptime('2018-07-13','%Y-%m-%d'), 'comments':[('+1', '+upgrade')]}
+COMMENT_CONVERSION['qliphy']={'comments_before': datetime.strptime('2020-07-24','%Y-%m-%d'), 'comments':[('+1', '+generators'),('-1', '-generators')]}
 
 
 def external_to_package(repo_fullname):

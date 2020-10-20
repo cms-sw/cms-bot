@@ -24,13 +24,13 @@ cd $WORKSPACE
 here=$(dirname $0)
 script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
 
-X509_PROXY_FILE="x509up_u$(id -u)"
-voms-proxy-init --voms cms --out $X509_PROXY_FILE
-chmod 0600 $X509_PROXY_FILE
+#X509_PROXY_FILE="x509up_u$(id -u)"
+#voms-proxy-init --voms cms --out $X509_PROXY_FILE
+#chmod 0600 $X509_PROXY_FILE
 
 echo '#!/bin/bash -ex' > ${script_name}.sh
 echo 'export WORKSPACE=${_CONDOR_SCRATCH_DIR}' >> ${script_name}.sh
-echo "export X509_USER_PROXY=\${WORKSPACE}/$X509_PROXY_FILE" >> ${script_name}.sh
+#echo "export X509_USER_PROXY=\${WORKSPACE}/$X509_PROXY_FILE" >> ${script_name}.sh
 echo "#### User Script #### " >> ${script_name}.sh
 cat $1 | grep -v "/condor/submit.sh  *" >> ${script_name}.sh
 chmod +x ${script_name}.sh

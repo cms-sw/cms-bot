@@ -1,11 +1,16 @@
 #!/bin/bash -ex
-ARTIFACTS_USER=$(whoami)
+cmssdt_script="$(dirname $0)/cmssdt.sh"
+if [ ! -e "${cmssdt_script}" ] ; then
+  cmssdt_script=$(cd $(dirname ${BASH_ARGV[0]}); /bin/pwd)/cmssdt.sh
+fi
+source $cmssdt_script
+if [ "$ARTIFACTS_USER" = "" ] ; then ARTIFACTS_USER=$(whoami) ; fi
 case ${ARTIFACTS_USER} in
   cmsbld|cvcmsib|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;
 esac
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins" ; fi
-ARTIFACTS_MACHINE="${ARTIFACTS_USER}@cmssdt03.cern.ch"
+ARTIFACTS_MACHINE="${ARTIFACTS_USER}@${CMSSDT_SERVER}"
 ARTIFACT_BASE_DIR_MAIN="/data/sdt/SDT/jenkins-artifacts"
 ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
 SSH_OPTS="-q -o ConnectTimeout=60 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
@@ -42,7 +47,7 @@ function send_jenkins_artifacts ()
   if [ "X$IS_DIR" = "X" ] ; then DES_DIR=$(dirname $DES) ; fi
   for i in 1 2 3 4 5 6 7 8 9 ;  do
     ( ssh $SSH_OPTS ${ARTIFACTS_MACHINE} mkdir -p ${ARTIFACT_BASE_DIR}/${DES_DIR} && \
-      rsync -az -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} && echo "JA_STATUS=OK") && return
+      rsync -azl -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} && echo "JA_STATUS=OK") && return
     sleep 60
   done
   echo "JA_STATUS=ERROR"

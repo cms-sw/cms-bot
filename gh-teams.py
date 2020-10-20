@@ -7,10 +7,12 @@ from argparse import ArgumentParser
 from sys import exit
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api,add_organization_member
+from github_utils import create_team,get_pending_members
+from categories import CMSSW_L1, CMSSW_L2
 setdefaulttimeout(120)
 
-CMS_OWNERS = [ "smuzaffar", "cmsbuild", "davidlange6", "fabiocos" ]
-CMS_SDT    = [ "mrodozov", "gudrutis" ]
+CMS_OWNERS = [ "davidlange6", "smuzaffar", "cmsbuild" ] + CMSSW_L1
+CMS_SDT    = [ "mrodozov" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
 REPO_OWNERS = {}
@@ -47,7 +49,7 @@ REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = {
   "repositories" : { "RecoLuminosity-LumiDB": "admin"}
 }
 REPO_TEAMS["cms-sw"]["generators-l2"] = { 
-  "members" : ["agrohsje","efeyazgan","qliphy"], 
+  "members" : ["GurpreetSinghChahal","agrohsje"], 
   "repositories" :  { "genproductions" : "admin",
                       "xsecdb" : "admin"}
 }
@@ -56,11 +58,11 @@ REPO_TEAMS["cms-sw"]["Dqm-Integration-developers"] = {
   "repositories" : { "DQM-Integration": "push"}
 }
 REPO_TEAMS["cms-sw"]["configdb-owners"] = {
-  "members" : ["fwyzard", "Martin-Grunewald", "vinnie87"],
+  "members" : ["fwyzard", "Martin-Grunewald", "vinnie87", "Sam-Harper"],
   "repositories" : { "hlt-confdb":"admin", "web-confdb":"admin"}
 }
 REPO_TEAMS["cms-sw"]["cmsdist-writers"] = {
-  "members" : [ "h4d4" ] + CMS_SDT,
+  "members" : [ "h4d4", "muhammadimranfarooqi" ] + CMS_SDT,
   "repositories" : { "cmsdist":"push" }
 }
 REPO_TEAMS["cms-sw"]["cmssw-l2"] = {
@@ -76,9 +78,22 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
   "repositories" : { "*":"push", "!cmssw" : "pull", "!cmsdist" : "pull" }
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
-  "members" : [ "smuzaffar", "gudrutis" ],
-  "repositories" : { "cmssdt-wiki ":"admin" }
+  "members" : [ "smuzaffar" ],
+  "repositories" : { "cmssdt-wiki":"admin" }
 }
+
+REPO_TEAMS["cms-sw"]["all-l2"] = {
+  "members" : CMSSW_L1,
+}
+
+for user in CMSSW_L2:
+  REPO_TEAMS["cms-sw"]['all-l2']["members"].append(user)
+  for cat in CMSSW_L2[user]:
+    cat = '%s-l2' % cat
+    if not cat in REPO_TEAMS["cms-sw"]:
+      REPO_TEAMS["cms-sw"][cat] = {"members": []}
+    REPO_TEAMS["cms-sw"][cat]["members"].append(user)
+
 #################################
 parser = ArgumentParser()
 parser.add_argument("-o", "--organization", dest="organization", help="Github Organization name e.g. cms-sw. Default is * i.e. all cms origanizations", type=str, default="*")
@@ -93,6 +108,11 @@ err_code=0
 for org_name in CMS_ORGANIZATIONS:
   if args.organization!="*" and org_name!=args.organization: continue
   print("Wroking on Organization ",org_name)
+  pending_members = []
+  for user in get_pending_members(GH_TOKEN, org_name):
+    user = user['login'].encode("ascii", "ignore")
+    pending_members.append(user)
+  print("Pending Invitations: %s" % ",".join(["@%s" % u for u in pending_members]))
   api_rate_limits(gh)
   org = gh.get_organization(org_name)
   ok_mems = []
@@ -115,7 +135,24 @@ for org_name in CMS_ORGANIZATIONS:
   if not chg_flag: print("    OK Owners")
   print("  Looking for teams:",list(REPO_TEAMS[org_name].keys()))
   org_repos =  [ repo for repo in org.get_repos() ]
-  for team in org.get_teams():
+  teams = org.get_teams()
+  chg_flag=0
+  for team in REPO_TEAMS[org_name]:
+    flag = False
+    for xteam in teams:
+      if xteam.name == team:
+        flag = True
+        break
+    if flag: continue
+    print("    => Creating team",team)
+    if not args.dryRun:
+      create_team(GH_TOKEN, org_name, team, "cmssw team for "+team)
+      chg_flag+=1
+  total_changes+=chg_flag
+  org_members = [ mem.login.encode("ascii", "ignore") for mem in org.get_members() ]
+  print("  All members: ",org_members)
+  if chg_flag: teams = org.get_teams()
+  for team in teams:
     print("    Checking team:",team.name)
     api_rate_limits(gh,msg=False)
     team_info = {}
@@ -136,7 +173,7 @@ for org_name in CMS_ORGANIZATIONS:
         api_rate_limits(gh,msg=False)
         login = mem.login.encode("ascii", "ignore")
         if not login in cache["users"]: cache["users"][login] = mem
-        if (login in members) or ("*" in members):
+        if (login in members):
           ok_mems.append(login)
         else:
           if not args.dryRun: team.remove_from_members(mem)
@@ -144,6 +181,13 @@ for org_name in CMS_ORGANIZATIONS:
           chg_flag+=1
       for login in [ l for l in members if not l in ok_mems ]:
         api_rate_limits(gh,msg=False)
+        if login in pending_members:
+          print("    => Can not add member, pending invitation: %s" % login)
+          continue
+        if login not in org_members:
+            if not args.dryRun: add_organization_member(GH_TOKEN, org_name, login, role="member")
+            print("      =>Inviting member:",login)
+            continue
         if not login in cache["users"]: cache["users"][login] = gh.get_user(login)
         if not args.dryRun:
           try: team.add_to_members(cache["users"][login])
@@ -154,6 +198,7 @@ for org_name in CMS_ORGANIZATIONS:
         chg_flag+=1
     total_changes+=chg_flag
     if not chg_flag: print("      OK Team members")
+    if not "repositories" in team_info: continue
     team_repos      = [ repo for repo in team.get_repos() ]
     team_repos_name = [ repo.name.encode("ascii", "ignore") for repo in team_repos ]
     print("      Checking team repositories")

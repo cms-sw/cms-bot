@@ -1,9 +1,9 @@
 from __future__ import print_function
 from sys import argv
 from hashlib import md5
-import json
+import json, sys
 from _py2with3compatibility import run_cmd, urlopen, Request
-from os.path import exists, dirname, abspath, join, basename
+from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
 
 try:
@@ -197,7 +197,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
         if 'invalid_prs' in cache and pr_hash_id in cache['invalid_prs']: continue
         print("Checking ", pr_number, author, parent_hash)
         try:
-            pr_md5 = md5(pr_number + "\n").hexdigest()
+            pr_md5 = md5((pr_number + "\n").encode()).hexdigest()
             pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
             print("Checking cached file: " + pr_cache)
             if not exists(pr_cache):
@@ -301,6 +301,14 @@ def get_commit_info(repo, commit):
     return {}
 
 
+def create_team(token, org, team, description):
+    params = {"name": team, "description": description, "permission": "admin", "privacy": "closed"}
+    return github_api("/orgs/%s/teams" % org, token, params, method="POST")
+
+def get_pending_members(token, org):
+    return github_api("/orgs/%s/invitations" % org, token, method="GET")
+
+
 def get_organization_members(token, org, role="all", filter="all"):
     return github_api("/orgs/%s/members" % org, token, params={"role": role, "filter": filter}, method="GET")
 
@@ -347,7 +355,7 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
-    if page <= 1:
+    if (page <= 1) and (method=='GET'):
         link = response.info().getheader("Link")
         if link:
             pages = [int(l.split("page=", 1)[1].split(">")[0]) for l in link.split(" ") if
@@ -391,3 +399,17 @@ def pr_get_changed_files(pr):
 
 def get_unix_time(data_obj):
     return data_obj.strftime("%s")
+
+
+def get_gh_token(repository=None):
+  if repository:
+    repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
+    if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+  import repo_config
+  return open(expanduser(repo_config.GH_TOKEN)).read().strip()
+
+
+def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None):
+  if not token: token = get_gh_token(repository)
+  params = {'state': state, 'target_url': url, 'description': description, 'context': context}
+  github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)

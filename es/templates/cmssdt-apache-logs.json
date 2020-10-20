@@ -1,8 +1,11 @@
 {
   "aliases": {},
   "mappings": {
-    "cmssdt-apache": {
+    "cmssdt-apache-*": {
       "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
         "agent": {
           "index": "not_analyzed",
           "type": "string"
@@ -54,5 +57,5 @@
       "number_of_shards": "1"
     }
   },
-  "template": "cmssdt-apache-*"
+  "template": "cmssdt-apachelogs"
 }

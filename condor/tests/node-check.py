@@ -3,7 +3,7 @@ from __future__ import print_function
 from sys import exit, argv
 from os import pipe, close, fork, fdopen, write, waitpid
 from os.path import exists
-from time import sleep
+from time import sleep, time
 from threading import Thread
 from re import match
 from array import array
@@ -25,10 +25,11 @@ def do_load(obj):
     sleep(0.001)
 
 class LoadMaster (object):
-  def __init__ (self, memory, max_child, pipe_in):
+  def __init__ (self, memory, max_child, pipe_in, max_time=0):
     self.memory = memory
     self.input = pipe_in
     self.max_child = max_child
+    self.max_time = max_time
     self.childs = []
 
   def get_command(self):
@@ -73,8 +74,17 @@ class LoadMaster (object):
     self.add_childs(self.max_child)
 
   def start(self):
+    stime = time()
     while True:
-      cmd = self.get_command()
+      if self.max_time<=0:
+        cmd = self.get_command()
+      elif (time()-stime)>self.max_time:
+        cmd = "exit"
+      elif self.childs:
+        sleep(1)
+        continue
+      else:
+        cmd = "start"
       print("master: %s" % cmd)
       if cmd in ['stop', 'exit']: self.remove_all()
       elif cmd=='start': self.add_all()
@@ -111,7 +121,9 @@ class LoadClient (object):
 
 childs=int(argv[1])
 memory=int(argv[2])
-master = LoadMaster(memory, childs, None)
+try: max_time=int(argv[3])
+except: max_time=0
+master = LoadMaster(memory, childs, None, max_time)
 master.start()
 print("ALL OK")
 

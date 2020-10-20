@@ -17,17 +17,19 @@ def update_stats(proc):
   stats['processes'] = clds
   for cld in children:
     try:
-      mem   = cld.memory_full_info()
-      fds   = cld.num_fds()
-      thrds = cld.num_threads()
       cld.cpu_percent(interval=None)
       sleep(0.1)
-      cpu   = int(cld.cpu_percent(interval=None))
-      stats['num_fds'] += fds
-      stats['num_threads'] += thrds
-      stats['cpu'] += cpu
-      for a in ["rss", "vms", "shared", "data", "uss", "pss"]: stats[a]+=getattr(mem,a)
-    except:pass
+      stats['cpu'] += int(cld.cpu_percent(interval=None))
+      stats['num_fds'] += cld.num_fds()
+      stats['num_threads'] += cld.num_threads()
+      mem = None
+      try:
+        mem   = cld.memory_full_info()
+        for a in ["uss", "pss"]: stats[a]+=getattr(mem,a)
+      except:
+        mem   = cld.memory_info_ex()
+      for a in ["rss", "vms", "shared", "data"]: stats[a]+=getattr(mem,a)
+    except: pass
   return stats
 
 def monitor(stop):

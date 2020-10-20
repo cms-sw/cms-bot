@@ -76,11 +76,10 @@ if [ "$TOOL_BRANCH" = "" ] ; then
 fi
 if [ "X$TOOL_BRANCH" = "X" ] ; then echo "Missing tool branch name"; exit 1; fi
 TOOL_CHECKOUT_CMD="; git checkout $TOOL_BRANCH"
-if [ $(echo $3 | grep ':' | wc -l) -gt 0 ] ; then
-  TOOL_CHECKOUT_CMD="${TOOL_CHECKOUT_CMD} ; git checkout $(echo $3 | sed 's|.*:||')"
+NEW_TOOL_HASH=$(echo $3 | sed 's|.*:||')
+if [ "${NEW_TOOL_HASH}" != "" ] ; then
+  TOOL_CHECKOUT_CMD="${TOOL_CHECKOUT_CMD} ; git checkout ${NEW_TOOL_HASH}"
 fi
-
-TOOL_TAG_CMD="git log --pretty=format:'%h' -n 1"
 
 PUSH_CMDS_FILE=`/bin/pwd`/push-branches.sh
 COMMIT_CMSDIST=NO
@@ -114,7 +113,9 @@ fi
 mkdir -p tool
 pushd tool
   eval $TOOL_DOWNOAD_CMD
-  NEW_TOOL_HASH=`eval $TOOL_TAG_CMD`
+  if [ "$NEW_TOOL_HASH" = "" ] ; then
+    NEW_TOOL_HASH=$(git log --pretty=format:'%h' -n 1)
+  fi
   echo "[$NEW_TOOL_HASH]"
   echo "[$OLD_TOOL_HASH]"
   if [ "$NEW_TOOL_HASH" = "$OLD_TOOL_HASH" ] ; then

@@ -27,10 +27,10 @@ def getParameters(root, payload):
     for x in root: getParameters(x, payload)
 
 query_running_builds = """{
-"query": {"bool": {"must": {"query_string": {"query": "job_status:running"}}}},
+"query": {"bool": {"must": {"query_string": {"query": "job_status:Running AND jenkins_server:%s", "default_operator": "AND"}}}},
 "from": 0,
 "size": 10000
-}"""
+}""" % JENKINS_PREFIX
 
 all_local = list() 
 path = '/build/builds'
@@ -45,9 +45,8 @@ for root, dirs, files in os.walk(path):
       job_info = root.split('/')
       payload['job_name'] = job_info[3]
       payload['build_number'] = job_info[-1]
-      print(payload)
       payload['url'] = "https://cmssdt.cern.ch/"+JENKINS_PREFIX+"/job/" + job_info[3] + "/" + job_info[-1] + "/"
-      id = sha1(root).hexdigest()
+      id = sha1(JENKINS_PREFIX+":"+root).hexdigest()
       try:
         tree = ET.parse(logFile)
         root = tree.getroot()
@@ -56,6 +55,7 @@ for root, dirs, files in os.walk(path):
         jstime = root.find('startTime').text
         payload['@timestamp'] = int(jstime)
         payload['slave_node'] = root.find('builtOn').text
+        payload['jenkins_server'] = JENKINS_PREFIX
         build_result = root.find('result')
         if build_result is not None:
           payload['build_result'] = build_result.text
@@ -78,10 +78,13 @@ else:
   if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
     print("ERROR: ",content)
     sys.exit(1)
+  print("Found:", len(content_hash['hits']['hits']))
   for hit in content_hash['hits']['hits']:
-    if hit["_index"].startswith("jenkins-jobs-") or hit["_index"].startswith("cmssdt-jenkins-jobs-"):
-      try:print("Running:",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
-      except: pass
+    if hit["_index"].startswith("cmssdt-jenkins-jobs-"):
+      if not "jenkins_server" in hit["_source"]: hit["_source"]["jenkins_server"] = JENKINS_PREFIX
+      if hit["_source"]["jenkins_server"]!=JENKINS_PREFIX: continue
+      try:print("Running:",hit["_source"]["jenkins_server"],":",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
+      except Exception as e: print("Error:", e)
       running_builds_elastic[hit['_id']]=hit
 for build in running_builds_elastic:
   if build not in all_local:

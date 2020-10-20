@@ -35,6 +35,7 @@ RELEASE_BRANCH_CLOSED = [
   "CMSSW_6_1_X_SLHC",
   "CMSSW_6_2_X",
   "CMSSW_7_0_X",
+  "CMSSW_.+_Patatrack_X",
 ]
 
 #All these releases require ORP signicatures
@@ -51,9 +52,10 @@ RELEASE_BRANCH_PRODUCTION = [
   "CMSSW_5_3_X",
 ]
 
-SPECIAL_RELEASE_MANAGERS = ["davidlange6", "slava77", "fabiocos"]
+SPECIAL_RELEASE_MANAGERS = []
 
 RELEASE_MANAGERS={}
+RELEASE_MANAGERS["CMSSW_.+_Patatrack_X"]=["fwyzard"]
 ######################################################################
 # Automatically added by cms-bot for CMSSW_8_1_X release cycle
 ######################################################################
@@ -89,7 +91,6 @@ RELEASE_BRANCH_MILESTONE["CMSSW_9_3_X"]=69
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_ROOT6_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_9_3_DEVEL_X")
-RELEASE_MANAGERS["CMSSW_9_3_X"]=["kpedro88"]
 
 #CMSSW_9_4_X release cycle
 RELEASE_BRANCH_MILESTONE["CMSSW_9_4_X"]=71
@@ -171,3 +172,19 @@ RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_DEVEL_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_CXXMODULE_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_ROOT614_X")
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_11_1_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_11_1_X"]=82
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_1_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_1_DEVEL_X")
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_11_2_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_11_2_X"]=83
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_CLANG_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_Patatrack_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_DEVEL_X")

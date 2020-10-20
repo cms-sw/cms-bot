@@ -24,6 +24,7 @@ REQUEST_UNIVERSE="${REQUEST_UNIVERSE-vanilla}"
 REQUEST_MAXRUNTIME="${REQUEST_MAXRUNTIME-432000}"
 DEBUG="${DEBUG-false}"
 JENKINS_CALLBACK="${JENKINS_CALLBACK-http://cmsjenkins03.cern.ch:8080/jenkins/}"
+
 if [ $REQUEST_CPUS -lt 1 ] ; then REQUEST_CPUS=1 ; fi
 if [ $REQUEST_MAXRUNTIME -lt 3600 ] ; then REQUEST_MAXRUNTIME=3600 ; fi
 ##########################################
@@ -39,14 +40,14 @@ done
 cp $SLAVE_JAR_DIR/slave.jar slave.jar
 cp ${here}/connect.sub job.sub
 cp ${here}/connect-job.sh  ${script_name}.sh
-sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" ${script_name}.sh
-sed -i -e "s|@JENKINS_CALLBACK@|$JENKINS_CALLBACK|" ${script_name}.sh
 chmod +x ${script_name}.sh
 
 sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
 sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
+echo "environment = \"JENKINS_DEBUG='${JENKINS_DEBUG}' JENKINS_AUTO_DELETE='${JENKINS_AUTO_DELETE}' EXTRA_LABELS='${EXTRA_LABELS}' JENKINS_CALLBACK=${JENKINS_CALLBACK} REQUEST_MAXRUNTIME=${REQUEST_MAXRUNTIME}\"" >> job.sub
+
 if [ "X${CONDOR_JOB_CONF}" != "X" ] ; then
   if [ -f  ${CONDOR_JOB_CONF} ] ; then
     cat ${CONDOR_JOB_CONF} >> job.sub
@@ -60,15 +61,36 @@ echo "############# JOB Configuration file ###############"
 cat job.sub
 echo "####################################################"
 
-condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1 || true
-cat submit.log
-JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
+JOBID=""
+if [ "$USE_PENDING_REQUEST" = "true" ] ; then
+  for x in $(condor_q `whoami` -global -format "%s:" JobStatus -format "%s:" ClusterId -format "%s\n" Cmd | grep ":${JOB_NAME}") ; do
+    status=$(echo $x | cut -d: -f1)
+    jid=$(echo $x | cut -d: -f2)
+    if [ $status -gt 2 -o $status -eq 0 ] ; then
+      ${here}/shutdown.sh $jid || true
+    elif [ $status -eq 1 ] ; then
+      JOBID="${jid}.0"
+      echo "Using existing job $JOBID"
+    else
+      echo "Already running $jid"
+      exit 0
+    fi
+  done
+fi
+if [ "${JOBID}" = "" ] ; then
+  condor_submit -spool ${CONDOR_SUBMIT_OPTIONS} job.sub > submit.log 2>&1 || true
+  cat submit.log
+  JOBID=$(grep ' submitted to cluster ' submit.log | sed 's|.* ||;s| ||g;s|\.$||')
+fi
 if [ "$JOBID" = "" ] ; then exit 1 ; fi
 sleep $WAIT_GAP
 echo "$JOBID" > job.id
 
 EXIT_CODE=1
 PREV_JOB_STATUS=""
+KINIT_COUNT=0
+kinit -R
+RUN_CHECK=false
 while true ; do
   JOB_STATUS=$(condor_q -json -attributes JobStatus $JOBID | grep 'JobStatus' | sed 's|.*: *||;s| ||g')
   eval JOB_STATUS_MSG=$(echo \$$(echo JOBS_STATUS_${JOB_STATUS}))
@@ -78,7 +100,13 @@ while true ; do
   fi
   if [ "$JOB_STATUS" = "1" -o "$JOB_STATUS" = "2" ] ;  then
     ERROR_COUNT=0
-    if [ "$JOB_STATUS" = "2" ] ;  then exit 0 ; fi
+    if [ "$JOB_STATUS" = "2" ] ;  then
+      if $RUN_CHECK ; then
+        exit 0
+      else
+        RUN_CHECK=true
+      fi
+    fi
   elif [ "$JOB_STATUS" = "4" ] ; then
     EXIT_CODE=$(condor_q -json -attributes ExitCode $JOBID | grep 'ExitCode' | sed 's|.*: *||;s| ||g')
     break
@@ -93,11 +121,18 @@ while true ; do
     break
   fi
   sleep $WAIT_GAP
+  let KINIT_COUNT=KINIT_COUNT+1
+  if [ $KINIT_COUNT -ge 120 ] ; then
+    KINIT_COUNT=0
+    kinit -R
+    klist
+  fi
 done
 echo EXIT_CODE $EXIT_CODE
 condor_transfer_data $JOBID || true
 ls -l
-if [ -f log.stdout ] ; then cat log.stdout ; fi
+cat logs/log.* || true
+cat log.job || true
 condor_rm $JOBID || true
 condor_q
 exit $EXIT_CODE

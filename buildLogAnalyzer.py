@@ -287,6 +287,7 @@ class LogFileAnalyzer(object):
         pkgList.sort(pkgCmp)
         
         for pkg in pkgList:
+            if not pkg.name() in self.tagList: continue
             htmlFile.write(' <tr>')
             htmlFile.write('<td class="ok">&nbsp;</td>')
             htmlFile.write('<td>')
@@ -307,8 +308,8 @@ class LogFileAnalyzer(object):
 
         # write out all info also as pkl files so we can re-use it:
         from pickle import Pickler
-        summFile = open(htmlDir+'/'+'logAnalysis.pkl','w')
-        pklr = Pickler(summFile)
+        summFile = open(htmlDir+'/'+'logAnalysis.pkl','wb')
+        pklr = Pickler(summFile, protocol=2)
         pklr.dump([self.release,os.environ["SCRAM_ARCH"], self.anaTime])
         pklr.dump(self.errorKeys)
         pklr.dump(self.nErrorInfo)

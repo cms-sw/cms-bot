@@ -20,7 +20,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | RELEASE_NOT_FOUND "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
-                            "| PARSE_ADDON_FAIL | REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE | MATERIAL_BUDGET | REPORT_ERRORS")
+                            "| PARSE_ADDON_FAIL | REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE | MATERIAL_BUDGET | REPORT_ERRORS | PYTHON3_FAIL")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
 parser.add_option("-p", action="store", type="string", dest="password", help="Your github account password", default='None')
@@ -131,7 +131,7 @@ def read_matrix_log_file( repo, matrix_log, tests_url ):
   for line in open( matrix_log ):
     if 'ERROR executing' in line:
       print('processing: %s' % line) 
-      parts = line.split(" ")
+      parts = re.sub("\s+"," ",line).split(" ")
       workflow_info = parse_workflow_info( parts )
       workflows_with_error.append( workflow_info )
     elif ' Step0-DAS_ERROR ' in line:
@@ -222,6 +222,10 @@ def send_error_report_message(repo, report_file, tests_url):
   pull_request = repo.get_pull(pr_number)
   message = '-1\n'
   if options.commit_hash: message += '\nTested at: ' + options.commit_hash+"\n"
+  if 'CMSSW_VERSION' in os.environ:
+    message+= '\nCMSSW: ' + os.environ['CMSSW_VERSION']
+  if 'SCRAM_ARCH' in os.environ:
+    message+= '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
   message += get_recent_merges_message()
   message += '\nYou can see the results of the tests here:\n%s\n' % tests_url
   message += '\nI found follow errors while testing this PR\n\n'
@@ -315,6 +319,27 @@ def read_unit_tests_file(repo,unit_tests_file,tests_url):
     if options.commit_hash: message += '\nTested at: ' + options.commit_hash+"\n"
 
   message += '\n* **Unit Tests**:\n\nI found errors in the following unit tests: \n \n %s' % errors_found
+
+  send_message_pr( pull_request, message, tests_url )
+  mark_commit_if_needed( ACTION, tests_url )
+
+
+#
+# reads the python3 file and gets the tests that failed
+#
+def read_python3_file(repo,python3_file,tests_url):
+  pull_request = repo.get_pull(pr_number)
+  errors_found=''
+  for line in open(python3_file):
+    if( ' Error compiling ' in line):
+      errors_found = errors_found + line
+
+  message = ""
+  if not options.report_file:
+    message = '-1\n'
+    if options.commit_hash: message += '\nTested at: ' + options.commit_hash+"\n"
+
+  message += '\n* **Python3**:\n\nI found errors: \n \n %s' % errors_found
 
   send_message_pr( pull_request, message, tests_url )
   mark_commit_if_needed( ACTION, tests_url )
@@ -446,6 +471,10 @@ def send_tests_approved_pr_message( repo, pr_number, tests_url ):
     message += '\nTested at: ' + options.commit_hash
 
   message += '\n' + tests_url
+  if 'CMSSW_VERSION' in os.environ:
+    message+= '\nCMSSW: ' + os.environ['CMSSW_VERSION']
+  if 'SCRAM_ARCH' in os.environ:
+    message+= '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
   if options.additional_comment:
     message += '\nAdditional comment: ' + options.additional_comment
 
@@ -586,6 +615,7 @@ COMMIT_STATES_DESCRIPTION = { 'TESTS_OK_PR'          : [ 'success' , 'Tests OK' 
                               'RELEASE_NOT_FOUND'    : [ 'failure' , 'Release area error' ] ,
                               'TESTS_RUNNING'        : [ 'pending' , 'cms-bot is testing this pull request' ],
                               'PARSE_CLANG_BUILD_FAIL' : [ 'failure' , 'Clang error' ],
+                              'PYTHON3_FAIL'         : [ 'failure' , 'Python3 error' ],
                               'MATERIAL_BUDGET'      : [ 'failure' , 'Material Budget error' ] }
 
 GLADOS = [ 'Cake, and grief counseling, will be available at the conclusion of the test...',
@@ -682,6 +712,8 @@ elif( ACTION == 'REMOTE_REF_ISSUE'):
   send_remote_ref_issue_message( destination_repo, pr_number )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
   read_build_log_file( destination_repo, options.unit_tests_file, tests_results_url, True )
+elif( ACTION == 'PYTHON3_FAIL'):
+  read_python3_file( destination_repo, options.unit_tests_file, tests_results_url )
 elif( ACTION == 'MATERIAL_BUDGET'):
   read_material_budget_log_file( destination_repo, options.unit_tests_file, tests_results_url)
 elif( ACTION == 'GIT_CMS_MERGE_TOPIC_ISSUE' ):

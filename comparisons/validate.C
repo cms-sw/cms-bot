@@ -62,7 +62,7 @@ bool stepContainsNU(const TString& s, TString v){
 
 bool checkBranchAND(const TString& b, bool verboseFalse = false){
   bool res = Events->GetBranch(b) != nullptr && refEvents->GetBranch(b) != nullptr;
-  if (!res && verboseFalse) std::cout<<"Branch "<<b.Data()<<" is not found one of the inputs. Skip."<<std::endl;
+  if (!res && verboseFalse) std::cout<<"Branch "<<b.Data()<<" is not found in one of the inputs. Skip."<<std::endl;
   return res;
 }
 
@@ -86,9 +86,9 @@ struct PlotStats {
   double ref_xmax;
   double new_xmin;
   double ref_xmin;
-  PlotStats() : status(-1), 
-                countDiff(0.), ksProb(0), 
-                new_entries(0), ref_entries(0), 
+  PlotStats() : status(-1),
+                countDiff(0.), ksProb(0),
+                new_entries(0), ref_entries(0),
                 new_mean(0.), ref_mean(0.), new_rms(0.), ref_rms(0.),
                 new_xmax(0.), ref_xmax(0.), new_xmin(0.), ref_xmin(0.)
   {}
@@ -110,7 +110,7 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
       limit = v+"<";
       limit+=1000;
     }
-  
+
   TString vn=v;
   vn.ReplaceAll(".","_");
   vn.ReplaceAll("(","");
@@ -127,7 +127,7 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
 
   if (limit!="")
     selection *= limit;
-  
+
   TString cn="c_"+vn;
   if (cut!="") cn+=count;
   TCanvas * c = new TCanvas(cn,"plot of "+v);
@@ -151,16 +151,17 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
   gStyle->SetTitleY(1);
   gStyle->SetTitleW(1);
   gStyle->SetTitleH(0.06);
-  TGaxis::SetExponentOffset(-0.042,-0.035,"x");
+  TGaxis::SetExponentOffset(-0.052,-0.060,"x");
+  TGaxis::SetExponentOffset(-0.052,0.010,"y");
 
   res.ref_entries = -1;
   res.new_entries = -1;
 
   res.ref_mean = -1e12;
   res.new_mean = -1e12;
-  
+
   if (refEvents!=0){
-    
+
     TString reffn=refvn+"_refplot";
     if (cut!="") reffn+=count;
     if(tryCatch){
@@ -177,7 +178,7 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
 		      Nmax);
     }
     refplot = (TH1F*)gROOT->Get(reffn);
-    
+
     if (refplot){
       refplot->SetLineColor(1);
       res.ref_entries = refplot->GetEntries();
@@ -191,7 +192,7 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
     std::cout<<"cannot do things for "<<refv<<std::endl;
     res.status = -1; return res;
   }
-  
+
   TString fn=vn+"_plot";
   if (cut!="") fn+=count;
   TH1F *  plot = new TH1F(fn,refplot->GetTitle(),
@@ -199,7 +200,7 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
 			  refplot->GetXaxis()->GetXmin(),
 			  refplot->GetXaxis()->GetXmax());
   plot->SetLineColor(2);
-  
+
   if (Events!=0){
     if (tryCatch){
       try {
@@ -223,10 +224,10 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
     if ( plot->GetXaxis()->GetXmax() != refplot->GetXaxis()->GetXmax()){
       std::cout<<"ERROR: DRAW RANGE IS INCONSISTENT !!!"<<std::endl;
     }
-    
+
   }
-  
-  
+
+
   res.countDiff=0;
   if (refplot && plot) {
     refplot->Draw("he");
@@ -239,7 +240,7 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
 			    refplot->GetNbinsX(),
 			    refplot->GetXaxis()->GetXmin(),
 			    refplot->GetXaxis()->GetXmax());
-    
+
     diff->Add(plot);
     diff->Add(refplot,-1.);
 
@@ -248,28 +249,28 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
     min = std::min(diff->GetMinimum(), min);
     refplot->SetMaximum(max + 0.05*std::abs(max));
     refplot->SetMinimum(min - 0.05*std::abs(min));
-    
+
     diff->SetMarkerColor(4);
     diff->SetLineColor(4);
     diff->SetMarkerStyle(7);
     diff->Draw("same p e");
-    
+
     for (int ib=1;ib<=diff->GetNbinsX();++ib){
       res.countDiff+=std::abs(diff->GetBinContent(ib));
     }
 
     res.ksProb = refplot->KolmogorovTest(plot);
-    
+
     TString outtext;
-    outtext.Form("Ref: %i, New: %i, De: %g, Diff: %g, 1-KS: %6.4g",res.ref_entries,res.new_entries,
+    outtext.Form("Ref: %i, New: %i, De: %6.4g, Diff: %g, 1-KS: %6.4g",res.ref_entries,res.new_entries,
                  res.ref_entries>0? (res.new_entries-res.ref_entries)/double(res.ref_entries):0, res.countDiff,1-res.ksProb);
 
-    TPaveText * pt = new TPaveText(0.01,0.89,0.71,0.93,"NDC");
+    TPaveText * pt = new TPaveText(0.05,0.89,0.71,0.93,"NDC");
     pt->AddText(outtext);
     pt->SetBorderSize(0);
     pt->SetFillStyle(0);
     pt->Draw();
-    
+
     TLegend * leg = new TLegend(0.72,0.89,0.99,0.93);
     leg->SetNColumns(3);
     leg->AddEntry(refplot,"Ref.","l");
@@ -277,8 +278,8 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
     leg->AddEntry(diff,"New - Ref.","p");
     leg->Draw();
 
-    
-  }else{ 
+
+  }else{
     std::cout<<"cannot do things for "<<v<<std::endl;
     res.status = -1; return res;
   }
@@ -296,10 +297,17 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
   return res;
 }
 
-void jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false, bool notafunction = false){
+int maxSize(const PlotStats& res){
+  int ref_max = res.ref_rms == 0 ? res.ref_mean : res.ref_xmax;
+  int new_max = res.new_rms == 0 ? res.new_mean : res.new_xmax;
+  
+  return std::max(ref_max, new_max);
+}
+
+PlotStats jet(TString type, TString algo, TString var, bool log10Var = false, bool trycatch = false, bool notafunction = false){
   TString v = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+".obj."+var+(notafunction? "" : "()");
   if (log10Var) v = "log10(" + v + ")";
-  plotvar(v, "", trycatch);
+  return plotvar(v, "", trycatch);
 }
 
 void jets(TString type,TString algo){
@@ -313,7 +321,7 @@ void jets(TString type,TString algo){
 
   jet(type,algo,"emEnergyFraction", false, true);//the last "true" is to catch cases of unfilled specific
   jet(type,algo,"neutralHadronEnergy", false, true);
-  
+
   jet(type,algo,"chargedHadronEnergyFraction", false, true);
   jet(type,algo,"neutralHadronEnergyFraction", false, true);
   jet(type,algo,"photonEnergyFraction", false, true);
@@ -323,23 +331,59 @@ void jets(TString type,TString algo){
   jet(type,algo,"HFHadronEnergyFraction", false, true);
   jet(type,algo,"HFEMEnergyFraction", false, true);
 
-  if (type == "patJets"){
-    jet(type, algo, "userFloats_@.size");
-    for (int i = 0; i< 32; ++i){
-      plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
+  if (type == "patJets"){    
+    PlotStats res = jet(type, algo, "userFloats_@.size");
+    TString jetBName = type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS;
+    for (int i = 0; i< maxSize(res); ++i){
+      plotvar(jetBName+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    jet(type, algo, "userInts_@.size");
-    for (int i = 0; i< 32; ++i){
-      plotvar(type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].userInts_[%d]",i), "", true);
+    res = jet(type, algo, "userInts_@.size");
+    for (int i = 0; i< maxSize(res); ++i){
+      plotvar(jetBName+Form(".obj[].userInts_[%d]",i), "", true);
     }
     jet(type, algo, "userCands_@.size");
-    jet(type, algo, "pairDiscriVector_@.size");
-    for (int i = 0; i< 64; ++i){
-      plotvar("min(2,max(-2,"+type+"_"+algo+(algo.Contains("_")? "_" : "__")+recoS+Form(".obj[].pairDiscriVector_[%d].second))",i), "", true);
+    res = jet(type, algo, "pairDiscriVector_@.size");
+    for (int i = 0; i< maxSize(res); ++i){
+      plotvar("min(2,max(-2,"+jetBName+Form(".obj[].pairDiscriVector_[%d].second))",i), "", true);
+    }
+    if (algo.Contains("AK8")){//many discriminants are valid only for high pt
+      for (int i = 0; i< maxSize(res); ++i){
+        plotvar("min(2,max(-2,"+jetBName+Form(".obj[].pairDiscriVector_[%d].second))",i), jetBName+".obj[].pt()>200", true);
+      }
     }
   }
 }
 
+void caloTowers(TString br, bool addHEP17 = false){
+  TString bObj = "CaloTowersSorted_"+br+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  TString tObj = bObj+".obj";
+  plotvar(tObj+"@.size()");
+  plotvar("log10("+tObj+".energy())");
+  plotvar("log10("+tObj+".emEnergy())");
+  plotvar("log10("+tObj+".hadEnergy())");
+  plotvar("log10("+tObj+".massSqr())/2.");
+  plotvar(tObj+".eta()");
+  plotvar(tObj+".phi()");
+  
+  if (addHEP17){
+    plotvar("log10("+tObj+".energy())", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar("log10("+tObj+".emEnergy())", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar("log10("+tObj+".hadEnergy())", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar("log10("+tObj+".massSqr())/2.", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar(tObj+".eta()", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+    plotvar(tObj+".phi()", tObj+".eta()>1.5&&"+tObj+".eta()<3&&"+tObj+".phi()<-0.435&&"+tObj+".phi()>-0.960");
+  }
+  
+  plotvar("Sum$("+tObj+".energy()>0)");
+  plotvar("log10("+tObj+".energy())", tObj+".energy()>0");
+  plotvar("log10("+tObj+".emEnergy())", tObj+".energy()>0");
+  plotvar("log10("+tObj+".hadEnergy())", tObj+".energy()>0");
+  plotvar("log10("+tObj+".massSqr())/2.", tObj+".energy()>0");
+  plotvar(tObj+".eta()", tObj+".energy()>0");
+  plotvar(tObj+".phi()", tObj+".energy()>0");
+}
 
 void secondaryVertexTagInfoVars(TString br){
   TString bObj = br+recoS+".obj";
@@ -420,10 +464,10 @@ void caloMetVars(TString cName){
   calomet(cName,"metSignificance");
 }
 
-void met(TString var, TString cName = "tcMet_", TString tName = "recoMETs_",  bool log10Var = false, bool trycatch = false, bool notafunction=false){
+PlotStats met(TString var, TString cName = "tcMet_", TString tName = "recoMETs_",  bool log10Var = false, bool trycatch = false, bool notafunction=false){
   TString v = tName+cName+"_"+recoS+".obj."+var+(notafunction? "" : "()");
   if (log10Var) v = "log10(" + v + ")";
-  plotvar(v, "", trycatch);
+  return plotvar(v, "", trycatch);
 }
 
 void metVars(TString cName = "tcMet_", TString tName = "recoMETs_") {
@@ -446,12 +490,12 @@ void patMetVars(TString cName){
 
   metVars(cName, tName);
   
-  met("userFloats_@.size", cName, tName);
-  for (int i = 0; i< 32; ++i){
+  PlotStats res = met("userFloats_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].userFloats_[%d]",i), "", true);
   }
-  met("userInts_@.size", cName, tName);
-  for (int i = 0; i< 32; ++i){
+  res = met("userInts_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].userInts_[%d]",i), "", true);
   }
   met("userCands_@.size", cName, tName);
@@ -464,21 +508,26 @@ void patMetVars(TString cName){
   met("pfMET_[0].Type6Fraction", cName, tName, false, true, true);
   met("pfMET_[0].Type7Fraction", cName, tName, false, true, true);
 
-  for (int i = 0; i< 24; ++i){
+  met("metSumPtUnclustered", cName, tName, true, true, false);
+
+  res = met("uncertainties_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dpx()",i), tName+cName+"_"+recoS+Form(".obj[0].uncertainties_@.size()>%d",i), true);
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].uncertainties_[%d].dsumEt()",i), tName+cName+"_"+recoS+Form(".obj[0].uncertainties_@.size()>%d",i), true);
-
+  }
+  res = met("corrections_@.size", cName, tName);
+  for (int i = 0; i< maxSize(res); ++i){
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dpx()",i), tName+cName+"_"+recoS+Form(".obj[0].corrections_@.size()>%d",i), true);
     plotvar(tName+cName+"_"+recoS+Form(".obj[0].corrections_[%d].dsumEt()",i), tName+cName+"_"+recoS+Form(".obj[0].corrections_@.size()>%d",i), true);
   }
 }
 
-void tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_", 
-         bool log10Var = false, bool trycatch = false, bool notafunction = false){
+PlotStats tau(TString var, TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_", 
+              bool log10Var = false, bool trycatch = false, bool notafunction = false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
   if (log10Var) v = "log10(" + v + ")";
-  plotvar(v, "", trycatch);
+  return plotvar(v, "", trycatch);
 }
 
 void tauVars(TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_"){
@@ -508,30 +557,30 @@ void tauVars(TString cName = "hpsPFTauProducer_", TString tName = "recoPFTaus_")
     tau("ptLeadChargedCand", cName, tName);
     tau("emFraction_MVA", cName, tName);
 
-    tau("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = tau("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    tau("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = tau("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     tau("userCands_@.size", cName,tName);
-    tau("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = tau("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
-    tau("tauIDs_@.size", cName,tName);
-    for (int i = 0; i< 82; ++i){
+    res = tau("tauIDs_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].tauIDs_[%d].second",i), "", true);
     }
   }
 }
 
-void photon(TString var, TString cName = "photons_", TString tName = "recoPhotons_", bool notafunction=false){
+PlotStats photon(TString var, TString cName = "photons_", TString tName = "recoPhotons_", bool notafunction=false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v);
+  return plotvar(v);
 }
 
 void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
@@ -553,7 +602,7 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("hadTowDepth1OverEm", cName,tName);
   photon("hadTowDepth2OverEm", cName,tName);
   photon("hadTowOverEmValid", cName,tName);
-  
+
   photon("e1x5", cName,tName);
   photon("e2x5", cName,tName);
   photon("e3x3", cName,tName);
@@ -625,31 +674,31 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
     photon("puppiNeutralHadronIso", cName,tName);
     photon("puppiPhotonIso", cName,tName);
 
-    photon("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = photon("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    photon("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = photon("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     photon("userCands_@.size", cName,tName);
-    photon("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = photon("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
-    photon("photonIDs_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = photon("photonIDs_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].photonIDs_[%d].second",i), "", true);
     }
 
   }
 }
 
-void conversion(TString var, TString cName = "conversions_", TString tName = "recoConversions_",  bool notafunction=false){
+PlotStats conversion(TString var, TString cName = "conversions_", TString tName = "recoConversions_",  bool notafunction=false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
-  plotvar(v);
+  return plotvar(v);
 
 }
 
@@ -658,7 +707,7 @@ void conversionVars(TString cName = "conversions_", TString tName = "recoConvers
       if (! checkBranchOR(bObj, true)) return;
 
       plotvar(bObj+"@.size()");
-      //conversion("EoverP", cName,tName); //seg fault !!! 
+      //conversion("EoverP", cName,tName); //seg fault !!!
       conversion("algo", cName,tName);
       conversion("nTracks", cName,tName);
       conversion("pairMomentum().x", cName,tName);
@@ -667,10 +716,10 @@ void conversionVars(TString cName = "conversions_", TString tName = "recoConvers
       conversion("MVAout", cName,tName);
 }
 
-void electron(TString var, TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_",  bool notafunction=false){
+PlotStats electron(TString var, TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_",  bool notafunction=false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
-  plotvar(v);
+  return plotvar(v);
 }
 
 void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElectrons_"){
@@ -684,7 +733,7 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   if (detailed)    electron("pz", cName, tName);
   electron("eta", cName, tName);
   electron("phi", cName, tName);
-  
+
   electron("e1x5", cName, tName);
   electron("e5x5", cName, tName);
   electron("e2x5Max", cName, tName);
@@ -696,7 +745,7 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("energy", cName, tName);
   if (detailed)    electron("fbrem", cName, tName);
   electron("classification", cName, tName);
-  
+
   electron("scPixCharge", cName, tName);
   electron("isGsfCtfScPixChargeConsistent", cName, tName);
   electron("isGsfScPixChargeConsistent", cName, tName);
@@ -791,35 +840,37 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
     electron("miniPFIsolation().photonIso", cName,tName);
     electron("miniPFIsolation().puChargedHadronIso", cName,tName);
 
+    electron("dB(pat::Electron::PV2D)", cName,tName, true);
+    electron("dB(pat::Electron::BS2D)", cName,tName, true);
     electron("dB(pat::Electron::PV3D)", cName,tName, true);
     electron("dB(pat::Electron::PVDZ)", cName,tName, true);
 
-    electron("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = electron("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    electron("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = electron("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     electron("userCands_@.size", cName,tName);
-    electron("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = electron("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
-    electron("electronIDs_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = electron("electronIDs_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].electronIDs_[%d].second",i), "", true);
     }
   }
 
 }
 
-void gsfTracks(TString var, bool doLog10 = false, TString cName = "electronGsfTracks_", TString tName = "recoGsfTracks_",  bool notafunction=false){
+PlotStats gsfTracks(TString var, bool doLog10 = false, TString cName = "electronGsfTracks_", TString tName = "recoGsfTracks_",  bool notafunction=false){
   TString v=notafunction ? tName+cName+"_"+recoS+".obj."+var:
     tName+cName+"_"+recoS+".obj."+var+"()";
   if (doLog10) v = "log10("+v+")";
-  plotvar(v);
+  return plotvar(v);
 }
 
 void gsfTrackVars(TString cName = "electronGsfTracks_", TString tName = "recoGsfTracks_"){
@@ -856,10 +907,10 @@ void staMuons(TString var){
   plotvar(v);
 }
 
-void muonVar(TString var, TString cName = "muons_", TString tName = "recoMuons_", bool notafunction = false){
+PlotStats muonVar(TString var, TString cName = "muons_", TString tName = "recoMuons_", bool notafunction = false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v);
+  return plotvar(v);
 }
 
 void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
@@ -958,20 +1009,22 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("miniPFIsolation().photonIso", cName,tName);
     muonVar("miniPFIsolation().puChargedHadronIso", cName,tName);
 
+    muonVar("dB(pat::Muon::PV2D)", cName,tName, true);
+    muonVar("dB(pat::Muon::BS2D)", cName,tName, true);
     muonVar("dB(pat::Muon::PV3D)", cName,tName, true);
     muonVar("dB(pat::Muon::PVDZ)", cName,tName, true);
 
-    muonVar("userFloats_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    PlotStats res = muonVar("userFloats_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userFloats_[%d]",i), "", true);
     }
-    muonVar("userInts_@.size", cName,tName);
-    for (int i = 0; i< 32; ++i){
+    res = muonVar("userInts_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].userInts_[%d]",i), "", true);
     }
     muonVar("userCands_@.size", cName,tName);
-    muonVar("isolations_@.size", cName,tName);
-    for (int i = 0; i< 12; ++i){
+    res = muonVar("isolations_@.size", cName,tName);
+    for (int i = 0; i< maxSize(res); ++i){
       plotvar(tName+cName+"_"+recoS+Form(".obj[].isolations_[%d]",i), "", true);
     }
 
@@ -981,6 +1034,8 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("mvaValue", cName,tName);
     muonVar("lowptMvaValue", cName,tName);
     muonVar("softMvaValue", cName,tName);
+    muonVar("inverseBeta", cName,tName);
+    muonVar("inverseBetaErr", cName,tName);
 
     muonVar("simType", cName,tName);
     muonVar("simExtType", cName,tName);
@@ -992,10 +1047,10 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
   }
 }
 
-void packedCandVar(TString var, TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_", bool notafunction = false){
+PlotStats packedCandVar(TString var, TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_", bool notafunction = false){
   TString v= notafunction ? tName+cName+"_"+recoS+".obj."+var :
     tName+cName+"_"+recoS+".obj."+var+"()" ;
-  plotvar(v, "", true);//ask for try/catch regardless of the type of the plotted variables
+  return plotvar(v, "", true);//ask for try/catch regardless of the type of the plotted variables
 }
 
 void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPackedCandidates_"){
@@ -1004,13 +1059,13 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   plotvar(bObj+"@.size()", "", true);//check for exception here
 
   //try to get something from the branches without constructor calls
-  packedCandVar("packedPt_",cName,tName, true); 
-  packedCandVar("packedEta_",cName,tName, true); 
-  packedCandVar("packedDxy_",cName,tName, true); 
-  packedCandVar("pdgId_",cName,tName, true); 
-  packedCandVar("qualityFlags_",cName,tName, true); 
-  packedCandVar("pvRefKey_",cName,tName, true); 
-  packedCandVar("normalizedChi2_",cName,tName, true); 
+  packedCandVar("packedPt_",cName,tName, true);
+  packedCandVar("packedEta_",cName,tName, true);
+  packedCandVar("packedDxy_",cName,tName, true);
+  packedCandVar("pdgId_",cName,tName, true);
+  packedCandVar("qualityFlags_",cName,tName, true);
+  packedCandVar("pvRefKey_",cName,tName, true);
+  packedCandVar("normalizedChi2_",cName,tName, true);
 
   //for the rest do some exception checking (it apparently does not throw for a range of cases)
   //  packedCandVar("charge",cName,tName);
@@ -1019,13 +1074,13 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   //  packedCandVar("dxyError",cName,tName);
   //  packedCandVar("dz",cName,tName);
   //  packedCandVar("dzError",cName,tName);
-  
+
   packedCandVar("energy",cName,tName);
   packedCandVar("et",cName,tName);
   packedCandVar("eta",cName,tName);
-  packedCandVar("hcalFraction",cName,tName); 
-  packedCandVar("rawCaloFraction",cName,tName); 
-  packedCandVar("caloFraction",cName,tName); 
+  packedCandVar("hcalFraction",cName,tName);
+  packedCandVar("rawCaloFraction",cName,tName);
+  packedCandVar("caloFraction",cName,tName);
   //all false now//  packedCandVar("isElectron",cName,tName);
   //all false now//  packedCandVar("isPhoton",cName,tName);
   //all false now//  packedCandVar("isConvertedPhoton",cName,tName);
@@ -1044,15 +1099,15 @@ void packedCand(TString cName = "packedPFCandidates_", TString tName = "patPacke
   packedCandVar("phi",cName,tName);
   packedCandVar("pt",cName,tName);
   plotvar("log10("+tName+cName+"_"+recoS+".obj.pt())", "", true);
-  packedCandVar("puppiWeight",cName,tName); 
-  packedCandVar("puppiWeightNoLep",cName,tName); 
+  packedCandVar("puppiWeight",cName,tName);
+  packedCandVar("puppiWeightNoLep",cName,tName);
   packedCandVar("status",cName,tName);
   packedCandVar("vertexChi2",cName,tName);
   packedCandVar("vertexNdof",cName,tName);
   //  packedCandVar("vx",cName,tName);
   //  packedCandVar("vy",cName,tName);
   //  packedCandVar("vz",cName,tName);
-  
+
 
 }
 
@@ -1112,7 +1167,44 @@ void hgcalMultiClusters(TString cName ){
   plotvar(bObj+".eta()");
   plotvar(bObj+".phi()");
   plotvar("log10("+bObj+".energy())");
-  plotvar(bObj+".time()");
+  plotvar("min(100,max(-20,"+bObj+".time()))");
+}
+
+void tracksters(TString cName ){
+  TString bObj = "ticlTracksters_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+  plotvar(bObj+"@.size()");
+  plotvar(bObj+".vertices_@.size()");
+  plotvar(bObj+".vertex_multiplicity_@.size()");
+
+  plotvar(bObj+".barycenter().phi()");
+  plotvar(bObj+".barycenter().eta()");
+  plotvar(bObj+".barycenter().z()");
+  plotvar(bObj+".id_probabilities(0)");
+  plotvar(bObj+".id_probabilities(2)");
+  plotvar(bObj+".id_probabilities(4)");
+  plotvar("log10("+bObj+".raw_energy())");
+  plotvar("log10("+bObj+".regressed_energy())");
+  plotvar("min(100,max(-20,"+bObj+".time()))");
+}
+
+void ticlCands(TString cName ){
+  TString bObj = "TICLCandidates_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+  plotvar(bObj+"@.size()");
+
+  plotvar(bObj+".phi()");
+  plotvar(bObj+".eta()");
+  plotvar("log10("+bObj+".pt())");
+  plotvar(bObj+".id_probability(TICLCandidate::ParticleType::photon)");
+  plotvar(bObj+".id_probability(TICLCandidate::ParticleType::electron)");
+  plotvar(bObj+".id_probability(TICLCandidate::ParticleType::muon)");
+  plotvar(bObj+".id_probability(TICLCandidate::ParticleType::neutral_pion)");
+  plotvar(bObj+".id_probability(TICLCandidate::ParticleType::charged_hadron)");
+  plotvar(bObj+".id_probability(TICLCandidate::ParticleType::neutral_hadron)");
+  plotvar("log10("+bObj+".rawEnergy())");
+  plotvar("min(100,max(-20,"+bObj+".time()))");
+  plotvar("log10("+bObj+".timeError())");
 }
 
 void plotTrack(TString alias, TString var){
@@ -1171,7 +1263,7 @@ void generalTrack(TString var){
 }
 
 
-void pf(TString var,int type=-1, TString cName = "particleFlow_", float ptMin = 0){ 
+void pf(TString var,int type=-1, TString cName = "particleFlow_", float ptMin = 0){
   TString v="recoPFCandidates_"+cName+"_"+recoS+".obj."+var+"()";
   if (var == "p" || var == "pt"){
     v = "log10("+v+")";
@@ -1217,6 +1309,25 @@ void V0(TString res, TString var){
   plotvar(v);
 }
 
+void caloHitsGeneric(TString tName, TString cName){
+  TString bObj=tName+"_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+".obj@.size()");
+  plotvar(bObj+".obj.energy()");
+  plotvar("log10("+bObj+".obj.energy())");
+  plotvar("log10("+bObj+".obj.energy())", bObj+".obj.energy()>0.001");
+  if (tName == "HBHERecHitsSorted"){
+    plotvar(bObj+".obj.eraw()");
+    plotvar("log10("+bObj+".obj.eraw())");
+    plotvar(bObj+".obj.eaux()");
+    plotvar("log10("+bObj+".obj.eaux())");
+    plotvar("log10("+bObj+".obj.chi2())");
+  }
+  plotvar("log2(max("+bObj+".obj.flags(),0.5))");
+  plotvar(bObj+".obj.time()");
+}
+
 void mtdHits(TString cName){
   TString tbr="FTLRecHitsSorted_"+cName+"_";
   TString bObj = tbr+recoS+".obj";
@@ -1227,7 +1338,44 @@ void mtdHits(TString cName){
   plotvar("log10("+bObj+".obj.energy())", bObj+".obj.energy()>0.001");
   plotvar(bObj+".obj.time()");
   plotvar(bObj+".obj.timeError()");
+  plotvar(bObj+".obj.position()");
+  plotvar("log10("+bObj+".obj.positionError())");
   plotvar("log2(max("+bObj+".obj.flagBits_,0.5))");
+}
+
+void siStripClusters(TString cName){
+  TString bObj="SiStripClusteredmNewDetSetVector_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+".m_data@.size()");
+  plotvar(bObj+".m_data.barycenter()");
+  plotvar("log10(max(0.1,"+bObj+".m_data.amplitudes_@.size()))");
+  plotvar("min(50,"+bObj+".m_data.amplitudes_@.size())");
+}
+
+void siPixelClusters(TString cName){
+  TString bObj="SiPixelClusteredmNewDetSetVector_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+".m_data@.size()");
+  plotvar(bObj+".m_data.charge()");
+  plotvar("log10(max(0.1,"+bObj+".m_data.size()))");
+  plotvar("min(50,"+bObj+".m_data.size())");
+}
+
+void trackExtras(TString cName){
+  TString bObj="recoTrackExtras_"+cName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+"@.size()");
+  plotvar(bObj+".recHitsSize()");
+  plotvar(bObj+".innerOk()+2*"+bObj+".outerOk()");
+  plotvar(bObj+".innerPosition().z()", bObj+".innerOk()");
+  plotvar(bObj+".innerPosition().rho()", bObj+".innerOk()");
+  plotvar("log10("+bObj+".innerMomentum().rho())", bObj+".innerOk()");
+  plotvar(bObj+".outerPosition().z()", bObj+".outerOk()");
+  plotvar(bObj+".outerPosition().rho()", bObj+".outerOk()");
+  plotvar("log10("+bObj+".outerMomentum().rho())", bObj+".outerOk()");
 }
 
 void forwardProtons(TString cName ){
@@ -1250,34 +1398,51 @@ void forwardProtons(TString cName ){
   plotvar(bObj+".time()");
 }
 
+void tauIDContainer(const TString& bName){
+  const TString bObj = "recoSingleTauDiscriminatorContaineredmValueMap_"+bName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  const TString tbr=bObj+".values_[]";
+  PlotStats res = plotvar(tbr+".rawValues@.size()");
+  for (int i = 0; i< maxSize(res) && i < 64; ++i){//restrict to 64
+    plotvar(tbr+Form(".rawValues[%d]",i), "", true);
+  }
+  res = plotvar(tbr+".workingPoints@.size()");
+  for (int i = 0; i< maxSize(res) && i < 64; ++i){//restrict to 64
+    plotvar(tbr+Form(".workingPoints[%d]",i), "", true);
+  }
+}
+
 void flatTable(const TString& shortName){
-  const TString tName = "nanoaodFlatTable_"+shortName;
-  plotvar(tName+"_"+recoS+".obj.size_");
-  PlotStats res = plotvar(tName+"_"+recoS+".obj.columns_@.size()");
+  const TString bObj = "nanoaodFlatTable_"+shortName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+".size_");
+  PlotStats res = plotvar(bObj+".columns_@.size()");
   if (res.new_mean == 0 && res.new_entries != 0){ //over/underflow case
-    std::cout<<"WARNING: Branch "<<tName<<" columns_@.size() is off scale vs ref"<<std::endl;
+    std::cout<<"WARNING: Branch "<<bObj<<" columns_@.size() is off scale vs ref"<<std::endl;
   }
   int nCols = res.ref_mean;
   if (res.ref_rms != 0){//size varies event to event => use xmax instead
     nCols = res.ref_xmax;
   }
-  
-  refEvents->SetAlias("xN", tName+"_"+recoS+".obj.size_");
-  Events->SetAlias("xN", tName+"_"+recoS+".obj.size_");
-  for (int i = 0; i< nCols; ++i){
-    res = plotvar(tName+"_"+recoS+Form(".obj.columns_[%i].type", i));
-    if (res.new_mean == res.ref_mean && res.new_entries != 0 && res.ref_entries != 0){//plot only matching content
-      const char* cName = Events->Query(tName+"_"+recoS+Form(".obj.columnName(%i)", i), "", "", 1)->Next()->GetField(0);
 
-      refEvents->SetAlias(Form("xC%i", i), tName+"_"+recoS+Form(".obj.columns_[%i].firstIndex", i));
-      Events->SetAlias(Form("xC%i", i), tName+"_"+recoS+Form(".obj.columns_[%i].firstIndex", i));
+  refEvents->SetAlias("xN", bObj+".size_");
+  Events->SetAlias("xN", bObj+".size_");
+  for (int i = 0; i< nCols; ++i){
+    res = plotvar(bObj+Form(".columns_[%i].type", i));
+    if (res.new_mean == res.ref_mean && res.new_entries != 0 && res.ref_entries != 0){//plot only matching content
+      const char* cName = Events->Query(bObj+Form(".columnName(%i)", i), "", "", 1)->Next()->GetField(0);
+
+      refEvents->SetAlias(Form("xC%i", i), bObj+Form(".columns_[%i].firstIndex", i));
+      Events->SetAlias(Form("xC%i", i), bObj+Form(".columns_[%i].firstIndex", i));
 
       if (res.new_mean == 0){
-        plotvar(tName+"_"+recoS+Form(".obj.floats_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
+        plotvar(bObj+Form(".floats_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
       } else if (res.new_mean == 1){
-        plotvar(tName+"_"+recoS+Form(".obj.ints_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
+        plotvar(bObj+Form(".ints_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
       } else {
-        plotvar(tName+"_"+recoS+Form(".obj.uint8s_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
+        plotvar(bObj+Form(".uint8s_*(\"%s\"!=\"\")",cName), Form("Iteration$>=xC%i&&Iteration$<xC%i+xN", i, i));
       }
     }
   }
@@ -1320,19 +1485,19 @@ void validateLumi(TString step, TString file, TString refFile, TString r="RECO",
     refEvents = refchain;
   }else
     refEvents = (TTree*)( TFile::Open(refFile)->Get("LuminosityBlocks"));
-  
+
   if (file.EndsWith(".txt")){
     TChain * chain = new TChain("LuminosityBlocks","new chain");
     readFileList(file,chain);
     Events = chain;
   }else
-    Events = (TTree*)( TFile::Open(file)->Get("LuminosityBlocks"));  
-  
+    Events = (TTree*)( TFile::Open(file)->Get("LuminosityBlocks"));
+
   int Nref = refEvents->GetEntries();
   int Nnew = Events->GetEntries();
   //normalize to the smallest number of entrie in the tree
   Nmax = TMath::Min(Nref,Nnew);
-  
+
   refEvents->SetCacheSize(50000000);
   Events->SetCacheSize(50000000);
 
@@ -1397,28 +1562,28 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     refEvents = refchain;
   }else
     refEvents = (TTree*)( TFile::Open(refFile)->Get("Events"));
-  
+
   if (file.EndsWith(".txt")){
     TChain * chain = new TChain("Events","new chain");
     readFileList(file,chain);
     Events = chain;
   }else
-    Events = (TTree*)( TFile::Open(file)->Get("Events"));  
-  
+    Events = (TTree*)( TFile::Open(file)->Get("Events"));
+
   int Nref = refEvents->GetEntries();
   int Nnew = Events->GetEntries();
   //normalize to the smallest number of entrie in the tree
   Nmax = TMath::Min(Nref,Nnew);
-  
+
   gROOT->cd();
 
   std::cout<<"Start making plots for Events with "<<Nnew<<" events and refEvents with "<<Nref<<" events ==> check  "<<Nmax<<std::endl;
 
   if (!stepContainsNU(step, "hlt")){
 
-    //Check if it's a NANOEDM 
+    //Check if it's a NANOEDM
     if (checkBranchAND("nanoaodFlatTable_muonTable__"+recoS+".")){
-      const int nTabs = 52;
+      const int nTabs = 66;
       TString tNames[nTabs] = {
         "btagWeightTable_",                      //0
         "caloMetTable_",                         //1
@@ -1472,11 +1637,28 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         "vertexTable_otherPVs",                  //49
         "vertexTable_pv",                        //50
         "vertexTable_svs",                       //51
+        //additions from comparisons-24Jun2020
+        "chsMetTable_",                          //52
+        "corrT1METJetTable_",                    //53
+        "deepMetResolutionTuneTable_",           //54
+        "deepMetResponseTuneTable_",             //55
+        "metFixEE2017Table_",                    //56
+        "rawPuppiMetTable_",                     //57
+        //
+        "subjetMCTable_",                        //58
+        "fatJetMCTable_",                        //59
+        "l1PreFiringEventWeightTable_",          //60
+        //
+        "HTXSCategoryTable_",                    //61
+        "extraFlagsTable_",                      //62
+        "fsrTable_",                             //63
+        "genWeightsTable_LHEReweighting",        //64
+        "rivetPhotonTable_",                     //65
       };
       for (int iT = 0; iT < nTabs; ++iT){
         flatTable(tNames[iT]);
       }
-      
+
       std::cout<<"Done comparing nano-EDM"<<std::endl;
       return;
     }
@@ -1519,23 +1701,33 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr="TotemFEDInfos_totemRPRawToDigi_RP_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
         plotvar(tbr+".getFEDId()");
         plotvar(tbr+".getOptoRxId()");
         plotvar(tbr+".getFSize()");
+        // 110X+ data format
+        plotvar(tbr+".fedId()");
+        plotvar(tbr+".optoRxId()");
+        plotvar(tbr+".fSize()");
       }
       tbr="TotemVFATStatusedmDetSetVector_totemRPRawToDigi_RP_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
         plotvar(tbr+"._sets.data.isOK()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getChipPosition()");
         plotvar(tbr+"._sets.data.getNumberOfClusters()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.chipPosition()");
+        plotvar(tbr+"._sets.data.numberOfClusters()");
       }
       tbr="TotemRPDigiedmDetSetVector_totemRPRawToDigi_RP_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.getStripNumber()");
+        plotvar(tbr+"._sets.data.getStripNumber()"); // legacy data format
+        plotvar(tbr+"._sets.data.stripNumber()"); // 110X+ data format
       }
       tbr="TotemTriggerCounters_totemTriggerRawToDigi__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -1546,33 +1738,47 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr="TotemFEDInfos_totemRPRawToDigi_TrackingStrip_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
         plotvar(tbr+".getFEDId()");
         plotvar(tbr+".getOptoRxId()");
         plotvar(tbr+".getFSize()");
+        // 110X+ data format
+        plotvar(tbr+".fedId()");
+        plotvar(tbr+".optoRxId()");
+        plotvar(tbr+".fSize()");
       }
       tbr="TotemVFATStatusedmDetSetVector_totemRPRawToDigi_TrackingStrip_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
         plotvar(tbr+"._sets.data.isOK()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getChipPosition()");
         plotvar(tbr+"._sets.data.getNumberOfClusters()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.chipPosition()");
+        plotvar(tbr+"._sets.data.numberOfClusters()");
       }
       tbr="TotemRPDigiedmDetSetVector_totemRPRawToDigi_TrackingStrip_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.getStripNumber()");
+        plotvar(tbr+"._sets.data.getStripNumber()"); // legacy data format
+        plotvar(tbr+"._sets.data.stripNumber()"); // 110X+ data format
       }
       //TOTEM timing
       tbr="TotemTimingDigiedmDetSetVector_totemTimingRawToDigi_TotemTiming_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.getHardwareId()");
-        plotvar(tbr+"._sets.data.getCellInfo()");
         plotvar(tbr+"._sets.data.samples_@.size()");
         plotvar(tbr+"._sets.data.samples_");
+        // legacy data format
+        plotvar(tbr+"._sets.data.getHardwareId()");
+        plotvar(tbr+"._sets.data.getCellInfo()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.hardwareId()");
+        plotvar(tbr+"._sets.data.cellInfo()");
       }
       //pixel digis
       tbr="CTPPSPixelDigiedmDetSetVector_ctppsPixelDigis__"+recoS+".obj";
@@ -1594,23 +1800,33 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr="TotemFEDInfos_ctppsDiamondRawToDigi_TimingDiamond_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
         plotvar(tbr+".getFEDId()");
         plotvar(tbr+".getOptoRxId()");
         plotvar(tbr+".getFSize()");
+        // 110X+ data format
+        plotvar(tbr+".fedId()");
+        plotvar(tbr+".optoRxId()");
+        plotvar(tbr+".fSize()");
       }
       tbr="TotemVFATStatusedmDetSetVector_ctppsDiamondRawToDigi_TimingDiamond_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
         plotvar(tbr+"._sets.data.isOK()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getChipPosition()");
         plotvar(tbr+"._sets.data.getNumberOfClusters()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.chipPosition()");
+        plotvar(tbr+"._sets.data.numberOfClusters()");
       }
       tbr="CTPPSDiamondDigiedmDetSetVector_ctppsDiamondRawToDigi_TimingDiamond_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
-        plotvar(tbr+"._sets.data.getStripNumber()");
+        plotvar(tbr+"._sets.data.getStripNumber()"); // legacy data format
+        plotvar(tbr+"._sets.data.stripNumber()"); // 110X+ data format
       }
 
       //CTPPS reco
@@ -1618,30 +1834,46 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getPosition()");
         plotvar(tbr+"._sets.data.getSigma()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.position()");
+        plotvar(tbr+"._sets.data.sigma()");
       }
       tbr="TotemRPClusteredmDetSetVector_totemRPClusterProducer__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getStripBegin()");
         plotvar(tbr+"._sets.data.getNumberOfStrips()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.stripBegin()");
+        plotvar(tbr+"._sets.data.numberOfStrips()");
       }
       tbr="TotemRPUVPatternedmDetSetVector_totemRPUVPatternFinder__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getProjection()");
         plotvar(tbr+"._sets.data.getA()");
         plotvar(tbr+"._sets.data.getB()");
         plotvar(tbr+"._sets.data.getW()");
         plotvar(tbr+"._sets.data.getFittable()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.projection()");
+        plotvar(tbr+"._sets.data.a()");
+        plotvar(tbr+"._sets.data.b()");
+        plotvar(tbr+"._sets.data.w()");
+        plotvar(tbr+"._sets.data.fittable()");
       }
       tbr="TotemRPLocalTrackedmDetSetVector_totemRPLocalTrackFitter__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getHits()@.size()");
         plotvar(tbr+"._sets.data.getX0()");
         plotvar(tbr+"._sets.data.getY0()");
@@ -1649,12 +1881,21 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.getTx()");
         plotvar(tbr+"._sets.data.getTy()");
         plotvar(tbr+"._sets.data.getChiSquared()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.hits()@.size()");
+        plotvar(tbr+"._sets.data.x0()");
+        plotvar(tbr+"._sets.data.y0()");
+        plotvar(tbr+"._sets.data.z0()");
+        plotvar(tbr+"._sets.data.tx()");
+        plotvar(tbr+"._sets.data.ty()");
+        plotvar(tbr+"._sets.data.chiSquared()");
       }
       //TOTEM timing detectors
       tbr="TotemTimingRecHitedmDetSetVector_totemTimingRecHits__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getX()");
         plotvar(tbr+"._sets.data.getY()");
         plotvar(tbr+"._sets.data.getT()");
@@ -1663,12 +1904,22 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.getSampicThresholdTime()");
         plotvar(tbr+"._sets.data.getAmplitude()");
         plotvar(tbr+"._sets.data.getTimingAlgorithm()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.x()");
+        plotvar(tbr+"._sets.data.y()");
+        plotvar(tbr+"._sets.data.time()");
+        plotvar(tbr+"._sets.data.xWidth()");
+        plotvar(tbr+"._sets.data.yWidth()");
+        plotvar(tbr+"._sets.data.sampicThresholdTime()");
+        plotvar(tbr+"._sets.data.amplitude()");
+        plotvar(tbr+"._sets.data.timingAlgorithm()");
       }
 
       tbr="CTPPSDiamondRecHitedmDetSetVector_ctppsDiamondRecHits__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getX()");
         plotvar(tbr+"._sets.data.getY()");
         plotvar(tbr+"._sets.data.getT()");
@@ -1677,12 +1928,22 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.getToT()");
         plotvar(tbr+"._sets.data.getTPrecision()");
         plotvar(tbr+"._sets.data.getOOTIndex()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.x()");
+        plotvar(tbr+"._sets.data.y()");
+        plotvar(tbr+"._sets.data.time()");
+        plotvar(tbr+"._sets.data.xWidth()");
+        plotvar(tbr+"._sets.data.yWidth()");
+        plotvar(tbr+"._sets.data.toT()");
+        plotvar(tbr+"._sets.data.timePrecision()");
+        plotvar(tbr+"._sets.data.ootIndex()");
       }
 
       tbr="CTPPSDiamondLocalTrackedmDetSetVector_ctppsDiamondLocalTracks__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getX0()");
         plotvar(tbr+"._sets.data.getY0()");
         plotvar(tbr+"._sets.data.getX0Sigma()");
@@ -1692,12 +1953,23 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.getT()");
         plotvar(tbr+"._sets.data.getTSigma()");
         plotvar(tbr+"._sets.data.getOOTIndex()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.x0()");
+        plotvar(tbr+"._sets.data.y0()");
+        plotvar(tbr+"._sets.data.x0Sigma()");
+        plotvar(tbr+"._sets.data.y0Sigma()");
+        plotvar(tbr+"._sets.data.z0()");
+        plotvar(tbr+"._sets.data.chiSquared()");
+        plotvar(tbr+"._sets.data.time()");
+        plotvar(tbr+"._sets.data.timeSigma()");
+        plotvar(tbr+"._sets.data.ootIndex()");
       }
 
       tbr="TotemTimingLocalTrackedmDetSetVector_totemTimingLocalTracks__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getX0()");
         plotvar(tbr+"._sets.data.getY0()");
         plotvar(tbr+"._sets.data.getX0Sigma()");
@@ -1706,6 +1978,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.getChiSquared()");
         plotvar(tbr+"._sets.data.getT()");
         plotvar(tbr+"._sets.data.getTSigma()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.x0()");
+        plotvar(tbr+"._sets.data.y0()");
+        plotvar(tbr+"._sets.data.x0Sigma()");
+        plotvar(tbr+"._sets.data.y0Sigma()");
+        plotvar(tbr+"._sets.data.z0()");
+        plotvar(tbr+"._sets.data.chiSquared()");
+        plotvar(tbr+"._sets.data.time()");
+        plotvar(tbr+"._sets.data.timeSigma()");
       }
 
       tbr="CTPPSPixelClusteredmDetSetVector_ctppsPixelClusters__"+recoS+".obj";
@@ -1726,16 +2007,24 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.minPixelRow()");
         plotvar(tbr+"._sets.data.minPixelCol()");
         plotvar(tbr+"._sets.data.clusterSize()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getPoint().x()");
         plotvar(tbr+"._sets.data.getPoint().y()");
         plotvar("log10("+tbr+"._sets.data.getError().xx())");
         plotvar("log10("+tbr+"._sets.data.getError().yy())");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.point().x()");
+        plotvar(tbr+"._sets.data.point().y()");
+        plotvar("log10("+tbr+"._sets.data.error().xx())");
+        plotvar("log10("+tbr+"._sets.data.error().yy())");
       }
 
       tbr="CTPPSPixelLocalTrackedmDetSetVector_ctppsPixelLocalTracks__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"._sets@.size()");
         plotvar(tbr+"._sets.data@.size()");
+        plotvar(tbr+"._sets.data.isValid()");
+        // legacy data format
         plotvar(tbr+"._sets.data.getX0()");
         plotvar("log10("+tbr+"._sets.data.getX0Sigma())");
         plotvar(tbr+"._sets.data.getY0()");
@@ -1748,18 +2037,31 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("min(20,"+tbr+"._sets.data.getChiSquaredOverNDF())");
         plotvar(tbr+"._sets.data.getNDF()");
         plotvar(tbr+"._sets.data.getRecoInfo()");
-        plotvar(tbr+"._sets.data.isValid()");
+        // 110X+ data format
+        plotvar(tbr+"._sets.data.x0()");
+        plotvar("log10("+tbr+"._sets.data.x0Sigma())");
+        plotvar(tbr+"._sets.data.y0()");
+        plotvar("log10("+tbr+"._sets.data.y0Sigma())");
+        plotvar(tbr+"._sets.data.z0()");
+        plotvar(tbr+"._sets.data.tx()");
+        plotvar("log10("+tbr+"._sets.data.txSigma())");
+        plotvar(tbr+"._sets.data.ty()");
+        plotvar("log10("+tbr+"._sets.data.tySigma())");
+        plotvar("min(20,"+tbr+"._sets.data.chiSquaredOverNDF())");
+        plotvar(tbr+"._sets.data.ndf()");
+        plotvar(tbr+"._sets.data.recoInfo()");
       }
 
       tbr="CTPPSLocalTrackLites_ctppsLocalTrackLiteProducer__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
+        // legacy data format
         plotvar(tbr+".getX()");
         plotvar(tbr+".getXUnc()");
         plotvar(tbr+".getY()");
         plotvar(tbr+".getYUnc()");
         plotvar(tbr+".getTime()");
-        plotvar(tbr+".getTimeUnc()");      
+        plotvar(tbr+".getTimeUnc()");
         plotvar(tbr+".getTx()");
         plotvar(tbr+".getTxUnc()");
         plotvar(tbr+".getTy()");
@@ -1767,6 +2069,20 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".getPixelTrackRecoInfo()");
         plotvar(tbr+".getChiSquaredOverNDF()");
         plotvar(tbr+".getNumberOfPointsUsedForFit()");
+        // 110X+ data format
+        plotvar(tbr+".x()");
+        plotvar(tbr+".xUnc()");
+        plotvar(tbr+".y()");
+        plotvar(tbr+".yUnc()");
+        plotvar(tbr+".time()");
+        plotvar(tbr+".timeUnc()");
+        plotvar(tbr+".tx()");
+        plotvar(tbr+".txUnc()");
+        plotvar(tbr+".ty()");
+        plotvar(tbr+".tyUnc()");
+        plotvar(tbr+".pixelTrackRecoInfo()");
+        plotvar(tbr+".chiSquaredOverNDF()");
+        plotvar(tbr+".numberOfPointsUsedForFit()");
       }
 
       forwardProtons("ctppsProtons_multiRP");
@@ -1833,19 +2149,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     }
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "hcal")) && !stepContainsNU(step, "cosmic") ){
       //hcal rechit plots
-      tbr="HBHERecHitsSorted_hbheprereco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar(tbr+".obj.eraw()");
-        plotvar("log10("+tbr+".obj.eraw())");
-        plotvar(tbr+".obj.eaux()");
-        plotvar("log10("+tbr+".obj.eaux())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-        plotvar("log10("+tbr+".obj.chi2())");
-      }
+      caloHitsGeneric("HBHERecHitsSorted", "hbheprereco_");
 
       tbr="HBHERecHitsSorted_hbhereco__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -1860,7 +2164,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log2(max("+tbr+".obj.flags(),0.5))", tbr+".obj.detid().subdetId()==1");
         plotvar(tbr+".obj.time()", tbr+".obj.detid().subdetId()==1");
         plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.detid().subdetId()==1");
-        
+        plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.energy()>0.001&&"+tbr+".obj.detid().subdetId()==1");
+
         plotvar(tbr+".obj.energy()", tbr+".obj.detid().subdetId()!=1");
         plotvar("log10("+tbr+".obj.energy())", tbr+".obj.detid().subdetId()!=1");
         plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001&&"+tbr+".obj.detid().subdetId()!=1");
@@ -1871,7 +2176,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log2(max("+tbr+".obj.flags(),0.5))", tbr+".obj.detid().subdetId()!=1");
         plotvar(tbr+".obj.time()", tbr+".obj.detid().subdetId()!=1");
         plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.detid().subdetId()!=1");
-        
+        plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.energy()>0.001&&"+tbr+".obj.detid().subdetId()!=1");
+
         if (stepContainsNU(step, "HEP17")){
           plotvar(tbr+".obj.energy()", tbr+".obj.detid().subdetId()!=1&&"+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66");
           plotvar("log10("+tbr+".obj.energy())", tbr+".obj.detid().subdetId()!=1&&"+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66");
@@ -1883,7 +2189,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
           plotvar("log2(max("+tbr+".obj.flags(),0.5))", tbr+".obj.detid().subdetId()!=1&&"+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66");
           plotvar(tbr+".obj.time()", tbr+".obj.detid().subdetId()!=1&&"+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66");
           plotvar("log10("+tbr+".obj.chi2())", tbr+".obj.detid().subdetId()!=1&&"+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66");
-          
+
           //outside of HEP17
           plotvar(tbr+".obj.energy()", tbr+".obj.detid().subdetId()!=1&&!("+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66)");
           plotvar("log10("+tbr+".obj.energy())", tbr+".obj.detid().subdetId()!=1&&!("+tbr+".obj.id().iphi()>=63&&"+tbr+".obj.id().iphi()<=66)");
@@ -1898,19 +2204,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         }
       }//check HBHERecHitsSorted_hbhereco__ is available
 
-      tbr="HBHERecHitsSorted_reducedHcalRecHits_hbhereco_"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar(tbr+".obj.eraw()");
-        plotvar("log10("+tbr+".obj.eraw())");
-        plotvar(tbr+".obj.eaux()");
-        plotvar("log10("+tbr+".obj.eaux())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-        plotvar("log10("+tbr+".obj.chi2())");
-      }
+      caloHitsGeneric("HBHERecHitsSorted", "reducedHcalRecHits_hbhereco");
+      caloHitsGeneric("HBHERecHitsSorted", "reducedEgamma_reducedHBHEHits");
+      caloHitsGeneric("HBHERecHitsSorted", "slimmedHcalRecHits_reducedHcalRecHits");
 
       tbr="HFPreRecHitsSorted_hfprereco__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -1922,70 +2218,23 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.hasInfo_[1]");
       }
 
-      tbr="HFRecHitsSorted_hfreco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
+      caloHitsGeneric("HFRecHitsSorted", "hfreco_");
+      caloHitsGeneric("HFRecHitsSorted", "reducedHcalRecHits_hfreco");
+      caloHitsGeneric("HFRecHitsSorted", "slimmedHcalRecHits_reducedHcalRecHits");
 
-      tbr="HFRecHitsSorted_reducedHcalRecHits_hfreco_"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
+      caloHitsGeneric("HORecHitsSorted", "horeco_");
+      caloHitsGeneric("HORecHitsSorted", "reducedHcalRecHits_horeco");
+      caloHitsGeneric("HORecHitsSorted", "slimmedHcalRecHits_reducedHcalRecHits");
 
-      tbr="HORecHitsSorted_horeco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }        
-
-      tbr="HORecHitsSorted_reducedHcalRecHits_horeco_"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
-
-      tbr="CastorRecHitsSorted_castorreco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
-
-      tbr="ZDCRecHitsSorted_zdcreco__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar(tbr+".obj.energy()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
-        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()");
-      }
+      caloHitsGeneric("CastorRecHitsSorted", "castorreco_");
+      caloHitsGeneric("ZDCRecHitsSorted", "zdcreco_");
 
       tbr="HcalNoiseSummary_hcalnoise__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+".noiseFilterStatus()");
         plotvar(tbr+".noiseType()");
       }
-        
+
       tbr="HcalUnpackerReport_hcalDigis__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+".errorFree()");
@@ -2013,7 +2262,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log10("+tbr+".obj.energy())");
         plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
         plotvar("log2(max("+tbr+".obj.flags(),0.5))");
-        plotvar(tbr+".obj.time()"); 
+        plotvar(tbr+".obj.time()");
         plotvar(tbr+".obj.timeError()");
         plotvar(tbr+".obj.outOfTimeEnergy()");
         plotvar(tbr+".obj.chi2()");
@@ -2047,6 +2296,20 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.chi2()");
         plotvar(tbr+".obj.outOfTimeChi2()");
       }
+
+      tbr="HGCRecHitsSorted_HGCalRecHit_HGCHFNoseRecHits_"+recoS+".obj";
+      if (checkBranchOR(tbr, true)){
+        plotvar(tbr+".obj@.size()");
+        plotvar(tbr+".obj.energy()");
+        plotvar("log10("+tbr+".obj.energy())");
+        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
+        plotvar("log2(max("+tbr+".obj.flags(),0.5))");
+        plotvar(tbr+".obj.time()");
+        plotvar(tbr+".obj.timeError()");
+        plotvar(tbr+".obj.outOfTimeEnergy()");
+        plotvar(tbr+".obj.chi2()");
+        plotvar(tbr+".obj.outOfTimeChi2()");
+      }
     }
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "preshower")) && !stepContainsNU(step, "cosmic") ){
@@ -2057,13 +2320,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.energy()");
         plotvar("log10("+tbr+".obj.energy())");
         plotvar(tbr+".obj.time()");
-        //plotvar(tbr+".obj.chi2Prob()");      
-        plotvar(tbr+".obj.chi2()");      
-        //      if (detailed)      plotvar(tbr+".obj.outOfTimeChi2Prob()");      
-        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");      
-        plotvar(tbr+".obj.recoFlag()");      
-        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");      
-        plotvar(tbr+".obj.flags()");      
+        //plotvar(tbr+".obj.chi2Prob()");
+        plotvar(tbr+".obj.chi2()");
+        //      if (detailed)      plotvar(tbr+".obj.outOfTimeChi2Prob()");
+        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");
+        plotvar(tbr+".obj.recoFlag()");
+        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");
+        plotvar(tbr+".obj.flags()");
       }
 
       tbr="EcalRecHitsSorted_reducedEcalRecHitsES__"+recoS+".obj";
@@ -2072,11 +2335,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.energy()");
         plotvar("log10("+tbr+".obj.energy())");
         plotvar(tbr+".obj.time()");
-        plotvar(tbr+".obj.chi2()");      
-        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");      
-        plotvar(tbr+".obj.recoFlag()");      
-        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");      
-        plotvar(tbr+".obj.flags()");      
+        plotvar(tbr+".obj.chi2()");
+        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");
+        plotvar(tbr+".obj.recoFlag()");
+        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");
+        plotvar(tbr+".obj.flags()");
       }
 
       tbr="recoPreshowerClusters_multi5x5SuperClustersWithPreshower_preshowerXClusters_"+recoS+".obj";
@@ -2108,13 +2371,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log10("+tbr+".obj.energy())");
         plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
         plotvar(tbr+".obj.time()");
-        //plotvar(tbr+".obj.chi2Prob()");      
-        plotvar(tbr+".obj.chi2()");      
-        //      if (detailed)      plotvar(tbr+".obj.outOfTimeChi2Prob()");      
-        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");      
-        plotvar(tbr+".obj.recoFlag()");      
-        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");      
-        plotvar(tbr+".obj.flags()");      
+        //plotvar(tbr+".obj.chi2Prob()");
+        plotvar(tbr+".obj.chi2()");
+        //      if (detailed)      plotvar(tbr+".obj.outOfTimeChi2Prob()");
+        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");
+        plotvar(tbr+".obj.recoFlag()");
+        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");
+        plotvar(tbr+".obj.flags()");
       }
 
       tbr="EcalRecHitsSorted_ecalRecHit_EcalRecHitsEE_"+recoS+".obj";
@@ -2124,13 +2387,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log10("+tbr+".obj.energy())");
         plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0.001");
         plotvar(tbr+".obj.time()");
-        //plotvar(tbr+".obj.chi2Prob()");      
-        plotvar(tbr+".obj.chi2()");      
-        //      if (detailed)      plotvar(tbr+".obj.outOfTimeChi2Prob()");      
-        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");      
-        plotvar(tbr+".obj.recoFlag()");      
-        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");      
-        plotvar(tbr+".obj.flags()");      
+        //plotvar(tbr+".obj.chi2Prob()");
+        plotvar(tbr+".obj.chi2()");
+        //      if (detailed)      plotvar(tbr+".obj.outOfTimeChi2Prob()");
+        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");
+        plotvar(tbr+".obj.recoFlag()");
+        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");
+        plotvar(tbr+".obj.flags()");
       }
 
       tbr="EcalRecHitsSorted_reducedEcalRecHitsEB__"+recoS+".obj";
@@ -2139,11 +2402,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.energy()");
         plotvar("log10("+tbr+".obj.energy())");
         plotvar(tbr+".obj.time()");
-        plotvar(tbr+".obj.chi2()");      
-        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");      
-        plotvar(tbr+".obj.recoFlag()");      
-        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");      
-        plotvar(tbr+".obj.flags()");      
+        plotvar(tbr+".obj.chi2()");
+        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");
+        plotvar(tbr+".obj.recoFlag()");
+        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");
+        plotvar(tbr+".obj.flags()");
       }
 
       tbr="EcalRecHitsSorted_reducedEcalRecHitsEE__"+recoS+".obj";
@@ -2152,11 +2415,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".obj.energy()");
         plotvar("log10("+tbr+".obj.energy())");
         plotvar(tbr+".obj.time()");
-        plotvar(tbr+".obj.chi2()");      
-        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");      
-        plotvar(tbr+".obj.recoFlag()");      
-        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");      
-        plotvar(tbr+".obj.flags()");      
+        plotvar(tbr+".obj.chi2()");
+        if (detailed)      plotvar(tbr+".obj.outOfTimeChi2()");
+        plotvar(tbr+".obj.recoFlag()");
+        plotvar("log2(max("+tbr+".obj.flagBits_,0.5))");
+        plotvar(tbr+".obj.flags()");
       }
 
       // miniaod
@@ -2200,7 +2463,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       }
     }
 
-    if ((stepContainsNU(step, "all") || stepContainsNU(step, "mtd") || stepContainsNU(step, "ftl")) && !stepContainsNU(step, "cosmic") ){       
+    if ((stepContainsNU(step, "all") || stepContainsNU(step, "mtd") || stepContainsNU(step, "ftl")) && !stepContainsNU(step, "cosmic") ){
       //FTL rechit plots
       mtdHits("ftlRecHits_FTLBarrel");
       mtdHits("ftlRecHits_FTLEndcap");
@@ -2217,7 +2480,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".m_data.y()");
         plotvar(tbr+".m_data.energy()");
         plotvar(tbr+".m_data.time()");
-        plotvar(tbr+".m_data.time_error()");
+        plotvar(tbr+".m_data.timeError()");
       }
 
       tbr="FTLClusteredmNewDetSetVector_mtdClusters_FTLEndcap_"+recoS+".obj";
@@ -2227,7 +2490,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".m_data.y()");
         plotvar(tbr+".m_data.energy()");
         plotvar(tbr+".m_data.time()");
-        plotvar(tbr+".m_data.time_error()");
+        plotvar(tbr+".m_data.timeError()");
       }
 
       //tracking rechits
@@ -2238,11 +2501,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
             plotvar(tbr+".m_data.energy()");
             plotvar(tbr+".m_data.time()");
         */
-        plotvar(tbr+".m_data.localPosition().x()");
-        plotvar(tbr+".m_data.localPosition().y()");
       }
-        
-      allTracks("trackExtenderWithMTD__RECO");
+
+      allTracks("trackExtenderWithMTD__"+recoS);
       tbr="floatedmValueMap_trackExtenderWithMTD_";
       plotvar(tbr+"generalTrackBeta_"+recoS+".obj.values_");
       plotvar(tbr+"generalTrackt0_"+recoS+".obj.values_");
@@ -2250,6 +2511,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+"generalTracktmtd_"+recoS+".obj.values_");
       plotvar(tbr+"pathLength_"+recoS+".obj.values_");
       plotvar(tbr+"tmtd_"+recoS+".obj.values_");
+      plotvar(tbr+"btlMatchChi2_"+recoS+".obj.values_");
+      plotvar(tbr+"etlMatchChi2_"+recoS+".obj.values_");
+      plotvar("min(20,"+tbr+"btlMatchChi2_"+recoS+".obj.values_)", tbr+"btlMatchChi2_"+recoS+".obj.values_>=0");
+      plotvar("min(20,"+tbr+"etlMatchChi2_"+recoS+".obj.values_)", tbr+"etlMatchChi2_"+recoS+".obj.values_>=0");
+      plotvar(tbr+"btlMatchTimeChi2_"+recoS+".obj.values_");
+      plotvar(tbr+"etlMatchTimeChi2_"+recoS+".obj.values_");
 
       tbr="floatedmValueMap_tofPID_";
       plotvar(tbr+"t0_"+recoS+".obj.values_");
@@ -2258,6 +2525,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar(tbr+"probPi_"+recoS+".obj.values_");
       plotvar(tbr+"probK_"+recoS+".obj.values_");
       plotvar(tbr+"probP_"+recoS+".obj.values_");
+
+      tbr="floatedmValueMap_mtdTrackQualityMVA_mtdQualMVA_";
+      plotvar(tbr+recoS+".obj.values_");
    }
 
 
@@ -2285,7 +2555,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("min("+tbr+".collection_.data_.chi2(),99.99)");
         plotvar(tbr+".collection_.data_.degreesOfFreedom()");
       }
-        
+
       tbr="DTChamberIdDTRecSegment4DsOwnedRangeMap_slimmedMuons__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+".collection_.data_@.size()");
@@ -2349,7 +2619,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".collection_.data_.localPositionError().yy()");
         plotvar(tbr+".collection_.data_.localPositionError().xy()");
       }
-        
+
     }
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "gem")) && !stepContainsNU(step, "cosmic") ){
       tbr="GEMDetIdGEMRecHitsOwnedRangeMap_gemRecHits__"+recoS+".obj";
@@ -2365,7 +2635,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".collection_.data_.localPositionError().yy()");
         plotvar(tbr+".collection_.data_.localPositionError().xy()");
       }
-      
+
       tbr="GEMDetIdGEMSegmentsOwnedRangeMap_gemSegments__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+".collection_.data_@.size()");
@@ -2395,7 +2665,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".collection_.data_.localPositionError().yy()");
         plotvar(tbr+".collection_.data_.localPositionError().xy()");
       }
-        
+
       tbr="ME0DetIdME0SegmentsOwnedRangeMap_me0Segments__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+".collection_.data_@.size()");
@@ -2414,14 +2684,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       }
     }
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "sipixel")) && !stepContainsNU(step, "cosmic") ){
-      tbr="SiPixelClusteredmNewDetSetVector_siPixelClusters__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".m_data@.size()");
-        //plotvar(tbr+".m_data.barycenter()");
-        plotvar(tbr+".m_data.charge()");
-        plotvar("log10(max(0.1,"+tbr+".m_data.size()))");
-        plotvar("min(50,"+tbr+".m_data.size())");
-      }
+      siPixelClusters("siPixelClusters_");
+      siPixelClusters("muonReducedTrackExtras_");
+      siPixelClusters("slimmedMuonTrackExtras_");
 
       tbr="Phase2TrackerCluster1DedmNewDetSetVector_siPhase2Clusters__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2450,14 +2715,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       }
     }
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "sistrip")) && !stepContainsNU(step, "cosmic") ){
-      tbr="SiStripClusteredmNewDetSetVector_siStripClusters__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".m_data@.size()");
-        plotvar(tbr+".m_data.barycenter()");
-        plotvar("log10(max(0.1,"+tbr+".m_data.amplitudes_@.size()))");
-        plotvar("min(50,"+tbr+".m_data.amplitudes_@.size())");
-        //plotvar(tbr+".m_data.amplitudes()[0]");
-      }
+      siStripClusters("siStripClusters_");
+      siStripClusters("muonReducedTrackExtras_");
+      siStripClusters("slimmedMuonTrackExtras_");
 
       tbr="ClusterSummary_clusterSummaryProducer__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2465,10 +2725,10 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".iterator_@.size()");
         plotvar(tbr+".modules_");
         plotvar(tbr+".iterator_");
-        
+
         plotvar(tbr+".genericVariables_@.size()");
         plotvar("log10("+tbr+".genericVariables_)");
-        
+
         for (ULong_t tkI = 0; tkI< 8; ++tkI){
           plotvar(tbr+".getNClus("+tkI+")");
           plotvar(tbr+".getClusSize("+tkI+")");
@@ -2505,7 +2765,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".dxdz()");
         plotvar(tbr+".dydz()");
       }
-      
+
     }
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "track")) && !stepContainsNU(step, "cosmic") ){
@@ -2522,7 +2782,6 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 	//	allTracks("thWithMaterialTracks__"+recoS);
 	//	allTracks("secWithMaterialTracks__"+recoS);
       }
-
     }
     if (stepContainsNU(step, "all")){
       allTracks("regionalCosmicTracks__"+recoS);
@@ -2550,17 +2809,30 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       }
     }
 
-    if (stepContainsNU(step, "all")) {
+    if (stepContainsNU(step, "all") || stepContainsNU(step, "pat")) {
       packedCand("packedPFCandidates_");
       packedCand("lostTracks_");
       packedCand("lostTracks_eleTracks");
       packedCand("packedPFCandidatesDiscarded_");
+      packedCand("hiPixelTracks_");
+
+      for (const TString& inst : {"pfCandidatesTMOneStationTight", "pfCandidatesAllTrackerMuons", 
+                                 "lostTracksTMOneStationTight", "lostTracksAllTrackerMuons"} ) {
+        tbr="patPackedCandidatesRefs_packedCandidateMuonID_"+inst+"_"+recoS+".obj";
+        if (checkBranchOR(tbr, true)){
+          plotvar(tbr+"@.size()");
+        }
+      }
 
       tbr="patHcalDepthEnergyFractionsedmValueMap_packedPFCandidates_hcalDepthEnergyFractions_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+".values_.fraction(0)");
         plotvar(tbr+".values_.fraction(0)", tbr+".values_.fraction(0)>=0");
       }
+
+      //HI miniAOD
+      plotvar("floatedmValueMap_packedPFCandidateTrackChi2__"+recoS+".obj.values_");
+      plotvar("floatedmValueMap_lostTrackChi2__"+recoS+".obj.values_");
 
       tbr="patIsolatedTracks_isolatedTracks__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2586,7 +2858,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("double_prefiringweight_nonPrefiringProb_"+recoS+".obj");
       plotvar("double_prefiringweight_nonPrefiringProbUp_"+recoS+".obj");
     }
-    
+
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "vertex")) && !stepContainsNU(step, "cosmic") ){
       /// primary vertex plots
       vertexVars("recoVertexs_pixelVertices__");
@@ -2697,7 +2969,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "dE")) && !stepContainsNU(step, "cosmic")){
-      ///dedx plots 
+      ///dedx plots
       // median was replaced by dedxHarmonic2 in CMSSW_4_2
       //      plotvar("recoDeDxDataedmValueMap_dedxMedian__"+recoS+".obj.size()");
       //      plotvar("recoDeDxDataedmValueMap_dedxMedian__"+recoS+".obj.values_.dEdx()");
@@ -2741,7 +3013,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         staMuons("chi2");
         if (detailed)    staMuons("dz");
         if (detailed)    staMuons("dxy");
-        if (detailed)    staMuons("ndof");      
+        if (detailed)    staMuons("ndof");
       }
 
       ///global Muons plots
@@ -2764,6 +3036,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       allTracks("tevMuons_picky_"+recoS);
       allTracks("standAloneSETMuons_UpdatedAtVtx_"+recoS);
 
+      trackExtras("muonReducedTrackExtras_");
+      trackExtras("slimmedMuonTrackExtras_");
+
       ///tracker muons
       tbr="recoMuons_muons__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -2774,7 +3049,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".pt()",c);
         plotvar(tbr+".p()",c);
       }
-      
+
       tbr="patMuons_slimmedMuons__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         TString c=tbr+".isTrackerMuon()";
@@ -2872,6 +3147,15 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolation__"+recoS+".obj.data_");
       plotvar("recoPFTauDiscriminator_hpsPFTauDiscriminationByMediumIsolationMVA__"+recoS+".obj.data_");
 
+      //new style IDs
+      tauIDContainer("hpsPFTauBasicDiscriminators_");
+      tauIDContainer("hpsPFTauBasicDiscriminatorsdR03_");
+      tauIDContainer("hpsPFTauDiscriminationByMuonRejection3_");
+      tauIDContainer("hpsPFTauDiscriminationByMVA6ElectronRejection_");
+      tauIDContainer("hpsPFTauDiscriminationByIsolationMVArun2v1DBoldDMwLT_");
+      tauIDContainer("hpsPFTauDiscriminationByIsolationMVArun2v1DBdR03oldDMwLT_");
+      tauIDContainer("hpsPFTauDiscriminationByIsolationMVArun2v1DBnewDMwLT_");
+
       plotvar("recoRecoTauPiZeros_hpsPFTauProducer_pizeros_"+recoS+".obj@.size()");
       plotvar("log10(recoRecoTauPiZeros_hpsPFTauProducer_pizeros_"+recoS+".obj.pt())");
       plotvar("recoRecoTauPiZeros_hpsPFTauProducer_pizeros_"+recoS+".obj.eta()");
@@ -2909,7 +3193,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       //pfphoton plots
       photonVars("pfPhotonTranslator_pfphot");
-      
+
       //new ged stuff
       photonVars("gedPhotons_");
       photonVars("gedPhotonsTmp_");//HI names
@@ -2978,7 +3262,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       caloClusters("hgcalLayerClusters_");
       plotvar("min(15,max(-2,floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_))");
-      plotvar("floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_", "floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_>-10");
+      plotvar("floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_",
+              "floatedmValueMap_hgcalLayerClusters_timeLayerCluster_"+recoS+".obj.values_>-10");
+
+      caloClusters("hgcalLayerClustersHFNose_");
+      plotvar("min(15,max(-2,floatedmValueMap_hgcalLayerClustersHFNose_timeLayerCluster_"+recoS+".obj.values_))");
+      plotvar("floatedmValueMap_hgcalLayerClustersHFNose_timeLayerCluster_"+recoS+".obj.values_",
+              "floatedmValueMap_hgcalLayerClustersHFNose_timeLayerCluster_"+recoS+".obj.values_>-10");
 
       tbr="recoPFRecHits_particleFlowRecHitHO_Cleaned_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3006,7 +3296,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log10("+tbr+".energy())");
         plotvar(tbr+".time()");
       }
-        
+
       tbr="recoPFRecHits_particleFlowRecHitHCAL_Cleaned_"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar(tbr+"@.size()");
@@ -3033,8 +3323,31 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       pfClusters("particleFlowClusterHGCal_");
       pfClusters("particleFlowClusterHGCalFromMultiCl_");
 
+      //active before 102X
       hgcalMultiClusters("hgcalLayerClusters_sharing");
       hgcalMultiClusters("hgcalLayerClusters_");
+      //
+      hgcalMultiClusters("hgcalMultiClusters_sharing");
+      hgcalMultiClusters("hgcalMultiClusters_");
+      //ticl
+      hgcalMultiClusters("multiClustersFromTracksters_MultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersHAD_MultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersEM_MultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersTrk_TrkMultiClustersFromTracksterByCA");
+      hgcalMultiClusters("multiClustersFromTrackstersMIP_MIPMultiClustersFromTracksterByCA");
+      hgcalMultiClusters("ticlMultiClustersFromTrackstersEM_");
+      hgcalMultiClusters("ticlMultiClustersFromTrackstersHAD_");
+      hgcalMultiClusters("ticlMultiClustersFromTrackstersMIP_");
+      hgcalMultiClusters("ticlMultiClustersFromTrackstersMerge_");
+      hgcalMultiClusters("ticlMultiClustersFromTrackstersTrk_");
+
+      tracksters("ticlTrackstersEM_");
+      tracksters("ticlTrackstersHAD_");
+      tracksters("ticlTrackstersMIP_");
+      tracksters("ticlTrackstersMerge_");
+      tracksters("ticlTrackstersTrk_");
+
+      ticlCands("ticlCandidateFromTracksters_");
       // miniaod
       superClusters("reducedEgamma_reducedSuperClusters");
       superClusters("reducedEgamma_reducedOOTSuperClusters");
@@ -3135,6 +3448,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       allpf(-1, "particleFlowTmp_CleanedTrackerAndGlobalMuons");
       allpf(-1, "particleFlowTmp_electrons");
 
+      allpf(-1, "pfTICL_");
+
       tbr="recoPFMETs_pfMet__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         plotvar("log10("+tbr+".pt())");
@@ -3229,7 +3544,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         //      plotvar(tbr+".muonRef().isAvailable()");
         //access to Refs still does not work [Jan 2019]//      plotvar(tbr+".muonRef().get()->type()");
       }
-        
+
     }
     if (stepContainsNU(step, "all") || stepContainsNU(step, "met")){
       ///MET plots
@@ -3239,6 +3554,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       // miniaod
       patMetVars("slimmedMETs_");
+      patMetVars("slimmedMETsNoHF_");
       patMetVars("slimmedMETsPuppi_");
       // miniaod debug
       patMetVars("patMETsPuppi_");
@@ -3257,7 +3573,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tbr = "edmTriggerResults_TriggerResults__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
         PlotStats res = plotvar(tbr+".paths_@.size()");
-        for (int i = 0; i< std::max(res.ref_xmax,res.new_xmax) && i < 64; ++i){//restrict to 64, 
+        for (int i = 0; i< maxSize(res) && i < 64; ++i){//restrict to 64, 
           plotvar(tbr+Form(".paths_[%d].accept()",i), "", true);
         }
       }
@@ -3266,33 +3582,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     if (stepContainsNU(step, "all") || stepContainsNU(step, "calotower") || stepContainsNU(step, "HEP17")){
       //calo towers plot
 
-      tbr="CaloTowersSorted_towerMaker__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+".obj@.size()");
-        plotvar("log10("+tbr+".obj.energy())");
-        plotvar("log10("+tbr+".obj.emEnergy())");
-        plotvar("log10("+tbr+".obj.hadEnergy())");
-        plotvar("log10("+tbr+".obj.mass2())/2.");
-        plotvar(tbr+".obj.eta()");
-        plotvar(tbr+".obj.phi()");
-        
-        if (stepContainsNU(step, "HEP17")){
-          plotvar("log10("+tbr+".obj.energy())", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar("log10("+tbr+".obj.emEnergy())", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar("log10("+tbr+".obj.hadEnergy())", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar("log10("+tbr+".obj.mass2())/2.", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar(tbr+".obj.eta()", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-          plotvar(tbr+".obj.phi()", tbr+".obj.eta()>1.5&&"+tbr+".obj.eta()<3&&"+tbr+".obj.phi()<-0.435&&"+tbr+".obj.phi()>-0.960");
-        }
-        
-        plotvar("Sum$("+tbr+".obj.energy()>0)");
-        plotvar("log10("+tbr+".obj.energy())", tbr+".obj.energy()>0");
-        plotvar("log10("+tbr+".obj.emEnergy())", tbr+".obj.energy()>0");
-        plotvar("log10("+tbr+".obj.hadEnergy())", tbr+".obj.energy()>0");
-        plotvar("log10("+tbr+".obj.mass2())/2.", tbr+".obj.energy()>0");
-        plotvar(tbr+".obj.eta()", tbr+".obj.energy()>0");
-        plotvar(tbr+".obj.phi()", tbr+".obj.energy()>0");
-      }        
+      caloTowers("towerMaker_", stepContainsNU(step, "HEP17"));
+      caloTowers("PFTowers_");
 
       tbr="recoCastorTowers_CastorTowerReco__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3301,7 +3592,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar("log10("+tbr+".energy())");
         plotvar("log10("+tbr+".emEnergy())");
         plotvar("log10("+tbr+".hadEnergy())");
-        plotvar("log10("+tbr+".mass2())/2.");
+        plotvar("log10("+tbr+".massSqr())/2.");
         plotvar(tbr+".eta()");
         plotvar(tbr+".phi()");
       }
@@ -3309,7 +3600,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
     }
 
     if (stepContainsNU(step, "all") || stepContainsNU(step, "jet")){
-      
+      ///puppi info
+      plotvar("floatedmValueMap_puppi__"+recoS+".obj.values_");
+
       ///jet plots
       jets("recoCaloJets","iterativeCone5CaloJets");
       jets("recoPFJets","kt4PFJets");
@@ -3319,26 +3612,35 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       jets("recoTrackJets","ak5TrackJets");
       jets("recoTrackJets","ak4TrackJets");
       jets("recoJPTJets","JetPlusTrackZSPCorJetAntiKt5");
+      jets("recoJPTJets","JetPlusTrackZSPCorJetAntiKt4");
       jets("recoJPTJets", "TCTauJetPlusTrackZSPCorJetAntiKt5");
       jets("recoPFJets","ak5PFJets");
       jets("recoPFJets","ak5PFJetsCHS");
-      
+
       jets("recoPFJets", "ak4PFJets");
       jets("recoPFJets", "ak4PFJetsCHS");
+      jets("recoPFJets", "ak4PFJetsPuppi");
       jets("recoPFJets", "ak8PFJets");
       jets("recoPFJets", "ak8PFJetsCHS");
-      jets("recoPFJets", "ak8PFJetsCHSSoftDrop");
+      jets("recoPFJets", "ak8PFJetsPuppi");
       jets("recoPFJets", "ca8PFJetsCHS");
 
       jets("recoPFJets", "ca8PFJetsCHSPruned_SubJets");
       jets("recoPFJets", "ak8PFJetsCHSPruned_SubJets");
+      jets("recoPFJets", "ak8PFJetsCHSSoftDrop_SubJets");
+      jets("recoPFJets", "ak8PFJetsPuppiSoftDrop_SubJets");
       jets("recoPFJets", "cmsTopTagPFJetsCHS_caTopSubJets");
 
       jets("recoBasicJets","ak7BasicJets"); //Castor jets
-      jets("recoBasicJets","ca8PFJetsCHSPruned"); 
-      jets("recoBasicJets","ak8PFJetsCHSPruned"); 
-      jets("recoBasicJets","cmsTopTagPFJetsCHS"); 
-      
+      jets("recoBasicJets","ak5CastorJets");
+      jets("recoBasicJets","ak7CastorJets");
+      jets("recoBasicJets","ca8PFJetsCHSPruned");
+      jets("recoBasicJets","ak8PFJetsCHSPruned");
+      jets("recoBasicJets","ak8PFJetsCHSSoftDrop");
+      jets("recoBasicJets","ak8PFJetsPuppiSoftDrop");
+      jets("recoBasicJets","cmsTopTagPFJetsCHS");
+
+
       jets("recoGenJets", "ak4GenJets");
       jets("recoGenJets", "slimmedGenJets");
 
@@ -3349,7 +3651,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".data_.m_partons.size()");
         plotvar(tbr+".data_.m_bHadrons.size()");
       }
-        
+
       plotvar("double_kt6PFJets_rho_"+recoS+".obj");
       plotvar("double_kt6CaloJets_rho_"+recoS+".obj");
       plotvar("double_fixedGridRhoFastjetAll__"+recoS+".obj");
@@ -3406,7 +3708,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       jets("patJets","slimmedJetsPuppi");
       jets("recoCaloJets", "slimmedCaloJets");
       //jets("patJets","slimmedJetsAK8PFCHSSoftDropPacked_SubJets");
-      //jets("patJets","slimmedJetsCMSTopTagCHSPacked_SubJets");      
+      //jets("patJets","slimmedJetsCMSTopTagCHSPacked_SubJets");
     }
 
     if (stepContainsNU(step, "all") || stepContainsNU(step, "jet")){
@@ -3505,7 +3807,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       impactParameterTagInfoVars("recoTracksRefsrecoJTATagInforecoIPTagInfos_impactParameterTagInfosEI__");
       impactParameterTagInfoVars("recoTrackIPTagInfos_impactParameterTagInfosEI_ghostTracks_");
     }
-      
+
     if (stepContainsNU(step, "all") || stepContainsNU(step, "hfreco")){
       tbr="recoRecoEcalCandidates_hfRecoEcalCandidate__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3522,9 +3824,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       b+=i;
       b+="].accept()";
       PlotStats res = plotvar(b);
-      if (res.countDiff!=0) 
+      if (res.countDiff!=0)
 	std::cout<<b<<" has diff count different than 0 : "<< res.countDiff<<std::endl;
-      
+
 
     }
   }

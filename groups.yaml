@@ -1,10 +1,17 @@
 tracking-pog:
   - VinInn
+  - mtosi
+  - JanFSchulte
 btv-pog:
-  - acaudron
   - ferencek
   - JyothsnaKomaragiri
-  - mverzett
-  - pvmulder
   - smoortga
-  - HeinerTholen
+  - emilbols
+  - andrzejnovak
+pixel-offline:
+  - dkotlins
+  - ferencek
+  - tvami
+trk-dqm:
+  - arossi83
+  - sroychow

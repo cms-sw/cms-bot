@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # This script will parse config.map and give back 1 matching line based on search criteria
 # Otherwise it will fail.
 
@@ -38,6 +38,15 @@ if [[ ${F_L_NUMBER} -eq 0 && ! -z ${CMS_DIST_TAG} ]]; then
   # if no match, we drop `grep ${CMS_SW_TAG_MATCH}` part and rely on `CMSDIST_TAG_MATCH`
   FILTERED_LINES=$(cat ${CONFIG_MAP} | grep -v '^ *#' | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep ${CMSDIST_TAG_MATCH} | grep ${ARCH_MATCH} | tr '\n' '#' )
   F_L_NUMBER=$(echo "${FILTERED_LINES}" | tr '#' '\n' | grep -c "$ARCH_MATCH" ) || true
+  if [[ ${F_L_NUMBER} -eq 0 && ! -z ${ARCH_MATCH} ]]; then
+    # if no match, we drop `grep ${CMSDIST_TAG_MATCH}` part and rely on `ARCH_MATCH`
+    if [ ! -z ${CMS_SW_TAG_MATCH} ] ; then
+      FILTERED_LINES=$(cat ${CONFIG_MAP} | grep -v '^ *#' | grep -v 'NO_IB=' | grep ${CMS_SW_TAG_MATCH} | grep -v 'DISABLED=1;' | grep ${ARCH_MATCH} | tr '\n' '#' )
+    else
+      FILTERED_LINES=$(cat ${CONFIG_MAP} | grep -v '^ *#' | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep ${ARCH_MATCH} | tr '\n' '#' )
+    fi
+    F_L_NUMBER=$(echo "${FILTERED_LINES}" | tr '#' '\n' | grep -c "$ARCH_MATCH" ) || true
+  fi
 fi
 
 SUB_FILTERED_LINES=${FILTERED_LINES}

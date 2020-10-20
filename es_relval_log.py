@@ -62,10 +62,9 @@ def es_parse_jobreport(payload,logFile):
         metrics_list = j.getchildren()
         for i in metrics_list:
           name=i.get("Name")
-          if name in ["AverageGrowthRateRss", "AverageGrowthRateVsize", "PeakValueVsize", "PeakValueRss"]:
-            val = i.get("Value")
-            if 'nan' in val: val=''
-            payload[name] = val
+          val = i.get("Value")
+          if 'nan' in val: val=''
+          payload[name] = val
       elif j.get("Metric") == "Timing":
         metrics_list = j.getchildren()
         for i in metrics_list:
@@ -164,7 +163,8 @@ def es_parse_log(logFile):
   except Exception as e:
     print(e)
   print("sending data for ",logFile)
-  try:send_payload(index,document,id,json.dumps(payload))
+  try:
+    send_payload(index,document,id,json.dumps(payload))
   except:pass
   if datasets:
     dataset = {"type" : "relvals", "name" : "%s/%s" % (payload["workflow"], payload["step"])}

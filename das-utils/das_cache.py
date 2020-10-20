@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from sys import exit
+from os import environ
 from os.path import exists,  dirname, abspath ,basename, join
 from time import time, sleep
 import json, threading, re
@@ -117,6 +118,12 @@ def update_timestamp(timestramps, timestramps_file, store):
   write_json(timestramps_file, timestramps)
   cleanup_timestamps(store)
 
+
+IGNORE_QUERIES = {}
+if 'IGNORE_DAS_QUERY_SHA' in environ:
+  for s in environ['IGNORE_DAS_QUERY_SHA'].split(','):
+    IGNORE_QUERIES[s]=1
+
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog <options>")
   parser.add_option("-t", "--threshold",  dest="threshold", help="Threshold time in sec to refresh query results. Default is 86400s", type=int, default=86400)
@@ -192,6 +199,9 @@ if __name__ == "__main__":
   for query in query_sha:
     nquery += 1
     sha = query_sha[query]
+    if sha in IGNORE_QUERIES:
+      print("IGNORED : %s" % sha)
+      continue
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     print("[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))
     if exists(outfile):
@@ -242,14 +252,14 @@ if __name__ == "__main__":
           t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client))
           t.start()
           threads.append(t)
-          sleep(1)
+          sleep(0.1)
         except Exception as e:
           print("ERROR threading das query cache: caught exception: " + str(e))
           error += 1
         break
       else:
         threads = [t for t in threads if t.is_alive()]
-        sleep(0.2)
+        sleep(0.1)
   for t in threads: t.join()
   failed_queries = 0
   e , o = run_cmd("find %s -name '*.error'" % opts.store)

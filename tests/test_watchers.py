@@ -42,11 +42,11 @@ for (key, value) in CMSSW_CATEGORIES.items():
     assert(type(p) == str)
     assert(re.match(PACKAGE_RE, p))
 
-w = yaml.load(open("super-users.yaml", "r"))
-
-assert(type(w) == list)
-for p in w:
-  assert(type(p) == str)
-  assert(re.match(KEY_RE, p))
+if os.path.exists("super-users.yaml"):
+  w = yaml.load(open("super-users.yaml", "r"))
+  assert(type(w) == list)
+  for p in w:
+    assert(type(p) == str)
+    assert(re.match(KEY_RE, p))
 
 print("Finished with success")

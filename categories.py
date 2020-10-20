@@ -30,7 +30,7 @@ CMSSW_L2 = {
   "agrohsje":         ["generators"],
   "alja":             ["visualization"],
   "andrius-k":        ["dqm"],
-  "benkrikler":       ["l1"],
+  "jmduarte":         ["l1"],
   "chayanit":         ["pdmv"],
   "civanch":          ["simulation", "geometry", "fastsim"],
   "cvuosalo":         ["geometry"],

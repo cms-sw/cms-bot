@@ -337,19 +337,32 @@ if ${BUILD_EXTERNAL} ; then
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then CMSBUILD_ARGS="--force-tag --delete-build-directory" ; fi
     if [ $(./pkgtools/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor" ; fi
     if [ $(./pkgtools/cmsBuild --help | grep '\-\-log-deps' | wc -l) -gt 0 ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --log-deps" ; fi
+    PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
-        ${CMSBUILD_ARGS} --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO --repository $CMS_WEEKLY_REPO \
-        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} build cms-common cms-git-tools cmssw-tool-conf"
-    echo $COMPILATION_CMD > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
+        ${CMSBUILD_ARGS} --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
+        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU}"
+    TMP_REPO="PR-${REPORT_H_CODE}-${CMSSW_QUEUE}-${ARCHITECTURE}"
+    UPLOAD_OPTS="--upload-tmp-repository ${TMP_REPO}"
+    if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${TMP_REPO}/${ARCHITECTURE}/latest 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
+      UPLOAD_OPTS="--sync-back"
+      COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}.${TMP_REPO}"
+    else
+      COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}"
+    fi
+    echo $COMPILATION_CMD build ${PKGS} > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
     # run the command and both log it to file and display it
-    (eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+    (eval $COMPILATION_CMD build ${PKGS} && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
     echo_section 'END OF BUILD LOG'
-    for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
-      rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
-    done
 
     TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
     GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
+
+    #upload packages build
+    BLD_PKGS=$(ls $WORKSPACE/$BUILD_DIR/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
+    eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${PKGS}
+    for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
+      rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
+    done
 
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> $RESULTS_FILE
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then

@@ -359,7 +359,7 @@ if ${BUILD_EXTERNAL} ; then
 
     #upload packages build
     BLD_PKGS=$(ls $WORKSPACE/$BUILD_DIR/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug' || true)
-    if [ "${BLD_PKGS}" != "" ] ; then eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
+    #if [ "${BLD_PKGS}" != "" ] ; then eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
     for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
       rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
     done

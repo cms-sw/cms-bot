@@ -349,6 +349,7 @@ if ${BUILD_EXTERNAL} ; then
     else
       COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}"
     fi
+    if [ "${SOURCE_FLAG}" != "" ] ; then UPLOAD_OPTS="${UPLOAD_OPTS} --force-upload" ; fi
     echo $COMPILATION_CMD build ${PKGS} > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
     # run the command and both log it to file and display it
     (eval $COMPILATION_CMD build ${PKGS} && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
@@ -359,7 +360,7 @@ if ${BUILD_EXTERNAL} ; then
 
     #upload packages build
     BLD_PKGS=$(ls $WORKSPACE/$BUILD_DIR/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug' || true)
-    #if [ "${BLD_PKGS}" != "" ] ; then eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
+    if [ "${BLD_PKGS}" != "" ] ; then eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
     for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
       rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
     done

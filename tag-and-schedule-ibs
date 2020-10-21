@@ -27,6 +27,7 @@ WEEK_DAY=`date +%w`
 DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
 HOUR=`echo $DATE | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
 ORDER_INDEX=0
+FORCE_FULL_IB_DEFAULT="${FORCE_FULL_IB}"
 for QUEUE in $RELEASE_QUEUES; do
   for IB_INFO in $(cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;") ;  do
     unset RELEASE_BRANCH
@@ -39,14 +40,22 @@ for QUEUE in $RELEASE_QUEUES; do
     unset SLAVE_LABELS
     unset SINGULARITY
     unset PROD_ARCH
+    unset FORCE_FULL_IB
     eval "$IB_INFO"
+    if [ "${FORCE_FULL_IB}" = "" ] ; then
+      FORCE_FULL_IB="${FORCE_FULL_IB_DEFAULT}"
+    elif [ "${FORCE_FULL_IB}" != "1" ] ; then
+      FORCE_FULL_IB="false"
+    else
+      FORCE_FULL_IB="true"
+    fi
     if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
       BUILD_PATCH_RELEASE=true
     else
       BUILD_PATCH_RELEASE=false
     fi
-    if [ "X$BUILD_PATCH_RELEASE" = "Xfalse" -a "X$FORCE_FULL_IB" = "Xfalse" ] ; then
+    if [ "${BUILD_CAUSE_UPSTREAMTRIGGER}" = "true" ] ; then
       if [ "X$BUILD_HOUR" != "X" ] ; then
         if [ $(echo " $BUILD_HOUR " | tr ',' ' ' | grep " $HOUR " | wc -l) -eq 0 ] ; then continue; fi
       fi

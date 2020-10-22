@@ -20,6 +20,7 @@ if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
   fi
   scram setup      > /dev/null 2>&1
   scram b echo_CXX > /dev/null 2>&1
+  eval `scram run -csh`
 fi
 
 if [ "X$DRY_RUN" = "X" ] ; then DRY_RUN=false ; fi

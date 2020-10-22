@@ -42,7 +42,13 @@ function mark_commit_status_all_prsX () {
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
         LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
-        ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "${CONTEXT}" -s "${STATE}" "$@"
+        for i in 0 1 2 3 4 ; do
+          if ! ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "bot/${CONTEXT}" -s "${STATE}" "$@" ; then
+            sleep 30
+          else
+            break
+          fi
+        done
     done
 }
 

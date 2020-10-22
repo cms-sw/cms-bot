@@ -60,7 +60,8 @@ MULTILINE_COMMENTS_MAP = {
               "enable_test(s|)":  ["gpu|profiling",                                                             "ENABLE_BOT_TESTS"],
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
-              "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"]
+              "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
+              "code-checks-tools":["cms.week[0-9].PR_.*/.+",                                                    "CODE_CHECKS_TOOL_CONF"]
               }
 
 def get_last_commit(pr):
@@ -494,6 +495,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   comp_warnings = False
   extra_testers = []
   all_comments = [issue]
+  code_checks_tools = ""
 
   #start of parsing comments section
 
@@ -585,6 +587,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if valid_commenter:
       valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
       if valid_multiline_comment:
+        if "CODE_CHECKS_TOOL_CONF" in test_params:
+          code_checks_tools = test_params["CODE_CHECKS_TOOL_CONF"]
+          del test_params["CODE_CHECKS_TOOL_CONF"]
         global_test_params = dict(test_params)
         continue
 
@@ -1129,7 +1134,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if trigger_code_checks and not triggerred_code_checks:
     if not dryRunOrig: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
     else: print("Dryrun:",TRIGERING_CODE_CHECK_MSG)
-    params = {"PULL_REQUEST" : "%s" % (prId)}
+    params = {"PULL_REQUEST" : "%s" % (prId), "CMSSW_TOOL_CONF": code_checks_tools}
     create_properties_file_tests(repository, prId, params, dryRunOrig, abort=False, req_type="codechecks")
 
   if commentMsg and not dryRun:

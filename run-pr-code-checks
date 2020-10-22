@@ -7,15 +7,19 @@ export USER_CODE_CHECKS=$2
 BUILD_NUMBER=$3
 DRY_RUN=$4
 REPOSITORY=$5
+CMSSW_TOOL_CONF="$6"
 CODE_CHECKS=true
 CODE_FORMAT=false
 MULTIPLE_FILES_CHANGES=true
 
-if [ $(cat $CMSSW_BASE/config/config_tag | sed 's|^V||;s|-||g') -gt 050850 ] ; then
-  CODE_FORMAT=true
-  rm -rf scram-buildrules $CMSSW_BASE/config/SCRAM
-  git clone --depth 1 git@github.com:cms-sw/cmssw-config scram-buildrules
-  mv scram-buildrules/SCRAM  $CMSSW_BASE/config/SCRAM
+if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
+  mv $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected $CMSSW_BASE/old-tools
+  cp -r ${CMSSW_TOOL_CONF}/tools/selected $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected
+  if [ -e $CMSSW_BASE/old-tools/cmssw.xml ] ; then
+    cp $CMSSW_BASE/old-tools/cmssw.xml $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected/
+  fi
+  scram setup      > /dev/null 2>&1
+  scram b echo_CXX > /dev/null 2>&1
 fi
 
 if [ "X$DRY_RUN" = "X" ] ; then DRY_RUN=false ; fi

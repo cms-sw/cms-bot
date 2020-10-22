@@ -29,11 +29,11 @@ function report_pull_request_results_all_prs_with_commit() {
     done
 }
 
-function  mark_commit_status_all_prs () {
+function  mark_commit_status_all_prsX () {
   echo "skipped:  mark_commit_status_all_prs"
 }
 
-function mark_commit_status_all_prsX () {
+function mark_commit_status_all_prs () {
     CONTEXT="${SCRAM_ARCH}/$1"; shift
     STATE=$1; shift
     CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)

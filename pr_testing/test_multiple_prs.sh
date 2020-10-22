@@ -406,7 +406,9 @@ if ${BUILD_EXTERNAL} ; then
     CTOOLS=$WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected
     BTOOLS=${CTOOLS}.backup
     mv ${CTOOLS} ${BTOOLS}
-    mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/*/tools/selected ${CTOOLS}
+    TOOL_CONF_VERSION=$(ls -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/* | sed 's|.*/||')
+    echo "CMSSWTOOLCONF_VERSION;OK,External Tools,${CMS_WEEKLY_REPO}.${TMP_REPO}/${TOOL_CONF_VERSION},." >> ${RESULTS_FILE}-toolconf.txt
+    mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/selected ${CTOOLS}
 
     #Generate External Tools Status
     echo '<html><head><link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet"></head>' > $WORKSPACE/upload/external-tools.html

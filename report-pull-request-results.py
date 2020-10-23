@@ -348,7 +348,6 @@ def read_python3_file(repo,python3_file,tests_url):
 # Marks the commit if it is not dry-run and the has of the commit was set
 #
 def mark_commit_if_needed( action, details ):
-  return
   if not options.commit_hash:
     print('No commit to mark')
     return
@@ -564,7 +563,7 @@ def complain_missing_param(param_name):
 # marks the commit with the result of the tests (success or failure)
 #
 def mark_commit( action , commit_hash , tests_url ):
- 
+  return
   url = COMMIT_STATUS_BASE_URL % commit_hash
  
   headers = {"Authorization" : "token " + TOKEN }

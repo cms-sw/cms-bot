@@ -172,7 +172,7 @@ for PR in ${PULL_REQUESTS}; do
     echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
 done
 
-mark_commit_status_all_prs 'ci' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' || true
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' || true
 
 COMP_QUEUE=
 case $CMSSW_QUEUE in
@@ -209,7 +209,7 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
       CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$CMSSW_IB" = "X" ] ; then
         report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
-        mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d 'Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}' || true
+        mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d 'Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}' || true
         exit 0
       fi
       COMPARISON_ARCH=$ARCHITECTURE
@@ -225,7 +225,7 @@ PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*/
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist ) ]] ; then
     # If low version and but there are external repos to test, fail
-    mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Invalid PKGTOOLS version to test external packages." || true
+    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Invalid PKGTOOLS version to test external packages." || true
     exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: RELEASE_FORMAT ${CMSSW_QUEUE} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
 fi
 
@@ -236,7 +236,7 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
         ERR=false
         git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
         if ${ERR} ; then
-            mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Failed to merge ${PR}" || true
+            mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to merge ${PR}" || true
             exit_with_comment_failure_main_pr  ${DRY_RUN} -m "ERROR: failed to merge ${PR} PR"
         fi
     done
@@ -268,7 +268,7 @@ for U_REPO in ${UNIQ_REPOS}; do
 	  BUILD_EXTERNAL=true
           for SPEC_NAME in ${SPEC_NAMES} ; do
 	    if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
-              mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}" || true
+              mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}" || true
 	      exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
 	        cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo."
             fi
@@ -300,7 +300,7 @@ else
 fi
 
 if ${BUILD_EXTERNAL} ; then
-    mark_commit_status_all_prs 'ci' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
+    mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
         git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
     fi
@@ -366,7 +366,7 @@ if ${BUILD_EXTERNAL} ; then
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> ${RESULTS_FILE}/toolconf.txt
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> ${RESULTS_FILE}/toolconf.txt
-      mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Failed to build externals" || true
+      mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to build externals" || true
       prepare_upload_comment_exit "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/upload/cmsswtoolconf.log
     else
       echo 'CMSSWTOOLCONF_RESULTS;OK' >> ${RESULTS_FILE}/toolconf.txt
@@ -555,13 +555,13 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   done
 
   if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
-    mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Merge: Unable to merge CMSSW PRs" || true
+    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Merge: Unable to merge CMSSW PRs" || true
     prepare_upload_comment_exit "NOT_MERGEABLE"
   fi
 
   if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
     echo "Please add the branch name to the parameters"
-    mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Merge: Unable to find remote reference." || true
+    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Merge: Unable to find remote reference." || true
     prepare_upload_comment_exit "REMOTE_REF_ISSUE"
   fi
 
@@ -570,7 +570,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
     echo "There was an error while running git cms-merge-topic"
-    mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Merge: Unknow error while merging." || true
+    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Merge: Unknow error while merging." || true
     prepare_upload_comment_exit "GIT_CMS_MERGE_TOPIC_ISSUE"
   fi
 
@@ -799,7 +799,7 @@ fi
 if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
-mark_commit_status_all_prs 'ci' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" ${NO_POST}
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
@@ -859,7 +859,7 @@ else
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES}" >> ${RESULTS_FILE}/build.txt
-mark_commit_status_all_prs 'ci' 'pending' -u "${BUILD_URL}" -d "Runnings tests" || true
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Runnings tests" || true
 
 #Work around for Simulation.so plugin
 if [ -e $CMSSW_BASE/biglib/${SCRAM_ARCH}/Simulation.edmplugin ] ; then
@@ -951,7 +951,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
     UNIT_TESTS_OK=false
     mark_commit_status_all_prs 'unittest' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed." || true
   else
-    mark_commit_status_all_prs 'unittest' 'success' -u "${BUILD_URL}" -d "All OK" || true
+    mark_commit_status_all_prs 'unittest' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo 'UNIT_TEST_RESULTS;OK' >> ${RESULTS_FILE}/unittest.txt
   fi
 
@@ -1027,7 +1027,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     RELVALS_OK=false
     mark_commit_status_all_prs 'relvals' 'error' -u "${BUILD_URL}" -d "Errors found while running runTheMatrix" || true
   else
-    mark_commit_status_all_prs 'relvals' 'success' -u "${BUILD_URL}" -d "All OK" || true
+    mark_commit_status_all_prs 'relvals' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK' >> ${RESULTS_FILE}/relval.txt
 
@@ -1045,7 +1045,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
       echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
       echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
       echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
-      mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
+      mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start" || true
     else
       echo 'COMPARISON;NOTRUN' >> ${RESULTS_FILE}/comparison.txt
     fi
@@ -1118,7 +1118,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true"
     ADDON_OK=false
     mark_commit_status_all_prs 'addon' 'error' -u "${BUILD_URL}" -d "Errors in the addOnTests" || true
   else
-    mark_commit_status_all_prs 'addon' 'success' -u "${BUILD_URL}" -d "All OK" || true
+    mark_commit_status_all_prs 'addon' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo "no errors in the addOnTests!!"
     echo 'ADDON_TESTS;OK' >> ${RESULTS_FILE}/adddon.txt
   fi
@@ -1139,7 +1139,7 @@ if [ $DO_MB_COMPARISON=false -a "X$BUILD_OK" = "Xtrue" -a "$RUN_TESTS" = "true" 
       fi
     popd
     mv $LOCALRT/material-budget $WORKSPACE/material-budget
-    mark_commit_status_all_prs 'material-budget' 'success' -u "${BUILD_URL}" -d "All OK" || true
+    mark_commit_status_all_prs 'material-budget' 'success' -u "${BUILD_URL}" -d "Passed" || true
   fi
 fi
 echo "MATERIAL_BUDGET;${MB_TESTS_OK}" >> ${RESULTS_FILE}/mbudget.txt
@@ -1161,7 +1161,7 @@ for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
   mkdir -p "$WORKSPACE/valgrindResults-"$WF
   pushd "$WORKSPACE/valgrindResults-"$WF
   runTheMatrix.py --command '-n 10 --prefix "time valgrind --tool=memcheck --suppressions=$CMSSW_RELEASE_BASE/src/Utilities/ReleaseScripts/data/cms-valgrind-memcheck.supp --num-callers=20 --xml=yes --xml-file=valgrind.xml " ' -l $WF
-  mark_commit_status_all_prs 'valgrind' 'success' -u "${BUILD_URL}" -d "All OK" || true
+  mark_commit_status_all_prs 'valgrind' 'success' -u "${BUILD_URL}" -d "Passed" || true
   popd
 done
 
@@ -1223,7 +1223,7 @@ for BT in ${ENABLE_BOT_TESTS}; do
              done
              popd
          done
-         mark_commit_status_all_prs 'profiling' 'success' -u "${BUILD_URL}" -d "All OK" || true
+         mark_commit_status_all_prs 'profiling' 'success' -u "${BUILD_URL}" -d "Passed" || true
          echo 'CMSSW_PROFILING;OK,Profiling Results,See Logs,profiling' >> ${RESULTS_FILE}/profiling.txt
    fi
 done
@@ -1266,7 +1266,7 @@ if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to fals
         BUILD_LOG_RES=""
     fi
     REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
-    mark_commit_status_all_prs 'ci' 'success' -u "${BUILD_URL}" -d "All OK" || true
+    mark_commit_status_all_prs '' 'success' -u "${BUILD_URL}" -d "Passed" || true
 else
     # Doc: in case some test failed, we check each test log specifically and generate combined message
     # which is stored in $WORKSPACE/report.txt
@@ -1298,7 +1298,7 @@ else
         $CMS_BOT_DIR/report-pull-request-results PYTHON3_FAIL        -f $WORKSPACE/upload/python3.log ${REPORT_GEN_OPTS}
     fi
     REPORT_OPTS="REPORT_ERRORS ${REPORT_OPTS}" # Doc:
-    mark_commit_status_all_prs 'ci' 'error' -u "${BUILD_URL}" -d "Some tests failed to run." || true
+    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed: ${TESTS_FAILED}" || true
 fi
 
 rm -f all_done  # delete file

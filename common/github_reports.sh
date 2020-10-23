@@ -34,10 +34,11 @@ function  mark_commit_status_all_prsX () {
 }
 
 function mark_commit_status_all_prs () {
-    CONTEXT="${SCRAM_ARCH}/$1"; shift
-    STATE=$1; shift
+    CONTEXT="${SCRAM_ARCH}"
     CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
     if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
+    if [ "$1" != "" ] ; then CONTEXT="${CONTEXT}/$1" ; fi
+    STATE=$2; shift ; shift
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )

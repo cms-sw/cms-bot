@@ -15,7 +15,7 @@ COMMON=${CMS_BOT_DIR}/common
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 RESULTS_FILE=$WORKSPACE/testsResults
 CONFIG_MAP=$CMS_BOT_DIR/config.map
-
+rm -rf ${RESULTS_FILE} ${RESULTS_FILE}.txt
 # ---
 # doc: Input variable
 # PULL_REQUESTS   # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
@@ -165,11 +165,14 @@ fi
 export SCRAM_ARCH=${ARCHITECTURE}
 
 # Put hashcodes of last commits to a file. Mostly used for commenting back
+rm -rf ${WORKSPACE}/prs_commits.txt
+touch ${WORKSPACE}/prs_commits.txt
 for PR in ${PULL_REQUESTS}; do
     PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
     PR_NR=$(echo ${PR} | sed 's/.*#//')
     COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
     echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
+    echo "${PR}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
 done
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' || true

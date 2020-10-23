@@ -348,7 +348,7 @@ def read_python3_file(repo,python3_file,tests_url):
 # Marks the commit if it is not dry-run and the has of the commit was set
 #
 def mark_commit_if_needed( action, details ):
-
+  return
   if not options.commit_hash:
     print('No commit to mark')
     return

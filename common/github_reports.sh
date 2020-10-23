@@ -29,10 +29,6 @@ function report_pull_request_results_all_prs_with_commit() {
     done
 }
 
-function  mark_commit_status_all_prsX () {
-  echo "skipped:  mark_commit_status_all_prs"
-}
-
 function mark_commit_status_all_prs () {
     CONTEXT="${SCRAM_ARCH}"
     CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
@@ -42,7 +38,11 @@ function mark_commit_status_all_prs () {
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
+        if [ -f $WORKSPACE/prs_commits.txt ] ; then
+          LAST_PR_COMMIT=$(grep "^${PR}=" $WORKSPACE/prs_commits.txt | sed 's|.*=||;s| ||g')
+        else
+          LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
+        fi
         for i in 0 1 2 3 4 ; do
           if ! ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "bot/${CONTEXT}" -s "${STATE}" "$@" ; then
             sleep 30

@@ -368,11 +368,11 @@ if ${BUILD_EXTERNAL} ; then
 
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> ${RESULTS_FILE}/toolconf.txt
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
-      echo 'CMSSWTOOLCONF_RESULTS;ERROR' >> ${RESULTS_FILE}/toolconf.txt
+      echo 'CMSSWTOOLCONF_RESULTS;ERROR;Externals compilation;See Log;cmsswtoolconf.log' >> ${RESULTS_FILE}/toolconf.txt
       mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to build externals" || true
       prepare_upload_comment_exit "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/upload/cmsswtoolconf.log
     else
-      echo 'CMSSWTOOLCONF_RESULTS;OK' >> ${RESULTS_FILE}/toolconf.txt
+      echo 'CMSSWTOOLCONF_RESULTS;OK;Externals compilation;See Log;cmsswtoolconf.log' >> ${RESULTS_FILE}/toolconf.txt
     fi
 
     # Create an appropriate CMSSW area
@@ -507,7 +507,6 @@ if [ "$TEST_CONTEXT" = "GPU" ] ; then
   DQM_TESTS=false
   DO_DUPLICATE_CHECKS=false
   DO_ADDON_TESTS=false
-  RUN_IGPROF=false
   RUN_CONFIG_VIEWER=false
   DO_COMPARISON=false
   DO_ADDON_TESTS=false
@@ -661,14 +660,14 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
   fi
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when testing compilation with clang"
-    echo 'CLANG_COMPILATION_RESULTS;ERROR' >> ${RESULTS_FILE}/clang.txt
+    echo 'CLANG_COMPILATION_RESULTS;ERROR;Clang Compilation;See Log;buildClang.log' >> ${RESULTS_FILE}/clang.txt
     RUN_TESTS=false
     ALL_OK=false
     CLANG_BUILD_OK=false
     mark_commit_status_all_prs 'clang' 'error' -u "${BUILD_URL}" -d "Found build errors." || true
   else
     echo "the clang compilation had no errors/warnings!!"
-    echo 'CLANG_COMPILATION_RESULTS;OK' >> ${RESULTS_FILE}/clang.txt
+    echo 'CLANG_COMPILATION_RESULTS;OK;Clang Compilation;See Log;buildClang.log' >> ${RESULTS_FILE}/clang.txt
   fi
 else
   echo 'CLANG_COMPILATION_RESULTS;NOTRUN' >> ${RESULTS_FILE}/clang.txt
@@ -696,8 +695,8 @@ if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" ]; then # If a C
       QA_RES="ERROR"
     fi
   done
+  echo "CODE_RULES;${QA_RES};CMSSW Code Rules;See Logs;codeRules" >> ${RESULTS_FILE}/coderules.txt
 fi
-echo "CODE_RULES;${QA_RES}" >> ${RESULTS_FILE}/coderules.txt
 
 #Do Python3 checks
 if $IS_DEV_BRANCH ; then
@@ -718,7 +717,7 @@ fi
 #
 if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "$ONLY_FIREWORKS" = false -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" ]; then
   report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" ${NO_POST}
-  echo 'STATIC_CHECKS;OK' >> ${RESULTS_FILE}/static.txt
+  echo 'STATIC_CHECKS;OK;Static checks outputs;See Static Checks;llvm-analysis' >> ${RESULTS_FILE}/static.txt
   echo '--------------------------------------'
   pushd $WORKSPACE/$CMSSW_IB
   git cms-addpkg --ssh Utilities/StaticAnalyzers
@@ -734,8 +733,6 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "$ONLY_FIREWORKS" = false -a "X$CMSSW_PR"
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
   popd
-else
-  echo 'STATIC_CHECKS;NOTRUN' >> ${RESULTS_FILE}/static.txt
 fi
 
 scram build clean
@@ -837,14 +834,14 @@ fi
 BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"
-    echo 'COMPILATION_RESULTS;ERROR' >> ${RESULTS_FILE}/build.txt
+    echo 'COMPILATION_RESULTS;ERROR;;Compilation log;See Log;build.log' >> ${RESULTS_FILE}/build.txt
     RUN_TESTS=false
     ALL_OK=false
     BUILD_OK=false
     mark_commit_status_all_prs 'build' 'error' -u "${BUILD_URL}" -d "CMSSW compilation errors." || true
 else
     echo "the build had no errors!!"
-    echo 'COMPILATION_RESULTS;OK' >> ${RESULTS_FILE}/build.txt
+    echo 'COMPILATION_RESULTS;OK;;Compilation log;See Log;build.log' >> ${RESULTS_FILE}/build.txt
     if [ -e ${WORKSPACE}/build-logs/index.html ] ; then
       if [ $(grep '<td> *[1-9][0-9]* *</td>' ${WORKSPACE}/build-logs/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
         BUILD_LOG_RES="OK"
@@ -862,7 +859,7 @@ else
         fi
     fi
 fi
-echo "BUILD_LOG;${BUILD_LOG_RES}" >> ${RESULTS_FILE}/build.txt
+echo "BUILD_LOG;${BUILD_LOG_RES};Compilation warnings summary;See Logs;build-logs" >> ${RESULTS_FILE}/build.txt
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Runnings tests" || true
 
 #Work around for Simulation.so plugin
@@ -911,8 +908,8 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_
   if [ "${QA_RES}" == "ERROR" ] ; then
     mark_commit_status_all_prs 'opt/dict' 'error' -u "${BUILD_URL}" -d "Duplicate dictionaries found" || true
   fi
+  echo "DUPLICATE_DICT_RULES;${QA_RES};Duplicate Dictionaries;See Logs;dupDict" >> ${RESULTS_FILE}/qa.txt
 fi
-echo "DUPLICATE_DICT_RULES;${QA_RES}" >> ${RESULTS_FILE}/qa.txt
 
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
 #
@@ -939,9 +936,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
     cp -r DQMTestsResults $WORKSPACE/DQMTestsResults
     ls $WORKSPACE
     popd
-    echo 'DQM_TESTS;OK' >> ${RESULTS_FILE}/unittest.txt
-  else
-    echo 'DQM_TESTS;NOTRUN' >> ${RESULTS_FILE}/unittest.txt
+    echo 'DQM_TESTS;OK;DQM Unit Tests;See Logs;DQMTestsResults' >> ${RESULTS_FILE}/unittest.txt
   fi
 
   TEST_ERRORS=$(grep -i 'had errors\|recipe for target' $WORKSPACE/unitTests.log | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
@@ -950,18 +945,16 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
 
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the unit tests"
-    echo 'UNIT_TEST_RESULTS;ERROR' >> ${RESULTS_FILE}/unittest.txt
+    echo 'UNIT_TEST_RESULTS;ERROR;Unit Tests;See Log;unitTests.log' >> ${RESULTS_FILE}/unittest.txt
     ALL_OK=false
     UNIT_TESTS_OK=false
     mark_commit_status_all_prs 'unittest' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed." || true
   else
     mark_commit_status_all_prs 'unittest' 'success' -u "${BUILD_URL}" -d "Passed" || true
-    echo 'UNIT_TEST_RESULTS;OK' >> ${RESULTS_FILE}/unittest.txt
+    echo 'UNIT_TEST_RESULTS;OK;Unit Tests;See Log;unitTests.log' >> ${RESULTS_FILE}/unittest.txt
   fi
-
 else
   echo 'UNIT_TEST_RESULTS;NOTRUN' >> ${RESULTS_FILE}/unittest.txt
-  echo 'DQM_TESTS;NOTRUN' >> ${RESULTS_FILE}/unittest.txt
 fi
 
 #
@@ -1025,15 +1018,14 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
 
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the RelVals"
-    echo 'MATRIX_TESTS;ERROR' >> ${RESULTS_FILE}/relval.txt
-    echo 'COMPARISON;NOTRUN' >> ${RESULTS_FILE}/comparison.txt
+    echo 'MATRIX_TESTS;ERROR;Matrix Tests Outputs;See Logs;runTheMatrix-results' >> ${RESULTS_FILE}/relval.txt
     ALL_OK=false
     RELVALS_OK=false
     mark_commit_status_all_prs 'relvals' 'error' -u "${BUILD_URL}" -d "Errors found while running runTheMatrix" || true
   else
     mark_commit_status_all_prs 'relvals' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo "no errors in the RelVals!!"
-    echo 'MATRIX_TESTS;OK' >> ${RESULTS_FILE}/relval.txt
+    echo 'MATRIX_TESTS;OK;Matrix Tests Outputs;See Logs;runTheMatrix-results' >> ${RESULTS_FILE}/relval.txt
 
     if $DO_COMPARISON ; then
       echo 'COMPARISON;QUEUED' >> ${RESULTS_FILE}/comparison.txt
@@ -1050,8 +1042,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
       echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
       echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
       mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start" || true
-    else
-      echo 'COMPARISON;NOTRUN' >> ${RESULTS_FILE}/comparison.txt
     fi
 
     #####################################################################
@@ -1068,10 +1058,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
       sed -i "s/PARAM_CONFIG_BROWSER/https:\/\/cmssdt.cern.ch\/SDT\/${JENKINS_PREFIX}-artifacts\/${JOB_NAME}\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/cfg-viewerResults\//g" $WORKSPACE/summary.html
     fi
   fi
-else
-  echo 'MATRIX_TESTS;NOTRUN' >> ${RESULTS_FILE}/relval.txt
-  echo 'IGPROF;NOTRUN' >> ${RESULTS_FILE}/relval.txt
-  echo 'COMPARISON;NOTRUN' >> ${RESULTS_FILE}/comparison.txt
 fi
 
 #
@@ -1117,17 +1103,15 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true"
 
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the addOnTests"
-    echo 'ADDON_TESTS;ERROR' >> ${RESULTS_FILE}/adddon.txt
+    echo 'ADDON_TESTS;ERROR;AddOn Tests;See Logs;addOnTests' >> ${RESULTS_FILE}/adddon.txt
     ALL_OK=false
     ADDON_OK=false
     mark_commit_status_all_prs 'addon' 'error' -u "${BUILD_URL}" -d "Errors in the addOnTests" || true
   else
     mark_commit_status_all_prs 'addon' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo "no errors in the addOnTests!!"
-    echo 'ADDON_TESTS;OK' >> ${RESULTS_FILE}/adddon.txt
+    echo 'ADDON_TESTS;OK;AddOn Tests;See Logs;addOnTests' >> ${RESULTS_FILE}/adddon.txt
   fi
-else
-  echo 'ADDON_TESTS_RESULTS;NOTRUN' >> ${RESULTS_FILE}/adddon.txt
 fi
 
 MB_TESTS_OK=NOTRUN
@@ -1144,13 +1128,13 @@ if [ $DO_MB_COMPARISON=false -a "X$BUILD_OK" = "Xtrue" -a "$RUN_TESTS" = "true" 
     popd
     mv $LOCALRT/material-budget $WORKSPACE/material-budget
     mark_commit_status_all_prs 'material-budget' 'success' -u "${BUILD_URL}" -d "Passed" || true
+    echo "MATERIAL_BUDGET;${MB_TESTS_OK};Material budge;See Logs;material-budget" >> ${RESULTS_FILE}/mbudget.txt
+    if [ "$MB_TESTS_OK" = "ERROR" ] ; then
+      MB_TESTS_OK=false
+    else
+      MB_TESTS_OK=true
+    fi
   fi
-fi
-echo "MATERIAL_BUDGET;${MB_TESTS_OK}" >> ${RESULTS_FILE}/mbudget.txt
-if [ "$MB_TESTS_OK" = "ERROR" ] ; then
-  MB_TESTS_OK=false
-else
-  MB_TESTS_OK=true
 fi
 
 #

@@ -342,7 +342,7 @@ if ${BUILD_EXTERNAL} ; then
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU}"
-    TMP_REPO="$(echo PR_${REPORT_H_CODE}_${CMSSW_QUEUE}_${ARCHITECTURE} | tr '-' '_')"
+    TMP_REPO="PR_$(echo ${REPORT_H_CODE}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     UPLOAD_OPTS="--upload-tmp-repository ${TMP_REPO}"
     if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${TMP_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
       UPLOAD_OPTS="--sync-back"
@@ -410,7 +410,8 @@ if ${BUILD_EXTERNAL} ; then
     BTOOLS=${CTOOLS}.backup
     mv ${CTOOLS} ${BTOOLS}
     TOOL_CONF_VERSION=$(ls -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/* | sed 's|.*/||')
-    echo "CMSSWTOOLCONF_VERSION;OK,External Tools,${CMS_WEEKLY_REPO}.${TMP_REPO}/${TOOL_CONF_VERSION},." >> ${RESULTS_FILE}/toolconf.txt
+    echo "${CMS_WEEKLY_REPO}.${TMP_REPO}/${TOOL_CONF_VERSION}" > $WORKSPACE/cmssw-tool-conf.txt
+    echo "CMSSWTOOLCONF_VERSION;OK,External tool conf,See log,cmssw-tool-conf.txt" >> ${RESULTS_FILE}/toolconf.txt
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/selected ${CTOOLS}
 
     #Generate External Tools Status

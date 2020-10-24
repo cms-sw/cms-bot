@@ -131,7 +131,7 @@ done
 echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 
 echo "Finished downloading files at `date`:"
-echo "COMPARISON;RUNNING;Comparison with the baseline;See results;See results" >> ${RESULTS_FILE}
+echo "COMPARISON;RUNNING,Comparison with the baseline,See results,See results" >> ${RESULTS_FILE}
 if [ "$DRY_RUN" != "true" ] ; then
   send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison.txt
 fi
@@ -366,7 +366,7 @@ fi
 if [ "$DRY_RUN" != "true" ] ; then
   send_jenkins_artifacts $WORKSPACE/upload/ ${COMP_UPLOAD_DIR}/
   if [ -e ${RESULTS_FILE} ] ; then
-    sed -i "s/^COMPARISON;RUNNING;/COMPARISON;$BUILD_NUMBER;/g" ${RESULTS_FILE}
+    sed -i "s/^COMPARISON;RUNNING,/COMPARISON;$BUILD_NUMBER,/g" ${RESULTS_FILE}
     send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison.txt
   fi
 fi

@@ -23,7 +23,6 @@ def get_secret(hook_name):
   return open(secret_file,'r').read().split('\n')[0].strip()
 #match hook config
 def match_config(new,old):
-  print("events:",old.events,new["events"])
   if new["active"] != old.active:
     return False
   elif set(new["events"]) != set(old.events):

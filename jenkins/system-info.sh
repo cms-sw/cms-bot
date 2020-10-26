@@ -100,7 +100,7 @@ SLAVE_LABELS="${SLAVE_LABELS} ${HOST_CMS_ARCH} $(echo ${HOST_CMS_ARCH} | tr _ ' 
 
 echo "DATA_REMOTE_USER_ID=$(id -u)"
 
-let WORKSPACE_SIZE="$(df -k ${WORKSPACE} | tail -1 | tr ' ' '\n' | grep -v '^$' | tail -3 | head -1)/(1024*1024)"
+let WORKSPACE_SIZE="$(df -k ${WORKSPACE} | tail -1 | tr ' ' '\n' | grep -v '^$' | tail -3 | head -1)/(1024*1024)" || true
 echo "DATA_WORKSPACE_SIZE=${WORKSPACE_SIZE}"
 
 JENKINS_SLAVE_SETUP=false

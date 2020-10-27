@@ -1025,7 +1025,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     echo 'MATRIX_TESTS;OK,Matrix Tests Outputs,See Logs,runTheMatrix-results' >> ${RESULTS_FILE}/relval.txt
 
     if $DO_COMPARISON ; then
-      echo 'COMPARISON;QUEUED' >> ${RESULTS_FILE}/comparison.txt
+      echo 'COMPARISON;QUEUED,Comparison with the baseline,See results,See results' >> ${RESULTS_FILE}/comparison.txt
       TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
       echo "Creating properties file $TRIGGER_COMPARISON_FILE"
       echo "RELEASE_FORMAT=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE

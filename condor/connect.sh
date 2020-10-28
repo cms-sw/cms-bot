@@ -71,7 +71,7 @@ if [ "$USE_PENDING_REQUEST" = "true" ] ; then
       ${here}/shutdown.sh $jid || true
     elif [ $status -eq 1 ] ; then
       JOBID="${jid}.0"
-      echo "Using existing job $JOBID"
+      echo "Using existing job $JOBID (${schd})"
       export _CONDOR_SCHEDD_HOST="${schd}"
       export _CONDOR_CREDD_HOST="${schd}"
     else

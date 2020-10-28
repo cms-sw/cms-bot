@@ -4,6 +4,7 @@ CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 COMMON=${CMS_BOT_DIR}/common
 source ${COMMON}/github_reports.sh
+source ${CMS_BOT_DIR}/pr_testing/_helper_functions.sh
 export SCRAM_ARCH=$ARCHITECTURE
 if [ "X$COMPARISON_ARCH" = "X" ] ; then COMPARISON_ARCH=$ARCHITECTURE; fi
 source $CMS_BOT_DIR/jenkins-artifacts
@@ -20,13 +21,13 @@ BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/m
 PR_BASELINE_JOBDIR=pull-request-integration/PR-$PULL_REQUEST_NUMBER/$PULL_REQUEST_JOB_ID
 PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix-results
 
-mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Downloading reference data" || true
 WFS_WITH_ERRORS=''
 RESULTS_FILE=$WORKSPACE/comparison.txt
 MAPPING_FILE=wf_mapping.txt
 get_jenkins_artifacts ${BASELINE_DIR}/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE
-get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/prs_commits.txt $WORKSPACE/prs_commits.txt | true
+get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/prs_commits.txt $WORKSPACE/prs_commits.txt || true
 get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/testsResults.txt
+mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Downloading reference data" || true
 BASE_IB=$(grep '^BASE_IB;' $WORKSPACE/testsResults.txt | sed 's|.*;||')
 if [ "X${BASE_IB}" = "X" ] ; then BASE_IB=$RELEASE_FORMAT ; fi
 rm -f $WORKSPACE/testsResults.txt

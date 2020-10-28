@@ -42,7 +42,7 @@ function mark_commit_status_all_prs () {
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        if [ -f $WORKSPACE/prs_commits.txt ] ; then
+        if [ -f ${WORKSPACE}/prs_commits.txt ] ; then
           LAST_PR_COMMIT=$(grep "^${PR}=" $WORKSPACE/prs_commits.txt | sed 's|.*=||;s| ||g')
         else
           LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash

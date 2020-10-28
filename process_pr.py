@@ -253,7 +253,7 @@ def parse_extra_params(full_comment, repo):
       continue
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
       line_args = l.split('=', 1)
-      line_args[0] = line.args[0].replace(' ', '')
+      line_args[0] = line_args[0].replace(' ', '')
       line_args[1] = line_args[1].strip()
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')

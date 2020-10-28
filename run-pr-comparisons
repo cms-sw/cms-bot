@@ -159,6 +159,13 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   echo "Finished with JR comparison at `date`:"
 fi
 
+#Run product size comparison script for Phase2 workflow
+mkdir compareProducts && cd compareProducts
+cp $CMS_BOT_DIR/comparisons/compareProducts.* ./
+./compareProducts.sh $WORKSPACE/data/PR-$PULL_REQUEST_NUMBER/23434.21_TTbar_14TeV+*2026D49PU*ProdLike*/step3.root $WORKSPACE/data/$RELEASE_FORMAT/23434.21_TTbar_14TeV+*2026D49PU*ProdLike*/step3.root > products.log
+mv products.log $WORKSPACE/upload/products.log
+cd .. 
+
 set +x
 # --------------------------------------------------------------------------
 # Default Comparison

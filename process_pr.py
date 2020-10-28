@@ -63,7 +63,7 @@ MULTILINE_COMMENTS_MAP = {
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
               "code_checks_tools":["cms.week[0-9].PR_.*/.+",                                                    "CODE_CHECKS_TOOL_CONF"],
-              "relvals_opt(ion|)(s|)": ["(%(opt)s)(\s+%(opt)s|)*",                                              "EXTRA_MATRIX_ARGS",True]
+              "relvals_opt(ion|)(s|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS),                     "EXTRA_MATRIX_ARGS",True]
               }
 
 def get_last_commit(pr):

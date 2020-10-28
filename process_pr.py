@@ -63,7 +63,7 @@ MULTILINE_COMMENTS_MAP = {
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
               "code_checks_tools":["cms.week[0-9].PR_.*/.+",                                                    "CODE_CHECKS_TOOL_CONF"],
-              "relvals_opt(ion|)(s|)": ["(%(opt)s)(\s+%(opt)s|)*",                                              "EXTRA_MATRIX_ARGS"]
+              "relvals_opt(ion|)(s|)": ["(%(opt)s)(\s+%(opt)s|)*",                                              "EXTRA_MATRIX_ARGS",True]
               }
 
 def get_last_commit(pr):
@@ -243,16 +243,20 @@ def parse_extra_params(full_comment, repo):
     all_globals = globals()
     ALL_CHECK_FUNCTIONS = dict([(f,all_globals[f]) for f in all_globals if f.startswith('check_') and callable(all_globals[f])])
   for l in full_comment[1:]:
-    l = l.replace(' ', '')
+    l = l.strip()
     if l.startswith('-'): l = l[1:]
     elif l.startswith('*'): l = l[1:]
+    l = l.strip()
     if l=='': continue
     if not '=' in l:
       error_lines.append('"=" not found in line arg: ' + l)
       continue
-
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
       line_args = l.split('=', 1)
+      line_args[0] = line.args[0].replace(' ', '')
+      line_args[1] = line_args[1].strip()
+      if (len(pttrn)<3) or (not pttrn[2]):
+        line_args[1] = line_args[1].replace(' ', '')
       if not re.match(k, line_args[0], re.I): continue
       if not re.match(pttrn[0], line_args[1], re.I):
         error_lines.append('Invalid value "%s" for parameter "%s" used.' % (line_args[1], line_args[0]))

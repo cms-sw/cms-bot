@@ -29,20 +29,31 @@ function report_pull_request_results_all_prs_with_commit() {
     done
 }
 
-function  mark_commit_status_all_prs () {
-  echo "skipped:  mark_commit_status_all_prs"
-}
-
-function mark_commit_status_all_prsX () {
-    CONTEXT="${SCRAM_ARCH}/$1"; shift
-    STATE=$1; shift
-    CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
-    if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
+function mark_commit_status_all_prs () {
+    if [ "${COMMIT_STATUS_CONTEXT}" = "" ] ; then 
+      CONTEXT="${SCRAM_ARCH}"
+      CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
+      if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
+      if [ "$1" != "" ] ; then CONTEXT="${CONTEXT}/$1" ; fi
+    else
+      CONTEXT="${COMMIT_STATUS_CONTEXT}"
+    fi
+    STATE=$2; shift ; shift
     for PR in ${PULL_REQUESTS} ; do
         PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
         PR_NR=$(echo ${PR} | sed 's/.*#//' )
-        LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
-        ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "${CONTEXT}" -s "${STATE}" "$@"
+        if [ -f $WORKSPACE/prs_commits.txt ] ; then
+          LAST_PR_COMMIT=$(grep "^${PR}=" $WORKSPACE/prs_commits.txt | sed 's|.*=||;s| ||g')
+        else
+          LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
+        fi
+        for i in 0 1 2 3 4 ; do
+          if ! ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "cms/${CONTEXT}" -s "${STATE}" "$@" ; then
+            sleep 30
+          else
+            break
+          fi
+        done
     done
 }
 

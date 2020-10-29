@@ -196,6 +196,7 @@ if __name__ == "__main__":
   cleanup_timestamps (opts.store)
   timestramps_file = join (opts.store, "timestamps.json")
   timestramps = read_timestramps (timestramps_file)
+  vold_caches = 0
   for query in query_sha:
     nquery += 1
     sha = query_sha[query]
@@ -212,7 +213,10 @@ if __name__ == "__main__":
         with open(outfile) as ofile:
           fcount = len(ofile.readlines())
       dtime = int(time())-xtime
-      print("  Days since last update:",int(dtime/86400))
+      vdays = int(dtime/86400)
+      if vdays>=90:
+        vold_caches+=1
+      print("  Days since last update:",vdays)
       if (dtime<=opts.threshold) and (fcount>0):
         jfile = "%s.json" % outfile
         okcache=exists(jfile)
@@ -275,6 +279,7 @@ if __name__ == "__main__":
   print("Found in object store: %s" % inCache)
   print("DAS Search: %s" % DasSearch)
   print("Total Queries Failed:",failed_queries)
+  print("Caches older than 90 days:",vold_caches)
   print("Process state:",error)
   if not error:update_timestamp(timestramps, timestramps_file, opts.store)
   else:  cleanup_timestamps (opts.store)

@@ -212,6 +212,7 @@ if __name__ == "__main__":
         with open(outfile) as ofile:
           fcount = len(ofile.readlines())
       dtime = int(time())-xtime
+      print("  Days since last update:",int(dtime/86400))
       if (dtime<=opts.threshold) and (fcount>0):
         jfile = "%s.json" % outfile
         okcache=exists(jfile)

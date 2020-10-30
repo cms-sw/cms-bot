@@ -45,7 +45,6 @@ CMS_COMMON="cms-common"
 case $RELEASE_NAME in
   *SLHCDEV*) ;;
   *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
-  *_DEVEL_X_*) EXTRA_REPOS="--extra-repositories cms.week0,cms.week1" ;;
   CMSSW_5_*) CMS_COMMON="";;
 esac
 

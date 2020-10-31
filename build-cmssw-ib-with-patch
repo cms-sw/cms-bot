@@ -40,7 +40,6 @@ HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
 RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/_X.*/_X/'`
 
 # Hardcode special queues like SLHC one.
-EXTRA_REPOS=""
 CMS_COMMON="cms-common"
 case $RELEASE_NAME in
   *SLHCDEV*) ;;
@@ -107,9 +106,10 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
   CMS_TAG="--tag `echo $RELEASE_QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
 fi
 
-CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} $EXTRA_REPOS $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
-if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --monitor" ; fi
-if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-delete-build-directory' | wc -l) -gt 0 ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory" ; fi
+CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
+if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
+  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --force-tag --tag hash --delete-build-directory"
+fi
 GCC_FIXINCLUDE=""
 [ -e CMSDIST/gcc-fixincludes.spec ] && GCC_FIXINCLUDE="gcc-fixincludes"
 PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1 ${GCC_FIXINCLUDE}

@@ -316,7 +316,7 @@ if ${BUILD_EXTERNAL} ; then
     REF_REPO=
     SOURCE_FLAG=
     if [ "X$USE_CMSPKG_REFERENCE" = "Xtrue" ] ; then
-      if [ ${PKG_TOOL_VERSION} -ge 32 ] ; then
+      if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
         REF_REPO="--reference "$(readlink /cvmfs/cms-ib.cern.ch/$(echo $CMS_WEEKLY_REPO | sed 's|^cms.||'))
         if [ -e ${WORKSPACE}/get_source_flag_result.txt ] ; then
           SOURCE_FLAG=$(cat ${WORKSPACE}/get_source_flag_result.txt )
@@ -335,9 +335,9 @@ if ${BUILD_EXTERNAL} ; then
 
     # Build the whole cmssw-tool-conf toolchain
     CMSBUILD_ARGS="--tag ${REPORT_H_CODE}"
-    if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then CMSBUILD_ARGS="--force-tag --tag hash --delete-build-directory --link-parent-repository" ; fi
-    if [ $(./pkgtools/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor" ; fi
-    if [ $(./pkgtools/cmsBuild --help | grep '\-\-log-deps' | wc -l) -gt 0 ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --log-deps" ; fi
+    if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
+    fi
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \

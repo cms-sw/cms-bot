@@ -107,8 +107,10 @@ if [ "X`PKGTOOLS/cmsBuild --help | grep tag=NAME`" != "X" ] ; then
 fi
 
 CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} $USE_DEV --builders $BUILD_JOBS -j $BUILD_NPROC --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir ${WRKDIR} $CMS_TAG"
+EX_OPTS=""
 if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
-  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --force-tag --tag hash --delete-build-directory"
+  EX_OPTS="--force-tag"
+  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --tag hash"
 fi
 GCC_FIXINCLUDE=""
 [ -e CMSDIST/gcc-fixincludes.spec ] && GCC_FIXINCLUDE="gcc-fixincludes"
@@ -170,30 +172,30 @@ pushd CMSDIST
   perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
 popd
 
-PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} ${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
 CMSBUILD_DEPS_OPTION=""
 if [ $(./PKGTOOLS/cmsBuild --help | grep '\-\-log-deps' | wc -l) -gt 0 ] ; then CMSBUILD_DEPS_OPTION="--log-deps" ; fi
 EXTERNAL_FAILED=false
-(PYTHONPATH=  $CMSBUILD_CMD ${CMSBUILD_DEPS_OPTION} build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
+(PYTHONPATH=  $CMSBUILD_CMD ${CMSBUILD_DEPS_OPTION} ${EX_OPTS} build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
 [ ! -e ${WRKDIR}/ok.txt ] && EXTERNAL_FAILED=true
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp/pip*
 if ${EXTERNAL_FAILED} ; then
   if [ "${DRY_RUN}" != "" ] ; then exit 1 ; fi
   BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
-  if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --sync-back upload ${BLD_PKGS} ; fi
+  if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${BLD_PKGS} ; fi
   rm -rf  ${WRKDIR}/tmp
   exit 1
 fi
 if [ "${DRY_RUN}" = "" ] ; then
   timeout 60 ${CMS_BOT_DIR}/create_json.py --logfile ${WORKSPACE}/cmsswtoolconf.log --jsonfile ${WORKSPACE}/externals.json || true
   if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
-    PYTHONPATH= $CMSBUILD_CMD --sync-back upload $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
     rm -rf ${WRKDIR}/tmp
-    PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
+    PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
   fi
 fi

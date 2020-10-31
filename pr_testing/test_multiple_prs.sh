@@ -334,13 +334,13 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS=""
-    if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then CMSBUILD_ARGS="--force-tag --delete-build-directory" ; fi
+    CMSBUILD_ARGS="--tag ${REPORT_H_CODE}"
+    if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then CMSBUILD_ARGS="--force-tag --tag hash --delete-build-directory --link-parent-repository" ; fi
     if [ $(./pkgtools/cmsBuild --help | grep '\-\-monitor' | wc -l) -gt 0 ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor" ; fi
     if [ $(./pkgtools/cmsBuild --help | grep '\-\-log-deps' | wc -l) -gt 0 ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --log-deps" ; fi
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
-        ${CMSBUILD_ARGS} --tag ${REPORT_H_CODE} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
+        ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU}"
     TMP_REPO="PR_$(echo ${REPORT_H_CODE}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     UPLOAD_OPTS="--upload-tmp-repository ${TMP_REPO}"

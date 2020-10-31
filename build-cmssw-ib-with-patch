@@ -114,7 +114,7 @@ if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
 fi
 GCC_FIXINCLUDE=""
 [ -e CMSDIST/gcc-fixincludes.spec ] && GCC_FIXINCLUDE="gcc-fixincludes"
-PYTHONPATH= $CMSBUILD_CMD --debug build SCRAMV1 ${GCC_FIXINCLUDE}
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build SCRAMV1 ${GCC_FIXINCLUDE}
 # Decide if we already have a release which uses the same CMSDIST.
 pushd ${WRKDIR}
 if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
@@ -172,10 +172,9 @@ pushd CMSDIST
   perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
 popd
 
-PYTHONPATH= $CMSBUILD_CMD --specs-only build $PACKAGE_NAME
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --specs-only build $PACKAGE_NAME
 TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} ${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
-rm -rf ${WRKDIR}
 EXTERNAL_FAILED=false
 (PYTHONPATH=  $CMSBUILD_CMD ${EX_OPTS} build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log
 [ ! -e ${WRKDIR}/ok.txt ] && EXTERNAL_FAILED=true
@@ -204,6 +203,7 @@ case $RELEASE_NAME in
   *_DEVEL_*) DEBUG_OPT="--debug" ;;
 esac
 export SCRAM_HOOKS_DEBUG=1
+rm -f ${WRKDIR}/tmp/specCache/$PACKAGE_NAME.* ${WRKDIR}/tmp/specCache/cmssw-ib.*
 PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build cmssw-ib
 echo DATE=`date`
 if [ "${DRY_RUN}" != "" ] ; then exit 0 ; fi

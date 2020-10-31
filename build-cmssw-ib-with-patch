@@ -8,7 +8,7 @@ echo DATE=`date`
 ARCHITECTURE=$1
 RELEASE_FORMAT=$2
 REPOSITORY=$3
-FORCE_FULL_IB=$4
+FORCE_FULL_IB_FLAG=$4
 RELEASE_LIST=$5
 PACKAGE_NAME=cmssw
 FORCE_PKGTOOLS_TAG=$6
@@ -84,9 +84,9 @@ echo DATE=`date`
 # We also store the HASH of both PKGTOOLS and CMSDIST to reuse them later on.
 # ALL_PREVIOUS_RELEASES contains both IBs and fill releases and we use it
 # to eventually skip the build if the same exact IB is already available.
-# We disable the whole logic and build a full IB if FORCE_FULL_IB is not empty.
+# We disable the whole logic and build a full IB if FORCE_FULL_IB_FLAG is not empty.
 pushd CMSDIST
-  if [ ! "X$FORCE_FULL_IB" = Xtrue ]; then
+  if [ ! "X${FORCE_FULL_IB_FLAG}" = "Xtrue" ]; then
     PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^\(IB\|REL\)/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
     ALL_PREVIOUS_RELEASES=`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]' | grep -v $RELEASE_NAME | { grep "^ALL/${RELEASE_QUEUE}_[0-9][^/]*/$ARCHITECTURE" || true; }`
   fi

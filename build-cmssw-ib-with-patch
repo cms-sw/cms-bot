@@ -173,7 +173,7 @@ pushd CMSDIST
 popd
 
 PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --specs-only build $PACKAGE_NAME
-TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} ${CMS_COMMON} local-cern-siteconf `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
+TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} ${CMS_COMMON} `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
 EXTERNAL_FAILED=false
 (PYTHONPATH=  $CMSBUILD_CMD ${EX_OPTS} build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log

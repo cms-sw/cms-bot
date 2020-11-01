@@ -18,6 +18,4 @@
 /prs/cms.week*/*_*_*/cms
 /prs/cms.week*/*_*_*/lcg
 /prs/cms.week*/*_*_*/lcg/root
-/prs/cms.week*/*_*_*/cms/cmssw/*
-/prs/cms.week*/*_*_*/cms/cmssw-patch/*
 /git/*

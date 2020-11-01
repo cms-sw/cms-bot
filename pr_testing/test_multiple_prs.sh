@@ -24,7 +24,7 @@ rm -rf ${RESULTS_FILE} ${RESULTS_FILE}.txt
 # CMSDIST_PR      # CMSDIST PR number, should avoid
 # ARCHITECTURE    # architecture (ex. slc6_amd64_gcc700)
 # and some others
-export CMSSW_GIT_REFERENCE=/cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git
+export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh

@@ -76,11 +76,8 @@ def auto_node_schedule(auto_jobs):
 
 def main():
     auto_nodes = read_auto_nodes()
-    r_xml = requests.get(running_job_xml)
-    r_json = requests.get(job_que_json)
-    print("RAW")
-    print(r_xml)
-    print(r_json)
+    r_xml = requests.get(running_job_xml, headers={"ADFS_LOGIN":"cmssdt"})
+    r_json = requests.get(job_que_json, headers={"ADFS_LOGIN":"cmssdt"})
     que_to_free = 0
 
     # get jobs that are waiting for a specific executor
@@ -113,13 +110,11 @@ def main():
 
     # get running placeholder job
     xml = ET.XML(r_xml.text)
-    print(r_xml.text)
     parsed_dict = etree_to_dict(xml)
     print("Running jobs", running_job_xml )
     pprint(parsed_dict)
     jobs_to_kill = []
-    if parsed_dict['jobs']:
-      for el in parsed_dict['jobs']['build']:
+    for el in parsed_dict['jobs']['build']:
         match = RX_Project.match(el['url'])
         project = match.group(1)
         j_number = match.group(2)

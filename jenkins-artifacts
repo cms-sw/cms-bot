@@ -6,7 +6,7 @@ fi
 source $cmssdt_script
 if [ "$ARTIFACTS_USER" = "" ] ; then ARTIFACTS_USER=$(whoami) ; fi
 case ${ARTIFACTS_USER} in
-  cmsbld|cvcmsib|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;
+  cmsbld|cvcmsib|cvcmsci|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;
 esac
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins" ; fi

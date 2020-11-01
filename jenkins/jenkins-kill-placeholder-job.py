@@ -78,6 +78,9 @@ def main():
     auto_nodes = read_auto_nodes()
     r_xml = requests.get(running_job_xml)
     r_json = requests.get(job_que_json)
+    print("RAW")
+    print(r_xml)
+    print(r_json)
     que_to_free = 0
 
     # get jobs that are waiting for a specific executor

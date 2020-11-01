@@ -110,11 +110,13 @@ def main():
 
     # get running placeholder job
     xml = ET.XML(r_xml.text)
+    print(r_xml.text)
     parsed_dict = etree_to_dict(xml)
     print("Running jobs", running_job_xml )
     pprint(parsed_dict)
     jobs_to_kill = []
-    for el in parsed_dict['jobs']['build']:
+    if parsed_dict['jobs']:
+      for el in parsed_dict['jobs']['build']:
         match = RX_Project.match(el['url'])
         project = match.group(1)
         j_number = match.group(2)

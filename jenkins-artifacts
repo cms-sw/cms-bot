@@ -14,6 +14,7 @@ ARTIFACTS_MACHINE="${ARTIFACTS_USER}@${CMSSDT_SERVER}"
 ARTIFACT_BASE_DIR_MAIN="/data/sdt/SDT/jenkins-artifacts"
 ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
 SSH_OPTS="-q -o ConnectTimeout=60 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+CVMFS_ARTIFACT_DIR="/cvmfs/cms-ci.cern.ch/jenkins-artifacts"
 
 function has_jenkins_artifacts ()
 {
@@ -60,15 +61,15 @@ function get_jenkins_artifacts ()
   local DES=$2
   local AFDIR="${ARTIFACT_BASE_DIR}"
   if [ $(echo $SRC | sed 's|^/*||;s|/.*||' | grep '^ib-baseline-tests$' | wc -l) -eq 1 ] ; then AFDIR="${ARTIFACT_BASE_DIR_MAIN}"; fi
-  if [ "X$3" = "X" -a -e /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$SRC ] ; then
-    if [ -d /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$SRC ] ; then
+  if [ "X$3" = "X" -a -e ${CVMFS_ARTIFACT_DIR}/$SRC ] ; then
+    if [ -d ${CVMFS_ARTIFACT_DIR}/$SRC ] ; then
       local XSRC=$(echo $SRC | sed 's|/*$||')
       local XDES=$(echo $DES | sed 's|/*$||')
       mkdir -p $XDES && rm -rf $XDES
-      ln -s /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$XSRC $XDES
+      ln -s ${CVMFS_ARTIFACT_DIR}/$XSRC $XDES
     else
       mkdir -p $(dirname $DES)
-      cp -f /cvmfs/cms-ib.cern.ch/jenkins-artifacts/$SRC $DES
+      cp -f ${CVMFS_ARTIFACT_DIR}/$SRC $DES
     fi
     echo "JA_STATUS=OK"
     return

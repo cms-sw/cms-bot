@@ -162,8 +162,10 @@ fi
 #Run product size comparison script for Phase2 workflow
 mkdir compareProducts && cd compareProducts
 cp $CMS_BOT_DIR/comparisons/compareProducts.* ./
-./compareProducts.sh $WORKSPACE/data/PR-$PULL_REQUEST_NUMBER/23434.999*/step3.root $WORKSPACE/data/$RELEASE_FORMAT/23434.999*/step3.root > products.log || true
-mv products.log $WORKSPACE/upload/products.log
+./compareProducts.sh $WORKSPACE/data/PR-$PULL_REQUEST_NUMBER/136.874_*/step3.root $WORKSPACE/data/$RELEASE_FORMAT/136.874_*/step3.root _ 100 10 > products_AOD.log || true
+./compareProducts.sh $WORKSPACE/data/PR-$PULL_REQUEST_NUMBER/136.874_*/step3_inMINIAOD.root $WORKSPACE/data/$RELEASE_FORMAT/136.874_*/step3_inMINIAOD.root _ 100 10 > products_MINIAOD.log || true
+mv products_AOD.log $WORKSPACE/upload/products_AOD.log
+mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
 cd .. 
 
 set +x

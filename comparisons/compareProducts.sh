@@ -38,6 +38,6 @@ edmEventSize -v ${fA} > ${os}
 ns=ns.${ds}
 edmEventSize -v ${fB} > ${ns}
 
-grep ${procF} ${os} ${ns} | sed -e "s/${os}:/os /g;s/${ns}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f comparisons/compareProducts.awk
+grep ${procF} ${os} ${ns} | sed -e "s/${os}:/os /g;s/${ns}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f compareProducts.awk
 
 rm ${os} ${ns}

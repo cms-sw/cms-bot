@@ -12,7 +12,7 @@ from os import stat as tstat
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
 ES_NEW_SERVER = 'https://es-cmssdt7.cern.ch:9203'
-ES_PASSWD_FILE = None
+ES_PASSWD = None
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
@@ -41,18 +41,14 @@ def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file=passwd_file)
 
 def es_get_passwd(passwd_file=None):
-  if not ES_PASSWD_FILE:
-    for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret", "/data/secrets/github_hook_secret_cmsbot"]:
-      if not psfile: continue
-      if exists(psfile):
-        passwd_file=psfile
-        break
-    ES_PASSWD_FILE = passwd_file
-  try:
-    return open(passwd_file,'r').read().strip()
-  except Exception as e:
-    print("Couldn't read the secrets file" , str(e))
-    return ""
+  if ES_PASSWD: return ES_PASSWD
+  for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret", "/data/secrets/github_hook_secret_cmsbot"]:
+    if not psfile: continue
+    if exists(psfile):
+      passwd_file=psfile
+      break
+  ES_PASSWD = open(passwd_file,'r').read().strip()
+  return ES_PASSWD
 
 def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False):
   header = {"Content-Type": "application/json"}

@@ -20,8 +20,6 @@ function dockerrun()
       elif [ "${arch}" = "ppc64le" ] ; then
         QEMU_ARGS="${QEMU_ARGS} -cpu POWER8"
       fi
-    elif [ -e "${IMAGE_BASE}/${IMG}-latest" ] ; then
-      IMG="${IMG}-latest"
     fi
   fi
   case $CONTAINER_TYPE in

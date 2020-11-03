@@ -68,6 +68,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
     request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
+    if method in ["POST", None]: print(content)
   except Exception as e:
     print("ERROR:",url,str(e))
     print(payload)
@@ -79,7 +80,7 @@ def send_payload(index, document, id, payload, passwd_file=None):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   uri = "%s/%s/" % (index,document)
   if id: uri = uri+id
-  return send_request(uri, payload=payload, passwd_file=passwd_file)
+  return send_request(uri, payload=payload, method="POST", passwd_file=passwd_file)
 
 def send_template(name, payload, passwd_file=None):
   if not name.startswith('cmssdt-'): name = 'cmssdt-' + name

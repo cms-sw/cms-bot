@@ -69,7 +69,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
     request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
-    if method in ["POST", None]: print(content)
+    if method in ["POST", None]: print(content.read())
   except Exception as e:
     print("ERROR:",url,str(e))
     print(payload)

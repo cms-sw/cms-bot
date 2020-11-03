@@ -3,6 +3,7 @@ function dockerrun()
   if [ -z "${CONTAINER_TYPE}" ] ; then
     CONTAINER_TYPE=docker
     DOCKER_IMG_BASE="/cvmfs/unpacked.cern.ch/registry.hub.docker.com"
+    if [ ! -d "${DOCKER_IMG_BASE}" ] ; then DOCKER_IMG_BASE="/cvmfs/cms-ib.cern.ch/docker" ; fi
     [ "$USE_SINGULARITY" = "true" ] && CONTAINER_TYPE=singularity
     if [ -z "${IMAGE_BASE}" ] ; then IMAGE_BASE="${DOCKER_IMG_BASE}" ; fi
     if [ -z "${PROOTDIR}" ]   ; then PROOTDIR="/cvmfs/cms-ib.cern.ch/proot" ; fi

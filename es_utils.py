@@ -37,8 +37,8 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
   return format(es5_query_tmpl, **locals ())
 
 
-def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file=passwd_file)
+def resend_payload(hit):
+  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]))
 
 def es_get_passwd(passwd_file=None):
   global ES_PASSWD

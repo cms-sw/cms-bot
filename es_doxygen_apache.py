@@ -39,7 +39,7 @@ def process (line, count):
       payload["agent_type"]=agent.replace(" ","-").split("/",1)[0].upper()
   id = sha1(line).hexdigest()
   if (count%1000)==0: print("Processed entries",count)
-  if not send_payload("apache-doxygen-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+  if not send_payload("apache-doxygen-"+week,"access_log", id, dumps(payload)):
     return False
   return True
 

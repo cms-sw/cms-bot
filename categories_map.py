@@ -62,6 +62,7 @@ CMSSW_CATEGORIES = {
     "CalibMuon/DTDigiSync",
     "CalibMuon/RPCCalibration",
     "CalibPPS/AlignmentRelative",
+    "CalibPPS/AlignmentGlobal",
     "CalibPPS/ESProducers",
     "CalibTracker/Configuration",
     "CalibTracker/Records",

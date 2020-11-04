@@ -881,6 +881,7 @@ set +x ; eval $(scram run -sh) ;set -x
 if $BUILD_EXTERNAL ; then
   if [ "X${CMSSW_RELEASE_BASE}" != "X" ] ; then
     export CMSSW_SEARCH_PATH=$(echo $CMSSW_SEARCH_PATH | tr ':' '\n'  | grep -v "$CMSSW_RELEASE_BASE/external/" | tr '\n' ':')
+    export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n'  | grep -v "$CMSSW_RELEASE_BASE/external/" | tr '\n' ':')
   fi
 fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH

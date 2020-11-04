@@ -61,6 +61,9 @@ EPOSPPb8160GeVwf281p0 281.0_EPOS_PPb_8160GeV_MinimumBias*/step3.root RECO
 HydjetQB12in2018wf150p0 150.0_HydjetQ_B12_5020GeV_*/step3.root RECO
 HydjetQB12ppRECOin2018wf158p0 158.0_HydjetQ_B12_5020GeV_*/step3.root RECO
 HydjetQB12ppRECOin2018reMINIAODwf158p01 158.01_HydjetQ_reminiaodPbPb2018_*/step2.root DQM
+HydjetQB12ppRECOin2021wf159p0 159.0_HydjetQ_B12_5020GeV_*/step3.root RECO
+PyquenDiJet80to120ppRECOin2021wf311p0 311.0_Pyquen_DiJet_pt80to120_*/step3.root RECO
+PyquenZEEMMppRECOin2021wf312p0 312.0_Pyquen_ZeemumuJets_pt10_*/step3.root RECO
 #
 #  Run2 MC
 #

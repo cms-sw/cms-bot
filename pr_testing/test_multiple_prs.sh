@@ -110,7 +110,8 @@ UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uni
 fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
-REPORT_H_CODE=$( echo ${PULL_REQUESTS} | tr ',' '\n' | sort | md5sum | sed 's| .*||' | cut -c27-33 )      # Used to to create link to folder where uploaded files are.
+REPORT_H_CODE=$(echo ${PULL_REQUESTS} | tr ',' '\n' | sort | md5sum | sed 's| .*||' | cut -c27-33)      # Used to to create link to folder where uploaded files are.
+RPM_UPLOAD_REPO=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '/cmssw#' | grep -v '/cms-bot#' | sort | uniq | md5sum | sed 's| .*||')
 
 let WEEK_NUM=$(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||;s|^0*||')%2 || true
 CMS_WEEKLY_REPO=cms.week${WEEK_NUM}
@@ -342,7 +343,7 @@ if ${BUILD_EXTERNAL} ; then
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU}"
-    TMP_REPO="PR_$(echo ${REPORT_H_CODE}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
+    TMP_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     UPLOAD_OPTS="--upload-tmp-repository ${TMP_REPO}"
     if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${TMP_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
       UPLOAD_OPTS="--sync-back"

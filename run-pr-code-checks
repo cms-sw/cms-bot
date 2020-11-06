@@ -121,6 +121,7 @@ if ${MULTIPLE_FILES_CHANGES} ; then
         ${CMSSW_BASE}/upload/multiple_files_changes.txt || true
 fi
 
+eval `scram unset -sh`
 RES="+code-checks"
 HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/code-checks.patch -o -s ${CMSSW_BASE}/upload/code-format.patch ] ; then

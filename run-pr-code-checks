@@ -121,7 +121,6 @@ if ${MULTIPLE_FILES_CHANGES} ; then
         ${CMSSW_BASE}/upload/multiple_files_changes.txt || true
 fi
 
-eval `scram unset -sh`
 RES="+code-checks"
 HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/code-checks.patch -o -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
@@ -153,5 +152,6 @@ fi
 
 if ! $DRY_RUN ; then
   send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+  eval `scram unset -sh`
   ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
 fi

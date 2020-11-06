@@ -11,6 +11,11 @@ CODE_FORMAT=$6
 CODE_CHECKS=$7
 CMSSW_TOOL_CONF=$8
 MULTIPLE_FILES_CHANGES=true
+if [ "$DRY_RUN" != "true" ] ; then DRY_RUN=false ; fi
+
+source ${CMS_BOT_DIR}/common/github_reports.sh
+PR_COMMIT="$(curl -s https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} | grep 'api.github.com/repos/cms-sw/cmssw/statuses/' | grep '"href"' | tail -1 | sed 's|.*/||;s|".*||')"
+[ $DRY_RUN ] || mark_commit_status_pr -r "cms-sw/cmssw" -c "${PR_COMMIT}" -C "cms/code-checks" -s "pending" -u "${BUILD_URL}" -d "Running"
 
 if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
   mv $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected $CMSSW_BASE/old-tools
@@ -23,7 +28,6 @@ if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
   eval `scram run -sh` > /dev/null 2>&1
 fi
 
-if [ "X$DRY_RUN" = "X" ] ; then DRY_RUN=false ; fi
 if [ "X${REPOSITORY}" = "X" ] ; then REPOSITORY="cms-sw/cmssw" ;fi
 REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
 if [ "$BUILD_NUMBER" = "" ] ; then BUILD_NUMBER=$(date +%s); fi
@@ -72,9 +76,9 @@ if $CODE_CHECKS ; then
       echo '' >> ${CMSSW_BASE}/upload/code-checks-err.log
       echo 'ERROR: Build errors found during clang-tidy run.' >> ${CMSSW_BASE}/upload/code-checks-err.log
       echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
-      grep -A 3 ': error: \|gmake: \*\*\*' ${CMSSW_BASE}/upload/code-checks.log | sed "s|$CMSSW_BASE/src/||" >> ${CMSSW_BASE}/upload/code-checks-err.log
+      grep -A 3 ': error: \|gmake: \*\*\*' ${CMSSW_BASE}/upload/code-checks.log | tail -24 | sed "s|$CMSSW_BASE/src/||" >> ${CMSSW_BASE}/upload/code-checks-err.log
       echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
-      if [ "$DRY_RUN" != "true" ] ; then
+      if [ ! $DRY_RUN ] ; then
         send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
         ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${CMSSW_BASE}/upload/code-checks-err.log
       fi
@@ -117,9 +121,6 @@ if ${MULTIPLE_FILES_CHANGES} ; then
         ${CMSSW_BASE}/upload/multiple_files_changes.txt || true
 fi
 
-if [ "$DRY_RUN" != "true" ] ; then
-  send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
-fi
 RES="+code-checks"
 HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/code-checks.patch -o -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
@@ -149,6 +150,7 @@ if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
     MSG="${MSG}@N@$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
 fi
 
-if [ "$DRY_RUN" != "true" ] ; then
+if [ ! $DRY_RUN ] ; then
+  send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
   ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
 fi

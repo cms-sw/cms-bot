@@ -14,7 +14,7 @@ MULTIPLE_FILES_CHANGES=true
 if [ "$DRY_RUN" != "true" ] ; then DRY_RUN=false ; fi
 
 source ${CMS_BOT_DIR}/common/github_reports.sh
-PR_COMMIT="$(curl -s https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} | grep 'api.github.com/repos/cms-sw/cmssw/statuses/' | grep '"href"' | tail -1 | sed 's|.*/||;s|".*||')"
+PR_COMMIT="$(wget -q -O- https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} | grep 'api.github.com/repos/cms-sw/cmssw/statuses/' | grep '"href"' | tail -1 | sed 's|.*/||;s|".*||')"
 $DRY_RUN || mark_commit_status_pr -r "cms-sw/cmssw" -c "${PR_COMMIT}" -C "cms/code-checks" -s "pending" -u "${BUILD_URL}" -d "Running"
 
 if [ "${CMSSW_TOOL_CONF}" != "" ] ; then

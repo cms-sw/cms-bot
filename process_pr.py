@@ -831,7 +831,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     pstate = get_status_state("cms/tests", commit_statues)
     state = "pending"
     desc = "Waitings for test to start"
-    url = None
+    url = ""
     if signatures["tests"] in ["approved", "rejected"]:
       state = "success" if signatures["tests"]=="approved" else "error"
       desc = "Passed" if signatures["tests"]=="approved" else "Failed"

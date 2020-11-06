@@ -78,7 +78,7 @@ if $CODE_CHECKS ; then
       echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
       grep -A 3 ': error: \|gmake: \*\*\*' ${CMSSW_BASE}/upload/code-checks.log | tail -24 | sed "s|$CMSSW_BASE/src/||" >> ${CMSSW_BASE}/upload/code-checks-err.log
       echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
-      if [ ! $DRY_RUN ] ; then
+      if ! $DRY_RUN ; then
         send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
         ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${CMSSW_BASE}/upload/code-checks-err.log
       fi
@@ -150,7 +150,7 @@ if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
     MSG="${MSG}@N@$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
 fi
 
-if [ ! $DRY_RUN ] ; then
+if ! $DRY_RUN ; then
   send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
   ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
 fi

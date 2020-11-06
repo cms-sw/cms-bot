@@ -32,7 +32,7 @@ function report_pull_request_results_all_prs_with_commit() {
 function mark_commit_status_pr () {
   local ERR=1
   for i in 0 1 2 3 4 ; do
-      if ${CMS_BOT_DIR}/mark_commit_status.py "$@" ; then
+      if [ $(eval `scram unset -sh` && ${CMS_BOT_DIR}/mark_commit_status.py "$@" && echo ALL_OK | grep 'ALL_OK' | wc -l) -gt 0 ]  ; then
           ERR=0
           break
       else

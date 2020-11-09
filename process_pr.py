@@ -457,7 +457,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if last_commit_obj is None: return
     last_commit = last_commit_obj.commit
     commit_statues = last_commit_obj.get_combined_status().statuses
-    code_checks_status = [s for s in commit_statues ifs.contex == "cms/code-checks"]
+    code_checks_status = [s for s in commit_statues if s.context == "cms/code-checks"]
     print("PR Statuses:",commit_statues)
     last_commit_date = last_commit.committer.date
     print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)

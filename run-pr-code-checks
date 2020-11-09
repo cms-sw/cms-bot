@@ -145,7 +145,6 @@ fi
 MSG="\n\nLogs: $UP_URL"
 if [ $DSIZE -gt 0 ] ; then MSG="${MSG}\n\n- This PR adds an extra ${DSIZE}KB to repository" ; fi
 if [ -s ${UP_DIR}/invalid_files.txt ] ; then
-  RES="-code-checks"
   MSG="${MSG}\n\n- Found files with invalid states:\n$(cat ${UP_DIR}/invalid_files.txt | sed 's|^\(\s*\)|\1  - |')"
 fi
 

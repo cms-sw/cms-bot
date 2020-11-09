@@ -12,8 +12,8 @@ function cleanup_git_tag ()
   fi
 }
 
-#Keep only last 21 days/3 weeks of IB tags
-DAYS_TO_KEEP=21
+#Keep only last 14 days/2 weeks of IB tags
+DAYS_TO_KEEP=14
 ECHO=
 if [ "X$DRY_RUN" = "Xtrue" ]; then ECHO=echo; fi
 

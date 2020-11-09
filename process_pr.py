@@ -634,16 +634,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
 
     if (cmssw_repo and first_line=="code-checks"):
+      if first_line not in pre_checks: extra_pre_checks.append(first_line)
       if code_checks_status and (code_checks_status[0].updated_at>=comment.created_at):
         continue
       if first_line in pre_checks:
         if pre_checks_state["code-checks"] in ["pending", ""]:
           continue
       elif pre_checks_state["code-checks"] in ["pending"]:
-        extra_pre_checks.append(first_line)
         continue
-      else:
-        extra_pre_checks.append(first_line)
       signatures[first_line] = "pending"
       pre_checks_state["code-checks"] = ""
       print("Found:Code Checks request", code_checks_tools)

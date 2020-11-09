@@ -1190,7 +1190,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       pass
   print("HERE:",pre_checks,extra_pre_checks,pre_checks_state)
   for pre_check in pre_checks+extra_pre_checks:
-    if pre_check not in signatures: signatures[[pre_check] = "pending"
+    if pre_check not in signatures: signatures[pre_check] = "pending"
     print("PRE CHECK: %s,%s,%s" % (pre_check, signatures[pre_check], pre_checks_state[pre_check]))
     if signatures[pre_check]!="pending":
       if pre_checks_state[pre_check] in ["pending", ""]:

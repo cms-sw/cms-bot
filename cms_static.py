@@ -9,7 +9,7 @@ VALID_CMSDIST_BRANCHES = "^IB/CMSSW_.+$"
 BACKPORT_STR     ="- Backported from #"
 CMSBUILD_GH_USER ="cmsbuild"
 CMSBOT_IGNORE_MSG= "<cmsbot>\s*</cmsbot>"
-CMSBOT_NO_NOTIFY_MSG= "<no_notify>\s*</no_notify>"
+CMSBOT_NO_NOTIFY_MSG= "<notify>\s*</notify>"
 VALID_CMS_SW_REPOS_FOR_TESTS = ["cmssw", "cmsdist", "cms-bot","root", "cmssw-config",
                       "pkgtools", "SCRAM", "cmssw-osenv", "cms-git-tools",
                       "cms-common","cms_oracleocci_abi_hack","siteconf"]

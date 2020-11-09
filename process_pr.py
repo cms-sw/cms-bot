@@ -322,13 +322,15 @@ def get_status_state(context, statuses):
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   if (not force) and ignore_issue(repo_config, repo, issue): return
-  notify_users = notify_user(issue)
+  gh_user_char="@"
+  if not notify_user(issue): gh_user_char=""
   api_rate_limits(gh)
   prId = issue.number
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
+  print("Notify User: ",gh_user)
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
   cms_repo = (repo_org in EXTERNAL_REPOS)
   external_repo = (repository!=CMSSW_REPO_NAME) and (len([e for e in EXTERNAL_REPOS if repo_org==e])>0)
@@ -372,9 +374,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("This pull request must go in to master branch")
         if not dryRun:
           edit_pr(get_token(gh), repo.full_name, prId, base="master")
-          msg = format("@%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
+          msg = format("%(gh_user_char)s%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
                        "In future, please use cmssw master branch to submit your changes.\n",
                        user=requestor,
+                       gh_user_char=gh_user_char,
                        dev_branch=CMSSW_DEVEL_BRANCH)
           issue.create_comment(msg)
       return
@@ -457,7 +460,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if not watcher in watchingGroups: continue
       watchers.remove(watcher)
       watchers.update(set(watchingGroups[watcher]))      
-    watchers = set(["@" + u for u in watchers])
+    watchers = set([gh_user_char + u for u in watchers])
     print("Watchers " + ", ".join(watchers))
     last_commit_obj = get_last_commit(pr)
     if last_commit_obj is None: return
@@ -806,7 +809,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   new_blocker = False
   blockers = ""
   for u in hold:
-    blockers += " @"+u+","
+    blockers += " "+gh_user_char+u+","
     if hold[u]: new_blocker = True
   blockers = blockers.rstrip(",")
 
@@ -927,7 +930,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     new_categories.add(nc_lab)
 
   if new_assign_cats:
-    new_l2s = ["@" + name
+    new_l2s = [gh_user_char + name
                for name, l2_categories in list(CMSSW_L2.items())
                for signature in new_assign_cats
                if signature in l2_categories]
@@ -959,14 +962,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if backport_pr_num: backport_msg="%s%s\n" % (BACKPORT_STR,backport_pr_num)
       uname = ""
       if issue.user.name: uname = issue.user.name.encode("ascii", "ignore")
-      l2s = ", ".join([ "@" + name for name in CMSSW_ISSUES_TRACKERS ])
-      issueMessage = format("%(msgPrefix)s @%(user)s"
+      l2s = ", ".join([ gh_user_char + name for name in CMSSW_ISSUES_TRACKERS ])
+      issueMessage = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                         " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
                         "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n%(backport_msg)s",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=requestor,
+                        gh_user_char=gh_user_char,
                         name=uname,
                         backport_msg=backport_msg,
                         l2s=l2s)
@@ -978,7 +982,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   # get release managers
   SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
-  releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
+  releaseManagersList = ", ".join([gh_user_char + x for x in set(releaseManagers + SUPER_USERS)])
 
   if cmssw_prs:
     global_test_params['PULL_REQUESTS'] = cmssw_prs
@@ -1080,7 +1084,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if not dryRun: issue.create_comment(messageFullySigned)
 
   unsigned = [k for (k, v) in list(signatures.items()) if v == "pending"]
-  missing_notifications = ["@" + name
+  missing_notifications = [gh_user_char + name
                             for name, l2_categories in list(CMSSW_L2.items())
                             for signature in signing_categories
                             if signature in l2_categories
@@ -1094,7 +1098,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          " watch as well.\n",
                          watchers=", ".join(watchers))
   # Construct message for the release managers.
-  managers = ", ".join(["@" + x for x in releaseManagers])
+  managers = ", ".join([gh_user_char + x for x in releaseManagers])
 
   releaseManagersMsg = ""
   if releaseManagers:
@@ -1116,7 +1120,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          base_branch=base_release_branch)
 
     # We do not want to spam people for the old pull requests.
-    messageNewPR = format("%(msgPrefix)s @%(user)s"
+    messageNewPR = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                         " %(name)s for %(branch)s.\n\n"
                         "It involves the following packages:\n\n"
                         "%(packages)s\n\n"
@@ -1129,6 +1133,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                         msgPrefix=NEW_PR_PREFIX,
                         user=pr.user.login,
+                        gh_user_char=gh_user_char,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
                         l2s=", ".join(missing_notifications),
@@ -1143,7 +1148,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
   else:
-    messageNewPR = format("%(msgPrefix)s @%(user)s"
+    messageNewPR = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"
                           "%(l2s)s can you please review it and eventually sign?"
                           " Thanks.\n"
@@ -1151,6 +1156,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                           msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,
+                          gh_user_char=gh_user_char,
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,
                           l2s=", ".join(missing_notifications),

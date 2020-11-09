@@ -330,7 +330,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   repo_org, repo_name = repository.split("/",1)
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
-  print("Notify User: ",gh_user)
+  print("Notify User: ",gh_user_char)
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
   cms_repo = (repo_org in EXTERNAL_REPOS)
   external_repo = (repository!=CMSSW_REPO_NAME) and (len([e for e in EXTERNAL_REPOS if repo_org==e])>0)

@@ -29,6 +29,19 @@ function report_pull_request_results_all_prs_with_commit() {
     done
 }
 
+function mark_commit_status_pr () {
+  local ERR=1
+  for i in 0 1 2 3 4 ; do
+      if [ "$(eval `scram unset -sh` && ${CMS_BOT_DIR}/mark_commit_status.py "$@" 2>&1 && echo ALL_OK | grep 'ALL_OK' | wc -l)" -gt 0 ]  ; then
+          ERR=0
+          break
+      else
+          sleep 10
+      fi
+  done
+  if [ $ERR -gt 0 ] ; then exit $ERR; fi
+}
+
 function mark_commit_status_all_prs () {
     if [ "${COMMIT_STATUS_CONTEXT}" = "" ] ; then 
       CONTEXT="${SCRAM_ARCH}"
@@ -47,13 +60,7 @@ function mark_commit_status_all_prs () {
         else
           LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PR})/COMMIT) # get cashed commit hash
         fi
-        for i in 0 1 2 3 4 ; do
-          if ! ${CMS_BOT_DIR}/mark_commit_status.py -r ${PR_NAME_AND_REPO} -c ${LAST_PR_COMMIT} -C "cms/${CONTEXT}" -s "${STATE}" "$@" ; then
-            sleep 30
-          else
-            break
-          fi
-        done
+        mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "cms/${CONTEXT}" -s "${STATE}" "$@"
     done
 }
 

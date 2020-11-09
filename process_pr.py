@@ -350,6 +350,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   ignore_tests = ''
   enable_tests = ''
   commit_statues = None
+  code_checks_status = []
   pre_checks_state = {}
   default_pre_checks = ["code-checks"]
   #For future pre_checks
@@ -456,6 +457,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if last_commit_obj is None: return
     last_commit = last_commit_obj.commit
     commit_statues = last_commit_obj.get_combined_status().statuses
+    code_checks_status = [s for s in commit_statues if s.context == "cms/code-checks"]
     print("PR Statuses:",commit_statues)
     last_commit_date = last_commit.committer.date
     print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)
@@ -623,9 +625,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
 
     if (cmssw_repo and first_line=="code-checks"):
-      signatures[first_line] = "pending"
-      if first_line not in pre_checks: extra_pre_checks.append(first_line)
-      print("Found:Code Checks request", code_checks_tools)
+      if (pre_checks_state["code-checks"] not in ["pending", ""]) and (code_checks_status[0].updated_at<comment.created_at):
+        signatures[first_line] = "pending"
+        pre_checks_state["code-checks"] = ""
+        if first_line not in pre_checks: extra_pre_checks.append(first_line)
+        print("Found:Code Checks request", code_checks_tools)
       continue
 
     # Check for cmsbuild_user comments and tests requests only for pull requests

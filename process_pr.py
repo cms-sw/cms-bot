@@ -3,7 +3,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, C
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
 from releases import get_release_managers, is_closed_branch
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS
-from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION
+from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from datetime import datetime
@@ -176,9 +176,14 @@ def ignore_issue(repo_config, repo, issue):
   if re.match(BUILD_REL, issue.title):
     return True
   if issue.body:
-    if re.match(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+    if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
       return True
   return False
+
+def notify_user(issue):
+  if issue.body and re.search(CMSBOT_NO_NOTIFY_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+      return False
+  return True
 
 def check_extra_labels(first_line, extra_labels):
   if "bug" in first_line:
@@ -317,6 +322,7 @@ def get_status_state(context, statuses):
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   if (not force) and ignore_issue(repo_config, repo, issue): return
+  notify_users = notify_user(issue)
   api_rate_limits(gh)
   prId = issue.number
   repository = repo.full_name
@@ -631,6 +637,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if pre_checks_state["code-checks"] in ["pending", ""]:
           continue
       elif pre_checks_state["code-checks"] in ["pending"]:
+        extra_pre_checks.append(first_line)
         continue
       else:
         extra_pre_checks.append(first_line)

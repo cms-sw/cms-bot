@@ -30,6 +30,7 @@ fi
 
 if [ "X${REPOSITORY}" = "X" ] ; then REPOSITORY="cms-sw/cmssw" ;fi
 REPO_USER=$(echo ${REPOSITORY} | sed 's|/.*||')
+UP_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"
 if [ "$BUILD_NUMBER" = "" ] ; then BUILD_NUMBER=$(date +%s); fi
 NUM_PROC=$(nproc)
 if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
@@ -72,15 +73,17 @@ if $CODE_CHECKS ; then
     ERR=false
     scram build -k -j $NUM_PROC code-checks USER_CODE_CHECKS_FILE="$CMSSW_BASE/upload/code-checks-files.txt" > ${CMSSW_BASE}/upload/code-checks.log 2>&1 || ERR=true
     if $ERR ; then
-      echo '-code-checks' > ${CMSSW_BASE}/upload/code-checks-err.log
-      echo '' >> ${CMSSW_BASE}/upload/code-checks-err.log
-      echo 'ERROR: Build errors found during clang-tidy run.' >> ${CMSSW_BASE}/upload/code-checks-err.log
-      echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
-      grep -A 3 ': error: \|gmake: \*\*\*' ${CMSSW_BASE}/upload/code-checks.log | tail -24 | sed "s|$CMSSW_BASE/src/||" >> ${CMSSW_BASE}/upload/code-checks-err.log
-      echo '```' >> ${CMSSW_BASE}/upload/code-checks-err.log
+      echo '-code-checks' > ${CMSSW_BASE}/upload/code-checks.md
+      echo '' >> ${CMSSW_BASE}/upload/code-checks.md
+      echo 'ERROR: Build errors found during clang-tidy run.' >> ${CMSSW_BASE}/upload/code-checks.md
+      echo '```' >> ${CMSSW_BASE}/upload/code-checks.md
+      grep -A 3 ': error: \|gmake: \*\*\*' ${CMSSW_BASE}/upload/code-checks.log | tail -24 | sed "s|$CMSSW_BASE/src/||" >> ${CMSSW_BASE}/upload/code-checks.md
+      echo '```' >> ${CMSSW_BASE}/upload/code-checks.md
       if ! $DRY_RUN ; then
+        ${CMS_BOT_DIR}/common/markdown2html.sh "Code Checks" ${CMSSW_BASE}/upload/code-checks.md > ${CMSSW_BASE}/upload/index.html
         send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
-        ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${CMSSW_BASE}/upload/code-checks-err.log
+        $DRY_RUN || mark_commit_status_pr -r "cms-sw/cmssw" -c "${PR_COMMIT}" -C "cms/code-checks" -s error -u "${UP_URL}" -d "Build errors, clang-tidy failed."
+        ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${CMSSW_BASE}/upload/code-checks.md
       fi
       exit 0
     fi
@@ -122,36 +125,52 @@ if ${MULTIPLE_FILES_CHANGES} ; then
 fi
 
 RES="+code-checks"
+PR_STATE_MSG=""
 HOW_TO_RUN=""
 if [ -s ${CMSSW_BASE}/upload/code-checks.patch -o -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
   RES="-code-checks"
-  HOW_TO_RUN="@N@@N@Code check has found code style and quality issues which could be resolved by applying following patch(s)"
+  HOW_TO_RUN="\n\nCode check has found code style and quality issues which could be resolved by applying following patch(s)"
   if [ -s ${CMSSW_BASE}/upload/code-checks.patch ] ; then
-    HOW_TO_RUN="${HOW_TO_RUN}@N@- **code-checks**:"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch | patch -p1\`"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@You can also run \`scram build code-checks\` to apply code checks directly"
+    HOW_TO_RUN="${HOW_TO_RUN}\n\n- **code-checks**:"
+    HOW_TO_RUN="${HOW_TO_RUN}\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}\nYou can also run \`scram build code-checks\` to apply code checks directly"
   fi
   if [ -s ${CMSSW_BASE}/upload/code-format.patch ] ; then
-    HOW_TO_RUN="${HOW_TO_RUN}@N@- **code-format**:"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@e.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
-    HOW_TO_RUN="${HOW_TO_RUN}@N@You can also run \`scram build code-format\` to apply code format directly"
+    HOW_TO_RUN="${HOW_TO_RUN}\n\n- **code-format**:"
+    HOW_TO_RUN="${HOW_TO_RUN}\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch"
+    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}\nYou can also run \`scram build code-format\` to apply code format directly"
   fi
 fi
-MSG="${RES}@N@@N@Logs: https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}"
-if [ $DSIZE -gt 0 ] ; then MSG="${MSG}@N@@N@- This PR adds an extra ${DSIZE}KB to repository" ; fi
+
+MSG="\n\nLogs: $UP_URL"
+if [ $DSIZE -gt 0 ] ; then MSG="${MSG}\n\n- This PR adds an extra ${DSIZE}KB to repository" ; PR_STATE_MSG="${PR_STATE_MSG}${DSIZE}KB,"; fi
 if [ -s ${CMSSW_BASE}/upload/invalid_files.txt ] ; then
-  MSG="${MSG}@N@@N@- Found files with invalid states:@N@$(cat ${CMSSW_BASE}/upload/invalid_files.txt | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
+  RES="-code-checks"
+  MSG="${MSG}\n\n- Found files with invalid states:\n$(cat ${CMSSW_BASE}/upload/invalid_files.txt | sed 's|^\(\s*\)|\1  - |')"
 fi
 
 if [ -s ${CMSSW_BASE}/upload/multiple_files_changes.txt ] ; then
-    MSG="${MSG}@N@@N@- There are other open Pull requests which might conflict with changes you have proposed:"
-    MSG="${MSG}@N@$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |;s|$|@N|' | tr '\n' '@')"
+    MSG="${MSG}\n\n- There are other open Pull requests which might conflict with changes you have proposed:"
+    MSG="${MSG}\n$(cat ${CMSSW_BASE}/upload/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |')"
+    PR_STATE_MSG="${PR_STATE_MSG}Files in multiple PRs,"
 fi
-
+MSG="${RES}${MSG}"
+echo -e "${MSG}${HOW_TO_RUN}" > ${CMSSW_BASE}/upload/code-checks.md
+${CMS_BOT_DIR}/common/markdown2html.sh "Code Checks" ${CMSSW_BASE}/upload/code-checks.md > ${CMSSW_BASE}/upload/index.html
 if ! $DRY_RUN ; then
   send_jenkins_artifacts ${CMSSW_BASE}/upload/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
   eval `scram unset -sh`
-  ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -m "${MSG}${HOW_TO_RUN}"
+  if [ "${RES}" = "-code-checks" ] ; then
+    PR_STATE_MSG="Failed"
+    PR_STATE="error"
+  else
+    PR_STATE_MSG="Passed $(echo ${PR_STATE_MSG} | sed 's|,$||')"
+    PR_STATE="success"
+  fi
+  $DRY_RUN || mark_commit_status_pr -r "cms-sw/cmssw" -c "${PR_COMMIT}" -C "cms/code-checks" -s ${PR_STATE}  -u "${UP_URL}" -d "${PR_STATE_MSG}"
+  if [ "${RES}" = "-code-checks" ] ; then
+    ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${CMSSW_BASE}/upload/code-checks.md
+  fi
 fi

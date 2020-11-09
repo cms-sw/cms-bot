@@ -350,6 +350,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   ignore_tests = ''
   enable_tests = ''
   commit_statues = None
+  code_checks_status = []
   pre_checks_state = {}
   default_pre_checks = ["code-checks"]
   #For future pre_checks
@@ -456,6 +457,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if last_commit_obj is None: return
     last_commit = last_commit_obj.commit
     commit_statues = last_commit_obj.get_combined_status().statuses
+    code_checks_status = [s for s in commit_statues ifs.contex == "cms/code-checks"]
     print("PR Statuses:",commit_statues)
     last_commit_date = last_commit.committer.date
     print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)
@@ -490,9 +492,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   signatures = dict([(x, "pending") for x in signing_categories])
   extra_pre_checks = []
   pre_checks = [c for c in signing_categories if c in default_pre_checks]
-  for pre_check in pre_checks+["code-checks"]:
-    pre_checks_state[pre_check] = get_status_state("cms/%s" % pre_check, commit_statues)
-  print("Pre check status:",pre_checks_state)
+  for pre_check in pre_checks:
+    state = get_status_state("cms/%s" % pre_check, commit_statues)
+    pre_checks_state[pre_check] = state
+    if state == "success":
+      signatures[ pre_check] = "approved"
+    elif state == "failure":
+      signatures[ pre_check] = "rejected"
+  if "code-checks" not in pre_checks:
+    pre_checks_state["code-checks"] = get_status_state("cms/code-checks", commit_statues)
+  check_code_checks = (pre_checks_state["code-checks"]=="")
+  print("Pre check status:",pre_checks_state,check_code_checks)
   already_seen = None
   pull_request_updated = False
   comparison_done = False
@@ -623,9 +633,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
 
     if (cmssw_repo and first_line=="code-checks"):
-      signatures[first_line] = "pending"
-      if first_line not in pre_checks: extra_pre_checks.append(first_line)
-      print("Found:Code Checks request", code_checks_tools)
+      if (pre_checks_state["code-checks"] not in ["pending", ""]) and (code_checks_status[0].updated_at<comment.created_at) :
+        signatures[first_line] = "pending"
+        pre_checks_state["code-checks"] = ""
+        if first_line not in pre_checks: extra_pre_checks.append(first_line)
+        print("Found:Code Checks request", code_checks_tools)
       continue
 
     # Check for cmsbuild_user comments and tests requests only for pull requests
@@ -637,10 +649,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if re.match("Comparison is ready", first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
       elif "-code-checks" == first_line:
-        signatures["code-checks"] = "rejected"
+        if check_code_checks:
+          signatures["code-checks"] = "rejected"
         pre_checks_url["code-checks"] = comment.html_url
       elif "+code-checks" == first_line:
-        signatures["code-checks"] = "approved"
+        if check_code_checks:
+          signatures["code-checks"] = "approved"
         pre_checks_url["code-checks"] = comment.html_url
       elif re.match("^Comparison not run.+",first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
@@ -1175,6 +1189,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Setting status: %s,%s,%s" % (pre_check, state, url))
         if not dryRunOrig:
           last_commit_obj.create_status(state, target_url=url, description="Check details", context="cms/%s" % pre_check)
+      continue
+    if pre_checks_state[pre_check]=="pending":
       continue
     if not dryRunOrig:
       params = {"PULL_REQUEST" : "%s" % (prId)}

@@ -500,10 +500,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
   extra_pre_checks = []
-  pre_checks = [c for c in signing_categories if c in default_pre_checks]
-  for pre_check in pre_checks+["code-checks"]:
-    pre_checks_state[pre_check] = get_status_state("cms/%s" % pre_check, commit_statues)
-  print("Pre check status:",pre_checks_state)
+  pre_checks = []
+  if issue.pull_request:
+    pre_checks = [c for c in signing_categories if c in default_pre_checks]
+    for pre_check in pre_checks+["code-checks"]:
+      pre_checks_state[pre_check] = get_status_state("cms/%s" % pre_check, commit_statues)
+    print("Pre check status:",pre_checks_state)
   already_seen = None
   pull_request_updated = False
   comparison_done = False

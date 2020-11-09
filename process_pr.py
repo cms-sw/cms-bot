@@ -1170,6 +1170,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       print(commentMsg.decode("ascii", "replace"))
     except:
       pass
+  print("HERE:",pre_checks,extra_pre_checks,pre_checks_state)
   for pre_check in pre_checks+extra_pre_checks:
     print("PRE CHECK: %s,%s,%s" % (pre_check, signatures[pre_check], pre_checks_state[pre_check]))
     if signatures[pre_check]!="pending":
@@ -1180,7 +1181,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if not dryRunOrig:
           last_commit_obj.create_status(state, target_url=url, description="Check details", context="cms/%s" % pre_check)
       continue
-    if not dryRunOrig:
+    if (not dryRunOrig) and (pre_checks_state[pre_check]==""):
       params = {"PULL_REQUEST" : "%s" % (prId)}
       if pre_check=="code-check":
         params["CMSSW_TOOL_CONF"] = code_checks_tools

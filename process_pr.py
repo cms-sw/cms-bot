@@ -839,7 +839,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   dryRunOrig = dryRun
   for cat in pre_checks:
-    if (cat in signatures) and (signatures[cat]=="pending"):
+    if (cat in signatures) and (signatures[cat]!="approved"):
       dryRun=True
       break
 

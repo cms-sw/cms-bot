@@ -38,6 +38,7 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
 
 
 def resend_payload(hit):
+  print("Resend:",hit)
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]))
 
 def es_get_passwd(passwd_file=None):

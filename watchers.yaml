@@ -1700,3 +1700,8 @@ skinnari:
 - L1Trigger/TrackerDTC
 swertz:
 - PhysicsTools/NanoAOD 
+ram1123:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates

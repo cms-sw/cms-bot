@@ -852,7 +852,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if "tests" in signatures:
     pstate = get_status_state("cms/tests", commit_statues)
     state = "pending"
-    desc = "Waitings for test to start"
+    desc = "Waiting for authorized user to issue the test command."
     url = ""
     if signatures["tests"] in ["approved", "rejected"]:
       state = "success" if signatures["tests"]=="approved" else "error"

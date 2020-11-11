@@ -13,7 +13,6 @@ rm -rf $WORKSPACE/results $WORKSPACE/upload
 JR_COMP_DIR=$WORKSPACE/results/JR-comparison
 mkdir -p $WORKSPACE/upload ${JR_COMP_DIR} $WORKSPACE/data
 rm -f $WORKSPACE/ALL_DONE
-CMSSW_QUEUE=$(echo echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$RELEASE_FORMAT; fi
 if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="-GenuineIntel"; fi
 
@@ -30,7 +29,9 @@ get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/testsRes
 mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Downloading reference data" || true
 BASE_IB=$(grep '^BASE_IB;' $WORKSPACE/testsResults.txt | sed 's|.*;||')
 if [ "X${BASE_IB}" = "X" ] ; then BASE_IB=$RELEASE_FORMAT ; fi
+CMSSW_QUEUE=$(echo echo ${BASE_IB} | sed 's/_X.*/_X/')
 rm -f $WORKSPACE/testsResults.txt
+mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Downloading reference data" || true
 
 COMP_UPLOAD_DIR="baseLineComparisons/${BASE_IB}+${PULL_REQUEST_NUMBER}/${BUILD_NUMBER}"
 ERRORS_FILE=wf_errors.txt

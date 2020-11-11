@@ -12,6 +12,7 @@ from os import stat as tstat
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
 ES_NEW_SERVER = 'https://es-cmssdt7.cern.ch:9203'
+ES_PASSWD = None
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
@@ -36,20 +37,20 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
   return format(es5_query_tmpl, **locals ())
 
 
-def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file=passwd_file)
+def resend_payload(hit):
+  print("Resend:",hit)
+  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]))
 
 def es_get_passwd(passwd_file=None):
+  global ES_PASSWD
+  if ES_PASSWD: return ES_PASSWD
   for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret", "/data/secrets/github_hook_secret_cmsbot"]:
     if not psfile: continue
     if exists(psfile):
       passwd_file=psfile
       break
-  try:
-    return open(passwd_file,'r').read().strip()
-  except Exception as e:
-    print("Couldn't read the secrets file" , str(e))
-    return ""
+  ES_PASSWD = open(passwd_file,'r').read().strip()
+  return ES_PASSWD
 
 def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False):
   header = {"Content-Type": "application/json"}
@@ -69,6 +70,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
     request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
+    if method in ["POST", None]: print(content.read())
   except Exception as e:
     print("ERROR:",url,str(e))
     print(payload)
@@ -80,7 +82,7 @@ def send_payload(index, document, id, payload, passwd_file=None):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   uri = "%s/%s/" % (index,document)
   if id: uri = uri+id
-  return send_request(uri, payload=payload, passwd_file=passwd_file)
+  return send_request(uri, payload=payload, method="POST", passwd_file=passwd_file)
 
 def send_template(name, payload, passwd_file=None):
   if not name.startswith('cmssdt-'): name = 'cmssdt-' + name

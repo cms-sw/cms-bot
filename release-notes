@@ -44,7 +44,7 @@ def add_categories_notes(notes, cache):
 
 def get_cmssw_notes( previous_release , this_release, cache ):
   if not exists("cmssw.git"):
-    error, out = run_cmd("git clone --bare --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git git@github.com:cms-sw/cmssw.git")
+    error, out = run_cmd("git clone --bare --reference /cvmfs/cms-ci.cern.ch/git/cms-sw/cmssw.git git@github.com:cms-sw/cmssw.git")
     if error: parser.error("Error while checking out the repository:\n" + out)
   run_cmd("GIT_DIR=cmssw.git git fetch --all --tags")
   return prs2relnotes(get_merge_prs(previous_release, this_release, "cmssw.git", "cms-prs", cache))

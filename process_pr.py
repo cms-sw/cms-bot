@@ -3,7 +3,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, C
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
 from releases import get_release_managers, is_closed_branch
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS
-from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION
+from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from datetime import datetime
@@ -25,7 +25,6 @@ def format(s, **kwds): return s % kwds
 TRIGERING_TESTS_ABORT_MSG = 'Jenkins tests are aborted.'
 TRIGERING_TESTS_MSG = 'The tests are being triggered in jenkins.'
 TRIGERING_TESTS_MSG1 = 'Jenkins tests started for '
-TRIGERING_CODE_CHECK_MSG = 'The code-checks are being triggered in jenkins.'
 TRIGERING_STYLE_TEST_MSG = 'The project style tests are being triggered in jenkins.'
 IGNORING_TESTS_MSG = 'Ignoring test request.'
 TESTS_RESULTS_MSG = '^\s*([-|+]1|I had the issue.*)\s*$'
@@ -33,11 +32,13 @@ FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 PUSH_TEST_ISSUE_MSG='^\[Jenkins CI\] Testing commit: [0-9a-f]+$'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
+CODE_CHECKS_REGEXP=re.compile("code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)$")
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
 CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+/[a-zA-Z0-9]+'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
+RELVAL_OPTS="[a-zA-Z0-9_-][a-zA-Z0-9_-]*"
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
 CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
                       cmsorgs='|'.join(EXTERNAL_REPOS))
@@ -61,19 +62,19 @@ MULTILINE_COMMENTS_MAP = {
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
-              "code-checks-tools":["cms.week[0-9].PR_.*/.+",                                                    "CODE_CHECKS_TOOL_CONF"]
+              "relvals_opt(ion|)(s|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS),                     "EXTRA_MATRIX_ARGS",True]
               }
 
 def get_last_commit(pr):
   last_commit = None
   try:
     # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-    last_commit = pr.get_commits().reversed[0].commit
+    last_commit = pr.get_commits().reversed[0]
   except:
     # This seems to fail for more than 250 commits. Not sure if the
     # problem is github itself or the bindings.
     try:
-      last_commit = pr.get_commits()[pr.commits - 1].commit
+      last_commit = pr.get_commits()[pr.commits - 1]
     except IndexError:
       print("Index error: May be PR with no commits")
   return last_commit
@@ -175,9 +176,14 @@ def ignore_issue(repo_config, repo, issue):
   if re.match(BUILD_REL, issue.title):
     return True
   if issue.body:
-    if re.match(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+    if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
       return True
   return False
+
+def notify_user(issue):
+  if issue.body and re.search(CMSBOT_NO_NOTIFY_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+      return False
+  return True
 
 def check_extra_labels(first_line, extra_labels):
   if "bug" in first_line:
@@ -241,16 +247,20 @@ def parse_extra_params(full_comment, repo):
     all_globals = globals()
     ALL_CHECK_FUNCTIONS = dict([(f,all_globals[f]) for f in all_globals if f.startswith('check_') and callable(all_globals[f])])
   for l in full_comment[1:]:
-    l = l.replace(' ', '')
+    l = l.strip()
     if l.startswith('-'): l = l[1:]
     elif l.startswith('*'): l = l[1:]
+    l = l.strip()
     if l=='': continue
     if not '=' in l:
       error_lines.append('"=" not found in line arg: ' + l)
       continue
-
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
       line_args = l.split('=', 1)
+      line_args[0] = line_args[0].replace(' ', '')
+      line_args[1] = line_args[1].strip()
+      if (len(pttrn)<3) or (not pttrn[2]):
+        line_args[1] = line_args[1].replace(' ', '')
       if not re.match(k, line_args[0], re.I): continue
       if not re.match(pttrn[0], line_args[1], re.I):
         error_lines.append('Invalid value "%s" for parameter "%s" used.' % (line_args[1], line_args[0]))
@@ -304,14 +314,23 @@ def get_jenkins_job(issue):
       return test_line[-3],test_line[-2]
   return "",""
 
+def get_status_state(context, statuses):
+  for s in statuses:
+    if s.context==context:
+      return s.state
+  return ""
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
   if (not force) and ignore_issue(repo_config, repo, issue): return
+  gh_user_char="@"
+  if not notify_user(issue): gh_user_char=""
   api_rate_limits(gh)
   prId = issue.number
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
+  print("Notify User: ",gh_user_char)
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
   cms_repo = (repo_org in EXTERNAL_REPOS)
   external_repo = (repository!=CMSSW_REPO_NAME) and (len([e for e in EXTERNAL_REPOS if repo_org==e])>0)
@@ -333,10 +352,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
   REGEX_EX_ENABLE_TESTS='^enable\s+((%s)(\s*,\s*(%s))*|none)$' % (known_enable_tests, known_enable_tests)
   last_commit_date = None
+  last_commit_obj = None
   push_test_issue = False
   requestor = issue.user.login.encode("ascii", "ignore")
   ignore_tests = ''
   enable_tests = ''
+  commit_statues = None
+  code_checks_status = []
+  pre_checks_state = {}
+  default_pre_checks = ["code-checks"]
+  #For future pre_checks
+  #if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
+  pre_checks_url = {}
   if issue.pull_request:
     pr   = repo.get_pull(prId)
     if pr.changed_files==0:
@@ -347,9 +374,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("This pull request must go in to master branch")
         if not dryRun:
           edit_pr(get_token(gh), repo.full_name, prId, base="master")
-          msg = format("@%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
+          msg = format("%(gh_user_char)s%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
                        "In future, please use cmssw master branch to submit your changes.\n",
                        user=requestor,
+                       gh_user_char=gh_user_char,
                        dev_branch=CMSSW_DEVEL_BRANCH)
           issue.create_comment(msg)
       return
@@ -432,11 +460,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if not watcher in watchingGroups: continue
       watchers.remove(watcher)
       watchers.update(set(watchingGroups[watcher]))      
-    watchers = set(["@" + u for u in watchers])
+    watchers = set([gh_user_char + u for u in watchers])
     print("Watchers " + ", ".join(watchers))
-
-    last_commit = get_last_commit(pr)
-    if last_commit is None: return
+    last_commit_obj = get_last_commit(pr)
+    if last_commit_obj is None: return
+    last_commit = last_commit_obj.commit
+    commit_statues = last_commit_obj.get_combined_status().statuses
+    code_checks_status = [s for s in commit_statues if s.context == "cms/code-checks"]
+    print("PR Statuses:",commit_statues)
     last_commit_date = last_commit.committer.date
     print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)
     print("Latest commit message: ",last_commit.message.encode("ascii", "ignore"))
@@ -468,7 +499,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])
-  pre_checks = ("code-checks" in signing_categories)
+  extra_pre_checks = []
+  pre_checks = []
+  if issue.pull_request:
+    pre_checks = [c for c in signing_categories if c in default_pre_checks]
+    for pre_check in pre_checks+["code-checks"]:
+      pre_checks_state[pre_check] = get_status_state("cms/%s" % pre_check, commit_statues)
+    print("Pre check status:",pre_checks_state)
   already_seen = None
   pull_request_updated = False
   comparison_done = False
@@ -489,8 +526,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   last_test_start_time = None
   abort_test = False
   need_external = False
-  trigger_code_checks=False
-  triggerred_code_checks=False
   backport_pr_num = ""
   comp_warnings = False
   extra_testers = []
@@ -587,21 +622,32 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if valid_commenter:
       valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
       if valid_multiline_comment:
-        if "CODE_CHECKS_TOOL_CONF" in test_params:
-          code_checks_tools = test_params["CODE_CHECKS_TOOL_CONF"]
-          del test_params["CODE_CHECKS_TOOL_CONF"]
         global_test_params = dict(test_params)
         continue
+
+    if (cmssw_repo and CODE_CHECKS_REGEXP.match(first_line)):
+      first_line = first_line.split(" ")[-1]
+      if first_line != "code-checks":
+        code_checks_tools = first_line
+        first_line = "code-checks"
 
     # Ignore all other messages which are before last commit.
     if issue.pull_request and (comment.created_at < last_commit_date):
       continue
 
-    if ("code-checks"==first_line and cmssw_repo):
-      signatures["code-checks"] = "pending"
-      trigger_code_checks=True
-      triggerred_code_checks=False
-      print("Found:Code Checks")
+    if (cmssw_repo and first_line=="code-checks"):
+      signatures[first_line] = "pending"
+      if first_line not in pre_checks+extra_pre_checks:
+        extra_pre_checks.append(first_line)
+      if code_checks_status and (code_checks_status[0].updated_at>=comment.created_at):
+        continue
+      if first_line in pre_checks:
+        if pre_checks_state["code-checks"] in ["pending", ""]:
+          continue
+      elif pre_checks_state["code-checks"] in ["pending"]:
+        continue
+      pre_checks_state["code-checks"] = ""
+      print("Found:Code Checks request", code_checks_tools)
       continue
 
     # Check for cmsbuild_user comments and tests requests only for pull requests
@@ -614,16 +660,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_done = True
       elif "-code-checks" == first_line:
         signatures["code-checks"] = "rejected"
-        trigger_code_checks=False
-        triggerred_code_checks=False
+        pre_checks_url["code-checks"] = comment.html_url
       elif "+code-checks" == first_line:
         signatures["code-checks"] = "approved"
-        trigger_code_checks=False
-        triggerred_code_checks=False
-      elif TRIGERING_CODE_CHECK_MSG == first_line:
-        trigger_code_checks=False
-        triggerred_code_checks=True
-        signatures["code-checks"] = "pending"
+        pre_checks_url["code-checks"] = comment.html_url
       elif re.match("^Comparison not run.+",first_line):
         if ('tests' in signatures) and signatures["tests"]!='pending': comparison_notrun = True
       elif re.match( FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
@@ -658,8 +698,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "+1" in first_line:
           signatures["tests"] = "approved"
           comp_warnings = len([1 for l in comment_lines if 'Compilation Warnings: Yes' in l ])>0
+          pre_checks_url["tests"] = comment.html_url
         elif "-1" in first_line:
           signatures["tests"] = "rejected"
+          pre_checks_url["tests"] = comment.html_url
         else:
           signatures["tests"] = "pending"
         print('Previous tests already finished, resetting test request state to ',signatures["tests"])
@@ -768,7 +810,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   new_blocker = False
   blockers = ""
   for u in hold:
-    blockers += " @"+u+","
+    blockers += " "+gh_user_char+u+","
     if hold[u]: new_blocker = True
   blockers = blockers.rstrip(",")
 
@@ -796,16 +838,34 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if is_hold: labels.append("hold")
 
   dryRunOrig = dryRun
-  if pre_checks and ((not already_seen) or pull_request_updated):
-    for cat in ["code-checks"]:
-      if (cat in signatures) and (signatures[cat]!="approved"):
-        dryRun=True
-        break
+  for cat in pre_checks:
+    if (cat in signatures) and (signatures[cat]!="approved"):
+      dryRun=True
+      break
 
   old_labels = set([x.name.encode("ascii", "ignore") for x in issue.labels])
   print("Stats:",backport_pr_num,extra_labels)
   print("Old Labels:",sorted(old_labels))
   print("Compilation Warnings: ",comp_warnings)
+
+  #Always set test pending label
+  if "tests" in signatures:
+    pstate = get_status_state("cms/tests", commit_statues)
+    state = "pending"
+    desc = "Waiting for authorized user to issue the test command."
+    url = ""
+    if signatures["tests"] in ["approved", "rejected"]:
+      state = "success" if signatures["tests"]=="approved" else "error"
+      desc = "Passed" if signatures["tests"]=="approved" else "Failed"
+      url = pre_checks_url["tests"] if "tests" in pre_checks_url else ""
+    elif (signatures["tests"]=="started") and ("tests-started" not in old_labels):
+      desc = "Waitings for tests to finish"
+      pstate = ""
+    if (pstate=="") or (state!=pstate):
+      print("Settings overall test status: %s,%s,%s,%s" % (pstate, state, desc, url))
+      if not dryRun:
+        last_commit_obj.create_status(state, description=desc, target_url=url, context="cms/tests")
+
   if "backport" in extra_labels:
     if backport_pr_num!=extra_labels["backport"][1]:
       try:
@@ -871,7 +931,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     new_categories.add(nc_lab)
 
   if new_assign_cats:
-    new_l2s = ["@" + name
+    new_l2s = [gh_user_char + name
                for name, l2_categories in list(CMSSW_L2.items())
                for signature in new_assign_cats
                if signature in l2_categories]
@@ -903,14 +963,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if backport_pr_num: backport_msg="%s%s\n" % (BACKPORT_STR,backport_pr_num)
       uname = ""
       if issue.user.name: uname = issue.user.name.encode("ascii", "ignore")
-      l2s = ", ".join([ "@" + name for name in CMSSW_ISSUES_TRACKERS ])
-      issueMessage = format("%(msgPrefix)s @%(user)s"
+      l2s = ", ".join([ gh_user_char + name for name in CMSSW_ISSUES_TRACKERS ])
+      issueMessage = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                         " %(name)s.\n\n"
                         "%(l2s)s can you please review it and eventually sign/assign?"
                         " Thanks.\n\n"
                         "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-issues.html\">here</a>\n%(backport_msg)s",
                         msgPrefix=NEW_ISSUE_PREFIX,
                         user=requestor,
+                        gh_user_char=gh_user_char,
                         name=uname,
                         backport_msg=backport_msg,
                         l2s=l2s)
@@ -922,7 +983,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   # get release managers
   SUPER_USERS = read_repo_file(repo_config, "super-users.yaml", [])
-  releaseManagersList = ", ".join(["@" + x for x in set(releaseManagers + SUPER_USERS)])
+  releaseManagersList = ", ".join([gh_user_char + x for x in set(releaseManagers + SUPER_USERS)])
 
   if cmssw_prs:
     global_test_params['PULL_REQUESTS'] = cmssw_prs
@@ -1024,7 +1085,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if not dryRun: issue.create_comment(messageFullySigned)
 
   unsigned = [k for (k, v) in list(signatures.items()) if v == "pending"]
-  missing_notifications = ["@" + name
+  missing_notifications = [gh_user_char + name
                             for name, l2_categories in list(CMSSW_L2.items())
                             for signature in signing_categories
                             if signature in l2_categories
@@ -1038,7 +1099,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          " watch as well.\n",
                          watchers=", ".join(watchers))
   # Construct message for the release managers.
-  managers = ", ".join(["@" + x for x in releaseManagers])
+  managers = ", ".join([gh_user_char + x for x in releaseManagers])
 
   releaseManagersMsg = ""
   if releaseManagers:
@@ -1060,7 +1121,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          base_branch=base_release_branch)
 
     # We do not want to spam people for the old pull requests.
-    messageNewPR = format("%(msgPrefix)s @%(user)s"
+    messageNewPR = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                         " %(name)s for %(branch)s.\n\n"
                         "It involves the following packages:\n\n"
                         "%(packages)s\n\n"
@@ -1073,6 +1134,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                         msgPrefix=NEW_PR_PREFIX,
                         user=pr.user.login,
+                        gh_user_char=gh_user_char,
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
                         l2s=", ".join(missing_notifications),
@@ -1087,7 +1149,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             pr=pr.number,
                             signers=", ".join(missing_notifications))
   else:
-    messageNewPR = format("%(msgPrefix)s @%(user)s"
+    messageNewPR = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                           " %(name)s for branch %(branch)s.\n\n"
                           "%(l2s)s can you please review it and eventually sign?"
                           " Thanks.\n"
@@ -1095,6 +1157,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                           msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,
+                          gh_user_char=gh_user_char,
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,
                           l2s=", ".join(missing_notifications),
@@ -1116,26 +1179,38 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   elif (not already_seen) or pull_request_updated:
     if not already_seen: commentMsg = messageNewPR
     else: commentMsg = messageUpdatedPR
-    if (not triggerred_code_checks) and cmssw_repo and (pr.base.ref=="master") and ("code-checks" in signatures) and (signatures["code-checks"]=="pending"):
-      trigger_code_checks=True
   elif new_categories:
     commentMsg = messageUpdatedPR
   elif not missingApprovals:
     print("Pull request is already fully signed. Not sending message.")
   else:
     print("Already notified L2 about " + str(pr.number))
-  if commentMsg:
+  if commentMsg and not dryRun:
     print("The following comment will be made:")
     try:
       print(commentMsg.decode("ascii", "replace"))
     except:
       pass
-  print("Code Checks:", trigger_code_checks, triggerred_code_checks)
-  if trigger_code_checks and not triggerred_code_checks:
-    if not dryRunOrig: issue.create_comment(TRIGERING_CODE_CHECK_MSG)
-    else: print("Dryrun:",TRIGERING_CODE_CHECK_MSG)
-    params = {"PULL_REQUEST" : "%s" % (prId), "CMSSW_TOOL_CONF": code_checks_tools}
-    create_properties_file_tests(repository, prId, params, dryRunOrig, abort=False, req_type="codechecks")
+  print("HERE:",pre_checks,extra_pre_checks,pre_checks_state)
+  for pre_check in pre_checks+extra_pre_checks:
+    if pre_check not in signatures: signatures[pre_check] = "pending"
+    print("PRE CHECK: %s,%s,%s" % (pre_check, signatures[pre_check], pre_checks_state[pre_check]))
+    if signatures[pre_check]!="pending":
+      if pre_checks_state[pre_check] in ["pending", ""]:
+        state = "success" if signatures[pre_check]=="approved" else "error"
+        url = pre_checks_url[pre_check]
+        print("Setting status: %s,%s,%s" % (pre_check, state, url))
+        if not dryRunOrig:
+          last_commit_obj.create_status(state, target_url=url, description="Check details", context="cms/%s" % pre_check)
+      continue
+    if (not dryRunOrig) and (pre_checks_state[pre_check]==""):
+      params = {"PULL_REQUEST" : "%s" % (prId)}
+      if pre_check=="code-check":
+        params["CMSSW_TOOL_CONF"] = code_checks_tools
+      create_properties_file_tests(repository, prId, params, dryRunOrig, abort=False, req_type=pre_check)
+      last_commit_obj.create_status("pending", description="%s requested" % pre_check, context="cms/%s" % pre_check)
+    else:
+      print("Dryrun: Setting pending status for %s" % pre_check)
 
   if commentMsg and not dryRun:
     issue.create_comment(commentMsg)

@@ -41,7 +41,7 @@ for log in out.split("\n"):
       payload['ip'] = m.group(2)
       payload['message'] = line
       id = sha1(str(timestamp)  + m.group(2)).hexdigest()
-      send_payload("hypernews-"+week,"hn-timeouts",id, dumps(payload), passwd_file="/data/es/es_secret")
+      send_payload("hypernews-"+week,"hn-timeouts",id, dumps(payload))
 payload = {}
 payload['@timestamp'] = int(time()*1000)
-send_payload("hypernews","hn-heartbeat",str(payload['@timestamp']), dumps(payload), passwd_file="/data/es/es_secret")
+send_payload("hypernews","hn-heartbeat",str(payload['@timestamp']), dumps(payload))

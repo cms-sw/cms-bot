@@ -408,8 +408,20 @@ def get_gh_token(repository=None):
   import repo_config
   return open(expanduser(repo_config.GH_TOKEN)).read().strip()
 
+def get_combined_statuses(commit, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  return github_api("/repos/%s/commits/%s/status" % (repository, commit), token, method='GET')
 
-def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None):
+def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):
   if not token: token = get_gh_token(repository)
   params = {'state': state, 'target_url': url, 'description': description, 'context': context}
   github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)
+  if reset:
+    statuses = get_combined_statuses(commit, repository, token)
+    if 'statuses' not in statuses: return
+    params = {'state': 'pending', 'target_url': '', 'description': 'Not yet started'}
+    for s in statuses['statuses']:
+      if s['context'].startswith(context+"/"):
+        params['context'] = s['context']
+        github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)
+  return

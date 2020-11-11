@@ -1,4 +1,3 @@
-/jenkins-artifacts/ib-baseline-tests/*
 /nweek-*/share
 /nweek-*/share/cms/data-L1Trigger-L1TMuon
 /nweek-*/share/cms/data-GeneratorInterface-EvtGenInterface
@@ -20,7 +19,5 @@
 /nweek-*/*_*_*/lcg/root
 /nweek-*/*_*_*/cms/cmssw/*
 /nweek-*/*_*_*/cms/cmssw-patch/*
-/git/*
 /docker/.images/*/*
-/rucio/*
-
+/git/*

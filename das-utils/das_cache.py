@@ -196,6 +196,8 @@ if __name__ == "__main__":
   cleanup_timestamps (opts.store)
   timestramps_file = join (opts.store, "timestamps.json")
   timestramps = read_timestramps (timestramps_file)
+  vold_caches = 0
+  vold_threshold = 90
   for query in query_sha:
     nquery += 1
     sha = query_sha[query]
@@ -204,6 +206,7 @@ if __name__ == "__main__":
       continue
     outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
     print("[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))
+    vold = False
     if exists(outfile):
       xtime  = 0
       fcount = 0
@@ -212,6 +215,9 @@ if __name__ == "__main__":
         with open(outfile) as ofile:
           fcount = len(ofile.readlines())
       dtime = int(time())-xtime
+      vdays = int(dtime/86400)
+      vold = (vdays>=vold_threshold)
+      print("  Days since last update:",vdays)
       if (dtime<=opts.threshold) and (fcount>0):
         jfile = "%s.json" % outfile
         okcache=exists(jfile)
@@ -242,7 +248,9 @@ if __name__ == "__main__":
       elif fcount>0: print("  Refreshing as cache expired (age: %s sec)" % dtime)
       else: print("  Retrying as cache with empty results found.")
     else: print("  No cache file found %s" % sha)
-
+    if vold:
+      vold_caches+=1
+      continue
     DasSearch += 1
     while True:
       tcount = len(threads)
@@ -274,6 +282,7 @@ if __name__ == "__main__":
   print("Found in object store: %s" % inCache)
   print("DAS Search: %s" % DasSearch)
   print("Total Queries Failed:",failed_queries)
+  print("Caches older than %s days: %s" % (vold_threshold, vold_caches))
   print("Process state:",error)
   if not error:update_timestamp(timestramps, timestramps_file, opts.store)
   else:  cleanup_timestamps (opts.store)

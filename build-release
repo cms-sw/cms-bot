@@ -110,7 +110,7 @@ pushd $BUILD_DIR
     echo 'ALL_OK'
     exit 0
   fi
-  PYTHONPATH= $CMSBUILD_CMD -j $BUILD_NPROC build local-cern-siteconf cmssw$PATCH
+  PYTHONPATH= $CMSBUILD_CMD -j $BUILD_NPROC build cmssw$PATCH
   echo DATE=`date`
 popd
 echo DATE=`date`

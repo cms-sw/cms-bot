@@ -31,13 +31,25 @@ if [ "x${useUnpacked}" == "x" ]; then
 fi
 
 echo "Checking process ${procF} ${fA} and ${fB} with useUnpacked=${useUnpacked} (if above ${absMin} or ${dptMin}%):"
-ds=`date -u +%s.%N`
-os=os.${ds}
-edmEventSize -v ${fA} > ${os}
 
-ns=ns.${ds}
-edmEventSize -v ${fB} > ${ns}
+case `basename $fA` in
+  step*.root)
+    ds=`date -u +%s.%N`
+    os=os.${ds}
+    edmEventSize -v ${fA} > ${os}
 
-grep ${procF} ${os} ${ns} | sed -e "s/${os}:/os /g;s/${ns}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f compareProducts.awk
+    ns=ns.${ds}
+    edmEventSize -v ${fB} > ${ns}
 
-rm ${os} ${ns}
+    grep ${procF} ${os} ${ns} | sed -e "s/${os}:/os /g;s/${ns}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f compareProducts.awk
+
+    rm ${os} ${ns}
+  ;;
+  step*.txt)
+    grep ${procF} ${fA} ${fB} | sed -e "s/${fA}:/os /g;s/${fB}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f compareProducts.awk
+  ;;
+  *)
+    echo "First two inputs $fA and $fB should be step*.root or step*_sizes.txt"
+    exit 18
+  ;;
+  esac

@@ -928,7 +928,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
       fi
     popd
     rm -rf $WORKSPACE/dasqueries/run
-    mv $WORKSPACE/dasqueries
     echo "DAS_QUERIES;${DAS_QUERY_RES},DAS Queries,See Logs,dasqueries" >> ${RESULTS_FILE}/dasqueries.txt
   fi
 fi

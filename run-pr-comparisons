@@ -371,6 +371,6 @@ if [ "$DRY_RUN" != "true" ] ; then
     send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison.txt
   fi
 fi
-mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Passed" || true
+mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finishes, please check results" || true
 echo "All done at `date`"
 touch $WORKSPACE/ALL_DONE

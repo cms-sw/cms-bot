@@ -410,7 +410,7 @@ def get_gh_token(repository=None):
 
 def get_combined_statuses(commit, repository, token=None):
   if not token: token = get_gh_token(repository)
-  return github_api("repos/%s/%s/status" % (repository, commit))
+  return github_api("/repos/%s/commits/%s/status" % (repository, commit), token, method='GET')
 
 def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):
   if not token: token = get_gh_token(repository)

@@ -45,7 +45,7 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
-    for f in testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
+    for f in dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
     if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
@@ -912,6 +912,28 @@ fi
 
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
 #
+#Checking runTheMatrix das-queries
+#
+DAS_QUERY_RES="NOTRUN"
+if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false -a "$RUN_TESTS" = "true" ]; then
+  if [ $(runTheMatrix.py --help | grep ibeos | wc -l) -gt 0 ] ; then
+    mkdir -p $WORKSPACE/dasqueries/run
+    DAS_QUERY_RES="OK"
+    pushd $WORKSPACE/dasqueries/run
+      $SCRIPTPATH/run-das-query.py > ../run.txt 2>&1 || DAS_QUERY_RES="ERROR"
+      if [ -f runall-report-step123-.log ] ; then
+        grep 'FAILED' runall-report-step123-.log > ../failed_workflows.log || true
+        mv runall-report-step123-.log ..
+        if [ -s ../failed_workflows.log ] ; then DAS_QUERY_RES="ERROR" ; fi
+      fi
+    popd
+    rm -rf $WORKSPACE/dasqueries/run
+    mv $WORKSPACE/dasqueries
+    echo "DAS_QUERIES;${DAS_QUERY_RES},DAS Queries,See Logs,dasqueries" >> ${RESULTS_FILE}/dasqueries.txt
+  fi
+fi
+
+#
 # Unit tests
 #
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
@@ -1247,11 +1269,14 @@ env | grep 'CMSSW_'
 REPORT_OPTS="--report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
 
 if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to false)
-    if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
-        BUILD_LOG_RES=" --add-comment 'Compilation Warnings: Yes'"
-    else
-        BUILD_LOG_RES=""
+    BUILD_LOG_RES=""
+    if [ "${DAS_QUERY_RES}" = "ERROR" ] ; then
+        BUILD_LOG_RES="DAS Queries failed;"
     fi
+    if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
+        BUILD_LOG_RES="${BUILD_LOG_RES} Found compilation warnings'"
+    fi
+    if [ "${BUILD_LOG_RES}" != "" ] ; then BUILD_LOG_RES=" --add-comment '${BUILD_LOG_RES}'" ; fi
     REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
     mark_commit_status_all_prs '' 'success' -u "${BUILD_URL}" -d "Passed" || true
 else
@@ -1283,6 +1308,9 @@ else
     fi
     if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then
         $CMS_BOT_DIR/report-pull-request-results PYTHON3_FAIL        -f $WORKSPACE/upload/python3.log ${REPORT_GEN_OPTS}
+    fi
+    if [ "${DAS_QUERY_RES}" = "ERROR" ] ; then
+      echo -e "\n* **DAS Queries**: The DAS query tests failed, see the summary page for details.\n" >> $WORKSPACE/report.txt
     fi
     REPORT_OPTS="REPORT_ERRORS ${REPORT_OPTS}" # Doc:
     mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed: ${TESTS_FAILED}" || true

@@ -176,7 +176,7 @@ for PR in ${PULL_REQUESTS}; do
     echo "${PR}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
 done
 
-mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' || true
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset || true
 
 COMP_QUEUE=
 case $CMSSW_QUEUE in

@@ -101,10 +101,6 @@ pushd $BUILD_DIR
 
   if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then
     echo 'I was asked to build only cmssw-tool-conf, exiting without building cmssw'
-    pushd $HERE/$CMSSW_X_Y_Z-build/CMSDIST
-      git tag  REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
-      git push origin REL/$CMSSW_X_Y_Z-tool-conf/$ARCHITECTURE
-    popd
     rm -rf tmp
     # If it reaches here it is because there were no errors
     echo 'ALL_OK'

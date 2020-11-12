@@ -13,8 +13,10 @@ from es_utils import get_indexes, close_index, find_indexes, open_index
 from time import time
 try: weeks=int(sys.argv[1])
 except: weeks=20
+ignore_index=[]
+for idx in sys.argv[2:]:
+  ignore_index.append(idx)
 cur_week=int(((time()/86400)+4)/7)
-ignore_index=["cmssdt-ibs"]
 idxs=[]
 odxs=[]
 try:

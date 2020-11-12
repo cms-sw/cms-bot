@@ -4,7 +4,7 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 WORKFLOWS=$1
 PROFILES=$2
 EVENTS=$3
-PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
 if [ "X$EVENTS" = "X" ] ; then EVENTS=1000; fi
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}

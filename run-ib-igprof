@@ -4,16 +4,20 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 WORKFLOWS=$1
 PROFILES=$2
 EVENTS=$3
-HPUWF="23434.21"
+HPUWFS="23434.21"
 if [ "X$EVENTS" = "X" ] ; then EVENTS=1000; fi
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
   runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof" 2>&1 | tee runTheMatrix.log
-  if [[ $WORKFLOWS == *"$HPUWF" ]]; then
-    edmEventSize -v step3*.root > step3_sizes_${HPUWF}.txt
-    edmEventSize -v step4*.root > step4_sizes_${HPUWF}.txt
-  fi
+  for hpwf in $HPUWFS; do
+    if [[ $WORKFLOWS == *"${hpwf}" ]]; then
+      for s in step3 step4 ; do
+        if [ $(ls -d ${hpwf}_*/${s}_*.root | wc -l) -eq 0 ] ; then continue ; fi
+        edmEventSize -v ${hpwf}_*/${s}_*.root> ${s}_sizes_${hpwf}.txt
+      done
+    fi
+  done
   for f in $(find . -name '*.gz' -type f) ; do
     echo "processing file $f"
     OUTFILE=${f//.gz/.sql3}
@@ -22,7 +26,7 @@ for prof in ${PROFILES} ; do
     ( igprof-analyse -d -c $f --sqlite > $f.sql ) || ERR=1
     ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 "$OUTFILE" > $f.log || ERR=1
 
-    
+
     BASENAME=$(basename $f)
     OUTFILE=${BASENAME//.gz/.txt}
     echo $OUTFILE

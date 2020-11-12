@@ -1179,7 +1179,7 @@ done
 #
 for BT in ${ENABLE_BOT_TESTS}; do
     if [ "$BT" = "PROFILING" ]; then
-         PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+         PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
          pushd $WORKSPACE
          git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
          popd

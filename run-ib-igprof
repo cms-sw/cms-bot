@@ -4,13 +4,13 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 WORKFLOWS=$1
 PROFILES=$2
 EVENTS=$3
-HPUWFS="23434.21"
+PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
 if [ "X$EVENTS" = "X" ] ; then EVENTS=1000; fi
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
   runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof" 2>&1 | tee runTheMatrix.log
-  for hpwf in $HPUWFS; do
+  for hpwf in $PROFLING_WORKFLOWS; do
     for s in step3 step4 ; do
       if [ $(ls -d ${hpwf}_*/${s}_*.root | wc -l) -eq 0 ] ; then continue ; fi
       edmEventSize -v ${hpwf}_*/${s}_*.root> ${s}_sizes_${hpwf}.txt

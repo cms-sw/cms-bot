@@ -1198,16 +1198,16 @@ for BT in ${ENABLE_BOT_TESTS}; do
              $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_IB}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare_$PROFILING_WORKFLOW.txt || true
              echo "<li><a href=\"$PROFILING_WORKFLOW/RES_CPU_compare_$PROFILING_WORKFLOW.txt\">Igprof Comparison cpu usage RECO produce methods.</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              cp $WORKSPACE/cms-bot/comparisons/compareProducts.* ./
-             get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/step3_sizes_${PROFILING_WORKFLOW}.txt  ${CMSSW_IB}_step3_sizes_${PROFILING_WORKFLOW}.txt || true
-             if ( $(ls -d ${CMSSW_IB}_step3_sizes_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ); then
+             get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/step3_sizes_${PROFILING_WORKFLOW}.txt  step3_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt || true
+             if ( $(ls -d step3_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ); then
                edmEventSize -v step3*.root > step3_sizes_${PROFILING_WORKFLOW}.txt || true
-               ./compareProducts.sh ${CMSSW_IB}_step3_sizes_${PROFILING_WORKFLOW}.txt step3_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 yes > products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
+               ./compareProducts.sh step3_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt step3_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 yes > products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
                echo "<li><a href=\"${PROFILING_WORKFLOW}/products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison AOD output.</a> <li>" >> $WORKSPACE/upload/profiling/index.html
              fi
-             get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/step4_sizes_${PROFILING_WORKFLOW}.txt  ${CMSSW_IB}_step4_sizes_${PROFILING_WORKFLOW}.txt || true
-             if ( $(ls -d ${CMSSW_IB}_step4_sizes_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ); then
+             get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/step4_sizes_${PROFILING_WORKFLOW}.txt  step4_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt || true
+             if ( $(ls -d step4_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ); then
                edmEventSize -v step4*.root > step4_sizes_${PROFILING_WORKFLOW}.txt || true
-               ./compareProducts.sh ${CMSSW_IB}_step4_sizes_${PROFILING_WORKFLOW}.txt step4_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 yes > products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
+               ./compareProducts.sh step4_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt step4_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 yes > products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
                echo "<li><a href=\"${PROFILING_WORKFLOW}/products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison miniAOD output.</a> <li>" >> $WORKSPACE/upload/profiling/index.html
              fi
              popd

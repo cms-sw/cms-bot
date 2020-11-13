@@ -45,7 +45,7 @@ case `basename $fA` in
 
     rm ${os} ${ns}
   ;;
-  *step*.txt)
+  step*sizes*.txt)
     grep ${procF} ${fA} ${fB} | sed -e "s/${fA}:/os /g;s/${fB}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f compareProducts.awk
   ;;
   *)

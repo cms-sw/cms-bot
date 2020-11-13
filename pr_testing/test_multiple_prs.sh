@@ -1276,7 +1276,7 @@ if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to fals
         BUILD_LOG_RES="${BUILD_LOG_RES} Found compilation warnings'"
     fi
     if [ "${BUILD_LOG_RES}" != "" ] ; then BUILD_LOG_RES=" --add-comment '${BUILD_LOG_RES}'" ; fi
-    REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
+    REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} '${BUILD_LOG_RES}'"
     mark_commit_status_all_prs '' 'success' -u "${BUILD_URL}" -d "Passed" || true
 else
     # Doc: in case some test failed, we check each test log specifically and generate combined message

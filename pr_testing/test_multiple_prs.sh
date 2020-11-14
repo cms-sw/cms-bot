@@ -922,7 +922,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     pushd $WORKSPACE/dasqueries/run
       $SCRIPTPATH/run-das-query.py > ../run.txt 2>&1 || DAS_QUERY_RES="ERROR"
       if [ -f runall-report-step123-.log ] ; then
-        grep 'FAILED' runall-report-step123-.log > ../failed_workflows.log || true
+        grep 'DAS_ERROR' runall-report-step123-.log > ../failed_workflows.log || true
         mv runall-report-step123-.log ..
         if [ -s ../failed_workflows.log ] ; then DAS_QUERY_RES="ERROR" ; fi
       fi

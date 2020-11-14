@@ -922,7 +922,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = 
     pushd $WORKSPACE/dasqueries/run
       $SCRIPTPATH/run-das-query.py > ../run.txt 2>&1 || DAS_QUERY_RES="ERROR"
       if [ -f runall-report-step123-.log ] ; then
-        grep 'FAILED' runall-report-step123-.log > ../failed_workflows.log || true
+        grep 'DAS_ERROR' runall-report-step123-.log > ../failed_workflows.log || true
         mv runall-report-step123-.log ..
         if [ -s ../failed_workflows.log ] ; then DAS_QUERY_RES="ERROR" ; fi
       fi
@@ -1287,7 +1287,7 @@ if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to fals
         BUILD_LOG_RES="${BUILD_LOG_RES} Found compilation warnings'"
     fi
     if [ "${BUILD_LOG_RES}" != "" ] ; then BUILD_LOG_RES=" --add-comment '${BUILD_LOG_RES}'" ; fi
-    REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} ${BUILD_LOG_RES}"
+    REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} '${BUILD_LOG_RES}'"
     mark_commit_status_all_prs '' 'success' -u "${BUILD_URL}" -d "Passed" || true
 else
     # Doc: in case some test failed, we check each test log specifically and generate combined message

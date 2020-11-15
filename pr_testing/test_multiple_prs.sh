@@ -1201,14 +1201,14 @@ for BT in ${ENABLE_BOT_TESTS}; do
              get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/step3_sizes_${PROFILING_WORKFLOW}.txt  step3_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt || true
              if [ $(ls -d step3_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ]; then
                edmEventSize -v step3*.root > step3_sizes_${PROFILING_WORKFLOW}.txt || true
-               ./compareProducts.sh step3_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt step3_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 yes > products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
-               echo "<li><a href=\"${PROFILING_WORKFLOW}/products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison AOD output.</a> <li>" >> $WORKSPACE/upload/profiling/index.html
+               ./compareProducts.sh step3_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt step3_sizes_${PROFILING_WORKFLOW}.txt _ 100 10> products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
+               echo "<li><a href=\"${PROFILING_WORKFLOW}/products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison AOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              fi
              get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/step4_sizes_${PROFILING_WORKFLOW}.txt  step4_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt || true
              if [ $(ls -d step4_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ]; then
                edmEventSize -v step4*.root > step4_sizes_${PROFILING_WORKFLOW}.txt || true
-               ./compareProducts.sh step4_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt step4_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 yes > products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
-               echo "<li><a href=\"${PROFILING_WORKFLOW}/products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison miniAOD output.</a> <li>" >> $WORKSPACE/upload/profiling/index.html
+               ./compareProducts.sh step4_sizes_${CMSSW_IB}_${PROFILING_WORKFLOW}.txt step4_sizes_${PROFILING_WORKFLOW}.txt _ 100 10> products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
+               echo "<li><a href=\"${PROFILING_WORKFLOW}/products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison miniAOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              fi
              popd
              pushd $WORKSPACE/$CMSSW_IB/src || true

@@ -173,6 +173,7 @@ pushd CMSDIST
 popd
 
 PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --specs-only build $PACKAGE_NAME
+rm -rf ${WRKDIR}/WEB
 TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} ${CMS_COMMON} `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
 EXTERNAL_FAILED=false
@@ -188,12 +189,12 @@ if ${EXTERNAL_FAILED} ; then
   exit 1
 fi
 if [ "${DRY_RUN}" = "" ] ; then
-  timeout 60 ${CMS_BOT_DIR}/create_json.py --logfile ${WORKSPACE}/cmsswtoolconf.log --jsonfile ${WORKSPACE}/externals.json || true
   if [ `ls ${WRKDIR}/RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
     PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
     rm -rf ${WRKDIR}/tmp
     PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} deprecate-local $TOOL_CONF_PACKAGES
+    rm -rf ${WRKDIR}/WEB
     echo DATE=`date`
   fi
 fi

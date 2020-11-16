@@ -19,5 +19,4 @@
 /nweek-*/*_*_*/lcg/root
 /nweek-*/*_*_*/cms/cmssw/*
 /nweek-*/*_*_*/cms/cmssw-patch/*
-/docker/.images/*/*
 /git/*

@@ -3869,6 +3869,8 @@ void validate(TString step, TString file, TString refFile, TString r="RECO", boo
   validateEvents(step, file, refFile, r, SHOW, sr);
   validateLumi(step, file, refFile, r, SHOW, sr);
   print(step);
+
+  std::cout<<"DONE calling validate"<<std::endl;
 }
 
 

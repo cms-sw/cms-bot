@@ -318,7 +318,7 @@ sameEvts=True
 nRoot=0
 for r in commonRoots:
 #    print 'I could have tested',r
-    if 'PU' in r and 'DQM' not in r:
+    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'DQM' not in r:
         sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
         nRoot=nRoot+1
 if not sameEvts:

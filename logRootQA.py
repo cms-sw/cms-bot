@@ -196,12 +196,22 @@ def summaryJR(jrDir):
     for root, dirs, files in os.walk(jrDir):
         break
 
+    nAll=0
+    nOK=0
     for d in dirs:
         diffs=getFiles(root+'/'+d,'*.png')
         if len(diffs)>0:
             print('JR results differ',len(diffs),d)
             nDiff=nDiff+len(diffs)
-    return nDiff
+        logs=getFiles(root+'/'+d,'*.log')
+        nAll+=len(logs)
+        if len(logs)==1:
+            output=runCommand(['grep','DONE calling validate',logs[0]])
+            if len(output[0])>0:
+                nOK+=1
+            else:
+                print('JR results failed',d)
+    return nDiff,nAll,nOK
 
 def parseNum(s):
     return int(s[1:-1].split('/')[0])
@@ -317,8 +327,10 @@ if not sameEvts:
 
 print('\n')
 # now check the JR comparisons for differences
-nDiff=summaryJR(jrDir)
+nDiff,nAll,nOK=summaryJR(jrDir)
 print('SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons') 
+if nAll!=nOK:
+    print('SUMMARY Reco comparison had ',nAll-nOK,'failed jobs')
 print('\n')
 
 compSummary=summaryComp(compDir)

@@ -11,6 +11,7 @@ done
 voms-proxy-init -voms cms || true
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
+export SCRAM_ARCH=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
 export LC_ALL=C
 #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week

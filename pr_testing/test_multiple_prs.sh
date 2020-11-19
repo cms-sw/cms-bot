@@ -1355,7 +1355,7 @@ else
 fi
 
 COMP_MSG="Comparison job queued."
-if [ $(grep 'COMPARISON;QUEUED' $WORKSPACE/upload/testsResults/comparison.txt | wc -l) -gt 0 ] ; then
+if [ $(grep 'COMPARISON;QUEUED' $WORKSPACE/upload/testsResults/comparison.txt | wc -l) -eq 0 ] ; then
   ERR_MSG="Build errors/Fireworks only changes/No short matrix requested"
   if [ "X$BUILD_OK" != "Xtrue" ] ; then
     ERR_MSG="Build errors"

@@ -1094,7 +1094,6 @@ CMSSW_CATEGORIES = {
     "DataFormats/MuonData",
     "DataFormats/MuonReco",
     "DataFormats/MuonSeed",
-    "DataFormats/NanoAOD",
     "DataFormats/OnlineMetaData",
     "DataFormats/ParticleFlowCandidate",
     "DataFormats/ParticleFlowReco",

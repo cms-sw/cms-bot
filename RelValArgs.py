@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import re
-from os import environ
+from os import environ, uname
 from os.path import dirname, abspath
 monitor_script = ""
 try:
@@ -26,8 +26,12 @@ if not 'CMSSW_NON_THREADED' in environ:
   #THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_.+:(slc|cc)([6-9]|[1-9][0-9]+)_amd64_gcc(5[3-9]|[6-9]|[1-9][0-9])[0-9]*"
   THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_.+:(slc|cc)([6-9]|[1-9][0-9]+)_[^_]+_gcc(5[3-9]|[6-9]|[1-9][0-9])[0-9]*"
 RELVAL_KEYS["customiseWithTimeMemorySummary"].append([".+" ,"--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"])
-RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ '" % monitor_script])
-RELVAL_KEYS["PREFIX"].append(["CMSSW_.+"                   ,"--prefix '%s timeout --signal SIGTERM @TIMEOUT@ '" % monitor_script])
+if 'aarch' in uname()[-1]:
+  RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix 'timeout --signal SIGSEGV @TIMEOUT@ '"])
+  RELVAL_KEYS["PREFIX"].append(["CMSSW_.+"                   ,"--prefix 'timeout --signal SIGTERM @TIMEOUT@ '"])
+else:
+  RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ '" % monitor_script])
+  RELVAL_KEYS["PREFIX"].append(["CMSSW_.+"                   ,"--prefix '%s timeout --signal SIGTERM @TIMEOUT@ '" % monitor_script])
 RELVAL_KEYS["JOB_REPORT"].append([".+"                     ,"--job-reports"])
 RELVAL_KEYS["USE_INPUT"].append([".+"                      ,"--useInput all"])
 RELVAL_KEYS["THREADED"].append([THREADED_IBS               ,"-t 4"])

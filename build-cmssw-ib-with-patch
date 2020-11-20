@@ -194,7 +194,8 @@ if [ "${DRY_RUN}" = "" ] ; then
     echo DATE=`date`
     rm -rf ${WRKDIR}/tmp
     PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} deprecate-local $TOOL_CONF_PACKAGES
-    rm -rf ${WRKDIR}/WEB
+    mv ${WRKDIR}/WEB ${WRKDIR}/DEPS
+    for i in `ls ${WRKDIR}/DEPS/${ARCHITECTURE}`; do mv ${WRKDIR}/DEPS/${ARCHITECTURE}/$i ${WRKDIR}/DEPS/${ARCHITECTURE}/$(echo $i | tr "+" " " | awk '{print $2}').json; done
     echo DATE=`date`
   fi
 fi

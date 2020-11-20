@@ -3372,15 +3372,18 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       hgcalMultiClusters("ticlMultiClustersFromTrackstersHAD_");
       hgcalMultiClusters("ticlMultiClustersFromTrackstersMIP_");
       hgcalMultiClusters("ticlMultiClustersFromTrackstersMerge_");
+      hgcalMultiClusters("ticlMultiClustersFromTrackstersTrkEM_");
       hgcalMultiClusters("ticlMultiClustersFromTrackstersTrk_");
 
       tracksters("ticlTrackstersEM_");
       tracksters("ticlTrackstersHAD_");
       tracksters("ticlTrackstersMIP_");
       tracksters("ticlTrackstersMerge_");
+      tracksters("ticlTrackstersTrkEM_");
       tracksters("ticlTrackstersTrk_");
 
       ticlCands("ticlCandidateFromTracksters_");
+      ticlCands("ticlTrackstersMerge_");
       // miniaod
       superClusters("reducedEgamma_reducedSuperClusters");
       superClusters("reducedEgamma_reducedOOTSuperClusters");

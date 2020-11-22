@@ -186,6 +186,11 @@ if ${EXTERNAL_FAILED} ; then
   BLD_PKGS=$(ls ${WRKDIR}/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${BLD_PKGS} ; fi
   rm -rf  ${WRKDIR}/tmp
+  if [ -d ${WRKDIR}/WEB/${ARCHITECTURE} ] ; then
+    mv ${WRKDIR}/WEB/${ARCHITECTURE} ${WRKDIR}/DEPS
+    rm -rf ${WRKDIR}/WEB
+    for i in `ls ${WRKDIR}/DEPS`; do mv ${WRKDIR}/DEPS/$i ${WRKDIR}/DEPS/$(echo $i | tr "+" " " | awk '{print $2}').json; done
+  fi  
   exit 1
 fi
 if [ "${DRY_RUN}" = "" ] ; then
@@ -213,6 +218,11 @@ PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build 
 echo DATE=`date`
 if [ "${DRY_RUN}" != "" ] ; then exit 0 ; fi
 PYTHONPATH= $CMSBUILD_CMD --sync-back upload cmssw-ib
+if [ -d ${WRKDIR}/WEB/${ARCHITECTURE} ] ; then
+  mkdir -p ${WRKDIR}/DEPS
+  for i in `ls ${WRKDIR}/WEB/${ARCHITECTURE}`; do mv -f ${WRKDIR}/WEB/${ARCHITECTURE}/$i ${WRKDIR}/DEPS/$(echo $i | tr "+" " " | awk '{print $2}').json; done
+  rm -rf ${WRKDIR}/WEB
+fi
 echo DATE=`date`
 rm -rf ${WRKDIR}/tmp
 pushd CMSDIST

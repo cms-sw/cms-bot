@@ -194,9 +194,11 @@ if [ "${DRY_RUN}" = "" ] ; then
     echo DATE=`date`
     rm -rf ${WRKDIR}/tmp
     PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} deprecate-local $TOOL_CONF_PACKAGES
-    mv ${WRKDIR}/WEB/${ARCHITECTURE} ${WRKDIR}/DEPS
-    rm -rf ${WRKDIR}/WEB
-    for i in `ls ${WRKDIR}/DEPS`; do mv ${WRKDIR}/DEPS/$i ${WRKDIR}/DEPS/$(echo $i | tr "+" " " | awk '{print $2}').json; done
+    if [ -d ${WRKDIR}/WEB/${ARCHITECTURE} ] ; then
+      mv ${WRKDIR}/WEB/${ARCHITECTURE} ${WRKDIR}/DEPS
+      rm -rf ${WRKDIR}/WEB
+      for i in `ls ${WRKDIR}/DEPS`; do mv ${WRKDIR}/DEPS/$i ${WRKDIR}/DEPS/$(echo $i | tr "+" " " | awk '{print $2}').json; done
+    fi
     echo DATE=`date`
   fi
 fi

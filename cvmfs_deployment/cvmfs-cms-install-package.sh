@@ -30,10 +30,12 @@ CMSPKG_OPTS=""
 [ "${REINSTALL}" = true ] && CMSPKG_OPTS="--reinstall"
 
 dockerrun "${CMSPKG} ${CMSPKG_OPTS} install ${CMSPKG_ARGS} -y ${PACKAGE_NAME}"
-BOOK_KEEPING="/cvmfs/${CVMFS_REPOSITORY}/cvmfs-cms.cern.ch-updates"
-touch ${BOOK_KEEPING}
-BOOK_KEEPING_PKG="${PACKAGE_NAME}"
-if [ "${PACKAGE_NAME}" = "cms+cms-common+1.0" ] ; then
-  BOOK_KEEPING_PKG="${PACKAGE_NAME}+${CMS_COMMON_REVISION}"
+if [ "$LOCK_CVMFS" != "false" ] ; then 
+  BOOK_KEEPING="/cvmfs/${CVMFS_REPOSITORY}/cvmfs-cms.cern.ch-updates"
+  touch ${BOOK_KEEPING}
+  BOOK_KEEPING_PKG="${PACKAGE_NAME}"
+  if [ "${PACKAGE_NAME}" = "cms+cms-common+1.0" ] ; then
+    BOOK_KEEPING_PKG="${PACKAGE_NAME}+${CMS_COMMON_REVISION}"
+  fi
+  echo "${BOOK_KEEPING_PKG} ${SCRAM_ARCH} $(date +%s) $(date)" >> ${BOOK_KEEPING}
 fi
-echo "${BOOK_KEEPING_PKG} ${SCRAM_ARCH} $(date +%s) $(date)" >> ${BOOK_KEEPING}

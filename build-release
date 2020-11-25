@@ -89,7 +89,7 @@ pushd $BUILD_DIR
   if $EXT_FAILED ; then
     BLD_PKGS=$(ls RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
     if [ "X$BLD_PKGS" != "X" ] ; then PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload ${BLD_PKGS} ; fi
-    rm -rf  ${WRKDIR}/tmp
+    rm -rf  tmp
     exit 1
   fi
   rm -rf tmp/pip*

@@ -79,7 +79,7 @@ pushd $BUILD_DIR
     CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps"
   fi
   PYTHONPATH= $CMSBUILD_CMD --debug --specs-only build cmssw$PATCH
-  rm -rf WEB/$ARCHITECTURE/*
+  rm -rf WEB
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`
   [ -e CMSDIST/gcc-fixincludes.spec ] && TOOL_CONF_PACKAGES="gcc-fixincludes ${TOOL_CONF_PACKAGES}"
@@ -98,7 +98,7 @@ pushd $BUILD_DIR
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
-    rm -rf WEB/$ARCHITECTURE/*
+    rm -rf WEB
   fi
 
   if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then

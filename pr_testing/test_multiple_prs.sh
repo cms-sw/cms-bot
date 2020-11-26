@@ -282,7 +282,11 @@ for U_REPO in ${UNIQ_REPOS}; do
 done
 
 # modify comments that test are being triggered by Jenkins
-modify_comment_all_prs "- ${CMSSW_IB}/${SCRAM_ARCH}: "
+if [ "$TEST_CONTEXT" = "" ] ; then
+  modify_comment_all_prs "- ${CMSSW_IB}/${SCRAM_ARCH}: "
+else
+  modify_comment_all_prs "- ${TEST_CONTEXT}/${CMSSW_IB}/${SCRAM_ARCH}: "
+fi
 
 # Notify github that the script will start testing now
 report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}

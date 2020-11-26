@@ -499,6 +499,7 @@ voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artif
 
 DO_COMPARISON=true
 DO_MB_COMPARISON=false
+DO_DAS_QUERY=true
 if [ "$TEST_CONTEXT" = "GPU" ] ; then
   APPLY_FIREWORKS_RULE=false
   TEST_CLANG_COMPILATION=false
@@ -513,6 +514,7 @@ if [ "$TEST_CONTEXT" = "GPU" ] ; then
   DO_ADDON_TESTS=false
   DO_MB_COMPARISON=false
   WORKFLOWS_FOR_VALGRIND_TEST=""
+  DO_DAS_QUERY=false
 fi
 
 ### to know at the end of the tests if everything went ok
@@ -915,7 +917,7 @@ export CMS_PATH=/cvmfs/cms-ib.cern.ch
 #Checking runTheMatrix das-queries
 #
 DAS_QUERY_RES="NOTRUN"
-if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_DAS_QUERY" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false -a "$RUN_TESTS" = "true" ]; then
   if [ $(runTheMatrix.py --help | grep ibeos | wc -l) -gt 0 ] ; then
     mkdir -p $WORKSPACE/dasqueries/run
     DAS_QUERY_RES="OK"

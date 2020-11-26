@@ -45,6 +45,7 @@ function mark_commit_status_pr () {
 function mark_commit_status_all_prs () {
     if [ "${COMMIT_STATUS_CONTEXT}" = "" ] ; then 
       CONTEXT="${SCRAM_ARCH}"
+      if [ "${TEST_CONTEXT}" != "" ] ; then CONTEXT="${TEST_CONTEXT}/${CONTEXT}" ; fi
       CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
       if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
       if [ "$1" != "" ] ; then CONTEXT="${CONTEXT}/$1" ; fi

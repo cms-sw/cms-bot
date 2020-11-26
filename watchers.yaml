@@ -463,9 +463,10 @@ pixel-offline:
 - RecoLocalTracker/SiPixelRecHits
 - SimTracker/SiPixelDigitizer
 - EventFilter/SiPixelRawToDigi
+- DataFormats/SiPixel
 - CalibTracker/SiPixel
 - CondCore/SiPixelPlugins
-- CondFormats/SiPixelObjects
+- CondFormats/SiPixel
 - CondTools/SiPixel
 forthommel:
 - Alignment/CTPPS

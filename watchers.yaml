@@ -1214,14 +1214,6 @@ idebruyn:
 - DQM/SiStripMonitor
 - DQM/Tracker
 - DQM/TrackingMonitor
-deguio:
-- SimCalorimetry/HGCalSimAlgos
-- SimCalorimetry/HGCalSimProducers
-- DataFormats/HGCDigi
-- DataFormats/HGCRecHit
-- Validation/HGCalValidation
-- RecoLocalCalo/HGCalRecAlgos
-- RecoLocalCalo/HGCalRecProducers
 gouskos:
 - DataFormats/RecoCandidate
 - DataFormats/PatCandidates
@@ -1625,7 +1617,7 @@ JanFSchulte:
 - Validation/RecoVertex
 - DQM/TrackingMonitor
 - DQM/TrackingMonitorSource
-- DQM/TrackingMonitorClient 
+- DQM/TrackingMonitorClient
 watson-ij:
 - CondCore/GEMPlugins
 - CondFormats/GEMObjects
@@ -1688,7 +1680,7 @@ skinnari:
 - L1Trigger/TrackTrigger
 - L1Trigger/TrackerDTC
 swertz:
-- PhysicsTools/NanoAOD 
+- PhysicsTools/NanoAOD
 ram1123:
   - RecoEgamma
   - RecoEcal

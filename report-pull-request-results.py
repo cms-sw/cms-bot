@@ -226,6 +226,8 @@ def send_error_report_message(repo, report_file, tests_url):
     message+= '\nCMSSW: ' + os.environ['CMSSW_VERSION']
   if 'SCRAM_ARCH' in os.environ:
     message+= '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
+  if 'TEST_CONTEXT' in os.environ and os.environ['TEST_CONTEXT'] != '':
+    message+= '\nTEST_CONTEXT: ' + os.environ['TEST_CONTEXT']
   message += get_recent_merges_message()
   message += '\nYou can see the results of the tests here:\n%s\n' % tests_url
   message += '\nI found follow errors while testing this PR\n\n'

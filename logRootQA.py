@@ -13,9 +13,9 @@ def getFiles(d,pattern):
 
 def getCommonFiles(d1,d2,pattern):
     l1=getFiles(d1,pattern)
-    print("l1",l1)
+#    print("l1",l1)
     l2=getFiles(d2,pattern)
-    print("l2",l2)
+#    print("l2",l2)
     common=[]
     for l in l1:
         lT=l[len(d1):]

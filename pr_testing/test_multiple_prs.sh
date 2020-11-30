@@ -505,7 +505,6 @@ DO_COMPARISON=true
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=true
 if [ "$TEST_CONTEXT" = "GPU" ] ; then
-  APPLY_FIREWORKS_RULE=false
   TEST_CLANG_COMPILATION=false
   CODE_RULES=false
   CHECK_HEADER_TESTS=false
@@ -603,15 +602,13 @@ fi
 
 #If Fireworks is the only package involved I only compile and run unit tests
 ONLY_FIREWORKS=false
-if [ "X$APPLY_FIREWORKS_RULE" = Xtrue ]; then
-  ls $WORKSPACE/$CMSSW_IB/src
-  NUM_DIRS=$(find $WORKSPACE/$CMSSW_IB/src -mindepth 1 -maxdepth 1 -type d -print | grep -v '.git' | wc -l)
-  if [ "$NUM_DIRS" == 1 ]; then
-    if [ -d "$WORKSPACE/$CMSSW_IB/src/Fireworks" ] ; then
-      ONLY_FIREWORKS=true
-      echo 'This pr only involves Fireworks!'
-      echo 'Only compiling and running unit tests'
-    fi
+ls $WORKSPACE/$CMSSW_IB/src
+NUM_DIRS=$(find $WORKSPACE/$CMSSW_IB/src -mindepth 1 -maxdepth 1 -type d -print | grep -v '.git' | wc -l)
+if [ "$NUM_DIRS" == 1 ]; then
+  if [ -d "$WORKSPACE/$CMSSW_IB/src/Fireworks" ] ; then
+    ONLY_FIREWORKS=true
+    echo 'This pr only involves Fireworks!'
+    echo 'Only compiling and running unit tests'
   fi
 fi
 

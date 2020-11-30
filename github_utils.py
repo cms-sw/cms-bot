@@ -21,6 +21,12 @@ except Exception as e:
 def format(s, **kwds): return s % kwds
 
 
+def comment_gh_pr(gh, repo, pr, msg):
+    repo = gh.get_repo(repo)
+    pr   = repo.get_issue(pr)
+    pr.create_comment(msg)
+
+
 def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=True):
     from time import sleep, gmtime
     from calendar import timegm

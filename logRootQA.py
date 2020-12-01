@@ -283,7 +283,7 @@ if compDir[-1]=='/':
     compDir=jrDir[:-1]
 
 commonLogs=getCommonFiles(baseDir,testDir,'step*.log')
-print(commonLogs)
+#print(commonLogs)
 
 #### check the printouts
 lines=0

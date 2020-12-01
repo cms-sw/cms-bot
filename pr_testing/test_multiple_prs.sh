@@ -15,6 +15,7 @@ COMMON=${CMS_BOT_DIR}/common
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 RESULTS_FILE=$WORKSPACE/testsResults
 CONFIG_MAP=$CMS_BOT_DIR/config.map
+MAIN_PR_COMMIT=""
 rm -rf ${RESULTS_FILE} ${RESULTS_FILE}.txt
 # ---
 # doc: Input variable
@@ -24,6 +25,7 @@ rm -rf ${RESULTS_FILE} ${RESULTS_FILE}.txt
 # CMSDIST_PR      # CMSDIST PR number, should avoid
 # ARCHITECTURE    # architecture (ex. slc6_amd64_gcc700)
 # and some others
+export FIRST_PR_ONLY=true
 export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
@@ -77,7 +79,7 @@ function prepare_upload_comment_exit(){
     if [ -z ${NO_POST} ]; then
         send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
     fi
-    report_pull_request_results_all_prs_with_commit $@ --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
+    report_pull_request_results_all_prs_with_commit $@ --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${MAIN_PR_COMMIT}
     exit 0
 }
 
@@ -175,8 +177,10 @@ for PR in ${PULL_REQUESTS}; do
     echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
     echo "${PR}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
 done
+if $FIRST_PR_ONLY ; then MAIN_PR_COMMIT="-c $(cat $(get_path_to_pr_metadata ${MAIN_PULL_REQUEST})/COMMIT)" ; fi
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset || true
+if $REQUIRED_TEST ; then mark_commit_status_all_prs 'required' 'success' -d 'OK' || true ; fi
 
 COMP_QUEUE=
 case $CMSSW_QUEUE in
@@ -212,7 +216,7 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
     if [ "X$CMSSW_IB" = "X" ] ; then
       CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$CMSSW_IB" = "X" ] ; then
-        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
+        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${MAIN_PR_COMMIT}
         mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d 'Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}' || true
         exit 0
       fi
@@ -287,9 +291,6 @@ if [ "$TEST_CONTEXT" = "" ] ; then
 else
   modify_comment_all_prs "- ${TEST_CONTEXT}/${CMSSW_IB}/${SCRAM_ARCH}: "
 fi
-
-# Notify github that the script will start testing now
-report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST}
 
 # Prepera html templates
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
@@ -546,7 +547,6 @@ set -x
 echo $LD_LIBRARY_PATH | tr ':' '\n'
 BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
 ANALOG_CMD="scram build outputlog && ($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
-report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Test started: $CMSSW_IB for $SCRAM_ARCH" ${NO_POST}
 
 cd $WORKSPACE/$CMSSW_IB/src
 git config --global --replace-all merge.renamelimit 2500 || true
@@ -614,9 +614,7 @@ fi
 
 # Don't do the following if we are only testing CMSDIST PR
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
-  # report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --pr-job-id ${BUILD_NUMBER} ${NO_POST}
   git log --oneline --merges ${CMSSW_VERSION}..
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Compiling" ${NO_POST}
 fi
 
 # #############################################
@@ -630,8 +628,6 @@ if cat $CONFIG_MAP | grep $CMSSW_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=
 fi
 
 if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X ]; then
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Testing Clang compilation" ${NO_POST}
-
   #first, add the command to the log
   CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j ${NCPU2} COMPILER='llvm compile'"
   CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
@@ -679,7 +675,6 @@ fi
 #Code Rules
 QA_RES="NOTRUN"
 if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" ]; then # If a CMSSW specific PR was specified
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Code Rules Checks" ${NO_POST}
   mkdir $WORKSPACE/codeRules
   cmsCodeRulesChecker.py -s $WORKSPACE/codeRules -r 1,3 || true
   QA_RES="OK"
@@ -718,7 +713,6 @@ fi
 # Static checks
 #
 if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "$ONLY_FIREWORKS" = false -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" ]; then
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Static Checks" ${NO_POST}
   echo 'STATIC_CHECKS;OK,Static checks outputs,See Static Checks,llvm-analysis' >> ${RESULTS_FILE}/static.txt
   echo '--------------------------------------'
   pushd $WORKSPACE/$CMSSW_IB
@@ -773,7 +767,6 @@ fi
 CHK_HEADER_OK=true
 if $IS_DEV_BRANCH ; then
   if [ "X${CHECK_HEADER_TESTS}" = "Xtrue" -a -f $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.chk_headers ] ; then
-    report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running HeaderChecks" ${NO_POST}
     IGNORE_HDRS="%.i"
     if [ -e "$WORKSPACE/$RELEASE_FORMAT/src/TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h" ] ; then
       IGNORE_HDRS="TrackingTools/GsfTools/interface/MultiGaussianStateCombiner.h %.i"
@@ -802,7 +795,6 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
-report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Compilation" ${NO_POST}
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
@@ -895,7 +887,6 @@ which das_client
 #Duplicate dict
 QA_RES="NOTRUN"
 if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" -a "$RUN_TESTS" = "true" ]; then
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Duplicate Dict Checks" ${NO_POST}
   mkdir $WORKSPACE/dupDict
   QA_RES="OK"
   for type in dup lostDefs edmPD ; do
@@ -939,7 +930,6 @@ fi
 #
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   mark_commit_status_all_prs 'unittest' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Unit Tests" ${NO_POST}
   echo '--------------------------------------'
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
   UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
@@ -994,7 +984,6 @@ fi
 
 if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false -a "$RUN_TESTS" = "true" ]; then
   mark_commit_status_all_prs 'relvals' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running RelVals" ${NO_POST}
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
   pushd "$WORKSPACE/runTheMatrix-results"
@@ -1088,7 +1077,6 @@ fi
 #
 if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running AddOn Tests" ${NO_POST}
   #Some data files in cmssw_7_1/src directory are newer then cmsswdata. We make sure that we pick up these files from src instead of data.
   #Without this hack, pat1 addOnTest fails.
   EX_DATA_SEARCH="$CMSSW_SEARCH_PATH"
@@ -1165,8 +1153,6 @@ fi
 #
 for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
   mark_commit_status_all_prs 'valgrind' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-  report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Valgrind" ${NO_POST}
-
   echo 'I will run valgrind for the following workflow'
   echo $WF;
   mkdir -p "$WORKSPACE/valgrindResults-"$WF
@@ -1187,7 +1173,6 @@ for BT in ${ENABLE_BOT_TESTS}; do
          git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
          popd
          mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-         report_pull_request_results_all_prs_with_commit "TESTS_RUNNING" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --add-message "Running Profling" ${NO_POST}
          mkdir -p $WORKSPACE/upload/profiling/
          echo "<html><head></head><title>Profiling results</title><body><ul>" > $WORKSPACE/upload/profiling/index.html
          for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
@@ -1347,16 +1332,17 @@ fi
 
 if [ -f all_done ] ; then
   rm -f all_done
-    # Doc: report everything back unless no matter if ALL_OK was true or false.
-    report_pull_request_results_all_prs_with_commit ${REPORT_OPTS}
+  # Doc: report everything back unless no matter if ALL_OK was true or false.
+  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${MAIN_PR_COMMIT}
 elif [ ! -z ${NO_POST} ] ; then
-    # Doc: if --no-post flag is set, output comments and continue to next code block.
-    report_pull_request_results_all_prs_with_commit ${REPORT_OPTS}
+  # Doc: if --no-post flag is set, output comments and continue to next code block.
+  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${MAIN_PR_COMMIT}
 else
   echo "Error: upload to Jenkins server failed."
   exit 1
 fi
 
+exit 0
 COMP_MSG="Comparison job queued."
 if [ $(grep 'COMPARISON;QUEUED' $WORKSPACE/upload/testsResults/comparison.txt | wc -l) -eq 0 ] ; then
   ERR_MSG="Build errors/Fireworks only changes/No short matrix requested"

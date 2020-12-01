@@ -1011,7 +1011,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if trigger_test_on_signature and has_categories_approval: tests_requested = True
     if tests_requested:
       prs = global_test_params['PULL_REQUESTS'].strip().split(" ")
-      for xpr in prs:
+      for xpr in [prs[0]]:
         repo_name,pr_num = xpr.split('#',1)
         pr_num = int(pr_num)
         rest_pr = [p for p in prs if p!=xpr]

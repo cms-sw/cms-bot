@@ -152,7 +152,7 @@ def checkDQMSize(r1,r2,diff, wfs):
     haveDQMChecker=False
     for path in os.environ["PATH"].split(os.pathsep):
         path = path.strip('"')
-        print(path)
+#        print(path)
         exe_file = os.path.join(path, 'dqmMemoryStats.py')
         if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
             haveDQMChecker=True

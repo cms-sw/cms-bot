@@ -293,10 +293,10 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Generating comparion summary" || true
     echo 'Doing histogram, log and root comparison:'
     (python $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${RELEASE_FORMAT} $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $QALOG 2>&1) || true
-    (grep SUMMARY $QALOG | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
+    (grep -a SUMMARY $QALOG | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
     echo "<html><body><h3>Default comparison: Workflows with failed comparisons</h3>" > $JRHTML
     echo "<table><tr><td>WF #</td><td>Failed</td></tr>" >> $JRHTML
-    grep 'Histogram comparison details' $QALOG  | grep '\.log *\[[1-9][0-9]* *, *[1-9][0-9]*'  | sed 's|.*/default-comparison/\(\([^_]*\)_.*\)RelMonComp.*.log \[[1-9][0-9]* *, *\([1-9][0-9]*\) *,.*|<tr><td><a href="\1">\2</a></td><td align="right">\3</td></tr>|' >> $JRHTML
+    grep -a 'Histogram comparison details' $QALOG  | grep '\.log *\[[1-9][0-9]* *, *[1-9][0-9]*'  | sed 's|.*/default-comparison/\(\([^_]*\)_.*\)RelMonComp.*.log \[[1-9][0-9]* *, *\([1-9][0-9]*\) *,.*|<tr><td><a href="\1">\2</a></td><td align="right">\3</td></tr>|' >> $JRHTML
     if [ $(cat $JRHTML | wc -l) -eq 2 ] ; then
       echo "<tr><td>ALL OK</td><td>No errors</td></tr></table>" >> $JRHTML
     else
@@ -304,7 +304,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     fi
     echo "<h3>Default comparison: Workflows with reco comparison differences</h3>" >> $JRHTML
     echo "<table><tr><td>WF #</td><td>Differences</td></tr>" >> $JRHTML
-    grep 'JR results differ' $QALOG | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[5]"\">"a[5]"</a></td><td align=\"right\">"a[4]"</td></tr>" }' >> $JRHTML
+    grep -a 'JR results differ' $QALOG | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[5]"\">"a[5]"</a></td><td align=\"right\">"a[4]"</td></tr>" }' >> $JRHTML
     if [ $(tail -1 $JRHTML | grep "Differences" | wc -l) -eq 1 ] ; then
       echo "<tr><td>ALL OK</td><td>No differences</td></tr></table>" >> $JRHTML
     else
@@ -312,7 +312,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     fi
     echo "<h3>Default comparison: Workflows with reco comparison failures</h3>" >> $JRHTML
     echo "<table><tr><td>WF #</td><td>Failures log</td></tr>" >> $JRHTML
-    grep 'JR results failed' $QALOG | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[4]"\">"a[4]"</a></td><td align=\"right\"><a href=\"validateJR/"a[4]"/"a[4]".log\">log</a></td></tr>" }' >> $JRHTML
+    grep -a 'JR results failed' $QALOG | awk '{ split($0,a," "); print "<tr><td><a href=\"validateJR/"a[4]"\">"a[4]"</a></td><td align=\"right\"><a href=\"validateJR/"a[4]"/"a[4]".log\">log</a></td></tr>" }' >> $JRHTML
     if [ $(tail -1 $JRHTML | grep "Failures" | wc -l) -eq 1 ] ; then
       echo "<tr><td>ALL OK</td><td>No failures</td></tr></table>" >> $JRHTML
     else

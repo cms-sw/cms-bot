@@ -70,7 +70,6 @@ CMSSW_L2 = {
   "smuzaffar":        ["core", "externals"],
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
-  "tocheng":          ["alca"],
   "wajidalikhan":     ["pdmv"],
   "christopheralanwest": ["alca"],
   "yuanchao":         ["alca"],

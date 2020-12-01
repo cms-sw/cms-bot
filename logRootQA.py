@@ -13,9 +13,9 @@ def getFiles(d,pattern):
 
 def getCommonFiles(d1,d2,pattern):
     l1=getFiles(d1,pattern)
-    print("l1",l1)
+#    print("l1",l1)
     l2=getFiles(d2,pattern)
-    print("l2",l2)
+#    print("l2",l2)
     common=[]
     for l in l1:
         lT=l[len(d1):]
@@ -152,7 +152,7 @@ def checkDQMSize(r1,r2,diff, wfs):
     haveDQMChecker=False
     for path in os.environ["PATH"].split(os.pathsep):
         path = path.strip('"')
-        print(path)
+#        print(path)
         exe_file = os.path.join(path, 'dqmMemoryStats.py')
         if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
             haveDQMChecker=True
@@ -283,7 +283,7 @@ if compDir[-1]=='/':
     compDir=jrDir[:-1]
 
 commonLogs=getCommonFiles(baseDir,testDir,'step*.log')
-print(commonLogs)
+#print(commonLogs)
 
 #### check the printouts
 lines=0
@@ -318,8 +318,9 @@ sameEvts=True
 nRoot=0
 for r in commonRoots:
 #    print 'I could have tested',r
-    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'DQM' not in r:
-        sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
+    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
+        checkResult=checkEventContent(baseDir+r,testDir+r)
+        sameEvts=sameEvts and checkResult
         nRoot=nRoot+1
 if not sameEvts:
     qaIssues=True

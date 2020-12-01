@@ -24,9 +24,9 @@ done
 grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     #fNP can be a pattern: path-expand it first
     fN=`echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g"`
-    [ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN}
-    #process regular files first
-    if [ -f "${baseA}/${fN}" ]; then
+    #[ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN}
+    #process regular files first; need files both in baseA and baseB
+    if [ -f "${baseA}/${fN}" -a -f "${baseB}/${fN}" ]; then
 	extN=all_${diffN}_${dsN}
 	mkdir -p ${extN}
 	pushd ${extN}
@@ -44,7 +44,8 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     if [ ! -f "${baseA}/${mFN}" ]; then
         mFN="${fNBase}_inMINIAODSIM.root"
     fi
-    if [ -f "${baseA}/${mFN}" ]; then
+    #need files both in baseA and baseB
+    if [ -f "${baseA}/${mFN}" -a -f "${baseB}/${mFN}" ]; then
 	echo $mFN
 	extmN=all_mini_${diffN}_${dsN}
 	mkdir -p ${extmN}

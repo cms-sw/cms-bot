@@ -845,6 +845,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print(bot_status.target_url,turl,signatures["tests"],bot_status.description)
       if bot_status and bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
         signatures["tests"]="started"
+      if signatures["tests"]=="started" and new_bot_tests:
+        for req in [s.context.replace("/required","") for s in commit_statuses if s.context.endswith("/required")]:
+          all_stats = [s.state for s in commit_statuses if (s.context==req) or (s.context.startswith(req+"/"))]
+          print("All stats for %s: %s" % (req, all_stats))
+          if "error" in all_stats:
+            signatures["tests"]="rejected"
+          elif ("pending" not in all_stats) and all_stats:
+            signatures["tests"]="approved"
     elif not bot_status:
       if not dryRun:
         last_commit_obj.create_status("pending", description="Waiting for authorized user to issue the test command.", context=bot_status_name)
@@ -890,7 +898,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   for lab in extra_labels: labels.append(extra_labels[lab][0])
   if comp_warnings: labels.append("compilation-warnings")
 
-  if cms_repo and issue.pull_request:
+  if cms_repo and issue.pull_request and (not new_bot_tests):
     if comparison_done:
       labels.append("comparison-available")
     elif comparison_notrun:

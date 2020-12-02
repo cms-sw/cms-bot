@@ -290,7 +290,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     QALOG=$JR_COMP_DIR/logRootQA.log
     JRHTML=$WORKSPACE/upload/validateJR.html
-    mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Generating comparion summary" || true
+    mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Generating comparison summary" || true
     echo 'Doing histogram, log and root comparison:'
     (python $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${RELEASE_FORMAT} $WORKSPACE/data/PR-${PULL_REQUEST_NUMBER} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $QALOG 2>&1) || true
     (grep -a SUMMARY $QALOG | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
@@ -389,5 +389,7 @@ if [ "$DRY_RUN" != "true" ] ; then
   fi
 fi
 mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finishes, please check results" || true
+report_pull_request_results_all_prs "COMPARISON_READY" --report-pr ${PULL_REQUEST_NUMBER} --pr-job-id $PULL_REQUEST_JOB_ID \
+  -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
+  --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt
 echo "All done at `date`"
-touch $WORKSPACE/ALL_DONE

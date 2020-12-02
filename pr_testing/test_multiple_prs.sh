@@ -177,7 +177,7 @@ for PR in ${PULL_REQUESTS}; do
     echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
     echo "${PR}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
 done
-if $FIRST_PR_ONLY ; then MAIN_PR_COMMIT="-c $(cat $(get_path_to_pr_metadata ${MAIN_PULL_REQUEST})/COMMIT)" ; fi
+#if $FIRST_PR_ONLY ; then MAIN_PR_COMMIT="-c $(cat $(get_path_to_pr_metadata ${MAIN_PULL_REQUEST})/COMMIT)" ; fi
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset || true
 if $REQUIRED_TEST ; then mark_commit_status_all_prs 'required' 'success' -d 'OK' || true ; fi

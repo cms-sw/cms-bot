@@ -418,6 +418,13 @@ def get_combined_statuses(commit, repository, token=None):
   if not token: token = get_gh_token(repository)
   return github_api("/repos/%s/commits/%s/status" % (repository, commit), token, method='GET')
 
+
+def set_comment_emoji(comment_id, repository, emoji="+1", token=None):
+  if not token: token = get_gh_token(repository)
+  params = {"content" : emoji }
+  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, params, headers=headers)
+
 def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):
   if not token: token = get_gh_token(repository)
   params = {'state': state, 'target_url': url, 'description': description, 'context': context}

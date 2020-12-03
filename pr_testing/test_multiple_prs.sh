@@ -366,6 +366,9 @@ if ${BUILD_EXTERNAL} ; then
 
     TEST_ERRORS=$(grep -E "Error [0-9]$" $WORKSPACE/cmsswtoolconf.log) || true
     GENERAL_ERRORS=$(grep "ALL_OK" $WORKSPACE/cmsswtoolconf.log) || true
+    if [ -f "$WORKSPACE/$BUILD_DIR/tmp/bootstrap.log" ] ; then
+      mv $WORKSPACE/$BUILD_DIR/tmp/bootstrap.log $WORKSPACE/bootstrap.log
+    fi
 
     #upload packages build
     BLD_PKGS=$(ls $WORKSPACE/$BUILD_DIR/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug' || true)

@@ -597,7 +597,7 @@ def mark_commit( action , commit_hash , tests_url ):
 #---- Global variables
 #---------------------------------------------------------------------------------------
 
-COMPARISON_READY_MSG = 'Comparison is ready'
+COMPARISON_READY_MSG = 'Comparison results are now available'
 COMPARISON_INCOMPLETE_MSG = 'There are some workflows for which there are errors in the baseline:\n {workflows} ' \
                             'The results for the comparisons for these workflows could be incomplete \n' \
                             'This means most likely that the IB is having errors in the relvals.'\

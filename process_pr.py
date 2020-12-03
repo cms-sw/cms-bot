@@ -848,7 +848,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if signatures["tests"]=="started" and new_bot_tests:
         all_stats = []
         for req in [s.context.replace("/required","") for s in commit_statuses if s.context.endswith("/required")]:
-          xstats = [s.state for s in commit_statuses if (s.context==req) or (s.context.startswith(req+"/"))]
+          xstats = [s.state for s in commit_statuses if (not s.context.startswith(req+"/opt/")) and ((s.context==req) or s.context.startswith(req+"/"))]
           all_stats = all_stats + xstats
           print("All stats for %s: %s" % (req, xstats))
         if "error" in all_stats:

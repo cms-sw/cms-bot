@@ -17,8 +17,8 @@ if ! $FOUND ; then
   export LD_LIBRARY_PATH=$(scram tool tag py2-dxr PY2_DXR_BASE)/lib:${LD_LIBRARY_PATH}
 fi
 ##################################
-ls /cvmfs/cms-ci.cern.ch
-git clone -b $CMSSW_VERSION --reference /cvmfs/cms-ci.cern.ch/git/cms-sw/cmssw.git https://github.com/cms-sw/cmssw src
+ls /cvmfs/cms-ib.cern.ch
+git clone -b $CMSSW_VERSION --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git https://github.com/cms-sw/cmssw src
 rm -rf src/.git
 rsync -aL --exclude '.scram' --exclude '*.pyc' ${CMSSW_RELEASE_BASE}/cfipython/${ARCHITECTURE}/ src/cfipython/
 (find src/cfipython -name '*.pyc'       | xargs rm -rf) || true

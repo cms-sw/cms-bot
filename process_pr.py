@@ -34,7 +34,7 @@ HOLD_MSG = "Pull request has been put on hold by "
 CODE_CHECKS_REGEXP=re.compile("code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)$")
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
-CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+/[a-zA-Z0-9]+'
+CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
 RELVAL_OPTS="[a-zA-Z0-9_-][a-zA-Z0-9_-]*"

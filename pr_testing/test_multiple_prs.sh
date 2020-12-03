@@ -157,7 +157,9 @@ fi
 if [[ ! -z ${CMSSW_PR} ]] ; then
     CMSSW_BR=$(get_base_branch $CMSSW_PR)
 fi
-CONFIG_LINE=$(${COMMON}/get_config_map_line.sh  "${CMSSW_QUEUE-$CMSSW_BR}" "$CMSDIST_TAG" "${ARCHITECTURE}")
+if [ "${CONFIG_LINE}" == "" ] ; then
+  CONFIG_LINE=$(${COMMON}/get_config_map_line.sh  "${CMSSW_QUEUE-$CMSSW_BR}" "$CMSDIST_TAG" "${ARCHITECTURE}")
+fi
 fail_if_empty "${CONFIG_LINE}"
 
 export CMSDIST_TAG=$(echo ${CONFIG_LINE} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//')

@@ -215,6 +215,17 @@ def get_recent_merges_message():
       message += git_cms_merge_topic_url + '\n'
   return message
 
+def get_pr_tests_info():
+  message = ""
+  if 'CMSSW_VERSION' in os.environ:
+    message += '\nCMSSW: ' + os.environ['CMSSW_VERSION']
+  if 'SCRAM_ARCH' in os.environ:
+    message += '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
+  if 'TEST_CONTEXT' in os.environ and os.environ['TEST_CONTEXT'] != '':
+    message += '\nTEST_CONTEXT: ' + os.environ['TEST_CONTEXT']
+  return message
+
+
 #
 # reads the report file and comment the github issue
 #
@@ -222,12 +233,7 @@ def send_error_report_message(repo, report_file, tests_url):
   pull_request = repo.get_pull(pr_number)
   message = '-1\n'
   if options.commit_hash: message += '\nTested at: ' + options.commit_hash+"\n"
-  if 'CMSSW_VERSION' in os.environ:
-    message+= '\nCMSSW: ' + os.environ['CMSSW_VERSION']
-  if 'SCRAM_ARCH' in os.environ:
-    message+= '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
-  if 'TEST_CONTEXT' in os.environ and os.environ['TEST_CONTEXT'] != '':
-    message+= '\nTEST_CONTEXT: ' + os.environ['TEST_CONTEXT']
+  message += get_pr_tests_info()
   message += get_recent_merges_message()
   message += '\nYou can see the results of the tests here:\n%s\n' % tests_url
   message += '\nI found follow errors while testing this PR\n\n'
@@ -468,14 +474,9 @@ def send_tests_approved_pr_message( repo, pr_number, tests_url ):
   pull_request = repo.get_pull(pr_number)
 
   message = '+1'
-  if options.commit_hash:
-    message += '\nTested at: ' + options.commit_hash
-
+  if options.commit_hash: message += '\nTested at: ' + options.commit_hash
   message += '\n' + tests_url
-  if 'CMSSW_VERSION' in os.environ:
-    message+= '\nCMSSW: ' + os.environ['CMSSW_VERSION']
-  if 'SCRAM_ARCH' in os.environ:
-    message+= '\nSCRAM_ARCH: ' + os.environ['SCRAM_ARCH']
+  message += get_pr_tests_info()
   if options.additional_comment:
     message += '\nAdditional comment: ' + options.additional_comment
 

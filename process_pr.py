@@ -851,7 +851,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           print("All stats for %s: %s" % (req, all_stats))
           if "error" in all_stats:
             signatures["tests"]="rejected"
-          elif ("pending" not in all_stats) and all_stats:
+          elif ("pending" not in all_stats) and len(all_stats)>1:
             signatures["tests"]="approved"
     elif not bot_status:
       if not dryRun:

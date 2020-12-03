@@ -846,13 +846,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if bot_status and bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
         signatures["tests"]="started"
       if signatures["tests"]=="started" and new_bot_tests:
+        all_stats = []
         for req in [s.context.replace("/required","") for s in commit_statuses if s.context.endswith("/required")]:
-          all_stats = [s.state for s in commit_statuses if (s.context==req) or (s.context.startswith(req+"/"))]
-          print("All stats for %s: %s" % (req, all_stats))
-          if "error" in all_stats:
-            signatures["tests"]="rejected"
-          elif ("pending" not in all_stats) and len(all_stats)>1:
-            signatures["tests"]="approved"
+          xstats = [s.state for s in commit_statuses if (s.context==req) or (s.context.startswith(req+"/"))]
+          all_stats = all_stats + xstats
+          print("All stats for %s: %s" % (req, xstats))
+        if "error" in all_stats:
+          signatures["tests"]="rejected"
+        elif ("pending" not in all_stats) and len(all_stats)>1:
+          signatures["tests"]="approved"
     elif not bot_status:
       if not dryRun:
         last_commit_obj.create_status("pending", description="Waiting for authorized user to issue the test command.", context=bot_status_name)

@@ -850,7 +850,7 @@ mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Uploading build ar
 
 cd $WORKSPACE
 rm -rf $CMSSW_IB/tmp
-tar -czvf cmssw.tar.gz $CMSSW_IB
+tar -czf cmssw.tar.gz $CMSSW_IB
 prepare_upload_results
 send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Uploaded build area to run tests" || true

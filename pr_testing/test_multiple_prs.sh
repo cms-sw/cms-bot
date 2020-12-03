@@ -47,7 +47,7 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
-    for f in dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
+    for f in cmssw.tar.gz dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
     if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
@@ -605,18 +605,6 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 fi
 
-#If Fireworks is the only package involved I only compile and run unit tests
-ONLY_FIREWORKS=false
-ls $WORKSPACE/$CMSSW_IB/src
-NUM_DIRS=$(find $WORKSPACE/$CMSSW_IB/src -mindepth 1 -maxdepth 1 -type d -print | grep -v '.git' | wc -l)
-if [ "$NUM_DIRS" == 1 ]; then
-  if [ -d "$WORKSPACE/$CMSSW_IB/src/Fireworks" ] ; then
-    ONLY_FIREWORKS=true
-    echo 'This pr only involves Fireworks!'
-    echo 'Only compiling and running unit tests'
-  fi
-fi
-
 # Don't do the following if we are only testing CMSDIST PR
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then
   git log --oneline --merges ${CMSSW_VERSION}..
@@ -717,7 +705,7 @@ fi
 #
 # Static checks
 #
-if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "$ONLY_FIREWORKS" = false -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" ]; then
   echo 'STATIC_CHECKS;OK,Static checks outputs,See Static Checks,llvm-analysis' >> ${RESULTS_FILE}/static.txt
   echo '--------------------------------------'
   pushd $WORKSPACE/$CMSSW_IB
@@ -858,25 +846,20 @@ else
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_FILE}/build.txt
-mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Runnings tests" || true
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Uploading build area to run tests" || true
 
-#Work around for Simulation.so plugin
-if [ -e $CMSSW_BASE/biglib/${SCRAM_ARCH}/Simulation.edmplugin ] ; then
-  for p in SimDataFormatsValidationFormats_xr_rdict.pcm ; do
-    if [ ! -e $CMSSW_BASE/biglib/${SCRAM_ARCH}/$p ] ; then
-      for d in $CMSSW_RELEASE_BASE $CMSSW_FULL_RELEASE_BASE ; do
-        if [ -e $d/biglib/${SCRAM_ARCH}/$p ] ; then
-          ln -s $d/biglib/${SCRAM_ARCH}/$p $CMSSW_BASE/biglib/${SCRAM_ARCH}/$p
-          break
-        fi
-      done
-    fi
-  done
-fi
+cd $WORKSPACE
+rm -rf $CMSSW_IB/tmp
+tar -czvf cmssw.tar.gz $CMSSW_IB
+prepare_upload_results
+send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Uploaded build area to run tests" || true
+exit 0
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 set +x ; eval $(scram run -sh) ;set -x
+
 #Drop RELEASE_TOP/external/SCRAM_ARCH/data if LOCALTOP/external/SCRAM_ARCH/data exists
 #to make sure external packages removed files are not picked up from release directory
 if $BUILD_EXTERNAL ; then
@@ -891,7 +874,7 @@ which das_client
 
 #Duplicate dict
 QA_RES="NOTRUN"
-if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "$ONLY_FIREWORKS" = false -a "X$CMSDIST_ONLY" == "Xfalse" -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "X$CMSDIST_ONLY" == "Xfalse" -a "$RUN_TESTS" = "true" ]; then
   mkdir $WORKSPACE/dupDict
   QA_RES="OK"
   for type in dup lostDefs edmPD ; do
@@ -913,7 +896,7 @@ export CMS_PATH=/cvmfs/cms-ib.cern.ch
 #Checking runTheMatrix das-queries
 #
 DAS_QUERY_RES="NOTRUN"
-if [ "X$DO_DAS_QUERY" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_DAS_QUERY" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ $(runTheMatrix.py --help | grep ibeos | wc -l) -gt 0 ] ; then
     mkdir -p $WORKSPACE/dasqueries/run
     DAS_QUERY_RES="OK"
@@ -987,7 +970,7 @@ if [ ! "X$MATRIX_EXTRAS" = X ]; then
   MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
 fi
 
-if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$ONLY_FIREWORKS" = false -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   mark_commit_status_all_prs 'relvals' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
@@ -1346,26 +1329,3 @@ else
   echo "Error: upload to Jenkins server failed."
   exit 1
 fi
-
-exit 0
-COMP_MSG="Comparison job queued."
-if [ $(grep 'COMPARISON;QUEUED' $WORKSPACE/upload/testsResults/comparison.txt | wc -l) -eq 0 ] ; then
-  ERR_MSG="Build errors/Fireworks only changes/No short matrix requested"
-  if [ "X$BUILD_OK" != "Xtrue" ] ; then
-    ERR_MSG="Build errors"
-  elif [ "X$RELVALS_OK" != "Xtrue" ] ; then
-    ERR_MSG="runTheMatrix errors"
-  elif [ "X$DO_SHORT_MATRIX" != "Xtrue" ] ; then
-    ERR_MSG="short runTheMatrix was not requested"
-  elif [ "X$ONLY_FIREWORKS" = "Xtrue" ] ; then
-    ERR_MSG="Fireworks only changes in PR"
-  fi
-  COMP_MSG="Comparison not run due to ${ERR_MSG} (RelVals and Igprof tests were also skipped)"
-fi
-
-# Leave final comment
-for PR in ${PULL_REQUESTS} ; do
-    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
-    PR_NR=$(echo ${PR} | sed 's/.*#//' )
-    ${CMS_BOT_DIR}/comment-gh-pr -r ${PR_NAME_AND_REPO} -p ${PR_NR} -m "${COMP_MSG}" ${DRY_RUN} || true
-done

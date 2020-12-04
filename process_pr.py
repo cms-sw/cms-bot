@@ -1246,7 +1246,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
               delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
     if not dryRun:
       set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
-      last_commit_obj.create_status("success", description=test_params_msg, target_url=url, context="bot/test_parameters")
+      state = "success"
+      if emoji="-1": state = "error"
+      last_commit_obj.create_status(state, description=test_params_msg, target_url=url, context="bot/test_parameters")
   if ack_comment:
     state = get_status("bot/ack", commit_statuses)
     if (not state) or (state.target_url != ack_comment.html_url):

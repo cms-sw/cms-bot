@@ -12,6 +12,7 @@ from os import environ
 from github_utils import get_token, edit_pr, api_rate_limits, set_comment_emoji
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
+from json imports dumps
 
 try: from categories import COMMENT_CONVERSION
 except: COMMENT_CONVERSION={}
@@ -277,11 +278,11 @@ def parse_extra_params(full_comment, repo):
 
 def multiline_check_function(first_line, comment_lines, repository):
   if not "test parameters" in first_line.lower():
-    return False, {}
+    return False, {}, ""
   extra_params = parse_extra_params(comment_lines, repository)
   print(extra_params)
-  if 'errors' in extra_params: return False, {}
-  return True, extra_params
+  if 'errors' in extra_params: return False, {}, extra_params['errors']
+  return True, extra_params, ""
 
 def get_changed_files(repo, pr, use_gh_patch=False):
   if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
@@ -538,6 +539,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   test_comment = None
   trigger_test = False
   ack_comment = None
+  test_params_msg = ""
 
   #start of parsing comments section
   for c in issue.get_comments(): all_comments.append(c)
@@ -627,9 +629,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
          print("==>Closing requested received from %s" % commenter)
       continue
     if valid_commenter:
-      valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
-      if valid_multiline_comment:
+      valid_multiline_comment , test_params, test_params_m = multiline_check_function(first_line, comment_lines, repository)
+      if test_params_m:
+        test_params_msg = test_params_m
+      elif valid_multiline_comment:
         global_test_params = dict(test_params)
+        test_params_msg = json.dumps(global_test_params, sort_keys=True)
         continue
 
     if (cmssw_repo and CODE_CHECKS_REGEXP.match(first_line)):
@@ -1211,6 +1216,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if mustMerge == True:
     print("This pull request must be merged.")
     if not dryRun and (pr.state == "open"): pr.merge()
+
+  state = get_status("bot/test_parameters", commit_statuses)
+  if test_params_msg="No special test parameter set."
+  if not state or (state.description != test_params_msg):
+    if not dryRun:
+      last_commit_obj.create_status("success", description=test_params_msg, context="bot/test_parameters")
   if ack_comment:
     state = get_status("bot/ack", commit_statuses)
     if (not state) or (state.target_url != ack_comment.html_url):

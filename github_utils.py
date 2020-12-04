@@ -337,7 +337,7 @@ def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
     return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
 
 
-def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None):
+def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None, raw=False):
     if not params:
         params = {}
     if not headers:
@@ -371,7 +371,9 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
                 page_range += range(pages[0], pages[1] + 1)
             elif len(pages) == 1:
                 page_range += pages
-    return json.loads(response.read())
+    cont = response.read()
+    if raw: return cont
+    return json.loads(cont)
 
 
 def get_pull_requests(gh_repo, branch=None, status='open'):
@@ -441,7 +443,7 @@ def get_comment_emojis(comment_id, repository, token=None):
 def delete_comment_emoji(emoji_id, comment_id, repository, token=None):
   if not token: token = get_gh_token(repository)
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), token, method="DELETE", headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), token, method="DELETE", headers=headers, raw=True)
 
 
 def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):

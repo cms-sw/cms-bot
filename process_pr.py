@@ -1243,7 +1243,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           if e['content']!=emoji:
             print("deleting old emoji:",e['content'])
             if not dryRun:
-              delte_comment_emoji(str(e['id']), test_params_comment.id, repository)
+              delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
     if not dryRun:
       set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
       last_commit_obj.create_status("success", description=test_params_msg, target_url=url, context="bot/test_parameters")

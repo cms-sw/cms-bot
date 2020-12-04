@@ -1248,6 +1248,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
       state = "success"
       if emoji=="-1": state = "error"
+      if len(test_params_msg)>140: test_params_msg=test_params_msg[:135]+"..."
       last_commit_obj.create_status(state, description=test_params_msg, target_url=url, context="bot/test_parameters")
   if ack_comment:
     state = get_status("bot/ack", commit_statuses)

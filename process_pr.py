@@ -634,7 +634,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         test_params_msg = test_params_m
       elif valid_multiline_comment:
         global_test_params = dict(test_params)
-        test_params_msg = json.dumps(global_test_params, sort_keys=True)
+        test_params_msg = dumps(global_test_params, sort_keys=True)
         continue
 
     if (cmssw_repo and CODE_CHECKS_REGEXP.match(first_line)):

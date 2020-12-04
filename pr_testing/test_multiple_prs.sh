@@ -972,7 +972,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
     echo 'UNIT_TEST_RESULTS;OK,Unit Tests,See Log,unitTests' >> ${RESULTS_FILE}/unittest.txt
   fi
   echo "<html><head></head><body>" > $WORKSPACE/unitTests/success.html
-  cp $WORKSPACE/unittests/success.html $WORKSPACE/unitTests/failed.html
+  cp $WORKSPACE/unitTests/success.html $WORKSPACE/unitTests/failed.html
   UT_ERR=false
   utlog="testing.log"
   for t in $(find $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src -name ${utlog} -type f | sed "s|$WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src/||;s|/${utlog}$||") ; do

@@ -975,9 +975,9 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
   cp $WORKSPACE/unitTests/success.html $WORKSPACE/unitTests/failed.html
   UT_ERR=false
   utlog="testing.log"
-  for t in $(find $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src -name ${utlog} -type f | sed "s|$WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src/||;s|/${utlog}$||") ; do
+  for t in $(find $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src -name ${utlog} -type f | sed "s|$WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/||;s|/${utlog}$||") ; do
     mkdir -p $WORKSPACE/unitTests/${t}
-    mv $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src/${t}/${utlog} $WORKSPACE/unitTests/${t}/
+    mv $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/${t}/${utlog} $WORKSPACE/unitTests/${t}/
     if [ $(grep '^\-\-\-> test  *[^ ]*  *succeeded$' $WORKSPACE/unitTests/${t}/${utlog} | wc -l) -gt 0 ] ; then
       echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/unitTests/success.html
     else

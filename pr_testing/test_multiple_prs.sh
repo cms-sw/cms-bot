@@ -47,7 +47,7 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
-    for f in dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
+    for f in unittests dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
     if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
@@ -970,6 +970,24 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
     mark_commit_status_all_prs 'unittest' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo 'UNIT_TEST_RESULTS;OK,Unit Tests,See Log,unitTests.log' >> ${RESULTS_FILE}/unittest.txt
   fi
+  mkdir $WORKSPACE/unittests
+  echo "<html><head></head><body>" > $WORKSPACE/unittests/success.html
+  cp $WORKSPACE/unittests/success.html $WORKSPACE/unittests/failed.html
+  UT_ERR=false
+  utlog="testing.log"
+  for t in $(find $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src -name ${utlog} -type f | sed "s|$WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src/||;s|/${utlog}$||") ; do
+    mkdir -p $WORKSPACE/unittests/${t}
+    mv $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src/${t}/${utlog} $WORKSPACE/unittests/${t}/
+    if [ $(grep '^\-\-\-> test  *[^ ]*  *succeeded$' $WORKSPACE/unittests/${t}/${utlog} | wc -l) -gt 0 ] ; then
+      echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/unittests/success.html
+    else
+      echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/unittests/failed.html
+      UT_ERR=true
+    fi
+  done
+  if $UT_ERR ; then echo "No unit test failed" >> $WORKSPACE/unittests/failed.html ; fi
+  echo "</body></html>" >> $WORKSPACE/unittests/success.html
+  echo "</body></html>" >> $WORKSPACE/unittests/failed.html
 else
   echo 'UNIT_TEST_RESULTS;NOTRUN' >> ${RESULTS_FILE}/unittest.txt
 fi

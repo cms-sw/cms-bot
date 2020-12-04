@@ -267,3 +267,26 @@ def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normal
   sdata["@timestamp"]=file_stamp*1000
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)
+
+def getExternalsESstats(cmsdist='*', arch='*', lastNdays=30, page_size=0):
+    stats = es_query(index='externals_stats_summary_testindex*',
+                     query=format('cmsdist:%(cmsdist_branch)s AND architecture:%(architecture)s',
+                                  cmsdist_branch=str(cmsdist),
+                                  architecture=arch),
+                     start_time=1000*int(time()-(86400*lastNdays)),
+                     end_time=1000*int(time()),scroll=True)
+    return stats['hits']['hits']
+
+# get a dict of stats with externals name as keys
+# create a default github file with stats so if elastic search fails,
+def orderStatsByName(externalsStats=None):    
+    namedStats = {}
+    for element in externalsStats:
+        ext_name = element["_source"]["name"]
+        if ext_name not in namedStats:
+            namedStats[ext_name] = list()
+        namedStats[ext_name].append(element["_source"])
+    # order by timestamp
+    for ext in namedStats:
+        namedStats[ext] = sorted(namedStats[ext], key=lambda x: x["@timestamp"], reverse=True)
+    return namedStats

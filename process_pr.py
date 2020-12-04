@@ -540,7 +540,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   trigger_test = False
   ack_comment = None
   test_params_msg = ""
-  test_params_url = ""
+  test_params_comment = None
 
   #start of parsing comments section
   for c in issue.get_comments(): all_comments.append(c)
@@ -633,9 +633,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       valid_multiline_comment , test_params, test_params_m = multiline_check_function(first_line, comment_lines, repository)
       if test_params_m:
         test_params_msg = test_params_m
-        test_params_url = comment.html_url
+        test_params_comment = comment
       elif valid_multiline_comment:
-        test_params_url = comment.html_url
+        test_params_comment = comment
         global_test_params = dict(test_params)
         test_params_msg = dumps(global_test_params, sort_keys=True)
         continue
@@ -1225,7 +1225,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if test_params_msg=="":  test_params_msg="No special test parameter set."
     print("Test params:",test_params_msg)
     if not dryRun:
-      last_commit_obj.create_status("success", description=test_params_msg, target_url=test_params_url, context="bot/test_parameters")
+      url = ""
+      if test_params_comment:
+        url = test_params_comment.html.url
+        if test_params_msg.startswith('Invalid value '):
+          set_comment_emoji(test_params_comment.id, repository, emoji="-1")
+        else:
+          set_comment_emoji(test_params_comment.id, repository, emoji="+1")
+      last_commit_obj.create_status("success", description=test_params_msg, target_url=url, context="bot/test_parameters")
   if ack_comment:
     state = get_status("bot/ack", commit_statuses)
     if (not state) or (state.target_url != ack_comment.html_url):

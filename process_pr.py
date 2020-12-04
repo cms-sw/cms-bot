@@ -12,7 +12,7 @@ from os import environ
 from github_utils import get_token, edit_pr, api_rate_limits, set_comment_emoji
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
-from json imports dumps
+from json import dumps
 
 try: from categories import COMMENT_CONVERSION
 except: COMMENT_CONVERSION={}

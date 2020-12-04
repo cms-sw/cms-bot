@@ -9,7 +9,8 @@ import re, time
 from datetime import datetime
 from os.path import join, exists
 from os import environ
-from github_utils import get_token, edit_pr, api_rate_limits, set_comment_emoji
+from github_utils import get_token, edit_pr, api_rate_limits
+from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps
@@ -1231,14 +1232,20 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if ((not state) and (test_params_msg!="")) or (state and state.description != test_params_msg):
     if test_params_msg=="":  test_params_msg="No special test parameter set."
     print("Test params:",test_params_msg)
+    url = ""
+    if test_params_comment:
+      url = test_params_comment.html_url
+      emoji = "+1"
+      if test_params_msg.startswith('ERRORS: '): emoji = "-1"
+      emojis = get_comment_emojis(test_params_comment.id, repository)
+      for e in emojis:
+        if e['user']['login'].encode("ascii", "ignore") == cmsbuild_user:
+          if e['content']!=emoji:
+            print("deleting old emoji:",e['content'])
+            if not dryRun:
+              delte_comment_emoji(str(e['id']), test_params_comment.id, repository)
     if not dryRun:
-      url = ""
-      if test_params_comment:
-        url = test_params_comment.html_url
-        if test_params_msg.startswith('ERRORS: '):
-          set_comment_emoji(test_params_comment.id, repository, emoji="-1")
-        else:
-          set_comment_emoji(test_params_comment.id, repository, emoji="+1")
+      set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
       last_commit_obj.create_status("success", description=test_params_msg, target_url=url, context="bot/test_parameters")
   if ack_comment:
     state = get_status("bot/ack", commit_statuses)

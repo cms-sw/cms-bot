@@ -1218,9 +1218,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if not dryRun and (pr.state == "open"): pr.merge()
 
   state = get_status("bot/test_parameters", commit_statuses)
-  print("Test params:",test_params_msg)
   if ((not state) and (test_params_msg!="")) or (state.description != test_params_msg):
     if test_params_msg=="":  test_params_msg="No special test parameter set."
+    print("Test params:",test_params_msg)
     if not dryRun:
       last_commit_obj.create_status("success", description=test_params_msg, context="bot/test_parameters")
   if ack_comment:

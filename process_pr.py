@@ -240,7 +240,7 @@ def get_prs_list_from_string(pr_string="", repo_string=""):
 
 def parse_extra_params(full_comment, repo):
   global ALL_CHECK_FUNCTIONS
-  error_lines = []
+  xerrors = {"format": [], "key": [], "value":[]}
   matched_extra_args = {}
   if ALL_CHECK_FUNCTIONS is None:
     all_globals = globals()
@@ -252,17 +252,19 @@ def parse_extra_params(full_comment, repo):
     l = l.strip()
     if l=='': continue
     if not '=' in l:
-      error_lines.append('"=" not found in line arg: ' + l)
+      xerrors["format"].append("'%s'" % l)
       continue
+    line_args = l.split('=', 1)
+    line_args[0] = line_args[0].replace(' ', '')
+    line_args[1] = line_args[1].strip()
+    found=False
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
-      line_args = l.split('=', 1)
-      line_args[0] = line_args[0].replace(' ', '')
-      line_args[1] = line_args[1].strip()
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')
       if not re.match(k, line_args[0], re.I): continue
       if not re.match(pttrn[0], line_args[1], re.I):
-        error_lines.append('Invalid value "%s" for parameter "%s" used.' % (line_args[1], line_args[0]))
+        xerrors["value"].append(line_args[0])
+        found=True
         break
       try:
         func = 'check_%s' % pttrn[1].lower()
@@ -271,9 +273,14 @@ def parse_extra_params(full_comment, repo):
       except:
         pass
       matched_extra_args[pttrn[1]] = line_args[1]
+      found=True
       break
+    if not found: xerrors["key"].append(line_args[0])
+  error_lines = []
+  for k in sorted(xerrors.keys()):
+    if xerrors[k]: error_lines.append("%s:%s" % (k,",".join(xerrors[k])))
   if error_lines:
-    matched_extra_args = {"errors" : error_lines}
+    matched_extra_args = {"errors" : "ERRORS: "+'; '.join(error_lines)}
   return matched_extra_args
 
 def multiline_check_function(first_line, comment_lines, repository):
@@ -1228,7 +1235,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       url = ""
       if test_params_comment:
         url = test_params_comment.html_url
-        if test_params_msg.startswith('Invalid value '):
+        if test_params_msg.startswith('ERRORS: '):
           set_comment_emoji(test_params_comment.id, repository, emoji="-1")
         else:
           set_comment_emoji(test_params_comment.id, repository, emoji="+1")

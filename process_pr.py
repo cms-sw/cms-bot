@@ -1227,7 +1227,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if not dryRun:
       url = ""
       if test_params_comment:
-        url = test_params_comment.html.url
+        url = test_params_comment.html_url
         if test_params_msg.startswith('Invalid value '):
           set_comment_emoji(test_params_comment.id, repository, emoji="-1")
         else:

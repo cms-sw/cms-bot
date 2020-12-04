@@ -985,7 +985,7 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
       UT_ERR=true
     fi
   done
-  if $UT_ERR ; then echo "No unit test failed" >> $WORKSPACE/unittests/failed.html ; fi
+  if ! $UT_ERR ; then echo "No unit test failed" >> $WORKSPACE/unittests/failed.html ; fi
   echo "</body></html>" >> $WORKSPACE/unittests/success.html
   echo "</body></html>" >> $WORKSPACE/unittests/failed.html
 else

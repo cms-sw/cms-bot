@@ -29,7 +29,7 @@ export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
-PR_NUM=i$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
+PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 NCPU=$(${COMMON}/get_cpu_number.sh)
 if [[  $NODE_NAME == *"cms-cmpwg-0"* ]]; then
    let NCPU=${NCPU}/2

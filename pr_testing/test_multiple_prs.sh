@@ -15,7 +15,7 @@ COMMON=${CMS_BOT_DIR}/common
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 RESULTS_FILE=$WORKSPACE/testsResults
 CONFIG_MAP=$CMS_BOT_DIR/config.map
-MAIN_PR_COMMIT=""
+PR_COMMIT=""
 rm -rf ${RESULTS_FILE} ${RESULTS_FILE}.txt
 # ---
 # doc: Input variable
@@ -25,7 +25,6 @@ rm -rf ${RESULTS_FILE} ${RESULTS_FILE}.txt
 # CMSDIST_PR      # CMSDIST PR number, should avoid
 # ARCHITECTURE    # architecture (ex. slc6_amd64_gcc700)
 # and some others
-export FIRST_PR_ONLY=true
 export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
@@ -79,7 +78,7 @@ function prepare_upload_comment_exit(){
     if [ -z ${NO_POST} ]; then
         send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
     fi
-    report_pull_request_results_all_prs_with_commit $@ --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${MAIN_PR_COMMIT}
+    report_pull_request_results_all_prs_with_commit $@ --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
     exit 0
 }
 
@@ -179,7 +178,6 @@ for PR in ${PULL_REQUESTS}; do
     echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
     echo "${PR}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
 done
-#if $FIRST_PR_ONLY ; then MAIN_PR_COMMIT="-c $(cat $(get_path_to_pr_metadata ${MAIN_PULL_REQUEST})/COMMIT)" ; fi
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset || true
 if $REQUIRED_TEST ; then mark_commit_status_all_prs 'required' 'success' -d 'OK' || true ; fi
@@ -218,7 +216,7 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
     if [ "X$CMSSW_IB" = "X" ] ; then
       CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$CMSSW_IB" = "X" ] ; then
-        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${MAIN_PR_COMMIT}
+        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
         mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d 'Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}' || true
         exit 0
       fi
@@ -1054,7 +1052,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true
       echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
       echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
       echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
-      echo "MAIN_PULL_REQUEST=${MAIN_PULL_REQUEST}" >> $TRIGGER_COMPARISON_FILE
+      echo "PULL_REQUEST=${PULL_REQUEST}" >> $TRIGGER_COMPARISON_FILE
       mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start" || true
     fi
 
@@ -1335,10 +1333,10 @@ fi
 if [ -f all_done ] ; then
   rm -f all_done
   # Doc: report everything back unless no matter if ALL_OK was true or false.
-  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${MAIN_PR_COMMIT}
+  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${PR_COMMIT}
 elif [ ! -z ${NO_POST} ] ; then
   # Doc: if --no-post flag is set, output comments and continue to next code block.
-  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${MAIN_PR_COMMIT}
+  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${PR_COMMIT}
 else
   echo "Error: upload to Jenkins server failed."
   exit 1

@@ -45,7 +45,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     REQUIRED_TEST=false
     eval $CONFIG_LINE
     OUTPUT_FILE=properties-pr-test-${SCRAM_ARCH}.txt
-    echo MAIN_PULL_REQUEST="$(echo ${PULL_REQUESTS} | sed 's| .*||')" >> $OUTPUT_FILE
+    echo PULL_REQUEST="$(echo ${PULL_REQUESTS} | sed 's| .*||')" >> $OUTPUT_FILE
     echo PULL_REQUESTS=${PULL_REQUESTS} >> $OUTPUT_FILE
     echo ARCHITECTURE=${SCRAM_ARCH} >> $OUTPUT_FILE
     if [ "X$RELEASE_FORMAT" = X ] ; then

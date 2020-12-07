@@ -29,6 +29,7 @@ export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
+PR_NUM=i$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 NCPU=$(${COMMON}/get_cpu_number.sh)
 if [[  $NODE_NAME == *"cms-cmpwg-0"* ]]; then
    let NCPU=${NCPU}/2
@@ -76,7 +77,7 @@ function prepare_upload_results (){
 function prepare_upload_comment_exit(){
     prepare_upload_results
     if [ -z ${NO_POST} ]; then
-        send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER}
+        send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}
     fi
     report_pull_request_results_all_prs_with_commit $@ --report-pr ${PULL_REQUEST} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
     exit 0
@@ -1065,7 +1066,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true
       popd
       sed -i "s/<!--CONFIG_FILES_BROWSER//g" $WORKSPACE/summary.html
       sed -i "s/CONFIG_FILES_BROWSER-->//g" $WORKSPACE/summary.html
-      sed -i "s/PARAM_CONFIG_BROWSER/https:\/\/cmssdt.cern.ch\/SDT\/${JENKINS_PREFIX}-artifacts\/${JOB_NAME}\/PR-${PULL_REQUEST}\/${BUILD_NUMBER}\/cfg-viewerResults\//g" $WORKSPACE/summary.html
+      sed -i "s/PARAM_CONFIG_BROWSER/https:\/\/cmssdt.cern.ch\/SDT\/${JENKINS_PREFIX}-artifacts\/${JOB_NAME}\/PR-${PR_NUM}\/${BUILD_NUMBER}\/cfg-viewerResults\//g" $WORKSPACE/summary.html
     fi
   fi
 fi
@@ -1204,11 +1205,11 @@ for BT in ${ENABLE_BOT_TESTS}; do
                d=$(dirname $f)
                mkdir -p $WORKSPACE/upload/profiling/$d || true
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
-               mkdir -p $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER} || true
+               mkdir -p $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER} || true
                BASENAME=$(basename $f)
-			ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
-               ls -l $WORKSPACE/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
-               echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index.html
+			ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER}/$BASENAME || true
+               ls -l $WORKSPACE/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER}/$BASENAME || true
+               echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              done
              for f in $(find $PROFILING_WORKFLOW -type f -name '*.json' ) ; do
                d=$(dirname $f)
@@ -1216,11 +1217,11 @@ for BT in ${ENABLE_BOT_TESTS}; do
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
                mkdir -p $WORKSPACE/upload/profiles/$d || true
                BASENAME=$(basename $f)
-               mkdir -p $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER} || true
-               ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
-               ls -l $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
+               mkdir -p $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER} || true
+               ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER}/$BASENAME || true
+               ls -l $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER}/$BASENAME || true
                AMP="&"
-               echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?local=false${AMP}dataset=${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index.html
+               echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?local=false${AMP}dataset=${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PR_NUM}/${BUILD_NUMBER}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index.html
              done
              echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index.html
              for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt') ; do
@@ -1316,9 +1317,9 @@ fi
 
 rm -f all_done  # delete file
 if [ -z ${NO_POST} ] ; then
-    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER} && touch all_done
+    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER} && touch all_done
     if [ -d $LOCALRT/das_query ] ; then
-      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PULL_REQUEST}/${BUILD_NUMBER}/PR || true
+      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PR_NUM}/${BUILD_NUMBER}/PR || true
     fi
     if [ -d $LOCALRT/profiling ]; then
         send_jenkins_artifacts $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE} profiling/${CMSSW_IB}/${ARCHITECTURE}/

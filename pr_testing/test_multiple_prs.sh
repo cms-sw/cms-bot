@@ -76,9 +76,9 @@ function prepare_upload_results (){
 function prepare_upload_comment_exit(){
     prepare_upload_results
     if [ -z ${NO_POST} ]; then
-        send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
+        send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER}
     fi
-    report_pull_request_results_all_prs_with_commit $@ --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
+    report_pull_request_results_all_prs_with_commit $@ --report-pr ${PULL_REQUEST} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
     exit 0
 }
 
@@ -111,7 +111,6 @@ UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uni
 fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
-REPORT_H_CODE=$(echo ${PULL_REQUESTS} | tr ',' '\n' | sort | md5sum | sed 's| .*||' | cut -c27-33)      # Used to to create link to folder where uploaded files are.
 RPM_UPLOAD_REPO=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '/cmssw#' | grep -v '/cms-bot#' | sort | uniq | md5sum | sed 's| .*||')
 
 let WEEK_NUM=$(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||;s|^0*||')%2 || true
@@ -216,7 +215,7 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
     if [ "X$CMSSW_IB" = "X" ] ; then
       CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$CMSSW_IB" = "X" ] ; then
-        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
+        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${PULL_REQUEST} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
         mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d 'Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}' || true
         exit 0
       fi
@@ -301,7 +300,7 @@ touch ${RESULTS_FILE}.txt ${RESULTS_FILE}/comparison.txt
 echo "PR_NUMBERS;$PULL_REQUESTS" >> ${RESULTS_FILE}.txt
 echo 'BASE_IB;'$CMSSW_IB >> ${RESULTS_FILE}.txt
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> ${RESULTS_FILE}.txt
-echo "PR_NUMBER;$REPORT_H_CODE" >> ${RESULTS_FILE}.txt
+echo "PR_NUMBER;$PULL_REQUEST" >> ${RESULTS_FILE}.txt
 if [ "X$COMPARISON_REL" == "X" ] ; then
   echo "COMPARISON_IB;$BASE_IB" >> ${RESULTS_FILE}.txt
 else
@@ -340,7 +339,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--tag ${REPORT_H_CODE}"
+    CMSBUILD_ARGS="--tag ${PULL_REQUEST}"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
     fi
@@ -1044,7 +1043,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true
       echo "Creating properties file $TRIGGER_COMPARISON_FILE"
       echo "RELEASE_FORMAT=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE
       echo "ARCHITECTURE=${ARCHITECTURE}" >> $TRIGGER_COMPARISON_FILE
-      echo "PULL_REQUEST_NUMBER=$REPORT_H_CODE" >> $TRIGGER_COMPARISON_FILE
       echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $TRIGGER_COMPARISON_FILE
       echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
       echo "REAL_ARCH=$REAL_ARCH" >> $TRIGGER_COMPARISON_FILE
@@ -1206,11 +1204,11 @@ for BT in ${ENABLE_BOT_TESTS}; do
                d=$(dirname $f)
                mkdir -p $WORKSPACE/upload/profiling/$d || true
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
-               mkdir -p $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER} || true
+               mkdir -p $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER} || true
                BASENAME=$(basename $f)
-			ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
-               ls -l $WORKSPACE/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
-               echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index.html
+			ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
+               ls -l $WORKSPACE/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
+               echo "<li><a href=\"https://cmssdt.cern.ch/SDT/cgi-bin/igprof-navigator/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/${BASENAME//.sql3/}\"> $(basename $f)</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              done
              for f in $(find $PROFILING_WORKFLOW -type f -name '*.json' ) ; do
                d=$(dirname $f)
@@ -1218,11 +1216,11 @@ for BT in ${ENABLE_BOT_TESTS}; do
                cp -p $f $WORKSPACE/upload/profiling/$d/ || true
                mkdir -p $WORKSPACE/upload/profiles/$d || true
                BASENAME=$(basename $f)
-               mkdir -p $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER} || true
-               ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
-               ls -l $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/$BASENAME || true
+               mkdir -p $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER} || true
+               ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER}/profiling/$d/$BASENAME $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
+               ls -l $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/$BASENAME || true
                AMP="&"
-               echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?local=false${AMP}dataset=${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index.html
+               echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?local=false${AMP}dataset=${CMSSW_IB}/${ARCHITECTURE}/${PROFILING_WORKFLOW}/PR-${PULL_REQUEST}/${BUILD_NUMBER}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index.html
              done
              echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index.html
              for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt') ; do
@@ -1266,7 +1264,7 @@ prepare_upload_results
 
 rm -f ${WORKSPACE}/report.txt
 env | grep 'CMSSW_'
-REPORT_OPTS="--report-pr ${REPORT_H_CODE} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
+REPORT_OPTS="--report-pr ${PULL_REQUEST} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
 
 if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to false)
     BUILD_LOG_RES=""
@@ -1318,9 +1316,9 @@ fi
 
 rm -f all_done  # delete file
 if [ -z ${NO_POST} ] ; then
-    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER} && touch all_done
+    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PULL_REQUEST}/${BUILD_NUMBER} && touch all_done
     if [ -d $LOCALRT/das_query ] ; then
-      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${REPORT_H_CODE}/${BUILD_NUMBER}/PR || true
+      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PULL_REQUEST}/${BUILD_NUMBER}/PR || true
     fi
     if [ -d $LOCALRT/profiling ]; then
         send_jenkins_artifacts $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE} profiling/${CMSSW_IB}/${ARCHITECTURE}/

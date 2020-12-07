@@ -79,7 +79,7 @@ function prepare_upload_comment_exit(){
     if [ -z ${NO_POST} ]; then
         send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}
     fi
-    report_pull_request_results_all_prs_with_commit $@ --report-pr ${PULL_REQUEST} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
+    report_pull_request_results_all_prs_with_commit $@ --report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
     exit 0
 }
 
@@ -216,7 +216,7 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
     if [ "X$CMSSW_IB" = "X" ] ; then
       CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$CMSSW_IB" = "X" ] ; then
-        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${PULL_REQUEST} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
+        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
         mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d 'Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}' || true
         exit 0
       fi
@@ -301,7 +301,7 @@ touch ${RESULTS_FILE}.txt ${RESULTS_FILE}/comparison.txt
 echo "PR_NUMBERS;$PULL_REQUESTS" >> ${RESULTS_FILE}.txt
 echo 'BASE_IB;'$CMSSW_IB >> ${RESULTS_FILE}.txt
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> ${RESULTS_FILE}.txt
-echo "PR_NUMBER;$PULL_REQUEST" >> ${RESULTS_FILE}.txt
+echo "PR_NUMBER;$PR_NUM" >> ${RESULTS_FILE}.txt
 if [ "X$COMPARISON_REL" == "X" ] ; then
   echo "COMPARISON_IB;$BASE_IB" >> ${RESULTS_FILE}.txt
 else
@@ -340,7 +340,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--tag ${PULL_REQUEST}"
+    CMSBUILD_ARGS="--tag ${PR_NUM}"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
     fi
@@ -1265,7 +1265,7 @@ prepare_upload_results
 
 rm -f ${WORKSPACE}/report.txt
 env | grep 'CMSSW_'
-REPORT_OPTS="--report-pr ${PULL_REQUEST} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
+REPORT_OPTS="--report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
 
 if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to false)
     BUILD_LOG_RES=""

@@ -17,7 +17,7 @@ if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$RELEASE_FORMAT; f
 if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="-GenuineIntel"; fi
 PR_NUM=i$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix-results
-PR_BASELINE_JOBDIR=pull-request-integration/PR-${PR_NUM}/$PULL_REQUEST_JOB_ID
+PR_BASELINE_JOBDIR=pull-request-integration/PR-$PR_NUM/$PULL_REQUEST_JOB_ID
 PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix-results
 
 WFS_WITH_ERRORS=''
@@ -108,10 +108,10 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
     grep '/store/' $WORKSPACE/data/$RELEASE_FORMAT/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log || true
   fi
   if [ -f $WORKSPACE/data/PR-${PR_NUM}/$WF ] ; then
-    ln -s $WORKSPACE/data/PR-${PR_NUM}/$WF $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST-$WF_FILE
+    ln -s $WORKSPACE/data/PR-${PR_NUM}/$WF $WORKSPACE/results/files/$WF_DIR/$PR_NUM-$WF_FILE
   fi
   if [ -f $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/step1_dasquery.log ] ; then
-    grep '/store/' $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST-step1_dasquery.log || true
+    grep '/store/' $WORKSPACE/data/PR-${PR_NUM}/$WF_DIR/step1_dasquery.log > $WORKSPACE/results/files/$WF_DIR/$PR_NUM-step1_dasquery.log || true
   fi
 
   # check that the step1_dasquery.log files are correct.
@@ -120,7 +120,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
   if [ "$NUM_FILES" -eq "1" ]; then
     WFS_WITH_DAS_INCONSISTENCY=$WF_NUMBER,$WFS_WITH_DAS_INCONSISTENCY
   elif [ "$NUM_FILES" -eq "2" ]; then
-    PR_DAS_QUERY_LOG="$WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST-step1_dasquery.log"
+    PR_DAS_QUERY_LOG="$WORKSPACE/results/files/$WF_DIR/$PR_NUM-step1_dasquery.log"
     BASELINE_DAS_QUERY_LOG="$WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-step1_dasquery.log"
     THEY_DIFFER=`diff -q "$PR_DAS_QUERY_LOG" "$BASELINE_DAS_QUERY_LOG" || true`
     if [ "X$THEY_DIFFER" != X ]; then
@@ -159,8 +159,8 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
   echo "Start JR comparison at `date`"
-  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-${PR_NUM} $WORKSPACE/data/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
-  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-${PR_NUM} $WORKSPACE/data/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
+  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
+  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$RELEASE_FORMAT OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
   echo "Finished with JR comparison at `date`:"
 fi
@@ -168,8 +168,8 @@ fi
 #Run product size comparison script for Phase2 workflow
 mkdir compareProducts && cd compareProducts
 cp $CMS_BOT_DIR/comparisons/compareProducts.* ./
-./compareProducts.sh $WORKSPACE/data/PR-${PR_NUM}/136.874_*/step3.root $WORKSPACE/data/$RELEASE_FORMAT/136.874_*/step3.root _ 100 10 > products_AOD.log || true
-./compareProducts.sh $WORKSPACE/data/PR-${PR_NUM}/136.874_*/step3_inMINIAOD.root $WORKSPACE/data/$RELEASE_FORMAT/136.874_*/step3_inMINIAOD.root _ 100 10 > products_MINIAOD.log || true
+./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3.root $WORKSPACE/data/$RELEASE_FORMAT/136.874_*/step3.root _ 100 10 > products_AOD.log || true
+./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3_inMINIAOD.root $WORKSPACE/data/$RELEASE_FORMAT/136.874_*/step3_inMINIAOD.root _ 100 10 > products_MINIAOD.log || true
 mv products_AOD.log $WORKSPACE/upload/products_AOD.log
 mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
 cd .. 
@@ -213,7 +213,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     # create a mini script for running this comparisons in parallel
     echo '#!/bin/sh -ex' > $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "ERR=0" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    echo "compare_using_files.py -B DQM/TimerService@3 $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE $WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST-$WF_FILE -o $OUTPUT_DIR --metas \" $RELEASE_FORMAT @@@ $RELEASE_FORMAT + $PULL_REQUEST \" --use_black_file -C -R -p --no_successes -s b2b $TH_PARAM --standalone >> ${OUTPUT_DIR}RelMonComp-$WF_NUMBER.log 2>&1 || ERR=1" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
+    echo "compare_using_files.py -B DQM/TimerService@3 $WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE $WORKSPACE/results/files/$WF_DIR/$PR_NUM-$WF_FILE -o $OUTPUT_DIR --metas \" $RELEASE_FORMAT @@@ $RELEASE_FORMAT + $PR_NUM \" --use_black_file -C -R -p --no_successes -s b2b $TH_PARAM --standalone >> ${OUTPUT_DIR}RelMonComp-$WF_NUMBER.log 2>&1 || ERR=1" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "cp $OUTPUT_DIR/RelMonSummary.html $OUTPUT_DIR/index.html || true" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "touch $WORKSPACE/results/default-comparison/done-$WF_NUMBER" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo 'exit $ERR' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
@@ -245,7 +245,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     WF_DIR=`echo $WF | cut -d "/" -f1`
     WF_NUMBER=`echo $WF | cut -d'_' -f1`
     BASE_FILE=$WORKSPACE/results/files/$WF_DIR/$RELEASE_FORMAT-$WF_FILE
-    COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PULL_REQUEST-$WF_FILE
+    COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PR_NUM-$WF_FILE
   
     mkdir -p $ALT_COMP_DIR/$WF_NUMBER
     cp $CMS_BOT_DIR/comparisons/compareValHists.C $ALT_COMP_DIR/$WF_NUMBER
@@ -375,7 +375,7 @@ if [ -e results/files ] ; then
     mkdir -p upload/files/${wfdir}
     case $file in 
       */${RELEASE_FORMAT}-*) SRC_FILE=../../../../../${BASELINE_DIR}/${wfdir}/$(echo $fname | sed "s|${RELEASE_FORMAT}-||") ;;
-      *)                     SRC_FILE=../../../../../${PR_BASELINE_DIR}/${wfdir}/$(echo $fname | sed "s|$PULL_REQUEST-||") ;;
+      *)                     SRC_FILE=../../../../../${PR_BASELINE_DIR}/${wfdir}/$(echo $fname | sed "s|$PR_NUM-||") ;;
     esac
     ln -sf $SRC_FILE upload/files/$file
   done
@@ -389,7 +389,7 @@ if [ "$DRY_RUN" != "true" ] ; then
   fi
 fi
 mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finishes, please check results" || true
-report_pull_request_results_all_prs "COMPARISON_READY" --report-pr ${PULL_REQUEST} --pr-job-id $PULL_REQUEST_JOB_ID \
+report_pull_request_results_all_prs "COMPARISON_READY" --report-pr ${PR_NUM} --pr-job-id $PULL_REQUEST_JOB_ID \
   -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
   --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt
 echo "All done at `date`"

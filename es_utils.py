@@ -256,8 +256,8 @@ def es_send_resource_stats(release, arch, name, version, sfile,
   except Exception as e: print(e.message)
 
 def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normalize=1,
-                           es_index_name='externals_stats_summary_testindex',
-                           es_doc_name='externals-runtime-stats-summary-testdoc'):
+                           es_index_name='externals_stats_summary',
+                           es_doc_name='externals-stats-summary'):
   file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
   week = str((file_stamp / 86400 + 4) / 7)
   with open(opts_dict_file_path, 'r') as opts_dict_f: opts_dict = json.load(opts_dict_f)

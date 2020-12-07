@@ -486,7 +486,7 @@ def send_tests_approved_pr_message( repo, pr_number, tests_url ):
 def send_comparison_ready_message(repo, pr_number, tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file, missing_map ):
   pull_request = repo.get_pull(pr_number)
   message = COMPARISON_READY_MSG +'\n' + tests_results_url
-
+  message += get_pr_tests_info()
   wfs_with_errors = ''
   for line in open( comparison_errors_file ):
     line = line.rstrip()

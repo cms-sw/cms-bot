@@ -9,9 +9,11 @@ import re, time
 from datetime import datetime
 from os.path import join, exists
 from os import environ
-from github_utils import get_token, edit_pr, api_rate_limits, set_comment_emoji
+from github_utils import get_token, edit_pr, api_rate_limits
+from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
+from json import dumps
 
 try: from categories import COMMENT_CONVERSION
 except: COMMENT_CONVERSION={}
@@ -34,7 +36,7 @@ HOLD_MSG = "Pull request has been put on hold by "
 CODE_CHECKS_REGEXP=re.compile("code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)$")
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
-CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+/[a-zA-Z0-9]+'
+CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
 RELVAL_OPTS="[a-zA-Z0-9_-][a-zA-Z0-9_-]*"
@@ -239,7 +241,7 @@ def get_prs_list_from_string(pr_string="", repo_string=""):
 
 def parse_extra_params(full_comment, repo):
   global ALL_CHECK_FUNCTIONS
-  error_lines = []
+  xerrors = {"format": [], "key": [], "value":[]}
   matched_extra_args = {}
   if ALL_CHECK_FUNCTIONS is None:
     all_globals = globals()
@@ -251,17 +253,19 @@ def parse_extra_params(full_comment, repo):
     l = l.strip()
     if l=='': continue
     if not '=' in l:
-      error_lines.append('"=" not found in line arg: ' + l)
+      xerrors["format"].append("'%s'" % l)
       continue
+    line_args = l.split('=', 1)
+    line_args[0] = line_args[0].replace(' ', '')
+    line_args[1] = line_args[1].strip()
+    found=False
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
-      line_args = l.split('=', 1)
-      line_args[0] = line_args[0].replace(' ', '')
-      line_args[1] = line_args[1].strip()
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')
       if not re.match(k, line_args[0], re.I): continue
       if not re.match(pttrn[0], line_args[1], re.I):
-        error_lines.append('Invalid value "%s" for parameter "%s" used.' % (line_args[1], line_args[0]))
+        xerrors["value"].append(line_args[0])
+        found=True
         break
       try:
         func = 'check_%s' % pttrn[1].lower()
@@ -270,18 +274,23 @@ def parse_extra_params(full_comment, repo):
       except:
         pass
       matched_extra_args[pttrn[1]] = line_args[1]
+      found=True
       break
+    if not found: xerrors["key"].append(line_args[0])
+  error_lines = []
+  for k in sorted(xerrors.keys()):
+    if xerrors[k]: error_lines.append("%s:%s" % (k,",".join(xerrors[k])))
   if error_lines:
-    matched_extra_args = {"errors" : error_lines}
+    matched_extra_args = {"errors" : "ERRORS: "+'; '.join(error_lines)}
   return matched_extra_args
 
 def multiline_check_function(first_line, comment_lines, repository):
   if not "test parameters" in first_line.lower():
-    return False, {}
+    return False, {}, ""
   extra_params = parse_extra_params(comment_lines, repository)
   print(extra_params)
-  if 'errors' in extra_params: return False, {}
-  return True, extra_params
+  if 'errors' in extra_params: return False, {}, extra_params['errors']
+  return True, extra_params, ""
 
 def get_changed_files(repo, pr, use_gh_patch=False):
   if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
@@ -538,6 +547,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   test_comment = None
   trigger_test = False
   ack_comment = None
+  test_params_msg = ""
+  test_params_comment = None
 
   #start of parsing comments section
   for c in issue.get_comments(): all_comments.append(c)
@@ -627,9 +638,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
          print("==>Closing requested received from %s" % commenter)
       continue
     if valid_commenter:
-      valid_multiline_comment , test_params = multiline_check_function(first_line, comment_lines, repository)
-      if valid_multiline_comment:
+      valid_multiline_comment , test_params, test_params_m = multiline_check_function(first_line, comment_lines, repository)
+      if test_params_m:
+        test_params_msg = test_params_m
+        test_params_comment = comment
+      elif valid_multiline_comment:
+        test_params_comment = comment
         global_test_params = dict(test_params)
+        test_params_msg = dumps(global_test_params, sort_keys=True)
         continue
 
     if (cmssw_repo and CODE_CHECKS_REGEXP.match(first_line)):
@@ -1211,6 +1227,29 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if mustMerge == True:
     print("This pull request must be merged.")
     if not dryRun and (pr.state == "open"): pr.merge()
+
+  state = get_status("bot/test_parameters", commit_statuses)
+  if ((not state) and (test_params_msg!="")) or (state and state.description != test_params_msg):
+    if test_params_msg=="":  test_params_msg="No special test parameter set."
+    print("Test params:",test_params_msg)
+    url = ""
+    if test_params_comment:
+      url = test_params_comment.html_url
+      emoji = "+1"
+      if test_params_msg.startswith('ERRORS: '): emoji = "-1"
+      emojis = get_comment_emojis(test_params_comment.id, repository)
+      for e in emojis:
+        if e['user']['login'].encode("ascii", "ignore") == cmsbuild_user:
+          if e['content']!=emoji:
+            print("deleting old emoji:",e['content'])
+            if not dryRun:
+              delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
+      state = "success"
+      if emoji=="-1": state = "error"
+      if not dryRun:
+        set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
+        if len(test_params_msg)>140: test_params_msg=test_params_msg[:135]+"..."
+        last_commit_obj.create_status(state, description=test_params_msg, target_url=url, context="bot/test_parameters")
   if ack_comment:
     state = get_status("bot/ack", commit_statuses)
     if (not state) or (state.target_url != ack_comment.html_url):

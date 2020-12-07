@@ -47,7 +47,7 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
-    for f in cmssw.tar.gz dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
+    for f in cmssw.tar.gz unitTests dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
     if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
@@ -846,15 +846,11 @@ else
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_FILE}/build.txt
-mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Uploading build area to run tests" || true
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Runnings tests" || true
 
-cd $WORKSPACE
-rm -rf $CMSSW_IB/tmp
-tar -czf cmssw.tar.gz $CMSSW_IB
-prepare_upload_results
-send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${REPORT_H_CODE}/${BUILD_NUMBER}
-mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Uploaded build area to run tests" || true
-exit 0
+pushd $WORKSPACE
+  mv $CMSSW_IB/tmp ${CMSSW_IB}.tmp; tar -czf cmssw.tar.gz $CMSSW_IB; mv ${CMSSW_IB}.tmp $CMSSW_IB/tmp
+popd
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
@@ -919,10 +915,11 @@ fi
 if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   mark_commit_status_all_prs 'unittest' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
+  mkdir $WORKSPACE/unitTests
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
   UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
-  echo $UTESTS_CMD > $WORKSPACE/unitTests.log
-  (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests.log 2>&1 || true
+  echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt
+  (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests/log.txt 2>&1 || true
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
   #######################################
@@ -939,20 +936,37 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
     echo 'DQM_TESTS;OK,DQM Unit Tests,See Logs,DQMTestsResults' >> ${RESULTS_FILE}/unittest.txt
   fi
 
-  TEST_ERRORS=$(grep -i 'had errors\|recipe for target' $WORKSPACE/unitTests.log | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
-  TEST_ERRORS=`grep -i "had errors" $WORKSPACE/unitTests.log` || true
-  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/unitTests.log` || true
+  TEST_ERRORS=$(grep -i 'had errors\|recipe for target' $WORKSPACE/unitTests/log.txt | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
+  TEST_ERRORS=`grep -i "had errors" $WORKSPACE/unitTests/log.txt` || true
+  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/unitTests/log.txt` || true
 
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the unit tests"
-    echo 'UNIT_TEST_RESULTS;ERROR,Unit Tests,See Log,unitTests.log' >> ${RESULTS_FILE}/unittest.txt
+    echo 'UNIT_TEST_RESULTS;ERROR,Unit Tests,See Log,unitTests' >> ${RESULTS_FILE}/unittest.txt
     ALL_OK=false
     UNIT_TESTS_OK=false
     mark_commit_status_all_prs 'unittest' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed." || true
   else
     mark_commit_status_all_prs 'unittest' 'success' -u "${BUILD_URL}" -d "Passed" || true
-    echo 'UNIT_TEST_RESULTS;OK,Unit Tests,See Log,unitTests.log' >> ${RESULTS_FILE}/unittest.txt
+    echo 'UNIT_TEST_RESULTS;OK,Unit Tests,See Log,unitTests' >> ${RESULTS_FILE}/unittest.txt
   fi
+  echo "<html><head></head><body>" > $WORKSPACE/unitTests/success.html
+  cp $WORKSPACE/unitTests/success.html $WORKSPACE/unitTests/failed.html
+  UT_ERR=false
+  utlog="testing.log"
+  for t in $(find $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src -name ${utlog} -type f | sed "s|$WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/||;s|/${utlog}$||") ; do
+    mkdir -p $WORKSPACE/unitTests/${t}
+    mv $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/${t}/${utlog} $WORKSPACE/unitTests/${t}/
+    if [ $(grep '^\-\-\-> test  *[^ ]*  *succeeded$' $WORKSPACE/unitTests/${t}/${utlog} | wc -l) -gt 0 ] ; then
+      echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/unitTests/success.html
+    else
+      echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/unitTests/failed.html
+      UT_ERR=true
+    fi
+  done
+  if ! $UT_ERR ; then echo "No unit test failed" >> $WORKSPACE/unitTests/failed.html ; fi
+  echo "</body></html>" >> $WORKSPACE/unitTests/success.html
+  echo "</body></html>" >> $WORKSPACE/unitTests/failed.html
 else
   echo 'UNIT_TEST_RESULTS;NOTRUN' >> ${RESULTS_FILE}/unittest.txt
 fi
@@ -1280,7 +1294,7 @@ else
         $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_GEN_OPTS}
     fi
     if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests.log ${REPORT_GEN_OPTS}
+        $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests/log.txt ${REPORT_GEN_OPTS}
     fi
     if [ "X$RELVALS_OK" = Xfalse ]; then
         $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_GEN_OPTS}

@@ -6,6 +6,7 @@ from _py2with3compatibility import run_cmd, urlopen, Request
 from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
 
+GITHUB_TOKEN = None
 try:
     from github import UnknownObjectException
 except:
@@ -336,7 +337,7 @@ def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
     return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
 
 
-def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None):
+def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None, raw=False):
     if not params:
         params = {}
     if not headers:
@@ -370,7 +371,9 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
                 page_range += range(pages[0], pages[1] + 1)
             elif len(pages) == 1:
                 page_range += pages
-    return json.loads(response.read())
+    cont = response.read()
+    if raw: return cont
+    return json.loads(cont)
 
 
 def get_pull_requests(gh_repo, branch=None, status='open'):
@@ -408,10 +411,15 @@ def get_unix_time(data_obj):
 
 
 def get_gh_token(repository=None):
-  if repository:
-    repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
-    if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
-  import repo_config
+  global GITHUB_TOKEN
+  if not GITHUB_TOKEN:
+    if repository:
+      repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
+      if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+    import repo_config
+    GITHUB_TOKEN = open(expanduser(repo_config.GH_TOKEN)).read().strip()
+  return GITHUB_TOKEN
+
   return open(expanduser(repo_config.GH_TOKEN)).read().strip()
 
 def get_combined_statuses(commit, repository, token=None):
@@ -424,6 +432,19 @@ def set_comment_emoji(comment_id, repository, emoji="+1", token=None):
   params = {"content" : emoji }
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
   return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, params, headers=headers)
+
+
+def get_comment_emojis(comment_id, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, method="GET", headers=headers)
+
+
+def delete_comment_emoji(emoji_id, comment_id, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
+  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), token, method="DELETE", headers=headers, raw=True)
+
 
 def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):
   if not token: token = get_gh_token(repository)

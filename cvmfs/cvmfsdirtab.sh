@@ -19,6 +19,7 @@ for cmsdir in $@ ; do
 
   #for cmssw releases
   for x in cmssw cmssw-patch ; do
-    echo "/${cmsdir}/*_*_*/cms/${x}/*"
+    echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*/src"
+    echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*"
   done
 done

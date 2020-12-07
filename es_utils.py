@@ -269,7 +269,7 @@ def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normal
   except Exception as e: print(e.message)
 
 def getExternalsESstats(cmsdist='*', arch='*', lastNdays=30, page_size=0):
-    stats = es_query(index='externals_stats_summary_testindex*',
+    stats = es_query(index='externals_stats_summary-*',
                      query=format('cmsdist:%(cmsdist_branch)s AND architecture:%(architecture)s',
                                   cmsdist_branch=str(cmsdist),
                                   architecture=arch),

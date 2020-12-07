@@ -53,7 +53,7 @@ function mark_commit_status_all_prs () {
     else
         LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PULL_REQUEST})/COMMIT) # get cashed commit hash
     fi
-    if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = false" ] ; then
+    if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = "false" ] ; then
       mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "cms/${CONTEXT}" -s "${STATE}" "$@"
     fi
 }

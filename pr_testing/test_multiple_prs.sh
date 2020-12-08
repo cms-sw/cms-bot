@@ -844,7 +844,7 @@ else
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_FILE}/build.txt
-mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Runnings tests" || true
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 
 pushd $WORKSPACE
   mv $CMSSW_IB/tmp ${CMSSW_IB}.tmp; tar -czf cmssw.tar.gz $CMSSW_IB; mv ${CMSSW_IB}.tmp $CMSSW_IB/tmp

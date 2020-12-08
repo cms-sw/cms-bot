@@ -268,10 +268,9 @@ def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normal
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)
 
-def getExternalsESstats(cmsdist='*', arch='*', lastNdays=30, page_size=0):
+def getExternalsESstats(arch='*', lastNdays=30, page_size=0):
     stats = es_query(index='externals_stats_summary-*',
-                     query=format('cmsdist:%(cmsdist_branch)s AND architecture:%(architecture)s',
-                                  cmsdist_branch=str(cmsdist),
+                     query=format('architecture:%(architecture)s',
                                   architecture=arch),
                      start_time=1000*int(time()-(86400*lastNdays)),
                      end_time=1000*int(time()),scroll=True)

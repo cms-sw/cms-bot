@@ -29,7 +29,7 @@ source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
 PR_NUMBER=$(echo ${PULL_REQUEST} | sed 's|.*#||')
-PR_REPO=$(echo ${PULL_REQUEST} | sed 's|.*#||')
+PR_REPO=$(echo ${PULL_REQUEST} | sed 's|#.*||')
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 PR_RESULT_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts/pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}"
 NCPU=$(${COMMON}/get_cpu_number.sh)

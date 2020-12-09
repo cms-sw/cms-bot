@@ -892,7 +892,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print(o)
                 raise Exception("System-error: unable to get PR result")
               if o and (not dryRun):
-                issue.create_comment(o)
+                res="+1"
+                if lab_stats[cdata[-1]][-1]=="error": res="-1"
+                issue.create_comment(res+"\n\n"+o)
             if not dryRun:
               last_commit_obj.create_status("success", description="Finished", target_url=status.target_url, context=status.context)
         lab_state = "required"

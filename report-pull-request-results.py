@@ -19,7 +19,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #---- Parser Options
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = TESTS_OK_PR | PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL | RELEASE_NOT_FOUND "
-                            "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE | GET_BASE_MESSAGE "
+                            "| PARSE_MATRIX_FAIL | COMPARISON_READY | STD_COUT | TESTS_RUNNING | IGPROF_READY | NOT_MERGEABLE "
                             "| PARSE_ADDON_FAIL | REMOTE_REF_ISSUE | PARSE_CLANG_BUILD_FAIL | GIT_CMS_MERGE_TOPIC_ISSUE | MATERIAL_BUDGET | REPORT_ERRORS | PYTHON3_FAIL")
 
 parser.add_option("-u", action="store", type="string", dest="username", help="Your github account username", default='None')
@@ -216,9 +216,17 @@ def get_recent_merges_message():
   return message
 
 def get_pr_tests_info():
-  message = "\nCMSSW: %s/%s" % (os.environ['CMSSW_VERSION'], os.environ['SCRAM_ARCH'])
+  message = "\n**CMSSW**: "
+  if 'CMSSW_VERSION' in os.environ:
+    message +=  os.environ['CMSSW_VERSION']
+  else:
+    message +=  "UNKNOWN"
+  if 'SCRAM_ARCH' in os.environ:
+    message += '/' + os.environ['SCRAM_ARCH']
+  else:
+    message += '/UNKNOWN'
   if 'TEST_CONTEXT' in os.environ and os.environ['TEST_CONTEXT'] != '':
-    message += ' (%s)' + os.environ['TEST_CONTEXT']
+    message += '(%s)' + os.environ['TEST_CONTEXT']
   return message
 
 
@@ -466,15 +474,6 @@ def send_remote_ref_issue_message( repo, pr_number):
 #
 # sends an approval message for a pr in cmssw
 #
-def get_base_message():
-  message = get_pr_tests_info()
-  if options.additional_comment:
-    message += '\nAdditional comment: ' + options.additional_comment
-  message += get_recent_merges_message()
-  with open(options.report_file, "a") as rfile:
-    rfile.write(message+"\n")
-  return
-
 def send_tests_approved_pr_message( repo, pr_number, tests_url ):
   pull_request = repo.get_pull(pr_number)
 
@@ -692,8 +691,6 @@ if (options.cmsdist_pr > -1):
 
 if ( ACTION == 'TESTS_OK_PR' ):
   send_tests_approved_pr_message( destination_repo , pr_number , tests_results_url )
-elif ( ACTION == 'GET_BASE_MESSAGE' ):
-  get_base_message()
 elif ( ACTION == 'PARSE_UNIT_TESTS_FAIL' ):
   read_unit_tests_file( destination_repo, options.unit_tests_file, tests_results_url )
 elif ( ACTION == 'PARSE_BUILD_FAIL' ):

@@ -862,15 +862,45 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if bot_status and bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
         signatures["tests"]="started"
       if signatures["tests"]=="started" and new_bot_tests:
-        all_stats = []
-        for req in [s.context.replace("/required","") for s in commit_statuses if s.context.endswith("/required")]:
-          xstats = [s.state for s in commit_statuses if (not s.context.startswith(req+"/opt/")) and ((s.context==req) or s.context.startswith(req+"/"))]
-          all_stats = all_stats + xstats
-          print("All stats for %s: %s" % (req, xstats))
-        if "error" in all_stats:
-          signatures["tests"]="rejected"
-        elif ("pending" not in all_stats) and len(all_stats)>1:
+        lab_stats = {}
+        for status in commit_statuses:
+          cdata = status.context.split("/")
+          if cdata[-1] not in ["optional", "required"]:
+            continue
+          if cdata[-1] not in lab_stats: lab_stats[cdata[-1]] = []
+          scontext = "/".join(cdata[:-1])
+          all_states = {}
+          for s in [i for i in commit_statuses if ((i.context==scontext) or (i.context.startswith(scontext+"/")))]:
+            if s.context == status.context: continue
+            if s.state not in all_states: all_states[s.state] = []
+            all_states[s.state].append(s.context)
+          print("Test status for %s: %s" % (status.context, all_states))
+          lab_stats[cdata[-1]].append("pending")
+          if "pending" in all_states:
+            continue
+          if "success" in all_states:
+            lab_stats[cdata[-1]][-1] = "success"
+          if "error" in all_states:
+            if [c for c in all_states['error'] if ('/opt/' not in c)]:
+              lab_stats[cdata[-1]][-1] = "error"
+          if (lab_stats[cdata[-1]][-1] != "pending") and (not status.description.startswith("Finished")):
+            if status.target_url:
+              url = status.target_url.replace("/SDT/jenkins-artifacts/", "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/")+"/pr-result"
+              print("PR Result:", url)
+              e, o = run_cmd("curl -s -L --max-time 60 %s" % url)
+              if e:
+                print(o)
+                raise Exception("System-error: unable to get PR result")
+              if o and (not dryRun):
+                issue.create_comment(o)
+            if not dryRun:
+              last_commit_obj.create_status("success", description="Finished", target_url=status.target_url, context=status.context)
+        lab_state = "required"
+        if lab_state not in lab_stats: lab_state = "optional"
+        if (lab_state in lab_stats) and ("pending" not in lab_stats[lab_state]):
           signatures["tests"]="approved"
+          if "error" in lab_stats[lab_state]:
+            signatures["tests"]="rejected"
     elif not bot_status:
       if not dryRun:
         last_commit_obj.create_status("pending", description="Waiting for authorized user to issue the test command.", context=bot_status_name)

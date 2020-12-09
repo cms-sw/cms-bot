@@ -380,16 +380,20 @@ if [ -e results/files ] ; then
     ln -sf $SRC_FILE upload/files/$file
   done
 fi
+
+mkdir $WORKSPACE/testsResults
+sed -i "s/^COMPARISON;RUNNING,/COMPARISON;$BUILD_NUMBER,/g" ${RESULTS_FILE}
+mv ${RESULTS_FILE} $WORKSPACE/testsResults/
+
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
+${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-pr ${PR_NUM} --pr-job-id ${PULL_REQUEST_JOB_ID} \
+  -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
+  --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt  --report-file $WORKSPACE/testsResults/20-report.res
+
 if [ "$DRY_RUN" != "true" ] ; then
   send_jenkins_artifacts $WORKSPACE/upload/ ${COMP_UPLOAD_DIR}/
-  if [ -e ${RESULTS_FILE} ] ; then
-    sed -i "s/^COMPARISON;RUNNING,/COMPARISON;$BUILD_NUMBER,/g" ${RESULTS_FILE}
-    send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison.txt
-  fi
+  send_jenkins_artifacts $WORKSPACE/testsResults/ ${PR_BASELINE_JOBDIR}/testsResults/
 fi
+
 mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finishes, please check results" || true
-report_pull_request_results_all_prs "COMPARISON_READY" --report-pr ${PR_NUM} --pr-job-id $PULL_REQUEST_JOB_ID \
-  -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
-  --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt
 echo "All done at `date`"

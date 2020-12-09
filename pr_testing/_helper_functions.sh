@@ -79,5 +79,3 @@ function fail_if_empty(){
         exit 1
     fi
 }
-
-

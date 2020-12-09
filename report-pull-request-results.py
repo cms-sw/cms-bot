@@ -280,8 +280,6 @@ def send_message_pr(message, tests_url=None):
 #
 def get_base_message():
   message = get_pr_tests_info()
-  if options.additional_comment:
-    message += '\nAdditional comment: ' + options.additional_comment
   message += get_recent_merges_message()
   with open(options.report_file, "a") as rfile:
     rfile.write(message+"\n")

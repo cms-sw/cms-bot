@@ -180,7 +180,9 @@ for PR in ${PULL_REQUESTS}; do
 done
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset || true
-if $REQUIRED_TEST ; then mark_commit_status_all_prs 'required' 'success' -d 'OK' || true ; fi
+PR_COMMIT_STATUS="optional"
+if $REQUIRED_TEST ; then PR_COMMIT_STATUS="required" ; fi
+mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' || true
 
 COMP_QUEUE=
 case $CMSSW_QUEUE in

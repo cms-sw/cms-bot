@@ -857,6 +857,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if not dryRun:
           last_commit_obj.create_status("success", description=desc, target_url=turl, context=bot_status_name)
           set_comment_emoji(test_comment.id, repository)
+      if get_status_state("unknown/release", commit_statuses) == "error":
+        signatures["tests"]="pending"
       if bot_status:
         print(bot_status.target_url,turl,signatures["tests"],bot_status.description)
       if bot_status and bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
@@ -868,6 +870,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           if cdata[-1] not in ["optional", "required"]:
             continue
           if cdata[-1] not in lab_stats: lab_stats[cdata[-1]] = []
+          lab_stats[cdata[-1]].append("pending")
+          if status.state == "pending":
+            continue
           scontext = "/".join(cdata[:-1])
           all_states = {}
           for s in [i for i in commit_statuses if ((i.context==scontext) or (i.context.startswith(scontext+"/")))]:
@@ -875,7 +880,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if s.state not in all_states: all_states[s.state] = []
             all_states[s.state].append(s.context)
           print("Test status for %s: %s" % (status.context, all_states))
-          lab_stats[cdata[-1]].append("pending")
           if "pending" in all_states:
             continue
           if "success" in all_states:

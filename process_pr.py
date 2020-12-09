@@ -857,12 +857,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if not dryRun:
           last_commit_obj.create_status("success", description=desc, target_url=turl, context=bot_status_name)
           set_comment_emoji(test_comment.id, repository)
-      if get_status_state("cms/unknown/release", commit_statuses) == "error":
-        signatures["tests"]="pending"
       if bot_status:
         print(bot_status.target_url,turl,signatures["tests"],bot_status.description)
       if bot_status and bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
         signatures["tests"]="started"
+      if get_status_state("cms/unknown/release", commit_statuses) == "error":
+        signatures["tests"]="pending"
       if signatures["tests"]=="started" and new_bot_tests:
         lab_stats = {}
         for status in commit_statuses:

@@ -24,24 +24,22 @@ else
     CMSSW_BR=$(get_base_branch ${GITHUB_PR_TO_SEARCH})
     CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "${CMSSW_BR}" "" "${ARCHITECTURE_FILTER}") || true
   fi
-fi
-
-#Find config entry based on CMSDIST PR
-if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
-  GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
-  if [ "${GITHUB_PR_TO_SEARCH}" != "" ] ; then
-    CMSDIST_TAG=$(get_base_branch "$GITHUB_PR_TO_SEARCH")
-    CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "${CMSDIST_TAG}" "${ARCHITECTURE_FILTER}") || true
-    if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
-      if [ "${CMSSW_BR}" != "" ] ; then
-        CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "${CMSSW_BR}" "${CMSDIST_TAG}" "${ARCHITECTURE_FILTER}") || true
+  #Find config entry based on CMSDIST PR
+  if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
+    GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmsdist#' | head -n 1) # get 1st one
+    if [ "${GITHUB_PR_TO_SEARCH}" != "" ] ; then
+      CMSDIST_TAG=$(get_base_branch "$GITHUB_PR_TO_SEARCH")
+      CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "${CMSDIST_TAG}" "${ARCHITECTURE_FILTER}") || true
+      if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
+        if [ "${CMSSW_BR}" != "" ] ; then
+          CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "${CMSSW_BR}" "${CMSDIST_TAG}" "${ARCHITECTURE_FILTER}") || true
+        fi
       fi
     fi
   fi
-fi
-
-if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
-  CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "" "${ARCHITECTURE_FILTER}") || true
+  if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
+    CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "" "${ARCHITECTURE_FILTER}") || true
+  fi
 fi
 
 if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; then

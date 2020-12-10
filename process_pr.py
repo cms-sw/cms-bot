@@ -904,7 +904,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 res="+1"
                 if lab_stats[cdata[-1]][-1]=="error": res="-1"
                 res = "%s\n\n%s" % (res, o)
-                print(len(res),res)
                 issue.create_comment(res)
             if not dryRun:
               last_commit_obj.create_status("success", description="Finished", target_url=status.target_url, context=status.context)

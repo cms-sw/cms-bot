@@ -286,7 +286,7 @@ def get_base_message():
   return
 
 def send_comparison_ready_message(tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file, missing_map ):
-  message += '\n# Comparison Summary\n\n'
+  message = '\n# Comparison Summary\n\n'
   wfs_with_errors = ''
   for line in open( comparison_errors_file ):
     line = line.rstrip()

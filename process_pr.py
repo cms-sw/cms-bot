@@ -843,7 +843,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if bot_status:
         if bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
           signatures["tests"]="started"
-        print("BOT STATUS:\n  %s\n  %s\n  %s\n  %s" % (bot_status,bot_status.description,bot_status.target_url,test_comment.html_url)
+        print("BOT STATUS:\n  %s\n  %s\n  %s\n  %s" % (bot_status,bot_status.description,bot_status.target_url,test_comment.html_url))
       if bot_status and bot_status.description.startswith("Old style tests"):
         new_bot_tests = False
       elif (not bot_status) and (signatures["tests"]!="pending"):

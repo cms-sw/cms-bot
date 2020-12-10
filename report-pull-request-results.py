@@ -87,6 +87,7 @@ def read_matrix_log_file(matrix_log, tests_url ):
   workflows_with_error = [ ]
 
   for line in open( matrix_log ):
+    line = line.strip()
     if 'ERROR executing' in line:
       print('processing: %s' % line) 
       parts = re.sub("\s+"," ",line).split(" ")

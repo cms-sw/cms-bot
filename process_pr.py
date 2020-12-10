@@ -834,6 +834,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   print("Stats:",backport_pr_num,extra_labels)
   print("Old Labels:",sorted(old_labels))
   print("Compilation Warnings: ",comp_warnings)
+  print("Singnatures: ",signatures)
 
   #Always set test pending label
   if "tests" in signatures:
@@ -842,7 +843,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if bot_status:
         if bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
           signatures["tests"]="started"
-        print("BOt STATUS:",bot_status,bot_status.description,bot_status.target_url,test_comment.html_url,signatures["tests"])
+        print("BOT STATUS:\n  %s\n  %s\n  %s\n  %s" % (bot_status,bot_status.description,bot_status.target_url,test_comment.html_url)
       if bot_status and bot_status.description.startswith("Old style tests"):
         new_bot_tests = False
       elif (not bot_status) and (signatures["tests"]!="pending"):

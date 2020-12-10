@@ -19,6 +19,7 @@ PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix-results
 PR_BASELINE_JOBDIR=pull-request-integration/PR-$PR_NUM/$PULL_REQUEST_JOB_ID
 PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix-results
+PR_RESULT_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts/${PR_BASELINE_JOBDIR}"
 
 WFS_WITH_ERRORS=''
 RESULTS_FILE=$WORKSPACE/comparison.txt
@@ -386,7 +387,7 @@ sed -i "s/^COMPARISON;RUNNING,/COMPARISON;$BUILD_NUMBER,/g" ${RESULTS_FILE}
 mv ${RESULTS_FILE} $WORKSPACE/testsResults/
 
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
-${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-pr ${PR_NUM} --pr-job-id ${PULL_REQUEST_JOB_ID} \
+${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_RESULT_URL} \
   -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
   --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt  --report-file $WORKSPACE/testsResults/20-report.res
 
@@ -395,5 +396,5 @@ if [ "$DRY_RUN" != "true" ] ; then
   send_jenkins_artifacts $WORKSPACE/testsResults/ ${PR_BASELINE_JOBDIR}/testsResults/
 fi
 
-mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finishes, please check results" || true
+mark_commit_status_all_prs 'comparison' 'success' -u "${PR_RESULT_URL}" -d "Finishes, please check results" || true
 echo "All done at `date`"

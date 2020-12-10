@@ -9,9 +9,6 @@ import os, sys
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits
 setdefaulttimeout(120)
-JENKINS_PREFIX="jenkins"
-try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
-except: JENKINS_PREFIX="jenkins"
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 #---- Parser Options
@@ -20,7 +17,6 @@ parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = PARSE_UNI
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE "
                             "| PARSE_ADDON_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET | PYTHON3_FAIL")
 
-parser.add_option("--pr-job-id", action="store", type="int", dest="pr_job_id", help="The jenkins job id for the  pull request to use", default=-1)
 parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
 parser.add_option("--f2", action="store", type="string", dest="results_file2", help="second results file to analyse" )
 parser.add_option("--missing_map", action="store", type="string", dest="missing_map", help="Missing workflow map file", default='None' )
@@ -28,7 +24,7 @@ parser.add_option("--recent-merges", action="store", type="string", dest="recent
 parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help="I will only show the message I would post, but I will not post it in github")
 parser.add_option("--repo", action="store", dest="custom_repo", help="Tells me to use a custom repository from the user cms-sw", default="cms-sw/cmssw" )
 parser.add_option("--report-file", action="store", type="string", dest="report_file", help="Report the github comment in report file instead of github", default='')
-parser.add_option("--report-pr", action="store", type="string", dest="report_pr_number", help="The number of the pull request to use for report", default='')
+parser.add_option("--report-url", action="store", type="string", dest="report_url", help="URL where pr results are stored.", default='')
 
 (options, args) = parser.parse_args()
 
@@ -147,14 +143,12 @@ def get_recent_merges_message():
     if extra_msg:
       message += '\n\nThe following merge commits were also included on top of IB + this PR '\
                  'after doing git cms-merge-topic: \n'
-      git_log_url = GITLOG_FILE_BASE_URL.format( pr_number=options.report_pr_number, job_id=options.pr_job_id )
-      git_cms_merge_topic_url = GIT_CMS_MERGE_TOPIC_BASE_URL.format( pr_number=options.report_pr_number, job_id=options.pr_job_id )
 
       for l in extra_msg: message += l + '\n'
 
       message += '\nYou can see more details here:\n'
-      message += git_log_url +'\n'
-      message += git_cms_merge_topic_url + '\n'
+      message += GITLOG_FILE_BASE_URL +'\n'
+      message += GIT_CMS_MERGE_TOPIC_BASE_URL + '\n'
   return message
 
 def get_pr_tests_info():
@@ -362,8 +356,6 @@ DAS_INCONSISTENCY_MSG = 'The workflows {workflows} have different files in step1
 
 MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND = 'Not Found'
 MATRIX_WORKFLOW_STEP_NA = 'N/A'
-GITLOG_FILE_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-log-recent-commits' % JENKINS_PREFIX
-GIT_CMS_MERGE_TOPIC_BASE_URL='https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-{pr_number}/{job_id}/git-merge-result' % JENKINS_PREFIX
 
 #----------------------------------------------------------------------------------------
 #---- Check arguments and options
@@ -383,11 +375,13 @@ if (ACTION == 'prBot.py'):
 
 print('you chose the action %s' % ACTION)
 
-if (options.pr_job_id == -1) or  (options.report_pr_number=='') or (options.report_file==''):
-  complain_missing_param( 'pull request job id/report pr number/report file' )
+if (options.report_url=='') or (options.report_file==''):
+  complain_missing_param( 'report url/report file' )
   exit()
 
-tests_results_url = 'https://cmssdt.cern.ch/SDT/%s-artifacts/pull-request-integration/PR-%s/%d/summary.html' % (JENKINS_PREFIX, options.report_pr_number, options.pr_job_id)
+GITLOG_FILE_BASE_URL='%s/git-log-recent-commits' % options.report_url
+GIT_CMS_MERGE_TOPIC_BASE_URL='%s/git-merge-result' % options.report_url
+tests_results_url = '%s/summary.html' % options.report_url
 
 if ( ACTION == 'GET_BASE_MESSAGE' ):
   get_base_message()

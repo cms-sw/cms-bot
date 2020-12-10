@@ -381,7 +381,7 @@ if ${BUILD_EXTERNAL} ; then
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR,Externals compilation,See Log,cmsswtoolconf.log' >> ${RESULTS_FILE}/toolconf.txt
       ${CMS_BOT_DIR}/report-pull-request-results "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log \
-        --report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} ${NO_POST} --report-file ${RESULTS_FILE}/10-report.res
+        --report-url ${PR_RESULT_URL} ${NO_POST} --report-file ${RESULTS_FILE}/10-report.res
       prepare_upload_results
       mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to build externals" || true
       exit 0
@@ -945,7 +945,7 @@ else
   DO_ADDON_TESTS=false
 fi
 
-REPORT_OPTS="--report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
+REPORT_OPTS="--report-url ${PR_RESULT_URL} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
 echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_FILE}/10-report.res
 $CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-file ${RESULTS_FILE}/10-report.res ${REPORT_OPTS}
 echo "" >> ${RESULTS_FILE}/10-report.res

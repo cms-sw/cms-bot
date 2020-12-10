@@ -7,6 +7,7 @@ from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile
 from _py2with3compatibility import Request, urlopen
 from os import stat as tstat
+from time import time
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'

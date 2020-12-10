@@ -1,14 +1,5 @@
 #!/bin/bash -ex
 
-# Functions unique to script
-function modify_comment_all_prs() {
-    # modify all PR's with message that job has been triggered and add a link to jobs console
-    PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//' )
-    PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
-    ${CMS_BOT_DIR}/modify_comment.py -r ${PR_NAME_AND_REPO} -t JENKINS_TEST_URL \
-        -m "${1}https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" ${PR_NR} ${DRY_RUN} || true
-}
-
 function mark_commit_status_pr () {
   local ERR=1
   for i in 0 1 2 3 4 ; do
@@ -43,13 +34,4 @@ function mark_commit_status_all_prs () {
     if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = "false" ] ; then
       mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "cms/${CONTEXT}" -s "${STATE}" "$@"
     fi
-}
-
-function exit_with_comment_failure_main_pr(){
-    # $@ - aditonal options
-    # report that job failed to the first PR (that should be our main PR)
-    PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//')
-    PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//')
-    ${CMS_BOT_DIR}/comment-gh-pr -r ${PR_NAME_AND_REPO} -p ${PR_NR} "$@"
-    exit 0
 }

@@ -388,7 +388,7 @@ if [ "$DRY_RUN" != "true" ] ; then
     send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison.txt
   fi
 fi
-mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finishes, please check results" || true
+mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finished, please check results" || true
 report_pull_request_results_all_prs "COMPARISON_READY" --report-pr ${PR_NUM} --pr-job-id $PULL_REQUEST_JOB_ID \
   -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
   --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt

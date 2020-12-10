@@ -330,7 +330,7 @@ def send_comparison_ready_message(tests_results_url, comparison_errors_file, wfs
   if exists(JRCompSummaryLog):
     err, out = run_cmd("cat %s" % JRCompSummaryLog)
     if (not err) and out:
-      message += "\n\nComparison Summary:\n"
+      message += "\n\n**Summary**:\n"
       for l in out.split("\n"):
         if l.strip(): message += " - %s\n" % l.strip()
 

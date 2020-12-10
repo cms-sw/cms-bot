@@ -880,8 +880,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           all_states = {}
           result_url = ""
           for s in [i for i in commit_statuses if ((i.context==scontext) or (i.context.startswith(scontext+"/")))]:
-            if (not result_url) and ('jenkins-artifacts' in s.target_url) and (s.target_url[-1]=='/'):
-              result_url = s.target_url
+            if (not result_url) and ('/jenkins-artifacts/' in s.target_url):
+              xdata = s.target_url.split("/")
+              while xdata and (not xdata[-2].startswith('PR-')):
+                xdata.pop()
+              if xdata: result_url = "/".join(xdata)
             if s.context == status.context: continue
             if s.state not in all_states: all_states[s.state] = []
             all_states[s.state].append(s.context)

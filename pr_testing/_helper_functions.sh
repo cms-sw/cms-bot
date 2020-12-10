@@ -5,15 +5,6 @@ WORKSPACE=${WORKSPACE}                # Needs to be exported in master script
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metadata etc are kept
 # -----
 
-function get_path_to_pr_metadata(){
-    PR=$1  # ex. cms-sw/dist#100
-    # ---
-    REPO=$( echo ${PR} | sed 's/#.*//' )
-    PR_NR=$(echo ${PR} | sed 's/.*#//')
-    DEST_D=${CACHED}/${REPO}/${PR_NR}
-    echo ${DEST_D}
-}
-
 function get_cached_GH_JSON (){
     # gives path to cached PR json file
     # if it is the first time a file is requested, it will download it

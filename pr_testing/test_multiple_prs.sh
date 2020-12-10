@@ -135,7 +135,6 @@ which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 rm -rf ${WORKSPACE}/prs_commits.txt
 touch ${WORKSPACE}/prs_commits.txt
 COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_REPO} ${PR_NUMBER})
-echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PULL_REQUEST})/COMMIT"
 echo "${PULL_REQUEST}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset

@@ -112,7 +112,7 @@ def read_matrix_log_file(matrix_log, tests_url ):
   for wf in workflows_with_error:
     message += wf[ 'number' ] +' '+ wf[ 'step' ]+'\n' + '<pre>' + wf[ 'message' ] + '</pre>'
 
-  send_message_pr(message, tests_url )
+  send_message_pr(message)
 
 #
 # reads the addon  tests log file and gets the tests that failed
@@ -124,14 +124,14 @@ def read_addon_log_file(unit_tests_file,tests_url):
       errors_found = errors_found + line
 
   message = '\n# AddOn Tests\n\nI found errors in the following addon tests:\n\n%s' % errors_found
-  send_message_pr(message, tests_url )
+  send_message_pr(message)
 
 #
 # reads material budget logs
 #
 def read_material_budget_log_file(unit_tests_file,tests_url):
   message = '\n# Material Budget\n\nThere was error running material budget tests.'
-  send_message_pr(message, tests_url )
+  send_message_pr(message)
 
 def get_recent_merges_message():
   message = ""
@@ -219,7 +219,7 @@ def read_build_log_file(build_log, tests_url, isClang ):
   else:
     message += " See details on the summary page."
 
-  send_message_pr(message, tests_url )
+  send_message_pr(message)
 
 #
 # reads the unit tests file and gets the tests that failed
@@ -235,7 +235,7 @@ def read_unit_tests_file(unit_tests_file,tests_url):
         errors_found = "and more ...\n"
         break
   message = '\n# Unit Tests\n\nI found errors in the following unit tests:\n\n<pre>%s</pre>' % errors_found
-  send_message_pr(message, tests_url )
+  send_message_pr(message)
 
 
 #
@@ -252,7 +252,7 @@ def read_python3_file(python3_file,tests_url):
         errors_found = "and more ...\n"
         break
   message = '\n#Python3\n\nI found errors: \n\n <pre>%s</pre>' % errors_found
-  send_message_pr(message, tests_url )
+  send_message_pr(message)
 
 
 #
@@ -260,7 +260,7 @@ def read_python3_file(python3_file,tests_url):
 # If checkDuplicateMessage is set to true, it checks if the message was already posted in the thread
 # and if it is it doesn't post it again
 #
-def send_message_pr(message, tests_url=None):
+def send_message_pr(message):
   if options.no_post_mesage:
     print('Not posting message (dry-run): \n ', message)
     return
@@ -333,7 +333,7 @@ def send_comparison_ready_message(tests_results_url, comparison_errors_file, wfs
       for l in out.split("\n"):
         if l.strip(): message += " - %s\n" % l.strip()
 
-  send_message_pr( pull_request, message )
+  send_message_pr(message )
 
 def complain_missing_param(param_name):
   print('\n')

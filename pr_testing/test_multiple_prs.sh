@@ -919,7 +919,8 @@ pushd $WORKSPACE
   echo "CMS_WEEK=${CMS_WEEKLY_REPO}" >> $WORKSPACE/deploy-cmssw
   echo "PR_REPOSITORY=${PR_EXTERNAL_REPO}" >> $WORKSPACE/deploy-cmssw
   echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/deploy-cmssw
-  echo "PR_UPLOAD_DIR="PR-${PR_NUM}/${BUILD_NUMBER} >> $WORKSPACE/deploy-cmssw
+  echo "PR_TEST_BUILD_ID=${BUILD_NUMBER}" >> $WORKSPACE/deploy-cmssw
+  echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 popd
 
 DO_PROFILING=false

@@ -103,7 +103,7 @@ def read_matrix_log_file(matrix_log, tests_url ):
       workflows_with_error.append( workflow_info )
 
   # check if it was timeout
-  message = "\n# RelVals\n\n"
+  message = "\n## RelVals\n\n"
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
     
@@ -124,14 +124,14 @@ def read_addon_log_file(unit_tests_file,tests_url):
     if( ': FAILED -' in line):
       errors_found = errors_found + line
 
-  message = '\n# AddOn Tests\n\nI found errors in the following addon tests:\n\n%s' % errors_found
+  message = '\n## AddOn Tests\n\nI found errors in the following addon tests:\n\n%s' % errors_found
   send_message_pr(message)
 
 #
 # reads material budget logs
 #
 def read_material_budget_log_file(unit_tests_file,tests_url):
-  message = '\n# Material Budget\n\nThere was error running material budget tests.'
+  message = '\n## Material Budget\n\nThere was error running material budget tests.'
   send_message_pr(message)
 
 def get_recent_merges_message():
@@ -205,10 +205,10 @@ def read_build_log_file(build_log, tests_url, isClang ):
   if error_found: err_type = "compilation error"
   if isClang:
     cmd = open( build_log ).readline()
-    message += '\n# Clang Build\n\nI found '+err_type+' while trying to compile with clang. '
+    message += '\n## Clang Build\n\nI found '+err_type+' while trying to compile with clang. '
     message += 'Command used:\n```\n' + cmd +'\n```\n'
   else:
-    message += '\n# Build\n\nI found '+err_type+' when building: '
+    message += '\n## Build\n\nI found '+err_type+' when building: '
 
   if error_found:
     message += '\n\n<pre>'
@@ -235,7 +235,7 @@ def read_unit_tests_file(unit_tests_file,tests_url):
       if err_cnt > 10:
         errors_found = "and more ...\n"
         break
-  message = '\n# Unit Tests\n\nI found errors in the following unit tests:\n\n<pre>%s</pre>' % errors_found
+  message = '\n## Unit Tests\n\nI found errors in the following unit tests:\n\n<pre>%s</pre>' % errors_found
   send_message_pr(message)
 
 
@@ -281,7 +281,7 @@ def get_base_message():
   return
 
 def send_comparison_ready_message(tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file, missing_map ):
-  message = '\n# Comparison Summary\n\n'
+  message = '\n## Comparison Summary\n\n'
   wfs_with_errors = ''
   for line in open( comparison_errors_file ):
     line = line.rstrip()

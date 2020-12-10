@@ -878,8 +878,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             continue
           scontext = "/".join(cdata[:-1])
           all_states = {}
+          result_url = ""
           for s in [i for i in commit_statuses if ((i.context==scontext) or (i.context.startswith(scontext+"/")))]:
             if s.context == status.context: continue
+            if s.context == scontext: result_url = s.target_url
             if s.state not in all_states: all_states[s.state] = []
             all_states[s.state].append(s.context)
           print("Test status for %s: %s" % (status.context, all_states))
@@ -891,8 +893,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if [c for c in all_states['error'] if ('/opt/' not in c)]:
               lab_stats[cdata[-1]][-1] = "error"
           if (lab_stats[cdata[-1]][-1] != "pending") and (not status.description.startswith("Finished")):
-            if status.target_url:
-              url = status.target_url.replace("/SDT/jenkins-artifacts/", "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/")+"/pr-result"
+            if result_url:
+              url = result_url.replace("/SDT/jenkins-artifacts/", "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/")+"/pr-result"
               print("PR Result:", url)
               e, o = run_cmd("curl -s -L --max-time 60 %s" % url)
               if e:

@@ -28,6 +28,10 @@ export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
+if [ -z ${ARCHITECTURE} ] ; then
+    ARCHITECTURE=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
+fi
+export SCRAM_ARCH=${ARCHITECTURE}
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 export JENKINS_PREFIX
@@ -178,11 +182,6 @@ fi
 if [ "${CONFIG_LINE}" == "" ] ; then exit 1 ; fi
 
 export CMSDIST_TAG=$(echo ${CONFIG_LINE} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//')
-
-if [ -z ${ARCHITECTURE} ] ; then
-    ARCHITECTURE=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
-fi
-export SCRAM_ARCH=${ARCHITECTURE}
 
 COMP_QUEUE=
 case $CMSSW_QUEUE in

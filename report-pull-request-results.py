@@ -83,7 +83,7 @@ def parse_workflow_info( parts ):
 # Reads the log file for the matrix tests. It identifyes which workflows failed
 # and then proceeds to read the corresponding log file to identify the message
 #
-def read_matrix_log_file(matrix_log, tests_url ):
+def read_matrix_log_file(matrix_log):
   workflows_with_error = [ ]
 
   for line in open( matrix_log ):
@@ -108,7 +108,12 @@ def read_matrix_log_file(matrix_log, tests_url ):
     message +=  'The relvals timed out after 4 hours.\n'
     
   for wf in workflows_with_error:
-    message += '- ' + wf[ 'number' ] +' '+ wf[ 'step' ] + '<pre>' + wf[ 'message' ] + '</pre>\n\n'
+    wnum = wf['number']
+    if 'out_directory' in wf:
+      wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
+    else:
+      wnum = "**%s %s**" % (wnum, wf['step'])
+    message += '- ' + wnum + '<pre>' + wf['message'] + '</pre>\n\n'
 
   send_message_pr(message)
 
@@ -124,13 +129,14 @@ def cmd_to_addon_test(command):
     return ""
   return o.split("/")[-2]
 
-def read_addon_log_file(unit_tests_file,tests_url):
+def read_addon_log_file(unit_tests_file):
   errors_found=''
   for line in open(unit_tests_file):
     line = line.strip()
     if( ': FAILED -' in line):
       tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip())
       if not tname: tname = "unknown"
+      else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
       line = "- "+ tname + '<pre>' + line + '</pre>\n\n'
       errors_found = errors_found + line
   message = '\n## AddOn Tests\n\n%s' % errors_found
@@ -139,7 +145,7 @@ def read_addon_log_file(unit_tests_file,tests_url):
 #
 # reads material budget logs
 #
-def read_material_budget_log_file(unit_tests_file,tests_url):
+def read_material_budget_log_file(unit_tests_file):
   message = '\n## Material Budget\n\nThere was error running material budget tests.'
   send_message_pr(message)
 
@@ -180,7 +186,7 @@ def get_pr_tests_info():
 # reads the build log file looking for the first error
 # it includes 5 lines before and 5 lines after the error
 #
-def read_build_log_file(build_log, tests_url, isClang ):
+def read_build_log_file(build_log, isClang ):
   line_number = 0
   error_line = 0
   lines_to_keep_before=5
@@ -234,7 +240,7 @@ def read_build_log_file(build_log, tests_url, isClang ):
 #
 # reads the unit tests file and gets the tests that failed
 #
-def read_unit_tests_file(unit_tests_file,tests_url):
+def read_unit_tests_file(unit_tests_file):
   errors_found=''
   err_cnt = 0
   for line in open(unit_tests_file):
@@ -251,7 +257,7 @@ def read_unit_tests_file(unit_tests_file,tests_url):
 #
 # reads the python3 file and gets the tests that failed
 #
-def read_python3_file(python3_file,tests_url):
+def read_python3_file(python3_file):
   errors_found=''
   err_cnt = 0
   for line in open(python3_file):
@@ -289,7 +295,7 @@ def get_base_message():
     rfile.write(message+"\n")
   return
 
-def send_comparison_ready_message(tests_results_url, comparison_errors_file, wfs_with_das_inconsistency_file, missing_map ):
+def send_comparison_ready_message(comparison_errors_file, wfs_with_das_inconsistency_file, missing_map ):
   message = '\n## Comparison Summary\n\n'
   wfs_with_errors = ''
   for line in open( comparison_errors_file ):
@@ -391,25 +397,24 @@ if (options.report_url=='') or (options.report_file==''):
 
 GITLOG_FILE_BASE_URL='%s/git-log-recent-commits' % options.report_url
 GIT_CMS_MERGE_TOPIC_BASE_URL='%s/git-merge-result' % options.report_url
-tests_results_url = '%s/summary.html' % options.report_url
 
 if ( ACTION == 'GET_BASE_MESSAGE' ):
   get_base_message()
 elif ( ACTION == 'PARSE_UNIT_TESTS_FAIL' ):
-  read_unit_tests_file(options.unit_tests_file, tests_results_url )
+  read_unit_tests_file(options.unit_tests_file)
 elif ( ACTION == 'PARSE_BUILD_FAIL' ):
-  read_build_log_file(options.unit_tests_file, tests_results_url, False )
+  read_build_log_file(options.unit_tests_file, False )
 elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
-  read_matrix_log_file(options.unit_tests_file , tests_results_url )
+  read_matrix_log_file(options.unit_tests_file )
 elif ( ACTION == 'PARSE_ADDON_FAIL' ):
-  read_addon_log_file(options.unit_tests_file , tests_results_url )
+  read_addon_log_file(options.unit_tests_file )
 elif ( ACTION == 'COMPARISON_READY' ):
-  send_comparison_ready_message(tests_results_url, options.unit_tests_file, options.results_file2, options.missing_map )
+  send_comparison_ready_message(options.unit_tests_file, options.results_file2, options.missing_map )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
-  read_build_log_file(options.unit_tests_file, tests_results_url, True )
+  read_build_log_file(options.unit_tests_file, True )
 elif( ACTION == 'PYTHON3_FAIL'):
-  read_python3_file(options.unit_tests_file, tests_results_url )
+  read_python3_file(options.unit_tests_file )
 elif( ACTION == 'MATERIAL_BUDGET'):
-  read_material_budget_log_file(options.unit_tests_file, tests_results_url)
+  read_material_budget_log_file(options.unit_tests_file)
 else:
   print("I don't recognize that action!")

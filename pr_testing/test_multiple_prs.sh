@@ -1053,6 +1053,7 @@ fi
 #
 # Matrix tests
 #
+export CMS_PATH=/cvmfs/cms.cern.ch
 if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   if [ "X$TEST_CONTEXT" = "X" ] ; then
     MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')

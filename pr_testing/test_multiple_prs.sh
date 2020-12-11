@@ -15,7 +15,6 @@ COMMON=${CMS_BOT_DIR}/common
 BUILD_DIR="testBuildDir"  # Where pkgtools/cmsBuild builds software
 RESULTS_FILE=$WORKSPACE/testsResults
 CONFIG_MAP=$CMS_BOT_DIR/config.map
-PR_COMMIT=""
 rm -rf ${RESULTS_FILE} ${RESULTS_FILE}.txt
 # ---
 # doc: Input variable
@@ -29,7 +28,17 @@ export CMSSW_GIT_REFERENCE=/cvmfs/cms.cern.ch/cmssw.git.daily
 source ${PR_TESTING_DIR}/_helper_functions.sh   # general helper functions
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
+if [ -z ${ARCHITECTURE} ] ; then
+    ARCHITECTURE=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
+fi
+export SCRAM_ARCH=${ARCHITECTURE}
+JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
+export JENKINS_PREFIX
+PR_NUMBER=$(echo ${PULL_REQUEST} | sed 's|.*#||')
+PR_REPO=$(echo ${PULL_REQUEST} | sed 's|#.*||')
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
+PR_RESULT_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}"
 NCPU=$(${COMMON}/get_cpu_number.sh)
 if [[  $NODE_NAME == *"cms-cmpwg-0"* ]]; then
    let NCPU=${NCPU}/2
@@ -37,7 +46,7 @@ fi
 let NCPU2=${NCPU}*2
 
 function prepare_upload_results (){
-    cd $WORKSPACE
+  pushd $WORKSPACE
     if [ -d ${WORKSPACE}/upload ] ; then
       for ut in $(find $WORKSPACE/upload -mindepth 1 -maxdepth 1 -name '*' -type d | sed 's|.*/||') ; do
         UT_STATUS="OK"
@@ -72,15 +81,15 @@ function prepare_upload_results (){
         done
       popd
     fi
-}
-
-function prepare_upload_comment_exit(){
-    prepare_upload_results
-    if [ -z ${NO_POST} ]; then
-        send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}
+    if [ -z ${NO_POST} ] ; then
+      send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER}
+      if [ -d $LOCALRT/das_query ] ; then
+        send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PR_NUM}/${BUILD_NUMBER}/PR || true
+        rm -rf $LOCALRT/das_query
+      fi
     fi
-    report_pull_request_results_all_prs_with_commit $@ --report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
-    exit 0
+    mkdir -p ${RESULTS_FILE}
+  popd
 }
 
 # ----------
@@ -109,16 +118,12 @@ fi
 CMSSW_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | tr ',' ' ' | sed 's/  */ /g' | sed 's/^ *//;s/ *$//' )  # to make consistent separation in list
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )  # Repos without pull number
-fail_if_empty "${UNIQ_REPOS}" "UNIQ_REPOS"
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
 RPM_UPLOAD_REPO=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '/cmssw#' | grep -v '/cms-bot#' | sort | uniq | md5sum | sed 's| .*||')
 
 let WEEK_NUM=$(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||;s|^0*||')%2 || true
 CMS_WEEKLY_REPO=cms.week${WEEK_NUM}
-JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
-if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
-export JENKINS_PREFIX
 
 # this is to automount directories in cvmfs, otherwise they wont show up
 ls /cvmfs/cms.cern.ch
@@ -126,10 +131,24 @@ ls /cvmfs/cms-ib.cern.ch || true
 
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
+# Put hashcodes of last commits to a file. Mostly used for commenting back
+rm -rf ${WORKSPACE}/prs_commits.txt
+touch ${WORKSPACE}/prs_commits.txt
+COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_REPO} ${PR_NUMBER})
+echo "${PULL_REQUEST}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
+
+mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset
+PR_COMMIT_STATUS="optional"
+if $REQUIRED_TEST ; then PR_COMMIT_STATUS="required" ; fi
+mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
+
 echo_section "Pull request checks"
 # Check if same organization/repo PRs
 if [ $(echo ${UNIQ_REPO_NAMES_WITH_COUNT}  | grep -v '1 ' | wc -w ) -gt 0 ]; then
-    exit_with_comment_failure_main_pr  ${DRY_RUN} -m "ERROR: multiple PRs from different organisations but same repos:    ${UNIQ_REPO_NAMES_WITH_COUNT}"
+    echo "ERROR: multiple PRs from different organisations but same repos:    ${UNIQ_REPO_NAMES_WITH_COUNT}" > ${RESULTS_FILE}/10-report.res
+    prepare_upload_results
+    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Multiple PRs from different repositories"
+    exit 0
 fi
 
 # Filter PR for specific repo and then check if its PRs point to same base branch
@@ -143,7 +162,10 @@ for U_REPO in ${UNIQ_REPOS}; do
     if [ -z ${UNIQ_MASTERS} ]; then continue ; fi
     NUMBER_U_M=$(echo ${UNIQ_MASTERS} | wc -l )
     if  [ ! ${NUMBER_U_M}  -eq 1 ]; then
-        exit_with_comment_failure_main_pr  ${DRY_RUN} -m  "ERROR: PRs for  repo '${U_REPO}' wants to merge to different branches: ${UNIQ_MASTERS}"
+        echo "ERROR: PRs for repo ${U_REPO} wants to merge to different branches: ${UNIQ_MASTERS}" > ${RESULTS_FILE}/10-report.res
+        prepare_upload_results
+        mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Invalid branch merge."
+        exit 0
     fi
 done
 
@@ -156,33 +178,9 @@ fi
 if [[ ! -z ${CMSSW_PR} ]] ; then
     CMSSW_BR=$(get_base_branch $CMSSW_PR)
 fi
-if [ "${CONFIG_LINE}" == "" ] ; then
-  CONFIG_LINE=$(${COMMON}/get_config_map_line.sh  "${CMSSW_QUEUE-$CMSSW_BR}" "$CMSDIST_TAG" "${ARCHITECTURE}")
-fi
-fail_if_empty "${CONFIG_LINE}"
+if [ "${CONFIG_LINE}" == "" ] ; then exit 1 ; fi
 
 export CMSDIST_TAG=$(echo ${CONFIG_LINE} | sed 's/^.*CMSDIST_TAG=//' | sed 's/;.*//')
-
-if [ -z ${ARCHITECTURE} ] ; then
-    ARCHITECTURE=$(echo ${CONFIG_LINE} | sed 's/^.*SCRAM_ARCH=//' | sed 's/;.*//' )
-fi
-export SCRAM_ARCH=${ARCHITECTURE}
-
-# Put hashcodes of last commits to a file. Mostly used for commenting back
-rm -rf ${WORKSPACE}/prs_commits.txt
-touch ${WORKSPACE}/prs_commits.txt
-for PR in ${PULL_REQUESTS}; do
-    PR_NAME_AND_REPO=$(echo ${PR} | sed 's/#.*//' )
-    PR_NR=$(echo ${PR} | sed 's/.*#//')
-    COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_NAME_AND_REPO} ${PR_NR})
-    echo ${COMMIT} | sed 's|.* ||' > "$(get_path_to_pr_metadata ${PR})/COMMIT"
-    echo "${PR}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
-done
-
-mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset || true
-PR_COMMIT_STATUS="optional"
-if $REQUIRED_TEST ; then PR_COMMIT_STATUS="required" ; fi
-mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' || true
 
 COMP_QUEUE=
 case $CMSSW_QUEUE in
@@ -218,8 +216,9 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
     if [ "X$CMSSW_IB" = "X" ] ; then
       CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
       if [ "X$CMSSW_IB" = "X" ] ; then
-        report_pull_request_results_all_prs_with_commit "RELEASE_NOT_FOUND" --report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} ${NO_POST} ${PR_COMMIT}
-        mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d 'Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}' || true
+        echo "I was not able to find a release to test this PR. See the Jenkins logs for more details" > ${RESULTS_FILE}/10-report.res
+        prepare_upload_results
+        mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}"
         exit 0
       fi
       COMPARISON_ARCH=$ARCHITECTURE
@@ -234,9 +233,10 @@ fi
 PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist | grep -v -w cms-bot ) ]] ; then
-    # If low version and but there are external repos to test, fail
-    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Invalid PKGTOOLS version to test external packages." || true
-    exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: RELEASE_FORMAT ${CMSSW_QUEUE} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals."
+    echo "ERROR: RELEASE_FORMAT ${CMSSW_QUEUE} uses PKG_TOOL_BRANCH ${PKG_TOOL_BRANCH} which is lower then required to test externals." > ${RESULTS_FILE}/10-report.res
+    prepare_upload_results
+    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Invalid PKGTOOLS version to test external packages."
+    exit 0
 fi
 
 # Do git pull --rebase for each PR except for /cmssw
@@ -246,8 +246,10 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw' ); do
         ERR=false
         git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
         if ${ERR} ; then
-            mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to merge ${PR}" || true
-            exit_with_comment_failure_main_pr  ${DRY_RUN} -m "ERROR: failed to merge ${PR} PR"
+            echo "Failed to merge pull requests ${PR}." > ${RESULTS_FILE}/10-report.res
+            prepare_upload_results
+            mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to merge ${PR}"
+            exit 0
         fi
     done
 done
@@ -278,21 +280,15 @@ for U_REPO in ${UNIQ_REPOS}; do
 	  BUILD_EXTERNAL=true
           for SPEC_NAME in ${SPEC_NAMES} ; do
 	    if ! ${PR_TESTING_DIR}/get_source_flag_for_cmsbuild.sh "$PKG_REPO" "$SPEC_NAME" "$CMSSW_QUEUE" "$ARCHITECTURE" "${CMS_WEEKLY_REPO}" "${BUILD_DIR}" ; then
-              mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}" || true
-	      exit_with_comment_failure_main_pr ${DRY_RUN} -m "ERROR: There was an issue generating parameters for
-	        cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo."
+              echo "ERROR: There was an issue generating parameters for cmsBuild '--source' flag for spec file ${SPEC_NAME} from ${PKG_REPO} repo." > ${RESULTS_FILE}/10-report.res
+              prepare_upload_results
+              mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Error getting source flag for ${PKG_REPO}, fix spec ${SPEC_NAME}"
+              exit 0
             fi
           done
 	;;
 	esac
 done
-
-# modify comments that test are being triggered by Jenkins
-if [ "$TEST_CONTEXT" = "" ] ; then
-  modify_comment_all_prs "- ${CMSSW_IB}/${SCRAM_ARCH}: "
-else
-  modify_comment_all_prs "- ${TEST_CONTEXT}/${CMSSW_IB}/${SCRAM_ARCH}: "
-fi
 
 # Prepera html templates
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
@@ -310,6 +306,7 @@ else
   echo "COMPARISON_IB;$COMPARISON_REL" >> ${RESULTS_FILE}.txt
 fi
 
+PR_EXTERNAL_REPO=""
 if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
@@ -350,11 +347,11 @@ if ${BUILD_EXTERNAL} ; then
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU}"
-    TMP_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
-    UPLOAD_OPTS="--upload-tmp-repository ${TMP_REPO}"
-    if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${TMP_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
+    PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
+    UPLOAD_OPTS="--upload-tmp-repository ${PR_EXTERNAL_REPO}"
+    if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
       UPLOAD_OPTS="--sync-back"
-      COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}.${TMP_REPO}"
+      COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}"
     else
       COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}"
     fi
@@ -380,8 +377,11 @@ if ${BUILD_EXTERNAL} ; then
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> ${RESULTS_FILE}/toolconf.txt
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR,Externals compilation,See Log,cmsswtoolconf.log' >> ${RESULTS_FILE}/toolconf.txt
-      mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to build externals" || true
-      prepare_upload_comment_exit "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/upload/cmsswtoolconf.log
+      ${CMS_BOT_DIR}/report-pull-request-results "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log \
+        --report-url ${PR_RESULT_URL} ${NO_POST} --report-file ${RESULTS_FILE}/10-report.res
+      prepare_upload_results
+      mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed to build externals"
+      exit 0
     else
       echo 'CMSSWTOOLCONF_RESULTS;OK,Externals compilation,See Log,cmsswtoolconf.log' >> ${RESULTS_FILE}/toolconf.txt
     fi
@@ -421,7 +421,7 @@ if ${BUILD_EXTERNAL} ; then
     BTOOLS=${CTOOLS}.backup
     mv ${CTOOLS} ${BTOOLS}
     TOOL_CONF_VERSION=$(ls -d $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/* | sed 's|.*/||')
-    echo "${CMS_WEEKLY_REPO}.${TMP_REPO}/${TOOL_CONF_VERSION}" > $WORKSPACE/cmssw-tool-conf.txt
+    echo "${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${TOOL_CONF_VERSION}" > $WORKSPACE/cmssw-tool-conf.txt
     echo "CMSSWTOOLCONF_VERSION;OK,External tool conf,See log,cmssw-tool-conf.txt" >> ${RESULTS_FILE}/toolconf.txt
     mv $WORKSPACE/$BUILD_DIR/$ARCHITECTURE/cms/cmssw-tool-conf/${TOOL_CONF_VERSION}/tools/selected ${CTOOLS}
 
@@ -569,23 +569,29 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   done
 
   if grep 'Automatic merge failed' $GIT_MERGE_RESULT_FILE; then
-    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Merge: Unable to merge CMSSW PRs" || true
-    prepare_upload_comment_exit "NOT_MERGEABLE"
+    echo "This pull request cannot be automatically merged, could you please rebase it?" > ${RESULTS_FILE}/10-report.res
+    echo "You can see the log for git cms-merge-topic here: ${PR_RESULT_URL}/git-merge-result" >> ${RESULTS_FILE}/10-report.res
+    prepare_upload_results
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Merge: Unable to merge CMSSW PRs"
+    exit 0
   fi
 
   if grep "Couldn't find remote ref" $GIT_MERGE_RESULT_FILE; then
-    echo "Please add the branch name to the parameters"
-    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Merge: Unable to find remote reference." || true
-    prepare_upload_comment_exit "REMOTE_REF_ISSUE"
+    echo "I had the issue <pre>could not find remote ref refs/pull/${PR_NUMBER}/head</pre>" > ${RESULTS_FILE}/10-report.res
+    echo 'Please restart the tests in jenkins providing the complete branch name' >> ${RESULTS_FILE}/10-report.res
+    prepare_upload_results
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Merge: Unable to find remote reference."
+    exit 0
   fi
 
   git diff --name-only $CMSSW_VERSION > $WORKSPACE/changed-files
 
   # look for any other error in general
   if ! grep "ALL_OK" $GIT_MERGE_RESULT_FILE; then
-    echo "There was an error while running git cms-merge-topic"
-    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Merge: Unknow error while merging." || true
-    prepare_upload_comment_exit "GIT_CMS_MERGE_TOPIC_ISSUE"
+    echo "There was an issue with git-cms-merge-topic you can see the log here: ${PR_RESULT_URL}/git-merge-result" > ${RESULTS_FILE}/10-report.res
+    prepare_upload_results
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Merge: Unknow error while merging."
+    exit 0
   fi
 
   #############################################
@@ -643,7 +649,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
       RUN_TESTS=false
       ALL_OK=false
       CLANG_BUILD_OK=false
-      mark_commit_status_all_prs 'clang' 'error' -u "${BUILD_URL}" -d "Found build warnings." || true
+      mark_commit_status_all_prs 'clang' 'error' -u "${PR_RESULT_URL}" -d "Found build warnings."
     fi
   fi
 
@@ -657,7 +663,7 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
     RUN_TESTS=false
     ALL_OK=false
     CLANG_BUILD_OK=false
-    mark_commit_status_all_prs 'clang' 'error' -u "${BUILD_URL}" -d "Found build errors." || true
+    mark_commit_status_all_prs 'clang' 'error' -u "${PR_RESULT_URL}" -d "Found build errors."
   else
     echo "the clang compilation had no errors/warnings!!"
     echo 'CLANG_COMPILATION_RESULTS;OK,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_FILE}/clang.txt
@@ -697,7 +703,7 @@ if $IS_DEV_BRANCH ; then
     PYTHON3_BUILD_OK=false
     RUN_TESTS=false
     ALL_OK=false
-    mark_commit_status_all_prs 'python3' 'error' -u "${BUILD_URL}" -d "Compilation errors" || true
+    mark_commit_status_all_prs 'python3' 'error' -u "${PR_RESULT_URL}" -d "Compilation errors"
   fi
   echo "PYTHON3_CHECKS;${PYTHON3_RES},Python3 Checks,See Log,python3.log" >> ${RESULTS_FILE}/python3.txt
 fi
@@ -776,7 +782,7 @@ if $IS_DEV_BRANCH ; then
       CHK_HEADER_LOG_RES="ERROR"
       CHK_HEADER_OK=false
       ALL_OK=false
-      mark_commit_status_all_prs 'headers' 'error' -u "${BUILD_URL}" -d "Compilation errors" || true
+      mark_commit_status_all_prs 'headers' 'error' -u "${PR_RESULT_URL}" -d "Compilation errors"
     fi
     echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> ${RESULTS_FILE}/header.txt
   fi
@@ -814,7 +820,7 @@ if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
       RUN_TESTS=false
       ALL_OK=false
       BUILD_OK=false
-      mark_commit_status_all_prs 'warnings' 'error' -u "${BUILD_URL}" -d "Found compilation warnings." || true
+      mark_commit_status_all_prs 'warnings' 'error' -u "${PR_RESULT_URL}" -d "Found compilation warnings."
     fi
 fi
 BUILD_LOG_RES="ERROR"
@@ -824,7 +830,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     RUN_TESTS=false
     ALL_OK=false
     BUILD_OK=false
-    mark_commit_status_all_prs 'build' 'error' -u "${BUILD_URL}" -d "CMSSW compilation errors." || true
+    mark_commit_status_all_prs 'build' 'error' -u "${PR_RESULT_URL}" -d "CMSSW compilation errors."
 else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK,Compilation log,See Log,build.log' >> ${RESULTS_FILE}/build.txt
@@ -841,16 +847,12 @@ else
         grep ' newer ' ${WORKSPACE}/scram-rebuild.log | grep -v '/cache/xlibs.backup' > ${WORKSPACE}/newer-than-target.log || true
         if [ -s ${WORKSPACE}/newer-than-target.log ] ; then
             echo "SCRAM_REBUILD;ERROR,Build Rules,See Log,newer-than-target.log" >> ${RESULTS_FILE}/build.txt
-            mark_commit_status_all_prs 'opt/buildrules' 'error' -u "${BUILD_URL}" -d "Build rules were re-executed." || true
+            mark_commit_status_all_prs 'opt/buildrules' 'error' -u "${PR_RESULT_URL}" -d "Build rules were re-executed."
         fi
     fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_FILE}/build.txt
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-
-pushd $WORKSPACE
-  mv $CMSSW_IB/tmp ${CMSSW_IB}.tmp; tar -czf cmssw.tar.gz $CMSSW_IB; mv ${CMSSW_IB}.tmp $CMSSW_IB/tmp
-popd
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
@@ -868,6 +870,7 @@ which das_client
 
 [ "X$USE_DAS_SORT" = "XYES" ] && $CMS_BOT_DIR/das-utils/use-ibeos-sort
 
+
 #Duplicate dict
 QA_RES="NOTRUN"
 if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "X$CMSDIST_ONLY" == "Xfalse" -a "$RUN_TESTS" = "true" ]; then
@@ -882,7 +885,7 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "X$CMSDIST_ONLY" == "Xfalse" -a "$RUN_TE
   if [ $QA_COUNT -gt 0 ] ; then  QA_RES="ERROR" ; fi
   if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" ; fi
   if [ "${QA_RES}" == "ERROR" ] ; then
-    mark_commit_status_all_prs 'opt/dict' 'error' -u "${BUILD_URL}" -d "Duplicate dictionaries found" || true
+    mark_commit_status_all_prs 'opt/dict' 'error' -u "${PR_RESULT_URL}" -d "Duplicate dictionaries found"
   fi
   echo "DUPLICATE_DICT_RULES;${QA_RES},Duplicate Dictionaries,See Logs,dupDict" >> ${RESULTS_FILE}/qa.txt
 fi
@@ -909,13 +912,82 @@ if [ "X$DO_DAS_QUERY" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]
   fi
 fi
 
+pushd $WORKSPACE
+  mv $CMSSW_IB/tmp ${CMSSW_IB}.tmp; tar -czf cmssw.tar.gz $CMSSW_IB; mv ${CMSSW_IB}.tmp $CMSSW_IB/tmp
+  echo "PR_BUILD_BASE=${WORKSPACE}" > $WORKSPACE/deploy-cmssw
+  echo "CMS_WEEK=${CMS_WEEKLY_REPO}" >> $WORKSPACE/deploy-cmssw
+  echo "PR_REPOSITORY=${PR_EXTERNAL_REPO}" >> $WORKSPACE/deploy-cmssw
+  echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/deploy-cmssw
+  echo "PR_TEST_BUILD_ID=${BUILD_NUMBER}" >> $WORKSPACE/deploy-cmssw
+  echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
+popd
+
+DO_PROFILING=false
+if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
+  if [ "X$DO_TESTS" = Xtrue ] ; then
+    mark_commit_status_all_prs 'unittest' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  fi
+  if [ "X$DO_SHORT_MATRIX" = Xtrue ] ; then
+    mark_commit_status_all_prs 'relvals' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  fi
+  if [ "X$DO_ADDON_TESTS" = Xtrue ] ; then
+    mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  fi
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
+    DO_PROFILING=true
+    mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  fi
+else
+  DO_TESTS=false
+  DO_SHORT_MATRIX=false
+  DO_ADDON_TESTS=false
+fi
+
+REPORT_OPTS="--report-url ${PR_RESULT_URL} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
+echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_FILE}/10-report.res
+$CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-file ${RESULTS_FILE}/10-report.res ${REPORT_OPTS}
+echo "" >> ${RESULTS_FILE}/10-report.res
+if ${ALL_OK} ; then
+    if [ "${DAS_QUERY_RES}" = "ERROR" ] ; then
+      echo "DAS Queries failed" >> ${RESULTS_FILE}/10-report.res
+    fi
+    if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
+      echo "Found compilation warnings" >> ${RESULTS_FILE}/10-report.res
+    fi
+    mark_commit_status_all_prs '' 'success' -u "${PR_RESULT_URL}" -d "Passed"
+else
+   TESTS_FAILED=""
+   if [ "X$BUILD_OK" = Xfalse ] ;         then TESTS_FAILED="$TESTS_FAILED  Build" ; fi
+   if [ "X$CHK_HEADER_OK" = Xfalse ] ;    then TESTS_FAILED="$TESTS_FAILED  HeaderConsistency" ; fi
+   if [ "X$CLANG_BUILD_OK" = Xfalse ];    then TESTS_FAILED="$TESTS_FAILED  ClangBuild" ; fi
+    if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then TESTS_FAILED="$TESTS_FAILED  Python3" ; fi
+    REPORT_GEN_OPTS="--repo cms-sw/cmssw --pr 1 --report-file ${RESULTS_FILE}/10-report.res ${REPORT_OPTS} "
+    echo "${TESTS_FAILED}" > ${RESULTS_FILE}/10-failed.res
+    if [ "X$BUILD_OK" = Xfalse ]; then
+      $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL -f $WORKSPACE/build.log ${REPORT_GEN_OPTS}
+    fi
+    if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
+      $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/buildClang.log ${REPORT_GEN_OPTS}
+    fi
+    if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then
+      $CMS_BOT_DIR/report-pull-request-results PYTHON3_FAIL -f $WORKSPACE/python3.log ${REPORT_GEN_OPTS}
+    fi
+    if [ "${DAS_QUERY_RES}" = "ERROR" ] ; then
+      echo -e "\n* **DAS Queries**: The DAS query tests failed, see the summary page for details.\n" >> ${RESULTS_FILE}/10-report.res
+    fi
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
+fi
+prepare_upload_results
+rm -rf $WORKSPACE/upload
+mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
+
 #
 # Unit tests
 #
-if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_TESTS" = Xtrue ]; then
   mark_commit_status_all_prs 'unittest' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
-  mkdir $WORKSPACE/unitTests
+  mkdir -p $WORKSPACE/unitTests
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
   UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
   echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt
@@ -945,9 +1017,9 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
     echo 'UNIT_TEST_RESULTS;ERROR,Unit Tests,See Log,unitTests' >> ${RESULTS_FILE}/unittest.txt
     ALL_OK=false
     UNIT_TESTS_OK=false
-    mark_commit_status_all_prs 'unittest' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed." || true
+    $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL -f $WORKSPACE/unitTests/log.txt --report-file ${RESULTS_FILE}/11-report.res ${REPORT_OPTS}
+    echo "UnitTests" > ${RESULTS_FILE}/11-failed.res
   else
-    mark_commit_status_all_prs 'unittest' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo 'UNIT_TEST_RESULTS;OK,Unit Tests,See Log,unitTests' >> ${RESULTS_FILE}/unittest.txt
   fi
   echo "<html><head></head><body>" > $WORKSPACE/unitTests/success.html
@@ -967,6 +1039,13 @@ if [ "X$DO_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; th
   if ! $UT_ERR ; then echo "No unit test failed" >> $WORKSPACE/unitTests/failed.html ; fi
   echo "</body></html>" >> $WORKSPACE/unitTests/success.html
   echo "</body></html>" >> $WORKSPACE/unitTests/failed.html
+  prepare_upload_results
+  rm -rf $WORKSPACE/upload
+  if $UNIT_TESTS_OK ; then
+    mark_commit_status_all_prs 'unittest' 'success' -u "${PR_RESULT_URL}/unitTests" -d "Passed"
+  else
+    mark_commit_status_all_prs 'unittest' 'error' -u "${PR_RESULT_URL}/unitTests" -d "Some unit tests were failed."
+  fi
 else
   echo 'UNIT_TEST_RESULTS;NOTRUN' >> ${RESULTS_FILE}/unittest.txt
 fi
@@ -974,17 +1053,15 @@ fi
 #
 # Matrix tests
 #
-
-if [ "X$TEST_CONTEXT" = "X" ] ; then
-  MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-else
-  MATRIX_EXTRAS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${TEST_CONTEXT}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-fi
-if [ ! "X$MATRIX_EXTRAS" = X ]; then
-  MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
-fi
-
-if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
+  if [ "X$TEST_CONTEXT" = "X" ] ; then
+    MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+  else
+    MATRIX_EXTRAS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${TEST_CONTEXT}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+  fi
+  if [ ! "X$MATRIX_EXTRAS" = X ]; then
+    MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
+  fi
   mark_commit_status_all_prs 'relvals' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
   mkdir "$WORKSPACE/runTheMatrix-results"
@@ -1034,9 +1111,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true
     echo 'MATRIX_TESTS;ERROR,Matrix Tests Outputs,See Logs,runTheMatrix-results' >> ${RESULTS_FILE}/relval.txt
     ALL_OK=false
     RELVALS_OK=false
-    mark_commit_status_all_prs 'relvals' 'error' -u "${BUILD_URL}" -d "Errors found while running runTheMatrix" || true
+    $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f $WORKSPACE/matrixTests.log --report-file ${RESULTS_FILE}/12-report.res ${REPORT_OPTS}
+    echo "RelVals" > ${RESULTS_FILE}/12-failed.res
+    mark_commit_status_all_prs 'comparison' 'success' -d "Not run due to failure in relvals"
   else
-    mark_commit_status_all_prs 'relvals' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo "no errors in the RelVals!!"
     echo 'MATRIX_TESTS;OK,Matrix Tests Outputs,See Logs,runTheMatrix-results' >> ${RESULTS_FILE}/relval.txt
 
@@ -1054,29 +1132,24 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true
       echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
       echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
       echo "PULL_REQUEST=${PULL_REQUEST}" >> $TRIGGER_COMPARISON_FILE
-      mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start" || true
+      mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    else
+      mark_commit_status_all_prs 'comparison' 'success' -d "No run as comparisons test were disabled"
     fi
-
-    #####################################################################
-    #### Run cfg-viewer
-    #####################################################################
-
-    if [ "X$RUN_CONFIG_VIEWER" = Xtrue ]; then
-      mkdir -p "$WORKSPACE/cfg-viewerResults"
-      pushd "$WORKSPACE/cfg-viewerResults"
-        cfg-viewer.py -r -s "$WORKSPACE/runTheMatrix-results"
-      popd
-      sed -i "s/<!--CONFIG_FILES_BROWSER//g" $WORKSPACE/summary.html
-      sed -i "s/CONFIG_FILES_BROWSER-->//g" $WORKSPACE/summary.html
-      sed -i "s/PARAM_CONFIG_BROWSER/https:\/\/cmssdt.cern.ch\/SDT\/${JENKINS_PREFIX}-artifacts\/${JOB_NAME}\/PR-${PR_NUM}\/${BUILD_NUMBER}\/cfg-viewerResults\//g" $WORKSPACE/summary.html
-    fi
+  fi
+  prepare_upload_results
+  rm -rf $WORKSPACE/upload
+  if $RELVALS_OK ; then
+    mark_commit_status_all_prs 'relvals' 'success' -u "${PR_RESULT_URL}/runTheMatrix-results" -d "Passed"
+  else
+    mark_commit_status_all_prs 'relvals' 'error' -u "${PR_RESULT_URL}/runTheMatrix-results" -d "Errors found while running runTheMatrix"
   fi
 fi
 
 #
 # AddOn Tetss
 #
-if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
   mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   #Some data files in cmssw_7_1/src directory are newer then cmsswdata. We make sure that we pick up these files from src instead of data.
   #Without this hack, pat1 addOnTest fails.
@@ -1118,57 +1191,25 @@ if [ "X$DO_ADDON_TESTS" = Xtrue -a "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true"
     echo 'ADDON_TESTS;ERROR,AddOn Tests,See Logs,addOnTests' >> ${RESULTS_FILE}/adddon.txt
     ALL_OK=false
     ADDON_OK=false
-    mark_commit_status_all_prs 'addon' 'error' -u "${BUILD_URL}" -d "Errors in the addOnTests" || true
+    $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL -f $WORKSPACE/addOnTests.log --report-file ${RESULTS_FILE}/13-report.res ${REPORT_OPTS}
+    echo "AddOn" > ${RESULTS_FILE}/13-failed.res
   else
-    mark_commit_status_all_prs 'addon' 'success' -u "${BUILD_URL}" -d "Passed" || true
     echo "no errors in the addOnTests!!"
     echo 'ADDON_TESTS;OK,AddOn Tests,See Logs,addOnTests' >> ${RESULTS_FILE}/adddon.txt
   fi
-fi
-
-MB_TESTS_OK=NOTRUN
-if [ $DO_MB_COMPARISON=false -a "X$BUILD_OK" = "Xtrue" -a "$RUN_TESTS" = "true" ] ; then
-  if has_jenkins_artifacts material-budget/${CMSSW_VERSION}/${SCRAM_ARCH}/Images ; then
-    mark_commit_status_all_prs 'material-budget' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-    mkdir $LOCALRT/material-budget
-    MB_TESTS_OK=OK
-    pushd $LOCALRT/material-budget
-      $CMS_BOT_DIR/run-material-budget > $WORKSPACE/material-budget.log 2>&1 || MB_TESTS_OK=ERROR
-      if [ "$MB_TESTS_OK" = "OK" ] ; then
-        $CMS_BOT_DIR/compare-material-budget $LOCALRT/material-budget || MB_TESTS_OK=ERROR
-      fi
-    popd
-    mv $LOCALRT/material-budget $WORKSPACE/material-budget
-    mark_commit_status_all_prs 'material-budget' 'success' -u "${BUILD_URL}" -d "Passed" || true
-    echo "MATERIAL_BUDGET;${MB_TESTS_OK},Material budge,See Logs,material-budget" >> ${RESULTS_FILE}/mbudget.txt
-    if [ "$MB_TESTS_OK" = "ERROR" ] ; then
-      MB_TESTS_OK=false
-    else
-      MB_TESTS_OK=true
-    fi
+  prepare_upload_results
+  rm -rf $WORKSPACE/upload
+  if $ADDON_OK ; then
+    mark_commit_status_all_prs 'addon' 'success' -u "${PR_RESULT_URL}/addOnTests" -d "Passed"
+  else
+    mark_commit_status_all_prs 'addon' 'error' -u "${PR_RESULT_URL}/addOnTests" -d "Errors in the addOnTests"
   fi
 fi
-
-#
-# Valgrind tests
-#
-for WF in ${WORKFLOWS_FOR_VALGRIND_TEST//,/ }; do
-  mark_commit_status_all_prs 'valgrind' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-  echo 'I will run valgrind for the following workflow'
-  echo $WF;
-  mkdir -p "$WORKSPACE/valgrindResults-"$WF
-  pushd "$WORKSPACE/valgrindResults-"$WF
-  runTheMatrix.py --command '-n 10 --prefix "time valgrind --tool=memcheck --suppressions=$CMSSW_RELEASE_BASE/src/Utilities/ReleaseScripts/data/cms-valgrind-memcheck.supp --num-callers=20 --xml=yes --xml-file=valgrind.xml " ' -l $WF
-  mark_commit_status_all_prs 'valgrind' 'success' -u "${BUILD_URL}" -d "Passed" || true
-  popd
-done
-
 
 #
 # Enabled bot tests
 #
-for BT in ${ENABLE_BOT_TESTS}; do
-    if [ "$BT" = "PROFILING" ]; then
+if [ "${DO_PROFILING}" = "true" ]  ; then
          PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
          pushd $WORKSPACE
          git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
@@ -1233,112 +1274,16 @@ for BT in ${ENABLE_BOT_TESTS}; do
              done
              popd
          done
-         mark_commit_status_all_prs 'profiling' 'success' -u "${BUILD_URL}" -d "Passed" || true
+         if [ -z ${NO_POST} ] ; then
+           if [ -d $LOCALRT/profiling ]; then
+             send_jenkins_artifacts $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE} profiling/${CMSSW_IB}/${ARCHITECTURE}/
+           fi
+           if [ -d $LOCALRT/igprof ]; then
+             send_jenkins_artifacts $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/
+           fi
+         fi
+         mark_commit_status_all_prs 'profiling' 'success' -u "${PR_RESULT_URL}" -d "Passed"
          echo 'CMSSW_PROFILING;OK,Profiling Results,See Logs,profiling' >> ${RESULTS_FILE}/profiling.txt
-   fi
-done
-
-
-#evaluate results
-TESTS_FAILED="Failed tests:"
-if [ "X$BUILD_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED  Build"
-fi
-if [ "X$CHK_HEADER_OK" = Xfalse ] ; then
-  TESTS_FAILED="$TESTS_FAILED  HeaderConsistency"
-fi
-if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED  UnitTests"
-fi
-if [ "X$RELVALS_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED  RelVals"
-fi
-if [ "X$ADDON_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED  AddOn"
-fi
-if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED  ClangBuild"
-fi
-if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then
-  TESTS_FAILED="$TESTS_FAILED  Python3"
 fi
 
 prepare_upload_results
-
-rm -f ${WORKSPACE}/report.txt
-env | grep 'CMSSW_'
-REPORT_OPTS="--report-pr ${PR_NUM} --pr-job-id ${BUILD_NUMBER} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
-
-if ${ALL_OK} ; then  # if non of the test failed (non of them set ALL_OK to false)
-    BUILD_LOG_RES=""
-    if [ "${DAS_QUERY_RES}" = "ERROR" ] ; then
-        BUILD_LOG_RES="DAS Queries failed;"
-    fi
-    if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
-        BUILD_LOG_RES="${BUILD_LOG_RES} Found compilation warnings'"
-    fi
-    if [ "${BUILD_LOG_RES}" != "" ] ; then BUILD_LOG_RES=" --add-comment '${BUILD_LOG_RES}'" ; fi
-    REPORT_OPTS="TESTS_OK_PR ${REPORT_OPTS} '${BUILD_LOG_RES}'"
-    mark_commit_status_all_prs '' 'success' -u "${BUILD_URL}" -d "Passed" || true
-else
-    # Doc: in case some test failed, we check each test log specifically and generate combined message
-    # which is stored in $WORKSPACE/report.txt
-    # $WORKSPACE/report.txt - is used to write message to unless its 'REPORT_ERRORS', then it is read from to upload comment
-    REPORT_OPTS="--report-file $WORKSPACE/report.txt ${REPORT_OPTS}"
-    # Doc: --repo and --pr are not used in report, but is a must for script, so I put a placeholder
-    REPORT_GEN_OPTS="--repo cms-sw/cmssw --pr 1 ${REPORT_OPTS} "  #
-
-    echo "**${TESTS_FAILED}**" >  $WORKSPACE/report.txt
-    if [ "X$BUILD_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL       -f $WORKSPACE/upload/build.log ${REPORT_GEN_OPTS}
-    fi
-    if [ "X$UNIT_TESTS_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL  -f $WORKSPACE/upload/unitTests/log.txt ${REPORT_GEN_OPTS}
-    fi
-    if [ "X$RELVALS_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL      -f $WORKSPACE/upload/runTheMatrix-results/matrixTests.log ${REPORT_GEN_OPTS}
-    fi
-    if [ "X$ADDON_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL       -f $WORKSPACE/upload/addOnTests.log ${REPORT_GEN_OPTS}
-    fi
-    if [ "X$CLANG_BUILD_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PARSE_CLANG_BUILD_FAIL -f $WORKSPACE/upload/buildClang.log ${REPORT_GEN_OPTS}
-    fi
-    if [ "X$MB_TESTS_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results MATERIAL_BUDGET        -f $WORKSPACE/upload/material-budget.log ${REPORT_GEN_OPTS}
-    fi
-    if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then
-        $CMS_BOT_DIR/report-pull-request-results PYTHON3_FAIL        -f $WORKSPACE/upload/python3.log ${REPORT_GEN_OPTS}
-    fi
-    if [ "${DAS_QUERY_RES}" = "ERROR" ] ; then
-      echo -e "\n* **DAS Queries**: The DAS query tests failed, see the summary page for details.\n" >> $WORKSPACE/report.txt
-    fi
-    REPORT_OPTS="REPORT_ERRORS ${REPORT_OPTS}" # Doc:
-    mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed: ${TESTS_FAILED}" || true
-fi
-
-rm -f all_done  # delete file
-if [ -z ${NO_POST} ] ; then
-    send_jenkins_artifacts $WORKSPACE/upload pull-request-integration/PR-${PR_NUM}/${BUILD_NUMBER} && touch all_done
-    if [ -d $LOCALRT/das_query ] ; then
-      send_jenkins_artifacts $LOCALRT/das_query das_query/PR-${PR_NUM}/${BUILD_NUMBER}/PR || true
-    fi
-    if [ -d $LOCALRT/profiling ]; then
-        send_jenkins_artifacts $LOCALRT/profiling/${CMSSW_IB}/${ARCHITECTURE} profiling/${CMSSW_IB}/${ARCHITECTURE}/
-    fi
-    if [ -d $LOCALRT/igprof ]; then
-        send_jenkins_artifacts $LOCALRT/igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/
-    fi
-fi
-
-if [ -f all_done ] ; then
-  rm -f all_done
-  # Doc: report everything back unless no matter if ALL_OK was true or false.
-  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${PR_COMMIT}
-elif [ ! -z ${NO_POST} ] ; then
-  # Doc: if --no-post flag is set, output comments and continue to next code block.
-  report_pull_request_results_all_prs_with_commit ${REPORT_OPTS} ${PR_COMMIT}
-else
-  echo "Error: upload to Jenkins server failed."
-  exit 1
-fi

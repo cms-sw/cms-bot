@@ -1,27 +1,5 @@
 #!/bin/bash -ex
 
-# Functions unique to script
-function modify_comment_all_prs() {
-    # modify all PR's with message that job has been triggered and add a link to jobs console
-    PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//' )
-    PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
-    ${CMS_BOT_DIR}/modify_comment.py -r ${PR_NAME_AND_REPO} -t JENKINS_TEST_URL \
-        -m "${1}https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console Started: $(date '+%Y/%m/%d %H:%M')" ${PR_NR} ${DRY_RUN} || true
-}
-
-function report_pull_request_results_all_prs() {
-    # post message of test status on Github on all PR's
-    PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//' )
-    PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
-    ${CMS_BOT_DIR}/report-pull-request-results $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}  # $@ - pass all parameters given to function
-}
-
-function report_pull_request_results_all_prs_with_commit() {
-    PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//' )
-    PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
-    ${CMS_BOT_DIR}/report-pull-request-results $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}
-}
-
 function mark_commit_status_pr () {
   local ERR=1
   for i in 0 1 2 3 4 ; do
@@ -50,28 +28,8 @@ function mark_commit_status_all_prs () {
     PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
     if [ -f ${WORKSPACE}/prs_commits.txt ] ; then
         LAST_PR_COMMIT=$(grep "^${PULL_REQUEST}=" $WORKSPACE/prs_commits.txt | sed 's|.*=||;s| ||g')
-    else
-        LAST_PR_COMMIT=$(cat $(get_path_to_pr_metadata ${PULL_REQUEST})/COMMIT) # get cashed commit hash
     fi
     if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = "false" ] ; then
       mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "cms/${CONTEXT}" -s "${STATE}" "$@"
     fi
-}
-
-function exit_with_comment_failure_main_pr(){
-    # $@ - aditonal options
-    # report that job failed to the first PR (that should be our main PR)
-    PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//')
-    PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//')
-    ${CMS_BOT_DIR}/comment-gh-pr -r ${PR_NAME_AND_REPO} -p ${PR_NR} "$@"
-    exit 0
-}
-
-function exit_with_report_failure_main_pr(){
-    # $@ - aditonal options
-    # report that job failed to the first PR (that should be our main PR)
-    PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//')
-    PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//')
-    ${CMS_BOT_DIR}/report-pull-request-results  $@ --repo ${PR_NAME_AND_REPO} --pr ${PR_NR}
-    exit 0
 }

@@ -107,24 +107,33 @@ def read_matrix_log_file(matrix_log, tests_url ):
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
     
-  if workflows_with_error:
-    message += 'When I ran the RelVals I found an error in the following workflows:\n'
-
   for wf in workflows_with_error:
-    message += wf[ 'number' ] +' '+ wf[ 'step' ]+'\n' + '<pre>' + wf[ 'message' ] + '</pre>'
+    message += '- ' + wf[ 'number' ] +' '+ wf[ 'step' ] + '<pre>' + wf[ 'message' ] + '</pre>\n\n'
 
   send_message_pr(message)
 
 #
 # reads the addon  tests log file and gets the tests that failed
 #
+def cmd_to_addon_test(command):
+  commandbase = command.replace(' ','_').replace('/','_')
+  logfile='%s.log' % commandbase[:150].replace("'",'').replace('"','').replace('../','')
+  e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (options.results_file2, logfile))
+  if e or (o==""):
+    print("ERROR: %s -> %s" % (command, o))
+    return ""
+  return o.split("/")[-2]
+
 def read_addon_log_file(unit_tests_file,tests_url):
   errors_found=''
   for line in open(unit_tests_file):
+    line = line.strip()
     if( ': FAILED -' in line):
+      tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip())
+      if not tname: tname = "unknown"
+      line = "- "+ tname + '<pre>' + line + '</pre>\n\n'
       errors_found = errors_found + line
-
-  message = '\n## AddOn Tests\n\nI found errors in the following addon tests:\n\n%s' % errors_found
+  message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)
 
 #

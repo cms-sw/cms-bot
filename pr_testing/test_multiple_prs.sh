@@ -1191,7 +1191,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
     echo 'ADDON_TESTS;ERROR,AddOn Tests,See Logs,addOnTests' >> ${RESULTS_FILE}/adddon.txt
     ALL_OK=false
     ADDON_OK=false
-    $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL -f $WORKSPACE/addOnTests.log --report-file ${RESULTS_FILE}/13-report.res ${REPORT_OPTS}
+    $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL -f $WORKSPACE/addOnTests.log --f2 $WORKSPACE/addOnTests --report-file ${RESULTS_FILE}/13-report.res ${REPORT_OPTS}
     echo "AddOn" > ${RESULTS_FILE}/13-failed.res
   else
     echo "no errors in the addOnTests!!"

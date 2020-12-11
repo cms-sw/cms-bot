@@ -110,7 +110,7 @@ def read_matrix_log_file(matrix_log):
   for wf in workflows_with_error:
     wnum = wf['number']
     if 'out_directory' in wf:
-      wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wnum)
+      wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
     else:
       wnum = "**%s %s**" % (wnum, wf['step'])
     message += '- ' + wnum + '<pre>' + wf['message'] + '</pre>\n\n'

@@ -105,13 +105,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ "X$TEST_CONTEXT" = "XGPU" -o -e "/proc/driver/nvidia/version" ] ; then
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
-        #cuda_libs=$(ldconfig -p | grep "libcuda.so" | sed 's|.* ||')
-        #if [ "${cuda_libs}" != "" ] ; then
-        #  xcuda_libs=$(echo ${cuda_libs} | tr ' ' '\n' | xargs -i readlink '{}')
-        #  for cuda_lib in $(echo ${cuda_libs} ${xcuda_libs} | tr ' ' '\n' | sort | uniq) ; do
-        #    SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B ${cuda_lib}"
-        #  done
-        #fi
       fi
     fi
     SINGULARITY_BINDPATH=""
@@ -129,6 +122,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
       precmd="source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
     fi
+    export PATH=$PATH:/usr/sbin
     singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR

@@ -32,7 +32,7 @@ function dockerrun()
     singularity)
       UNPACK_IMG="${IMAGE_BASE}/${IMG}"
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u >/dev/null 2>&1; $@"
-      singularity -s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR} ${UNPACK_IMG} sh -c "$ARGS"
+      PATH=$PATH:/usr/sbin singularity -s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR} ${UNPACK_IMG} sh -c "$ARGS"
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1

@@ -31,17 +31,16 @@ parser.add_option("--report-url", action="store", type="string", dest="report_ur
 #
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #
-def get_wf_error_msg( out_directory , out_file ):
+def get_wf_error_msg(out_file):
 
-  if out_file == MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND:
+  if out_file.endswith(MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND):
     return ''
 
-  route = 'runTheMatrix-results/'+out_directory+'/'+out_file
   reading = False
   error_lines = ''
-  error_lines += route +'\n' + '\n'
-  if exists( route ):
-    for line in open( route ):
+  error_lines += "/".join(out_file.split("/")[-2:]) +'\n' + '\n'
+  if exists( out_file ):
+    for line in open( out_file ):
       if reading:
         error_lines += line + '\n'
         if '----- End Fatal Exception' in line:
@@ -56,7 +55,7 @@ def get_wf_error_msg( out_directory , out_file ):
 # it gets the directory where the results for the workflow are, the step that failed
 # and the log file
 #
-def parse_workflow_info( parts ):
+def parse_workflow_info( parts, relval_dir ):
   workflow_info = {}
   # this is the output file to which the output of command for the step was directed
   # it starts asumed as not found
@@ -76,7 +75,7 @@ def parse_workflow_info( parts ):
       workflow_info[ 'out_file'] = out_file
       workflow_info[ 'step' ] = step
 
-  workflow_info['message'] = get_wf_error_msg( out_directory , out_file )
+  workflow_info['message'] = get_wf_error_msg(join(relval_dir, out_directory, out_file))
   return workflow_info
     
 #
@@ -85,13 +84,13 @@ def parse_workflow_info( parts ):
 #
 def read_matrix_log_file(matrix_log):
   workflows_with_error = [ ]
-
+  relval_dir = join(dirname (matrix_log), "runTheMatrix-results")
   for line in open( matrix_log ):
     line = line.strip()
     if 'ERROR executing' in line:
       print('processing: %s' % line) 
       parts = re.sub("\s+"," ",line).split(" ")
-      workflow_info = parse_workflow_info( parts )
+      workflow_info = parse_workflow_info( parts, relval_dir)
       workflows_with_error.append( workflow_info )
     elif ' Step0-DAS_ERROR ' in line:
       print('processing: %s' % line)

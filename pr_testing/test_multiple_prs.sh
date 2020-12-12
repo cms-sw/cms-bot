@@ -452,7 +452,7 @@ if ${BUILD_EXTERNAL} ; then
       if [ ! -e ${CTOOLS}/$t.xml ] ; then
         echo "Removing tool $t"
         scram tool remove $t || true
-        DEP_NAMES="$DEP_NAMES echo_$t_USED_BY"
+        DEP_NAMES="$DEP_NAMES echo_${t}_USED_BY"
       fi
     done
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then

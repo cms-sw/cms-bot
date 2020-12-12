@@ -109,7 +109,7 @@ def read_matrix_log_file(matrix_log):
       wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
     else:
       wnum = "**%s %s**" % (wnum, wf['step'])
-    message += '- ' + wnum + '\n\`\`\`\n' + wf['message'] + '\n\`\`\`\n'
+    message += '- ' + wnum + '\n```\n' + wf['message'] + '\n```\n'
 
   send_message_pr(message)
 
@@ -133,7 +133,7 @@ def read_addon_log_file(unit_tests_file):
       tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip())
       if not tname: tname = "unknown"
       else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
-      line = "- "+ tname + '\n\`\`\`\n' + line + '\n\`\`\`\n'
+      line = "- "+ tname + '\n```\n' + line + '\n```\n'
       errors_found = errors_found + line
   message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)

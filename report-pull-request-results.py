@@ -32,21 +32,18 @@ parser.add_option("--report-url", action="store", type="string", dest="report_ur
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #
 def get_wf_error_msg(out_file):
-
   if out_file.endswith(MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND):
     return ''
-
-  reading = False
-  error_lines = ''
-  error_lines += "/".join(out_file.split("/")[-2:]) +'\n' + '\n'
+  error_lines = "/".join(out_file.split("/")[-2:]) + '\n'
   if exists( out_file ):
+    reading = False
     for line in open( out_file ):
       if reading:
-        error_lines += line + '\n'
+        error_lines += line
         if '----- End Fatal Exception' in line:
           reading = False
       elif '----- Begin Fatal Exception' in line:
-        error_lines += line + '\n'
+        error_lines += '\n'+ line
         reading = True
   return error_lines
 
@@ -112,7 +109,7 @@ def read_matrix_log_file(matrix_log):
       wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
     else:
       wnum = "**%s %s**" % (wnum, wf['step'])
-    message += '- ' + wnum + '<pre>' + wf['message'] + '</pre>\n\n'
+    message += '- ' + wnum + '\n\`\`\`\n' + wf['message'] + '\n\`\`\`\n'
 
   send_message_pr(message)
 
@@ -136,7 +133,7 @@ def read_addon_log_file(unit_tests_file):
       tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip())
       if not tname: tname = "unknown"
       else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
-      line = "- "+ tname + '<pre>' + line + '</pre>\n\n'
+      line = "- "+ tname + '\n\`\`\`\n' + line + '\n\`\`\`\n'
       errors_found = errors_found + line
   message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)

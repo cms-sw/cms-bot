@@ -447,7 +447,12 @@ if ${BUILD_EXTERNAL} ; then
     done
     echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
     echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> ${RESULTS_FILE}/toolconf.txt
-
+    for t in $(ls ${BTOOLS}/*.xml | sed 's|.*/||;s|\.xml$||' grep -v '^cmssw$') ; do
+      if [ ! -e ${CTOOLS}/$t.xml ] ; then
+        echo "Removing tool $t"
+        scram tool remove $t || true
+      fi
+    done
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=

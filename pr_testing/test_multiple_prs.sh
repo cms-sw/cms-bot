@@ -447,15 +447,16 @@ if ${BUILD_EXTERNAL} ; then
     done
     echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
     echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> ${RESULTS_FILE}/toolconf.txt
+    DEP_NAMES=
     for t in $(ls ${BTOOLS}/*.xml | sed 's|.*/||;s|\.xml$||' grep -v '^cmssw$') ; do
       if [ ! -e ${CTOOLS}/$t.xml ] ; then
         echo "Removing tool $t"
         scram tool remove $t || true
+        DEP_NAMES="$DEP_NAMES echo_$t_USED_BY"
       fi
     done
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
-      DEP_NAMES=
       if [ -e "${BTOOLS}/cmssw.xml" ] ; then cp ${BTOOLS}/cmssw.xml ${CTOOLS}/cmssw.xml ; fi
       RMV_CMSSW_EXTERNAL="$(ls -d $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/*-remove-release-external-lib 2>/dev/null || true)"
       if [ "${RMV_CMSSW_EXTERNAL}" != "" ] ; then

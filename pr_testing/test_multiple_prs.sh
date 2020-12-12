@@ -951,7 +951,7 @@ else
    if [ "X$CHK_HEADER_OK" = Xfalse ] ;    then TESTS_FAILED="$TESTS_FAILED  HeaderConsistency" ; fi
    if [ "X$CLANG_BUILD_OK" = Xfalse ];    then TESTS_FAILED="$TESTS_FAILED  ClangBuild" ; fi
     if [ "X$PYTHON3_BUILD_OK" = Xfalse ]; then TESTS_FAILED="$TESTS_FAILED  Python3" ; fi
-    REPORT_GEN_OPTS="--repo cms-sw/cmssw --pr 1 --report-file ${RESULTS_FILE}/10-report.res ${REPORT_OPTS} "
+    REPORT_GEN_OPTS="--repo cms-sw/cmssw --report-file ${RESULTS_FILE}/10-report.res ${REPORT_OPTS} "
     echo "${TESTS_FAILED}" > ${RESULTS_FILE}/10-failed.res
     if [ "X$BUILD_OK" = Xfalse ]; then
       $CMS_BOT_DIR/report-pull-request-results PARSE_BUILD_FAIL -f $WORKSPACE/build.log ${REPORT_GEN_OPTS}

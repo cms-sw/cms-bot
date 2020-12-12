@@ -649,7 +649,6 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
       RUN_TESTS=false
       ALL_OK=false
       CLANG_BUILD_OK=false
-      mark_commit_status_all_prs 'clang' 'error' -u "${PR_RESULT_URL}" -d "Found build warnings."
     fi
   fi
 
@@ -663,7 +662,6 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
     RUN_TESTS=false
     ALL_OK=false
     CLANG_BUILD_OK=false
-    mark_commit_status_all_prs 'clang' 'error' -u "${PR_RESULT_URL}" -d "Found build errors."
   else
     echo "the clang compilation had no errors/warnings!!"
     echo 'CLANG_COMPILATION_RESULTS;OK,Clang Compilation,See Log,buildClang.log' >> ${RESULTS_FILE}/clang.txt
@@ -703,7 +701,6 @@ if $IS_DEV_BRANCH ; then
     PYTHON3_BUILD_OK=false
     RUN_TESTS=false
     ALL_OK=false
-    mark_commit_status_all_prs 'python3' 'error' -u "${PR_RESULT_URL}" -d "Compilation errors"
   fi
   echo "PYTHON3_CHECKS;${PYTHON3_RES},Python3 Checks,See Log,python3.log" >> ${RESULTS_FILE}/python3.txt
 fi
@@ -782,7 +779,6 @@ if $IS_DEV_BRANCH ; then
       CHK_HEADER_LOG_RES="ERROR"
       CHK_HEADER_OK=false
       ALL_OK=false
-      mark_commit_status_all_prs 'headers' 'error' -u "${PR_RESULT_URL}" -d "Compilation errors"
     fi
     echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> ${RESULTS_FILE}/header.txt
   fi
@@ -820,7 +816,6 @@ if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
       RUN_TESTS=false
       ALL_OK=false
       BUILD_OK=false
-      mark_commit_status_all_prs 'warnings' 'error' -u "${PR_RESULT_URL}" -d "Found compilation warnings."
     fi
 fi
 BUILD_LOG_RES="ERROR"
@@ -830,7 +825,6 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     RUN_TESTS=false
     ALL_OK=false
     BUILD_OK=false
-    mark_commit_status_all_prs 'build' 'error' -u "${PR_RESULT_URL}" -d "CMSSW compilation errors."
 else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK,Compilation log,See Log,build.log' >> ${RESULTS_FILE}/build.txt
@@ -847,7 +841,6 @@ else
         grep ' newer ' ${WORKSPACE}/scram-rebuild.log | grep -v '/cache/xlibs.backup' > ${WORKSPACE}/newer-than-target.log || true
         if [ -s ${WORKSPACE}/newer-than-target.log ] ; then
             echo "SCRAM_REBUILD;ERROR,Build Rules,See Log,newer-than-target.log" >> ${RESULTS_FILE}/build.txt
-            mark_commit_status_all_prs 'opt/buildrules' 'error' -u "${PR_RESULT_URL}" -d "Build rules were re-executed."
         fi
     fi
 fi
@@ -884,9 +877,6 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "X$CMSDIST_ONLY" == "Xfalse" -a "$RUN_TE
   QA_COUNT=$(cat $WORKSPACE/dupDict/lostDefs.txt | grep '^[.]/[A-Z]' | grep '.xml' | sed 's|^./||' | sort | uniq | wc -l)
   if [ $QA_COUNT -gt 0 ] ; then  QA_RES="ERROR" ; fi
   if [ -s $WORKSPACE/dupDict/edmPD ] ; then QA_RES="ERROR" ; fi
-  if [ "${QA_RES}" == "ERROR" ] ; then
-    mark_commit_status_all_prs 'opt/dict' 'error' -u "${PR_RESULT_URL}" -d "Duplicate dictionaries found"
-  fi
   echo "DUPLICATE_DICT_RULES;${QA_RES},Duplicate Dictionaries,See Logs,dupDict" >> ${RESULTS_FILE}/qa.txt
 fi
 

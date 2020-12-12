@@ -448,7 +448,7 @@ if ${BUILD_EXTERNAL} ; then
     echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
     echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> ${RESULTS_FILE}/toolconf.txt
     DEP_NAMES=
-    for t in $(ls ${BTOOLS}/*.xml | sed -e 's|.*/||;s|\.xml$||' grep -v '^cmssw$') ; do
+    for t in $(ls ${BTOOLS}/*.xml | sed -e 's|.*/||;s|\.xml$||' | grep -v '^cmssw$') ; do
       if [ ! -e ${CTOOLS}/$t.xml ] ; then
         echo "Removing tool $t"
         scram tool remove $t || true

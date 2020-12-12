@@ -31,23 +31,19 @@ parser.add_option("--report-url", action="store", type="string", dest="report_ur
 #
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #
-def get_wf_error_msg( out_directory , out_file ):
-
-  if out_file == MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND:
+def get_wf_error_msg(out_file):
+  if out_file.endswith(MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND):
     return ''
-
-  route = 'runTheMatrix-results/'+out_directory+'/'+out_file
-  reading = False
-  error_lines = ''
-  error_lines += route +'\n' + '\n'
-  if exists( route ):
-    for line in open( route ):
+  error_lines = "/".join(out_file.split("/")[-2:]) + '\n'
+  if exists( out_file ):
+    reading = False
+    for line in open( out_file ):
       if reading:
-        error_lines += line + '\n'
+        error_lines += line
         if '----- End Fatal Exception' in line:
           reading = False
       elif '----- Begin Fatal Exception' in line:
-        error_lines += line + '\n'
+        error_lines += '\n'+ line
         reading = True
   return error_lines
 
@@ -56,7 +52,7 @@ def get_wf_error_msg( out_directory , out_file ):
 # it gets the directory where the results for the workflow are, the step that failed
 # and the log file
 #
-def parse_workflow_info( parts ):
+def parse_workflow_info( parts, relval_dir ):
   workflow_info = {}
   # this is the output file to which the output of command for the step was directed
   # it starts asumed as not found
@@ -76,7 +72,7 @@ def parse_workflow_info( parts ):
       workflow_info[ 'out_file'] = out_file
       workflow_info[ 'step' ] = step
 
-  workflow_info['message'] = get_wf_error_msg( out_directory , out_file )
+  workflow_info['message'] = get_wf_error_msg(join(relval_dir, out_directory, out_file))
   return workflow_info
     
 #
@@ -85,13 +81,13 @@ def parse_workflow_info( parts ):
 #
 def read_matrix_log_file(matrix_log):
   workflows_with_error = [ ]
-
+  relval_dir = join(dirname (matrix_log), "runTheMatrix-results")
   for line in open( matrix_log ):
     line = line.strip()
     if 'ERROR executing' in line:
       print('processing: %s' % line) 
       parts = re.sub("\s+"," ",line).split(" ")
-      workflow_info = parse_workflow_info( parts )
+      workflow_info = parse_workflow_info( parts, relval_dir)
       workflows_with_error.append( workflow_info )
     elif ' Step0-DAS_ERROR ' in line:
       print('processing: %s' % line)
@@ -113,7 +109,7 @@ def read_matrix_log_file(matrix_log):
       wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
     else:
       wnum = "**%s %s**" % (wnum, wf['step'])
-    message += '- ' + wnum + '<pre>' + wf['message'] + '</pre>\n\n'
+    message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
 
   send_message_pr(message)
 
@@ -137,7 +133,7 @@ def read_addon_log_file(unit_tests_file):
       tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip())
       if not tname: tname = "unknown"
       else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
-      line = "- "+ tname + '<pre>' + line + '</pre>\n\n'
+      line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
       errors_found = errors_found + line
   message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)

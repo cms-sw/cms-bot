@@ -968,7 +968,7 @@ else
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
 fi
 prepare_upload_results
-rm -rf $WORKSPACE/upload
+rm -rf $WORKSPACE/upload ; mkdir $WORKSPACE/upload
 mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
 
 #

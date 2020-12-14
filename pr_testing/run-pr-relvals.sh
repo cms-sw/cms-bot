@@ -34,6 +34,7 @@ else
   echo 'MATRIX_TESTS;OK,Matrix Tests Outputs,See Logs,runTheMatrix-results' >> ${RESULTS_DIR}/relval.txt
 
   if $DO_COMPARISON ; then
+    REAL_ARCH=-$(cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //")
     echo 'COMPARISON;QUEUED,Comparison with the baseline,See results,See results' >> ${RESULTS_DIR}/comparison.txt
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
     echo "Creating properties file $TRIGGER_COMPARISON_FILE"
@@ -41,10 +42,9 @@ else
     echo "SCRAM_ARCH=${SCRAM_ARCH}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_JOB_ID=${BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
-    echo "REAL_ARCH=$REAL_ARCH" >> $TRIGGER_COMPARISON_FILE
+    echo "REAL_ARCH=${REAL_ARCH}" >> $TRIGGER_COMPARISON_FILE
     echo "WORKFLOWS_LIST=${WORKFLOW_TO_COMPARE}" >> $TRIGGER_COMPARISON_FILE
     echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
-    echo "CMSDIST_ONLY=$CMSDIST_ONLY" >> $TRIGGER_COMPARISON_FILE
     echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST=${PULL_REQUEST}" >> $TRIGGER_COMPARISON_FILE
     mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"

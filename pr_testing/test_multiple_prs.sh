@@ -928,6 +928,8 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.txt
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.txt
   echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS $SLHC_PARAM $WF_LIST" >> $WORKSPACE/run-relvals.txt
+  echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.txt
+  echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.txt
 fi
 
 if [ "X$DO_ADDON_TESTS" = Xtrue ]; then

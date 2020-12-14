@@ -3,6 +3,8 @@
 
 WORKSPACE=${WORKSPACE}                # Needs to be exported in master script
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metadata etc are kept
+BUILD_DIR=testBuildDir
+RESULTS_DIR=$WORKSPACE/testsResults
 # -----
 
 function get_cached_GH_JSON (){
@@ -63,3 +65,52 @@ function get_base_branch(){
 function echo_section(){
     echo "---------|  $@  |----------"
 }
+
+function prepare_upload_results (){
+  pushd $WORKSPACE
+    if [ -d ${WORKSPACE}/upload ] ; then
+      for ut in $(find $WORKSPACE/upload -mindepth 1 -maxdepth 1 -name '*' -type d | sed 's|.*/||') ; do
+        UT_STATUS="OK"
+        if [ -f $WORKSPACE/upload/${ut}/status ] ; then UT_STATUS=$(cat $WORKSPACE/upload/${ut}/status) ; fi
+        echo "USER_TEST_${ul};${UT_STATUS},User Test ${ut},See Log,${ut}" >> ${RESULTS_DIR}/${ut}.txt
+      done
+    else
+      mkdir -p upload
+    fi
+    for f in cmssw.tar.gz unitTests dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
+      [ -e $f ] && mv $f upload/$f
+    done
+    if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
+    if [ -e upload/matrixTests.log  ] ; then mkdir -p upload/runTheMatrix-results && mv upload/matrixTests.log upload/runTheMatrix-results/ ; fi
+    if [ -d upload/addOnTests       ] ; then find upload/addOnTests -name '*.root' -type f | xargs rm -f ; fi
+    echo "Preparation done"
+
+    # for uploading CMSDIST build logs
+    LOG_SRC="${WORKSPACE}/${BUILD_DIR}/BUILD/${ARCHITECTURE}"
+    LOCAL_LOGDIR="${WORKSPACE}/upload"
+    if [ -d "${LOG_SRC}" ] ; then
+      [ -d ${WORKSPACE}/${BUILD_DIR}/DEPS ] && mv ${WORKSPACE}/${BUILD_DIR}/DEPS ${WORKSPACE}/upload/DEPS
+      pushd ${LOG_SRC}
+        for log in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|^./||') ; do
+          dir=$(dirname $log)
+          mkdir -p ${LOCAL_LOGDIR}/${dir}
+          mv $log ${LOCAL_LOGDIR}/${dir}/
+          [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
+          json=$(basename $(dirname $dir)).json
+          [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${dir}/
+          [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${dir}/
+        done
+      popd
+    fi
+    if [ -z ${NO_POST} ] ; then
+      send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/${UPLOAD_UNIQ_ID}
+      rm -rf ${WORKSPACE}/upload
+      if [ -d $LOCALRT/das_query ] ; then
+        send_jenkins_artifacts $LOCALRT/das_query das_query/${UPLOAD_UNIQ_ID}/PR || true
+        rm -rf $LOCALRT/das_query
+      fi
+    fi
+    mkdir -p ${RESULTS_DIR}
+  popd
+}
+

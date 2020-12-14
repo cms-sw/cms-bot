@@ -849,24 +849,26 @@ else
     fi
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
 fi
-prepare_upload_results
-rm -rf $WORKSPACE/upload
-mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
-
-if [ "X$BUILD_OK" != Xtrue -o "$RUN_TESTS" != "true" ]; then exit 0 ; fi
 
 pushd $WORKSPACE
   rm -rf ${CMSSW_IB}/das_query
   if [ -d ${CMSSW_IB}/tmp ] ; then mv ${CMSSW_IB}/tmp ${CMSSW_IB}.tmp ; fi
   tar -czf cmssw.tar.gz $CMSSW_IB
   if [ -d ${CMSSW_IB}.tmp ] ; then mv ${CMSSW_IB}.tmp ${CMSSW_IB}/tmp ; fi
-  echo "PR_BUILD_BASE=${WORKSPACE}" > $WORKSPACE/deploy-cmssw
-  echo "CMS_WEEK=${CMS_WEEKLY_REPO}" >> $WORKSPACE/deploy-cmssw
-  echo "PR_REPOSITORY=${PR_EXTERNAL_REPO}" >> $WORKSPACE/deploy-cmssw
-  echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/deploy-cmssw
-  echo "PR_TEST_BUILD_ID=${BUILD_NUMBER}" >> $WORKSPACE/deploy-cmssw
-  echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 popd
+
+prepare_upload_results
+rm -rf $WORKSPACE/upload
+mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
+
+if [ "X$BUILD_OK" != Xtrue -o "$RUN_TESTS" != "true" ]; then exit 0 ; fi
+
+echo "PR_BUILD_BASE=${WORKSPACE}" > $WORKSPACE/deploy-cmssw
+echo "CMS_WEEK=${CMS_WEEKLY_REPO}" >> $WORKSPACE/deploy-cmssw
+echo "PR_REPOSITORY=${PR_EXTERNAL_REPO}" >> $WORKSPACE/deploy-cmssw
+echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/deploy-cmssw
+echo "PR_TEST_BUILD_ID=${BUILD_NUMBER}" >> $WORKSPACE/deploy-cmssw
+echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 
 touch $WORKSPACE/job.env
 for x in REPORT_OPTS CMSSW_IB NCPU BUILD_EXTERNAL CMS_BOT_DIR USE_DAS_SORT DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSSW_PKG_COUNT CMSDIST_ONLY SCRIPTPATH; do

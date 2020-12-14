@@ -876,7 +876,7 @@ for x in REPORT_OPTS CMSSW_IB NCPU BUILD_EXTERNAL CMS_BOT_DIR USE_DAS_SORT DO_DU
 done
 
 echo "UPLOAD_UNIQ_ID=${UPLOAD_UNIQ_ID}" > $WORKSPACE/test-env.txt
-echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci/cern.ch/week${WEEK_NUM}/${PR_REPO}/${PR_NUMBER}/${BUILD_NUMBER}/${CMSSW_VERSION}" >> $WORKSPACE/test-env.txt
+echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_REPO}/${PR_NUMBER}/${BUILD_NUMBER}/${CMSSW_VERSION}" >> $WORKSPACE/test-env.txt
 echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/test-env.txt
 echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $WORKSPACE/test-env.txt
 echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/test-env.txt

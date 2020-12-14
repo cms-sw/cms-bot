@@ -856,9 +856,10 @@ mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_U
 if [ "X$BUILD_OK" != Xtrue -o "$RUN_TESTS" != "true" ]; then exit 0 ; fi
 
 pushd $WORKSPACE
-  for x in tmp das_query; do [ -d ${CMSSW_IB}/${x} ] && mv ${CMSSW_IB}/${x} ${CMSSW_IB}.${x} ; done
+  rm -rf ${CMSSW_IB}/das_query
+  if [ -d ${CMSSW_IB}/tmp ] ; then mv ${CMSSW_IB}/tmp ${CMSSW_IB}.tmp ; fi
   tar -czf cmssw.tar.gz $CMSSW_IB
-  for x in tmp das_query; do [ -d ${CMSSW_IB}.${x} ] && mv ${CMSSW_IB}.${x} ${CMSSW_IB}/${x} ; done
+  if [ -d ${CMSSW_IB}.tmp ] ; then mv ${CMSSW_IB}.tmp ${CMSSW_IB}/tmp ; fi
   echo "PR_BUILD_BASE=${WORKSPACE}" > $WORKSPACE/deploy-cmssw
   echo "CMS_WEEK=${CMS_WEEKLY_REPO}" >> $WORKSPACE/deploy-cmssw
   echo "PR_REPOSITORY=${PR_EXTERNAL_REPO}" >> $WORKSPACE/deploy-cmssw

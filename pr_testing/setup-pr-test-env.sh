@@ -41,7 +41,7 @@ if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
   if [ -f ${CMSSW_CVMFS_PATH}/ibeos_cache.txt ] ; then ln -s ${CMSSW_CVMFS_PATH}/ibeos_cache.txt $WORKSPACE/${CMSSW_VERSION}/ibeos_cache.txt ; fi
   ln -s ${CMSSW_CVMFS_PATH}/src $WORKSPACE/${CMSSW_VERSION}/src
 else
-  if [ $WORKSPACE/test.env ] ; then source $WORKSPACE/test.env ; fi
+  if [ -e $WORKSPACE/job.env ] ; then source $WORKSPACE/job.env ; fi
   pushd $WORKSPACE/$CMSSW_IB
     eval `scram run -sh` >/dev/null 2>&1
   popd

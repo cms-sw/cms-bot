@@ -77,6 +77,7 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
+    [ -f prs_commits.txt ] && cp -f prs_commits.txt prs_commits
     for f in cmssw.tar.gz unitTests dasqueries testsResults build-logs clang-logs runTheMatrix-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
@@ -111,6 +112,7 @@ function prepare_upload_results (){
       fi
     fi
     mkdir -p ${RESULTS_DIR}
+    [ -f prs_commits ] && cp -f prs_commits prs_commits.txt
   popd
 }
 

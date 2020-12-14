@@ -45,6 +45,7 @@ fi
 if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; then
     REQUIRED_TEST=false
     eval $CONFIG_LINE
+    ARCHITECTURE=${SCRAM_ARCH}
     OUTPUT_FILE=properties-pr-test-${SCRAM_ARCH}.txt
     echo PULL_REQUEST="${PULL_REQUEST}" >> $OUTPUT_FILE
     echo PULL_REQUESTS=${PULL_REQUESTS} >> $OUTPUT_FILE

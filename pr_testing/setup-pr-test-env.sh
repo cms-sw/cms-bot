@@ -49,4 +49,7 @@ fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH
 CMSSW_IB=${CMSSW_VERSION}
 CMSSW_QUEUE=$(echo ${CMSSW_VERSION} | sed 's|_X.*|_X|')
+if [ "${UPLOAD_UNIQ_ID}" != "" ] ; then
+  PR_TEST_BUILD_NUMBER=$(echo ${UPLOAD_UNIQ_ID} | sed 's|.*/||')
+fi
 export 	ARCHITECTURE=${SCRAM_ARCH}

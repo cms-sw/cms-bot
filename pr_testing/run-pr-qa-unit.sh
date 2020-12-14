@@ -1,6 +1,13 @@
 #!/bin/bash -ex
 source $WORKSPACE/job.env
 cd $WORKSPACE/$CMSSW_IB
+PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
+COMMON=${CMS_BOT_DIR}/common
+source ${CMS_BOT_DIR}/cmsrep.sh
+source ${PR_TESTING_DIR}/_helper_functions.sh
+source ${CMS_BOT_DIR}/jenkins-artifacts
+source ${COMMON}/github_reports.sh
+
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py

@@ -1,6 +1,6 @@
 #!/bin/bash -ex
-cd $WORKSPACE/$CMSSW_IB
 source $WORKSPACE/job.env
+cd $WORKSPACE/$CMSSW_IB
 
 #Copy the cmssw ib das_client wrapper in PATH
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py

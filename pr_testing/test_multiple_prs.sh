@@ -899,7 +899,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   if [ ! "X$MATRIX_EXTRAS" = X ]; then
     MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
   fi
-  mark_commit_status_all_prs 'relvals' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
   case $TEST_CONTEXT-$CMSSW_IB in
       -*SLHCDEV*)

@@ -1,4 +1,4 @@
-#!/bin/bash ex
+#!/bin/bash -ex
 cd $WORKSPACE/$CMSSW_IB
 source $WORKSPACE/job.env
 

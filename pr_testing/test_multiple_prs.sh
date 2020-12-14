@@ -872,7 +872,7 @@ echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 
 touch $WORKSPACE/job.env
 for x in REPORT_OPTS CMSSW_IB NCPU BUILD_EXTERNAL CMS_BOT_DIR USE_DAS_SORT DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSSW_PKG_COUNT CMSDIST_ONLY SCRIPTPATH; do
-  eval echo "$x=$(echo \$$x)" >> $WORKSPACE/job.env
+  eval echo "$x=\\\"$(echo \$$x)\\\"" >> $WORKSPACE/job.env
 done
 
 echo "UPLOAD_UNIQ_ID=${UPLOAD_UNIQ_ID}" > $WORKSPACE/test-env.txt

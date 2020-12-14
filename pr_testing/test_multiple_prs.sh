@@ -682,7 +682,6 @@ fi
 
 scram build clean
 if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true; fi
-CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 ############################################
 # Force the run of DQM tests if necessary
 ############################################
@@ -849,6 +848,7 @@ else
     fi
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
 fi
+[ "X$USE_DAS_SORT" = "XYES" ] && $CMS_BOT_DIR/das-utils/use-ibeos-sort
 
 pushd $WORKSPACE
   rm -rf ${CMSSW_IB}/das_query
@@ -871,7 +871,7 @@ echo "PR_TEST_BUILD_ID=${BUILD_NUMBER}" >> $WORKSPACE/deploy-cmssw
 echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 
 touch $WORKSPACE/job.env
-for x in REPORT_OPTS CMSSW_IB NCPU BUILD_EXTERNAL CMS_BOT_DIR USE_DAS_SORT DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSSW_PKG_COUNT CMSDIST_ONLY SCRIPTPATH PR_RESULT_URL; do
+for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY; do
   eval echo "$x=\\\"$(echo \$$x)\\\"" >> $WORKSPACE/job.env
 done
 

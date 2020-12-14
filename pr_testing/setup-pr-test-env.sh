@@ -19,22 +19,34 @@ JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 export JENKINS_PREFIX
 PR_RESULT_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}"
-get_jenkins_artifacts pull-request-integration/${UPLOAD_UNIQ_ID}/prs_commits.txt $WORKSPACE/prs_commits.txt
+if [ ! -f $WORKSPACE/prs_commits.txt ] ; then
+  get_jenkins_artifacts pull-request-integration/${UPLOAD_UNIQ_ID}/prs_commits.txt $WORKSPACE/prs_commits.txt
+fi
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
 mkdir -p ${RESULTS_DIR}
-WAIT_TIME=14400
-while [ $WAIT_TIME -gt 0 ] ; do
-  if [ -d ${CMSSW_CVMFS_PATH} ] ; then
-    break
-  fi
-  sleep 60
-  let WAIT_TIME=${WAIT_TIME}-60 || true
-done
-pushd ${CMSSW_CVMFS_PATH}
-  eval `scram run -sh`
-  export PATH=$CMS_BOT_DIR/das-utils:$PATH
-popd
+if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
+  WAIT_TIME=14400
+  while [ $WAIT_TIME -gt 0 ] ; do
+    if [ -d ${CMSSW_CVMFS_PATH} ] ; then
+      break
+    fi
+    sleep 60
+    let WAIT_TIME=${WAIT_TIME}-60 || true
+  done
+  pushd ${CMSSW_CVMFS_PATH}
+    eval `scram run -sh` >/dev/null 2>&1
+  popd
+  mkdir -p $WORKSPACE/${CMSSW_VERSION}
+  if [ -f ${CMSSW_CVMFS_PATH}/ibeos_cache.txt ] ; then ln -s ${CMSSW_CVMFS_PATH}/ibeos_cache.txt $WORKSPACE/${CMSSW_VERSION}/ibeos_cache.txt ; fi
+  ln -s ${CMSSW_CVMFS_PATH}/src $WORKSPACE/${CMSSW_VERSION}/src
+else
+  if [ $WORKSPACE/test.env ] ; then source $WORKSPACE/test.env ; fi
+  pushd $WORKSPACE/$CMSSW_IB
+    eval `scram run -sh` >/dev/null 2>&1
+  popd
+fi
+export PATH=$CMS_BOT_DIR/das-utils:$PATH
 CMSSW_IB=${CMSSW_VERSION}
+CMSSW_QUEUE=$(echo ${CMSSW_VERSION} | sed 's|_X.*|_X|')
 export 	ARCHITECTURE=${SCRAM_ARCH}
-mkdir -p $WORKSPACE/${CMSSW_VERSION}

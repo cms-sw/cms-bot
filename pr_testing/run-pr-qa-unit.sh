@@ -1,17 +1,6 @@
 #!/bin/bash -ex
-source $WORKSPACE/job.env
-cd $WORKSPACE/$CMSSW_IB
-PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
-COMMON=${CMS_BOT_DIR}/common
-source ${CMS_BOT_DIR}/cmsrep.sh
-source ${PR_TESTING_DIR}/_helper_functions.sh
-source ${CMS_BOT_DIR}/jenkins-artifacts
-source ${COMMON}/github_reports.sh
-
-
-#Copy the cmssw ib das_client wrapper in PATH
-cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
-set +x ; eval $(scram run -sh) ;set -x
+source $(dirname $0)/setup-pr-test-env.sh
+CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 
 #Drop RELEASE_TOP/external/SCRAM_ARCH/data if LOCALTOP/external/SCRAM_ARCH/data exists
 #to make sure external packages removed files are not picked up from release directory
@@ -20,8 +9,6 @@ if $BUILD_EXTERNAL ; then
     export CMSSW_SEARCH_PATH=$(echo $CMSSW_SEARCH_PATH | tr ':' '\n'  | grep -v "$CMSSW_RELEASE_BASE/external/" | tr '\n' ':')
   fi
 fi
-export PATH=$CMS_BOT_DIR/das-utils:$PATH
-[ "X$USE_DAS_SORT" = "XYES" ] && $CMS_BOT_DIR/das-utils/use-ibeos-sort
 
 
 #Duplicate dict

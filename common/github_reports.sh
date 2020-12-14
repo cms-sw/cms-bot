@@ -15,7 +15,7 @@ function mark_commit_status_pr () {
 
 function mark_commit_status_all_prs () {
     if [ "${COMMIT_STATUS_CONTEXT}" = "" ] ; then 
-      CONTEXT="${SCRAM_ARCH}"
+      CONTEXT="${ARCHITECTURE}"
       if [ "${TEST_CONTEXT}" != "" ] ; then CONTEXT="${TEST_CONTEXT}/${CONTEXT}" ; fi
       CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
       if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
@@ -26,9 +26,7 @@ function mark_commit_status_all_prs () {
     STATE=$2; shift ; shift
     PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//' )
     PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
-    if [ -f ${WORKSPACE}/prs_commits.txt ] ; then
-        LAST_PR_COMMIT=$(grep "^${PULL_REQUEST}=" $WORKSPACE/prs_commits.txt | sed 's|.*=||;s| ||g')
-    fi
+    LAST_PR_COMMIT=$(grep "^${PULL_REQUEST}=" $WORKSPACE/prs_commits.txt | sed 's|.*=||;s| ||g')
     if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = "false" ] ; then
       mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "cms/${CONTEXT}" -s "${STATE}" "$@"
     fi

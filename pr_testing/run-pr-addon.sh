@@ -48,7 +48,7 @@ else
 fi
 prepare_upload_results
 if $ADDON_OK ; then
-  mark_commit_status_all_prs 'addon' 'success' -u "${PR_RESULT_URL}/addOnTests" -d "Passed"
+  mark_commit_status_all_prs 'addon' 'success' -u "${BUILD_URL}" -d "Passed"
 else
-  mark_commit_status_all_prs 'addon' 'error' -u "${PR_RESULT_URL}/addOnTests" -d "Errors in the addOnTests"
+  mark_commit_status_all_prs 'addon' 'error' -u "${BUILD_URL}" -d "Errors in the addOnTests"
 fi

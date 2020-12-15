@@ -74,4 +74,4 @@ if [ -z ${NO_POST} ] ; then
 fi
 echo 'CMSSW_PROFILING;OK,Profiling Results,See Logs,profiling' >> ${RESULTS_DIR}/profiling.txt
 prepare_upload_results
-mark_commit_status_all_prs 'profiling' 'success' -u "${PR_RESULT_URL}" -d "Passed"
+mark_commit_status_all_prs 'profiling' 'success' -u "${BUILD_URL}" -d "Passed"

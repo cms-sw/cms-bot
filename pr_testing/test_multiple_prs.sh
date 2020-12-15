@@ -1211,7 +1211,7 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
              $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_IB || true
              $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_IB || true
              $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_IB || true
-             pushd $WORKSPACE/$CMSSW_IB/src/$PROFILING_WORKFLOW
+             pushd $WORKSPACE/$CMSSW_IB/$PROFILING_WORKFLOW
              ./profile.sh $CMSSW_IB || true
              echo "<li><a href=\"$PROFILING_WORKFLOW/\">$PROFILING_WORKFLOW/</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              get_jenkins_artifacts igprof/${CMSSW_IB}/${ARCHITECTURE}/profiling/${PROFILING_WORKFLOW}/RES_CPU_step3.txt  ${CMSSW_IB}_RES_CPU_step3.txt || true
@@ -1233,7 +1233,7 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
                echo "<li><a href=\"${PROFILING_WORKFLOW}/products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison miniAOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index.html
              fi
              popd
-             pushd $WORKSPACE/$CMSSW_IB/src || true
+             pushd $WORKSPACE/$CMSSW_IB || true
              for f in $(find $PROFILING_WORKFLOW -type f -name '*.sql3') ; do
                d=$(dirname $f)
                mkdir -p $WORKSPACE/upload/profiling/$d || true

@@ -117,8 +117,8 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   echo "</body></html>" >> $WORKSPACE/unitTests/failed.html
   prepare_upload_results
   if $UNIT_TESTS_OK ; then
-    mark_commit_status_all_prs 'unittest' 'success' -u "${PR_RESULT_URL}/unitTests" -d "Passed"
+    mark_commit_status_all_prs 'unittest' 'success' -u "${BUILD_URL}" -d "Passed"
   else
-    mark_commit_status_all_prs 'unittest' 'error' -u "${PR_RESULT_URL}/unitTests" -d "Some unit tests were failed."
+    mark_commit_status_all_prs 'unittest' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed."
   fi
 fi

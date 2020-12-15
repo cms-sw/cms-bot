@@ -876,6 +876,7 @@ CMSSW_CATEGORIES = {
     "HeterogeneousCore/SonicTriton",
   ],
   "hlt": [
+    "CommonTools/TriggerUtils",
     "CondCore/HLTPlugins",
     "CondFormats/HLTObjects",
     "CondTools/HLT",
@@ -911,6 +912,7 @@ CMSSW_CATEGORIES = {
     "CalibCalorimetry/HcalTPGAlgos",
     "CalibCalorimetry/HcalTPGEventSetup",
     "CalibCalorimetry/HcalTPGIO",
+    "CommonTools/TriggerUtils",
     "CondCore/L1TPlugins",
     "CondFormats/L1TObjects",
     "CondTools/L1Trigger",
@@ -1057,7 +1059,6 @@ CMSSW_CATEGORIES = {
     "CommonTools/RecoAlgos",
     "CommonTools/Statistics",
     "CommonTools/TrackerMap",
-    "CommonTools/TriggerUtils",
     "CommonTools/UtilAlgos",
     "CommonTools/Utils",
     "CondFormats/SiPixelTransient",

@@ -372,6 +372,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   enable_tests = ''
   commit_statuses = None
   bot_status_name = "bot/jenkins"
+  bot_ack_name = "bot/ack"
+  bot_test_param_name = "bot/test_parameters"
+  cms_status_prefix = "cms"
   bot_status = None
   code_checks_status = []
   pre_checks_state = {}
@@ -481,8 +484,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if last_commit_obj is None: return
     last_commit = last_commit_obj.commit
     commit_statuses = last_commit_obj.get_combined_status().statuses
-    code_checks_status = [s for s in commit_statuses if s.context == "cms/code-checks"]
     bot_status = get_status(bot_status_name, commit_statuses)
+    if not bot_status:
+      bot_status_name  = "bot/%s/jenkins" % prId
+      bot_ack_name = "bot/%s/ack" % prId
+      bot_test_param_name = "bot/%s/test_parameters" % prId
+      cms_status_prefix = "cms/%s" % prId
+    code_checks_status = [s for s in commit_statuses if s.context == "%s/code-checks" % cms_status_prefix]
     print("PR Statuses:",commit_statuses)
     last_commit_date = last_commit.committer.date
     print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)
@@ -520,7 +528,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if issue.pull_request:
     pre_checks = [c for c in signing_categories if c in default_pre_checks]
     for pre_check in pre_checks+["code-checks"]:
-      pre_checks_state[pre_check] = get_status_state("cms/%s" % pre_check, commit_statuses)
+      pre_checks_state[pre_check] = get_status_state("%s/%s" % (cms_status_prefix, pre_check), commit_statuses)
     print("Pre check status:",pre_checks_state)
   already_seen = None
   pull_request_updated = False
@@ -864,7 +872,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print(bot_status.target_url,turl,signatures["tests"],bot_status.description)
       if bot_status and bot_status.target_url == turl and signatures["tests"]=="pending" and (" requested by " in  bot_status.description):
         signatures["tests"]="started"
-      if get_status_state("cms/unknown/release", commit_statuses) == "error":
+      if get_status_state("%s/unknown/release" % cms_status_prefix, commit_statuses) == "error":
         signatures["tests"]="pending"
       if signatures["tests"]=="started" and new_bot_tests:
         lab_stats = {}
@@ -1075,6 +1083,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   print("All Parameters:",global_test_params)
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist
   if create_test_property:
+    global_test_params["CONTEXT_PREFIX"] = cms_status_prefix
     if trigger_test:
         create_properties_file_tests(repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config)
         if not dryRun:
@@ -1246,14 +1255,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         url = pre_checks_url[pre_check]
         print("Setting status: %s,%s,%s" % (pre_check, state, url))
         if not dryRunOrig:
-          last_commit_obj.create_status(state, target_url=url, description="Check details", context="cms/%s" % pre_check)
+          last_commit_obj.create_status(state, target_url=url, description="Check details", context="%s/%s" % (cms_status_prefix, pre_check))
       continue
     if (not dryRunOrig) and (pre_checks_state[pre_check]==""):
-      params = {"PULL_REQUEST" : "%s" % (prId)}
+      params = {"PULL_REQUEST" : "%s" % (prId), "CONTEXT_PREFIX": cms_status_prefix}
       if pre_check=="code-check":
         params["CMSSW_TOOL_CONF"] = code_checks_tools
       create_properties_file_tests(repository, prId, params, dryRunOrig, abort=False, req_type=pre_check)
-      last_commit_obj.create_status("pending", description="%s requested" % pre_check, context="cms/%s" % pre_check)
+      last_commit_obj.create_status("pending", description="%s requested" % pre_check, context="%s/%s" % (cms_status_prefix, pre_check))
     else:
       print("Dryrun: Setting pending status for %s" % pre_check)
 
@@ -1274,7 +1283,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print("This pull request must be merged.")
     if not dryRun and (pr.state == "open"): pr.merge()
 
-  state = get_status("bot/test_parameters", commit_statuses)
+  state = get_status(bot_test_param_name, commit_statuses)
   if ((not state) and (test_params_msg!="")) or (state and state.description != test_params_msg):
     if test_params_msg=="":  test_params_msg="No special test parameter set."
     print("Test params:",test_params_msg)
@@ -1295,11 +1304,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if not dryRun:
         set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
         if len(test_params_msg)>140: test_params_msg=test_params_msg[:135]+"..."
-        last_commit_obj.create_status(state, description=test_params_msg, target_url=url, context="bot/test_parameters")
+        last_commit_obj.create_status(state, description=test_params_msg, target_url=url, context=bot_test_param_name)
   if ack_comment:
-    state = get_status("bot/ack", commit_statuses)
+    state = get_status(bot_ack_name, commit_statuses)
     if (not state) or (state.target_url != ack_comment.html_url):
       desc = "Comment by %s at %s UTC processed." % (ack_comment.user.login.encode("ascii", "ignore"), ack_comment.created_at)
       print(desc)
       if not dryRun:
-        last_commit_obj.create_status("success", description=desc, target_url=ack_comment.html_url, context="bot/ack")
+        last_commit_obj.create_status("success", description=desc, target_url=ack_comment.html_url, context=bot_ack_name)

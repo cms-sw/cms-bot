@@ -4,7 +4,7 @@ source $(dirname $0)/setup-pr-test-env.sh
 mark_commit_status_all_prs 'relvals' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 mkdir "$WORKSPACE/runTheMatrix-results"
 pushd "$WORKSPACE/runTheMatrix-results"
-  RELVALS_CMD="LOCALRT=${WORKSPACE}/${CMSSW_VERSION} timeout $MATRIX_TIMEOUT runTheMatrix.py $MATRIX_ARGS -j $(${COMMON}/get_cpu_number.sh -2)"
+  RELVALS_CMD="LOCALRT=${WORKSPACE}/${CMSSW_VERSION} timeout $MATRIX_TIMEOUT runTheMatrix.py $MATRIX_ARGS -j ${NCPU}"
   echo $RELVALS_CMD > $WORKSPACE/matrixTests.log
   dateBefore=$(date +"%s")
   (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/matrixTests.log

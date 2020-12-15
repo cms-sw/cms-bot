@@ -25,7 +25,7 @@ WFS_WITH_ERRORS=''
 RESULTS_FILE=$WORKSPACE/comparison.txt
 MAPPING_FILE=wf_mapping.txt
 get_jenkins_artifacts ${BASELINE_DIR}/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE
-get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/prs_commits.txt $WORKSPACE/prs_commits.txt || true
+get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/prs_commits.txt $WORKSPACE/prs_commits || true
 get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/testsResults.txt $WORKSPACE/testsResults.txt
 BASE_IB=$(grep '^BASE_IB;' $WORKSPACE/testsResults.txt | sed 's|.*;||')
 if [ "X${BASE_IB}" = "X" ] ; then BASE_IB=$RELEASE_FORMAT ; fi

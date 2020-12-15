@@ -85,10 +85,9 @@ ls /cvmfs/cms-ib.cern.ch || true
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 # Put hashcodes of last commits to a file. Mostly used for commenting back
-rm -rf ${WORKSPACE}/prs_commits.txt
-touch ${WORKSPACE}/prs_commits.txt
 COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r ${PR_REPO} ${PR_NUMBER})
-echo "${PULL_REQUEST}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
+echo "${PULL_REQUEST}=${COMMIT}" > ${WORKSPACE}/prs_commits
+cp ${WORKSPACE}/prs_commits ${WORKSPACE}/prs_commits.txt
 
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build environment' --reset
 PR_COMMIT_STATUS="optional"

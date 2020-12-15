@@ -26,7 +26,7 @@ function mark_commit_status_all_prs () {
     STATE=$2; shift ; shift
     PR_NAME_AND_REPO=$(echo ${PULL_REQUEST} | sed 's/#.*//' )
     PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
-    LAST_PR_COMMIT=$(grep "^${PULL_REQUEST}=" $WORKSPACE/prs_commits.txt | sed 's|.*=||;s| ||g')
+    LAST_PR_COMMIT=$(grep "^${PULL_REQUEST}=" $WORKSPACE/prs_commits | sed 's|.*=||;s| ||g')
     if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = "false" ] ; then
       mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "cms/${CONTEXT}" -s "${STATE}" "$@"
     fi

@@ -1,8 +1,6 @@
 #!/bin/bash -ex
 
-if [ "${CONTEXT_PREFIX}" = "" ] ; then
-  CONTEXT_PREFIX="cms"
-fi
+if [ "${CONTEXT_PREFIX}" = "" ] ; then CONTEXT_PREFIX="cms"; fi
 
 function mark_commit_status_pr () {
   local ERR=1

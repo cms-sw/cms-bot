@@ -878,7 +878,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if signatures["tests"]=="started" and new_bot_tests:
         lab_stats = {}
         for status in commit_statuses:
-          if not status.context.startswith(cms_status_prefix+"/"): contninue
+          if not status.context.startswith(cms_status_prefix+"/"): continue
           cdata = status.context.split("/")
           if cdata[-1] not in ["optional", "required"]:
             continue

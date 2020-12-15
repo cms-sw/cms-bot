@@ -885,6 +885,7 @@ echo "DOCKER_IMG=${DOCKER_IMG}" >> $WORKSPACE/test-env.txt
 echo "TEST_CONTEXT=${TEST_CONTEXT}" >> $WORKSPACE/test-env.txt
 echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
 echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $WORKSPACE/test-env.txt
+echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
 
 #
 # Matrix tests

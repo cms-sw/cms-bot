@@ -80,6 +80,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_2_X/master"].append("IB/CMSSW_11_2_X/gc
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_3_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_3_X"].append("CMSSW_11_3_DEVEL_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_3_X"].append("CMSSW_11_3_CLANG_X")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_3_X"].append("CMSSW_11_3_GEANT4_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_3_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_3_X/master"].append("IB/CMSSW_11_3_X/rootnext")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_3_X/master"].append("IB/CMSSW_11_3_X/rootmaster")

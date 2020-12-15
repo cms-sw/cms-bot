@@ -1,5 +1,7 @@
 #!/bin/bash -ex
 
+if [ "${CONTEXT_PREFIX}" = "" ] ; then CONTEXT_PREFIX="cms"; fi
+
 function mark_commit_status_pr () {
   local ERR=1
   for i in 0 1 2 3 4 ; do
@@ -28,6 +30,6 @@ function mark_commit_status_all_prs () {
     PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
     LAST_PR_COMMIT=$(grep "^${PULL_REQUEST}=" $WORKSPACE/prs_commits | sed 's|.*=||;s| ||g')
     if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = "false" ] ; then
-      mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "cms/${CONTEXT}" -s "${STATE}" "$@"
+      mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "${CONTEXT_PREFIX}/${CONTEXT}" -s "${STATE}" "$@"
     fi
 }

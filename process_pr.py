@@ -490,6 +490,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       bot_ack_name = "bot/%s/ack" % prId
       bot_test_param_name = "bot/%s/test_parameters" % prId
       cms_status_prefix = "cms/%s" % prId
+      bot_status = get_status(bot_status_name, commit_statuses)
     code_checks_status = [s for s in commit_statuses if s.context == "%s/code-checks" % cms_status_prefix]
     print("PR Statuses:",commit_statuses)
     last_commit_date = last_commit.committer.date

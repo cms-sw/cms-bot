@@ -7,6 +7,7 @@ mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running t
 mkdir -p $WORKSPACE/upload/profiling/
 echo "<html><head></head><title>Profiling results</title><body><ul>" > $WORKSPACE/upload/profiling/index.html
 LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
+export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
 for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true

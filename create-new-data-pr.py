@@ -36,7 +36,8 @@ if __name__ == "__main__":
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
   data_repo_base_branch = data_repo_pr.base.ref
-  if (data_repo_pr.base.ref != "master") or (data_repo_pr.base.ref != "main"):
+  
+  if (data_repo_base_branch != "master") and (data_repo_base_branch != "main"):
     print("I do not know how to tag a non-master (non-main) branch %s" % data_repo_pr.base.ref)
     exit(1)
 

@@ -35,8 +35,9 @@ if __name__ == "__main__":
   data_prid = int(opts.pull_request)
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
-  if data_repo_pr.base.ref != "master":
-    print("I do not know how to tag a non-master branch %s" % data_repo_pr.base.ref)
+  data_repo_base_branch = data_repo_pr.base.ref
+  if (data_repo_pr.base.ref != "master") or (data_repo_pr.base.ref != "main"):
+    print("I do not know how to tag a non-master (non-main) branch %s" % data_repo_pr.base.ref)
     exit(1)
 
   if not data_repo_pr.merged:
@@ -52,7 +53,7 @@ if __name__ == "__main__":
       break
 
   if last_release_tag:
-    comparison = data_repo.compare('master', last_release_tag)
+    comparison = data_repo.compare(data_repo_base_branch, last_release_tag)
     print('commits behind ', comparison.behind_by)
     create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
     print('create new tag ? ', create_new_tag)

@@ -68,6 +68,7 @@ CMSSW_L2 = {
   "slava77":          ["reconstruction"],
   "smorovic":         ["daq"],
   "smuzaffar":        ["core", "externals"],
+  "srimanob":         ["upgrade"],
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
   "wajidalikhan":     ["pdmv"],

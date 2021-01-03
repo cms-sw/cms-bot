@@ -25,8 +25,10 @@ if [ "${REMOTE_USER}" = "cmsbld" ] ; then
 elif [ "${REMOTE_USER}" = "cmsbuild" ] ; then
   ssh -n $SSH_OPTS $TARGET aklog || true
 fi
-scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:~/system-info.sh"
-SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "~/system-info.sh '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}' '${USER_HOME_MD5}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
+ssh -n $SSH_OPTS $TARGET aklog || true
+SYS_SCRIPT="system-$(hostname -s).sh"
+scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:~/${SYS_SCRIPT}"
+SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "~/${SYS_SCRIPT} '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}' '${USER_HOME_MD5}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
 
 if [ $(get_data ERROR | wc -l) -gt 0 ] ; then
   echo $DATA | tr ';' '\n'
@@ -46,6 +48,7 @@ REMOTE_USER_ID=$(get_data REMOTE_USER_ID)
 JENKINS_PORT=$(pgrep -x -a  -f ".*httpPort=.*" | tail -1 | tr ' ' '\n' | grep httpPort | sed 's|.*=||')
 SSHD_PORT=$(grep '<port>' ${HOME}/org.jenkinsci.main.modules.sshd.SSHD.xml | sed 's|</.*||;s|.*>||')
 JENKINS_CLI_CMD="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_dsa -l localcli -p ${SSHD_PORT} localhost"
+JENKINS_API_URL=$(echo ${JENKINS_URL} | sed "s|^https://[^/]*/|http://localhost:${JENKINS_PORT}/|")
 if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   slave_labels=""
   case ${SLAVE_TYPE} in
@@ -68,8 +71,13 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
   slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
-if [ $(get_data JENKINS_SLAVE_SETUP) = "false" -a "${REMOTE_USER}" != "cmst1" ] ; then
-  ${JENKINS_CLI_CMD} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
+if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
+  case ${REMOTE_USER} in
+    cmsbot|cmsbld)
+      ${JENKINS_CLI_CMD} build 'jenkins-test-slave' -p SLAVE_CONNECTION=${TARGET} -p RSYNC_SLAVE_HOME=true -s || true
+      ;;
+     *) ;;
+   esac
 fi
 KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar ; fi
@@ -84,17 +92,35 @@ esac
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "
 EXTRA_JAVA_ARGS=""
 if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
-  set +x
+  #set +x
   let MAX_WAIT_TIME=60*60*12
   WAIT_GAP=60
   SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+-jar\s+.*/slave.*\s+"
+  START_ALL_SHARED=true
   while true ; do
-    if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+    if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | wc -l) -eq 0 ] ; then
+      if [ $(ssh -n $SSH_OPTS $TARGET "pgrep -f '${SLAVE_CMD_REGEX}' | wc -l") -eq 0 ] ; then break ; fi
+    fi
+    if $START_ALL_SHARED ; then
+      START_ALL_SHARED=false
+      shared_labels=$(curl -s ${JENKINS_API_URL}/computer/${NODE_NAME}/api/xml  | sed 's|<assignedLabel>|\n|g' | sed 's|</name>.*||;s|<name>||' | grep '^shared-')
+      for s in ${shared_labels} ; do
+        for node in $(curl -s ${JENKINS_API_URL}/label/$s/api/xml | sed 's|<nodeName>|\n|g' | grep '</nodeName>' | sed 's|</nodeName>.*||') ; do
+          [ "${node}" = "${NODE_NAME}" ] && continue
+          [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${node}/config.xml | wc -l) -gt 0 ] && continue
+          pgrep -f " +${node}\s*\$" || true
+          if [ $(pgrep -f " +${node}\s*\$" | wc -l) -eq 0 ] ; then
+            (nohup ${JENKINS_CLI_CMD} connect-node $node >/dev/null 2>&1  &) || true
+            break
+          fi
+        done
+      done
+    fi
     echo "$(date): Waiting $MAX_WAIT_TIME ..."
     if [ $MAX_WAIT_TIME -gt 0 ] ; then
       let MAX_WAIT_TIME=$MAX_WAIT_TIME-$WAIT_GAP
       sleep $WAIT_GAP
-      if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/$i{NODE_NAME}/config.xml | wc -l) -gt 0 ] ; then
+      if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | wc -l) -gt 0 ] ; then
         echo "ERROR: Node is marked temporary Offline, so exiting without connecting."
         exit 0
       fi

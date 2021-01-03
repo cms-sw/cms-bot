@@ -2,8 +2,9 @@ function dockerrun()
 {
   if [ -z "${CONTAINER_TYPE}" ] ; then
     CONTAINER_TYPE=docker
+    DOCKER_IMG_BASE="/cvmfs/unpacked.cern.ch/registry.hub.docker.com"
     [ "$USE_SINGULARITY" = "true" ] && CONTAINER_TYPE=singularity
-    if [ -z "${IMAGE_BASE}" ] ; then IMAGE_BASE="/cvmfs/cms-ib.cern.ch/docker" ; fi
+    if [ -z "${IMAGE_BASE}" ] ; then IMAGE_BASE="${DOCKER_IMG_BASE}" ; fi
     if [ -z "${PROOTDIR}" ]   ; then PROOTDIR="/cvmfs/cms-ib.cern.ch/proot" ; fi
     if [ -z "${THISDIR}" ]    ; then THISDIR=$(/bin/pwd -P) ; fi
     if [ -z "${WORKDIR}" ]    ; then WORKDIR=$(/bin/pwd -P) ; fi
@@ -31,7 +32,7 @@ function dockerrun()
     singularity)
       UNPACK_IMG="${IMAGE_BASE}/${IMG}"
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u >/dev/null 2>&1; $@"
-      singularity -s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR} ${UNPACK_IMG} sh -c "$ARGS"
+      PATH=$PATH:/usr/sbin singularity -s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR} ${UNPACK_IMG} sh -c "$ARGS"
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1

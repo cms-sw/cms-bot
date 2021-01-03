@@ -56,6 +56,10 @@ for t in thrds: t.join()
 print("Getting Workflow stats from ES.....")
 stats = {}
 release_cycle=str.lower(cmssw_ver.split("_X_")[0]+"_X")
+days_history=30
+if ('_ppc64le_' in arch) or ('_aarch64_' in arch) or ('cc8_' in arch) or ('gcc10' in arch):
+  days_history=3
+print("Searching for last %s days data" % days_history)
 while True:
   stats = es_query(index='relvals_stats_*',
                  query=format('(NOT cpu_max:0) AND exit_code:0 AND release:%(release_cycle)s AND architecture:%(architecture)s AND (%(workflows)s)',
@@ -63,7 +67,7 @@ while True:
                               architecture=arch,
                               workflows=wf_query[4:]
                              ),
-                 start_time=1000*int(time()-(86400*30)),
+                 start_time=1000*int(time()-(86400*days_history)),
                  end_time=1000*int(time()),
                  scroll=True)
   if (not 'hits' in stats) or (not 'hits' in stats['hits']) or (not stats['hits']['hits']):

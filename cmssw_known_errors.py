@@ -105,9 +105,6 @@ KNOWN_ERRORS["relvals"][RelFilter]["slc6_amd64_gcc[7-9][0-9]+"]= {
 RelFilter="CMSSW_10_3_.+"
 KNOWN_ERRORS["relvals"][RelFilter]={}
 KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"] = deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"])
-KNOWN_ERRORS["relvals"][RelFilter]["slc7_amd64_gcc[7-9][0-9]+"]= deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"]["slc7_amd64_gcc700"])
-for wf in ["523.0", "551.0","555.0","562.0","1360.0","25210.0"]:
-  KNOWN_ERRORS["relvals"][RelFilter]["slc7_amd64_gcc[7-9][0-9]+"][wf]=deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_amd64_gcc700"][wf])
 
 #10.4 and above
 RelFilter="CMSSW_(10_([4-9]|[1-9][0-9]+)|1[1-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"

@@ -6,6 +6,7 @@ import repo_config
 from os.path import expanduser
 from urllib2 import urlopen
 from json import loads
+import re
 
 def update_tag_version(current_version=None):
     updated_version = None
@@ -34,8 +35,9 @@ if __name__ == "__main__":
   data_prid = int(opts.pull_request)
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
-  if data_repo_pr.base.ref != "master":
-    print("I do not know how to tag a non-master branch %s" % data_repo_pr.base.ref)
+  data_repo_base_branch = data_repo_pr.base.ref
+  if (data_repo_base_branch != "master") and (data_repo_base_branch != "main"):
+    print("I do not know how to tag a non-master (non-main) branch %s" % data_repo_pr.base.ref)
     exit(1)
 
   if not data_repo_pr.merged:
@@ -45,11 +47,13 @@ if __name__ == "__main__":
   last_release_tag = None
   releases = data_repo.get_releases()
   for i in releases:
-      last_release_tag = (i.tag_name)
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+          continue #loop until it finds a tag matching the pattern
+      last_release_tag = i.tag_name
       break
 
   if last_release_tag:
-    comparison = data_repo.compare('master', last_release_tag)
+    comparison = data_repo.compare(data_repo_base_branch, last_release_tag)
     print('commits behind ', comparison.behind_by)
     create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
     print('create new tag ? ', create_new_tag)
@@ -86,6 +90,8 @@ if __name__ == "__main__":
   last_release_tag = None
   releases = data_repo.get_releases()
   for i in releases:
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+          continue #loop until it finds a tag matching the pattern
       last_release_tag = i.tag_name
       break
 

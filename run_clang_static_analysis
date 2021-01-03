@@ -4,6 +4,7 @@ export J=$(nproc)
 export LC_ALL=C
 cd $CMSSW_BASE
 rm -rf src
+ls /cvmfs/cms-ib.cern.ch
 git clone --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git  --depth 1 git@github.com:cms-sw/cmssw src
 cd src
 git checkout $CMSSW_VERSION
@@ -27,7 +28,7 @@ fi
 ./create_statics_esd_reports.sh
 ls -ltrh
 tar cvfz dumper-checker.tgz *.txt*
-egrep '::(stream|global)::[^ ]+::(produce|analyze|filter)\(\)' modules2statics.txt | egrep -v 'edm::RootInputFileSequence::initTheFile\(\)' | egrep -v 'PrintGeomInfoAction::update\(\)'  > modules2statics-filter1.txt
+egrep '::(stream|global)::[^ ]+::(produce|analyze|filter)\(\)' modules2statics.txt | egrep -v -f statics-filter1.txt > modules2statics-filter1.txt
 mkdir $WORKSPACE/reports
 for f in dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt modules2statics-filter1.txt ; do
   [ -f $f ] && cp $f $WORKSPACE/reports/$f

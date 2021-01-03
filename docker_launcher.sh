@@ -1,11 +1,18 @@
 #!/bin/bash -ex
-if ulimit -a ; then
-  opts=""
-  for o in n s u ; do
-    opts="-$o $(ulimit -H -$o) ${opts}"
-  done
-  ulimit ${opts}
-  ulimit -a
+if [ "X$ADDITIONAL_TEST_NAME" = "Xigprof" ] ; then
+  if ulimit -a ; then
+    ulimit -n 4096 -s 81920
+    ulimit -a
+  fi
+else
+  if ulimit -a ; then
+    opts=""
+    for o in n s u ; do
+      opts="-$o $(ulimit -H -$o) ${opts}"
+    done
+    ulimit ${opts}
+    ulimit -a
+  fi
 fi
 kinit -R || true
 for repo in cms cms-ib grid projects unpacked ; do
@@ -61,9 +68,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     case $XUSER in
       cmsbld ) DOCKER_OPT="${DOCKER_OPT} -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group" ;;
     esac
-    for e in $DOCKER_JOB_ENV WORKSPACE BUILD_NUMBER JOB_NAME NODE_NAME NODE_LABELS DOCKER_IMG; do DOCKER_OPT="${DOCKER_OPT} -e $e"; done
+    for e in $DOCKER_JOB_ENV WORKSPACE BUILD_URL BUILD_NUMBER JOB_NAME NODE_NAME NODE_LABELS DOCKER_IMG; do DOCKER_OPT="${DOCKER_OPT} -e $e"; done
     if [ "${PYTHONPATH}" != "" ] ; then DOCKER_OPT="${DOCKER_OPT} -e PYTHONPATH" ; fi
     for m in $(echo $MOUNT_POINTS,/etc/localtime,${BUILD_BASEDIR},/home/$XUSER | tr ',' '\n') ; do
+      x=$(echo $m | sed 's|:.*||')
+      [ -e $x ] || continue
       if [ $(echo $m | grep ':' | wc -l) -eq 0 ] ; then m="$m:$m";fi
       DOCKER_OPT="${DOCKER_OPT} -v $m"
     done
@@ -78,10 +87,10 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     CLEAN_UP_CACHE=false
     DOCKER_IMGX=""
-    if [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
-      DOCKER_IMGX=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
-    elif [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
+    if [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
+    elif [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
+      DOCKER_IMGX=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
     fi
     if [ "$DOCKER_IMGX" = "" ] ; then
       DOCKER_IMGX="docker://$DOCKER_IMG"
@@ -96,21 +105,25 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ "X$TEST_CONTEXT" = "XGPU" -o -e "/proc/driver/nvidia/version" ] ; then
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
-        #cuda_libs=$(ldconfig -p | grep "libcuda.so" | sed 's|.* ||')
-        #if [ "${cuda_libs}" != "" ] ; then
-        #  xcuda_libs=$(echo ${cuda_libs} | tr ' ' '\n' | xargs -i readlink '{}')
-        #  for cuda_lib in $(echo ${cuda_libs} ${xcuda_libs} | tr ' ' '\n' | sort | uniq) ; do
-        #    SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B ${cuda_lib}"
-        #  done
-        #fi
       fi
     fi
-    export SINGULARITY_BINDPATH="${MOUNT_POINTS},$ws"
+    SINGULARITY_BINDPATH=""
+    for m in $(echo "$MOUNT_POINTS" | tr ',' '\n') ; do
+      x=$(echo $m | sed 's|:.*||')
+      [ -e $x ] || continue
+      SINGULARITY_BINDPATH=${SINGULARITY_BINDPATH}${m},
+    done
+    export SINGULARITY_BINDPATH="${SINGULARITY_BINDPATH},$ws"
     if [ $(whoami) = "cmsbuild" -a $(echo $HOME | grep /afs/ | wc -l) -gt 0 ] ; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi
     ERR=0
-    singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "source /cvmfs/cms.cern.ch/cmsset_default.sh ; $CMD2RUN" || ERR=$?
+    precmd=""
+    if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
+      precmd="source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
+    fi
+    export PATH=$PATH:/usr/sbin
+    singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi

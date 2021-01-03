@@ -63,14 +63,17 @@ echo "####################################################"
 
 JOBID=""
 if [ "$USE_PENDING_REQUEST" = "true" ] ; then
-  for x in $(condor_q `whoami` -global -format "%s:" JobStatus -format "%s:" ClusterId -format "%s\n" Cmd | grep ":${JOB_NAME}") ; do
+  for x in $(condor_q `whoami` -global -format "%s:" JobStatus -format "%s:" ClusterId -format "%s:" GlobalJobId -format "%s\n" Cmd | grep ":${JOB_NAME}") ; do
     status=$(echo $x | cut -d: -f1)
     jid=$(echo $x | cut -d: -f2)
+    schd=$(echo $x | cut -d: -f3 | cut -d# -f1)
     if [ $status -gt 2 -o $status -eq 0 ] ; then
       ${here}/shutdown.sh $jid || true
     elif [ $status -eq 1 ] ; then
       JOBID="${jid}.0"
-      echo "Using existing job $JOBID"
+      echo "Using existing job $JOBID (${schd})"
+      export _CONDOR_SCHEDD_HOST="${schd}"
+      export _CONDOR_CREDD_HOST="${schd}"
     else
       echo "Already running $jid"
       exit 0

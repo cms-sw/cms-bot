@@ -179,3 +179,21 @@ RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_0_ROOT614_X")
 RELEASE_BRANCH_MILESTONE["CMSSW_11_1_X"]=82
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_1_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_1_DEVEL_X")
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_11_2_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_11_2_X"]=83
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_CLANG_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_Patatrack_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_2_DEVEL_X")
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_11_3_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_11_3_X"]=84
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_3_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_3_CLANG_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_3_DEVEL_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_11_3_Patatrack_X")

@@ -2,13 +2,17 @@
 
 from __future__ import print_function
 import os
+from os.path import dirname, abspath, join
 from cmsutils import doCmd, getIBReleaseInfo
 from time import sleep
-
+SCRIPT_DIR=dirname(abspath(__file__))
 
 class LogUpdater(object):
 
-    def __init__(self, dirIn=None, dryRun=False, remote="cmsbuild@cmssdt03.cern.ch", webDir="/data/sdt/buildlogs/"):
+    def __init__(self, dirIn=None, dryRun=False, remote=None, webDir="/data/sdt/buildlogs/"):
+        if not remote:
+          with open(join(SCRIPT_DIR,"cmssdt.sh")) as ref:
+            remote = "cmsbuild@"+[ line.split("=")[-1].strip() for line in ref.readlines() if "CMSSDT_SERVER=" in line][0]
         self.dryRun = dryRun
         self.remote = remote
         self.cmsswBuildDir = dirIn

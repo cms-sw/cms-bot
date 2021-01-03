@@ -46,9 +46,8 @@
            fillResultsTable( resultsDict , table )
 
          }
-         $.get( "testsResults.txt", load_results , 'text' )
-
-
+         res = document.URL.replace("/SDT/jenkins-artifacts", "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/")
+         $.get( res, load_results , 'text' )
        } )
 
     </script>

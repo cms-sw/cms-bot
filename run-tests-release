@@ -18,6 +18,7 @@ BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
 TEST_DIR=$HERE/$CMSSW_X_Y_Z-tests
 
 export SCRAM_ARCH=${ARCHITECTURE}
+export LC_ALL=C
 source $BUILD_DIR/cmsset_default.sh
 mkdir -p $TEST_DIR
 pushd $TEST_DIR

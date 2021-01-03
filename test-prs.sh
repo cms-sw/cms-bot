@@ -2,6 +2,7 @@
 export WORKSPACE=$(/bin/pwd -P)
 export KEEP_SOURCE_GIT=true
 export BUILD_DIR=externals
+source $(dirname $0)/cmsrep.sh
 ARCH=""
 CMSDIST_BR=""
 PRS=""
@@ -92,11 +93,23 @@ if [ -e get_source_flag_result.txt ] ; then
 fi
 
 #Build externals
-COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --delete-build-directory --weekly -i ${BUILD_DIR} ${SOURCE_FLAG} --arch $SCRAM_ARCH -j ${NCPU} build cmssw-tool-conf"
+COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} -i ${BUILD_DIR} ${SOURCE_FLAG} --arch $SCRAM_ARCH -j ${NCPU}"
+if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
+  COMPILATION_CMD="${COMPILATION_CMD} --force-tag --tag hash --delete-build-directory --link-parent-repository --weekly"
+else
+  CMS_WEEK_NUM=$(echo 00000$(echo "(($(date -d "$(date +%m/%d/%Y) 00:00:00z" +%s)/86400)+4)/7" | bc) | sed 's|^.*\(.....\)$|\1|')
+  CMS_REPOSITORY=cms.week$(echo ${CMS_WEEK_NUM}%2 | bc)
+  COMPILATION_CMD="${COMPILATION_CMD} --repo ${CMS_REPOSITORY}"
+fi
+COMPILATION_CMD="${COMPILATION_CMD} build cmssw-tool-conf"
+
 echo "${COMPILATION_CMD}"
 [ -e $WORKSPACE/cmsswtoolconf.log ] && mv $WORKSPACE/cmsswtoolconf.log $WORKSPACE/cmsswtoolconf.log.$(date +%s)
 eval $COMPILATION_CMD 2>&1 | tee $WORKSPACE/cmsswtoolconf.log
-TOOL_CONF_VER=$(grep ' cms+cmssw-tool-conf+' $WORKSPACE/cmsswtoolconf.log | head -1 | sed 's|.* cms+cmssw-tool-conf+||;s| .*||g')
+TOOL_CONF_VER=$(ls -d $WORKSPACE/${BUILD_DIR}/${SCRAM_ARCH}/cms/cmssw-tool-conf/* | sed 's|.*/||')
+
+source $WORKSPACE/${BUILD_DIR}/cmsset_default.sh
+echo /cvmfs/cms.cern.ch > $WORKSPACE/${BUILD_DIR}/etc/scramrc/links.db
 
 #Find CMSSW IB to use to test externals
 CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "${CMS_BOT_DIR}/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
@@ -105,8 +118,36 @@ if [ ! -d ${CMSSW_IB} ] ; then
   scram -a $SCRAM_ARCH project ${CMSSW_IB}
 fi
 
-#Setup newly build tools
 cd ${CMSSW_IB}
+ls $WORKSPACE/${BUILD_DIR}/share/lcg/SCRAMV1 > config/scram_version
+rm -f config/scram_basedir
+
+config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+if [ "$(cat config/config_tag)" != "${config_tag}" ] ; then
+  git clone git@github.com:cms-sw/cmssw-config scram-buildrules
+  pushd scram-buildrules
+    git checkout ${config_tag}
+    echo ${config_tag} > ../config/config_tag
+  popd
+  mv config/SCRAM config/SCRAM.orig
+  cp -r scram-buildrules/SCRAM config/SCRAM
+  if [ -d scram-buildrules/Projects/CMSSW ] ; then
+    cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml config/BuildFile.xml
+    cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm config/SCRAM_ExtraBuildRule.pm
+  else
+    cp -f scram-buildrules/CMSSW_BuildFile.xml config/BuildFile.xml
+    cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm config/SCRAM_ExtraBuildRule.pm
+  fi
+  if [ -f config/SCRAM.orig/GMake/CXXModules.mk ] ; then
+    cp $WORKSPACE/cmsdist/CXXModules.mk.file config/SCRAM/GMake/CXXModules.mk
+    if [ "X${CLING_PREBUILT_MODULE_PATH}" = "X" ] ; then
+      export CLING_PREBUILT_MODULE_PATH="${WORKSPACE}/${CMSSW_IB}/lib/${SCRAM_ARCH}"
+    fi
+  fi
+  rm -rf scram-buildrules
+fi
+
+#Setup newly build tools
 CONF="config/toolbox/${SCRAM_ARCH}/tools/selected"
 CONF_BACK="config/toolbox/${SCRAM_ARCH}/tools/selected.backup"
 if [ ! -d ${CONF_BACK} ] ; then mv ${CONF} ${CONF_BACK} ; fi
@@ -114,8 +155,8 @@ rm -rf ${CONF}
 TOOL_CONF="$WORKSPACE/$BUILD_DIR/$SCRAM_ARCH/cms/cmssw-tool-conf/${TOOL_CONF_VER}/tools/selected"
 rsync -a ${TOOL_CONF}/ ${CONF}/
 if [ -e "${CONF_BACK}/cmssw.xml" ] ; then cp ${CONF_BACK}/cmssw.xml ${CONF}/cmssw.xml ; fi
-RMV_CMSSW_EXTERNAL="config/SCRAM/hooks/runtime/99-remove-release-external-lib"
-if [ -f "${RMV_CMSSW_EXTERNAL}" ] ; then chmod +x ${RMV_CMSSW_EXTERNAL} ; fi
+RMV_CMSSW_EXTERNAL="$(ls -d config/SCRAM/hooks/runtime/*-remove-release-external-lib 2>/dev/null || true)"
+if [ "${RMV_CMSSW_EXTERNAL}" != "" ] ; then chmod +x ${RMV_CMSSW_EXTERNAL} ; fi
 echo "Setting up newly build tools"
 DEP_NAMES=
 for xml in $(ls ${CONF}/*.xml) ; do
@@ -134,10 +175,12 @@ for xml in $(ls ${CONF}/*.xml) ; do
 done
 
 #Setup new tools
+touch ${CONF}/*.xml
 scram setup
 scram setup self
-eval `scram run -sh`
+rm -rf external
 scram b echo_CXX >/dev/null 2>&1
+eval `scram run -sh`
 
 #Find and checkout CMSSW packages which needs to be rebuild
 CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
@@ -150,5 +193,3 @@ for PR in $(echo $PRS | tr ' ' '\n' | grep '/cmssw#' | sed 's|/cmssw#|:|') ; do
   git cms-merge-topic --ssh -u $PR
 done
 echo "Please go to $CMSSW_BASE and checkout any extra CMSSW packages and rebuild."
-
-

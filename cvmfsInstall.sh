@@ -1,5 +1,6 @@
 #!/bin/sh -ex
 source $(dirname $0)/dockerrun.sh
+source $(dirname $0)/cmsrep.sh
 export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
 export THISDIR=$(/bin/pwd -P)
 export LANG=C
@@ -81,7 +82,11 @@ else
 fi
 
 # Create Nested Catalogs file
-cp -f $WORKSPACE/cms-bot/cvmfsdirtab $BASEDIR/.cvmfsdirtab
+if [ -e $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh ] ; then
+  $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh  > $BASEDIR/.cvmfsdirtab
+elif [ -f $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab ] ; then
+  cp -f $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab $BASEDIR/.cvmfsdirtab
+fi
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
@@ -123,12 +128,15 @@ for REPOSITORY in $REPOSITORIES; do
     if [ ! -f $LOGFILE ]; then
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
-      wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://cmsrep.cern.ch/cmssw/repos/bootstrap${DEV}.sh
-      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
+      wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://${CMSREP_IB_SERVER}/cmssw/repos/bootstrap${DEV}.sh
+      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -server ${CMSREP_IB_SERVER} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
       if [ "${INSTALL_PACKAGES}" = "" ] ; then
         INSTALL_PACKAGES=$(${CMSPKG} search SCRAMV1 | sed 's| .*||' | grep 'SCRAMV1' | sort | tail -1)
       fi
+    elif [ $(grep "server  *${CMSREP_IB_SERVER} " $WORKDIR/common/cmspkg | wc -l) -eq 0 ] ; then
+      sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi
+    INSTALL_PACKAGES="${INSTALL_PACKAGES} $(${CMSPKG} search gcc-fixincludes | sed 's| .*||' | grep 'gcc-fixincludes' | sort | tail -1)"
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
     if [ $(echo "${SCRAM_ARCH}" | grep '^cc' | wc -l) -eq 0 ] ; then

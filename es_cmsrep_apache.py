@@ -36,7 +36,7 @@ def process (line, count):
   payload["@timestamp"]=int(tsec*1000)
   id = sha1(line).hexdigest()
   if (count%1000)==0: print("Processed entries",count)
-  if not send_payload("apache-cmsrep-"+week,"access_log", id, dumps(payload), passwd_file="/data/es/es_secret"):
+  if not send_payload("apache-cmsrep-"+week,"access_log", id, dumps(payload)):
     return False
   if payload["verb"] != "GET": return True
   items = payload["request"].replace("/cms/cpt/Software/download/","/cmssw/",1).split("/")
@@ -59,11 +59,11 @@ def process (line, count):
   from _py2with3compatibility import unquote
   xpayload = {'dev' : dev, 'repository' : unquote(repo), 'architecture' : unquote(arch), 'package' : unquote(pkg).split("-1-",1)[0], 'cmspkg' : unquote(cmspkg)}
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
-  return send_payload("cmspkg-access-"+week,"rpm-packages", id, dumps(xpayload), passwd_file="/data/es/es_secret")
+  return send_payload("cmspkg-access-"+week,"rpm-packages", id, dumps(xpayload))
 
 count=run_cmd("pgrep -l -x -f '^python .*/es_cmsrep_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)
-logs = run_cmd("ls -rt /var/log/httpd/access_log* | grep -v '[.]gz$'").split("\n")
+logs = run_cmd("ls -rt /var/log/httpd/cmsrep-non-ssl_access.log* | grep -v '[.]gz$'").split("\n")
 log = logwatch("httpd",log_dir="/data/es")
 s,c=log.process(logs, process)
 print("Total entries processed",c)

@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import json, re, ssl
+import json, re, ssl, base64
 from os.path import exists
 from os import getenv
 from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile
-from _py2with3compatibility import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, install_opener, Request, \
-  urlopen, build_opener
+from _py2with3compatibility import Request, urlopen
 from os import stat as tstat
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
 ES_NEW_SERVER = 'https://es-cmssdt7.cern.ch:9203'
+ES_PASSWD = None
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
@@ -36,36 +36,31 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
   return format(es5_query_tmpl, **locals ())
 
 
-def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file=passwd_file)
+def resend_payload(hit):
+  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]))
 
 def es_get_passwd(passwd_file=None):
+  global ES_PASSWD
+  if ES_PASSWD: return ES_PASSWD
   for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret", "/data/secrets/github_hook_secret_cmsbot"]:
     if not psfile: continue
     if exists(psfile):
       passwd_file=psfile
       break
-  try:
-    return open(passwd_file,'r').read().strip()
-  except Exception as e:
-    print("Couldn't read the secrets file" , str(e))
-    return ""
+  ES_PASSWD = open(passwd_file,'r').read().strip()
+  return ES_PASSWD
 
-def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER):
+def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False):
   header = {"Content-Type": "application/json"}
   xuri = uri.split("/")
-  if xuri[1] != "_doc":
+  if (not ignore_doc) and (xuri[1] != "_doc"):
     xuri[1] = "_doc"
     uri = "/".join(xuri)
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
   url = "%s/%s" % (es_ser,uri)
-  passman = HTTPPasswordMgrWithDefaultRealm()
-  passman.add_password(None,url, 'cmssdt', passwd)
-  auth_handler = HTTPBasicAuthHandler(passman)
-  opener = build_opener(auth_handler)
+  header['Authorization'] = 'Basic %s' % base64.b64encode("cmssdt:%s" % passwd)
   try:
-    install_opener(opener)
     request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
@@ -80,12 +75,12 @@ def send_payload(index, document, id, payload, passwd_file=None):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   uri = "%s/%s/" % (index,document)
   if id: uri = uri+id
-  return send_request(uri, payload=payload, passwd_file=passwd_file)
+  return send_request(uri, payload=payload, method="POST", passwd_file=passwd_file)
 
 def send_template(name, payload, passwd_file=None):
   if not name.startswith('cmssdt-'): name = 'cmssdt-' + name
   uri = "_template/%s" % name
-  return send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT')
+  return send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT', ignore_doc=True)
 
 def delete_hit(hit,passwd_file=None):
   uri = "%s/%s/%s" % (hit["_index"], hit["_type"], hit["_id"])
@@ -152,15 +147,15 @@ def get_indexes(index='cmssdt-*'):
 
 def close_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/_close',method='POST')
+  send_request(index+'/_close',method='POST', ignore_doc=True)
 
 def open_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/_open',method='POST')
+  send_request(index+'/_open',method='POST', ignore_doc=True)
 
 def delete_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/',method='DELETE')
+  send_request(index+'/',method='DELETE', ignore_doc=True)
 
 def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False, max_count=-1, fields=None):
   query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field, fields=fields)
@@ -171,6 +166,7 @@ def es_workflow_stats(es_hits,rss='rss_75', cpu='cpu_75'):
   wf_stats = {}
   for h in es_hits['hits']['hits']:
     hit = h["_source"]
+    if 'time' not in hit: continue
     wf = hit["workflow"]
     step = hit["step"]
     if not wf in wf_stats: wf_stats[wf]={}
@@ -260,8 +256,8 @@ def es_send_resource_stats(release, arch, name, version, sfile,
   except Exception as e: print(e.message)
 
 def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normalize=1,
-                           es_index_name='externals_stats_summary_testindex',
-                           es_doc_name='externals-runtime-stats-summary-testdoc'):
+                           es_index_name='externals_stats_summary',
+                           es_doc_name='externals-stats-summary'):
   file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
   week = str((file_stamp / 86400 + 4) / 7)
   with open(opts_dict_file_path, 'r') as opts_dict_f: opts_dict = json.load(opts_dict_f)

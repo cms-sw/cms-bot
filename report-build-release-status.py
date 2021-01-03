@@ -8,6 +8,7 @@ from os.path import expanduser
 from datetime import datetime
 from socket import setdefaulttimeout
 from os import environ
+import re
 setdefaulttimeout(120)
 JENKINS_PREFIX="jenkins"
 try:    JENKINS_PREFIX=environ['JENKINS_URL'].strip("/").split("/")[-1]
@@ -121,15 +122,14 @@ def remove_label( issue, label ):
     print('Not removing label (dry-run):\n %s' % label)
     return
 
-  if label not in ALL_LABELS:
-    print('label ', label, ' does not exist. Not attempting to remove')
-    return
-
-  print('Removing label: %s' % label)
-  try:
-    issue.remove_from_labels( label) 
-  except Exception as e:
-    pass
+  reM = re.compile ("^%s$" % label)
+  for l in ALL_LABELS:
+    if not reM.match(l): continue
+    print('Removing label: %s' % l)
+    try:
+      issue.remove_from_labels(l)
+    except Exception as e:
+      pass
 
 #
 # removes the labels of the issue
@@ -194,7 +194,7 @@ if __name__ == "__main__":
       msg_details = opts.details
     msg = BUILDING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number, details=msg_details )
     post_message( issue , msg )
-    remove_label( issue, arch+'-build-queued' )
+    remove_label( issue, arch+'-.*' )
     new_label = arch+'-building'
     add_label( issue, new_label )
 
@@ -205,7 +205,7 @@ if __name__ == "__main__":
       msg_details = opts.details
     msg = BUILDING_TOOL_CONF_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number, details=msg_details )
     post_message( issue , msg )
-    remove_label( issue, arch+'-tool-conf-waiting' )
+    remove_label( issue, arch+'-.*' )
     new_label = arch+'-tool-conf-building'
     add_label( issue, new_label )
 
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = BUILD_OK_MSG.format( architecture=arch, log_url=results_url )
     post_message( issue , msg )
-    remove_label( issue, arch+'-building' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-build-ok' )
 
   elif action == TOOL_CONF_OK:
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TOOL_CONF_OK_MSG.format( architecture=arch, log_url=results_url )
     post_message( issue , msg )
-    remove_label( issue, arch+'-tool-conf-building' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-tool-conf-ok' )
 
   elif action == BUILD_ERROR:
@@ -230,7 +230,7 @@ if __name__ == "__main__":
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = BUILD_ERROR_MSG.format( architecture=arch, log_url=results_url )
     post_message( issue , msg )
-    remove_label( issue, arch+'-building' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-build-error' )
 
   elif action == TOOL_CONF_ERROR:
@@ -238,7 +238,7 @@ if __name__ == "__main__":
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TOOL_CONF_ERROR_MSG.format( architecture=arch, log_url=results_url )
     post_message( issue , msg )
-    remove_label( issue, arch+'-tool-conf-building' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-tool-conf-error' )
 
   elif action == UPLOADING:
@@ -251,8 +251,7 @@ if __name__ == "__main__":
     results_url = BASE_UPLOAD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = UPLOAD_OK_MSG.format( architecture=arch , log_url=results_url )
     post_message( issue , msg )
-    remove_label( issue, arch+'-uploading' )
-    remove_label( issue, arch+'-upload-error' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-upload-ok' )
 
   elif action == UPLOAD_ERROR:
@@ -260,7 +259,7 @@ if __name__ == "__main__":
     results_url = BASE_UPLOAD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = UPLOAD_ERROR_MSG.format( architecture=arch , log_url=results_url )
     post_message( issue , msg )
-    remove_label( issue, arch+'-uploading' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-upload-error' )
 
   elif action == CLEANUP_OK:
@@ -306,8 +305,7 @@ if __name__ == "__main__":
     #if action == INSTALLATION_SKIP:
     #  msg = INSTALLATION_SKIP_MSG.format( architecture=arch , log_url=results_url )
     #post_message( issue, msg )
-    remove_label( issue, arch+'-upload-ok' )
-    remove_label( issue, arch+'-installation-error' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-installation-ok' )
 
   elif action == INSTALLATION_ERROR:
@@ -317,7 +315,7 @@ if __name__ == "__main__":
                                                      job_id=jenkins_build_number )
     msg = INSTALLATION_ERROR_MSG.format( architecture=arch , log_url=results_url )
     post_message( issue, msg )
-    remove_label( issue, arch+'-upload-ok' )
+    remove_label( issue, arch+'-.*' )
     add_label( issue,  arch+'-installation-error' )
 
   else:

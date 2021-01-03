@@ -9,13 +9,16 @@ if __file__: cmsbot_dir=dirname(dirname(abspath(__file__)))
 else: cmsbot_dir=dirname(dirname(abspath(sys.argv[0])))
 sys.path.insert(0,cmsbot_dir)
 
-from es_utils import get_indexes, close_index, find_indexes
+from es_utils import get_indexes, close_index, find_indexes, open_index
 from time import time
 try: weeks=int(sys.argv[1])
 except: weeks=20
+ignore_index=[]
+for idx in sys.argv[2:]:
+  ignore_index.append(idx)
 cur_week=int(((time()/86400)+4)/7)
-ignore_index=["cmssdt-ibs"]
 idxs=[]
+odxs=[]
 try:
   if sys.argv[2]:
     for ix in sys.argv[2:]:
@@ -37,6 +40,7 @@ except:
         types[k][ix].append(wk)
         if ix in ignore_index: continue
         if (k == "open") and ((cur_week-int(wk))>weeks): idxs.append(idx)
+        if (k == "close") and ((cur_week-int(wk))<=weeks): odxs.append(idx)
       else:
         if not k in rest: rest[k]=[]
         rest[k].append(idx)
@@ -49,4 +53,9 @@ except:
 for idx in sorted(idxs):
   print("Closing ",idx)
   close_index(idx)
+  print("  ",get_indexes(idx).strip())
+
+for idx in sorted(odxs):
+  print("Opening ",idx)
+  open_index(idx)
   print("  ",get_indexes(idx).strip())

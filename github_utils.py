@@ -6,6 +6,7 @@ from _py2with3compatibility import run_cmd, urlopen, Request
 from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
 
+GITHUB_TOKEN = None
 try:
     from github import UnknownObjectException
 except:
@@ -19,6 +20,12 @@ except Exception as e:
 
 
 def format(s, **kwds): return s % kwds
+
+
+def comment_gh_pr(gh, repo, pr, msg):
+    repo = gh.get_repo(repo)
+    pr   = repo.get_issue(pr)
+    pr.create_comment(msg)
 
 
 def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=True):
@@ -197,7 +204,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
         if 'invalid_prs' in cache and pr_hash_id in cache['invalid_prs']: continue
         print("Checking ", pr_number, author, parent_hash)
         try:
-            pr_md5 = md5(pr_number + "\n").hexdigest()
+            pr_md5 = md5((pr_number + "\n").encode()).hexdigest()
             pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
             print("Checking cached file: " + pr_cache)
             if not exists(pr_cache):
@@ -301,6 +308,14 @@ def get_commit_info(repo, commit):
     return {}
 
 
+def create_team(token, org, team, description):
+    params = {"name": team, "description": description, "permission": "admin", "privacy": "closed"}
+    return github_api("/orgs/%s/teams" % org, token, params, method="POST")
+
+def get_pending_members(token, org):
+    return github_api("/orgs/%s/invitations" % org, token, method="GET")
+
+
 def get_organization_members(token, org, role="all", filter="all"):
     return github_api("/orgs/%s/members" % org, token, params={"role": role, "filter": filter}, method="GET")
 
@@ -322,7 +337,7 @@ def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
     return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
 
 
-def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None):
+def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None, raw=False):
     if not params:
         params = {}
     if not headers:
@@ -356,7 +371,9 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
                 page_range += range(pages[0], pages[1] + 1)
             elif len(pages) == 1:
                 page_range += pages
-    return json.loads(response.read())
+    cont = response.read()
+    if raw: return cont
+    return json.loads(cont)
 
 
 def get_pull_requests(gh_repo, branch=None, status='open'):
@@ -394,14 +411,51 @@ def get_unix_time(data_obj):
 
 
 def get_gh_token(repository=None):
-  if repository:
-    repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
-    if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
-  import repo_config
+  global GITHUB_TOKEN
+  if not GITHUB_TOKEN:
+    if repository:
+      repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
+      if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+    import repo_config
+    GITHUB_TOKEN = open(expanduser(repo_config.GH_TOKEN)).read().strip()
+  return GITHUB_TOKEN
+
   return open(expanduser(repo_config.GH_TOKEN)).read().strip()
 
+def get_combined_statuses(commit, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  return github_api("/repos/%s/commits/%s/status" % (repository, commit), token, method='GET')
 
-def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None):
+
+def set_comment_emoji(comment_id, repository, emoji="+1", token=None):
+  if not token: token = get_gh_token(repository)
+  params = {"content" : emoji }
+  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, params, headers=headers)
+
+
+def get_comment_emojis(comment_id, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, method="GET", headers=headers)
+
+
+def delete_comment_emoji(emoji_id, comment_id, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
+  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), token, method="DELETE", headers=headers, raw=True)
+
+
+def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):
   if not token: token = get_gh_token(repository)
   params = {'state': state, 'target_url': url, 'description': description, 'context': context}
   github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)
+  if reset:
+    statuses = get_combined_statuses(commit, repository, token)
+    if 'statuses' not in statuses: return
+    params = {'state': 'pending', 'target_url': '', 'description': 'Not yet started'}
+    for s in statuses['statuses']:
+      if s['context'].startswith(context+"/"):
+        params['context'] = s['context']
+        github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)
+  return

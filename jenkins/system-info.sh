@@ -4,6 +4,9 @@ $(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs --no-
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
+#cleanup old /tmp files
+find /tmp -maxdepth 1 -mindepth 1 -type f -mtime +2 -user $(whoami) -exec rm -f {} \; || true
+
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 git config --global cms.protocol "mixed" || true
 JENKINS_SLAVE_JAR_MD5="$1"
@@ -32,6 +35,12 @@ if [ "${USER_HOME_MD5}" != "" ] ; then
     RSYNC_SLAVE=true
   elif [ $(cat ${RSYNC_SLAVE_FILE}) != "${USER_HOME_MD5}" ] ; then
     RSYNC_SLAVE=true
+  else
+    HN=$(hostname -s)
+    if [ -e "${HOME}/.ssh/authorized_keys-${HN}" ] ; then
+      cat ${HOME}/.ssh/authorized_keys-${HN} >> ${HOME}/.ssh/authorized_keys
+      rm -f ${HOME}/.ssh/authorized_keys-${HN}
+    fi
   fi
 fi
 echo "DATA_RSYNC_SLAVE=${RSYNC_SLAVE}"
@@ -91,7 +100,7 @@ SLAVE_LABELS="${SLAVE_LABELS} ${HOST_CMS_ARCH} $(echo ${HOST_CMS_ARCH} | tr _ ' 
 
 echo "DATA_REMOTE_USER_ID=$(id -u)"
 
-let WORKSPACE_SIZE="$(df -k ${WORKSPACE} | tail -1 | tr ' ' '\n' | grep -v '^$' | tail -3 | head -1)/(1024*1024)"
+let WORKSPACE_SIZE="$(df -k ${WORKSPACE} | tail -1 | tr ' ' '\n' | grep -v '^$' | tail -3 | head -1)/(1024*1024)" || true
 echo "DATA_WORKSPACE_SIZE=${WORKSPACE_SIZE}"
 
 JENKINS_SLAVE_SETUP=false

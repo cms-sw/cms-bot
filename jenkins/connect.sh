@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 TARGET=$1 ; shift
 if [ "$1" != "${NODE_NAME}" ] ; then exec $0 "${TARGET}" "${NODE_NAME}" "$@"; fi
-opts="$0 +${TARGET} +${NODE_NAME}"
+opts="$0 +${TARGET} +${NODE_NAME} +"
 if [ $(pgrep -f "$opts" | wc -l) -gt 2 ] ; then
   pgrep -af "$opts" | grep -v "^$$ "
   echo "WARNING: There is already a process trying to connect. please wait for that process to finish first"

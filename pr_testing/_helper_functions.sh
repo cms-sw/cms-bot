@@ -5,15 +5,6 @@ WORKSPACE=${WORKSPACE}                # Needs to be exported in master script
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metadata etc are kept
 # -----
 
-function get_path_to_pr_metadata(){
-    PR=$1  # ex. cms-sw/dist#100
-    # ---
-    REPO=$( echo ${PR} | sed 's/#.*//' )
-    PR_NR=$(echo ${PR} | sed 's/.*#//')
-    DEST_D=${CACHED}/${REPO}/${PR_NR}
-    echo ${DEST_D}
-}
-
 function get_cached_GH_JSON (){
     # gives path to cached PR json file
     # if it is the first time a file is requested, it will download it
@@ -48,6 +39,9 @@ function git_clone_and_merge (){
     TEST_REPO=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['head']['repo']['full_name']")
 
     pushd ${WORKSPACE} >/dev/null 2>&1
+        if [ $(echo $BASE_REPO | grep '/cmsdist$' | wc -l) -gt 0 ] ; then
+          [ ! -z "${CMSDIST_TAG}" ] && BASE_BRANCH="${CMSDIST_TAG}"
+        fi
         if  [ ! -d ${BASE_REPO_NAME} ]; then
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH}
         fi
@@ -62,19 +56,10 @@ function get_base_branch(){
     PR_METADATA_PATH=$(get_cached_GH_JSON "$1")
     # echo ${PR_METADATA_PATH}
     EXTERNAL_BRANCH=$(python -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print obj['base']['ref']")
-    fail_if_empty "${EXTERNAL_BRANCH}" "PR had errors - ${1}"
+    if [ "${EXTERNAL_BRANCH}" == "" ] ; then exit 1; fi
     echo ${EXTERNAL_BRANCH}
 }
 
 function echo_section(){
     echo "---------|  $@  |----------"
 }
-
-function fail_if_empty(){
-    if [ -z $(echo "$1" | tr -d ' ' ) ]; then
-        exit_with_comment_failure_main_pr -m "ERROR: empty variable. ${2}." ${DRY_RUN} || true
-        exit 1
-    fi
-}
-
-

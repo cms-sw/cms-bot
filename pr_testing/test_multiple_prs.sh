@@ -870,7 +870,7 @@ echo "PR_TEST_BUILD_ID=${BUILD_NUMBER}" >> $WORKSPACE/deploy-cmssw
 echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 
 touch $WORKSPACE/job.env
-for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY CMSSW_IB; do
+for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY CMSSW_IB UPLOAD_UNIQ_ID; do
   eval echo "$x=\\\"$(echo \$$x)\\\"" >> $WORKSPACE/job.env
 done
 
@@ -925,18 +925,18 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       EXTRA_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $EXTRA_MATRIX_ARGS"
     fi
   fi
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.txt
-  echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.txt
-  echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS $SLHC_PARAM $WF_LIST" >> $WORKSPACE/run-relvals.txt
-  echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.txt
-  echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.txt
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
+  echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
+  echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS $SLHC_PARAM $WF_LIST" >> $WORKSPACE/run-relvals.prop
+  echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
+  echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 fi
 
 if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-addon.txt
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-addon.prop
 fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-prefiling.txt
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-prefiling.prop
 fi
 rm -f $WORKSPACE/test-env.txt

@@ -18,6 +18,7 @@ fi
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 export JENKINS_PREFIX
+if [ -e $WORKSPACE/job.env ] ; then source $WORKSPACE/job.env ; fi
 PR_RESULT_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}"
 if [ ! -f $WORKSPACE/prs_commits ] ; then
   get_jenkins_artifacts pull-request-integration/${UPLOAD_UNIQ_ID}/prs_commits.txt $WORKSPACE/prs_commits
@@ -42,7 +43,6 @@ if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
   if [ -f ${CMSSW_CVMFS_PATH}/ibeos_cache.txt ] ; then ln -s ${CMSSW_CVMFS_PATH}/ibeos_cache.txt $WORKSPACE/${CMSSW_VERSION}/ibeos_cache.txt ; fi
   ln -s ${CMSSW_CVMFS_PATH}/src $WORKSPACE/${CMSSW_VERSION}/src
 else
-  if [ -e $WORKSPACE/job.env ] ; then source $WORKSPACE/job.env ; fi
   pushd $WORKSPACE/$CMSSW_IB
     eval `scram run -sh` >/dev/null 2>&1
   popd

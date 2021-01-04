@@ -57,7 +57,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   XUSER=`whoami`
   if [ -d $HOME/bin ] ; then
     if [ $(echo $PATH | tr ':' '\n' | grep $HOME/bin | wc -l) -eq 0 ] ; then
-      CMD2RUN="export PATH=$HOME/bin:$PATH; "
+      CMD2RUN="${CMD2RUN}export PATH=$HOME/bin:$PATH; "
     fi
   fi
   CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"

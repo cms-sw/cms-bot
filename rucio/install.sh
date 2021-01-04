@@ -1,7 +1,8 @@
-#!/bin/bash -e
+#!/bin/bash -ex
+PYTHON_CMD="python"
 INSTALL_DIR=$(/bin/pwd)
 SET_CURRENT=false
-RUCIO_VERSION="latest"
+RUCIO_VERSION=""
 PIP_PKG=rucio-clients
 DEPS=""
 ARCH=$(uname -m)/$(cmsos | cut -d_ -f1)
@@ -12,6 +13,7 @@ while [ $# -gt 0 ]; do
     -c|--current )          SET_CURRENT=true      ;        shift;;
     -v|--rucio-version )    RUCIO_VERSION="$2"    ; shift; shift;;
     -d|--dependency)        DEPS="$2"             ; shift; shift;;
+    -p|--python)            PYTHON_CMD="$2"       ; shift; shift;;
     -h|--help )
       echo "
 Usage: ${PIP_PKG}-$(basename $0)
@@ -21,6 +23,7 @@ Usage: ${PIP_PKG}-$(basename $0)
                                 Default is latest available version
   -d|--dependency               Install extra dependencies e.g. urllib3==1.25 requests=1.0
   -c|--current                  Make this version the default version
+  -p|--python <python|python3>  Python env to use
   -h|-help                      Show this help message
 
   It will install ${PIP_PKG} version under ${INSTALL_DIR} and will
@@ -33,21 +36,28 @@ Usage: ${PIP_PKG}-$(basename $0)
   esac
 done
 
-if [ "${RUCIO_VERSION}" = "latest" ] ; then
-  RUCIO_VERSION=$(pip search --disable-pip-version-check rucio-clients 2>&1 | grep '^rucio-clients ' | sed 's|).*||;s|.*(||')
+if [ "${RUCIO_VERSION}" = "" ] ; then
+  echo "Error: Missing ${PIP_PKG} version. Please use -v <version> command-line option"
+  exit 1
 fi
 
 export PYTHONUSERBASE="${INSTALL_DIR}/${ARCH}/${RUCIO_VERSION}"
+if [ -d ${PYTHONUSERBASE} ] ; then
+  echo "Error: Already installed ${PYTHONUSERBASE}. Please first delete it to re-install"
+  exit 1
+fi
+
 mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
 export TMPDIR="${INSTALL_DIR}/tmp"
-if [ $(which python | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
-  pip install --upgrade --user pip
+if [ $(which ${PYTHON_CMD} | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
+  ${PYTHON_CMD} -m pip install --upgrade --user pip
   mv ${PYTHONUSERBASE}/bin ${PYTHONUSERBASE}/pip-bin
   export PATH=${PYTHONUSERBASE}/pip-bin:$PATH
   [ "$DEPS" ] && pip install --upgrade --user $DEPS
   pip install --upgrade --user setuptools
 fi
-pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
+
+PATH="${PYTHONUSERBASE}/pip:$PATH" pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
 rm -f ${INSTALL_DIR}/rucio.cfg
 cp $(dirname $0)/rucio.cfg ${INSTALL_DIR}/rucio.cfg
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg

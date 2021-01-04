@@ -41,7 +41,8 @@ if [ "${RUCIO_VERSION}" = "" ] ; then
   exit 1
 fi
 
-export PYTHONUSERBASE="${INSTALL_DIR}/${ARCH}/${RUCIO_VERSION}"
+PY_VER=$(${PYTHON_CMD} -c 'import sys;print(sys.version_info[0])')
+export PYTHONUSERBASE="${INSTALL_DIR}/${ARCH}/py${PY_VER}/${RUCIO_VERSION}"
 if [ -d ${PYTHONUSERBASE} ] ; then
   echo "Error: Already installed ${PYTHONUSERBASE}. Please first delete it to re-install"
   exit 1
@@ -50,6 +51,7 @@ fi
 mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
 export TMPDIR="${INSTALL_DIR}/tmp"
 if [ $(which ${PYTHON_CMD} | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
+  export PATH=${PYTHONUSERBASE}/bin:$PATH
   ${PYTHON_CMD} -m pip install --upgrade --user pip
   mv ${PYTHONUSERBASE}/bin ${PYTHONUSERBASE}/pip-bin
   export PATH=${PYTHONUSERBASE}/pip-bin:$PATH
@@ -61,20 +63,25 @@ PATH="${PYTHONUSERBASE}/bin:$PATH" pip install --disable-pip-version-check --use
 rm -f ${INSTALL_DIR}/rucio.cfg
 cp $(dirname $0)/rucio.cfg ${INSTALL_DIR}/rucio.cfg
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg
-ln -s ../../../../rucio.cfg ${PYTHONUSERBASE}/etc/rucio.cfg
+ln -s ../../../../../rucio.cfg ${PYTHONUSERBASE}/etc/rucio.cfg
 rm -rf ${TMPDIR}
 
-cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup.sh
-chmod 0644 ${INSTALL_DIR}/setup.sh
+cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup-py${PY_VER}.sh
+sed -i -e "s|/\${ARCH}/|/\${ARCH}/py${PY_VER}|" ${INSTALL_DIR}/setup-py${PY_VER}.sh
+chmod 0644 ${INSTALL_DIR}/setup-py${PY_VER}.sh
 touch ${PYTHONUSERBASE}/.cvmfscatalog
 
 [ ! -e ${INSTALL_DIR}/${ARCH}/current ] && SET_CURRENT=true
 if $SET_CURRENT ; then
-  rm -f ${INSTALL_DIR}/${ARCH}/current
-  ln -s ${RUCIO_VERSION} ${INSTALL_DIR}/${ARCH}/current
-  echo "source ${INSTALL_DIR}/setup.sh"
-  /bin/bash ${INSTALL_DIR}/setup.sh
+  rm -f ${INSTALL_DIR}/${ARCH}/py${PY_VER}/current
+  ln -s ${RUCIO_VERSION} ${INSTALL_DIR}/${ARCH}/py${PY_VER}/current
+  echo "source ${INSTALL_DIR}/setup-py${PY_VER}.sh"
+  /bin/bash ${INSTALL_DIR}/setup-py${PY_VER}.sh
 else
-  echo "source ${INSTALL_DIR}/setup.sh ${RUCIO_VERSION}"
-  /bin/bash ${INSTALL_DIR}/setup.sh ${RUCIO_VERSION}
+  echo "source ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}"
+  /bin/bash ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}
+fi
+if [ ${PY_VER} = "2" ] ; then
+  rm -f ${INSTALL_DIR}/setup.sh
+  ln -s setup-py${PY_VER}.sh ${INSTALL_DIR}/setup.sh
 fi

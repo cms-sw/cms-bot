@@ -53,7 +53,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
     fi
   fi
-  CMD2RUN=""
+  CMD2RUN="export PATH=$PATH:/usr/sbin;"
   XUSER=`whoami`
   if [ -d $HOME/bin ] ; then
     if [ $(echo $PATH | tr ':' '\n' | grep $HOME/bin | wc -l) -eq 0 ] ; then

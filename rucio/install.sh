@@ -82,6 +82,5 @@ else
   /bin/bash ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}
 fi
 if [ ${PY_VER} = "2" ] ; then
-  rm -f ${INSTALL_DIR}/setup.sh
-  ln -s setup-py${PY_VER}.sh ${INSTALL_DIR}/setup-new.sh
+  ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup-new.sh
 fi

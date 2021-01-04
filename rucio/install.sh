@@ -83,5 +83,5 @@ else
 fi
 if [ ${PY_VER} = "2" ] ; then
   rm -f ${INSTALL_DIR}/setup.sh
-  ln -s setup-py${PY_VER}.sh ${INSTALL_DIR}/setup.sh
+  ln -s setup-py${PY_VER}.sh ${INSTALL_DIR}/setup-new.sh
 fi

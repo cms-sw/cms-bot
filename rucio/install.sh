@@ -57,7 +57,7 @@ if [ $(which ${PYTHON_CMD} | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
   pip install --upgrade --user setuptools
 fi
 
-PATH="${PYTHONUSERBASE}/pip:$PATH" pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
+PATH="${PYTHONUSERBASE}/bin:$PATH" pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
 rm -f ${INSTALL_DIR}/rucio.cfg
 cp $(dirname $0)/rucio.cfg ${INSTALL_DIR}/rucio.cfg
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg

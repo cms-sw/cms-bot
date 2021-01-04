@@ -9,7 +9,7 @@ cd $WORKSPACE
 PULL_REQUESTS=$(echo $1 | sed 's/^ *//;s/ *$//')
 PULL_REQUEST="$(echo ${PULL_REQUESTS} | sed 's| .*||')"
 COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r $(echo ${PULL_REQUEST} | sed 's/#.*//') $(echo ${PULL_REQUEST} | sed 's/.*#//'))
-echo "${PULL_REQUEST}=${COMMIT}" >> ${WORKSPACE}/prs_commits.txt
+echo "${PULL_REQUEST}=${COMMIT}" > ${WORKSPACE}/prs_commits
 source $CMS_BOT_DIR/pr_testing/_helper_functions.sh
 source $CMS_BOT_DIR/common/github_reports.sh
 
@@ -45,6 +45,7 @@ fi
 if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; then
     REQUIRED_TEST=false
     eval $CONFIG_LINE
+    ARCHITECTURE=${SCRAM_ARCH}
     OUTPUT_FILE=properties-pr-test-${SCRAM_ARCH}.txt
     echo PULL_REQUEST="${PULL_REQUEST}" >> $OUTPUT_FILE
     echo PULL_REQUESTS=${PULL_REQUESTS} >> $OUTPUT_FILE

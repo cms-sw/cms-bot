@@ -24,20 +24,25 @@ function dockerrun()
   case $CONTAINER_TYPE in
     docker)
       docker pull ${IMG}
-      DOC_ARG="run --net=host -u $(id -u):$(id -g) --rm -t"
-      DOC_ARG="${DOC_ARG} -v ${THISDIR}:${THISDIR} -v /tmp:/tmp -v /cvmfs:/cvmfs -v ${WORKDIR}:${WORKDIR}"
+      CMD_ARG="run --net=host -u $(id -u):$(id -g) --rm -t"
+      CMD_ARG="${CMD_ARG} -v ${THISDIR}:${THISDIR} -v /tmp:/tmp -v /cvmfs:/cvmfs -v ${WORKDIR}:${WORKDIR}"
+      if [ "${MOUNT_DIRS}" != "" ] ; then for p in ${MOUNT_DIRS} ; do CMD_ARG="${CMD_ARG} -v $p"; done ; fi
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u >/dev/null 2>&1; $@"
-      docker $DOC_ARG ${IMG} sh -c "$ARGS"
+      docker ${CMD_ARG} ${IMG} sh -c "$ARGS"
       ;;
     singularity)
       UNPACK_IMG="${IMAGE_BASE}/${IMG}"
+      CMD_ARG="-s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR}"
+      if [ "${MOUNT_DIRS}" != "" ] ; then for p in ${MOUNT_DIRS} ; do CMD_ARG="${CMD_ARG} -B $p"; done ; fi
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u >/dev/null 2>&1; $@"
-      PATH=$PATH:/usr/sbin singularity -s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR} ${UNPACK_IMG} sh -c "$ARGS"
+      PATH=$PATH:/usr/sbin singularity ${CMD_ARG} ${UNPACK_IMG} sh -c "$ARGS"
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1
+      CMD_ARG="-b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q '${QEMU_ARGS}'"
+      if [ "${MOUNT_DIRS}" != "" ] ; then for p in ${MOUNT_DIRS} ; do CMD_ARG="${CMD_ARG} -b $p"; done ; fi
       ARGS="cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R ${IMAGE_BASE}/${IMG} -b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q "${QEMU_ARGS}" sh -c "${ARGS}"
+      $PROOTDIR/proot -R ${IMAGE_BASE}/${IMG} ${CMD_ARG} sh -c "${ARGS}"
       ;;
     *) eval $@;;
   esac

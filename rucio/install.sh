@@ -1,14 +1,17 @@
 #!/bin/bash -ex
+source /cvmfs/cms.cern.ch/cmsset_default.sh
 PYTHON_CMD="python"
 INSTALL_DIR=$(/bin/pwd)
 SET_CURRENT=false
 RUCIO_VERSION=""
 PIP_PKG=rucio-clients
 DEPS=""
+REINSTALL=false
 ARCH=$(uname -m)/$(cmsos | cut -d_ -f1)
 
 while [ $# -gt 0 ]; do
   case $1 in
+    -r|--reinstall )        REINSTALL=true        ;        shift;;
     -i|--install-dir )      INSTALL_DIR="$2"      ; shift; shift;;
     -c|--current )          SET_CURRENT=true      ;        shift;;
     -v|--rucio-version )    RUCIO_VERSION="$2"    ; shift; shift;;
@@ -17,6 +20,7 @@ while [ $# -gt 0 ]; do
     -h|--help )
       echo "
 Usage: ${PIP_PKG}-$(basename $0)
+  -r|--reinstall                Reinstall the version if already installed
   -i|--install-dir <path>       Install ${PIP_PKG} under <path>.
                                 Default is currect working directory
   -v|--rucio-version <version>  ${PIP_PKG} version to install
@@ -43,6 +47,7 @@ fi
 
 PY_VER=$(${PYTHON_CMD} -c 'import sys;print(sys.version_info[0])')
 export PYTHONUSERBASE="${INSTALL_DIR}/${ARCH}/py${PY_VER}/${RUCIO_VERSION}"
+if $REINSTALL ; then rm -rf ${PYTHONUSERBASE} ; fi
 if [ ! -d ${PYTHONUSERBASE} ] ; then
   mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
   export TMPDIR="${INSTALL_DIR}/tmp"

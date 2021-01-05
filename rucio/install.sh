@@ -1,5 +1,4 @@
 #!/bin/bash -ex
-source /cvmfs/cms.cern.ch/cmsset_default.sh
 PYTHON_CMD="python"
 INSTALL_DIR=$(/bin/pwd)
 SET_CURRENT=false

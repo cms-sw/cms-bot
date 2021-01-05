@@ -39,10 +39,10 @@ function dockerrun()
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1
-      CMD_ARG="-b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR} -q '${QEMU_ARGS}'"
+      CMD_ARG="-b /tmp:tmp -b /build:/build -b /cvmfs:/cvmfs -w ${THISDIR}"
       if [ "${MOUNT_DIRS}" != "" ] ; then for p in ${MOUNT_DIRS} ; do CMD_ARG="${CMD_ARG} -b $p"; done ; fi
       ARGS="cd ${THISDIR}; $@"
-      $PROOTDIR/proot -R ${IMAGE_BASE}/${IMG} ${CMD_ARG} sh -c "${ARGS}"
+      $PROOTDIR/proot -R ${IMAGE_BASE}/${IMG} ${CMD_ARG} -q "${QEMU_ARGS}" sh -c "${ARGS}"
       ;;
     *) eval $@;;
   esac

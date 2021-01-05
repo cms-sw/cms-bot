@@ -35,7 +35,8 @@ function dockerrun()
       CMD_ARG="-s exec -B /tmp -B /cvmfs -B ${THISDIR}:${THISDIR} -B ${WORKDIR}:${WORKDIR}"
       if [ "${MOUNT_DIRS}" != "" ] ; then for p in ${MOUNT_DIRS} ; do CMD_ARG="${CMD_ARG} -B $p"; done ; fi
       ARGS="cd $THISDIR; for o in n s u ; do val=\"-\$o \$(ulimit -H -\$o) \${val}\"; done; ulimit \${val}; ulimit -n -s -u >/dev/null 2>&1; $@"
-      PATH=$PATH:/usr/sbin singularity ${CMD_ARG} ${UNPACK_IMG} sh -c "$ARGS"
+      export PATH=$PATH:/usr/sbin
+      SINGULARITYENV_PATH=$PATH singularity ${CMD_ARG} ${UNPACK_IMG} sh -c "$ARGS"
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1

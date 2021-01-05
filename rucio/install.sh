@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+source /cvmfs/cms.cern.ch/cmsset_default.sh
 PYTHON_CMD="python"
 INSTALL_DIR=$(/bin/pwd)
 SET_CURRENT=false
@@ -6,10 +7,12 @@ RUCIO_VERSION=""
 PIP_PKG=rucio-clients
 DEPS=""
 REINSTALL=false
+RUN_TESTS=true
 ARCH=$(uname -m)/$(cmsos | cut -d_ -f1)
 
 while [ $# -gt 0 ]; do
   case $1 in
+    -s|--skip-tests )       RUN_TESTS=false       ;        shift;;
     -r|--reinstall )        REINSTALL=true        ;        shift;;
     -i|--install-dir )      INSTALL_DIR="$2"      ; shift; shift;;
     -c|--current )          SET_CURRENT=true      ;        shift;;
@@ -27,6 +30,7 @@ Usage: ${PIP_PKG}-$(basename $0)
   -d|--dependency               Install extra dependencies e.g. urllib3==1.25 requests=1.0
   -c|--current                  Make this version the default version
   -p|--python <python|python3>  Python env to use
+  -s|--skip-tests               Do not run rucio tests
   -h|-help                      Show this help message
 
   It will install ${PIP_PKG} version under ${INSTALL_DIR} and will
@@ -77,15 +81,18 @@ source ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}
 if [ ${PY_VER} = "2" ] ; then
   ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup-new.sh
 fi
-export RUCIO_ACCOUNT=`whoami`
-voms-proxy-init
-rucio list-dataset-replicas cms:/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv5-Nano1June2019_102X_upgrade2018_realistic_v19-v1/NANOAODSIM
-rucio list-rules --account ${RUCIO_ACCOUNT}
-rucio list-account-limits ${RUCIO_ACCOUNT}
-rucio list-rse-attributes T2_IT_Bari
-rucio list-rse-attributes T2_CH_CERN
-rucio list-rse-attributes T2_US_Caltech
-rm -rf $RUCIO_ACCOUNT
+
+if $RUN_TESTS ; then
+  voms-proxy-init
+  export RUCIO_ACCOUNT=$(voms-proxy-info | grep '^subject' | sed 's|.*Users/CN=||;s|/.*||')
+  rucio list-dataset-replicas cms:/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv5-Nano1June2019_102X_upgrade2018_realistic_v19-v1/NANOAODSIM
+  rucio list-rules --account ${RUCIO_ACCOUNT}
+  rucio list-account-limits ${RUCIO_ACCOUNT}
+  rucio list-rse-attributes T2_IT_Bari
+  rucio list-rse-attributes T2_CH_CERN
+  rucio list-rse-attributes T2_US_Caltech
+  rm -rf $RUCIO_ACCOUNT
+fi
 
 [ ! -e ${INSTALL_DIR}/${ARCH}/current ] && SET_CURRENT=true
 if $SET_CURRENT ; then

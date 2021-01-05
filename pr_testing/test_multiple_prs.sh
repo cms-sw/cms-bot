@@ -186,6 +186,7 @@ else
   COMPARISON_ARCH=$ARCHITECTURE
   COMPARISON_REL=$CMSSW_IB
 fi
+if [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] ; then sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res ; fi
 
 PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)

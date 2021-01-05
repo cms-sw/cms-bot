@@ -52,7 +52,11 @@ mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
 export TMPDIR="${INSTALL_DIR}/tmp"
 if [ $(which ${PYTHON_CMD} | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
   export PATH=${PYTHONUSERBASE}/bin:$PATH
-  ${PYTHON_CMD} -m pip install --upgrade --user pip
+  if [ ${PY_VER} = "2" ] ; then
+    pip install --upgrade --user pip
+  else
+    ${PYTHON_CMD} -m pip install --upgrade --user pip
+  fi
   mv ${PYTHONUSERBASE}/bin ${PYTHONUSERBASE}/pip-bin
   export PATH=${PYTHONUSERBASE}/pip-bin:$PATH
   [ "$DEPS" ] && pip install --upgrade --user $DEPS

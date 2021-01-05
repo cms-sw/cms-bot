@@ -247,10 +247,10 @@ def read_unit_tests_file(unit_tests_file):
   err_cnt = 0
   for line in open(unit_tests_file):
     if( 'had ERRORS' in line):
-      errors_found = errors_found + line
+      errors_found += errors_found + line
       err_cnt += 1
       if err_cnt > 10:
-        errors_found = "and more ...\n"
+        errors_found += "and more ...\n"
         break
   message = '\n## Unit Tests\n\nI found errors in the following unit tests:\n\n<pre>%s</pre>' % errors_found
   send_message_pr(message)

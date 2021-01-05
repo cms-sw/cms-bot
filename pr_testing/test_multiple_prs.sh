@@ -851,9 +851,10 @@ fi
 
 pushd $WORKSPACE
   rm -rf ${CMSSW_IB}/das_query
-  if [ -d ${CMSSW_IB}/tmp ] ; then mv ${CMSSW_IB}/tmp ${CMSSW_IB}.tmp ; fi
+  backup_dirs="tmp llvm-analysis"
+  for d in $backup_dirs ; do if [ -e ${CMSSW_IB}/${d} ] ; then mv ${CMSSW_IB}/${d} ${CMSSW_IB}.${d} ; fi ; done
   tar -czf cmssw.tar.gz $CMSSW_IB
-  if [ -d ${CMSSW_IB}.tmp ] ; then mv ${CMSSW_IB}.tmp ${CMSSW_IB}/tmp ; fi
+  for d in $backup_dirs ; do if [ -e ${CMSSW_IB}.${d} ] ; then mv ${CMSSW_IB}.${d} ${CMSSW_IB}/${d} ; fi ; done
 popd
 
 prepare_upload_results

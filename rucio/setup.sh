@@ -1,11 +1,6 @@
 ARCH=$(uname -m)/$(cmsos | cut -d_ -f1)
 THISDIR=$(cd $(dirname ${BASH_SOURCE:-${(%):-%N}}) >/dev/null 2>&1; /bin/pwd)/${ARCH}/
 SELECTED_VERSION=${1-current}
-if [ ! -e ${THISDIR}/current ] ; then
-  echo "ERROR: Unsupported architecture ${ARCH}. Supported architectures are:"
-  echo $(find ${THISDIR} -maxdepth 1 -mindepth 1 -type d | sed "s|${THISDIR}/||")
-  return
-fi
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then
   echo "Error: Unable to find rucio version '${SELECTED_VERSION}'" >&2
   return

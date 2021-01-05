@@ -43,48 +43,48 @@ fi
 
 PY_VER=$(${PYTHON_CMD} -c 'import sys;print(sys.version_info[0])')
 export PYTHONUSERBASE="${INSTALL_DIR}/${ARCH}/py${PY_VER}/${RUCIO_VERSION}"
-if [ -d ${PYTHONUSERBASE} ] ; then
-  echo "Error: Already installed ${PYTHONUSERBASE}. Please first delete it to re-install"
-  exit 1
-fi
-
-mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
-export TMPDIR="${INSTALL_DIR}/tmp"
-if [ $(which ${PYTHON_CMD} | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
-  export PATH=${PYTHONUSERBASE}/bin:$PATH
-  if [ ${PY_VER} = "2" ] ; then
-    pip install --upgrade --user pip
-  else
+if [ ! -d ${PYTHONUSERBASE} ] ; then
+  mkdir -p "${PYTHONUSERBASE}" "${INSTALL_DIR}/tmp"
+  export TMPDIR="${INSTALL_DIR}/tmp"
+  if [ $(which ${PYTHON_CMD} | grep '^/usr/bin/' | wc -l) -gt 0 ] ; then
+    export PATH=${PYTHONUSERBASE}/bin:$PATH
     ${PYTHON_CMD} -m pip install --upgrade --user pip
+    mv ${PYTHONUSERBASE}/bin ${PYTHONUSERBASE}/pip-bin
+    export PATH=${PYTHONUSERBASE}/pip-bin:$PATH
+    [ "$DEPS" ] && pip install --upgrade --user $DEPS
+    pip install --upgrade --user setuptools
   fi
-  mv ${PYTHONUSERBASE}/bin ${PYTHONUSERBASE}/pip-bin
-  export PATH=${PYTHONUSERBASE}/pip-bin:$PATH
-  [ "$DEPS" ] && pip install --upgrade --user $DEPS
-  pip install --upgrade --user setuptools
+  PATH="${PYTHONUSERBASE}/bin:$PATH" pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
+  rm -rf ${TMPDIR}
 fi
 
-PATH="${PYTHONUSERBASE}/bin:$PATH" pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
 rm -f ${INSTALL_DIR}/rucio.cfg
 cp $(dirname $0)/rucio.cfg ${INSTALL_DIR}/rucio.cfg
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg
 ln -s ../../../../../rucio.cfg ${PYTHONUSERBASE}/etc/rucio.cfg
-rm -rf ${TMPDIR}
 
 cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup-py${PY_VER}.sh
 sed -i -e "s|/\${ARCH}/|/\${ARCH}/py${PY_VER}|" ${INSTALL_DIR}/setup-py${PY_VER}.sh
 chmod 0644 ${INSTALL_DIR}/setup-py${PY_VER}.sh
 touch ${PYTHONUSERBASE}/.cvmfscatalog
 
+#Testing new version
+source ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}
+if [ ${PY_VER} = "2" ] ; then
+  ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup-new.sh
+fi
+export RUCIO_ACCOUNT=`whoami`
+voms-proxy-init
+rucio list-dataset-replicas cms:/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv5-Nano1June2019_102X_upgrade2018_realistic_v19-v1/NANOAODSIM
+rucio list-rules --account ${RUCIO_ACCOUNT}
+rucio list-account-limits ${RUCIO_ACCOUNT}
+rucio list-rse-attributes T2_IT_Bari
+rucio list-rse-attributes T2_CH_CERN
+rucio list-rse-attributes T2_US_Caltech
+rm -rf $RUCIO_ACCOUNT
+
 [ ! -e ${INSTALL_DIR}/${ARCH}/current ] && SET_CURRENT=true
 if $SET_CURRENT ; then
   rm -f ${INSTALL_DIR}/${ARCH}/py${PY_VER}/current
   ln -s ${RUCIO_VERSION} ${INSTALL_DIR}/${ARCH}/py${PY_VER}/current
-  echo "source ${INSTALL_DIR}/setup-py${PY_VER}.sh"
-  /bin/bash ${INSTALL_DIR}/setup-py${PY_VER}.sh
-else
-  echo "source ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}"
-  /bin/bash ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}
-fi
-if [ ${PY_VER} = "2" ] ; then
-  ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup-new.sh
 fi

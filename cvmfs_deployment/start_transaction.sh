@@ -6,7 +6,7 @@ if [ "$LOCK_CVMFS" != "false" ] ; then
   CPID=""
   while [ "$CPID" != "JENKINS:$1" ]  ; do
     while [ -f $lock ] ; do
-      if [ $(cat $lock | tail -1 | grep '^JENKINS:') -gt 0 ] ; then
+      if [ $(cat $lock | tail -1 | grep '^JENKINS:' | wc -l) -gt 0 ] ; then
         rm -f $lock
       else
         echo Waiting for lock ...

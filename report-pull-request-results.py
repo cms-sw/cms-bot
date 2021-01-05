@@ -25,6 +25,7 @@ parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help=
 parser.add_option("--repo", action="store", dest="custom_repo", help="Tells me to use a custom repository from the user cms-sw", default="cms-sw/cmssw" )
 parser.add_option("--report-file", action="store", type="string", dest="report_file", help="Report the github comment in report file instead of github", default='')
 parser.add_option("--report-url", action="store", type="string", dest="report_url", help="URL where pr results are stored.", default='')
+parser.add_option("--commit", action="store", type="string", dest="commit", help="Pull request latest commit", default='')
 
 (options, args) = parser.parse_args()
 
@@ -164,7 +165,10 @@ def get_recent_merges_message():
   return message
 
 def get_pr_tests_info():
-  message = "\n**CMSSW**: "
+  message = ""
+  if options.commit:
+    message = "\n**COMMIT**: %s" % options.commit
+  message += "\n**CMSSW**: "
   if 'CMSSW_VERSION' in os.environ:
     message +=  os.environ['CMSSW_VERSION']
   else:

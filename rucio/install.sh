@@ -63,6 +63,7 @@ if [ ! -d ${PYTHONUSERBASE} ] ; then
     pip install --upgrade --user setuptools
   fi
   PATH="${PYTHONUSERBASE}/bin:$PATH" pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
+  if [ -d ${PYTHONUSERBASE}/lib ] ; then find ${PYTHONUSERBASE}/lib -type d -print | xargs chmod 0755 ; fi
   rm -rf ${TMPDIR}
 fi
 

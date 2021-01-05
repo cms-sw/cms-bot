@@ -14,7 +14,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #---- Parser Options
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
-                            "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE "
+                            "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE | PARSE_EXTERNAL_BUILD_FAIL "
                             "| PARSE_ADDON_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET | PYTHON3_FAIL")
 
 parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
@@ -182,7 +182,7 @@ def get_pr_tests_info():
 # reads the build log file looking for the first error
 # it includes 5 lines before and 5 lines after the error
 #
-def read_build_log_file(build_log, isClang , toolconf=False):
+def read_build_log_file(build_log, isClang=False , toolconf=False):
   line_number = 0
   error_line = 0
   lines_to_keep_before=5
@@ -400,8 +400,10 @@ if ( ACTION == 'GET_BASE_MESSAGE' ):
   get_base_message()
 elif ( ACTION == 'PARSE_UNIT_TESTS_FAIL' ):
   read_unit_tests_file(options.unit_tests_file)
+elif ( ACTION == 'PARSE_EXTERNAL_BUILD_FAIL' ):
+  read_build_log_file(options.unit_tests_file, toolconf=True )
 elif ( ACTION == 'PARSE_BUILD_FAIL' ):
-  read_build_log_file(options.unit_tests_file, False )
+  read_build_log_file(options.unit_tests_file)
 elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   read_matrix_log_file(options.unit_tests_file )
 elif ( ACTION == 'PARSE_ADDON_FAIL' ):
@@ -409,7 +411,7 @@ elif ( ACTION == 'PARSE_ADDON_FAIL' ):
 elif ( ACTION == 'COMPARISON_READY' ):
   send_comparison_ready_message(options.unit_tests_file, options.results_file2, options.missing_map )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
-  read_build_log_file(options.unit_tests_file, True )
+  read_build_log_file(options.unit_tests_file, isClang=True )
 elif( ACTION == 'PYTHON3_FAIL'):
   read_python3_file(options.unit_tests_file )
 elif( ACTION == 'MATERIAL_BUDGET'):

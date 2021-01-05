@@ -80,12 +80,20 @@ touch ${PYTHONUSERBASE}/.cvmfscatalog
 #Testing new version
 source ${INSTALL_DIR}/setup-py${PY_VER}.sh ${RUCIO_VERSION}
 if [ ${PY_VER} = "2" ] ; then
-  ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup-new.sh
+  if [ ! -e ${INSTALL_DIR}/setup-1.22.7.sh ] ; then
+    mv ${INSTALL_DIR}/setup.sh ${INSTALL_DIR}/setup-1.22.7.sh
+  fi
+  ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup.sh
 fi
 
 if $RUN_TESTS ; then
-  voms-proxy-init
+  if [ "${X509_USER_CERT}" != "" -a "${X509_USER_KEY}" != "" ] ; then
+    voms-proxy-init -cert $X509_USER_CERT -key $X509_USER_KEY
+  else
+    voms-proxy-init
+  fi
   export RUCIO_ACCOUNT=$(voms-proxy-info | grep '^subject' | sed 's|.*Users/CN=||;s|/.*||')
+  rucio whoami
   rucio list-dataset-replicas cms:/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18NanoAODv5-Nano1June2019_102X_upgrade2018_realistic_v19-v1/NANOAODSIM
   rucio list-rules --account ${RUCIO_ACCOUNT}
   rucio list-account-limits ${RUCIO_ACCOUNT}

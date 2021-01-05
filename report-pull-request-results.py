@@ -182,7 +182,7 @@ def get_pr_tests_info():
 # reads the build log file looking for the first error
 # it includes 5 lines before and 5 lines after the error
 #
-def read_build_log_file(build_log, isClang ):
+def read_build_log_file(build_log, isClang , toolconf=False):
   line_number = 0
   error_line = 0
   lines_to_keep_before=5
@@ -218,6 +218,8 @@ def read_build_log_file(build_log, isClang ):
     cmd = open( build_log ).readline()
     message += '\n## Clang Build\n\nI found '+err_type+' while trying to compile with clang. '
     message += 'Command used:\n```\n' + cmd +'\n```\n'
+  elif toolconf:
+    message += '\n## External Build\n\nI found '+err_type+' when building: '
   else:
     message += '\n## Build\n\nI found '+err_type+' when building: '
 

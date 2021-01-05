@@ -44,6 +44,7 @@ if [[  $NODE_NAME == *"cms-cmpwg-0"* ]]; then
 fi
 let NCPU2=${NCPU}*2
 rm -rf ${RESULTS_DIR} ${RESULTS_FILE}
+mkdir ${RESULTS_DIR}
 
 # ----------
 # -- MAIN --
@@ -93,6 +94,11 @@ mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d 'Setting up build e
 PR_COMMIT_STATUS="optional"
 if $REQUIRED_TEST ; then PR_COMMIT_STATUS="required" ; fi
 mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_URL}"
+
+echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_DIR}/09-report.res
+CMSSW_VERSION=${RELEASE_FORMAT} $CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-url ${PR_RESULT_URL} \
+    --commit ${COMMIT} --report-file ${RESULTS_DIR}/09-report.res ${REPORT_OPTS}
+echo "" >> ${RESULTS_DIR}/09-report.res
 
 echo_section "Pull request checks"
 # Check if same organization/repo PRs
@@ -181,6 +187,7 @@ else
   COMPARISON_ARCH=$ARCHITECTURE
   COMPARISON_REL=$CMSSW_IB
 fi
+if [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] ; then sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res ; fi
 
 PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
@@ -246,7 +253,7 @@ done
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
 sed -e "s|@JENKINS_PREFIX@|$JENKINS_PREFIX|g;" $CMS_BOT_DIR/templates/js/renderPRTests.js > $WORKSPACE/renderPRTests.js
 
-mkdir ${RESULTS_DIR}
+mkdir -p ${RESULTS_DIR}
 touch ${RESULTS_FILE} ${RESULTS_DIR}/comparison.txt
 echo "PR_NUMBERS;$PULL_REQUESTS" >> ${RESULTS_FILE}
 echo 'BASE_IB;'$CMSSW_IB >> ${RESULTS_FILE}
@@ -329,7 +336,7 @@ if ${BUILD_EXTERNAL} ; then
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,.' >> ${RESULTS_DIR}/toolconf.txt
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR,Externals compilation,See Log,cmsswtoolconf.log' >> ${RESULTS_DIR}/toolconf.txt
-      ${CMS_BOT_DIR}/report-pull-request-results "PARSE_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log \
+      ${CMS_BOT_DIR}/report-pull-request-results "PARSE_EXTERNAL_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log \
         --report-url ${PR_RESULT_URL} ${NO_POST} --report-file ${RESULTS_DIR}/10-report.res
       prepare_upload_results
       mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed to build externals"
@@ -820,9 +827,7 @@ else
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} --recent-merges $RECENT_COMMITS_FILE $NO_POST"
-echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_DIR}/10-report.res
-$CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-file ${RESULTS_DIR}/10-report.res ${REPORT_OPTS}
-echo "" >> ${RESULTS_DIR}/10-report.res
+rm -f ${RESULTS_DIR}/10-report.res ; touch ${RESULTS_DIR}/10-report.res
 if ${ALL_OK} ; then
     if [ "${BUILD_LOG_RES}" = "ERROR" ] ; then
       echo "Found compilation warnings" >> ${RESULTS_DIR}/10-report.res

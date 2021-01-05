@@ -14,7 +14,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #---- Parser Options
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
-                            "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE "
+                            "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE | PARSE_EXTERNAL_BUILD_FAIL "
                             "| PARSE_ADDON_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET | PYTHON3_FAIL")
 
 parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
@@ -25,6 +25,7 @@ parser.add_option("--no-post", action="store_true", dest="no_post_mesage", help=
 parser.add_option("--repo", action="store", dest="custom_repo", help="Tells me to use a custom repository from the user cms-sw", default="cms-sw/cmssw" )
 parser.add_option("--report-file", action="store", type="string", dest="report_file", help="Report the github comment in report file instead of github", default='')
 parser.add_option("--report-url", action="store", type="string", dest="report_url", help="URL where pr results are stored.", default='')
+parser.add_option("--commit", action="store", type="string", dest="commit", help="Pull request latest commit", default='')
 
 (options, args) = parser.parse_args()
 
@@ -164,7 +165,10 @@ def get_recent_merges_message():
   return message
 
 def get_pr_tests_info():
-  message = "\n**CMSSW**: "
+  message = ""
+  if options.commit:
+    message = "\n**COMMIT**: %s" % options.commit
+  message += "\n**CMSSW**: "
   if 'CMSSW_VERSION' in os.environ:
     message +=  os.environ['CMSSW_VERSION']
   else:
@@ -182,7 +186,7 @@ def get_pr_tests_info():
 # reads the build log file looking for the first error
 # it includes 5 lines before and 5 lines after the error
 #
-def read_build_log_file(build_log, isClang ):
+def read_build_log_file(build_log, isClang=False , toolconf=False):
   line_number = 0
   error_line = 0
   lines_to_keep_before=5
@@ -218,6 +222,8 @@ def read_build_log_file(build_log, isClang ):
     cmd = open( build_log ).readline()
     message += '\n## Clang Build\n\nI found '+err_type+' while trying to compile with clang. '
     message += 'Command used:\n```\n' + cmd +'\n```\n'
+  elif toolconf:
+    message += '\n## External Build\n\nI found '+err_type+' when building: '
   else:
     message += '\n## Build\n\nI found '+err_type+' when building: '
 
@@ -398,8 +404,10 @@ if ( ACTION == 'GET_BASE_MESSAGE' ):
   get_base_message()
 elif ( ACTION == 'PARSE_UNIT_TESTS_FAIL' ):
   read_unit_tests_file(options.unit_tests_file)
+elif ( ACTION == 'PARSE_EXTERNAL_BUILD_FAIL' ):
+  read_build_log_file(options.unit_tests_file, toolconf=True )
 elif ( ACTION == 'PARSE_BUILD_FAIL' ):
-  read_build_log_file(options.unit_tests_file, False )
+  read_build_log_file(options.unit_tests_file)
 elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   read_matrix_log_file(options.unit_tests_file )
 elif ( ACTION == 'PARSE_ADDON_FAIL' ):
@@ -407,7 +415,7 @@ elif ( ACTION == 'PARSE_ADDON_FAIL' ):
 elif ( ACTION == 'COMPARISON_READY' ):
   send_comparison_ready_message(options.unit_tests_file, options.results_file2, options.missing_map )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):
-  read_build_log_file(options.unit_tests_file, True )
+  read_build_log_file(options.unit_tests_file, isClang=True )
 elif( ACTION == 'PYTHON3_FAIL'):
   read_python3_file(options.unit_tests_file )
 elif( ACTION == 'MATERIAL_BUDGET'):

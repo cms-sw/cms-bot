@@ -58,7 +58,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ -d $HOME/bin ] ; then
     CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi
-  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
+  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
     set +x

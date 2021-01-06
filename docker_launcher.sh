@@ -53,13 +53,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
     fi
   fi
+  CMD2RUN="export PATH=\$PATH:/usr/sbin;"
   XUSER=`whoami`
   if [ -d $HOME/bin ] ; then
-    if [ $(echo $PATH | tr ':' '\n' | grep $HOME/bin | wc -l) -eq 0 ] ; then
-      export PATH="$HOME/bin:$PATH"
-    fi
+    CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi
-  CMD2RUN="voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
+  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
     set +x
@@ -121,8 +120,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
       precmd="source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
     fi
-    export PATH=$PATH:/usr/sbin
-    SINGULARITYENV_PATH=$PATH singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
+    PATH=$PATH:/usr/sbin singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi

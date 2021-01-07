@@ -15,7 +15,7 @@ jobs=6
 try: jobs=int(argv[2])
 except: jobs=6
 items = partial_log_dirpath.split("/")
-if items[-1]!="pyRelValPartialLogs": exit(1)
+if items[-1] not in ["pyRelValPartialLogs", "pyRelValPartialLogsGPU"]: exit(1)
 release=items[-2]
 arch=items[-6]
 if not exists("%s/threads.txt" % partial_log_dirpath):

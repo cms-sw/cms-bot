@@ -63,13 +63,17 @@ class LogUpdater(object):
         return
 
     def updateRelValMatrixPartialLogs(self, partialSubDir, dirToSend):
-        destination = os.path.join(self.webTargetDir, 'pyRelValPartialLogs')
+        dest = 'pyRelValPartialLogs'
+        if ("TEST_FLAVOR" in os.environ) and os.environ["TEST_FLAVOR"]: dest += os.environ["TEST_FLAVOR"].upper()
+        destination = os.path.join(self.webTargetDir, dest)
         print("\n--> going to copy pyrelval partial matrix logs to", destination, '... \n')
         self.copyLogs(dirToSend, partialSubDir, destination)
         self.runRemoteCmd("touch " + os.path.join(destination, dirToSend, "wf.done"))
         return
 
     def relvalAlreadyDone(self, wf):
+        dest = 'pyRelValPartialLogs'
+        if ("TEST_FLAVOR" in os.environ) and os.environ["TEST_FLAVOR"]: dest += os.environ["TEST_FLAVOR"].upper()
         wfDoneFile = "wf.done"
         destination = os.path.join(self.webTargetDir, 'pyRelValPartialLogs', str(wf) + "_*", wfDoneFile)
         code, out = self.runRemoteCmd("ls -d " + destination)

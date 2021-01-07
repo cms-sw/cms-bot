@@ -929,7 +929,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if $PRODUCTION_RELEASE ; then
-    #if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
+    if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
       WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_GPU=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
       if [ "X$WF_LIST" != X ]; then
         cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-gpu.prop
@@ -939,7 +939,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         echo "TEST_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop
         mark_commit_status_all_prs 'relvals/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       fi
-    #fi
+    fi
   fi
 fi
 

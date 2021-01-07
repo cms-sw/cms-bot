@@ -177,8 +177,6 @@ def get_pr_tests_info():
     message += '/' + os.environ['SCRAM_ARCH']
   else:
     message += '/UNKNOWN'
-  if 'TEST_CONTEXT' in os.environ and os.environ['TEST_CONTEXT'] != '':
-    message += '(%s)' + os.environ['TEST_CONTEXT']
   return message
 
 

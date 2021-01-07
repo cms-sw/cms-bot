@@ -933,7 +933,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_GPU=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
       if [ "X$WF_LIST" != X ]; then
         cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-gpu.prop
-        echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals.prop
+        echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-gpu.prop
         echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-gpu.prop
         echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS -l $WF_LIST" >> $WORKSPACE/run-relvals-gpu.prop
         echo "RELVAL_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop

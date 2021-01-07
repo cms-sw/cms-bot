@@ -936,7 +936,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-gpu.prop
         echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-gpu.prop
         echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS -l $WF_LIST" >> $WORKSPACE/run-relvals-gpu.prop
-        echo "RELVAL_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop
+        echo "TEST_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop
         mark_commit_status_all_prs 'relvals/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       fi
     #fi

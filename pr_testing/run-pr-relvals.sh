@@ -2,9 +2,9 @@
 source $(dirname $0)/setup-pr-test-env.sh
 GH_CONTEXT="relvals"
 GH_COMP_CONTEXT="comparison"
-if [ ${RELVAL_FLAVOR} != "" ] ; then
-  GH_CONTEXT="${GH_CONTEXT}/${RELVAL_FLAVOR}"
-  GH_COMP_CONTEXT="${GH_COMP_CONTEXT}/${RELVAL_FLAVOR}"
+if [ ${TEST_FLAVOR} != "" ] ; then
+  GH_CONTEXT="${GH_CONTEXT}/${TEST_FLAVOR}"
+  GH_COMP_CONTEXT="${GH_COMP_CONTEXT}/${TEST_FLAVOR}"
 fi
 
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true

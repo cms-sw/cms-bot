@@ -1,7 +1,13 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
+GH_CONTEXT="relvals"
+GH_COMP_CONTEXT="comparison"
+if [ ${TEST_FLAVOR} != "" ] ; then
+  GH_CONTEXT="${GH_CONTEXT}/${TEST_FLAVOR}"
+  GH_COMP_CONTEXT="${GH_COMP_CONTEXT}/${TEST_FLAVOR}"
+fi
 
-mark_commit_status_all_prs 'relvals' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
+mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 mkdir "$WORKSPACE/runTheMatrix-results"
 pushd "$WORKSPACE/runTheMatrix-results"
   RELVALS_CMD="LOCALRT=${WORKSPACE}/${CMSSW_VERSION} timeout $MATRIX_TIMEOUT runTheMatrix.py $MATRIX_ARGS -j ${NCPU}"
@@ -28,7 +34,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   RELVALS_OK=false
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f $WORKSPACE/matrixTests.log --report-file ${RESULTS_DIR}/12-report.res --report-url ${PR_RESULT_URL} $NO_POST
   echo "RelVals" > ${RESULTS_DIR}/12-failed.res
-  mark_commit_status_all_prs 'comparison' 'success' -d "Not run due to failure in relvals"
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run due to failure in relvals"
 else
   echo "no errors in the RelVals!!"
   echo 'MATRIX_TESTS;OK,Matrix Tests Outputs,See Logs,runTheMatrix-results' >> ${RESULTS_DIR}/relval.txt
@@ -48,14 +54,14 @@ else
     echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST=${PULL_REQUEST}" >> $TRIGGER_COMPARISON_FILE
     echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $TRIGGER_COMPARISON_FILE
-    mark_commit_status_all_prs 'comparison' 'pending' -d "Waiting for tests to start"
+    mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -d "Waiting for tests to start"
   else
-    mark_commit_status_all_prs 'comparison' 'success' -d "No run as comparisons test were disabled"
+    mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run: Disabled for this arch/flavor"
   fi
 fi
 prepare_upload_results
 if $RELVALS_OK ; then
-  mark_commit_status_all_prs 'relvals' 'success' -u "${BUILD_URL}" -d "Passed"
+  mark_commit_status_all_prs "${GH_CONTEXT}" 'success' -u "${BUILD_URL}" -d "Passed"
 else
-  mark_commit_status_all_prs 'relvals' 'error' -u "${BUILD_URL}" -d "Errors found while running runTheMatrix"
+  mark_commit_status_all_prs "${GH_CONTEXT}" 'error' -u "${BUILD_URL}" -d "Errors found while running runTheMatrix"
 fi

@@ -36,9 +36,14 @@ if __name__ == "__main__":
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
   data_repo_base_branch = data_repo_pr.base.ref
+  # create master just to exist on the cms-data repo if it doesn't
+  if data_repo_base_branch == "main":
+      if "master" not in [branch.name for branch in data_repo.get_branches()]:
+          data_repo.create_git_ref(ref='refs/heads/master', sha=data_repo.get_branch(data_repo_base_branch).commit.sha)
+
   if (data_repo_base_branch != "master") and (data_repo_base_branch != "main"):
-    print("I do not know how to tag a non-master (non-main) branch %s" % data_repo_pr.base.ref)
-    exit(1)
+      print("I do not know how to tag a non-master (non-main) branch %s" % data_repo_pr.base.ref)
+      exit(1)
 
   if not data_repo_pr.merged:
       print('Branch has not been merged !')

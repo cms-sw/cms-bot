@@ -46,6 +46,24 @@ let NCPU2=${NCPU}*2
 rm -rf ${RESULTS_DIR} ${RESULTS_FILE}
 mkdir ${RESULTS_DIR}
 
+DO_COMPARISON=false
+DO_MB_COMPARISON=false
+DO_DAS_QUERY=false
+if [ $(echo ${ARCHITECTURE} | grep "_amd64_" | wc -l) -gt 0 ] ; then
+  DO_COMPARISON=true
+fi
+
+PRODUCTION_RELEASE=false
+if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
+  if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
+    PRODUCTION_RELEASE=true
+  fi
+fi
+
+if $PRODUCTION_RELEASE ; then
+  DO_DAS_QUERY=true
+fi
+
 # ----------
 # -- MAIN --
 # ----------
@@ -149,7 +167,7 @@ if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
 
 REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 CMSSW_IB=  # We are getting CMSSW_IB, so that we wont rebuild all the software
-COMPARISON_REL=
+COMPARISON_REL=""
 if [[ $RELEASE_FORMAT != *-* ]]; then
     COMP_ARCH=$COMPARISON_ARCH
     if [ "X$COMP_ARCH" = "X" ] ; then
@@ -165,7 +183,9 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
       else
         COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
       fi
-      has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
+      if $DO_COMPARISON ; then
+        has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
+      fi
       CMSSW_IB=$SCRAM_REL
       COMPARISON_ARCH=$COMP_ARCH
       COMPARISON_REL=$COMP_REL
@@ -465,25 +485,6 @@ echo_section "end of build external"
 # This part responsible for testing CMSSW
 echo_section "Testing CMSSW"
 voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artifact machine
-
-DO_COMPARISON=true
-DO_MB_COMPARISON=false
-DO_DAS_QUERY=true
-if [ "$TEST_CONTEXT" = "GPU" ] ; then
-  TEST_CLANG_COMPILATION=false
-  CODE_RULES=false
-  CHECK_HEADER_TESTS=false
-  DO_STATIC_CHECKS=false
-  DQM_TESTS=false
-  DO_DUPLICATE_CHECKS=false
-  DO_ADDON_TESTS=false
-  RUN_CONFIG_VIEWER=false
-  DO_COMPARISON=false
-  DO_ADDON_TESTS=false
-  DO_MB_COMPARISON=false
-  WORKFLOWS_FOR_VALGRIND_TEST=""
-  DO_DAS_QUERY=false
-fi
 
 ### to know at the end of the tests if everything went ok
 ALL_OK=true
@@ -817,8 +818,10 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
     mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
-    DO_PROFILING=true
-    mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    if $PRODUCTION_RELEASE ; then
+      DO_PROFILING=true
+      mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    fi
   fi
 else
   DO_TESTS=false
@@ -897,34 +900,21 @@ echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
 # Matrix tests
 #
 if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
-  if [ "X$TEST_CONTEXT" = "X" ] ; then
-    MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  else
-    MATRIX_EXTRAS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${TEST_CONTEXT}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  fi
-  if [ ! "X$MATRIX_EXTRAS" = X ]; then
-    MATRIX_EXTRAS="-l $MATRIX_EXTRAS"
-  fi
-  echo '--------------------------------------'
-  case $TEST_CONTEXT-$CMSSW_IB in
-      -*SLHCDEV*)
-        SLHC_PARAM='-w upgrade'
-        WF_LIST="-l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
-        ;;
-      -*SLHC*)
-        SLHC_PARAM='-w upgrade'
-        WF_LIST="-l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
-        ;;
-      -*)
-        WF_LIST="-s $MATRIX_EXTRAS"
-        ;;
-      GPU-*)
-        WF_LIST="$MATRIX_EXTRAS"
-        ;;
+  MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+  if [ ! "X$MATRIX_EXTRAS" = X ]; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
+  WF_LIST="-s $MATRIX_EXTRAS"
+  case $CMSSW_IB in
+    *SLHCDEV*)
+      SLHC_PARAM='-w upgrade'
+      WF_LIST="-l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
+      ;;
+    *SLHC*)
+      SLHC_PARAM='-w upgrade'
+      WF_LIST="-l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
+      ;;
   esac
 
   # MATRIX_TIMEOUT is set by jenkins
-  dateBefore=$(date +"%s")
   [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--job-reports $EXTRA_MATRIX_ARGS"
   if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
     if [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] ; then
@@ -932,10 +922,25 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     fi
   fi
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
+  echo "DO_COMPARISON=$DO_COMPARISON" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS $SLHC_PARAM $WF_LIST" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
+
+  if $PRODUCTION_RELEASE ; then
+    #if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
+      WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_GPU=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+      if [ "X$WF_LIST" != X ]; then
+        cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-gpu.prop
+        echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals.prop
+        echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-gpu.prop
+        echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS -l $WF_LIST" >> $WORKSPACE/run-relvals-gpu.prop
+        echo "RELVAL_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop
+        mark_commit_status_all_prs 'relvals/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+      fi
+    #fi
+  fi
 fi
 
 if [ "X$DO_ADDON_TESTS" = Xtrue ]; then

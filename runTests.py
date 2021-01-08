@@ -134,9 +134,7 @@ class UnitTester(IBThreadBase):
         except Exception as e:
             pass
         self.checkTestLogs()
-        xtype = self.xType
-        if "_GPU_X" in os.environ["CMSSW_VERSION"]: xtype = ""
-        self.logger.updateUnitTestLogs(xtype)
+        self.logger.updateUnitTestLogs(self.xType)
         return
 
 

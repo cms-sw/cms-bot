@@ -30,7 +30,7 @@ GENERAL_ERRORS=`grep "ALL_OK" ${LOG}` || true
 
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo "Errors in the RelVals"
-  echo "MATRIX${TEST_FLAVOR}_TESTS;ERROR,Matrix${TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${TEST_FLAVOR}-results" >> ${RESULTS_DIR}/relval${TEST_FLAVOR}.txt
+  echo "MATRIX${TEST_FLAVOR}_TESTS;ERROR,Matrix ${TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${TEST_FLAVOR}-results" >> ${RESULTS_DIR}/relval${TEST_FLAVOR}.txt
   ALL_OK=false
   RELVALS_OK=false
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/12${TEST_FLAVOR}-report.res --report-url ${PR_RESULT_URL} $NO_POST
@@ -38,7 +38,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run due to failure in relvals"
 else
   echo "no errors in the RelVals!!"
-  echo 'MATRIX${TEST_FLAVOR}_TESTS;OK,Matrix${TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${TEST_FLAVOR}-results' >> ${RESULTS_DIR}/relval${TEST_FLAVOR}.txt
+  echo "MATRIX${TEST_FLAVOR}_TESTS;OK,Matrix ${TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${TEST_FLAVOR}-results" >> ${RESULTS_DIR}/relval${TEST_FLAVOR}.txt
 
   if $DO_COMPARISON ; then
     REAL_ARCH=-$(cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //")

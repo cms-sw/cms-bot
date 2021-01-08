@@ -42,7 +42,7 @@ else
 
   if $DO_COMPARISON ; then
     REAL_ARCH=-$(cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //")
-    echo 'COMPARISON${TEST_FLAVOR};QUEUED,Comparison${TEST_FLAVOR} with the baseline,See results,See results' >> ${RESULTS_DIR}/comparison${TEST_FLAVOR}.txt
+    echo "COMPARISON${TEST_FLAVOR};QUEUED,Comparison ${TEST_FLAVOR} with the baseline,See results,See results" >> ${RESULTS_DIR}/comparison${TEST_FLAVOR}.txt
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
     echo "Creating properties file $TRIGGER_COMPARISON_FILE"
     echo "RELEASE_FORMAT=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE

@@ -84,7 +84,7 @@ function prepare_upload_results (){
     for f in upload/matrixTests*.log ; do
       if [ -e "$f" ] ; then
         t=$(echo $f | sed 's|.*/matrixTests||;s|.log$||')
-        mkdir -p upload/runTheMatrixi${t}-results && mv $f upload/runTheMatrix{$t}-results/
+        mkdir -p upload/runTheMatrixi${t}-results && mv $f upload/runTheMatrix${t}-results/
       fi
     done
     if [ -d upload/addOnTests       ] ; then find upload/addOnTests -name '*.root' -type f | xargs rm -f ; fi

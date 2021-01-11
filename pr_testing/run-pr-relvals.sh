@@ -19,7 +19,7 @@ pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
   dateBefore=$(date +"%s")
   (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a ${LOG}
   dateAfter=$(date +"%s")
-  WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
+  $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
 
   diff=$(($dateAfter-$dateBefore))
   if [ "$diff" -ge $MATRIX_TIMEOUT ]; then

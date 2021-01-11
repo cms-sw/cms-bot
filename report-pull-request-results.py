@@ -177,6 +177,8 @@ def get_pr_tests_info():
     message += '/' + os.environ['SCRAM_ARCH']
   else:
     message += '/UNKNOWN'
+  if ('ENABLE_BOT_TESTS' in os.environ) and os.environ['ENABLE_BOT_TESTS']:
+    message += "\n**Additional Tests**: %s" % os.environ['ENABLE_BOT_TESTS']
   return message
 
 

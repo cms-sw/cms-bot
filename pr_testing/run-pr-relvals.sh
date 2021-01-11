@@ -3,9 +3,11 @@ source $(dirname $0)/setup-pr-test-env.sh
 GH_CONTEXT="relvals"
 GH_COMP_CONTEXT="comparison"
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
+MARK_OPTS=""
 if [ ${TEST_FLAVOR} != "" ] ; then
   GH_CONTEXT="${GH_CONTEXT}/${TEST_FLAVOR}"
   GH_COMP_CONTEXT="${GH_COMP_CONTEXT}/${TEST_FLAVOR}"
+  MARK_OPTS="-e"
 fi
 
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
@@ -37,7 +39,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res --report-url ${PR_RESULT_URL} $NO_POST
   if [ "${TEST_FLAVOR}" != "" ] ; then sed -i -e "s|## RelVals|## ${UC_TEST_FLAVOR}RelVals|" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res ; fi
   echo "${UC_TEST_FLAVOR}RelVals" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-failed.res
-  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run due to failure in relvals"
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run due to failure in relvals" ${MARK_OPTS}
 else
   echo "no errors in the RelVals!!"
   echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/relval${UC_TEST_FLAVOR}.txt
@@ -59,7 +61,7 @@ else
     echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $TRIGGER_COMPARISON_FILE
     mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -d "Waiting for tests to start"
   else
-    mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run: Disabled for this arch/flavor"
+    mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run: Disabled for this arch/flavor" ${MARK_OPTS}
   fi
 fi
 prepare_upload_results

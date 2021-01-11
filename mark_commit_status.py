@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from optparse import OptionParser
-from github_utils import api_rate_limits, mark_commit_status
+from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses
+from sys import exit
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog")
@@ -12,7 +13,18 @@ if __name__ == "__main__":
   parser.add_option("-u", "--url",         dest="url",         help="Status results URL", type=str, default="")
   parser.add_option("-s", "--state",       dest="state",       help="State of the status e.g. pending, failure, error or success", type=str, default='pending')
   parser.add_option("-R", "--reset-all",   dest="reset_all",   help="Reset all matching contexts", action="store_true", default=False)
+  parser.add_option("-e", "--if-exists",   dest="if_exists",   help="Only set the status if context already exists", action="store_true", default=False)
   opts, args = parser.parse_args()
 
+  if opts.if_exists:
+    statues = get_combined_statuses(opts.commit, opts.repository)
+    if 'statuses' in statues:
+      found = False
+      for s in statues['statuses']:
+        if s['context'] != opts.context:
+          continue
+        found = True
+        break
+      if not found: exit(0)
   mark_commit_status(opts.commit, opts.repository, opts.context, opts.state, opts.url, opts.description, reset=opts.reset_all)
 

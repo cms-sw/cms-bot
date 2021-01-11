@@ -941,7 +941,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     fi
     WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
-    MTX_ARGS="{EXTRA_MATRIX_ARGS}"
+    MTX_ARGS="${EXTRA_MATRIX_ARGS}"
     if [ $(echo "${MTX_ARGS}" | grep "\-\-command " | wc -l) -gt 0 ] ; then
       MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1-n 1 |')
     else

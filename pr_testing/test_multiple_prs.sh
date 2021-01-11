@@ -939,6 +939,13 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         mark_commit_status_all_prs 'relvals/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       fi
     fi
+    WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
+    echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
+    echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS -i all --command '-n 1' --maxSteps=2 -l ${WF_LIST}" >> $WORKSPACE/run-relvals-input.prop
+    echo "TEST_FLAVOR=input" >> $WORKSPACE/run-relvals-input.prop
+    echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop
+    mark_commit_status_all_prs 'relvals/input' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
 fi
 

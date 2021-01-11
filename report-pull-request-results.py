@@ -135,7 +135,7 @@ def read_addon_log_file(unit_tests_file):
       if not tname: tname = "unknown"
       else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
       line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
-      errors_found = errors_found + line
+      errors_found += line
   message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)
 
@@ -245,7 +245,7 @@ def read_unit_tests_file(unit_tests_file):
   err_cnt = 0
   for line in open(unit_tests_file):
     if( 'had ERRORS' in line):
-      errors_found += errors_found + line
+      errors_found += line
       err_cnt += 1
       if err_cnt > 10:
         errors_found += "and more ...\n"
@@ -262,7 +262,7 @@ def read_python3_file(python3_file):
   err_cnt = 0
   for line in open(python3_file):
     if( ' Error compiling ' in line):
-      errors_found = errors_found + line
+      errors_found += line
       err_cnt += 1
       if err_cnt>10:
         errors_found = "and more ...\n"

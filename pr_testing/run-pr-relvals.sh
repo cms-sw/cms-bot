@@ -13,13 +13,13 @@ fi
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 mkdir "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
 pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
-  RELVALS_CMD="LOCALRT=${WORKSPACE}/${CMSSW_VERSION} timeout $MATRIX_TIMEOUT runTheMatrix.py $MATRIX_ARGS -j ${NCPU}"
+  RELVALS_CMD="LOCALRT=${WORKSPACE}/${CMSSW_VERSION} timeout $MATRIX_TIMEOUT runTheMatrix.py -j ${NCPU} $MATRIX_ARGS"
   LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
   echo $RELVALS_CMD > ${LOG}
   dateBefore=$(date +"%s")
   (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a ${LOG}
   dateAfter=$(date +"%s")
-  WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
+  $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
 
   diff=$(($dateAfter-$dateBefore))
   if [ "$diff" -ge $MATRIX_TIMEOUT ]; then

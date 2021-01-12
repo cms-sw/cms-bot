@@ -46,6 +46,7 @@ let NCPU2=${NCPU}*2
 rm -rf ${RESULTS_DIR} ${RESULTS_FILE}
 mkdir ${RESULTS_DIR}
 
+TEST_RELVALS_INPUT=false
 DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
@@ -939,6 +940,21 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         echo "TEST_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop
         mark_commit_status_all_prs 'relvals/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       fi
+    fi
+    if $TEST_RELVALS_INPUT ; then
+      WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
+      cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
+      MTX_ARGS="${EXTRA_MATRIX_ARGS}"
+      if [ $(echo "${MTX_ARGS}" | grep "\-\-command " | wc -l) -gt 0 ] ; then
+        MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1-n 1 |')
+      else
+        MTX_ARGS="${MTX_ARGS} --command '-n 1'"
+      fi
+      echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
+      echo "MATRIX_ARGS=${MTX_ARGS} -i all --maxSteps=2 -l ${WF_LIST}" >> $WORKSPACE/run-relvals-input.prop
+      echo "TEST_FLAVOR=input" >> $WORKSPACE/run-relvals-input.prop
+      echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop
+      mark_commit_status_all_prs 'relvals/input' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
     fi
   fi
 fi

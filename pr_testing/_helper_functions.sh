@@ -77,12 +77,16 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
-    for f in cmssw.tar.gz unitTests dasqueries testsResults build-logs clang-logs runTheMatrix-results runTheMatrixGPU-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
+    for f in cmssw.tar.gz unitTests dasqueries testsResults build-logs clang-logs runTheMatrix*-results runTheMatrixGPU-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
     if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi
-    if [ -e upload/matrixTests.log  ] ; then mkdir -p upload/runTheMatrix-results && mv upload/matrixTests.log upload/runTheMatrix-results/ ; fi
-    if [ -e upload/matrixTestsGPU.log  ] ; then mkdir -p upload/runTheMatrixGPU-results && mv upload/matrixTestsGPU.log upload/runTheMatrixGPU-results/ ; fi
+    for f in upload/matrixTests*.log ; do
+      if [ -e "$f" ] ; then
+        t=$(echo $f | sed 's|.*/matrixTests||;s|.log$||')
+        mkdir -p upload/runTheMatrixi${t}-results && mv $f upload/runTheMatrix${t}-results/
+      fi
+    done
     if [ -d upload/addOnTests       ] ; then find upload/addOnTests -name '*.root' -type f | xargs rm -f ; fi
     echo "Preparation done"
 

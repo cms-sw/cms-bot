@@ -40,7 +40,7 @@ if __name__ == "__main__":
   if data_repo_base_branch == "main":
       if "master" not in [branch.name for branch in data_repo.get_branches()]:
           data_repo.create_git_ref(ref='refs/heads/master', sha=data_repo.get_branch(data_repo_base_branch).commit.sha)
-
+  # non base branch releases to be dealt with manually, the job will fail
   if (data_repo_base_branch != "master") and (data_repo_base_branch != "main"):
       print("I do not know how to tag a non-master (non-main) branch %s" % data_repo_pr.base.ref)
       exit(1)
@@ -49,12 +49,18 @@ if __name__ == "__main__":
       print('Branch has not been merged !')
       exit(0)
 
+  # get commit hashes from base branch. this is to reduce tags to only base branch
+  response = urlopen("https://api.github.com/repos/%s/commits?sha=%s" % (opts.data_repo, data_repo_base_branch))
+  res_json = loads(response.read())
+  data_repo_tags = data_repo.get_tags()
+  base_branch_commits = [commit['sha'] for commit in res_json]
   last_release_tag = None
-  releases = data_repo.get_releases()
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+  release_tags = [t.name for t in data_repo_tags if t.commit.sha in base_branch_commits]
+
+  for i in release_tags:
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i)):
           continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
+      last_release_tag = i
       break
 
   if last_release_tag:
@@ -93,11 +99,11 @@ if __name__ == "__main__":
       new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
 
   last_release_tag = None
-  releases = data_repo.get_releases()
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+  release_tags = [t.name for t in data_repo_tags if t.commit.sha in base_branch_commits]
+  for i in release_tags:
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i)):
           continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
+      last_release_tag = i
       break
 
   default_cms_dist_branch = dist_repo.default_branch

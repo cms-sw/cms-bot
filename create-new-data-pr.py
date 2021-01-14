@@ -50,12 +50,11 @@ if __name__ == "__main__":
       exit(0)
 
   last_release_tag = None
-  releases = data_repo.get_releases()
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
-          continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
-      break
+  releases = [tag['name'] for tag in loads(urlopen("https://api.github.com/repos/%s/tags" % opts.data_repo).read())]
+  for tag_name in releases:
+      if (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", tag_name)):
+        last_release_tag = tag_name
+        break
 
   if last_release_tag:
     comparison = data_repo.compare(data_repo_base_branch, last_release_tag)
@@ -92,17 +91,9 @@ if __name__ == "__main__":
       # message should be referencing the PR that triggers this job
       new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
 
-  last_release_tag = None
-  releases = data_repo.get_releases()
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
-          continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
-      break
-
   default_cms_dist_branch = dist_repo.default_branch
   repo_name_only = opts.data_repo.split('/')[1]
-  repo_tag_pr_branch = 'update-'+repo_name_only+'-to-'+last_release_tag
+  repo_tag_pr_branch = 'update-'+repo_name_only+'-to-'+new_tag
 
   sb = dist_repo.get_branch(default_cms_dist_branch)
   dest_branch = None #

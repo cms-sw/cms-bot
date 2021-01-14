@@ -50,7 +50,7 @@ if __name__ == "__main__":
       exit(0)
 
   last_release_tag = None
-  releases = sorted([tag.name for tag in data_repo.get_tags()], reverse=True)
+  releases = [tag['name'] for tag in loads(urlopen("https://api.github.com/repos/%s/tags" % opts.data_repo).read())]
   for tag_name in releases:
       if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", tag_name)):
           continue #loop until it finds a tag matching the pattern
@@ -93,7 +93,7 @@ if __name__ == "__main__":
       new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
 
   last_release_tag = None
-  releases = sorted([tag.name for tag in data_repo.get_tags()], reverse=True)
+  releases = [tag['name'] for tag in loads(urlopen("https://api.github.com/repos/%s/tags" % opts.data_repo).read())]
   for tag_name in releases:
       if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", tag_name)):
           continue #loop until it finds a tag matching the pattern

@@ -51,10 +51,10 @@ if __name__ == "__main__":
 
   last_release_tag = None
   releases = sorted([tag.name for tag in data_repo.get_tags()], reverse=True)
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+  for tag_name in releases:
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", tag_name)):
           continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
+      last_release_tag = tag_name
       break
 
   if last_release_tag:
@@ -94,10 +94,10 @@ if __name__ == "__main__":
 
   last_release_tag = None
   releases = sorted([tag.name for tag in data_repo.get_tags()], reverse=True)
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
+  for tag_name in releases:
+      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", tag_name)):
           continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
+      last_release_tag = tag_name
       break
 
   default_cms_dist_branch = dist_repo.default_branch

@@ -37,8 +37,10 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   ALL_OK=false
   RELVALS_OK=false
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res --report-url ${PR_RESULT_URL} $NO_POST
-  if [ "${TEST_FLAVOR}" != "" ] ; then sed -i -e "s|## RelVals|## ${UC_TEST_FLAVOR}RelVals|" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res ; fi
-  echo "${UC_TEST_FLAVOR}RelVals" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-failed.res
+  if [ "${TEST_FLAVOR}" != "" ] ; then
+    sed -i -e "s|## RelVals|## RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix|/runTheMatrix${UC_TEST_FLAVOR}|" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res
+  fi
+  echo "RelVals-${UC_TEST_FLAVOR}" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-failed.res
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run due to failure in relvals" ${MARK_OPTS}
 else
   echo "no errors in the RelVals!!"

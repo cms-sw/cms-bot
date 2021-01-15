@@ -117,10 +117,10 @@ def read_matrix_log_file(matrix_log):
 #
 # reads the addon  tests log file and gets the tests that failed
 #
-def cmd_to_addon_test(command):
+def cmd_to_addon_test(command, addon_dir):
   commandbase = command.replace(' ','_').replace('/','_')
   logfile='%s.log' % commandbase[:150].replace("'",'').replace('"','').replace('../','')
-  e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (options.results_file2, logfile))
+  e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (addon_dir, logfile))
   if e or (o==""):
     print("ERROR: %s -> %s" % (command, o))
     return ""
@@ -128,10 +128,11 @@ def cmd_to_addon_test(command):
 
 def read_addon_log_file(unit_tests_file):
   errors_found=''
+  addon_dir = join(dirname(unit_tests_file), "addOnTests")
   for line in open(unit_tests_file):
     line = line.strip()
     if( ': FAILED -' in line):
-      tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip())
+      tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
       if not tname: tname = "unknown"
       else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
       line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'

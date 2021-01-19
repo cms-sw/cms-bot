@@ -110,7 +110,7 @@ KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"] = deepcopy(KNOWN_ERRORS["rel
 RelFilter="CMSSW_(10_([4-9]|[1-9][0-9]+)|1[1-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"
 KNOWN_ERRORS["relvals"][RelFilter]={}
 KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"] = deepcopy(KNOWN_ERRORS["relvals"]["CMSSW_10_[0-1]_.+"][".+_aarch64_.+"])
-for wf in ["535.0", "536.0","1361.18","1362.18","1363.18","25211.18","25212.18", "25213.18","1361.181"]:
+for wf in ["535.0", "536.0","1361.18","1362.18","1363.18","25211.18","25212.18", "25213.18","1361.181", "546.0", "547.0", "548.0"]:
   KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"][wf] = deepcopy(KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"]["512.0"])
 KNOWN_ERRORS["relvals"][RelFilter][".+_ppc64le_.+"] = deepcopy(KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"])
 

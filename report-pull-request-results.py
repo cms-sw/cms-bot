@@ -103,14 +103,18 @@ def read_matrix_log_file(matrix_log):
   message = "\n## RelVals\n\n"
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
-    
+  cnt = 0
   for wf in workflows_with_error:
     wnum = wf['number']
+    cnt += 1
     if 'out_directory' in wf:
       wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
     else:
       wnum = "**%s %s**" % (wnum, wf['step'])
-    message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
+    if cnt<=5:
+      message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
+    else:
+      message += '- ' + wnum + '\n\n'
 
   send_message_pr(message)
 
@@ -129,13 +133,18 @@ def cmd_to_addon_test(command, addon_dir):
 def read_addon_log_file(unit_tests_file):
   errors_found=''
   addon_dir = join(dirname(unit_tests_file), "addOnTests")
+  cnt = 0
   for line in open(unit_tests_file):
     line = line.strip()
     if( ': FAILED -' in line):
+      cnt += 1
       tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
       if not tname: tname = "unknown"
       else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
-      line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
+      if cnt<=5:
+        line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
+      else:
+        line = "- "+ tname + '\n\n'
       errors_found += line
   message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)

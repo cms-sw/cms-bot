@@ -117,6 +117,7 @@ mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'success' -d 'OK' -u "${BUILD_U
 echo -n "**Summary**: ${PR_RESULT_URL}/summary.html" > ${RESULTS_DIR}/09-report.res
 CMSSW_VERSION=${RELEASE_FORMAT} $CMS_BOT_DIR/report-pull-request-results GET_BASE_MESSAGE --report-url ${PR_RESULT_URL} \
     --commit ${COMMIT} --report-file ${RESULTS_DIR}/09-report.res ${REPORT_OPTS}
+echo "**User test area**: For local testing, you can use \`/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_REPO}/${PR_NUMBER}/${BUILD_NUMBER}/install.sh\` to create a dev area with all the needed externals and cmssw changes." >> ${RESULTS_DIR}/09-report.res
 echo "" >> ${RESULTS_DIR}/09-report.res
 
 echo_section "Pull request checks"

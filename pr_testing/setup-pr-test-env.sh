@@ -38,7 +38,6 @@ if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
     let WAIT_TIME=${WAIT_TIME}-60 || true
   done
   pushd ${CMSSW_CVMFS_PATH}
-    SCRAM=scram bash -ex config/SCRAM/hooks/runtime/00-nvidia-drivers
     eval `scram run -sh` >/dev/null 2>&1
   popd
   mkdir -p $WORKSPACE/${CMSSW_VERSION}

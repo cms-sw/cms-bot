@@ -15,6 +15,7 @@ if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then
   DRY_RUN='--dry-run'
 fi
 
+export LC_ALL=C
 JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 export JENKINS_PREFIX

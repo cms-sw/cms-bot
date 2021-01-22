@@ -146,7 +146,7 @@ def read_addon_log_file(unit_tests_file):
     if( ': FAILED -' in line):
       cnt += 1
       tname, err = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
-      if not tname: tnamef err: line + '\n' +  = "unknown"
+      if not tname: tname = "unknown"
       else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
       if cnt<=max_show:
         if err:

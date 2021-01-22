@@ -116,7 +116,7 @@ def read_matrix_log_file(matrix_log):
       if cnt>10:
         message += ' and more ....'
         break
-      else
+      else:
         message += ', ' + wnum
     else:
       message += '- ' + wnum

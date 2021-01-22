@@ -14,7 +14,7 @@ function get_parent_cmds ()
   echo "" >> ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
   get_parent_cmds "$XPID" "$DEPTH"
 }
-
+sleep 1
 CMD_NAME=$(basename $0)
 CMD_NAME="dasgoclient"
 LIMIT_RESULTS="NO"

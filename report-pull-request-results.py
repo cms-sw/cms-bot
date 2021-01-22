@@ -269,7 +269,7 @@ def read_unit_tests_file(unit_tests_file):
     if( 'had ERRORS' in line):
       errors_found += line
       err_cnt += 1
-      if err_cnt > 5:
+      if err_cnt > 3:
         errors_found += "and more ...\n"
         break
   message = '\n## Unit Tests\n\nI found errors in the following unit tests:\n\n<pre>%s</pre>' % errors_found
@@ -286,8 +286,8 @@ def read_python3_file(python3_file):
     if( ' Error compiling ' in line):
       errors_found += line
       err_cnt += 1
-      if err_cnt>10:
-        errors_found = "and more ...\n"
+      if err_cnt > 3:
+        errors_found += "and more ...\n"
         break
   message = '\n#Python3\n\nI found errors: \n\n <pre>%s</pre>' % errors_found
   send_message_pr(message)

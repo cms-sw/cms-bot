@@ -110,8 +110,6 @@ def read_matrix_log_file(matrix_log):
     cnt += 1
     if 'out_directory' in wf:
       wnum = "[%s](%s/runTheMatrix-results/%s)" % (wnum, options.report_url, wf['out_directory'])
-    else:
-      wnum = "%s" % wnum
     if cnt<=3:
       message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
     elif extra_msg:

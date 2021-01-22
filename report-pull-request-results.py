@@ -32,10 +32,10 @@ parser.add_option("--commit", action="store", type="string", dest="commit", help
 #
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #
-def get_wf_error_msg(out_file):
+def get_wf_error_msg(out_file, filename=True):
   if out_file.endswith(MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND):
     return ''
-  error_lines = "/".join(out_file.split("/")[-2:]) + '\n'
+  error_lines = ''
   if exists( out_file ):
     reading = False
     for line in open( out_file ):
@@ -46,6 +46,8 @@ def get_wf_error_msg(out_file):
       elif '----- Begin Fatal Exception' in line:
         error_lines += '\n'+ line
         reading = True
+  if not error_lines and filename:
+    error_lines = "/".join(out_file.split("/")[-2:])+'\n'
   return error_lines
 
 #
@@ -130,8 +132,8 @@ def cmd_to_addon_test(command, addon_dir):
   e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (addon_dir, logfile))
   if e or (o==""):
     print("ERROR: %s -> %s" % (command, o))
-    return ""
-  return o.split("/")[-2]
+    return ("", "")
+  return (o.split("/")[-2], get_wf_error_msg(o, False))
 
 def read_addon_log_file(unit_tests_file):
   message='\n## AddOn Tests\n\n'
@@ -141,12 +143,14 @@ def read_addon_log_file(unit_tests_file):
   extra_msg = False
   for line in open(unit_tests_file):
     line = line.strip()
-    if( ': FAILED -' in line) or True:
+    if( ': FAILED -' in line):
       cnt += 1
-      tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
-      if not tname: tname = "unknown"
+      tname, err = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
+      if not tname: tnamef err: line + '\n' +  = "unknown"
       else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
       if cnt<=max_show:
+        if err:
+          line = err
         message += "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
       else:
         if not extra_msg:

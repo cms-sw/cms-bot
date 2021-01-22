@@ -109,13 +109,17 @@ def read_matrix_log_file(matrix_log):
     wnum = wf['number']
     cnt += 1
     if 'out_directory' in wf:
-      wnum = "[%s/%s](%s/runTheMatrix-results/%s)" % (wnum, wf['step'], options.report_url, wf['out_directory'])
+      wnum = "[%s](%s/runTheMatrix-results/%s)" % (wnum, options.report_url, wf['out_directory'])
     else:
-      wnum = "%s/%s" % (wnum, wf['step'])
+      wnum = "%s" % wnum
     if cnt<=3:
       message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
     elif extra_msg:
-      message += ', ' + wnum
+      if cnt>10:
+        message += ' and more ....'
+        break
+      else
+        message += ', ' + wnum
     else:
       message += '- ' + wnum
       extra_msg = True
@@ -150,7 +154,11 @@ def read_addon_log_file(unit_tests_file):
       if cnt<=3:
         line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
       elif extra_msg:
-        line = ', ' + tname
+        if cnt>10:
+          message += ' and more ....'
+          break
+        else:
+          line = ', ' + tname
       else:
         line = '- ' + tname
         extra_msg = True

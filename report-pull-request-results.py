@@ -114,7 +114,11 @@ def read_matrix_log_file(matrix_log):
     if 'out_directory' in wf:
       wnum = "[%s](%s/runTheMatrix-results/%s)" % (wnum, options.report_url, wf['out_directory'])
     if cnt<=max_show:
-      message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
+      msg =  wf['message'].strip()
+      if len(msg.split('\n'))>1:
+        message += '- ' + wnum + '\n```\n' + msg + '\n```\n'
+      else:
+        message += '- ' + wnum + '```' + msg + '```\n'
     else:
       if not extra_msg:
         extra_msg = True
@@ -133,7 +137,7 @@ def cmd_to_addon_test(command, addon_dir):
   if e or (o==""):
     print("ERROR: %s -> %s" % (command, o))
     return ("", "")
-  return (o.split("/")[-2], get_wf_error_msg(o, False))
+  return (o.split("/")[-2], get_wf_error_msg(o, False).strip())
 
 def read_addon_log_file(unit_tests_file):
   message='\n## AddOn Tests\n\n'
@@ -149,9 +153,11 @@ def read_addon_log_file(unit_tests_file):
       if not tname: tname = "unknown"
       else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
       if cnt<=max_show:
-        if err:
-          line = err
-        message += "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
+        if err: line = err
+        if len(line.split('\n'))>1:
+          message += "- "+ tname + '\n```\n' + line + '\n```\n'
+        else:
+          message += "- "+ tname + '```' + line + '```\n'
       else:
         if not extra_msg:
           extra_msg = True

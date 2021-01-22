@@ -118,7 +118,7 @@ def read_matrix_log_file(matrix_log):
     else:
       if not extra_msg:
         extra_msg = True
-        message += '<details>\n<summary>more ...</summary>\n\n'
+        message += '<details>\n<summary>Expand to see more relval errors ...</summary>\n\n'
       message += '- ' + wnum + '\n'
   if extra_msg: message += '</details>\n\n'
   send_message_pr(message)
@@ -155,7 +155,7 @@ def read_addon_log_file(unit_tests_file):
       else:
         if not extra_msg:
           extra_msg = True
-          message += '<details>\n<summary>more ...</summary>\n\n'
+          message += '<details>\n<summary>Expand to see more addon errors ...</summary>\n\n'
         message += '- ' + tname + '\n'
   if extra_msg: message += '</details>\n\n'
   send_message_pr(message)

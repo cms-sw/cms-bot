@@ -152,17 +152,16 @@ def read_addon_log_file(unit_tests_file):
       if not tname: tname = "unknown"
       else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
       if cnt<=3:
-        line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
+        errors_found += "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
       elif extra_msg:
         if cnt>10:
-          message += ' and more ....'
+          errors_found += ' and more ....'
           break
         else:
-          line = ', ' + tname
+          errors_found += ', ' + tname
       else:
-        line = '- ' + tname
+        errors_found += '- ' + tname
         extra_msg = True
-      errors_found += line
   if extra_msg: errors_found += '\n\n'
   message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)

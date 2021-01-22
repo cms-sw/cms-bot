@@ -104,29 +104,21 @@ def read_matrix_log_file(matrix_log):
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
   cnt = 0
+  max_show = 3
   extra_msg = False
   for wf in workflows_with_error:
     wnum = wf['number']
     cnt += 1
     if 'out_directory' in wf:
       wnum = "[%s](%s/runTheMatrix-results/%s)" % (wnum, options.report_url, wf['out_directory'])
-    if cnt<=3:
-      msg = wf['message'].rstrip()
-      if len(msg.split("\n"))==1:
-        message += '- ' + wnum + ':`' + msg + '`\n'
-      else:
-        message += '- ' + wnum + ':\n```\n' + msg + '\n```\n'
-    elif extra_msg:
-      if cnt>10:
-        message += ' and more ....'
-        break
-      else:
-        message += ', ' + wnum
+    if cnt<=max_show:
+      message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
     else:
-      message += '- ' + wnum
-      extra_msg = True
-  if extra_msg: message += '\n\n'
-
+      if not extra_msg:
+        extra_msg = True
+        message += '<details>\n<summary>more ...</summary>\n\n'
+      message += '- ' + wnum + '\n'
+  if extra_msg: message += '</details>\n\n'
   send_message_pr(message)
 
 #
@@ -142,30 +134,26 @@ def cmd_to_addon_test(command, addon_dir):
   return o.split("/")[-2]
 
 def read_addon_log_file(unit_tests_file):
-  errors_found=''
+  message='\n## AddOn Tests\n\n'
   addon_dir = join(dirname(unit_tests_file), "addOnTests")
   cnt = 0
+  max_show = 3
   extra_msg = False
   for line in open(unit_tests_file):
     line = line.strip()
-    if( ': FAILED -' in line):
+    if( ': FAILED -' in line) or True:
       cnt += 1
       tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
       if not tname: tname = "unknown"
       else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
-      if cnt<=3:
-        errors_found += "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
-      elif extra_msg:
-        if cnt>10:
-          errors_found += ' and more ....'
-          break
-        else:
-          errors_found += ', ' + tname
+      if cnt<=max_show:
+        message += "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
       else:
-        errors_found += '- ' + tname
-        extra_msg = True
-  if extra_msg: errors_found += '\n\n'
-  message = '\n## AddOn Tests\n\n%s' % errors_found
+        if not extra_msg:
+          extra_msg = True
+          message += '<details>\n<summary>more ...</summary>\n\n'
+        message += '- ' + tname + '\n'
+  if extra_msg: message += '</details>\n\n'
   send_message_pr(message)
 
 #

@@ -38,7 +38,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   RELVALS_OK=false
   $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res --report-url ${PR_RESULT_URL} $NO_POST
   if [ "${TEST_FLAVOR}" != "" ] ; then
-    sed -i -e "s|## RelVals|## RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix|/runTheMatrix${UC_TEST_FLAVOR}|" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res
+    sed -i -e "s|## RelVals|## RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix-results|/runTheMatrix${UC_TEST_FLAVOR}-results|g" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res
     echo "RelVals-${UC_TEST_FLAVOR}" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-failed.res
   else
     echo "RelVals" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-failed.res

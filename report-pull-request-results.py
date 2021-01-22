@@ -32,10 +32,10 @@ parser.add_option("--commit", action="store", type="string", dest="commit", help
 #
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #
-def get_wf_error_msg(out_file):
+def get_wf_error_msg(out_file, filename=True):
   if out_file.endswith(MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND):
     return ''
-  error_lines = "/".join(out_file.split("/")[-2:]) + '\n'
+  error_lines = ''
   if exists( out_file ):
     reading = False
     for line in open( out_file ):
@@ -46,6 +46,8 @@ def get_wf_error_msg(out_file):
       elif '----- Begin Fatal Exception' in line:
         error_lines += '\n'+ line
         reading = True
+  if not error_lines and filename:
+    error_lines = "/".join(out_file.split("/")[-2:])+'\n'
   return error_lines
 
 #
@@ -104,18 +106,25 @@ def read_matrix_log_file(matrix_log):
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
   cnt = 0
+  max_show = 3
+  extra_msg = False
   for wf in workflows_with_error:
     wnum = wf['number']
     cnt += 1
     if 'out_directory' in wf:
-      wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
+      wnum = "[%s](%s/runTheMatrix-results/%s)" % (wnum, options.report_url, wf['out_directory'])
+    if cnt<=max_show:
+      msg =  wf['message'].strip()
+      if len(msg.split('\n'))>1:
+        message += '- ' + wnum + '\n```\n' + msg + '\n```\n'
+      else:
+        message += '- ' + wnum + '```' + msg + '```\n'
     else:
-      wnum = "**%s %s**" % (wnum, wf['step'])
-    if cnt<=5:
-      message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
-    else:
-      message += '- ' + wnum + '\n\n'
-
+      if not extra_msg:
+        extra_msg = True
+        message += '<details>\n<summary>Expand to see more relval errors ...</summary>\n\n'
+      message += '- ' + wnum + '\n'
+  if extra_msg: message += '</details>\n\n'
   send_message_pr(message)
 
 #
@@ -127,26 +136,34 @@ def cmd_to_addon_test(command, addon_dir):
   e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (addon_dir, logfile))
   if e or (o==""):
     print("ERROR: %s -> %s" % (command, o))
-    return ""
-  return o.split("/")[-2]
+    return ("", "")
+  return (o.split("/")[-2], get_wf_error_msg(o, False).strip())
 
 def read_addon_log_file(unit_tests_file):
-  errors_found=''
+  message='\n## AddOn Tests\n\n'
   addon_dir = join(dirname(unit_tests_file), "addOnTests")
   cnt = 0
+  max_show = 3
+  extra_msg = False
   for line in open(unit_tests_file):
     line = line.strip()
     if( ': FAILED -' in line):
       cnt += 1
-      tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
+      tname, err = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
       if not tname: tname = "unknown"
-      else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
-      if cnt<=5:
-        line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
+      else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
+      if cnt<=max_show:
+        if err: line = err
+        if len(line.split('\n'))>1:
+          message += "- "+ tname + '\n```\n' + line + '\n```\n'
+        else:
+          message += "- "+ tname + '```' + line + '```\n'
       else:
-        line = "- "+ tname + '\n\n'
-      errors_found += line
-  message = '\n## AddOn Tests\n\n%s' % errors_found
+        if not extra_msg:
+          extra_msg = True
+          message += '<details>\n<summary>Expand to see more addon errors ...</summary>\n\n'
+        message += '- ' + tname + '\n'
+  if extra_msg: message += '</details>\n\n'
   send_message_pr(message)
 
 #
@@ -259,7 +276,7 @@ def read_unit_tests_file(unit_tests_file):
     if( 'had ERRORS' in line):
       errors_found += line
       err_cnt += 1
-      if err_cnt > 10:
+      if err_cnt > 3:
         errors_found += "and more ...\n"
         break
   message = '\n## Unit Tests\n\nI found errors in the following unit tests:\n\n<pre>%s</pre>' % errors_found
@@ -276,8 +293,8 @@ def read_python3_file(python3_file):
     if( ' Error compiling ' in line):
       errors_found += line
       err_cnt += 1
-      if err_cnt>10:
-        errors_found = "and more ...\n"
+      if err_cnt > 3:
+        errors_found += "and more ...\n"
         break
   message = '\n#Python3\n\nI found errors: \n\n <pre>%s</pre>' % errors_found
   send_message_pr(message)

@@ -26,7 +26,7 @@ if [ ! -f $WORKSPACE/prs_commits ] ; then
 fi
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 if ! which scram >/dev/null 2>&1 ; then source /cvmfs/cms.cern.ch/cmsset_default.sh ; fi
-export CMS_PATH=/cvmfs/cms-ib.cern.ch
+export CMS_PATH=/cvmfs/cms.cern.ch
 mkdir -p ${RESULTS_DIR}
 if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
   WAIT_TIME=14400

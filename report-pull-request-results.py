@@ -104,17 +104,22 @@ def read_matrix_log_file(matrix_log):
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
   cnt = 0
+  extra_msg = False
   for wf in workflows_with_error:
     wnum = wf['number']
     cnt += 1
     if 'out_directory' in wf:
-      wnum = "**[%s %s](%s/runTheMatrix-results/%s)**" % (wnum, wf['step'], options.report_url, wf['out_directory'])
+      wnum = "[%s/%s](%s/runTheMatrix-results/%s)" % (wnum, wf['step'], options.report_url, wf['out_directory'])
     else:
-      wnum = "**%s %s**" % (wnum, wf['step'])
-    if cnt<=5:
+      wnum = "%s/%s" % (wnum, wf['step'])
+    if cnt<=3:
       message += '- ' + wnum + '\n```\n' + wf['message'].rstrip() + '\n```\n'
+    elif extra_msg:
+      message += ', ' + wnum
     else:
-      message += '- ' + wnum + '\n\n'
+      message += '- ' + wnum
+      extra_msg = True
+  if extra_msg: message += '\n\n'
 
   send_message_pr(message)
 
@@ -134,18 +139,23 @@ def read_addon_log_file(unit_tests_file):
   errors_found=''
   addon_dir = join(dirname(unit_tests_file), "addOnTests")
   cnt = 0
+  extra_msg = False
   for line in open(unit_tests_file):
     line = line.strip()
     if( ': FAILED -' in line):
       cnt += 1
       tname = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
       if not tname: tname = "unknown"
-      else: tname = "**[%s](%s/addOnTests/%s)**" % (tname, options.report_url, tname)
-      if cnt<=5:
+      else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
+      if cnt<=3:
         line = "- "+ tname + '\n```\n' + line.rstrip() + '\n```\n'
+      elif extra_msg:
+        line = ', ' + tname
       else:
-        line = "- "+ tname + '\n\n'
+        line = '- ' + tname
+        extra_msg = True
       errors_found += line
+  if extra_msg: errors_found += '\n\n'
   message = '\n## AddOn Tests\n\n%s' % errors_found
   send_message_pr(message)
 
@@ -259,7 +269,7 @@ def read_unit_tests_file(unit_tests_file):
     if( 'had ERRORS' in line):
       errors_found += line
       err_cnt += 1
-      if err_cnt > 10:
+      if err_cnt > 5:
         errors_found += "and more ...\n"
         break
   message = '\n## Unit Tests\n\nI found errors in the following unit tests:\n\n<pre>%s</pre>' % errors_found

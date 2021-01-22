@@ -2825,3 +2825,4 @@ architecture=cc8_amd64_gcc9;label=CMSSW_11_3_0_pre2;type=Development;state=Annou
 architecture=slc7_amd64_gcc900;label=CMSSW_11_3_0_pre2;type=Development;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc900;label=CMSSW_11_3_0_pre2_SCRAMV3;type=Development;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc900;label=CMSSW_11_3_0_pre2_PY3;type=Development;state=Announced;prodarch=1;
+architecture=slc7_aarch64_gcc820;label=CMSSW_11_1_7;type=Production;state=Announced;prodarch=0;

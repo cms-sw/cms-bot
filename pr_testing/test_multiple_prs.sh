@@ -944,7 +944,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-      echo "MATRIX_ARGS=$SLHC_PARAM $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
+      echo "MATRIX_ARGS=$SLHC_PARAM -s $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
     fi
     if $TEST_RELVALS_INPUT ; then
       WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')

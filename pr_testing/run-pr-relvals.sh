@@ -13,6 +13,7 @@ fi
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 mkdir "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
 pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
+  if [ "${TEST_FLAVOR}" = "threading" ] ; then let NCPU=($(nproc)/4)+1 ; fi
   RELVALS_CMD="LOCALRT=${WORKSPACE}/${CMSSW_VERSION} timeout $MATRIX_TIMEOUT runTheMatrix.py -j ${NCPU} $MATRIX_ARGS"
   LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
   echo $RELVALS_CMD > ${LOG}

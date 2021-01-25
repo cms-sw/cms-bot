@@ -118,4 +118,3 @@ function prepare_upload_results (){
     mkdir -p ${RESULTS_DIR}
   popd
 }
-

@@ -282,7 +282,7 @@ def parse_extra_params(full_comment, repo):
       try:
         func = 'check_%s' % param.lower()
         if func in ALL_CHECK_FUNCTIONS:
-          line_args[1], new_param = ALL_CHECK_FUNCTIONS[func](line_args[1], repo, matched_extra_args, k, param)
+          line_args[1], new_param = ALL_CHECK_FUNCTIONS[func](line_args[1], repo, matched_extra_args, line_args[0], param)
           if new_param: param = new_param
       except:
         pass

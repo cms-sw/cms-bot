@@ -204,8 +204,8 @@ def check_ignore_bot_tests(first_line, *args):
 
 def check_enable_bot_tests(first_line, *args):
   tests = first_line.upper().replace(" ","")
-  if "none" in tests: tests = ["none"]
-  return list(set(tests)),None
+  if "NONE" in tests: tests = "NONE"
+  return tests,None
 
 def check_extra_matrix_args(first_line, repo, params, mkey, param, *args):
   kitem = mkey.split("_")
@@ -630,7 +630,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
     if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
       if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
-        enable_tests = check_enable_bot_tests (first_line.split(" ",1)[-1])
+        enable_tests, ignore = check_enable_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
       if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:

@@ -819,7 +819,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ "X$DO_ADDON_TESTS" = Xtrue ] ; then
     mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
     if $PRODUCTION_RELEASE ; then
       DO_PROFILING=true
       mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
@@ -930,7 +930,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if $PRODUCTION_RELEASE ; then
-    if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
+    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
       WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_GPU=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
       if [ "X$WF_LIST" != X ]; then
         cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-gpu.prop
@@ -940,7 +940,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         echo "MATRIX_ARGS=-l $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu -i all" >> $WORKSPACE/run-relvals-gpu.prop
       fi
     fi
-    if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
+    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop

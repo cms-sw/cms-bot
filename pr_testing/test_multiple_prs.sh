@@ -938,13 +938,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-gpu.prop
 	#GPU workflows are in relvals_gpu
         echo "MATRIX_ARGS=-l $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu -i all" >> $WORKSPACE/run-relvals-gpu.prop
-        echo "TEST_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop
-        mark_commit_status_all_prs 'relvals/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       fi
     fi
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
-      echo "TEST_FLAVOR=threading" >> $WORKSPACE/run-relvals-threading.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
       echo "MATRIX_ARGS=$SLHC_PARAM $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
@@ -960,10 +957,12 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       fi
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_ARGS=-i all --maxSteps=2 -l ${WF_LIST} ${MTX_ARGS}" >> $WORKSPACE/run-relvals-input.prop
-      echo "TEST_FLAVOR=input" >> $WORKSPACE/run-relvals-input.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop
-      mark_commit_status_all_prs 'relvals/input' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
     fi
+    for rtype in $(ls $WORKSPACE/run-relvals-*.prop 2>/dev/null | sed 's|.*/run-relvals-||;s|.prop$||') ; do
+      echo "TEST_FLAVOR=${rtype}" >> $WORKSPACE/run-relvals-${rtype}.prop
+      mark_commit_status_all_prs "relvals/${rtype}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    do
   fi
 fi
 

@@ -209,8 +209,10 @@ def check_enable_bot_tests(first_line, *args):
 
 def check_extra_matrix_args(first_line, repo, params, mkey, param, *args):
   kitem = mkey.split("_")
-  if kitem[-1] in ["input", "threading"]:
-    param = param + kitem[-1].upper()
+  print(first_line, repo, params, mkey, param)
+  if kitem[-1] in ["input", "threading", "gpu"]:
+    param = param + "_" + kitem[-1].upper()
+  print(first_line,param)
   return first_line,param
 
 def check_pull_requests(first_line, repo, *args):

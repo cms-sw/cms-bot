@@ -52,6 +52,7 @@ REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
 ALL_CHECK_FUNCTIONS = None
+EXTRA_TESTS = "gpu|threading|profiling|none"
 MULTILINE_COMMENTS_MAP = {
               "workflow(s|)":     [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
               "pull_request(s|)": [format('%(cms_pr)s(,%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),                  "PULL_REQUESTS"],
@@ -59,11 +60,11 @@ MULTILINE_COMMENTS_MAP = {
               "dry_run":          ['true|false',                                                                "DRY_RUN"],
               "jenkins_slave":    ['[a-zA-Z][a-zA-Z0-9_-]+' ,                                                   "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],
-              "enable_test(s|)":  ["gpu|profiling",                                                             "ENABLE_BOT_TESTS"],
+              "enable_test(s|)":  [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),               "ENABLE_BOT_TESTS"],
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
-              "relvals_opt(ion|)(s|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS),                     "EXTRA_MATRIX_ARGS",True]
+              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS), "EXTRA_MATRIX_ARGS",True]
               }
 
 def get_last_commit(pr):
@@ -199,13 +200,23 @@ def check_extra_labels(first_line, extra_labels):
     extra_labels["backport"]=["backport", bp_pr]
 
 def check_ignore_bot_tests(first_line, *args):
-  return first_line.upper().replace(" ","")
+  return first_line.upper().replace(" ",""),None
 
 def check_enable_bot_tests(first_line, *args):
-  return first_line.upper().replace(" ","")
+  tests = first_line.upper().replace(" ","")
+  if "NONE" in tests: tests = "NONE"
+  return tests,None
+
+def check_extra_matrix_args(first_line, repo, params, mkey, param, *args):
+  kitem = mkey.split("_")
+  print(first_line, repo, params, mkey, param)
+  if kitem[-1] in ["input", "threading", "gpu"]:
+    param = param + "_" + kitem[-1].upper()
+  print(first_line,param)
+  return first_line,param
 
 def check_pull_requests(first_line, repo, *args):
-  return " ".join(get_prs_list_from_string(first_line, repo))
+  return " ".join(get_prs_list_from_string(first_line, repo)),None
 
 def check_release_format(first_line, repo, params, *args):
   rq = first_line
@@ -216,7 +227,7 @@ def check_release_format(first_line, repo, params, *args):
     ra = rq
     rq = ''
   params['ARCHITECTURE_FILTER'] = ra
-  return rq
+  return rq, None
 
 def check_test_cmd(first_line, repo):
   m = REGEX_TEST_REG.match(first_line)
@@ -263,17 +274,19 @@ def parse_extra_params(full_comment, repo):
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')
       if not re.match(k, line_args[0], re.I): continue
+      param = pttrn[1]
       if not re.match(pttrn[0], line_args[1], re.I):
         xerrors["value"].append(line_args[0])
         found=True
         break
       try:
-        func = 'check_%s' % pttrn[1].lower()
+        func = 'check_%s' % param.lower()
         if func in ALL_CHECK_FUNCTIONS:
-          line_args[1] = ALL_CHECK_FUNCTIONS[func](line_args[1], repo, matched_extra_args)
+          line_args[1], new_param = ALL_CHECK_FUNCTIONS[func](line_args[1], repo, matched_extra_args, line_args[0], param)
+          if new_param: param = new_param
       except:
         pass
-      matched_extra_args[pttrn[1]] = line_args[1]
+      matched_extra_args[param] = line_args[1]
       found=True
       break
     if not found: xerrors["key"].append(line_args[0])
@@ -361,9 +374,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   pkg_categories = set([])
   REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
-  known_enable_tests=MULTILINE_COMMENTS_MAP["enable_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
-  REGEX_EX_ENABLE_TESTS='^enable\s+((%s)(\s*,\s*(%s))*|none)$' % (known_enable_tests, known_enable_tests)
+  REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP["enable_test(s|)"][0]
   last_commit_date = None
   last_commit_obj = None
   push_test_issue = False
@@ -620,7 +632,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
     if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
       if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
-        enable_tests = check_enable_bot_tests (first_line.split(" ",1)[-1])
+        enable_tests, ignore = check_enable_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
       if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:

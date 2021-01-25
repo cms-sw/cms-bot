@@ -819,7 +819,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ "X$DO_ADDON_TESTS" = Xtrue ] ; then
     mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
     if $PRODUCTION_RELEASE ; then
       DO_PROFILING=true
       mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
@@ -925,38 +925,44 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
   echo "DO_COMPARISON=$DO_COMPARISON" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
-  echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS $SLHC_PARAM $WF_LIST" >> $WORKSPACE/run-relvals.prop
+  echo "MATRIX_ARGS=$SLHC_PARAM $WF_LIST $EXTRA_MATRIX_ARGS" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if $PRODUCTION_RELEASE ; then
-    if [ $(echo ${ENABLE_BOT_TESTS} | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
+    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
       WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_GPU=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
       if [ "X$WF_LIST" != X ]; then
         cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-gpu.prop
         echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-gpu.prop
         echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-gpu.prop
 	#GPU workflows are in relvals_gpu
-        echo "MATRIX_ARGS=$EXTRA_MATRIX_ARGS -i all -w gpu -l $WF_LIST" >> $WORKSPACE/run-relvals-gpu.prop
-        echo "TEST_FLAVOR=gpu" >> $WORKSPACE/run-relvals-gpu.prop
-        mark_commit_status_all_prs 'relvals/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+        echo "MATRIX_ARGS=-l $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu -i all" >> $WORKSPACE/run-relvals-gpu.prop
       fi
+    fi
+    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
+      cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
+      echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
+      echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
+      echo "MATRIX_ARGS=$SLHC_PARAM -s $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
     fi
     if $TEST_RELVALS_INPUT ; then
       WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
-      MTX_ARGS="${EXTRA_MATRIX_ARGS}"
+      MTX_ARGS="${EXTRA_MATRIX_ARGS} $EXTRA_MATRIX_ARGS_INPUT"
       if [ $(echo "${MTX_ARGS}" | grep "\-\-command " | wc -l) -gt 0 ] ; then
-        MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1-n 1 |')
+        MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1-n 1 |g')
       else
         MTX_ARGS="${MTX_ARGS} --command '-n 1'"
       fi
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
-      echo "MATRIX_ARGS=${MTX_ARGS} -i all --maxSteps=2 -l ${WF_LIST}" >> $WORKSPACE/run-relvals-input.prop
-      echo "TEST_FLAVOR=input" >> $WORKSPACE/run-relvals-input.prop
+      echo "MATRIX_ARGS=-i all --maxSteps=2 -l ${WF_LIST} ${MTX_ARGS}" >> $WORKSPACE/run-relvals-input.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop
-      mark_commit_status_all_prs 'relvals/input' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
     fi
+    for rtype in $(ls $WORKSPACE/run-relvals-*.prop 2>/dev/null | sed 's|.*/run-relvals-||;s|.prop$||') ; do
+      echo "TEST_FLAVOR=${rtype}" >> $WORKSPACE/run-relvals-${rtype}.prop
+      mark_commit_status_all_prs "relvals/${rtype}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    done
   fi
 fi
 

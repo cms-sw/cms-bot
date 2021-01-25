@@ -64,7 +64,7 @@ MULTILINE_COMMENTS_MAP = {
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
-              "relvals_opt(ion|)(s|)(_gpu|_input|_threading|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS), "EXTRA_MATRIX_ARGS",True]
+              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS), "EXTRA_MATRIX_ARGS",True]
               }
 
 def get_last_commit(pr):

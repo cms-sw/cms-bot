@@ -12,6 +12,7 @@ sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-b
 from _py2with3compatibility import run_cmd
 
 field_map = {'file':'name', 'lumi':'number', 'site':'name', 'run':'run_number', 'dataset':'name'}
+opts = None
 
 def write_json(outfile, cache):
   outdir = dirname(outfile)
@@ -25,7 +26,7 @@ def read_json(infile):
   with open(infile) as json_data:
     return json.load(json_data)
 
-def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0, debug=True):
+def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0):
   sha=basename(outfile)
   field = query.split(" ",1)[0]
   if "=" in field: field=field.split("=",1)[0]
@@ -40,7 +41,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   print("  Running: ",sha,das_cmd)
   print("  Fields:",sha,fields) 
   err, out = run_cmd(das_cmd)
-  if debug:
+  if opts.debug:
     print("DEBUG OUT:\n%s\n%s" % (err, out))
   efile = "%s.error" % outfile
   with open(efile, "w") as ofile:
@@ -78,7 +79,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     lmt = 0
     if "file" in fields: lmt = 100
     print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
-    return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt, debug=debug)
+    return run_das_client(outfile, query, override, dasclient, threshold, retry, limit=lmt)
   if results or override:
     xfile = outfile+".json"
     write_json (xfile+".tmp", jdata)

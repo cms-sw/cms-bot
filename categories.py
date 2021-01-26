@@ -26,6 +26,7 @@ COMPARISON_MISSING_MAP = [ "slava77" ]
 CMSSW_L2 = {
   "Dr15Jones":        ["core", "visualization", "geometry"],
   "Martin-Grunewald": ["hlt"],
+  "ahmad3213":        ["dqm"],
   "alberto-sanchez":  ["generators"],
   "agrohsje":         ["generators"],
   "alja":             ["visualization"],
@@ -49,7 +50,6 @@ CMSSW_L2 = {
   "jordan-martins":   ["pdmv"],
   "jpata":            ["reconstruction"],
   "kmaeshima":        ["dqm"],
-  "fioriNTU":         ["dqm"],
   "kpedro88":         ["upgrade"],
   "lveldere":         ["fastsim"],
   "makortel":         ["heterogeneous", "core", "visualization", "geometry"],
@@ -61,6 +61,7 @@ CMSSW_L2 = {
   "pohsun":           ["alca"],
   "qliphy":           ["operations"],
   "rekovic":          ["l1"],
+  "rvenditti":        ["dqm"],
   "santocch":         ["analysis"],
   "sbein":            ["fastsim"],
   "SiewYan":          ["generators"], 

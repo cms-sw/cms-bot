@@ -25,7 +25,7 @@ def read_json(infile):
   with open(infile) as json_data:
     return json.load(json_data)
 
-def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0, debug=False):
+def run_das_client(outfile, query, override, dasclient="das_client", threshold=900, retry=5, limit=0, debug=True):
   sha=basename(outfile)
   field = query.split(" ",1)[0]
   if "=" in field: field=field.split("=",1)[0]
@@ -260,7 +260,7 @@ if __name__ == "__main__":
       if(tcount < jobs):
         print("  Searching DAS (threads: %s)" % tcount)
         try:
-          t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client, debug=opts.debug))
+          t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client))
           t.start()
           threads.append(t)
           sleep(0.1)

@@ -61,6 +61,7 @@ def parse_workflow_info( parts, relval_dir ):
   # it starts asumed as not found
   out_file = MATRIX_WORKFLOW_STEP_LOG_FILE_NOT_FOUND
   workflow_info[ 'step' ] = MATRIX_WORKFLOW_STEP_NA
+  out_directory = None
   for i in range( 0 , len( parts ) ):
     current_part = parts[ i ]
     if ( current_part == 'cd' ):

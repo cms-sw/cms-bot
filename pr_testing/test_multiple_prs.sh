@@ -288,6 +288,7 @@ else
 fi
 
 PR_EXTERNAL_REPO=""
+TEST_DASGOCLIENT=false
 if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
@@ -367,8 +368,11 @@ if ${BUILD_EXTERNAL} ; then
       echo 'CMSSWTOOLCONF_RESULTS;OK,Externals compilation,See Log,cmsswtoolconf.log' >> ${RESULTS_DIR}/toolconf.txt
     fi
 
+    OLD_DASGOCLIENT=$(dasgoclient --version  | tr ' ' '\n' | grep '^git=' | sed 's|^git=||')
     # Create an appropriate CMSSW area
     source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
+    NEW_DASGOCLIENT=$($WORKSPACE/$BUILD_DIR/common/dasgoclient --version  | tr ' ' '\n' | grep '^git=' | sed 's|^git=||')
+    if [ "${OLD_DASGOCLIENT}" != "${NEW_DASGOCLIENT}" ] ; then TEST_DASGOCLIENT=true ; fi
     echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
     scram -a $SCRAM_ARCH project $CMSSW_IB
 
@@ -964,6 +968,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       mark_commit_status_all_prs "relvals/${rtype}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
     done
   fi
+fi
+
+if $TEST_DASGOCLIENT ; then
+  echo "NEW_DASGOCLIENT_DIR=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" > $WORKSPACE/run-dasgoclient.prop
+  echo "OLD_DASGOCLIENT_DIR=/cvmfs/cms-ib.cern.ch/week${WEEK_NUM}" >> $WORKSPACE/run-dasgoclient.prop
 fi
 
 if [ "X$DO_ADDON_TESTS" = Xtrue ]; then

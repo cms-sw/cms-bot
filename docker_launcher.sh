@@ -19,7 +19,7 @@ for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
 RUN_NATIVE=
-export RUCIO_ACCOUNT="cmsbot"
+if [ "${RUCIO_ACCOUNT}" = "" ] ; then export RUCIO_ACCOUNT="cmsbot" ; fi
 if [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then DOCKER_IMG=$DOCKER_IMG_HOST ; fi
 if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`

@@ -371,8 +371,11 @@ if ${BUILD_EXTERNAL} ; then
     OLD_DASGOCLIENT=$(dasgoclient --version  | tr ' ' '\n' | grep '^git=' | sed 's|^git=||')
     # Create an appropriate CMSSW area
     source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
-    NEW_DASGOCLIENT=$($WORKSPACE/$BUILD_DIR/common/dasgoclient --version  | tr ' ' '\n' | grep '^git=' | sed 's|^git=||')
-    if [ "${OLD_DASGOCLIENT}" != "${NEW_DASGOCLIENT}" ] ; then TEST_DASGOCLIENT=true ; fi
+    if [ -e $WORKSPACE/$BUILD_DIR/common/dasgoclient ] ; then
+      NEW_DASGOCLIENT=$($WORKSPACE/$BUILD_DIR/common/dasgoclient --version  | tr ' ' '\n' | grep '^git=' | sed 's|^git=||')
+      XDAS=$(echo ${OLD_DASGOCLIENT} ${NEW_DASGOCLIENT} | tr ' ' '\n' | grep '^v' | sort | head -1)
+      if [ "${OLD_DASGOCLIENT}" != "${XDAS}" ] ; then TEST_DASGOCLIENT=true ; fi
+    fi
     echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
     scram -a $SCRAM_ARCH project $CMSSW_IB
 

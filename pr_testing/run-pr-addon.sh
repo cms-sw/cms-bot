@@ -6,7 +6,7 @@ mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Running tests
 #Without this hack, pat1 addOnTest fails.
 EX_DATA_SEARCH="$CMSSW_SEARCH_PATH"
 case $CMSSW_IB in
-  CMSSW_7_1_* )
+  XXCMSSW_7_1_* )
     for xdata_pkg in Geometry/CMSCommonData Geometry/ForwardCommonData Geometry/HcalCommonData Geometry/MuonCommonData Geometry/TrackerCommonData ; do
       if [ -e ${CMSSW_BASE}/external/${SCRAM_ARCH}/data/${xdata_pkg}/data ] ; then
         if [ ! -e ${CMSSW_BASE}/src/${xdata_pkg}/data ] ; then

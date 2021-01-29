@@ -970,8 +970,8 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   fi
 fi
 
-if $TEST_DASGOCLIENT ; then
-  echo "NEW_DASGOCLIENT_DIR=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" > $WORKSPACE/run-dasgoclient.prop
+if $TEST_DASGOCLIENT && $PRODUCTION_RELEASE ; then
+  echo "NEW_DASGOCLIENT_DIR=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}/${ARCHITECTURE}" > $WORKSPACE/run-dasgoclient.prop
   echo "OLD_DASGOCLIENT_DIR=/cvmfs/cms-ib.cern.ch/week${WEEK_NUM}" >> $WORKSPACE/run-dasgoclient.prop
 fi
 

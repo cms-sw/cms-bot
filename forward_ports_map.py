@@ -16,6 +16,11 @@ GIT_REPO_FWPORTS["cms-sw.github.io"] = {
 #Master branch is always forward ported to one branch.
 GIT_REPO_FWPORTS["cmssw"]["master"]=[CMSSW_DEVEL_BRANCH]
 
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_1_X/stable"]=[]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_7_1_X/stable"].append("IB/CMSSW_7_1_X/pythia240")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_1_X"]=[]
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_7_1_X"].append("CMSSW_7_1_PYTHIA240_X")
+
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc530"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_9_1_X/gcc530"].append("IB/CMSSW_9_1_X/gcc630")
 

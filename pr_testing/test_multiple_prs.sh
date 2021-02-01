@@ -373,7 +373,7 @@ if ${BUILD_EXTERNAL} ; then
     source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
     if [ -e $WORKSPACE/$BUILD_DIR/common/dasgoclient ] ; then
       NEW_DASGOCLIENT=$($WORKSPACE/$BUILD_DIR/common/dasgoclient --version  | tr ' ' '\n' | grep '^git=' | sed 's|^git=||')
-      XDAS=$(echo ${OLD_DASGOCLIENT} ${NEW_DASGOCLIENT} | tr ' ' '\n' | grep '^v' | sort | head -1)
+      XDAS=$(echo ${OLD_DASGOCLIENT} ${NEW_DASGOCLIENT} | tr ' ' '\n' | grep '^v' | sort | tail -1)
       if [ "${OLD_DASGOCLIENT}" != "${XDAS}" ] ; then TEST_DASGOCLIENT=true ; fi
     fi
     echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db

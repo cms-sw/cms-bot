@@ -75,6 +75,8 @@ CMSSW_L2 = {
   "wajidalikhan":     ["pdmv"],
   "christopheralanwest": ["alca"],
   "yuanchao":         ["alca"],
+  "francescobrivio":  ["alca"],
+  "malbouis":         ["alca"],
   CMSBUILD_USER:      ["tests" ],
 }
 

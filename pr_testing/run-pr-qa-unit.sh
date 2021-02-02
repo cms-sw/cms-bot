@@ -73,7 +73,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
     for p in $(ls -d $CMSSW_RELEASE_BASE/src/*/* | sed "s|$CMSSW_RELEASE_BASE/src/||") ; do
       if [ -e $CMSSW_BASE/src/$p ] || [ -e $CMSSW_BASE/poison/$p ] ; then
         echo "Skipped $p"
-        conitnue
+        continue
       fi
       s=$(echo $p | sed 's|/.*||')
       mkdir -p $CMSSW_BASE/src/$s

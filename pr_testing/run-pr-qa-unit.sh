@@ -71,20 +71,25 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   TEST_PATH="${PATH}"
   if ${RUN_FULL_UNITTEST} ; then
     set +x
-    TEST_PATH=${CMSSW_RELEASE_BASE}/test/${SCRAM_ARCH}
+    curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/${CMSSW_IB}.tar.gz
+    tar -xzf src.tar.gz
+    mv cmssw-${CMSSW_IB} fullsrc
+    mv fullsrc/Geometry/TrackerSimData/data fullsrc/Geometry/TrackerSimData/data.backup
+    TEST_PATH="${CMSSW_RELEASE_BASE}/test/${SCRAM_ARCH}"
     rpath=$(scram tool info cmssw 2>&1 | grep CMSSW_BASE | sed 's|^CMSSW_BASE=||')
     if [ "${rpath}" != "" ] ; then TEST_PATH="${TEST_PATH}:${rpath}/test/${SCRAM_ARCH}"; fi
     TEST_PATH="${TEST_PATH}:${PATH}"
-    for p in $(ls -d $CMSSW_RELEASE_BASE/src/*/* | sed "s|$CMSSW_RELEASE_BASE/src/||") ; do
+    for p in $(ls -d fullsrc/*/* | sed 's|fullsrc/||') ; do
       if [ -e $CMSSW_BASE/src/$p ] || [ -e $CMSSW_BASE/poison/$p ] ; then
         echo "Skipped $p"
         continue
       fi
       s=$(echo $p | sed 's|/.*||')
       mkdir -p $CMSSW_BASE/src/$s
-      ln -s $CMSSW_RELEASE_BASE/src/$p $CMSSW_BASE/src/$p
-      echo "Created link $p"
+      mv fullsrc/$p $CMSSW_BASE/src/$p
+      echo "Created $p"
     done
+    rm -rf fullsrc src.tar.gz
     set -x
     scram b -r echo_CXX
     test_target=unittests

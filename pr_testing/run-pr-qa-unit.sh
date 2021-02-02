@@ -2,6 +2,7 @@
 source $(dirname $0)/setup-pr-test-env.sh
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 cd $CMSSW_BASE
+RUN_FULL_UNITTEST=true
 
 #Drop RELEASE_TOP/external/SCRAM_ARCH/data if LOCALTOP/external/SCRAM_ARCH/data exists
 #to make sure external packages removed files are not picked up from release directory
@@ -64,8 +65,26 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   mark_commit_status_all_prs 'unittest' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
   mkdir -p $WORKSPACE/unitTests
+  test_target=runtest
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
-  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
+  if ${RUN_FULL_UNITTEST} ; then
+    set +x
+    for p in $(ls -d $CMSSW_RELEASE_BASE/src/*/* | sed "s|$CMSSW_RELEASE_BASE/src/||") ; do
+      if [ -e $CMSSW_BASE/src/$p ] || [ -e $CMSSW_BASE/poison/$p ] ; then
+        echo "Skipped $p"
+        conitnue
+      fi
+      s=$(echo $p | sed 's|/.*||')
+      mkdir -p $CMSSW_BASE/src/$s
+      ln -s $CMSSW_RELEASE_BASE/src/$p $CMSSW_BASE/src/$p
+      echo "Created link $p"
+    done
+    set -x
+    scram b -r echo_CXX
+    test_target=unittest
+    UT_TIMEOUT=10800
+  fi
+  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU} ${test_target} "
   echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests/log.txt 2>&1 || true
   echo 'END OF UNIT TESTS'

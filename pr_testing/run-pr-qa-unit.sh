@@ -82,7 +82,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
     done
     set -x
     scram b -r echo_CXX
-    test_target=unittest
+    test_target=unittests
     UT_TIMEOUT=10800
   fi
   UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU} ${test_target} "

@@ -2,7 +2,8 @@
 source $(dirname $0)/setup-pr-test-env.sh
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 cd $CMSSW_BASE
-RUN_FULL_UNITTEST=true
+RUN_FULL_UNITTEST=false
+if $PRODUCTION_RELEASE ; then RUN_FULL_UNITTEST=true ; fi
 
 #Drop RELEASE_TOP/external/SCRAM_ARCH/data if LOCALTOP/external/SCRAM_ARCH/data exists
 #to make sure external packages removed files are not picked up from release directory

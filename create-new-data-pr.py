@@ -7,6 +7,7 @@ from os.path import expanduser
 from urllib2 import urlopen
 from json import loads
 import re
+from _py2with3compatibility import run_cmd
 
 def update_tag_version(current_version=None):
     updated_version = None
@@ -16,6 +17,15 @@ def update_tag_version(current_version=None):
             updated_version = '0'+updated_version
 
     return updated_version
+
+def get_tag_from_string(tag_string=None):
+    tag = None
+    for i in tag_string.split('\n'):
+        m = re.search("(V[0-9]{2}-[0-9]{2}-[0-9]{2})", i)
+        if m:
+           tag = m.group()
+           break
+    return tag
 
 if __name__ == "__main__":
 
@@ -35,29 +45,39 @@ if __name__ == "__main__":
   data_prid = int(opts.pull_request)
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
-  data_repo_base_branch = data_repo_pr.base.ref
+  data_pr_base_branch = data_repo_pr.base.ref
+  data_repo_default_branch = data_repo.default_branch
   # create master just to exist on the cms-data repo if it doesn't
-  if data_repo_base_branch == "main":
+  if data_repo_default_branch == "main":
       if "master" not in [branch.name for branch in data_repo.get_branches()]:
-          data_repo.create_git_ref(ref='refs/heads/master', sha=data_repo.get_branch(data_repo_base_branch).commit.sha)
-
-  if (data_repo_base_branch != "master") and (data_repo_base_branch != "main"):
-      print("I do not know how to tag a non-master (non-main) branch %s" % data_repo_pr.base.ref)
-      exit(1)
-
-  if not data_repo_pr.merged:
-      print('Branch has not been merged !')
-      exit(0)
+          data_repo.create_git_ref(ref='refs/heads/master', sha=data_repo.get_branch(data_repo_default_branch).commit.sha)
 
   last_release_tag = None
-  releases = [tag['name'] for tag in loads(urlopen("https://api.github.com/repos/%s/tags" % opts.data_repo).read())]
-  for tag_name in releases:
-      if (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", tag_name)):
-        last_release_tag = tag_name
-        break
+  repo_name_only = opts.data_repo.split("/")[1]
+  #find the last tag on the default branch, which is needed in all cases
+  err, out = run_cmd("rm -rf %s; git clone git@github.com:%s && cd %s && git checkout %s && git log --pretty=\'%%s, %%d\' %s | grep tag:" % (repo_name_only, opts.data_repo, repo_name_only, data_repo_default_branch, data_repo_default_branch))
+
+  last_release_tag = get_tag_from_string(out)
+
+  if (data_pr_base_branch != data_repo_default_branch):
+      err, o = run_cmd("cd %s && git checkout %s && git log --pretty=\'%%s, %%d\' %s | grep tag:" % (repo_name_only, data_pr_base_branch, data_pr_base_branch))
+      non_default_branch_last_tag = get_tag_from_string(o)
+      if not non_default_branch_last_tag:
+          print('Tags doesn\'t exist yet on %s branch, please create one manually first' % data_pr_base_branch)
+          exit(1)
+      elif (last_release_tag == non_default_branch_last_tag):
+          #the non default has the same tag as the default, non default was just branched out
+          print('Branch %s was just branched out' % data_pr_base_branch)
+          exit(1)
+      else:
+          last_release_tag = non_default_branch_last_tag
+
+  if not data_repo_pr.merged:
+      print('The pull request isn\'t merged !')
+      exit(0)
 
   if last_release_tag:
-    comparison = data_repo.compare(data_repo_base_branch, last_release_tag)
+    comparison = data_repo.compare(data_pr_base_branch, last_release_tag)
     print('commits behind ', comparison.behind_by)
     create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
     print('create new tag ? ', create_new_tag)
@@ -89,6 +109,10 @@ if __name__ == "__main__":
           print('files were modified, update mid version and reset minor', sec, thrd)
       new_tag = 'V'+first+'-'+sec+'-'+thrd
       # message should be referencing the PR that triggers this job
+      pr_branch_sha = data_repo.get_branch(data_pr_base_branch).commit.sha
+      #there is a bug in old versions, we need this three calls instead of one: https://github.com/PyGithub/PyGithub/issues/1336
+      gh_tag = data_repo.create_git_tag(tag=new_tag,message='Details in: '+data_repo_pr.html_url,object=pr_branch_sha,type='tag type')
+      tag_ref = data_repo.create_git_ref(ref='refs/tags/'+new_tag, sha=gh_tag.sha)
       new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
 
   default_cms_dist_branch = dist_repo.default_branch

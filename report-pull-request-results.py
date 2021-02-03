@@ -43,6 +43,7 @@ def get_wf_error_msg(out_file, filename=True):
         error_lines += line
         if '----- End Fatal Exception' in line:
           reading = False
+          break
       elif '----- Begin Fatal Exception' in line:
         error_lines += '\n'+ line
         reading = True

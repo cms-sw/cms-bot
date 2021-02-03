@@ -107,12 +107,7 @@ if __name__ == "__main__":
           thrd = '00'
           print('files were modified, update mid version and reset minor', sec, thrd)
       new_tag = 'V'+first+'-'+sec+'-'+thrd
-      # message should be referencing the PR that triggers this job
-      pr_branch_sha = data_repo.get_branch(data_pr_base_branch).commit.sha
-      #there is a bug in old versions, we need this three calls instead of one: https://github.com/PyGithub/PyGithub/issues/1336
-      gh_tag = data_repo.create_git_tag(tag=new_tag,message='Details in: '+data_repo_pr.html_url,object=pr_branch_sha,type='tag type')
-      tag_ref = data_repo.create_git_ref(ref='refs/tags/'+new_tag, sha=gh_tag.sha)
-      new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
+      tag_ref = data_repo.create_git_ref(ref='refs/tags/'+new_tag, sha=data_repo.get_branch(data_pr_base_branch).commit.sha)
 
   default_cms_dist_branch = dist_repo.default_branch
   repo_name_only = opts.data_repo.split('/')[1]

@@ -55,12 +55,11 @@ if __name__ == "__main__":
   last_release_tag = None
   repo_name_only = opts.data_repo.split("/")[1]
   #find the last tag on the default branch, which is needed in all cases
-  err, out = run_cmd("rm -rf %s; git clone git@github.com:%s && cd %s && git checkout %s && git log --pretty=\'%%s, %%d\' %s | grep tag:" % (repo_name_only, opts.data_repo, repo_name_only, data_repo_default_branch, data_repo_default_branch))
-
+  err, out = run_cmd("rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'" % (opts.data_repo, data_repo_default_branch))
   last_release_tag = get_tag_from_string(out)
 
   if (data_pr_base_branch != data_repo_default_branch):
-      err, o = run_cmd("cd %s && git checkout %s && git log --pretty=\'%%s, %%d\' %s | grep tag:" % (repo_name_only, data_pr_base_branch, data_pr_base_branch))
+      err, o = run_cmd("rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'" % (opts.data_repo, data_pr_base_branch))
       non_default_branch_last_tag = get_tag_from_string(o)
       if not non_default_branch_last_tag:
           print('Tags doesn\'t exist yet on %s branch, please create one manually first' % data_pr_base_branch)

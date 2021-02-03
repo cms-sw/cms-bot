@@ -51,7 +51,7 @@ if __name__ == "__main__":
   data_pr_base_branch = data_repo_pr.base.ref
   data_repo_default_branch = data_repo.default_branch
   # create master just to exist on the cms-data repo if it doesn't
-  if data_repo_default_branch == "main":
+  if data_repo_default_branch != "master":
       if "master" not in [branch.name for branch in data_repo.get_branches()]:
           data_repo.create_git_ref(ref='refs/heads/master', sha=data_repo.get_branch(data_repo_default_branch).commit.sha)
 

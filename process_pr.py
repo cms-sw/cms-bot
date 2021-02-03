@@ -1085,6 +1085,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     global_test_params['PULL_REQUESTS'] = '%s#%s' % (repository, prId)
   else:
     global_test_params['PULL_REQUESTS'] = '%s#%s %s' % (repository, prId, global_test_params['PULL_REQUESTS'])
+    need_external = True
   if ignore_tests:
     if ignore_tests == 'NONE': ignore_tests = ''
     global_test_params['IGNORE_BOT_TESTS'] = ignore_tests

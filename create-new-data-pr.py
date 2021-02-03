@@ -45,6 +45,9 @@ if __name__ == "__main__":
   data_prid = int(opts.pull_request)
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
+  if not data_repo_pr.merged:
+      print('The pull request isn\'t merged !')
+      exit(0)
   data_pr_base_branch = data_repo_pr.base.ref
   data_repo_default_branch = data_repo.default_branch
   # create master just to exist on the cms-data repo if it doesn't
@@ -52,28 +55,8 @@ if __name__ == "__main__":
       if "master" not in [branch.name for branch in data_repo.get_branches()]:
           data_repo.create_git_ref(ref='refs/heads/master', sha=data_repo.get_branch(data_repo_default_branch).commit.sha)
 
-  last_release_tag = None
-  repo_name_only = opts.data_repo.split("/")[1]
-  #find the last tag on the default branch, which is needed in all cases
-  err, out = run_cmd("rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'" % (opts.data_repo, data_repo_default_branch))
+  err, out = run_cmd("rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'" % (opts.data_repo, data_pr_base_branch))
   last_release_tag = get_tag_from_string(out)
-
-  if (data_pr_base_branch != data_repo_default_branch):
-      err, o = run_cmd("rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'" % (opts.data_repo, data_pr_base_branch))
-      non_default_branch_last_tag = get_tag_from_string(o)
-      if not non_default_branch_last_tag:
-          print('Tags doesn\'t exist yet on %s branch, please create one manually first' % data_pr_base_branch)
-          exit(1)
-      elif (last_release_tag == non_default_branch_last_tag):
-          #the non default has the same tag as the default, non default was just branched out
-          print('Branch %s was just branched out' % data_pr_base_branch)
-          exit(1)
-      else:
-          last_release_tag = non_default_branch_last_tag
-
-  if not data_repo_pr.merged:
-      print('The pull request isn\'t merged !')
-      exit(0)
 
   if last_release_tag:
     comparison = data_repo.compare(data_pr_base_branch, last_release_tag)

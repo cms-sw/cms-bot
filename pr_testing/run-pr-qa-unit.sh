@@ -2,6 +2,10 @@
 source $(dirname $0)/setup-pr-test-env.sh
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 cd $CMSSW_BASE
+RUN_FULL_UNITTEST=false
+if $PRODUCTION_RELEASE ; then RUN_FULL_UNITTEST=true ; fi
+#For now force disabl full unit tests
+RUN_FULL_UNITTEST=false
 
 #Drop RELEASE_TOP/external/SCRAM_ARCH/data if LOCALTOP/external/SCRAM_ARCH/data exists
 #to make sure external packages removed files are not picked up from release directory
@@ -66,6 +70,30 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   mkdir -p $WORKSPACE/unitTests
   UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
   UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
+  if ${RUN_FULL_UNITTEST} ; then
+    set +x
+    curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/${CMSSW_IB}.tar.gz
+    tar -xzf src.tar.gz
+    mv cmssw-${CMSSW_IB} fullsrc
+    mv fullsrc/Geometry/TrackerSimData/data fullsrc/Geometry/TrackerSimData/data.backup
+    for p in $(ls -d fullsrc/*/* | sed 's|fullsrc/||') ; do
+      if [ -e $CMSSW_BASE/src/$p ] || [ -e $CMSSW_BASE/poison/$p ] ; then
+        echo "Skipped $p"
+        continue
+      fi
+      s=$(echo $p | sed 's|/.*||')
+      mkdir -p $CMSSW_BASE/src/$s
+      mv fullsrc/$p $CMSSW_BASE/src/$p
+      echo "Created $p"
+    done
+    rm -rf fullsrc src.tar.gz
+    scram b -r echo_CXX
+    TEST_PATH="${CMSSW_RELEASE_BASE}/test/${SCRAM_ARCH}"
+    rpath=$(scram tool info cmssw 2>&1 | grep CMSSW_BASE | sed 's|^CMSSW_BASE=||')
+    if [ "${rpath}" != "" ] ; then TEST_PATH="${TEST_PATH}:${rpath}/test/${SCRAM_ARCH}"; fi
+    UTESTS_CMD="PATH=${TEST_PATH}:${PATH} timeout 10800 scram b -k -j ${NCPU} unittests "
+    set -x
+  fi
   echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests/log.txt 2>&1 || true
   echo 'END OF UNIT TESTS'

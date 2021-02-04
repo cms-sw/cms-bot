@@ -330,6 +330,7 @@ if ${BUILD_EXTERNAL} ; then
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU}"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
+    echo "#${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
     UPLOAD_OPTS="--upload-tmp-repository ${PR_EXTERNAL_REPO}"
     if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
       UPLOAD_OPTS="--sync-back"
@@ -889,7 +890,7 @@ echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
 echo "RELEASE_FORMAT=$CMSSW_IB" >> $WORKSPACE/deploy-cmssw
 
 touch $WORKSPACE/job.env
-for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY CMSSW_IB UPLOAD_UNIQ_ID; do
+for x in REPORT_OPTS BUILD_EXTERNAL DO_DUPLICATE_CHECKS DO_DAS_QUERY DO_TESTS CMSDIST_ONLY CMSSW_IB UPLOAD_UNIQ_ID PRODUCTION_RELEASE; do
   eval echo "$x=\\\"$(echo \$$x)\\\"" >> $WORKSPACE/job.env
 done
 
@@ -904,6 +905,7 @@ echo "DOCKER_IMG=${DOCKER_IMG}" >> $WORKSPACE/test-env.txt
 echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
 echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $WORKSPACE/test-env.txt
 echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
+echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
 
 #
 # Matrix tests

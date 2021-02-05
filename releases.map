@@ -2839,3 +2839,4 @@ architecture=slc6_amd64_gcc481;label=CMSSW_7_1_47_PYTHIA240;type=Production;stat
 architecture=cc8_ppc64le_gcc9;label=CMSSW_11_2_1_patch1;type=Production;state=Announced;prodarch=0;
 architecture=cc8_aarch64_gcc9;label=CMSSW_11_2_1_patch1;type=Production;state=Announced;prodarch=0;
 architecture=cc8_amd64_gcc9;label=CMSSW_11_2_1_patch1;type=Production;state=Announced;prodarch=0;
+architecture=slc7_aarch64_gcc9;label=CMSSW_11_2_1_patch1;type=Production;state=Announced;prodarch=0;

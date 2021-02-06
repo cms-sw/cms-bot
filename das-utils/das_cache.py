@@ -254,7 +254,7 @@ if __name__ == "__main__":
     else: print("  No cache file found %s" % sha)
     if vold:
       vold_caches+=1
-      continue
+      #continue
     DasSearch += 1
     while True:
       tcount = len(threads)

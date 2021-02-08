@@ -1694,3 +1694,7 @@ dinyar:
   - L1Trigger/L1TCommon
   - L1Trigger/L1TMuon
   - L1Trigger/L1TNtuples
+tau-pog:
+  - RecoTauTag/
+  - DataFormats/TauReco
+  - PhysicsTools/PatAlgos

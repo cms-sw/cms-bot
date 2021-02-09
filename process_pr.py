@@ -666,6 +666,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       elif valid_multiline_comment:
         test_params_comment = comment
         global_test_params = dict(test_params)
+        if 'ENABLE_BOT_TESTS' in global_test_params:
+          enable_tests = global_test_params['ENABLE_BOT_TESTS']
         test_params_msg = dumps(global_test_params, sort_keys=True)
         continue
 

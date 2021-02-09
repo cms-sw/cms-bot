@@ -757,9 +757,6 @@ mmusich:
 - SimTracker/Configuration
 - SimTracker/Records
 - SimTracker/SiStripDigitizer
-mschrode:
-- Alignment
-- RecoTracker
 namapane:
 - .*Magnetic
 nhanvtran:

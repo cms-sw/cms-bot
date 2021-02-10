@@ -5,6 +5,7 @@
 # If it is greater then $MAX_WAIT, it will exit with error code.
 
 IB_WEEK_DIR="/cvmfs/cms-ib.cern.ch/week0 /cvmfs/cms-ib.cern.ch/week1 /cvmfs/cms.cern.ch"
+if [ "${RELEASE_INSTALL_PATH}" != "" ] ; then IB_WEEK_DIR="${RELEASE_INSTALL_PATH}"; fi
 RELEASE=$1
 ARCH=$2
 WAIT_STEP=$3

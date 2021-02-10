@@ -50,7 +50,7 @@ def configureProfilingSteps(cmsdriver_lines):
 	step3_ig = step3 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step3_igprof.py"
 
 	igprof_s3_pp = "igprof -d -pp -z -o step3_igprofCPU.gz -t cmsRun cmsRun step3_igprof.py &> step3_igprof_cpu.txt"
-	igprof_s3_mp = "igprof -d -mp -z -o step3_igprofMEM.gz cmsRunGlibC -t cmsRunGlibC step3_igprof.py &> step3_igprof_mem.txt"
+	igprof_s3_mp = "igprof -d -mp -z -o step3_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step3_igprof.py &> step3_igprof_mem.txt"
 
 	step4 = cmsdriver_lines[3]
 	step4_tmi = step4 + " --customise=Validation/Performance/TimeMemoryInfo.py &> step4_TimeMemoryInfo.log"
@@ -58,7 +58,7 @@ def configureProfilingSteps(cmsdriver_lines):
 	step4_ig = step4 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step4_igprof.py"
 
 	igprof_s4_pp = "igprof -d -pp -z -o step4_igprofCPU.gz -t cmsRun cmsRun step4_igprof.py &> step4_igprof_cpu.txt"
-	igprof_s4_mp = "igprof -d -mp -z -o step4_igprofMEM.gz cmsRunGlibC -t cmsRunGlibC step4_igprof.py &> step4_igprof_mem.txt"
+	igprof_s4_mp = "igprof -d -mp -z -o step4_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step4_igprof.py &> step4_igprof_mem.txt"
 
 	new_cmdlist = (cmsdriver_lines[:2] +
 		[step3_tmi, step3_ft, step3_ig, igprof_s3_pp, igprof_s3_mp] +
@@ -66,14 +66,14 @@ def configureProfilingSteps(cmsdriver_lines):
 
 	return new_cmdlist
 
-def writeProfilingScript(wfdir, runscript):
+def writeProfilingScript(wfdir, runscript, cmdlist):
 	runscript_path = "{}/{}".format(wfdir, runscript)
 	with open(runscript_path, "w") as fi:
 		fi.write("#!/bin/bash\n")
 
 		#abort on error
 		fi.write("set -e\n")
-		for cmd in new_cmdlist:
+		for cmd in cmdlist:
 			fi.write(cmd + '\n')
 
 	return
@@ -120,7 +120,7 @@ def main(wf, num_events):
 	new_cmdlist = configureProfilingSteps(cmsdriver_lines)
 
 	runscript = "cmdLog_profiling.sh"
-	writeProfilingScript(wfdir, runscript)
+	writeProfilingScript(wfdir, runscript, new_cmdlist)
 	runProfiling(wfdir, runscript)
 
 	ret = validateProfilingOutputs(wfdir)

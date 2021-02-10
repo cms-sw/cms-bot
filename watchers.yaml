@@ -1695,3 +1695,5 @@ tau-pog:
   - RecoTauTag/
   - DataFormats/TauReco
   - PhysicsTools/PatAlgos
+cvuosalo:
+  - CondTools/Geometry

@@ -4,6 +4,7 @@ import subprocess
 import glob
 import sys
 import os
+import shutil
 
 def prepareMatrixWF(workflow_number, num_events):
     cmd = [
@@ -84,10 +85,14 @@ def runProfiling(wfdir, runscript):
     os.system("bash {}".format(runscript))
     os.chdir("..")
 
-def validateProfilingOutputs(wfdir):
-    ret = {}
-
+def copyProfilingOutputs(wfdir, out_dir):
     for output in [
+        "step1.root",
+        "step2.root",
+        "step3.root",
+        "step4.root",
+        "step1.log",
+        "step2.log",
         "step3_TimeMemoryInfo.log",
         "step3_circles.json",
         "step3_igprofCPU.gz",
@@ -101,13 +106,13 @@ def validateProfilingOutputs(wfdir):
 
         #check that all outputs exists and are of nonzero size
         if os.path.isfile(path) and os.stat(path).st_size > 0:
-            ret[output.split(".")[0]] = path
+            print("copying {} to {}".format(path, out_dir))
+            shutil.copy(path, out_dir)
         else:
             raise Exception("Output {} not found or is broken".format(path))
+    return
 
-    return ret
-
-def main(wf, num_events):
+def main(wf, num_events, out_dir):
     wfdir = getWFDir(wf)
     
     if not (wfdir is None):
@@ -122,18 +127,22 @@ def main(wf, num_events):
     runscript = "cmdLog_profiling.sh"
     writeProfilingScript(wfdir, runscript, new_cmdlist)
     runProfiling(wfdir, runscript)
-
-    ret = validateProfilingOutputs(wfdir)
-    print(ret)
+    copyProfilingOutputs(wfdir, out_dir)
 
 def parse_args():
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--workflow", type=str, default="23434.21", help="The workflow to use for profiling")
     parser.add_argument("--num-events", type=int, default=100, help="Number of events to use")
+    parser.add_argument("--out-dir", type=str, help="The output directory where to copy the profiling results", required=True)
     args = parser.parse_args()
     return args
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.workflow, args.num_events)
+    
+    os.makedirs(args.out_dir)
+
+    main(args.workflow, args.num_events, args.out_dir)
+
+

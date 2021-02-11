@@ -86,10 +86,7 @@ else:
       try:print("Running:",hit["_source"]["jenkins_server"],":",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
       except Exception as e: print("Error:", e)
       running_builds_elastic[hit['_id']]=hit
-      print("Old running job:",hit['_id'])
-print(all_local)
 for build in running_builds_elastic:
-  print("checking ",build)
   if build not in all_local:
     hit = running_builds_elastic[build]
     hit["_source"]["job_status"]="Failed"

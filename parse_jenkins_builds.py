@@ -71,11 +71,10 @@ for root, dirs, files in os.walk(path):
       except Exception as e:
         print("Xml parsing error",logFile , e)
 running_builds_elastic={}
-content = get_payload_wscroll('jenkins-*',query_running_builds)
-if content == "":
+content_hash = get_payload_wscroll('jenkins-*',query_running_builds)
+if not content_hash:
   running_builds_elastic = {}
 else:
-  content_hash = json.loads(content)
   if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
     print("ERROR: ",content)
     sys.exit(1)

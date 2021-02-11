@@ -45,7 +45,7 @@ def _memorySizeGB():
     if platform == "darwin":
       cmd = "sysctl -n hw.memsize"
     elif platform.startswith("linux"):
-      cmd = "LD_PRELOAD= free -t -m | grep '^Mem: *' | awk '{print $2}'"
+      cmd = "free -t -m | grep '^Mem: *' | awk '{print $2}'"
     error, out = run_cmd(cmd)
     if error:
       print("Warning: unable to detect memory info. Using 8GB as default value")

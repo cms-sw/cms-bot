@@ -32,7 +32,7 @@ query_running_builds = """{
 "size": 10000
 }""" % JENKINS_PREFIX
 
-all_local = list() 
+all_local = []
 path = '/build/builds'
 document = "builds-data"
 rematch = re.compile(".*/\d+$")
@@ -72,7 +72,7 @@ for root, dirs, files in os.walk(path):
 running_builds_elastic={}
 content = get_payload('jenkins-*',query_running_builds)
 if content == "":
-  running_builds_elastic = []
+  running_builds_elastic = {}
 else:
   content_hash = json.loads(content)
   if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
@@ -86,7 +86,10 @@ else:
       try:print("Running:",hit["_source"]["jenkins_server"],":",hit["_source"]['job_name'],hit["_source"]['build_number'],hit["_index"],hit['_id'])
       except Exception as e: print("Error:", e)
       running_builds_elastic[hit['_id']]=hit
+      print("Old running job:",hit['_id'])
+print(all_local)
 for build in running_builds_elastic:
+  print("checking ",build)
   if build not in all_local:
     hit = running_builds_elastic[build]
     hit["_source"]["job_status"]="Failed"

@@ -21,6 +21,9 @@ mkdir -p $BUILD_DIR
 BUILD_NPROC=$(nproc)
 QUEUE=$CMSSW_QUEUE
 
+#Workaround to fix py3-tomlkit which fails to build it if finds .git in the working directory
+if [ -d .git ] ; then mv .git backup.git ; fi
+
 kinit -R || true
 echo $$ > $WORKSPACE/BUILD_PID
 

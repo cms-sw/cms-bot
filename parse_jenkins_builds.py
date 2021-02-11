@@ -66,11 +66,12 @@ for root, dirs, files in os.walk(path):
           payload['job_status'] = 'Running'
           all_local.append(id)
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
+        print(payload)
         send_payload(weekindex,document,id,json.dumps(payload))
       except Exception as e:
         print("Xml parsing error",logFile , e)
 running_builds_elastic={}
-content = get_payload('jenkins-*',query_running_builds)
+content = get_payload_wscroll('jenkins-*',query_running_builds)
 if content == "":
   running_builds_elastic = {}
 else:

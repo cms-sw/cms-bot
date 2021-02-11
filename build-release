@@ -81,7 +81,7 @@ pushd $BUILD_DIR
   if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
     CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps"
   fi
-  PYTHONPATH= $CMSBUILD_CMD --debug --specs-only build cmssw$PATCH
+  PYTHONPATH= $CMSBUILD_CMD --specs-only build cmssw$PATCH
   rm -rf WEB
   echo DATE=`date`
   TOOL_CONF_PACKAGES=`grep '^%define \(build\|\)directpkgreqs' SPECS/cms/cmssw$PATCH/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`

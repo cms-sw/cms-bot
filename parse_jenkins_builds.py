@@ -3,7 +3,7 @@ from __future__ import print_function
 from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
-from es_utils import send_payload,get_payload,resend_payload
+from es_utils import send_payload,get_payload,resend_payload,get_payload_wscroll
 JENKINS_PREFIX="jenkins"
 try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
 except: JENKINS_PREFIX="jenkins"
@@ -66,7 +66,7 @@ for root, dirs, files in os.walk(path):
           payload['job_status'] = 'Running'
           all_local.append(id)
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
-        print(payload)
+        print("==>",id,payload['job_name'],payload['build_number'],payload['job_status'])
         send_payload(weekindex,document,id,json.dumps(payload))
       except Exception as e:
         print("Xml parsing error",logFile , e)

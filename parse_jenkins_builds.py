@@ -64,7 +64,7 @@ for root, dirs, files in os.walk(path):
           os.system('touch "' + flagFile + '"')
         else:
           payload['job_status'] = 'Running'
-          all_local.append(id)
+        all_local.append(id)
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
         print("==>",id,payload['job_name'],payload['build_number'],payload['job_status'])
         send_payload(weekindex,document,id,json.dumps(payload))

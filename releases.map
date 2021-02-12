@@ -2851,3 +2851,4 @@ architecture=slc7_amd64_gcc900;label=CMSSW_11_2_1_patch2;type=Production;state=A
 architecture=slc6_amd64_gcc630;label=CMSSW_9_4_20;type=Production;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc630;label=CMSSW_9_4_20;type=Production;state=Announced;prodarch=0;
 architecture=cc8_amd64_gcc9;label=CMSSW_11_3_0_pre3;type=Development;state=Announced;prodarch=0;
+architecture=cc8_ppc64le_gcc9;label=CMSSW_11_3_0_pre3;type=Development;state=Announced;prodarch=0;

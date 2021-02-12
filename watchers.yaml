@@ -876,6 +876,10 @@ thomreis:
 - L1Trigger/L1TCommon
 - L1Trigger/L1TMuon
 - L1Trigger/L1TNtuples
+- SimDataFormats/CaloAnalysis
+- SimDataFormats/CaloHit
+- SimDataFormats/CaloTest
+- SimDataFormats/EcalTestBeam
 threus:
 - DQM/SiPixel
 - DQM/SiStrip

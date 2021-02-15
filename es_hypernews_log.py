@@ -63,4 +63,4 @@ payload['posts'] = total
 payload['forums'] = len(egrp_emails)
 for k in temp_fails:
   payload['fail-'+k] = temp_fails[k]
-send_payload("hypernews","mailinfo",timestp, dumps(payload), passwd_file="/data/es/es_secret")
+send_payload("hypernews","mailinfo",timestp, dumps(payload))

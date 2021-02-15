@@ -13,9 +13,9 @@ def getFiles(d,pattern):
 
 def getCommonFiles(d1,d2,pattern):
     l1=getFiles(d1,pattern)
-    print("l1",l1)
+#    print("l1",l1)
     l2=getFiles(d2,pattern)
-    print("l2",l2)
+#    print("l2",l2)
     common=[]
     for l in l1:
         lT=l[len(d1):]
@@ -152,7 +152,7 @@ def checkDQMSize(r1,r2,diff, wfs):
     haveDQMChecker=False
     for path in os.environ["PATH"].split(os.pathsep):
         path = path.strip('"')
-        print(path)
+#        print(path)
         exe_file = os.path.join(path, 'dqmMemoryStats.py')
         if os.path.isfile(exe_file) and os.access(exe_file, os.X_OK):
             haveDQMChecker=True
@@ -196,12 +196,22 @@ def summaryJR(jrDir):
     for root, dirs, files in os.walk(jrDir):
         break
 
+    nAll=0
+    nOK=0
     for d in dirs:
         diffs=getFiles(root+'/'+d,'*.png')
         if len(diffs)>0:
             print('JR results differ',len(diffs),d)
             nDiff=nDiff+len(diffs)
-    return nDiff
+        logs=getFiles(root+'/'+d,'*.log')
+        nAll+=len(logs)
+        if len(logs)==1:
+            output=runCommand(['grep','DONE calling validate',logs[0]])
+            if len(output[0])>0:
+                nOK+=1
+            else:
+                print('JR results failed',d)
+    return nDiff,nAll,nOK
 
 def parseNum(s):
     return int(s[1:-1].split('/')[0])
@@ -242,7 +252,7 @@ def summaryComp(compDir):
 qaIssues=False
 
 # one way to set up for local tests..
-#login to ssh cmssdt03.cern.ch
+#login to ssh cmssdt server (see CMSSDT_SERVER in ./cmssdt.sh for server name)
 #copy out data from a recent pull request comparison 
 #cd /data/sdt/SDT/jenkins-artifacts/ib-baseline-tests/CMSSW_10_0_X_2017-11-05-2300/slc6_amd64_gcc630/-GenuineIntel
 #scp -r matrix-results/ dlange@cmsdev01:/build/dlange/171103/t1/ 
@@ -273,7 +283,7 @@ if compDir[-1]=='/':
     compDir=jrDir[:-1]
 
 commonLogs=getCommonFiles(baseDir,testDir,'step*.log')
-print(commonLogs)
+#print(commonLogs)
 
 #### check the printouts
 lines=0
@@ -308,8 +318,9 @@ sameEvts=True
 nRoot=0
 for r in commonRoots:
 #    print 'I could have tested',r
-    if 'PU' in r and 'DQM' not in r:
-        sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
+    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
+        checkResult=checkEventContent(baseDir+r,testDir+r)
+        sameEvts=sameEvts and checkResult
         nRoot=nRoot+1
 if not sameEvts:
     qaIssues=True
@@ -317,8 +328,10 @@ if not sameEvts:
 
 print('\n')
 # now check the JR comparisons for differences
-nDiff=summaryJR(jrDir)
+nDiff,nAll,nOK=summaryJR(jrDir)
 print('SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons') 
+if nAll!=nOK:
+    print('SUMMARY Reco comparison had ',nAll-nOK,'failed jobs')
 print('\n')
 
 compSummary=summaryComp(compDir)

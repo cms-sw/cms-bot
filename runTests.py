@@ -91,7 +91,7 @@ class UnitTester(IBThreadBase):
         if platform.system() == 'Darwin':
             print('unitTest> Skipping unit tests for MacOS')
             return
-        if self.xType == 'GPU':
+        if (self.xType == 'GPU') or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
             cmd = "cd " + self.startDir + "; scram b -f echo_cuda_USED_BY | tr ' ' '\\n' | grep '^\\(self\\|cmssw\\)/' | cut -d/ -f2-3 > cuda_pkgs.txt; "
             cmd = cmd + " cat  cuda_pkgs.txt; mv src src.full;"
             cmd = cmd + " for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram build -r echo_CXX"

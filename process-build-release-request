@@ -414,9 +414,9 @@ def delete_cmsdist_tags_github( release_name, architectures ):
     tag_to_delete = "REL/{rel_name}/{architecture}".format(rel_name=release_name, architecture=arch )
     if opts.dryRun:
       msg = 'Not deleting cmsdist tag (dry-run): %s' % tag_to_delete
-      result += '\n\n  -' + msg
+      result += '\n\n  - ' + msg
       continue
-    result += '\n\n -' + delete_tag(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO, tag_to_delete)
+    result += '\n\n - ' + delete_tag(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO, tag_to_delete)
   return result
 
 #
@@ -530,8 +530,8 @@ def create_properties_kill_build( release_name ):
 def abort_build( issue, release_name, architectures, comments):
   msg = 'Deleting %s:' % release_name
   del_rel_result = delete_release_github( release_name )
-  msg += '\n\n  -' + del_rel_result
-  msg += '\n\n  -' + delete_cmssw_tag_github( release_name )
+  msg += '\n\n  - ' + del_rel_result
+  msg += '\n\n  - ' + delete_cmssw_tag_github( release_name )
 
   create_properties_kill_build(release_name)
   msg += delete_cmsdist_tags_github( release_name, architectures )

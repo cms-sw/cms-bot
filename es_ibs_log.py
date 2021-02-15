@@ -1,7 +1,7 @@
 #!/bin/env python
 from __future__ import print_function
 from hashlib import sha1
-import os, json,  datetime
+import os, json,  datetime, sys
 from os.path import exists, dirname, getmtime
 from es_utils import send_payload
 from _py2with3compatibility import run_cmd
@@ -133,7 +133,7 @@ def process_ib_utests(logFile):
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:
-        print("ERROR: File processed:", e)
+        print("ERROR: File processed: %s" % e)
   else:
     print("Invalid File Path")
 

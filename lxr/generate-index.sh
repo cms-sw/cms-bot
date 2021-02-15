@@ -1,4 +1,4 @@
-#!/bin/bash -e 
+#!/bin/bash -ex
 source $(dirname $0)/version_utils.sh
 BASE_DIR=/data/lxr
 [ "X$1" = "X" ] && exit 1

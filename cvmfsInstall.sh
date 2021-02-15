@@ -82,7 +82,11 @@ else
 fi
 
 # Create Nested Catalogs file
-cp -f $WORKSPACE/cms-bot/cvmfsdirtab $BASEDIR/.cvmfsdirtab
+if [ -e $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh ] ; then
+  $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh  > $BASEDIR/.cvmfsdirtab
+elif [ -f $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab ] ; then
+  cp -f $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab $BASEDIR/.cvmfsdirtab
+fi
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done

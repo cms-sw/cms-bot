@@ -19,6 +19,7 @@ for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
 RUN_NATIVE=
+if [ "${RUCIO_ACCOUNT}" = "" ] ; then export RUCIO_ACCOUNT="cmsbot" ; fi
 if [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then DOCKER_IMG=$DOCKER_IMG_HOST ; fi
 if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
@@ -53,14 +54,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
     fi
   fi
-  CMD2RUN=""
+  CMD2RUN="export PATH=\$PATH:/usr/sbin;"
   XUSER=`whoami`
   if [ -d $HOME/bin ] ; then
-    if [ $(echo $PATH | tr ':' '\n' | grep $HOME/bin | wc -l) -eq 0 ] ; then
-      CMD2RUN="export PATH=$HOME/bin:$PATH; "
-    fi
+    CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi
-  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; $@"
+  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -valid 24:00|| true ; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
     set +x
@@ -68,7 +67,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     case $XUSER in
       cmsbld ) DOCKER_OPT="${DOCKER_OPT} -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group" ;;
     esac
-    for e in $DOCKER_JOB_ENV WORKSPACE BUILD_NUMBER JOB_NAME NODE_NAME NODE_LABELS DOCKER_IMG; do DOCKER_OPT="${DOCKER_OPT} -e $e"; done
+    for e in $DOCKER_JOB_ENV WORKSPACE BUILD_URL BUILD_NUMBER JOB_NAME NODE_NAME NODE_LABELS DOCKER_IMG RUCIO_ACCOUNT; do DOCKER_OPT="${DOCKER_OPT} -e $e"; done
     if [ "${PYTHONPATH}" != "" ] ; then DOCKER_OPT="${DOCKER_OPT} -e PYTHONPATH" ; fi
     for m in $(echo $MOUNT_POINTS,/etc/localtime,${BUILD_BASEDIR},/home/$XUSER | tr ',' '\n') ; do
       x=$(echo $m | sed 's|:.*||')
@@ -102,16 +101,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       fi
       mkdir -p $SINGULARITY_CACHEDIR
     fi
-    if [ "X$TEST_CONTEXT" = "XGPU" -o -e "/proc/driver/nvidia/version" ] ; then
+    if [ -e "/proc/driver/nvidia/version" ] ; then
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
-        #cuda_libs=$(ldconfig -p | grep "libcuda.so" | sed 's|.* ||')
-        #if [ "${cuda_libs}" != "" ] ; then
-        #  xcuda_libs=$(echo ${cuda_libs} | tr ' ' '\n' | xargs -i readlink '{}')
-        #  for cuda_lib in $(echo ${cuda_libs} ${xcuda_libs} | tr ' ' '\n' | sort | uniq) ; do
-        #    SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B ${cuda_lib}"
-        #  done
-        #fi
       fi
     fi
     SINGULARITY_BINDPATH=""
@@ -129,7 +121,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
       precmd="source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
     fi
-    singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
+    PATH=$PATH:/usr/sbin singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi

@@ -15,6 +15,7 @@ boolean isJobMatched(params_to_match, job_parameters)
     def cv="";
     try {
       cv = job_parameters[p.key];
+      if (cv==null){cv='';}
       println "Comp. Real: '" + cv + "' ,given: '" + p.value + "'"
       if ( ! (cv ==~ p.value) ){all_ok=false;}
     }

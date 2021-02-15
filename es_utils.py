@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import json, re, ssl
+import json, re, ssl, base64
 from os.path import exists
 from os import getenv
 from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile
-from _py2with3compatibility import HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, install_opener, Request, \
-  urlopen, build_opener
+from _py2with3compatibility import Request, urlopen
 from os import stat as tstat
+from time import time
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
 ES_NEW_SERVER = 'https://es-cmssdt7.cern.ch:9203'
+ES_PASSWD = None
 def format(s, **kwds): return s % kwds
 
 def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=10000, timestamp_field='@timestamp', lowercase_expanded_terms='false', fields=None):
@@ -36,20 +37,19 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
   return format(es5_query_tmpl, **locals ())
 
 
-def resend_payload(hit, passwd_file="/data/secrets/github_hook_secret_cmsbot"):
-  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]),passwd_file=passwd_file)
+def resend_payload(hit):
+  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]))
 
 def es_get_passwd(passwd_file=None):
+  global ES_PASSWD
+  if ES_PASSWD: return ES_PASSWD
   for psfile in [passwd_file, getenv("CMS_ES_SECRET_FILE",None), "/data/secrets/cmssdt-es-secret", "/build/secrets/cmssdt-es-secret", "/var/lib/jenkins/secrets/cmssdt-es-secret", "/data/secrets/github_hook_secret_cmsbot"]:
     if not psfile: continue
     if exists(psfile):
       passwd_file=psfile
       break
-  try:
-    return open(passwd_file,'r').read().strip()
-  except Exception as e:
-    print("Couldn't read the secrets file" , str(e))
-    return ""
+  ES_PASSWD = open(passwd_file,'r').read().strip()
+  return ES_PASSWD
 
 def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False):
   header = {"Content-Type": "application/json"}
@@ -60,12 +60,8 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
   url = "%s/%s" % (es_ser,uri)
-  passman = HTTPPasswordMgrWithDefaultRealm()
-  passman.add_password(None,url, 'cmssdt', passwd)
-  auth_handler = HTTPBasicAuthHandler(passman)
-  opener = build_opener(auth_handler)
+  header['Authorization'] = 'Basic %s' % base64.b64encode("cmssdt:%s" % passwd)
   try:
-    install_opener(opener)
     request = Request(url, payload, header)
     if method: request.get_method = lambda: method
     content = urlopen(request)
@@ -80,7 +76,7 @@ def send_payload(index, document, id, payload, passwd_file=None):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
   uri = "%s/%s/" % (index,document)
   if id: uri = uri+id
-  return send_request(uri, payload=payload, passwd_file=passwd_file)
+  return send_request(uri, payload=payload, method="POST", passwd_file=passwd_file)
 
 def send_template(name, payload, passwd_file=None):
   if not name.startswith('cmssdt-'): name = 'cmssdt-' + name
@@ -261,8 +257,8 @@ def es_send_resource_stats(release, arch, name, version, sfile,
   except Exception as e: print(e.message)
 
 def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normalize=1,
-                           es_index_name='externals_stats_summary_testindex',
-                           es_doc_name='externals-runtime-stats-summary-testdoc'):
+                           es_index_name='externals_stats_summary',
+                           es_doc_name='externals-stats-summary'):
   file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
   week = str((file_stamp / 86400 + 4) / 7)
   with open(opts_dict_file_path, 'r') as opts_dict_f: opts_dict = json.load(opts_dict_f)
@@ -272,3 +268,31 @@ def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normal
   sdata["@timestamp"]=file_stamp*1000
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)
+
+def getExternalsESstats(arch='*', externalsList='', lastNdays=30, page_size=0):
+  externals_names=''
+  if externalsList == '':
+    externals_names="*"
+  else:
+    externals_names= (" OR ").join(externalsList.split(','))
+  stats = es_query(index='externals_stats_summary-*',
+                   query=format('architecture:%(architecture)s AND name.keyword:(%(names)s)',
+                                architecture=arch,
+                                names=externals_names),
+                   start_time=1000*int(time()-(86400*lastNdays)),
+                   end_time=1000*int(time()),scroll=True)
+  return stats['hits']['hits']
+
+# get a dict of stats with externals name as keys
+# create a default github file with stats so if elastic search fails,
+def orderStatsByName(externalsStats=None):    
+    namedStats = {}
+    for element in externalsStats:
+        ext_name = element["_source"]["name"]
+        if ext_name not in namedStats:
+            namedStats[ext_name] = list()
+        namedStats[ext_name].append(element["_source"])
+    # order by timestamp
+    for ext in namedStats:
+        namedStats[ext] = sorted(namedStats[ext], key=lambda x: x["@timestamp"], reverse=True)
+    return namedStats

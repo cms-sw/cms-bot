@@ -7,6 +7,7 @@ from os.path import expanduser
 from urllib2 import urlopen
 from json import loads
 import re
+from _py2with3compatibility import run_cmd
 
 def update_tag_version(current_version=None):
     updated_version = None
@@ -16,6 +17,15 @@ def update_tag_version(current_version=None):
             updated_version = '0'+updated_version
 
     return updated_version
+
+def get_tag_from_string(tag_string=None):
+    tag = None
+    for i in tag_string.split('\n'):
+        m = re.search("(V[0-9]{2}-[0-9]{2}-[0-9]{2})", i)
+        if m:
+           tag = m.group()
+           break
+    return tag
 
 if __name__ == "__main__":
 
@@ -35,24 +45,21 @@ if __name__ == "__main__":
   data_prid = int(opts.pull_request)
   dist_repo = gh.get_repo(opts.dist_repo)
   data_repo_pr = data_repo.get_pull(data_prid)
-  if data_repo_pr.base.ref != "master":
-    print("I do not know how to tag a non-master branch %s" % data_repo_pr.base.ref)
-    exit(1)
-
   if not data_repo_pr.merged:
-      print('Branch has not been merged !')
+      print('The pull request isn\'t merged !')
       exit(0)
+  data_pr_base_branch = data_repo_pr.base.ref
+  data_repo_default_branch = data_repo.default_branch
+  # create master just to exist on the cms-data repo if it doesn't
+  if data_repo_default_branch != "master":
+      if "master" not in [branch.name for branch in data_repo.get_branches()]:
+          data_repo.create_git_ref(ref='refs/heads/master', sha=data_repo.get_branch(data_repo_default_branch).commit.sha)
 
-  last_release_tag = None
-  releases = data_repo.get_releases()
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
-          continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
-      break
+  err, out = run_cmd("rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'" % (opts.data_repo, data_pr_base_branch))
+  last_release_tag = get_tag_from_string(out)
 
   if last_release_tag:
-    comparison = data_repo.compare('master', last_release_tag)
+    comparison = data_repo.compare(data_pr_base_branch, last_release_tag)
     print('commits behind ', comparison.behind_by)
     create_new_tag = True if comparison.behind_by > 0 else False # last tag and master commit difference
     print('create new tag ? ', create_new_tag)
@@ -83,20 +90,11 @@ if __name__ == "__main__":
           thrd = '00'
           print('files were modified, update mid version and reset minor', sec, thrd)
       new_tag = 'V'+first+'-'+sec+'-'+thrd
-      # message should be referencing the PR that triggers this job
-      new_rel = data_repo.create_git_release(new_tag, new_tag, 'Details in: '+data_repo_pr.html_url, False, False)
-
-  last_release_tag = None
-  releases = data_repo.get_releases()
-  for i in releases:
-      if not (re.match("^(V[0-9]{2}-[0-9]{2}-[0-9]{2})$", i.tag_name)):
-          continue #loop until it finds a tag matching the pattern
-      last_release_tag = i.tag_name
-      break
+      tag_ref = data_repo.create_git_ref(ref='refs/tags/'+new_tag, sha=data_repo.get_branch(data_pr_base_branch).commit.sha)
 
   default_cms_dist_branch = dist_repo.default_branch
   repo_name_only = opts.data_repo.split('/')[1]
-  repo_tag_pr_branch = 'update-'+repo_name_only+'-to-'+last_release_tag
+  repo_tag_pr_branch = 'update-'+repo_name_only+'-to-'+new_tag
 
   sb = dist_repo.get_branch(default_cms_dist_branch)
   dest_branch = None #

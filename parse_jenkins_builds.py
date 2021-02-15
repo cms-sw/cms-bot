@@ -3,7 +3,7 @@ from __future__ import print_function
 from hashlib import sha1
 import os , re , sys , json
 import xml.etree.ElementTree as ET
-from es_utils import send_payload,get_payload,resend_payload
+from es_utils import send_payload,get_payload,resend_payload,get_payload_wscroll
 JENKINS_PREFIX="jenkins"
 try:    JENKINS_PREFIX=os.environ['JENKINS_URL'].strip("/").split("/")[-1]
 except: JENKINS_PREFIX="jenkins"
@@ -32,7 +32,7 @@ query_running_builds = """{
 "size": 10000
 }""" % JENKINS_PREFIX
 
-all_local = list() 
+all_local = []
 path = '/build/builds'
 document = "builds-data"
 rematch = re.compile(".*/\d+$")
@@ -64,17 +64,17 @@ for root, dirs, files in os.walk(path):
           os.system('touch "' + flagFile + '"')
         else:
           payload['job_status'] = 'Running'
-          all_local.append(id)
+        all_local.append(id)
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
+        print("==>",id,payload['job_name'],payload['build_number'],payload['job_status'])
         send_payload(weekindex,document,id,json.dumps(payload))
       except Exception as e:
         print("Xml parsing error",logFile , e)
 running_builds_elastic={}
-content = get_payload('jenkins-*',query_running_builds)
-if content == "":
-  running_builds_elastic = []
+content_hash = get_payload_wscroll('jenkins-*',query_running_builds)
+if not content_hash:
+  running_builds_elastic = {}
 else:
-  content_hash = json.loads(content)
   if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
     print("ERROR: ",content)
     sys.exit(1)

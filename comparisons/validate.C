@@ -1413,6 +1413,33 @@ void tauIDContainer(const TString& bName){
   }
 }
 
+void evtPlanes(const TString& bName, bool detailByPlane = false){
+  const TString bObj = "recoEvtPlanes_"+bName+"_"+recoS+".obj";
+  if (! checkBranchOR(bObj, true)) return;
+
+  plotvar(bObj+"@.size()");
+  plotvar(bObj+".angle(0)");
+  plotvar(bObj+".sumSin(0)");
+  plotvar(bObj+".angle(3)");
+  plotvar(bObj+".sumSin(3)");
+  plotvar(bObj+".sumw()");
+  plotvar("log10("+bObj+".sumPtOrEt())");
+  plotvar(bObj+".mult()");
+
+  if (detailByPlane){
+    PlotStats res = plotvar(bObj+"@.size()");
+    for (int i = 0; i< maxSize(res) && i < 64; ++i){//restrict to 64
+      plotvar(bObj+Form("[%d].angle(0)",i), "", true);
+      plotvar(bObj+Form("[%d].sumSin(0)",i), "", true);
+      plotvar(bObj+Form("[%d].angle(3)",i), "", true);
+      plotvar(bObj+Form("[%d].sumSin(3)",i), "", true);
+      plotvar(bObj+Form("[%d].sumw()",i), "", true);
+      plotvar("log10("+bObj+Form("[%d].sumPtOrEt())",i), "", true);
+      plotvar(bObj+Form("[%d].mult()",i), "", true);
+    }
+  }
+}
+
 void flatTable(const TString& shortName){
   const TString bObj = "nanoaodFlatTable_"+shortName+"_"+recoS+".obj";
   if (! checkBranchOR(bObj, true)) return;
@@ -2807,6 +2834,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+".NpixelTracks()");
         plotvar(tbr+".zdcSum()");
       }
+
+      evtPlanes("hiEvtPlaneFlat_", stepContainsNU(step, "all_hi"));
+      evtPlanes("hiEvtPlane_", stepContainsNU(step, "all_hi"));
     }
 
     if (stepContainsNU(step, "all") || stepContainsNU(step, "pat")) {
@@ -2814,7 +2844,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       packedCand("lostTracks_");
       packedCand("lostTracks_eleTracks");
       packedCand("packedPFCandidatesDiscarded_");
+      //HI miniAOD:
       packedCand("hiPixelTracks_");
+      packedCand("packedPFCandidatesCleaned_");
 
       for (const TString& inst : {"pfCandidatesTMOneStationTight", "pfCandidatesAllTrackerMuons", 
                                  "lostTracksTMOneStationTight", "lostTracksAllTrackerMuons"} ) {
@@ -2881,6 +2913,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       vertexVars("recoVertexs_hiSelectedVertex__");
       vertexVars("recoVertexs_hiSelectedPixelVertex__");
+      vertexVars("recoVertexs_offlineSlimmedPrimaryVerticesRecovery__");
 
       tbr="recoVertexCompositePtrCandidates_inclusiveCandidateSecondaryVertices__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3339,15 +3372,18 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       hgcalMultiClusters("ticlMultiClustersFromTrackstersHAD_");
       hgcalMultiClusters("ticlMultiClustersFromTrackstersMIP_");
       hgcalMultiClusters("ticlMultiClustersFromTrackstersMerge_");
+      hgcalMultiClusters("ticlMultiClustersFromTrackstersTrkEM_");
       hgcalMultiClusters("ticlMultiClustersFromTrackstersTrk_");
 
       tracksters("ticlTrackstersEM_");
       tracksters("ticlTrackstersHAD_");
       tracksters("ticlTrackstersMIP_");
       tracksters("ticlTrackstersMerge_");
+      tracksters("ticlTrackstersTrkEM_");
       tracksters("ticlTrackstersTrk_");
 
       ticlCands("ticlCandidateFromTracksters_");
+      ticlCands("ticlTrackstersMerge_");
       // miniaod
       superClusters("reducedEgamma_reducedSuperClusters");
       superClusters("reducedEgamma_reducedOOTSuperClusters");
@@ -3836,6 +3872,8 @@ void validate(TString step, TString file, TString refFile, TString r="RECO", boo
   validateEvents(step, file, refFile, r, SHOW, sr);
   validateLumi(step, file, refFile, r, SHOW, sr);
   print(step);
+
+  std::cout<<"DONE calling validate"<<std::endl;
 }
 
 

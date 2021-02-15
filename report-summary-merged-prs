@@ -35,7 +35,6 @@ parser = OptionParser(
           "\n <year>-<day>-<month>-<hour>"
           "\n For example:"
           "\n 2014-10-08-1400"
-          "\n ARTIFACTS_MACHINE: the artifacts machine to use to look for static checks and hlt tests"
 )
 
 parser.add_option("-v", "--verbose", dest="verbose", action="store_true", help="Do not post on Github", default=False)
@@ -94,7 +93,6 @@ if len(args) >= 5:
     CMS_PRS = args[4]
 else:
     CMS_PRS = "cms-prs"
-ARTIFACTS_MACHINE = "cmssdt03.cern.ch"
 
 
 # -----------------------------------------------------------------------------------

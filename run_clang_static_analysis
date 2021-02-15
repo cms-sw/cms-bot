@@ -4,6 +4,7 @@ export J=$(nproc)
 export LC_ALL=C
 cd $CMSSW_BASE
 rm -rf src
+ls /cvmfs/cms-ib.cern.ch
 git clone --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git  --depth 1 git@github.com:cms-sw/cmssw src
 cd src
 git checkout $CMSSW_VERSION

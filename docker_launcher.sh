@@ -117,7 +117,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} -B $HOME:/home/cmsbuild"
     fi
     ERR=0
-    precmd="export SINGULARITY_BIND=''; "
+    precmd="export ORIGINAL_SINGULARITY_BIND=${SINGULARITY_BIND}; export SINGULARITY_BIND=''; "
     if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
       precmd="${precmd} source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
     fi

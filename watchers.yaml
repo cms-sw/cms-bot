@@ -523,6 +523,15 @@ pixel-offline:
 - CondCore/SiPixelPlugins
 - CondFormats/SiPixelObjects
 - CondTools/SiPixel
+ecal-offline:
+- .*[Ee][Cc][Aa][Ll]
+- CondFormats/ESObjects
+- EventFilter/ESDigiToRaw
+- EventFilter/ESRawToDigi
+- SimDataFormats/CaloAnalysis
+- SimDataFormats/CaloHit
+- SimDataFormats/CaloTest
+- SimDataFormats/EcalTestBeam
 echapon:
 - RecoHI/Configuration
 - RecoHI/HiMuonAlgos
@@ -929,20 +938,12 @@ tlampen:
 - Alignment/TrackerAlignment
 - Alignment/TwoBodyDecay
 thomreis:
-- .*[Ee][Cc][Aa][Ll]
-- CondFormats/ESObjects
 - DataFormats/L1TMuon
 - DataFormats/L1Trigger
 - EventFilter/L1TRawToDigi
-- EventFilter/ESDigiToRaw
-- EventFilter/ESRawToDigi
 - L1Trigger/L1TCommon
 - L1Trigger/L1TMuon
 - L1Trigger/L1TNtuples
-- SimDataFormats/CaloAnalysis
-- SimDataFormats/CaloHit
-- SimDataFormats/CaloTest
-- SimDataFormats/EcalTestBeam
 threus:
 - DQM/SiPixel
 - DQM/SiStrip

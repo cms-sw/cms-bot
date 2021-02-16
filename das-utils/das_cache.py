@@ -78,7 +78,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     xf = 'lumi'
     if (len(fields)>1) and (fields[0]==xf):
       res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
-    if item=="file" and res in ignore_lfn:
+    if fields[0]=="file" and res in ignore_lfn:
       print("  Ignoring %s" % res)
       continue
     if not res in results: results.append(res)

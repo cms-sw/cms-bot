@@ -13,6 +13,12 @@ from _py2with3compatibility import run_cmd
 
 field_map = {'file':'name', 'lumi':'number', 'site':'name', 'run':'run_number', 'dataset':'name'}
 opts = None
+ignore_lfn = [
+  "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/007A3BD1-02CD-E311-853B-002590D0AFC8.root",
+  "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/02161409-13CD-E311-B62B-00259073E4A2.root",
+  "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/06A0F09E-F4CC-E311-B47A-002590D0AF92.root",
+  "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/0A3BFB8B-0DCD-E311-A6C5-485B39800C2D.root"
+]
 
 def write_json(outfile, cache):
   outdir = dirname(outfile)
@@ -72,6 +78,8 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     xf = 'lumi'
     if (len(fields)>1) and (fields[0]==xf):
       res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
+    if item=="file" and res in ignore_lfn:
+      continue
     if not res in results: results.append(res)
   print("  Results:",sha,len(results))
   if (len(results)==0) and ('site=T2_CH_CERN' in query):

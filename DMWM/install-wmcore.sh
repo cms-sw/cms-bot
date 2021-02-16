@@ -16,7 +16,7 @@ set -x
 
 export WMCORE_ROOT=$PWD/install
 export PATH=$WMCORE_ROOT/install/bin:$PATH
-export PYTHONPATH=$WMCORE_ROOT/lib/python2.6/site-packages:$PYTHONPATH
+export PYTHONPATH=$WMCORE_ROOT/lib/python2.7/site-packages:$PYTHONPATH
 export PYTHONPATH=$WMCORE_ROOT/test/python:$PYTHONPATH
 
 echo "Sourcing secrets and setting DB connectors"

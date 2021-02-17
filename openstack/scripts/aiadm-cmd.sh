@@ -45,4 +45,5 @@ ERR=$(tail -1 ${REQ}.out | grep '^EXIT:' | sed 's|^EXIT:||')
 if [ "$ERR" = "" ] ; then ERR=1; fi
 sed -e 's|^EXIT:.*||' ${REQ}.out > ${REQ}
 rm -f ${REQ}.out
+cat ${REQ}
 exit $ERR

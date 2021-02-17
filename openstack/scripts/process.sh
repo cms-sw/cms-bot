@@ -19,6 +19,7 @@ let STIME=$(date +%s)+7200
 echo "$(date): ${XID} Started" >> ${REQ}/status
 while [ $(date +%s) -lt ${STIME} ] ; do
   if [ $((grep "^${XID}" ${LOCK} 2>/dev/null || true) | wc -l) -eq 0 ] ; then
+    echo "$(date): ${XID} Aborted" >> ${REQ}/status
     exit 0
   fi
   if [ -e ${REQ}/stop ] ; then

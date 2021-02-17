@@ -13,7 +13,7 @@ SSH_OPT="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o Serve
 AIADM_DIR="/afs/cern.ch/user/c/cmsbuild/private/jenkins"
 REQ_DIR="${AIADM_DIR}/request"
 RES_DIR="${AIADM_DIR}/response"
-REQF="$(basename ${REQ}-${BUILD_TAG}-${JENKINS_PREFIX})"
+REQF="REQ-$(basename ${REQ}-${BUILD_TAG}-${JENKINS_PREFIX})"
 scp ${SSH_OPT} ${REQ} cmsbuild@lxplus.cern.ch:${REQ_DIR}/${REQF}
 WAIT=1800
 while [ $WAIT -gt 0 ] ; do

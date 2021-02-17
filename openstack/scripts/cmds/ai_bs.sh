@@ -1,5 +1,6 @@
 #!/bin/bash -e
-vm=$(head -1 $1 | grep '^vm=' | sed 's|^vm=||' | grep '^[a-zA-Z0-9_-][a-zA-Z0-9_-]*$' || true)
+vm=$(grep '^vm=' $1 | sed 's|^vm=||' | grep '^[a-zA-Z0-9_-][a-zA-Z0-9_-]*$' || true)
+hg=$(grep '^hg=' $1 | sed 's|^hg=||' | grep '^[a-zA-Z0-9_-][a-zA-Z0-9_-]*$' || true)
 if [ "${vm}" = "" ] ; then
   echo "ERROR: Wrong VM name"
   exit 1

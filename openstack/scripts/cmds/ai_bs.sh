@@ -5,5 +5,5 @@ if [ "${hg}" = "" ] ; then
   echo "ERROR: Missing hostgroup"
   exit 1
 fi
-source $(dirname $0)/setup-env.sh
+source $(dirname $0)/setup-env.sh ${hg}
 ai-bs -g ${hg} ${opts}

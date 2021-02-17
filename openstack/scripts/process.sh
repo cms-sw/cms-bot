@@ -21,6 +21,10 @@ while [ $(date +%s) -lt ${STIME} ] ; do
   if [ $((grep "^${XID}" ${LOCK} 2>/dev/null || true) | wc -l) -eq 0 ] ; then
     exit 0
   fi
+  if [ -e ${REQ}/stop ] ; then
+    rm -f ${REQ}/stop
+    break
+  fi
   touch ${LOCK}
   for r in $(ls -d ${REQ}/REQ-* 2>/dev/null | grep '/REQ-[a-zA-Z][a-zA-Z0-9_-]*$' || true) ; do
     if [ -f $r ] ; then

@@ -28,4 +28,7 @@ while [ $WAIT -gt 0 ] ; do
 done
 
 if [ ! -f "${REQ}.out" ] ; then exit 1; fi
-mv -f ${REQ}.out ${REQ}
+ERR=$(tail -1 ${REQ} | grep '^EXIT:' | sed 's|^EXIT:||')
+sed -e 's|^EXIT:.*||' ${REQ}.out > ${REQ}
+rm -f ${REQ}.out
+exit $ERR

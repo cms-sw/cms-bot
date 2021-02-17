@@ -81,6 +81,7 @@ def writeProfilingScript(wfdir, runscript, cmdlist):
     runscript_path = "{}/{}".format(wfdir, runscript)
     with open(runscript_path, "w") as fi:
         fi.write("#!/bin/bash\n")
+        fi.write("ulimit -a\n")
 
         #abort on error
         fi.write("set -e\n")

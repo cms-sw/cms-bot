@@ -36,8 +36,8 @@ while [ $WAIT -gt 0 ] ; do
       break
     fi
   fi
-  sleep 60
-  let WAIT=$WAIT-60 || true
+  sleep 30
+  let WAIT=$WAIT-30 || true
 done
 
 if [ ! -f "${REQ}.out" ] ; then exit 1; fi

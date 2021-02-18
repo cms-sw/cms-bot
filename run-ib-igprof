@@ -11,8 +11,9 @@ for prof in ${PROFILES} ; do
   cd $WORKSPACE/igprof/${prof}
   if [ "$prof" = "mp" ];then
     runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log
-    sed -e 's/cmsRun/cmsRunGlibC/g' cmdLog > cmdLog.sh
+    cd ${WORKFLOWS}*; sed -e 's/cmsRun/cmsRunGlibC/g' */cmdLog > cmdLog.sh
     source cmdLog.sh
+    cd -
   else
     runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof" 2>&1 | tee runTheMatrix.log
   fi

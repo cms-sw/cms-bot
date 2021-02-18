@@ -39,11 +39,18 @@ def wrapInRetry(cmd):
     s = """n=0
 until [ "$n" -ge 5 ]
 do
+   echo "attempt $n"
    {} && break
    n=$((n+1))
 done""".format(cmd)
     return s
 
+def echoBefore(cmd, msg):
+    s = """
+echo "{}"
+{}
+""".format(msg, cmd)
+    return s
 
 def configureProfilingSteps(cmsdriver_lines):
     assert(len(cmsdriver_lines) == 4)
@@ -58,7 +65,7 @@ def configureProfilingSteps(cmsdriver_lines):
     step3 = cmsdriver_lines[2]
     step3_tmi = step3 + " --customise=Validation/Performance/TimeMemoryInfo.py &> step3_TimeMemoryInfo.log"
     step3_ft = step3 + " --customise HLTrigger/Timer/FastTimer.customise_timer_service_singlejob --customise_commands \"process.FastTimerService.writeJSONSummary=True;process.FastTimerService.jsonFileName=\\\"step3_circles.json\\\"\" &> step3_FastTimerService.log"
-    step3_ig = step3 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step3_igprof.py"
+    step3_ig = step3 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step3_igprof.py &> step3_igprof_conf.txt"
 
     igprof_s3_pp = wrapInRetry("igprof -d -pp -z -o step3_igprofCPU.gz -t cmsRun cmsRun step3_igprof.py &> step3_igprof_cpu.txt")
     igprof_s3_mp = wrapInRetry("igprof -d -mp -z -o step3_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step3_igprof.py &> step3_igprof_mem.txt")
@@ -66,14 +73,23 @@ def configureProfilingSteps(cmsdriver_lines):
     step4 = cmsdriver_lines[3]
     step4_tmi = step4 + " --customise=Validation/Performance/TimeMemoryInfo.py &> step4_TimeMemoryInfo.log"
     step4_ft = step4 + " --customise HLTrigger/Timer/FastTimer.customise_timer_service_singlejob --customise_commands \"process.FastTimerService.writeJSONSummary=True;process.FastTimerService.jsonFileName=\\\"step4_circles.json\\\"\" &> step4_FastTimerService.log"
-    step4_ig = step4 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step4_igprof.py"
+    step4_ig = step4 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step4_igprof.py &> step4_igprof_conf.txt"
 
     igprof_s4_pp = wrapInRetry("igprof -d -pp -z -o step4_igprofCPU.gz -t cmsRun cmsRun step4_igprof.py &> step4_igprof_cpu.txt")
     igprof_s4_mp = wrapInRetry("igprof -d -mp -z -o step4_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step4_igprof.py &> step4_igprof_mem.txt")
 
     new_cmdlist = (cmsdriver_lines[:2] +
-        [step3_tmi, step3_ft, step3_ig, igprof_s3_pp, igprof_s3_mp] +
-        [step4_tmi, step4_ft, step4_ig, igprof_s4_pp, igprof_s4_mp])
+        [echoBefore(step3_tmi, "step3 TimeMemoryInfo"),
+        echoBefore(step3_ft, "step3 FastTimer"),
+        echoBefore(step3_ig, "step3 IgProf conf"),
+        echoBefore(igprof_s3_pp, "step3 IgProf pp"),
+        echoBefore(igprof_s3_mp, "step3 IgProf mp")] +
+        [echoBefore(step4_tmi, "step4 TimeMemoryInfo"),
+        echoBefore(step4_ft, "step4 FastTimer"),
+        echoBefore(step4_ig, "step4 IgProf conf"),
+        echoBefore(igprof_s4_pp, "step4 IgProf pp"),
+        echoBefore(igprof_s4_mp, "step4 IgProf mp"),
+        ])
 
     return new_cmdlist
 

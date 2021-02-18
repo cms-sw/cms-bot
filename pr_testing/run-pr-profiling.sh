@@ -12,6 +12,7 @@ for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/runall_mem.sh $CMSSW_VERSION || true
   pushd $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW
   ./profile.sh $CMSSW_VERSION || true
   echo "<li><a href=\"$PROFILING_WORKFLOW/\">$PROFILING_WORKFLOW/</a> </li>" >> $WORKSPACE/upload/profiling/index.html

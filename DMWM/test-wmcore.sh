@@ -41,7 +41,7 @@ mv nosetests.xml nosetests-$SLICE-$BUILD_ID.xml
 #export PYLINTHOME=$PWD/.pylint.d # force pylint cache to this workspace
 #ulimit -n 4086 # opens all source files at once (> 1024)
 # pylint broken in latest build
-#pylint --rcfile=code/standards/.pylintrc -f parseable install/lib/python2.6/site-packages/* 2>&1 > pylint.txt || true
+#pylint --rcfile=code/standards/.pylintrc -f parseable install/lib/python2.7/site-packages/* 2>&1 > pylint.txt || true
 
 end=`date +%s`
 runtime=$((end-start))

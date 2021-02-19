@@ -52,7 +52,7 @@ for prof in ${PROFILES} ; do
         ( igprof-analyse -v -d -g -r MEM_LIVE $f > "RES_MEM_${OUTFILE}" ) || ERR=1
         OUTFILE=${BASENAME//.gz/.sql3}
         ( igprof-analyse --sqlite -v -d -g -r MEM_LIVE $f > $f.MEM_LIVE.sql ) || ERR=1
-        ${CMS_BOT_DIR}/fix-igprof-sql.py $f.MEM_LIVE.sql | sqlite3 "$DIRNAME/MEM_LIVE_${OUTFILE}" > ${OUTFILE}.MEM_LIVE.log || ERR=1
+        ${CMS_BOT_DIR}/fix-igprof-sql.py $f.MEM_LIVE.sql | sqlite3 "$DIRNAME/MEM_LIVE_${OUTFILE}" > $DIRNAME/${OUTFILE}.MEM_LIVE.log || ERR=1
     fi
 
     if [ $ERR -gt 0 ] ; then

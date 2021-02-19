@@ -13,10 +13,10 @@ for prof in ${PROFILES} ; do
     runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log
     cd *
     for f in $(ls *GEN_SIM.py); do
-       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee $f.log
+       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
     done
     for f in $(ls -1 step*.py| sort); do
-       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee $f.log
+       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
     done
     cd -
   else

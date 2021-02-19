@@ -11,7 +11,7 @@ for prof in ${PROFILES} ; do
   cd $WORKSPACE/igprof/${prof}
   if [ "$prof" = "mp" ];then
     runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log
-    cd *
+    cd [0-9]*
     for f in $(ls *GEN_SIM.py); do
        igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
     done

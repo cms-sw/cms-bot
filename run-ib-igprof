@@ -5,11 +5,23 @@ WORKFLOWS=$1
 PROFILES=$2
 EVENTS=$3
 PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
-if [ "X$EVENTS" = "X" ] ; then EVENTS=1000; fi
+if [ "X$EVENTS" = "X" ] ; then EVENTS=100; fi
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
-  runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof" 2>&1 | tee runTheMatrix.log
+  if [ "$prof" = "mp" ];then
+    runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log
+    cd [0-9]*
+    for f in $(ls *GEN_SIM.py); do
+       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
+    done
+    for f in $(ls -1 step*.py| sort); do
+       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
+    done
+    cd -
+  else
+    runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof" 2>&1 | tee runTheMatrix.log
+  fi
   for hpwf in $PROFILING_WORKFLOWS; do
     for s in step3 step4 ; do
       if [ $(ls -d ${hpwf}_*/${s}.root | wc -l) -eq 0 ] ; then continue ; fi
@@ -19,15 +31,14 @@ for prof in ${PROFILES} ; do
   for f in $(find . -name '*.gz' -type f) ; do
     echo "processing file $f"
     OUTFILE=${f//.gz/.sql3}
-    echo $OUTFILE
     ERR=0
     ( igprof-analyse -d -c $f --sqlite > $f.sql ) || ERR=1
     ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 "$OUTFILE" > $f.log || ERR=1
 
 
     BASENAME=$(basename $f)
+    DIRNAME=$(dirname $f)
     OUTFILE=${BASENAME//.gz/.txt}
-    echo $OUTFILE
     if [ "$prof" = "pp" ]; then
         ( igprof-analyse -v -d -g $f > "RES_CPU_${OUTFILE}" ) || ERR=1
         if [[ $OUTFILE == "step3"*"_EndOfJob.txt"  && $WORKFLOWS != "-i all -l 13"* ]];then
@@ -38,7 +49,10 @@ for prof in ${PROFILES} ; do
         fi
     fi
     if [ "$prof" = "mp" ]; then
-        ( igprof-analyse -v -d -g -r MEM_LIVE $f > "RES_MEM_${OUTFILE}") || ERR=1
+        ( igprof-analyse -v -d -g -r MEM_LIVE $f > "RES_MEM_${OUTFILE}" ) || ERR=1
+        OUTFILE=${BASENAME//.gz/.sql3}
+        ( igprof-analyse --sqlite -v -d -g -r MEM_LIVE $f > $f.MEM_LIVE.sql ) || ERR=1
+        ${CMS_BOT_DIR}/fix-igprof-sql.py $f.MEM_LIVE.sql | sqlite3 "$DIRNAME/MEM_LIVE_${OUTFILE}" > $DIRNAME/${OUTFILE}.MEM_LIVE.log || ERR=1
     fi
 
     if [ $ERR -gt 0 ] ; then

@@ -445,6 +445,10 @@ def delete_comment_emoji(emoji_id, comment_id, repository, token=None):
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
   return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), token, method="DELETE", headers=headers, raw=True)
 
+def get_git_tree(sha, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  return github_api("/repos/%s/git/trees/%s" % (repository, sha), token, method='GET')
+
 
 def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):
   if not token: token = get_gh_token(repository)

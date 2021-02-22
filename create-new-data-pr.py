@@ -7,21 +7,19 @@ from os.path import expanduser
 from urllib2 import urlopen
 from json import loads
 import re
-from _py2with3compatibility import run_cmd
+from github_utils import get_git_tree
+from _py2with3compatibility import run_cmd, HTTPError
 
-def update_tag_version(current_version=None):
-    updated_version = None
-    if current_version:
-        updated_version=str(int(current_version)+1)
-        if len(updated_version) == 1:
-            updated_version = '0'+updated_version
-
-    return updated_version
+def update_tag_version(current_version):
+    updated_version = int(current_version)+1
+    if updated_version<10:
+        updated_version = '0%s' % updated_version
+    return str(updated_version)
 
 def get_tag_from_string(tag_string=None):
     tag = None
     for i in tag_string.split('\n'):
-        m = re.search("(V[0-9]{2}-[0-9]{2}-[0-9]{2})", i)
+        m = re.search("(V[0-9]{2}(-[0-9]{2})+)", i)
         if m:
            tag = m.group()
            break
@@ -71,27 +69,34 @@ if __name__ == "__main__":
 
   response = urlopen("https://api.github.com/repos/%s/pulls/%s" % (opts.data_repo, opts.pull_request))
   res_json = loads(response.read())
-  files_created = res_json['additions']
-  files_modified = res_json['changed_files']+res_json['deletions']
+  print(res_json['additions'], res_json['changed_files'], res_json['deletions'])
+  files_modified = res_json['deletions']
   only_new_files=(files_modified==0)
 
   # if the latest tag/release compared with master(base) or the pr(head) branch is behind then make new tag
   new_tag = last_release_tag # in case the tag doesnt change
   if create_new_tag:
-      nums_only = last_release_tag.strip('V').split('-')
-      first, sec, thrd = tuple(nums_only)
-      print(first, sec, thrd)
-      # update minor for now
-      if only_new_files:
-          thrd = update_tag_version(thrd)
-          print('new files only. update third part: ', thrd)
-      else:
-          sec = update_tag_version(sec)
-          thrd = '00'
-          print('files were modified, update mid version and reset minor', sec, thrd)
-      new_tag = 'V'+first+'-'+sec+'-'+thrd
+      while True:
+          print("searching next tag for ",last_release_tag)
+          tag_data = last_release_tag.strip('V').split('-')
+          if len(tag_data)<3: tag_data.append('00')
+          print(tag_data)
+          # update minor for now
+          if only_new_files:
+              tag_data[-1] = update_tag_version(tag_data[-1])
+          else:
+              tag_data[-2] = update_tag_version(tag_data[-2])
+              tag_data[-1] = '00'
+          print('New tag data', tag_data)
+          new_tag = 'V%s' % '-'.join(tag_data)
+          try:
+            has_tag = get_git_tree(new_tag, opts.data_repo)
+            if "sha" not in has_tag: break
+            last_release_tag = last_release_tag+"-00-00"
+          except  HTTPError as e:
+            break
+      print(new_tag)
       tag_ref = data_repo.create_git_ref(ref='refs/tags/'+new_tag, sha=data_repo.get_branch(data_pr_base_branch).commit.sha)
-
   default_cms_dist_branch = dist_repo.default_branch
   repo_name_only = opts.data_repo.split('/')[1]
   repo_tag_pr_branch = 'update-'+repo_name_only+'-to-'+new_tag

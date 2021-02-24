@@ -46,7 +46,7 @@ CMSSW_L2 = {
   "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
   "jfernan2":         ["dqm"],
-  "jmduarte":         ["l1"],
+  "cecilecaillol":    ["l1"],
   "jordan-martins":   ["pdmv"],
   "jpata":            ["reconstruction"],
   "kmaeshima":        ["dqm"],

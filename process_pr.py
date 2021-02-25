@@ -1277,7 +1277,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
     if (not dryRunOrig) and (pre_checks_state[pre_check]==""):
       params = {"PULL_REQUEST" : "%s" % (prId), "CONTEXT_PREFIX": cms_status_prefix}
-      if pre_check=="code-check":
+      if pre_check=="code-checks":
         params["CMSSW_TOOL_CONF"] = code_checks_tools
       create_properties_file_tests(repository, prId, params, dryRunOrig, abort=False, req_type=pre_check)
       last_commit_obj.create_status("pending", description="%s requested" % pre_check, context="%s/%s" % (cms_status_prefix, pre_check))

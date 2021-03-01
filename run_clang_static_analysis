@@ -26,6 +26,7 @@ if [ -e ./postprocess-scan-build.py ] ; then
 fi
 
 ./create_statics_esd_reports.sh
+touch eventsetuprecord-get.txt
 ls -ltrh
 tar cvfz dumper-checker.tgz *.txt*
 egrep '::(stream|global)::[^ ]+::(produce|analyze|filter)\(\)' modules2statics.txt | egrep -v -f statics-filter1.txt > modules2statics-filter1.txt

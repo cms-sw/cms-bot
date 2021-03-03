@@ -9,7 +9,7 @@ export OS_AUTH_URL=https://keystone.cern.ch/v3
 export OS_VOLUME_API_VERSION=3
 export OS_USERNAME=$(whoami)
 case $1 in
-  cmsbuild*|vocmssdt/sdt/builder)
+  cmsbuild*|CMS_SDT_CI)
     export OS_TENANT_ID="dd21c071-cf05-4a5e-8197-0aa0a4d3c8c7"
     export OS_PROJECT_NAME="CMS SDT CI"
     ;;

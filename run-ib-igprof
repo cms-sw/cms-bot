@@ -9,19 +9,21 @@ if [ "X$EVENTS" = "X" ] ; then EVENTS=100; fi
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
-  if [ "$prof" = "mp" ];then
-    runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log
-    cd [0-9]*
-    for f in $(ls *GEN_SIM.py); do
-       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
-    done
-    for f in $(ls -1 step*.py| sort); do
-       igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
-    done
-    cd -
-  else
-    runTheMatrix.py $WORKFLOWS --ibeos --command "-n $EVENTS --profile $prof" 2>&1 | tee runTheMatrix.log
-  fi
+  for WORKFLOW in $(echo $WORKFLOWS | sed 's|-l||;s|,| |');do
+    if [ "$prof" = "mp" ];then
+      runTheMatrix.py -l $WORKFLOW --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log
+      cd [0-9]*
+      for f in $(ls *GEN_SIM.py); do
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
+      done
+      for f in $(ls -1 step*.py| sort); do
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
+      done
+      cd -
+    else
+      runTheMatrix.py -l $WORKFLOW --command "-n $EVENTS --profile $prof" 2>&1 | tee runTheMatrix.log
+    fi
+  done
   for hpwf in $PROFILING_WORKFLOWS; do
     for s in step3 step4 ; do
       if [ $(ls -d ${hpwf}_*/${s}.root | wc -l) -eq 0 ] ; then continue ; fi

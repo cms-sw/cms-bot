@@ -9,7 +9,7 @@ if [ "X$EVENTS" = "X" ] ; then EVENTS=100; fi
 for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
-  for WORKFLOW in `echo $WORKFLOWS | sed 's|-l||;s|,| |g;s|-i all||'`;do
+  for WORKFLOW in `echo $WORKFLOWS | sed 's|-l ||;s|,| |g;s|-i all||'`;do
     if [[ $WORKFLOWS = *all* ]];  then
         WF="-i all -l $WORKFLOW"
     else
@@ -17,7 +17,7 @@ for prof in ${PROFILES} ; do
     fi
     if [ "$prof" = "mp" ];then
       runTheMatrix.py $WF --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log
-      cd [0-9]*
+      cd $WORKFLOW*
       for f in $(ls *GEN_SIM.py); do
          igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
       done

@@ -10,6 +10,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
   if [ "$x" == "baseline" ]; then
     echo "REAL_ARCH=-GenuineIntel" >> ${pfile}
   fi
+  PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||' | tr ',' ' ')  
   if [ "$x" = "igprof-pp" -o  "$x" = "igprof-mp"  ] ; then
     prof=$(echo $x | sed 's|igprof-||')
     sed -i -e "s|ADDITIONAL_TEST_NAME=$x|ADDITIONAL_TEST_NAME=igprof|" ${pfile}
@@ -19,7 +20,6 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     cp ${pfile} ${nfile}
     echo "WORKFLOWS=-i all -l $wf" >> ${nfile}
     echo "EVENTS=100" >> ${nfile}
-    PROFILING_WORKFLOWS=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'), | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
     for wf in $PROFILING_WORKFLOWS; do
       nfile=$WORKSPACE/auto-$x-${wf}-properties
       cp ${pfile} ${nfile}
@@ -29,7 +29,6 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     rm -f ${pfile}
   fi
   if [ "$x" = "profiling" ] ; then
-    PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||' | tr ',' ' ')
     for wf in $PROFILING_WORKFLOWS; do
       nfile=$WORKSPACE/auto-$x-${wf}-properties
       cp ${pfile} ${nfile}

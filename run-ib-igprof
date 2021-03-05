@@ -13,7 +13,7 @@ for prof in ${PROFILES} ; do
     if [[ $WORKFLOWS = *all* ]];  then
         WF="-i all -l $WORKFLOW"
     else
-        WF="-l $WORKFLOW"
+        WF="-w upgrade -l $WORKFLOW"
     fi
     if [ "$prof" = "mp" ];then
       runTheMatrix.py $WF --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee runTheMatrix.log

@@ -27,5 +27,5 @@ CMS_STANDARD_TESTS=True
 CMS_BRANCH_MAP={
 }
 #Valid Web hooks e.g. '.+' to match all event
-VALID_WEB_HOOKS=['release']
-
+VALID_WEB_HOOKS=['release', 'workflow_dispatch']
+WEBHOOK_PAYLOAD=True

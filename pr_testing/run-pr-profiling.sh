@@ -9,6 +9,7 @@ echo "<html><head></head><title>Profiling results</title><body><ul>" > $WORKSPAC
 LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
 export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
 for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
+  export PROFILING_WORKFLOW
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_VERSION || true

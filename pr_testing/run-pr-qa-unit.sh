@@ -49,6 +49,7 @@ if [ "X$DO_DAS_QUERY" = Xtrue ]; then
         if [ -s ../failed_workflows.log ] ; then
           DAS_QUERY_RES="ERROR"
           echo -e "\n* **DAS Queries**: The DAS query tests failed, see the summary page for details.\n" >> ${RESULTS_DIR}/11-report.res
+          touch ${WORKSPACE}/update-das-queries
         fi
       fi
     popd

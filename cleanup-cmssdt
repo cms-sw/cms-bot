@@ -55,10 +55,10 @@ for dir in ${DIRS}; do
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
-#Keep the following for 30 days
+#Keep the following for 90 days
 DAYS_TO_KEEP=30
 DIRS="run-pr-format pr-code-checks jenkins-test-code-format profiling"
-DIRS="${DIRS} auto-build-release auto-upload-release cleanup-auto-build build-fwlite"
+DIRS="${DIRS} auto-build-release auto-upload-release cleanup-auto-build build-fwlite release-run-reco-profiling"
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"

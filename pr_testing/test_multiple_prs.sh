@@ -940,6 +940,12 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if $PRODUCTION_RELEASE ; then
+    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
+      cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
+      echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
+      echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
+      echo "MATRIX_ARGS=$SLHC_PARAM $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
+    fi
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
       WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_GPU=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
       if [ "X$WF_LIST" != X ]; then
@@ -949,12 +955,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
 	#GPU workflows are in relvals_gpu
         echo "MATRIX_ARGS=-l $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu -i all" >> $WORKSPACE/run-relvals-gpu.prop
       fi
-    fi
-    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-      cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
-      echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
-      echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-      echo "MATRIX_ARGS=$SLHC_PARAM -s $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
     fi
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps=' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e

@@ -25,7 +25,7 @@ for h in sorted(htmls):
     print("Error Filtering: %s/%s\n%s" %(WF_DIR,h,o))
 
 if DES_DIR_CREATED:
-  e, o = run_cmd("mv %s/*.png %s/" % (WF_PATH, DES_DIR))
+  e, o = run_cmd("ls %s/*.png | xargs --no-run-if-empty mv -t %s" % (WF_PATH, DES_DIR))
   print("Copy png: %s" % o)
   run_cmd("echo ErrorDocument 404 /SDT/html/pr_comparison_ok.html > %s/.htaccess" % DES_DIR)
 print("Done filtering:", WF_DIR)

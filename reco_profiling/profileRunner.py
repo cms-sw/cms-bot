@@ -52,7 +52,7 @@ echo "{}"
 """.format(msg, cmd)
     return s
 
-def configureProfilingSteps(cmsdriver_lines):
+def configureProfilingSteps(cmsdriver_lines, num_events):
     assert(len(cmsdriver_lines) == 4)
     assert("step1" in cmsdriver_lines[0])
     assert("step2" in cmsdriver_lines[1])
@@ -83,12 +83,25 @@ def configureProfilingSteps(cmsdriver_lines):
         echoBefore(step3_ft, "step3 FastTimer"),
         echoBefore(step3_ig, "step3 IgProf conf"),
         echoBefore(igprof_s3_pp, "step3 IgProf pp"),
-        echoBefore(igprof_s3_mp, "step3 IgProf mp")] +
+        "mv IgProf.1.gz step3_igprofCPU.1.gz",
+        "mv IgProf.{nev}.gz step3_igprofCPU.{nev}.gz".format(nev=int(num_events/2)),
+        "mv IgProf.{nev}.gz step3_igprofCPU.{nev}.gz".format(nev=int(num_events-1)),
+        echoBefore(igprof_s3_mp, "step3 IgProf mp"),
+        "mv IgProf.1.gz step3_igprofMEM.1.gz",
+        "mv IgProf.{nev}.gz step3_igprofMEM.{nev}.gz".format(nev=int(num_events/2)),
+        "mv IgProf.{nev}.gz step3_igprofMEM.{nev}.gz".format(nev=int(num_events-1)),
+        ] +
         [echoBefore(step4_tmi, "step4 TimeMemoryInfo"),
         echoBefore(step4_ft, "step4 FastTimer"),
         echoBefore(step4_ig, "step4 IgProf conf"),
         echoBefore(igprof_s4_pp, "step4 IgProf pp"),
+        "mv IgProf.1.gz step4_igprofCPU.1.gz",
+        "mv IgProf.{nev}.gz step4_igprofCPU.{nev}.gz".format(nev=int(num_events/2)),
+        "mv IgProf.{nev}.gz step4_igprofCPU.{nev}.gz".format(nev=int(num_events-1)),
         echoBefore(igprof_s4_mp, "step4 IgProf mp"),
+        "mv IgProf.1.gz step4_igprofMEM.1.gz",
+        "mv IgProf.{nev}.gz step4_igprofMEM.{nev}.gz".format(nev=int(num_events/2)),
+        "mv IgProf.{nev}.gz step4_igprofMEM.{nev}.gz".format(nev=int(num_events-1)),
         ])
 
     return new_cmdlist
@@ -112,7 +125,7 @@ def runProfiling(wfdir, runscript):
     os.system("bash {}".format(runscript))
     os.chdir("..")
 
-def copyProfilingOutputs(wfdir, out_dir):
+def copyProfilingOutputs(wfdir, out_dir, num_events):
     for output in [
         "step1.root",
         "step2.root",
@@ -123,11 +136,15 @@ def copyProfilingOutputs(wfdir, out_dir):
         "step3_TimeMemoryInfo.log",
         "step3_circles.json",
         "step3_igprofCPU.gz",
-        "step3_igprofMEM.gz",
+        "step3_igprofMEM.1.gz",
+        "step3_igprofMEM.{}.gz".format(int(num_events-1)),
+        "step3_igprofMEM.{}.gz".format(int(num_events/2)),
         "step4_TimeMemoryInfo.log",
         "step4_circles.json",
         "step4_igprofCPU.gz",
-        "step4_igprofMEM.gz",
+        "step4_igprofMEM.1.gz",
+        "step4_igprofMEM.{}.gz".format(int(num_events-1)),
+        "step4_igprofMEM.{}.gz".format(int(num_events/2)),
         ]:
         path = "{}/{}".format(wfdir, output)
 
@@ -149,12 +166,12 @@ def main(wf, num_events, out_dir):
     prepareMatrixWF(wf, num_events)
     wfdir = getWFDir(wf)
     cmsdriver_lines = parseCmdLog("{}/cmdLog".format(wfdir))
-    new_cmdlist = configureProfilingSteps(cmsdriver_lines)
+    new_cmdlist = configureProfilingSteps(cmsdriver_lines, num_events)
 
     runscript = "cmdLog_profiling.sh"
     writeProfilingScript(wfdir, runscript, new_cmdlist)
     runProfiling(wfdir, runscript)
-    copyProfilingOutputs(wfdir, out_dir)
+    copyProfilingOutputs(wfdir, out_dir, num_events)
 
 def parse_args():
     import argparse

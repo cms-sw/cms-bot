@@ -17,6 +17,7 @@ for h in sorted(htmls):
   if not e:
     if int(o)>0:
       if not DES_DIR_CREATED:
+        print("Found errors %s/%s" %  (WF_PATH,h))
         run_cmd("mkdir -p %s" % DES_DIR)
         DES_DIR_CREATED=True
       run_cmd("mv '%s/%s.html' '%s/%s.html'" % (WF_PATH,h,DES_DIR,h))
@@ -24,6 +25,7 @@ for h in sorted(htmls):
     print("Error Filtering: %s/%s\n%s" %(WF_DIR,h,o))
 
 if DES_DIR_CREATED:
-  run_cmd("mv %s/*.png %s/" % (WF_PATH, DES_DIR))
+  e, o = run_cmd("mv %s/*.png %s/" % (WF_PATH, DES_DIR))
+  print("Copy png: %s" % o)
   run_cmd("echo ErrorDocument 404 /SDT/html/pr_comparison_ok.html > %s/.htaccess" % DES_DIR)
 print("Done filtering:", WF_DIR)

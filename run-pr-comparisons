@@ -19,7 +19,8 @@ PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix-results
 PR_BASELINE_JOBDIR=pull-request-integration/PR-$PR_NUM/$PULL_REQUEST_JOB_ID
 PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix-results
-PR_RESULT_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts/${PR_BASELINE_JOBDIR}"
+JENKINS_ARTIFACTS_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts"
+PR_RESULT_URL="${JENKINS_ARTIFACTS_URL}/${PR_BASELINE_JOBDIR}"
 
 WFS_WITH_ERRORS=''
 RESULTS_FILE=$WORKSPACE/comparison.txt
@@ -148,7 +149,7 @@ fi
 # JR-Comparison
 # --------------------------------------------------------------------------
 
-#This is used manily for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
+#This is used mainly for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
 #which comparison is run.
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
@@ -321,6 +322,16 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     fi
     echo "</body></html>" >> $JRHTML
     echo "FAILED_COMPARISON;OK,Comparison failed,See failed,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/validateJR.html" >> ${RESULTS_FILE}
+  fi
+
+  # Comparisons of edm::TriggerResults
+  RUN_TR_COMP=true # placeholder: to be configured upstream?
+  if [ "X$RUN_TR_COMP" = Xtrue ]; then
+    echo "Starting comparisons of edm::TriggerResults at `date`"
+    (${CMS_BOT_DIR}/compareTriggerResults.py -r ${JR_COMP_DIR}/${RELEASE_FORMAT} -t ${JR_COMP_DIR}/PR-${PULL_REQUEST_NUMBER} \
+      -f "step*.root" -o ${WORKSPACE}/upload/triggerResults >> ${JR_COMP_DIR}/qaResultsSummary.log 2>&1) || true
+    sed -i "s|TriggerResults|[TriggerResults](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/triggerResults)|g" ${JR_COMP_DIR}/qaResultsSummary.log
+    echo "Finished comparisons of edm::TriggerResults at `date` (summary appended to ${JR_COMP_DIR}/qaResultsSummary.log)"
   fi
 fi
 

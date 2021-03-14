@@ -137,6 +137,7 @@ def compareTriggerResults(**kwargs):
         os.makedirs(wfOutputDir)
       except:
         WARNING('failed to create output directory (will skip comparisons for this workflow): '+wfOutputDir)
+        continue
 
     wfHasDiff = False
     for procName in ret[wfName]:

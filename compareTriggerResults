@@ -71,11 +71,20 @@ def getListOfTriggerResultsProcessNames(inputEDMFile, verbosity=0):
         ret.append(outl_split[3])
     ret = list(set(ret))
   except:
-    if verbosity > 0:
+    if verbosity > 10:
       WARNING('getListOfTriggerResultsProcessNames -- failed to execute "edmDumpEventContent '+inputEDMFile+'" (will return empty list)')
   return ret
 
-def compareTriggerResults(inputDir1, inputDir2, filePattern, outputDir, maxEvents, dryRun=False, verbosity=0):
+def compareTriggerResults(**kwargs):
+  inputDir1 = kwargs.get('inputDir1')
+  inputDir2 = kwargs.get('inputDir2')
+  outputDir = kwargs.get('outputDir')
+  filePattern = kwargs.get('filePattern')
+  maxEvents = kwargs.get('maxEvents')
+  summaryFormat = kwargs.get('summaryFormat')
+  dryRun = kwargs.get('dryRun', False)
+  verbosity = kwargs.get('verbosity', 0)
+
   files1 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir1) for f in filenames if fnmatch.fnmatch(f, filePattern)]
   files2 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir2) for f in filenames if fnmatch.fnmatch(f, filePattern)]
   ret = {}
@@ -107,20 +116,32 @@ def compareTriggerResults(inputDir1, inputDir2, filePattern, outputDir, maxEvent
 
   # hltDiff calls
   numWorkflowsWithDiffs = 0
-  summaryLines = ['| {:25} | {:15} | {:12} | {:}'.format('Events with differences', 'Input Events', 'Process Name', 'Workflow')]
-  summaryLines += ['-'*100]
+  summaryLines = []
+
+  if summaryFormat == 'html':
+    summaryLines += [
+      '<html>',
+      '<head><style> table { border-spacing: 18px; }</style></head>',
+      '<body><h3>Summary of edm::TriggerResults Comparisons</h3><table>',
+      '<tr><td>Workflow</td><td>Process Name</td><td>Events with Diffs</td><td>Events Processed</td></tr>',
+    ]
+  else:
+    summaryLines += ['| {:25} | {:18} | {:12} | {:}'.format('Events with Diffs', 'Events Processed', 'Process Name', 'Workflow')]
+    summaryLines += ['-'*100]
 
   for wfName in ret:
+    wfNameShort = wfName.split('_')[0]
     wfOutputDir = os.path.join(outputDir, wfName)
-    try:
-      if not dryRun:
+    if not dryRun:
+      try:
         os.makedirs(wfOutputDir)
-    except:
-      WARNING('failed to create output directory (will skip comparisons for this workflow): '+wfOutputDir)
+      except:
+        WARNING('failed to create output directory (will skip comparisons for this workflow): '+wfOutputDir)
 
     wfHasDiff = False
     for procName in ret[wfName]:
-      hltDiff_cmds = ['hltDiff', '-m', str(maxEvents)]
+      hltDiff_cmds = ['hltDiff']
+      hltDiff_cmds += ['-m', str(maxEvents)]*(maxEvents >= 0)
       hltDiff_cmds += ['-o', ret[wfName][procName][0], '-O', procName]
       hltDiff_cmds += ['-n', ret[wfName][procName][1], '-N', procName]
       hltDiff_cmds += ['-j', '-F', os.path.join(wfOutputDir, procName)]
@@ -135,7 +156,7 @@ def compareTriggerResults(inputDir1, inputDir2, filePattern, outputDir, maxEvent
       with open(os.path.join(wfOutputDir, procName+'.log'), 'w') as outputLogFile:
         for _tmp in hltDiff_outputs:
           outputLogFile.write(_tmp+'\n')
-          # caveat: relies on format of hltDiff outputs to stdout
+          # CAVEAT: relies on format of hltDiff outputs to stdout
           #  - see https://github.com/cms-sw/cmssw/blob/master/HLTrigger/Tools/bin/hltDiff.cc
           if _tmp.startswith('Found '):
             diffStatsTmp = [int(s) for s in _tmp.split() if s.isdigit()]
@@ -148,17 +169,34 @@ def compareTriggerResults(inputDir1, inputDir2, filePattern, outputDir, maxEvent
               WARNING('format error -- extracted N!=2 integers from output of hltDiff: '+str(diffStatsTmp))
 
       if not diffStats: diffStats = [0, 0]
-      summaryLines += ['| {:25d} | {:15d} | {:12} | {:}'.format(diffStats[1], diffStats[0], procName, wfName)]
       wfHasDiff |= diffStats[1] > 0
 
+      if summaryFormat == 'html':
+        summaryLines += [
+          '<tr>',
+          '  <td align="left"><a href="'+wfName+'">'+wfNameShort+'</a></td>',
+          '  <td align="center"><a href="'+wfName+'/'+procName+'.log">'+procName+'</a></td>',
+          '  <td align="right">'+str(diffStats[1])+'</td>',
+          '  <td align="right">'+str(diffStats[0])+'</td>',
+          '</tr>',
+        ]
+      else:
+        summaryLines += ['| {:25d} | {:18d} | {:12} | {:}'.format(diffStats[1], diffStats[0], procName, wfName)]
+
     if wfHasDiff: numWorkflowsWithDiffs += 1
-    summaryLines += ['-'*100]
+
+    if summaryFormat != 'html':
+      summaryLines += ['-'*100]
+
+  if summaryFormat == 'html':
+    summaryLines += ['</table></body></html>']
 
   if dryRun: return
 
-  with open(os.path.join(outputDir, 'summary.log'), 'w') as outputSummaryFile:
-    for _tmp in summaryLines:
-      outputSummaryFile.write(_tmp+'\n')
+  if summaryLines:
+    outputSummaryFilePath = os.path.join(outputDir, 'index.html' if summaryFormat == 'html' else 'summary.log')
+    with open(outputSummaryFilePath, 'w') as outputSummaryFile:
+      for _tmp in summaryLines: outputSummaryFile.write(_tmp+'\n')
 
   if verbosity >= 0:
     if numWorkflowsWithDiffs > 0:
@@ -177,20 +215,23 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--target-dir', dest='inputDir_targ', action='store', default=None, required=True,
                         help='path to directory with new (or, "target") workflow outputs')
 
-    parser.add_argument('-f', '--file-pattern', dest='file_pattern', action='store', default='step*.root',
-                        help='basename pattern of input EDM files to be compared')
-
     parser.add_argument('-o', '--output-dir', dest='outputDir', action='store', default=None, required=True,
                         help='path to output directory')
+
+    parser.add_argument('-f', '--file-pattern', dest='file_pattern', action='store', default='*.root',
+                        help='basename pattern of input EDM files to be compared (default: "*.root")')
 
     parser.add_argument('-m', '--max-events', dest='max_events', action='store', type=int, default=-1,
                         help='maximum number of events considered per comparison (default: -1, i.e. all)')
 
+    parser.add_argument('-s', '--summary-format', dest='summary_format', action='store', default='txt', choices=["html", "txt"],
+                        help='format of output summary (must be "txt" or "html") (default: "txt")')
+
     parser.add_argument('-d', '--dry-run', dest='dry_run', action='store_true', default=False,
-                        help='enable dry-run mode')
+                        help='enable dry-run mode (default: False)')
 
     parser.add_argument('-v', '--verbosity', dest='verbosity', type=int, default=0,
-                        help='level of verbosity')
+                        help='level of verbosity (default: 0)')
 
     opts, opts_unknown = parser.parse_known_args()
     ### -------------------------
@@ -208,9 +249,8 @@ if __name__ == '__main__':
 
     # check: output
     outDir = opts.outputDir
-    if os.path.exists(outDir):
+    if not opts.dry_run and os.path.exists(outDir):
       KILL('target output directory already exists [-o]: '+outDir)
-      outDir = None
 
     # check: external dependencies
     if which('edmDumpEventContent', permissive=True) is None:
@@ -223,9 +263,10 @@ if __name__ == '__main__':
     compareTriggerResults(**{
       'inputDir1': opts.inputDir_refe,
       'inputDir2': opts.inputDir_targ,
+      'outputDir': outDir,
       'filePattern': opts.file_pattern,
       'maxEvents': opts.max_events,
-      'outputDir': outDir,
+      'summaryFormat': opts.summary_format,
       'dryRun': opts.dry_run,
       'verbosity': opts.verbosity,
     })

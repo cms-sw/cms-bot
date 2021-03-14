@@ -214,10 +214,10 @@ if __name__ == '__main__':
 
     # check: external dependencies
     if which('edmDumpEventContent', permissive=True) is None:
-      KILL('executable "edmDumpEventContent" is not available (set up an appropriate CMSSW area')
+      KILL('executable "edmDumpEventContent" is not available (set up an appropriate CMSSW area)')
 
     if which('hltDiff', permissive=True) is None:
-      KILL('executable "hltDiff" is not available (set up an appropriate CMSSW area')
+      KILL('executable "hltDiff" is not available (set up an appropriate CMSSW area)')
 
     # run TriggerResults comparisons
     compareTriggerResults(**{

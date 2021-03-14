@@ -200,9 +200,9 @@ def compareTriggerResults(**kwargs):
 
   if verbosity >= 0:
     if numWorkflowsWithDiffs > 0:
-      print('TriggerResults: found differences in {:d} / {:d} workflows'.format(numWorkflowsWithDiffs, len(ret.keys())))
+      print('SUMMARY TriggerResults: found differences in {:d} / {:d} workflows'.format(numWorkflowsWithDiffs, len(ret.keys())))
     else:
-      print('TriggerResults: no differences found')
+      print('SUMMARY TriggerResults: no differences found')
 
 #### main
 if __name__ == '__main__':

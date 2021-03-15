@@ -78,8 +78,8 @@ def getListOfTriggerResultsProcessNames(inputEDMFile, verbosity=0):
 def compareTriggerResults(**kwargs):
   inputDir1 = kwargs.get('inputDir1')
   inputDir2 = kwargs.get('inputDir2')
-  outputDir = kwargs.get('outputDir')
   filePattern = kwargs.get('filePattern')
+  outputDir = kwargs.get('outputDir')
   maxEvents = kwargs.get('maxEvents')
   summaryFormat = kwargs.get('summaryFormat', None)
   dryRun = kwargs.get('dryRun', False)
@@ -123,7 +123,7 @@ def compareTriggerResults(**kwargs):
     return -1
 
   # hltDiff calls
-  numWorkflowsWithDiffs = 0
+  numWorkflowsChecked, numWorkflowsWithDiffs = 0, 0
   summaryLines = []
 
   if summaryFormat == 'html':
@@ -190,7 +190,7 @@ def compareTriggerResults(**kwargs):
         summaryLines += [
           '<tr>',
           '  <td align="left"><a href="'+wfName+'">'+wfNameShort+'</a></td>',
-          '  <td align="center"><a href="'+wfName+'/'+procName+'.log">'+procName+'</a></td>',
+          '  <td align="center"><a href="'+os.path.join(wfName, procName+'.log')+'">'+procName+'</a></td>',
           '  <td align="right">'+str(diffStats[1])+'</td>',
           '  <td align="right">'+str(diffStats[0])+'</td>',
           '</tr>',
@@ -198,6 +198,7 @@ def compareTriggerResults(**kwargs):
       elif summaryFormat == 'txt':
         summaryLines += ['| {:25d} | {:18d} | {:12} | {:}'.format(diffStats[1], diffStats[0], procName, wfName)]
 
+    numWorkflowsChecked += 1
     if wfHasDiff: numWorkflowsWithDiffs += 1
 
     if summaryFormat == 'txt':
@@ -206,7 +207,7 @@ def compareTriggerResults(**kwargs):
   if summaryFormat == 'html':
     summaryLines += ['</table></body></html>']
 
-  if dryRun: return
+  if dryRun: return 0
 
   if summaryLines:
     outputSummaryFilePath = os.path.join(outputDir, 'index.html' if summaryFormat == 'html' else 'summary.log')
@@ -214,10 +215,12 @@ def compareTriggerResults(**kwargs):
       for _tmp in summaryLines: outputSummaryFile.write(_tmp+'\n')
 
   if verbosity >= 0:
-    if numWorkflowsWithDiffs > 0:
-      print('SUMMARY TriggerResults: found differences in {:d} / {:d} workflows'.format(numWorkflowsWithDiffs, len(wfDict.keys())))
-    else:
+    if numWorkflowsChecked == 0:
+      print('SUMMARY TriggerResults: no workflows checked')
+    elif numWorkflowsWithDiffs == 0:
       print('SUMMARY TriggerResults: no differences found')
+    else:
+      print('SUMMARY TriggerResults: found differences in {:d} / {:d} workflows'.format(numWorkflowsWithDiffs, len(wfDict.keys())))
 
   return numWorkflowsWithDiffs
 
@@ -232,11 +235,11 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--target-dir', dest='inputDir_targ', action='store', default=None, required=True,
                         help='path to directory with new (or, "target") workflow outputs')
 
-    parser.add_argument('-o', '--output-dir', dest='outputDir', action='store', default=None, required=True,
-                        help='path to output directory')
-
     parser.add_argument('-f', '--file-pattern', dest='file_pattern', action='store', default='*.root',
                         help='pattern of input EDM files to be compared (default: "*.root")')
+
+    parser.add_argument('-o', '--output-dir', dest='outputDir', action='store', default=None, required=True,
+                        help='path to output directory')
 
     parser.add_argument('-m', '--max-events', dest='max_events', action='store', type=int, default=-1,
                         help='maximum number of events considered per comparison (default: -1, i.e. all)')
@@ -280,8 +283,8 @@ if __name__ == '__main__':
     compareTriggerResults(**{
       'inputDir1': opts.inputDir_refe,
       'inputDir2': opts.inputDir_targ,
-      'outputDir': outDir,
       'filePattern': opts.file_pattern,
+      'outputDir': outDir,
       'maxEvents': opts.max_events,
       'summaryFormat': opts.summary,
       'dryRun': opts.dry_run,

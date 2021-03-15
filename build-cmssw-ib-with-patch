@@ -110,7 +110,7 @@ CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmsp
 EX_OPTS=""
 if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
-  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash"
+  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args ${RELEASE_NAME})"
 fi
 GCC_FIXINCLUDE=""
 [ -e CMSDIST/gcc-fixincludes.spec ] && GCC_FIXINCLUDE="gcc-fixincludes"

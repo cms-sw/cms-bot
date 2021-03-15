@@ -81,12 +81,16 @@ def compareTriggerResults(**kwargs):
   outputDir = kwargs.get('outputDir')
   filePattern = kwargs.get('filePattern')
   maxEvents = kwargs.get('maxEvents')
-  summaryFormat = kwargs.get('summaryFormat')
+  summaryFormat = kwargs.get('summaryFormat', None)
   dryRun = kwargs.get('dryRun', False)
   verbosity = kwargs.get('verbosity', 0)
 
-  files1 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir1) for f in filenames if fnmatch.fnmatch(f, filePattern)]
-  files2 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir2) for f in filenames if fnmatch.fnmatch(f, filePattern)]
+  files1 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir1) for f in filenames]
+  files1 = [f for f in files1 if fnmatch.fnmatch(f, filePattern)]
+
+  files2 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir2) for f in filenames]
+  files2 = [f for f in files2 if fnmatch.fnmatch(f, filePattern)]
+
   wfDict = {}
   for f1 in sorted(files1):
     fBasename, wfName = os.path.basename(f1), os.path.dirname(os.path.relpath(f1, inputDir1))
@@ -113,6 +117,11 @@ def compareTriggerResults(**kwargs):
     for _tmp1 in trProcessNames2:
       wfDict[wfName][_tmp1] = [f1, f2]
 
+  if not wfDict:
+    if verbosity >= 0:
+      WARNING('compareTriggerResults -- found zero inputs to be compared (no outputs produced)')
+    return -1
+
   # hltDiff calls
   numWorkflowsWithDiffs = 0
   summaryLines = []
@@ -124,7 +133,7 @@ def compareTriggerResults(**kwargs):
       '<body><h3>Summary of edm::TriggerResults Comparisons</h3><table>',
       '<tr><td>Workflow</td><td>Process Name</td><td>Events with Diffs</td><td>Events Processed</td></tr>',
     ]
-  else:
+  elif summaryFormat == 'txt':
     summaryLines += ['| {:25} | {:18} | {:12} | {:}'.format('Events with Diffs', 'Events Processed', 'Process Name', 'Workflow')]
     summaryLines += ['-'*100]
 
@@ -140,7 +149,8 @@ def compareTriggerResults(**kwargs):
       try:
         os.makedirs(wfOutputDir)
       except:
-        WARNING('failed to create output directory (will skip comparisons for this workflow): '+wfOutputDir)
+        warn_msg = 'target output directory already exists' if os.path.isdir(wfOutputDir) else 'failed to create output directory'
+        WARNING(warn_msg+' (will skip comparisons for this workflow): '+wfOutputDir)
         continue
 
     wfHasDiff = False
@@ -185,12 +195,12 @@ def compareTriggerResults(**kwargs):
           '  <td align="right">'+str(diffStats[0])+'</td>',
           '</tr>',
         ]
-      else:
+      elif summaryFormat == 'txt':
         summaryLines += ['| {:25d} | {:18d} | {:12} | {:}'.format(diffStats[1], diffStats[0], procName, wfName)]
 
     if wfHasDiff: numWorkflowsWithDiffs += 1
 
-    if summaryFormat != 'html':
+    if summaryFormat == 'txt':
       summaryLines += ['-'*100]
 
   if summaryFormat == 'html':
@@ -209,6 +219,8 @@ def compareTriggerResults(**kwargs):
     else:
       print('SUMMARY TriggerResults: no differences found')
 
+  return numWorkflowsWithDiffs
+
 #### main
 if __name__ == '__main__':
     ### args
@@ -224,13 +236,13 @@ if __name__ == '__main__':
                         help='path to output directory')
 
     parser.add_argument('-f', '--file-pattern', dest='file_pattern', action='store', default='*.root',
-                        help='basename pattern of input EDM files to be compared (default: "*.root")')
+                        help='pattern of input EDM files to be compared (default: "*.root")')
 
     parser.add_argument('-m', '--max-events', dest='max_events', action='store', type=int, default=-1,
                         help='maximum number of events considered per comparison (default: -1, i.e. all)')
 
-    parser.add_argument('-s', '--summary-format', dest='summary_format', action='store', default='txt', choices=["html", "txt"],
-                        help='format of output summary (must be "txt" or "html") (default: "txt")')
+    parser.add_argument('-s', '--summary', dest='summary', action='store', default=None, choices=["html", "txt"],
+                        help='produce summary file in the specified format (must be "txt" or "html") (default: None, i.e. no summary)')
 
     parser.add_argument('-d', '--dry-run', dest='dry_run', action='store_true', default=False,
                         help='enable dry-run mode (default: False)')
@@ -254,7 +266,7 @@ if __name__ == '__main__':
 
     # check: output
     outDir = opts.outputDir
-    if not opts.dry_run and os.path.exists(outDir):
+    if not opts.dry_run and opts.summary is not None and os.path.exists(outDir):
       KILL('target output directory already exists [-o]: '+outDir)
 
     # check: external dependencies
@@ -271,7 +283,7 @@ if __name__ == '__main__':
       'outputDir': outDir,
       'filePattern': opts.file_pattern,
       'maxEvents': opts.max_events,
-      'summaryFormat': opts.summary_format,
+      'summaryFormat': opts.summary,
       'dryRun': opts.dry_run,
       'verbosity': opts.verbosity,
     })

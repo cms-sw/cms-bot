@@ -328,12 +328,12 @@ fi
 # Comparisons of edm::TriggerResults
 RUN_TR_COMP=true # placeholder: to be configured upstream?
 if [ "X$RUN_TR_COMP" = Xtrue ]; then
-  echo "Starting comparisons of edm::TriggerResults at `date`"
+  echo "Starting comparisons of edm::TriggerResults on `date`"
   (${CMS_BOT_DIR}/compareTriggerResults -r ${WORKSPACE}/data/${RELEASE_FORMAT} -t ${WORKSPACE}/data/PR-${PR_NUM} \
-    -f "step*.root" --summary html -o ${WORKSPACE}/upload/triggerResults >> ${WORKSPACE}/upload/triggerResults.log 2>&1) || true
+    -f "*/step*.root" --summary html -o ${WORKSPACE}/upload/triggerResults >> ${WORKSPACE}/upload/triggerResults.log 2>&1) || true
   (grep -a SUMMARY ${WORKSPACE}/upload/triggerResults.log | cut -d' ' -f2-100 >> ${JR_COMP_DIR}/qaResultsSummary.log 2>&1) || true
   sed -i "s|TriggerResults|[TriggerResults](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/triggerResults)|g" ${JR_COMP_DIR}/qaResultsSummary.log
-  echo "Finished comparisons of edm::TriggerResults at `date` (summary appended to ${JR_COMP_DIR}/qaResultsSummary.log)"
+  echo "Finished comparisons of edm::TriggerResults on `date` (summary appended to ${JR_COMP_DIR}/qaResultsSummary.log)"
 fi
 
 jobs

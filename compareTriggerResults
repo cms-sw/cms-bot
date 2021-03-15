@@ -87,7 +87,7 @@ def compareTriggerResults(**kwargs):
 
   files1 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir1) for f in filenames if fnmatch.fnmatch(f, filePattern)]
   files2 = [os.path.join(dp, f) for dp, dn, filenames in os.walk(inputDir2) for f in filenames if fnmatch.fnmatch(f, filePattern)]
-  ret = {}
+  wfDict = {}
   for f1 in sorted(files1):
     fBasename, wfName = os.path.basename(f1), os.path.dirname(os.path.relpath(f1, inputDir1))
     f2 = os.path.join(inputDir2, wfName, fBasename)
@@ -101,18 +101,17 @@ def compareTriggerResults(**kwargs):
     # (would become unnecessary calls to hltDiff)
     trProcessNames2 = trProcessNames[:]
     for _tmp1 in trProcessNames:
-      if wfName in ret:
-        if _tmp1 in ret[wfName]:
+      if wfName in wfDict:
+        if _tmp1 in wfDict[wfName]:
           trProcessNames2.remove(_tmp1)
 
     # skip if empty list
     if not trProcessNames2: continue
 
     # fill dictionary
-    if wfName not in ret: ret[wfName] = {}
-
+    if wfName not in wfDict: wfDict[wfName] = {}
     for _tmp1 in trProcessNames2:
-      ret[wfName][_tmp1] = [f1, f2]
+      wfDict[wfName][_tmp1] = [f1, f2]
 
   # hltDiff calls
   numWorkflowsWithDiffs = 0
@@ -129,7 +128,12 @@ def compareTriggerResults(**kwargs):
     summaryLines += ['| {:25} | {:18} | {:12} | {:}'.format('Events with Diffs', 'Events Processed', 'Process Name', 'Workflow')]
     summaryLines += ['-'*100]
 
-  for wfName in ret:
+  try:
+    sortedWfNames = sorted(wfDict, key=lambda k: float(k.split('_')[0]))
+  except:
+    sortedWfNames = sorted(wfDict.keys())
+
+  for wfName in sortedWfNames:
     wfNameShort = wfName.split('_')[0]
     wfOutputDir = os.path.join(outputDir, wfName)
     if not dryRun:
@@ -140,11 +144,11 @@ def compareTriggerResults(**kwargs):
         continue
 
     wfHasDiff = False
-    for procName in ret[wfName]:
+    for procName in wfDict[wfName]:
       hltDiff_cmds = ['hltDiff']
       hltDiff_cmds += ['-m', str(maxEvents)]*(maxEvents >= 0)
-      hltDiff_cmds += ['-o', ret[wfName][procName][0], '-O', procName]
-      hltDiff_cmds += ['-n', ret[wfName][procName][1], '-N', procName]
+      hltDiff_cmds += ['-o', wfDict[wfName][procName][0], '-O', procName]
+      hltDiff_cmds += ['-n', wfDict[wfName][procName][1], '-N', procName]
       hltDiff_cmds += ['-j', '-F', os.path.join(wfOutputDir, procName)]
 
       if dryRun:
@@ -201,7 +205,7 @@ def compareTriggerResults(**kwargs):
 
   if verbosity >= 0:
     if numWorkflowsWithDiffs > 0:
-      print('SUMMARY TriggerResults: found differences in {:d} / {:d} workflows'.format(numWorkflowsWithDiffs, len(ret.keys())))
+      print('SUMMARY TriggerResults: found differences in {:d} / {:d} workflows'.format(numWorkflowsWithDiffs, len(wfDict.keys())))
     else:
       print('SUMMARY TriggerResults: no differences found')
 

@@ -1415,6 +1415,7 @@ CMSSW_CATEGORIES = {
     "DataFormats/HGCDigi",
     "DataFormats/HcalDetId",
     "DataFormats/HcalDigi",
+    "DataFormats/JetMatching",
     "DataFormats/MuonDetId",
     "DataFormats/RPCDigi",
     "DataFormats/SiPixelDetId",

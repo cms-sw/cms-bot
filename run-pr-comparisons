@@ -351,7 +351,7 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
   (${CMS_BOT_DIR}/compareTriggerResultsSummary -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" \
     -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1) || true
   echo "[`date`] Summary of TriggerResults comparisons saved in ${WORKSPACE}/upload/triggerResults.log"
-
+  echo "HLT_TRIGGER_COMPARISON;OK,HLT Trigger comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/triggerResults/" >> ${RESULTS_FILE}
   if [ -f ${JR_COMP_DIR}/qaResultsSummary.log ]; then
     (grep -a SUMMARY ${WORKSPACE}/upload/triggerResults.log | cut -d' ' -f2-100 >> ${JR_COMP_DIR}/qaResultsSummary.log 2>&1) || true
     sed -i "s|TriggerResults|[TriggerResults](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/triggerResults)|g" ${JR_COMP_DIR}/qaResultsSummary.log

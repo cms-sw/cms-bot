@@ -969,6 +969,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       else
         MTX_ARGS="${MTX_ARGS} --command '-n 1'"
       fi
+      MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1--prefix "timeout --signal SIGTERM 900" |g')
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_ARGS=-i all --maxSteps=2 -l ${WF_LIST} ${MTX_ARGS}" >> $WORKSPACE/run-relvals-input.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop

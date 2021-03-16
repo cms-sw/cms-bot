@@ -1702,3 +1702,5 @@ tau-pog:
   - PhysicsTools/PatAlgos
 cvuosalo:
   - CondTools/Geometry
+  - SimG4Core/
+  - SimG4CMS/

@@ -19,7 +19,8 @@ PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
 BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix-results
 PR_BASELINE_JOBDIR=pull-request-integration/PR-$PR_NUM/$PULL_REQUEST_JOB_ID
 PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix-results
-PR_RESULT_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts/${PR_BASELINE_JOBDIR}"
+JENKINS_ARTIFACTS_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts"
+PR_RESULT_URL="${JENKINS_ARTIFACTS_URL}/${PR_BASELINE_JOBDIR}"
 
 WFS_WITH_ERRORS=''
 RESULTS_FILE=$WORKSPACE/comparison.txt
@@ -148,7 +149,7 @@ fi
 # JR-Comparison
 # --------------------------------------------------------------------------
 
-#This is used manily for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
+#This is used mainly for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
 #which comparison is run.
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
@@ -326,6 +327,38 @@ fi
 
 jobs
 wait || true
+
+#-----------------------------------
+# Comparisons of edm::TriggerResults
+#-----------------------------------
+RUN_TR_COMP=true # placeholder: to be configured upstream?
+if [ "X$RUN_TR_COMP" = Xtrue ]; then
+  echo "[`date`] Starting comparisons of edm::TriggerResults"
+  mkdir -p ${WORKSPACE}/upload/triggerResults
+  for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ]; do sleep 5; done
+    WF_DIR=`echo ${WF} | cut -d "/" -f1`
+    (${CMS_BOT_DIR}/compareTriggerResults -r ${WORKSPACE}/data/${RELEASE_FORMAT} -t ${WORKSPACE}/data/PR-${PR_NUM} \
+      -f "*/${WF_DIR}/step*.root" -o ${WORKSPACE}/upload/triggerResults > ${WORKSPACE}/upload/triggerResults/${WF_DIR}.log 2>&1) || true &
+    unset WF_DIR
+  done
+  unset WF
+
+  echo "[`date`] Running comparisons of edm::TriggerResults ..."
+  wait || true
+  echo "[`date`] Finished comparisons of edm::TriggerResults"
+
+  (${CMS_BOT_DIR}/compareTriggerResultsSummary -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" \
+    -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1) || true
+  echo "[`date`] Summary of TriggerResults comparisons saved in ${WORKSPACE}/upload/triggerResults.log"
+
+  if [ -f ${JR_COMP_DIR}/qaResultsSummary.log ]; then
+    (grep -a SUMMARY ${WORKSPACE}/upload/triggerResults.log | cut -d' ' -f2-100 >> ${JR_COMP_DIR}/qaResultsSummary.log 2>&1) || true
+    sed -i "s|TriggerResults|[TriggerResults](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/triggerResults)|g" ${JR_COMP_DIR}/qaResultsSummary.log
+    echo "[`date`] One-line Summary of TriggerResults comparisons appended to ${JR_COMP_DIR}/qaResultsSummary.log"
+  fi
+fi
+#-----------------------------------
 
 cd $WORKSPACE
 mkdir -p upload/alternative-comparisons

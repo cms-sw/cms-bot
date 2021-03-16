@@ -325,9 +325,6 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   fi
 fi
 
-jobs
-wait || true
-
 #-----------------------------------
 # Comparisons of edm::TriggerResults
 #-----------------------------------
@@ -343,11 +340,15 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
     unset WF_DIR
   done
   unset WF
-
   echo "[`date`] Running comparisons of edm::TriggerResults ..."
-  wait || true
-  echo "[`date`] Finished comparisons of edm::TriggerResults"
+fi
+#-----------------------------------
 
+jobs
+wait || true
+
+if [ "X$RUN_TR_COMP" = Xtrue ]; then
+  echo "[`date`] Finished comparisons of edm::TriggerResults"
   (${CMS_BOT_DIR}/compareTriggerResultsSummary -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" \
     -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1) || true
   echo "[`date`] Summary of TriggerResults comparisons saved in ${WORKSPACE}/upload/triggerResults.log"
@@ -358,7 +359,6 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
     echo "[`date`] One-line Summary of TriggerResults comparisons appended to ${JR_COMP_DIR}/qaResultsSummary.log"
   fi
 fi
-#-----------------------------------
 
 cd $WORKSPACE
 mkdir -p upload/alternative-comparisons

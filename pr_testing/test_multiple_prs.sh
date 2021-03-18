@@ -573,7 +573,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs
   fi
   $SCRIPTPATH/get-merged-prs.py -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs/cms-sw/cmssw -o $RECENT_COMMITS_FILE
-  $CMS_BOT_DIR/report-pull-request-results MERGE_COMMITS --report-url ${PR_RESULT_URL} --report-file ${RESULTS_DIR}/09-report.res ${REPORT_OPTS}
+  $CMS_BOT_DIR/report-pull-request-results MERGE_COMMITS --recent-merges $RECENT_COMMITS_FILE --report-url ${PR_RESULT_URL} --report-file ${RESULTS_DIR}/09-report.res ${REPORT_OPTS}
   git log ${CMSSW_IB}..HEAD --merges 2>&1      | tee -a $RECENT_COMMITS_LOG_FILE
   if [ $DO_MB_COMPARISON -a $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     has_jenkins_artifacts material-budget/$CMSSW_IB/$SCRAM_ARCH/Images || DO_MB_COMPARISON=false

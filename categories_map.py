@@ -64,6 +64,7 @@ CMSSW_CATEGORIES = {
     "CalibPPS/AlignmentRelative",
     "CalibPPS/AlignmentGlobal",
     "CalibPPS/ESProducers",
+    "CalibPPS/TimingCalibration",
     "CalibTracker/Configuration",
     "CalibTracker/Records",
     "CalibTracker/SiPhase2TrackerESProducers",

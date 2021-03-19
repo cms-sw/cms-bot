@@ -15,7 +15,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE | PARSE_EXTERNAL_BUILD_FAIL "
-                            "| PARSE_ADDON_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET | PYTHON3_FAIL")
+                            "| PARSE_ADDON_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET | PYTHON3_FAIL | MERGE_COMMITS")
 
 parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
 parser.add_option("--f2", action="store", type="string", dest="results_file2", help="second results file to analyse" )
@@ -318,11 +318,14 @@ def send_message_pr(message):
 #
 # sends an approval message for a pr in cmssw
 #
-def get_base_message():
-  message = get_pr_tests_info()
-  message += get_recent_merges_message()
+def add_to_report(message):
+  if not message: return
   with open(options.report_file, "a") as rfile:
     rfile.write(message+"\n")
+  return
+
+def get_base_message():
+  add_to_report(get_pr_tests_info())
   return
 
 def send_comparison_ready_message(comparison_errors_file, wfs_with_das_inconsistency_file, missing_map ):
@@ -425,7 +428,7 @@ if (options.report_url=='') or (options.report_file==''):
   complain_missing_param( 'report url/report file' )
   exit()
 
-GITLOG_FILE_BASE_URL='%s/git-log-recent-commits' % options.report_url
+GITLOG_FILE_BASE_URL='%s/git-recent-commits.json' % options.report_url
 GIT_CMS_MERGE_TOPIC_BASE_URL='%s/git-merge-result' % options.report_url
 
 if ( ACTION == 'GET_BASE_MESSAGE' ):
@@ -448,5 +451,7 @@ elif( ACTION == 'PYTHON3_FAIL'):
   read_python3_file(options.unit_tests_file )
 elif( ACTION == 'MATERIAL_BUDGET'):
   read_material_budget_log_file(options.unit_tests_file)
+elif ( ACTION == 'MERGE_COMMITS'):
+  add_to_report(get_recent_merges_message())
 else:
   print("I don't recognize that action!")

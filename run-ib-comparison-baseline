@@ -54,8 +54,3 @@ if [ "X${REL_QUEUE}" = "X${DEV_QUEUE}" ] ; then
   echo "${REL_QUEUE}" > $WORKSPACE/BaselineDevRelease
   send_jenkins_artifacts $WORKSPACE/BaselineDevRelease ib-baseline-tests/BaselineDevRelease
 fi
-# Make it fail so it can be identified when there were errors
-if grep -i -E "ERROR executing.*" $WORKSPACE/matrixTests.log; then
-  echo "Errors in the RelVals"
-  exit 1
-fi

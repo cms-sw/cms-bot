@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import sys
 from os.path import exists, join
 import json
@@ -21,5 +22,5 @@ for d in o.split("\n"):
   item.update(jopts)
   data.append({'_source': item})
 
-print json.dumps(data, sort_keys=True, indent=2)
+print(json.dumps(data, sort_keys=True, indent=2))
   

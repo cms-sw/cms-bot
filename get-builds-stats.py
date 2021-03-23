@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from cmsutils import MachineMemoryGB, MachineCPUCount
 import json, re, sys
 r=open(sys.argv[1])
@@ -62,4 +63,4 @@ for name in all_data:
       elif v==0:
         v = data["defaults"][k][0]
       data["packages"][name][k] = v
-print json.dumps(data, sort_keys=True, indent=2)
+print(json.dumps(data, sort_keys=True, indent=2))

@@ -178,27 +178,11 @@ class LogFileAnalyzer(object):
         
         print('found ', len(self.pkgOK),  'packages without errors/warnings.')
         print('found ', len(self.pkgErr), 'packages with errors or warnings, ', len(self.pkgWarn), ' with warnings only.')
-#        for pkg in pkgErr:
-#            print '\t',pkg.name(), ' : ',
-#            for key in ['dictError', 'compError', 'linkError']:
-#                if key in pkg.errSummary.keys():
-#                    print key, pkg.errSummary[key],
-#                else:
-#                    print key, ' N/A ',
-#            print ''
-
-## for debugging
-#            for err in pkg.errInfo:
-#                if err.errType == 'miscError':
-#                    print '\t\t', err.errMsg
-        
         start = time.time()
         self.makeHTMLSummaryPage()
         for key in self.errorKeys:
             pkgList = self.errMap[key]
             pkgList.sort()
-            # print 'Error type :', key
-            # print [x.name() for x in pkgList]
             for pkg in pkgList:
                 self.makeHTMLLogFile(pkg)
         for pkg in self.pkgOK:
@@ -326,6 +310,7 @@ class LogFileAnalyzer(object):
     def makeHTMLLogFile(self, pkg):
         """docstring for makeHTMLFile"""
 
+        if not pkg.name() in self.tagList: return
         htmlDir = '../html/'+pkg.name()+'/'
         if not os.path.exists(htmlDir):
             os.makedirs(htmlDir)

@@ -702,8 +702,8 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   echo 'CMS_CLANG_TIDY_CHECKS;OK,CMS clang-tidy checks output,See Log,llvm-analysis/runCMSClangTidyChecks.log' >> ${RESULTS_DIR}/static.txt
   echo '--------------------------------------'
   USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms*' scram b -k -j ${NCPU2} code-checks-run SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
-  if $IS_DEV_BRANCH && [ $(grep ': warning: call of function EventSetupRecord::get(ESHandle&) is deprecated and should be replaced with a call to EventSetup::getHandle(ESGetToken&' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | wc -l) -gt 0 ]; then
-    grep ': warning: call of function EventSetupRecord::get(ESHandle&) is deprecated and should be replaced with a call to EventSetup::getHandle(ESGetToken&' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | sort -u >> $WORKSPACE/llvm-analysis/cmsclangtidy.txt
+  if $IS_DEV_BRANCH && [ $(grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get' | wc -l) -gt 0 ]; then
+    grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get'| sort -u >> $WORKSPACE/llvm-analysis/cmsclangtidy.txt
     echo "CMS_CLANG_TIDY_CHECKS;ERROR,CMS clang-tidy checks EventSetupRecord::get warnings,See warnings log,llvm-analysis/cmsclangtidy.txt" >> ${RESULTS_DIR}/static.txt
   else
     echo "CMS_CLANG_TIDY_CHECKS;OK,CMS clang-tidy checks output,See Log,llvm-analysis/runCMSClangTidyChecks.log" >> ${RESULTS_DIR}/static.txt

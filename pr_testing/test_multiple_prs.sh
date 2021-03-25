@@ -957,7 +957,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
           echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-gpu.prop
         fi
 	#GPU workflows are in relvals_gpu
-        echo "MATRIX_ARGS=-l $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu -i all" >> $WORKSPACE/run-relvals-gpu.prop
+        echo "MATRIX_ARGS=-l $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu" >> $WORKSPACE/run-relvals-gpu.prop
       fi
     fi
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps=' | wc -l) -eq 0 ] ; then

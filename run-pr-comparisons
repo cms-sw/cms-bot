@@ -215,6 +215,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     if [ "X$RUN_JR_COMP" = Xtrue ]; then
       eval $( cat $RELMON_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
       echo "TH=$TH"
+      if [ "${TH}" = "" ] ; then TH="0.999999999999"; echo "Overriding TH=$TH" ; fi
       TH_PARAM="-t $TH "
     fi
 
@@ -262,6 +263,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     cp $CMS_BOT_DIR/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
 
     eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
+    if [ "${MOD"}" = "" ] ; then MOD=0; echo "Overriding MOD=$MOD";  fi
     echo "MOD=$MOD"
 
     # create a mini script for running this comparisons in parallel

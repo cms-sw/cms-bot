@@ -263,7 +263,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     cp $CMS_BOT_DIR/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
 
     eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
-    if [ "${MOD"}" = "" ] ; then MOD=0; echo "Overriding MOD=$MOD";  fi
+    if [ "${MOD}" = "" ] ; then MOD=0; echo "Overriding MOD=$MOD";  fi
     echo "MOD=$MOD"
 
     # create a mini script for running this comparisons in parallel

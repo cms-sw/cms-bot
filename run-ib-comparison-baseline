@@ -1,4 +1,5 @@
 #!/bin/sh -ex
+TEST_FLAVOR=$1
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 function Jenkins_GetCPU ()
@@ -12,11 +13,14 @@ function Jenkins_GetCPU ()
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
   MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
+  if [ "${TEST_FLAVOR}" = "gpu" ] ; then
+    MATRIX_EXTRAS="$(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') -w gpu"
+  fi
   if [ ! "X$MATRIX_EXTRAS" = "X" ] ; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
   [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--job-reports $MATRIX_EXTRAS"
   if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
       [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_EXTRAS"
-  fi 
+  fi
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch/week0 runTheMatrix.py -s -j $(Jenkins_GetCPU) ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root | sort`
@@ -44,9 +48,10 @@ mv $ERRORS_FILE $WORKSPACE/matrix-results/
 
 [ -f ${LOCALRT}/used-ibeos-sort ] && mv ${LOCALRT}/used-ibeos-sort $WORKSPACE/matrix-results/
 source $CMS_BOT_DIR/jenkins-artifacts
-send_jenkins_artifacts $WORKSPACE/matrix-results/ ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix-results 
+send_jenkins_artifacts $WORKSPACE/matrix-results/ ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results
 echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/cvmfs-deploy-baseline
 echo "ARCHITECTURE=${ARCHITECTURE}"    >> $WORKSPACE/cvmfs-deploy-baseline
+echo "TEST_FLAVOR=${TEST_FLAVOR}"      >> $WORKSPACE/cvmfs-deploy-baseline
 
 REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
 DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')

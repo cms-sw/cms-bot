@@ -35,6 +35,11 @@ getResultRow = function( resultsDict , resultsKey ){
     column2Label = 'See Comparison Results'
     linkURL = BASE_COMPARISONS_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/' 
 
+  }else if( resultsKey == COMPARISON_GPU_KEY ){
+
+    column2Label = 'See Comparison Results'
+    linkURL = BASE_COMPARISONS_GPU_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
+
   }
 
 
@@ -200,6 +205,7 @@ BASE_IB_KEY = 'BASE_IB';
 PR_NUMBER_KEY = 'PR_NUMBER';
 PR_NUMBERS_KEY = 'PR_NUMBERS';
 COMPARISON_KEY = 'COMPARISON';
+COMPARISON_GPU_KEY = 'COMPARISON_GPU';
 BASE_IB_URL = '/SDT/html/showIB.html';
 COMPARISON_IB_KEY = "COMPARISON_IB"
 IB_PAGE_V2 = '/SDT/html/cmssdt-ib/#/ib/';
@@ -210,4 +216,5 @@ LABELS2 = {};
 LOCATIONS = {};
 
 BASE_COMPARISONS_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisons/';
+BASE_COMPARISONS_GPU_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisonsGPU/';
 

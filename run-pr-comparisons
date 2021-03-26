@@ -1,4 +1,12 @@
 #!/bin/sh -ex
+TEST_FLAVOR_STR=""
+UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
+GH_COMP_CONTEXT="comparison"
+if [ "${TEST_FLAVOR}" != "" ] ; then
+  GH_COMP_CONTEXT="${GH_COMP_CONTEXT}/${TEST_FLAVOR}"
+  TEST_FLAVOR_STR="_${UC_TEST_FLAVOR}"
+fi
+
 NUM_PROC=$(nproc)
 CMS_BOT_DIR=$(dirname $0)
 case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
@@ -16,14 +24,14 @@ rm -f $WORKSPACE/ALL_DONE
 if [ "X$COMPARISON_RELEASE" = "X" ] ; then COMPARISON_RELEASE=$RELEASE_FORMAT; fi
 if [ "$REAL_ARCH" = "" ] ; then REAL_ARCH="-GenuineIntel"; fi
 PR_NUM=$(echo ${PULL_REQUEST} | md5sum | sed 's| .*||' | cut -c27-33)
-BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix-results
+BASELINE_DIR=ib-baseline-tests/$COMPARISON_RELEASE/$COMPARISON_ARCH/$REAL_ARCH/matrix${TEST_FLAVOR}-results
 PR_BASELINE_JOBDIR=pull-request-integration/PR-$PR_NUM/$PULL_REQUEST_JOB_ID
-PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix-results
+PR_BASELINE_DIR=${PR_BASELINE_JOBDIR}/runTheMatrix${UC_TEST_FLAVOR}-results
 JENKINS_ARTIFACTS_URL="https://cmssdt.cern.ch/SDT/jenkins-artifacts"
 PR_RESULT_URL="${JENKINS_ARTIFACTS_URL}/${PR_BASELINE_JOBDIR}"
 
 WFS_WITH_ERRORS=''
-RESULTS_FILE=$WORKSPACE/comparison.txt
+RESULTS_FILE=$WORKSPACE/comparison${UC_TEST_FLAVOR}.txt
 MAPPING_FILE=wf_mapping.txt
 get_jenkins_artifacts ${BASELINE_DIR}/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE
 get_jenkins_artifacts ${PR_BASELINE_JOBDIR}/prs_commits.txt $WORKSPACE/prs_commits || true
@@ -32,9 +40,9 @@ BASE_IB=$(grep '^BASE_IB;' $WORKSPACE/testsResults.txt | sed 's|.*;||')
 if [ "X${BASE_IB}" = "X" ] ; then BASE_IB=$RELEASE_FORMAT ; fi
 CMSSW_QUEUE=$(echo echo ${BASE_IB} | sed 's/_X.*/_X/')
 rm -f $WORKSPACE/testsResults.txt
-mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running" || true
+mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running" || true
 
-COMP_UPLOAD_DIR="baseLineComparisons/${BASE_IB}+${PR_NUM}/${BUILD_NUMBER}"
+COMP_UPLOAD_DIR="baseLineComparisons${UC_TEST_FLAVOR}/${BASE_IB}+${PR_NUM}/${BUILD_NUMBER}"
 ERRORS_FILE=wf_errors.txt
 get_jenkins_artifacts ${BASELINE_DIR}/$ERRORS_FILE $WORKSPACE/$ERRORS_FILE
 
@@ -134,15 +142,15 @@ done
 echo $WFS_WITH_DAS_INCONSISTENCY >> $WORKSPACE/$DAS_NON_CONSISTENT_WFS_FILE
 
 echo "Finished downloading files at `date`:"
-echo "COMPARISON;RUNNING,Comparison with the baseline,See results,See results" >> ${RESULTS_FILE}
+echo "COMPARISON${TEST_FLAVOR_STR};RUNNING,Comparison with the ${UC_TEST_FLAVOR} baseline,See results,See results" >> ${RESULTS_FILE}
 if [ "$DRY_RUN" != "true" ] ; then
-  send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison.txt
+  send_jenkins_artifacts ${RESULTS_FILE} ${PR_BASELINE_JOBDIR}/testsResults/comparison${UC_TEST_FLAVOR}.txt
 fi
 
 if $DQM_COMPARISON_TEST ; then
-  mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running DQM bin by bin comparison" || true
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running DQM bin by bin comparison" || true
   (compareDQMOutput.py -b $WORKSPACE/data/$RELEASE_FORMAT/ -p $WORKSPACE/data/PR-${PR_NUM} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -l "$PULL_REQUESTS" -t $PULL_REQUEST_JOB_ID -r $RELEASE_FORMAT -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1) || true
-  echo "DQM_BIN_BY_BIN_COMPARISON;OK,DQM bin by bin comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> ${RESULTS_FILE}
+  echo "DQM_BIN_BY_BIN_COMPARISON${TEST_FLAVOR_STR};OK,DQM bin by bin ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/dqm-histo-comparison-summary.html" >> ${RESULTS_FILE}
 fi
 
 # --------------------------------------------------------------------------
@@ -152,7 +160,7 @@ fi
 #This is used mainly for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
 #which comparison is run.
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
-  mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
   cd $JR_COMP_DIR
   cp $CMS_BOT_DIR/comparisons/validateJR.sh  $JR_COMP_DIR
   chmod +x $JR_COMP_DIR/validateJR.sh
@@ -181,7 +189,7 @@ set +x
 # Default Comparison
 # --------------------------------------------------------------------------
 if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
-  mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running default comparison" || true
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running default comparison" || true
   echo "Started with default comparison at `date`"
   
   RELMON_COMP_DIR=$WORKSPACE/results/default-comparison
@@ -207,6 +215,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     if [ "X$RUN_JR_COMP" = Xtrue ]; then
       eval $( cat $RELMON_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
       echo "TH=$TH"
+      if [ "${TH}" = "" ] ; then TH="0.999999999999"; echo "Overriding TH=$TH" ; fi
       TH_PARAM="-t $TH "
     fi
 
@@ -231,7 +240,7 @@ fi
 # ----------------------------------------------------------------------------
 
 if [ "X$RUN_ALT_COMP" = Xtrue ]; then
-  mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Running alternative comparison" || true
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running alternative comparison" || true
   echo "Started with alternative comparison at `date`"
   
   ALT_COMP_DIR=$WORKSPACE/results/alternative-comparison
@@ -254,6 +263,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     cp $CMS_BOT_DIR/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
 
     eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
+    if [ "${MOD}" = "" ] ; then MOD=0; echo "Overriding MOD=$MOD";  fi
     echo "MOD=$MOD"
 
     # create a mini script for running this comparisons in parallel
@@ -292,7 +302,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     QALOG=$JR_COMP_DIR/logRootQA.log
     JRHTML=$WORKSPACE/upload/validateJR.html
-    mark_commit_status_all_prs 'comparison' 'pending' -u "${BUILD_URL}" -d "Generating comparison summary" || true
+    mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Generating comparison summary" || true
     echo 'Doing histogram, log and root comparison:'
     (python $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${RELEASE_FORMAT} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $QALOG 2>&1) || true
     (grep -a SUMMARY $QALOG | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
@@ -321,7 +331,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
       echo "</table>" >> $JRHTML
     fi
     echo "</body></html>" >> $JRHTML
-    echo "FAILED_COMPARISON;OK,Comparison failed,See failed,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/validateJR.html" >> ${RESULTS_FILE}
+    echo "FAILED_COMPARISON${TEST_FLAVOR_STR};OK,Comparison ${UC_TEST_FLAVOR} failed,See failed,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/validateJR.html" >> ${RESULTS_FILE}
   fi
 fi
 
@@ -352,7 +362,7 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
   (${CMS_BOT_DIR}/compareTriggerResultsSummary -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" \
     -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1) || true
   echo "[`date`] Summary of TriggerResults comparisons saved in ${WORKSPACE}/upload/triggerResults.log"
-  echo "HLT_TRIGGER_COMPARISON;OK,HLT Trigger comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/triggerResults/" >> ${RESULTS_FILE}
+  echo "HLT_TRIGGER_COMPARISON${TEST_FLAVOR_STR};OK,HLT Trigger ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/triggerResults/" >> ${RESULTS_FILE}
   if [ -f ${JR_COMP_DIR}/qaResultsSummary.log ]; then
     (grep -a SUMMARY ${WORKSPACE}/upload/triggerResults.log | cut -d' ' -f2-100 >> ${JR_COMP_DIR}/qaResultsSummary.log 2>&1) || true
     sed -i "s|TriggerResults|[TriggerResults](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/triggerResults)|g" ${JR_COMP_DIR}/qaResultsSummary.log
@@ -416,7 +426,7 @@ if [ -e results/files ] ; then
 fi
 
 mkdir $WORKSPACE/testsResults
-sed -i "s/^COMPARISON;RUNNING,/COMPARISON;$BUILD_NUMBER,/g" ${RESULTS_FILE}
+sed -i "s/^COMPARISON${TEST_FLAVOR_STR};RUNNING,/COMPARISON${TEST_FLAVOR_STR};$BUILD_NUMBER,/g" ${RESULTS_FILE}
 mv ${RESULTS_FILE} $WORKSPACE/testsResults/
 
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
@@ -424,9 +434,14 @@ ${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_
   -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
   --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt  --report-file $WORKSPACE/testsResults/20-report.res
 
+if [ "${TEST_FLAVOR}" != "" ] ; then
+  sed -i -e "s|## Comparison Summary|## ${UC_TEST_FLAVOR} Comparison Summary|" $WORKSPACE/testsResults/20-report.res
+  mv $WORKSPACE/testsResults/20-report.res $WORKSPACE/testsResults/20-${TEST_FLAVOR}-report.res
+fi
+
 if [ "$DRY_RUN" != "true" ] ; then
   send_jenkins_artifacts $WORKSPACE/upload/ ${COMP_UPLOAD_DIR}/
   send_jenkins_artifacts $WORKSPACE/testsResults/ ${PR_BASELINE_JOBDIR}/testsResults/
 fi
-mark_commit_status_all_prs 'comparison' 'success' -u "${BUILD_URL}" -d "Finished, please check results" || true
+mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -u "${BUILD_URL}" -d "Finished, please check results" || true
 echo "All done at `date`"

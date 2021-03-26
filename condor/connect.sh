@@ -76,6 +76,7 @@ if [ "$USE_PENDING_REQUEST" = "true" ] ; then
       export _CONDOR_CREDD_HOST="${schd}"
     else
       echo "Already running $jid"
+      sleep 600
       exit 0
     fi
   done

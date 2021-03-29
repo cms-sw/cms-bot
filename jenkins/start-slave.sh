@@ -22,8 +22,6 @@ JENKINS_SLAVE_JAR_MD5=$(md5sum ${HOME}/slave.jar | sed 's| .*||')
 USER_HOME_MD5=""
 if [ "${REMOTE_USER}" = "cmsbld" ] ; then
   USER_HOME_MD5=$(tar c ${HOME}/slave_setup/cmsbot 2>&1 | md5sum  | tail -1 | sed 's| .*||')
-elif [ "${REMOTE_USER}" = "cmsbuild" ] ; then
-  ssh -n $SSH_OPTS $TARGET aklog || true
 fi
 ssh -n $SSH_OPTS $TARGET aklog || true
 SYS_SCRIPT="system-$(hostname -s).sh"

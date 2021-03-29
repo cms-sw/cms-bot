@@ -114,6 +114,9 @@ def writeProfilingScript(wfdir, runscript, cmdlist):
 
         #abort on error
         fi.write("set -e\n")
+        
+        #print commands verbosely
+        fi.write("set -x\n")
         for cmd in cmdlist:
             fi.write(cmd + '\n')
 

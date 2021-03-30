@@ -9,6 +9,8 @@ import shutil
 def prepareMatrixWF(workflow_number, num_events):
     cmd = [
          "runTheMatrix.py",
+         "-w",
+         "upgrade",
          "-l",
          workflow_number,
          "--command",
@@ -53,7 +55,6 @@ echo "{}"
     return s
 
 def configureProfilingSteps(cmsdriver_lines, num_events):
-    assert(len(cmsdriver_lines) == 4)
     assert("step1" in cmsdriver_lines[0])
     assert("step2" in cmsdriver_lines[1])
     assert("step3" in cmsdriver_lines[2])

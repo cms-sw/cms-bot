@@ -1,5 +1,5 @@
 #!/bin/bash -e
-$base=$1
+base=$1
 [ "${base}" != "" ] || exit 1
 [ -d "${base}" ] || exit 1
 items=$(ls -l $base | grep '^d' | grep ' zh ' | awk '{print $3":"$9}' | sort ) 

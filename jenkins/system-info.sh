@@ -55,7 +55,8 @@ if [ -e $WORKSPACE/slave.jar ] ; then
 fi
 echo "DATA_SLAVE_JAR=${slave_jar}"
 
-SLAVE_LABELS=""
+SLAVE_LABELS="user-$(whoami)"
+if [ $(echo $HOME | grep '^/afs/' |wc -l) -gt 1 ] ; then SLAVE_LABELS="${SLAVE_LABELS} home-afs"; fi
 arch=$(uname -m)
 HOST_ARCH=""
 if [ "$arch" = "aarch64" ] ; then

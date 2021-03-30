@@ -70,7 +70,7 @@ if __name__ == "__main__":
   response = urlopen("https://api.github.com/repos/%s/pulls/%s" % (opts.data_repo, opts.pull_request))
   res_json = loads(response.read())
   print(res_json['additions'], res_json['changed_files'], res_json['deletions'])
-  files_modified = res_json['deletions']
+  files_modified = res_json['deletions'] + res_json['changed_files']
   only_new_files=(files_modified==0)
 
   # if the latest tag/release compared with master(base) or the pr(head) branch is behind then make new tag

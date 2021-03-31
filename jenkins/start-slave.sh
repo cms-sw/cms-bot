@@ -47,11 +47,16 @@ JENKINS_PORT=$(pgrep -x -a  -f ".*httpPort=.*" | tail -1 | tr ' ' '\n' | grep ht
 SSHD_PORT=$(grep '<port>' ${HOME}/org.jenkinsci.main.modules.sshd.SSHD.xml | sed 's|</.*||;s|.*>||')
 JENKINS_CLI_CMD="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_dsa -l localcli -p ${SSHD_PORT} localhost"
 JENKINS_API_URL=$(echo ${JENKINS_URL} | sed "s|^https://[^/]*/|http://localhost:${JENKINS_PORT}/|")
+SET_KRB5CCNAME=true
 if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   slave_labels=""
   case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
   aiadm* ) echo "Skipping auto labels" ;;
+  lxplus8* )
+    slave_labels=$(get_data SLAVE_LABELS)
+    SET_KRB5CCNAME=false
+    ;;
   lxplus* )
     slave_labels=$(get_data SLAVE_LABELS)
     ;;
@@ -77,14 +82,22 @@ if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
      *) ;;
    esac
 fi
-KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
 if [ $(get_data SLAVE_JAR) = "false" ] ; then scp -p $SSH_OPTS ${HOME}/slave.jar $TARGET:$WORKSPACE/slave.jar ; fi
-scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
+if $SET_KRB5CCNAME ; then
+  KRB5_FILENAME=$(echo $KRB5CCNAME | sed 's|^FILE:||')
+  scp -p $SSH_OPTS ${KRB5_FILENAME} $TARGET:/tmp/krb5cc_${REMOTE_USER_ID}
+fi
 
 pre_cmd=""
 case $(get_data SHELL) in
-  */tcsh|*/csh) pre_cmd="unlimit; limit; setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
-  *) pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1; ulimit -a; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ;;
+  */tcsh|*/csh)
+    pre_cmd="unlimit; limit"
+    if $SET_KRB5CCNAME ; then pre_cmd="${pre_cmd}; setenv KRB5CCNAME FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ; fi
+    ;;
+  *)
+    pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1; ulimit -a"
+    if $SET_KRB5CCNAME ; then pre_cmd="${pre_cmd} ; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ; fi
+    fi
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "

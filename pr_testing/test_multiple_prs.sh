@@ -745,9 +745,7 @@ fi
 # Remove poison if asked to do so
 #############################################
 if [ "X$DISABLE_POISON" = Xtrue ]; then
-  if [ -d $WORKSPACE/$CMSSW_IB/poison ]; then
-    rm -rf $WORKSPACE/$CMSSW_IB/poison
-  fi
+  rm -rf $WORKSPACE/$CMSSW_IB/poison
 fi
 # #############################################
 # test header checks tests

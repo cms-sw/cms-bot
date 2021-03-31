@@ -703,9 +703,10 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
     echo '--------------------------------------'
     echo "Changed files:"
     echo ""
-    cat $WORKSPACE/changed-files
+    curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/all-changed-files.txt
+    cat $WORKSPACE/all-changed-files.txt
     echo ""
-    USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms*' scram b -k -j ${NCPU2} code-checks USER_CODE_CHECKS_FILE="$WORKSPACE/changed-files" SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
+    USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms*' scram b -k -j ${NCPU2} code-checks USER_CODE_CHECKS_FILE="$WORKSPACE/all-changed-files.txt" SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
     warncount=$(grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get' | wc -l) 
     if [ $warncount -gt 0 ]; then
       grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get'| sort -u > $WORKSPACE/llvm-analysis/cmsclangtidy.txt

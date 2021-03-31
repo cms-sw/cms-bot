@@ -71,7 +71,7 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
 case ${SLAVE_TYPE} in
-  lxplus8* ) SET_KRB5CCNAME=false ;;
+  lxplus* ) SET_KRB5CCNAME=false ;;
 esac
 if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
   case ${REMOTE_USER} in

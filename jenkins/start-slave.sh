@@ -96,7 +96,7 @@ case $(get_data SHELL) in
   *)
     pre_cmd="ulimit $(get_data LIMITS) >/dev/null 2>&1; ulimit -a"
     if $SET_KRB5CCNAME ; then pre_cmd="${pre_cmd} ; export KRB5CCNAME=FILE:/tmp/krb5cc_${REMOTE_USER_ID}" ; fi
-    fi
+    ;;
 esac
 
 pre_cmd="${pre_cmd} && (kinit -R || true) && (klist || true ) && "

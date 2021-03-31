@@ -15,6 +15,7 @@ else
   fi
 fi
 kinit -R || true
+aklog || true
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done

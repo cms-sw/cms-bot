@@ -53,10 +53,6 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
   case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
   aiadm* ) echo "Skipping auto labels" ;;
-  lxplus8* )
-    slave_labels=$(get_data SLAVE_LABELS)
-    SET_KRB5CCNAME=false
-    ;;
   lxplus* )
     slave_labels=$(get_data SLAVE_LABELS)
     ;;
@@ -74,6 +70,9 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
   slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
+case ${SLAVE_TYPE} in
+  lxplus8* ) SET_KRB5CCNAME=false ;;
+esac
 if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
   case ${REMOTE_USER} in
     cmsbot|cmsbld)

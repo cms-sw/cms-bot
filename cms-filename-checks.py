@@ -15,5 +15,5 @@ for file_path in [ f.strip("\n").strip("/") for f in open(argv[1]).readlines()]:
     if exists(join(argv[2],xpath)): break
     if not xpath in uniq_paths: uniq_paths.append(xpath)
     break
-print("\n".join(uniq_paths))
-
+if uniq_paths:
+  print("\n".join(uniq_paths))

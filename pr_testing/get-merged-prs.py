@@ -33,8 +33,10 @@ if opts.out_file:
     prs = load(ref)
 prs[opts.repository] = get_merge_prs(opts.start_tag, opts.end_tag, opts.git_dir,opts.cache_dir,{},basename(opts.repository))
 for ignore in [int(i) for i in opts.ignore.split(",") if i]:
-  if ignore in prs[opts.repository: del  prs[opts.repository][ignore]
-if not prs[opts.repository]: del prs[opts.repository]
+  if ignore in prs[opts.repository]:
+    del prs[opts.repository][ignore]
+if not prs[opts.repository]:
+  del prs[opts.repository]
 if opts.out_file:
   with open(opts.out_file,"w") as ref:
     dump(prs, ref,sort_keys=True, indent=4, separators=(',', ': '))

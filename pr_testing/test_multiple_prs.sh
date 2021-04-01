@@ -573,7 +573,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs
   fi
   merged_prs=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#" | sed 's|.*#||' | tr '\n' ',')
-  $SCRIPTPATH/get-merged-prs.py -t cms-sw/cmssw -i "${merged_prs}" -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs/cms-sw/cmssw -o $RECENT_COMMITS_FILE
+  $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmssw -i "${merged_prs}" -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs/cms-sw/cmssw -o $RECENT_COMMITS_FILE
   echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
   git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 
@@ -588,7 +588,7 @@ if ${BUILD_EXTERNAL} ; then
     CMSDIST_REL_TAG=$(git tag | grep '^'ALL/${CMSSW_VERSION}/${SCRAM_ARCH}'$' || true)
     if [ "${CMSDIST_REL_TAG}" != "" ] ; then
       merged_prs=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmsdist#" | sed 's|.*#||' | tr '\n' ',')
-      $SCRIPTPATH/get-merged-prs.py -t cms-sw/cmsdist -i "${merged_prs}" -s ${CMSDIST_REL_TAG} -e HEAD -g $WORKSPACE/cmsdist/.git -c $WORKSPACE/cms-prs/cms-sw/cmsdist -o $RECENT_COMMITS_FILE
+      $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmsdist -i "${merged_prs}" -s ${CMSDIST_REL_TAG} -e HEAD -g $WORKSPACE/cmsdist/.git -c $WORKSPACE/cms-prs/cms-sw/cmsdist -o $RECENT_COMMITS_FILE
       echo "##### CMSDIST Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
       git log ${CMSDIST_REL_TAG}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
     fi

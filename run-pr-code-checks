@@ -63,6 +63,14 @@ pushd $CMSSW_BASE/src
   let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
   if [ $DSIZE -lt 0 ] ; then DSIZE=0 ; fi
   $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > ${UP_DIR}/invalid_files.txt || true
+  touch ${UP_DIR}/duplicate-data.txt
+  if [ -d ${CMSSW_RELEASE_BASE}/external/${SCRAM_ARCH}/data ] ; then
+    for f in $(cat ${UP_DIR}/all-changed-files.txt) ; do
+      if [ -f ${CMSSW_RELEASE_BASE}/external/${SCRAM_ARCH}/data/$f -a ${CMSSW_BASE}/src/$f ] ; then
+        echo $f >> ${UP_DIR}/duplicate-data.txt
+      fi
+    done
+  fi
 popd
 
 source $CMS_BOT_DIR/jenkins-artifacts
@@ -139,15 +147,24 @@ if [ -s ${UP_DIR}/code-checks.patch -o -s ${UP_DIR}/code-format.patch ] ; then
 fi
 
 MSG="\n\nLogs: $UP_URL"
+if [ -s ${UP_DIR}/invalid-filenames.txt ] ; then
+    RES="-code-checks"
+    MSG="${MSG}\n\n- Error: Found path names starting with digits: ${UP_URL}/invalid-filenames.txt"
+fi
+if [ -s ${UP_DIR}/duplicate-data.txt ] ; then
+    RES="-code-checks"
+    MSG="${MSG}\n\n- Error: Found data files available in both cmssw and cms-data. Please update these data files directly in cms-data repository: ${UP_URL}/duplicate-data.txt"
+fi
 if [ $DSIZE -gt 0 ] ; then MSG="${MSG}\n\n- This PR adds an extra ${DSIZE}KB to repository" ; fi
 if [ -s ${UP_DIR}/invalid_files.txt ] ; then
-  MSG="${MSG}\n\n- Found files with invalid states:\n$(cat ${UP_DIR}/invalid_files.txt | sed 's|^\(\s*\)|\1  - |')"
+    MSG="${MSG}\n\n- Found files with invalid states:\n$(cat ${UP_DIR}/invalid_files.txt | sed 's|^\(\s*\)|\1  - |')"
 fi
 
 if [ -s ${UP_DIR}/multiple_files_changes.txt ] ; then
     MSG="${MSG}\n\n- There are other open Pull requests which might conflict with changes you have proposed:"
     MSG="${MSG}\n$(cat ${UP_DIR}/multiple_files_changes.txt | grep -v '^ *$'  | sed 's|^\(\s*\)|\1  - |')"
 fi
+
 MSG="${RES}${MSG}"
 echo -e "${MSG}${HOW_TO_RUN}" > ${UP_DIR}/code-checks.md
 if ! $DRY_RUN ; then

@@ -530,6 +530,7 @@ GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits.json
 echo '{}' > $RECENT_COMMITS_FILE
 # use the branch name if necesary
+touch $WORKSPACE/changed-files
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do

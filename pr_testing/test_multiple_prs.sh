@@ -532,6 +532,7 @@ RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 echo '{}' > $RECENT_COMMITS_FILE
 # use the branch name if necesary
 touch $WORKSPACE/changed-files
+if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
@@ -569,9 +570,6 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   #############################################
   # Check if there are unwanted commits that came with the merge.
   ############################################
-  if [ ! -d $WORKSPACE/cms-prs ]  ; then
-    git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs
-  fi
   merged_prs=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#" | sed 's|.*#||' | tr '\n' ',')
   $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmssw -i "${merged_prs}" -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs/cms-sw/cmssw -o $RECENT_COMMITS_FILE
   echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE

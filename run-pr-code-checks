@@ -152,7 +152,7 @@ if [ -s ${UP_DIR}/invalid-filenames.txt ] ; then
     MSG="${MSG}\n\n- Error: Found path names starting with digits: ${UP_URL}/invalid-filenames.txt"
 fi
 if [ -s ${UP_DIR}/duplicate-data.txt ] ; then
-    RES="-code-checks"
+#    RES="-code-checks"
     MSG="${MSG}\n\n- Error: Found data files available in both cmssw and cms-data. Please update these data files directly in cms-data repository: ${UP_URL}/duplicate-data.txt"
 fi
 if [ $DSIZE -gt 0 ] ; then MSG="${MSG}\n\n- This PR adds an extra ${DSIZE}KB to repository" ; fi

@@ -15,7 +15,7 @@ parser.add_option( "-g", "--git-directory", dest="git_dir" , action="store" , he
 parser.add_option( "-c", "--cache-directory", dest="cache_dir" , action="store" , help="Path to cms-prs cache directory", default=None)
 parser.add_option( "-o", "--out-file", dest="out_file" , action="store" , help="Outpu json file name", default=None)
 parser.add_option( "-r", "--repository", dest="repository" , action="store" , help="Repository e.g. cms-sw/cmssw or cms-sw/cmsdist", default="cms-sw/cmssw")
-parser.add_option( "-i", "--ignore-prs", dest="ignore" , action="store" , help="Comma separated list of PRs to ignore", default"")
+parser.add_option( "-i", "--ignore-prs", dest="ignore" , action="store" , help="Comma separated list of PRs to ignore", default="")
 opts, args = parser.parse_args( )
 if len( args ) != 0:
   parser.print_help()

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from os import environ
-from os.path import dirname,basename,abspath
-from json import dumps, dump
+from os.path import dirname,basename,abspath,join
+from json import dumps, dump, load
 from optparse import OptionParser
 import sys
 sys.path.append(dirname(dirname(abspath(__file__)))) 
@@ -14,6 +14,8 @@ parser.add_option( "-e", "--end-tag", dest="end_tag" , action="store" , help="En
 parser.add_option( "-g", "--git-directory", dest="git_dir" , action="store" , help=".git directory, default is CMSSW_BASE/src/.git", default=None)
 parser.add_option( "-c", "--cache-directory", dest="cache_dir" , action="store" , help="Path to cms-prs cache directory", default=None)
 parser.add_option( "-o", "--out-file", dest="out_file" , action="store" , help="Outpu json file name", default=None)
+parser.add_option( "-r", "--repository", dest="repository" , action="store" , help="Repository e.g. cms-sw/cmssw or cms-sw/cmsdist", default="cms-sw/cmssw")
+parser.add_option( "-i", "--ignore-prs", dest="ignore" , action="store" , help="Comma separated list of PRs to ignore", default"")
 opts, args = parser.parse_args( )
 if len( args ) != 0:
   parser.print_help()
@@ -23,11 +25,16 @@ if not opts.start_tag:
 if not opts.git_dir:
   opts.git_dir = environ['CMSSW_BASE']+"/src/.git"
 if not opts.cache_dir:
-  parser.error( "Please pass -c|--cache-directory /path/to/cms-prs/cms-sw/<repository>" )
+  parser.error( "Please pass -c|--cache-directory /path/to/cms-prs" )
 
-repo = basename(opts.cache_dir)
-opts.cache_dir = dirname(dirname(opts.cache_dir))
-prs = get_merge_prs(opts.start_tag, opts.end_tag, opts.git_dir,opts.cache_dir,{},repo)
+prs = {}
+if opts.out_file:
+  with open(opts.out_file) as ref:
+    prs = load(ref)
+prs[opts.repository] = get_merge_prs(opts.start_tag, opts.end_tag, opts.git_dir,opts.cache_dir,{},basename(opts.repository))
+for ignore in [int(i) for i in opts.ignore.split(",") if i]:
+  if ignore in prs[opts.repository: del  prs[opts.repository][ignore]
+if not prs[opts.repository]: del prs[opts.repository]
 if opts.out_file:
   with open(opts.out_file,"w") as ref:
     dump(prs, ref,sort_keys=True, indent=4, separators=(',', ': '))

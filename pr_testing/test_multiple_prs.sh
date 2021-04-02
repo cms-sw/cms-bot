@@ -688,11 +688,12 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   mkdir $WORKSPACE/llvm-analysis
   USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" \
     scram b -k -j ${NCPU2} checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
+  touch $WORKSPACE/llvm-analysis/esrget-sa.txt
+  grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep edm::eventsetup::EventSetupRecord::get | sort -u > $WORKSPACE/llvm-analysis/esrget-sa.txt
   cp -R $WORKSPACE/$CMSSW_IB/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
   if $IS_DEV_BRANCH && [ $(grep ': error: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | wc -l) -gt 0 ] ; then
     echo "EDM_ML_DEBUG_CHECKS;ERROR,Static Check build log,See Log,llvm-analysis/runStaticChecks.log" >> ${RESULTS_DIR}/static.txt
-  elif $IS_DEV_BRANCH && [ $(grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep '[threadsafety.ESRecordGetChecker]' | wc -l) -gt 0 ] ; then
-    grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep edm::eventsetup::EventSetupRecord::get | sort -u > $WORKSPACE/llvm-analysis/esrget-sa.txt
+  elif $IS_DEV_BRANCH && [ $(cat $WORKSPACE/llvm-analysis/esrget-sa.txt | wc -l) -gt 0 ] ; then
     echo "STATIC_CHECK_ESRGET;ERROR,Static analyzer EventSetupRecord::get warnings,See warnings log,llvm-analysis/esrget-sa.txt" >> ${RESULTS_DIR}/static.txt
   else
     echo "EDM_ML_DEBUG_CHECKS;OK,Static Check build log,See Log,llvm-analysis/runStaticChecks.log" >> ${RESULTS_DIR}/static.txt
@@ -704,12 +705,13 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
     echo '--------------------------------------'
     echo "Changed files:"
     echo ""
-    cat $WORKSPACE/changed-files
+    curl -s -L https://patch-diff.githubusercontent.com/raw/${PR_REPO}/pull/${PR_NUMBER}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/all-changed-files.txt
+    cat $WORKSPACE/all-changed-files.txt
     echo ""
-    USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms*' scram b -k -j ${NCPU2} code-checks USER_CODE_CHECKS_FILE="$WORKSPACE/changed-files" SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
-    warncount=$(grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get' | wc -l) 
-    if [ $warncount -gt 0 ]; then
-      grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get'| sort -u > $WORKSPACE/llvm-analysis/cmsclangtidy.txt
+    USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms*' scram b -k -j ${NCPU2} code-checks USER_CODE_CHECKS_FILE="$WORKSPACE/all-changed-files.txt" SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
+    touch $WORKSPACE/llvm-analysis/cmsclangtidy.txt
+    grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get' | sort -u > $WORKSPACE/llvm-analysis/cmsclangtidy.txt
+    if [ $(cat $WORKSPACE/llvm-analysis/cmsclangtidy.txt | wc -l) -gt 0 ]; then
       echo "CMS_CLANG_TIDY_CHECKS_ESRGET;ERROR,CMS clang-tidy checks EventSetupRecord::get warnings,See clang-tidy warnings log,llvm-analysis/cmsclangtidy.txt" >> ${RESULTS_DIR}/clangtidy.txt
       echo "**CMS Clang-Tidy warnings**: There are $warncount Clang-Tidy warnings. See ${PR_RESULT_URL}/llvm-analysis/cmsclangtidy.txt for details." >> ${RESULTS_DIR}/09-report.res
     else

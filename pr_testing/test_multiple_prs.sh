@@ -528,9 +528,11 @@ git config --global --replace-all merge.renamelimit 2500 || true
 
 GIT_MERGE_RESULT_FILE=$WORKSPACE/git-merge-result
 RECENT_COMMITS_FILE=$WORKSPACE/git-recent-commits.json
+RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 echo '{}' > $RECENT_COMMITS_FILE
 # use the branch name if necesary
 touch $WORKSPACE/changed-files
+if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
@@ -568,20 +570,29 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   #############################################
   # Check if there are unwanted commits that came with the merge.
   ############################################
-  RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
+  merged_prs=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#" | sed 's|.*#||' | tr '\n' ',')
+  $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmssw -i "${merged_prs}" -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs -o $RECENT_COMMITS_FILE
+  echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
+  git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 
-  if [ ! -d $WORKSPACE/cms-prs ]  ; then
-    git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs
-  fi
-  $SCRIPTPATH/get-merged-prs.py -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs/cms-sw/cmssw -o $RECENT_COMMITS_FILE
-  $CMS_BOT_DIR/report-pull-request-results MERGE_COMMITS --recent-merges $RECENT_COMMITS_FILE --report-url ${PR_RESULT_URL} --report-file ${RESULTS_DIR}/09-report.res ${REPORT_OPTS}
-  git log ${CMSSW_IB}..HEAD --merges 2>&1      | tee -a $RECENT_COMMITS_LOG_FILE
   if [ $DO_MB_COMPARISON -a $(grep 'Geometry' $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     has_jenkins_artifacts material-budget/$CMSSW_IB/$SCRAM_ARCH/Images || DO_MB_COMPARISON=false
   else
     DO_MB_COMPARISON=false
   fi
 fi
+if ${BUILD_EXTERNAL} ; then
+  pushd $WORKSPACE/cmsdist
+    CMSDIST_REL_TAG=$(git tag | grep '^'ALL/${CMSSW_VERSION}/${SCRAM_ARCH}'$' || true)
+    if [ "${CMSDIST_REL_TAG}" != "" ] ; then
+      merged_prs=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmsdist#" | sed 's|.*#||' | tr '\n' ',')
+      $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmsdist -i "${merged_prs}" -s ${CMSDIST_REL_TAG} -e HEAD -g $WORKSPACE/cmsdist/.git -c $WORKSPACE/cms-prs -o $RECENT_COMMITS_FILE
+      echo "##### CMSDIST Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
+      git log ${CMSDIST_REL_TAG}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
+    fi
+  popd
+fi
+$CMS_BOT_DIR/report-pull-request-results MERGE_COMMITS --recent-merges $RECENT_COMMITS_FILE --report-url ${PR_RESULT_URL} --report-file ${RESULTS_DIR}/09-report.res ${REPORT_OPTS}
 
 # Don't do the following if we are only testing CMSDIST PR
 if [ "X$CMSDIST_ONLY" == Xfalse ]; then

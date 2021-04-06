@@ -71,8 +71,16 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "DO_SHORT_MATRIX=${DO_SHORT_MATRIX}" >> $OUTPUT_FILE
     echo "DO_STATIC_CHECKS=${DO_STATIC_CHECKS}" >> $OUTPUT_FILE
     echo "DO_DUPLICATE_CHECKS=${DO_DUPLICATE_CHECKS}" >> $OUTPUT_FILE
-    for i in "" _INPUT _GPU _THREADING ; do
+    for i in "" _GPU _THREADING ; do
       for t in EXTRA_MATRIX_ARGS MATRIX_EXTRAS ; do
+        eval "a=\${$t$i}"
+        if [ "$a" != "" ]  ;then
+          echo "${t}${i}=${a}" >> $OUTPUT_FILE
+        fi
+      done
+    done
+    for i in _INPUT ; do
+      for t in EXTRA_MATRIX_ARGS ; do
         eval "a=\${$t$i}"
         if [ "$a" != "" ]  ;then
           echo "${t}${i}=${a}" >> $OUTPUT_FILE

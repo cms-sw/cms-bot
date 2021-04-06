@@ -292,10 +292,10 @@ TEST_DASGOCLIENT=false
 if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
-        git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
+        git clone https://github.com/cms-sw/pkgtools -b $PKG_TOOL_BRANCH
     fi
     if [ ! -d "cmsdist" ] ; then
-        git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
+        git clone https://github.com/cms-sw/cmsdist -b $CMSDIST_TAG
     fi
 
     echo_section "Building, testing and commenting status to github"
@@ -385,7 +385,7 @@ if ${BUILD_EXTERNAL} ; then
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
     config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
     if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
-      git clone git@github.com:cms-sw/cmssw-config scram-buildrules
+      git clone https://github.com/cms-sw/cmssw-config scram-buildrules
       pushd scram-buildrules
         git checkout ${config_tag}
       popd

@@ -54,7 +54,7 @@ TEST_WAIT_GAP=720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_TESTS = "gpu|threading|profiling|none"
 MULTILINE_COMMENTS_MAP = {
-              "workflow(s|)":     [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
+              "workflow(s|)(_gpu|_input|_threading|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
               "pull_request(s|)": [format('%(cms_pr)s(,%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),                  "PULL_REQUESTS"],
               "full_cmssw|full":  ['true|false',                                                                "BUILD_FULL_CMSSW"],
               "disable_poison":   ['true|false',                                                                "DISABLE_POISON"],
@@ -209,6 +209,14 @@ def check_enable_bot_tests(first_line, *args):
   return tests,None
 
 def check_extra_matrix_args(first_line, repo, params, mkey, param, *args):
+  kitem = mkey.split("_")
+  print(first_line, repo, params, mkey, param)
+  if kitem[-1] in ["input", "threading", "gpu"]:
+    param = param + "_" + kitem[-1].upper()
+  print(first_line,param)
+  return first_line,param
+
+def check_matrix_extras(first_line, repo, params, mkey, param, *args):
   kitem = mkey.split("_")
   print(first_line, repo, params, mkey, param)
   if kitem[-1] in ["input", "threading", "gpu"]:

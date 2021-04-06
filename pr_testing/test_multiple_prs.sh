@@ -532,7 +532,7 @@ RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 echo '{}' > $RECENT_COMMITS_FILE
 # use the branch name if necesary
 touch $WORKSPACE/changed-files
-if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
+if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 https://github.com/cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do

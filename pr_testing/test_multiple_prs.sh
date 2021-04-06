@@ -946,50 +946,43 @@ echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
 # Matrix tests
 #
 if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
-  MATRIX_EXTRAS=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  if [ ! "X$MATRIX_EXTRAS" = X ]; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
-  WF_LIST="-s $MATRIX_EXTRAS"
-  case $CMSSW_IB in
-    *SLHCDEV*)
-      SLHC_PARAM='-w upgrade'
-      WF_LIST="-l 10000,10061,10200,10261,10800,10861,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
-      ;;
-    *SLHC*)
-      SLHC_PARAM='-w upgrade'
-      WF_LIST="-l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861"
-      ;;
-  esac
-
-  # MATRIX_TIMEOUT is set by jenkins
-  [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && EXTRA_MATRIX_ARGS="--job-reports $EXTRA_MATRIX_ARGS"
+  COMMON_MATRIX_ARGS=""
+  [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && COMMON_MATRIX_ARGS="--job-reports"
   if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
     if [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] ; then
-      EXTRA_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $EXTRA_MATRIX_ARGS"
+      COMMON_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $COMMON_MATRIX_ARGS"
     fi
   fi
+  WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+  if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
+  WF_LIST="-s $WF_LIST"
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
   echo "DO_COMPARISON=$DO_COMPARISON" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
-  echo "MATRIX_ARGS=$SLHC_PARAM $WF_LIST $EXTRA_MATRIX_ARGS" >> $WORKSPACE/run-relvals.prop
+  echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if $PRODUCTION_RELEASE ; then
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
+      WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS_THREADING=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+      if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
+      WF_LIST="-s $WF_LIST"
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-      echo "MATRIX_ARGS=$SLHC_PARAM $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
+      echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
     fi
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
-      WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_GPU=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+      WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_GPU} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+      if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
       if [ "X$WF_LIST" != X ]; then
         cp $WORKSPACE/run-relvals.prop $WORKSPACE/run-relvals-gpu.prop
         if [ $(echo "${CONFIG_LINE}" | sed 's|.*ADDITIONAL_TESTS=||;s|;.*||' | tr , '\n' | grep '^baseline-gpu$' | wc -l) -eq 0 ] ; then
           echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-gpu.prop
         fi
 	#GPU workflows are in relvals_gpu
-        echo "MATRIX_ARGS=-l $WF_LIST $EXTRA_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu" >> $WORKSPACE/run-relvals-gpu.prop
+        echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu" >> $WORKSPACE/run-relvals-gpu.prop
       fi
     fi
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps=' | wc -l) -eq 0 ] ; then
@@ -999,7 +992,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     if $TEST_RELVALS_INPUT ; then
       WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
-      MTX_ARGS="${EXTRA_MATRIX_ARGS} $EXTRA_MATRIX_ARGS_INPUT"
+      MTX_ARGS="${COMMON_MATRIX_ARGS} $EXTRA_MATRIX_ARGS_INPUT"
       if [ $(echo "${MTX_ARGS}" | grep "\-\-command " | wc -l) -gt 0 ] ; then
         MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1-n 1 |g')
       else

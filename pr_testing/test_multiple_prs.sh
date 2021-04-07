@@ -963,16 +963,16 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
+    WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS_THREADING=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+    if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
+    WF_LIST="-s $WF_LIST"
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
+    echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
+    echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
+    echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
+  fi
   if $PRODUCTION_RELEASE ; then
-    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-      WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS_THREADING=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-      if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
-      WF_LIST="-s $WF_LIST"
-      cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
-      echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
-      echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-      echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
-    fi
     if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
       WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_GPU} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
       if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi

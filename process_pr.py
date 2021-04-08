@@ -514,6 +514,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       bot_status = get_status(bot_status_name, commit_statuses)
     code_checks_status = [s for s in commit_statuses if s.context == "%s/code-checks" % cms_status_prefix]
     print("PR Statuses:",commit_statuses)
+    print(len(commit_statuses))
     last_commit_date = last_commit.committer.date
     print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)
     print("Latest commit message: ",last_commit.message.encode("ascii", "ignore"))

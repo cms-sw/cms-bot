@@ -1003,11 +1003,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       echo "MATRIX_ARGS=-i all --maxSteps=2 -l ${WF_LIST} ${MTX_ARGS}" >> $WORKSPACE/run-relvals-input.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop
     fi
-    for rtype in $(ls $WORKSPACE/run-relvals-*.prop 2>/dev/null | sed 's|.*/run-relvals-||;s|.prop$||') ; do
-      echo "TEST_FLAVOR=${rtype}" >> $WORKSPACE/run-relvals-${rtype}.prop
-      mark_commit_status_all_prs "relvals/${rtype}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
-    done
   fi
+  for rtype in $(ls $WORKSPACE/run-relvals-*.prop 2>/dev/null | sed 's|.*/run-relvals-||;s|.prop$||') ; do
+    echo "TEST_FLAVOR=${rtype}" >> $WORKSPACE/run-relvals-${rtype}.prop
+    mark_commit_status_all_prs "relvals/${rtype}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  done
 fi
 
 if $TEST_DASGOCLIENT && $PRODUCTION_RELEASE ; then

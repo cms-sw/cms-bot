@@ -26,7 +26,7 @@ if not 'CMSSW_NON_THREADED' in environ:
   #THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_.+:(slc|cc)([6-9]|[1-9][0-9]+)_amd64_gcc(5[3-9]|[6-9]|[1-9][0-9])[0-9]*"
   THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_.+:(slc|cc)([6-9]|[1-9][0-9]+)_[^_]+_gcc(5[3-9]|[6-9]|[1-9][0-9])[0-9]*"
 RELVAL_KEYS["customiseWithTimeMemorySummary"].append([".+" ,"--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"])
-if 'aarch' in uname()[-1]:
+if 'aarchXX' in uname()[-1]:
   RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix 'timeout --signal SIGSEGV @TIMEOUT@ '"])
   RELVAL_KEYS["PREFIX"].append(["CMSSW_.+"                   ,"--prefix 'timeout --signal SIGTERM @TIMEOUT@ '"])
 else:

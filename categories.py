@@ -100,8 +100,6 @@ CMSSW_L2 = {
   "cseez":            ["hgcal-dpg"],
   "fabiocos":         ["mtd-dpg"],
   "parbol":           ["mtd-dpg"],
-  "mmusich":          ["trk-dpg"],
-  "mmusich":          ["trk-dpg"],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))

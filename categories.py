@@ -81,7 +81,7 @@ CMSSW_L2 = {
   # dpgs
   "tsusa":            ["trk-dpg"],
   "mmusich":          ["trk-dpg"],
-  #"":                 ["ecal-dpg"],
+  "thomreis":         ["ecal-dpg"],
   "mseidel42":        ["hcal-dpg"],
   "georgia14":        ["hcal-dpg"],
   "mileva":           ["muon-dpg"],
@@ -92,7 +92,8 @@ CMSSW_L2 = {
   "jhgoh":            ["rpc-dpg"],
   "andresib":         ["rpc-dpg"],
   "pavlov":           ["rpc-dpg"],
-  #"":           ["gem-dpg"],
+  "kamon":            ["gem-dpg"],
+  "jlee":             ["gem-dpg"],
   "fabferro":         ["ctpps-dpg"],
   "jan-kaspar":       ["ctpps-dpg"],
   "vavati":           ["ctpps-dpg"],

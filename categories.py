@@ -37,7 +37,7 @@ CMSSW_L2 = {
   "davidlange6":      ["operations"],
   "emeschi":          ["daq"],
   "ErnestaP":         ["dqm"],
-  "fabiocos":         ["operations"],
+  "fabiocos":         ["operations","mtd-dpg"],
   "fgolf":            ["xpog"],
   "franzoni":         ["operations"],
   "fwyzard":          ["heterogeneous", "hlt"],
@@ -99,7 +99,6 @@ CMSSW_L2 = {
   "vavati":           ["ctpps-dpg"],
   "rovere":           ["hgcal-dpg"],
   "cseez":            ["hgcal-dpg"],
-  "fabiocos":         ["mtd-dpg"],
   "parbol":           ["mtd-dpg"],
 }
 

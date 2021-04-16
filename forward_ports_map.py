@@ -77,7 +77,6 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_3_X/master"].append("IB/CMSSW_11_3_X/cl
 #Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_0_X"]=[]
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_0_X"].append("CMSSW_12_0_DEVEL_X")
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_0_X"].append("CMSSW_12_0_CLANG_X")
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_0_X"].append("CMSSW_12_0_GEANT4_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_0_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_0_X/master"].append("IB/CMSSW_12_0_X/rootnext")

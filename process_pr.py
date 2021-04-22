@@ -39,7 +39,7 @@ CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
 CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
-RELVAL_OPTS="[a-zA-Z0-9_-][a-zA-Z0-9_-]*"
+RELVAL_OPTS="^[-][a-zA-Z0-9_.,\s-]+$"
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
 CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
                       cmsorgs='|'.join(EXTERNAL_REPOS))
@@ -65,7 +65,7 @@ MULTILINE_COMMENTS_MAP = {
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
-              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS), "EXTRA_MATRIX_ARGS",True]
+              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [RELVAL_OPTS,                                "EXTRA_MATRIX_ARGS",True]
               }
 
 def get_last_commit(pr):

@@ -40,6 +40,7 @@ while [ $(date +%s) -lt ${STIME} ] ; do
         ERR=1
       fi
       rm -rf $r
+      echo "$(date): ${rf}: $ERR" >> ${REQ}/status
       echo "EXIT:$ERR" >> ${RES}/${rf}.tmp
       mv ${RES}/${rf}.tmp ${RES}/${rf}
     else

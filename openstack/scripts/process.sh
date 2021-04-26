@@ -50,6 +50,7 @@ while [ $(date +%s) -lt ${STIME} ] ; do
   sleep 10
 done
 rm -f ${LOCK}
+touch ${REQ}/status
 find ${REQ} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf 
 find ${RES} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf
 echo "$(date): ${XID} Stopped" >> ${REQ}/status

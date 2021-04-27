@@ -161,7 +161,7 @@ def modify_comment(comment, match, replace, dryRun):
   return 0
 
 def get_assign_categories(line):
-  m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s]+)\s*$", line, re.I)
+  m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s-]+)\s*$", line, re.I)
   if m:
     assgin_type = m.group(1).lower()
     new_cats = []

@@ -109,6 +109,10 @@ COMMENT_CONVERSION = {}
 COMMENT_CONVERSION['kpedro88']={'comments_before': datetime.strptime('2018-07-13','%Y-%m-%d'), 'comments':[('+1', '+upgrade')]}
 COMMENT_CONVERSION['qliphy']={'comments_before': datetime.strptime('2020-07-24','%Y-%m-%d'), 'comments':[('+1', '+generators'),('-1', '-generators')]}
 
+for user in CMSSW_L2:
+  for cat in CMSSW_L2[user]:
+    if cat not in CMSSW_CATEGORIES:
+      CMSSW_CATEGORIES[cat] = []
 
 def external_to_package(repo_fullname):
   org, repo = repo_fullname.split("/",1)

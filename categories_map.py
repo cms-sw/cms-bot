@@ -150,6 +150,7 @@ CMSSW_CATEGORIES = {
     "DataFormats/Alignment",
     "DataFormats/HcalCalibObjects",
     "IORawData/CaloPatterns",
+    "IORawData/CSCCommissioning",
     "IORawData/DTCommissioning",
     "IORawData/HcalTBInputService",
     "IORawData/SiPixelInputSources",

@@ -150,7 +150,6 @@ CMSSW_CATEGORIES = {
     "DataFormats/Alignment",
     "DataFormats/HcalCalibObjects",
     "IORawData/CaloPatterns",
-    "IORawData/CSCCommissioning",
     "IORawData/DTCommissioning",
     "IORawData/HcalTBInputService",
     "IORawData/SiPixelInputSources",
@@ -363,6 +362,7 @@ CMSSW_CATEGORIES = {
     "EventFilter/SiStripChannelChargeFilter",
     "EventFilter/StorageManager",
     "EventFilter/Utilities",
+    "IORawData/CSCCommissioning",
     "IORawData/DaqSource",
   ],
   "db": [

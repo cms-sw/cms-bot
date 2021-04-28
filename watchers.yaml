@@ -1336,22 +1336,23 @@ mtosi:
 - TrackingTools
 - TrackPropagation
 ebrondol:
-  - DPGAnalysis/SiStripTools
-  - Geometry/Track
-  - Geometry/CommonTopologies
-  - RecoLocalTracker
-  - RecoPixelVertexing
-  - RecoTracker
-  - RecoVertex
-  - SimDataFormats/DigiSimLinks
-  - SimDataFormats/Track
-  - SimDataFormats/Vertex
-  - SimTracker
-  - SLHCUpgradeSimulations/Configuration
-  - TrackingTools
-  - TrackPropagation
-  - Validation/RecoTrack
-  - Validation/RecoVertex
+- Configuration/StandardSequences
+- DataFormats/HGCRecHit
+- RecoTracker
+- RecoHGCal
+- RecoLocalCalo/Configuration
+- RecoLocalCalo/HGC
+- RecoLocalCalo/HGCalRecAlgos
+- RecoLocalCalo/HGCalRecProducers
+- RecoParticleFlow/PFTracking
+- RecoParticleFlow/PFClusterProducer
+- SimDataFormats
+- TrackingTools
+- TrackPropagation
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- Validation/RecoTrack
 alberto-sanchez:
 - GeneratorInterface
 seemasharmafnal:

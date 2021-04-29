@@ -638,11 +638,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         check_extra_labels(first_line.lower(), extra_labels)
       continue
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
-      if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
+      if valid_commenter:
         ignore_tests = check_ignore_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
-      if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
+      if valid_commenter:
         enable_tests, ignore = check_enable_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):

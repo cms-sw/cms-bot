@@ -55,7 +55,7 @@ ALL_CHECK_FUNCTIONS = None
 EXTRA_TESTS = "gpu|threading|profiling|none"
 MULTILINE_COMMENTS_MAP = {
               "workflow(s|)(_gpu|_threading|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
-              "workflow(s|)(_profiling|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "PROFILING_WORKFLOWS"],
+              "workflow(s|)_profiling":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "PROFILING_WORKFLOWS"],
               "pull_request(s|)": [format('%(cms_pr)s(,%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),                  "PULL_REQUESTS"],
               "full_cmssw|full":  ['true|false',                                                                "BUILD_FULL_CMSSW"],
               "disable_poison":   ['true|false',                                                                "DISABLE_POISON"],

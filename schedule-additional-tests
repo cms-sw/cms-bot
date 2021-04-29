@@ -1,6 +1,8 @@
 #!/bin/bash -ex
 CONFIG_MAP=$(dirname $0)/config.map
-PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||' | tr ',' ' ')
+if [ "X$PROFILING_WORKFLOWS" == "X" ];then
+  PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||' | tr ',' ' ')
+fi
 for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;" | sed -e's/.*ADDITIONAL_TESTS=//;s/;.*//' | tr , '\n' | grep -v 'fwlite'`; do
   pfile="$WORKSPACE/auto-$x-properties"
   echo "Creating property file ${pfile}"

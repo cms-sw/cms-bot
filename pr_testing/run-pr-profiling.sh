@@ -1,7 +1,9 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
 
-PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
+if [ "X$PROFILNG_WORKFLOWS" == "X" ];then
+  PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
+fi
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 mkdir -p $WORKSPACE/upload/profiling/

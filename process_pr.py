@@ -283,7 +283,7 @@ def parse_extra_params(full_comment, repo):
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')
-      if not re.match(k, line_args[0], re.I): continue
+      if not re.match("^"+k+"$", line_args[0], re.I): continue
       param = pttrn[1]
       if not re.match(pttrn[0], line_args[1], re.I):
         xerrors["value"].append(line_args[0])

@@ -1,14 +1,27 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
 
-PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
+ALLOWED_PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |')
+
+if [ "X$PROFILING_WORKFLOWS" == "X" ];then
+  PROFILING_WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
+fi
+
+for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
+  if echo $ALLOWED_PROFILING_WORKFLOWS | grep -qw $PROFLING_WORKFLOW ; then
+    WORKFLOWS="$WORKFLOW $PROFILING_WORKFLOW"
+  else
+    echo "Workflow $PROFILING_WORKFLOW not in allowed workflows $ALLOWED_WORKFLOW_LIST"
+  fi
+done
+
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 mkdir -p $WORKSPACE/upload/profiling/
 echo "<html><head></head><title>Profiling results</title><body><ul>" > $WORKSPACE/upload/profiling/index.html
 LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
 export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
+for PROFILING_WORKFLOW in $WORKFLOWS;do
   export PROFILING_WORKFLOW
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true

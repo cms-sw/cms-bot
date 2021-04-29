@@ -100,6 +100,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "EXTRA_CMSSW_PACKAGES=${EXTRA_CMSSW_PACKAGES}" >> $OUTPUT_FILE
     echo "CONFIG_LINE=${CONFIG_LINE}" >> $OUTPUT_FILE
     echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $OUTPUT_FILE
+    echo "PROFILING_WORKFLOWS=${PROFILING_WORKFLOWS}" >> $OUTPUT_FILE
     CMSSW_QUEUE="${RELEASE_QUEUE}"
     mark_commit_status_all_prs "${PR_COMMIT_STATUS}" 'pending' -d "Tests scheduled ${RELEASE_FORMAT}/${SCRAM_ARCH}" -u 'https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/' || true
     COMMIT_STATUS_CONTEXT="unknown/release"

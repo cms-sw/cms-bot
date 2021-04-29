@@ -45,7 +45,7 @@ function git_clone_and_merge (){
           [ ! -z "${CMSDIST_TAG}" ] && BASE_BRANCH="${CMSDIST_TAG}"
         fi
         if  [ ! -d ${BASE_REPO_NAME} ]; then
-            git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH}
+            git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH} || git clone git@github.com:${BASE_REPO} -b ${BASE_BRANCH}
         fi
         pushd ${BASE_REPO_NAME}  >/dev/null 2>&1
             git pull  git://github.com/${TEST_REPO}.git ${TEST_BRANCH}

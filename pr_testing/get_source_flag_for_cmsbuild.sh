@@ -42,7 +42,7 @@ if [ ${PKG_TOOL_VERSION} -lt 32 ] ; then
     exit 1
 fi
 if ! [ -d "cmsdist" ]; then
-    git clone --depth 1 -b ${CMSDIST_BRANCH} https://github.com/cms-sw/cmsdist.git
+    git clone --depth 1 -b ${CMSDIST_BRANCH} git@github.com:cms-sw/cmsdist.git
 else
     # check if existing cmsdist repo points to correct branch
     pushd cmsdist
@@ -54,7 +54,7 @@ else
     popd
 fi
 if ! [ -d "pkgtools" ]; then
-    git clone --depth 1 -b ${PKG_TOOL_BRANCH} https://github.com/cms-sw/pkgtools.git
+    git clone --depth 1 -b ${PKG_TOOL_BRANCH} git@github.com:cms-sw/pkgtools.git
 fi
 if [ -e cmsdist/data/cmsswdata.txt ] ; then
   case ${PKG_REPO} in

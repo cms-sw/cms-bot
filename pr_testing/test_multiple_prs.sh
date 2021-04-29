@@ -292,10 +292,10 @@ TEST_DASGOCLIENT=false
 if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
-        git clone https://github.com/cms-sw/pkgtools -b $PKG_TOOL_BRANCH
+        git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
     fi
     if [ ! -d "cmsdist" ] ; then
-        git clone https://github.com/cms-sw/cmsdist -b $CMSDIST_TAG
+        git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
     fi
 
     echo_section "Building, testing and commenting status to github"
@@ -385,7 +385,7 @@ if ${BUILD_EXTERNAL} ; then
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
     config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
     if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
-      git clone https://github.com/cms-sw/cmssw-config scram-buildrules
+      git clone git@github.com:cms-sw/cmssw-config scram-buildrules
       pushd scram-buildrules
         git checkout ${config_tag}
       popd
@@ -532,7 +532,7 @@ RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 echo '{}' > $RECENT_COMMITS_FILE
 # use the branch name if necesary
 touch $WORKSPACE/changed-files
-if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 https://github.com/cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
+if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do

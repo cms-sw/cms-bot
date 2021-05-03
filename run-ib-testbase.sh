@@ -23,6 +23,9 @@ fi
 source \${IB_LAST_WEEK}/cmsset_default.sh  || true
 scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
 cd ${RELEASE_FORMAT}
+if [ -f config/SCRAM/linkexternal.py ] ; then
+  sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py
+fi
 eval \$(scram runtime -sh)
 export CMS_PATH=\${IB_LAST_WEEK}
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then

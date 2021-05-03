@@ -72,7 +72,6 @@ CMSSW_L2 = {
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
   "wajidalikhan":     ["pdmv"],
-  "christopheralanwest": ["alca"],
   "yuanchao":         ["alca"],
   "francescobrivio":  ["alca"],
   "malbouis":         ["alca"],

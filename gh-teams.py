@@ -12,7 +12,7 @@ from categories import CMSSW_L1, CMSSW_L2
 setdefaulttimeout(120)
 
 CMS_OWNERS = [ "davidlange6", "smuzaffar", "cmsbuild" ] + CMSSW_L1
-CMS_SDT    = [ "mrodozov" ]
+CMS_SDT    = [ "mrodozov", "iarspider" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
 REPO_OWNERS = {}

@@ -44,6 +44,7 @@ CMSSW_L2 = {
   "gouskos":          ["xpog"],
   "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
+  "iarspider":        ["externals"],
   "jfernan2":         ["dqm"],
   "cecilecaillol":    ["l1"],
   "jordan-martins":   ["pdmv"],

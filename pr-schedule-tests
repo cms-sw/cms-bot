@@ -111,7 +111,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
 else
     COMMIT_STATUS_CONTEXT="unknown/release"
     msg=""
-    if [ "${CMSSW_BR}" != ]    ; then msg=" for ${CMSSW_BR}" ;fi
-    if [ "${CMSDIST_TAG}" != ] ; then msg=" for cmsdist ${CMSDIST_TAG}" ;fi
+    if [ "${CMSSW_BR}" != "" ]    ; then msg=" for ${CMSSW_BR}" ;fi
+    if [ "${CMSDIST_TAG}" != "" ] ; then msg=" for cmsdist ${CMSDIST_TAG}" ;fi
     mark_commit_status_all_prs '' 'error' -d "Unable to find CMSSW IB${msg}." || true
 fi

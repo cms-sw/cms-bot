@@ -1321,7 +1321,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if test_params_comment:
       url = test_params_comment.html_url
       emoji = "+1"
-      if test_params_msg.startswith('ERRORS: '): emoji = "-1"
+      if 'ERRORS: ' in test_params_msg: emoji = "-1"
       emojis = get_comment_emojis(test_params_comment.id, repository)
       for e in emojis:
         if e['user']['login'].encode("ascii", "ignore") == cmsbuild_user:

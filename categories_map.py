@@ -973,6 +973,7 @@ CMSSW_CATEGORIES = {
     "L1Trigger/TrackFindingTracklet",
     "L1Trigger/TrackTrigger",
     "L1Trigger/TrackerDTC",
+    "L1Trigger/VertexFinder",
     "L1TriggerConfig/CSCTFConfigProducers",
     "L1TriggerConfig/DTTPGConfig",
     "L1TriggerConfig/DTTPGConfigProducers",

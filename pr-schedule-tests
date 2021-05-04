@@ -15,6 +15,7 @@ source $CMS_BOT_DIR/common/github_reports.sh
 
 #Search Config entry based on CMSSW branch/PR
 CMSSW_BR=""
+CMSDIST_TAG=""
 if [ "${RELEASE_FORMAT}" != "" ] ; then
   CMSSW_BR="$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|')"
   CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh "${CMSSW_BR}" "" "${ARCHITECTURE_FILTER}") || true
@@ -38,7 +39,9 @@ else
     fi
   fi
   if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -ne 1 ] ; then
-    CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "" "${ARCHITECTURE_FILTER}") || true
+    if [ "${CMSSW_BR}${CMSDIST_TAG}" = "" ] ; then
+      CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh  "" "" "${ARCHITECTURE_FILTER}") || true
+    fi
   fi
 fi
 
@@ -107,5 +110,8 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     mark_commit_status_all_prs '' 'success' -d 'All OK' || true
 else
     COMMIT_STATUS_CONTEXT="unknown/release"
-    mark_commit_status_all_prs '' 'error' -d 'Unable to find cmssw release to run tests.' || true
+    msg=""
+    if [ "${CMSSW_BR}" != ]    ; then msg=" for ${CMSSW_BR}" ;fi
+    if [ "${CMSDIST_TAG}" != ] ; then msg=" for cmsdist ${CMSDIST_TAG}" ;fi
+    mark_commit_status_all_prs '' 'error' -d "Unable to find CMSSW IB${msg}." || true
 fi

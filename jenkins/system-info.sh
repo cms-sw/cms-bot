@@ -164,3 +164,7 @@ if [ $(echo "${SHELL}" | grep '/csh\|/tcsh' | wc -l) -eq 0 ] ; then
 fi
 echo "DATA_LIMITS=${val}"
 
+#Extra labels
+if hostname | grep 'techlab-arm64-thunderx-02' ; then
+  SLAVE_LABELS="profiling ${SLAVE_LABELS}"
+fi

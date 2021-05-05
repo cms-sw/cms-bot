@@ -165,6 +165,6 @@ fi
 echo "DATA_LIMITS=${val}"
 
 #Extra labels
-if hostname | grep 'techlab-arm64-thunderx-02' ; then
-  SLAVE_LABELS="profiling ${SLAVE_LABELS}"
-fi
+case $(hostname -s) in
+  techlab-arm64-thunderx-02 | ibmminsky-* ) SLAVE_LABELS="profiling ${SLAVE_LABELS}";;
+esac

@@ -1,10 +1,21 @@
 #!/usr/bin/env python3
-#Profile runner for step3 and step4
+#Profile runner for reco step3 and step4
+#maintained by the CMS reco group
 import subprocess
 import glob
 import sys
 import os
 import shutil
+
+def fixIgProfExe():
+    ver = os.environ["CMSSW_VERSION"]
+
+    #affected by https://github.com/cms-sw/cmssw/issues/33297
+    if ver.startswith("CMSSW_11_3_0_pre5") or ver.startswith("CMSSW_11_3_0_pre6"):
+        runner_path = os.path.dirname(os.path.realpath(__file__))
+        return os.path.join(runner_path, "igprof-fixed.sh")
+
+    return "igprof"
 
 def prepareMatrixWF(workflow_number, num_events):
     cmd = [
@@ -60,27 +71,36 @@ def configureProfilingSteps(cmsdriver_lines, num_events):
     assert("step3" in cmsdriver_lines[2])
     assert("step4" in cmsdriver_lines[3])
 
-    cmsdriver_lines[0] = cmsdriver_lines[0] + "&> step1.log"
-    cmsdriver_lines[1] = cmsdriver_lines[1] + "&> step2.log"
-
-    step3 = cmsdriver_lines[2]
+    step1 = cmsdriver_lines[0] + " --suffix \"-j step1_JobReport.xml\""
+    step2 = cmsdriver_lines[1] + " --suffix \"-j step2_JobReport.xml\""
+    step3 = cmsdriver_lines[2] + " --suffix \"-j step3_JobReport.xml\""
+    step4 = cmsdriver_lines[3] + " --suffix \"-j step4_JobReport.xml\""
+    
     step3_tmi = step3 + " --customise=Validation/Performance/TimeMemoryInfo.py &> step3_TimeMemoryInfo.log"
     step3_ft = step3 + " --customise HLTrigger/Timer/FastTimer.customise_timer_service_singlejob --customise_commands \"process.FastTimerService.writeJSONSummary=True;process.FastTimerService.jsonFileName=\\\"step3_circles.json\\\"\" &> step3_FastTimerService.log"
-    step3_ig = step3 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step3_igprof.py &> step3_igprof_conf.txt"
+    step3_ig = step3 + " --customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step3_igprof.py &> step3_igprof_conf.txt"
 
-    igprof_s3_pp = wrapInRetry("igprof -d -pp -z -o step3_igprofCPU.gz -t cmsRun cmsRun step3_igprof.py &> step3_igprof_cpu.txt")
-    igprof_s3_mp = wrapInRetry("igprof -d -mp -z -o step3_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step3_igprof.py &> step3_igprof_mem.txt")
+    igprof_exe = fixIgProfExe()
+    igprof_s3_pp = wrapInRetry(igprof_exe + " -d -pp -z -o step3_igprofCPU.gz -t cmsRun cmsRun step3_igprof.py &> step3_igprof_cpu.txt")
+    igprof_s3_mp = wrapInRetry(igprof_exe + " -d -mp -z -o step3_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step3_igprof.py &> step3_igprof_mem.txt")
 
-    step4 = cmsdriver_lines[3]
     step4_tmi = step4 + " --customise=Validation/Performance/TimeMemoryInfo.py &> step4_TimeMemoryInfo.log"
     step4_ft = step4 + " --customise HLTrigger/Timer/FastTimer.customise_timer_service_singlejob --customise_commands \"process.FastTimerService.writeJSONSummary=True;process.FastTimerService.jsonFileName=\\\"step4_circles.json\\\"\" &> step4_FastTimerService.log"
-    step4_ig = step4 + "--customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step4_igprof.py &> step4_igprof_conf.txt"
+    step4_ig = step4 + " --customise Validation/Performance/IgProfInfo.customise --no_exec --python_filename step4_igprof.py &> step4_igprof_conf.txt"
 
-    igprof_s4_pp = wrapInRetry("igprof -d -pp -z -o step4_igprofCPU.gz -t cmsRun cmsRun step4_igprof.py &> step4_igprof_cpu.txt")
-    igprof_s4_mp = wrapInRetry("igprof -d -mp -z -o step4_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step4_igprof.py &> step4_igprof_mem.txt")
+    igprof_s4_pp = wrapInRetry(igprof_exe + " -d -pp -z -o step4_igprofCPU.gz -t cmsRun cmsRun step4_igprof.py &> step4_igprof_cpu.txt")
+    igprof_s4_mp = wrapInRetry(igprof_exe + " -d -mp -z -o step4_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step4_igprof.py &> step4_igprof_mem.txt")
 
-    new_cmdlist = (cmsdriver_lines[:2] +
-        [echoBefore(step3_tmi, "step3 TimeMemoryInfo"),
+    new_cmdlist = [
+        step1 + " &> step1.log",
+        step2 + " &> step2.log",
+        step3 + " &> step3.log",
+        step4 + " &> step4.log"
+    ]
+
+    #add step3 profiling
+    new_cmdlist += [
+        echoBefore(step3_tmi, "step3 TimeMemoryInfo"),
         echoBefore(step3_ft, "step3 FastTimer"),
         echoBefore(step3_ig, "step3 IgProf conf"),
         echoBefore(igprof_s3_pp, "step3 IgProf pp"),
@@ -91,8 +111,10 @@ def configureProfilingSteps(cmsdriver_lines, num_events):
         "mv IgProf.1.gz step3_igprofMEM.1.gz",
         "mv IgProf.{nev}.gz step3_igprofMEM.{nev}.gz".format(nev=int(num_events/2)),
         "mv IgProf.{nev}.gz step3_igprofMEM.{nev}.gz".format(nev=int(num_events-1)),
-        ] +
-        [echoBefore(step4_tmi, "step4 TimeMemoryInfo"),
+    ]
+    #add step4 profiling
+    new_cmdlist += [
+        echoBefore(step4_tmi, "step4 TimeMemoryInfo"),
         echoBefore(step4_ft, "step4 FastTimer"),
         echoBefore(step4_ig, "step4 IgProf conf"),
         echoBefore(igprof_s4_pp, "step4 IgProf pp"),
@@ -103,7 +125,7 @@ def configureProfilingSteps(cmsdriver_lines, num_events):
         "mv IgProf.1.gz step4_igprofMEM.1.gz",
         "mv IgProf.{nev}.gz step4_igprofMEM.{nev}.gz".format(nev=int(num_events/2)),
         "mv IgProf.{nev}.gz step4_igprofMEM.{nev}.gz".format(nev=int(num_events-1)),
-        ])
+    ]
 
     return new_cmdlist
 
@@ -131,12 +153,19 @@ def runProfiling(wfdir, runscript):
 
 def copyProfilingOutputs(wfdir, out_dir, num_events):
     for output in [
+        "cmdLog_profiling.sh",
         "step1.root",
         "step2.root",
         "step3.root",
         "step4.root",
+        "step1_JobReport.xml",
+        "step2_JobReport.xml",
+        "step3_JobReport.xml",
+        "step4_JobReport.xml",
         "step1.log",
         "step2.log",
+        "step3.log",
+        "step4.log",
         "step3_TimeMemoryInfo.log",
         "step3_circles.json",
         "step3_igprofCPU.gz",
@@ -192,5 +221,3 @@ if __name__ == "__main__":
     os.makedirs(args.out_dir)
 
     main(args.workflow, args.num_events, args.out_dir)
-
-

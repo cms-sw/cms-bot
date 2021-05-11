@@ -153,8 +153,6 @@ if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
   fi
 fi
 
-echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"
-
 #Search for Hard limits
 val=""
 if [ $(echo "${SHELL}" | grep '/csh\|/tcsh' | wc -l) -eq 0 ] ; then
@@ -164,3 +162,9 @@ if [ $(echo "${SHELL}" | grep '/csh\|/tcsh' | wc -l) -eq 0 ] ; then
 fi
 echo "DATA_LIMITS=${val}"
 
+#Extra labels
+case $(hostname -s) in
+  techlab-arm64-thunderx-02 | ibmminsky-* ) SLAVE_LABELS="profiling ${SLAVE_LABELS}";;
+esac
+
+echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"

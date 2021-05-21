@@ -21,7 +21,8 @@ mv $LOCALRT/llvm-analysis/* $WORKSPACE/llvm-analysis
 chmod -R a+r $WORKSPACE/llvm-analysis
 #if postprocess-scan-build.py exists then run it
 if [ -e ./postprocess-scan-build.py ] ; then
-  ./postprocess-scan-build.py $WORKSPACE/llvm-analysis/index.html > $WORKSPACE/llvm-analysis/index-bs.html 2>&1
+  cp $WORSPACE/index.html $WORKSPACE/index_full.html
+  ./postprocess-scan-build.py $WORKSPACE/llvm-analysis/index.html > $WORKSPACE/llvm-analysis/index-bs.html 2>$WORKSPACE/reports/postprocess.log
   mv $WORKSPACE/llvm-analysis/index-bs.html $WORKSPACE/llvm-analysis/index.html
 fi
 

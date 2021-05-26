@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 from __future__ import print_function
 
@@ -6,25 +6,31 @@ import glob
 import os
 import sys
 
-import xunitparser
+try:
+    from github import Github
+except ImportError:
+    # DMWM-WMCore-UnitTests and DMWM-WMCorePy3-UnitTests don't really push anything!
+    Github = None
 
-from github import Github
+import xunitparser
 
 testResults = {}
 
 unstableTests = []
 
 try:
-    with open ('code/test/etc/UnstableTests.txt') as unstableFile:
+    with open('code/test/etc/UnstableTests.txt') as unstableFile:
         for line in unstableFile:
             unstableTests.append(line.strip())
 except:
     print("Was not able to open list of unstable tests")
 
 # Parse all the various nose xunit test reports looking for changes
-
+filePattern = '*/nosetests-*.xml'
+if len(sys.argv) == 2:
+    filePattern = "*/%s-*.xml" % sys.argv[1]
 for kind, directory in [('base', './MasterUnitTests/'), ('test', './LatestUnitTests/')]:
-    for xunitFile in glob.iglob(directory + '*/nosetests-*.xml'):
+    for xunitFile in glob.iglob(directory + filePattern):
 
         ts, tr = xunitparser.parse(open(xunitFile))
         for tc in ts:
@@ -36,7 +42,7 @@ for kind, directory in [('base', './MasterUnitTests/'), ('test', './LatestUnitTe
 
 # Generate a Github report of any changes found
 
-issueID = None
+issueID, mode = None, None
 
 if 'ghprbPullId' in os.environ:
     issueID = os.environ['ghprbPullId']
@@ -44,6 +50,8 @@ if 'ghprbPullId' in os.environ:
 elif 'TargetIssueID' in os.environ:
     issueID = os.environ['TargetIssueID']
     mode = 'Daily'
+
+print("Comparing tests for issueID: {} in mode: {}".format(issueID, mode))
 
 message = 'Unit test changes for pull request %s:\n' % issueID
 if mode == 'Daily':
@@ -78,6 +86,11 @@ for testName, testResult in sorted(testResults.items()):
         message += "* %s was deleted. Prior status was %s\n" % (testName, testResult['base'])
 if failed:
     message += '\n\nPreviously working unit tests have failed!\n'
+
+if mode == 'Daily':
+    # Alan on 25/may/2021: then there is nothing else to be done
+    print(message)
+    sys.exit(0)
 
 gh = Github(os.environ['DMWMBOT_TOKEN'])
 codeRepo = os.environ.get('CODE_REPO', 'WMCore')

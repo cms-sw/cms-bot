@@ -1335,6 +1335,7 @@ CMSSW_CATEGORIES = {
     "RecoTracker/Configuration",
     "RecoTracker/ConversionSeedGenerators",
     "RecoTracker/DeDx",
+    "RecoTracker/DisplacedRegionalTracking",
     "RecoTracker/DebugTools",
     "RecoTracker/FinalTrackSelectors",
     "RecoTracker/GeometryESProducer",

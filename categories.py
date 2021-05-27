@@ -38,7 +38,6 @@ CMSSW_L2 = {
   "emeschi":          ["daq"],
   "ErnestaP":         ["dqm"],
   "fgolf":            ["xpog"],
-  "franzoni":         ["operations"],
   "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
   "gouskos":          ["xpog"],

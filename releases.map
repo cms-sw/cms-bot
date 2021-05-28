@@ -2954,3 +2954,4 @@ architecture=cc8_ppc64le_gcc9;label=CMSSW_12_0_0_pre2;type=Development;state=Ann
 architecture=slc7_ppc64le_gcc9;label=CMSSW_12_0_0_pre2;type=Development;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc900;label=CMSSW_12_0_0_pre2;type=Development;state=Announced;prodarch=1;
 architecture=cc8_amd64_gcc9;label=CMSSW_12_0_0_pre2;type=Development;state=Announced;prodarch=0;
+architecture=cc8_amd64_gcc9;label=CMSSW_11_3_1;type=Production;state=Announced;prodarch=0;

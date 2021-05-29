@@ -34,11 +34,11 @@ def add_categories_notes(notes, cache):
       print("Labels for %s: %s" % (pr_number, categories))
     note = notes[pr_number]
     for cat in categories:
-      note += " `%s` " % cat
+      note += " `%s`" % cat
 
     if 'release-notes' in cache[pr_number]['pr']:
-      rel_notes = "\n\n".join(cache[pr_number]['pr']['release-notes'])
-      note = note + "\n\n" + rel_notes
+      rel_notes = "\n".join(cache[pr_number]['pr']['release-notes'])
+      note = note + rel_notes
     notes[pr_number] = note
   return notes
 
@@ -109,6 +109,19 @@ if __name__ == "__main__":
     cmssw_notes_str += cmssw_notes[pr]+'\n'
   for pr in sorted(list(cmsdist_notes.keys()), reverse=True):
     cmsdist_notes_str += cmsdist_notes[pr]+'\n'
+  header = "#### Changes since %s:\n%s\n" %  \
+           ( prev_release , get_comparison_url( prev_release, curr_release , 'cmssw' ) )
+  cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \
+                   ( prev_cmsdist_tag , curr_cmsdist_tag , get_comparison_url( prev_cmsdist_tag, curr_cmsdist_tag , 'cmsdist' ) )
+  if opts.dryRun:
+    print(header)
+    print(cmssw_notes_str)
+    print(cmsdist_header)
+    print(cmsdist_notes_str)
+    print("--dry-run specified, quitting without modifying release.")
+    print('ALL_OK')
+    exit(0)
+
   request = Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
                             headers={"Authorization" : "token " + token})
   releases = json.loads(urlopen(request).read())
@@ -121,18 +134,5 @@ if __name__ == "__main__":
   request = Request(url, headers={"Authorization" : "token " + token})
   request.get_method = lambda: 'PATCH'
   print("Modifying release notes for %s at %s" % (curr_release, url))
-  if opts.dryRun:
-    print(cmssw_notes_str)
-    print("\n cmsdist: \n")
-    print(cmsdist_notes_str)
-    print("--dry-run specified, quitting without modifying release.")
-    print('ALL_OK')
-    exit(0)
-
-  header = "#### Changes since %s:\n%s\n" %  \
-           ( prev_release , get_comparison_url( prev_release, curr_release , 'cmssw' ) )
-
-  cmsdist_header = "\n#### CMSDIST Changes between Tags %s and %s:\n%s\n" % \
-                   ( prev_cmsdist_tag , curr_cmsdist_tag , get_comparison_url( prev_cmsdist_tag, curr_cmsdist_tag , 'cmsdist' ) )
   print(urlopen(request, json.dumps({"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str })).read())
   print('ALL_OK')

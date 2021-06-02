@@ -20,10 +20,12 @@ FWCore/ParameterSetReader
 FWCore/PluginManager
 FWCore/PrescaleService
 FWCore/PyDevParameterSet
+FWCore/Reflection
 FWCore/PythonParameterSet
 FWCore/SOA
 FWCore/ServiceRegistry
 FWCore/Services
+FWCore/SharedMemory
 FWCore/Skeletons
 FWCore/Sources
 FWCore/TFWLiteSelector

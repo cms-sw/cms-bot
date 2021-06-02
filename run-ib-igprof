@@ -40,7 +40,7 @@ for prof in ${PROFILES} ; do
     echo "processing file $f"
     OUTFILE=${f//.gz/.sql3}
     ERR=0
-    ( igprof-analyse -d -c $f --sqlite > $f.sql ) || ERR=1
+    ( igprof-analyse -v -d -g -c $f --sqlite > $f.sql ) || ERR=1
     ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 "$OUTFILE" > $f.log || ERR=1
 
 

@@ -40,6 +40,7 @@ while [ $(date +%s) -lt ${STIME} ] ; do
         ERR=1
       fi
       rm -rf $r
+      echo "$(date): ${rf}: $ERR" >> ${REQ}/status
       echo "EXIT:$ERR" >> ${RES}/${rf}.tmp
       mv ${RES}/${rf}.tmp ${RES}/${rf}
     else
@@ -49,7 +50,8 @@ while [ $(date +%s) -lt ${STIME} ] ; do
   done
   sleep 10
 done
-rm -f ${LOCK}
+touch ${REQ}/status ${LOCK}
 find ${REQ} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf 
 find ${RES} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf
 echo "$(date): ${XID} Stopped" >> ${REQ}/status
+rm -f ${LOCK} || true

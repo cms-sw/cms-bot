@@ -39,7 +39,7 @@ CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
 CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
-RELVAL_OPTS="[a-zA-Z0-9_-][a-zA-Z0-9_-]*"
+RELVAL_OPTS="^[-][a-zA-Z0-9_.,\s-]+$"
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
 CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
                       cmsorgs='|'.join(EXTERNAL_REPOS))
@@ -55,6 +55,7 @@ ALL_CHECK_FUNCTIONS = None
 EXTRA_TESTS = "gpu|threading|profiling|none"
 MULTILINE_COMMENTS_MAP = {
               "workflow(s|)(_gpu|_threading|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
+              "workflow(s|)_profiling":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "PROFILING_WORKFLOWS"],
               "pull_request(s|)": [format('%(cms_pr)s(,%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),                  "PULL_REQUESTS"],
               "full_cmssw|full":  ['true|false',                                                                "BUILD_FULL_CMSSW"],
               "disable_poison":   ['true|false',                                                                "DISABLE_POISON"],
@@ -65,7 +66,7 @@ MULTILINE_COMMENTS_MAP = {
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+:[a-zA-Z0-9_-]+",              "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
-              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [format('(%(opt)s)(\s+%(opt)s|)*', opt=RELVAL_OPTS), "EXTRA_MATRIX_ARGS",True]
+              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [RELVAL_OPTS,                                "EXTRA_MATRIX_ARGS",True]
               }
 
 def get_last_commit(pr):
@@ -161,7 +162,7 @@ def modify_comment(comment, match, replace, dryRun):
   return 0
 
 def get_assign_categories(line):
-  m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s]+)\s*$", line, re.I)
+  m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s-]+)\s*$", line, re.I)
   if m:
     assgin_type = m.group(1).lower()
     new_cats = []
@@ -282,7 +283,7 @@ def parse_extra_params(full_comment, repo):
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')
-      if not re.match(k, line_args[0], re.I): continue
+      if not re.match("^"+k+"$", line_args[0], re.I): continue
       param = pttrn[1]
       if not re.match(pttrn[0], line_args[1], re.I):
         xerrors["value"].append(line_args[0])
@@ -514,6 +515,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       bot_status = get_status(bot_status_name, commit_statuses)
     code_checks_status = [s for s in commit_statuses if s.context == "%s/code-checks" % cms_status_prefix]
     print("PR Statuses:",commit_statuses)
+    print(len(commit_statuses))
     last_commit_date = last_commit.committer.date
     print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)
     print("Latest commit message: ",last_commit.message.encode("ascii", "ignore"))
@@ -636,11 +638,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         check_extra_labels(first_line.lower(), extra_labels)
       continue
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
-      if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
+      if valid_commenter:
         ignore_tests = check_ignore_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
-      if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
+      if valid_commenter:
         enable_tests, ignore = check_enable_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
@@ -670,14 +672,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if valid_commenter:
       valid_multiline_comment , test_params, test_params_m = multiline_check_function(first_line, comment_lines, repository)
       if test_params_m:
-        test_params_msg = test_params_m
+        test_params_msg = str(comment.id) + ":" + test_params_m
         test_params_comment = comment
       elif valid_multiline_comment:
         test_params_comment = comment
         global_test_params = dict(test_params)
         if 'ENABLE_BOT_TESTS' in global_test_params:
           enable_tests = global_test_params['ENABLE_BOT_TESTS']
-        test_params_msg = dumps(global_test_params, sort_keys=True)
+        test_params_msg = str(comment.id) + ":" + dumps(global_test_params, sort_keys=True)
         continue
 
     if (cmssw_repo and CODE_CHECKS_REGEXP.match(first_line)):
@@ -1319,7 +1321,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if test_params_comment:
       url = test_params_comment.html_url
       emoji = "+1"
-      if test_params_msg.startswith('ERRORS: '): emoji = "-1"
+      if 'ERRORS: ' in test_params_msg: emoji = "-1"
       emojis = get_comment_emojis(test_params_comment.id, repository)
       for e in emojis:
         if e['user']['login'].encode("ascii", "ignore") == cmsbuild_user:

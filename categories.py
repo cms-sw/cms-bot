@@ -37,14 +37,13 @@ CMSSW_L2 = {
   "davidlange6":      ["operations"],
   "emeschi":          ["daq"],
   "ErnestaP":         ["dqm"],
-  "fabiocos":         ["operations"],
   "fgolf":            ["xpog"],
-  "franzoni":         ["operations"],
   "fwyzard":          ["heterogeneous", "hlt"],
   "ggovi":            ["db"],
   "gouskos":          ["xpog"],
   "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
+  "iarspider":        ["externals"],
   "jfernan2":         ["dqm"],
   "cecilecaillol":    ["l1"],
   "jordan-martins":   ["pdmv"],
@@ -73,11 +72,33 @@ CMSSW_L2 = {
   "ssekmen":          ["fastsim"],
   "tlampen":          ["alca"],
   "wajidalikhan":     ["pdmv"],
-  "christopheralanwest": ["alca"],
   "yuanchao":         ["alca"],
   "francescobrivio":  ["alca"],
   "malbouis":         ["alca"],
   CMSBUILD_USER:      ["tests" ],
+  # dpgs
+  "tsusa":            ["trk-dpg"],
+  "mmusich":          ["trk-dpg"],
+  "thomreis":         ["ecal-dpg"],
+  "mseidel42":        ["hcal-dpg"],
+  "georgia14":        ["hcal-dpg"],
+  "mileva":           ["muon-dpg"],
+  "battibass":        ["dt-dpg"],
+  "fcavallo":         ["dt-dpg"],
+  "namapane":         ["dt-dpg"],
+  "ptcox":            ["csc-dpg"],
+  "jhgoh":            ["rpc-dpg"],
+  "andresib":         ["rpc-dpg"],
+  "pavlov":           ["rpc-dpg"],
+  "kamon":            ["gem-dpg"],
+  "jlee":             ["gem-dpg"],
+  "fabferro":         ["ctpps-dpg"],
+  "jan-kaspar":       ["ctpps-dpg"],
+  "vavati":           ["ctpps-dpg"],
+  "rovere":           ["hgcal-dpg"],
+  "cseez":            ["hgcal-dpg"],
+  "fabiocos":         ["mtd-dpg", "operations"],
+  "parbol":           ["mtd-dpg"],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))
@@ -87,6 +108,10 @@ COMMENT_CONVERSION = {}
 COMMENT_CONVERSION['kpedro88']={'comments_before': datetime.strptime('2018-07-13','%Y-%m-%d'), 'comments':[('+1', '+upgrade')]}
 COMMENT_CONVERSION['qliphy']={'comments_before': datetime.strptime('2020-07-24','%Y-%m-%d'), 'comments':[('+1', '+generators'),('-1', '-generators')]}
 
+for user in CMSSW_L2:
+  for cat in CMSSW_L2[user]:
+    if cat not in CMSSW_CATEGORIES:
+      CMSSW_CATEGORIES[cat] = []
 
 def external_to_package(repo_fullname):
   org, repo = repo_fullname.split("/",1)

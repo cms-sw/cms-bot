@@ -292,10 +292,10 @@ TEST_DASGOCLIENT=false
 if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
-        git clone https://github.com/cms-sw/pkgtools -b $PKG_TOOL_BRANCH
+        git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
     fi
     if [ ! -d "cmsdist" ] ; then
-        git clone https://github.com/cms-sw/cmsdist -b $CMSDIST_TAG
+        git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
     fi
 
     echo_section "Building, testing and commenting status to github"
@@ -385,7 +385,7 @@ if ${BUILD_EXTERNAL} ; then
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
     config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
     if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
-      git clone https://github.com/cms-sw/cmssw-config scram-buildrules
+      git clone git@github.com:cms-sw/cmssw-config scram-buildrules
       pushd scram-buildrules
         git checkout ${config_tag}
       popd
@@ -532,7 +532,7 @@ RECENT_COMMITS_LOG_FILE=$WORKSPACE/git-log-recent-commits
 echo '{}' > $RECENT_COMMITS_FILE
 # use the branch name if necesary
 touch $WORKSPACE/changed-files
-if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 https://github.com/cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
+if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
@@ -719,7 +719,7 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
     curl -s -L https://patch-diff.githubusercontent.com/raw/${PR_REPO}/pull/${PR_NUMBER}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > $WORKSPACE/all-changed-files.txt
     cat $WORKSPACE/all-changed-files.txt
     echo ""
-    USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms*' scram b -k -j ${NCPU2} code-checks USER_CODE_CHECKS_FILE="$WORKSPACE/all-changed-files.txt" SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
+    USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms-esrget' scram b -k -j ${NCPU2} code-checks USER_CODE_CHECKS_FILE="$WORKSPACE/all-changed-files.txt" SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
     touch $WORKSPACE/llvm-analysis/cmsclangtidy.txt
     grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get' | sort -u > $WORKSPACE/llvm-analysis/cmsclangtidy.txt
     if [ $(cat $WORKSPACE/llvm-analysis/cmsclangtidy.txt | wc -l) -gt 0 ]; then
@@ -964,7 +964,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-    WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS_THREADING=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+    WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
     if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
     WF_LIST="-s $WF_LIST"
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
@@ -1003,11 +1003,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       echo "MATRIX_ARGS=-i all --maxSteps=2 -l ${WF_LIST} ${MTX_ARGS}" >> $WORKSPACE/run-relvals-input.prop
       echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop
     fi
-    for rtype in $(ls $WORKSPACE/run-relvals-*.prop 2>/dev/null | sed 's|.*/run-relvals-||;s|.prop$||') ; do
-      echo "TEST_FLAVOR=${rtype}" >> $WORKSPACE/run-relvals-${rtype}.prop
-      mark_commit_status_all_prs "relvals/${rtype}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
-    done
   fi
+  for rtype in $(ls $WORKSPACE/run-relvals-*.prop 2>/dev/null | sed 's|.*/run-relvals-||;s|.prop$||') ; do
+    echo "TEST_FLAVOR=${rtype}" >> $WORKSPACE/run-relvals-${rtype}.prop
+    mark_commit_status_all_prs "relvals/${rtype}" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  done
 fi
 
 if $TEST_DASGOCLIENT && $PRODUCTION_RELEASE ; then
@@ -1022,5 +1022,6 @@ fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling.prop
+  echo "PROFILING_WORKFLOWS=${PROFILING_WORKFLOWS}" >> $WORKSPACE/run-profiling.prop
 fi
 rm -f $WORKSPACE/test-env.txt

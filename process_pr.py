@@ -308,7 +308,7 @@ def parse_extra_params(full_comment, repo):
   return matched_extra_args
 
 def multiline_check_function(first_line, comment_lines, repository):
-  if not "test parameters" in first_line.lower():
+  if first_line.lower() not in ["test parameters", "test parameters:"]:
     return False, {}, ""
   extra_params = parse_extra_params(comment_lines, repository)
   print(extra_params)

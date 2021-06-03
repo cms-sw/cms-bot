@@ -2968,3 +2968,4 @@ architecture=cc8_ppc64le_gcc9;label=CMSSW_11_2_4_patch2;type=Production;state=An
 architecture=cc8_aarch64_gcc9;label=CMSSW_11_2_4_patch2;type=Production;state=Announced;prodarch=0;
 architecture=slc7_aarch64_gcc9;label=CMSSW_11_2_4_patch2;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc900;label=CMSSW_11_2_4_patch2;type=Production;state=Announced;prodarch=1;
+architecture=cc8_amd64_gcc9;label=CMSSW_11_2_4_patch2;type=Production;state=Announced;prodarch=0;

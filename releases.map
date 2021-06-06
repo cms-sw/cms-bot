@@ -2974,3 +2974,4 @@ architecture=slc7_amd64_gcc900;label=CMSSW_12_0_0_pre2_PYTHON3;type=Development;
 architecture=slc7_aarch64_gcc9;label=CMSSW_11_2_4_patch3;type=Production;state=Announced;prodarch=0;
 architecture=cc8_aarch64_gcc9;label=CMSSW_11_2_4_patch3;type=Production;state=Announced;prodarch=0;
 architecture=cc8_ppc64le_gcc9;label=CMSSW_11_2_4_patch3;type=Production;state=Announced;prodarch=0;
+architecture=cc8_amd64_gcc9;label=CMSSW_11_2_4_patch3;type=Production;state=Announced;prodarch=0;

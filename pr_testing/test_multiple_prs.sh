@@ -472,10 +472,11 @@ if ${BUILD_EXTERNAL} ; then
     else
       rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
       touch $CTOOLS/*.xml
-      scram setup self
       scram setup
       scram tool remove cmssw || true
+      scram setup self
       rm -rf $WORKSPACE/$CMSSW_IB/external
+      scram b clean
       scram build -r echo_CXX 
       CMSSW_DEP="*"
     fi

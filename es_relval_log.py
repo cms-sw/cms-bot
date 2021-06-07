@@ -82,7 +82,6 @@ def es_parse_log(logFile):
   payload = {}
   pathInfo = logFile.split('/')
   architecture = pathInfo[4]
-  if '_amd64_' not in architecture: return
   release = pathInfo[8]
   workflow = pathInfo[10].split('_')[0]
   step = pathInfo[11].split('_')[0]

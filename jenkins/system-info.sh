@@ -166,5 +166,5 @@ echo "DATA_LIMITS=${val}"
 case $(hostname -s) in
   techlab-arm64-thunderx-02 | ibmminsky-* ) SLAVE_LABELS="profiling ${SLAVE_LABELS}";;
 esac
-
+SLAVE_LABELS="disk-$(df -BG $WORKSPACE | tail -1 | awk '{print $2"-"$4}') ${SLAVE_LABELS}"
 echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"

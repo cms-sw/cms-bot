@@ -1,4 +1,4 @@
-ARCH=$(uname -m)/$(cmsos | cut -d_ -f1)
+ARCH=$(uname -m)/$(/cvmfs/cms.cern.ch/common/cmsos | cut -d_ -f1)
 THISDIR=$(cd $(dirname ${BASH_SOURCE:-${(%):-%N}}) >/dev/null 2>&1; /bin/pwd)/${ARCH}/
 SELECTED_VERSION=${1-current}
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then
@@ -14,4 +14,3 @@ export PATH=${THISDIR}/${SELECTED_VERSION}/bin${PATH:+:$PATH}
 export PYTHONPATH=${PY_PATH}${PYTHONPATH:+:$PYTHONPATH}
 export RUCIO_HOME=${THISDIR}/${SELECTED_VERSION}
 rucio --version
-

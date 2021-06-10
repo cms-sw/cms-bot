@@ -592,6 +592,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
         git cms-merge-topic --debug --ssh -u ${CMSSW_ORG}:${PR_NR}
       done
     popd
+    scram b -r clean >/dev/null 2>&1 || true
   fi
 fi
 
@@ -748,6 +749,7 @@ if [ -d $WORKSPACE/$CMSSW_IB/src.full ] ; then
     rm -rf src
     mv src.full src
   popd
+  scram b -r clean >/dev/null 2>&1 || true
 fi
 
 scram build clean

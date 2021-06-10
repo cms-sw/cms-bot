@@ -581,7 +581,20 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   else
     DO_MB_COMPARISON=false
   fi
+
+  # create a backup of src.full , to avoid running extra qa tests of all packages
+  if [ "${BUILD_EXTERNAL}-${CMSDIST_ONLY}" = "true-false" ] ; then
+    pushd $WORKSPACE/$CMSSW_IB
+      mv src src.full
+      mkdir src
+      for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
+        PR_NR=$(echo ${PR} | sed 's/.*#//' )
+        git cms-merge-topic --debug --ssh -u ${CMSSW_ORG}:${PR_NR}
+      done
+    popd
+  fi
 fi
+
 if ${BUILD_EXTERNAL} ; then
   pushd $WORKSPACE/cmsdist
     CMSDIST_REL_TAG=$(git tag | grep '^'ALL/${CMSSW_VERSION}/${SCRAM_ARCH}'$' || true)
@@ -594,11 +607,6 @@ if ${BUILD_EXTERNAL} ; then
   popd
 fi
 $CMS_BOT_DIR/report-pull-request-results MERGE_COMMITS --recent-merges $RECENT_COMMITS_FILE --report-url ${PR_RESULT_URL} --report-file ${RESULTS_DIR}/09-report.res ${REPORT_OPTS}
-
-# Don't do the following if we are only testing CMSDIST PR
-if [ "X$CMSDIST_ONLY" == Xfalse ]; then
-  git log --oneline --merges ${CMSSW_VERSION}..
-fi
 
 # #############################################
 # test compilation with Clang
@@ -732,6 +740,13 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
     echo 'END OF CLANG-TIDY CHECKS'
     echo '--------------------------------------'
   fi
+  popd
+fi
+
+if [ -d $WORKSPACE/$CMSSW_IB/src.full ] ; then
+  pushd $WORKSPACE/$CMSSW_IB
+    rm -rf src
+    mv src.full src
   popd
 fi
 

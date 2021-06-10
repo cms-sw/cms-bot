@@ -736,7 +736,11 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
 fi
 
 scram build clean
-if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true; fi
+if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
+  git cms-checkdeps -A -a || true
+elif ! ${BUILD_EXTERNAL} ; then
+  git cms-addpkg '*'
+fi
 ############################################
 # Force the run of DQM tests if necessary
 ############################################

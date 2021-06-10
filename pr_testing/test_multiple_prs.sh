@@ -736,7 +736,7 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
 fi
 
 scram build clean
-if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true; fi
+if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
 
 ############################################
 # Force the run of DQM tests if necessary
@@ -789,6 +789,21 @@ if $IS_DEV_BRANCH ; then
     echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> ${RESULTS_DIR}/header.txt
   fi
 fi
+
+##########################################
+# Checkout full cmssw is requested
+##########################################
+if [ "${BUILD_FULL_CMSSW}-${BUILD_EXTERNAL}" = "true-false" ] ; then
+  if [ -d  $LOCALRT/src/.git ] ; then
+    echo '/*/' >> $LOCALRT/src/.git/info/sparse-checkout
+    pushd $LOCALRT/src
+      git read-tree -mu HEAD
+    popd
+  else
+    git cms-addpkg '*'
+  fi
+fi
+
 # #############################################
 # test compilation with GCC
 # ############################################

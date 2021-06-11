@@ -40,6 +40,10 @@ UP_DIR="${CMSSW_BASE}/upload"
 rm -rf ${UP_DIR}
 mkdir ${UP_DIR}
 
+if ! python2 -c 'import yaml' >/dev/null 2&1 ; then
+  sed -i -e 's|/usr/bin/env python$|/usr/bin/env python3|' config/SCRAM/fix-code-checks-yaml.py
+fi
+
 curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq > ${UP_DIR}/all-changed-files.txt
 grep -v '^[^/]*/[^/]*/test/' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-checks-files.txt          || true
 grep -v '^[^/]*/[^/]*/data/' ${UP_DIR}/code-checks-files.txt > ${UP_DIR}/filename-code-checks-files.txt || true

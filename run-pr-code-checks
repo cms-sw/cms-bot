@@ -40,7 +40,7 @@ UP_DIR="${CMSSW_BASE}/upload"
 rm -rf ${UP_DIR}
 mkdir ${UP_DIR}
 
-if ! python2 -c 'import yaml' >/dev/null 2>&1 ; then
+if python3 -c 'import yaml' ; then
   sed -i -e 's|/usr/bin/env python$|/usr/bin/env python3|' config/SCRAM/fix-code-checks-yaml.py
 fi
 

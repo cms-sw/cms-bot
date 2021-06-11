@@ -6,8 +6,11 @@ This is primarily used to avoid merge conflicts.
 
 from __future__ import print_function
 import json
-import requests
 import sys
+if sys.version_info[0] == 2:
+  from commands import getstatusoutput as run_cmd
+else:
+  from subprocess import getstatusoutput as run_cmd
 
 
 def ascii_encode_dict(data):
@@ -44,9 +47,8 @@ if __name__ == '__main__':
 
     my_pr = sys.argv[1]
     my_branch = None
-    json_response = requests.get(
-        "https://raw.githubusercontent.com/cms-sw/cms-prs/master/cms-sw/cmssw/.other/files_changed_by_prs.json")
-    prs_dict = json.loads(json_response.text, object_hook=ascii_encode_dict)
+    e, o = run_cmd('curl -s -k -L https://raw.githubusercontent.com/cms-sw/cms-prs/master/cms-sw/cmssw/.other/files_changed_by_prs.json')
+    prs_dict = json.loads(o)
     if my_pr not in prs_dict and not "all":
         print("PR # ", my_pr, "does not exists", file=sys.stderr)
         exit(1)

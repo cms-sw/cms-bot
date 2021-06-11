@@ -68,7 +68,7 @@ pushd $BUILD_DIR
   # prepare cmssw.spec
   if [ "X$ENABLE_DEBUG" = X ] && [ "X$PATCH" = X ]; then
     perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' CMSDIST/cmssw.spec CMSDIST/cmssw-patch.spec CMSDIST/coral.spec
-    (cd CMSDIST ; git commit -m 'Coherent debug package setup.' cmssw.spec cmssw-patch.spec coral.spec)
+    (cd CMSDIST ; git commit -m 'Coherent debug package setup.' cmssw.spec cmssw-patch.spec coral.spec || true)
   fi
   sh -e PKGTOOLS/scripts/prepare-cmsdist $CMSSW_X_Y_Z $ARCHITECTURE > $WORKSPACE/prepare-cmsdist.log 2>&1
   echo DATE=`date`

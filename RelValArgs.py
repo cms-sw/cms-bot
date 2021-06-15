@@ -6,7 +6,7 @@ from os.path import dirname, abspath
 from _py2with3compatibility import run_cmd
 
 monitor_script = dirname(abspath(__file__))+"/monitor_workflow.py"
-e, o = run_cmd("python -c 'import psutil'")
+e, o = run_cmd("python2 -c 'import psutil'")
 if e:
   e, o = run_cmd("python3 -c 'import psutil'")
   if e:

@@ -105,10 +105,12 @@ class UnitTester(IBThreadBase):
             "cd " + self.startDir + ";scram tool info cmssw 2>&1 | grep CMSSW_BASE= | sed 's|^CMSSW_BASE=||'")
         if cmd: TEST_PATH = TEST_PATH + ":" + cmd + "/test/" + os.environ['SCRAM_ARCH']
         print(TEST_PATH)
+        default_timeout='3h'
+        if '_ASAN_' in os.environ["CMSSW_VERSION"]: default_timeout='8h'
         try:
             cmd = "cd " + self.startDir + "; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
             cmd += " if which timeout 2>/dev/null; then TIMEOUT=timeout; fi ; "
-            cmd += 'PATH=' + TEST_PATH + ':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j ' + str(MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
+            cmd += 'PATH=' + TEST_PATH + ':$PATH ${TIMEOUT+timeout '+ default_timeout +'} scram b -f -k -j ' + str(MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
             cmd += 'touch nodelete.done; ls -l nodelete.*'
             print('unitTest> Going to run ' + cmd)
             ret = runCmd(cmd)

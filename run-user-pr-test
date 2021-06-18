@@ -17,7 +17,7 @@ if [ "X${PULL_REQUEST}" != "X" ] ; then
   COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
   $CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
     -t JENKINS_TEST_URL \
-    -m "https://cmssdt.cern.ch/${JENKINS_PREFIX}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
+    -m "${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
 else
   cd userrepo
   if [ -f "${REPO_DIR}/check-for-valid-push" ] ; then
@@ -25,7 +25,7 @@ else
   fi
   GH_COMMIT=$(git log --pretty=format:'%h' -n 1)
   ISSUE_TITLE="[Jenkins CI] Testing commit: ${GH_COMMIT}"
-  $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -m "Jenkins tests started for ${GH_COMMIT} at $(date '+%Y/%m/%d %H:%M')@N@@N@Build logs are available at: https://cmssdt.cern.ch/cms-jenkins/job/${JOB_NAME}/${BUILD_NUMBER}/console"
+  $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -m "Jenkins tests started for ${GH_COMMIT} at $(date '+%Y/%m/%d %H:%M')@N@@N@Build logs are available at: ${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/console"
 fi
 voms-proxy-init --voms cms
 ${REPO_DIR}/run-pr-tests 2>&1 | tee -a $WORKSPACE/upload/run.log  || ERR=1

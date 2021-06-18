@@ -502,7 +502,7 @@ ecal-offline:
 - SimDataFormats/EcalTestBeam
 - SimG4CMS/Calo
 - SimGeneral/CaloAnalysis
-forthommel:
+fabferro:
 - Alignment/CTPPS
 - CalibPPS
 - CondCore/CTPPSPlugins

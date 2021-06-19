@@ -16,6 +16,7 @@ USE_DEV_CMSPKG=$7
 FORCE_BUILD_PATCH_RELEASE=$8
 CMSSW_TOOL_CONF_ONLY=$9
 DRY_RUN="${10}"
+FORCE_CMSDIST_TAG="${11}"
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
@@ -51,12 +52,12 @@ CMSDIST_REPO=cms-sw
 PKGTOOLS_REPO=cms-sw
 unset BUILD_PATCH_RELEASE
 eval `cat $CMS_BOT_DIR/config.map | grep -v 'DISABLED=' | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
-[ "${CMSDIST_OVERRIDE_TAG}" != "" ] && CMSDIST_TAG=${CMSDIST_OVERRIDE_TAG}
 [ "X$BUILD_PATCH_RELEASE" = "X1" ] && FORCE_BUILD_PATCH_RELEASE=true
 
 # We use git clone -b because this forces git to think that $CMSDIST_TAG, PKGTOOLS_TAG,
 # are both branches. See below to handle the case in which they are actually tags.
 
+[ "$FORCE_CMSDIST_TAG" != ""  ] && CMSDIST_TAG=$FORCE_CMSDIST_TAG
 [ "$FORCE_PKGTOOLS_TAG" != "" ] && PKGTOOLS_TAG=$FORCE_PKGTOOLS_TAG
 USE_DEV=""
 [ "$USE_DEV_CMSPKG" = "true" ] && USE_DEV="--use-dev"

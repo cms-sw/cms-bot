@@ -308,7 +308,7 @@ def parse_extra_params(full_comment, repo):
   return matched_extra_args
 
 def multiline_check_function(first_line, comment_lines, repository):
-  if not "test parameters" in first_line.lower():
+  if first_line.lower() not in ["test parameters", "test parameters:"]:
     return False, {}, ""
   extra_params = parse_extra_params(comment_lines, repository)
   print(extra_params)
@@ -1238,6 +1238,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           "%(l2s)s can you please review it and eventually sign?"
                           " Thanks.\n"
                           "%(watchers)s"
+                          "%(releaseManagers)s"
                           "cms-bot commands are listed <a href=\"http://cms-sw.github.io/cms-bot-cmssw-cmds.html\">here</a>\n",
                           msgPrefix=NEW_PR_PREFIX,
                           user=pr.user.login,
@@ -1245,6 +1246,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                           name=pr.user.name and "(%s)" % pr.user.name or "",
                           branch=pr.base.ref,
                           l2s=", ".join(missing_notifications),
+                          releaseManagers=releaseManagersMsg,
                           watchers=watchersMsg)
 
     messageUpdatedPR = format("Pull request #%(pr)s was updated.",

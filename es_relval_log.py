@@ -162,7 +162,6 @@ def es_parse_log(logFile):
     payload = es_parse_jobreport(payload,logFile)
   except Exception as e:
     print(e)
-  print("sending data for ",logFile)
   try:
     send_payload(index,document,id,json.dumps(payload))
   except:pass
@@ -179,7 +178,6 @@ def es_parse_log(logFile):
       dataset["protocol_opts"]=ds_items[1]
       dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1].strip()
       idx = sha1(id + ds).hexdigest()
-      print(dataset)
       send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))
 
 if __name__ == "__main__":

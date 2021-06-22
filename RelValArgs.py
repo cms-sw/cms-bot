@@ -3,12 +3,19 @@ from __future__ import print_function
 import re
 from os import environ, uname
 from os.path import dirname, abspath
-monitor_script = ""
-try:
-  import psutil
-  monitor_script = dirname(abspath(__file__))+"/monitor_workflow.py"
-except:
- print("Monitering of relval steps disabled: import psutils failed")
+from _py2with3compatibility import run_cmd
+
+monitor_script = dirname(abspath(__file__))+"/monitor_workflow.py"
+e, o = run_cmd("python2 -c 'import psutil'")
+if e:
+  e, o = run_cmd("python3 -c 'import psutil'")
+  if e:
+    print("Monitering of relval steps disabled: import psutils failed")
+    monitor_script = ""
+  else:
+    monitor_script = "python3 " + monitor_script
+else:
+  monitor_script = "python2 " + monitor_script
 
 RELVAL_KEYS = {"customiseWithTimeMemorySummary":[],
                "enableIMT":[],

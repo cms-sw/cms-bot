@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from os import system, getpid
 from sys import argv, exit
 from time import sleep, time
@@ -46,14 +46,15 @@ def monitor(stop):
     if not "step" in step: step="step1"
   else: step=stime
   data = []
+  sleep_time = 1
   while not stop():
     try:
       stats = update_stats(p)
       if stats['processes']==0: break
+      sleep_time = 1.0-stats['processes']*0.1
       stats['time'] = int(time()-stime)
       data.append(stats)
     except: pass
-    sleep_time = 1.0-stats['processes']*0.1
     if sleep_time>0.1: sleep(sleep_time)
   from json import dump
   stat_file =open("wf_stats-%s.json" % step,"w")

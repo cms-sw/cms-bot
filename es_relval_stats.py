@@ -62,7 +62,7 @@ for wf in o.split("\n"):
     if s in exit_codes: exit_code = exit_codes[s]
     while True:
       threads = [t for t in threads if t.is_alive()]
-      if(len(threads) >= jobs):sleep(0.5)
+      if(len(threads) >= jobs):sleep(0.1)
       else: break
     params={"cmsthreads":cmsThreads}
     t = threading.Thread(target=es_send_resource_stats, args=(release, arch, wfnum, s, sfile, hostname, exit_code, params))

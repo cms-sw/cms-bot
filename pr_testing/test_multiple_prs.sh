@@ -471,11 +471,12 @@ if ${BUILD_EXTERNAL} ; then
       fi
     else
       rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
-      touch $CTOOLS/*.xml
-      scram setup self
-      scram setup
+      touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml
       scram tool remove cmssw || true
+      scram setup
+      scram setup self
       rm -rf $WORKSPACE/$CMSSW_IB/external
+      scram b clean
       scram build -r echo_CXX 
       CMSSW_DEP="*"
     fi
@@ -615,8 +616,8 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
   CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
   echo $CLANG_USER_CMD > $WORKSPACE/buildClang.log
 
-  (eval $CLANG_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/buildClang.log
-  (eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/buildClang.log
+  (eval $CLANG_CMD && echo 'ALL_OK') >>$WORKSPACE/buildClang.log 2>&1 || true
+  (eval ${ANALOG_CMD})               >>$WORKSPACE/buildClang.log 2>&1 || true
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
@@ -698,7 +699,7 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   git cms-addpkg --ssh Utilities/StaticAnalyzers
   mkdir $WORKSPACE/llvm-analysis
   USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -disable-checker cms.FunctionDumper" \
-    scram b -k -j ${NCPU2} checker SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runStaticChecks.log
+    scram b -k -j ${NCPU2} checker SCRAM_IGNORE_SUBDIRS=test >>$WORKSPACE/llvm-analysis/runStaticChecks.log 2>&1 || true
   touch $WORKSPACE/llvm-analysis/esrget-sa.txt
   grep ': warning: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | grep edm::eventsetup::EventSetupRecord::get | sort -u > $WORKSPACE/llvm-analysis/esrget-sa.txt
   cp -R $WORKSPACE/$CMSSW_IB/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
@@ -735,7 +736,8 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
 fi
 
 scram build clean
-if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true; fi
+if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
+
 ############################################
 # Force the run of DQM tests if necessary
 ############################################
@@ -787,6 +789,21 @@ if $IS_DEV_BRANCH ; then
     echo "HEADER_CHECKS;${CHK_HEADER_LOG_RES},Header Consistency,See Log,headers_chks.log" >> ${RESULTS_DIR}/header.txt
   fi
 fi
+
+##########################################
+# Checkout full cmssw is requested
+##########################################
+if [ "${BUILD_FULL_CMSSW}-${BUILD_EXTERNAL}" = "true-false" ] ; then
+  if [ -d  $LOCALRT/src/.git ] ; then
+    echo '/*/' >> $LOCALRT/src/.git/info/sparse-checkout
+    pushd $LOCALRT/src
+      git read-tree -mu HEAD
+    popd
+  else
+    git cms-addpkg '*'
+  fi
+fi
+
 # #############################################
 # test compilation with GCC
 # ############################################
@@ -964,7 +981,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-    WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+    WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
     if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
     WF_LIST="-s $WF_LIST"
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop

@@ -94,7 +94,7 @@ class UnitTester(IBThreadBase):
         if (self.xType == 'GPU') or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
             cmd = "cd " + self.startDir + "; scram b -f echo_cuda_USED_BY | tr ' ' '\\n' | grep '^\\(self\\|cmssw\\)/' | cut -d/ -f2-3 > cuda_pkgs.txt; "
             cmd = cmd + " cat  cuda_pkgs.txt; mv src src.full;"
-            cmd = cmd + " for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram build -r echo_CXX"
+            cmd = cmd + " for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram b clean; scram build -r echo_CXX"
             ret = runCmd(cmd)
             if ret != 0:
                 print("ERROR when getting GPU unit-tests sources: cmd returned " + str(ret))
@@ -107,8 +107,7 @@ class UnitTester(IBThreadBase):
         print(TEST_PATH)
         try:
             cmd = "cd " + self.startDir + "; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
-            cmd += " if which timeout 2>/dev/null; then TIMEOUT=timeout; fi ; "
-            cmd += 'PATH=' + TEST_PATH + ':$PATH ${TIMEOUT+timeout 3h} scram b -f -k -j ' + str(MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
+            cmd += 'PATH=' + TEST_PATH + ':$PATH scram b -f -k -j ' + str(MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
             cmd += 'touch nodelete.done; ls -l nodelete.*'
             print('unitTest> Going to run ' + cmd)
             ret = runCmd(cmd)

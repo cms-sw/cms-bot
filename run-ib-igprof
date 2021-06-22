@@ -31,7 +31,7 @@ for prof in ${PROFILES} ; do
     fi
   done
   for hpwf in $PROFILING_WORKFLOWS; do
-    for s in step3 step4 ; do
+    for s in step3 step4 step5 ; do
       if [ $(ls -d ${hpwf}_*/${s}.root | wc -l) -eq 0 ] ; then continue ; fi
       edmEventSize -v ${hpwf}_*/${s}.root> ${s}_sizes_${hpwf}.txt
     done

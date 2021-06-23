@@ -723,25 +723,6 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   fi
   echo 'END OF STATIC CHECKS'
   echo '--------------------------------------'
-  if $IS_DEV_BRANCH ;then 
-    echo 'CMS_CLANG_TIDY_CHECKS;OK,CMS clang-tidy checks output,See clang-tidy log,llvm-analysis/runCMSClangTidyChecks.log' >> ${RESULTS_DIR}/clangtidy.txt
-    echo '--------------------------------------'
-    echo "Changed files:"
-    echo ""
-    cat $WORKSPACE/all-changed-files.txt
-    echo ""
-    USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_CODE_CHECKS='cms-esrget' scram b -k -j ${NCPU2} code-checks USER_CODE_CHECKS_FILE="$WORKSPACE/all-changed-files.txt" SCRAM_IGNORE_SUBDIRS=test 2>&1 | tee -a $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log
-    touch $WORKSPACE/llvm-analysis/cmsclangtidy.txt
-    grep ': warning: ' $WORKSPACE/llvm-analysis/runCMSClangTidyChecks.log | grep 'call of function EventSetupRecord::get' | sort -u > $WORKSPACE/llvm-analysis/cmsclangtidy.txt
-    if [ $(cat $WORKSPACE/llvm-analysis/cmsclangtidy.txt | wc -l) -gt 0 ]; then
-      echo "CMS_CLANG_TIDY_CHECKS_ESRGET;ERROR,CMS clang-tidy checks EventSetupRecord::get warnings,See clang-tidy warnings log,llvm-analysis/cmsclangtidy.txt" >> ${RESULTS_DIR}/clangtidy.txt
-      echo "**CMS Clang-Tidy warnings**: There are $(cat $WORKSPACE/llvm-analysis/cmsclangtidy.txt | wc -l) Clang-Tidy warnings. See ${PR_RESULT_URL}/llvm-analysis/cmsclangtidy.txt for details." >> ${RESULTS_DIR}/09-report.res
-    else
-      echo "CMS_CLANG_TIDY_CHECKS;OK,CMS clang-tidy checks output,See clang-tidy log,llvm-analysis/runCMSClangTidyChecks.log" >> ${RESULTS_DIR}/clangtidy.txt
-    fi
-    echo 'END OF CLANG-TIDY CHECKS'
-    echo '--------------------------------------'
-  fi
   popd
 fi
 

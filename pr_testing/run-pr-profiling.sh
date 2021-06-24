@@ -15,7 +15,9 @@ for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
   fi
 done
 
-git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
+#git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
+git clone --depth 1 https://github.com/silviodonato/profiling.git -b addstep5 #for testing
+
 mark_commit_status_all_prs 'profiling' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 mkdir -p $WORKSPACE/upload/profiling/
 echo "<html><head></head><title>Profiling results</title><body><ul>" > $WORKSPACE/upload/profiling/index.html

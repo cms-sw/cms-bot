@@ -29,7 +29,7 @@ pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
   fi
 popd
 
-TEST_ERRORS=`grep -i -E "ERROR .*" ${LOG}` || true
+TEST_ERRORS=`grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR'` || true
 GENERAL_ERRORS=`grep "ALL_OK" ${LOG}` || true
 
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then

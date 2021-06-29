@@ -9,7 +9,8 @@ python:
   - "2.7"
   - "3.6"
 install: "pip install PyYaml"
-script: 
+script:
+  - tests/test-duplicates.sh
   - PYTHONPATH=. python tests/test_watchers.py
   - PYTHONPATH=. python tests/test_config-map.py
   - python -m compileall $( ls | grep -v v_scheduler | grep -v venv)

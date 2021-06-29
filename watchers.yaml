@@ -925,11 +925,6 @@ threus:
 - Validation/Tracker
 thuer:
 - GeneratorInterface/SherpaInterface
-tracking-pog:
-- RecoTracker
-- RecoLocalTracker
-- TrackingTools
-- TrackPropagation
 trocino:
 - Alignment/MuonAlignment
 - Alignment/MuonAlignmentAlgorithms

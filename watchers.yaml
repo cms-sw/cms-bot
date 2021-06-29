@@ -1168,8 +1168,6 @@ vandreev11:
 - Validation/HGCalValidation
 - RecoLocalCalo/HGCalRecAlgos
 - RecoLocalCalo/HGCalRecProducers
-bsunanda:
-- Validation/HGCalValidation
 sethzenz:
 - SimCalorimetry/HGCalSimProducers
 - DataFormats/HGCDigi

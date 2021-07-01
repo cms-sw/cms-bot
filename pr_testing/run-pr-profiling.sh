@@ -55,8 +55,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   echo $(ls -d step5_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt | wc -l)
     edmEventSize -v $WORKSPACE/step5*.root > step5_sizes_${PROFILING_WORKFLOW}.txt || true
     ls -l 
-    ./compareProducts.sh step5_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt step5_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 > products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
-    echo "<li><a href=\"${PROFILING_WORKFLOW}/products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison miniAOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index.html
+    ./compareProducts.sh step5_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt step5_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 > products_nanoAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
+    echo "<li><a href=\"${PROFILING_WORKFLOW}/products_nanoAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison nanoAOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index.html
 #  fi #DEBUG
   popd
   pushd $WORKSPACE/$CMSSW_VERSION || true

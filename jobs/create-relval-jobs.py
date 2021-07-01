@@ -56,7 +56,7 @@ for t in thrds: t.join()
 print("Getting Workflow stats from ES.....")
 stats = {}
 release_cycle=str.lower(cmssw_ver.split("_X_")[0]+"_X")
-days_history=30
+days_history=10
 #if ('_ppc64le_' in arch) or ('_aarch64_' in arch) or ('cc8_' in arch) or ('gcc10' in arch):
 #  days_history=3
 print("Searching for last %s days data" % days_history)

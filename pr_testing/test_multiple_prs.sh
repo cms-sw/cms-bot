@@ -211,6 +211,14 @@ else
 fi
 if [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] ; then sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res ; fi
 
+#Incase week is changed but tests were run for last week
+IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|.* ||;s|/${SCRAM_ARCH}/.*||;s|.*/week||")
+if [ "${IB_WEEK}" != "${WEEK_NUM}" ] ; then
+  sed -i -e "s|/week${WEEK_NUM}/|/week${IB_WEEK}/|" ${RESULTS_DIR}/09-report.res
+  WEEK_NUM=${IB_WEEK}
+  CMS_WEEKLY_REPO=cms.week${WEEK_NUM}
+fi
+
 PKG_TOOL_BRANCH=$(echo ${CONFIG_LINE} | sed 's/^.*PKGTOOLS_TAG=//' | sed 's/;.*//' )
 PKG_TOOL_VERSION=$(echo ${PKG_TOOL_BRANCH} | cut -d- -f 2)
 if [[ ${PKG_TOOL_VERSION} -lt 32 && ! -z $(echo ${UNIQ_REPO_NAMES} | tr ' ' '\n' | grep -v -w cmssw | grep -v -w cmsdist | grep -v -w cms-bot ) ]] ; then

@@ -243,8 +243,7 @@ class LogFileAnalyzer(object):
         topLogString = self.topURL
 
         for key in keyList:
-            pkgList = self.errMap[key]
-            pkgList.sort(pkgCmp)
+            pkgList = sorted(self.errMap[key], key=lambda x: x.name())
             
             for pkg in pkgList:
                 if not pkg.name() in self.tagList: continue
@@ -267,8 +266,7 @@ class LogFileAnalyzer(object):
 
                 htmlFile.write("</tr>\n")    
 
-        pkgList = self.pkgOK
-        pkgList.sort(pkgCmp)
+        pkgList = sorted(self.pkgOK, key=lambda x: x.name())
         
         for pkg in pkgList:
             if not pkg.name() in self.tagList: continue

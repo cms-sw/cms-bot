@@ -594,6 +594,8 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   else
     DO_MB_COMPARISON=false
   fi
+elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
+  $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmssw -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs -o $RECENT_COMMITS_FILE
 fi
 if ${BUILD_EXTERNAL} ; then
   pushd $WORKSPACE/cmsdist

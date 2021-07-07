@@ -180,7 +180,7 @@ def get_recent_merges_message():
     extra_msg = []
     json_obj = json.load(open(options.recent_merges_file))
     for r in json_obj:
-      for pr in json_obj[r]: extra_msg.append(" - %s#%s @%s: %s" % (r, pr, json_obj[r][pr]['author'], json_obj[r][pr]['title']))
+      for pr in json_obj[r]: extra_msg.append(" - @%s %s#%s" % (json_obj[r][pr]['author'], r, pr, json_obj[r][pr]['author']))
 
     if extra_msg:
       message += '\n\nThe following merge commits were also included on top of IB + this PR '\

@@ -52,7 +52,7 @@ PYTHONPATH= PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg
 
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src
   tar xzf src-logs.tgz
-  python ${WORKSPACE}/cms-bot/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/${RELEASE_FORMAT}/new_FWLITE/"
+  ${CMS_PYTHON_TO_USE} ${WORKSPACE}/cms-bot/buildLogAnalyzer.py -r ${RELEASE_FORMAT}_FWLITE -p ${WORKSPACE}/cms/${ARCHITECTURE}/cms/fwlite/${RELEASE_FORMAT}_FWLITE/src/PackageList.cmssw --logDir ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src --topURL "http://cern.ch/cms-sdt/rc/${ARCHITECTURE}/www/${DOW}/${CMSSW_MAJOR_MINOR}-${DOW}-${HOUR}/${RELEASE_FORMAT}/new_FWLITE/"
   cd ../html
   zip -r ../html-logs.zip ./
   cd ..

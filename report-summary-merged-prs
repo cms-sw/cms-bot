@@ -672,6 +672,7 @@ def print_results(results):
             print(comp['compared_tags'])
 
             print('\t' + 'HLT Tests: ' + comp['hlt_tests'])
+            print('\t' + 'HEADER Tests:' + comp['check-headers'])
             print('\t' + 'DQM Tests: ' + comp['dqm_tests'])
             print('\t' + 'Static Checks: ' + comp['static_checks'])
             print('\t' + 'Valgrind: ' + comp['valgrind'])
@@ -1027,33 +1028,41 @@ def find_general_test_results_2(test_field, comparisons, magic_command):
         comp[test_field] = find_one_test_results(rel_name)
 
 
-def find_check_headers(comparisons, architecture):
-    def find_one_test_results(release_name):
-        path = CHECK_HEADERS_PATH.replace('RELEASE_NAME', release_name)
-        path = path.replace('ARCHITECTURE', architecture)
-        _, _, t_ret_code = get_output_command('test -f ' + path)
-        if t_ret_code == 0:
-            cmd = 'wc -l ' + path + '| cut -d \' \' -f1'
-            out, err, ret_code = get_output_command(cmd)
-            try:
-                # if the file is empty, means there was no issues with header checks
-                if int(out) == 0:
-                    result = 'passed'
-                else:
-                    result = 'error'
-            except:
-                print("ERROR running command: " + cmd)
-                print(out, err, ret_code)
-                result = 'error'  # this will make sure to check what is wrong with the file
-        else:
-            result = 'inprogress'
-        print(result)
-        return result
+def find_and_check_result(release_name, architecture, magic_cmd, res_cmd):
+    path = magic_cmd.replace('RELEASE_NAME', release_name)
+    path = path.replace('ARCHITECTURE', architecture)
+    _, _, t_ret_code = get_output_command('test -f ' + path)
+    if t_ret_code == 0:
+        cmd =  search % path
+        out, err, ret_code = get_output_command(cmd)
+        try:
+            # if the file is empty, means there was no issues with header checks
+            if int(out) == 0:
+                result = 'passed'
+            else:
+                result = 'error'
+        except:
+            print("ERROR running command: " + cmd)
+            print(out, err, ret_code)
+            result = 'error'  # this will make sure to check what is wrong with the file
+    else:
+        result = 'inprogress'
+    print(result)
+    return result
 
+
+def find_check_hlt(comparisons, architecture):
+    for comp in comparisons:
+        rel_name = comp['compared_tags'].split('-->')[1]
+        print("Looking for {0} results for {1}.".format('hlt', rel_name))
+        comp['hlt_tests'] = find_and_check_result(rel_name, architecture, CHECK_HLT_PATH, 'grep -c "exit status: *[1-9]" %s')
+
+
+def find_check_headers(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print("Looking for {0} results for {1}.".format('check-headers', rel_name))
-        comp['check-headers'] = find_one_test_results(rel_name)
+        comp['check-headers'] = find_and_check_result(rel_name, architecture, CHECK_HEADERS_PATH_PATH, 'wc -l %s | cut -d " " -f1')
 
 
 def find_static_results(comparisons, architecture):
@@ -1427,7 +1436,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     COMPARISON_BASELINE_TESTS_URL = 'https://cmssdt.cern.ch/' + JENKINS_ARTIFACTS_SUBDIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'
-    MAGIC_COMMAND_FIND_HLT_TESTS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/HLT-Validation/RELEASE_NAME'
+    CHECK_HLT_PATH = JENKINS_ARTIFACTS_DIR + '/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log'
     MAGIC_COMMAND_FIND_DQM_TESTS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/ib-dqm-tests/RELEASE_NAME'
     MAGIC_COMMAND_FIND_LIZARD = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/lizard/RELEASE_NAME/ARCHITECTURE'
     MAGIC_COMMAND_FIND_CHECK_HEADERS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE'
@@ -1566,9 +1575,7 @@ if __name__ == "__main__":
             for arch in additional_tests.keys():
                 tests_to_find = additional_tests[arch]
                 if 'HLT' in tests_to_find:
-                    find_general_test_results_2(
-                        'hlt_tests', release_queue_results['comparisons'], MAGIC_COMMAND_FIND_HLT_TESTS
-                    )
+                    find_check_hlt(release_queue_results['comparisons'], arch)
                 if 'static-checks' in tests_to_find:
                     find_static_results(release_queue_results['comparisons'], arch)
                 if 'material-budget' in tests_to_find:

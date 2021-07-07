@@ -259,7 +259,10 @@ class LogFileAnalyzer(object):
                 for pKey in keyList:
                     htmlFile.write("<td>")
                     if pKey in pkg.errSummary.keys():
-                        htmlFile.write( str(pkg.errSummary[pKey]).decode('ascii','ignore') )
+                        if sys.version_info[0]<3:
+                            htmlFile.write( str(pkg.errSummary[pKey]).decode('ascii','ignore') )
+                        else:
+                            htmlFile.write( str(pkg.errSummary[pKey]))
                     else:
                         htmlFile.write(' - ')
                     htmlFile.write("</td>")    
@@ -333,7 +336,10 @@ class LogFileAnalyzer(object):
             newLine = newLine.replace('<','&lt;').replace('>','&gt;')
             if lineNo in pkg.errLines.keys():
                 newLine = '<class='+self.styleClass[pkg.errLines[lineNo]]+'> <b> '+newLine+' </b></class>'
-            htmlFile.write(newLine.decode('ascii','ignore'))
+            if sys.version_info[0]<3:
+                htmlFile.write(newLine.decode('ascii','ignore'))
+            else:
+                htmlFile.write(newLine)
         htmlFile.write("</pre>\n")    
         htmlFile.write("</body>\n")    
         htmlFile.write("</html>\n")        

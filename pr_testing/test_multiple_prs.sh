@@ -596,6 +596,8 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   fi
 elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmssw -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs -o $RECENT_COMMITS_FILE
+  echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
+  git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 fi
 if ${BUILD_EXTERNAL} ; then
   pushd $WORKSPACE/cmsdist

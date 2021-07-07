@@ -373,6 +373,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   create_test_property = False
   repo_cache = {repository: repo}
   packages = set([])
+  package_categories = {}
   add_external_category = False
   signing_categories = set([])
   new_package_message = ""
@@ -446,9 +447,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     print("Following packages affected:")
     print("\n".join(packages))
-    pkg_categories = set([category for package in packages
-                              for category, category_packages in list(CMSSW_CATEGORIES.items())
-                              if package in category_packages])
+    for package in packages:
+        package_categories[package] = set([])
+        for category, category_packages in list(CMSSW_CATEGORIES.items()):
+            if package in category_packages:
+                package_categories[package].add(category)
+                pkg_categories.add(category)
     signing_categories.update(pkg_categories)
 
     # For PR, we always require tests.
@@ -1205,6 +1209,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          base_branch=base_release_branch)
 
     # We do not want to spam people for the old pull requests.
+    pkg_msg = []
+    for pkg in packages:
+        if pkg in package_categories:
+            pkg_msg.append("%s (%s)" % (pkg, ", ".join(package_categories[pkg])))
+        else:
+            pkg_msg.append(pkg+" (new)")
     messageNewPR = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                         " %(name)s for %(branch)s.\n\n"
                         "It involves the following packages:\n\n"
@@ -1222,7 +1232,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         name=pr.user.name and "(%s)" % pr.user.name or "",
                         branch=pr.base.ref,
                         l2s=", ".join(missing_notifications),
-                        packages="\n".join(packages),
+                        packages="\n".join(pkg_msg),
                         new_package_message=new_package_message,
                         watchers=watchersMsg,
                         releaseManagers=releaseManagersMsg,

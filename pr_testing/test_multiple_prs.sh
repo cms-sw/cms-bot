@@ -495,6 +495,11 @@ if ${BUILD_EXTERNAL} ; then
     fi
     if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
     git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+    if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
+      pushd $WORKSPACE/$CMSSW_IB/src
+        git checkout $(git branch | grep  '^  *CMSSW_')
+      popd
+    fi
     rm -rf $WORKSPACE/$CMSSW_IB/external
     scram b clean
     scram b -r echo_CXX

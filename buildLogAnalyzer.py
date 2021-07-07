@@ -181,8 +181,7 @@ class LogFileAnalyzer(object):
         start = time.time()
         self.makeHTMLSummaryPage()
         for key in self.errorKeys:
-            pkgList = self.errMap[key]
-            pkgList.sort()
+            pkgList = sorted(self.errMap[key],key=lambda x: x.name())
             for pkg in pkgList:
                 self.makeHTMLLogFile(pkg)
         for pkg in self.pkgOK:

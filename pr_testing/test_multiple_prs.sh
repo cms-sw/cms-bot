@@ -530,7 +530,7 @@ eval $(scram run -sh)
 set -x
 echo $LD_LIBRARY_PATH | tr ':' '\n'
 BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
-ANALOG_CMD="scram build outputlog && ($CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
+ANALOG_CMD="scram build outputlog && (${CMS_PYTHON_TO_USE} $CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
 
 cd $WORKSPACE/$CMSSW_IB/src
 git config --global --replace-all merge.renamelimit 2500 || true

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # encoding: utf-8
 """
 Created by Andreas Pfeiffer on 2008-08-05.
@@ -181,8 +181,7 @@ class LogFileAnalyzer(object):
         start = time.time()
         self.makeHTMLSummaryPage()
         for key in self.errorKeys:
-            pkgList = self.errMap[key]
-            pkgList.sort()
+            pkgList = sorted(self.errMap[key],key=lambda x: x.name())
             for pkg in pkgList:
                 self.makeHTMLLogFile(pkg)
         for pkg in self.pkgOK:
@@ -243,8 +242,7 @@ class LogFileAnalyzer(object):
         topLogString = self.topURL
 
         for key in keyList:
-            pkgList = self.errMap[key]
-            pkgList.sort(pkgCmp)
+            pkgList = sorted(self.errMap[key], key=lambda x: x.name())
             
             for pkg in pkgList:
                 if not pkg.name() in self.tagList: continue
@@ -260,15 +258,17 @@ class LogFileAnalyzer(object):
                 for pKey in keyList:
                     htmlFile.write("<td>")
                     if pKey in pkg.errSummary.keys():
-                        htmlFile.write( str(pkg.errSummary[pKey]).decode('ascii','ignore') )
+                        if sys.version_info[0]<3:
+                            htmlFile.write( str(pkg.errSummary[pKey]).decode('ascii','ignore') )
+                        else:
+                            htmlFile.write( str(pkg.errSummary[pKey]))
                     else:
                         htmlFile.write(' - ')
                     htmlFile.write("</td>")    
 
                 htmlFile.write("</tr>\n")    
 
-        pkgList = self.pkgOK
-        pkgList.sort(pkgCmp)
+        pkgList = sorted(self.pkgOK, key=lambda x: x.name())
         
         for pkg in pkgList:
             if not pkg.name() in self.tagList: continue
@@ -335,7 +335,10 @@ class LogFileAnalyzer(object):
             newLine = newLine.replace('<','&lt;').replace('>','&gt;')
             if lineNo in pkg.errLines.keys():
                 newLine = '<class='+self.styleClass[pkg.errLines[lineNo]]+'> <b> '+newLine+' </b></class>'
-            htmlFile.write(newLine.decode('ascii','ignore'))
+            if sys.version_info[0]<3:
+                htmlFile.write(newLine.decode('ascii','ignore'))
+            else:
+                htmlFile.write(newLine)
         htmlFile.write("</pre>\n")    
         htmlFile.write("</body>\n")    
         htmlFile.write("</html>\n")        

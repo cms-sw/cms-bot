@@ -94,7 +94,6 @@ pushd CMSDIST
   fi
   # We checkout a few files from the default branch in any case.
   curl -L -s -k https://raw.githubusercontent.com/cms-sw/cmsdist/HEAD/cmssw-ib.spec > cmssw-ib.spec
-  sed -i -e 's|Source: .*/buildLogAnalyzer.py|Source: https://raw.githubusercontent.com/cms-sw/cms-bot/master/buildLogAnalyzer.py|' cmssw-ib.spec
 popd
 
 CMS_TAG=""

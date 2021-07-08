@@ -297,6 +297,7 @@ fi
 
 PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
+SKIP_STATIC_CHECKS=false
 if ${BUILD_EXTERNAL} ; then
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
     if [ ! -d "pkgtools" ] ; then
@@ -487,6 +488,7 @@ if ${BUILD_EXTERNAL} ; then
       scram b clean
       scram build -r echo_CXX 
       CMSSW_DEP="*"
+      SKIP_STATIC_CHECKS=true
     fi
     set +x ; eval $(scram runtime -sh) ; set -x
     echo $LD_LIBRARY_PATH
@@ -627,7 +629,7 @@ if cat $CONFIG_MAP | grep $CMSSW_QUEUE | grep PRS_TEST_CLANG= | grep SCRAM_ARCH=
   NEED_CLANG_TEST=true
 fi
 
-if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X ]; then
+if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_PR" != X -a "$SKIP_STATIC_CHECKS" = "false" ]; then
   #first, add the command to the log
   CLANG_USER_CMD="USER_CUDA_FLAGS='--expt-relaxed-constexpr' USER_CXXFLAGS='-Wno-register -fsyntax-only' scram build -k -j ${NCPU2} COMPILER='llvm compile'"
   CLANG_CMD="scram b vclean && ${CLANG_USER_CMD} BUILD_LOG=yes"
@@ -672,7 +674,7 @@ fi
 #Do QA checks
 #Code Rules
 QA_RES="NOTRUN"
-if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" ]; then # If a CMSSW specific PR was specified
+if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" -a "$SKIP_STATIC_CHECKS" = "false" ]; then # If a CMSSW specific PR was specified
   mkdir $WORKSPACE/codeRules
   cmsCodeRulesChecker.py -s $WORKSPACE/codeRules -r 1,3 || true
   QA_RES="OK"
@@ -709,7 +711,7 @@ fi
 #
 # Static checks
 #
-if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" ]; then
+if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true" -a "$SKIP_STATIC_CHECKS" = "false" ]; then
   echo 'STATIC_CHECKS;OK,Static checks outputs,See Static Checks,llvm-analysis' >> ${RESULTS_DIR}/static.txt
   echo '--------------------------------------'
   pushd $WORKSPACE/$CMSSW_IB

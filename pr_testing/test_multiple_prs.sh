@@ -495,6 +495,11 @@ if ${BUILD_EXTERNAL} ; then
     fi
     if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
     git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+    if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
+      pushd $WORKSPACE/$CMSSW_IB/src
+        git checkout $(git branch | grep  '^  *CMSSW_')
+      popd
+    fi
     rm -rf $WORKSPACE/$CMSSW_IB/external
     scram b clean
     scram b -r echo_CXX
@@ -589,6 +594,10 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   else
     DO_MB_COMPARISON=false
   fi
+elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
+  $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmssw -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs -o $RECENT_COMMITS_FILE
+  echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
+  git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 fi
 if ${BUILD_EXTERNAL} ; then
   pushd $WORKSPACE/cmsdist

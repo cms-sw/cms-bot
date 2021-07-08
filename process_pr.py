@@ -1212,9 +1212,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     pkg_msg = []
     for pkg in packages:
         if pkg in package_categories:
-            pkg_msg.append("%s (%s)" % (pkg, ", ".join(package_categories[pkg])))
+            pkg_msg.append("- %s (%s)" % (pkg, ", ".join(package_categories[pkg])))
         else:
-            pkg_msg.append(pkg+" (new)")
+            pkg_msg.append("- %s (new)" % pkg)
     messageNewPR = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                         " %(name)s for %(branch)s.\n\n"
                         "It involves the following packages:\n\n"

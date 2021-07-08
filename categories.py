@@ -38,7 +38,7 @@ CMSSW_L2 = {
   "emeschi":          ["daq"],
   "ErnestaP":         ["dqm"],
   "fgolf":            ["xpog"],
-  "fwyzard":          ["heterogeneous", "hlt"],
+  "fwyzard":          ["heterogeneous"],
   "ggovi":            ["db"],
   "gouskos":          ["xpog"],
   "GurpreetSinghChahal":  ["generators"],

@@ -78,6 +78,10 @@ rm -rf $BASE_IB; scram project $BASE_IB
 set +x
 cd $BASE_IB
 eval `scram run -sh`
+if [ "${PULL_REQUEST}" = "cms-sw/cmssw#34440" ] ; then
+  git cms-merge-topic -v 34440
+  scram b -j 20
+fi
 set -x
 if $DQM_COMPARISON_TEST ; then
   if [ ! -e $CMSSW_RELEASE_BASE/src/DQMServices/FileIO/scripts/compareDQMOutput.py ] ; then

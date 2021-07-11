@@ -79,7 +79,7 @@ set +x
 cd $BASE_IB
 eval `scram run -sh`
 if [ "${PULL_REQUEST}" = "cms-sw/cmssw#34440" ] ; then
-  git cms-merge-topic -v 34440
+  git cms-merge-topic -u 34440
   scram b -j 20
 fi
 set -x

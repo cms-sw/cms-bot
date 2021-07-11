@@ -78,20 +78,19 @@ rm -rf $BASE_IB; scram project $BASE_IB
 set +x
 cd $BASE_IB
 eval `scram run -sh`
-if [ "${PULL_REQUEST}" = "cms-sw/cmssw#34440" ] ; then
-  git cms-merge-topic -u 34440
-  scram b -j 20
+if [ $(echo "${RELEASE_FORMAT}" | grep '^CMSSW_12_0_' | wc -l) -gt 0 ] ; then
+  COMPARISON_PRS="${COMPARISON_PRS} cms-sw/cmssw#34440"
+fi
+if [ "$COMPARISON_PRS" != "" ] ; then
+  for pr in $(echo $COMPARISON_PRS | tr ' ' '\n' | grep "/cmssw#" | sed 's|.*#||') ; do
+    git cms-merge-topic --debug --ssh -u cms-sw:${pr}
+  done
 fi
 set -x
 if $DQM_COMPARISON_TEST ; then
   if [ ! -e $CMSSW_RELEASE_BASE/src/DQMServices/FileIO/scripts/compareDQMOutput.py ] ; then
     DQM_COMPARISON_TEST=false
   fi
-fi
-if [ "$COMPARISON_PRS" != "" ] ; then
-  for pr in $(echo $COMPARISON_PRS | tr ' ' '\n' | grep "/cmssw#" | sed 's|.*#||') ; do
-    git cms-merge-topic --debug --ssh -u cms-sw:${pr}
-  done
 fi
 if [ -e $CMSSW_RELEASE_BASE/src/Utilities/RelMon ] ; then
   if [ ! -e src/Utilities/RelMon ] ; then

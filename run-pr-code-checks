@@ -70,7 +70,8 @@ pushd $CMSSW_BASE/src
     echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
     echo -e '\nERROR: Build errors found during clang-tidy run.' >> ${UP_DIR}/code-checks.md
     echo '```' >> ${UP_DIR}/code-checks.md
-    grep 'SCRAM error: ' ${UP_DIR}/code-checks.log | tail -12 >> ${UP_DIR}/code-checks.md || true
+    grep 'SCRAM error: ' ${UP_DIR}/code-checks.log >> ${UP_DIR}/code-checks.md || true
+    grep 'Parse Error ' -A 1 ${UP_DIR}/code-checks.log >> ${UP_DIR}/code-checks.md || true
     echo '```' >> ${UP_DIR}/code-checks.md
     if ! $DRY_RUN ; then
       send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}

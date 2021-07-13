@@ -54,6 +54,7 @@ echo ""
 
 git cms-init --upstream-only
 DSIZE=0
+source $CMS_BOT_DIR/jenkins-artifacts
 pushd $CMSSW_BASE/src
   git checkout $(git branch  | grep -v '^[*]' | grep 'CMSSW_' | head -1)
   THRDS=""
@@ -91,8 +92,6 @@ pushd $CMSSW_BASE/src
     done
   fi
 popd
-
-source $CMS_BOT_DIR/jenkins-artifacts
 
 #If we have any non-tests changed files
 touch ${UP_DIR}/code-checks.patch

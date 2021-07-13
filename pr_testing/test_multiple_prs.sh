@@ -601,6 +601,11 @@ elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
   git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 fi
+if ! scram build -r echo_CXX $WORKSPACE/build.log 2>&1 ; then
+    prepare_upload_results
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "BuildRules: There might be errors in BuildFile, please see the build.log"
+    exit 0
+fi
 if ${BUILD_EXTERNAL} ; then
   pushd $WORKSPACE/cmsdist
     CMSDIST_REL_TAG=$(git tag | grep '^'ALL/${CMSSW_VERSION}/${SCRAM_ARCH}'$' || true)
@@ -745,7 +750,7 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   popd
 fi
 
-scram build clean || true
+scram build clean
 if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
 
 ############################################

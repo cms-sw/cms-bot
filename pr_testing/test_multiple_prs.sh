@@ -486,7 +486,7 @@ if ${BUILD_EXTERNAL} ; then
       scram setup self
       rm -rf $WORKSPACE/$CMSSW_IB/external
       scram b clean
-      scram build -r echo_CXX 
+      scram build -r echo_CXX
       CMSSW_DEP="*"
       SKIP_STATIC_CHECKS=true
     fi
@@ -600,6 +600,13 @@ elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   $SCRIPTPATH/get-merged-prs.py -r cms-sw/cmssw -s $CMSSW_VERSION -e HEAD -g $CMSSW_BASE/src/.git -c $WORKSPACE/cms-prs -o $RECENT_COMMITS_FILE
   echo "##### CMSSW Extra merges #####" >> $RECENT_COMMITS_LOG_FILE
   git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
+fi
+if ! scram build -r echo_CXX > $WORKSPACE/build.log 2>&1 ; then
+    echo "**ERROR**: SCRAM failed to generate build rules, there might be syntax errors in modified BuildFiles." > ${RESULTS_DIR}/10-report.res
+    echo "SCRAM_BUILD_CXX;ERROR,SCRAM Build Rules,See Log,build.log" > ${RESULTS_DIR}/scramb.txt
+    prepare_upload_results
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "There might be syntax errors in BuildFiles."
+    exit 0
 fi
 if ${BUILD_EXTERNAL} ; then
   pushd $WORKSPACE/cmsdist
@@ -785,7 +792,7 @@ if $IS_DEV_BRANCH ; then
     fi
     COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='${IGNORE_HDRS}' scram build -k -j ${NCPU} check-headers"
     echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
-    (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/headers_chks.log 2>&1
+    (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/headers_chks.log 2>&1 || true
     echo 'END OF HEADER CHEKS LOG'
     TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/headers_chks.log` || true
     GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/headers_chks.log` || true
@@ -826,8 +833,8 @@ if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/co
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
-(eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
-(eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/build.log
+(eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/build.log 2>&1 || true
+(eval ${ANALOG_CMD}) >>$WORKSPACE/build.log 2>&1 || true
 if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${WORKSPACE}/build-logs ; fi
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'

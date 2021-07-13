@@ -84,6 +84,7 @@ if [ $(echo "${RELEASE_FORMAT}" | grep '^CMSSW_12_0_' | wc -l) -gt 0 ] ; then
 fi
 if [ "$COMPARISON_PRS" != "" ] ; then
   for pr in $(echo $COMPARISON_PRS | tr ' ' '\n' | grep "/cmssw#" | sed 's|.*#||') ; do
+    echo "git cms-merge-topic --debug --ssh -u cms-sw:${pr}"
     git cms-merge-topic --debug --ssh -u cms-sw:${pr}
   done
 fi

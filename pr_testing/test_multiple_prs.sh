@@ -603,7 +603,7 @@ elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
 fi
 if ! scram build -r echo_CXX > $WORKSPACE/build.log 2>&1 ; then
     prepare_upload_results
-    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "BuildRules: There might be errors in BuildFile, please see the build.log"
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "ERROR: There might be syntax errors in BuildFiles, please see the build.log"
     exit 0
 fi
 if ${BUILD_EXTERNAL} ; then

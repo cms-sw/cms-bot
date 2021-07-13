@@ -21,7 +21,7 @@ if [ ! -e ${LOCALRT}/src/Configuration/PyReleaseValidation ] ; then
   CMSSW_PKG_BUILD="Configuration/PyReleaseValidation"
 fi
 if [ "X${CMSSW_PKG_BUILD}" != "X" ] ; then
-  (cd ${LOCALRT}/src && scram build ${CMSSW_PKG_BUILD} && scram build do_python_symlink)
+  (cd ${LOCALRT}/src && scram build ${CMSSW_PKG_BUILD} && scram build do_python_symlink) || true
 fi
 cd ${LOCALRT}/src/Configuration/PyReleaseValidation/python
 for pyFile in $(find ${LOCALRT}/src/Configuration/PyReleaseValidation/python -name '*.py' -type f) ; do

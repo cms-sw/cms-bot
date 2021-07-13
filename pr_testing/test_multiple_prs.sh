@@ -486,7 +486,7 @@ if ${BUILD_EXTERNAL} ; then
       scram setup self
       rm -rf $WORKSPACE/$CMSSW_IB/external
       scram b clean
-      scram build -r echo_CXX 
+      scram build -r echo_CXX
       CMSSW_DEP="*"
       SKIP_STATIC_CHECKS=true
     fi
@@ -745,7 +745,7 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   popd
 fi
 
-scram build clean
+scram build clean || true
 if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
 
 ############################################
@@ -785,7 +785,7 @@ if $IS_DEV_BRANCH ; then
     fi
     COMPILATION_CMD="scram b vclean && USER_CHECK_HEADERS_IGNORE='${IGNORE_HDRS}' scram build -k -j ${NCPU} check-headers"
     echo $COMPILATION_CMD > $WORKSPACE/headers_chks.log
-    (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/headers_chks.log 2>&1
+    (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/headers_chks.log 2>&1 || true
     echo 'END OF HEADER CHEKS LOG'
     TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/headers_chks.log` || true
     GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/headers_chks.log` || true
@@ -826,8 +826,8 @@ if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/co
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
-(eval $COMPILATION_CMD && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/build.log
-(eval ${ANALOG_CMD}) 2>&1 | tee -a $WORKSPACE/build.log
+(eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/build.log 2>&1 || true
+(eval ${ANALOG_CMD}) >>$WORKSPACE/build.log 2>&1 || true
 if [ -d ${BUILD_LOG_DIR}/html ] ; then mv ${BUILD_LOG_DIR}/html ${WORKSPACE}/build-logs ; fi
 echo 'END OF BUILD LOG'
 echo '--------------------------------------'

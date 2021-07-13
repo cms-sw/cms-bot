@@ -602,8 +602,10 @@ elif [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
   git log ${CMSSW_IB}..HEAD --merges 2>&1 | tee -a $RECENT_COMMITS_LOG_FILE
 fi
 if ! scram build -r echo_CXX > $WORKSPACE/build.log 2>&1 ; then
+    echo "**ERROR**: SCRAM failed to generate build rules, there might be syntax errors in modified BuildFiles." > ${RESULTS_DIR}/10-report.res
+    echo "SCRAM_BUILD_CXX;ERROR,SCRAM Build Rules,See Log,build.log" > ${RESULTS_DIR}/scramb.txt
     prepare_upload_results
-    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "ERROR: There might be syntax errors in BuildFiles, please see the build.log"
+    mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "There might be syntax errors in BuildFiles."
     exit 0
 fi
 if ${BUILD_EXTERNAL} ; then

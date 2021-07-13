@@ -90,7 +90,8 @@ if $CODE_CHECKS ; then
       echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
       echo -e '\nERROR: Build errors found during clang-tidy run.' >> ${UP_DIR}/code-checks.md
       echo '```' >> ${UP_DIR}/code-checks.md
-      grep -A 3 ': error: \|gmake: \*\*\*' ${UP_DIR}/code-checks.log | tail -24 | sed "s|$CMSSW_BASE/src/||" >> ${UP_DIR}/code-checks.md
+      grep -A 3 ': error: \|gmake: \*\*\*' ${UP_DIR}/code-checks.log | tail -12 | sed "s|$CMSSW_BASE/src/||" >> ${UP_DIR}/code-checks.md || true
+      grep 'SCRAM error: ' ${UP_DIR}/code-checks.log | tail -12 >> ${UP_DIR}/code-checks.md || true
       echo '```' >> ${UP_DIR}/code-checks.md
       if ! $DRY_RUN ; then
         send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
@@ -115,7 +116,22 @@ if $CODE_FORMAT ; then
   if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
     cp ${UP_DIR}/all-changed-files.txt ${UP_DIR}/code-format-files.txt
     if [ -s ${UP_DIR}/code-format-files.txt ] ; then
-      scram build -k -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="${UP_DIR}/code-format-files.txt" > ${UP_DIR}/code-format.log 2>&1
+      ERR=false
+      scram build -k -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="${UP_DIR}/code-format-files.txt" > ${UP_DIR}/code-format.log 2>&1 || ERR=true
+      if $ERR ; then
+        echo '-code-checks' > ${UP_DIR}/code-checks.md
+        echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
+        echo -e '\nERROR: Build errors found during clang-format run.' >> ${UP_DIR}/code-checks.md
+        echo '```' >> ${UP_DIR}/code-checks.md
+        grep -A 3 ': error: \|gmake: \*\*\*' ${UP_DIR}/code-format.log | tail -12 | sed "s|$CMSSW_BASE/src/||" >> ${UP_DIR}/code-checks.md || true
+        grep 'SCRAM error: ' ${UP_DIR}/code-format.log | tail -12 >> ${UP_DIR}/code-checks.md || true
+        echo '```' >> ${UP_DIR}/code-checks.md
+        if ! $DRY_RUN ; then
+          send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
+          ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+        fi
+        exit 0
+      fi
       pushd $CMSSW_BASE/src
         git diff > ${UP_DIR}/code-format.patch
         if [ -s ${UP_DIR}/code-format.patch ] ; then

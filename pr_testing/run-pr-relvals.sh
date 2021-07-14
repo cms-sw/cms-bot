@@ -67,7 +67,7 @@ else
     echo "TEST_FLAVOR=${TEST_FLAVOR}" >> $TRIGGER_COMPARISON_FILE
     echo "CMSSW_CVMFS_PATH=${CMSSW_CVMFS_PATH}" >> $TRIGGER_COMPARISON_FILE
     echo "UPLOAD_UNIQ_ID=${UPLOAD_UNIQ_ID}" >> $TRIGGER_COMPARISON_FILE
-    echo "COMPARISON_RELEASE=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE
+    echo "COMPARISON_RELEASE=$COMPARISON_REL" >> $TRIGGER_COMPARISON_FILE
     mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -d "Waiting for tests to start"
   else
     mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run: Disabled for this arch/flavor" ${MARK_OPTS}

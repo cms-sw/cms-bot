@@ -180,13 +180,17 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
       fi
     fi
     for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" |  awk '{print $2":"$3}' | sort -r | sed 's|:.*$||') ;  do
-      if [ "$(echo $SCRAM_REL | sed 's|_X_.*|_X|')" = "$COMP_QUEUE" ] ; then
-        COMP_REL=$SCRAM_REL
-      else
-        COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
-      fi
       if $DO_COMPARISON ; then
-        has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
+        if has_jenkins_artifacts ib-baseline-tests/$SCRAM_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt ; then
+          COMP_REL=$SCRAM_REL
+        else
+          if [ "$(echo $SCRAM_REL | sed 's|_X_.*|_X|')" = "$COMP_QUEUE" ] ; then
+            COMP_REL=$SCRAM_REL
+          else
+            COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+          fi
+          has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
+        fi
       fi
       CMSSW_IB=$SCRAM_REL
       COMPARISON_ARCH=$COMP_ARCH

@@ -755,7 +755,8 @@ fi
 scram build clean
 if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
 [ -e $LOCALRT/src/Utilities/RelMon ] || git cms-addpkg Utilities/RelMon
-sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' $LOCALRT/src/Utilities/RelMon/python/directories2html.py
+sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' $LOCALRT/src/Utilities/RelMon/python/directories2html.py || true
+grep -R -l 'To the DQM GUI' $LOCALRT/src/Utilities/RelMon | grep -v '\.pyc$' | xargs --no-run-if-empty sed -i -e '/To the DQM GUI/d' || true
 
 ############################################
 # Force the run of DQM tests if necessary

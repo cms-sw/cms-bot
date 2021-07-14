@@ -393,7 +393,7 @@ if [ -e results/files ] ; then
   done
 fi
 
-mkdir $WORKSPACE/testsResults
+mkdir -p $WORKSPACE/testsResults
 sed -i "s/^COMPARISON${TEST_FLAVOR_STR};RUNNING,/COMPARISON${TEST_FLAVOR_STR};$BUILD_NUMBER,/g" ${RESULTS_FILE}
 mv ${RESULTS_FILE} $WORKSPACE/testsResults/
 

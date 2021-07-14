@@ -753,11 +753,9 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
 fi
 
 scram build clean
-if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then
-  git cms-checkdeps -A -a || true
-  [ -e $LOCALRT/src/Utilities/RelMon ] || git cms-addpkg Utilities/RelMon
-  sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' $LOCALRT/src/Utilities/RelMon/python/directories2html.py
-fi
+if [ "X$BUILD_FULL_CMSSW" != "Xtrue" -a -d $LOCALRT/src/.git ] ; then git cms-checkdeps -A -a || true ; fi
+[ -e $LOCALRT/src/Utilities/RelMon ] || git cms-addpkg Utilities/RelMon
+sed -i -e 's|\.\./RelMonSummary.html|RelMonSummary.html|' $LOCALRT/src/Utilities/RelMon/python/directories2html.py
 
 ############################################
 # Force the run of DQM tests if necessary

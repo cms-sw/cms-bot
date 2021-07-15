@@ -18,6 +18,9 @@ source ${CMS_BOT_DIR}/common/github_reports.sh
 PR_COMMIT="$(wget -q -O- https://api.github.com/repos/cms-sw/cmssw/pulls/${PULL_REQUEST} | grep 'api.github.com/repos/cms-sw/cmssw/statuses/' | grep '"href"' | tail -1 | sed 's|.*/||;s|".*||')"
 $DRY_RUN || mark_commit_status_pr -r "cms-sw/cmssw" -c "${PR_COMMIT}" -C "${CONTEXT_PREFIX}/code-checks" -s "pending" -u "${BUILD_URL}" -d "Running"
 
+#disable script build rules to avoid copying newly added files in PATH
+sed -i -e '/scripts+scripts/d' $CMSSW_BASE/config/BuildFile.xml
+
 if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
   mv $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected $CMSSW_BASE/old-tools
   cp -r ${CMSSW_TOOL_CONF}/tools/selected $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected

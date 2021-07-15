@@ -61,7 +61,7 @@ done
 WORKFLOWS_TO_COMPARE=`echo $WORKFLOWS_TO_COMPARE | sed 's/^.//'`
 
 if $DQM_COMPARISON_TEST ; then
-  if [ ! -e $CMSSW_RELEASE_BASE/src/DQMServices/FileIO/scripts/compareDQMOutput.py -o -e $CMSSW_BASE/src/DQMServices/FileIO/scripts/compareDQMOutput.py ] ; then
+  if ! which compareDQMOutput.py >/dev/null 2>&1 ; then
     DQM_COMPARISON_TEST=false
   fi
 fi

@@ -8,6 +8,7 @@ source ${PR_TESTING_DIR}/_helper_functions.sh
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
 NCPU=$(${COMMON}/get_cpu_number.sh)
+if [ "${DRY_RUN}" = "true" ] ; then AUTO_POST_MESSAGE="false"; fi
 NO_POST=''
 DRY_RUN=''
 if [ "X$AUTO_POST_MESSAGE" != Xtrue ]; then

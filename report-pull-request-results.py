@@ -30,7 +30,7 @@ parser.add_option("--commit", action="store", type="string", dest="commit", help
 
 (options, args) = parser.parse_args()
 
-def openloglog(log, mode='r'):
+def openlog(log, mode='r'):
   return open(log, mode=mode, encoding='utf-8', errors='ignore')
 #
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'

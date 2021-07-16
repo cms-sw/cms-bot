@@ -314,7 +314,7 @@ def send_message_pr(message):
   if options.no_post_mesage:
     print('Not posting message (dry-run): \n ', message)
     return
-  rfile = openlog(options.report_file, "a"):
+  rfile = openlog(options.report_file, "a")
   rfile.write(message+"\n")
   rfile.close()
   return

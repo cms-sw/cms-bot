@@ -38,7 +38,7 @@ def get_wf_error_msg(out_file, filename=True):
   error_lines = ''
   if exists( out_file ):
     reading = False
-    for line in open( out_file ):
+    for line in open( out_file, 'rt'):
       if reading:
         error_lines += line
         if '----- End Fatal Exception' in line:
@@ -86,7 +86,7 @@ def parse_workflow_info( parts, relval_dir ):
 def read_matrix_log_file(matrix_log):
   workflows_with_error = [ ]
   relval_dir = join(dirname (matrix_log), "runTheMatrix-results")
-  for line in open( matrix_log ):
+  for line in open( matrix_log, 'rt'):
     line = line.strip()
     if 'ERROR executing' in line:
       print('processing: %s' % line) 
@@ -146,7 +146,7 @@ def read_addon_log_file(unit_tests_file):
   cnt = 0
   max_show = 3
   extra_msg = False
-  for line in open(unit_tests_file):
+  for line in open(unit_tests_file, 'rt'):
     line = line.strip()
     if( ': FAILED -' in line):
       cnt += 1
@@ -178,7 +178,7 @@ def get_recent_merges_message():
   message = ""
   if options.recent_merges_file:
     extra_msg = []
-    json_obj = json.load(open(options.recent_merges_file))
+    json_obj = json.load(open(options.recent_merges_file, 'rt'))
     for r in json_obj:
       for pr in json_obj[r]: extra_msg.append(" - @%s %s#%s" % (json_obj[r][pr]['author'], r, pr))
 
@@ -224,7 +224,7 @@ def read_build_log_file(build_log, isClang=False , toolconf=False):
   lines_before = ['']
   lines_after = ['']
   error_found = False
-  for line in open(build_log):
+  for line in open(build_log, 'rt'):
     line_number += 1
     if (not error_found):
       lines_before.append(line)
@@ -248,7 +248,7 @@ def read_build_log_file(build_log, isClang=False , toolconf=False):
   err_type = "compilation warning"
   if error_found: err_type = "compilation error"
   if isClang:
-    cmd = open( build_log ).readline()
+    cmd = open( build_log, 'rt' ).readline()
     message += '\n## Clang Build\n\nI found '+err_type+' while trying to compile with clang. '
     message += 'Command used:\n```\n' + cmd +'\n```\n'
   elif toolconf:
@@ -274,7 +274,7 @@ def read_build_log_file(build_log, isClang=False , toolconf=False):
 def read_unit_tests_file(unit_tests_file):
   errors_found=''
   err_cnt = 0
-  for line in open(unit_tests_file):
+  for line in open(unit_tests_file, 'rt'):
     if( 'had ERRORS' in line):
       errors_found += line
       err_cnt += 1
@@ -291,7 +291,7 @@ def read_unit_tests_file(unit_tests_file):
 def read_python3_file(python3_file):
   errors_found=''
   err_cnt = 0
-  for line in open(python3_file):
+  for line in open(python3_file, 'rt'):
     if( ' Error compiling ' in line):
       errors_found += line
       err_cnt += 1
@@ -311,7 +311,7 @@ def send_message_pr(message):
   if options.no_post_mesage:
     print('Not posting message (dry-run): \n ', message)
     return
-  with open(options.report_file, "a") as rfile:
+  with open(options.report_file, "at") as rfile:
     rfile.write(message+"\n")
   return
 
@@ -321,7 +321,7 @@ def send_message_pr(message):
 #
 def add_to_report(message):
   if not message: return
-  with open(options.report_file, "a") as rfile:
+  with open(options.report_file, "at") as rfile:
     rfile.write(message+"\n")
   return
 
@@ -332,7 +332,7 @@ def get_base_message():
 def send_comparison_ready_message(comparison_errors_file, wfs_with_das_inconsistency_file, missing_map ):
   message = '\n## Comparison Summary\n\n'
   wfs_with_errors = ''
-  for line in open( comparison_errors_file ):
+  for line in open( comparison_errors_file, 'rt' ):
     line = line.rstrip()
     parts = line.split( ';' )
     wf = parts[ 0 ]
@@ -343,7 +343,7 @@ def send_comparison_ready_message(comparison_errors_file, wfs_with_das_inconsist
     error_info = COMPARISON_INCOMPLETE_MSG.format( workflows=wfs_with_errors )
     message += '\n\n' + error_info
 
-  wfs_das_inconsistency = open( wfs_with_das_inconsistency_file ).readline().rstrip().rstrip(',').split( ',' )
+  wfs_das_inconsistency = open( wfs_with_das_inconsistency_file, 'rt' ).readline().rstrip().rstrip(',').split( ',' )
 
   if '' in wfs_das_inconsistency:
     wfs_das_inconsistency.remove( '' )
@@ -354,7 +354,7 @@ def send_comparison_ready_message(comparison_errors_file, wfs_with_das_inconsist
 
   if missing_map and exists (missing_map):
     missing = []
-    for line in open(missing_map):
+    for line in open(missing_map, 'rt'):
       line = line.strip()
       if line: missing.append("   * "+line)
     if missing:

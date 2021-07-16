@@ -64,6 +64,7 @@ CMSSW_L2 = {
   "rekovic":          ["l1"],
   "rvenditti":        ["dqm"],
   "santocch":         ["analysis"],
+  "Saptaparna":       ["generators"],
   "sbein":            ["fastsim"],
   "SiewYan":          ["generators"], 
   "silviodonato":     ["operations"],

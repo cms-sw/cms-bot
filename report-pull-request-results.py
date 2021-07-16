@@ -32,6 +32,9 @@ parser.add_option("--commit", action="store", type="string", dest="commit", help
 
 def openlog(log, mode='r'):
   return open(log, mode=mode, encoding='utf-8', errors='ignore')
+
+def writelog(ref, line):
+  ref.write(line.decode('utf-8') if sys.version_info[0] < 3 else line)
 #
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #
@@ -314,9 +317,8 @@ def send_message_pr(message):
   if options.no_post_mesage:
     print('Not posting message (dry-run): \n ', message)
     return
-  rfile = openlog(options.report_file, "a")
-  rfile.write(message+"\n")
-  rfile.close()
+  with openlog(options.report_file, "a") as rfile:
+    write(rfile, message+"\n")
   return
 
 
@@ -325,9 +327,8 @@ def send_message_pr(message):
 #
 def add_to_report(message):
   if not message: return
-  rfile =openlog(options.report_file, "a")
-  rfile.write(message+"\n")
-  rfile.close()
+  with openlog(options.report_file, "a") as rfile:
+    write(rfile, message+"\n")
   return
 
 def get_base_message():

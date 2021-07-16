@@ -318,7 +318,7 @@ def send_message_pr(message):
     print('Not posting message (dry-run): \n ', message)
     return
   with openlog(options.report_file, "a") as rfile:
-    write(rfile, message+"\n")
+    writelog(rfile, message+"\n")
   return
 
 
@@ -328,7 +328,7 @@ def send_message_pr(message):
 def add_to_report(message):
   if not message: return
   with openlog(options.report_file, "a") as rfile:
-    write(rfile, message+"\n")
+    writelog(rfile, message+"\n")
   return
 
 def get_base_message():

@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 from __future__ import print_function
+from io import open
 from os.path import expanduser, dirname, join, exists, abspath
 from optparse import OptionParser
 from _py2with3compatibility import run_cmd

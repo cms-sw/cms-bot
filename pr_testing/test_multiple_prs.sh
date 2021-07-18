@@ -407,10 +407,10 @@ if ${BUILD_EXTERNAL} ; then
       mv scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM
       if [ -d scram-buildrules/Projects/CMSSW ] ; then
         cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml $CMSSW_IB/config/BuildFile.xml
-        cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
+        [ -e scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm ] && cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
       else
         cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
-        cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
+        [ -e scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm ] && cp -f scram-buildrules/CMSSW_SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
       fi
       if [ -f $CMSSW_IB/config/SCRAM.orig/GMake/CXXModules.mk ] ; then
         cp $WORKSPACE/cmsdist/CXXModules.mk.file $CMSSW_IB/config/SCRAM/GMake/CXXModules.mk

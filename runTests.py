@@ -88,11 +88,12 @@ class UnitTester(IBThreadBase):
     # --------------------------------------------------------------------------------
     def run(self):
         IBThreadBase.run(self)
+        arch = os.environ['SCRAM_ARCH']
         if platform.system() == 'Darwin':
             print('unitTest> Skipping unit tests for MacOS')
             return
         if (self.xType == 'GPU') or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
-            cmd = "cd " + self.startDir + "; scram b -f echo_cuda_USED_BY | tr ' ' '\\n' | grep '^\\(self\\|cmssw\\)/' | cut -d/ -f2-3 > cuda_pkgs.txt; "
+            cmd = "cd " + self.startDir + "; find .SCRAM/"+arch+"/BuildFiles/src -name BuildFile.xml | xargs grep '\"cuda\"' | cut -d/ -f5,6 | sort | uniq > cuda_pkgs.txt; "
             cmd = cmd + " cat  cuda_pkgs.txt; mv src src.full;"
             cmd = cmd + " for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram b clean; scram build -r echo_CXX"
             ret = runCmd(cmd)
@@ -100,10 +101,10 @@ class UnitTester(IBThreadBase):
                 print("ERROR when getting GPU unit-tests sources: cmd returned " + str(ret))
         skiptests = ""
         if 'lxplus' in getHostName(): skiptests = 'SKIP_UNITTESTS=ExpressionEvaluatorUnitTest'
-        TEST_PATH = os.environ['CMSSW_RELEASE_BASE'] + "/test/" + os.environ['SCRAM_ARCH']
+        TEST_PATH = os.environ['CMSSW_RELEASE_BASE'] + "/test/" + arch
         err, cmd = run_cmd(
             "cd " + self.startDir + ";scram tool info cmssw 2>&1 | grep CMSSW_BASE= | sed 's|^CMSSW_BASE=||'")
-        if cmd: TEST_PATH = TEST_PATH + ":" + cmd + "/test/" + os.environ['SCRAM_ARCH']
+        if cmd: TEST_PATH = TEST_PATH + ":" + cmd + "/test/" + arch
         print(TEST_PATH)
         try:
             cmd = "cd " + self.startDir + "; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
@@ -117,7 +118,7 @@ class UnitTester(IBThreadBase):
             print("ERROR during runtests : caught exception: " + str(e))
             pass
         try:
-            testLog = self.startDir + '/tmp/' + os.environ['SCRAM_ARCH'] + '/src/'
+            testLog = self.startDir + '/tmp/' + arch + '/src/'
             logFile = self.startDir + '/unitTests.log'
             runCmd('rm -f %s; touch %s' % (logFile, logFile))
             for packDir in glob.glob(testLog + '*/*'):

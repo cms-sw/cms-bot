@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from github import Github
-from os.path import expanduser, dirname, abspath, join
+from os.path import expanduser, dirname, abspath, join, exists
 from githublabels import LABEL_TYPES, COMMON_LABELS, COMPARISON_LABELS, CMSSW_BUILD_LABELS, LABEL_COLORS
 from categories import COMMON_CATEGORIES, EXTERNAL_CATEGORIES, EXTERNAL_REPOS, CMSSW_REPOS, CMSSW_CATEGORIES
 from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS, GH_CMSSW_ORGANIZATION
@@ -32,6 +32,8 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False, ignore=[]):
   api_rate_limits(gh)
   for repo in repos:
     print("Checking repository ", repo.full_name, ", DryRun:",dryRun)
+    xfile = repo.replace("/","-").done
+    if exists(xfile): continue
     cur_labels = {}
     for lab in repo.get_labels():
       cur_labels [lab.name]=lab
@@ -47,6 +49,8 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False, ignore=[]):
           cur_labels[lab].edit(lab, all_labels[lab])
           api_rate_limits(gh)
         print("  Label ",lab," color updated: ",cur_labels[lab].color ," => ",all_labels[lab])
+    ref = open(xfile,"w")
+    ref.close()
 
 if __name__ == "__main__":
   from optparse import OptionParser

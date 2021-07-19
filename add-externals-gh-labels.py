@@ -32,7 +32,7 @@ def setRepoLabels (gh, repo_name, all_labels, dryRun=False, ignore=[]):
   api_rate_limits(gh)
   for repo in repos:
     print("Checking repository ", repo.full_name, ", DryRun:",dryRun)
-    xfile = repo.full_name.replace("/","-").done
+    xfile = repo.full_name.replace("/","-")+".done"
     if exists(xfile): continue
     cur_labels = {}
     for lab in repo.get_labels():

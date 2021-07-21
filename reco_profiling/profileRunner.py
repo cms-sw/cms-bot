@@ -98,11 +98,18 @@ def configureProfilingSteps(cmsdriver_lines, num_events):
         step4 + " &> step4.log"
     ]
 
-    #add step3 profiling
+    #add step3 and step4 basic profiles
     new_cmdlist += [
         echoBefore(step3_tmi, "step3 TimeMemoryInfo"),
         echoBefore(step3_ft, "step3 FastTimer"),
         echoBefore(step3_ig, "step3 IgProf conf"),
+        echoBefore(step4_tmi, "step4 TimeMemoryInfo"),
+        echoBefore(step4_ft, "step4 FastTimer"),
+        echoBefore(step4_ig, "step4 IgProf conf"),
+    ]
+
+    #add step3 igprof profiling
+    new_cmdlist += [
         echoBefore(igprof_s3_pp, "step3 IgProf pp"),
         "mv IgProf.1.gz step3_igprofCPU.1.gz",
         "mv IgProf.{nev}.gz step3_igprofCPU.{nev}.gz".format(nev=int(num_events/2)),
@@ -112,11 +119,8 @@ def configureProfilingSteps(cmsdriver_lines, num_events):
         "mv IgProf.{nev}.gz step3_igprofMEM.{nev}.gz".format(nev=int(num_events/2)),
         "mv IgProf.{nev}.gz step3_igprofMEM.{nev}.gz".format(nev=int(num_events-1)),
     ]
-    #add step4 profiling
+    #add step4 igprof profiling
     new_cmdlist += [
-        echoBefore(step4_tmi, "step4 TimeMemoryInfo"),
-        echoBefore(step4_ft, "step4 FastTimer"),
-        echoBefore(step4_ig, "step4 IgProf conf"),
         echoBefore(igprof_s4_pp, "step4 IgProf pp"),
         "mv IgProf.1.gz step4_igprofCPU.1.gz",
         "mv IgProf.{nev}.gz step4_igprofCPU.{nev}.gz".format(nev=int(num_events/2)),
@@ -135,8 +139,8 @@ def writeProfilingScript(wfdir, runscript, cmdlist):
         fi.write("#!/bin/bash\n")
         fi.write("ulimit -a\n")
 
-        #abort on error
-        fi.write("set -e\n")
+        #don't abort on error
+        #fi.write("set -e\n")
         
         #print commands verbosely
         fi.write("set -x\n")

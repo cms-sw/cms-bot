@@ -172,12 +172,12 @@ def copyProfilingOutputs(wfdir, out_dir, num_events):
         "step4.log",
         "step3_TimeMemoryInfo.log",
         "step3_circles.json",
+        "step4_TimeMemoryInfo.log",
+        "step4_circles.json",
         "step3_igprofCPU.gz",
         "step3_igprofMEM.1.gz",
         "step3_igprofMEM.{}.gz".format(int(num_events-1)),
         "step3_igprofMEM.{}.gz".format(int(num_events/2)),
-        "step4_TimeMemoryInfo.log",
-        "step4_circles.json",
         "step4_igprofCPU.gz",
         "step4_igprofMEM.1.gz",
         "step4_igprofMEM.{}.gz".format(int(num_events-1)),
@@ -190,7 +190,7 @@ def copyProfilingOutputs(wfdir, out_dir, num_events):
             print("copying {} to {}".format(path, out_dir))
             shutil.copy(path, out_dir)
         else:
-            raise Exception("Output {} not found or is broken".format(path))
+            print("ERROR: Output {} not found or is broken, skipping".format(path))
     return
 
 def main(wf, num_events, out_dir):

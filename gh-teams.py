@@ -11,7 +11,7 @@ from github_utils import create_team,get_pending_members
 from categories import CMSSW_L1, CMSSW_L2
 setdefaulttimeout(120)
 
-CMS_OWNERS = [ "davidlange6", "smuzaffar", "cmsbuild" ] + CMSSW_L1
+CMS_OWNERS = [ "davidlange6", "smuzaffar", "cmsbuild" ] + CMSSW_L1[:]
 CMS_SDT    = [ "mrodozov", "iarspider" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
@@ -33,11 +33,9 @@ REPO_OWNERS["cms-sw"]        += [ "sextonkennedy" ]
 #################################
 #Teams for cms-data
 REPO_TEAMS["cms-data"]["Developers"] =  {
-  "members"      : CMS_SDT,
+  "members"      : CMS_SDT[:],
   "repositories" : { "*" : "push" }
 }
-
-REPO_TEAMS["cms-data"]["Developers"]["members"].append("ddaina")
 
 #Teams for cms-externals
 REPO_TEAMS["cms-externals"]["Developers"] = deepcopy(REPO_TEAMS["cms-data"]["Developers"])
@@ -64,7 +62,7 @@ REPO_TEAMS["cms-sw"]["configdb-owners"] = {
   "repositories" : { "hlt-confdb":"admin", "web-confdb":"admin"}
 }
 REPO_TEAMS["cms-sw"]["cmsdist-writers"] = {
-  "members" : [ "h4d4", "muhammadimranfarooqi" ] + CMS_SDT,
+  "members" : [ "h4d4", "muhammadimranfarooqi" ] + CMS_SDT[:],
   "repositories" : { "cmsdist":"push" }
 }
 REPO_TEAMS["cms-sw"]["cmssw-l2"] = {
@@ -76,7 +74,7 @@ REPO_TEAMS["cms-sw"]["cmssw-developers"] = {
   "repositories" : { "cmssw":"pull" }
 }
 REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
-  "members" : CMS_SDT,
+  "members" : CMS_SDT[:],
   "repositories" : { "*":"push", "!cmssw" : "pull", "!cmsdist" : "pull" }
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
@@ -85,10 +83,8 @@ REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
 }
 
 REPO_TEAMS["cms-sw"]["all-l2"] = {
-  "members" : CMSSW_L1,
+  "members" : CMSSW_L1[:],
 }
-
-REPO_TEAMS["cms-sw"]["cms-sw-writers"]["members"].append("ddaina")
 
 for user in CMSSW_L2:
   REPO_TEAMS["cms-sw"]['all-l2']["members"].append(user)
@@ -97,6 +93,10 @@ for user in CMSSW_L2:
     if not cat in REPO_TEAMS["cms-sw"]:
       REPO_TEAMS["cms-sw"][cat] = {"members": []}
     REPO_TEAMS["cms-sw"][cat]["members"].append(user)
+
+REPO_TEAMS["cms-data"]["Developers"]["members"].append("ddaina")
+REPO_TEAMS["cms-externals"]["Developers"]["members"].append("ddaina")
+REPO_TEAMS["cms-sw"]["cms-sw-writers"]["members"].append("ddaina")
 
 #################################
 parser = ArgumentParser()

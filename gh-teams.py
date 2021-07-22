@@ -37,6 +37,8 @@ REPO_TEAMS["cms-data"]["Developers"] =  {
   "repositories" : { "*" : "push" }
 }
 
+REPO_TEAMS["cms-data"]["Developers"]["members"].append("ddaina")
+
 #Teams for cms-externals
 REPO_TEAMS["cms-externals"]["Developers"] = deepcopy(REPO_TEAMS["cms-data"]["Developers"])
 REPO_TEAMS["cms-externals"]["boost-developers"] = { "members": ["fwyzard"], "repositories" : { "boost" : "push" } }
@@ -86,8 +88,6 @@ REPO_TEAMS["cms-sw"]["all-l2"] = {
   "members" : CMSSW_L1,
 }
 
-REPO_TEAMS["cms-externals"]["Developers"]["members"].append("ddaina")
-REPO_TEAMS["cms-data"]["Developers"]["members"].append("ddaina")
 REPO_TEAMS["cms-sw"]["cms-sw-writers"]["members"].append("ddaina")
 
 for user in CMSSW_L2:

@@ -116,7 +116,7 @@ def checkEventContent(r1,r2):
     s1=output1[0].split()[4]
     s2=output2[0].split()[4]
     if abs(float(s2)-float(s1))>0.1*float(s1):
-        print("Big output file size change?",s1,s2)
+        print("Big output file size change? in ",r1,s1,s2)
         retVal=False
 
     output1=runCommand(['edmEventSize','-v',r1])

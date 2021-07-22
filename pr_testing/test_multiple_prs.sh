@@ -709,7 +709,13 @@ if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" -a "$SKIP_STATIC
 fi
 
 #Do Python3 checks
+DO_PYTHON3=false
 if $IS_DEV_BRANCH ; then
+  if [ $(echo "${CONFIG_LINE}" | tr ';' '\n' | grep 'ADDITIONAL_TESTS=' | tr '=,' '\n\n' | grep '^python3$' | wc -l) -gt 0 ] ; then
+    DO_PYTHON3=true
+  fi
+fi
+if $DO_PYTHON3 ; then
   PYTHON3_RES="OK"
   CMD_python=$(which python3) scram b -r -k -j ${NCPU} CompilePython > $WORKSPACE/python3.log 2>&1 || true
   if [ $(grep ' Error compiling ' $WORKSPACE/python3.log | wc -l) -gt 0 ] ; then

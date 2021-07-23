@@ -1252,6 +1252,7 @@ CMSSW_CATEGORIES = {
     "RecoLocalTracker/Records",
     "RecoLocalTracker/SiPhase2Clusterizer",
     "RecoLocalTracker/SiPixelClusterizer",
+    "RecoLocalTracker/SiPixelDigiMorphing",
     "RecoLocalTracker/SiPixelRecHits",
     "RecoLocalTracker/SiStripClusterizer",
     "RecoLocalTracker/SiStripRecHitConverter",

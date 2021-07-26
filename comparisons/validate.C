@@ -602,6 +602,9 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("hadTowDepth1OverEm", cName,tName);
   photon("hadTowDepth2OverEm", cName,tName);
   photon("hadTowOverEmValid", cName,tName);
+  photon("hadronicOverEm", cName,tName);
+  photon("hadronicOverEm(1)", cName,tName, true);
+  photon("hadronicOverEm(3)", cName,tName, true);
 
   photon("e1x5", cName,tName);
   photon("e2x5", cName,tName);
@@ -619,8 +622,13 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   //  photon("r9", cName,tName);
   photon("mipChi2", cName,tName);
   photon("mipNhitCone", cName,tName);
+  photon("hcalTowerSumEtConeDR04", cName,tName);
+  photon("hcalTowerSumEtConeDR04(1)", cName,tName, true);
+  photon("hcalTowerSumEtConeDR04(3)", cName,tName, true);
   photon("ecalRecHitSumEtConeDR03", cName,tName);
   photon("hcalTowerSumEtConeDR03", cName,tName);
+  photon("hcalTowerSumEtConeDR03(1)", cName,tName, true);
+  photon("hcalTowerSumEtConeDR03(3)", cName,tName, true);
   photon("hcalDepth1TowerSumEtConeDR03", cName,tName);
   photon("trkSumPtSolidConeDR03", cName,tName);
   photon("trkSumPtHollowConeDR03", cName,tName);
@@ -742,6 +750,9 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("full5x5_e2x5Max", cName, tName);
   electron("ecalEnergy", cName, tName);
   if (detailed)    electron("hcalOverEcal", cName, tName);
+  if (detailed)    electron("hcalOverEcal(1)", cName, tName, true);
+  if (detailed)    electron("hcalOverEcal(2)", cName, tName, true);
+  if (detailed)    electron("hcalOverEcal(4)", cName, tName, true);
   electron("energy", cName, tName);
   if (detailed)    electron("fbrem", cName, tName);
   electron("classification", cName, tName);
@@ -764,6 +775,9 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("hcalDepth1OverEcal", cName, tName);
   electron("hcalDepth2OverEcal", cName, tName);
   electron("hcalOverEcalBc", cName, tName);
+  electron("hcalOverEcalBc(1)", cName, tName, true);
+  electron("hcalOverEcalBc(2)", cName, tName, true);
+  electron("hcalOverEcalBc(4)", cName, tName, true);
   electron("hcalOverEcalValid", cName, tName);
   electron("eLeft", cName, tName);
   electron("eTop", cName, tName);
@@ -773,7 +787,12 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("full5x5_r9", cName, tName);
   electron("full5x5_hcalDepth1OverEcal", cName, tName);
   electron("full5x5_hcalDepth2OverEcal", cName, tName);
+  electron("full5x5_hcalOverEcal", cName, tName);
+  electron("full5x5_hcalOverEcal(1)", cName, tName, true);
+  electron("full5x5_hcalOverEcal(3)", cName, tName, true);
   electron("full5x5_hcalOverEcalBc", cName, tName);
+  electron("full5x5_hcalOverEcalBc(1)", cName, tName, true);
+  electron("full5x5_hcalOverEcalBc(3)", cName, tName, true);
   electron("full5x5_hcalOverEcalValid", cName, tName);
   electron("full5x5_e2x5Left", cName, tName);
   electron("full5x5_eLeft", cName, tName);
@@ -785,8 +804,12 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("dr03EcalRecHitSumEt", cName, tName);
   electron("dr03HcalDepth1TowerSumEt", cName, tName);
   electron("dr03HcalTowerSumEt", cName, tName);
+  electron("dr03HcalTowerSumEt(1)", cName, tName, true);
+  electron("dr03HcalTowerSumEt(3)", cName, tName, true);
   electron("dr03HcalDepth1TowerSumEtBc", cName, tName);
   electron("dr03HcalTowerSumEtBc", cName, tName);
+  electron("dr03HcalTowerSumEtBc(1)", cName, tName, true);
+  electron("dr03HcalTowerSumEtBc(3)", cName, tName, true);
   electron("convDist", cName, tName);
   electron("convRadius", cName, tName);
   electron("convVtxFitProb", cName, tName);
@@ -3234,6 +3257,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       //phase 2 HGCAL dev
       photonVars("photonsFromMultiCl_");
+      photonVars("photonsHGC_");
 
       //OOT photons
       photonVars("ootPhotons_");
@@ -3252,6 +3276,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       photonVars("slimmedPhotons_","patPhotons_");
       photonVars("slimmedOOTPhotons_","patPhotons_");
       photonVars("slimmedPhotonsFromMultiCl_","patPhotons_");
+      photonVars("slimmedPhotonsHGC_","patPhotons_");
 
       caloClusters("reducedEgamma_reducedEBEEClusters");
       caloClusters("reducedEgamma_reducedESClusters");
@@ -3404,10 +3429,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       //phase-2 HGCAL dev
       electronVars("ecalDrivenGsfElectronsFromMultiCl_");
+      electronVars("ecalDrivenGsfElectronsHGC_");
 
       // miniaod
       electronVars("slimmedElectrons_","patElectrons_");
       electronVars("slimmedElectronsFromMultiCl_","patElectrons_");
+      electronVars("slimmedElectronsHGC_","patElectrons_");
       electronVars("slimmedLowPtElectrons_","patElectrons_");
 
       plotvar("floatedmValueMap_eidLoose__"+recoS+".obj.values_");

@@ -58,7 +58,7 @@ CMSSW_L2 = {
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "mkirsano":         ["generators"],   
   "mrodozov":         ["externals"],
-  "perrotta":         ["reconstruction"],
+  "perrotta":         ["operations", "reconstruction"],
   "pohsun":           ["alca"],
   "qliphy":           ["operations"],
   "rekovic":          ["l1"],

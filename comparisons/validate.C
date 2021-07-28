@@ -3411,6 +3411,14 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
       ticlCands("ticlCandidateFromTracksters_");
       ticlCands("ticlTrackstersMerge_");
+
+      //HFNose
+      tracksters("ticlTrackstersHFNoseEM_");
+      tracksters("ticlTrackstersHFNoseHAD_");
+      tracksters("ticlTrackstersHFNoseMIP_");
+      tracksters("ticlTrackstersHFNoseTrkEM_");
+      tracksters("ticlTrackstersHFNoseTrk_");
+
       // miniaod
       superClusters("reducedEgamma_reducedSuperClusters");
       superClusters("reducedEgamma_reducedOOTSuperClusters");

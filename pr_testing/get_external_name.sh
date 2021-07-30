@@ -9,7 +9,7 @@ ARRAY=(
     "cms-sw/SCRAM:SCRAMV1"
     "cms-externals/incubator-mxnet:mxnet-predict"
     "cms-externals/eigen-git-mirror:eigen"
-    "cms-externals/tensorflow:tensorflow-sources tensorflow-python3-sources"
+    "cms-externals/tensorflow:tensorflow-sources"
     )
 
 case ${PKG_REPO} in

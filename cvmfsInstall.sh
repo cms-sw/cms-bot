@@ -16,6 +16,9 @@ TEST_INSTALL=$7
 NUM_WEEKS=$8
 REINSTALL_COMMON=$9
 INSTALL_PACKAGES="${10}"
+FIX_RPMDB="${11}"
+if [ $(echo "${ARCHITECTURE}" | grep '^cc' | wc -l) -eq 0 ] ; then FIX_RPMDB=false; fi
+if [ "${FIX_RPMDB}" != "true" ] ; then FIX_RPMDB=false; fi
 if [ "$REINSTALL_COMMON" = "true" ] ; then
   REINSTALL_COMMON="--reinstall"
 else
@@ -139,7 +142,7 @@ for REPOSITORY in $REPOSITORIES; do
     INSTALL_PACKAGES="$(${CMSPKG} search gcc-fixincludes | sed 's| .*||' | grep 'gcc-fixincludes' | sort | tail -1) ${INSTALL_PACKAGES}"
     ln -sfT ../SITECONF $WORKDIR/SITECONF
     $CMSPKG -y upgrade
-    if [ $(echo "${SCRAM_ARCH}" | grep '^cc' | wc -l) -eq 0 ] ; then
+    if ${FIX_RPMDB} ; then
       RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
       if [ ! -e $RPM_CONFIG ] ; then
         echo "mutex_set_max 10000000" > $RPM_CONFIG

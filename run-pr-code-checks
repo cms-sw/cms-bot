@@ -131,7 +131,7 @@ fi
 touch ${UP_DIR}/code-format.patch
 if $CODE_FORMAT ; then
   if [ -f ${CMSSW_BASE}/src/.clang-format ] ; then
-    grep -v '/stdhep.inc$' ${UP_DIR}/all-changed-files.txt | grep -v '/hepev4.inc$' > ${UP_DIR}/code-format-files.txt || true
+    grep -v '\.inc$' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-format-files.txt || true
     cp ${UP_DIR}/all-changed-files.txt ${UP_DIR}/code-format-files.txt
     if [ -s ${UP_DIR}/code-format-files.txt ] ; then
       scram build -k -j $NUM_PROC code-format USER_CODE_FORMAT_FILE="${UP_DIR}/code-format-files.txt" > ${UP_DIR}/code-format.log 2>&1

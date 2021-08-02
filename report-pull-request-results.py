@@ -99,7 +99,8 @@ def read_matrix_log_file(matrix_log):
       print('processing: %s' % line) 
       parts = re.sub("\s+"," ",line).split(" ")
       workflow_info = parse_workflow_info( parts, relval_dir)
-      workflows_with_error.append( workflow_info )
+      if 'number' in workflow_info:
+        workflows_with_error.append( workflow_info )
     elif ' Step0-DAS_ERROR ' in line:
       print('processing: %s' % line)
       parts = line.split("_",2)

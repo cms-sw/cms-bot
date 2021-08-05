@@ -817,8 +817,8 @@ if __name__ == "__main__":
   release_name = title_match.group(1)
   # Get the release queue from the release name.
   print(release_name)
-
-  issue_body = issue.body.encode("ascii", "ignore").strip()
+  issue_body = ""
+  if issue.body: issue_body = issue.body.encode("ascii", "ignore").strip()
   release_queue = None
   rel_name_match = re.match( REL_NAME_REGEXP, release_name )
   if "RELEASE_QUEUE:" in issue_body:

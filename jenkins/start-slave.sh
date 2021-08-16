@@ -13,7 +13,7 @@ SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHost
 #Check unique slave conenction
 if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
   TARGET_HOST=$(echo $TARGET | sed 's|.*@||')
-  if [ $(ssh -n $SSH_OPTS $TARGET 'cat /proc/sys/user/max_user_namespaces') = "0" ] ; then
+  if ! ssh -n $SSH_OPTS $TARGET 'cmssw-cc7 -- echo OK' ; then
     echo "==================== ERROR ================"
     echo "User namespace is not enabled. singularity will not run"
     exit 99

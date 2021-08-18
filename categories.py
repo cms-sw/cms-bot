@@ -68,7 +68,6 @@ CMSSW_L2 = {
   "Saptaparna":       ["generators"],
   "sbein":            ["fastsim"],
   "SiewYan":          ["generators"], 
-  "silviodonato":     ["operations"],
   "slava77":          ["reconstruction"],
   "smorovic":         ["daq"],
   "smuzaffar":        ["core", "externals"],

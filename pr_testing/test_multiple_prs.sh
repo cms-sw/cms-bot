@@ -412,7 +412,7 @@ if ${BUILD_EXTERNAL} ; then
           for x in SCRAM_COMPILER:DEFAULT_COMPILER PROJECT_GIT_HASH:CMSSW_GIT_HASH ; do
             e=$(echo $x | sed 's|:.*||');
             k=$(echo $x | sed 's|.*:||');
-            export $e=$(grep "$k" config/Self.xml | tr ' ' '\n' | grep '=' | tail -1 | sed 's|[^"]*"||;s|".*||');\
+            export $e=$(grep "$k" $CMSSW_IB/config/Self.xml | tr ' ' '\n' | grep '=' | tail -1 | sed 's|[^"]*"||;s|".*||');\
           done;
           perl -p -i -e 's|\@([^@]*)\@|$ENV{$1}|g' scram-buildrules/Projects/CMSSW/Self.xml
         )

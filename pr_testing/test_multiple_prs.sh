@@ -544,7 +544,6 @@ if [ ! -d CMSSW_* ]; then  # if no directory that starts with "CMSSW_" exist, th
 fi
 cd $WORKSPACE/$CMSSW_IB
 
-sed -i -e 's|^define  *processTmpMMDData.*|processTmpMMDData=true\ndefine processTmpMMDDataXX|;s|^define  *processMMDData.*|processMMDData=true\ndefine processMMDDataXX|' config/SCRAM/GMake/Makefile.rules
 set +x
 eval $(scram run -sh)
 set -x

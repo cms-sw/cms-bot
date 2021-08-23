@@ -1047,7 +1047,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e
       TEST_RELVALS_INPUT=false
     fi
-    if $TEST_RELVALS_INPUT ; then
+    if $TEST_RELVALS_INPUT && $CMSDIST_ONLY ; then
       WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
       MTX_ARGS="${COMMON_MATRIX_ARGS} $EXTRA_MATRIX_ARGS_INPUT"

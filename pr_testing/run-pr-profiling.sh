@@ -30,6 +30,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/runall_mem.sh $CMSSW_VERSION || true
   pushd $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW
   ./profile.sh $CMSSW_VERSION || true
+  ./profile_mem.sh $CMSSW_VERSION || true
   echo "<li><a href=\"$PROFILING_WORKFLOW/\">$PROFILING_WORKFLOW/</a> </li>" >> $WORKSPACE/upload/profiling/index.html
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/RES_CPU_step3.txt  ${CMSSW_VERSION}_RES_CPU_step3.txt || true
   $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_VERSION}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare_$PROFILING_WORKFLOW.txt || true

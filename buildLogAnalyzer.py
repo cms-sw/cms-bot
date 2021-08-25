@@ -398,7 +398,10 @@ class LogFileAnalyzer(object):
             errorInf.append({str('^.*?:\d+\: warning\: ') : ['compWarning', 'from external in package']})
         else:
             errorInf.append({str('^.*?:\d+\: warning\: ') : ['ignoreWarning', 'from external in package']})
-            errorInf.append({str('^.*?ERROR:Private Header:') : ['ignoreWarning', 'ignore private header usage.']})
+            if '_DEVEL' in self.release:
+                errorInf.append({str('^.*?ERROR:Private Header:') : ['compWarning', 'Private header usage.']})
+            else:
+                errorInf.append({str('^.*?ERROR:Private Header:') : ['ignoreWarning', 'ignore private header usage.']})
         errors = []
         for errI in errorInf:
           for err, info in errI.items():

@@ -26,7 +26,7 @@ COMPARISON_MISSING_MAP = [ "slava77" ]
 CMSSW_L2 = {
   "Dr15Jones":        ["core", "visualization", "geometry"],
   "Martin-Grunewald": ["hlt"],
-  "adrianodee":       ["upgrade"],
+  "AdrianoDee":       ["upgrade"],
   "ahmad3213":        ["dqm"],
   "alberto-sanchez":  ["generators"],
   "agrohsje":         ["generators"],

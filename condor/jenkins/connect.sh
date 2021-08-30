@@ -18,7 +18,7 @@ if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   for ip in $(host $SLAVE_TYPE | grep 'has address' | sed 's|^.* ||'); do
     hname=$(host $ip | grep 'domain name' | sed 's|^.* ||;s|\.$||')
     NEW_TARGET=$(echo $TARGET | sed "s|@.*|@$hname|")
-    if ssh $SSH_OPTS $TARGET 'grep -q "Puppet environment: production" /etc/motd' ; then
+    if ssh $SSH_OPTS $NEW_TARGET 'grep -q "Puppet environment: production" /etc/motd' ; then
       TARGET="${NEW_TARGET}"
       break
     fi

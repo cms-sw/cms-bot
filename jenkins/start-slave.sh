@@ -13,11 +13,7 @@ SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHost
 #Check unique slave conenction
 if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
   TARGET_HOST=$(echo $TARGET | sed 's|.*@||')
-  if ! ssh -n $SSH_OPTS $TARGET 'cmssw-cc7 -- echo OK' ; then
-    echo "==================== ERROR ================"
-    echo "User namespace is not enabled. singularity will not run"
-    exit 99
-  fi
+  if ! ssh -n $SSH_OPTS $TARGET 'grep -q "Puppet environment: production" /etc/motd' ; then exit 99 ; fi
   if [ `pgrep -f "@${TARGET_HOST} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
 fi
 DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')

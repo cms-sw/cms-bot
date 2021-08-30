@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 echo $WORKSPACE
+SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=90"
 SCHEDD_ENV=""
 if [ "X$3" != "X" ] ;then
   SCHEDD_ENV="setenv _CONDOR_SCHEDD_HOST $3 && setenv _CONDOR_CREDD_HOST $3 && "
@@ -12,5 +13,15 @@ KINIT_USER=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)
 KPRINCIPAL=${KINIT_USER}@CERN.CH
 export KRB5CCNAME=FILE:/tmp/krb5cc_$(id -u)_${KINIT_USER}_${2}
 kinit ${KPRINCIPAL} -k -t ${KTAB}
-SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=90"
+export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
+if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
+  for ip in $(host $SLAVE_TYPE | grep 'has address' | sed 's|^.* ||'); do
+    hname=$(host $ip | grep 'domain name' | sed 's|^.* ||;s|\.$||')
+    NEW_TARGET=$(echo $TARGET | sed "s|@.*|@$hname|")
+    if ssh $SSH_OPTS $TARGET 'grep -q "Puppet environment: production" /etc/motd' ; then
+      TARGET="${NEW_TARGET}"
+      break
+    fi
+  done
+fi
 ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $2 'java -jar ${WORKSPACE}/slave.jar -jar-cache ${WORKSPACE}/tmp'"

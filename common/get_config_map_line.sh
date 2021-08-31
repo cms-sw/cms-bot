@@ -30,6 +30,7 @@ fi
 ARCH_MATCH=$(formatFilter 'SCRAM_ARCH' "${ARCHITECTURE}")
 CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' "${RELEASE_QUEUE}")
 CMSDIST_TAG_MATCH=$(formatFilter 'CMSDIST_TAG' "${CMS_DIST_TAG}")
+if [ "${RELEASE_QUEUE}" = "" -a "${CMS_DIST_TAG}" != "" ] ; then CMS_SW_TAG_MATCH=$(formatFilter 'RELEASE_QUEUE' "$(echo ${CMS_DIST_TAG} | cut -d/ -f2)") ; fi
 
 FILTERED_LINES=$(cat ${CONFIG_MAP} | grep -v '^ *#' | grep -v 'NO_IB=' | grep -v 'DISABLED=1;' | grep ${CMS_SW_TAG_MATCH} | grep ${CMSDIST_TAG_MATCH} | grep ${ARCH_MATCH} | tr '\n' '#' )
 F_L_NUMBER=$(echo "${FILTERED_LINES}" | tr '#' '\n' | grep -c "$ARCH_MATCH" ) || true

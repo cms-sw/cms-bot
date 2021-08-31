@@ -13,9 +13,6 @@ SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHost
 #Check unique slave conenction
 if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
   TARGET_HOST=$(echo $TARGET | sed 's|.*@||')
-  if [ $(grep '>IGNORE_PRODUCTION_ENV<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||') != "true" ] ; then
-    if ! ssh -n $SSH_OPTS $TARGET 'grep -q "Puppet environment: production" /etc/motd' ; then exit 99 ; fi
-  fi
   if [ `pgrep -f "@${TARGET_HOST} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
 fi
 DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
@@ -74,7 +71,7 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
 case ${SLAVE_TYPE} in
-  lxplus* ) SET_KRB5CCNAME=false ;;
+  lxplus* ) SET_KRB5CCNAME=true ;;
 esac
 if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
   case ${REMOTE_USER} in

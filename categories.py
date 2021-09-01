@@ -51,7 +51,6 @@ CMSSW_L2 = {
   "jordan-martins":   ["pdmv"],
   "jpata":            ["reconstruction"],
   "kmaeshima":        ["dqm"],
-  "kpedro88":         ["upgrade"],
   "kskovpen":         ["pdmv"],
   "lveldere":         ["fastsim"],
   "makortel":         ["heterogeneous", "core", "visualization", "geometry"],

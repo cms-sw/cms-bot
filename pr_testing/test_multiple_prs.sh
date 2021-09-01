@@ -1045,7 +1045,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps=' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e
       TEST_RELVALS_INPUT=false
-    elif ! $CMSDIST_ONLY ; then
+    elif $CMSDIST_ONLY ; then
       TEST_RELVALS_INPUT=false
     fi
     if $TEST_RELVALS_INPUT ; then

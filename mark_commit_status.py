@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from optparse import OptionParser
-from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses, get_latest_commit
+from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses, get_pr_latest_commit
 from sys import exit
 
 if __name__ == "__main__":
@@ -18,7 +18,7 @@ if __name__ == "__main__":
   opts, args = parser.parse_args()
 
   if not opts.commit:
-    opts.commit = get_latest_commit(opts.pr, opts.repository)
+    opts.commit = get_pr_latest_commit(opts.pr, opts.repository)
   if opts.if_exists:
     statues = get_combined_statuses(opts.commit, opts.repository)
     if 'statuses' in statues:

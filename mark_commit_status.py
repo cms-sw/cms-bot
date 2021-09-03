@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from optparse import OptionParser
-from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses
+from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses, get_pr_latest_commit
 from sys import exit
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog")
   parser.add_option("-c", "--commit",     dest="commit",       help="git commit for which set the status", type=str, default=None)
+  parser.add_option("-p", "--pr",         dest="pr",           help="github pr for which set the status", type=str, default=None)
   parser.add_option("-r", "--repository", dest="repository",   help="Github Repositoy name e.g. cms-sw/cmssw.", type=str, default="cms-sw/cmssw")
   parser.add_option("-d", "--description", dest="description", help="Description of the status", type=str, default="Test running")
   parser.add_option("-C", "--context",     dest="context",     help="Status context", type=str, default="default")
@@ -16,6 +17,8 @@ if __name__ == "__main__":
   parser.add_option("-e", "--if-exists",   dest="if_exists",   help="Only set the status if context already exists", action="store_true", default=False)
   opts, args = parser.parse_args()
 
+  if opts.pr:
+    opts.commit = get_pr_latest_commit(opts.pr, opts.repository)
   if opts.if_exists:
     statues = get_combined_statuses(opts.commit, opts.repository)
     if 'statuses' in statues:

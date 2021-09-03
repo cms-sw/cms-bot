@@ -24,5 +24,5 @@ for cmsdir in $@ ; do
   done
 
   #for cuda-compatible-runtime
-  echo "/${cmsdir}/cuda-compatible-runtime/v*"
+  echo "/${cmsdir}/cuda-compatible-runtime/v2*"
 done

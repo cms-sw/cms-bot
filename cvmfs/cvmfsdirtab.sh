@@ -22,4 +22,7 @@ for cmsdir in $@ ; do
     echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*/src"
     echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*"
   done
+
+  #for cuda-compatible-runtime
+  echo "/${cmsdir}/cuda-compatible-runtime/v*"
 done

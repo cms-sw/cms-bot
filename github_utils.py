@@ -426,6 +426,9 @@ def get_combined_statuses(commit, repository, token=None):
   if not token: token = get_gh_token(repository)
   return github_api("/repos/%s/commits/%s/status" % (repository, commit), token, method='GET')
 
+def get_latest_commit(pr, repository, token=None):
+  if not token: token = get_gh_token(repository)
+  return github_api("repos/%s/pulls/%s/commits" % (repository, pr), token, method='GET')[-1]["sha"]
 
 def set_comment_emoji(comment_id, repository, emoji="+1", token=None):
   if not token: token = get_gh_token(repository)

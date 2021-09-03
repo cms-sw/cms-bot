@@ -17,7 +17,7 @@ if __name__ == "__main__":
   parser.add_option("-e", "--if-exists",   dest="if_exists",   help="Only set the status if context already exists", action="store_true", default=False)
   opts, args = parser.parse_args()
 
-  if not opts.commit:
+  if opts.pr:
     opts.commit = get_pr_latest_commit(opts.pr, opts.repository)
   if opts.if_exists:
     statues = get_combined_statuses(opts.commit, opts.repository)

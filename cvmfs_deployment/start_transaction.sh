@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-
+cd /tmp
 cvmfs_repo=${CVMFS_REPOSITORY}
 if [ "$LOCK_CVMFS" != "false" ] ; then
   lock=~/cron_install_cmssw.lock

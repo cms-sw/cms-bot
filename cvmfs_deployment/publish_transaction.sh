@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-
+cd /tmp
 lock=~/cron_install_cmssw.lock
 ERR=0
 cvmfs_server publish || ERR=1

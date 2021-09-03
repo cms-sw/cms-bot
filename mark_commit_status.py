@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from optparse import OptionParser
-from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses
+from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses, get_latest_commit
 from sys import exit
 
 if __name__ == "__main__":

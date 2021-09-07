@@ -7,7 +7,6 @@ exceptions_regexp = []
 uniq_paths = []
 for file_path in [ f.strip("\n").strip("/") for f in open(argv[1]).readlines()]:
   if not file_path or [ r for r in exceptions_regexp if r.match(file_path) ] : continue
-  if not exists(join(argv[3],file_path)): continue
   xpath = ""
   for sub_path in file_path.split('/'):
     xpath=join(xpath,sub_path)

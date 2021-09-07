@@ -47,14 +47,7 @@ if python3 -c 'import yaml' ; then
   sed -i -e 's|/usr/bin/env python$|/usr/bin/env python3|' config/SCRAM/fix-code-checks-yaml.py
 fi
 
-curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq > ${UP_DIR}/all-changed-files.txt
-grep -v '^[^/]*/[^/]*/test/' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-checks-files.txt          || true
-grep -v '^[^/]*/[^/]*/data/' ${UP_DIR}/code-checks-files.txt > ${UP_DIR}/filename-code-checks-files.txt || true
-$CMS_BOT_DIR/cms-filename-checks.py ${UP_DIR}/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > ${UP_DIR}/invalid-filenames.txt || true
-echo "Changed files:"
-cat ${UP_DIR}/code-checks-files.txt
-echo ""
-
+touch ${UP_DIR}/all-changed-files.txt
 git cms-init --upstream-only
 DSIZE=0
 source $CMS_BOT_DIR/jenkins-artifacts
@@ -67,6 +60,15 @@ pushd $CMSSW_BASE/src
   OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} 2>&1 | tee ${UP_DIR}/cms-checkout-topic.log
   ERR=false
+  for f in $(curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq) ; do
+    [ ! -e $f ] || echo "$f" >> ${UP_DIR}/all-changed-files.txt
+  done
+  grep -v '^[^/]*/[^/]*/test/' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-checks-files.txt          || true
+  grep -v '^[^/]*/[^/]*/data/' ${UP_DIR}/code-checks-files.txt > ${UP_DIR}/filename-code-checks-files.txt || true
+  $CMS_BOT_DIR/cms-filename-checks.py ${UP_DIR}/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > ${UP_DIR}/invalid-filenames.txt || true
+  echo "Changed files:"
+  cat ${UP_DIR}/code-checks-files.txt
+  echo ""
   scram build -r echo_CXX > ${UP_DIR}/code-checks.log 2>&1 || ERR=true
   if $ERR ; then
     echo '-code-checks' > ${UP_DIR}/code-checks.md

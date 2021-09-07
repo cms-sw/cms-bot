@@ -47,10 +47,7 @@ if python3 -c 'import yaml' ; then
   sed -i -e 's|/usr/bin/env python$|/usr/bin/env python3|' config/SCRAM/fix-code-checks-yaml.py
 fi
 
-touch ${UP_DIR}/all-changed-files.txt
-for f in $(curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq) ; do
-  [ ! -e ${CMSSW_BASE}/src/$f ] || echo "$f" >> ${UP_DIR}/all-changed-files.txt
-done
+curl -s -L https://patch-diff.githubusercontent.com/raw/${REPOSITORY}/pull/${PULL_REQUEST}.patch | grep '^diff --git ' | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq > ${UP_DIR}/all-changed-files.txt
 grep -v '^[^/]*/[^/]*/test/' ${UP_DIR}/all-changed-files.txt > ${UP_DIR}/code-checks-files.txt          || true
 grep -v '^[^/]*/[^/]*/data/' ${UP_DIR}/code-checks-files.txt > ${UP_DIR}/filename-code-checks-files.txt || true
 $CMS_BOT_DIR/cms-filename-checks.py ${UP_DIR}/filename-code-checks-files.txt $CMSSW_RELEASE_BASE/src > ${UP_DIR}/invalid-filenames.txt || true

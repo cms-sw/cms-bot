@@ -8,6 +8,7 @@ from cmsutils import cmsswIB2Week
 
 err, logs = run_cmd("find /data/sdt/SDT/jenkins-artifacts/cmssw-afs-eos-comparison -mindepth 4 -maxdepth 4 -name 'afs-eos-build.json' -type f")
 for jfile in logs.split('\n'):
+  if not jfile: continue
   payload = json.load(open(jfile))
   week, rel_sec  = cmsswIB2Week (payload["release"])
   payload["@timestamp"]=rel_sec*1000

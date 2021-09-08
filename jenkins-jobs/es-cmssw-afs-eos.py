@@ -6,7 +6,7 @@ from es_utils import send_payload
 from _py2with3compatibility import run_cmd
 from cmsutils import cmsswIB2Week
 
-err, logs = run_cmd("find /data/sdt/SDT/jenkins-artifacts/cmssw-afs-eos-comparison -mindepth 4 -maxdepth 4 -name 'afs-eos-build.json' -type f")
+err, logs = run_cmd("find /data/sdt/SDT/jenkins-artifacts/cmssw-afs-eos-comparison -mindepth 1 -maxdepth 1 -name 'CMSSW_*.json' -type f")
 for jfile in logs.split('\n'):
   if not jfile: continue
   payload = json.load(open(jfile))

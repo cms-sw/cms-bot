@@ -10,6 +10,7 @@ ARRAY=(
     "cms-externals/incubator-mxnet:mxnet-predict"
     "cms-externals/eigen-git-mirror:eigen"
     "cms-externals/tensorflow:tensorflow-sources"
+    "cms-sw/cmssw-config:coral"
     )
 
 case ${PKG_REPO} in

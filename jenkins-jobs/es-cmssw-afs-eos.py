@@ -1,5 +1,8 @@
 #!/bin/env python
 from __future__ import print_function
+from os.path import dirname,abspath
+import sys
+sys.path.append(dirname(dirname(abspath(__file__))))
 from hashlib import sha1
 import json
 from es_utils import send_payload

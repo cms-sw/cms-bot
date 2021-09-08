@@ -42,3 +42,10 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     rm -f ${pfile}
   fi
 done
+
+if [ "${PRODUCTION_ARCH}" = "1" ] ; then
+  if [ $(grep "SCRAM_ARCH=${ARCHITECTURE};" $CONFIG_MAP | grep 'RELEASE_BRANCH=master;' | grep "RELEASE_QUEUE=${RELEASE_QUEUE};" | grep 'PROD_ARCH=1;' | grep -v 'DISABLED=1' | wc -l) -eq 1 ] ; then
+    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > cmssw-afs-eos.txt
+    echo "ARCHITECTURE=${ARCHITECTURE}" >> cmssw-afs-eos.txt
+  fi
+fi

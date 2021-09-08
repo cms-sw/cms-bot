@@ -53,4 +53,3 @@ echo '"host":"'$(hostname -s)'",' >> $JSON
 echo '"architecture":"'$ARCHITECTURE'",' >> $JSON
 echo '"release":"'$RELEASE_FORMAT'"' >> $JSON
 echo "}" >> $JSON
-cat $JSON

@@ -396,12 +396,18 @@ if ${BUILD_EXTERNAL} ; then
     # To make sure we always pick scram from local area
     rm -f $CMSSW_IB/config/scram_basedir
     ls $WORKSPACE/$BUILD_DIR/share/lcg/SCRAMV1 > $CMSSW_IB/config/scram_version
-    config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
-    if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
-      git clone git@github.com:cms-sw/cmssw-config scram-buildrules
-      pushd scram-buildrules
-        git checkout ${config_tag}
-      popd
+    if [ -d $WORKSPACE/config ] ; then
+      cp -r $WORKSPACE/config scram-buildrules
+    else
+      config_tag=$(grep '%define *configtag *V' $WORKSPACE/cmsdist/scram-project-build.file | sed 's|.*configtag *V|V|;s| *||g')
+      if [ "$(cat $CMSSW_IB/config/config_tag)" != "${config_tag}" ] ; then
+        git clone git@github.com:cms-sw/cmssw-config scram-buildrules
+        pushd scram-buildrules
+          git checkout ${config_tag}
+        popd
+      fi
+    fi
+    if [ -d scram-buildrules ] ; then
       echo ${config_tag} > $WORKSPACE/$CMSSW_IB/config/config_tag
       mv $CMSSW_IB/config/SCRAM $CMSSW_IB/config/SCRAM.orig
       mv scram-buildrules/SCRAM $CMSSW_IB/config/SCRAM

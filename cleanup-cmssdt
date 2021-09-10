@@ -48,7 +48,7 @@ done
 DAYS_TO_KEEP=15
 DIRS="lizard flawfinder invalid-includes cmssw-afs-eos-comparison"
 DIRS="${DIRS} check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof"
-DIRS="${DIRS} iwyu material-budget das_query build-any-ib"
+DIRS="${DIRS} iwyu material-budget das_query build-any-ib check-unused-cmsdist-packages"
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"

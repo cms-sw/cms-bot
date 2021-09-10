@@ -3,6 +3,7 @@ CMS_BOT_DIR=$(dirname $0)/..
 RELEASE_QUEUE=$1
 ARCHITECTURE=$2
 UPLOAD_ID=$3
+PKGS="$4"
 eval `cat $CMS_BOT_DIR/config.map | grep -v 'DISABLED=' | grep "SCRAM_ARCH=$ARCHITECTURE;" | grep "RELEASE_QUEUE=$RELEASE_QUEUE;"`
 git clone --depth 1 git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
 git clone --depth 1 git@github.com:cms-sw/pkgtools -b $PKGTOOLS_TAG
@@ -11,7 +12,7 @@ if [ "X$ENABLE_DEBUG" = X ]; then
 fi
 perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw ${RELEASE_QUEUE}_2099-01-01-2400/" cmsdist/cmssw.spec
 
-PYTHONPATH= ./pkgtools/cmsBuild --use-dev --repo cms --architecture $ARCHITECTURE --work-dir w --pretend build cmssw bootstrap-bundle cms-common
+PYTHONPATH= ./pkgtools/cmsBuild --use-dev --repo cms --architecture $ARCHITECTURE --work-dir w --pretend build cmssw bootstrap-bundle cms-common fwlite $PKGS
 mkdir upload
 used="upload/${RELEASE_QUEUE}-${ARCHITECTURE}.txt"
 python -c "import json; print '\n'.join(['${CMSDIST_TAG}:%s' % f for f in json.load(open('w/cmsdist_files.json')).keys()])" | sort > $used

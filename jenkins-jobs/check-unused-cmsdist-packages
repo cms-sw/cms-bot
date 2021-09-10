@@ -12,10 +12,7 @@ fi
 perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw ${RELEASE_QUEUE}_2099-01-01-2400/" cmsdist/cmssw.spec
 
 PYTHONPATH= ./pkgtools/cmsBuild --use-dev --repo cms --architecture $ARCHITECTURE --work-dir w --pretend build cmssw bootstrap-bundle cms-common
-used="$(/bin/pwd)/${RELEASE_QUEUE}-${ARCHITECTURE}.txt"
-touch $used
-for u in $(python -c "import json; print '\n'.join(json.load(open('w/cmsdist_files.json')).keys())" | sort | uniq) ; do
-  echo "$CMSDIST_TAG:$u" >> $used
-done
+used="${RELEASE_QUEUE}-${ARCHITECTURE}.txt"
+python -c "import json; print '\n'.join(['${CMSDIST_TAG}:%s' % f for f in json.load(open('w/cmsdist_files.json')).keys()])" | sort > $used
 source $CMS_BOT_DIR/jenkins-artifacts
-send_jenkins_artifacts $used check-unused-cmsdist-packages/${UPLOAD_ID}/$(basename $used)
+send_jenkins_artifacts $(/bin/pwd)/$used check-unused-cmsdist-packages/${UPLOAD_ID}/${used}

@@ -12,7 +12,7 @@ if [ "X$ENABLE_DEBUG" = X ]; then
 fi
 perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw ${RELEASE_QUEUE}_2099-01-01-2400/" cmsdist/cmssw.spec
 
-PYTHONPATH= ./pkgtools/cmsBuild --use-dev --repo cms --architecture $ARCHITECTURE --work-dir w --pretend build cmssw bootstrap-bundle cms-common fwlite $PKGS
+PYTHONPATH= ./pkgtools/cmsBuild --use-dev --repo cms --architecture $ARCHITECTURE --work-dir w --pretend build cmssw-patch cmssw-ib bootstrap-driver cms-common fwlite $PKGS
 mkdir upload
 used="upload/${RELEASE_QUEUE}-${ARCHITECTURE}.txt"
 python -c "import json; print '\n'.join(['${CMSDIST_TAG}:%s' % f for f in json.load(open('w/cmsdist_files.json')).keys()])" | sort > $used

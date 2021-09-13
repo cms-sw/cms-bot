@@ -269,7 +269,7 @@ def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normal
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
   except Exception as e: print(e.message)
 
-def getExternalsESstats(arch='*', externalsList='', lastNdays=30, page_size=0):
+def getExternalsESstats(arch='*', externalsList='', lastNdays=30, page_size=0, fields=None):
   externals_names=''
   if externalsList == '':
     externals_names="*"
@@ -280,7 +280,7 @@ def getExternalsESstats(arch='*', externalsList='', lastNdays=30, page_size=0):
                                 architecture=arch,
                                 names=externals_names),
                    start_time=1000*int(time()-(86400*lastNdays)),
-                   end_time=1000*int(time()),scroll=True)
+                   end_time=1000*int(time()),scroll=True, fields=fields)
   return stats['hits']['hits']
 
 # get a dict of stats with externals name as keys
@@ -296,3 +296,70 @@ def orderStatsByName(externalsStats=None):
     for ext in namedStats:
         namedStats[ext] = sorted(namedStats[ext], key=lambda x: x["@timestamp"], reverse=True)
     return namedStats
+
+def get_externals_build_stats(arch='*', lastNdays=30, cpus=0, memoryGB=0, default_key="90"):
+    default_keys= {"cpu": "cpu_" + default_key, "rss": "rss_" + default_key, "time": "time"}
+    all_data = {}
+    if cpus<=0:
+        from cmsutils import MachineCPUCount
+        cpus=MachineCPUCount
+    if memoryGB<=0:
+        from cmsutils import MachineMemoryGB, MachineCPUCount
+        memoryGB = MachineMemoryGB
+    mem=memoryGB*1024*1024*1024
+
+    fields = list(default_keys.values()) + ["name", "build_jobs"]
+    items = getExternalsESstats(arch=arch, lastNdays=lastNdays, fields=fields)
+    for item in items:
+        name=item['_source']['name']
+        jobs=item['_source']['build_jobs']
+        if name not in all_data:
+            all_data[name] = {}
+            for k in default_keys: all_data[name][k] = []
+        for k in default_keys:
+            xk = default_keys[k]
+            all_data[name][k].append(int(item['_source'][xk]*cpus/jobs))
+
+    default_res = 4
+    if cpus<4: default_res=1
+    elif cpus<8: default_res=2
+    total_cpus = cpus*100
+    data={"defaults": {"cpu": (50, total_cpus/default_res),
+                       "rss": (int(mem/cpus), int(mem/default_res)),
+                       "time": (1, 300)
+                      },
+          "resources":{"cpu": total_cpus, "rss": mem},
+          "packages": {},
+          "known": [("^.+-toolfile$", 0),
+                    ("^data-.+$", 0),
+                    ("^.+$", 1)]
+         }
+    for name in all_data:
+        data["packages"][name] = {'cpu': 0, 'rss': 0, 'time': -1, "name": name}
+        for k in default_keys:
+            if all_data[name][k]:
+                data["packages"][name][k] = int(sum(all_data[name][k])/len(all_data[name][k]))
+        #Default resources if no data found for a package
+        if data["packages"][name]['time']==-1:
+            idx = 1
+            for exp in data["known"]:
+                if re.match(exp[0], name):
+                    idx = exp[1]
+                    break
+            for k in data["defaults"]:
+                data["packages"][name][k] = data["defaults"][k][idx]
+        #for small package with build time 1 or less use min resources
+        elif data["packages"][name]['time']==0:
+            for k in data["defaults"]:
+                data["packages"][name][k] = data["defaults"][k][0]
+        else:
+            #Make sure resources are not more than the total
+            for k in data["defaults"]:
+                if k == "time": continue
+                v = data["packages"][name][k]
+                if v>data["resources"][k]:
+                    v = data["resources"][k]
+                elif v==0:
+                    v = data["defaults"][k][0]
+                data["packages"][name][k] = v
+    return data

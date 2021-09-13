@@ -74,9 +74,9 @@ CMSSW_L2 = {
   "ssekmen":          ["fastsim"],
   "wajidalikhan":     ["pdmv"],
   "yuanchao":         ["alca"],
-  "francescobrivio":  ["alca"],
-  "malbouis":         ["alca"],
-  "tvami":            ["alca"],
+  "francescobrivio":  ["alca","db"],
+  "malbouis":         ["alca","db"],
+  "tvami":            ["alca","db"],
   CMSBUILD_USER:      ["tests" ],
   # dpgs
   "tsusa":            ["trk-dpg"],

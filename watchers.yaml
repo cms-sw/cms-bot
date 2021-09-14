@@ -960,6 +960,12 @@ wddgit:
 - DataFormats/Streamer
 - DataFormats/TestObjects
 - DataFormats/WrappedStdDictionaries
+wrtabb:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
 wmtford:
 - SimTracker/TrackerHitAssociation
 - Validation/TrackerRecHits

@@ -39,7 +39,7 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
   get_jenkins_artifacts ${BASELINE_DIR}/runall-report-step123-.log $WORKSPACE/ib-wfs.txt
   PR_EXTRA_WFS=""
   for wf in ${WORKFLOWS_LIST//,/ } ; do
-    if [ $(grep "^${wf}_" $WORKSPACE/ib-wfs.txt | wc l) -eq 0 ] ; then
+    if [ $(grep "^${wf}_" $WORKSPACE/ib-wfs.txt | wc -l) -eq 0 ] ; then
       PR_EXTRA_WFS="${wf} ${PR_EXTRA_WFS}"
     fi
   done

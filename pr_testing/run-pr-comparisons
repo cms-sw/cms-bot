@@ -50,12 +50,17 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
     mkdir $WORKSPACE/extra_wfs
     pushd $WORKSPACE/extra_wfs
       (
-      scram -a ${COMPARISON_ARCH} project $COMPARISON_RELEASE ; pushd $COMPARISON_RELEASE ; eval `scram run -sh` ; popd;
-      which runTheMatrix.py ;
-      [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--job-reports" ;
+      scram -a ${COMPARISON_ARCH} project $COMPARISON_RELEASE
+      pushd $COMPARISON_RELEASE
+        eval `scram run -sh` >/dev/null 2>&1
+        ${CMS_BOT_DIR}/das-utils/use-ibeos-sort
+      popd
+      export PATH=${CMS_BOT_DIR}/das-utils:$PATH
+      which runTheMatrix.py
+      [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--job-reports"
       if [ -e ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ] ; then
-        [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' ${IB_MATRIX_OPTS}" ;
-      fi ;
+        [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' ${IB_MATRIX_OPTS}"
+      fi
       eval runTheMatrix.py -j ${NUM_PROC} -l ${PR_EXTRA_WFS} ${IB_MATRIX_OPTS} >$WORKSPACE/extra_wfs.log 2>&1 || true
       )
       which runTheMatrix.py

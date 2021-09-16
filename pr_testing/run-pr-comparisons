@@ -56,7 +56,7 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
       if [ -e ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ] ; then
         [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' ${IB_MATRIX_OPTS}" ;
       fi ;
-      runTheMatrix.py -j ${NUM_PROC} -l ${PR_EXTRA_WFS} ${IB_MATRIX_OPTS} >$WORKSPACE/extra_wfs.log 2>&1 || true
+      eval runTheMatrix.py -j ${NUM_PROC} -l ${PR_EXTRA_WFS} ${IB_MATRIX_OPTS} >$WORKSPACE/extra_wfs.log 2>&1 || true
       )
       which runTheMatrix.py
       rm -rf $COMPARISON_RELEASE

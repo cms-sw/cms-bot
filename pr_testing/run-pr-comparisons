@@ -39,6 +39,9 @@ fi
 cd $WORKSPACE/results
 echo "Downloading Ref: `date`"
 ARTIFACT_SYMLINK=true get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$COMPARISON_RELEASE/ || true
+echo "Downloading PR: `date`"
+get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/ &
+echo "Done Downloading `date`"
 
 if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
   PR_EXTRA_WFS=""
@@ -53,7 +56,7 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
     IB_MATRIX_OPTS=""
     mkdir $WORKSPACE/extra_wf
     pushd $WORKSPACE/extra_wf
-    (
+      (
       scram -a ${COMPARISON_ARCH} project $COMPARISON_RELEASE
       pushd $COMPARISON_RELEASE
         eval `scram run -sh` >/dev/null 2>&1
@@ -64,31 +67,23 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
       if [ -e ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ] ; then
         [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' ${IB_MATRIX_OPTS}"
       fi
-      (eval runTheMatrix.py -j ${NUM_PROC} -l ${PR_EXTRA_WFS} ${IB_MATRIX_OPTS} >$WORKSPACE/extra_wf.log 2>&1 || true) &
-    )
+      eval runTheMatrix.py -j ${NUM_PROC} -l ${PR_EXTRA_WFS} ${IB_MATRIX_OPTS} >$WORKSPACE/extra_wf.log 2>&1 || true
+      )
+      rm -rf $COMPARISON_RELEASE
+      mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}
+      find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}
+      touch wf_errors.${BUILD_ID}
+      grep "ERROR executing.*" $WORKSPACE/extra_wf.log | while read line ; do
+        WF_STEP=`echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g'`
+        if ! grep $WF_STEP wf_errors.${BUILD_ID} ; then echo $WF_STEP >> wf_errors.${BUILD_ID} ; fi
+      done
     popd
+    #send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
+    mv $WORKSPACE/extra_wf/* $WORKSPACE/data/$COMPARISON_RELEASE/
   fi
 fi
-
-echo "Downloading PR: `date`"
-get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/ || true
-echo "Done Downloading `date`"
 wait
-
-if [ -d $WORKSPACE/extra_wf ] ; then
-  pushd $WORKSPACE/extra_wf
-    rm -rf $COMPARISON_RELEASE
-    mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}
-    find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}
-    touch wf_errors.${BUILD_ID}
-    grep "ERROR executing.*" $WORKSPACE/extra_wf.log | while read line ; do
-      WF_STEP=`echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g'`
-      if ! grep $WF_STEP wf_errors.${BUILD_ID} ; then echo $WF_STEP >> wf_errors.${BUILD_ID} ; fi
-    done
-  popd
-  #send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
-  mv $WORKSPACE/extra_wf/* $WORKSPACE/data/$COMPARISON_RELEASE/
-fi
+echo "Done Downloading `date`"
 
 MAPPING_FILE=wf_mapping.txt
 ERRORS_FILE=wf_errors.txt

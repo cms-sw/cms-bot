@@ -40,7 +40,7 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
   PR_EXTRA_WFS=""
   for wf in ${WORKFLOWS_LIST//,/ } ; do
     if [ $(grep "^${wf}_" $WORKSPACE/ib-wfs.txt | wc -l) -eq 0 ] ; then
-      PR_EXTRA_WFS="${wf} ${PR_EXTRA_WFS}"
+      PR_EXTRA_WFS="${wf},${PR_EXTRA_WFS}"
     fi
   done
   if [ "${PR_EXTRA_WFS}" != "" ] ; then

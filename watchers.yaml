@@ -1742,3 +1742,6 @@ sscruz:
 - Validation/MuonIdentification
 - Validation/MuonIsolation
 - Validation/RecoMuon
+francescobrivio:
+- RecoVertex/BeamSpotProducer
+- DQM/Integration

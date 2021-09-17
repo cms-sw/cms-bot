@@ -27,6 +27,8 @@ PR_RESULT_URL="${JENKINS_ARTIFACTS_URL}/${PR_BASELINE_JOBDIR}"
 RESULTS_FILE=$WORKSPACE/comparison${UC_TEST_FLAVOR}.txt
 COMP_UPLOAD_DIR="baseLineComparisons${UC_TEST_FLAVOR}/${COMPARISON_RELEASE}+${PR_NUM}/${BUILD_NUMBER}"
 DAS_NON_CONSISTENT_WFS_FILE=wf_non_consistent_das.txt
+MAPPING_FILE=wf_mapping.txt
+ERRORS_FILE=wf_errors.txt
 
 mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running" || true
 
@@ -86,8 +88,6 @@ fi
 wait
 echo "Done Downloading `date`"
 
-MAPPING_FILE=wf_mapping.txt
-ERRORS_FILE=wf_errors.txt
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.* | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*  | sort | uniq > $WORKSPACE/$ERRORS_FILE
 WFS_WITH_ERRORS=''

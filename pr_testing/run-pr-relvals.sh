@@ -27,6 +27,7 @@ pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
     echo "------------"  >> ${LOG}
     echo 'ERROR TIMEOUT' >> ${LOG}
   fi
+  find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.txt
 popd
 
 TEST_ERRORS=`grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR'` | grep -v 'ERROR failed to parse X509 proxy' || true

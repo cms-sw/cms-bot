@@ -44,8 +44,9 @@ get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/ &
 echo "Done Downloading `date`"
 
 if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
+  get_jenkins_artifacts ${PR_BASELINE_DIR}/${MAPPING_FILE} $WORKSPACE/pr_${MAPPING_FILE}
   PR_EXTRA_WFS=""
-  for wf in ${WORKFLOWS_LIST//,/ } ; do
+  for wf in $(cat $WORKSPACE/pr_${MAPPING_FILE} | sed 's|_.*||') ; do
     if [ $(grep "^${wf}_" $WORKSPACE/data/$COMPARISON_RELEASE/runall-report-step123-.* | wc -l) -eq 0 ] ; then
       PR_EXTRA_WFS="${wf},${PR_EXTRA_WFS}"
     fi

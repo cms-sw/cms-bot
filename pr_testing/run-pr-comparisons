@@ -81,7 +81,7 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
         if ! grep $WF_STEP wf_errors.${BUILD_ID} ; then echo $WF_STEP >> wf_errors.${BUILD_ID} ; fi
       done
     popd
-    #send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
+    send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
     mv $WORKSPACE/extra_wf/* $WORKSPACE/data/$COMPARISON_RELEASE/
   fi
 fi

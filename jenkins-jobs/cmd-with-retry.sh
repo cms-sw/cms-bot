@@ -1,5 +1,5 @@
 #!/bin/bash -ex
-cmd=$1
+cmd=$1 ; shift
 if [ -f retry.txt ] ; then
   rm -f retry.txt
   echo "Previously done repos"

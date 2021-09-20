@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 cmd=$1
 if [ -f retry.txt ] ; then
   rm -f retry.txt

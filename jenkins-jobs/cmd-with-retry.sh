@@ -7,7 +7,7 @@ if [ -f retry.txt ] ; then
 else
   rm -f *.done
 fi
-if ! $cmd "$@"  > run.log 2>&1 ; then
+if ! $cmd ${1+"$@"}  > run.log 2>&1 ; then
   cat run.log
   echo "Total done repos"
   ls *.done | wc -l

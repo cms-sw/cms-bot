@@ -1,22 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from optparse import OptionParser
-from _py2with3compatibility import urlencode, Request, urlopen
-from json import dumps
+from jenkins_callback import build_jobs
+import json
 
 def process(opts):
   xparam = []
   for param in opts.params:
     p,v=param.split("=",1)
     xparam.append({"name":p,"value":v})
-  data = {"json":dumps({"parameter":xparam}),"Submit": "Build"}
-  try:
-    url = opts.server+'/job/'+opts.job+'/build'
-    data = urlencode(data)
-    req = Request(url=url,data=data,headers={"ADFS_LOGIN" : opts.user})
-    content = urlopen(req).read()
-  except Exception as e:
-    print("Unable to start jenkins job:",e)
+  build_jobs(opts.server, [(json.dumps({"parameter":xparam}),opts.job)], headers={}, user=opts.user)
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog")

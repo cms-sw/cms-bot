@@ -53,6 +53,7 @@ CMSSW_L2 = {
   "makortel":         ["heterogeneous", "core", "visualization", "geometry"],
   "mariadalfonso":    ["xpog"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
+  "missirol":         ["hlt"],
   "mkirsano":         ["generators"],   
   "mrodozov":         ["externals"],
   "perrotta":         ["operations"],

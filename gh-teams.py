@@ -2,7 +2,7 @@
 from __future__ import print_function
 from copy import deepcopy
 from github import Github
-from os.path import expanduser
+from os.path import expanduser, exists
 from argparse import ArgumentParser
 from sys import exit
 from socket import setdefaulttimeout
@@ -157,6 +157,8 @@ for org_name in CMS_ORGANIZATIONS:
   print("  All members: ",org_members)
   if chg_flag: teams = org.get_teams()
   for team in teams:
+    xfile = "%s-%s.done" % (org_name, team.name)
+    if exists(xfile): continue
     print("    Checking team:",team.name)
     api_rate_limits(gh,msg=False)
     team_info = {}
@@ -202,7 +204,10 @@ for org_name in CMS_ORGANIZATIONS:
         chg_flag+=1
     total_changes+=chg_flag
     if not chg_flag: print("      OK Team members")
-    if not "repositories" in team_info: continue
+    if not "repositories" in team_info:
+      ref = open(xfile,"w")
+      ref.close()
+      continue
     team_repos      = [ repo for repo in team.get_repos() ]
     team_repos_name = [ repo.name.encode("ascii", "ignore") for repo in team_repos ]
     print("      Checking team repositories")
@@ -255,5 +260,8 @@ for org_name in CMS_ORGANIZATIONS:
         chg_flag+=1
     if not chg_flag: print("        OK Team Repositories")
     total_changes+=chg_flag
+    ref = open(xfile,"w")
+    ref.close()
+
 print("Total Updates:",total_changes)
 exit(err_code)

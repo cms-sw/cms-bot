@@ -11,8 +11,9 @@ if sys.version_info[0] == 2:
     # urllib
     from urllib import urlencode, quote_plus, quote, unquote
     from urllib2 import Request, urlopen, HTTPSHandler, build_opener, install_opener, unquote, HTTPError, \
-        HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler
+        HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, HTTPCookieProcessor
     from urlparse import urlparse
+    from cookielib import CookieJar
 else:
     # python 3 modules
     from subprocess import getstatusoutput as run_cmd
@@ -22,9 +23,9 @@ else:
     # urllib
     from urllib.parse import urlencode, quote_plus, quote, unquote, urlparse
     from urllib.request import Request, urlopen, HTTPSHandler, build_opener, install_opener, \
-        HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler
+        HTTPPasswordMgrWithDefaultRealm, HTTPBasicAuthHandler, HTTPCookieProcessor
     from urllib.error import HTTPError
-
+    from http.cookiejar import CookieJar
 
 def cmp_f(a, b):
     return ((a > b) - (a < b))

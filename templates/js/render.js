@@ -486,6 +486,22 @@ add_header_check_link = function ( title_cell, isFound, currentTag ){
   }
 }
 
+add_ubsan_logs_link = function ( title_cell, isFound, currentTag ){
+  if ( isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' UBSAN warnings')
+    return
+  }
+  if ( isFound == 'found' ){
+    var url = CMSSDT_SERVER+'/SDT/jenkins-artifacts/ubsan_logs/' + currentTag
+    var sa_link = $("<a></a>").attr("href", url)
+    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+    sa_link.append($('<span></span>').text(' UBSAN warnings'))
+    title_cell.append(sa_link)
+    title_cell.append($("<br>"))
+  }
+}
+
 /**
  * Adds a link to the tag of the IB in github
  */
@@ -571,6 +587,7 @@ write_comp_IB_table =  function( comparison, tab_pane ){
     add_rv_exceptions_link( title_cell , comparison.RVExceptions , current_tag )
     add_material_budget_tests_link( title_cell , comparison.material_budget , current_tag )
     add_header_check_link( title_cell , comparison.check_headers , current_tag )
+    add_ubsan_logs_link( title_cell , comparison.ubsan_logs , current_tag )
   }
 
   var title_row = $('<tr>')

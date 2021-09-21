@@ -14,7 +14,8 @@ WORKSPACE="$2"
 DOCKER_IMG_HOST="$3"
 CLEANUP_WORKSPACE="$4"
 USER_HOME_MD5="$5"
-if [ "X$WORKSPACE" = "X" ] ; then echo DATA_ERROR="Missing workspace directory." ;  exit 1; fi
+if [ "X$WORKSPACE" = "X" ] ; then echo DATA_ERROR="Missing workspace directory." ;        exit 1; fi
+if [ ! -e  $HOME ] ;         then echo DATA_ERROR="Home directory $HOME not available." ; exit 1; fi
 if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
 mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 rm -f $WORKSPACE/cmsos
@@ -57,11 +58,6 @@ echo "DATA_SLAVE_JAR=${slave_jar}"
 
 SLAVE_LABELS="user-$(whoami) kernel-$(uname -r)"
 if [ $(echo $HOME | grep '^/afs/' |wc -l) -gt 0 ] ; then SLAVE_LABELS="${SLAVE_LABELS} home-afs"; fi
-if [ -e  $HOME ] ; then
-  DATA_HOME="OK"
-else
-  DATA_HOME="ERROR"
-fi
 arch=$(uname -m)
 HOST_ARCH=""
 if [ "$arch" = "aarch64" ] ; then

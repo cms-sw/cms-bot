@@ -1,4 +1,5 @@
 #!/bin/bash -e
+aklog >/dev/null 2>&1 || true
 if [ -d $HOME/bin ] ; then export PATH=$HOME/bin:$PATH ; fi
 $(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs --no-run-if-empty kill -9) || true
 for repo in cms cms-ib grid projects unpacked ; do

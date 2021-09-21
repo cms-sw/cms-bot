@@ -57,6 +57,11 @@ echo "DATA_SLAVE_JAR=${slave_jar}"
 
 SLAVE_LABELS="user-$(whoami) kernel-$(uname -r)"
 if [ $(echo $HOME | grep '^/afs/' |wc -l) -gt 0 ] ; then SLAVE_LABELS="${SLAVE_LABELS} home-afs"; fi
+if [ -e  $HOME ] ; then
+  DATA_HOME="OK"
+else
+  DATA_HOME="ERROR"
+fi
 arch=$(uname -m)
 HOST_ARCH=""
 if [ "$arch" = "aarch64" ] ; then

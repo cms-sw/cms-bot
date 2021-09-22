@@ -1070,7 +1070,7 @@ def find_ubsan_logs(comparison, arch):
     for c in comparisons:
         rel_name = c['compared_tags'].split('-->')[1]
         print("Searching for ubsan runtime errors summary log")
-        c['ubsan_logs'] = find_and_check_result(rel_name, architecture, CHECK_UBSANLOG_PATH, 'wc -l {0} | cut -d " " -f1')
+        c['ubsan-logs'] = find_and_check_result(rel_name, architecture, CHECK_UBSANLOG_PATH, 'wc -l {0} | cut -d " " -f1')
 
 def find_static_results(comparisons, architecture):
     """
@@ -1616,7 +1616,7 @@ if __name__ == "__main__":
                     find_general_test_results(
                         'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2, find_one_profiling_result
                         )
-                if 'ubsan_logs' in tests_to_find:
+                if 'ubsan-logs' in tests_to_find:
                     find_ubsan_logs(release_queue_results['comparisons'], arch)
                 if 'check-headers' in tests_to_find:
                     find_check_headers(release_queue_results['comparisons'], arch)

@@ -1064,14 +1064,14 @@ def find_check_headers(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print('Looking for check-headers results for', rel_name, '.')
-        comp['check-headers'] = find_and_check_result(rel_name, architecture, CHECK_HEADERS_PATH, 'wc -l {0} | cut -d " " -f1')
+        comp['check-headers'] = find_and_check_result(rel_name, architecture, CHECK_HEADERS_PATH, 'cat {0} | wc -l')
 
 def find_ubsan_logs(comparisons, arch):
     for c in comparisons:
         if c['compared_tags'].count('UBSAN') < 2: continue
         rel_name = c['compared_tags'].split('-->')[1]
         print('Looking for ubsan results for', rel_name, '.')
-        c['ubsan-logs'] = find_and_check_result(rel_name, arch, CHECK_UBSANLOG_PATH, 'wc -l {0} | cut -d " " -f1')
+        c['ubsan-logs'] = find_and_check_result(rel_name, arch, CHECK_UBSANLOG_PATH, 'cat {0} | wc -l')
 
 def find_static_results(comparisons, architecture):
     """

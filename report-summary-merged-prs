@@ -1065,11 +1065,17 @@ def find_check_headers(comparisons, architecture):
         print('Looking for check-headers results for', rel_name, '.')
         comp['check-headers'] = find_and_check_result(rel_name, architecture, CHECK_HEADERS_PATH, 'cat {0} | wc -l')
 
-def find_ubsan_logs(comparisons, arch):
+
+def find_ubsan_logs(comparisons, ubsan_data):
     for c in comparisons:
         rel_name = c['compared_tags'].split('-->')[1]
-        print('Looking for ubsan results for', rel_name, '.')
-        c['ubsan-logs'] = find_and_check_result(rel_name, arch, CHECK_UBSANLOG_PATH, 'cat {0} | wc -l')
+        if rel_name in ubsan_data:
+            print('Looking for ubsan results for', rel_name, '.')
+            if ubsan_data[rel_name]>0:
+                c['ubsan-logs'] = 'error'
+            else:
+                c['ubsan-logs'] = 'passed'
+
 
 def find_static_results(comparisons, architecture):
     """
@@ -1447,7 +1453,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_LIZARD = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/lizard/RELEASE_NAME/ARCHITECTURE'
     MAGIC_COMMAND_FIND_CHECK_HEADERS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE'
     CHECK_HEADERS_PATH = JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE/headers_with_error.log'
-    CHECK_UBSANLOG_PATH = JENKINS_ARTIFACTS_DIR + '/ubsan_logs/RELEASE_NAME/ubsan_runtime_errors.log'
+    CHECK_UBSANLOG_PATH = JENKINS_ARTIFACTS_DIR + '/ubsan_logs/CMSSW_*/ubsan_runtime_errors.log'
     MAGIC_COMMAND_FIND_FLAWFINDER = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/flawfinder/RELEASE_NAME/ARCHITECTURE'
     MAGIC_COMMAND_FIND_DUP_DICT = ("grep -v '^Searching for '  " + BUILD_LOG_DIR + "/ARCHITECTURE/www/*/*/RELEASE_NAME/testLogs/dup*.log" +
         " |  grep -v ':**** SKIPPING ' | grep -v '^ *$'  | wc -l ")
@@ -1638,9 +1644,18 @@ if __name__ == "__main__":
         execute_magic_command_find_results('invalid-includes')
     )
 
+    ubsan_data = {}
+    out, err, rcode = get_output_command('wc -l %s' % CHECK_UBSANLOG_PATH)
+    for line in out.split('\n'):
+        count, rel = line.strip().split('\n',1)
+        rel = rel.split('/')[-2]
+        ubsan_data[rel]=int(count)
+        if '_UBSAN_' in rel:
+            ubsan_data[rel.replace('_UBSAN_','_')]=int(count)
+
     for release_queue_results in results:
         find_dup_dict_result(release_queue_results['comparisons'])
-        #find_ubsan_logs(release_queue_results['comparisons'], 'noarch')
+        find_ubsan_logs(release_queue_results['comparisons'], ubsan_data)
 
     fill_missing_cmsdist_tags(results)
     get_cmsdist_merge_commits(results)

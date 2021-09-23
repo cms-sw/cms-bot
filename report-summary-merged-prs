@@ -1067,7 +1067,6 @@ def find_check_headers(comparisons, architecture):
 
 def find_ubsan_logs(comparisons, arch):
     for c in comparisons:
-        if c['compared_tags'].count('UBSAN') < 2: continue
         rel_name = c['compared_tags'].split('-->')[1]
         print('Looking for ubsan results for', rel_name, '.')
         c['ubsan-logs'] = find_and_check_result(rel_name, arch, CHECK_UBSANLOG_PATH, 'cat {0} | wc -l')
@@ -1641,8 +1640,7 @@ if __name__ == "__main__":
 
     for release_queue_results in results:
         find_dup_dict_result(release_queue_results['comparisons'])
-        if '_UBSAN_X' in release_queue_results['release_name']:
-            find_ubsan_logs(release_queue_results['comparisons'], 'noarch')
+        find_ubsan_logs(release_queue_results['comparisons'], 'noarch')
 
     fill_missing_cmsdist_tags(results)
     get_cmsdist_merge_commits(results)

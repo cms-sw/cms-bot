@@ -1068,7 +1068,7 @@ def find_check_headers(comparisons, architecture):
 
 def find_ubsan_logs(comparisons, arch):
     for c in comparisons:
-        if c['compared_tags'].find('UBSAN') < 2: continue
+        if c['compared_tags'].count('UBSAN') < 2: continue
         rel_name = c['compared_tags'].split('-->')[1]
         print('Looking for ubsan results for', rel_name, '.')
         c['ubsan-logs'] = find_and_check_result(rel_name, arch, CHECK_UBSANLOG_PATH, 'wc -l {0} | cut -d " " -f1')

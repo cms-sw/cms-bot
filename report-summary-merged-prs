@@ -1648,6 +1648,8 @@ if __name__ == "__main__":
     out, err, rcode = get_output_command('wc -l %s' % CHECK_UBSANLOG_PATH)
     for line in out.split('\n'):
         count, rel = line.strip().split(' ',1)
+        if not '/CMSSW_' in rel: continue
+        print("UBSAN:",count,line)
         rel = rel.split('/')[-2]
         ubsan_data[rel]=int(count)
         if '_UBSAN_' in rel:

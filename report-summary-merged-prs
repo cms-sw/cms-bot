@@ -1069,7 +1069,7 @@ def find_check_headers(comparisons, architecture):
 def find_ubsan_logs(comparisons, arch):
     for c in comparisons:
         rel_name = c['compared_tags'].split('-->')[1]
-        print('Looking for check-headers results for', rel_name, '.')
+        print('Looking for ubsan results for', rel_name, '.')
         c['ubsan-logs'] = find_and_check_result(rel_name, arch, CHECK_UBSANLOG_PATH, 'wc -l {0} | cut -d " " -f1')
 
 def find_static_results(comparisons, architecture):

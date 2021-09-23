@@ -1642,8 +1642,7 @@ if __name__ == "__main__":
 
     for release_queue_results in results:
         find_dup_dict_result(release_queue_results['comparisons'])
-
-    find_ubsan_logs(release_queue_results['comparisons'], 'noarch')
+        find_ubsan_logs(release_queue_results['comparisons'], 'noarch')
 
     fill_missing_cmsdist_tags(results)
     get_cmsdist_merge_commits(results)

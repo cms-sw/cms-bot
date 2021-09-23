@@ -1038,7 +1038,6 @@ def find_and_check_result(release_name, architecture, magic_cmd, res_cmd):
         cmd =  res_cmd.format(path)
         out, err, ret_code = get_output_command(cmd)
         try:
-            # if the file is empty, means there was no issues with header checks
             if int(out) == 0:
                 result = 'passed'
             else:

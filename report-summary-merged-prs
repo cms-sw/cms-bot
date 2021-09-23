@@ -1063,9 +1063,15 @@ def find_check_hlt(comparisons, architecture):
 def find_check_headers(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
-        print("Looking for {0} results for {1}.".format('check-headers', rel_name))
+        print('Looking for check-headers results for', rel_name, '.')
         comp['check-headers'] = find_and_check_result(rel_name, architecture, CHECK_HEADERS_PATH, 'wc -l {0} | cut -d " " -f1')
 
+def find_ubsan_logs(comparisons, arch):
+    for c in comparisons:
+        if 'UBSAN' in c['compared_tags']:
+            rel_name = c['compared_tags'].split('-->')[1]
+            print("Searching for ubsan runtime errors summary log")
+            c['ubsan-logs'] = find_and_check_result(rel_name, arch, CHECK_UBSANLOG_PATH, 'wc -l {0} | cut -d " " -f1')
 
 def find_static_results(comparisons, architecture):
     """
@@ -1443,6 +1449,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_LIZARD = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/lizard/RELEASE_NAME/ARCHITECTURE'
     MAGIC_COMMAND_FIND_CHECK_HEADERS = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE'
     CHECK_HEADERS_PATH = JENKINS_ARTIFACTS_DIR + '/check_headers/RELEASE_NAME/ARCHITECTURE/headers_with_error.log'
+    CHECK_UBSANLOG_PATH = JENKINS_ARTIFACTS_DIR + '/ubsan_logs/RELEASE_NAME/ubsan_runtime_errors.log'
     MAGIC_COMMAND_FIND_FLAWFINDER = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/flawfinder/RELEASE_NAME/ARCHITECTURE'
     MAGIC_COMMAND_FIND_DUP_DICT = ("grep -v '^Searching for '  " + BUILD_LOG_DIR + "/ARCHITECTURE/www/*/*/RELEASE_NAME/testLogs/dup*.log" +
         " |  grep -v ':**** SKIPPING ' | grep -v '^ *$'  | wc -l ")
@@ -1635,6 +1642,7 @@ if __name__ == "__main__":
 
     for release_queue_results in results:
         find_dup_dict_result(release_queue_results['comparisons'])
+        find_ubsan_logs(release_queue_results['comparisons'], 'noarch')
 
     fill_missing_cmsdist_tags(results)
     get_cmsdist_merge_commits(results)

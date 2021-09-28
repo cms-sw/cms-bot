@@ -79,7 +79,8 @@ CMSSW_L2 = {
   CMSBUILD_USER:      ["tests" ],
   # dpgs
   "tsusa":            ["trk-dpg"],
-  "mmusich":          ["trk-dpg"],
+  "mmusich":          ["trk-dpg","tracking-pog"],
+  "connorpa":         ["trk-dpg"],
   "thomreis":         ["ecal-dpg"],
   "mseidel42":        ["hcal-dpg"],
   "georgia14":        ["hcal-dpg"],
@@ -117,7 +118,6 @@ CMSSW_L2 = {
   "kshcheli":         ["proton-pog"],
   "kandrosov":        ["tau-pog"],
   #"LE BIHAN, Anne-Catherine":        ["tau-pog"],
-  "mmusich":          ["tracking-pog"],
   "mtosi":            ["tracking-pog"],
   #"MARIANI, Valentina": ["tracking-pog"],
 }

@@ -119,7 +119,7 @@ CMSSW_L2 = {
   "kandrosov":        ["tau-pog"],
   #"LE BIHAN, Anne-Catherine":        ["tau-pog"],
   "mtosi":            ["tracking-pog"],
-  #"MARIANI, Valentina": ["tracking-pog"],
+  "vmariani":         ["tracking-pog"],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))

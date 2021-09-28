@@ -1355,18 +1355,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print("Test params:",test_params_msg)
     url = ""
     if test_params_comment:
-      url = test_params_comment.html_url
-      emoji = "+1"
-      if 'ERRORS: ' in test_params_msg: emoji = "-1"
       e = get_user_emoji(test_params_comment, repository, cmsbuild_user)
       print(e)
-      if e and (e['content']!=emoji) and not dryRun:
-        delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
-      state = "success"
-      if emoji=="-1": state = "error"
-      if not dryRun and ((not e) or (e['content']!=emoji)):
-        set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
-        last_commit_obj.create_status(state, description=test_params_msg, target_url=url, context=bot_test_param_name)
+      if not dryRun:
+        emoji = "-1" if 'ERRORS: ' in test_params_msg else "+1"
+        if e and (e['content']!=emoji):
+          delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
+        state = "success" if emioji=="+1" else "error"
+        last_commit_obj.create_status(state, description=test_params_msg, target_url=test_params_comment.html_url, context=bot_test_param_name)
+        if (not e) or (e['content']!=emoji):
+          set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
   if ack_comment:
     state = get_status(bot_ack_name, commit_statuses)
     if (not state) or (state.target_url != ack_comment.html_url):

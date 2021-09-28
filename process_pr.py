@@ -1361,7 +1361,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         emoji = "-1" if 'ERRORS: ' in test_params_msg else "+1"
         if e and (e['content']!=emoji):
           delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
-        state = "success" if emioji=="+1" else "error"
+        state = "success" if emoji=="+1" else "error"
         last_commit_obj.create_status(state, description=test_params_msg, target_url=test_params_comment.html_url, context=bot_test_param_name)
         if (not e) or (e['content']!=emoji):
           set_comment_emoji(test_params_comment.id, repository, emoji=emoji)

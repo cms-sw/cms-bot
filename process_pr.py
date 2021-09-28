@@ -798,7 +798,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           print("Comment message:",first_line)
           signatures["tests"] = "pending"
           continue
-        elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] != "pending"):
+        elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] == "pending"):
           abort_test = comment
           test_comment = None
           signatures["tests"] = "pending"

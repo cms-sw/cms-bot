@@ -100,6 +100,26 @@ CMSSW_L2 = {
   "cseez":            ["hgcal-dpg"],
   "fabiocos":         ["mtd-dpg", "operations"],
   "parbol":           ["mtd-dpg"],
+  # pogs
+  "juska":            ["pf"],
+  "kdlong":           ["pf"],
+  "lfinco":           ["egamma-pog"],
+  "swagata87":        ["egamma-pog"],
+  "kirschen":         ["jetmet-pog"],
+  #"MC LEAN, Christine Angela": ["jetmet-pog"],
+  "knollejo":         ["lumi-pog"],
+  #"SCHWICK, Christoph":         ["lumi-pog"],
+  "gkaratha":         ["muon-pog"],
+  #"SANCHEZ CRUZ, Sergio":         ["muon-pog"],
+  "johnalison":       ["btv-pog"],
+  "soureek":          ["btv-pog"],
+  "michael-pitt":     ["proton-pog"],
+  "kshcheli":         ["proton-pog"],
+  "kandrosov":        ["tau-pog"],
+  #"LE BIHAN, Anne-Catherine":        ["tau-pog"],
+  "mmusich":          ["tracking-pog"],
+  "mtosi":            ["tracking-pog"],
+  #"MARIANI, Valentina": ["tracking-pog"],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))

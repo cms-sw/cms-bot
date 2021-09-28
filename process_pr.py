@@ -174,6 +174,16 @@ def modify_comment(comment, match, replace, dryRun):
       print("Message updated")
   return 0
 
+def get_user_emoji(comment, repository, user):
+  for e in get_comment_emojis(comment.id, repository):
+    if e['user']['login'].encode("ascii", "ignore") == user:
+      return e
+  return None
+
+def has_user_emoji(comment, repository, emoji, user):
+  e = get_user_emoji(comment, repository, user)
+  return (e and e['content']==emoji)
+
 def get_assign_categories(line):
   m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s-]+)\s*$", line, re.I)
   if m:
@@ -1135,10 +1145,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if not dryRun:
           set_comment_emoji(test_comment.id, repository)
     elif abort_test and bot_status and (not bot_status.description.startswith("Aborted")):
-      create_properties_file_tests(repository, prId, global_test_params, dryRun, abort=True)
-      if not dryRun:
-        set_comment_emoji(abort_test.id, repository)
-        last_commit_obj.create_status("pending", description="Aborted, waiting for authorized user to issue the test command.", target_url=abort_test.html_url, context=bot_status_name)
+      if not has_user_emoji(abort_test, repository, "+1", cmsbuild_user):
+        create_properties_file_tests(repository, prId, global_test_params, dryRun, abort=True)
+        if not dryRun:
+          set_comment_emoji(abort_test.id, repository)
+          last_commit_obj.create_status("pending", description="Aborted, waiting for authorized user to issue the test command.", target_url=abort_test.html_url, context=bot_status_name)
 
   # Do not complain about tests
   requiresTestMessage = " after it passes the integration tests"
@@ -1347,16 +1358,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       url = test_params_comment.html_url
       emoji = "+1"
       if 'ERRORS: ' in test_params_msg: emoji = "-1"
-      emojis = get_comment_emojis(test_params_comment.id, repository)
-      for e in emojis:
-        if e['user']['login'].encode("ascii", "ignore") == cmsbuild_user:
-          if e['content']!=emoji:
-            print("deleting old emoji:",e['content'])
-            if not dryRun:
-              delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
+      e = get_user_emoji(test_params_comment, repository, cmsbuild_user)
+      print(e)
+      if e and (e['content']!=emoji) and not dryRun:
+        delete_comment_emoji(str(e['id']), test_params_comment.id, repository)
       state = "success"
       if emoji=="-1": state = "error"
-      if not dryRun:
+      if not dryRun and ((not e) or (e['content']!=emoji)):
         set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
         last_commit_obj.create_status(state, description=test_params_msg, target_url=url, context=bot_test_param_name)
   if ack_comment:

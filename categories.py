@@ -111,7 +111,7 @@ CMSSW_L2 = {
   "knollejo":         ["lumi-pog"],
   #"SCHWICK, Christoph":         ["lumi-pog"],
   "gkaratha":         ["muon-pog"],
-  #"SANCHEZ CRUZ, Sergio":         ["muon-pog"],
+  "sscruz":           ["muon-pog"],
   "johnalison":       ["btv-pog"],
   "soureek":          ["btv-pog"],
   "michael-pitt":     ["proton-pog"],

@@ -79,12 +79,14 @@ CMSSW_L2 = {
   CMSBUILD_USER:      ["tests" ],
   # dpgs
   "tsusa":            ["trk-dpg"],
-  "mmusich":          ["trk-dpg","tracking-pog"],
   "connorpa":         ["trk-dpg"],
+  "simonepigazzini":  ["ecal-dpg"],
+  "jainshilpi":       ["ecal-dpg"],
   "thomreis":         ["ecal-dpg"],
   "mseidel42":        ["hcal-dpg"],
   "georgia14":        ["hcal-dpg"],
   "mileva":           ["muon-dpg"],
+  "battibass":        ["muon-dpg"],
   "battibass":        ["dt-dpg"],
   "fcavallo":         ["dt-dpg"],
   "namapane":         ["dt-dpg"],
@@ -107,9 +109,8 @@ CMSSW_L2 = {
   "lfinco":           ["egamma-pog"],
   "swagata87":        ["egamma-pog"],
   "kirschen":         ["jetmet-pog"],
-  #"MC LEAN, Christine Angela": ["jetmet-pog"],
+  "camclean":         ["jetmet-pog"],
   "knollejo":         ["lumi-pog"],
-  #"SCHWICK, Christoph":         ["lumi-pog"],
   "gkaratha":         ["muon-pog"],
   "sscruz":           ["muon-pog"],
   "johnalison":       ["btv-pog"],
@@ -117,9 +118,10 @@ CMSSW_L2 = {
   "michael-pitt":     ["proton-pog"],
   "kshcheli":         ["proton-pog"],
   "kandrosov":        ["tau-pog"],
-  #"LE BIHAN, Anne-Catherine":        ["tau-pog"],
+  "alebihan":         ["tau-pog"],
   "mtosi":            ["tracking-pog"],
   "vmariani":         ["tracking-pog"],
+  "mmusich":          ["tracking-pog","trk-dpg"],
 }
 
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))

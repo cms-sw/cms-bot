@@ -52,7 +52,7 @@ git cms-init --upstream-only
 DSIZE=0
 source $CMS_BOT_DIR/jenkins-artifacts
 pushd $CMSSW_BASE/src
-  git checkout $(git branch  | grep -v '^[*]' | grep 'CMSSW_' | head -1)
+  git checkout -b codechecks-${PULL_REQUEST} CMSSW_VERSION
   THRDS=""
   git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NUM_PROC}" || true
   git repack -a -d ${THRDS}

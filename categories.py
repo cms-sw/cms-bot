@@ -55,7 +55,7 @@ CMSSW_L2 = {
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "missirol":         ["hlt"],
   "mkirsano":         ["generators"],   
-  "ddirmait":         ["externals"],
+  "ddaina":           ["externals"],
   "perrotta":         ["operations"],
   "pmandrik":         ["dqm"],
   "pbo0":             ["dqm"],

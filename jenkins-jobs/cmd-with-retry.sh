@@ -20,5 +20,6 @@ if ! $cmd ${1+"$@"}  > run.log 2>&1 ; then
     exit 1
   fi
 else
+  cat run.log
   rm -rf *.done
 fi

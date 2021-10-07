@@ -25,7 +25,7 @@ def prepareMatrixWF(workflow_number, num_events):
          "-l",
          workflow_number,
          "--command",
-         "\"-n {}\"".format(num_events),
+         "\" -n {}\"".format(num_events),
          "--dryRun"
     ]
     out = subprocess.check_output(cmd)

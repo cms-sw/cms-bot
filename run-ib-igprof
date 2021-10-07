@@ -16,7 +16,7 @@ for prof in ${PROFILES} ; do
         WF="-w upgrade -l $WORKFLOW"
     fi
     if [ "$prof" = "mp" ];then
-      runTheMatrix.py $WF --command "-n $EVENTS --profile $prof --no_exec" 2>&1 | tee  ./runTheMatrix.log
+      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --no_exec" 2>&1 | tee  ./runTheMatrix.log
       cd $WORKFLOW*
       for f in $(ls *GEN_SIM.py); do
          igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
@@ -26,7 +26,7 @@ for prof in ${PROFILES} ; do
       done
       cd -
     else
-      runTheMatrix.py $WF --command "-n $EVENTS --profile $prof" 2>&1 | tee ./runTheMatrix.log
+      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof" 2>&1 | tee ./runTheMatrix.log
       mv runTheMatrix.log $(ls -d $WORKFLOW*)
     fi
   done

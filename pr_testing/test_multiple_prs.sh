@@ -1013,7 +1013,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && COMMON_MATRIX_ARGS="--job-reports"
   if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
     if [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] ; then
-      COMMON_MATRIX_ARGS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $COMMON_MATRIX_ARGS"
+      COMMON_MATRIX_ARGS="--command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $COMMON_MATRIX_ARGS"
     fi
   fi
   WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
@@ -1061,7 +1061,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       if [ $(echo "${MTX_ARGS}" | grep "\-\-command " | wc -l) -gt 0 ] ; then
         MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1-n 1 |g')
       else
-        MTX_ARGS="${MTX_ARGS} --command '-n 1'"
+        MTX_ARGS="${MTX_ARGS} --command ' -n 1'"
       fi
       MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1--prefix "timeout --signal SIGTERM 900" |g')
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop

@@ -156,6 +156,9 @@ def configureProfilingSteps(cmsdriver_lines, num_events, steps_to_profile):
         outfiles += [
             "step{istep}_igprofMEM.{nev}.gz".format(istep=istep, nev=nev) for nev in [1,int(num_events/2), int(num_events-1)]
         ]
+        outfiles += [
+            "step{istep}_igprofCPU.gz".format(istep=istep)
+        ]
 
     new_cmdlist = new_cmdlist + igprof_commands
 

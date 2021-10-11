@@ -39,10 +39,9 @@ def prepareMatrixWF(workflow_number, num_events):
          "upgrade",
          "-l",
          workflow_number,
-         "--command",
-         "\" -n {}\"".format(num_events),
          "--dryRun"
     ]
+    print(" ".join(cmd))
     out = subprocess.check_output(cmd)
 
 def parseCmdLog(filename):
@@ -96,7 +95,7 @@ def configureProfilingSteps(cmsdriver_lines, num_events, steps_to_profile):
     igprof_exe = fixIgProfExe()
 
     steps_to_run = [i for i in range(1, len(cmsdriver_lines)+1)]
-    steps = {istep: cmsdriver_lines[istep-1]+" --suffix \"-j step{istep}_JobReport.xml\"".format(istep=istep) for istep in steps_to_run}
+    steps = {istep: cmsdriver_lines[istep-1]+" -n {num_events} --suffix \"-j step{istep}_JobReport.xml\"".format(istep=istep, num_events=num_events) for istep in steps_to_run}
     outfiles = [
         "step{}_JobReport.xml".format(istep) for istep in steps_to_run
     ]

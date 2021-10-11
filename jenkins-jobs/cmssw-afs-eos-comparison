@@ -46,7 +46,10 @@ echo '"scram_build":'$ETIME',' >> $JSON
 
 if $DEL ; then
   cd $WORKSPACE
-  rm -rf ${WORK_DIR}
+  for x in 0 1 2 3 4 ; do
+   if rm -rf ${WORK_DIR} ; then break; fi
+   sleep 5
+  done
 fi
 echo '"fstype":"'${BUILD_TYPE}'",' >> $JSON
 echo '"host":"'$(hostname -s)'",' >> $JSON

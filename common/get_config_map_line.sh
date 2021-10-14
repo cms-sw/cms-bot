@@ -22,7 +22,7 @@ if [[ -z "$RELEASE_QUEUE" && -z "$CMS_DIST_TAG"  ]]; then
     RELEASE_QUEUE='master'
 fi
 if [[ "$RELEASE_QUEUE" == "master" ]] ; then
-    RELEASE_QUEUE=$(curl -s -L https://cmssdt.cern.ch/SDT/BaselineDevRelease | grep '^CMSSW_')
+    RELEASE_QUEUE=$(curl -k -s -L https://cmssdt.cern.ch/SDT/BaselineDevRelease | grep '^CMSSW_')
     if [[ -z "$RELEASE_QUEUE" ]] ; then
         RELEASE_QUEUE=$(grep '^ *CMSSW_DEVEL_BRANCH *= *' ${CMS_BOT_DIR}/releases.py | sed 's/.*= *//;s/"//g;s/ //g'  )
     fi

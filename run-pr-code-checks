@@ -159,13 +159,13 @@ if [ -s ${UP_DIR}/code-checks.patch -o -s ${UP_DIR}/code-format.patch ] ; then
   if [ -s ${UP_DIR}/code-checks.patch ] ; then
     HOW_TO_RUN="${HOW_TO_RUN}\n\n- **code-checks**:"
     HOW_TO_RUN="${HOW_TO_RUN}\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch"
-    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl -k https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-checks.patch | patch -p1\`"
     HOW_TO_RUN="${HOW_TO_RUN}\nYou can also run \`scram build code-checks\` to apply code checks directly"
   fi
   if [ -s ${UP_DIR}/code-format.patch ] ; then
     HOW_TO_RUN="${HOW_TO_RUN}\n\n- **code-format**:"
     HOW_TO_RUN="${HOW_TO_RUN}\nhttps://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch"
-    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
+    HOW_TO_RUN="${HOW_TO_RUN}\ne.g. \`curl -k https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX_STR}code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}/code-format.patch | patch -p1\`"
     HOW_TO_RUN="${HOW_TO_RUN}\nYou can also run \`scram build code-format\` to apply code format directly"
   fi
 fi

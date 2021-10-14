@@ -13,7 +13,7 @@ def update_crumb(jenkins_url, headers):
     return headers
 
 def build_jobs(jenkins_url, jobs_data, headers = {}, user="cmssdt"):
-  for rk in ["ADFS_LOGIN", "OIDC_CLAIM_CERN_UPN"]:
+  for rk in ["OIDC_CLAIM_CERN_UPN", "OIDC_CLAIM_CERN_UPN"]:
     if rk not in headers:
       headers[rk] = user
   install_opener(build_opener(HTTPCookieProcessor(CookieJar())))

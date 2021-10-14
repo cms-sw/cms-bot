@@ -76,8 +76,8 @@ def auto_node_schedule(auto_jobs):
 
 def main():
     auto_nodes = read_auto_nodes()
-    r_xml = requests.get(running_job_xml, headers={"ADFS_LOGIN":"cmssdt"})
-    r_json = requests.get(job_que_json, headers={"ADFS_LOGIN":"cmssdt"})
+    r_xml = requests.get(running_job_xml, headers={"OIDC_CLAIM_CERN_UPN":"cmssdt"})
+    r_json = requests.get(job_que_json, headers={"OIDC_CLAIM_CERN_UPN":"cmssdt"})
     que_to_free = 0
 
     # get jobs that are waiting for a specific executor

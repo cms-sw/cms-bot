@@ -37,6 +37,13 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
   return format(es5_query_tmpl, **locals ())
 
 
+def ssl_urlopen(url, data):
+  sslcon = None
+  try: sslcon = ssl._create_unverified_context()
+  except Exception as e: sslcon =  None
+  if sslcon: return urlopen(url, data, context=sslcon).read()
+  return urlopen(CMSSDT_ES_QUERY,data).read()
+
 def resend_payload(hit):
   return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]))
 
@@ -93,13 +100,7 @@ def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
   if scroll<=1: data['params'] = 'ignore_unavailable=true'
   data["es_server"]=ES_SERVER
-  sslcon = None
-  try:
-    sslcon = ssl._create_unverified_context()
-  except Exception as e:
-    sslcon =  None
-  if sslcon: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"), context=sslcon).read()
-  else: return urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore")).read()
+  ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"))
 
 def get_payload_wscroll(index, query, max_count=-1):
   es_data = json.loads(get_payload(index, query,scroll=1))
@@ -123,7 +124,7 @@ def get_payload_wscroll(index, query, max_count=-1):
 
 def get_template(index=''):
   data = {'index':index, 'api': '/_template', 'prefix': True}
-  return urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data))
 
 def find_indexes(index):
   idxs = {}
@@ -144,7 +145,7 @@ def find_indexes(index):
 
 def get_indexes(index='cmssdt-*'):
   data = {'index':index, 'api': '/_cat', 'prefix': True}
-  return urlopen(CMSSDT_ES_QUERY,json.dumps(data)).read()
+  return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data))
 
 def close_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index

@@ -962,7 +962,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if result_url:
               url = result_url.replace("/SDT/jenkins-artifacts/", "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/")+"/pr-result"
               print("PR Result:", url)
-              e, o = run_cmd("curl -s -L --max-time 60 %s" % url)
+              e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
               if e:
                 print(o)
                 raise Exception("System-error: unable to get PR result")

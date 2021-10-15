@@ -100,7 +100,7 @@ def get_payload(index, query, scroll=0):
   data = {'index':index, 'query':query, 'scroll':scroll}
   if scroll<=1: data['params'] = 'ignore_unavailable=true'
   data["es_server"]=ES_SERVER
-  ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"))
+  return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode("ascii","ignore"))
 
 def get_payload_wscroll(index, query, max_count=-1):
   es_data = json.loads(get_payload(index, query,scroll=1))

@@ -42,8 +42,9 @@ for QUEUE in $RELEASE_QUEUES; do
     unset SINGULARITY
     unset PROD_ARCH
     unset FORCE_FULL_IB
-    unset SKIP_TESTS
+    SKIP_TESTS=false
     eval "$IB_INFO"
+    if [ "${SKIP_TESTS}" = "1" ] ; then SKIP_TESTS=true; fi
     if [ "${FORCE_FULL_IB}" = "" ] ; then
       FORCE_FULL_IB="${FORCE_FULL_IB_DEFAULT}"
     elif [ "${FORCE_FULL_IB}" != "1" ] ; then

@@ -42,6 +42,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset SINGULARITY
     unset PROD_ARCH
     unset FORCE_FULL_IB
+    unset SKIP_TESTS
     eval "$IB_INFO"
     if [ "${FORCE_FULL_IB}" = "" ] ; then
       FORCE_FULL_IB="${FORCE_FULL_IB_DEFAULT}"
@@ -97,6 +98,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "FORCE_FULL_IB=$FORCE_FULL_IB" >> $WORKSPACE/properties
     echo "CMSSW_TOOL_CONF_ONLY=$CMSSW_TOOL_CONF_ONLY" >> $WORKSPACE/properties
     echo "SLAVE_LABELS=$SLAVE_LABELS" >> $WORKSPACE/properties
+    echo "SKIP_TESTS=$SKIP_TESTS" >> $WORKSPACE/properties
     if [ "X$ALWAYS_BUILD" = X ]; then
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties
     else

@@ -75,7 +75,7 @@ function process_dir()
           process_ubsan &
         fi
         find . -mindepth 2 -maxdepth 2 -type d | xargs --no-run-if-empt rm -rf
-        zip -q -r $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip .
+        zip -q -1 -r $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip .
         mv $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip $dir/../pyRelValMatrixLogs.zip
         touch $WORKSPACE/update-github-pages
         touch $dir/../pyRelValMatrixLogs/run/done

@@ -29,7 +29,7 @@ def fix_lognames(workflow_dir):
     step = logname.split("_",1)[0]
     deslog = step+".log"
     if logname.endswith('_dasquery.log'): deslog = '%s_%s.log' % (step, workflow_id)
-    run_cmd("cp %s %s/%s" % (log, workflow_dir, deslog))
+    run_cmd("ln -s %s %s/%s" % (logname, workflow_dir, deslog))
 
 def update_worklog(workflow_dir, jobs):
   if not jobs["commands"]: return False

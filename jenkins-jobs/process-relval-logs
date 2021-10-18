@@ -71,6 +71,12 @@ function process_dir()
         rm -rf */*.dump || true
         rm -rf */*.tex || true
         rm -rf */fort.* || true
+        for log in $(find . -name 'step?.log' -maxdepth 2 -mindepth 2 -type f) ; do
+          [ -L $log ] && continue
+          olog=$(echo $log | sed 's|\.log$||')
+          olog1=$(ls ${olog}_*.log | sed 's|.*/||' | head -1 )
+          [ "${olog1}" != "" ] && ln -sf ${olog1} ${log}
+        done
         if [[ "$dir" == *"_UBSAN_X"* ]]; then
           process_ubsan &
         fi

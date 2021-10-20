@@ -28,7 +28,10 @@ PR_RESULT_URL="${JENKINS_ARTIFACTS_URL}/${PR_BASELINE_JOBDIR}"
 WFS_WITH_ERRORS=''
 RESULTS_FILE=$WORKSPACE/comparison${UC_TEST_FLAVOR}.txt
 MAPPING_FILE=wf_mapping.txt
-get_jenkins_artifacts ${BASELINE_DIR}/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE
+if ! get_jenkins_artifacts ${BASELINE_DIR}/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE ; then
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'error' -u "${BUILD_URL}" -d "Failed to get baseline wf_mapping.txt"
+  exit 0
+fi
 mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running" || true
 
 COMP_UPLOAD_DIR="baseLineComparisons${UC_TEST_FLAVOR}/${COMPARISON_RELEASE}+${PR_NUM}/${BUILD_NUMBER}"

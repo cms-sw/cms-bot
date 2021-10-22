@@ -87,6 +87,28 @@ for dir in `find ${JENKINS_ARTIFACTS} -mindepth 1 -maxdepth 1 -type d | sed 's|.
   fi
 done
 
+#cleanup cms-jenkins-artifacts
+JENKINS_ARTIFACTS=/data/sdt/SDT/cms-jenkins-artifacts
+DAYS_TO_KEEP=15
+JOBS_TO_KEEP=30
+for dir in EcalLaserValidation/HLT_EcalLaserValidation  EcalLaserValidation/L1T_EcalLaserValidation  EcalLaserValidation/RECO_EcalPulseShapeValidation  EcalLaserValidation/TPG_EcalLaserValidation HcalConditionsAutomatization/ConditionsValidation ; do
+  [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
+  DIRS_PROCESSED="cms/${DIRS_PROCESSED}"
+  cd ${JENKINS_ARTIFACTS}/$dir
+  for d in $(ls -rt | head -n -$JOBS_TO_KEEP) ; do
+    if [ $((($(date +%s)-$(date +%s -r $d))/86400)) -gt ${DAYS_TO_KEEP} ] ; then
+      ls -ld $d
+      echo rm -rf $d
+    fi
+  done
+done
+
+for dir in `find ${JENKINS_ARTIFACTS} -mindepth 2 -maxdepth 1 -type d | sed 's|.*/||'`; do
+  if [ "X`echo ${DIRS_PROCESSED} | grep cms/${dir}`" = "X" ] ; then
+    NEW_DIRS="${NEW_DIRS} cms/${dir}"
+  fi
+done
+
 if [ "X${NEW_DIRS}" != "X" ] ; then
   echo -e "${BUILD_URL}\nNew directories: ${NEW_DIRS}" | mail -s '[CMSSDT] Found new Directories to cleanup' cms-sdt-logs@cern.ch
 fi

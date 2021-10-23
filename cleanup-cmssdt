@@ -97,8 +97,7 @@ for dir in EcalLaserValidation/HLT_EcalLaserValidation  EcalLaserValidation/L1T_
   cd ${JENKINS_ARTIFACTS}/$dir
   for d in $(ls -rt | head -n -$JOBS_TO_KEEP) ; do
     if [ $((($(date +%s)-$(date +%s -r $d))/86400)) -gt ${DAYS_TO_KEEP} ] ; then
-      ls -ld $d
-      echo rm -rf $d
+      rm -rf $d
     fi
   done
 done

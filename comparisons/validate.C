@@ -2016,28 +2016,30 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.ootIndex()");
       }
 
-      tbr="TotemTimingLocalTrackedmDetSetVector_totemTimingLocalTracks__"+recoS+".obj";
-      if (checkBranchOR(tbr, true)){
-        plotvar(tbr+"._sets@.size()");
-        plotvar(tbr+"._sets.data@.size()");
-        // legacy data format
-        plotvar(tbr+"._sets.data.getX0()");
-        plotvar(tbr+"._sets.data.getY0()");
-        plotvar(tbr+"._sets.data.getX0Sigma()");
-        plotvar(tbr+"._sets.data.getY0Sigma()");
-        plotvar(tbr+"._sets.data.getZ0()");
-        plotvar(tbr+"._sets.data.getChiSquared()");
-        plotvar(tbr+"._sets.data.getT()");
-        plotvar(tbr+"._sets.data.getTSigma()");
-        // 110X+ data format
-        plotvar(tbr+"._sets.data.x0()");
-        plotvar(tbr+"._sets.data.y0()");
-        plotvar(tbr+"._sets.data.x0Sigma()");
-        plotvar(tbr+"._sets.data.y0Sigma()");
-        plotvar(tbr+"._sets.data.z0()");
-        plotvar(tbr+"._sets.data.chiSquared()");
-        plotvar(tbr+"._sets.data.time()");
-        plotvar(tbr+"._sets.data.timeSigma()");
+      for (const TString& flav : {"totemTiming", "diamondSampic"} ) {
+        tbr="TotemTimingLocalTrackedmDetSetVector_"+flav+"LocalTracks__"+recoS+".obj";
+        if (checkBranchOR(tbr, true)){
+          plotvar(tbr+"._sets@.size()");
+          plotvar(tbr+"._sets.data@.size()");
+          // legacy data format
+          plotvar(tbr+"._sets.data.getX0()");
+          plotvar(tbr+"._sets.data.getY0()");
+          plotvar(tbr+"._sets.data.getX0Sigma()");
+          plotvar(tbr+"._sets.data.getY0Sigma()");
+          plotvar(tbr+"._sets.data.getZ0()");
+          plotvar(tbr+"._sets.data.getChiSquared()");
+          plotvar(tbr+"._sets.data.getT()");
+          plotvar(tbr+"._sets.data.getTSigma()");
+          // 110X+ data format
+          plotvar(tbr+"._sets.data.x0()");
+          plotvar(tbr+"._sets.data.y0()");
+          plotvar(tbr+"._sets.data.x0Sigma()");
+          plotvar(tbr+"._sets.data.y0Sigma()");
+          plotvar(tbr+"._sets.data.z0()");
+          plotvar(tbr+"._sets.data.chiSquared()");
+          plotvar(tbr+"._sets.data.time()");
+          plotvar(tbr+"._sets.data.timeSigma()");
+        }
       }
 
       tbr="CTPPSPixelClusteredmDetSetVector_ctppsPixelClusters__"+recoS+".obj";
@@ -3408,6 +3410,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       tracksters("ticlTrackstersTrkEM_");
       tracksters("ticlTrackstersTrk_");
       tracksters("ticlSimTracksters_");
+      tracksters("ticlSimTrackstersFromCP_");
 
       ticlCands("ticlCandidateFromTracksters_");
       ticlCands("ticlTrackstersMerge_");

@@ -1,12 +1,12 @@
 from cms_static import GH_CMSSW_ORGANIZATION,GH_CMSSW_REPO,CMSBUILD_GH_USER
 from os.path import basename,dirname,abspath
 #GH read/write token: Use default ~/.github-token-cmsbot
-GH_TOKEN="~/.github-token-cmsbot"
+GH_TOKEN="~/.github-token-cmsdmwmbot"
 #GH readonly token: Use default ~/.github-token-readonly
-GH_TOKEN_READONLY="~/.github-token-readonly"
+GH_TOKEN_READONLY="~/.github-token-cmsdmwmbot"
 CONFIG_DIR=dirname(abspath(__file__))
 #GH bot user: Use default cmsbot
-CMSBUILD_USER="cmsbot"
+CMSBUILD_USER="cmsdmwmbot"
 GH_REPO_ORGANIZATION=basename(dirname(CONFIG_DIR))
 GH_REPO_FULLNAME="dmwm/CRABServer"
 CREATE_EXTERNAL_ISSUE=False

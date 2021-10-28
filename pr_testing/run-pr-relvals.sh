@@ -28,6 +28,11 @@ pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
     echo 'ERROR TIMEOUT' >> ${LOG}
   fi
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.txt
+  CNT=1
+  for lfn in $(grep -hR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch/' | sed 's|.*/cms-xrd-global.cern.ch//*|/|' | sort | uniq) ; do
+    echo "LFN=${lfn}" > $WORKSPACE/lfn-to-ibeos-${CNT}.prop
+    let CNT=${CNT}+1
+  done
 popd
 
 TEST_ERRORS=`grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR'` | grep -v 'ERROR failed to parse X509 proxy' || true

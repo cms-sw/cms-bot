@@ -215,3 +215,11 @@ RELEASE_BRANCH_PRODUCTION.append("CMSSW_12_1_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_12_1_GEANT4_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_12_1_DEVEL_X")
 RELEASE_BRANCH_PRODUCTION.append("CMSSW_12_1_ROOT6_X")
+
+######################################################################
+# Automatically added by cms-bot for CMSSW_12_2_X release cycle
+######################################################################
+RELEASE_BRANCH_MILESTONE["CMSSW_12_2_X"]=87
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_12_2_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_12_2_DEVEL_X")
+RELEASE_BRANCH_PRODUCTION.append("CMSSW_12_2_ROOT6_X")

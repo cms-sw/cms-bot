@@ -23,10 +23,7 @@ def runStep1Only(basedir, workflow, args=''):
     print("runPyRelVal> ERROR during test PyReleaseValidation steps, workflow "+str(workflow)+" : caught exception: " + str(e))
   return
 
-def runThreadMatrix(basedir, workflow, args='', logger=None, force=False, wf_err={}):
-  if (not force) and logger and logger.relvalAlreadyDone(workflow):
-    print("Message>> Not runing workflow ",workflow," as it is already ran")
-    return
+def runThreadMatrix(basedir, workflow, args='', logger=None, wf_err={}):
   args = FixWFArgs (os.environ["CMSSW_VERSION"],os.environ["SCRAM_ARCH"],workflow,args)
   workdir = os.path.join(basedir, workflow)
   matrixCmd = 'runTheMatrix.py -l ' + workflow +' '+args
@@ -150,7 +147,10 @@ class PyRelValsThread(object):
 
   def run_workflows(self, workflows=[], logger=None, force=False,known_errors={}):
     if not workflows: return
-    workflows = workflows[::-1]
+    doneWFs = []
+    if logger and not force:
+      doneWFs = logger.getDoneRelvals()
+    workflows = [w for w in workflows[::-1] if w not in doneWFs]
     threads = []
     while(len(workflows) > 0):
       threads = [t for t in threads if t.is_alive()]
@@ -159,7 +159,7 @@ class PyRelValsThread(object):
           wf = workflows.pop()
           wf_err = {}
           if wf in known_errors: wf_err = known_errors[wf]
-          t = threading.Thread(target=runThreadMatrix, args=(self.basedir, wf, self.args['rest']+" "+self.args['w'], logger, force, wf_err))
+          t = threading.Thread(target=runThreadMatrix, args=(self.basedir, wf, self.args['rest']+" "+self.args['w'], logger, wf_err))
           t.start()
           threads.append(t)
         except Exception as e:

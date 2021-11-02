@@ -42,11 +42,11 @@ if __name__ == "__main__":
   cmssw_base = environ["CMSSW_BASE"]
   logger=None
   if not opts.dryRun: logger=LogUpdater(dirIn=cmssw_base)
-  if logger and not opts.force:
-    doneWFs = logger.getDoneRelvals()
-    print("Already done workflows: ",doneWFs)
-    opts.workflow = [w for w in opts.workflow if w not in doneWFs]
-    print("Workflow to run:",opts.workflow)
+  #if logger and not opts.force:
+  #  doneWFs = logger.getDoneRelvals()
+  #  print("Already done workflows: ",doneWFs)
+  #  opts.workflow = [w for w in opts.workflow if w not in doneWFs]
+  #  print("Workflow to run:",opts.workflow)
 
   if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$",cmssw_ver):
     e=0

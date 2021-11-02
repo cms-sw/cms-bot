@@ -74,11 +74,13 @@ def _cmsRunProcesses():
 compilationPrcoessCount = _compilationProcesses()
 cmsRunProcessCount = _cmsRunProcesses()
 
-def doCmd(cmd, dryRun=False, inDir=None):
+def doCmd(cmd, dryRun=False, inDir=None, debug=True):
   if not inDir:
-    print("--> "+asctime()+ " in ", getcwd() ," executing ", cmd)
+    if debug:
+      print("--> "+asctime()+ " in ", getcwd() ," executing ", cmd)
   else:
-    print("--> "+asctime()+ " in " + inDir + " executing ", cmd)
+    if debug:
+      print("--> "+asctime()+ " in " + inDir + " executing ", cmd)
     cmd = "cd " + inDir + "; "+cmd
   sys.stdout.flush()
   sys.stderr.flush()
@@ -90,9 +92,11 @@ def doCmd(cmd, dryRun=False, inDir=None):
     print("DryRun for: "+cmd)
   else:
     ret, outX = run_cmd(cmd)
-    print(outX)
+    if debug:
+        print(outX)
   stop = time()
-  print("--> "+asctime()+" cmd took", stop-start, "sec. ("+strftime("%H:%M:%S",gmtime(stop-start))+")")
+  if debug:
+    print("--> "+asctime()+" cmd took", stop-start, "sec. ("+strftime("%H:%M:%S",gmtime(stop-start))+")")
   sys.stdout.flush()
   sys.stderr.flush()
   return (ret,outX)

@@ -4,6 +4,7 @@ CMSSW_VERSION=$2
 PKGTOOLS=$3
 CMSDIST=$4
 if [ -f "${5}/etc/profile.d/init.sh" ] ; then source ${5}/etc/profile.d/init.sh ; fi
+if [ -e "$HOME/bin/nproc" ] ; then export PATH="${HOME}/bin:${PATH}" ; fi
 repo="boot_$(date +%Y%m%d)_$ARCH"
 cmsBuild="./pkgtools/cmsBuild --repo $repo -a $ARCH -j $(nproc)"
 

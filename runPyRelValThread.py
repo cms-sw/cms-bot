@@ -145,14 +145,9 @@ class PyRelValsThread(object):
     for t in threads: t.join()
     return
 
-  def run_workflows(self, workflows=[], logger=None, force=False,known_errors={}):
+  def run_workflows(self, workflows=[], logger=None, known_errors={}):
     if not workflows: return
-    doneWFs = []
-    if logger and not force:
-      doneWFs = logger.getDoneRelvals()
-    print("Already done workflows: ",doneWFs)
-    workflows = [w for w in workflows[::-1] if w not in doneWFs]
-    print("Workflows to run:",workflows)
+    workflows = workflows[::-1]
     threads = []
     while(len(workflows) > 0):
       threads = [t for t in threads if t.is_alive()]

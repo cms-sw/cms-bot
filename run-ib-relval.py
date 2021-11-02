@@ -42,19 +42,28 @@ if __name__ == "__main__":
   cmssw_base = environ["CMSSW_BASE"]
   logger=None
   if not opts.dryRun: logger=LogUpdater(dirIn=cmssw_base)
+  if logger and not opts.force:
+    doneWFs = logger.getDoneRelvals()
+    print("Already done workflows: ",doneWFs)
+    opts.workflows = [w for w in opts.workflows if w not in doneWFs]
+    print("Workflow to run:",opts.workflows)
 
   if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$",cmssw_ver):
-    stime = time()
-    p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
-    e=waitpid(p.pid,0)[1]
-    print("Time took to create jobs:",int(time()-stime),"sec")
-    if e: exit(e)
+    e=0
+    if opts.workflows:
+      stime = time()
+      p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
+      e=waitpid(p.pid,0)[1]
+      print("Time took to create jobs:",int(time()-stime),"sec")
+      if e: exit(e)
 
-    p = None
-    stime = time()
-    p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 150 -m 85 -o time %s" % (cmssw_base,SCRIPT_DIR,opts.jobConfig), shell=True)
-    e=waitpid(p.pid,0)[1]
-    print("Time took to create jobs:",int(time()-stime),"sec")
+      p = None
+      stime = time()
+      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 150 -m 85 -o time %s" % (cmssw_base,SCRIPT_DIR,opts.jobConfig), shell=True)
+      e=waitpid(p.pid,0)[1]
+      print("Time took to create jobs:",int(time()-stime),"sec")
+    else:
+      print("No workflow to run.")
     system("touch "+cmssw_base+"/done."+opts.jobid)
     if logger: logger.updateRelValMatrixPartialLogs(cmssw_base, "done."+opts.jobid)
     exit(e)
@@ -75,4 +84,4 @@ if __name__ == "__main__":
   known_errs = get_known_errors(cmssw_ver, arch, "relvals")
   matrix = PyRelValsThread(thrds, cmssw_base+"/pyRelval", opts.jobid)
   matrix.setArgs(GetMatrixOptions(cmssw_ver,arch))
-  matrix.run_workflows(opts.workflow.split(","),logger,opts.force,known_errors=known_errs)
+  matrix.run_workflows(opts.workflow.split(","),logger,known_errors=known_errs)

@@ -9,9 +9,9 @@ cmsBuild="./pkgtools/cmsBuild --repo $repo -a $ARCH -j $(nproc)"
 
 git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
 git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
-perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' cmsdist/coral.spec cmsdist/cmssw.spec
-perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_VERSION/" cmsdist/cmssw.spec
-perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $CMSSW_VERSION/" cmsdist/cmssw-ib.spec
+sed -i -e 's|^\s*%define\s\s*subpackageDebug\s|#subpackage debug disabled|' cmsdist/coral.spec cmsdist/cmssw.spec
+sed -i -e "s|^### RPM cms cmssw .*|### RPM cms cmssw $CMSSW_VERSION|"       cmsdist/cmssw.spec
+sed -i -e "s|^### RPM cms cmssw-ib .*|### RPM cms cmssw-ib $CMSSW_VERSION|" cmsdist/cmssw-ib.spec
 
 $cmsBuild -i bootstrap --no-bootstrap build bootstrap-driver
 $cmsBuild -i bootstrap --no-bootstrap --sync-back upload bootstrap-driver

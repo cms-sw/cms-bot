@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
   if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$",cmssw_ver):
     e=0
-    if opts.workflows:
+    if opts.workflow:
       stime = time()
       p=Popen("%s/jobs/create-relval-jobs.py %s" % (SCRIPT_DIR, opts.workflow),shell=True)
       e=waitpid(p.pid,0)[1]

@@ -69,6 +69,12 @@ class LogUpdater(object):
         self.runRemoteCmd("touch " + os.path.join(destination, dirToSend, "wf.done"))
         return
 
+    def getDoneRelvals(self):
+        wfDoneFile = "wf.done"
+        destination = os.path.join(self.webTargetDir, 'pyRelValPartialLogs', "*", wfDoneFile)
+        code, out = self.runRemoteCmd("ls " + destination, debug=False)
+        return [ wf.split("/")[-2].split("_")[0]  for wf in out.split("\n") if wf.endswith(wfDoneFile)]
+
     def relvalAlreadyDone(self, wf):
         wfDoneFile = "wf.done"
         destination = os.path.join(self.webTargetDir, 'pyRelValPartialLogs', str(wf) + "_*", wfDoneFile)
@@ -108,25 +114,25 @@ class LogUpdater(object):
         self.runRemoteCmd("mkdir -p " + tgtDirIn)
         self.copy2Remote(os.path.join(self.cmsswBuildDir, logSubDir, what), tgtDirIn + "/")
 
-    def runRemoteCmd(self, cmd):
-        return self.runRemoteHostCmd(cmd, self.remote)
+    def runRemoteCmd(self, cmd, debug=True):
+        return self.runRemoteHostCmd(cmd, self.remote, debug=debug)
 
     def copy2Remote(self, src, des):
         return self.copy2RemoteHost(src, des, self.remote)
 
-    def runRemoteHostCmd(self, cmd, host):
+    def runRemoteHostCmd(self, cmd, host, debug=True):
         cmd = "ssh -Y " + self.ssh_opt + " " + host + " 'echo CONNECTION=OK && " + cmd + "'"
         try:
             if self.dryRun:
                 print("CMD>>", cmd)
             else:
                 for i in range(10):
-                    err, out = doCmd(cmd)
+                    err, out = doCmd(cmd, debug=debug)
                     if not err: return (err, out)
                     for l in out.split("\n"):
                         if "CONNECTION=OK" in l: return (err, out)
                     sleep(60)
-                return doCmd(cmd)
+                return doCmd(cmd, debug=debug)
         except Exception as e:
             print("Ignoring exception during runRemoteCmd:", str(e))
             return (1, str(e))

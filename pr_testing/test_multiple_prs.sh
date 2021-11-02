@@ -333,6 +333,11 @@ if ${BUILD_EXTERNAL} ; then
       popd
     fi
 
+    #allow packages with suffix
+    if [ "${ALLOW_VERSION_SUFFIX}" = "true" ] ; then
+      grep -IlR NO_VERSION_SUFFIX . | xargs --no-run-if-empty sed -i -e 's|NO_VERSION_SUFFIX|ALLOW_VERSION_SUFFIX|'
+    fi
+
     # Build the whole cmssw-tool-conf toolchain
     CMSBUILD_ARGS="--tag ${PR_NUM}"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then

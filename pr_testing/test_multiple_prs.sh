@@ -333,15 +333,13 @@ if ${BUILD_EXTERNAL} ; then
       popd
     fi
 
-    #allow packages with suffix
-    if [ "${ALLOW_VERSION_SUFFIX}" = "true" ] ; then
-      grep -IlR NO_VERSION_SUFFIX . | xargs --no-run-if-empty sed -i -e 's|NO_VERSION_SUFFIX|ALLOW_VERSION_SUFFIX|'
-    fi
-
     # Build the whole cmssw-tool-conf toolchain
     CMSBUILD_ARGS="--tag ${PR_NUM}"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
+    fi
+    if [ "${ALLOW_VERSION_SUFFIX}" = "true" ] ; then
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --define allow_version_suffix"
     fi
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \

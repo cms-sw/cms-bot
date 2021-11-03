@@ -15,9 +15,7 @@ CMSDIST=$3
 REPO="$4"
 DISABLE_DEBUG="$5"
 CMSSW_VERSION="$6"
-if [ -f "${7}/etc/profile.d/init.sh" ] ; then source ${7}/etc/profile.d/init.sh ; fi
-if [ -e "$HOME/bin/nproc" ] ; then export PATH="${HOME}/bin:${PATH}" ; fi
-
+GCC_PATH="$7"
 BS_OPTS="--no-bootstrap"
 if [ "${REPO}" = "" ] ; then
   REPO="test_boot_$ARCH"
@@ -25,15 +23,17 @@ if [ "${REPO}" = "" ] ; then
 else
   if ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -L /data/cmssw/repos/$REPO/${ARCH}/latest ; then
     BS_OPTS=""
+    GCC_PATH="NO_GCC_ENV"
   fi
 fi
 
+if [ -e "$HOME/bin/nproc" ] ; then export PATH="${HOME}/bin:${PATH}" ; fi
 cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"
 
 git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
 git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
 
-$cmsBuild -i bootstrap ${BS_OPTS} build bootstrap-driver
+([ -f "${GCC_PATH}/etc/profile.d/init.sh" ] && source ${GCC_PATH}/etc/profile.d/init.sh ; $cmsBuild -i bootstrap ${BS_OPTS} build bootstrap-driver)
 get_logs bootstrap
 $cmsBuild -i bootstrap ${BS_OPTS} --sync-back upload bootstrap-driver
 rm -rf bootstrap

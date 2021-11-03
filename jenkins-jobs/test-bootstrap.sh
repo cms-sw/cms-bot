@@ -23,9 +23,10 @@ if [ "${REPO}" = "" ] ; then
 else
   if ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -L /data/cmssw/repos/$REPO/${ARCH}/latest ; then
     BS_OPTS=""
-    GCC_PATH="NO_GCC_ENV"
+    GCC_PATH=""
   fi
 fi
+[ "${GCC_PATH}" != "" ] || GCC_PATH="NO_GCC_PATH"
 
 if [ -e "$HOME/bin/nproc" ] ; then export PATH="${HOME}/bin:${PATH}" ; fi
 cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"

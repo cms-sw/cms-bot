@@ -72,11 +72,13 @@ SLAVE_LABELS="${SLAVE_LABELS} ${arch} ${HOST_ARCH}"
 
 DOCKER=""
 if docker --version >/dev/null 2>&1 ; then
-  docker ps >/dev/null 2>&1 || true
-  if docker ps >/dev/null 2>&1 ; then
-    DOCKER="docker"
-    if [ -e $HOME/.docker/config.json ] ; then
-      SLAVE_LABELS="${SLAVE_LABELS} docker-build"
+  if [ $(docker --version 2>&1 | grep -i podman | wc-l) -eq 0 ] ; then
+    docker ps >/dev/null 2>&1 || true
+    if docker ps >/dev/null 2>&1 ; then
+      DOCKER="docker"
+      if [ -e $HOME/.docker/config.json ] ; then
+        SLAVE_LABELS="${SLAVE_LABELS} docker-build"
+      fi
     fi
   fi
 fi

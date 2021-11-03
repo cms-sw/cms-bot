@@ -33,9 +33,9 @@ cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"
 git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
 git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
 
-$cmsBuild -i bootstrap ${BS_OPT} build bootstrap-driver
+$cmsBuild -i bootstrap ${BS_OPTS} build bootstrap-driver
 get_logs bootstrap
-$cmsBuild -i bootstrap ${BS_OPT} --sync-back upload bootstrap-driver
+$cmsBuild -i bootstrap ${BS_OPTS} --sync-back upload bootstrap-driver
 rm -rf bootstrap
 
 if [ "${DISABLE_DEBUG}" = "true" ] ; then

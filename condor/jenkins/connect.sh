@@ -5,7 +5,7 @@ SCHEDD_ENV=""
 TARGET="${1-cmsbuild@lxplus.cern.ch}"
 if [ "X$3" != "X" ] ; then
   ssh $SSH_OPTS ${TARGET} echo \$SHELL 2>&1 || true
-  if [ $(ssh $SSH_OPTS ${TARGET} echo \$SHELL 2>&1 | grep /tcsh) -gt 0 ] ; then
+  if [ $(ssh $SSH_OPTS ${TARGET} echo \$SHELL 2>&1 | grep /tcsh |wc -l) -gt 0 ] ; then
     SCHEDD_ENV="setenv _CONDOR_SCHEDD_HOST $3 && setenv _CONDOR_CREDD_HOST $3 && "
   else
     SCHEDD_ENV="export _CONDOR_SCHEDD_HOST=$3 && export _CONDOR_CREDD_HOST=$3 && "

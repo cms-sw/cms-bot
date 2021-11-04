@@ -31,7 +31,7 @@ cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"
 git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
 git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
 
-if $SKIP_BOOTSTRAP ; then
+if ! $SKIP_BOOTSTRAP ; then
   ([ -f "${GCC_PATH}/etc/profile.d/init.sh" ] && source ${GCC_PATH}/etc/profile.d/init.sh ; $cmsBuild -i bootstrap ${BS_OPTS} build bootstrap-driver)
   get_logs bootstrap
   $cmsBuild -i bootstrap ${BS_OPTS} --sync-back upload bootstrap-driver

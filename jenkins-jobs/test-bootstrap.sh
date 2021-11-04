@@ -16,6 +16,7 @@ REPO="$4"
 DISABLE_DEBUG="$5"
 CMSSW_VERSION="$6"
 GCC_PATH="$7"
+SKIP_BOOTSTRAP="$8"
 BS_OPTS="--no-bootstrap"
 if [ "${REPO}" = "" ] ; then REPO="test_boot_$ARCH" ; fi
 if ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -L /data/cmssw/repos/$REPO/${ARCH}/latest ; then
@@ -30,10 +31,12 @@ cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"
 git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
 git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
 
-([ -f "${GCC_PATH}/etc/profile.d/init.sh" ] && source ${GCC_PATH}/etc/profile.d/init.sh ; $cmsBuild -i bootstrap ${BS_OPTS} build bootstrap-driver)
-get_logs bootstrap
-$cmsBuild -i bootstrap ${BS_OPTS} --sync-back upload bootstrap-driver
-rm -rf bootstrap
+if $SKIP_BOOTSTRAP ; then
+  ([ -f "${GCC_PATH}/etc/profile.d/init.sh" ] && source ${GCC_PATH}/etc/profile.d/init.sh ; $cmsBuild -i bootstrap ${BS_OPTS} build bootstrap-driver)
+  get_logs bootstrap
+  $cmsBuild -i bootstrap ${BS_OPTS} --sync-back upload bootstrap-driver
+  rm -rf bootstrap
+fi
 
 if [ "${DISABLE_DEBUG}" = "true" ] ; then
   sed -i -e 's|^\s*%define\s\s*subpackageDebug\s|#subpackage debug disabled|' cmsdist/coral.spec cmsdist/cmssw.spec

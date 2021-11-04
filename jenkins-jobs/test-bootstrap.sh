@@ -1,4 +1,22 @@
 #!/bin/bash -ex
+
+function check_missing_provides() {
+  rm -f rpms.txt ; touch rpms.txt
+  grep ' is needed by ' $1 | while IFS= read -r line; do
+    pkg=$(echo "$line" | sed 's|.*needed by *||' | cut -d+ -f2)
+    provide=$(echo "$line" | sed 's| *is needed by .*||;s|^\s*||')
+    r=$(rpm -q --whatprovides "$provide" --queryformat='%{NAME}' 2>&1 | grep -v 'no package provides')
+    if [ "${r}" != "" ] ; then echo $r >> rpms.txt; fi
+    if [ "${opkg}" != "${pkg}" ] ; then
+      echo "==== $pkg.spec ===="
+      opkg=$pkg
+    fi
+    echo "Provides: ${provide}"
+  done
+  cat rpms.txt | sort | uniq | tr '\n' ' '
+  rm -rf rpms.txt
+}
+
 function get_logs() {
   mkdir -p upload/$1
   [ -e $1/tmp/bootstrap.log ] && cp $1/tmp/bootstrap.log upload/$1
@@ -48,6 +66,7 @@ type="toolconf"
 ($cmsBuild -i ${type} --builder 3  build cmssw-tool-conf | tee -a upload/${type}-build.log) || ERR=1
 get_logs ${type}
 if [ $ERR -gt 0 ] ; then
+  set +x; check_missing_provides upload/${type}-build.log ; set -x
   BLD_PKGS=$(ls ${type}/RPMS/${ARCH}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then $cmsBuild -i ${type} --builder 3  --sync-back upload ${BLD_PKGS} | tee -a upload/${type}-upload.log ; fi
   rm -rf ${type}

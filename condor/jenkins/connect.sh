@@ -2,10 +2,14 @@
 echo $WORKSPACE
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=90"
 SCHEDD_ENV=""
-if [ "X$3" != "X" ] ;then
-  SCHEDD_ENV="setenv _CONDOR_SCHEDD_HOST $3 && setenv _CONDOR_CREDD_HOST $3 && "
-fi
 TARGET="${1-cmsbuild@lxplus.cern.ch}"
+if [ "X$3" != "X" ] ;then
+  if [ $(ssh $SSH_OPTS ${TARGET} echo \$SHELL 2>&1 | grep /tcsh) -gt 0 ] ; then
+    SCHEDD_ENV="setenv _CONDOR_SCHEDD_HOST $3 && setenv _CONDOR_CREDD_HOST $3 && "
+  else
+    SCHEDD_ENV="export _CONDOR_SCHEDD_HOST=$3 && export _CONDOR_CREDD_HOST=$3 && "
+  fi
+fi
 REMOTE_USER=$(echo $TARGET | sed 's|@.*||')
 KTAB=${HOME}/keytabs/${REMOTE_USER}.keytab
 if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi

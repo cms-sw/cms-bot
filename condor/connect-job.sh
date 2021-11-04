@@ -66,7 +66,7 @@ while true ; do
     echo "Jenkins Slave has been disconencted: $(date)"
     break
   fi
-  ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* | head -n -1 | xargs --no-run-if-empty rm -rf || true
+  ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* 2>/dev/null | head -n -1 | xargs --no-run-if-empty rm -rf || true
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)
   if [ $CTIME -gt ${FORCE_EXIT_AT} ] ; then

@@ -72,7 +72,7 @@ SLAVE_LABELS="${SLAVE_LABELS} ${arch} ${HOST_ARCH}"
 
 DOCKER=""
 if docker --version >/dev/null 2>&1 ; then
-  if [ $(docker --version 2>&1 | grep -i podman | wc-l) -eq 0 ] ; then
+  if [ $(docker --version 2>&1 | grep -i podman | wc -l) -eq 0 ] ; then
     docker ps >/dev/null 2>&1 || true
     if docker ps >/dev/null 2>&1 ; then
       DOCKER="docker"

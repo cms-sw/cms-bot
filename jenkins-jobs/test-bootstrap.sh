@@ -17,14 +17,10 @@ DISABLE_DEBUG="$5"
 CMSSW_VERSION="$6"
 GCC_PATH="$7"
 BS_OPTS="--no-bootstrap"
-if [ "${REPO}" = "" ] ; then
-  REPO="test_boot_$ARCH"
-  ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch rm -rf /data/cmssw/repos/$REPO || true
-else
-  if ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -L /data/cmssw/repos/$REPO/${ARCH}/latest ; then
-    BS_OPTS=""
-    GCC_PATH=""
-  fi
+if [ "${REPO}" = "" ] ; then REPO="test_boot_$ARCH" ; fi
+if ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -L /data/cmssw/repos/$REPO/${ARCH}/latest ; then
+  BS_OPTS=""
+  GCC_PATH=""
 fi
 [ "${GCC_PATH}" != "" ] || GCC_PATH="NO_GCC_PATH"
 

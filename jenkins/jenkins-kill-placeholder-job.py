@@ -114,6 +114,8 @@ def main():
     print("Running jobs", running_job_xml )
     pprint(parsed_dict)
     jobs_to_kill = []
+    if not isinstance(parsed_dict['jobs']['build'],list):
+        parsed_dict['jobs']['build']=[parsed_dict['jobs']['build']]
     for el in parsed_dict['jobs']['build']:
         match = RX_Project.match(el['url'])
         project = match.group(1)

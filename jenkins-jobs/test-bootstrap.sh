@@ -52,8 +52,9 @@ git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
 mkdir -p upload
 if ! $SKIP_BOOTSTRAP ; then
   type="bootstrap"
-  ([ -f "${GCC_PATH}/etc/profile.d/init.sh" ] && source ${GCC_PATH}/etc/profile.d/init.sh ; $cmsBuild -i ${type} ${BS_OPTS} build bootstrap-driver | tee -a upload/${type}-build.log)
+  ([ -f "${GCC_PATH}/etc/profile.d/init.sh" ] && source ${GCC_PATH}/etc/profile.d/init.sh ; $cmsBuild -i ${type} ${BS_OPTS} build bootstrap-driver | tee -a upload/${type}-build.log || touch err.txt)
   get_logs ${type}
+  [ ! -f err.txt ] || exit 1
   $cmsBuild -i ${type} ${BS_OPTS} --sync-back upload bootstrap-driver | tee -a upload/${type}-upload.log
   rm -rf bootstrap
 fi
@@ -61,14 +62,16 @@ fi
 if [ "${DISABLE_DEBUG}" = "true" ] ; then
   sed -i -e 's|^\s*%define\s\s*subpackageDebug\s|#subpackage debug disabled|' cmsdist/coral.spec cmsdist/cmssw.spec
 fi
-ERR=0
+ERR=false
 type="toolconf"
-$cmsBuild -i ${type} --builder 3  build cmssw-tool-conf | tee -a upload/${type}-build.log || ERR=1
+$cmsBuild -i ${type} --builder 3  build cmssw-tool-conf | tee -a upload/${type}-build.log || ERR=true
 get_logs ${type}
-if [ $ERR -gt 0 ] ; then
+if $ERR ; then
   set +x; check_missing_provides upload/${type}-build.log ; set -x
   BLD_PKGS=$(ls ${type}/RPMS/${ARCH}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
-  if [ "X$BLD_PKGS" != "X" ] ; then $cmsBuild -i ${type} --builder 3  --sync-back upload ${BLD_PKGS} | tee -a upload/${type}-upload.log ; fi
+  if [ "X$BLD_PKGS" != "X" ] ; then
+    $cmsBuild -i ${type} --builder 3  --sync-back upload ${BLD_PKGS} | tee -a upload/${type}-upload.log
+  fi
   rm -rf ${type}
   exit 1
 fi

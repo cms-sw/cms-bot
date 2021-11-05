@@ -646,6 +646,7 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("nClusterOutsideMustache", cName,tName);
   photon("etOutsideMustache", cName,tName);
   photon("pfMVA", cName,tName);
+  photon("pfDNN", cName,tName);
   photon("showerShapeVariables().effSigmaRR",cName,tName, true);
   photon("showerShapeVariables().sigmaIetaIphi",cName,tName, true);
   photon("showerShapeVariables().sigmaIphiIphi",cName,tName, true);
@@ -830,6 +831,11 @@ void electronVars(TString cName = "gsfElectrons_", TString tName = "recoGsfElect
   electron("mvaOutput().mva", cName, tName, true);
   electron("mvaOutput().mva_Isolated", cName, tName, true);
   electron("mvaOutput().mva_e_pi", cName, tName, true);
+  electron("mvaOutput().dnn_e_sigIsolated", cName, tName, true);
+  electron("mvaOutput().dnn_e_sigNonIsolated", cName, tName, true);
+  electron("mvaOutput().dnn_e_bkgNonIsolated", cName, tName, true);
+  electron("mvaOutput().dnn_e_bkgTau", cName, tName, true);
+  electron("mvaOutput().dnn_e_bkgPhoton", cName, tName, true);
   electron("correctedEcalEnergy", cName, tName);
   electron("correctedEcalEnergyError", cName, tName);
   electron("trackMomentumError", cName, tName);

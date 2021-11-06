@@ -1,6 +1,7 @@
 #!/bin/bash -ex
 
 function check_missing_provides() {
+  set +x
   rm -f rpms.txt ; touch rpms.txt
   grep ' is needed by ' $1 | while IFS= read -r line; do
     pkg=$(echo "$line" | sed 's|.*needed by *||' | cut -d+ -f2)
@@ -15,9 +16,11 @@ function check_missing_provides() {
   done
   cat rpms.txt | sort | uniq | tr '\n' ' '
   rm -rf rpms.txt
+  set -x
 }
 
 function get_logs() {
+  set +x
   mkdir -p upload/$1
   [ -e $1/tmp/bootstrap.log ] && cp $1/tmp/bootstrap.log upload/$1
   for l in $(find $1/BUILD/${ARCH} -maxdepth 4 -mindepth 4 -name log -type f | sed "s|$1/BUILD/${ARCH}/||") ; do
@@ -25,6 +28,7 @@ function get_logs() {
     mkdir -p upload/$1/$d
     mv $1/BUILD/${ARCH}/$l upload/$1/$d
   done
+  set -x
 }
 
 ARCH=$1
@@ -66,7 +70,7 @@ type="toolconf"
 $cmsBuild -i ${type} --builder 3  build cmssw-tool-conf || touch err.txt | tee -a upload/${type}-build.log
 get_logs ${type}
 if [ -f err.txt ] ; then
-  set +x; check_missing_provides upload/${type}-build.log ; set -x
+  check_missing_provides upload/${type}-build.log
   BLD_PKGS=$(ls ${type}/RPMS/${ARCH}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug')
   if [ "X$BLD_PKGS" != "X" ] ; then
     $cmsBuild -i ${type} --builder 3  --sync-back upload ${BLD_PKGS} | tee -a upload/${type}-upload.log

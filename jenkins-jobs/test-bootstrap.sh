@@ -31,6 +31,7 @@ function get_logs() {
   set -x
 }
 
+export PYTHONPATH=""
 ARCH=$1
 PKGTOOLS=$2
 CMSDIST=$3

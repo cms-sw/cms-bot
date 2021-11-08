@@ -914,10 +914,8 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
 else
     echo "the build had no errors!!"
     echo 'COMPILATION_RESULTS;OK,Compilation log,See Log,build.log' >> ${RESULTS_DIR}/build.txt
-    if [ -e ${WORKSPACE}/build-logs/index.html ] ; then
-      if [ $(grep '<td> *[1-9][0-9]* *</td>' ${WORKSPACE}/build-logs/index.html  | grep -iv ' href' | grep -v 'ignoreWarning' | wc -l) -eq 0 ] ; then
-        BUILD_LOG_RES="OK"
-      fi
+    if [ ! -e $WORKSPACE/new-build-warnings.log ] ; then
+      BUILD_LOG_RES="OK"
     elif [ ! -d ${BUILD_LOG_DIR}/src ] ; then
       BUILD_LOG_RES="OK"
     fi

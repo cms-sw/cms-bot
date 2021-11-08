@@ -860,9 +860,11 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes scram b -k -j ${NCPU}"
+USER_FLAGS=""
+if  $IS_DEV_BRANCH ;  then  USER_FLAGS="USER_CXXFLAGS=-DUSE_CMS_DEPRECATED" ; fi
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS scram b -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
-  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes scram b -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
+  COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes $USER_FLAGS scram b -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
 fi
 echo $COMPILATION_CMD > $WORKSPACE/build.log
 (eval $COMPILATION_CMD && echo 'ALL_OK') >>$WORKSPACE/build.log 2>&1 || true
@@ -874,10 +876,20 @@ echo '--------------------------------------'
 TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
 GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
+rm -f $WORKSPACE/deprecated-warnings.log
 for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$CMSSW_IB/" | sed "s|.*/$CMSSW_IB/src/||;s|:.*||;s| ||g" | sort -u) ; do
   if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
-    echo $i >> $WORKSPACE/new-build-warnings.log
-    grep ": warning: " $WORKSPACE/build.log | grep "/$i" >> $WORKSPACE/new-build-warnings.log
+    echo $i > $WORKSPACE/warning.log
+    grep ": warning: " $WORKSPACE/build.log | grep "/$i" >> $WORKSPACE/warning.log
+    if $IS_DEV_BRANCH ; then
+      if [ $(grep ": warning: "$WORKSPACE/warning.log | grep 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
+        cat $WORKSPACE/warning.log >>  $WORKSPACE/deprecated-warnings.log
+      fi
+    fi
+    if [ $(grep ": warning: "$WORKSPACE/warning.log | grep -v 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
+      cat $WORKSPACE/warning.log >> $WORKSPACE/new-build-warnings.log
+    fi
+    rm -f $WORKSPACE/warning.log
   fi
 done
 if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
@@ -888,6 +900,10 @@ if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
       BUILD_OK=false
     fi
 fi
+if [ -e $WORKSPACE/deprecated-warnings.log ] ; then
+  echo 'BUILD_DEPRECATED_WARNINGS;ERROR,CMS Deprecated Warnings,See Log,deprecated-warnings.log' >> ${RESULTS_DIR}/buildrules.txt
+fi
+
 BUILD_LOG_RES="ERROR"
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors when building"

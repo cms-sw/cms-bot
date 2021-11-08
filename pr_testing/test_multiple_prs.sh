@@ -882,11 +882,11 @@ for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$CMSSW_IB/" | sed "s
     echo $i > $WORKSPACE/warning.log
     grep ": warning: " $WORKSPACE/build.log | grep "/$i" >> $WORKSPACE/warning.log
     if $IS_DEV_BRANCH ; then
-      if [ $(grep ": warning: "$WORKSPACE/warning.log | grep 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
+      if [ $(grep ": warning: " $WORKSPACE/warning.log | grep 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
         cat $WORKSPACE/warning.log >>  $WORKSPACE/deprecated-warnings.log
       fi
     fi
-    if [ $(grep ": warning: "$WORKSPACE/warning.log | grep -v 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
+    if [ $(grep ": warning: " $WORKSPACE/warning.log | grep -v 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
       cat $WORKSPACE/warning.log >> $WORKSPACE/new-build-warnings.log
     fi
     rm -f $WORKSPACE/warning.log

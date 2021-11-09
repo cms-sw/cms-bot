@@ -51,8 +51,8 @@ fi
 if [ -e "$HOME/bin/nproc" ] ; then export PATH="${HOME}/bin:${PATH}" ; fi
 cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"
 
-git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
-git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
+[ -d cmsdist ]  || git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
+[ -d pkgtools ] || git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
 
 mkdir -p upload
 if ! $SKIP_BOOTSTRAP ; then
@@ -62,6 +62,7 @@ if ! $SKIP_BOOTSTRAP ; then
   [ ! -f err.txt ] || exit 1
   $cmsBuild -i ${type} ${BS_OPTS} --sync-back upload bootstrap-driver | tee -a upload/${type}-upload.log
   rm -rf bootstrap
+  exit 0
 fi
 
 if [ "${DISABLE_DEBUG}" = "true" ] ; then

@@ -93,7 +93,8 @@ def main():
         if m: label = m.group(0)
         elif m1: label = m1.group(0)
         if label:
-            if ('condor' in label) or re.match('^\s*grid[1-9][0-9]*\s*', label):
+            print("Checking label:[%s]",label)
+            if ('condor' in label) or re.match('^\s*grid[1-9][0-9]*\s*$', label):
                 que_to_free += 1
             for reg in auto_nodes:
                 if reg.search(label):

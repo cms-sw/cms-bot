@@ -902,7 +902,7 @@ if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
 fi
 if [ -e $WORKSPACE/deprecated-warnings.log ] ; then
   echo 'BUILD_DEPRECATED_WARNINGS;ERROR,CMS Deprecated Warnings,See Log,deprecated-warnings.log' >> ${RESULTS_DIR}/buildrules.txt
-  echo "**CMS deprecated warnings**: $(cat ${WORKSPACE}/deprecated-warnings.log | grep 'Wdeprecated-declarations' | wc -l) CMS deprecated warnings found, see summary page for details." >> ${RESULTS_DIR}/09-report.res
+  echo "**CMS deprecated warnings**: $(cat ${WORKSPACE}/deprecated-warnings.log | grep 'Wdeprecated-declarations' | wc -l) CMS deprecated warnings found, see [summary page](${PR_RESULT_URL}/deprecated-warnings.log) for details." >> ${RESULTS_DIR}/09-report.res
 fi
 
 BUILD_LOG_RES="ERROR"

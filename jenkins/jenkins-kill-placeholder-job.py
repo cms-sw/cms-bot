@@ -90,8 +90,8 @@ def main():
         m = RX_Queue_why.match(j['why'])
         m1 = RX_Queue_nolabel.match(j['why'])
         label = ""
-        if m: label = m.group(0)
-        elif m1: label = m1.group(0)
+        if m: label = m.group(1)
+        elif m1: label = m1.group(1)
         if label:
             print("Checking label:", label)
             if ('condor' in label) or re.match('^\s*grid[1-9][0-9]*\s*$', label):

@@ -33,13 +33,11 @@ function get_logs() {
 
 export PYTHONPATH=""
 ARCH=$1
-PKGTOOLS=$2
-CMSDIST=$3
-REPO="$4"
-DISABLE_DEBUG="$5"
-CMSSW_VERSION="$6"
-GCC_PATH="$7"
-SKIP_BOOTSTRAP="$8"
+REPO="$2"
+DISABLE_DEBUG="$3"
+CMSSW_VERSION="$4"
+GCC_PATH="$5"
+SKIP_BOOTSTRAP="$6"
 BS_OPTS="--no-bootstrap"
 if [ "${REPO}" = "" ] ; then REPO="test_boot_$ARCH" ; fi
 if ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -L /data/cmssw/repos/$REPO/${ARCH}/latest ; then
@@ -50,9 +48,6 @@ fi
 
 if [ -e "$HOME/bin/nproc" ] ; then export PATH="${HOME}/bin:${PATH}" ; fi
 cmsBuild="./pkgtools/cmsBuild --repo $REPO -a $ARCH -j $(nproc)"
-
-[ -d cmsdist ]  || git clone --depth 1 https://github.com/cms-sw/cmsdist -b $CMSDIST
-[ -d pkgtools ] || git clone --depth 1 https://github.com/cms-sw/pkgtools -b $PKGTOOLS
 
 mkdir -p upload
 if ! $SKIP_BOOTSTRAP ; then

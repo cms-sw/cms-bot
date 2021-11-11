@@ -239,7 +239,7 @@ def read_build_log_file(build_log, isClang=False , toolconf=False):
       if (line_number > lines_to_keep_before):
         lines_before.pop(0)
     #this is how it determines that a line has an error
-    if 'error: ' in line:
+    if ('error: ' in line) or line.startswith("gmake: "):
       error_found = True
       error_line = line_number
     if error_found:

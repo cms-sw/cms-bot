@@ -558,7 +558,12 @@ eval $(scram run -sh)
 set -x
 echo $LD_LIBRARY_PATH | tr ':' '\n'
 BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
-ANALOG_CMD="scram build outputlog && (${CMS_PYTHON_TO_USE} $CMS_BOT_DIR/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true)"
+USER_FLAGS=""
+if  $IS_DEV_BRANCH ;  then
+  USER_FLAGS="USER_CXXFLAGS=-DUSE_CMS_DEPRECATED"
+  ANALOG_OPT="--ignoreWarning=Wdeprecated-declarations"
+fi
+ANALOG_CMD="scram build outputlog && (${CMS_PYTHON_TO_USE} $CMS_BOT_DIR/buildLogAnalyzer.py ${ANALOG_OPT} --logDir ${BUILD_LOG_DIR}/src || true)"
 
 cd $WORKSPACE/$CMSSW_IB/src
 git config --global --replace-all merge.renamelimit 2500 || true
@@ -860,8 +865,6 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
-USER_FLAGS=""
-if  $IS_DEV_BRANCH ;  then  USER_FLAGS="USER_CXXFLAGS=-DUSE_CMS_DEPRECATED" ; fi
 COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS scram b -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes $USER_FLAGS scram b -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"

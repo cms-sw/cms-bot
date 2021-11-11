@@ -59,11 +59,11 @@ class PackageInfo(object):
 
 class LogFileAnalyzer(object):
     """docstring for LogFileAnalyzer"""
-    def __init__(self, topDirIn='.', topUrlIn='', verbose = -1, pkgsList = None, release = None):
+    def __init__(self, topDirIn='.', topUrlIn='', verbose = -1, pkgsList = None, release = None, ignoreWarnings=[]):
         super(LogFileAnalyzer, self).__init__()
 
         self.topDir = os.path.abspath( topDirIn )
-
+        self.ignoreWarnings = ignoreWarnings
         self.topURL = topUrlIn
         if not pkgsList:  pkgsList = "../../../../../src/PackageList.cmssw"
         if self.topURL != '' :
@@ -417,6 +417,8 @@ class LogFileAnalyzer(object):
                     errFound = True
                     isMatched = True
                     errTyp, msg = info
+                    if self.ignoreWarnings and (errTyp=="compWarning") and  [w for w in self.ignoreWarnings if w in line]:
+                        break
                     if '%s' in msg :
                         msg = info[1] % errMatch.groups(1)
                     if errTyp in self.nErrorInfo.keys():
@@ -474,12 +476,13 @@ def main(argv=None):
     pkgList = os.getenv("CMSSW_BASE",None)
     if pkgList: pkgList+="/src/PackageList.cmssw"
     rel = os.getenv("CMSSW_VERSION",None)
+    igWarning = []
     if argv is None:
         argv = sys.argv
 
     try:
         try:
-            opts, args = getopt.getopt(argv[1:], "hv:l:t:p:r:", ["help", "verbose=", "logDir=", "topURL=", "pkgList=", "release="])
+            opts, args = getopt.getopt(argv[1:], "hv:l:t:p:r:", ["help", "verbose=", "logDir=", "topURL=", "pkgList=", "release=", "ignoreWarning="])
         except getopt.error as msg:
             raise Usage(msg)
 
@@ -497,13 +500,15 @@ def main(argv=None):
                 pkgList = value
             if option in ("-t", "--topURL"):
                 topURL = value
+            if option == "ignoreWarning":
+                igWarning = [w.strip() for w in value.split(",") if w.strip()]
 
         if not topURL:
             raise Usage(help_message)
 
         if not os.path.exists(logDir): return
 
-        lfa = LogFileAnalyzer(logDir, topURL, verbose, pkgList, rel)
+        lfa = LogFileAnalyzer(logDir, topURL, verbose, pkgList, rel, igWarning)
         lfa.analyze()
         lfa.report()
 

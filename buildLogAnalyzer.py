@@ -418,7 +418,7 @@ class LogFileAnalyzer(object):
                     isMatched = True
                     errTyp, msg = info
                     if self.ignoreWarnings and (errTyp=="compWarning") and  [w for w in self.ignoreWarnings if w in line]:
-                        break
+                        errTyp = 'ignoreWarning'
                     if '%s' in msg :
                         msg = info[1] % errMatch.groups(1)
                     if errTyp in self.nErrorInfo.keys():

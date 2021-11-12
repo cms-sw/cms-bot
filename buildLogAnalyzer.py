@@ -500,7 +500,7 @@ def main(argv=None):
                 pkgList = value
             if option in ("-t", "--topURL"):
                 topURL = value
-            if option == "ignoreWarning":
+            if option == "--ignoreWarning":
                 igWarning = [w.strip() for w in value.split(",") if w.strip()]
 
         if not topURL:

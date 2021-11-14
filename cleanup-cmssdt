@@ -10,7 +10,7 @@ fi
 JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
 DIRS_PROCESSED="cvmfs-deploy-baseline "
-JOBS_TO_KEEP=300
+JOBS_TO_KEEP=200
 RUNS_TO_KEEP=3
 #Keep $JOBS_TO_KEEP of these
 for dir in pull-request-integration ; do
@@ -36,7 +36,7 @@ for dir in  baseLineComparisons baseLineComparisonsGPU ; do
   done
 done
 
-JOBS_TO_KEEP=50
+JOBS_TO_KEEP=10
 for dir in material-budget-ref ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
@@ -44,8 +44,8 @@ for dir in material-budget-ref ; do
   ls -rt | head -n -$JOBS_TO_KEEP | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
-#Keep the following for 15 days
-DAYS_TO_KEEP=15
+#Keep the following for 8 days
+DAYS_TO_KEEP=8
 DIRS="lizard flawfinder invalid-includes cmssw-afs-eos-comparison ubsan_logs"
 DIRS="${DIRS} check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof"
 DIRS="${DIRS} iwyu material-budget das_query build-any-ib check-unused-cmsdist-packages"
@@ -55,8 +55,8 @@ for dir in ${DIRS}; do
   find ${JENKINS_ARTIFACTS}/${dir} -mtime +${DAYS_TO_KEEP} -mindepth 1 -maxdepth 1 | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 done
 
-#Keep the following for 90 days
-DAYS_TO_KEEP=30
+#Keep the following for 14 days
+DAYS_TO_KEEP=14
 DIRS="run-pr-format pr-code-checks jenkins-test-code-format profiling jenkins-test-bootstrap jenkins-test-cmssw-bootstrap"
 DIRS="${DIRS} auto-build-release auto-upload-release cleanup-auto-build build-fwlite release-run-reco-profiling"
 for dir in ${DIRS}; do
@@ -89,7 +89,7 @@ done
 
 #cleanup cms-jenkins-artifacts
 JENKINS_ARTIFACTS=/data/sdt/SDT/cms-jenkins-artifacts
-DAYS_TO_KEEP=15
+DAYS_TO_KEEP=14
 JOBS_TO_KEEP=30
 for dir in EcalLaserValidation/HLT_EcalLaserValidation  EcalLaserValidation/L1T_EcalLaserValidation  EcalLaserValidation/RECO_EcalPulseShapeValidation  EcalLaserValidation/TPG_EcalLaserValidation HcalConditionsAutomatization/ConditionsValidation ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
@@ -115,4 +115,3 @@ fi
 WEB_LOG_DIR=/data/sdt/buildlogs
 find /data/sdt/buildlogs -mindepth 3 -maxdepth 3 -mtime +15  -path '*/fwlite/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
 find /data/sdt/buildlogs -mindepth 5 -maxdepth 5 -mtime +15  -path '*/www/*/CMSSW_*' -type d | xargs -i --no-run-if-empty $DRY_RUN rm -rf '{}'
-

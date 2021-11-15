@@ -26,7 +26,16 @@ if [ "X$DOCKER_IMG" = "X" -a "$DOCKER_IMG_HOST" != "X" ] ; then DOCKER_IMG=$DOCK
 if [ "X$NOT_RUN_DOCKER" != "X" -a "X$DOCKER_IMG" != "X"  ] ; then
   RUN_NATIVE=`echo $DOCKER_IMG | grep "$NOT_RUN_DOCKER"`
 fi
+UNAME_M=$(uname -m)
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
+  if [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
+    if [ $(echo "${DOCKER_IMG}" | grep ':' | wc -l) -eq 0 ] ; then
+      case ${UNAME_M} in
+        x86_64 ) export DOCKER_IMG="${DOCKER_IMG}:amd64" ;;
+        * ) export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}" ;;
+      esac
+    fi
+  fi
   if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
   BUILD_BASEDIR=$(dirname $WORKSPACE)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
@@ -36,14 +45,13 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ $(echo "${IGNORE_MOUNTS}" | tr ' ' '\n' | grep "^${ldir}$" | wc -l) -gt 0 ] ; then
       continue
     fi
-    #if [ -d $ldir -a $(ls $ldir |wc -l) -gt 0 ] ; then xdir=$ldir; fi
     MOUNT_POINTS="$MOUNT_POINTS,${xdir}"
   done
   if [ $(echo $HOME |  grep '^/home/' | wc -l)  -gt 0 ] ; then
     MOUNT_POINTS="$MOUNT_POINTS,/home"
   fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
-  if [ "$(uname -m)" = "x86_64" ] ; then
+  if [ "${UNAME_M}" = "x86_64" ] ; then
     if [ -e /etc/tnsnames.ora ] ; then
       MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora"
     elif [ -e ${HOME}/tnsnames.ora ] ; then

@@ -1,6 +1,10 @@
 #!/bin/bash -e
 aklog >/dev/null 2>&1 || true
+ACTUAL_NPROC=$(nproc)
+ACTUAL_MEMORY=$(free -m | grep Mem: | awk '{print $2}')
 if [ -d $HOME/bin ] ; then export PATH=$HOME/bin:$PATH ; fi
+OVERRIDE_NPROC=$(nproc)
+OVERRIDE_MEMORY=$(free -m | grep Mem: | awk '{print $2}')
 $(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs --no-run-if-empty kill -9) || true
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
@@ -113,19 +117,15 @@ JENKINS_SLAVE_SETUP=false
 if [ -f ~/.jenkins-slave-setup ] ; then JENKINS_SLAVE_SETUP=true ; fi
 echo "DATA_JENKINS_SLAVE_SETUP=${JENKINS_SLAVE_SETUP}"
 
-if [ -e /bin/nproc ] ; then
-  val=$(/bin/nproc)
-else
-  val=$(/usr/bin/nproc)
-fi
-echo "DATA_ACTUAL_CPUS=${val}"
-SLAVE_LABELS="${SLAVE_LABELS} real-cpu-${val}"
-val=$(nproc)
-echo "DATA_CPUS=${val}"
-SLAVE_LABELS="${SLAVE_LABELS} cpu-${val} cpu-tiny"
+echo "DATA_ACTUAL_CPUS=${ACTUAL_NPROC}"
+echo "DATA_ACTUAL_MEMORY=${ACTUAL_MEMORY}"
+SLAVE_LABELS="${SLAVE_LABELS} real-cpu-${ACTUAL_NPROC} real-memory-${ACTUAL_MEMORY}"
+echo "DATA_CPUS=${OVERRIDE_NPROC}"
+echo "DATA_MEMORY=${OVERRIDE_MEMORY}"
+SLAVE_LABELS="${SLAVE_LABELS} cpu-${OVERRIDE_NPROC} cpu-tiny memory-${OVERRIDE_MEMORY}"
 for t in 2:small 4:medium 8:large 16:xlarge 24:x2large 32:x3large 64:huge; do
   c=$(echo $t | sed 's|:.*||')
-  if [ $val -ge $c ] ; then SLAVE_LABELS="${SLAVE_LABELS} cpu-$(echo $t | sed 's|.*:||')" ; fi
+  if [ ${OVERRIDE_NPROC} -ge $c ] ; then SLAVE_LABELS="${SLAVE_LABELS} cpu-$(echo $t | sed 's|.*:||')" ; fi
 done
 
 CPU_VECTOR_SET=$(cat /proc/cpuinfo | grep '^flags' | tail -1 | tr ' ' '\n' | grep '^sss*e\|^avx' | tr '\n' ' ')

@@ -1081,27 +1081,8 @@ ahinzmann:
 rchatter:
 - .*[Ee][Cc][Aa][Ll]
 clelange:
-- CondFormats/JetMETObjects
-- DQMOffline/JetMET
-- DataFormats/JetReco
-- DataFormats/METReco
 - JetMETCorrections
-- PhysicsTools/PatAlgos
-- PhysicsTools/PatUtils
-- PhysicsTools/RecoAlgos
 - RecoJets
-- RecoMET
-- Validation/RecoJets
-- Validation/RecoMET
-- CommonTools/ParticleFlow
-- CommonTools/PileupAlgos
-- CommonTools/RecoAlgos
-- FWCore/GuiBrowsers
-- RecoLocalCalo/HGCalRecAlgos
-- RecoLocalCalo/HGCalRecProducers
-- DataFormats/HGCRecHit
-- RecoParticleFlow/PFClusterProducer
-- RecoHGCal
 gkasieczka:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET

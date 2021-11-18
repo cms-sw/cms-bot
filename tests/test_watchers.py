@@ -47,7 +47,7 @@ for (key, value) in CMSSW_CATEGORIES.items():
     assert(re.match(PACKAGE_RE, p))
 
 if os.path.exists("super-users.yaml"):
-  w = yaml.load(open("super-users.yaml", "r"))
+  w = yaml.load(open("super-users.yaml", "r"), Loader=Loader)
   assert(type(w) == list)
   for p in w:
     assert(type(p) == str)

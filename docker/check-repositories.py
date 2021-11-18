@@ -3,6 +3,10 @@ from __future__ import print_function
 import sys
 from os.path import exists, dirname, abspath
 import yaml, json
+try:
+  from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+  from yaml import Loader, Dumper
 from sys import exit
 from optparse import OptionParser
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
@@ -47,9 +51,9 @@ if __name__ == "__main__":
     if e:
       print (o)
       exit(1)
-    repos = yaml.load_all(o)
+    repos = yaml.load_all(o, Loader=Loader)
   elif exists(opts.repo_list):
-    repos = yaml.load(open(opts.repo_list))
+    repos = yaml.load(open(opts.repo_list), Loader=Loader)
   else:
     print ("Error: No such file: %s" % opts.repo_list)
     exit (1)

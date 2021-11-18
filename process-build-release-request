@@ -10,6 +10,10 @@ from os.path import expanduser
 from socket import setdefaulttimeout
 
 import yaml
+try:
+  from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+  from yaml import Loader, Dumper
 from github import Github
 
 from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
@@ -982,7 +986,7 @@ if __name__ == "__main__":
 
   if status == NEW_ISSUE:
     approvers = ", ".join( [ "@"+x for x in APPROVE_BUILD_RELEASE ] )
-    ALL_WATCHERS = (yaml.load(open(CMS_BOT_DIR+"/build-release-watchers.yaml")))
+    ALL_WATCHERS = (yaml.load(open(CMS_BOT_DIR+"/build-release-watchers.yaml"), Loader=Loader))
     watchers = ALL_WATCHERS.get( release_queue )
     xqueue = release_queue
     if release_queue != release_branch: xqueue =release_queue+"("+release_branch+")"

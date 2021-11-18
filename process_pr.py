@@ -124,10 +124,14 @@ def get_last_commit(pr):
 #Read a yaml file
 def read_repo_file(repo_config, repo_file, default=None):
   import yaml
+  try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+  except ImportError:
+    from yaml import Loader, Dumper
   file_path = join(repo_config.CONFIG_DIR, repo_file)
   contents = default
   if exists(file_path):
-    contents = (yaml.load(file(file_path)))
+    contents = (yaml.load(file(file_path),Loader=Loader))
     if not contents: contents = default
   return contents
 

@@ -82,7 +82,7 @@ MULTILINE_COMMENTS_MAP = {
               "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [RELVAL_OPTS,                                "EXTRA_MATRIX_ARGS",True]
               }
 
-CMSSW_L2_ALL = {}
+L2_DATA = {}
 
 #Add CMSSW ORP in CMSSW_L2
 def init_l2_data(cms_repo):
@@ -102,8 +102,8 @@ def init_l2_data(cms_repo):
   return l2_data
 
 def get_commenter_categories(commenter, comment_date):
-  if commenter not in CMSSW_L2_ALL: return []
-  for item in CMSSW_L2_ALL[commenter]:
+  if commenter not in L2_DATA: return []
+  for item in L2_DATA[commenter]:
     if (comment_date<item['start_date']): return []
     if ('end_date' not in item) or (comment_date<item['end_date']): return item['category']
   return []

@@ -1,27 +1,33 @@
-#!/bin/bash -ex
+#!/bin/bash -e
+push_chg=true
+if [ "$1" = "" -o "$1" = "false" ] ; then push_chg=false ; fi
 sdir=$(dirname $0)
-[ -f ${sdir}/all_l2.json ] || echo '{}' > ${sdir}/all_l2.json
+[ -f ${sdir}/l2.json ] || echo '{}' > ${sdir}/l2.json
 old_commit=""
-[ -f ${sdir}/last_commit.txt ] && old_commit=$(cat ${sdir}/last_commit.txt)..
+[ -f ${sdir}/commit.txt ] && old_commit=$(cat ${sdir}/commit.txt)..
 
 rm -rf update_cmssw_l2
-git clone git@github.com:cms-sw/cms-bot update_cmssw_l2
-
+git clone -q git@github.com:cms-sw/cms-bot update_cmssw_l2
 pushd update_cmssw_l2
   export PYTHONPATH=$(/bin/pwd -P)
+  export PYTHONUNBUFFERED=1
   commit=""
-  for data in $(git log --no-merges --pretty=format:"%H:%at" ${old_commit} -- categories.py | tac) ; do
+  for data in $(git log --no-merges --pretty=format:"%H:%at," ${old_commit} -- categories.py | tr ',' '\n' | grep : | tac) ; do
     commit=$(echo $data | sed 's|:.*||')
-    cut_time=$(echo $data | sed 's|.*:||')
+    cur_time=$(echo $data | sed 's|.*:||')
     git checkout -q $commit
-    ${sdir}/update.py ${sdir}/all_l2.json ${cut_time}
+    rm -rf *.pyc __pycache__
+    echo "Working on $commit"
+    ${sdir}/update.py ${sdir}/l2.json ${cur_time} 2>&1
   done
 popd
 rm -rf update_cmssw_l2
-if [ ${commit} != "" ] ; then
+if [ "${commit}" != "" ] ; then
   pushd ${sdir}
-    echo "${commit}" > last_commit.txt
-    git add last_commit.txt all_l2.json
-    git commit -a -m "Updated CMSSW L2 category information."
+    echo "${commit}" > commit.txt
+    if $push_chg ; then
+      git add commit.txt l2.json
+      git commit -a -m "Updated CMSSW L2 category information."
+    fi
   popd
 fi

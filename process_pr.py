@@ -82,6 +82,28 @@ MULTILINE_COMMENTS_MAP = {
               "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [RELVAL_OPTS,                                "EXTRA_MATRIX_ARGS",True]
               }
 
+CMSSW_L2_ALL = {}
+
+#Add CMSSW ORP in CMSSW_L2
+def init_cmssw_l2():
+  from json import load
+  from os.path import dirname,join
+  l2_data = {}
+  with open(join(dirname(__file__),"cmssw_l2","l2.json")) as ref:
+    l2_data = load(ref)
+
+  for user in CMSSW_L2:
+    if (user in l2_data) and ('end_date' in l2_data[user][-1]):
+      del l2_data[user][-1]['end_date']
+  return l2_data
+
+def get_commenter_categories(commenter, comment_date):
+  if commenter not in CMSSW_L2_ALL: return []
+  for item in CMSSW_L2_ALL[commenter]:
+    if (comment_date<item['start_date']): return []
+    if ('end_date' not in item) or (comment_date<item['end_date']): return item['category']
+  return []
+
 def get_last_commit(pr):
   last_commit = None
   try:

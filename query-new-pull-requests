@@ -3,7 +3,6 @@ from __future__ import print_function
 from github import Github
 from os.path import expanduser
 from optparse import OptionParser
-from categories import CMSSW_CATEGORIES, CMSSW_L2
 from datetime import datetime, timedelta
 import re
 

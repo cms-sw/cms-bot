@@ -20,5 +20,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           architecture: x64
-      - run: python -c 'from categories import CMSSW_L2,CMSSW_L1'
-
+      - name: Test importing CMSSW_L2/L1
+        run: python -c 'from categories import CMSSW_L2,CMSSW_L1'
+      - name: Checking duplicates in yaml files
+        run: tests/test-duplicates.sh

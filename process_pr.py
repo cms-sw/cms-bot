@@ -84,7 +84,6 @@ MULTILINE_COMMENTS_MAP = {
 
 L2_DATA = {}
 
-#Add CMSSW ORP in CMSSW_L2
 def init_l2_data(cms_repo):
   l2_data = {}
   if cms_repo:
@@ -406,6 +405,7 @@ def get_status_state(context, statuses):
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
+  global L2_DATA
   if (not force) and ignore_issue(repo_config, repo, issue): return
   gh_user_char="@"
   if not notify_user(issue): gh_user_char=""
@@ -436,6 +436,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
   REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP["enable_test(s|)"][0]
+  #FIXME: use cms_repo when bot is ready to make use of L@ historical data
+  L2_DATA = init_l2_data (False)
   last_commit_date = None
   last_commit_obj = None
   push_test_issue = False
@@ -451,7 +453,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   code_checks_status = []
   pre_checks_state = {}
   default_pre_checks = ["code-checks"]
-  CMSSW_L2_NAMES = list(CMSSW_L2.keys())
   #For future pre_checks
   #if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
   pre_checks_url = {}
@@ -636,7 +637,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   for comment in all_comments:
     ack_comment = comment
     commenter = comment.user.login.encode("ascii", "ignore")
-    valid_commenter = commenter in TRIGGER_PR_TESTS + CMSSW_L2_NAMES + releaseManagers + [repo_org]
+    commenter_categories = get_commenter_categories(commenter, int(comment.created_at.strftime('%s')))
+    valid_commenter = (commenter in TRIGGER_PR_TESTS + releaseManagers + [repo_org]) or (len(commenter_categories)>0)
     if (not valid_commenter) and (requestor!=commenter): continue
     comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
     if (commenter in COMMENT_CONVERSION) and (comment.created_at<=COMMENT_CONVERSION[commenter]['comments_before']):
@@ -662,7 +664,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if (assign_type == "new categories assigned:") and (commenter == cmsbuild_user):
         for ex_cat in new_cats:
           if ex_cat in assign_cats: assign_cats[ex_cat] = 1
-      if ((commenter in CMSSW_L2_NAMES) or (commenter in  CMSSW_ISSUES_TRACKERS)):
+      if commenter_categories or (commenter in CMSSW_ISSUES_TRACKERS):
         if assign_type == "assign":
           for ex_cat in new_cats:
             if not ex_cat in signing_categories:
@@ -680,10 +682,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
     if re.match("^hold$", first_line, re.I):
-      if commenter in CMSSW_L2_NAMES + releaseManagers + PR_HOLD_MANAGERS: hold[commenter]=1
+      if commenter_categories or (commenter in releaseManagers + PR_HOLD_MANAGERS): hold[commenter]=1
       continue
     if re.match(REGEX_EX_CMDS, first_line, re.I):
-      if commenter in CMSSW_L2_NAMES + releaseManagers + [requestor]:
+      if commenter_categories or (commenter in releaseManagers + [requestor]):
         check_extra_labels(first_line.lower(), extra_labels)
       continue
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
@@ -695,7 +697,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         enable_tests, ignore = check_enable_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
-      if commenter in CMSSW_L2_NAMES + releaseManagers:
+      if commenter_categories or (commenter in releaseManagers):
         tester = first_line.split("@",1)[-1].split(" ",1)[0]
         if not tester in TRIGGER_PR_TESTS:
           TRIGGER_PR_TESTS.append(tester)
@@ -703,9 +705,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           print("Added user in test category:",tester)
       continue
     if re.match("^unhold$", first_line, re.I):
-      if commenter in CMSSW_L1:
+      if 'orp' in commenter_categories:
         hold = {}
-      elif commenter in CMSSW_L2_NAMES + releaseManagers + PR_HOLD_MANAGERS:
+      elif commenter_categories or (commenter in releaseManagers + PR_HOLD_MANAGERS):
         if commenter in hold: del hold[commenter]
       continue
     if (commenter == cmsbuild_user) and (re.match("^"+HOLD_MSG+".+", first_line)):
@@ -713,8 +715,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         u = u.strip().lstrip("@")
         if u in hold: hold[u]=0
     if CLOSE_REQUEST.match(first_line):
-      if (commenter in CMSSW_L2_NAMES + releaseManagers) or \
-         ((not issue.pull_request) and (commenter in  CMSSW_ISSUES_TRACKERS)):
+      if (commenter_categories or (commenter in releaseManagers)) or \
+         ((not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)):
          mustClose = True
          print("==>Closing requested received from %s" % commenter)
       continue
@@ -803,12 +805,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           signatures["tests"] = "pending"
         print('Previous tests already finished, resetting test request state to ',signatures["tests"])
 
-    if issue.pull_request or push_test_issue:
+    if (issue.pull_request or push_test_issue):
       # Check if the release manager asked for merging this.
-      if (commenter in releaseManagers + CMSSW_L1) and re.match("^\s*(merge)\s*$", first_line, re.I):
+      if ((commenter in releaseManagers) or ('orp' in commenter_categories)) and re.match("^\s*(merge)\s*$", first_line, re.I):
         mustMerge = True
         mustClose = False
-        if (commenter in CMSSW_L1) and ("orp" in signatures): signatures["orp"] = "approved"
+        if ('orp' in commenter_categories) and ('orp' in signatures): signatures["orp"] = "approved"
         continue
 
       # Check if the someone asked to trigger the tests
@@ -836,18 +838,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           signatures["tests"] = "pending"
 
     # Check L2 signoff for users in this PR signing categories
-    if commenter in CMSSW_L2 and [x for x in CMSSW_L2[commenter] if x in signing_categories]:
+    if [ x for x in commenter_categories if x in signing_categories]:
       ctype = ""
       selected_cats = []
       if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
         ctype = "+1"
-        selected_cats = CMSSW_L2[commenter]
+        selected_cats = commenter_categories
       elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
         ctype = "-1"
-        selected_cats = CMSSW_L2[commenter]
+        selected_cats = commenter_categories
       elif re.match("^[+-][a-z][a-z0-9]+$", first_line, re.I):
         category_name = first_line[1:].lower()
-        if category_name in CMSSW_L2[commenter]:
+        if category_name in commenter_categories:
           ctype = first_line[0]+"1"
           selected_cats = [ category_name ]
       elif re.match("^(reopen)$", first_line, re.I):
@@ -863,7 +865,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           signatures[sign] = "rejected"
           if sign == "orp": mustClose = False
       elif ctype == "reopen":
-        if "orp" in CMSSW_L2[commenter]:
+        if "orp" in commenter_categories:
           signatures["orp"] = "pending"
           mustClose = False
       continue

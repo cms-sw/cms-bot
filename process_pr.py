@@ -85,16 +85,20 @@ MULTILINE_COMMENTS_MAP = {
 CMSSW_L2_ALL = {}
 
 #Add CMSSW ORP in CMSSW_L2
-def init_cmssw_l2():
-  from json import load
-  from os.path import dirname,join
+def init_l2_data(cms_repo):
   l2_data = {}
-  with open(join(dirname(__file__),"cmssw_l2","l2.json")) as ref:
-    l2_data = load(ref)
-
-  for user in CMSSW_L2:
-    if (user in l2_data) and ('end_date' in l2_data[user][-1]):
-      del l2_data[user][-1]['end_date']
+  if cms_repo:
+    from json import load
+    from os.path import dirname,join
+    l2_data = {}
+    with open(join(dirname(__file__),"cmssw_l2","l2.json")) as ref:
+      l2_data = load(ref)
+    for user in CMSSW_L2:
+      if (user in l2_data) and ('end_date' in l2_data[user][-1]):
+        del l2_data[user][-1]['end_date']
+  else:
+    for user in CMSSW_L2:
+      l2_data[user] = [{'start_date': 0, 'category': CMSSW_L2[user]}]
   return l2_data
 
 def get_commenter_categories(commenter, comment_date):

@@ -425,6 +425,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   code_checks_status = []
   pre_checks_state = {}
   default_pre_checks = ["code-checks"]
+  CMSSW_L2_NAMES = list(CMSSW_L2.keys())
   #For future pre_checks
   #if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
   pre_checks_url = {}
@@ -486,9 +487,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if cms_repo and ((not cmssw_repo) or (pr.base.ref in RELEASE_BRANCH_PRODUCTION)):
       print("This pull request requires ORP approval")
       signing_categories.add("orp")
-      for l1 in CMSSW_L1:
-        if not l1 in CMSSW_L2: CMSSW_L2[l1]=[]
-        if not "orp" in CMSSW_L2[l1]: CMSSW_L2[l1].append("orp")
 
     print("Following categories affected:")
     print("\n".join(signing_categories))
@@ -614,7 +612,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   for comment in all_comments:
     ack_comment = comment
     commenter = comment.user.login.encode("ascii", "ignore")
-    valid_commenter = commenter in TRIGGER_PR_TESTS + list(CMSSW_L2.keys()) + CMSSW_L1 + releaseManagers + [repo_org]
+    valid_commenter = commenter in TRIGGER_PR_TESTS + CMSSW_L2_NAMES + releaseManagers + [repo_org]
     if (not valid_commenter) and (requestor!=commenter): continue
     comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
     if (commenter in COMMENT_CONVERSION) and (comment.created_at<=COMMENT_CONVERSION[commenter]['comments_before']):
@@ -640,7 +638,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if (assign_type == "new categories assigned:") and (commenter == cmsbuild_user):
         for ex_cat in new_cats:
           if ex_cat in assign_cats: assign_cats[ex_cat] = 1
-      if ((commenter in CMSSW_L2) or (commenter in  CMSSW_ISSUES_TRACKERS + CMSSW_L1)):
+      if ((commenter in CMSSW_L2_NAMES) or (commenter in  CMSSW_ISSUES_TRACKERS)):
         if assign_type == "assign":
           for ex_cat in new_cats:
             if not ex_cat in signing_categories:
@@ -658,10 +656,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # Some of the special users can say "hold" prevent automatic merging of
     # fully signed PRs.
     if re.match("^hold$", first_line, re.I):
-      if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers + PR_HOLD_MANAGERS: hold[commenter]=1
+      if commenter in CMSSW_L2_NAMES + releaseManagers + PR_HOLD_MANAGERS: hold[commenter]=1
       continue
     if re.match(REGEX_EX_CMDS, first_line, re.I):
-      if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers + [requestor]:
+      if commenter in CMSSW_L2_NAMES + releaseManagers + [requestor]:
         check_extra_labels(first_line.lower(), extra_labels)
       continue
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
@@ -673,7 +671,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         enable_tests, ignore = check_enable_bot_tests (first_line.split(" ",1)[-1])
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
-      if commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers:
+      if commenter in CMSSW_L2_NAMES + releaseManagers:
         tester = first_line.split("@",1)[-1].split(" ",1)[0]
         if not tester in TRIGGER_PR_TESTS:
           TRIGGER_PR_TESTS.append(tester)
@@ -683,7 +681,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if re.match("^unhold$", first_line, re.I):
       if commenter in CMSSW_L1:
         hold = {}
-      elif commenter in list(CMSSW_L2.keys()) + releaseManagers + PR_HOLD_MANAGERS:
+      elif commenter in CMSSW_L2_NAMES + releaseManagers + PR_HOLD_MANAGERS:
         if commenter in hold: del hold[commenter]
       continue
     if (commenter == cmsbuild_user) and (re.match("^"+HOLD_MSG+".+", first_line)):
@@ -691,7 +689,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         u = u.strip().lstrip("@")
         if u in hold: hold[u]=0
     if CLOSE_REQUEST.match(first_line):
-      if (commenter in CMSSW_L1 + list(CMSSW_L2.keys()) + releaseManagers) or \
+      if (commenter in CMSSW_L2_NAMES + releaseManagers) or \
          ((not issue.pull_request) and (commenter in  CMSSW_ISSUES_TRACKERS)):
          mustClose = True
          print("==>Closing requested received from %s" % commenter)

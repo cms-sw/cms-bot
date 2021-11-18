@@ -128,6 +128,10 @@ CMSSW_L2 = {
   "mmusich":          ["tracking-pog","trk-dpg"],
 }
 
+for user in CMSSW_L1:
+  if user not in CMSSW_L2: CMSSW_L2[user] = ['orp']
+  else: CMSSW_L2[user].append('orp')
+
 USERS_TO_TRIGGER_HOOKS = set(TRIGGER_PR_TESTS + CMSSW_ISSUES_TRACKERS + list(CMSSW_L2.keys()))
 CMS_REPOS = set(CMSDIST_REPOS + CMSSW_REPOS + EXTERNAL_REPOS)
 from datetime import datetime

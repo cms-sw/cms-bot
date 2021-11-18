@@ -7,6 +7,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 from releases import *
 from categories import *
 import yaml
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 import re
 # Validate the schema of watchers.
@@ -14,7 +18,7 @@ import re
 KEY_RE = "^[^@]+"
 VALUE_RE = "[A-Za-z0-0.*+]"
 
-w = yaml.load(open("watchers.yaml", "r"))
+w = yaml.load(open("watchers.yaml", "r"), Loader=Loader)
 assert(type(w) == dict)
 for (key, value) in w.items():
   assert(type(key) == str)

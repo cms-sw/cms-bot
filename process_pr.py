@@ -508,9 +508,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # For PR, we always require tests.
     signing_categories.add("tests")
     if add_external_category: signing_categories.add("externals")
-    # We require ORP approval for releases which are in production.
-    # or all externals package
-    if cms_repo and ((not cmssw_repo) or (pr.base.ref in RELEASE_BRANCH_PRODUCTION)):
+    if cms_repo:
       print("This pull request requires ORP approval")
       signing_categories.add("orp")
 

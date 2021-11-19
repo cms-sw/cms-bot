@@ -532,15 +532,6 @@
       "start_date": 1585699200
     }
   ], 
-  "efe": [
-    {
-      "category": [
-        "generators"
-      ], 
-      "end_date": 1498694400, 
-      "start_date": 1498694400
-    }
-  ], 
   "efeyazgan": [
     {
       "category": [
@@ -1462,15 +1453,6 @@
       ], 
       "end_date": 1631491200, 
       "start_date": 1631491200
-    }
-  ], 
-  "pedrok": [
-    {
-      "category": [
-        "upgrade"
-      ], 
-      "end_date": 1485820800, 
-      "start_date": 1485820800
     }
   ], 
   "perrotta": [

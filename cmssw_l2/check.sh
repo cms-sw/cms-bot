@@ -28,6 +28,10 @@ if [ "${commit}" != "" ] ; then
     if $push_chg ; then
       git add commit.txt l2.json
       git commit -a -m "Updated CMSSW L2 category information."
+      if ! git push origin ; then
+        git pull --rebase
+        git push origin
+      fi
     fi
   popd
 fi

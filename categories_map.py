@@ -1293,6 +1293,7 @@ CMSSW_CATEGORIES = {
     "RecoMuon/MuonIdentification",
     "RecoMuon/MuonIsolation",
     "RecoMuon/MuonIsolationProducers",
+    "RecoMuon/MuonRechitClusterProducer",
     "RecoMuon/MuonSeedGenerator",
     "RecoMuon/Navigation",
     "RecoMuon/Records",

@@ -6,13 +6,13 @@ from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from datetime import datetime
-from os.path import join, exists
+from os.path import join, exists, dirname
 from os import environ
 from github_utils import get_token, edit_pr, api_rate_limits
 from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
-from json import dumps
+from json import dumps, load
 
 try:
   from categories import external_to_package
@@ -87,9 +87,6 @@ L2_DATA = {}
 def init_l2_data(cms_repo):
   l2_data = {}
   if cms_repo:
-    from json import load
-    from os.path import dirname,join
-    l2_data = {}
     with open(join(dirname(__file__),"cmssw_l2","l2.json")) as ref:
       l2_data = load(ref)
     for user in CMSSW_L2:

@@ -64,15 +64,17 @@ echo "DATA_SLAVE_JAR=${slave_jar}"
 SLAVE_LABELS="user-$(whoami) kernel-$(uname -r)"
 if [ $(echo $HOME | grep '^/afs/' |wc -l) -gt 0 ] ; then SLAVE_LABELS="${SLAVE_LABELS} home-afs"; fi
 arch=$(uname -m)
+SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
 HOST_ARCH=""
 if [ "$arch" = "aarch64" ] ; then
   HOST_ARCH=arm$(cat /proc/cpuinfo 2> /dev/null | grep 'CPU architectur' | sed 's|.*: *||' | tail -1)
 elif [ "$arch" = "x86_64" ] ; then
   arch="amd64"
+  SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
   HOST_ARCH=$(cat /proc/cpuinfo 2> /dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
 fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
-SLAVE_LABELS="${SLAVE_LABELS} ${arch} ${HOST_ARCH}"
+SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
 DOCKER=""
 if docker --version >/dev/null 2>&1 ; then

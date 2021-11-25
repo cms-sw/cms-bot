@@ -8,10 +8,10 @@ function dockerrun()
     if [ -z "${PROOTDIR}" ]   ; then PROOTDIR="/cvmfs/cms-ib.cern.ch/proot" ; fi
     if [ -z "${THISDIR}" ]    ; then THISDIR=$(/bin/pwd -P) ; fi
     if [ -z "${WORKDIR}" ]    ; then WORKDIR=$(/bin/pwd -P) ; fi
-    arch=$(echo $SCRAM_ARCH | cut -d_ -f2)
+    arch="$(uname -m)"
     os=$(echo $SCRAM_ARCH | cut -d_ -f1 | sed 's|slc7|cc7|')
     IMG="cmssw/${os}:${arch}"
-    if [ "${arch}" != "amd64" ] ; then
+    if [ "${arch}" != "x86_64" ] ; then
       CONTAINER_TYPE="qemu"
       QEMU_ARGS="$PROOTDIR/qemu-${arch}"
       if [ "${arch}" = "aarch64" ] ; then

@@ -30,10 +30,7 @@ UNAME_M=$(uname -m)
 if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ $(echo "${DOCKER_IMG}" | grep '^cmssw/' | wc -l) -gt 0 ] ; then
     if [ $(echo "${DOCKER_IMG}" | grep ':' | wc -l) -eq 0 ] ; then
-      case ${UNAME_M} in
-        x86_64 ) export DOCKER_IMG="${DOCKER_IMG}:amd64" ;;
-        * ) export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}" ;;
-      esac
+      export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}"
     fi
   fi
   if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi

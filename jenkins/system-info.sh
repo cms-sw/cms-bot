@@ -1,6 +1,7 @@
 #!/bin/bash -e
 aklog >/dev/null 2>&1 || true
-ACTUAL_NPROC=$(nproc)
+ACTUAL_NPROC=$(getconf _NPROCESSORS_ONLN 2> /dev/null || true)
+[ "${ACTUAL_NPROC}" != "" ] || ACTUAL_NPROC=$(nproc)
 ACTUAL_MEMORY=$(free -m | grep Mem: | awk '{print $2}')
 if [ -d $HOME/bin ] ; then export PATH=$HOME/bin:$PATH ; fi
 OVERRIDE_NPROC=$(nproc)

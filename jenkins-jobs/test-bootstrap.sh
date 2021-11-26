@@ -40,6 +40,8 @@ GCC_PATH="$5"
 SKIP_BOOTSTRAP="$6"
 BS_OPTS="--no-bootstrap"
 if [ "${REPO}" = "" ] ; then REPO="test_boot_$ARCH" ; fi
+#test cmsrep connection
+ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -d /data/cmssw/repos/cms
 if ssh -q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 cmsbuild@cmsrep.cern.ch test -L /data/cmssw/repos/$REPO/${ARCH}/latest ; then
   BS_OPTS=""
   GCC_PATH=""

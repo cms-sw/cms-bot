@@ -3,6 +3,8 @@ source $(dirname $0)/dockerrun.sh
 source $(dirname $0)/cmsrep.sh
 export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
 export THISDIR=$(/bin/pwd -P)
+export LC_ALL=C
+export LC_CTYPE=C
 export LANG=C
 
 ARCHITECTURE=$1

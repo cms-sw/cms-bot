@@ -5,7 +5,8 @@ SCRAM_ARCH=$2
 RPMS_REPO=$3
 PACKAGE_NAME=$4
 REINSTALL=$5
-
+export LC_ALL=C
+export LANGUAGE=C
 if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] ; then
     echo "Usage: $0 INSTALL_DIR SCRAM_ARCH RPMS_REPO PACKAGE_NAME [REINSTALL:true|false]"
     exit 1

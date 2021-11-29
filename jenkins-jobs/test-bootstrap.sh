@@ -63,7 +63,7 @@ if ! $SKIP_BOOTSTRAP ; then
 fi
 
 if [ "${DISABLE_DEBUG}" = "true" ] ; then
-  sed -i -e 's|^\s*%define\s\s*subpackageDebug\s.|#subpackage debug disabled|' cmsdist/coral.spec cmsdist/cmssw.spec
+  perl -p -i -e 's/^[\s]*%define[\s]+subpackageDebug[\s]+./#subpackage debug disabled/' cmsdist/coral.spec cmsdist/cmssw.spec
 fi
 type="toolconf"
 $cmsBuild -i ${type} --builder 3  build cmssw-tool-conf || touch err.txt | tee -a upload/${type}-build.log

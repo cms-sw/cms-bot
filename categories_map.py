@@ -96,6 +96,7 @@ CMSSW_CATEGORIES = {
     "Calibration/Hotline",
     "Calibration/IsolatedParticles",
     "Calibration/LumiAlCaRecoProducers",
+    "Calibration/PPSAlCaRecoProducer",
     "Calibration/TkAlCaRecoProducers",
     "Calibration/Tools",
     "CaloOnlineTools/EcalTools",

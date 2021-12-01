@@ -107,8 +107,8 @@ def GetMatrixOptions(release, arch, dasfile=None):
 
 def FixWFArgs(release, arch, wf, args):
   if isThreaded(release, arch):
-    #if int(release.split("_")[1])>=12:
-    #  return args
+    if int(release.split("_")[1])>=12:
+      return args
     NonThreadedWF = ["101.0","102.0"]
     if wf in NonThreadedWF:
       for k in [ "THREADED", "enableIMT" ]:

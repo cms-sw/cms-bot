@@ -459,6 +459,7 @@ CMSSW_CATEGORIES = {
     "CondTools/Geometry",
     "CondTools/HLT",
     "CondTools/Hcal",
+    "CondTools/JetMET",
     "CondTools/IntegrationTest",
     "CondTools/L1Trigger",
     "CondTools/L1TriggerExt",

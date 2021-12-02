@@ -365,8 +365,16 @@ def multiline_check_function(first_line, comment_lines, repository):
   return True, extra_params, ""
 
 def get_changed_files(repo, pr, use_gh_patch=False):
-  if (not use_gh_patch) and (pr.changed_files<=300): return [f.filename for f in pr.get_files()]
-  cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/%s/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/.*||' | sort | uniq" % (repo.full_name,pr.number)
+  if (not use_gh_patch) and (pr.changed_files<=300):
+    pr_files = []
+    for f in pr.get_files():
+      pr_files.append(f.filename)
+      try:
+        if f.previous_filename: pr_files.append(f.previous_filename)
+      except: pass
+    print("PR Files: ", pr_files)
+    return pr_files
+  cmd="curl -s -L https://patch-diff.githubusercontent.com/raw/%s/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq" % (repo.full_name,pr.number)
   e , o = run_cmd(cmd)
   if e: return []
   return o.split("\n")

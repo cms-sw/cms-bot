@@ -403,6 +403,9 @@ def pr_get_changed_files(pr):
     rez = []
     for f in pr.get_files():
         rez.append(f.filename)
+        try:
+          if f.previous_filename: rez.append(f.previous_filename)
+        except: pass
     return rez
 
 

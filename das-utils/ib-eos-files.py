@@ -163,6 +163,10 @@ def copy_lfns_to_eos(eos_lfns):
   total_lfns = len(eos_lfns)
   eos_lfns_to_copy = []
   for lfn in eos_lfns:
+    if not lfn.endswith('.root'):
+      already_done += 1
+      print("IGNORE (%s/%s): %s" % (already_done, total_lfns, lfn))
+      continue
     eos_file = "%s%s" % (eos_base, lfn)
     if eos_exists(eos_file) or (eos_exists(eos_file+".unused") and eos_rename(eos_file+".unused", eos_file)):
       already_done += 1

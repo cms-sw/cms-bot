@@ -1722,6 +1722,13 @@ skinnari:
 - L1Trigger/TrackerDTC
 swertz:
 - PhysicsTools/NanoAOD
+- DataFormats/SiStrip
+- CUDADataFormats/SiStripCluster
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers
 ram1123:
   - RecoEgamma
   - RecoEcal

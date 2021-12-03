@@ -20,6 +20,13 @@ if days<30:
   days=30
 if (unused_days_threshold-days)<30: unused_days_threshold=days+30
 
+def get_unused_days(eosfile):
+  e, o = run_cmd("%s fileinfo %s | grep 'Modify:' | sed 's|.* Timestamp: ||'" % (eos_cmd, eosfile))
+  if e or (o == ""):
+    print("Error: Getting timestamp for %s\n%s" % (eosfile, o))
+    return -1
+  return int((time()-float(o))/86400)
+
 e , o = run_cmd("PYTHONPATH=%s/.. %s/ib-datasets.py --days %s" % (script_path, script_path, days))
 if e:
   print(o)
@@ -39,15 +46,21 @@ total = 0
 active = 0
 unused = []
 all_files = []
-for l in o.split("\n"):
-  l = l.replace(eos_base,"")
+for pfn in o.split("\n"):
+  l = pfn.replace(eos_base,"")
   all_files.append(l)
   if not l.endswith(".root"): continue
   total += 1
   if l in used:
+    run_cmd("%s file touch %s" % (eos_cmd, pfn))
     active += 1
     continue
-  unused.append(l)
+  unused_days = get_unused_days(pfn)
+  print("%s unsed for last %s days." % (pfn,unused_days))
+  if (unused_days<30):
+    active += 1
+  else:
+    unused.append(l)
 
 print("Total:",total)
 print("Active:",active)
@@ -58,7 +71,6 @@ if active == 0:
 
 print("Renaming unused files")
 for l in unused:
-  if not l in all_files: continue
   pfn = "%s/%s" % (eos_base, l)
   e, o = run_cmd("%s stat -f %s" % (eos_cmd, pfn))
   if e:
@@ -74,11 +86,7 @@ print("Removing %s days old unused files." % unused_days_threshold)
 for unused_file in all_files:
   if not unused_file.endswith(".unused"): continue
   unused_file = "%s/%s" % (eos_base, unused_file)
-  e, o = run_cmd("%s fileinfo %s | grep 'Modify:' | sed 's|.* Timestamp: ||'" % (eos_cmd, unused_file))
-  if e or (o == ""):
-    print("Error: Getting timestamp for %s\n%s" % (unused_file, o))
-    continue
-  unused_days = int((time()-float(o))/86400)
+  unused_days = get_unused_days(unused_file)
   if unused_days<unused_days_threshold: continue
   print("Deleting as unused for last %s days: %s" % (unused_days, unused_file))
   run_cmd("echo %s rm %s" % (eos_cmd, unused_file))

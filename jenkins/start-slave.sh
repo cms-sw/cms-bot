@@ -47,7 +47,7 @@ JENKINS_PORT=$(pgrep -x -a  -f ".*httpPort=.*" | tail -1 | tr ' ' '\n' | grep ht
 SSHD_PORT=$(grep '<port>' ${HOME}/org.jenkinsci.main.modules.sshd.SSHD.xml | sed 's|</.*||;s|.*>||')
 JENKINS_CLI_CMD="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_dsa -l localcli -p ${SSHD_PORT} localhost"
 JENKINS_API_URL=$(echo ${JENKINS_URL} | sed "s|^https://[^/]*/|http://localhost:${JENKINS_PORT}/|")
-SET_KRB5CCNAME=false
+SET_KRB5CCNAME=true
 if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
   slave_labels=""
   case ${SLAVE_TYPE} in
@@ -71,8 +71,7 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
 #case ${SLAVE_TYPE} in
-#  lxplus* ) SET_KRB5CCNAME=true ;;
-#  lxplus8* ) SET_KRB5CCNAME=false ;;
+  lxplus* ) SET_KRB5CCNAME=false ;;
 #esac
 if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
   case ${REMOTE_USER} in

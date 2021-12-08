@@ -141,7 +141,7 @@ def read_matrix_log_file(matrix_log):
 #
 def cmd_to_addon_test(command, addon_dir):
   commandbase = command.replace(' ','_').replace('/','_')
-  logfile='%s.log' % commandbase[:150].replace("'",'').replace('"','').replace('../','')
+  logfile='%s.log' % commandbase[:160].replace("'",'').replace('"','').replace('../','')
   e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (addon_dir, logfile))
   if e or (o==""):
     print("ERROR: %s -> %s" % (command, o))

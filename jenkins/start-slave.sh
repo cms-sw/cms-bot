@@ -70,9 +70,9 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
   slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
-#case ${SLAVE_TYPE} in
+case ${SLAVE_TYPE} in
   lxplus* ) SET_KRB5CCNAME=false ;;
-#esac
+esac
 if [ $(get_data JENKINS_SLAVE_SETUP) = "false" ] ; then
   case ${REMOTE_USER} in
     cmsbot|cmsbld)

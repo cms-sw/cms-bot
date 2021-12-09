@@ -790,6 +790,8 @@ mmusich:
 - CalibTracker/SiStrip
 - DataFormats/SiStrip
 - DPGAnalysis/SiStripTools
+- DQM/Si
+- DQM/Track
 - MuonAnalysis/MomentumScaleCalibration
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration

@@ -147,7 +147,7 @@ def cmd_to_addon_test(command, addon_dir):
     if (not e) and o:
       return (o.split("/")[-2], get_wf_error_msg(o, False).strip())
     print("ERROR: %s -> %s" % (command, o))
-  return ("", "") 
+  return ("", "")
 
 def read_addon_log_file(unit_tests_file):
   message='\n## AddOn Tests\n\n'

@@ -141,12 +141,13 @@ def read_matrix_log_file(matrix_log):
 #
 def cmd_to_addon_test(command, addon_dir):
   commandbase = command.replace(' ','_').replace('/','_')
-  logfile='%s.log' % commandbase[:160].replace("'",'').replace('"','').replace('../','')
-  e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (addon_dir, logfile))
-  if e or (o==""):
+  for nlen in [150, 160]:
+    logfile='%s.log' % commandbase[:nlen].replace("'",'').replace('"','').replace('../','')
+    e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (addon_dir, logfile))
+    if (not e) and o:
+      return (o.split("/")[-2], get_wf_error_msg(o, False).strip())
     print("ERROR: %s -> %s" % (command, o))
-    return ("", "")
-  return (o.split("/")[-2], get_wf_error_msg(o, False).strip())
+  return ("", "") 
 
 def read_addon_log_file(unit_tests_file):
   message='\n## AddOn Tests\n\n'

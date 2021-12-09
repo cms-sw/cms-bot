@@ -567,6 +567,14 @@
       "start_date": 1377734400
     }
   ], 
+  "epalencia": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "start_date": 1638748800
+    }
+  ], 
   "fabferro": [
     {
       "category": [
@@ -1147,7 +1155,7 @@
       "category": [
         "core", 
         "visualization", 
-        "geometry" 
+        "geometry"
       ], 
       "end_date": 1412208000, 
       "start_date": 1386460800

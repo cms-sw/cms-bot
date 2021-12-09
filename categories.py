@@ -46,6 +46,7 @@ CMSSW_L2 = {
   "iarspider":        ["externals"],
   "jfernan2":         ["dqm"],
   "cecilecaillol":    ["l1"],
+  "clacaputo":        ["reconstruction"],
   "jordan-martins":   ["pdmv"],
   "jpata":            ["reconstruction"],
   "kskovpen":         ["pdmv"],

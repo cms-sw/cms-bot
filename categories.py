@@ -60,6 +60,7 @@ CMSSW_L2 = {
   "pmandrik":         ["dqm"],
   "pbo0":             ["dqm"],
   "qliphy":           ["operations"],
+  "epalencia":        ["l1"],
   "rekovic":          ["l1"],
   "rvenditti":        ["dqm"],
   "santocch":         ["analysis"],

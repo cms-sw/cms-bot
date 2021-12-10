@@ -327,6 +327,14 @@
       "start_date": 1406160000
     }
   ], 
+  "clacaputo": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "start_date": 1639008000
+    }
+  ], 
   "cmsbuild": [
     {
       "category": [

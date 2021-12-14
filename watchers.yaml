@@ -1183,14 +1183,6 @@ alesaggio:
 - RecoLocalTracker/SubCollectionProducers
 - DataFormats/SiStrip
 - CalibTracker/SiStripChannelGain
-cbernet:
-- CommonTools/ParticleFlow
-- DataFormats/ParticleFlowCandidate
-- DataFormats/ParticleFlowReco
-- DataFormats/PatCandidates
-- PhysicsTools/Heppy
-- PhysicsTools/HeppyCore
-- RecoParticleFlow
 ptcox:
 - CalibMuon/CSCCalibration
 - CondFormats/CSCObjects

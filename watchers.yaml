@@ -1425,6 +1425,24 @@ jandrea:
 - DQM/Tracker
 - DQM/TrackingMonitor
 - DPGAnalysis/SiStripTools
+grzanka:
+- Alignment/CTPPS
+- CalibPPS/ESProducers
+- CondFormats/PPSObjects
+- DQM/CTPPS
+- DataFormats/CTPPSDetId
+- DataFormats/CTPPSDigi
+- DataFormats/CTPPSReco
+- DataFormats/ProtonReco
+- EventFilter/CTPPSRawToDigi
+- Geometry/VeryForwardData
+- Geometry/VeryForwardGeometry
+- Geometry/VeryForwardGeometryBuilder
+- Geometry/VeryForwardRPTopology
+- IOMC/EventVertexGenerators
+- IOMC/ParticleGuns
+- RecoPPS/*
+- Validation/CTPPS
 pieterdavid:
 - EventFilter/SiStripRawToDigi
 - CalibTracker/Configuration

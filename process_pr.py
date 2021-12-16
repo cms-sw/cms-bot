@@ -967,7 +967,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           cdata = status.context.split("/")
           if cdata[-1] not in ["optional", "required"]:
             continue
-          if cdata[-1] not in lab_stats: lab_stats[cdata[-1]] = []
+          if (cdata[-1] not in lab_stats) or (cdata[-1] == 'required'): lab_stats[cdata[-1]] = []
           lab_stats[cdata[-1]].append("pending")
           if status.state == "pending":
             continue
@@ -1006,6 +1006,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 issue.create_comment(res)
             if not dryRun:
               last_commit_obj.create_status("success", description="Finished", target_url=status.target_url, context=status.context)
+          print("Lab Status",lab_stats)
         lab_state = "required"
         if lab_state not in lab_stats: lab_state = "optional"
         if (lab_state in lab_stats) and ("pending" not in lab_stats[lab_state]):

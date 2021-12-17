@@ -14,6 +14,7 @@ else
     ulimit -a
   fi
 fi
+export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
 kinit -R || true
 aklog || true

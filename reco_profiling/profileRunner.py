@@ -11,14 +11,23 @@ workflow_configs = {
     "11834.21": {
         "num_events": 400,
         "steps_to_profile": [3,4,5],
+        "matrix": "upgrade"
     },
     "23434.21": {
         "num_events": 100,
         "steps_to_profile": [3,4],
+        "matrix": "upgrade"
     },
     "34834.21": {
         "num_events": 100,
         "steps_to_profile": [3,4],
+        "matrix": "upgrade"
+    } ,
+    "136.889": {
+        "num_events": 100,
+        "steps_to_profile": [],
+        "nThreads": 8,
+        "matrix": "standard"
     } 
 }
 
@@ -32,26 +41,39 @@ def fixIgProfExe():
 
     return "igprof"
 
-def prepareMatrixWF(workflow_number, num_events):
+def prepareMatrixWF(workflow_number, num_events, matrix="upgrade", nthreads=1):
     cmd = [
          "runTheMatrix.py",
          "-w",
-         "upgrade",
+         matrix,
          "-l",
-         workflow_number,
-         "--dryRun"
+         str(workflow_number),
+         "--dryRun",
+         "--nThreads",
+         str(nthreads),
     ]
     print(" ".join(cmd))
     out = subprocess.check_output(cmd)
 
+#extracts the cmsdriver lines from the cmdLog
 def parseCmdLog(filename):
+    init_lines = []
+    with open(filename) as fi:
+        for line in fi.readlines():
+            line = line.strip()
+            if line.startswith("#"):
+                continue
+            if line.startswith("cmsDriver"):
+                break
+            init_lines.append(line)
+ 
     cmsdriver_lines = []
     with open(filename) as fi:
         for line in fi.readlines():
             line = line.strip()
             if line.strip().startswith("cmsDriver"):
                 cmsdriver_lines.append(stripPipe(line))
-    return cmsdriver_lines
+    return init_lines, cmsdriver_lines
 
 def stripPipe(cmsdriver_line):
     return cmsdriver_line[:cmsdriver_line.index(">")]
@@ -204,14 +226,14 @@ def main(wf, num_events, out_dir):
         print("Output directory {} exists, aborting".format(wfdir))
         sys.exit(1)
 
-    prepareMatrixWF(wf, num_events)
+    prepareMatrixWF(wf, num_events, matrix=workflow_configs[wf]["matrix"], nthreads=workflow_configs[wf]["nThreads"])
     wfdir = getWFDir(wf)
-    cmsdriver_lines = parseCmdLog("{}/cmdLog".format(wfdir))
+    init_lines, cmsdriver_lines = parseCmdLog("{}/cmdLog".format(wfdir))
     new_cmdlist, outfiles = configureProfilingSteps(cmsdriver_lines, num_events, workflow_configs[wf]["steps_to_profile"])
 
     runscript = "cmdLog_profiling.sh"
     outfiles += ["cmdLog_profiling.sh"]
-    writeProfilingScript(wfdir, runscript, new_cmdlist)
+    writeProfilingScript(wfdir, runscript, init_lines + new_cmdlist)
     runProfiling(wfdir, runscript)
     copyProfilingOutputs(wfdir, out_dir, outfiles)
 

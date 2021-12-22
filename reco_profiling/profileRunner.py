@@ -74,7 +74,7 @@ workflow_configs = {
     } ,
     #8-thread T0-like promptreco workflow
     "136.889": {
-        "num_events": 100,
+        "num_events": 5000,
         "steps": {
             "step3": {
                 "TimeMemoryInfo": True,

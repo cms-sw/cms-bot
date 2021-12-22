@@ -27,7 +27,7 @@ export PYTHONPATH=$WMCORE_ROOT/test/python:$PYTHONPATH
 echo "Sourcing secrets and setting DB connectors"
 set +x # don't echo secrets
 . $WMAGENT_SECRETS_LOCATION
-export DATABASE=mysql://${MYSQL_USER}:${MYSQL_PASS}@localhost/WMCore_unit_test
+export DATABASE=mysql://${MYSQL_USER}@localhost/wmcore_unittest
 export COUCHURL="http://${COUCH_USER}:${COUCH_PASS}@${COUCH_HOST}:${COUCH_PORT}"
 set -x
 

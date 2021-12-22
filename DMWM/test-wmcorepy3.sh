@@ -3,7 +3,8 @@
 start=`date +%s`
 
 # ensure db exists
-echo "CREATE DATABASE IF NOT EXISTS WMCore_unit_test" | mysql -u ${MYSQL_USER} --password=${MYSQL_PASS} --socket=${DBSOCK}
+MYSQL_UNITTEST_DB=wmcore_unittest
+mysql -u ${MYSQL_USER} --socket=${DBSOCK} --execute "CREATE DATABASE IF NOT EXISTS ${MYSQL_UNITTEST_DB}"
 set -x
 
 ### Some tweaks for the nose run (in practice, there is nothing to change in setup_test.py...)

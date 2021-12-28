@@ -20,10 +20,8 @@ if [ $(nproc) -lt 8 ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} scripts" 
 fi
 if [ "X${EXTRA_LABELS}" != "X" ] ; then SLAVE_LABELS="${SLAVE_LABELS} ${EXTRA_LABELS}" ;fi
-if [ $(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep '^GenuineIntel$' | wc -l) -gt 0 ] ; then
-  if [ $(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep '^cpu-xlarge$' | wc -l) -gt 0 ] ; then
-    SLAVE_LABELS="${SLAVE_LABELS} cmsbuild"
-  fi
+if [ $(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep '^cpu-xlarge$' | wc -l) -gt 0 ] ; then
+  SLAVE_LABELS="${SLAVE_LABELS} cmsbuild"
 fi
 
 JENKINS_WEBHOOK="${JENKINS_WEBHOOK-https://cmssdt.cern.ch/SDT/cgi-bin/condor_webhook}"

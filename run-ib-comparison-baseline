@@ -55,7 +55,7 @@ send_jenkins_artifacts $WORKSPACE/matrix-results/ ib-baseline-tests/${RELEASE_FO
 echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/cvmfs-deploy-baseline
 echo "ARCHITECTURE=${ARCHITECTURE}"    >> $WORKSPACE/cvmfs-deploy-baseline
 echo "TEST_FLAVOR=${TEST_FLAVOR}"      >> $WORKSPACE/cvmfs-deploy-baseline
-echo "REAL_ARCH=REAL_ARCH"             >> $WORKSPACE/cvmfs-deploy-baseline
+echo "REAL_ARCH=${REAL_ARCH}"             >> $WORKSPACE/cvmfs-deploy-baseline
 
 REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
 DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')

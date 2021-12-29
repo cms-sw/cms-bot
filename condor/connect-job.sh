@@ -43,6 +43,7 @@ fi
 
 REQUEST_MAXRUNTIME=$(grep '^ *MaxRuntime *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
 let OFFLINE_NOTICE_SEC="${REQUEST_MAXRUNTIME}/10"
+if [ ${OFFLINE_NOTICE_SEC} -gt 43200 ] ; then OFFLINE_NOTICE_SEC=43200; fi
 let FORCE_EXIT_SEC="${OFFLINE_NOTICE_SEC}/10"
 if [ $FORCE_EXIT_SEC -gt 300 ] ; then FORCE_EXIT_SEC=300; fi
 if [ $FORCE_EXIT_SEC -lt 60 ] ; then FORCE_EXIT_SEC=60; fi

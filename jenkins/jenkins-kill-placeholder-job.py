@@ -97,19 +97,20 @@ def main():
     que_job_list = r_json.json()['items']
     auto_jobs = {}
     for j in que_job_list:
-        x_why = j['why'].encode('utf-8')
-        print("waiting for",x_why)
-        found = False
-        matching_nodes = get_nodes(x_why)
-        for node in matching_nodes:
-          if re.match('^\s*grid[1-9][0-9]*\s*$', node['nodeName']):
-            que_to_free += 1
-            print(" Matched ",node)
-            found = True
-        if found: continue
-        m = RX_Queue_why.match(j['why'])
-        m1 = RX_Queue_nolabel.match(j['why'])
         label = ""
+        m = RX_Queue_why.match(j['why'])
+        if m:
+          label = m.group(1).encode('utf-8')
+          print("Waiting for",label)
+          found = False
+          matching_nodes = get_nodes(label)
+          for node in matching_nodes:
+            if re.match('^grid[1-9][0-9]*$', node['nodeName']):
+              que_to_free += 1
+              print(" Matched ",node)
+              found = True
+          if found: continue
+        m1 = RX_Queue_nolabel.match(j['why'])
         if m: label = m.group(1)
         elif m1: label = m1.group(1)
         if label:

@@ -77,7 +77,9 @@ def auto_node_schedule(auto_jobs):
 
 def get_nodes(label):
   if label not in node_labels:
-    r_json = requests.get("%s/label/%s/api/json?pretty=true"  % (JENKINS_URL, label))
+    url = "%s/label/%s/api/json?pretty=true"  % (JENKINS_URL, label)
+    r_json = requests.get(url)
+    print("HERE:",url,r_json)
     node_labels[label] = r_json.json()
     print("nodes to match label ",node_labels[label]['nodes'])
   return node_labels[label]['nodes']

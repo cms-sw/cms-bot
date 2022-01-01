@@ -79,6 +79,7 @@ def get_nodes(label):
   if label not in node_labels:
     r_json = requests.get("%s/label/%s/api/json?pretty=true"  % (JENKINS_URL, label))
     node_labels[label] = r_json.json()
+    print("nodes to match label ",node_labels[label]['nodes'])
   return node_labels[label]['nodes']
 
 def main():

@@ -23,7 +23,7 @@ JENKINS_URL = environ['LOCAL_JENKINS_URL']
 WORKSPACE = environ['WORKSPACE']
 running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
 job_que_json = JENKINS_URL + '/queue/api/json?tree=items[url,why]'
-node_labls = {}
+node_labels = {}
 
 
 def etree_to_dict(t):

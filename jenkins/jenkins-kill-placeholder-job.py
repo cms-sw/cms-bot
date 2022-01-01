@@ -108,6 +108,7 @@ def main():
               que_to_free += 1
               print(" Matched ",node)
               found = True
+              break
           if found: continue
         m1 = RX_Queue_nolabel.match(j['why'])
         if m: label = m.group(1)

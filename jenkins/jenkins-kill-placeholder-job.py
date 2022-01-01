@@ -87,6 +87,7 @@ def main():
     que_job_list = r_json.json()['items']
     auto_jobs = {}
     for j in que_job_list:
+        print("waiting for",j['why'])
         m = RX_Queue_why.match(j['why'])
         m1 = RX_Queue_nolabel.match(j['why'])
         label = ""

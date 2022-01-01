@@ -126,6 +126,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
       precmd="${precmd} source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
     fi
+    if [ $(echo $HOME | grep '^/afs/' | wc -l) -gt 0 ] ; then
+      if [ $(singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c 'echo $HOME' 2>&1 | grep "container creation failed: mount $HOME->" | wc -l) -gt 0 ]  ; then
+        SINGULARITY_OPTIONS="--no-home $SINGULARITY_OPTIONS"
+      fi
+    fi
     PATH=$PATH:/usr/sbin singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR

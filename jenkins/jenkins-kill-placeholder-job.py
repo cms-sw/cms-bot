@@ -97,25 +97,22 @@ def main():
     auto_jobs = {}
     for j in que_job_list:
         label = ""
+        found = False
         m = RX_Queue_why.match(j['why'])
         if m:
           label = m.group(1).encode('utf-8')
           print("Waiting for",label)
-          found = False
-          matching_nodes = get_nodes(label)
-          for node in matching_nodes:
+          for node in get_nodes(label):
             if re.match('^grid[1-9][0-9]*$', node['nodeName']):
-              que_to_free += 1
               print(" Matched ",node)
               found = True
               break
-          if found: continue
         m1 = RX_Queue_nolabel.match(j['why'])
         if m: label = m.group(1)
         elif m1: label = m1.group(1)
         if label:
             print("Checking label:", label)
-            if ('condor' in label) or re.match('^\s*grid[1-9][0-9]*\s*$', label):
+            if found:
                 que_to_free += 1
             for reg in auto_nodes:
                 if reg.search(label):

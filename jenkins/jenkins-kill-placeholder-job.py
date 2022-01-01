@@ -96,13 +96,13 @@ def main():
     for j in que_job_list:
         x_why = j['why'].encode('utf-8')
         print("waiting for",x_why)
-        found = false
+        found = False
         matching_nodes = get_nodes(x_why)
         for node in matching_nodes:
           if re.match('^\s*grid[1-9][0-9]*\s*$', node['nodeName']):
             que_to_free += 1
             print(" Matched ",node)
-            found = true
+            found = True
         if found: continue
         m = RX_Queue_why.match(j['why'])
         m1 = RX_Queue_nolabel.match(j['why'])

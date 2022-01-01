@@ -23,6 +23,7 @@ JENKINS_URL = environ['LOCAL_JENKINS_URL']
 WORKSPACE = environ['WORKSPACE']
 running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
 job_que_json = JENKINS_URL + '/queue/api/json?tree=items[url,why]'
+node_labls = {}
 
 
 def etree_to_dict(t):
@@ -74,6 +75,12 @@ def auto_node_schedule(auto_jobs):
             print(out)
     return
 
+def get_labels(label):
+  if label not in node_labels:
+    r_json = requests.get("%s/label/%s/api/json?pretty=true"  % (JENKINS_URL, label))
+    node_labels[label] = r_json.json()
+  return node_labels[label]
+
 def main():
     auto_nodes = read_auto_nodes()
     r_xml = requests.get(running_job_xml, headers={"OIDC_CLAIM_CERN_UPN":"cmssdt"})
@@ -87,7 +94,7 @@ def main():
     que_job_list = r_json.json()['items']
     auto_jobs = {}
     for j in que_job_list:
-        print("waiting for",j['why'])
+        print("waiting for",j['why'].encode('utf-8'))
         m = RX_Queue_why.match(j['why'])
         m1 = RX_Queue_nolabel.match(j['why'])
         label = ""

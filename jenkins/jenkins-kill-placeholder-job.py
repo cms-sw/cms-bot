@@ -75,11 +75,11 @@ def auto_node_schedule(auto_jobs):
             print(out)
     return
 
-def get_labels(label):
+def get_nodes(label):
   if label not in node_labels:
     r_json = requests.get("%s/label/%s/api/json?pretty=true"  % (JENKINS_URL, label))
     node_labels[label] = r_json.json()
-  return node_labels[label]
+  return node_labels[label]['nodes']
 
 def main():
     auto_nodes = read_auto_nodes()
@@ -94,7 +94,16 @@ def main():
     que_job_list = r_json.json()['items']
     auto_jobs = {}
     for j in que_job_list:
-        print("waiting for",j['why'].encode('utf-8'))
+        x_why = j['why'].encode('utf-8')
+        print("waiting for",x_why)
+        found = false
+        matching_nodes = get_nodes(x_why)
+        for node in matching_nodes:
+          if re.match('^\s*grid[1-9][0-9]*\s*$', node['nodeName']):
+            que_to_free += 1
+            print(" Matched ",node)
+            found = true
+        if found: continue
         m = RX_Queue_why.match(j['why'])
         m1 = RX_Queue_nolabel.match(j['why'])
         label = ""

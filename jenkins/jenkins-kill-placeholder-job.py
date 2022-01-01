@@ -108,8 +108,7 @@ def main():
               found = True
               break
         m1 = RX_Queue_nolabel.match(j['why'])
-        if m: label = m.group(1)
-        elif m1: label = m1.group(1)
+        if not label and m1 : label = m1.group(1)
         if label:
             print("Checking label:", label)
             if found:

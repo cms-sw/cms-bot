@@ -8,11 +8,10 @@ from sys import exit
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api,add_organization_member
 from github_utils import create_team,get_pending_members
-from categories import CMSSW_L1, CMSSW_L2
+from categories import CMSSW_L1, CMSSW_L2, CMS_SDT
 setdefaulttimeout(120)
 
 CMS_OWNERS = [ "davidlange6", "smuzaffar", "cmsbuild" ] + CMSSW_L1[:]
-CMS_SDT    = [ "ddaina", "iarspider" ]
 CMS_ORGANIZATIONS = [ "cms-data", "cms-externals", "cms-sw" ]
 
 REPO_OWNERS = {}
@@ -93,10 +92,6 @@ for user in CMSSW_L2:
     if not cat in REPO_TEAMS["cms-sw"]:
       REPO_TEAMS["cms-sw"][cat] = {"members": []}
     REPO_TEAMS["cms-sw"][cat]["members"].append(user)
-
-REPO_TEAMS["cms-data"]["Developers"]["members"].append("ddaina")
-REPO_TEAMS["cms-externals"]["Developers"]["members"].append("ddaina")
-REPO_TEAMS["cms-sw"]["cms-sw-writers"]["members"].append("ddaina")
 
 #################################
 parser = ArgumentParser()

@@ -11,8 +11,6 @@ CMSDIST_PERMISSIONS = {
   "todor-ivanov"   : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "belforte"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "mapellidario"   : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
-  "ddaina"         : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
-  "nataliaratnikova": [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "germanfgv"      : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
 }
 

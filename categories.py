@@ -9,6 +9,7 @@ from releases import SPECIAL_RELEASE_MANAGERS
 authors = {}
 GITHUB_BLACKLIST_AUTHORS = []
 CMSSW_L1 = ["dpiparo", "qliphy", "perrotta"]
+CMS_SDT    = [ "iarspider", "smuzaffar" ]
 APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar"] + CMSSW_L1 + SPECIAL_RELEASE_MANAGERS))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-","mmusich","Sam-Harper","sroychow","silviodonato"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
@@ -43,7 +44,6 @@ CMSSW_L2 = {
   "gouskos":          ["xpog"],
   "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
-  "iarspider":        ["externals"],
   "jfernan2":         ["dqm"],
   "cecilecaillol":    ["l1"],
   "clacaputo":        ["reconstruction"],
@@ -56,7 +56,6 @@ CMSSW_L2 = {
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "missirol":         ["hlt"],
   "mkirsano":         ["generators"],   
-  "ddaina":           ["externals"],
   "perrotta":         ["operations"],
   "pmandrik":         ["dqm"],
   "pbo0":             ["dqm"],
@@ -70,7 +69,7 @@ CMSSW_L2 = {
   "SiewYan":          ["generators"], 
   "slava77":          ["reconstruction"],
   "smorovic":         ["daq"],
-  "smuzaffar":        ["core", "externals"],
+  "smuzaffar":        ["core"],
   "srimanob":         ["upgrade"],
   "ssekmen":          ["fastsim"],
   "wajidalikhan":     ["pdmv"],
@@ -129,6 +128,10 @@ CMSSW_L2 = {
   "vmariani":         ["tracking-pog"],
   "mmusich":          ["tracking-pog","trk-dpg"],
 }
+
+for user in CMS_SDT:
+  if user not in CMSSW_L2: CMSSW_L2[user] = ['externals']
+  elif not 'externals' in CMSSW_L2[user]: CMSSW_L2[user].append('externals')
 
 for user in CMSSW_L1:
   if user not in CMSSW_L2: CMSSW_L2[user] = ['orp']

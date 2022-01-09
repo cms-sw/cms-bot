@@ -18,6 +18,7 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
     echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --architecture $SCRAM_ARCH --work-dir w build dummy SCRAMV1 crab" > $WORKSPACE/run.sh
     echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $SCRAM_ARCH --work-dir w upload dummy SCRAMV1 crab" >> $WORKSPACE/run.sh
     chmod 0755 $WORKSPACE/run.sh
+    export DOCKER_IMG
     $WORKSPACE/cms-bot/docker_launcher.sh $WORKSPACE/run.sh
     PKGS=$(ls -d w/${SCRAM_ARCH}/cms/crab/*/etc w/${SCRAM_ARCH}/lcg/SCRAMV1/*/etc | sed "s|^w/${SCRAM_ARCH}/||;s|/etc$||;s|/|+|g")
   popd

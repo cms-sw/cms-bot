@@ -48,6 +48,11 @@ unused = []
 all_files = []
 for pfn in o.split("\n"):
   l = pfn.replace(eos_base,"")
+  if not l.startswith("/store/"):
+    if l.endswith(".root.unused"):
+      pfn = pfn.replace(".root.unused", ".root")
+      run_cmd("%s file rename %s.unused %s" % (eos_cmd, pfn, pfn))
+    continue
   all_files.append(l)
   if not l.endswith(".root"): continue
   total += 1

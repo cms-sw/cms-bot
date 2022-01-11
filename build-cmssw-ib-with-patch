@@ -68,7 +68,7 @@ for x in $PKGTOOLS_REPO/pkgtools@$PKGTOOLS_TAG $CMSDIST_REPO/cmsdist@$CMSDIST_TA
   T=`echo $x | cut -f2 -d@`
   P=`echo $REPO | cut -f2 -d/ | tr "[:lower:]" "[:upper:]"`
   if [ ! -d $P ]; then
-    git clone -b $T git://github.com/$REPO.git $P
+    git clone -b $T https://github.com/$REPO.git $P
     pushd $P
       git remote add originrw git@github.com:$REPO.git
     popd

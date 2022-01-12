@@ -991,6 +991,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           if "error" in all_states:
             if [c for c in all_states['error'] if ('/opt/' not in c)]:
               lab_stats[cdata[-1]][-1] = "error"
+          print("Final Status:",status.context,cdata[-1],lab_stats[cdata[-1]][-1],status.description)
           if (lab_stats[cdata[-1]][-1] != "pending") and (not status.description.startswith("Finished")):
             if result_url:
               url = result_url.replace("/SDT/jenkins-artifacts/", "/SDT/cgi-bin/get_pr_results/jenkins-artifacts/")+"/pr-result"

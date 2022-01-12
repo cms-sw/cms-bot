@@ -110,9 +110,9 @@ function prepare_upload_results (){
     if [ -z ${NO_POST} ] ; then
       send_jenkins_artifacts ${WORKSPACE}/upload pull-request-integration/${UPLOAD_UNIQ_ID}
       rm -rf ${WORKSPACE}/upload
-      if [ -d $LOCALRT/das_query ] ; then
-        send_jenkins_artifacts $LOCALRT/das_query das_query/${UPLOAD_UNIQ_ID}/PR || true
-        rm -rf $LOCALRT/das_query
+      if [ -d ${WORKSPACE}/${CMSSW_VERSION}/das_query ] ; then
+        send_jenkins_artifacts ${WORKSPACE}/${CMSSW_VERSION}/das_query das_query/${UPLOAD_UNIQ_ID}/PR || true
+        rm -rf ${WORKSPACE}/${CMSSW_VERSION}/das_query
       fi
     fi
     mkdir -p ${RESULTS_DIR}

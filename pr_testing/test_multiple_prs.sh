@@ -56,6 +56,8 @@ if [ $(echo ${ARCHITECTURE} | grep "_amd64_" | wc -l) -gt 0 ] ; then
 fi
 
 PRODUCTION_RELEASE=false
+CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
+if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=$(cd $CMS_BOT_DIR; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH') ; fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true
@@ -519,6 +521,7 @@ if ${BUILD_EXTERNAL} ; then
       SCRAM=scram bash -ex $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers || true
     fi
     if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
+    git cms-init $CMSSW_BRANCH
     git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
     if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
       pushd $WORKSPACE/$CMSSW_IB/src

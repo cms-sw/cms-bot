@@ -28,8 +28,15 @@ pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
     echo 'ERROR TIMEOUT' >> ${LOG}
   fi
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.txt
+  rm -f lfns.txt ; touch lfns.txt
+  for lfn in $(grep -hR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
+    echo "${lfn}" >> lfns.txt
+  done
+  for lfn in $(grep -hR 'Failed to open file at URL' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
+    echo "${lfn}" >> lfns.txt
+  done
   CNT=1
-  for lfn in $(grep -hR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch/' | sed 's|.*/cms-xrd-global.cern.ch//*|/|' | sort | uniq) ; do
+  for lfn in $(cat lfns.txt | sort | uniq) ; do
     echo "LFN=${lfn}" > $WORKSPACE/lfn-to-ibeos-${CNT}.prop
     let CNT=${CNT}+1
   done

@@ -581,6 +581,7 @@ CMSSW_CATEGORIES = {
     "DQMOffline/L1Trigger",
     "DQMOffline/Lumi",
     "DQMOffline/Muon",
+    "DQMOffline/MuonDPG",
     "DQMOffline/PFTau",
     "DQMOffline/RecoB",
     "DQMOffline/Trigger",

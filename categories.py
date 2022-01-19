@@ -30,7 +30,6 @@ CMSSW_L2 = {
   "AdrianoDee":       ["upgrade"],
   "ahmad3213":        ["dqm"],
   "alberto-sanchez":  ["generators"],
-  "agrohsje":         ["generators"],
   "alja":             ["visualization"],
   "bbilin":           ["pdmv"],
   "civanch":          ["simulation", "geometry", "fastsim"],

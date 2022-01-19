@@ -1066,6 +1066,7 @@ void muonVars(TString cName = "muons_", TString tName = "recoMuons_"){
     muonVar("mvaValue", cName,tName);
     muonVar("lowptMvaValue", cName,tName);
     muonVar("softMvaValue", cName,tName);
+    muonVar("mvaIDValue", cName,tName);
     muonVar("inverseBeta", cName,tName);
     muonVar("inverseBetaErr", cName,tName);
 

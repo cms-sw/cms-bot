@@ -860,6 +860,15 @@ if [ "${BUILD_FULL_CMSSW}-${BUILD_EXTERNAL}" = "true-false" ] ; then
   else
     git cms-addpkg '*'
   fi
+  rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
+  touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml
+  scram tool remove cmssw || true
+  scram setup
+  scram setup self
+  rm -rf $WORKSPACE/$CMSSW_IB/external
+  scram b clean
+  scram build -r echo_CXX
+  eval $(scram run -sh)
 fi
 
 # #############################################

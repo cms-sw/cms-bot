@@ -495,7 +495,7 @@ if ${BUILD_EXTERNAL} ; then
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
-      touch $CTOOLS/*.xml
+      set +x; touch $CTOOLS/*.xml ; set -x
       scram setup
       scram setup self
       rm -rf $WORKSPACE/$CMSSW_IB/external
@@ -505,7 +505,7 @@ if ${BUILD_EXTERNAL} ; then
       fi
     else
       rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
-      touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml
+      set +x; touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml; set -x
       scram tool remove cmssw || true
       scram setup
       scram setup self
@@ -860,6 +860,18 @@ if [ "${BUILD_FULL_CMSSW}-${BUILD_EXTERNAL}" = "true-false" ] ; then
   else
     git cms-addpkg '*'
   fi
+  set +x
+  rm -rf $WORKSPACE/$CMSSW_IB/poison
+  rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
+  touch $WORKSPACE/$CMSSW_IB/config/toolbox/${ARCHITECTURE}/tools/selected/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml
+  scram tool remove cmssw || true
+  scram setup
+  scram setup self
+  rm -rf $WORKSPACE/$CMSSW_IB/external
+  scram b clean
+  scram build -r echo_CXX
+  eval $(scram run -sh)
+  set -x 
 fi
 
 # #############################################

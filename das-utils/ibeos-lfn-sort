@@ -4,6 +4,7 @@ NON_IBEOS_FILES=""
 if [ -f ${LOCALRT}/ibeos_cache.txt ] ; then
   while read LFN ; do
     case $LFN in
+      */0C402854-EECC-E311-AE34-E0CB4E553656.root) ;;
       /store/* )
         if [ $(grep "^${LFN}$" ${LOCALRT}/ibeos_cache.txt | wc -l) -gt 0 ] ; then
           IBEOS_FILES="$IBEOS_FILES $LFN"

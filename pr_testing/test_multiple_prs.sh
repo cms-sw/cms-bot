@@ -195,6 +195,11 @@ if [[ $RELEASE_FORMAT != *-* ]]; then
           has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
         fi
       fi
+      if [ "$COMP_ARCH" != "$SCRAM_ARCH" ] ; then
+        if has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$SCRAM_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt ; then
+	  COMP_ARCH=$SCRAM_ARCH
+	fi
+      fi
       CMSSW_IB=$SCRAM_REL
       COMPARISON_ARCH=$COMP_ARCH
       COMPARISON_REL=$COMP_REL

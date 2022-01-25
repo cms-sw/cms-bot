@@ -22,3 +22,5 @@ the `%{defined-variable}` gets expanded to their value, as required by rpm. In p
 - `%tag`: the hash commit to be used for the external.
 - `%branch`: the branch on which the commit its located.
 - `github_user`: the user owning the repository to be used.
+
+test1

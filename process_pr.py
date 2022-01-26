@@ -56,9 +56,10 @@ RELVAL_OPTS="^[-][a-zA-Z0-9_.,\s/'-]+$"
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
 CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
                       cmsorgs='|'.join(EXTERNAL_REPOS))
-TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)\s*$",
+TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
                      workflow=WF_PATTERN,
                      cms_pr=CMS_PR_PATTERN,
+                     pkg=CMSSW_PACKAGE_PATTERN,
                      release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
 
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
@@ -288,7 +289,7 @@ def check_release_format(first_line, repo, params, *args):
   params['ARCHITECTURE_FILTER'] = ra
   return rq, None
 
-def check_test_cmd(first_line, repo):
+def check_test_cmd(first_line, repo, params):
   m = REGEX_TEST_REG.match(first_line)
   if m:
     wfs = ""
@@ -298,6 +299,9 @@ def check_test_cmd(first_line, repo):
     if m.group(6): wfs = ",".join(set(m.group(6).replace(" ","").split(",")))
     if m.group(11): prs = get_prs_list_from_string(m.group(11), repo)
     if m.group(20): cmssw_que = m.group(20)
+    if m.group(23):
+      if 'addpkg' in m.group(23): params['EXTRA_CMSSW_PACKAGES'] = m.group(25).strip()
+      else: params['BUILD_FULL_CMSSW'] = 'true'
     return (True, " ".join(prs), wfs, cmssw_que)
   return (False, "", "", "")
 
@@ -824,7 +828,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
       # Check if the someone asked to trigger the tests
       if valid_commenter:
-        ok, v2, v3, v4 = check_test_cmd(first_line, repository)
+        ok, v2, v3, v4 = check_test_cmd(first_line, repository, global_test_params)
         if ok:
           test_comment = comment
           abort_test = None

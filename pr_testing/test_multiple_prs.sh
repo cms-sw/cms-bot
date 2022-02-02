@@ -508,6 +508,7 @@ if ${BUILD_EXTERNAL} ; then
       if [ "${DEP_NAMES}" != "" ] ; then
         CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
       fi
+      if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
     else
       rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
       set +x; touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml; set -x
@@ -525,18 +526,18 @@ if ${BUILD_EXTERNAL} ; then
     if [ -e $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers ] ; then
       SCRAM=scram bash -ex $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers || true
     fi
-    if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
-    if [ "X$CMSSW_BRANCH" = "X$COMP_QUEUE" ] ; then 
-      git cms-init --upstream-only
-      git cms-checkout-topic --ssh $CMSSW_BRANCH
-      git cms-checkdeps -A -a
-    fi
-    git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
-    if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
-      pushd $WORKSPACE/$CMSSW_IB/src
+    git cms-init --upstream-only
+    pushd $WORKSPACE/$CMSSW_IB/src
+      if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
         git checkout $(git branch | grep  '^  *CMSSW_')
-      popd
-    fi
+        echo '/*/' >> .git/info/sparse-checkout
+        git read-tree -mu HEAD
+      else
+        git cms-checkout-topic --ssh $(git branch | grep  '^  *CMSSW_') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+        git cms-checkdeps -A -a 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+        git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
+      fi
+    popd
     rm -rf $WORKSPACE/$CMSSW_IB/external
     scram b clean
     scram b -r echo_CXX
@@ -862,8 +863,8 @@ fi
 ##########################################
 if [ "${BUILD_FULL_CMSSW}-${BUILD_EXTERNAL}" = "true-false" ] ; then
   if [ -d  $LOCALRT/src/.git ] ; then
-    echo '/*/' >> $LOCALRT/src/.git/info/sparse-checkout
     pushd $LOCALRT/src
+      echo '/*/' >> .git/info/sparse-checkout
       git read-tree -mu HEAD
     popd
   else

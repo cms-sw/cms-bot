@@ -527,9 +527,9 @@ if ${BUILD_EXTERNAL} ; then
     fi
     if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
     if [ "X$CMSSW_BRANCH" = "X$COMP_QUEUE" ] ; then 
-      git cms-init --upstream-only $CMSSW_BRANCH
-      git cms-sparse-checkout --exclude-cvs-keywords $CMSSW_IB $CMSSW_BRANCH
-      git read-tree -mu $CMSSW_BRANCH
+      git cms-init --upstream-only
+      git cms-checkout-topic --ssh $CMSSW_BRANCH
+      git cms-checkdeps -A -a
     fi
     git cms-addpkg --ssh "$CMSSW_DEP" 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log
     if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then

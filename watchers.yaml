@@ -1788,3 +1788,9 @@ sscruz:
 francescobrivio:
 - RecoVertex/BeamSpotProducer
 - DQM/Integration
+valsdav:
+- RecoEcal
+- RecoEgamma
+- SimCalorimetry/EcalTrigPrimAlgos
+- SimCalorimetry/EcalTrigPrimProducers
+- CalibCalorimetry/EcalTPGTools

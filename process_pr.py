@@ -28,8 +28,6 @@ except:
     return False
 
 
-try: from categories import COMMENT_CONVERSION
-except: COMMENT_CONVERSION={}
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
 CMSSW_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
@@ -449,8 +447,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
   REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP["enable_test(s|)"][0]
-  #FIXME: use cms_repo when bot is ready to make use of L@ historical data
-  L2_DATA = init_l2_data (False)
+  L2_DATA = init_l2_data (cms_repo)
   last_commit_date = None
   last_commit_obj = None
   push_test_issue = False
@@ -651,14 +648,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     ack_comment = comment
     commenter = comment.user.login.encode("ascii", "ignore")
     commenter_categories = get_commenter_categories(commenter, int(comment.created_at.strftime('%s')))
+    print("####",comment.created_at.strftime('%s'),commenter,commenter_categories,comment.body.encode("ascii", "ignore"))
     valid_commenter = (commenter in TRIGGER_PR_TESTS + releaseManagers + [repo_org]) or (len(commenter_categories)>0)
+    print("====>", commenter, valid_commenter, commenter_categories, comment.body.encode("ascii", "ignore"))
     if (not valid_commenter) and (requestor!=commenter): continue
     comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
-    if (commenter in COMMENT_CONVERSION) and (comment.created_at<=COMMENT_CONVERSION[commenter]['comments_before']):
-      orig_msg = comment_msg
-      for cmt in COMMENT_CONVERSION[commenter]['comments']:
-        comment_msg = comment_msg.replace(cmt[0],cmt[1])
-      if (orig_msg != comment_msg): print("==>Updated Comment:",commenter,comment.created_at,"\n",comment_msg)
     # The first line is an invariant.
     comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ]
     first_line = comment_lines[0:1]
@@ -851,6 +845,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           signatures["tests"] = "pending"
 
     # Check L2 signoff for users in this PR signing categories
+    print("SIGN1:", signatures)
     if [ x for x in commenter_categories if x in signing_categories]:
       ctype = ""
       selected_cats = []
@@ -881,6 +876,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "orp" in commenter_categories:
           signatures["orp"] = "pending"
           mustClose = False
+      print("SIGN2:", signatures)
       continue
 
   # end of parsing comments section

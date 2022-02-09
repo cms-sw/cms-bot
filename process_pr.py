@@ -648,9 +648,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     ack_comment = comment
     commenter = comment.user.login.encode("ascii", "ignore")
     commenter_categories = get_commenter_categories(commenter, int(comment.created_at.strftime('%s')))
-    print("####",comment.created_at.strftime('%s'),commenter,commenter_categories,comment.body.encode("ascii", "ignore"))
     valid_commenter = (commenter in TRIGGER_PR_TESTS + releaseManagers + [repo_org]) or (len(commenter_categories)>0)
-    print("====>", commenter, valid_commenter, commenter_categories, comment.body.encode("ascii", "ignore"))
     if (not valid_commenter) and (requestor!=commenter): continue
     comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
     # The first line is an invariant.
@@ -845,7 +843,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           signatures["tests"] = "pending"
 
     # Check L2 signoff for users in this PR signing categories
-    print("SIGN1:", signatures)
     if [ x for x in commenter_categories if x in signing_categories]:
       ctype = ""
       selected_cats = []
@@ -876,7 +873,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "orp" in commenter_categories:
           signatures["orp"] = "pending"
           mustClose = False
-      print("SIGN2:", signatures)
       continue
 
   # end of parsing comments section

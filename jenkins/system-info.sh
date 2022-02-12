@@ -155,6 +155,7 @@ if [ $(hostname | grep '^lxplus' | wc -l) -gt 0 ] ; then
   case ${HOST_CMS_ARCH} in
     slc6_*) lxplus_type="lxplus6";;
     slc7_*) lxplus_type="lxplus7";;
+    cc8_*|cs8_*) lxplus_type="lxplus8";;
   esac
   if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
     SLAVE_LABELS="$hname lxplus-scripts ${lxplus_type}-scripts ${SLAVE_LABELS}"

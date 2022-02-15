@@ -1350,6 +1350,8 @@ CMSSW_CATEGORIES = {
     "RecoTracker/IterativeTracking",
     "RecoTracker/MeasurementDet",
     "RecoTracker/MkFit",
+    "RecoTracker/MkFitCMS",
+    "RecoTracker/MkFitCore",
     "RecoTracker/NuclearSeedGenerator",
     "RecoTracker/Record",
     "RecoTracker/SeedingLayerSetsHits",

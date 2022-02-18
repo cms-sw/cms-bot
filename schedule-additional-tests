@@ -19,7 +19,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     prof=$(echo $x | sed 's|igprof-||')
     sed -i -e "s|ADDITIONAL_TEST_NAME=$x|ADDITIONAL_TEST_NAME=igprof|" ${pfile}
     echo "PROFILE=$prof" >> ${pfile}
-    wf="136.731"
+    wf="136.889"
     nfile=$WORKSPACE/auto-$x-${wf}-properties
     cp ${pfile} ${nfile}
     echo "WORKFLOWS=-i all -l $wf" >> ${nfile}

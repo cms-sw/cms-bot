@@ -26,6 +26,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
     echo "EVENTS=100" >> ${nfile}
     for wf in $PROFILING_WORKFLOWS; do
       nfile=$WORKSPACE/auto-$x-${wf}-properties
+      [ ! -e ${nfile} ] || continue
       cp ${pfile} ${nfile}
       echo "WORKFLOWS=-l $wf" >> ${nfile}
       echo "EVENTS=10" >> ${nfile}

@@ -215,6 +215,15 @@ RunJetHT2018DhcalCPUwf136p888521 136.888521_RunJetHT2018D+*HCALOnlyCPU*/step3.ro
 RunJetHT2018DhcalGPUwf136p888522 136.888522_RunJetHT2018D+*HCALOnlyGPU*/step3.root reRECO
 RunParkingBPH2018Bwf136p898 136.898_RunParkingBPH2018B+*/step3.root reRECO
 #
+# Run3 data
+#  2021 commissioning
+#
+RunMinimumBias2021PROMPTwf138p4 138.4_PromptCollisions+RunMinimumBias2021*/step2.root reRECO
+RunMinimumBias2021EXPRESSwf138p5 138.5_ExpressCollisions+RunMinimumBias2021*/step2.root RECO
+RunMinimumBias2021wf139p001 139.001_RunMinimumBias2021*/step3.root reRECO
+#
+#  MC WORKFLOWS FOLLOW BELOW
+#
 # 2017 workflows follow
 #
 Cosmics2017wf7p2 7.2_Cosmics_UP17*/step3.root RECO

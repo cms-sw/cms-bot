@@ -72,6 +72,24 @@ workflow_configs = {
         "nThreads": 1,
         "matrix": "upgrade"
     } ,
+    #Phase2 workflow used in early-2022
+    "35234.21": {
+        "num_events": 100,
+        "steps": {
+            "step3": {
+                "TimeMemoryInfo": True,
+                "FastTimer": True,
+                "igprof": True,
+            },
+            "step4": {
+                "TimeMemoryInfo": True,
+                "FastTimer": True,
+                "igprof": True,
+            },
+         },
+        "nThreads": 1,
+        "matrix": "upgrade"
+    } ,
     #8-thread T0-like promptreco workflow
     "136.889": {
         "num_events": 5000,
@@ -93,7 +111,12 @@ def fixIgProfExe():
     #affected by https://github.com/cms-sw/cmssw/issues/33297
     if ver.startswith("CMSSW_11_3_0_pre5") or ver.startswith("CMSSW_11_3_0_pre6"):
         runner_path = os.path.dirname(os.path.realpath(__file__))
-        return os.path.join(runner_path, "igprof-fixed.sh")
+        return os.path.join(runner_path, "igprof-fixed-12_0_0_pre1.sh")
+    
+    #affected by https://github.com/cms-sw/cmssw/issues/36727
+    if ver.startswith("CMSSW_12_2_0") or ver.startswith("CMSSW_12_3_0_pre3") or ver.startswith("CMSSW_12_3_0_pre4"):
+        runner_path = os.path.dirname(os.path.realpath(__file__))
+        return os.path.join(runner_path, "igprof-fixed-12_3_0_pre5.sh")
 
     return "igprof"
 
@@ -306,7 +329,7 @@ def main(wf, num_events, out_dir):
 def parse_args():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--workflow", type=str, default="34834.21", help="The workflow to use for profiling")
+    parser.add_argument("--workflow", type=str, default="35234.21", help="The workflow to use for profiling")
     parser.add_argument("--num-events", type=int, default=-1, help="Number of events to use, -1 to use the default")
     parser.add_argument("--out-dir", type=str, help="The output directory where to copy the profiling results", required=True)
     args = parser.parse_args()

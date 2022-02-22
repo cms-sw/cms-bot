@@ -81,14 +81,16 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     AMP="&"
     echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index.html
   done
-  echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index.html
   for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt') ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
   done
   popd
+  echo "<br><br>" >> $WORKSPACE/upload/profiling/index.html
 done
+echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index.html
+
 if [ -z ${NO_POST} ] ; then
   if [ -d $LOCALREL/profiling ]; then
     send_jenkins_artifacts $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH} profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/

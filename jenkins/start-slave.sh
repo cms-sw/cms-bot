@@ -17,6 +17,7 @@ if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
 fi
 DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
 MULTI_MASTER_SLAVE=$(grep '>MULTI_MASTER_SLAVE<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+EX_LABELS=$(grep '>FORCE_LABELS<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
 
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${HOME}/slave.jar | sed 's| .*||')
 USER_HOME_MD5=""
@@ -67,7 +68,7 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
     esac
     ;;
   esac
-  slave_labels=$(echo ${slave_labels} | sed 's|  *| |g;s|^ *||;s| *$||')
+  slave_labels=$(echo ${slave_labels} ${EX_LABELS} | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's|^ *||;s| *$||')
   if [ "X${slave_labels}" != "X" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
 fi
 case ${SLAVE_TYPE} in

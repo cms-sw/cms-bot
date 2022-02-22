@@ -177,6 +177,7 @@ case $(uname) in
     export DYLD_INSERT_LIBRARIES ;;
   * )
     LD_PRELOAD=${LD_PRELOAD:+${LD_PRELOAD}:}/cvmfs/cms.cern.ch/slc7_amd64_gcc10/cms/cmssw/CMSSW_12_3_0_pre5/external/slc7_amd64_gcc10/lib/libigprof.so
+    export LD_LIBRARY_PATH=/cvmfs/cms.cern.ch/slc7_amd64_gcc10/external/libunwind/1.6.2-8c56527dc769c5819da7bf38e126d531/lib/:$LD_LIBRARY_PATH
     export LD_PRELOAD ;;
 esac
 export IGPROF

@@ -31,7 +31,7 @@ elif [ ! -f ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml ] ; then
   echo "CONDOR_JOB_ID=${CONDOR_JOB_ID}" > shutdown.txt
 elif [ "${STATUS}" = "offline" ] ; then
   ${JENKINS_CLI_CMD} offline-node ${NODE_NAME} || true
-  if [ $(grep '^ *<label>' ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml | grep ' nvidia ' | wc -l) -eq 0 ] ; then
+  if [ $(grep '^ *<label>' ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml | grep 'auto-delete\|no-auto-recreate' | wc -l) -eq 0 ] ; then
     echo "REPLACE_NODE=${CONDOR_JOB_ID}" > create-node.txt
   fi
 elif [ "${STATUS}" = "shutdown" ] ; then

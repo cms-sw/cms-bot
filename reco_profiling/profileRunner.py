@@ -105,21 +105,6 @@ workflow_configs = {
     } 
 }
 
-def fixIgProfExe():
-    ver = os.environ["CMSSW_VERSION"]
-
-    #affected by https://github.com/cms-sw/cmssw/issues/33297
-    if ver.startswith("CMSSW_11_3_0_pre5") or ver.startswith("CMSSW_11_3_0_pre6"):
-        runner_path = os.path.dirname(os.path.realpath(__file__))
-        return os.path.join(runner_path, "igprof-fixed-12_0_0_pre1.sh")
-    
-    #affected by https://github.com/cms-sw/cmssw/issues/36727
-    if ver.startswith("CMSSW_12_2_0") or ver.startswith("CMSSW_12_3_0_pre3") or ver.startswith("CMSSW_12_3_0_pre4"):
-        runner_path = os.path.dirname(os.path.realpath(__file__))
-        return os.path.join(runner_path, "igprof-fixed-12_3_0_pre5.sh")
-
-    return "igprof"
-
 #Prepare cmdLog and execute the workflow steps to get e.g. DAS entries, but call cmsRun with --no_exec
 def prepareMatrixWF(workflow_number, num_events, matrix="upgrade", nthreads=1):
     cmd = [
@@ -158,7 +143,7 @@ def getWFDir(workflow_number):
 
 def wrapInRetry(cmd):
     s = """n=0
-until [ "$n" -ge 5 ]
+until [ "$n" -ge 2 ]
 do
    echo "attempt $n"
    {} && break
@@ -186,7 +171,7 @@ def prepIgprof(cmd, istep):
     return cmd_ig 
 
 def configureProfilingSteps(cmsdriver_lines, num_events, steps_config):
-    igprof_exe = fixIgProfExe()
+    igprof_exe = "igprof"
 
     steps = {}
     for line in cmsdriver_lines:
@@ -272,8 +257,11 @@ def configureProfilingSteps(cmsdriver_lines, num_events, steps_config):
 
 def writeProfilingScript(wfdir, runscript, cmdlist):
     runscript_path = "{}/{}".format(wfdir, runscript)
+
     with open(runscript_path, "w") as fi:
         fi.write("#!/bin/sh\n")
+
+        fi.write("scram setup /cvmfs/cms.cern.ch/slc7_amd64_gcc10/cms/cmssw-tool-conf/52.0-904e6a6e16dcc9bdba60a5fd496e4237/tools/selected/libunwind.xml\n")
 
         #this is required for igprof
         fi.write("ulimit -a\n")

@@ -209,7 +209,8 @@ if __name__ == "__main__":
   cleanup_timestamps (opts.store)
   timestramps_file = join (opts.store, "timestamps.json")
   timestramps = read_timestramps (timestramps_file)
-  vold_caches = 0
+  vold_caches = {}
+  run_queries = {}
   vold_threshold = 90
   for query in query_sha:
     nquery += 1
@@ -262,8 +263,10 @@ if __name__ == "__main__":
       else: print("  Retrying as cache with empty results found.")
     else: print("  No cache file found %s" % sha)
     if vold:
-      vold_caches+=1
+      vold_caches[query] = 1
       continue
+    else:
+      run_queries[query] = 1
     DasSearch += 1
     while True:
       tcount = len(threads)
@@ -295,7 +298,10 @@ if __name__ == "__main__":
   print("Found in object store: %s" % inCache)
   print("DAS Search: %s" % DasSearch)
   print("Total Queries Failed:",failed_queries)
-  print("Caches older than %s days: %s" % (vold_threshold, vold_caches))
+  print("Caches older than %s days: %s" % (vold_threshold, len(vold_caches)))
+  print(" ","\n  ".join(list(vold_caches.keys())))
+  print("Queries which were run:",len(run_queries))
+  print(" ","\n  ".join(list(run_queries.keys())))
   print("Process state:",error)
   if not error:update_timestamp(timestramps, timestramps_file, opts.store)
   else:  cleanup_timestamps (opts.store)

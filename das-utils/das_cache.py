@@ -72,7 +72,8 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
       except Exception as e:
         with open(efile, "w") as ofile:
           ofile.write("Wrong DAS result format for %s,%s\n" % (fn,fx))
-          ofile.write(json.dumps(item)+"\n"+str(e)+"\n")
+          ofile.write(json.dumps(item))
+          ofile.write("\n%s\n------------------------\n" % e)
           return False
   if not all_ok:
     print("  DAS WRONG Results:",fields,sha,out)
@@ -88,7 +89,8 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
       except Exception as e:
         with open(efile, "w") as ofile:
           ofile.write("Wrong DAS result format for lumi\n")
-          ofile.write(json.dumps(item)+"\n"+str(e)+"\n")
+          ofile.write(json.dumps(item))
+          ofile.write("\n%s\n--------------------\n" % e)
         print("  Failed to load das output:",sha,e)
         return False
     if fields[0]=="file" and res in ignore_lfn:

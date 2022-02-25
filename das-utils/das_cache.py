@@ -76,6 +76,13 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
           ofile.write("\n%s\n" % e)
           return False
   if not all_ok:
+    #if 'site=T2_CH_CERN' in query:
+    #  run_cmd("rm -f %s" % efile)
+    #  query = query.replace("site=T2_CH_CERN","").strip()
+    #  lmt = 0
+    #  if "file" in fields: lmt = 100
+    #  print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
+    #  return run_das_client(outfile, query, override, dasclient, options, threshold, retry, limit=lmt)
     print("  DAS WRONG Results:",fields,sha,out)
     return False
   run_cmd("rm -f %s" % efile)
@@ -299,7 +306,7 @@ if __name__ == "__main__":
         break
       else:
         threads = [t for t in threads if t.is_alive()]
-        sleep(0.1)
+        sleep(0.5)
   for t in threads: t.join()
   failed_queries = 0
   e , o = run_cmd("find %s -name '*.error'" % opts.store)

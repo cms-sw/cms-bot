@@ -43,6 +43,11 @@ if [ "X${ORIG_DAS_CLIENT}" = "X" ] ; then
   exit 1
 fi
 
+if [ "${CMS_BOT_USE_DASGOCLIENT}" = "true" ] ; then
+  ${ORIG_DAS_CLIENT} "$@"
+  exit $?
+fi
+
 if [ "${QUERY}" = "" -o "${HELP}" != "" ] ; then
   ${ORIG_DAS_CLIENT} "$@"
   exit $?

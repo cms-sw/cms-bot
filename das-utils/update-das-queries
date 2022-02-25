@@ -9,7 +9,7 @@ USE_DASGO=$3
 PUSH_RESULTS=$4
 DAS_CLINET=$6
 if [ "${DAS_CLINET}" != "" ] ; then
-  USE_DASGO="-c '${DAS_CLINET}'"
+  USE_DASGO="-c ${DAS_CLINET}"
 elif [ "$USE_DASGO" = "true" ] ; then
   USE_DASGO="-c dasgoclient"
 else

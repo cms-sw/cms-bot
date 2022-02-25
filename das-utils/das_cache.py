@@ -71,7 +71,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
         if (not fx in item) or (not item[fx]) or (not fn in item[fx][0]) or (item[fx][0][fn] is None): all_ok = False
       except Exception as e:
         with open(efile, "w") as ofile:
-          ofile.write("Wrong DAS result format1\n")
+          ofile.write("Wrong DAS result format for %s,%s\n" % (fn,fx))
           ofile.write(json.dumps(item)+"\n"+str(e)+"\n")
           return False
   if not all_ok:
@@ -87,7 +87,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
         res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
       except Exception as e:
         with open(efile, "w") as ofile:
-          ofile.write("Wrong DAS result format2\n")
+          ofile.write("Wrong DAS result format for lumi\n")
           ofile.write(json.dumps(item)+"\n"+str(e)+"\n")
         print("  Failed to load das output:",sha,e)
         return False

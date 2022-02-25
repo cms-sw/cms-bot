@@ -67,7 +67,15 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
   for fx in fields:
     fn = field_map[fx]
     for item in jdata['data']:
-      if (not fx in item) or (not item[fx]) or (not fn in item[fx][0]) or (item[fx][0][fn] is None): all_ok = False
+      try:
+        if (not fx in item) or (not item[fx]) or (not fn in item[fx][0]) or (item[fx][0][fn] is None): all_ok = False
+      except Exception as e:
+        with open(efile, "w") as ofile:
+          ofile.write("Wrong DAS result format\n")
+          ofile.write(item)
+          ofile.write("\n")
+          ofile.write(e)
+          return False
   if not all_ok:
     print("  DAS WRONG Results:",fields,sha,out)
     return False
@@ -81,6 +89,9 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
         res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
       except Exception as e:
         with open(efile, "w") as ofile:
+          ofile.write("Wrong DAS result format\n")
+          ofile.write(item)
+          ofile.write("\n")
           ofile.write(e)
         print("  Failed to load das output:",sha,e)
         return False

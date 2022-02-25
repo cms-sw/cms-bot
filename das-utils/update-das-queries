@@ -21,7 +21,11 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 
 cd $WORKSPACE
 if [ ! -d das_results ] ; then
-  git clone git@github.com:cms-sw/cms-sw.github.io.git das_results
+  if [ "$PUSH_RESULTS" = "true" ] ; then
+    git clone git@github.com:cms-sw/cms-sw.github.io.git das_results
+  else
+    git clone --depth 1 git@github.com:cms-sw/cms-sw.github.io.git das_results
+  fi
 fi
 
 rm -f $WORKSPACE/error

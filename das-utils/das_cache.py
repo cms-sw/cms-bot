@@ -71,7 +71,6 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   if not all_ok:
     print("  DAS WRONG Results:",fields,sha,out)
     return False
-  run_cmd("rm -f %s" % efile)
   results = []
   for item in jdata["data"]:
     res = str(item[field][0][field_map[field]])
@@ -86,6 +85,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
       print("  Ignoring %s" % res)
       continue
     if not res in results: results.append(res)
+  run_cmd("rm -f %s" % efile)
   print("  Results:",sha,len(results))
   if (len(results)==0) and ('site=T2_CH_CERN' in query):
     query = query.replace("site=T2_CH_CERN","").strip()

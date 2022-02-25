@@ -7,6 +7,7 @@ WORKSPACE="${WORKSPACE-$PWD}"
 JOBS=$(nproc)
 USE_DASGO=$3
 PUSH_RESULTS=$4
+DAS_CLINET=$5
 if [ "${DAS_CLINET}" != "" ] ; then
   USE_DASGO="-c ${DAS_CLINET}"
 elif [ "$USE_DASGO" = "true" ] ; then

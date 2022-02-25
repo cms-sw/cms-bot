@@ -42,7 +42,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
   if field in ["file", "site", "dataset"]:
     field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
   retry_str=""
-  if dasclient=="das_client":retry_str="--retry=%s" % retry
+  if "das_client" in dasclient:retry_str="--retry=%s" % retry
   das_cmd = "%s --format=json --limit=%s --query '%s%s' %s --threshold=%s" % (dasclient, limit, query, field_filter, retry_str, threshold)
   print("  Running: ",sha,das_cmd)
   print("  Fields:",sha,fields) 

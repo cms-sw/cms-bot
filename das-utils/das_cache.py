@@ -77,7 +77,11 @@ def run_das_client(outfile, query, override, dasclient="das_client", threshold=9
     res = str(item[field][0][field_map[field]])
     xf = 'lumi'
     if (len(fields)>1) and (fields[0]==xf):
-      res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
+      try:
+        res = res + " [" +",".join([str(i) for i in item[xf][0][field_map[xf]]])+ "]"
+      except Exception as e:
+        print("  Failed to load das output:",sha,e)
+        return False
     if fields[0]=="file" and res in ignore_lfn:
       print("  Ignoring %s" % res)
       continue

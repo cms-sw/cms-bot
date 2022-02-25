@@ -23,7 +23,10 @@ fi
 
 rm -f $WORKSPACE/error
 if [ "${DEBUG}" = "true" ] ; then USE_DASGO="${USE_DASGO} --debug" ; fi
+OLD_SIZE=$(du -sm $WORKSPACE/das_results/das_queries) || true
 $CMS_BOT_DIR/das_cache.py ${EXTRA_OPTS} ${USE_DASGO} --jobs $JOBS ${THRESHOLD_TIME} --store $WORKSPACE/das_results/das_queries --query "$5" || touch $WORKSPACE/error
+let DIFF_SIZE=$(du -sm $WORKSPACE/das_results/das_queries)-${OLD_SIZE} || true
+echo "Change in DAS cache size (MB): ${DIFF_SIZE}"
 if [ "$PUSH_RESULTS" = "true" ] ; then
   pushd $WORKSPACE/das_results
   git add das_queries

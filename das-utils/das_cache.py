@@ -53,7 +53,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
   with open(efile, "w") as ofile:
     ofile.write(out)
   if err:
-    print("  DAS ERROR:",sha)
+    print("  DAS ERROR:",sha,out)
     return False
   try:
     jdata = json.loads(out)
@@ -315,9 +315,9 @@ if __name__ == "__main__":
   print("DAS Search: %s" % DasSearch)
   print("Total Queries Failed:",failed_queries)
   print("Caches older than %s days: %s" % (vold_threshold, len(vold_caches)))
-  print(" ","\n  ".join(list(vold_caches.keys())))
-  print("Queries which were run:",len(run_queries))
-  print(" ","\n  ".join(list(run_queries.keys())))
+  #print(" ","\n  ".join(list(vold_caches.keys())))
+  #print("Queries which were run:",len(run_queries))
+  #print(" ","\n  ".join(list(run_queries.keys())))
   print("Process state:",error)
   if not error:update_timestamp(timestramps, timestramps_file, opts.store)
   else:  cleanup_timestamps (opts.store)

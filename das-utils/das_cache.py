@@ -149,10 +149,10 @@ if __name__ == "__main__":
   parser.add_option("-j", "--jobs",       dest="jobs",      help="Parallel das_client queries to run. Default is equal to cpu count but max value is 32", type=int, default=-1)
   parser.add_option("-s", "--store",      dest="store",     help="Name of object store directory to store the das queries results", default=None)
   parser.add_option("-c", "--client",     dest="client",    help="Das client to use either das_client or dasgoclient", default="das_client")
-  parser.add_option("-x", "--extra-opts", dest="options",   help="Das client options to pass.", default="")
   parser.add_option("-q", "--query",      dest="query",     help="Only process this query", default=None)
   parser.add_option("-d", "--debug",   dest="debug",  help="Run debug mode", action="store_true", default=False)
 
+  xopts = environ['DAS_CLIENT_OPTIONS'] if 'DAS_CLIENT_OPTIONS' in environ else ""
   opts, args = parser.parse_args()
   if (not opts.store): parser.error("Missing store directory path to store das queries objects.")
 
@@ -280,7 +280,7 @@ if __name__ == "__main__":
       if(tcount < jobs):
         print("  Searching DAS (threads: %s)" % tcount)
         try:
-          t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client, opts.options))
+          t = threading.Thread(target=run_das_client, args=(outfile, query, opts.override, opts.client, xopts))
           t.start()
           threads.append(t)
           sleep(0.1)

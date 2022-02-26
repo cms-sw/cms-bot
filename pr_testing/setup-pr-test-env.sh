@@ -26,7 +26,12 @@ if [ ! -f $WORKSPACE/prs_commits ] ; then
   get_jenkins_artifacts pull-request-integration/${UPLOAD_UNIQ_ID}/prs_commits.txt $WORKSPACE/prs_commits
 fi
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
-if ! which scram >/dev/null 2>&1 ; then source /cvmfs/cms.cern.ch/cmsset_default.sh ; fi
+if [ -e $WORKSPACE/$BUILD_DIR/cmsset_default.sh ] ; then
+  source $WORKSPACE/$BUILD_DIR/cmsset_default.sh
+elif ! which scram >/dev/null 2>&1 ; then
+  source /cvmfs/cms.cern.ch/cmsset_default.sh
+fi
+which dasgoclient
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
 mkdir -p ${RESULTS_DIR}
 export SCRAM_ARCH=${ARCHITECTURE}

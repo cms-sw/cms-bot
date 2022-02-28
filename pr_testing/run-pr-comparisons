@@ -83,11 +83,11 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
     popd
     send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
     mv $WORKSPACE/extra_wf/* $WORKSPACE/data/$COMPARISON_RELEASE/
-    echo "RELEASE_FORMAT=$COMPARISON_RELEASE" > ${$WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
-    echo "ARCHITECTURE=${COMPARISON_ARCH}" >> ${$WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
-    echo "TEST_FLAVOR=${TEST_FLAVOR}" >> ${$WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
-    send_jenkins_artifacts ${$WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID} cvmfs-deploy-baseline/cvmfs-deploy-baseline.${BUILD_ID}
-    rm -f ${$WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
+    echo "RELEASE_FORMAT=$COMPARISON_RELEASE" > ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
+    echo "ARCHITECTURE=${COMPARISON_ARCH}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
+    echo "TEST_FLAVOR=${TEST_FLAVOR}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
+    send_jenkins_artifacts ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID} cvmfs-deploy-baseline/cvmfs-deploy-baseline.${BUILD_ID}
+    rm -f ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
   fi
 fi
 wait

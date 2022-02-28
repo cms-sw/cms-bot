@@ -80,7 +80,7 @@ function get_jenkins_artifacts ()
   esac
   has_jenkins_artifacts $1 || return 1
   for i in 1 2 3 4 5 6 7 8 9 ;  do
-    rsync -az -e "ssh $SSH_OPTS" ${ARTIFACTS_MACHINE}:${AFDIR}/${SRC} ${DES} && echo "JA_STATUS=OK" && return
+    rsync $4 -az -e "ssh $SSH_OPTS" ${ARTIFACTS_MACHINE}:${AFDIR}/${SRC} ${DES} && echo "JA_STATUS=OK" && return
     sleep 60
   done
   echo "JA_STATUS=ERROR"

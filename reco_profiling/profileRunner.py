@@ -143,7 +143,7 @@ def getWFDir(workflow_number):
 
 def wrapInRetry(cmd):
     s = """n=0
-until [ "$n" -ge 2 ]
+until [ "$n" -ge 5 ]
 do
    echo "attempt $n"
    {} && break

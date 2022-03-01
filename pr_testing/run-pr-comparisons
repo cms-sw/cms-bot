@@ -73,7 +73,7 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
       eval runTheMatrix.py -j ${NUM_PROC} -l ${PR_EXTRA_WFS} ${IB_MATRIX_OPTS} >$WORKSPACE/extra_wf.log 2>&1 || true
       )
       rm -rf $COMPARISON_RELEASE
-      for wf in ${PR_EXTRA_WFS} ; do
+      for wf in $(echo ${PR_EXTRA_WFS} | tr ',' ' ') ; do
         if [ $(grep "^${wf}_" runall-report-step123-.log | wc -l) -gt 0 ] ; then
           grep "^${wf}_" runall-report-step123-.log > runall-report-step123-.${wf}
         fi

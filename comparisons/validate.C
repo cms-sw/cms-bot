@@ -650,6 +650,7 @@ void photonVars(TString cName = "photons_", TString tName = "recoPhotons_"){
   photon("etOutsideMustache", cName,tName);
   photon("pfMVA", cName,tName);
   photon("pfDNN", cName,tName);
+  photon("haloTaggerMVAVal", cName,tName);
   photon("showerShapeVariables().effSigmaRR",cName,tName, true);
   photon("showerShapeVariables().sigmaIetaIphi",cName,tName, true);
   photon("showerShapeVariables().sigmaIphiIphi",cName,tName, true);

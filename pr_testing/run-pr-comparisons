@@ -87,7 +87,10 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
       done
     popd
     send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
-    mv $WORKSPACE/extra_wf/* $WORKSPACE/data/$COMPARISON_RELEASE/
+    for x in $(ls $WORKSPACE/extra_wf) ; do
+      [ ! -e $WORKSPACE/data/$COMPARISON_RELEASE/$x ] || continue
+      mv $WORKSPACE/extra_wf/$x $WORKSPACE/data/$COMPARISON_RELEASE/$x
+    done
     echo "RELEASE_FORMAT=$COMPARISON_RELEASE" > ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
     echo "ARCHITECTURE=${COMPARISON_ARCH}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
     echo "TEST_FLAVOR=${TEST_FLAVOR}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}

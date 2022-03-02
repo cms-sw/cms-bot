@@ -70,7 +70,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   mark_commit_status_all_prs 'unittest' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
   mkdir -p $WORKSPACE/unitTests
-  UT_TIMEOUT=$(echo 7200+${CMSSW_PKG_COUNT}*20 | bc)
+  let UT_TIMEOUT=7200+${CMSSW_PKG_COUNT}*20
   UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
   if ${RUN_FULL_UNITTEST} ; then
     set +x

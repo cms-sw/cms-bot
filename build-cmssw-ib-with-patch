@@ -221,7 +221,8 @@ case $RELEASE_NAME in
 esac
 export SCRAM_HOOKS_DEBUG=1
 rm -f ${WRKDIR}/tmp/specCache/$PACKAGE_NAME.* ${WRKDIR}/tmp/specCache/cmssw-ib.*
-PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j `echo "$BUILD_NPROC + 1" | bc` build ${PACKAGE_NAME} cmssw-ib
+let CMSSW_NPROC=$BUILD_NPROC+1
+PYTHONPATH= $CMSBUILD_CMD $DEBUG_OPT -k -j ${CMSSW_NPROC} build ${PACKAGE_NAME} cmssw-ib
 echo DATE=`date`
 if [ "${DRY_RUN}" != "" ] ; then exit 0 ; fi
 PYTHONPATH= $CMSBUILD_CMD --sync-back upload cmssw-ib

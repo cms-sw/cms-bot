@@ -10,6 +10,7 @@ function dockerrun()
     if [ -z "${WORKDIR}" ]    ; then WORKDIR=$(/bin/pwd -P) ; fi
     arch="$(echo $SCRAM_ARCH | cut -d_ -f2)"
     os=$(echo $SCRAM_ARCH | cut -d_ -f1 | sed 's|slc7|cc7|')
+    if [ "${os}" = "rhel8" ] ; then os="ubi8" ; fi
     IMG="cmssw/${os}:${arch}"
     if [ "${arch}" = "amd64" ] ; then
       IMG="cmssw/${os}:x86_64"

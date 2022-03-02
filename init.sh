@@ -4,7 +4,7 @@ function Jenkins_GetCPU ()
 {
   ACTUAL_CPU=$(nproc)
   if [ "X$1" != "X" ] ; then
-    ACTUAL_CPU=$(echo "$ACTUAL_CPU*$1" | bc)
+    let ACTUAL_CPU=$ACTUAL_CPU*$1 || true
   fi
   echo $ACTUAL_CPU
 }

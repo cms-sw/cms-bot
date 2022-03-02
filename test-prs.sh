@@ -97,8 +97,10 @@ COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SER
 if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
   COMPILATION_CMD="${COMPILATION_CMD} --force-tag --tag hash --delete-build-directory --link-parent-repository --weekly"
 else
-  CMS_WEEK_NUM=$(echo 00000$(echo "(($(date -d "$(date +%m/%d/%Y) 00:00:00z" +%s)/86400)+4)/7" | bc) | sed 's|^.*\(.....\)$|\1|')
-  CMS_REPOSITORY=cms.week$(echo ${CMS_WEEK_NUM}%2 | bc)
+  let CMS_WEEK_NUM="(($(date -d "$(date +%m/%d/%Y) 00:00:00z" +%s)/86400)+4)/7"
+  CMS_WEEK_NUM=$(echo 00000${CMS_WEEK_NUM} | sed 's|^.*\(.....\)$|\1|')
+  let CMS_REPOSITORY=${CMS_WEEK_NUM}%2 || true
+  CMS_REPOSITORY="cms.week${CMS_REPOSITORY}"
   COMPILATION_CMD="${COMPILATION_CMD} --repo ${CMS_REPOSITORY}"
 fi
 COMPILATION_CMD="${COMPILATION_CMD} build cmssw-tool-conf"

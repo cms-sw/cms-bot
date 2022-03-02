@@ -36,7 +36,6 @@ done
 # Remove empty <arch>/www/<day>/<rc>-<day>-<hour> directories
 find $IB_BASEDIR -mindepth 4 -maxdepth 5 -path '*/www/*/*' -o -path '*/www/*/*/CMSSW_*' -type d | sed 's|/CMSSW_.*||' | sort | uniq -c | grep '1 ' | awk '{print $2}' | grep /www/ | xargs rm -rf || true
 for WEEK in 0 1; do
-  BIWEEK=`echo "((52 + $(date +%W) - $WEEK)/2)%26" | bc`
   # notice it must finish with something which matches %Y-%m-%d-%H00
   # We only sync the last 7 days.
   XREPO_PATH=$REPO_PATH

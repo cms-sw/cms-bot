@@ -95,7 +95,7 @@ for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do u
 for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
-      N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
+      let N="$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" || true
       ln -s $BASEDIR/$w $BASEDIR/week$N
     else
       echo "Deleting obsolete week $w"
@@ -108,7 +108,7 @@ done
 TMP_PREFIX=/tmp/cvsmfs-$$
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
-  WEEK=$(echo "$(echo $REPOSITORY | cut -d- -f2) % ${NUM_WEEKS}" | bc)
+  let WEEK="$(echo $REPOSITORY | cut -d- -f2) % ${NUM_WEEKS}" || true
   #If CMS_WEEK was set then only check releases for that week
   if [ "X$CMS_WEEK" != "X" -a "$CMS_WEEK" != "cms.week$WEEK" ] ; then
     echo "Skipping week for $REPOSITORY"
@@ -183,7 +183,7 @@ echo "/cvmfs/cms.cern.ch" >> $BASEDIR/scramdb/etc/scramrc/links.db
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
 for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
-    N=$(echo "$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" | bc)
+    let N="$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" || true
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
       ln -s $BASEDIR/$w $BASEDIR/week$N
       [ -f $BASEDIR/week$N/etc/scramrc/links.db ] || continue

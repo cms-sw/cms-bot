@@ -35,6 +35,7 @@ which dasgoclient
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
 mkdir -p ${RESULTS_DIR}
 export SCRAM_ARCH=${ARCHITECTURE}
+export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
 if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
   WAIT_TIME=14400
   while [ $WAIT_TIME -gt 0 ] ; do

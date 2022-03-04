@@ -32,7 +32,7 @@ if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
   $WORKSPACE/cms-bot/das-utils/use-ibeos-sort
   export PATH=$WORKSPACE/cms-bot/das-utils:\$PATH
-  which das_client
+  which dasgoclient
   grep 'ibeos-lfn-sort' \${LOCALRT}/src/Configuration/PyReleaseValidation/python/*.py || true
 fi
 EOF

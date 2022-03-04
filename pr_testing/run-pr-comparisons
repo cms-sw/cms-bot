@@ -86,11 +86,19 @@ if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
         if ! grep $WF_STEP wf_errors.${BUILD_ID} ; then echo $WF_STEP >> wf_errors.${BUILD_ID} ; fi
       done
     popd
+    for wf in $(echo ${PR_EXTRA_WFS} | tr ',' ' ') ; do
+      wf_dir=$(basename $(ls -d $WORKSPACE/extra_wf/${wf}_*))
+      mv $WORKSPACE/extra_wf/${wf_dir} $WORKSPACE/data/$COMPARISON_RELEASE/${wf_dir}
+      if ! has_jenkins_artifacts ${BASELINE_DIR}/${wf_dir} ; then
+        send_jenkins_artifacts $WORKSPACE/data/$COMPARISON_RELEASE/${wf_dir}/  ${BASELINE_DIR}/${wf_dir}/ &
+      fi
+    done
     send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
     for x in $(ls $WORKSPACE/extra_wf) ; do
       [ ! -e $WORKSPACE/data/$COMPARISON_RELEASE/$x ] || continue
       mv $WORKSPACE/extra_wf/$x $WORKSPACE/data/$COMPARISON_RELEASE/$x
     done
+    rm -rf $WORKSPACE/extra_wf
     echo "RELEASE_FORMAT=$COMPARISON_RELEASE" > ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
     echo "ARCHITECTURE=${COMPARISON_ARCH}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
     echo "TEST_FLAVOR=${TEST_FLAVOR}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}

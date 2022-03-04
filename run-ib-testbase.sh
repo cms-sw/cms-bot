@@ -13,6 +13,7 @@ export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export SCRAM_ARCH=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
+export SCRAM_PREFIX_PATH=$WORKSPACE/cms-bot/das-utils
 export LC_ALL=C
 #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
 if [ $(date +%w) -lt 2 ] ; then

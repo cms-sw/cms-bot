@@ -28,6 +28,7 @@ if [ -f config/SCRAM/linkexternal.py ] ; then
   sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py || true
 fi
 eval \$(scram runtime -sh)
+echo $PATH | tr ':' '\n'
 export CMS_PATH=\${IB_LAST_WEEK}
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py

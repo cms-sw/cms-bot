@@ -9,6 +9,7 @@ echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
 source ${CMS_BOT_DIR}/cmsrep.sh
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing

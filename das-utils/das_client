@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 #CMSSDT_DAS_CLIENT_SIGN:12345678901234567890ABCDEFABCDEF
 #Do not change the above magic line. It is signature for the cmssw ibs das_client wrapper
 function get_parent_cmds ()

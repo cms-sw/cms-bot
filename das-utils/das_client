@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 #CMSSDT_DAS_CLIENT_SIGN:12345678901234567890ABCDEFABCDEF
 #Do not change the above magic line. It is signature for the cmssw ibs das_client wrapper
 function get_parent_cmds ()
@@ -24,11 +24,11 @@ HELP=
 for ((i=1; i<=$#; i++)); do
   next=$((i+1))
   case  ${!i} in
-    --query=*  ) QUERY=$(echo ${!i} | sed 's|.*=||') ;;
-    --query    ) QUERY=${!next} ;;
-    --format=* ) FORMAT=$(echo ${!i} | sed 's|.*=||') ;;
-    --format   ) FORMAT=${!next} ;;
-    -h|--help  ) HELP=YES ;;
+    --query=*|-query=*   ) QUERY=$(echo ${!i} | sed 's|.*=||') ;;
+    --query|-query       ) QUERY=${!next} ;;
+    --format=*|-format=* ) FORMAT=$(echo ${!i} | sed 's|.*=||') ;;
+    --format|-format     ) FORMAT=${!next} ;;
+    -h|--help|-help      ) HELP=YES ;;
   esac
 done
 

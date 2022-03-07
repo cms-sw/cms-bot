@@ -54,6 +54,8 @@ DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
 if [ $(echo ${ARCHITECTURE} | grep "_amd64_" | wc -l) -gt 0 ] ; then
   DO_COMPARISON=true
+elif [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X' |wc -l) -gt 0 ] ; then
+  DO_COMPARISON=false
 fi
 
 PRODUCTION_RELEASE=false

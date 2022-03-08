@@ -16,6 +16,14 @@ ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
 SSH_OPTS="-q -o ConnectTimeout=60 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 CVMFS_ARTIFACT_DIR="/cvmfs/cms-ci.cern.ch/jenkins-artifacts"
 
+function cmd_jenkins_artifacts ()
+{
+  local SRC=$1
+  local AFDIR="${ARTIFACT_BASE_DIR}"
+  if [ $(echo $SRC | sed 's|^/*||;s|/.*||' | grep '^ib-baseline-tests$' | wc -l) -eq 1 ] ; then AFDIR="${ARTIFACT_BASE_DIR_MAIN}"; fi
+  ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "cd ${AFDIR}/${SRC} ; $2"
+}
+
 function has_jenkins_artifacts ()
 {
   local SRC=$1

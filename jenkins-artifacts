@@ -65,8 +65,15 @@ function get_jenkins_artifacts ()
     if [ -d ${CVMFS_ARTIFACT_DIR}/$SRC ] ; then
       local XSRC=$(echo $SRC | sed 's|/*$||')
       local XDES=$(echo $DES | sed 's|/*$||')
-      mkdir -p $XDES && rm -rf $XDES
-      ln -s ${CVMFS_ARTIFACT_DIR}/$XSRC $XDES
+      mkdir -p $XDES
+      if [ "${ARTIFACT_SYMLINK}" = "true" ] ; then
+        for x in $(ls -d ${CVMFS_ARTIFACT_DIR}/$XSRC/*) ; do
+          ln -sf $x $XDES/
+        done
+      else
+        rm -rf $XDES
+        ln -s ${CVMFS_ARTIFACT_DIR}/$XSRC $XDES
+      fi
     else
       mkdir -p $(dirname $DES)
       cp -f ${CVMFS_ARTIFACT_DIR}/$SRC $DES

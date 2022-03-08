@@ -53,7 +53,7 @@ pushd "$WORKSPACE/matrix-results"
   done
 popd
 
-echo send_jenkins_artifacts $WORKSPACE/matrix-results/ ${REL_BASELINE_DIR}
+send_jenkins_artifacts $WORKSPACE/matrix-results/ ${REL_BASELINE_DIR}
 echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/cvmfs-deploy-baseline
 echo "ARCHITECTURE=${ARCHITECTURE}"    >> $WORKSPACE/cvmfs-deploy-baseline
 echo "TEST_FLAVOR=${TEST_FLAVOR}"      >> $WORKSPACE/cvmfs-deploy-baseline

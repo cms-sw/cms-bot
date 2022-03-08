@@ -37,6 +37,7 @@ pushd "$WORKSPACE/matrix-results"
     [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_OPTS="--command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_OPTS"
   fi
   eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py ${MATRIX_OPTS} 2>&1 | tee -a matrixTests.log.${BUILD_ID}
+  mv runall-report-step123-.log runall-report-step123-.log.${BUILD_ID}
   MAPPING_FILE=wf_mapping.txt.${BUILD_ID}
   for f in $(find . -name DQM*.root | sort) ; do
     WF_PATH=`echo $f | sed 's/^\.\///'`

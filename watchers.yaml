@@ -1522,6 +1522,8 @@ missirol:
 - Configuration
 - DataFormats/HLTReco
 - DataFormats/L1Trigger
+- DataFormats/PatCandidates
+- DataFormats/Scouting
 - DQMOffline/Trigger
 - DQM/HLTEvF
 - DQM/HLXMonitor

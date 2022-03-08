@@ -261,7 +261,8 @@ def writeProfilingScript(wfdir, runscript, cmdlist):
     with open(runscript_path, "w") as fi:
         fi.write("#!/bin/sh\n")
 
-        fi.write("scram setup /cvmfs/cms.cern.ch/slc7_amd64_gcc10/cms/cmssw-tool-conf/52.0-904e6a6e16dcc9bdba60a5fd496e4237/tools/selected/libunwind.xml\n")
+        #for 12_3_0_pre3,pre4
+        #fi.write("scram setup /cvmfs/cms.cern.ch/slc7_amd64_gcc10/cms/cmssw-tool-conf/52.0-904e6a6e16dcc9bdba60a5fd496e4237/tools/selected/libunwind.xml\n")
 
         #this is required for igprof
         fi.write("ulimit -a\n")

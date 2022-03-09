@@ -17,11 +17,7 @@ pushd "$WORKSPACE/matrix-results"
   source $CMS_BOT_DIR/jenkins-artifacts
   MATRIX_OPTS="-j $(Jenkins_GetCPU) ${EXTRA_MATRIX_ARGS}"
   [ "${TEST_FLAVOR}" = "gpu" ] && MATRIX_OPTS="${MATRIX_OPTS} -w gpu"
-  if ! has_jenkins_artifacts ${REL_BASELINE_DIR}/all.wfs ; then
-    runTheMatrix.py -n ${MATRIX_OPTS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
-  else
-    get_jenkins_artifacts ${REL_BASELINE_DIR}/all.wfs $WORKSPACE/all.wfs
-  fi
+  runTheMatrix.py -n ${MATRIX_OPTS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
   echo "Total WFs: $(cat $WORKSPACE/all.wfs |wc)"
   REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
   WFS=""

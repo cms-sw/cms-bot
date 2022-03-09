@@ -12,45 +12,50 @@ function Jenkins_GetCPU ()
 }
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
-  MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
   MATRIX_OPTS="-j $(Jenkins_GetCPU)"
-  MX_ALL_OPT=""
   if [ "${TEST_FLAVOR}" = "gpu" ] ; then
-    MX_ALL_OPT="-w gpu"
-    MATRIX_EXTRAS="$(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') ${MX_ALL_OPT}"
+    MATRIX_OPTS="${MATRIX_OPTS} -w gpu"
+    MATRIX_EXTRAS="$(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')"
   else
-    MATRIX_OPTS="-s ${MATRIX_OPTS}"
+    MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
   fi
-  runTheMatrix.py -n ${MX_ALL_OPT} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > all.wfs
-  if [ ! "X$MATRIX_EXTRAS" = "X" ] ; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
-  [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--job-reports $MATRIX_EXTRAS"
-  if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
-      [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_EXTRAS"
+  runTheMatrix.py -n ${MATRIX_OPTS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > all.wfs
+  [ "${TEST_FLAVOR}" = "" ] && MATRIX_OPTS="${MATRIX_OPTS} -s"
+  WFS=""
+  for wf in $(echo ${MATRIX_EXTRAS} | tr ',' '\n') ;  do
+    [ $(grep "^${wf}$" all.wfs | wc -l) -gt 0 ] || continue
+    WFS="${wf},${WFS}"
+  done
+  if [ "$WFS" != "" ] ; then
+    WFS=$(echo ${WFS} | sed 's|,$||')
+    MATRIX_OPTS="${MATRIX_OPTS} -l $WFS"
+  elif [ "${TEST_FLAVOR}" != "" ] ; then
+    echo "ERROR: No workflow found to generate baseline."
+    exit 1
   fi
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py ${MATRIX_OPTS} ${MATRIX_EXTRAS} 2>&1 | tee -a $WORKSPACE/matrixTests.log
+  [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_OPTS="${MATRIX_OPTS} --job-reports"
+  if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
+      [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_OPTS="${MATRIX_OPTS} --command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport'"
+  fi
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py ${MATRIX_OPTS} 2>&1 | tee -a matrixTests.log
   MAPPING_FILE=wf_mapping.txt
   ROOT_FILES=`find . -name DQM*.root | sort`
-  for f in $ROOT_FILES
-  do
+  for f in $ROOT_FILES ; do
     WF_PATH=`echo $f | sed 's/^\.\///'`
     WF_NUMBER=`echo $WF_PATH | sed 's/_.*$//'`
     echo $WF_PATH >> $MAPPING_FILE
   done
+  touch $MAPPING_FILE
+  ERRORS_FILE=wf_errors.txt
+  touch $ERRORS_FILE
+  grep "ERROR executing.*" matrixTests.log | while read line ; do
+    WF_STEP=`echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g'`
+    # don't add duplicate lines
+    if ! grep $WF_STEP $ERRORS_FILE; then
+      echo $WF_STEP >> $ERRORS_FILE
+    fi
+  done
 popd
-
-ERRORS_FILE=$WORKSPACE/wf_errors.txt
-touch $ERRORS_FILE
-
-grep "ERROR executing.*" $WORKSPACE/matrixTests.log | while read line
-do
-  WF_STEP=`echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g'`
-  # don't add duplicate lines
-  if ! grep $WF_STEP $ERRORS_FILE; then
-    echo $WF_STEP >> $ERRORS_FILE
-  fi
-done
-
-mv $ERRORS_FILE $WORKSPACE/matrix-results/
 
 [ -f ${LOCALRT}/used-ibeos-sort ] && mv ${LOCALRT}/used-ibeos-sort $WORKSPACE/matrix-results/
 source $CMS_BOT_DIR/jenkins-artifacts

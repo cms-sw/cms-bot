@@ -32,17 +32,17 @@ pushd "$WORKSPACE/matrix-results"
   if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
     [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_OPTS="--command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_OPTS"
   fi
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py ${MATRIX_OPTS} 2>&1 | tee -a matrixTests.log.${BUILD_ID}
-  mv runall-report-step123-.log runall-report-step123-.log.${BUILD_ID}
-  MAPPING_FILE=wf_mapping.txt.${BUILD_ID}
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py ${MATRIX_OPTS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
+  mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
+  MAPPING_FILE=wf_mapping.${BUILD_ID}.txt
   for f in $(find . -name DQM*.root | sort) ; do
     WF_PATH=`echo $f | sed 's/^\.\///'`
     WF_NUMBER=`echo $WF_PATH | sed 's/_.*$//'`
     echo $WF_PATH >> $MAPPING_FILE
   done
-  ERRORS_FILE=wf_errors.txt.${BUILD_ID}
+  ERRORS_FILE=wf_errors.${BUILD_ID}.txt
   touch $ERRORS_FILE
-  grep "ERROR executing.*" matrixTests.log.${BUILD_ID} | while read line ; do
+  grep "ERROR executing.*" matrixTests.${BUILD_ID}.log | while read line ; do
     WF_STEP=$(echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g')
     if ! grep $WF_STEP $ERRORS_FILE; then
       echo $WF_STEP >> $ERRORS_FILE

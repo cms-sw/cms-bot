@@ -45,8 +45,10 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
   if "das_client" in dasclient:retry_str="--retry=%s" % retry
   das_cmd = "%s --format=json --limit=%s --query '%s%s' %s --threshold=%s %s" % (dasclient, limit, query, field_filter, retry_str, threshold, options)
   print("  Running: ",sha,das_cmd)
-  print("  Fields:",sha,fields) 
+  print("  Fields:",sha,fields)
+  stime = time()
   err, out = run_cmd(das_cmd)
+  print("  QueryTime:",int(time()-stime()),query)
   if opts.debug:
     print("DEBUG OUT:\n%s\n%s" % (err, out))
   efile = "%s.error" % outfile

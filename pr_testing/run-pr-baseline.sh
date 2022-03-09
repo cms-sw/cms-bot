@@ -22,7 +22,7 @@ pushd "$WORKSPACE/matrix-results"
   else
     get_jenkins_artifacts ${REL_BASELINE_DIR}/all.wfs $WORKSPACE/all.wfs
   fi
-  REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
+  REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
   WFS=""
   for wf in $(echo ${MATRIX_EXTRAS} | tr ',' '\n') ;  do
     [ $(echo " $REL_WFS " | grep " $wf " | wc -l) -eq 0 ] || continue

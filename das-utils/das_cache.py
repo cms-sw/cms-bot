@@ -48,7 +48,7 @@ def run_das_client(outfile, query, override, dasclient="das_client", options="",
   print("  Fields:",sha,fields)
   stime = time()
   err, out = run_cmd(das_cmd)
-  print("  QueryTime:",int(time()-stime()),query)
+  print("  QueryTime:",int(time()-stime),query)
   if opts.debug:
     print("DEBUG OUT:\n%s\n%s" % (err, out))
   efile = "%s.error" % outfile

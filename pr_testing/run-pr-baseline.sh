@@ -18,7 +18,7 @@ pushd "$WORKSPACE/matrix-results"
   MATRIX_OPTS="-j $(Jenkins_GetCPU) ${EXTRA_MATRIX_ARGS}"
   [ "${TEST_FLAVOR}" = "gpu" ] && MATRIX_OPTS="${MATRIX_OPTS} -w gpu"
   runTheMatrix.py -n ${MATRIX_OPTS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
-  echo "Total WFs: $(cat $WORKSPACE/all.wfs |wc)"
+  echo "Total WFs: $(cat $WORKSPACE/all.wfs |wc -l)"
   REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
   WFS=""
   for wf in $(echo ${MATRIX_EXTRAS} | tr ',' '\n') ;  do

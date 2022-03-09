@@ -47,6 +47,8 @@ echo "Done Downloading `date`"
 
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
+cat $WORKSPACE/$MAPPING_FILE
+cat $WORKSPACE/$ERRORS_FILE
 WFS_WITH_ERRORS=''
 for wf in ${WORKFLOWS_LIST//,/ }
 do

@@ -40,7 +40,7 @@ fi
 
 cd $WORKSPACE/results
 echo "Downloading Ref: `date`"
-ARTIFACT_SYMLINK=true get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$COMPARISON_RELEASE/ || true
+get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$COMPARISON_RELEASE/ || true
 echo "Downloading PR: `date`"
 get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"

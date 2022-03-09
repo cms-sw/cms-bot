@@ -14,11 +14,14 @@ mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
   MATRIX_EXTRAS=$(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||')
   MATRIX_OPTS="-j $(Jenkins_GetCPU)"
+  MX_ALL_OPT=""
   if [ "${TEST_FLAVOR}" = "gpu" ] ; then
-    MATRIX_EXTRAS="$(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') -w gpu"
+    MX_ALL_OPT="-w gpu"
+    MATRIX_EXTRAS="$(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') ${MX_ALL_OPT}"
   else
     MATRIX_OPTS="-s ${MATRIX_OPTS}"
   fi
+  runTheMatrix.py -n ${MX_ALL_OPT} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > all.wfs
   if [ ! "X$MATRIX_EXTRAS" = "X" ] ; then MATRIX_EXTRAS="-l $MATRIX_EXTRAS" ; fi
   [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_EXTRAS="--job-reports $MATRIX_EXTRAS"
   if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 

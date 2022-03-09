@@ -1077,13 +1077,13 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
 
   if [ "${MATRIX_EXTRAS}" != "" ] ; then
-    echo "ARCHITECTURE=${COMPARISON_ARCH}"         > $WORKSPACE/run-pr-baseline.prop
-    echo "RELEASE_FORMAT=${COMPARISON_REL}"       >> $WORKSPACE/run-pr-baseline.prop
-    echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}"           >> $WORKSPACE/run-pr-baseline.prop
-    echo "DOCKER_IMG=${DOCKER_IMG}"               >> $WORKSPACE/run-pr-baseline.prop
-    echo "MATRIX_EXTRAS=${MATRIX_EXTRAS}"         >> $WORKSPACE/run-pr-baseline.prop
-    echo "EXTRA_MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> $WORKSPACE/run-pr-baseline.prop
-    echo "TEST_FLAVOR="                           >> $WORKSPACE/run-pr-baseline.prop
+    echo "ARCHITECTURE=${COMPARISON_ARCH}"         > $WORKSPACE/pr-baseline.prop
+    echo "RELEASE_FORMAT=${COMPARISON_REL}"       >> $WORKSPACE/pr-baseline.prop
+    echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}"           >> $WORKSPACE/pr-baseline.prop
+    echo "DOCKER_IMG=${DOCKER_IMG}"               >> $WORKSPACE/pr-baseline.prop
+    echo "MATRIX_EXTRAS=${MATRIX_EXTRAS}"         >> $WORKSPACE/pr-baseline.prop
+    echo "EXTRA_MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> $WORKSPACE/pr-baseline.prop
+    echo "TEST_FLAVOR="                           >> $WORKSPACE/pr-baseline.prop
   fi
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
@@ -1108,13 +1108,13 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
         echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu" >> $WORKSPACE/run-relvals-gpu.prop
       fi
       if [ "${MATRIX_EXTRAS_GPU}" != "" ] ; then
-        echo "ARCHITECTURE=${COMPARISON_ARCH}"             > $WORKSPACE/run-pr-baseline-gpu.prop
-        echo "RELEASE_FORMAT=${COMPARISON_REL}"           >> $WORKSPACE/run-pr-baseline-gpu.prop
-        echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}"               >> $WORKSPACE/run-pr-baseline-gpu.prop
-        echo "DOCKER_IMG=${DOCKER_IMG}"                   >> $WORKSPACE/run-pr-baseline-gpu.prop
-        echo "MATRIX_EXTRAS=${MATRIX_EXTRAS_GPU}"         >> $WORKSPACE/run-pr-baseline-gpu.prop
-        echo "EXTRA_MATRIX_ARGS=${EXTRA_MATRIX_ARGS_GPU}" >> $WORKSPACE/run-pr-baseline-gpu.prop
-        echo "TEST_FLAVOR=gpu"                            >> $WORKSPACE/run-pr-baseline-gpu.prop
+        echo "ARCHITECTURE=${COMPARISON_ARCH}"             > $WORKSPACE/pr-baseline-gpu.prop
+        echo "RELEASE_FORMAT=${COMPARISON_REL}"           >> $WORKSPACE/pr-baseline-gpu.prop
+        echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}"               >> $WORKSPACE/pr-baseline-gpu.prop
+        echo "DOCKER_IMG=${DOCKER_IMG}"                   >> $WORKSPACE/pr-baseline-gpu.prop
+        echo "MATRIX_EXTRAS=${MATRIX_EXTRAS_GPU}"         >> $WORKSPACE/pr-baseline-gpu.prop
+        echo "EXTRA_MATRIX_ARGS=${EXTRA_MATRIX_ARGS_GPU}" >> $WORKSPACE/pr-baseline-gpu.prop
+        echo "TEST_FLAVOR=gpu"                            >> $WORKSPACE/pr-baseline-gpu.prop
       fi
     fi
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then

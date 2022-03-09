@@ -162,6 +162,7 @@ for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
     BASELINE_DAS_QUERY_LOG="$WORKSPACE/results/files/$WF_DIR/$COMPARISON_RELEASE-step1_dasquery.log"
     THEY_DIFFER=`diff -q "$PR_DAS_QUERY_LOG" "$BASELINE_DAS_QUERY_LOG" || true`
     if [ "X$THEY_DIFFER" != X ]; then
+      diff -u "$PR_DAS_QUERY_LOG" "$BASELINE_DAS_QUERY_LOG" || true
       WFS_WITH_DAS_INCONSISTENCY=$WF_NUMBER,$WFS_WITH_DAS_INCONSISTENCY
     fi
   fi 

@@ -42,71 +42,7 @@ cd $WORKSPACE/results
 echo "Downloading Ref: `date`"
 ARTIFACT_SYMLINK=true get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$COMPARISON_RELEASE/ || true
 echo "Downloading PR: `date`"
-get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/ &
-echo "Done Downloading `date`"
-
-if [ "${COMPARISON_ARCH}" = "${SCRAM_ARCH}" ] ; then
-  get_jenkins_artifacts ${PR_BASELINE_DIR}/${MAPPING_FILE} $WORKSPACE/pr_${MAPPING_FILE}
-  PR_EXTRA_WFS=""
-  for wf in $(cat $WORKSPACE/pr_${MAPPING_FILE} | sed 's|_.*||') ; do
-    if [ $(grep "^${wf}_" $WORKSPACE/data/$COMPARISON_RELEASE/runall-report-step123-.* | wc -l) -eq 0 ] ; then
-      PR_EXTRA_WFS="${wf},${PR_EXTRA_WFS}"
-    fi
-  done
-  if [ "${PR_EXTRA_WFS}" != "" ] ; then
-    PR_EXTRA_WFS=$(echo ${PR_EXTRA_WFS} | sed 's|,$||')
-    echo "Running extra workflows for IB"
-    IB_MATRIX_OPTS=""
-    mkdir $WORKSPACE/extra_wf
-    pushd $WORKSPACE/extra_wf
-      (
-      scram -a ${COMPARISON_ARCH} project $COMPARISON_RELEASE
-      pushd $COMPARISON_RELEASE
-        eval `scram run -sh` >/dev/null 2>&1
-        ${CMS_BOT_DIR}/das-utils/use-ibeos-sort
-      popd
-      export PATH=${CMS_BOT_DIR}/das-utils:$PATH
-      [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--job-reports"
-      if [ -e ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ] ; then
-        [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && IB_MATRIX_OPTS="--command '--customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' ${IB_MATRIX_OPTS}"
-      fi
-      eval runTheMatrix.py -j ${NUM_PROC} -l ${PR_EXTRA_WFS} ${IB_MATRIX_OPTS} >$WORKSPACE/extra_wf.log 2>&1 || true
-      )
-      rm -rf $COMPARISON_RELEASE
-      for wf in $(echo ${PR_EXTRA_WFS} | tr ',' ' ') ; do
-        if [ $(grep "^${wf}_" runall-report-step123-.log | wc -l) -gt 0 ] ; then
-          grep "^${wf}_" runall-report-step123-.log > runall-report-step123-.${wf}
-        fi
-        ls ${wf}_*/DQM*.root 2>/dev/null > wf_mapping.${wf} || true
-      done
-      mv runall-report-step123-.log build${BUILD_ID}_runall-report-step123-.log
-      touch wf_errors.${BUILD_ID}
-      grep "ERROR executing.*" $WORKSPACE/extra_wf.log | while read line ; do
-        WF_STEP=`echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g'`
-        if ! grep $WF_STEP wf_errors.${BUILD_ID} ; then echo $WF_STEP >> wf_errors.${BUILD_ID} ; fi
-      done
-    popd
-    for wf in $(echo ${PR_EXTRA_WFS} | tr ',' ' ') ; do
-      wf_dir=$(basename $(ls -d $WORKSPACE/extra_wf/${wf}_*))
-      mv $WORKSPACE/extra_wf/${wf_dir} $WORKSPACE/data/$COMPARISON_RELEASE/${wf_dir}
-      if ! has_jenkins_artifacts ${BASELINE_DIR}/${wf_dir} ; then
-        send_jenkins_artifacts $WORKSPACE/data/$COMPARISON_RELEASE/${wf_dir}/  ${BASELINE_DIR}/${wf_dir}/ &
-      fi
-    done
-    send_jenkins_artifacts $WORKSPACE/extra_wf/  ${BASELINE_DIR}/
-    for x in $(ls $WORKSPACE/extra_wf) ; do
-      [ ! -e $WORKSPACE/data/$COMPARISON_RELEASE/$x ] || continue
-      mv $WORKSPACE/extra_wf/$x $WORKSPACE/data/$COMPARISON_RELEASE/$x
-    done
-    rm -rf $WORKSPACE/extra_wf
-    echo "RELEASE_FORMAT=$COMPARISON_RELEASE" > ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
-    echo "ARCHITECTURE=${COMPARISON_ARCH}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
-    echo "TEST_FLAVOR=${TEST_FLAVOR}" >> ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
-    send_jenkins_artifacts ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID} cvmfs-deploy-baseline/cvmfs-deploy-baseline.${BUILD_ID}
-    rm -f ${WORKSPACE}/cvmfs-deploy-baseline.${BUILD_ID}
-  fi
-fi
-wait
+get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
 
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.* | sort | uniq > $WORKSPACE/$MAPPING_FILE

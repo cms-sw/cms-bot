@@ -227,9 +227,9 @@ def ignore_issue(repo_config, repo, issue):
     return True
   if re.match(BUILD_REL, issue.title):
     return True
-  #if issue.body:
-  #  if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
-  #    return True
+  if issue.body:
+    if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+      return True
   return False
 
 def notify_user(issue):

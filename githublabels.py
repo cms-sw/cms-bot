@@ -12,14 +12,24 @@ LABEL_TYPES = {
   "rejected": LABEL_COLORS["rejected"],
 }
 
+#TYPE_COMMANDS[LABEL_NAME]=[LABEL_COLOR,
+#                           REGEXP_TO_MATCH_CCOMMENT",
+#                           TYPE
+#                                type: only apply the last comment
+#                                mtype: accomulate all comments]
+TYPE_COMMANDS = {
+  "bug-fix" :                  ["b8860b",             "bug(-fix|fix|)",             "type"],
+  "new-feature" :              [LABEL_COLORS["info"], "(new-|)feature|(new-|)idea", "type"],
+  "documentation" :            ["257fdb",             "doc(umentation|)",           "mtype"],
+  "performance-improvements" : ["5b9ee3",             "performance|improvements|performance-improvements", "mtype"],
+}
+
 COMMON_LABELS = {
   "tests-started": LABEL_COLORS["hold"],
   "fully-signed": LABEL_COLORS["approved"],
   "pending-signatures": LABEL_COLORS["hold"],
   "pending-assignment": LABEL_COLORS["hold"],
   "new-package-pending" : LABEL_COLORS["rejected"],
-  "bug-fix" : "b8860b",
-  "new-feature" : LABEL_COLORS["info"],
   "backport" : LABEL_COLORS["info"],
   "backport-ok" : LABEL_COLORS["approved"],
   "urgent"   : "cc317c",
@@ -28,6 +38,9 @@ COMMON_LABELS = {
   "compilation-warnings": LABEL_COLORS["hold"],
   "requires-external" : LABEL_COLORS["info"],
 }
+
+for lab in TYPE_COMMANDS:
+  COMMON_LABELS[lab] = TYPE_COMMANDS[lab][0]
 
 COMPARISON_LABELS = {
   "comparison-notrun" : "bfe5bf",

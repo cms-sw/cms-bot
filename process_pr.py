@@ -3,6 +3,7 @@ from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, C
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS
 from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
+from githublabels import TYPE_COMMANDS
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from datetime import datetime
@@ -226,9 +227,9 @@ def ignore_issue(repo_config, repo, issue):
     return True
   if re.match(BUILD_REL, issue.title):
     return True
-  if issue.body:
-    if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
-      return True
+  #if issue.body:
+  #  if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+  #    return True
   return False
 
 def notify_user(issue):
@@ -237,17 +238,23 @@ def notify_user(issue):
   return True
 
 def check_extra_labels(first_line, extra_labels):
-  if "bug" in first_line:
-    extra_labels["type"]=["bug-fix"]
-  elif "feature" in first_line:
-    extra_labels["type"]=["new-feature"]
-  elif "urgent" in first_line:
+  if "urgent" in first_line:
     extra_labels["urgent"]=["urgent"]
   elif "backport" in first_line:
     bp_pr = ""
     if "#" in first_line: bp_pr = first_line.split("#",1)[1].strip()
     else: bp_pr = first_line.split("/pull/",1)[1].strip("/").strip()
     extra_labels["backport"]=["backport", bp_pr]
+
+def check_type_labels(first_line, extra_labels):
+  for type_cmd in [x.strip() for x in first_line.split(" ",1)[-1].split(",") if x.strip()]:
+    for lab in TYPE_COMMANDS:
+      if re.match(TYPE_COMMANDS[lab][1],type_cmd,re.I):
+        lab_type = TYPE_COMMANDS[lab][2]
+        if lab_type not in extra_labels: extra_labels[lab_type] = []
+        extra_labels[lab_type].append(lab)
+      continue
+  return
 
 def check_ignore_bot_tests(first_line, *args):
   return first_line.upper().replace(" ",""),None
@@ -443,7 +450,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   watchers = []
   #Process Pull Request
   pkg_categories = set([])
-  REGEX_EX_CMDS="^type\s+(bug(-fix|fix|)|(new-|)feature)|urgent|backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
+  REGEX_TYPE_CMDS="^type\s+([a-z][a-z-]+)(\s*,\s*[a-z][a-z-]+)*$"
+  REGEX_EX_CMDS="^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
   REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP["enable_test(s|)"][0]
@@ -693,6 +701,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if commenter_categories or (commenter in releaseManagers + [requestor]):
         check_extra_labels(first_line.lower(), extra_labels)
       continue
+    if re.match(REGEX_TYPE_CMDS, first_line, re.I):
+      if commenter_categories or (commenter in releaseManagers + [requestor]):
+        check_type_labels(first_line.lower(), extra_labels)
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
       if valid_commenter:
         ignore_tests = check_ignore_bot_tests (first_line.split(" ",1)[-1])
@@ -925,6 +936,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   print("Old Labels:",sorted(old_labels))
   print("Compilation Warnings: ",comp_warnings)
   print("Singnatures: ",signatures)
+  if "mtype" in extra_labels:
+    extra_labels["mtype"] = list(set(extra_labels["mtype"]))
+  if "type" in extra_labels:
+    extra_labels["type"] = [extra_labels["type"][-1]]
 
   #Always set test pending label
   if "tests" in signatures:
@@ -1052,7 +1067,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
   # Add additional labels
   for lab in extra_testers: labels.append("allow-"+lab)
-  for lab in extra_labels: labels.append(extra_labels[lab][0])
+  for lab in extra_labels:
+    if lab != "mtype":
+      labels.append(extra_labels[lab][0])
+    else:
+      for slab in extra_labels[lab]:
+        labels.append(slab)
   if comp_warnings: labels.append("compilation-warnings")
 
   if cms_repo and issue.pull_request and (not new_bot_tests):
@@ -1066,6 +1086,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if ('PULL_REQUESTS' in global_test_params) or cmssw_prs:
     need_external = True
   # Now updated the labels.
+  xlabs = ["backport", "urgent", "backport-ok", "compilation-warnings"]
+  for lab in TYPE_COMMANDS: xlabs.append(lab)
   missingApprovals = [x
                       for x in labels
                       if     not x.endswith("-approved")
@@ -1075,7 +1097,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          and not x.startswith("comparison")
                          and not x.startswith("code-checks")
                          and not x.startswith("allow-")
-                         and not x in ["backport", "urgent", "bug-fix", "new-feature", "backport-ok", "compilation-warnings"]]
+                         and not x in xlabs]
 
   if not missingApprovals:
     print("The pull request is complete.")

@@ -19,7 +19,7 @@ LABEL_TYPES = {
 #                                mtype: accomulate all comments]
 TYPE_COMMANDS = {
   "bug-fix" :                  ["b8860b",             "bug(-fix|fix|)",             "type"],
-  "new-feature" :              [LABEL_COLORS["info"], "(new-|)feature|(new-|)idea", "type"],
+  "new-feature" :              [LABEL_COLORS["info"], "(new-|)(feature|idea)",      "type"],
   "documentation" :            ["257fdb",             "doc(umentation|)",           "mtype"],
   "performance-improvements" : ["5b9ee3",             "performance|improvements|performance-improvements", "mtype"],
 }

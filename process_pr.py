@@ -253,7 +253,7 @@ def check_type_labels(first_line, extra_labels):
         lab_type = TYPE_COMMANDS[lab][2]
         if lab_type not in extra_labels: extra_labels[lab_type] = []
         extra_labels[lab_type].append(lab)
-      continue
+        break
   return
 
 def check_ignore_bot_tests(first_line, *args):

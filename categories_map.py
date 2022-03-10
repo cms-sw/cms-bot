@@ -914,6 +914,7 @@ CMSSW_CATEGORIES = {
     "DataFormats/L1TGlobal",
     "DataFormats/L1THGCal",
     "DataFormats/L1TMuon",
+    "DataFormats/L1TMuonPhase2",
     "DataFormats/L1TotemRP",
     "DataFormats/L1TrackTrigger",
     "DataFormats/L1Trigger",

@@ -101,7 +101,7 @@ pushd $BUILD_DIR
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
-    rm -rf WEB RPMS tmp
+    rm -rf WEB RPMS SRPMS SOURCES tmp
   else
     rm -rf tmp/pip*
   fi

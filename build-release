@@ -96,13 +96,14 @@ pushd $BUILD_DIR
     rm -rf  tmp
     exit 1
   fi
-  rm -rf tmp/pip*
   if [ `ls RPMS/${ARCHITECTURE} | wc -l` -gt 0 ] ; then
     PYTHONPATH= $CMSBUILD_CMD --builders 4 --sync-back upload $TOOL_CONF_PACKAGES
     echo DATE=`date`
     PYTHONPATH= $CMSBUILD_CMD deprecate-local $TOOL_CONF_PACKAGES
     echo DATE=`date`
-    rm -rf WEB
+    rm -rf WEB RPMS tmp
+  else
+    rm -rf tmp/pip*
   fi
 
   if [ "X$ONLY_BUILD_TOOLCONF" = Xtrue ]; then

@@ -205,7 +205,7 @@ if [ "${DRY_RUN}" = "" ] ; then
     echo DATE=`date`
     if [ "$CMSSW_TOOL_CONF_ONLY" = "true" ] ; then exit 0; fi
     PYTHONPATH= $CMSBUILD_CMD --debug ${EX_OPTS} deprecate-local $TOOL_CONF_PACKAGES
-    rm -rf ${WRKDIR}/tmp ${WRKDIR}/RPMS
+    rm -rf ${WRKDIR}/tmp ${WRKDIR}/RPMS ${WRKDIR}/SOURCES ${WRKDIR}/SRPMS
     if [ -d ${WRKDIR}/WEB/${ARCHITECTURE} ] ; then
       mv ${WRKDIR}/WEB/${ARCHITECTURE} ${WRKDIR}/DEPS
       rm -rf ${WRKDIR}/WEB

@@ -100,7 +100,7 @@ done
 
 # We install packages for both weeks. We reset every two week, alternating.
 TMP_PREFIX=/tmp/cvsmfs-$$
-export CMSPKG_OS_COMMAND="${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
+export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
 export SCRAM_ARCH="$ARCHITECTURE"
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY

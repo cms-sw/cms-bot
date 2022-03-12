@@ -1,5 +1,4 @@
 #!/bin/sh -ex
-source $(dirname $0)/dockerrun.sh
 source $(dirname $0)/cmsrep.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
 export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
@@ -126,7 +125,13 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://${CMSREP_IB_SERVER}/cmssw/repos/bootstrap${DEV}.sh
-      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -server ${CMSREP_IB_SERVER} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
+      rm -f ${LOGFILE}.err
+      (source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -server ${CMSREP_IB_SERVER} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >$LOGFILE 2>&1" || touch ${LOGFILE}.err)
+      if [ -e ${LOGFILE}.err ] ; then
+        rm -f ${LOGFILE}.err
+        cat ${LOGFILE}
+        exit 1
+      fi
       if [ "${INSTALL_PACKAGES}" = "" ] ; then
         INSTALL_PACKAGES=$(${CMSPKG} search SCRAMV1 | sed 's| .*||' | grep 'SCRAMV1' | sort | tail -1)
       fi

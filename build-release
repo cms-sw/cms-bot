@@ -82,6 +82,9 @@ pushd $BUILD_DIR
   else
     CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
+  PYTHONPATH= $CMSBUILD_CMD -i fake             build  fakesystem || true
+  PYTHONPATH= $CMSBUILD_CMD -i fake --sync-back upload fakesystem || true
+  rm -rf fake
   PYTHONPATH= $CMSBUILD_CMD --specs-only build cmssw$PATCH
   rm -rf WEB
   echo DATE=`date`

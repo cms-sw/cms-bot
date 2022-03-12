@@ -112,10 +112,12 @@ if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args ${RELEASE_NAME})"
 fi
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build fakesystem || true
+PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload fakesystem || true
+rm -rf ${WRKDIR}
 GCC_FIXINCLUDE=""
 [ -e CMSDIST/gcc-fixincludes.spec ] && GCC_FIXINCLUDE="gcc-fixincludes"
 PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build SCRAMV1 ${GCC_FIXINCLUDE}
-PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build fakesystem || true
 # Decide if we already have a release which uses the same CMSDIST.
 pushd ${WRKDIR}
 if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then

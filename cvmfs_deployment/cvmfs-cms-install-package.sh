@@ -19,14 +19,13 @@ ${CMS_BOT_DIR}/cvmfs_deployment/bootstrap_dir_for_arch.sh ${INSTALL_PATH} ${SCRA
 
 export SCRAM_ARCH
 export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
-source ${CMS_BOT_DIR}/dockerrun.sh
 CMSPKG="${INSTALL_PATH}/common/cmspkg -a ${SCRAM_ARCH}"
 if [ $(echo "${SCRAM_ARCH}" | grep '^slc' | wc -l) -gt 0 ] ; then
     RPM_CONFIG=${INSTALL_PATH}/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     if [ ! -e ${RPM_CONFIG} ] ; then
         echo "WARNING: For now ignore fixing mutex_set_max"
         #echo "mutex_set_max 10000000" > $RPM_CONFIG
-        #dockerrun "${CMSPKG} env -- rpmdb --rebuilddb"
+        #${CMSPKG} env -- rpmdb --rebuilddb
     fi
 fi
 

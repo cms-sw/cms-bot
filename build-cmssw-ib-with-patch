@@ -113,8 +113,8 @@ if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args ${RELEASE_NAME})"
 fi
 if [ -e CMSDIST/fakesystem.spec ] ; then
-  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${FAKESYS}
-  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${FAKESYS} || true
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build fakesystem
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload fakesystem || true
   rm -rf ${WRKDIR}
 fi
 GCC_FIXINCLUDE=""

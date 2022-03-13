@@ -128,7 +128,7 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://${CMSREP_IB_SERVER}/cmssw/repos/bootstrap${DEV}.sh
       rm -f ${LOGFILE}.err
-      (source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -server ${CMSREP_IB_SERVER} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >$LOGFILE 2>&1" || touch ${LOGFILE}.err)
+      (source ${CMS_BOT_DIR}/dockerrun.sh ; export CMSPKG_OS_COMMAND="" ; dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -server ${CMSREP_IB_SERVER} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >$LOGFILE 2>&1" || touch ${LOGFILE}.err)
       if [ -e ${LOGFILE}.err ] ; then
         rm -f ${LOGFILE}.err
         cat ${LOGFILE}

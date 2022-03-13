@@ -152,6 +152,7 @@ for REPOSITORY in $REPOSITORIES; do
     fi
     (
       ${CMSPKG} update
+      ${CMSPKG} -f reinstall cms+fakesystem+1.0 || true
       ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 ${INSTALL_PACKAGES}
       if [ "X$RELEASE_NAME" != "X" ] ; then
         x="cms+cmssw-ib+$RELEASE_NAME"

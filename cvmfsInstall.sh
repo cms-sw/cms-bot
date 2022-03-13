@@ -1,6 +1,6 @@
 #!/bin/sh -ex
-source $(dirname $0)/dockerrun.sh
 source $(dirname $0)/cmsrep.sh
+CMS_BOT_DIR=$(dirname $(realpath $0))
 export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
 export THISDIR=$(/bin/pwd -P)
 export LC_ALL=C
@@ -43,13 +43,6 @@ cd $WORKSPACE/cms-bot
 REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
 
 echo $REPOSITORIES
-ARCHITECTURES=$ARCHITECTURE
-#If Architecture is not pass via command line then check for all ARCHS from the config.map file
-if [ "X$ARCHITECTURE" = "X" ] ; then
-  ARCHITECTURES=`curl -s https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/config.map | grep -v DISABLED= | grep -o "slc[5-7]_amd64_gcc[0-9][0-9][0-9]" | sort -ur` #Reverse order to install most important IBs first
-fi
-
-echo $ARCHITECTURES
 # Prepare the cvmfs repository in read/write mode
 cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
 # Check if the transaction really happened
@@ -100,12 +93,16 @@ for t in nweek- ; do
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
+      time cvmfs_server publish
+      cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
     fi
   done
 done
 
 # We install packages for both weeks. We reset every two week, alternating.
 TMP_PREFIX=/tmp/cvsmfs-$$
+export SCRAM_ARCH="$ARCHITECTURE"
+export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
   let WEEK="$(echo $REPOSITORY | cut -d- -f2) % ${NUM_WEEKS}" || true
@@ -119,7 +116,6 @@ for REPOSITORY in $REPOSITORIES; do
   WORKDIR=$BASEDIR/$REPOSITORY
   mkdir -p $WORKDIR/logs
   # Install all architectures of the most recent week first.
-  for SCRAM_ARCH in $ARCHITECTURES; do
     CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH ${USE_DEV}"
     LOGFILE=$WORKDIR/logs/bootstrap-$REPOSITORY-$SCRAM_ARCH.log
     #Recover from bad bootstrap arch
@@ -131,7 +127,13 @@ for REPOSITORY in $REPOSITORIES; do
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
       wget --tries=5 --waitretry=60 -O $WORKDIR/bootstrap.sh http://${CMSREP_IB_SERVER}/cmssw/repos/bootstrap${DEV}.sh
-      dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -server ${CMSREP_IB_SERVER} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >& $LOGFILE" || (cat $LOGFILE && exit 1)
+      rm -f ${LOGFILE}.err
+      (source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun "sh -ex $WORKDIR/bootstrap.sh setup ${DEV} -server ${CMSREP_IB_SERVER} -path $WORKDIR -r cms.week$WEEK -arch $SCRAM_ARCH -y >$LOGFILE 2>&1" || touch ${LOGFILE}.err)
+      if [ -e ${LOGFILE}.err ] ; then
+        rm -f ${LOGFILE}.err
+        cat ${LOGFILE}
+        exit 1
+      fi
       if [ "${INSTALL_PACKAGES}" = "" ] ; then
         INSTALL_PACKAGES=$(${CMSPKG} search SCRAMV1 | sed 's| .*||' | grep 'SCRAMV1' | sort | tail -1)
       fi
@@ -145,30 +147,29 @@ for REPOSITORY in $REPOSITORIES; do
       RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
       if [ ! -e $RPM_CONFIG ] ; then
         echo "mutex_set_max 10000000" > $RPM_CONFIG
-        dockerrun "$CMSPKG rpmenv -- rpmdb --rebuilddb"
+        $CMSPKG rpmenv -- rpmdb --rebuilddb
       fi
     fi
     (
-      dockerrun "${CMSPKG} update ; ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 ${INSTALL_PACKAGES}; ${CMSPKG} reinstall -y cms+fakesystem+1.0 || true" ;
+      ${CMSPKG} update
+      ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 ${INSTALL_PACKAGES}
       if [ "X$RELEASE_NAME" != "X" ] ; then
-        x="cms+cmssw-ib+$RELEASE_NAME" ;
-        INSTALL="${CMSPKG} install -y $x || true; \
-        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true; \
-        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true; \
-        ${CMSPKG} clean" ;
-        dockerrun $INSTALL ;
-        relname=`echo $x | awk -F + '{print $NF}'` ;
-        timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'` ;
+        x="cms+cmssw-ib+$RELEASE_NAME"
+        ${CMSPKG} clean
+        ${CMSPKG} install -y $x || true
+        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
+        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
+        relname=`echo $x | awk -F + '{print $NF}'`
+        timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'`
         if [ "X$timestamp" != "X" ] ; then
           for y in cmssw cmssw-patch ; do
             if [ -d $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ] ; then
-              touch -t $timestamp $WORKDIR/$SCRAM_ARCH/cms/$y/$relname ;
+              touch -t $timestamp $WORKDIR/$SCRAM_ARCH/cms/$y/$relname
             fi
-          done ;
-        fi ;
+          done
+        fi
       fi
     ) || true
-  done  #End architecture
 done #End week repository
 
 mkdir -p $BASEDIR/scramdb/etc/scramrc

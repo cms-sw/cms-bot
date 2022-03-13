@@ -149,7 +149,7 @@ for REPOSITORY in $REPOSITORIES; do
       fi
     fi
     (
-      dockerrun "${CMSPKG} update ; ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 ${INSTALL_PACKAGES}" ;
+      dockerrun "${CMSPKG} update ; ${CMSPKG} -f $REINSTALL_COMMON install cms+cms-common+1.0 ${INSTALL_PACKAGES}; ${CMSPKG} reinstall -y cms+fakesystem+1.0 || true" ;
       if [ "X$RELEASE_NAME" != "X" ] ; then
         x="cms+cmssw-ib+$RELEASE_NAME" ;
         INSTALL="${CMSPKG} install -y $x || true; \

@@ -14,25 +14,27 @@ if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] ; then
 fi
 
 #make sure area is bootstraped
-CMS_BOT_DIR=$(cd $(dirname $0)/..; /bin/pwd -P)
+CMS_BOT_DIR=$(dirname $(realpath $0))
 ${CMS_BOT_DIR}/cvmfs_deployment/bootstrap_dir_for_arch.sh ${INSTALL_PATH} ${SCRAM_ARCH} ${RPMS_REPO}
 
-source ${CMS_BOT_DIR}/dockerrun.sh
+export SCRAM_ARCH
+export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
 CMSPKG="${INSTALL_PATH}/common/cmspkg -a ${SCRAM_ARCH}"
 if [ $(echo "${SCRAM_ARCH}" | grep '^slc' | wc -l) -gt 0 ] ; then
     RPM_CONFIG=${INSTALL_PATH}/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     if [ ! -e ${RPM_CONFIG} ] ; then
         echo "WARNING: For now ignore fixing mutex_set_max"
         #echo "mutex_set_max 10000000" > $RPM_CONFIG
-        #dockerrun "${CMSPKG} env -- rpmdb --rebuilddb"
+        #${CMSPKG} env -- rpmdb --rebuilddb
     fi
 fi
 
 CMSPKG_OPTS=""
 [ "${REINSTALL}" = true ] && CMSPKG_OPTS="--reinstall"
 
-dockerrun "${CMSPKG} ${CMSPKG_OPTS} install ${CMSPKG_ARGS} -y ${PACKAGE_NAME}"
-if [ "$LOCK_CVMFS" != "false" ] ; then 
+${CMSPKG} ${CMSPKG_OPTS} reinstall ${CMSPKG_ARGS} -y cms+fakesystem+1.0 || true
+${CMSPKG} ${CMSPKG_OPTS} install ${CMSPKG_ARGS} -y ${PACKAGE_NAME}
+if [ "$LOCK_CVMFS" != "false" ] ; then
   BOOK_KEEPING="/cvmfs/${CVMFS_REPOSITORY}/cvmfs-cms.cern.ch-updates"
   touch ${BOOK_KEEPING}
   BOOK_KEEPING_PKG="${PACKAGE_NAME}"

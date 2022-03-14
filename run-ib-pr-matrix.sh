@@ -1,12 +1,12 @@
 #!/bin/sh -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(dirname $(realpath $0))
-REL_BASELINE_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/new-matrix${TEST_FLAVOR}-results"
+ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/new-matrix${TEST_FLAVOR}-results"
 source $CMS_BOT_DIR/jenkins-artifacts
 #Run on any machine to see which workflows should be run
 if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   echo "${WORKFLOWS}" > ${WORKSPACE}/workflows-${BUILD_ID}.log
-  send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${REL_BASELINE_DIR}/workflows-${BUILD_ID}.log
+  send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${ARTIFACT_DIR}/workflows-${BUILD_ID}.log
   OPTS=""
   case "${TEST_FLAVOR}" in
     gpu ) OPTS="-w gpu" ;;
@@ -16,8 +16,8 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
   echo "Total WFs: $(cat $WORKSPACE/all.wfs |wc -l)"
   REL_WFS=""
-  if has_jenkins_artifacts ${REL_BASELINE_DIR} -d ; then
-    REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log 2>/dev/null" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
+  if has_jenkins_artifacts ${ARTIFACT_DIR} -d ; then
+    REL_WFS=$(cmd_jenkins_artifacts ${ARTIFACT_DIR} "cat runall-report-step123*.log 2>/dev/null" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
   fi
   runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
   for wf in $(cat $WORKSPACE/req.wfs) ; do
@@ -61,5 +61,15 @@ pushd "$WORKSPACE/matrix-results"
 popd
 
 if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
-  send_jenkins_artifacts $WORKSPACE/matrix-results/ ${REL_BASELINE_DIR}
+  [ -f ${LOCALRT}/used-ibeos-sort ] && mv ${LOCALRT}/used-ibeos-sort $WORKSPACE/matrix-results/
+  send_jenkins_artifacts $WORKSPACE/matrix-results/ ${ARTIFACT_DIR}
+  echo "ARTIFACT_DIR=${ARTIFACT_DIR}" > $WORKSPACE/cvmfs-deploy-baseline
+  echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
+
+  REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
+  DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')
+  if [ "X${REL_QUEUE}" = "X${DEV_QUEUE}" ] ; then
+    echo "${REL_QUEUE}" > $WORKSPACE/BaselineDevRelease
+    send_jenkins_artifacts $WORKSPACE/BaselineDevRelease ib-baseline-tests/BaselineDevRelease
+  fi
 fi

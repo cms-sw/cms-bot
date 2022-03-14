@@ -12,6 +12,7 @@ function Jenkins_GetCPU ()
 REL_BASELINE_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/new-matrix${TEST_FLAVOR}-results"
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
+  echo "${WORKFLOWS}" > workflows-${BUILD_ID}.log
   source $CMS_BOT_DIR/jenkins-artifacts
   MATRIX_OPTS="-j $(Jenkins_GetCPU) ${MATRIX_ARGS}"
   case "${TEST_FLAVOR}" in

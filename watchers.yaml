@@ -1796,3 +1796,15 @@ valsdav:
 - SimCalorimetry/EcalTrigPrimAlgos
 - SimCalorimetry/EcalTrigPrimProducers
 - CalibCalorimetry/EcalTPGTools
+eyigitba:
+- DataFormats/L1TMuon
+- DataFormats/L1Trigger
+- EventFilter/L1TRawToDigi
+- L1Trigger/L1TCommon
+- L1Trigger/L1TMuon
+- L1Trigger/L1TNtuples
+- L1Trigger/L1TMuonEndCap
+- L1Trigger/CSCTriggerPrimitives
+- L1Trigger/CSCCommonTrigger
+- DataFormats/CSCDigi
+- DataFormats/GEMDigi

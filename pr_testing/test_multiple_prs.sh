@@ -224,7 +224,7 @@ for ex_type in "GPU" "HIGH_STATS" ; do
   [ "$WF_LIST" != "" ] || continue
   WF_LIST=$(echo ${WF_LIST} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
-  cp run-default-${BUILD_ID}-01.txt   run-baseline-${BUILD_ID}-01.${ex_type_lc}
+  cp run-baseline-${BUILD_ID}-01.default   run-baseline-${BUILD_ID}-01.${ex_type_lc}
   echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
   echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
   WF_LIST=$(eval echo "\${MATRIX_EXTRAS_${ex_type}}" | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')

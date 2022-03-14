@@ -15,16 +15,20 @@ REL_BASELINE_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARC
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
   source $CMS_BOT_DIR/jenkins-artifacts
-  MATRIX_OPTS="-j $(Jenkins_GetCPU) ${EXTRA_MATRIX_ARGS}"
-  [ "${TEST_FLAVOR}" = "gpu" ] && MATRIX_OPTS="${MATRIX_OPTS} -w gpu"
+  MATRIX_OPTS="-j $(Jenkins_GetCPU) ${MATRIX_ARGS}"
+  case "${TEST_FLAVOR}" in
+    gpu ) MATRIX_OPTS="${MATRIX_OPTS} -w gpu" ;;
+    high_stats ) ;;
+    * ) ;;
+  esac
   runTheMatrix.py -n ${MATRIX_OPTS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
   echo "Total WFs: $(cat $WORKSPACE/all.wfs |wc -l)"
-  REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
-  WFS=""
-  for wf in $(echo ${MATRIX_EXTRAS} | tr ',' '\n') ;  do
-    [ $(echo " $REL_WFS " | grep " $wf " | wc -l) -eq 0 ] || continue
+  REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log 2>/dev/null" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
+  runTheMatrix.py -n ${MATRIX_OPTS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  for wf in $(cat $WORKSPACE/req.wfs) ; do
     [ $(grep "^${wf}$" $WORKSPACE/all.wfs | wc -l) -gt 0 ] || continue
-    WFS="${wf},${WFS}"
+    [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
+    WFS="${wf},${WFS}"    
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
   [ "${WFS}" = "" ] && exit 0
@@ -52,7 +56,3 @@ pushd "$WORKSPACE/matrix-results"
 popd
 
 send_jenkins_artifacts $WORKSPACE/matrix-results/ ${REL_BASELINE_DIR}
-echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/cvmfs-deploy-baseline
-echo "ARCHITECTURE=${ARCHITECTURE}"    >> $WORKSPACE/cvmfs-deploy-baseline
-echo "TEST_FLAVOR=${TEST_FLAVOR}"      >> $WORKSPACE/cvmfs-deploy-baseline
-echo "REAL_ARCH=${REAL_ARCH}"          >> $WORKSPACE/cvmfs-deploy-baseline

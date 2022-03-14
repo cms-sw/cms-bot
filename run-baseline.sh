@@ -11,7 +11,7 @@ function Jenkins_GetCPU ()
   fi
   echo $ACTUAL_CPU
 }
-REL_BASELINE_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
+REL_BASELINE_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/new-matrix${TEST_FLAVOR}-results"
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
   source $CMS_BOT_DIR/jenkins-artifacts

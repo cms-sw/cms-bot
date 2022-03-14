@@ -199,13 +199,22 @@ fi
 
 mkdir $WORKSPACE/ib-baseline-tests
 pushd $WORKSPACE/ib-baseline-tests
-echo "RELEASE_FORMAT=$COMPARISON_REL"                             > run-baseline-${BUILD_ID}-01.default
-echo "ARCHITECTURE=$COMPARISON_ARCH"                             >> run-baseline-${BUILD_ID}-01.default
-echo "DOCKER_IMG=cmssw/$(echo $COMPARISON_ARCH | sed 's|_.*||')" >> run-baseline-${BUILD_ID}-01.default
-echo "TEST_FLAVOR="                                              >> run-baseline-${BUILD_ID}-01.default
+COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
+if [ "${COMP_OS}" = "slc7" ] ; then COMP_OS="cc7"; fi
+echo "RELEASE_FORMAT=$COMPARISON_REL" > run-baseline-${BUILD_ID}-01.default
+echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
+echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
+echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
+WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+if [ "${WF_LIST}" = "" ] ; then
+  WF_LIST="-s"
+else
+  WF_LIST="-s -l ${WF_LIST}"
+fi
+echo "WORKFLOWS=${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
 if [ "${MATRIX_EXTRAS}" != "" ] ; then
   cp run-baseline-${BUILD_ID}-01.default     run-baseline-${BUILD_ID}-02.default
-  echo "WORKFLOWS=${WF_LIST}"             >> run-baseline-${BUILD_ID}-02.default
+  echo "WORKFLOWS=-l ${MATRIX_EXTRAS}"    >> run-baseline-${BUILD_ID}-02.default
   echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
 fi
 for ex_type in "GPU" "HIGH_STATS" ; do
@@ -214,14 +223,14 @@ for ex_type in "GPU" "HIGH_STATS" ; do
   [ "$WF_LIST" != "" ] || continue
   ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
   cp run-default-${BUILD_ID}-01.txt   run-baseline-${BUILD_ID}-01.${ex_type_lc}
-  echo "WORKFLOWS=${WF_LIST}"      >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
+  echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
   echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
   WF_LIST=$(eval echo "\${MATRIX_EXTRAS_${ex_type}}")
   [ "${WF_LIST}" != "" ] || continue
   WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
   cp run-baseline-${BUILD_ID}-01.${ex_type_lc} run-baseline-${BUILD_ID}-02.${ex_type_lc}
-  echo "WORKFLOWS=${WF_LIST}"               >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
-  echo "MATRIX_ARGS=${WF_ARGS}"             >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+  echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+  echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
 done
 popd
 send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/

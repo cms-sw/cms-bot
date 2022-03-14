@@ -26,6 +26,8 @@ pushd $WORKSPACE/matrix-results
   fi
 
   [ -f wf_mapping.${BUILD_ID}.txt ] && mv wf_mapping.${BUILD_ID}.txt wf_mapping.txt
+  [ -f runall-report-step123-.${BUILD_ID}.log ] && mv runall-report-step123-.${BUILD_ID}.log runall-report-step123-.log
+  [ -f wf_errors.${BUILD_ID}.txt ] && mv wf_errors.${BUILD_ID}.txt wf_errors.txt
   rm -f lfns.txt ; touch lfns.txt
   for lfn in $(grep -hR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
     echo "${lfn}" >> lfns.txt
@@ -39,6 +41,7 @@ pushd $WORKSPACE/matrix-results
     let CNT=${CNT}+1
   done
 popd
+mv $WORKSPACE/matrix-results $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
 
 TEST_ERRORS=`grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR'` | grep -v 'ERROR failed to parse X509 proxy' || true
 GENERAL_ERRORS=`grep "ALL_OK" ${LOG}` || true

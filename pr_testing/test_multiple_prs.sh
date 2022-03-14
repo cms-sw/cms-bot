@@ -226,6 +226,7 @@ done
 popd
 send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
 rm -rf $WORKSPACE/ib-baseline-tests
+exit 0
 
 #Incase week is changed but tests were run for last week
 IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|.* ||;s|/${SCRAM_ARCH}/.*||;s|.*/week||")

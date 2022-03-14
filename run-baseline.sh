@@ -6,7 +6,7 @@ source $CMS_BOT_DIR/jenkins-artifacts
 #Run on any machine to see which workflows should be run
 if ! $FORCE_RUN ; then
   echo "${WORKFLOWS}" > ${WORKSPACE}/workflows-${BUILD_ID}.log
-  send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${REL_BASELINE_DIR}/
+  send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${REL_BASELINE_DIR}/workflows-${BUILD_ID}.log
   OPTS=""
   case "${TEST_FLAVOR}" in
     gpu ) OPTS="-w gpu" ;;

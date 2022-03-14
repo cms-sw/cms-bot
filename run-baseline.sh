@@ -1,8 +1,6 @@
 #!/bin/sh -ex
 TEST_FLAVOR=$1
-CMS_BOT_DIR=$(dirname $0)
-case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
-CMS_BOT_DIR=$(dirname ${CMS_BOT_DIR})
+CMS_BOT_DIR=$(dirname $(realpath $0))
 function Jenkins_GetCPU ()
 {
   ACTUAL_CPU=$(nproc)

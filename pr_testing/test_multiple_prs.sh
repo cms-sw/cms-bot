@@ -214,7 +214,7 @@ fi
 echo "WORKFLOWS=${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
 if [ "${MATRIX_EXTRAS}" != "" ] ; then
   WF_LIST=$(echo ${MATRIX_EXTRAS} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  cp run-baseline-${BUILD_ID}-01.default     run-baseline-${BUILD_ID}-02.default
+  grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
   echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
   echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
 fi
@@ -224,13 +224,13 @@ for ex_type in "GPU" "HIGH_STATS" ; do
   [ "$WF_LIST" != "" ] || continue
   WF_LIST=$(echo ${WF_LIST} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
-  cp run-baseline-${BUILD_ID}-01.default   run-baseline-${BUILD_ID}-01.${ex_type_lc}
+  grep -v '^\(WORKFLOWS\|MATRIX_ARGS\|TEST_FLAVOR\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-01.${ex_type_lc}
   echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
   echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
   WF_LIST=$(eval echo "\${MATRIX_EXTRAS_${ex_type}}" | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   [ "${WF_LIST}" != "" ] || continue
   WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
-  cp run-baseline-${BUILD_ID}-01.${ex_type_lc} run-baseline-${BUILD_ID}-02.${ex_type_lc}
+  grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
   echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
   echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
 done

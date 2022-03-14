@@ -205,7 +205,7 @@ echo "RELEASE_FORMAT=$COMPARISON_REL" > run-baseline-${BUILD_ID}-01.default
 echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
 echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
 echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
-WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ',' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
 if [ "${WF_LIST}" = "" ] ; then
   WF_LIST="-s"
 else
@@ -213,19 +213,21 @@ else
 fi
 echo "WORKFLOWS=${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
 if [ "${MATRIX_EXTRAS}" != "" ] ; then
+  WF_LIST=$(echo ${MATRIX_EXTRAS} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   cp run-baseline-${BUILD_ID}-01.default     run-baseline-${BUILD_ID}-02.default
-  echo "WORKFLOWS=-l ${MATRIX_EXTRAS}"    >> run-baseline-${BUILD_ID}-02.default
+  echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
   echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
 fi
 for ex_type in "GPU" "HIGH_STATS" ; do
   [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
-  WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${ex_type}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+  WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${ex_type}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ',' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   [ "$WF_LIST" != "" ] || continue
+  WF_LIST=$(echo ${WF_LIST} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
   cp run-default-${BUILD_ID}-01.txt   run-baseline-${BUILD_ID}-01.${ex_type_lc}
   echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
   echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
-  WF_LIST=$(eval echo "\${MATRIX_EXTRAS_${ex_type}}")
+  WF_LIST=$(eval echo "\${MATRIX_EXTRAS_${ex_type}}" | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   [ "${WF_LIST}" != "" ] || continue
   WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
   cp run-baseline-${BUILD_ID}-01.${ex_type_lc} run-baseline-${BUILD_ID}-02.${ex_type_lc}

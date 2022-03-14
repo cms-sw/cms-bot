@@ -206,12 +206,8 @@ echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
 echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
 echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
 WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ',' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-if [ "${WF_LIST}" = "" ] ; then
-  WF_LIST="-s"
-else
-  WF_LIST="-s -l ${WF_LIST}"
-fi
-echo "WORKFLOWS=${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+[ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
+echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
 if [ "${MATRIX_EXTRAS}" != "" ] ; then
   WF_LIST=$(echo ${MATRIX_EXTRAS} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
   grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
@@ -1076,12 +1072,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
     WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-    if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
-    WF_LIST="-s $WF_LIST"
+    [ "$WF_LIST" = "" ] ||  WF_LIST="-l $WF_LIST"
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
     echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
     echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-    echo "MATRIX_ARGS=$WF_LIST $EXTRA_MATRIX_ARGS_THREADING" >> $WORKSPACE/run-relvals-threading.prop
+    echo "MATRIX_ARGS=-s $WF_LIST $EXTRA_MATRIX_ARGS_THREADING" >> $WORKSPACE/run-relvals-threading.prop
   fi
   if $PRODUCTION_RELEASE ; then
     for ex_type in "GPU" "HIGH_STATS" ; do

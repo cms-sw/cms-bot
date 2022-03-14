@@ -1,45 +1,44 @@
 #!/bin/sh -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(dirname $(realpath $0))
-function Jenkins_GetCPU ()
-{
-  ACTUAL_CPU=$(nproc)
-  if [ "X$1" != "X" ] ; then
-    let ACTUAL_CPU=$ACTUAL_CPU*$1 || true
-  fi
-  echo $ACTUAL_CPU
-}
 REL_BASELINE_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/new-matrix${TEST_FLAVOR}-results"
-mkdir -p "$WORKSPACE/matrix-results"
-pushd "$WORKSPACE/matrix-results"
-  echo "${WORKFLOWS}" > workflows-${BUILD_ID}.log
-  source $CMS_BOT_DIR/jenkins-artifacts
-  MATRIX_OPTS="-j $(Jenkins_GetCPU) ${MATRIX_ARGS}"
+source $CMS_BOT_DIR/jenkins-artifacts
+#Run on any machine to see which workflows should be run
+if ! $FORCE_RUN ; then
+  echo "${WORKFLOWS}" > ${WORKSPACE}/workflows-${BUILD_ID}.log
+  send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${REL_BASELINE_DIR}/
   case "${TEST_FLAVOR}" in
-    gpu ) MATRIX_OPTS="${MATRIX_OPTS} -w gpu" ;;
+    gpu ) MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) ;;
     * ) ;;
   esac
-  runTheMatrix.py -n ${MATRIX_OPTS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
+  runTheMatrix.py -n ${MATRIX_ARGS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
   echo "Total WFs: $(cat $WORKSPACE/all.wfs |wc -l)"
   REL_WFS=""
   if has_jenkins_artifacts ${REL_BASELINE_DIR} -d ; then
     REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log 2>/dev/null" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
   fi
-  runTheMatrix.py -n ${MATRIX_OPTS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
+  runTheMatrix.py -n ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
   for wf in $(cat $WORKSPACE/req.wfs) ; do
     [ $(grep "^${wf}$" $WORKSPACE/all.wfs | wc -l) -gt 0 ] || continue
     [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue
-    WFS="${wf},${WFS}"    
+    WFS="${wf},${WFS}"
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
   [ "${WFS}" = "" ] && exit 0
-  MATRIX_OPTS="${MATRIX_OPTS} -l ${WFS}"
-  [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_OPTS="--job-reports $MATRIX_OPTS"
-  if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then 
-    [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_OPTS="--command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_OPTS"
+  echo "MATRIX_ARGS=${MATRIX_ARGS} -l ${WFS}" > $WORKSPACE/rerun.txt
+  echo "FORCE_RUN=true"                      >> $WORKSPACE/rerun.txt
+  exit 0
+fi
+
+#Actually run  runTheMatrix.py for the selected workflows
+mkdir -p "$WORKSPACE/matrix-results"
+pushd "$WORKSPACE/matrix-results"
+  [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_ARGS="--job-reports $MATRIX_ARGS"
+  if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
+    [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] && MATRIX_ARGS="--command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $MATRIX_ARGS"
   fi
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py ${MATRIX_OPTS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py -j $(nproc) ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
   MAPPING_FILE=wf_mapping.${BUILD_ID}.txt
   for f in $(find . -name DQM*.root | sort) ; do

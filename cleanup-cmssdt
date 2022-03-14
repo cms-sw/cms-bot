@@ -9,7 +9,7 @@ fi
 
 JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
-DIRS_PROCESSED="cvmfs-deploy-baseline "
+DIRS_PROCESSED=""
 JOBS_TO_KEEP=200
 RUNS_TO_KEEP=3
 #Keep $JOBS_TO_KEEP of these

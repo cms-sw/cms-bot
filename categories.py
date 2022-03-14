@@ -85,6 +85,7 @@ CMSSW_L2 = {
   "thomreis":         ["ecal-dpg"],
   "mseidel42":        ["hcal-dpg"],
   "georgia14":        ["hcal-dpg"],
+  "wang-hui":         ["hcal-dpg"],
   "igv4321":          ["hcal-dpg"],
   "mileva":           ["muon-dpg"],
   "battibass":        ["muon-dpg","dt-dpg"],

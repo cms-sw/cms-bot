@@ -11,15 +11,12 @@ if [ ${TEST_FLAVOR} != "" ] ; then
 fi
 
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
-mkdir "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
-pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
-  if [ "${TEST_FLAVOR}" = "threading" ] ; then let NCPU=($(nproc)/4)+1 ; fi
-  RELVALS_CMD="LOCALRT=${WORKSPACE}/${CMSSW_VERSION} timeout $MATRIX_TIMEOUT runTheMatrix.py -j ${NCPU} $MATRIX_ARGS"
-  LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
-  echo $RELVALS_CMD > ${LOG}
-  dateBefore=$(date +"%s")
-  (eval $RELVALS_CMD && echo 'ALL_OK') 2>&1 | tee -a ${LOG}
-  dateAfter=$(date +"%s")
+LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
+dateBefore=$(date +"%s")
+(LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee -a ${LOG}
+dateAfter=$(date +"%s")
+pushd $WORKSPACE/matrix-results
+  rm -f matrixTests.${BUILD_ID}.log
   $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
 
   diff=$(($dateAfter-$dateBefore))
@@ -27,7 +24,8 @@ pushd "$WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results"
     echo "------------"  >> ${LOG}
     echo 'ERROR TIMEOUT' >> ${LOG}
   fi
-  find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.txt
+
+  [ -f wf_mapping.${BUILD_ID}.txt ] && mv wf_mapping.${BUILD_ID}.txt wf_mapping.txt
   rm -f lfns.txt ; touch lfns.txt
   for lfn in $(grep -hR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
     echo "${lfn}" >> lfns.txt
@@ -63,7 +61,6 @@ else
   echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/relval${UC_TEST_FLAVOR}.txt
 
   if $DO_COMPARISON ; then
-    REAL_ARCH=-$(cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //")
     echo "COMPARISON${UC_TEST_FLAVOR};QUEUED,Comparison ${UC_TEST_FLAVOR} with the baseline,See results,See results" >> ${RESULTS_DIR}/comparison${UC_TEST_FLAVOR}.txt
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
     echo "Creating properties file $TRIGGER_COMPARISON_FILE"
@@ -71,7 +68,6 @@ else
     echo "ARCHITECTURE=${SCRAM_ARCH}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_JOB_ID=${PR_TEST_BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE
-    echo "REAL_ARCH=${REAL_ARCH}" >> $TRIGGER_COMPARISON_FILE
     echo "WORKFLOWS_LIST=${WORKFLOW_TO_COMPARE}" >> $TRIGGER_COMPARISON_FILE
     echo "COMPARISON_ARCH=$COMPARISON_ARCH" >> $TRIGGER_COMPARISON_FILE
     echo "DOCKER_IMG=$DOCKER_IMG" >> $TRIGGER_COMPARISON_FILE

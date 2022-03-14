@@ -35,25 +35,21 @@ fi
 #Actually run  runTheMatrix.py for the selected workflows
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
+  NJOBS=$(nproc)
   CMD_OPTS=""
   case "${TEST_FLAVOR}" in
     gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 1000" ;;
-    threading )  MATRIX_ARGS="-i all -t 4 ${MATRIX_ARGS}" ;;
+    threading )  MATRIX_ARGS="-i all -t 4 ${MATRIX_ARGS}" ; let NJOBS=(${NCPU}/4)+1 ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1" ;;
     * ) ;;
   esac
   [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && MATRIX_ARGS="--job-reports $MATRIX_ARGS"
   [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ] && CMD_OPTS="${CMD_OPTS} --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport"
   [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py -j $(nproc) ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
-  MAPPING_FILE=wf_mapping.${BUILD_ID}.txt
-  for f in $(find . -name DQM*.root | sort) ; do
-    WF_PATH=`echo $f | sed 's/^\.\///'`
-    WF_NUMBER=`echo $WF_PATH | sed 's/_.*$//'`
-    echo $WF_PATH >> $MAPPING_FILE
-  done
+  find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt
   ERRORS_FILE=wf_errors.${BUILD_ID}.txt
   touch $ERRORS_FILE
   grep "ERROR executing.*" matrixTests.${BUILD_ID}.log | while read line ; do

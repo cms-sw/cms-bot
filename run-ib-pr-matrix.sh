@@ -24,8 +24,8 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
   [ "${WFS}" = "" ] && exit 0
-  echo "CHECK_WORKFLOWS=false"                 > rerun.txt
-  echo "MATRIX_ARGS=${MATRIX_ARGS} -l ${WFS}" >> rerun.txt
+  echo "CHECK_WORKFLOWS=false"                 > ${WORKSPACE}/rerun.txt
+  echo "MATRIX_ARGS=${MATRIX_ARGS} -l ${WFS}" >> ${WORKSPACE}/rerun.txt
   exit 0
 fi
 

@@ -14,7 +14,7 @@ mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Runni
 LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
 echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
   dateBefore=$(date +"%s")
-  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee -a ${LOG}
+  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee -a ${LOG}
   dateAfter=$(date +"%s")
   diff=$(($dateAfter-$dateBefore))
   if [ "$diff" -ge $MATRIX_TIMEOUT ]; then

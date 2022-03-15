@@ -4,7 +4,7 @@ CMS_BOT_DIR=$(dirname $(realpath $0))
 ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/new-matrix${TEST_FLAVOR}-results"
 source $CMS_BOT_DIR/jenkins-artifacts
 #Run on any machine to see which workflows should be run
-if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
+if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   echo "${WORKFLOWS}" > ${WORKSPACE}/workflows-${BUILD_ID}.log
   send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${ARTIFACT_DIR}/workflows-${BUILD_ID}.log
   OPTS=""
@@ -24,7 +24,9 @@ if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
   [ "${WFS}" = "" ] && exit 0
-  MATRIX_ARGS="${MATRIX_ARGS} -l ${WFS}"
+  echo "CHECK_WORKFLOWS=false"                 > rerun.txt
+  echo "MATRIX_ARGS=${MATRIX_ARGS} -l ${WFS}" >> rerun.txt
+  exit 0
 fi
 
 #Actually run  runTheMatrix.py for the selected workflows

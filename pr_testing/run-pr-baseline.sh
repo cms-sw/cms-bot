@@ -11,7 +11,7 @@ function Jenkins_GetCPU ()
   fi
   echo $ACTUAL_CPU
 }
-REL_BASELINE_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
+ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
 mkdir -p "$WORKSPACE/matrix-results"
 pushd "$WORKSPACE/matrix-results"
   source $CMS_BOT_DIR/jenkins-artifacts
@@ -19,7 +19,7 @@ pushd "$WORKSPACE/matrix-results"
   [ "${TEST_FLAVOR}" = "gpu" ] && MATRIX_OPTS="${MATRIX_OPTS} -w gpu"
   runTheMatrix.py -n ${MATRIX_OPTS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/all.wfs
   echo "Total WFs: $(cat $WORKSPACE/all.wfs |wc -l)"
-  REL_WFS=$(cmd_jenkins_artifacts ${REL_BASELINE_DIR} "cat runall-report-step123*.log" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
+  REL_WFS=$(cmd_jenkins_artifacts ${ARTIFACT_DIR} "cat runall-report-step123*.log" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
   WFS=""
   for wf in $(echo ${MATRIX_EXTRAS} | tr ',' '\n') ;  do
     [ $(echo " $REL_WFS " | grep " $wf " | wc -l) -eq 0 ] || continue
@@ -51,8 +51,6 @@ pushd "$WORKSPACE/matrix-results"
   done
 popd
 
-send_jenkins_artifacts $WORKSPACE/matrix-results/ ${REL_BASELINE_DIR}
-echo "RELEASE_FORMAT=${RELEASE_FORMAT}" > $WORKSPACE/cvmfs-deploy-baseline
-echo "ARCHITECTURE=${ARCHITECTURE}"    >> $WORKSPACE/cvmfs-deploy-baseline
-echo "TEST_FLAVOR=${TEST_FLAVOR}"      >> $WORKSPACE/cvmfs-deploy-baseline
-echo "REAL_ARCH=${REAL_ARCH}"          >> $WORKSPACE/cvmfs-deploy-baseline
+send_jenkins_artifacts $WORKSPACE/matrix-results/ ${ARTIFACT_DIR}
+echo "ARTIFACT_DIR=${ARTIFACT_DIR}" > $WORKSPACE/cvmfs-deploy-baseline
+echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline

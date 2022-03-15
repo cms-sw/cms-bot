@@ -142,7 +142,7 @@ for REPOSITORY in $REPOSITORIES; do
     fi
     INSTALL_PACKAGES="$(${CMSPKG} search gcc-fixincludes | sed 's| .*||' | grep 'gcc-fixincludes' | sort | tail -1) ${INSTALL_PACKAGES}"
     ln -sfT ../SITECONF $WORKDIR/SITECONF
-    $CMSPKG -y upgrade
+    $CMSPKG -y  --upgrade-packages upgrade
     if [ $(ls -rtd $WORKDIR/${SCRAM_ARCH}/external/rpm/4.* | tail -1 | sed 's|.*/external/rpm/4.||;s|\..*||') -lt 15 ] ; then
       RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
       if [ ! -e $RPM_CONFIG ] ; then
@@ -152,12 +152,6 @@ for REPOSITORY in $REPOSITORIES; do
     fi
     (
       ${CMSPKG} update
-      if [ $(${CMSPKG} --version | sed 's|V||;s|-||g') -ge 105 ] ; then
-        $CMSPKG -y --upgrade-packages upgrade
-      else
-        ${CMSPKG} -f reinstall cms+fakesystem+1.0 || true
-        ${CMSPKG} -f reinstall cms+cms-common+1.0
-      fi
       ${CMSPKG} -f install ${INSTALL_PACKAGES}
       if [ "X$RELEASE_NAME" != "X" ] ; then
         x="cms+cmssw-ib+$RELEASE_NAME"

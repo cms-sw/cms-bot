@@ -200,7 +200,6 @@ case $CMSSW_QUEUE in
 esac
 if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
 
-REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
 CMSSW_IB="$RELEASE_FORMAT"  # We are getting CMSSW_IB, so that we wont rebuild all the software
 [ "$COMPARISON_ARCH" = "" ] && COMPARISON_ARCH=$(cat $CONFIG_MAP | grep "RELEASE_QUEUE=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep 'PROD_ARCH=1' | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
 if [[ $RELEASE_FORMAT != *-* ]]; then
@@ -260,7 +259,7 @@ if $DO_COMPARISON ; then
   popd
   send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
   rm -rf $WORKSPACE/ib-baseline-tests
-popd
+fi
 
 #Incase week is changed but tests were run for last week
 IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|.* ||;s|/${SCRAM_ARCH}/.*||;s|.*/week||")

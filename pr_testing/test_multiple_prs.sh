@@ -4,6 +4,36 @@
 # 1) will merge multiple PRs for multiple repos
 # 2) run tests and post result on github
 # ---
+#common function
+function order_workflow_list(){
+  echo ${1} | tr ' ' '\n' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||'
+}
+
+function get_pr_baseline_worklflow() {
+  order_workflow_list $(grep "^PR_TEST_MATRIX_EXTRAS${1}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${2}
+}
+
+function get_pr_relval_args() {
+  local WF_ARGS
+  local WF_LIST
+  local WF_LIST2
+  if $1 ; then
+     WF_LIST=$(get_pr_baseline_worklflow "$2")
+     [ "$WF_LIST" = "" ] || WF_LIST="-l $WF_LIST"
+     WF_LIST2=$(order_workflow_list "$(eval echo \${MATRIX_EXTRAS$2})")
+     if [ "${WF_LIST2}" = "" ] ; then
+       WF_ARGS="${WF_LIST}"
+     else
+       WF_ARGS="${WF_LIST};-l ${WF_LIST2} $(eval echo \${EXTRA_MATRIX_ARGS$2})"
+     fi
+  else
+    WF_LIST=$(get_pr_baseline_worklflow "$2" "$(eval echo \${MATRIX_EXTRAS$2})")
+    [ "$WF_LIST" = "" ] || WF_LIST="-l $WF_LIST"
+    WF_ARGS="${WF_LIST} $(eval echo \${EXTRA_MATRIX_ARGS$2})"
+  fi
+  echo "${WF_ARGS}"
+}
+
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
@@ -52,11 +82,8 @@ TEST_RELVALS_INPUT=true
 DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
-if [ $(echo ${ARCHITECTURE} | grep "_amd64_" | wc -l) -gt 0 ] ; then
-  DO_COMPARISON=true
-elif [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X' |wc -l) -gt 0 ] ; then
-  DO_COMPARISON=false
-fi
+[ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
+[ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
 
 PRODUCTION_RELEASE=false
 CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
@@ -197,42 +224,43 @@ if [ "$COMPARISON_REL" = "" ] ; then
 fi
 [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] && sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res
 
-mkdir $WORKSPACE/ib-baseline-tests
-pushd $WORKSPACE/ib-baseline-tests
-COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
-if [ "${COMP_OS}" = "slc7" ] ; then COMP_OS="cc7"; fi
-echo "RELEASE_FORMAT=$COMPARISON_REL" > run-baseline-${BUILD_ID}-01.default
-echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
-echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
-echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
-WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ',' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-[ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
-echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
-if [ "${MATRIX_EXTRAS}" != "" ] ; then
-  WF_LIST=$(echo ${MATRIX_EXTRAS} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
-  echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
-  echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
-fi
-for ex_type in "GPU" "HIGH_STATS" ; do
-  [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
-  WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${ex_type}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||') | tr ' ' ',' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  [ "$WF_LIST" != "" ] || continue
-  WF_LIST=$(echo ${WF_LIST} | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
-  grep -v '^\(WORKFLOWS\|MATRIX_ARGS\|TEST_FLAVOR\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-01.${ex_type_lc}
-  echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
-  echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
-  WF_LIST=$(eval echo "\${MATRIX_EXTRAS_${ex_type}}" | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  [ "${WF_LIST}" != "" ] || continue
-  WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
-  grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
-  echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
-  echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
-done
+if $DO_COMPARISON ; then
+  mkdir $WORKSPACE/ib-baseline-tests
+  pushd $WORKSPACE/ib-baseline-tests
+    COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
+    if [ "${COMP_OS}" = "slc7" ] ; then COMP_OS="cc7"; fi
+    echo "RELEASE_FORMAT=$COMPARISON_REL" > run-baseline-${BUILD_ID}-01.default
+    echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
+    echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
+    echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
+    WF_LIST=$(get_pr_baseline_worklflow)
+    [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
+    echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+    if [ "${MATRIX_EXTRAS}" != "" ] ; then
+      WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
+      echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
+      echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
+    fi
+    for ex_type in "GPU" "HIGH_STATS" ; do
+      [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
+      WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
+      [ "$WF_LIST" != "" ] || continue
+      ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\|TEST_FLAVOR\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      WF_LIST=$(order_workflow_list $(eval echo "\${MATRIX_EXTRAS_${ex_type}}"))
+      [ "${WF_LIST}" != "" ] || continue
+      WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+    done
+  popd
+  send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
+  rm -rf $WORKSPACE/ib-baseline-tests
 popd
-send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
-rm -rf $WORKSPACE/ib-baseline-tests
 
 #Incase week is changed but tests were run for last week
 IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|.* ||;s|/${SCRAM_ARCH}/.*||;s|.*/week||")
@@ -1058,20 +1086,16 @@ echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
 
 #
 # Matrix tests
-#
 if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
-  WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
-  WF_LIST="-s $WF_LIST"
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
   echo "DO_COMPARISON=$DO_COMPARISON" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
-  echo "MATRIX_ARGS=$WF_LIST $EXTRA_MATRIX_ARGS" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
+  echo "MATRIX_ARGS="-s $(get_pr_relval_args $DO_COMPARISON '') >> $WORKSPACE/run-relvals.prop
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-    WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
+    WF_LIST=$(get_pr_baseline_worklflow "" ${MATRIX_EXTRAS_THREADING})
     [ "$WF_LIST" = "" ] ||  WF_LIST="-l $WF_LIST"
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
     echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
@@ -1081,14 +1105,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   if $PRODUCTION_RELEASE ; then
     for ex_type in "GPU" "HIGH_STATS" ; do
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
-      WF_LIST=$(eval echo "\$MATRIX_EXTRAS_${ex_type}}" | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-      WF_LIST=$(echo $(grep "PR_TEST_MATRIX_EXTRAS_${ex_type}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${WF_LIST} | tr ' ' ',' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-      if [ "X$WF_LIST" != X ]; then
-        ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
-        WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
-        cp $WORKSPACE/run-relvals.prop $WORKSPACE/run-relvals-${ex_type_lc}.prop
-        echo "MATRIX_ARGS=-l ${WF_LIST} ${WF_ARGS}" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
-      fi
+      WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
+      [ "$WF_LIST" != "" ] || continue
+      grep -v '^MATRIX_ARGS=' $WORKSPACE/run-relvals.prop > $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
     done
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e

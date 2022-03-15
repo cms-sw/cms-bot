@@ -12,22 +12,37 @@ fi
 
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
-dateBefore=$(date +"%s")
-(LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee -a ${LOG}
-dateAfter=$(date +"%s")
-pushd $WORKSPACE/matrix-results
-  rm -f matrixTests.${BUILD_ID}.log
-  $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | tr '\n' ',' | sed 's|,$||')
-
+echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
+  dateBefore=$(date +"%s")
+  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee -a ${LOG}
+  dateAfter=$(date +"%s")
   diff=$(($dateAfter-$dateBefore))
   if [ "$diff" -ge $MATRIX_TIMEOUT ]; then
     echo "------------"  >> ${LOG}
     echo 'ERROR TIMEOUT' >> ${LOG}
   fi
+  if [ ! -d $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results ] ; then
+    mv $WORKSPACE/matrix-results $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
+  else
+    rsync -a $WORKSPACE/matrix-results/ $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results/
+    rm -rf $WORKSPACE/matrix-results
+  fi
+  pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
+    rm -f matrixTests.${BUILD_ID}.log
+    for x in wf_mapping.${BUILD_ID}.txt runall-report-step123-.${BUILD_ID}.log wf_errors.${BUILD_ID}.txt ; do
+      xm=$(echo $x | sed "s|.${BUILD_ID}\.|.|")
+      touch $xm
+      if [ -f $x ] ; then
+        cat $x >> $xm
+        rm -f $x
+      fi
+    done
+  popd
+done
 
-  [ -f wf_mapping.${BUILD_ID}.txt ] && mv wf_mapping.${BUILD_ID}.txt wf_mapping.txt
-  [ -f runall-report-step123-.${BUILD_ID}.log ] && mv runall-report-step123-.${BUILD_ID}.log runall-report-step123-.log
-  [ -f wf_errors.${BUILD_ID}.txt ] && mv wf_errors.${BUILD_ID}.txt wf_errors.txt
+pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
+  $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | sort | uniq | tr '\n' ',' | sed 's|,$||')
+
   rm -f lfns.txt ; touch lfns.txt
   for lfn in $(grep -hR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
     echo "${lfn}" >> lfns.txt
@@ -41,7 +56,6 @@ pushd $WORKSPACE/matrix-results
     let CNT=${CNT}+1
   done
 popd
-mv $WORKSPACE/matrix-results $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
 
 TEST_ERRORS=`grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR'` | grep -v 'ERROR failed to parse X509 proxy' || true
 GENERAL_ERRORS=`grep "ALL_OK" ${LOG}` || true

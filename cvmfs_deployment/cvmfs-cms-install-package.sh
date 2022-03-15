@@ -20,8 +20,7 @@ ${CMS_BOT_DIR}/cvmfs_deployment/bootstrap_dir_for_arch.sh ${INSTALL_PATH} ${SCRA
 export SCRAM_ARCH
 export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
 CMSPKG="${INSTALL_PATH}/common/cmspkg -a ${SCRAM_ARCH}"
-${CMSPKG} -y upgrade
-${CMSPKG} -y --upgrade-packages upgrade || true
+${CMSPKG} -y --upgrade-packages upgrade
 if [ $(echo "${SCRAM_ARCH}" | grep '^slc' | wc -l) -gt 0 ] ; then
     RPM_CONFIG=${INSTALL_PATH}/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
     if [ ! -e ${RPM_CONFIG} ] ; then
@@ -31,10 +30,8 @@ if [ $(echo "${SCRAM_ARCH}" | grep '^slc' | wc -l) -gt 0 ] ; then
     fi
 fi
 
-#CMSPKG_OPTS=""
-#[ "${REINSTALL}" = true ] && CMSPKG_OPTS="--reinstall"
-
-${CMSPKG} ${CMSPKG_OPTS} reinstall ${CMSPKG_ARGS} -y cms+fakesystem+1.0 || true
+CMSPKG_OPTS=""
+[ "${REINSTALL}" = true ] && CMSPKG_OPTS="--reinstall"
 ${CMSPKG} ${CMSPKG_OPTS} install ${CMSPKG_ARGS} -y ${PACKAGE_NAME}
 if [ "$LOCK_CVMFS" != "false" ] ; then
   BOOK_KEEPING="/cvmfs/${CVMFS_REPOSITORY}/cvmfs-cms.cern.ch-updates"

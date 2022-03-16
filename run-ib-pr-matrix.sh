@@ -59,6 +59,7 @@ popd
 
 if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
   [ -f ${LOCALRT}/used-ibeos-sort ] && mv ${LOCALRT}/used-ibeos-sort $WORKSPACE/matrix-results/
+  echo "${WORKFLOWS}" > ${WORKSPACE}/matrix-results/workflows-${BUILD_ID}.done
   send_jenkins_artifacts $WORKSPACE/matrix-results/ ${ARTIFACT_DIR}
   echo "ARTIFACT_DIR=${ARTIFACT_DIR}" > $WORKSPACE/cvmfs-deploy-baseline
   echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline

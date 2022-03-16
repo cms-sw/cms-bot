@@ -30,6 +30,22 @@ DAS_NON_CONSISTENT_WFS_FILE=wf_non_consistent_das.txt
 MAPPING_FILE=wf_mapping.txt
 ERRORS_FILE=wf_errors.txt
 
+#Make sure Release baseline has been deployed
+echo -n "Waiting for baseline .."
+while [ ! -d ${CVMFS_ARTIFACT_DIR}/${BASELINE_DIR} ] ; do echo -n '.'; sleep 10 ; done
+echo ''
+if [ "${MATRIX_ARGS}" != "" ] ; then
+ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
+   args=$(echo "$args" | sed -e 's|.*\(-l *[^ ]*\).*|\1|;s|-|\\-|')
+   echo -n "Waiting for \"$args\" .."
+   while [ $(grep "$args" ${CVMFS_ARTIFACT_DIR}/${BASELINE_DIR}/workflows-*.done 2>/dev/null| wc -l) -eq 0 ] ; do
+     echo -n '.'
+     sleep 10
+   done
+   echo "Done: \"$args\""
+ done
+fi
+
 mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running" || true
 
 if $DQM_COMPARISON_TEST ; then

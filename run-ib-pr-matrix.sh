@@ -23,7 +23,10 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
     WFS="${wf},${WFS}"
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
-  [ "${WFS}" = "" ] && exit 0
+  if [ "${WFS}" = "" ] ; then
+    send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${ARTIFACT_DIR}/workflows-${BUILD_ID}.done
+    exit 0
+  fi
   echo "CHECK_WORKFLOWS=false"                 > ${WORKSPACE}/rerun.txt
   echo "MATRIX_ARGS=${MATRIX_ARGS} -l ${WFS}" >> ${WORKSPACE}/rerun.txt
   exit 0
@@ -36,7 +39,7 @@ pushd "$WORKSPACE/matrix-results"
   CMD_OPTS=""
   case "${TEST_FLAVOR}" in
     gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
-    high_stats ) CMD_OPTS="-n 10" ;;
+    high_stats ) CMD_OPTS="-n 200" ; MATRIX_ARGS="-i all ;;
     threading )  MATRIX_ARGS="-i all -t 4 ${MATRIX_ARGS}" ; let NJOBS=(${NJOBS}/4)+1 ;;
     input )      MATRIX_ARGS="-i all --maxSteps=2 ${MATRIX_ARGS}" ; CMD_OPTS="-n 1" ;;
     * ) ;;

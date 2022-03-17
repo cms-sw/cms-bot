@@ -80,7 +80,7 @@ MULTILINE_COMMENTS_MAP = {
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",           "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
               "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|high_stats|)": [RELVAL_OPTS,                     "EXTRA_MATRIX_ARGS",True],
-              "relval(s|)_command_opt(ion|)(s|)(_gpu|_input|_threading|high_stats|)": [RELVAL_OPTS,             "EXTRA_MATRIX_COMMAND_ARGS",True],
+              "relval(s|)_command_opt(ion|)(s|)(_gpu|_input|_threading|high_stats|)": [RELVAL_OPTS,             "EXTRA_MATRIX_COMMAND_ARGS",True]
               }
 
 L2_DATA = {}

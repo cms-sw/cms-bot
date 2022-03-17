@@ -29,6 +29,8 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   fi
   echo "CHECK_WORKFLOWS=false"                 > ${WORKSPACE}/rerun.txt
   echo "MATRIX_ARGS=${MATRIX_ARGS} -l ${WFS}" >> ${WORKSPACE}/rerun.txt
+  echo "ARTIFACT_DIR=${ARTIFACT_DIR}" > $WORKSPACE/cvmfs-deploy-baseline
+  echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
   exit 0
 fi
 

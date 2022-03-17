@@ -29,7 +29,7 @@ if [ -f config/SCRAM/linkexternal.py ] ; then
 fi
 eval \$(scram runtime -sh)
 echo $PATH | tr ':' '\n'
-export CMS_PATH=\${IB_LAST_WEEK}
+export CMS_PATH="/cvmfs/cms-ib.cern.ch"
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py
   $WORKSPACE/cms-bot/das-utils/use-ibeos-sort

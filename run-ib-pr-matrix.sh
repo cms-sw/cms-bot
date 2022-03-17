@@ -1,7 +1,7 @@
 #!/bin/sh -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(dirname $(realpath $0))
-ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/new-matrix${TEST_FLAVOR}-results"
+ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
 source $CMS_BOT_DIR/jenkins-artifacts
 #Run on any machine to see which workflows should be run
 if [ "${CHECK_WORKFLOWS}" = "true" ] ; then

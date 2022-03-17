@@ -65,7 +65,7 @@ REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
 ALL_CHECK_FUNCTIONS = None
-EXTRA_TESTS = "gpu|threading|profiling|none"
+EXTRA_TESTS = "gpu|threading|profiling|high_stats|none"
 MULTILINE_COMMENTS_MAP = {
               "workflow(s|)(_gpu|_threading|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
               "workflow(s|)_profiling":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "PROFILING_WORKFLOWS"],
@@ -79,7 +79,8 @@ MULTILINE_COMMENTS_MAP = {
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",           "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
-              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|)": [RELVAL_OPTS,                                "EXTRA_MATRIX_ARGS",True]
+              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|high_stats|)": [RELVAL_OPTS,                     "EXTRA_MATRIX_ARGS",True],
+              "relval(s|)_command_opt(ion|)(s|)(_gpu|_input|_threading|high_stats|)": [RELVAL_OPTS,             "EXTRA_MATRIX_COMMAND_ARGS",True],
               }
 
 L2_DATA = {}

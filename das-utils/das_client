@@ -28,6 +28,7 @@ for ((i=1; i<=$#; i++)); do
     --query|-query       ) QUERY=${!next} ;;
     --format=*|-format=* ) FORMAT=$(echo ${!i} | sed 's|.*=||') ;;
     --format|-format     ) FORMAT=${!next} ;;
+    -json                ) FORMAT=json ;;
     -h|--help|-help      ) HELP=YES ;;
   esac
 done

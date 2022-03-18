@@ -95,7 +95,15 @@ echo "DATA_DOCKER=${DOCKER}"
 SLAVE_LABELS="${SLAVE_LABELS} ${DOCKER}"
 
 SINGULARITY=""
-if singularity --version >/dev/null 2>&1 ; then SINGULARITY="singularity" ;fi
+if singularity --version >/dev/null 2>&1 ; then
+  if [ -e /proc/sys/user/max_user_namespaces ] ; then
+    if [ $(cat /proc/sys/user/max_user_namespaces) -gt 0 ] ; then
+      SINGULARITY="singularity"
+    fi
+  else
+    SINGULARITY="singularity"
+  fi
+fi
 echo "DATA_SINGULARITY=${SINGULARITY}"
 SLAVE_LABELS="${SLAVE_LABELS} ${SINGULARITY}"
 

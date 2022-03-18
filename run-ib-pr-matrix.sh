@@ -25,12 +25,12 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   WFS=$(echo ${WFS} | sed 's|,$||')
   if [ "${WFS}" = "" ] ; then
     send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${ARTIFACT_DIR}/workflows-${BUILD_ID}.done
+    echo "ARTIFACT_DIR=${ARTIFACT_DIR}" > $WORKSPACE/cvmfs-deploy-baseline
+    echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
     exit 0
   fi
   echo "CHECK_WORKFLOWS=false"                 > ${WORKSPACE}/rerun.txt
   echo "MATRIX_ARGS=${MATRIX_ARGS} -l ${WFS}" >> ${WORKSPACE}/rerun.txt
-  echo "ARTIFACT_DIR=${ARTIFACT_DIR}" > $WORKSPACE/cvmfs-deploy-baseline
-  echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
   exit 0
 fi
 

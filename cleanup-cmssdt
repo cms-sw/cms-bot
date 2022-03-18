@@ -26,7 +26,7 @@ done
 
 RUNS_TO_KEEP=1
 #Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
-for dir in  baseLineComparisons baseLineComparisonsGPU ; do
+for dir in  baseLineComparisons baseLineComparisonsGPU baseLineComparisonsHIGH_STATS ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir

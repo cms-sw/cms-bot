@@ -24,7 +24,8 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   done
   WFS=$(echo ${WFS} | sed 's|,$||')
   if [ "${WFS}" = "" ] ; then
-    send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.log ${ARTIFACT_DIR}/workflows-${BUILD_ID}.done
+    mv ${WORKSPACE}/workflows-${BUILD_ID}.log ${WORKSPACE}/workflows-${BUILD_ID}.done
+    send_jenkins_artifacts ${WORKSPACE}/workflows-${BUILD_ID}.done ${ARTIFACT_DIR}/workflows-${BUILD_ID}.done
     echo "ARTIFACT_DIR=${ARTIFACT_DIR}" > $WORKSPACE/cvmfs-deploy-baseline
     echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
     exit 0

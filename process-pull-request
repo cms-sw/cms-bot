@@ -3,11 +3,10 @@
 Returns top commit of a PR (mostly used to comments)
 """
 from __future__ import print_function
-from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits
+from github_utils import api_rate_limits, get_pr_commits, get_pr_latest_commit
 setdefaulttimeout(120)
 import sys
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
@@ -28,16 +27,18 @@ if __name__ == "__main__":
   repo_dir = join(SCRIPT_DIR,'repos',opts.repository.replace("-","_"))
   if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
   import repo_config
-  gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
-  if not opts.commit: api_rate_limits(gh)
-  repo = gh.get_repo(opts.repository)
+  token = open(expanduser(repo_config.GH_TOKEN)).read().strip()
+
   if opts.commit:
-    pr = repo.get_pull(prId)
     if opts.all:
-      for c in pr.get_commits():
-        print(c.sha)
+      for c in get_pr_commits(prId, opts.repository, token):
+        print(c['sha'])
     else:
-      print(pr.get_commits().reversed[0].commit.sha)
+      print(get_pr_latest_commit(args[0], opts.repository, token))
   else:
+    from github import Github
+    gh = Github(login_or_token=token)
+    api_rate_limits(gh)
+    repo = gh.get_repo(opts.repository)
     from process_pr import process_pr
     process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)

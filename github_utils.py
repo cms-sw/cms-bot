@@ -337,7 +337,7 @@ def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
     return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
 
 
-def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None, raw=False):
+def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None, raw=False, per_page=None, last_page=False):
     if not params:
         params = {}
     if not headers:
@@ -346,6 +346,7 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
         page_range = []
     url = "https://api.github.com%s" % uri
     data = ""
+    if per_page: params['per_page']=per_page
     if method == "GET":
         if params:
             import urllib
@@ -357,7 +358,7 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
             url = url + "?"
         else:
             url = url + "&"
-        url = url + "page=" + str(page)
+        url = url + "page=%s" % page
     headers["Authorization"] = "token " + token
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
@@ -365,15 +366,23 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
     if (page <= 1) and (method=='GET'):
         link = response.info().getheader("Link")
         if link:
-            pages = [int(l.split("page=", 1)[1].split(">")[0]) for l in link.split(" ") if
-                     "https://api.github.com" in l]
+            pages = []
+            for x in link.split(" "):
+              m = re.match('^.*[?&]page=([1-9][0-9]*).*$', x)
+              if m: pages.append(int(m.group(1)))
             if len(pages) == 2:
                 page_range += range(pages[0], pages[1] + 1)
             elif len(pages) == 1:
                 page_range += pages
     cont = response.read()
     if raw: return cont
-    return json.loads(cont)
+    data = json.loads(cont)
+    if page_range and page<=1:
+      if last_page:
+        return github_api(uri, token, params, method, headers, page_range[-1], page_range=None, raw=False, per_page=per_page, last_page=last_page)
+      for page in page_range:
+        data += github_api(uri, token, params, method, headers, page, page_range=None, raw=raw, per_page=per_page, last_page=last_page)
+    return data
 
 
 def get_pull_requests(gh_repo, branch=None, status='open'):
@@ -429,12 +438,12 @@ def get_combined_statuses(commit, repository, token=None):
   if not token: token = get_gh_token(repository)
   return github_api("/repos/%s/commits/%s/status" % (repository, commit), token, method='GET')
 
-def get_pr_commits(pr, repository, token=None):
+def get_pr_commits(pr, repository, token=None, per_page=None, last_page=False):
   if not token: token = get_gh_token(repository)
-  return github_api("/repos/%s/pulls/%s/commits" % (repository, pr), token, method='GET')
+  return github_api("/repos/%s/pulls/%s/commits" % (repository, pr), token, method='GET', per_page=per_page, last_page=last_page)
 
 def get_pr_latest_commit(pr, repository, token=None):
-  return str(get_pr_commits(pr, repository, token)[-1]["sha"])
+  return str(get_pr_commits(pr, repository, token, per_page=1, last_page=True)[-1]["sha"])
 
 def set_comment_emoji(comment_id, repository, emoji="+1", token=None):
   if not token: token = get_gh_token(repository)

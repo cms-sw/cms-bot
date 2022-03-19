@@ -228,8 +228,7 @@ fi
 if [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] ; then sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res ; fi
 
 #Incase week is changed but tests were run for last week
-scram -a $SCRAM_ARCH list -c ${CMSSW_IB}
-IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|^.* /||;s|/${SCRAM_ARCH}/.*||;s|.*/week||")
+let IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|/${SCRAM_ARCH}/.*||;s|^.*\([0-9]\)$|\1|')%2 || true
 if [ "${IB_WEEK}" != "${WEEK_NUM}" ] ; then
   sed -i -e "s|/week${WEEK_NUM}/|/week${IB_WEEK}/|" ${RESULTS_DIR}/09-report.res
   WEEK_NUM=${IB_WEEK}

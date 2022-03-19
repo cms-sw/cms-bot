@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3or2
 from __future__ import print_function
 import sys, json, glob, os, re
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))

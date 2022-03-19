@@ -2,7 +2,7 @@ from __future__ import print_function
 from sys import argv
 from hashlib import md5
 import json, sys
-from _py2with3compatibility import run_cmd, urlopen, Request
+from _py2with3compatibility import run_cmd, urlopen, Request, urlencode
 from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
 
@@ -349,7 +349,6 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
     if per_page: params['per_page']=per_page
     if method == "GET":
         if params:
-            import urllib
             url = url + "?" + urllib.urlencode(params)
     else:
         data = json.dumps(params)

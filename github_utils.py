@@ -349,7 +349,7 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
     if per_page: params['per_page']=per_page
     if method == "GET":
         if params:
-            url = url + "?" + urllib.urlencode(params)
+            url = url + "?" + urlencode(params)
     else:
         data = json.dumps(params)
     if page > 1:

@@ -27,6 +27,7 @@ cd ${RELEASE_FORMAT}
 if [ -f config/SCRAM/linkexternal.py ] ; then
   sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py || true
 fi
+[ -e "\${HOME}/bin/python3or2" ] && export PATH="\${HOME}/bin:\${PATH}"
 eval \$(scram runtime -sh)
 echo $PATH | tr ':' '\n'
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"

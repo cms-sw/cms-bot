@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3or2
 from __future__ import print_function
 from io import open
 from os.path import expanduser, dirname, join, exists, abspath

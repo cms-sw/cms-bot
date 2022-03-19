@@ -60,7 +60,8 @@ fi
 
 PRODUCTION_RELEASE=false
 CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
-if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=$(cd $CMS_BOT_DIR; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH') ; fi
+
+if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=$(cd $CMS_BOT_DIR; python3or2 -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH') ; fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true

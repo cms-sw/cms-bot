@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3or2
 from __future__ import print_function
 from optparse import OptionParser
 from github_utils import api_rate_limits, mark_commit_status, get_combined_statuses, get_pr_latest_commit

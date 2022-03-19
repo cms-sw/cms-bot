@@ -1,5 +1,5 @@
 from __future__ import print_function
-from sys import argv
+from sys import argv, version_info
 from hashlib import md5
 import json, sys
 from _py2with3compatibility import run_cmd, urlopen, Request, urlencode
@@ -352,6 +352,8 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
             url = url + "?" + urlencode(params)
     else:
         data = json.dumps(params)
+    if version_info[0]==3:
+        data = data.encode("utf-8")
     if page > 1:
         if not "?" in url:
             url = url + "?"
@@ -363,7 +365,11 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
     request.get_method = lambda: method
     response = urlopen(request)
     if (page <= 1) and (method=='GET'):
-        link = response.info().getheader("Link")
+        link = ""
+        if version_info[0]==2:
+            link = response.info().getheader("Link")
+        else:
+            link = response.info().get("Link")
         if link:
             pages = []
             for x in link.split(" "):

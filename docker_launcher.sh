@@ -137,6 +137,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     exit $ERR
   fi
 else
+  cd $WORKSPACE
+  [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] && source /cvmfs/cms.cern.ch/cmsset_default.sh
   voms-proxy-init -voms cms -valid 24:00 || true
   eval $@
 fi

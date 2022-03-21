@@ -16,6 +16,11 @@ else
 fi
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
+py3or2_dir="$HOME/bin"
+if [ ! -e ${py3or2_dir} ] ; then
+  py3or2_dir="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)/bin"
+fi
+[ -e ${py3or2_dir} ] && [ $(echo $PATH | tr ' ' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] && export PATH="${py3or2_dir}:${PATH}"
 if [ "${USE_SINGULARITY}" != "false" ] ; then export USE_SINGULARITY=true; fi
 kinit -R || true
 aklog || true
@@ -131,10 +136,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       if [ $(singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c 'echo $HOME' 2>&1 | grep "container creation failed: mount $HOME->" | wc -l) -gt 0 ]  ; then
         SINGULARITY_OPTIONS="--no-home $SINGULARITY_OPTIONS"
       fi
-    fi
-    afshome="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)"
-    if [ -e ${afshome}/bin ] ; then
-      [ $(echo $PATH | tr ' ' '\n' | grep "^${afshome}/bin$" | wc -l) -eq 0 ] && export PATH="${afshome}/bin:${PATH}"
     fi
     PATH=$PATH:/usr/sbin singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi

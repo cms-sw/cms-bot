@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3or2
 from optparse import OptionParser
 from os import listdir
 import re

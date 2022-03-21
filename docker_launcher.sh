@@ -23,7 +23,7 @@ if [ ! -e ${py3or2_dir} ] ; then
 fi
 if [ -e ${py3or2_dir} ] ; then
   XPATH="${py3or2_dir}:"
-  [ $(echo $PATH | tr ':' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] export PATH="${py3or2_dir}:${PATH}"
+  [ $(echo $PATH | tr ':' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] && export PATH="${py3or2_dir}:${PATH}"
 fi
 if [ "${USE_SINGULARITY}" != "false" ] ; then export USE_SINGULARITY=true; fi
 kinit -R || true

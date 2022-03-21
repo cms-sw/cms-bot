@@ -16,11 +16,15 @@ else
 fi
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
+XPATH=""
 py3or2_dir="$HOME/bin"
 if [ ! -e ${py3or2_dir} ] ; then
   py3or2_dir="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)/bin"
 fi
-[ -e ${py3or2_dir} ] && [ $(echo $PATH | tr ':' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] && export PATH="${py3or2_dir}:${PATH}"
+if [ -e ${py3or2_dir} ] ; then
+  XPATH="${py3or2_dir}:"
+  [ $(echo $PATH | tr ':' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] export PATH="${py3or2_dir}:${PATH}"
+fi
 if [ "${USE_SINGULARITY}" != "false" ] ; then export USE_SINGULARITY=true; fi
 kinit -R || true
 aklog || true
@@ -68,7 +72,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       HAS_DOCKER=$(docker --version >/dev/null 2>&1 && echo true || echo false)
     fi
   fi
-  CMD2RUN="export PATH=\$PATH:/usr/sbin;"
+  CMD2RUN="export PATH=${XPATH}\$PATH:/usr/sbin;"
   XUSER=`whoami`
   if [ -d $HOME/bin ] ; then
     CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "

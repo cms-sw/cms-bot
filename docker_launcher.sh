@@ -132,8 +132,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
         SINGULARITY_OPTIONS="--no-home $SINGULARITY_OPTIONS"
       fi
     fi
-    if [ -e $HOME/bin ] ; then
-      [ $(echo $PATH | tr ' ' '\n' | grep "^${HOME}/bin$" | wc -l) -eq 0 ] && export PATH=$HOME/bin:$PATH
+    afshome="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)"
+    if [ -e ${afshome}/bin ] ; then
+      [ $(echo $PATH | tr ' ' '\n' | grep "^${afshome}/bin$" | wc -l) -eq 0 ] && export PATH="${afshome}/bin:${PATH}"
     fi
     PATH=$PATH:/usr/sbin singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi

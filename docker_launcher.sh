@@ -58,6 +58,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ $(echo $HOME |  grep '^/home/' | wc -l)  -gt 0 ] ; then
     MOUNT_POINTS="$MOUNT_POINTS,/home"
   fi
+  IMG_OS=$(echo $DOCKER_IMG | sed 's|.*/||;s|:.*||')
+  if [ -e ${HOME}/.ssh/${IMG_OS} ] ; then MOUNT_POINTS="$MOUNT_POINTS,${HOME}/.ssh/${IMG_OS}:${HOME}/.ssh" ; fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
   if [ "${UNAME_M}" = "x86_64" ] ; then
     if [ -e /etc/tnsnames.ora ] ; then

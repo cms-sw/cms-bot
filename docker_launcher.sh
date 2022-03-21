@@ -20,7 +20,7 @@ py3or2_dir="$HOME/bin"
 if [ ! -e ${py3or2_dir} ] ; then
   py3or2_dir="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)/bin"
 fi
-[ -e ${py3or2_dir} ] && [ $(echo $PATH | tr ' ' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] && export PATH="${py3or2_dir}:${PATH}"
+[ -e ${py3or2_dir} ] && [ $(echo $PATH | tr ':' '\n' | grep "^${py3or2_dir}$" | wc -l) -eq 0 ] && export PATH="${py3or2_dir}:${PATH}"
 if [ "${USE_SINGULARITY}" != "false" ] ; then export USE_SINGULARITY=true; fi
 kinit -R || true
 aklog || true

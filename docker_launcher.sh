@@ -84,7 +84,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ -d $HOME/bin ] ; then
     CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi
-  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; cd $WORKSPACE; echo \$PATH; $@"
+  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; echo \$HOME; echo \$X509_USER_PROX ;openssl x509 -inform pem -in -noout -text -in \$X509_USER_PROXY || true ; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
     set +x

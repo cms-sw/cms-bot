@@ -59,7 +59,13 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     MOUNT_POINTS="$MOUNT_POINTS,/home"
   fi
   IMG_OS=$(echo $DOCKER_IMG | sed 's|.*/||;s|:.*||')
-  if [ -e ${HOME}/.ssh/${IMG_OS} ] ; then MOUNT_POINTS="$MOUNT_POINTS,${HOME}/.ssh/${IMG_OS}:${HOME}/.ssh" ; fi
+  XUSER=`whoami`
+  AFS_HOME="/afs/cern.ch/user/$(echo ${XUSER} | cut -c1)/${XUSER}"
+  if [ -e ${HOME}/.ssh/${IMG_OS} ] ; then
+    MOUNT_POINTS="$MOUNT_POINTS,${HOME}/.ssh/${IMG_OS}:${HOME}/.ssh"
+  elif [ -e ${AFS_HOME}/.ssh/${IMG_OS} ] ; then
+    MOUNT_POINTS="$MOUNT_POINTS,${AFS_HOME}/.ssh/${IMG_OS}:${AFS_HOME}/.ssh"
+  fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
   if [ "${UNAME_M}" = "x86_64" ] ; then
     if [ -e /etc/tnsnames.ora ] ; then
@@ -75,7 +81,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     fi
   fi
   CMD2RUN="export PATH=${XPATH}\$PATH:/usr/sbin;"
-  XUSER=`whoami`
   if [ -d $HOME/bin ] ; then
     CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi

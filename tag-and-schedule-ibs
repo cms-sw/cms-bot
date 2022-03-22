@@ -45,6 +45,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset FORCE_FULL_IB
     SKIP_TESTS=false
     eval "$IB_INFO"
+    [ $(echo ${SCRAM_ARCH} | grep slc6_ |wc -l) -gt 0 ] && continue
     if [ "${SKIP_TESTS}" = "1" ] ; then SKIP_TESTS=true; fi
     if [ "${FORCE_FULL_IB}" = "" ] ; then
       FORCE_FULL_IB="${FORCE_FULL_IB_DEFAULT}"

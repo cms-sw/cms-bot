@@ -4,6 +4,36 @@
 # 1) will merge multiple PRs for multiple repos
 # 2) run tests and post result on github
 # ---
+#common function
+function order_workflow_list(){
+  echo ${1} | tr ' ' '\n' | tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||'
+}
+
+function get_pr_baseline_worklflow() {
+  order_workflow_list $(grep "^PR_TEST_MATRIX_EXTRAS${1}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${2}
+}
+
+function get_pr_relval_args() {
+  local WF_ARGS
+  local WF_LIST
+  local WF_LIST2
+  if $1 ; then
+     WF_LIST=$(get_pr_baseline_worklflow "$2")
+     [ "$WF_LIST" = "" ] || WF_LIST="-l $WF_LIST"
+     WF_LIST2=$(order_workflow_list "$(eval echo \${MATRIX_EXTRAS$2})")
+     if [ "${WF_LIST2}" = "" ] ; then
+       WF_ARGS="${WF_LIST}"
+     else
+       WF_ARGS="${WF_LIST};-l ${WF_LIST2} $(eval echo \${EXTRA_MATRIX_ARGS$2})"
+     fi
+  else
+    WF_LIST=$(get_pr_baseline_worklflow "$2" "$(eval echo \${MATRIX_EXTRAS$2})")
+    [ "$WF_LIST" = "" ] || WF_LIST="-l $WF_LIST"
+    WF_ARGS="${WF_LIST} $(eval echo \${EXTRA_MATRIX_ARGS$2})"
+  fi
+  echo "${WF_ARGS}"
+}
+
 # Constants
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
@@ -52,11 +82,8 @@ TEST_RELVALS_INPUT=true
 DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
-if [ $(echo ${ARCHITECTURE} | grep "_amd64_" | wc -l) -gt 0 ] ; then
-  DO_COMPARISON=true
-elif [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X' |wc -l) -gt 0 ] ; then
-  DO_COMPARISON=false
-fi
+[ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
+[ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
 
 PRODUCTION_RELEASE=false
 CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
@@ -174,58 +201,66 @@ case $CMSSW_QUEUE in
 esac
 if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
 
-REAL_ARCH=-`cat /proc/cpuinfo | grep vendor_id | head -n 1 | sed "s/.*: //"`
-CMSSW_IB=  # We are getting CMSSW_IB, so that we wont rebuild all the software
-COMPARISON_REL=""
+CMSSW_IB="$RELEASE_FORMAT"  # We are getting CMSSW_IB, so that we wont rebuild all the software
+[ "$COMPARISON_ARCH" = "" ] && COMPARISON_ARCH=$(cat $CONFIG_MAP | grep "RELEASE_QUEUE=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep 'PROD_ARCH=1' | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
 if [[ $RELEASE_FORMAT != *-* ]]; then
-    COMP_ARCH=$COMPARISON_ARCH
-    if [ "X$COMP_ARCH" = "X" ] ; then
-      COMP_ARCH=$(cat $CONFIG_MAP | grep "=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep "SCRAM_ARCH=${ARCHITECTURE};" | grep "ADDITIONAL_TESTS=.*baseline" | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
-      if [ "X$COMP_ARCH" = "X" ] ; then
-        COMP_ARCH=$(cat $CONFIG_MAP | grep $COMP_QUEUE | grep -v "DISABLED=1" | grep "ADDITIONAL_TESTS=.*baseline" | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
-        if [ "X$COMP_ARCH" = "X" ] ; then COMP_ARCH=$ARCHITECTURE ; fi
-      fi
+  CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" |  awk '{print $2}' | sort -r | head -1)
+  if [ "$CMSSW_IB" = "" ] ; then
+    CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
+    if [ "$CMSSW_IB" = "" ] ; then
+      echo "I was not able to find a release to test this PR. See the Jenkins logs for more details" > ${RESULTS_DIR}/10-report.res
+      prepare_upload_results
+      mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}"
+      exit 0
     fi
-    for SCRAM_REL in $(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" |  awk '{print $2":"$3}' | sort -r | sed 's|:.*$||') ;  do
-      if $DO_COMPARISON ; then
-        if has_jenkins_artifacts ib-baseline-tests/$SCRAM_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt ; then
-          COMP_REL=$SCRAM_REL
-        else
-          if [ "$(echo $SCRAM_REL | sed 's|_X_.*|_X|')" = "$COMP_QUEUE" ] ; then
-            COMP_REL=$SCRAM_REL
-          else
-            COMP_REL=$(echo $SCRAM_REL | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
-          fi
-          has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$COMP_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt || continue
-        fi
-      fi
-      if [ "$COMP_ARCH" != "$SCRAM_ARCH" ] ; then
-        if has_jenkins_artifacts ib-baseline-tests/$COMP_REL/$SCRAM_ARCH/$REAL_ARCH/matrix-results/wf_errors.txt ; then
-	  COMP_ARCH=$SCRAM_ARCH
-	fi
-      fi
-      CMSSW_IB=$SCRAM_REL
-      COMPARISON_ARCH=$COMP_ARCH
-      COMPARISON_REL=$COMP_REL
-      break
-    done
-    if [ "X$CMSSW_IB" = "X" ] ; then
-      CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
-      if [ "X$CMSSW_IB" = "X" ] ; then
-        echo "I was not able to find a release to test this PR. See the Jenkins logs for more details" > ${RESULTS_DIR}/10-report.res
-        prepare_upload_results
-        mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Unable to find CMSSW release for ${CMSSW_QUEUE}/${SCRAM_ARCH}"
-        exit 0
-      fi
-      COMPARISON_ARCH=$ARCHITECTURE
-      COMPARISON_REL=$CMSSW_IB
-    fi
-else
-  CMSSW_IB=$RELEASE_FORMAT
-  COMPARISON_ARCH=$ARCHITECTURE
-  COMPARISON_REL=$CMSSW_IB
+  fi
 fi
-if [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] ; then sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res ; fi
+if [ "$COMPARISON_REL" = "" ] ; then
+  if [ "$(echo $CMSSW_IB | sed 's|_X_.*|_X|')" = "$COMP_QUEUE" ] ; then
+    COMPARISON_REL=$CMSSW_IB
+  else
+    COMPARISON_REL=$(echo $CMSSW_IB | sed 's|_[A-Z][A-Z0-9]*_X_|_X_|')
+  fi
+fi
+[ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] && sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res
+
+if $DO_COMPARISON ; then
+  mkdir $WORKSPACE/ib-baseline-tests
+  pushd $WORKSPACE/ib-baseline-tests
+    COMP_OS=$(echo $COMPARISON_ARCH | sed 's|_.*||')
+    if [ "${COMP_OS}" = "slc7" ] ; then COMP_OS="cc7"; fi
+    echo "RELEASE_FORMAT=$COMPARISON_REL" > run-baseline-${BUILD_ID}-01.default
+    echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
+    echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
+    echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
+    WF_LIST=$(get_pr_baseline_worklflow)
+    [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
+    echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+    if [ "${MATRIX_EXTRAS}" != "" ] ; then
+      WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
+      echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
+      echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
+    fi
+    for ex_type in "GPU" "HIGH_STATS" ; do
+      [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
+      WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
+      [ "$WF_LIST" != "" ] || continue
+      ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\|TEST_FLAVOR\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      echo "TEST_FLAVOR=${ex_type_lc}" >> run-baseline-${BUILD_ID}-01.${ex_type_lc}
+      WF_LIST=$(order_workflow_list $(eval echo "\${MATRIX_EXTRAS_${ex_type}}"))
+      [ "${WF_LIST}" != "" ] || continue
+      WF_ARGS=$(eval echo "\${EXTRA_MATRIX_ARGS_${ex_type}}")
+      grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.${ex_type_lc} > run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      echo "WORKFLOWS=-l ${WF_LIST}"   >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+      echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
+    done
+  popd
+  send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
+  rm -rf $WORKSPACE/ib-baseline-tests
+fi
 
 #Incase week is changed but tests were run for last week
 let IB_WEEK=$(scram -a $SCRAM_ARCH list -c ${CMSSW_IB} | sed "s|/${SCRAM_ARCH}/.*||;s|^.*\([0-9]\)$|\1|")%2 || true
@@ -305,11 +340,7 @@ echo "PR_NUMBERS;$PULL_REQUESTS" >> ${RESULTS_FILE}
 echo 'BASE_IB;'$CMSSW_IB >> ${RESULTS_FILE}
 echo 'BUILD_NUMBER;'$BUILD_NUMBER >> ${RESULTS_FILE}
 echo "PR_NUMBER;$PR_NUM" >> ${RESULTS_FILE}
-if [ "X$COMPARISON_REL" == "X" ] ; then
-  echo "COMPARISON_IB;$BASE_IB" >> ${RESULTS_FILE}
-else
-  echo "COMPARISON_IB;$COMPARISON_REL" >> ${RESULTS_FILE}
-fi
+echo "COMPARISON_IB;$COMPARISON_REL" >> ${RESULTS_FILE}
 
 PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
@@ -561,9 +592,6 @@ ADDON_OK=true
 CLANG_BUILD_OK=true
 PYTHON3_BUILD_OK=true
 RUN_TESTS=true
-USE_DAS_SORT=YES
-
-has_jenkins_artifacts ib-baseline-tests/$COMPARISON_REL/$COMPARISON_ARCH/$REAL_ARCH/matrix-results/used-ibeos-sort || USE_DAS_SORT=NO
 
 cd $WORKSPACE
 if [ ! -d CMSSW_* ]; then  # if no directory that starts with "CMSSW_" exist, then bootstrap with SCRAM
@@ -1014,7 +1042,7 @@ else
     fi
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed: ${TESTS_FAILED}"
 fi
-[ "X$USE_DAS_SORT" = "XYES" ] && $CMS_BOT_DIR/das-utils/use-ibeos-sort
+$CMS_BOT_DIR/das-utils/use-ibeos-sort || true
 
 pushd $WORKSPACE
   rm -rf ${CMSSW_IB}/das_query
@@ -1058,66 +1086,31 @@ echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
 
 #
 # Matrix tests
-#
 if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
-  COMMON_MATRIX_ARGS=""
-  [ $(runTheMatrix.py --help | grep 'job-reports' | wc -l) -gt 0 ] && COMMON_MATRIX_ARGS="--job-reports"
-  if [ -f ${CMSSW_RELEASE_BASE}/src/Validation/Performance/python/TimeMemoryJobReport.py ]; then
-    if [ $(runTheMatrix.py --help | grep 'command' | wc -l) -gt 0 ] ; then
-      COMMON_MATRIX_ARGS="--command ' --customise Validation/Performance/TimeMemoryJobReport.customiseWithTimeMemoryJobReport' $COMMON_MATRIX_ARGS"
-    fi
-  fi
-  WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-  if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
-  WF_LIST="-s $WF_LIST"
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals.prop
   echo "DO_COMPARISON=$DO_COMPARISON" >> $WORKSPACE/run-relvals.prop
   echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals.prop
-  echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
-
-  if [ "${MATRIX_EXTRAS}" != "" ] ; then
-    echo "ARCHITECTURE=${COMPARISON_ARCH}"         > $WORKSPACE/pr-baseline.prop
-    echo "RELEASE_FORMAT=${COMPARISON_REL}"       >> $WORKSPACE/pr-baseline.prop
-    echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}"           >> $WORKSPACE/pr-baseline.prop
-    echo "DOCKER_IMG=${DOCKER_IMG}"               >> $WORKSPACE/pr-baseline.prop
-    echo "MATRIX_EXTRAS=${MATRIX_EXTRAS}"         >> $WORKSPACE/pr-baseline.prop
-    echo "EXTRA_MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> $WORKSPACE/pr-baseline.prop
-    echo "TEST_FLAVOR="                           >> $WORKSPACE/pr-baseline.prop
-  fi
+  echo "MATRIX_ARGS="-s $(get_pr_relval_args $DO_COMPARISON '') >> $WORKSPACE/run-relvals.prop
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-    WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_THREADING} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-    if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
-    WF_LIST="-s $WF_LIST"
+    WF_LIST=$(get_pr_baseline_worklflow "" ${MATRIX_EXTRAS_THREADING})
+    [ "$WF_LIST" = "" ] ||  WF_LIST="-l $WF_LIST"
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
     echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
     echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-    echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS_THREADING -i all -t 4" >> $WORKSPACE/run-relvals-threading.prop
+    echo "MATRIX_ARGS=-s $WF_LIST $EXTRA_MATRIX_ARGS_THREADING" >> $WORKSPACE/run-relvals-threading.prop
   fi
   if $PRODUCTION_RELEASE ; then
-    if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
-      WF_LIST=$(echo $(grep 'PR_TEST_MATRIX_EXTRAS_GPU=' $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${MATRIX_EXTRAS_GPU} | tr ' ' ','| tr ',' '\n' | grep '^[0-9]' | sort | uniq | tr '\n' ',' | sed 's|,*$||')
-      if [ ! "X$WF_LIST" = X ]; then WF_LIST="-l $WF_LIST" ; fi
-      if [ "X$WF_LIST" != X ]; then
-        cp $WORKSPACE/run-relvals.prop $WORKSPACE/run-relvals-gpu.prop
-        if [ $(echo "${CONFIG_LINE}" | sed 's|.*ADDITIONAL_TESTS=||;s|;.*||' | tr , '\n' | grep '^baseline-gpu$' | wc -l) -eq 0 ] ; then
-          echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-gpu.prop
-        fi
-	#GPU workflows are in relvals_gpu
-        echo "MATRIX_ARGS=$WF_LIST $COMMON_MATRIX_ARGS $EXTRA_MATRIX_ARGS_GPU -w gpu" >> $WORKSPACE/run-relvals-gpu.prop
-      fi
-      if [ "${MATRIX_EXTRAS_GPU}" != "" ] ; then
-        echo "ARCHITECTURE=${COMPARISON_ARCH}"             > $WORKSPACE/pr-baseline-gpu.prop
-        echo "RELEASE_FORMAT=${COMPARISON_REL}"           >> $WORKSPACE/pr-baseline-gpu.prop
-        echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}"               >> $WORKSPACE/pr-baseline-gpu.prop
-        echo "DOCKER_IMG=${DOCKER_IMG}"                   >> $WORKSPACE/pr-baseline-gpu.prop
-        echo "MATRIX_EXTRAS=${MATRIX_EXTRAS_GPU}"         >> $WORKSPACE/pr-baseline-gpu.prop
-        echo "EXTRA_MATRIX_ARGS=${EXTRA_MATRIX_ARGS_GPU}" >> $WORKSPACE/pr-baseline-gpu.prop
-        echo "TEST_FLAVOR=gpu"                            >> $WORKSPACE/pr-baseline-gpu.prop
-      fi
-    fi
+    for ex_type in "GPU" "HIGH_STATS" ; do
+      [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
+      WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
+      [ "$WF_LIST" != "" ] || continue
+      ex_type_lc=$(echo ${ex_type} | tr '[A-Z]' '[a-z]')
+      grep -v '^MATRIX_ARGS=' $WORKSPACE/run-relvals.prop > $WORKSPACE/run-relvals-${ex_type_lc}.prop
+      echo "MATRIX_ARGS=$(get_pr_relval_args $DO_COMPARISON _${ex_type})" >> $WORKSPACE/run-relvals-${ex_type_lc}.prop
+    done
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e
       TEST_RELVALS_INPUT=false
@@ -1127,16 +1120,9 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     if $TEST_RELVALS_INPUT ; then
       WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
-      MTX_ARGS="${COMMON_MATRIX_ARGS} $EXTRA_MATRIX_ARGS_INPUT"
-      if [ $(echo "${MTX_ARGS}" | grep "\-\-command " | wc -l) -gt 0 ] ; then
-        MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1-n 1 |g')
-      else
-        MTX_ARGS="${MTX_ARGS} --command ' -n 1'"
-      fi
-      MTX_ARGS=$(echo "${MTX_ARGS}" | sed 's|\(--command *.\)|\1--prefix "timeout --signal SIGTERM 900" |g')
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
-      echo "MATRIX_ARGS=-i all --maxSteps=2 -l ${WF_LIST} ${MTX_ARGS}" >> $WORKSPACE/run-relvals-input.prop
-      echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-input.prop
+      echo "MATRIX_ARGS=-l ${WF_LIST}"      >> $WORKSPACE/run-relvals-input.prop
+      echo "DO_COMPARISON=false"            >> $WORKSPACE/run-relvals-input.prop
     fi
   fi
   for rtype in $(ls $WORKSPACE/run-relvals-*.prop 2>/dev/null | sed 's|.*/run-relvals-||;s|.prop$||') ; do

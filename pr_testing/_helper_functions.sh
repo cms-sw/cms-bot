@@ -5,6 +5,7 @@ WORKSPACE=${WORKSPACE}                # Needs to be exported in master script
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metadata etc are kept
 BUILD_DIR=testBuildDir
 RESULTS_DIR=$WORKSPACE/testsResults
+export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 # -----
 
 function get_cached_GH_JSON (){
@@ -33,12 +34,12 @@ function get_cached_GH_JSON (){
 function git_clone_and_merge (){
     PR_METADATA_PATH=$1  # Absolute path to JSON format text with PR data from github
     # ---
-    BASE_REPO_NAME=$(python3or2 -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['repo']['name'])")
-    BASE_BRANCH=$(python3or2 -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['ref'])")  # where to merge
-    BASE_REPO=$(python3or2 -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['repo']['full_name'])")
+    BASE_REPO_NAME=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['repo']['name'])")
+    BASE_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['ref'])")  # where to merge
+    BASE_REPO=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['repo']['full_name'])")
 
-    TEST_BRANCH=$(python3or2 -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['head']['ref'])")  # PR branch
-    TEST_REPO=$(python3or2 -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['head']['repo']['full_name'])")
+    TEST_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['head']['ref'])")  # PR branch
+    TEST_REPO=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['head']['repo']['full_name'])")
 
     pushd ${WORKSPACE} >/dev/null 2>&1
         if [ $(echo $BASE_REPO | grep '/cmsdist$' | wc -l) -gt 0 ] ; then
@@ -57,7 +58,7 @@ function get_base_branch(){
     # get branch to which to merge from GH PR json
     PR_METADATA_PATH=$(get_cached_GH_JSON "$1")
     # echo ${PR_METADATA_PATH}
-    EXTERNAL_BRANCH=$(python3or2 -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['ref'])")
+    EXTERNAL_BRANCH=$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('${PR_METADATA_PATH}'));print(obj['base']['ref'])")
     if [ "${EXTERNAL_BRANCH}" == "" ] ; then exit 1; fi
     echo ${EXTERNAL_BRANCH}
 }

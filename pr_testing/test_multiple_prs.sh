@@ -88,7 +88,7 @@ DO_DAS_QUERY=false
 PRODUCTION_RELEASE=false
 CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
 
-if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=$(cd $CMS_BOT_DIR; python3or2 -c 'from releases import CMSSW_DEVEL_BRANCH; print(CMSSW_DEVEL_BRANCH)') ; fi
+if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=$(cd $CMS_BOT_DIR; ${CMSBOT_PYTHON_CMD} -c 'from releases import CMSSW_DEVEL_BRANCH; print(CMSSW_DEVEL_BRANCH)') ; fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true
@@ -139,7 +139,7 @@ ls /cvmfs/cms-ib.cern.ch || true
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 # Put hashcodes of last commits to a file. Mostly used for commenting back
-COMMIT=$(python3or2 ${CMS_BOT_DIR}/process-pull-request -c -r ${PR_REPO} ${PR_NUMBER})
+COMMIT=$(${CMSBOT_PYTHON_CMD} ${CMS_BOT_DIR}/process-pull-request -c -r ${PR_REPO} ${PR_NUMBER})
 echo "${PULL_REQUEST}=${COMMIT}" > ${WORKSPACE}/prs_commits
 cp ${WORKSPACE}/prs_commits ${WORKSPACE}/prs_commits.txt
 

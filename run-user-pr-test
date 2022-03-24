@@ -1,7 +1,9 @@
 #!/bin/bash -ex
-#if [ -d /afs/cern.ch/user ] ; then
-#  export HOME="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)"
-#fi
+if [ $(echo ${HOME} | grep '^/home/' | wc -l) -eq 0 ] ; then
+  if [ -d /afs/cern.ch/user ] ; then
+   export HOME="/afs/cern.ch/user/$(whoami | cut -c1)/$(whoami)"
+  fi
+fi
 if ! scram version 2>/dev/null ; then
   source /cvmfs/cms.cern.ch/cmsset_default.sh
 fi

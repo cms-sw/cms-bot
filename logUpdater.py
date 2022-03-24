@@ -1,4 +1,10 @@
-#!/usr/bin/env python3or2
+#!/bin/bash
+
+""":"
+python_cmd="python"
+python3 -V >/dev/null 2>&1 && python_cmd="python3"
+exec ${python_cmd} $0 ${1+"$@"}
+"""
 
 from __future__ import print_function
 import os

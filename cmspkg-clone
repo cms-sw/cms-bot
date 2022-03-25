@@ -24,7 +24,13 @@ if [ "X${REPOSITORY}" = "X" ] ; then
     if [ -d $CLONE_DIR/cmssw/repos ] ; then
       for repo_dir in $(find $CLONE_DIR/cmssw/repos -mindepth 1 -maxdepth 1 -type d | grep -v '/\.obj_store') ; do
         repo=$(basename $repo_dir)
-        if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) ] ; then echo "Delete excluded repository $repo"; fi
+        if [ "${EXCLUDE_REPO}" != "" ] ; then
+          if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
+            if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
+              echo "Deleting excluded repository $repo"
+            fi
+          fi
+        fi
         if [ $(echo "$REPOSITORY" | tr ' ' '\n' | grep "^$repo\$" | wc -l) -eq 1 ] ; then
           ARCHS=$(${CMSREP}/${repo} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | sort | uniq)
           for arch_dir in $(find ${repo_dir} -mindepth 1 -maxdepth 1 -type d) ; do
@@ -78,7 +84,12 @@ TOTAL_REPOS=0
 ERR=0
 for repo in $(echo ${REPOSITORY} | tr ' ' '\n' | grep -v '^cms.week[0-9].PR_[0-9a-f]\{8\}$') ; do
   if [ "${EXCLUDE_REPO}" != "" ] ; then
-    if [ $(echo $repo | grep "${EXCLUDE_REPO}" | wc -l) -gt 0 ] ; then continue; fi
+    if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
+      if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
+        echo "Deleting excluded repository $repo"
+      fi
+      continue
+    fi
   fi
   ARCHS="${ARCHITECTURE}"
   if [ "X${ARCHS}" = "X" ] ; then

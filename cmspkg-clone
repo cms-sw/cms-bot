@@ -11,13 +11,14 @@ pushd cmspkg
 popd
 
 mdir=$(echo $CLONE_DIR | cut -d/ -f1,2)
-df -h /mdir
+df -h $mdir
 mkdir -p $CLONE_DIR/cmssw $CLONE_DIR/cmssw/repos/.obj_store/RPMS
 
 CMSREP="curl -L -s http://cmsrep.cern.ch/cmssw/repos"
 if [ "X${REPOSITORY}" = "X" ] ; then
   echo "Starting cleanup process ..."
-  REPOSITORY=$(${CMSREP} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | grep -v tmp | sort | uniq)
+  REPOSITORY=$(${CMSREP} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | grep -v tmp | sort | uniq | tr '\n' ' ')
+  echo "Found repositories: $REPOSITORY"
   echo "Searching for obsolete repositories ...."
   if [ "X${REPOSITORY}" != "X" ] ; then
     if [ -d $CLONE_DIR/cmssw/repos ] ; then
@@ -94,5 +95,5 @@ for repo in $(echo ${REPOSITORY} | tr ' ' '\n' | grep -v '^cms.week[0-9].PR_[0-9
 done
 
 echo "Total Repos cloned: $TOTAL_REPOS"
-df -h /data
+df -h $mdir
 exit $ERR

@@ -24,6 +24,7 @@ if [ "X${REPOSITORY}" = "X" ] ; then
     if [ -d $CLONE_DIR/cmssw/repos ] ; then
       for repo_dir in $(find $CLONE_DIR/cmssw/repos -mindepth 1 -maxdepth 1 -type d | grep -v '/\.obj_store') ; do
         repo=$(basename $repo_dir)
+        if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) ] ; then echo "Delete excluded repository $repo"; fi
         if [ $(echo "$REPOSITORY" | tr ' ' '\n' | grep "^$repo\$" | wc -l) -eq 1 ] ; then
           ARCHS=$(${CMSREP}/${repo} | grep 'alt="\[DIR\]' | grep -v 'Parent Directory' | sed 's|.*href=.||;s|/.>.*||' | sort | uniq)
           for arch_dir in $(find ${repo_dir} -mindepth 1 -maxdepth 1 -type d) ; do

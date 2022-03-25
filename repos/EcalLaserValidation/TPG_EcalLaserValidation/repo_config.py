@@ -3,7 +3,7 @@ from os.path import basename,dirname,abspath
 GH_TOKEN="~/.github-token"
 GH_TOKEN_READONLY="~/.github-token-readonly"
 CONFIG_DIR=dirname(abspath(__file__))
-CMSBUILD_USER="cmsbot"
+CMSBUILD_USER="cmsbuild"
 GH_REPO_ORGANIZATION="EcalLaserValidation"
 GH_REPO_NAME="TPG_EcalLaserValidation"
 GH_REPO_FULLNAME=GH_REPO_ORGANIZATION+"/"+GH_REPO_NAME

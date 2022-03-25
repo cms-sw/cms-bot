@@ -4,7 +4,7 @@ CLONE_DIR=$1
 mkdir -p $CLONE_DIR
 cd $CLONE_DIR
 if [ ! -d cmspkg ] ; then
-  git clone git@github.com:cms-sw/cmspkg.git
+  git clone https://github.com/cms-sw/cmspkg.git
 fi
 pushd cmspkg
   git pull --rebase

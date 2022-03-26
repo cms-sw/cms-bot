@@ -18,7 +18,7 @@ for org in orgs:
     repo_name = repo['full_name']
     print("Working on",repo_name)
     repo_dir = join(backup_store,repo_name)
-    repo_stat = join(repo_dir + "json")
+    repo_stat = join(repo_dir, "json")
     backup = True
     if exists(repo_stat):
       repo_obj = load(open(repo_stat))

@@ -28,7 +28,9 @@ if [ "X${REPOSITORY}" = "X" ] ; then
           if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
             if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
               echo "Deleting excluded repository $repo"
+              rm -rf $CLONE_DIR/cmssw/repos/$repo
             fi
+            continue
           fi
         fi
         if [ $(echo "$REPOSITORY" | tr ' ' '\n' | grep "^$repo\$" | wc -l) -eq 1 ] ; then
@@ -87,6 +89,7 @@ for repo in $(echo ${REPOSITORY} | tr ' ' '\n' | grep -v '^cms.week[0-9].PR_[0-9
     if [ $(echo $repo | grep "^${EXCLUDE_REPO}$" | wc -l) -gt 0 ] ; then
       if [ -d $CLONE_DIR/cmssw/repos/$repo ] ; then
         echo "Deleting excluded repository $repo"
+        rm -rf $CLONE_DIR/cmssw/repos/$repo
       fi
       continue
     fi

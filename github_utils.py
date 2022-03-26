@@ -320,6 +320,14 @@ def get_organization_members(token, org, role="all", filter="all"):
     return github_api("/orgs/%s/members" % org, token, params={"role": role, "filter": filter}, method="GET")
 
 
+def get_organization_repositores(token, org):
+    return github_api("/orgs/%s/repos" % org, token, method="GET")
+
+
+def get_repository(token, repo):
+    return github_api("/repos/%s" % repo, token, method="GET")
+
+
 def add_organization_member(token, org, member, role="member"):
     return github_api("/orgs/%s/memberships/%s" % (org, member), token, params={"role": role}, method="PUT")
 
@@ -436,8 +444,6 @@ def get_gh_token(repository=None):
     import repo_config
     GITHUB_TOKEN = open(expanduser(repo_config.GH_TOKEN)).read().strip()
   return GITHUB_TOKEN
-
-  return open(expanduser(repo_config.GH_TOKEN)).read().strip()
 
 def get_combined_statuses(commit, repository, token=None):
   if not token: token = get_gh_token(repository)

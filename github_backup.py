@@ -11,13 +11,14 @@ backup_store = argv[2]
 if not exists(backup_store):
   print("Backup store not exists.")
   sys.exit(1)
-orgs=["cms-sw", "cms-data", "cms-externals", "cms-analysis", "cms-cvs-history", "cms-obsolete", "dmwm"]
+orgs=["cms-sw", "dmwm", "cms-externals", "cms-data", "cms-analysis", "cms-cvs-history", "cms-obsolete"]
 err=0
 for org in orgs:
   for repo in get_organization_repositores(token, org):
     repo_name = repo['full_name']
     print("Working on",repo_name)
-    repo_stat = join(backup_store, repo_name + ".json")
+    repo_dir = join(backup_store,repo_name)
+    repo_stat = join(repo_dir + "json")
     backup = True
     if exists(repo_stat):
       repo_obj = load(open(repo_stat))
@@ -29,12 +30,12 @@ for org in orgs:
     if not backup:
       print("  Skipping, no change")
       continue
-    getstatusoutput("mkdir -p %s" % join(backup_store, org))
-    brepo = join(backup_store,repo_name)
+    getstatusoutput("mkdir -p %s" % repo_dir)
+    brepo = join(backup_store,repo_name, "repo")
     if exists(brepo):
       getstatusoutput("mv %s %s.%s" % (brepo, brepo, int(time())))
     getstatusoutput("rm -rf %s.tmp" % brepo)
-    e, o = getstatusoutput("git clone --bare https://github.com/%s %s.tmp" % (repo_name, brepo))
+    e, o = getstatusoutput("git clone --mirror https://github.com/%s %s.tmp" % (repo_name, brepo))
     if e:
       print(o)
       err = 1

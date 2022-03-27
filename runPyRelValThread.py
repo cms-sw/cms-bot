@@ -71,6 +71,7 @@ def find_argv(args, arg):
   return (args, fullval, val)
 
 def splitWorkflows(workflows, max_wf_pre_set):
+  print(workflows)
   avg_t = sum ([ x[1] for x in workflows ] ) / len(workflows)
   wf_max = len(workflows)
   wf_pre_set = wf_max

@@ -110,7 +110,8 @@ for org in orgs:
           backup = True
           break
     if not backup:
-      print("  Skipping, no change")
+      print("  Skipping mirror, no change")
+      process_issues(repo_name)
       continue
     getstatusoutput("mkdir -p %s/issues" % repo_dir)
     brepo = join(backup_store, repo_name, "repo")

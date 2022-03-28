@@ -59,6 +59,7 @@ def process_issues(repo, max_threads=8):
   if exists(ref_datefile):
     with open(ref_datefile) as ref:
       ref_date = int(ref.read().strip())
+  clean_run=False
   while issues:
     for issue in issues:
       idate = github_time(issue['updated_at'])
@@ -85,10 +86,12 @@ def process_issues(repo, max_threads=8):
     issues = []
     if pages:
       issues = get_repository_issues(repo_name, page = pages.pop(0))
+    else:
+      clean_run=True
   for t in threads:
     t[0].join()
     all_ok = (all_ok and t[1]['status'])
-  if all_ok and (latest_date!=ref_date):
+  if clean_run and all_ok and (latest_date!=ref_date):
     with open(ref_datefile, "w") as ref:
       ref.write(str(latest_date))
   return

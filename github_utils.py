@@ -65,8 +65,8 @@ def _check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=
         if tok_len>=1:
           GH_TOKEN_INDEX = 0 if (GH_TOKEN_INDEX==tok_len) else GH_TOKEN_INDEX+1
           if msg: print("Changing token index",GH_TOKEN_INDEX)
-          if GH_TOKEN_INDEX==0: get_rate_limits()
-          else: return
+          get_rate_limits()
+          if GH_TOKEN_INDEX>0: return
         if msg:
           print("Slowing down for %s sec due to api rate limits %s approching zero (reset in %s secs)" % (doSleep, rate_limit, rate_reset_sec))
         sleep(doSleep)

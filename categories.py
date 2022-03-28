@@ -57,7 +57,7 @@ CMSSW_L2 = {
   "mkirsano":         ["generators"],   
   "perrotta":         ["operations"],
   "pmandrik":         ["dqm"],
-  "pbo0":             ["dqm"],
+  "micsucmed":        ["dqm"],
   "qliphy":           ["operations"],
   "epalencia":        ["l1"],
   "rekovic":          ["l1"],

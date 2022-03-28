@@ -7,5 +7,5 @@ fi
 ERR=0
 source $(dirname $0)/setup-env.sh $vm
 ai-kill ${vm} || ERR=1
-ai-foreman delhost ${vm} || true
+ai-foreman delhost --do-not-ask ${vm} || true
 exit $ERR

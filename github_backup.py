@@ -3,18 +3,100 @@ from sys import exit,argv
 from os import environ
 from os.path import exists, join
 from json import load, dump
-from time import time
+from time import time, sleep
 from subprocess import getstatusoutput
-from github_utils import get_organization_repositores, get_repository
-token = open(argv[1]).read().strip()
+from hashlib import md5
+import threading
+from github_utils import get_organization_repositores, get_repository_issues, check_rate_limits, github_time, get_issue_comments, get_page_range, get_gh_token
+get_gh_token(token_file=argv[1])
 backup_store = argv[2]
 if not exists(backup_store):
   print("Backup store not exists.")
-  sys.exit(1)
+  exit(1)
+
+def download_patch(issue, pfile, force=False):
+  if 'pull_request' in issue:
+    if (not exists(pfile)) or force:
+      e, o = getstatusoutput('curl -L -s "%s" > %s.tmp && mv %s.tmp %s' % (issue['pull_request']['patch_url'], pfile, pfile, pfile))
+      if e:
+        print("ERROR:",issue['number'],o)
+        return False
+  return True
+
+
+def process_issue(repo, issue, data):
+  num = issue['number']
+  pr_md5 = md5((str(num)+"\n").encode()).hexdigest()
+  pr_md5_dir = join(backup_store, repo_name, "issues", pr_md5[:2],  pr_md5[2:])
+  ifile = join(pr_md5_dir, "issue.json")
+  pfile = join(pr_md5_dir, "patch.txt")
+  getstatusoutput("mkdir -p %s" % pr_md5_dir)
+  status = download_patch(issue, pfile)
+  if exists (ifile):
+    obj = {}
+    with open(ifile) as ref:
+      obj = load(ref)
+    if obj['updated_at']==issue['updated_at']:
+      data['status'] = status
+      return
+  status = status and download_patch(issue, pfile, True)
+  comments = get_issue_comments(repo, num)
+  dump(comments, open(join(pr_md5_dir, "comments.json"),"w"))
+  dump(issue, open(ifile, "w"))
+  print("  Updated ",repo,num,issue['updated_at'],status)
+  data['status'] = status
+  return
+
+def process_issues(repo, max_threads=8):
+  issues = get_repository_issues(repo_name)
+  check_rate_limits(msg=True)
+  pages = get_page_range()
+  threads = []
+  all_ok = True
+  latest_date = 0
+  ref_datefile = join(backup_store, repo, "issues", "latest.txt")
+  ref_date = 0
+  if exists(ref_datefile):
+    with open(ref_datefile) as ref:
+      ref_date = int(ref.read().strip())
+  while issues:
+    for issue in issues:
+      idate = github_time(issue['updated_at'])
+      if latest_date==0: latest_date = idate
+      if idate<ref_date:
+        pages = []
+        break
+      check_rate_limits(msg=False, when_slow=True)
+      inum = issue['number']
+      print("Processing ",repo,inum)
+      while (len(threads) >= max_threads):
+        sleep(0.01)
+        athreads = []
+        for t in threads:
+          if t[0].is_alive(): athreads.append(t)
+          else:
+            all_ok = (all_ok and t[1]['status'])
+        threads = athreads
+      data={'status': False, 'number': inum}
+      t = threading.Thread(target=process_issue, args=(repo, issue, data))
+      t.start()
+      threads.append((t, data))
+      sleep(0.01)
+    issues = []
+    if pages:
+      issues = get_repository_issues(repo_name, page = pages.pop(0))
+  for t in threads:
+    t[0].join()
+    all_ok = (all_ok and t[1]['status'])
+  if all_ok and (latest_date!=ref_date):
+    with open(ref_datefile, "w") as ref:
+      ref.write(str(latest_date))
+  return
+ 
 orgs=["cms-sw", "dmwm", "cms-externals", "cms-data", "cms-analysis", "cms-cvs-history", "cms-obsolete"]
 err=0
 for org in orgs:
-  for repo in get_organization_repositores(token, org):
+  for repo in get_organization_repositores(org):
     repo_name = repo['full_name']
     print("Working on",repo_name)
     repo_dir = join(backup_store,repo_name)
@@ -30,8 +112,8 @@ for org in orgs:
     if not backup:
       print("  Skipping, no change")
       continue
-    getstatusoutput("mkdir -p %s" % repo_dir)
-    brepo = join(backup_store,repo_name, "repo")
+    getstatusoutput("mkdir -p %s/issues" % repo_dir)
+    brepo = join(backup_store, repo_name, "repo")
     if exists(brepo):
       getstatusoutput("mv %s %s.%s" % (brepo, brepo, int(time())))
     getstatusoutput("rm -rf %s.tmp" % brepo)
@@ -48,4 +130,6 @@ for org in orgs:
       else:
         print(o)
         err = 1
+    process_issues(repo_name)
 exit(err)
+

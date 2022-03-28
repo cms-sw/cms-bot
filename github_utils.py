@@ -1,12 +1,16 @@
 from __future__ import print_function
 from sys import argv, version_info
 from hashlib import md5
-import json, sys
+import json, sys, datetime
+from time import sleep, gmtime, mktime, strptime
 from _py2with3compatibility import run_cmd, urlopen, Request, urlencode
 from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
 
-GITHUB_TOKEN = None
+GH_TOKENS = []
+GH_TOKEN_INDEX = 0
+GH_RATE_LIMIT = [ 5000, 5000, 3600]
+GH_PAGE_RANGE = []
 try:
     from github import UnknownObjectException
 except:
@@ -28,41 +32,61 @@ def comment_gh_pr(gh, repo, pr, msg):
     pr.create_comment(msg)
 
 
-def check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=True):
-    from time import sleep, gmtime
+def github_time(gh_time):
+  return int(mktime(strptime(gh_time, "%Y-%m-%dT%H:%M:%SZ")))
+
+def get_page_range():
+  return GH_PAGE_RANGE[:]
+
+def _check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=True, when_slow=False):
+    global GH_TOKENS, GH_TOKEN_INDEX
     from calendar import timegm
     from datetime import datetime
     doSleep = 0
     rate_reset_sec = rate_limiting_resettime - timegm(gmtime()) + 5
     if msg: print('API Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (
         rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime)))
-    if rate_limit < 100:
+    if rate_limit < 50:
         doSleep = rate_reset_sec
+    elif rate_limit < 100:
+        doSleep = 3
     elif rate_limit < 250:
-        doSleep = 30
-    elif rate_limit < 500:
-        doSleep = 10
-    elif rate_limit < 750:
-        doSleep = 5
-    elif rate_limit < 1000:
         doSleep = 2
-    elif rate_limit < 1500:
+    elif rate_limit < 500:
         doSleep = 1
+    elif rate_limit < 750:
+        doSleep = 0.5
+    elif rate_limit < 1000:
+        doSleep = 0.25
     if (rate_reset_sec < doSleep): doSleep = rate_reset_sec
+    if when_slow: msg=True
     if doSleep > 0:
-        if msg: print("Slowing down for %s sec due to api rate limits %s approching zero" % (doSleep, rate_limit))
+        tok_len = len(GH_TOKENS)-1
+        if tok_len>=1:
+          GH_TOKEN_INDEX = 0 if (GH_TOKEN_INDEX==tok_len) else GH_TOKEN_INDEX+1
+          if msg: print("Changing token index",GH_TOKEN_INDEX)
+          if GH_TOKEN_INDEX==0: get_rate_limits()
+          else: return
+        if msg:
+          print("Slowing down for %s sec due to api rate limits %s approching zero (reset in %s secs)" % (doSleep, rate_limit, rate_reset_sec))
         sleep(doSleep)
     return
 
-
-def api_rate_limits_repo(repo, msg=True):
-    check_rate_limits(int(repo.raw_headers['x-ratelimit-remaining']), int(repo.raw_headers['x-ratelimit-limit']),
-                      int(repo.raw_headers['x-ratelimit-reset']), msg)
+def check_rate_limits(msg=True, when_slow=False):
+    _check_rate_limits(GH_RATE_LIMIT[0], GH_RATE_LIMIT[1], GH_RATE_LIMIT[2], msg, when_slow)
 
 
-def api_rate_limits(gh, msg=True):
+def api_rate_limits_repo(obj, msg=True, when_slow=False):
+    global GH_RATE_LIMIT
+    GH_RATE_LIMIT = [ int(obj.raw_headers['x-ratelimit-remaining']), int(obj.raw_headers['x-ratelimit-limit']), int(obj.raw_headers['x-ratelimit-reset']) ]
+    check_rate_limits(msg, when_slow)
+
+
+def api_rate_limits(gh, msg=True, when_slow=False):
+    global GH_RATE_LIMIT
     gh.get_rate_limit()
-    check_rate_limits(gh.rate_limiting[0], gh.rate_limiting[1], gh.rate_limiting_resettime, msg)
+    GH_RATE_LIMIT = [ int(gh.rate_limiting[0]), int(gh.rate_limiting[1]), int(gh.rate_limiting_resettime) ]
+    check_rate_limits(msg, when_slow)
 
 
 def get_ported_PRs(repo, src_branch, des_branch):
@@ -320,12 +344,12 @@ def get_organization_members(token, org, role="all", filter="all"):
     return github_api("/orgs/%s/members" % org, token, params={"role": role, "filter": filter}, method="GET")
 
 
-def get_organization_repositores(token, org):
-    return github_api("/orgs/%s/repos" % org, token, method="GET")
+def get_organization_repositores(org):
+    return github_api("/orgs/%s/repos" % org, method="GET")
 
 
-def get_repository(token, repo):
-    return github_api("/repos/%s" % repo, token, method="GET")
+def get_repository(repo):
+    return github_api("/repos/%s" % repo, method="GET")
 
 
 def add_organization_member(token, org, member, role="member"):
@@ -344,17 +368,18 @@ def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
     if state: params["state"] = state
     return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
 
+def get_rate_limits():
+  return github_api(uri="/rate_limit", method="GET")
 
-def github_api(uri, token, params=None, method="POST", headers=None, page=1, page_range=None, raw=False, per_page=None, last_page=False):
+def github_api(uri, token=None, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True):
+    global GH_RATE_LIMIT, GH_PAGE_RANGE
     if not params:
         params = {}
     if not headers:
         headers = {}
-    if not page_range:
-        page_range = []
     url = "https://api.github.com%s" % uri
     data = ""
-    if per_page: params['per_page']=per_page
+    if per_page and ('per_page' not in params) : params['per_page']=per_page
     if method == "GET":
         if params:
             url = url + "?" + urlencode(params)
@@ -368,33 +393,35 @@ def github_api(uri, token, params=None, method="POST", headers=None, page=1, pag
         else:
             url = url + "&"
         url = url + "page=%s" % page
+    if not token: token = get_gh_token()
     headers["Authorization"] = "token " + token
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
+    if page<=1 : GH_PAGE_RANGE = []
+    try:
+      GH_RATE_LIMIT = [ int(response.headers["X-RateLimit-Remaining"]), int(response.headers["X-RateLimit-Limit"]), int(response.headers["X-Ratelimit-Reset"])]
+    except Exception as e:
+      print("ERROR:",e)
     if (page <= 1) and (method=='GET'):
-        link = ""
-        if version_info[0]==2:
-            link = response.info().getheader("Link")
-        else:
-            link = response.info().get("Link")
+        link = response.headers.get("Link")
         if link:
             pages = []
             for x in link.split(" "):
               m = re.match('^.*[?&]page=([1-9][0-9]*).*$', x)
               if m: pages.append(int(m.group(1)))
             if len(pages) == 2:
-                page_range += range(pages[0], pages[1] + 1)
+                GH_PAGE_RANGE += range(pages[0], pages[1] + 1)
             elif len(pages) == 1:
-                page_range += pages
+                GH_PAGE_RANGE += pages
     cont = response.read()
     if raw: return cont
     data = json.loads(cont)
-    if page_range and page<=1:
+    if GH_PAGE_RANGE and all_pages:
       if last_page:
-        return github_api(uri, token, params, method, headers, page_range[-1], page_range=None, raw=False, per_page=per_page, last_page=last_page)
-      for page in page_range:
-        data += github_api(uri, token, params, method, headers, page, page_range=None, raw=raw, per_page=per_page, last_page=last_page)
+        return github_api(uri, token, params, method, headers, GH_PAGE_RANGE[-1], raw=False, per_page=per_page, all_pages=False)
+      for page in GH_PAGE_RANGE:
+        data += github_api(uri, token, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False)
     return data
 
 
@@ -435,15 +462,22 @@ def get_unix_time(data_obj):
     return data_obj.strftime("%s")
 
 
-def get_gh_token(repository=None):
-  global GITHUB_TOKEN
-  if not GITHUB_TOKEN:
-    if repository:
-      repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
-      if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
-    import repo_config
-    GITHUB_TOKEN = open(expanduser(repo_config.GH_TOKEN)).read().strip()
-  return GITHUB_TOKEN
+def get_gh_token(repository=None, token_file=None):
+  global GH_TOKENS, GH_TOKEN_INDEX
+  if not GH_TOKENS:
+    GH_TOKEN_INDEX = 0
+    if not token_file:
+      if repository:
+        repo_dir = join(scriptPath,'repos',repository.replace("-","_"))
+        if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
+      import repo_config
+      token_file = expanduser(repo_config.GH_TOKEN)
+    with open(token_file) as ref:
+      for tok in [t.strip() for t in ref.readlines() ]:
+        if not tok: continue
+        GH_TOKENS.append(tok)
+    print("Read Tokens:",len(GH_TOKENS))
+  return GH_TOKENS[GH_TOKEN_INDEX]
 
 def get_combined_statuses(commit, repository, token=None):
   if not token: token = get_gh_token(repository)
@@ -463,6 +497,12 @@ def set_comment_emoji(comment_id, repository, emoji="+1", token=None):
   return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, params, headers=headers)
 
 
+def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}, page=1):
+  return github_api('/repos/%s/issues' % repository, method="GET", params=params, page=page, all_pages=False)
+
+def get_issue_comments(repository, issue_num):
+  return github_api('/repos/%s/issues/%s/comments' % (repository, issue_num), method="GET")
+
 def get_comment_emojis(comment_id, repository, token=None):
   if not token: token = get_gh_token(repository)
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
@@ -473,6 +513,7 @@ def delete_comment_emoji(emoji_id, comment_id, repository, token=None):
   if not token: token = get_gh_token(repository)
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
   return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), token, method="DELETE", headers=headers, raw=True)
+
 
 def get_git_tree(sha, repository, token=None):
   if not token: token = get_gh_token(repository)

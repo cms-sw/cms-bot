@@ -332,16 +332,16 @@ def get_commit_info(repo, commit):
     return {}
 
 
-def create_team(token, org, team, description):
+def create_team(org, team, description):
     params = {"name": team, "description": description, "permission": "admin", "privacy": "closed"}
-    return github_api("/orgs/%s/teams" % org, token, params, method="POST")
+    return github_api("/orgs/%s/teams" % org, params=params, method="POST")
 
-def get_pending_members(token, org):
-    return github_api("/orgs/%s/invitations" % org, token, method="GET")
+def get_pending_members(org):
+    return github_api("/orgs/%s/invitations" % org, method="GET")
 
 
-def get_organization_members(token, org, role="all", filter="all"):
-    return github_api("/orgs/%s/members" % org, token, params={"role": role, "filter": filter}, method="GET")
+def get_organization_members(org, role="all", filter="all"):
+    return github_api("/orgs/%s/members" % org, params={"role": role, "filter": filter}, method="GET")
 
 
 def get_organization_repositores(org):
@@ -352,26 +352,24 @@ def get_repository(repo):
     return github_api("/repos/%s" % repo, method="GET")
 
 
-def add_organization_member(token, org, member, role="member"):
-    return github_api("/orgs/%s/memberships/%s" % (org, member), token, params={"role": role}, method="PUT")
+def add_organization_member(org, member, role="member"):
+    return github_api("/orgs/%s/memberships/%s" % (org, member), params={"role": role}, method="PUT")
 
 
-def get_token(github):
-    return github._Github__requester._Requester__authorizationHeader.split(" ")[-1]
 
-
-def edit_pr(token, repo, pr_num, title=None, body=None, state=None, base=None):
+def edit_pr(repo, pr_num, title=None, body=None, state=None, base=None):
+    get_gh_token(repo)
     params = {}
     if title: params["title"] = title
     if body: params["body"] = body
     if base: params["base"] = base
     if state: params["state"] = state
-    return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), token=token, params=params, method="PATCH")
+    return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), params=params, method="PATCH")
 
 def get_rate_limits():
   return github_api(uri="/rate_limit", method="GET")
 
-def github_api(uri, token=None, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True):
+def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True):
     global GH_RATE_LIMIT, GH_PAGE_RANGE
     if not params:
         params = {}
@@ -393,8 +391,7 @@ def github_api(uri, token=None, params=None, method="POST", headers=None, page=1
         else:
             url = url + "&"
         url = url + "page=%s" % page
-    if not token: token = get_gh_token()
-    headers["Authorization"] = "token " + token
+    headers["Authorization"] = "token " + get_gh_token()
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
@@ -419,9 +416,9 @@ def github_api(uri, token=None, params=None, method="POST", headers=None, page=1
     data = json.loads(cont)
     if GH_PAGE_RANGE and all_pages:
       if last_page:
-        return github_api(uri, token, params, method, headers, GH_PAGE_RANGE[-1], raw=False, per_page=per_page, all_pages=False)
+        return github_api(uri, params, method, headers, GH_PAGE_RANGE[-1], raw=False, per_page=per_page, all_pages=False)
       for page in GH_PAGE_RANGE:
-        data += github_api(uri, token, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False)
+        data += github_api(uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False)
     return data
 
 
@@ -472,63 +469,69 @@ def get_gh_token(repository=None, token_file=None):
         if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
       import repo_config
       token_file = expanduser(repo_config.GH_TOKEN)
-    with open(token_file) as ref:
-      for tok in [t.strip() for t in ref.readlines() ]:
-        if not tok: continue
-        GH_TOKENS.append(tok)
+    try:
+      with open(token_file) as ref:
+        for tok in [t.strip() for t in ref.readlines() ]:
+          if not tok: continue
+          GH_TOKENS.append(tok)
+    except:
+      GH_TOKENS = [""]
   return GH_TOKENS[GH_TOKEN_INDEX]
 
-def get_combined_statuses(commit, repository, token=None):
-  if not token: token = get_gh_token(repository)
-  return github_api("/repos/%s/commits/%s/status" % (repository, commit), token, method='GET')
+def get_combined_statuses(commit, repository):
+  get_gh_token(repository)
+  return github_api("/repos/%s/commits/%s/status" % (repository, commit), method='GET')
 
-def get_pr_commits(pr, repository, token=None, per_page=None, last_page=False):
-  if not token: token = get_gh_token(repository)
-  return github_api("/repos/%s/pulls/%s/commits" % (repository, pr), token, method='GET', per_page=per_page, last_page=last_page)
+def get_pr_commits(pr, repository, per_page=None, last_page=False):
+  get_gh_token(repository)
+  return github_api("/repos/%s/pulls/%s/commits" % (repository, pr), method='GET', per_page=per_page, last_page=last_page)
 
-def get_pr_latest_commit(pr, repository, token=None):
-  return str(get_pr_commits(pr, repository, token, per_page=1, last_page=True)[-1]["sha"])
+def get_pr_latest_commit(pr, repository):
+  get_gh_token(repository)
+  return str(get_pr_commits(pr, repository, per_page=1, last_page=True)[-1]["sha"])
 
-def set_comment_emoji(comment_id, repository, emoji="+1", token=None):
-  if not token: token = get_gh_token(repository)
+def set_comment_emoji(comment_id, repository, emoji="+1"):
+  get_gh_token(repository)
   params = {"content" : emoji }
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, params, headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), params=params, headers=headers)
 
 
 def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}, page=1):
+  get_gh_token(repository)
   return github_api('/repos/%s/issues' % repository, method="GET", params=params, page=page, all_pages=False)
 
 def get_issue_comments(repository, issue_num):
+  get_gh_token(repository)
   return github_api('/repos/%s/issues/%s/comments' % (repository, issue_num), method="GET")
 
-def get_comment_emojis(comment_id, repository, token=None):
-  if not token: token = get_gh_token(repository)
+def get_comment_emojis(comment_id, repository):
+  get_gh_token(repository)
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), token, method="GET", headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), method="GET", headers=headers)
 
 
-def delete_comment_emoji(emoji_id, comment_id, repository, token=None):
-  if not token: token = get_gh_token(repository)
+def delete_comment_emoji(emoji_id, comment_id, repository):
+  get_gh_token(repository)
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), token, method="DELETE", headers=headers, raw=True)
+  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", headers=headers, raw=True)
 
 
-def get_git_tree(sha, repository, token=None):
-  if not token: token = get_gh_token(repository)
-  return github_api("/repos/%s/git/trees/%s" % (repository, sha), token, method='GET')
+def get_git_tree(sha, repository):
+  get_gh_token(repository)
+  return github_api("/repos/%s/git/trees/%s" % (repository, sha), method='GET')
 
 
-def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", token=None, reset=False):
-  if not token: token = get_gh_token(repository)
+def mark_commit_status(commit, repository, context="default", state="pending", url="", description="Test started", reset=False):
+  get_gh_token(repository)
   params = {'state': state, 'target_url': url, 'description': description, 'context': context}
-  github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)
+  github_api('/repos/%s/statuses/%s' % (repository, commit), params=params)
   if reset:
-    statuses = get_combined_statuses(commit, repository, token)
+    statuses = get_combined_statuses(commit, repository)
     if 'statuses' not in statuses: return
     params = {'state': 'pending', 'target_url': '', 'description': 'Not yet started'}
     for s in statuses['statuses']:
       if s['context'].startswith(context+"/"):
         params['context'] = s['context']
-        github_api('/repos/%s/statuses/%s' % (repository, commit), token, params)
+        github_api('/repos/%s/statuses/%s' % (repository, commit), params=params)
   return

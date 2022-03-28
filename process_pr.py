@@ -484,7 +484,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if pr.state != "closed":
         print("This pull request must go in to master branch")
         if not dryRun:
-          edit_pr(get_token(gh), repo.full_name, prId, base="master")
+          edit_pr(repo.full_name, prId, base="master")
           msg = format("%(gh_user_char)s%(user)s, %(dev_branch)s branch is closed for direct updates. cms-bot is going to move this PR to master branch.\n"
                        "In future, please use cmssw master branch to submit your changes.\n",
                        user=requestor,

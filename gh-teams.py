@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from sys import exit
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api,add_organization_member
-from github_utils import create_team,get_pending_members
+from github_utils import create_team,get_pending_members, get_gh_token
 from categories import CMSSW_L1, CMSSW_L2, CMS_SDT
 setdefaulttimeout(120)
 
@@ -98,9 +98,7 @@ parser = ArgumentParser()
 parser.add_argument("-o", "--organization", dest="organization", help="Github Organization name e.g. cms-sw. Default is * i.e. all cms origanizations", type=str, default="*")
 parser.add_argument("-n", "-dry-run", dest="dryRun", default=False, action="store_true")
 args = parser.parse_args()
-
-GH_TOKEN = open(expanduser("~/.github-token")).read().strip()
-gh = Github(login_or_token=GH_TOKEN)
+gh = Github(login_or_token=get_gh_token(token_file=expanduser("~/.github-token")))
 cache = {"users" : {}}
 total_changes=0
 err_code=0
@@ -108,7 +106,7 @@ for org_name in CMS_ORGANIZATIONS:
   if args.organization!="*" and org_name!=args.organization: continue
   print("Wroking on Organization ",org_name)
   pending_members = []
-  for user in get_pending_members(GH_TOKEN, org_name):
+  for user in get_pending_members(org_name):
     user = user['login'].encode("ascii", "ignore")
     pending_members.append(user)
   print("Pending Invitations: %s" % ",".join(["@%s" % u for u in pending_members]))
@@ -121,13 +119,13 @@ for org_name in CMS_ORGANIZATIONS:
     login = mem.login.encode("ascii", "ignore")
     if not login in cache["users"]: cache["users"][login] = mem
     if not login in REPO_OWNERS[org_name]:
-      if not args.dryRun: add_organization_member(GH_TOKEN, org_name, login, role="member")
+      if not args.dryRun: add_organization_member(org_name, login, role="member")
       print("    =>Remove owner:",login)
       chg_flag+=1
     else:
       ok_mems.append(login)
   for login in [ l for l in REPO_OWNERS[org_name] if not l in ok_mems ]:
-    if not args.dryRun: add_organization_member(GH_TOKEN, org_name, login, role="admin")
+    if not args.dryRun: add_organization_member(org_name, login, role="admin")
     print("    =>Add owner:",login)
     chg_flag+=1
   total_changes+=chg_flag
@@ -145,7 +143,7 @@ for org_name in CMS_ORGANIZATIONS:
     if flag: continue
     print("    => Creating team",team)
     if not args.dryRun:
-      create_team(GH_TOKEN, org_name, team, "cmssw team for "+team)
+      create_team(org_name, team, "cmssw team for "+team)
       chg_flag+=1
   total_changes+=chg_flag
   org_members = [ mem.login.encode("ascii", "ignore") for mem in org.get_members() ]
@@ -186,7 +184,7 @@ for org_name in CMS_ORGANIZATIONS:
           print("    => Can not add member, pending invitation: %s" % login)
           continue
         if login not in org_members:
-            if not args.dryRun: add_organization_member(GH_TOKEN, org_name, login, role="member")
+            if not args.dryRun: add_organization_member(org_name, login, role="member")
             print("      =>Inviting member:",login)
             continue
         if not login in cache["users"]: cache["users"][login] = gh.get_user(login)

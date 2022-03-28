@@ -476,7 +476,6 @@ def get_gh_token(repository=None, token_file=None):
       for tok in [t.strip() for t in ref.readlines() ]:
         if not tok: continue
         GH_TOKENS.append(tok)
-    print("Read Tokens:",len(GH_TOKENS))
   return GH_TOKENS[GH_TOKEN_INDEX]
 
 def get_combined_statuses(commit, repository, token=None):

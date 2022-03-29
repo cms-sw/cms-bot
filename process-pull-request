@@ -6,7 +6,7 @@ from __future__ import print_function
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits, get_pr_commits, get_pr_latest_commit
+from github_utils import api_rate_limits, get_pr_commits, get_pr_latest_commit, get_gh_token
 setdefaulttimeout(120)
 import sys
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
@@ -23,21 +23,15 @@ if __name__ == "__main__":
   if len(args) != 1:
     parser.error("Too many/few arguments")
   prId = int(args[0])  # Positional argument is "Pull request ID"
-
-  repo_dir = join(SCRIPT_DIR,'repos',opts.repository.replace("-","_"))
-  if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
-  import repo_config
-  token = open(expanduser(repo_config.GH_TOKEN)).read().strip()
-
   if opts.commit:
     if opts.all:
-      for c in get_pr_commits(prId, opts.repository, token):
+      for c in get_pr_commits(prId, opts.repository):
         print(c['sha'])
     else:
-      print(get_pr_latest_commit(args[0], opts.repository, token))
+      print(get_pr_latest_commit(args[0], opts.repository))
   else:
     from github import Github
-    gh = Github(login_or_token=token)
+    gh = Github(login_or_token=get_gh_token(opts.repository))
     api_rate_limits(gh)
     repo = gh.get_repo(opts.repository)
     from process_pr import process_pr

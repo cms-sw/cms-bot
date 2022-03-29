@@ -3,7 +3,7 @@ from __future__ import print_function
 from optparse import OptionParser
 import json
 import re
-from github_utils import github_api
+from github_utils import github_api, get_gh_token
 from collections import namedtuple
 from os.path import expanduser, join, exists
 from hashlib import md5
@@ -45,7 +45,7 @@ def get_pr(pr, repo, cmsprs):
   return {}
 
 def getReleasesNotes(opts):
-  login_or_token=open(expanduser("~/.github-token-cmsbot")).read().strip()
+  get_gh_token(token_file=expanduser("~/.github-token-cmsbot"))
   page = 1
   pages = []
   notes = []
@@ -54,7 +54,7 @@ def getReleasesNotes(opts):
     print("Reading releases page",page)
     rel_opt=""
     if opts.release: rel_opt="/tags/%s" % opts.release
-    releases=github_api("/repos/%s/releases%s" % (opts.repository, rel_opt), login_or_token, method="GET", page=page, page_range=pages)
+    releases=github_api("/repos/%s/releases%s" % (opts.repository, rel_opt), method="GET", page=page, page_range=pages)
     if opts.release: releases= [releases]
     if len(pages): page=pages.pop(0)
     else: page=0

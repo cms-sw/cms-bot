@@ -369,7 +369,7 @@ def edit_pr(repo, pr_num, title=None, body=None, state=None, base=None):
 def get_rate_limits():
   return github_api(uri="/rate_limit", method="GET")
 
-def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True):
+def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True, max_pages=-1):
     global GH_RATE_LIMIT, GH_PAGE_RANGE
     if not params:
         params = {}
@@ -413,11 +413,16 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
                 GH_PAGE_RANGE += pages
     cont = response.read()
     if raw: return cont
-    data = json.loads(cont)
+    try:
+      data = json.loads(cont)
+    except:
+      print(cont)
+      exit(0)
     if GH_PAGE_RANGE and all_pages:
       if last_page:
         return github_api(uri, params, method, headers, GH_PAGE_RANGE[-1], raw=False, per_page=per_page, all_pages=False)
       for page in GH_PAGE_RANGE:
+        if max_pages>0 and page>max_pages: break
         data += github_api(uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False)
     return data
 
@@ -478,17 +483,21 @@ def get_gh_token(repository=None, token_file=None):
       GH_TOKENS = [""]
   return GH_TOKENS[GH_TOKEN_INDEX]
 
+
 def get_combined_statuses(commit, repository):
   get_gh_token(repository)
   return github_api("/repos/%s/commits/%s/status" % (repository, commit), method='GET')
+
 
 def get_pr_commits(pr, repository, per_page=None, last_page=False):
   get_gh_token(repository)
   return github_api("/repos/%s/pulls/%s/commits" % (repository, pr), method='GET', per_page=per_page, last_page=last_page)
 
+
 def get_pr_latest_commit(pr, repository):
   get_gh_token(repository)
   return str(get_pr_commits(pr, repository, per_page=1, last_page=True)[-1]["sha"])
+
 
 def set_comment_emoji(comment_id, repository, emoji="+1"):
   get_gh_token(repository)
@@ -501,9 +510,16 @@ def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}
   get_gh_token(repository)
   return github_api('/repos/%s/issues' % repository, method="GET", params=params, page=page, all_pages=False)
 
+
 def get_issue_comments(repository, issue_num):
   get_gh_token(repository)
   return github_api('/repos/%s/issues/%s/comments' % (repository, issue_num), method="GET")
+
+
+def get_releases(repository, params={'osrt':'updated'}):
+  get_gh_token(repository)
+  return github_api('/repos/%s/releases' % repository, method="GET", params=params, max_pages=10)
+
 
 def get_comment_emojis(comment_id, repository):
   get_gh_token(repository)

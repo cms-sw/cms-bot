@@ -82,7 +82,7 @@ pushd $BUILD_DIR
   else
     CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
-  if [ -f CMSDIST/fakesystem.spec ] ; ; then
+  if [ -f CMSDIST/fakesystem.spec ] ; then
     PYTHONPATH= $CMSBUILD_CMD -i fake             build  fakesystem
     PYTHONPATH= $CMSBUILD_CMD -i fake --sync-back upload fakesystem
     rm -rf fake

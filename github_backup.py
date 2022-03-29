@@ -93,7 +93,9 @@ def process_issues(repo, max_threads=8):
       ref.write(str(latest_date))
   return
  
-orgs=["cms-sw", "dmwm", "cms-externals", "cms-data", "cms-analysis", "cms-cvs-history", "cms-obsolete"]
+orgs=["cms-sw", "dmwm", "cms-externals", "cms-data", "cms-analysis"]
+no_issues_orgs = ["cms-cvs-history", "cms-obsolete"]
+orgs += no_issues_orgs
 err=0
 for org in orgs:
   for repo in get_organization_repositores(org):
@@ -131,6 +133,7 @@ for org in orgs:
       else:
         print(o)
         err = 1
-    process_issues(repo_name)
+    if org not in no_issues_orgs:
+      process_issues(repo_name)
 exit(err)
 

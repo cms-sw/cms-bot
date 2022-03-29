@@ -371,6 +371,8 @@ def get_rate_limits():
 
 def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True, max_pages=-1):
     global GH_RATE_LIMIT, GH_PAGE_RANGE
+    if max_pages>0 and page>max_pages:
+        return '[]' if raw else []
     if not params:
         params = {}
     if not headers:
@@ -413,11 +415,7 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
                 GH_PAGE_RANGE += pages
     cont = response.read()
     if raw: return cont
-    try:
-      data = json.loads(cont)
-    except:
-      print(cont)
-      exit(0)
+    data = json.loads(cont)
     if GH_PAGE_RANGE and all_pages:
       if last_page:
         return github_api(uri, params, method, headers, GH_PAGE_RANGE[-1], raw=False, per_page=per_page, all_pages=False)

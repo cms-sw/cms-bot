@@ -9,7 +9,7 @@ import re, time
 from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
-from github_utils import get_token, edit_pr, api_rate_limits
+from github_utils import edit_pr, api_rate_limits
 from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd

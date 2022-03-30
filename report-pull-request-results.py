@@ -41,7 +41,7 @@ def openlog(log, mode='r'):
   return open(log, mode=mode, encoding='utf-8', errors='ignore')
 
 def writelog(ref, line):
-  ref.write(line.decode('utf-8') if sys.version_info[0] < 3 else line)
+  ref.write(line.encode('ascii', 'ignore').decode('utf-8') if sys.version_info[0] < 3 else line)
 #
 # Reads the log file for a step in a workflow and identifies the error if it starts with 'Begin Fatal Exception'
 #

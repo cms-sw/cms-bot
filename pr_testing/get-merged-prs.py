@@ -1,7 +1,7 @@
 #!/bin/bash
 
 """:"
-python_cmd="pythoy3"
+python_cmd="python3"
 python -V >/dev/null 2>&1 && python_cmd="python"
 exec ${python_cmd} $0 ${1+"$@"}
 """

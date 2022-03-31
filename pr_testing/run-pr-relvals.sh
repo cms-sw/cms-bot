@@ -57,7 +57,8 @@ pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
   done
 popd
 
-TEST_ERRORS=$(grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR' | grep -v 'ERROR failed to parse X509 proxy' || true)
+TEST_ERRORS=$(grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR' | grep -v 'ERROR failed to parse X509 proxy') || true
+echo "[${TEST_ERRORS}]"
 GENERAL_ERRORS=`grep "ALL_OK" ${LOG}` || true
 
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then

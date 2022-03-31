@@ -55,12 +55,14 @@ pushd "$WORKSPACE/matrix-results"
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt
   ERRORS_FILE=wf_errors.${BUILD_ID}.txt
   touch $ERRORS_FILE
+  set +x
   grep "ERROR executing.*" matrixTests.${BUILD_ID}.log | while read line ; do
     WF_STEP=$(echo "$line" | sed 's/.* cd //g' | sed 's/_.*step/;/g' | sed 's/_.*$//g')
     if ! grep $WF_STEP $ERRORS_FILE; then
       echo $WF_STEP >> $ERRORS_FILE
     fi
   done
+  set -x
 popd
 
 if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then

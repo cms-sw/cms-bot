@@ -94,7 +94,8 @@ def process_issues(repo, max_threads=8):
   return
  
 orgs=["cms-sw", "dmwm", "cms-externals", "cms-data", "cms-analysis"]
-no_issues_orgs = ["cms-cvs-history", "cms-obsolete"]
+#no_issues_orgs = ["cms-cvs-history", "cms-obsolete"]
+no_issues_orgs = []
 orgs += no_issues_orgs
 err=0
 for org in orgs:

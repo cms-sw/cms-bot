@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from sys import exit,argv
 from os import environ
-from os.path import exists, join
+from os.path import exists, join,dirname
 from json import load, dump
 from time import time, sleep, gmtime
 from subprocess import getstatusoutput
@@ -11,7 +11,7 @@ from github_utils import get_organization_repositores, get_repository_issues, ch
 from github_utils import get_releases
 get_gh_token(token_file=argv[1])
 backup_store = argv[2]
-comment_imgs_regexp = re.compile('\((https://user-images.githubusercontent.com/([0-9]+/[0-9a-f-]+\.[a-z]+))\).*')
+comment_imgs_regexp = re.compile('\((https://(([A-Za-z0-9._-]+/)+[0-9a-f-]+\.[a-z]+))\).*')
 if not exists(backup_store):
   print("Backup store not exists.")
   exit(1)
@@ -22,16 +22,24 @@ def download_patch(issue, pfile, force=False):
       e, o = getstatusoutput('curl -L -s "%s" > %s.tmp && mv %s.tmp %s' % (issue['pull_request']['patch_url'], pfile, pfile, pfile))
       if e:
         print("ERROR:",issue['number'],o)
-        return False
-  return True
+        return 1
+  return 0
 
-def process_comment(comment):
-  for line in comment['body'].encode("ascii", "ignore").split('[overlay]'):
+def process_comment(comment, repo):
+  for line in comment.split('[overlay]'):
     m = comment_imgs_regexp.match(line)
+    err = 0
     if m:
       url = m.group(1)
       uri = m.group(2)
-      print("    URL:",url)
+      img_file = join(backup_store, repo, "images", m.group(2))
+      getstatusoutput("mkdir -p %s" % dirname(img_file))
+      print("    Downloading image:",url)
+      e, o = getstatusoutput('curl -L -s "%s" > %s.tmp && mv %s.tmp %s' % (url, img_file, img_file, img_file))
+      if e:
+        print("    ERROR:",o)
+        err = 1
+  return err
 
 def process_issue(repo, issue, data):
   num = issue['number']
@@ -40,20 +48,24 @@ def process_issue(repo, issue, data):
   ifile = join(pr_md5_dir, "issue.json")
   pfile = join(pr_md5_dir, "patch.txt")
   getstatusoutput("mkdir -p %s" % pr_md5_dir)
-  status = download_patch(issue, pfile)
+  err = 0
+  err += process_comment(issue['body'], repo)
+  err += download_patch(issue, pfile)
   if exists (ifile):
     obj = {}
     with open(ifile) as ref:
       obj = load(ref)
     if obj['updated_at']==issue['updated_at']:
-      data['status'] = status
+      data['status'] = False if err>0 else True
       return
-  status = status and download_patch(issue, pfile, True)
+  err += download_patch(issue, pfile, True)
   comments = get_issue_comments(repo, num)
+  for c in comments:
+    err += process_comment(c['body'],repo)
   dump(comments, open(join(pr_md5_dir, "comments.json"),"w"))
   dump(issue, open(ifile, "w"))
-  print("    Updated ",repo,num,issue['updated_at'],status)
-  data['status'] = status
+  print("    Updated ",repo,num,issue['updated_at'],err)
+  data['status'] = False if err>0 else True
   return
 
 def process_issues(repo, max_threads=8):
@@ -147,6 +159,7 @@ def process_releases(repo, max_threads=8):
     with open(ref_datefile, "w") as ref:
       ref.write(str(latest_date))
   return
+
 
 ##########################################################
 orgs = { 

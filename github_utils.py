@@ -513,6 +513,10 @@ def get_issue_comments(repository, issue_num):
   return github_api('/repos/%s/issues/%s/comments' % (repository, issue_num), method="GET")
 
 
+def get_issue(repository, issue_num):
+  get_gh_token(repository)
+  return github_api('/repos/%s/issues/%s' % (repository, issue_num), method="GET")
+
 def get_releases(repository, params={'sort':'updated'}, page=1, all_pages=False):
   get_gh_token(repository)
   return github_api('/repos/%s/releases' % repository, method="GET", params=params, page=page, all_pages=all_pages)

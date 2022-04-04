@@ -44,14 +44,14 @@ def process_issue(repo, issue, data):
   comments = get_issue_comments(repo, num)
   dump(comments, open(join(pr_md5_dir, "comments.json"),"w"))
   dump(issue, open(ifile, "w"))
-  print("  Updated ",repo,num,issue['updated_at'],status)
+  print("    Updated ",repo,num,issue['updated_at'],status)
   data['status'] = status
   return
 
 def process_issues(repo, max_threads=8):
   issues = get_repository_issues(repo_name)
   pages = get_page_range()
-  check_rate_limits(msg=True)
+  check_rate_limits(msg=True, prefix="  ")
   threads = []
   all_ok = True
   latest_date = 0
@@ -67,7 +67,7 @@ def process_issues(repo, max_threads=8):
       if idate<ref_date:
         pages = []
         break
-      check_rate_limits(msg=False, when_slow=True)
+      check_rate_limits(msg=False, when_slow=True, prefix="  ")
       inum = issue['number']
       print("  Processing ",repo,inum)
       while (len(threads) >= max_threads):

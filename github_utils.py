@@ -38,14 +38,14 @@ def github_time(gh_time):
 def get_page_range():
   return GH_PAGE_RANGE[:]
 
-def _check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=True, when_slow=False):
+def _check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=True, when_slow=False, prefix=""):
     global GH_TOKENS, GH_TOKEN_INDEX
     from calendar import timegm
     from datetime import datetime
     doSleep = 0
     rate_reset_sec = rate_limiting_resettime - timegm(gmtime()) + 5
-    if msg: print('API Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (
-        rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime)))
+    if msg: print('%sAPI Rate Limit: %s/%s, Reset in %s sec i.e. at %s' % (
+        prefix, rate_limit, rate_limit_max, rate_reset_sec, datetime.fromtimestamp(rate_limiting_resettime)))
     if rate_limit < 50:
         doSleep = rate_reset_sec
     elif rate_limit < 100:
@@ -64,11 +64,10 @@ def _check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=
         tok_len = len(GH_TOKENS)-1
         if tok_len>=1:
           GH_TOKEN_INDEX = 0 if (GH_TOKEN_INDEX==tok_len) else GH_TOKEN_INDEX+1
-          if msg: print("Changing token index",GH_TOKEN_INDEX)
           get_rate_limits()
           if GH_TOKEN_INDEX>0: return
         if msg:
-          print("Slowing down for %s sec due to api rate limits %s approching zero (reset in %s secs)" % (doSleep, rate_limit, rate_reset_sec))
+          print("%sSlowing down for %s sec due to api rate limits %s approching zero (reset in %s secs)" % (prefix, doSleep, rate_limit, rate_reset_sec))
         sleep(doSleep)
     return
 

@@ -69,7 +69,7 @@ def process_issues(repo, max_threads=8):
         break
       check_rate_limits(msg=False, when_slow=True)
       inum = issue['number']
-      print("Processing ",repo,inum)
+      print("  Processing ",repo,inum)
       while (len(threads) >= max_threads):
         sleep(0.01)
         athreads = []
@@ -118,7 +118,7 @@ def process_releases(repo, max_threads=8):
       if idate<ref_date:
         pages = []
         break
-      print("Processing release",rel['name'])
+      print("  Processing release",rel['name'])
       while (len(threads) >= max_threads):
         athreads = []
         for t in threads:

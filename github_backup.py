@@ -113,7 +113,7 @@ def process_releases(repo, max_threads=8):
       ref_date = int(ref.read().strip())
   while rels:
     for rel in rels:
-      idate = github_time(rels[0]['published_at'])
+      idate = github_time(rel['published_at'])
       if latest_date==0: latest_date = idate
       if idate<ref_date:
         pages = []

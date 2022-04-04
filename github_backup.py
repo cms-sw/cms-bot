@@ -8,6 +8,7 @@ from subprocess import getstatusoutput
 from hashlib import md5
 import threading
 from github_utils import get_organization_repositores, get_repository_issues, check_rate_limits, github_time, get_issue_comments, get_page_range, get_gh_token
+from github_utils import get_releases
 get_gh_token(token_file=argv[1])
 backup_store = argv[2]
 if not exists(backup_store):
@@ -92,9 +93,9 @@ def process_issues(repo, max_threads=8):
   return
 
 def process_release(repo, rel, data):
-  rdir = join(backup_store, repo, "releases", str(gmtime(rel['published_at']).tm_year))
+  rdir = join(backup_store, repo, "releases", data['year'])
   getstatusoutput("mkdir -p %s" % rdir)
-  dump(rel, open(join(rdir, "%s.json" % rel['name']),"w"))
+  dump(rel, open(join(rdir, "%s.json" % rel['id']),"w"))
   data['status'] = True
   return
 
@@ -102,9 +103,11 @@ def process_releases(repo, max_threads=8):
   rels = get_releases(repo_name)
   pages = get_page_range()
   check_rate_limits(msg=True)
-  latest_date = 0
+  threads = []
   all_ok = True
+  latest_date = 0
   ref_datefile = join(backup_store, repo, "releases", "latest.txt")
+  ref_date = 0
   if exists(ref_datefile):
     with open(ref_datefile) as ref:
       ref_date = int(ref.read().strip())
@@ -123,7 +126,7 @@ def process_releases(repo, max_threads=8):
           else:
             all_ok = (all_ok and t[1]['status'])
         threads = athreads
-      data={'status': False, 'name': rel['name']}
+      data={'status': False, 'year': str(gmtime(idate).tm_year) }
       t = threading.Thread(target=process_release, args=(repo, rel, data))
       t.start()
       threads.append((t, data))

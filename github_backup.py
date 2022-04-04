@@ -6,11 +6,12 @@ from json import load, dump
 from time import time, sleep, gmtime
 from subprocess import getstatusoutput
 from hashlib import md5
-import threading
+import threading, re
 from github_utils import get_organization_repositores, get_repository_issues, check_rate_limits, github_time, get_issue_comments, get_page_range, get_gh_token
 from github_utils import get_releases
 get_gh_token(token_file=argv[1])
 backup_store = argv[2]
+comment_imgs_regexp = re.compile('\((https://user-images.githubusercontent.com/([0-9]+/[0-9a-f-]+\.[a-z]+))\).*')
 if not exists(backup_store):
   print("Backup store not exists.")
   exit(1)
@@ -24,6 +25,13 @@ def download_patch(issue, pfile, force=False):
         return False
   return True
 
+def process_comment(comment):
+  for line in comment['body'].encode("ascii", "ignore").split('[overlay]'):
+    m = comment_imgs_regexp.match(line)
+    if m:
+      url = m.group(1)
+      uri = m.group(2)
+      print("    URL:",url)
 
 def process_issue(repo, issue, data):
   num = issue['number']

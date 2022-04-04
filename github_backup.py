@@ -157,9 +157,11 @@ for org in orgs:
         if repo_obj[v] != repo[v]:
           backup = True
           break
+    if org not in no_issues_orgs:
+      process_issues(repo_name)
+      process_releases(repo_name)
     if not backup:
       print("  Skipping mirror, no change")
-      process_issues(repo_name)
       continue
     getstatusoutput("mkdir -p %s/issues" % repo_dir)
     brepo = join(backup_store, repo_name, "repo")
@@ -179,8 +181,5 @@ for org in orgs:
       else:
         print(o)
         err = 1
-    if org not in no_issues_orgs:
-      process_issues(repo_name)
-      process_releases(repo_name)
 exit(err)
 

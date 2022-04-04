@@ -7,12 +7,20 @@ from repo_config import CMSBUILD_USER
 from releases import SPECIAL_RELEASE_MANAGERS
 
 authors = {}
+#Any Githib user whose comments/requests should be ignored
 GITHUB_BLACKLIST_AUTHORS = []
+#CMS Offline Release Planning managers
 CMSSW_L1 = ["dpiparo", "qliphy", "perrotta"]
+#CMS-SDT members who has admin rights to various github organizations and repositories.
+#They are also reposionsible to sign for externals
 CMS_SDT    = [ "iarspider", "smuzaffar" ]
+#List of gh users who can approve a release build request
 APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar"] + CMSSW_L1 + SPECIAL_RELEASE_MANAGERS))
+#List of gh users who can request to build a release.
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
+#List og gh users who are allowed to trigger Pull Request testing
 TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-","mmusich","Sam-Harper","sroychow","silviodonato"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
+#List of on additional release managers
 PR_HOLD_MANAGERS = [ "kpedro88" ]
 
 COMMON_CATEGORIES = [ "orp", "tests", "code-checks" ]
@@ -24,6 +32,7 @@ CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
 CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + [ "smuzaffar", "Dr15Jones", "makortel" ]))
 COMPARISON_MISSING_MAP = [ "slava77" ]
 
+#CMS L2's and the CMSSW categories they are responsible for. They can also request to start pull requests testing
 CMSSW_L2 = {
   "Dr15Jones":        ["core", "visualization", "geometry"],
   "Martin-Grunewald": ["hlt"],
@@ -129,10 +138,12 @@ CMSSW_L2 = {
   "mmusich":          ["tracking-pog","trk-dpg"],
 }
 
+#All CMS_SDT members can sign externals ( e.g Pull Requests in cms-sw/cmsdist , cms-data and cms-externals
 for user in CMS_SDT:
   if user not in CMSSW_L2: CMSSW_L2[user] = ['externals']
   elif not 'externals' in CMSSW_L2[user]: CMSSW_L2[user].append('externals')
 
+#All CMSSW L1 can sign for ORP   
 for user in CMSSW_L1:
   if user not in CMSSW_L2: CMSSW_L2[user] = ['orp']
   else: CMSSW_L2[user].append('orp')

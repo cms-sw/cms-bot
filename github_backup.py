@@ -171,9 +171,11 @@ for org in orgs:
           break
     getstatusoutput("mkdir -p %s" % repo_dir)
     if 'issues' in orgs[org]:
+      print("  Processing issues for",repo_name)
       getstatusoutput("mkdir -p %s/issues" % repo_dir)
       process_issues(repo_name)
     if 'releases' in orgs[org]:
+      print("  Processing releases for",repo_name)
       getstatusoutput("mkdir -p %s/releases" % repo_dir)
       process_releases(repo_name)
     if not backup:
@@ -183,6 +185,7 @@ for org in orgs:
     if exists(brepo):
       getstatusoutput("mv %s %s.%s" % (brepo, brepo, int(time())))
     getstatusoutput("rm -rf %s.tmp" % brepo)
+    print("  Mirroring repository",repo_name)
     e, o = getstatusoutput("git clone --mirror https://github.com/%s %s.tmp" % (repo_name, brepo))
     if e:
       print(o)

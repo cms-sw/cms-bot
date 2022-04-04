@@ -71,21 +71,21 @@ def _check_rate_limits(rate_limit, rate_limit_max, rate_limiting_resettime, msg=
         sleep(doSleep)
     return
 
-def check_rate_limits(msg=True, when_slow=False):
-    _check_rate_limits(GH_RATE_LIMIT[0], GH_RATE_LIMIT[1], GH_RATE_LIMIT[2], msg, when_slow)
+def check_rate_limits(msg=True, when_slow=False, prefix=""):
+    _check_rate_limits(GH_RATE_LIMIT[0], GH_RATE_LIMIT[1], GH_RATE_LIMIT[2], msg, when_slow,  prefix=prefix)
 
 
-def api_rate_limits_repo(obj, msg=True, when_slow=False):
+def api_rate_limits_repo(obj, msg=True, when_slow=False, prefix=""):
     global GH_RATE_LIMIT
     GH_RATE_LIMIT = [ int(obj.raw_headers['x-ratelimit-remaining']), int(obj.raw_headers['x-ratelimit-limit']), int(obj.raw_headers['x-ratelimit-reset']) ]
-    check_rate_limits(msg, when_slow)
+    check_rate_limits(msg, when_slow, prefix=prefix)
 
 
-def api_rate_limits(gh, msg=True, when_slow=False):
+def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
     global GH_RATE_LIMIT
     gh.get_rate_limit()
     GH_RATE_LIMIT = [ int(gh.rate_limiting[0]), int(gh.rate_limiting[1]), int(gh.rate_limiting_resettime) ]
-    check_rate_limits(msg, when_slow)
+    check_rate_limits(msg, when_slow, prefix=prefix)
 
 
 def get_ported_PRs(repo, src_branch, des_branch):

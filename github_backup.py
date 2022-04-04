@@ -49,7 +49,8 @@ def process_issue(repo, issue, data):
   pfile = join(pr_md5_dir, "patch.txt")
   getstatusoutput("mkdir -p %s" % pr_md5_dir)
   err = 0
-  err += process_comment(issue['body'], repo)
+  if issue['body']:
+    err += process_comment(issue['body'], repo)
   err += download_patch(issue, pfile)
   if exists (ifile):
     obj = {}
@@ -61,7 +62,8 @@ def process_issue(repo, issue, data):
   err += download_patch(issue, pfile, True)
   comments = get_issue_comments(repo, num)
   for c in comments:
-    err += process_comment(c['body'],repo)
+    if c['body']:
+      err += process_comment(c['body'],repo)
   dump(comments, open(join(pr_md5_dir, "comments.json"),"w"))
   dump(issue, open(ifile, "w"))
   print("    Updated ",repo,num,issue['updated_at'],err)

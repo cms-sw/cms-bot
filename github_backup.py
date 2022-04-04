@@ -140,12 +140,21 @@ def process_releases(repo, max_threads=8):
       ref.write(str(latest_date))
   return
 
- 
-orgs=["cms-sw", "dmwm", "cms-externals", "cms-data", "cms-analysis"]
-#no_issues_orgs = ["cms-cvs-history", "cms-obsolete"]
-no_issues_orgs = []
-orgs += no_issues_orgs
+##########################################################
+orgs = { 
+         "cms-sw":          ["issues", "releases"],
+         "dmwm":            ["issues", "releases"],
+         "cms-externals":   ["issues"],
+         "cms-data":        ["issues"],
+         "cms-analysis":    ["issues", "releases"],
+         "cms-cvs-history": [],
+         "cms-obsolete":    [],
+       }
 err=0
+e, o = getstatusoutput("date")
+print("=================================================")
+print(o.strip())
+print("=================================================")
 for org in orgs:
   for repo in get_organization_repositores(org):
     repo_name = repo['full_name']
@@ -156,17 +165,20 @@ for org in orgs:
     if exists(repo_stat):
       repo_obj = load(open(repo_stat))
       backup = False 
-      for v in ['pushed_at', 'pushed_at']:
+      for v in ['pushed_at', 'updated_at']:
         if repo_obj[v] != repo[v]:
           backup = True
           break
-    if org not in no_issues_orgs:
+    getstatusoutput("mkdir -p %s" % repo_dir)
+    if 'issues' in orgs[org]:
+      getstatusoutput("mkdir -p %s/issues" % repo_dir)
       process_issues(repo_name)
+    if 'releases' in orgs[org]:
+      getstatusoutput("mkdir -p %s/releases" % repo_dir)
       process_releases(repo_name)
     if not backup:
       print("  Skipping mirror, no change")
       continue
-    getstatusoutput("mkdir -p %s/issues" % repo_dir)
     brepo = join(backup_store, repo_name, "repo")
     if exists(brepo):
       getstatusoutput("mv %s %s.%s" % (brepo, brepo, int(time())))
@@ -184,5 +196,9 @@ for org in orgs:
       else:
         print(o)
         err = 1
+e, o = getstatusoutput("date")
+print("=================================================")
+print(o.strip())
+print("=================================================")
 exit(err)
 

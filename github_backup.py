@@ -3,7 +3,7 @@ from sys import exit,argv
 from os import environ
 from os.path import exists, join
 from json import load, dump
-from time import time, sleep
+from time import time, sleep, gmtime
 from subprocess import getstatusoutput
 from hashlib import md5
 import threading
@@ -82,9 +82,7 @@ def process_issues(repo, max_threads=8):
       t.start()
       threads.append((t, data))
       sleep(0.01)
-    issues = []
-    if pages:
-      issues = get_repository_issues(repo_name, page = pages.pop(0))
+    issues = get_repository_issues(repo_name, page = pages.pop(0)) if pages else []
   for t in threads:
     t[0].join()
     all_ok = (all_ok and t[1]['status'])
@@ -92,6 +90,53 @@ def process_issues(repo, max_threads=8):
     with open(ref_datefile, "w") as ref:
       ref.write(str(latest_date))
   return
+
+def process_release(repo, rel, data):
+  rdir = join(backup_store, repo, "releases", str(gmtime(rel['published_at']).tm_year))
+  getstatusoutput("mkdir -p %s" % rdir)
+  dump(rel, open(join(rdir, "%s.json" % rel['name']),"w"))
+  data['status'] = True
+  return
+
+def process_releases(repo, max_threads=8):
+  rels = get_releases(repo_name)
+  pages = get_page_range()
+  check_rate_limits(msg=True)
+  latest_date = 0
+  all_ok = True
+  ref_datefile = join(backup_store, repo, "releases", "latest.txt")
+  if exists(ref_datefile):
+    with open(ref_datefile) as ref:
+      ref_date = int(ref.read().strip())
+  while rels:
+    for rel in rels:
+      idate = github_time(rels[0]['published_at'])
+      if latest_date==0: latest_date = idate
+      if idate<ref_date:
+        pages = []
+        break
+      print("Processing release",rel['name'])
+      while (len(threads) >= max_threads):
+        athreads = []
+        for t in threads:
+          if t[0].is_alive(): athreads.append(t)
+          else:
+            all_ok = (all_ok and t[1]['status'])
+        threads = athreads
+      data={'status': False, 'name': rel['name']}
+      t = threading.Thread(target=process_release, args=(repo, rel, data))
+      t.start()
+      threads.append((t, data))
+    rels = get_releases(repo_name, page=pages.pop(0)) if pages else []
+    check_rate_limits(msg=False, when_slow=True)
+  for t in threads:
+    t[0].join()
+    all_ok = (all_ok and t[1]['status'])
+  if all_ok and (latest_date!=ref_date):
+    with open(ref_datefile, "w") as ref:
+      ref.write(str(latest_date))
+  return
+
  
 orgs=["cms-sw", "dmwm", "cms-externals", "cms-data", "cms-analysis"]
 #no_issues_orgs = ["cms-cvs-history", "cms-obsolete"]
@@ -136,5 +181,6 @@ for org in orgs:
         err = 1
     if org not in no_issues_orgs:
       process_issues(repo_name)
+      process_releases(repo_name)
 exit(err)
 

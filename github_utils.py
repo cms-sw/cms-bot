@@ -504,9 +504,9 @@ def set_comment_emoji(comment_id, repository, emoji="+1"):
   return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), params=params, headers=headers)
 
 
-def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}, page=1):
+def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}, page=1, all_pages=False):
   get_gh_token(repository)
-  return github_api('/repos/%s/issues' % repository, method="GET", params=params, page=page, all_pages=False)
+  return github_api('/repos/%s/issues' % repository, method="GET", params=params, page=page, all_pages=all_pages)
 
 
 def get_issue_comments(repository, issue_num):
@@ -514,9 +514,9 @@ def get_issue_comments(repository, issue_num):
   return github_api('/repos/%s/issues/%s/comments' % (repository, issue_num), method="GET")
 
 
-def get_releases(repository, params={'osrt':'updated'}):
+def get_releases(repository, params={'sort':'updated'}, page=1, all_pages=False):
   get_gh_token(repository)
-  return github_api('/repos/%s/releases' % repository, method="GET", params=params, max_pages=10)
+  return github_api('/repos/%s/releases' % repository, method="GET", params=params, page=page, all_pages=all_pages)
 
 
 def get_comment_emojis(comment_id, repository):

@@ -27,10 +27,9 @@ def download_patch(issue, pfile, force=False):
 
 def process_comment(body, repo):
   err = 0
-  if not body: return
+  if not body: return err
   for comment in body.split("\n"):
     while comment:
-      print(comment)
       m = comment_imgs_regexp.match("  "+comment+"   ")
       if not m: break
       comment = "%s%s" % (m.group(1), m.group(3))

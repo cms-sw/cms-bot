@@ -28,7 +28,7 @@ def download_patch(issue, pfile, force=False):
 def process_comment(comment, repo):
   err = 0
   while comment:
-    m = reg.match(comment)
+    m = comment_imgs_regexp.match(comment)
     if not m: break
     comment = "%s%s" % (m.group(1), m.group(3))
     url = m.group(2)

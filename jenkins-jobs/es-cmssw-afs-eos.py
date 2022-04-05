@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from os.path import dirname,abspath
 import sys
 sys.path.append(dirname(dirname(abspath(__file__))))
@@ -13,7 +12,13 @@ err, logs = run_cmd("find /data/sdt/SDT/jenkins-artifacts/cmssw-afs-eos-comparis
 for jfile in logs.split('\n'):
   if not jfile: continue
   print("Processing file",jfile)
-  payload = json.load(open(jfile))
+  payload = {}
+  try:
+    payload = json.load(open(jfile))
+  except ValueError as err:
+    print(err)
+    run_cmd("rm -f %s" % jfile)
+    continue
   week, rel_sec  = cmsswIB2Week (payload["release"])
   payload["@timestamp"]=rel_sec*1000
   id = sha1("%s-%s-%s" % (payload["release"], payload["architecture"], payload["fstype"])).hexdigest()

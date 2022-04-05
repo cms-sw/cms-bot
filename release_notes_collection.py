@@ -46,19 +46,14 @@ def get_pr(pr, repo, cmsprs):
 
 def getReleasesNotes(opts):
   get_gh_token(token_file=expanduser("~/.github-token-cmsbot"))
-  page = 1
-  pages = []
   notes = []
   error_releases = {}
-  while page>0:
-    print("Reading releases page",page)
-    rel_opt=""
-    if opts.release: rel_opt="/tags/%s" % opts.release
-    releases=github_api("/repos/%s/releases%s" % (opts.repository, rel_opt), method="GET", page=page, page_range=pages)
-    if opts.release: releases= [releases]
-    if len(pages): page=pages.pop(0)
-    else: page=0
-    for release in releases:
+  print("Reading releases page")
+  rel_opt=""
+  if opts.release: rel_opt="/tags/%s" % opts.release
+  releases=github_api("/repos/%s/releases%s" % (opts.repository, rel_opt), method="GET")
+  if opts.release: releases = [releases]
+  for release in releases:
       rel_name = release['name']
       rel_id = str(release['id'])
       print("Checking release", rel_name)

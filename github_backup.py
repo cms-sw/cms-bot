@@ -11,7 +11,9 @@ from github_utils import get_organization_repositores, get_repository_issues, ch
 from github_utils import get_releases
 get_gh_token(token_file=argv[1])
 backup_store = argv[2]
-comment_imgs_regexp = re.compile('\((https://(([A-Za-z0-9._-]+/)+[0-9a-f-]+\.[a-z]+))\).*')
+gh_img_host='user-images.githubusercontent.com'
+gh_img_url='https://%s/' % gh_img_url
+comment_imgs_regexp=re.compile('^(([a-zA-Z0-9._-]+/)+[a-zA-Z0-9._-]+)\)')
 if not exists(backup_store):
   print("Backup store not exists.")
   exit(1)
@@ -26,14 +28,15 @@ def download_patch(issue, pfile, force=False):
   return 0
 
 def process_comment(comment, repo):
-  for line in comment.split('[overlay]'):
+  err = 0
+  if gh_img_url not in comment: return err
+  for line in comment.split(gh_img_url):
     m = comment_imgs_regexp.match(line)
-    err = 0
     if m:
-      url = m.group(1)
-      uri = m.group(2)
-      img_file = join(backup_store, repo, "images", m.group(2))
+      img_file = join(backup_store, repo, "images", m.group(1))
+      if exists(img_file): continue
       getstatusoutput("mkdir -p %s" % dirname(img_file))
+      url = "%s%s" % (gh_img_url, m.group(1))
       print("    Downloading image:",url)
       e, o = getstatusoutput('curl -L -s "%s" > %s.tmp && mv %s.tmp %s' % (url, img_file, img_file, img_file))
       if e:

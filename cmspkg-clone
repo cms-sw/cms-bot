@@ -59,29 +59,30 @@ if [ "X${REPOSITORY}" = "X" ] ; then
       done
     fi
   fi
-  echo "Searching for obsolete RPMS in Object Store"
-  for arch_dir in $(find $CLONE_DIR/cmssw/repos/.obj_store/RPMS -mindepth 1 -maxdepth 1 -mtime -1 -type d) ; do
-    DEL_FILES=0
-    arch=$(basename ${arch_dir})
-    echo "  Checking architecture ${arch}"
-    for rpm in $(find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f) ; do
-      [ $(ls -l $rpm | awk '{print $2}') -gt 1 ] && continue
-      let DEL_FILES=$DEL_FILES+1
-      echo  "    Remove($DEL_FILES): $rpm"
-      rm -f "$rpm"
-    done
-    echo "  Deleted obsolete files: ${arch}: $DEL_FILES"
-    if [ $DEL_FILES -gt 0 ] ; then
-      echo "    Cleaning up empty directories"
-      for depth in 2 1 ; do
-        for dir in $(find ${arch_dir} -mindepth ${depth} -maxdepth ${depth} -type d -empty) ; do
-          echo "    Deleting empty store: $dir"
-          rm -rf $dir
-        done
+  if [ "${CMSPKG_DELETE_UNUSED}" != "false" ] ; then
+    echo "Searching for obsolete RPMS in Object Store"
+    for arch_dir in $(find $CLONE_DIR/cmssw/repos/.obj_store/RPMS -mindepth 1 -maxdepth 1 -mtime -1 -type d) ; do
+      DEL_FILES=0
+      arch=$(basename ${arch_dir})
+      echo "  Checking architecture ${arch}"
+      for rpm in $(find ${arch_dir} -mindepth 3 -maxdepth 3 -name '*.rpm' -type f) ; do
+        [ $(ls -l $rpm | awk '{print $2}') -gt 1 ] && continue
+        let DEL_FILES=$DEL_FILES+1
+        echo  "    Remove($DEL_FILES): $rpm"
+        rm -f "$rpm"
       done
-    fi
-  done
-  #exit 0
+      echo "  Deleted obsolete files: ${arch}: $DEL_FILES"
+      if [ $DEL_FILES -gt 0 ] ; then
+        echo "    Cleaning up empty directories"
+        for depth in 2 1 ; do
+          for dir in $(find ${arch_dir} -mindepth ${depth} -maxdepth ${depth} -type d -empty) ; do
+            echo "    Deleting empty store: $dir"
+            rm -rf $dir
+          done
+        done
+      fi
+    done
+  fi
 fi
 
 echo "Starting backup process ...."

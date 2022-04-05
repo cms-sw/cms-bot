@@ -25,24 +25,27 @@ def download_patch(issue, pfile, force=False):
         return 1
   return 0
 
-def process_comment(comment, repo):
+def process_comment(body, repo):
   err = 0
-  while comment:
-    m = comment_imgs_regexp.match(comment)
-    if not m: break
-    comment = "%s%s" % (m.group(1), m.group(3))
-    url = m.group(2)
-    if ('"' in url) or ("'" in url): continue
-    ifile = "%s/%s/images/%s" % (backup_store, repo, url.split("://")[-1])
-    ifile = re.sub("[^a-zA-Z0-9/._-]", "", ifile)
-    if exists(ifile): continue
-    getstatusoutput("mkdir -p %s" % dirname(ifile))
-    e, o = getstatusoutput("curl -L -s '%s' > %s.tmp && mv %s.tmp %s" % (url,ifile,ifile,ifile))
-    if e:
-      print("    ERROR:",o)
-      err = 1
-    else:
-      print( "    Download user content: ",url)
+  if not body: return
+  for comment in body.split("\n"):
+    while comment:
+      print(comment)
+      m = comment_imgs_regexp.match("  "+comment+"   ")
+      if not m: break
+      comment = "%s%s" % (m.group(1), m.group(3))
+      url = m.group(2)
+      if ('"' in url) or ("'" in url): continue
+      ifile = "%s/%s/images/%s" % (backup_store, repo, url.split("://")[-1])
+      ifile = re.sub("[^a-zA-Z0-9/._-]", "", ifile)
+      if exists(ifile): continue
+      getstatusoutput("mkdir -p %s" % dirname(ifile))
+      e, o = getstatusoutput("curl -L -s '%s' > %s.tmp && mv %s.tmp %s" % (url,ifile,ifile,ifile))
+      if e:
+        print("    ERROR:",o)
+        err = 1
+      else:
+        print( "    Download user content: ",url)
   return err
 
 def process_issue(repo, issue, data):
@@ -52,9 +55,7 @@ def process_issue(repo, issue, data):
   ifile = join(pr_md5_dir, "issue.json")
   pfile = join(pr_md5_dir, "patch.txt")
   getstatusoutput("mkdir -p %s" % pr_md5_dir)
-  err = 0
-  if issue['body']:
-    err += process_comment(issue['body'], repo)
+  err = process_comment(issue['body'], repo)
   err += download_patch(issue, pfile)
   if exists (ifile):
     obj = {}
@@ -66,8 +67,7 @@ def process_issue(repo, issue, data):
   err += download_patch(issue, pfile, True)
   comments = get_issue_comments(repo, num)
   for c in comments:
-    if c['body']:
-      err += process_comment(c['body'],repo)
+    err += process_comment(c['body'],repo)
   dump(comments, open(join(pr_md5_dir, "comments.json"),"w"))
   dump(issue, open(ifile, "w"))
   print("    Updated ",repo,num,issue['updated_at'],err)

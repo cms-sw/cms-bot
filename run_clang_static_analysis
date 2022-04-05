@@ -21,7 +21,8 @@ mv $LOCALRT/llvm-analysis/* $WORKSPACE/llvm-analysis
 chmod -R a+r $WORKSPACE/llvm-analysis
 #if postprocess-scan-build.py exists then run it
 if [ -e ./postprocess-scan-build.py ] ; then
-  cp $WORKSPACE/index.html $WORKSPACE/index_full.html
+  # keep a backup copy of index.html in case post processing get fubared
+  cp $WORKSPACE/llvm-analysis/index.html $WORKSPACE/llvm-analysis/index_full.html
   ./postprocess-scan-build.py $WORKSPACE/llvm-analysis/index.html > $WORKSPACE/llvm-analysis/index-temp.html 2>$WORKSPACE/llvm-analysis/postprocess.log
   mv $WORKSPACE/llvm-analysis/index-temp.html $WORKSPACE/llvm-analysis/index.html
 fi

@@ -89,7 +89,7 @@ def process_issues(repo, max_threads=8):
     for issue in issues:
       idate = github_time(issue['updated_at'])
       if latest_date==0: latest_date = idate
-      if idate<ref_date:
+      if idate<=ref_date:
         pages = []
         break
       check_rate_limits(msg=False, when_slow=True, prefix="  ")
@@ -140,7 +140,7 @@ def process_releases(repo, max_threads=8):
     for rel in rels:
       idate = github_time(rel['published_at'])
       if latest_date==0: latest_date = idate
-      if idate<ref_date:
+      if idate<=ref_date:
         pages = []
         break
       print("  Processing release",rel['name'])

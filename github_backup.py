@@ -41,6 +41,8 @@ def process_comment(comment, repo):
     if e:
       print("    ERROR:",o)
       err = 1
+    else:
+      print( "    Download user content: ",url)
   return err
 
 def process_issue(repo, issue, data):

@@ -510,7 +510,7 @@ if ${BUILD_EXTERNAL} ; then
     done
     echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
     echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> ${RESULTS_DIR}/toolconf.txt
-
+    set +x
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=
@@ -519,6 +519,21 @@ if ${BUILD_EXTERNAL} ; then
       if [ "${RMV_CMSSW_EXTERNAL}" != "" ] ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
+      DEP_NAMES=""
+      for xml in $(ls ${BTOOLS}/*.xml) ; do
+        name=$(basename $xml)
+        tool=$(echo $name | sed 's|.xml$||')
+        if [ ! -e ${CTOOLS}/$name ] ; then
+          echo "Removed tool $name"
+          DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+        fi
+      done
+      if [ "${DEP_NAMES}" != "" ] ; then
+        CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+        DEP_NAMES=""
+        echo "CMSSW_DEP=${CMSSW_DEP}"
+      fi
+      rm -rf $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/tools
       for xml in $(ls ${CTOOLS}/*.xml) ; do
         name=$(basename $xml)
         tool=$(echo $name | sed 's|.xml$||')
@@ -535,18 +550,21 @@ if ${BUILD_EXTERNAL} ; then
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
-      set +x; touch $CTOOLS/*.xml ; set -x
+      touch $CTOOLS/*.xml
       scram setup
       scram setup self
       rm -rf $WORKSPACE/$CMSSW_IB/external
-      scram build -r echo_CXX 
+      scram build -r echo_CXX
       if [ "${DEP_NAMES}" != "" ] ; then
-        CMSSW_DEP=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+        CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+        CMSSW_DEP=$(echo ${CMSSW_DEP} ${CMSSW_DEPx} | tr ' ' '\n' | sort | uniq)
       fi
+      echo "Final CMSSW_DEP=${CMSSW_DEP}"
       if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
     else
       rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
-      set +x; touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml; set -x
+      rm -rf $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/tools
+      touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml
       scram tool remove cmssw || true
       scram setup
       scram setup self
@@ -556,7 +574,8 @@ if ${BUILD_EXTERNAL} ; then
       CMSSW_DEP="*"
       SKIP_STATIC_CHECKS=true
     fi
-    set +x ; eval $(scram runtime -sh) ; set -x
+    eval $(scram runtime -sh)
+    set -x
     echo $LD_LIBRARY_PATH
     if [ -e $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers ] ; then
       SCRAM=scram bash -ex $WORKSPACE/$CMSSW_IB/config/SCRAM/hooks/runtime/00-nvidia-drivers || true

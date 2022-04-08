@@ -510,7 +510,7 @@ if ${BUILD_EXTERNAL} ; then
     done
     echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
     echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> ${RESULTS_DIR}/toolconf.txt
-
+    rm -rf $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/tools
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=
@@ -519,6 +519,7 @@ if ${BUILD_EXTERNAL} ; then
       if [ "${RMV_CMSSW_EXTERNAL}" != "" ] ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
+      set +x
       for xml in $(ls ${CTOOLS}/*.xml) ; do
         name=$(basename $xml)
         tool=$(echo $name | sed 's|.xml$||')
@@ -534,8 +535,17 @@ if ${BUILD_EXTERNAL} ; then
         echo "Settings up $name: $over vs $nver"
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
       done
+      for xml in $(ls ${BTOOLS}/*.xml) ; do
+        name=$(basename $xml)
+        tool=$(echo $name | sed 's|.xml$||')
+        if [ ! -e ${CTOOLS}/$name ] ; then
+          echo "Removed tool $name"
+          DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
+        fi
+      done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
-      set +x; touch $CTOOLS/*.xml ; set -x
+      touch $CTOOLS/*.xml
+      set -x
       scram setup
       scram setup self
       rm -rf $WORKSPACE/$CMSSW_IB/external

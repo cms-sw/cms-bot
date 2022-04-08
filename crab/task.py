@@ -5,7 +5,7 @@ archs       = os.environ['SCRAM_ARCH'].split("_")
 requestName = os.getenv('CRAB_REQUEST', str(int(time.time())))
 numJobs     = int(os.getenv('CRAB_JOBS',2))
 
-SingularityImage = '/cvmfs/singularity.opensciencegrid.org/cmssw/cms:rhel%s-itb"' % re.sub('[a-z]', '', archs[0])
+SingularityImage = '/cvmfs/singularity.opensciencegrid.org/cmssw/cms:rhel%s-itb' % re.sub('[a-z]', '', archs[0])
 if 'SINGULARITY_IMAGE' in os.environ:
   SingularityImage = os.environ['SINGULARITY_IMAGE']
 

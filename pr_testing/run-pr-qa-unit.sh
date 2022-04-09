@@ -114,9 +114,9 @@ if [ "X$DO_TESTS" = Xtrue ]; then
     echo 'DQM_TESTS;OK,DQM Unit Tests,See Logs,DQMTestsResults' >> ${RESULTS_DIR}/unittest.txt
   fi
 
-  TEST_ERRORS=$(grep -i 'had errors\|recipe for target' $WORKSPACE/unitTests/log.txt | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
-  TEST_ERRORS=`grep -i "had errors" $WORKSPACE/unitTests/log.txt` || true
-  GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/unitTests/log.txt` || true
+  TEST_ERRORS=$(grep -ai 'had errors\|recipe for target' $WORKSPACE/unitTests/log.txt | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
+  TEST_ERRORS=`grep -ai "had errors" $WORKSPACE/unitTests/log.txt` || true
+  GENERAL_ERRORS=`grep -a "ALL_OK" $WORKSPACE/unitTests/log.txt` || true
 
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the unit tests"
@@ -135,7 +135,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   for t in $(find $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/src -name ${utlog} -type f | sed "s|$WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/||;s|/${utlog}$||") ; do
     mkdir -p $WORKSPACE/unitTests/${t}
     mv $WORKSPACE/$CMSSW_IB/tmp/${SCRAM_ARCH}/${t}/${utlog} $WORKSPACE/unitTests/${t}/
-    if [ $(grep '^\-\-\-> test  *[^ ]*  *succeeded$' $WORKSPACE/unitTests/${t}/${utlog} | wc -l) -gt 0 ] ; then
+    if [ $(grep -a '^\-\-\-> test  *[^ ]*  *succeeded$' $WORKSPACE/unitTests/${t}/${utlog} | wc -l) -gt 0 ] ; then
       echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/unitTests/success.html
     else
       echo "<a href='${t}/${utlog}'>${t}</a><br/>" >> $WORKSPACE/unitTests/failed.html

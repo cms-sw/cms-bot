@@ -8,8 +8,8 @@ config = config()
 config.General.instance                = os.getenv('CRABCONFIGINSTANCE','prod')
 config.General.requestName             = os.getenv('CRAB_REQUEST', str(int(time.time())))
 
-config.Data.unitsPerJob                = 1
-config.Data.totalUnits                 = 1
+config.Data.unitsPerJob                = 10
+config.Data.totalUnits                 = 100
 config.Data.splitting                  = 'EventBased'
 config.Data.publication                = False
 

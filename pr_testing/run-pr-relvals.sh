@@ -41,13 +41,13 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
 done
 
 pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
-  $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | sort | uniq | tr '\n' ',' | sed 's|,$||')
+  $DO_COMPARISON && WORKFLOW_TO_COMPARE=$(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's|_.*||' | sort | uniq | tr '\n' ',' | sed 's|,$||')
 
   rm -f lfns.txt ; touch lfns.txt
-  for lfn in $(grep -hR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
+  for lfn in $(grep -ahR 'Initiating request to open file' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
     echo "${lfn}" >> lfns.txt
   done
-  for lfn in $(grep -hR 'Failed to open file at URL' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
+  for lfn in $(grep -ahR 'Failed to open file at URL' --include 'step*.log' | grep '/cms-xrd-global.cern.ch' | sed 's|.*/cms-xrd-global.cern.ch[^/]*//*|/|;s|[?].*||' | sort | uniq) ; do
     echo "${lfn}" >> lfns.txt
   done
   CNT=1
@@ -57,8 +57,8 @@ pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
   done
 popd
 
-TEST_ERRORS=$(grep -i -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR' | grep -v 'ERROR failed to parse X509 proxy') || true
-GENERAL_ERRORS=`grep "ALL_OK" ${LOG}` || true
+TEST_ERRORS=$(grep -ai -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR' | grep -v 'ERROR failed to parse X509 proxy') || true
+GENERAL_ERRORS=`grep -a "ALL_OK" ${LOG}` || true
 
 if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo "Errors in the RelVals"

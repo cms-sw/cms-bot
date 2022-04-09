@@ -28,7 +28,7 @@ STIME=$(date +%s)
 set DTIME=$(date +%s)-$STIME
 echo 'END OF ADDON TESTS'
 echo '--------------------------------------'
-if [ $(grep -a' tests passed, ' $WORKSPACE/addOnTests.log | wc -l) -eq 0 ] ; then
+if [ $(grep -a ' tests passed, ' $WORKSPACE/addOnTests.log | wc -l) -eq 0 ] ; then
   echo "AddOnTest might have timed out: FAILED - $DTIME secs" >>  $WORKSPACE/addOnTests.log
 fi
 

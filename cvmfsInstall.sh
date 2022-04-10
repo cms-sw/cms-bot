@@ -105,7 +105,7 @@ export SCRAM_ARCH="$ARCHITECTURE"
 export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
 for REPOSITORY in $REPOSITORIES; do
   echo $REPOSITORY
-  let WEEK="$(echo $REPOSITORY | cut -d- -f2) % ${NUM_WEEKS}" || true
+  let WEEK="$(echo $REPOSITORY | cut -d- -f2 | sed 's|^0*||') % ${NUM_WEEKS}" || true
   #If CMS_WEEK was set then only check releases for that week
   if [ "X$CMS_WEEK" != "X" -a "$CMS_WEEK" != "cms.week$WEEK" ] ; then
     echo "Skipping week for $REPOSITORY"
@@ -184,7 +184,7 @@ echo "/cvmfs/cms.cern.ch" >> $BASEDIR/scramdb/etc/scramrc/links.db
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
 for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
-    let N="$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" || true
+    let N="$(echo $w | cut -d- -f2 ) % ${NUM_WEEKS}" || true
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
       ln -s $BASEDIR/$w $BASEDIR/week$N
       [ -f $BASEDIR/week$N/etc/scramrc/links.db ] || continue

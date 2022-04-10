@@ -88,7 +88,7 @@ for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do u
 for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
-      let N="$(echo $w | cut -d- -f2) % ${NUM_WEEKS}" || true
+      let N="$(echo $w | cut -d- -f2 | sed 's|^0||') % ${NUM_WEEKS}" || true
       ln -s $BASEDIR/$w $BASEDIR/week$N
     else
       echo "Deleting obsolete week $w"

@@ -324,6 +324,7 @@ CMSSW_CATEGORIES = {
     "Utilities/DavixAdaptor",
     "Utilities/General",
     "Utilities/LStoreAdaptor",
+    "Utilities/OpenSSL",
     "Utilities/RFIOAdaptor",
     "Utilities/ReleaseScripts",
     "Utilities/StaticAnalyzers",

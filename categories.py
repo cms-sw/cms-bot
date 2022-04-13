@@ -92,7 +92,6 @@ CMSSW_L2 = {
   "simonepigazzini":  ["ecal-dpg"],
   "jainshilpi":       ["ecal-dpg"],
   "thomreis":         ["ecal-dpg"],
-  "mseidel42":        ["hcal-dpg"],
   "georgia14":        ["hcal-dpg"],
   "wang-hui":         ["hcal-dpg"],
   "igv4321":          ["hcal-dpg"],

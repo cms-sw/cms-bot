@@ -7,7 +7,7 @@ osMajorVer = int(re.sub('[a-z]', '', archs[0]))
 config = config()
 config.General.instance                = os.getenv('CRABCONFIGINSTANCE','prod')
 config.General.requestName             = os.getenv('CRAB_REQUEST', str(int(time.time())))
-config.General.transferOutputs         = False
+config.General.transferOutputs         = True
 config.General.transferLogs            = False
 
 config.Data.unitsPerJob                = 10

@@ -11,7 +11,7 @@ config.General.transferOutputs         = False
 config.General.transferLogs            = False
 
 config.Data.unitsPerJob                = 10
-config.Data.totalUnits                 = 100
+config.Data.totalUnits                 = 10
 config.Data.splitting                  = 'EventBased'
 config.Data.publication                = False
 

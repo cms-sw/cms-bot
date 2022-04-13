@@ -1,6 +1,6 @@
 #!/bin/bash
 #Shared files
-for cmsdir in $@ ; do
+for cmsdir in "$@" ; do
   if [ $(ls ${CVMFS_DIR}/$cmsdir -d 2>/dev/null | wc -l) -eq 0 ] ; then exit 0 ; fi
   echo "/${cmsdir}/share"
   for x in cms/data-L1Trigger-L1TMuon cms/data-GeneratorInterface-EvtGenInterface 'cms/data-MagneticField-Interpolation/*' ; do

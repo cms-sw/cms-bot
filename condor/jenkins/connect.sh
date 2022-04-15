@@ -31,6 +31,6 @@ KPRINCIPAL=${KINIT_USER}@CERN.CH
 export KRB5CCNAME=FILE:/tmp/krb5cc_$(id -u)_${KINIT_USER}_${2}
 kinit ${KPRINCIPAL} -k -t ${KTAB}
 if $K5COPY ; then
-  ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}K5FILE=\$(klist | grep 'FILE:' | sed 's|.*FILE:||') && rsync -v -e 'condor_ssh_to_job' \$K5FILE $2:~/${REMOTE_USER}.cc"
+  ssh -n $SSH_OPTS ${TARGET} "${SCHEDD_ENV}K5FILE=\$(klist | grep 'FILE:' | sed 's|.*FILE:||') && rsync -v -e 'condor_ssh_to_job' \$K5FILE $2:~/${REMOTE_USER}.cc"
 fi
 ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $2 'java -jar ${WORKSPACE}/slave.jar -jar-cache ${WORKSPACE}/tmp'"

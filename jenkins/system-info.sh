@@ -16,7 +16,7 @@ done
 find /tmp -mindepth 1 -maxdepth 1 -mtime +1 -user $(whoami) -exec rm -rf {} \; || true
 
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
-git config --global cms.protocol "mixed" || true
+
 JENKINS_SLAVE_JAR_MD5="$1"
 WORKSPACE="$2"
 DOCKER_IMG_HOST="$3"
@@ -27,6 +27,9 @@ if [ ! -e  $HOME ] ;         then echo DATA_ERROR="Home directory $HOME not avai
 if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
 mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 rm -f $WORKSPACE/cmsos
+#Protection for CVE-2022-24765
+[ -e ~/.git -a ! -e $WORKSPACE/.git ] && ln -s ~/.git $WORKSPACE/.git
+git config --global cms.protocol "mixed" || true
 
 #Delete old failed builds
 if [ -d ${WORKSPACE}/workspace/auto-builds ] ; then
@@ -187,4 +190,3 @@ case $(hostname -s) in
 esac
 SLAVE_LABELS="disk-$(df -BG $WORKSPACE | tail -1 | awk '{print $2"-"$4}') ${SLAVE_LABELS}"
 echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"
-[ -e ~/.git -a ! -e $WORKSPACE/.git ] && ln -s ~/.git $WORKSPACE/.git

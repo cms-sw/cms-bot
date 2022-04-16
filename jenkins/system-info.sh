@@ -187,3 +187,4 @@ case $(hostname -s) in
 esac
 SLAVE_LABELS="disk-$(df -BG $WORKSPACE | tail -1 | awk '{print $2"-"$4}') ${SLAVE_LABELS}"
 echo "DATA_SLAVE_LABELS=$(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep -v '^$' | sort | uniq | tr '\n' ' ')"
+[ -e /tmp/.git -a ~/.git] && ln -s ~/.git $WORKSPACE/.git

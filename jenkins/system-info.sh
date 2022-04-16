@@ -28,9 +28,12 @@ if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
 mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 rm -f $WORKSPACE/cmsos
 #Protection for CVE-2022-24765
+WS_GIT=""
 if [ ! -e $WORKSPACE/.git ] ; then
+  WS_GIT="$WORKSPACE/.git"
   mkdir -p $WORKSPACE/.git
 fi
+echo "DATA_WORKSPACE_GIT=${WS_GIT}"
 git config --global cms.protocol "mixed" || true
 
 #Delete old failed builds

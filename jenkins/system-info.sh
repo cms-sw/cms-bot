@@ -28,15 +28,16 @@ if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
 mkdir -p $WORKSPACE/tmp $WORKSPACE/workspace
 rm -f $WORKSPACE/cmsos
 
-rm -rf $WORKSPACE/.git
-###Disable CVE-2022-24765 work-around as it caused build issues e.g build py3-tomlkit
-# Command '['git', '--git-dir', '/data/cmsbld/jenkins/.git', '--work-tree', '/data/cmsbld/jenkins', 'ls-files', '--others', '-i', '--exclude-standard']'
-# returned non-zero exit status 128.
 #Protection for CVE-2022-24765
-#if [ ! -e $WORKSPACE/.git/config ] ; then
-#  rm -rf $WORKSPACE/.git
-#  git init $WORKSPACE
-#fi
+#Workaround for lxplus /tmp/.git
+if [ $(hostname | grep 'lxplus' | wc -l) -gt 0 ] ; then
+  if [ ! -e $WORKSPACE/.git/config ] ; then
+    rm -rf $WORKSPACE/.git
+    git init $WORKSPACE
+  fi
+else
+  rm -rf $WORKSPACE/.git
+fi
 git config --global cms.protocol "mixed" || true
 
 #Delete old failed builds

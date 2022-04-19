@@ -18,6 +18,7 @@ export TASK_ID=$(grep crab_${CRAB_REQUEST} crab_${CRAB_REQUEST}/.requestcache | 
 sleep 10
 
 echo "Keep checking job information until grid site has been assigned"
+GRIDSITE=""
 while [ "${GRIDSITE}" = "" ]
 do
   export GRIDSITE=$(crab status -d crab_${CRAB_REQUEST} | grep -o "vocms.*cern.ch" || echo "")
@@ -28,6 +29,7 @@ done
 sleep 10
 
 echo "Wait until job has finished"
+status=""
 while [ "${status}" = "" ]
 do
   output=$(curl -L -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "http://${GRIDSITE}/mon/cmsbot/${TASK_ID}/status_cache")

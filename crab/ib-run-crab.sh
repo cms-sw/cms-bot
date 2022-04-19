@@ -10,3 +10,38 @@ export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 voms-proxy-init -voms cms
 crab submit -c $(dirname $0)/task.py
 crab status -d crab_${CRAB_REQUEST}
+
+export ID=$(id -u)
+export TASK_ID=$(grep crab_${CRAB_REQUEST} crab_${CRAB_REQUEST}/.requestcache | sed 's|^V||')
+
+# Wait a few seconds to get the resources assigned
+sleep 10
+
+echo "Keep checking job information until grid site has been assigned"
+while [ "${GRIDSITE}" = "" ]
+do
+  export GRIDSITE=$(crab status -d crab_${CRAB_REQUEST} | grep -o "vocms.*cern.ch" || echo "")
+  sleep 5
+done
+
+# Wait a few seconds to start the monitoring of the job
+sleep 10
+
+echo "Wait until job has finished"
+while [ "${status}" = "" ]
+do
+  output=$(curl -L -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "http://${GRIDSITE}/mon/cmsbot/${TASK_ID}/status_cache")
+  errval=$(echo $output | grep -o "404 Not Found" || echo "")
+  if [ "$errval" = "" ] ; then
+    echo -e "["$(date)"]:" $output "\n" >> crab_${CRAB_REQUEST}/results/logfile
+    # Keep checking until job finishes
+    status=$( echo $output | grep -o "'State': 'finished'" || echo "")
+    echo $status
+  else
+    echo -e "["$(date)"]: ERROR: Failed to curl job status\n" >> crab_${CRAB_REQUEST}/results/logfile
+  fi
+  sleep 30
+done
+
+echo "Job FINISHED"
+echo "PASSED" > crab_${CRAB_REQUEST}/results/statusfile && exit 0

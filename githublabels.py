@@ -1,9 +1,11 @@
+from categories import get_dpg_pog
 LABEL_COLORS = {
   "hold" : "ff8000",
   "pending":  "fbca04",
   "approved": "2cbe4e",
   "rejected": "e11d21",
   "info": "0000ff",
+  "doc": "257fdb",
 }
 
 LABEL_TYPES = {
@@ -20,9 +22,13 @@ LABEL_TYPES = {
 TYPE_COMMANDS = {
   "bug-fix" :                  ["b8860b",             "bug(-fix|fix|)",             "type"],
   "new-feature" :              [LABEL_COLORS["info"], "(new-|)(feature|idea)",      "type"],
-  "documentation" :            ["257fdb",             "doc(umentation|)",           "mtype"],
+  "documentation" :            [LABEL_COLORS["doc"],             "doc(umentation|)",           "mtype"],
   "performance-improvements" : ["5b9ee3",             "performance|improvements|performance-improvements", "mtype"],
 }
+
+for lab in get_dpg_pog():
+  if lab in TYPE_COMMANDS: continue
+  TYPE_COMMANDS[lab] = [LABEL_COLORS['doc'], lab, "mtype"]
 
 COMMON_LABELS = {
   "tests-started": LABEL_COLORS["hold"],

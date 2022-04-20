@@ -160,3 +160,13 @@ def external_to_package(repo_fullname):
   if org == "cms-data":
     return repo.replace('-','/')
   return ''
+
+def get_dpg_pog():
+  groups = []
+  for user in CMSSW_L2:
+    for cat in CMSSW_L2[user]:
+      if '-' not in cat: continue
+      grp, ctype = cat.split('-',1)
+      if ctype in ['pog', 'dpg']:
+        groups.append(grp)
+  return list(set(groups))

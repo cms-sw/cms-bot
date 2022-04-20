@@ -249,13 +249,18 @@ def check_extra_labels(first_line, extra_labels):
 
 def check_type_labels(first_line, extra_labels):
   ex_labels = {}
+  rem_labels = {}
   for type_cmd in [x.strip() for x in first_line.split(" ",1)[-1].split(",") if x.strip()]:
     valid_lab = False
+    rem_lab = (type_cmd[0]=='-')
+    if type_cmd[0] in ['-', '+']:
+      type_cmd = type_cmd[1:]
     for lab in TYPE_COMMANDS:
       if re.match('^%s$' % TYPE_COMMANDS[lab][1],type_cmd,re.I):
         lab_type = TYPE_COMMANDS[lab][2]
-        if lab_type not in ex_labels: ex_labels[lab_type] = []
-        ex_labels[lab_type].append(lab)
+        obj_labels = rem_labels if rem_lab else ex_labels
+        if lab_type not in obj_labels: obj_labels[lab_type] = []
+        obj_labels[lab_type].append(lab)
         valid_lab = True
         break
     if not valid_lab: return valid_lab
@@ -263,6 +268,15 @@ def check_type_labels(first_line, extra_labels):
      if not ltype in extra_labels: extra_labels[ltype] = []
      for lab in ex_labels[ltype]:
        extra_labels[lab_type].append(lab)
+  for ltype in rem_labels:
+     if ltype not in extra_labels: continue
+     for lab in rem_labels[ltype]:
+       if lab not in extra_labels[ltype]: continue
+       while lab in extra_labels[ltype]:
+         extra_labels[ltype].remove(lab)
+       if not extra_labels[ltype]:
+         del extra_labels[ltype]
+         break
   return True
 
 def check_ignore_bot_tests(first_line, *args):

@@ -473,7 +473,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   watchers = []
   #Process Pull Request
   pkg_categories = set([])
-  REGEX_TYPE_CMDS="^type\s+([a-z][a-z-]+)(\s*,\s*[a-z][a-z-]+)*$"
+  REGEX_TYPE_CMDS="^type\s+(([-+]|)[a-z][a-z-]+)(\s*,\s*([-+]|)[a-z][a-z-]+)*$"
   REGEX_EX_CMDS="^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)

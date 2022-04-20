@@ -18,10 +18,10 @@ export TASK_ID=$(grep crab_${CRAB_REQUEST} crab_${CRAB_REQUEST}/.requestcache | 
 sleep 10
 
 echo "Keep checking job information until grid site has been assigned"
-GRIDSITE=""
-while [ "${GRIDSITE}" = "" ]
+GRIDSITE="N/A"
+while [ "${GRIDSITE}" = "N/A" ]
 do
-  export GRIDSITE=$(crab status -d crab_${CRAB_REQUEST} | grep -o "vocms.*cern.ch" || echo "")
+  export GRIDSITE=$(crab status -d crab_${CRAB_REQUEST} | grep "Grid scheduler - Task Worker:" | awk '{print $6}')
   sleep 5
 done
 

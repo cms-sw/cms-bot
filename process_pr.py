@@ -248,14 +248,36 @@ def check_extra_labels(first_line, extra_labels):
     extra_labels["backport"]=["backport", bp_pr]
 
 def check_type_labels(first_line, extra_labels):
+  ex_labels = {}
+  rem_labels = {}
   for type_cmd in [x.strip() for x in first_line.split(" ",1)[-1].split(",") if x.strip()]:
+    valid_lab = False
+    rem_lab = (type_cmd[0]=='-')
+    if type_cmd[0] in ['-', '+']:
+      type_cmd = type_cmd[1:]
     for lab in TYPE_COMMANDS:
-      if re.match(TYPE_COMMANDS[lab][1],type_cmd,re.I):
+      if re.match('^%s$' % TYPE_COMMANDS[lab][1],type_cmd,re.I):
         lab_type = TYPE_COMMANDS[lab][2]
-        if lab_type not in extra_labels: extra_labels[lab_type] = []
-        extra_labels[lab_type].append(lab)
+        obj_labels = rem_labels if rem_lab else ex_labels
+        if lab_type not in obj_labels: obj_labels[lab_type] = []
+        obj_labels[lab_type].append(lab)
+        valid_lab = True
         break
-  return
+    if not valid_lab: return valid_lab
+  for ltype in ex_labels:
+     if not ltype in extra_labels: extra_labels[ltype] = []
+     for lab in ex_labels[ltype]:
+       extra_labels[lab_type].append(lab)
+  for ltype in rem_labels:
+     if ltype not in extra_labels: continue
+     for lab in rem_labels[ltype]:
+       if lab not in extra_labels[ltype]: continue
+       while lab in extra_labels[ltype]:
+         extra_labels[ltype].remove(lab)
+       if not extra_labels[ltype]:
+         del extra_labels[ltype]
+         break
+  return True
 
 def check_ignore_bot_tests(first_line, *args):
   return first_line.upper().replace(" ",""),None
@@ -451,7 +473,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   watchers = []
   #Process Pull Request
   pkg_categories = set([])
-  REGEX_TYPE_CMDS="^type\s+([a-z][a-z-]+)(\s*,\s*[a-z][a-z-]+)*$"
+  REGEX_TYPE_CMDS="^type\s+(([-+]|)[a-z][a-z-]+)(\s*,\s*([-+]|)[a-z][a-z-]+)*$"
   REGEX_EX_CMDS="^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
@@ -704,7 +726,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
     if re.match(REGEX_TYPE_CMDS, first_line, re.I):
       if commenter_categories or (commenter in releaseManagers + [requestor]):
-        check_type_labels(first_line.lower(), extra_labels)
+        valid_labs = check_type_labels(first_line.lower(), extra_labels)
+        if not dryRun:
+          if valid_labs: set_comment_emoji(comment.id, repository, emoji="+1")
+          else: set_comment_emoji(comment.id, repository, emoji="-1")
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
       if valid_commenter:
         ignore_tests = check_ignore_bot_tests (first_line.split(" ",1)[-1])

@@ -18,10 +18,10 @@ export TASK_ID=$(grep crab_${CRAB_REQUEST} crab_${CRAB_REQUEST}/.requestcache | 
 sleep 10
 
 echo "Keep checking job information until grid site has been assigned"
-GRIDSITE="N/A"
-while [ "${GRIDSITE}" = "N/A" ]
+GRIDSITE=""
+while [ "${GRIDSITE}" = "" ]
 do
-  export GRIDSITE=$(crab status -d crab_${CRAB_REQUEST} | grep "Grid scheduler - Task Worker:" | awk '{print $6}')
+  export GRIDSITE=$(curl  -X GET  --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http://.*${TASK_ID}")
   sleep 5
 done
 

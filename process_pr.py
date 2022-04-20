@@ -713,7 +713,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if re.match(REGEX_TYPE_CMDS, first_line, re.I):
       if commenter_categories or (commenter in releaseManagers + [requestor]):
         valid_labs = check_type_labels(first_line.lower(), extra_labels)
-        if dryRun:
+        if not dryRun:
           if valid_labs: set_comment_emoji(comment.id, repository, emoji="+1")
           else: set_comment_emoji(comment.id, repository, emoji="-1")
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):

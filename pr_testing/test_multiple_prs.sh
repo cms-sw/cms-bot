@@ -540,7 +540,7 @@ if ${BUILD_EXTERNAL} ; then
         tool=$(echo $name | sed 's|.xml$||')
         echo "Checking tool $tool ($xml)"
         if [ ! -e ${BTOOLS}/$name ] ; then
-          scram setup $xml >> $WORKSPACE/scram-tool-setup.log 2>&1
+          scram setup $xml >> $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
           continue
         fi
         nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')

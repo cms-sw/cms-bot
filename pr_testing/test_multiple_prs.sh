@@ -511,6 +511,7 @@ if ${BUILD_EXTERNAL} ; then
     echo "</table></body></html>" >> $WORKSPACE/upload/external-tools.html
     echo 'CMSSWTOOLCONF_STATS;OK,External Build Stats,See Log,external-tools.html' >> ${RESULTS_DIR}/toolconf.txt
     set +x
+    TOOL_SETUP=true
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
       # Setup all the toolfiles previously built
       DEP_NAMES=
@@ -539,7 +540,7 @@ if ${BUILD_EXTERNAL} ; then
         tool=$(echo $name | sed 's|.xml$||')
         echo "Checking tool $tool ($xml)"
         if [ ! -e ${BTOOLS}/$name ] ; then
-          scram setup $xml
+          scram setup $xml >> $WORKSPACE/scram-tool-setup.log 2>&1
           continue
         fi
         nver=$(grep '<tool ' $xml          | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
@@ -551,28 +552,29 @@ if ${BUILD_EXTERNAL} ; then
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
       touch $CTOOLS/*.xml
-      scram setup
-      scram setup self
-      rm -rf $WORKSPACE/$CMSSW_IB/external
-      scram build -r echo_CXX
-      if [ "${DEP_NAMES}" != "" ] ; then
-        CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
-        CMSSW_DEP=$(echo ${CMSSW_DEP} ${CMSSW_DEPx} | tr ' ' '\n' | sort | uniq)
+      (scram setup && scram setup self && rm -rf $WORKSPACE/$CMSSW_IB/external && scram build -r echo_CXX) >> $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
+      if $TOOL_SETUP ; then
+        if [ "${DEP_NAMES}" != "" ] ; then
+          CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
+          CMSSW_DEP=$(echo ${CMSSW_DEP} ${CMSSW_DEPx} | tr ' ' '\n' | sort | uniq)
+        fi
+        echo "Final CMSSW_DEP=${CMSSW_DEP}"
+        if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
       fi
-      echo "Final CMSSW_DEP=${CMSSW_DEP}"
-      if [ "$CMSSW_DEP" = "" ] ; then CMSSW_DEP="FWCore/Version" ; fi
     else
       rm -f $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/Environment
       rm -rf $WORKSPACE/$CMSSW_IB/.SCRAM/$ARCHITECTURE/tools
       touch $CTOOLS/*.xml $WORKSPACE/$CMSSW_IB/config/Self.xml
       scram tool remove cmssw || true
-      scram setup
-      scram setup self
-      rm -rf $WORKSPACE/$CMSSW_IB/external
-      scram b clean
-      scram build -r echo_CXX
+      (scram setup && scram setup self && rm -rf $WORKSPACE/$CMSSW_IB/external && scram b clean && scram build -r echo_CXX)  > $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
       CMSSW_DEP="*"
       SKIP_STATIC_CHECKS=true
+    fi
+    if ! $TOOL_SETUP ; then
+      echo 'SCRAM_TOOLS_SETUP;ERROR,Scram tools setup,See Log,scram-tool-setup.log' >> ${RESULTS_DIR}/scramtools.txt
+      prepare_upload_results
+      mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Failed to setup externals"
+      exit 0
     fi
     eval $(scram runtime -sh)
     set -x

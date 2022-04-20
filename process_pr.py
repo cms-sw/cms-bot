@@ -248,14 +248,22 @@ def check_extra_labels(first_line, extra_labels):
     extra_labels["backport"]=["backport", bp_pr]
 
 def check_type_labels(first_line, extra_labels):
+  ex_labels = {}
   for type_cmd in [x.strip() for x in first_line.split(" ",1)[-1].split(",") if x.strip()]:
+    valid_lab = False
     for lab in TYPE_COMMANDS:
-      if re.match(TYPE_COMMANDS[lab][1],type_cmd,re.I):
+      if re.match('^%s$' % TYPE_COMMANDS[lab][1],type_cmd,re.I):
         lab_type = TYPE_COMMANDS[lab][2]
-        if lab_type not in extra_labels: extra_labels[lab_type] = []
-        extra_labels[lab_type].append(lab)
+        if lab_type not in ex_labels: ex_labels[lab_type] = []
+        ex_labels[lab_type].append(lab)
+        valid_lab = True
         break
-  return
+    if not valid_lab: return valid_lab
+  for ltype in ex_labels:
+     if not ltype in extra_labels: extra_labels[ltype] = []
+     for lab in ex_labels[ltype]:
+       extra_labels[lab_type].append(lab)
+  return True
 
 def check_ignore_bot_tests(first_line, *args):
   return first_line.upper().replace(" ",""),None
@@ -704,7 +712,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       continue
     if re.match(REGEX_TYPE_CMDS, first_line, re.I):
       if commenter_categories or (commenter in releaseManagers + [requestor]):
-        check_type_labels(first_line.lower(), extra_labels)
+        valid_labs = check_type_labels(first_line.lower(), extra_labels)
+        if dryRun:
+          if valid_labs: set_comment_emoji(comment.id, repository, emoji="+1")
+          else: set_comment_emoji(comment.id, repository, emoji="-1")
     if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
       if valid_commenter:
         ignore_tests = check_ignore_bot_tests (first_line.split(" ",1)[-1])

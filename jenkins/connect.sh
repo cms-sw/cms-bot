@@ -17,7 +17,7 @@ export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
 export KRB5CCNAME=FILE:/tmp/krb5cc_$(id -u)_${KINIT_USER}_${SLAVE_TYPE}
 KPRINCIPAL=${KINIT_USER}@CERN.CH
 kinit ${KPRINCIPAL} -k -t ${KTAB}
-
+klist || true
 export SLAVE_UNIQUE_TARGET=""
 export SLAVE_MAX_WORKSPACE_SIZE=""
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)

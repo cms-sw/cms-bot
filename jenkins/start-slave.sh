@@ -25,7 +25,7 @@ if [ "${REMOTE_USER}" = "cmsbld" ] ; then
   USER_HOME_MD5=$(tar c ${HOME}/slave_setup/cmsbot 2>&1 | md5sum  | tail -1 | sed 's| .*||')
 fi
 #ssh -n $SSH_OPTS $TARGET aklog || true
-SYS_SCRIPT="system-$(hostname -s).sh"
+SYS_SCRIPT="system-${REMOTE_USER}-$(hostname -s).sh"
 scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:/tmp/${SYS_SCRIPT}"
 SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "/tmp/${SYS_SCRIPT} '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}' '${USER_HOME_MD5}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
 

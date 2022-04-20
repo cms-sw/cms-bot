@@ -20,7 +20,7 @@ echo "Keep checking job information until grid site has been assigned"
 GRIDSITE=""
 while [ "${GRIDSITE}" = "" ]
 do
-  export GRIDSITE=$(curl -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http://.*${TASK_ID}")
+  export GRIDSITE=$(curl -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
   sleep 5
 done
 
@@ -31,7 +31,7 @@ echo "Wait until job has finished"
 status=""
 while [ "${status}" = "" ]
 do
-  output=$(curl -L -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "http://${GRIDSITE}/mon/cmsbot/${TASK_ID}/status_cache")
+  output=$(curl -L -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "${GRIDSITE}/status_cache")
   errval=$(echo $output | grep -o "404 Not Found" || echo "")
   if [ "$errval" = "" ] ; then
     echo -e "["$(date)"]:" $output "\n" >> crab_${CRAB_REQUEST}/results/logfile

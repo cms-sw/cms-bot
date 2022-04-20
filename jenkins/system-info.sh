@@ -91,6 +91,9 @@ fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
+#Check for EOS
+[ -e /eos/cms/store ] && SLAVE_LABELS="${SLAVE_LABELS} eos"
+
 DOCKER=""
 if docker --version >/dev/null 2>&1 ; then
   if [ $(docker --version 2>&1 | grep -i podman | wc -l) -eq 0 ] ; then

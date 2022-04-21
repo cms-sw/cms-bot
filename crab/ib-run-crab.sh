@@ -6,7 +6,7 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   osver=$(echo ${SCRAM_ARCH} | tr '_' '\n' | head -1 | sed 's|^[a-z][a-z]*||')
   ls /cvmfs/singularity.opensciencegrid.org >/dev/null 2>&1 || true
   IMG_PATH="/cvmfs/singularity.opensciencegrid.org/cmssw/cms:rhel${osver}"
-  if [ -e "${IMG_PATH}" ] ; then
+  if [ ! -e "${IMG_PATH}" ] ; then
     IMG_PATH="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/${DOCKER_IMG}-$(uname -m)"
   fi
   export SINGULARITY_IMAGE="${IMG_PATH}"

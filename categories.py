@@ -52,7 +52,6 @@ CMSSW_L2 = {
   "gouskos":          ["xpog"],
   "GurpreetSinghChahal":  ["generators"],
   "ianna":            ["geometry"],
-  "jfernan2":         ["dqm"],
   "cecilecaillol":    ["l1"],
   "clacaputo":        ["reconstruction"],
   "jordan-martins":   ["pdmv"],

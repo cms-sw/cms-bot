@@ -27,7 +27,9 @@ cd ${RELEASE_FORMAT}
 if [ -f config/SCRAM/linkexternal.py ] ; then
   sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py || true
 fi
+set +x
 eval \$(scram runtime -sh)
+set -x
 echo $PATH | tr ':' '\n'
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"
 export CMSBOT_PYTHON_CMD=\$(which python3 >/dev/null 2>&1 && echo python3 || echo python)

@@ -32,8 +32,9 @@ echo "Wait until job has finished"
 status=""
 while [ "${status}" = "" ]
 do
-  sleep 60
+  sleep 300
   curl -s -L -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "${GRIDSITE}/status_cache" > $WORKSPACE/status.log 2>&1
+  cat $WORKSPACE/status.log
   errval=$(grep -o "404 Not Found" $WORKSPACE/status.log || echo "")
   cat $WORKSPACE/status.log >> $WORKSPACE/crab/results/logfile
   if [ "$errval" = "" ] ; then

@@ -1083,6 +1083,7 @@ echo "PR_REPOSITORY=${PR_EXTERNAL_REPO}" >> $WORKSPACE/deploy-cmssw
 echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/deploy-cmssw
 echo "PR_TEST_BUILD_ID=${BUILD_NUMBER}" >> $WORKSPACE/deploy-cmssw
 echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/deploy-cmssw
+echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $WORKSPACE/deploy-cmssw
 echo "RELEASE_FORMAT=$CMSSW_IB" >> $WORKSPACE/deploy-cmssw
 
 if [ "X$BUILD_OK" != Xtrue -o "$RUN_TESTS" != "true" ]; then exit 0 ; fi

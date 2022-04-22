@@ -39,4 +39,6 @@ if [ "${EXT_DIR}" != "" ] ; then
   set -x
 fi
 find config/SCRAM -name __pycache__ -type d | xargs --no-run-if-empty rm -rf
+[ -d .SCRAM/${ARCHITECTURE}/timestamps ] && touch .SCRAM/${ARCHITECTURE}/timestamps/*
+[ -d .SCRAM/${ARCHITECTURE}/tools ]      && touch .SCRAM/${ARCHITECTURE}/tools/*
 EOF

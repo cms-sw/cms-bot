@@ -140,8 +140,12 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     export SINGULARITY_BINDPATH="${SINGULARITY_BINDPATH},$ws"
     ERR=0
     precmd="export ORIGINAL_SINGULARITY_BIND=\${SINGULARITY_BIND}; export SINGULARITY_BIND=''; "
-    if [ -f /cvmfs/cms.cern.ch/cmsset_default.sh ] ; then
-      precmd="${precmd} source /cvmfs/cms.cern.ch/cmsset_default.sh ;"
+    ENV_PATH="/cvmfs/cms.cern.ch"
+    if which scram >/dev/null 2>&1 ; then
+      ENV_PATH=$(which scram | sed 's|/common/scram$||')
+    fi
+    if [ -f ${ENV_PATH}/cmsset_default.sh ] ; then
+      precmd="${precmd} source ${ENV_PATH}/cmsset_default.sh ;"
     fi
     if [ $(echo $HOME | grep '^/afs/' | wc -l) -gt 0 ] ; then
       if [ $(singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c 'echo $HOME' 2>&1 | grep "container creation failed: mount $HOME->" | wc -l) -gt 0 ]  ; then

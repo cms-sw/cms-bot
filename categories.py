@@ -54,6 +54,7 @@ CMSSW_L2 = {
   "ianna":            ["geometry"],
   "cecilecaillol":    ["l1"],
   "clacaputo":        ["reconstruction"],
+  "jfernan2":         ["dqm"],
   "jordan-martins":   ["pdmv"],
   "jpata":            ["reconstruction"],
   "kskovpen":         ["pdmv"],

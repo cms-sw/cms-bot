@@ -585,7 +585,7 @@ if ${BUILD_EXTERNAL} ; then
     git cms-init --upstream-only
     pushd $WORKSPACE/$CMSSW_IB/src
       if [ "X$BUILD_FULL_CMSSW" = "Xtrue" ] ; then
-        git checkout $(git branch | grep  '^  *CMSSW_')
+        git checkout $(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
         echo '/*/' >> .git/info/sparse-checkout
         git read-tree -mu HEAD
       else

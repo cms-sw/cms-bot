@@ -28,6 +28,11 @@ do
   export GRIDSITE=$(curl -s -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
 done
 
+# Store information for the monitoring job
+echo "CRAB_WORKSPACE=$WORKSPACE" >> $WORKSPACE/crab/parameters.property
+echo "CRAB_ID=$ID" >> $WORKSPACE/crab/parameters.property
+echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/parameters.property
+
 echo "Wait until job has finished"
 status=""
 while [ "${status}" = "" ]

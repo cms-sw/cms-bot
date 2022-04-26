@@ -29,6 +29,5 @@ do
 done
 
 # Store information for the monitoring job
-echo "CRAB_WORKSPACE=$WORKSPACE" >> $WORKSPACE/crab/parameters.property
-echo "CRAB_ID=$ID" >> $WORKSPACE/crab/parameters.property
+echo "CRAB_BUILD_ID=$BUILD_ID" >> $WORKSPACE/crab/parameters.property
 echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/parameters.property

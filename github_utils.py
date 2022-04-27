@@ -394,7 +394,7 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
         url = url + "page=%s" % page
     headers["Authorization"] = "token " + get_gh_token()
     print("GH API:",url,headers,data)
-    request = Request(url, data=data, headers=headers)
+    request = Request(url, data=data)
     request.get_method = lambda: method
     response = urlopen(request)
     if page<=1 : GH_PAGE_RANGE = []

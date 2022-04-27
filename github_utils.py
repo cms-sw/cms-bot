@@ -393,6 +393,7 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
             url = url + "&"
         url = url + "page=%s" % page
     headers["Authorization"] = "token " + get_gh_token()
+    print("GH API:",url,headers,data)
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)

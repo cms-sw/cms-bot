@@ -382,7 +382,7 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
     if method == "GET":
         if params:
             url = url + "?" + urlencode(params)
-    else:
+    elif method == "POST":
         data = json.dumps(params)
     if version_info[0]==3:
         data = data.encode("utf-8")

@@ -393,8 +393,7 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
             url = url + "&"
         url = url + "page=%s" % page
     headers["Authorization"] = "token " + get_gh_token()
-    print("GH API:",url,headers,data)
-    request = Request(url, data=data)
+    request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
     if page<=1 : GH_PAGE_RANGE = []
@@ -531,7 +530,7 @@ def get_comment_emojis(comment_id, repository):
 
 def delete_comment_emoji(emoji_id, comment_id, repository):
   get_gh_token(repository)
-  headers = {"Accept": "application/vnd.github.v3+json", "Content-Type": "application/json"}
+  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
   return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", headers=headers, raw=True)
 
 

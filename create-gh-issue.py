@@ -28,11 +28,14 @@ import repo_config
 gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 print("Authentication succeeeded")
 gh_repo = gh.get_repo(args.repo)
-e, o = run_cmd("curl -s 'https://api.github.com/search/issues?q=%s+repo:%s+in:title+type:issue' | grep '\"number\"' | head -1 | sed -e 's|.*: ||;s|,.*||'" % (quote(args.title),args.repo))
+cmd = "curl -s 'https://api.github.com/search/issues?q=%s+repo:%s+in:title+type:issue+state:open' | grep '\"number\"' | head -1 | sed -e 's|.*: ||;s|,.*||'" % (quote(args.title),args.repo)
+print("Checking existing Issue",cmd)
+e, o = run_cmd(cmd)
 print("Existing Issues:",e,o)
 issue = None
-if (not e) and (o != ""):
-  issue = gh_repo.get_issue(int(o))
+if not e:
+  try: issue = gh_repo.get_issue(int(o))
+  except: pass
 if issue:
   print("Updaing comment")
   issue.create_comment(msg)

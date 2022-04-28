@@ -1,4 +1,8 @@
-from categories import get_dpg_pog
+try:
+  from categories import get_dpg_pog
+except:
+  def get_dpg_pog(): return []
+
 LABEL_COLORS = {
   "hold" : "ff8000",
   "pending":  "fbca04",

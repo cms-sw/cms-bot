@@ -23,8 +23,8 @@ else
 fi
 cat <<EOF
 ./config/SCRAM/projectAreaRename.\${EXT} ${PR_BUILD_BASE} \${XDIR} ${ARCHITECTURE}
+set +x
 if [ "${EXT_DIR}" != "" ] ; then
-  set +x
   echo "Relocating external/${ARCHITECTURE} symlinks"
   for L in \$(find external/${ARCHITECTURE} -type l); do
     lnk=\$(readlink -n \$L 2>&1)
@@ -36,12 +36,14 @@ if [ "${EXT_DIR}" != "" ] ; then
          ;;
      esac
   done
-  set -x
 fi
+echo "Deleting generated python caches in config/SCRAM"
 find config/SCRAM -name __pycache__ -type d | xargs --no-run-if-empty rm -rf
+echo "Updating tools"
 if [ -d .SCRAM/${ARCHITECTURE}/timestamps ] ; then
   touch .SCRAM/${ARCHITECTURE}/timestamps/*
 else
   touch .SCRAM/${ARCHITECTURE}/tools/*
 fi
+set -x
 EOF

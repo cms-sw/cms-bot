@@ -76,6 +76,7 @@ while true ; do
       $WORKSPACE/cache/cms-bot/condor/tests/node-check.sh 2>&1 > node-check.log &
     fi
   fi
+  if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)
   if [ "${JENKINS_DEBUG}" = "true" ] ; then
     let DEBUG_JOB_GAP=$CTIME-${DEBUG_JOB}

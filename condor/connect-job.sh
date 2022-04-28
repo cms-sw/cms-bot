@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 env
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}
@@ -51,19 +51,42 @@ let OFFLINE_NOTICE_TIME=${START_TIME}+${REQUEST_MAXRUNTIME}-${OFFLINE_NOTICE_SEC
 let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 
 KERBEROS_REFRESH=0
+DEBUG_JOB=0
 FORCE_EXIT=false
-CHK_GAP=10
+CHK_GAP=2
 JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-false"
 if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set +x ; fi
+CHECK_RUN=false
 while true ; do
   sleep $CHK_GAP
-  if [ "${JENKINS_DEBUG}" = "true" ] ; then
-    if [ -e "/afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh" ] ; then
-      sh -ex /afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh || true
+  JENKINS_PROCESS=$(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l)
+  if [ "${JENKINS_AUTO_DELETE}" != "true" ] ; then
+    if [ ${JENKINS_PROCESS} -gt 0 ] ; then
+      if $CHECK_RUN ; then
+        echo "Stopping node check job"
+        touch ${WORKSPACE}/.auto-load
+        wait
+        CHECK_RUN=false
+        echo "Stopped node check job"
+      fi
+    elif ! $CHECK_RUN ; then
+      CHECK_RUN=true
+      echo "Starting node check job"
+      $WORKSPACE/cache/cms-bot/condor/tests/node-check.sh 2>&1 > node-check.log &
     fi
   fi
-  if [ $(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l) -gt 0 ] ; then
+  CTIME=$(date +%s)
+  if [ "${JENKINS_DEBUG}" = "true" ] ; then
+    let DEBUG_JOB_GAP=$CTIME-${DEBUG_JOB}
+    if [ $DEBUG_JOB_GAP -gt 300 ] ; then
+      DEBUG_JOB=$CTIME
+      if [ -e "/afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh" ] ; then
+        sh -ex /afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh || true
+      fi
+    fi
+  fi
+  if [ ${JENKINS_PROCESS} -gt 0 ] ; then
     JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"
     echo "Jenkins Slave has been conencted: $(date)"
   elif [ "${JENKINS_JOB_STATE}" = "true-true" ] ; then
@@ -71,13 +94,10 @@ while true ; do
     break
   fi
   ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* 2>/dev/null | head -n -1 | xargs --no-run-if-empty rm -rf || true
-  if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
-  CTIME=$(date +%s)
   if [ $CTIME -gt ${FORCE_EXIT_AT} ] ; then
     break
   elif [ $CTIME -gt ${OFFLINE_NOTICE_TIME} -a "$FORCE_EXIT" = "false" ] ; then
     echo "Sending going to Offline notification"
-    echo exit > ${WORKSPACE}/.auto-load
     FORCE_EXIT=true
     SEND_DATA=$(echo "${JENKINS_PAYLOAD}" | sed 's|@STATE@|offline|')
     curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
@@ -90,6 +110,7 @@ while true ; do
     KERBEROS_REFRESH=$CTIME
   fi
 done
+if $CHECK_RUN ; then touch ${WORKSPACE}/.auto-load ; wait ; fi
 echo "Going to shutdown."
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set -x ; fi
 rm -rf ${WORKSPACE}

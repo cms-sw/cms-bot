@@ -31,7 +31,7 @@ gh_repo = gh.get_repo(args.repo)
 e, o = run_cmd("curl -s 'https://api.github.com/search/issues?q=%s+repo:%s+in:title+type:issue' | grep '\"number\"' | head -1 | sed -e 's|.*: ||;s|,.*||'" % (quote(args.title),args.repo))
 print("Existing Issues:",e,o)
 issue = None
-if not e:
+if (not e) and (o != ""):
   issue = gh_repo.get_issue(int(o))
 if issue:
   print("Updaing comment")

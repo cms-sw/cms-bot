@@ -33,7 +33,8 @@ TYPE_COMMANDS = {
 for lab in get_dpg_pog():
   if lab in TYPE_COMMANDS: continue
   TYPE_COMMANDS[lab] = [LABEL_COLORS['doc'], lab, "mtype"]
-
+TYPE_COMMANDS['pf'] = [LABEL_COLORS['doc'], 'pf', "mtype"]
+  
 COMMON_LABELS = {
   "tests-started": LABEL_COLORS["hold"],
   "fully-signed": LABEL_COLORS["approved"],

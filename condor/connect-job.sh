@@ -51,7 +51,7 @@ let OFFLINE_NOTICE_TIME=${START_TIME}+${REQUEST_MAXRUNTIME}-${OFFLINE_NOTICE_SEC
 let FORCE_EXIT_AT=${START_TIME}+${REQUEST_MAXRUNTIME}-${FORCE_EXIT_SEC}
 
 KERBEROS_REFRESH=0
-DEBUG_JOB=0
+CHECK_JOB=0
 FORCE_EXIT=false
 CHK_GAP=2
 JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-false"
@@ -78,21 +78,20 @@ while true ; do
   fi
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)
-  if [ "${JENKINS_DEBUG}" = "true" ] ; then
-    let DEBUG_JOB_GAP=$CTIME-${DEBUG_JOB}
-    if [ $DEBUG_JOB_GAP -gt 300 ] ; then
-      DEBUG_JOB=$CTIME
-      if [ -e "/afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh" ] ; then
-        sh -ex /afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh || true
-      fi
-    fi
-  fi
+  let JOB_GAP=${CTIME}-${CHECK_JOB}
+  if [ $JOB_GAP -lt 60 ] ; then continue ; fi
+  CHECK_JOB=$CTIME
   if [ ${JENKINS_PROCESS} -gt 0 ] ; then
     JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"
     echo "Jenkins Slave has been conencted: $(date)"
   elif [ "${JENKINS_JOB_STATE}" = "true-true" ] ; then
     echo "Jenkins Slave has been disconencted: $(date)"
     break
+  fi
+  if [ "${JENKINS_DEBUG}" = "true" ] ; then
+    if [ -e "/afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh" ] ; then
+      sh -ex /afs/cern.ch/user/c/cmsbuild/debug-grid-node.sh || true
+    fi
   fi
   ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* 2>/dev/null | head -n -1 | xargs --no-run-if-empty rm -rf || true
   if [ $CTIME -gt ${FORCE_EXIT_AT} ] ; then
@@ -104,8 +103,8 @@ while true ; do
     curl ${CURL_OPTS} -d "${SEND_DATA}" --header 'Content-Type: application/json' "${JENKINS_WEBHOOK}"
     touch ${LOCAL_DATA}/offline
   fi
-  let KERBEROS_REFRESH_GAP=$CTIME-$KERBEROS_REFRESH
-  if [ $KERBEROS_REFRESH_GAP -gt 21600 ] ; then
+  let JOB_GAP=$CTIME-$KERBEROS_REFRESH
+  if [ $JOB_GAP -gt 21600 ] ; then
     echo "Refreshing kerberose token"
     kinit -R || true
     KERBEROS_REFRESH=$CTIME

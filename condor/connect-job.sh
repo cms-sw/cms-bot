@@ -64,15 +64,15 @@ while true ; do
   if [ "${JENKINS_AUTO_DELETE}" != "true" ] ; then
     if [ ${JENKINS_PROCESS} -gt 0 ] ; then
       if $CHECK_RUN ; then
-        echo "Stopping node check job"
+        echo "[$(date)] Stopping node check job" >> node-check.status
         touch ${WORKSPACE}/.auto-load
         wait
         CHECK_RUN=false
-        echo "Stopped node check job"
+        echo "[$(date)] Stopped node check job" >> node-check.status
       fi
     elif ! $CHECK_RUN ; then
       CHECK_RUN=true
-      echo "Starting node check job"
+      echo "[$(date)] Starting node check job" >> node-check.status
       $WORKSPACE/cache/cms-bot/condor/tests/node-check.sh 2>&1 > node-check.log &
     fi
   fi

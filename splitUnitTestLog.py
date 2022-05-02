@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import os, sys, re, time
+
+import os
+import re
+import sys
+import time
 
 
 class LogSplitter(object):
@@ -33,14 +37,13 @@ class LogSplitter(object):
         subsysRe = re.compile('^>> Tests for package ([A-Z].*/[A-Z].*) ran.')
 
         pkgTestStartRe = re.compile('^===== Test \"(.*)\" ====')
-        pkgTestEndRe = re.compile('^\^\^\^\^ End Test (.*) \^\^\^\^')
+        pkgTestEndRe = re.compile(r'^\^\^\^\^ End Test (.*) \^\^\^\^')
         pkgTestResultRe = re.compile('.*---> test ([^ ]+) (had ERRORS|succeeded)')
 
         pkgStartRe = re.compile("^>> Entering Package (.*)")
         # pkgEndRe   = re.compile("^>> Leaving Package (.*)")
         pkgEndRe = re.compile("^>> Tests for package (.*) ran.")
 
-        infoPkg = {}
         pkgSubsysMap = {}
         subsysPkgMap = {}
 
@@ -50,7 +53,7 @@ class LogSplitter(object):
         if not os.path.exists(logDirs):
             os.makedirs(logDirs)
 
-        lf = open(logFile,"rb")
+        lf = open(logFile, "rb")
         lines = lf
 
         startTime = time.time()
@@ -134,7 +137,7 @@ class LogSplitter(object):
                 tst = pkgTestEndMatch.group(1)
                 if actTest != tst:
                     self.outFile.write(
-                        "pkgTestEndMatch> package mismatch: pkg found " + pkg + ' actPkg=' + actPkg + '\n')
+                        "pkgTestEndMatch> test mismatch: tst found " + tst + ' actTest=' + actTest + '\n')
                 testLines[tst] = actTstLines
 
         stopTime = time.time()
@@ -147,7 +150,8 @@ class LogSplitter(object):
         nMax = 1000
         self.outFile.write("tests with more than " + str(nMax) + " lines of logs:\n")
         for pkg, lines in list(testLines.items()):
-            if lines > nMax: self.outFile.write("  " + pkg + ' : ' + str(lines) + '\n')
+            if lines > nMax:
+                self.outFile.write("  " + pkg + ' : ' + str(lines) + '\n')
 
         self.outFile.write("Number of tests for packages: \n")
         noTests = 0
@@ -161,10 +165,12 @@ class LogSplitter(object):
                 noTests += 1
             else:
                 nrTests += 1
-                if self.verbose: self.outFile.write('-' * 80 + '\n')
+                if self.verbose:
+                    self.outFile.write('-' * 80 + '\n')
                 self.outFile.write(indent + pkg + ' : ')
                 nOK = 0
-                if self.verbose: self.outFile.write("\n")
+                if self.verbose:
+                    self.outFile.write("\n")
                 for tNam in testNames[pkg]:
                     if results[tNam] == 'succeeded':
                         nOK += 1
@@ -173,7 +179,8 @@ class LogSplitter(object):
                         totalFail += 1
                     if self.verbose:
                         self.outFile.write(indent * 2 + tNam + ' ' + results[tNam] + '\n')
-                if self.verbose: self.outFile.write(indent + pkg + " : ")
+                if self.verbose:
+                    self.outFile.write(indent + pkg + " : ")
                 self.outFile.write(
                     indent + str(len(testNames[pkg])) + ' tests in total,  OK:' + str(nOK) + ' fail:' + str(
                         len(testNames[pkg]) - nOK) + '\n')
@@ -201,43 +208,18 @@ class LogSplitter(object):
 
 # ================================================================================
 
-def usage():
-    print("usage: " + os.path.basename(sys.argv[0]) + " --logFile <logFileName> [--verbose]\n")
-    return
+def main():
+    import argparse
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--logFile', dest='logFile', required=True)
+    parser.add_argument('-v', '--verbose', default=False, action='store_true')
+    parser.add_argument('-s', '--outFile', dest='outFile')
+    args = parser.parse_args()
 
-if __name__ == "__main__":
-    import getopt
-
-    options = sys.argv[1:]
-    try:
-        opts, args = getopt.getopt(options, 'hl:sv',
-                                   ['help', 'logFile=', 'verbose', 'outFile='])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(-2)
-
-    logFile = None
-    verb = False
-    outFile = None
-
-    for o, a in opts:
-        if o in ('-h', '--help'):
-            usage()
-            sys.exit()
-
-        if o in ('-l', '--logFile',):
-            logFile = a
-
-        if o in ('-v', '--verbose',):
-            verb = True
-
-        if o in ('-l', '--outFile',):
-            outFile = a
-
-    if not logFile:
-        usage()
-        sys.exit(-1)
+    logFile = args.logFile
+    verb = args.verbose
+    outFile = args.outFile
 
     tls = LogSplitter(outFileIn=outFile, verbIn=verb)
     tls.split(logFile)

@@ -120,44 +120,18 @@ class DepViolSplitter(object):
 
 
 # ================================================================================
-
-def usage():
-    print("usage: " + os.path.basename(sys.argv[0]) + " --logFile <logFileName> [--verbose]\n")
-    return
-
-
 if __name__ == "__main__":
-    import getopt
+    import argparse
 
-    options = sys.argv[1:]
-    try:
-        opts, args = getopt.getopt(options, 'hl:sv',
-                                   ['help', 'logFile=', 'verbose', 'outFile='])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(-2)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--logFile', default=None, required=True)
+    parser.add_argument('-v', '--verbose', action='store_true', default=False)
+    parser.add_argument('-s', '--outFile', default=None)
+    args = parser.parse_args()
 
-    logFile = None
-    verb = False
-    outFile = None
-
-    for o, a in opts:
-        if o in ('-h', '--help'):
-            usage()
-            sys.exit()
-
-        if o in ('-l', '--logFile',):
-            logFile = a
-
-        if o in ('-v', '--verbose',):
-            verb = True
-
-        if o in ('-l', '--outFile',):
-            outFile = a
-
-    if not logFile:
-        usage()
-        sys.exit(-1)
+    logFile = args.logFile
+    verb = args.verbose
+    outFile = args.outFIle
 
     tls = DepViolSplitter(outFileIn=outFile, verbIn=verb)
     tls.split(logFile)

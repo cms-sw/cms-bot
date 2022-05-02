@@ -4,6 +4,7 @@ from copy import deepcopy
 
 MSG_GCC_ABI_INCOMPETIBILITY = "GCC ABI incompetibility. GridPacks were built with gcc4"
 MSG_ARCH_INCOMPETIBILITY = "Architecture incompetibility. GridPacks were built for x86_64"
+MSG_ASAN_INCOMPETIBILITY = = "Grid-packs mising asan and non-asan shared libraries"
 KNOWN_ERRORS = {"relvals":{}, "addons":{}, "unittests":{}}
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-3]_.+"]={
   "slc._amd64_gcc630": {
@@ -113,6 +114,16 @@ KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"] = deepcopy(KNOWN_ERRORS["rel
 for wf in ["535.0", "536.0", "537.0", "538.0", "547.0", "548.0", "573.0", "1361.18", "1361.181", "1362.18", "1363.18", "25211.18", "25212.18", "25213.18"]:
   KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"][wf] = deepcopy(KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"]["512.0"])
 KNOWN_ERRORS["relvals"][RelFilter][".+_ppc64le_.+"] = deepcopy(KNOWN_ERRORS["relvals"][RelFilter][".+_aarch64_.+"])
+
+RelFilter="CMSSW_[0-9]+_[0-9]+_ASAN_X_.+"
+KNOWN_ERRORS["relvals"][RelFilter] = {}
+KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
+  "511.0": { "step": 1, "exitcode": 31744, "reason" : MSG_ASAN_INCOMPETIBILITY},
+  "534.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
+  "536.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
+  "537.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
+  "573.0": { "step": 1, "exitcode": 31744, "reason" : MSG_ASAN_INCOMPETIBILITY},
+}
 
 def get_known_errors(release, architecture, test_type):
   if not test_type in KNOWN_ERRORS: return {}

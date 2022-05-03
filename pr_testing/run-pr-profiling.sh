@@ -22,12 +22,18 @@ mkdir -p $WORKSPACE/upload/profiling/
 echo "<html><head></head><title>Profiling results</title><body><ul>" > $WORKSPACE/upload/profiling/index.html
 LOCALREL=${WORKSPACE}/${CMSSW_VERSION}
 export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
+PROF_RES="OK"
 for PROFILING_WORKFLOW in $WORKFLOWS;do
   export PROFILING_WORKFLOW
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_mem.sh $CMSSW_VERSION || true
+  if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
+    echo "<li>$PROFILING_WORKFLOW: No such directory</li>" >> $WORKSPACE/upload/profiling/index.html
+    PROF_RES="ERROR"
+    continue
+  fi
   pushd $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW
   ./profile.sh $CMSSW_VERSION || true
   ./profile_mem.sh $CMSSW_VERSION || true
@@ -99,6 +105,6 @@ if [ -z ${NO_POST} ] ; then
     send_jenkins_artifacts $LOCALREL/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/
   fi
 fi
-echo 'CMSSW_PROFILING;OK,Profiling Results,See Logs,profiling' >> ${RESULTS_DIR}/profiling.txt
+echo "CMSSW_PROFILING;${PROF_RES},Profiling Results,See Logs,profiling" >> ${RESULTS_DIR}/profiling.txt
 prepare_upload_results
 mark_commit_status_all_prs 'profiling' 'success' -u "${BUILD_URL}" -d "Passed"

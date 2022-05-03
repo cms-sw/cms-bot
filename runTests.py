@@ -650,7 +650,7 @@ def main():
     try:
         import argparse
     except ImportError:
-        import argparse_py26 as argparse
+        import archived_argparse as argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dryRun', default=False, action='store_true')

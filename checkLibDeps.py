@@ -33,7 +33,8 @@ class LibDepChecker(object):
 
     def checkPkg(self, pkg):
         libName = 'lib' + pkg.replace('/', '') + '.so'
-        if not os.path.exists(self.startDir + '/lib/' + self.plat + '/' + libName):
+        libPathName = os.path.join(self.startDir, 'lib', self.plat, libName)
+        if not os.path.exists(libPathName):
             return []
         cmd = '(cd ' + self.startDir + '/lib/' + self.plat + ';'
         cmd += 'libchecker.pl ' + libName + ' )'
@@ -43,7 +44,10 @@ class LibDepChecker(object):
 
 
 def main():
-    import argparse
+    try:
+        import argparse
+    except ImportError:
+        import argparse_py26 as argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--platform', default=None)
     parser.add_argument('-n', '--dryRun', default=False, action='store_true')

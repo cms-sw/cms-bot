@@ -4,7 +4,6 @@ from __future__ import print_function
 
 import os
 import re
-import sys
 import time
 
 
@@ -304,7 +303,8 @@ class LogChecker(object):
         if len(errorList.items()) > 500:
             if self.htmlOut and self.sumLog:
                 self.sumLog.write(
-                    '<font color="#ff0000"><b>Caution:</b> Too many errors found ("+len(errorList.items())+"), printout suppressed !!</font>\n')
+                    '<font color="#ff0000"><b>Caution:</b> Too many errors found (' +
+                    str(len(errorList.items())) + '), printout suppressed !!</font>\n')
                 errLimit = True
 
         if self.verbose > 0 and not errLimit:
@@ -430,7 +430,11 @@ class LogChecker(object):
 
 # ================================================================================
 def main():
-    import argparse
+    try:
+        import argparse
+    except ImportError:
+        import argparse_py26 as argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--html', default=False, action='store_true')
     parser.add_argument('--verbose', default=0)

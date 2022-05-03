@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import os, sys, re, time
+
+import os
+import re
+import sys
+import time
 
 
 class DepViolSplitter(object):
@@ -30,14 +34,10 @@ class DepViolSplitter(object):
 
         self.outFile.write("going to check " + logFile + '\n')
 
-        pkgStartRe = re.compile('^>> Checking dependency for (.*)\s*$')
-        pkgEndRe = re.compile('^>> Done Checking dependency for (.*)\s*$')
+        pkgStartRe = re.compile(r'^>> Checking dependency for (.*)\s*$')
+        pkgEndRe = re.compile(r'^>> Done Checking dependency for (.*)\s*$')
 
-        depViolRe = re.compile('\s*\*+ERROR: Dependency violation')
-
-        infoPkg = {}
-        pkgSubsysMap = {}
-        subsysPkgMap = {}
+        depViolRe = re.compile(r'\s*\*+ERROR: Dependency violation')
 
         logDirs = os.path.join(os.path.split(logFile)[0], 'depViolationLogs')
         print("logDirs ", logDirs)
@@ -52,7 +52,6 @@ class DepViolSplitter(object):
         pkgViol = {}
 
         actPkg = "None"
-        actTest = "None"
         actTstLines = 0
         actPkgLines = 0
 
@@ -120,8 +119,11 @@ class DepViolSplitter(object):
 
 
 # ================================================================================
-if __name__ == "__main__":
-    import argparse
+def main():
+    try:
+        import argparse
+    except ImportError:
+        import argparse_py26 as argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--logFile', default=None, required=True)
@@ -135,3 +137,7 @@ if __name__ == "__main__":
 
     tls = DepViolSplitter(outFileIn=outFile, verbIn=verb)
     tls.split(logFile)
+
+
+if __name__ == "__main__":
+    main()

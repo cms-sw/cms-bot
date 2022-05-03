@@ -647,7 +647,11 @@ class ReleaseTester(object):
 # ================================================================================
 
 def main():
-    import argparse
+    try:
+        import argparse
+    except ImportError:
+        import argparse_py26 as argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--dryRun', default=False, action='store_true')
     parser.add_argument('--only')

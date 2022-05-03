@@ -209,7 +209,10 @@ class LogSplitter(object):
 # ================================================================================
 
 def main():
-    import argparse
+    try:
+        import argparse
+    except ImportError:
+        import argparse_py26 as argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--logFile', dest='logFile', required=True)

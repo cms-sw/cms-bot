@@ -6,6 +6,7 @@ CRAB_BUILD_ID=$1
 GRIDSITE=$2
 
 # Keep checking the status of the job until it finishes
+voms-proxy-init -voms cms
 status=""
 while [ "${status}" = "" ]
 do

@@ -737,6 +737,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
       if valid_commenter:
         enable_tests, ignore = check_enable_bot_tests (first_line.split(" ",1)[-1])
+        if not dryRun:
+          set_comment_emoji(comment.id, repository, emoji="+1")
       continue
     if re.match('^allow\s+@([^ ]+)\s+test\s+rights$',first_line, re.I):
       if commenter_categories or (commenter in releaseManagers):

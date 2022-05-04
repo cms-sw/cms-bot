@@ -7,50 +7,64 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-import os, sys, platform, glob
-from _py2with3compatibility import run_cmd
+
+import glob
+import os
+import platform
+import sys
 import traceback
+from threading import Thread
+
+from _py2with3compatibility import run_cmd
 
 try:
     scriptPath = os.path.dirname(os.path.abspath(__file__))
-except Exception as e:
+except NameError:  # __file__ not defined in interactive mode
     scriptPath = os.path.dirname(os.path.abspath(sys.argv[0]))
+
 if scriptPath not in sys.path:
     sys.path.append(scriptPath)
 
 from cmsutils import doCmd, MachineCPUCount, getHostName
-if MachineCPUCount<=0: MachineCPUCount=2
+
+if MachineCPUCount <= 0:
+    MachineCPUCount = 2
 
 
 # TODO IDE says "Unresolved reference 'ActionError'", where it is defined?
 
 # ================================================================================
 def runCmd(cmd):
-    while cmd.endswith(";"): cmd = cmd[:-1]
+    cmd = cmd.rstrip(';')
     print("Running cmd> ", cmd)
     ret, out = run_cmd(cmd)
-    if out: print(out)
+    if out:
+        print(out)
     return ret
 
 
-from threading import Thread
-
-
 class IBThreadBase(Thread):
-    def __init__(self, deps=[]):
+    def __init__(self, deps=None):
+        if deps is None:
+            deps = []
+
         Thread.__init__(self)
         self.deps = deps
         return
 
     def run(self):
         for dep in self.deps:
-            if dep: dep.join()
+            if dep:
+                dep.join()
         return
 
 
 # ================================================================================
 class UnitTester(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=[], xType=""):
+    def __init__(self, startDirIn, Logger, deps=None, xType=""):
+        if deps is None:
+            deps = []
+
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
         self.logger = Logger
@@ -59,9 +73,10 @@ class UnitTester(IBThreadBase):
 
     # --------------------------------------------------------------------------------
     def checkTestLogs(self):
+        # noinspection PyBroadException
         try:
             self.checkUnitTestLog()
-        except:
+        except Exception:
             pass
         try:
             self.splitUnitTestLogs()
@@ -74,9 +89,10 @@ class UnitTester(IBThreadBase):
     def checkUnitTestLog(self):
         import checkTestLog
         print("unitTest>Going to check log file from unit-tests in ", self.startDir)
+        # noinspection PyBroadException
         try:
             runCmd("rm -rf " + self.startDir + "/unitTestLogs")
-        except:
+        except Exception:
             pass
         tlc = checkTestLog.TestLogChecker(self.startDir + "/unitTests-summary.log", True)
         tlc.check(self.startDir + "/unitTests.log")
@@ -99,22 +115,25 @@ class UnitTester(IBThreadBase):
             print('unitTest> Skipping unit tests for MacOS')
             return
         if (self.xType == 'GPU') or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
-            cmd = "cd " + self.startDir + "; find .SCRAM/"+arch+"/BuildFiles/src -name BuildFile.xml | xargs grep '\"cuda\"' | cut -d/ -f5,6 | sort | uniq > cuda_pkgs.txt; "
+            cmd = "cd " + self.startDir + "; find .SCRAM/" + arch + "/BuildFiles/src -name BuildFile.xml | xargs grep '\"cuda\"' | cut -d/ -f5,6 | sort | uniq > cuda_pkgs.txt; "
             cmd = cmd + " cat  cuda_pkgs.txt; mv src src.full;"
             cmd = cmd + " for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram b clean; scram build -r echo_CXX"
             ret = runCmd(cmd)
             if ret != 0:
                 print("ERROR when getting GPU unit-tests sources: cmd returned " + str(ret))
         skiptests = ""
-        if 'lxplus' in getHostName(): skiptests = 'SKIP_UNITTESTS=ExpressionEvaluatorUnitTest'
+        if 'lxplus' in getHostName():
+            skiptests = 'SKIP_UNITTESTS=ExpressionEvaluatorUnitTest'
         TEST_PATH = os.environ['CMSSW_RELEASE_BASE'] + "/test/" + arch
         err, cmd = run_cmd(
             "cd " + self.startDir + ";scram tool info cmssw 2>&1 | grep CMSSW_BASE= | sed 's|^CMSSW_BASE=||'")
-        if cmd: TEST_PATH = TEST_PATH + ":" + cmd + "/test/" + arch
+        if cmd:
+            TEST_PATH = TEST_PATH + ":" + cmd + "/test/" + arch
         print(TEST_PATH)
         try:
-            cmd = "cd " + self.startDir + "; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
-            cmd += 'PATH=' + TEST_PATH + ':$PATH scram b -f -k -j ' + str(MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
+            cmd = "cd " + self.startDir + r"; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
+            cmd += 'PATH=' + TEST_PATH + ':$PATH scram b -f -k -j ' + str(
+                MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
             cmd += 'touch nodelete.done; ls -l nodelete.*'
             print('unitTest> Going to run ' + cmd)
             ret = runCmd(cmd)
@@ -123,6 +142,7 @@ class UnitTester(IBThreadBase):
         except Exception as e:
             print("ERROR during runtests : caught exception: " + str(e))
             pass
+        # noinspection PyBroadException
         try:
             testLog = self.startDir + '/tmp/' + arch + '/src/'
             logFile = self.startDir + '/unitTests.log'
@@ -134,10 +154,11 @@ class UnitTester(IBThreadBase):
                 if os.path.exists(packDir):
                     err, testFiles = run_cmd('find ' + packDir + ' -maxdepth 2 -mindepth 2 -name testing.log -type f')
                     for lFile in testFiles.strip().split('\n'):
-                        if lFile: runCmd("cat %s >> %s" % (lFile, logFile))
+                        if lFile:
+                            runCmd("cat %s >> %s" % (lFile, logFile))
                 runCmd("echo '>> Leaving Package %s' >> %s" % (pack, logFile))
                 runCmd("echo '>> Tests for package %s ran.' >> %s" % (pack, logFile))
-        except Exception as e:
+        except Exception:
             pass
         self.checkTestLogs()
         self.logger.updateUnitTestLogs(self.xType)
@@ -147,7 +168,10 @@ class UnitTester(IBThreadBase):
 # ================================================================================
 
 class IgnominyTests(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=[]):
+    def __init__(self, startDirIn, Logger, deps=None):
+        if deps is None:
+            deps = []
+
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
         self.logger = Logger
@@ -155,11 +179,12 @@ class IgnominyTests(IBThreadBase):
 
     def run(self):
         IBThreadBase.run(self)
+        cmd = 'cd ' + self.startDir + '; '
+        cmd += 'rm -rf igRun; mkdir igRun; cd igRun;'
+        cmd += 'ignominy -f -A -i -g all -j ' + str(MachineCPUCount) + ' $CMSSW_RELEASE_BASE > ignominy.log 2>&1 '
+        print('Ignominy> Going to run ' + cmd)
+
         try:
-            cmd = 'cd ' + self.startDir + '; '
-            cmd += 'rm -rf igRun; mkdir igRun; cd igRun;'
-            cmd += 'ignominy -f -A -i -g all -j ' + str(MachineCPUCount) + ' $CMSSW_RELEASE_BASE > ignominy.log 2>&1 '
-            print('Ignominy> Going to run ' + cmd)
             ret = runCmd(cmd)
             if ret != 0:
                 print("ERROR when running Ignominy: cmd returned " + str(ret))
@@ -178,17 +203,16 @@ class IgnominyTests(IBThreadBase):
         self.logger.updateIgnominyLogs()
         cmd = 'cd ' + self.startDir + '/igRun; gunzip dependencies.txt.gz products.txt.gz logwarnings.gz ; '
         cmd += 'touch igDone'
-        try:
-            runCmd(cmd)
-        except:
-            pass
-        return
+        runCmd(cmd)
 
 
 # ================================================================================
 
 class AppBuildSetTests(IBThreadBase):
-    def __init__(self, startDirIn, Logger, cmsdist, deps=[], appType='fwlite'):
+    def __init__(self, startDirIn, Logger, cmsdist, deps=None, appType='fwlite'):
+        if deps is None:
+            deps = []
+
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
         self.logger = Logger
@@ -214,15 +238,14 @@ class AppBuildSetTests(IBThreadBase):
         logFile = self.startDir + '/' + self.appType + 'BuildSet.log'
         cmd = script + ' --release ' + self.startDir + ' --ignominy ' + self.startDir + '/igRun --cmsdist ' + self.cmsdist
         cmd += ' --application ' + self.appType + ' > ' + logFile + ' 2>&1 '
-        try:
-            ret = runCmd(cmd)
-        except:
-            pass
+        runCmd(cmd)
 
         if not os.path.exists(self.appDir + '/status'):
             inFile = open(logFile)
             message = ''
-            for x in inFile.readlines(): message += x
+            for x in inFile.readlines():
+                message += x
+
             inFile.close()
             self.setStatus('error', message)
 
@@ -234,7 +257,10 @@ class AppBuildSetTests(IBThreadBase):
 # ================================================================================
 
 class LibDepsTester(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=[]):
+    def __init__(self, startDirIn, Logger, deps=None):
+        if deps is None:
+            deps = []
+
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
         self.logger = Logger
@@ -248,7 +274,7 @@ class LibDepsTester(IBThreadBase):
             ret = runCmd(cmd)
             if ret != 0:
                 print("ERROR when running lib dependency check: cmd returned " + str(ret))
-        except:
+        except Exception as e:
             print("ERROR during lib dependency check : caught exception: " + str(e))
             print("      cmd as of now   : '" + cmd + "'")
 
@@ -260,7 +286,10 @@ class LibDepsTester(IBThreadBase):
 # ================================================================================
 
 class DirSizeTester(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=[]):
+    def __init__(self, startDirIn, Logger, deps=None):
+        if deps is None:
+            deps = []
+
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
         self.logger = Logger
@@ -269,34 +298,25 @@ class DirSizeTester(IBThreadBase):
     def run(self):
         IBThreadBase.run(self)
         cmd = 'cd ' + self.startDir + '; ' + scriptPath + '/checkDirSizes.py '
-        try:
-            ret = runCmd(cmd)
-            if ret != 0:
-                print("ERROR when running DirSizeTester: cmd returned " + str(ret))
-        except ActionError as e:
-            print("Caught ActionError when running checkDirSizes.py (platform :" + os.environ[
-                'SCRAM_ARCH'] + ") : " + str(e))
+        ret = runCmd(cmd)
+        if ret != 0:
+            print("ERROR when running DirSizeTester: cmd returned " + str(ret))
 
         cmd = 'cd ' + self.startDir + '; storeTreeInfo.py --checkDir src --outFile treeInfo-IBsrc.json '
-        try:
-            ret = runCmd(cmd)
-            if ret != 0:
-                print("ERROR when running DirSizeTester: cmd returned " + str(ret))
-        except ActionError as e:
-            print("Caught ActionError when running storeTreeInfo.py (platform :" + os.environ[
-                'SCRAM_ARCH'] + ") : " + str(e))
-            pass
+        ret = runCmd(cmd)
+        if ret != 0:
+            print("ERROR when running DirSizeTester: cmd returned " + str(ret))
 
         self.logger.updateLogFile(self.startDir + "/dirSizeInfo.pkl", "testLogs")
         self.logger.updateLogFile(self.startDir + "/treeInfo-IBsrc.json", "testLogs")
-        return
 
 
 # ================================================================================
 
 class ReleaseProductsDump(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=[]):
+    def __init__(self, startDirIn, Logger, deps=None):
         IBThreadBase.__init__(self, deps)
+
         self.startDir = startDirIn
         self.logger = Logger
         return
@@ -304,29 +324,23 @@ class ReleaseProductsDump(IBThreadBase):
     def run(self):
         IBThreadBase.run(self)
         logDir = os.path.join(self.startDir, 'logs', os.environ['SCRAM_ARCH'])
-        if not os.path.exists(logDir): os.makedirs(logDir)
+        if not os.path.exists(logDir):
+            os.makedirs(logDir)
 
         rperrFileName = os.path.join(logDir, 'relProducts.err')
 
         cmd = 'cd ' + self.startDir + '; RelProducts.pl > ReleaseProducts.list  2> ' + rperrFileName
-        try:
-            ret = runCmd(cmd)
-            if ret != 0:
-                print("ERROR when running ReleaseProductsChecks: cmd returned " + str(ret))
-        except ActionError as e:
-            print(
-                "Caught ActionError when running RelProducts.pl (platform :" + os.environ['SCRAM_ARCH'] + ") : " + str(
-                    e))
-            pass
+        ret = runCmd(cmd)
+        if ret != 0:
+            print("ERROR when running ReleaseProductsChecks: cmd returned " + str(ret))
         self.logger.updateLogFile(self.startDir + "/ReleaseProducts.list")
         self.logger.updateLogFile(rperrFileName, "logs/" + os.environ['SCRAM_ARCH'])
-        return
 
 
 # ================================================================================
 
 class BuildFileDependencyCheck(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=[]):
+    def __init__(self, startDirIn, Logger, deps=None):
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
         self.logger = Logger
@@ -335,41 +349,32 @@ class BuildFileDependencyCheck(IBThreadBase):
     def run(self):
         IBThreadBase.run(self)
         logDir = os.path.join(self.startDir, 'logs', os.environ['SCRAM_ARCH'])
-        if not os.path.exists(logDir): os.makedirs(logDir)
+        if not os.path.exists(logDir):
+            os.makedirs(logDir)
         dverrFileName = os.path.join(logDir, 'depsViolations.err')
 
         depDir = os.path.join(self.startDir, 'etc/dependencies')
-        if not os.path.exists(depDir): os.makedirs(depDir)
+        if not os.path.exists(depDir):
+            os.makedirs(depDir)
         depFile = os.path.join(depDir, 'depsViolations.txt')
 
         cmd = 'cd ' + self.startDir + '; ReleaseDepsChecks.pl --detail > ' + depFile + '  2> ' + dverrFileName
-        try:
-            ret = runCmd(cmd)
-            if ret != 0:
-                print("ERROR when running BuildFileDependencyCheck: cmd returned " + str(ret))
-        except ActionError as e:
-            print("Caught ActionError when running ReleaseDepsChecks.pl (platform :" + os.environ[
-                'SCRAM_ARCH'] + ") : " + str(e))
+        ret = runCmd(cmd)
+        if ret != 0:
+            print("ERROR when running BuildFileDependencyCheck: cmd returned " + str(ret))
 
         cmd = 'cd ' + self.startDir + '; ' + scriptPath + '/splitDepViolationLog.py --log ' + depFile
-        try:
-            ret = runCmd(cmd)
-            if ret != 0:
-                print("ERROR when running BuildFileDependencyCheck: cmd returned " + str(ret))
-        except ActionError as e:
-            print("Caught ActionError when running splitDepViolationLog.py: " + str(e))
-            pass
+        ret = runCmd(cmd)
+        if ret != 0:
+            print("ERROR when running BuildFileDependencyCheck: cmd returned " + str(ret))
 
         bdir = os.path.join(depDir, "depViolationLogs")
-        try:
-            import fnmatch
-            for root, dirnames, filenames in os.walk(bdir):
-                for filename in fnmatch.filter(filenames, 'depViolation.log'):
-                    pkg = "/".join(root.replace(bdir, "").split('/')[1:3])
-                    log = os.path.join(bdir, pkg, "log.txt")
-                    ret = runCmd("touch " + log + "; cat " + os.path.join(root, filename) + " >> " + log)
-        except ActionError as e:
-            pass
+        import fnmatch
+        for root, dirnames, filenames in os.walk(bdir):
+            for filename in fnmatch.filter(filenames, 'depViolation.log'):
+                pkg = "/".join(root.replace(bdir, "").split('/')[1:3])
+                log = os.path.join(bdir, pkg, "log.txt")
+                runCmd("touch " + log + "; cat " + os.path.join(root, filename) + " >> " + log)
 
         self.logger.updateLogFile(self.startDir + "/depViolationSummary.pkl", "testLogs")
         self.logger.updateLogFile(dverrFileName, "logs/" + os.environ['SCRAM_ARCH'])
@@ -381,7 +386,7 @@ class BuildFileDependencyCheck(IBThreadBase):
 # ================================================================================
 
 class CodeRulesChecker(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=[]):
+    def __init__(self, startDirIn, Logger, deps=None):
         IBThreadBase.__init__(self, deps)
         self.startDir = startDirIn
         self.logger = Logger
@@ -389,13 +394,13 @@ class CodeRulesChecker(IBThreadBase):
 
     def run(self):
         IBThreadBase.run(self)
+        cmd = 'cd ' + self.startDir + '; rm -rf  codeRules; mkdir codeRules; cd codeRules; '
+        cmd += 'cmsCodeRulesChecker.py -r 1,2,3,4,5 -d ' + os.environ[
+            'CMSSW_RELEASE_BASE'] + '/src -S . -html 2>&1 >CodeRulesChecker.log ;'
+        cmd += "find . -name log.html -type f | xargs --no-run-if-empty sed -i -e 's|cmslxr.fnal.gov|cmssdt.cern.ch|'"
+        print('CodeRulesChecker: in: ', os.getcwd())
+        print(' ... going to execute:', cmd)
         try:
-            cmd = 'cd ' + self.startDir + '; rm -rf  codeRules; mkdir codeRules; cd codeRules; '
-            cmd += 'cmsCodeRulesChecker.py -r 1,2,3,4,5 -d ' + os.environ[
-                'CMSSW_RELEASE_BASE'] + '/src -S . -html 2>&1 >CodeRulesChecker.log ;'
-            cmd += "find . -name log.html -type f | xargs --no-run-if-empty sed -i -e 's|cmslxr.fnal.gov|cmssdt.cern.ch|'"
-            print('CodeRulesChecker: in: ', os.getcwd())
-            print(' ... going to execute:', cmd)
             ret = runCmd(cmd)
             if ret != 0:
                 print("ERROR when running CodeRulesChecker: cmd returned " + str(ret))
@@ -426,10 +431,13 @@ class ReleaseTester(object):
         return
 
     # --------------------------------------------------------------------------------
-    def getDepThreads(self, jobs=[]):
+    def getDepThreads(self, jobs=None):
+        if jobs is None:
+            jobs = []
         deps = []
         for job in jobs:
-            if job in self.threadList and self.threadList[job]: deps.append(self.threadList[job])
+            if job in self.threadList and self.threadList[job]:
+                deps.append(self.threadList[job])
         return deps
 
     # --------------------------------------------------------------------------------
@@ -478,32 +486,33 @@ class ReleaseTester(object):
 
         if not only or 'pyConfigs' in only:
             print('\n' + 80 * '-' + ' pyConfigs \n')
+            # noinspection PyNoneFunctionAssignment
             self.threadList['pyConfigs'] = self.checkPyConfigs()
 
         if not only or 'dupDict' in only:
             print('\n' + 80 * '-' + ' dupDict \n')
+            # noinspection PyNoneFunctionAssignment
             self.threadList['dupDict'] = self.runDuplicateDictCheck()
 
         print('TestWait> waiting for tests to finish ....')
         for task in self.threadList:
-            if self.threadList[task]: self.threadList[task].join()
+            if self.threadList[task]:
+                self.threadList[task].join()
         print('TestWait> Tests finished ')
         return
 
     # --------------------------------------------------------------------------------
-    def checkPyConfigs(self, deps=[]):
+    # noinspection PyUnusedLocal
+    def checkPyConfigs(self, deps=None):
         print("Going to check python configs in ", os.getcwd())
         cmd = scriptPath + '/checkPyConfigs.py > chkPyConf.log 2>&1'
-        try:
-            doCmd(cmd, self.dryRun, self.cmsswBuildDir)
-            self.logger.updateLogFile("chkPyConf.log")
-            self.logger.updateLogFile("chkPyConf.log", 'testLogs')
-        except:
-            pass
+        doCmd(cmd, self.dryRun, self.cmsswBuildDir)
+        self.logger.updateLogFile("chkPyConf.log")
+        self.logger.updateLogFile("chkPyConf.log", 'testLogs')
         return None
 
     # --------------------------------------------------------------------------------
-    def checkLibDeps(self, deps=[]):
+    def checkLibDeps(self, deps=None):
         print("libDepTests> Going to run LibDepChk ... ")
         thrd = None
         try:
@@ -514,7 +523,8 @@ class ReleaseTester(object):
         return thrd
 
     # --------------------------------------------------------------------------------
-    def runProjectInit(self, deps=[]):
+    # noinspection PyUnusedLocal
+    def runProjectInit(self, deps=None):
         print("runProjectInit> Going regenerate scram caches ... ")
         try:
             ver = os.environ["CMSSW_VERSION"]
@@ -529,7 +539,9 @@ class ReleaseTester(object):
         return None
 
     # --------------------------------------------------------------------------------
-    def runCodeRulesChecker(self, deps=[]):
+    def runCodeRulesChecker(self, deps=None):
+        if deps is None:
+            deps = []
         print("runCodeRulesTests> Going to run cmsCodeRulesChecker ... ")
         thrd = None
         try:
@@ -540,7 +552,8 @@ class ReleaseTester(object):
         return thrd
 
     # --------------------------------------------------------------------------------
-    def runDuplicateDictCheck(self, deps=[]):
+    # noinspection PyUnusedLocal
+    def runDuplicateDictCheck(self, deps=None):
         print("runDuplicateDictTests> Going to run duplicateReflexLibrarySearch.py ... ")
         script = 'duplicateReflexLibrarySearch.py'
         for opt in ['dup', 'lostDefs', 'edmPD']:
@@ -553,7 +566,9 @@ class ReleaseTester(object):
         return None
 
     # --------------------------------------------------------------------------------
-    def runIgnominy(self, deps=[]):
+    def runIgnominy(self, deps=None):
+        if deps is None:
+            deps = []
         print("ignominyTests> Going to run ignominy tests ... ")
         thrd = None
         try:
@@ -564,7 +579,9 @@ class ReleaseTester(object):
         return thrd
 
     # --------------------------------------------------------------------------------
-    def runFWLiteBuildSet(self, deps=[]):
+    def runFWLiteBuildSet(self, deps=None):
+        if deps is None:
+            deps = []
         print("FWLiteBuildSet> Going to run FWLite BuildSet tests ... ")
         thd = None
         try:
@@ -575,7 +592,9 @@ class ReleaseTester(object):
         return thd
 
     # --------------------------------------------------------------------------------
-    def runUnitTests(self, deps=[], xType=""):
+    def runUnitTests(self, deps=None, xType=""):
+        if deps is None:
+            deps = []
         print("runTests> Going to run units tests ... ")
         thrd = None
         try:
@@ -586,7 +605,9 @@ class ReleaseTester(object):
         return thrd
 
     # --------------------------------------------------------------------------------
-    def runDirSize(self, deps=[]):
+    def runDirSize(self, deps=None):
+        if deps is None:
+            deps = []
         print("runTests> Going to run DirSize ... ")
         thrd = None
         try:
@@ -597,7 +618,9 @@ class ReleaseTester(object):
         return thrd
 
     # --------------------------------------------------------------------------------
-    def runReleaseProducts(self, deps=[]):
+    def runReleaseProducts(self, deps=None):
+        if deps is None:
+            deps = []
         print("runTests> Going to run ReleaseProducts ... ")
         thrd = None
         try:
@@ -608,7 +631,9 @@ class ReleaseTester(object):
         return thrd
 
     # --------------------------------------------------------------------------------
-    def runBuildFileDeps(self, deps=[]):
+    def runBuildFileDeps(self, deps=None):
+        if deps is None:
+            deps = []
         print("runTests> Going to run BuildFileDeps ... ")
         thrd = None
         try:
@@ -622,20 +647,20 @@ class ReleaseTester(object):
 # ================================================================================
 
 def main():
-    import getopt
-    options = sys.argv[1:]
     try:
-        opts, args = getopt.getopt(options, 'h', ['help', 'dryRun', 'only='])
-    except getopt.GetoptError as msg:
-        print(msg)
-        sys.exit(-2)
+        import argparse
+    except ImportError:
+        import archived_argparse as argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dryRun', default=False, action='store_true')
+    parser.add_argument('--only')
+    args = parser.parse_args()
+
     rel = os.environ.get('CMSSW_BASE')
-    buildDir = rel
-    dryRun = False
-    only = None
-    for o, a in opts:
-        if o in ('--dryRun',): dryRun = True
-        if o in ('--only',):   only = a.split(",")
+    dryRun = args.dryRun
+    only = args.only.split(",")
+
     os.chdir(rel)
     rb = ReleaseTester(rel, dryRun)
     try:
@@ -646,6 +671,5 @@ def main():
 
 
 # ================================================================================
-
 if __name__ == "__main__":
     main()

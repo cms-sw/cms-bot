@@ -659,7 +659,10 @@ def main():
 
     rel = os.environ.get('CMSSW_BASE')
     dryRun = args.dryRun
-    only = args.only.split(",")
+    if args.only is not None:
+        only = args.only.split(",")
+    else
+        only = None
 
     os.chdir(rel)
     rb = ReleaseTester(rel, dryRun)

@@ -661,7 +661,7 @@ def main():
     dryRun = args.dryRun
     if args.only is not None:
         only = args.only.split(",")
-    else
+    else:
         only = None
 
     os.chdir(rel)

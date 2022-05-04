@@ -31,6 +31,7 @@ ORDER_INDEX=0
 FORCE_FULL_IB_DEFAULT="${FORCE_FULL_IB}"
 for QUEUE in $RELEASE_QUEUES; do
   for IB_INFO in $(cat $CONFIG_MAP_PATH | grep -v "DISABLED=" | grep "RELEASE_QUEUE=$QUEUE;" | grep "SCRAM_ARCH=$ARCHITECTURE_FILTER;") ;  do
+    CMS_BOT_BRANCH=master
     unset DEBUG_EXTERNALS
     unset RELEASE_BRANCH
     unset BUILD_HOUR
@@ -90,6 +91,7 @@ for QUEUE in $RELEASE_QUEUES; do
     fi
 
     echo "RELEASE_NAME=$RELEASE_NAME" > $WORKSPACE/properties
+    echo "CMS_BOT_BRANCH=$CMS_BOT_BRANCH" >> $WORKSPACE/properties
     echo "PRODUCTION_ARCH=${PROD_ARCH}" >> $WORKSPACE/properties
     echo "DATE_FORMAT=$DATE" >> $WORKSPACE/properties
     echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> $WORKSPACE/properties

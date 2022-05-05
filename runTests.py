@@ -31,8 +31,6 @@ if MachineCPUCount <= 0:
     MachineCPUCount = 2
 
 
-# TODO IDE says "Unresolved reference 'ActionError'", where it is defined?
-
 # ================================================================================
 def runCmd(cmd):
     cmd = cmd.rstrip(';')
@@ -162,95 +160,6 @@ class UnitTester(IBThreadBase):
             pass
         self.checkTestLogs()
         self.logger.updateUnitTestLogs(self.xType)
-        return
-
-
-# ================================================================================
-
-class IgnominyTests(IBThreadBase):
-    def __init__(self, startDirIn, Logger, deps=None):
-        if deps is None:
-            deps = []
-
-        IBThreadBase.__init__(self, deps)
-        self.startDir = startDirIn
-        self.logger = Logger
-        return
-
-    def run(self):
-        IBThreadBase.run(self)
-        cmd = 'cd ' + self.startDir + '; '
-        cmd += 'rm -rf igRun; mkdir igRun; cd igRun;'
-        cmd += 'ignominy -f -A -i -g all -j ' + str(MachineCPUCount) + ' $CMSSW_RELEASE_BASE > ignominy.log 2>&1 '
-        print('Ignominy> Going to run ' + cmd)
-
-        try:
-            ret = runCmd(cmd)
-            if ret != 0:
-                print("ERROR when running Ignominy: cmd returned " + str(ret))
-        except Exception as e:
-            print("ERROR during ignominy : caught exception: " + str(e))
-            print("      cmd as of now   : '" + cmd + "'")
-            pass
-
-        cmd = 'cd ' + self.startDir + '/igRun; gzip dependencies.txt products.txt logwarnings '
-        try:
-            runCmd(cmd)
-        except Exception as e:
-            print("ERROR during ignominy : caught exception: " + str(e))
-            print("      cmd as of now   : '" + cmd + "'")
-            pass
-        self.logger.updateIgnominyLogs()
-        cmd = 'cd ' + self.startDir + '/igRun; gunzip dependencies.txt.gz products.txt.gz logwarnings.gz ; '
-        cmd += 'touch igDone'
-        runCmd(cmd)
-
-
-# ================================================================================
-
-class AppBuildSetTests(IBThreadBase):
-    def __init__(self, startDirIn, Logger, cmsdist, deps=None, appType='fwlite'):
-        if deps is None:
-            deps = []
-
-        IBThreadBase.__init__(self, deps)
-        self.startDir = startDirIn
-        self.logger = Logger
-        self.cmsdist = cmsdist
-        self.appType = appType
-        self.appDir = startDirIn + '/BuildSet/' + appType
-        return
-
-    def setStatus(self, status, message):
-        outFile = open(self.appDir + '/index.html', 'w')
-        outFile.write("<html><head></head><body><b>" + message + "</b></body></html>\n")
-        outFile.close()
-        outFile = open(self.appDir + '/status', 'w')
-        outFile.write(status)
-        outFile.close()
-        print(message)
-        return
-
-    def run(self):
-        IBThreadBase.run(self)
-        script = scriptPath + '/buildSetTest.py'
-
-        logFile = self.startDir + '/' + self.appType + 'BuildSet.log'
-        cmd = script + ' --release ' + self.startDir + ' --ignominy ' + self.startDir + '/igRun --cmsdist ' + self.cmsdist
-        cmd += ' --application ' + self.appType + ' > ' + logFile + ' 2>&1 '
-        runCmd(cmd)
-
-        if not os.path.exists(self.appDir + '/status'):
-            inFile = open(logFile)
-            message = ''
-            for x in inFile.readlines():
-                message += x
-
-            inFile.close()
-            self.setStatus('error', message)
-
-        runCmd('cat ' + logFile + ' ; cp ' + logFile + ' ' + self.appDir)
-        self.logger.updateBuildSetLogs(self.appType)
         return
 
 
@@ -472,14 +381,6 @@ class ReleaseTester(object):
             print('\n' + 80 * '-' + ' codeRules \n')
             self.threadList['codeRules'] = self.runCodeRulesChecker()
 
-        if not only or 'ignominy' in only:
-            print('\n' + 80 * '-' + ' ignominy \n')
-            self.threadList['ignominy'] = self.runIgnominy()
-
-        if not only or 'fwbuildset' in only:
-            print('\n' + 80 * '-' + ' FWLite BuildSet\n')
-            self.threadList['fwbuildset'] = self.runFWLiteBuildSet(self.getDepThreads(['ignominy']))
-
         if not only or 'libcheck' in only:
             print('\n' + 80 * '-' + ' libcheck\n')
             self.threadList['libcheck'] = self.checkLibDeps()
@@ -564,32 +465,6 @@ class ReleaseTester(object):
                 print("ERROR during test duplicateDictCheck : caught exception: " + str(e))
             self.logger.updateDupDictTestLogs()
         return None
-
-    # --------------------------------------------------------------------------------
-    def runIgnominy(self, deps=None):
-        if deps is None:
-            deps = []
-        print("ignominyTests> Going to run ignominy tests ... ")
-        thrd = None
-        try:
-            thrd = IgnominyTests(self.cmsswBuildDir, self.logger, deps)
-            thrd.start()
-        except Exception as e:
-            print("ERROR during run ignominytests : caught exception: " + str(e))
-        return thrd
-
-    # --------------------------------------------------------------------------------
-    def runFWLiteBuildSet(self, deps=None):
-        if deps is None:
-            deps = []
-        print("FWLiteBuildSet> Going to run FWLite BuildSet tests ... ")
-        thd = None
-        try:
-            thd = AppBuildSetTests(self.cmsswBuildDir, self.logger, self.appset, deps, 'fwlite')
-            thd.start()
-        except Exception as e:
-            print("ERROR during run FWLiteBuildSet : caught exception: " + str(e))
-        return thd
 
     # --------------------------------------------------------------------------------
     def runUnitTests(self, deps=None, xType=""):

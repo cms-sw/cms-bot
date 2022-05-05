@@ -58,6 +58,7 @@ JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-false"
 if [ -f ${LOCAL_DATA}/offline ] ; then FORCE_EXIT=true ; fi
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set +x ; fi
 CHECK_RUN=false
+touch node-check.status
 while true ; do
   sleep $CHK_GAP
   JENKINS_PROCESS=$(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l)
@@ -77,6 +78,7 @@ while true ; do
     fi
   fi
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
+  echo "WORKSPACE=${WORKSPACE}, CHECK_RUN=${CHECK_RUN}, JENKINS_PROCESS=${JENKINS_PROCESS}, JENKINS_AUTO_DELETE=${JENKINS_AUTO_DELETE}"
   CTIME=$(date +%s)
   let JOB_GAP=${CTIME}-${CHECK_JOB}
   if [ $JOB_GAP -lt 60 ] ; then continue ; fi

@@ -470,6 +470,7 @@ CMSSW_CATEGORIES = {
     "CondTools/SiPixel",
     "CondTools/SiStrip",
     "CondTools/Utilities",
+    "DQM/BeamMonitor",
     "OnlineDB/CSCCondDB",
     "OnlineDB/EcalCondDB",
     "OnlineDB/HcalCondDB",

@@ -74,7 +74,7 @@ while true ; do
     elif ! $CHECK_RUN ; then
       CHECK_RUN=true
       echo "[$(date)] Starting node check job" >> node-check.status
-      $WORKSPACE/cache/cms-bot/condor/tests/node-check.sh 2>&1 > node-check.log &
+      $WORKSPACE/cache/cms-bot/condor/tests/node-check.sh > node-check.log 2>&1 &
     fi
   fi
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi

@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-import os, sys, re, time
+
+import os
+import re
+import sys
+import time
 
 
 class DepViolSplitter(object):
@@ -30,14 +34,10 @@ class DepViolSplitter(object):
 
         self.outFile.write("going to check " + logFile + '\n')
 
-        pkgStartRe = re.compile('^>> Checking dependency for (.*)\s*$')
-        pkgEndRe = re.compile('^>> Done Checking dependency for (.*)\s*$')
+        pkgStartRe = re.compile(r'^>> Checking dependency for (.*)\s*$')
+        pkgEndRe = re.compile(r'^>> Done Checking dependency for (.*)\s*$')
 
-        depViolRe = re.compile('\s*\*+ERROR: Dependency violation')
-
-        infoPkg = {}
-        pkgSubsysMap = {}
-        subsysPkgMap = {}
+        depViolRe = re.compile(r'\s*\*+ERROR: Dependency violation')
 
         logDirs = os.path.join(os.path.split(logFile)[0], 'depViolationLogs')
         print("logDirs ", logDirs)
@@ -52,7 +52,6 @@ class DepViolSplitter(object):
         pkgViol = {}
 
         actPkg = "None"
-        actTest = "None"
         actTstLines = 0
         actPkgLines = 0
 
@@ -120,44 +119,25 @@ class DepViolSplitter(object):
 
 
 # ================================================================================
-
-def usage():
-    print("usage: " + os.path.basename(sys.argv[0]) + " --logFile <logFileName> [--verbose]\n")
-    return
-
-
-if __name__ == "__main__":
-    import getopt
-
-    options = sys.argv[1:]
+def main():
     try:
-        opts, args = getopt.getopt(options, 'hl:sv',
-                                   ['help', 'logFile=', 'verbose', 'outFile='])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(-2)
+        import argparse
+    except ImportError:
+        import archived_argparse as argparse
 
-    logFile = None
-    verb = False
-    outFile = None
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--logFile', default=None, required=True)
+    parser.add_argument('-v', '--verbose', action='store_true', default=False)
+    parser.add_argument('-s', '--outFile', default=None)
+    args = parser.parse_args()
 
-    for o, a in opts:
-        if o in ('-h', '--help'):
-            usage()
-            sys.exit()
-
-        if o in ('-l', '--logFile',):
-            logFile = a
-
-        if o in ('-v', '--verbose',):
-            verb = True
-
-        if o in ('-l', '--outFile',):
-            outFile = a
-
-    if not logFile:
-        usage()
-        sys.exit(-1)
+    logFile = args.logFile
+    verb = args.verbose
+    outFile = args.outFIle
 
     tls = DepViolSplitter(outFileIn=outFile, verbIn=verb)
     tls.split(logFile)
+
+
+if __name__ == "__main__":
+    main()

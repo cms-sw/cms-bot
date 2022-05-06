@@ -66,7 +66,7 @@ while true ; do
     if [ ${JENKINS_PROCESS} -gt 0 ] ; then
       if $CHECK_RUN ; then
         echo "[$(date)] Stopping node check job" >> node-check.status
-        touch ${WORKSPACE}/.auto-load
+        touch ${WORKSPACE}/.auto-stop
         wait
         CHECK_RUN=false
         echo "[$(date)] Stopped node check job" >> node-check.status
@@ -112,7 +112,7 @@ while true ; do
     KERBEROS_REFRESH=$CTIME
   fi
 done
-if $CHECK_RUN ; then touch ${WORKSPACE}/.auto-load ; wait ; fi
+if $CHECK_RUN ; then touch ${WORKSPACE}/.auto-stop ; wait ; fi
 echo "Going to shutdown."
 if [ "${JENKINS_DEBUG}" != "true" ] ; then set -x ; fi
 rm -rf ${WORKSPACE}

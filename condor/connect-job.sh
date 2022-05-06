@@ -73,6 +73,7 @@ while true ; do
       fi
     elif ! $CHECK_RUN ; then
       CHECK_RUN=true
+      rm -f ${WORKSPACE}/.auto-stop
       echo "[$(date)] Starting node check job" >> node-check.status
       $WORKSPACE/cache/cms-bot/condor/tests/node-check.sh > node-check.log 2>&1 &
     fi

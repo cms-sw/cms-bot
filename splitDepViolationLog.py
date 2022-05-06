@@ -133,7 +133,7 @@ def main():
 
     logFile = args.logFile
     verb = args.verbose
-    outFile = args.outFIle
+    outFile = args.outFile
 
     tls = DepViolSplitter(outFileIn=outFile, verbIn=verb)
     tls.split(logFile)

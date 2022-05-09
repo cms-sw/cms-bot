@@ -79,6 +79,8 @@ while true ; do
     fi
   fi
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
+  echo "pgrep 'java' -a  | egrep \"^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+\""
+  pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+"
   echo "WORKSPACE=${WORKSPACE}, CHECK_RUN=${CHECK_RUN}, JENKINS_PROCESS=${JENKINS_PROCESS}, JENKINS_AUTO_DELETE=${JENKINS_AUTO_DELETE}"
   CTIME=$(date +%s)
   let JOB_GAP=${CTIME}-${CHECK_JOB}

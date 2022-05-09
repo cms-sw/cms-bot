@@ -62,9 +62,7 @@ touch node-check.status
 while true ; do
   sleep $CHK_GAP
   if [ "${JENKINS_AUTO_DELETE}" != "true" ] ; then
-    if [ "${JENKINS_DEBUG}" = "true" ] ; then
-      source $WORKSPACE/cache/cms-bot/condor/autoload.sh || true
-    fi
+    source $WORKSPACE/cache/cms-bot/condor/autoload.sh || true
   fi
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)

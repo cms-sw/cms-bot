@@ -61,6 +61,7 @@ CHECK_RUN=false
 touch node-check.status
 while true ; do
   sleep $CHK_GAP
+  pgrep 'java' -a
   JENKINS_PROCESS=$(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l)
   if [ "${JENKINS_AUTO_DELETE}" != "true" ] ; then
     if [ ${JENKINS_PROCESS} -gt 0 ] ; then

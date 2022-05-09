@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 env
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}

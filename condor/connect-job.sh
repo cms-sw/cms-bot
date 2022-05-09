@@ -61,28 +61,12 @@ CHECK_RUN=false
 touch node-check.status
 while true ; do
   sleep $CHK_GAP
-  JENKINS_PROCESS=$(pgrep 'java' -a  | egrep "^[0-9]+\s+java\s+[-]jar\s+${WORKSPACE}/slave.jar\s+" | wc -l)
-  if [ "${JENKINS_DEBUG}" = "true" ] ; then
-    pgrep '.*' -a -u $(whoami)
   if [ "${JENKINS_AUTO_DELETE}" != "true" ] ; then
-    if [ ${JENKINS_PROCESS} -gt 0 ] ; then
-      if $CHECK_RUN ; then
-        echo "[$(date)] Stopping node check job" >> node-check.status
-        touch ${WORKSPACE}/.auto-stop
-        wait
-        CHECK_RUN=false
-        echo "[$(date)] Stopped node check job" >> node-check.status
-      fi
-    elif ! $CHECK_RUN ; then
-      CHECK_RUN=true
-      rm -f ${WORKSPACE}/.auto-stop
-      echo "[$(date)] Starting node check job" >> node-check.status
-      $WORKSPACE/cache/cms-bot/condor/tests/node-check.sh > node-check.log 2>&1 &
+    if [ "${JENKINS_DEBUG}" = "true" ] ; then
+      source $WORKSPACE/cache/cms-bot/condor/autoload.sh || true
     fi
   fi
-  fi
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
-  echo "WORKSPACE=${WORKSPACE}, CHECK_RUN=${CHECK_RUN}, JENKINS_PROCESS=${JENKINS_PROCESS}, JENKINS_AUTO_DELETE=${JENKINS_AUTO_DELETE}"
   CTIME=$(date +%s)
   let JOB_GAP=${CTIME}-${CHECK_JOB}
   if [ $JOB_GAP -lt 60 ] ; then continue ; fi

@@ -121,7 +121,6 @@ KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
   "511.0": { "step": 1, "exitcode": 31744, "reason" : MSG_ASAN_INCOMPETIBILITY},
   "534.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
   "536.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
-  "537.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
   "573.0": { "step": 1, "exitcode": 31744, "reason" : MSG_ASAN_INCOMPETIBILITY},
 }
 

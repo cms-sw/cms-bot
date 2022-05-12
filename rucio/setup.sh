@@ -1,6 +1,8 @@
-ARCH=$(uname -m)/$(/cvmfs/cms.cern.ch/common/cmsos | cut -d_ -f1)
-THISDIR=$(cd $(dirname ${BASH_SOURCE:-${(%):-%N}}) >/dev/null 2>&1; /bin/pwd)/${ARCH}/
+
 SELECTED_VERSION=${1-current}
+DEFAULT_OS="$(/cvmfs/cms.cern.ch/common/cmsos | cut -d_ -f1)"
+ARCH=$(uname -m)/${2-$DEFAULT_OS}
+THISDIR=$(cd $(dirname ${BASH_SOURCE:-${(%):-%N}}) >/dev/null 2>&1; /bin/pwd)/${ARCH}/
 if [ ! -e ${THISDIR}/${SELECTED_VERSION}/bin/rucio ] ; then
   echo "Error: Unable to find rucio version '${SELECTED_VERSION}'" >&2
   return

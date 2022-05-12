@@ -8,7 +8,9 @@ PIP_PKG=rucio-clients
 DEPS=""
 REINSTALL=false
 RUN_TESTS=true
-ARCH=$(uname -m)/$(cmsos | cut -d_ -f1)
+CMS_OS=$(cmsos | cut -d_ -f1)
+ARCH=$(uname -m)/${CMS_OS}
+EL_ARCH=$(echo ${CMS_OS} | sed 's|/[a-z]*|rhel|')
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -70,6 +72,7 @@ if [ ! -d ${PYTHONUSERBASE} ] ; then
   rm -rf ${TMPDIR}
 fi
 
+[ -e "${INSTALL_DIR}/${EL_ARCH}" ] || ln -s ${CMS_OS} ${INSTALL_DIR}/${EL_ARCH}
 rm -f ${INSTALL_DIR}/rucio.cfg
 cp $(dirname $0)/rucio.cfg ${INSTALL_DIR}/rucio.cfg
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg

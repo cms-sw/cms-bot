@@ -10,7 +10,7 @@ REINSTALL=false
 RUN_TESTS=true
 CMS_OS=$(cmsos | cut -d_ -f1)
 ARCH=$(uname -m)/${CMS_OS}
-EL_ARCH=$(echo ${CMS_OS} | sed 's|/[a-z]*|rhel|')
+EL_ARCH=$(echo ${ARCH} | sed 's|/[a-z]*|rhel|')
 
 while [ $# -gt 0 ]; do
   case $1 in

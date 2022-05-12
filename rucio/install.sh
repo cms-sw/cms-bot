@@ -64,6 +64,9 @@ if [ ! -d ${PYTHONUSERBASE} ] ; then
   fi
   PATH="${PYTHONUSERBASE}/bin:$PATH" pip install --disable-pip-version-check --user ${PIP_PKG}==${RUCIO_VERSION}
   if [ -d ${PYTHONUSERBASE}/lib ] ; then find ${PYTHONUSERBASE}/lib -type d -print | xargs chmod 0755 ; fi
+  for f in $(grep -lR '^#!/usr/bin/python' ${PYTHONUSERBASE}/bin  | sort | uniq) ; do
+    sed -i -e 's|^#!/usr/bin/python|#!/usr/bin/env python|' $f
+  done
   rm -rf ${TMPDIR}
 fi
 

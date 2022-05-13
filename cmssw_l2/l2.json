@@ -261,12 +261,20 @@
       "start_date": 1442534400
     }
   ], 
-  "camclean": [
+  "miquork": [
     {
       "category": [
         "jetmet-pog"
       ], 
-      "start_date": 1632873600
+      "start_date": 1652403702
+    }
+  ], 
+  "alkaloge": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "start_date": 1652403702
     }
   ], 
   "cecilecaillol": [

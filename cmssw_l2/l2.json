@@ -261,6 +261,14 @@
       "start_date": 1442534400
     }
   ], 
+  "camclean": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
   "miquork": [
     {
       "category": [

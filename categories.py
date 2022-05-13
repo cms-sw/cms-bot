@@ -32,7 +32,7 @@ CMSDIST_REPOS = [ gh_user+"/"+gh_cmsdist ]
 CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + [ "smuzaffar", "Dr15Jones", "makortel" ]))
 COMPARISON_MISSING_MAP = [ "slava77" ]
 
-#CMS L2's and the CMSSW categories they are responsible for. They can also request to start pull requests testing
+# CMS L2's and the CMSSW categories they are responsible for. They can also request to start pull requests testing
 CMSSW_L2 = {
   "Dr15Jones":        ["core", "visualization", "geometry"],
   "Martin-Grunewald": ["hlt"],

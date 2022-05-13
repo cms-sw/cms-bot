@@ -141,6 +141,14 @@
       "start_date": 1382572800
     }
   ], 
+  "alkaloge": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "start_date": 1652403702
+    }
+  ], 
   "andresib": [
     {
       "category": [
@@ -266,23 +274,8 @@
       "category": [
         "jetmet-pog"
       ], 
+      "end_date": 1652400000, 
       "start_date": 1632873600
-    }
-  ], 
-  "miquork": [
-    {
-      "category": [
-        "jetmet-pog"
-      ], 
-      "start_date": 1652403702
-    }
-  ], 
-  "alkaloge": [
-    {
-      "category": [
-        "jetmet-pog"
-      ], 
-      "start_date": 1652403702
     }
   ], 
   "cecilecaillol": [
@@ -1343,6 +1336,14 @@
         "muon-dpg"
       ], 
       "start_date": 1618272000
+    }
+  ], 
+  "miquork": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "start_date": 1652403702
     }
   ], 
   "missirol": [

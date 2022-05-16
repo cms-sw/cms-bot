@@ -1,4 +1,4 @@
-import jenkins.model.Jenkins
+import jenkins.model.*
 import hudson.model.*
 
 projName=args[0];

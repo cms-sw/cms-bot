@@ -1,8 +1,8 @@
 import jenkins.model.*
 import hudson.model.*
 
-projName=Jenkins.args[0];
-buildId=Jenkins.arg[1].toInteger();
+projName=args[0];
+buildId=args[1].toInteger();
 
 println "Retrying build number "+buildId+" for "+projName;
 def job = Jenkins.instance.getItemByFullName(projName)

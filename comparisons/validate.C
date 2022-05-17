@@ -1645,7 +1645,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
     //Check if it's a NANOEDM
     if (checkBranchAND("nanoaodFlatTable_muonTable__"+recoS+".")){
-      const int nTabs = 66;
+      const int nTabs = 68;
       TString tNames[nTabs] = {
         "btagWeightTable_",                      //0
         "caloMetTable_",                         //1
@@ -1716,6 +1716,9 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         "fsrTable_",                             //63
         "genWeightsTable_LHEReweighting",        //64
         "rivetPhotonTable_",                     //65
+        //
+        "beamSpotTable_",                        //66
+        "genProtonTable_",                       //67
       };
       for (int iT = 0; iT < nTabs; ++iT){
         flatTable(tNames[iT]);
@@ -2754,6 +2757,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       siPixelClusters("siPixelClusters_");
       siPixelClusters("muonReducedTrackExtras_");
       siPixelClusters("slimmedMuonTrackExtras_");
+      siPixelClusters("displacedMuonReducedTrackExtras_");
 
       tbr="Phase2TrackerCluster1DedmNewDetSetVector_siPhase2Clusters__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3134,6 +3138,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       }
 
       muonVars("muons_");
+      muonVars("displacedMuons_");
 
       tbr="recoCaloMuons_calomuons__"+recoS+".obj";
       if (checkBranchOR(tbr, true)){
@@ -3185,6 +3190,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       muonVars("muonsFromCosmics1Leg_");
       // miniaod
       muonVars("slimmedMuons_","patMuons_");
+      muonVars("slimmedDisplacedMuons_","patMuons_");
     }
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "tau")) && !stepContainsNU(step, "cosmic") && !stepContainsNU(step, "NoTaus")){

@@ -18,7 +18,7 @@ from github import Github
 
 from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
 from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
-from cmsutils import get_config_map_properties
+from cmsutils import get_config_map_properties, get_full_release_archs
 from github_utils import api_rate_limits, get_ref_commit, get_commit_info
 from releases import get_release_managers
 
@@ -819,6 +819,7 @@ if __name__ == "__main__":
   comments = [ c for c in issue.get_comments( ) ]
 
   release_name = title_match.group(1)
+  is_patch = 'patch' in release_name
   # Get the release queue from the release name.
   print(release_name)
   issue_body = ""
@@ -868,6 +869,18 @@ if __name__ == "__main__":
 
   if sel_archs:
     architectures = [ a for a in architectures if a in sel_archs ]
+
+  if is_patch:
+    full_release = release_name.split("_patch")[0]
+    full_release_archs = get_full_release_archs(full_release)
+    print("Full release archs:",full_release, full_release_archs)
+    if not full_release_archs:
+      msg = "Error: unable to find architectures for full release "+full_release
+      post_message( issue, msg )
+      exit( 0 )
+    architectures = [a for a in architectures if a in full_release_archs]
+    print("Patch release filtered archs:",architectures)
+
   # Check if we have at least one architecture to build and complain if not.
   if not architectures:
     print('no archs found for the requested release')
@@ -909,7 +922,7 @@ if __name__ == "__main__":
         print(msg)
         post_message( issue, msg)
         exit(0)
-    if ('patch' in release_name) and (production_architecture != req_arch):
+    if is_patch and (production_architecture != req_arch):
         msg="You can not override production architecture for a patch release.\nProdction architecture for this release should be %s" % production_architecture
         print(msg)
         post_message( issue, msg)

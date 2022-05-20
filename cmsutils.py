@@ -146,3 +146,14 @@ def percentile(percentage, data, dlen):
   if FR>0: res=(FR/100.0)*(data[IR]-res)+res
   return res
 
+def get_full_release_archs(release_name):
+  data = {}
+  ret, out = run_cmd("grep 'label="+ release_name +";' "+ CMS_BOT_DIR+"/releases.map")
+  for line in out.split("\n"):
+    arch=""
+    prod=0
+    for item in [x.split("=") for x in line.split(";")]:
+      if item[0]=="architecture": arch = item[1]
+      elif item[0]=="prodarch": prod=item[1]
+    if arch: data[arch]=prod
+  return data

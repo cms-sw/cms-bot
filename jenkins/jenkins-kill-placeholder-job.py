@@ -24,6 +24,7 @@ WORKSPACE = environ['WORKSPACE']
 running_job_xml = JENKINS_URL + '/api/xml?&tree=jobs[builds[url,building]]&xpath=/hudson/job/build[building="true"]&wrapper=jobs'
 job_que_json = JENKINS_URL + '/queue/api/json?tree=items[url,why]'
 node_labels = {}
+JENKNS_REQ_HEADER = {"OIDC_CLAIM_CERN_UPN":"cmssdt"}
 
 
 def etree_to_dict(t):
@@ -78,15 +79,15 @@ def auto_node_schedule(auto_jobs):
 def get_nodes(label):
   if label not in node_labels:
     url = "%s/label/%s/api/json?pretty=true"  % (JENKINS_URL, label)
-    r_json = requests.get(url)
+    r_json = requests.get(url, headers=JENKNS_REQ_HEADER)
     node_labels[label] = r_json.json()
     print("Nodes to match label ",node_labels[label]['nodes'])
   return node_labels[label]['nodes']
 
 def main():
     auto_nodes = read_auto_nodes()
-    r_xml = requests.get(running_job_xml, headers={"OIDC_CLAIM_CERN_UPN":"cmssdt"})
-    r_json = requests.get(job_que_json, headers={"OIDC_CLAIM_CERN_UPN":"cmssdt"})
+    r_xml = requests.get(running_job_xml, headers=JENKNS_REQ_HEADER)
+    r_json = requests.get(job_que_json, headers=JENKNS_REQ_HEADER)
     que_to_free = 0
 
     # get jobs that are waiting for a specific executor

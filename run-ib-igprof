@@ -17,7 +17,7 @@ for prof in ${PROFILES} ; do
     fi
     if [ "$prof" = "mp" ];then
       GLIBC="GlibC"
-      if ( echo $SCRAM_ARCH | grep -Eq "^el8*" ) ; then
+      if ( echo $SCRAM_ARCH | grep -Eq "^el8.*" ) ; then
           GLIBC=""
       fi
       runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --no_exec" 2>&1 | tee  ./runTheMatrix.log

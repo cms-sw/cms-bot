@@ -763,9 +763,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if CLOSE_REQUEST.match(first_line):
       if (commenter_categories or (commenter in releaseManagers)) or \
          ((not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)):
+         reOpen = False
          if issue.state == "open":
            mustClose = True
-           print("==>Closing requested received from %s" % commenter)
+           print("==>Closing request received from %s" % commenter)
+      continue
+    if REOPEN_REQUEST.match(first_line):
+      if (commenter_categories or (commenter in releaseManagers)) or \
+         ((not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)):
+         mustClose = False
+         if issue.state == "closed":
+           reOpen = True
+           print("==>Reopen request received from %s" % commenter)
       continue
     if valid_commenter:
       valid_multiline_comment , test_params, test_params_m = multiline_check_function(first_line, comment_lines, repository)
@@ -899,8 +908,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if category_name in commenter_categories:
           ctype = first_line[0]+"1"
           selected_cats = [ category_name ]
-      elif REOPEN_REQUEST.match(first_line):
-        ctype = "reopen"
       if ctype == "+1":
         for sign in selected_cats:
           signatures[sign] = "approved"
@@ -911,11 +918,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         for sign in selected_cats:
           signatures[sign] = "rejected"
           if sign == "orp": mustClose = False
-      elif ctype == "reopen":
-        if "orp" in commenter_categories:
-          signatures["orp"] = "pending"
-        if issue.state == "closed": reOpen = True
-        mustClose = False
       continue
 
   # end of parsing comments section

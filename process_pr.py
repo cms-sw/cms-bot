@@ -766,7 +766,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
          reOpen = False
          if issue.state == "open":
            mustClose = True
-           print("==>Closing request received from %s" % commenter)
+         print("==>Closing request received from %s" % commenter)
       continue
     if REOPEN_REQUEST.match(first_line):
       if (commenter_categories or (commenter in releaseManagers)) or \
@@ -774,7 +774,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
          mustClose = False
          if issue.state == "closed":
            reOpen = True
-           print("==>Reopen request received from %s" % commenter)
+         print("==>Reopen request received from %s" % commenter)
       continue
     if valid_commenter:
       valid_multiline_comment , test_params, test_params_m = multiline_check_function(first_line, comment_lines, repository)

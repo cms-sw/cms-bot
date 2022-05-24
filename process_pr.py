@@ -53,6 +53,7 @@ ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
 RELVAL_OPTS="^[-][a-zA-Z0-9_.,\s/'-]+$"
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
+REOPEN_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(re|)open\s*$',re.I)
 CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
                       cmsorgs='|'.join(EXTERNAL_REPOS))
 TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+workflow(s|)\s+(%(workflow)s(\s*,\s*%(workflow)s|)*)|)(\s+with\s+(%(cms_pr)s(\s*,\s*%(cms_pr)s)*)|)(\s+for\s+%(release_queue)s|)(\s+using\s+full\s+cmssw|\s+using\s+(cms-|)addpkg\s+(%(pkg)s(,%(pkg)s)*)|)\s*$",
@@ -468,6 +469,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   signing_categories = set([])
   new_package_message = ""
   mustClose = False
+  reOpen = False
   releaseManagers = []
   signatures = {}
   watchers = []
@@ -761,8 +763,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if CLOSE_REQUEST.match(first_line):
       if (commenter_categories or (commenter in releaseManagers)) or \
          ((not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)):
-         mustClose = True
-         print("==>Closing requested received from %s" % commenter)
+         if issue.state == "open":
+           mustClose = True
+           print("==>Closing requested received from %s" % commenter)
       continue
     if valid_commenter:
       valid_multiline_comment , test_params, test_params_m = multiline_check_function(first_line, comment_lines, repository)
@@ -896,7 +899,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if category_name in commenter_categories:
           ctype = first_line[0]+"1"
           selected_cats = [ category_name ]
-      elif re.match("^(reopen)$", first_line, re.I):
+      elif REOPEN_REQUEST.match(first_line):
         ctype = "reopen"
       if ctype == "+1":
         for sign in selected_cats:
@@ -911,7 +914,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       elif ctype == "reopen":
         if "orp" in commenter_categories:
           signatures["orp"] = "pending"
-          mustClose = False
+        if issue.state == "closed": reOpen = True
+        mustClose = False
       continue
 
   # end of parsing comments section
@@ -1165,9 +1169,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if add_labels: issue.edit(labels=list(labels))
 
   # Check if it needs to be automatically closed.
-  if mustClose == True and issue.state == "open":
-    print("This pull request must be closed.")
-    if not dryRunOrig: issue.edit(state="closed")
+  if mustClose:
+    if issue.state == "open":
+      print("This pull request must be closed.")
+      if not dryRunOrig: issue.edit(state="closed")
+  elif reOpen:
+    if issue.state == "closed":
+      print("This pull request must be reopened.")
+      if not dryRunOrig: issue.edit(state="open")
  
   if not issue.pull_request:
     issueMessage = None

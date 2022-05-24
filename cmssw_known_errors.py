@@ -5,6 +5,7 @@ from copy import deepcopy
 MSG_GCC_ABI_INCOMPETIBILITY = "GCC ABI incompetibility. GridPacks were built with gcc4"
 MSG_ARCH_INCOMPETIBILITY = "Architecture incompetibility. GridPacks were built for x86_64"
 MSG_ASAN_INCOMPETIBILITY = "Grid-packs mising asan and non-asan shared libraries"
+MSG_TRITON_INCOMPETIBILITY = "Triton Server Instance for non-x86_64"
 KNOWN_ERRORS = {"relvals":{}, "addons":{}, "unittests":{}}
 KNOWN_ERRORS["relvals"]["CMSSW_9_[2-3]_.+"]={
   "slc._amd64_gcc630": {
@@ -122,6 +123,13 @@ KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
   "534.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
   "536.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
   "573.0": { "step": 1, "exitcode": 31744, "reason" : MSG_ASAN_INCOMPETIBILITY},
+}
+
+RelFilter="CMSSW_12_.+"
+KNOWN_ERRORS["relvals"][RelFilter] = {}
+KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
+  "10804.31": { "step": 3, "exitcode": 16640, "reason" : MSG_TRITON_INCOMPETIBILITY},
+  "10805.31": { "step": 3, "exitcode": 16640, "reason" : MSG_TRITON_INCOMPETIBILITY},
 }
 
 def get_known_errors(release, architecture, test_type):

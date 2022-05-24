@@ -772,7 +772,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if (commenter_categories or (commenter in releaseManagers)) or \
          ((not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)):
          mustClose = False
-         if issue.state == "closed":
+         if (issue.state == "closed") and (comment.created_at >= issue.closed_at):
            reOpen = True
          print("==>Reopen request received from %s" % commenter)
       continue

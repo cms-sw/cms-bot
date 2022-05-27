@@ -377,7 +377,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--tag ${PR_NUM}"
+    CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
     fi
@@ -398,6 +398,7 @@ if ${BUILD_EXTERNAL} ; then
       COMPILATION_CMD="${COMPILATION_CMD} --repository ${CMS_WEEKLY_REPO}"
     fi
     if [ "${SOURCE_FLAG}" != "" ] ; then UPLOAD_OPTS="${UPLOAD_OPTS} --force-upload" ; fi
+    rm -rf $WORKSPACE/$BUILD_DIR
     echo $COMPILATION_CMD build ${PKGS} > ${WORKSPACE}/cmsswtoolconf.log  # log the command to be run
     # run the command and both log it to file and display it
     (eval $COMPILATION_CMD build ${PKGS} && echo 'ALL_OK') 2>&1 | tee -a $WORKSPACE/cmsswtoolconf.log

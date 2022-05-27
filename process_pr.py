@@ -268,7 +268,7 @@ def check_type_labels(first_line, extra_labels):
   for ltype in ex_labels:
      if not ltype in extra_labels: extra_labels[ltype] = []
      for lab in ex_labels[ltype]:
-       extra_labels[lab_type].append(lab)
+       extra_labels[ltype].append(lab)
   for ltype in rem_labels:
      if ltype not in extra_labels: continue
      for lab in rem_labels[ltype]:

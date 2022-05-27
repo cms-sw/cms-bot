@@ -27,6 +27,7 @@ def check_prs(gh, repo, since, process_issue, dryRun):
     try:
       process_pr(repo_config, gh, repo, issue, dryRun)
     except Exception as e :
+      print("ERROR: Failed to process",repo.full_name,issue.number)
       print(e)
       err=1
   return err 

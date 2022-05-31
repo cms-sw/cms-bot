@@ -34,6 +34,11 @@ def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
             "str_to_match": "sig_dostack_then_abort",
             "name": "sig_dostack_then_abort",
             "control_type": ResultTypeEnum.ISSUE
+        },
+        {
+            "str_to_match": ": runtime error:",
+            "name": "Runtime error",
+            "control_type": ResultTypeEnum.ISSUE
         }
     ]
     line_nr = index + 1

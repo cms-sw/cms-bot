@@ -127,6 +127,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       mkdir -p $SINGULARITY_CACHEDIR
     fi
     if [ -e "/proc/driver/nvidia/version" ] ; then
+      nvidia-smi || true
+      cat /proc/driver/nvidia/version || true
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
       fi

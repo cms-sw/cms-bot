@@ -42,7 +42,7 @@ for xfile in ${HOME}/.netrc ${HOME}/tnsnames.ora ${SLAVE_JAR_DIR}/slave.jar ; do
   if [ -e $xfile ] ; then
     xname=$(basename $xfile)
     cp $xfile ./${xname}
-    chmod 0400 ./${xname}
+    chmod 0600 ./${xname}
     INPUT_FILES="${xname},${INPUT_FILES}"
   fi
 done

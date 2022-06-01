@@ -1040,8 +1040,8 @@ def find_and_check_result(release_name, architecture, magic_cmd, res_cmd, opt_cm
 
 
     def set_result(cmd, status0='passed', statusnon0='failed'):
-        new_cmd =  cmd.format(path)
-        out, err, ret_code = get_output_command(new_cmd)
+        cmd =  cmd.format(path)
+        out, err, ret_code = get_output_command(cmd)
         try:
             if int(out) == 0:
                 result = status0

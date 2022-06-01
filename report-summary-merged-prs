@@ -1033,7 +1033,7 @@ def find_general_test_results_2(test_field, comparisons, magic_command):
 def find_and_check_result(release_name, architecture, magic_cmd, res_cmd):
     path = magic_cmd.replace('RELEASE_NAME', release_name)
     path = path.replace('ARCHITECTURE', architecture)
-    _, _, t_ret_code = get_output_command('test -f ' + path)
+    _, _, t_ret_code = get_output_command('test -e ' + path)
     if t_ret_code == 0:
         cmd =  res_cmd.format(path)
         out, err, ret_code = get_output_command(cmd)

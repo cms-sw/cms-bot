@@ -1033,24 +1033,34 @@ def find_general_test_results_2(test_field, comparisons, magic_command):
         comp[test_field] = find_one_test_results(rel_name)
 
 
-def find_and_check_result(release_name, architecture, magic_cmd, res_cmd):
+def find_and_check_result(release_name, architecture, magic_cmd, res_cmd, opt_cmd=''):
     path = magic_cmd.replace('RELEASE_NAME', release_name)
     path = path.replace('ARCHITECTURE', architecture)
     _, _, t_ret_code = get_output_command('test -f ' + path)
-    if t_ret_code == 0:
-        cmd =  res_cmd.format(path)
-        out, err, ret_code = get_output_command(cmd)
+
+
+    def set_result(cmd, status0='passed', statusnon0='failed'):
+        new_cmd =  cmd.format(path)
+        out, err, ret_code = get_output_command(new_cmd)
         try:
             if int(out) == 0:
-                result = 'passed'
+                result = status0
             else:
-                result = 'error'
+                result = statusnon0
         except:
             print("ERROR running command: " + cmd)
             print(out, err, ret_code)
             result = 'error'  # this will make sure to check what is wrong with the file
+        return result
+
+
+    if t_ret_code == 0:
+        result = set_result(res_cmd)
+        if result == 'passed' and opt_cmd != '':
+            result =  set_result(opt_cmd, 'passed', 'inprogress')
     else:
         result = 'inprogress'
+
     print(result)
     return result
 
@@ -1066,7 +1076,7 @@ def find_check_crab(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print("Looking for {0} results for {1}.".format('crab', rel_name))
-        comp['crab_tests'] = find_and_check_result(rel_name, architecture, CHECK_CRAB_PATH, 'grep -c "FAILED" {0}/*/statusfile')
+        comp['crab_tests'] = find_and_check_result(rel_name, architecture, CHECK_CRAB_PATH, 'grep -c "FAILED" {0}/*/statusfile', 'grep -c "INPROGRESS" {0}/*/statusfile')
 
 
 def find_check_headers(comparisons, architecture):

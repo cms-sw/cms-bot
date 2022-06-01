@@ -26,8 +26,8 @@ fi
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 voms-proxy-init -voms cms
 crab submit -c $(dirname $0)/task.py
-echo "INPROGRESS" > $WORKSPACE/crab/statusfile
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
+echo "INPROGRESS" > $WORKSPACE/crab/statusfile
 
 export ID=$(id -u)
 export TASK_ID=$(grep crab_${CRAB_REQUEST} $WORKSPACE/crab/.requestcache | sed 's|^V||')

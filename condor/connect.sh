@@ -40,8 +40,10 @@ done
 INPUT_FILES=""
 for xfile in ${HOME}/.netrc ${HOME}/tnsnames.ora ${SLAVE_JAR_DIR}/slave.jar ; do
   if [ -e $xfile ] ; then
-    cp $xfile .
-    INPUT_FILES="$(basename $xfile),${INPUT_FILES}"
+    xname=$(basename $xfile)
+    cp $xfile ./${xname}
+    chmod 0400 ./${xname}
+    INPUT_FILES="${xname},${INPUT_FILES}"
   fi
 done
 INPUT_FILES=$(echo ${INPUT_FILES} | sed 's|,$||')

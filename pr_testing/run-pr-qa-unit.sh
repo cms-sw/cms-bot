@@ -33,7 +33,6 @@ if [ "X$DO_DUPLICATE_CHECKS" = Xtrue -a "X$CMSDIST_ONLY" == "Xfalse" ]; then
   echo "DUPLICATE_DICT_RULES;${QA_RES},Duplicate Dictionaries,See Logs,dupDict" >> ${RESULTS_DIR}/qa.txt
 fi
 
-export CMS_PATH=/cvmfs/cms-ib.cern.ch
 #
 #Checking runTheMatrix das-queries
 #

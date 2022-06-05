@@ -1,4 +1,16 @@
 #!/bin/bash -ex
+
+trap report EXIT
+
+report() {
+   exit_code=$?
+   if [ ${exit_code} -eq 0 ]; then
+       echo "PASSED" > $WORKSPACE/results/statusfile
+   else
+       echo "FAILED" > $WORKSPACE/results/statusfile
+   fi
+}
+
 [ "${WORKSPACE}" != "" ] || export WORKSPACE=$(pwd) && cd $WORKSPACE
 export ID=$(id -u)
 
@@ -20,4 +32,3 @@ do
     status=$(grep -o "'State': 'finished'" $WORKSPACE/status.log || echo "")
   fi
 done
-echo "PASSED" > $WORKSPACE/results/statusfile

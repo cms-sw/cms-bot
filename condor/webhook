@@ -29,6 +29,7 @@ if [ "${STATUS}" = "online" -o "${STATUS}" = "reconfigure" ] ; then
 elif [ ! -f ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml ] ; then
   echo "$NODE_NAME: Already removed"
   echo "CONDOR_JOB_ID=${CONDOR_JOB_ID}" > shutdown.txt
+  echo "USER=${CONDOR_USER}" >> shutdown.txt
 elif [ "${STATUS}" = "offline" ] ; then
   ${JENKINS_CLI_CMD} offline-node ${NODE_NAME} || true
   if [ $(grep '^ *<label>' ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml | grep 'auto-recreate' | wc -l) -gt 0 ] ; then
@@ -39,4 +40,5 @@ elif [ "${STATUS}" = "shutdown" ] ; then
   ${JENKINS_CLI_CMD} offline-node     ${NODE_NAME} || true
   ${JENKINS_CLI_CMD} delete-node      ${NODE_NAME} || true
   echo "CONDOR_JOB_ID=${CONDOR_JOB_ID}" > shutdown.txt
+  echo "USER=${CONDOR_USER}"           >> shutdown.txt
 fi

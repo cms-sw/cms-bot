@@ -1164,7 +1164,9 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
 fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling.prop
-  echo "PROFILING_WORKFLOWS=${PROFILING_WORKFLOWS}" >> $WORKSPACE/run-profiling.prop
+  for wf in ${PROFILING_WORKFLOWS};do
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$wf.prop
+    echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop
+  done
 fi
 rm -f $WORKSPACE/test-env.txt

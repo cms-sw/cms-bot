@@ -105,6 +105,8 @@ Thread 1 (Thread 0x7f8131dd9400 (LWP 17956)):
 #21 0x000000000040faf1 in main::{lambda()#1}::operator()() const ()
 #22 0x000000000040de12 in main ()
 
+/data/cmsbld/jenkins/workspace/build-any-ib/w/tmp/BUILDROOT/b252b0cb8309100426ad2c49bcae53a8/opt/cmssw/el8_amd64_gcc10/cms/cmssw/CMSSW_12_5_UBSAN_X_2022-05-30-1100/src/L1Trigger/L1TMuonBarrel/src/L1MuBMAssignmentUnit.cc:172:49: runtime error: left shift of negative value -32
+
 """
 
 

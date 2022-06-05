@@ -19,12 +19,18 @@ def check_prs(gh, repo, since, process_issue, dryRun):
     issues = repo.get_issues(state="open", sort="updated", since=since)
   else:
     issues = repo.get_issues(state="open", sort="updated")
+  err=0
   for issue in issues:
     if not process_issue and not issue.pull_request:
       print("Only processing PRs, skipped issue: ",issue.number)
       continue
-    process_pr(repo_config, gh, repo, issue, dryRun)
-    
+    try:
+      process_pr(repo_config, gh, repo, issue, dryRun)
+    except Exception as e :
+      print("ERROR: Failed to process",repo.full_name,issue.number)
+      print(e)
+      err=1
+  return err 
 
 if __name__ == "__main__":
   parser = OptionParser(usage="%prog [-r|--repository <repo: default is cms-sw/cmssw>] [-i|--issue] [-s|--since <sec default is 3600>] [-n|--dry-run]")
@@ -50,12 +56,12 @@ if __name__ == "__main__":
     repos.append(opts.repository)
   else:
     repos = EXTERNAL_REPOS
-
+  err=0
   for repo_name in repos:
     if not "/" in repo_name:
       user = gh.get_user(repo_name)
       for repo in user.get_repos():
-        check_prs(gh, repo, since, opts.issue, opts.dryRun)
+        err+=check_prs(gh, repo, since, opts.issue, opts.dryRun)
     else:
-      check_prs(gh, gh.get_repo(repo_name), since, opts.issue, opts.dryRun)
-
+      err+=check_prs(gh, gh.get_repo(repo_name), since, opts.issue, opts.dryRun)
+  sys.exit(err)

@@ -37,7 +37,16 @@ SLAVE_JAR_DIR="${WORKSPACE}"
 while [ ! -e ${SLAVE_JAR_DIR}/slave.jar ] ; do
   SLAVE_JAR_DIR=$(dirname $SLAVE_JAR_DIR)
 done
-cp $SLAVE_JAR_DIR/slave.jar slave.jar
+INPUT_FILES=""
+for xfile in ${HOME}/.netrc ${HOME}/tnsnames.ora ${SLAVE_JAR_DIR}/slave.jar ; do
+  if [ -e $xfile ] ; then
+    xname=$(basename $xfile)
+    cp $xfile ./${xname}
+    chmod 0600 ./${xname}
+    INPUT_FILES="${xname},${INPUT_FILES}"
+  fi
+done
+INPUT_FILES=$(echo ${INPUT_FILES} | sed 's|,$||')
 cp ${here}/connect.sub job.sub
 cp ${here}/connect-job.sh  ${script_name}.sh
 chmod +x ${script_name}.sh
@@ -46,6 +55,7 @@ sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
 sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
+sed -i -e "s|@INPUT_FILES@|$INPUT_FILES|"               job.sub
 echo "environment = \"JENKINS_DEBUG='${JENKINS_DEBUG}' JENKINS_AUTO_DELETE='${JENKINS_AUTO_DELETE}' EXTRA_LABELS='${EXTRA_LABELS}' JENKINS_CALLBACK=${JENKINS_CALLBACK} REQUEST_MAXRUNTIME=${REQUEST_MAXRUNTIME}\"" >> job.sub
 
 if [ "X${CONDOR_JOB_CONF}" != "X" ] ; then

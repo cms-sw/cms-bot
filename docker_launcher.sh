@@ -67,12 +67,10 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     MOUNT_POINTS="$MOUNT_POINTS,${AFS_HOME}/.ssh/${IMG_OS}:${AFS_HOME}/.ssh"
   fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
-  if [ "${UNAME_M}" = "x86_64" ] ; then
-    if [ -e /etc/tnsnames.ora ] ; then
-      MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora"
-    elif [ -e ${HOME}/tnsnames.ora ] ; then
-      MOUNT_POINTS="${MOUNT_POINTS},${HOME}/tnsnames.ora:/etc/tnsnames.ora"
-    fi
+  if [ -e ${HOME}/tnsnames.ora ] ; then
+    MOUNT_POINTS="${MOUNT_POINTS},${HOME}/tnsnames.ora:/etc/tnsnames.ora"
+  elif [ -e /etc/tnsnames.ora ] ; then
+    MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora"
   fi
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then
@@ -127,6 +125,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       mkdir -p $SINGULARITY_CACHEDIR
     fi
     if [ -e "/proc/driver/nvidia/version" ] ; then
+      nvidia-smi || true
+      cat /proc/driver/nvidia/version || true
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
       fi

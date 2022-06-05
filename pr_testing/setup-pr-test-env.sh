@@ -33,6 +33,7 @@ elif ! which scram >/dev/null 2>&1 ; then
 fi
 which dasgoclient
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local
 mkdir -p ${RESULTS_DIR}
 export SCRAM_ARCH=${ARCHITECTURE}
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils

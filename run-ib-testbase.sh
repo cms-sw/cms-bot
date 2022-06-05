@@ -32,6 +32,7 @@ eval \$(scram runtime -sh)
 set -x
 echo $PATH | tr ':' '\n'
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"
+export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch"
 export CMSBOT_PYTHON_CMD=\$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py

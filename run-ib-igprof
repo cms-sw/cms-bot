@@ -8,6 +8,7 @@ PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw
 
 # ensure that compiler include paths are added to ROOT_INCLUDE_PATH 
 for path in $(LC_ALL=C g++   -xc++ -E -v /dev/null 2>&1 | sed -n -e '/^.include/,${' -e '/^ \/.*++/p' -e '}');do ROOT_INCLUDE_PATH=$path:$ROOT_INCLUDE_PATH; done
+export ROOT_INCLUDE_PATH
 
 if [ "X$EVENTS" = "X" ] ; then EVENTS=100; fi
 for prof in ${PROFILES} ; do

@@ -106,5 +106,5 @@ if [ -z ${NO_POST} ] ; then
 fi
 echo "CMSSW_PROFILING;${PROF_RES},Profiling wf $PROFILING_WORKFLOW Results,See Logs,profiling-$PROFILING_WORKFLOW" >> ${RESULTS_DIR}/profiling-$PROFILING_WORKFLOW.txt
 prepare_upload_results
-mark_commit_status_all_prs 'profiling wf $PROFILING_WORKFLOW' 'success' -u "${BUILD_URL}" -d "Passed"
+mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Passed"
 done

@@ -1029,6 +1029,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
     if $PRODUCTION_RELEASE ; then
       DO_PROFILING=true
+      PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |g')
       for wf in $PROFILING_WORKFLOWS;do
         mark_commit_status_all_prs "profiling wf $wf" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       done
@@ -1167,6 +1168,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
 fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
+  PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |g')
   for wf in ${PROFILING_WORKFLOWS};do
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$wf.prop
     echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop

@@ -4,16 +4,16 @@ source $(dirname $0)/setup-pr-test-env.sh
 ALLOWED_PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |g')
 
 if [ "X$PROFILING_WORKFLOWS" == "X" ];then
-  PROFILING_WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
+  WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS
+else
+  for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
+    if echo $ALLOWED_PROFILING_WORKFLOWS | grep -qw $PROFILING_WORKFLOW ; then
+      WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
+    else
+      echo "Workflow $PROFILING_WORKFLOW not in allowed workflows $ALLOWED_WORKFLOW_LIST"
+    fi
+  done
 fi
-
-for PROFILING_WORKFLOW in $PROFILING_WORKFLOWS;do
-  if echo $ALLOWED_PROFILING_WORKFLOWS | grep -qw $PROFILING_WORKFLOW ; then
-    WORKFLOWS="$WORKFLOWS $PROFILING_WORKFLOW"
-  else
-    echo "Workflow $PROFILING_WORKFLOW not in allowed workflows $ALLOWED_WORKFLOW_LIST"
-  fi
-done
 
 git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 
@@ -79,7 +79,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true
-    mkdir -p $WORKSPACE/upload/profiles/$d || true
+    mkdir -p $WORKSPACE/upload/profiling/$d || true
     BASENAME=$(basename $f)
     mkdir -p $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
     ln -s /data/sdt/SDT/jenkins-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}/profiling/$d/$BASENAME $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID} || true
@@ -94,17 +94,16 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   done
   popd
   echo "<br><br>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
-
-if [ -z ${NO_POST} ] ; then
-  if [ -d $LOCALREL/profiling ]; then
-    send_jenkins_artifacts $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH} profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/
+  echo "</ul></body></html>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
+  if [ -z ${NO_POST} ] ; then
+    if [ -d $LOCALREL/profiling ]; then
+      send_jenkins_artifacts $LOCALREL/profiling/${CMSSW_VERSION}/${SCRAM_ARCH} profiling/${CMSSW_VERSION}/${SCRAM_ARCH}/
+    fi
+    if [ -d $LOCALREL/igprof ]; then
+      send_jenkins_artifacts $LOCALREL/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/
+    fi
   fi
-  if [ -d $LOCALREL/igprof ]; then
-    send_jenkins_artifacts $LOCALREL/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/
-  fi
-fi
-echo "CMSSW_PROFILING;${PROF_RES},Profiling wf $PROFILING_WORKFLOW Results,See Logs,profiling-$PROFILING_WORKFLOW" >> ${RESULTS_DIR}/profiling-$PROFILING_WORKFLOW.txt
-prepare_upload_results
-mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Passed"
+  echo "CMSSW_PROFILING;${PROF_RES},Profiling wf $PROFILING_WORKFLOW Results,See Logs,profiling/profiling-$PROFILING_WORKFLOW" >> ${RESULTS_DIR}/profiling-$PROFILING_WORKFLOW.txt
+  prepare_upload_results
+  mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Passed"
 done

@@ -103,7 +103,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
       send_jenkins_artifacts $LOCALREL/igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/
     fi
   fi
-  echo "CMSSW_PROFILING;${PROF_RES},Profiling wf $PROFILING_WORKFLOW Results,See Logs,profiling/profiling-$PROFILING_WORKFLOW" >> ${RESULTS_DIR}/profiling-$PROFILING_WORKFLOW.txt
+  echo "CMSSW_PROFILING_${PROFILING_WORKFLOW};${PROF_RES},Profiling wf $PROFILING_WORKFLOW Results,See Logs,profiling/index-${PROFILING_WORKFLOW}.html" >> ${RESULTS_DIR}/profiling-$PROFILING_WORKFLOW.txt
   prepare_upload_results
   mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Passed"
 done

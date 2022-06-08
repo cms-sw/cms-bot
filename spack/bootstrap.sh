@@ -8,7 +8,7 @@ echo This script will install Spack and configure it for CMS needs
 [ -d spack ] && (echo Skipping bootstrap; exit 0)
 echo Cloning cms spack recipes...
 git clone --quiet https://github.com/iarspider/cms-spack-repo.git
-cd ${WORKSPACE}/cms-spack-repo; git checkout --quiet ${VERSION_MAIN}); cd ${WORKSPACE}
+cd ${WORKSPACE}/cms-spack-repo; git checkout --quiet ${VERSION_MAIN}; cd ${WORKSPACE}
 echo Cloning spack...
 git clone --quiet https://github.com/spack/spack.git
 cd $WORKSPACE/spack; git checkout --quiet ${SPACK_VERSION}

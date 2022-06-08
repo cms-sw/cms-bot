@@ -2,11 +2,13 @@
 export CMSARCH=${CMSARCH:-slc7_amd64_gcc900}
 export USE_SINGULARITY=true
 export WORKDIR=$WORKSPACE
+if [ ! -z ${SPACK_GPG_KEY} ]; then
+  SPACK_GPG_KEY_DIR=$(dirname ${SPACK_GPG_KEY})
+  export MOUNT_DIRS="${SPACK_GPG_KEY_DIR}:${SPACK_GPG_KEY_DIR}"
+fi
 
 cd $WORKSPACE/cms-bot
 ./spack/bootstrap.sh
-# Inject necessary environment variables into install.sh script
-sed -ie "s@### ENV ###@export RPM_INSTALL_PREFIX=${RPM_INSTALL_PREFIX}\nexport WORKSPACE=${WORKSPACE}\nexport SPACK_ENV_NAME=${SPACK_ENV_NAME}\nexport UPLOAD_BUILDCACHE=${UPLOAD_BUILDCACHE}@"
 
 source ${WORKSPACE}/cms-bot/dockerrun.sh ; dockerrun ./spack/build.sh
 [ -e ${WORKSPACE}/fail ] && exit 1

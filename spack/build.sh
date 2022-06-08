@@ -1,6 +1,4 @@
 #!/bin/bash
-### ENV ###
-
 # Retry a command with exponential backoff
 # Source: https://gist.github.com/askoufis/0da8502b5f1df4d067502273876fcd07
 function retry {
@@ -45,7 +43,15 @@ export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE
 cd spack
 echo Add signing key
-if [ ! -z ${SPACK_GPG_KEY+x} ]; then bin/spack gpg trust $SPACK_GPG_KEY; fi
+if [ ! -z ${SPACK_GPG_KEY+x} ]; then
+  if [ -e ${SPACK_GPG_KEY} ]; then
+    bin/spack gpg trust $SPACK_GPG_KEY
+  else
+    echo ERROR: GPG key not found
+    touch ${WORKSPACE}/fail
+    exit 1
+  fi
+fi
 echo Add padding to install_tree
 bin/spack config add "config:install_tree:padded_length:128"
 echo Set local monitor directory

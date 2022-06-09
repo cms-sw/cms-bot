@@ -32,8 +32,7 @@ echo Adding CMSData package type
 cp ${WORKSPACE}/cms-spack-repo/build_systems/cmsdata.py lib/spack/spack/build_systems/
 echo "from spack.build_systems.cmsdata import CMSDataPackage" >> lib/spack/spack/pkgkit.py
 echo Copying backported recipes
-##spack repo add --scope=site ${SCRIPT_DIR}/repos/backport
-find ${SCRIPT_DIR}/repos/backport/packages -maxdepth 1 -type 'd' -exec cp -r -f {} ${SCRIPT_DIR}/spack/var/spack/repos/builtin/packages \;
+find ${WORKSPACE}/cms-spack-repo/repos/backport/packages -maxdepth 1 -type 'd' -exec cp -r -f {} ${WORKSPACE}/spack/spack/var/spack/repos/builtin/packages \;
 echo Copying backported PythonPackage class
 cp ${WORKSPACE}/cms-spack-repo/build_systems/python.py lib/spack/spack/build_systems/
 cp ${WORKSPACE}/cms-spack-repo/develop/build_environment.py lib/spack/spack/build_environment.py
@@ -48,7 +47,7 @@ bin/spack mirror add --scope=site cms https://test-cms-spack.web.cern.ch/test-cm
 echo Adding CMS Spack signing key to trusted list
 bin/spack buildcache keys --install --trust
 #echo Adding spack augment command
-#bin/spack config --scope=site add "config:extensions:${SCRIPT_DIR}/spack-scripting"
+#bin/spack config --scope=site add "config:extensions:${WORKSPACE}/cms-spack-repo/spack-scripting"
 #echo Forcing bootstrap of clingo
 #bin/spack -d spec zlib > /dev/null
 echo Creating environment

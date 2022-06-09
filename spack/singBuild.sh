@@ -18,7 +18,7 @@ rm -f ${WORKSPACE}/fail
 cd ${WORKSPACE}/cms-bot
 ./spack/bootstrap.sh
 
-${WORKSPACE}/cms-bot/docker_launcher.sh ./spack/build.sh
+${WORKSPACE}/cms-bot/docker_launcher.sh ${WORKSPACE}/cms-bot/spack/build.sh
 if [ -e ${WORKSPACE}/fail ]; then
     echo Build falied, uploading monitor data
     tar -zcf ${WORKSPACE}/monitor.tar.gz ${WORKSPACE}/monitor

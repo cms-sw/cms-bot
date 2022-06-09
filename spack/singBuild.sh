@@ -31,6 +31,7 @@ fi
 #if [ ! -z ${SPACKMON_TOKEN} ]; then retry 5 bin/spack monitor --monitor-host http://cms-spackmon.cern.ch/cms-spackmon --monitor-keep-going --monitor-tags ${SPACK_ENV_NAME} upload ${WORKSPACE}/monitor; fi;
 if [ ${UPLOAD_BUILDCACHE-x} = "true" ]; then
   echo Prepare mirror and buildcache
+  cd ${WORKSPACE}/spack
   bin/spack -e ${SPACK_ENV_NAME} mirror create -d ${WORKSPACE}/mirror --all --dependencies
   bin/spack -e ${SPACK_ENV_NAME} buildcache create -r -f -a -d ${WORKSPACE}/mirror
   bin/spack -e ${SPACK_ENV_NAME} gpg publish -d ${WORKSPACE}/mirror --rebuild-index

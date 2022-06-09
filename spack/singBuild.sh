@@ -7,6 +7,8 @@ if [ ! -z ${SPACK_GPG_KEY} ]; then
   export MOUNT_DIRS="${SPACK_GPG_KEY_DIR}:${SPACK_GPG_KEY_DIR}"
 fi
 
+rm -f ${WORKSPACE}/fail
+
 cd $WORKSPACE/cms-bot
 ./spack/bootstrap.sh
 

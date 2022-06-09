@@ -2,11 +2,16 @@
 export CMSARCH=${CMSARCH:-slc7_amd64_gcc900}
 export USE_SINGULARITY=true
 export WORKDIR=${WORKSPACE}
-export DOCKER_IMG=${DOCKER_IMG:-
-#if [ ! -z ${SPACK_GPG_KEY} ]; then
-#  SPACK_GPG_KEY_DIR=$(dirname ${SPACK_GPG_KEY})
-#  export MOUNT_DIRS="${SPACK_GPG_KEY_DIR}:${SPACK_GPG_KEY_DIR}"
-#fi
+if [ x$DOCKER_IMG == "x" ]; then
+    arch="$(echo $CMSARCH | cut -d_ -f2)"
+    os=$(echo $CMSARCH | cut -d_ -f1 | sed 's|slc7|cc7|')
+    if [ "${os}" = "rhel8" ] ; then os="ubi8" ; fi
+    DOCKER_IMG="cmssw/${os}:${arch}"
+    if [ "${arch}" = "amd64" ] ; then
+      DOCKER_IMG="cmssw/${os}:x86_64"
+    fi
+fi
+export DOCKER_IMG
 
 rm -f ${WORKSPACE}/fail
 

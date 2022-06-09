@@ -20,5 +20,6 @@ else
   exit 1
 fi
 
-${WORKSPACE}/cms-bot/docker_launcher.sh ./spack/install.sh
+# Use dockerrun since we may need to use qemu
+source ${WORKSPACE}/cms-bot/dockerrun.sh ; dockerrun ./spack/install.sh
 [ -e ${WORKSPACE}/fail ] && ./cvmfs_deployment/abort_transaction.sh || ./cvmfs_deployment/publish_transaction.sh

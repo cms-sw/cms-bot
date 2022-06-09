@@ -30,7 +30,8 @@ TYPE_COMMANDS = {
   "performance-improvements" : ["5b9ee3",             "performance|improvements|performance-improvements", "mtype"],
 }
 
-for lab in get_dpg_pog() + ['pf']:
+EXTRA_MTYPES = ['pf', 'l1t']
+for lab in get_dpg_pog() + EXTRA_MTYPES:
   if lab in TYPE_COMMANDS: continue
   TYPE_COMMANDS[lab] = [LABEL_COLORS['doc'], lab, "mtype"]
 

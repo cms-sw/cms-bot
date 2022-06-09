@@ -36,6 +36,10 @@ script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
 SLAVE_JAR_DIR="${WORKSPACE}"
 while [ ! -e ${SLAVE_JAR_DIR}/slave.jar ] ; do
   SLAVE_JAR_DIR=$(dirname $SLAVE_JAR_DIR)
+  if [ "${SLAVE_JAR_DIR}" = "/" ] ; then
+    echo "ERROR: Unable to find slave.jar under ${WORKSPACE}"
+    exit 1
+  fi
 done
 INPUT_FILES=""
 for xfile in ${HOME}/.netrc ${HOME}/tnsnames.ora ${SLAVE_JAR_DIR}/slave.jar ; do

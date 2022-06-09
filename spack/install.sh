@@ -1,6 +1,4 @@
-#!/bin/bash
-### ENV ###
-# if [ -z ${RPM_INSTALL_PREFIX+x} ]; then export RPM_INSTALL_PREFIX=/cvmfs/cms-ib.cern.ch/spack; fi
+#!/bin/bash -x
 if [[ "${RPM_INSTALL_PREFIX}" != /* ]]; then RPM_INSTALL_PREFIX=${WORKSPACE}/${RPM_INSTALL_PREFIX}; fi
 
 if [ "$(uname)" == "Darwin" ]; then

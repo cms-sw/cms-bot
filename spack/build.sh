@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # Retry a command with exponential backoff
 # Source: https://gist.github.com/askoufis/0da8502b5f1df4d067502273876fcd07
 function retry {

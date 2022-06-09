@@ -1,15 +1,14 @@
-#!/bin/bash
+#!/bin/bash -x
 export CMSARCH=${CMSARCH:-slc7_amd64_gcc900}
 export CVMFS_REPOSITORY=cms-ib.cern.ch
 export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
 export USE_SINGULARITY=true
 export WORKDIR=$WORKSPACE
 
+rm -f ${WORKSPACE}/fail
+
 cd $WORKSPACE/cms-bot
 ./spack/bootstrap.sh
-# Inject necessary environment variables into install.sh script
-sed -ie "s@### ENV ###@export RPM_INSTALL_PREFIX=${RPM_INSTALL_PREFIX}\nexport WORKSPACE=${WORKSPACE}\nexport SPACK_ENV_NAME=${SPACK_ENV_NAME}@"
-
 ./cvmfs_deployment/start_transaction.sh
 
 # Check if the transaction really happened
@@ -21,5 +20,5 @@ else
   exit 1
 fi
 
-source ${WORKSPACE}/cms-bot/dockerrun.sh ; dockerrun ./spack/install.sh
+${WORKSPACE}/cms-bot/docker_launcher.sh ./spack/install.sh
 [ -e ${WORKSPACE}/fail ] && ./cvmfs_deployment/abort_transaction.sh || ./cvmfs_deployment/publish_transaction.sh

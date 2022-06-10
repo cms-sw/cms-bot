@@ -6,9 +6,11 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/cms-s
 cd ${WORKSPACE}
 # For boto3
 export PYTHONPATH=/cvmfs/cms-ib.cern.ch/share/python3/lib/python3.6/site-packages:$PYTHONPATH
+export S3_ENDPOINT_URL=https://s3.cern.ch
+
 echo This script will install Spack and configure it for CMS needs
 [ -d spack ] && (echo Skipping bootstrap; exit 0)
-echo Cloning cms spack recipes...
+echo Cloning cms spack recipes (version ${VERSION_MAIN})...
 git clone --quiet https://github.com/iarspider/cms-spack-repo.git
 cd ${WORKSPACE}/cms-spack-repo; git checkout --quiet ${VERSION_MAIN}; cd ${WORKSPACE}
 echo Cloning spack...
@@ -41,7 +43,7 @@ cp ${WORKSPACE}/cms-spack-repo/develop/build_environment.py lib/spack/spack/buil
 echo Copying patched CudaPackage class
 cp ${WORKSPACE}/cms-spack-repo/build_systems/cuda.py lib/spack/spack/build_systems/
 echo Patching spack.util.web and spack.s3_handler
-patch -p1 ${WORKSPACE}/cms-spack-repo/s3.patch
+patch -p1 < ${WORKSPACE}/cms-spack-repo/s3.patch
 echo Initializing Spack
 #source share/spack/setup-env.sh
 echo Adding CMS repository

@@ -43,6 +43,7 @@ cd $WORKSPACE
 # For boto3
 export PYTHONPATH=/cvmfs/cms-ib.cern.ch/share/python3/lib/python3.6/site-packages:$PYTHONPATH
 
+export S3_ENDPOINT_URL=https://s3.cern.ch
 export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE
 cd spack

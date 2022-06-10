@@ -40,6 +40,8 @@ cp ${WORKSPACE}/cms-spack-repo/build_systems/python.py lib/spack/spack/build_sys
 cp ${WORKSPACE}/cms-spack-repo/develop/build_environment.py lib/spack/spack/build_environment.py
 echo Copying patched CudaPackage class
 cp ${WORKSPACE}/cms-spack-repo/build_systems/cuda.py lib/spack/spack/build_systems/
+echo Patching spack.util.web and spack.s3_handler
+patch -p1 ${WORKSPACE}/cms-spack-repo/s3.patch
 echo Initializing Spack
 #source share/spack/setup-env.sh
 echo Adding CMS repository

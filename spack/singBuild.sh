@@ -1,5 +1,6 @@
 #!/bin/bash -x
 export CMSARCH=${CMSARCH:-slc7_amd64_gcc900}
+export SCRAM_ARCH=$CMSARCH
 export USE_SINGULARITY=true
 export WORKDIR=${WORKSPACE}
 if [ x$DOCKER_IMG == "x" ]; then

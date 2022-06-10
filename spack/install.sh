@@ -12,8 +12,8 @@ elif [ "$(uname)" == "Linux" ]; then
 fi
 export CORES
 echo Setup Spack for CMS
-cd "$WORKSPACE"/cms-spack-repo
-bash -xe ./bootstrap.sh || (echo "Boostrap failed"; exit 1)
+cd $WORKSPACE
+bash -xe $WORKSPACE/cms-bot/spack/bootstrap.sh || (echo "Boostrap failed"; exit 1)
 cd spack
 export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE

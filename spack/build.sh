@@ -52,6 +52,11 @@ if [ ! -z ${SPACK_GPG_KEY+x} ]; then
     exit 1
   fi
 fi
+echo Setup spack
+. share/spack/setup-env.sh
+echo Install py-boto3
+spack install --reuse py-boto3
+spack load py-boto3
 echo Add padding to install_tree
 bin/spack config add "config:install_tree:padded_length:128"
 echo Set local monitor directory

@@ -52,7 +52,11 @@ echo Adding CMS mirror
 #bin/spack mirror add --scope=site cms https://test-cms-spack.web.cern.ch/test-cms-spack/CMS/mirror
 bin/spack mirror add --scope=site cms-s3 s3://cms-spack
 echo Adding CMS Spack signing key to trusted list
-bin/spack buildcache keys --install --trust
+#bin/spack buildcache keys --install --trust
+# Temporary workaround until `spack gpg publish` works!
+wget https://test-cms-spack.web.cern.ch/test-cms-spack/CMS/mirror/build_cache/_pgp/A9541E16BC04DEA9624B99B43E5E5DB6F48CB63F.pub -O ${WORKSPACE}/cms-spack.pub
+bin/spack gpg trust ${WORKSPACE}/cms-spack.pub
+(bin/spack gpg list --trusted | grep -e "4096R/F48CB63F") || exit 1
 #echo Adding spack augment command
 #bin/spack config --scope=site add "config:extensions:${WORKSPACE}/cms-spack-repo/spack-scripting"
 #echo Forcing bootstrap of clingo

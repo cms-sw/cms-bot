@@ -38,7 +38,6 @@ fi
 export CORES
 echo Setup Spack for CMS
 cd $WORKSPACE
-[ ! -d spack ] && bash -xe ./bootstrap.sh
 
 # For boto3
 export PYTHONPATH=/cvmfs/cms-ib.cern.ch/share/python3/lib/python3.6/site-packages:$PYTHONPATH

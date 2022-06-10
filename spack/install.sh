@@ -11,7 +11,8 @@ elif [ "$(uname)" == "Linux" ]; then
 	CORES=$(awk '/^processor/ { N++} END { print N }' /proc/cpuinfo)
 fi
 export CORES
-cd spack
+cd ${WORKSPACE}/spack
+ls
 export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE
 echo Forcing bootstrap

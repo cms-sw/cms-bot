@@ -15,10 +15,12 @@ echo Setup Spack for CMS
 cd "$WORKSPACE"/cms-spack-repo
 bash -xe ./bootstrap.sh || (echo "Boostrap failed"; exit 1)
 cd spack
-echo Forcing bootstrap
-bin/spack -d solve zlib
 export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE
+echo Forcing bootstrap
+bin/spack -d solve zlib
+echo Getting patchelf
+bin/spack install --reuse patchelf
 # source share/spack/setup-env.sh
 echo Add signing key
 bin/spack buildcache keys --force --install --trust

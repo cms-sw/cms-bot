@@ -28,7 +28,7 @@ echo Start the installation
 mkdir -p "${RPM_INSTALL_PREFIX}"
 #spack env activate ${SPACK_ENV_NAME}
 bin/spack -e "${SPACK_ENV_NAME}" install -j"$CORES" --fail-fast --cache-only --require-full-hash-match
-if [$? -eq 0 ]; then
+if [ $? -eq 0 ]; then
     echo Installation complete
 else
     echo "ERROR: Installation failed"

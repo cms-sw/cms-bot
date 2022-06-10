@@ -16,9 +16,9 @@ ls
 export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE
 echo Forcing bootstrap
-bin/spack -d solve zlib
+bin/spack -d solve zlib || exit 1
 echo Getting patchelf
-bin/spack install --reuse patchelf
+bin/spack install --reuse --cache-only patchelf || exit 1
 # source share/spack/setup-env.sh
 echo Add signing key
 bin/spack buildcache keys --force --install --trust

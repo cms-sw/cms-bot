@@ -10,10 +10,10 @@ export S3_ENDPOINT_URL=https://s3.cern.ch
 
 echo This script will install Spack and configure it for CMS needs
 [ -d spack ] && (echo Skipping bootstrap; exit 0)
-echo Cloning cms spack recipes (version ${VERSION_MAIN})...
+echo Cloning cms spack recipes from branch ${VERSION_MAIN}...
 git clone --quiet https://github.com/iarspider/cms-spack-repo.git
 cd ${WORKSPACE}/cms-spack-repo; git checkout --quiet ${VERSION_MAIN}; cd ${WORKSPACE}
-echo Cloning spack...
+echo Cloning spack from branch ${SPACK_VERSION}...
 git clone --quiet https://github.com/spack/spack.git
 cd ${WORKSPACE}/spack; git checkout --quiet ${SPACK_VERSION}
 echo Configuring spack
@@ -57,6 +57,6 @@ bin/spack buildcache keys --install --trust
 #bin/spack config --scope=site add "config:extensions:${WORKSPACE}/cms-spack-repo/spack-scripting"
 #echo Forcing bootstrap of clingo
 #bin/spack -d spec zlib > /dev/null
-echo Creating environment
+echo Creating environment ${SPACK_ENV_NAME}
 bin/spack env create ${SPACK_ENV_NAME} ${WORKSPACE}/cms-spack-repo/environments/${SPACK_ENV_NAME}/spack.yaml
 echo Done

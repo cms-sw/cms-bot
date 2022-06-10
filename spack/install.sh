@@ -11,9 +11,6 @@ elif [ "$(uname)" == "Linux" ]; then
 	CORES=$(awk '/^processor/ { N++} END { print N }' /proc/cpuinfo)
 fi
 export CORES
-echo Setup Spack for CMS
-cd $WORKSPACE
-bash -xe $WORKSPACE/cms-bot/spack/bootstrap.sh || (echo "Boostrap failed"; exit 1)
 cd spack
 export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE

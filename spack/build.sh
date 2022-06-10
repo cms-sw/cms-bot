@@ -39,6 +39,10 @@ export CORES
 echo Setup Spack for CMS
 cd $WORKSPACE
 [ ! -d spack ] && bash -xe ./bootstrap.sh
+
+# For boto3
+export PYTHONPATH=/cvmfs/cms-ib.cern.ch/share/python3/lib/python3.6/site-packages:$PYTHONPATH
+
 export SPACK_DISABLE_LOCAL_CONFIG=true
 export SPACK_USER_CACHE_PATH=$WORKSPACE
 cd spack
@@ -52,11 +56,9 @@ if [ ! -z ${SPACK_GPG_KEY+x} ]; then
     exit 1
   fi
 fi
+
 echo Setup spack
 . share/spack/setup-env.sh
-echo Install py-boto3
-spack install --reuse py-boto3
-spack load py-boto3
 echo Add padding to install_tree
 bin/spack config add "config:install_tree:padded_length:128"
 echo Set local monitor directory

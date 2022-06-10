@@ -1,4 +1,7 @@
 #!/bin/bash -x
+# For boto3
+export PYTHONPATH=/cvmfs/cms-ib.cern.ch/share/python3/lib/python3.6/site-packages:$PYTHONPATH
+
 if [[ "${RPM_INSTALL_PREFIX}" != /* ]]; then RPM_INSTALL_PREFIX=${WORKSPACE}/${RPM_INSTALL_PREFIX}; fi
 
 if [ "$(uname)" == "Darwin" ]; then

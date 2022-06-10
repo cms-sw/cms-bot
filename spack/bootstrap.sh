@@ -4,6 +4,8 @@ SPACK_ENV_NAME=${SPACK_ENV_NAME:-CMSSW_12_4_X}
 ###############################################################################
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/cms-spack-repo"
 cd ${WORKSPACE}
+# For boto3
+export PYTHONPATH=/cvmfs/cms-ib.cern.ch/share/python3/lib/python3.6/site-packages:$PYTHONPATH
 echo This script will install Spack and configure it for CMS needs
 [ -d spack ] && (echo Skipping bootstrap; exit 0)
 echo Cloning cms spack recipes...

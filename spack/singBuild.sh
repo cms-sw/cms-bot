@@ -15,8 +15,7 @@ export DOCKER_IMG
 
 rm -f ${WORKSPACE}/fail
 
-cd ${WORKSPACE}/cms-bot
-./spack/bootstrap.sh
+${WORKSPACE}/cms-bot/spack/bootstrap.sh
 
 ${WORKSPACE}/cms-bot/docker_launcher.sh ${WORKSPACE}/cms-bot/spack/build.sh
 if [ -e ${WORKSPACE}/fail ]; then

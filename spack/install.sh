@@ -18,10 +18,10 @@ echo Add signing key
 bin/spack buildcache keys --force --install --trust
 echo Force bootstrap
 bin/spack -d solve zlib || exit 1
-echo Get patchelf
-GCC_VER=$(gcc --version | head -1 | cut -d ' ' -f 3)
-bin/spack compiler find --scope=site
-bin/spack install --reuse --cache-only patchelf%gcc@${GCC_VER} || exit 1
+# echo Get patchelf
+# GCC_VER=$(gcc --version | head -1 | cut -d ' ' -f 3)
+# bin/spack compiler find --scope=site
+# bin/spack install --reuse --cache-only patchelf%gcc@${GCC_VER} || exit 1
 # source share/spack/setup-env.sh
 echo Set install root
 bin/spack config add "config:install_tree:root:${RPM_INSTALL_PREFIX}"

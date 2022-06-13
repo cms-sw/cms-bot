@@ -6,6 +6,8 @@ export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
 export USE_SINGULARITY=true
 export WORKDIR=$WORKSPACE
 
+export RPM_INSTALL_PREFIX=$BASEDIR/spack
+
 rm -f ${WORKSPACE}/fail
 
 cd $WORKSPACE/cms-bot

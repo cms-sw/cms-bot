@@ -26,5 +26,7 @@ fi
 # Use dockerrun since we may need to use qemu
 source ${WORKSPACE}/cms-bot/dockerrun.sh ; dockerrun ${WORKSPACE}/cms-bot/spack/install.sh
 exit_code=$?
-[ -e ${WORKSPACE}/fail -o ${exit_code} -ne 0 ] && ./cvmfs_deployment/abort_transaction.sh || ./cvmfs_deployment/publish_transaction.sh
+[ -e ${WORKSPACE}/fail -o ${exit_code} -ne 0 ] && ./cvmfs_deployment/abort_transaction.sh || 
+${WORKSPACE}/cms-bot/cvmfs/cms-ib.cern.ch/cvmfsdirtab.sh
+./cvmfs_deployment/publish_transaction.sh
 exit ${exit_code}

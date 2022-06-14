@@ -9,15 +9,21 @@ for cmsdir in "$@" ; do
   done
 
   #cmssw externals
-  echo "/${cmsdir}/*_*_*/external/*" >> $tmpfile
+  if [ "${cmsdir}" != "spack" ]; then
+    echo "/${cmsdir}/*_*_*/external/*" >> $tmpfile
+  fi
   for x in blackhat boost cuda geant4 geant4-G4EMLOW herwigpp madgraph5amcatnlo py2-pippkgs py2-pippkgs_depscipy sherpa rivet; do
     echo "/${cmsdir}/*_*_*/external/${x}/*" >> $tmpfile
   done
 
   #Some special directories
-  for x in cms lcg lcg/root ; do
-    echo "/${cmsdir}/*_*_*/${x}" >> $tmpfile
-  done
+  if [ "${cmsdir}" != "spack" ]; then
+    for x in cms lcg lcg/root ; do
+      echo "/${cmsdir}/*_*_*/${x}" >> $tmpfile
+    done
+  else
+    echo "/${cmsdir}/*_*_*/root-*" >> $tmpfile
+  fi
 
   #for cmssw releases
   for x in cmssw cmssw-patch ; do
@@ -29,7 +35,7 @@ for cmsdir in "$@" ; do
     # Second sed: replace CMS' top-level directory name (<os>_<arch>_<comp><compvers>) with spack's (<platform>-<os>-<arch>/<comp>-<compvers>)
     # Third sed: use spack package names for madgraph5amcatnlo and geant4-G4EMLOW
     # Fourth sed: replace CMS' package directory name (<pkgname>/<version>-<hash>) with spack's (<pkgname>-<version>-<hash>)
-    cat $tmpfile | sed -e 's#/lcg/#/#g;s#/external/#/#g;s#/cms/#/#g' | sed -e "s#/${cmsdir}/._._./#/${cmsdir}/*-*-*/*-*/#" | sed -e 's#madgraph5amcatnlo#madgraph5amc#g;s#geant4-##g'  | sed -e 's#/[*]$#-*#g'
+    cat $tmpfile | sed -e 's#/lcg/#/#g;s#/external/#/#g;s#/cms/#/#g' | sed -e "s#/${cmsdir}/._._./#/${cmsdir}/*-*-*/*-*/#" | sed -e 's#madgraph5amcatnlo#madgraph5amc#g;s#geant4-G4EMLOW#g4emlow#g;s#herwigpp#herwig7#g'  | sed -e 's#/[*]$#-*#g' | grep -v "py2"
   else
     cat $tmpfile
   fi

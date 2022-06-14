@@ -981,6 +981,7 @@ CMSSW_CATEGORIES = {
     "L1Trigger/RegionalCaloTrigger",
     "L1Trigger/Skimmer",
     "L1Trigger/TextToDigi",
+    "L1Trigger/TrackerTFP",
     "L1Trigger/TrackFindingAM",
     "L1Trigger/TrackFindingTMTT",
     "L1Trigger/TrackFindingTracklet",

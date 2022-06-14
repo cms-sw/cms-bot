@@ -40,6 +40,9 @@ for cmsdir in "$@" ; do
     cat $tmpfile | sed -e 's#/lcg/#/#g;s#/external/#/#g;s#/cms/#/#g' | sed -e "s#/${cmsdir}/._._./#/${cmsdir}/*-*-*/*-*/#" > $tmpfile2
     cat $tmpfile2 | sed -e 's#madgraph5amcatnlo#madgraph5amc#g;s#geant4-G4EMLOW#g4emlow#g;s#herwigpp#herwig7#g'  | sed -e 's#/[*]$#-*#g' | grep -v "py2" > $tmpfile
     cat $tmpfile | sed -e 's#data-L1Trigger-L1TMuon#data-l1trigger-l1tmuon#;s#data-GeneratorInterface-EvtGenInterface#data-generatorinterface-evtgeninterface#;s#data-MagneticField-Interpolation#data-magneticfield-interpolation#'
+    echo "/spack"
+    echo "/spack/*-*-*"
+    echo "/spack/*-*-*/*-*"
   else
     cat $tmpfile
   fi

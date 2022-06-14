@@ -7,7 +7,7 @@ NODE_NAME="grid${CONDOR_JOB_ID}"
 
 if [ "${STATUS}" = "online" -o "${STATUS}" = "reconfigure" ] ; then
   cp ${CMS_BOT_DIR}/condor/jenkins/node.xml node.xml
-  sed -i -e "s|@LABELS@|$LABELS $CONDOR_JOB_ID $SCHEDD_NAME|g;s|@CONDOR_JOB_ID@|$CONDOR_JOB_ID|g;s|@NODE_NAME@|$NODE_NAME|g" node.xml
+  sed -i -e "s|@LABELS@|$LABELS|g;s|@CONDOR_JOB_ID@|$CONDOR_JOB_ID|g;s|@NODE_NAME@|$NODE_NAME|g" node.xml
   sed -i -e "s|@WORK_DIR@|$WORK_DIR|g;s|@JENKINS_HOME@|$JENKINS_HOME|g;s|@CMS_BOT_DIR@|$CMS_BOT_DIR|" node.xml
   sed -i -e "s|@CONDOR_USER@|$CONDOR_USER|g;s|@CONDOR_SUMBITTER_SYSTEM@|$CONDOR_SUMBITTER_SYSTEM|g" node.xml
   sed -i -e "s|@SCHEDD_NAME@|$SCHEDD_NAME|g;" node.xml

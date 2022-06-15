@@ -6,7 +6,8 @@ export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
 export USE_SINGULARITY=true
 export WORKDIR=$WORKSPACE
 
-export RPM_INSTALL_PREFIX=$BASEDIR/spack
+weekno=$(tail -1 $WORKSPACE/cms-bot/ib-weeks)
+export RPM_INSTALL_PREFIX=$BASEDIR/$weekno/spack
 
 rm -f ${WORKSPACE}/fail
 

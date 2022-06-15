@@ -19,6 +19,7 @@ source share/spack/setup-env.sh
 echo Add signing key
 spack buildcache keys --force --install --trust
 echo Set install root
+spack config add 'config:install_tree:projection:all:${ARCHITECTURE}/${COMPILERNAME}-${COMPILERVER}/${PACKAGE}/${VERSION}-${HASH}'
 spack config add "config:install_tree:root:${RPM_INSTALL_PREFIX}"
 echo Force bootstrap
 spack -d solve zlib || exit 1

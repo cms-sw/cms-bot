@@ -1,51 +1,54 @@
 #!/bin/bash
 #Shared files
 for cmsdir in "$@" ; do
-  tmpfile=$(mktemp)
   if [ $(ls ${CVMFS_DIR}/$cmsdir -d 2>/dev/null | wc -l) -eq 0 ] ; then continue ; fi
-  echo "/${cmsdir}/share" > $tmpfile
+  echo "/${cmsdir}/share"
   for x in cms/data-L1Trigger-L1TMuon cms/data-GeneratorInterface-EvtGenInterface 'cms/data-MagneticField-Interpolation/*' ; do
-    echo "/${cmsdir}/share/${x}" >> $tmpfile
+    echo "/${cmsdir}/share/${x}"
   done
 
   #cmssw externals
-  if [ "${cmsdir}" != "spack" ]; then
-    echo "/${cmsdir}/*_*_*/external/*" >> $tmpfile
-  fi
+  echo "/${cmsdir}/*_*_*/external/*"
   for x in blackhat boost cuda geant4 geant4-G4EMLOW herwigpp madgraph5amcatnlo py2-pippkgs py2-pippkgs_depscipy sherpa rivet; do
-    echo "/${cmsdir}/*_*_*/external/${x}/*" >> $tmpfile
+    echo "/${cmsdir}/*_*_*/external/${x}/*"
   done
 
   #Some special directories
-  if [ "${cmsdir}" != "spack" ]; then
-    for x in cms lcg lcg/root ; do
-      echo "/${cmsdir}/*_*_*/${x}" >> $tmpfile
-    done
-  else
-    echo "/${cmsdir}/*_*_*/root-*" >> $tmpfile
-  fi
+  for x in cms lcg lcg/root ; do
+    echo "/${cmsdir}/*_*_*/${x}"
+  done
 
   #for cmssw releases
   for x in cmssw cmssw-patch ; do
-    echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*/src" >> $tmpfile
-    echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*" >> $tmpfile
+    echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*/src"
+    echo "/${cmsdir}/*_*_*/cms/${x}/CMSSW_*"
   done
-  if [[ "$cmsdir" == "spack" ]]; then
-    # First sed: remove "cms/", "lcg/", "external/" since spack install tree is flat
-    # Second sed: replace CMS' top-level directory name (<os>_<arch>_<comp><compvers>) with spack's (<platform>-<os>-<arch>/<comp>-<compvers>)
-    # Third sed: use spack package names for madgraph5amcatnlo and geant4-G4EMLOW
-    # Fourth sed: replace CMS' package directory name (<pkgname>/<version>-<hash>) with spack's (<pkgname>-<version>-<hash>)
-    # Fifth sed: use spack package names for data packages
-    tmpfile2=$(mktemp)
-    cat $tmpfile | sed -e 's#/lcg/#/#g;s#/external/#/#g;s#/cms/#/#g' | sed -e "s#/${cmsdir}/._._./#/${cmsdir}/*-*-*/*-*/#" > $tmpfile2
-    cat $tmpfile2 | sed -e 's#madgraph5amcatnlo#madgraph5amc#g;s#geant4-G4EMLOW#g4emlow#g;s#herwigpp#herwig7#g'  | sed -e 's#/[*]$#-*#g' | grep -v "py2" > $tmpfile
-    cat $tmpfile | sed -e 's#data-L1Trigger-L1TMuon#data-l1trigger-l1tmuon#;s#data-GeneratorInterface-EvtGenInterface#data-generatorinterface-evtgeninterface#;s#data-MagneticField-Interpolation#data-magneticfield-interpolation#'
-    echo "/spack"
-    echo "/spack/*-*-*"
-    echo "/spack/*-*-*/*-*"
-  else
-    cat $tmpfile
+  if [ -d ${CVMFS_DIR}/$cmsdir/spack ]; then
+    echo "/${cmsdir}/spack/share"
+    echo "/${cmsdir}/spack/share/data-l1trigger-l1tmuon"
+    echo "/${cmsdir}/spack/share/data-generatorinterface-evtgeninterface"
+    echo "/${cmsdir}/spack/share/data-magneticfield-interpolation/*"
+    echo "/${cmsdir}/spack"
+    # All platforms
+    echo "/${cmsdir}/spack/*-*-*"
+    # All compilers
+    echo "/${cmsdir}/spack/*-*-*/*-*"
+    # All packages
+    echo "/${cmsdir}/spack/*-*-*/*-*/*"
+    # All versions for select packages
+    echo "/${cmsdir}/spack/*-*-*/*-*/blackhat/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/boost/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/cuda/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/geant4/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/g4emlow/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/herwig7/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/madgraph5amc/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/sherpa/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/rivet/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/root/*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/cmssw/CMSSW_*/src"
+    echo "/${cmsdir}/spack/*-*-*/*-*/cmssw/CMSSW_*"
+    echo "/${cmsdir}/spack/*-*-*/*-*/cmssw-patch/CMSSW_*/src"
+    echo "/${cmsdir}/spack/*-*-*/*-*/cmssw-patch/CMSSW_*"
   fi
-  rm $tmpfile
-  [ -z $tmpfile2 ] || rm $tmpfile2
 done

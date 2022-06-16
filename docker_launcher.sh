@@ -67,11 +67,16 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     MOUNT_POINTS="$MOUNT_POINTS,${AFS_HOME}/.ssh/${IMG_OS}:${AFS_HOME}/.ssh"
   fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
-  if [ -e ${HOME}/tnsnames.ora ] ; then
-    MOUNT_POINTS="${MOUNT_POINTS},${HOME}/tnsnames.ora:/etc/tnsnames.ora"
-  elif [ -e /etc/tnsnames.ora ] ; then
-    MOUNT_POINTS="${MOUNT_POINTS},/etc/tnsnames.ora"
-  fi
+  for tnsnames in ${HOME}/tnsnames.ora /etc/tnsnames.ora ; do
+    if [ -e "${tnsnames}" ] ; then
+      if [ $(echo ${tnsnames} | grep '^/afs/' | wc -l) -gt 0 ] ; then
+        cp ${tnsnames} ${WORKSPACE}/
+        tnsnames="${WORKSPACE}/tnsnames.ora"
+      fi
+      MOUNT_POINTS="${MOUNT_POINTS},${tnsnames}:/etc/tnsnames.ora"
+      break
+    fi
+  done
   HAS_DOCKER=false
   if [ "X$USE_SINGULARITY" != "Xtrue" ] ; then
     if [ $(id -Gn 2>/dev/null | grep docker | wc -l) -gt 0 ] ; then

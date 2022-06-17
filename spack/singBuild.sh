@@ -27,16 +27,10 @@ if [ -e ${WORKSPACE}/fail ]; then
     touch ${WORKSPACE}/fail
     exit 1
 fi
-#echo Upload monitor data
-#if [ ! -z ${SPACKMON_TOKEN} ]; then retry 5 bin/spack monitor --monitor-host http://cms-spackmon.cern.ch/cms-spackmon --monitor-keep-going --monitor-tags ${SPACK_ENV_NAME} upload ${WORKSPACE}/monitor; fi;
 if [ ${UPLOAD_BUILDCACHE-x} = "true" ]; then
   echo Prepare mirror and buildcache
-  cd ${WORKSPACE}/spack
-  bin/spack -e ${SPACK_ENV_NAME} mirror create -d ${WORKSPACE}/mirror --all --dependencies
-  bin/spack -e ${SPACK_ENV_NAME} buildcache create -r -f -a -d ${WORKSPACE}/mirror
-  bin/spack -e ${SPACK_ENV_NAME} gpg publish -d ${WORKSPACE}/mirror --rebuild-index
-  cd ${WORKSPACE}
-  echo Upload mirror
-  rsync -e "ssh -o StrictHostKeyChecking=no -o GSSAPIAuthentication=yes -o GSSAPIDelegateCredentials=yes" --recursive --links --ignore-times --ignore-existing ${WORKSPACE}/mirror cmsbuild@lxplus:/eos/user/r/razumov/www/CMS/
+  # TODO: create mirror and sync to s3
+  # TODO: push gpg key to mirror (broken in 0.17, should be working in 0.18)
+  bin/spack -e ${SPACK_ENV_NAME} buildcache create -r -a --mirror-url s3://cms-spack/
 fi
 echo All done

@@ -788,7 +788,7 @@ if [ "X$CMSDIST_ONLY" == "Xfalse" -a "X${CODE_RULES}" = "Xtrue" -a "$SKIP_STATIC
       echo "Rule$CRULE $description: https://raw.githubusercontent.com/${CMSSW_ORG}/cmssw/master/Utilities/ReleaseScripts/python/cmsCodeRules/config.py" > $r.new
       pycmd=python2
       if ! python2 -c 'import Utilities.ReleaseScripts.cmsCodeRules.config' >/dev/null 2>&1 ; then pycmd=python3 ; fi
-      $pycmd -c "from Utilities.ReleaseScripts.cmsCodeRules.config import Configuration as x;print x['$CRULE']['description']" >> $r.new || true
+      $pycmd -c "from Utilities.ReleaseScripts.cmsCodeRules.config import Configuration as x;print(x['$CRULE']['description'])" >> $r.new || true
       echo "" >> $r.new
       cat $r >> $r.new
       mv $r.new $r

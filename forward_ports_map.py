@@ -50,46 +50,28 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_0_X/master"].append("IB/CMSSW_11_0_X/cc8")
 
 #Automatically added
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_1_X"]=[]
-
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_1_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_1_X/master"].append("IB/CMSSW_11_1_X/cc8")
 
 #Automatically added
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_2_X"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_2_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_2_X/master"].append("IB/CMSSW_11_2_X/cc8")
 
 #Automatically added
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_11_3_X"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_3_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_11_3_X/master"].append("IB/CMSSW_11_3_X/cc8")
 
 #Automatically added
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_0_X"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_0_X/master"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_0_X/master"].append("IB/CMSSW_12_0_X/gcc10")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_0_X/master"].append("IB/CMSSW_12_0_X/cc8")
 
 #Automatically added
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_1_X"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_1_X/master"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_1_X/master"].append("IB/CMSSW_12_1_X/gcc10")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_1_X/master"].append("IB/CMSSW_12_1_X/cc8")
 
 #Automatically added
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_2_X/master"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_2_X/master"].append("IB/CMSSW_12_2_X/gcc10")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_2_X/master"].append("IB/CMSSW_12_2_X/cc8")
-
-#Automatically added
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_3_X/master"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_3_X/master"].append("IB/CMSSW_12_3_X/g11")
-
-#Automatically added
-GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_4_X"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_4_X/master"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_4_X/master"].append("IB/CMSSW_12_4_X/g11")
 
 #Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_5_X"]=[]

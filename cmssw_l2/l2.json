@@ -1436,6 +1436,7 @@
       "category": [
         "tracking-pog"
       ], 
+      "end_date": 1655769600, 
       "start_date": 1632787200
     }
   ], 
@@ -1760,7 +1761,14 @@
       "category": [
         "reconstruction"
       ], 
+      "end_date": 1655769600, 
       "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "tracking-pog"
+      ], 
+      "start_date": 1655769600
     }
   ], 
   "smorovic": [

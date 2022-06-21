@@ -19,7 +19,7 @@ APPROVE_BUILD_RELEASE =  list(set([ "smuzaffar"] + CMSSW_L1 + SPECIAL_RELEASE_MA
 #List of gh users who can request to build a release.
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 #List og gh users who are allowed to trigger Pull Request testing
-TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-","mmusich","Sam-Harper","sroychow","silviodonato"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
+TRIGGER_PR_TESTS = list(set([ "felicepantaleo", "rovere", "lgray", "bsunanda", "VinInn", "kpedro88", "makortel", "wddgit", "mtosi", "gpetruc", "gartung", "nsmith-","mmusich","Sam-Harper","sroychow","silviodonato","slava77"] + REQUEST_BUILD_RELEASE + [ a for a in authors if authors[a]>10 and not a in GITHUB_BLACKLIST_AUTHORS ]))
 #List of on additional release managers
 PR_HOLD_MANAGERS = [ "kpedro88" ]
 
@@ -74,7 +74,6 @@ CMSSW_L2 = {
   "Saptaparna":       ["generators"],
   "sbein":            ["fastsim"],
   "SiewYan":          ["generators"], 
-  "slava77":          ["reconstruction"],
   "smorovic":         ["daq"],
   "smuzaffar":        ["core"],
   "srimanob":         ["upgrade"],
@@ -131,7 +130,7 @@ CMSSW_L2 = {
   "kshcheli":         ["proton-pog"],
   "kandrosov":        ["tau-pog"],
   "alebihan":         ["tau-pog"],
-  "mtosi":            ["tracking-pog"],
+  "slava77":          ["tracking-pog"],
   "vmariani":         ["tracking-pog"],
   "mmusich":          ["tracking-pog","trk-dpg"],
 }

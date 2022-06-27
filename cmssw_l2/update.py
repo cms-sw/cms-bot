@@ -45,6 +45,11 @@ for u in data:
     data[u][-1]['end_date'] = ctime
     data_chg=True
 
+for u in CMSSW_L2:
+  if (u in data) and ('end_date' in data[u][-1]):
+    del data[u][-1]['end_date']
+    data_chg = True
+
 if data_chg:
   print("  Updated L2")
   with open(l2_file, "w") as ref:

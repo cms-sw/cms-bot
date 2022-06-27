@@ -582,7 +582,6 @@
       "category": [
         "dqm"
       ], 
-      "end_date": 1631491200, 
       "start_date": 1631491200
     }
   ], 
@@ -984,7 +983,6 @@
       "category": [
         "dqm"
       ], 
-      "end_date": 1650499200, 
       "start_date": 1508889600
     }
   ], 
@@ -1351,7 +1349,6 @@
       "category": [
         "hlt"
       ], 
-      "end_date": 1632787200, 
       "start_date": 1632096000
     }
   ], 
@@ -1596,7 +1593,6 @@
       "category": [
         "dqm"
       ], 
-      "end_date": 1631491200, 
       "start_date": 1631491200
     }
   ], 
@@ -1776,7 +1772,6 @@
       "category": [
         "daq"
       ], 
-      "end_date": 1598572800, 
       "start_date": 1598486400
     }
   ], 

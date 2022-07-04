@@ -79,6 +79,7 @@ CMSSW_L2 = {
   "srimanob":         ["upgrade"],
   "ssekmen":          ["fastsim"],
   "yuanchao":         ["alca"],
+  "ChrisMisan":       ["alca"],
   "francescobrivio":  ["alca","db"],
   "malbouis":         ["alca","db"],
   "tvami":            ["alca","db"],

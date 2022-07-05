@@ -1699,10 +1699,6 @@ tau-pog:
   - RecoTauTag/
   - DataFormats/TauReco
   - PhysicsTools/PatAlgos
-cvuosalo:
-  - CondTools/Geometry
-  - SimG4Core/
-  - SimG4CMS/
 sscruz:
 - DataFormats/CSCRecHit
 - DataFormats/GEMRecHit

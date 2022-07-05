@@ -42,7 +42,7 @@ CMSSW_L2 = {
   "alja":             ["visualization"],
   "bbilin":           ["pdmv"],
   "civanch":          ["simulation", "geometry", "fastsim"],
-  "cvuosalo":         ["geometry"],
+  "bsunanda":         ["geometry"],
   "davidlange6":      ["operations"],
   "emanueleusai":     ["dqm"],
   "emeschi":          ["daq"],

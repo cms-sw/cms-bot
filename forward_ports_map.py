@@ -92,5 +92,6 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"].append("IB/CMSSW_12_5_X/ge
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"].append("IB/CMSSW_12_5_X/geant4_vecgeom")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"].append("IB/CMSSW_12_5_X/g11")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"].append("IB/CMSSW_12_5_X/g12")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"].append("IB/CMSSW_12_5_X/lto")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/g11"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/g11"].append("IB/CMSSW_12_5_X/cs9")

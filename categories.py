@@ -65,6 +65,7 @@ CMSSW_L2 = {
   "missirol":         ["hlt"],
   "mkirsano":         ["generators"],   
   "perrotta":         ["operations"],
+  "rappoccio":        ["operations"],
   "pmandrik":         ["dqm"],
   "micsucmed":        ["dqm"],
   "qliphy":           ["operations"],

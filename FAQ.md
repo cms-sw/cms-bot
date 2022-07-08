@@ -1,3 +1,5 @@
+
+
 ## How can I tell which version of an external is used?
 
 First lookup your release in [config.map](https://github.com/cms-sw/cms-bot/blob/master/config.map).

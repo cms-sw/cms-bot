@@ -197,7 +197,13 @@ for org_name in CMS_ORGANIZATIONS:
           continue
         if login not in org_members:
             print("      =>Inviting member:",login)
-            if not args.dryRun: add_organization_member(org_name, login, role="member")
+            if not args.dryRun:
+              try:
+                add_organization_member(org_name, login, role="member")
+                chg_flag+=1
+              except Exception as ex:
+                print("  =>",ex)
+                err_code = 1
             continue
         if not login in cache["users"]: cache["users"][login] = gh.get_user(login)
         if not args.dryRun:

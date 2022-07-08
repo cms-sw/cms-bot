@@ -364,6 +364,9 @@ def add_organization_member(org, member, role="member"):
     return github_api("/orgs/%s/memberships/%s" % (org, member), params={"role": role}, method="PUT")
 
 
+def invite_organization_member(org, member, role="direct_member"):
+    return github_api("/orgs/%s/invitations" % org, params={"role": role, "invitee_id": member}, method="POST")
+
 def edit_pr(repo, pr_num, title=None, body=None, state=None, base=None):
     get_gh_token(repo)
     params = {}

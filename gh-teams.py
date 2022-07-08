@@ -119,14 +119,14 @@ for org_name in CMS_ORGANIZATIONS:
     login = mem.login.encode("ascii", "ignore")
     if not login in cache["users"]: cache["users"][login] = mem
     if not login in REPO_OWNERS[org_name]:
+      print("    =>Removing owner:",login)
       if not args.dryRun: add_organization_member(org_name, login, role="member")
-      print("    =>Remove owner:",login)
       chg_flag+=1
     else:
       ok_mems.append(login)
   for login in [ l for l in REPO_OWNERS[org_name] if not l in ok_mems ]:
+    print("    =>Adding owner:",login)
     if not args.dryRun: add_organization_member(org_name, login, role="admin")
-    print("    =>Add owner:",login)
     chg_flag+=1
   total_changes+=chg_flag
   if not chg_flag: print("    OK Owners")
@@ -184,8 +184,8 @@ for org_name in CMS_ORGANIZATIONS:
           print("    => Can not add member, pending invitation: %s" % login)
           continue
         if login not in org_members:
-            if not args.dryRun: add_organization_member(org_name, login, role="member")
             print("      =>Inviting member:",login)
+            if not args.dryRun: add_organization_member(org_name, login, role="member")
             continue
         if not login in cache["users"]: cache["users"][login] = gh.get_user(login)
         if not args.dryRun:

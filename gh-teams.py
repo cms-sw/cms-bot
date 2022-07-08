@@ -8,6 +8,7 @@ from sys import exit
 from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api,add_organization_member
 from github_utils import create_team,get_pending_members, get_gh_token
+from github_utils import get_delete_pending_members, get_failed_pending_members
 from categories import CMSSW_L1, CMSSW_L2, CMS_SDT
 setdefaulttimeout(120)
 
@@ -105,6 +106,12 @@ err_code=0
 for org_name in CMS_ORGANIZATIONS:
   if args.organization!="*" and org_name!=args.organization: continue
   print("Wroking on Organization ",org_name)
+  for inv in get_failed_pending_members(org_name):
+    if ('failed_reason' in inv) and ('Invitation expired' in inv['failed_reason']):
+      print("  ==>Deleting pending invitation ",inv['id'],inv['login'])
+      if not args.dryRun:
+        get_delete_pending_members(org_name, inv['id'])
+        api_rate_limits(gh,msg=False)
   pending_members = []
   for user in get_pending_members(org_name):
     user = user['login'].encode("ascii", "ignore")

@@ -108,7 +108,7 @@ for org_name in CMS_ORGANIZATIONS:
   print("Wroking on Organization ",org_name)
   for inv in get_failed_pending_members(org_name):
     if ('failed_reason' in inv) and ('Invitation expired' in inv['failed_reason']):
-      print("  ==>Deleting pending invitation ",inv['id'],inv['login'])
+      print("  =>Deleting pending invitation ",inv['id'],inv['login'])
       if not args.dryRun:
         get_delete_pending_members(org_name, inv['id'])
         api_rate_limits(gh,msg=False)
@@ -127,8 +127,13 @@ for org_name in CMS_ORGANIZATIONS:
     if not login in cache["users"]: cache["users"][login] = mem
     if not login in REPO_OWNERS[org_name]:
       print("    =>Removing owner:",login)
-      if not args.dryRun: add_organization_member(org_name, login, role="member")
-      chg_flag+=1
+      if not args.dryRun:
+        try:
+          add_organization_member(org_name, login, role="member")
+          chg_flag+=1
+        except Exception as ex:
+          print("  =>",ex)
+          err_code = 1
     else:
       ok_mems.append(login)
   for login in [ l for l in REPO_OWNERS[org_name] if not l in ok_mems ]:

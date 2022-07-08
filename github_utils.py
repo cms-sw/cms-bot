@@ -335,14 +335,18 @@ def create_team(org, team, description):
     params = {"name": team, "description": description, "permission": "admin", "privacy": "closed"}
     return github_api("/orgs/%s/teams" % org, params=params, method="POST")
 
+
 def get_pending_members(org):
     return github_api("/orgs/%s/invitations" % org, method="GET")
+
 
 def get_failed_pending_members(org):
     return github_api("/orgs/%s/failed_invitations" % org, method="GET")
 
+
 def get_delete_pending_members(org, invitation_id):
     return github_api("/orgs/%s/invitations/%s" % (org, invitation_id), method="DELETE", raw=True)
+
 
 def get_organization_members(org, role="all", filter="all"):
     return github_api("/orgs/%s/members" % org, params={"role": role, "filter": filter}, method="GET")
@@ -358,7 +362,6 @@ def get_repository(repo):
 
 def add_organization_member(org, member, role="member"):
     return github_api("/orgs/%s/memberships/%s" % (org, member), params={"role": role}, method="PUT")
-
 
 
 def edit_pr(repo, pr_num, title=None, body=None, state=None, base=None):

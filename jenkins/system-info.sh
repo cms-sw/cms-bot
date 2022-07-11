@@ -133,6 +133,7 @@ else
   chmod +x $WORKSPACE/cmsos
   HOST_CMS_ARCH=$($WORKSPACE/cmsos 2>/dev/null)
 fi
+echo "DATA_SYSTEM_LOAD=$(uptime | sed 's|.*: *||;s|, *|:|g')"
 echo "DATA_HOST_CMS_ARCH=${HOST_CMS_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_CMS_ARCH} $(echo ${HOST_CMS_ARCH} | tr _ ' ')"
 

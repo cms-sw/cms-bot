@@ -528,6 +528,11 @@ fabferro:
 - Geometry/VeryForwardGeometryBuilder
 - Geometry/VeryForwardRPTopology
 - RecoCTPPS
+forthommel:
+- EventFilter/CTPPSRawToDigi
+- RecoPPS
+- RecoHGCal
+- SimPPS/DirectSimProducer
 fwyzard:
 - FWCore/ServiceRegistry
 gbenelli:

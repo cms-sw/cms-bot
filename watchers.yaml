@@ -1770,3 +1770,16 @@ eyigitba:
 - L1Trigger/CSCCommonTrigger
 - DataFormats/CSCDigi
 - DataFormats/GEMDigi
+youyingli:
+- Validation/Configuration
+- Validation/Geometry
+- Validation/HGCalValidation
+- RecoLocalCalo/Configuration
+- RecoLocalCalo
+- DataFormats/HGCDigi
+- DataFormats/HGCRecHit
+- DataFormats/ForwardDetId
+- RecoHGCal
+- SimTracker/TrackerMaterialAnalysis
+- SimCalorimetry/HGCalSimProducers
+- SimDataFormats

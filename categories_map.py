@@ -856,6 +856,7 @@ CMSSW_CATEGORIES = {
     "DataFormats/SoATemplate",
     "HeterogeneousCore/AlpakaCore",
     "HeterogeneousCore/AlpakaInterface",
+    "HeterogeneousCore/AlpakaServices",
     "HeterogeneousCore/AlpakaTest",
     "HeterogeneousCore/CUDACore",
     "HeterogeneousCore/CUDAServices",

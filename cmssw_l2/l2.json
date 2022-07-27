@@ -716,6 +716,7 @@
       "category": [
         "xpog"
       ], 
+      "end_date": 1658880000, 
       "start_date": 1544400000
     }
   ], 
@@ -1888,6 +1889,14 @@
       "start_date": 1632787200
     }
   ], 
+  "swertz": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "start_date": 1658880000
+    }
+  ], 
   "thomreis": [
     {
       "category": [
@@ -2038,6 +2047,12 @@
       ], 
       "end_date": 1416355200, 
       "start_date": 1377475200
+    }, 
+    {
+      "category": [
+        "xpog"
+      ], 
+      "start_date": 1658880000
     }
   ], 
   "vmariani": [

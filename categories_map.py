@@ -1560,6 +1560,7 @@ CMSSW_CATEGORIES = {
     "SimMuon/Neutron",
     "SimMuon/RPCDigitizer",
     "SimPPS/Configuration",
+    "SimPPS/DirectSimProducer",
     "SimPPS/PPSPixelDigiProducer",
     "SimPPS/PPSSimTrackProducer",
     "SimPPS/RPDigiProducer",

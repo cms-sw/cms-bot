@@ -64,7 +64,6 @@ CMSSW_L2 = {
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "missirol":         ["hlt"],
   "mkirsano":         ["generators"],   
-  "menglu21":         ["generators"],
   "perrotta":         ["operations"],
   "rappoccio":        ["operations"],
   "pmandrik":         ["dqm"],

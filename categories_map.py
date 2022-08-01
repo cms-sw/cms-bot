@@ -402,6 +402,7 @@ CMSSW_CATEGORIES = {
     "CondCore/PCLConfigPlugins",
     "CondCore/PhysicsToolsPlugins",
     "CondCore/PopCon",
+    "CondCore/PPSTimingCalibrationPlugins",
     "CondCore/RPCPlugins",
     "CondCore/RecoMuonPlugins",
     "CondCore/RegressionTest",

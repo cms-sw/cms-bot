@@ -85,6 +85,7 @@ CMSSW_L2 = {
   "francescobrivio":  ["alca","db"],
   "malbouis":         ["alca","db"],
   "tvami":            ["alca","db"],
+  "saumyaphor4252":   ["alca","db"],
   CMSBUILD_USER:      ["tests" ],
   # dpgs
   "tsusa":            ["trk-dpg"],

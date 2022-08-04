@@ -535,6 +535,11 @@ forthommel:
 - SimPPS/DirectSimProducer
 fwyzard:
 - FWCore/ServiceRegistry
+- FWCore/Services
+- HLTrigger/HLTcore
+- HLTrigger/JSONMonitoring
+- HLTrigger/Timer
+- HLTrigger/Tools
 gbenelli:
 - RecoLocalTracker/ClusterParameterEstimator
 - RecoLocalTracker/Configuration

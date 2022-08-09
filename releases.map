@@ -3448,3 +3448,4 @@ architecture=slc7_amd64_gcc10;label=CMSSW_12_4_5_patch1;type=Production;state=An
 architecture=el8_aarch64_gcc10;label=CMSSW_12_4_6;type=Production;state=Announced;prodarch=0;
 architecture=el8_ppc64le_gcc10;label=CMSSW_12_4_6;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc10;label=CMSSW_12_4_6;type=Production;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc10;label=CMSSW_12_4_6;type=Production;state=Announced;prodarch=1;

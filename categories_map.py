@@ -632,6 +632,7 @@ CMSSW_CATEGORIES = {
     "Validation/HcalDigis",
     "Validation/HcalHits",
     "Validation/HcalRecHits",
+    "Validation/HLTrigger",
     "Validation/L1T",
     "Validation/Mixing",
     "Validation/MuonCSCDigis",

@@ -154,6 +154,7 @@ CMSSW_CATEGORIES = {
     "IORawData/DTCommissioning",
     "IORawData/HcalTBInputService",
     "IORawData/SiPixelInputSources",
+    "MuonAnalysis/MomentumScaleCalibration",
     "RecoVertex/BeamSpotProducer",
   ],
   "analysis": [
@@ -204,7 +205,6 @@ CMSSW_CATEGORIES = {
     "JetMETCorrections/MinBias",
     "JetMETCorrections/TauJet",
     "MuonAnalysis/Configuration",
-    "MuonAnalysis/MomentumScaleCalibration",
     "MuonAnalysis/MuonAssociators",
     "PhysicsTools/CandAlgos",
     "PhysicsTools/CandUtils",

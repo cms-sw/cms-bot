@@ -61,6 +61,7 @@ CMSSW_L2 = {
   "jpata":            ["reconstruction"],
   "kskovpen":         ["pdmv"],
   "makortel":         ["heterogeneous", "core", "visualization", "geometry"],
+  "mandrenguyen":     ["reconstruction"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],
   "missirol":         ["hlt"],
   "mkirsano":         ["generators"],   

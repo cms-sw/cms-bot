@@ -1039,7 +1039,7 @@ def find_and_check_result(release_name, architecture, magic_cmd, res_cmd, opt_cm
     _, _, t_ret_code = get_output_command('test -e ' + path)
 
 
-    def set_result(cmd, status0='passed', statusnon0='failed'):
+    def set_result(cmd, status0='passed', statusnon0='error'):
         cmd =  cmd.format(path)
         out, err, ret_code = get_output_command(cmd)
         try:

@@ -11,7 +11,7 @@ from time import time
 
 CMSSDT_ES_QUERY="https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
-ES_NEW_SERVER = 'https://es-cmssdt7.cern.ch:9203'
+ES_NEW_SERVER = 'https://es-cmssdt1.cern.ch/es'
 ES_PASSWD = None
 def format(s, **kwds): return s % kwds
 
@@ -59,6 +59,9 @@ def es_get_passwd(passwd_file=None):
   return ES_PASSWD
 
 def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False):
+  if (ES_SERVER!=ES_NEW_SERVER) and (es_ser==ES_SERVER):
+    if not send_request(uri, payload, passwd_file, method, es_ser=ES_NEW_SERVER, ignore_doc=ignore_doc):
+      return False
   header = {"Content-Type": "application/json"}
   xuri = uri.split("/")
   if (not ignore_doc) and (xuri[1] != "_doc"):

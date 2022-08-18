@@ -1,0 +1,133 @@
+{
+  "jobsConfig": {
+    "jenkinsJobs": [
+      {
+        "jobName": "jenkins-test-dummyjob",
+        "errorType": [
+          "hudsonConnection",
+          "timedOut",
+          "busError",
+          "workspaceFailure"
+        ],
+        "maxTime": "2"
+      },
+      {
+        "jobName": "ib-run-igprof",
+        "errorType": [
+          "hudsonConnection",
+          "timedOut",
+          "segmentationFault"
+        ],
+        "maxTime": "5"
+      },
+      {
+        "jobName": "ib-run-profiling",
+        "errorType": [
+          "timedOut"
+        ],
+        "maxTime": "8"
+      },
+      {
+        "jobName": "ib-run-HLT",
+        "errorType": [
+          "hudsonConnection",
+          "busError"
+        ],
+        "maxTime": "16"
+      },
+      {
+        "jobName": "ib-run-qa",
+        "errorType": [
+          "hudsonConnection",
+          "busError"
+        ],
+        "maxTime": "5"
+      },
+      {
+        "jobName": "ib-run-relvals",
+        "errorType": [
+          "hudsonConnection",
+          "afsFailure",
+          "busError"
+        ],
+        "maxTime": "12"
+      },
+      {
+        "jobName": "ib-run-pr-relvals",
+        "errorType": [
+          "hudsonConnection"
+        ],
+        "maxTime": "12"
+      },
+      {
+        "jobName": "ib-validation",
+        "errorType": [
+          "afsFailure"
+        ],
+        "maxTime": "4"
+      },
+      {
+        "jobName": "build-any-ib",
+        "errorType": [],
+        "maxTime": "18"
+      },
+      {
+        "jobName": "ib-run-pr-tests",
+        "errorType": [],
+        "maxTime": "10"
+      }
+    ],
+    "errorMsg": {
+      "timedOut": {
+        "errorStr": [
+          "Build timed out"
+        ],
+        "action": "retryBuild"
+      },
+      "hudsonConnection": {
+        "errorStr": [
+          "Remote call on .* failed. The channel is closing down or has closed down"
+        ],
+        "action": "retryBuild"
+      },
+      "segmentationFault": {
+        "errorStr": [
+          "unexpected fault address"
+        ],
+        "action": "retryBuild"
+      },
+      "gitErrors": {
+        "errorStr": [
+          "fatal: repository .* not found",
+          "Tag already exist"
+        ],
+        "action": "retryBuild"
+      },
+      "busError": {
+        "errorStr": [
+          "Bus error",
+          "Transport endpoint is not connected"
+        ],
+        "action": "nodeOff"
+      },
+      "gridConnection": {
+        "errorStr": [
+          "Unexpected exception occurred while performing connect-node command"
+        ],
+        "action": "retryBuild"
+      },
+      "afsFailure": {
+        "errorStr": [
+          "no such identity: .* Permission denied"
+        ],
+        "action": "nodeOff"
+      },
+      "workspaceFailure": {
+        "errorStr": [
+          "Cannot delete workspace: Remote call on .* failed"
+        ],
+        "action": "nodeReconnect"
+      }
+    }
+  }
+}

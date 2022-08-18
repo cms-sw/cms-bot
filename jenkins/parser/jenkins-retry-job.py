@@ -82,8 +82,8 @@ if retry_counter_value != "":
         )
     except AssertionError:
         update_label = (
-            "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-            + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost set-build-description "
+            os.environ.get("JENKINS_CLI_CMD")
+            + " set-build-description "
             + job_to_retry
             + " "
             + build_to_retry
@@ -121,8 +121,8 @@ label = (
 )
 
 update_label = (
-    "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-    + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost set-build-description "
+    os.environ.get("JENKINS_CLI_CMD")
+    + " set-build-description "
     + job_to_retry
     + " "
     + build_to_retry

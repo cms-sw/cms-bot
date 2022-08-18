@@ -183,7 +183,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         + "/"
                         + build_to_retry
                     )
-                    node_url = "https://cmssdt.cern.ch/jenkins/computer/" + node_name
+                    node_url = os.environ.get("JENKINS_URL") + "computer/" + node_name
                     parser_url = (
                         os.environ.get("JENKINS_URL")
                         + "job/jenkins-test-parser/"
@@ -291,7 +291,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         )
                         connect_node = (
                             os.environ.get("JENKINS_CLI_CMD")
-                            + " localhost connect-node "
+                            + " connect-node "
                             + node_name
                             + " -f"
                         )

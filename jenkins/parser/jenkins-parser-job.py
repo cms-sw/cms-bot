@@ -140,10 +140,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
     text_log.close()
 
     job_url = (
-        "https://cmssdt.cern.ch/jenkins/view/All/job/"
-        + job_to_retry
-        + "/"
-        + build_to_retry
+        os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
     )
 
     print("Parsing build #" + build_to_retry + " (" + job_url + ") ...")
@@ -164,9 +161,8 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                 )
                 if action == "retryBuild":
                     trigger_retry = (
-                        "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-                        + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost build jenkins-test-retry"
-                        + " -p JOB_TO_RETRY="
+                        os.environ.get("JENKINS_CLI_CMD")
+                        + " build jenkins-test-retry -p JOB_TO_RETRY="
                         + job_to_retry
                         + " -p BUILD_TO_RETRY="
                         + build_to_retry
@@ -181,14 +177,16 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         .replace("\n", "")
                     )
                     job_url = (
-                        "https://cmssdt.cern.ch/jenkins/view/All/job/"
+                        os.environ.get("JENKINS_URL")
+                        + "job/"
                         + job_to_retry
                         + "/"
                         + build_to_retry
                     )
                     node_url = "https://cmssdt.cern.ch/jenkins/computer/" + node_name
                     parser_url = (
-                        "https://cmssdt.cern.ch/jenkins/view/All/job/jenkins-test-parser/"
+                        os.environ.get("JENKINS_URL")
+                        + "job/jenkins-test-parser/"
                         + parser_build_id
                     )
 
@@ -226,8 +224,8 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                             "'Node\ marked\ as\ offline\ beacuse\ of\ " + job_url + "'"
                         )
                         take_nodeoff = (
-                            "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-                            + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost offline-node "
+                            os.environ.get("JENKINS_CLI_CMD")
+                            + " offline-node "
                             + node_name
                             + " -m "
                             + nodeoff_msg
@@ -241,12 +239,12 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
 
                         # Update description of the failed job
                         update_label = (
-                            "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-                            + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost set-build-description "
+                            os.environ.get("JENKINS_CLI_CMD")
+                            + " set-build-description "
                             + job_to_retry
                             + " "
                             + build_to_retry
-                            + " 'Node\ marked\ as\ offline'"
+                            + " 'Node\ marked\ as\ offline.\ Please,\ take\ the\ appropiate\ action\ and\ relaunch\ the\ node.'"
                         )
 
                         print(update_label)
@@ -285,15 +283,15 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         )
                         nodeoff_msg = "'Node\ reconnected\ by\ " + job_url + "'"
                         disconnect_node = (
-                            "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-                            + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost disconnect-node "
+                            os.environ.get("JENKINS_CLI_CMD")
+                            + " disconnect-node "
                             + node_name
                             + " -m "
                             + nodeoff_msg
                         )
                         connect_node = (
-                            "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-                            + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost connect-node "
+                            os.environ.get("JENKINS_CLI_CMD")
+                            + " localhost connect-node "
                             + node_name
                             + " -f"
                         )
@@ -311,9 +309,8 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
 
                         # Retry job
                         trigger_retry = (
-                            "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-                            + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost build jenkins-test-retry"
-                            + " -p JOB_TO_RETRY="
+                            os.environ.get("JENKINS_CLI_CMD")
+                            + " build jenkins-test-retry -p JOB_TO_RETRY="
                             + job_to_retry
                             + " -p BUILD_TO_RETRY="
                             + build_to_retry
@@ -369,14 +366,10 @@ def check_running_time(
     duration = now - start_datetime
 
     job_url = (
-        "https://cmssdt.cern.ch/jenkins/view/All/job/"
-        + job_to_retry
-        + "/"
-        + build_to_retry
+        os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
     )
     parser_url = (
-        "https://cmssdt.cern.ch/jenkins/view/All/job/jenkins-test-parser/"
-        + parser_build_id
+        os.environ.get("JENKINS_URL") + "job/jenkins-test-parser/" + parser_build_id
     )
 
     email_msg = (
@@ -407,7 +400,6 @@ def check_running_time(
         'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
     )
 
-    # TODO: Check scope of rotation object and rotation file
     if duration > datetime.timedelta(hours=max_running_time):
         with open(rotation_file_path, "r") as rotation_file:
             old_running_builds_object = json.load(rotation_file)
@@ -465,8 +457,8 @@ def mark_build_as_retried(job_dir, job_to_retry, build_to_retry):
         label = "Retried'\ 'build"
 
         update_label = (
-            "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no "
-            + "-i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost set-build-description "
+            os.environ.get("JENKINS_CLI_CMD")
+            + " set-build-description "
             + job_to_retry
             + " "
             + build_to_retry

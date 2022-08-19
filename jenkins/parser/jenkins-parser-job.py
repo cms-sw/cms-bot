@@ -20,31 +20,31 @@ def grep(filename, pattern, verbose=False):
                     return True
 
 
-def get_errors_list(errors_file_path, jobs_object, job_id):
+def get_errors_list(jobs_object, job_id):
     """Get list of errors to check for a concrete job with the corresponding action."""
-    with open(errors_file_path, "r") as errors_file:
-        errors_object = json.load(errors_file)
 
     # Get the error keys of the concrete job ii
-    error_keys = jobs_object["jenkinsJobs"][job_id]["errorType"]
+    jenkins_errors = jobs_object["jobsConfig"]["errorMsg"]
+
+    error_keys = jobs_object["jobsConfig"]["jenkinsJobs"][job_id]["errorType"]
 
     # Get the error messages of the error keys
     error_list = []
     # We append the action to perform to the error message
     for ii in error_keys:
-        if errors_object["errorMsg"][ii]["action"] == "retryBuild":
-            for error in errors_object["errorMsg"][ii]["errorStr"]:
+        if jenkins_errors[ii]["action"] == "retryBuild":
+            for error in jenkins_errors[ii]["errorStr"]:
                 error_list.append(error + " - retryBuild")
-        elif errors_object["errorMsg"][ii]["action"] == "nodeOff":
-            for error in errors_object["errorMsg"][ii]["errorStr"]:
+        elif jenkins_errors[ii]["action"] == "nodeOff":
+            for error in jenkins_errors[ii]["errorStr"]:
                 error_list.append(error + " - nodeOff")
-        elif errors_object["errorMsg"][ii]["action"] == "nodeReconnect":
-            for error in errors_object["errorMsg"][ii]["errorStr"]:
+        elif jenkins_errors[ii]["action"] == "nodeReconnect":
+            for error in jenkins_errors[ii]["errorStr"]:
                 error_list.append(error + " - nodeReconnect")
         else:
             print(
                 "Action not defined. Please define a valid action in "
-                + errors_file_path
+                + jobs_config_path
             )
             # TODO: Assert?
     return error_list
@@ -69,9 +69,7 @@ def get_finished_builds(job_dir, last_processed_log):
     ]
 
 
-def get_old_running_builds(
-    job_dir, job_to_retry, last_processed_log, rotation_file_path
-):
+def get_old_running_builds(job_dir, job_to_retry, last_processed_log, parser_info_path):
     """Get list of long running builds that are left behind in the trend list.
        Report the value from the last run and update it."""
     current_running_builds = [
@@ -88,9 +86,11 @@ def get_old_running_builds(
     ]
 
     # We first check for the old running builds of last run
-    with open(rotation_file_path, "r") as rotation_file:
+    with open(parser_info_path, "r") as rotation_file:
         old_running_builds_object = json.load(rotation_file)
-        old_running_builds_dict = old_running_builds_object["runningBuilds"]
+        old_running_builds_dict = old_running_builds_object["parserInfo"][
+            "runningBuilds"
+        ]
 
     if job_to_retry not in old_running_builds_dict:
         old_running_builds_dict[job_to_retry] = dict()
@@ -102,11 +102,15 @@ def get_old_running_builds(
     for build_number in current_running_builds:
         if (
             build_number
-            not in old_running_builds_object["runningBuilds"][job_to_retry].keys()
+            not in old_running_builds_object["parserInfo"]["runningBuilds"][
+                job_to_retry
+            ].keys()
         ):
-            old_running_builds_object["runningBuilds"][job_to_retry][build_number] = ""
+            old_running_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
+                build_number
+            ] = ""
 
-    with open(rotation_file_path, "w") as rotation_file:
+    with open(parser_info_path, "w") as rotation_file:
         json.dump(old_running_builds_object, rotation_file)
 
     return current_running_builds, old_running_builds
@@ -183,7 +187,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         + "/"
                         + build_to_retry
                     )
-                    node_url = os.environ.get("JENKINS_URL") + "computer/" + node_name
+                    node_url = "https://cmssdt.cern.ch/jenkins/computer/" + node_name
                     parser_url = (
                         os.environ.get("JENKINS_URL")
                         + "job/jenkins-test-parser/"
@@ -291,7 +295,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         )
                         connect_node = (
                             os.environ.get("JENKINS_CLI_CMD")
-                            + " connect-node "
+                            + " localhost connect-node "
                             + node_name
                             + " -f"
                         )
@@ -328,19 +332,21 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
         print("... no known errors were found.")
 
 
-def get_last_processed_log(processed_file_path, job_to_retry):
+def get_last_processed_log(parser_info_path, job_to_retry):
     """Get value of the last processed log from the workspace."""
-    with open(processed_file_path, "r") as processed_file:
+    with open(parser_info_path, "r") as processed_file:
         processed_object = json.load(processed_file)
-        last_processed_log = processed_object["lastRevision"][job_to_retry]
+        last_processed_log = processed_object["parserInfo"]["lastRevision"][
+            job_to_retry
+        ]
     return last_processed_log, processed_object
 
 
 def update_last_processed_log(processed_object, job_to_retry, builds_list):
     """Update build number value of the parser's last processed log."""
-    processed_object["lastRevision"][job_to_retry] = max(builds_list)
+    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(builds_list)
 
-    with open(processed_file_path, "w") as processed_file:
+    with open(parser_info_path, "w") as processed_file:
         json.dump(processed_object, processed_file)
 
 
@@ -401,13 +407,17 @@ def check_running_time(
     )
 
     if duration > datetime.timedelta(hours=max_running_time):
-        with open(rotation_file_path, "r") as rotation_file:
+        with open(parser_info_path, "r") as rotation_file:
             old_running_builds_object = json.load(rotation_file)
 
         if (
             build_to_retry
-            not in old_running_builds_object["runningBuilds"][job_to_retry]
-            or old_running_builds_object["runningBuilds"][job_to_retry][build_to_retry]
+            not in old_running_builds_object["parserInfo"]["runningBuilds"][
+                job_to_retry
+            ]
+            or old_running_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
+                build_to_retry
+            ]
             == ""
         ):
             print(
@@ -421,10 +431,10 @@ def check_running_time(
             )
             print(email_cmd)
             os.system(email_cmd)
-            old_running_builds_object["runningBuilds"][job_to_retry][
+            old_running_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
                 build_to_retry
             ] = "emailSent"
-            with open(rotation_file_path, "w") as rotation_file:
+            with open(parser_info_path, "w") as rotation_file:
                 json.dump(old_running_builds_object, rotation_file)
         else:
             print(
@@ -480,30 +490,28 @@ if __name__ == "__main__":
     parser_build_id = args.parser_build_id
 
     # Define paths:
-    jobs_file_path = "jobs-info.json"  # This file matches job with their known errors and the action to perform
-    errors_file_path = "errormsg-action.json"  # This file groups errors in types depending on the error messages
-    processed_file_path = "last-parsed-log.json"  # This file keeps track of the last log processed by the parser
-    rotation_file_path = "rotation-trial.json"  # "long-running-builds.json"  # This file keeps track of running builds that are left behind
-    builds_dir = "/build/builds"  # Path to the logs
+    jobs_config_path = "jobs-config.json"  # This file matches job with their known errors and the action to perform
+    parser_info_path = "parser-info.json"  # This file keeps track of the last log processed and the pending builds
+    builds_dir = "/build/builds"  # Path to the actual build logs
 
     # Define e-mails to notify
-    email_addresses = "cms-sdt-logs@cern.ch"
+    email_addresses = "andrea.valenzuela.ramirez@cern.ch"
 
-    with open(jobs_file_path, "r") as jobs_file:
+    with open(jobs_config_path, "r") as jobs_file:
         jobs_object = json.load(jobs_file)
+        jenkins_jobs = jobs_object["jobsConfig"]["jenkinsJobs"]
 
-        # Iterate over all the jobs jobs_object["jenkinsJobs"][ii]["jobName"]
-        for job_id in range(len(jobs_object["jenkinsJobs"])):
-            job_to_retry = jobs_object["jenkinsJobs"][job_id]["jobName"]
-            max_running_time = int(jobs_object["jenkinsJobs"][job_id]["maxTime"])
-
-            print("--> Checking job " + job_to_retry + " ...")
+        # Iterate over all the jobs jobs_object["jobsConfig"]["jenkinsJobs"][ii]["jobName"]
+        for job_id in range(len(jenkins_jobs)):
+            job_to_retry = jenkins_jobs[job_id]["jobName"]
+            max_running_time = int(jenkins_jobs[job_id]["maxTime"])
+            print("[" + job_to_retry + "] Processing ...")
             job_dir = os.path.join(builds_dir, job_to_retry)
 
-            error_list = get_errors_list(errors_file_path, jobs_object, job_id)
+            error_list = get_errors_list(jobs_object, job_id)
 
             last_processed_log, processed_object = get_last_processed_log(
-                processed_file_path, job_to_retry
+                parser_info_path, job_to_retry
             )
 
             builds_list = get_finished_builds(job_dir, last_processed_log)
@@ -511,7 +519,7 @@ if __name__ == "__main__":
 
             # Check for running builds left behind and store them to keep track
             current_running_builds, old_running_builds = get_old_running_builds(
-                job_dir, job_to_retry, last_processed_log, rotation_file_path
+                job_dir, job_to_retry, last_processed_log, parser_info_path
             )
 
             if current_running_builds or newest_running_builds:
@@ -522,14 +530,10 @@ if __name__ == "__main__":
                     + job_to_retry
                 )
 
-            # Check if any of these builds has finished
-            for build in newest_running_builds:
-                if build in old_running_builds.keys():
-                    old_running_builds.pop(build)
             old_running_builds_list = list(old_running_builds.keys())
 
             if not old_running_builds_list and not newest_running_builds:
-                print("No old builds running for " + job_to_retry)
+                print("No builds running for " + job_to_retry)
                 pass
             elif sorted(current_running_builds) != sorted(old_running_builds_list):
                 extra_list = [
@@ -547,15 +551,15 @@ if __name__ == "__main__":
                     check_and_trigger_action(
                         build_to_retry, job_dir, job_to_retry, error_list
                     )
-                    # Remove from rotation list
-                    with open(rotation_file_path, "r") as rotation_file:
+                    # Remove from rotation dict
+                    with open(parser_info_path, "r") as rotation_file:
                         old_running_builds_object = json.load(rotation_file)
 
-                    old_running_builds_object["runningBuilds"][job_to_retry].pop(
-                        build_to_retry
-                    )
+                    old_running_builds_object["parserInfo"]["runningBuilds"][
+                        job_to_retry
+                    ].pop(build_to_retry)
 
-                    with open(rotation_file_path, "w") as rotation_file:
+                    with open(parser_info_path, "w") as rotation_file:
                         json.dump(old_running_builds_object, rotation_file)
             else:
                 print(
@@ -576,7 +580,7 @@ if __name__ == "__main__":
                     )
 
             if not builds_list:
-                print("No new builds for job " + job_to_retry + " to parse")
+                print("No new finished builds for job " + job_to_retry + " to parse")
                 continue
 
             print(
@@ -586,7 +590,7 @@ if __name__ == "__main__":
                 + str(builds_list)
             )
 
-            with open(rotation_file_path, "r") as rotation_file:
+            with open(parser_info_path, "r") as rotation_file:
                 old_running_builds_object = json.load(rotation_file)
 
             # Process logs of failed builds
@@ -594,19 +598,11 @@ if __name__ == "__main__":
                 check_and_trigger_action(
                     build_to_retry, job_dir, job_to_retry, error_list
                 )
-                # Remove from rotation list
-                if (
-                    build_to_retry
-                    in old_running_builds_object["runningBuilds"][job_to_retry]
-                ):
-                    old_running_builds_object["runningBuilds"][job_to_retry].pop(
-                        build_to_retry
-                    )
 
                 # Mark as retried
                 mark_build_as_retried(job_dir, job_to_retry, build_to_retry)
 
-            with open(rotation_file_path, "w") as rotation_file:
+            with open(parser_info_path, "w") as rotation_file:
                 json.dump(old_running_builds_object, rotation_file)
 
             # Update the value of the last log processed

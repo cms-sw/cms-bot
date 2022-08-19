@@ -19,7 +19,7 @@ current_build_number = args.current_build_number
 retry_counter_value = ""
 
 # Assuming we are in the workspace/<job-name> directory, get all build
-builds_dir = "../../builds"
+builds_dir = os.environ.get("HOME") + "/builds"
 
 # Construct path to the logs
 build_path = functools.reduce(os.path.join, [builds_dir, job_to_retry, build_to_retry])

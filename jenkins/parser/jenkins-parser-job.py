@@ -495,7 +495,7 @@ if __name__ == "__main__":
     builds_dir = "/build/builds"  # Path to the actual build logs
 
     # Define e-mails to notify
-    email_addresses = "andrea.valenzuela.ramirez@cern.ch"
+    email_addresses = "cms-sdt-logs@cern.ch"
 
     with open(jobs_config_path, "r") as jobs_file:
         jobs_object = json.load(jobs_file)

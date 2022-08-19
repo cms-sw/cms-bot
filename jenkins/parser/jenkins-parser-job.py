@@ -336,9 +336,17 @@ def get_last_processed_log(parser_info_path, job_to_retry):
     """Get value of the last processed log from the workspace."""
     with open(parser_info_path, "r") as processed_file:
         processed_object = json.load(processed_file)
-        last_processed_log = processed_object["parserInfo"]["lastRevision"][
-            job_to_retry
-        ]
+        try:
+            last_processed_log = processed_object["parserInfo"]["lastRevision"][
+                job_to_retry
+            ]
+        except KeyError:
+            # If last processed log not defined, all logs will be parsed
+            last_processed_log = 1
+            processed_object["parserInfo"]["lastRevision"][
+                job_to_retry
+            ] = last_processed_log
+
     return last_processed_log, processed_object
 
 

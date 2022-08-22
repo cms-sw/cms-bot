@@ -139,6 +139,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
     envvars_file_path = os.path.join(build_dir_path, "injectedEnvVars.txt")
 
     # TODO: Try not to load everything on memory
+    if not os.path.exists(log_file_path): return
     text_log = open(log_file_path, errors="ignore")
     lines = text_log.readlines()
     text_log.close()

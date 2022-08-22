@@ -501,7 +501,7 @@ if __name__ == "__main__":
     # Define paths:
     jobs_config_path = "jobs-config.json"  # This file matches job with their known errors and the action to perform
     parser_info_path = "parser-info.json"  # This file keeps track of the last log processed and the pending builds
-    builds_dir = "/build/builds"  # Path to the actual build logs
+    builds_dir = os.environ.get("HOME") + "/builds"  # Path to the actual build logs
 
     # Define e-mails to notify
     email_addresses = "cms-sdt-logs@cern.ch"
@@ -513,7 +513,12 @@ if __name__ == "__main__":
         # Iterate over all the jobs jobs_object["jobsConfig"]["jenkinsJobs"][ii]["jobName"]
         for job_id in range(len(jenkins_jobs)):
             job_to_retry = jenkins_jobs[job_id]["jobName"]
-            max_running_time = int(jenkins_jobs[job_id]["maxTime"])
+            try:
+                max_running_time = int(jenkins_jobs[job_id]["maxTime"])
+            except KeyError:
+                # The default max running time is 18h for all builds
+                max_running_time = 18
+
             print("[" + job_to_retry + "] Processing ...")
             job_dir = os.path.join(builds_dir, job_to_retry)
 

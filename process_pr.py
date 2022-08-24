@@ -10,7 +10,7 @@ from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
 from github_utils import edit_pr, api_rate_limits
-from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji
+from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji, set_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps, load
@@ -459,6 +459,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
   print("Notify User: ",gh_user_char)
+  set_gh_user(cmsbuild_user)
   cmssw_repo = (repo_name==GH_CMSSW_REPO)
   cms_repo = (repo_org in EXTERNAL_REPOS)
   external_repo = (repository!=CMSSW_REPO_NAME) and (len([e for e in EXTERNAL_REPOS if repo_org==e])>0)

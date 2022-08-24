@@ -8,6 +8,7 @@ from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
 
 GH_TOKENS = []
+GH_USER = None
 GH_TOKEN_INDEX = 0
 GH_RATE_LIMIT = [ 5000, 5000, 3600]
 GH_PAGE_RANGE = []
@@ -492,6 +493,11 @@ def get_gh_token(repository=None, token_file=None):
   return GH_TOKENS[GH_TOKEN_INDEX]
 
 
+def set_gh_user(user):
+  global GH_USER
+  GH_USER = user
+
+  
 def get_combined_statuses(commit, repository):
   get_gh_token(repository)
   return github_api("/repos/%s/commits/%s/status" % (repository, commit), method='GET')
@@ -507,7 +513,16 @@ def get_pr_latest_commit(pr, repository):
   return str(get_pr_commits(pr, repository, per_page=1, last_page=True)[-1]["sha"])
 
 
-def set_comment_emoji(comment_id, repository, emoji="+1"):
+def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
+  cur_emoji = None
+  if reset_other:
+    for e in get_comment_emojis(comment_id, repository):
+      if e['user']['login'].encode("ascii", "ignore") == GH_USER:
+        if  e['content']!=emoji:
+          delete_comment_emoji(e['id'], comment_id, repository)
+        else:
+          cur_emoji = e
+  if cur_emoji: return cur_emoji
   get_gh_token(repository)
   params = {"content" : emoji }
   headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}

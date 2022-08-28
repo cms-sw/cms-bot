@@ -58,8 +58,8 @@ def es_get_passwd(passwd_file=None):
   ES_PASSWD = open(passwd_file,'r').read().strip()
   return ES_PASSWD
 
-def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False):
-  if (ES_SERVER!=ES_NEW_SERVER) and (es_ser==ES_SERVER):
+def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SERVER, ignore_doc=False, ignore_new=False):
+  if (not ignore_new) and (ES_SERVER!=ES_NEW_SERVER) and (es_ser==ES_SERVER):
     if not send_request(uri, payload, passwd_file, method, es_ser=ES_NEW_SERVER, ignore_doc=ignore_doc):
       return False
   header = {"Content-Type": "application/json"}
@@ -147,20 +147,20 @@ def find_indexes(index):
   return idxs
 
 def get_indexes(index='cmssdt-*'):
-  data = {'index':index, 'api': '/_cat', 'prefix': True}
+  data = {'index':index, 'api': '/_cat', 'prefix': True, 'method': 'GET'}
   return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data))
 
 def close_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/_close',method='POST', ignore_doc=True)
+  send_request(index+'/_close',method='POST', ignore_doc=True, ignore_new=True)
 
 def open_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/_open',method='POST', ignore_doc=True)
+  send_request(index+'/_open',method='POST', ignore_doc=True, ignore_new=True)
 
 def delete_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
-  send_request(index+'/',method='DELETE', ignore_doc=True)
+  send_request(index+'/',method='DELETE', ignore_doc=True, ignore_new=True)
 
 def es_query(index,query,start_time,end_time,page_start=0,page_size=10000,timestamp_field="@timestamp", scroll=False, max_count=-1, fields=None):
   query_str = get_es_query(query=query, start_time=start_time,end_time=end_time,page_start=page_start,page_size=page_size,timestamp_field=timestamp_field, fields=fields)

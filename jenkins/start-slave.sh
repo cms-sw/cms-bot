@@ -49,7 +49,8 @@ SSHD_PORT=$(grep '<port>' ${HOME}/org.jenkinsci.main.modules.sshd.SSHD.xml | sed
 JENKINS_CLI_CMD="ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${HOME}/.ssh/id_rsa-openstack -l localcli -p ${SSHD_PORT} localhost"
 JENKINS_API_URL=$(echo ${JENKINS_URL} | sed "s|^https://[^/]*/|http://localhost:${JENKINS_PORT}/|")
 SET_KRB5CCNAME=true
-if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_label' | wc -l) -eq 0 ] ; then
+CUR_LABS=$(grep '<label>' ${HOME}/nodes/${NODE_NAME}/config.xml |  sed 's|.*<label>||;s|</label>||')
+if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^no_label$' | wc -l) -eq 0 ] ; then
   slave_labels=""
   case ${SLAVE_TYPE} in
   *dmwm* ) echo "Skipping auto labels" ;;
@@ -61,10 +62,11 @@ if [ $(cat ${HOME}/nodes/${NODE_NAME}/config.xml | grep '<label>' | grep 'no_lab
     slave_labels="auto-label $(get_data SLAVE_LABELS)"
     case ${SLAVE_TYPE} in
       cmsbuild*|vocms* ) slave_labels="${slave_labels} cloud cmsbuild release-build";;
-      cmsdev*   ) slave_labels="${slave_labels} cloud cmsdev";;
+      cmsdev*   )        slave_labels="${slave_labels} cloud cmsdev";;
+      * ) if [ $(echo "${CUR_LABS}" | grep tr ' ' '\n' | grep '^release-build$' | wc -l) -gt 0 ] ; then slave_labels="${slave_labels} crelease-build"; fi ;;
     esac
     case $(get_data HOST_CMS_ARCH) in
-      *_aarch64|*_ppc64le ) slave_labels="${slave_labels} release-build cmsbuild";;
+      *_aarch64|*_ppc64le ) slave_labels="${slave_labels} cmsbuild";;
     esac
     ;;
   esac

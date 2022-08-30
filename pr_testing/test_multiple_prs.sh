@@ -1127,7 +1127,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
     echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
     echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-    echo "MATRIX_ARGS=-s $(get_pr_relval_args $DO_COMPARISON _${THREADING})" >> $WORKSPACE/run-relvals-threading.prop
+    echo "MATRIX_ARGS=-s $(get_pr_relval_args $DO_COMPARISON _THREADING)" >> $WORKSPACE/run-relvals-threading.prop
   fi
   if $PRODUCTION_RELEASE ; then
     for ex_type in "GPU" "HIGH_STATS" ; do

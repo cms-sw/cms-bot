@@ -52,9 +52,10 @@ SET_KRB5CCNAME=true
 CUR_LABS=$(grep '<label>' ${HOME}/nodes/${NODE_NAME}/config.xml |  sed 's|.*<label>||;s|</label>||')
 if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^no_label$' | wc -l) -eq 0 ] ; then
   slave_labels=""
+  skip_labs=false
   case ${SLAVE_TYPE} in
-  *dmwm* ) echo "Skipping auto labels" ;;
-  aiadm* ) echo "Skipping auto labels" ;;
+  *dmwm* ) echo "Skipping auto labels" ; skip_labs=true ;;
+  aiadm* ) echo "Skipping auto labels" ; skip_labs=true ;;
   lxplus* )
     slave_labels=$(get_data SLAVE_LABELS)
     ;;
@@ -70,8 +71,10 @@ if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^no_label$' | wc -l) -eq 0 ] ; t
     esac
     ;;
   esac
-  slave_labels=$(echo ${slave_labels} ${EX_LABELS} | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's|^ *||;s| *$||')
-  if [ "${slave_labels}" != "${CUR_LABS}" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
+  if ! $skip_labs ; then
+    slave_labels=$(echo ${slave_labels} ${EX_LABELS} | tr ' ' '\n' | sort | uniq | tr '\n' ' ' | sed 's|^ *||;s| *$||')
+    if [ "${slave_labels}" != "${CUR_LABS}" ] ; then cat ${SCRIPT_DIR}/set-slave-labels.groovy | ${JENKINS_CLI_CMD} groovy = ${NODE_NAME} ${slave_labels} ; fi
+  fi
 fi
 case ${SLAVE_TYPE} in
   lxplus* ) SET_KRB5CCNAME=false ;;

@@ -1124,12 +1124,10 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "MATRIX_ARGS="-s $(get_pr_relval_args $DO_COMPARISON '') >> $WORKSPACE/run-relvals.prop
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
-    WF_LIST=$(get_pr_baseline_worklflow "" ${MATRIX_EXTRAS_THREADING})
-    [ "$WF_LIST" = "" ] ||  WF_LIST="-l $WF_LIST"
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
     echo "DO_COMPARISON=false" >> $WORKSPACE/run-relvals-threading.prop
     echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
-    echo "MATRIX_ARGS=-s $WF_LIST $EXTRA_MATRIX_ARGS_THREADING" >> $WORKSPACE/run-relvals-threading.prop
+    echo "MATRIX_ARGS=-s $(get_pr_relval_args $DO_COMPARISON _${THREADING})" >> $WORKSPACE/run-relvals-threading.prop
   fi
   if $PRODUCTION_RELEASE ; then
     for ex_type in "GPU" "HIGH_STATS" ; do

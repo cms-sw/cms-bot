@@ -9,7 +9,7 @@ import shutil
 
 workflow_configs = {
     #Run3 HI workflow
-    "159": {
+    "159.0": {
         "num_events": 100,
         "steps": {
             "step3": {

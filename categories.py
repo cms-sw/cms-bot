@@ -59,7 +59,7 @@ CMSSW_L2 = {
   "jfernan2":         ["dqm"],
   "jpata":            ["reconstruction"],
   "kskovpen":         ["pdmv"],
-  "subansal":         ["pdmv"],
+  "sunilUIET":        ["pdmv"],
   "makortel":         ["heterogeneous", "core", "visualization", "geometry"],
   "mandrenguyen":     ["reconstruction"],
   "mdhildreth":       ["simulation", "geometry", "fastsim"],

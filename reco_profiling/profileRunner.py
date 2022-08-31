@@ -10,7 +10,7 @@ import shutil
 workflow_configs = {
     #Run3 HI workflow
     "159.0": {
-        "num_events": 100,
+        "num_events": 400,
         "steps": {
             "step3": {
                 "TimeMemoryInfo": True,
@@ -19,11 +19,11 @@ workflow_configs = {
             },
         },
         "nThreads": 1,
-        "matrix": "upgrade"
+        "matrix": "standard"
     },
     #2018 HI T0-like workflow
     "140.56": {
-        "num_events": 400,
+        "num_events": 1000,
         "steps": {
             "step3": {
                 "TimeMemoryInfo": True,

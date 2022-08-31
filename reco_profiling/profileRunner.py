@@ -17,17 +17,7 @@ workflow_configs = {
                 "FastTimer": True,
                 "igprof": True,
             },
-            "step4": {
-                "TimeMemoryInfo": True,
-                "FastTimer": True,
-                "igprof": True,
-            },
-            "step5": {
-                "TimeMemoryInfo": True,
-                "FastTimer": True,
-                "igprof": True,
-            },
-         },
+        },
         "nThreads": 1,
         "matrix": "upgrade"
     },

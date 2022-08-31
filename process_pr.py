@@ -905,7 +905,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
         ctype = "-1"
         selected_cats = commenter_categories
-      elif re.match("^[+-][a-z][a-z0-9]+$", first_line, re.I):
+      elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
         category_name = first_line[1:].lower()
         if category_name in commenter_categories:
           ctype = first_line[0]+"1"

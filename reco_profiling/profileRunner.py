@@ -8,6 +8,42 @@ import os
 import shutil
 
 workflow_configs = {
+    #Run3 HI workflow
+    "159": {
+        "num_events": 100,
+        "steps": {
+            "step3": {
+                "TimeMemoryInfo": True,
+                "FastTimer": True,
+                "igprof": True,
+            },
+            "step4": {
+                "TimeMemoryInfo": True,
+                "FastTimer": True,
+                "igprof": True,
+            },
+            "step5": {
+                "TimeMemoryInfo": True,
+                "FastTimer": True,
+                "igprof": True,
+            },
+         },
+        "nThreads": 1,
+        "matrix": "upgrade"
+    },
+    #2018 HI T0-like workflow
+    "140.56": {
+        "num_events": 400,
+        "steps": {
+            "step3": {
+                "TimeMemoryInfo": True,
+                "FastTimer": False,
+                "igprof": False,
+            },
+         },
+        "nThreads": 8,
+        "matrix": "standard"
+    },
     #Run3 workflow
     "11834.21": {
         "num_events": 400,

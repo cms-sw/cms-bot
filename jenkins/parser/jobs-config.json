@@ -12,7 +12,7 @@
         "maxTime": "2"
       },
       {
-        "jobName": "ib-run-igprof-testing",
+        "jobName": "ib-run-igprof-test",
         "errorType": [
           "hudsonConnection",
           "timedOut",

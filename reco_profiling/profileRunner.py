@@ -8,32 +8,6 @@ import os
 import shutil
 
 workflow_configs = {
-    #Run3 HI workflow
-    "159.0": {
-        "num_events": 100,
-        "steps": {
-            "step3": {
-                "TimeMemoryInfo": True,
-                "FastTimer": True,
-                "igprof": True,
-            },
-        },
-        "nThreads": 1,
-        "matrix": "standard"
-    },
-    #2018 HI T0-like workflow
-    "140.56": {
-        "num_events": 1000,
-        "steps": {
-            "step3": {
-                "TimeMemoryInfo": True,
-                "FastTimer": False,
-                "igprof": False,
-            },
-         },
-        "nThreads": 8,
-        "matrix": "standard"
-    },
     #Run3 workflow
     "11834.21": {
         "num_events": 400,
@@ -146,7 +120,20 @@ workflow_configs = {
          },
         "nThreads": 8,
         "matrix": "standard"
-    } 
+    },
+    #2018 HI T0-like workflow
+    "140.56": {
+        "num_events": 1000,
+        "steps": {
+            "step2": {
+                "TimeMemoryInfo": True,
+                "FastTimer": False,
+                "igprof": False,
+            },
+         },
+        "nThreads": 8,
+        "matrix": "standard"
+    },
 }
 
 #Prepare cmdLog and execute the workflow steps to get e.g. DAS entries, but call cmsRun with --no_exec

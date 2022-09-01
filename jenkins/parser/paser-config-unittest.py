@@ -5,7 +5,7 @@ from subprocess import getstatusoutput
 import time
 
 
-jobs_config_path = "jobs-config.json"
+jobs_config_path = "cms-bot/jenkins/parser/jobs-config.json"
 error_types = []
 
 with open(jobs_config_path, "r") as jobs_file:

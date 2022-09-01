@@ -1,5 +1,9 @@
 import json
 import os
+import re
+from subprocess import getstatusoutput
+import time
+
 
 jobs_config_path = "jobs-config.json"
 error_types = []
@@ -13,13 +17,16 @@ with open(jobs_config_path, "r") as jobs_file:
 print("[TEST 1]: Checking that all jobs defined in jobs-config.json exist in Jenkins ...")
 job_names = [jenkins_jobs[job_id]["jobName"] for job_id in range(len(jenkins_jobs))]
 
-for job in job_names:
-    exit_code = os.system(
-        "ssh -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/id_rsa-openstack -l localcli -p 8090 localhost get-job "
-        + job
-        + " > /dev/null"
-    )
-    assert exit_code == 0, "Job " + job + " does not exists in Jenkins"
+_, output = getstatusoutput(
+    'curl -s https://raw.githubusercontent.com/cms-sw/cmssdt-wiki/master/jenkins_reports/All.md | grep "## \[.*\](.*"'
+)
+valid_job_names = [
+    re.sub("\]\(.*", "", item.replace("## [", "")) for item in output.split("\n")
+]
+# Check that valid_job_names contains all elements of job_names
+assert all(
+    item in valid_job_names for item in job_names
+), "Invalid job names have been defined in config file"
 print("[TEST 1]: ... OK")
 
 
@@ -43,7 +50,7 @@ valid_actions = [
 defined_actions = [
     error_msg[error_category]["action"] for error_category in error_msg.keys()
 ]
-# Check that valid_actions contains contains all defined actions
+# Check that valid_actions contains all defined actions
 assert all(
     item in valid_actions for item in defined_actions
 ), "Defined action does not correspond to a valid action"

@@ -6,7 +6,8 @@ CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
 ALL_BRANCHES     = ".+"
 COMP_BRANCHES = "^comp_gcc.+$"
 CMSDIST_PERMISSIONS = {
-  "muhammadimranfarooqi"           : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "muhammadimranfarooqi" : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
+  "arooshap"       : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "amaltaro"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "todor-ivanov"   : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "belforte"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],

@@ -62,7 +62,7 @@ REPO_TEAMS["cms-sw"]["configdb-owners"] = {
   "repositories" : { "hlt-confdb":"admin", "web-confdb":"admin"}
 }
 REPO_TEAMS["cms-sw"]["cmsdist-writers"] = {
-  "members" : [ "h4d4", "muhammadimranfarooqi" ] + CMS_SDT[:],
+  "members" : [ "h4d4", "muhammadimranfarooqi", "arooshap" ] + CMS_SDT[:],
   "repositories" : { "cmsdist":"push" }
 }
 REPO_TEAMS["cms-sw"]["cmssw-l2"] = {

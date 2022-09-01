@@ -73,12 +73,12 @@ if [ ! -d ${PYTHONUSERBASE} ] ; then
 fi
 
 [ -e "${INSTALL_DIR}/${EL_ARCH}" ] || ln -s ${CMS_OS} ${INSTALL_DIR}/${EL_ARCH}
-rm -f ${INSTALL_DIR}/rucio.cfg
-cp $(dirname $0)/rucio.cfg ${INSTALL_DIR}/rucio.cfg
+THIS_DIR=$(dirname $0)
+rsync -a ${THIS_DIR}/deploy/ ${INSTALL_DIR}/
 rm -f ${PYTHONUSERBASE}/etc/rucio.cfg
 ln -s ../../../../../rucio.cfg ${PYTHONUSERBASE}/etc/rucio.cfg
 
-cp -r $(dirname $0)/setup.sh ${INSTALL_DIR}/setup-py${PY_VER}.sh
+cp -r ${THIS_DIR}/setup.sh ${INSTALL_DIR}/setup-py${PY_VER}.sh
 sed -i -e "s|/\${ARCH}/|/\${ARCH}/py${PY_VER}|" ${INSTALL_DIR}/setup-py${PY_VER}.sh
 chmod 0644 ${INSTALL_DIR}/setup-py${PY_VER}.sh
 touch ${PYTHONUSERBASE}/.cvmfscatalog

@@ -68,13 +68,23 @@
       },
       {
         "jobName": "build-any-ib",
-        "errorType": [],
+        "errorType": [gitErrors],
         "maxTime": "18"
       },
       {
         "jobName": "ib-run-pr-tests",
-        "errorType": [],
+        "errorType": ["gitErrors"],
         "maxTime": "10"
+      },
+      {
+        "jobName": "update-github-pages",
+        "errorType": ["gitErrors"],
+        "maxTime": "2"
+      },
+      {
+        "jobName": "ib-tag-and-schdule",
+        "errorType": [gitErrors],
+        "maxTime": "18"
       }
     ],
     "errorMsg": {

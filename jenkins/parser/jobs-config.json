@@ -99,7 +99,8 @@
       "gitErrors": {
         "errorStr": [
           "fatal: repository .* not found",
-          "Tag already exist"
+          "Tag already exist",
+          "Connection to github\\.com closed by remote host."
         ],
         "action": "retryBuild"
       },

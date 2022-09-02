@@ -58,8 +58,6 @@ def getParameters(root, payload):
         if v is not None:
             if v.text is not None:
                 payload.append(n.text + "=" + str(v.text))
-        if "RETRY_COUNTER" in n.text:
-            retry_counter_value = int(v.text)
     else:
         for x in root:
             getParameters(x, payload)
@@ -74,8 +72,14 @@ jenkins_params_values = []
 if pa is not None:
     getParameters(pa, jenkins_params_values)
 
-# Check that the retry counter is present, if not create one, if present update it
-if retry_counter_value != "":
+# Get RETRY_COUNTER, if present
+r = re.compile("RETRY_COUNTER=.*")
+retry_counter = list(filter(r.match, jenkins_params_values))
+
+# If retry counter is present, get its value and update it. If not, create one.
+if retry_counter != []:
+    retry_counter_value = int(retry_counter[0].split("=")[1])
+
     # Check maximum number of retries and update counter
     max_retries = 3
     try:
@@ -96,6 +100,7 @@ if retry_counter_value != "":
         raise
 
     retry_counter_update = retry_counter_value + 1
+    jenkins_params_values.remove(retry_counter[0])  # Remove old value from params
     jenkins_params_values.append("RETRY_COUNTER=" + str(retry_counter_update) + "\n")
 else:
     retry_counter_update = 1
@@ -144,7 +149,7 @@ if parser_action == "retryBuild":
     label = retry_label
 elif parser_action == "nodeOff":
     label = nodeoff_label
-else: # nodeReconnect
+else:  # nodeReconnect
     label = nodereconnect_label
 
 update_label = (

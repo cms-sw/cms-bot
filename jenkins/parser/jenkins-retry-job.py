@@ -10,10 +10,12 @@ import xml.etree.ElementTree as ET
 parser = argparse.ArgumentParser()
 parser.add_argument("job_to_retry", help="Jenkins job to retry")
 parser.add_argument("build_to_retry", help="Build number to retry")
+parser.add_argument("parser_action", help="Action taken by parser job")
 parser.add_argument("current_build_number", help="Current build number")
 args = parser.parse_args()
 job_to_retry = args.job_to_retry
 build_to_retry = args.build_to_retry
+parser_action = args.parser_action
 current_build_number = args.current_build_number
 
 retry_counter_value = ""
@@ -108,17 +110,42 @@ with open("parameters.txt", "w") as propfile:
         print(param + "\n")
         propfile.write(param + "\n")
 
-# Format retry label
+# Format retry label depending on parser action
 times = "time" if retry_counter_update == 1 else "times"
 
-label = (
-    "Retried'\ '"
+retry_label = (
+    "Job'\ 'retried'\ '"
     + str(retry_counter_update)
     + "'\ '"
     + times
     + "'\ 'by'\ 'retry'\ 'job'\ '#"
     + str(current_build_number)
 )
+
+nodeoff_label = (
+    "Node'\ 'marked'\ 'as'\ 'offline'\ 'and'\ 'job'\ 'retried.'\ 'Please,'\ 'take'\ 'the'\ 'appropiate'\ 'action'\ 'and'\ 'relaunch'\ 'the'\ 'node.'\ 'Also,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
+    + str(retry_counter_update)
+    + "'\ '"
+    + times
+    + "'\ 'by'\ 'retry'\ 'job'\ '#"
+    + str(current_build_number)
+)
+
+nodereconnect_label = (
+    "Node'\ 'has'\ 'been'\ 'forced'\ 'to'\ 'reconnect'\ 'and'\ 'job'\ 'has'\ 'been'\ 'retried.'\ 'Please,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'node'\ 'is'\ 'in'\ 'good'\ 'state'\ 'and'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
+    + str(retry_counter_update)
+    + "'\ '"
+    + times
+    + "'\ 'by'\ 'retry'\ 'job'\ '#"
+    + str(current_build_number)
+)
+
+if parser_action == "retryBuild":
+    label = retry_label
+elif parser_action == "nodeOff":
+    label = nodeoff_label
+else: # nodeReconnect
+    label = nodereconnect_label
 
 update_label = (
     os.environ.get("JENKINS_CLI_CMD")
@@ -129,5 +156,6 @@ update_label = (
     + " "
     + label
 )
+
 print(update_label)
 os.system(update_label)

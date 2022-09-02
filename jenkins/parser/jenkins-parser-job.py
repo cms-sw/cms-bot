@@ -46,7 +46,6 @@ def get_errors_list(jobs_object, job_id):
                 "Action not defined. Please define a valid action in "
                 + jobs_config_path
             )
-            # TODO: Assert?
     return error_list
 
 
@@ -132,14 +131,171 @@ def get_new_running_builds(job_dir, last_processed_log):
     ]
 
 
+def trigger_retry_action(job_to_retry, build_to_retry, action):
+    trigger_retry = (
+        os.environ.get("JENKINS_CLI_CMD")
+        + " build jenkins-test-retry -p JOB_TO_RETRY="
+        + job_to_retry
+        + " -p BUILD_TO_RETRY="
+        + build_to_retry
+        + " -p ACTION="
+        + action
+    )
+    print(trigger_retry)
+    os.system(trigger_retry)
+
+
+def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
+    nodeoff_msg = "'Node\ marked\ as\ offline\ beacuse\ of\ " + job_url + "'"
+    take_nodeoff = (
+        os.environ.get("JENKINS_CLI_CMD")
+        + " offline-node "
+        + node_name
+        + " -m "
+        + nodeoff_msg
+    )
+    print(take_nodeoff)
+    os.system(take_nodeoff)
+
+    # Update description of the failed job
+    update_label = (
+        os.environ.get("JENKINS_CLI_CMD")
+        + " set-build-description "
+        + job_to_retry
+        + " "
+        + build_to_retry
+        + " 'Node\ marked\ as\ offline\ and\ job\ retried.\ Please,\ take\ the\ appropiate\ action\ and\ relaunch\ the\ node.\ Also,\ make\ sure\ that\ the\ job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
+    )
+    print(update_label)
+    os.system(update_label)
+
+
+def trigger_reconnect_action(job_ro_retry, build_to_retry, job_url, node_name):
+    nodeoff_msg = "'Node\ reconnected\ by\ " + job_url + "'"
+    disconnect_node = (
+        os.environ.get("JENKINS_CLI_CMD")
+        + " disconnect-node "
+        + node_name
+        + " -m "
+        + nodeoff_msg
+    )
+    connect_node = (
+        os.environ.get("JENKINS_CLI_CMD") + " connect-node " + node_name + " -f"
+    )
+    print(disconnect_node)
+    os.system(disconnect_node)
+    time.sleep(10)
+    print(connect_node)
+    os.system(connect_node)
+
+    # Update description of the failed job
+    update_label = (
+        os.environ.get("JENKINS_CLI_CMD")
+        + " set-build-description "
+        + job_to_retry
+        + " "
+        + build_to_retry
+        + " 'Node\ has\ been\ forced\ to\ reconnect\ and\ job\ has\ been\ retried.\ Please,\ make\ sure\ that\ the\ node\ is\ in\ good\ state\ and job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
+    )
+    print(update_label)
+    os.system(update_label)
+
+
+def send_email(email_msg, email_subject, email_addresses):
+    email_cmd = (
+        'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
+    )
+    print(email_cmd)
+    os.system(email_cmd)
+
+
+def notify_nodeoff(
+    node_name, regex, job_to_retry, build_to_retry, job_url, node_url, parser_url
+):
+    email_msg = (
+        "Node "
+        + node_name
+        + " has been disconnected because of an error of type <"
+        + regex
+        + "> in job "
+        + job_to_retry
+        + " build number "
+        + build_to_retry
+        + ".\nPlease, take the appropiate action.\n\nFailed job: "
+        + job_url
+        + "\n\nDisconnected node: "
+        + node_url
+        + "\n\nParser job: "
+        + parser_url
+    )
+    email_subject = "Node " + node_name + " disconnected by jenkins-test-parser job"
+    send_email(email_msg, email_subject, email_addresses)
+
+
+def notify_nodereconnect(
+    node_name, regex, job_to_retry, build_to_retry, job_url, node_url, parser_url
+):
+    email_msg = (
+        "Node "
+        + node_name
+        + " has been forced to reconnect because of an error of type <"
+        + regex
+        + "> in job "
+        + job_to_retry
+        + " build number "
+        + build_to_retry
+        + ".\nPlease, take the appropiate action.\n\nFailed job: "
+        + job_url
+        + "\n\nAffected node: "
+        + node_url
+        + "\n\nParser job: "
+        + parser_url
+    )
+    email_subject = "Node " + node_name + " reconnected by jenkins-test-parser job"
+    send_email(email_msg, email_subject, email_addresses)
+
+
+def notify_pendingbuild(
+    display_name, build_to_retry, job_to_retry, duration, job_url, parser_url
+):
+    email_msg = (
+        "Build"
+        + display_name
+        + " (#"
+        + build_to_retry
+        + ") from job "
+        + job_to_retry
+        + " has been running for an unexpected amount of time.\nTotal running time: "
+        + str(duration)
+        + ".\nPlease, take the appropiate action.\n\nPending job: "
+        + job_url
+        + "\n\nParser job: "
+        + parser_url
+    )
+
+    email_subject = (
+        "Pending build "
+        + display_name
+        + " (#"
+        + build_to_retry
+        + ") from job "
+        + job_to_retry
+    )
+
+    email_cmd = (
+        'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
+    )
+    send_email(email_msg, email_subject, email_addresses)
+
+
 def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_action):
     """Check failed build logs and trigger the appropiate action if a known error is found."""
     build_dir_path = os.path.join(job_dir, build_to_retry)
     log_file_path = os.path.join(build_dir_path, "log")
     envvars_file_path = os.path.join(build_dir_path, "injectedEnvVars.txt")
 
-    # TODO: Try not to load everything on memory
     if not os.path.exists(log_file_path): return
+    # TODO: Try not to load everything on memory
     text_log = open(log_file_path, errors="ignore")
     lines = text_log.readlines()
     text_log.close()
@@ -165,15 +321,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                     + ". Taking action ..."
                 )
                 if action == "retryBuild":
-                    trigger_retry = (
-                        os.environ.get("JENKINS_CLI_CMD")
-                        + " build jenkins-test-retry -p JOB_TO_RETRY="
-                        + job_to_retry
-                        + " -p BUILD_TO_RETRY="
-                        + build_to_retry
-                    )
-                    print(trigger_retry)
-                    os.system(trigger_retry)
+                    trigger_retry_action(job_to_retry, build_to_retry, action)
                 else:
                     # Take action on the nodes
                     node_name = (
@@ -196,133 +344,34 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                     )
 
                     if action == "nodeOff":
-                        email_msg = (
-                            "Node "
-                            + node_name
-                            + " has been disconnected because of an error of type <"
-                            + regex
-                            + "> in job "
-                            + job_to_retry
-                            + " build number "
-                            + build_to_retry
-                            + ".\nPlease, take the appropiate action.\n\nFailed job: "
-                            + job_url
-                            + "\n\nDisconnected node: "
-                            + node_url
-                            + "\n\nParser job: "
-                            + parser_url
+                        trigger_nodeoff_action(
+                            job_to_retry, build_to_retry, job_url, node_name
                         )
-                        email_subject = (
-                            "Node "
-                            + node_name
-                            + " disconnected by jenkins-test-parser job"
+                        trigger_retry_action(job_to_retry, build_to_retry, action)
+                        notify_nodeoff(
+                            node_name,
+                            regex,
+                            job_to_retry,
+                            build_to_retry,
+                            job_url,
+                            node_url,
+                            parser_url,
                         )
-                        email_cmd = (
-                            'echo "'
-                            + email_msg
-                            + '" | mail -s "'
-                            + email_subject
-                            + '" '
-                            + email_addresses
-                        )
-                        nodeoff_msg = (
-                            "'Node\ marked\ as\ offline\ beacuse\ of\ " + job_url + "'"
-                        )
-                        take_nodeoff = (
-                            os.environ.get("JENKINS_CLI_CMD")
-                            + " offline-node "
-                            + node_name
-                            + " -m "
-                            + nodeoff_msg
-                        )
-
-                        print(take_nodeoff)
-                        os.system(take_nodeoff)
-
-                        print(email_cmd)
-                        os.system(email_cmd)
-
-                        # Update description of the failed job
-                        update_label = (
-                            os.environ.get("JENKINS_CLI_CMD")
-                            + " set-build-description "
-                            + job_to_retry
-                            + " "
-                            + build_to_retry
-                            + " 'Node\ marked\ as\ offline.\ Please,\ take\ the\ appropiate\ action\ and\ relaunch\ the\ node.'"
-                        )
-
-                        print(update_label)
-                        os.system(update_label)
-
                     elif action == "nodeReconnect":
-                        # Send disconnect and connect command
-                        email_msg = (
-                            "Node "
-                            + node_name
-                            + " has been forced to reconnect because of an error of type <"
-                            + regex
-                            + "> in job "
-                            + job_to_retry
-                            + " build number "
-                            + build_to_retry
-                            + ".\nPlease, take the appropiate action.\n\nFailed job: "
-                            + job_url
-                            + "\n\nAffected node: "
-                            + node_url
-                            + "\n\nParser job: "
-                            + parser_url
+                        trigger_reconnect_action(
+                            job_ro_retry, build_to_retry, job_url, node_name
                         )
-                        email_subject = (
-                            "Node "
-                            + node_name
-                            + " reconnected by jenkins-test-parser job"
-                        )
-                        email_cmd = (
-                            'echo "'
-                            + email_msg
-                            + '" | mail -s "'
-                            + email_subject
-                            + '" '
-                            + email_addresses
-                        )
-                        nodeoff_msg = "'Node\ reconnected\ by\ " + job_url + "'"
-                        disconnect_node = (
-                            os.environ.get("JENKINS_CLI_CMD")
-                            + " disconnect-node "
-                            + node_name
-                            + " -m "
-                            + nodeoff_msg
-                        )
-                        connect_node = (
-                            os.environ.get("JENKINS_CLI_CMD")
-                            + " connect-node "
-                            + node_name
-                            + " -f"
+                        trigger_retry_action(job_to_retry, build_to_retry, action)
+                        notify_nodereconnect(
+                            node_name,
+                            regex,
+                            job_to_retry,
+                            build_to_retry,
+                            job_url,
+                            node_url,
+                            parser_url,
                         )
 
-                        # Reconnect node
-                        print(disconnect_node)
-                        os.system(disconnect_node)
-                        time.sleep(10)
-                        print(connect_node)
-                        os.system(connect_node)
-
-                        # Notify
-                        print(email_cmd)
-                        os.system(email_cmd)
-
-                        # Retry job
-                        trigger_retry = (
-                            os.environ.get("JENKINS_CLI_CMD")
-                            + " build jenkins-test-retry -p JOB_TO_RETRY="
-                            + job_to_retry
-                            + " -p BUILD_TO_RETRY="
-                            + build_to_retry
-                        )
-
-                        print(trigger_retry)
-                        os.system(trigger_retry)
                 regex_flag = 1
                 break
             if regex_flag == 1:
@@ -331,6 +380,20 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
             break
     if regex_flag == 0:
         print("... no known errors were found.")
+
+        if grep(os.path.join(build_dir_path, "build.xml"), "<result>FAILURE"):
+            # Update description to inform that no action has been taken
+            update_label = (
+                os.environ.get("JENKINS_CLI_CMD")
+                + " set-build-description "
+                + job_to_retry
+                + " "
+                + build_to_retry
+                + " '[No\ action\ has\ been\ taken\ by\ the\ parser\ job]'"
+            )
+
+            print(update_label)
+            os.system(update_label)
 
 
 def get_last_processed_log(parser_info_path, job_to_retry):
@@ -387,34 +450,6 @@ def check_running_time(
         os.environ.get("JENKINS_URL") + "job/jenkins-test-parser/" + parser_build_id
     )
 
-    email_msg = (
-        "Build"
-        + display_name
-        + " (#"
-        + build_to_retry
-        + ") from job "
-        + job_to_retry
-        + " has been running for an unexpected amount of time.\nTotal running time: "
-        + str(duration)
-        + ".\nPlease, take the appropiate action.\n\nPending job: "
-        + job_url
-        + "\n\nParser job: "
-        + parser_url
-    )
-
-    email_subject = (
-        "Pending build "
-        + display_name
-        + " (#"
-        + build_to_retry
-        + ") from job "
-        + job_to_retry
-    )
-
-    email_cmd = (
-        'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
-    )
-
     if duration > datetime.timedelta(hours=max_running_time):
         with open(parser_info_path, "r") as rotation_file:
             old_running_builds_object = json.load(rotation_file)
@@ -438,8 +473,16 @@ def check_running_time(
                 + str(max_running_time)
                 + " hours!"
             )
-            print(email_cmd)
-            os.system(email_cmd)
+
+            notify_pendingbuild(
+                display_name,
+                build_to_retry,
+                job_to_retry,
+                duration,
+                job_url,
+                parser_url,
+            )
+
             old_running_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
                 build_to_retry
             ] = "emailSent"

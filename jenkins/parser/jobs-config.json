@@ -68,7 +68,7 @@
       },
       {
         "jobName": "build-any-ib",
-        "errorType": [gitErrors],
+        "errorType": ["gitErrors"],
         "maxTime": "18"
       },
       {
@@ -83,7 +83,7 @@
       },
       {
         "jobName": "ib-tag-and-schdule",
-        "errorType": [gitErrors],
+        "errorType": ["gitErrors"],
         "maxTime": "18"
       }
     ],

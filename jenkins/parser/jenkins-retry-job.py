@@ -149,7 +149,7 @@ if parser_action == "retryBuild":
     label = retry_label
 elif parser_action == "nodeOff":
     label = nodeoff_label
-else:  # nodeReconnect
+else: # nodeReconnect
     label = nodereconnect_label
 
 update_label = (

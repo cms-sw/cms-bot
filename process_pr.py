@@ -45,7 +45,7 @@ FAILED_TESTS_MSG = 'The jenkins tests job failed, please try again.'
 PUSH_TEST_ISSUE_MSG='^\[Jenkins CI\] Testing commit: [0-9a-f]+$'
 HOLD_MSG = "Pull request has been put on hold by "
 #Regexp to match the test requests
-CODE_CHECKS_REGEXP=re.compile("code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)$")
+CODE_CHECKS_REGEXP=re.compile("code-checks(\s+with\s+cms.week[0-9].PR_[0-9a-f]{8}/[^\s]+|)(\s+and\s+apply\s+patch|)$")
 WF_PATTERN="[1-9][0-9]*(\.[0-9]+|)"
 CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
 CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)'
@@ -676,6 +676,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   ack_comment = None
   test_params_msg = ""
   test_params_comment = None
+  code_check_apply_patch = False
 
   #start of parsing comments section
   for c in issue.get_comments(): all_comments.append(c)
@@ -791,11 +792,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         test_params_msg = str(comment.id) + ":" + dumps(global_test_params, sort_keys=True)
         continue
 
-    if (cmssw_repo and CODE_CHECKS_REGEXP.match(first_line)):
-      first_line = first_line.split(" ")[-1]
-      if first_line != "code-checks":
-        code_checks_tools = first_line
+    if cmssw_repo:
+      m = CODE_CHECKS_REGEXP.match(first_line)
+      if m:
         first_line = "code-checks"
+        code_check_apply_patch = False
+        if m.group(1):
+          code_checks_tools = m.group(1).strip().split(" ")[-1]
+        if m.group(2):
+          code_check_apply_patch = True
 
     # Ignore all other messages which are before last commit.
     if issue.pull_request and (comment.created_at < last_commit_date):
@@ -1420,6 +1425,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       params = {"PULL_REQUEST" : "%s" % (prId), "CONTEXT_PREFIX": cms_status_prefix}
       if pre_check=="code-checks":
         params["CMSSW_TOOL_CONF"] = code_checks_tools
+        params["APPLY_PATCH"] = str(code_check_apply_patch).lower()
       create_properties_file_tests(repository, prId, params, dryRunOrig, abort=False, req_type=pre_check)
       last_commit_obj.create_status("pending", description="%s requested" % pre_check, context="%s/%s" % (cms_status_prefix, pre_check))
     else:

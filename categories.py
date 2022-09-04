@@ -57,7 +57,6 @@ CMSSW_L2 = {
   "cecilecaillol":    ["l1"],
   "clacaputo":        ["reconstruction"],
   "jfernan2":         ["dqm"],
-  "jpata":            ["reconstruction"],
   "kskovpen":         ["pdmv"],
   "sunilUIET":        ["pdmv"],
   "makortel":         ["heterogeneous", "core", "visualization", "geometry"],

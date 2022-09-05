@@ -48,8 +48,6 @@ CMSSW_L2 = {
   "emeschi":          ["daq"],
   "vlimant":          ["xpog"],
   "swertz":           ["xpog"],
-  "gouskos":          ["xpog"],
-  "mariadalfonso":    ["xpog"],
   "fwyzard":          ["heterogeneous"],
   "ggovi":            ["db"],
   "GurpreetSinghChahal":  ["generators"],

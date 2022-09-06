@@ -85,8 +85,8 @@ CMSSW_L2 = {
   "saumyaphor4252":   ["alca","db"],
   CMSBUILD_USER:      ["tests" ],
   # dpgs
-  "tsusa":            ["trk-dpg"],
   "connorpa":         ["trk-dpg"],
+  "sroychow":         ["trk-dpg"],
   "simonepigazzini":  ["ecal-dpg"],
   "jainshilpi":       ["ecal-dpg"],
   "thomreis":         ["ecal-dpg"],
@@ -132,8 +132,7 @@ CMSSW_L2 = {
   "kandrosov":        ["tau-pog"],
   "alebihan":         ["tau-pog"],
   "slava77":          ["tracking-pog"],
-  "vmariani":         ["tracking-pog"],
-  "mmusich":          ["tracking-pog","trk-dpg"],
+  "mmusich":          ["tracking-pog"],
 }
 
 #All CMS_SDT members can sign externals ( e.g Pull Requests in cms-sw/cmsdist , cms-data and cms-externals

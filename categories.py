@@ -124,7 +124,7 @@ CMSSW_L2 = {
   "knollejo":         ["lumi-pog"],
   "cschwick":         ["lumi-pog"],
   "gkaratha":         ["muon-pog"],
-  "JanFSchulte":           ["muon-pog"],
+  "JanFSchulte":      ["muon-pog"],
   "johnalison":       ["btv-pog"],
   "soureek":          ["btv-pog"],
   "michael-pitt":     ["proton-pog"],

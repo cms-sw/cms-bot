@@ -83,7 +83,7 @@
       },
       {
         "jobName": "ib-tag-and-schdule",
-        "errorType": ["gitErrors"],
+        "errorType": [],
         "maxTime": "18"
       }
     ],

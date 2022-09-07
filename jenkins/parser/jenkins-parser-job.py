@@ -131,7 +131,24 @@ def get_new_running_builds(job_dir, last_processed_log):
     ]
 
 
-def trigger_retry_action(job_to_retry, build_to_retry, action):
+def trigger_retry_action(job_to_retry, build_to_retry, build_dir_path, action):
+    # Skip autoretry if Jenkins already retries
+    if grep(os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True):
+        print("... Jenkins already takes care of retrying. Skipping ...")
+        if grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True): return
+        # Update description of the failed job
+        update_label = (
+            os.environ.get("JENKINS_CLI_CMD")
+            + " set-build-description "
+            + job_to_retry
+            + " "
+            + build_to_retry
+            + " 'Retried\ by\ Jenkins'"
+        )
+        print(update_label)
+        os.system(update_label)
+        return
+
     trigger_retry = (
         os.environ.get("JENKINS_CLI_CMD")
         + " build jenkins-test-retry -p JOB_TO_RETRY="
@@ -321,7 +338,9 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                     + ". Taking action ..."
                 )
                 if action == "retryBuild":
-                    trigger_retry_action(job_to_retry, build_to_retry, action)
+                    trigger_retry_action(
+                        job_to_retry, build_to_retry, build_dir_path, action
+                    )
                 else:
                     # Take action on the nodes
                     node_name = (
@@ -347,7 +366,9 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         trigger_nodeoff_action(
                             job_to_retry, build_to_retry, job_url, node_name
                         )
-                        trigger_retry_action(job_to_retry, build_to_retry, action)
+                        trigger_retry_action(
+                            job_to_retry, build_to_retry, build_dir_path, action
+                        )
                         notify_nodeoff(
                             node_name,
                             regex,
@@ -361,7 +382,9 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         trigger_reconnect_action(
                             job_ro_retry, build_to_retry, job_url, node_name
                         )
-                        trigger_retry_action(job_to_retry, build_to_retry, action)
+                        trigger_retry_action(
+                            job_to_retry, build_to_retry, build_dir_path, action
+                        )
                         notify_nodereconnect(
                             node_name,
                             regex,
@@ -543,7 +566,9 @@ if __name__ == "__main__":
 
     # Define paths:
     jobs_config_path = "cms-bot/jenkins/parser/jobs-config.json"  # This file matches job with their known errors and the action to perform
-    parser_info_path = os.environ.get("HOME") + "/builds/jenkins-test-parser/parser-info.json"  # This file keeps track of the last log processed and the pending builds
+    parser_info_path = (
+        os.environ.get("HOME") + "/builds/jenkins-test-parser/parser-info.json"
+    )  # This file keeps track of the last log processed and the pending builds
     builds_dir = os.environ.get("HOME") + "/builds"  # Path to the actual build logs
 
     # Define e-mails to notify

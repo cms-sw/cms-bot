@@ -49,6 +49,14 @@
       "start_date": 1588377600
     }
   ], 
+  "JanFSchulte": [
+    {
+      "category": [
+        "muon-pog"
+      ], 
+      "start_date": 1662422400
+    }
+  ], 
   "Martin-Grunewald": [
     {
       "category": [
@@ -1915,6 +1923,7 @@
       "category": [
         "muon-pog"
       ], 
+      "end_date": 1662422400, 
       "start_date": 1632787200
     }
   ], 

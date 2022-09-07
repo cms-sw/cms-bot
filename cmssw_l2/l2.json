@@ -1419,7 +1419,14 @@
         "trk-dpg", 
         "tracking-pog"
       ], 
+      "end_date": 1662422400, 
       "start_date": 1632787200
+    }, 
+    {
+      "category": [
+        "tracking-pog"
+      ], 
+      "start_date": 1662422400
     }
   ], 
   "mommsen": [
@@ -1895,6 +1902,14 @@
       "start_date": 1609632000
     }
   ], 
+  "sroychow": [
+    {
+      "category": [
+        "trk-dpg"
+      ], 
+      "start_date": 1662422400
+    }
+  ], 
   "sscruz": [
     {
       "category": [
@@ -2000,6 +2015,7 @@
       "category": [
         "trk-dpg"
       ], 
+      "end_date": 1662422400, 
       "start_date": 1618272000
     }
   ], 
@@ -2107,6 +2123,7 @@
       "category": [
         "tracking-pog"
       ], 
+      "end_date": 1662422400, 
       "start_date": 1632787200
     }
   ], 

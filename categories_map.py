@@ -845,6 +845,7 @@ CMSSW_CATEGORIES = {
     "CUDADataFormats/HGCal",
     "CUDADataFormats/HcalDigi",
     "CUDADataFormats/HcalRecHitSoA",
+    "CUDADataFormats/PortableTestObjects",
     "CUDADataFormats/SiPixelCluster",
     "CUDADataFormats/SiPixelDigi",
     "CUDADataFormats/SiStripCluster",

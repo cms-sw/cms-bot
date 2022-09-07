@@ -83,7 +83,7 @@
       },
       {
         "jobName": "ib-tag-and-schdule",
-        "errorType": ["gitErrors"],
+        "errorType": [],
         "maxTime": "18"
       }
     ],
@@ -110,7 +110,8 @@
         "errorStr": [
           "fatal: repository .* not found",
           "Tag already exist",
-          "Connection to github\\.com closed by remote host."
+          "Connection to github\\.com closed by remote host.",
+	  "Error while downloading sources from github\\.com"
         ],
         "action": "retryBuild"
       },

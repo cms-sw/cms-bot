@@ -543,7 +543,7 @@ if __name__ == "__main__":
 
     # Define paths:
     jobs_config_path = "jobs-config.json"  # This file matches job with their known errors and the action to perform
-    parser_info_path = "parser-info.json"  # This file keeps track of the last log processed and the pending builds
+    parser_info_path = os.environ.get("HOME") + "/builds/jenkins-test-parser/parser-info.json"  # This file keeps track of the last log processed and the pending builds
     builds_dir = os.environ.get("HOME") + "/builds"  # Path to the actual build logs
 
     # Define e-mails to notify

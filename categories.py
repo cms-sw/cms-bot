@@ -70,6 +70,7 @@ CMSSW_L2 = {
   "epalencia":        ["l1"],
   "rekovic":          ["l1"],
   "rvenditti":        ["dqm"],
+  "syuvivida":        ["dqm"],
   "Saptaparna":       ["generators"],
   "sbein":            ["fastsim"],
   "SiewYan":          ["generators"], 

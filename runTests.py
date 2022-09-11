@@ -430,8 +430,9 @@ class ReleaseTester(object):
         print("runProjectInit> Going regenerate scram caches ... ")
         try:
             ver = os.environ["CMSSW_VERSION"]
+            url = "https://github.com/cms-sw/cmssw/archive/" + ver + ".tar.gz"
             cmd = "cd " + self.cmsswBuildDir + "; rm -rf src;"
-            cmd += "curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/" + ver + ".tar.gz;"
+            cmd += "(curl -k -L -o src.tar.gz " + url + " || wget -O src.tar.gz " + url + ");"
             cmd += "tar -xzf src.tar.gz; mv cmssw-" + ver + " src; rm -rf src.tar.gz;"
             cmd += "mv src/Geometry/TrackerSimData/data src/Geometry/TrackerSimData/data.backup;"
             cmd += "scram build -r echo_CXX"

@@ -6,6 +6,15 @@ import os
 import re
 import time
 
+try:
+    scriptPath = os.path.dirname(os.path.abspath(__file__))
+except NameError:  # __file__ not defined in interactive mode
+    scriptPath = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+if scriptPath not in sys.path:
+    sys.path.append(scriptPath)
+sys.path.append(os.path.join(scriptPath,"python"))
+
 
 class LogChecker(object):
     # --------------------------------------------------------------------------------

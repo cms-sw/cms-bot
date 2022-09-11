@@ -24,6 +24,7 @@ except NameError:  # __file__ not defined in interactive mode
 
 if scriptPath not in sys.path:
     sys.path.append(scriptPath)
+sys.path.append(os.path.join(scriptPath,"python"))
 
 from cmsutils import doCmd, MachineCPUCount, getHostName
 

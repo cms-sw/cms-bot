@@ -5,6 +5,15 @@ from __future__ import print_function
 import os
 import re
 
+try:
+    scriptPath = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    scriptPath = os.path.dirname(os.path.abspath(sys.argv[0]))
+
+if scriptPath not in sys.path:
+    sys.path.append(scriptPath)
+sys.path.append(os.path.join(scriptPath,"python"))
+
 
 class LibDepChecker(object):
     def __init__(self, startDir=None, plat='slc6_amd64_gcc493'):

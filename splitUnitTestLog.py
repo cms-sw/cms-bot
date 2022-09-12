@@ -72,7 +72,10 @@ class LogSplitter(object):
         actLogLines = []
         startFound = False
         for line in lines:
-            line = line.decode("ascii", errors='ignore')
+            if sys.version_info[0] == 2:
+                line = line.decode("ascii", "ignore")
+            else:
+                line = line.decode("ascii", errors="ignore")
             # write out log to individual log file ...
             if startFound and ">> Leaving Package " not in line:
                 actLogLines.append(line)

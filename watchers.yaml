@@ -1542,22 +1542,20 @@ afiqaize:
 - DataFormats/EgammaCandidates
 - DataFormats/EgammaReco
 missirol:
-- CommonTools/PileupAlgos
-- CommonTools/TriggerUtils
+- .*DataFormats
+- .*L1T
+- .*HL
+- .*Trig
+- CommonTools
 - Configuration
-- DataFormats/HLTReco
-- DataFormats/L1Trigger
-- DataFormats/PatCandidates
-- DataFormats/Scouting
-- DQMOffline/Trigger
-- DQM/HLTEvF
-- DQM/HLXMonitor
-- DQM/TrigXMonitor
-- DQM/TrigXMonitorClient
 - EventFilter
-- L1Trig
-- HLTrigger
-- HLTriggerOffline
+- FWCore
+- Heterogeneous
+- Reco
+- SLHCUpgradeSimulations
+- SimTracker
+- TrackingTools
+- Validation
 sobhatta:
 - RecoEgamma
 - RecoEcal

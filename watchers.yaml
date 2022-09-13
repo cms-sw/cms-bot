@@ -1756,7 +1756,6 @@ skinnari:
 - L1Trigger/TrackTrigger
 - L1Trigger/TrackerDTC
 swertz:
-- PhysicsTools/NanoAOD
 - DataFormats/SiStrip
 - CUDADataFormats/SiStripCluster
 - RecoLocalTracker/ClusterParameterEstimator

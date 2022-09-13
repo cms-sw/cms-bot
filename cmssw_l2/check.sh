@@ -3,7 +3,7 @@ push_chg=true
 if [ "$1" = "" -o "$1" = "false" ] ; then push_chg=false ; fi
 sdir=$(realpath $(dirname $0))
 [ -f ${sdir}/l2.json ] || echo '{}' > ${sdir}/l2.json
-old_commit="$(cat ${sdir}/commit.txt)"
+old_commit="$(tail -1 ${sdir}/commit.txt)"
 new_commit="${old_commit}"
 rm -rf update_cmssw_l2
 git clone -q git@github.com:cms-sw/cms-bot update_cmssw_l2
@@ -16,6 +16,8 @@ pushd update_cmssw_l2
     cur_time=$(echo $data | sed 's|.*:||')
     git cherry-pick $commit
     if [ $(git diff --name-only HEAD^ | grep "^categories.py" | wc -l) -gt 0 ] ; then
+      [ $(grep $commit ${sdir}/commit.txt | wc -l) -eq 0 ] || continue
+      echo ${commit} >> ${sdir}/commit.txt
       new_commit="${commit}"
       echo "Working on $commit"
       ${sdir}/update.py ${sdir}/l2.json ${cur_time} 2>&1
@@ -26,7 +28,6 @@ popd
 rm -rf update_cmssw_l2
 if [ "${new_commit}" != "${old_commit}" ] ; then
   pushd ${sdir}
-    echo "${new_commit}" > commit.txt
     if $push_chg ; then
       git add commit.txt l2.json
       git commit -a -m "Updated CMSSW L2 category information ${new_commit}"

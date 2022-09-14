@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 push_chg=true
+default_commit_limits=50
 if [ "$1" = "" -o "$1" = "false" ] ; then push_chg=false ; fi
 sdir=$(realpath $(dirname $0))
 [ -f ${sdir}/l2.json ] || echo '{}' > ${sdir}/l2.json
@@ -26,7 +27,7 @@ pushd update_cmssw_l2
       rm -rf *.pyc __pycache__
     fi
   done
-  if [ $commit_cnt -gt 20 ] ; then
+  if [ ${commit_cnt} -gt ${default_commit_limits} ] ; then
     new_commit="${commit}"
   fi
 popd

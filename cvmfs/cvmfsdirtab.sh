@@ -25,9 +25,9 @@ for cmsdir in "$@" ; do
   done
   if [ -d ${CVMFS_DIR}/$cmsdir/spack ]; then
     echo "/${cmsdir}/spack/share"
-    echo "/${cmsdir}/spack/share/cms/data-l1trigger-l1tmuon"
-    echo "/${cmsdir}/spack/share/cms/data-generatorinterface-evtgeninterface"
-    echo "/${cmsdir}/spack/share/cms/data-magneticfield-interpolation/*"
+    echo "/${cmsdir}/spack/share/data-l1trigger-l1tmuon"
+    echo "/${cmsdir}/spack/share/data-generatorinterface-evtgeninterface"
+    echo "/${cmsdir}/spack/share/data-magneticfield-interpolation/*"
     echo "/${cmsdir}/spack"
     # All platforms
     echo "/${cmsdir}/spack/*_*_*"

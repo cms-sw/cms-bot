@@ -27,7 +27,8 @@ def update_stats(proc):
         mem   = cld.memory_full_info()
         for a in ["uss", "pss"]: stats[a]+=getattr(mem,a)
       except:
-        mem   = cld.memory_info_ex()
+        try:    mem   = cld.memory_info()
+        except: mem   = cld.memory_info_ex()
       for a in ["rss", "vms", "shared", "data"]: stats[a]+=getattr(mem,a)
     except: pass
   return stats

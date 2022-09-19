@@ -68,10 +68,12 @@ def get_finished_builds(job_dir, last_processed_log):
     ]
 
 
-def get_old_running_builds(job_dir, job_to_retry, last_processed_log, parser_info_path):
+def get_pending_builds(
+    job_dir, job_to_retry, last_processed_log, parser_info_path, running_builds
+):
     """Get list of long running builds that are left behind in the trend list.
        Report the value from the last run and update it."""
-    current_running_builds = [
+    pending_builds = [
         dir.name
         for dir in os.scandir(job_dir)
         if dir.name.isdigit()
@@ -86,36 +88,39 @@ def get_old_running_builds(job_dir, job_to_retry, last_processed_log, parser_inf
 
     # We first check for the old running builds of last run
     with open(parser_info_path, "r") as rotation_file:
-        old_running_builds_object = json.load(rotation_file)
-        old_running_builds_dict = old_running_builds_object["parserInfo"][
+        last_pending_builds_object = json.load(rotation_file)
+        last_pending_builds_dict = last_pending_builds_object["parserInfo"][
             "runningBuilds"
         ]
 
-    if job_to_retry not in old_running_builds_dict:
-        old_running_builds_dict[job_to_retry] = dict()
-        old_running_builds = dict()
+    if job_to_retry not in last_pending_builds_dict:
+        last_pending_builds_dict[job_to_retry] = dict()
+        last_pending_builds = dict()
     else:
-        old_running_builds = old_running_builds_dict[job_to_retry]
+        last_pending_builds = last_pending_builds_dict[job_to_retry]
+
+    # Remove new running builds from list of old builds:
+    last_pending_builds = list(set(last_pending_builds.keys()) - set(running_builds))
 
     # Update value of old running builds in the original object to store it again
-    for build_number in current_running_builds:
+    for build_number in pending_builds:
         if (
             build_number
-            not in old_running_builds_object["parserInfo"]["runningBuilds"][
+            not in last_pending_builds_object["parserInfo"]["runningBuilds"][
                 job_to_retry
             ].keys()
         ):
-            old_running_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
+            last_pending_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
                 build_number
             ] = ""
 
     with open(parser_info_path, "w") as rotation_file:
-        json.dump(old_running_builds_object, rotation_file)
+        json.dump(last_pending_builds_object, rotation_file)
 
-    return current_running_builds, old_running_builds
+    return pending_builds, last_pending_builds
 
 
-def get_new_running_builds(job_dir, last_processed_log):
+def get_running_builds(job_dir, last_processed_log):
     """Get list of new running builds that have been started after the last processed log."""
     return [
         dir.name
@@ -135,7 +140,8 @@ def trigger_retry_action(job_to_retry, build_to_retry, build_dir_path, action):
     # Skip autoretry if Jenkins already retries
     if grep(os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True):
         print("... Jenkins already takes care of retrying. Skipping ...")
-        if grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True): return
+        if grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True):
+            return
         # Update description of the failed job
         update_label = (
             os.environ.get("JENKINS_CLI_CMD")
@@ -311,7 +317,8 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
     log_file_path = os.path.join(build_dir_path, "log")
     envvars_file_path = os.path.join(build_dir_path, "injectedEnvVars.txt")
 
-    if not os.path.exists(log_file_path): return
+    if not os.path.exists(log_file_path):
+        return
     # TODO: Try not to load everything on memory
     text_log = open(log_file_path, errors="ignore")
     lines = text_log.readlines()
@@ -437,9 +444,9 @@ def get_last_processed_log(parser_info_path, job_to_retry):
     return last_processed_log, processed_object
 
 
-def update_last_processed_log(processed_object, job_to_retry, builds_list):
+def update_last_processed_log(processed_object, job_to_retry, finished_builds):
     """Update build number value of the parser's last processed log."""
-    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(builds_list)
+    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(finished_builds)
 
     with open(parser_info_path, "w") as processed_file:
         json.dump(processed_object, processed_file)
@@ -473,16 +480,23 @@ def check_running_time(
         os.environ.get("JENKINS_URL") + "job/jenkins-test-parser/" + parser_build_id
     )
 
+    with open(parser_info_path, "r") as rotation_file:
+        last_pending_builds_object = json.load(rotation_file)
+
+    if (
+        build_to_retry
+        not in last_pending_builds_object["parserInfo"]["runningBuilds"][job_to_retry]
+    ):
+        last_pending_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
+            build_to_retry
+        ] = ""
+        with open(parser_info_path, "w") as rotation_file:
+            json.dump(last_pending_builds_object, rotation_file)
+
     if duration > datetime.timedelta(hours=max_running_time):
-        with open(parser_info_path, "r") as rotation_file:
-            old_running_builds_object = json.load(rotation_file)
 
         if (
-            build_to_retry
-            not in old_running_builds_object["parserInfo"]["runningBuilds"][
-                job_to_retry
-            ]
-            or old_running_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
+            last_pending_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
                 build_to_retry
             ]
             == ""
@@ -506,19 +520,20 @@ def check_running_time(
                 parser_url,
             )
 
-            old_running_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
+            last_pending_builds_object["parserInfo"]["runningBuilds"][job_to_retry][
                 build_to_retry
             ] = "emailSent"
             with open(parser_info_path, "w") as rotation_file:
-                json.dump(old_running_builds_object, rotation_file)
+                json.dump(last_pending_builds_object, rotation_file)
         else:
             print(
                 "... Email notification already send for build #"
                 + build_to_retry
                 + " ("
                 + job_url
-                + ")"
-                + " ... Waiting for action"
+                + "). It has been running for "
+                + str(duration)
+                + " hours ... Waiting for action"
             )
     else:
         print(
@@ -529,7 +544,7 @@ def check_running_time(
             + ")"
             + " has been running for "
             + str(duration)
-            + " ... OK"
+            + " hours ... OK"
         )
 
 
@@ -596,33 +611,36 @@ if __name__ == "__main__":
                 parser_info_path, job_to_retry
             )
 
-            builds_list = get_finished_builds(job_dir, last_processed_log)
-            newest_running_builds = get_new_running_builds(job_dir, last_processed_log)
+            finished_builds = get_finished_builds(job_dir, last_processed_log)
+            running_builds = get_running_builds(job_dir, last_processed_log)
 
             # Check for running builds left behind and store them to keep track
-            current_running_builds, old_running_builds = get_old_running_builds(
-                job_dir, job_to_retry, last_processed_log, parser_info_path
+            pending_builds, last_pending_builds = get_pending_builds(
+                job_dir,
+                job_to_retry,
+                last_processed_log,
+                parser_info_path,
+                running_builds,
             )
 
-            if current_running_builds or newest_running_builds:
+            if pending_builds or running_builds:
                 print(
                     "Builds "
-                    + str(current_running_builds + newest_running_builds)
-                    + " are still running (pending) for job "
+                    + str(pending_builds + running_builds)
+                    + " are still running for job "
                     + job_to_retry
                 )
 
-            old_running_builds_list = list(old_running_builds.keys())
-
-            if not old_running_builds_list and not newest_running_builds:
+            if not last_pending_builds and not running_builds:
                 print("No builds running for " + job_to_retry)
                 pass
-            elif sorted(current_running_builds) != sorted(old_running_builds_list):
+            elif sorted(pending_builds) != sorted(last_pending_builds):
                 extra_list = [
                     build
-                    for build in old_running_builds_list
-                    if build not in current_running_builds
+                    for build in last_pending_builds
+                    if build not in pending_builds
                 ]
+
                 print(
                     "Builds "
                     + str(extra_list)
@@ -635,23 +653,21 @@ if __name__ == "__main__":
                     )
                     # Remove from rotation dict
                     with open(parser_info_path, "r") as rotation_file:
-                        old_running_builds_object = json.load(rotation_file)
+                        last_pending_builds_object = json.load(rotation_file)
 
-                    old_running_builds_object["parserInfo"]["runningBuilds"][
+                    last_pending_builds_object["parserInfo"]["runningBuilds"][
                         job_to_retry
                     ].pop(build_to_retry)
 
                     with open(parser_info_path, "w") as rotation_file:
-                        json.dump(old_running_builds_object, rotation_file)
+                        json.dump(last_pending_builds_object, rotation_file)
             else:
                 print(
                     "Checking for how long the pending builds have been running (maximum running time: "
                     + str(max_running_time)
                     + " hours) ..."
                 )
-                for build_to_check in sorted(
-                    old_running_builds_list + newest_running_builds
-                ):
+                for build_to_check in sorted(last_pending_builds + running_builds):
                     check_running_time(
                         functools.reduce(
                             os.path.join, [job_dir, build_to_check, "build.xml"]
@@ -661,7 +677,7 @@ if __name__ == "__main__":
                         max_running_time,
                     )
 
-            if not builds_list:
+            if not finished_builds:
                 print("No new finished builds for job " + job_to_retry + " to parse")
                 continue
 
@@ -669,14 +685,14 @@ if __name__ == "__main__":
                 "Job "
                 + job_to_retry
                 + " has the following new builds to process: "
-                + str(builds_list)
+                + str(finished_builds)
             )
 
             with open(parser_info_path, "r") as rotation_file:
-                old_running_builds_object = json.load(rotation_file)
+                last_pending_builds_object = json.load(rotation_file)
 
             # Process logs of failed builds
-            for build_to_retry in builds_list:
+            for build_to_retry in finished_builds:
                 check_and_trigger_action(
                     build_to_retry, job_dir, job_to_retry, error_list
                 )
@@ -685,9 +701,9 @@ if __name__ == "__main__":
                 mark_build_as_retried(job_dir, job_to_retry, build_to_retry)
 
             with open(parser_info_path, "w") as rotation_file:
-                json.dump(old_running_builds_object, rotation_file)
+                json.dump(last_pending_builds_object, rotation_file)
 
             # Update the value of the last log processed
-            update_last_processed_log(processed_object, job_to_retry, builds_list)
+            update_last_processed_log(processed_object, job_to_retry, finished_builds)
 
     print("All jobs have been checked!")

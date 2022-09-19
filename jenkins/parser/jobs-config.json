@@ -18,7 +18,7 @@
           "timedOut",
           "segmentationFault"
         ],
-        "maxTime": "5"
+        "maxTime": "10"
       },
       {
         "jobName": "ib-run-profiling",
@@ -74,7 +74,7 @@
       {
         "jobName": "ib-run-pr-tests",
         "errorType": ["gitErrors"],
-        "maxTime": "10"
+        "maxTime": "12"
       },
       {
         "jobName": "update-github-pages",

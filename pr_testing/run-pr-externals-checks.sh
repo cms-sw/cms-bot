@@ -9,6 +9,7 @@ cmspkg="${base_dir}/common/cmspkg -a $SCRAM_ARCH"
 deps=$(${cmspkg} env -- rpm -q --requires ${tool_pkg} | tr '\n' ' ')
 LOGFILE=$WORKSPACE/externals-checks.log
 rm -f $LOGFILE ; touch $LOGFILE
+echo "Looking in to ${tool_conf} ${tool_pkg} with base dir ${base_dir}"
 for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; do
   pkg_dir=$(echo $init | sed 's|/etc/profile.d/init.sh||')
   pkg=$(echo $pkg_dir | sed "s|$base_dir/$SCRAM_ARCH/||;s|/|+|g")

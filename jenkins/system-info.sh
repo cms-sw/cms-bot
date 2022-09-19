@@ -13,7 +13,7 @@ done
 #cleanup old /tmp files
 ([ -f /tmp/$(whoami) ] && rm -f /tmp/$(whoami)) || true
 ([ -d /tmp/$(whoami) ] && touch /tmp/$(whoami)) || true
-find /tmp -mindepth 1 -maxdepth 1 -mtime +1 -user $(whoami) -exec rm -rf {} \; || true
+find /tmp -mindepth 1 -maxdepth 1 -mtime +2 -user $(whoami) -exec rm -rf {} \; || true
 
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 

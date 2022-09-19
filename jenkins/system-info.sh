@@ -179,8 +179,9 @@ if [ $(hostname | grep 'lxplus' | wc -l) -gt 0 ] ; then
   hname=$(hostname -s)
   case ${HOST_CMS_ARCH} in
     slc6_*) lxplus_type="lxplus6";;
-    slc7_*) lxplus_type="lxplus7";;
-    cc8_*|cs8_*) lxplus_type="lxplus8";;
+    slc7_*|cc7_*|cs7_*) lxplus_type="lxplus7";;
+    cc8_*|cs8_*|el8_*) lxplus_type="lxplus8";;
+    cs9_*|el9_*) lxplus_type="lxplus9";;
   esac
   if [ "${CLEANUP_WORKSPACE}" != "cleanup" ] ; then
     SLAVE_LABELS="$hname lxplus-scripts ${lxplus_type}-scripts ${SLAVE_LABELS}"

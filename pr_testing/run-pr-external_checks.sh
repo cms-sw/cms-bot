@@ -2,7 +2,7 @@
 source $(dirname $0)/setup-pr-test-env.sh
 toolconf_file=$CMSSW_BASE/config/toolbox/$SCRAM_ARCH/tools/selected/python-paths.xml
 [ -f $toolconf_file ] || exit 0
-tool_conf=$(grep /cms/cmssw-tool-conf/ $toolconf_file | tr ' ' '\n' | grep /cmssw-tool-conf/ | sed 's|.*=||;s|"||g' | rev  | cut -d/ -f4- | rev)
+tool_conf=$(grep -E '/cms/cmssw-(patch-|)tool-conf/' $toolconf_file | tr ' ' '\n' | grep -E '/cmssw-(patch-|)tool-conf/' | sed 's|.*=||;s|"||g' | rev  | cut -d/ -f4- | rev)
 tool_pkg=$(echo $tool_conf | rev | cut -d/ -f1-3 | rev | tr '/' '+')
 base_dir=$(echo $tool_conf | sed "s|/$SCRAM_ARCH/.*||")
 cmspkg="${base_dir}/common/cmspkg -a $SCRAM_ARCH"

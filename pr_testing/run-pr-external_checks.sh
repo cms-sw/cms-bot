@@ -8,6 +8,9 @@ base_dir=$(echo $tool_conf | sed "s|/$SCRAM_ARCH/.*||")
 cmspkg="${base_dir}/common/cmspkg -a $SCRAM_ARCH"
 deps=$(${cmspkg} env -- rpm -q --requires ${tool_pkg} | tr '\n' ' ')
 LOGFILE=$WORKSPACE/externals-checks.log
+if [ -f ${base_dir}/$SCRAM_ARCH/${tool_pkg}.log ] ; then
+  grep "${base_dir}/${SCRAM_ARCH}/" ${base_dir}/$SCRAM_ARCH/${tool_pkg}.log | grep -i ': No such file or directory' > ${WORKSPACE}/externals-checks-missing.log || true
+fi
 rm -f $LOGFILE ; touch $LOGFILE
 echo "Looking in to ${tool_conf} ${tool_pkg} with base dir ${base_dir}"
 for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; do
@@ -19,6 +22,9 @@ for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; 
   [ "${build_dir}" != "" ] || continue
   echo "=====> Search ${pkg_dir}" >> $LOGFILE
   grep "${build_dir}/" -Ir ${pkg_dir} >${WORKSPACE}/match.data 2>&1 || true
+  if [ -f ${WORKSPACE}/externals-checks-missing.log ] ; then
+    grep "${pkg_dir}" ${WORKSPACE}/externals-checks-missing.log >> ${WORKSPACE}/match.data || true
+  fi
   FOUND=$(cat ${WORKSPACE}/match.data |wc -l)
   if [ $FOUND -gt 0 ] ; then
     cat ${WORKSPACE}/match.data

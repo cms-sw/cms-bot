@@ -88,8 +88,8 @@ DO_DAS_QUERY=false
 
 PRODUCTION_RELEASE=false
 CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
-
-if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=$(cd $CMS_BOT_DIR; ${CMSBOT_PYTHON_CMD} -c 'from releases import CMSSW_DEVEL_BRANCH; print(CMSSW_DEVEL_BRANCH)') ; fi
+CMSSW_DEVEL_BRANCH=$(cd $CMS_BOT_DIR; ${CMSBOT_PYTHON_CMD} -c 'from releases import CMSSW_DEVEL_BRANCH; print(CMSSW_DEVEL_BRANCH)')
+if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=${CMSSW_DEVEL_BRANCH} ; fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true
@@ -346,6 +346,7 @@ echo "COMPARISON_IB;$COMPARISON_REL" >> ${RESULTS_FILE}
 PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
 SKIP_STATIC_CHECKS=false
+HAS_EXTERNAL_BUILD=false
 if ${BUILD_EXTERNAL} ; then
     export USE_IB_TAG=false
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
@@ -414,7 +415,7 @@ if ${BUILD_EXTERNAL} ; then
 
     #upload packages build
     BLD_PKGS=$(ls $WORKSPACE/$BUILD_DIR/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug' || true)
-    if [ "${BLD_PKGS}" != "" ] ; then eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
+    if [ "${BLD_PKGS}" != "" ] ; then HAS_EXTERNAL_BUILD=true; eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
     for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
       rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
     done
@@ -1170,6 +1171,12 @@ fi
 
 if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-addon.prop
+fi
+
+if ${HAS_EXTERNAL_BUILD} ; then
+  if [ "$(echo ${CMSSW_DEVEL_BRANCH} | cut -d_ -f-3)" = "$(echo ${CMSSW_DEVEL_BRANCH} | cut -d_ -f-3)" ] ; then
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-external_checks.prop
+  fi
 fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then

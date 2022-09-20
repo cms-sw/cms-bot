@@ -21,9 +21,11 @@ JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins"; fi
 export JENKINS_PREFIX
 if [ -e $WORKSPACE/job.env ] ; then source $WORKSPACE/job.env ; fi
-PR_RESULT_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}"
-if [ ! -f $WORKSPACE/prs_commits ] ; then
-  get_jenkins_artifacts pull-request-integration/${UPLOAD_UNIQ_ID}/prs_commits.txt $WORKSPACE/prs_commits
+if [ "${DRY_RUN}" = "" ] ; then
+  PR_RESULT_URL="https://cmssdt.cern.ch/SDT/${JENKINS_PREFIX}-artifacts/pull-request-integration/${UPLOAD_UNIQ_ID}"
+  if [ ! -f $WORKSPACE/prs_commits ] ; then
+    get_jenkins_artifacts pull-request-integration/${UPLOAD_UNIQ_ID}/prs_commits.txt $WORKSPACE/prs_commits
+  fi
 fi
 cp -f $CMS_BOT_DIR/das-utils/das_client $CMS_BOT_DIR/das-utils/das_client.py
 if [ -e $WORKSPACE/$BUILD_DIR/cmsset_default.sh ] ; then

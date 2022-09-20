@@ -17,10 +17,10 @@ for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; 
   [ $(echo " ${deps} " | grep " ${pkg} "| wc -l) -gt 0 ] || continue
   build_dir=$(${cmspkg} env -- rpm -q --scripts $pkg | grep '/tmp/BUILDROOT/' | head -1 | sed 's|/tmp/BUILDROOT/.*||;s|^[^/]*/|/|')
   [ "${build_dir}" != "" ] || continue
-  echo "Search $build_dir under ${pkg_dir}" >> $LOGFILE
-  for m in $(grep "${build_dir}/" -Ir ${pkg_dir} | grep -v '/direct_url.json:'); do
-    echo "Found:$m" >> $LOGFILE
-  done
+  echo "=====> Search ${pkg_dir}" >> $LOGFILE
+  grep "${build_dir}/" -Ir ${pkg_dir} >>$LOGFILE 2>&1 || true
 done
-echo 'CMSSWTOOLCONF_CHECKS;OK,Externals path checks,See Log,externals-checks.log' >> ${RESULTS_DIR}/externals.txt
-prepare_upload_results
+if [ "${DRY_RUN}" = "" ] ; then
+  echo 'CMSSWTOOLCONF_CHECKS;OK,Externals path checks,See Log,externals-checks.log' >> ${RESULTS_DIR}/externals.txt
+  prepare_upload_results
+fi

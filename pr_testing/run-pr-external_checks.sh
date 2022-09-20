@@ -8,7 +8,7 @@ base_dir=$(echo $tool_conf | sed "s|/$SCRAM_ARCH/.*||")
 cmspkg="${base_dir}/common/cmspkg -a $SCRAM_ARCH"
 deps=$(${cmspkg} env -- rpm -q --requires ${tool_pkg} | tr '\n' ' ')
 if [ -f ${base_dir}/$SCRAM_ARCH/${tool_pkg}.log ] ; then
-  grep "${base_dir}/${SCRAM_ARCH}/" ${base_dir}/$SCRAM_ARCH/${tool_pkg}.log | grep -i ': No such file or directory' > ${WORKSPACE}/externals-checks-missing.log || true
+  cat ${base_dir}/$SCRAM_ARCH/cms+cmssw-*tool-conf*.log | grep "${base_dir}/${SCRAM_ARCH}/" | grep -i ': No such file or directory' > ${WORKSPACE}/externals-checks-missing.log || true
 fi
 echo "Looking in to ${tool_conf} ${tool_pkg} with base dir ${base_dir}"
 mkdir -p ${WORKSPACE}/external_checks

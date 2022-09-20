@@ -18,8 +18,14 @@ for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; 
   build_dir=$(${cmspkg} env -- rpm -q --scripts $pkg | grep '/tmp/BUILDROOT/' | head -1 | sed 's|/tmp/BUILDROOT/.*||;s|^[^/]*/|/|')
   [ "${build_dir}" != "" ] || continue
   echo "=====> Search ${pkg_dir}" >> $LOGFILE
-  grep "${build_dir}/" -Ir ${pkg_dir} >>$LOGFILE 2>&1 || true
+  grep "${build_dir}/" -Ir ${pkg_dir} >${WORKSPACE}/match.data 2>&1 || true
+  FOUND=$(cat ${WORKSPACE}/match.data |wc -l)
+  if [ $FOUND -gt 0 ] ; then
+    cat ${WORKSPACE}/match.data
+    cat ${WORKSPACE}/match.data >> $LOGFILE
+  fi
 done
+rm -f ${WORKSPACE}/match.data
 if [ "${DRY_RUN}" = "" ] ; then
   echo 'CMSSWTOOLCONF_CHECKS;OK,Externals path checks,See Log,externals-checks.log' >> ${RESULTS_DIR}/externals.txt
   prepare_upload_results

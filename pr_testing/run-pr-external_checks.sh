@@ -34,6 +34,7 @@ for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; 
     let cnt=$cnt+1
   else
     rm -f ${WORKSPACE}/external_checks/${pkg_name}.txt
+    echo "  OK: No relocatable path found"
   fi
 done
 [ $cnt -eq 0 ] && echo "<html><body>All OK</body></html>" >  ${WORKSPACE}/external_checks/index.html

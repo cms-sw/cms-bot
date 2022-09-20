@@ -12,6 +12,7 @@ if [ $(ls -d ${base_dir}/$SCRAM_ARCH/*.log 2>/dev/null |wc -l) -gt 0 ] ; then
 fi
 echo "Looking in to ${tool_conf} ${tool_pkg} with base dir ${base_dir}"
 mkdir -p ${WORKSPACE}/external_checks
+cnt=0
 for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; do
   pkg_dir=$(echo $init | sed 's|/etc/profile.d/init.sh||')
   pkg=$(echo $pkg_dir | sed "s|$base_dir/$SCRAM_ARCH/||;s|/|+|g")
@@ -24,12 +25,18 @@ for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; 
   build_dir=$(${cmspkg} env -- rpm -q --scripts $pkg | grep '/tmp/BUILDROOT/' | head -1 | sed 's|/tmp/BUILDROOT/.*||;s|^[^/]*/|/|')
   touch ${WORKSPACE}/external_checks/${pkg_name}.txt
   [ "${build_dir}" != "" ] || continue
-  grep "${build_dir}/" -Ir ${pkg_dir} >${WORKSPACE}/external_checks/${pkg_name}.txt 2>&1 || true
+  (grep "${build_dir}/" -Ir ${pkg_dir} 2>&1 | grep -v '/direct_url.json:' >${WORKSPACE}/external_checks/${pkg_name}.txt) || true
   if [ -f ${WORKSPACE}/externals-checks-missing.log ] ; then
     grep "${pkg_dir}" ${WORKSPACE}/externals-checks-missing.log >> ${WORKSPACE}/external_checks/${pkg_name}.txt || true
   fi
-  cat ${WORKSPACE}/external_checks/${pkg_name}.txt
+  if [ -s ${WORKSPACE}/external_checks/${pkg_name}.txt ] ; then
+    cat ${WORKSPACE}/external_checks/${pkg_name}.txt
+    let cnt=$cnt+1
+  else
+    rm -f ${WORKSPACE}/external_checks/${pkg_name}.txt
+  fi
 done
+[ $cnt -eq 0 ] && echo "<html><body>All OK</body></html>" >  ${WORKSPACE}/external_checks/index.html
 if [ "${DRY_RUN}" = "" ] ; then
   echo 'CMSSWTOOLCONF_CHECKS;OK,Externals path checks,See Log,external_checks' >> ${RESULTS_DIR}/externals_checks.txt
   prepare_upload_results

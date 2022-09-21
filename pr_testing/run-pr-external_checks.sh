@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -ex
 
 function external_check() {
   local pkg_dir=$(echo $1 | sed 's|/etc/profile.d/init.sh||')

@@ -19,7 +19,7 @@ for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; 
   pkg=$(echo $pkg_dir | sed "s|$base_dir/$SCRAM_ARCH/||;s|/|+|g")
   pkg_name=$(echo ${pkg} | cut -d+ -f2)
   echo "Checking: $pkg $pkg_dir"
-  if [ $(echo " ${deps} " | grep " ${pkg} "| wc -l) -eq 0 ] ; then
+  if [ $(echo " ${deps} ${tool_pkg} " | grep " ${pkg} "| wc -l) -eq 0 ] ; then
     echo "  Skipping: $pkg is not deps of ${tool_pkg}"
     continue
   fi

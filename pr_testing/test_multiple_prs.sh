@@ -346,7 +346,6 @@ echo "COMPARISON_IB;$COMPARISON_REL" >> ${RESULTS_FILE}
 PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
 SKIP_STATIC_CHECKS=false
-HAS_EXTERNAL_BUILD=false
 if ${BUILD_EXTERNAL} ; then
     export USE_IB_TAG=false
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
@@ -415,7 +414,7 @@ if ${BUILD_EXTERNAL} ; then
 
     #upload packages build
     BLD_PKGS=$(ls $WORKSPACE/$BUILD_DIR/RPMS/${ARCHITECTURE}/ | grep '.rpm$' | cut -d+ -f2 | grep -v 'coral-debug' || true)
-    if [ "${BLD_PKGS}" != "" ] ; then HAS_EXTERNAL_BUILD=true; eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
+    if [ "${BLD_PKGS}" != "" ] ; then eval $COMPILATION_CMD ${UPLOAD_OPTS} upload ${BLD_PKGS} ; fi
     for d in bootstraptmp tmp RPMS SOURCES  SPECS  SRPMS WEB ; do
       rm -rf $WORKSPACE/$BUILD_DIR/${d} || true
     done
@@ -1173,7 +1172,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-addon.prop
 fi
 
-if ${HAS_EXTERNAL_BUILD} ; then
+if ${BUILD_EXTERNAL} ; then
   if [ "$(echo ${CMSSW_DEVEL_BRANCH} | cut -d_ -f-3)" = "$(echo ${CMSSW_DEVEL_BRANCH} | cut -d_ -f-3)" ] ; then
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-external_checks.prop
   fi

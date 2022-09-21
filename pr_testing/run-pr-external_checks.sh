@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 function external_check() {
   local pkg_dir=$(echo $1 | sed 's|/etc/profile.d/init.sh||')
@@ -46,7 +46,7 @@ let unknown_cnt=$(ls -d ${WORKSPACE}/external_checks/unknown/*.txt | wc  -l)-1 |
 rm -f ${WORKSPACE}/external_checks/relocate/1.txt ${WORKSPACE}/external_checks/unknown/1.txt
 [ ${rel_cnt} -gt 0 ]     || rm -rf ${WORKSPACE}/external_checks/relocate
 [ ${unknown_cnt} -gt 0 ] || rm -rf ${WORKSPACE}/external_checks/unknown
-let cnt=${rel_cnt}+${unknown_cnt}
+let cnt=${rel_cnt}+${unknown_cnt} || true
 [ $cnt -gt 0 ] || echo "<html><body>Great all externals are properly relocated.</body></html>" >  ${WORKSPACE}/external_checks/index.html
 if [ "${DRY_RUN}" = "" ] ; then
   rm -f ${RESULTS_DIR}/externals_checks.txt

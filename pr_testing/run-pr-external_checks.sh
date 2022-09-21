@@ -25,7 +25,7 @@ for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; 
   build_dir=$(${cmspkg} env -- rpm -q --scripts $pkg | grep '/tmp/BUILDROOT/' | head -1 | sed 's|/tmp/BUILDROOT/.*||;s|^[^/]*/|/|')
   touch ${WORKSPACE}/external_checks/${pkg_name}.txt
   [ "${build_dir}" != "" ] || continue
-  (grep "${build_dir}/" -Ir ${pkg_dir} 2>&1 | grep -v '/direct_url.json:' >${WORKSPACE}/external_checks/${pkg_name}.txt) || true
+  (grep "${build_dir}/" -Ir ${pkg_dir} >${WORKSPACE}/external_checks/${pkg_name}.txt) 2>&1 || true
   if [ -f ${WORKSPACE}/externals-checks-missing.log ] ; then
     grep "${pkg_dir}" ${WORKSPACE}/externals-checks-missing.log >> ${WORKSPACE}/external_checks/${pkg_name}.txt || true
   fi

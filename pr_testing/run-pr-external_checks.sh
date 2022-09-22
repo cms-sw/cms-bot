@@ -12,7 +12,8 @@ function external_check() {
   local build_dir=$(${cmspkg} env -- rpm -q --scripts ${pkg} | grep '/tmp/BUILDROOT/' | head -1 | sed 's|/tmp/BUILDROOT/.*||;s|^[^/]*/|/|')
   [ "${build_dir}" != "" ] || return 0
   local LOGFILE=${WORKSPACE}/external_checks/relocate/${pkg_name}.txt
-  (grep "${build_dir}/" -Ir ${pkg_dir} >${LOGFILE} 2>&1) || true
+  #FIXME: Remove direct_url.json condition once cmsdist/build-with-pip.file is fixes to relocate direct_url.json
+  (grep "${build_dir}/" -Ir ${pkg_dir} 2>&1 | grep -v '/direct_url.json:' >${LOGFILE}) || true
   [ ! -s ${LOGFILE} ] && rm -f ${LOGFILE}
   if [ -f ${WORKSPACE}/externals-checks-missing.log ] ; then
     LOGFILE=${WORKSPACE}/external_checks/unknown/${pkg_name}.txt

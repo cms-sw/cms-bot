@@ -36,7 +36,7 @@ if [ $(ls -d ${base_dir}/$SCRAM_ARCH/*.log 2>/dev/null |wc -l) -gt 0 ] ; then
 fi
 echo "Looking in to ${tool_conf} ${tool_pkg} with base dir ${base_dir}"
 mkdir -p ${WORKSPACE}/external_checks/relocate ${WORKSPACE}/external_checks/unknown
-for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh') ; do
+for init in $(find ${base_dir}/${SCRAM_ARCH} -path '*/etc/profile.d/init.sh' | sort) ; do
   while [ $(jobs -p | wc -l) -ge ${NCPU} ] ; do sleep 0.2 ; done
   external_check ${init} &
 done

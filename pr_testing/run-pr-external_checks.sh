@@ -29,7 +29,7 @@ tool_conf=$(grep -E '/cms/cmssw-(patch-|)tool-conf/' $toolconf_file | tr ' ' '\n
 tool_pkg=$(echo $tool_conf | rev | cut -d/ -f1-3 | rev | tr '/' '+')
 base_dir=$(echo $tool_conf | sed "s|/$SCRAM_ARCH/.*||")
 cmspkg="${base_dir}/common/cmspkg -a $SCRAM_ARCH"
-${cmspkg} env -- rpm -q --requires ${tool_pkg} | grep -E '^(cms|external|lcg)\+' > $WORKSPACE/cmssw-tool-conf-deps.log
+${cmspkg} env -- rpm -q --requires ${tool_pkg} | grep -E '^(cms|external|lcg)\+' | sort > $WORKSPACE/cmssw-tool-conf-deps.log
 echo ${tool_pkg} >> $WORKSPACE/cmssw-tool-conf-deps.log
 if [ $(ls -d ${base_dir}/$SCRAM_ARCH/*.log 2>/dev/null |wc -l) -gt 0 ] ; then
   cat ${base_dir}/$SCRAM_ARCH/*.log | grep "${base_dir}/${SCRAM_ARCH}/" | grep -i ': No such file or directory' > ${WORKSPACE}/externals-checks-missing.log || true

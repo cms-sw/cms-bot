@@ -51,8 +51,8 @@ let cnt=${rel_cnt}+${unknown_cnt} || true
 [ $cnt -gt 0 ] || echo "<html><body>Great all externals are properly relocated.</body></html>" >  ${WORKSPACE}/external_checks/index.html
 if [ "${DRY_RUN}" = "" ] ; then
   rm -f ${RESULTS_DIR}/externals_checks.txt
-  [ ${rel_cnt} -eq 0 ]     || echo 'CMSSWTOOLCONF_CHECKS_RELOCATE;OK,Externals Relocation,See Log,external_checks/relocate' >> ${RESULTS_DIR}/externals_checks.txt
-  [ ${unknown_cnt} -eq 0 ] || echo 'CMSSWTOOLCONF_CHECKS_UNKNOW;OK,Externals Unknown files,See Log,external_checks/unknown' >> ${RESULTS_DIR}/externals_checks.txt
+  [ ${rel_cnt} -eq 0 ]     || echo 'CMSSWTOOLCONF_CHECKS_RELOCATE;ERROR,Externals Relocation,See Log,external_checks/relocate' >> ${RESULTS_DIR}/externals_checks.txt
+  [ ${unknown_cnt} -eq 0 ] || echo 'CMSSWTOOLCONF_CHECKS_UNKNOW;ERROR,Externals Unknown files,See Log,external_checks/unknown' >> ${RESULTS_DIR}/externals_checks.txt
   [ $cnt -gt 0 ] || echo 'CMSSWTOOLCONF_CHECKS;OK,Externals Checks,See log,external_checks' >> ${RESULTS_DIR}/externals_checks.txt
   prepare_upload_results
 fi

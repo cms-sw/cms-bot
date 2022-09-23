@@ -8,6 +8,24 @@ import os
 import shutil
 
 workflow_configs = {
+    #Run3 HI workflow
+    "159.03": {
+        "num_events": 100,
+        "steps": {
+            "step4": {
+                "TimeMemoryInfo": True,
+                "FastTimer": True,
+                "igprof": True,
+            },
+            "step5": {
+                "TimeMemoryInfo": True,
+                "FastTimer": True,
+                "igprof": True,
+            },
+         },
+        "nThreads": 1,
+        "matrix": "standard"
+    },
     #Run3 workflow
     "11834.21": {
         "num_events": 400,

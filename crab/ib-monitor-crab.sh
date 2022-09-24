@@ -32,3 +32,4 @@ while true ; do
   fi
   sleep 300
 done
+if [ $(echo "${status}" | grep 'finished' | wc -l) -eq 0 ] ; then exit 1; fi

@@ -36,7 +36,7 @@ if 'CRAB_SITE' in os.environ:
   config.Debug.extraJDL.append('+DESIRED_Sites="%s"' % os.environ['CRAB_SITE'])
 env_str=""
 if 'CMS_PATH' in os.environ:
-  env_str='CMS_PATH=%s' os.environ['CMS_PATH']
+  env_str='CMS_PATH=%s' % os.environ['CMS_PATH']
 if 'SITECONFIG_PATH' in os.environ:
   env_str='%s SITECONFIG_PATH=%s' % (env_str, os.environ['SITECONFIG_PATH'])
 if env_str:

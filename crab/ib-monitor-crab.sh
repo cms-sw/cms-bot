@@ -1,17 +1,6 @@
 #!/bin/bash -ex
-
-trap report EXIT
-
-report() {
-   exit_code=$?
-   if [ ${exit_code} -eq 0 ]; then
-       echo "PASSED" > $WORKSPACE/results/statusfile
-   else
-       echo "FAILED" > $WORKSPACE/results/statusfile
-   fi
-}
-
 [ "${WORKSPACE}" != "" ] || export WORKSPACE=$(pwd) && cd $WORKSPACE
+echo "FAILED" > $WORKSPACE/results/statusfile
 export ID=$(id -u)
 
 CRAB_BUILD_ID=$1
@@ -32,4 +21,6 @@ while true ; do
   fi
   sleep 300
 done
-if [ $(echo "${status}" | grep 'finished' | wc -l) -eq 0 ] ; then exit 1; fi
+if [ $(echo "${status}" | grep 'finished' | wc -l) -gt 0 ] ; then
+   echo "PASSED" > $WORKSPACE/results/statusfile
+fi

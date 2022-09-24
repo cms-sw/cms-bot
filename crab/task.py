@@ -39,5 +39,5 @@ if 'CMS_PATH' in os.environ:
   env_str='CMS_PATH=%s' % os.environ['CMS_PATH']
 if 'SITECONFIG_PATH' in os.environ:
   env_str='%s SITECONFIG_PATH=%s' % (env_str, os.environ['SITECONFIG_PATH'])
-#if env_str:
-#   config.Debug.extraJDL.append('+Environment="%s"' % env_str.strip())
+if env_str:
+   config.Debug.extraJDL.append('Environment="%s"' % env_str.strip())

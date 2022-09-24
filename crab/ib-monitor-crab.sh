@@ -29,6 +29,6 @@ do
   cat $WORKSPACE/status.log >> $WORKSPACE/results/logfile
   if [ "$errval" = "" ] ; then
     # Keep checking until job finishes
-    status=$(grep -o "'State': 'finished'" $WORKSPACE/status.log || echo "")
+    status=$(grep -Eo "'State': '(finished|failed)'" $WORKSPACE/status.log || echo "")
   fi
 done

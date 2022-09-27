@@ -17,14 +17,14 @@ from RelValArgs import GetMatrixOptions
 os.environ["PATH"] = "%s/das-utils:%s" % (BOT_DIR, os.environ["PATH"])
 cmd = "runTheMatrix.py -j %s --maxSteps=0 %s" % (MachineCPUCount, GetMatrixOptions(os.environ["CMSSW_VERSION"], os.environ["SCRAM_ARCH"]))
 print("Running ",cmd)
-e, o = run_cmd("touch runall-report-step123-.log ; rm -rf rel; mkdir rel; pushd rel; %s;  [ -f runall-report-step123-.log ] && cat runall-report-step123-.log > ../runall-report-step123-.log; popd" % cmd)
+e, o = run_cmd("touch runall-report-step123-.log ; rm -rf rel; mkdir rel; cd rel; %s;  [ -f runall-report-step123-.log ] && cp runall-report-step123-.log ../" % cmd)
 print(o)
 err=0
 if e: err=1
 if os.getenv("MATRIX_EXTRAS",""):
   cmd = "%s -l %s %s" % (cmd, os.getenv("MATRIX_EXTRAS",""), os.getenv("EXTRA_MATRIX_ARGS",""))
   print("Running ",cmd)
-  e, o = run_cmd("rm -rf rel; mkdir rel; pushd rel; %s; ; [ -f runall-report-step123-.log ] && cat runall-report-step123-.log > ../runall-report-step123-.log; popd" % cmd)
+  e, o = run_cmd("rm -rf rel; mkdir rel; cd rel; %s ; [ -f runall-report-step123-.log ] && cat runall-report-step123-.log >> ../runall-report-step123-.log" % cmd)
   print(o)
   if e: err=1
 sys.exit(err)

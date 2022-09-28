@@ -572,7 +572,7 @@ def mark_commit_status(commit, repository, context="default", state="pending", u
   if reset:
     statuses = get_combined_statuses(commit, repository)
     if 'statuses' not in statuses: return
-    params = {'state': 'pending', 'target_url': '', 'description': 'Not yet started'}
+    params = {'state': 'success', 'target_url': '', 'description': 'Not yet started or might not rerun'}
     for s in statuses['statuses']:
       if s['context'].startswith(context+"/"):
         params['context'] = s['context']

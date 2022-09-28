@@ -1037,6 +1037,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             all_states[s.state].append(s.context)
           print("Test status for %s: %s" % (status.context, all_states))
           if "pending" in all_states:
+            if status.description.startswith("Finished"):
+              print("Some test might have been restarted for %s. Resetting the status" % status.context)
+              if not dryRun:
+                last_commit_obj.create_status("success", description="OK", target_url=status.target_url, context=status.context)
             continue
           if "success" in all_states:
             lab_stats[cdata[-1]][-1] = "success"

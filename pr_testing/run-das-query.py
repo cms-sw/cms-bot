@@ -22,9 +22,17 @@ print(o)
 err=0
 if e: err=1
 if os.getenv("MATRIX_EXTRAS",""):
-  cmd = "%s -l %s %s" % (cmd, os.getenv("MATRIX_EXTRAS",""), os.getenv("EXTRA_MATRIX_ARGS",""))
-  print("Running ",cmd)
-  e, o = run_cmd("rm -rf rel; mkdir rel; cd rel; %s ; [ -f runall-report-step123-.log ] && cat runall-report-step123-.log >> ../runall-report-step123-.log" % cmd)
-  print(o)
-  if e: err=1
+  e, o = run_cmd("grep -E '^[1-9][0-9]*(\.[0-9]*|)_' runall-report-step123-.log | sed 's|_.*||'")
+  all_wfs = [wf for wf in o.split('\n') if wf]
+  print("All WFS:",all_wfs)
+  new_wfs = []
+  for wf in os.getenv("MATRIX_EXTRAS","").split(","):
+    if wf and (not wf in all_wfs) and (not wf in new_wfs): new_wfs.append(wf)
+  print("New WFs:",new_wfs)
+  if new_wfs:
+    cmd = "%s -l %s %s" % (cmd, ','.join(new_wfs), os.getenv("EXTRA_MATRIX_ARGS",""))
+    print("Running ",cmd)
+    e, o = run_cmd("rm -rf rel; mkdir rel; cd rel; %s ; [ -f runall-report-step123-.log ] && cat runall-report-step123-.log >> ../runall-report-step123-.log" % cmd)
+    print(o)
+    if e: err=1
 sys.exit(err)

@@ -136,24 +136,25 @@ def get_running_builds(job_dir, last_processed_log):
     ]
 
 
-def trigger_retry_action(job_to_retry, build_to_retry, build_dir_path, action):
-    # Skip autoretry if Jenkins already retries
-    if grep(os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True):
-        print("... Jenkins already takes care of retrying. Skipping ...")
-        if grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True):
+def trigger_retry_action(job_to_retry, build_to_retry, build_dir_path, action, regex):
+    # Skip autoretry if Jenkins already retries, unless connection issue.
+    if "Remote call on .* failed" not in regex:
+        if grep(os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True):
+            print("... Jenkins already takes care of retrying. Skipping ...")
+            if grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True):
+                return
+            # Update description of the failed job
+            update_label = (
+                os.environ.get("JENKINS_CLI_CMD")
+                + " set-build-description "
+                + job_to_retry
+                + " "
+                + build_to_retry
+                + " 'Retried\ by\ Jenkins'"
+            )
+            print(update_label)
+            os.system(update_label)
             return
-        # Update description of the failed job
-        update_label = (
-            os.environ.get("JENKINS_CLI_CMD")
-            + " set-build-description "
-            + job_to_retry
-            + " "
-            + build_to_retry
-            + " 'Retried\ by\ Jenkins'"
-        )
-        print(update_label)
-        os.system(update_label)
-        return
 
     trigger_retry = (
         os.environ.get("JENKINS_CLI_CMD")
@@ -346,7 +347,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                 )
                 if action == "retryBuild":
                     trigger_retry_action(
-                        job_to_retry, build_to_retry, build_dir_path, action
+                        job_to_retry, build_to_retry, build_dir_path, action, regex
                     )
                 else:
                     # Take action on the nodes
@@ -374,7 +375,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                             job_to_retry, build_to_retry, job_url, node_name
                         )
                         trigger_retry_action(
-                            job_to_retry, build_to_retry, build_dir_path, action
+                            job_to_retry, build_to_retry, build_dir_path, action, regex
                         )
                         notify_nodeoff(
                             node_name,
@@ -390,7 +391,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                             job_ro_retry, build_to_retry, job_url, node_name
                         )
                         trigger_retry_action(
-                            job_to_retry, build_to_retry, build_dir_path, action
+                            job_to_retry, build_to_retry, build_dir_path, action, regex
                         )
                         notify_nodereconnect(
                             node_name,

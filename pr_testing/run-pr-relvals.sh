@@ -12,9 +12,13 @@ fi
 
 mark_commit_status_all_prs "${GH_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
+touch ${LOG}
 echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
   dateBefore=$(date +"%s")
-  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee -a ${LOG}
+  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee ${LOG}.tmp
+  if [ $(grep -a "ALL_OK" ${LOG}.tmp | wc -l) -eq 0 ] ; then echo "ERROR Running runTheMatrix for '$args'" >> ${LOG}.tmp ; fi
+  cat ${LOG}.tmp >> ${LOG}
+  rm -rf ${LOG}.tmp
   dateAfter=$(date +"%s")
   diff=$(($dateAfter-$dateBefore))
   if [ "$diff" -ge $MATRIX_TIMEOUT ]; then

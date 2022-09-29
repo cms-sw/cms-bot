@@ -415,11 +415,11 @@ mv ${RESULTS_FILE} $WORKSPACE/testsResults/
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
 ${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_RESULT_URL} \
   -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
-  --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt  --report-file $WORKSPACE/testsResults/20-report.res
+  --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt  --report-file $WORKSPACE/testsResults/20-comparison-report.res
 
 if [ "${TEST_FLAVOR}" != "" ] ; then
-  sed -i -e "s|## Comparison Summary|## ${UC_TEST_FLAVOR} Comparison Summary|" $WORKSPACE/testsResults/20-report.res
-  mv $WORKSPACE/testsResults/20-report.res $WORKSPACE/testsResults/20-${TEST_FLAVOR}-report.res
+  sed -i -e "s|## Comparison Summary|## ${UC_TEST_FLAVOR} Comparison Summary|" $WORKSPACE/testsResults/20-comparison-report.res
+  mv $WORKSPACE/testsResults/20-comparison-report.res $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
 fi
 
 if [ "$DRY_RUN" = "" ] ; then

@@ -40,9 +40,11 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo 'ADDON_TESTS;ERROR,AddOn Tests,See Logs,addOnTests' >> ${RESULTS_DIR}/adddon.txt
   ALL_OK=false
   ADDON_OK=false
-  $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL -f $WORKSPACE/addOnTests.log --report-file ${RESULTS_DIR}/13-report.res --report-url ${PR_RESULT_URL}
-  echo "AddOn" > ${RESULTS_DIR}/13-failed.res
+  $CMS_BOT_DIR/report-pull-request-results PARSE_ADDON_FAIL -f $WORKSPACE/addOnTests.log --report-file ${RESULTS_DIR}/13-addon-report.res --report-url ${PR_RESULT_URL}
+  echo "AddOn" > ${RESULTS_DIR}/13-addon-failed.res
 else
+  touch ${RESULTS_DIR}/13-addon-failed.res
+  touch ${RESULTS_DIR}/13-addon-report.res
   echo "no errors in the addOnTests!!"
   echo 'ADDON_TESTS;OK,AddOn Tests,See Logs,addOnTests' >> ${RESULTS_DIR}/adddon.txt
 fi

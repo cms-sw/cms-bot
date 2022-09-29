@@ -65,15 +65,17 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo "MATRIX${UC_TEST_FLAVOR}_TESTS;ERROR,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/relval${UC_TEST_FLAVOR}.txt
   ALL_OK=false
   RELVALS_OK=false
-  $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res --report-url ${PR_RESULT_URL} $NO_POST
+  $CMS_BOT_DIR/report-pull-request-results PARSE_MATRIX_FAIL -f ${LOG} --report-file ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-report.res --report-url ${PR_RESULT_URL} $NO_POST
   if [ "${TEST_FLAVOR}" != "" ] ; then
-    sed -i -e "s|## RelVals|## RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix-results|/runTheMatrix${UC_TEST_FLAVOR}-results|g" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-report.res
-    echo "RelVals-${UC_TEST_FLAVOR}" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-failed.res
+    sed -i -e "s|## RelVals|## RelVals-${UC_TEST_FLAVOR}|;s|/runTheMatrix-results|/runTheMatrix${UC_TEST_FLAVOR}-results|g" ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-report.res
+    echo "RelVals-${UC_TEST_FLAVOR}" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-failed.res
   else
-    echo "RelVals" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-failed.res
+    echo "RelVals" > ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-failed.res
   fi
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'success' -d "Not run due to failure in relvals" ${MARK_OPTS}
 else
+  touch ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-failed.res
+  touch ${RESULTS_DIR}/12${UC_TEST_FLAVOR}-relvals-report.res
   echo "no errors in the RelVals!!"
   echo "MATRIX${UC_TEST_FLAVOR}_TESTS;OK,Matrix ${UC_TEST_FLAVOR} Tests Outputs,See Logs,runTheMatrix${UC_TEST_FLAVOR}-results" >> ${RESULTS_DIR}/relval${UC_TEST_FLAVOR}.txt
 

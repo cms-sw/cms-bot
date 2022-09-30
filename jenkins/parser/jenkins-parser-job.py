@@ -36,7 +36,7 @@ def get_errors_list(jobs_object, job_id):
                 jobs_object["jobsConfig"]["errorMsg"][ii]["errorStr"]
             )
     # Get the error keys of the concrete job ii
-    error_keys = jobs_object["jobsConfig"]["jenkinsJobs"][job_id]["errorType"]
+    error_keys = jobs_object["jobsConfig"]["jenkinsJobs"][job_id]["errorType"][:]
     error_keys.extend(common_keys)
     error_keys = list(set(error_keys))
 

@@ -92,19 +92,25 @@
         "errorStr": [
           "Build timed out"
         ],
-        "action": "retryBuild"
+        "action": "retryBuild",
+	"forceRetry": "false",
+	"allJobs": "false"
       },
       "hudsonConnection": {
         "errorStr": [
           "Remote call on .* failed. The channel is closing down or has closed down"
         ],
-        "action": "retryBuild"
+        "action": "retryBuild",
+        "forceRetry": "true",
+        "allJobs": "true"
       },
       "segmentationFault": {
         "errorStr": [
           "unexpected fault address"
         ],
-        "action": "retryBuild"
+        "action": "retryBuild",
+        "forceRetry": "false",
+        "allJobs": "false"
       },
       "gitErrors": {
         "errorStr": [
@@ -113,32 +119,42 @@
           "Connection to github\\.com closed by remote host.",
 	  "Error while downloading sources from github\\.com"
         ],
-        "action": "retryBuild"
+        "action": "retryBuild",
+        "forceRetry": "false",
+        "allJobs": "false"
       },
       "busError": {
         "errorStr": [
           "Bus error",
           "Transport endpoint is not connected"
         ],
-        "action": "nodeOff"
+        "action": "nodeOff",
+        "forceRetry": "false",
+        "allJobs": "false"
       },
       "gridConnection": {
         "errorStr": [
           "Unexpected exception occurred while performing connect-node command"
         ],
-        "action": "retryBuild"
+        "action": "retryBuild",
+        "forceRetry": "false",
+        "allJobs": "false"
       },
       "afsFailure": {
         "errorStr": [
           "no such identity: .* Permission denied"
         ],
-        "action": "nodeOff"
+        "action": "nodeOff",
+        "forceRetry": "false",
+        "allJobs": "false"
       },
       "workspaceFailure": {
         "errorStr": [
           "Cannot delete workspace: Remote call on .* failed"
         ],
-        "action": "nodeReconnect"
+        "action": "nodeReconnect",
+        "forceRetry": "false",
+        "allJobs": "true"
       }
     }
   }

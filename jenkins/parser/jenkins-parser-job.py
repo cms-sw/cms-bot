@@ -23,10 +23,22 @@ def grep(filename, pattern, verbose=False):
 def get_errors_list(jobs_object, job_id):
     """Get list of errors to check for a concrete job with the corresponding action."""
 
-    # Get the error keys of the concrete job ii
+    # Get errorMsg object
     jenkins_errors = jobs_object["jobsConfig"]["errorMsg"]
-
-    error_keys = jobs_object["jobsConfig"]["jenkinsJobs"][job_id]["errorType"]
+    # Get common error messages and regex that must be force retried
+    common_keys = []
+    force_retry_regex = []
+    for ii in jobs_object["jobsConfig"]["errorMsg"].keys():
+        if jobs_object["jobsConfig"]["errorMsg"][ii]["allJobs"] == "true":
+            common_keys.append(ii)
+        if jobs_object["jobsConfig"]["errorMsg"][ii]["forceRetry"] == "true":
+            force_retry_regex.extend(
+                jobs_object["jobsConfig"]["errorMsg"][ii]["errorStr"]
+            )
+    # Get the error keys of the concrete job ii
+    error_keys = jobs_object["jobsConfig"]["jenkinsJobs"][job_id]["errorType"][:]
+    error_keys.extend(common_keys)
+    error_keys = list(set(error_keys))
 
     # Get the error messages of the error keys
     error_list = []
@@ -46,7 +58,7 @@ def get_errors_list(jobs_object, job_id):
                 "Action not defined. Please define a valid action in "
                 + jobs_config_path
             )
-    return error_list
+    return error_list, force_retry_regex
 
 
 def get_finished_builds(job_dir, last_processed_log):
@@ -136,24 +148,27 @@ def get_running_builds(job_dir, last_processed_log):
     ]
 
 
-def trigger_retry_action(job_to_retry, build_to_retry, build_dir_path, action):
-    # Skip autoretry if Jenkins already retries
-    if grep(os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True):
-        print("... Jenkins already takes care of retrying. Skipping ...")
-        if grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True):
+def trigger_retry_action(
+    job_to_retry, build_to_retry, build_dir_path, action, regex, force_retry_regex
+):
+    # Skip autoretry if Jenkins already retries, unless connection issue.
+    if regex not in force_retry_regex:
+        if grep(os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True):
+            print("... Jenkins already takes care of retrying. Skipping ...")
+            if grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True):
+                return
+            # Update description of the failed job
+            update_label = (
+                os.environ.get("JENKINS_CLI_CMD")
+                + " set-build-description "
+                + job_to_retry
+                + " "
+                + build_to_retry
+                + " 'Retried\ by\ Jenkins'"
+            )
+            print(update_label)
+            os.system(update_label)
             return
-        # Update description of the failed job
-        update_label = (
-            os.environ.get("JENKINS_CLI_CMD")
-            + " set-build-description "
-            + job_to_retry
-            + " "
-            + build_to_retry
-            + " 'Retried\ by\ Jenkins'"
-        )
-        print(update_label)
-        os.system(update_label)
-        return
 
     trigger_retry = (
         os.environ.get("JENKINS_CLI_CMD")
@@ -346,7 +361,12 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                 )
                 if action == "retryBuild":
                     trigger_retry_action(
-                        job_to_retry, build_to_retry, build_dir_path, action
+                        job_to_retry,
+                        build_to_retry,
+                        build_dir_path,
+                        action,
+                        regex,
+                        force_retry_regex,
                     )
                 else:
                     # Take action on the nodes
@@ -374,7 +394,12 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                             job_to_retry, build_to_retry, job_url, node_name
                         )
                         trigger_retry_action(
-                            job_to_retry, build_to_retry, build_dir_path, action
+                            job_to_retry,
+                            build_to_retry,
+                            build_dir_path,
+                            action,
+                            regex,
+                            force_retry_regex,
                         )
                         notify_nodeoff(
                             node_name,
@@ -390,7 +415,12 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                             job_ro_retry, build_to_retry, job_url, node_name
                         )
                         trigger_retry_action(
-                            job_to_retry, build_to_retry, build_dir_path, action
+                            job_to_retry,
+                            build_to_retry,
+                            build_dir_path,
+                            action,
+                            regex,
+                            force_retry_regex,
                         )
                         notify_nodereconnect(
                             node_name,
@@ -574,7 +604,7 @@ if __name__ == "__main__":
     # Parsing the build id of the current job
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "parser_build_id", help="input current build id from Jenkins env vars"
+        "parser_build_id", help="Input current build id from Jenkins env vars"
     )
     args = parser.parse_args()
     parser_build_id = args.parser_build_id
@@ -605,7 +635,7 @@ if __name__ == "__main__":
             print("[" + job_to_retry + "] Processing ...")
             job_dir = os.path.join(builds_dir, job_to_retry)
 
-            error_list = get_errors_list(jobs_object, job_id)
+            error_list, force_retry_regex = get_errors_list(jobs_object, job_id)
 
             last_processed_log, processed_object = get_last_processed_log(
                 parser_info_path, job_to_retry

@@ -67,7 +67,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     MOUNT_POINTS="$MOUNT_POINTS,${AFS_HOME}/.ssh/${IMG_OS}:${AFS_HOME}/.ssh"
   fi
   if [ -d /afs/cern.ch ] ; then MOUNT_POINTS="${MOUNT_POINTS},/afs"; fi
-  for tnsnames in ${HOME}/tnsnames.ora /etc/tnsnames.ora ; do
+  for tnsnames in /etc/tnsnames.ora ${HOME}/tnsnames.ora ; do
     if [ -e "${tnsnames}" ] ; then
       if [ $(echo ${tnsnames} | grep '^/afs/' | wc -l) -gt 0 ] ; then
         cp ${tnsnames} ${WORKSPACE}/

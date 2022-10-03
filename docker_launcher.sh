@@ -135,6 +135,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
         SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
       fi
+    else
+      export CUDA_VISIBLE_DEVICES=""
     fi
     SINGULARITY_BINDPATH=""
     for m in $(echo "$MOUNT_POINTS" | tr ',' '\n') ; do

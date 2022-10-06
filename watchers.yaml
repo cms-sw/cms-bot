@@ -1088,6 +1088,12 @@ wrtabb:
 - EgammaAnalysis
 - DataFormats/EgammaCandidates
 - DataFormats/EgammaReco
+Prasant1993:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
 wmtford:
 - SimTracker/TrackerHitAssociation
 - Validation/TrackerRecHits

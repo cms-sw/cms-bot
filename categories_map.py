@@ -1695,6 +1695,9 @@ CMSSW_CATEGORIES = {
   ],
   "xpog": [
     "DataFormats/NanoAOD",
+    "DataFormats/PatCandidates",
     "PhysicsTools/NanoAOD",
+    "PhysicsTools/PatAlgos",
+    "PhysicsTools/PatUtils",
   ],
 }

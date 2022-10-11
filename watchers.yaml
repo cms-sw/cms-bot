@@ -1094,6 +1094,18 @@ Prasant1993:
 - EgammaAnalysis
 - DataFormats/EgammaCandidates
 - DataFormats/EgammaReco
+sameasy:
+- RecoEgamma
+- RecoEcal
+- EgammaAnalysis
+- DataFormats/EgammaCandidates
+- DataFormats/EgammaReco
+- RecoHGCal
+- Configuration/StandardSequences
+- RecoLocalCalo/Configuration
+- RecoLocalCalo/HGC
+- RecoParticleFlow/PFClusterProducer
+- SimCalorimetry
 wmtford:
 - SimTracker/TrackerHitAssociation
 - Validation/TrackerRecHits

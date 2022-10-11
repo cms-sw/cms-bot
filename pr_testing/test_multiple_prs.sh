@@ -46,6 +46,8 @@ PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
 CONFIG_MAP=$CMS_BOT_DIR/config.map
 [ "${USE_IB_TAG}" != "true" ] && export USE_IB_TAG=false
+[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="GPU THREADING HIGH_STATS NANO"
+EXTRA_RELVALS_TESTS=$(echo ${EXTRA_RELVALS_TESTS} | tr ' ' '\n' | grep -v THREADING | tr '\n' ' ')
 # ---
 # doc: Input variable
 # PULL_REQUESTS   # "cms-sw/cmsdist#4488,cms-sw/cmsdist#4480,cms-sw/cmsdist#4479,cms-sw/root#116"
@@ -248,7 +250,7 @@ if $DO_COMPARISON ; then
       echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
       echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
     fi
-    for ex_type in "GPU" "HIGH_STATS" ; do
+    for ex_type in ${EXTRA_RELVALS_TESTS} ; do
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
       [ "$WF_LIST" != "" ] || continue
@@ -1139,7 +1141,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     echo "MATRIX_ARGS=${WF1}" >> $WORKSPACE/run-relvals-threading.prop
   fi
   if $PRODUCTION_RELEASE ; then
-    for ex_type in "GPU" "HIGH_STATS" ; do
+    for ex_type in ${EXTRA_RELVALS_TESTS} ; do
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
       [ "$WF_LIST" != "" ] || continue

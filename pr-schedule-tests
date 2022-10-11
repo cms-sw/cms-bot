@@ -45,6 +45,7 @@ else
   fi
 fi
 [ "${BUILD_VERBOSE}" = "true" ] || BUILD_VERBOSE="false"
+[ "${EXTRA_RELVALS_TESTS}" = "" ] && EXTRA_RELVALS_TESTS="GPU THREADING HIGH_STATS NANO"
 if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; then
     REQUIRED_TEST=false
     eval $CONFIG_LINE
@@ -75,7 +76,9 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "DO_SHORT_MATRIX=${DO_SHORT_MATRIX}" >> $OUTPUT_FILE
     echo "DO_STATIC_CHECKS=${DO_STATIC_CHECKS}" >> $OUTPUT_FILE
     echo "DO_DUPLICATE_CHECKS=${DO_DUPLICATE_CHECKS}" >> $OUTPUT_FILE
-    for i in "" _GPU _THREADING ; do
+    echo "EXTRA_RELVALS_TESTS=${EXTRA_RELVALS_TESTS}" >> $OUTPUT_FILE
+    for i in "" ${EXTRA_RELVALS_TESTS} ; do
+      [ "$i" != "" ] && i="_$i"
       for t in EXTRA_MATRIX_ARGS MATRIX_EXTRAS ; do
         eval "a=\${$t$i}"
         if [ "$a" != "" ]  ;then

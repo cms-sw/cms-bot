@@ -66,10 +66,12 @@ REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
 ALL_CHECK_FUNCTIONS = None
-EXTRA_TESTS = "gpu|threading|profiling|high_stats|none"
+EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
+EXTRA_RELVALS_TESTS_OPTS ="_" + "|_".join(EXTRA_RELVALS_TESTS)
+EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|profiling|none"
 MULTILINE_COMMENTS_MAP = {
-              "workflow(s|)(_gpu|_threading|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
-              "workflow(s|)_profiling":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "PROFILING_WORKFLOWS"],
+              "(workflow|relval)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
+              "(workflow|relval)(s|)_profiling":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),"PROFILING_WORKFLOWS"],
               "pull_request(s|)": [format('%(cms_pr)s(,%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),                  "PULL_REQUESTS"],
               "full_cmssw|full":  ['true|false',                                                                "BUILD_FULL_CMSSW"],
               "disable_poison":   ['true|false',                                                                "DISABLE_POISON"],
@@ -82,8 +84,8 @@ MULTILINE_COMMENTS_MAP = {
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",           "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
               "build_verbose":    ['true|false',                                                                "BUILD_VERBOSE"],
-              "relval(s|)_opt(ion|)(s|)(_gpu|_input|_threading|high_stats|)": [RELVAL_OPTS,                     "EXTRA_MATRIX_ARGS",True],
-              "relval(s|)_command_opt(ion|)(s|)(_gpu|_input|_threading|high_stats|)": [RELVAL_OPTS,             "EXTRA_MATRIX_COMMAND_ARGS",True]
+              "(workflow|relval)(s|)_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)":         [RELVAL_OPTS,           "EXTRA_MATRIX_ARGS",True],
+              "(workflow|relval)(s|)_command_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)": [RELVAL_OPTS,           "EXTRA_MATRIX_COMMAND_ARGS",True]
               }
 
 L2_DATA = {}
@@ -293,16 +295,16 @@ def check_enable_bot_tests(first_line, *args):
 def check_extra_matrix_args(first_line, repo, params, mkey, param, *args):
   kitem = mkey.split("_")
   print(first_line, repo, params, mkey, param)
-  if kitem[-1] in ["input", "threading", "gpu"]:
-    param = param + "_" + kitem[-1].upper()
+  if kitem[-1] in ["input" ] + EXTRA_RELVALS_TESTS:
+    param = param + "_" + kitem[-1].upper().replace("-","_")
   print(first_line,param)
   return first_line,param
 
 def check_matrix_extras(first_line, repo, params, mkey, param, *args):
   kitem = mkey.split("_")
   print(first_line, repo, params, mkey, param)
-  if kitem[-1] in ["threading", "gpu"]:
-    param = param + "_" + kitem[-1].upper()
+  if kitem[-1] in EXTRA_RELVALS_TESTS:
+    param = param + "_" + kitem[-1].upper().replace("-","_")
   print(first_line,param)
   return first_line,param
 
@@ -1239,6 +1241,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     global_test_params['ENABLE_BOT_TESTS'] = enable_tests
   if release_arch:
     global_test_params['ARCHITECTURE_FILTER'] = release_arch
+  global_test_params['EXTRA_RELVALS_TESTS'] = " ".join([ t.upper().replace("-", "_") for t in EXTRA_RELVALS_TESTS])
     
   print("All Parameters:",global_test_params)
   #For now, only trigger tests for cms-sw/cmssw and cms-sw/cmsdist

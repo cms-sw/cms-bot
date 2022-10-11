@@ -20,7 +20,7 @@ fi
 ls /cvmfs/cms-ib.cern.ch
 git clone -b $CMSSW_VERSION --reference /cvmfs/cms-ib.cern.ch/git/cms-sw/cmssw.git https://github.com/cms-sw/cmssw src
 rm -rf src/.git
-rsync -aL --exclude '.scram' --exclude '*.pyc' ${CMSSW_RELEASE_BASE}/cfipython/${ARCHITECTURE}/ src/cfipython/
+rsync -aL --no-owner --no-group --exclude '.scram' --exclude '*.pyc' ${CMSSW_RELEASE_BASE}/cfipython/${ARCHITECTURE}/ src/cfipython/
 (find src/cfipython -name '*.pyc'       | xargs rm -rf) || true
 (find src/cfipython -name '__pycache__' | xargs rm -rf) || true
 find src/cfipython -type d -empty -delete || true

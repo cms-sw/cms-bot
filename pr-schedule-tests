@@ -79,7 +79,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "EXTRA_RELVALS_TESTS=${EXTRA_RELVALS_TESTS}" >> $OUTPUT_FILE
     for i in "" ${EXTRA_RELVALS_TESTS} ; do
       [ "$i" != "" ] && i="_$i"
-      for t in EXTRA_MATRIX_ARGS MATRIX_EXTRAS ; do
+      for t in EXTRA_MATRIX_ARGS MATRIX_EXTRAS EXTRA_MATRIX_COMMAND_ARGS ; do
         eval "a=\${$t$i}"
         if [ "$a" != "" ]  ;then
           echo "${t}${i}=${a}" >> $OUTPUT_FILE
@@ -87,7 +87,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
       done
     done
     for i in _INPUT ; do
-      for t in EXTRA_MATRIX_ARGS ; do
+      for t in EXTRA_MATRIX_ARGS EXTRA_MATRIX_COMMAND_ARGS ; do
         eval "a=\${$t$i}"
         if [ "$a" != "" ]  ;then
           echo "${t}${i}=${a}" >> $OUTPUT_FILE

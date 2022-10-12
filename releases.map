@@ -3500,3 +3500,4 @@ architecture=el8_ppc64le_gcc10;label=CMSSW_12_6_0_pre3_LossyCompression;type=Dev
 architecture=el8_aarch64_gcc10;label=CMSSW_12_6_0_pre3_LossyCompression;type=Development;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc10;label=CMSSW_12_6_0_pre3_LossyCompression;type=Development;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc10;label=CMSSW_12_6_0_pre3_LossyCompression;type=Development;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc11;label=CMSSW_12_6_0_pre3_LossyCompression;type=Development;state=Announced;prodarch=0;

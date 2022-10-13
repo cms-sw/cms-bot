@@ -1,4 +1,8 @@
 {
+  "defaultConfig": {
+    "forceRetry": "false",
+    "allJobs": "false"
+  },
   "jobsConfig": {
     "jenkinsJobs": [
       {
@@ -9,7 +13,7 @@
           "busError",
           "workspaceFailure"
         ],
-        "maxTime": "2"
+        "maxTime": "1"
       },
       {
         "jobName": "ib-run-igprof",
@@ -68,23 +72,34 @@
       },
       {
         "jobName": "build-any-ib",
-        "errorType": ["gitErrors"],
+        "errorType": [
+          "gitErrors"
+        ],
         "maxTime": "18"
       },
       {
         "jobName": "ib-run-pr-tests",
-        "errorType": ["gitErrors"],
+        "errorType": [
+          "gitErrors"
+        ],
         "maxTime": "12"
       },
       {
         "jobName": "update-github-pages",
-        "errorType": ["gitErrors"],
+        "errorType": [
+          "gitErrors"
+        ],
         "maxTime": "2"
       },
       {
         "jobName": "ib-tag-and-schdule",
         "errorType": [],
         "maxTime": "18"
+      },
+      {
+        "jobName": "ib-run-static-checks",
+        "errorType": [],
+        "maxTime": "6"
       }
     ],
     "errorMsg": {
@@ -92,9 +107,7 @@
         "errorStr": [
           "Build timed out"
         ],
-        "action": "retryBuild",
-	"forceRetry": "false",
-	"allJobs": "false"
+        "action": "retryBuild"
       },
       "hudsonConnection": {
         "errorStr": [
@@ -108,52 +121,48 @@
         "errorStr": [
           "unexpected fault address"
         ],
-        "action": "retryBuild",
-        "forceRetry": "false",
-        "allJobs": "false"
+        "action": "retryBuild"
       },
       "gitErrors": {
         "errorStr": [
           "fatal: repository .* not found",
           "Tag already exist",
           "Connection to github\\.com closed by remote host.",
-	  "Error while downloading sources from github\\.com"
+          "Error while downloading sources from github\\.com"
         ],
-        "action": "retryBuild",
-        "forceRetry": "false",
-        "allJobs": "false"
+        "action": "retryBuild"
       },
       "busError": {
         "errorStr": [
           "Bus error",
           "Transport endpoint is not connected"
         ],
-        "action": "nodeOff",
-        "forceRetry": "false",
-        "allJobs": "false"
+        "action": "nodeOff"
       },
       "gridConnection": {
         "errorStr": [
           "Unexpected exception occurred while performing connect-node command"
         ],
-        "action": "retryBuild",
-        "forceRetry": "false",
-        "allJobs": "false"
+        "action": "retryBuild"
       },
       "afsFailure": {
         "errorStr": [
           "no such identity: .* Permission denied"
         ],
-        "action": "nodeOff",
-        "forceRetry": "false",
-        "allJobs": "false"
+        "action": "nodeOff"
       },
       "workspaceFailure": {
         "errorStr": [
           "Cannot delete workspace: Remote call on .* failed"
         ],
         "action": "nodeReconnect",
-        "forceRetry": "false",
+        "allJobs": "true"
+      },
+      "cvmfsFailure": {
+        "errorStr": [
+          "Error: No such directory: /cvmfs/.*cern.ch$"
+        ],
+        "action": "nodeOff",
         "allJobs": "true"
       }
     }

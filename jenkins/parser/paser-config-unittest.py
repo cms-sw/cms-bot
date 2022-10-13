@@ -55,3 +55,11 @@ assert all(
     item in valid_actions for item in defined_actions
 ), "Defined action does not correspond to a valid action"
 print("[TEST 3]: ... OK")
+
+print("[TEST 4]: Checking that default sections are present ...")
+default_fields = jobs_object["defaultConfig"].keys()
+valid_fields = ["forceRetry", "allJobs"]  # TODO: Find a better way to get valid fields
+assert all(
+    item in valid_fields for item in default_fields
+), "Defined default field does not correspond to a valid field. Only forceRetry and allJobs fields should be defined under defaultConfig."
+print("[TEST 4]: ... OK")

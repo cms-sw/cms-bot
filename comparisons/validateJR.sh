@@ -59,7 +59,6 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     #need files both in baseA and baseB
     if [ -f "${baseA}/${mFN}" -a -f "${baseB}/${mFN}" ]; then
         echo $mFN
-        extmN=all_mini_${diffN}_${dsN}
         run_validate "all_mini_${diffN}_${dsN}" "${mFN}"  "${procN}" &
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi

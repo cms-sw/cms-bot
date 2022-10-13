@@ -21,6 +21,11 @@ ls -d ${baseA}/[1-9]* | while read -r d; do
   echo "${dL}" | grep  " $d/" >& /dev/null || echo $d >> missing_map.txt
 done
 
+mkdir -p validate_lib
+pushd validate_lib
+    cp ${VALIDATE_C_SCRIPT} ./validate.C
+    echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b
+popd
 grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     #fNP can be a pattern: path-expand it first
     fN=`echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g"`
@@ -30,10 +35,9 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
         extN=all_${diffN}_${dsN}
         mkdir -p ${extN}
         pushd ${extN}
-          cp ${VALIDATE_C_SCRIPT} ./
           echo "$(date): Will run on ${fN} in ${extN}"
-          (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
-                  .x validate.C+(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log) &
+          (rsync -a ../validate_lib/ ./ && echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
+                  validate.C+(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log) &
         popd
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi
@@ -49,12 +53,12 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
         extmN=all_mini_${diffN}_${dsN}
         mkdir -p ${extmN}
         pushd ${extmN}
-          cp ${VALIDATE_C_SCRIPT} ./
           echo "$(date): Will run on ${mFN} in ${extmN}"
-          (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
-                  .x validate.C+(\"${extmN}\", \"${baseA}/${mFN}\", \"${baseB}/${mFN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extmN}.log) &
+          (rsync -a ../validate_lib/ ./ && echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
+                  validate.C+(\"${extmN}\", \"${baseA}/${mFN}\", \"${baseB}/${mFN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extmN}.log) &
         popd
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi
 done
 wait
+rm -rf validate_lib

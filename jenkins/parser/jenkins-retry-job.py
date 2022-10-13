@@ -5,17 +5,20 @@ import functools
 import re
 import os
 import xml.etree.ElementTree as ET
+import datetime
 
 # Get job name and build number to retry
 parser = argparse.ArgumentParser()
 parser.add_argument("job_to_retry", help="Jenkins job to retry")
 parser.add_argument("build_to_retry", help="Build number to retry")
 parser.add_argument("parser_action", help="Action taken by parser job")
+parser.add_argument("error_message", type=str, help="Error message found in build log")
 parser.add_argument("current_build_number", help="Current build number")
 args = parser.parse_args()
 job_to_retry = args.job_to_retry
 build_to_retry = args.build_to_retry
 parser_action = args.parser_action
+regex = args.error_message.replace("&", " ")
 current_build_number = args.current_build_number
 
 retry_counter_value = ""
@@ -115,6 +118,46 @@ with open("parameters.txt", "w") as propfile:
         print(param + "\n")
         propfile.write(param + "\n")
 
+
+# Update static webpage
+tracker_path = (
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/parser-web-info.html"
+)
+job_url = os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
+retry_url = (
+    os.environ.get("JENKINS_URL") + "job/jenkins-test-retry/" + current_build_number
+)
+
+with open(tracker_path, "r+") as summary:
+    content = summary.readlines()
+    # Each entry has 8, we keep a maximum of 100 entries
+    # TODO: Cleanup by date
+    if len(content) > 800:
+        content = content[0:800]
+    retry_time = datetime.datetime.now().replace(microsecond=0)
+    summary.seek(0)
+    summary.write(
+        "<tr>\n<td>"
+        + str(retry_time)
+        + "</td>\n<td>"
+        + str(job_to_retry)
+        + "</td>\n<td>"
+        + str(build_to_retry)
+        + "</td>\n<td>"
+        + str(regex)
+        + '</td>\n<td><a href="'
+        + str(job_url)
+        + '">'
+        + str(job_url)
+        + '</a></td>\n<td><a href="'
+        + str(retry_url)
+        + '">'
+        + str(retry_url)
+        + "</a></td>\n</tr>\n"
+        + "".join(content)
+    )
+
+
 # Format retry label depending on parser action
 times = "time" if retry_counter_update == 1 else "times"
 
@@ -149,7 +192,7 @@ if parser_action == "retryBuild":
     label = retry_label
 elif parser_action == "nodeOff":
     label = nodeoff_label
-else: # nodeReconnect
+else:  # nodeReconnect
     label = nodereconnect_label
 
 update_label = (

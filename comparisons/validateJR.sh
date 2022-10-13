@@ -27,14 +27,13 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     #[ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN}
     #process regular files first; need files both in baseA and baseB
     if [ -f "${baseA}/${fN}" -a -f "${baseB}/${fN}" ]; then
-	extN=all_${diffN}_${dsN}
-	mkdir -p ${extN}
-	pushd ${extN}
-	  cp ${VALIDATE_C_SCRIPT} ./
-	  echo "Will run on ${fN} in ${extN}"
-	  g++ -shared -o validate.so validate.C `root-config --cflags ` -fPIC
-	  echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
-                  .x validate.C+(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log &
+        extN=all_${diffN}_${dsN}
+        mkdir -p ${extN}
+        pushd ${extN}
+          cp ${VALIDATE_C_SCRIPT} ./
+          echo "$(date): Will run on ${fN} in ${extN}"
+          (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
+                  .x validate.C+(\"${extN}\", \"${baseA}/${fN}\", \"${baseB}/${fN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extN}.log) &
         popd
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi
@@ -46,14 +45,14 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     fi
     #need files both in baseA and baseB
     if [ -f "${baseA}/${mFN}" -a -f "${baseB}/${mFN}" ]; then
-	echo $mFN
-	extmN=all_mini_${diffN}_${dsN}
-	mkdir -p ${extmN}
-	pushd ${extmN}
-	  cp ${VALIDATE_C_SCRIPT} ./
-	  echo "$(date): Will run on ${mFN} in ${extmN}"
-	  echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
-                  .x validate.C+(\"${extmN}\", \"${baseA}/${mFN}\", \"${baseB}/${mFN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extmN}.log &
+        echo $mFN
+        extmN=all_mini_${diffN}_${dsN}
+        mkdir -p ${extmN}
+        pushd ${extmN}
+          cp ${VALIDATE_C_SCRIPT} ./
+          echo "$(date): Will run on ${mFN} in ${extmN}"
+          (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
+                  .x validate.C+(\"${extmN}\", \"${baseA}/${mFN}\", \"${baseB}/${mFN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extmN}.log) &
         popd
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi

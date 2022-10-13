@@ -54,7 +54,10 @@ for root, dirs, files in os.walk(path):
         if pa is not None: getParameters(pa, payload)
         jstime = root.find('startTime').text
         payload['@timestamp'] = int(jstime)
-        payload['slave_node'] = root.find('builtOn').text
+        try:
+          payload['slave_node'] = root.find('builtOn').text
+        except:
+          payload['slave_node'] = 'unknown'
         payload['jenkins_server'] = JENKINS_PREFIX
         build_result = root.find('result')
         if build_result is not None:

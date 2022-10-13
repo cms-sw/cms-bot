@@ -51,7 +51,7 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
 	mkdir -p ${extmN}
 	pushd ${extmN}
 	  cp ${VALIDATE_C_SCRIPT} ./
-	  echo "Will run on ${mFN} in ${extmN}"
+	  echo "$(date): Will run on ${mFN} in ${extmN}"
 	  echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n
                   .x validate.C+(\"${extmN}\", \"${baseA}/${mFN}\", \"${baseB}/${mFN}\", \"${procN}\");\n .qqqqqq" | root -l -b >& ${extmN}.log &
         popd

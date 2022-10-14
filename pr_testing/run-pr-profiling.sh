@@ -20,6 +20,7 @@ git clone --depth 1 https://github.com/cms-cmpwg/profiling.git
 for PROFILING_WORKFLOW in $WORKFLOWS;do
   if [ $(runTheMatrix.py -n | grep "^$PROFILING_WORKFLOW " | wc -l) -eq 0 ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Not run: not a valid workflows" -e
+    continue
   else
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   fi

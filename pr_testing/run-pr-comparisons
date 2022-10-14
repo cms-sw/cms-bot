@@ -279,6 +279,15 @@ if [ -e $WORKSPACE/results/default-comparison/done-0 ] ; then
   rm -f $WORKSPACE/results/default-comparison/done-*
   rm -f $WORKSPACE/results/default-comparison/cmdlog-*
   echo "Finished with default comparison at `date`"
+  if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
+    for f in results/default-comparison/* ; do
+      if [ -f $f/index.html ] ; then
+        wf=$(basename $f)
+        $CMS_BOT_DIR/comparisons/filter-failed-comparison.py $f >$WORKSPACE/upload/extras/$wf.log 2>&1 &
+        while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
+      fi
+    done
+  fi
 fi
 set -x
 
@@ -361,27 +370,9 @@ cd $WORKSPACE
 mkdir -p upload/alternative-comparisons
 
 #default-comparison
-if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
-  mkdir -p $WORKSPACE/upload/extras
-  for f in results/default-comparison/* ; do
-    if [ -f $f ] ; then
-      mv $f upload/
-    elif [ ! -f $f/index.html ] ; then
-      mv $f upload/
-    elif [ -d $f ] ; then
-      set +x
-      while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
-      set -x
-      wf=$(basename $f)
-      $CMS_BOT_DIR/comparisons/filter-failed-comparison.py $f $WORKSPACE/upload >$WORKSPACE/upload/extras/$wf.log 2>&1 &
-    fi
-  done
-  wait || true
-else
-  for f in results/default-comparison/* ; do
-    [ -e $f ] && mv $f upload/
-  done
-fi
+for f in results/default-comparison/* ; do
+  [ -e $f ] && mv $f upload/
+done
 
 #alternative-comparison
 alt_dir=results/alternative-comparison

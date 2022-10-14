@@ -145,7 +145,7 @@ fi
 #which comparison is run.
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
-  cd $JR_COMP_DIR
+  pushd $JR_COMP_DIR
   cp $CMS_BOT_DIR/comparisons/validateJR.sh  $JR_COMP_DIR
   chmod +x $JR_COMP_DIR/validateJR.sh
   cp $CMS_BOT_DIR/comparisons/validate.C     $JR_COMP_DIR
@@ -158,17 +158,18 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
 
   echo "Finished with JR comparison at `date`:"
   wait
+  popd
   (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison JR || true) >${JR_COMP_DIR}/logRootQA-JR.log 2>&1 &
 fi
 
 #Run product size comparison script for Phase2 workflow
-mkdir compareProducts && cd compareProducts
+mkdir compareProducts && pushd compareProducts
 cp $CMS_BOT_DIR/comparisons/compareProducts.* ./
 ./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3.root $WORKSPACE/data/$COMPARISON_RELEASE/136.874_*/step3.root _ 100 10 > products_AOD.log || true
 ./compareProducts.sh $WORKSPACE/data/PR-$PR_NUM/136.874_*/step3_inMINIAOD.root $WORKSPACE/data/$COMPARISON_RELEASE/136.874_*/step3_inMINIAOD.root _ 100 10 > products_MINIAOD.log || true
 mv products_AOD.log $WORKSPACE/upload/products_AOD.log
 mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
-cd .. 
+popd
 
 set +x
 # --------------------------------------------------------------------------

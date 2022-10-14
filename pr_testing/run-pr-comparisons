@@ -61,6 +61,7 @@ echo "Downloading PR: `date`"
 get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
 
+(${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events || true) >${JR_COMP_DIR}/logRootQA-events.log 2>&1 &
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
 cat $WORKSPACE/$MAPPING_FILE
@@ -156,6 +157,8 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
   echo "Finished with JR comparison at `date`:"
+  wait
+  (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison JR || true) >${JR_COMP_DIR}/logRootQA-JR.log 2>&1 &
 fi
 
 #Run product size comparison script for Phase2 workflow

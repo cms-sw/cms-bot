@@ -5,7 +5,13 @@ from fnmatch import fnmatch
 import os
 import re
 import sys
+import json
 import subprocess as sub
+
+def openfile(filename):
+  if sys.version_info[0] == 2:
+    return open(filename)
+  return open(filename, encoding="utf8", errors='ignore')
 
 def getFiles(d,pattern):
     return [os.path.join(dp, f) for dp, dn, filenames in os.walk(d) for f in filenames if fnmatch(f, pattern)]
@@ -13,9 +19,7 @@ def getFiles(d,pattern):
 
 def getCommonFiles(d1,d2,pattern):
     l1=getFiles(d1,pattern)
-#    print("l1",l1)
     l2=getFiles(d2,pattern)
-#    print("l2",l2)
     common=[]
     for l in l1:
         lT=l[len(d1):]
@@ -32,9 +36,9 @@ def getWorkflow(f):
 
 def checkLines(l1,l2):
     lines=0
-    for l in open(l2):
+    for l in openfile(l2):
         lines=lines+1
-    for l in open(l1):
+    for l in openfile(l1):
         lines=lines-1
     if lines>0:
         print("You added "+str(lines)+" to "+l2)
@@ -45,7 +49,7 @@ def checkLines(l1,l2):
 
 def filteredLines(f):
     retval={}
-    for l in open(f):
+    for l in openfile(f):
         sl=l.strip()
         if 'P       Y      T    H   H  III  A   A' in l:continue
         # look for and remove timestamps
@@ -267,23 +271,14 @@ testDir='../t1/matrix-results'
 jrDir='../t1/23485/validateJR'
 compDir='../t1/23485'
 
-if len(sys.argv)==5:
-    baseDir=sys.argv[1]
-    testDir=sys.argv[2]
-    jrDir=sys.argv[3]
-    compDir=sys.argv[4]
-
-if baseDir[-1]=='/':
-    baseDir=baseDir[:-1]
-if testDir[-1]=='/':
-    testDir=testDir[:-1]
-if jrDir[-1]=='/':
-    jrDir=jrDir[:-1]
-if compDir[-1]=='/':
-    compDir=jrDir[:-1]
-
-commonLogs=getCommonFiles(baseDir,testDir,'step*.log')
-#print(commonLogs)
+run="all"
+if len(sys.argv)==6:
+  run = sys.argv[5]
+if len(sys.argv)>=5:
+    baseDir=sys.argv[1].rstrip("/")
+    testDir=sys.argv[2].rstrip("/")
+    jrDir=sys.argv[3].rstrip("/")
+    compDir=sys.argv[4].rstrip("/")
 
 #### check the printouts
 lines=0
@@ -291,7 +286,13 @@ lChanges=False
 nLog=0
 nPrintTot=0
 stopPrint=0
-for l in commonLogs:
+sameEvts=True
+nRoot=0
+newDQM=0
+nDQM=0
+diff,wfs=[],[]
+if not os.path.exists('comparison-events.json'):
+  for l in getCommonFiles(baseDir,testDir,'step*.log'):
     lCount=checkLines(baseDir+l,testDir+l)
     lines=lines+lCount
     if lChanges!=0:
@@ -303,38 +304,72 @@ for l in commonLogs:
         if stopPrint==0:
             print('Skipping further diff comparisons. Too many diffs')
             stopPrint=1
-    nLog=nLog+1    
+    nLog=nLog+1
+  #### compare edmEventSize on each to look for new missing candidates
+  for r in getCommonFiles(baseDir,testDir,'step*.root'):
+    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
+        sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
+        nRoot=nRoot+1
+  for r in getCommonFiles(baseDir,testDir,'DQM*.root'):
+      t=checkDQMSize(baseDir+r,testDir+r,diff,wfs)
+      print(r,t)
+      newDQM=newDQM+t
+      nDQM=nDQM+1
+  with open('comparison-events.json', 'w') as f:
+      json.dump([lines, lChanges, nLog, nPrintTot, stopPrint, sameEvts, nRoot, newDQM, nDQM, diff, wfs], f)
+else:
+  with open('comparison-events.json') as f:
+      (lines, lChanges, nLog, nPrintTot, stopPrint, sameEvts, nRoot, newDQM, nDQM, diff, wfs) = json.load(f)
 
+print("Logs:", lines, lChanges, nLog, nPrintTot, stopPrint)
+print("Events:", sameEvts, nRoot, newDQM, nDQM, diff, wfs)
 if lines >0 :
     print("SUMMARY You potentially added "+str(lines)+" lines to the logs") 
 else:
     print("SUMMARY No significant changes to the logs found")
+
 if lChanges:
     qaIssues=True
-print('\n')
-#### compare edmEventSize on each to look for new missing candidates
-commonRoots=getCommonFiles(baseDir,testDir,'step*.root')
-sameEvts=True
-nRoot=0
-for r in commonRoots:
-#    print 'I could have tested',r
-    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
-        checkResult=checkEventContent(baseDir+r,testDir+r)
-        sameEvts=sameEvts and checkResult
-        nRoot=nRoot+1
+
 if not sameEvts:
     qaIssues=True
     print('SUMMARY ROOTFileChecks: Some differences in event products or their sizes found')
 
+if run == "events":
+  sys.exit(0)
+
 print('\n')
+
 # now check the JR comparisons for differences
-nDiff,nAll,nOK=summaryJR(jrDir)
+nDiff = 0
+nAll = 0
+nOK = 0
+if not os.path.exists('comparison-JR.json'):
+    nDiff,nAll,nOK=summaryJR(jrDir)
+    with open('comparison-JR.json', 'w') as f:
+      json.dump([nDiff,nAll,nOK], f)
+else:
+    with open('comparison-JR.json') as f:
+        (nDiff,nAll,nOK) = json.load(f)
+
 print('SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons') 
 if nAll!=nOK:
     print('SUMMARY Reco comparison had ',nAll-nOK,'failed jobs')
 print('\n')
 
-compSummary=summaryComp(compDir)
+if run == "JR":
+  sys.exit(0)
+
+# not check for default comparison
+compSummary = []
+if not os.path.exists('comparison-comp.json'):
+    compSummary=summaryComp(compDir)
+    with open('comparison-comp.json', 'w') as f:
+      json.dump(compSummary, f)
+else:
+    with open('comparison-comp.json') as f:
+        compSummary = json.load(f)
+
 print('SUMMARY DQMHistoTests: Total files compared:',compSummary[6])
 print('SUMMARY DQMHistoTests: Total histograms compared:',compSummary[0])
 print('SUMMARY DQMHistoTests: Total failures:',compSummary[1])
@@ -343,20 +378,9 @@ print('SUMMARY DQMHistoTests: Total successes:',compSummary[3])
 print('SUMMARY DQMHistoTests: Total skipped:',compSummary[4])
 print('SUMMARY DQMHistoTests: Total Missing objects:',compSummary[5])
 
-commonDQMs=getCommonFiles(baseDir,testDir,'DQM*.root')
-newDQM=0
-nDQM=0
-diff,wfs=[],[]
-for r in commonDQMs:
-        t=checkDQMSize(baseDir+r,testDir+r,diff,wfs)
-        print(r,t)
-        newDQM=newDQM+t
-        nDQM=nDQM+1
-
 print('SUMMARY DQMHistoSizes: Histogram memory added:',newDQM,'KiB(',nDQM,'files compared)')
 for line, wf in zip(diff,wfs):
     print('SUMMARY DQMHistoSizes: changed (',wf,'):',line)
-
 
 #### conclude
 print("SUMMARY Checked",nLog,"log files,",nRoot,"edm output root files,",compSummary[6],"DQM output files")

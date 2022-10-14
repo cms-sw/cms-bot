@@ -52,4 +52,4 @@ case `basename $fA` in
     echo "First two inputs $fA and $fB should be step*.root or step*_sizes.txt"
     exit 18
   ;;
-  esac
+esac

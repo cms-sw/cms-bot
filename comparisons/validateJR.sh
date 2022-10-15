@@ -39,6 +39,7 @@ pushd validate_lib
     cp ${VALIDATE_C_SCRIPT} ./validate.C
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b
     ln -s validate_C.so libvalidate_C.so
+    ls -l
 popd
 export LD_LIBRARY_PATH=`pwd`/validate_lib:${LD_LIBRARY_PATH}
 grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do

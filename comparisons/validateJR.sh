@@ -2,9 +2,7 @@
 
 function run_validate(){
   mkdir -p $1
-  sync -a validate_lib/ $1/
   pushd $1
-    export LD_LIBRARY_PATH=`pwd`:${OLD_LD_LIBRARY_PATH}
     echo "$(date): Will run on ${2} in ${1} for ${3}"
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n
              AutoLibraryLoader::enable();\n
@@ -42,13 +40,14 @@ pushd validate_lib
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b
     ls -l
 popd
-export ORIG_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
-grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
+export LD_LIBRARY_PATH=`pwd`/validate_lib:${LD_LIBRARY_PATH}
+while read -r dsN fNP procN comm; do
     #fNP can be a pattern: path-expand it first
     fN=`echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g"`
     #[ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN}
     #process regular files first; need files both in baseA and baseB
     if [ -f "${baseA}/${fN}" -a -f "${baseB}/${fN}" ]; then
+        CMDS=""
         extN=all_${diffN}_${dsN}
         run_validate "all_${diffN}_${dsN}" "${fN}" "${procN}" &
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
@@ -65,6 +64,6 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
         run_validate "all_mini_${diffN}_${dsN}" "${mFN}"  "${procN}" &
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi
-done
+done< <(grep root ${inList} | grep -v "#")
 wait
 rm -rf validate_lib

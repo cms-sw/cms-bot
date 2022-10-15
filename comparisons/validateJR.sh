@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 function run_validate(){
   mkdir -p $1

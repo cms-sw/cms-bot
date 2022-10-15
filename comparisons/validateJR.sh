@@ -7,7 +7,7 @@ function run_validate(){
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n
              AutoLibraryLoader::enable();\n
              FWLiteEnabler::enable();\n
-             gSystem->Load(\"validate_C.so\");\n
+             gSystem->Load(\"libvalidate_C.so\");\n
              validate(\"${1}\", \"${baseA}/${2}\", \"${baseB}/${2}\", \"${3}\");\n
              .qqqqqq" | root -l -b >& ${1}.log
   popd

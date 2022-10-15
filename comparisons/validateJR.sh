@@ -2,14 +2,16 @@
 
 function run_validate(){
   mkdir -p $1
+  sync -a validate_lib/ $1/
   pushd $1
-    echo "$(date): Will run on ${2} in ${1}"
+    export LD_LIBRARY_PATH=`pwd`:${OLD_LD_LIBRARY_PATH}
+    echo "$(date): Will run on ${2} in ${1} for ${3}"
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n
              AutoLibraryLoader::enable();\n
              FWLiteEnabler::enable();\n
-             gSystem->Load(\"libvalidate_C.so\");\n
+             gSystem->Load(\"validate_C.so\");\n
              validate(\"${1}\", \"${baseA}/${2}\", \"${baseB}/${2}\", \"${3}\");\n
-             .qqqqqq" | root -l -b >& ${1}.log
+             .qqqqqq" | root -l -b >${1}.log 2>&1
   popd
 }
 
@@ -38,10 +40,9 @@ mkdir -p validate_lib
 pushd validate_lib
     cp ${VALIDATE_C_SCRIPT} ./validate.C
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b
-    ln -s validate_C.so libvalidate_C.so
     ls -l
 popd
-export LD_LIBRARY_PATH=`pwd`/validate_lib:${LD_LIBRARY_PATH}
+export ORIG_LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
     #fNP can be a pattern: path-expand it first
     fN=`echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g"`

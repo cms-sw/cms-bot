@@ -1,4 +1,11 @@
 #!/bin/sh -ex
+
+function filter_failed_comparison(){
+  if [ -f $1/index.html ] ; then
+    [ $(grep 'Skipped:\|Null:\|Fail:' $1/index.html | wc -l) -gt 0 ] || touch $1/.deleteme 
+  fi
+}
+
 source $(dirname $0)/setup-pr-test-env.sh
 TEST_FLAVOR_STR=""
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
@@ -281,11 +288,7 @@ if [ -e $WORKSPACE/results/default-comparison/done-0 ] ; then
   echo "Finished with default comparison at `date`"
   if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
     for f in results/default-comparison/* ; do
-      if [ -f $f/index.html ] ; then
-        wf=$(basename $f)
-        $CMS_BOT_DIR/comparisons/filter-failed-comparison.py $f >$WORKSPACE/upload/extras/$wf.log 2>&1 &
-        while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 1 ; done
-      fi
+      filter_failed_comparison "$f"
     done
   fi
 fi
@@ -371,7 +374,12 @@ mkdir -p upload/alternative-comparisons
 
 #default-comparison
 for f in results/default-comparison/* ; do
-  [ -e $f ] && mv $f upload/
+  if [ -e $f/.deleteme ] ; then
+    rm -rf $f
+    echo "Deleting $f"
+  elif [ -e $f ] ; then
+    mv $f upload/
+  fi
 done
 
 #alternative-comparison

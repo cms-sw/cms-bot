@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 function run_validate(){
   mkdir -p $1
@@ -7,7 +7,7 @@ function run_validate(){
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n
              AutoLibraryLoader::enable();\n
              FWLiteEnabler::enable();\n
-             gSystem->Load(\"validate_C.so\");\n
+             gSystem->Load(\"libvalidate_C.so\");\n
              validate(\"${1}\", \"${baseA}/${2}\", \"${baseB}/${2}\", \"${3}\");\n
              .qqqqqq" | root -l -b >& ${1}.log
   popd
@@ -38,6 +38,7 @@ mkdir -p validate_lib
 pushd validate_lib
     cp ${VALIDATE_C_SCRIPT} ./validate.C
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b
+    ln -s validate_C.so libvalidate_C.so
 popd
 export LD_LIBRARY_PATH=`pwd`/validate_lib:${LD_LIBRARY_PATH}
 grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do

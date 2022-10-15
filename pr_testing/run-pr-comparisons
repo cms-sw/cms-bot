@@ -2,7 +2,11 @@
 
 function filter_failed_comparison(){
   if [ -f $1/index.html ] ; then
-    [ $(grep 'Skipped:\|Null:\|Fail:' $1/index.html | wc -l) -gt 0 ] || touch $1/.deleteme 
+    if [ $(grep 'Skipped:\|Null:\|Fail:' $1/index.html | wc -l) -gt 0 ] ; then
+      echo "Keeping workflow: $1"
+    else
+      touch $1/.deleteme 
+    fi
   fi
 }
 
@@ -220,13 +224,20 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     echo "ERR=0" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "compare_using_files.py -B DQM/TimerService@3 $WORKSPACE/results/files/$WF_DIR/$COMPARISON_RELEASE-$WF_FILE $WORKSPACE/results/files/$WF_DIR/$PR_NUM-$WF_FILE -o $OUTPUT_DIR --metas \" $COMPARISON_RELEASE @@@ $COMPARISON_RELEASE + $PR_NUM \" --use_black_file -C -R -p --no_successes -s b2b $TH_PARAM --standalone >> ${OUTPUT_DIR}RelMonComp-$WF_NUMBER.log 2>&1 || ERR=1" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo "cp $OUTPUT_DIR/RelMonSummary.html $OUTPUT_DIR/index.html || true" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    echo "touch $WORKSPACE/results/default-comparison/done-$WF_NUMBER" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo 'exit $ERR' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 5 ; done
     echo "Running $WORKSPACE/results/default-comparison/command-$WF_NUMBER"
     ($WORKSPACE/results/default-comparison/command-$WF_NUMBER > ${OUTPUT_DIR}/cmd.log 2>&1 || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
   done
+  wait
+  rm -f $WORKSPACE/results/default-comparison/cmdlog-*
+  echo "Finished with default comparison at `date`"
+  if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
+    for f in $WORKSPACE/results/default-comparison/* ; do
+      filter_failed_comparison "$f"
+    done
+  fi
 fi
 
 # ----------------------------------------------------------------------------
@@ -276,22 +287,10 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     echo "Running $ALT_COMP_DIR/command-$WF_NUMBER"
     ($ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
   done
+  wait
+  echo "Finished with alternative comparison at `date`"
 fi
 
-if [ -e $WORKSPACE/results/default-comparison/done-0 ] ; then
-  while [ $(ls -d $WORKSPACE/results/default-comparison/done-* | wc -l) -le $(ls -d $WORKSPACE/results/default-comparison/command-* | wc -l) ] ; do
-    sleep 60
-    echo "Jobs Running: $(jobs -p | wc -l)"
-  done
-  rm -f $WORKSPACE/results/default-comparison/done-*
-  rm -f $WORKSPACE/results/default-comparison/cmdlog-*
-  echo "Finished with default comparison at `date`"
-  if [ "X${FILTER_FAILED_COMPARISON}" = "Xtrue" ] ; then
-    for f in results/default-comparison/* ; do
-      filter_failed_comparison "$f"
-    done
-  fi
-fi
 set -x
 
 #----------------------------------

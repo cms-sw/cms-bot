@@ -3,7 +3,7 @@
 function run_validate(){
   mkdir -p $1
   pushd $1
-    echo "$(date): Will run on ${2} in ${1}"
+    echo "$(date): Will run on ${2} in ${1} for ${3}"
     echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n
              AutoLibraryLoader::enable();\n
              FWLiteEnabler::enable();\n
@@ -41,7 +41,7 @@ pushd validate_lib
     ls -l
 popd
 export LD_LIBRARY_PATH=`pwd`/validate_lib:${LD_LIBRARY_PATH}
-grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
+while read -r dsN fNP procN comm; do
     #fNP can be a pattern: path-expand it first
     fN=`echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g"`
     #[ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN}
@@ -63,6 +63,6 @@ grep root ${inList} | grep -v "#" | while read -r dsN fNP procN comm; do
         run_validate "all_mini_${diffN}_${dsN}" "${mFN}"  "${procN}" &
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
     fi
-done
+done< <(grep root ${inList} |  grep -v "#")
 wait
 rm -rf validate_lib

@@ -36,7 +36,6 @@ while read -r dsN fNP procN comm; do
     #[ ! -f "${baseA}/${fN}" ] && echo Missing ${baseA}/${fN}
     #process regular files first; need files both in baseA and baseB
     if [ -f "${baseA}/${fN}" -a -f "${baseB}/${fN}" ]; then
-        CMDS=""
         extN=all_${diffN}_${dsN}
         run_validate "all_${diffN}_${dsN}" "${fN}" "${procN}" &
         while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done

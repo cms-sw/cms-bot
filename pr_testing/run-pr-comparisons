@@ -73,6 +73,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b || true) &
   popd
 fi
+#Build validateALT shared lib once
 if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   mkdir -p $WORKSPACE/validateALT_lib
   pushd $WORKSPACE/validateALT_lib
@@ -173,16 +174,12 @@ fi
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
   pushd $JR_COMP_DIR
-  cp $CMS_BOT_DIR/comparisons/validateJR.sh  $JR_COMP_DIR
-  chmod +x $JR_COMP_DIR/validateJR.sh
-  cp $CMS_BOT_DIR/comparisons/matrix_RE.txt $JR_COMP_DIR
-
-  echo "Start JR comparison at `date`"
-  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
-  wait || true
-  (LD_LIBRARY_PATH=$WORKSPACE/validateJR_lib:${LD_LIBRARY_PATH} $JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
-  echo "Finished with JR comparison at `date`:"
-  wait
+    echo "Start JR comparison at `date`"
+    echo  "$CMS_BOT_DIR/comparisons/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew $CMS_BOT_DIR/comparisons/matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
+    wait || true
+    (LD_LIBRARY_PATH=$WORKSPACE/validateJR_lib:${LD_LIBRARY_PATH} $CMS_BOT_DIR/comparisons/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew $CMS_BOT_DIR/comparisons/matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
+    echo "Finished with JR comparison at `date`:"
+    wait
   popd
   rm -rf $WORKSPACE/validateJR_lib
   (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison JR || true) >${JR_COMP_DIR}/logRootQA-JR.log 2>&1 &
@@ -239,7 +236,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     echo "cp $OUTPUT_DIR/RelMonSummary.html $OUTPUT_DIR/index.html || true" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo 'exit $ERR' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.5 ; done
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
     echo "Jobs: $(jobs -p | wc -l)"
     echo "Running $WORKSPACE/results/default-comparison/command-$WF_NUMBER"
     ($WORKSPACE/results/default-comparison/command-$WF_NUMBER > ${OUTPUT_DIR}/cmd.log 2>&1 || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
@@ -354,18 +351,16 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
   echo "[`date`] Starting comparisons of edm::TriggerResults"
   mkdir -p ${WORKSPACE}/upload/triggerResults
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ]; do sleep 5; done
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ]; do sleep 0.1; done
     WF_DIR=`echo ${WF} | cut -d "/" -f1`
     (${CMS_BOT_DIR}/compareTriggerResults -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
       -f "*/${WF_DIR}/step*.root" -o ${WORKSPACE}/upload/triggerResults > ${WORKSPACE}/upload/triggerResults/${WF_DIR}.log 2>&1) || true &
-    unset WF_DIR
   done
-  unset WF
-  echo "[`date`] Running comparisons of edm::TriggerResults ..."
+  wait
+  echo "[`date`] Done comparisons of edm::TriggerResults"
 fi
 #-----------------------------------
 
-jobs
 wait || true
 
 if [ "X$RUN_TR_COMP" = Xtrue ]; then

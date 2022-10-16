@@ -36,11 +36,11 @@ case `basename $fA` in
   step*.root)
     ds=`date -u +%s.%N`
     os=os.${ds}
-    edmEventSize -v ${fA} > ${os}
+    edmEventSize -v ${fA} > ${os} &
 
     ns=ns.${ds}
-    edmEventSize -v ${fB} > ${ns}
-
+    edmEventSize -v ${fB} > ${ns} &
+    wait
     grep ${procF} ${os} ${ns} | sed -e "s/${os}:/os /g;s/${ns}:/ns /g" | absMin=${absMin} dptMin=${dptMin} useUnpacked=${useUnpacked} awk -f compareProducts.awk
 
     rm ${os} ${ns}

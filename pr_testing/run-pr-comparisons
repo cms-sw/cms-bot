@@ -11,6 +11,13 @@ function filter_failed_comparison(){
 }
 
 function wait_dqm_comp(){
+  echo "DQM_PID: ${DQM_PID}"
+  if [ "${DQM_PID}" != "" ] ; then
+    ps -p "$DQM_PID" -o pid,cmd || true
+    if [ $(ps -p "$DQM_PID" -o cmd | grep '/compareDQMOutput.py ' | wc -l) -gt 0 ] ; then
+      pgrep -P $DQM_PID -f || true
+    fi
+  fi
   while true ; do
     djobs=0
     if [ "${DQM_PID}" != "" ] ; then

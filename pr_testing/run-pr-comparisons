@@ -108,7 +108,6 @@ get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
 
 (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events >${JR_COMP_DIR}/logRootQA-events.log 2>&1 || true) &
-PID_WAIT="$! ${PID_WAIT}"
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
 cat $WORKSPACE/$MAPPING_FILE

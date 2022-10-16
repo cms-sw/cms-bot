@@ -185,7 +185,8 @@ DQM_PID=""
 if $DQM_COMPARISON_TEST ; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running DQM bin by bin comparison" || true
   (compareDQMOutput.py -b $WORKSPACE/data/$COMPARISON_RELEASE/ -p $WORKSPACE/data/PR-${PR_NUM} -o $CMS_BOT_DIR/dqm-comparison/dqmComparisonOutput/ -l "$PULL_REQUESTS" -t ${BUILD_ID} -r $COMPARISON_RELEASE -s $WORKSPACE/upload/ -j $NUM_PROC > $WORKSPACE/upload/dqmBinByBinLog.log 2>&1 || true) &
-  DQM_PID="$!"
+  sleep 5
+  DQM_PID=$(pgrep -x -f '.*/compareDQMOutput.py .*' || true)
 fi
 
 echo "DQM_PID: ${DQM_PID}, PID_WAIT: ${PID_WAIT}"

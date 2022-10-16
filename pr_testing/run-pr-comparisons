@@ -121,7 +121,6 @@ done
 WORKFLOWS_TO_COMPARE=`echo $WORKFLOWS_TO_COMPARE | sed 's/^.//'`
 echo $WORKFLOWS_TO_COMPARE
 for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
-
   WF_DIR=`echo $WF | cut -d "/" -f1`
   WF_NUMBER=`echo $WF | cut -d'_' -f1`
   WF_FILE=$(basename $WF)
@@ -179,6 +178,7 @@ mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
 popd
 
 [ "${PID_WAIT}" = "" ] || wait ${PID_WAIT}
+PID_WAIT=""
 set +x
 # --------------------------------------------------------------------------
 # Default Comparison
@@ -285,7 +285,6 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   if [ "X$RUN_JR_COMP" = Xtrue ]; then
     $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE >> $ALT_COMP_DIR/assignedParameters.log 2>&1
   fi
-  wait || true
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
 
     WF_FILE=$(basename $WF)
@@ -320,7 +319,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   rm -rf $WORKSPACE/validateALT_lib
   echo "Finished with alternative comparison at `date`"
 fi
-
+wait || true
 #----------------------------------
 # Comparison summary
 #----------------------------------

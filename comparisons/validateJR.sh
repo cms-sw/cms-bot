@@ -17,10 +17,6 @@ baseA=$1
 baseB=$2
 diffN=$3
 inList=$4
-if [ "X$VALIDATE_C_SCRIPT" = "X" ] ; then
-  VALIDATE_C_SCRIPT="${HOME}/tools/validate.C"
-fi
-
 nProc=$(nproc)
 touch missing_map.txt
 dL=""
@@ -34,13 +30,6 @@ ls -d ${baseA}/[1-9]* | while read -r d; do
   echo "${dL}" | grep  " $d/" >& /dev/null || echo $d >> missing_map.txt
 done
 
-mkdir -p validate_lib
-pushd validate_lib
-    cp ${VALIDATE_C_SCRIPT} ./validate.C
-    echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b
-    ls -l
-popd
-export LD_LIBRARY_PATH=`pwd`/validate_lib:${LD_LIBRARY_PATH}
 while read -r dsN fNP procN comm; do
     #fNP can be a pattern: path-expand it first
     fN=`echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g"`
@@ -66,4 +55,3 @@ while read -r dsN fNP procN comm; do
     fi
 done< <(grep root ${inList} | grep -v "#")
 wait
-rm -rf validate_lib

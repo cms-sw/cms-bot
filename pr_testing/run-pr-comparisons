@@ -65,6 +65,22 @@ if $DQM_COMPARISON_TEST ; then
   fi
 fi
 
+#Build validateJR shared lib once
+if [ "X$RUN_JR_COMP" = Xtrue ]; then
+  mkdir -p $WORKSPACE/validateJR_lib
+  pushd $WORKSPACE/validateJR_lib
+    cp $CMS_BOT_DIR/comparisons/validate.C ./
+    (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b || true) &
+  popd
+fi
+if [ "X$RUN_ALT_COMP" = Xtrue ]; then
+  mkdir -p $WORKSPACE/validateALT_lib
+  pushd $WORKSPACE/validateALT_lib
+    cp $CMS_BOT_DIR/comparisons/compareValHists.C ./
+    (echo -e "gROOT->SetStyle(\"Plain\");\n .L compareValHists.C+\n .qqqqqq" | root -l -b || true) &
+  popd
+fi
+
 cd $WORKSPACE/results
 echo "Downloading Ref: `date`"
 get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$COMPARISON_RELEASE/ || true
@@ -159,17 +175,16 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   pushd $JR_COMP_DIR
   cp $CMS_BOT_DIR/comparisons/validateJR.sh  $JR_COMP_DIR
   chmod +x $JR_COMP_DIR/validateJR.sh
-  cp $CMS_BOT_DIR/comparisons/validate.C     $JR_COMP_DIR
   cp $CMS_BOT_DIR/comparisons/matrix_RE.txt $JR_COMP_DIR
-  export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
   echo "Start JR comparison at `date`"
   echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
-  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
-
+  wait || true
+  (LD_LIBRARY_PATH=$WORKSPACE/validateJR_lib:${LD_LIBRARY_PATH} $JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
   echo "Finished with JR comparison at `date`:"
   wait
   popd
+  rm -rf $WORKSPACE/validateJR_lib
   (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison JR || true) >${JR_COMP_DIR}/logRootQA-JR.log 2>&1 &
 fi
 
@@ -198,9 +213,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R >> $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1
   fi
 
-  touch $WORKSPACE/results/default-comparison/done-0
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
-
     WF_FILE=$(basename $WF)
     WF_DIR=`echo $WF | cut -d "/" -f1`
     WF_NUMBER=`echo $WF | cut -d'_' -f1`
@@ -226,7 +239,8 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
     echo "cp $OUTPUT_DIR/RelMonSummary.html $OUTPUT_DIR/index.html || true" >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     echo 'exit $ERR' >> $WORKSPACE/results/default-comparison/command-$WF_NUMBER
     chmod 755 $WORKSPACE/results/default-comparison/command-$WF_NUMBER
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 5 ; done
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.5 ; done
+    echo "Jobs: $(jobs -p | wc -l)"
     echo "Running $WORKSPACE/results/default-comparison/command-$WF_NUMBER"
     ($WORKSPACE/results/default-comparison/command-$WF_NUMBER > ${OUTPUT_DIR}/cmd.log 2>&1 || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
   done
@@ -255,6 +269,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   if [ "X$RUN_JR_COMP" = Xtrue ]; then
     $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $DQM_COMP_PARAMS_FILE >> $ALT_COMP_DIR/assignedParameters.log 2>&1
   fi
+  wait || true
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
 
     WF_FILE=$(basename $WF)
@@ -264,9 +279,6 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PR_NUM-$WF_FILE
   
     mkdir -p $ALT_COMP_DIR/$WF_NUMBER
-    cp $CMS_BOT_DIR/comparisons/compareValHists.C $ALT_COMP_DIR/$WF_NUMBER
-    cp $CMS_BOT_DIR/comparisons/makeDiff.sh $ALT_COMP_DIR/$WF_NUMBER
-
     eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
     if [ "${MOD}" = "" ] ; then MOD=0; echo "Overriding MOD=$MOD";  fi
     echo "MOD=$MOD"
@@ -275,7 +287,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     echo '#!/bin/sh -ex' > $ALT_COMP_DIR/command-$WF_NUMBER
     echo "ERR=0" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "cd $ALT_COMP_DIR/$WF_NUMBER" >> $ALT_COMP_DIR/command-$WF_NUMBER
-    echo "$ALT_COMP_DIR/$WF_NUMBER/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD || ERR=1" >> $ALT_COMP_DIR/command-$WF_NUMBER
+    echo "$CMS_BOT_DIR/comparisons/makeDiff.sh $BASE_FILE $COMP_FILE $WF_NUMBER-result.ps 0 $MOD || ERR=1" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.ps $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "mv diff.pdf $ALT_COMP_DIR/$WF_NUMBER-result.pdf || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
     echo "gzip -f $ALT_COMP_DIR/$WF_NUMBER-result.ps || true" >> $ALT_COMP_DIR/command-$WF_NUMBER
@@ -283,14 +295,15 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     echo 'exit $ERR' >> $ALT_COMP_DIR/command-$WF_NUMBER
 
     chmod 755 $ALT_COMP_DIR/command-$WF_NUMBER
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 5 ; done
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
+    echo "Jobs: $(jobs -p | wc -l)"
     echo "Running $ALT_COMP_DIR/command-$WF_NUMBER"
-    ($ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
+    (LD_LIBRARY_PATH=$WORKSPACE/validateALT_lib:${LD_LIBRARY_PATH} $ALT_COMP_DIR/command-$WF_NUMBER > $ALT_COMP_DIR/runDQMComp-$WF_NUMBER.log 2>&1 || touch $ALT_COMP_DIR/error-$WF_NUMBER) &
   done
   wait
+  rm -rf $WORKSPACE/validateALT_lib
   echo "Finished with alternative comparison at `date`"
 fi
-
 set -x
 
 #----------------------------------

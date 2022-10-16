@@ -231,7 +231,7 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
       fi
       let djobs=${djobs}+$(jobs -p | wc -l) || true
       if [ $djobs -lt ${NUM_PROC} ] ; then break ; fi
-      sleep 1
+      sleep 2
     done
     echo "Running $WORKSPACE/results/default-comparison/command-$WF_NUMBER"
     ($WORKSPACE/results/default-comparison/command-$WF_NUMBER > ${OUTPUT_DIR}/cmd.log 2>&1 || touch $WORKSPACE/results/default-comparison/error-$WF_NUMBER) &
@@ -368,8 +368,9 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
   echo "[`date`] Starting comparisons of edm::TriggerResults"
   mkdir -p ${WORKSPACE}/upload/triggerResults
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
-    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ]; do sleep 0.1; done
+    while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ]; do sleep 1; done
     WF_DIR=`echo ${WF} | cut -d "/" -f1`
+    echo "Running: edm::TriggerResults ${WF_DIR}"
     (${CMS_BOT_DIR}/compareTriggerResults -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
       -f "*/${WF_DIR}/step*.root" -o ${WORKSPACE}/upload/triggerResults > ${WORKSPACE}/upload/triggerResults/${WF_DIR}.log 2>&1 || true) &
   done

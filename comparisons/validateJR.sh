@@ -38,7 +38,7 @@ while read -r dsN fNP procN comm; do
     if [ -f "${baseA}/${fN}" -a -f "${baseB}/${fN}" ]; then
         extN=all_${diffN}_${dsN}
         run_validate "all_${diffN}_${dsN}" "${fN}" "${procN}" &
-        while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
+        while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 0.2 ; done
     fi
     #process miniAOD files now
     fNBase=`echo ${fN} | sed -e 's/.root$//g'`
@@ -50,7 +50,7 @@ while read -r dsN fNP procN comm; do
     if [ -f "${baseA}/${mFN}" -a -f "${baseB}/${mFN}" ]; then
         echo $mFN
         run_validate "all_mini_${diffN}_${dsN}" "${mFN}"  "${procN}" &
-        while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 5 ; done
+        while [ $(jobs -p | wc -l) -ge ${nProc} ] ; do sleep 0.2 ; done
     fi
 done< <(grep root ${inList} | grep -v "#")
 wait

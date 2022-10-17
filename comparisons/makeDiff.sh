@@ -14,5 +14,5 @@ echo -e "gROOT->SetStyle(\"Plain\");\n
          compareAll(f1,f2,${lMod},${dOpt}, \"${dirPattern}\", \"${dirPatternExclude}\");\n
          .qqqqqq" | root -l -b
 exit_code=$?
-[ $exit_code -eq 6 ] || exit_code=0
+[ $exit_code -eq 6 ] && exit_code=0
 exit $exit_code

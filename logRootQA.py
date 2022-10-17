@@ -296,8 +296,6 @@ if run in ['all', 'events']:
     for l in getCommonFiles(baseDir,testDir,'step*.log'):
       lCount=checkLines(baseDir+l,testDir+l)
       lines=lines+lCount
-      if lChanges!=0:
-        lChanges=True
       if nPrintTot<1000:
         nprint=getRelevantDiff(baseDir+l,testDir+l)
         nPrintTot=nPrintTot+nprint
@@ -306,6 +304,8 @@ if run in ['all', 'events']:
           print('Skipping further diff comparisons. Too many diffs')
           stopPrint=1
       nLog=nLog+1
+    if lines>0:
+      lChanges=True
     #### compare edmEventSize on each to look for new missing candidates
     for r in getCommonFiles(baseDir,testDir,'step*.root'):
       if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:

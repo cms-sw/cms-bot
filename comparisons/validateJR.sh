@@ -15,5 +15,5 @@ echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n
          validate(\"${name}\", \"${baseA}/${fileN}\", \"${baseB}/${fileN}\", \"${procN}\");\n
          .qqqqqq" | root -l -b >${name}.log 2>&1
 exit_code=$?
-[ $exit_code -eq 6 ] || exit_code=0
+[ $exit_code -eq 6 ] && exit_code=0
 exit $exit_code

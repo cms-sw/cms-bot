@@ -291,74 +291,72 @@ nRoot=0
 newDQM=0
 nDQM=0
 diff,wfs=[],[]
-if not os.path.exists('comparison-events.json'):
-  for l in getCommonFiles(baseDir,testDir,'step*.log'):
-    lCount=checkLines(baseDir+l,testDir+l)
-    lines=lines+lCount
-    if lChanges!=0:
+if run in ['all', 'events']:
+  if not os.path.exists('comparison-events.json'):
+    for l in getCommonFiles(baseDir,testDir,'step*.log'):
+      lCount=checkLines(baseDir+l,testDir+l)
+      lines=lines+lCount
+      if lChanges!=0:
         lChanges=True
-    if nPrintTot<1000:
+      if nPrintTot<1000:
         nprint=getRelevantDiff(baseDir+l,testDir+l)
         nPrintTot=nPrintTot+nprint
-    else:
+      else:
         if stopPrint==0:
-            print('Skipping further diff comparisons. Too many diffs')
-            stopPrint=1
-    nLog=nLog+1
-  #### compare edmEventSize on each to look for new missing candidates
-  for r in getCommonFiles(baseDir,testDir,'step*.root'):
-    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
+          print('Skipping further diff comparisons. Too many diffs')
+          stopPrint=1
+      nLog=nLog+1
+    #### compare edmEventSize on each to look for new missing candidates
+    for r in getCommonFiles(baseDir,testDir,'step*.root'):
+      if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
         sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
         nRoot=nRoot+1
-  for r in getCommonFiles(baseDir,testDir,'DQM*.root'):
+    for r in getCommonFiles(baseDir,testDir,'DQM*.root'):
       t=checkDQMSize(baseDir+r,testDir+r,diff,wfs)
       print(r,t)
       newDQM=newDQM+t
       nDQM=nDQM+1
-  with open('comparison-events.json', 'w') as f:
+    with open('comparison-events.json', 'w') as f:
       json.dump([lines, lChanges, nLog, nPrintTot, stopPrint, sameEvts, nRoot, newDQM, nDQM, diff, wfs], f)
-else:
-  with open('comparison-events.json') as f:
+  else:
+    with open('comparison-events.json') as f:
       (lines, lChanges, nLog, nPrintTot, stopPrint, sameEvts, nRoot, newDQM, nDQM, diff, wfs) = json.load(f)
 
-print("Logs:", lines, lChanges, nLog, nPrintTot, stopPrint)
-print("Events:", sameEvts, nRoot, newDQM, nDQM, diff, wfs)
-if lines >0 :
-    print("SUMMARY You potentially added "+str(lines)+" lines to the logs") 
-else:
+  print("Logs:", lines, lChanges, nLog, nPrintTot, stopPrint)
+  print("Events:", sameEvts, nRoot, newDQM, nDQM, diff, wfs)
+  if lines >0 :
+    print("SUMMARY You potentially added "+str(lines)+" lines to the logs")
+  else:
     print("SUMMARY No significant changes to the logs found")
 
-if lChanges:
+  if lChanges:
     qaIssues=True
 
-if not sameEvts:
+  if not sameEvts:
     qaIssues=True
     print('SUMMARY ROOTFileChecks: Some differences in event products or their sizes found')
-
-if run == "events":
-  sys.exit(0)
-
-print('\n')
+  print('\n')
+  if run == "events":
+    sys.exit(0)
 
 # now check the JR comparisons for differences
 nDiff = 0
 nAll = 0
 nOK = 0
-if not os.path.exists('comparison-JR.json'):
+if run in ['all', 'JR']:
+  if not os.path.exists('comparison-JR.json'):
     nDiff,nAll,nOK=summaryJR(jrDir)
     with open('comparison-JR.json', 'w') as f:
       json.dump([nDiff,nAll,nOK], f)
-else:
+  else:
     with open('comparison-JR.json') as f:
         (nDiff,nAll,nOK) = json.load(f)
-
-print('SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons') 
-if nAll!=nOK:
+  print('SUMMARY Reco comparison results:',nDiff,'differences found in the comparisons')
+  if nAll!=nOK:
     print('SUMMARY Reco comparison had ',nAll-nOK,'failed jobs')
-print('\n')
-
-if run == "JR":
-  sys.exit(0)
+  print('\n')
+  if run == "JR":
+    sys.exit(0)
 
 # not check for default comparison
 compSummary = []

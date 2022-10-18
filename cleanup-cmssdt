@@ -26,7 +26,8 @@ done
 
 RUNS_TO_KEEP=1
 #Keep $JOBS_TO_KEEP of these with RUNS_TO_KEEP
-for dir in  baseLineComparisons baseLineComparisonsGPU baseLineComparisonsHIGH_STATS ; do
+for type in "" $(PYTHONPATH=${CMS_BOT_DIR} python3 -c 'from process_pr import EXTRA_RELVALS_TESTS;print(" ".join([x.upper().replace("-","_") for x in EXTRA_RELVALS_TESTS if x]))') ; do
+  dir=baseLineComparisons${type}
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"
   cd ${JENKINS_ARTIFACTS}/$dir

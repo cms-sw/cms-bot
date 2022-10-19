@@ -69,6 +69,7 @@ ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS ="_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|profiling|none"
+ENABLE_TEST_PTRN = "enable(_test(s|)|)"
 MULTILINE_COMMENTS_MAP = {
               "(workflow|relval)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
               "(workflow|relval)(s|)_profiling":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),"PROFILING_WORKFLOWS"],
@@ -79,7 +80,7 @@ MULTILINE_COMMENTS_MAP = {
               "dry_run":          ['true|false',                                                                "DRY_RUN"],
               "jenkins_slave":    ['[a-zA-Z][a-zA-Z0-9_-]+' ,                                                   "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],
-              "enable(_test(s|))":[format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),                "ENABLE_BOT_TESTS"],
+              ENABLE_TEST_PTRN:   [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),                "ENABLE_BOT_TESTS"],
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",           "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
@@ -484,7 +485,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   REGEX_EX_CMDS="^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
   known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
-  REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP["enable(_test(s|))"][0]
+  REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
   L2_DATA = init_l2_data (cms_repo)
   last_commit_date = None
   last_commit_obj = None

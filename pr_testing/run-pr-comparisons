@@ -469,6 +469,10 @@ ${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_
 if [ "${TEST_FLAVOR}" != "" ] ; then
   sed -i -e "s|## Comparison Summary|## ${UC_TEST_FLAVOR} Comparison Summary|" $WORKSPACE/testsResults/20-comparison-report.res
   mv $WORKSPACE/testsResults/20-comparison-report.res $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
+  if [ -e $WORKSPACE/upload/NANO_report.md ] ; then
+    echo "- Nano Size comparison results" >> $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
+    cat $WORKSPACE/upload/NANO_report.md >> $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
+  fi
 fi
 
 if [ "$DRY_RUN" = "" ] ; then

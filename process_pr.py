@@ -79,7 +79,7 @@ MULTILINE_COMMENTS_MAP = {
               "dry_run":          ['true|false',                                                                "DRY_RUN"],
               "jenkins_slave":    ['[a-zA-Z][a-zA-Z0-9_-]+' ,                                                   "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],
-              "enable_test(s|)":  [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),                "ENABLE_BOT_TESTS"],
+              "enable(_test(s|))":[format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),                "ENABLE_BOT_TESTS"],
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",           "DOCKER_IMGAGE"],
               "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],

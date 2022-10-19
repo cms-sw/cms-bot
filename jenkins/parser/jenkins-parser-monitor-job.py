@@ -2,18 +2,22 @@ import json
 
 
 with open(
-    "/build/builds/jenkins-test-parser-monitor/json-web-info.json", "r"
-) as json_file:
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-web-info.json",
+    "r",
+) as json_file:  # Keeps track of the actions taken by parser job
     json_object = json.load(json_file)
 
 with open(
-    "/build/builds/jenkins-test-parser-monitor/json-retry-info.json", "r"
-) as json_file:
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json",
+    "r",
+) as json_file:  # Keeps track of the links to the retry job
     json_retry_object = json.load(json_file)
 
 with open(
-    "/build/builds/jenkins-test-parser-monitor/test-parser-web-info.html", "w"
-) as html_file:
+    os.environ.get("HOME")
+    + "/builds/jenkins-test-parser-monitor/test-parser-web-info.html",
+    "w",
+) as html_file:  # Static web page
 
     head = '<!DOCTYPE html>\n\
 <html>\n\

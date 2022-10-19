@@ -89,7 +89,7 @@ if $DQM_COMPARISON_TEST ; then
 fi
 
 NANO_TEST=false
-if [ "${UC_TEST_FLAVOR}" = "nano" ] ; then
+if [ "${UC_TEST_FLAVOR}" = "NANO" ] ; then
   NANO_TEST_DIR=${CMSSW_BASE}/src/PhysicsTools/NanoAOD/test
   [ -e ${NANO_TEST_DIR} ] || NANO_TEST_DIR=${CMSSW_RELEASE_BASE}/src/PhysicsTools/NanoAOD/test
   [ -x ${NANO_TEST_DIR}/compare_sizes_json.py ] && NANO_TEST=true

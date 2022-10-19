@@ -5,6 +5,9 @@ import re
 
 def grep(filename, pattern, verbose=False):
     """Bash-like grep function. Set verbose=True to print the line match."""
+    if not os.path.exists(filename):
+        # TODO: Make sure parser-info.json is properly cleaned
+        return
     with open(filename, "r") as file:
         for line in file:
             if re.search(pattern, line):

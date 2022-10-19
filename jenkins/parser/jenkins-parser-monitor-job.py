@@ -1,5 +1,7 @@
-import json
+#!/usr/bin/env python3
 
+import json
+import os
 
 with open(
     os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-web-info.json",

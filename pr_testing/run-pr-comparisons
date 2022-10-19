@@ -15,7 +15,7 @@ function process_nano(){
 }
 
 function nano_summary(){
-  pushd nano
+  pushd $WORKSPACE/results/nano
     WFS=""
     rm -f NANO_report.md
     for wf in $(ls -d *-size.json | sed 's|-size.json||') ; do

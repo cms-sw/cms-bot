@@ -7,6 +7,9 @@ import os
 import xml.etree.ElementTree as ET
 import datetime
 
+import actions
+import helpers
+
 # Get job name and build number to retry
 parser = argparse.ArgumentParser()
 parser.add_argument("job_to_retry", help="Jenkins job to retry")
@@ -128,35 +131,12 @@ retry_url = (
     os.environ.get("JENKINS_URL") + "job/jenkins-test-retry/" + current_build_number
 )
 
-with open(tracker_path, "r+") as summary:
-    content = summary.readlines()
-    # Each entry has 8, we keep a maximum of 100 entries
-    # TODO: Cleanup by date
-    if len(content) > 800:
-        content = content[0:800]
-    retry_time = datetime.datetime.now().replace(microsecond=0)
-    summary.seek(0)
-    summary.write(
-        "<tr>\n<td>"
-        + str(retry_time)
-        + "</td>\n<td>"
-        + str(job_to_retry)
-        + "</td>\n<td>"
-        + str(build_to_retry)
-        + "</td>\n<td>"
-        + str(regex)
-        + '</td>\n<td><a href="'
-        + str(job_url)
-        + '">'
-        + str(job_url)
-        + '</a></td>\n<td><a href="'
-        + str(retry_url)
-        + '">'
-        + str(retry_url)
-        + "</a></td>\n</tr>\n"
-        + "".join(content)
-    )
-
+retry_url_file_path = (
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json"
+)
+actions.update_retry_link_cmssdt_page(
+    retry_url_file_path, job_to_retry, build_to_retry, retry_url
+)
 
 # Format retry label depending on parser action
 times = "time" if retry_counter_update == 1 else "times"

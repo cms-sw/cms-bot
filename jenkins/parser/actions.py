@@ -1,11 +1,20 @@
 import functools
 import os
 import time
+import json
+import datetime
 
 import helpers
 
 
 email_addresses = "cms-sdt-logs@cern.ch"
+
+html_file_path = (
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-web-info.json"
+)
+retry_url_file = (
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json"
+)
 
 
 def send_email(email_msg, email_subject, email_addresses):
@@ -17,7 +26,13 @@ def send_email(email_msg, email_subject, email_addresses):
 
 
 def trigger_retry_action(
-    job_to_retry, build_to_retry, build_dir_path, action, regex, force_retry_regex
+    job_to_retry,
+    job_url,
+    build_to_retry,
+    build_dir_path,
+    action,
+    regex,
+    force_retry_regex,
 ):
     # Skip autoretry if Jenkins already retries, unless connection issue.
     if regex not in force_retry_regex:
@@ -56,6 +71,9 @@ def trigger_retry_action(
     )
     print(trigger_retry)
     os.system(trigger_retry)
+    update_cmssdt_page(
+        html_file_path, job_to_retry, build_to_retry, regex, job_url, "", "Retry"
+    )
 
 
 def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
@@ -225,3 +243,45 @@ def update_no_action_label(job_to_retry, build_to_retry):
     )
     print(update_label)
     os.system(update_label)
+
+
+def update_cmssdt_page(html_file, job, build, error, job_url, retry_url, action):
+
+    with open(html_file, "r") as openfile:
+        json_object = json.load(openfile)
+
+    id = str(len(json_object["parserActions"]) + 1)
+    retry_time = datetime.datetime.now().replace(microsecond=0)
+
+    json_object["parserActions"][id] = dict()
+    json_object["parserActions"][id]["actionTime"] = str(retry_time)
+    json_object["parserActions"][id]["jobName"] = job
+    json_object["parserActions"][id]["buildNumber"] = build
+    json_object["parserActions"][id]["errorMsg"] = error
+    json_object["parserActions"][id]["failedBuild"] = job_url
+    json_object["parserActions"][id]["retryJob"] = retry_url
+    json_object["parserActions"][id]["parserAction"] = action
+
+    with open(html_file, "w") as openfile:
+        json.dump(json_object, openfile, indent=2)
+
+    trigger_web_update = (
+        os.environ.get("JENKINS_CLI_CMD") + " build jenkins-test-parser-monitor"
+    )
+    print(trigger_web_update)
+    os.system(trigger_web_update)
+
+
+def update_retry_link_cmssdt_page(retry_url_file, job, build, retry_url):
+
+    with open(retry_url_file, "r") as openfile:
+        json_object = json.load(openfile)
+
+    if job in json_object["retryUrl"].keys():
+        json_object["retryUrl"][job][build] = retry_url
+    else:
+        json_object["retryUrl"][job] = dict()
+        json_object["retryUrl"][job][build] = retry_url
+
+    with open(retry_url_file, "w") as openfile:
+        json.dump(json_object, openfile, indent=2)

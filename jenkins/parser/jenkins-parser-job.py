@@ -48,6 +48,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                 if action == "retryBuild":
                     actions.trigger_retry_action(
                         job_to_retry,
+                        job_url,
                         build_to_retry,
                         build_dir_path,
                         action,
@@ -81,6 +82,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         )
                         actions.trigger_retry_action(
                             job_to_retry,
+                            job_url,
                             build_to_retry,
                             build_dir_path,
                             action,
@@ -102,6 +104,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         )
                         actions.trigger_retry_action(
                             job_to_retry,
+                            job_url,
                             build_to_retry,
                             build_dir_path,
                             action,
@@ -127,12 +130,23 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
 
     # Mark as retried
     actions.mark_build_as_retried(job_dir, job_to_retry, build_to_retry)
+    with open(parser_info_path, "w") as processed_file:
+        json.dump(processed_object, processed_file, indent=2)
 
     if regex_flag == 0:
         print("... no known errors were found.")
         if helpers.grep(os.path.join(build_dir_path, "build.xml"), "<result>FAILURE"):
             # Update description to inform that no action has been taken
             actions.update_no_action_label(job_to_retry, build_to_retry)
+            actions.update_cmssdt_page(
+                html_file_path,
+                job_to_retry,
+                build_to_retry,
+                "No error found. Please, take the appropiate action",
+                job_url,
+                "[ No action taken ]",
+                "NoAction",
+            )
 
 
 def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=18):
@@ -160,6 +174,9 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
     build_file_path = functools.reduce(
         os.path.join, [job_dir, build_to_check, "build.xml"]
     )
+
+    if not os.path.exists(build_file_path):
+        return
 
     start_timestamp = (
         helpers.grep(build_file_path, "<startTime>", True)
@@ -286,8 +303,12 @@ if __name__ == "__main__":
     parser_info_path = (
         os.environ.get("HOME") + "/builds/jenkins-test-parser/parser-info.json"
     )  # This file keeps track of the last log processed and the pending builds
+    html_file_path = (
+        os.environ.get("HOME")
+        + "/builds/jenkins-test-parser-monitor/json-web-info.json"
+    )
 
-    # Get jobs-config info
+    # Get job-config info
     with open(jobs_config_path, "r") as jobs_file:
         jobs_object = json.load(jobs_file)
         jenkins_jobs = jobs_object["jobsConfig"]["jenkinsJobs"]
@@ -377,12 +398,15 @@ if __name__ == "__main__":
                     )
 
         first_iter = False
-
         with open(parser_info_path, "w") as processed_file:
-            json.dump(processed_object, processed_file)
-        print("[Parser information updated]")
+            json.dump(processed_object, processed_file, indent=2)
 
         if elapsed_time > datetime.timedelta(hours=2):
+            # Save last parsed log and current running builds in file
+            # TODO: Not necessary to save here
+            with open(parser_info_path, "w") as processed_file:
+                json.dump(processed_object, processed_file, indent=2)
             break
 
+        print("[Parser information updated]")
         time.sleep(10)

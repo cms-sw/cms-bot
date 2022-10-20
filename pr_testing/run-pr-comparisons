@@ -21,14 +21,14 @@ function nano_summary(){
     for wf in $(ls -d *-size.json | sed 's|-size.json||') ; do
       ok_wf=true
       for f in ${wf}-timing.json ref/${wf}-size.json ref/${wf}-size.json ; do
-        if [ ! -e $f ] ; then echo "   - Nano ERROR: Missing $f" >> NANO_report.md ; ok_wf=false ; fi
+        if [ ! -e $f ] ; then echo " - Nano ERROR: Missing $f" >> NANO_report.md ; ok_wf=false ; fi
       done
       $ok_wf && WFS="${WFS} ${wf}"
     done
     if [ "${WFS}" != "" ] ; then
       ${NANO_TEST_DIR}/compare_sizes_json.py -H -f md --base "{}-size.json,{}-timing.json" --ref "./ref" ${WFS} >> NANO_report.md
     else
-     echo "   - No valid nano workflows found" >> NANO_report.md
+     echo " - No valid nano workflows found" >> NANO_report.md
     fi
   popd
 }
@@ -470,10 +470,10 @@ if [ "${TEST_FLAVOR}" != "" ] ; then
   sed -i -e "s|## Comparison Summary|## ${UC_TEST_FLAVOR} Comparison Summary|" $WORKSPACE/testsResults/20-comparison-report.res
   mv $WORKSPACE/testsResults/20-comparison-report.res $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
   if [ -e $WORKSPACE/upload/nano/NANO_report.md ] ; then
-    echo " - Nano Size comparison results" >> $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
-    echo "" >> $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
-    cat $WORKSPACE/upload/nano/NANO_report.md >> $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
-    echo "" >> $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
+    echo "**Nano size comparison Summary**:" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    echo "" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    cat $WORKSPACE/upload/nano/NANO_report.md >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    echo "" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
   fi
 fi
 

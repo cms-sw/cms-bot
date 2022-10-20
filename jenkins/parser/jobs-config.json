@@ -37,7 +37,7 @@
           "hudsonConnection",
           "busError"
         ],
-        "maxTime": "16"
+        "maxTime": "18"
       },
       {
         "jobName": "ib-run-qa",
@@ -54,7 +54,7 @@
           "afsFailure",
           "busError"
         ],
-        "maxTime": "12"
+        "maxTime": "14"
       },
       {
         "jobName": "ib-run-pr-relvals",

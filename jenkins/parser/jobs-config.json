@@ -135,7 +135,8 @@
           "fatal: repository .* not found",
           "Tag already exist",
           "Connection to github\\.com closed by remote host.",
-          "Error while downloading sources from github\\.com"
+          "Error while downloading sources from github\\.com",
+          "fatal: remote did not send all necessary objects"
         ],
         "action": "retryBuild"
       },

@@ -100,6 +100,13 @@
         "jobName": "ib-run-static-checks",
         "errorType": [],
         "maxTime": "6"
+      },
+      {
+        "jobName": "auto-forward-port-branch",
+        "errorType": [
+          "gitErrors"
+        ],
+        "maxTime": "1"
       }
     ],
     "errorMsg": {

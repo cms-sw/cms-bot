@@ -1,4 +1,38 @@
 #!/bin/sh -ex
+function process_nano(){
+  mkdir -p $1
+  pushd $1
+    for r in $(ls -d $2/*/step2.root 2>/dev/null); do
+      WF_DIR=$(dirname $r)
+      [ -e ${WF_DIR}/JobReport2.xml ] || continue
+      while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
+      WF=$(basename ${WF_DIR} | cut -d_ -f1)
+      ${NANO_TEST_DIR}/inspectNanoFile.py $r -j ${WF}-size.json &
+      while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
+      ${NANO_TEST_DIR}/get_timing_from_jobreport.py ${WF_DIR}/JobReport2.xml ${WF}-timing.json &
+    done
+  popd
+}
+
+function nano_summary(){
+  pushd $WORKSPACE/results/nano
+    WFS=""
+    rm -f NANO_report.md
+    for wf in $(ls -d *-size.json | sed 's|-size.json||') ; do
+      ok_wf=true
+      for f in ${wf}-timing.json ref/${wf}-size.json ref/${wf}-size.json ; do
+        if [ ! -e $f ] ; then echo " - Nano ERROR: Missing $f" >> NANO_report.md ; ok_wf=false ; fi
+      done
+      $ok_wf && WFS="${WFS} ${wf}"
+    done
+    if [ "${WFS}" != "" ] ; then
+      ${NANO_TEST_DIR}/compare_sizes_json.py -H -f md --base "{}-size.json,{}-timing.json" --ref "./ref" ${WFS} >> NANO_report.md
+    else
+     echo " - No valid nano workflows found" >> NANO_report.md
+    fi
+  popd
+}
+
 source $(dirname $0)/setup-pr-test-env.sh
 TEST_FLAVOR_STR=""
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
@@ -54,12 +88,21 @@ if $DQM_COMPARISON_TEST ; then
   fi
 fi
 
+NANO_TEST=false
+if [ "${UC_TEST_FLAVOR}" = "NANO" ] ; then
+  NANO_TEST_DIR=${CMSSW_BASE}/src/PhysicsTools/NanoAOD/test
+  [ -e ${NANO_TEST_DIR} ] || NANO_TEST_DIR=${CMSSW_RELEASE_BASE}/src/PhysicsTools/NanoAOD/test
+  [ -x ${NANO_TEST_DIR}/compare_sizes_json.py ] && NANO_TEST=true
+fi
+
 cd $WORKSPACE/results
 echo "Downloading Ref: `date`"
 get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$COMPARISON_RELEASE/ || true
 echo "Downloading PR: `date`"
+${NANO_TEST} && process_nano nano/ref $WORKSPACE/data/$COMPARISON_RELEASE
 get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
+${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
@@ -337,6 +380,9 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
 fi
 #-----------------------------------
 
+#Nano Workflows summary
+${NANO_TEST} && nano_summary
+
 jobs
 wait || true
 
@@ -393,6 +439,9 @@ for x in $(find results/JR-comparison -maxdepth 2 -name 'command*' -o -name '*.l
   mv results/JR-comparison/$f $d/
 done
 
+#nano
+[ -d $WORKSPACE/results/nano ] && mv $WORKSPACE/results/nano upload/
+
 #files
 if [ -e results/files ] ; then
   mkdir -p upload/files
@@ -420,6 +469,12 @@ ${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_
 if [ "${TEST_FLAVOR}" != "" ] ; then
   sed -i -e "s|## Comparison Summary|## ${UC_TEST_FLAVOR} Comparison Summary|" $WORKSPACE/testsResults/20-comparison-report.res
   mv $WORKSPACE/testsResults/20-comparison-report.res $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
+  if [ -e $WORKSPACE/upload/nano/NANO_report.md ] ; then
+    echo "**Nano size comparison Summary**:" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    echo "" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    cat $WORKSPACE/upload/nano/NANO_report.md >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    echo "" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+  fi
 fi
 
 if [ "$DRY_RUN" = "" ] ; then

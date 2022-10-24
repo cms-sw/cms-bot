@@ -15,6 +15,17 @@ LOG=$WORKSPACE/matrixTests${UC_TEST_FLAVOR}.log
 touch ${LOG}
 echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
   dateBefore=$(date +"%s")
+  if [ $(echo "${args}" | sed 's|.*-l ||;s| .*||' | tr ',' '\n' | grep '^all$' | wc -l) -gt 0 ] ; then
+    OPTS=""
+    case "${TEST_FLAVOR}" in
+      gpu ) OPTS="-w gpu" ;;
+      high_stats ) ;;
+      nano ) OPTS="-w nano" ;;
+      * ) ;;
+    esac
+    ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${args} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
+    args=$(echo "${args}" | sed "s|all|${ALL_WFS}|")
+  fi
   (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee ${LOG}.tmp
   if [ $(grep -a "ALL_OK" ${LOG}.tmp | wc -l) -eq 0 ] ; then echo "ERROR Running runTheMatrix for '$args'" >> ${LOG}.tmp ; fi
   cat ${LOG}.tmp >> ${LOG}

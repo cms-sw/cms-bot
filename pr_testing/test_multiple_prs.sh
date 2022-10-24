@@ -6,7 +6,7 @@
 # ---
 #common function
 function order_workflow_list(){
-  echo ${1} | tr ' ' '\n' | tr ',' '\n' | grep '^[0-9]' | sort -n | uniq | tr '\n' ',' | sed 's|,*$||'
+  echo ${1} | tr ' ' '\n' | tr ',' '\n' | grep '^[0-9]\|^all$' | sort -n | uniq | tr '\n' ',' | sed 's|,*$||'
 }
 
 function get_pr_baseline_worklflow() {

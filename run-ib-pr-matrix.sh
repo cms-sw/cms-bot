@@ -18,6 +18,10 @@ if [ "${CHECK_WORKFLOWS}" = "true" ] ; then
   if has_jenkins_artifacts ${ARTIFACT_DIR} -d ; then
     REL_WFS=$(cmd_jenkins_artifacts ${ARTIFACT_DIR} "cat runall-report-step123*.log 2>/dev/null" | grep '_' | sed 's|_.*||' | tr '\n' ' ')
   fi
+  if [ $(echo "${WORKFLOWS}" | sed 's|.*-l ||;s| .*||' | tr ',' '\n' | grep '^all$' | wc -l) -gt 0 ] ; then
+    ALL_WFS=$(runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' | tr '\n' ',' | sed 's|,$||')
+    WORKFLOWS=$(echo "${WORKFLOWS}" | sed "s|all|${ALL_WFS}|")
+  fi
   runTheMatrix.py -n ${OPTS} ${MATRIX_ARGS} ${WORKFLOWS} | grep -v ' workflows ' | grep '^[1-9][0-9]*\(.[0-9][0-9]*\|\)\s' | sed 's| .*||' > $WORKSPACE/req.wfs
   for wf in $(cat $WORKSPACE/req.wfs) ; do
     [ $(echo " $REL_WFS " | grep " $wf "  | wc -l) -eq 0 ] || continue

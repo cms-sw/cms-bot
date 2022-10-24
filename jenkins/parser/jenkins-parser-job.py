@@ -243,6 +243,8 @@ def first_iter_check(job_to_retry, job_dir, error_list, processed_object):
             job_to_retry
         ] = last_processed_log
 
+    print(" ---> Last processed log: ", last_processed_log)
+
     finished_builds = [
         dir.name
         for dir in os.scandir(job_dir)
@@ -381,6 +383,7 @@ if __name__ == "__main__":
                         build
                     )
                 # Update last processed log
+                # TODO: Only update if greater than current revision number
                 processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
                     finished_builds
                 )
@@ -409,4 +412,6 @@ if __name__ == "__main__":
             break
 
         print("[Parser information updated]")
-        time.sleep(10)
+        # Trigger cmssdt page update
+        actions.update_cmssdt_page(html_file_path, "", "", "", "", "", "", True)
+        time.sleep(20)

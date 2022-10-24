@@ -245,22 +245,27 @@ def update_no_action_label(job_to_retry, build_to_retry):
     os.system(update_label)
 
 
-def update_cmssdt_page(html_file, job, build, error, job_url, retry_url, action):
+def update_cmssdt_page(
+    html_file, job, build, error, job_url, retry_url, action, refresh_only=False
+):
 
     with open(html_file, "r") as openfile:
         json_object = json.load(openfile)
 
-    id = str(len(json_object["parserActions"]) + 1)
-    retry_time = datetime.datetime.now().replace(microsecond=0)
+    if refresh_only == False:
+        id = str(len(json_object["parserActions"]) + 1)
+        retry_time = datetime.datetime.now().replace(microsecond=0)
 
-    json_object["parserActions"][id] = dict()
-    json_object["parserActions"][id]["actionTime"] = str(retry_time)
-    json_object["parserActions"][id]["jobName"] = job
-    json_object["parserActions"][id]["buildNumber"] = build
-    json_object["parserActions"][id]["errorMsg"] = error
-    json_object["parserActions"][id]["failedBuild"] = job_url
-    json_object["parserActions"][id]["retryJob"] = retry_url
-    json_object["parserActions"][id]["parserAction"] = action
+        json_object["parserActions"][id] = dict()
+        json_object["parserActions"][id]["actionTime"] = str(retry_time)
+        json_object["parserActions"][id]["jobName"] = job
+        json_object["parserActions"][id]["buildNumber"] = build
+        json_object["parserActions"][id]["errorMsg"] = error
+        json_object["parserActions"][id]["failedBuild"] = job_url
+        json_object["parserActions"][id]["retryJob"] = retry_url
+        json_object["parserActions"][id]["parserAction"] = action
+
+    json_object = cleanup_cmssdt_page(json_object)
 
     with open(html_file, "w") as openfile:
         json.dump(json_object, openfile, indent=2)
@@ -270,6 +275,42 @@ def update_cmssdt_page(html_file, job, build, error, job_url, retry_url, action)
     )
     print(trigger_web_update)
     os.system(trigger_web_update)
+
+
+def cleanup_cmssdt_page(json_object):
+
+    builds_dir = os.environ.get("HOME") + "/builds"
+
+    # [CLEANUP]: Loop over the entries to clean up static page
+    for entry in list(json_object["parserActions"].keys()):
+        job_to_retry = json_object["parserActions"][entry]["jobName"]
+        build_to_retry = json_object["parserActions"][entry]["buildNumber"]
+        action_time = json_object["parserActions"][entry]["actionTime"]
+        action_type = json_object["parserActions"][entry]["parserAction"]
+
+        # [CLEANUP 1]: If job has been removed from Jenkins
+        job_dir = os.path.join(builds_dir, job_to_retry)
+        if not os.path.exists(os.path.join(job_dir, build_to_retry)):
+            json_object["parserActions"].pop(entry)
+            continue
+
+        # [CLEANUP 2]: Remove entries older than 2 days
+        current_time = datetime.datetime.now().replace(microsecond=0)
+        if current_time > datetime.datetime.strptime(
+            action_time, "%Y-%m-%d %H:%M:%S"
+        ) + datetime.timedelta(days=2):
+            json_object["parserActions"].pop(entry)
+            continue
+
+        # [CLEANUP 3]: Remove entry if external action has taken
+        if action_type == "NoAction" and not helpers.grep(
+            functools.reduce(os.path.join, [job_dir, build_to_retry, "build.xml"]),
+            "No action has been taken by the parser job",
+            True,
+        ):
+            json_object["parserActions"].pop(entry)
+
+    return json_object
 
 
 def update_retry_link_cmssdt_page(retry_url_file, job, build, retry_url):

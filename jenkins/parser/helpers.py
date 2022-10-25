@@ -76,12 +76,12 @@ def append_actions(error_keys, jenkins_errors):
 
 
 def get_finished_builds(job_dir, running_builds):
-    """Check if any build has finished."""
+    """Check if any build has finished and failed."""
     return [
         build
         for build in running_builds
         if grep(
-            functools.reduce(os.path.join, [job_dir, build, "build.xml"]), "<result>",
+            functools.reduce(os.path.join, [job_dir, build, "build.xml"]), "<result>FAILURE",
         )
     ]
 

@@ -245,6 +245,7 @@ def first_iter_check(job_to_retry, job_dir, error_list, processed_object):
 
     print(" ---> Last processed log: ", last_processed_log)
 
+    # Get finished builds with FAILURE result
     finished_builds = [
         dir.name
         for dir in os.scandir(job_dir)
@@ -254,13 +255,13 @@ def first_iter_check(job_to_retry, job_dir, error_list, processed_object):
             functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
         )
         and helpers.grep(
-            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
+            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>FAILURE"
         )
     ]
 
     if finished_builds:
         print(
-            "Builds " + str(finished_builds) + " have already finished. Processing ..."
+            "Builds " + str(finished_builds) + " have already finished, but failed. Processing ..."
         )
         for build in sorted(finished_builds):
             check_and_trigger_action(build, job_dir, job_to_retry, error_list)
@@ -354,6 +355,7 @@ if __name__ == "__main__":
                 processed_object["parserInfo"]["runningBuilds"][job_to_retry] = dict()
                 running_builds = []
 
+            # Get finished builds with FAILURE result from running builds
             finished_builds = helpers.get_finished_builds(job_dir, running_builds)
             running_builds = helpers.get_running_builds(job_dir)
 
@@ -382,11 +384,17 @@ if __name__ == "__main__":
                     processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(
                         build
                     )
-                # Update last processed log
-                # TODO: Only update if greater than current revision number
-                processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
-                    finished_builds
-                )
+                # Update last processed log only if grater than current revision number
+                try:
+                    latest_revision = processed_object["parserInfo"]["lastRevision"][job_to_retry]
+                except KeyError:
+                    latest_revision = 0
+                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = ''
+
+                if max(finished_builds) > latest_revision:
+                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
+                        finished_builds
+                    )
 
             if running_builds:
                 print(

@@ -292,6 +292,7 @@ def cleanup_cmssdt_page(json_object):
         job_dir = os.path.join(builds_dir, job_to_retry)
         if not os.path.exists(os.path.join(job_dir, build_to_retry)):
             json_object["parserActions"].pop(entry)
+            print("[CLEANUP 1] Removing monitor entry for job " + job_to_retry + " #" + build_to_retry)
             continue
 
         # [CLEANUP 2]: Remove entries older than 2 days
@@ -300,6 +301,7 @@ def cleanup_cmssdt_page(json_object):
             action_time, "%Y-%m-%d %H:%M:%S"
         ) + datetime.timedelta(days=2):
             json_object["parserActions"].pop(entry)
+            print("[CLEANUP 2] Removing monitor entry for job " + job_to_retry + " #" + build_to_retry)
             continue
 
         # [CLEANUP 3]: Remove entry if external action has taken
@@ -309,6 +311,7 @@ def cleanup_cmssdt_page(json_object):
             True,
         ):
             json_object["parserActions"].pop(entry)
+            print("[CLEANUP 3] Removing monitor entry for job " + job_to_retry + " #" + build_to_retry)
 
     return json_object
 

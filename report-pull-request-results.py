@@ -100,6 +100,7 @@ def parse_workflow_info( parts, relval_dir ):
 def read_matrix_log_file(matrix_log):
   workflows_with_error = [ ]
   relval_dir = join(dirname (matrix_log), "runTheMatrix-results")
+  common_errors = []
   for line in openlog( matrix_log):
     line = line.strip()
     if 'ERROR executing' in line:
@@ -116,11 +117,15 @@ def read_matrix_log_file(matrix_log):
       workflow_info[ 'number' ] = parts [0]
       workflow_info[ 'message' ] = "DAS Error"
       workflows_with_error.append( workflow_info )
+    elif 'ValueError: Undefined' in line:
+      common_errors.append(line+"\n")
 
   # check if it was timeout
   message = "\n## RelVals\n\n"
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
+  if common_errors:
+    message +=  ''.join(common_errors)
   cnt = 0
   max_show = 3
   extra_msg = False

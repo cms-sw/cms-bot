@@ -50,11 +50,6 @@ for xfile in ${HOME}/.netrc ${HOME}/tnsnames.ora ${SLAVE_JAR_DIR}/slave.jar ; do
     INPUT_FILES="${xname},${INPUT_FILES}"
   fi
 done
-if [ -e ${HOME}/.cms_cond/db.key ] ; then
-  mkdir -p .cms_cond
-  cp ${HOME}/.cms_cond/db.key .cms_cond/db.key
-  INPUT_FILES=".cms_cond/db.key,${INPUT_FILES}"
-fi
 INPUT_FILES=$(echo ${INPUT_FILES} | sed 's|,$||')
 cp ${here}/connect.sub job.sub
 cp ${here}/connect-job.sh  ${script_name}.sh

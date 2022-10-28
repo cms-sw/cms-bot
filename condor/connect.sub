@@ -5,7 +5,6 @@ executable              = @SCRIPT_NAME@.sh
 transfer_input_files    = @INPUT_FILES@
 should_transfer_files   = yes
 when_to_transfer_output = on_exit
-preserve_relative_paths = True
 output                  = logs/log.stdout
 error                   = logs/log.stdout
 log                     = logs/log.job

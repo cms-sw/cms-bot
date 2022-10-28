@@ -6,6 +6,7 @@ export THISDIR=$(/bin/pwd -P)
 export LC_ALL=C
 export LC_CTYPE=C
 export LANG=C
+${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
 
 ARCHITECTURE=$1
 CMS_WEEK=$2
@@ -34,6 +35,7 @@ fi
 if [ "X$PROOTDIR" = "X" ] ; then
   PROOTDIR=${BASEDIR}/proot
 fi
+export PROOTDIR
 
 cd $WORKSPACE/cms-bot
 [ -f ib-weeks ] || exit 1
@@ -54,27 +56,7 @@ else
   exit 1
 fi
 
-export PROOTDIR
-if [ $(echo $PROOTDIR | grep $BASEDIR | wc -l) -gt 0 ] ; then
-  [ -d $PROOTDIR ] || mkdir -p $PROOTDIR
-  PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
-  for x in proot qemu-aarch64 qemu-ppc64le ; do
-    if [ ! -x $PROOTDIR/$x ] ; then
-      rm -rf $PROOTDIR/$x
-      wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
-      chmod +x $PROOTDIR/$x
-    fi
-  done
-fi
-
 hostname > $BASEDIR/stratum0
-if [ -d $BASEDIR/SITECONF ] ; then
-  pushd $BASEDIR/SITECONF
-    git pull --rebase || true
-  popd
-else
-  git clone https://github.com/cms-sw/siteconf.git $BASEDIR/SITECONF
-fi
 
 # Create Nested Catalogs file
 if [ -e $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh ] ; then

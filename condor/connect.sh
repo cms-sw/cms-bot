@@ -42,7 +42,7 @@ while [ ! -e ${SLAVE_JAR_DIR}/slave.jar ] ; do
   fi
 done
 INPUT_FILES=""
-for xfile in ${HOME}/.netrc ${HOME}/tnsnames.ora ${SLAVE_JAR_DIR}/slave.jar ; do
+for xfile in ${SLAVE_JAR_DIR}/slave.jar ; do
   if [ -e $xfile ] ; then
     xname=$(basename $xfile)
     cp $xfile ./${xname}

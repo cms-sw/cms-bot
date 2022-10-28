@@ -2,7 +2,8 @@
 source $(dirname $0)/cmsrep.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
 CVMFS_INSTALL=false
-[ "${BASEDIR}" != "" ] || BASEDIR=/cvmfs/$CVMFS_REPOSITORY
+CVMFS_BASEDIR=/cvmfs/$CVMFS_REPOSITORY
+[ "${BASEDIR}" != "" ] || BASEDIR="${CVMFS_BASEDIR}"
 case ${BASEDIR} in
   /cvmfs/* ) CVMFS_INSTALL=true ;;
 esac
@@ -30,16 +31,13 @@ USE_DEV=""
 ${CVMFS_INSTALL}               || USE_CVMFS_GW="false"
 [ "$PROOTDIR" != "" ]          || PROOTDIR=${BASEDIR}/proot
 export PROOTDIR
-ORIG_BASEDIR="${BASEDIR}"
+COMMON_BASEDIR="${BASEDIR}"
+${CVMFS_INSTALL} && COMMON_BASEDIR="${CVMFS_BASEDIR}"
 if ${USE_CVMFS_GW} ; then
   export BASEDIR="${BASEDIR}/sw/$(uname -m)"
   CVMFS_PUBLISH_PATH="${BASEDIR}"
 else
-  if ${CVMFS_INSTALL} ; then
-    BASEDIR="" ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
-  else
-    ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
-  fi
+  BASEDIR="${COMMON_BASEDIR}" ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
 fi
 if [ "$REINSTALL_COMMON" = "true" ] ; then
   REINSTALL_COMMON="--reinstall"
@@ -64,7 +62,7 @@ REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -
 echo $REPOSITORIES
 if $CVMFS_INSTALL ; then
   # Prepare the cvmfs repository in read/write mode
-  cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
+  cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction)
 fi
 
 # Check if the transaction really happened
@@ -89,7 +87,7 @@ for t in nweek- ; do
       rm -rf $BASEDIR/$w
       if $CVMFS_INSTALL ; then
         time cvmfs_server publish
-        cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
+        cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction)
       fi
     fi
   done
@@ -136,7 +134,7 @@ for REPOSITORY in $REPOSITORIES; do
       sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi
     INSTALL_PACKAGES="$(${CMSPKG} search gcc-fixincludes | sed 's| .*||' | grep 'gcc-fixincludes' | sort | tail -1) ${INSTALL_PACKAGES}"
-    ln -sfT ${ORIG_BASEDIR}/SITECONF $WORKDIR/SITECONF
+    ln -sfT ${COMMON_BASEDIR}/SITECONF $WORKDIR/SITECONF
     $CMSPKG -y  --upgrade-packages upgrade
     if [ $(ls -rtd $WORKDIR/${SCRAM_ARCH}/external/rpm/4.* | tail -1 | sed 's|.*/external/rpm/4.||;s|\..*||') -lt 15 ] ; then
       RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG

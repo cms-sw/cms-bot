@@ -35,7 +35,11 @@ if ${USE_CVMFS_GW} ; then
   export BASEDIR="${BASEDIR}/sw/$(uname -m)"
   CVMFS_PUBLISH_PATH="${BASEDIR}"
 else
-  ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
+  if ${CVMFS_INSTALL} ; then
+    BASEDIR="" ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
+  else
+    ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
+  fi
 fi
 if [ "$REINSTALL_COMMON" = "true" ] ; then
   REINSTALL_COMMON="--reinstall"

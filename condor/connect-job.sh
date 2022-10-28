@@ -13,6 +13,12 @@ rm -rf ${WORKSPACE}
 mkdir -p $WORKSPACE/cache $WORKSPACE/workspace ${WORKSPACE}/tmp
 git clone --depth 1 https://github.com/cms-sw/cms-bot $WORKSPACE/cache/cms-bot
 mv slave.jar ${WORKSPACE}/
+for x in .netrc tnsnames.ora .cms_cond/db.key ; do
+  [ ! -e $x ] || continue
+  [ -e /afs/cern.ch/user/${USER::1}/${USER}/$x ] || continue
+  [ $(dirname $x) = "." ] || mkdir -p $(dirname $x)
+  cp -p /afs/cern.ch/user/${USER::1}/${USER}/$x $x || true
+done
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${WORKSPACE}/slave.jar | sed 's| .*||')
 $WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}"
 SLAVE_LABELS=$($WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}" | grep '^DATA_SLAVE_LABELS=' | sed 's|^DATA_SLAVE_LABELS=|condor |')

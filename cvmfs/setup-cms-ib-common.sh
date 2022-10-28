@@ -51,6 +51,7 @@ if $update ; then
     cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
   fi
   $siteconf && rm -rf ${BASEDIR}/SITECONF
+  hostname > $BASEDIR/stratum0
   rsync -av new_data/ ${BASEDIR}/
   if $CVMFS_INSTALL ; then
     time cvmfs_server publish

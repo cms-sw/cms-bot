@@ -62,7 +62,7 @@ REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -
 echo $REPOSITORIES
 if $CVMFS_INSTALL ; then
   # Prepare the cvmfs repository in read/write mode
-  cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction)
+  cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f ${CVMFS_PUBLISH_PATH} || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction ${CVMFS_PUBLISH_PATH})
 fi
 
 # Check if the transaction really happened
@@ -87,7 +87,7 @@ for t in nweek- ; do
       rm -rf $BASEDIR/$w
       if $CVMFS_INSTALL ; then
         time cvmfs_server publish
-        cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction)
+        cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f ${CVMFS_PUBLISH_PATH} || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction ${CVMFS_PUBLISH_PATH})
       fi
     fi
   done

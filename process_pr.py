@@ -369,11 +369,11 @@ def parse_extra_params(full_comment, repo):
     line_args[1] = line_args[1].strip()
     found=False
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
-      if not re.match("^"+k+"$", line_args[0], re.I): continue
+      if not re.match("^(%s)$" % k, line_args[0], re.I): continue
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')
       param = pttrn[1]
-      if not re.match("^%s$" % pttrn[0], line_args[1], re.I):
+      if not re.match("^(%s)$" % pttrn[0], line_args[1], re.I):
         xerrors["value"].append(line_args[0])
         found=True
         break
@@ -484,7 +484,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   pkg_categories = set([])
   REGEX_TYPE_CMDS="^type\s+(([-+]|)[a-z][a-z0-9-]+)(\s*,\s*([-+]|)[a-z][a-z0-9-]+)*$"
   REGEX_EX_CMDS="^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
-  known_ignore_tests="^%s$" % MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
+  known_ignore_tests="%s" % MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
   REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
   L2_DATA = init_l2_data (cms_repo)

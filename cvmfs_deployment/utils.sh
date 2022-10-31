@@ -9,8 +9,6 @@ function cvmfs_transaction()
     local tdir=$(dirname $0)
     local lease_path=${CVMFS_REPOSITORY}/$(echo $1 | sed -e 's|^//*||;s|//*$||')
     local gw_api=$(grep '^CVMFS_UPSTREAM_STORAGE=' /etc/cvmfs/repositories.d/${CVMFS_REPOSITORY}/server.conf | sed 's|.*,||')
-    set -x
-    echo "Running: cvmfs_server transaction ${lease_path}"
     while true ; do
       cvmfs_server abort -f || true
       rm -f /var/spool/${CVMFS_BASEDIR}/is_publishing.lock
@@ -20,7 +18,6 @@ function cvmfs_transaction()
       fi
       sleep 10
     done
-    set +x
   else
     cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction)
   fi

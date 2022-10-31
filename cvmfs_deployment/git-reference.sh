@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+source $(dirname $0)/utils.sh
 CVMFS_DIR=${CVMFS_BASEDIR}/git
 cvmfs_transaction /git
 for rep in ${REPOSITORY} ; do

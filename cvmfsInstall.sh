@@ -35,7 +35,7 @@ COMMON_BASEDIR="${BASEDIR}"
 ${CVMFS_INSTALL} && COMMON_BASEDIR="${CVMFS_BASEDIR}"
 if ${USE_CVMFS_GW} ; then
   export BASEDIR="${BASEDIR}/sw/$(uname -m)"
-  CVMFS_PUBLISH_PATH="${BASEDIR}"
+  CVMFS_PUBLISH_PATH="$CVMFS_REPOSITORY/sw/$(uname -m)"
 else
   BASEDIR="${COMMON_BASEDIR}" ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
 fi

@@ -32,7 +32,9 @@ export PROOTDIR
 COMMON_BASEDIR="${BASEDIR}"
 ${CVMFS_INSTALL} && COMMON_BASEDIR="${CVMFS_BASEDIR}"
 if ${USE_CVMFS_GW} ; then
-  CVMFS_PUBLISH_PATH="/sw/$(uname -m)"
+  CMS_ARCH=$(echo ${ARCHITECTURE} | cut -d_ -f2)
+  [ "${CMS_ARCH}" = "amd64" ] && CMS_ARCH="x86_64"
+  CVMFS_PUBLISH_PATH="/sw/${CMS_ARCH}"
   export BASEDIR="${BASEDIR}${CVMFS_PUBLISH_PATH}"
 fi
 if [ "$REINSTALL_COMMON" = "true" ] ; then

@@ -1,12 +1,13 @@
 #!/bin/sh -ex
 source $(dirname $0)/cmsrep.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
+source ${CMS_BOT_DIR}/cvmfs_deployment/utils.sh
 CVMFS_INSTALL=false
-CVMFS_BASEDIR=/cvmfs/$CVMFS_REPOSITORY
 [ "${BASEDIR}" != "" ] || BASEDIR="${CVMFS_BASEDIR}"
 case ${BASEDIR} in
   /cvmfs/* ) CVMFS_INSTALL=true ;;
 esac
+${CVMFS_INSTALL}               || export USE_CVMFS_GW="false"
 export BASEDIR
 export THISDIR=$(/bin/pwd -P)
 export LC_ALL=C
@@ -23,21 +24,16 @@ TEST_INSTALL=$7
 NUM_WEEKS=$8
 REINSTALL_COMMON=$9
 INSTALL_PACKAGES="${10}"
-USE_CVMFS_GW="${11}"
 
 CVMFS_PUBLISH_PATH=""
 USE_DEV=""
-[ "${USE_CVMFS_GW}" = "true" ] || USE_CVMFS_GW="false"
-${CVMFS_INSTALL}               || USE_CVMFS_GW="false"
 [ "$PROOTDIR" != "" ]          || PROOTDIR=${BASEDIR}/proot
 export PROOTDIR
 COMMON_BASEDIR="${BASEDIR}"
 ${CVMFS_INSTALL} && COMMON_BASEDIR="${CVMFS_BASEDIR}"
 if ${USE_CVMFS_GW} ; then
-  export BASEDIR="${BASEDIR}/sw/$(uname -m)"
-  CVMFS_PUBLISH_PATH="$CVMFS_REPOSITORY/sw/$(uname -m)"
-else
-  BASEDIR="${COMMON_BASEDIR}" ${CMS_BOT_DIR}/cvmfs/setup-cms-ib-common.sh
+  CVMFS_PUBLISH_PATH="/sw/$(uname -m)"
+  export BASEDIR="${BASEDIR}${CVMFS_PUBLISH_PATH}"
 fi
 if [ "$REINSTALL_COMMON" = "true" ] ; then
   REINSTALL_COMMON="--reinstall"
@@ -60,18 +56,7 @@ cd ${CMS_BOT_DIR}
 REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
 
 echo $REPOSITORIES
-if $CVMFS_INSTALL ; then
-  # Prepare the cvmfs repository in read/write mode
-  cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f ${CVMFS_PUBLISH_PATH} || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction ${CVMFS_PUBLISH_PATH})
-fi
-
-# Check if the transaction really happened
-if [ `touch $BASEDIR/is_writable 2> /dev/null; echo "$?"` -eq 0 ]; then
-  rm $BASEDIR/is_writable
-else
-  echo Filesystem is not writable. Aborting.
-  exit 1
-fi
+$CVMFS_INSTALL && cvmfs_transaction ${CVMFS_PUBLISH_PATH}
 
 hostname > $BASEDIR/stratum0
 
@@ -87,7 +72,7 @@ for t in nweek- ; do
       rm -rf $BASEDIR/$w
       if $CVMFS_INSTALL ; then
         time cvmfs_server publish
-        cvmfs_server transaction ${CVMFS_PUBLISH_PATH} || ((cvmfs_server abort -f ${CVMFS_PUBLISH_PATH} || rm -fR /var/spool/${CVMFS_BASEDIR}/is_publishing.lock) && cvmfs_server transaction ${CVMFS_PUBLISH_PATH})
+        cvmfs_transaction ${CVMFS_PUBLISH_PATH}
       fi
     fi
   done

@@ -5,7 +5,8 @@ gw   = sys.argv[1]
 path = sys.argv[2].strip("/")
 rep = requests.get(gw + '/leases')
 data = rep.json()['data']
-for entry in [e.strip("/") for e in data.keys()]:
+for xentry in data.keys():
+  entry = xentry.strip("/")
   rest = None
   if entry.startswith(path):
     rest = entry[len(path):]
@@ -15,7 +16,6 @@ for entry in [e.strip("/") for e in data.keys()]:
     continue
   if (not rest) or (rest[0] == "/"):
     print("Yes, there is lease for %s" % entry)
-    print(data[entry])
+    print(data[xentry])
     sys.exit(0)
 sys.exit(1)
-

@@ -7,15 +7,15 @@ rep = requests.get(gw + '/leases')
 data = rep.json()['data']
 for xentry in data.keys():
   entry = xentry.strip("/")
-  rest = []
+  rest = ""
   if entry != path:
     if entry.startswith(path):
-      rest = entry[len(path):]
+      rest = entry[len(path):-1]
     elif path.startswith(entry):
-      rest = path[len(entry):]
+      rest = path[len(entry):-1]
     else:
       continue
-  if (not rest) or (rest[0] == "/"):
+  if rest in ["", "/"]:
     print("Yes, there is lease for %s" % entry)
     print(data[xentry])
     sys.exit(0)

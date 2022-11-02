@@ -3,6 +3,7 @@
 #include "TChain.h"
 #include "TCanvas.h"
 #include "TString.h"
+#include "TRegexp.h"
 #include "TFile.h"
 #include "TROOT.h"
 #include "TH1F.h"
@@ -58,6 +59,19 @@ bool stepContainsNU(const TString& s, TString v){
   } else {
     return s.Contains(v);
   }
+}
+
+std::vector<TString>  getBranchNames(const TString& bPattern){
+  TObjArray * all_branches = Events->GetListOfBranches();
+  TRegexp exp(bPattern);
+  std::vector<TString> branches;
+  branches.reserve(all_branches->GetSize());
+  for (int i=0 ; i!=all_branches->GetSize() ; ++i){
+    TString branch_name(all_branches->At(i)->GetName());
+    if (branch_name(exp).Length())
+      branches.push_back(branch_name);
+  }
+  return branches;
 }
 
 bool checkBranchAND(const TString& b, bool verboseFalse = false){
@@ -1475,7 +1489,10 @@ void evtPlanes(const TString& bName, bool detailByPlane = false){
   }
 }
 
-void flatTable(const TString& shortName){
+void flatTable(const TString& branchName){
+  plotvar(branchName, "", true);
+}
+void flatEDMTable(const TString& shortName){
   const TString bObj = "nanoaodFlatTable_"+shortName+"_"+recoS+".obj";
   if (! checkBranchOR(bObj, true)) return;
 
@@ -1641,9 +1658,33 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
   std::cout<<"Start making plots for Events with "<<Nnew<<" events and refEvents with "<<Nref<<" events ==> check  "<<Nmax<<std::endl;
 
+  if (stepContainsNU(step, "NANO")){
+    std::vector<TString> edmBranches = getBranchNames("nanoaodFlatTable_.*__"+recoS);
+    //Check if it's a NANOEDM
+    if (edmBranches.size()){
+      for (uint iT = 0; iT < edmBranches.size() ; ++iT){
+	TString shortName = ((*edmBranches[iT].Tokenize("_"))[1])->GetName();
+	shortName += "_";
+	//shortName += ((*edmBranches[iT].Tokenize("_"))[2])->GetName();
+	std::cout<< "this is a shortname"<< shortName <<std::endl;
+        flatEDMTable( shortName);
+      }
+      std::cout<<"Done comparing nano-EDM"<<std::endl;
+    }else{
+      //NANO was asked for, but no EDM branches. plot nano branches
+      std::vector<TString> nanoBranches = getBranchNames(".*");
+      for (uint iT = 0; iT <nanoBranches.size() ; ++iT){
+	flatTable( nanoBranches[iT] );
+      }
+      std::cout<<"Done comparing pure-ROOT nano"<<std::endl;
+    }
+
+    return;
+  }
+
   if (!stepContainsNU(step, "hlt")){
 
-    //Check if it's a NANOEDM
+    /*
     if (checkBranchAND("nanoaodFlatTable_muonTable__"+recoS+".")){
       const int nTabs = 68;
       TString tNames[nTabs] = {
@@ -1721,12 +1762,12 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         "genProtonTable_",                       //67
       };
       for (int iT = 0; iT < nTabs; ++iT){
-        flatTable(tNames[iT]);
+        flatEDMTable(tNames[iT]);
       }
 
       std::cout<<"Done comparing nano-EDM"<<std::endl;
       return;
-    }
+      }*/
 
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "error"))){

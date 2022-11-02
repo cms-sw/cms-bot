@@ -300,7 +300,9 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
             mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to merge ${PR}"
             exit 0
         fi
+	pushd ${CMSDIST_DIR}
 	git diff origin/${BASE_BRANCH} --name-only
+	popd
     done
 done
 

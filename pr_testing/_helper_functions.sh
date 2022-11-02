@@ -5,7 +5,6 @@ WORKSPACE=${WORKSPACE}                # Needs to be exported in master script
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metadata etc are kept
 BUILD_DIR=testBuildDir
 RESULTS_DIR=$WORKSPACE/testsResults
-
 export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 # -----
 

@@ -62,7 +62,7 @@ bool stepContainsNU(const TString& s, TString v){
 }
 
 std::vector<TString>  getBranchNames(const TString& bPattern){
-  TObjArray * all_branches = Events->GetListOfBranches();
+  TObjArray * all_branches = refEvents->GetListOfBranches();
   TRegexp exp(bPattern);
   std::vector<TString> branches;
   branches.reserve(all_branches->GetSize());
@@ -1665,7 +1665,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       for (uint iT = 0; iT < edmBranches.size() ; ++iT){
 	TString shortName = ((*edmBranches[iT].Tokenize("_"))[1])->GetName();
 	shortName += "_";
-	//shortName += ((*edmBranches[iT].Tokenize("_"))[2])->GetName();
+	if (!edmBranches[iT].Contains("__"))
+	  shortName += ((*edmBranches[iT].Tokenize("_"))[2])->GetName();
 	std::cout<< "this is a shortname"<< shortName <<std::endl;
         flatEDMTable( shortName);
       }
@@ -1683,92 +1684,6 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
   }
 
   if (!stepContainsNU(step, "hlt")){
-
-    /*
-    if (checkBranchAND("nanoaodFlatTable_muonTable__"+recoS+".")){
-      const int nTabs = 68;
-      TString tNames[nTabs] = {
-        "btagWeightTable_",                      //0
-        "caloMetTable_",                         //1
-        "electronMCTable_",                      //2
-        "electronTable_",                        //3
-        "fatJetTable_",                          //4
-        "genJetAK8FlavourTable_",                //5
-        "genJetAK8Table_",                       //6
-        "genJetFlavourTable_",                   //7
-        "genJetTable_",                          //8
-        "genParticleTable_",                     //9
-        "genSubJetAK8Table_",                    //10
-        "genTable_",                             //11
-        "genVisTauTable_",                       //12
-        "genWeightsTable_",                      //13
-        "genWeightsTable_LHENamed",              //14
-        "genWeightsTable_LHEPdf",                //15
-        "genWeightsTable_LHEScale",              //16
-        "genWeightsTable_PS",                    //17
-        "isoTrackTable_",                        //18
-        "jetMCTable_",                           //19
-        "jetTable_",                             //20
-        "lheInfoTable_LHE",                      //21
-        "lheInfoTable_LHEPart",                  //22
-        "metMCTable_",                           //23
-        "metTable_",                             //24
-        "muonMCTable_",                          //25
-        "muonTable_",                            //26
-        "photonMCTable_",                        //27
-        "photonTable_",                          //28
-        "puTable_",                              //29
-        "puppiMetTable_",                        //30
-        "rawMetTable_",                          //31
-        "rhoTable_",                             //32
-        "rivetLeptonTable_",                     //33
-        "rivetMetTable_",                        //34
-        "saJetTable_",                           //35
-        "saTable_",                              //36
-        "simpleCleanerTable_electrons",          //37
-        "simpleCleanerTable_jets",               //38
-        "simpleCleanerTable_muons",              //39
-        "simpleCleanerTable_photons",            //40
-        "simpleCleanerTable_taus",               //41
-        "subJetTable_",                          //42
-        "svCandidateTable_",                     //43
-        "tauMCTable_",                           //44
-        "tauTable_",                             //45
-        "tkMetTable_",                           //46
-        "triggerObjectTable_",                   //47
-        "ttbarCategoryTable_",                   //48
-        "vertexTable_otherPVs",                  //49
-        "vertexTable_pv",                        //50
-        "vertexTable_svs",                       //51
-        //additions from comparisons-24Jun2020
-        "chsMetTable_",                          //52
-        "corrT1METJetTable_",                    //53
-        "deepMetResolutionTuneTable_",           //54
-        "deepMetResponseTuneTable_",             //55
-        "metFixEE2017Table_",                    //56
-        "rawPuppiMetTable_",                     //57
-        //
-        "subjetMCTable_",                        //58
-        "fatJetMCTable_",                        //59
-        "l1PreFiringEventWeightTable_",          //60
-        //
-        "HTXSCategoryTable_",                    //61
-        "extraFlagsTable_",                      //62
-        "fsrTable_",                             //63
-        "genWeightsTable_LHEReweighting",        //64
-        "rivetPhotonTable_",                     //65
-        //
-        "beamSpotTable_",                        //66
-        "genProtonTable_",                       //67
-      };
-      for (int iT = 0; iT < nTabs; ++iT){
-        flatEDMTable(tNames[iT]);
-      }
-
-      std::cout<<"Done comparing nano-EDM"<<std::endl;
-      return;
-      }*/
-
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "error"))){
       tbr="edmErrorSummaryEntrys_logErrorHarvester__"+recoS+".obj";

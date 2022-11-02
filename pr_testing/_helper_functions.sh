@@ -5,6 +5,7 @@ WORKSPACE=${WORKSPACE}                # Needs to be exported in master script
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metadata etc are kept
 BUILD_DIR=testBuildDir
 RESULTS_DIR=$WORKSPACE/testsResults
+
 export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 # -----
 
@@ -49,8 +50,13 @@ function git_clone_and_merge (){
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH} || git clone git@github.com:${BASE_REPO} -b ${BASE_BRANCH}
         fi
         pushd ${BASE_REPO_NAME}  >/dev/null 2>&1
-            git pull https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
-        popd
+            UPDATES=$(git pull --stat https://github.com/${TEST_REPO}.git ${TEST_BRANCH})
+            if [[ $(echo ${UPDATES} | grep -E \("crab.*spec"\|"crab.*file"\)) ]]; then  # Check for CRAB updates to trigger unit test
+                echo "There is a CRAB update."
+                touch ${WORKSPACE}/pr-run-crab
+            fi
+
+	popd
     popd
 }
 

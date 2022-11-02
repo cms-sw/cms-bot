@@ -300,7 +300,7 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
             exit 0
         fi
 	if [ -f ${WORKSPACE}/pr-run-crab ]; then
-            echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${TEST_REPO}/${PR_NUMBER}/${BUILD_NUMBER}/${CMSSW_VERSION}" >> ${WORKSPACE}/pr-run-crab
+            echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/cms-sw/cmsdist/${PR_NUMBER}/${BUILD_NUMBER}/${CMSSW_VERSION}" >> ${WORKSPACE}/pr-run-crab
 	fi
     done
 done

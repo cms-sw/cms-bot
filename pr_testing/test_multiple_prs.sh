@@ -41,6 +41,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
 source ${CMS_BOT_DIR}/cmsrep.sh
+CMSDIST_DIR=${WORKSPACE}/cmsdist
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
@@ -293,6 +294,16 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
     for PR in ${FILTERED_PRS}; do
         ERR=false
         git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
+	if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
+	    pushd cmsdist
+	    UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
+            if [[ $(echo ${UPDATES} | grep -E \("crab.*spec"\|"crab.*file"\)) ]]; then
+                echo "There is a CRAB update."
+		touch ${WORKSPACE}/crab.prop
+		# echo "/cvmfs/cms-ci.cern.ch/${WEEK_NUM}/${PR_EXTERNAL_REPO}"
+            fi
+	    popd
+        fi
         if ${ERR} ; then
             echo "Failed to merge pull requests ${PR}." > ${RESULTS_DIR}/10-report.res
             prepare_upload_results
@@ -301,6 +312,16 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
         fi
     done
 done
+
+PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
+
+# Store externals path for CRAB unit test
+if [ -f ${WORKSPACE}/crab.prop ]; then
+    echo "PR_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" >> ${WORKSPACE}/crab.prop
+    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" >> ${WORKSPACE}/crab.prop
+    echo "ARCHITECTURE=${ARCHITECTURE}" >> ${WORKSPACE}/crab.prop
+    echo "DOCKER_IMG=cmssw/${COMP_OS}" >> ${WORKSPACE}/crab.prop
+fi
 
 # Preparations depending on from repo type
 CMSSW_ORG='cms-sw'

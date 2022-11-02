@@ -41,6 +41,7 @@ SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
 source ${CMS_BOT_DIR}/cmsrep.sh
+CMSDIST_DIR=${WORKSPACE}/cmsdist
 CACHED=${WORKSPACE}/CACHED            # Where cached PR metada etc are kept
 PR_TESTING_DIR=${CMS_BOT_DIR}/pr_testing
 COMMON=${CMS_BOT_DIR}/common
@@ -299,9 +300,7 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
             mark_commit_status_all_prs '' 'error' -u "${BUILD_URL}" -d "Failed to merge ${PR}"
             exit 0
         fi
-	if [ -f ${WORKSPACE}/pr-run-crab ]; then
-            echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/cms-sw/cmsdist/${PR_NUMBER}/${BUILD_NUMBER}/${CMSSW_VERSION}" >> ${WORKSPACE}/pr-run-crab
-	fi
+	git diff origin/${BASE_BRANCH} --name-only
     done
 done
 

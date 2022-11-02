@@ -49,12 +49,7 @@ function git_clone_and_merge (){
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH} || git clone git@github.com:${BASE_REPO} -b ${BASE_BRANCH}
         fi
         pushd ${BASE_REPO_NAME}  >/dev/null 2>&1
-            UPDATES=$(git pull --stat https://github.com/${TEST_REPO}.git ${TEST_BRANCH})
-            if [[ $(echo ${UPDATES} | grep -E \("crab.*spec"\|"crab.*file"\)) ]]; then  # Check for CRAB updates to trigger unit test
-                echo "There is a CRAB update."
-                touch ${WORKSPACE}/pr-run-crab
-            fi
-
+            git pull https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
 	popd
     popd
 }

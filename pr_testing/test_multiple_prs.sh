@@ -300,7 +300,6 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
             if [[ $(echo ${UPDATES} | grep -E \("crab.*spec"\|"crab.*file"\)) ]]; then
                 echo "There is a CRAB update."
 		touch ${WORKSPACE}/crab.prop
-		# echo "/cvmfs/cms-ci.cern.ch/${WEEK_NUM}/${PR_EXTERNAL_REPO}"
             fi
 	    popd
         fi

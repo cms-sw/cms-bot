@@ -81,7 +81,7 @@ def get_finished_builds(job_dir, running_builds):
         build
         for build in running_builds
         if grep(
-            functools.reduce(os.path.join, [job_dir, build, "build.xml"]), "<result>FAILURE",
+            functools.reduce(os.path.join, [job_dir, build, "build.xml"]), "<result>",
         )
     ]
 

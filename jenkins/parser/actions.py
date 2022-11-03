@@ -232,7 +232,7 @@ def mark_build_as_retried(job_dir, job_to_retry, build_to_retry):
         os.system(update_label)
 
 
-def update_no_action_label(job_to_retry, build_to_retry):
+def update_no_action_label(job_to_retry, build_to_retry, job_url):
     update_label = (
         os.environ.get("JENKINS_CLI_CMD")
         + " set-build-description "
@@ -245,6 +245,19 @@ def update_no_action_label(job_to_retry, build_to_retry):
     os.system(update_label)
 
 
+def notify_noaction(display_name, job_to_retry, build_to_retry, job_url):
+    email_msg = (
+        "Build failed in job"
+        + job_to_retry
+        + ", "
+        + display_name
+        + ".\nNo action has been taken by parser job. Please, take the appropiate action.\n\nFailed job: "
+        + job_url
+    )
+    email_subject = "Build failed in Jenkins: " + job_to_retry + " " + display_name
+    send_email(email_msg, email_subject, email_addresses)
+
+
 def update_cmssdt_page(
     html_file, job, build, error, job_url, retry_url, action, refresh_only=False
 ):
@@ -253,7 +266,8 @@ def update_cmssdt_page(
         json_object = json.load(openfile)
 
     if refresh_only == False:
-        id = str(len(json_object["parserActions"]) + 1)
+
+        id = str(job + "#" + build)
         retry_time = datetime.datetime.now().replace(microsecond=0)
 
         json_object["parserActions"][id] = dict()
@@ -265,7 +279,7 @@ def update_cmssdt_page(
         json_object["parserActions"][id]["retryJob"] = retry_url
         json_object["parserActions"][id]["parserAction"] = action
 
-    json_object = cleanup_cmssdt_page(json_object)
+    json_object, cleanup_flag = cleanup_cmssdt_page(json_object)
 
     with open(html_file, "w") as openfile:
         json.dump(json_object, openfile, indent=2)
@@ -273,13 +287,17 @@ def update_cmssdt_page(
     trigger_web_update = (
         os.environ.get("JENKINS_CLI_CMD") + " build jenkins-test-parser-monitor"
     )
-    print(trigger_web_update)
-    os.system(trigger_web_update)
+
+    if refresh_only == False or cleanup_flag == 1:
+
+        print(trigger_web_update)
+        os.system(trigger_web_update)
 
 
 def cleanup_cmssdt_page(json_object):
 
     builds_dir = os.environ.get("HOME") + "/builds"
+    cleanup_flag = 0
 
     # [CLEANUP]: Loop over the entries to clean up static page
     for entry in list(json_object["parserActions"].keys()):
@@ -292,7 +310,13 @@ def cleanup_cmssdt_page(json_object):
         job_dir = os.path.join(builds_dir, job_to_retry)
         if not os.path.exists(os.path.join(job_dir, build_to_retry)):
             json_object["parserActions"].pop(entry)
-            print("[CLEANUP 1] Removing monitor entry for job " + job_to_retry + " #" + build_to_retry)
+            print(
+                "[CLEANUP 1] Removing monitor entry for job "
+                + job_to_retry
+                + " #"
+                + build_to_retry
+            )
+            cleanup_flag = 1
             continue
 
         # [CLEANUP 2]: Remove entries older than 2 days
@@ -301,7 +325,13 @@ def cleanup_cmssdt_page(json_object):
             action_time, "%Y-%m-%d %H:%M:%S"
         ) + datetime.timedelta(days=2):
             json_object["parserActions"].pop(entry)
-            print("[CLEANUP 2] Removing monitor entry for job " + job_to_retry + " #" + build_to_retry)
+            print(
+                "[CLEANUP 2] Removing monitor entry for job "
+                + job_to_retry
+                + " #"
+                + build_to_retry
+            )
+            cleanup_flag = 1
             continue
 
         # [CLEANUP 3]: Remove entry if external action has taken
@@ -311,9 +341,15 @@ def cleanup_cmssdt_page(json_object):
             True,
         ):
             json_object["parserActions"].pop(entry)
-            print("[CLEANUP 3] Removing monitor entry for job " + job_to_retry + " #" + build_to_retry)
+            print(
+                "[CLEANUP 3] Removing monitor entry for job "
+                + job_to_retry
+                + " #"
+                + build_to_retry
+            )
+            cleanup_flag = 1
 
-    return json_object
+    return json_object, cleanup_flag
 
 
 def update_retry_link_cmssdt_page(retry_url_file, job, build, retry_url):

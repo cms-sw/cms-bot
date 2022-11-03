@@ -77,9 +77,21 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                     )
 
                     if action == "nodeOff":
-                        actions.trigger_nodeoff_action(
-                            job_to_retry, build_to_retry, job_url, node_name
-                        )
+                        if node_name not in affected_nodes:
+                            affected_nodes.append(node_name)
+                            actions.trigger_nodeoff_action(
+                                job_to_retry, build_to_retry, job_url, node_name
+                            )
+                            actions.notify_nodeoff(
+                                node_name,
+                                regex,
+                                job_to_retry,
+                                build_to_retry,
+                                job_url,
+                                node_url,
+                                parser_url,
+                            )
+
                         actions.trigger_retry_action(
                             job_to_retry,
                             job_url,
@@ -88,20 +100,22 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                             action,
                             regex,
                             force_retry_regex,
-                        )
-                        actions.notify_nodeoff(
-                            node_name,
-                            regex,
-                            job_to_retry,
-                            build_to_retry,
-                            job_url,
-                            node_url,
-                            parser_url,
                         )
                     elif action == "nodeReconnect":
-                        actions.trigger_reconnect_action(
-                            job_to_retry, build_to_retry, job_url, node_name
-                        )
+                        if node_name not in affected_nodes:
+                            affected_nodes.append(node_name)
+                            actions.trigger_reconnect_action(
+                                job_to_retry, build_to_retry, job_url, node_name
+                            )
+                            actions.notify_nodereconnect(
+                                node_name,
+                                regex,
+                                job_to_retry,
+                                build_to_retry,
+                                job_url,
+                                node_url,
+                                parser_url,
+                            )
                         actions.trigger_retry_action(
                             job_to_retry,
                             job_url,
@@ -110,15 +124,6 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                             action,
                             regex,
                             force_retry_regex,
-                        )
-                        actions.notify_nodereconnect(
-                            node_name,
-                            regex,
-                            job_to_retry,
-                            build_to_retry,
-                            job_url,
-                            node_url,
-                            parser_url,
                         )
 
                 regex_flag = 1
@@ -128,25 +133,31 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
         if regex_flag == 1:
             break
 
-    # Mark as retried
-    actions.mark_build_as_retried(job_dir, job_to_retry, build_to_retry)
     with open(parser_info_path, "w") as processed_file:
         json.dump(processed_object, processed_file, indent=2)
 
     if regex_flag == 0:
         print("... no known errors were found.")
-        if helpers.grep(os.path.join(build_dir_path, "build.xml"), "<result>FAILURE"):
-            # Update description to inform that no action has been taken
-            actions.update_no_action_label(job_to_retry, build_to_retry)
-            actions.update_cmssdt_page(
-                html_file_path,
-                job_to_retry,
-                build_to_retry,
-                "No error found. Please, take the appropiate action",
-                job_url,
-                "[ No action taken ]",
-                "NoAction",
-            )
+        # Update description to inform that no action has been taken
+        actions.update_no_action_label(job_to_retry, build_to_retry, job_url)
+        actions.update_cmssdt_page(
+            html_file_path,
+            job_to_retry,
+            build_to_retry,
+            "No error found. Please, take the appropiate action",
+            job_url,
+            "[ No action taken ]",
+            "NoAction",
+        )
+
+        build_file_path = os.path.join(build_dir_path, "build.xml")
+        display_name = (
+            helpers.grep(build_file_path, "<displayName>", True)
+            .replace("<displayName>", "")
+            .replace("</displayName>", "")
+            .replace("\n", "")
+        )
+        actions.notify_noaction(display_name, job_to_retry, build_to_retry, job_url)
 
 
 def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=18):
@@ -245,7 +256,7 @@ def first_iter_check(job_to_retry, job_dir, error_list, processed_object):
 
     print(" ---> Last processed log: ", last_processed_log)
 
-    # Get finished builds with FAILURE result
+    # Get finished builds
     finished_builds = [
         dir.name
         for dir in os.scandir(job_dir)
@@ -255,17 +266,25 @@ def first_iter_check(job_to_retry, job_dir, error_list, processed_object):
             functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
         )
         and helpers.grep(
-            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>FAILURE"
+            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
         )
     ]
 
     if finished_builds:
         print(
-            "Builds " + str(finished_builds) + " have already finished, but failed. Processing ..."
+            "Builds " + str(finished_builds) + " have already finished. Processing ..."
         )
         for build in sorted(finished_builds):
-            check_and_trigger_action(build, job_dir, job_to_retry, error_list)
-            # Cleaning bellow -->
+            if helpers.grep(
+                functools.reduce(os.path.join, [job_dir, build, "build.xml"]),
+                "<result>FAILURE",
+            ):
+                check_and_trigger_action(build, job_dir, job_to_retry, error_list)
+                # Cleaning bellow -->
+            else:
+                # Mark as retried
+                actions.mark_build_as_retried(job_dir, job_to_retry, build)
+
         processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
             finished_builds
         )
@@ -327,6 +346,8 @@ if __name__ == "__main__":
     while True:
         current_time = datetime.datetime.now()
         elapsed_time = current_time - start_time
+        # Restart list of affected nodes in each iteration
+        affected_nodes = []
 
         # Iterate over all the jobs jobs_object["jobsConfig"]["jenkinsJobs"][ii]["jobName"]
         for job_id in range(len(jenkins_jobs)):
@@ -355,7 +376,7 @@ if __name__ == "__main__":
                 processed_object["parserInfo"]["runningBuilds"][job_to_retry] = dict()
                 running_builds = []
 
-            # Get finished builds with FAILURE result from running builds
+            # Get finished builds from running builds
             finished_builds = helpers.get_finished_builds(job_dir, running_builds)
             running_builds = helpers.get_running_builds(job_dir)
 
@@ -379,17 +400,29 @@ if __name__ == "__main__":
                     + " have already finished. Processing ..."
                 )
                 for build in sorted(finished_builds):
-                    check_and_trigger_action(build, job_dir, job_to_retry, error_list)
+                    if helpers.grep(
+                        functools.reduce(os.path.join, [job_dir, build, "build.xml"]),
+                        "<result>FAILURE",
+                    ):
+                        check_and_trigger_action(
+                            build, job_dir, job_to_retry, error_list
+                        )
                     # Pop build number from the tracking
+                    else:
+                        # Mark as retried
+                        actions.mark_build_as_retried(job_dir, job_to_retry, build)
+
                     processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(
                         build
                     )
                 # Update last processed log only if grater than current revision number
                 try:
-                    latest_revision = processed_object["parserInfo"]["lastRevision"][job_to_retry]
+                    latest_revision = processed_object["parserInfo"]["lastRevision"][
+                        job_to_retry
+                    ]
                 except KeyError:
                     latest_revision = 0
-                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = ''
+                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = ""
 
                 if max(finished_builds) > latest_revision:
                     processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
@@ -422,4 +455,4 @@ if __name__ == "__main__":
         print("[Parser information updated]")
         # Trigger cmssdt page update
         actions.update_cmssdt_page(html_file_path, "", "", "", "", "", "", True)
-        time.sleep(20)
+        time.sleep(10)

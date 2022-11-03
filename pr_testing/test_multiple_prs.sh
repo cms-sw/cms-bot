@@ -312,16 +312,6 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
     done
 done
 
-PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
-
-# Store externals path for CRAB unit test
-if [ -f ${WORKSPACE}/run-crab.prop ]; then
-    echo "PR_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" >> ${WORKSPACE}/run-crab.prop
-    echo "RELEASE_FORMAT=${RELEASE_FORMAT}" >> ${WORKSPACE}/run-crab.prop
-    echo "ARCHITECTURE=${ARCHITECTURE}" >> ${WORKSPACE}/run-crab.prop
-    echo "DOCKER_IMG=cmssw/${COMP_OS}" >> ${WORKSPACE}/run-crab.prop
-fi
-
 # Preparations depending on from repo type
 CMSSW_ORG='cms-sw'
 BUILD_EXTERNAL=false
@@ -1139,6 +1129,11 @@ echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
 echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $WORKSPACE/test-env.txt
 echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
 echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
+
+# Store externals path for CRAB unit test
+if [ -f ${WORKSPACE}/run-crab.prop ]; then
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-crab.prop
+fi
 
 #
 # Matrix tests

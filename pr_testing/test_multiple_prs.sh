@@ -1122,7 +1122,6 @@ echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_REPO}/${PR_NUM
 echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/test-env.txt
 echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $WORKSPACE/test-env.txt
 echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/test-env.txt
-echo "RELEASE_FORMAT=${RELEASE_FORMAT}" >> $WORKSPACE/test-env.txt
 echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}" >> $WORKSPACE/test-env.txt
 echo "DOCKER_IMG=${DOCKER_IMG}" >> $WORKSPACE/test-env.txt
 echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
@@ -1133,7 +1132,11 @@ echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
 # Store externals path for CRAB unit test
 if [ -f ${WORKSPACE}/run-crab.prop ]; then
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-crab.prop
+    echo "PR_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" >> $WORKSPACE/run-crab.prop
+    echo "RELEASE_FORMAT=${CMSSW_IB}" >> $WORKSPACE/run-crab.prop
 fi
+
+echo "RELEASE_FORMAT=${RELEASE_FORMAT}" >> $WORKSPACE/test-env.txt
 
 #
 # Matrix tests

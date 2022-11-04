@@ -42,8 +42,10 @@ if [ -z ${RELEASE_NAME+x} ]; then
     CRAB_OK=true
     touch $WORKSPACE/results/crab-failed.res
     touch $WORKSPACE/results/crab-report.res
+  fi
 
   prepare_upload_results
+
   if [ "X$CRAB_OK" = Xtrue ]; then
     mark_commit_status_all_prs 'CRAB' 'success' -u "${BUILD_URL}" -d "Passed"
   else

@@ -28,6 +28,8 @@ if [ $(echo "${status}" | grep 'finished' | wc -l) -gt 0 ] ; then
 fi
 
 # Submit results to IB page (in case of IB test) or to github (in case of PR testing)
+source $WORKSPACE/cms-bot/jenkins-artifacts
+
 if [ -z ${RELEASE_NAME+x} ]; then
   # PR test
   if [ "X$TEST_PASSED" = Xfalse ]; then
@@ -54,7 +56,6 @@ if [ -z ${RELEASE_NAME+x} ]; then
   fi
 else
   # IB test
-  source $WORKSPACE/cms-bot/jenkins-artifacts
   ls -l $WORKSPACE/results
   send_jenkins_artifacts $WORKSPACE/results ib-run-crab/$RELEASE_FORMAT/$ARCHITECTURE/${CRAB_BUILD_ID}/
 fi

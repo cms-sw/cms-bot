@@ -85,6 +85,7 @@ TEST_RELVALS_INPUT=true
 DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
+DO_CRAB_TESTS=false
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
 if [ "${BUILD_VERBOSE}" = "true" ] ; then
@@ -296,9 +297,9 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
 	if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
 	    pushd cmsdist
 	    UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
-            if [[ $(echo ${UPDATES} | grep -E \("crab.*spec"\|"crab.*file"\)) ]]; then
+            if [[ $(echo ${UPDATES} | grep -E 'crab.*(spec|file)') ]]; then
                 echo "There is a CRAB update."
-		touch ${WORKSPACE}/run-crab.prop
+		DO_CRAB_TESTS=true
             fi
 	    popd
         fi
@@ -1058,6 +1059,7 @@ else
   DO_TESTS=false
   DO_SHORT_MATRIX=false
   DO_ADDON_TESTS=false
+  DO_CRAB_TESTS=false
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
@@ -1121,6 +1123,7 @@ echo "CMSSW_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_REPO}/${PR_NUM
 echo "PULL_REQUEST=${PULL_REQUEST}" >> $WORKSPACE/test-env.txt
 echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $WORKSPACE/test-env.txt
 echo "ARCHITECTURE=${ARCHITECTURE}" >> $WORKSPACE/test-env.txt
+echo "RELEASE_FORMAT=${RELEASE_FORMAT}" >> $WORKSPACE/test-env.txt
 echo "RUN_ON_SLAVE=${RUN_ON_SLAVE}" >> $WORKSPACE/test-env.txt
 echo "DOCKER_IMG=${DOCKER_IMG}" >> $WORKSPACE/test-env.txt
 echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
@@ -1129,13 +1132,11 @@ echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
 echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
 
 # Store externals path for CRAB unit test
-if [ -f ${WORKSPACE}/run-crab.prop ]; then
+if [ "X$DO_CRAB_TESTS" = Xtrue ]; then
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-crab.prop
     echo "PR_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" >> $WORKSPACE/run-crab.prop
     echo "RELEASE_FORMAT=${CMSSW_IB}" >> $WORKSPACE/run-crab.prop
 fi
-
-echo "RELEASE_FORMAT=${RELEASE_FORMAT}" >> $WORKSPACE/test-env.txt
 
 #
 # Matrix tests

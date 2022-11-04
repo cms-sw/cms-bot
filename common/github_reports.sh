@@ -29,7 +29,7 @@ function mark_commit_status_all_prs () {
     PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
     LAST_PR_COMMIT=$(grep "^${PULL_REQUEST}=" $WORKSPACE/prs_commits | sed 's|.*=||;s| ||g')
     if [ "X$LAST_PR_COMMIT" = "X" ]; then
-      LAST_PR_COMMIT = ${LAST_PR_COMMIT}
+      LAST_PR_COMMIT = ${ENV_LAST_PR_COMMIT}
     fi
     if [ "$DRY_RUN" = "" -o "${DRY_RUN}" = "false" ] ; then
       mark_commit_status_pr -r "${PR_NAME_AND_REPO}" -c "${LAST_PR_COMMIT}" -C "${CONTEXT_PREFIX}/${CONTEXT}" -s "${STATE}" "$@"

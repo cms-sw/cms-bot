@@ -47,6 +47,7 @@ if [ -z ${RELEASE_NAME+x} ]; then
   fi
 
   source $WORKSPACE/cms-bot/pr_testing/_helper_functions.sh
+  source $WORKSPACE/cms-bot/common/github_reports.sh
   prepare_upload_results
 
   if [ "X$CRAB_OK" = Xtrue ]; then

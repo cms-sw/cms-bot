@@ -46,3 +46,4 @@ echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/parameters.property
 echo "RELEASE_FORMAT=$RELEASE_FORMAT" >> $WORKSPACE/crab/parameters.property
 echo "ARCHITECTURE=$ARCHITECTURE" >> $WORKSPACE/crab/parameters.property
 echo "PULL_REQUESTS=$PULL_REQUESTS" >> $WORKSPACE/crab/parameters.property
+echo "PR_RESULT_URL=$PR_RESULT_URL" >> $WORKSPACE/crab/parameters.property

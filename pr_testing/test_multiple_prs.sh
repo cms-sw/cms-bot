@@ -1140,6 +1140,7 @@ if [ "X$DO_CRAB_TESTS" = Xtrue ]; then
     echo "PR_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" >> $WORKSPACE/run-crab.prop
     echo "RELEASE_FORMAT=${CMSSW_IB}" >> $WORKSPACE/run-crab.prop
     echo "PR_RESULT_URL=${PR_RESULT_URL}" >> $WORKSPACE/run-crab.prop
+    echo "LAST_PR_COMMIT=${LAST_PR_COMMIT}" >> $WORKSPACE/run-crab.prop
 fi
 
 #

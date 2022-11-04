@@ -44,6 +44,7 @@ if [ -z ${RELEASE_NAME+x} ]; then
     touch $WORKSPACE/results/crab-report.res
   fi
 
+  source $WORKSPACE/cms-bot/_helper_functions.sh
   prepare_upload_results
 
   if [ "X$CRAB_OK" = Xtrue ]; then

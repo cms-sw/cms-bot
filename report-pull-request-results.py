@@ -23,7 +23,8 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE | PARSE_EXTERNAL_BUILD_FAIL "
-                            "| PARSE_ADDON_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET | PYTHON3_FAIL | MERGE_COMMITS")
+                            "| PARSE_ADDON_FAIL | PARSE_CRAB_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET "
+                            "| PYTHON3_FAIL | MERGE_COMMITS")
 
 parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
 parser.add_option("--f2", action="store", type="string", dest="results_file2", help="second results file to analyse" )
@@ -186,6 +187,18 @@ def read_addon_log_file(unit_tests_file):
           message += '<details>\n<summary>Expand to see more addon errors ...</summary>\n\n'
         message += '- ' + tname + '\n'
   if extra_msg: message += '</details>\n\n'
+  send_message_pr(message)
+
+#
+# reads the CRAB tests log file and gets if FAILED or PASSED
+#
+def read_crab_log_file(unit_tests_file):
+  for line in openlog(unit_tests_file):
+    line = line.strip()
+    if ('FAILED' in line):
+      message += '<summary>CRAB test failed ...</summary>\n\n'
+    else:
+      message += '<summary>CRAB test succeeded ...</summary>\n\n'
   send_message_pr(message)
 
 #
@@ -465,6 +478,8 @@ elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   read_matrix_log_file(options.unit_tests_file )
 elif ( ACTION == 'PARSE_ADDON_FAIL' ):
   read_addon_log_file(options.unit_tests_file )
+elif ( ACTION == 'PARSE_CRAB_FAIL' ):
+  read_crab_log_file(options.unit_tests_file)
 elif ( ACTION == 'COMPARISON_READY' ):
   send_comparison_ready_message(options.unit_tests_file, options.results_file2, options.missing_map )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):

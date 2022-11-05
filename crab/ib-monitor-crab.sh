@@ -51,9 +51,9 @@ if [ -z ${RELEASE_NAME+x} ]; then
   prepare_upload_results
 
   if [ "X$CRAB_OK" = Xtrue ]; then
-    mark_commit_status_all_prs 'CRAB' 'success' -u "${BUILD_URL}" -d "Passed"
+    mark_commit_status_all_prs 'crab' 'success' -u "${BUILD_URL}" -d "Passed"
   else
-    mark_commit_status_all_prs 'CRAB' 'error' -u "${BUILD_URL}" -d "Errors in the CRABTests"
+    mark_commit_status_all_prs 'crab' 'error' -u "${BUILD_URL}" -d "Errors in the CRABTests"
   fi
 else
   # IB test

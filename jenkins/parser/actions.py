@@ -25,6 +25,20 @@ def send_email(email_msg, email_subject, email_addresses):
     os.system(email_cmd)
 
 
+def trigger_create_gridnode_action(node_name):
+    node_config_path = os.environ.get("HOME") + "/nodes/" + node_name + "/config.xml"
+    print("Grid node configuration path: ", node_config_path)
+    if helpers.grep(node_config_path, "auto-recreate", True):
+        print("Recreating grid node ...")
+        trigger_create_gridnode = (
+            os.environ.get("JENKINS_CLI_CMD") + " build grid-create-node"
+        )
+        print(trigger_create_gridnode)
+        os.system(trigger_create_gridnode)
+    else:
+        print("Skipping grid node recreation ...")
+
+
 def trigger_retry_action(
     job_to_retry,
     job_url,

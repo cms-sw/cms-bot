@@ -168,7 +168,8 @@
       },
       "cvmfsFailure": {
         "errorStr": [
-          "Error: No such directory: /cvmfs/.*cern.ch$"
+          "Error: No such directory: /cvmfs/.*cern.ch$",
+	  "cannot open directory /cvmfs/.*cern.ch:"
         ],
         "action": "nodeOff",
         "allJobs": "true"

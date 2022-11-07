@@ -76,7 +76,7 @@ def append_actions(error_keys, jenkins_errors):
 
 
 def get_finished_builds(job_dir, running_builds):
-    """Check if any build has finished and failed."""
+    """Check if any build has finished."""
     return [
         build
         for build in running_builds
@@ -86,16 +86,34 @@ def get_finished_builds(job_dir, running_builds):
     ]
 
 
-def get_running_builds(job_dir):
+def get_running_builds(job_dir, last_processed_log):
     """Get list of new running builds that have been started after the last processed log."""
     return [
         dir.name
         for dir in os.scandir(job_dir)
         if dir.name.isdigit()
+        and int(dir.name) > int(last_processed_log)
         and os.path.isfile(
             functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
         )
         and not grep(
+            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
+        )
+    ]
+
+
+def get_missing_builds(job_dir, total_running_builds, last_processed_log):
+    """Get builds that started and finished between iterations."""
+    return [
+        dir.name
+        for dir in os.scandir(job_dir)
+        if dir.name.isdigit()
+        and int(dir.name) > int(last_processed_log)
+        and dir.name not in total_running_builds
+        and os.path.isfile(
+            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
+        )
+        and grep(
             functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
         )
     ]

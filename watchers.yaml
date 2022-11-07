@@ -1832,3 +1832,9 @@ youyingli:
 - SimTracker/TrackerMaterialAnalysis
 - SimCalorimetry/HGCalSimProducers
 - SimDataFormats
+a-kapoor:
+  - RecoEgamma
+  - RecoEcal
+  - EgammaAnalysis
+  - DataFormats/EgammaCandidates
+  - DataFormats/EgammaReco

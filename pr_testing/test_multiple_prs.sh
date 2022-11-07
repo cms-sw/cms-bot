@@ -1142,6 +1142,7 @@ if [ "X$DO_CRAB_TESTS" = Xtrue ]; then
     echo "PR_RESULT_URL=${PR_RESULT_URL}" >> $WORKSPACE/run-crab.prop
     echo "LAST_PR_COMMIT=${LAST_PR_COMMIT}" >> $WORKSPACE/run-crab.prop
     echo "CMSSW_QUEUE=${CMSSW_QUEUE}" >> $WORKSPACE/run-crab.prop
+    echo "UPLOAD_UNIQ_ID=${UPLOAD_UNIQ_ID}" >> $WORKSPACE/run-crab.prop
 fi
 
 #

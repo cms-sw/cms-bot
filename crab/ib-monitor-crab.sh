@@ -50,8 +50,6 @@ if [ -z ${RELEASE_NAME+x} ]; then
   source $WORKSPACE/cms-bot/common/github_reports.sh
   prepare_upload_results
   
-  CONTEXT_PREFIX=$(echo "cms/"$(echo ${PULL_REQUEST} | cut -d "#" -f 2))
-
   if [ "X$CRAB_OK" = Xtrue ]; then
     mark_commit_status_all_prs 'crab' 'success' -u "${BUILD_URL}" -d "Passed"
   else

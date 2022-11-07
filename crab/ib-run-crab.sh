@@ -49,4 +49,4 @@ echo "PULL_REQUESTS=$PULL_REQUESTS" >> $WORKSPACE/crab/parameters.property
 echo "PULL_REQUEST=$PULL_REQUEST" >> $WORKSPACE/crab/parameters.property
 echo "PR_RESULT_URL=$PR_RESULT_URL" >> $WORKSPACE/crab/parameters.property
 echo "ENV_LAST_PR_COMMIT=$LAST_PR_COMMIT" >> $WORKSPACE/crab/parameters.property
-
+echo "CONTEXT_PREFIX=$CONTEXT_PREFIX" >> $WORKSPACE/crab/parameters.property

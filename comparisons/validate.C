@@ -1658,7 +1658,7 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
   std::cout<<"Start making plots for Events with "<<Nnew<<" events and refEvents with "<<Nref<<" events ==> check  "<<Nmax<<std::endl;
 
-  if (stepContainsNU(step, "NANO")){
+  if (!stepContainsNU(step, "hlt")){
     std::vector<TString> edmBranches = getBranchNames("nanoaodFlatTable_.*__"+recoS);
     //Check if it's a NANOEDM
     if (edmBranches.size()){
@@ -1671,19 +1671,18 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         flatEDMTable( shortName);
       }
       std::cout<<"Done comparing nano-EDM"<<std::endl;
+      return;
     }else{
       //NANO was asked for, but no EDM branches. plot nano branches
       std::vector<TString> nanoBranches = getBranchNames(".*");
       for (uint iT = 0; iT <nanoBranches.size() ; ++iT){
 	flatTable( nanoBranches[iT] );
       }
-      std::cout<<"Done comparing pure-ROOT nano"<<std::endl;
+      if (nanoBranches.size()!=0){
+	std::cout<<"Done comparing pure-ROOT nano"<<std::endl;
+	return;
+      }
     }
-
-    return;
-  }
-
-  if (!stepContainsNU(step, "hlt")){
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "error"))){
       tbr="edmErrorSummaryEntrys_logErrorHarvester__"+recoS+".obj";

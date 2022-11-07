@@ -45,6 +45,7 @@ def ssl_urlopen(url, data):
   return urlopen(CMSSDT_ES_QUERY,data).read()
 
 def resend_payload(hit):
+  print("Resending ",hit)
   return send_payload(hit["_index"], "_doc", hit["_id"],json.dumps(hit["_source"]))
 
 def es_get_passwd(passwd_file=None):

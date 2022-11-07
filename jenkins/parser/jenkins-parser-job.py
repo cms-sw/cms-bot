@@ -12,6 +12,18 @@ import helpers
 import actions
 
 
+def process_build(build, job_dir, job_to_retry, error_list):
+    """Process finished build. If failed, check for known erros. If succeed, check if it is a retried build to update its description."""
+    if helpers.grep(
+        functools.reduce(os.path.join, [job_dir, build, "build.xml"]),
+        "<result>FAILURE",
+    ):
+        check_and_trigger_action(build, job_dir, job_to_retry, error_list)
+    else:
+        # Mark as retried
+        actions.mark_build_as_retried(job_dir, job_to_retry, build)
+
+
 def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_action):
     """Check build logs and trigger the appropiate action if a known error is found."""
     build_dir_path = os.path.join(job_dir, build_to_retry)
@@ -91,6 +103,10 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                                 node_url,
                                 parser_url,
                             )
+
+                            if "grid" in node_name:
+                                print("Error found on a grid node!")
+                                actions.trigger_create_gridnode_action(node_name)
 
                         actions.trigger_retry_action(
                             job_to_retry,
@@ -248,18 +264,6 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
             + str(duration)
             + " hours ... OK"
         )
-
-
-def process_build(build, job_dir, job_to_retry, error_list):
-    """Process finished build. If failed, check for known erros. If succeed, check if it is a retried build to update its description."""
-    if helpers.grep(
-        functools.reduce(os.path.join, [job_dir, build, "build.xml"]),
-        "<result>FAILURE",
-    ):
-        check_and_trigger_action(build, job_dir, job_to_retry, error_list)
-    else:
-        # Mark as retried
-        actions.mark_build_as_retried(job_dir, job_to_retry, build)
 
 
 if __name__ == "__main__":

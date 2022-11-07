@@ -45,7 +45,7 @@ def ssl_urlopen(url, data):
   return urlopen(CMSSDT_ES_QUERY,data).read()
 
 def resend_payload(hit):
-  return send_payload(hit["_index"], hit["_type"], hit["_id"],json.dumps(hit["_source"]))
+  return send_payload(hit["_index"], "_doc", hit["_id"],json.dumps(hit["_source"]))
 
 def es_get_passwd(passwd_file=None):
   global ES_PASSWD
@@ -94,7 +94,7 @@ def send_template(name, payload, passwd_file=None):
   return send_request(uri, payload=payload, passwd_file=passwd_file, method='PUT', ignore_doc=True)
 
 def delete_hit(hit,passwd_file=None):
-  uri = "%s/%s/%s" % (hit["_index"], hit["_type"], hit["_id"])
+  uri = "%s/%s/%s" % (hit["_index"], "_doc", hit["_id"])
   if not send_request(uri, passwd_file=passwd_file, method='DELETE'): return False
   print("DELETE:",hit["_id"])
   return True

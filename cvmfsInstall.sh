@@ -27,10 +27,10 @@ INSTALL_PACKAGES="${10}"
 
 CVMFS_PUBLISH_PATH=""
 USE_DEV=""
-[ "$PROOTDIR" != "" ]          || PROOTDIR=${BASEDIR}/proot
 export PROOTDIR
 COMMON_BASEDIR="${BASEDIR}"
 ${CVMFS_INSTALL} && COMMON_BASEDIR="${CVMFS_BASEDIR}"
+[ "$PROOTDIR" != "" ] || PROOTDIR=${CVMFS_BASEDIR}/proot
 if ${USE_CVMFS_GW} ; then
   CMS_ARCH=$(echo ${ARCHITECTURE} | cut -d_ -f2)
   [ "${CMS_ARCH}" = "amd64" ] && CMS_ARCH="x86_64"

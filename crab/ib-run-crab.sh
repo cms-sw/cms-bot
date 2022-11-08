@@ -9,7 +9,7 @@ report() {
    fi
 }
 
-CRABCLIENT_TYPE=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(-dev|-prod|-pre)')
+CRABCLIENT_TYPE=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
 
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)

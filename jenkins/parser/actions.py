@@ -261,9 +261,9 @@ def update_no_action_label(job_to_retry, build_to_retry, job_url):
 
 def notify_noaction(display_name, job_to_retry, build_to_retry, job_url):
     email_msg = (
-        "Build failed in job"
+        "Build failed in job "
         + job_to_retry
-        + ", "
+        + ","
         + display_name
         + ".\nNo action has been taken by parser job. Please, take the appropiate action.\n\nFailed job: "
         + job_url

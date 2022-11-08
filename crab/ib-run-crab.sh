@@ -21,7 +21,7 @@ fi
 
 #CRABCLIENT_TYPE=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
 
-ls $(pwd)/common | grep -Eo '(dev|prod|pre)' | while read -r line ; do
+ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' | while read -r line ; do
     CRABCLIENT_TYPE=$line
 
     [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"

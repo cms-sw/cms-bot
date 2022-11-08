@@ -19,7 +19,7 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   export SINGULARITY_IMAGE="${IMG_PATH}"
 fi
 
-ls ${PR_CVMFS_PATH}/share/cms/ | (grep -Eo '(dev|prod|pre)' || echo "") | while read -r line ; do
+ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' | while read -r line ; do
     CRABCLIENT_TYPE=$line
 
     [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"

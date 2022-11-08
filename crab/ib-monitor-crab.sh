@@ -56,6 +56,7 @@ if [ -z ${RELEASE_NAME+x} ]; then
   else
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'error' -u "${BUILD_URL}" -d "Errors in the CRABTests"
   fi
+  ls $WORKSPACE/upload
 else
   # IB test
   ls -l $WORKSPACE/testsResults

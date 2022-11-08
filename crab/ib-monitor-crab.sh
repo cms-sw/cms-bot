@@ -31,8 +31,9 @@ fi
 # Submit testsResults to IB page (in case of IB test) or to github (in case of PR testing)
 source $WORKSPACE/cms-bot/jenkins-artifacts
 
-if [ -z ${RELEASE_NAME+x} ]; then
+if [ -z ${UPLOAD_UNIQ_ID+x} ]; then
   # PR test
+  echo "Uploading results of PR testing"
   if [ "X$TEST_PASSED" = Xfalse ]; then
     echo "Errors in CRAB PR test"
     echo 'CRAB_TESTS;ERROR,CRAB Tests,See Logs,CRABTests' >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
@@ -62,6 +63,7 @@ if [ -z ${RELEASE_NAME+x} ]; then
   ls $WORKSPACE/upload
 else
   # IB test
+  echo "Uploading results to IB page"
   ls -l $WORKSPACE/testsResults
   send_jenkins_artifacts $WORKSPACE/testsResults ib-run-crab/$RELEASE_FORMAT/$ARCHITECTURE/${CRAB_BUILD_ID}/
 fi

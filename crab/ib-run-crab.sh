@@ -19,9 +19,7 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   export SINGULARITY_IMAGE="${IMG_PATH}"
 fi
 
-#CRABCLIENT_TYPE=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
-
-ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' | while read -r line ; do
+ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' && echo "" | while read -r line ; do
     CRABCLIENT_TYPE=$line
 
     [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
@@ -48,7 +46,17 @@ ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' | while read -r line 
       export GRIDSITE=$(curl -s -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
     done
 
-    # Trigger ib-crab-monitor job for each crab submit request
-    ${JENKINS_CLI_CMD}" build ib-monitor-crab -p CRAB_BUILD_ID="$BUILD_ID" -p CRAB_GRIDSITE="$GRIDSITE" -p RELEASE_FORMAT="$RELEASE_FORMAT" -p ARCHITECTURE="$ARCHITECTURE" -p PULL_REQUESTS="$PULL_REQUESTS" -p PULL_REQUEST="$PULL_REQUEST" -p PR_RESULT_URL="$PR_RESULT_URL" -p ENV_LAST_PR_COMMIT="$LAST_PR_COMMIT" -p CMSSW_QUEUE="$CMSSW_QUEUE" -p CONTEXT_PREFIX="$CONTEXT_PREFIX" -p UPLOAD_UNIQ_ID="$UPLOAD_UNIQ_ID" -p CRABCLIENT_TYPE="$CRABCLIENT_TYPE
-
+    # Store information for the monitoring job
+    echo "CRAB_BUILD_ID=$BUILD_ID" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "RELEASE_FORMAT=$RELEASE_FORMAT" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "ARCHITECTURE=$ARCHITECTURE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "PULL_REQUESTS=$PULL_REQUESTS" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "PULL_REQUEST=$PULL_REQUEST" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "PR_RESULT_URL=$PR_RESULT_URL" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "ENV_LAST_PR_COMMIT=$LAST_PR_COMMIT" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "CMSSW_QUEUE=$CMSSW_QUEUE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "CONTEXT_PREFIX=$CONTEXT_PREFIX" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    echo "CRABCLIENT_TYPE=$CRABCLIENT_TYPE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
 done

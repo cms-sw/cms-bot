@@ -9,6 +9,8 @@ report() {
    fi
 }
 
+CRABCLIENT_TYPE=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(-dev|-prod|-pre)')
+
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
@@ -23,9 +25,12 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   export SINGULARITY_IMAGE="${IMG_PATH}"
 fi
 
+echo "CRAB is sourced from:"
+which crab-${CRABCLIENT_TYPE}
+
 export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
 voms-proxy-init -voms cms
-crab submit -c $(dirname $0)/task.py
+crab-${CRABCLIENT_TYPE} submit -c $(dirname $0)/task.py
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
 echo "INPROGRESS" > $WORKSPACE/crab/statusfile
 
@@ -43,3 +48,12 @@ done
 # Store information for the monitoring job
 echo "CRAB_BUILD_ID=$BUILD_ID" >> $WORKSPACE/crab/parameters.property
 echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/parameters.property
+echo "RELEASE_FORMAT=$RELEASE_FORMAT" >> $WORKSPACE/crab/parameters.property
+echo "ARCHITECTURE=$ARCHITECTURE" >> $WORKSPACE/crab/parameters.property
+echo "PULL_REQUESTS=$PULL_REQUESTS" >> $WORKSPACE/crab/parameters.property
+echo "PULL_REQUEST=$PULL_REQUEST" >> $WORKSPACE/crab/parameters.property
+echo "PR_RESULT_URL=$PR_RESULT_URL" >> $WORKSPACE/crab/parameters.property
+echo "ENV_LAST_PR_COMMIT=$LAST_PR_COMMIT" >> $WORKSPACE/crab/parameters.property
+echo "CMSSW_QUEUE=$CMSSW_QUEUE" >> $WORKSPACE/crab/parameters.property
+echo "CONTEXT_PREFIX=$CONTEXT_PREFIX" >> $WORKSPACE/crab/parameters.property
+echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> $WORKSPACE/crab/parameters.property

@@ -31,7 +31,7 @@ fi
 # Submit testsResults to IB page (in case of IB test) or to github (in case of PR testing)
 source $WORKSPACE/cms-bot/jenkins-artifacts
 
-if [ -z ${UPLOAD_UNIQ_ID+x} ]; then
+if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   # PR test
   echo "Uploading results of PR testing"
   if [ "X$TEST_PASSED" = Xfalse ]; then

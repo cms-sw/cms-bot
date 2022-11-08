@@ -27,6 +27,7 @@ ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' | while read -r line 
     [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
 
     # Report PR status
+    source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
     source $WORKSPACE/cms-bot/common/github_reports.sh
     mark_commit_status_all_prs 'crab' 'pending' -u "${BUILD_URL}" -d "CRAB test successfully triggered"
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'pending' -u "${BUILD_URL}" -d "Running"

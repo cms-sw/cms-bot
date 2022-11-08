@@ -10,8 +10,6 @@ $(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs --no-
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
-if ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 ; then
-fi
 #cleanup old /tmp files
 ([ -f /tmp/$(whoami) ] && rm -f /tmp/$(whoami)) || true
 ([ -d /tmp/$(whoami) ] && touch /tmp/$(whoami)) || true

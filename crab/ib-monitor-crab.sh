@@ -49,7 +49,7 @@ if [ -z ${RELEASE_NAME+x} ]; then
 
   source $WORKSPACE/cms-bot/pr_testing/_helper_functions.sh
   source $WORKSPACE/cms-bot/common/github_reports.sh
-  prepare_upload_testsResults
+  prepare_upload_results
   
   if [ "X$CRAB_OK" = Xtrue ]; then
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'success' -u "${BUILD_URL}" -d "Passed"

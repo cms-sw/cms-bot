@@ -60,7 +60,6 @@ if [ -z ${UPLOAD_UNIQ_ID+x} ]; then
   else
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'error' -u "${BUILD_URL}" -d "Errors in the CRABTests"
   fi
-  ls $WORKSPACE/upload
 else
   # IB test
   echo "Uploading results to IB page"

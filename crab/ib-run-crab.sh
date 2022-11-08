@@ -49,29 +49,6 @@ ls $(pwd)/common | grep -Eo '(dev|prod|pre)' | while read -r line ; do
     done
 
     # Trigger ib-crab-monitor job for each crab submit request
-    os.environ.get("JENKINS_CLI_CMD")
-        + " build ib-monitor-crab -p CRAB_BUILD_ID="
-        + $BUILD_ID
-        + " -p CRAB_GRIDSITE="
-        + $GRIDSITE
-        + " -p RELEASE_FORMAT="
-        + $RELEASE_FORMAT
-	+ " -p ARCHITECTURE="
-        + $ARCHITECTURE
-	+ " -p PULL_REQUESTS="
-        + $PULL_REQUESTS
-        + " -p PULL_REQUEST="
-        + $PULL_REQUEST
-        + " -p PR_RESULT_URL="
-        + $PR_RESULT_URL
-	+ " -p ENV_LAST_PR_COMMIT="
-        + $LAST_PR_COMMIT
-        + " -p CMSSW_QUEUE="
-        + $CMSSW_QUEUE
-        + " -p CONTEXT_PREFIX="
-        + $CONTEXT_PREFIX
-        + " -p UPLOAD_UNIQ_ID="
-        + $UPLOAD_UNIQ_ID
-        + " -p CRABCLIENT_TYPE="
-        + $CRABCLIENT_TYPE
+    ${JENKINS_CLI_CMD}" build ib-monitor-crab -p CRAB_BUILD_ID="$BUILD_ID" -p CRAB_GRIDSITE="$GRIDSITE" -p RELEASE_FORMAT="$RELEASE_FORMAT" -p ARCHITECTURE="$ARCHITECTURE" -p PULL_REQUESTS="$PULL_REQUESTS" -p PULL_REQUEST="$PULL_REQUEST" -p PR_RESULT_URL="$PR_RESULT_URL" -p ENV_LAST_PR_COMMIT="$LAST_PR_COMMIT" -p CMSSW_QUEUE="$CMSSW_QUEUE" -p CONTEXT_PREFIX="$CONTEXT_PREFIX" -p UPLOAD_UNIQ_ID="$UPLOAD_UNIQ_ID" -p CRABCLIENT_TYPE="$CRABCLIENT_TYPE
+
 done

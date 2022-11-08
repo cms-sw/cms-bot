@@ -1,13 +1,13 @@
 #!/bin/bash -ex
 
-trap report EXIT
+#trap report EXIT
 
-report() {
-   exit_code=$?
-   if [ ${exit_code} -ne 0 ]; then
-       echo "FAILED" > $WORKSPACE/crab/statusfile
-   fi
-}
+#report() {
+#   exit_code=$?
+#   if [ ${exit_code} -ne 0 ]; then
+#       echo "FAILED" > $WORKSPACE/crab/statusfile
+#   fi
+#}
 
 if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   osver=$(echo ${SCRAM_ARCH} | tr '_' '\n' | head -1 | sed 's|^[a-z][a-z]*||')

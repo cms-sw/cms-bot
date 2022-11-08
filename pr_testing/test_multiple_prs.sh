@@ -297,7 +297,7 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
 	if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
 	    pushd cmsdist
 	    UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
-            if [[ $(echo ${UPDATES} | grep -E 'crab.*(spec|file)') ]]; then
+            if [[ $(echo ${UPDATES} | grep -E 'crab-.*(spec|file)') ]]; then
                 echo "There is a CRAB update."
 		DO_CRAB_TESTS=true
             fi

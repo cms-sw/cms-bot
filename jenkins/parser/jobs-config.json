@@ -107,6 +107,20 @@
           "gitErrors"
         ],
         "maxTime": "1"
+      },
+      {
+        "jobName": "ib-install-cvmfs",
+        "errorType": [
+          "gitErrors"
+        ],
+        "maxTime": "1"
+      },
+      {
+        "jobName": "run-pr-code-checks",
+        "errorType": [
+          "gitErrors"
+        ],
+        "maxTime": "1"
       }
     ],
     "errorMsg": {
@@ -136,7 +150,9 @@
           "Tag already exist",
           "Connection to github\\.com closed by remote host.",
           "Error while downloading sources from github\\.com",
-          "fatal: remote did not send all necessary objects"
+          "fatal: remote did not send all necessary objects",
+	  "Empty reply from server",
+	  "The requested URL returned error: 503"
         ],
         "action": "retryBuild"
       },
@@ -145,7 +161,8 @@
           "Bus error",
           "Transport endpoint is not connected"
         ],
-        "action": "nodeOff"
+        "action": "nodeOff",
+	"allJobs": "true"
       },
       "gridConnection": {
         "errorStr": [

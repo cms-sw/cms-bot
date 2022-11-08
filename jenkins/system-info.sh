@@ -10,6 +10,8 @@ $(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs --no-
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done
+if ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 ; then
+fi
 #cleanup old /tmp files
 ([ -f /tmp/$(whoami) ] && rm -f /tmp/$(whoami)) || true
 ([ -d /tmp/$(whoami) ] && touch /tmp/$(whoami)) || true
@@ -80,6 +82,8 @@ SLAVE_LABELS="user-$(whoami) kernel-$(uname -r) hostname-$(hostname -s)"
 if [ $(echo $HOME | grep '^/afs/' |wc -l) -gt 0 ] ; then SLAVE_LABELS="${SLAVE_LABELS} home-afs"; fi
 arch=$(uname -m)
 SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
+ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 && SLAVE_LABELS="${SLAVE_LABELS} FS-cvmfs"
+ls /afs/cern.ch          >/dev/null 2>&1 && SLAVE_LABELS="${SLAVE_LABELS} FS-afs"
 HOST_ARCH=""
 if [ "$arch" = "aarch64" ] ; then
   HOST_ARCH=arm$(cat /proc/cpuinfo 2> /dev/null | grep 'CPU architectur' | sed 's|.*: *||' | tail -1)

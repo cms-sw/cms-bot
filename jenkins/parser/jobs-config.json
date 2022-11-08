@@ -154,7 +154,8 @@
 	  "Empty reply from server",
 	  "The requested URL returned error: 503"
         ],
-        "action": "retryBuild"
+        "action": "retryBuild",
+	"allJobs": "true"
       },
       "busError": {
         "errorStr": [

@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 echo ${CRABCLIENT_TYPE}
 [ "${WORKSPACE}" != "" ] || export WORKSPACE=$(pwd) && cd $WORKSPACE
-echo "FAILED" > $WORKSPACE/results/statusfile-${CRABCLIENT_TYPE}
+echo "FAILED" > $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE}
 TEST_PASSED=false
 export ID=$(id -u)
 
@@ -15,7 +15,7 @@ while true ; do
   curl -s -L -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "${GRIDSITE}/status_cache" > $WORKSPACE/status-${CRABCLIENT_TYPE}.log 2>&1
   cat $WORKSPACE/status-${CRABCLIENT_TYPE}.log
   errval=$(grep -o "404 Not Found" $WORKSPACE/status-${CRABCLIENT_TYPE}.log || echo "")
-  cat $WORKSPACE/status-${CRABCLIENT_TYPE}.log >> $WORKSPACE/results/logfile-${CRABCLIENT_TYPE}
+  cat $WORKSPACE/status-${CRABCLIENT_TYPE}.log >> $WORKSPACE/testsResults/logfile-${CRABCLIENT_TYPE}
   if [ "$errval" = "" ] ; then
     # Keep checking until job finishes
     status=$(grep -Eo "'State': '(finished|failed)'" $WORKSPACE/status-${CRABCLIENT_TYPE}.log || echo "")
@@ -24,34 +24,32 @@ while true ; do
   sleep 300
 done
 if [ $(echo "${status}" | grep 'finished' | wc -l) -gt 0 ] ; then
-  echo "PASSED" > $WORKSPACE/results/statusfile-${CRABCLIENT_TYPE}
+  echo "PASSED" > $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE}
   TEST_PASSED=true
 fi
 
-# Submit results to IB page (in case of IB test) or to github (in case of PR testing)
+# Submit testsResults to IB page (in case of IB test) or to github (in case of PR testing)
 source $WORKSPACE/cms-bot/jenkins-artifacts
 
 if [ -z ${RELEASE_NAME+x} ]; then
   # PR test
   if [ "X$TEST_PASSED" = Xfalse ]; then
     echo "Errors in CRAB PR test"
-    echo 'CRAB_TESTS;ERROR,CRAB Tests,See Logs,CRABTests' >> $WORKSPACE/results/crab-${CRABCLIENT_TYPE}.txt
+    echo 'CRAB_TESTS;ERROR,CRAB Tests,See Logs,CRABTests' >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     CRAB_OK=false
-    $CMS_BOT_DIR/report-pull-request-results PARSE_CRAB_FAIL -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log --report-file $WORKSPACE/results/crab-report-${CRABCLIENT_TYPE}.res --report-url ${PR_RESULT_URL}
-    echo "CRAB" > $WORKSPACE/results/crab-failed-${CRABCLIENT_TYPE}.res
+    $CMS_BOT_DIR/report-pull-request-testsResults PARSE_CRAB_FAIL -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log --report-file $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res --report-url ${PR_RESULT_URL}
+    echo "CRAB" > $WORKSPACE/testsResults/crab-failed-${CRABCLIENT_TYPE}.res
   else
     echo "No errors in CRAB PR test"
-    echo 'CRAB_TESTS;OK,CRAB Tests,See Logs,CRABTests' >> $WORKSPACE/results/crab-${CRABCLIENT_TYPE}.txt
+    echo 'CRAB_TESTS;OK,CRAB Tests,See Logs,CRABTests' >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     CRAB_OK=true
-    touch $WORKSPACE/results/crab-failed-${CRABCLIENT_TYPE}.res
-    touch $WORKSPACE/results/crab-report-${CRABCLIENT_TYPE}.res
+    touch $WORKSPACE/testsResults/crab-failed-${CRABCLIENT_TYPE}.res
+    touch $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res
   fi
 
   source $WORKSPACE/cms-bot/pr_testing/_helper_functions.sh
   source $WORKSPACE/cms-bot/common/github_reports.sh
-  mkdir -p upload/crabTests
-  cp -rf $WORKSPACE/results $WORKSPACE/upload/crabTests
-  prepare_upload_results
+  prepare_upload_testsResults
   
   if [ "X$CRAB_OK" = Xtrue ]; then
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'success' -u "${BUILD_URL}" -d "Passed"
@@ -60,6 +58,6 @@ if [ -z ${RELEASE_NAME+x} ]; then
   fi
 else
   # IB test
-  ls -l $WORKSPACE/results
-  send_jenkins_artifacts $WORKSPACE/results ib-run-crab/$RELEASE_FORMAT/$ARCHITECTURE/${CRAB_BUILD_ID}/
+  ls -l $WORKSPACE/testsResults
+  send_jenkins_artifacts $WORKSPACE/testsResults ib-run-crab/$RELEASE_FORMAT/$ARCHITECTURE/${CRAB_BUILD_ID}/
 fi

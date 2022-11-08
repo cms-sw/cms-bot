@@ -15,13 +15,13 @@ export SCRAM_ARCH=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
 export SCRAM_PREFIX_PATH=$WORKSPACE/cms-bot/das-utils
 export LC_ALL=C
-export UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
-[ "${UNAME}" != "amd64" ] || export UNAME="x86_64"
+UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
+[ "\${UNAME}" != "amd64" ] || UNAME="x86_64"
 #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
 if [ $(date +%w) -lt 2 ] ; then
-  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/sw/${UNAME}/nweek-* | tail -2 | head -1)
+  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -2 | head -1)
 else
-  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/sw/${UNAME}/nweek-* | tail -1)
+  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -1)
 fi
 source \${IB_LAST_WEEK}/cmsset_default.sh  || true
 scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}

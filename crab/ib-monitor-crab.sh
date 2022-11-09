@@ -30,7 +30,7 @@ fi
 
 # Submit testsResults to IB page (in case of IB test) or to github (in case of PR testing)
 source $WORKSPACE/cms-bot/jenkins-artifacts
-DRY_RUN=""
+
 if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   # PR test
   echo "Uploading results of PR testing"
@@ -55,6 +55,7 @@ if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   mv $WORKSPACE/testsResults/logfile-${CRABCLIENT_TYPE} $WORKSPACE/CRABTests
   mv $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE} $WORKSPACE/CRABTests
   prepare_upload_results
+  DRY_RUN=""
   
   if [ "X$CRAB_OK" = Xtrue ]; then
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'success' -u "${BUILD_URL}" -d "Passed"

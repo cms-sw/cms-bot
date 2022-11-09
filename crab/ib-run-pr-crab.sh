@@ -20,6 +20,10 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
 fi
 
 (ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)') | while read -r line ; do
+    echo "Matched Line:  $line"
+done
+
+(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)') | while read -r line ; do
     CRABCLIENT_TYPE=$line
 
     [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"

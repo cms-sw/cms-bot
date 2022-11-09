@@ -67,7 +67,7 @@ do
 
     # Clean workspace for next iteration
     mkdir $WORKSPACE/crab-${CRABCLIENT_TYPE}
-    cp -rf $WORKSPACE/* $WORKSPACE/crab-${CRABCLIENT_TYPE}
+    cp -rf $WORKSPACE/* $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
 done
 
 mark_commit_status_all_prs 'crab' 'pending' -u "${BUILD_URL}" -d "CRAB test successfully triggered"

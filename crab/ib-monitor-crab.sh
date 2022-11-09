@@ -30,7 +30,7 @@ fi
 
 # Submit testsResults to IB page (in case of IB test) or to github (in case of PR testing)
 source $WORKSPACE/cms-bot/jenkins-artifacts
-
+DRY_RUN=""
 if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   # PR test
   echo "Uploading results of PR testing"

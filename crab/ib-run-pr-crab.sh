@@ -67,7 +67,7 @@ do
 
     # Clean workspace for next iteration
     mkdir $WORKSPACE/crab-${CRABCLIENT_TYPE}
-    mv $WORKSPACE/* $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
+    mv $WORKSPACE/CMSSW* $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
     ls $WORKSPACE
 done
 

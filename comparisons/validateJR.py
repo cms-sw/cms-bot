@@ -3,22 +3,27 @@ import glob, os, sys
 
 
 def compile_lib():
-    if not os.path.isfile('validate_C.so'):
-        command = 'echo -e \"gSystem->Load(\"libFWCoreFWLite.so\");AutoLibraryLoader::enable();FWLiteEnabler::enable();.L validate.C+ .qqqqqq\" | root -l -b'
+    lib_dir = 'validate_lib'
+    if not os.path.isfile(f'{lib_dir}/validate_C.so'):
+        os.makedirs(lib_dir, exist_ok=True)
+        if not 'VALIDATE_C_SCRIPT' in os.environ or not os.environ['VALIDATE_C_SCRIPT']:
+            os.environ['VALIDATE_C_SCRIPT'] = os.path.join(os.environ['HOME'],'tools','validate.C')
+        os.system(f"cp $VALIDATE_C_SCRIPT {lib_dir}/validate.C")
+        command = f'cd {lib_dir};'+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();\n .L validate.C+ \n .qqqqqq\" | root -l -b'
         print(f"compiling library with {command}")
         os.system( command )
-        return True
-    return os.path.isfile('validate_C.so')
+    os.environ['LD_LIBRARY_PATH'] = ':'.join([os.path.join(os.getcwd(),'validate_lib'),os.environ['LD_LIBRARY_PATH']])
+    return os.path.isfile(f'{lib_dir}/validate_C.so')
 
 def run_comparison(fileName, base_dir, ref_dir, processName, output_dir):
-    base_file=base_dir+"/"+fileName
-    ref_file=ref_dir+"/"+fileName
-    logFile=output_dir+"/"+fileName+".log"
+    base_file=os.path.join(base_dir,fileName)
+    ref_file=os.path.join(ref_dir,fileName)
+    logFile=os.path.join(output_dir,fileName.replace('.root','.log'))
     os.makedirs(output_dir ,exist_ok=True)
     what_is_called_step_in_the_script = output_dir
     command = f'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"{what_is_called_step_in_the_script}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
     #print(f"running comparison with {command}")
-    print(f"comparing {fileName} from {base_dir} and {ref_dir} into {output_dir}")
+    print(f"log of comparing {fileName} process {processName} from {base_dir} and {ref_dir} into {output_dir} shown in {logFile}")
     c=os.system( command )
     #print(f"comparison exit signal is {c}")
     #if c!=0: return False
@@ -65,25 +70,27 @@ if __name__ == "__main__":
     parser.add_option("--ref", dest="ref", default="ref/", help="path to the reference files")
     (options, args) = parser.parse_args()
 
-    if not compile_lib():
-        sys.exit()
+    if not compile_lib():sys.exit()
+
     process_of_interest=['RECO','reRECO','PAT','NANO','DQM','HLT','HLT2']
 
-    all_output_root_files = glob.glob(f'{options.base}/*/*.root')
+    all_output_root_files = glob.glob(f'{options.base}/*/step*.root')
     for each_root_file in all_output_root_files:
         processName = last_process(each_root_file)
         if processName in process_of_interest:
-            print(f"found process of interest {processName} in file {each_root_file}")
+            #print(f"found process of interest {processName} in file {each_root_file}")
             path,fileName = each_root_file.rsplit('/',1)
             ref_path =path.replace( options.base, options.ref )
-            _,compressedName = path.rsplit('/',1)
-            wfn,therest=compressedName.split('_',1)
+            _,fullName = path.rsplit('/',1)
+            wfn,therest=fullName.split('_',1)
             wfn='wf'+wfn.replace('.','pt')
             fileindex = file_index(fileName)
             elements = therest.split('+')[:fileindex+1]
-            compressedName = "".join(elements) + wfn
+            compressedName = "".join(elements)
+            #if ip !=0: compressedName += processName
+            compressedName += wfn
             compressedName = compressedName.replace('.','').replace('_','')
-            print(f"compressing {path} into {compressedName}")
+            #print(f"compressing {path} into {compressedName}")
             output_dir = ''
             #output_dir = path+'/'
             output_dir += 'all'
@@ -92,7 +99,3 @@ if __name__ == "__main__":
             output_dir += '_OldVSNew'
             output_dir += '_'+compressedName
             run_comparison(fileName, path, ref_path, processName, output_dir)
-            break
-
-
-

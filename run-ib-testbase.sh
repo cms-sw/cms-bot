@@ -31,8 +31,11 @@ if [ -f config/SCRAM/linkexternal.py ] ; then
 fi
 set +x
 eval \$(scram runtime -sh)
+echo "PATH"
+echo \$PATH | tr ':' '\n'
+echo "LD_LIBRARY_PATH"
+echo \$LD_LIBRARY_PATH | tr ':' '\n'
 set -x
-echo $PATH | tr ':' '\n'
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"
 export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
 export CMSBOT_PYTHON_CMD=\$(which python3 >/dev/null 2>&1 && echo python3 || echo python)

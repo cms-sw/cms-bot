@@ -19,10 +19,6 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   export SINGULARITY_IMAGE="${IMG_PATH}"
 fi
 
-(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)') | while read -r line ; do
-    echo "Matched Line:  $line"
-done
-
 for CRABCLIENT_TYPE in $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
 do
     echo $CRABCLIENT_TYPE
@@ -69,6 +65,9 @@ do
     echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
     echo "CRABCLIENT_TYPE=$CRABCLIENT_TYPE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
 
+    # Clean workspace for next iteration
+    mkdir $WORKSPACE/crab-${CRABCLIENT_TYPE}
+    cp -rf $WORKSPACE/* $WORKSPACE/crab-${CRABCLIENT_TYPE}
 done
 
 mark_commit_status_all_prs 'crab' 'pending' -u "${BUILD_URL}" -d "CRAB test successfully triggered"

@@ -23,8 +23,9 @@ fi
     echo "Matched Line:  $line"
 done
 
-while read -r line ; do
-    CRABCLIENT_TYPE=$line
+for CRABCLIENT_TYPE in $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
+do
+    echo $CRABCLIENT_TYPE
 
     [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
     [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
@@ -68,8 +69,6 @@ while read -r line ; do
     echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
     echo "CRABCLIENT_TYPE=$CRABCLIENT_TYPE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
 
-    echo $?
-
-done <<< $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
+done
 
 mark_commit_status_all_prs 'crab' 'pending' -u "${BUILD_URL}" -d "CRAB test successfully triggered"

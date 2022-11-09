@@ -1659,30 +1659,32 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
   std::cout<<"Start making plots for Events with "<<Nnew<<" events and refEvents with "<<Nref<<" events ==> check  "<<Nmax<<std::endl;
 
   if (!stepContainsNU(step, "hlt")){
-    std::vector<TString> edmBranches = getBranchNames("nanoaodFlatTable_.*__"+recoS);
-    //Check if it's a NANOEDM
-    if (edmBranches.size()){
-      for (uint iT = 0; iT < edmBranches.size() ; ++iT){
-	TString shortName = ((*edmBranches[iT].Tokenize("_"))[1])->GetName();
-	shortName += "_";
-	if (!edmBranches[iT].Contains("__"))
-	  shortName += ((*edmBranches[iT].Tokenize("_"))[2])->GetName();
-	std::cout<< "this is a shortname"<< shortName <<std::endl;
-        flatEDMTable( shortName);
+    if (recoS.Contains("NANO")){
+	std::vector<TString> edmBranches = getBranchNames("nanoaodFlatTable_.*__"+recoS);
+	//Check if it's a NANOEDM
+	if (edmBranches.size()){
+	  for (uint iT = 0; iT < edmBranches.size() ; ++iT){
+	    TString shortName = ((*edmBranches[iT].Tokenize("_"))[1])->GetName();
+	    shortName += "_";
+	    if (!edmBranches[iT].Contains("__"))
+	      shortName += ((*edmBranches[iT].Tokenize("_"))[2])->GetName();
+	    std::cout<< "this is a shortname"<< shortName <<std::endl;
+	    flatEDMTable( shortName);
+	  }
+	  std::cout<<"Done comparing nano-EDM"<<std::endl;
+	  return;
+	}else{
+	  //NANO was asked for, but no EDM branches. plot nano branches
+	  std::vector<TString> nanoBranches = getBranchNames(".*");
+	  for (uint iT = 0; iT <nanoBranches.size() ; ++iT){
+	    flatTable( nanoBranches[iT] );
+	  }
+	  if (nanoBranches.size()!=0){
+	    std::cout<<"Done comparing pure-ROOT nano"<<std::endl;
+	    return;
+	  }
+	}
       }
-      std::cout<<"Done comparing nano-EDM"<<std::endl;
-      return;
-    }else{
-      //NANO was asked for, but no EDM branches. plot nano branches
-      std::vector<TString> nanoBranches = getBranchNames(".*");
-      for (uint iT = 0; iT <nanoBranches.size() ; ++iT){
-	flatTable( nanoBranches[iT] );
-      }
-      if (nanoBranches.size()!=0){
-	std::cout<<"Done comparing pure-ROOT nano"<<std::endl;
-	return;
-      }
-    }
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "error"))){
       tbr="edmErrorSummaryEntrys_logErrorHarvester__"+recoS+".obj";

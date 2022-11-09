@@ -33,7 +33,6 @@ while read -r line ; do
     # Report PR status
     source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
     source $WORKSPACE/cms-bot/common/github_reports.sh
-    mark_commit_status_all_prs 'crab' 'pending' -u "${BUILD_URL}" -d "CRAB test successfully triggered"
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'pending' -u "${BUILD_URL}" -d "Running"
     echo "CRAB is sourced from:"
     which crab-${CRABCLIENT_TYPE}
@@ -72,3 +71,5 @@ while read -r line ; do
     echo $?
 
 done <<< $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
+
+mark_commit_status_all_prs 'crab' 'pending' -u "${BUILD_URL}" -d "CRAB test successfully triggered"

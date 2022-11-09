@@ -67,7 +67,7 @@ do
 
     # Clean workspace for next iteration
     mkdir $WORKSPACE/crab-${CRABCLIENT_TYPE}
-    cp $WORKSPACE/* $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
+    cp -r $WORKSPACE/* $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
     ls $WORKSPACE
 done
 

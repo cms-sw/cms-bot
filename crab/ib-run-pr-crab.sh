@@ -23,7 +23,7 @@ fi
     echo "Matched Line:  $line"
 done
 
-(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)') | while read -r line ; do
+while read -r line ; do
     CRABCLIENT_TYPE=$line
 
     [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
@@ -68,4 +68,4 @@ done
     echo "CONTEXT_PREFIX=$CONTEXT_PREFIX" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
     echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
     echo "CRABCLIENT_TYPE=$CRABCLIENT_TYPE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-done
+done <<< $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')

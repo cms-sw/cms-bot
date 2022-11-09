@@ -49,6 +49,7 @@ if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   fi
 
   source $WORKSPACE/cms-bot/pr_testing/_helper_functions.sh
+  source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
   source $WORKSPACE/cms-bot/common/github_reports.sh
   rm $WORKSPACE/status-${CRABCLIENT_TYPE}.log
   mv $WORKSPACE/testsResults/logfile-${CRABCLIENT_TYPE} $WORKSPACE/CRABTests

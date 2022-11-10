@@ -191,7 +191,8 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   cp $CMS_BOT_DIR/comparisons/validateJR.sh  $JR_COMP_DIR
   chmod +x $JR_COMP_DIR/validateJR.sh
   cp $CMS_BOT_DIR/comparisons/validate.C     $JR_COMP_DIR
-  cp $CMS_BOT_DIR/comparisons/matrix_RE.txt $JR_COMP_DIR
+  cp $CMS_BOT_DIR/comparisons/validate.py    $JR_COMP_DIR
+  chmod +x $JR_COMP_DIR/validateJR.py
   export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
   echo "Start JR comparison at `date`"

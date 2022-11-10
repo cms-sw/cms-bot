@@ -72,7 +72,7 @@ if __name__ == "__main__":
 
     if not compile_lib():sys.exit()
 
-    process_of_interest=['RECO','reRECO','PAT','NANO','DQM','HLT','HLT2']
+    process_of_interest=['ZStoRECO','RECO','reRECO','PAT','NANO','DQM','HLT','HLT2']
 
     all_output_root_files = glob.glob(f'{options.base}/*/step*.root')
     for each_root_file in all_output_root_files:

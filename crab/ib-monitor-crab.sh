@@ -37,13 +37,13 @@ if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   echo "Uploading results of PR testing"
   if [ "X$TEST_PASSED" = Xfalse ]; then
     echo "Errors in CRAB PR test"
-    echo 'CRAB_TESTS;ERROR,CRAB Tests,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
+    echo 'CRAB_TESTS_'${CRABCLIENT_TYPE}';OK,CRAB '${CRABCLIENT_TYPE}' Test,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     CRAB_OK=false
     $CMS_BOT_DIR/report-pull-request-testsResults PARSE_CRAB_FAIL -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log --report-file $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res --report-url ${PR_RESULT_URL}
     echo "CRAB" > $WORKSPACE/testsResults/crab-failed-${CRABCLIENT_TYPE}.res
   else
     echo "No errors in CRAB PR test"
-    echo 'CRAB_TESTS;OK,CRAB Tests,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
+    echo 'CRAB_TESTS_'${CRABCLIENT_TYPE}';OK,CRAB '${CRABCLIENT_TYPE}' Test,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     CRAB_OK=true
     touch $WORKSPACE/testsResults/crab-failed-${CRABCLIENT_TYPE}.res
     touch $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res

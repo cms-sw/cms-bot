@@ -78,7 +78,7 @@ function prepare_upload_results (){
     else
       mkdir -p upload
     fi
-    for f in external_checks git-recent-commits.json cmssw.tar.gz unitTests dasqueries testsResults build-logs clang-logs runTheMatrix*-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests CRABTests codeRules dupDict material-budget ; do
+    for f in external_checks git-recent-commits.json cmssw.tar.gz unitTests dasqueries testsResults build-logs clang-logs runTheMatrix*-results llvm-analysis *.log *.html *.txt *.js DQMTestsResults valgrindResults-* cfg-viewerResults igprof-results-data git-merge-result git-log-recent-commits addOnTests CRABTests-* codeRules dupDict material-budget ; do
       [ -e $f ] && mv $f upload/$f
     done
     if [ -e upload/renderPRTests.js ] ; then mkdir -p upload/js && mv upload/renderPRTests.js upload/js/ ; fi

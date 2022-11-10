@@ -56,6 +56,7 @@ if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   mv $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE} $WORKSPACE/CRABTests
   prepare_upload_results
   DRY_RUN=""
+  echo ${CMSSW_QUEUE}
   
   if [ "X$CRAB_OK" = Xtrue ]; then
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'success' -u "${BUILD_URL}" -d "Passed"

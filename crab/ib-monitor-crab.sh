@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 echo ${CRABCLIENT_TYPE}
-echo ${CMSSW_QUEUE}
+export CMSSW_QUEUE=${CMSSW_QUEUE}
 [ "${WORKSPACE}" != "" ] || export WORKSPACE=$(pwd) && cd $WORKSPACE
 echo "FAILED" > $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE}
 TEST_PASSED=false

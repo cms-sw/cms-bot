@@ -35,11 +35,11 @@ source $WORKSPACE/cms-bot/jenkins-artifacts
 if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   # PR test
   echo "Uploading results of PR testing"
-  if [ "X$TEST_PASSED" = Xfalse ]; then
+  if [ "X${CRABCLIENT_TYPE}" = Xdev ]; then
     echo "Errors in CRAB PR test"
-    echo 'CRAB_TESTS_'${CRABCLIENT_TYPE}';OK,CRAB '${CRABCLIENT_TYPE}' Test,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
+    echo 'CRAB_TESTS_'${CRABCLIENT_TYPE}';ERROR,CRAB '${CRABCLIENT_TYPE}' Test,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     CRAB_OK=false
-    $CMS_BOT_DIR/report-pull-request-testsResults PARSE_CRAB_FAIL -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log --report-file $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res --report-url ${PR_RESULT_URL}
+    $WORKSPACE/cms-bot/report-pull-request-results PARSE_CRAB_FAIL -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log --report-file $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res --report-url ${PR_RESULT_URL}
     echo "CRAB" > $WORKSPACE/testsResults/crab-failed-${CRABCLIENT_TYPE}.res
   else
     echo "No errors in CRAB PR test"

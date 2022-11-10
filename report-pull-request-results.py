@@ -193,6 +193,7 @@ def read_addon_log_file(unit_tests_file):
 # reads the CRAB tests log file and gets if FAILED or PASSED
 #
 def read_crab_log_file(unit_tests_file):
+  message='\n## CRAB Tests\n\n'
   for line in openlog(unit_tests_file):
     line = line.strip()
     if ('FAILED' in line):

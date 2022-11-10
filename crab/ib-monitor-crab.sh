@@ -35,7 +35,7 @@ source $WORKSPACE/cms-bot/jenkins-artifacts
 if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   # PR test
   echo "Uploading results of PR testing"
-  if [ "X${CRABCLIENT_TYPE}" = Xdev ]; then
+  if [ "X$TEST_PASSED" = Xfalse ]; then
     echo "Errors in CRAB PR test"
     echo 'CRAB_TESTS_'${CRABCLIENT_TYPE}';ERROR,CRAB '${CRABCLIENT_TYPE}' Test,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     CRAB_OK=false

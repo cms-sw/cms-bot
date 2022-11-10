@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 echo ${CRABCLIENT_TYPE}
-export CMSSW_QUEUE=${CMSSW_QUEUE}
+export CMSSW_QUEUE_FLAVOR=${CMSSW_QUEUE}
 [ "${WORKSPACE}" != "" ] || export WORKSPACE=$(pwd) && cd $WORKSPACE
 echo "FAILED" > $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE}
 TEST_PASSED=false
@@ -57,7 +57,7 @@ if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   mv $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE} $WORKSPACE/CRABTests
   prepare_upload_results
   DRY_RUN=""
-  echo ${CMSSW_QUEUE}
+  CMSSW_QUEUE=${CMSSW_QUEUE_FLAVOR}
   
   if [ "X$CRAB_OK" = Xtrue ]; then
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'success' -u "${BUILD_URL}" -d "Passed"

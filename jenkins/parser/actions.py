@@ -15,6 +15,7 @@ html_file_path = (
 retry_url_file = (
     os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json"
 )
+queue_file_path = os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue"
 
 
 def send_email(email_msg, email_subject, email_addresses):
@@ -27,7 +28,6 @@ def send_email(email_msg, email_subject, email_addresses):
 
 def trigger_create_gridnode_action(node_name):
     node_config_path = os.environ.get("HOME") + "/nodes/" + node_name + "/config.xml"
-    print("Grid node configuration path: ", node_config_path)
     if helpers.grep(node_config_path, "auto-recreate", True):
         print("Recreating grid node ...")
         trigger_create_gridnode = (
@@ -84,10 +84,38 @@ def trigger_retry_action(
         + '"'
     )
     print(trigger_retry)
-    os.system(trigger_retry)
-    update_cmssdt_page(
-        html_file_path, job_to_retry, build_to_retry, regex, job_url, "", "Retry"
-    )
+    if action == "retryNow":
+        os.system(trigger_retry)
+        update_cmssdt_page(
+            html_file_path, job_to_retry, build_to_retry, regex, job_url, "", "Retry"
+        )
+    elif action == "retryLate":
+        # Store retry command into a file
+        print("This failure will be retried with some delay ~ 10 min")
+        with open(queue_file_path, "a") as retry_queue_file:
+            retry_queue_file.write(trigger_retry + "\n")
+        # Update description of the failed job
+        update_label = (
+            os.environ.get("JENKINS_CLI_CMD")
+            + " set-build-description "
+            + job_to_retry
+            + " "
+            + build_to_retry
+            + " 'Build\ will\ be\ retried\ with\ some\ delay\ ~\ 10\ min'"
+        )
+        print(update_label)
+        os.system(update_label)
+    else:
+        os.system(trigger_retry)
+
+
+def trigger_late_retries():
+    print("Triggering delayed retries ...")
+    with open(queue_file_path, "r+") as retry_queue_file:
+        for line in retry_queue_file:
+            print(line)
+            os.system(line)
+        retry_queue_file.truncate(0)
 
 
 def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):

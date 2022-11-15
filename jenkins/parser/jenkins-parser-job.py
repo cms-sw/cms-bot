@@ -57,7 +57,7 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                     + log_file_path
                     + ". Taking action ..."
                 )
-                if action == "retryBuild":
+                if "retry" in action:
                     actions.trigger_retry_action(
                         job_to_retry,
                         job_url,
@@ -104,9 +104,9 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                                 parser_url,
                             )
 
-                            if "grid" in node_name:
-                                print("Error found on a grid node!")
-                                actions.trigger_create_gridnode_action(node_name)
+                            # if "grid" in node_name:
+                            #     print("Error found on a grid node!")
+                            #     actions.trigger_create_gridnode_action(node_name)
 
                         actions.trigger_retry_action(
                             job_to_retry,
@@ -301,6 +301,8 @@ if __name__ == "__main__":
     ) as processed_file:  # Get last parsed object just once
         processed_object = json.load(processed_file)
 
+    T = 1
+    time_check = True
     first_iter = True
 
     while True:
@@ -318,7 +320,7 @@ if __name__ == "__main__":
                 # The default max running time is 18h for all builds
                 max_running_time = 18
 
-            print("[" + job_to_retry + "] Processing ...")
+            # print("[" + job_to_retry + "] Processing ...")
             job_dir = os.path.join(builds_dir, job_to_retry)
             error_list, force_retry_regex = helpers.get_errors_list(jobs_object, job_id)
 
@@ -347,8 +349,10 @@ if __name__ == "__main__":
                 )
                 if missing_builds:
                     print(
-                        "Builds "
-                        + str(missing_builds)
+                        "["
+                        + job_to_retry
+                        + "] Builds #"
+                        + str(", #".join(missing_builds))
                         + " have finished. Processing ..."
                     )
                     for build in sorted(finished_builds):
@@ -356,7 +360,6 @@ if __name__ == "__main__":
 
             # Update running builds checking > last revision number
             new_running_builds = helpers.get_running_builds(job_dir, latest_revision)
-            # pending_builds = helpers.get_pending_builds(build_list, lastest_revision)
 
             for build in new_running_builds:
                 if build not in total_running_builds:
@@ -379,8 +382,10 @@ if __name__ == "__main__":
             # Parse logs of finished builds
             if finished_builds:
                 print(
-                    "Builds "
-                    + str(finished_builds)
+                    "["
+                    + job_to_retry
+                    + "] Builds #"
+                    + str(", #".join(finished_builds))
                     + " have already finished. Processing ..."
                 )
                 for build in sorted(finished_builds):
@@ -399,10 +404,12 @@ if __name__ == "__main__":
                 processed_object["parserInfo"]["runningBuilds"][job_to_retry].keys()
             )
 
-            if total_running_builds:
+            if total_running_builds and time_check == True:
                 print(
-                    "Builds "
-                    + str(total_running_builds)
+                    "["
+                    + job_to_retry
+                    + "] Builds #"
+                    + str(", #".join(total_running_builds))
                     + " are still running for job "
                     + job_to_retry
                 )
@@ -411,14 +418,25 @@ if __name__ == "__main__":
                         job_dir, build_to_check, job_to_retry, max_running_time
                     )
 
+            # print("[" + job_to_retry + "] ... Done")
+
         first_iter = False
+
+        # Enable time check and delayed retries every 10 min
+        if elapsed_time / (datetime.timedelta(minutes=10) * T) > 1:
+            time_check = True
+            actions.trigger_late_retries()
+            T += 1
+        else:
+            time_check = False
+
         with open(parser_info_path, "w") as processed_file:
             json.dump(processed_object, processed_file, indent=2)
 
         if elapsed_time > datetime.timedelta(hours=2):
             break
 
-        print("[Parser information updated]")
+        # print("[Parser information updated]")
         # Trigger cmssdt page update
         actions.update_cmssdt_page(html_file_path, "", "", "", "", "", "", True)
         time.sleep(2)

@@ -168,7 +168,7 @@ nodereconnect_label = (
     + str(current_build_number)
 )
 
-if parser_action == "retryBuild":
+if "retry" in parser_action:
     label = retry_label
 elif parser_action == "nodeOff":
     label = nodeoff_label

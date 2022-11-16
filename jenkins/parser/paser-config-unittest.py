@@ -44,7 +44,7 @@ print("[TEST 2]: ... OK")
 print("[TEST 3]: Checking that the defined actions are valid ...")
 valid_actions = [
     "retryNow",
-    "retryLate"
+    "retryLate",
     "nodeOff",
     "nodeReconnect",
 ]  # TODO: Find a better way to get all valid actions

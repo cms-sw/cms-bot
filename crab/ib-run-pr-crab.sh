@@ -23,8 +23,6 @@ fi
 source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
 source $WORKSPACE/cms-bot/common/github_reports.sh
 
-# Create SCRAM project
-scram -a $ARCHITECTURE project $RELEASE_FORMAT
 cd $RELEASE_FORMAT
 eval `scram run -sh`
 

@@ -12,19 +12,23 @@ import helpers
 import actions
 
 
-def process_build(build, job_dir, job_to_retry, error_list):
+def process_build(build, job_dir, job_to_retry, error_list, retry_object, retry_delay):
     """Process finished build. If failed, check for known erros. If succeed, check if it is a retried build to update its description."""
     if helpers.grep(
         functools.reduce(os.path.join, [job_dir, build, "build.xml"]),
         "<result>FAILURE",
     ):
-        check_and_trigger_action(build, job_dir, job_to_retry, error_list)
+        check_and_trigger_action(
+            build, job_dir, job_to_retry, error_list, retry_object, retry_delay
+        )
     else:
         # Mark as retried
         actions.mark_build_as_retried(job_dir, job_to_retry, build)
 
 
-def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_action):
+def check_and_trigger_action(
+    build_to_retry, job_dir, job_to_retry, error_list_action, retry_object, retry_delay
+):
     """Check build logs and trigger the appropiate action if a known error is found."""
     build_dir_path = os.path.join(job_dir, build_to_retry)
     log_file_path = os.path.join(build_dir_path, "log")
@@ -66,6 +70,8 @@ def check_and_trigger_action(build_to_retry, job_dir, job_to_retry, error_list_a
                         action,
                         regex,
                         force_retry_regex,
+                        retry_object,
+                        retry_delay,
                     )
                 else:
                     # Take action on the nodes
@@ -289,6 +295,9 @@ if __name__ == "__main__":
         os.environ.get("HOME")
         + "/builds/jenkins-test-parser-monitor/json-web-info.json"
     )
+    retry_queue_path = (
+        os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
+    )
 
     # Get job-config info
     with open(jobs_config_path, "r") as jobs_file:
@@ -300,6 +309,11 @@ if __name__ == "__main__":
         parser_info_path, "r"
     ) as processed_file:  # Get last parsed object just once
         processed_object = json.load(processed_file)
+
+    # Get retry queue
+    with open(retry_queue_path, "r") as retry_file:
+        retry_object = json.load(retry_file)
+        retry_entries = retry_object["retryQueue"]
 
     T = 1
     time_check = True
@@ -319,6 +333,11 @@ if __name__ == "__main__":
             except KeyError:
                 # The default max running time is 18h for all builds
                 max_running_time = 18
+            try:
+                retry_delay = int(jenkins_jobs[job_id]["retryTime"])
+            except KeyError:
+                # The default delay time is 10 min for all builds
+                retry_delay = 10
 
             # print("[" + job_to_retry + "] Processing ...")
             job_dir = os.path.join(builds_dir, job_to_retry)
@@ -356,7 +375,14 @@ if __name__ == "__main__":
                         + " have finished. Processing ..."
                     )
                     for build in sorted(finished_builds):
-                        process_build(build, job_dir, job_to_retry, error_list)
+                        process_build(
+                            build,
+                            job_dir,
+                            job_to_retry,
+                            error_list,
+                            retry_object,
+                            retry_delay,
+                        )
 
             # Update running builds checking > last revision number
             new_running_builds = helpers.get_running_builds(job_dir, latest_revision)
@@ -389,7 +415,14 @@ if __name__ == "__main__":
                     + " have already finished. Processing ..."
                 )
                 for build in sorted(finished_builds):
-                    process_build(build, job_dir, job_to_retry, error_list)
+                    process_build(
+                        build,
+                        job_dir,
+                        job_to_retry,
+                        error_list,
+                        retry_object,
+                        retry_delay,
+                    )
                     processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(
                         build
                     )
@@ -421,6 +454,24 @@ if __name__ == "__main__":
             # print("[" + job_to_retry + "] ... Done")
 
         first_iter = False
+
+        # Check for delayed retries
+        if retry_entries:
+            for entry in list(retry_entries):
+                if (
+                    datetime.datetime.strptime(
+                        retry_entries[entry]["retryTime"], "%Y-%m-%d %H:%M:%S"
+                    )
+                    < datetime.datetime.now()
+                ):
+                    print("Triggering delayed retry for " + entry)
+                    os.system(retry_entries[entry]["retryCommand"])
+                    retry_object["retryQueue"].pop(entry)
+
+            # Reset copy
+            retry_entries = retry_object["retryQueue"]
+            with open(retry_queue_path, "w") as retry_file:
+                json.dump(retry_object, retry_file, indent=2)
 
         # Enable time check and delayed retries every 10 min
         if elapsed_time / (datetime.timedelta(minutes=10) * T) > 1:

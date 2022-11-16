@@ -16,6 +16,9 @@ retry_url_file = (
     os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json"
 )
 queue_file_path = os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue"
+retry_queue_path = (
+    os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
+)
 
 
 def send_email(email_msg, email_subject, email_addresses):
@@ -47,6 +50,8 @@ def trigger_retry_action(
     action,
     regex,
     force_retry_regex,
+    retry_object="",
+    delay_time="",
 ):
     # Skip autoretry if Jenkins already retries, unless connection issue.
     if regex not in force_retry_regex:
@@ -91,9 +96,23 @@ def trigger_retry_action(
         )
     elif action == "retryLate":
         # Store retry command into a file
-        print("This failure will be retried with some delay ~ 10 min")
+        print(
+            "This failure will be retried with a delay of " + str(delay_time) + " min"
+        )
         with open(queue_file_path, "a") as retry_queue_file:
             retry_queue_file.write(trigger_retry + "\n")
+
+        retry_entry = job_to_retry + "#" + build_to_retry
+        retry_time = datetime.datetime.now().replace(
+            microsecond=0
+        ) + datetime.timedelta(minutes=delay_time)
+        retry_object["retryQueue"][retry_entry] = {}
+        retry_object["retryQueue"][retry_entry]["retryTime"] = str(retry_time)
+        retry_object["retryQueue"][retry_entry]["retryCommand"] = trigger_retry
+
+        with open(retry_queue_path, "w") as retry_file:
+            json.dump(retry_object, retry_file, indent=2)
+
         # Update description of the failed job
         update_label = (
             os.environ.get("JENKINS_CLI_CMD")
@@ -101,7 +120,7 @@ def trigger_retry_action(
             + job_to_retry
             + " "
             + build_to_retry
-            + " 'Build\ will\ be\ retried\ with\ some\ delay\ ~\ 10\ min'"
+            + " 'Build\ will\ be\ retried\ with\ some\ delay'"
         )
         print(update_label)
         os.system(update_label)

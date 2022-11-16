@@ -13,7 +13,8 @@
           "busError",
           "workspaceFailure"
         ],
-        "maxTime": "1"
+        "maxTime": "1",
+        "retryTime": "5"
       },
       {
         "jobName": "ib-run-igprof",

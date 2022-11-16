@@ -2,7 +2,9 @@
 
 baseA=$1
 baseB=$2
-diffN=$3
-inList=$4
 
-`dirname $0`/validateJR.py --base $baseA --ref $baseB
+if which python3 ; then
+    python3 `dirname $0`/validateJR.py --base $baseA --ref $baseB --procs $(nproc)
+else
+    python `dirname $0`/validateJR.py --base $baseA --ref $baseB --procs $(nproc)
+fi

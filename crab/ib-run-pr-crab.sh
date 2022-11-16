@@ -23,6 +23,8 @@ fi
 source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
 source $WORKSPACE/cms-bot/common/github_reports.sh
 
+voms-proxy-init -voms cms
+
 cd $RELEASE_FORMAT
 eval `scram run -sh`
 
@@ -37,7 +39,6 @@ do
     which crab-${CRABCLIENT_TYPE}
 
     export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
-    voms-proxy-init -voms cms
     crab-${CRABCLIENT_TYPE} submit -c $(dirname $0)/task.py
     mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
     echo "INPROGRESS" > $WORKSPACE/crab/statusfile

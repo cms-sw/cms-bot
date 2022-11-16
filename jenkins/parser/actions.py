@@ -15,7 +15,6 @@ html_file_path = (
 retry_url_file = (
     os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json"
 )
-queue_file_path = os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue"
 retry_queue_path = (
     os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
 )
@@ -99,9 +98,6 @@ def trigger_retry_action(
         print(
             "This failure will be retried with a delay of " + str(delay_time) + " min"
         )
-        with open(queue_file_path, "a") as retry_queue_file:
-            retry_queue_file.write(trigger_retry + "\n")
-
         retry_entry = job_to_retry + "#" + build_to_retry
         retry_time = datetime.datetime.now().replace(
             microsecond=0
@@ -127,15 +123,6 @@ def trigger_retry_action(
     else:
         print(trigger_retry)
         os.system(trigger_retry)
-
-
-def trigger_late_retries():
-    print("Triggering delayed retries ...")
-    with open(queue_file_path, "r+") as retry_queue_file:
-        for line in retry_queue_file:
-            print(line)
-            os.system(line)
-        retry_queue_file.truncate(0)
 
 
 def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):

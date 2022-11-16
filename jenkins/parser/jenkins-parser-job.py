@@ -479,7 +479,6 @@ if __name__ == "__main__":
         # Enable time check and delayed retries every 10 min
         if elapsed_time / (datetime.timedelta(minutes=10) * T) > 1:
             time_check = True
-            actions.trigger_late_retries()
             T += 1
         else:
             time_check = False

@@ -196,8 +196,8 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
   echo "Start JR comparison at `date`"
-  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
-  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
+  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
+  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
   echo "Finished with JR comparison at `date`:"
 fi

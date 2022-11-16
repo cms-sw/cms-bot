@@ -30,8 +30,6 @@ def run_comparison(fileName, base_dir, ref_dir, processName, output_dir):
     return True
 
 def file_processes(fileName):
-    if any([pat in fileName for pat in ['inDQM','DQM_V']]):
-        return []
     max_proc=20
     prov_file = fileName.replace('.root','.prov')
     if not os.path.isfile(prov_file):
@@ -66,6 +64,8 @@ def file_index(fileName):
 def process_file(each_root_file):
     print(f'processing {each_root_file} in {os.getpid()}')
     process_of_interest=['ZStoRECO','RECO','reRECO','PAT','NANO','DQM','HLT','HLT2']
+    if any([pat in each_root_file for pat in ['inDQM','DQM_V']]):
+        return
     processName = last_process(each_root_file)
     if not processName in process_of_interest:
         return

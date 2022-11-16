@@ -62,7 +62,7 @@ def file_index(fileName):
     return None
 
 def process_file(each_root_file):
-    print(f'processing {each_root_file} in {os.getpid()}')
+    #print(f'processing {each_root_file} in {os.getpid()}')
     process_of_interest=['ZStoRECO','RECO','reRECO','PAT','NANO','DQM','HLT','HLT2']
     if any([pat in each_root_file for pat in ['inDQM','DQM_V']]):
         return
@@ -90,7 +90,7 @@ def process_file(each_root_file):
     output_dir += '_OldVSNew'
     output_dir += '_'+compressedName
     run_comparison(fileName, path, ref_path, processName, output_dir)
-    print(f'\t{each_root_file} processed in {os.getpid()}')
+    #print(f'\t{each_root_file} processed in {os.getpid()}')
 
 if __name__ == "__main__":
     from optparse import OptionParser

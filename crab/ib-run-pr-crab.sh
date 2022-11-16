@@ -19,13 +19,12 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   export SINGULARITY_IMAGE="${IMG_PATH}"
 fi
 
+[ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
+
 for CRABCLIENT_TYPE in $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
 do
     echo $CRABCLIENT_TYPE
-
-    [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
     [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
-    [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
 
     # Report PR status
     source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
@@ -34,6 +33,7 @@ do
     echo "CRAB is sourced from:"
     which crab-${CRABCLIENT_TYPE}
 
+    scram -a $ARCHITECTURE project $RELEASE_FORMAT
     export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
     voms-proxy-init -voms cms
     crab-${CRABCLIENT_TYPE} submit -c $(dirname $0)/task.py

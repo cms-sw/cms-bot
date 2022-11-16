@@ -20,6 +20,13 @@ if [ "${SINGULARITY_IMAGE}" = "" ] ; then
 fi
 
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
+source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
+source $WORKSPACE/cms-bot/common/github_reports.sh
+
+# Create SCRAM project
+scram -a $ARCHITECTURE project $RELEASE_FORMAT
+cd $RELEASE_FORMAT
+eval `scram run -sh`
 
 for CRABCLIENT_TYPE in $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
 do
@@ -27,13 +34,10 @@ do
     [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 
     # Report PR status
-    source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
-    source $WORKSPACE/cms-bot/common/github_reports.sh
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'pending' -u "${BUILD_URL}" -d "Running"
     echo "CRAB is sourced from:"
     which crab-${CRABCLIENT_TYPE}
 
-    scram -a $ARCHITECTURE project $RELEASE_FORMAT
     export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
     voms-proxy-init -voms cms
     crab-${CRABCLIENT_TYPE} submit -c $(dirname $0)/task.py
@@ -68,7 +72,6 @@ do
     # Clean workspace for next iteration
     cp $WORKSPACE/crab/statusfile $WORKSPACE/CRABTests-${CRABCLIENT_TYPE}
     mkdir $WORKSPACE/crab-${CRABCLIENT_TYPE}
-    mv $WORKSPACE/CMSSW* $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
     mv $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property $WORKSPACE
     mv $WORKSPACE/crab $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
     ls $WORKSPACE

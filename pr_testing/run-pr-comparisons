@@ -211,7 +211,7 @@ mv products_AOD.log $WORKSPACE/upload/products_AOD.log
 mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
 cd .. 
 
-set +x
+#set +x
 # --------------------------------------------------------------------------
 # Default Comparison
 # --------------------------------------------------------------------------
@@ -320,7 +320,7 @@ if [ -e $WORKSPACE/results/default-comparison/done-0 ] ; then
   rm -f $WORKSPACE/results/default-comparison/cmdlog-*
   echo "Finished with default comparison at `date`"
 fi
-set -x
+#set -x
 
 #----------------------------------
 # Comparison summary

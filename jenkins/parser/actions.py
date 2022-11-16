@@ -88,8 +88,8 @@ def trigger_retry_action(
         + str(regex.replace(" ", "&"))
         + '"'
     )
-    print(trigger_retry)
     if action == "retryNow":
+        print(trigger_retry)
         os.system(trigger_retry)
         update_cmssdt_page(
             html_file_path, job_to_retry, build_to_retry, regex, job_url, "", "Retry"
@@ -125,6 +125,7 @@ def trigger_retry_action(
         print(update_label)
         os.system(update_label)
     else:
+        print(trigger_retry)
         os.system(trigger_retry)
 
 

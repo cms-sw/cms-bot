@@ -24,6 +24,7 @@ def process_build(build, job_dir, job_to_retry, error_list, retry_object, retry_
     else:
         # Mark as retried
         actions.mark_build_as_retried(job_dir, job_to_retry, build)
+        print("[" + job_to_retry + "] ... OK")
 
 
 def check_and_trigger_action(
@@ -465,7 +466,9 @@ if __name__ == "__main__":
                     < datetime.datetime.now()
                 ):
                     print("Triggering delayed retry for " + entry)
-                    os.system(retry_entries[entry]["retryCommand"])
+                    trigger_retry = retry_entries[entry]["retryCommand"]
+                    print(trigger_retry)
+                    os.system(trigger_retry)
                     retry_object["retryQueue"].pop(entry)
 
             # Reset copy

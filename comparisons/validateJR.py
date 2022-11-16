@@ -110,21 +110,23 @@ if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options]")
     parser.add_option("--base", dest="base", default="base/", help="path to the file to compare with ref")
     parser.add_option("--ref", dest="ref", default="ref/", help="path to the reference files")
+    parser.add_option("--wf", dest="workflow", default="*", help="pattern for listing the workflows to run the comparison for {base}/{wf}_*/...")
     parser.add_option("--procs", dest="procs", default=None, type=int, help="number of processes to run")
     (options, args) = parser.parse_args()
 
     if not compile_lib():sys.exit()
 
-    #all_output_root_files = glob.glob(f'{options.base}/*/step*.root')
-    all_output_root_files = glob.glob('%s/*/step*.root'%(options.base,))
+    #all_output_root_files = glob.glob(f'{options.base}/{options.workflow}_*/step*.root')
+    all_output_root_files = glob.glob('%s/%s_*/step*.root'%(options.base,options.workflow))
+
+    #print(f'{len(all_output_root_files)} files to process')
+    print('%d files to process'%(len(all_output_root_files)))
 
     if options.procs==0:
         for afile in all_output_root_files:
             process_file(afile)
     else:
         from multiprocessing import Pool
-        #print(f'{len(all_output_root_files)} files to process')
-        print('%d files to process'%(len(all_output_root_files)))
         #with Pool(options.procs) as threads: #only python3
         #    results = [threads.apply_async(process_file, (f, )) for f in all_output_root_files]
         #    for r in results: r.wait()

@@ -63,39 +63,49 @@ def file_index(fileName):
         ndigits-=1
     return None
 
+def process_file(each_root_file):
+    print(f'processing {each_root_file} in {os.getpid()}')
+    process_of_interest=['ZStoRECO','RECO','reRECO','PAT','NANO','DQM','HLT','HLT2']
+    processName = last_process(each_root_file)
+    if not processName in process_of_interest:
+        return
+    #print(f"found process of interest {processName} in file {each_root_file}")
+    path,fileName = each_root_file.rsplit('/',1)
+    ref_path =path.replace( options.base, options.ref )
+    _,fullName = path.rsplit('/',1)
+    wfn,therest=fullName.split('_',1)
+    wfn='wf'+wfn.replace('.','pt')
+    fileindex = file_index(fileName)
+    elements = therest.split('+')[:fileindex+1]
+    compressedName = "".join(elements)
+    #if ip !=0: compressedName += processName
+    compressedName += wfn
+    compressedName = compressedName.replace('.','').replace('_','')
+    #print(f"compressing {path} into {compressedName}")
+    output_dir = ''
+    #output_dir = path+'/'
+    output_dir += 'all'
+    if ('inMINIAOD' in fileName):
+        output_dir += '_mini'
+    output_dir += '_OldVSNew'
+    output_dir += '_'+compressedName
+    run_comparison(fileName, path, ref_path, processName, output_dir)
+    print(f'\t{each_root_file} processed in {os.getpid()}')
+
 if __name__ == "__main__":
     from optparse import OptionParser
     parser = OptionParser(usage="%prog [options] dir1 dir2 ...")
     parser.add_option("--base", dest="base", default="base/", help="path to the file to compare with ref")
     parser.add_option("--ref", dest="ref", default="ref/", help="path to the reference files")
+    parser.add_option("--procs", dest="procs", default=None, type=int, help="number of processes to run")
     (options, args) = parser.parse_args()
 
     if not compile_lib():sys.exit()
 
-    process_of_interest=['ZStoRECO','RECO','reRECO','PAT','NANO','DQM','HLT','HLT2']
-
     all_output_root_files = glob.glob(f'{options.base}/*/step*.root')
-    for each_root_file in all_output_root_files:
-        processName = last_process(each_root_file)
-        if processName in process_of_interest:
-            #print(f"found process of interest {processName} in file {each_root_file}")
-            path,fileName = each_root_file.rsplit('/',1)
-            ref_path =path.replace( options.base, options.ref )
-            _,fullName = path.rsplit('/',1)
-            wfn,therest=fullName.split('_',1)
-            wfn='wf'+wfn.replace('.','pt')
-            fileindex = file_index(fileName)
-            elements = therest.split('+')[:fileindex+1]
-            compressedName = "".join(elements)
-            #if ip !=0: compressedName += processName
-            compressedName += wfn
-            compressedName = compressedName.replace('.','').replace('_','')
-            #print(f"compressing {path} into {compressedName}")
-            output_dir = ''
-            #output_dir = path+'/'
-            output_dir += 'all'
-            if ('inMINIAOD' in fileName):
-                output_dir += '_mini'
-            output_dir += '_OldVSNew'
-            output_dir += '_'+compressedName
-            run_comparison(fileName, path, ref_path, processName, output_dir)
+
+    from multiprocessing import Pool
+    print(f'{len(all_output_root_files)} files to process')
+    with Pool(options.procs) as threads:
+        results = [threads.apply_async(process_file, (f, )) for f in all_output_root_files]
+        for r in results: r.wait()

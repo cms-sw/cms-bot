@@ -13,7 +13,8 @@
           "busError",
           "workspaceFailure"
         ],
-        "maxTime": "1"
+        "maxTime": "1",
+        "retryTime": "5"
       },
       {
         "jobName": "ib-run-igprof",
@@ -121,6 +122,13 @@
           "gitErrors"
         ],
         "maxTime": "1"
+      },
+      {
+        "jobName": "ib-run-pr-addon",
+        "errorType": [
+          "cvmfsFailure"
+        ],
+        "maxTime": "1"
       }
     ],
     "errorMsg": {
@@ -128,13 +136,13 @@
         "errorStr": [
           "Build timed out"
         ],
-        "action": "retryBuild"
+        "action": "retryNow"
       },
       "hudsonConnection": {
         "errorStr": [
           "Remote call on .* failed. The channel is closing down or has closed down"
         ],
-        "action": "retryBuild",
+        "action": "retryNow",
         "forceRetry": "true",
         "allJobs": "true"
       },
@@ -142,7 +150,7 @@
         "errorStr": [
           "unexpected fault address"
         ],
-        "action": "retryBuild"
+        "action": "retryNow"
       },
       "gitErrors": {
         "errorStr": [
@@ -154,7 +162,7 @@
 	  "Empty reply from server",
 	  "The requested URL returned error: 503"
         ],
-        "action": "retryBuild",
+        "action": "retryLate",
 	"allJobs": "true"
       },
       "busError": {
@@ -169,7 +177,7 @@
         "errorStr": [
           "Unexpected exception occurred while performing connect-node command"
         ],
-        "action": "retryBuild"
+        "action": "retryNow"
       },
       "afsFailure": {
         "errorStr": [
@@ -187,7 +195,8 @@
       "cvmfsFailure": {
         "errorStr": [
           "Error: No such directory: /cvmfs/.*cern.ch$",
-	  "cannot open directory /cvmfs/.*cern.ch:"
+	  "cannot open directory /cvmfs/.*cern.ch:",
+          "cannot access /cvmfs/.*cern.ch"
         ],
         "action": "nodeOff",
         "allJobs": "true"

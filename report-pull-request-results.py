@@ -192,19 +192,6 @@ def read_addon_log_file(unit_tests_file):
   send_message_pr(message)
 
 #
-# reads the CRAB tests log file and gets if FAILED or PASSED
-#
-def read_crab_log_file(unit_tests_file):
-  message='\n## CRAB Tests\n\n'
-  for line in openlog(unit_tests_file):
-    line = line.strip()
-    if ('FAILED' in line):
-      message += '<summary>CRAB test failed ...</summary>\n\n'
-    else:
-      message += '<summary>CRAB test succeeded ...</summary>\n\n'
-  send_message_pr(message)
-
-#
 # reads material budget logs
 #
 def read_material_budget_log_file(unit_tests_file):
@@ -481,8 +468,6 @@ elif ( ACTION == 'PARSE_MATRIX_FAIL' ):
   read_matrix_log_file(options.unit_tests_file )
 elif ( ACTION == 'PARSE_ADDON_FAIL' ):
   read_addon_log_file(options.unit_tests_file )
-elif ( ACTION == 'PARSE_CRAB_FAIL' ):
-  read_crab_log_file(options.unit_tests_file)
 elif ( ACTION == 'COMPARISON_READY' ):
   send_comparison_ready_message(options.unit_tests_file, options.results_file2, options.missing_map )
 elif( ACTION == 'PARSE_CLANG_BUILD_FAIL'):

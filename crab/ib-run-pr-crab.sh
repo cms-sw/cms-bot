@@ -27,24 +27,21 @@ voms-proxy-init -voms cms
 
 cd $RELEASE_FORMAT
 eval `scram run -sh`
+[ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 
 for CRABCLIENT_TYPE in $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
 do
-    echo $CRABCLIENT_TYPE
-    [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
-
     # Report PR status
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'pending' -u "${BUILD_URL}" -d "Running"
     echo "CRAB is sourced from:"
     which crab-${CRABCLIENT_TYPE}
 
     export CRAB_REQUEST="Jenkins_${CMSSW_VERSION}_${SCRAM_ARCH}_${BUILD_ID}"
+    rm -rf crab_${CRAB_REQUEST}
     crab-${CRABCLIENT_TYPE} submit -c $(dirname $0)/task.py
-    mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
-    echo "INPROGRESS" > $WORKSPACE/crab/statusfile
 
     export ID=$(id -u)
-    export TASK_ID=$(grep crab_${CRAB_REQUEST} $WORKSPACE/crab/.requestcache | sed 's|^V||')
+    export TASK_ID=$(grep crab_${CRAB_REQUEST} crab_${CRAB_REQUEST}/.requestcache | sed 's|^V||')
 
     echo "Keep checking job information until grid site has been assigned"
     GRIDSITE=""
@@ -55,29 +52,22 @@ do
     done
 
     # Store information for the monitoring job
-    echo "CRAB_BUILD_ID=$BUILD_ID" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "RELEASE_FORMAT=$RELEASE_FORMAT" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "ARCHITECTURE=$ARCHITECTURE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "PULL_REQUESTS=$PULL_REQUESTS" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "PULL_REQUEST=$PULL_REQUEST" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "PR_RESULT_URL=$PR_RESULT_URL" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "ENV_LAST_PR_COMMIT=$LAST_PR_COMMIT" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "CMSSW_QUEUE=$CMSSW_QUEUE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "CONTEXT_PREFIX=$CONTEXT_PREFIX" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
-    echo "CRABCLIENT_TYPE=$CRABCLIENT_TYPE" >> $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property
+    CRAB_PROP=$WORKSPACE/crab-${CRABCLIENT_TYPE}.property
+    echo "CRAB_BUILD_ID=$BUILD_ID" > ${CRAB_PROP}
+    echo "CRAB_GRIDSITE=$GRIDSITE" >> ${CRAB_PROP}
+    echo "RELEASE_FORMAT=$RELEASE_FORMAT" >> ${CRAB_PROP}
+    echo "ARCHITECTURE=$ARCHITECTURE" >> ${CRAB_PROP}
+    echo "PULL_REQUESTS=$PULL_REQUESTS" >> ${CRAB_PROP}
+    echo "PULL_REQUEST=$PULL_REQUEST" >> ${CRAB_PROP}
+    echo "PR_RESULT_URL=$PR_RESULT_URL" >> ${CRAB_PROP}
+    echo "ENV_LAST_PR_COMMIT=$LAST_PR_COMMIT" >> ${CRAB_PROP}
+    echo "CMSSW_QUEUE=$CMSSW_QUEUE" >> ${CRAB_PROP}
+    echo "CONTEXT_PREFIX=$CONTEXT_PREFIX" >> ${CRAB_PROP}
+    echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> ${CRAB_PROP}
+    echo "CRABCLIENT_TYPE=$CRABCLIENT_TYPE" >> ${CRAB_PROP}
 
     # Clean workspace for next iteration
-    cp $WORKSPACE/crab/statusfile $WORKSPACE/CRABTests-${CRABCLIENT_TYPE}
-    mkdir $WORKSPACE/crab-${CRABCLIENT_TYPE}
-    mv $WORKSPACE/crab/crab-${CRABCLIENT_TYPE}.property $WORKSPACE
-    mv $WORKSPACE/crab $WORKSPACE/crab-${CRABCLIENT_TYPE} || true
+    rm -rf crab_${CRAB_REQUEST}
     ls $WORKSPACE
 done
-
-DRY_RUN=""
-NO_POST=""
-prepare_upload_results
-
 mark_commit_status_all_prs 'crab' 'success' -u "${BUILD_URL}" -d "CRAB test successfully triggered"

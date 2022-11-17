@@ -90,12 +90,10 @@ def process_file(each_root_file):
     _,fullName = path.rsplit('/',1)
     wfn,therest=fullName.split('_',1)
     wfn='wf'+wfn.replace('.','p')
-    fileindex = file_index(fileName)
-    elements = therest.split('+')[:fileindex+1]
-    compressedName = "".join(elements)
-    #if ip !=0: compressedName += processName
+    # the compressed name should uniquely identify the workflow and the output file
+    compressedName = therest.replace('+','').replace('.','').replace('_','')
+    compressedName += fileName.replace('.root','')
     compressedName += wfn
-    compressedName = compressedName.replace('.','').replace('_','')
     #print(f"compressing {path} into {compressedName}")
     output_dir = ''
     #output_dir = path+'/'

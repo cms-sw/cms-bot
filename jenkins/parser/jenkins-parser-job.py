@@ -24,7 +24,7 @@ def process_build(build, job_dir, job_to_retry, error_list, retry_object, retry_
     else:
         # Mark as retried
         actions.mark_build_as_retried(job_dir, job_to_retry, build)
-        print("[" + job_to_retry + "] ... OK")
+        print("[" + job_to_retry + "] ... #" + str(build)+ "OK")
 
 
 def check_and_trigger_action(

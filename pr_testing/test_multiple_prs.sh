@@ -85,6 +85,7 @@ TEST_RELVALS_INPUT=true
 DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
+DO_CRAB_TESTS=false
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
 if [ "${BUILD_VERBOSE}" = "true" ] ; then
@@ -293,6 +294,15 @@ for U_REPO in $(echo ${UNIQ_REPOS} | tr ' ' '\n'  | grep -v '/cmssw$' ); do
     for PR in ${FILTERED_PRS}; do
         ERR=false
         git_clone_and_merge "$(get_cached_GH_JSON "${PR}")" || ERR=true
+	if [[ $(echo ${PR} | grep "cmsdist") ]]; then  # Check for CRAB updates to trigger unit test
+	    pushd cmsdist
+	    UPDATES=$(git diff origin/${BASE_BRANCH} --name-only)
+            if [[ $(echo ${UPDATES} | grep -E 'crab-.*(spec|file)') ]]; then
+                echo "There is a CRAB update."
+		DO_CRAB_TESTS=true
+            fi
+	    popd
+        fi
         if ${ERR} ; then
             echo "Failed to merge pull requests ${PR}." > ${RESULTS_DIR}/10-report.res
             prepare_upload_results
@@ -1037,6 +1047,9 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ "X$DO_ADDON_TESTS" = Xtrue ] ; then
     mark_commit_status_all_prs 'addon' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
+  if [ "X$DO_CRAB_TESTS" = Xtrue ] ; then
+    mark_commit_status_all_prs 'crab' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
     if $PRODUCTION_RELEASE ; then
       DO_PROFILING=true
@@ -1050,6 +1063,7 @@ else
   DO_TESTS=false
   DO_SHORT_MATRIX=false
   DO_ADDON_TESTS=false
+  DO_CRAB_TESTS=false
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
@@ -1120,6 +1134,17 @@ echo "CONFIG_LINE=${CONFIG_LINE}" >> $WORKSPACE/test-env.txt
 echo "AUTO_POST_MESSAGE=${AUTO_POST_MESSAGE}" >> $WORKSPACE/test-env.txt
 echo "CONTEXT_PREFIX=${CONTEXT_PREFIX}" >> $WORKSPACE/test-env.txt
 echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> $WORKSPACE/test-env.txt
+
+# Store externals path for CRAB unit test
+if [ "X$DO_CRAB_TESTS" = Xtrue ]; then
+    cp $WORKSPACE/test-env.txt $WORKSPACE/run-crab.prop
+    echo "PR_CVMFS_PATH=/cvmfs/cms-ci.cern.ch/week${WEEK_NUM}/${PR_EXTERNAL_REPO}" >> $WORKSPACE/run-crab.prop
+    echo "RELEASE_FORMAT=${CMSSW_IB}" >> $WORKSPACE/run-crab.prop
+    echo "PR_RESULT_URL=${PR_RESULT_URL}" >> $WORKSPACE/run-crab.prop
+    echo "LAST_PR_COMMIT=${LAST_PR_COMMIT}" >> $WORKSPACE/run-crab.prop
+    echo "CMSSW_QUEUE=${CMSSW_QUEUE}" >> $WORKSPACE/run-crab.prop
+    echo "UPLOAD_UNIQ_ID=${UPLOAD_UNIQ_ID}" >> $WORKSPACE/run-crab.prop
+fi
 
 #
 # Matrix tests

@@ -160,7 +160,8 @@
           "Error while downloading sources from github\\.com",
           "fatal: remote did not send all necessary objects",
 	  "Empty reply from server",
-	  "The requested URL returned error: 503"
+	  "The requested URL returned error: 503",
+	  "error: RPC failed"
         ],
         "action": "retryLate",
 	"allJobs": "true"

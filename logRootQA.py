@@ -205,12 +205,12 @@ def summaryJR(jrDir):
             nDiff=nDiff+len(diffs)
         logs=getFiles(root+'/'+d,'*.log')
         nAll+=len(logs)
-        if len(logs)==1:
-            output=runCommand(['grep','DONE calling validate',logs[0]])
+        for log in logs:
+            output=runCommand(['grep','DONE calling validate',log])
             if len(output[0])>0:
                 nOK+=1
             else:
-                print('JR results failed',d)
+                print('JR results failed in ',log)
     return nDiff,nAll,nOK
 
 def parseNum(s):

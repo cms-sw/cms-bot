@@ -28,6 +28,8 @@ def compile_lib():
 def run_comparison(fileName, base_dir, ref_dir, processName, output_dir):
     base_file=os.path.join(base_dir,fileName)
     ref_file=os.path.join(ref_dir,fileName)
+    if not os.path.isfile(base_file) or not os.path.isfile(ref_file):
+        return False
     logFile=os.path.join(output_dir,fileName.replace('.root','.log'))
     makedirs(output_dir)
     what_is_called_step_in_the_script = output_dir
@@ -87,7 +89,7 @@ def process_file(each_root_file):
     ref_path =path.replace( options.base, options.ref )
     _,fullName = path.rsplit('/',1)
     wfn,therest=fullName.split('_',1)
-    wfn='wf'+wfn.replace('.','pt')
+    wfn='wf'+wfn.replace('.','p')
     fileindex = file_index(fileName)
     elements = therest.split('+')[:fileindex+1]
     compressedName = "".join(elements)

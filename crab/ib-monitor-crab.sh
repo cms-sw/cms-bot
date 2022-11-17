@@ -24,6 +24,7 @@ while true ; do
   fi
   sleep 300
 done
+rm -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log
 if [ $(echo "${status}" | grep 'finished' | wc -l) -gt 0 ] ; then
   echo "PASSED" > $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE}
   TEST_PASSED=true
@@ -34,17 +35,16 @@ source $WORKSPACE/cms-bot/jenkins-artifacts
 
 if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   # PR test
+  mv $WORKSPACE/testsResults/crab-logfile-${CRABCLIENT_TYPE} $WORKSPACE/crab-${CRABCLIENT_TYPE}.log
+  mv $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE} $WORKSPACE/crab-statusfile-${CRABCLIENT_TYPE}.log
   echo "Uploading results of PR testing"
-  if [ "X$TEST_PASSED" = Xfalse ]; then
+  if ! $TEST_PASSED ; then
     echo "Errors in CRAB PR test"
-    echo 'CRAB_TESTS_'${CRABCLIENT_TYPE}';ERROR,CRAB '${CRABCLIENT_TYPE}' Test,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
-    CRAB_OK=false
-    $WORKSPACE/cms-bot/report-pull-request-results PARSE_CRAB_FAIL -f $WORKSPACE/status-${CRABCLIENT_TYPE}.log --report-file $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res --report-url ${PR_RESULT_URL}
+    echo "CRAB_TESTS_${CRABCLIENT_TYPE};ERROR,CRAB ${CRABCLIENT_TYPE} Test,See Logs,crab-${CRABCLIENT_TYPE}.log" >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     echo "CRAB" > $WORKSPACE/testsResults/crab-failed-${CRABCLIENT_TYPE}.res
   else
     echo "No errors in CRAB PR test"
-    echo 'CRAB_TESTS_'${CRABCLIENT_TYPE}';OK,CRAB '${CRABCLIENT_TYPE}' Test,See Logs,CRABTests-'${CRABCLIENT_TYPE} >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
-    CRAB_OK=true
+    echo "CRAB_TESTS_${CRABCLIENT_TYPE};OK,CRAB ${CRABCLIENT_TYPE} Test,See Logs,crab-${CRABCLIENT_TYPE}.log" >> $WORKSPACE/testsResults/crab-${CRABCLIENT_TYPE}.txt
     touch $WORKSPACE/testsResults/crab-failed-${CRABCLIENT_TYPE}.res
     touch $WORKSPACE/testsResults/crab-report-${CRABCLIENT_TYPE}.res
   fi
@@ -52,15 +52,13 @@ if [ "${UPLOAD_UNIQ_ID}" != "" ]; then
   source $WORKSPACE/cms-bot/pr_testing/_helper_functions.sh
   source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
   source $WORKSPACE/cms-bot/common/github_reports.sh
-  rm $WORKSPACE/status-${CRABCLIENT_TYPE}.log
-  mv $WORKSPACE/testsResults/statusfile-${CRABCLIENT_TYPE} $WORKSPACE/CRABTests-${CRABCLIENT_TYPE}
   
   DRY_RUN=""
   NO_POST=""
   prepare_upload_results
   CMSSW_QUEUE=${CMSSW_QUEUE_FLAVOR}
   
-  if [ "X$CRAB_OK" = Xtrue ]; then
+  if $TEST_PASSED ; then
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'success' -u "${BUILD_URL}" -d "Passed"
   else
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'error' -u "${BUILD_URL}" -d "Errors found when testing CRAB"

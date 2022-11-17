@@ -30,11 +30,11 @@ def run_comparison(fileName, base_dir, ref_dir, processName, output_dir):
     ref_file=os.path.join(ref_dir,fileName)
     if not os.path.isfile(base_file) or not os.path.isfile(ref_file):
         return False
-    logFile=os.path.join(output_dir,fileName.replace('.root','.log'))
+    logFile=fileName.replace('.root','.log')
     makedirs(output_dir)
     what_is_called_step_in_the_script = output_dir
-    #command = f'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"{what_is_called_step_in_the_script}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
-    command = 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(what_is_called_step_in_the_script, base_file, ref_file, processName, logFile)
+    #command = f'cd {output_dir}; echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"{what_is_called_step_in_the_script}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
+    command = 'cd %s;'%output_dir + 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(what_is_called_step_in_the_script, base_file, ref_file, processName, logFile)
     #print(f"running comparison with {command}")
     #print(f"log of comparing {fileName} process {processName} from {base_dir} and {ref_dir} into {output_dir} shown in {logFile}")
     print("log of comparing %s process %s from %s and %s into %s shown in %s"%(fileName, processName, base_dir, ref_dir, output_dir, logFile ))

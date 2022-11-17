@@ -223,7 +223,10 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 
   if [ "X$RUN_JR_COMP" = Xtrue ]; then
     RELMON_COMP_PARAMS_FILE=$RELMON_COMP_DIR/RelMonComparisonParams.txt
-    $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R >> $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1
+    if ! $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R >> $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1 ; then
+      cat $RELMON_COMP_DIR/RelMonAssignedParameters.log
+      exit 1
+    fi
   fi
 
   touch $WORKSPACE/results/default-comparison/done-0

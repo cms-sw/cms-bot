@@ -161,7 +161,9 @@
           "fatal: remote did not send all necessary objects",
 	  "Empty reply from server",
 	  "The requested URL returned error: 503",
-	  "error: RPC failed"
+	  "error: RPC failed",
+	  "fatal: The remote end hung up unexpectedly",
+	  "Broken pipe"
         ],
         "action": "retryLate",
 	"allJobs": "true"

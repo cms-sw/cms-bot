@@ -31,15 +31,11 @@ TString recoS="RECO";
 TString refrecoS="RECO";
 
 void print( TString step){
-  //  gROOT->ProcessLine(".! mkdir -p "+step);
   const TSeqCollection* l=gROOT->GetListOfCanvases();
   for (int i=0 ; i!=l->GetSize();++i){
-    //    TString n=step+"/"+step+l->At(i)->GetName()+".gif";
-    //    TString n=step+"/"+step+l->At(i)->GetName()+".png";
-    TString n=step+l->At(i)->GetName()+".png";
+    // just use the name of the canvas, nothing else.
+    TString n = l->At(i)->GetName()+".png";
     l->At(i)->Print(n);
-    //TString n2=step+"/"+step+l->At(i)->GetName()+".eps";
-    //l->At(i)->Print(n2);
   }
 
 }

@@ -193,24 +193,28 @@ def summaryJR(jrDir):
     nDiff=0
     print(jrDir)
     dirs=[]
-    for root, dirs, files in os.walk(jrDir):
+    #find directories at top level
+    for root, dirs, _ in os.walk(jrDir):
         break
 
     nAll=0
     nOK=0
-    for d in dirs:
-        diffs=getFiles(root+'/'+d,'*.png')
+    for d, subdir, files in os.walk(jrDir):
+        if not d.split('/')[-1].startswith('all_'): continue
+        if not '_' in d: continue
+        diffs=[file for file in files if file.endswith('.png')]
         if len(diffs)>0:
             print('JR results differ',len(diffs),d)
             nDiff=nDiff+len(diffs)
-        logs=getFiles(root+'/'+d,'*.log')
+        logs=[file for file in files if file.endswith('.log')]
         nAll+=len(logs)
         for log in logs:
+            log = os.path.join(d,log)
             output=runCommand(['grep','DONE calling validate',log])
             if len(output[0])>0:
                 nOK+=1
             else:
-                print('JR results failed in ',log)
+                print('JR results failed',d)
     return nDiff,nAll,nOK
 
 def parseNum(s):

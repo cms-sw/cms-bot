@@ -163,7 +163,8 @@
 	  "The requested URL returned error: 503",
 	  "error: RPC failed",
 	  "fatal: The remote end hung up unexpectedly",
-	  "Broken pipe"
+	  "Broken pipe",
+	  "fatal: fetch-pack"
         ],
         "action": "retryLate",
 	"allJobs": "true"

@@ -7,6 +7,8 @@ def makedirs(dir):
         if not os.path.exists(dir):
             os.makedirs(dir)
 
+## commented lines are mostly python3 fstring syntax that we cannot use until we totally loose python2 support in the PR validation
+
 def compile_lib():
     lib_dir = 'validate_lib'
     #if not os.path.isfile(f'{lib_dir}/validate_C.so'):
@@ -25,19 +27,18 @@ def compile_lib():
     #return os.path.isfile(f'{lib_dir}/validate_C.so')
     return os.path.isfile('%s/validate_C.so'%(lib_dir,))
 
-def run_comparison(fileName, base_dir, ref_dir, processName, output_dir):
+def run_comparison(fileName, base_dir, ref_dir, processName, spec, output_dir):
     base_file=os.path.join(base_dir,fileName)
     ref_file=os.path.join(ref_dir,fileName)
     if not os.path.isfile(base_file) or not os.path.isfile(ref_file):
         return False
     logFile=fileName.replace('.root','.log')
     makedirs(output_dir)
-    what_is_called_step_in_the_script = output_dir
-    #command = f'cd {output_dir}; echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"{what_is_called_step_in_the_script}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
-    command = 'cd %s;'%output_dir + 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(what_is_called_step_in_the_script, base_file, ref_file, processName, logFile)
+    #command = f'cd {output_dir}; echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"{spec}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
+    command = 'cd %s;'%output_dir + 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();FWLiteEnabler::enable();gSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(spec, base_file, ref_file, processName, logFile)
     #print(f"running comparison with {command}")
-    #print(f"log of comparing {fileName} process {processName} from {base_dir} and {ref_dir} into {output_dir} shown in {logFile}")
-    print("log of comparing %s process %s from %s and %s into %s shown in %s"%(fileName, processName, base_dir, ref_dir, output_dir, logFile ))
+    #print(f"log of comparing {fileName} process {processName} from {base_dir} and {ref_dir} into {output_dir} with spec {spec} shown in {logFile}")
+    print("log of comparing %s process %s from %s and %s into %s with spec %s shown in %s"%(fileName, processName, base_dir, ref_dir, output_dir, spec, logFile ))
     c=os.system( command )
     return True
 
@@ -90,19 +91,23 @@ def process_file(each_root_file):
     _,fullName = path.rsplit('/',1)
     wfn,therest=fullName.split('_',1)
     wfn='wf'+wfn.replace('.','p')
+    # specify what are the specific branches to look at
+    spec = 'all'
+    if ('inMINIAOD' in fileName): spec += '_mini'
+
     # the compressed name should uniquely identify the workflow and the output file
     compressedName = therest.replace('+','').replace('.','').replace('_','')
     compressedName += fileName.replace('.root','')
     compressedName += wfn
     #print(f"compressing {path} into {compressedName}")
-    output_dir = ''
-    #output_dir = path+'/'
-    output_dir += 'all'
-    if ('inMINIAOD' in fileName):
-        output_dir += '_mini'
-    output_dir += '_OldVSNew'
-    output_dir += '_'+compressedName
-    run_comparison(fileName, path, ref_path, processName, output_dir)
+    output_dir = os.path.join(#'OldVSNew',
+                              fullName,
+                              #'_'.join([spec,processName,fileName.replace('.root','').split('_')[-1] if '_' in fileName else '']),
+                              '_'.join([spec,processName,fileName.replace('.root','')])
+                          )
+
+
+    run_comparison(fileName, path, ref_path, processName, spec, output_dir)
     #print(f'\t{each_root_file} processed in {os.getpid()}')
 
 if __name__ == "__main__":

@@ -34,7 +34,7 @@ void print( TString step){
   const TSeqCollection* l=gROOT->GetListOfCanvases();
   for (int i=0 ; i!=l->GetSize();++i){
     // just use the name of the canvas, nothing else.
-    TString n = l->At(i)->GetName()+".png";
+    TString n = TString(l->At(i)->GetName())+".png";
     l->At(i)->Print(n);
   }
 

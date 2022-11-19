@@ -202,9 +202,10 @@ def summaryJR(jrDir):
     for d, subdir, files in os.walk(jrDir):
         if not d.split('/')[-1].startswith('all_'): continue
         if not '_' in d: continue
+        relative_d = d.replace(root,'')
         diffs=[file for file in files if file.endswith('.png')]
         if len(diffs)>0:
-            print('JR results differ',len(diffs),d)
+            print('JR results differ',len(diffs),relative_d)
             nDiff=nDiff+len(diffs)
         logs=[file for file in files if file.endswith('.log')]
         nAll+=len(logs)
@@ -214,7 +215,7 @@ def summaryJR(jrDir):
             if len(output[0])>0:
                 nOK+=1
             else:
-                print('JR results failed',d)
+                print('JR results failed',relative_d)
     return nDiff,nAll,nOK
 
 def parseNum(s):

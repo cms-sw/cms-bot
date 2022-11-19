@@ -433,7 +433,7 @@ for f in $(find ${alt_dir} -maxdepth 1 -name 'command*' -o -name '*.ps' -o -name
 done
 
 #JR-comparison
-for x in $(find results/JR-comparison -maxdepth 2 -name 'command*' -o -name '*.log' -o -name '*.png' -type f) ; do
+for x in $(find results/JR-comparison -maxdepth 3 -name 'command*' -o -name '*.log' -o -name '*.png' -type f) ; do
   f=$(echo $x | sed 's|results/JR-comparison/||')
   d=$(dirname upload/validateJR/$f)
   [ -d $d ] || mkdir -p $d

@@ -164,7 +164,9 @@
 	  "error: RPC failed",
 	  "fatal: The remote end hung up unexpectedly",
 	  "Broken pipe",
-	  "fatal: fetch-pack"
+	  "fatal: fetch-pack",
+	  "transfer closed with outstanding read data remaining",
+	  "fatal: unable to access 'https://github\\.com"
         ],
         "action": "retryLate",
 	"allJobs": "true"

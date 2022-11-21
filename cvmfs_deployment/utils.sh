@@ -14,6 +14,7 @@ function cvmfs_transaction()
     local lease_path=${CVMFS_REPOSITORY}/$(echo $1 | sed -e 's|^//*||;s|//*$||')
     while true ; do
       cvmfs_server abort -f || true
+      ls -l /var/spool/${CVMFS_BASEDIR}/
       rm -f /var/spool/${CVMFS_BASEDIR}/is_publishing.lock
       rm -f /var/spool/${CVMFS_BASEDIR}/session_token
       rm -f /var/spool/${CVMFS_BASEDIR}/in_transaction.lock

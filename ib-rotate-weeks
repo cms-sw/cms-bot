@@ -29,7 +29,8 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   git commit -m "Added new ib-week $WEEK_NO" ib-weeks
   git pull --rebase
   git push origin
-  echo "ARCHITECTURE=${SCRAM_ARCH}" > cvmfs-reset-week 
+  echo "ARCHITECTURE=${SCRAM_ARCH}" > cvmfs-reset-week
+  echo "ARCH_NAME=$(echo ${SCRAM_ARCH} | cut -d_ -f2)" >> cvmfs-reset-week
   echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> cvmfs-reset-week
   echo "RELEASE_FORMAT=" >> cvmfs-reset-week
   echo "CMSDIST_HASH=" >> cvmfs-reset-week

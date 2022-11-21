@@ -16,6 +16,7 @@ function cvmfs_transaction()
       cvmfs_server abort -f || true
       rm -f /var/spool/${CVMFS_BASEDIR}/is_publishing.lock
       rm -f /var/spool/${CVMFS_BASEDIR}/session_token
+      rm -f /var/spool/${CVMFS_BASEDIR}/in_transaction.lock
       if ! ${CVMFS_DEPLOYMENT_DIR}/has_lease.py ${CVMFS_GATEWAY_API} ${lease_path} ; then
         if cvmfs_server transaction ${lease_path} ; then break ; fi
       fi

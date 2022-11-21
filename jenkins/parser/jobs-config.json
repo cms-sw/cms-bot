@@ -131,7 +131,7 @@
         "maxTime": "1"
       },
         "jobName": "ib-run-baseline",
-        "errorType": [],
+        "errorType": [""],
         "maxTime": "1"
       }
     ],

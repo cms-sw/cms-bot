@@ -129,6 +129,10 @@
           "cvmfsFailure"
         ],
         "maxTime": "1"
+      },
+        "jobName": "ib-run-baseline",
+        "errorType": [],
+        "maxTime": "1"
       }
     ],
     "errorMsg": {

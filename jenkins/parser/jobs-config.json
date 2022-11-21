@@ -133,7 +133,7 @@
       {
         "jobName": "ib-run-baseline",
         "errorType": [],
-        "maxTime": "1"
+        "maxTime": "2"
       }
     ],
     "errorMsg": {

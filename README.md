@@ -5,6 +5,8 @@ be the core of the whole release engineering process for CMSSW.
 
 # Setup
 
+
+
 To have it working you'll need a `~/.github-token` which can access the
 [cms-sw](http://github.io/cms-sw) organization.
 

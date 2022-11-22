@@ -1983,7 +1983,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.ootIndex()");
       }
 
-      for (const TString& flav : {"totemTiming", "diamondSampic"} ) {
+      std::vector<TString> flavors(2);
+      flavors[0]="totemTiming";
+      flavors[1]="diamondSampic";
+      for (size_t i = 0 ; i!= flavors.size() ; ++i){
+	TString & flav = flavors[i];
         tbr="TotemTimingLocalTrackedmDetSetVector_"+flav+"LocalTracks__"+recoS+".obj";
         if (checkBranchOR(tbr, true)){
           plotvar(tbr+"._sets@.size()");
@@ -2845,8 +2849,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       packedCand("hiPixelTracks_");
       packedCand("packedPFCandidatesCleaned_");
 
-      for (const TString& inst : {"pfCandidatesTMOneStationTight", "pfCandidatesAllTrackerMuons", 
-                                 "lostTracksTMOneStationTight", "lostTracksAllTrackerMuons"} ) {
+      std::vector<TString> instances(4);
+      instances[0]="pfCandidatesTMOneStationTight";
+      instances[1]="pfCandidatesAllTrackerMuons";
+      instances[2]="lostTracksTMOneStationTight";
+      instances[3]="lostTracksAllTrackerMuons";
+      for (size_t i = 0 ; i!= instances.size(); ++i){
+	TString & inst = instances[i];
         tbr="patPackedCandidatesRefs_packedCandidateMuonID_"+inst+"_"+recoS+".obj";
         if (checkBranchOR(tbr, true)){
           plotvar(tbr+"@.size()");

@@ -49,7 +49,7 @@ fi
 
 echo "DATA_SHELL=${SHELL}"
 
-JAVA11=$(rpm -ql java-11-openjdk-headless 2>&1 | grep '/java$')
+JAVA11=$(rpm -ql java-11-openjdk-headless 2>&1 | grep '/java$' || true)
 if [ "${JAVA11}" != "" -a -f "${JAVA11}" ] ; then
   echo "DATA_JAVA11=${JAVA11}"
 fi

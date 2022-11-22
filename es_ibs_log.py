@@ -222,7 +222,7 @@ for d in dirs:
   for logFile in glob(d+"/*.log"):
     print("Working on ",logFile)
     try:
-        process_hlt_log(utlog)
+        process_hlt_log(logFile)
     except Exception as e:
       print("ERROR:",e)
   run_cmd("touch %s" % flagFile)

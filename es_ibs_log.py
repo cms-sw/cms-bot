@@ -2,6 +2,7 @@
 from __future__ import print_function
 from hashlib import sha1
 import os, json,  datetime, sys
+from glob import glob
 from os.path import exists, dirname, getmtime
 from es_utils import send_payload
 from _py2with3compatibility import run_cmd

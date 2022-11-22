@@ -62,6 +62,7 @@ TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+wo
                      pkg=CMSSW_PACKAGE_PATTERN,
                      release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
 
+AUTO_TEST_REPOS = ["cms-sw/cmssw"]
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
@@ -461,6 +462,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   prId = issue.number
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
+  auto_test_repo = AUTO_TEST_REPOS
+  try:
+    if repo_config.AUTO_TEST_REPOS:
+      auto_test_repo = [repository]
+    else:
+      auto_test_repo = []
+  except: pass
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
   print("Notify User: ",gh_user_char)
@@ -923,7 +931,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if ctype == "+1":
         for sign in selected_cats:
           signatures[sign] = "approved"
-          if test_comment is None:
+          if (test_comment is None) and ((repository in auto_test_repo) or ('*' in auto_test_repo)):
             test_comment = comment
           if sign == "orp": mustClose = False
       elif ctype == "-1":

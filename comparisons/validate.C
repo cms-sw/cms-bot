@@ -30,7 +30,7 @@ int Nmax=0;
 TString recoS="RECO";
 TString refrecoS="RECO";
 
-void print( TString step){
+void print(){ // TString step){
   const TSeqCollection* l=gROOT->GetListOfCanvases();
   for (int i=0 ; i!=l->GetSize();++i){
     // just use the name of the canvas, nothing else.
@@ -161,8 +161,9 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
   gStyle->SetTitleY(1);
   gStyle->SetTitleW(1);
   gStyle->SetTitleH(0.06);
-  TGaxis::SetExponentOffset(-0.052,-0.060,"x");
-  TGaxis::SetExponentOffset(-0.052,0.010,"y");
+  // too bad for good style
+  //TGaxis::SetExponentOffset(-0.052,-0.060,"x");
+  //TGaxis::SetExponentOffset(-0.052,0.010,"y");
 
   res.ref_entries = -1;
   res.new_entries = -1;
@@ -1541,7 +1542,7 @@ void readFileList(TString file,TChain * ch){
   }
 }
 
-void validateLumi(TString step, TString file, TString refFile, TString r="RECO", bool SHOW=false, TString sr="")
+void validateLumi(TString file, TString refFile, TString r="RECO", bool SHOW=false, TString sr="")
 {
   if (sr=="") sr=r;
 
@@ -3892,8 +3893,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
 void validate(TString step, TString file, TString refFile, TString r="RECO", bool SHOW=false, TString sr=""){
   validateEvents(step, file, refFile, r, SHOW, sr);
-  validateLumi(step, file, refFile, r, SHOW, sr);
-  print(step);
+  validateLumi(file, refFile, r, SHOW, sr);
+  print();
 
   std::cout<<"DONE calling validate"<<std::endl;
 }

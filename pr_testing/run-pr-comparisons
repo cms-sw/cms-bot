@@ -109,6 +109,7 @@ cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPA
 
 #Create long to short symlinks
 mv $WORKSPACE/data/$COMPARISON_RELEASE $WORKSPACE/data/${COMPARISON_RELEASE}-long
+cp $WORKSPACE/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE.orig
 mkdir $WORKSPACE/data/${COMPARISON_RELEASE}
 for wf_dir in $(ls $WORKSPACE/data/${COMPARISON_RELEASE}-long) ; do
   if [ ! -e $WORKSPACE/data/${COMPARISON_RELEASE}-long/${wf_dir}/cmdLog ] ; then
@@ -119,8 +120,8 @@ for wf_dir in $(ls $WORKSPACE/data/${COMPARISON_RELEASE}-long) ; do
   sname=$(ls -d $WORKSPACE/data/PR-${PR_NUM}/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")
   [ "${sname}" = "" ] && exit 1
   nwf_dir="${wf}_${sname}"
-  ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${wf_dir}
-  sed -i -e "s|${wf_dir}/|${nwf_dir}/|" wf_mapping.txt
+  ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${nwf_dir}
+  sed -i -e "s|${wf_dir}/|${nwf_dir}/|" $WORKSPACE/$MAPPING_FILE
 done
 
 cat $WORKSPACE/$MAPPING_FILE

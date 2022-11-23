@@ -9,11 +9,11 @@ def makedirs(dir):
 
 ## commented lines are mostly python3 fstring syntax that we cannot use until we totally loose python2 support in the PR validation
 
-def fwLiteEnabler():
+def autoLoadEnabler():
     if os.path.isfile( os.path.join(os.environ['CMSSW_RELEASE_BASE'],'src/FWCore/FWLite/interface/FWLiteEnabler.h')):
         return 'FWLiteEnabler::enable();'
     else:
-        return ''
+        return 'AutoLibraryLoader::enable();'
 
 def compile_lib():
     lib_dir = 'validate_lib'
@@ -25,8 +25,8 @@ def compile_lib():
         if os.path.isfile(os.environ['VALIDATE_C_SCRIPT']):
             #os.system(f"cp $VALIDATE_C_SCRIPT {lib_dir}/validate.C")
             os.system("cp $VALIDATE_C_SCRIPT %s/validate.C"%(lib_dir,))
-        #command = f'cd {lib_dir};'+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();{fwLiteEnabler()}\n .L validate.C+ \n .qqqqqq\" | root -l -b'
-        command = 'cd %s;'%(lib_dir,)+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();%s\n .L validate.C+ \n .qqqqqq\" | root -l -b'%(fwLiteEnabler(),)
+        #command = f'cd {lib_dir};'+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");{autoLoadEnabler()}\n .L validate.C+ \n .qqqqqq\" | root -l -b'
+        command = 'cd %s;'%(lib_dir,)+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");%s\n .L validate.C+ \n .qqqqqq\" | root -l -b'%(autoLoadEnabler(),)
         #print(f"compiling library with {command}")
         print("compiling library with %s"%(command,))
         os.system( command )

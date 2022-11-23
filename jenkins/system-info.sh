@@ -97,7 +97,7 @@ if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
   echo "DATA_JAVA=/etc/alternatives/jre_11/bin/java"
   SLAVE_LABELS="${SLAVE_LABELS} java-11"
 else
-  echo "DATA_JAVA=JAVA"
+  echo "DATA_JAVA=java"
   SLAVE_LABELS="${SLAVE_LABELS} java-default"
 fi
 

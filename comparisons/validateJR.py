@@ -41,8 +41,8 @@ def run_comparison(fileName, base_dir, ref_dir, processName, spec, output_dir):
         return False
     logFile=fileName.replace('.root','.log')
     makedirs(output_dir)
-    #command = f'cd {output_dir}; echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();{fwLiteEnabler()}gSystem->Load(\\"validate_C.so\\");validate(\\"{spec}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
-    command = 'cd %s;'%output_dir + 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();%sgSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(fwLiteEnabler(), spec, base_file, ref_file, processName, logFile)
+    #command = f'cd {output_dir}; echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");{autoLoadEnabler()}gSystem->Load(\\"validate_C.so\\");validate(\\"{spec}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
+    command = 'cd %s;'%output_dir + 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");%sgSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(autoLoadEnabler(), spec, base_file, ref_file, processName, logFile)
     #print(f"running comparison with {command}")
     #print(f"log of comparing {fileName} process {processName} from {base_dir} and {ref_dir} into {output_dir} with spec {spec} shown in {logFile}")
     print("log of comparing %s process %s from %s and %s into %s with spec %s shown in %s"%(fileName, processName, base_dir, ref_dir, output_dir, spec, logFile ))

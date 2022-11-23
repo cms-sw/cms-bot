@@ -49,11 +49,6 @@ fi
 
 echo "DATA_SHELL=${SHELL}"
 
-JAVA11=$(rpm -ql java-11-openjdk-headless 2>&1 | grep '/java$' || true)
-if [ "${JAVA11}" != "" -a -f "${JAVA11}" ] ; then
-  echo "DATA_JAVA11=${JAVA11}"
-fi
-
 RSYNC_SLAVE=false
 if [ "${USER_HOME_MD5}" != "" ] ; then
   RSYNC_SLAVE_FILE="${HOME}/.jenkins_slave_md5"
@@ -97,6 +92,14 @@ elif [ "$arch" = "x86_64" ] ; then
 fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
+
+if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
+  echo "DATA_JAVA=/etc/alternatives/jre_11/bin/java"
+  SLAVE_LABELS="${SLAVE_LABELS} java-11"
+else
+  echo "DATA_JAVA=JAVA"
+  SLAVE_LABELS="${SLAVE_LABELS} java-default"
+fi
 
 #Check for EOS
 [ -e /eos/cms/store ] && SLAVE_LABELS="${SLAVE_LABELS} eos"

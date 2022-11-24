@@ -85,10 +85,11 @@ MULTILINE_COMMENTS_MAP = {
               ENABLE_TEST_PTRN:   [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),                "ENABLE_BOT_TESTS"],
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",           "DOCKER_IMGAGE"],
-              "cms-addpkg|addpkg":[format('%(pkg)s(,%(pkg)s)*', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
+              "cms-addpkg|addpkg":[format('%(pkg)s(,%(pkg)s)*', pkg=CMSSW_PACKAGE_PATTERN),                     "EXTRA_CMSSW_PACKAGES"],
               "build_verbose":    ['true|false',                                                                "BUILD_VERBOSE"],
-              "(workflow|relval)(s|)_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)":         [RELVAL_OPTS,           "EXTRA_MATRIX_ARGS",True],
-              "(workflow|relval)(s|)_command_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)": [RELVAL_OPTS,           "EXTRA_MATRIX_COMMAND_ARGS",True]
+              "baseline":         [CMS_PR_PATTERN,                                                              "COMPARISON_BASELINE"],
+              "(workflow|relval)(s|)_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)":         [RELVAL_OPTS,"EXTRA_MATRIX_ARGS",True],
+              "(workflow|relval)(s|)_command_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)": [RELVAL_OPTS,"EXTRA_MATRIX_COMMAND_ARGS",True]
               }
 
 L2_DATA = {}

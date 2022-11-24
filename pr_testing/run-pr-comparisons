@@ -104,25 +104,12 @@ get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
 ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
+#Use cmssw#40106 as baseline
+mv $WORKSPACE/data/$COMPARISON_RELEASE $WORKSPACE/data/$COMPARISON_RELEASE-orig
+get_jenkins_artifacts pull-request-integration/PR-353010/29197/runTheMatrix${UC_TEST_FLAVOR}-results $WORKSPACE/data/$COMPARISON_RELEASE/
+
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
-
-#Create long to short symlinks
-mv $WORKSPACE/data/$COMPARISON_RELEASE $WORKSPACE/data/${COMPARISON_RELEASE}-long
-cp $WORKSPACE/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE.orig
-mkdir $WORKSPACE/data/${COMPARISON_RELEASE}
-for wf_dir in $(ls $WORKSPACE/data/${COMPARISON_RELEASE}-long) ; do
-  if [ ! -e $WORKSPACE/data/${COMPARISON_RELEASE}-long/${wf_dir}/cmdLog ] ; then
-    ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${wf_dir}
-    continue
-  fi
-  wf=$(echo $wf_dir | sed 's|_.*||')
-  sname=$(ls -d $WORKSPACE/data/PR-${PR_NUM}/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")
-  [ "${sname}" = "" ] && exit 1
-  nwf_dir="${wf}_${sname}"
-  ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${nwf_dir}
-  sed -i -e "s|${wf_dir}/|${nwf_dir}/|" $WORKSPACE/$MAPPING_FILE
-done
 
 cat $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/$ERRORS_FILE

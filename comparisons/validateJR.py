@@ -9,11 +9,11 @@ def makedirs(dir):
 
 ## commented lines are mostly python3 fstring syntax that we cannot use until we totally loose python2 support in the PR validation
 
-def fwLiteEnabler():
+def autoLoadEnabler():
     if os.path.isfile( os.path.join(os.environ['CMSSW_RELEASE_BASE'],'src/FWCore/FWLite/interface/FWLiteEnabler.h')):
         return 'FWLiteEnabler::enable();'
     else:
-        return ''
+        return 'AutoLibraryLoader::enable();'
 
 def compile_lib():
     lib_dir = 'validate_lib'
@@ -25,8 +25,8 @@ def compile_lib():
         if os.path.isfile(os.environ['VALIDATE_C_SCRIPT']):
             #os.system(f"cp $VALIDATE_C_SCRIPT {lib_dir}/validate.C")
             os.system("cp $VALIDATE_C_SCRIPT %s/validate.C"%(lib_dir,))
-        #command = f'cd {lib_dir};'+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();{fwLiteEnabler()}\n .L validate.C+ \n .qqqqqq\" | root -l -b'
-        command = 'cd %s;'%(lib_dir,)+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();%s\n .L validate.C+ \n .qqqqqq\" | root -l -b'%(fwLiteEnabler(),)
+        #command = f'cd {lib_dir};'+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");{autoLoadEnabler()}\n .L validate.C+ \n .qqqqqq\" | root -l -b'
+        command = 'cd %s;'%(lib_dir,)+'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");%s\n .L validate.C+ \n .qqqqqq\" | root -l -b'%(autoLoadEnabler(),)
         #print(f"compiling library with {command}")
         print("compiling library with %s"%(command,))
         os.system( command )
@@ -41,8 +41,8 @@ def run_comparison(fileName, base_dir, ref_dir, processName, spec, output_dir):
         return False
     logFile=fileName.replace('.root','.log')
     makedirs(output_dir)
-    #command = f'cd {output_dir}; echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();{fwLiteEnabler()}gSystem->Load(\\"validate_C.so\\");validate(\\"{spec}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
-    command = 'cd %s;'%output_dir + 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");AutoLibraryLoader::enable();%sgSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(fwLiteEnabler(), spec, base_file, ref_file, processName, logFile)
+    #command = f'cd {output_dir}; echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");{autoLoadEnabler()}gSystem->Load(\\"validate_C.so\\");validate(\\"{spec}\\",\\"{base_file}\\",\\"{ref_file}\\",\\"{processName}\\");\n.qqqqqq" | root -l -b >& {logFile}'
+    command = 'cd %s;'%output_dir + 'echo -e "gSystem->Load(\\"libFWCoreFWLite.so\\");%sgSystem->Load(\\"validate_C.so\\");validate(\\"%s\\",\\"%s\\",\\"%s\\",\\"%s\\");\n.qqqqqq" | root -l -b >& %s'%(autoLoadEnabler(), spec, base_file, ref_file, processName, logFile)
     #print(f"running comparison with {command}")
     #print(f"log of comparing {fileName} process {processName} from {base_dir} and {ref_dir} into {output_dir} with spec {spec} shown in {logFile}")
     print("log of comparing %s process %s from %s and %s into %s with spec %s shown in %s"%(fileName, processName, base_dir, ref_dir, output_dir, spec, logFile ))

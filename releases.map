@@ -1,3 +1,4 @@
+architecture=el8_amd64_gcc11;label=CMSSW_13_0_X;type=Development;state=IB;prodarch=1;
 architecture=el8_amd64_gcc10;label=CMSSW_12_6_X;type=Development;state=IB;prodarch=1;
 architecture=el8_amd64_gcc10;label=CMSSW_12_5_X;type=Development;state=IB;prodarch=1;
 architecture=el8_amd64_gcc10;label=CMSSW_12_4_X;type=Development;state=IB;prodarch=1;

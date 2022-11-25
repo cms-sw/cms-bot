@@ -4,7 +4,7 @@ WORKSPACE=$(pwd)
 nodes=("lxplus7" "lxplus8" "lxplus9" "olarm-202" "olarm-102" "ibmminsky-1" "ibmminsky-2")
 
 blacklist_path="$HOME/workspace/cache/blacklist"
-email_notification="andrea.valenzuela.ramirez@cern.ch"
+email_notification="cms-sdt-logs@cern.ch"
 job_url="${JENKINS_URL}job/test-check-nodes/${BUILD_NUMBER}"
 
 function run_check {

@@ -54,7 +54,7 @@ function notify_failure {
     node=$2
     job_url=$3
     job_description="This job runs a sanity check for /afs, /cvmfs repositories and singularity."
-    error_msg="Node ${node} has been blacklisted by ${job_url}. Please, take the appropiate action.\n${job_description}"
+    error_msg="Node ${node} has been blacklisted by ${job_url}. Please, take the appropiate action. ${job_description}"
     echo $error_msg | mail -s "Node ${node} has been blacklisted" $email
 }
 

@@ -11,6 +11,8 @@ SCRAM_ARCH=$ARCHITECTURE
 scram -a $ARCHITECTURE p $RELEASE_FORMAT
 cd $RELEASE_FORMAT/src
 eval `scram run -sh`
+export CMS_PATH="/cvmfs/cms-ib.cern.ch"
+export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
 mkdir -p $CMSSW_BASE/src/HLTrigger
 cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger/Configuration/
 scram build -j $(nproc)

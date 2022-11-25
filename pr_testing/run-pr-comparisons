@@ -191,12 +191,13 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   cp $CMS_BOT_DIR/comparisons/validateJR.sh  $JR_COMP_DIR
   chmod +x $JR_COMP_DIR/validateJR.sh
   cp $CMS_BOT_DIR/comparisons/validate.C     $JR_COMP_DIR
-  cp $CMS_BOT_DIR/comparisons/matrix_RE.txt $JR_COMP_DIR
+  cp $CMS_BOT_DIR/comparisons/validateJR.py    $JR_COMP_DIR
+  chmod +x $JR_COMP_DIR/validateJR.py
   export VALIDATE_C_SCRIPT=${JR_COMP_DIR}/validate.C
 
   echo "Start JR comparison at `date`"
-  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
-  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE OldVSNew matrix_RE.txt >> $JR_COMP_DIR/validateJR.log 2>&1) || true
+  echo  "$JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE >> $JR_COMP_DIR/validateJR.log 2>&1" > $JR_COMP_DIR/command
+  ($JR_COMP_DIR/validateJR.sh $WORKSPACE/data/PR-$PR_NUM $WORKSPACE/data/$COMPARISON_RELEASE >> $JR_COMP_DIR/validateJR.log 2>&1) || true
 
   echo "Finished with JR comparison at `date`:"
 fi
@@ -210,7 +211,7 @@ mv products_AOD.log $WORKSPACE/upload/products_AOD.log
 mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
 cd .. 
 
-set +x
+#set +x
 # --------------------------------------------------------------------------
 # Default Comparison
 # --------------------------------------------------------------------------
@@ -223,7 +224,10 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
 
   if [ "X$RUN_JR_COMP" = Xtrue ]; then
     RELMON_COMP_PARAMS_FILE=$RELMON_COMP_DIR/RelMonComparisonParams.txt
-    $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R >> $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1
+    if ! $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R >> $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1 ; then
+      cat $RELMON_COMP_DIR/RelMonAssignedParameters.log
+      exit 1
+    fi
   fi
 
   touch $WORKSPACE/results/default-comparison/done-0
@@ -319,7 +323,7 @@ if [ -e $WORKSPACE/results/default-comparison/done-0 ] ; then
   rm -f $WORKSPACE/results/default-comparison/cmdlog-*
   echo "Finished with default comparison at `date`"
 fi
-set -x
+#set -x
 
 #----------------------------------
 # Comparison summary
@@ -432,7 +436,7 @@ for f in $(find ${alt_dir} -maxdepth 1 -name 'command*' -o -name '*.ps' -o -name
 done
 
 #JR-comparison
-for x in $(find results/JR-comparison -maxdepth 2 -name 'command*' -o -name '*.log' -o -name '*.png' -type f) ; do
+for x in $(find results/JR-comparison -maxdepth 3 -name 'command*' -o -name '*.log' -o -name '*.png' -type f) ; do
   f=$(echo $x | sed 's|results/JR-comparison/||')
   d=$(dirname upload/validateJR/$f)
   [ -d $d ] || mkdir -p $d

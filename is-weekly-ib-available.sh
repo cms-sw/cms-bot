@@ -12,7 +12,7 @@ CMS_ARCH=$(echo $ARCH | cut -d_ -f2)
 if [ "X$RELEASE" = "X" ] ; then echo "Error: Missing release name"     ; echo "Usage: $0 RELEASE ARCH [WAIT_STEP: default 120s] [MAX_WAIT: default 7200s]"; exit 1;  fi
 if [ "X$ARCH" = "X" ]    ; then echo "Error: Missing architecture name"; echo "Usage: $0 RELEASE ARCH [WAIT_STEP: default 120s] [MAX_WAIT: default 7200s]"; exit 1;  fi
 
-IB_WEEK_DIR="/cvmfs/cms-ib.cern.ch/sw/${CMS_ARCH}/week0 /cvmfs/cms-ib.cern.ch/${CMS_ARCH}/week1 /cvmfs/cms.cern.ch"
+IB_WEEK_DIR="/cvmfs/cms-ib.cern.ch/sw/${CMS_ARCH}/week0 /cvmfs/cms-ib.cern.ch/sw/${CMS_ARCH}/week1 /cvmfs/cms.cern.ch"
 if [ "${RELEASE_INSTALL_PATH}" != "" ] ; then IB_WEEK_DIR="${RELEASE_INSTALL_PATH}"; fi
 if [ "X$WAIT_STEP" = "X" ] ; then WAIT_STEP=120; fi
 if [ "X$MAX_WAIT" = "X" ]  ; then MAX_WAIT=7200; fi

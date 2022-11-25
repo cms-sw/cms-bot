@@ -7,7 +7,7 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from optparse import OptionParser
-from os import listdir
+from os import walk
 import re
 
 #-----------------------------------------------------------------------------------
@@ -62,16 +62,20 @@ if __name__ == "__main__":
   RELMON_COMP_THRESHOLDS = { 0:'TH=0.999999999999', 2:'TH=0.1', 3:'TH=0.999' }
 
   params_dict = RELMON_COMP_THRESHOLDS if options.relmon else ALT_COMP_PARAMS
-  f = open( PARAMS_FILE , 'w')
+  worflow_params = {}
 
-  for current_dir in [ dir for dir in listdir( RESULTS_DIR ) if dir.startswith( 'all_Old' ) ]:
-  
+  for iwalk,(current_dir,subdir,files) in enumerate(walk( RESULTS_DIR )):
+    #naming convention is that a comparison sub-directory starts with 'all_'
+    if not current_dir.split('/')[-1].startswith('all_'): continue
+    if not '_' in current_dir: continue
+    current_wf = current_dir.split('_',)[0]
     print('Processing: %s' % current_dir)
-
-    current_wf = re.search( WF_REGEXP , current_dir ).group( 0 ).replace( 'p' , '.' )
+    if '/' in current_wf: current_wf=current_wf.split('/')[-1]
+    if not current_wf[0].isdigit(): continue
+   
     print('Workflow number is: %s' % current_wf)
-
-    num_diffs = len( [ file_name for file_name in listdir( RESULTS_DIR + '/' + current_dir ) if '.png' in file_name ] )
+    diff_files = [file for file in files if file.endswith('.png')]
+    num_diffs = len( diff_files )
     print('It had %s diffs' % num_diffs)
 
     if num_diffs < 10:
@@ -82,11 +86,15 @@ if __name__ == "__main__":
       mod = 2
 
     print('This needs to be run with %s' % params_dict [ mod ])
+    if current_wf in worflow_params:
+      #print('taking max of',mod,'and',worflow_params[current_wf])
+      worflow_params[current_wf] = max(mod,worflow_params[current_wf])
+    else:
+      worflow_params[current_wf] = mod
 
-    line = BASE_WF_NUM_PARAM + '=' + current_wf + ';' + params_dict [ mod ] + '\n'
-
-    f.write( line )
-
+  f = open( PARAMS_FILE , 'w')
+  for wf,mod in worflow_params.items():
+    f.write( '%s=%s;%s\n'%(BASE_WF_NUM_PARAM,wf,RELMON_COMP_THRESHOLDS[mod]) )
   f.close()
  
 

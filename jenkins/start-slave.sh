@@ -151,4 +151,6 @@ if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | w
   echo "ERROR: Node is marked temporary Offline, so exiting without connecting."
   exit 0
 fi
-ssh $SSH_OPTS $TARGET "${pre_cmd} java ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"
+JAVA=$(get_data JAVA)
+if [ "${JAVA}" = "" ] ; then JAVA="java"; fi
+ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

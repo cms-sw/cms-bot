@@ -63,9 +63,12 @@ def append_actions(error_keys, jenkins_errors):
     error_list = []
     # We append the action to perform to the error message
     for ii in error_keys:
-        if jenkins_errors[ii]["action"] == "retryBuild":
+        if jenkins_errors[ii]["action"] == "retryNow":
             for error in jenkins_errors[ii]["errorStr"]:
-                error_list.append(error + " - retryBuild")
+                error_list.append(error + " - retryNow")
+        elif jenkins_errors[ii]["action"] == "retryLate":
+            for error in jenkins_errors[ii]["errorStr"]:
+                error_list.append(error + " - retryLate")
         elif jenkins_errors[ii]["action"] == "nodeOff":
             for error in jenkins_errors[ii]["errorStr"]:
                 error_list.append(error + " - nodeOff")

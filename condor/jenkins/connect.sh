@@ -3,18 +3,11 @@ echo $WORKSPACE
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=90"
 SCHEDD_ENV=""
 TARGET="${1-cmsbuild@lxplus.cern.ch}"
-
-if [ "X$2" != "X" ] ; then
-    GRID_ID=$2
-else
-    GRID_ID=$(grep -o "gridid-\w*\.0" ${HOME}/nodes/${NODE_NAME}/config.xml | awk 'BEGIN {FS="-";} { print $2 }')
-fi
-
-if [ "X$3" != "X" ] ; then
-    SCHEDD_NAME=$3
-else
-    SCHEDD_NAME=$(grep -o "schedulername-\w*\.*\w*\.*\w*"  ${HOME}/nodes/${NODE_NAME}/config.xml | awk 'BEGIN {FS="-";} { print $2 }')
-fi
+LABELS=$(grep '<label>' ${HOME}/nodes/${NODE_NAME}/config.xml | tr '<>' ' ')
+GRID_ID=$(echo "${LABELS}"     | grep -o "gridid-\w*\.0"                  | awk 'BEGIN {FS="-";} { print $2 }')
+SCHEDD_NAME=$(echo "${LABELS}" | grep -o "schedulername-\w*\.*\w*\.*\w*"  | awk 'BEGIN {FS="-";} { print $2 }')
+JAVA="java"
+[ "$(echo ${LABELS} | grep -o 'java-11')" = "java-11" ] && JAVA="/etc/alternatives/jre_11/bin/java"
 
 export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
 if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
@@ -46,5 +39,5 @@ kinit ${KPRINCIPAL} -k -t ${KTAB}
 if $K5COPY ; then
   ssh -n $SSH_OPTS ${TARGET} "${SCHEDD_ENV}K5FILE=\$(klist | grep 'FILE:' | sed 's|.*FILE:||') && rsync -v -e 'condor_ssh_to_job' \$K5FILE $GRID_ID:~/${REMOTE_USER}.cc"
 fi
-ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $GRID_ID 'java -jar ${WORKSPACE}/slave.jar -jar-cache ${WORKSPACE}/tmp'" || true
+ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $GRID_ID '${JAVA} -jar ${WORKSPACE}/slave.jar -jar-cache ${WORKSPACE}/tmp'" || true
 ssh $SSH_OPTS ${TARGET} "${SCHEDD_ENV}condor_ssh_to_job -auto-retry $GRID_ID 'rm -rf .condor_ssh_to_job_*'"

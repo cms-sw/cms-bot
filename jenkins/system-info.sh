@@ -93,6 +93,15 @@ fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
+JAVA_VERSION=$(java -version 2>&1 | grep ' version ' | tr ' ' '\n' | grep '"[1-9]'  | sed 's|"||g' | cut -d. -f1)
+if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
+  echo "DATA_JAVA=/etc/alternatives/jre_11/bin/java"
+  SLAVE_LABELS="${SLAVE_LABELS} java-11"
+else
+  echo "DATA_JAVA=java"
+  SLAVE_LABELS="${SLAVE_LABELS} java-${JAVA_VERSION} java-default"
+fi
+
 #Check for EOS
 [ -e /eos/cms/store ] && SLAVE_LABELS="${SLAVE_LABELS} eos"
 

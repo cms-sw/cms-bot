@@ -11,7 +11,7 @@ function run_check {
     node=$1
     SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
     scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh "cmsbuild@$node:/tmp" || (echo "Cannot scp script" && exit 1)
-    ssh $SSH_OPTS "cmsbuild@"$node 'sh /tmp/nodes-check.sh'; exit_code=$?
+    ssh $SSH_OPTS "cmsbuild@"$node 'sh /tmp/nodes-sanity-check.sh'; exit_code=$?
     if [[ ${exit_code} -eq 0 ]]; then
         rm -f "$blacklist_path/$node"
     else

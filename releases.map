@@ -3556,3 +3556,4 @@ architecture=el8_amd64_gcc10;label=CMSSW_13_0_0_pre1;type=Development;state=Anno
 architecture=el8_ppc64le_gcc11;label=CMSSW_13_0_0_pre1;type=Development;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc10;label=CMSSW_13_0_0_pre1;type=Development;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc11;label=CMSSW_13_0_0_pre1;type=Development;state=Announced;prodarch=1;
+architecture=el8_aarch64_gcc10;label=CMSSW_12_4_11_patch3;type=Production;state=Announced;prodarch=0;

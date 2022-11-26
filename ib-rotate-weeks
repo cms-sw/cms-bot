@@ -29,10 +29,30 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   git commit -m "Added new ib-week $WEEK_NO" ib-weeks
   git pull --rebase
   git push origin
-  echo "ARCHITECTURE=${SCRAM_ARCH}" > cvmfs-reset-week
-  echo "ARCH_NAME=$(echo ${SCRAM_ARCH} | cut -d_ -f2)" >> cvmfs-reset-week
-  echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> cvmfs-reset-week
-  echo "RELEASE_FORMAT=" >> cvmfs-reset-week
-  echo "CMSDIST_HASH=" >> cvmfs-reset-week
-  echo "INSTALL_PACKAGES=${PKGS}" >> cvmfs-reset-week
+  oarch=$SCRAM_ARCH
+  parch=$(echo $SCRAM_ARCH | cut -d_ -f2)
+  pfile="cvmfs-reset-week-${parch}"
+  echo "ARCHITECTURE=${SCRAM_ARCH}"        > ${pfile}
+  echo "ARCH_NAME=${parch}"               >> ${pfile}
+  echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> ${pfile}
+  echo "RELEASE_FORMAT="                  >> ${pfile}
+  echo "CMSDIST_HASH="                    >> ${pfile}
+  echo "INSTALL_PACKAGES=${PKGS}"         >> ${pfile}
+  for arch in amd64 ppc64le aarch64 ; do
+    [ "$parch" != "${arch}" ] || continue
+    sarch=$(echo $oarch | sed "s|_${parch}_|_${arch}_|")
+    xreg=""
+    if [ $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "SCRAM_ARCH=${sarch};" | wc -l) -gt 0 ] ; then
+      xreg="SCRAM_ARCH=${sarch};"
+    else
+      sarch=".*_${arch}_.*"
+      if [ $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "SCRAM_ARCH=${sarch};" | wc -l) -gt 0 ] ; then
+        xreg="SCRAM_ARCH=${sarch};"
+      fi
+    fi
+    [ "${xreg}" != "" ] || continue
+    eval $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "$xreg" | head -1)
+    cp ${pfile} cvmfs-reset-week-${arch}
+    sed -i -e "s|ARCHITECTURE=.*|ARCHITECTURE=${SCRAM_ARCH}|;s|ARCH_NAME=.*|ARCH_NAME=${arch}|" cvmfs-reset-week-${arch}
+  done
 fi

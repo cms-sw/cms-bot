@@ -174,7 +174,7 @@ echo "DATA_CPU_VECTOR_SET=${CPU_VECTOR_SET}"SINGULARITY
 for is in ${CPU_VECTOR_SET} ; do SLAVE_LABELS="${SLAVE_LABELS} is-${is}" ; done
 
 if [ -f /proc/driver/nvidia/version ]; then
-  NVIDIA_VERSION=`cat /proc/driver/nvidia/version | sed -ne's/.*Kernel Module *\([0-9.]\+\).*/\1/p'`
+  NVIDIA_VERSION=`cat /proc/driver/nvidia/version | sed -ne's/.*Kernel Module\(\s\s*for\s\s*[^\s]*\|\)\s\s*\([0-9.]\+\).*/\2/p'`
 else 
   # check if a kernel module is available, even if not currently loaded (e.g. for an OPTIMUS system)
   # if there are multiple modules, pick the newest one

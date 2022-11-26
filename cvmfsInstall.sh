@@ -115,8 +115,9 @@ for REPOSITORY in $REPOSITORIES; do
         cat ${LOGFILE}
         exit 1
       fi
-      INSTALL_PACKAGES="$(${CMSPKG} search SCRAMV1        | sed 's| .*||' | grep 'SCRAMV1'        | sort | tail -1) ${INSTALL_PACKAGES}"
-      INSTALL_PACKAGES="$(${CMSPKG} search cmssw-wm-tools | sed 's| .*||' | grep 'cmssw-wm-tools' | sort | tail -1) ${INSTALL_PACKAGES}"
+      for pkg in SCRAMV1 SCRAMV2 cmssw-wm-tools cms-git-tools crab ; do
+        INSTALL_PACKAGES="$(${CMSPKG} search $pkg | sed 's| .*||' | grep "+${pkg}+" | sort | tail -1) ${INSTALL_PACKAGES}"
+      done
     elif [ $(grep "server  *${CMSREP_IB_SERVER} " $WORKDIR/common/cmspkg | wc -l) -eq 0 ] ; then
       sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi

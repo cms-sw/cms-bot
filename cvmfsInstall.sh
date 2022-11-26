@@ -104,6 +104,7 @@ for REPOSITORY in $REPOSITORIES; do
       rm -f $LOGFILE
     fi
     # If the bootstrap log for the current week is not their rebootstrap the area.
+    XPKGS="gcc-fixincludes"
     if [ ! -f $LOGFILE ]; then
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
@@ -115,13 +116,13 @@ for REPOSITORY in $REPOSITORIES; do
         cat ${LOGFILE}
         exit 1
       fi
-      for pkg in SCRAMV1 SCRAMV2 cmssw-wm-tools cms-git-tools crab ; do
-        INSTALL_PACKAGES="$(${CMSPKG} search $pkg | sed 's| .*||' | grep "+${pkg}+" | sort | tail -1) ${INSTALL_PACKAGES}"
-      done
+      XPKGS="${XPKGS} SCRAMV1 SCRAMV2 cmssw-wm-tools cms-git-tools crab"
     elif [ $(grep "server  *${CMSREP_IB_SERVER} " $WORKDIR/common/cmspkg | wc -l) -eq 0 ] ; then
       sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi
-    INSTALL_PACKAGES="$(${CMSPKG} search gcc-fixincludes | sed 's| .*||' | grep 'gcc-fixincludes' | sort | tail -1) ${INSTALL_PACKAGES}"
+    for pkg in ${XPKGS} ; do
+      INSTALL_PACKAGES="$(${CMSPKG} search $pkg | sed 's| .*||' | grep "+${pkg}+" | sort | tail -1) ${INSTALL_PACKAGES}"
+    done
     ln -sfT ${COMMON_BASEDIR}/SITECONF $WORKDIR/SITECONF
     $CMSPKG -y  --upgrade-packages upgrade
     if [ $(ls -rtd $WORKDIR/${SCRAM_ARCH}/external/rpm/4.* | tail -1 | sed 's|.*/external/rpm/4.||;s|\..*||') -lt 15 ] ; then

@@ -53,6 +53,6 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
     [ "${xreg}" != "" ] || continue
     eval $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "$xreg" | head -1)
     cp ${pfile} cvmfs-reset-week-${arch}
-    sed -i -e "s|ARCHITECTURE=.*|ARCHITECTURE=${SCRAM_ARCH}|;s|ARCH_NAME=.*|ARCH_NAME=${arch}|" cvmfs-reset-week-${arch}
+    sed -i -e "s|ARCHITECTURE=.*|ARCHITECTURE=${SCRAM_ARCH}|;s|ARCH_NAME=.*|ARCH_NAME=${arch}|;s|INSTALL_PACKAGES=.*|INSTALL_PACKAGES=|" cvmfs-reset-week-${arch}
   done
 fi

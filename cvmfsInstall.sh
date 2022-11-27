@@ -104,7 +104,7 @@ for REPOSITORY in $REPOSITORIES; do
       rm -f $LOGFILE
     fi
     # If the bootstrap log for the current week is not their rebootstrap the area.
-    XPKGS="gcc-fixincludes"
+    XPKGS="gcc-fixincludes cmssw-tool-conf"
     if [ ! -f $LOGFILE ]; then
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp

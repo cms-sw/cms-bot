@@ -1,5 +1,6 @@
-PATHS=$(head -n 1 /tmp/paths.param)
-SINGULARITY=$(tail -n 1 /tmp/paths.param)
+SINGULARITY=$1
+shift
+PATHS=$@
 
 # Checking that paths are acessible
 for path in ${PATHS[@]}; do

@@ -8,14 +8,11 @@ fi
 nodes_path="$HOME/nodes/"
 email_notification="cms-sdt-logs@cern.ch"
 job_url="${JENKINS_URL}job/nodes-sanity-check/${BUILD_NUMBER}"
-echo $PATHS >> $WORKSPACE/paths.param
-echo $SINGULARITY >> $WORKSPACE/paths.param
 
 function run_check {
     node=$1
     SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-    scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh ${WORKSPACE}/paths.param "cmsbuild@$node:/tmp" || (echo "Cannot scp script" && exit 1)
-    ssh $SSH_OPTS "cmsbuild@"$node 'sh /tmp/nodes-sanity-check.sh'; exit_code=$?
+    ssh $SSH_OPTS "cmsbuild@"$node "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS"; exit_code=$?
     if [[ ${exit_code} -eq 0 ]]; then
         rm -f "$blacklist_path/$node"
     else
@@ -65,7 +62,7 @@ function lxplus_disconnect {
     for lxplus_node in $nodes_list; do
         if [ -e $lxplus_node/slave.log ]; then
             match=$(cat $lxplus_node/slave.log | grep -a "ssh -q" | grep $host)
-            lxplus_node=$(echo $lxplus_node | rev | cut -d "/" -f 1 | rev )
+            lxplus_node=$(basename $lxplus_node)
             if [ "X$match" != "X" ]; then
                 echo "Node $lxplus_node is connected to host $host ... Force reconnecting $lxplus_node ..."
                 # Reconnect node

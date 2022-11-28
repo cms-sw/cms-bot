@@ -20,12 +20,13 @@ function run_check {
 	if [ ! -e $blacklist_path/$node ]; then 
             touch "$blacklist_path/$node" || exit 1
             notify_failure $email_notification $node $job_url
-            # If aarch or ppc, disconnect node
-	    node_regex="$(echo $node | cut -d "-" -f 1)*$(echo $node | cut -d "-" -f 2)*"
-	    for match in $(find $nodes_path -name $node_regex); do
-	        jenkins_node=$(echo $match | rev | cut -d "/" -f 1 | rev)
-                node_off $jenkins_node
-            done
+	    if [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
+                # If aarch or ppc, bring node off
+                aarch_ppc_disconnect $node
+            elif [[ $(echo $node | grep '^lxplus' | wc -l) -gt 0 ]]; then
+                # If lxplus, disconnect all nodes connected to this host
+                lxplus_disconnect $node
+            fi
 	else
             echo "Node already in blacklist. Skipping notification ..."
         fi
@@ -54,6 +55,34 @@ function lxplus_cleanup {
     done
 }
 
+function lxplus_disconnect {
+    nodes_list="$HOME/logs/slaves/lxplus/*"
+    host=$1
+    for lxplus_node in $nodes_list; do
+        if [ -e $lxplus_node/slave.log ]; then
+            match=$(cat $lxplus_node/slave.log | grep -a "ssh -q" | grep $host)
+            lxplus_node=$(echo $lxplus_node | rev | cut -d "/" -f 1 | rev )
+            if [ "X$match" != "X" ]; then
+                echo "Node $lxplus_node is connected to host $host ... Force reconnecting $lxplus_node ..."
+                # Reconnect node
+                node_reconnect $lxplus_node
+            else
+                echo "Node $lxplus_node not connected to $host. Skipping ..."
+            fi
+        fi
+    done
+
+}
+
+function aarch_ppc_disconnect {
+    node=$1
+    node_regex="$(echo $node | cut -d "-" -f 1)*$(echo $node | cut -d "-" -f 2)*"
+    for match in $(find $nodes_path -name $node_regex); do
+        jenkins_node=$(echo $match | rev | cut -d "/" -f 1 | rev)
+        node_off $jenkins_node
+    done
+}
+
 function notify_failure {
     email=$1
     node=$2
@@ -67,6 +96,14 @@ function node_off {
     affected_node=$1
     ${JENKINS_CLI_CMD} offline-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
 }
+
+function node_reconnect {
+    affected_node=$1
+    ${JENKINS_CLI_CMD} disconnect-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
+    sleep 2
+    ${JENKINS_CLI_CMD} connect-node ${affected_node}
+}
+
 
 # Main
 

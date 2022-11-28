@@ -56,7 +56,7 @@ function lxplus_cleanup {
 }
 
 function lxplus_disconnect {
-    nodes_list="$HOME/logs/slaves/lxplus/*"
+    nodes_list="$HOME/logs/slaves/lxplus*"
     host=$1
     for lxplus_node in $nodes_list; do
         if [ -e $lxplus_node/slave.log ]; then

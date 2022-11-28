@@ -5,6 +5,7 @@ nodes_path="$HOME/nodes/"
 email_notification="cms-sdt-logs@cern.ch"
 job_url="${JENKINS_URL}job/nodes-sanity-check/${BUILD_NUMBER}"
 echo $PATHS >> $WORKSPACE/paths.param
+echo $SINGULARITY >> $WORKSPACE/paths.param
 
 function run_check {
     node=$1

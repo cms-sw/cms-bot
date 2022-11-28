@@ -1,4 +1,5 @@
 PATHS=$(head -n 1 /tmp/paths.param)
+SINGULARITY=$(head -n 2 /tmp/paths.param)
 
 echo "List of paths: $PATHS"
 
@@ -14,6 +15,8 @@ if [[ $arch == "el7"  ]]; then
     arch="cc7"
 fi
 
-# Checking that singularity can start
-echo "Checking that singularity can start a container on $(hostname)"
-/cvmfs/cms.cern.ch/common/cmssw-${arch} --command-to-run ls >/dev/null 2>&1 && echo -e "... OK!" || exit 1
+if [ "$SINGULARITY" == "true" ]; then
+    # Checking that singularity can start
+    echo "Checking that singularity can start a container on $(hostname)"
+    /cvmfs/cms.cern.ch/common/cmssw-${arch} --command-to-run ls >/dev/null 2>&1 && echo -e "... OK!" || exit 1
+fi

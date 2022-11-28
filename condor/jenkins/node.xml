@@ -7,7 +7,7 @@
   <mode>NORMAL</mode>
   <retentionStrategy class="hudson.slaves.RetentionStrategy$Demand">
     <inDemandDelay>0</inDemandDelay>
-    <idleDelay>1</idleDelay>
+    <idleDelay>3</idleDelay>
   </retentionStrategy>
   <launcher class="hudson.slaves.CommandLauncher" plugin="command-launcher@1.2">
     <agentCommand>@CMS_BOT_DIR@/condor/jenkins/connect.sh @CONDOR_USER@@@CONDOR_SUMBITTER_SYSTEM@</agentCommand>

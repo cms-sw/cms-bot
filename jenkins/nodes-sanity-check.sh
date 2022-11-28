@@ -1,7 +1,5 @@
-paths=("/afs" "/cvmfs" "/cvmfs/cms.cern.ch" "/cvmfs/cms-ci.cern.ch" "/cvmfs/cms-ib.cern.ch" "/cvmfs/grid.cern.ch" "/cvmfs/unpacked.cern.ch")
-
 # Checking that paths are acessible
-for path in ${paths[@]}; do
+for path in ${PATHS[@]}; do
     echo "Checking ${path} for host $(hostname)"
     ls ${path} >/dev/null 2>&1 && echo -e "... OK!" || exit 1
 done

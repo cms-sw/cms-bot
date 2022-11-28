@@ -1,7 +1,4 @@
-BUILD_NUMBER=$1
 WORKSPACE=$(pwd)
-
-nodes=("lxplus7" "lxplus8" "lxplus9" "olarm-202" "olarm-102" "ibmminsky-1" "ibmminsky-2")
 
 blacklist_path="$HOME/workspace/cache/blacklist"
 email_notification="cms-sdt-logs@cern.ch"
@@ -72,7 +69,7 @@ function node_off {
 
 lxplus_hosts=()
 
-for node in ${nodes[@]}; do
+for node in ${NODES[@]}; do
     echo "Processing $node ..."
     if [[ "$node" =~ .*"lxplus".* ]]; then
         echo "Searching for lxplus hosts ..."

@@ -16,13 +16,18 @@ function run_check {
         rm -f "$blacklist_path/$node"
     else
         echo "... ERROR! Blacklisting ${node} ..."
-        touch "$blacklist_path/$node"
-        notify_failure $email_notification $node $job_url
-        # If aarch or ppc, disconnect node
-        if [[ $(echo $node | grep '^olarm-102' | wc -l) -gt 0 ]]; then
-            node_off "olarm-99-102a" && node_off "olarm-99-102b"
-        elif [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
-            node_off "${node}a" && node_off "${node}b"
+	# Check if node is already in the blacklist
+	if [ ! -e $blacklist_path/$node ]; then 
+            touch "$blacklist_path/$node"
+            notify_failure $email_notification $node $job_url
+            # If aarch or ppc, disconnect node
+            if [[ $(echo $node | grep '^olarm-102' | wc -l) -gt 0 ]]; then
+                node_off "olarm-99-102a" && node_off "olarm-99-102b"
+            elif [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
+                node_off "${node}a" && node_off "${node}b"
+	    fi
+	else
+            echo "Node already in blacklist. Skipping notification ..."
         fi
     fi
 }

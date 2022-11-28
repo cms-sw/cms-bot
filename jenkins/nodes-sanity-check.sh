@@ -1,3 +1,7 @@
+PATHS=$(head -n 1 ${WORKSPACE}/paths.param)
+
+echo "List of $PATHS"
+
 # Checking that paths are acessible
 for path in ${PATHS[@]}; do
     echo "Checking ${path} for host $(hostname)"

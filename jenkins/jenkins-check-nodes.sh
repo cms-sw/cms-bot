@@ -1,6 +1,10 @@
 WORKSPACE=$(pwd)
 
 blacklist_path="$HOME/workspace/cache/blacklist"
+if [ -d $blacklist_path ]; then
+    mkdir -p $blacklist_path
+fi
+
 nodes_path="$HOME/nodes/"
 email_notification="cms-sdt-logs@cern.ch"
 job_url="${JENKINS_URL}job/nodes-sanity-check/${BUILD_NUMBER}"

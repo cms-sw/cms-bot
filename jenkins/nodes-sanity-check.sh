@@ -1,6 +1,6 @@
-PATHS=$(head -n 1 ${WORKSPACE}/paths.param)
+PATHS=$(head -n 1 /tmp/paths.param)
 
-echo "List of $PATHS"
+echo "List of paths: $PATHS"
 
 # Checking that paths are acessible
 for path in ${PATHS[@]}; do

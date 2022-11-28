@@ -1,8 +1,9 @@
 WORKSPACE=$(pwd)
 
 blacklist_path="$HOME/workspace/cache/blacklist"
+nodes_path="$HOME/nodes/"
 email_notification="cms-sdt-logs@cern.ch"
-job_url="${JENKINS_URL}job/test-check-nodes/${BUILD_NUMBER}"
+job_url="${JENKINS_URL}job/nodes-sanity-check/${BUILD_NUMBER}"
 echo $PATHS >> $WORKSPACE/paths.param
 
 function run_check {
@@ -19,11 +20,11 @@ function run_check {
             touch "$blacklist_path/$node"
             notify_failure $email_notification $node $job_url
             # If aarch or ppc, disconnect node
-            if [[ $(echo $node | grep '^olarm-102' | wc -l) -gt 0 ]]; then
-                node_off "olarm-99-102a" && node_off "olarm-99-102b"
-            elif [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
-                node_off "${node}a" && node_off "${node}b"
-	    fi
+	    node_regex="$(echo $node | cut -d "-" -f 1)*$(echo $node | cut -d "-" -f 2)*"
+	    for match in $(find $nodes_path -name $node_regex); do
+	        jenkins_node=$(echo $match | cut -d "/" -f 4)
+                node_off $jenkins_node
+            done
 	else
             echo "Node already in blacklist. Skipping notification ..."
         fi

@@ -1,5 +1,5 @@
 PATHS=$(head -n 1 /tmp/paths.param)
-SINGULARITY=$(head -n 2 /tmp/paths.param)
+SINGULARITY=$(tail -n 1 /tmp/paths.param)
 
 echo "List of paths: $PATHS"
 

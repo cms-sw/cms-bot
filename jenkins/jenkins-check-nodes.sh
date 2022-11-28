@@ -22,7 +22,7 @@ function run_check {
             # If aarch or ppc, disconnect node
 	    node_regex="$(echo $node | cut -d "-" -f 1)*$(echo $node | cut -d "-" -f 2)*"
 	    for match in $(find $nodes_path -name $node_regex); do
-	        jenkins_node=$(echo $match | cut -d "/" -f 4)
+	        jenkins_node=$(echo $match | rev | cut -d "/" -f 1 | rev)
                 node_off $jenkins_node
             done
 	else

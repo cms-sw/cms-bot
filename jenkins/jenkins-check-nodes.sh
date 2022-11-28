@@ -18,7 +18,7 @@ function run_check {
         echo "... ERROR! Blacklisting ${node} ..."
 	# Check if node is already in the blacklist
 	if [ ! -e $blacklist_path/$node ]; then 
-            touch "$blacklist_path/$node"
+            touch "$blacklist_path/$node" || exit 1
             notify_failure $email_notification $node $job_url
             # If aarch or ppc, disconnect node
 	    node_regex="$(echo $node | cut -d "-" -f 1)*$(echo $node | cut -d "-" -f 2)*"

@@ -1,8 +1,6 @@
 PATHS=$(head -n 1 /tmp/paths.param)
 SINGULARITY=$(tail -n 1 /tmp/paths.param)
 
-echo "List of paths: $PATHS"
-
 # Checking that paths are acessible
 for path in ${PATHS[@]}; do
     echo "Checking ${path} for host $(hostname)"

@@ -44,16 +44,19 @@ pushd src
     git cms-merge-topic -u ${pr}
   done
 popd
+#Keep original sources to be used by clang-format
+rsync -a src src.orig
 
 $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
 cat $CMSSW_BASE/selected-source-files.txt | grep -v '/test/' > $CMSSW_BASE/selected-source-files.txt.filtered || true
 
 ERR=0
-cd src
 if $CLANG_TIDY ; then
   scram build -k -j ${NUM_PROC} code-checks-all USER_CODE_CHECKS_FILE=$CMSSW_BASE/selected-source-files.txt.filtered  > $WORKSPACE/upload/code-checks.log 2>&1 || ERR=1
-  git diff --name-only > $WORKSPACE/upload/code-checks.txt
-  git diff > $WORKSPACE/upload/code-checks.patch
+  pushd src
+    git diff --name-only > $WORKSPACE/upload/code-checks.txt
+    git diff > $WORKSPACE/upload/code-checks.patch
+  popd
   cat $WORKSPACE/upload/code-checks.patch
   echo "Files need clang-tidy fixes ....."
   cat $WORKSPACE/upload/code-checks.txt
@@ -65,15 +68,22 @@ else
 fi
 
 if $CLANG_FORMAT ; then
+  mv src src.tidy
+  mv src.orig src
+  scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format-orig.log 2>&1 || ERR=1
+  pushd src
+    git diff --name-only > $WORKSPACE/upload/code-format-orig.txt
+    git diff > $WORKSPACE/upload/code-format-orig.patch
+  popd
+  cat $WORKSPACE/upload/code-format-orig.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs-orig.log
+  mv src src.format
+  mv src.tidy src
   scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format.log 2>&1 || ERR=1
-  git diff --name-only > $WORKSPACE/upload/code-format.txt
-  git diff > $WORKSPACE/upload/code-format.patch
-  cat $WORKSPACE/upload/code-format.patch
-  echo "Files need clang-format fixes ....."
-  cat $WORKSPACE/upload/code-format.txt
-  cat $WORKSPACE/upload/code-format.txt | wc -l
-  cat $WORKSPACE/upload/code-format.txt | cut -d/ -f1,2 | sort | uniq
-  cat $WORKSPACE/upload/code-format.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs.log
+  pushd
+    git diff --name-only > $WORKSPACE/upload/code-format.txt
+    git diff > $WORKSPACE/upload/code-format.patch
+  popd
+  cat $WORKSPACE/upload/code-format.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs.log  
 else
   touch $WORKSPACE/upload/code-format.txt
 fi
@@ -91,4 +101,3 @@ if $TEST_CHANGES ; then
   $WORKSPACE/cms-bot/buildLogAnalyzer.py --logDir ${BUILD_LOG_DIR}/src || true
   [ -d ${BUILD_LOG_DIR}/html ] && mv ${BUILD_LOG_DIR}/html $WORKSPACE/upload/build-logs
 fi
-

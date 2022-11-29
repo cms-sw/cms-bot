@@ -78,11 +78,15 @@ function lxplus_disconnect {
 }
 
 function aarch_ppc_disconnect {
-    node=$1
-    node_regex="$(echo $node | cut -d "-" -f 1)*$(echo $node | cut -d "-" -f 2)*"
-    for match in $(find $nodes_path -name $node_regex); do
-        jenkins_node=$(echo $match | rev | cut -d "/" -f 1 | rev)
-        node_off $jenkins_node
+    nodes_path="/build/nodes/*"
+    host=$1
+
+    for folder in $nodes_path; do
+        node=$(grep agentCommand $folder/config.xml | tr ' <>' '\n\n\n' | grep '@' | sort | uniq | cut -d "@" -f 2)
+        if [[ $node == $host ]]; then
+            echo "Processing agent $(basename $folder) ..."
+            node_off $(basename $folder)
+        fi
     done
 }
 

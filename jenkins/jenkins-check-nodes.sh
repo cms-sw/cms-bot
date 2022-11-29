@@ -101,7 +101,7 @@ function notify_failure {
 
 function node_off {
     affected_node=$1
-    node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "http://localhost:8080/jenkins/computer/$affected_node/api/json?pretty=true")
+    node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "${LOCAL_JENKINS_URL}computer/$affected_node/api/json?pretty=true")
     node_offline=$(echo $node_info | grep '"offline" : false' | wc -l)
     if [ $node_offline -gt 0 ]; then
         ${JENKINS_CLI_CMD} offline-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
@@ -130,7 +130,7 @@ function offline_cleanup {
             break
         fi
         echo "Offline file found for $node_name ... Cleannig up, if needed."
-        node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "http://localhost:8080/jenkins/computer/$node_name/api/json?pretty=true")
+        node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "${LOCAL_JENKINS_URL}computer/$node_name/api/json?pretty=true")
         node_tempoffline=$(echo $node_info | grep '"temporarilyOffline" : true' | wc -l)
         if [ $node_tempoffline -eq 0 ]; then $(rm -rf $file) && continue; fi # External action has been taken
         node_offline=$(echo $node_info | grep '"offline" : true' | wc -l)

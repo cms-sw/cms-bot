@@ -3,8 +3,7 @@ nodes_path="/build/nodes/*"
 job_url="${JENKINS_URL}job/nodes-sanity-check"
 node_base_url="${JENKINS_URL}computer"
 
-#email_address="cms-sdt-logs@cern.ch"
-email_address="andrea.valenzuela.ramirez@cern.ch"
+email_address="cms-sdt-logs@cern.ch"
 
 function notify {
     MSG=$1

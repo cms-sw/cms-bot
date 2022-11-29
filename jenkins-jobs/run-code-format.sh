@@ -45,7 +45,7 @@ pushd src
   done
 popd
 #Keep original sources to be used by clang-format
-rsync -a src src.orig
+cp -r src src.orig
 
 $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
 cat $CMSSW_BASE/selected-source-files.txt | grep -v '/test/' > $CMSSW_BASE/selected-source-files.txt.filtered || true
@@ -57,11 +57,7 @@ if $CLANG_TIDY ; then
     git diff --name-only > $WORKSPACE/upload/code-checks.txt
     git diff > $WORKSPACE/upload/code-checks.patch
   popd
-  cat $WORKSPACE/upload/code-checks.patch
   echo "Files need clang-tidy fixes ....."
-  cat $WORKSPACE/upload/code-checks.txt
-  cat $WORKSPACE/upload/code-checks.txt | wc -l
-  cat $WORKSPACE/upload/code-checks.txt | cut -d/ -f1,2 | sort | uniq
   cat $WORKSPACE/upload/code-checks.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-checks-pkgs.log
 else
   touch $WORKSPACE/upload/code-checks.txt
@@ -79,7 +75,7 @@ if $CLANG_FORMAT ; then
   mv src src.format
   mv src.tidy src
   scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format.log 2>&1 || ERR=1
-  pushd
+  pushd src
     git diff --name-only > $WORKSPACE/upload/code-format.txt
     git diff > $WORKSPACE/upload/code-format.patch
   popd

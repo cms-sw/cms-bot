@@ -21,6 +21,8 @@ klist || true
 export SLAVE_UNIQUE_TARGET=""
 export SLAVE_MAX_WORKSPACE_SIZE=""
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
+BLACKLIST_DIR="${HOME}/workspace/cache/blacklist"
+
 if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   export SLAVE_UNIQUE_TARGET="YES"
   case ${SLAVE_TYPE} in 
@@ -28,7 +30,8 @@ if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   esac
   for ip in $(host $SLAVE_TYPE | grep 'has address' | sed 's|^.* ||'); do
     hname=$(host $ip | grep 'domain name' | sed 's|^.* ||;s|\.$||')
-    if [ $(grep "${hname}" ${SCRIPT_DIR}/blacklist-lxplus.txt |wc -l) -gt 0 ] ; then continue ; fi
+    if [ $(grep "${hname}" ${SCRIPT_DIR}/blacklist-lxplus.txt | wc -l) -gt 0 ] ; then continue ; fi
+    if [ -e ${BLACKLIST_DIR}/${hname} ] ; then continue ; fi
     NEW_TARGET=$(echo $TARGET | sed "s|@.*|@$hname|")
     ${SCRIPT_DIR}/start-slave.sh "${NEW_TARGET}" "$@" || [ "X$?" = "X99" ] && sleep 5 && continue
     exit 0

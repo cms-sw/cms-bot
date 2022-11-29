@@ -102,13 +102,10 @@ function notify_failure {
 function node_off {
     affected_node=$1
     node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "${LOCAL_JENKINS_URL}computer/$affected_node/api/json?pretty=true")
-    node_offline=$(echo $node_info | grep '"offline" : false' | wc -l)
-    if [ $node_offline -gt 0 ]; then
-        ${JENKINS_CLI_CMD} offline-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
-        # Store that node has been set offline
-        echo "Storing .offline info at: $blacklist_path"
-        touch "$blacklist_path/$affected_node.offline"
-    fi
+    ${JENKINS_CLI_CMD} offline-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
+    # Store that node has been set offline
+    echo "Storing .offline info at: $blacklist_path"
+    touch "$blacklist_path/$affected_node.offline"
 }
 
 function node_on {
@@ -135,10 +132,7 @@ function offline_cleanup {
         if [ $node_tempoffline -eq 0 ]; then $(rm -rf $file) && continue; fi # External action has been taken
         node_offline=$(echo $node_info | grep '"offline" : true' | wc -l)
         if [ $node_offline -gt 0 ]; then
-            node_idle=$(echo $node_info | grep '"idle" : true' | wc -l)
-            if [ $node_idle -gt 0 ]; then
-                node_on $node_name
-            fi
+            node_on $node_name
         fi
     done
 }

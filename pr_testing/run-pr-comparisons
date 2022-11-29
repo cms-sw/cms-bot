@@ -106,7 +106,7 @@ ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
 #Use cmssw#40106 as baseline
 mv $WORKSPACE/data/$COMPARISON_RELEASE $WORKSPACE/data/$COMPARISON_RELEASE-orig
-get_jenkins_artifacts pull-request-integration/PR-353010/29197/runTheMatrix${UC_TEST_FLAVOR}-results/ $WORKSPACE/data/$COMPARISON_RELEASE/
+get_jenkins_artifacts pull-request-integration/PR-353010/29303/runTheMatrix${UC_TEST_FLAVOR}-results/ $WORKSPACE/data/$COMPARISON_RELEASE/
 
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE

@@ -78,7 +78,7 @@ function lxplus_disconnect {
 }
 
 function aarch_ppc_disconnect {
-    nodes_path="/build/nodes/*"
+    nodes_path="$HOME/nodes/*"
     host=$1
 
     for folder in $nodes_path; do

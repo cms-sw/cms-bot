@@ -1,5 +1,5 @@
-blacklist_content="/build/workspace/cache/blacklist/*"
-nodes_path="/build/nodes/*"
+blacklist_content="$HOME/workspace/cache/blacklist/*"
+nodes_path="$HOME/nodes/*"
 job_url="${JENKINS_URL}job/nodes-sanity-check"
 node_base_url="${JENKINS_URL}computer"
 

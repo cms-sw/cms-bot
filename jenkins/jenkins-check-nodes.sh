@@ -12,6 +12,7 @@ job_url="${JENKINS_URL}job/nodes-sanity-check/${BUILD_NUMBER}"
 function run_check {
     node=$1
     SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+    scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh "cmsbuild@$node:/tmp" || (echo "Cannot scp script" && exit 1)
     ssh $SSH_OPTS "cmsbuild@"$node "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS"; exit_code=$?
     if [[ ${exit_code} -eq 0 ]]; then
         rm -f "$blacklist_path/$node"
@@ -39,7 +40,9 @@ function lxplus_cleanup {
     blacklist_content="$HOME/workspace/cache/blacklist/*"
 
     for file in $blacklist_content; do
-        filename="${file##*/}"
+	filename=$(basename $file)
+        offline_file=$(echo $filename | grep ".offline" | wc -l)
+        if [ $offline_file -gt 0 ]; then continue; fi
         if [[ "$filename" == "*" ]]; then
             echo "Blacklist directory empty... Skipping cleanup!"
             break
@@ -64,9 +67,8 @@ function lxplus_disconnect {
             match=$(cat $lxplus_node/slave.log | grep -a "ssh -q" | grep $host)
             lxplus_node=$(basename $lxplus_node)
             if [ "X$match" != "X" ]; then
-                echo "Node $lxplus_node is connected to host $host ... Force reconnecting $lxplus_node ..."
-                # Reconnect node
-                node_reconnect $lxplus_node
+                echo "Node $lxplus_node is connected to host $host ... Marking $lxplus_node as offline, if needed ..."
+                node_off $lxplus_node
             else
                 echo "Node $lxplus_node not connected to $host. Skipping ..."
             fi
@@ -95,14 +97,46 @@ function notify_failure {
 
 function node_off {
     affected_node=$1
-    ${JENKINS_CLI_CMD} offline-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
+    node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "http://localhost:8080/jenkins/computer/$affected_node/api/json?pretty=true")
+    node_offline=$(echo $node_info | grep '"offline" : false' | wc -l)
+    if [ $node_offline -gt 0 ]; then
+        ${JENKINS_CLI_CMD} offline-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
+        # Store that node has been set offline
+        echo "Storing .offline info at: $blacklist_path"
+        touch "$blacklist_path/$affected_node.offline"
+    fi
 }
 
-function node_reconnect {
+function node_on {
     affected_node=$1
-    ${JENKINS_CLI_CMD} disconnect-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
-    sleep 2
-    ${JENKINS_CLI_CMD} connect-node ${affected_node}
+    ${JENKINS_CLI_CMD} online-node ${affected_node}
+    # Remove offline flag
+    echo "Removing .offline info at: $blacklist_path"
+    rm -rf "$blacklist_path/$affected_node.offline"
+}
+
+function offline_cleanup {
+    offline_content="$HOME/workspace/cache/blacklist/*.offline"
+
+    for file in $offline_content; do
+        filename=$(basename $file)
+        node_name=$(echo $filename | cut -d "." -f 1)
+        if [[ "$node_name" == "*" ]]; then
+            echo "No offline nodes found ... Skipping cleanup!"
+            break
+        fi
+        echo "Offline file found for $node_name ... Cleannig up, if needed."
+        node_info=$(curl -H "OIDC_CLAIM_CERN_UPN: cmssdt" "http://localhost:8080/jenkins/computer/$node_name/api/json?pretty=true")
+        node_tempoffline=$(echo $node_info | grep '"temporarilyOffline" : true' | wc -l)
+        if [ $node_tempoffline -eq 0 ]; then $(rm -rf $file) && continue; fi # External action has been taken
+        node_offline=$(echo $node_info | grep '"offline" : true' | wc -l)
+        if [ $node_offline -gt 0 ]; then
+            node_idle=$(echo $node_info | grep '"idle" : true' | wc -l)
+            if [ $node_idle -gt 0 ]; then
+                node_on $node_name
+            fi
+        fi
+    done
 }
 
 
@@ -119,7 +153,7 @@ for node in ${NODES[@]}; do
             lxplus_hosts+="$real_nodename "
             echo "[$real_nodename]"
             run_check $real_nodename
-         done
+        done
     else
         run_check $node
     fi
@@ -127,3 +161,4 @@ done
 
 # Cleanup of lxplus hosts
 lxplus_cleanup $lxplus_hosts
+offline_cleanup

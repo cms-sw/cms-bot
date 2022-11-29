@@ -1,7 +1,7 @@
 WORKSPACE=$(pwd)
 
 blacklist_path="$HOME/workspace/cache/blacklist"
-if [ -d $blacklist_path ]; then
+if [ ! -d $blacklist_path ]; then
     mkdir -p $blacklist_path
 fi
 
@@ -82,7 +82,7 @@ function aarch_ppc_disconnect {
     host=$1
 
     for folder in $nodes_path; do
-        node=$(grep agentCommand $folder/config.xml | tr ' <>' '\n\n\n' | grep '@' | sort | uniq | cut -d "@" -f 2)
+        node=$(grep agentCommand $folder/config.xml | tr ' <>' '\n\n\n' | grep '@' | sort | uniq | cut -d "@" -f 2 | cut -d "." -f 1)
         if [[ $node == $host ]]; then
             echo "Processing agent $(basename $folder) ..."
             node_off $(basename $folder)

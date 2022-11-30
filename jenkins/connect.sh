@@ -30,7 +30,7 @@ if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then
   esac
   for ip in $(host $SLAVE_TYPE | grep 'has address' | sed 's|^.* ||'); do
     hname=$(host $ip | grep 'domain name' | sed 's|^.* ||;s|\.$||')
-    if [ $(grep "${hname}" ${SCRIPT_DIR}/blacklist-lxplus.txt | wc -l) -gt 0 ] ; then continue ; fi
+    if [ $(grep $(echo "${hname}" | cut -d "." -f 1) ${SCRIPT_DIR}/blacklist-lxplus.txt | wc -l) -gt 0 ] ; then continue ; fi
     if [ -e ${BLACKLIST_DIR}/${hname} ] ; then continue ; fi
     NEW_TARGET=$(echo $TARGET | sed "s|@.*|@$hname|")
     ${SCRIPT_DIR}/start-slave.sh "${NEW_TARGET}" "$@" || [ "X$?" = "X99" ] && sleep 5 && continue

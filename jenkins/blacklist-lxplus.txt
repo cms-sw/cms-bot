@@ -1,2 +1,2 @@
- lxplus761
- lxplus7106
+ lxplus761.cern.ch
+ lxplus7106.cern.ch

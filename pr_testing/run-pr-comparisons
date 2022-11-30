@@ -107,22 +107,38 @@ ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
 
-#Create long to short symlinks
-mv $WORKSPACE/data/$COMPARISON_RELEASE $WORKSPACE/data/${COMPARISON_RELEASE}-long
-cp $WORKSPACE/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE.orig
-mkdir $WORKSPACE/data/${COMPARISON_RELEASE}
-for wf_dir in $(ls $WORKSPACE/data/${COMPARISON_RELEASE}-long) ; do
-  if [ ! -e $WORKSPACE/data/${COMPARISON_RELEASE}-long/${wf_dir}/cmdLog ] ; then
-    ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${wf_dir}
-    continue
+#Temp fix for RelVal long vs short names: Remove it once we have PRs using IBs with short relval names
+MATRIX_READER="src/Configuration/PyReleaseValidation/python/MatrixReader.py"
+if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>&1 ; then
+  #Release is still using long relval names
+  if [ -f $CMSSW_BASE/${MATRIX_READER} ] ; then
+    #PR tests might have latest short name changes
+    if grep 'stepList=stepList' $CMSSW_BASE/${MATRIX_READER} >/dev/null 2>&1 ; then
+      #PR tests generated short relval names change
+      #Create long to short symlinks for root & logs files and update mapping file
+      mv $WORKSPACE/data/$COMPARISON_RELEASE $WORKSPACE/data/${COMPARISON_RELEASE}-long
+      cp $WORKSPACE/$MAPPING_FILE $WORKSPACE/$MAPPING_FILE.orig
+      mkdir $WORKSPACE/data/${COMPARISON_RELEASE}
+      for wf_dir in $(ls $WORKSPACE/data/${COMPARISON_RELEASE}-long) ; do
+        if [ ! -e $WORKSPACE/data/${COMPARISON_RELEASE}-long/${wf_dir}/cmdLog ] ; then
+          ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${wf_dir}
+          continue
+        fi
+        wf=$(echo $wf_dir | cut -d_ -f1)
+        long_name=$(echo $wf_dir | cut -d_ -f2-)
+        short_name=$(ls -d $WORKSPACE/data/PR-${PR_NUM}/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")
+        [ "${short_name}" = "" ] && exit 1
+        nwf_dir="${wf}_${short_name}"
+        ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${nwf_dir}
+        sed -i -e "s|${wf_dir}/|${nwf_dir}/|" $WORKSPACE/$MAPPING_FILE
+        #create symlinks for log files
+        for log in $(ls $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}/step*_${short_name}.log) ; do
+          mv $log $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}/$(basename $log | cut -d_ -f1)_${long_name}.log
+        done
+      done
+    fi
   fi
-  wf=$(echo $wf_dir | sed 's|_.*||')
-  sname=$(ls -d $WORKSPACE/data/PR-${PR_NUM}/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")
-  [ "${sname}" = "" ] && exit 1
-  nwf_dir="${wf}_${sname}"
-  ln -sf ../${COMPARISON_RELEASE}-long/${wf_dir} $WORKSPACE/data/${COMPARISON_RELEASE}/${nwf_dir}
-  sed -i -e "s|${wf_dir}/|${nwf_dir}/|" $WORKSPACE/$MAPPING_FILE
-done
+fi
 
 cat $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/$ERRORS_FILE

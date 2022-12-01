@@ -14,7 +14,7 @@ if [[ "$TEST_SINGLE_LXPLUS_HOST" == "true" ]]; then
 fi
 
 nodes_path="$HOME/nodes/"
-email_notification="andrea.valenzuela.ramirez@cern.ch"
+email_notification="cms-sdt-logs@cern.ch"
 job_url="${JENKINS_URL}job/nodes-sanity-check/${BUILD_NUMBER}"
 
 function run_check {
@@ -56,7 +56,6 @@ function get_jenkins_nodenames {
             jenkins_nodes_list+="$(basename $folder) "
         fi
     done
-    echo "Get Jenkins nodenames: $jenkins_nodes_list"
 }
 
 function lxplus_disconnect {
@@ -90,7 +89,7 @@ function aarch_ppc_disconnect {
         node=$(grep agentCommand $folder/config.xml | tr ' <>' '\n\n\n' | grep '@' | sort | uniq | cut -d "@" -f 2 | cut -d "." -f 1)
         if [[ $node == $host ]]; then
             agent=$(basename $folder)
-            echo "Processing agent $agent ..."
+            echo "Marking node $agent as offline ..."
             node_off_list+="$agent "
             node_off $agent
         fi
@@ -176,8 +175,8 @@ function lxplus_offline_cleanup {
         node_idle=$(echo $node_info | grep '"idle" : true' | wc -l)
         if [ $node_idle -gt 0 ]; then
             echo "Bringing node $node_name online again ..."
-            node_on $node_name
-            connect_node $node_name
+            node_on $node_name  # Brings node online, but it stays connected to the buggy host
+            connect_node $node_name  # We need to send the connect command so that the jenkins node is re-connected
         fi
     done
 }
@@ -223,7 +222,7 @@ for node in ${NODES[@]}; do
 done
 
 
-# Cleanup of lxplus hosts
+# Cleanup of lxplus hosts, if needed
 if [ $(echo "${NODES[@]}" | grep "lxplus" | wc -l) -gt 0 ]; then
     if [[ "$TEST_SINGLE_LXPLUS_HOST" == "false" ]]; then 
         lxplus_blacklist_cleanup $lxplus_hosts

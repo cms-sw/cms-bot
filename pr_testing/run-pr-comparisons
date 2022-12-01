@@ -106,6 +106,32 @@ ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
+
+#Temp fix for RelVal long vs short names: Remove it once we have PRs using IBs with short relval names
+MATRIX_READER="src/Configuration/PyReleaseValidation/python/MatrixReader.py"
+if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>&1 ; then
+  #Release is still using long relval names
+  if [ -f $CMSSW_BASE/${MATRIX_READER} ] ; then
+    #PR tests might have latest short name changes
+    if grep 'stepList=stepList' $CMSSW_BASE/${MATRIX_READER} >/dev/null 2>&1 ; then
+      #PR tests generated short relval names change
+      #Move PR short names to long names and rename log fils
+      for wf_dir in $(ls $WORKSPACE/data/PR-${PR_NUM}) ; do
+        [ -e $WORKSPACE/data/PR-${PR_NUM}/${wf_dir}/cmdLog ] || continue
+        wf=$(echo $wf_dir | cut -d_ -f1)
+        short_name=$(echo $wf_dir | cut -d_ -f2-)
+        long_name=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")
+        nwf_dir="${wf}_${long_name}"
+        mv $WORKSPACE/data/PR-${PR_NUM}/${wf_dir} $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}
+        #create symlinks for log files
+        for log in $(ls $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}/step*_${short_name}.log) ; do
+          mv $log $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}/$(basename $log | cut -d_ -f1)_${long_name}.log
+        done
+      done
+    fi
+  fi
+fi
+
 cat $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/$ERRORS_FILE
 WFS_WITH_ERRORS=''

@@ -323,7 +323,7 @@ sameEvts=True
 nRoot=0
 for r in commonRoots:
 #    print 'I could have tested',r
-    if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
+    if 'inDQM.root' not in r:
         checkResult=checkEventContent(baseDir+r,testDir+r)
         sameEvts=sameEvts and checkResult
         nRoot=nRoot+1

@@ -117,7 +117,7 @@ if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>
       #PR tests generated short relval names change
       #Move PR short names to long names and rename log fils
       for wf_dir in $(ls $WORKSPACE/data/PR-${PR_NUM}) ; do
-        [ ! -e $WORKSPACE/data/PR-${PR_NUM}/${wf_dir}/cmdLog ] || continue
+        [ -e $WORKSPACE/data/PR-${PR_NUM}/${wf_dir}/cmdLog ] || continue
         wf=$(echo $wf_dir | cut -d_ -f1)
         short_name=$(echo $wf_dir | cut -d_ -f2-)
         long_name=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")

@@ -56,6 +56,7 @@ def es_get_passwd(passwd_file=None):
     if exists(psfile):
       passwd_file=psfile
       break
+  print("Reading ",passwd_file)
   ES_PASSWD = open(passwd_file,'r').read().strip()
   return ES_PASSWD
 

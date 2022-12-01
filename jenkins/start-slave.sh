@@ -4,6 +4,11 @@ function get_data ()
   echo "$SYSTEM_DATA" | tr ';' '\n' | grep "^DATA_$1=" | sed 's|.*=||'
 }
 
+function get_env ()
+{
+  grep ">$1<" -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1 | sed 's|[^>]*>||;s|<.*||'
+}
+
 SCRIPT_DIR=$(cd $(dirname $0); /bin/pwd)
 TARGET=$1
 CLEANUP_WORKSPACE=$2
@@ -15,9 +20,10 @@ if [ "${SLAVE_UNIQUE_TARGET}" = "YES" ] ; then
   TARGET_HOST=$(echo $TARGET | sed 's|.*@||')
   if [ `pgrep -f "@${TARGET_HOST} " | grep -v "$$" | wc -l` -gt 1 ] ; then exit 99 ; fi
 fi
-DOCKER_IMG_HOST=$(grep '>DOCKER_IMG_HOST<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
-MULTI_MASTER_SLAVE=$(grep '>MULTI_MASTER_SLAVE<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
-EX_LABELS=$(grep '>FORCE_LABELS<' -A1 ${HOME}/nodes/${NODE_NAME}/config.xml | tail -1  | sed 's|[^>]*>||;s|<.*||')
+DOCKER_IMG_HOST=$(get_env DOCKER_IMG_HOST)
+MULTI_MASTER_SLAVE=$(get_env MULTI_MASTER_SLAVE)
+EX_LABELS=$(get_env FORCE_LABELS)
+JAVA_CMD=$(get_env JAVA_CMD)
 
 JENKINS_SLAVE_JAR_MD5=$(md5sum ${HOME}/slave.jar | sed 's| .*||')
 USER_HOME_MD5=""
@@ -151,6 +157,9 @@ if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | w
   echo "ERROR: Node is marked temporary Offline, so exiting without connecting."
   exit 0
 fi
-JAVA=$(get_data JAVA)
-if [ "${JAVA}" = "" ] ; then JAVA="java"; fi
+JAVA=${JAVA_CMD}
+if [ "${JAVA}" = "" ] ; then
+  JAVA=$(get_data JAVA)
+  if [ "${JAVA}" = "" ] ; then JAVA="java"; fi
+fi
 ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

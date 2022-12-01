@@ -13,7 +13,8 @@ if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins" ; fi
 ARTIFACTS_MACHINE="${ARTIFACTS_USER}@${CMSSDT_SERVER}"
 ARTIFACT_BASE_DIR_MAIN="/data/sdt/SDT/jenkins-artifacts"
 ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
-SSH_OPTS="-q -o ConnectTimeout=60 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+DEFAULT_TIMEOUT=60
+SSH_OPTS="-q -o ConnectTimeout=${DEFAULT_TIMEOUT} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 CVMFS_ARTIFACT_DIR="/cvmfs/cms-ci.cern.ch/jenkins-artifacts"
 
 function cmd_jenkins_artifacts ()
@@ -32,7 +33,7 @@ function has_jenkins_artifacts ()
   if [ $(echo $SRC | sed 's|^/*||;s|/.*||' | grep '^ib-baseline-tests$' | wc -l) -eq 1 ] ; then AFDIR="${ARTIFACT_BASE_DIR_MAIN}"; fi
   [ "X$TYPE" = "X" ] && TYPE="-e"
   for i in 1 2 3 4 5 6 7 8 9 ;  do
-    RES=$(ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "echo JA_RUN${i}=CONN && test ${TYPE} ${AFDIR}/${SRC} || echo JA_RUN${i}=FAIL" | grep "^JA_RUN${i}=" | wc -l)
+    RES=$(timeout ${DEFAULT_TIMEOUT} ssh $SSH_OPTS ${ARTIFACTS_MACHINE} "echo JA_RUN${i}=CONN && test ${TYPE} ${AFDIR}/${SRC} || echo JA_RUN${i}=FAIL" | grep "^JA_RUN${i}=" | wc -l)
     if [ $RES -eq 1 ] ; then
       echo "JA_STATUS=OK"
       return 0

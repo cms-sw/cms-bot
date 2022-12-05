@@ -8,10 +8,10 @@ on:
       - master
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ '2.7.17', '3.6.15' ]
+        python-version: [ '2.x', '3.x' ]
     name: Python ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2

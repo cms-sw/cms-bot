@@ -99,6 +99,14 @@
       "start_date": 1600905600
     }
   ], 
+  "a-kapoor": [
+    {
+      "category": [
+        "egamma-pog"
+      ], 
+      "start_date": 1670112000
+    }
+  ], 
   "aandvalenzuela": [
     {
       "category": [
@@ -1230,6 +1238,7 @@
       "category": [
         "egamma-pog"
       ], 
+      "end_date": 1670112000, 
       "start_date": 1632787200
     }
   ], 

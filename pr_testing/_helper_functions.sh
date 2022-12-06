@@ -97,14 +97,14 @@ function prepare_upload_results (){
     if [ -d "${LOG_SRC}" ] ; then
       [ -d ${WORKSPACE}/${BUILD_DIR}/DEPS ] && mv ${WORKSPACE}/${BUILD_DIR}/DEPS ${WORKSPACE}/upload/DEPS
       pushd ${LOG_SRC}
-        for log in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|^./||') ; do
-          dir=$(dirname $log)
-          mkdir -p ${LOCAL_LOGDIR}/${dir}
-          mv $log ${LOCAL_LOGDIR}/${dir}/
-          [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
+        for dir in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|/log$||') ; do
+          xdir=externals/$(echo $dir | cut -d/ -f3-)
+          mkdir -p ${LOCAL_LOGDIR}/${xdir}
+          mv ${dir}/log ${LOCAL_LOGDIR}/${xdir}/
+          [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${xdir}/
           json=$(basename $(dirname $dir)).json
-          [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${dir}/
-          [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${dir}/
+          [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${xdir}/
+          [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${xdir}/
         done
       popd
     fi

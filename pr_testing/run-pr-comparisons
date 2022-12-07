@@ -108,6 +108,7 @@ cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPA
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
 
 #Temp fix for RelVal long vs short names: Remove it once we have PRs using IBs with short relval names
+if [ "${$CMSSW_RELEASE_BASE}" != "" ] ; then
 MATRIX_READER="src/Configuration/PyReleaseValidation/python/MatrixReader.py"
 if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>&1 ; then
   #Release is still using long relval names
@@ -132,6 +133,7 @@ if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>
       done
     fi
   fi
+fi
 fi
 
 cat $WORKSPACE/$MAPPING_FILE

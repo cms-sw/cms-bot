@@ -122,7 +122,7 @@ if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>
         short_name=$(echo $wf_dir | cut -d_ -f2-)
         long_name=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")
         nwf_dir="${wf}_${long_name}"
-        if [ "X${long_name}" != "X${short_name}" ], then
+        if [ "X${long_name}" != "X${short_name}" ]; then
             mv $WORKSPACE/data/PR-${PR_NUM}/${wf_dir} $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}
         fi
         #create symlinks for log files

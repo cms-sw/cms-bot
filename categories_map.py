@@ -529,6 +529,7 @@ CMSSW_CATEGORIES = {
     "DQM/RPCMonitorDigi",
     "DQM/SiOuterTracker",
     "DQM/SiPixelCommon",
+    "DQM/SiPixelHeterogeneous",
     "DQM/SiPixelHistoricInfoClient",
     "DQM/SiPixelMonitorClient",
     "DQM/SiPixelMonitorCluster",

@@ -542,6 +542,7 @@ CMSSW_CATEGORIES = {
     "DQM/SiPixelPhase1Config",
     "DQM/SiPixelPhase1DeadFEDChannels",
     "DQM/SiPixelPhase1Digis",
+    "DQM/SiPixelPhase1Heterogeneous",
     "DQM/SiPixelPhase1RawData",
     "DQM/SiPixelPhase1RecHits",
     "DQM/SiPixelPhase1Summary",

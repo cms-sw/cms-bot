@@ -15,14 +15,17 @@ for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
   for WORKFLOW in `echo $WORKFLOWS | sed 's|-l ||;s|,| |g;s|-i all||'`;do
-    if [ $(runTheMatrix.py -n | grep "^$WORKFLOW " | wc -l) -eq 0 ]; then
-       echo "Workflow $WORKFLOW is not defined in this IB release"
-       continue
-    fi
     if [[ $WORKFLOWS = *all* ]];  then
         WF="-i all -l $WORKFLOW"
-    else
+    elif [ $(runTheMatrix.py -n | grep "^$WORKFLOW " | wc -l) -eq 0 ]; then
+      if [ $(runTheMatrix.py -w upgrade -n | grep "^$WORKFLOW " | wc -l) -eq 0 ]; then
+        echo "Workflow $WORKFLOW is not defined in this IB release"
+        continue
+      else
         WF="-w upgrade -l $WORKFLOW"
+      fi
+    else
+      WF="-l $WORKFLOW"
     fi
     if [ "$prof" = "mp" ];then
       runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --no_exec" 2>&1 | tee  ./runTheMatrix.log

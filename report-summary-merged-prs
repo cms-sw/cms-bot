@@ -1551,10 +1551,11 @@ if __name__ == "__main__":
     SP_REL_REGEX = "|".join(SPECIAL_RELEASES)
     REQUESTED_COMPARISONS = [('%s_%s..%s' % (rq, START_DATE, rq)) for rq in RELEASE_QUEUES]
 
-    AFS_IB_INSTALLATION = "/cvmfs/cms-ib.cern.ch/week*/*/cms"
     AFS_INSTALLATION = "/cvmfs/cms.cern.ch/*/cms"
-    installedPaths = [x for x in glob(AFS_IB_INSTALLATION + "/cmssw/*")]
-    installedPaths += [x for x in glob(AFS_IB_INSTALLATION + "/cmssw-patch/*")]
+    installedPaths = []
+    for ib_path in [ "/cvmfs/cms-ib.cern.ch", "/cvmfs/cms-ib.cern.ch/sw/*"]:
+        installedPaths += [x for x in glob(ib_path + "/week*/*/cms/cmssw/*")]
+        installedPaths += [x for x in glob(ib_path + "/week*/*/cms/cmssw-patch/*")]
     installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw/*")]
     installedPaths += [x for x in glob(AFS_INSTALLATION + "/cmssw-patch/*")]
 

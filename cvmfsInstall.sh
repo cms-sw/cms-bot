@@ -1,7 +1,14 @@
 #!/bin/sh -ex
 source $(dirname $0)/cmsrep.sh
 CMS_BOT_DIR=$(dirname $(realpath $0))
-export BASEDIR=/cvmfs/$CVMFS_REPOSITORY
+source ${CMS_BOT_DIR}/cvmfs_deployment/utils.sh
+CVMFS_INSTALL=false
+[ "${BASEDIR}" != "" ] || BASEDIR="${CVMFS_BASEDIR}"
+case ${BASEDIR} in
+  /cvmfs/* ) CVMFS_INSTALL=true ;;
+esac
+${CVMFS_INSTALL}               || export USE_CVMFS_GW="false"
+export BASEDIR
 export THISDIR=$(/bin/pwd -P)
 export LC_ALL=C
 export LC_CTYPE=C
@@ -12,18 +19,30 @@ CMS_WEEK=$2
 RELEASE_NAME=$3
 WORKSPACE=$4
 DEV=$5
-USE_DEV=""
 PROOTDIR=$6
 TEST_INSTALL=$7
 NUM_WEEKS=$8
 REINSTALL_COMMON=$9
 INSTALL_PACKAGES="${10}"
+
+CVMFS_PUBLISH_PATH=""
+USE_DEV=""
+export PROOTDIR
+COMMON_BASEDIR="${BASEDIR}"
+${CVMFS_INSTALL} && COMMON_BASEDIR="${CVMFS_BASEDIR}"
+[ "$PROOTDIR" != "" ] || PROOTDIR=${CVMFS_BASEDIR}/proot
+if ${USE_CVMFS_GW} ; then
+  CMS_ARCH=$(echo ${ARCHITECTURE} | cut -d_ -f2)
+  [ "${CMS_ARCH}" = "amd64" ] && CMS_ARCH="x86_64"
+  CVMFS_PUBLISH_PATH="/sw/${CMS_ARCH}"
+  export BASEDIR="${BASEDIR}${CVMFS_PUBLISH_PATH}"
+fi
 if [ "$REINSTALL_COMMON" = "true" ] ; then
   REINSTALL_COMMON="--reinstall"
 else
   REINSTALL_COMMON=""
 fi
-if [ "X$NUM_WEEKS" = "X" ] ; then NUM_WEEKS=2; fi
+[ "X$NUM_WEEKS" != "X" ] || NUM_WEEKS=2
 if [ "X$DEV" = "Xtrue" ] ; then
   DEV="-dev"
   USE_DEV="--use-dev"
@@ -31,11 +50,7 @@ else
   DEV=""
 fi
 
-if [ "X$PROOTDIR" = "X" ] ; then
-  PROOTDIR=${BASEDIR}/proot
-fi
-
-cd $WORKSPACE/cms-bot
+cd ${CMS_BOT_DIR}
 [ -f ib-weeks ] || exit 1
 
 # The repositories we need to install are those for which we find the
@@ -43,45 +58,9 @@ cd $WORKSPACE/cms-bot
 REPOSITORIES=`tail -${NUM_WEEKS} ib-weeks | sed -e's/-\([0-9]\)$/-0\1/' | sort -r`
 
 echo $REPOSITORIES
-# Prepare the cvmfs repository in read/write mode
-cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
-# Check if the transaction really happened
-if [ `touch $BASEDIR/is_writable 2> /dev/null; echo "$?"` -eq 0 ]; then
-  rm $BASEDIR/is_writable
-else
-  echo CVMFS filesystem is not writable. Aborting.
-  echo " " | mail -s "$CVMFS_REPOSITORY cannot be set to transaction" cms-sdt-logs@cern.ch
-  exit 1
-fi
-
-export PROOTDIR
-if [ $(echo $PROOTDIR | grep $BASEDIR | wc -l) -gt 0 ] ; then
-  [ -d $PROOTDIR ] || mkdir -p $PROOTDIR
-  PROOT_URL="https://cmssdt.cern.ch/SDT/proot/"
-  for x in proot qemu-aarch64 qemu-ppc64le ; do
-    if [ ! -x $PROOTDIR/$x ] ; then
-      rm -rf $PROOTDIR/$x
-      wget -q -O $PROOTDIR/$x "${PROOT_URL}/${x}"
-      chmod +x $PROOTDIR/$x
-    fi
-  done
-fi
+$CVMFS_INSTALL && cvmfs_transaction ${CVMFS_PUBLISH_PATH}
 
 hostname > $BASEDIR/stratum0
-if [ -d $BASEDIR/SITECONF ] ; then
-  pushd $BASEDIR/SITECONF
-    git pull --rebase || true
-  popd
-else
-  git clone https://github.com/cms-sw/siteconf.git $BASEDIR/SITECONF
-fi
-
-# Create Nested Catalogs file
-if [ -e $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh ] ; then
-  $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab.sh  > $BASEDIR/.cvmfsdirtab
-elif [ -f $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab ] ; then
-  cp -f $WORKSPACE/cms-bot/cvmfs/${CVMFS_REPOSITORY}/cvmfsdirtab $BASEDIR/.cvmfsdirtab
-fi
 
 #Recreate the links
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
@@ -93,8 +72,10 @@ for t in nweek- ; do
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
-      time cvmfs_server publish
-      cvmfs_server transaction || ((cvmfs_server abort -f || rm -fR /var/spool/cvmfs/$CVMFS_REPOSITORY/is_publishing.lock) && cvmfs_server transaction)
+      if $CVMFS_INSTALL ; then
+        time cvmfs_server publish
+        cvmfs_transaction ${CVMFS_PUBLISH_PATH}
+      fi
     fi
   done
 done
@@ -123,6 +104,7 @@ for REPOSITORY in $REPOSITORIES; do
       rm -f $LOGFILE
     fi
     # If the bootstrap log for the current week is not their rebootstrap the area.
+    XPKGS="gcc-fixincludes"
     if [ ! -f $LOGFILE ]; then
       rm -rf $WORKDIR/$SCRAM_ARCH
       rm -rf $WORKDIR/bootstraptmp
@@ -134,14 +116,16 @@ for REPOSITORY in $REPOSITORIES; do
         cat ${LOGFILE}
         exit 1
       fi
-      INSTALL_PACKAGES="$(${CMSPKG} search SCRAMV1        | sed 's| .*||' | grep 'SCRAMV1'        | sort | tail -1) ${INSTALL_PACKAGES}"
-      INSTALL_PACKAGES="$(${CMSPKG} search cmssw-wm-tools | sed 's| .*||' | grep 'cmssw-wm-tools' | sort | tail -1) ${INSTALL_PACKAGES}"
+      XPKGS="${XPKGS} SCRAMV1 SCRAMV2 cmssw-wm-tools cms-git-tools crab cmssw-tool-conf"
     elif [ $(grep "server  *${CMSREP_IB_SERVER} " $WORKDIR/common/cmspkg | wc -l) -eq 0 ] ; then
       sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi
-    INSTALL_PACKAGES="$(${CMSPKG} search gcc-fixincludes | sed 's| .*||' | grep 'gcc-fixincludes' | sort | tail -1) ${INSTALL_PACKAGES}"
-    ln -sfT ../SITECONF $WORKDIR/SITECONF
-    $CMSPKG -y  --upgrade-packages upgrade
+    $CMSPKG -y --upgrade-packages upgrade
+    ${CMSPKG} update
+    for pkg in ${XPKGS} ; do
+      INSTALL_PACKAGES="$(${CMSPKG} --build-order search +${pkg}+ | grep ${pkg} | sed 's| .*||' | head -1) ${INSTALL_PACKAGES}"
+    done
+    ln -sfT ${COMMON_BASEDIR}/SITECONF $WORKDIR/SITECONF
     if [ $(ls -rtd $WORKDIR/${SCRAM_ARCH}/external/rpm/4.* | tail -1 | sed 's|.*/external/rpm/4.||;s|\..*||') -lt 15 ] ; then
       RPM_CONFIG=$WORKDIR/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG
       if [ ! -e $RPM_CONFIG ] ; then
@@ -150,7 +134,6 @@ for REPOSITORY in $REPOSITORIES; do
       fi
     fi
     (
-      ${CMSPKG} update
       ${CMSPKG} -f install ${INSTALL_PACKAGES}
       if [ "X$RELEASE_NAME" != "X" ] ; then
         x="cms+cmssw-ib+$RELEASE_NAME"
@@ -195,8 +178,10 @@ for t in nweek- ; do
   done
 done
 rm -f $BASEDIR/latest
-ln -s $(grep "^nweek-" $WORKSPACE/cms-bot/ib-weeks | tail -1) $BASEDIR/latest
+ln -s $(grep "^nweek-" ${CMS_BOT_DIR}/ib-weeks | tail -1) $BASEDIR/latest
 
-# Write everything in the repository
-echo "Publishing started" `date`
-time cvmfs_server publish
+if $CVMFS_INSTALL ; then
+  # Write everything in the repository
+  echo "Publishing started" `date`
+  time cvmfs_server publish
+fi

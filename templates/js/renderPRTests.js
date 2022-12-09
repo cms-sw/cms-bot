@@ -45,6 +45,11 @@ getResultRow = function( resultsDict , resultsKey ){
     column2Label = 'See High Stats Comparison Results'
     linkURL = BASE_COMPARISONS_HIGH_STATS_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
 
+  }else if( resultsKey == COMPARISON_NANO ){
+
+    column2Label = 'See Nano Comparison Results'
+    linkURL = BASE_COMPARISONS_NANO_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
+
   }
 
 
@@ -212,6 +217,7 @@ PR_NUMBERS_KEY = 'PR_NUMBERS';
 COMPARISON_KEY = 'COMPARISON';
 COMPARISON_GPU_KEY = 'COMPARISON_GPU';
 COMPARISON_HIGH_STATS = 'COMPARISON_HIGH_STATS';
+COMPARISON_NANO = 'COMPARISON_NANO';
 BASE_IB_URL = '/SDT/html/showIB.html';
 COMPARISON_IB_KEY = "COMPARISON_IB"
 IB_PAGE_V2 = '/SDT/html/cmssdt-ib/#/ib/';
@@ -224,4 +230,5 @@ LOCATIONS = {};
 BASE_COMPARISONS_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisons/';
 BASE_COMPARISONS_GPU_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisonsGPU/';
 BASE_COMPARISONS_HIGH_STATS_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisonsHIGH_STATS/'
+BASE_COMPARISONS_NANO_URL = '/SDT/@JENKINS_PREFIX@-artifacts/baseLineComparisonsNANO/'
 

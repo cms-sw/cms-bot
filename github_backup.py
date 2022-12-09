@@ -35,16 +35,22 @@ def process_comment(body, repo):
       comment = "%s%s" % (m.group(1), m.group(3))
       url = m.group(2)
       if ('"' in url) or ("'" in url): continue
+      if url.startswith('data:'): continue
       ifile = "%s/%s/images/%s" % (backup_store, repo, url.split("://")[-1])
       ifile = re.sub("[^a-zA-Z0-9/._-]", "", ifile)
       if exists(ifile): continue
       getstatusoutput("mkdir -p %s" % dirname(ifile))
-      e, o = getstatusoutput("curl -L -s '%s' > %s.tmp && mv %s.tmp %s" % (url,ifile,ifile,ifile))
-      if e:
-        print("    ERROR:",o)
+      try:
+        cmd = "curl -L -s '%s' > %s.tmp && mv %s.tmp %s" % (url,ifile,ifile,ifile)
+        e, o = getstatusoutput(cmd)
+        if e:
+          print("    ERROR:",o)
+          err = 1
+        else:
+          print( "    Download user content: ",url)
+      except:
+        print("ERROR: Runing ",cmd)
         err = 1
-      else:
-        print( "    Download user content: ",url)
   return err
 
 def process_issue(repo, issue, data):

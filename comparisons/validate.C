@@ -3,6 +3,7 @@
 #include "TChain.h"
 #include "TCanvas.h"
 #include "TString.h"
+#include "TRegexp.h"
 #include "TFile.h"
 #include "TROOT.h"
 #include "TH1F.h"
@@ -29,16 +30,12 @@ int Nmax=0;
 TString recoS="RECO";
 TString refrecoS="RECO";
 
-void print( TString step){
-  //  gROOT->ProcessLine(".! mkdir -p "+step);
+void print(){ // TString step){
   const TSeqCollection* l=gROOT->GetListOfCanvases();
   for (int i=0 ; i!=l->GetSize();++i){
-    //    TString n=step+"/"+step+l->At(i)->GetName()+".gif";
-    //    TString n=step+"/"+step+l->At(i)->GetName()+".png";
-    TString n=step+l->At(i)->GetName()+".png";
+    // just use the name of the canvas, nothing else.
+    TString n = TString(l->At(i)->GetName())+".png";
     l->At(i)->Print(n);
-    //TString n2=step+"/"+step+l->At(i)->GetName()+".eps";
-    //l->At(i)->Print(n2);
   }
 
 }
@@ -58,6 +55,19 @@ bool stepContainsNU(const TString& s, TString v){
   } else {
     return s.Contains(v);
   }
+}
+
+std::vector<TString>  getBranchNames(const TString& bPattern){
+  TObjArray * all_branches = refEvents->GetListOfBranches();
+  TRegexp exp(bPattern);
+  std::vector<TString> branches;
+  branches.reserve(all_branches->GetSize());
+  for (int i=0 ; i!=all_branches->GetSize() ; ++i){
+    TString branch_name(all_branches->At(i)->GetName());
+    if (branch_name(exp).Length())
+      branches.push_back(branch_name);
+  }
+  return branches;
 }
 
 bool checkBranchAND(const TString& b, bool verboseFalse = false){
@@ -151,8 +161,9 @@ PlotStats plotvar(TString v,TString cut="", bool tryCatch = false){
   gStyle->SetTitleY(1);
   gStyle->SetTitleW(1);
   gStyle->SetTitleH(0.06);
-  TGaxis::SetExponentOffset(-0.052,-0.060,"x");
-  TGaxis::SetExponentOffset(-0.052,0.010,"y");
+  // too bad for good style
+  //TGaxis::SetExponentOffset(-0.052,-0.060,"x");
+  //TGaxis::SetExponentOffset(-0.052,0.010,"y");
 
   res.ref_entries = -1;
   res.new_entries = -1;
@@ -1475,7 +1486,10 @@ void evtPlanes(const TString& bName, bool detailByPlane = false){
   }
 }
 
-void flatTable(const TString& shortName){
+void flatTable(const TString& branchName){
+  plotvar(branchName, "", true);
+}
+void flatEDMTable(const TString& shortName){
   const TString bObj = "nanoaodFlatTable_"+shortName+"_"+recoS+".obj";
   if (! checkBranchOR(bObj, true)) return;
 
@@ -1528,7 +1542,7 @@ void readFileList(TString file,TChain * ch){
   }
 }
 
-void validateLumi(TString step, TString file, TString refFile, TString r="RECO", bool SHOW=false, TString sr="")
+void validateLumi(TString file, TString refFile, TString r="RECO", bool SHOW=false, TString sr="")
 {
   if (sr=="") sr=r;
 
@@ -1642,92 +1656,32 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
   std::cout<<"Start making plots for Events with "<<Nnew<<" events and refEvents with "<<Nref<<" events ==> check  "<<Nmax<<std::endl;
 
   if (!stepContainsNU(step, "hlt")){
-
-    //Check if it's a NANOEDM
-    if (checkBranchAND("nanoaodFlatTable_muonTable__"+recoS+".")){
-      const int nTabs = 68;
-      TString tNames[nTabs] = {
-        "btagWeightTable_",                      //0
-        "caloMetTable_",                         //1
-        "electronMCTable_",                      //2
-        "electronTable_",                        //3
-        "fatJetTable_",                          //4
-        "genJetAK8FlavourTable_",                //5
-        "genJetAK8Table_",                       //6
-        "genJetFlavourTable_",                   //7
-        "genJetTable_",                          //8
-        "genParticleTable_",                     //9
-        "genSubJetAK8Table_",                    //10
-        "genTable_",                             //11
-        "genVisTauTable_",                       //12
-        "genWeightsTable_",                      //13
-        "genWeightsTable_LHENamed",              //14
-        "genWeightsTable_LHEPdf",                //15
-        "genWeightsTable_LHEScale",              //16
-        "genWeightsTable_PS",                    //17
-        "isoTrackTable_",                        //18
-        "jetMCTable_",                           //19
-        "jetTable_",                             //20
-        "lheInfoTable_LHE",                      //21
-        "lheInfoTable_LHEPart",                  //22
-        "metMCTable_",                           //23
-        "metTable_",                             //24
-        "muonMCTable_",                          //25
-        "muonTable_",                            //26
-        "photonMCTable_",                        //27
-        "photonTable_",                          //28
-        "puTable_",                              //29
-        "puppiMetTable_",                        //30
-        "rawMetTable_",                          //31
-        "rhoTable_",                             //32
-        "rivetLeptonTable_",                     //33
-        "rivetMetTable_",                        //34
-        "saJetTable_",                           //35
-        "saTable_",                              //36
-        "simpleCleanerTable_electrons",          //37
-        "simpleCleanerTable_jets",               //38
-        "simpleCleanerTable_muons",              //39
-        "simpleCleanerTable_photons",            //40
-        "simpleCleanerTable_taus",               //41
-        "subJetTable_",                          //42
-        "svCandidateTable_",                     //43
-        "tauMCTable_",                           //44
-        "tauTable_",                             //45
-        "tkMetTable_",                           //46
-        "triggerObjectTable_",                   //47
-        "ttbarCategoryTable_",                   //48
-        "vertexTable_otherPVs",                  //49
-        "vertexTable_pv",                        //50
-        "vertexTable_svs",                       //51
-        //additions from comparisons-24Jun2020
-        "chsMetTable_",                          //52
-        "corrT1METJetTable_",                    //53
-        "deepMetResolutionTuneTable_",           //54
-        "deepMetResponseTuneTable_",             //55
-        "metFixEE2017Table_",                    //56
-        "rawPuppiMetTable_",                     //57
-        //
-        "subjetMCTable_",                        //58
-        "fatJetMCTable_",                        //59
-        "l1PreFiringEventWeightTable_",          //60
-        //
-        "HTXSCategoryTable_",                    //61
-        "extraFlagsTable_",                      //62
-        "fsrTable_",                             //63
-        "genWeightsTable_LHEReweighting",        //64
-        "rivetPhotonTable_",                     //65
-        //
-        "beamSpotTable_",                        //66
-        "genProtonTable_",                       //67
-      };
-      for (int iT = 0; iT < nTabs; ++iT){
-        flatTable(tNames[iT]);
+    if (recoS.Contains("NANO")){
+	std::vector<TString> edmBranches = getBranchNames("nanoaodFlatTable_.*__"+recoS);
+	//Check if it's a NANOEDM
+	if (edmBranches.size()){
+	  for (uint iT = 0; iT < edmBranches.size() ; ++iT){
+	    TString shortName = ((*edmBranches[iT].Tokenize("_"))[1])->GetName();
+	    shortName += "_";
+	    if (!edmBranches[iT].Contains("__"))
+	      shortName += ((*edmBranches[iT].Tokenize("_"))[2])->GetName();
+	    std::cout<< "this is a shortname"<< shortName <<std::endl;
+	    flatEDMTable( shortName);
+	  }
+	  std::cout<<"Done comparing nano-EDM"<<std::endl;
+	  return;
+	}else{
+	  //NANO was asked for, but no EDM branches. plot nano branches
+	  std::vector<TString> nanoBranches = getBranchNames(".*");
+	  for (uint iT = 0; iT <nanoBranches.size() ; ++iT){
+	    flatTable( nanoBranches[iT] );
+	  }
+	  if (nanoBranches.size()!=0){
+	    std::cout<<"Done comparing pure-ROOT nano"<<std::endl;
+	    return;
+	  }
+	}
       }
-
-      std::cout<<"Done comparing nano-EDM"<<std::endl;
-      return;
-    }
-
 
     if ((stepContainsNU(step, "all") || stepContainsNU(step, "error"))){
       tbr="edmErrorSummaryEntrys_logErrorHarvester__"+recoS+".obj";
@@ -2030,7 +1984,11 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
         plotvar(tbr+"._sets.data.ootIndex()");
       }
 
-      for (const TString& flav : {"totemTiming", "diamondSampic"} ) {
+      std::vector<TString> flavors(2);
+      flavors[0]="totemTiming";
+      flavors[1]="diamondSampic";
+      for (size_t i = 0 ; i!= flavors.size() ; ++i){
+	TString & flav = flavors[i];
         tbr="TotemTimingLocalTrackedmDetSetVector_"+flav+"LocalTracks__"+recoS+".obj";
         if (checkBranchOR(tbr, true)){
           plotvar(tbr+"._sets@.size()");
@@ -2892,8 +2850,13 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
       packedCand("hiPixelTracks_");
       packedCand("packedPFCandidatesCleaned_");
 
-      for (const TString& inst : {"pfCandidatesTMOneStationTight", "pfCandidatesAllTrackerMuons", 
-                                 "lostTracksTMOneStationTight", "lostTracksAllTrackerMuons"} ) {
+      std::vector<TString> instances(4);
+      instances[0]="pfCandidatesTMOneStationTight";
+      instances[1]="pfCandidatesAllTrackerMuons";
+      instances[2]="lostTracksTMOneStationTight";
+      instances[3]="lostTracksAllTrackerMuons";
+      for (size_t i = 0 ; i!= instances.size(); ++i){
+	TString & inst = instances[i];
         tbr="patPackedCandidatesRefs_packedCandidateMuonID_"+inst+"_"+recoS+".obj";
         if (checkBranchOR(tbr, true)){
           plotvar(tbr+"@.size()");
@@ -3930,8 +3893,8 @@ void validateEvents(TString step, TString file, TString refFile, TString r="RECO
 
 void validate(TString step, TString file, TString refFile, TString r="RECO", bool SHOW=false, TString sr=""){
   validateEvents(step, file, refFile, r, SHOW, sr);
-  validateLumi(step, file, refFile, r, SHOW, sr);
-  print(step);
+  validateLumi(file, refFile, r, SHOW, sr);
+  print();
 
   std::cout<<"DONE calling validate"<<std::endl;
 }

@@ -17,7 +17,7 @@ pushd update_cmssw_l2
     commit=$(echo $data | sed 's|:.*||')
     cur_time=$(echo $data | sed 's|.*:||')
     let commit_cnt=${commit_cnt}+1
-    git cherry-pick $commit
+    git cherry-pick --keep-redundant-commits --allow-empty-message --allow-empty $commit
     if [ $(git diff --name-only HEAD^ | grep "^categories.py" | wc -l) -gt 0 ] ; then
       [ $(grep $commit ${sdir}/commit.txt | wc -l) -eq 0 ] || continue
       new_commit="${commit}"

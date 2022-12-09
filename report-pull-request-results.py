@@ -23,7 +23,8 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 #-----------------------------------------------------------------------------------
 parser = OptionParser(usage="usage: %prog ACTION [options] \n ACTION = PARSE_UNIT_TESTS_FAIL | PARSE_BUILD_FAIL "
                             "| PARSE_MATRIX_FAIL | COMPARISON_READY | GET_BASE_MESSAGE | PARSE_EXTERNAL_BUILD_FAIL "
-                            "| PARSE_ADDON_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET | PYTHON3_FAIL | MERGE_COMMITS")
+                            "| PARSE_ADDON_FAIL | PARSE_CRAB_FAIL | PARSE_CLANG_BUILD_FAIL | MATERIAL_BUDGET "
+                            "| PYTHON3_FAIL | MERGE_COMMITS")
 
 parser.add_option("-f", "--unit-tests-file", action="store", type="string", dest="unit_tests_file", help="results file to analyse", default='None')
 parser.add_option("--f2", action="store", type="string", dest="results_file2", help="second results file to analyse" )
@@ -100,6 +101,7 @@ def parse_workflow_info( parts, relval_dir ):
 def read_matrix_log_file(matrix_log):
   workflows_with_error = [ ]
   relval_dir = join(dirname (matrix_log), "runTheMatrix-results")
+  common_errors = []
   for line in openlog( matrix_log):
     line = line.strip()
     if 'ERROR executing' in line:
@@ -116,11 +118,15 @@ def read_matrix_log_file(matrix_log):
       workflow_info[ 'number' ] = parts [0]
       workflow_info[ 'message' ] = "DAS Error"
       workflows_with_error.append( workflow_info )
+    elif 'ValueError: Undefined' in line:
+      common_errors.append(line+"\n")
 
   # check if it was timeout
   message = "\n## RelVals\n\n"
   if 'ERROR TIMEOUT' in line:
     message +=  'The relvals timed out after 4 hours.\n'
+  if common_errors:
+    message +=  ''.join(common_errors)
   cnt = 0
   max_show = 3
   extra_msg = False
@@ -144,16 +150,21 @@ def read_matrix_log_file(matrix_log):
   send_message_pr(message)
 
 #
-# reads the addon  tests log file and gets the tests that failed
+# reads the addon tests log file and gets the tests that failed
 #
 def cmd_to_addon_test(command, addon_dir):
-  commandbase = command.replace(' ','_').replace('/','_')
-  for nlen in [150, 160]:
-    logfile='%s.log' % commandbase[:nlen].replace("'",'').replace('"','').replace('../','')
+  try:
+    cmdMatch = re.match("^\[(.+):(\d+)\] +(.*)", command)
+    addon_subdir = cmdMatch.group(1)
+    logfile = 'step%s.log' % cmdMatch.group(2)
+    e, o = run_cmd('ls -d %s/%s/%s 2>/dev/null | tail -1' % (addon_dir, addon_subdir, logfile))
+  except:
+    commandbase = command.replace(' ','_').replace('/','_')
+    logfile='%s.log' % commandbase[:150].replace("'",'').replace('"','').replace('../','')
     e, o = run_cmd("ls -d %s/*/%s 2>/dev/null | tail -1" % (addon_dir, logfile))
-    if (not e) and o:
-      return (o.split("/")[-2], get_wf_error_msg(o, False).strip())
-    print("ERROR: %s -> %s" % (command, o))
+  if (not e) and o:
+    return (o.split("/")[-2], get_wf_error_msg(o, False).strip())
+  print("ERROR: %s -> %s" % (command, o))
   return ("", "")
 
 def read_addon_log_file(unit_tests_file):
@@ -169,12 +180,9 @@ def read_addon_log_file(unit_tests_file):
       tname, err = cmd_to_addon_test(line.split(': FAILED -')[0].strip(), addon_dir)
       if not tname: tname = "unknown"
       else: tname = "[%s](%s/addOnTests/%s)" % (tname, options.report_url, tname)
-      if cnt<=max_show:
+      if cnt <= max_show:
         if err: line = err
-        if len(line.split('\n'))>1:
-          message += "- "+ tname + '\n```\n' + line + '\n```\n'
-        else:
-          message += "- "+ tname + '```' + line + '```\n'
+        message += "- "+ tname + '\n```\n' + line + '\n```\n'
       else:
         if not extra_msg:
           extra_msg = True

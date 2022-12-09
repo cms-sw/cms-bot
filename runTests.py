@@ -114,9 +114,9 @@ class UnitTester(IBThreadBase):
             print('unitTest> Skipping unit tests for MacOS')
             return
         if (self.xType == 'GPU') or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
-            cmd = "cd " + self.startDir + "; find .SCRAM/" + arch + "/BuildFiles/src -name BuildFile.xml | xargs grep '\"cuda\"' | cut -d/ -f5,6 | sort | uniq > cuda_pkgs.txt; "
-            cmd = cmd + " cat  cuda_pkgs.txt; mv src src.full;"
-            cmd = cmd + " for p in $(cat cuda_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram b clean; scram build -r echo_CXX"
+            cmd = "cd " + self.startDir + "; find .SCRAM/" + arch + "/BuildFiles/src -name BuildFile.xml | xargs grep -E '\"(cuda|alpaka)\"' | cut -d/ -f5,6 | sort | uniq > gpu_pkgs.txt; "
+            cmd = cmd + " cat  gpu_pkgs.txt; mv src src.full;"
+            cmd = cmd + " for p in $(cat pgu_pkgs.txt); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram b clean; scram build -r echo_CXX"
             ret = runCmd(cmd)
             if ret != 0:
                 print("ERROR when getting GPU unit-tests sources: cmd returned " + str(ret))

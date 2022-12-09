@@ -80,6 +80,8 @@ SLAVE_LABELS="user-$(whoami) kernel-$(uname -r) hostname-$(hostname -s)"
 if [ $(echo $HOME | grep '^/afs/' |wc -l) -gt 0 ] ; then SLAVE_LABELS="${SLAVE_LABELS} home-afs"; fi
 arch=$(uname -m)
 SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
+ls /cvmfs/cms-ib.cern.ch >/dev/null 2>&1 && SLAVE_LABELS="${SLAVE_LABELS} FS-cvmfs"
+ls /afs/cern.ch          >/dev/null 2>&1 && SLAVE_LABELS="${SLAVE_LABELS} FS-afs"
 HOST_ARCH=""
 if [ "$arch" = "aarch64" ] ; then
   HOST_ARCH=arm$(cat /proc/cpuinfo 2> /dev/null | grep 'CPU architectur' | sed 's|.*: *||' | tail -1)
@@ -90,6 +92,15 @@ elif [ "$arch" = "x86_64" ] ; then
 fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
+
+JAVA_VERSION=$(java -version 2>&1 | grep ' version ' | tr ' ' '\n' | grep '"[1-9]'  | sed 's|"||g' | cut -d. -f1)
+if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
+  echo "DATA_JAVA=/etc/alternatives/jre_11/bin/java"
+  SLAVE_LABELS="${SLAVE_LABELS} java-11"
+else
+  echo "DATA_JAVA=java"
+  SLAVE_LABELS="${SLAVE_LABELS} java-${JAVA_VERSION} java-default"
+fi
 
 #Check for EOS
 [ -e /eos/cms/store ] && SLAVE_LABELS="${SLAVE_LABELS} eos"
@@ -163,7 +174,7 @@ echo "DATA_CPU_VECTOR_SET=${CPU_VECTOR_SET}"SINGULARITY
 for is in ${CPU_VECTOR_SET} ; do SLAVE_LABELS="${SLAVE_LABELS} is-${is}" ; done
 
 if [ -f /proc/driver/nvidia/version ]; then
-  NVIDIA_VERSION=`cat /proc/driver/nvidia/version | sed -ne's/.*Kernel Module *\([0-9.]\+\).*/\1/p'`
+  NVIDIA_VERSION=`cat /proc/driver/nvidia/version | sed -ne's/.*Kernel Module\(\s\s*for\s\s*[^\s]*\|\)\s\s*\([0-9.]\+\).*/\2/p'`
 else 
   # check if a kernel module is available, even if not currently loaded (e.g. for an OPTIMUS system)
   # if there are multiple modules, pick the newest one

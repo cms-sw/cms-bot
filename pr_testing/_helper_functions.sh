@@ -49,7 +49,7 @@ function git_clone_and_merge (){
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH} || git clone git@github.com:${BASE_REPO} -b ${BASE_BRANCH}
         fi
         pushd ${BASE_REPO_NAME}  >/dev/null 2>&1
-            git pull  https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
+            git pull https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
         popd
     popd
 }
@@ -97,14 +97,14 @@ function prepare_upload_results (){
     if [ -d "${LOG_SRC}" ] ; then
       [ -d ${WORKSPACE}/${BUILD_DIR}/DEPS ] && mv ${WORKSPACE}/${BUILD_DIR}/DEPS ${WORKSPACE}/upload/DEPS
       pushd ${LOG_SRC}
-        for log in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|^./||') ; do
-          dir=$(dirname $log)
-          mkdir -p ${LOCAL_LOGDIR}/${dir}
-          mv $log ${LOCAL_LOGDIR}/${dir}/
-          [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${dir}/
+        for dir in $(find . -maxdepth 4 -mindepth 4 -name log -type f | sed 's|/log$||') ; do
+          xdir=externals/$(echo $dir | cut -d/ -f3-)
+          mkdir -p ${LOCAL_LOGDIR}/${xdir}
+          mv ${dir}/log ${LOCAL_LOGDIR}/${xdir}/
+          [ -e ${dir}/src-logs.tgz ] && mv ${dir}/src-logs.tgz ${LOCAL_LOGDIR}/${xdir}/
           json=$(basename $(dirname $dir)).json
-          [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${dir}/
-          [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${dir}/
+          [ -e "${dir}/${json}" ] && mv ${dir}/${json} ${LOCAL_LOGDIR}/${xdir}/
+          [ -e "${dir}/opts.json" ] && mv ${dir}/opts.json ${LOCAL_LOGDIR}/${xdir}/
         done
       popd
     fi

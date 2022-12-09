@@ -51,7 +51,7 @@ CMSSW_QUEUE_PATTERN='CMSSW_[0-9]+_[0-9]+_([A-Z][A-Z0-9]+_|)X'
 CMSSW_PACKAGE_PATTERN='[A-Z][a-zA-Z0-9]+(/[a-zA-Z0-9]+|)'
 ARCH_PATTERN='[a-z0-9]+_[a-z0-9]+_[a-z0-9]+'
 CMSSW_RELEASE_QUEUE_PATTERN=format('(%(cmssw)s|%(arch)s|%(cmssw)s/%(arch)s)', cmssw=CMSSW_QUEUE_PATTERN, arch=ARCH_PATTERN)
-RELVAL_OPTS="^[-][a-zA-Z0-9_.,\s/'-]+$"
+RELVAL_OPTS="[-][a-zA-Z0-9_.,\s/'-]+"
 CLOSE_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)close\s*$',re.I)
 REOPEN_REQUEST=re.compile('^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)(re|)open\s*$',re.I)
 CMS_PR_PATTERN=format('(#[1-9][0-9]*|(%(cmsorgs)s)/+[a-zA-Z0-9_-]+#[1-9][0-9]*|https://+github.com/+(%(cmsorgs)s)/+[a-zA-Z0-9_-]+/+pull/+[1-9][0-9]*)',
@@ -62,6 +62,7 @@ TEST_REGEXP = format("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)test(\s+wo
                      pkg=CMSSW_PACKAGE_PATTERN,
                      release_queue=CMSSW_RELEASE_QUEUE_PATTERN)
 
+AUTO_TEST_REPOS = ["cms-sw/cmssw"]
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile("^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I)
 TEST_WAIT_GAP=720
@@ -69,23 +70,25 @@ ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS ="_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|profiling|none"
+ENABLE_TEST_PTRN = "enable(_test(s|)|)"
+JENKINS_NODES = '[a-zA-Z0-9_|&\s()-]+'
 MULTILINE_COMMENTS_MAP = {
-              "(workflow|relval)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|)":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
-              "(workflow|relval)(s|)_profiling":  [format('^%(workflow)s(\s*,\s*%(workflow)s|)*$', workflow= WF_PATTERN),"PROFILING_WORKFLOWS"],
+              "(workflow|relval)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|)":  [format('%(workflow)s(\s*,\s*%(workflow)s|)*', workflow= WF_PATTERN),       "MATRIX_EXTRAS"],
+              "(workflow|relval)(s|)_profiling":  [format('%(workflow)s(\s*,\s*%(workflow)s|)*', workflow= WF_PATTERN),"PROFILING_WORKFLOWS"],
               "pull_request(s|)": [format('%(cms_pr)s(,%(cms_pr)s)*', cms_pr=CMS_PR_PATTERN ),                  "PULL_REQUESTS"],
               "full_cmssw|full":  ['true|false',                                                                "BUILD_FULL_CMSSW"],
               "disable_poison":   ['true|false',                                                                "DISABLE_POISON"],
               "use_ib_tag":       ['true|false',                                                                "USE_IB_TAG"],
               "dry_run":          ['true|false',                                                                "DRY_RUN"],
-              "jenkins_slave":    ['[a-zA-Z][a-zA-Z0-9_-]+' ,                                                   "RUN_ON_SLAVE"],
+              "jenkins_(slave|node)": [JENKINS_NODES ,                                                          "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],
-              "enable_test(s|)":  [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),                "ENABLE_BOT_TESTS"],
+              ENABLE_TEST_PTRN:   [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=EXTRA_TESTS),                "ENABLE_BOT_TESTS"],
               "ignore_test(s|)":  ["build-warnings|clang-warnings",                                             "IGNORE_BOT_TESTS"],
               "container":        ["[a-zA-Z][a-zA-Z0-9_-]+/[a-zA-Z][a-zA-Z0-9_-]+(:[a-zA-Z0-9_-]+|)",           "DOCKER_IMGAGE"],
-              "cms-addpkg|addpkg":[format('^%(pkg)s(,%(pkg)s)*$', pkg=CMSSW_PACKAGE_PATTERN),                   "EXTRA_CMSSW_PACKAGES"],
+              "cms-addpkg|addpkg":[format('%(pkg)s(,%(pkg)s)*', pkg=CMSSW_PACKAGE_PATTERN),                     "EXTRA_CMSSW_PACKAGES"],
               "build_verbose":    ['true|false',                                                                "BUILD_VERBOSE"],
-              "(workflow|relval)(s|)_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)":         [RELVAL_OPTS,           "EXTRA_MATRIX_ARGS",True],
-              "(workflow|relval)(s|)_command_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)": [RELVAL_OPTS,           "EXTRA_MATRIX_COMMAND_ARGS",True]
+              "(workflow|relval)(s|)_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)":         [RELVAL_OPTS,"EXTRA_MATRIX_ARGS",True],
+              "(workflow|relval)(s|)_command_opt(ion|)(s|)("+EXTRA_RELVALS_TESTS_OPTS+"|_input|)": [RELVAL_OPTS,"EXTRA_MATRIX_COMMAND_ARGS",True]
               }
 
 L2_DATA = {}
@@ -367,11 +370,11 @@ def parse_extra_params(full_comment, repo):
     line_args[1] = line_args[1].strip()
     found=False
     for k, pttrn in MULTILINE_COMMENTS_MAP.items():
-      if not re.match("^"+k+"$", line_args[0], re.I): continue
+      if not re.match("^(%s)$" % k, line_args[0], re.I): continue
       if (len(pttrn)<3) or (not pttrn[2]):
         line_args[1] = line_args[1].replace(' ', '')
       param = pttrn[1]
-      if not re.match(pttrn[0], line_args[1], re.I):
+      if not re.match("^(%s)$" % pttrn[0], line_args[1], re.I):
         xerrors["value"].append(line_args[0])
         found=True
         break
@@ -459,6 +462,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   prId = issue.number
   repository = repo.full_name
   repo_org, repo_name = repository.split("/",1)
+  auto_test_repo = AUTO_TEST_REPOS
+  try:
+    if repo_config.AUTO_TEST_REPOS:
+      auto_test_repo = [repository]
+    else:
+      auto_test_repo = []
+  except: pass
   if not cmsbuild_user: cmsbuild_user=repo_config.CMSBUILD_USER
   print("Working on ",repo.full_name," for PR/Issue ",prId,"with admin user",cmsbuild_user)
   print("Notify User: ",gh_user_char)
@@ -482,9 +492,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   pkg_categories = set([])
   REGEX_TYPE_CMDS="^type\s+(([-+]|)[a-z][a-z0-9-]+)(\s*,\s*([-+]|)[a-z][a-z0-9-]+)*$"
   REGEX_EX_CMDS="^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (repo.full_name)
-  known_ignore_tests=MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
+  known_ignore_tests="%s" % MULTILINE_COMMENTS_MAP["ignore_test(s|)"][0]
   REGEX_EX_IGNORE_CHKS='^ignore\s+((%s)(\s*,\s*(%s))*|none)$' % (known_ignore_tests, known_ignore_tests)
-  REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP["enable_test(s|)"][0]
+  REGEX_EX_ENABLE_TESTS='^enable\s+(%s)$' % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
   L2_DATA = init_l2_data (cms_repo)
   last_commit_date = None
   last_commit_obj = None
@@ -921,7 +931,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if ctype == "+1":
         for sign in selected_cats:
           signatures[sign] = "approved"
-          if test_comment is None:
+          if (test_comment is None) and ((repository in auto_test_repo) or ('*' in auto_test_repo)):
             test_comment = comment
           if sign == "orp": mustClose = False
       elif ctype == "-1":

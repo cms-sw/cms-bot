@@ -15,11 +15,13 @@ export SCRAM_ARCH=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
 export SCRAM_PREFIX_PATH=$WORKSPACE/cms-bot/das-utils
 export LC_ALL=C
+UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
+[ "\${UNAME}" != "amd64" ] || UNAME="x86_64"
 #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
 if [ $(date +%w) -lt 2 ] ; then
-  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | tail -2 | head -1)
+  IB_LAST_WEEK=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -2 | head -1)
 else
-  IB_LAST_WEEK=$(ls -d /cvmfs/cms-ib.cern.ch/nweek-* | tail -1)
+  IB_LAST_WEEK=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -1)
 fi
 source \${IB_LAST_WEEK}/cmsset_default.sh  || true
 scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
@@ -29,8 +31,11 @@ if [ -f config/SCRAM/linkexternal.py ] ; then
 fi
 set +x
 eval \$(scram runtime -sh)
+echo "PATH"
+echo \$PATH | tr ':' '\n'
+echo "LD_LIBRARY_PATH"
+echo \$LD_LIBRARY_PATH | tr ':' '\n'
 set -x
-echo $PATH | tr ':' '\n'
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"
 export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
 export CMSBOT_PYTHON_CMD=\$(which python3 >/dev/null 2>&1 && echo python3 || echo python)

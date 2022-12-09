@@ -13,7 +13,8 @@
           "busError",
           "workspaceFailure"
         ],
-        "maxTime": "1"
+        "maxTime": "1",
+        "retryTime": "5"
       },
       {
         "jobName": "ib-run-igprof",
@@ -37,7 +38,7 @@
           "hudsonConnection",
           "busError"
         ],
-        "maxTime": "16"
+        "maxTime": "18"
       },
       {
         "jobName": "ib-run-qa",
@@ -54,7 +55,7 @@
           "afsFailure",
           "busError"
         ],
-        "maxTime": "12"
+        "maxTime": "14"
       },
       {
         "jobName": "ib-run-pr-relvals",
@@ -100,6 +101,39 @@
         "jobName": "ib-run-static-checks",
         "errorType": [],
         "maxTime": "6"
+      },
+      {
+        "jobName": "auto-forward-port-branch",
+        "errorType": [
+          "gitErrors"
+        ],
+        "maxTime": "1"
+      },
+      {
+        "jobName": "ib-install-cvmfs",
+        "errorType": [
+          "gitErrors"
+        ],
+        "maxTime": "1"
+      },
+      {
+        "jobName": "run-pr-code-checks",
+        "errorType": [
+          "gitErrors"
+        ],
+        "maxTime": "1"
+      },
+      {
+        "jobName": "ib-run-pr-addon",
+        "errorType": [
+          "cvmfsFailure"
+        ],
+        "maxTime": "1"
+      },
+      {
+        "jobName": "ib-run-baseline",
+        "errorType": [],
+        "maxTime": "2"
       }
     ],
     "errorMsg": {
@@ -107,13 +141,13 @@
         "errorStr": [
           "Build timed out"
         ],
-        "action": "retryBuild"
+        "action": "retryNow"
       },
       "hudsonConnection": {
         "errorStr": [
           "Remote call on .* failed. The channel is closing down or has closed down"
         ],
-        "action": "retryBuild",
+        "action": "retryNow",
         "forceRetry": "true",
         "allJobs": "true"
       },
@@ -121,29 +155,40 @@
         "errorStr": [
           "unexpected fault address"
         ],
-        "action": "retryBuild"
+        "action": "retryNow"
       },
       "gitErrors": {
         "errorStr": [
           "fatal: repository .* not found",
           "Tag already exist",
           "Connection to github\\.com closed by remote host.",
-          "Error while downloading sources from github\\.com"
+          "Error while downloading sources from github\\.com",
+          "fatal: remote did not send all necessary objects",
+	  "Empty reply from server",
+	  "The requested URL returned error: 503",
+	  "error: RPC failed",
+	  "fatal: The remote end hung up unexpectedly",
+	  "Broken pipe",
+	  "fatal: fetch-pack",
+	  "transfer closed with outstanding read data remaining",
+	  "fatal: unable to access 'https://github\\.com"
         ],
-        "action": "retryBuild"
+        "action": "retryLate",
+	"allJobs": "true"
       },
       "busError": {
         "errorStr": [
           "Bus error",
           "Transport endpoint is not connected"
         ],
-        "action": "nodeOff"
+        "action": "nodeOff",
+	"allJobs": "true"
       },
       "gridConnection": {
         "errorStr": [
           "Unexpected exception occurred while performing connect-node command"
         ],
-        "action": "retryBuild"
+        "action": "retryNow"
       },
       "afsFailure": {
         "errorStr": [
@@ -160,7 +205,9 @@
       },
       "cvmfsFailure": {
         "errorStr": [
-          "Error: No such directory: /cvmfs/.*cern.ch$"
+          "Error: No such directory: /cvmfs/.*cern.ch$",
+	  "cannot open directory /cvmfs/.*cern.ch:",
+          "cannot access /cvmfs/.*cern.ch"
         ],
         "action": "nodeOff",
         "allJobs": "true"

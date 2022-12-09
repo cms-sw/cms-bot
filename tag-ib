@@ -38,8 +38,13 @@ if __name__ == "__main__":
 
   repo =  gh.get_repo('cms-sw/cmssw')
   commits = repo.get_commits(sha=opts.branch, until=commit_date)
-  sha = commits[0].sha
-  print('Found Commit :',sha,commits[0].author.login,'(',commits[0].author.name,')')
+  last_merge = None
+  for c in commits:
+    if c.parents:
+      last_merge = c
+      break
+  sha = last_merge.sha
+  print('Found Commit :',sha,last_merge.author.login,'(',last_merge.author.name,')')
   if not opts.dryRun:
     try:
       repo.create_git_tag(opts.tag, "Release", sha, "commit")

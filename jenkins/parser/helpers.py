@@ -5,6 +5,9 @@ import re
 
 def grep(filename, pattern, verbose=False):
     """Bash-like grep function. Set verbose=True to print the line match."""
+    if not os.path.exists(filename):
+        # TODO: Make sure parser-info.json is properly cleaned
+        return
     with open(filename, "r") as file:
         for line in file:
             if re.search(pattern, line):
@@ -60,9 +63,12 @@ def append_actions(error_keys, jenkins_errors):
     error_list = []
     # We append the action to perform to the error message
     for ii in error_keys:
-        if jenkins_errors[ii]["action"] == "retryBuild":
+        if jenkins_errors[ii]["action"] == "retryNow":
             for error in jenkins_errors[ii]["errorStr"]:
-                error_list.append(error + " - retryBuild")
+                error_list.append(error + " - retryNow")
+        elif jenkins_errors[ii]["action"] == "retryLate":
+            for error in jenkins_errors[ii]["errorStr"]:
+                error_list.append(error + " - retryLate")
         elif jenkins_errors[ii]["action"] == "nodeOff":
             for error in jenkins_errors[ii]["errorStr"]:
                 error_list.append(error + " - nodeOff")
@@ -83,16 +89,34 @@ def get_finished_builds(job_dir, running_builds):
     ]
 
 
-def get_running_builds(job_dir):
+def get_running_builds(job_dir, last_processed_log):
     """Get list of new running builds that have been started after the last processed log."""
     return [
         dir.name
         for dir in os.scandir(job_dir)
         if dir.name.isdigit()
+        and int(dir.name) > int(last_processed_log)
         and os.path.isfile(
             functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
         )
         and not grep(
+            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
+        )
+    ]
+
+
+def get_missing_builds(job_dir, total_running_builds, last_processed_log):
+    """Get builds that started and finished between iterations."""
+    return [
+        dir.name
+        for dir in os.scandir(job_dir)
+        if dir.name.isdigit()
+        and int(dir.name) > int(last_processed_log)
+        and dir.name not in total_running_builds
+        and os.path.isfile(
+            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
+        )
+        and grep(
             functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
         )
     ]

@@ -43,3 +43,12 @@ done
 # Store information for the monitoring job
 echo "CRAB_BUILD_ID=$BUILD_ID" >> $WORKSPACE/crab/parameters.property
 echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/parameters.property
+echo "RELEASE_FORMAT=$RELEASE_FORMAT" >> $WORKSPACE/crab/parameters.property
+echo "ARCHITECTURE=$ARCHITECTURE" >> $WORKSPACE/crab/parameters.property
+echo "PULL_REQUESTS=$PULL_REQUESTS" >> $WORKSPACE/crab/parameters.property
+echo "PULL_REQUEST=$PULL_REQUEST" >> $WORKSPACE/crab/parameters.property
+echo "PR_RESULT_URL=$PR_RESULT_URL" >> $WORKSPACE/crab/parameters.property
+echo "ENV_LAST_PR_COMMIT=$LAST_PR_COMMIT" >> $WORKSPACE/crab/parameters.property
+echo "CMSSW_QUEUE=$CMSSW_QUEUE" >> $WORKSPACE/crab/parameters.property
+echo "CONTEXT_PREFIX=$CONTEXT_PREFIX" >> $WORKSPACE/crab/parameters.property
+echo "UPLOAD_UNIQ_ID=$UPLOAD_UNIQ_ID" >> $WORKSPACE/crab/parameters.property

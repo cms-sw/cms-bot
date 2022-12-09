@@ -2,6 +2,7 @@
 from __future__ import print_function
 from hashlib import sha1
 import os, json,  datetime, sys
+from glob import glob
 from os.path import exists, dirname, getmtime
 from es_utils import send_payload
 from _py2with3compatibility import run_cmd
@@ -92,6 +93,31 @@ def process_addon_log(logFile):
         except: pass
   send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"addon-dataset")
   transform_and_write_config_file(logFile + "-read_config", config_list)
+  return
+
+def process_hlt_log(logFile):
+  t = getmtime(logFile)
+  timestp = int(t*1000)
+  pathInfo = logFile.split('/')
+  architecture = pathInfo[-2]
+  release = pathInfo[-3]
+  week, rel_sec  = cmsswIB2Week (release)
+  datasets = []
+  payload = {"type" : "hlt"}
+  payload["release"]=release
+  payload["architecture"]=architecture
+  payload["@timestamp"]=timestp
+  payload["name"] = pathInfo[-1][:-4]
+  id = sha1(release + architecture + "hlt" + payload["name"]).hexdigest()
+  with open(logFile) as f:
+    for index, l in enumerate(f):
+      l = l.strip()
+      if " Initiating request to open file " in l:
+        try:
+          rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
+          if (not "file:" in rootfile) and (not rootfile in datasets): datasets.append(rootfile)
+        except: pass
+  send_unittest_dataset(datasets, payload, id, "ib-dataset-"+week,"hlt-dataset")
   return
 
 def process_ib_utests(logFile):
@@ -189,3 +215,14 @@ for logFile in logs:
     run_cmd("cd %s/AO ; zip -r ../addOnTests.zip ." % utdir)
     run_cmd("rm -rf %s/AO" % utdir)
 
+dirs = run_cmd("find /data/sdt/SDT/jenkins-artifacts/HLT-Validation -maxdepth 2 -mindepth 2 -type d")[1].split('\n')
+for d in dirs:
+  flagFile = d + '.checked'
+  if exists(flagFile): continue
+  for logFile in glob(d+"/*.log"):
+    print("Working on ",logFile)
+    try:
+        process_hlt_log(logFile)
+    except Exception as e:
+      print("ERROR:",e)
+  run_cmd("touch %s" % flagFile)

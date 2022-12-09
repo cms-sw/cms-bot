@@ -138,15 +138,20 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     else
       export CUDA_VISIBLE_DEVICES=""
     fi
-    SINGULARITY_BINDPATH=""
     for m in $(echo "$MOUNT_POINTS" | tr ',' '\n') ; do
       x=$(echo $m | sed 's|:.*||')
       [ -e $x ] || continue
-      SINGULARITY_BINDPATH=${SINGULARITY_BINDPATH}${m},
+      BINDPATH="${BINDPATH},${m}"
     done
-    export SINGULARITY_BINDPATH="${SINGULARITY_BINDPATH},$ws"
+    CONTAINER_CMD="singularity"
+    BINDPATH_ENV="SINGULARITY_BINDPATH"
+    if which apptainer >/dev/null 2>&1 ; then
+      CONTAINER_CMD="apptainer"
+      BINDPATH_ENV="APPTAINER_BINDPATH"
+    fi
+    export ${BINDPATH_ENV}="$(echo ${BINDPATH},${ws} | sed 's|^,||')"
     ERR=0
-    precmd="export ORIGINAL_SINGULARITY_BIND=\${SINGULARITY_BIND}; export SINGULARITY_BIND=''; "
+    precmd="export ORIGINAL_${BINDPATH_ENV}=\${$BINDPATH_ENV}; export ${BINDPATH_ENV}=''; "
     ENV_PATH="/cvmfs/cms.cern.ch"
     if which scram >/dev/null 2>&1 ; then
       ENV_PATH=$(which scram | sed 's|/common/scram$||')

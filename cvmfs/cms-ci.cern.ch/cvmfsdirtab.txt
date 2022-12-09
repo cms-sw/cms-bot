@@ -1,3 +1,4 @@
+/*
 /jenkins-artifacts/ib-baseline-tests/*
 /week*/cms-*
 /week*/cms-*/*/*/*/CMSSW_*

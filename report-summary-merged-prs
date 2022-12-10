@@ -257,7 +257,7 @@ def get_results_one_unitTests_file(file, grep_str="ERROR"):
     it returns a tuple, the first element is one of the possible values of PossibleUnitTestResults
     The second element is a dictionary which indicates how many tests failed
     """
-    look_for_err_cmd = 'grep -c "%s" %s' % (grep_str, file)
+    look_for_err_cmd = 'grep -h -c "%s" %s' % (grep_str, file)
     result, err, ret_code = get_output_command(look_for_err_cmd)
 
     result = result.rstrip()

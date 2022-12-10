@@ -1044,9 +1044,7 @@ def find_and_check_result(release_name, architecture, magic_cmd, res_cmd, opt_cm
         out, err, ret_code = get_output_command(cmd)
         try:
             e = 0 
-            print("OUT: [%s]" % out)
             for o in [ x for x in out.split('\n') if x]:
-                print("Found: ",o)
                 e += int(o)
             if e == 0:
                 result = status0

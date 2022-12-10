@@ -1043,7 +1043,10 @@ def find_and_check_result(release_name, architecture, magic_cmd, res_cmd, opt_cm
         cmd =  cmd.format(path)
         out, err, ret_code = get_output_command(cmd)
         try:
-            if int(out) == 0:
+            err = 0 
+            for o in out.split('\n'):
+                err += int(o)
+            if err == 0:
                 result = status0
             else:
                 result = statusnon0
@@ -1069,14 +1072,14 @@ def find_check_hlt(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print("Looking for {0} results for {1}.".format('hlt', rel_name))
-        comp['hlt_tests'] = find_and_check_result(rel_name, architecture, CHECK_HLT_PATH, 'grep -c "exit status: *[1-9]" {0}')
+        comp['hlt_tests'] = find_and_check_result(rel_name, architecture, CHECK_HLT_PATH, 'grep -h -c "exit status: *[1-9]" {0}')
 
 
 def find_check_crab(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp['compared_tags'].split('-->')[1]
         print("Looking for {0} results for {1}.".format('crab', rel_name))
-        comp['crab_tests'] = find_and_check_result(rel_name, architecture, CHECK_CRAB_PATH, 'grep -c "FAILED" {0}/*/statusfile', 'grep -c "INPROGRESS" {0}/*/statusfile')
+        comp['crab_tests'] = find_and_check_result(rel_name, architecture, CHECK_CRAB_PATH, 'grep -h -c "FAILED" {0}/*/statusfile', 'grep -h -c "INPROGRESS" {0}/*/statusfile')
 
 
 def find_check_headers(comparisons, architecture):

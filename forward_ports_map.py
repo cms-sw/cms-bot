@@ -80,8 +80,6 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"].append("IB/CMSSW_12_5_X/g1
 #Automatically added
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_6_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_6_X/master"].append("IB/CMSSW_12_6_X/g11")
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_6_X/g11"]=[]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_6_X/g11"].append("IB/CMSSW_12_6_X/cs9")
 
 #Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_13_0_X"]=[]

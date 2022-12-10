@@ -1043,10 +1043,12 @@ def find_and_check_result(release_name, architecture, magic_cmd, res_cmd, opt_cm
         cmd =  cmd.format(path)
         out, err, ret_code = get_output_command(cmd)
         try:
-            err = 0 
+            e = 0 
+            print("OUT: [%s]" % out)
             for o in out.split('\n'):
-                err += int(o)
-            if err == 0:
+                print("Found: ",o)
+                e += int(o)
+            if e == 0:
                 result = status0
             else:
                 result = statusnon0

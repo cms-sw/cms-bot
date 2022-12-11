@@ -48,7 +48,7 @@ done
 #Keep the following for 8 days
 DAYS_TO_KEEP=8
 DIRS="lizard flawfinder invalid-includes cmssw-afs-eos-comparison ubsan_logs ib-run-crab"
-DIRS="${DIRS} check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests igprof"
+DIRS="${DIRS} check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests profiling igprof"
 DIRS="${DIRS} iwyu material-budget das_query build-any-ib check-unused-cmsdist-packages"
 DIRS="${DIRS} test-os-alma8 test-os-cs8 test-os-ubi8 test-os-lxplus8 test-os-rhel8 test-os-rocky8 test-os-el8"
 for dir in ${DIRS}; do
@@ -59,7 +59,7 @@ done
 
 #Keep the following for 14 days
 DAYS_TO_KEEP=14
-DIRS="run-pr-format pr-code-checks jenkins-test-code-format profiling jenkins-test-bootstrap jenkins-test-cmssw-bootstrap"
+DIRS="run-pr-format pr-code-checks jenkins-test-code-format jenkins-test-bootstrap jenkins-test-cmssw-bootstrap"
 DIRS="${DIRS} auto-build-release auto-upload-release cleanup-auto-build build-fwlite release-run-reco-profiling"
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue

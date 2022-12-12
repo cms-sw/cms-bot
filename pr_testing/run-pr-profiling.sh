@@ -50,21 +50,21 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   cp $WORKSPACE/cms-bot/comparisons/compareProducts.* ./
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/step3_sizes_${PROFILING_WORKFLOW}.txt  step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt || true
   if [ $(ls -d step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ]; then
-    edmEventSize -v $WORKSPACE/step3*.root > step3_sizes_${PROFILING_WORKFLOW}.txt || true
+    edmEventSize -v step3*.root > step3_sizes_${PROFILING_WORKFLOW}.txt || true
     ls -l 
     ./compareProducts.sh step3_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt step3_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 > products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/products_AOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison AOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   fi
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/step4_sizes_${PROFILING_WORKFLOW}.txt  step4_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt || true
   if [ $(ls -d step4_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ]; then
-    edmEventSize -v $WORKSPACE/step4*.root > step4_sizes_${PROFILING_WORKFLOW}.txt || true
+    edmEventSize -v step4*.root > step4_sizes_${PROFILING_WORKFLOW}.txt || true
     ls -l 
     ./compareProducts.sh step4_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt step4_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 > products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/products_miniAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison miniAOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   fi
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/step5_sizes_${PROFILING_WORKFLOW}.txt  step5_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt || true
   if [ $(ls -d step5_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt | wc -l) -gt 0 ]; then #DEBUG
-    edmEventSize -v $WORKSPACE/step5*.root > step5_sizes_${PROFILING_WORKFLOW}.txt || true
+    edmEventSize -v step5*.root > step5_sizes_${PROFILING_WORKFLOW}.txt || true
     ls -l 
     ./compareProducts.sh step5_sizes_${CMSSW_VERSION}_${PROFILING_WORKFLOW}.txt step5_sizes_${PROFILING_WORKFLOW}.txt _ 100 10 > products_nanoAOD_sizes_compare_${PROFILING_WORKFLOW}.txt || true
     echo "<li><a href=\"${PROFILING_WORKFLOW}/products_nanoAOD_sizes_compare_${PROFILING_WORKFLOW}.txt\"> edmEventSize Comparison nanoAOD output.</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

@@ -59,7 +59,7 @@ for element in queue_json["items"]:
     payload["wait_time"] = current_time - queue_time
 
     unique_id = JENKINS_PREFIX + ":" + job_name + "#" + build_id
-    id = sha1(unique_id.encode('utf-8')).hexdigest()  # TODO: encoding?
+    id = sha1(unique_id).hexdigest()
     jenkins_queue[id] = payload
 
 queue_index="cmssdt-jenkins-queue-"+str(int(((queue_time/86400000)+4)/7))

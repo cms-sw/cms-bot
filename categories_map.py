@@ -557,6 +557,7 @@ CMSSW_CATEGORIES = {
     "DQM/SiStripCommissioningSummary",
     "DQM/SiStripCommon",
     "DQM/SiStripHistoricInfoClient",
+    "DQM/SiStripMonitorApproximateCluster",
     "DQM/SiStripMonitorClient",
     "DQM/SiStripMonitorCluster",
     "DQM/SiStripMonitorDigi",

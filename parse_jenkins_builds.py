@@ -32,6 +32,20 @@ query_running_builds = """{
 "size": 10000
 }""" % JENKINS_PREFIX
 
+query_jenkins_queue = """{
+"query": {"bool": {"must": {"query_string": {"query": "in_queue: 0 AND start_time: 0", "default_operator": "AND"}}}},
+"from": 0,
+"size": 10000
+}"""
+
+queue_document = "queue-data"
+queue_content_hash = get_payload_wscroll("cmssdt-jenkins-queue*", query_jenkins_queue)
+es_queue = dict()
+for entry in queue_content_hash['hits']['hits']:
+    queue_id = entry['_source']['queue_id']
+    entry['_source']['queue_hash'] = entry['_id']
+    es_queue[queue_id] = entry['_source']
+
 all_local = []
 path = '/build/builds'
 document = "builds-data"
@@ -58,6 +72,11 @@ for root, dirs, files in os.walk(path):
           payload['slave_node'] = root.find('builtOn').text
         except:
           payload['slave_node'] = 'unknown'
+        try:
+          payload['queue_id'] = root.find('queueId').text
+          print("Queue id: ", payload['queue_id'])
+        except:
+          payload['queue_id'] = 'unknown'
         payload['jenkins_server'] = JENKINS_PREFIX
         build_result = root.find('result')
         if build_result is not None:
@@ -67,6 +86,21 @@ for root, dirs, files in os.walk(path):
           os.system('touch "' + flagFile + '"')
         else:
           payload['job_status'] = 'Running'
+
+        # Check if job has been in queue, and update queue waiting time
+        print("[DEBUG] payload queue id: ", payload['queue_id'])
+        print("[DEBUG] es queue list: ", es_queue.keys())
+        if int(payload['queue_id']) in es_queue.keys():
+            print("Updating queue waiting time for ", queue_payload)
+            queue_payload = es_queue[payload['queue_id']]
+            queue_payload['start_time'] = int(jstime) # start time in millisec
+            queue_payload['wait_time'] = int(jstime) - queue_payload["in_queue_since"]
+            queue_payload['build_number'] = payload['build_number']
+            
+            queue_index="cmssdt-jenkins-queue-"+str(int((((int(jstime)/1000)/86400)+4)/7))
+            print("[DEBUG] queue id: ", queue_payload['_id'])
+            send_payload(queue_index, queue_document, queue_payload['_id'], json.dumps(queue_payload))
+
         all_local.append(id)
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
         print("==>",id,payload['job_name'],payload['build_number'],payload['job_status'])

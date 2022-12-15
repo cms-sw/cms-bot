@@ -814,8 +814,6 @@ if __name__ == "__main__":
     print('This issue is not for building a release, ignoring.')
     exit( 0 )
   
-  ALL_LABELS = [ l.name for l in cmssw_repo.get_labels() ]
-  print("All labels:",ALL_LABELS)
   comments = [ c for c in issue.get_comments( ) ]
 
   release_name = title_match.group(1)

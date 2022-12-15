@@ -375,7 +375,7 @@ if __name__ == "__main__":
                         + str(", #".join(missing_builds))
                         + " have finished. Processing ..."
                     )
-                    for build in sorted(finished_builds):
+                    for build in sorted(missing_builds):
                         process_build(
                             build,
                             job_dir,

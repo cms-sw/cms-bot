@@ -124,7 +124,7 @@ KNOWN_ERRORS["relvals"][RelFilter][".+"] = {
   "536.0": { "step": 1, "exitcode": 256,   "reason" : MSG_ASAN_INCOMPETIBILITY},
 }
 
-RelFilter="CMSSW_12_.+"
+RelFilter="CMSSW_(12|13)_.+"
 KNOWN_ERRORS["relvals"][RelFilter] = {}
 KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
   "10804.31": { "step": 3, "exitcode": 16640, "reason" : MSG_TRITON_INCOMPETIBILITY},

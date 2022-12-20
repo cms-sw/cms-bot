@@ -19,6 +19,7 @@ except:
 if days<30:
   days=30
 if (unused_days_threshold-days)<30: unused_days_threshold=days+30
+active_days_threshold = int(unused_days_threshold/2)
 
 def get_unused_days(eosfile):
   e, o = run_cmd("%s fileinfo %s | grep 'Modify:' | sed 's|.* Timestamp: ||'" % (eos_cmd, eosfile))
@@ -61,8 +62,8 @@ for pfn in o.split("\n"):
     active += 1
     continue
   unused_days = get_unused_days(pfn)
-  print("%s unsed for last %s days." % (pfn,unused_days))
-  if (unused_days<30):
+  print("%s unused for last %s days." % (pfn,unused_days))
+  if ((unused_days+days)<active_days_threshold):
     active += 1
   else:
     unused.append(l)

@@ -17,7 +17,7 @@ function notify {
 # Summary of offline nodes
 for d in $nodes_path/config.xml; do
   if [[ -n $(grep "\$UserCause\|\$ByCLI" $d) ]]; then
-    node=$(echo $d | awk '{split($0,a,"/"); print a[4]}')
+    node=$(echo $d | awk '{split($0,a,"/"); print a[6]}')
     node_url=$(echo "$node_base_url/$node/")
     offline_reason=$(grep -e "string" -m 2 $d | awk '{split($0,a,"<string>|</string>"); print a[2]}' | tail -n 1)
     offline_person=$(grep -e "string" -m 1 $d | awk '{split($0,a,"<string>|</string>"); print a[2]}')
@@ -43,6 +43,6 @@ for file in $blacklist_content; do
             nodes_list+="$node_base_url/$(basename $folder)\n"
         fi
     done
-    msg=$(echo -e "Host $filename has been blacklisted by job $job_url.\n\nPlease check if it should be already online at the corresponding Jenkins nodes:\n$nodes_list")
+    msg=$(echo -e "Host $filename has been blacklisted by job $job_url.\n\nIt is possible to test if the node should be still blacklisted by manually running $job_url for this concrete host (setting parameter TEST_SINGLE_LXPLUS_HOST to true).")
     notify "$msg" "$sbj" $email_address
 done

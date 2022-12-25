@@ -63,6 +63,7 @@ $CVMFS_INSTALL && cvmfs_transaction ${CVMFS_PUBLISH_PATH}
 hostname > $BASEDIR/stratum0
 
 #Recreate the links
+PUBLISH_CLEANUP=false
 for link in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name 'week*' -type l); do unlink $link; done
 for t in nweek- ; do
   for w in $(find $BASEDIR -mindepth 1 -maxdepth 1 -name "$t*" -type d | sed 's|.*/||') ; do
@@ -72,13 +73,14 @@ for t in nweek- ; do
     else
       echo "Deleting obsolete week $w"
       rm -rf $BASEDIR/$w
-      if $CVMFS_INSTALL ; then
-        time cvmfs_server publish
-        cvmfs_transaction ${CVMFS_PUBLISH_PATH}
-      fi
+      $CVMFS_INSTALL && PUBLISH_CLEANUP=true
     fi
   done
 done
+if $PUBLISH_CLEANUP ; then
+  time cvmfs_server publish
+  cvmfs_transaction ${CVMFS_PUBLISH_PATH}
+fi
 
 # We install packages for both weeks. We reset every two week, alternating.
 TMP_PREFIX=/tmp/cvsmfs-$$

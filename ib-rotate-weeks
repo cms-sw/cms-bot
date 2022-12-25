@@ -31,13 +31,15 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
   git push origin
   oarch=$SCRAM_ARCH
   parch=$(echo $SCRAM_ARCH | cut -d_ -f2)
-  pfile="cvmfs-reset-week-${parch}"
+  idx=0
+  pfile="cvmfs-reset-week-0${idx}-${parch}"
   echo "ARCHITECTURE=${SCRAM_ARCH}"        > ${pfile}
   echo "ARCH_NAME=${parch}"               >> ${pfile}
   echo "REPOSITORY=cms.${CMS_REPOSITORY}" >> ${pfile}
   echo "RELEASE_FORMAT="                  >> ${pfile}
   echo "CMSDIST_HASH="                    >> ${pfile}
   echo "INSTALL_PACKAGES=${PKGS}"         >> ${pfile}
+  idx=1
   for arch in amd64 ppc64le aarch64 ; do
     [ "$parch" != "${arch}" ] || continue
     sarch=$(echo $oarch | sed "s|_${parch}_|_${arch}_|")
@@ -52,7 +54,8 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
     fi
     [ "${xreg}" != "" ] || continue
     eval $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "$xreg" | head -1)
-    cp ${pfile} cvmfs-reset-week-${arch}
+    cp ${pfile} cvmfs-reset-week-0${idx}-${arch}
     sed -i -e "s|ARCHITECTURE=.*|ARCHITECTURE=${SCRAM_ARCH}|;s|ARCH_NAME=.*|ARCH_NAME=${arch}|;s|INSTALL_PACKAGES=.*|INSTALL_PACKAGES=|" cvmfs-reset-week-${arch}
+    let idx=idx+1
   done
 fi

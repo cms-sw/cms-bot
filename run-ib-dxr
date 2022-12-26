@@ -1,10 +1,14 @@
 #!/bin/bash -ex
 cd ${LOCALRT}
+NJOB=$(nproc)
 rm -rf src
 ##################################
 #To avoid bug in buildRules introduced in CMSSW_10_1_0 and above
 if [ $(head -5 config/SCRAM/GMake/Makefile.rules | grep 'LLVM_ANALYZER' | wc -l) -eq 0 ] ; then
   sed -i '2i$(foreach f,LLVM_ANALYZER MISSING_SYMBOL_FLAGS,$(eval $f:=$(self_EX_FLAGS_$f)))' config/SCRAM/GMake/Makefile.rules
+fi
+if [ -f config/dxr.config ] ; then
+  sed -i -e "s|nb_jobs.*|nb_jobs = ${NJOB}|" config/dxr.config
 fi
 #To avoid bug in py2-dxr toolfile: add the missing library path
 FOUND=false
@@ -25,4 +29,4 @@ rsync -aL --no-owner --no-group --exclude '.scram' --exclude '*.pyc' ${CMSSW_REL
 (find src/cfipython -name '__pycache__' | xargs rm -rf) || true
 find src/cfipython -type d -empty -delete || true
 sed -i -r 's| -v | |' config/dxr.config
-scram b -j $(nproc) -k dxr || true
+scram b -j ${NJOB} -k dxr || true

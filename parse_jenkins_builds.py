@@ -84,6 +84,7 @@ exit_code, queue_json = run_cmd('curl -s -H "OIDC_CLAIM_CERN_UPN: cmssdt; charse
 queue_json = json.loads(queue_json)
 
 jenkins_queue = dict()
+current_time = get_current_time()
 for element in queue_json["items"]:
     payload = dict()
 
@@ -104,7 +105,7 @@ for element in queue_json["items"]:
     id = sha1(unique_id).hexdigest()
     jenkins_queue[id] = payload
 
-queue_index="cmssdt-jenkins-queue-"+str(int(((queue_time/86400000)+4)/7))
+queue_index="cmssdt-jenkins-queue-"+str(int(((current_time/86400000)+4)/7))
 queue_document = "queue-data"
 
 # Update information in elastic search

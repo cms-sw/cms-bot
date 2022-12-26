@@ -91,7 +91,6 @@ for element in queue_json["items"]:
     job_name = element["task"]["name"]
     queue_id = int(element["id"])
     queue_time = int(element["inQueueSince"])
-    current_time = get_current_time()
 
     payload['jenkins_server'] = JENKINS_PREFIX
     payload["in_queue_since"] = queue_time

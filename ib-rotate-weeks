@@ -17,12 +17,12 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
     echo -e "### RPM cms dummy `date +%s`\n## NOCOMPILER\nSource: none\n%prep\n%build\n%install\n" > CMSDIST/dummy.spec
     echo "#!/bin/bash -ex" > $WORKSPACE/run.sh
     echo "cd $(pwd -P)" >> $WORKSPACE/run.sh
-    echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --architecture $SCRAM_ARCH --work-dir w build dummy SCRAMV1 crab" >> $WORKSPACE/run.sh
-    echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $SCRAM_ARCH --work-dir w upload dummy SCRAMV1 crab" >> $WORKSPACE/run.sh
+    echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --architecture $SCRAM_ARCH --work-dir w build dummy SCRAMV1 SCRAMV2 crab" >> $WORKSPACE/run.sh
+    echo "./PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} --debug --repository cms --upload-tmp-repository $CMS_REPOSITORY --architecture $SCRAM_ARCH --work-dir w upload dummy SCRAMV1 SCRAMV2 crab" >> $WORKSPACE/run.sh
     chmod 0755 $WORKSPACE/run.sh
     export DOCKER_IMG
     $WORKSPACE/cms-bot/docker_launcher.sh $WORKSPACE/run.sh
-    PKGS=$(ls -d w/${SCRAM_ARCH}/cms/crab/*/etc w/${SCRAM_ARCH}/lcg/SCRAMV1/*/etc | sed "s|^w/${SCRAM_ARCH}/||;s|/etc$||;s|/|+|g")
+    PKGS=$(ls -d w/${SCRAM_ARCH}/cms/crab/*/etc w/${SCRAM_ARCH}/lcg/SCRAMV*/*/etc  | sed "s|^w/${SCRAM_ARCH}/||;s|/etc$||;s|/|+|g")
   popd
   rm -rf dummybuild
   echo "$WEEK_NO" >> ib-weeks
@@ -55,7 +55,7 @@ if [ "X$WEEK_FOUND" = "X0" ] ; then
     [ "${xreg}" != "" ] || continue
     eval $(grep -v 'DISABLED=1' $(dirname $0)/config.map | grep 'RELEASE_BRANCH=master' | grep "$xreg" | head -1)
     cp ${pfile} cvmfs-reset-week-0${idx}-${arch}
-    sed -i -e "s|ARCHITECTURE=.*|ARCHITECTURE=${SCRAM_ARCH}|;s|ARCH_NAME=.*|ARCH_NAME=${arch}|;s|INSTALL_PACKAGES=.*|INSTALL_PACKAGES=|" cvmfs-reset-week-${arch}
+    sed -i -e "s|ARCHITECTURE=.*|ARCHITECTURE=${SCRAM_ARCH}|;s|ARCH_NAME=.*|ARCH_NAME=${arch}|;s|INSTALL_PACKAGES=.*|INSTALL_PACKAGES=|" cvmfs-reset-week-0${idx}-${arch}
     let idx=idx+1
   done
 fi

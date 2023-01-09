@@ -8,6 +8,8 @@ be the core of the whole release engineering process for CMSSW.
 To have it working you'll need a `~/.github-token` which can access the
 [cms-sw](http://github.io/cms-sw) organization.
 
+
+
 # Release integration
 
 - [process-pull-request](https://github.com/cms-sw/cms-bot/blob/master/process-pull-request):

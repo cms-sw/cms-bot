@@ -39,6 +39,9 @@ for u in CMSSW_L2:
         del data[u][-1]['end_date']
       else:
         data[u].append({'start_date': ctime, 'category': CMSSW_L2[u]})
+  elif ('end_date' in data[u][-1]):
+    data[u].append({'start_date': ctime, 'category': CMSSW_L2[u]})
+    data_chg=True
 
 for u in data:
   if (u not in CMSSW_L2) and ('end_date' not in data[u][-1]):

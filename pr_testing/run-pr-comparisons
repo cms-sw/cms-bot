@@ -25,6 +25,40 @@ function wait_dqm_comp(){
   done
 }
 
+function process_nano(){
+  mkdir -p $1
+  pushd $1
+    for r in $(ls -d $2/*/step2.root 2>/dev/null); do
+      WF_DIR=$(dirname $r)
+      [ -e ${WF_DIR}/JobReport2.xml ] || continue
+      while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
+      WF=$(basename ${WF_DIR} | cut -d_ -f1)
+      ${NANO_TEST_DIR}/inspectNanoFile.py $r -j ${WF}-size.json &
+      while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
+      ${NANO_TEST_DIR}/get_timing_from_jobreport.py ${WF_DIR}/JobReport2.xml ${WF}-timing.json &
+    done
+  popd
+}
+
+function nano_summary(){
+  pushd $WORKSPACE/results/nano
+    WFS=""
+    rm -f NANO_report.md
+    for wf in $(ls -d *-size.json | sed 's|-size.json||') ; do
+      ok_wf=true
+      for f in ${wf}-timing.json ref/${wf}-size.json ref/${wf}-size.json ; do
+        if [ ! -e $f ] ; then echo " - Nano ERROR: Missing $f" >> NANO_report.md ; ok_wf=false ; fi
+      done
+      $ok_wf && WFS="${WFS} ${wf}"
+    done
+    if [ "${WFS}" != "" ] ; then
+      ${NANO_TEST_DIR}/compare_sizes_json.py -H -f md --base "{}-size.json,{}-timing.json" --ref "./ref" ${WFS} >> NANO_report.md
+    else
+     echo " - No valid nano workflows found" >> NANO_report.md
+    fi
+  popd
+}
+
 source $(dirname $0)/setup-pr-test-env.sh
 TEST_FLAVOR_STR=""
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
@@ -80,11 +114,18 @@ if $DQM_COMPARISON_TEST ; then
   fi
 fi
 
+NANO_TEST=false
+if [ "${UC_TEST_FLAVOR}" = "NANO" ] ; then
+  NANO_TEST_DIR=${CMSSW_BASE}/src/PhysicsTools/NanoAOD/test
+  [ -e ${NANO_TEST_DIR} ] || NANO_TEST_DIR=${CMSSW_RELEASE_BASE}/src/PhysicsTools/NanoAOD/test
+  [ -x ${NANO_TEST_DIR}/compare_sizes_json.py ] && NANO_TEST=true
+fi
+
 #Build validateJR shared lib once
 PID_WAIT=""
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
-  mkdir -p $WORKSPACE/validateJR_lib
-  pushd $WORKSPACE/validateJR_lib
+  mkdir -p $JR_COMP_DIR/validate_lib
+  pushd $JR_COMP_DIR/validate_lib
     cp $CMS_BOT_DIR/comparisons/validate.C ./
     (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n FWLiteEnabler::enable();\n .L validate.C+\n .qqqqqq" | root -l -b || true) &
     PID_WAIT="$!"
@@ -96,7 +137,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   pushd $WORKSPACE/validateALT_lib
     cp $CMS_BOT_DIR/comparisons/compareValHists.C ./
     (echo -e "gROOT->SetStyle(\"Plain\");\n .L compareValHists.C+\n .qqqqqq" | root -l -b || true) &
-    PID_WAIT="$! ${PID_WAIT}"
+    PID_WAIT+=" $!"
   popd
 fi
 
@@ -104,12 +145,46 @@ cd $WORKSPACE/results
 echo "Downloading Ref: `date`"
 get_jenkins_artifacts ${BASELINE_DIR}/    $WORKSPACE/data/$COMPARISON_RELEASE/ || true
 echo "Downloading PR: `date`"
+${NANO_TEST} && process_nano nano/ref $WORKSPACE/data/$COMPARISON_RELEASE
 get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
 
 (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events >${JR_COMP_DIR}/logRootQA-events.log 2>&1 || true) &
+
+${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
+
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_mapping.*txt | sort | uniq > $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/data/$COMPARISON_RELEASE/wf_errors.*txt  | sort | uniq > $WORKSPACE/$ERRORS_FILE
+
+#Temp fix for RelVal long vs short names: Remove it once we have PRs using IBs with short relval names
+if [ "${CMSSW_RELEASE_BASE}" != "" ] ; then
+MATRIX_READER="src/Configuration/PyReleaseValidation/python/MatrixReader.py"
+if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>&1 ; then
+  #Release is still using long relval names
+  if [ -f $CMSSW_BASE/${MATRIX_READER} ] ; then
+    #PR tests might have latest short name changes
+    if grep 'stepList=stepList' $CMSSW_BASE/${MATRIX_READER} >/dev/null 2>&1 ; then
+      #PR tests generated short relval names change
+      #Move PR short names to long names and rename log fils
+      for wf_dir in $(ls $WORKSPACE/data/PR-${PR_NUM}) ; do
+        [ -e $WORKSPACE/data/PR-${PR_NUM}/${wf_dir}/cmdLog ] || continue
+        wf=$(echo $wf_dir | cut -d_ -f1)
+        short_name=$(echo $wf_dir | cut -d_ -f2-)
+        long_name=$(ls -d $WORKSPACE/data/$COMPARISON_RELEASE/${wf}_*/cmdLog | sed "s|.*/${wf}_||;s|/cmdLog||")
+        nwf_dir="${wf}_${long_name}"
+        if [ "X${long_name}" != "X${short_name}" ]; then
+            mv $WORKSPACE/data/PR-${PR_NUM}/${wf_dir} $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}
+        fi
+        #create symlinks for log files
+        for log in $(ls $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}/step*_${short_name}.log) ; do
+          mv $log $WORKSPACE/data/PR-${PR_NUM}/${nwf_dir}/$(basename $log | cut -d_ -f1)_${long_name}.log
+        done
+      done
+    fi
+  fi
+fi
+fi
+
 cat $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/$ERRORS_FILE
 WFS_WITH_ERRORS=''
@@ -205,43 +280,12 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
   pushd $JR_COMP_DIR
     echo "Start JR comparison at `date`"
-    baseA="$WORKSPACE/data/PR-$PR_NUM"
-    baseB="$WORKSPACE/data/${COMPARISON_RELEASE}"
-    diffN="OldVSNew"
-    dL=""
-    grep root $CMS_BOT_DIR/comparisons/matrix_RE.txt | grep -v "#" > filtered_matrix_RE.txt
-    #check from map patterns to the local
-    while read -r dsN fNP procN comm; do
-      dP=$(echo "${fNP}" | sed -e 's?/[^/]*.root??g'); d=$(echo ${baseA}/$dP | cut -d" " -f1)
-      [ -d "${d}" ] && dL="$dL ${d}/"
-    done <filtered_matrix_RE.txt
-    #check the found mapped list with all that we have
-    ls -d ${baseA}/[1-9]* | while read -r d; do
-      echo "${dL}" | grep  " $d/" >& /dev/null || echo $d >> missing_map.txt
+    for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
+      WF_NUMBER=`echo $WF | cut -d'_' -f1`
+      wait_dqm_comp 2
+      (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/comparisons/validateJR.py --base "$WORKSPACE/data/PR-$PR_NUM" --ref "$WORKSPACE/data/$COMPARISON_RELEASE" --wf $WF_NUMBER --procs 0 || true) &
+      PID_WAIT+=" $!"
     done
-    PID_WAIT=""
-    while read -r dsN fNP procN comm; do
-      #fNP can be a pattern: path-expand it first
-      fN=$(echo ${baseA}/${fNP} | cut -d" " -f1 | sed -e "s?^${baseA}/??g")
-      #process regular files first; need files both in baseA and baseB
-      if [ -f "${baseA}/${fN}" -a -f "${baseB}/${fN}" ]; then
-        wait_dqm_comp 2
-        (LD_LIBRARY_PATH=$WORKSPACE/validateJR_lib:${LD_LIBRARY_PATH} $CMS_BOT_DIR/comparisons/validateJR.sh "all_${diffN}_${dsN}" "$WORKSPACE/data/PR-$PR_NUM" "$WORKSPACE/data/$COMPARISON_RELEASE" "${fN}" "${procN}" || true) &
-        PID_WAIT="$!"
-      fi
-      #process miniAOD files now
-      fNBase=$(echo ${fN} | sed -e 's/.root$//g')
-      mFN="${fNBase}_inMINIAOD.root"
-      if [ ! -f "${baseA}/${mFN}" ]; then
-        mFN="${fNBase}_inMINIAODSIM.root"
-      fi
-      #need files both in baseA and baseB
-      if [ -f "${baseA}/${mFN}" -a -f "${baseB}/${mFN}" ]; then
-        wait_dqm_comp 2
-        (LD_LIBRARY_PATH=$WORKSPACE/validateJR_lib:${LD_LIBRARY_PATH} $CMS_BOT_DIR/comparisons/validateJR.sh "all_mini_${diffN}_${dsN}" "$WORKSPACE/data/PR-$PR_NUM" "$WORKSPACE/data/$COMPARISON_RELEASE" "${mFN}" "${procN}" || true) &
-        PID_WAIT="$!"
-      fi
-    done <filtered_matrix_RE.txt
   popd
 fi
 echo "Jobs: $(jobs -p | wc -l)"
@@ -268,8 +312,9 @@ jobs
 #Wait for JR comparison jobs
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   [ "${PID_WAIT}" = "" ] || wait ${PID_WAIT}
+  PID_WAIT=""
   echo "Finished with JR comparison at `date`:"
-  rm -rf $WORKSPACE/validateJR_lib
+  rm -rf $JR_COMP_DIR/validate_lib
   (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison JR >${JR_COMP_DIR}/logRootQA-JR.log 2>&1 || true) &
 fi
 
@@ -285,8 +330,12 @@ if [ "X$RUN_DEFAULT_COMP" = Xtrue ]; then
   mkdir $RELMON_COMP_DIR
 
   if [ "X$RUN_JR_COMP" = Xtrue ]; then
-    $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R > $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1
+    if ! $CMS_BOT_DIR/comparisons/analyzeFWComparison.py $JR_COMP_DIR $RELMON_COMP_PARAMS_FILE -R >> $RELMON_COMP_DIR/RelMonAssignedParameters.log 2>&1 ; then
+      cat $RELMON_COMP_DIR/RelMonAssignedParameters.log
+      exit 1
+    fi
   fi
+
   for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do 
     WF_FILE=$(basename $WF)
     WF_DIR=`echo $WF | cut -d "/" -f1`
@@ -324,6 +373,7 @@ jobs
 # ----------------------------------------------------------------------------
 # Alternative Comparison
 # ----------------------------------------------------------------------------
+
 if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running alternative comparison" || true
   echo "Started with alternative comparison at `date`"
@@ -342,7 +392,7 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
     WF_NUMBER=`echo $WF | cut -d'_' -f1`
     BASE_FILE=$WORKSPACE/results/files/$WF_DIR/$COMPARISON_RELEASE-$WF_FILE
     COMP_FILE=$WORKSPACE/results/files/$WF_DIR/$PR_NUM-$WF_FILE
-
+  
     mkdir -p $ALT_COMP_DIR/$WF_NUMBER
     eval $( cat $DQM_COMP_PARAMS_FILE | grep "FOR_WF=$WF_NUMBER;" )
     if [ "${MOD}" = "" ] ; then MOD=0; echo "Overriding MOD=$MOD";  fi
@@ -424,6 +474,11 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
   fi
 fi
 
+#-----------------------------------
+
+#Nano Workflows summary
+${NANO_TEST} && nano_summary
+
 if [ "X$RUN_TR_COMP" = Xtrue ]; then
   echo "[`date`] Done comparisons of edm::TriggerResults"
   ${CMS_BOT_DIR}/compareTriggerResultsSummary -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1 || true
@@ -456,12 +511,15 @@ for f in $(find ${alt_dir} -maxdepth 1 -name 'command*' -o -name '*.ps' -o -name
 done
 
 #JR-comparison
-for x in $(find results/JR-comparison -maxdepth 2 -name 'command*' -o -name '*.log' -o -name '*.png' -type f) ; do
+for x in $(find results/JR-comparison -maxdepth 3 -name 'command*' -o -name '*.log' -o -name '*.png' -type f) ; do
   f=$(echo $x | sed 's|results/JR-comparison/||')
   d=$(dirname upload/validateJR/$f)
   [ -d $d ] || mkdir -p $d
   mv results/JR-comparison/$f $d/
 done
+
+#nano
+[ -d $WORKSPACE/results/nano ] && mv $WORKSPACE/results/nano upload/
 
 #files
 if [ -e results/files ] ; then
@@ -491,6 +549,12 @@ ${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_
 if [ "${TEST_FLAVOR}" != "" ] ; then
   sed -i -e "s|## Comparison Summary|## ${UC_TEST_FLAVOR} Comparison Summary|" $WORKSPACE/testsResults/20-comparison-report.res
   mv $WORKSPACE/testsResults/20-comparison-report.res $WORKSPACE/testsResults/20-${TEST_FLAVOR}-comparison-report.res
+  if [ -e $WORKSPACE/upload/nano/NANO_report.md ] ; then
+    echo "**Nano size comparison Summary**:" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    echo "" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    cat $WORKSPACE/upload/nano/NANO_report.md >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+    echo "" >> $WORKSPACE/testsResults/21-${TEST_FLAVOR}-comparison-report.res
+  fi
 fi
 
 if [ "$DRY_RUN" = "" ] ; then

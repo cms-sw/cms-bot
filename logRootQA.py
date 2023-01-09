@@ -197,24 +197,29 @@ def summaryJR(jrDir):
     nDiff=0
     print(jrDir)
     dirs=[]
-    for root, dirs, files in os.walk(jrDir):
+    #find directories at top level
+    for root, dirs, _ in os.walk(jrDir):
         break
 
     nAll=0
     nOK=0
-    for d in dirs:
-        diffs=getFiles(root+'/'+d,'*.png')
+    for d, subdir, files in os.walk(jrDir):
+        if not d.split('/')[-1].startswith('all_'): continue
+        if not '_' in d: continue
+        relative_d = d.replace(root,'')
+        diffs=[file for file in files if file.endswith('.png')]
         if len(diffs)>0:
-            print('JR results differ',len(diffs),d)
+            print('JR results differ',len(diffs),relative_d)
             nDiff=nDiff+len(diffs)
-        logs=getFiles(root+'/'+d,'*.log')
+        logs=[file for file in files if file.endswith('.log')]
         nAll+=len(logs)
-        if len(logs)==1:
-            output=runCommand(['grep','DONE calling validate',logs[0]])
+        for log in logs:
+            log = os.path.join(d,log)
+            output=runCommand(['grep','DONE calling validate',log])
             if len(output[0])>0:
                 nOK+=1
             else:
-                print('JR results failed',d)
+                print('JR results failed',relative_d)
     return nDiff,nAll,nOK
 
 def parseNum(s):
@@ -308,8 +313,9 @@ if run in ['all', 'events']:
       lChanges=True
     #### compare edmEventSize on each to look for new missing candidates
     for r in getCommonFiles(baseDir,testDir,'step*.root'):
-      if ('PU' in r or 'RECODR' in r or 'REMINIAOD' in r) and 'inDQM.root' not in r:
-        sameEvts=sameEvts and checkEventContent(baseDir+r,testDir+r)
+      if 'inDQM.root' not in r:
+        checkResult=checkEventContent(baseDir+r,testDir+r)
+        sameEvts=sameEvts and checkResult
         nRoot=nRoot+1
     for r in getCommonFiles(baseDir,testDir,'DQM*.root'):
       t=checkDQMSize(baseDir+r,testDir+r,diff,wfs)

@@ -28,10 +28,8 @@ if [ -e ./postprocess-scan-build.py ] ; then
 fi
 
 ./create_statics_esd_reports.sh
-touch eventsetuprecord-get.txt
-touch eventsetuprecord-get.yaml
 ls -ltrh
 tar cvfz dumper-checker.tgz *.txt*
 egrep '::(stream|global)::[^ ]+::(produce|analyze|filter)\(\)' modules2statics.txt | egrep -v -f statics-filter1.txt > modules2statics-filter1.txt
 mkdir $WORKSPACE/reports
-cp -pv dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt modules2statics-filter1.txt eventsetuprecord-get* $WORKSPACE/reports || /bin/true
+cp -pv dumper-checker.tgz esd2tlf.txt tlf2esd.txt statics2modules.txt modules2statics.txt override-flagged-classes.txt modules2statics-filter1.txt $WORKSPACE/reports || /bin/true

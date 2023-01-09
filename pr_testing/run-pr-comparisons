@@ -289,7 +289,7 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do
       WF_NUMBER=`echo $WF | cut -d'_' -f1`
       wait_dqm_comp 2
-      (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/comparisons/validateJR.py --base "$WORKSPACE/data/PR-$PR_NUM" --ref "$WORKSPACE/data/$COMPARISON_RELEASE" --wf $WF_NUMBER --procs 0 >${WF_NUMBE}.log 2>&1 || true) &
+      (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/comparisons/validateJR.py --base "$WORKSPACE/data/PR-$PR_NUM" --ref "$WORKSPACE/data/$COMPARISON_RELEASE" --wf $WF_NUMBER --procs 0 >${WF_NUMBER}.log 2>&1 || true) &
       PID_WAIT+=" $!"
     done
   popd

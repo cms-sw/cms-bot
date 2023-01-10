@@ -8,7 +8,8 @@ report() {
        echo "FAILED" > $WORKSPACE/crab/statusfile
    fi
 }
-
+env
+sleep 1
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE

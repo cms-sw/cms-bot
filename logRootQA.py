@@ -128,7 +128,7 @@ def checkEventContent(r1,r2):
     if os.path.exists(r1+'.edmEventSize'):
       cmd1 = ['cat',r1+'.edmEventSize']
     if os.path.exists(r2+'.edmEventSize'):
-      cmd1 = ['cat',r2+'.edmEventSize']
+      cmd2 = ['cat',r2+'.edmEventSize']
     output1=runCommand(cmd1)
     output2=runCommand(cmd2)
 

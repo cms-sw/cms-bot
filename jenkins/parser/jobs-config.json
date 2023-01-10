@@ -134,6 +134,11 @@
         "jobName": "ib-run-baseline",
         "errorType": [],
         "maxTime": "2"
+      },
+      {
+        "jobName": "check-docker",
+        "errorType": [],
+        "maxTime": "1"
       }
     ],
     "errorMsg": {
@@ -145,7 +150,8 @@
       },
       "hudsonConnection": {
         "errorStr": [
-          "Remote call on .* failed. The channel is closing down or has closed down"
+          "Remote call on .* failed. The channel is closing down or has closed down",
+	  "Remote call to .*"
         ],
         "action": "retryNow",
         "forceRetry": "true",

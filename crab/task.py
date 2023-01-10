@@ -30,9 +30,9 @@ if 'CRAB_COLLECTOR' in os.environ:
 
 config.Debug.extraJDL     = ['+REQUIRED_OS="rhel%s"'  % 7 if osMajorVer>6 else 6]
 config.Debug.extraJDL.append('+DESIRED_Archs="%s"'    % 'X86_64' if ('amd64' == archs[1]) else archs[1])
-if 'SINGULARITY_IMAGE' in os.environ:
+if 'SINGULARITY_IMAGE' in os.environ and os.environ['SINGULARITY_IMAGE']!='':
   config.Debug.extraJDL.append('+SingularityImage="%s"' % os.environ['SINGULARITY_IMAGE'])
-if 'CRAB_SITE' in os.environ:
+if 'CRAB_SITE' in os.environ and os.environ['CRAB_SITE']!='':
   config.Debug.extraJDL.append('+DESIRED_Sites="%s"' % os.environ['CRAB_SITE'])
 env_str=""
 if 'CMS_PATH' in os.environ:

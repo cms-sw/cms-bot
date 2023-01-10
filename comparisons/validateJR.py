@@ -94,7 +94,7 @@ def process_file(each_root_file):
         return
     #print(f"found process of interest {processName} in file {each_root_file}")
     ref_path,fileName = each_root_file.rsplit('/',1)
-    path = path.replace( options.ref, options.base )
+    path = ref_path.replace( options.ref, options.base )
     _,fullName = path.rsplit('/',1)
     wfn,therest=fullName.split('_',1)
     wfn='wf'+wfn.replace('.','p')

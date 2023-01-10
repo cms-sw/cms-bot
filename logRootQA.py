@@ -123,8 +123,14 @@ def checkEventContent(r1,r2):
         print("Big output file size change? in ",r1,s1,s2)
         retVal=False
 
-    output1=runCommand(['edmEventSize','-v',r1])
-    output2=runCommand(['edmEventSize','-v',r2])
+    cmd1 = ['edmEventSize','-v',r1]
+    cmd2 = ['edmEventSize','-v',r2]
+    if os.path.exists(r1+'.edmEventSize'):
+      cmd1 = ['cat',r1+'.edmEventSize']
+    if os.path.exists(r2+'.edmEventSize'):
+      cmd1 = ['cat',r2+'.edmEventSize']
+    output1=runCommand(cmd1)
+    output2=runCommand(cmd2)
 
     if 'contains no' in output1[1] and 'contains no' in output2[1]:
         w=1

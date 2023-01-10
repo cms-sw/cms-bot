@@ -351,7 +351,7 @@ if __name__ == "__main__":
                 ]
             except KeyError:
                 latest_revision = 0
-                processed_object["parserInfo"]["lastRevision"][job_to_retry] = ""
+                processed_object["parserInfo"]["lastRevision"][job_to_retry] = "0"
 
             # Take info from rotation list
             try:

@@ -51,7 +51,7 @@ def run_comparison(fileName, base_dir, ref_dir, processName, spec, output_dir):
 
 def file_processes(fileName):
     max_proc=20
-    prov_file = fileName.replace('.root','.edmProvDump')
+    prov_file = fileName+'.edmProvDump'
     if not os.path.isfile(prov_file):
         #print(f"dumping provenance of {fileName} in {prov_file}")
         print("dumping provenance of %s in %s"%(fileName, prov_file))

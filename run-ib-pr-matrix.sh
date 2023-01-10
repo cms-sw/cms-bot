@@ -85,8 +85,9 @@ if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
   NUM_PROC=$(nproc)
   for r in $(find ${WORKSPACE}/matrix-results -name 'step*.root' -type f | grep -v 'inDQM.root$') ; do
     while [ $(jobs -p | wc -l) -gt ${NUM_PROC} ] ; do sleep 0.1 ; done
+    echo "Running edmEventSize and edmProvDump: $r"
     (edmEventSize -v $r > $r.edmEventSize || true) &
-    (edmProvDump     $r > $r.edmProvDump || true) &
+    (edmProvDump     $r > $r.edmProvDump  || true) &
   done
   set -x
   jobs

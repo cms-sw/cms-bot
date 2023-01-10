@@ -122,7 +122,6 @@ if [ "${UC_TEST_FLAVOR}" = "NANO" ] ; then
 fi
 
 #Build validateJR shared lib once
-PID_WAIT=""
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   mkdir -p $JR_COMP_DIR/validate_lib
   pushd $JR_COMP_DIR/validate_lib
@@ -133,7 +132,6 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     else
       (echo -e "gSystem->Load(\"libFWCoreFWLite.so\");\n AutoLibraryLoader::enable();\n .L validate.C+\n .qqqqqq" | root -l -b || true) &
     fi
-    PID_WAIT="$!"
   popd
 fi
 #Build validateALT shared lib once
@@ -142,7 +140,6 @@ if [ "X$RUN_ALT_COMP" = Xtrue ]; then
   pushd $WORKSPACE/validateALT_lib
     cp $CMS_BOT_DIR/comparisons/compareValHists.C ./
     (echo -e "gROOT->SetStyle(\"Plain\");\n .L compareValHists.C+\n .qqqqqq" | root -l -b || true) &
-    PID_WAIT+=" $!"
   popd
 fi
 
@@ -155,7 +152,13 @@ get_jenkins_artifacts ${PR_BASELINE_DIR}/ $WORKSPACE/data/PR-${PR_NUM}/
 echo "Done Downloading `date`"
 ${NANO_TEST} && process_nano nano $WORKSPACE/data/PR-${PR_NUM}
 
+for r in $(find $WORKSPACE/data/PR-${PR_NUM} -name 'step*.root' -type f | grep -v 'inDQM.root') ; do
+  while [ $(jobs -p | wc -l) -ge ${NUM_PROC} ] ; do sleep 0.1 ; done
+  (edmEventSize -v $r > $r.edmEventSize || true) &
+  (edmProvDump     $r > $r.edmProvDump  || true) &
+done
 jobs
+wait
 (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison events >${JR_COMP_DIR}/logRootQA-events.log 2>&1 || true) &
 jobs
 
@@ -263,7 +266,7 @@ if $DQM_COMPARISON_TEST ; then
   DQM_PID=$(pgrep -x -f '.*/compareDQMOutput.py .*' || true)
 fi
 
-echo "DQM_PID: ${DQM_PID}, PID_WAIT: ${PID_WAIT}"
+echo "DQM_PID: ${DQM_PID}"
 #Run product size comparison script for Phase2 workflow
 mkdir compareProducts && pushd compareProducts
   cp $CMS_BOT_DIR/comparisons/compareProducts.* ./
@@ -273,15 +276,13 @@ mkdir compareProducts && pushd compareProducts
   mv products_MINIAOD.log $WORKSPACE/upload/products_MINIAOD.log
 popd
 
-[ "${PID_WAIT}" = "" ] || wait ${PID_WAIT}
-PID_WAIT=""
-
 set +x
 # --------------------------------------------------------------------------
 # JR-Comparison
 # --------------------------------------------------------------------------
 #This is used mainly for testing. In jenkins the 3 forms of comparisons are always run. But if you are testing you can control
 #which comparison is run.
+PID_WAIT=""
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
   mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
   pushd $JR_COMP_DIR

@@ -145,27 +145,33 @@
         "errorType": [],
         "maxTime": "3"
       },
+      {
 	"jobName": "test-os-cs8",
         "errorType": [],
         "maxTime": "3"
       },
+      {
         "jobName": "test-os-el8",
         "errorType": [],
         "maxTime": "3"
       },
-        "jobName": "test-os-lxplus8",
+      {  
+	"jobName": "test-os-lxplus8",
         "errorType": [],
         "maxTime": "3"
       },
+      {
         "jobName": "test-os-rhel8",
         "errorType": [],
         "maxTime": "3"
       },
+      {
         "jobName": "test-os-rocky8",
         "errorType": [],
         "maxTime": "3"
       },
-        "jobName": "test-os-ubi8",
+      {
+	"jobName": "test-os-ubi8",
         "errorType": [],
         "maxTime": "3"
       }

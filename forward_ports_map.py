@@ -96,3 +96,4 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/master"].append("IB/CMSSW_13_0_X/lt
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/master"].append("IB/CMSSW_13_0_X/rootmaster")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/master"].append("IB/CMSSW_13_0_X/clang")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/rootmaster"]=["IB/CMSSW_13_0_X/rootmodule"]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/g4_vecgeom"]=["IB/CMSSW_13_0_X/g4_vecgeom_lto"]

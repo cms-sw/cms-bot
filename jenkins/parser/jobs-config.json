@@ -55,7 +55,7 @@
           "afsFailure",
           "busError"
         ],
-        "maxTime": "14"
+        "maxTime": "16"
       },
       {
         "jobName": "ib-run-pr-relvals",

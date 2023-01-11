@@ -139,6 +139,11 @@
         "jobName": "check-docker",
         "errorType": [],
         "maxTime": "1"
+      },
+      {
+        "jobName": "test-os-ubi8",
+        "errorType": [],
+        "maxTime": "3"
       }
     ],
     "errorMsg": {

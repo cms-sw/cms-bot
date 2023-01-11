@@ -51,7 +51,7 @@ def run_comparison(fileName, base_dir, ref_dir, processName, spec, output_dir):
 
 def file_processes(fileName):
     max_proc=20
-    prov_file = fileName.replace('.root','.prov')
+    prov_file = fileName+'.edmProvDump'
     if not os.path.isfile(prov_file):
         #print(f"dumping provenance of {fileName} in {prov_file}")
         print("dumping provenance of %s in %s"%(fileName, prov_file))
@@ -93,8 +93,8 @@ def process_file(each_root_file):
     if not processName in process_of_interest:
         return
     #print(f"found process of interest {processName} in file {each_root_file}")
-    path,fileName = each_root_file.rsplit('/',1)
-    ref_path =path.replace( options.base, options.ref )
+    ref_path,fileName = each_root_file.rsplit('/',1)
+    path = ref_path.replace( options.ref, options.base )
     _,fullName = path.rsplit('/',1)
     wfn,therest=fullName.split('_',1)
     wfn='wf'+wfn.replace('.','p')
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     if not compile_lib():sys.exit()
 
     #all_output_root_files = glob.glob(f'{options.base}/{options.workflow}_*/step*.root')
-    all_output_root_files = glob.glob('%s/%s_*/step*.root'%(options.base,options.workflow))
+    all_output_root_files = glob.glob('%s/%s_*/step*.root'%(options.ref,options.workflow))
 
     #print(f'{len(all_output_root_files)} files to process')
     print('%d files to process'%(len(all_output_root_files)))

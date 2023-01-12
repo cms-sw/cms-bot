@@ -197,8 +197,15 @@ if ! grep 'stepList=stepList' $CMSSW_RELEASE_BASE/${MATRIX_READER} >/dev/null 2>
 fi
 fi
 
+#Only keep those wf in $WORKSPACE/$ERRORS_FILE which were run for PR tests
+for wf in $(cat $WORKSPACE/$ERRORS_FILE | sed -e 's|;.*||') ; do
+  [ $(echo ",$WORKFLOWS_LIST," | grep ",$wf," |wc -l) -gt 0 ] || continue
+  sed -i "/^${wf};/d" $WORKSPACE/$ERRORS_FILE
+done
+
 cat $WORKSPACE/$MAPPING_FILE
 cat $WORKSPACE/$ERRORS_FILE
+
 WFS_WITH_ERRORS=''
 for wf in ${WORKFLOWS_LIST//,/ }
 do
@@ -555,7 +562,7 @@ mv ${RESULTS_FILE} $WORKSPACE/testsResults/
 
 [ -e comparisonDetails.txt ] && mv comparisonDetails.txt upload/
 ${CMS_BOT_DIR}/report-pull-request-results "COMPARISON_READY" --report-url ${PR_RESULT_URL} \
-  -f $WORKSPACE/wf_errors.txt --f2 $WORKSPACE/wf_non_consistent_das.txt \
+  -f $WORKSPACE/${ERRORS_FILE} --f2 $WORKSPACE/wf_non_consistent_das.txt \
   --missing_map $WORKSPACE/results/JR-comparison/missing_map.txt  --report-file $WORKSPACE/testsResults/20-comparison-report.res
 
 if [ "${TEST_FLAVOR}" != "" ] ; then

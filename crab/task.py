@@ -23,9 +23,9 @@ config.JobType.allowUndistributedCMSSW = True
 
 config.Site.storageSite                = 'T2_CH_CERN'
 
-if 'CRAB_SCHEDD_NAME' in os.environ:
+if 'CRAB_SCHEDD_NAME' in os.environ and os.environ['CRAB_SCHEDD_NAME']!='':
   config.Debug.scheddName = os.environ['CRAB_SCHEDD_NAME']
-if 'CRAB_COLLECTOR' in os.environ:
+if 'CRAB_COLLECTOR' in os.environ and os.environ['CRAB_COLLECTOR']!='':
   config.Debug.collector = os.environ['CRAB_COLLECTOR']
 
 config.Debug.extraJDL     = ['+REQUIRED_OS="rhel%s"'  % 7 if osMajorVer>6 else 6]

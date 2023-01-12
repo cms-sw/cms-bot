@@ -39,5 +39,8 @@ if 'CMS_PATH' in os.environ:
   env_str='CMS_PATH=%s' % os.environ['CMS_PATH']
 if 'SITECONFIG_PATH' in os.environ:
   env_str='%s SITECONFIG_PATH=%s' % (env_str, os.environ['SITECONFIG_PATH'])
-#if env_str:
-#   config.Debug.extraJDL.append('Environment="%s"' % env_str.strip())
+if 'COLLECTOR' in os.environ and os.environ['COLLECTOR']!='':
+   config.section_("Debug")
+   config.Debug.collector = os.environ['COLLECTOR']
+if 'SCHEDD_NAME' in os.environ and os.environ['SCHEDD_NAME']!='':
+  config.Debug.scheddName = os.environ['SCHEDD_NAME']

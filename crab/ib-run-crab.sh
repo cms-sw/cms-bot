@@ -12,6 +12,7 @@ report() {
 [ "${CRABCLIENT_TYPE}" != "" ]   || export CRABCLIENT_TYPE="prod"
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
+[ "${CRABCONFIGINSTANCE}" != "" ]|| export CRABCONFIGINSTANCE="prod"
 
 if [ "${SINGULARITY_IMAGE}" = "" ] ; then
   osver=$(echo ${SCRAM_ARCH} | tr '_' '\n' | head -1 | sed 's|^[a-z][a-z]*||')
@@ -37,7 +38,7 @@ GRIDSITE=""
 while [ "${GRIDSITE}" = "" ]
 do
   sleep 10
-  export GRIDSITE=$(curl -s -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/prod/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
+  export GRIDSITE=$(curl -s -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/${CRABCONFIGINSTANCE}/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
 done
 
 # Store information for the monitoring job

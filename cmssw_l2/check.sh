@@ -15,6 +15,7 @@ pushd update_cmssw_l2
   git checkout ${old_commit}
   for data in $(git log --no-merges --pretty=format:"%H:%at," ${old_commit}..master | tr ',' '\n' | grep : | tac) ; do
     commit=$(echo $data | sed 's|:.*||')
+    [ $(grep "^${commit}$" ${sdir}/commit.txt | wc -l) -eq 0 ] || continue
     cur_time=$(echo $data | sed 's|.*:||')
     let commit_cnt=${commit_cnt}+1
     git cherry-pick --keep-redundant-commits --allow-empty-message --allow-empty $commit

@@ -69,7 +69,7 @@
         "errorType": [
           "afsFailure"
         ],
-        "maxTime": "4"
+        "maxTime": "5"
       },
       {
         "jobName": "build-any-ib",
@@ -114,7 +114,7 @@
         "errorType": [
           "gitErrors"
         ],
-        "maxTime": "1"
+        "maxTime": "3"
       },
       {
         "jobName": "run-pr-code-checks",

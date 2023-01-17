@@ -2,7 +2,7 @@
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from categories_map import CMSSW_CATEGORIES
+from categories_map import CMSSW_CATEGORIES, CMSSW_LABELS
 from repo_config import CMSBUILD_USER
 from releases import SPECIAL_RELEASE_MANAGERS
 
@@ -160,7 +160,7 @@ def external_to_package(repo_fullname):
   return ''
 
 def get_dpg_pog():
-  groups = []
+  groups = ['pf', 'l1t', 'castor']
   for user in CMSSW_L2:
     for cat in CMSSW_L2[user]:
       if '-' not in cat: continue

@@ -1714,12 +1714,17 @@ CMSSW_CATEGORIES = {
 # "jetmet": [ "SubSystem1", "SubSystem2/Package"]
 CMSSW_LABELS = {
   "tracking": [
+    "AnalysisDataFormats/TrackInfo",
+    "CondCore/BeamSpot",
+    "CondFormats/BeamSpot",
+    "CondTools/BeamSpot",
     "CUDADataFormats/Track",
     "CUDADataFormats/Vertex",
     "DataFormats/Track",
     "DataFormats/VertexReco",
     "DataFormats/V0Candidate",
     "DataFormats/VZero",
+    "DQM/BeamMonitor",
     "DQM/Tracking",
     "FastSimulation/Tracking",
     "Geometry/GlobalTracking",

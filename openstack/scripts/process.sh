@@ -16,7 +16,7 @@ XID="$(hostname -s):$$:"
 echo "${XID}" > ${LOCK}
 sleep 5
 let STIME=$(date +%s)+7200
-echo "$(date): ${XID} Started" >> ${REQ}/status
+echo "$(date): ${XID} Started via ${2}" >> ${REQ}/status
 while [ $(date +%s) -lt ${STIME} ] ; do
   if [ $((grep "^${XID}" ${LOCK} 2>/dev/null || true) | wc -l) -eq 0 ] ; then
     echo "$(date): ${XID} Aborted" >> ${REQ}/status

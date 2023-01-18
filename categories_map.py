@@ -1711,6 +1711,31 @@ CMSSW_CATEGORIES = {
 #explicit `type label`. Only valid dpg/pog groups can be added as labels
 #Format: label = [cmssw_pkg1, cmssw_pkgN]
 #where cmssw_pkgX can be full or part of start of cmssw Package name
-# "jetmet" = [ "SubSystem1", "SubSystem2/Package"]
+# "jetmet": [ "SubSystem1", "SubSystem2/Package"]
 CMSSW_LABELS = {
+  "tracking": [
+    "AnalysisDataFormats/TrackInfo",
+    "CondCore/BeamSpot",
+    "CondFormats/BeamSpot",
+    "CondTools/BeamSpot",
+    "CUDADataFormats/Track",
+    "CUDADataFormats/Vertex",
+    "DataFormats/Track",
+    "DataFormats/VertexReco",
+    "DataFormats/V0Candidate",
+    "DataFormats/VZero",
+    "DQM/BeamMonitor",
+    "DQM/Tracking",
+    "FastSimulation/Tracking",
+    "Geometry/GlobalTracking",
+    "RecoPixelVertexing",
+    "RecoTracker",
+    "RecoVertex",
+    "TrackPropagation",
+    "TrackingTools",
+    "Validation/RecoPixelVertexing",
+    "Validation/RecoTrack",
+    "Validation/RecoVertex",
+    "Validation/Tracking"
+  ]
 }

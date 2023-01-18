@@ -95,6 +95,8 @@ if [ "X$DO_TESTS" = Xtrue ]; then
     UTESTS_CMD="PATH=${TEST_PATH}:${PATH} timeout 10800 scram b -k -j ${NCPU} unittests "
     set -x
   fi
+  echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
+  scram build echo_LD_LIBRARY_PATH || true
   echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests/log.txt 2>&1 || true
   echo 'END OF UNIT TESTS'

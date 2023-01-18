@@ -1713,4 +1713,13 @@ CMSSW_CATEGORIES = {
 #where cmssw_pkgX can be full or part of start of cmssw Package name
 # "jetmet" = [ "SubSystem1", "SubSystem2/Package"]
 CMSSW_LABELS = {
+  "tracking" = [
+    "CUDADataFormats/Track",
+    "DataFormats/Track",
+    "RecoPixelVertexing",
+    "RecoTracker",
+    "RecoVertex",
+    "TrackPropagation",
+    "TrackingTools"
+  ]
 }

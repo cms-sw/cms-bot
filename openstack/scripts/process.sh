@@ -2,7 +2,7 @@
 THISDIR=$(dirname $0)
 REQ="${1}/request"
 RES="${1}/response"
-
+[ "${2}" = "acrontab" ] || exit 0
 LOCK="${REQ}/lock"
 if [ -f ${LOCK} ] ; then
   let age=$(date +%s)-$(stat -c %Y ${LOCK})

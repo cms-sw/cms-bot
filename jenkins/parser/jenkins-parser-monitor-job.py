@@ -100,8 +100,7 @@ with open(
             <th>Job Name</th>\n\
             <th>Build Number</th>\n\
             <th>Error Message</th>\n\
-            <th>Link to failed build</th>\n\
-            <th>Link to retry job</th>\n\
+            <th>Retry job</th>\n\
          </tr>\n\
          </tr>\n\
          </thead>\n\
@@ -113,6 +112,8 @@ with open(
         table_entries = list(json_object["parserActions"][id].keys())
         # Remove html class entry
         table_entries.pop()
+        # No need to show explicitly the link to failed build
+        table_entries.remove("failedBuild")
 
         action = json_object["parserActions"][id]["parserAction"]
         html_file.writelines('   <tr class="' + action + '">\n')
@@ -128,10 +129,10 @@ with open(
 
         if action == "NoAction":
             for item in table_entries:
-                if item == "failedBuild":
+                if item == "buildNumber":
                     html_file.writelines(
                         '      <td><a href="'
-                        + json_object["parserActions"][id][item]
+                        + json_object["parserActions"][id]["failedBuild"]
                         + '">'
                         + json_object["parserActions"][id][item]
                         + "</a></td>\n"
@@ -145,20 +146,21 @@ with open(
 
         elif action == "Retry":
             for item in table_entries:
-                if item == "failedBuild":
+                if item == "buildNumber":
                     html_file.writelines(
                         '      <td><a href="'
-                        + json_object["parserActions"][id][item]
+                        + json_object["parserActions"][id]["failedBuild"]
                         + '">'
                         + json_object["parserActions"][id][item]
                         + "</a></td>\n"
                     )
                 elif item == "retryJob" and retry_url != "":
+                    retry_build_number = retry_url.split("/")[-1]
                     html_file.writelines(
                         '      <td><a href="'
                         + retry_url
                         + '">'
-                        + retry_url
+                        + retry_build_number
                         + "</a></td>\n"
                     )
                 else:

@@ -1705,3 +1705,12 @@ CMSSW_CATEGORIES = {
     "PhysicsTools/PatUtils",
   ],
 }
+
+#Just like CMSSW_CATEGORIES but it creates non-blocking (no signature needed) github labels
+#This can be used to automatically create non-blocking labels for selected packages instead of
+#explicit `type label`. Only valid dpg/pog groups can be added as labels
+#Format: label = [cmssw_pkg1, cmssw_pkgN]
+#where cmssw_pkgX can be full or part of start of cmssw Package name
+# "jetmet" = [ "SubSystem1", "SubSystem2/Package"]
+CMSSW_LABELS = {
+}

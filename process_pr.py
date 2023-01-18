@@ -1,5 +1,6 @@
 from __future__ import print_function
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
+from categories import CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
+from categories import CMSSW_CATEGORIES, CMSSW_LABELS, get_dpg_pog
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS
 from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
@@ -28,6 +29,11 @@ except:
   def is_closed_branch(*args):
     return False
 
+
+dpg_pog = get_dpg_pog()
+for l in CMSSW_LABELS.keys():
+  if not l in dpg_pog:
+    del CMSSW_LABELS[l]
 
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
@@ -480,6 +486,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   repo_cache = {repository: repo}
   packages = set([])
   package_categories = {}
+  extra_labels = {'mtype':[]}
   add_external_category = False
   signing_categories = set([])
   new_package_message = ""
@@ -562,6 +569,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if package in category_packages:
                 package_categories[package].add(category)
                 pkg_categories.add(category)
+        for ex_lab, category_packages in list(CMSSW_LABELS.items()):
+            for cp in category_packages:
+                if package.startswith(cp):
+                    extra_labels['mtype'].append(ex_lab)
+                    break
+    if not extra_labels['mtype']: del extra_labels['mtype']
     signing_categories.update(pkg_categories)
 
     # For PR, we always require tests.
@@ -674,7 +687,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   global_test_params = {}
   assign_cats = {}
   hold = {}
-  extra_labels = {}
   last_test_start_time = None
   abort_test = None
   need_external = False

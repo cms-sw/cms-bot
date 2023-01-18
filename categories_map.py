@@ -1715,11 +1715,22 @@ CMSSW_CATEGORIES = {
 CMSSW_LABELS = {
   "tracking": [
     "CUDADataFormats/Track",
+    "CUDADataFormats/Vertex",
     "DataFormats/Track",
+    "DataFormats/VertexReco",
+    "DataFormats/V0Candidate",
+    "DataFormats/VZero",
+    "DQM/Tracking",
+    "FastSimulation/Tracking",
+    "Geometry/GlobalTracking",
     "RecoPixelVertexing",
     "RecoTracker",
     "RecoVertex",
     "TrackPropagation",
-    "TrackingTools"
+    "TrackingTools",
+    "Validation/RecoPixelVertexing",
+    "Validation/RecoTrack",
+    "Validation/RecoVertex",
+    "Validation/Tracking"
   ]
 }

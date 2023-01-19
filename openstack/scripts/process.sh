@@ -2,7 +2,7 @@
 THISDIR=$(dirname $0)
 REQ="${1}/request"
 RES="${1}/response"
-[ "${2}" = "acrontab" ] || exit 0
+[ "${2}" = "acron" ] || exit 0
 LOCK="${REQ}/lock"
 if [ -f ${LOCK} ] ; then
   let age=$(date +%s)-$(stat -c %Y ${LOCK})
@@ -15,7 +15,8 @@ fi
 XID="$(hostname -s):$$:"
 echo "${XID}" > ${LOCK}
 sleep 5
-let STIME=$(date +%s)+7200
+#Run for 10hours 02 mins
+let STIME=$(date +%s)+36120
 echo "$(date): ${XID} Started via ${2}" >> ${REQ}/status
 while [ $(date +%s) -lt ${STIME} ] ; do
   if [ $((grep "^${XID}" ${LOCK} 2>/dev/null || true) | wc -l) -eq 0 ] ; then

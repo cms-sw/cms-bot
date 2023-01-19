@@ -556,6 +556,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           for regex in pkgs_regexp:
             if regex.match(pkg_file):
               extra_labels['mtype'].append(ex_lab)
+              print("Non-Blocking label:%s:%s:%s" % (ex_lab,regex.pattern,pkg_file))
               break
       if not extra_labels['mtype']: del extra_labels['mtype']
       print("Extra non-blocking labels:",extra_labels)

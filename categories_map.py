@@ -1782,7 +1782,7 @@ CMSSW_LABELS = {
     "FastSimulation/Tracking",
     "Geometry/GlobalTracking",
     "RecoHI/HiTracking",
-    "RecoPixelVertexing",
+    "RecoPixelVertexing/",
     "RecoTracker/",
     "RecoVertex/",
     "SimGeneral/TrackingAnalysis",

@@ -1711,7 +1711,7 @@ CMSSW_CATEGORIES = {
 #explicit `type label`. Only valid dpg/pog groups can be added as labels
 #Format: label = [regexp1, regexp2]
 #where regexpX can be part of cmssw package e.g SiStrip will match all cmssw packages with SiStrip in them
-# "jetmet": [ "SubSystem1", "SubSystem2/Package"]
+# "jetmet": [ "SubSystem1/", "SubSystem2/Package"]
 CMSSW_LABELS = {
   "trk": [
     "Alignment/APEEstimation",  
@@ -1727,7 +1727,7 @@ CMSSW_LABELS = {
     "AnalysisAlgos/SiStripClusterInfoProducer",  
     "CalibFormats/SiPixel",
     "CalibFormats/SiStrip",
-    "CalibTracker",
+    "CalibTracker/",
     "Calibration/TkAlCaRecoProducers", 
     "CommonTools/TrackerMap",
     "CondCore/SiPhase2",
@@ -1760,8 +1760,8 @@ CMSSW_LABELS = {
     "Geometry/Tracker",
     "L1Trigger/Tracker",
     "OnlineDB/SiStrip",
-    "RecoLocalTracker",
-    "SimTracker",
+    "RecoLocalTracker/",
+    "SimTracker/",
     "Validation/Si",
     "Validation/Tracker",
   ],  
@@ -1783,11 +1783,11 @@ CMSSW_LABELS = {
     "Geometry/GlobalTracking",
     "RecoHI/HiTracking",
     "RecoPixelVertexing",
-    "RecoTracker",
-    "RecoVertex",
+    "RecoTracker/",
+    "RecoVertex/",
     "SimGeneral/TrackingAnalysis",
-    "TrackPropagation",
-    "TrackingTools",
+    "TrackPropagation/",
+    "TrackingTools/",
     "Validation/RecoPixelVertexing",
     "Validation/RecoTrack",
     "Validation/RecoVertex",

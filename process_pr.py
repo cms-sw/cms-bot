@@ -34,6 +34,8 @@ dpg_pog = get_dpg_pog()
 for l in CMSSW_LABELS.keys():
   if not l in dpg_pog:
     del CMSSW_LABELS[l]
+  else:
+    CMSSW_LABELS[l] = [re.compile('^.*('+p+').*$') for p in CMSSW_LABELS[l]]
 
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
@@ -546,8 +548,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       if cmssw_repo:
         if (pr.base.ref=="master"): signing_categories.add("code-checks")
         updateMilestone(repo, issue, pr, dryRun)
+      chg_files = get_changed_files(repo, pr)
       packages = sorted([x for x in set([cmssw_file2Package(repo_config, f)
-                           for f in get_changed_files(repo, pr)])])
+                           for f in chg_files])])
+      for pkg_file in chg_files:
+        for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
+          for regex in pkgs_regexp:
+            if regex.match(pkg_file):
+              extra_labels['mtype'].append(ex_lab)
+              break
+      if not extra_labels['mtype']: del extra_labels['mtype']
+      print("Extra non-blocking labels:",extra_labels)
       print("First Package: ",packages[0])
       create_test_property = True
     else:
@@ -569,12 +580,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if package in category_packages:
                 package_categories[package].add(category)
                 pkg_categories.add(category)
-        for ex_lab, category_packages in list(CMSSW_LABELS.items()):
-            for cp in category_packages:
-                if package.startswith(cp):
-                    extra_labels['mtype'].append(ex_lab)
-                    break
-    if not extra_labels['mtype']: del extra_labels['mtype']
     signing_categories.update(pkg_categories)
 
     # For PR, we always require tests.

@@ -384,6 +384,12 @@ if __name__ == "__main__":
                             retry_object,
                             retry_delay,
                         )
+                         
+                    # Update last processed log only if grater than current revision number
+                    if max(missing_builds) > latest_revision:
+                        processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
+                            missing_builds
+                        )
 
             # Update running builds checking > last revision number
             new_running_builds = helpers.get_running_builds(job_dir, latest_revision)

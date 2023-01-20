@@ -86,13 +86,6 @@
         "maxTime": "12"
       },
       {
-        "jobName": "update-github-pages",
-        "errorType": [
-          "gitErrors"
-        ],
-        "maxTime": "2"
-      },
-      {
         "jobName": "ib-tag-and-schdule",
         "errorType": [],
         "maxTime": "18"

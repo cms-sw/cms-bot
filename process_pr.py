@@ -608,7 +608,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Add watchers.yaml information to the WATCHERS dict.
     WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
-    # Given the packages check if there are additional developers watching one or more.
+    # Given the files modified by the PR, check if there are additional developers watching one or more.
     author = pr.user.login
     watchers = set([user for chg_file in chg_files
                          for user, watched_regexp in list(WATCHERS.items())

@@ -19,13 +19,6 @@ STAGEOUT="gsiftp://gridftp.echo.stfc.ac.uk/cms: \
           root://xrootd-cmst1-door.pic.es:1094//pnfs/pic.es/data/cms/disk"
 PREFIX="/store/test/cmsbuild"
 #
-#
-#
-# overall return code:
-MRC=0
-#
-#
-#
 # create a small 64kB test file:
 /usr/bin/head -c 65536 </dev/urandom 1>/tmp/stageout_verify_$$.bin
 #
@@ -33,9 +26,9 @@ MRC=0
 CHKSUM=`/usr/bin/xrdadler32 /tmp/stageout_verify_$$.bin | /usr/bin/awk '{print $1; exit}'`
 echo "Adler-32 checksum of test file stageout_verify_$$.bin is ${CHKSUM}"
 #
-#
-#
 # loop over stage-out protocols and verify at a test site:
+# overall fails protocols:
+MRC=""
 echo ""
 for PROTO in root gsiftp srm davs; do
    PASSED=0
@@ -60,18 +53,16 @@ for PROTO in root gsiftp srm davs; do
    done
    if [ $PASSED -eq 0 ] ; then
        echo "--> attempts to all destinations failed"
-       let MRC=${MRC}+1
+       MRC="${MRC} ${PROTO}($PASSED/$TOTAL)"
    else
        echo "--> protocol ${PROTO} working: $PASSED/$TOTAL"
    fi
    echo ""
 done
 #
-#
-#
-if [ ${MRC} -ne 0 ]; then
-   echo "==> stage-out verify failed"
-else
-   echo "==> stage-out working"
+if [ "${MRC}" != "" ]; then
+   echo "==> stage-out verify failed: ${MRC}"
+   exit 1
 fi
-exit ${MRC}
+echo "==> stage-out working"
+exit 0

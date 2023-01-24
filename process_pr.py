@@ -487,6 +487,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   create_test_property = False
   repo_cache = {repository: repo}
   packages = set([])
+  chg_files = []
   package_categories = {}
   extra_labels = {'mtype':[]}
   add_external_category = False
@@ -607,12 +608,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Add watchers.yaml information to the WATCHERS dict.
     WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
-    # Given the packages check if there are additional developers watching one or more.
+    # Given the files modified by the PR, check if there are additional developers watching one or more.
     author = pr.user.login
-    watchers = set([user for package in packages
+    watchers = set([user for chg_file in chg_files
                          for user, watched_regexp in list(WATCHERS.items())
                          for regexp in watched_regexp
-                         if re.match("^" + regexp + ".*", package) and user != author])
+                         if re.match("^" + regexp + ".*", chg_file) and user != author])
     #Handle category watchers
     catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
     for user, cats in list(catWatchers.items()):

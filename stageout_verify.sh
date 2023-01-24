@@ -38,11 +38,13 @@ echo "Adler-32 checksum of test file stageout_verify_$$.bin is ${CHKSUM}"
 # loop over stage-out protocols and verify at a test site:
 echo ""
 for PROTO in root gsiftp srm davs; do
+   PASSED=0
+   TOTAL=0
    echo "Stage-out protocol ${PROTO}"
    #
-   PRC=93
    for DEST in ${STAGEOUT}; do
       if [[ "${DEST}" =~ ^${PROTO}:// ]]; then
+         let TOTAL=$TOTAL+1
          echo "using ${DEST}"
          /usr/bin/gfal-copy -t 90 --checksum ADLER32:${CHKSUM} \
                             file:///tmp/stageout_verify_$$.bin \
@@ -50,21 +52,17 @@ for PROTO in root gsiftp srm davs; do
          RC=$?
          echo "   gfal-copy, rc=${RC}"
          if [ ${RC} -eq 0 ]; then
-            PRC=0
-            #
+            let PASSED=$PASSED+1
             /usr/bin/gfal-rm -t 90 ${DEST}${PREFIX}/stageout_verify_$$.bin 1>/dev/null
             echo "   gfal-rm, rc=$?"
-            break
-         elif [ ${PRC} -eq 93 ]; then
-            PRC=${RC}
          fi
       fi
    done
-   if [ ${PRC} -ne 0 ]; then
+   if [ $PASSED -eq 0 ] ; then
        echo "--> attempts to all destinations failed"
        let MRC=${MRC}+1
    else
-       echo "--> protocol working"
+       echo "--> protocol ${PROTO} working: $PASSED/$TOTAL"
    fi
    echo ""
 done

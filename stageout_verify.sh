@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 #
 trap 'exit 1' 1 2 3 15
 trap '/bin/rm -f /tmp/stageout_verify_$$.bin 1> /dev/null 2>&1' 0

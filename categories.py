@@ -51,7 +51,6 @@ CMSSW_L2 = {
   "fwyzard":          ["heterogeneous"],
   "ggovi":            ["db"],
   "GurpreetSinghChahal":  ["generators"],
-  "ianna":            ["geometry"],
   "cecilecaillol":    ["l1"],
   "clacaputo":        ["reconstruction"],
   "kskovpen":         ["pdmv"],

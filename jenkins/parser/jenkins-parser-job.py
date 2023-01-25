@@ -318,7 +318,6 @@ if __name__ == "__main__":
 
     T = 1
     time_check = True
-    first_iter = True
 
     while True:
         current_time = datetime.datetime.now()
@@ -362,34 +361,33 @@ if __name__ == "__main__":
                 processed_object["parserInfo"]["runningBuilds"][job_to_retry] = dict()
                 total_running_builds = []
 
-            if first_iter == True:
-                # Look for untracked builds
-                missing_builds = helpers.get_missing_builds(
-                    job_dir, total_running_builds, latest_revision
+            # Look for untracked builds
+            missing_builds = helpers.get_missing_builds(
+                job_dir, total_running_builds, latest_revision
+            )
+            if missing_builds:
+                print(
+                    "["
+                    + job_to_retry
+                    + "] Builds #"
+                    + str(", #".join(missing_builds))
+                    + " have finished. Processing ..."
                 )
-                if missing_builds:
-                    print(
-                        "["
-                        + job_to_retry
-                        + "] Builds #"
-                        + str(", #".join(missing_builds))
-                        + " have finished. Processing ..."
+                for build in sorted(missing_builds):
+                    process_build(
+                        build,
+                        job_dir,
+                        job_to_retry,
+                        error_list,
+                        retry_object,
+                        retry_delay,
                     )
-                    for build in sorted(missing_builds):
-                        process_build(
-                            build,
-                            job_dir,
-                            job_to_retry,
-                            error_list,
-                            retry_object,
-                            retry_delay,
-                        )
                          
-                    # Update last processed log only if grater than current revision number
-                    if max(missing_builds) > latest_revision:
-                        processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
-                            missing_builds
-                        )
+                # Update last processed log only if grater than current revision number
+                if max(missing_builds) > latest_revision:
+                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
+                        missing_builds
+                    )
 
             # Update running builds checking > last revision number
             new_running_builds = helpers.get_running_builds(job_dir, latest_revision)
@@ -459,8 +457,6 @@ if __name__ == "__main__":
                     )
 
             # print("[" + job_to_retry + "] ... Done")
-
-        first_iter = False
 
         # Check for delayed retries
         if retry_entries:

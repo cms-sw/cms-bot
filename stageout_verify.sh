@@ -29,11 +29,12 @@ echo "Adler-32 checksum of test file stageout_verify_$$.bin is ${CHKSUM}"
 # loop over stage-out protocols and verify at a test site:
 # overall fails protocols:
 MRC=""
+SUMMARY=""
 echo ""
 for PROTO in root gsiftp srm davs; do
    PASSED=0
    TOTAL=0
-   echo "Stage-out protocol ${PROTO}"
+   echo "Stage-out protocol ${PROTO} .... "
    #
    for DEST in ${STAGEOUT}; do
       if [[ "${DEST}" =~ ^${PROTO}:// ]]; then
@@ -51,6 +52,7 @@ for PROTO in root gsiftp srm davs; do
          fi
       fi
    done
+   SUMMARY="${SUMMARY} ${PROTO}($PASSED/$TOTAL)"
    if [ $PASSED -eq 0 ] ; then
        echo "--> attempts to all destinations failed"
        MRC="${MRC} ${PROTO}($PASSED/$TOTAL)"
@@ -60,9 +62,9 @@ for PROTO in root gsiftp srm davs; do
    echo ""
 done
 #
+echo "Test Summary:${SUMMARY}"
 if [ "${MRC}" != "" ]; then
    echo "==> stage-out verify failed: ${MRC}"
    exit 1
 fi
-echo "==> stage-out working"
 exit 0

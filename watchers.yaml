@@ -1815,6 +1815,7 @@ youyingli:
 - SimTracker/TrackerMaterialAnalysis
 - SimCalorimetry/HGCalSimProducers
 - SimDataFormats
+- Configuration/Skimming
 a-kapoor:
   - RecoEgamma
   - RecoEcal

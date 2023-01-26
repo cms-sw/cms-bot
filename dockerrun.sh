@@ -14,7 +14,7 @@ function dockerrun()
     IMG="cmssw/${os}:${arch}"
     if [ "${arch}" = "amd64" ] ; then
       IMG="cmssw/${os}:x86_64"
-    else
+    elif [ $(uname -m) != "${arch}" ] ; then
       CONTAINER_TYPE="qemu"
       QEMU_ARGS="$PROOTDIR/qemu-${arch}"
       if [ "${arch}" = "aarch64" ] ; then

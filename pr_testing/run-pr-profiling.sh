@@ -33,7 +33,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
   $WORKSPACE/profiling/Gen_tool/Gen.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall.sh $CMSSW_VERSION || true
   $WORKSPACE/profiling/Gen_tool/runall_cpu.sh $CMSSW_VERSION || true
-  $WORKSPACE/profiling/Gen_tool/runall_mem_GC.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/runall_mem_TC.sh $CMSSW_VERSION || true
   if [ ! -d $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW ] ; then
     mark_commit_status_all_prs "profiling wf $PROFILING_WORKFLOW" 'success' -u "${BUILD_URL}" -d "Error: failed to run profiling"
     echo "<li>$PROFILING_WORKFLOW: No such directory</li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html

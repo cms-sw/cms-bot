@@ -31,6 +31,8 @@ if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
   fi
   scram setup      > /dev/null 2>&1
   scram b echo_CXX > /dev/null 2>&1
+  cp -r $(scram tool tag coral CORAL_BASE)/config/SCRAM $CMSSW_BASE/config/SCRAM
+  scram b -r echo_CXX
   eval `scram run -sh` > /dev/null 2>&1
 fi
 

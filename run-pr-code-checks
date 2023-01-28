@@ -30,8 +30,8 @@ if [ "${CMSSW_TOOL_CONF}" != "" ] ; then
     cp $CMSSW_BASE/old-tools/cmssw.xml $CMSSW_BASE/config/toolbox/${SCRAM_ARCH}/tools/selected/
   fi
   scram setup      > /dev/null 2>&1
+  rm -rf $CMSSW_BASE/old-tools $CMSSW_BASE/config/SCRAM $CMSSW_BASE/external
   cp -r $(scram tool tag coral CORAL_BASE)/config/SCRAM $CMSSW_BASE/config/SCRAM
-  rm -rf $CMSSW_BASE/external
   scram b -r echo_CXX
   eval `scram run -sh` > /dev/null 2>&1
 fi

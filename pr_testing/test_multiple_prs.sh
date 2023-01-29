@@ -80,7 +80,7 @@ fi
 let NCPU2=${NCPU}*2
 rm -rf ${RESULTS_DIR} ${RESULTS_FILE}
 mkdir ${RESULTS_DIR}
-export DISABLE_CMS_DEPRECATED=true
+
 TEST_RELVALS_INPUT=true
 DO_COMPARISON=false
 DO_MB_COMPARISON=false
@@ -137,6 +137,7 @@ UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uni
 UNIQ_REPO_NAMES=$(echo ${UNIQ_REPOS} | tr ' ' '\n' | sed 's|.*/||' )
 UNIQ_REPO_NAMES_WITH_COUNT=$(echo ${UNIQ_REPO_NAMES} | sort | uniq -c )
 RPM_UPLOAD_REPO=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep -v '/cmssw#' | grep -v '/cms-bot#' | sort | uniq | md5sum | sed 's| .*||')
+if [ $(echo $CMSSW_QUEUE | cut -d_ -f2) -lt 13 ] ; then export DISABLE_CMS_DEPRECATED=true ; fi
 
 let WEEK_NUM=$(tail -1 $CMS_BOT_DIR/ib-weeks | sed 's|.*-||;s|^0*||')%2 || true
 CMS_WEEKLY_REPO=cms.week${WEEK_NUM}

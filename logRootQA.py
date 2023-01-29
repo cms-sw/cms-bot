@@ -336,8 +336,10 @@ if run in ['all', 'events']:
 
   print("Logs:", lines, lChanges, nLog, nPrintTot, stopPrint)
   print("Events:", sameEvts, nRoot, newDQM, nDQM, diff, wfs)
-  if lines >0 :
+  if lines>0 :
     print("SUMMARY You potentially added "+str(lines)+" lines to the logs")
+  elif lines<0 :
+    print("SUMMARY You potentially removed "+str(-1*lines)+" lines from the logs")
   else:
     print("SUMMARY No significant changes to the logs found")
 

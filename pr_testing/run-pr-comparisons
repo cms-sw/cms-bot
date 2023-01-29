@@ -294,7 +294,7 @@ set +x
 #which comparison is run.
 PID_WAIT=""
 if [ "X$RUN_JR_COMP" = Xtrue ]; then
-  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running JR comparion" || true
+  mark_commit_status_all_prs "${GH_COMP_CONTEXT}" 'pending' -u "${BUILD_URL}" -d "Running JR comparison" || true
   pushd $JR_COMP_DIR
     echo "Start JR comparison at `date`"
     for WF in ${WORKFLOWS_TO_COMPARE//,/ }; do

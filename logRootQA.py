@@ -56,12 +56,12 @@ def filteredLines(f):
     retval={}
     for l in openfile(f):
         sl=l.strip()
-        skip=false
+        skip=False
         for data in Log_Lines_Filter:
-          skip = true
+          skip = True
           for s in data:
             if not s in sl:
-              skip = false
+              skip = False
               break
           if not skip: continue
           break

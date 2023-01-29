@@ -38,7 +38,7 @@ for x in `grep ADDITIONAL_TESTS=  $CONFIG_MAP | grep "SCRAM_ARCH=$ARCHITECTURE;"
       nfile=$WORKSPACE/auto-$x-${wf}-properties
       cp ${pfile} ${nfile}
       echo "PROFILING_WORKFLOWS=$wf" >> ${nfile}
-      echo "EVENTS=20" >> ${nfile}
+      echo "EVENTS=10" >> ${nfile}
     done
     rm -f ${pfile}
   fi

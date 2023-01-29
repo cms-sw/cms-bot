@@ -131,6 +131,7 @@ if [ -z ${RELEASE_FORMAT} ]; then
      RELEASE_FORMAT=$DEV_BRANCH
 fi
 
+DISABLE_CMS_DEPRECATED=false
 CMSSW_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | tr ',' ' ' | sed 's/  */ /g' | sed 's/^ *//;s/ *$//' )  # to make consistent separation in list
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )  # Repos without pull number
@@ -648,8 +649,8 @@ set -x
 echo $LD_LIBRARY_PATH | tr ':' '\n'
 BUILD_LOG_DIR="${CMSSW_BASE}/tmp/${SCRAM_ARCH}/cache/log"
 USER_FLAGS=""
-if  $IS_DEV_BRANCH ;  then
-  USER_FLAGS="USER_CXXFLAGS=-DUSE_CMS_DEPRECATED"
+if $DISABLE_CMS_DEPRECATED ;  then
+  #USER_FLAGS="USER_CXXFLAGS=-DUSE_CMS_DEPRECATED"
   ANALOG_OPT="--ignoreWarning=Wdeprecated-declarations"
 fi
 ANALOG_CMD="scram build outputlog && (${CMS_PYTHON_TO_USE} $CMS_BOT_DIR/buildLogAnalyzer.py ${ANALOG_OPT} --logDir ${BUILD_LOG_DIR}/src || true)"

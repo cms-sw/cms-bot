@@ -114,10 +114,10 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
     CLEAN_UP_CACHE=false
     DOCKER_IMGX=""
-    if [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
+    if [ -e /cvmfs/singularity.opensciencegrid.org/$DOCKER_IMG ] ; then
+      DOCKER_IMGX=/cvmfs/singularity.opensciencegrid.org/$DOCKER_IMG
+    elif [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
-    elif [ -e /cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG ] ; then
-      DOCKER_IMGX=/cvmfs/cms-ib.cern.ch/docker/$DOCKER_IMG
     fi
     if [ "$DOCKER_IMGX" = "" ] ; then
       DOCKER_IMGX="docker://$DOCKER_IMG"

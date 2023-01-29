@@ -8,6 +8,11 @@ import sys
 import json
 import subprocess as sub
 
+Log_Lines_Filter = [
+  ('This TensorFlow binary is optimized with'),
+  ('[PostMaster', '[Error')
+]
+
 def openfile(filename):
   if sys.version_info[0] == 2:
     return open(filename)
@@ -51,6 +56,16 @@ def filteredLines(f):
     retval={}
     for l in openfile(f):
         sl=l.strip()
+        skip=false
+        for data in Log_Lines_Filter:
+          skip = true
+          for s in data:
+            if not s in sl:
+              skip = false
+              break
+          if not skip: continue
+          break
+        if skip: continue
         if 'P       Y      T    H   H  III  A   A' in l:continue
         # look for and remove timestamps
         if '-' in l and ':' in l:

@@ -8,6 +8,14 @@ import sys
 import json
 import subprocess as sub
 
+Log_Lines_Filter = [
+  ('This TensorFlow binary is optimized with'),
+  ('[PostMaster', '[Error'),
+  ('Initiating request to open file', 'root://'),
+  ('Successfully opened file', 'root://'),
+  ('Closed file', 'root://')
+]
+
 def openfile(filename):
   if sys.version_info[0] == 2:
     return open(filename)
@@ -35,22 +43,30 @@ def getWorkflow(f):
 
 
 def checkLines(l1,l2):
-    lines=0
-    for l in openfile(l2):
-        lines=lines+1
-    for l in openfile(l1):
-        lines=lines-1
+    filt1 = filteredLines(l1)
+    filt2 = filteredLines(l2)
+    lines = len(filt2) - len(filt1)
     if lines>0:
         print("You added "+str(lines)+" to "+l2)
     if lines<0:
-        print("You removed "+str(-1*lines)+" to "+l2)
+        print("You removed "+str(-1*lines)+" from "+l2)
         
-    return lines
+    return (lines, filt1, filt2)
 
 def filteredLines(f):
     retval={}
     for l in openfile(f):
         sl=l.strip()
+        skip=False
+        for data in Log_Lines_Filter:
+          skip = True
+          for s in data:
+            if not s in sl:
+              skip = False
+              break
+          if not skip: continue
+          break
+        if skip: continue
         if 'P       Y      T    H   H  III  A   A' in l:continue
         # look for and remove timestamps
         if '-' in l and ':' in l:
@@ -71,10 +87,8 @@ def filteredLines(f):
         retval[sl]=1
     return retval
 
-def getRelevantDiff(l1,l2,maxInFile=20):
+def getRelevantDiff(filt1, filt2, l1, l2 ,maxInFile=20):
     nPrintTot=0
-    filt1=filteredLines(l1)
-    filt2=filteredLines(l2)
 
     keys1=filt1.keys()
     keys2=filt2.keys()
@@ -305,10 +319,10 @@ diff,wfs=[],[]
 if run in ['all', 'events']:
   if not os.path.exists('comparison-events.json'):
     for l in getCommonFiles(baseDir,testDir,'step*.log'):
-      lCount=checkLines(baseDir+l,testDir+l)
+      lCount, filt1, filt2 = checkLines(baseDir+l,testDir+l)
       lines=lines+lCount
       if nPrintTot<1000:
-        nprint=getRelevantDiff(baseDir+l,testDir+l)
+        nprint=getRelevantDiff(filt1, filt2, baseDir+l, testDir+l)
         nPrintTot=nPrintTot+nprint
       else:
         if stopPrint==0:

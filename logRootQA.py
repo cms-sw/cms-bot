@@ -10,7 +10,10 @@ import subprocess as sub
 
 Log_Lines_Filter = [
   ('This TensorFlow binary is optimized with'),
-  ('[PostMaster', '[Error')
+  ('[PostMaster', '[Error'),
+  ('Initiating request to open file', 'root://'),
+  ('Successfully opened file', 'root://'),
+  ('Closed file', 'root://')
 ]
 
 def openfile(filename):

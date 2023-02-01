@@ -43,17 +43,15 @@ def getWorkflow(f):
 
 
 def checkLines(l1,l2):
-    lines=0
-    for l in openfile(l2):
-        lines=lines+1
-    for l in openfile(l1):
-        lines=lines-1
+    filt1 = filteredLines(l1)
+    filt2 = filteredLines(l2)
+    lines = len(filt2) - len(filt1)
     if lines>0:
         print("You added "+str(lines)+" to "+l2)
     if lines<0:
-        print("You removed "+str(-1*lines)+" to "+l2)
+        print("You removed "+str(-1*lines)+" from "+l2)
         
-    return lines
+    return (lines, filt1, filt2)
 
 def filteredLines(f):
     retval={}
@@ -89,10 +87,8 @@ def filteredLines(f):
         retval[sl]=1
     return retval
 
-def getRelevantDiff(l1,l2,maxInFile=20):
+def getRelevantDiff(filt1, filt2, l1, l2 ,maxInFile=20):
     nPrintTot=0
-    filt1=filteredLines(l1)
-    filt2=filteredLines(l2)
 
     keys1=filt1.keys()
     keys2=filt2.keys()
@@ -323,10 +319,10 @@ diff,wfs=[],[]
 if run in ['all', 'events']:
   if not os.path.exists('comparison-events.json'):
     for l in getCommonFiles(baseDir,testDir,'step*.log'):
-      lCount=checkLines(baseDir+l,testDir+l)
+      lCount, filt1, filt2 = checkLines(baseDir+l,testDir+l)
       lines=lines+lCount
       if nPrintTot<1000:
-        nprint=getRelevantDiff(baseDir+l,testDir+l)
+        nprint=getRelevantDiff(filt1, filt2, baseDir+l, testDir+l)
         nPrintTot=nPrintTot+nprint
       else:
         if stopPrint==0:

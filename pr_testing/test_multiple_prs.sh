@@ -235,6 +235,11 @@ if [ "$COMPARISON_REL" = "" ] ; then
 fi
 [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] && sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res
 
+if [ "${USER_BASELINE}" = "self" ] ; then
+  COMPARISON_REL="$CMSSW_IB"
+  COMPARISON_ARCH="$SCRAM_ARCH"
+fi
+
 if $DO_COMPARISON ; then
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
@@ -365,6 +370,7 @@ echo "COMPARISON_IB;$COMPARISON_REL" >> ${RESULTS_FILE}
 PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
 SKIP_STATIC_CHECKS=false
+[ $(echo ",${SKIP_TESTS}," | grep ',static,' | wc -l) -gt 0 ] && SKIP_STATIC_CHECKS=true
 if ${BUILD_EXTERNAL} ; then
     export USE_IB_TAG=false
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true

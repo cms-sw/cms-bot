@@ -78,6 +78,7 @@ ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS ="_" + "|_".join(EXTRA_RELVALS_TESTS)
 EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|profiling|none"
+SKIP_TESTS = "|".join(["static","header"])
 ENABLE_TEST_PTRN = "enable(_test(s|)|)"
 JENKINS_NODES = '[a-zA-Z0-9_|&\s()-]+'
 MULTILINE_COMMENTS_MAP = {
@@ -87,6 +88,8 @@ MULTILINE_COMMENTS_MAP = {
               "full_cmssw|full":  ['true|false',                                                                "BUILD_FULL_CMSSW"],
               "disable_poison":   ['true|false',                                                                "DISABLE_POISON"],
               "use_ib_tag":       ['true|false',                                                                "USE_IB_TAG"],
+              "baseline":         ['self|default',                                                              "USE_BASELINE"],
+              "skip_tests":       [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=SKIP_TESTS),                 "SKIP_TESTS"],
               "dry_run":          ['true|false',                                                                "DRY_RUN"],
               "jenkins_(slave|node)": [JENKINS_NODES ,                                                          "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],

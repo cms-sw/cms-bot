@@ -89,7 +89,7 @@ MULTILINE_COMMENTS_MAP = {
               "disable_poison":   ['true|false',                                                                "DISABLE_POISON"],
               "use_ib_tag":       ['true|false',                                                                "USE_IB_TAG"],
               "baseline":         ['self|default',                                                              "USE_BASELINE"],
-              "skip_tests":       [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=SKIP_TESTS),                 "SKIP_TESTS"],
+              "skip_test(s|)":    [format("(%(tests)s)(\s*,\s*(%(tests)s))*",tests=SKIP_TESTS),                 "SKIP_TESTS"],
               "dry_run":          ['true|false',                                                                "DRY_RUN"],
               "jenkins_(slave|node)": [JENKINS_NODES ,                                                          "RUN_ON_SLAVE"],
               "(arch(itecture(s|))|release|release/arch)" : [ CMSSW_RELEASE_QUEUE_PATTERN,                      "RELEASE_FORMAT"],

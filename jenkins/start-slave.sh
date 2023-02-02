@@ -68,7 +68,7 @@ if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^no_label$' | wc -l) -eq 0 ] ; t
     slave_labels="auto-label $(get_data SLAVE_LABELS)"
     case ${SLAVE_TYPE} in
       cmsbuild*|vocms* ) slave_labels="${slave_labels} cloud cmsbuild release-build";;
-      cmsdev*   )        slave_labels="${slave_labels} cloud cmsdev profile";;
+      cmsdev*   )        slave_labels="${slave_labels} cloud cmsdev profiling";;
       * ) if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^release-build$' | wc -l) -gt 0 ] ; then slave_labels="${slave_labels} release-build"; fi ;;
     esac
     case $(get_data HOST_CMS_ARCH) in

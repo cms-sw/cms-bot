@@ -123,8 +123,10 @@ for REPOSITORY in $REPOSITORIES; do
     elif [ $(grep "server  *${CMSREP_IB_SERVER} " $WORKDIR/common/cmspkg | wc -l) -eq 0 ] ; then
       sed -i -e "s| \-\-server *[^ ]* | --server ${CMSREP_IB_SERVER} |" $WORKDIR/common/cmspkg
     fi
+    #Ugrade cmspkg itself
+    $CMSPKG -y upgrade
+    #Upgrade any common packages e.g. cms-common, fakesystem etc.
     $CMSPKG -y --upgrade-packages upgrade
-    ${CMSPKG} update
     for pkg in ${XPKGS} ; do
       INSTALL_PACKAGES="$(${CMSPKG} --build-order search +${pkg}+ | grep ${pkg} | sed 's| .*||' | head -1) ${INSTALL_PACKAGES}"
     done

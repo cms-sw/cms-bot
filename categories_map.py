@@ -320,6 +320,7 @@ CMSSW_CATEGORIES = {
     "NOTICE",
     "PerfTools/Callgrind",
     "PerfTools/EdmEvent",
+    "PerfTools/JeProf",
     "Utilities/DCacheAdaptor",
     "Utilities/DavixAdaptor",
     "Utilities/General",

@@ -48,6 +48,18 @@ def update_payload_timestamp(build_id, queue):
     current_time = get_current_time()
     payload['@timestamp'] = current_time
     return id, payload
+  
+def grep(filename, pattern, verbose=False):
+    """Bash-like grep function. Set verbose=True to print the line match."""
+    if not os.path.exists(filename):
+        return
+    with open(filename, "r") as file:
+        for line in file:
+            if re.search(pattern, line):
+                if verbose:
+                    return line
+                else:
+                    return True
 
 query_running_builds = """{
 "query": {"bool": {"must": {"query_string": {"query": "job_status:Running AND jenkins_server:%s", "default_operator": "AND"}}}},

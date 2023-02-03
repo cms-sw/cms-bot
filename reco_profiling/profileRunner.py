@@ -291,7 +291,7 @@ def configureProfilingSteps(cmsdriver_lines, num_events, steps_config):
             ]
             
             igprof_pp = wrapInRetry(igprof_exe + " -d -pp -z -o step{istep}_igprofCPU.gz -t cmsRun cmsRun step{istep}_igprof.py &> step{istep}_igprof_cpu.txt".format(istep=istep))
-            igprof_mp = wrapInRetry(igprof_exe + " -d -mp -z -o step{istep}_igprofMEM.gz -t cmsRunTC cmsRunTC step{istep}_igprof.py &> step{istep}_igprof_mem.txt".format(istep=istep))
+            igprof_mp = wrapInRetry(igprof_exe + " -d -mp -z -o step{istep}_igprofMEM.gz -t cmsRunGlibC cmsRunGlibC step{istep}_igprof.py &> step{istep}_igprof_mem.txt".format(istep=istep))
             outfiles += [
                 "step{istep}_igprof_cpu.txt".format(istep=istep), 
                 "step{istep}_igprof_mem.txt".format(istep=istep)

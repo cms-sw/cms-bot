@@ -71,7 +71,11 @@ query_inqueue0 = """{
 
 # Get jobs in queue from elastic search
 queue_index = 'cmssdt-jenkins-queue*'
-elements_inqueue = get_payload_wscroll(queue_index, query_inqueue1)
+try:
+    elements_inqueue = get_payload_wscroll(queue_index, query_inqueue1)
+except ValueError:
+    elements_inqueue = dict()
+
 es_queue = dict()
 if elements_inqueue:
   if (not 'hits' in elements_inqueue) or (not 'hits' in elements_inqueue['hits']):

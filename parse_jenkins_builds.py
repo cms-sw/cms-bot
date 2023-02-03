@@ -219,6 +219,8 @@ for root, dirs, files in os.walk(path):
 print("[INFO] Checking remaining elements in queue ...")
 for entry in es_queue:
     job_path = path + "/" + es_queue[entry]["job_name"]
+    if not os.path.exists(job_path):
+        continue
     for dir in os.listdir(job_path):
         if dir.isdigit():
             file_path = functools.reduce(os.path.join, [job_path, dir, "build.xml"])

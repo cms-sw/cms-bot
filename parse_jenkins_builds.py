@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from hashlib import sha1
-import os , re , sys , json, datetime, time
+import os , re , sys , json, datetime, time, functools
 import xml.etree.ElementTree as ET
 from _py2with3compatibility import run_cmd
 from es_utils import send_payload,get_payload,resend_payload,get_payload_wscroll

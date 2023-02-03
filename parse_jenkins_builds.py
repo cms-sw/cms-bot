@@ -214,6 +214,22 @@ for root, dirs, files in os.walk(path):
         send_payload(weekindex,document,id,json.dumps(payload))
       except Exception as e:
         print("Xml parsing error",logFile , e)
+
+# Check remaining elements in the queue (to catch jobs that enter the queue and finish on the same iter)        
+for entry in es_queue:
+    job_path = path + "/" + es_queue[entry]["job_name"]
+    for dir in os.listdir(job_path):
+        if dir.isdigit():
+            file_path = functools.reduce(os.path.join, [job_path, dir, "build.xml"])
+            queue_id = grep(file_path, str(es_queue[entry]["queue_id"]), True)
+            if queue_id != None:
+                queue_id.replace("<queueId>", "").replace("</queueId>", "").replace("\n", "")
+                jstime = grep(file_path, str("<startTime>"), True).replace("<startTime>", "").replace("</startTime>", "").replace("\n", "")
+                es_queue[entry]["start_time"] = int(jstime)
+                es_queue[entry]["wait_time"] = int(jstime) - es_queue[entry]["in_queue_since"]
+                print("==> Sending payload for ", es_queue[entry]['queue_hash'])
+                send_payload(queue_index, queue_document, es_queue[entry]['queue_hash'], json.dumps(es_queue[entry]))
+
 running_builds_elastic={}
 content_hash = get_payload_wscroll('jenkins-*',query_running_builds)
 if not content_hash:

@@ -215,7 +215,8 @@ for root, dirs, files in os.walk(path):
       except Exception as e:
         print("Xml parsing error",logFile , e)
 
-# Check remaining elements in the queue (to catch jobs that enter the queue and finish on the same iter)        
+# Check remaining elements in the queue (to catch jobs that enter the queue and finish on the same iter)
+print("[INFO] Checking remaining elements in queue ...")
 for entry in es_queue:
     job_path = path + "/" + es_queue[entry]["job_name"]
     for dir in os.listdir(job_path):

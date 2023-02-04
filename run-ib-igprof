@@ -32,9 +32,17 @@ for prof in ${PROFILES} ; do
       cd $WORKFLOW*
       for f in $(ls *GEN_SIM.py); do
          igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
+         for g in $(ls -1 IgProf*.gz);do
+           mv $f ${g/IgProf/igprofMEM_GC_step1}
+         done
       done
+      s=1
       for f in $(ls -1 step*.py| sort); do
          igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
+         s=$((++s))
+         for g in $(ls -1 IgProf*.gz);do
+           mv $g ${g/IgProf/igprofMEM_GC_step$s}
+         done
       done
       cd -
     else

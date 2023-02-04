@@ -31,10 +31,10 @@ for prof in ${PROFILES} ; do
       runTheMatrix.py $WF --command " -n $EVENTS --profile $prof --customise Validation/Performance/IgProfInfo.customise --no_exec" 2>&1 | tee  ./runTheMatrix.log
       cd $WORKFLOW*
       for f in $(ls *GEN_SIM.py); do
-         igprof -mp -t cmsRunTC -- cmsRunTC $f 2>&1 | tee ${f//.py/.log}
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
       done
       for f in $(ls -1 step*.py| sort); do
-         igprof -mp -t cmsRunTC -- cmsRunTC $f 2>&1 | tee ${f//.py/.log}
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f 2>&1 | tee ${f//.py/.log}
       done
       cd -
     else

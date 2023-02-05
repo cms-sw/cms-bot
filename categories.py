@@ -37,7 +37,6 @@ CMSSW_L2 = {
   "Dr15Jones":        ["core", "visualization", "geometry"],
   "Martin-Grunewald": ["hlt"],
   "AdrianoDee":       ["upgrade"],
-  "ahmad3213":        ["dqm"],
   "alberto-sanchez":  ["generators"],
   "alja":             ["visualization"],
   "bbilin":           ["pdmv"],

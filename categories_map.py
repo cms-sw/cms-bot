@@ -1705,6 +1705,7 @@ CMSSW_CATEGORIES = {
     "Fireworks/Geometry",
     "Fireworks/Macros",
     "Fireworks/Muons",
+    "Fireworks/MTD",
     "Fireworks/ParticleFlow",
     "Fireworks/SimData",
     "Fireworks/TableWidget",

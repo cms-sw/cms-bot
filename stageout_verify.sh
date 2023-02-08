@@ -6,6 +6,9 @@ trap '/bin/rm -f /tmp/stageout_verify_$$.bin 1> /dev/null 2>&1' 0
 #
 #
 # destinations the test can use:
+
+voms-proxy-info –all
+
 STAGEOUT="gsiftp://gridftp.echo.stfc.ac.uk/cms: \
           gsiftp://eoscmsftp.cern.ch/eos/cms \
           srm://srmcms.pic.es:8443/srm/managerv2?SFN=/pnfs/pic.es/data/cms/disk \

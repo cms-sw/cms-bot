@@ -578,3 +578,46 @@ def mark_commit_status(commit, repository, context="default", state="pending", u
         params['context'] = s['context']
         github_api('/repos/%s/statuses/%s' % (repository, commit), params=params)
   return
+
+def get_branch(repository, branch_name):
+    get_gh_token(repository)
+    data = github_api("/repos/%s/branches/%s" % (repository, branch_name), method="GET")
+    return data
+
+
+def get_git_tag(repository, tag_name):
+    get_gh_token(repository)
+    data = github_api(
+        "/repos/%s/git/ref/tags/%s" % (repository, tag_name), method="GET"
+    )
+    return data
+
+
+def create_git_tag(
+    repository, tag_name, commit_sha, tagger_name, tagger_email, tag_date=None
+):
+    get_gh_token(repository)
+    if tag_date is None:
+        tag_date = datetime.datetime.now()
+    tag_date_s = tag_date.replace(microsecond=0).isoformat()
+    params = {
+        "tag": tag_name,
+        "message": "Create tag %s" % tag_name,
+        "object": commit_sha,
+        "type": "commit",
+        "tagger": {"name": tagger_name, "email": tagger_email, "date": tag_date_s},
+    }
+    data = github_api("/repos/%s/git/tags" % repository, method="POST", params=params)
+    tag_sha = data["sha"]
+    params = {"ref": "refs/tags/%s" % tag_name, "sha": tag_sha}
+    github_api("/repos/%s/git/refs" % repository, method="POST", params=params)
+
+
+def get_commit_tags(repository, commit_sha, all_tags=False):
+    res = []
+    data = github_api("/repos/%s/tags" % repository, all_pages=all_tags, method="GET")
+    for tag in data:
+        if tag["commit"]["sha"] == commit_sha:
+            res.append(tag["name"])
+
+    return res

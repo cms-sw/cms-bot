@@ -7,7 +7,8 @@ trap '/bin/rm -f /tmp/stageout_verify_$$.bin 1> /dev/null 2>&1' 0
 #
 # destinations the test can use:
 
-voms-proxy-info –all
+voms-proxy-init -voms cms
+voms-proxy-info -all
 
 STAGEOUT="gsiftp://gridftp.echo.stfc.ac.uk/cms: \
           gsiftp://eoscmsftp.cern.ch/eos/cms \

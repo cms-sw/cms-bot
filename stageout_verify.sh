@@ -12,7 +12,6 @@ STAGEOUT="gsiftp://gridftp.echo.stfc.ac.uk/cms: \
           srm://cmssrm-kit.gridka.de:8443/srm/managerv2?SFN=/pnfs/gridka.de/cms/disk-only \
           davs://cmswebdav-kit.gridka.de:2880/pnfs/gridka.de/cms/disk-only \
           davs://srmcms.pic.es:8459/pnfs/pic.es/data/cms/disk \
-          davs://ceph-gw8.gridpp.rl.ac.uk:1094/ \
           davs://ceph-svc02.gridpp.rl.ac.uk:1094/ \
           davs://eoscms.cern.ch:443/eos/cms \
           davs://webdav.echo.stfc.ac.uk:1094/ \

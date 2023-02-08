@@ -73,6 +73,9 @@ for QUEUE in $RELEASE_QUEUES; do
     RELEASE_NAME="${QUEUE}_${DATE}"
     if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
       RELEASE_LIST="`./ib-create-tag.py -N ${RELEASE_NAME} -d $DAY -H $HOUR 11 -b ${RELEASE_BRANCH} -q ${QUEUE}`"
+      if [ $? -ne 0 ]; then
+        exit 1
+      fi
     else
       RELEASE_LIST="$RELEASE_NAME"
     fi

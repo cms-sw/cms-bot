@@ -490,7 +490,7 @@ if ${BUILD_EXTERNAL} ; then
         cp -f scram-buildrules/Projects/CMSSW/BuildFile.xml $CMSSW_IB/config/BuildFile.xml
         [ -e scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm ] && cp -f scram-buildrules/Projects/CMSSW/SCRAM_ExtraBuildRule.pm $CMSSW_IB/config/SCRAM_ExtraBuildRule.pm
         (
-          for x in SCRAM_COMPILER:DEFAULT_COMPILER PROJECT_GIT_HASH:CMSSW_GIT_HASH ; do
+          for x in SCRAM_COMPILER:DEFAULT_COMPILER PROJECT_GIT_HASH:CMSSW_GIT_HASH ENABLE_LTO:ENABLE_LTO ; do
             e=$(echo $x | sed 's|:.*||');
             k=$(echo $x | sed 's|.*:||');
             export $e=$(grep "$k" $CMSSW_IB/config/Self.xml | tr ' ' '\n' | grep '=' | tail -1 | sed 's|[^"]*"||;s|".*||');\

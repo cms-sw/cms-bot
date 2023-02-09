@@ -86,11 +86,6 @@
         "maxTime": "12"
       },
       {
-        "jobName": "ib-tag-and-schdule",
-        "errorType": [],
-        "maxTime": "18"
-      },
-      {
         "jobName": "ib-run-static-checks",
         "errorType": [],
         "maxTime": "6"

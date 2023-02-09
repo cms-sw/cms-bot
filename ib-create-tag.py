@@ -12,11 +12,8 @@ from cms_static import (
     GH_CMSSW_REPO,
 )
 from github_utils import (
-    get_branch,
     get_git_tag,
     create_git_tag,
-    get_commit_info,
-    get_commit_tags,
     get_commits,
     find_tags,
 )

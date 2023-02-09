@@ -17,6 +17,8 @@ from github_utils import (
     create_git_tag,
     get_commit_info,
     get_commit_tags,
+    get_commits,
+    find_tags,
 )
 
 setdefaulttimeout(120)
@@ -44,8 +46,12 @@ if __name__ == "__main__":
         action="store",
         help="CMSSW Release name",
     )
-    parser.add_option("-d", "--day", dest="day", action="store", help="CMSSW IB day")
-    parser.add_option("-H", "--hour", dest="hour", action="store", help="CMSSW IB hour")
+    parser.add_option(
+        "-d", "--date", dest="date", action="store", help="CMSSW IB date (YYYY-MM-DD)"
+    )
+    parser.add_option(
+        "-H", "--hour", dest="hour", action="store", help="CMSSW IB hour (HH)"
+    )
     parser.add_option(
         "-b", "--branch", dest="branch", action="store", help="CMSSW branch"
     )
@@ -54,40 +60,26 @@ if __name__ == "__main__":
     )
     opts, args = parser.parse_args()
 
-    RELEASE_NAME = opts.release_name  # "CMSSW_13_0_X_2023-02-02-1101"
-    DAY = opts.day  # "02"
-    HOUR = int(opts.hour)  # 11
+    RELEASE_NAME = opts.release_name  # "CMSSW_13_0_X_2023-02-02-1100"
+    ib_date = datetime.datetime.strptime(
+        "%s %s:00" % (opts.date, opts.hour), "%Y-%m-%d %H:%M"
+    )
+
     RELEASE_BRANCH = opts.branch  # "master"
     QUEUE = opts.queue  # "CMSSW_13_0_X"
 
     repo = "%s/%s" % (GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO)
 
-    bran = get_branch(repo, RELEASE_BRANCH)
     try:
         ref = get_git_tag(repo, RELEASE_NAME)
         OLD_HASH = ref["object"]["sha"]
     except urllib.error.URLError:
         OLD_HASH = "X"
 
-    head = bran["commit"]
-    today = datetime.datetime.now().replace(
-        hour=HOUR, minute=0, second=0, microsecond=0
-    )
-    head_time = datetime.datetime.strptime(
-        head["commit"]["author"]["date"], "%Y-%m-%dT%H:%M:%SZ"
-    )
-
-    while head_time > today:
-        try:
-            head = head["parents"][0]
-            info = get_commit_info(repo, head["sha"])
-            head_time = datetime.datetime.strptime(
-                info["author"]["date"], "%Y-%m-%dT%H:%M:%SZ"
-            )
-            head = info
-        except IndexError:
-            # No old-enough commits
-            exit(1)
+    try:
+        head = get_commits(repo, RELEASE_BRANCH, until=ib_date)[0]
+    except IndexError:
+        exit(1)
 
     NEW_HASH = head["sha"]
 
@@ -100,6 +92,10 @@ if __name__ == "__main__":
             "cmsbuild@cern.ch",
         )
 
-    tags = get_commit_tags(repo, bran["commit"]["sha"])
-    RELEASE_LIST = [t for t in tags if t.startswith(QUEUE + "_20")]
+    tags = find_tags(repo, QUEUE + "_20")
+    RELEASE_LIST = [
+        t["ref"].replace("refs/tags/", "")
+        for t in tags
+        if t["object"]["sha"] == head["sha"]
+    ]
     print(" ".join(RELEASE_LIST))

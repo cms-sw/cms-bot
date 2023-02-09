@@ -497,7 +497,7 @@ def set_gh_user(user):
   global GH_USER
   GH_USER = user
 
-  
+
 def get_combined_statuses(commit, repository):
   get_gh_token(repository)
   return github_api("/repos/%s/commits/%s/status" % (repository, commit), method='GET')
@@ -614,6 +614,7 @@ def create_git_tag(
 
 
 def get_commit_tags(repository, commit_sha, all_tags=False):
+    get_gh_token(repository)
     res = []
     data = github_api("/repos/%s/tags" % repository, all_pages=all_tags, method="GET")
     for tag in data:
@@ -621,3 +622,26 @@ def get_commit_tags(repository, commit_sha, all_tags=False):
             res.append(tag["name"])
 
     return res
+
+
+def get_commits(repository, branch, until, per_page=1):
+    get_gh_token(repository)
+    if isinstance(until, datetime.datetime):
+        until = until.replace(microsecond=0).isoformat() + "Z"
+
+    data = github_api(
+        "/repos/%s/commits" % repository,
+        method="GET",
+        params={"sha": branch, "until": until},
+        per_page=per_page,
+        all_pages=False,
+    )
+
+    return data
+
+
+def find_tags(repository, name):
+    get_gh_token(repository)
+    data = github_api("/repos/%s/git/matching-refs/tags/%s" % (repository, name), method="GET")
+
+    return data

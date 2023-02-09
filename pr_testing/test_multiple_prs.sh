@@ -1227,3 +1227,6 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
   done
 fi
 rm -f $WORKSPACE/test-env.txt
+
+# Test for missing 'Provides'
+${CMS_BOT_DIR}/pr_testing/test-cmssw-provides.sh ${SCRAM_ARCH} ${PKGTOOLS_BRANCH} ${CMSDIST_TAG} ${BUILD_DIR} ${WEEK_NUM} ${CMSSW_RELEASE}

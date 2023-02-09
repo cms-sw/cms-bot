@@ -19,7 +19,8 @@ cd $WORKSPACE/test-provides
 git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
 git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
 
-sed -ie "s!@release@!${WORKSPACE}/test-provides/${CMSSW_RELEASE}!g" cmsdist/cmssw-pr-package.spec
+sed -ie "s!@release@!${WORKSPACE}/test-provides/${CMSSW_RELEASE}!g" cmssw-pr-package.spec
+mv cmssw-pr-package.spec cmsdist
 
 mkdir -p var/lib
 

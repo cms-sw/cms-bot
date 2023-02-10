@@ -4,8 +4,6 @@ if [ $# -ne 6 ]; then
   exit 1
 fi
 
-mark_commit_status_all_prs "provides" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
-
 SCRAM_ARCH=$1
 PKG_TOOL_BRANCH=$2
 CMSDIST_TAG=$3
@@ -13,34 +11,38 @@ BUILD_DIR=$4
 WEEK_NUM=$5
 CMSSW_RELEASE=$6
 
+SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
+CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
+
 rm -rf $WORKSPACE/test-provides
 mkdir -p $WORKSPACE/test-provides
 cd $WORKSPACE/test-provides
-git clone git@github.com:cms-sw/pkgtools -b $PKG_TOOL_BRANCH
-git clone git@github.com:cms-sw/cmsdist -b $CMSDIST_TAG
+if [ ! -d $WORKSPACE/pkgtools ]; then
+  git clone git@github.com:cms-sw/pkgtools --depth 1 -b $PKG_TOOL_BRANCH
+else
+  ln -s $WORKSPACE/pkgtools .
+fi
+
+if [ ! -d $WORKSPACE/cmsdist ]; then
+  git clone git@github.com:cms-sw/cmsdist --depth 1 -b $CMSDIST_TAG
+else
+  ln -s $WORKSPACE/cmsdist .
+fi
 
 sed -ie "s!@release@!${WORKSPACE}/test-provides/${CMSSW_RELEASE}!g" cmssw-pr-package.spec
-mv cmssw-pr-package.spec cmsdist
+cp $CMS_BOT_DIR/cmssw-pr-package.spec cmsdist/
 
 mkdir -p var/lib
 
 if [ ! -d $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
-    cp -r /cvmfs/cms-ib.cern.ch/sw/x86_64/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm var/lib
+    cp -r /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm build/${SCRAM_ARCH}/var/lib/
 else
-    cp -r $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm var/lib
+    cp -r $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm build/${SCRAM_ARCH}/var/lib/
 fi
 
-scram project $CMSSW_RELEASE
-pushd ${CMSSW_RELEASE}/src
-    git cms-addpkg FWCore
-    scram b -j8
-popd
-
-PKGTOOLS/cmsBuild --weekly -a el8_amd64_gcc11 -c CMSDIST -i BUILD --builders 1 -j 8 build cmssw-pr-package | tee requires.log
+pkgtools/cmsBuild --weekly -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cmssw-pr-package | tee requires.log
 if [ $? -ne 0 ]; then
   num_missing=$(grep requires.log -e "is needed by"|wc -l)
-  mark_commit_status_all_prs "provides" 'failed' -d "Failed: missing ${num_missing} Provides" -u "${BUILD_URL}"
   exit 1
 fi
 
-mark_commit_status_all_prs "provides" 'success' -d 'OK' -u "${BUILD_URL}"

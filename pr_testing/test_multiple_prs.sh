@@ -1040,6 +1040,12 @@ else
             echo "SCRAM_REBUILD;ERROR,Build Rules,See Log,newer-than-target.log" >> ${RESULTS_DIR}/build.txt
         fi
     fi
+    #Check for missing Provides
+    if ${CMS_BOT_DIR}/pr_testing/test-cmssw-provides.sh ${SCRAM_ARCH} ${PKGTOOLS_BRANCH} ${CMSDIST_TAG} ${BUILD_DIR} ${WEEK_NUM} ${CMSSW_RELEASE} >$WORKSPACE/rpm-deps-checks.log 2>&1 ; then
+      echo "SCRAM_RPM_DEPS;OK,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt
+    else
+      echo "SCRAM_RPM_DEPS;ERROR,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt
+    fi
 fi
 echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-logs" >> ${RESULTS_DIR}/build.txt
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
@@ -1227,6 +1233,3 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
   done
 fi
 rm -f $WORKSPACE/test-env.txt
-
-# Test for missing 'Provides'
-${CMS_BOT_DIR}/pr_testing/test-cmssw-provides.sh ${SCRAM_ARCH} ${PKGTOOLS_BRANCH} ${CMSDIST_TAG} ${BUILD_DIR} ${WEEK_NUM} ${CMSSW_RELEASE}

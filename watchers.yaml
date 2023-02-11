@@ -1826,3 +1826,12 @@ beaucero:
 - HLTrigger/Configuration/python/HLT_75e33
 SohamBhattacharya:
 - HLTrigger/Configuration/python/HLT_75e33
+AnnikaStein:
+- Configuration/Eras
+- DataFormats/NanoAOD
+- DPGAnalysis/Skims
+- PhysicsTools/MXNet
+- PhysicsTools/NanoAOD
+- PhysicsTools/ONNXRuntime
+- PhysicsTools/SelectorUtils
+- RecoJets/JetProducers

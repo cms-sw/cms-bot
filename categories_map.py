@@ -83,6 +83,7 @@ CMSSW_CATEGORIES = {
     "CalibTracker/SiStripDCS",
     "CalibTracker/SiStripESProducers",
     "CalibTracker/SiStripHitEfficiency",
+    "CalibTracker/SiStripHitResolution",
     "CalibTracker/SiStripLorentzAngle",
     "CalibTracker/SiStripQuality",
     "CalibTracker/StandaloneTrackerTopology",

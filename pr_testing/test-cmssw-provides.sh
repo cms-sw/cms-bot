@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 if [ $# -ne 6 ]; then
   echo Usage: test-cmssw-provides.sh scram_arch pkgtools_branch cmsdist_tag build_dir week_num cmssw_release
   exit 1
@@ -29,10 +29,12 @@ else
   ln -s $WORKSPACE/cmsdist .
 fi
 
-sed -ie "s!@release@!${WORKSPACE}/test-provides/${CMSSW_RELEASE}!g" cmssw-pr-package.spec
-cp $CMS_BOT_DIR/cmssw-pr-package.spec cmsdist/
+sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
+cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
-mkdir -p var/lib
+#mkdir -p test-provides/${SCRAM_ARCH}/var/lib
+# bootstrap cmsBuild
+pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cms-common
 
 if [ ! -d $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
     cp -r /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm build/${SCRAM_ARCH}/var/lib/
@@ -40,9 +42,4 @@ else
     cp -r $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm build/${SCRAM_ARCH}/var/lib/
 fi
 
-pkgtools/cmsBuild --weekly -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cmssw-pr-package | tee requires.log
-if [ $? -ne 0 ]; then
-  num_missing=$(grep requires.log -e "is needed by"|wc -l)
-  exit 1
-fi
-
+pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cmssw-pr-package

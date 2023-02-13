@@ -23,7 +23,7 @@
           "timedOut",
           "segmentationFault"
         ],
-        "maxTime": "10"
+        "maxTime": "13"
       },
       {
         "jobName": "ib-run-profiling",

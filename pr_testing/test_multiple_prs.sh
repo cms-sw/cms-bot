@@ -1041,7 +1041,7 @@ else
         fi
     fi
     #Check for missing Provides
-    if ${CMS_BOT_DIR}/pr_testing/test-cmssw-provides.sh ${SCRAM_ARCH} ${PKGTOOLS_BRANCH} ${CMSDIST_TAG} ${BUILD_DIR} ${WEEK_NUM} ${CMSSW_RELEASE} >$WORKSPACE/rpm-deps-checks.log 2>&1 ; then
+    if ${CMS_BOT_DIR}/pr_testing/test-cmssw-provides.sh ${SCRAM_ARCH} ${PKGTOOLS_TAG} ${CMSDIST_TAG} ${BUILD_DIR} ${WEEK_NUM} ${RELEASE_FORMAT} >$WORKSPACE/rpm-deps-checks.log 2>&1 ; then
       echo "SCRAM_RPM_DEPS;OK,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt
     else
       echo "SCRAM_RPM_DEPS;ERROR,Package dependency,See Log,rpm-deps-checks.log" >> ${RESULTS_DIR}/build.txt

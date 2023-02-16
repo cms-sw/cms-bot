@@ -14,6 +14,10 @@ CMSSW_RELEASE=$6
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 
+set +x
+eval $(scram unsetenv -sh)
+set -x
+
 rm -rf $WORKSPACE/test-provides
 mkdir -p $WORKSPACE/test-provides
 cd $WORKSPACE/test-provides
@@ -43,3 +47,8 @@ else
 fi
 
 pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cmssw-pr-package
+
+cd ${WORKSPACE}/${CMSSW_RELEASE}
+set +x
+eval $(scram runtime -sh)
+set -x

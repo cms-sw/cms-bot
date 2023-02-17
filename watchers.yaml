@@ -1835,3 +1835,11 @@ AnnikaStein:
 - PhysicsTools/ONNXRuntime
 - PhysicsTools/SelectorUtils
 - RecoJets/JetProducers
+jlidrych:
+- DataFormats/SiStrip
+- CUDADataFormats/SiStripCluster
+- RecoLocalTracker/ClusterParameterEstimator
+- RecoLocalTracker/Configuration
+- RecoLocalTracker/Records
+- RecoLocalTracker/SiStrip
+- RecoLocalTracker/SubCollectionProducers

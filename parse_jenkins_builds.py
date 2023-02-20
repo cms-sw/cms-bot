@@ -48,7 +48,16 @@ def update_payload_timestamp(build_id, queue):
     current_time = get_current_time()
     payload['@timestamp'] = current_time
     return id, payload
-  
+
+def process_queue_reason(labels):
+    if "already in progress" in labels:
+        reason = "concurrent builds not allowed"
+    elif "Waiting for next available executor on" in labels:
+        reason = labels.split(" on ")[1].decode('utf8').encode('ascii', errors='ignore')
+    else:
+        reason = "other"
+    return reason
+
 def grep(filename, pattern, verbose=False):
     """Bash-like grep function. Set verbose=True to print the line match."""
     if not os.path.exists(filename):
@@ -107,11 +116,14 @@ for element in queue_json["items"]:
     job_name = element["task"]["name"]
     queue_id = int(element["id"])
     queue_time = int(element["inQueueSince"])
+    labels = element["why"].encode('utf-8')
+    reason = process_queue_reason(labels)
 
     payload['jenkins_server'] = JENKINS_PREFIX
     payload["in_queue_since"] = queue_time
     payload["queue_id"] = queue_id
     payload["job_name"] = job_name
+    payload["node_labels"] = reason
     payload["in_queue"] = 1
     payload["wait_time"] = current_time - queue_time
     payload["start_time"] = 0

@@ -870,6 +870,7 @@ CMSSW_CATEGORIES = {
     "HeterogeneousCore/CUDAServices",
     "HeterogeneousCore/CUDATest",
     "HeterogeneousCore/CUDAUtilities",
+    "HeterogeneousCore/Common",
     "HeterogeneousCore/MPICore",
     "HeterogeneousCore/MPIServices",
     "HeterogeneousCore/Producer",

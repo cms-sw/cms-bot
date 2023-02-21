@@ -5,6 +5,7 @@ from __future__ import print_function
 import os
 import re
 import time
+import sys
 
 try:
     scriptPath = os.path.dirname(os.path.abspath(__file__))

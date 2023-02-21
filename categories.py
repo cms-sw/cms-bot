@@ -65,7 +65,7 @@ CMSSW_L2 = {
   "pmandrik":         ["dqm"],
   "micsucmed":        ["dqm"],
   "epalencia":        ["l1"],
-  "rekovic":          ["l1"],
+  "aloeliger":        ["l1"],
   "rvenditti":        ["dqm"],
   "syuvivida":        ["dqm"],
   "Saptaparna":       ["generators"],

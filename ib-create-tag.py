@@ -73,9 +73,16 @@ if __name__ == "__main__":
     except urllib.error.URLError:
         OLD_HASH = "X"
 
-    try:
-        head = get_commits(repo, RELEASE_BRANCH, until=ib_date)[0]
-    except IndexError:
+    commits_ = get_commits(repo, RELEASE_BRANCH, until=ib_date, per_page=100)
+    if not commits_:
+        exit(1)
+
+    head = None
+    for commit_ in commits_:
+        if commit_["commit"]["committer"]["name"] == "GitHub":
+            head = commit_
+
+    if head is None:
         exit(1)
 
     NEW_HASH = head["sha"]

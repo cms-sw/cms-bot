@@ -81,6 +81,7 @@ if __name__ == "__main__":
     for commit_ in commits_:
         if commit_["commit"]["committer"]["name"] == "GitHub":
             head = commit_
+            break
 
     if head is None:
         exit(1)

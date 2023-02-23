@@ -4,6 +4,8 @@
 
 Source: none
 
+Requires: cmssw-fake-package
+
 %prep
 
 %build

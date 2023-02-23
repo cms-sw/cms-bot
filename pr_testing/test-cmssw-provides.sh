@@ -36,6 +36,10 @@ fi
 sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
+pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build rpm
+RPM_DIR=$(ls -1tr build/${SCRAM_ARCH}/external/rpm/|tail -1)
+source build/${SCRAM_ARCH}/external/rpm/$RPM_DIR/etc/profile.d/init.sh
+
 PROVIDELIST=$(rpm -q --provides cms+cmssw-patch+${CMSSW_RELEASE} --dbpath /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm/)
 PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
 

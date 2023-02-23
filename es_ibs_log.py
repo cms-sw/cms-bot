@@ -131,6 +131,8 @@ def process_ib_utests(logFile):
   index = "ibs-"+week
   document = "unittests"
   payload["release"] = release
+  payload["release_queue"] = "_".join(release.split("_", 3)[:3])
+  payload["flavor"] = "_".join(release.split("_", 3)[-1].split("_", -1)[:2])
   payload["architecture"] = architecture
   payload["@timestamp"] = timestp
 
@@ -156,6 +158,7 @@ def process_ib_utests(logFile):
               payload["package"] = pkg
               payload["name"] = utest
               id = sha1(release + architecture + utest).hexdigest()
+              print("==> ", json.dumps(payload) + '\n')
               send_payload(index,document,id,json.dumps(payload))
               line = it.next().strip()
       except Exception as e:

@@ -131,8 +131,11 @@ def process_ib_utests(logFile):
   index = "ibs-"+week
   document = "unittests"
   payload["release"] = release
-  payload["release_queue"] = "_".join(release.split("_", 3)[:3])
-  payload["flavor"] = "_".join(release.split("_", 3)[-1].split("_", -1)[:2])
+  release = "_".join(release.split("_", -1)[:-1]).split("_", 3)
+  payload["release_queue"] = "_".join(release[0:3])
+  flavor = release[-1]
+  if flavor == 'X': flavor = 'DEFAULT'
+  payload["flavor"] = flavor
   payload["architecture"] = architecture
   payload["@timestamp"] = timestp
 

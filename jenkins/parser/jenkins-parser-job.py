@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+# (avalenzu): Testing LTO in PR tests
 import argparse
 import datetime
 import functools
@@ -156,6 +156,7 @@ def check_and_trigger_action(
         if regex_flag == 1:
             break
 
+    # (avalenzu): Testing LTO in PR tests
     with open(parser_info_path, "w") as processed_file:
         json.dump(processed_object, processed_file, indent=2)
 
@@ -235,6 +236,7 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
         .replace("\n", "")
     )
 
+    # (avalenzu): Testing LTO in PR tests
     start_datetime = datetime.datetime.fromtimestamp(int(start_timestamp) / 1000)
     now = datetime.datetime.now()
     duration = now - start_datetime
@@ -299,6 +301,11 @@ if __name__ == "__main__":
     retry_queue_path = (
         os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
     )
+
+    # (avalenzu): Testing LTO in PR tests
+    #
+    #
+    #
 
     # Get job-config info
     with open(jobs_config_path, "r") as jobs_file:
@@ -495,3 +502,4 @@ if __name__ == "__main__":
         # Trigger cmssdt page update
         actions.update_cmssdt_page(html_file_path, "", "", "", "", "", "", True)
         time.sleep(2)
+        # (avalenzu): Testing LTO in PR tests

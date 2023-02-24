@@ -131,9 +131,9 @@ def process_ib_utests(logFile):
   index = "ibs-"+week
   document = "unittests"
   payload["release"] = release
-  release = "_".join(release.split("_", -1)[:-1]).split("_", 3)
-  payload["release_queue"] = "_".join(release[0:3])
-  flavor = release[-1]
+  release_queue = "_".join(release.split("_", -1)[:-1]).split("_", 3)
+  payload["release_queue"] = "_".join(release_queue[0:3])
+  flavor = release_queue[-1]
   if flavor == 'X': flavor = 'DEFAULT'
   payload["flavor"] = flavor
   payload["architecture"] = architecture

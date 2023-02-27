@@ -29,20 +29,12 @@ else
   ln -s $WORKSPACE/cmsdist .
 fi
 
-# Check if we are testing with patch release
-FULL_RELEASE_BASE=$(echo ${CMSSW_FULL_RELEASE_BASE} | rev | cut -d '/' -f 1 | rev)
-if [ ${FULL_RELEASE_BASE} = ${CMSSW_RELEASE} ]; then
-  IS_PATCH_RELEASE=0
-else
-  IS_PATCH_RELEASE=1
-fi
-
 RPM_CMD="/cvmfs/cms-ib.cern.ch/sw/$(uname -m)/week${WEEK_NUM}/common/cmspkg -a $SCRAM_ARCH env -- rpm"
 
 PROVIDELIST=$(${RPM_CMD} -q --provides cms+cmssw+${CMSSW_RELEASE})
 PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
 
-if [ ${IS_PATCH_RELEASE} -eq 1 ]; then
+if [ ! -z ${CMSSW_FULL_RELEASE_BASE} ]; then
   PROVIDELIST_PATCH=$(${RPM_CMD} -q --provides cms+cmssw-patch+${CMSSW_RELEASE})
   PROVIDELIST_PATCH=$(echo ${PROVIDELIST_PATCH} | sed -E 's/^(.*)$/Provides: \1/g')
   PROVIDELIST="$PROVIDELIST\n${PROVIDELIST_PATCH}"
@@ -52,18 +44,19 @@ sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/
 sed -i -e "s!@provides@!${PROVIDELIST}!" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
+pushd ${WORKSPACE}/${CMSSW_RELEASE}
+#set +x
+eval $(scram unsetenv -sh)
+#set -x
+popd
+
 # bootstrap cmsBuild
 pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cms-common
 
-if [ ! -d $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
+if [ ! -d ${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
     cp -r /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm build/${SCRAM_ARCH}/var/lib/
 else
-    cp -r $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm build/${SCRAM_ARCH}/var/lib/
+    cp -r ${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm build/${SCRAM_ARCH}/var/lib/
 fi
 
 pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cmssw-pr-package
-
-cd ${WORKSPACE}/${CMSSW_RELEASE}
-set +x
-eval $(scram runtime -sh)
-set -x

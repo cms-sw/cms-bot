@@ -34,7 +34,6 @@ else
 fi
 
 sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
-cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
 # Check if we are testing with patch release
 pushd ${WORKSPACE}/${CMSSW_RELEASE}/src
@@ -52,12 +51,7 @@ eval $(scram unsetenv -sh)
 set -x
 popd
 
-pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build rpm
-RPM_DIR=$(ls -1tr build/${SCRAM_ARCH}/external/rpm/|tail -1)
-source build/${SCRAM_ARCH}/external/rpm/$RPM_DIR/etc/profile.d/init.sh
-
-PROVIDELIST=$(rpm -q --provides cms+cmssw-patch+${CMSSW_RELEASE} --dbpath /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm/)
-PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
+cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
 sed -i -e "s!@provides@!$PROVIDELIST!" $CMS_BOT_DIR/pr_testing/cmssw-fake-package.spec
 cp $CMS_BOT_DIR/pr_testing/cmssw-fake-package.spec cmsdist/

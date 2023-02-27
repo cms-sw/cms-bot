@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     head = None
     for commit_ in commits_:
-        if commit_["commit"]["committer"]["name"] == "GitHub":
+        if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"]["author"]["name} == "cmsbuild":
             head = commit_
             break
 

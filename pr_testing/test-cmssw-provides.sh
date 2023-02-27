@@ -14,10 +14,6 @@ CMSSW_RELEASE=$6
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
 CMS_BOT_DIR=$(dirname ${SCRIPTPATH})  # To get CMS_BOT dir path
 
-set +x
-eval $(scram unsetenv -sh)
-set -x
-
 rm -rf $WORKSPACE/test-provides
 mkdir -p $WORKSPACE/test-provides
 cd $WORKSPACE/test-provides
@@ -34,31 +30,28 @@ else
 fi
 
 # Check if we are testing with patch release
-pushd ${WORKSPACE}/${CMSSW_RELEASE}/src
-set +x
-eval $(scram runtime -sh)
-set -x
 FULL_RELEASE_BASE=$(echo ${CMSSW_FULL_RELEASE_BASE} | rev | cut -d '/' -f 1 | rev)
 if [ ${FULL_RELEASE_BASE} = ${CMSSW_RELEASE} ]; then
-  CMS_PKG_NAME='cmssw'
+  IS_PATCH_RELEASE=0
 else
-  CMS_PKG_NAME='cmssw-patch'
+  IS_PATCH_RELEASE=1
 fi
-set +x
-eval $(scram unsetenv -sh)
-set -x
-popd
 
 RPM_CMD="/cvmfs/cms-ib.cern.ch/sw/$(uname -m)/week${WEEK_NUM}/common/cmspkg -a $SCRAM_ARCH env -- rpm"
 
-PROVIDELIST=$(${RPM_CMD} -q --provides cms+${CMS_PKG_NAME}+${CMSSW_RELEASE} --dbpath /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm/)
+PROVIDELIST=$(${RPM_CMD} -q --provides cms+cmssw+${CMSSW_RELEASE})
 PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
+
+if [ ${IS_PATCH_RELEASE} -eq 1 ]; then
+  PROVIDELIST_PATCH=$(${RPM_CMD} -q --provides cms+cmssw-patch+${CMSSW_RELEASE})
+  PROVIDELIST_PATCH=$(echo ${PROVIDELIST_PATCH} | sed -E 's/^(.*)$/Provides: \1/g')
+  PROVIDELIST="$PROVIDELIST\n${PROVIDELIST_PATCH}"
+fi
 
 sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
 sed -i -e "s!@provides@!${PROVIDELIST}!" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
-#mkdir -p test-provides/${SCRAM_ARCH}/var/lib
 # bootstrap cmsBuild
 pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cms-common
 

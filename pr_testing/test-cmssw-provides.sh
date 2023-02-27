@@ -36,6 +36,22 @@ fi
 sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
+# Check if we are testing with patch release
+pushd ${WORKSPACE}/${CMSSW_RELEASE}/src
+set +x
+eval $(scram runtime -sh)
+set -x
+FULL_RELEASE_BASE=$(echo ${CMSSW_FULL_RELEASE_BASE} | rev | cut -d '/' -f 1 | rev)
+if [ ${FULL_RELEASE_BASE} = ${CMSSW_RELEASE} ]; then
+  CMS_PKG_NAME='cmssw'
+else
+  CMS_PKG_NAME='cmssw-patch'
+fi
+set +x
+eval $(scram unsetenv -sh)
+set -x
+popd
+
 pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build rpm
 RPM_DIR=$(ls -1tr build/${SCRAM_ARCH}/external/rpm/|tail -1)
 source build/${SCRAM_ARCH}/external/rpm/$RPM_DIR/etc/profile.d/init.sh
@@ -49,6 +65,11 @@ cp $CMS_BOT_DIR/pr_testing/cmssw-fake-package.spec cmsdist/
 #mkdir -p test-provides/${SCRAM_ARCH}/var/lib
 # bootstrap cmsBuild
 pkgtools/cmsBuild --repo cms.week${WEEK_NUM} -a $SCRAM_ARCH -c cmsdist -i build --builders 1 -j 8 build cms-common
+
+RPM_CMD="/cvmfs/cms-ib.cern.ch/sw/$(uname -m)/week${WEEK_NUM}/common/cmspkg -a $SCRAM_ARCH env -- rpm"
+
+PROVIDELIST=$(${RPM_CMD} -q --provides cms+${CMS_PKG_NAME}+${CMSSW_RELEASE} --dbpath /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm/)
+PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
 
 if [ ! -d $BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
     cp -r /cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm build/${SCRAM_ARCH}/var/lib/

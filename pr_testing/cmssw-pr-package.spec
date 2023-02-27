@@ -4,7 +4,7 @@
 
 Source: none
 
-Requires: cmssw-fake-package
+@provides@
 
 %prep
 

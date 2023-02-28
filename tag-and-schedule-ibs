@@ -23,8 +23,6 @@ if [ "X$RELEASE_QUEUES" = X ]; then
 fi
 rm -rf cmssw
 ls /cvmfs/cms.cern.ch
-git clone --reference /cvmfs/cms.cern.ch/cmssw.git.daily git@github.com:cms-sw/cmssw.git cmssw
-cd cmssw
 WEEK_DAY=`date +%w`
 DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
 HOUR=`echo $DATE | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
@@ -72,21 +70,7 @@ for QUEUE in $RELEASE_QUEUES; do
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     RELEASE_NAME="${QUEUE}_${DATE}"
     if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
-      git checkout $RELEASE_BRANCH
-      # find old tag, if any
-      OLD_HASH=`git show-ref $RELEASE_NAME | cut -f1 -d\ `
-      NEW_HASH=`git rev-list -n 1 --before="$DAY $HOUR:00" --first-parent $RELEASE_BRANCH`
-      # If there is no new hash, we have a problem.
-      # If there is no old hash, we simply tag.
-      # If there is an old hash, we use the old one.
-      if [ "X$NEW_HASH" = X ]; then
-        exit 1
-      fi
-      if [ "X$OLD_HASH" = X ]; then
-        git tag $RELEASE_NAME $NEW_HASH
-        git push origin --tags
-      fi
-      RELEASE_LIST="`git show --pretty='%d' HEAD | tr '[ ,()]' '[\n   ]'| { grep \"^${QUEUE}_20\" || true; }`"
+      RELEASE_LIST="`./ib-create-tag.py -N ${RELEASE_NAME} -d $DAY -H $HOUR -b ${RELEASE_BRANCH} -q ${QUEUE}`"
     else
       RELEASE_LIST="$RELEASE_NAME"
     fi

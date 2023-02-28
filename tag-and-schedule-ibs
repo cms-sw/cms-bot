@@ -70,7 +70,7 @@ for QUEUE in $RELEASE_QUEUES; do
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     RELEASE_NAME="${QUEUE}_${DATE}"
     if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
-      RELEASE_LIST="`./ib-create-tag.py -N ${RELEASE_NAME} -d $DAY -H $HOUR -b ${RELEASE_BRANCH} -q ${QUEUE}`"
+      RELEASE_LIST="`${CMS_BOT_DIR}/ib-create-tag.py -N ${RELEASE_NAME} -d $DAY -H $HOUR -b ${RELEASE_BRANCH} -q ${QUEUE}`"
     else
       RELEASE_LIST="$RELEASE_NAME"
     fi

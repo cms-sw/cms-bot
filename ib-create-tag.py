@@ -18,6 +18,8 @@ from github_utils import (
     find_tags,
 )
 
+from categories import CMSSW_L1
+
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
@@ -79,7 +81,7 @@ if __name__ == "__main__":
 
     head = None
     for commit_ in commits_:
-        if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"]["author"]["name"] == "cmsbuild":
+        if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"]["author"]["name"] in (CMSSW_L1 + ["cmsbuild"]):
             head = commit_
             break
 

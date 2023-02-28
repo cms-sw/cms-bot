@@ -5,7 +5,7 @@ import datetime
 from _py2with3compatibility import HTTPError
 from os.path import dirname, abspath
 from socket import setdefaulttimeout
-from sys import argv
+import sys
 
 from cms_static import (
     GH_CMSSW_ORGANIZATION,
@@ -21,7 +21,7 @@ from github_utils import (
 from categories import CMSSW_L1
 
 setdefaulttimeout(120)
-SCRIPT_DIR = dirname(abspath(argv[0]))
+SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 
 if __name__ == "__main__":
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     except HTTPError:
         commits_ = get_commits(repo, RELEASE_BRANCH, until=ib_date, per_page=100)
         if not commits_:
-            exit(1)
+            sys.exit(1)
 
         head = None
         for commit_ in commits_:
@@ -86,7 +86,7 @@ if __name__ == "__main__":
                 break
 
         if head is None:
-            exit(1)
+            sys.exit(1)
 
         HEAD_SHA = head["sha"]
         if not opts.dryRun:

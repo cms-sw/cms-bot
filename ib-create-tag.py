@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 import datetime
-import urllib.error
+from _py2with3compatibility import HTTPError
 from os.path import dirname, abspath
 from socket import setdefaulttimeout
 from sys import argv
@@ -71,38 +71,35 @@ if __name__ == "__main__":
 
     try:
         ref = get_git_tag(repo, RELEASE_NAME)
-        OLD_HASH = ref["object"]["sha"]
-    except urllib.error.URLError:
-        OLD_HASH = "X"
+        HEAD_SHA = ref["object"]["sha"]
+    except HTTPError:
+        commits_ = get_commits(repo, RELEASE_BRANCH, until=ib_date, per_page=100)
+        if not commits_:
+            exit(1)
 
-    commits_ = get_commits(repo, RELEASE_BRANCH, until=ib_date, per_page=100)
-    if not commits_:
-        exit(1)
+        head = None
+        for commit_ in commits_:
+            if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"][
+                "author"
+            ]["name"] in (CMSSW_L1 + ["cmsbuild"]):
+                head = commit_
+                break
 
-    head = None
-    for commit_ in commits_:
-        if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"]["author"]["name"] in (CMSSW_L1 + ["cmsbuild"]):
-            head = commit_
-            break
+        if head is None:
+            exit(1)
 
-    if head is None:
-        exit(1)
-
-    NEW_HASH = head["sha"]
-
-    if OLD_HASH == "X" and not opts.dryRun:
-        create_git_tag(
-            repo,
-            RELEASE_NAME,
-            NEW_HASH,
-            "cmsbuild",
-            "cmsbuild@cern.ch",
-        )
+        HEAD_SHA = head["sha"]
+        if not opts.dryRun:
+            create_git_tag(
+                repo,
+                RELEASE_NAME,
+                HEAD_SHA,
+            )
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [
         t["ref"].replace("refs/tags/", "")
         for t in tags
-        if t["object"]["sha"] == head["sha"]
+        if t["object"]["sha"] == HEAD_SHA
     ]
     print(" ".join(RELEASE_LIST))

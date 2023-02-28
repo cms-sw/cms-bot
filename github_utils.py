@@ -593,19 +593,13 @@ def get_git_tag(repository, tag_name):
     return data
 
 
-def create_git_tag(
-    repository, tag_name, commit_sha, tagger_name, tagger_email, tag_date=None
-):
+def create_git_tag(repository, tag_name, commit_sha):
     get_gh_token(repository)
-    if tag_date is None:
-        tag_date = datetime.datetime.now()
-    tag_date_s = tag_date.replace(microsecond=0).isoformat()
     params = {
         "tag": tag_name,
         "message": "Create tag %s" % tag_name,
         "object": commit_sha,
         "type": "commit",
-        "tagger": {"name": tagger_name, "email": tagger_email, "date": tag_date_s},
     }
     data = github_api("/repos/%s/git/tags" % repository, method="POST", params=params)
     tag_sha = data["sha"]

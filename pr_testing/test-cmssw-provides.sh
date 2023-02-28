@@ -31,13 +31,22 @@ fi
 
 RPM_CMD="/cvmfs/cms-ib.cern.ch/sw/$(uname -m)/week${WEEK_NUM}/common/cmspkg -a $SCRAM_ARCH env -- rpm"
 
-PROVIDELIST=$(${RPM_CMD} -q --provides cms+cmssw+${CMSSW_RELEASE})
-PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
+if [ ! -d ${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
+  if [ ! -z ${CMSSW_FULL_RELEASE_BASE} ]; then
+    CMSSW_RELEASE_PATCH=$CMSSW_RELEASE
+    CMSSW_RELEASE=$(echo ${CMSSW_FULL_RELEASE_BASE} | rev | cut -d '/' -f 1 | rev)
+  fi
 
-if [ ! -z ${CMSSW_FULL_RELEASE_BASE} ]; then
-  PROVIDELIST_PATCH=$(${RPM_CMD} -q --provides cms+cmssw-patch+${CMSSW_RELEASE})
-  PROVIDELIST_PATCH=$(echo ${PROVIDELIST_PATCH} | sed -E 's/^(.*)$/Provides: \1/g')
-  PROVIDELIST="$PROVIDELIST\n${PROVIDELIST_PATCH}"
+  PROVIDELIST=$(${RPM_CMD} -q --provides cms+cmssw+${CMSSW_RELEASE})
+  PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
+
+  if [ ! -z ${CMSSW_RELEASE_PATCH} ]; then
+    PROVIDELIST_PATCH=$(${RPM_CMD} -q --provides cms+cmssw-patch+${CMSSW_RELEASE_PATCH})
+    PROVIDELIST_PATCH=$(echo ${PROVIDELIST_PATCH} | sed -E 's/^(.*)$/Provides: \1/g')
+    PROVIDELIST="$PROVIDELIST\n${PROVIDELIST_PATCH}"
+  fi
+else
+  PROVIDELIST=""
 fi
 
 sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
@@ -45,9 +54,9 @@ sed -i -e "s!@provides@!${PROVIDELIST}!" $CMS_BOT_DIR/pr_testing/cmssw-pr-packag
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 
 pushd ${WORKSPACE}/${CMSSW_RELEASE}
-#set +x
+set +x
 eval $(scram unsetenv -sh)
-#set -x
+set -x
 popd
 
 # bootstrap cmsBuild

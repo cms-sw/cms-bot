@@ -23,8 +23,6 @@ if [ "X$RELEASE_QUEUES" = X ]; then
 fi
 rm -rf cmssw
 ls /cvmfs/cms.cern.ch
-git clone --reference /cvmfs/cms.cern.ch/cmssw.git.daily git@github.com:cms-sw/cmssw.git cmssw
-cd cmssw
 WEEK_DAY=`date +%w`
 DAY=`echo $DATE | sed 's|-[0-2][0-9]00||'`
 HOUR=`echo $DATE | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
@@ -73,9 +71,6 @@ for QUEUE in $RELEASE_QUEUES; do
     RELEASE_NAME="${QUEUE}_${DATE}"
     if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then
       RELEASE_LIST="`./ib-create-tag.py -N ${RELEASE_NAME} -d $DAY -H $HOUR -b ${RELEASE_BRANCH} -q ${QUEUE}`"
-      if [ $? -ne 0 ]; then
-        exit 1
-      fi
     else
       RELEASE_LIST="$RELEASE_NAME"
     fi

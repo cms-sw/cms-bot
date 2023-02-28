@@ -49,9 +49,9 @@ else
   PROVIDELIST=""
 fi
 
-sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
-sed -i -e "s!@provides@!${PROVIDELIST}!" $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
+sed -i -e "s!@release@!${WORKSPACE}/${CMSSW_RELEASE}!g" cmsdist/cmssw-pr-package.spec
+sed -i -e "s!@provides@!${PROVIDELIST}!" cmsdist/cmssw-pr-package.spec
 
 pushd ${WORKSPACE}/${CMSSW_RELEASE}
 set +x

@@ -605,6 +605,7 @@ def create_git_tag(repository, tag_name, commit_sha):
     tag_sha = data["sha"]
     params = {"ref": "refs/tags/%s" % tag_name, "sha": tag_sha}
     github_api("/repos/%s/git/refs" % repository, method="POST", params=params)
+    return tag_sha
 
 
 def get_commit_tags(repository, commit_sha, all_tags=False):

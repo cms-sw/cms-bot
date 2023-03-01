@@ -596,8 +596,7 @@ def get_git_tag(repository, tag_name):
 def create_git_tag(repository, tag_name, commit_sha):
     get_gh_token(repository)
     params = {"ref": "refs/tags/%s" % tag_name, "sha": commit_sha}
-    github_api("/repos/%s/git/refs" % repository, method="POST", params=params)
-    return commit_sha
+    return github_api("/repos/%s/git/refs" % repository, method="POST", params=params)
 
 
 def get_commit_tags(repository, commit_sha, all_tags=False):

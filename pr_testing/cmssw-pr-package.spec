@@ -4,7 +4,8 @@
 
 Source: none
 
-@provides@
+## INCLUDE cmssw-pr-provides
+## INCLUDE cmssw-pr-defines
 
 %prep
 
@@ -15,4 +16,4 @@ mkdir -p %{i}/bin
 mkdir -p %{i}/lib
 mkdir -p %{i}/biglib
 
-cp -r @release@/{bin,lib,biglib} %{i}/
+cp -r %{release_dir}/{bin,lib,biglib} %{i}/

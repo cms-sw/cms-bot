@@ -86,7 +86,6 @@ CMSSW_L2 = {
   # dpgs
   "connorpa":         ["trk-dpg"],
   "sroychow":         ["trk-dpg"],
-  "simonepigazzini":  ["ecal-dpg"],
   "jainshilpi":       ["ecal-dpg"],
   "thomreis":         ["ecal-dpg"],
   "georgia14":        ["hcal-dpg"],

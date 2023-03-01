@@ -497,7 +497,7 @@ def set_gh_user(user):
   global GH_USER
   GH_USER = user
 
-  
+
 def get_combined_statuses(commit, repository):
   get_gh_token(repository)
   return github_api("/repos/%s/commits/%s/status" % (repository, commit), method='GET')
@@ -578,3 +578,57 @@ def mark_commit_status(commit, repository, context="default", state="pending", u
         params['context'] = s['context']
         github_api('/repos/%s/statuses/%s' % (repository, commit), params=params)
   return
+
+def get_branch(repository, branch_name):
+    get_gh_token(repository)
+    data = github_api("/repos/%s/branches/%s" % (repository, branch_name), method="GET")
+    return data
+
+
+def get_git_tag(repository, tag_name):
+    get_gh_token(repository)
+    data = github_api(
+        "/repos/%s/git/ref/tags/%s" % (repository, tag_name), method="GET"
+    )
+    return data
+
+
+def create_git_tag(repository, tag_name, commit_sha):
+    get_gh_token(repository)
+    params = {"ref": "refs/tags/%s" % tag_name, "sha": commit_sha}
+    github_api("/repos/%s/git/refs" % repository, method="POST", params=params)
+    return commit_sha
+
+
+def get_commit_tags(repository, commit_sha, all_tags=False):
+    get_gh_token(repository)
+    res = []
+    data = github_api("/repos/%s/tags" % repository, all_pages=all_tags, method="GET")
+    for tag in data:
+        if tag["commit"]["sha"] == commit_sha:
+            res.append(tag["name"])
+
+    return res
+
+
+def get_commits(repository, branch, until, per_page=1):
+    get_gh_token(repository)
+    if isinstance(until, datetime.datetime):
+        until = until.replace(microsecond=0).isoformat() + "Z"
+
+    data = github_api(
+        "/repos/%s/commits" % repository,
+        method="GET",
+        params={"sha": branch, "until": until},
+        per_page=per_page,
+        all_pages=False,
+    )
+
+    return data
+
+
+def find_tags(repository, name):
+    get_gh_token(repository)
+    data = github_api("/repos/%s/git/matching-refs/tags/%s" % (repository, name), method="GET")
+
+    return data

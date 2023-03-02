@@ -38,12 +38,10 @@ if [ -d ${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
     CMSSW_RELEASE_BASE=$(echo ${CMSSW_FULL_RELEASE_BASE} | rev | cut -d '/' -f 1 | rev)
   fi
 
-  PROVIDELIST=$(${RPM_CMD} -q --provides cms+cmssw+${CMSSW_RELEASE_BASE})
-  PROVIDELIST=$(echo $PROVIDELIST | sed -E 's/^(.*)$/Provides: \1/g')
-
+  ${RPM_CMD} -q --provides cms+cmssw+${CMSSW_RELEASE_BASE} | sed -E 's/^(.*)$/Provides: \1/g' > cmsdist/cmssw-pr-provides.file
+  
   if [ ! -z ${CMSSW_RELEASE_PATCH} ]; then
-    PROVIDELIST_PATCH=$(${RPM_CMD} -q --provides cms+cmssw-patch+${CMSSW_RELEASE_PATCH})
-    PROVIDELIST_PATCH=$(echo ${PROVIDELIST_PATCH} | sed -E 's/^(.*)$/Provides: \1/g')
+    ${RPM_CMD} -q --provides cms+cmssw-patch+${CMSSW_RELEASE_PATCH} | sed -E 's/^(.*)$/Provides: \1/g' >> cmsdist/cmssw-pr-provides.file
   fi
   RPM_DB_PATH=${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm
 else

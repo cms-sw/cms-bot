@@ -44,7 +44,6 @@ if [ -d ${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
   if [ ! -z ${CMSSW_RELEASE_PATCH} ]; then
     PROVIDELIST_PATCH=$(${RPM_CMD} -q --provides cms+cmssw-patch+${CMSSW_RELEASE_PATCH})
     PROVIDELIST_PATCH=$(echo ${PROVIDELIST_PATCH} | sed -E 's/^(.*)$/Provides: \1/g')
-    PROVIDELIST="$PROVIDELIST\n${PROVIDELIST_PATCH}"
   fi
   RPM_DB_PATH=${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm
 else
@@ -55,6 +54,7 @@ fi
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 echo "%define release_dir ${WORKSPACE}/${CMSSW_RELEASE}" > cmsdist/cmssw-pr-defines.file
 echo "${PROVIDELIST}" > cmsdist/cmssw-pr-provides.file
+echo "${PROVIDELIST_PATCH}" >> cmsdist/cmssw-pr-provides.file
 
 pushd ${WORKSPACE}/${CMSSW_RELEASE}
 set +x

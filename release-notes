@@ -10,6 +10,7 @@ import re
 from cms_static import GH_CMSSW_REPO, GH_CMSDIST_REPO, GH_CMSSW_ORGANIZATION
 from github_utils import prs2relnotes, get_merge_prs
 from socket import setdefaulttimeout
+from categories import get_dpg_pog
 setdefaulttimeout(120)
 CMSDIST_REPO_NAME=join(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO)
 CMSSW_REPO_NAME=join(GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO)
@@ -24,10 +25,11 @@ def format(s, **kwds): return s % kwds
 #defines the categories for each pr in the release notes
 #
 def add_categories_notes(notes, cache):
+  dpg_pog_labels = get_dpg_pog()
   for pr_number in notes:
     categories = [ l.split('-')[0] for l in cache[pr_number]['pr']['labels']
-                                       if re.match("^[a-zA-Z0-9]+[-](approved|pending|hold|rejected)$", l)
-                                          and not re.match('^(tests|orp)-' , l) ]
+                                       if (re.match("^[a-zA-Z0-9]+[-](approved|pending|hold|rejected)$", l)
+                                          and not re.match('^(tests|orp)-' , l)) or l in dpg_pog_labels ]
     if len(categories) == 0:
       print("no categories for:",  pr_number)
     else:

@@ -100,7 +100,8 @@
       {
         "jobName": "ib-install-cvmfs",
         "errorType": [
-          "gitErrors"
+          "gitErrors",
+	  "cvmfsInstallFailure"
         ],
         "maxTime": "3"
       },
@@ -240,6 +241,12 @@
         ],
         "action": "nodeOff",
         "allJobs": "true"
+      },
+      "cvmfsInstallFailure": {
+        "errorStr": [
+          "SessionContext: could not commit session. Aborting."
+        ],
+        "action": "retryNow"
       }
     }
   }

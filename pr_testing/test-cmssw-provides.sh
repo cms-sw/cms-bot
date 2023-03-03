@@ -45,14 +45,11 @@ if [ -d ${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
   fi
   RPM_DB_PATH=${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm
 else
-  PROVIDELIST=""
   RPM_DB_PATH=/cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm
 fi
 
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/
 echo "%define release_dir ${WORKSPACE}/${CMSSW_RELEASE}" > cmsdist/cmssw-pr-defines.file
-echo "${PROVIDELIST}" > cmsdist/cmssw-pr-provides.file
-echo "${PROVIDELIST_PATCH}" >> cmsdist/cmssw-pr-provides.file
 
 pushd ${WORKSPACE}/${CMSSW_RELEASE}
 set +x

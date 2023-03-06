@@ -4,8 +4,7 @@
 
 Source: none
 
-## INCLUDE cmssw-pr-provides
-## INCLUDE cmssw-pr-defines
+## INCLUDE cmssw-pr-data
 
 %prep
 

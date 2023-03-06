@@ -46,6 +46,7 @@ if [ -d ${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm ]; then
   RPM_DB_PATH=${WORKSPACE}/$BUILD_DIR/$SCRAM_ARCH/var/lib/rpm
 else
   RPM_DB_PATH=/cvmfs/cms-ib.cern.ch/sw/`uname -m`/week${WEEK_NUM}/${SCRAM_ARCH}/var/lib/rpm
+  touch cmsdist/cmssw-pr-provides.file
 fi
 
 cp $CMS_BOT_DIR/pr_testing/cmssw-pr-package.spec cmsdist/

@@ -21,7 +21,8 @@
         "errorType": [
           "hudsonConnection",
           "timedOut",
-          "segmentationFault"
+          "segmentationFault",
+	  "singularityMountFailure"
         ],
         "maxTime": "13"
       },
@@ -247,6 +248,12 @@
           "SessionContext: could not commit session. Aborting."
         ],
         "action": "retryNow"
+      },
+      "singularityMountFailure": {    
+        "errorStr": [
+          "mount hook function failure.*doesn't exist in container"
+	],
+	"action": "nodeOff"
       }
     }
   }

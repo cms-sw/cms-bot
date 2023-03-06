@@ -10,11 +10,11 @@ BUILD_DIR=$3
 WEEK_NUM=$4
 
 #Prepare cmsdist/pkgtool/test directories and generate cmssw-pr-package spec file
+rm -rf $WORKSPACE/test-provides ; mkdir -p $WORKSPACE/test-provides ; cd $WORKSPACE/test-provides
 [ -d $WORKSPACE/pkgtools ] && ln -s $WORKSPACE/pkgtools . || git clone git@github.com:cms-sw/pkgtools --depth 1 -b $PKG_TOOL_BRANCH
 [ -d $WORKSPACE/cmsdist ]  && ln -s $WORKSPACE/cmsdist .  || git clone git@github.com:cms-sw/cmsdist  --depth 1 -b $CMSDIST_TAG
 echo "%define release_dir ${CMSSW_BASE}" > cmsdist/cmssw-pr-data.file
 cp $(dirname $0)/cmssw-pr-package.spec cmsdist/
-rm -rf $WORKSPACE/test-provides ; mkdir -p $WORKSPACE/test-provides ; cd $WORKSPACE/test-provides
 
 #Get cmssw/cmssw-patch release RPM Provides if PR has built cmssw-tool-conf locally
 #otherwise we copy the complete RPM DB from release area

@@ -12,6 +12,7 @@
       "category": [
         "alca"
       ], 
+      "end_date": 1678147200, 
       "start_date": 1656892800
     }
   ], 
@@ -877,6 +878,7 @@
       "category": [
         "db"
       ], 
+      "end_date": 1678147200, 
       "start_date": 1377043200
     }
   ], 
@@ -1317,6 +1319,7 @@
         "alca", 
         "db"
       ], 
+      "end_date": 1678147200, 
       "start_date": 1633478400
     }
   ], 
@@ -2195,6 +2198,7 @@
       "category": [
         "alca"
       ], 
+      "end_date": 1678147200, 
       "start_date": 1601596800
     }
   ], 

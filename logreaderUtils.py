@@ -39,6 +39,16 @@ def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
             "str_to_match": ": runtime error:",
             "name": "Runtime error",
             "control_type": ResultTypeEnum.ISSUE
+        },
+        {
+            "str_to_match": ": Assertion .* failed",
+            "name": "Assertion failure",
+            "control_type": ResultTypeEnum.ISSUE
+        },
+        {
+            "str_to_match": "==ERROR: AddressSanitizer:",
+            "name": "Address Sanitizer error",
+            "control_type": ResultTypeEnum.ISSUE
         }
     ]
     line_nr = index + 1

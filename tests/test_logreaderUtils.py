@@ -107,6 +107,7 @@ Thread 1 (Thread 0x7f8131dd9400 (LWP 17956)):
 
 /data/cmsbld/jenkins/workspace/build-any-ib/w/tmp/BUILDROOT/b252b0cb8309100426ad2c49bcae53a8/opt/cmssw/el8_amd64_gcc10/cms/cmssw/CMSSW_12_5_UBSAN_X_2022-05-30-1100/src/L1Trigger/L1TMuonBarrel/src/L1MuBMAssignmentUnit.cc:172:49: runtime error: left shift of negative value -32
 
+cmsRun: /data/cmsbld/jenkins_a/workspace/build-any-ib/w/tmp/BUILDROOT/05acf3cc0792618d6ceb25007b670f7d/opt/cmssw/el8_aarch64_gcc11/cms/cmssw/CMSSW_13_1_X_2023-03-08-2300/src/DataFormats/Common/interface/DetSetNew.h:86: const data_type* edmNew::DetSet<T>::data() const [with T = SiStripCluster; edmNew::DetSet<T>::data_type = SiStripCluster]: Assertion `m_data' failed.
 """
 
 

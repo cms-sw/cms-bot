@@ -649,6 +649,7 @@ def fix_release_description(issue):
     if "TAG_COMMIT:" in l: continue
     if "CMSSW_COMMIT:" in l: continue
     if "CMSDIST_COMMIT:" in l: continue
+    if "PRODUCTION_ARCHITECTURE:" in l: continue
     desc_lines.append(l)
   return "\n".join(desc_lines)
   

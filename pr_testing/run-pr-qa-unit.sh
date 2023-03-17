@@ -108,6 +108,10 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests/log.txt 2>&1 || true
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
+  if [ $cms_ver -ge 1301 ] ; then
+    find $CMSSW_BASE/src -type d | xargs chmod +w
+    chmod +w $CMSSW_BASE
+  fi
   #######################################
   # check if DQM Tests where run
   #######################################

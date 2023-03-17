@@ -1,6 +1,6 @@
 from __future__ import print_function
 from categories import CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
-from categories import CMSSW_CATEGORIES, CMSSW_LABELS, get_dpg_pog
+from categories import CMSSW_CATEGORIES
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
 from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS
 from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
@@ -16,6 +16,14 @@ from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps, load
 
+try:
+  from categories import CMSSW_LABELS
+except:
+  CMSSW_LABELS = {}
+try:
+  from categories import get_dpg_pog
+except:
+  def get_dpg_pog(*args): return {}
 try:
   from categories import external_to_package
 except:

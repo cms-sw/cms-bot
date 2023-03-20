@@ -102,7 +102,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   cms_ver="$(echo 00${cms_major} | sed -E 's|^.*(..)$|\1|')$(echo 00${cms_minor} | sed -E 's|^.*(..)$|\1|')"
   if [ $cms_ver -ge 1301 ] ; then
     find $CMSSW_BASE/src -type d | grep -v '/__pycache__/*' | xargs chmod -w
-    mkdir $CMSSW_BASE/unit_tests
+    mkdir $CMSSW_BASE/unit_tests $CMSSW_BASE/das_query
     chmod -w $CMSSW_BASE
   fi
   echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt

@@ -70,7 +70,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   echo '--------------------------------------'
   mkdir -p $WORKSPACE/unitTests
   let UT_TIMEOUT=7200+${CMSSW_PKG_COUNT}*20
-  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
+  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  runtests "
   if ${RUN_FULL_UNITTEST} ; then
     set +x
     curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/${CMSSW_IB}.tar.gz

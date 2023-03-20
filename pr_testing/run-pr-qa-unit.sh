@@ -70,7 +70,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   echo '--------------------------------------'
   mkdir -p $WORKSPACE/unitTests
   let UT_TIMEOUT=7200+${CMSSW_PKG_COUNT}*20
-  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -k -j ${NCPU}  runtests "
+  UTESTS_CMD="timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  runtests "
   if ${RUN_FULL_UNITTEST} ; then
     set +x
     curl -k -L -s -o src.tar.gz https://github.com/cms-sw/cmssw/archive/${CMSSW_IB}.tar.gz
@@ -101,12 +101,15 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   cms_minor=$(echo ${CMSSW_IB} | cut -d_ -f3)
   cms_ver="$(echo 00${cms_major} | sed -E 's|^.*(..)$|\1|')$(echo 00${cms_minor} | sed -E 's|^.*(..)$|\1|')"
   if [ $cms_ver -ge 1301 ] ; then
-    find $CMSSW_BASE/src -type d | grep -v '/__pycache__/*' | grep -v '/Alignment/MillePedeAlignmentAlgorithm/macros/' | xargs chmod -w
+    find $CMSSW_BASE/src -type d | grep -v '/__pycache__/*' | xargs chmod -w
   fi
   echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests/log.txt 2>&1 || true
   echo 'END OF UNIT TESTS'
   echo '--------------------------------------'
+  if [ $cms_ver -ge 1301 ] ; then
+    find $CMSSW_BASE/src -type d | xargs chmod +w
+  fi
   #######################################
   # check if DQM Tests where run
   #######################################

@@ -1847,7 +1847,14 @@
       "category": [
         "ecal-dpg"
       ], 
+      "end_date": 1677628800, 
       "start_date": 1632873600
+    }, 
+    {
+      "category": [
+        "xpog"
+      ], 
+      "start_date": 1677628800
     }
   ], 
   "slava77": [

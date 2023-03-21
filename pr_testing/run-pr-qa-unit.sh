@@ -102,6 +102,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   cms_ver="$(echo 00${cms_major} | sed -E 's|^.*(..)$|\1|')$(echo 00${cms_minor} | sed -E 's|^.*(..)$|\1|')"
   if [ $cms_ver -ge 1301 ] ; then
     find $CMSSW_BASE/src -type d | grep -v '/__pycache__/*' | xargs chmod -w
+    ls -l $CMSSW_BASE/src $CMSSW_BASE/src/FWCore/Framework
   fi
   echo $UTESTS_CMD > $WORKSPACE/unitTests/log.txt
   (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/unitTests/log.txt 2>&1 || true
@@ -109,6 +110,7 @@ if [ "X$DO_TESTS" = Xtrue ]; then
   echo '--------------------------------------'
   if [ $cms_ver -ge 1301 ] ; then
     find $CMSSW_BASE/src -type d | xargs chmod +w
+    ls -l $CMSSW_BASE/src $CMSSW_BASE/src/FWCore/Framework
   fi
   #######################################
   # check if DQM Tests where run

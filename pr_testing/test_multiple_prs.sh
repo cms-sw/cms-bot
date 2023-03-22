@@ -235,7 +235,7 @@ if [ "$COMPARISON_REL" = "" ] ; then
 fi
 [ "${RELEASE_FORMAT}" != "${CMSSW_IB}" ] && sed -i -e "s|${RELEASE_FORMAT}|${CMSSW_IB}|" ${RESULTS_DIR}/09-report.res
 
-if [ "${USER_BASELINE}" = "self" ] ; then
+if [ "${USE_BASELINE}" = "self" ] ; then
   COMPARISON_REL="$CMSSW_IB"
   COMPARISON_ARCH="$SCRAM_ARCH"
 fi

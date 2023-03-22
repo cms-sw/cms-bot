@@ -610,6 +610,35 @@ def get_commit_tags(repository, commit_sha, all_tags=False):
     return res
 
 
+def get_org_packages(org, package_type="container", visibility=None, token_file=None):
+  get_gh_token(token_file=token_file)
+  params = {"package_type" : package_type}
+  if visibility: params["visibility"] = visibility
+  return github_api(
+    "/orgs/%s/packages" % org,
+    method="GET",
+    params=params,
+    all_pages=True,
+    )
+
+
+def get_org_package(org, package, package_type="container", token_file=None):
+  get_gh_token(token_file=token_file)
+  return github_api(
+    "/orgs/%s/packages/%s/%s" % (org, package_type, package),
+    method="GET",
+    all_pages=True
+    )
+
+def get_org_package_versions(org, package, package_type="container", token_file=None):
+  get_gh_token(token_file=token_file)
+  return github_api(
+    "/orgs/%s/packages/%s/%s/versions" % (org, package_type, package),
+    method="GET",
+    all_pages=True
+    )
+
+
 def get_commits(repository, branch, until, per_page=1):
     get_gh_token(repository)
     if isinstance(until, datetime.datetime):

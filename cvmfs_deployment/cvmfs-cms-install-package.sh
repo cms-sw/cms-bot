@@ -20,6 +20,7 @@ ${CMS_BOT_DIR}/cvmfs_deployment/bootstrap_dir_for_arch.sh ${INSTALL_PATH} ${SCRA
 export SCRAM_ARCH
 export CMSPKG_OS_COMMAND="source ${CMS_BOT_DIR}/dockerrun.sh ; dockerrun"
 CMSPKG="${INSTALL_PATH}/common/cmspkg -a ${SCRAM_ARCH}"
+${CMSPKG} update
 ${CMSPKG} -y --upgrade-packages upgrade
 if [ $(echo "${SCRAM_ARCH}" | grep '^slc' | wc -l) -gt 0 ] ; then
     RPM_CONFIG=${INSTALL_PATH}/${SCRAM_ARCH}/var/lib/rpm/DB_CONFIG

@@ -383,8 +383,8 @@ if __name__ == "__main__":
                         retry_delay,
                     )
                          
-                # Update last processed log only if grater than current revision number
-                max_latest_revision = int(max(missing_builds))
+                # Update last processed log only if greater than current revision number
+                max_latest_revision = max([int(build_id) for build_id in missing_builds])
                 if max_latest_revision > int(latest_revision):
                     processed_object["parserInfo"]["lastRevision"][job_to_retry] = max_latest_revision
 

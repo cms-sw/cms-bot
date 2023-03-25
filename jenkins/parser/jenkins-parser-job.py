@@ -351,7 +351,7 @@ if __name__ == "__main__":
             except KeyError:
                 latest_revision = 0
                 processed_object["parserInfo"]["lastRevision"][job_to_retry] = "0"
-            print("DEBUG1:",job_to_retry,latest_revision)
+
             # Take info from rotation list
             try:
                 total_running_builds = list(
@@ -385,10 +385,8 @@ if __name__ == "__main__":
                          
                 # Update last processed log only if grater than current revision number
                 max_latest_revision = int(max(missing_builds))
-                print("DEBUG:",job_to_retry,max_latest_revision,latest_revision)
                 if max_latest_revision > int(latest_revision):
                     processed_object["parserInfo"]["lastRevision"][job_to_retry] = max_latest_revision
-                    print("DEBUG:",job_to_retry,processed_object["parserInfo"]["lastRevision"][job_to_retry],latest_revision)
 
             # Update running builds checking > last revision number
             new_running_builds = helpers.get_running_builds(job_dir, latest_revision)

@@ -384,9 +384,9 @@ if __name__ == "__main__":
                     )
                          
                 # Update last processed log only if grater than current revision number
-                max_latest_revision = max(missing_builds)
+                max_latest_revision = int(max(missing_builds))
                 print("DEBUG:",job_to_retry,max_latest_revision,latest_revision)
-                if max_latest_revision > latest_revision:
+                if max_latest_revision > int(latest_revision):
                     processed_object["parserInfo"]["lastRevision"][job_to_retry] = max_latest_revision
                     print("DEBUG:",job_to_retry,processed_object["parserInfo"]["lastRevision"][job_to_retry],latest_revision)
 

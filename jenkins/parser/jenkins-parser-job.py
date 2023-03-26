@@ -430,11 +430,10 @@ if __name__ == "__main__":
                     processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(
                         build
                     )
-                # Update last processed log only if grater than current revision number
-                if max(finished_builds) > latest_revision:
-                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max(
-                        finished_builds
-                    )
+                # Update last processed log only if greater than current revision number
+                max_latest_revision = max([int(build_id) for build_id in finished_builds])
+                if max_latest_revision > int(latest_revision):
+                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max_latest_revision
 
             # Get updated value for total_running_builds
             total_running_builds = list(

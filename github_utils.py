@@ -638,6 +638,13 @@ def get_org_package_versions(org, package, package_type="container", token_file=
     all_pages=True
     )
 
+def get_org_package_version(org, package, version_id, package_type="container", token_file=None):
+  get_gh_token(token_file=token_file)
+  return github_api(
+    "/orgs/%s/packages/%s/%s/versions/%s" % (org, package_type, package, version_id),
+    method="GET",
+    )
+
 
 def get_commits(repository, branch, until, per_page=1):
     get_gh_token(repository)

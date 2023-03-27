@@ -158,7 +158,7 @@ print("[INFO] Updating builds that are no longer in queue ...")
 for build_id in no_inqueue:
     id, payload = update_payload_timestamp(build_id, es_queue)
     payload['in_queue'] = 0
-    print("==> Cleaning up ", str(id) + " " + str(payload["job_name"]) + " #" + str(payload["queue_id"]))
+    print("==> Cleaning up ",es_indexes[id],"/", str(id) + " " + str(payload["job_name"]) + " #" + str(payload["queue_id"]))
     send_payload(es_indexes[id],queue_document,id,json.dumps(payload))
 
 time.sleep(10)

@@ -98,10 +98,12 @@ except ValueError:
     elements_inqueue = dict()
 
 es_queue = dict()
+es_indexes = dict()
 if elements_inqueue:
   if (not 'hits' in elements_inqueue) or (not 'hits' in elements_inqueue['hits']):
     print("ERROR: ", elements_inqueue)
   for entry in elements_inqueue['hits']['hits']:
+    es_indexes[entry['_id']] = entry['_index']
     es_queue[entry['_id']] = entry['_source']
 
 # Get jenkins queue and construct payload to be send to elastic search
@@ -149,7 +151,7 @@ for build_id in still_inqueue:
     id, payload = update_payload_timestamp(build_id, jenkins_queue)
     payload["wait_time"] = current_time - payload["in_queue_since"]
     display_build_info(id, payload)
-    send_payload(queue_index,queue_document,id,json.dumps(payload))
+    send_payload(es_indexes[id],queue_document,id,json.dumps(payload))
 
 no_inqueue = [str(y) for y in es_queue.keys() if y not in jenkins_queue.keys()]
 print("[INFO] Updating builds that are no longer in queue ...")
@@ -157,17 +159,19 @@ for build_id in no_inqueue:
     id, payload = update_payload_timestamp(build_id, es_queue)
     payload['in_queue'] = 0
     print("==> Cleaning up ", str(id) + " " + str(payload["job_name"]) + " #" + str(payload["queue_id"]))
-    send_payload(queue_index,queue_document,id,json.dumps(payload))
+    send_payload(es_indexes[id],queue_document,id,json.dumps(payload))
 
 time.sleep(10)
 
 # Get jobs in elastic search with in_queue=0 (jobs that already started)
 queue_content_hash = get_payload_wscroll("cmssdt-jenkins-queue*", query_inqueue0)
 es_queue = dict()
+es_indexes = dict()
 for entry in queue_content_hash['hits']['hits']:
     if not 'queue_id' in entry['_source']: continue
     queue_id = entry['_source']['queue_id']
     entry['_source']['queue_hash'] = entry['_id']
+    es_indexes[queue_id] = entry['_index']
     es_queue[queue_id] = entry['_source']
 
 print("[INFO] Checking status of running/finished builds ...")
@@ -212,14 +216,15 @@ for root, dirs, files in os.walk(path):
           payload['job_status'] = 'Running'
 
         # Check if job has been in queue, and update queue waiting time
-        if int(payload['queue_id']) in es_queue.keys():
-            queue_payload = es_queue[int(payload['queue_id'])]
+        queue_id = int(payload['queue_id'])
+        if queue_id in es_queue.keys():
+            queue_payload = es_queue[queue_id]
             queue_payload['start_time'] = int(jstime) # start time in millisec
             queue_payload['wait_time'] = int(jstime) - queue_payload["in_queue_since"]
             queue_payload['build_number'] = payload['build_number']
-            
+
             print("==> Sending payload for ", queue_payload['queue_hash'])
-            send_payload(queue_index, queue_document, queue_payload['queue_hash'], json.dumps(queue_payload))
+            send_payload(es_indexes[queue_id], queue_document, queue_payload['queue_hash'], json.dumps(queue_payload))
 
         all_local.append(id)
         weekindex="jenkins-jobs-"+str(int((((int(jstime)/1000)/86400)+4)/7))
@@ -244,7 +249,7 @@ for entry in es_queue:
                 es_queue[entry]["start_time"] = int(jstime)
                 es_queue[entry]["wait_time"] = int(jstime) - es_queue[entry]["in_queue_since"]
                 print("==> Sending payload for ", es_queue[entry]['queue_hash'])
-                send_payload(queue_index, queue_document, es_queue[entry]['queue_hash'], json.dumps(es_queue[entry]))
+                send_payload(es_indexes[entry], queue_document, es_queue[entry]['queue_hash'], json.dumps(es_queue[entry]))
 
 running_builds_elastic={}
 content_hash = get_payload_wscroll('jenkins-*',query_running_builds)

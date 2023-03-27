@@ -165,6 +165,7 @@ time.sleep(10)
 queue_content_hash = get_payload_wscroll("cmssdt-jenkins-queue*", query_inqueue0)
 es_queue = dict()
 for entry in queue_content_hash['hits']['hits']:
+    if not 'queue_id' in entry['_source']: continue
     queue_id = entry['_source']['queue_id']
     entry['_source']['queue_hash'] = entry['_id']
     es_queue[queue_id] = entry['_source']

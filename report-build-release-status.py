@@ -180,7 +180,7 @@ if __name__ == "__main__":
   action = args[ 5 ]
 
   repo = GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO
-  ALL_LABELS = [ l.name for l in get_issue_labels(repo, issue) ]
+  ALL_LABELS = [ l["name"] for l in get_issue_labels(repo, issue) ]
   test_logfile = "build/"+release_name+"-tests/matrixTests/runall-report-step123-.log"
   
   if action == POST_BUILDING:

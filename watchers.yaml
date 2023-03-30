@@ -1816,6 +1816,7 @@ youyingli:
 - SimCalorimetry/HGCalSimProducers
 - SimDataFormats
 - Configuration/Skimming
+- DPGAnalysis/Skims
 a-kapoor:
   - RecoEgamma
   - RecoEcal

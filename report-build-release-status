@@ -1,6 +1,8 @@
 #!/bin/bash
+PYTHON_CMD="python"
+if which python3 >/dev/null 2>&1 ; then PYTHON_CMD="python3" ; fi
 for x in 0 1 2 ; do
-  $(dirname $0)/report-build-release-status.py "$@" && exit 0
+  ${PYTHON_CMD} $(dirname $0)/report-build-release-status.py "$@" && exit 0
   sleep 30
 done
 exit 1

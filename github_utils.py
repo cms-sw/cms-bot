@@ -32,7 +32,6 @@ def comment_gh_pr(gh, repo, pr, msg):
     pr   = repo.get_issue(pr)
     pr.create_comment(msg)
 
-
 def github_time(gh_time):
   return int(mktime(strptime(gh_time, "%Y-%m-%dT%H:%M:%SZ")))
 
@@ -377,10 +376,34 @@ def edit_pr(repo, pr_num, title=None, body=None, state=None, base=None):
     if state: params["state"] = state
     return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), params=params, method="PATCH")
 
+def create_issue_comment(repo, issue_num, body):
+    get_gh_token(repo)
+    return github_api(uri="/repos/%s/issues/%s/comments" % (repo, issue_num), params={"body": body})
+
+def get_issue_labels(repo, issue_num):
+    get_gh_token(repo)
+    return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), method="GET")
+
+def add_issue_labels(repo, issue_num, labels=[]):
+    get_gh_token(repo)
+    return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), params={"labels": labels}, method="POST")
+
+def set_issue_labels(repo, issue_num, labels=[]):
+    get_gh_token(repo)
+    return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), params={"labels": labels}, method="PUT")
+
+def remove_issue_labels_all(repo, issue_num):
+    get_gh_token(repo)
+    return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), method="DELETE", status=[204])
+
+def remove_issue_label(repo, issue_num, label):
+    get_gh_token(repo)
+    return github_api(uri="/repos/%s/issues/%s/labels/%s" % (repo, issue_num, label), method="DELETE")
+
 def get_rate_limits():
   return github_api(uri="/rate_limit", method="GET")
 
-def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True, max_pages=-1):
+def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True, max_pages=-1, status=[]):
     global GH_RATE_LIMIT, GH_PAGE_RANGE
     if max_pages>0 and page>max_pages:
         return '[]' if raw else []
@@ -390,7 +413,7 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
         headers = {}
     url = "https://api.github.com%s" % uri
     data = ""
-    if per_page and ('per_page' not in params) : params['per_page']=per_page
+    if per_page and ('per_page' not in params) and (not method in ["POST", "PATCH", "PUT"]): params['per_page']=per_page
     if method == "GET":
         if params:
             url = url + "?" + urlencode(params)
@@ -425,6 +448,8 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
             elif len(pages) == 1:
                 GH_PAGE_RANGE += pages
     cont = response.read()
+    if status:
+      return response.status in status
     if raw: return cont
     data = json.loads(cont)
     if GH_PAGE_RANGE and all_pages:

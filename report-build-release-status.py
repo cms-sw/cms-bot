@@ -3,7 +3,7 @@
 from __future__ import print_function
 from _py2with3compatibility import getoutput
 from optparse import OptionParser
-from github import Github
+from github_utils import create_issue_comment, get_issue_labels, remove_issue_label, add_issue_labels, remove_issue_labels_all
 from os.path import expanduser
 from datetime import datetime
 from socket import setdefaulttimeout
@@ -98,26 +98,26 @@ BASE_INSTALLATION_URL = 'https://cmssdt.cern.ch/SDT/%s-artifacts/deploy-release-
 # posts a message to the issue in github
 # if dry-run is selected it doesn't post the message and just prints it
 #
-def post_message( issue, msg ):
+def post_message(repo, issue, msg ):
   if opts.dryRun:
     print('Not posting message (dry-run):\n %s' % msg)
   else:
     print('Posting message:\n %s' % msg)
-    issue.create_comment( msg )
+    create_issue_comment(repo, issue, msg)
 
 
 
 # Adds a label to the issue in github
 # if dry-run is selected it doesn't add the label and just prints it
-def add_label( issue, label ):
+def add_label(repo, issue, label ):
   if opts.dryRun:
     print('Not adding label (dry-run):\n %s' % label)
     return
   print('Adding label:\n %s' % label)
-  issue.add_to_labels( label )
+  add_issue_labels(repo, issue, [label] )
 
 # Removes a label form the issue
-def remove_label( issue, label ):
+def remove_label( repo, issue, label ):
   if opts.dryRun:
     print('Not removing label (dry-run):\n %s' % label)
     return
@@ -127,18 +127,18 @@ def remove_label( issue, label ):
     if not reM.match(l): continue
     print('Removing label: %s' % l)
     try:
-      issue.remove_from_labels(l)
+      remove_issue_label(repo, issue, l)
     except Exception as e:
       pass
 
 #
 # removes the labels of the issue
 #
-def remove_labels( issue ):
+def remove_labels( repo, issue ):
   if opts.dryRun:
     print('Not removing issue labels (dry-run)')
     return
-  issue.delete_labels()
+  remove_issue_labels_all(repo, issue)
 
 
 #
@@ -174,18 +174,13 @@ if __name__ == "__main__":
 
   jenkins_build_number = int( args[ 0 ] )
   hostname = args[ 1 ]
-  issue_id = int( args[ 2 ] )
+  issue = int( args[ 2 ] )
   arch = args[ 3 ]
   release_name = args[ 4 ]
   action = args[ 5 ]
 
-  GH = Github( login_or_token=open( expanduser( "~/.github-token" ) ).read( ).strip( ) )
-  cmssw_repo = GH.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
-  print('API Rate Limit')
-  print('Limit, Remaining: ', GH.rate_limiting)
-  print('Reset time (GMT): ', datetime.fromtimestamp(GH.rate_limiting_resettime))
-  issue = cmssw_repo.get_issue( issue_id )
-  ALL_LABELS = [ l.name for l in issue.get_labels() ]
+  repo = GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO
+  ALL_LABELS = [ l.name for l in get_issue_labels(repo, issue) ]
   test_logfile = "build/"+release_name+"-tests/matrixTests/runall-report-step123-.log"
   
   if action == POST_BUILDING:
@@ -193,10 +188,10 @@ if __name__ == "__main__":
     if opts.details:
       msg_details = opts.details
     msg = BUILDING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number, details=msg_details )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
     new_label = arch+'-building'
-    add_label( issue, new_label )
+    add_label( repo, issue, new_label )
 
   elif action == POST_TOOL_CONF_BUILDING:
 
@@ -204,97 +199,97 @@ if __name__ == "__main__":
     if opts.details:
       msg_details = opts.details
     msg = BUILDING_TOOL_CONF_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number, details=msg_details )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
     new_label = arch+'-tool-conf-building'
-    add_label( issue, new_label )
+    add_label( repo, issue, new_label )
 
   elif action == BUILD_OK:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = BUILD_OK_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-build-ok' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-build-ok' )
 
   elif action == TOOL_CONF_OK:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TOOL_CONF_OK_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-tool-conf-ok' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-tool-conf-ok' )
 
   elif action == BUILD_ERROR:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = BUILD_ERROR_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-build-error' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-build-error' )
 
   elif action == TOOL_CONF_ERROR:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TOOL_CONF_ERROR_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-tool-conf-error' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-tool-conf-error' )
 
   elif action == UPLOADING:
 
     msg = UPLOADING_MSG.format( architecture=arch, machine=hostname, jk_build_number=jenkins_build_number)
-    post_message( issue , msg )
+    post_message( repo, issue , msg )
 
   elif action == UPLOAD_OK:
 
     results_url = BASE_UPLOAD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = UPLOAD_OK_MSG.format( architecture=arch , log_url=results_url )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-upload-ok' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-upload-ok' )
 
   elif action == UPLOAD_ERROR:
 
     results_url = BASE_UPLOAD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = UPLOAD_ERROR_MSG.format( architecture=arch , log_url=results_url )
-    post_message( issue , msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-upload-error' )
+    post_message( repo, issue , msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-upload-error' )
 
   elif action == CLEANUP_OK:
 
     results_url = BASE_CLEANUP_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = CLEANUP_OK_MSG.format( architecture=arch , log_url=results_url )
-    post_message( issue , msg )
+    post_message( repo, issue , msg )
 
   elif action == CLEANUP_ERROR:
 
     results_url = BASE_CLEANUP_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = CLEANUP_ERROR_MSG.format( architecture=arch , log_url=results_url )
-    post_message( issue , msg ) 
+    post_message( repo, issue , msg )
 
   elif action == TESTS_OK:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TESTS_OK_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg + get_test_log(test_logfile))
+    post_message( repo, issue , msg + get_test_log(test_logfile))
 
   elif action == TESTS_ERROR:
 
     results_url = BASE_BUILD_LOG_URL % (release_name,arch,jenkins_build_number)
     msg = TESTS_ERROR_MSG.format( architecture=arch, log_url=results_url )
-    post_message( issue , msg + get_test_log(test_logfile))
+    post_message( repo, issue , msg + get_test_log(test_logfile))
    
   elif action == RELEASE_NOTES_OK:
 
     msg = RELEASE_NOTES_OK_MSG.format( rel_name=release_name )
-    post_message( issue, msg)
+    post_message( repo, issue, msg)
 
   elif action == RELEASE_NOTES_ERROR:
 
     msg = RELEASE_NOTES_ERROR_MSG.format( rel_name=release_name )
-    post_message( issue, msg)
+    post_message( repo, issue, msg)
 
   elif action in [ INSTALLATION_OK, INSTALLATION_SKIP ]:
 
@@ -304,9 +299,9 @@ if __name__ == "__main__":
     #msg = INSTALLATION_OK_MSG.format( architecture=arch , log_url=results_url )
     #if action == INSTALLATION_SKIP:
     #  msg = INSTALLATION_SKIP_MSG.format( architecture=arch , log_url=results_url )
-    #post_message( issue, msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-installation-ok' )
+    #post_message( repo, issue, msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-installation-ok' )
 
   elif action == INSTALLATION_ERROR:
 
@@ -314,9 +309,9 @@ if __name__ == "__main__":
                                                      architecture=arch,
                                                      job_id=jenkins_build_number )
     msg = INSTALLATION_ERROR_MSG.format( architecture=arch , log_url=results_url )
-    post_message( issue, msg )
-    remove_label( issue, arch+'-.*' )
-    add_label( issue,  arch+'-installation-error' )
+    post_message( repo, issue, msg )
+    remove_label( repo, issue, arch+'-.*' )
+    add_label( repo, issue,  arch+'-installation-error' )
 
   else:
     parser.error( "Message type not recognized" )

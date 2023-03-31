@@ -39,6 +39,12 @@ export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local
 mkdir -p ${RESULTS_DIR}
 [ "${ARCHITECTURE}" != "" ] && export SCRAM_ARCH=${ARCHITECTURE}
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils
+case $CMSSW_IB in
+  *_ASAN_* )
+   $CMS_BOT_DIR/system-overrides.sh $WORKSPACE/system-overrides
+   export SCRAM_PREFIX_PATH=$WORKSPACE/system-overrides:${SCRAM_PREFIX_PATH}
+   ;;
+esac
 if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
   WAIT_TIME=14400
   while [ $WAIT_TIME -gt 0 ] ; do

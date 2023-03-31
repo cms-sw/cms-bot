@@ -30,6 +30,13 @@ if [ -f config/SCRAM/linkexternal.py ] ; then
   sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py || true
 fi
 set +x
+#Check for syste commands to override e.g. ps hangs in ASAN env
+case ${RELEASE_FORMAT} in
+  *_ASAN_* )
+   $CMS_BOT_DIR/system-overrides.sh $WORKSPACE/system-overrides
+   export SCRAM_PREFIX_PATH=$WORKSPACE/system-overrides:${SCRAM_PREFIX_PATH}
+   ;;
+esac
 eval \$(scram runtime -sh)
 echo "PATH"
 echo \$PATH | tr ':' '\n'

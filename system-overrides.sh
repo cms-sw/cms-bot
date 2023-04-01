@@ -4,7 +4,7 @@
 OVERRIDE_DIR=$1
 [ "$1" != "" ] || OVERRIDE_DIR=$(/bin/pwd -P)
 mkdir -p ${OVERRIDE_DIR}
-for cmd in ps ; do
+for cmd in ps cp ; do
   if [ ! -x ${OVERRIDE_DIR}/${cmd} ] ; then
     sys_cmd=$(which $cmd || echo "")
     echo '#!/bin/bash' > ${OVERRIDE_DIR}/${cmd}

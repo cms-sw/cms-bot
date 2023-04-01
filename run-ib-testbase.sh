@@ -33,8 +33,8 @@ set +x
 #Check for syste commands to override e.g. ps hangs in ASAN env
 case ${RELEASE_FORMAT} in
   *_ASAN_* )
-   $CMS_BOT_DIR/system-overrides.sh $WORKSPACE/system-overrides
-   export SCRAM_PREFIX_PATH=$WORKSPACE/system-overrides:${SCRAM_PREFIX_PATH}
+   $WORKSPACE/cms-bot/system-overrides.sh $WORKSPACE/system-overrides
+   export SCRAM_PREFIX_PATH=$WORKSPACE/system-overrides:\${SCRAM_PREFIX_PATH}
    ;;
 esac
 eval \$(scram runtime -sh)

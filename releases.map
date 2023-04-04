@@ -3653,3 +3653,4 @@ architecture=el8_amd64_gcc11;label=CMSSW_13_0_2;type=Production;state=Announced;
 architecture=slc7_amd64_gcc11;label=CMSSW_13_0_2;type=Production;state=Announced;prodarch=0;
 architecture=el9_amd64_gcc11;label=CMSSW_13_0_2;type=Production;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc11;label=CMSSW_13_0_3;type=Production;state=Announced;prodarch=0;
+architecture=el9_amd64_gcc11;label=CMSSW_13_0_3;type=Production;state=Announced;prodarch=0;

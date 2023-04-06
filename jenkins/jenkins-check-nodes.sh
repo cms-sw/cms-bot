@@ -106,7 +106,7 @@ function notify_failure {
     node_off_list=$@
     job_description="This job runs a sanity check for /afs, /cvmfs repositories and singularity."
     node_info="Jenkins nodes ${node_off_list[@]} have been marked offline since they where connected to host ${node}."
-    error_msg="Node ${node} has been blacklisted by ${job_url}. Please, take the appropiate action. ${node_info} ${job_description}"
+    error_msg="Node ${node} has been blacklisted by ${job_url}/console. Please, take the appropiate action. ${node_info} ${job_description}"
     echo $error_msg | mail -s "Node ${node} has been blacklisted" $email
 }
 

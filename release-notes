@@ -125,8 +125,8 @@ if __name__ == "__main__":
     exit(0)
 
   # "Only the first 1000 results are available."
-  for page in range(1, 11) do:
-    request = Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100&page=" + page,
+  for page in range(1, 11):
+    request = Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100&page=%s" + page,
                               headers={"Authorization" : "token " + token})
     releases = json.loads(urlopen(request).read())
     matchingRelease = [x["id"] for x in releases if x["name"] == curr_release]

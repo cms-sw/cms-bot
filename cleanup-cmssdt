@@ -11,7 +11,7 @@ JENKINS_ARTIFACTS=/data/sdt/SDT/jenkins-artifacts
 CVMFS_JENKINS_ARTIFACTS=/cvmfs/cms-ib.cern.ch/jenkins-artifacts
 DIRS_PROCESSED=""
 JOBS_TO_KEEP=200
-RUNS_TO_KEEP=3
+RUNS_TO_KEEP=5
 #Keep $JOBS_TO_KEEP of these
 for dir in pull-request-integration ; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue

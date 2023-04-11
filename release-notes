@@ -124,17 +124,21 @@ if __name__ == "__main__":
     print('ALL_OK')
     exit(0)
 
-  request = Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100",
-                            headers={"Authorization" : "token " + token})
-  releases = json.loads(urlopen(request).read())
-  matchingRelease = [x["id"] for x in releases if x["name"] == curr_release]
-  if len(matchingRelease) < 1:
-    print("Release %s not found." % curr_release)
-    exit(1)
-  releaseId = matchingRelease[0]
-  url = "https://api.github.com/repos/cms-sw/cmssw/releases/%s" % releaseId
-  request = Request(url, headers={"Authorization" : "token " + token})
-  request.get_method = lambda: 'PATCH'
-  print("Modifying release notes for %s at %s" % (curr_release, url))
-  print(urlopen(request, json.dumps({"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str })).read())
-  print('ALL_OK')
+  # "Only the first 1000 results are available."
+  for page in range(1, 11) do:
+    request = Request("https://api.github.com/repos/cms-sw/cmssw/releases?per_page=100&page=" + page,
+                              headers={"Authorization" : "token " + token})
+    releases = json.loads(urlopen(request).read())
+    matchingRelease = [x["id"] for x in releases if x["name"] == curr_release]
+    if len(matchingRelease) > 0:
+      releaseId = matchingRelease[0]
+      url = "https://api.github.com/repos/cms-sw/cmssw/releases/%s" % releaseId
+      request = Request(url, headers={"Authorization" : "token " + token})
+      request.get_method = lambda: 'PATCH'
+      print("Modifying release notes for %s at %s" % (curr_release, url))
+      print(urlopen(request, json.dumps({"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str })).read())
+      print('ALL_OK')
+      return
+
+  print("Release %s not found." % curr_release)
+  exit(1)

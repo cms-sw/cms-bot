@@ -97,6 +97,7 @@ for REPOSITORY in $REPOSITORIES; do
   echo "Checking week $REPOSITORY ($WEEK) for RPMS"
   if [ "X$TEST_INSTALL" = "XYes" ] ; then REPOSITORY="test" ; fi
   WORKDIR=$BASEDIR/$REPOSITORY
+  rm -rf $WORKDIR/*/var/cmspkg/rpms || true
   mkdir -p $WORKDIR/logs
   # Install all architectures of the most recent week first.
     CMSPKG="$WORKDIR/common/cmspkg -a $SCRAM_ARCH ${USE_DEV}"

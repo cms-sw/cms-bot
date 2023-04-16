@@ -146,7 +146,7 @@ for REPOSITORY in $REPOSITORIES; do
         ${CMSPKG} install -y $x || true
         time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
         time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
-        rm -rf $WORKDIR/$SCRAM_ARCH/var/cmspkg/rpms || true
+        rm -rf $WORKDIR/*/var/cmspkg/rpms || true
         relname=`echo $x | awk -F + '{print $NF}'`
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'`
         if [ "X$timestamp" != "X" ] ; then

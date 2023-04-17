@@ -78,7 +78,7 @@ pushd $BUILD_DIR
     * )      MD5_CMD=md5sum;;
   esac
   if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
-    CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps --tag hash"
+    CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps --tag hash $(cmsbuild_args ${CMSSW_X_Y_Z})"
   else
     CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi

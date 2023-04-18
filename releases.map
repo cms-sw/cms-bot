@@ -3668,3 +3668,4 @@ architecture=el9_aarch64_gcc11;label=CMSSW_13_1_0_pre3;type=Development;state=An
 architecture=el9_amd64_gcc11;label=CMSSW_13_1_0_pre3;type=Development;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc11;label=CMSSW_13_1_0_pre3;type=Development;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc11;label=CMSSW_13_1_0_pre3;type=Development;state=Announced;prodarch=1;
+architecture=slc7_amd64_gcc700;label=CMSSW_10_6_33;type=Production;state=Announced;prodarch=1;

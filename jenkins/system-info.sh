@@ -148,7 +148,7 @@ else
   if [ "${CMS_ARCH_DIR}" != "" ] ; then
     GCC_ENV=$(ls -d ${CMS_ARCH_DIR}/external/gcc/*/etc/profile.d/init.sh 2>/dev/null | sort | tail -1)
     if [ "${GCC_ENV}" != "" ] ; then
-      SLAVE_LABELS="${SLAVE_LABELS} $(source $GCC_ENV; gcc -march=native -Q --help=target 2>/dev/null | grep -- '^ *-march=' | sed 's|.*=\s*||;s|\s*$||;s|\s|-|g')"
+      SLAVE_LABELS="${SLAVE_LABELS} cpu-family-$(source $GCC_ENV; gcc -march=native -Q --help=target 2>/dev/null | grep -- '^ *-march=' | sed 's|.*=\s*||;s|\s*$||;s|\s|-|g')"
     fi
   fi
 fi

@@ -144,7 +144,15 @@ else
   curl -s -k -L -o $WORKSPACE/cmsos https://raw.githubusercontent.com/cms-sw/cms-common/master/common/cmsos
   chmod +x $WORKSPACE/cmsos
   HOST_CMS_ARCH=$($WORKSPACE/cmsos 2>/dev/null)
+  CMS_ARCH_DIR=$(ls -d /cvmfs/cms.cern.ch/${HOST_CMS_ARCH}_gcc* 2>/dev/null | sort | tail -1)
+  if [ "${CMS_ARCH_DIR}" != "" ] ; then
+    GCC_ENV=$(ls -d ${CMS_ARCH_DIR}/external/gcc/*/etc/profile.d/init.sh 2>/dev/null | sort | tail -1)
+    if [ "${GCC_ENV}" != "" ] ; then
+      SLAVE_LABELS="${SLAVE_LABELS} $(source $GCC_ENV; gcc -march=native -Q --help=target 2>/dev/null | grep -- '^ *-march=' | sed 's|.*=\s*||;s|\s*$||;s|\s|-|g')"
+    fi
+  fi
 fi
+
 echo "DATA_SYSTEM_LOAD=$(uptime | sed 's|.*: *||;s|, *|:|g')"
 echo "DATA_HOST_CMS_ARCH=${HOST_CMS_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_CMS_ARCH} $(echo ${HOST_CMS_ARCH} | tr _ ' ')"

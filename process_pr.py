@@ -627,9 +627,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                          if re.match("^" + regexp + ".*", chg_file) and user != author])
     #Handle category watchers
     catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
+    non_block_cats = [] if not 'mtype' in extra_labels else extra_labels['mtype']
     for user, cats in list(catWatchers.items()):
       for cat in cats:
-        if cat in signing_categories:
+        if (cat in signing_categories) or (cat in non_block_cats):
           print("Added ",user, " to watch due to cat",cat)
           watchers.add(user)
 

@@ -35,7 +35,7 @@ class LogUpdater(object):
         print("\n--> going to copy unit test logs to", self.webTargetDir, '... \n')
         # copy back the test and relval logs to the install area
         # check size first ... sometimes the log _grows_ to tens of GB !!
-        testLogs = ['unitTestLogs.zip', 'unitTests-summary.log', 'unitTestResults.pkl']
+        testLogs = ['unitTestLogs.zip', 'unitTests-summary.log', 'unitTestResults.pkl', 'unitTests1.log']
         for tl in testLogs:
             self.copyLogs(tl, '.', self.webTargetDir + "/" + subdir)
         return

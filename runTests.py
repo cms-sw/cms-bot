@@ -113,14 +113,9 @@ class UnitTester(IBThreadBase):
         if platform.system() == 'Darwin':
             print('unitTest> Skipping unit tests for MacOS')
             return
+        precmd=""
         if (self.xType == 'GPU') or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
-            gpu_pkg = "gpu_pkgs.txt"
-            cmd = "cd " + self.startDir + "; find .SCRAM/" + arch + "/BuildFiles/src -name BuildFile.xml | xargs grep -E '\"(cuda|alpaka)\"' | cut -d/ -f5,6 | sort | uniq > "+gpu_pkg+"; "
-            cmd = cmd + " cat "+gpu_pkg+"; mv src src.full;"
-            cmd = cmd + " for p in $(cat "+gpu_pkg+"); do mkdir -p src/${p} ; rsync -a src.full/${p}/ src/${p}/ ; done ; scram b clean>/dev/null 2>&1; scram build -r echo_CXX"
-            ret = runCmd(cmd)
-            if ret != 0:
-                print("ERROR when getting GPU unit-tests sources: cmd returned " + str(ret))
+            precmd="export USER_UNIT_TESTS=cuda ;"
         skiptests = ""
         if 'lxplus' in getHostName():
             skiptests = 'SKIP_UNITTESTS=ExpressionEvaluatorUnitTest'
@@ -129,9 +124,8 @@ class UnitTester(IBThreadBase):
             "cd " + self.startDir + ";scram tool info cmssw 2>&1 | grep CMSSW_BASE= | sed 's|^CMSSW_BASE=||'")
         if cmd:
             TEST_PATH = TEST_PATH + ":" + cmd + "/test/" + arch
-        print(TEST_PATH)
         try:
-            cmd = "cd " + self.startDir + r"; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
+            cmd = precmd+"cd " + self.startDir + r"; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
             cmd += 'PATH=' + TEST_PATH + ':$PATH scram b -f -k -j ' + str(
                 MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
             cmd += 'touch nodelete.done; ls -l nodelete.*'

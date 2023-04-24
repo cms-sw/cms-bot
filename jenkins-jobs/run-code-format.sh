@@ -59,6 +59,7 @@ if $CLANG_TIDY ; then
   popd
   echo "Files need clang-tidy fixes ....."
   cat $WORKSPACE/upload/code-checks.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-checks-pkgs.log
+  scram b clean
 else
   touch $WORKSPACE/upload/code-checks.txt
 fi
@@ -66,6 +67,7 @@ fi
 if $CLANG_FORMAT ; then
   mv src src.tidy
   mv src.orig src
+  scram b clean
   scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format-orig.log 2>&1 || ERR=1
   pushd src
     git diff --name-only > $WORKSPACE/upload/code-format-orig.txt
@@ -74,6 +76,7 @@ if $CLANG_FORMAT ; then
   cat $WORKSPACE/upload/code-format-orig.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs-orig.log
   mv src src.format
   mv src.tidy src
+  scram b clean
   scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format.log 2>&1 || ERR=1
   pushd src
     git diff --name-only > $WORKSPACE/upload/code-format.txt

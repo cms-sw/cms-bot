@@ -10,7 +10,7 @@ CMSBUILD_USER="cmsdmwmbot"
 GH_REPO_ORGANIZATION=basename(dirname(CONFIG_DIR))
 GH_REPO_FULLNAME="dmwm/CRABServer"
 CREATE_EXTERNAL_ISSUE=False
-#Jenkins CI server: User default http://cmsjenkins05.cern.ch:8080/cms-jenkins
+#Jenkins CI server: User default http://cmsjenkins04.cern.ch:8080/cms-jenkins
 JENKINS_SERVER="http://cmsjenkins10.cern.ch:8080/dmwm-jenkins"
 #Set to True if you want bot to add build/test labels to your repo
 ADD_LABELS=False

@@ -81,6 +81,7 @@ if [ $(echo $CONFIG_LINE | tr ';' '\n' | grep SCRAM_ARCH= | wc -l) -eq 1 ] ; the
     echo "EXTRA_RELVALS_TESTS=${EXTRA_RELVALS_TESTS}" >> $OUTPUT_FILE
     for i in "" ${EXTRA_RELVALS_TESTS} ; do
       [ "$i" != "" ] && i="_$i"
+      [ "$i" == "GPU" ] && echo "TEST_FLAVOR=gpu" >> $OUTPUT_FILE
       for t in EXTRA_MATRIX_ARGS MATRIX_EXTRAS EXTRA_MATRIX_COMMAND_ARGS ; do
         eval "a=\${$t$i}"
         if [ "$a" != "" ]  ;then

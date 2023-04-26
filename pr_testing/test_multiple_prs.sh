@@ -1051,6 +1051,7 @@ echo "BUILD_LOG;${BUILD_LOG_RES},Compilation warnings summary,See Logs,build-log
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
 
 DO_PROFILING=false
+DO_GPU=false
 if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ "X$DO_TESTS" = Xtrue ] ; then
     mark_commit_status_all_prs 'unittest' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
@@ -1073,11 +1074,15 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
       done
     fi
   fi
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
+    DO_GPU=true
+    mark_commit_status_all_prs 'gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+  fi
 else
   DO_TESTS=false
   DO_SHORT_MATRIX=false
   DO_ADDON_TESTS=false
-  DO_CRAB_TESTS=false
+  DO_CRAB_TESTS=false  
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
@@ -1217,6 +1222,10 @@ fi
 
 if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-addon.prop
+fi
+
+if [ "X$DO_GPU_TESTS" = Xtrue ]; then
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-gpu.prop
 fi
 
 if ${BUILD_EXTERNAL} ; then

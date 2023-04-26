@@ -37,13 +37,14 @@ def get_es_query(query="", start_time=0, end_time=0, page_start=0, page_size=100
   fields_list = ",".join([ '"%s"' % f for f in fields])
   return format(es5_query_tmpl, **locals ())
 
-
-def ssl_urlopen(url, data):
+def get_ssl_context():
   sslcon = None
   try: sslcon = ssl._create_unverified_context()
   except Exception as e: sslcon =  None
-  if sslcon: return urlopen(url, data, context=sslcon).read()
-  return urlopen(CMSSDT_ES_QUERY,data).read()
+  return sslcon
+
+def ssl_urlopen(url, data):
+  return urlopen(url, data, context=get_ssl_context()).read()
 
 def resend_payload(hit):
   print("Resending ",hit)
@@ -76,7 +77,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
   try:
     request = Request(url, payload, header)
     if method: request.get_method = lambda: method
-    content = urlopen(request)
+    content = urlopen(request, context=get_ssl_context())
   except Exception as e:
     print("ERROR:",url,str(e))
     print(payload)

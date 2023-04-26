@@ -30,8 +30,11 @@ crab submit -c $(dirname $0)/task.py
 mv crab_${CRAB_REQUEST} ${WORKSPACE}/crab
 echo "INPROGRESS" > $WORKSPACE/crab/statusfile
 
+cat $WORKSPACE/crab/.requestcache 
 export ID=$(id -u)
 export TASK_ID=$(grep crab_${CRAB_REQUEST} $WORKSPACE/crab/.requestcache | sed 's|^V||')
+
+if [ "${TASK_ID}" = "" ] ; then exit 1 ; fi
 
 echo "Keep checking job information until grid site has been assigned"
 GRIDSITE=""

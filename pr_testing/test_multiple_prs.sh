@@ -1224,7 +1224,7 @@ if [ "X$DO_ADDON_TESTS" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-addon.prop
 fi
 
-if [ "X$DO_GPU_TESTS_TESTS" = Xtrue ]; then
+if [ "X$DO_GPU_TESTS" = Xtrue ]; then
   cp $WORKSPACE/test-env.txt $WORKSPACE/run-unittests.prop
 fi
 

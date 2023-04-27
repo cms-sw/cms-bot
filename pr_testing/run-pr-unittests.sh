@@ -1,9 +1,9 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
 
-echo 'UNIT_TEST_RESULTS;NOTRUN' > ${RESULTS_DIR}/unittest.txt
+echo 'UNIT_TEST_RESULTS;NOTRUN' > ${RESULTS_DIR}/unittestGPU.txt
 if [ "X$DO_TESTS" = Xtrue ]; then
-  rm -f ${RESULTS_DIR}/unittest.txt
+  rm -f ${RESULTS_DIR}/unittestGPU.txt
   mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Running tests" || true
   echo '--------------------------------------'
   mkdir -p $WORKSPACE/gpuUnitTests
@@ -31,13 +31,13 @@ if [ "X$DO_TESTS" = Xtrue ]; then
 
   if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
     echo "Errors in the gpu unit tests"
-    echo 'UNIT_TEST_RESULTS;ERROR,Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittest.txt
+    echo 'UNIT_TEST_RESULTS;ERROR,Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittestGPU.txt
     ALL_OK=false
     UNIT_TESTS_OK=false
-    $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL -f $WORKSPACE/gpuUnitTests/log.txt --report-file ${RESULTS_DIR}/14-report.res ${REPORT_OPTS}
+    $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL -f $WORKSPACE/gpuUnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittestGPU-report.res ${REPORT_OPTS}
     echo "UnitTests" > ${RESULTS_DIR}/14-failed.res
   else
-    echo 'UNIT_TEST_RESULTS;OK,Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittest.txt
+    echo 'GPU_UNIT_TEST_RESULTS;OK,GPU Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittestGPU.txt
   fi
   echo "<html><head></head><body>" > $WORKSPACE/gpuUnitTests/success.html
   cp $WORKSPACE/gpuUnitTests/success.html $WORKSPACE/gpuUnitTests/failed.html

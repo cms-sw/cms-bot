@@ -128,6 +128,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
         export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
       fi
       mkdir -p $SINGULARITY_CACHEDIR
+      export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
     fi
     EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS}"
     if [ "${CHECK_NVIDIA}" != "false" -a -e "/proc/driver/nvidia/version" ] ; then
@@ -150,7 +151,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     if which apptainer >/dev/null 2>&1 ; then
       CONTAINER_CMD="apptainer"
       BINDPATH_ENV="APPTAINER_BINDPATH"
-      export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
     fi
     export ${BINDPATH_ENV}="$(echo ${BINDPATH},${ws} | sed 's|^,||')"
     ERR=0

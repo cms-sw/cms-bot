@@ -1076,7 +1076,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   fi
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^GPU$' | wc -l) -gt 0 ] ; then
     DO_GPU_TESTS=true
-    mark_commit_status_all_prs 'gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    mark_commit_status_all_prs 'unittest/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
 else
   DO_TESTS=false

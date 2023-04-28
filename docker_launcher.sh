@@ -154,7 +154,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     fi
     export ${BINDPATH_ENV}="$(echo ${BINDPATH},${ws} | sed 's|^,||')"
     ERR=0
-    precmd="export ORIGINAL_${BINDPATH_ENV}=\${$BINDPATH_ENV}; export ${BINDPATH_ENV}=''; "
+    precmd="export ORIGINAL_${BINDPATH_ENV}=\${$BINDPATH_ENV}; export ${BINDPATH_ENV}=''; export SINGULARITY_BIND=''; export APPTAINER_BIND=''; "
     ENV_PATH="/cvmfs/cms.cern.ch"
     if which scram >/dev/null 2>&1 ; then
       ENV_PATH=$(which scram | sed 's|/common/scram$||')

@@ -41,8 +41,8 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     continue
   fi
   pushd $WORKSPACE/$CMSSW_VERSION/$PROFILING_WORKFLOW
-  ./profile_igpp.sh $CMSSW_VERSION || true
-  ./profile_igmp.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/profile_igpp.sh $CMSSW_VERSION || true
+  $WORKSPACE/profiling/Gen_tool/profile_igmp.sh $CMSSW_VERSION || true
   echo "<li><a href=\"$PROFILING_WORKFLOW/\">$PROFILING_WORKFLOW/</a> </li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   get_jenkins_artifacts igprof/${CMSSW_VERSION}/${SCRAM_ARCH}/profiling/${PROFILING_WORKFLOW}/RES_CPU_step3.txt  ${CMSSW_VERSION}_RES_CPU_step3.txt || true
   $WORKSPACE/profiling/Analyze_tool/compare_cpu_txt.py --old ${CMSSW_VERSION}_RES_CPU_step3.txt --new RES_CPU_step3.txt > RES_CPU_compare_$PROFILING_WORKFLOW.txt || true

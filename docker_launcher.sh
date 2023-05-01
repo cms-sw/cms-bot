@@ -128,12 +128,14 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
         export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
       fi
       mkdir -p $SINGULARITY_CACHEDIR
+      export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
     fi
+    EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS}"
     if [ "${CHECK_NVIDIA}" != "false" -a -e "/proc/driver/nvidia/version" ] ; then
       nvidia-smi || true
       cat /proc/driver/nvidia/version || true
-      if [ $(echo "${SINGULARITY_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
-        SINGULARITY_OPTIONS="${SINGULARITY_OPTIONS} --nv"
+      if [ $(echo "${EX_OPTIONS}" | tr ' ' '\n' | grep '^\-\-nv$' | wc -l) -eq 0 ] ; then
+        EX_OPTIONS="${EX_OPTIONS} --nv"
         rm -rf ~/.nv || true
       fi
     else
@@ -152,7 +154,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     fi
     export ${BINDPATH_ENV}="$(echo ${BINDPATH},${ws} | sed 's|^,||')"
     ERR=0
-    precmd="export ORIGINAL_${BINDPATH_ENV}=\${$BINDPATH_ENV}; export ${BINDPATH_ENV}=''; "
+    precmd="export ORIGINAL_${BINDPATH_ENV}=\${$BINDPATH_ENV}; export ${BINDPATH_ENV}=''; export SINGULARITY_BIND=''; export APPTAINER_BIND=''; "
     ENV_PATH="/cvmfs/cms.cern.ch"
     if which scram >/dev/null 2>&1 ; then
       ENV_PATH=$(which scram | sed 's|/common/scram$||')
@@ -161,11 +163,11 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       precmd="${precmd} source ${ENV_PATH}/cmsset_default.sh ;"
     fi
     if [ $(echo $HOME | grep '^/afs/' | wc -l) -gt 0 ] ; then
-      if [ $(singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c 'echo $HOME' 2>&1 | grep "container creation failed: mount $HOME->" | wc -l) -gt 0 ]  ; then
-        SINGULARITY_OPTIONS="--no-home $SINGULARITY_OPTIONS"
+      if [ $(${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c 'echo $HOME' 2>&1 | grep "container creation failed: mount $HOME->" | wc -l) -gt 0 ]  ; then
+        EX_OPTIONS="--no-home $EX_OPTIONS"
       fi
     fi
-    PATH=$PATH:/usr/sbin singularity -s exec $SINGULARITY_OPTIONS $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
+    PATH=$PATH:/usr/sbin ${CONTAINER_CMD} -s exec ${EX_OPTIONS} $DOCKER_IMGX sh -c "${precmd} $CMD2RUN" || ERR=$?
     if $CLEAN_UP_CACHE ; then rm -rf $SINGULARITY_CACHEDIR ; fi
     exit $ERR
   fi

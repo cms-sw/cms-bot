@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
 
-ALLOWED_PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |g')
+ALLOWED_PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
 
 if [ "X$PROFILING_WORKFLOWS" == "X" ];then
   WORKFLOWS=$ALLOWED_PROFILING_WORKFLOWS

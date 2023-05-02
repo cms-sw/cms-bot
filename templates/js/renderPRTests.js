@@ -124,7 +124,7 @@ getLinkToIB = function( baseIB ){
     var reReleaseInfo = /^(CMSSW_[0-9]+_[0-9]+)_(.*)/;
     var releaseQueue = baseIB.match(reReleaseInfo)[1];
     return IB_PAGE_V2 + releaseQueue + '_X';
-  catch(err){
+  } catch(err){
     return IB_PAGE_V2 + baseIB;
   }
 }

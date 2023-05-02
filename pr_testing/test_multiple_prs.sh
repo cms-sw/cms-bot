@@ -860,6 +860,10 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -enable-checker deprecated -disable-checker cms.FunctionDumper" \
     scram b -k -j ${NCPU2} checker SCRAM_IGNORE_SUBDIRS=test >>$WORKSPACE/llvm-analysis/runStaticChecks.log 2>&1 || true
   cp -R $WORKSPACE/$CMSSW_IB/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
+  if [ $(find $WORKSPACE/$CMSSW_IB -maxdepth 1 -mindepth 1 -name 'clang_other_error_*' -type f | wc -l) -gt 0 ] ;  then
+    mkdir $WORKSPACE/llvm-analysis/failures
+    find $WORKSPACE/$CMSSW_IB -maxdepth 1 -mindepth 1 -name 'clang_other_error_*' -type f | xargs -i mv '{}' $WORKSPACE/llvm-analysis/failures/
+  fi
   if $IS_DEV_BRANCH && [ $(grep ': error: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | wc -l) -gt 0 ] ; then
     echo "EDM_ML_DEBUG_CHECKS;ERROR,Static Check build log,See Log,llvm-analysis/runStaticChecks.log" >> ${RESULTS_DIR}/static.txt
   else

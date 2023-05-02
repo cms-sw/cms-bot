@@ -215,7 +215,7 @@ if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
 CMSSW_IB="$RELEASE_FORMAT"  # We are getting CMSSW_IB, so that we wont rebuild all the software
 [ "$COMPARISON_ARCH" = "" ] && COMPARISON_ARCH=$(cat $CONFIG_MAP | grep "RELEASE_QUEUE=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep 'PROD_ARCH=1' | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
 if [[ $RELEASE_FORMAT != *-* ]]; then
-  if [ "${RELEASE_FORMAT}" != "${CMSSW_QUEUE}" ] ; then
+  if [ $(echo ${RELEASE_FORMAT} | grep _X | wc -l) -gt 0 ] ; then
     CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep '^CMSSW ' | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
   fi
   if [ "$CMSSW_IB" = "" ] ; then

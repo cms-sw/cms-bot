@@ -17,7 +17,11 @@ source $CMS_BOT_DIR/common/github_reports.sh
 CMSSW_BR=""
 CMSDIST_TAG=""
 if [ "${RELEASE_FORMAT}" != "" ] ; then
-  CMSSW_BR="$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|')"
+  if [ $(echo $RELEASE_FORMAT | grep '_X' | wc -l) -gt 0 ] ; then
+    CMSSW_BR="$(echo $RELEASE_FORMAT | sed 's|_X.*|_X|')"
+  else
+    CMSSW_BR="$(echo $RELEASE_FORMAT | cut -d_ -f1-3)_X"
+  fi
   CONFIG_LINE=$($CMS_BOT_DIR/common/get_config_map_line.sh "${CMSSW_BR}" "" "${ARCHITECTURE_FILTER}") || true
 else
   GITHUB_PR_TO_SEARCH=$(echo ${PULL_REQUESTS} | tr ' ' '\n' | grep '/cmssw#' | head -n 1)

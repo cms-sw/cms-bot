@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
+CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 
 rm -f ${RESULTS_DIR}/unittestGPU.txt
 mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Running tests" || true

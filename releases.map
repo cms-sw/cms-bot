@@ -3694,3 +3694,4 @@ architecture=el8_amd64_gcc11;label=CMSSW_13_0_3_patch1;type=Production;state=Ann
 architecture=el9_aarch64_gcc11;label=CMSSW_13_1_0_pre4;type=Development;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc11;label=CMSSW_13_1_0_pre4;type=Development;state=Announced;prodarch=0;
 architecture=el8_ppc64le_gcc11;label=CMSSW_13_1_0_pre4;type=Development;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc11;label=CMSSW_13_1_0_pre4;type=Development;state=Announced;prodarch=1;

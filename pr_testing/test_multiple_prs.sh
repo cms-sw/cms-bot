@@ -10,7 +10,7 @@ function order_workflow_list(){
 }
 
 function get_pr_baseline_worklflow() {
-  order_workflow_list $(grep "^PR_TEST_MATRIX_EXTRAS${1}=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||'),${2}
+  order_workflow_list $($CMS_BOT_DIR/cmssw-pr-test-config $1),${2}
 }
 
 function get_pr_relval_args() {
@@ -215,7 +215,9 @@ if [ "X$DEV_BRANCH" = "X$COMP_QUEUE" ] ; then IS_DEV_BRANCH=true ; fi
 CMSSW_IB="$RELEASE_FORMAT"  # We are getting CMSSW_IB, so that we wont rebuild all the software
 [ "$COMPARISON_ARCH" = "" ] && COMPARISON_ARCH=$(cat $CONFIG_MAP | grep "RELEASE_QUEUE=$COMP_QUEUE;" | grep -v "DISABLED=1" | grep 'PROD_ARCH=1' | sed 's|^.*SCRAM_ARCH=||;s|;.*$||')
 if [[ $RELEASE_FORMAT != *-* ]]; then
-  CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep '^CMSSW ' | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
+  if [ $(echo ${RELEASE_FORMAT} | grep _X | wc -l) -gt 0 ] ; then
+    CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $RELEASE_FORMAT | grep '^CMSSW ' | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
+  fi
   if [ "$CMSSW_IB" = "" ] ; then
     CMSSW_IB=$(scram -a $SCRAM_ARCH l -c $CMSSW_QUEUE  | grep '^CMSSW ' | grep -v -f "$CMS_BOT_DIR/ignore-releases-for-tests" | awk '{print $2}' | sort -r | head -1)
     if [ "$CMSSW_IB" = "" ] ; then
@@ -858,6 +860,10 @@ if [ "X$DO_STATIC_CHECKS" = "Xtrue" -a "X$CMSSW_PR" != X -a "$RUN_TESTS" = "true
   USER_CXXFLAGS='-Wno-register -DEDM_ML_DEBUG -w' SCRAM_IGNORE_PACKAGES="Fireworks/% Utilities/StaticAnalyzers" USER_LLVM_CHECKERS="-enable-checker threadsafety -enable-checker cms -enable-checker deprecated -disable-checker cms.FunctionDumper" \
     scram b -k -j ${NCPU2} checker SCRAM_IGNORE_SUBDIRS=test >>$WORKSPACE/llvm-analysis/runStaticChecks.log 2>&1 || true
   cp -R $WORKSPACE/$CMSSW_IB/llvm-analysis/*/* $WORKSPACE/llvm-analysis || true
+  if [ $(find $WORKSPACE/$CMSSW_IB -maxdepth 1 -mindepth 1 -name 'clang_other_error_*' -type f | wc -l) -gt 0 ] ;  then
+    mkdir $WORKSPACE/llvm-analysis/failures
+    find $WORKSPACE/$CMSSW_IB -maxdepth 1 -mindepth 1 -name 'clang_other_error_*' -type f | xargs -i mv '{}' $WORKSPACE/llvm-analysis/failures/
+  fi
   if $IS_DEV_BRANCH && [ $(grep ': error: ' $WORKSPACE/llvm-analysis/runStaticChecks.log | wc -l) -gt 0 ] ; then
     echo "EDM_ML_DEBUG_CHECKS;ERROR,Static Check build log,See Log,llvm-analysis/runStaticChecks.log" >> ${RESULTS_DIR}/static.txt
   else
@@ -1067,7 +1073,7 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^PROFILING$' | wc -l) -gt 0 ] ; then
     if $PRODUCTION_RELEASE ; then
       DO_PROFILING=true
-      PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |g')
+      PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
       for wf in $PROFILING_WORKFLOWS;do
         mark_commit_status_all_prs "profiling wf $wf" 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
       done
@@ -1226,7 +1232,7 @@ if ${BUILD_EXTERNAL} ; then
 fi
 
 if [ "${DO_PROFILING}" = "true" ]  ; then
-  PROFILING_WORKFLOWS=$(grep "PR_TEST_MATRIX_EXTRAS_PROFILING=" $CMS_BOT_DIR/cmssw-pr-test-config | sed 's|.*=||;s|,| |g')
+  PROFILING_WORKFLOWS=$($CMS_BOT_DIR/cmssw-pr-test-config _PROFILING | tr ',' ' ')
   for wf in ${PROFILING_WORKFLOWS};do
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-profiling-$wf.prop
     echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop

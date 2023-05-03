@@ -453,7 +453,7 @@ class ReleaseTester(object):
     # noinspection PyUnusedLocal
     def runDuplicateDictCheck(self, deps=None):
         print("runDuplicateDictTests> Going to run duplicateReflexLibrarySearch.py ... ")
-        script = 'duplicateReflexLibrarySearch.py'
+        script = 'export USER_SCRAM_TARGET=default ; eval $(scram run -sh) ; duplicateReflexLibrarySearch.py'
         for opt in ['dup', 'lostDefs', 'edmPD']:
             cmd = script + ' --' + opt + ' 2>&1 >dupDict-' + opt + '.log'
             try:

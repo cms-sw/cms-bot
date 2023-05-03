@@ -120,9 +120,13 @@ getLinkToPR = function( pr ){
 
 // point to new version
 getLinkToIB = function( baseIB ){
-  var reReleaseInfo = /^([a-zA-Z]+_[0-9]+_[0-9])+_(.*)_(\d{4}-\d{2}-\d{2}-\d{4})/;
-  var releaseQueue = baseIB.match(reReleaseInfo)[1];
-  return IB_PAGE_V2 + releaseQueue + '_X';
+  try {
+    var reReleaseInfo = /^(CMSSW_[0-9]+_[0-9]+)_(.*)/;
+    var releaseQueue = baseIB.match(reReleaseInfo)[1];
+    return IB_PAGE_V2 + releaseQueue + '_X';
+  } catch(err){
+    return IB_PAGE_V2 + baseIB;
+  }
 }
 
 /**

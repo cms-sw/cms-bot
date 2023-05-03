@@ -18,7 +18,10 @@ function mark_commit_status_pr () {
 function mark_commit_status_all_prs () {
     if [ "${COMMIT_STATUS_CONTEXT}" = "" ] ; then 
       CONTEXT="${ARCHITECTURE}"
-      CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
+      CMSSW_FLAVOR="X"
+      if [ $(echo $CMSSW_QUEUE | grep '_X' | wc -l) -gt 0 ] ; then
+        CMSSW_FLAVOR=$(echo $CMSSW_QUEUE | cut -d_ -f4)
+      fi
       if [ "${CMSSW_FLAVOR}" != "X" ] ; then CONTEXT="${CMSSW_FLAVOR}/${CONTEXT}" ; fi
       if [ "$1" != "" ] ; then CONTEXT="${CONTEXT}/$1" ; fi
     else

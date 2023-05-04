@@ -114,6 +114,9 @@ class UnitTester(IBThreadBase):
             print('unitTest> Skipping unit tests for MacOS')
             return
         precmd=""
+        paralleJobs = MachineCPUCount
+        if ('_ASAN_X' in os.environ["CMSSW_VERSION"]) or ('_UBSAN_X' in os.environ["CMSSW_VERSION"]):
+          paralleJobs = int(MachineCPUCount/2)
         if (self.xType == 'GPU') or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
             precmd="export USER_UNIT_TESTS=cuda ;"
         skiptests = ""
@@ -127,7 +130,7 @@ class UnitTester(IBThreadBase):
         try:
             cmd = precmd+"cd " + self.startDir + r"; touch nodelete.root nodelete.txt nodelete.log;  sed -i -e 's|testing.log; *$(CMD_rm)  *-f  *$($(1)_objdir)/testing.log;|testing.log;|;s|test $(1) had ERRORS\") *\&\&|test $(1) had ERRORS\" >> $($(1)_objdir)/testing.log) \&\&|' config/SCRAM/GMake/Makefile.rules; "
             cmd += 'PATH=' + TEST_PATH + ':$PATH scram b -f -k -j ' + str(
-                MachineCPUCount) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
+                paralleJobs) + ' unittests ' + skiptests + ' >unitTests1.log 2>&1 ; '
             cmd += 'touch nodelete.done; ls -l nodelete.*'
             print('unitTest> Going to run ' + cmd)
             ret = runCmd(cmd)

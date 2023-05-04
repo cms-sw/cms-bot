@@ -1,4 +1,9 @@
 #!/bin/bash
+#This is a utility script which can go through your uncommited cmssw changes and separate them
+#for each category. After running this script you will have cmssw/src-category directory which
+#should only contain changes for that category. If a package belong to multiple cmssw categories
+# your you will have src-catA-catB directory.
+# use cmssw-push-branches.sh to push your change to my-cmssw repository for Opening PRs
 
 function usage_and_exit(){
   echo "Usage: $0 '<commit-msg>' '<branch-suffix>'\n"

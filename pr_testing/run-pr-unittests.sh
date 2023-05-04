@@ -13,16 +13,10 @@ scram build echo_LD_LIBRARY_PATH || true
 cms_major=$(echo ${CMSSW_IB} | cut -d_ -f2)
 cms_minor=$(echo ${CMSSW_IB} | cut -d_ -f3)
 cms_ver="$(echo 00${cms_major} | sed -E 's|^.*(..)$|\1|')$(echo 00${cms_minor} | sed -E 's|^.*(..)$|\1|')"
-if [ $cms_ver -ge 1301 ] ; then
-  find $CMSSW_BASE/src -type d | grep -v '/__pycache__/*' | xargs chmod -w
-fi
 echo $UTESTS_CMD > $WORKSPACE/gpuUnitTests/log.txt
 (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/gpuUnitTests/log.txt 2>&1 || true
 echo 'END OF UNIT TESTS'
 echo '--------------------------------------'
-if [ $cms_ver -ge 1301 ] ; then
-  find $CMSSW_BASE/src -type d | xargs chmod +w
-fi
 
 TEST_ERRORS=$(grep -ai 'had errors\|recipe for target' $WORKSPACE/gpuUnitTests/log.txt | sed "s|'||g;s|.*recipe for target *||;s|.*unittests_|---> test |;s| failed$| timeout|" || true)
 TEST_ERRORS=`grep -ai "had errors" $WORKSPACE/gpuUnitTests/log.txt` || true

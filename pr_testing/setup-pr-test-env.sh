@@ -60,9 +60,12 @@ if [ "${CMSSW_CVMFS_PATH}" != "" ] ; then
   mkdir -p $WORKSPACE/${CMSSW_VERSION}
   if [ -f ${CMSSW_CVMFS_PATH}/ibeos_cache.txt ] ; then ln -s ${CMSSW_CVMFS_PATH}/ibeos_cache.txt $WORKSPACE/${CMSSW_VERSION}/ibeos_cache.txt ; fi
   ln -s ${CMSSW_CVMFS_PATH}/src $WORKSPACE/${CMSSW_VERSION}/src
+  cp -r ${CMSSW_CVMFS_PATH}/.SCRAM $WORKSPACE/${CMSSW_VERSION}/.SCRAM
+  cp -r ${CMSSW_CVMFS_PATH}/config $WORKSPACE/${CMSSW_VERSION}/config
 else
   pushd $WORKSPACE/$CMSSW_IB
     eval `scram run -sh` >/dev/null 2>&1
+    scram b ProjectRename
   popd
 fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH

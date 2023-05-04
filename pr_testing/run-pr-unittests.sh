@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 source $(dirname $0)/setup-pr-test-env.sh
+cd $WORKSPACE/${CMSSW_VERSION}
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
 
 rm -f ${RESULTS_DIR}/unittestGPU.txt
@@ -15,6 +16,7 @@ cms_minor=$(echo ${CMSSW_IB} | cut -d_ -f3)
 cms_ver="$(echo 00${cms_major} | sed -E 's|^.*(..)$|\1|')$(echo 00${cms_minor} | sed -E 's|^.*(..)$|\1|')"
 echo $UTESTS_CMD > $WORKSPACE/gpuUnitTests/log.txt
 (eval $UTESTS_CMD && echo 'ALL_OK') > $WORKSPACE/gpuUnitTests/log.txt 2>&1 || true
+exit 1
 echo 'END OF UNIT TESTS'
 echo '--------------------------------------'
 

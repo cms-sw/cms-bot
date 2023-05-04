@@ -1466,7 +1466,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_VALGRIND = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/valgrind/RELEASE_NAME'
     MAGIC_COMMAND_FIND_IGPROF = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME'
     MAGIC_COMMAND_FIND_PROFILING = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME'
-    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = 'test -s '+JENKINS_ARTIFACTS_DIR+'/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json && (ls '+JENKINS_ARTIFACTS_DIR+'/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json | sed "s|.*/RELEASE_NAME/||;s|.json$||")`
+    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = 'test -s '+JENKINS_ARTIFACTS_DIR+'/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json && (ls '+JENKINS_ARTIFACTS_DIR+'/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json | sed "s|.*/RELEASE_NAME/||;s|.json$||")'
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt && echo ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt'
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'

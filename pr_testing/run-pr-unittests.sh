@@ -1,4 +1,8 @@
 #!/bin/bash -ex
+cd $WORKSPACE
+$CMSSW_CVMFS_PATH/../install.sh
+export CMSSW_CVMFS_PATH=""
+
 source $(dirname $0)/setup-pr-test-env.sh
 cd $WORKSPACE/${CMSSW_VERSION}
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)

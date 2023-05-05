@@ -2,7 +2,7 @@
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from categories_map import CMSSW_CATEGORIES
+from categories_map import CMSSW_CATEGORIES, CMSSW_LABELS
 from repo_config import CMSBUILD_USER
 from releases import SPECIAL_RELEASE_MANAGERS
 
@@ -43,13 +43,13 @@ CMSSW_L2 = {
   "civanch":          ["simulation", "geometry", "fastsim"],
   "bsunanda":         ["geometry"],
   "davidlange6":      ["operations"],
+  "emanueleusai":     ["dqm"],
   "emeschi":          ["daq"],
   "vlimant":          ["xpog"],
   "swertz":           ["xpog"],
+  "simonepigazzini":  ["xpog"],
   "fwyzard":          ["heterogeneous"],
-  "ggovi":            ["db"],
   "GurpreetSinghChahal":  ["generators"],
-  "ianna":            ["geometry"],
   "cecilecaillol":    ["l1"],
   "clacaputo":        ["reconstruction"],
   "kskovpen":         ["pdmv"],
@@ -62,8 +62,14 @@ CMSSW_L2 = {
   "menglu21":         ["generators"],
   "perrotta":         ["operations"],
   "rappoccio":        ["operations"],
+  "pmandrik":         ["dqm"],
+  "micsucmed":        ["dqm"],
   "epalencia":        ["l1"],
-  "rekovic":          ["l1"],
+  "aloeliger":        ["l1"],
+  "rvenditti":        ["dqm"],
+  "syuvivida":        ["dqm"],
+  "tjavaid":	      ["dqm"],
+  "nothingface0":     ["dqm"],
   "Saptaparna":       ["generators"],
   "sbein":            ["fastsim"],
   "SiewYan":          ["generators"], 
@@ -71,27 +77,14 @@ CMSSW_L2 = {
   "smuzaffar":        ["core"],
   "srimanob":         ["upgrade"],
   "ssekmen":          ["fastsim"],
-  "ahmad3213":        ["dqm"],
-  "emanueleusai":     ["dqm"],
-  "jfernan2":         ["dqm"],
-  "micsucmed":        ["dqm"],
-  "nothingface0":     ["dqm"],
-  "pmandrik":         ["dqm"],
-  "rvenditti":        ["dqm"],
-  "syuvivida":        ["dqm"],
-  "tjavaid":	      ["dqm"],
-  "yuanchao":         ["alca"],
-  "ChrisMisan":       ["alca"],
   "francescobrivio":  ["alca","db"],
-  "malbouis":         ["alca","db"],
   "tvami":            ["alca","db"],
   "saumyaphor4252":   ["alca","db"],
   CMSBUILD_USER:      ["tests" ],
   # dpgs
   "connorpa":         ["trk-dpg"],
   "sroychow":         ["trk-dpg"],
-  "simonepigazzini":  ["ecal-dpg"],
-  "jainshilpi":       ["ecal-dpg"],
+  "wang0jin":         ["ecal-dpg"],
   "thomreis":         ["ecal-dpg"],
   "georgia14":        ["hcal-dpg"],
   "wang-hui":         ["hcal-dpg"],
@@ -119,7 +112,7 @@ CMSSW_L2 = {
   # pogs
   "juska":            ["pf"],
   "kdlong":           ["pf"],
-  "lfinco":           ["egamma-pog"],
+  "a-kapoor":         ["egamma-pog"],
   "swagata87":        ["egamma-pog"],
   "kirschen":         ["jetmet-pog"],
   "miquork":          ["jetmet-pog"],
@@ -163,7 +156,7 @@ def external_to_package(repo_fullname):
   return ''
 
 def get_dpg_pog():
-  groups = []
+  groups = ['pf', 'l1t', 'castor']
   for user in CMSSW_L2:
     for cat in CMSSW_L2[user]:
       if '-' not in cat: continue

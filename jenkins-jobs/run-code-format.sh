@@ -7,6 +7,7 @@ EXTRA_PRS="$3"
 CLANG_TIDY="$4"
 CLANG_FORMAT="$5"
 TEST_CHANGES="$6"
+CMSSW_QUEUE="$7"
 [ "${CLANG_TIDY}"   != "true" ] && CLANG_TIDY=false
 [ "${CLANG_FORMAT}" != "true" ] && CLANG_FORMAT=false
 [ "${TEST_CHANGES}" != "true" ] && TEST_CHANGES=false
@@ -22,6 +23,7 @@ if [ "${INSTALL_SCRIPT}" != "" ] ; then
 else
   eval $(grep 'RELEASE_BRANCH=master;' cms-bot/config.map | grep PROD_ARCH=1 )
   export SCRAM_ARCH
+  [ "${CMSSW_QUEUE}" = "" ] || RELEASE_QUEUE="${CMSSW_QUEUE}"
   CMSSW_PROJECT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | tr -s ' ' |  cut -d ' '   -f2 | tail -n 1)
   scram -a ${SCRAM_ARCH} project ${CMSSW_PROJECT}
   cd $CMSSW_PROJECT

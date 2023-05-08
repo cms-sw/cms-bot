@@ -14,9 +14,10 @@ mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Runni
 echo '--------------------------------------'
 mkdir -p $WORKSPACE/gpuUnitTests
 let UT_TIMEOUT=7200+${CMSSW_PKG_COUNT}*20
-UTESTS_CMD="USER_UNIT_TESTS=cuda timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  runtests "
+UTESTS_CMD="USER_UNIT_TESTS=cuda timeout ${UT_TIMEOUT} scram b -v -k -j ${NCPU}  unittests "
 echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
 scram build echo_LD_LIBRARY_PATH || true
+scram build -r echo_CXX || true
 cms_major=$(echo ${CMSSW_IB} | cut -d_ -f2)
 cms_minor=$(echo ${CMSSW_IB} | cut -d_ -f3)
 cms_ver="$(echo 00${cms_major} | sed -E 's|^.*(..)$|\1|')$(echo 00${cms_minor} | sed -E 's|^.*(..)$|\1|')"

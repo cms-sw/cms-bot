@@ -34,7 +34,7 @@ if [ "X$TEST_ERRORS" != "X" -o "X$GENERAL_ERRORS" = "X" ]; then
   echo 'GPU_UNIT_TEST_RESULTS;ERROR,Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittestGPU.txt
   ALL_OK=false
   UNIT_TESTS_OK=false
-  $CMS_BOT_DIR/report-pull-request-results PARSE_UNIT_TESTS_FAIL -f $WORKSPACE/gpuUnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittestGPU-report.res ${REPORT_OPTS}
+  $CMS_BOT_DIR/report-pull-request-results PARSE_GPU_UNIT_TESTS_FAIL -f $WORKSPACE/gpuUnitTests/log.txt --report-file ${RESULTS_DIR}/14-unittestGPU-report.res ${REPORT_OPTS}
   echo "UnitTests" > ${RESULTS_DIR}/14-failed.res
 else
   echo 'GPU_UNIT_TEST_RESULTS;OK,GPU Unit Tests,See Log,gpuUnitTests' >> ${RESULTS_DIR}/unittestGPU.txt

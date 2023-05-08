@@ -57,7 +57,7 @@ echo "</body></html>" >> $WORKSPACE/gpuUnitTests/success.html
 echo "</body></html>" >> $WORKSPACE/gpuUnitTests/failed.html
 prepare_upload_results
 if $UNIT_TESTS_OK ; then
-  mark_commit_status_all_prs 'unittest/gpu' 'success' -u "${BUILD_URL}" -d "Passed"
+  mark_commit_status_all_prs 'unittests/gpu' 'success' -u "${BUILD_URL}" -d "Passed"
 else
-  mark_commit_status_all_prs 'unittest/gpu' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed."
+  mark_commit_status_all_prs 'unittests/gpu' 'error' -u "${BUILD_URL}" -d "Some unit tests were failed."
 fi

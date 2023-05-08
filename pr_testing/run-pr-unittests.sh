@@ -1,10 +1,9 @@
 #!/bin/bash -ex
 cd $WORKSPACE
 $CMSSW_CVMFS_PATH/../install.sh
-export CMSSW_CVMFS_PATH=""
-
 export CMSSW_IB=$(basename $CMSSW_CVMFS_PATH)
 export CMSSW_VERSION=${CMSSW_IB}
+export CMSSW_CVMFS_PATH=""
 
 source $(dirname $0)/setup-pr-test-env.sh
 cd $WORKSPACE/${CMSSW_VERSION}

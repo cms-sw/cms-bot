@@ -8,6 +8,7 @@ export CMSSW_CVMFS_PATH=""
 source $(dirname $0)/setup-pr-test-env.sh
 cd $WORKSPACE/${CMSSW_VERSION}
 CMSSW_PKG_COUNT=$(ls -d $LOCALRT/src/*/* | wc -l)
+REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
 
 rm -f ${RESULTS_DIR}/unittestGPU.txt
 mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Running tests" || true

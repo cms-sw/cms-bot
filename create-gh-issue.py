@@ -37,7 +37,7 @@ if not e:
   try: issue = gh_repo.get_issue(int(o))
   except: pass
 if issue:
-  print("Updaing comment")
+  print("Updating comment")
   issue.create_comment(msg)
 else:
   print("Creating issue request")

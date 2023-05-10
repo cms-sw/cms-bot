@@ -52,6 +52,9 @@ if __name__ == "__main__":
         "-H", "--hour", dest="hour", action="store", help="CMSSW IB hour (HH)"
     )
     parser.add_option(
+        "-M", "--minute", dest="minute", action="store", help="CMSSW IB minute (MM)", default="00"
+    )
+    parser.add_option(
         "-b", "--branch", dest="branch", action="store", help="CMSSW branch"
     )
     parser.add_option(
@@ -61,7 +64,7 @@ if __name__ == "__main__":
 
     RELEASE_NAME = opts.release_name  # "CMSSW_13_0_X_2023-02-02-1100"
     ib_date = datetime.datetime.strptime(
-        "%s %s:00" % (opts.date, opts.hour), "%Y-%m-%d %H:%M"
+        "%s %s:%s" % (opts.date, opts.hour, opts.minute), "%Y-%m-%d %H:%M"
     )
 
     RELEASE_BRANCH = opts.branch  # "master"

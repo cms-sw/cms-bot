@@ -68,6 +68,8 @@ CMSSW_L2 = {
   "aloeliger":        ["l1"],
   "rvenditti":        ["dqm"],
   "syuvivida":        ["dqm"],
+  "tjavaid":	      ["dqm"],
+  "nothingface0":     ["dqm"],
   "Saptaparna":       ["generators"],
   "sbein":            ["fastsim"],
   "SiewYan":          ["generators"], 

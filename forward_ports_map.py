@@ -12,11 +12,6 @@ GIT_REPO_FWPORTS["cms-sw.github.io"] = {
     "code": ["master"]
 }
 
-#Added explicitly by smuzaffar
-GIT_REPO_FWPORTS["pkgtools"] = {
-    "V00-33-XX": ["V00-34-XX"]
-}
-
 #Forward port master branch to latest dev branch
 #Master branch is always forward ported to one branch.
 GIT_REPO_FWPORTS["cmssw"]["master"]=[CMSSW_DEVEL_BRANCH]

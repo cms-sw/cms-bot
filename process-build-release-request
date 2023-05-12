@@ -2,7 +2,7 @@
 from __future__ import print_function
 import json
 import re
-from _py2with3compatibility import run_cmd, quote, Request, urlopen
+from _py2with3compatibility import run_cmd, quote, Request, urlopen, HTTPError
 from datetime import datetime, timedelta
 from optparse import OptionParser
 from os.path import dirname, abspath, exists
@@ -20,6 +20,7 @@ from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
 from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
 from cmsutils import get_config_map_properties, get_full_release_archs
 from github_utils import api_rate_limits, get_ref_commit, get_commit_info
+from github_utils import get_branch
 from releases import get_release_managers
 
 setdefaulttimeout(120)
@@ -768,7 +769,7 @@ def guess_prev_rel_name( release_name, issue ):
         exit (0)
       return re.sub("_"+num_str+"$","",release_name)
     return re.sub("_"+num_str+"$","_"+prev_num_str,release_name)
-  rel_match = re.sub("_"+num_str+"$","_"+prev_num_str,release_name)+"\(_patch[0-9][0-9]*\|\);"
+  rel_match = re.sub("_"+num_str+"$","_"+prev_num_str,release_name)+"\(_[a-zA-Z]*patch[0-9][0-9]*\|\);"
   if number == 0:
     rel_match = release_name + "_pre\([0-9][0-9]*\);"
   ret, out = run_cmd("grep 'label="+ rel_match +"' "+ CMS_BOT_DIR+"/releases.map" + " | grep -v 'label=" + release_name + ";' | tail -1 | sed 's|.*label=||;s|;.*||'")
@@ -797,7 +798,8 @@ if __name__ == "__main__":
   issue_id  = int( args[ 0 ] )
   gh = Github( login_or_token=GH_TOKEN )
   api_rate_limits(gh)
-  cmssw_repo = gh.get_repo( GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO )
+  cmssw_repo_name = GH_CMSSW_ORGANIZATION + '/' + GH_CMSSW_REPO
+  cmssw_repo = gh.get_repo( cmssw_repo_name )
   issue = cmssw_repo.get_issue( issue_id )
   print('API Rate Limit')
   print('Limit, Remaining: ', gh.rate_limiting)
@@ -819,6 +821,7 @@ if __name__ == "__main__":
 
   release_name = title_match.group(1)
   is_patch = 'patch' in release_name
+  full_release = release_name.split("patch")[0].rsplit('_',1)[0] if is_patch else ""
   # Get the release queue from the release name.
   print(release_name)
   issue_body = ""
@@ -870,7 +873,6 @@ if __name__ == "__main__":
     architectures = [ a for a in architectures if a in sel_archs ]
 
   if is_patch:
-    full_release = release_name.split("_patch")[0]
     full_release_archs = get_full_release_archs(full_release)
     print("Full release archs:",full_release, full_release_archs)
     if not full_release_archs:
@@ -941,14 +943,18 @@ if __name__ == "__main__":
   # if you want to create CMSSW_7_1_4_patch2 and there exists a branch called CMSSW_7_1_4_patchX the tag will be 
   # on top of the branch CMSSW_7_1_4_patchX instead of CMSSW_7_1_X.
  
-  patch_reg_exp = '.*_[a-zA-Z]*patch[0-9]+$'
-  if re.match( patch_reg_exp, release_name ):
-    possible_branch = re.sub( '[0-9]+$', 'X', release_name )
-    if possible_branch in [b.name for b in cmssw_repo.get_branches()]:
-      print('This is a patch release and the branch %s was found. It will be used as base branch.' % possible_branch)
-      release_branch = possible_branch
-    
+  if is_patch:
+    try:
+      possible_branch = full_release + "_patchX"
+      if get_branch(cmssw_repo_name, possible_branch)['name'] == possible_branch:
+        release_branch = possible_branch
+        print('This is a patch release and the branch %s was found. It will be used as base branch.' % possible_branch)
+    except HTTPError as e:
+      print(e)
+      if e.code != 404:
+        exit(1)
 
+  print(release_branch)
   for rm in get_release_managers(release_branch):
     if not rm in APPROVE_BUILD_RELEASE: APPROVE_BUILD_RELEASE.append(rm)
     if not rm in REQUEST_BUILD_RELEASE: REQUEST_BUILD_RELEASE.append(rm)
@@ -1020,8 +1026,6 @@ if __name__ == "__main__":
   if status == PENDING_APPROVAL:
     approval_comments = search_in_comments( comments, APPROVE_BUILD_RELEASE , APPROVAL_COMMENT, True )
     build_toolconf_commments = search_in_comments( comments, APPROVE_BUILD_RELEASE , BUILD_TOOLCONF, True )
-    is_patch = 'patch' in release_name
-    
     if build_toolconf_commments:
       if is_patch:
         post_message( issue, NOT_TOOLCONF_FOR_PATCH_MSG )

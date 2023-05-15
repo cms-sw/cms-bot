@@ -65,10 +65,7 @@ def check_ib(data):
     queue = data["release_queue"]
     for arch in data["tests_archs"]:
         # print(f"\tFound arch {arch}")
-        log[arch] = [
-            "| What failed | Description | Issue |",
-            "| ----------- | ----------- | ----- |",
-        ]
+        log[arch] = []
 
     print("== Compilation results ==")
     for bld in data["builds"]:
@@ -162,13 +159,20 @@ def check_ib(data):
 
     print("=" * 80)
 
-    os.mkdir("out")
+    os.makedirs("out", exist_ok=True)
     with open(f"out/{data['release_name']}_{ib_date}.md", "w") as f:
         print(f"## {data['release_name']}\n", file=f)
         print("-- INSERT SCREENSHOT HERE --\n", file=f)
         for arch, lines in log.items():
             print(f"### {arch}\n", file=f)
-            print("\n".join(lines), file=f)
+            if lines:
+                lines = [
+                    "| What failed | Description | Issue |",
+                    "| ----------- | ----------- | ----- |",
+                ] + lines
+                print("\n".join(lines), file=f)
+            else:
+                print('<span style="color:green">No issues</span>', file=f)
             print("", file=f)
 
 

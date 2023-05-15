@@ -9,10 +9,17 @@ import urllib.error
 import urllib.request
 from enum import Enum
 from typing import Any
+import sys
 
 # ErrorInfo class is used during unpickling
 # noinspection PyUnresolvedReferences
 from showBuildLogs import PackageInfo, ErrorInfo
+
+if sys.version_info.major < 3 or (
+    sys.version_info.major == 3 and sys.version_info.minor < 10
+):
+    print("This script requires Python 3.10 or newer!", file=sys.stderr)
+    exit(0)
 
 date_rex = re.compile(r"\d{4}-\d{2}-\d{2}-\d{2}00")
 url_root = "https://cmssdt.cern.ch/"

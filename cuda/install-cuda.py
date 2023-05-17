@@ -641,6 +641,11 @@ def main():
             # Move the contents of the package to the installation directory
             install_package(component, archive_dir, install_dir, rules)
 
+        # copy json file for future use
+        cms_conf_dir = os.path.join(install_dir, ".cms")
+        os.makedirs(cms_conf_dir)
+        shutil.copy(catalog, cms_conf_dir)
+
         # Clean up the temporary directory
         shutil.rmtree(temp_dir)
 

@@ -643,7 +643,7 @@ def main():
 
         # copy json file for future use
         cms_conf_dir = os.path.join(install_dir, ".cms")
-        os.makedirs(cms_conf_dir)
+        os.makedirs(cms_conf_dir, exist_ok=True)
         shutil.copy(catalog, cms_conf_dir)
 
         # Clean up the temporary directory

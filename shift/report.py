@@ -6,6 +6,7 @@ import urllib
 import urllib.error
 
 import libib
+from libib import PackageInfo, ErrorInfo
 
 if sys.version_info.major < 3 or (
     sys.version_info.major == 3 and sys.version_info.minor < 6
@@ -69,19 +70,19 @@ def main():
     for ib_date in ib_dates:
         for flav, comp in libib.get_flavors(ib_date, default_release).items():
             release_name, errors = libib.check_ib(comp)
-            with open(f"out/{release_name}_{ib_date}.md", "w") as f:
+            with open(f"out/{release_name}.md", "w") as f:
                 print(f"## {release_name}\n", file=f)
                 print("-- INSERT SCREENSHOT HERE --\n", file=f)
                 for arch in errors:
                     print(f"### {arch}\n", file=f)
-                    if any(errors[arch].items()):
+                    if any((errors[arch]["build"], errors[arch]["utest"], errors[arch]["relval"])):
                         print("| What failed | Description | Issue |", file=f)
                         print("| ----------- | ----------- | ----- |", file=f)
                         for error in errors[arch]["build"]:
-                            # type error: libib.LogEntry
-                            print(
-                                f"| [{error.name}]({error.url}) | {error.data[1]}x "
-                                f"{error.data[0]} | TDB |",
+                            for error_data in error.data:
+                              print(
+                                  f"| [{error.name}]({error.url}) | {error_data[1]}x "
+                                  f"{error_data[0]} | TDB |",
                                 file=f,
                             )
                         for error in errors[arch]["utest"]:
@@ -92,12 +93,12 @@ def main():
                         for error in errors[arch]["relval"]:
                             print(
                                 f"| [{error.name}]({error.url}) | {error.data} | "
-                                f"TBD |"
+                                f"TBD |", file=f
                             )
                     else:
                         print('<span style="color:green">No issues</span>', file=f)
 
-                print("", file=f)
+                    print("", file=f)
 
 
 def validate_date(x):

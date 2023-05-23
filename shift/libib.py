@@ -77,7 +77,7 @@ def make_url(url):
         return url_root + url
 
 
-def fetch(url, payload=None, content_type=ContentType.JSON):
+def fetch(url, content_type=ContentType.JSON, payload=None):
     url = make_url(url)
     try:
         response = urllib.request.urlopen(url)
@@ -145,7 +145,7 @@ def check_ib(data):
 
                 res[arch]["build"].append(
                     LogEntry(
-                        name=pkg.name, url=f"{url_prefix}/{pkg.name()}", data=errors
+                        name=pkg.name(), url=f"{url_prefix}/{pkg.name()}", data=errors
                     )
                 )
 
@@ -230,22 +230,6 @@ def check_ib(data):
 
     logger.info("=" * 80)
     return data["release_name"], res
-    #
-    # os.makedirs("out", exist_ok=True)
-    # with open(f"out/{data['release_name']}_{ib_date}.md", "w") as f:
-    #     print(f"## {data['release_name']}\n", file=f)
-    #     print("-- INSERT SCREENSHOT HERE --\n", file=f)
-    #     for arch, lines in log.items():
-    #         print(f"### {arch}\n", file=f)
-    #         if lines:
-    #             lines = [
-    #                         "| What failed | Description | Issue |",
-    #                         "| ----------- | ----------- | ----- |",
-    #                     ] + lines
-    #             print("\n".join(lines), file=f)
-    #         else:
-    #             print('<span style="color:green">No issues</span>', file=f)
-    #         print("", file=f)
 
 
 def get_flavors(ib_date_in, cmssw_release=None):

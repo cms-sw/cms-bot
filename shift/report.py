@@ -84,12 +84,12 @@ def main():
                                 f"{error.data[0]} | TDB |",
                                 file=f,
                             )
-                        for error in error[arch]["utest"]:
+                        for error in errors[arch]["utest"]:
                             print(
                                 f"| [{error.name}]({error.url}) | TBD | TBD |", file=f
                             )
 
-                        for error in error[arch]["relval"]:
+                        for error in errors[arch]["relval"]:
                             print(
                                 f"| [{error.name}]({error.url}) | {error.data} | "
                                 f"TBD |"

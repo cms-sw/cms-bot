@@ -35,7 +35,8 @@ class PackageInfo(object):
 
     def addErrInfo(self, errInfo, lineNo):
         """docstring for addErr"""
-        if 'Error' in errInfo.errType: self.warnOnly = False
+        if "Error" in errInfo.errType:
+            self.warnOnly = False
         self.errInfo.append(errInfo)
         if errInfo.errType not in self.errSummary.keys():
             self.errSummary[errInfo.errType] = 1
@@ -45,7 +46,7 @@ class PackageInfo(object):
 
     def name(self):
         """docstring for name"""
-        return self.subsys + '/' + self.pkg
+        return self.subsys + "/" + self.pkg
 
 
 url_root = "https://cmssdt.cern.ch/"
@@ -182,7 +183,7 @@ def check_ib(data):
                             continue
                         for obj in ctl["list"]:
                             if obj["control_type"] == "Issues" and re.match(
-                                    r".* failed at line #\d+", obj["name"]
+                                r".* failed at line #\d+", obj["name"]
                             ):
                                 webURL = webURL_t.format(**obj)
                                 # print("\t\t" + obj["name"])

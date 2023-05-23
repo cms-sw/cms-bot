@@ -75,16 +75,22 @@ def main():
                 print("-- INSERT SCREENSHOT HERE --\n", file=f)
                 for arch in errors:
                     print(f"### {arch}\n", file=f)
-                    if any((errors[arch]["build"], errors[arch]["utest"], errors[arch]["relval"])):
+                    if any(
+                        (
+                            errors[arch]["build"],
+                            errors[arch]["utest"],
+                            errors[arch]["relval"],
+                        )
+                    ):
                         print("| What failed | Description | Issue |", file=f)
                         print("| ----------- | ----------- | ----- |", file=f)
                         for error in errors[arch]["build"]:
                             for error_data in error.data:
-                              print(
-                                  f"| [{error.name}]({error.url}) | {error_data[1]}x "
-                                  f"{error_data[0]} | TDB |",
-                                file=f,
-                            )
+                                print(
+                                    f"| [{error.name}]({error.url}) | {error_data[1]}x "
+                                    f"{error_data[0]} | TDB |",
+                                    file=f,
+                                )
                         for error in errors[arch]["utest"]:
                             print(
                                 f"| [{error.name}]({error.url}) | TBD | TBD |", file=f
@@ -93,7 +99,8 @@ def main():
                         for error in errors[arch]["relval"]:
                             print(
                                 f"| [{error.name}]({error.url}) | {error.data} | "
-                                f"TBD |", file=f
+                                f"TBD |",
+                                file=f,
                             )
                     else:
                         print('<span style="color:green">No issues</span>', file=f)

@@ -6,6 +6,7 @@ import urllib
 import urllib.error
 
 import libib
+# noinspection PyUnresolvedReferences
 from libib import PackageInfo, ErrorInfo
 
 if sys.version_info.major < 3 or (

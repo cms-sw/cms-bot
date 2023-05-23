@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+
+import datetime
+import json
+import os
+import sys
+
+import urllib
+import urllib.request
+import urllib.error
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shift"))
+
+from github_utils import github_api
+import libib
+# noinspection PyUnresolvedReferences
+from libib import PackageInfo, ErrorInfo
+
+
+def get_commit_info(repo, commit):
+    return github_api(
+        uri="https://api.github.com/repos/{}/git/commits/{}".format(repo, commit),
+        metod="GET",
+    )
+
+
+def isoparse(strDate):
+    return datetime.datetime.strptime(strDate, "%Y-%m-%dT%H:%M:%SZ")
+
+
+def main():
+    mm_webhook_url = os.environ["MM_WEBHOOK_URL"]
+
+    libib.setup_logging()
+    libib.get_exitcodes()
+
+    structure = libib.fetch("SDT/html/data/structure.json")
+
+    if os.environ["SERIES"] == "default":
+        default_release = structure["default_release"]
+    else:
+        default_release = os.environ["SERIES"]
+
+    changed_rels = set()
+    for commit_id in sys.argv[1:]:
+        commit_info = get_commit_info("cms-sw/cms-sw.github.io", commit_id)
+        if "sha" not in commit_info:
+            print("Invalid or missing commit-id {}".format(commit_id))
+            continue
+        try:
+            commit_author = commit_info["author"]
+        except KeyError:
+            print("Commit {} has no author!".format(commit_id))
+            continue
+        if commit_author["email"] != "cmsbuild@cern.ch":
+            print(
+                "Commit {} not from cmsbuild: {} <{}>".format(
+                    commit_id, commit_author["name"], commit_author["email"]
+                )
+            )
+            continue
+
+        for change in commit_info["files"]:
+            if not change["filename"].startswith("_data/CMSSW"):
+                continue
+            relname = change["filename"].replace("_data/", "").replace(".json", "")
+            changed_rels.add(relname)
+
+    if len(changed_rels) == 0:
+        print("No releases changed")
+        exit(0)
+
+    for rel in changed_rels:
+        old_data_file = "/build/builds/cms-ib-notifier/{}.json".format(rel)
+        if os.path.exists(old_data_file):
+            old_data = json.load(open(old_data_file, "r"))
+        else:
+            old_data = None
+
+    # changed_rels = "\n".join("* "+x for x in list(changed_rels))
+    #
+    # payload = {"text": "The following release series were updated, please check:\n"
+    # + changed_rels}
+    # jsondata = json.dumps(payload).encode("utf-8")
+    # req = Request(mm_webhook_url)
+    # req.add_header("Content-Type", "application/json; charset=utf-8")
+    # req.add_header("Content-Length", len(jsondata))
+    # fetch(req, jsondata)
+
+
+if __name__ == "__main__":
+    main()

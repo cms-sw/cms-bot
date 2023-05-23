@@ -183,7 +183,7 @@ def check_ib(data):
                             continue
                         for obj in ctl["list"]:
                             if obj["control_type"] == "Issues" and re.match(
-                                r".* failed at line #\d+", obj["name"]
+                                    r".* failed at line #\d+", obj["name"]
                             ):
                                 webURL = webURL_t.format(**obj)
                                 # print("\t\t" + obj["name"])
@@ -250,3 +250,50 @@ def get_flavors(ib_date_in, cmssw_release=None):
                 break
 
     return res
+
+
+def get_ib_dates(cmssw_release):
+    structure = fetch("SDT/html/data/structure.json")
+
+    if cmssw_release == "default":
+        default_release = structure["default_release"]
+    else:
+        default_release = cmssw_release
+
+    try:
+        release_data = fetch("SDT/html/data/" + default_release + ".json")
+    except urllib.error.HTTPError:
+        print(f"!ERROR: Invalid release {default_release}!")
+        exit(1)
+
+    ib_dates = []
+
+    latest_ib_date, previous_ib_date = None, None
+
+    for i, c in enumerate(release_data["comparisons"]):
+        if not c["isIB"]:
+            continue
+
+        latest_ib_date = release_data["comparisons"][i]["ib_date"]
+        try:
+            previous_ib_date = release_data["comparisons"][i + 1]["ib_date"]
+        except IndexError:
+            pass
+
+        break
+
+    print(f"Latest IB date: {latest_ib_date}")
+    print(f"Previous IB date: {previous_ib_date}")
+
+    if latest_ib_date is None:
+        print(f"!ERROR: latest IB for {default_release} not found!")
+        exit(1)
+
+    if previous_ib_date is None:
+        print(f"?WARNING: only one IB available for {default_release}")
+
+    ib_dates = [latest_ib_date]
+    if previous_ib_date is not None:
+        ib_dates.append(previous_ib_date)
+
+    return ib_dates

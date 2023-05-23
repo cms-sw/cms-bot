@@ -97,7 +97,7 @@ def main():
                     else:
                         print('<span style="color:green">No issues</span>', file=f)
 
-            print("", file=f)
+              print("", file=f)
 
 
 def validate_date(x):

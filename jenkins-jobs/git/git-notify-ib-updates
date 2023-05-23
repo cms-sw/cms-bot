@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+
+import datetime
+import json
+import os
+import sys
+
+import urllib
+import urllib.request
+import urllib.error
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+
+from github_utils import github_api
+
+url_root = "https://cmssdt.cern.ch/"
+
+
+def get_commit_info(repo, commit):
+    return github_api(
+        uri="https://api.github.com/repos/{}/git/commits/{}".format(repo, commit),
+        metod="GET",
+    )
+
+
+def isoparse(strDate):
+    return datetime.strptime(strDate, "%Y-%m-%dT%H:%M:%SZ")
+
+
+def make_url(url):
+    url = url.lstrip("/")
+    if url.startswith("http"):
+        return url
+    else:
+        return url_root + url
+
+
+def fetch(url, payload=None):
+    if isinstance(url, str):
+        url = make_url(url)
+
+    try:
+        response = urllib.request.urlopen(url, data=payload)
+    except urllib.error.HTTPError as e:
+        print("Request to {} failed with code {}".format(url, e.code))
+        print(e.read())
+        raise
+    except urllib.error.URLError as e:
+        print("Request to {} failed with error {}".format(url, e.reason))
+        raise
+    if response.getcode() != 200:
+        print(f"Request to %s failed with code %s" % (url, response.getcode()))
+        raise RuntimeError()
+
+    if not payload:
+        content = response.read()
+        return json.loads(content)
+
+def check_ib(release_data):
+    # return something like {2023-05-23-1100: {el8_amd64_gcc11: {relvals: 1, utests: 2, build: 0}, ...}, 2023-05-22-2300: ...}
+    # First, find 2 latest IBs
+    latest_ib_date, previous_ib_date = None, None
+
+    for i, c in enumerate(release_data["comparisons"]):
+        if not c["isIB"]:
+            continue
+
+        latest_ib_date = release_data["comparisons"][i]["ib_date"]
+        try:
+            previous_ib_date = release_data["comparisons"][i + 1]["ib_date"]
+        except IndexError:
+            pass
+
+        break
+
+    print(f"Latest IB date: {latest_ib_date}")
+    print(f"Previous IB date: {previous_ib_date}")
+
+    if latest_ib_date is None:
+        print(f"!ERROR: latest IB for {default_release} not found!")
+        exit(1)
+
+    if previous_ib_date is None:
+        print(f"?WARNING: only one IB available for {default_release}")
+
+    ib_dates = [latest_ib_date]
+    if previous_ib_date is not None:
+        ib_dates.append(previous_ib_date)
+
+    for ib_date in ib_dates:
+        for flav, comp in get_flavors(ib_date, default_release).items():
+            check_ib(comp)
+
+    return
+
+def main():
+    mm_webhook_url = os.envron["MM_WEBHOOK_URL"]
+
+
+    changed_rels = set()
+    for commit_id in sys.argv[1:]:
+        commit_info = get_commit_info("cms-sw/cms-sw.github.io", commit_id)
+        if "sha" not in commit_info:
+            print("Invalid or missing commit-id {}".format(commit_id))
+            continue
+        try:
+            commit_author = commit_info["author"]
+        except KeyError:
+            print("Commit {} has no author!".format(commit_id))
+            continue
+        if commit_author["email"] != "cmsbuild@cern.ch":
+            print(
+                "Commit {} not from cmsbuild: {} <{}>".format(
+                    commit_id, commit_author["name"], commit_author["email"]
+                )
+            )
+            continue
+
+        for change in commit_info["files"]:
+            if not change["filename"].startswith("_data/CMSSW"):
+                continue
+            relname = change["filename"].replace("_data/", "").replace(".json", "")
+            changed_rels.add(relname)
+
+    if len(changed_rels) == 0:
+        print("No releases changed")
+        exit(0)
+
+    for rel in changed_rels:
+        old_data_file = "/build/builds/cms-ib-notifier/{}.json".format(rel)
+        if os.path.exists(old_data_file):
+            old_data = json.load(open(old_data_file, "r"))
+        else:
+            old_data = None
+
+    # changed_rels = "\n".join("* "+x for x in list(changed_rels))
+    #
+    # payload = {"text": "The following release series were updated, please check:\n" + changed_rels}
+    # jsondata = json.dumps(payload).encode("utf-8")
+    # req = Request(mm_webhook_url)
+    # req.add_header("Content-Type", "application/json; charset=utf-8")
+    # req.add_header("Content-Length", len(jsondata))
+    # fetch(req, jsondata)
+
+
+if __name__ == "__main__":
+    main()

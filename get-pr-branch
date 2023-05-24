@@ -17,7 +17,7 @@ if __name__ == "__main__":
   prId = int(argv[1])
   repo = "cms-sw/cmssw"
   try: repo = argv[2]
-  except: pass
+  except IndexError: pass
 
   try:
     pr = get_pr(repo, prId)
@@ -41,5 +41,5 @@ if __name__ == "__main__":
         path.insert(0,repo_dir)
         import repo_config
         pr_branch = repo_config.CMS_BRANCH_MAP[pr["base"]["ref"]]
-    except: pass
+    except KeyError: pass
     print(pr_branch)

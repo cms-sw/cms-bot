@@ -1,3 +1,4 @@
+import datetime
 import io
 import json
 import logging
@@ -52,6 +53,7 @@ class PackageInfo(object):
 url_root = "https://cmssdt.cern.ch/"
 exitcodes = {}
 logger = logging.Logger("libib", logging.INFO)
+date_rex = re.compile(r"(\d{4})-(\d{2})-(\d{2})-(\d{2})00")
 
 
 class ContentType(Enum):
@@ -61,6 +63,33 @@ class ContentType(Enum):
 
 
 LogEntry = namedtuple("LogEntry", "name,url,data")
+
+
+def date_fromisoformat(date_str):
+    if date_str.endswith("Z"):
+        tzinfo = datetime.timezone.utc
+        date_str = date_str.rstrip("Z")
+    else:
+        tzinfo = None
+
+    date_str, time_str = date_str.split("T")
+    date_y, date_m, date_d = date_str.split("-")
+    time_h, time_m, time_s = time_str.split(":")
+
+    return datetime.datetime(
+        year=int(date_y),
+        month=int(date_m),
+        day=int(date_d),
+        hour=int(time_h),
+        minute=int(time_m),
+        second=int(time_s),
+        tzinfo=tzinfo,
+    )
+
+
+def date_fromibdate(date_str):
+    y, m, d, h = date_rex.findall(date_str)[0]
+    return datetime.datetime(year=y, month=m, day=d, hour=h)
 
 
 def setup_logging():
@@ -183,7 +212,7 @@ def check_ib(data):
                             continue
                         for obj in ctl["list"]:
                             if obj["control_type"] == "Issues" and re.match(
-                                    r".* failed at line #\d+", obj["name"]
+                                r".* failed at line #\d+", obj["name"]
                             ):
                                 webURL = webURL_t.format(**obj)
                                 # print("\t\t" + obj["name"])
@@ -233,21 +262,20 @@ def check_ib(data):
     return data["release_name"], res
 
 
-def get_flavors(ib_date_in, cmssw_release=None):
+def get_ib_results(ib_date, flavor, ib_data=None):
+    ib_data = ib_data or fetch("SDT/html/data/" + flavor + ".json")
+    for comp in ib_data["comparisons"]:
+        if comp["ib_date"] == ib_date and comp["isIB"]:
+            return comp
+
+
+def get_ib_comparision(ib_date, series):
     res = {}
     structure = fetch("SDT/html/data/structure.json")
+    all_releases = structure[series]
 
-    default_release = cmssw_release or structure["default_release"]
-
-    all_releases = structure[default_release]
-
-    # latest_ibs = fetch("SDT/html/data/LatestIBsSummary.json")
     for rel in all_releases:
-        ib_data = fetch("SDT/html/data/" + rel + ".json")
-        for comp in ib_data["comparisons"]:
-            if comp["ib_date"] == ib_date_in and comp["isIB"]:
-                res[rel] = comp
-                break
+        res[rel] = get_ib_results(ib_date, rel)
 
     return res
 
@@ -266,8 +294,6 @@ def get_ib_dates(cmssw_release):
         print(f"!ERROR: Invalid release {default_release}!")
         exit(1)
 
-    ib_dates = []
-
     latest_ib_date, previous_ib_date = None, None
 
     for i, c in enumerate(release_data["comparisons"]):
@@ -279,6 +305,13 @@ def get_ib_dates(cmssw_release):
             previous_ib_date = release_data["comparisons"][i + 1]["ib_date"]
         except IndexError:
             pass
+
+        if previous_ib_date:
+            previous_ib_datetime = date_fromibdate(previous_ib_date)
+            now = datetime.datetime.now().replace(minute=0, second=0, microsecond=0)
+            if (now - previous_ib_datetime).seconds > 24 * 3600:
+                print(f"Previous IB {previous_ib_date} is more than 24h old, ignoring")
+                previous_ib_date = None
 
         break
 

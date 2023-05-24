@@ -1,11 +1,11 @@
 import argparse
 import os
-import re
 import sys
 import urllib
 import urllib.error
 
 import libib
+
 # noinspection PyUnresolvedReferences
 from libib import PackageInfo, ErrorInfo
 
@@ -14,8 +14,6 @@ if sys.version_info.major < 3 or (
 ):
     print("This script requires Python 3.6 or newer!", file=sys.stderr)
     exit(0)
-
-date_rex = re.compile(r"\d{4}-\d{2}-\d{2}-\d{2}00")
 
 
 def main():
@@ -26,50 +24,24 @@ def main():
     structure = libib.fetch("SDT/html/data/structure.json")
 
     if args.series == "default":
-        default_release = structure["default_release"]
+        series = structure["default_release"]
     else:
-        default_release = args.series
+        series = args.series
 
     try:
-        release_data = libib.fetch("SDT/html/data/" + default_release + ".json")
+        libib.fetch("SDT/html/data/" + series + ".json")
     except urllib.error.HTTPError:
-        print(f"!ERROR: Invalid release {default_release}!")
+        print(f"!ERROR: Invalid release {series}!")
         exit(1)
 
-    ib_dates = [] if args.date else args.date
-
-    if not ib_dates:
-        latest_ib_date, previous_ib_date = None, None
-
-        for i, c in enumerate(release_data["comparisons"]):
-            if not c["isIB"]:
-                continue
-
-            latest_ib_date = release_data["comparisons"][i]["ib_date"]
-            try:
-                previous_ib_date = release_data["comparisons"][i + 1]["ib_date"]
-            except IndexError:
-                pass
-
-            break
-
-        print(f"Latest IB date: {latest_ib_date}")
-        print(f"Previous IB date: {previous_ib_date}")
-
-        if latest_ib_date is None:
-            print(f"!ERROR: latest IB for {default_release} not found!")
-            exit(1)
-
-        if previous_ib_date is None:
-            print(f"?WARNING: only one IB available for {default_release}")
-
-        ib_dates = [latest_ib_date]
-        if previous_ib_date is not None:
-            ib_dates.append(previous_ib_date)
+    if args.date == "auto":
+        ib_dates = libib.get_ib_dates(series)
+    else:
+        ib_dates = [args.date]
 
     os.makedirs("out", exist_ok=True)
     for ib_date in ib_dates:
-        for flav, comp in libib.get_flavors(ib_date, default_release).items():
+        for flav, comp in libib.get_ib_comparision(ib_date, series).items():
             release_name, errors = libib.check_ib(comp)
             with open(f"out/{release_name}.md", "w") as f:
                 print(f"## {release_name}\n", file=f)
@@ -110,7 +82,7 @@ def main():
 
 
 def validate_date(x):
-    if not (x == "auto" or date_rex.match(x.rsplit("_")[1])):
+    if not (x == "auto" or libib.date_rex.match(x.rsplit("_")[1])):
         raise ValueError()
 
 
@@ -132,5 +104,4 @@ if __name__ == "__main__":
         nargs="*",
     )
     args = parser.parse_args()
-    # main2()
     main()

@@ -697,3 +697,10 @@ def find_tags(repository, name):
     data = github_api("/repos/%s/git/matching-refs/tags/%s" % (repository, name), method="GET")
 
     return data
+    
+    
+def get_pr(repository, pr_id):
+    data = github_api("/repos/%s/pulls/%s" % (repository, pr_id), method="GET")
+
+    return data
+

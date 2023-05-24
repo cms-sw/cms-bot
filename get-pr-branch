@@ -20,7 +20,7 @@ if __name__ == "__main__":
   except: pass
 
   try:
-    pr =get_pr(repo, prId)
+    pr = get_pr(repo, prId)
   except Exception as ex:
     print("Could not find pull request %s. Maybe this is an issue" % prId)
     print(ex)
@@ -40,6 +40,6 @@ if __name__ == "__main__":
       if exists(join(repo_dir,"repo_config.py")):
         path.insert(0,repo_dir)
         import repo_config
-        pr_branch = repo_config.CMS_BRANCH_MAP[pr.base.ref]
+        pr_branch = repo_config.CMS_BRANCH_MAP[pr["base"]["ref"]]
     except: pass
     print(pr_branch)

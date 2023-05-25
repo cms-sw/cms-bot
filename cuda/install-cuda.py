@@ -113,7 +113,7 @@ def removesuffix(arg, *suffixes):
     return arg
 
 #Create symlinks for soname or libname.so
-def fix_symlinks(install_dir):
+def fix_symlinks(install_dir, dry_run=False):
   target_dir = os.path.join(install_dir, "targets", "*")
   libdirs = [os.path.join(install_dir, "drivers", "lib")]
   libdirs.append(os.path.join(target_dir, "lib"))
@@ -128,7 +128,7 @@ def fix_symlinks(install_dir):
         for l in lib_names:
           full_lib = os.path.join(dirname, l)
           if os.path.exists(full_lib): continue
-          os.symlink(lib, full_lib)
+          if not dry_run: os.symlink(lib, full_lib)
           print("Creating link", full_lib,"->", lib)
 
 # Move the file or directory tree "src" to "dst", merging any directories that already exist.

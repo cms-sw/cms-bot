@@ -50,7 +50,7 @@ function git_clone_and_merge (){
             git clone https://github.com/${BASE_REPO} -b ${BASE_BRANCH} || git clone git@github.com:${BASE_REPO} -b ${BASE_BRANCH}
         fi
         pushd ${BASE_REPO_NAME}  >/dev/null 2>&1
-            git pull https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
+            git pull --no-rebase https://github.com/${TEST_REPO}.git ${TEST_BRANCH}
         popd
     popd
 }

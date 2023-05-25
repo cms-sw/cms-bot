@@ -112,6 +112,21 @@ def removesuffix(arg, *suffixes):
 
     return arg
 
+#Create symlinks for soname or libname.so
+def fix_symlinks(install_dir):
+  for xdir in ["lib", os.path.join("lib","stubs")]:
+    for dirname in glob.glob(os.path.join(install_dir, "targets", "*", xdir)):
+      for lib in [os.path.basename(l) for l in glob.glob(os.path.join(dirname, "lib*.so*"))]:
+        xlib = lib.split(".so")[0][3:]
+        err, out = subprocess.getstatusoutput("objdump -p %s | grep 'SONAME'" % os.path.join(dirname, lib))
+        if not 'SONAME' in out: continue
+        soname=out.split('SONAME')[-1].strip()
+        for l in [ "lib%s.so" % xlib, soname]:
+          full_lib = os.path.join(dirname, l)
+          if os.path.exists(full_lib): continue
+          os.symlink(lib, full_lib)
+          print("Creating link", full_lib,"->", lib)
+
 # Move the file or directory tree "src" to "dst", merging any directories that already exist.
 # Similar to shutil.copytree(src, dst, symlinks=True, ignore=None, copy_function=shutil.move, ignore_dangling_symlinks=True, dirs_exist_ok=True)
 def movetree(src, dst, overwrite=False):
@@ -641,6 +656,7 @@ def main():
             # Move the contents of the package to the installation directory
             install_package(component, archive_dir, install_dir, rules)
 
+        fix_symlinks(install_dir)
         # copy json file for future use
         cms_conf_dir = os.path.join(install_dir, ".cms")
         os.makedirs(cms_conf_dir, exist_ok=True)

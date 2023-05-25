@@ -63,6 +63,8 @@ class ContentType(Enum):
 
 
 LogEntry = namedtuple("LogEntry", "name,url,data")
+def logentry_tostr(type_, entry):
+    pass
 
 
 def date_fromisoformat(date_str):
@@ -88,7 +90,7 @@ def date_fromisoformat(date_str):
 
 
 def date_fromibdate(date_str):
-    y, m, d, h = date_rex.findall(date_str)[0]
+    y, m, d, h = (int(x) for x in date_rex.findall(date_str)[0])
     return datetime.datetime(year=y, month=m, day=d, hour=h)
 
 
@@ -167,17 +169,13 @@ def check_ib(data):
             url_prefix = f"https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/{plat}/{rel}"
 
             for pkg in [x for x in packageList if x.errInfo]:
-                errors = [
-                    (err, cnt)
-                    for err, cnt in pkg.errSummary.items()
-                    if err != "ignoreWarning" and cnt > 0
-                ]
-
-                res[arch]["build"].append(
-                    LogEntry(
-                        name=pkg.name(), url=f"{url_prefix}/{pkg.name()}", data=errors
+                pkg_errors = dict(((err, cnt) for err, cnt in pkg.errSummary.items() if err != "ignoreWarning" and cnt > 0))
+                for itm in pkg_errors.items():
+                    res[arch]["build"].append(
+                        LogEntry(
+                            name=pkg.name(), url=f"{url_prefix}/{pkg.name()}", data=itm
+                        )
                     )
-                )
 
     logger.info("== Unit test results ==")
     for ut in data["utests"]:

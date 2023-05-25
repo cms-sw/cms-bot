@@ -34,7 +34,7 @@ def main():
         print(f"!ERROR: Invalid release {series}!")
         exit(1)
 
-    if args.date == "auto":
+    if (not args.date) or args.date == "auto":
         ib_dates = libib.get_ib_dates(series)
     else:
         ib_dates = [args.date]
@@ -42,6 +42,9 @@ def main():
     os.makedirs("out", exist_ok=True)
     for ib_date in ib_dates:
         for flav, comp in libib.get_ib_comparision(ib_date, series).items():
+            if comp is None:
+                print(f"No IB found for flavor {flav} and date {ib_date}")
+                continue
             release_name, errors = libib.check_ib(comp)
             with open(f"out/{release_name}.md", "w") as f:
                 print(f"## {release_name}\n", file=f)
@@ -58,12 +61,11 @@ def main():
                         print("| What failed | Description | Issue |", file=f)
                         print("| ----------- | ----------- | ----- |", file=f)
                         for error in errors[arch]["build"]:
-                            for error_data in error.data:
-                                print(
-                                    f"| [{error.name}]({error.url}) | {error_data[1]}x "
-                                    f"{error_data[0]} | TDB |",
-                                    file=f,
-                                )
+                            print(
+                                f"| [{error.name}]({error.url}) | {error.data[1]}x "
+                                f"{error.data[0]} | TDB |",
+                                file=f,
+                            )
                         for error in errors[arch]["utest"]:
                             print(
                                 f"| [{error.name}]({error.url}) | TBD | TBD |", file=f

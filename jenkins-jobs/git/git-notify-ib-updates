@@ -8,12 +8,14 @@ import sys
 import urllib
 import urllib.request
 import urllib.error
+from urllib.request import Request
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shift"))
 try:
     from github_utils import github_api
     import libib
+
     # noinspection PyUnresolvedReferences
     from libib import PackageInfo, ErrorInfo
 except ImportError:
@@ -21,25 +23,28 @@ except ImportError:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shift"))
     from github_utils import github_api
     import libib
+
     # noinspection PyUnresolvedReferences
     from libib import PackageInfo, ErrorInfo
 
 
 def get_commit_info(repo, commit):
     return github_api(
-        uri="https://api.github.com/repos/{}/git/commits/{}".format(repo, commit),
+        uri="/repos/{}/commits/{}".format(repo, commit),
         method="GET",
     )
 
+
 def get_file_at_commit(repo, file, commit):
     return
+
 
 def isoparse(strDate):
     return datetime.datetime.strptime(strDate, "%Y-%m-%dT%H:%M:%SZ")
 
 
 def main():
-    mm_webhook_url = os.environ["MM_WEBHOOK_URL"]
+    mm_webhook_url = os.environ.get("MM_WEBHOOK_URL", "")
 
     libib.setup_logging()
     libib.get_exitcodes()
@@ -55,7 +60,7 @@ def main():
             print("Invalid or missing commit-id {}".format(commit_id))
             continue
         try:
-            commit_author = commit_info["author"]
+            commit_author = commit_info["commit"]["author"]
         except KeyError:
             print("Commit {} has no author!".format(commit_id))
             continue
@@ -81,7 +86,11 @@ def main():
         exit(0)
 
     newest_commit_date = max(commit_dates.values())
-    newest_commit_id = [k for k, v in commit_dates.items() if v == newest_commit_date][0]
+    newest_commit_id = [k for k, v in commit_dates.items() if v == newest_commit_date][
+        0
+    ]
+
+    report = []
 
     for ib_date in ib_dates:
         for rel in changed_rels:
@@ -89,23 +98,61 @@ def main():
             if os.path.exists(old_data_file):
                 old_data = json.load(open(old_data_file, "r"))
                 old_comparision = libib.get_ib_results(ib_date, None, old_data)
-                old_result = libib.check_ib(old_comparision)
+                _, old_result = libib.check_ib(old_comparision)
             else:
                 old_result = None
 
-            new_data = libib.fetch(f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/data%2F{rel}.json")
+            new_data = libib.fetch(
+                f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/data%2F{rel}.json"
+            )
             new_comparision = libib.get_ib_results(ib_date, None, new_data)
-            new_result = libib.check_ib(new_comparision)
+            if new_comparision is None:
+                continue
+            _, new_result = libib.check_ib(new_comparision)
+
+            for arch in new_result:
+                for error in new_result[arch]["build"]:
+                    if old_result and error in old_result[arch]["build"]:
+                        continue
+
+                    report.append(
+                        f"| {rel} | {ib_date} | {arch} | [{error.name}]({error.url}) | {error.data[1]}x "
+                        f"{error.data[0]} | "
+                    )
+
+                for error in new_result[arch]["utest"]:
+                    if old_result and error in old_result[arch]["utest"]:
+                        continue
+
+                    report.append(
+                        f"| {rel} | {ib_date} | {arch} | [{error.name}]({error.url}) | TBD | "
+                    )
+
+                for error in new_result[arch]["relval"]:
+                    if old_result and error not in old_result[arch]["relval"]:
+                        continue
+
+                    report.append(
+                        f"| {rel} | {ib_date} | {arch} | [{error.name}]({error.url}) | {error.data} | "
+                    )
 
     # changed_rels = "\n".join("* "+x for x in list(changed_rels))
-    #
-    # payload = {"text": "The following release series were updated, please check:\n"
-    # + changed_rels}
-    # jsondata = json.dumps(payload).encode("utf-8")
-    # req = Request(mm_webhook_url)
-    # req.add_header("Content-Type", "application/json; charset=utf-8")
-    # req.add_header("Content-Length", len(jsondata))
-    # fetch(req, jsondata)
+    header = """@shifter New IB failures found, please check:
+
+| Series | IB date | Architecture | Error | Additional data |
+| --- | --- | --- | --- | --- |
+"""
+    if report:
+        payload = {"text": header + "\n".join(report)}
+
+        if mm_webhook_url:
+            jsondata = json.dumps(payload).encode("utf-8")
+            req = Request(mm_webhook_url)
+            req.add_header("Content-Type", "application/json; charset=utf-8")
+            req.add_header("Content-Length", str(len(jsondata)))
+            libib.fetch(req, payload=jsondata)
+        else:
+            print(payload["text"])
 
 
 if __name__ == "__main__":

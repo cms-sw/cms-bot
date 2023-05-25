@@ -114,14 +114,18 @@ def removesuffix(arg, *suffixes):
 
 #Create symlinks for soname or libname.so
 def fix_symlinks(install_dir):
-  for xdir in ["lib", os.path.join("lib","stubs")]:
-    for dirname in glob.glob(os.path.join(install_dir, "targets", "*", xdir)):
+  target_dir = os.path.join(install_dir, "targets", "*")
+  libdirs = [os.path.join(install_dir, "drivers", "lib")]
+  libdirs.append(os.path.join(target_dir, "lib"))
+  libdirs.append(os.path.join(target_dir, "lib", "stubs"))
+  for xdir in libdirs:
+    for dirname in glob.glob(xdir):
       for lib in [os.path.basename(l) for l in glob.glob(os.path.join(dirname, "lib*.so*"))]:
         xlib = lib.split(".so")[0][3:]
         err, out = subprocess.getstatusoutput("objdump -p %s | grep 'SONAME'" % os.path.join(dirname, lib))
         if not 'SONAME' in out: continue
-        soname=out.split('SONAME')[-1].strip()
-        for l in [ "lib%s.so" % xlib, soname]:
+        lib_names = ["lib%s.so" % xlib, out.split('SONAME')[-1].strip()]
+        for l in lib_names:
           full_lib = os.path.join(dirname, l)
           if os.path.exists(full_lib): continue
           os.symlink(lib, full_lib)

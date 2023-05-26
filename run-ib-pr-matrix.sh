@@ -1,4 +1,4 @@
-#!/bin/sh -exCMD_OPTS
+#!/bin/sh -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(cd $(dirname $0) >/dev/null 2>&1; pwd -P)
 ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"

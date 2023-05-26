@@ -86,9 +86,8 @@ def main():
         exit(0)
 
     newest_commit_date = max(commit_dates.values())
-    newest_commit_id = [k for k, v in commit_dates.items() if v == newest_commit_date][
-        0
-    ]
+    newest_commit_id = [k for k, v in commit_dates.items() if v == newest_commit_date]
+    newest_commit_id = newest_commit_id[0]
 
     report = []
 
@@ -153,6 +152,13 @@ def main():
             libib.fetch(req, payload=jsondata)
         else:
             print(payload["text"])
+
+    # Save new json file
+    for rel in changed_rels:
+        url_ = f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/_data%2F{rel}.json"
+        data = libib.fetch(url_, libib.ContentType.TEXT)
+        with open("/build/builds/cms-ib-notifier/{}.json".format(rel), "w") as f:
+            f.write(data)
 
 
 if __name__ == "__main__":

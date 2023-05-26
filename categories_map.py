@@ -1814,5 +1814,8 @@ CMSSW_LABELS = {
     "Validation/RecoTrack",
     "Validation/RecoVertex",
     "Validation/Tracking"
+  ],
+  "hcal": [
+    "DPGAnalysis/HcalNanoAOD"
   ]
 }

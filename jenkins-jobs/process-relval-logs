@@ -93,6 +93,7 @@ function process_dir()
 rm -f $WORKSPACE/update-github-pages
 cd $(dirname $(dirname $0))
 for dir in `find /data/sdt/buildlogs -maxdepth 6 -mindepth 6 -name pyRelValPartialLogs -type d | sort ` ; do
+  echo "Working on $dir"
   set +x
   echo "Jobs running: $(jobs -p |wc -l)"
   while [ $(jobs -p | wc -l) -ge 2 ]; do

@@ -1277,13 +1277,6 @@ fioriNTU:
 - DQM/SiStripMonitor
 - DQM/Tracker
 - DQM/TrackingMonitor
-hdelanno:
-- DQM/SiPixel
-- DQM/SiStripCommon
-- DQM/SiStripHistoricInfoClient
-- DQM/SiStripMonitor
-- DQM/Tracker
-- DQM/TrackingMonitor
 idebruyn:
 - DQM/SiPixel
 - DQM/SiStripCommon

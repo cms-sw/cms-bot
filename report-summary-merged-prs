@@ -1468,6 +1468,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_PROFILING = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME'
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = 'ls '+JENKINS_ARTIFACTS_DIR+'/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt && echo ARCHITECTURE/profiling/WORKFLOW/sorted_RES_CPU_step3.txt'
+    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3 = 'test -s ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/WORKFLOW/step3_gpu_nsys.txt && echo ARCHITECTURE/profiling/WORKFLOW/step3_gpu_nsys.txt'
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     COMPARISON_BASELINE_TESTS_URL = 'https://cmssdt.cern.ch/' + JENKINS_ARTIFACTS_SUBDIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results'
@@ -1647,6 +1648,9 @@ if __name__ == "__main__":
                         )
                     find_general_test_results(
                         'reco_event_loop', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2, find_one_profiling_result
+                        )
+                    find_general_test_results(
+                        'reco_gpu_mods', release_queue_results['comparisons'], arch, MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3, find_one_profiling_result
                         )
                 if 'check-headers' in tests_to_find:
                     find_check_headers(release_queue_results['comparisons'], arch)

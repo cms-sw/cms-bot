@@ -46,7 +46,6 @@ CMSSW_L2 = {
   "emanueleusai":     ["dqm"],
   "emeschi":          ["daq"],
   "vlimant":          ["xpog"],
-  "swertz":           ["xpog"],
   "simonepigazzini":  ["xpog"],
   "fwyzard":          ["heterogeneous"],
   "GurpreetSinghChahal":  ["generators"],

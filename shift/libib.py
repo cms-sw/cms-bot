@@ -124,8 +124,8 @@ def fetch(url, content_type=ContentType.JSON, payload=None):
         logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with code {response.getcode()}")
         raise RuntimeError()
 
+    content = response.read()
     if payload is None:
-        content = response.read()
         if content_type == ContentType.JSON:
             return json.loads(content)
         elif content_type == ContentType.TEXT:

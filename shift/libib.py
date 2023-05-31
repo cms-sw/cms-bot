@@ -114,14 +114,14 @@ def fetch(url, content_type=ContentType.JSON, payload=None):
     try:
         response = urllib.request.urlopen(url)
     except urllib.error.HTTPError as e:
-        logger.fatal(f"Request to {url} failed with code {e.code}")
+        logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with code {e.code}")
         logger.fatal(f"{e.read()}")
         raise
     except urllib.error.URLError as e:
-        logger.fatal(f"Request to {url} failed with error {e.reason}")
+        logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with error {e.reason}")
         raise
     if response.getcode() != 200:
-        logger.fatal(f"Request to {url} failed with code {response.getcode()}")
+        logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with code {response.getcode()}")
         raise RuntimeError()
 
     if payload is None:

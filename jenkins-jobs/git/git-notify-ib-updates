@@ -55,6 +55,7 @@ def main():
 
     changed_rels = set()
     for commit_id in sys.argv[1:]:
+        print("Processing commit {}".format(commit_id))
         commit_info = get_commit_info("cms-sw/cms-sw.github.io", commit_id)
         if "sha" not in commit_info:
             print("Invalid or missing commit-id {}".format(commit_id))
@@ -76,6 +77,7 @@ def main():
         commit_dates[commit_id] = commit_date
 
         for change in commit_info["files"]:
+            print("File {} changed".format(change["filename"]))
             if not change["filename"].startswith("_data/CMSSW"):
                 continue
             relname = change["filename"].replace("_data/", "").replace(".json", "")

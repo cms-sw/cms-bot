@@ -94,10 +94,10 @@ def date_fromibdate(date_str):
     return datetime.datetime(year=y, month=m, day=d, hour=h)
 
 
-def setup_logging():
+def setup_logging(level=logging.INFO):
     global logger
     logger = logging.getLogger("libib")
-
+    logger.setLevel(level)
 
 def make_url(url):
     if not isinstance(url, str):

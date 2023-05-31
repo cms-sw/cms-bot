@@ -2,6 +2,7 @@
 
 import datetime
 import json
+import logging
 import os
 import sys
 
@@ -46,7 +47,7 @@ def isoparse(strDate):
 def main():
     mm_webhook_url = os.environ.get("MM_WEBHOOK_URL", "")
 
-    libib.setup_logging()
+    libib.setup_logging(logging.DEBUG)
     libib.get_exitcodes()
 
     ib_dates = libib.get_ib_dates("default")

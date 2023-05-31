@@ -49,7 +49,6 @@ CMSSW_L2 = {
   "simonepigazzini":  ["xpog"],
   "fwyzard":          ["heterogeneous"],
   "GurpreetSinghChahal":  ["generators"],
-  "cecilecaillol":    ["l1"],
   "clacaputo":        ["reconstruction"],
   "kskovpen":         ["pdmv"],
   "sunilUIET":        ["pdmv"],

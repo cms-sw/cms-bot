@@ -260,9 +260,9 @@ battibass:
 - DataFormats/L1DTTrackFinder
 - DataFormats/MuonDetId
 - DataFormats/MuonReco
+- DPGAnalysis/MuonTools
 - DQM/DTMonitorClient
 - DQM/DTMonitorModule
-- DQM/Integration
 - DQMOffline/CalibMuon
 - EventFilter/DTRawToDigi
 - EventFilter/L1TXRawToDigi

@@ -1749,14 +1749,6 @@ skinnari:
 - L1Trigger/TrackFindingTracklet
 - L1Trigger/TrackTrigger
 - L1Trigger/TrackerDTC
-swertz:
-- DataFormats/SiStrip
-- CUDADataFormats/SiStripCluster
-- RecoLocalTracker/ClusterParameterEstimator
-- RecoLocalTracker/Configuration
-- RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip
-- RecoLocalTracker/SubCollectionProducers
 ram1123:
   - RecoEgamma
   - RecoEcal

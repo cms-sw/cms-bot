@@ -1,3 +1,4 @@
+import dataclasses
 import datetime
 import io
 import json
@@ -7,8 +8,9 @@ import re
 import urllib
 import urllib.error
 import urllib.request
-from collections import namedtuple
 from enum import Enum
+from dataclasses import dataclass
+from typing import Any
 
 
 # Borrowed from https://github.com/cms-sw/cmssdt-web
@@ -62,9 +64,11 @@ class ContentType(Enum):
     BINARY = 3
 
 
-LogEntry = namedtuple("LogEntry", "name,url,data")
-def logentry_tostr(type_, entry):
-    pass
+@dataclass(kw_only=True)
+class LogEntry:
+    name: str
+    url: str
+    data: Any
 
 
 def date_fromisoformat(date_str):
@@ -99,6 +103,7 @@ def setup_logging(level=logging.INFO):
     logger = logging.getLogger("libib")
     logger.setLevel(level)
 
+
 def make_url(url):
     if not isinstance(url, str):
         return url
@@ -114,14 +119,20 @@ def fetch(url, content_type=ContentType.JSON, payload=None):
     try:
         response = urllib.request.urlopen(url, timeout=10)
     except urllib.error.HTTPError as e:
-        logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with code {e.code}")
+        logger.fatal(
+            f"Request to {url if isinstance(url, str) else url.full_url} failed with code {e.code}"
+        )
         logger.fatal(f"{e.read()}")
         raise
     except urllib.error.URLError as e:
-        logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with error {e.reason}")
+        logger.fatal(
+            f"Request to {url if isinstance(url, str) else url.full_url} failed with error {e.reason}"
+        )
         raise
     if response.getcode() != 200:
-        logger.fatal(f"Request to {url if isinstance(url, str) else url.full_url} failed with code {response.getcode()}")
+        logger.fatal(
+            f"Request to {url if isinstance(url, str) else url.full_url} failed with code {response.getcode()}"
+        )
         raise RuntimeError()
 
     content = response.read()
@@ -169,7 +180,13 @@ def check_ib(data):
             url_prefix = f"https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/{plat}/{rel}"
 
             for pkg in [x for x in packageList if x.errInfo]:
-                pkg_errors = dict(((err, cnt) for err, cnt in pkg.errSummary.items() if err != "ignoreWarning" and cnt > 0))
+                pkg_errors = dict(
+                    (
+                        (err, cnt)
+                        for err, cnt in pkg.errSummary.items()
+                        if err != "ignoreWarning" and cnt > 0
+                    )
+                )
                 for itm in pkg_errors.items():
                     res[arch]["build"].append(
                         LogEntry(
@@ -261,9 +278,11 @@ def check_ib(data):
 
 
 def get_ib_results(ib_date, flavor, ib_data=None):
+    short_ib_date = ib_date.rsplit("-", 1)[0]
     ib_data = ib_data or fetch("SDT/html/data/" + flavor + ".json")
     for comp in ib_data["comparisons"]:
-        if comp["ib_date"] == ib_date and comp["isIB"]:
+        comp_ib_date = comp["ib_date"].rsplit("-", 1)[0]
+        if short_ib_date == comp_ib_date and comp["isIB"]:
             return comp
 
 

@@ -1,4 +1,3 @@
-import dataclasses
 import datetime
 import io
 import json
@@ -8,9 +7,8 @@ import re
 import urllib
 import urllib.error
 import urllib.request
+from collections import namedtuple
 from enum import Enum
-from dataclasses import dataclass
-from typing import Any
 
 
 # Borrowed from https://github.com/cms-sw/cmssdt-web
@@ -64,11 +62,7 @@ class ContentType(Enum):
     BINARY = 3
 
 
-@dataclass(kw_only=True)
-class LogEntry:
-    name: str
-    url: str
-    data: Any
+LogEntry = namedtuple("LogEntry", "name,url,data")
 
 
 def date_fromisoformat(date_str):

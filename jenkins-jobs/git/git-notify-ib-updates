@@ -111,7 +111,7 @@ def main():
 
             for arch in new_result:
                 for error in new_result[arch]["build"]:
-                    if old_result and error in old_result[arch]["build"]:
+                    if old_result and arch in old_result and error in old_result[arch]["build"]:
                         continue
 
                     report.append(
@@ -120,7 +120,7 @@ def main():
                     )
 
                 for error in new_result[arch]["utest"]:
-                    if old_result and error in old_result[arch]["utest"]:
+                    if old_result and arch in old_result and error in old_result[arch]["utest"]:
                         continue
 
                     report.append(
@@ -128,7 +128,7 @@ def main():
                     )
 
                 for error in new_result[arch]["relval"]:
-                    if old_result and error in old_result[arch]["relval"]:
+                    if old_result and arch in old_result and error in old_result[arch]["relval"]:
                         continue
 
                     report.append(

@@ -30,6 +30,7 @@ def get_commit_info(repo, commit):
     return github_api(
         uri="/repos/{}/commits/{}".format(repo, commit),
         method="GET",
+        all_pages=False
     )
 
 

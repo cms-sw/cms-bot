@@ -132,7 +132,10 @@ if [ -z ${RELEASE_FORMAT} ]; then
 fi
 
 DISABLE_CMS_DEPRECATED=false
-DISABLE_GPU_TESTS=false
+DISABLE_GPU_TESTS=true
+if [ $(uname -m) != "aarch64" ] ; then
+  DISABLE_GPU_TESTS=false
+fi
 CMSSW_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's/_X.*/_X/')  # RELEASE_FORMAT - CMSSW_10_4_X_2018-11-26-2300
 PULL_REQUESTS=$(echo ${PULL_REQUESTS} | tr ',' ' ' | sed 's/  */ /g' | sed 's/^ *//;s/ *$//' )  # to make consistent separation in list
 UNIQ_REPOS=$(echo ${PULL_REQUESTS} |  tr ' ' '\n'  | sed 's|#.*||g' | sort | uniq | tr '\n' ' ' )  # Repos without pull number

@@ -162,7 +162,11 @@ def check_ib(data):
         logger.info(f"\tArch: {arch}, status: {bld['passed']}")
         if bld["passed"] != "passed":
             bldFile = bld["file"].replace("/data/sdt", "")
-            summIO = io.BytesIO(fetch(bldFile, content_type=ContentType.BINARY))
+            try:
+                summIO = io.BytesIO(fetch(bldFile, content_type=ContentType.BINARY))
+            except urllib.error.HTTPError:
+                continue
+
             pklr = pickle.Unpickler(summIO)
             [rel, plat, _] = pklr.load()
             _ = pklr.load()
@@ -211,11 +215,15 @@ def check_ib(data):
                         f"lineStart}}-{{lineEnd}}"
                     )
                     # print(f"\t\t{failed} Unit Test{'s' if failed>1 else ''} in {pkg}")
-                    utlData = fetch(
-                        f"SDT/cgi-bin/buildlogs/raw_read_config/{arch}/"
-                        f"{data['release_name']}/unitTestLogs/{pkg}",
-                        ContentType.JSON,
-                    )
+                    try:
+                        utlData = fetch(
+                            f"SDT/cgi-bin/buildlogs/raw_read_config/{arch}/"
+                            f"{data['release_name']}/unitTestLogs/{pkg}",
+                            ContentType.JSON,
+                        )
+                    except urllib.error.HTTPError:
+                        utlData = {"show_controls": []}
+
                     for ctl in utlData["show_controls"]:
                         if ctl["name"] != "Issues":
                             continue
@@ -235,11 +243,15 @@ def check_ib(data):
         arch = rv["arch"]
         logger.info(f"\tArch: {rv['arch']}, status: {rv['passed']}")
         if not rv["passed"]:
-            rvData = fetch(
-                f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/"
-                f"{queue}.json",
-                ContentType.JSON,
-            )
+            try:
+                rvData = fetch(
+                    f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/"
+                    f"{queue}.json",
+                    ContentType.JSON,
+                )
+            except urllib.error.HTTPError:
+                rvData = []
+
             for rvItem in rvData:
                 exitcode = rvItem["exitcode"]
                 exitcodeName = exitcodes.get(exitcode, str(exitcode))

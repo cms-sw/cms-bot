@@ -84,7 +84,7 @@ def main():
 
 
 def validate_date(x):
-    if not (x == "auto" or libib.date_rex.match(x.rsplit("_")[1])):
+    if not (x == "auto" or libib.date_rex.match(x.rsplit("_", 1)[1])):
         raise ValueError()
 
 

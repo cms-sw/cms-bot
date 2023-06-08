@@ -1077,6 +1077,12 @@
       ], 
       "end_date": 1661904000, 
       "start_date": 1596585600
+    }, 
+    {
+      "category": [
+        "ppd"
+      ], 
+      "start_date": 1686182400
     }
   ], 
   "jpata": [
@@ -1323,6 +1329,12 @@
       ], 
       "end_date": 1678147200, 
       "start_date": 1633478400
+    }, 
+    {
+      "category": [
+        "ppd"
+      ], 
+      "start_date": 1686182400
     }
   ], 
   "mandrenguyen": [

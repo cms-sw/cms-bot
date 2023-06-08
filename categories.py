@@ -127,6 +127,9 @@ CMSSW_L2 = {
   "alebihan":         ["tau-pog"],
   "slava77":          ["tracking-pog"],
   "mmusich":          ["tracking-pog"],
+  # PPD
+  "malbouis":         ["ppd"],
+  "jordan-martins":   ["ppd"],
 }
 
 #All CMS_SDT members can sign externals ( e.g Pull Requests in cms-sw/cmsdist , cms-data and cms-externals

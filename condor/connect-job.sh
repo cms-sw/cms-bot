@@ -1,5 +1,6 @@
 #!/bin/bash -ex
 env
+if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}
 if [ -f ${LOCAL_DATA}/start_time ] ; then

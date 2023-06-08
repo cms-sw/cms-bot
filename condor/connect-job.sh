@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 env
 pwd
-ls -l
+ls -la
 if [ "${_CONDOR_JOB_AD}" != "" ] ; then
   [ -e ${_CONDOR_JOB_AD} ] && cat ${_CONDOR_JOB_AD}
 fi

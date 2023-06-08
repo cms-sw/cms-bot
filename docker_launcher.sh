@@ -1,4 +1,8 @@
 #!/bin/bash -ex
+if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
+if [ "${HOME}" = "" ] ; then
+  if [ "${_CONDOR_SCRATCH_DIR}" != "" ] ; then export HOME="${_CONDOR_SCRATCH_DIR}" ; fi
+fi
 if [ "X$ADDITIONAL_TEST_NAME" = "Xigprof" ] ; then
   if ulimit -a ; then
     ulimit -n 4096 -s 81920

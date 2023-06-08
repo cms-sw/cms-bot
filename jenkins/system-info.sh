@@ -1,4 +1,8 @@
 #!/bin/bash -e
+if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
+if [ "${HOME}" = "" ] ; then
+  if [ "${_CONDOR_SCRATCH_DIR}" != "" ] ; then export HOME="${_CONDOR_SCRATCH_DIR}" ; fi
+fi
 aklog >/dev/null 2>&1 || true
 ACTUAL_NPROC=$(getconf _NPROCESSORS_ONLN 2> /dev/null || true)
 [ "${ACTUAL_NPROC}" != "" ] || ACTUAL_NPROC=$(nproc)

@@ -1,5 +1,13 @@
 #!/bin/bash -ex
 env
+pwd
+ls
+if [ "${_CONDOR_JOB_AD}" != "" ] ; then
+  [ -e ${_CONDOR_JOB_AD} ] && cat ${_CONDOR_JOB_AD}
+fi
+if [ "${_CONDOR_MACHINE_AD}" != "" ] ; then
+  [ -e ${_CONDOR_MACHINE_AD} ] && cat ${_CONDOR_MACHINE_AD}
+fi
 if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}

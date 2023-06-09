@@ -9,8 +9,6 @@ fi
 if [ "${_CONDOR_MACHINE_AD}" != "" ] ; then
   [ -e ${_CONDOR_MACHINE_AD} ] && cat ${_CONDOR_MACHINE_AD}
 fi
-[ -d tmp ] && find tmp -type f
-[ -d var ] && find var -type f
 if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}

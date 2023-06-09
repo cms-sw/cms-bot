@@ -9,8 +9,6 @@ fi
 if [ "${_CONDOR_MACHINE_AD}" != "" ] ; then
   [ -e ${_CONDOR_MACHINE_AD} ] && cat ${_CONDOR_MACHINE_AD}
 fi
-[ -e .chirp.config ]  && (cat .chirp.config || true)
-([ -e _condor_stdout ] && (cp _condor_stdout delme ; cat delme ; rm -f delem)) || true
 [ -d tmp ] && find tmp -type f
 [ -d var ] && find var -type f
 if [ "${USER}" = "" ] ; then export USER=$(whoami); fi

@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+sleep 30
 env
 pwd
 ls -la

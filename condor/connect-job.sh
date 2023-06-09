@@ -11,8 +11,8 @@ if [ "${_CONDOR_MACHINE_AD}" != "" ] ; then
 fi
 [ -e .chirp.config ]  && (cat .chirp.config || true)
 ([ -e _condor_stdout ] && (cp _condor_stdout delme ; cat delme ; rm -f delem)) || true
-[ -d tmp ] && ls -la tmp/
-[ -d var ] && ls -la var/
+[ -d tmp ] && find tmp -type f
+[ -d var ] && find var -type f
 if [ "${USER}" = "" ] ; then export USER=$(whoami); fi
 LOCAL_DATA=${_CONDOR_SCRATCH_DIR}/cmsconnect
 mkdir -p ${LOCAL_DATA}

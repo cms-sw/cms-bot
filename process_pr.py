@@ -43,7 +43,7 @@ for l in CMSSW_LABELS.keys():
   if not l in dpg_pog:
     del CMSSW_LABELS[l]
   else:
-    CMSSW_LABELS[l] = [re.compile('^.*('+p+').*$') for p in CMSSW_LABELS[l]]
+    CMSSW_LABELS[l] = [re.compile('^('+p+').*$') for p in CMSSW_LABELS[l]]
 
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME=join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)

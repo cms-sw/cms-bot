@@ -110,11 +110,12 @@ def main():
             _, new_result = libib.check_ib(new_comparision)
 
             for arch in new_result:
+                arch_report = []
                 for error in new_result[arch]["build"]:
                     if old_result and arch in old_result and error in old_result[arch]["build"]:
                         continue
 
-                    report.append(
+                    arch_report.append(
                         f"| {rel} | {ib_date} | {arch} | [{error.name}]({error.url}) | {error.data[1]}x "
                         f"{error.data[0]} | "
                     )
@@ -123,7 +124,7 @@ def main():
                     if old_result and arch in old_result and error in old_result[arch]["utest"]:
                         continue
 
-                    report.append(
+                    arch_report.append(
                         f"| {rel} | {ib_date} | {arch} | [{error.name}]({error.url}) | TBD | "
                     )
 
@@ -131,9 +132,19 @@ def main():
                     if old_result and arch in old_result and error in old_result[arch]["relval"]:
                         continue
 
-                    report.append(
+                    arch_report.append(
                         f"| {rel} | {ib_date} | {arch} | [{error.name}]({error.url}) | {error.data} | "
                     )
+
+                if len(arch_report) > 20:
+                    arch_report_l = len(arch_report)
+                    arch_report = arch_report[:19]
+                    arch_report.append(
+                        f"| :warning: {rel} | {ib_date} | {arch} | {arch_report_l-19} error(s) more | Check IB status page | "
+                    )
+
+                report.extend(arch_report)
+
 
     # changed_rels = "\n".join("* "+x for x in list(changed_rels))
     header = """@shifter New IB failures found, please check:

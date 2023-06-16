@@ -3755,3 +3755,4 @@ architecture=el9_amd64_gcc11;label=CMSSW_13_0_7_TOTEM;type=Production;state=Anno
 architecture=el8_aarch64_gcc11;label=CMSSW_13_2_0_pre2;type=Development;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc11;label=CMSSW_13_2_0_pre2;type=Development;state=Announced;prodarch=1;
 architecture=el9_amd64_gcc11;label=CMSSW_13_2_0_pre2;type=Development;state=Announced;prodarch=0;
+architecture=el9_aarch64_gcc11;label=CMSSW_13_2_0_pre2;type=Development;state=Announced;prodarch=0;

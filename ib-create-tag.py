@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+#!/bin/bash
+
+""":"
+python_cmd="python3"
+python -V >/dev/null 2>&1 && python_cmd="python"
+exec ${python_cmd} $0 ${1+"$@"}
+"""
+
 from __future__ import print_function
 
 import datetime

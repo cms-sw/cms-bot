@@ -536,7 +536,7 @@ if ${BUILD_EXTERNAL} ; then
       ltpath="${WORKSPACE}/${BUILD_DIR}/${pkg}"
       [ -d ${ltpath} ] || continue
       l_tc=$(find ${ltpath} -follow | wc -l)
-      l_ts=$(du -shL ${ltpath} | awk '{print $1}')
+      l_ts=$(du -shD ${ltpath} | awk '{print $1}')
       tdir=$(dirname $pkg)
       rtpath=$(grep -R ${tdir} ${BTOOLS} | grep '_BASE\|CMSSW_SEARCH_PATH' | tail -1 | sed 's|.* default="||;s|".*||')
       if [ "${rtpath}" = "" ] || [ ! -d "${rtpath}" ] ; then
@@ -544,7 +544,7 @@ if ${BUILD_EXTERNAL} ; then
         r_ts=0
       else
         r_tc=$(find ${rtpath} -follow | wc -l)
-        r_ts=$(du -shL ${rtpath} | awk '{print $1}')
+        r_ts=$(du -shD ${rtpath} | awk '{print $1}')
       fi
       tool=$(basename $tdir)
       echo "<tr><td>${tool}</td><td>$l_tc</td><td>$r_tc</td><td>$l_ts</td><td>$r_ts</td></tr>" >> $WORKSPACE/upload/external-tools.html

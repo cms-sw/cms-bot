@@ -39,7 +39,7 @@ class PackageInfo(object):
         self.errSummary = {}
         self.errLines = {}
         self.warnOnly = False
-        
+
     def addErrInfo(self, errInfo, lineNo):
         """docstring for addErr"""
         self.warnOnly = True
@@ -50,11 +50,11 @@ class PackageInfo(object):
         else:
             self.errSummary[errInfo.errType] += 1
         self.errLines[lineNo] = errInfo.errType
-        
+
     def name(self):
         """docstring for name"""
         return self.subsys+'/'+self.pkg
-        
+
 # ================================================================================
 
 class LogFileAnalyzer(object):
@@ -74,14 +74,14 @@ class LogFileAnalyzer(object):
         self.verbose = verbose
 
         self.tagList = {}
-        
+
         self.nErrorInfo  = {}
         self.nFailedPkgs = []
         self.packageList = []
         self.pkgOK       = []
         self.pkgErr      = []
         self.pkgWarn     = []
-                
+
         self.errorKeys = ['dictError',
                           'compError',
                           'linkError',
@@ -120,7 +120,7 @@ class LogFileAnalyzer(object):
         needed for sending out e-mails
         """
         pass
-        
+
     def getTagList(self):
 
         import glob
@@ -129,12 +129,12 @@ class LogFileAnalyzer(object):
           pkg = pkg.replace(srcdir,"")
           self.tagList[pkg] = ""
         return
-        
+
     def analyze(self):
         """loop over all packages and analyze the log files"""
 
         os.chdir(self.topDir)
-        
+
         self.getTagList()
 
         import glob
@@ -157,7 +157,7 @@ class LogFileAnalyzer(object):
                     if key in pkg.errSummary.keys() and pkg not in pkgDone:
                         self.errMap[key].append(pkg)
                         pkgDone.append(pkg)
-            else:    
+            else:
                 self.pkgOK.append(pkg)
 
         stop = time.time()
@@ -166,16 +166,16 @@ class LogFileAnalyzer(object):
 
     def report(self):
         """show collected info"""
-        
+
         print('analyzed ', len(self.packageList), 'log files in', str(self.anaTime), 'sec.')
         totErr = 0
         for key, val in self.nErrorInfo.items():
             totErr += int(val)
-            
+
         print('found ', totErr, ' errors and warnings in total, by type:')
         for key, val in self.nErrorInfo.items():
             print('\t', key, ' : ', val, ' in ', len(self.errMapAll[key]), 'packages')
-        
+
         print('found ', len(self.pkgOK),  'packages without errors/warnings.')
         print('found ', len(self.pkgErr), 'packages with errors or warnings, ', len(self.pkgWarn), ' with warnings only.')
         start = time.time()
@@ -188,11 +188,11 @@ class LogFileAnalyzer(object):
             self.makeHTMLLogFile(pkg)
         stop = time.time()
         print("creating html pages took ", str(stop-start), 'sec.')
-        
+
     def makeHTMLSummaryPage(self):
 
         keyList = self.errorKeys
-        
+
         htmlDir = '../html/'
         if not os.path.exists(htmlDir):
             os.makedirs(htmlDir)
@@ -211,7 +211,7 @@ class LogFileAnalyzer(object):
         totErr = 0
         for key, val in self.nErrorInfo.items():
             totErr += int(val)
-        
+
         htmlFile.write('<h3> found '+ str(totErr)+ ' errors and warnings in total, by type: </h3>\n')
         htmlFile.write('<table border="1" cellpadding="10">')
         htmlFile.write('<tr> <td><b>error type</b></td><td><b> # packages </b></td><td><b> total # errors </b></td></tr>\n')
@@ -224,26 +224,26 @@ class LogFileAnalyzer(object):
             nPkgE = len(self.errMapAll[key])
             htmlFile.write('<tr class="'+self.styleClass[key]+'"> <td>'+ key + ' </td><td> ' + str(nPkgE) + '</td><td> ' + str(val) + '</td></tr>\n')
         htmlFile.write('<table>')
-        
+
         htmlFile.write('<table border="1">\n')
         htmlFile.write(" <tr>")
         htmlFile.write("<th>")
         htmlFile.write('status')
-        htmlFile.write("</th>")    
+        htmlFile.write("</th>")
         htmlFile.write("<th>")
         htmlFile.write('subsystem/package')
-        htmlFile.write("</th>")    
+        htmlFile.write("</th>")
         for key in keyList:
             htmlFile.write("<th>")
             htmlFile.write(key)
-            htmlFile.write("</th>")    
+            htmlFile.write("</th>")
         htmlFile.write(" </tr> \n")
-        
+
         topLogString = self.topURL
 
         for key in keyList:
             pkgList = sorted(self.errMap[key], key=lambda x: x.name())
-            
+
             for pkg in pkgList:
                 if not pkg.name() in self.tagList: continue
                 styleClass = 'ok'
@@ -254,7 +254,7 @@ class LogFileAnalyzer(object):
                 htmlFile.write('<td>')
                 link = ' <a href="'+topLogString+pkg.name()+'/log.html">'+pkg.name()+'   '+self.tagList[pkg.name()]+'  </a> '
                 htmlFile.write(link)
-                htmlFile.write("</td>")    
+                htmlFile.write("</td>")
                 for pKey in keyList:
                     htmlFile.write("<td>")
                     if pKey in pkg.errSummary.keys():
@@ -264,12 +264,12 @@ class LogFileAnalyzer(object):
                             htmlFile.write( str(pkg.errSummary[pKey]))
                     else:
                         htmlFile.write(' - ')
-                    htmlFile.write("</td>")    
+                    htmlFile.write("</td>")
 
-                htmlFile.write("</tr>\n")    
+                htmlFile.write("</tr>\n")
 
         pkgList = sorted(self.pkgOK, key=lambda x: x.name())
-        
+
         for pkg in pkgList:
             if not pkg.name() in self.tagList: continue
             htmlFile.write(' <tr>')
@@ -277,16 +277,16 @@ class LogFileAnalyzer(object):
             htmlFile.write('<td>')
             link = ' <a href="'+topLogString+pkg.name()+'/log.html">'+pkg.name()+'   '+self.tagList[pkg.name()]+'</a> '
             htmlFile.write(link)
-            htmlFile.write("</td>")    
+            htmlFile.write("</td>")
             for pKey in self.errorKeys:
                 htmlFile.write("<td>")
                 htmlFile.write(' - ')
-                htmlFile.write("</td>")    
-            htmlFile.write("</tr>\n")    
+                htmlFile.write("</td>")
+            htmlFile.write("</tr>\n")
 
-        htmlFile.write("</table>\n")    
-        htmlFile.write("</body>\n")    
-        htmlFile.write("</html>\n")        
+        htmlFile.write("</table>\n")
+        htmlFile.write("</body>\n")
+        htmlFile.write("</html>\n")
 
         htmlFile.close()
 
@@ -306,7 +306,7 @@ class LogFileAnalyzer(object):
         summFile.close()
 
         return
-        
+
     def makeHTMLLogFile(self, pkg):
         """docstring for makeHTMLFile"""
 
@@ -314,14 +314,14 @@ class LogFileAnalyzer(object):
         htmlDir = '../html/'+pkg.name()+'/'
         if not os.path.exists(htmlDir):
             os.makedirs(htmlDir)
-        htmlFileName = htmlDir +'log.html'    
+        htmlFileName = htmlDir +'log.html'
 
         logFileName = pkg.name()+'/build.log'
         logFile = open(logFileName, 'r')
         htmlFile = open (htmlFileName, 'w')
         htmlFile.write("<html>\n")
         htmlFile.write("<head>\n")
-        htmlFile.write('<link rel="stylesheet" type="text/css" href="http://cern.ch/cms-sdt/intbld.css">\n')
+        htmlFile.write('<link rel="stylesheet" type="text/css" href="/SDT/html//css/intbld.css">')
         htmlFile.write("<title>Log File for "+pkg.name()+"</title>")
         htmlFile.write("</head>\n")
         htmlFile.write("<body>\n")
@@ -334,22 +334,22 @@ class LogFileAnalyzer(object):
             newLine = line.replace('&','&amp;') # do this first to not escape it again in the next subs
             newLine = newLine.replace('<','&lt;').replace('>','&gt;')
             if lineNo in pkg.errLines.keys():
-                newLine = '<class='+self.styleClass[pkg.errLines[lineNo]]+'> <b> '+newLine+' </b></class>'
+                newLine = '<span class='+self.styleClass[pkg.errLines[lineNo]]+'> <b> '+newLine+' </b></span>'
             if sys.version_info[0]<3:
                 htmlFile.write(newLine.decode('ascii','ignore'))
             else:
                 htmlFile.write(newLine)
-        htmlFile.write("</pre>\n")    
-        htmlFile.write("</body>\n")    
-        htmlFile.write("</html>\n")        
+        htmlFile.write("</pre>\n")
+        htmlFile.write("</body>\n")
+        htmlFile.write("</html>\n")
         htmlFile.close()
-        
+
     def analyzeFile(self, fileNameIn):
         """read in file and check for errors"""
         subsys, pkg, logFile = fileNameIn.split('/')
 
         if self.verbose > 5 : print("analyzing file : ", fileNameIn)
-        
+
         fileIn = open(fileNameIn, 'r')
         shLib = 'so'
         if os.uname()[0] == 'Darwin' :
@@ -393,7 +393,7 @@ class LogFileAnalyzer(object):
 
         miscErrRe = re.compile('^gmake: \*\*\* (.*)$')
         genericLinkErrRe = re.compile('^gmake: \*\*\* \[tmp/.*?/lib.*?'+shLib+'\] Error 1')
-        
+
         if ('_gcc46' in os.environ["SCRAM_ARCH"]):
             errorInf.append({str('^.*?:\d+\: warning\: ') : ['compWarning', 'from external in package']})
         else:
@@ -403,7 +403,7 @@ class LogFileAnalyzer(object):
         for errI in errorInf:
           for err, info in errI.items():
             errors.append({re.compile(err) : info})
-            
+
         pkgInfo = PackageInfo(subsys, pkg)
         lineNo = -1
         for line in fileIn:
@@ -424,28 +424,28 @@ class LogFileAnalyzer(object):
                     if errTyp in self.nErrorInfo.keys():
                         self.nErrorInfo[errTyp] += 1
                     else:
-                        self.nErrorInfo[errTyp] = 1    
+                        self.nErrorInfo[errTyp] = 1
                     pkgInfo.addErrInfo( ErrorInfo(errTyp, msg), lineNo )
                     break
               if isMatched: break
             if not errFound :
                 miscErrMatch = miscErrRe.match(line)
                 if miscErrMatch:
-                    if not genericLinkErrRe.match(line) : 
+                    if not genericLinkErrRe.match(line) :
                         errTyp = 'miscError'
                         msg = 'Unknown error found: %s' % miscErrMatch.groups(1)
                         if errTyp in self.nErrorInfo.keys():
                             self.nErrorInfo[errTyp] += 1
                         else:
-                            self.nErrorInfo[errTyp] = 1    
+                            self.nErrorInfo[errTyp] = 1
                         pkgInfo.addErrInfo( ErrorInfo(errTyp, msg), lineNo )
-                
+
         fileIn.close()
 
         self.packageList.append( pkgInfo )
 
         return
-    
+
 # ================================================================================
 
 help_message = '''

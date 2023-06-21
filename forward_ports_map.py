@@ -96,8 +96,8 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/master"].append("IB/CMSSW_13_2_X/cl
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/master"].append("IB/CMSSW_13_2_X/cudart")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/rootmaster"]=["IB/CMSSW_13_2_X/rootmodule"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/root628"]=["IB/CMSSW_13_2_X/root628-g12"]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/g12"]=["IB/CMSSW_13_2_X/root628-g12"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/g12"]=["IB/CMSSW_13_2_X/g13"]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/root628"].append("IB/CMSSW_13_2_X/g13")
 
 #Explicitly added by Ivan RAZUMOV
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_2_X/g12"].append("IB/CMSSW_13_2_X/g12_cpp20")

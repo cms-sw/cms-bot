@@ -110,8 +110,10 @@ CMSSW_L2 = {
   # pogs
   "juska":            ["pf"],
   "kdlong":           ["pf"],
+  "swagata87":        ["pf"],
   "a-kapoor":         ["egamma-pog"],
   "swagata87":        ["egamma-pog"],
+  "RSalvatico":       ["egamma-pog"],
   "kirschen":         ["jetmet-pog"],
   "miquork":          ["jetmet-pog"],
   "alkaloge":         ["jetmet-pog"],

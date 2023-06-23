@@ -108,7 +108,7 @@ CMSSW_L2 = {
   "fabiocos":         ["mtd-dpg", "operations"],
   "parbol":           ["mtd-dpg"],
   # pogs
-  "juska":            ["pf"],
+  "bellan":           ["pf"],
   "kdlong":           ["pf"],
   "swagata87":        ["pf"],
   "a-kapoor":         ["egamma-pog"],

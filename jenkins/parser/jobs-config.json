@@ -169,6 +169,11 @@
         "jobName": "cvmfs-cms-stale-lock",
         "errorType": [],
         "maxTime": "1"
+      },
+      {
+        "jobName": "compare-root-files-short-matrix",
+        "errorType": [],
+        "maxTime": "10"
       }
     ],
     "errorMsg": {

@@ -127,6 +127,7 @@ CMSSW_L2 = {
   "alebihan":         ["tau-pog"],
   "slava77":          ["tracking-pog"],
   "mmusich":          ["tracking-pog"],
+  "kskovpen":         ["tracking-pog"],
   # PPD
   "malbouis":         ["ppd"],
   "jordan-martins":   ["ppd"],

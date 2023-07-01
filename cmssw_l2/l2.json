@@ -452,6 +452,15 @@
       "start_date": 1632787200
     }
   ], 
+  "consuegs": [
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "start_date": 1687996800
+    }
+  ], 
   "covarell": [
     {
       "category": [
@@ -1666,7 +1675,17 @@
         "operations", 
         "orp"
       ], 
+      "end_date": 1687996800, 
       "start_date": 1629244800
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db", 
+        "orp", 
+        "orp"
+      ], 
+      "start_date": 1687996800
     }
   ], 
   "perrozzi": [

@@ -28,7 +28,7 @@ voms-proxy-init -voms cms
 cd $RELEASE_FORMAT
 eval `scram run -sh`
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
-CRABCLIENT_TYPES=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
+CRABCLIENT_TYPES=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)' || true)
 [ "${CRABCLIENT_TYPES}" != "" ] || CRABCLIENT_TYPES="prod"
 for CRABCLIENT_TYPE in ${CRABCLIENT_TYPES}
 do

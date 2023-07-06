@@ -28,8 +28,9 @@ voms-proxy-init -voms cms
 cd $RELEASE_FORMAT
 eval `scram run -sh`
 [ "${BUILD_ID}" != "" ]          || export BUILD_ID=$(date +%s)
-
-for CRABCLIENT_TYPE in $(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
+CRABCLIENT_TYPES=$(ls ${PR_CVMFS_PATH}/share/cms/ | grep -Eo '(dev|prod|pre)')
+[ "${CRABCLIENT_TYPES}" != "" ] || CRABCLIENT_TYPES="prod"
+for CRABCLIENT_TYPE in ${CRABCLIENT_TYPES}
 do
     # Report PR status
     mark_commit_status_all_prs 'crab-'${CRABCLIENT_TYPE} 'pending' -u "${BUILD_URL}" -d "Running"

@@ -195,7 +195,8 @@ def main():
                 )
                 print(f"rm -f report_{i}.json", file=f)
     else:
-        os.unlink(f"{workspace}/submit.sh")
+        if os.path.exists(f"{workspace}/submit.sh"):
+            os.unlink(f"{workspace}/submit.sh")
 
     # # Save new json files
     # for rel in changed_rels:

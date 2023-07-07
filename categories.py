@@ -58,7 +58,6 @@ CMSSW_L2 = {
   "missirol":         ["hlt"],
   "mkirsano":         ["generators"],   
   "menglu21":         ["generators"],
-  "perrotta":         ["operations"],
   "rappoccio":        ["operations"],
   "pmandrik":         ["dqm"],
   "micsucmed":        ["dqm"],
@@ -78,7 +77,7 @@ CMSSW_L2 = {
   "francescobrivio":  ["alca","db"],
   "tvami":            ["alca","db"],
   "saumyaphor4252":   ["alca","db"],
-  "perrotta":         ["alca","db"],
+  "perrotta":         ["operations","alca","db"],
   "consuegs":         ["alca","db"],
   CMSBUILD_USER:      ["tests" ],
   # dpgs

@@ -12,7 +12,7 @@ fi
 
 KTAB=${HOME}/keytabs/$(echo $TARGET | sed 's|@.*||').keytab
 if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi
-KINIT_USER=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||' | tail -1)
+KINIT_USER=$(klist -k -t -K ${KTAB} | sed  's|@CERN.CH.*||;s|.* ||;s|\.||g' | tail -1)
 export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
 export KRB5CCNAME=FILE:/tmp/krb5cc_$(id -u)_${KINIT_USER}_${SLAVE_TYPE}
 KPRINCIPAL=${KINIT_USER}@CERN.CH

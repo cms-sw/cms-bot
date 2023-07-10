@@ -1065,12 +1065,6 @@ wddgit:
 - DataFormats/Streamer
 - DataFormats/TestObjects
 - DataFormats/WrappedStdDictionaries
-wrtabb:
-- RecoEgamma
-- RecoEcal
-- EgammaAnalysis
-- DataFormats/EgammaCandidates
-- DataFormats/EgammaReco
 Prasant1993:
 - RecoEgamma
 - RecoEcal

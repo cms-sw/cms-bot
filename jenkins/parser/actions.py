@@ -311,8 +311,15 @@ def update_cmssdt_page(
     html_file, job, build, error, job_url, retry_url, action, refresh_only=False
 ):
 
-    with open(html_file, "r") as openfile:
-        json_object = json.load(openfile)
+    try:
+        with open(html_file, "r") as openfile:
+            json_object = json.load(openfile)
+    except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+        # Handle file not found error or JSON decoding error
+        print(f"Error occurred: {str(e)}")
+        print("Restoring json-web-info.json file...")
+        with open(html_file, "w") as json_file:
+            json.dump({"parserActions": {}}, json_file)
 
     if refresh_only == False:
 

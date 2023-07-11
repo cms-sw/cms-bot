@@ -4,29 +4,29 @@ import json
 import os
 
 webinfo_file = os.path.join(os.environ.get("HOME"), "builds/jenkins-test-parser-monitor/json-web-info.json")
-webinfo_template = {"parserActions": {}}  # Keeps track of the actions taken by parser job
 
 try:
-    with open(webinfo_file, "r") as json_file:
+    with open(webinfo_file, "r") as json_file:  # Keeps track of the actions taken by parser job
         json_object = json.load(json_file)
 except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
     print(f"Error occurred: {str(e)}")
     print("Restoring json-web-info.json file...")
     with open(webinfo_file, "w") as json_file:
-        json.dump(webinfo_template, json_file, indent=4)
+        json_object = {"parserActions": {}}
+        json.dump(json_object, json_file, indent=2)
 
 retryinfo_file = os.path.join(os.environ.get("HOME"), "builds/jenkins-test-parser-monitor/json-retry-info.json")
-retryinfo_template = {"retryUrl": {}}  # Keeps track of the links to the retry job
 
 try:
-    with open(retryinfo_file, "r") as json_file:
+    with open(retryinfo_file, "r") as json_file:  # Keeps track of the links to the retry job
         json_retry_object = json.load(json_file)
 except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
     # Handle file not found error or JSON decoding error
     print(f"Error occurred: {str(e)}")
     print("Restoring json-retry-info.json file...")
     with open(retryinfo_file, "w") as json_file:
-        json.dump(retryinfo_template, json_file)
+        json_retry_object = {"retryUrl": {}}
+        json.dump(retryinfo_template, json_file, indent=2)
 
 with open(
     os.environ.get("HOME")

@@ -76,11 +76,8 @@ def check_and_trigger_action(
                     )
                 else:
                     # Take action on the nodes
-                    node_name = (
-                        helpers.grep(envvars_file_path, "NODE_NAME=", True)
-                        .split("=")[1]
-                        .replace("\n", "")
-                    )
+                    node_name = helpers.grep(envvars_file_path, "NODE_NAME=", True) or ""
+                    node_name = (node_name.split("=")[1].replace("\n", ""))
                     job_url = (
                         os.environ.get("JENKINS_URL")
                         + "job/"
@@ -174,12 +171,8 @@ def check_and_trigger_action(
         )
 
         build_file_path = os.path.join(build_dir_path, "build.xml")
-        display_name = (
-            helpers.grep(build_file_path, "<displayName>", True)
-            .replace("<displayName>", "")
-            .replace("</displayName>", "")
-            .replace("\n", "")
-        )
+        display_name = helpers.grep(build_file_path, "<displayName>", True) or ""
+        display_name = display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")
         actions.notify_noaction(display_name, job_to_retry, build_to_retry, job_url)
 
 
@@ -222,19 +215,12 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
         )
         return
 
-    start_timestamp = (
-        helpers.grep(build_file_path, "<startTime>", True)
-        .replace("<startTime>", "")
-        .replace("</startTime>", "")
-    )
+    start_timestamp = helpers.grep(build_file_path, "<startTime>", True) or ""
+    start_timestamp = start_timestamp.replace("<startTime>", "").replace("</startTime>", "")
 
-    display_name = (
-        helpers.grep(build_file_path, "<displayName>", True)
-        .replace("<displayName>", "")
-        .replace("</displayName>", "")
-        .replace("\n", "")
-    )
-
+    display_name = helpers.grep(build_file_path, "<displayName>", True) or ""
+    display_name = display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")
+  
     start_datetime = datetime.datetime.fromtimestamp(int(start_timestamp) / 1000)
     now = datetime.datetime.now()
     duration = now - start_datetime
@@ -300,21 +286,34 @@ if __name__ == "__main__":
         os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
     )
 
-    # Get job-config info
+    # Get job-config info - always present (cloned from github)
     with open(jobs_config_path, "r") as jobs_file:
         jobs_object = json.load(jobs_file)
         jenkins_jobs = jobs_object["jobsConfig"]["jenkinsJobs"]
 
     # Get parser-info from previous run
-    with open(
-        parser_info_path, "r"
-    ) as processed_file:  # Get last parsed object just once
-        processed_object = json.load(processed_file)
+    try:
+        with open(parser_info_path, "r") as processed_file:  # Get last parsed object just once
+            processed_object = json.load(processed_file)
+    except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+         print(f"Error occurred: {str(e)}")
+         print("Restoring parser-info.json file...")
+         with open(parser_info_path, "w") as json_file:
+             processed_object = {"parserInfo":{"lastRevision":{},"runningBuilds":{}}}
+             json.dump(processed_object, json_file, indent=2)
 
     # Get retry queue
-    with open(retry_queue_path, "r") as retry_file:
-        retry_object = json.load(retry_file)
-        retry_entries = retry_object["retryQueue"]
+    try:
+        with open(retry_queue_path, "r") as retry_file:
+            retry_object = json.load(retry_file)
+            retry_entries = retry_object["retryQueue"]
+    except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+         print(f"Error occurred: {str(e)}")
+         print("Restoring retry_queue.json file...")
+         with open(retry_queue_path, "w") as json_file:
+             retry_object = {"retryQueue": {}}
+             json.dump(retry_object, json_file, indent=2)
+             retry_entries = retry_object["retryQueue"]
 
     T = 1
     time_check = True

@@ -319,7 +319,8 @@ def update_cmssdt_page(
         print(f"Error occurred: {str(e)}")
         print("Restoring json-web-info.json file...")
         with open(html_file, "w") as json_file:
-            json.dump({"parserActions": {}}, json_file)
+            json_object = {"parserActions": {}}
+            json.dump(json_object, json_file)
 
     if refresh_only == False:
 

@@ -300,21 +300,34 @@ if __name__ == "__main__":
         os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
     )
 
-    # Get job-config info
+    # Get job-config info - always present (cloned from github)
     with open(jobs_config_path, "r") as jobs_file:
         jobs_object = json.load(jobs_file)
         jenkins_jobs = jobs_object["jobsConfig"]["jenkinsJobs"]
 
     # Get parser-info from previous run
-    with open(
-        parser_info_path, "r"
-    ) as processed_file:  # Get last parsed object just once
-        processed_object = json.load(processed_file)
+    try:
+        with open(parser_info_path, "r") as processed_file:  # Get last parsed object just once
+            processed_object = json.load(processed_file)
+    except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+         print(f"Error occurred: {str(e)}")
+         print("Restoring parser-info.json file...")
+         with open(parser_info_path, "w") as json_file:
+             processed_object = {"parserInfo":{"lastRevision":{},"runningBuilds":{}}}
+             json.dump(processed_object, json_file, indent=2)
 
     # Get retry queue
-    with open(retry_queue_path, "r") as retry_file:
-        retry_object = json.load(retry_file)
-        retry_entries = retry_object["retryQueue"]
+    try:
+        with open(retry_queue_path, "r") as retry_file:
+            retry_object = json.load(retry_file)
+            retry_entries = retry_object["retryQueue"]
+    except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+         print(f"Error occurred: {str(e)}")
+         print("Restoring retry_queue.json file...")
+         with open(retry_queue_path, "w") as json_file:
+             retry_object = {"retryQueue": {}}
+             json.dump(retry_object, json_file, indent=2)
+             retry_entries = retry_object["retryQueue"]
 
     T = 1
     time_check = True

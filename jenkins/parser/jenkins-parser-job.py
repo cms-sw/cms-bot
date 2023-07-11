@@ -76,11 +76,8 @@ def check_and_trigger_action(
                     )
                 else:
                     # Take action on the nodes
-                    node_name = (
-                        helpers.grep(envvars_file_path, "NODE_NAME=", True)
-                        .split("=")[1]
-                        .replace("\n", "")
-                    )
+                    node_name = helpers.grep(envvars_file_path, "NODE_NAME=", True) or ""
+                    node_name = (node_name.split("=")[1].replace("\n", ""))
                     job_url = (
                         os.environ.get("JENKINS_URL")
                         + "job/"
@@ -218,11 +215,8 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
         )
         return
 
-    start_timestamp = (
-        helpers.grep(build_file_path, "<startTime>", True)
-        .replace("<startTime>", "")
-        .replace("</startTime>", "")
-    )
+    start_timestamp = helpers.grep(build_file_path, "<startTime>", True) or ""
+    start_timestamp = start_timestamp.replace("<startTime>", "").replace("</startTime>", "")
 
     display_name = helpers.grep(build_file_path, "<displayName>", True) or ""
     display_name = display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")

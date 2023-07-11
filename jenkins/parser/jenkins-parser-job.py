@@ -174,12 +174,8 @@ def check_and_trigger_action(
         )
 
         build_file_path = os.path.join(build_dir_path, "build.xml")
-        display_name = (
-            helpers.grep(build_file_path, "<displayName>", True)
-            .replace("<displayName>", "")
-            .replace("</displayName>", "")
-            .replace("\n", "")
-        )
+        display_name = helpers.grep(build_file_path, "<displayName>", True) or ""
+        display_name = display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")
         actions.notify_noaction(display_name, job_to_retry, build_to_retry, job_url)
 
 
@@ -228,13 +224,9 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
         .replace("</startTime>", "")
     )
 
-    display_name = (
-        helpers.grep(build_file_path, "<displayName>", True)
-        .replace("<displayName>", "")
-        .replace("</displayName>", "")
-        .replace("\n", "")
-    )
-
+    display_name = helpers.grep(build_file_path, "<displayName>", True) or ""
+    display_name = display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")
+  
     start_datetime = datetime.datetime.fromtimestamp(int(start_timestamp) / 1000)
     now = datetime.datetime.now()
     duration = now - start_datetime

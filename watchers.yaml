@@ -1554,9 +1554,6 @@ sobhatta:
 kpedro88:
 - HeterogeneousCore/SonicCore
 - HeterogeneousCore/SonicTriton
-- SLHCUpgradeSimulations/Configuration
-- Configuration/Geometry
-- Configuration/PyReleaseValidation
 fabiocos:
 - CondFormats/GeometryObjects
 - Configuration

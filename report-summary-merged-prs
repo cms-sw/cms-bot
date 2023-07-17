@@ -1467,7 +1467,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_IGPROF = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME'
     MAGIC_COMMAND_FIND_PROFILING = 'test -d ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME'
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER1 = 'ls '+JENKINS_ARTIFACTS_DIR+'/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3_*.resources.json 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||;s|.json$||"'
-    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = 'ls ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/*/sorted_RES_CPU_step3.txt 2>/dev/null | head -1 | sed sed"s|.*/RELEASE_NAME/||"''
+    MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER2 = 'ls ' + JENKINS_ARTIFACTS_DIR + '/igprof/RELEASE_NAME/ARCHITECTURE/profiling/*/sorted_RES_CPU_step3.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME/||"'
     MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3 = 'ls ' + JENKINS_ARTIFACTS_DIR + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME||"'
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = 'test -f ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'
     MAGIC_COMMAND_COMPARISON_BASELINE_ERRORS = 'cat ' + JENKINS_ARTIFACTS_DIR + '/ib-baseline-tests/RELEASE_NAME/ARCHITECTURE/-GenuineIntel/matrix-results/wf_errors.txt'

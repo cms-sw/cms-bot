@@ -175,12 +175,9 @@ pushd CMSDIST
   perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw $CMSSW_RELEASE_BASE/" cmssw.spec
   perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" cmssw-ib.spec
   perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
-  for ext in $(echo ${DEBUG_EXTERNALS} | tr ', ' '\n\n' | grep -v '^$') ; do
-    case $ext in
-      root ) sed -i -e 's|_BUILD_TYPE=Release|_BUILD_TYPE=Debug|g' root.spec ;;
-     * ) ;;
-    esac
-  done
+  if [ "${DEBUG_EXTERNALS}" != "" ] ; then
+    EX_OPTS="${EX_OPTS} --define cms_debug_packages=${DEBUG_EXTERNALS}"
+  fi
 popd
 
 PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --specs-only build $PACKAGE_NAME

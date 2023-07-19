@@ -1,2 +1,2 @@
-current_shifter="avalenzu"
-#current_shifter="razumov"
+#current_shifter="avalenzu"
+current_shifter="razumov"

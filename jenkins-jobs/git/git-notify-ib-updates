@@ -5,6 +5,7 @@ import json
 import logging
 import sys
 import os
+import urllib.error
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shift"))
@@ -24,10 +25,13 @@ except ImportError:
     from libib import PackageInfo, ErrorInfo
 
 try:
-    from shifter import current_shifter
-except ImportError:
-    print("WARNING: current_shifter not defined")
+    current_shifter = libib.fetch("/SDT/shifter.txt", content_type=libib.ContentType.TEXT)
+    exit_code = 0
+except (urllib.error.URLError, urllib.error.HTTPError) as e:
+    print("WARNING: failed to get current_shifter!")
+    print(e)
     current_shifter = "all"
+    exit_code = 1
 
 cache_root = "/build/builds/cms-ib-notifier"
 
@@ -208,3 +212,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    exit(exit_code)

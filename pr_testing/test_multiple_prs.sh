@@ -423,6 +423,10 @@ if ${BUILD_EXTERNAL} ; then
     if [ "${ALLOW_VERSION_SUFFIX}" = "true" ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define allow_version_suffix"
     fi
+    if [ $(echo "${CONFIG_LINE}" | grep "DEBUG_EXTERNALS=" | wc -l) -gt 0 ] ; then
+      dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
+    fi
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \

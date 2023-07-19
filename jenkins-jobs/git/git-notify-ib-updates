@@ -185,9 +185,9 @@ def main():
             print("#!/bin/bash", file=f)
             for i in range(payload_index):
                 print(
-                    f'curl -H "Content-Type: application/json" --data-binary "@report_{i}.json" $MM_WEBHOOK_URL', file=f
+                    f'curl -H "Content-Type: application/json" --data-binary "@report_{i:03d}.json" $MM_WEBHOOK_URL', file=f
                 )
-                print(f"rm -f report_{i}.json", file=f)
+                print(f"rm -f report_{i:03d}.json", file=f)
     else:
         if os.path.exists(f"{workspace}/submit.sh"):
             os.unlink(f"{workspace}/submit.sh")

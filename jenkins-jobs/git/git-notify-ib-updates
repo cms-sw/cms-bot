@@ -3,26 +3,16 @@
 import datetime
 import json
 import logging
-import sys
 import os
+import sys
 import urllib.error
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shift"))
-try:
-    from github_utils import github_api
-    import libib
+from github_utils import github_api
+# noinspection PyUnresolvedReferences
+import libib
 
-    # noinspection PyUnresolvedReferences
-    from libib import PackageInfo, ErrorInfo
-except ImportError:
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "shift"))
-    from github_utils import github_api
-    import libib  # NOQA
-
-    # noinspection PyUnresolvedReferences
-    from libib import PackageInfo, ErrorInfo
+# noinspection PyUnresolvedReferences
+from libib import PackageInfo, ErrorInfo
 
 try:
     current_shifter = libib.fetch("/SDT/shifter.txt", content_type=libib.ContentType.TEXT)
@@ -33,7 +23,7 @@ except (urllib.error.URLError, urllib.error.HTTPError) as e:
     current_shifter = "all"
     exit_code = 1
 
-cache_root = "/build/builds/cms-ib-notifier"
+cache_root = os.path.join(os.getenv("JENKINS_HOME"), "workspace/cache/cms-ib-notifier")
 
 header = f"@{current_shifter} New IB failures found, please check:"
 
@@ -56,7 +46,7 @@ def isoparse(strDate):
 
 
 def main():
-    workspace = os.getenv("WORKSPACE", os.path.expanduser("~"))
+    workspace = os.getenv("WORKSPACE", os.getcwd())
 
     libib.setup_logging(logging.DEBUG)
     libib.get_exitcodes()

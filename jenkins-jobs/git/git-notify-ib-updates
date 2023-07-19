@@ -29,8 +29,7 @@ header = f"@{current_shifter} New IB failures found, please check:"
 
 table_header = """# {rel}-{ib_date} for {arch}
 | Error | Additional data |
-| --- | --- |
-"""
+| --- | --- |"""
 
 max_report_lines = 19
 

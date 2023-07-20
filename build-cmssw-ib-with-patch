@@ -176,7 +176,7 @@ pushd CMSDIST
   perl -p -i -e "s/### RPM cms cmssw-ib .*/### RPM cms cmssw-ib $RELEASE_NAME/" cmssw-ib.spec
   perl -p -i -e "s/### RPM cms cmssw-patch.*/### RPM cms cmssw-patch $RELEASE_NAME/" cmssw-patch.spec
   if [ "${DEBUG_EXTERNALS}" != "" ] ; then
-    EX_OPTS="${EX_OPTS} --define cms_debug_packages=${DEBUG_EXTERNALS}"
+    CMSBUILD_CMD="${CMSBUILD_CMD} --define cms_debug_packages=${DEBUG_EXTERNALS}"
   fi
 popd
 

@@ -53,7 +53,6 @@ for QUEUE in $RELEASE_QUEUES; do
     else
       FORCE_FULL_IB="true"
     fi
-    if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     if [ "X$BUILD_PATCH_RELEASE" != "X" -o "X$BUILD_PATCH" = "Xtrue" ] ; then
       BUILD_PATCH_RELEASE=true
     else
@@ -66,7 +65,10 @@ for QUEUE in $RELEASE_QUEUES; do
       if [ "X$BUILD_DAY" != "X" ] ; then
         if [ $(echo " $BUILD_DAY "  | tr ',' ' ' | grep " $WEEK_DAY " | wc -l) -eq 0 ] ; then continue; fi
       fi
+    else
+      NO_IB=0
     fi
+    if [ "X$NO_IB" = "X1" ] ; then continue ; fi
     RELEASE_BRANCH=${RELEASE_BRANCH-$RELEASE_QUEUE}
     RELEASE_NAME="${QUEUE}_${DATE}"
     if [ "$CMSSW_TOOL_CONF_ONLY" != "true" ] ; then

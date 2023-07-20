@@ -46,6 +46,7 @@ def isoparse(strDate):
 
 def main():
     workspace = os.getenv("WORKSPACE", os.getcwd())
+    os.makedirs(cache_root, exist_ok=True)
 
     libib.setup_logging(logging.DEBUG)
     libib.get_exitcodes()
@@ -191,12 +192,12 @@ def main():
         if os.path.exists(f"{workspace}/submit.sh"):
             os.unlink(f"{workspace}/submit.sh")
 
-    # # Save new json files
-    # for rel in changed_rels:
-    #     url_ = f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/_data%2F{rel}.json"
-    #     data = libib.fetch(url_, libib.ContentType.TEXT)
-    #     with open(os.path.join(cache_root, "{}.json".format(rel)), "w") as f:
-    #         f.write(data)
+    # Save new json files
+    for rel in changed_rels:
+        url_ = f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/_data%2F{rel}.json"
+        data = libib.fetch(url_, libib.ContentType.TEXT)
+        with open(os.path.join(cache_root, "{}.json".format(rel)), "w") as f:
+            f.write(data)
 
 
 if __name__ == "__main__":

@@ -112,9 +112,15 @@ if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args ${RELEASE_NAME})"
 fi
-if [ -e CMSDIST/fakesystem.spec ] ; then
-  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build fakesystem
-  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload fakesystem || true
+
+## build and upload revision based packages
+REV_PKGS=""
+for p in cms-common fakesystem gcc-fixinclude SCRAMV1 SCRAMV2 ; do
+  [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
+done
+if [ "${REV_PKGS}" != "" ] ; then
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${REV_PKGS}
+  PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true
   rm -rf ${WRKDIR}
 fi
 GCC_FIXINCLUDE=""

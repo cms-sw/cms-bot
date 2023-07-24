@@ -42,11 +42,9 @@ HOUR=`echo $RELEASE_NAME | sed -e's|.*-\([0-9][0-9]\)00|\1|'`
 RELEASE_QUEUE=`echo $RELEASE_NAME | sed -e 's/_X.*/_X/'`
 
 # Hardcode special queues like SLHC one.
-CMS_COMMON="cms-common"
 case $RELEASE_NAME in
   *SLHCDEV*) ;;
   *SLHC*) RELEASE_QUEUE=${RELEASE_QUEUE}_SLHC ;;
-  CMSSW_5_*) CMS_COMMON="";;
 esac
 
 CMSDIST_REPO=cms-sw
@@ -188,7 +186,7 @@ popd
 
 PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --specs-only build $PACKAGE_NAME
 rm -rf ${WRKDIR}/WEB
-TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} ${CMS_COMMON} `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
+TOOL_CONF_PACKAGES="${GCC_FIXINCLUDE} `grep '^%define \(build\|\)directpkgreqs' ${WRKDIR}/SPECS/cms/$PACKAGE_NAME/*/spec | grep -v '%{nil}' | sed 's|.*directpkgreqs[ \t]*||' | tr ' ' '\n' | cut -f2 -d/ | sort | uniq | tr '\n' ' '`"
 echo DATE=`date`
 EXTERNAL_FAILED=false
 (PYTHONPATH=  $CMSBUILD_CMD ${EX_OPTS} build $TOOL_CONF_PACKAGES 2>&1 && touch ${WRKDIR}/ok.txt) | tee -a ${WORKSPACE}/cmsswtoolconf.log

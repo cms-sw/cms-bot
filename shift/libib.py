@@ -146,7 +146,7 @@ def get_exitcodes():
         exitcodes[int(k)] = v
 
 
-def check_ib(data):
+def check_ib(data, compilation_only=False):
     global logger
     res = {}
     logger.info(f"Found IB {data['release_name']}")
@@ -185,6 +185,19 @@ def check_ib(data):
                         if err != "ignoreWarning" and cnt > 0
                     )
                 )
+
+                # If there are compilation errors, only report those
+                if pkg_errors.get("compError", 0) > 0:
+                    res[arch]["build"].append(
+                        LogEntry(
+                            name=pkg.name(),
+                            url=f"{url_prefix}/{pkg.name()}",
+                            data=("compError", pkg_errors["compError"]),
+                        )
+                    )
+
+                    continue
+
                 for itm in pkg_errors.items():
                     res[arch]["build"].append(
                         LogEntry(
@@ -192,99 +205,103 @@ def check_ib(data):
                         )
                     )
 
-    logger.info("== Unit test results ==")
-    for ut in data["utests"]:
-        arch = ut["arch"]
-        logger.info(f"\tArch: {arch}, status: {ut['passed']}")
-        if ut["passed"] == "failed":
-            utFile = ut["file"]
-            utFile = utFile.replace("/data/sdt", "").replace(
-                "unitTests-summary.log", "unitTestResults.pkl"
-            )
-
-            utIO = io.BytesIO(fetch(utFile, ContentType.BINARY))
-            # utIO.seek(0)
-            pklr = pickle.Unpickler(utIO)
-            unitTestResults = pklr.load()
-            for pkg, utData in unitTestResults.items():
-                utList, passed, failed = utData
-                if failed > 0:
-                    webURL_t = (
-                        f"https://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
-                        f"{arch}/{data['release_name']}/unitTestLogs/{pkg}#/{{"
-                        f"lineStart}}-{{lineEnd}}"
-                    )
-                    # print(f"\t\t{failed} Unit Test{'s' if failed>1 else ''} in {pkg}")
-                    try:
-                        utlData = fetch(
-                            f"SDT/cgi-bin/buildlogs/raw_read_config/{arch}/"
-                            f"{data['release_name']}/unitTestLogs/{pkg}",
-                            ContentType.JSON,
-                        )
-                    except urllib.error.HTTPError:
-                        utlData = {"show_controls": []}
-
-                    for ctl in utlData["show_controls"]:
-                        if ctl["name"] != "Issues":
-                            continue
-                        for obj in ctl["list"]:
-                            if obj["control_type"] == "Issues" and re.match(
-                                r".* failed at line #\d+", obj["name"]
-                            ):
-                                webURL = webURL_t.format(**obj)
-                                # print("\t\t" + obj["name"])
-                                utName = pkg + "/" + obj["name"].split(" ", 1)[0]
-                                res[arch]["utest"].append(
-                                    LogEntry(name=utName, url=webURL, data=None)
-                                )
-
-    logger.info("== RelVal results ==")
-    for rv in data["relvals"]:
-        arch = rv["arch"]
-        logger.info(f"\tArch: {rv['arch']}, status: {rv['passed']}")
-        if not rv["passed"]:
-            try:
-                rvData = fetch(
-                    f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/"
-                    f"{queue}.json",
-                    ContentType.JSON,
+    if not compilation_only:
+        logger.info("== Unit test results ==")
+        for ut in data["utests"]:
+            arch = ut["arch"]
+            logger.info(f"\tArch: {arch}, status: {ut['passed']}")
+            if ut["passed"] == "failed":
+                utFile = ut["file"]
+                utFile = utFile.replace("/data/sdt", "").replace(
+                    "unitTests-summary.log", "unitTestResults.pkl"
                 )
-            except urllib.error.HTTPError:
-                rvData = []
 
-            for rvItem in rvData:
-                exitcode = rvItem["exitcode"]
-                exitcodeName = exitcodes.get(exitcode, str(exitcode))
-                if rvItem["exitcode"] != 0 and rvItem["known_error"] == 0:
-                    for i, rvStep in enumerate(rvItem["steps"]):
-                        if rvStep["status"] == "FAILED":
-                            webURL = (
-                                f"http://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
-                                f"{arch}/"
-                                f"{data['release_name']}/pyRelValMatrixLogs/run/"
-                                f"{rvItem['id']}_{rvItem['name']}/step{i + 1}_"
-                                f"{rvItem['name']}.log"
-                            )
-                            res[arch]["relval"].append(
-                                LogEntry(
-                                    name=f"Relval" f" {rvItem['id']} step {i + 1}",
-                                    url=webURL,
-                                    data=exitcodeName,
-                                )
-                            )
-                            break
-                    else:
-                        logger.error(
-                            f"ERROR: RelVal {rvItem['id']} failed with {exitcodeName} "
-                            f"at UNKNOWN step"
+                utIO = io.BytesIO(fetch(utFile, ContentType.BINARY))
+                # utIO.seek(0)
+                pklr = pickle.Unpickler(utIO)
+                unitTestResults = pklr.load()
+                for pkg, utData in unitTestResults.items():
+                    utList, passed, failed = utData
+                    if failed > 0:
+                        webURL_t = (
+                            f"https://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
+                            f"{arch}/{data['release_name']}/unitTestLogs/{pkg}#/{{"
+                            f"lineStart}}-{{lineEnd}}"
                         )
+                        # print(f"\t\t{failed} Unit Test{'s' if failed>1 else ''} in {pkg}")
+                        try:
+                            utlData = fetch(
+                                f"SDT/cgi-bin/buildlogs/raw_read_config/{arch}/"
+                                f"{data['release_name']}/unitTestLogs/{pkg}",
+                                ContentType.JSON,
+                            )
+                        except urllib.error.HTTPError:
+                            utlData = {"show_controls": []}
+
+                        for ctl in utlData["show_controls"]:
+                            if ctl["name"] != "Issues":
+                                continue
+                            for obj in ctl["list"]:
+                                if obj["control_type"] == "Issues" and re.match(
+                                    r".* failed at line #\d+", obj["name"]
+                                ):
+                                    webURL = webURL_t.format(**obj)
+                                    # print("\t\t" + obj["name"])
+                                    utName = pkg + "/" + obj["name"].split(" ", 1)[0]
+                                    res[arch]["utest"].append(
+                                        LogEntry(name=utName, url=webURL, data=None)
+                                    )
+
+        logger.info("== RelVal results ==")
+        for rv in data["relvals"]:
+            arch = rv["arch"]
+            logger.info(f"\tArch: {rv['arch']}, status: {rv['passed']}")
+            if not rv["passed"]:
+                try:
+                    rvData = fetch(
+                        f"SDT/public/cms-sw.github.io/data/relvals/{arch}/{ib_date}/"
+                        f"{queue}.json",
+                        ContentType.JSON,
+                    )
+                except urllib.error.HTTPError:
+                    rvData = []
+
+                for rvItem in rvData:
+                    exitcode = rvItem["exitcode"]
+                    exitcodeName = exitcodes.get(exitcode, str(exitcode))
+                    if rvItem["exitcode"] != 0 and rvItem["known_error"] == 0:
+                        for i, rvStep in enumerate(rvItem["steps"]):
+                            if rvStep["status"] == "FAILED":
+                                webURL = (
+                                    f"http://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
+                                    f"{arch}/"
+                                    f"{data['release_name']}/pyRelValMatrixLogs/run/"
+                                    f"{rvItem['id']}_{rvItem['name']}/step{i + 1}_"
+                                    f"{rvItem['name']}.log"
+                                )
+                                res[arch]["relval"].append(
+                                    LogEntry(
+                                        name=f"Relval" f" {rvItem['id']} step {i + 1}",
+                                        url=webURL,
+                                        data=exitcodeName,
+                                    )
+                                )
+                                break
+                        else:
+                            logger.error(
+                                f"ERROR: RelVal {rvItem['id']} failed with {exitcodeName} "
+                                f"at UNKNOWN step"
+                            )
 
     logger.info("=" * 80)
     return data["release_name"], res
 
 
 def get_ib_results(ib_date, flavor, ib_data=None):
-    short_ib_date = ib_date.rsplit("-", 1)[0]
+    if len(ib_date.split("-")) > 4:
+        short_ib_date = "-".join(ib_date.split("-", 5)[:-1])
+    else:
+        short_ib_date = ib_date
     ib_data = ib_data or fetch("SDT/html/data/" + flavor + ".json")
     for comp in ib_data["comparisons"]:
         comp_ib_date = comp["ib_date"].rsplit("-", 1)[0]

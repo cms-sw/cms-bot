@@ -43,7 +43,7 @@ def main():
     for ib_date in ib_dates:
         for flav, comp in libib.get_ib_comparision(ib_date, series).items():
             if comp is None:
-                print(f"No IB found for flavor {flav} and date {ib_date}")
+                # print(f"No IB found for flavor {flav} and date {ib_date}")
                 continue
             release_name, errors = libib.check_ib(comp)
             with open(f"out/{release_name}.md", "w") as f:

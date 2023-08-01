@@ -75,7 +75,7 @@ CMSSW_L2 = {
   "srimanob":         ["upgrade"],
   "ssekmen":          ["fastsim"],
   "francescobrivio":  ["alca","db"],
-  "tvami":            ["alca","db"],
+  "tvami":            ["alca","db","analysis"],
   "saumyaphor4252":   ["alca","db"],
   "perrotta":         ["operations","alca","db"],
   "consuegs":         ["alca","db"],

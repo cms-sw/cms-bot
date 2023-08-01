@@ -8,6 +8,7 @@ import sys
 import urllib.error
 
 from github_utils import github_api
+from urllib.error import HTTPError
 # noinspection PyUnresolvedReferences
 import libib
 
@@ -109,9 +110,16 @@ def main():
             else:
                 print(f"No cache for release {rel}")
 
-            new_data = libib.fetch(
-                f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/data%2F{rel}.json"
-            )
+            try:
+                new_data = libib.fetch(
+                    f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/data%2F{rel}.json"
+                )
+            except HTTPError as e:
+                if e.code == 404:
+                    print(f"Release {rel} not found on github!")
+                    continue
+                else:
+                    raise
             new_comparision = libib.get_ib_results(ib_date, None, new_data)
             if new_comparision is None:
                 continue

@@ -116,7 +116,8 @@ def fetch(url, content_type=ContentType.JSON, payload=None):
         logger.fatal(
             f"Request to {url if isinstance(url, str) else url.full_url} failed with code {e.code}"
         )
-        logger.fatal(f"{e.read()}")
+        if e.code != 404:
+            logger.fatal(f"{e.read()}")
         raise
     except urllib.error.URLError as e:
         logger.fatal(

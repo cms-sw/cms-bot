@@ -2189,7 +2189,16 @@
         "alca", 
         "db"
       ], 
+      "end_date": 1690848000, 
       "start_date": 1633478400
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db", 
+        "analysis"
+      ], 
+      "start_date": 1690848000
     }
   ], 
   "vadler": [

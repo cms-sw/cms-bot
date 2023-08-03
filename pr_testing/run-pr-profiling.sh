@@ -95,7 +95,7 @@ for PROFILING_WORKFLOW in $WORKFLOWS;do
     AMP="&"
     echo "<li><a href=\"https://cmssdt.cern.ch/circles/web/piechart.php?local=false${AMP}dataset=${CMSSW_VERSION}/${SCRAM_ARCH}/${PROFILING_WORKFLOW}/${UPLOAD_UNIQ_ID}/${BASENAME//.json/}${AMP}resource=time_thread${AMP}colours=default${AMP}groups=reco_PhaseII${AMP}threshold=0\">$BASENAME</a></li>" >> $WORKSPACE/upload/profiling/index-$PROFILING_WORKFLOW.html
   done
-  for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*.heap*') ; do
+  for f in $(find $PROFILING_WORKFLOW -type f -name '*.log' -o -name '*.txt' -o -name '*.tmp' -o -name '*jeprof*.heap*') ; do
     d=$(dirname $f)
     mkdir -p $WORKSPACE/upload/profiling/$d || true
     cp -p $f $WORKSPACE/upload/profiling/$d/ || true

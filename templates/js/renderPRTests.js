@@ -33,22 +33,22 @@ getResultRow = function( resultsDict , resultsKey ){
   }else if( resultsKey == COMPARISON_KEY ){
 
     column2Label = 'See Comparison Results'
-    linkURL = BASE_COMPARISONS_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/' 
+    linkURL = BASE_COMPARISONS_URL + resultsDict[ COMPARISON_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/' 
 
   }else if( resultsKey == COMPARISON_GPU_KEY ){
 
     column2Label = 'See GPU Comparison Results'
-    linkURL = BASE_COMPARISONS_GPU_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
+    linkURL = BASE_COMPARISONS_GPU_URL + resultsDict[ COMPARISON_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
 
   }else if( resultsKey == COMPARISON_HIGH_STATS ){
 
     column2Label = 'See High Stats Comparison Results'
-    linkURL = BASE_COMPARISONS_HIGH_STATS_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
+    linkURL = BASE_COMPARISONS_HIGH_STATS_URL + resultsDict[ COMPARISON_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
 
   }else if( resultsKey == COMPARISON_NANO ){
 
     column2Label = 'See Nano Comparison Results'
-    linkURL = BASE_COMPARISONS_NANO_URL + resultsDict[ BASE_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
+    linkURL = BASE_COMPARISONS_NANO_URL + resultsDict[ COMPARISON_IB_KEY ] + '+' + resultsDict[ PR_NUMBER_KEY ] + '/' + testResult + '/'
 
   }
 

@@ -176,7 +176,7 @@ for t in nweek- ; do
     let N="$(echo $w | cut -d- -f2 | sed 's|^0||') % ${NUM_WEEKS}" || true
     if [ $(echo "$REPOSITORIES" | grep "^$w$" | wc -l) -gt 0 ] ; then
       ln -s $BASEDIR/$w $BASEDIR/week$N
-      [ -f $BASEDIR/week$N/etc/scramrc/links.db ] || continue
+      [ -f $BASEDIR/week$N/etc/scramrc/links.db -a -s $BASEDIR/week$N/etc/scramrc/links.db ] && continue
       echo "$BASEDIR/scramdb" > $BASEDIR/week$N/etc/scramrc/links.db
     else
       echo "Deleting obsolete week $w"

@@ -56,7 +56,7 @@ def process_queue_reason(labels):
         node = labels.split(" on ")[1].decode('utf8').encode('ascii', errors='ignore')
         reason = str(node) + "-busy"
     elif "is offline" in labels:
-        node = labels.split(" is ")[1].decode('utf8').encode('ascii', errors='ignore')
+        node = labels.split(" is ")[0].decode('utf8').encode('ascii', errors='ignore')
         reason = str(node) + "-offline"
     else:
         reason = "other"

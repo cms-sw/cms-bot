@@ -4,7 +4,15 @@
       "category": [
         "upgrade"
       ], 
+      "end_date": 1691539200, 
       "start_date": 1629936000
+    }, 
+    {
+      "category": [
+        "upgrade", 
+        "pdmv"
+      ], 
+      "start_date": 1691539200
     }
   ], 
   "ChrisMisan": [
@@ -1475,7 +1483,15 @@
       "category": [
         "jetmet-pog"
       ], 
+      "end_date": 1691539200, 
       "start_date": 1652403702
+    }, 
+    {
+      "category": [
+        "pdmv", 
+        "jetmet-pog"
+      ], 
+      "start_date": 1691539200
     }
   ], 
   "missirol": [

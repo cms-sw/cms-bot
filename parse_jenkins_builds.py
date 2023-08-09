@@ -53,7 +53,11 @@ def process_queue_reason(labels):
     if "already in progress" in labels:
         reason = "concurrent builds not allowed"
     elif "Waiting for next available executor on" in labels:
-        reason = labels.split(" on ")[1].decode('utf8').encode('ascii', errors='ignore')
+        node = labels.split(" on ")[1].decode('utf8').encode('ascii', errors='ignore')
+        reason = str(node) + "-busy"
+    elif "is offline" in labels:
+        node = labels.split(" is ")[1].decode('utf8').encode('ascii', errors='ignore')
+        reason = str(node) + "-offline"
     else:
         reason = "other"
     return reason

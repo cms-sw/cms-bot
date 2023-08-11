@@ -3804,3 +3804,4 @@ architecture=el9_amd64_gcc11;label=CMSSW_13_3_0_pre1;type=Development;state=Anno
 architecture=el9_amd64_gcc11;label=CMSSW_13_0_12;type=Production;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc11;label=CMSSW_13_0_12;type=Production;state=Announced;prodarch=1;
 architecture=el8_ppc64le_gcc11;label=CMSSW_13_0_12;type=Production;state=Announced;prodarch=0;
+architecture=el8_aarch64_gcc11;label=CMSSW_13_0_12;type=Production;state=Announced;prodarch=0;

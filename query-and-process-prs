@@ -5,20 +5,20 @@ from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from datetime import datetime, timedelta
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits
+from github_utils import api_rate_limits, get_repository_issues, get_organization_repositores
 from github_hooks_config import get_repository_hooks
 import sys
 setdefaulttimeout(None)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
-def check_prs(gh, repo, since, process_issue, dryRun):
+def check_prs(repo, since, process_issue, dryRun):
   #if repo.full_name in ["cms-sw/cmsdist", "cms-sw/cmssw"]: return
-  if not get_repository_hooks(repo.full_name,"Jenkins_Github_Hook"): return  
+  if not get_repository_hooks(repo,"Jenkins_Github_Hook"): return  
   print("Working on Repository: ",repo.full_name)
   if since:
-    issues = repo.get_issues(state="open", sort="updated", since=since)
+    issues = get_repository_issues(repo, params={"state": "open", "sort": "updated", "since": since})
   else:
-    issues = repo.get_issues(state="open", sort="updated")
+    issues = get_repository_issues(repo, params={"state": "open", "sort": "updated"})
   err=0
   for issue in issues:
     if not process_issue and not issue.pull_request:
@@ -49,8 +49,6 @@ if __name__ == "__main__":
   import repo_config
   from process_pr import process_pr
   from categories import EXTERNAL_REPOS
-  gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
-  api_rate_limits(gh)
   repos = []
   if opts.repository != "externals":
     repos.append(opts.repository)
@@ -59,9 +57,8 @@ if __name__ == "__main__":
   err=0
   for repo_name in repos:
     if not "/" in repo_name:
-      user = gh.get_user(repo_name)
-      for repo in user.get_repos():
-        err+=check_prs(gh, repo, since, opts.issue, opts.dryRun)
+      for repo in get_organization_repositores(repo_name):
+        err+=check_prs(repo, since, opts.issue, opts.dryRun)
     else:
-      err+=check_prs(gh, gh.get_repo(repo_name), since, opts.issue, opts.dryRun)
+      err+=check_prs(repo_name, since, opts.issue, opts.dryRun)
   sys.exit(err)

@@ -76,6 +76,7 @@ def check_rate_limits(msg=True, when_slow=False, prefix=""):
 
 
 def api_rate_limits_repo(obj, msg=True, when_slow=False, prefix=""):
+# TODO
     global GH_RATE_LIMIT
     GH_RATE_LIMIT = [ int(obj.raw_headers['x-ratelimit-remaining']), int(obj.raw_headers['x-ratelimit-limit']), int(obj.raw_headers['x-ratelimit-reset']) ]
     check_rate_limits(msg, when_slow, prefix=prefix)
@@ -84,7 +85,9 @@ def api_rate_limits_repo(obj, msg=True, when_slow=False, prefix=""):
 def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
     global GH_RATE_LIMIT
     gh.get_rate_limit()
-    GH_RATE_LIMIT = [ int(gh.rate_limiting[0]), int(gh.rate_limiting[1]), int(gh.rate_limiting_resettime) ]
+    limits = get_rate_limits()
+    # First value is requests remaining, second value is request limit.
+    GH_RATE_LIMIT = [ int(limits["resources"]["core"]["remaining"]), int(limits["resources"]["core"]["limit"]]), int(limits["resources"]["core"]["reset"]) ]
     check_rate_limits(msg, when_slow, prefix=prefix)
 
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 import sys
 #run this command for once to create the data file or directly pipe its output to this script

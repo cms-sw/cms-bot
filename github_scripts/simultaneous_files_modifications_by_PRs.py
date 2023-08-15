@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This script will test if there are other PRs that modify the same files.
 This is primarily used to avoid merge conflicts.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from optparse import OptionParser
 from jenkins_callback import build_jobs

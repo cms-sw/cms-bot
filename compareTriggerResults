@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Script to compare the content of edm::TriggerResults collections in EDM files across multiple workflows
  - CMSSW dependencies: edmDumpEventContent, hltDiff

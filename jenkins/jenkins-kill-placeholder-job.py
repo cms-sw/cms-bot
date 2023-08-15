@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This job will check if there are queued jobs for jenkins slaves with 'condor' label and how many.
 Then it will kill needed amount of placeholder jobs.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Gets list of files that will be modified by all PRs for the branch.
 Dumps to file to be loaded by other script.

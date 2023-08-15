@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from optparse import OptionParser
 from os.path import expanduser
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user

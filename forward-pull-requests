@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Given a branch, gets all of its pull requests
 # and recreates them in a different branch.

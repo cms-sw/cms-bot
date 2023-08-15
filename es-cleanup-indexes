@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # A script which deletes elasticsearch logs when they are older that the specified amount
 # of units.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # TODO had syntax errors, is this file used ?
 from __future__ import print_function

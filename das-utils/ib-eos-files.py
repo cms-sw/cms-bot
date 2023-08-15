@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import exit, version_info
 from os.path import abspath, dirname, exists, getmtime
 import json

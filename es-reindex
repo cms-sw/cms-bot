@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # A script which creates a new index using a new mapping and create an alias
 # for the old index name.

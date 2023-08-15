@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from os import utime
 from sys import exit
 from os.path import isfile, islink
-from commands import getstatusoutput as cmd
+from _py2with3compatibility import run_cmd as cmd
 e, total =cmd("find . -type f | grep -v '/.git/' |wc -l")
 e, o = cmd ('git log --name-only  --pretty=format:"T:%at"')
 if e:

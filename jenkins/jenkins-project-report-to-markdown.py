@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 File       : jenkins-project-report-to-markdown.py
 Author     : Zygimantas Matonis

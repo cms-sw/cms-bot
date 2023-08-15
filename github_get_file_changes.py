@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This script will check what modules PR's are changing.
 It assumes that a module is 2 directories deep ( dir1/dir2/)

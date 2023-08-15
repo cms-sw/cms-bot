@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from es_utils import get_indexes, open_index, close_index, delete_index, send_request
 import sys

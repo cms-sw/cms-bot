@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import argv
 from logUpdater import LogUpdater
 logger=LogUpdater(dirIn=argv[1])

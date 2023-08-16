@@ -75,19 +75,18 @@ def check_rate_limits(msg=True, when_slow=False, prefix=""):
     _check_rate_limits(GH_RATE_LIMIT[0], GH_RATE_LIMIT[1], GH_RATE_LIMIT[2], msg, when_slow,  prefix=prefix)
 
 
+# Could not find any usage of this function inc cms-bot repo, making it just call api_rate_limits
 def api_rate_limits_repo(obj, msg=True, when_slow=False, prefix=""):
-# TODO
-    global GH_RATE_LIMIT
-    GH_RATE_LIMIT = [ int(obj.raw_headers['x-ratelimit-remaining']), int(obj.raw_headers['x-ratelimit-limit']), int(obj.raw_headers['x-ratelimit-reset']) ]
-    check_rate_limits(msg, when_slow, prefix=prefix)
+#    global GH_RATE_LIMIT
+#    GH_RATE_LIMIT = [ int(obj.raw_headers['x-ratelimit-remaining']), int(obj.raw_headers['x-ratelimit-limit']), int(obj.raw_headers['x-ratelimit-reset']) ]
+    api_rate_limits(msg, when_slow, prefix=prefix)
 
 
 def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
     global GH_RATE_LIMIT
-    gh.get_rate_limit()
     limits = get_rate_limits()
     # First value is requests remaining, second value is request limit.
-    GH_RATE_LIMIT = [ int(limits["resources"]["core"]["remaining"]), int(limits["resources"]["core"]["limit"]]), int(limits["resources"]["core"]["reset"]) ]
+    GH_RATE_LIMIT = [ int(limits["resources"]["core"]["remaining"]), int(limits["resources"]["core"]["limit"]), int(limits["resources"]["core"]["reset"]) ]
     check_rate_limits(msg, when_slow, prefix=prefix)
 
 

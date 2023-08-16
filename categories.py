@@ -10,7 +10,7 @@ authors = {}
 #Any Githib user whose comments/requests should be ignored
 GITHUB_BLACKLIST_AUTHORS = []
 #CMS Offline Release Planning managers
-CMSSW_L1 = ["dpiparo", "perrotta", "rappoccio"]
+CMSSW_L1 = ["dpiparo", "perrotta", "rappoccio", "antoniovilela"]
 #CMS-SDT members who has admin rights to various github organizations and repositories.
 #They are also reposionsible to sign for externals
 CMS_SDT    = [ "iarspider", "smuzaffar", "aandvalenzuela" ]
@@ -60,6 +60,7 @@ CMSSW_L2 = {
   "mkirsano":         ["generators"],   
   "menglu21":         ["generators"],
   "rappoccio":        ["operations"],
+  "antoniovilela":    ["operations"],
   "pmandrik":         ["dqm"],
   "micsucmed":        ["dqm"],
   "epalencia":        ["l1"],

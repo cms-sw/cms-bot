@@ -3812,3 +3812,4 @@ architecture=el9_amd64_gcc11;label=CMSSW_13_2_1;type=Production;state=Announced;
 architecture=slc7_amd64_gcc11;label=CMSSW_13_2_1;type=Production;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc11;label=CMSSW_13_2_1;type=Production;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc11;label=CMSSW_13_2_1;type=Production;state=Announced;prodarch=1;
+architecture=el8_amd64_gcc11;label=CMSSW_13_2_1_SKYLAKEAVX512;type=Production;state=Announced;prodarch=1;

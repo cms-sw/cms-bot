@@ -374,6 +374,7 @@ CMSSW_CATEGORIES = {
     "CommonTools/ConditionDBWriter",
     "CondCore/AlignmentPlugins",
     "CondCore/BTauPlugins",
+    "CondCore/BaseKeyedPlugins",
     "CondCore/BasicCondPlugins",
     "CondCore/BeamSpotPlugins",
     "CondCore/CSCPlugins",

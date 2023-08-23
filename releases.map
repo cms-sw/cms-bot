@@ -3815,3 +3815,4 @@ architecture=el8_amd64_gcc11;label=CMSSW_13_2_1;type=Production;state=Announced;
 architecture=el8_amd64_gcc11;label=CMSSW_13_2_1_SKYLAKEAVX512;type=Production;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc700;label=CMSSW_10_6_35_patch1;type=Production;state=Announced;prodarch=1;
 architecture=el8_aarch64_gcc10;label=CMSSW_12_4_14_patch3;type=Production;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc10;label=CMSSW_12_4_14_patch3;type=Production;state=Announced;prodarch=1;

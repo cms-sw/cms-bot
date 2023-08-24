@@ -15,7 +15,7 @@ export SCRAM_ARCH=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
 export SCRAM_PREFIX_PATH=$WORKSPACE/cms-bot/das-utils
 export LC_ALL=C
-if [ ! -d ${RELEASE_FORMAT}/lib/${ARCHITECTURE} ] ; then
+if [ ! -d ${CMSSW_BASE}/lib/${ARCHITECTURE} ] ; then
   UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
   [ "\${UNAME}" != "amd64" ] || UNAME="x86_64"
   if [ "\${CMS_SW_INSTALL_DIR}" = "" ] ; then
@@ -28,8 +28,10 @@ if [ ! -d ${RELEASE_FORMAT}/lib/${ARCHITECTURE} ] ; then
   fi
   source \${CMS_SW_INSTALL_DIR}/cmsset_default.sh  || true
   scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
+  cd ${RELEASE_FORMAT}
+else
+  cd ${CMSSW_BASE}
 fi
-cd ${RELEASE_FORMAT}
 if [ -f config/SCRAM/linkexternal.py ] ; then
   sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py || true
 fi

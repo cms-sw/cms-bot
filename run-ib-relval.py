@@ -55,6 +55,8 @@ if __name__ == "__main__":
     wfs = opts.workflow.split(",")
     opts.workflow = ",".join([w for w in wfs if (w not in doneWFs)])
     print("Workflow to run:",opts.workflow)
+  else:
+    print("Force running all workflows")
 
   if re.match("^CMSSW_(9_([3-9]|[1-9][0-9]+)|[1-9][0-9]+)_.*$",cmssw_ver):
     e=0

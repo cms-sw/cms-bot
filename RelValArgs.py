@@ -5,17 +5,19 @@ from os import environ, uname
 from os.path import dirname, abspath
 from _py2with3compatibility import run_cmd
 
-monitor_script = dirname(abspath(__file__))+"/monitor_workflow.py"
-e, o = run_cmd("python2 -c 'import psutil'")
-if e:
-  e, o = run_cmd("python3 -c 'import psutil'")
+monitor_script = ""
+if 'CMS_DISABLE_MONITORING' not in environ:
+  monitor_script = dirname(abspath(__file__))+"/monitor_workflow.py"
+  e, o = run_cmd("python2 -c 'import psutil'")
   if e:
-    print("Monitering of relval steps disabled: import psutils failed")
-    monitor_script = ""
+    e, o = run_cmd("python3 -c 'import psutil'")
+    if e:
+      print("Monitering of relval steps disabled: import psutils failed")
+      monitor_script = ""
+    else:
+      monitor_script = "python3 " + monitor_script
   else:
-    monitor_script = "python3 " + monitor_script
-else:
-  monitor_script = "python2 " + monitor_script
+    monitor_script = "python2 " + monitor_script
 
 RELVAL_KEYS = {"customiseWithTimeMemorySummary":[],
                "enableIMT":[],
@@ -32,12 +34,8 @@ if not 'CMSSW_NON_THREADED' in environ:
   THREADED_ROOT="CMSSW_9_[1-9]_ROOT6_X_.+"
   THREADED_IBS="CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_.+:([a-z]+)([6-9]|[1-9][0-9]+)_[^_]+_gcc(5[3-9]|[6-9]|[1-9][0-9])[0-9]*"
 RELVAL_KEYS["customiseWithTimeMemorySummary"].append([".+" ,"--customise Validation/Performance/TimeMemorySummary.customiseWithTimeMemorySummary"])
-if 'aarchXX' in uname()[-1]:
-  RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix 'timeout --signal SIGSEGV @TIMEOUT@ '"])
-  RELVAL_KEYS["PREFIX"].append(["CMSSW_.+"                   ,"--prefix 'timeout --signal SIGTERM @TIMEOUT@ '"])
-else:
-  RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ '" % monitor_script])
-  RELVAL_KEYS["PREFIX"].append(["CMSSW_.+"                   ,"--prefix '%s timeout --signal SIGTERM @TIMEOUT@ '" % monitor_script])
+RELVAL_KEYS["PREFIX"].append(["CMSSW_[1-7]_.+"             ,"--prefix '%s timeout --signal SIGSEGV @TIMEOUT@ '" % monitor_script])
+RELVAL_KEYS["PREFIX"].append(["CMSSW_.+"                   ,"--prefix '%s timeout --signal SIGTERM @TIMEOUT@ '" % monitor_script])
 RELVAL_KEYS["JOB_REPORT"].append([".+"                     ,"--job-reports"])
 RELVAL_KEYS["USE_INPUT"].append([".+"                      ,"--useInput all"])
 RELVAL_KEYS["THREADED"].append([THREADED_IBS               ,"-t 4"])

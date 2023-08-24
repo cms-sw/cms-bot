@@ -15,18 +15,20 @@ export SCRAM_ARCH=${ARCHITECTURE}
 export RELEASE_FORMAT=${RELEASE_FORMAT}
 export SCRAM_PREFIX_PATH=$WORKSPACE/cms-bot/das-utils
 export LC_ALL=C
-UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
-[ "\${UNAME}" != "amd64" ] || UNAME="x86_64"
-if [ "\${CMS_SW_INSTALL_DIR}" = "" ] ; then
-  #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
-  if [ $(date +%w) -lt 2 ] ; then
-    CMS_SW_INSTALL_DIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -2 | head -1)
-  else
-    CMS_SW_INSTALL_DIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -1)
+if [ ! -d ${RELEASE_FORMAT}/lib/${ARCHITECTURE} ] ; then
+  UNAME=$(echo ${ARCHITECTURE} | cut -d_ -f2)
+  [ "\${UNAME}" != "amd64" ] || UNAME="x86_64"
+  if [ "\${CMS_SW_INSTALL_DIR}" = "" ] ; then
+    #Use previous WEEK for env if week day is Sunday(0)  or Monday(1) otherwise use current week
+    if [ $(date +%w) -lt 2 ] ; then
+      CMS_SW_INSTALL_DIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -2 | head -1)
+    else
+      CMS_SW_INSTALL_DIR=\$(ls -d /cvmfs/cms-ib.cern.ch/sw/\${UNAME}/nweek-* | tail -1)
+    fi
   fi
+  source \${CMS_SW_INSTALL_DIR}/cmsset_default.sh  || true
+  scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
 fi
-source \${CMS_SW_INSTALL_DIR}/cmsset_default.sh  || true
-scram -a ${ARCHITECTURE} project ${RELEASE_FORMAT}
 cd ${RELEASE_FORMAT}
 if [ -f config/SCRAM/linkexternal.py ] ; then
   sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py || true

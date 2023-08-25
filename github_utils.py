@@ -12,11 +12,10 @@ GH_USER = None
 GH_TOKEN_INDEX = 0
 GH_RATE_LIMIT = [ 5000, 5000, 3600]
 GH_PAGE_RANGE = []
-try:
-    from github import UnknownObjectException
-except:
-    class UnknownObjectException(Exception):
-        pass
+
+
+class UnknownObjectException(Exception):
+    pass
 
 try:
     scriptPath = dirname(abspath(__file__))
@@ -31,6 +30,9 @@ def comment_gh_pr(gh, repo, pr, msg):
     repo = gh.get_repo(repo)
     pr   = repo.get_issue(pr)
     pr.create_comment(msg)
+
+def parse_github_time(gh_time: str) -> datetime.datetime:
+    return datetime.datetime.strptime(gh_time, "%Y-%m-%dT%H:%M:%SZ")
 
 def github_time(gh_time):
   return int(mktime(strptime(gh_time, "%Y-%m-%dT%H:%M:%SZ")))
@@ -211,7 +213,9 @@ def cache_invalid_pr(pr_id, cache):
     cache['dirty'] = True
 
 
-def fill_notes_description(notes, repo_name, cmsprs, cache={}):
+def fill_notes_description(notes, repo_name, cmsprs, cache=None):
+    if cache is None:
+        cache = {}
     new_notes = {}
     for log_line in notes.splitlines():
         print("Log:", log_line)
@@ -268,7 +272,9 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
     return new_notes
 
 
-def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache={}, repo_name=None):
+def get_merge_prs(prev_tag, this_tag, git_dir, cmsprs, cache=None, repo_name=None):
+    if cache is None:
+        cache = {}
     print("Getting merged Pull Requests b/w", prev_tag, this_tag)
     cmd = format("GIT_DIR=%(git_dir)s"
                  " git log --graph --merges --pretty='%%s: %%P' %(previous)s..%(release)s | "
@@ -384,11 +390,15 @@ def get_issue_labels(repo, issue_num):
     get_gh_token(repo)
     return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), method="GET")
 
-def add_issue_labels(repo, issue_num, labels=[]):
+def add_issue_labels(repo, issue_num, labels=None):
+    if labels is None:
+        labels = []
     get_gh_token(repo)
     return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), params={"labels": labels}, method="POST")
 
-def set_issue_labels(repo, issue_num, labels=[]):
+def set_issue_labels(repo, issue_num, labels=None):
+    if labels is None:
+        labels = []
     get_gh_token(repo)
     return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), params={"labels": labels}, method="PUT")
 
@@ -403,9 +413,12 @@ def remove_issue_label(repo, issue_num, label):
 def get_rate_limits():
   return github_api(uri="/rate_limit", method="GET")
 
-def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False, per_page=100, last_page=False, all_pages=True, max_pages=-1, status=[]):
+def github_api(uri, params=None, method="POST", headers=None, page=1, raw=False, per_page=100, last_page=False, all_pages=True, max_pages=-1,
+               status=None):
+    if status is None:
+        status = []
     global GH_RATE_LIMIT, GH_PAGE_RANGE
-    if max_pages>0 and page>max_pages:
+    if 0 < max_pages < page:
         return '[]' if raw else []
     if not params:
         params = {}
@@ -456,7 +469,7 @@ def github_api(uri, params=None, method="POST", headers=None, page=1,  raw=False
       if last_page:
         return github_api(uri, params, method, headers, GH_PAGE_RANGE[-1], raw=False, per_page=per_page, all_pages=False)
       for page in GH_PAGE_RANGE:
-        if max_pages>0 and page>max_pages: break
+        if 0 < max_pages < page: break
         data += github_api(uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False)
     return data
 
@@ -554,7 +567,9 @@ def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
   return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), params=params, headers=headers)
 
 
-def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}, page=1, all_pages=False):
+def get_repository_issues(repository, params=None, page=1, all_pages=False):
+  if params is None:
+      params = {'sort': 'updated', 'state': 'all'}
   get_gh_token(repository)
   return github_api('/repos/%s/issues' % repository, method="GET", params=params, page=page, all_pages=all_pages)
 
@@ -568,7 +583,9 @@ def get_issue(repository, issue_num):
   get_gh_token(repository)
   return github_api('/repos/%s/issues/%s' % (repository, issue_num), method="GET")
 
-def get_releases(repository, params={'sort':'updated'}, page=1, all_pages=False):
+def get_releases(repository, params=None, page=1, all_pages=False):
+  if params is None:
+      params = {'sort': 'updated'}
   get_gh_token(repository)
   return github_api('/repos/%s/releases' % repository, method="GET", params=params, page=page, all_pages=all_pages)
 
@@ -691,16 +708,49 @@ def get_commits(repository, branch, until, per_page=1):
 
     return data
 
-
 def find_tags(repository, name):
     get_gh_token(repository)
-    data = github_api("/repos/%s/git/matching-refs/tags/%s" % (repository, name), method="GET")
-
-    return data
-    
+    return github_api("/repos/%s/git/matching-refs/tags/%s" % (repository, name), method="GET")
     
 def get_pr(repository, pr_id):
-    data = github_api("/repos/%s/pulls/%s" % (repository, pr_id), method="GET")
+    get_gh_token(repository)
+    return github_api("/repos/%s/pulls/%s" % (repository, pr_id), method="GET")
 
-    return data
+def get_pr_files(repository, pr_id):
+    get_gh_token(repository)
+    return github_api("/repos/%s/pulls/%s/files" % (repository, pr_id), method="GET")
 
+def merge_pr(repository, pr_id):
+    github_api(
+        "/repos/{repo}/pulls/{pull_number}/merge".format(
+            repo=repository, pull_number=pr_id
+        ),
+        method="PUT",
+    )
+
+
+def edit_issue(repository, issue_id, changes):
+    github_api(
+        "/repos/{repo}/issues/{issue_number}".format(
+            repo=repository, issue_number=issue_id
+        ),
+        params=changes,
+        method="PATCH",
+    )
+
+def edit_comment(repository, comment_id, changes):
+    github_api(
+        "/repos/{repo}/issues/comments/{id}".format(repo=repository, id=comment_id),
+        params=changes,
+        method="PATCH",
+    )
+
+def create_pull(repository, title, body, base, head):
+    return github_api(
+        "/repos/{repo}/pulls".format(repo=repository),
+        params={"title": title, "body": body, "base": base, "head": head},
+    )
+
+def get_milestone(repository, number):
+    return github_api("repos/{repository}/milestones/{number}".format(
+        repository=repository, number=number))

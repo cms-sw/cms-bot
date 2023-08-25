@@ -1,34 +1,38 @@
 #!/usr/bin/env python3
 from __future__ import print_function
+import sys
 from sys import exit,argv
 from re import match
-from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
-from optparse import OptionParser
+from argparse import ArgumentParser
 from socket import setdefaulttimeout
+
+from github_utils import get_pr, get_issue_comments, merge_pr, edit_issue, \
+  create_issue_comment
+
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
-def process_pr(gh, repo, issue, dryRun):
+def process_pr(repo: str, issue: dict, dryRun: bool):
   from cmsdist_merge_permissions import USERS_TO_TRIGGER_HOOKS, getCommentCommand, hasRights
-  print("Issue state:", issue.state)
-  prId    = issue.number
+  print("Issue state:", issue["state"])
+  prId    = issue["number"]
   pr      = None
   branch  = None
   cmdType = None
   chg_files= []
-  if issue.pull_request:
-    pr   = repo.get_pull(prId)
-    branch = pr.base.ref
-    print("PR merged:", pr.merged)
-    if pr.merged: return True
+  if issue["pull_request"]:
+    pr   = get_pr(repo, prId)
+    branch = pr["base"]["ref"]
+    print("PR merged:", pr["merged"])
+    if pr["merged"]: return True
     from process_pr import get_changed_files
     chg_files = get_changed_files(repo, pr)
   USERS_TO_TRIGGER_HOOKS.add("cmsbuild")
-  for comment in issue.get_comments():
-    commenter = comment.user.login
+  for comment in get_issue_comments(repo, issue):
+    commenter = comment["user"]["login"]
     if not commenter in USERS_TO_TRIGGER_HOOKS: continue
-    comment_msg = comment.body.encode("ascii", "ignore")
+    comment_msg = comment["body"].encode("ascii", "ignore")
     comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ][0:1]
     print("Comment first line: %s => %s" % (commenter, comment_lines))
     if not comment_lines: continue
@@ -49,28 +53,26 @@ def process_pr(gh, repo, issue, dryRun):
   if not cmdType: return True
   print("Processing ",cmdType)
   if dryRun: return True
-  if issue.state == "open":
-    if cmdType == "merge": pr.merge()
-    if cmdType == "close": issue.edit(state="closed")
-  elif cmdType == "open": issue.edit(state="open")
-  issue.create_comment("Command "+cmdType+" acknowledged.")
+  if issue["state"] == "open":
+    if cmdType == "merge": merge_pr(repo, prId)
+    if cmdType == "close": edit_issue(repo, prId, {'state': "closed"})
+  elif cmdType == "open": edit_issue(repo, prId, {'state': "open"})
+  create_issue_comment(repo, prId, "Command "+cmdType+" acknowledged.")
   return True
 
 if __name__ == "__main__":
-  parser = OptionParser(usage="%prog <pull-request-id>")
-  parser.add_option("-n", "--dry-run",    dest="dryRun",     action="store_true", help="Do not modify Github", default=False)
+  parser = ArgumentParser()
+  parser.add_argument("-n", "--dry-run", dest="dryRun", action="store_true", help="Do not modify Github", default=False)
+  parser.add_argument("prId", help="Pull request id", nargs=1)
   #parser.add_option("-r", "--repository", dest="repository", help="Github Repositoy name e.g. cms-sw/cmsdist.", type=str, default="cms-sw/cmsdist")
-  opts, args = parser.parse_args()
+  args = parser.parse_args()
 
-  if len(args) != 1:
-    parser.error("Too many/few arguments")
-  prId = int(args[0])
+  prId = int(args.prId[0])
   
   repo_dir = join(SCRIPT_DIR,'repos',"cms-sw/cmsdist".replace("-","_"))
   if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
   import repo_config
 
-  gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
-  repo = gh.get_repo("cms-sw/cmsdist")
-  if not process_pr(gh, repo, repo.get_issue(prId), opts.dryRun): exit(1)
+  repo = "cms-sw/cmsdist"
+  if not process_pr(repo, prId, args.dryRun): exit(1)
   exit (0)

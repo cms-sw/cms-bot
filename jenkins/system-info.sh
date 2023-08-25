@@ -6,7 +6,9 @@ fi
 aklog >/dev/null 2>&1 || true
 ACTUAL_NPROC=$(getconf _NPROCESSORS_ONLN 2> /dev/null || true)
 [ "${ACTUAL_NPROC}" != "" ] || ACTUAL_NPROC=$(nproc)
-ACTUAL_MEMORY=$(free -m | grep Mem: | awk '{print $2}')
+FREE_CMD="/usr/bin/free"
+[ -e $FREE_CMD ] || FREE_CMD="free"
+ACTUAL_MEMORY=$($FREE_CMD -m | grep Mem: | awk '{print $2}')
 if [ -d $HOME/bin ] ; then export PATH=$HOME/bin:$PATH ; fi
 OVERRIDE_NPROC=$(nproc)
 OVERRIDE_MEMORY=$(free -m | grep Mem: | awk '{print $2}')

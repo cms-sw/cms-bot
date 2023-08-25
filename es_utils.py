@@ -73,7 +73,10 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
   url = "%s/%s" % (es_ser,uri)
-  header['Authorization'] = 'Basic %s' % base64.b64encode("cmssdt:%s" % passwd)
+  if sys.version_info[0] == 2: 
+    header['Authorization'] = 'Basic %s' % base64.b64encode("cmssdt:%s" % passwd)
+  else:
+    header['Authorization'] = 'Basic %s' % base64.b64encode(("cmssdt:%s" % passwd).encode()).decode() 
   try:
     request = Request(url, payload, header)
     if method: request.get_method = lambda: method

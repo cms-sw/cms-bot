@@ -17,7 +17,7 @@ from cmsutils import cmsRunProcessCount, MachineMemoryGB
 from cmssw_known_errors import get_known_errors
 from subprocess import Popen
 from os.path import abspath, dirname
-import re
+import re, socket
 from time import time
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
@@ -69,7 +69,10 @@ if __name__ == "__main__":
 
       p = None
       stime = time()
-      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 -c 150 -m 85 -o time %s" % (cmssw_base,SCRIPT_DIR,opts.jobConfig), shell=True)
+      xopt="-c 150 -m 85"
+      if "lxplus" in socket.gethostname():
+        xopt="-c 120 -m 50"
+      p = Popen("cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 "+xopt+" -o time %s" % (cmssw_base,SCRIPT_DIR,opts.jobConfig), shell=True)
       e=waitpid(p.pid,0)[1]
       print("Time took to create jobs:",int(time()-stime),"sec")
     else:

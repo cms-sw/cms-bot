@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from hashlib import sha1
 import os , re , sys , json, datetime, time, functools
@@ -53,12 +53,12 @@ def process_queue_reason(labels):
     if "already in progress" in labels:
         reason = "concurrent builds not allowed"
     elif "Waiting for next available executor on" in labels:
-        node = labels.split(" on ")[1].decode('utf8').encode('ascii', errors='ignore')
+        node = labels.split(" on ")[1].encode('ascii', errors='ignore')
         reason = str(node) + "-busy"
     elif "is offline;" in labels:
         reason = "multiple-offline"
     elif "is offline" in labels:
-        node = labels.split(" is ")[0].decode('utf8').encode('ascii', errors='ignore')
+        node = labels.split(" is ")[0].encode('ascii', errors='ignore')
         reason = str(node) + "-offline"
     else:
         reason = "other"
@@ -124,7 +124,7 @@ for element in queue_json["items"]:
     job_name = element["task"]["name"]
     queue_id = int(element["id"])
     queue_time = int(element["inQueueSince"])
-    labels = element["why"].encode('utf-8')
+    labels = str(element["why"].encode('utf-8'))
     reason = process_queue_reason(labels)
 
     payload['jenkins_server'] = JENKINS_PREFIX
@@ -137,7 +137,7 @@ for element in queue_json["items"]:
     payload["start_time"] = 0
 
     unique_id = JENKINS_PREFIX + ":/build/builds/" + job_name + "/" + str(queue_id) # Not a real path
-    id = sha1(unique_id).hexdigest()
+    id = sha1(unique_id.encode()).hexdigest()
     jenkins_queue[id] = payload
 
 queue_index="cmssdt-jenkins-queue-"+str(int(((current_time/86400000)+4)/7))
@@ -195,7 +195,7 @@ for root, dirs, files in os.walk(path):
       payload['job_name'] = '/'.join(job_info[3:-1])
       payload['build_number'] = job_info[-1]
       payload['url'] = "https://cmssdt.cern.ch/"+JENKINS_PREFIX+"/job/" + '/job/'.join(job_info[3:-1]) + "/" + job_info[-1] + "/"
-      id = sha1(JENKINS_PREFIX+":"+root).hexdigest()
+      id = sha1((JENKINS_PREFIX+":"+root).encode()).hexdigest()
       try:
         tree = ET.parse(logFile)
         root = tree.getroot()

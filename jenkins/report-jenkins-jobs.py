@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 print("<html>")
 print('<head>')
@@ -39,14 +39,14 @@ for item in data:
   print("<li class="+'"'+"active"+'" '+ "id="+'"'+ name + '"'+ '><a href="https://cmssdt.cern.ch/jenkins/job/'+name+'"'+'><b>' + name.upper() +"</b></a></li>"+"<br />")
   print("<p>" , item[1]['job_desc'] , "</p><br />")
   if len(item[1]['downstream']) > 0:
-    d = [ x.encode('utf-8') for x in item[1]['downstream'] ]
+    d = [ x for x in item[1]['downstream'] ]
     for chd in d:
       parents[chd].append(name)
     print('<li>')  
     print("<b>DownStream Projects:</b> ", '  '.join([ '<a href='+'"#'+ x +'"'+ '>' + x + '</a>' for x in d ]) , "<br />")
     print('</li>')
   if len(item[1]['subprojects']) > 0:
-    sub = [ x.encode('utf-8') for x in item[1]['subprojects'] ]
+    sub = [ x for x in item[1]['subprojects'] ]
     print('<li>') 
     print("<b>Sub Projects:</b> ", ' '.join([ '<a href='+'"#'+ x +'"'+ '>' + x + '</a>' for x in sub  ]) , "<br />")
     print('</li>')
@@ -54,7 +54,7 @@ for item in data:
       parents[child].append(name)
   
   if len(item[1]['triggers_from']) > 0:
-    trg = [ x.encode('utf-8') for x in item[1]['triggers_from']]
+    trg = [ x for x in item[1]['triggers_from']]
     item[1]['upstream'].extend(trg)
   for ent in parents:
     if ent == name:
@@ -62,7 +62,7 @@ for item in data:
 
   if len(item[1]['upstream']) > 0:
     item[1]['upstream'] = set(item[1]['upstream'])
-    up = [ x.encode('utf-8') for x in item[1]['upstream']]
+    up = [ x for x in item[1]['upstream']]
     print('<li>') 
     print("<b>UpStream Projects:</b> ", ' '.join([ '<a href='+'"#'+ x +'"'+ '>' + x + '</a>' for x in up  ]) , "<br />")
     print('</li><br />')

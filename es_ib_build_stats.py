@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 import re, json, sys
 from datetime import datetime
@@ -82,7 +82,7 @@ def process_build_any_ib(logFile):
   payload["url"]=url
   week, rel_sec = cmsswIB2Week(rel)
   print(payload)
-  id = sha1(rel + arch).hexdigest()
+  id = sha1((rel + arch).encode()).hexdigest()
   send_payload("jenkins-ibs-"+week,"timings",id,json.dumps(payload))
   return finished
     

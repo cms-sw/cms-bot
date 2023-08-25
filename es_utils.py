@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import json, re, ssl, base64
+import sys, json, re, ssl, base64
 from os.path import exists
 from os import getenv
 from hashlib import sha1

@@ -8,13 +8,14 @@ from argparse import ArgumentParser
 from socket import setdefaulttimeout
 
 from github_utils import get_pr, get_issue_comments, merge_pr, edit_issue, \
-  create_issue_comment
+  create_issue_comment, get_gh_token
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
-def process_pr(repo: str, issue: dict, dryRun: bool):
+def process_pr(repo: str, issueId: int, dryRun: bool):
   from cmsdist_merge_permissions import USERS_TO_TRIGGER_HOOKS, getCommentCommand, hasRights
+  issue = get_pr(repo, issueId)
   print("Issue state:", issue["state"])
   prId    = issue["number"]
   pr      = None
@@ -72,6 +73,8 @@ if __name__ == "__main__":
   repo_dir = join(SCRIPT_DIR,'repos',"cms-sw/cmsdist".replace("-","_"))
   if exists(join(repo_dir,"repo_config.py")): sys.path.insert(0,repo_dir)
   import repo_config
+
+  get_gh_token(token_file=repo_config.GH_TOKEN)
 
   repo = "cms-sw/cmsdist"
   if not process_pr(repo, prId, args.dryRun): exit(1)

@@ -932,6 +932,7 @@ rovere:
 - SimG4CMS
 - SimG4Core
 - SimCalorimetry
+- HLTrigger/Configuration/python/HLT_75e33
 rylanC24:
 - Validation/RecoHI
 schoef:
@@ -1799,8 +1800,6 @@ a-kapoor:
   - EgammaAnalysis
   - DataFormats/EgammaCandidates
   - DataFormats/EgammaReco
-beaucero:
-- HLTrigger/Configuration/python/HLT_75e33
 SohamBhattacharya:
 - HLTrigger/Configuration/python/HLT_75e33
 AnnikaStein:

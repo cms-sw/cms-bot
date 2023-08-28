@@ -15,6 +15,7 @@ for prof in ${PROFILES} ; do
   mkdir -p $WORKSPACE/igprof/${prof}
   cd $WORKSPACE/igprof/${prof}
   for WORKFLOW in `echo $WORKFLOWS | sed 's|-l ||;s|,| |g;s|-i all||'`;do
+    ERR=0
     if [[ $WORKFLOWS = *all* ]];  then
         WF="-i all -l $WORKFLOW"
     elif [ $(runTheMatrix.py -n | grep "^$WORKFLOW " | wc -l) -eq 0 ]; then
@@ -38,7 +39,7 @@ for prof in ${PROFILES} ; do
       done
       s=1
       for f in $(ls -1 step*.py| sort); do
-         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1
+         igprof -mp -t cmsRunGlibC -- cmsRunGlibC $f > ${f//.py/.log} 2>&1 || ERR=1
          s=$((++s))
          for g in $(ls -1 IgProf*.gz);do
            mv $g ${g/IgProf/igprofMEM_GC_step$s}
@@ -46,20 +47,19 @@ for prof in ${PROFILES} ; do
       done
       cd -
     else
-      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof" > ./runTheMatrix.log 2>&1 && /bin/true
+      runTheMatrix.py $WF --command " -n $EVENTS --profile $prof" > ./runTheMatrix.log 2>&1 || ERR=1
       mv runTheMatrix.log $(ls -d $WORKFLOW*)
     fi
   done
   for hpwf in $PROFILING_WORKFLOWS; do
     for s in step3 step4 step5 ; do
       if [ $(ls -d ${hpwf}_*/${s}.root | wc -l) -eq 0 ] ; then continue ; fi
-      edmEventSize -v ${hpwf}_*/${s}.root> ${s}_sizes_${hpwf}.txt
+      edmEventSize -v ${hpwf}_*/${s}.root> ${s}_sizes_${hpwf}.txt || ERR=1
     done
   done
   for f in $(find . -name '*.gz' -type f) ; do
     echo "processing file $f"
     OUTFILE=${f//.gz/.sql3}
-    ERR=0
     ( igprof-analyse -v -d -g -c $f --sqlite > $f.sql ) || ERR=1
     ${CMS_BOT_DIR}/fix-igprof-sql.py $f.sql | sqlite3 "$OUTFILE" > $f.log || ERR=1
 

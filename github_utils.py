@@ -332,7 +332,7 @@ def get_commit_info(repo, commit):
 
 
 def create_team(org, team, description):
-    params = {"name": team, "description": description, "permission": "admin", "privacy": "closed"}
+    params = {"name": team, "description": description, "privacy": "closed"}
     return github_api("/orgs/%s/teams" % org, params=params, method="POST")
 
 

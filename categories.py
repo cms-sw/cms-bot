@@ -131,7 +131,7 @@ CMSSW_L2 = {
   "kandrosov":        ["tau-pog"],
   "alebihan":         ["tau-pog"],
   "slava77":          ["tracking-pog"],
-  "mmusich":          ["tracking-pog"],
+  "mmusich":          ["tracking-pog", "hlt"],
   "kskovpen":         ["tracking-pog"],
   # PPD
   "malbouis":         ["ppd"],

@@ -64,7 +64,7 @@ function process_dir()
         rm -rf $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip
         rm -rf */*.tar || true
         rm -rf */*.gz || true
-        rm -rf */*.db || true22-1600
+        rm -rf */*.db || true
         rm -rf */*.dat || true
         rm -rf */*.tgz || true
         rm -rf */millepede.* || true

@@ -93,6 +93,8 @@ def get_ported_PRs(repo, src_branch, des_branch):
     prRe = re.compile('Automatically ported from ' + src_branch + ' #(\d+)\s+.*', re.MULTILINE)
     for pr in repo.get_pulls(base=des_branch):
         body = pr.body.encode("ascii", "ignore")
+        if sys.version_info[0] == 3:
+            body = body.decode()
         m = prRe.search(body)
         if m:
             done_prs_id[int(m.group(1))] = pr.number
@@ -542,7 +544,10 @@ def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
   cur_emoji = None
   if reset_other:
     for e in get_comment_emojis(comment_id, repository):
-      if e['user']['login'].encode("ascii", "ignore") == GH_USER:
+      login = e['user']['login'].encode("ascii", "ignore")
+      if sys.version_info[0] == 3:
+        login = login.decode()
+      if login == GH_USER:
         if  e['content']!=emoji:
           delete_comment_emoji(e['id'], comment_id, repository)
         else:

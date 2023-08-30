@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import re
 from sys import exit
 from datetime import datetime
@@ -37,7 +36,7 @@ def process (line, count):
       agent  = " ".join(items[12:]).replace('"','')
       payload["agent"] = agent
       payload["agent_type"]=agent.replace(" ","-").split("/",1)[0].upper()
-  id = sha1(line).hexdigest()
+  id = sha1(line.encode()).hexdigest()
   if (count%1000)==0: print("Processed entries",count)
   if not send_payload("apache-doxygen-"+week,"access_log", id, dumps(payload)):
     return False

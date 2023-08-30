@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from sys import exit
 from datetime import datetime
 from time import mktime
@@ -34,7 +33,7 @@ def process (line, count):
   tsec = mktime(datetime.strptime(items[3][1:],'%d/%b/%Y:%H:%M:%S').timetuple())
   week = str(int(tsec/(86400*7)))
   payload["@timestamp"]=int(tsec*1000)
-  id = sha1(line).hexdigest()
+  id = sha1(line.encode()).hexdigest()
   if (count%1000)==0: print("Processed entries",count)
   if not send_payload("apache-cmsrep-"+week,"access_log", id, dumps(payload)):
     return False

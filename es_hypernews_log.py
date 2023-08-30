@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from _py2with3compatibility import run_cmd
 import re, sys, datetime
 from es_utils import send_payload

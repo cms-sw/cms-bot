@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from hashlib import sha1
 import os, sys,json , re
 from os.path import exists
@@ -88,7 +87,7 @@ def es_parse_log(logFile):
   week, rel_sec  = cmsswIB2Week(release)
   index = "ib-matrix-" + week
   document = "runTheMatrix-data"
-  id = sha1(release + architecture + workflow + str(step)).hexdigest()
+  id = sha1((release + architecture + workflow + str(step)).encode()).hexdigest()
   logdir = '/'.join(logFile.split('/')[:-1])
   cmdfile = logdir + '/cmdLog'
   cmd_step = find_step_cmd(cmdfile,step)
@@ -177,7 +176,7 @@ def es_parse_log(logFile):
       dataset["protocol"]=ds_items[0].split("/store/",1)[0]+ibeos
       dataset["protocol_opts"]=ds_items[1]
       dataset["lfn"]="/store/"+ds_items[0].split("/store/",1)[1].strip()
-      idx = sha1(id + ds).hexdigest()
+      idx = sha1((id + ds).encode()).hexdigest()
       send_payload("ib-dataset-"+week,"relvals-dataset",idx,json.dumps(dataset))
 
 if __name__ == "__main__":

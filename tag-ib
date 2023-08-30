@@ -1,6 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #test commit
-from __future__ import print_function
 from github import Github, GithubException
 from os.path import expanduser
 from optparse import OptionParser
@@ -35,7 +34,7 @@ if __name__ == "__main__":
   print('Limit: ', rate_limit.limit)
   print('Remaining: ', rate_limit.remaining)
   print('Reset time (GMT): ', rate_limit.reset)
-
+from __future__ import print_function
   repo =  gh.get_repo('cms-sw/cmssw')
   commits = repo.get_commits(sha=opts.branch, until=commit_date)
   last_merge = None
@@ -51,7 +50,7 @@ if __name__ == "__main__":
       repo.create_git_ref("refs/tags/"+opts.tag,sha)
       print("Created Tag ",opts.tag," based on ",sha)
     except GithubException as e:
-      msg = e.data['message'].encode("ascii", "ignore")
+      msg = e.data['message'].encode("ascii", "ignore").decode()
       print("Message: ",msg)
       if re.match('^.*Reference already exists.*$',msg,re.M):
         exit(0)

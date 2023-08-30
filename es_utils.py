@@ -136,7 +136,7 @@ def get_payload_wscroll(index, query, max_count=-1):
 
 def get_template(index=''):
   data = {'index':index, 'api': '/_template', 'prefix': True}
-  return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data))
+  return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode())
 
 def find_indexes(index):
   idxs = {}
@@ -157,7 +157,7 @@ def find_indexes(index):
 
 def get_indexes(index='cmssdt-*'):
   data = {'index':index, 'api': '/_cat', 'prefix': True, 'method': 'GET'}
-  return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data))
+  return ssl_urlopen(CMSSDT_ES_QUERY,json.dumps(data).encode())
 
 def close_index(index):
   if not index.startswith('cmssdt-'): index = 'cmssdt-' + index
@@ -247,7 +247,7 @@ def get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize):
           for t in ["25", "75", "90", "avg", "median"]:
             sdata[x + "_" + t] = data[0]
   except Exception as e:
-    print(e.message)
+    print(str(e))
   return sdata
 
 def es_send_resource_stats(release, arch, name, version, sfile,
@@ -265,9 +265,9 @@ def es_send_resource_stats(release, arch, name, version, sfile,
   average_stats = get_summary_stats_from_json_file(sfile, cpu_normalize)
   sdata.update(average_stats)
   if params: sdata.update(params)
-  idx = sha1(release + arch + name + version + str(rel_sec)).hexdigest()
+  idx = sha1((release + arch + name + version + str(rel_sec)).encode()).hexdigest()
   try:send_payload(index+"-"+week,doc,idx,json.dumps(sdata))
-  except Exception as e: print(e.message)
+  except Exception as e: print(str(e))
 
 def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normalize=1,
                            es_index_name='externals_stats_summary',
@@ -275,12 +275,12 @@ def es_send_external_stats(stats_dict_file_path, opts_dict_file_path, cpu_normal
   file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
   week = str((file_stamp / 86400 + 4) / 7)
   with open(opts_dict_file_path, 'r') as opts_dict_f: opts_dict = json.load(opts_dict_f)
-  index_sha = sha1( ''.join([str(x) for x in opts_dict.values()])+stats_dict_file_path).hexdigest()
+  index_sha = sha1( (''.join([str(x) for x in opts_dict.values()])+stats_dict_file_path).encode() ).hexdigest()
   sdata = get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize)
   sdata.update(opts_dict)
   sdata["@timestamp"]=file_stamp*1000
   try:send_payload(es_index_name+"-"+week, es_doc_name, index_sha, json.dumps(sdata))
-  except Exception as e: print(e.message)
+  except Exception as e: print(str(e))
 
 def getExternalsESstats(arch='*', externalsList='', lastNdays=30, page_size=0, fields=None):
   externals_names=''

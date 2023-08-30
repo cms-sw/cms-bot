@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import sys, os, re
 from datetime import datetime,timedelta
 from _py2with3compatibility import run_cmd
@@ -40,7 +39,7 @@ for log in out.split("\n"):
       payload['@timestamp'] = timestamp
       payload['ip'] = m.group(2)
       payload['message'] = line
-      id = sha1(str(timestamp)  + m.group(2)).hexdigest()
+      id = sha1((str(timestamp)  + m.group(2)).encode()).hexdigest()
       send_payload("hypernews-"+week,"hn-timeouts",id, dumps(payload))
 payload = {}
 payload['@timestamp'] = int(time()*1000)

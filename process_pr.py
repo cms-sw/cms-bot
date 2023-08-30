@@ -210,14 +210,14 @@ def find_last_comment(issue, user, match):
   for comment in issue.get_comments():
     if (user != comment.user.login) or (not comment.body):
       continue
-    if not re.match(match,comment.body.encode("ascii", "ignore").strip("\n\t\r "),re.MULTILINE):
+    if not re.match(match,comment.body.encode("ascii", "ignore").decode().strip("\n\t\r "),re.MULTILINE):
       continue
     last_comment = comment
     print("Matched comment from ",comment.user.login+" with comment id ",comment.id)
   return last_comment
 
 def modify_comment(comment, match, replace, dryRun):
-  comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
+  comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
   if match:
     new_comment_msg = re.sub(match,replace,comment_msg)
   else:
@@ -230,7 +230,7 @@ def modify_comment(comment, match, replace, dryRun):
 
 def get_user_emoji(comment, repository, user):
   for e in get_comment_emojis(comment.id, repository):
-    if e['user']['login'].encode("ascii", "ignore") == user:
+    if e['user']['login'].encode("ascii", "ignore").decode() == user:
       return e
   return None
 
@@ -256,12 +256,12 @@ def ignore_issue(repo_config, repo, issue):
   if re.match(BUILD_REL, issue.title):
     return True
   if issue.body:
-    if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+    if re.search(CMSBOT_IGNORE_MSG, issue.body.encode("ascii", "ignore").decode().split("\n",1)[0].strip() ,re.I):
       return True
   return False
 
 def notify_user(issue):
-  if issue.body and re.search(CMSBOT_NO_NOTIFY_MSG, issue.body.encode("ascii", "ignore").split("\n",1)[0].strip() ,re.I):
+  if issue.body and re.search(CMSBOT_NO_NOTIFY_MSG, issue.body.encode("ascii", "ignore").decode().split("\n",1)[0].strip() ,re.I):
       return False
   return True
 
@@ -452,7 +452,7 @@ def cmssw_file2Package(repo_config, filename):
 
 def get_jenkins_job(issue):
   test_line=""
-  for line in [l.strip() for l in issue.body.encode("ascii", "ignore").split("\n")]:
+  for line in [l.strip() for l in issue.body.encode("ascii", "ignore").decode().split("\n")]:
     if line.startswith("Build logs are available at:"): test_line=line
   if test_line:
     test_line=test_line.split("Build logs are available at: ",1)[-1].split("/")
@@ -520,7 +520,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   last_commit_date = None
   last_commit_obj = None
   push_test_issue = False
-  requestor = issue.user.login.encode("ascii", "ignore")
+  requestor = issue.user.login.encode("ascii", "ignore").decode()
   ignore_tests = ''
   enable_tests = ''
   commit_statuses = None
@@ -657,8 +657,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print("PR Statuses:",commit_statuses)
     print(len(commit_statuses))
     last_commit_date = last_commit.committer.date
-    print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore")," at ",last_commit_date)
-    print("Latest commit message: ",last_commit.message.encode("ascii", "ignore"))
+    print("Latest commit by ",last_commit.committer.name.encode("ascii", "ignore").decode()," at ",last_commit_date)
+    print("Latest commit message: ",last_commit.message.encode("ascii", "ignore").decode())
     print("Latest commit sha: ",last_commit.sha)
     print("PR update time",pr.updated_at)
     print("Time UTC:",datetime.utcnow())
@@ -668,7 +668,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       try: add_labels = repo_config.ADD_LABELS
       except: pass
       if (not dryRun) and add_labels:
-        labels = [x.name.encode("ascii", "ignore") for x in issue.labels]
+        labels = [x.name.encode("ascii", "ignore").decode() for x in issue.labels]
         if not 'future-commit' in labels:
           labels.append('future-commit')
           issue.edit(labels=labels)
@@ -726,11 +726,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   for c in issue.get_comments(): all_comments.append(c)
   for comment in all_comments:
     ack_comment = comment
-    commenter = comment.user.login.encode("ascii", "ignore")
+    commenter = comment.user.login.encode("ascii", "ignore").decode()
     commenter_categories = get_commenter_categories(commenter, int(comment.created_at.strftime('%s')))
     valid_commenter = (commenter in TRIGGER_PR_TESTS + releaseManagers + [repo_org]) or (len(commenter_categories)>0)
     if (not valid_commenter) and (requestor!=commenter): continue
-    comment_msg = comment.body.encode("ascii", "ignore") if comment.body else ""
+    comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
     # The first line is an invariant.
     comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ]
     first_line = comment_lines[0:1]
@@ -1016,7 +1016,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       dryRun=True
       break
 
-  old_labels = set([x.name.encode("ascii", "ignore") for x in issue.labels])
+  old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
   print("Stats:",backport_pr_num,extra_labels)
   print("Old Labels:",sorted(old_labels))
   print("Compilation Warnings: ",comp_warnings)
@@ -1041,7 +1041,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
           new_bot_tests = True
           trigger_test = True
           signatures["tests"]="started"
-        desc = "requested by %s at %s UTC." % (test_comment.user.login.encode("ascii", "ignore"), test_comment.created_at)
+        desc = "requested by %s at %s UTC." % (test_comment.user.login.encode("ascii", "ignore").decode(), test_comment.created_at)
         if not new_bot_tests:
           desc = "Old style tests %s" % desc
         else:
@@ -1146,7 +1146,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if dryRun: print("Update PR seen message to include backport PR number",backport_pr_num)
         else:
           new_msg = ""
-          for l in already_seen.body.encode("ascii", "ignore").split("\n"):
+          for l in already_seen.body.encode("ascii", "ignore").decode().split("\n"):
             if BACKPORT_STR in l: continue
             new_msg += l+"\n"
           if backport_pr_num: new_msg="%s%s%s\n" % (new_msg, BACKPORT_STR, backport_pr_num)
@@ -1241,7 +1241,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
       backport_msg=""
       if backport_pr_num: backport_msg="%s%s\n" % (BACKPORT_STR,backport_pr_num)
       uname = ""
-      if issue.user.name: uname = issue.user.name.encode("ascii", "ignore")
+      if issue.user.name: uname = issue.user.name.encode("ascii", "ignore").decode()
       l2s = ", ".join([ gh_user_char + name for name in CMSSW_ISSUES_TRACKERS ])
       issueMessage = format("%(msgPrefix)s %(gh_user_char)s%(user)s"
                         " %(name)s.\n\n"
@@ -1517,7 +1517,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
   if ack_comment:
     state = get_status(bot_ack_name, commit_statuses)
     if (not state) or (state.target_url != ack_comment.html_url):
-      desc = "Comment by %s at %s UTC processed." % (ack_comment.user.login.encode("ascii", "ignore"), ack_comment.created_at)
+      desc = "Comment by %s at %s UTC processed." % (ack_comment.user.login.encode("ascii", "ignore").decode(), ack_comment.created_at)
       print(desc)
       if not dryRun:
         last_commit_obj.create_status("success", description=desc, target_url=ack_comment.html_url, context=bot_ack_name)

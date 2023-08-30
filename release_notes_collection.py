@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from optparse import OptionParser
 import json
 import re
@@ -39,7 +38,7 @@ def head(title, release):
   return ret
 
 def get_pr(pr, repo, cmsprs):
-  pr_md5 = md5(pr+"\n").hexdigest()
+  pr_md5 = md5((pr+"\n").encode()).hexdigest()
   pr_cache = join(cmsprs,repo,pr_md5[0:2],pr_md5[2:]+".json")
   if exists(pr_cache): return json.load(open(pr_cache))
   return {}
@@ -82,7 +81,7 @@ def getReleasesNotes(opts):
       prepo = ""
       count = 0
       forward_port_sym = '<span class="glyphicon glyphicon-arrow-right"></span>'
-      for line in release['body'].encode("ascii", "ignore").split('\n'):
+      for line in release['body'].encode("ascii", "ignore").decode().split('\n'):
         line = re.sub(RX_AUTHOR, '\\1**\\2**', line)
         m = RX_COMMIT.match(line)
         if m:

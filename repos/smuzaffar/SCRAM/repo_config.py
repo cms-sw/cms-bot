@@ -1,7 +1,6 @@
 from os.path import basename,dirname,abspath
 
 CONFIG_DIR=dirname(abspath(__file__))
-GH_REPO_ORGANIZATION=basename(dirname(CONFIG_DIR))
 GITHUB_WEBHOOK_TOKEN='U2FsdGVkX1+8ckT0H3wKIUb59hZQrF5PZ2VlBxYyFek='
 RUN_DEFAULT_CMS_BOT=False
 

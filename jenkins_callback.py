@@ -26,7 +26,7 @@ def build_jobs(jenkins_url, jobs_data, headers = {}, user="cmssdt"):
              "Submit": "Build"
            }
     try:
-      data = urlencode(data)
+      data = urlencode(data).encode()
       req = Request(url=url,data=data,headers=headers)
       content = urlopen(req).read()
       print ("ALL_OK")

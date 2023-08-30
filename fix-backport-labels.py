@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 import re
 from github import Github
@@ -32,13 +32,13 @@ for issue in issues:
   if not issue.pull_request: continue
   api_rate_limits(gh)
   backport_pr=None
-  issue_body = issue.body.encode("ascii", "ignore") if issue.body else ""
+  issue_body = issue.body.encode("ascii", "ignore").decode() if issue.body else ""
   if (issue.user.login == CMSBUILD_GH_USER) and re.match(ISSUE_SEEN_MSG,issue_body.split("\n",1)[0].strip()):
      backport_pr=get_backported_pr(issue_body)
   else:
     for comment in issue.get_comments():
       commenter = comment.user.login
-      comment_msg = comment.body.encode("ascii", "ignore")
+      comment_msg = comment.body.encode("ascii", "ignore").decode()
       # The first line is an invariant.
       comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ]
       first_line = comment_lines[0:1]

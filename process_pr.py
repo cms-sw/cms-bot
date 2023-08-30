@@ -1,4 +1,3 @@
-from __future__ import print_function
 from categories import CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
 from categories import CMSSW_CATEGORIES
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
@@ -156,7 +155,8 @@ def read_repo_file(repo_config, repo_file, default=None):
   file_path = join(repo_config.CONFIG_DIR, repo_file)
   contents = default
   if exists(file_path):
-    contents = (yaml.load(file(file_path),Loader=Loader))
+    with open(file_path, "r") as f:
+      contents = (yaml.load(f,Loader=Loader))
     if not contents: contents = default
   return contents
 

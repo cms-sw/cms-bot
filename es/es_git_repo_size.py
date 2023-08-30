@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from hashlib import sha1
 import sys, json
 from time import time

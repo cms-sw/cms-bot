@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from copy import deepcopy
 from github import Github
@@ -114,7 +114,7 @@ for org_name in CMS_ORGANIZATIONS:
         api_rate_limits(gh,msg=False)
   pending_members = []
   for user in get_pending_members(org_name):
-    user = user['login'].encode("ascii", "ignore")
+    user = user['login'].encode("ascii", "ignore").decode()
     pending_members.append(user)
   print("Pending Invitations: %s" % ",".join(["@%s" % u for u in pending_members]))
   api_rate_limits(gh)
@@ -123,7 +123,7 @@ for org_name in CMS_ORGANIZATIONS:
   print("  Looking for owners:",REPO_OWNERS[org_name])
   chg_flag=0
   for mem in org.get_members(role="admin"):
-    login = mem.login.encode("ascii", "ignore")
+    login = mem.login.encode("ascii", "ignore").decode()
     if not login in cache["users"]: cache["users"][login] = mem
     if not login in REPO_OWNERS[org_name]:
       print("    =>Removing owner:",login)
@@ -158,7 +158,7 @@ for org_name in CMS_ORGANIZATIONS:
       create_team(org_name, team, "cmssw team for "+team)
       chg_flag+=1
   total_changes+=chg_flag
-  org_members = [ mem.login.encode("ascii", "ignore") for mem in org.get_members() ]
+  org_members = [ mem.login.encode("ascii", "ignore").decode() for mem in org.get_members() ]
   print("  All members: ",org_members)
   if chg_flag: teams = org.get_teams()
   for team in teams:
@@ -174,7 +174,7 @@ for org_name in CMS_ORGANIZATIONS:
       continue
     members = team_info["members"]
     tm_members = [ mem for mem in team.get_members()]
-    tm_members_login = [ mem.login.encode("ascii", "ignore") for mem in tm_members ]
+    tm_members_login = [ mem.login.encode("ascii", "ignore").decode() for mem in tm_members ]
     print("      Valid Members:",members)
     print("      Existing Members:",tm_members_login)
     ok_mems = ["*"]
@@ -182,7 +182,7 @@ for org_name in CMS_ORGANIZATIONS:
     if not "*" in members:
       for mem in tm_members:
         api_rate_limits(gh,msg=False)
-        login = mem.login.encode("ascii", "ignore")
+        login = mem.login.encode("ascii", "ignore").decode()
         if not login in cache["users"]: cache["users"][login] = mem
         if (login in members):
           ok_mems.append(login)
@@ -220,20 +220,20 @@ for org_name in CMS_ORGANIZATIONS:
       ref.close()
       continue
     team_repos      = [ repo for repo in team.get_repos() ]
-    team_repos_name = [ repo.name.encode("ascii", "ignore") for repo in team_repos ]
+    team_repos_name = [ repo.name.encode("ascii", "ignore").decode() for repo in team_repos ]
     print("      Checking team repositories")
     print("        Valid Repos:",list(team_info["repositories"].keys()))
     print("        Existing Repos:",team_repos_name)
     repo_to_check = team_repos_name[:]
     for repo in team_info["repositories"]:
-      if repo=="*":              repo_to_check += [ r.name.encode("ascii", "ignore") for r in org_repos ]
+      if repo=="*":              repo_to_check += [ r.name.encode("ascii", "ignore").decode() for r in org_repos ]
       elif repo.startswith("!"): repo_to_check += [repo[1:]]
       else:                      repo_to_check += [repo]
     chg_flag=0
     for repo_name in set(repo_to_check):
       api_rate_limits(gh, msg=False)
       inv_repo = "!"+repo_name
-      repo = [ r for r in team_repos if r.name.encode("ascii", "ignore") == repo_name ]
+      repo = [ r for r in team_repos if r.name.encode("ascii", "ignore").decode() == repo_name ]
       if (repo_name in team_info["repositories"]) or \
          ("*" in team_info["repositories"] and (not inv_repo in team_info["repositories"])):
          prem = "pull"

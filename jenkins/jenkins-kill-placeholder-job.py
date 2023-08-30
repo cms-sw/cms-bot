@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This job will check if there are queued jobs for jenkins slaves with 'condor' label and how many.
 Then it will kill needed amount of placeholder jobs.
@@ -101,7 +101,7 @@ def main():
         found = False
         m = RX_Queue_why.match(j['why'])
         if m:
-          label = m.group(1).encode('utf-8')
+          label = m.group(1)
           print("Waiting for",label)
           for node in get_nodes(label):
             if re.match('^grid[1-9][0-9]*$', node['nodeName']):

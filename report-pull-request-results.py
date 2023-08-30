@@ -301,8 +301,9 @@ def read_unit_tests_file(unit_tests_file):
   for line in openlog(unit_tests_file):
     if( 'had ERRORS' in line):
       err_cnt += 1
-      if err_cnt > 3:
+      if err_cnt == 4:
         errors_found += "and more ...\n"
+      if err_cnt > 3:
         continue
       errors_found += line
 
@@ -317,8 +318,9 @@ def read_gpu_tests_file(unit_tests_file):
   for line in openlog(unit_tests_file):
     if( 'had ERRORS' in line):
       err_cnt += 1
-      if err_cnt > 3:
+      if err_cnt == 4:
         errors_found += "and more ...\n"
+      if err_cnt > 3:
         continue
       errors_found += line
   message = '\n## GPU Unit Tests\n\nI found %s errors in the following unit tests:\n\n<pre>%s</pre>' % (err_cnt, errors_found)
@@ -333,8 +335,9 @@ def read_python3_file(python3_file):
   for line in openlog(python3_file):
     if( ' Error compiling ' in line):
       err_cnt += 1
-      if err_cnt > 3:
+      if err_cnt == 4:
         errors_found += "and more ...\n"
+      if err_cnt > 3:
         continue
       errors_found += line
   message = '\n#Python3\n\nI found %s errors: \n\n <pre>%s</pre>' % (err_cnt, errors_found)

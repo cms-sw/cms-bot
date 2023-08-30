@@ -179,10 +179,8 @@ if [ ${COMMIT_CHG} -gt 0 ] ; then
       fi
       curl -s https://api.github.com/repos/${REPO_USER}/cmssw/pulls/${PULL_REQUEST}  > pr.json
       export CMSBOT_PYTHON_CMD=$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
-      TEST_BRANCH=$(jq ".head.ref" "pr.json")
-      #$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('pr.json'));print(obj['head']['ref'])")
-      TEST_REPO=$(jq ".head.repo.full_name" "pr.json")
-      #$(${CMSBOT_PYTHON_CMD} -c "import json,sys;obj=json.load(open('pr.json'));print(obj['head']['repo']['full_name'])")
+      TEST_BRANCH=$(jq -M -r ".head.ref" "pr.json")
+      TEST_REPO=$(jq -M -r ".head.repo.full_name" "pr.json")
       if ! $DRY_RUN ; then
         git push  git@github.com:${TEST_REPO} HEAD:${TEST_BRANCH}
       fi

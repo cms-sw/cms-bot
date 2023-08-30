@@ -47,7 +47,7 @@ def process_unittest_log(logFile):
     {"str_to_match": "test (.*) had ERRORS", "name": "{0} failed", 'control_type': ResultTypeEnum.ISSUE },
     {"str_to_match": '===== Test "([^\s]+)" ====', "name": "{0}", 'control_type': ResultTypeEnum.TEST }
   ]
-  with open(logFile) as f:
+  with open(logFile, encoding="ascii", errors="ignore") as f:
     utname = None
     datasets = []
     xid = None
@@ -87,7 +87,7 @@ def process_addon_log(logFile):
   payload["name"] = pathInfo[-1].split("-")[1].split("_cmsRun_")[0].split("_cmsDriver.py_")[0]
   id = sha1hexdigest(release + architecture + "addon" + payload["name"])
   config_list = []
-  with open(logFile) as f:
+  with open(logFile, encoding="ascii", errors="ignore") as f:
     for index, l in enumerate(f):
       l = l.strip()
       config_list = add_exception_to_config(l,index, config_list)
@@ -114,7 +114,7 @@ def process_hlt_log(logFile):
   payload["@timestamp"]=timestp
   payload["name"] = pathInfo[-1][:-4]
   id = sha1hexdigest(release + architecture + "hlt" + payload["name"])
-  with open(logFile) as f:
+  with open(logFile, encoding="ascii", errors="ignore") as f:
     for index, l in enumerate(f):
       l = l.strip()
       if " Initiating request to open file " in l:
@@ -145,7 +145,7 @@ def process_ib_utests(logFile):
   payload["@timestamp"] = timestp
 
   if exists(logFile):
-    with open(logFile) as f:
+    with open(logFile, encoding="ascii", errors="ignore") as f:
       try:
         it = iter(f)
         line = next(it)

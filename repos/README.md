@@ -1,14 +1,14 @@
 ## Adding your repository so that CMS CI system can process webhooks
 ### Setup you repository
-- Make a Pull Request to add your repository configuration in `cms-bot/repos/<user>/<repo>`
-  - If you have `-` in your github user or repository name then replace it with `_`
+- Open a pull request to add your repository configuration via `cms-bot/repos/<user>/<repo>/repo_config.py`
+  - If you have `-` character in your github user or repository name then replace it with `_`
 - It is better to copy existing configuration and change it accordingly e.g. copy `repos/smuzaffar/SCRAM` in to `repos/<user>/<repo>`
 - If you want `cmsbot` github user to update your repository/pull requests/issue (e.g. adding webhooks, setting labels etc.) then please
-  - github organization: Add github user `cmsbot` in to a team with write (or admin) rights
-  - personal repository: Add `cmsbot` as Collaborators (under the Settings of your repository).
-- Add github webhook so that bot can get notifications.
-  - If you have given admin rights to `cmsbot` and set `ADD_WEB_HOOK=True` in `repos/<user>/<repo>/repo_config.py` so that bot can automatically add web-hook
-  - If `cmsbot` does not have admin rights then please add yourself the github webhook (under `Settings` of your repository) so that bot can recognize/process webhooks
+  - **github organization**: Add github user `cmsbot` in to a team with `write` (or `admin`) rights
+  - **personal repository**: Add `cmsbot` as `Collaborators` (under the `Settings` of your repository).
+- Add github webhook so that bot can receive notifications
+  - **`cmsbot` with `admin` rights**: Set `ADD_WEB_HOOK=True` in `repos/<user>/<repo>/repo_config.py` so that bot can automatically add web-hook
+  - **`cmsbot` without `admin` right**: Add yourself the github webhook (under `Settings` of your repository) so that bot can recognize/process webhooks
     - Please disable SSL Verificaton as github does not recognize cmssdt.cern.ch certificate
     - Payload URL: https://cmssdt.cern.ch/SDT/cgi-bin/github_webhook
     - Content type: application/json

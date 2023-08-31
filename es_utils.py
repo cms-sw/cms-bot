@@ -78,7 +78,7 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
   else:
     header['Authorization'] = 'Basic %s' % base64.b64encode(("cmssdt:%s" % passwd).encode()).decode() 
   try:
-    if sys.version_info[0] == 2:
+    if sys.version_info[0] == 2 or payload is None:
       request = Request(url, payload, header)
     else:
       request = Request(url, payload.encode(), header)

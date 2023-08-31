@@ -555,8 +555,7 @@ def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
   if cur_emoji: return cur_emoji
   get_gh_token(repository)
   params = {"content" : emoji }
-  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), params=params, headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), params=params)
 
 
 def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}, page=1, all_pages=False):
@@ -585,14 +584,12 @@ def get_release_by_tag(repository, tag):
 
 def get_comment_emojis(comment_id, repository):
   get_gh_token(repository)
-  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), method="GET", headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), method="GET")
 
 
 def delete_comment_emoji(emoji_id, comment_id, repository):
   get_gh_token(repository)
-  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", headers=headers, raw=True)
+  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", headers=headers)
 
 
 def get_git_tree(sha, repository):

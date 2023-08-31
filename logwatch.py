@@ -38,7 +38,7 @@ class logwatch (object):
           continue
         else: break
       run_cmd ("rsync -a %s %s" % (log, service_log))
-      cur_hash = sha256(run_cmd("head -1 %s" % service_log)).hexdigest()
+      cur_hash = sha256(run_cmd("head -1 %s" % service_log).encode()).hexdigest()
       data.insert(0,[log , service_log, 1, cur_hash, False])
       if cur_hash == prev_hash:
         found = True

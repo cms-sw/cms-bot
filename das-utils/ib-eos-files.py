@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from sys import exit, version_info
 from os.path import abspath, dirname, exists, getmtime
 import json
@@ -181,7 +181,10 @@ def copy_lfns_to_eos(eos_lfns):
     while True:
       threads = get_alive_threads(threads)
       if(len(threads) < opts.jobs):
-        log_file=logdir+"/"+sha256(lfn).hexdigest()+".log"
+        if sys.version_info[0] == 3:
+          log_file=logdir+"/"+sha256(lfn.encode()).hexdigest()+".log"
+        else:
+          log_file=logdir+"/"+sha256(lfn).hexdigest()+".log"
         all_logs[log_file]=lfn
         print("Copy (%s/%s): %s" % (already_done+len(all_logs), total_lfns, lfn))
         t = Thread(name=lfn,target=copy_to_eos, args=(lfn, log_file))

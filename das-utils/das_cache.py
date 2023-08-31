@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from sys import exit
 from os import environ
@@ -179,6 +179,8 @@ if __name__ == "__main__":
   if opts.query:
     import hashlib
     query = re.sub("= ","=",re.sub(" =","=",re.sub("  +"," ",opts.query.strip())))
+    if sys.version_info[0] == 3:
+      query = query.encode()
     query_sha[query] = hashlib.sha256(query).hexdigest()
   else:
     err, qout = run_cmd("find %s -name '*.query' -type f" % opts.store)
@@ -205,6 +207,8 @@ if __name__ == "__main__":
   for query in query_sha:
     if 'site=T2_CH_CERN' in query:
       query = re.sub("  +"," ",query.replace('site=T2_CH_CERN','').strip())
+      if sys.version_info[0] == 3:
+        query = query.encode()
       if not query in query_sha:
         from hashlib import sha256
         sha = sha256(query).hexdigest()

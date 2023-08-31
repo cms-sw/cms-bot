@@ -1747,7 +1747,15 @@
         "orp", 
         "orp"
       ], 
+      "end_date": 1693440000, 
       "start_date": 1688688000
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "start_date": 1693440000
     }
   ], 
   "perrozzi": [

@@ -53,12 +53,12 @@ def process_queue_reason(labels):
     if "already in progress" in labels:
         reason = "concurrent builds not allowed"
     elif "Waiting for next available executor on" in labels:
-        node = labels.split(" on ")[1]
+        node = labels.split(" on ")[1].encode('ascii', errors='ignore').decode("ascii", "ignore")
         reason = node + "-busy"
     elif "is offline;" in labels:
         reason = "multiple-offline"
     elif "is offline" in labels:
-        node = labels.split(" is ")[0]
+        node = labels.split(" is ")[0].encode('ascii', errors='ignore').decode("ascii", "ignore")
         reason = node + "-offline"
     else:
         reason = "other"
@@ -125,7 +125,7 @@ for element in queue_json["items"]:
     job_name = element["task"]["name"]
     queue_id = int(element["id"])
     queue_time = int(element["inQueueSince"])
-    labels = element["why"]
+    labels = element["why"].encode("ascii", "ignore").decode("ascii", "ignore")
     reason = process_queue_reason(labels)
 
     payload['jenkins_server'] = JENKINS_PREFIX

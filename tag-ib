@@ -34,7 +34,7 @@ if __name__ == "__main__":
   print('Limit: ', rate_limit.limit)
   print('Remaining: ', rate_limit.remaining)
   print('Reset time (GMT): ', rate_limit.reset)
-from __future__ import print_function
+
   repo =  gh.get_repo('cms-sw/cmssw')
   commits = repo.get_commits(sha=opts.branch, until=commit_date)
   last_merge = None

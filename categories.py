@@ -49,7 +49,7 @@ CMSSW_L2 = {
   "simonepigazzini":  ["xpog"],
   "fwyzard":          ["heterogeneous"],
   "GurpreetSinghChahal":  ["generators"],
-  "clacaputo":        ["reconstruction"],
+  "jfernan2":         ["reconstruction"],
   "kskovpen":         ["pdmv"],
   "sunilUIET":        ["pdmv"],
   "miquork":          ["pdmv", "jetmet-pog"],

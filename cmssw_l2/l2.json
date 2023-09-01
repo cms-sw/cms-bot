@@ -435,6 +435,7 @@
       "category": [
         "reconstruction"
       ], 
+      "end_date": 1693526400, 
       "start_date": 1639008000
     }
   ], 
@@ -1087,6 +1088,12 @@
       ], 
       "end_date": 1671494400, 
       "start_date": 1508889600
+    }, 
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "start_date": 1693526400
     }
   ], 
   "jhakala": [

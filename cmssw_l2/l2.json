@@ -82,6 +82,14 @@
       "start_date": 1687478400
     }
   ], 
+  "SWuchterl": [
+    {
+      "category": [
+        "btv-pog"
+      ], 
+      "start_date": 1693353600
+    }
+  ], 
   "Saptaparna": [
     {
       "category": [
@@ -1135,6 +1143,7 @@
       "category": [
         "btv-pog"
       ], 
+      "end_date": 1693353600, 
       "start_date": 1632787200
     }
   ], 
@@ -1573,6 +1582,14 @@
       ], 
       "end_date": 1598486400, 
       "start_date": 1377734400
+    }
+  ], 
+  "mondalspandan": [
+    {
+      "category": [
+        "btv-pog"
+      ], 
+      "start_date": 1693353600
     }
   ], 
   "montjj": [
@@ -2075,6 +2092,7 @@
       "category": [
         "btv-pog"
       ], 
+      "end_date": 1693353600, 
       "start_date": 1632787200
     }
   ], 

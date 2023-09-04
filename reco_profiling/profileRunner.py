@@ -163,7 +163,7 @@ workflow_configs = {
         "matrix": "upgrade"
     } ,
     #Phase2 workflow used late-2023
-    "24834.21": {
+    "25034.21": {
         "num_events": 100,
         "steps": {
             "step3": {

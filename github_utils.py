@@ -589,7 +589,7 @@ def get_comment_emojis(comment_id, repository):
 
 def delete_comment_emoji(emoji_id, comment_id, repository):
   get_gh_token(repository)
-  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", raw=True)
 
 
 def get_git_tree(sha, repository):

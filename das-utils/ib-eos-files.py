@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from sys import exit, version_info
+from sys import exit
 from os.path import abspath, dirname, exists, getmtime
 import json
 from hashlib import sha256
@@ -14,18 +14,11 @@ eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"
 opts = None
 
-if version_info < (2,6):
-  def get_alive_threads(threads):
-    alive = []
-    for t in threads:
-      if t.isAlive(): alive.append(t)
-    return alive
-else:
-  def get_alive_threads(threads):
-    alive = []
-    for t in threads:
-      if t.is_alive(): alive.append(t)
-    return alive
+def get_alive_threads(threads):
+  alive = []
+  for t in threads:
+    if t.is_alive(): alive.append(t)
+  return alive
 
 try:
   CMS_BOT_DIR = dirname(abspath(__file__))
@@ -181,10 +174,7 @@ def copy_lfns_to_eos(eos_lfns):
     while True:
       threads = get_alive_threads(threads)
       if(len(threads) < opts.jobs):
-        if sys.version_info[0] == 3:
-          log_file=logdir+"/"+sha256(lfn.encode()).hexdigest()+".log"
-        else:
-          log_file=logdir+"/"+sha256(lfn).hexdigest()+".log"
+        log_file=logdir+"/"+sha256(lfn.encode()).hexdigest()+".log"
         all_logs[log_file]=lfn
         print("Copy (%s/%s): %s" % (already_done+len(all_logs), total_lfns, lfn))
         t = Thread(name=lfn,target=copy_to_eos, args=(lfn, log_file))

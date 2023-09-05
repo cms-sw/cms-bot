@@ -44,7 +44,11 @@ def get_ssl_context():
   return sslcon
 
 def ssl_urlopen(url, data):
-  return urlopen(url, data, context=get_ssl_context()).read()
+  res = urlopen(url, data, context=get_ssl_context()).read()
+  if isinstance(res, bytes):
+    res = res.decode()
+
+  return res
 
 def resend_payload(hit):
   print("Resending ",hit)
@@ -73,12 +77,9 @@ def send_request(uri, payload=None, passwd_file=None, method=None, es_ser=ES_SER
   passwd=es_get_passwd(passwd_file)
   if not passwd: return False
   url = "%s/%s" % (es_ser,uri)
-  if sys.version_info[0] == 2: 
-    header['Authorization'] = 'Basic %s' % base64.b64encode("cmssdt:%s" % passwd)
-  else:
-    header['Authorization'] = 'Basic %s' % base64.b64encode(("cmssdt:%s" % passwd).encode()).decode() 
+  header['Authorization'] = 'Basic %s' % base64.b64encode(("cmssdt:%s" % passwd).encode()).decode()
   try:
-    if sys.version_info[0] == 2 or payload is None:
+    if payload is None:
       request = Request(url, payload, header)
     else:
       request = Request(url, payload.encode(), header)

@@ -60,7 +60,7 @@ def process (line, count):
   for x in ["@timestamp","ip"]: xpayload[x] = payload[x]
   return send_payload("cmspkg-access-"+week,"rpm-packages", id, dumps(xpayload))
 
-count=run_cmd("pgrep -l -x -f '^python .*/es_cmsrep_apache.py$' | wc -l",False)
+count=run_cmd("pgrep -l -x -f '^python3 .*/es_cmsrep_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)
 logs = run_cmd("ls -rt /var/log/httpd/cmsrep-non-ssl_access.log* | grep -v '[.]gz$'").split("\n")
 log = logwatch("httpd",log_dir="/data/es")

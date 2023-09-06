@@ -41,7 +41,7 @@ def process (line, count):
     print("Processed entries",count)
   return send_payload("apache-cmsdoxygen-"+week,"access_log", id, dumps(payload))
 
-count=run_cmd("pgrep -l -x -f '^python .*/es_cmsdoxygen_apache.py$' | wc -l",False)
+count=run_cmd("pgrep -l -x -f '^python3 .*/es_cmsdoxygen_apache.py$' | wc -l",False)
 if int(count)>1: exit(0)
 logs = run_cmd("ls -rt /var/log/httpd/sdt-access_log* | grep -v '[.]gz$'").split("\n")
 log = logwatch("httpd",log_dir="/data/es")

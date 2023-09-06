@@ -44,7 +44,7 @@ def hasRights(user, branch, type, files=[]):
 def isValidWebHook(payload):
   if (not payload['repository']['full_name'] in ['cms-sw/cmsdist']): return False
   if (not payload['comment']['user']['login'] in CMSDIST_PERMISSIONS.keys()): return False
-  comment_lines = [ l.strip() for l in payload['comment']['body'].encode("ascii", "ignore").split("\n") if l.strip() ][0:1]
+  comment_lines = [ l.strip() for l in payload['comment']['body'].encode("ascii", "ignore").decode().split("\n") if l.strip() ][0:1]
   if (not comment_lines) or (not getCommentCommand(comment_lines[0])): return False
   return True
 

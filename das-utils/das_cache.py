@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from sys import exit
 from os import environ
@@ -179,7 +179,7 @@ if __name__ == "__main__":
   if opts.query:
     import hashlib
     query = re.sub("= ","=",re.sub(" =","=",re.sub("  +"," ",opts.query.strip())))
-    query_sha[query] = hashlib.sha256(query).hexdigest()
+    query_sha[query] = hashlib.sha256(query.encode()).hexdigest()
   else:
     err, qout = run_cmd("find %s -name '*.query' -type f" % opts.store)
     for qfile in qout.split("\n"):
@@ -207,7 +207,7 @@ if __name__ == "__main__":
       query = re.sub("  +"," ",query.replace('site=T2_CH_CERN','').strip())
       if not query in query_sha:
         from hashlib import sha256
-        sha = sha256(query).hexdigest()
+        sha = sha256(query.encode()).hexdigest()
         xqueries[query] = sha
         qdir = join(opts.store, sha[:2])
         run_cmd("mkdir -p %s" % qdir)

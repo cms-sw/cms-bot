@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from github import Github
 from os.path import expanduser, exists
 from optparse import OptionParser
@@ -23,20 +22,20 @@ def process(repo, prId, prCache):
       data['auther_sha'] = refData['auther_sha']
       data['merge_commit_sha'] = refData['merge_commit_sha']
   data['number']   = issue.number
-  data['user']     = issue.user.login.encode("ascii", "ignore")
-  data['title']    = issue.title.encode("ascii", "ignore")
+  data['user']     = issue.user.login.encode("ascii", "ignore").decode()
+  data['title']    = issue.title.encode("ascii", "ignore").decode()
   data['comments'] = issue.comments
-  data['labels']   = [x.name.encode("ascii", "ignore") for x in issue.labels]
-  if issue.body: data['body']=issue.body.encode("ascii", "ignore")
+  data['labels']   = [x.name.encode("ascii", "ignore").decode() for x in issue.labels]
+  if issue.body: data['body']=issue.body.encode("ascii", "ignore").decode()
   else: data['body']=""
-  if issue.milestone: data['milestone']=issue.milestone.title.encode("ascii", "ignore")
+  if issue.milestone: data['milestone']=issue.milestone.title.encode("ascii", "ignore").decode()
 
-  data['branch']          = pr.base.ref.encode("ascii", "ignore")
+  data['branch']          = pr.base.ref.encode("ascii", "ignore").decode()
   data['created_at']      = pr.created_at.strftime("%s")
   data['updated_at']      = pr.updated_at.strftime("%s")
-  if pr.head.user: data['author'] = pr.head.user.login.encode("ascii", "ignore")
-  data['auther_ref']      = pr.head.ref.encode("ascii", "ignore")
-  if not 'freeze' in data: data['auther_sha'] = pr.head.sha.encode("ascii", "ignore")
+  if pr.head.user: data['author'] = pr.head.user.login.encode("ascii", "ignore").decode()
+  data['auther_ref']      = pr.head.ref.encode("ascii", "ignore").decode()
+  if not 'freeze' in data: data['auther_sha'] = pr.head.sha.encode("ascii", "ignore").decode()
   data['review_comments'] = pr.review_comments
   data['commits']         = pr.commits
   data['additions']       = pr.additions
@@ -47,18 +46,18 @@ def process(repo, prId, prCache):
     data['closed_at'] = pr.closed_at.strftime("%s")
     if pr.merged:
       data['merged_at'] = pr.merged_at.strftime("%s")
-      data['merged_by'] = pr.merged_by.login.encode("ascii", "ignore")
+      data['merged_by'] = pr.merged_by.login.encode("ascii", "ignore").decode()
       if not 'freeze' in data:
-        if pr.merge_commit_sha:data['merge_commit_sha'] = pr.merge_commit_sha.encode("ascii", "ignore")
+        if pr.merge_commit_sha:data['merge_commit_sha'] = pr.merge_commit_sha.encode("ascii", "ignore").decode()
         else: data['merge_commit_sha']=""
   data['release-notes'] = []
   REGEX_RN = re.compile('^release(-| )note(s|)\s*:\s*',re.I)
   if issue.body:
-    msg = issue.body.encode("ascii", "ignore").strip()
+    msg = issue.body.encode("ascii", "ignore").decode().strip()
     if REGEX_RN.match(msg): data['release-notes'].append(REGEX_RN.sub('',msg).strip())
   for comment in issue.get_comments():
     if not comment.body: continue
-    msg = comment.body.encode("ascii", "ignore").strip()
+    msg = comment.body.encode("ascii", "ignore").decode().strip()
     if REGEX_RN.match(msg):
       data['release-notes'].append(REGEX_RN.sub('',msg).strip())
   return data

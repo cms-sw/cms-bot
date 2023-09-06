@@ -93,6 +93,8 @@ def get_ported_PRs(repo, src_branch, des_branch):
     prRe = re.compile('Automatically ported from ' + src_branch + ' #(\d+)\s+.*', re.MULTILINE)
     for pr in repo.get_pulls(base=des_branch):
         body = pr.body.encode("ascii", "ignore")
+        if sys.version_info[0] == 3:
+            body = body.decode()
         m = prRe.search(body)
         if m:
             done_prs_id[int(m.group(1))] = pr.number
@@ -542,7 +544,10 @@ def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
   cur_emoji = None
   if reset_other:
     for e in get_comment_emojis(comment_id, repository):
-      if e['user']['login'].encode("ascii", "ignore") == GH_USER:
+      login = e['user']['login'].encode("ascii", "ignore")
+      if sys.version_info[0] == 3:
+        login = login.decode()
+      if login == GH_USER:
         if  e['content']!=emoji:
           delete_comment_emoji(e['id'], comment_id, repository)
         else:
@@ -550,8 +555,7 @@ def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
   if cur_emoji: return cur_emoji
   get_gh_token(repository)
   params = {"content" : emoji }
-  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), params=params, headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), params=params)
 
 
 def get_repository_issues(repository, params={'sort': 'updated', 'state': 'all'}, page=1, all_pages=False):
@@ -580,14 +584,12 @@ def get_release_by_tag(repository, tag):
 
 def get_comment_emojis(comment_id, repository):
   get_gh_token(repository)
-  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), method="GET", headers=headers)
+  return github_api('/repos/%s/issues/comments/%s/reactions' % (repository, comment_id), method="GET")
 
 
 def delete_comment_emoji(emoji_id, comment_id, repository):
   get_gh_token(repository)
-  headers = {"Accept": "application/vnd.github.squirrel-girl-preview+json"}
-  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", headers=headers, raw=True)
+  return github_api('/repos/%s/issues/comments/%s/reactions/%s' % (repository, comment_id, emoji_id), method="DELETE", raw=True)
 
 
 def get_git_tree(sha, repository):

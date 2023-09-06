@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import datetime, json
+import sys
+import os
 from hashlib import sha1
 from es_utils import get_payload_wscroll, send_payload, delete_hit
 
@@ -30,7 +32,7 @@ current_offline_nodes = []
 content_hash = get_payload_wscroll('cmssdt-jenkins-queue-*', query_pending_builds)
 if content_hash:
   if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
-    print("ERROR: ", content)
+    print("ERROR: ", content_hash)
     sys.exit(1)
 
   print("Found " + str(len(content_hash['hits']['hits'])) + " jobs in queue!")
@@ -67,7 +69,7 @@ content_hash = get_payload_wscroll('cmssdt-jenkins-offline-node*', query_offline
 es_offline_nodes = []
 if content_hash:
   if (not 'hits' in content_hash) or (not 'hits' in content_hash['hits']):
-    print("ERROR: ", content)
+    print("ERROR: ", content_hash)
     sys.exit(1)
 
   print("Found " + str(len(content_hash['hits']['hits'])) + " nodes already online!")

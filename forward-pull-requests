@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Given a branch, gets all of its pull requests
 # and recreates them in a different branch.
@@ -71,8 +71,8 @@ if __name__ == "__main__":
       newHead = "%s:%s" % (pr.head.user.login, pr.head.ref)
       print('-----')
       print("Porting %s" % pr.number)
-      print(pr.title.encode('utf-8'))
-      print(newBody.encode('utf-8'))
+      print(pr.title)
+      print(newBody)
       print(args.dest)
       print(newHead)
       print('---')
@@ -89,7 +89,7 @@ if __name__ == "__main__":
       request = Request("https://api.github.com/repos/cms-sw/cmssw/pulls",
         headers={"Authorization" : "token " + GH_TOKEN })
       request.get_method = lambda: 'POST'
-      newPR = json.loads(urlopen( request, json.dumps(params)).read())
+      newPR = json.loads(urlopen( request, json.dumps(params).encode()).read())
       print("New PR number", newPR['number'])
       sleep(15)
     except GithubException as e:

@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import os, sys, json, socket, re, base64
 from glob import glob
 from optparse import OptionParser
@@ -79,7 +78,7 @@ if __name__ == "__main__":
       stops = dict([(x[2], int(x[1])) for x in info if x[0] == "stop"])
       packages = set(x[2] for x in info)
       for x in packages:
-        h = sha1(x + SCRAM_ARCH + CMSSW_VERSION).hexdigest()
+        h = sha1((x + SCRAM_ARCH + CMSSW_VERSION).encode()).hexdigest()
         header = { "index" : { "_index" : INDEX_NAME,
                                "_type" : "cmssw_pkg_times",
                                "_id": h}

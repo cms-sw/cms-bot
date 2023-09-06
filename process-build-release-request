@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import json
 import re
 from _py2with3compatibility import run_cmd, quote, Request, urlopen, HTTPError
@@ -209,7 +208,7 @@ def search_date_comment( comments, user_logins, pattern, first_line ):
     examined_str = comment.body
 
     if first_line:
-      examined_str = str(comment.body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+      examined_str = str(comment.body.encode("ascii", "ignore").decode().split("\n")[0].strip("\n\t\r "))
 
     if examined_str == pattern:
       return comment.created_at
@@ -230,7 +229,7 @@ def search_in_comments( comments, user_logins, pattern, first_line ):
   for body in requested_comment_bodies:
     examined_str = body
     if first_line:
-      examined_str = str(body.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+      examined_str = str(body.encode("ascii", "ignore").decode().split("\n")[0].strip("\n\t\r "))
    
     if examined_str == pattern:
       found_comments.append( body )
@@ -349,7 +348,7 @@ def create_release_github( repository, release_name, branch, commit=None):
   request.get_method = lambda: 'POST'
   print('--')
   try:
-    print(urlopen( request, json.dumps( params  ) ).read())
+    print(urlopen( request, json.dumps( params  ).encode() ).read())
     return True
   except Exception as e:
     print('There was an error while creating the release:\n', e)
@@ -642,7 +641,7 @@ def go_to_state( issue, current_state, new_state ):
 #
 def fix_release_description(issue):
   if not issue.body: return '\n'
-  desc_str = '\n' + issue.body.encode("ascii", "ignore").strip() + '\n\n'
+  desc_str = '\n' + issue.body.encode("ascii", "ignore").decode().strip() + '\n\n'
   desc_lines = []
   for l in desc_str.split('\n'):
     if "RELEASE_QUEUE:" in l: continue
@@ -728,7 +727,7 @@ def check_archs_to_upload( release_name, issue, docker_imgs, production_architec
       print('No information found about the build machine, something is wrong')
       exit( 1 )
  
-    first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+    first_line_info_comment = str(build_info_comments[-1].encode("ascii", "ignore").decode().split("\n")[0].strip("\n\t\r "))
     build_machine = first_line_info_comment.split( ' ' )[ 7 ].strip( '.' )
     print('Triggering upload for %s (prod arch: %s)' % (arch, arch==production_architecture))
     create_properties_files_upload( release_name , arch , issue.number , build_machine, docker_imgs, arch==production_architecture )
@@ -825,7 +824,7 @@ if __name__ == "__main__":
   # Get the release queue from the release name.
   print(release_name)
   issue_body = ""
-  if issue.body: issue_body = issue.body.encode("ascii", "ignore").strip()
+  if issue.body: issue_body = issue.body.encode("ascii", "ignore").decode().strip()
   release_queue = None
   rel_name_match = re.match( REL_NAME_REGEXP, release_name )
   if "RELEASE_QUEUE:" in issue_body:
@@ -1112,7 +1111,7 @@ if __name__ == "__main__":
 
       if release_notes_comments:
         comment = release_notes_comments[-1]
-        first_line = str(comment.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+        first_line = str(comment.encode("ascii", "ignore").decode().split("\n")[0].strip("\n\t\r "))
         comment_parts = first_line.strip().split(' ')
         print("debug: ",comment_parts)
 
@@ -1154,7 +1153,7 @@ if __name__ == "__main__":
       print('I need to generate the release notes again')
       # check if this is beter if a function is added
       comment = release_notes_comments[-1]
-      first_line = str(comment.encode("ascii", "ignore").split("\n")[0].strip("\n\t\r "))
+      first_line = str(comment.encode("ascii", "ignore").decode().split("\n")[0].strip("\n\t\r "))
       comment_parts = first_line.strip().split(' ')
 
       if len( comment_parts ) > 1:

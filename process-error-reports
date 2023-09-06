@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script will be famous:
 #
@@ -6,7 +6,6 @@
 # Parses github issues looking for past errors.
 # Updates past errors to match the current status.
 
-from __future__ import print_function
 from argparse import ArgumentParser
 from glob import glob
 from github import Github, Label
@@ -75,7 +74,11 @@ def readWorkflows(f):
                           }
   return results
 
-def postNewMessage(dryRun=True, labels=[], repo=None, queue=None, error_title=None, workflows=[], current_release=None, error_hash=None, error_text=None, **kwds):
+def postNewMessage(dryRun=True, labels=None, repo=None, queue=None, error_title=None, workflows=None, current_release=None, error_hash=None, error_text=None, **kwds):
+  if labels is None:
+    labels = []
+  if workflows is None:
+    workflows = []
   steps = ""
   print("foo" + str(workflows[0]))
   workflows.sort(key=itemgetter("workflowId"))
@@ -156,8 +159,8 @@ def understandAssertion(name, t, p, info):
   print("Reporting this as an assertion")
   errorTitle = "failed assertion"
   uniqueMessage = checkAssertion[0][1]
-  errorMessage = "%s: Assertion `%s' failed." % checkAssertion[0]
-  h = hashlib.sha1(name + errorTitle + uniqueMessage).hexdigest()[:10]
+  errorMessage = "%s: Assertion `%s' failed." % (checkAssertion[0][0], checkAssertion[0][1])
+  h = hashlib.sha1((name + errorTitle + uniqueMessage).encode()).hexdigest()[:10]
   return (h, errorTitle, errorMessage)
 
 # Understand fatal root errors
@@ -182,7 +185,7 @@ def understandFatalRootError(name, t, p, info):
   errorTitle = re.sub("/.*/", "", checkRootError[0][1].strip("\n"))
   # Remove any paths.
   errorMessage = re.sub("/.*/", "", s).strip("\n")
-  h = hashlib.sha1(name + errorTitle + errorMessage).hexdigest()[:10]
+  h = hashlib.sha1((name + errorTitle + errorMessage).encode()).hexdigest()[:10]
   print(h)
   return (h, errorTitle, errorMessage)
 
@@ -205,7 +208,7 @@ def understandStep1Error(name, t, p, info):
   errorTitle = "cannot find input"
   errorMessage = str("step2 fails when looking for input.\n"
                      "Input file might have been deleted or we have a DAS issue.")
-  h = hashlib.sha1(name + errorTitle).hexdigest()[:10]
+  h = hashlib.sha1((name + errorTitle).encode()).hexdigest()[:10]
   return (h, errorTitle, errorMessage)
 
 # Generic "catch all" solution for errors. This must be last in the list of
@@ -213,7 +216,7 @@ def understandStep1Error(name, t, p, info):
 def understandGenericError(name, t, p, info):
   errorTitle = "generic error"
   errorMessage = "I could not fully undestand what is going on, but some relval fails.\nPlease have a look at the errors."
-  h = hashlib.sha1(name + "generic error").hexdigest()[:10]
+  h = hashlib.sha1((name + "generic error").encode()).hexdigest()[:10]
   return (h, errorTitle, errorMessage)
 
 understandingPlugins = [understandStep1Error,

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from os.path import dirname,abspath
 import sys
@@ -22,7 +22,7 @@ for jfile in logs.split('\n'):
     continue
   week, rel_sec  = cmsswIB2Week (payload["release"])
   payload["@timestamp"]=rel_sec*1000
-  id = sha1("%s-%s-%s" % (payload["release"], payload["architecture"], payload["fstype"])).hexdigest()
+  id = sha1(("%s-%s-%s" % (payload["release"], payload["architecture"], payload["fstype"])).encode()).hexdigest()
   print(payload)
   if send_payload("cmssw-afs-eos-%s" % week,"build",id,json.dumps(payload)):
     run_cmd("rm -f %s" % jfile)

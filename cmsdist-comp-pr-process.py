@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
+import sys
 from sys import exit,argv
 from re import match
 from github import Github
@@ -28,7 +28,7 @@ def process_pr(gh, repo, issue, dryRun):
   for comment in issue.get_comments():
     commenter = comment.user.login
     if not commenter in USERS_TO_TRIGGER_HOOKS: continue
-    comment_msg = comment.body.encode("ascii", "ignore")
+    comment_msg = comment.body.encode("ascii", "ignore").decode()
     comment_lines = [ l.strip() for l in comment_msg.split("\n") if l.strip() ][0:1]
     print("Comment first line: %s => %s" % (commenter, comment_lines))
     if not comment_lines: continue

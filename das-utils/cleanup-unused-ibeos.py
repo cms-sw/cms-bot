@@ -11,14 +11,14 @@ from _py2with3compatibility import run_cmd
 script_path = abspath(dirname(argv[0]))
 eos_cmd = "EOS_MGM_URL=root://eoscms.cern.ch /usr/bin/eos"
 eos_base = "/eos/cms/store/user/cmsbuild"
-unused_days_threshold = 180
+unused_days_threshold = 360
 try:
   days=int(argv[1])
 except:
   days=30
 if days<30:
   days=30
-if (unused_days_threshold-days)<30: unused_days_threshold=days+30
+if (unused_days_threshold-days)<180: unused_days_threshold=days+180
 active_days_threshold = int(unused_days_threshold/2)
 
 def get_unused_days(eosfile):

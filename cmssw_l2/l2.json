@@ -845,7 +845,14 @@
         "alca", 
         "db"
       ], 
+      "end_date": 1693872000, 
       "start_date": 1633478400
+    }, 
+    {
+      "category": [
+        "db"
+      ], 
+      "start_date": 1693872000
     }
   ], 
   "franzoni": [
@@ -2292,7 +2299,14 @@
         "db", 
         "analysis"
       ], 
+      "end_date": 1693872000, 
       "start_date": 1690848000
+    }, 
+    {
+      "category": [
+        "analysis"
+      ], 
+      "start_date": 1693872000
     }
   ], 
   "vadler": [

@@ -76,15 +76,18 @@ CHECK_RUN=false
 touch node-check.status
 while true ; do
   sleep $CHK_GAP
+  SSH_JOBS=0
   if [ "${JENKINS_AUTO_DELETE}" != "true" ] ; then
     source $WORKSPACE/cache/cms-bot/condor/autoload.sh || true
+  else
+    SSH_JOBS=$(ls -d ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* 2>/dev/null | wc -l)
   fi
   if [ -f ${WORKSPACE}/.shut-down ] ; then sleep 60; break; fi
   CTIME=$(date +%s)
   let JOB_GAP=${CTIME}-${CHECK_JOB}
   if [ $JOB_GAP -lt 60 ] ; then continue ; fi
   CHECK_JOB=$CTIME
-  if [ ${JENKINS_PROCESS} -gt 0 ] ; then
+  if [ ${SSH_JOBS} -gt 0 ] ; then
     JENKINS_JOB_STATE="${JENKINS_AUTO_DELETE}-true"
     echo "Jenkins Slave has been conencted: $(date)"
   elif [ "${JENKINS_JOB_STATE}" = "true-true" ] ; then

@@ -42,7 +42,7 @@ fi
 JENKINS_WEBHOOK="${JENKINS_WEBHOOK-https://cmssdt.cern.ch/SDT/cgi-bin/condor_webhook}"
 JOB_ID=$(grep '^ *ClusterId *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g').0
 SCHEDD_NAME=$(grep '^ *GlobalJobId *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s|#.*||;s|"||g')
-TOKEN="$(sha256sum ~/private/secrets/github_hook_secret | sed 's| .*||')"
+TOKEN="$(sha256sum ${AFS_HOME}/private/secrets/github_hook_secret | sed 's| .*||')"
 SIGNATURE=$(echo -n "${JOB_ID}:${WORKSPACE} ${TOKEN}" | sha256sum | sed 's| .*||')
 JENKINS_PAYLOAD='{"jenkins_url":"'${JENKINS_CALLBACK}'","signature":"'${SIGNATURE}'","work_dir":"'${WORKSPACE}'","schedd_name":"'${SCHEDD_NAME}'","condor_job_id":"'${JOB_ID}'","labels":"'${SLAVE_LABELS}'","status":"@STATE@"}'
 

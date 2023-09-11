@@ -1,14 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from github import Github
 from optparse import OptionParser
 import repo_config
 from os.path import expanduser
-from urllib2 import urlopen
 from json import loads
 import re
 from github_utils import get_git_tree
-from _py2with3compatibility import run_cmd, HTTPError
+from _py2with3compatibility import run_cmd, HTTPError, urlopen
 
 def update_tag_version(current_version):
     updated_version = int(current_version)+1
@@ -68,7 +67,7 @@ if __name__ == "__main__":
   # if created files and modified files are the same count, all files are new
 
   response = urlopen("https://api.github.com/repos/%s/pulls/%s" % (opts.data_repo, opts.pull_request))
-  res_json = loads(response.read())
+  res_json = loads(response.read().decode())
   print(res_json['additions'], res_json['changed_files'], res_json['deletions'])
   files_modified = res_json['deletions'] + res_json['changed_files']
   only_new_files=(files_modified==0)

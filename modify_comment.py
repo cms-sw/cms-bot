@@ -1,8 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Modifies last cmsbot message on Github
 """
-from __future__ import print_function
 from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
@@ -41,5 +40,5 @@ if __name__ == "__main__":
   if not last_comment:
     print("Warning: Not comment matched")
     sys.exit(1)
-  print(last_comment.body.encode("ascii", "ignore"))
+  print(last_comment.body)
   sys.exit(modify_comment(last_comment,valid_types[opts.msgtype][1],opts.message,opts.dryRun))

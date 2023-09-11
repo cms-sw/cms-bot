@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import sys, json
 from os.path import expanduser
 from _py2with3compatibility import Request, urlopen
@@ -23,8 +22,7 @@ request = Request("https://api.github.com/repos/" + GH_CMSSW_ORGANIZATION + "/" 
 request.get_method = lambda: 'POST'
 print('--')
 try:
-  print(urlopen( request, json.dumps( params  ) ).read())
+  print(urlopen( request, json.dumps( params  ).encode()).read())
   print("OK release",release_name,"created")
 except Exception as e:
   print('There was an error while creating the release:\n', e)
-

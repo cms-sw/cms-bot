@@ -1,21 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 This script will test if there are other PRs that modify the same files.
 This is primarily used to avoid merge conflicts.
 """
 
-from __future__ import print_function
 import json
 import sys
-if sys.version_info[0] == 2:
-  from commands import getstatusoutput as run_cmd
-else:
-  from subprocess import getstatusoutput as run_cmd
 
-
-def ascii_encode_dict(data):
-    ascii_encode = lambda x: x.encode('ascii') if isinstance(x, unicode) else x
-    return dict(map(ascii_encode, pair) for pair in data.items())
+from subprocess import getstatusoutput as run_cmd
 
 
 def build_open_file_list(prs_dict, branch):
@@ -23,7 +15,7 @@ def build_open_file_list(prs_dict, branch):
     for pr in prs_dict:
         if prs_dict[pr]['base_branch'] == branch:
             for file in prs_dict[pr]['changed_files_names']:
-                if open_file_list.has_key(file):
+                if file in open_file_list:
                     open_file_list[file].append(pr)
                 else:
                     open_file_list[file] = [pr, ]

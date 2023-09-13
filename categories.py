@@ -36,6 +36,7 @@ COMPARISON_MISSING_MAP = [ "slava77" ]
 CMSSW_L2 = {
   "Dr15Jones":        ["core", "visualization", "geometry"],
   "Martin-Grunewald": ["hlt"],
+  "mmusich":          ["hlt"],
   "AdrianoDee":       ["upgrade", "pdmv"],
   "alberto-sanchez":  ["generators"],
   "alja":             ["visualization"],
@@ -131,7 +132,6 @@ CMSSW_L2 = {
   "kandrosov":        ["tau-pog"],
   "alebihan":         ["tau-pog"],
   "slava77":          ["tracking-pog"],
-  "mmusich":          ["tracking-pog", "hlt"],
   "kskovpen":         ["tracking-pog"],
   # PPD
   "malbouis":         ["ppd"],

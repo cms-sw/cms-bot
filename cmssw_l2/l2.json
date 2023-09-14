@@ -95,6 +95,7 @@
       "category": [
         "generators"
       ], 
+      "end_date": 1694649600, 
       "start_date": 1626393600
     }
   ], 
@@ -306,7 +307,14 @@
       "category": [
         "pdmv"
       ], 
+      "end_date": 1694649600, 
       "start_date": 1626134400
+    }, 
+    {
+      "category": [
+        "generators"
+      ], 
+      "start_date": 1694649600
     }
   ], 
   "bellan": [

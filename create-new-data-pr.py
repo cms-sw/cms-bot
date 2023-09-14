@@ -112,7 +112,7 @@ if __name__ == "__main__":
       print('Branch exists')
 
   # file with tags on the default branch
-  cmsswdatafile = "/data/cmsswdata.txt"
+  cmsswdatafile = "data/cmsswdata.txt"
   content_file = dist_repo.get_contents(cmsswdatafile, repo_tag_pr_branch)
   cmsswdatafile_raw = content_file.decoded_content
   new_content = ''
@@ -120,6 +120,7 @@ if __name__ == "__main__":
 
   count = 0 # omit first line linebreaker
   for line in cmsswdatafile_raw.splitlines():
+      line = line.decode()
       updated_line = None
       if '[default]' in line:
           updated_line = '\n'+line+'\n'+repo_name_only+'='+new_tag+''
@@ -144,6 +145,7 @@ if __name__ == "__main__":
   data_pkg = ' data-'+repo_name_only
   added_pkg = False 
   for line in cmsswdatafile_raw.splitlines():
+      line = line.decode()
       new_content.append(line)
       if not line.startswith('Requires: '): continue
       if data_pkg in line:

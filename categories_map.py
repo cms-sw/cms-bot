@@ -1811,6 +1811,7 @@ CMSSW_LABELS = {
     "DataFormats/V0Candidate",
     "DataFormats/VZero",
     "DQM/BeamMonitor",
+    "DQMOffline/RecoB",
     "DQM/Tracking",
     "FastSimulation/Tracking",
     "Geometry/GlobalTracking",

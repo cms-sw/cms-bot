@@ -33,6 +33,7 @@ CMSSW_CATEGORIES = {
     "CalibCalorimetry/CaloTPG",
     "CalibCalorimetry/CastorCalib",
     "CalibCalorimetry/Configuration",
+    "CalibCalorimetry/EBPhase2TPGTools",
     "CalibCalorimetry/EcalCorrectionModules",
     "CalibCalorimetry/EcalCorrelatedNoiseAnalysisAlgos",
     "CalibCalorimetry/EcalCorrelatedNoiseAnalysisModules",
@@ -930,6 +931,7 @@ CMSSW_CATEGORIES = {
   ],
   "l1": [
     "CalibCalorimetry/CaloTPG",
+    "CalibCalorimetry/EBPhase2TPGTools",
     "CalibCalorimetry/EcalTPGTools",
     "CalibCalorimetry/HcalTPGAlgos",
     "CalibCalorimetry/HcalTPGEventSetup",

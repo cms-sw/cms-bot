@@ -116,7 +116,6 @@ CMSSW_L2 = {
   "kdlong":           ["pf"],
   "swagata87":        ["pf"],
   "a-kapoor":         ["egamma-pog"],
-  "swagata87":        ["egamma-pog"],
   "RSalvatico":       ["egamma-pog"],
   "kirschen":         ["jetmet-pog"],
   "alkaloge":         ["jetmet-pog"],

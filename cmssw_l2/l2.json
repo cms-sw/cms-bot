@@ -2180,7 +2180,14 @@
       "category": [
         "egamma-pog"
       ], 
+      "end_date": 1695081600, 
       "start_date": 1632787200
+    }, 
+    {
+      "category": [
+        "pf"
+      ], 
+      "start_date": 1695081600
     }
   ], 
   "swertz": [

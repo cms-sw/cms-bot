@@ -31,7 +31,7 @@ for issue in repo.get_issues(state="open", sort="updated", labels=label):
   if last_commit is None: continue
   if last_commit.commit.committer.date>datetime.utcnow(): continue
   cnt += 1
-  with open("cms-bot-%s.txt" % cnt,"w") as prop:
+  with open("cms-bot-%s-%s.txt" % (repo.name, cnt),"w") as prop:
     prop.write("FORCE_PULL_REQUEST=%s\n" % issue.number)
     prop.write("REPOSITORY=%s\n" % opts.repository)
 api_rate_limits(gh)

@@ -78,7 +78,7 @@ REPO_TEAMS["cms-sw"]["cms-sw-writers"] = {
   "repositories" : { "*":"push", "!cmssw" : "pull", "!cmsdist" : "pull" }
 }
 REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
-  "members" : CMS_SDT,
+  "members" : CMS_SDT[:],
   "repositories" : { "cmssdt-wiki":"admin", "cms-sw.github.io":"admin" }
 }
 

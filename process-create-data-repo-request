@@ -1,0 +1,304 @@
+#!/usr/bin/env python3
+import re
+from datetime import datetime
+from optparse import OptionParser
+from os.path import dirname, abspath
+from os.path import expanduser
+from socket import setdefaulttimeout
+from typing import Optional, Any
+
+from categories_map import CMSSW_CATEGORIES
+
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+from github import Github
+
+from categories import CMSSW_L2
+from cms_static import (
+    GH_CMSSW_ORGANIZATION,
+    GH_CMSSW_REPO,
+    CREATE_REPO,
+)
+from github_utils import api_rate_limits
+from os import environ
+
+setdefaulttimeout(120)
+
+JENKINS_PREFIX = "jenkins"
+try:
+    JENKINS_PREFIX = environ["JENKINS_URL"].strip("/").split("/")[-1]
+except (KeyError, IndexError):
+    JENKINS_PREFIX = "jenkins"
+
+try:
+    CMS_BOT_DIR = dirname(abspath(__file__))
+except NameError as e:
+    from sys import argv
+
+    CMS_BOT_DIR = dirname(abspath(argv[0]))
+#
+# Processes a github issue to check if it is requesting the creation of a new data repo
+# If the issue is not requesting new repo, it ignores it.
+
+# -------------------------------------------------------------------------------
+# Global Variables
+# --------------------------------------------------------------------------------
+
+APPROVAL_COMMENT = "^[+]1$"
+opts: Optional[Any] = None
+labels = []
+
+INVALID_REQUEST_MSG = "No category found for requested package {package}"
+ACK_MSG = (
+    "Request received. I will create the requested repository after one of the following approve "
+    'the issue: {approvers_list}. You can do this by writing "+1" in a '
+    "comment."
+)
+COMPLETE_MSG = "Repository created: {url}"
+
+# -------------------------------------------------------------------------------
+# Statuses
+# --------------------------------------------------------------------------------
+# This is to determine the status of the issue after reading the labels
+
+# The issue has just been created
+NEW_ISSUE = "NEW_ISSUE"
+# The issue has been received, but it needs approval to start the build
+PENDING_APPROVAL = "pending-approval"
+# The build has been queued in jenkins
+PROCESS_COMPLETE = "process-complete"
+
+# -------------------------------------------------------------------------------
+# Functions
+# --------------------------------------------------------------------------------
+
+
+#
+# Searches in the comments if there is a comment made from  the given users  that
+# matches the given pattern. It returns a list with the matched comments.
+#
+def search_in_comments(comments, user_logins, pattern, first_line):
+    found_comments = []
+    requested_comment_bodies = [c.body for c in comments if c.user.login in user_logins]
+    for body in requested_comment_bodies:
+        examined_str = body
+        if first_line:
+            examined_str = str(
+                body.encode("ascii", "ignore").decode().split("\n")[0].strip("\n\t\r ")
+            )
+
+        if examined_str == pattern:
+            found_comments.append(body)
+            continue
+
+        if re.match(pattern, examined_str):
+            found_comments.append(body)
+
+    return found_comments
+
+
+#
+# Adds a label to the issue in github
+# if dry-run is selected it doesn't add the label and just prints it
+def add_label(issue, label):
+    if opts.dryRun:
+        print("Not adding label (dry-run):\n %s" % label)
+        return
+    print("Adding label:\n %s" % label)
+    issue.add_to_labels(label)
+
+
+#
+# posts a message to the issue in github
+# if dry-run is selected it doesn't post the message and just prints it
+# if you set checkIfRepeated to False, if will not check if the message has already been written.
+#
+def post_message(issue, msg, comments, checkIfRepeated=True):
+    if opts.dryRun:
+        print("Not posting message (dry-run):\n %s" % msg)
+        return
+
+    if checkIfRepeated and search_in_comments(comments, ["cmsbuild"], msg, False):
+        print("Message already in the thread: \n %s" % msg)
+        return
+
+    print("Posting message:\n %s" % msg)
+    issue.create_comment(msg)
+
+
+#
+# reads the comments and gets returns the status of the issue
+#
+def get_issue_status(issue):
+    global labels
+    labels = [label.name for label in issue.get_labels()]
+    print("Issue Label: ", labels)
+
+    if not labels:
+        return NEW_ISSUE
+    if any(label.endswith("-pending") for label in labels):
+        return PENDING_APPROVAL
+    if PROCESS_COMPLETE in labels:
+        return PROCESS_COMPLETE
+
+
+#
+# closes the issue
+#
+def close_issue(issue):
+    if opts.dryRun:
+        print("Not closing issue (dry-run)")
+        return
+    print("Closing issue...")
+    issue.edit(state="closed")
+
+
+#
+# removes the labels of the issue
+#
+def remove_labels(issue):
+    if opts.dryRun:
+        print("Not removing issue labels (dry-run)")
+        return
+    issue.delete_labels()
+
+
+# Removes a label form the issue
+def remove_label(issue, label):
+    if opts.dryRun:
+        print("Not removing label (dry-run):\n %s" % label)
+        return
+
+    if label not in labels:
+        print("label ", label, " does not exist. Not attempting to remove")
+        return
+
+    print("Removing label: %s" % label)
+    try:
+        issue.remove_from_labels(label)
+    except Exception as exc:
+        print(exc)
+        from sys import exit
+
+        exit(1)
+
+
+#
+# removes the label for the current state and adds the label for the next state
+#
+def go_to_state(issue, current_state, new_state):
+    print("\nSwitching to state: ", new_state, "\n")
+    remove_label(issue, current_state)
+    add_label(issue, new_state)
+
+
+# -------------------------------------------------------------------------------
+# Start of execution
+# --------------------------------------------------------------------------------
+
+
+def main():
+    global opts, PENDING_APPROVAL
+    parser = OptionParser(usage="%prog <issue-id>")
+    parser.add_option(
+        "-n",
+        "--dry-run",
+        dest="dryRun",
+        action="store_true",
+        help="Do not post on Github",
+        default=False,
+    )
+    opts, args = parser.parse_args()
+
+    if len(args) != 1:
+        parser.print_help()
+        parser.error("Too many arguments")
+
+    GH_TOKEN = open(expanduser("~/.github-token")).read().strip()
+
+    issue_id = int(args[0])
+    gh = Github(login_or_token=GH_TOKEN)
+    api_rate_limits(gh)
+    cmssw_repo_name = GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO
+    cmssw_repo = gh.get_repo(cmssw_repo_name)
+    issue = cmssw_repo.get_issue(issue_id)
+    print("API Rate Limit")
+    print("Limit, Remaining: ", gh.rate_limiting)
+    print("Reset time (GMT): ", datetime.fromtimestamp(gh.rate_limiting_resettime))
+
+    # 1. Is this a pull request?
+    if issue.pull_request:
+        print("This is a pull request, ignoring.")
+        exit(0)
+
+    title_match = re.match(CREATE_REPO, issue.title)
+
+    # 2. Is this issue meant to create a new cms-data repo?
+    if not title_match:
+        print("This issue is not for creating a repo, ignoring.")
+        print(issue.title)
+        exit(0)
+
+    category_name = title_match.group(1)
+    package_name = title_match.group(2)
+
+    print(category_name + "/" + package_name)
+
+    comments = [c for c in issue.get_comments()]
+
+    # Figure out who must approve the action
+    data_categ = ""
+    for cat, pkgs in CMSSW_CATEGORIES.items():
+        for pkg in pkgs:
+            if re.match(pkg + ".*", category_name + "/" + package_name):
+                data_categ = cat
+                break
+
+    if not data_categ:
+        post_message(
+            issue,
+            INVALID_REQUEST_MSG.format(package=category_name + "/" + package_name),
+            comments,
+        )
+        exit(0)
+
+    # Get the status of this issue.
+    status = get_issue_status(issue)
+    print("Status: %s \n" % status)
+    print("Issue labels:", labels)
+
+    approvers = [k for k, v in CMSSW_L2.items() if data_categ in v]
+    if status == NEW_ISSUE:
+        msg = ACK_MSG.format(
+            approvers_list=", ".join("@"+x for x in approvers),
+        )
+
+        post_message(issue, msg, comments)
+        add_label(issue, data_categ + "-pending")
+        PENDING_APPROVAL = data_categ + "-pending"
+        exit(0)
+
+    if status == PENDING_APPROVAL:
+        approval_comments = search_in_comments(
+            comments, approvers, APPROVAL_COMMENT, True
+        )
+        if approval_comments:
+            org = gh.get_organization("cms-data")
+            new_repo = org.create_repo(
+                category_name + "-" + package_name,
+                "Data files from " + category_name + "/" + package_name,
+                has_wiki=False,
+                has_projects=False,
+            )
+            go_to_state(issue, status, PROCESS_COMPLETE)
+            post_message(issue, COMPLETE_MSG.format(new_repo.url), comments)
+
+        else:
+            print("Build not approved yet")
+            exit(0)
+
+
+if __name__ == "__main__":
+    main()

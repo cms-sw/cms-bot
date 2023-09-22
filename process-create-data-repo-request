@@ -7,6 +7,8 @@ from os.path import expanduser
 from socket import setdefaulttimeout
 from typing import Optional, Any
 
+import github
+
 from categories_map import CMSSW_CATEGORIES
 
 try:
@@ -15,13 +17,12 @@ except ImportError:
     from yaml import Loader, Dumper
 from github import Github
 
-from categories import CMSSW_L2
 from cms_static import (
     GH_CMSSW_ORGANIZATION,
     GH_CMSSW_REPO,
     CREATE_REPO,
 )
-from github_utils import api_rate_limits
+from github_utils import api_rate_limits, set_comment_emoji
 from os import environ
 
 setdefaulttimeout(120)
@@ -51,6 +52,7 @@ opts: Optional[Any] = None
 labels = []
 
 INVALID_REQUEST_MSG = "No category found for requested package {package}"
+EXISTS_MSG = "Requested repository {repo} already exists"
 ACK_MSG = (
     "Request received. I will create the requested repository after one of the following approve "
     'the issue: {approvers_list}. You can do this by writing "+1" in a '
@@ -68,7 +70,7 @@ NEW_ISSUE = "NEW_ISSUE"
 # The issue has been received, but it needs approval to start the build
 PENDING_APPROVAL = "pending-approval"
 # The build has been queued in jenkins
-PROCESS_COMPLETE = "process-complete"
+FULLY_SIGNED = "fully-signed"
 
 # -------------------------------------------------------------------------------
 # Functions
@@ -140,8 +142,8 @@ def get_issue_status(issue):
         return NEW_ISSUE
     if any(label.endswith("-pending") for label in labels):
         return PENDING_APPROVAL
-    if PROCESS_COMPLETE in labels:
-        return PROCESS_COMPLETE
+    if FULLY_SIGNED in labels:
+        return FULLY_SIGNED
 
 
 #
@@ -228,6 +230,11 @@ def main():
     print("Limit, Remaining: ", gh.rate_limiting)
     print("Reset time (GMT): ", datetime.fromtimestamp(gh.rate_limiting_resettime))
 
+    # 0. Is this issue closed?
+    if issue.state == "closed":
+        print("Issue closed, ignoring.")
+        exit(0)
+
     # 1. Is this a pull request?
     if issue.pull_request:
         print("This is a pull request, ignoring.")
@@ -246,17 +253,31 @@ def main():
 
     print(category_name + "/" + package_name)
 
+    # 3. Does the requested repository already exist?
+    repo = None
+    try:
+        repo = gh.get_organization("cms-data").get_repo(
+            category_name + "-" + package_name
+        )
+    except github.UnknownObjectException:
+        pass
+
     comments = [c for c in issue.get_comments()]
 
+    if repo:
+        post_message(issue, EXISTS_MSG.format(repo=repo.url), comments)
+        issue.edit(state="closed")
+        exit(0)
+
     # Figure out who must approve the action
-    data_categ = ""
+    data_categs = []
     for cat, pkgs in CMSSW_CATEGORIES.items():
         for pkg in pkgs:
             if re.match(pkg + ".*", category_name + "/" + package_name):
-                data_categ = cat
+                data_categs.append(cat)
                 break
 
-    if not data_categ:
+    if not data_categs:
         post_message(
             issue,
             INVALID_REQUEST_MSG.format(package=category_name + "/" + package_name),
@@ -269,35 +290,26 @@ def main():
     print("Status: %s \n" % status)
     print("Issue labels:", labels)
 
-    approvers = [k for k, v in CMSSW_L2.items() if data_categ in v]
     if status == NEW_ISSUE:
-        msg = ACK_MSG.format(
-            approvers_list=", ".join("@"+x for x in approvers),
-        )
-
-        post_message(issue, msg, comments)
-        add_label(issue, data_categ + "-pending")
-        PENDING_APPROVAL = data_categ + "-pending"
+        post_message(issue, "assign " + ",".join(data_categs), comments)
+        set_comment_emoji(comments[0].id, issue.repository.full_name)
         exit(0)
 
     if status == PENDING_APPROVAL:
-        approval_comments = search_in_comments(
-            comments, approvers, APPROVAL_COMMENT, True
-        )
-        if approval_comments:
-            org = gh.get_organization("cms-data")
-            new_repo = org.create_repo(
-                category_name + "-" + package_name,
-                "Data files from " + category_name + "/" + package_name,
-                has_wiki=False,
-                has_projects=False,
-            )
-            go_to_state(issue, status, PROCESS_COMPLETE)
-            post_message(issue, COMPLETE_MSG.format(new_repo.url), comments)
+        print("Request not approved yet")
+        exit(0)
 
-        else:
-            print("Build not approved yet")
-            exit(0)
+    if status == FULLY_SIGNED:
+        org = gh.get_organization("cms-data")
+        new_repo = org.create_repo(
+            category_name + "-" + package_name,
+            "Data files for " + category_name + "/" + package_name,
+            has_wiki=False,
+            has_projects=False,
+        )
+
+        post_message(issue, COMPLETE_MSG.format(new_repo.url), comments)
+        issue.edit(state="closed")
 
 
 if __name__ == "__main__":

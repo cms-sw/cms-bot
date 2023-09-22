@@ -5,6 +5,8 @@ from re import match,IGNORECASE
 CMSSW_BRANCHES   = "^IB/CMSSW_.+$"
 ALL_BRANCHES     = ".+"
 COMP_BRANCHES = "^comp_gcc.+$"
+#CMSDIST_PERMISSIONS: format
+#gh-user: [command-type, regexp-valid-branch, regexp-invalid-branch, regexp-changed-files-for-merge-command]
 CMSDIST_PERMISSIONS = {
   "muhammadimranfarooqi" : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "arooshap"       : [ ".+", ALL_BRANCHES , CMSSW_BRANCHES, ".+" ],

@@ -2,7 +2,6 @@
 import re
 from datetime import datetime
 from optparse import OptionParser
-from os.path import dirname, abspath
 from os.path import expanduser
 from socket import setdefaulttimeout
 from typing import Optional, Any
@@ -11,10 +10,6 @@ import github
 
 from categories_map import CMSSW_CATEGORIES
 
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
 from github import Github
 
 from cms_static import (
@@ -23,23 +18,10 @@ from cms_static import (
     CREATE_REPO,
 )
 from github_utils import api_rate_limits, set_comment_emoji
-from os import environ
 
 setdefaulttimeout(120)
 
-JENKINS_PREFIX = "jenkins"
-try:
-    JENKINS_PREFIX = environ["JENKINS_URL"].strip("/").split("/")[-1]
-except (KeyError, IndexError):
-    JENKINS_PREFIX = "jenkins"
 
-try:
-    CMS_BOT_DIR = dirname(abspath(__file__))
-except NameError as e:
-    from sys import argv
-
-    CMS_BOT_DIR = dirname(abspath(argv[0]))
-#
 # Processes a github issue to check if it is requesting the creation of a new data repo
 # If the issue is not requesting new repo, it ignores it.
 
@@ -47,7 +29,6 @@ except NameError as e:
 # Global Variables
 # --------------------------------------------------------------------------------
 
-APPROVAL_COMMENT = "^[+]1$"
 opts: Optional[Any] = None
 labels = []
 
@@ -66,7 +47,7 @@ COMPLETE_MSG = "Repository created: {url}"
 # This is to determine the status of the issue after reading the labels
 
 # The issue has just been created
-NEW_ISSUE = "NEW_ISSUE"
+NEW_ISSUE = "pending-assignment"
 # The issue has been received, but it needs approval to start the build
 PENDING_APPROVAL = "pending-approval"
 # The build has been queued in jenkins
@@ -99,17 +80,6 @@ def search_in_comments(comments, user_logins, pattern, first_line):
             found_comments.append(body)
 
     return found_comments
-
-
-#
-# Adds a label to the issue in github
-# if dry-run is selected it doesn't add the label and just prints it
-def add_label(issue, label):
-    if opts.dryRun:
-        print("Not adding label (dry-run):\n %s" % label)
-        return
-    print("Adding label:\n %s" % label)
-    issue.add_to_labels(label)
 
 
 #
@@ -155,45 +125,6 @@ def close_issue(issue):
         return
     print("Closing issue...")
     issue.edit(state="closed")
-
-
-#
-# removes the labels of the issue
-#
-def remove_labels(issue):
-    if opts.dryRun:
-        print("Not removing issue labels (dry-run)")
-        return
-    issue.delete_labels()
-
-
-# Removes a label form the issue
-def remove_label(issue, label):
-    if opts.dryRun:
-        print("Not removing label (dry-run):\n %s" % label)
-        return
-
-    if label not in labels:
-        print("label ", label, " does not exist. Not attempting to remove")
-        return
-
-    print("Removing label: %s" % label)
-    try:
-        issue.remove_from_labels(label)
-    except Exception as exc:
-        print(exc)
-        from sys import exit
-
-        exit(1)
-
-
-#
-# removes the label for the current state and adds the label for the next state
-#
-def go_to_state(issue, current_state, new_state):
-    print("\nSwitching to state: ", new_state, "\n")
-    remove_label(issue, current_state)
-    add_label(issue, new_state)
 
 
 # -------------------------------------------------------------------------------
@@ -266,7 +197,7 @@ def main():
 
     if repo:
         post_message(issue, EXISTS_MSG.format(repo=repo.url), comments)
-        issue.edit(state="closed")
+        close_issue(issue)
         exit(0)
 
     # Figure out who must approve the action
@@ -301,15 +232,16 @@ def main():
 
     if status == FULLY_SIGNED:
         org = gh.get_organization("cms-data")
-        new_repo = org.create_repo(
-            category_name + "-" + package_name,
-            "Data files for " + category_name + "/" + package_name,
-            has_wiki=False,
-            has_projects=False,
-        )
+        if not opts.dryRun:
+            new_repo = org.create_repo(
+                category_name + "-" + package_name,
+                "Data files for " + category_name + "/" + package_name,
+                has_wiki=False,
+                has_projects=False,
+            )
 
         post_message(issue, COMPLETE_MSG.format(new_repo.url), comments)
-        issue.edit(state="closed")
+        close_issue(issue)
 
 
 if __name__ == "__main__":

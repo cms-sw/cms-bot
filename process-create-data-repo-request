@@ -31,11 +31,7 @@ labels = []
 
 INVALID_REQUEST_MSG = "No category found for requested package {package}"
 EXISTS_MSG = "Requested repository {repo} already exists"
-ACK_MSG = (
-    "Request received. I will create the requested repository after one of the following approve "
-    'the issue: {approvers_list}. You can do this by writing "+1" in a '
-    "comment."
-)
+ACK_MSG = "Request received. I will create the requested repository after this issue is fully signed."
 COMPLETE_MSG = "Repository created: {url}"
 
 # -------------------------------------------------------------------------------
@@ -43,8 +39,10 @@ COMPLETE_MSG = "Repository created: {url}"
 # --------------------------------------------------------------------------------
 # This is to determine the status of the issue after reading the labels
 
-# The issue has just been created
-NEW_ISSUE = "pending-assignment"
+# Default state
+NEW_ISSUE = "new-issue"
+# The issue is pending assignment
+PENDING_ASSIGNMENT = "pending-assignment"
 # The issue has been received, but it needs approval to start the build
 PENDING_APPROVAL = "pending-approval"
 # The build has been queued in jenkins
@@ -198,15 +196,16 @@ def main():
         exit(0)
 
     # Figure out who must approve the action
-    data_categs = []
+    data_categs = set()
     for cat, pkgs in CMSSW_CATEGORIES.items():
         for pkg in pkgs:
             if not pkg:
                 continue
             if re.match(pkg + ".*", category_name + "/" + package_name):
-                data_categs.append(cat)
+                data_categs.add(cat)
                 break
 
+    data_categs = sorted(list(data_categs))
     print(data_categs)
 
     if not data_categs:
@@ -223,7 +222,12 @@ def main():
     print("Issue labels:", labels)
 
     if status == NEW_ISSUE:
+        print("Issue not processed by the cms-bot yet, skipping")
+        exit(0)
+
+    if status == PENDING_ASSIGNMENT:
         post_message(issue, "assign " + ",".join(data_categs), comments)
+        post_message(issue, ACK_MSG, comments)
         if not opts.dryRun:
             issue.create_reaction("+1")
         exit(0)

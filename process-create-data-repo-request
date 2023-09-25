@@ -103,12 +103,14 @@ def get_issue_status(issue):
     labels = [label.name for label in issue.get_labels()]
     print("Issue Label: ", labels)
 
-    if NEW_ISSUE in labels:
-        return NEW_ISSUE
+    if PENDING_ASSIGNMENT in labels:
+        return PENDING_ASSIGNMENT
     if any(label.endswith("-pending") for label in labels):
         return PENDING_APPROVAL
     if FULLY_SIGNED in labels:
         return FULLY_SIGNED
+
+    return NEW_ISSUE
 
 
 #

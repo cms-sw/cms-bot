@@ -7,17 +7,14 @@ from socket import setdefaulttimeout
 from typing import Optional, Any
 
 import github
-
-from categories_map import CMSSW_CATEGORIES
-
 from github import Github
 
+from categories_map import CMSSW_CATEGORIES
 from cms_static import (
-    GH_CMSSW_ORGANIZATION,
     GH_CMSSW_REPO,
     CREATE_REPO,
 )
-from github_utils import api_rate_limits, set_comment_emoji
+from github_utils import api_rate_limits
 
 setdefaulttimeout(120)
 
@@ -88,12 +85,12 @@ def search_in_comments(comments, user_logins, pattern, first_line):
 # if you set checkIfRepeated to False, if will not check if the message has already been written.
 #
 def post_message(issue, msg, comments, checkIfRepeated=True):
-    if opts.dryRun:
-        print("Not posting message (dry-run):\n %s" % msg)
-        return
-
     if checkIfRepeated and search_in_comments(comments, ["cmsbuild"], msg, False):
         print("Message already in the thread: \n %s" % msg)
+        return
+
+    if opts.dryRun:
+        print("Not posting message (dry-run):\n %s" % msg)
         return
 
     print("Posting message:\n %s" % msg)
@@ -108,7 +105,7 @@ def get_issue_status(issue):
     labels = [label.name for label in issue.get_labels()]
     print("Issue Label: ", labels)
 
-    if not labels:
+    if NEW_ISSUE in labels:
         return NEW_ISSUE
     if any(label.endswith("-pending") for label in labels):
         return PENDING_APPROVAL
@@ -154,7 +151,7 @@ def main():
     issue_id = int(args[0])
     gh = Github(login_or_token=GH_TOKEN)
     api_rate_limits(gh)
-    cmssw_repo_name = GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO
+    cmssw_repo_name = "iarspider" + "/" + GH_CMSSW_REPO
     cmssw_repo = gh.get_repo(cmssw_repo_name)
     issue = cmssw_repo.get_issue(issue_id)
     print("API Rate Limit")
@@ -204,9 +201,13 @@ def main():
     data_categs = []
     for cat, pkgs in CMSSW_CATEGORIES.items():
         for pkg in pkgs:
+            if not pkg:
+                continue
             if re.match(pkg + ".*", category_name + "/" + package_name):
                 data_categs.append(cat)
                 break
+
+    print(data_categs)
 
     if not data_categs:
         post_message(
@@ -223,7 +224,8 @@ def main():
 
     if status == NEW_ISSUE:
         post_message(issue, "assign " + ",".join(data_categs), comments)
-        set_comment_emoji(comments[0].id, issue.repository.full_name)
+        if not opts.dryRun:
+            issue.create_reaction("+1")
         exit(0)
 
     if status == PENDING_APPROVAL:
@@ -240,8 +242,11 @@ def main():
                 has_projects=False,
             )
 
-        post_message(issue, COMPLETE_MSG.format(new_repo.url), comments)
-        close_issue(issue)
+            post_message(issue, COMPLETE_MSG.format(url=new_repo.html_url), comments)
+            close_issue(issue)
+        else:
+            print("(Dry-run) Not creating repo ", category_name + "-" + package_name)
+            exit(0)
 
 
 if __name__ == "__main__":

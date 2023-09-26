@@ -247,6 +247,8 @@ def main():
                 "Data files for " + category_name + "/" + package_name,
                 has_wiki=False,
                 has_projects=False,
+                private=False,
+                auto_init=True
             )
 
             post_message(issue, COMPLETE_MSG.format(url=new_repo.html_url), comments)

@@ -1,7 +1,10 @@
+import os
+
 from categories import CMSSW_L2, CMSSW_L1, TRIGGER_PR_TESTS, CMSSW_ISSUES_TRACKERS, PR_HOLD_MANAGERS, EXTERNAL_REPOS,CMSDIST_REPOS
 from categories import CMSSW_CATEGORIES
 from releases import RELEASE_BRANCH_MILESTONE, RELEASE_BRANCH_PRODUCTION, CMSSW_DEVEL_BRANCH
-from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS
+from cms_static import VALID_CMSDIST_BRANCHES, NEW_ISSUE_PREFIX, NEW_PR_PREFIX, ISSUE_SEEN_MSG, BUILD_REL, \
+  GH_CMSSW_REPO, GH_CMSDIST_REPO, CMSBOT_IGNORE_MSG, VALID_CMS_SW_REPOS_FOR_TESTS, CREATE_REPO
 from cms_static import BACKPORT_STR,GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS
 from repo_config import GH_REPO_ORGANIZATION
@@ -684,6 +687,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         signing_categories.add("tests")
         push_test_issue = True
     except: pass
+    if (not issue.pull_request) and re.match(CREATE_REPO, issue.title):
+      with open("query-new-data-repo-issues.properties", "w") as f:
+        f.write("CMS_BOT_BRANCH="+os.environ.get("CMS_BOT_BRANCH", "master"))
+        f.write("ISSUE_NUMBER="+str(issue.number))
 
   # Process the issue comments
   signatures = dict([(x, "pending") for x in signing_categories])

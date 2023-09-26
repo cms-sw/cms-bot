@@ -81,7 +81,7 @@ if __name__ == "__main__":
       all_labels[lab] = COMPARISON_LABELS[lab]
 
   if opts.externals:
-    repos = EXTERNAL_REPOS if not opt.repository else [opt.repository]
+    repos = EXTERNAL_REPOS if not opts.repository else [opts.repository]
     for repo_name in repos:
       setRepoLabels (gh, repo_name, all_labels, opts.dryRun, ignore=CMSSW_REPOS)
 
@@ -99,7 +99,7 @@ if __name__ == "__main__":
       for inproc in [ 'building', 'tool-conf-building', 'uploading', 'build-queued', 'tool-conf-waiting']:
         all_labels[arch+'-'+inproc] = LABEL_COLORS["hold"]
       all_labels[arch+'-finished'] = LABEL_COLORS["approved"]
-    repos = CMSSW_REPOS if not opt.repository else [opt.repository]
+    repos = CMSSW_REPOS if not opts.repository else [opts.repository]
     for repo_name in CMSSW_REPOS:
       setRepoLabels (gh, repo_name, all_labels, opts.dryRun)
 

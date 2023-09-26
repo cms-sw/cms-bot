@@ -138,7 +138,7 @@ if __name__ == "__main__":
   update_file_object = dist_repo.update_file(cmsswdatafile, mssg, new_content, content_file.sha, repo_tag_pr_branch)
 
   # file with tags on the default branch
-  cmsswdataspec = "/cmsswdata.spec"
+  cmsswdataspec = "cmsswdata.spec"
   content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
   cmsswdatafile_raw = content_file.decoded_content
   new_content = []

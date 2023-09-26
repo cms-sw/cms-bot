@@ -13,6 +13,7 @@ from categories_map import CMSSW_CATEGORIES
 from cms_static import (
     GH_CMSSW_REPO,
     CREATE_REPO,
+    GH_CMSSW_ORGANIZATION,
 )
 from github_utils import api_rate_limits
 
@@ -151,7 +152,7 @@ def main():
     issue_id = int(args[0])
     gh = Github(login_or_token=GH_TOKEN)
     api_rate_limits(gh)
-    cmssw_repo_name = "iarspider" + "/" + GH_CMSSW_REPO
+    cmssw_repo_name = GH_CMSSW_ORGANIZATION + "/" + GH_CMSSW_REPO
     cmssw_repo = gh.get_repo(cmssw_repo_name)
     issue = cmssw_repo.get_issue(issue_id)
     print("API Rate Limit")

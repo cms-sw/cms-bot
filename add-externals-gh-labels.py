@@ -58,6 +58,7 @@ if __name__ == "__main__":
   parser.add_option("-e", "--externals", dest="externals", action="store_true", help="Only process CMS externals repositories", default=False)
   parser.add_option("-u", "--users",     dest="users",     action="store_true", help="Only process Users externals repositories", default=False)
   parser.add_option("-c", "--cmssw",     dest="cmssw",     action="store_true", help="Only process "+",".join(CMSSW_REPOS)+" repository", default=False)
+  parser.add_option("-r", "--repository",dest="repository",action="store_true", help="Only process the selected repository.", default=None)
   parser.add_option("-a", "--all",       dest="all",       action="store_true", help="Process all CMS repository i.e. externals and cmssw", default=False)
   opts, args = parser.parse_args()
 
@@ -65,7 +66,7 @@ if __name__ == "__main__":
     opts.externals = True
     opts.cmssw = True
   elif (not opts.externals) and (not opts.cmssw) and (not opts.users):
-    parser.error("Too few arguments, please use either -e, -c, or -u")
+    parser.error("Too few arguments, please use either -e, -c or -u")
 
   import repo_config
   gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
@@ -80,7 +81,8 @@ if __name__ == "__main__":
       all_labels[lab] = COMPARISON_LABELS[lab]
 
   if opts.externals:
-    for repo_name in EXTERNAL_REPOS:
+    repos = EXTERNAL_REPOS if not opt.repository else [opt.repository]
+    for repo_name in repos:
       setRepoLabels (gh, repo_name, all_labels, opts.dryRun, ignore=CMSSW_REPOS)
 
   if opts.cmssw:
@@ -97,6 +99,7 @@ if __name__ == "__main__":
       for inproc in [ 'building', 'tool-conf-building', 'uploading', 'build-queued', 'tool-conf-waiting']:
         all_labels[arch+'-'+inproc] = LABEL_COLORS["hold"]
       all_labels[arch+'-finished'] = LABEL_COLORS["approved"]
+    repos = CMSSW_REPOS if not opt.repository else [opt.repository]
     for repo_name in CMSSW_REPOS:
       setRepoLabels (gh, repo_name, all_labels, opts.dryRun)
 

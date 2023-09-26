@@ -160,6 +160,7 @@ def external_to_package(repo_fullname):
     return repo.replace('-','/')
   return ''
 
+#extra labels which bot cn add via 'type label' comment
 def get_dpg_pog():
   groups = ['pf', 'l1t', 'castor']
   for user in CMSSW_L2:

@@ -58,7 +58,7 @@ if __name__ == "__main__":
   parser.add_option("-e", "--externals", dest="externals", action="store_true", help="Only process CMS externals repositories", default=False)
   parser.add_option("-u", "--users",     dest="users",     action="store_true", help="Only process Users externals repositories", default=False)
   parser.add_option("-c", "--cmssw",     dest="cmssw",     action="store_true", help="Only process "+",".join(CMSSW_REPOS)+" repository", default=False)
-  parser.add_option("-r", "--repository",dest="repository",action="store_true", help="Only process the selected repository.", default=None)
+  parser.add_option("-r", "--repository",dest="repository",                     help="Only process the selected repository.", type=str, default=None)
   parser.add_option("-a", "--all",       dest="all",       action="store_true", help="Process all CMS repository i.e. externals and cmssw", default=False)
   opts, args = parser.parse_args()
 

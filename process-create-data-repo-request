@@ -251,6 +251,8 @@ def main():
                 auto_init=True
             )
 
+            with open("new-repo.txt", "w") as out:
+              out.write("REPOSITORY=cms-data/%s-%s\n" % (category_name, package_name))
             post_message(issue, COMPLETE_MSG.format(url=new_repo.html_url), comments)
             close_issue(issue)
         else:

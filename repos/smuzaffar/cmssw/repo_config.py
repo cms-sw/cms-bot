@@ -10,8 +10,8 @@ CMSBUILD_USER="cmsbot"
 GH_REPO_ORGANIZATION=basename(dirname(CONFIG_DIR))
 GH_REPO_FULLNAME="smuzaffar/cmssw"
 CREATE_EXTERNAL_ISSUE=False
-#Jenkins CI server: User default http://cmsjenkins04.cern.ch:8080/cms-jenkins
-JENKINS_SERVER="http://cmsjenkins04.cern.ch:8080/cms-jenkins"
+#Jenkins CI server: User default http://cmsjenkins02.cern.ch:8080/cms-jenkins
+JENKINS_SERVER="http://cmsjenkins02.cern.ch:8080/cms-jenkins"
 #GH Web hook pass phrase. This is encrypeted used bot keys.
 GITHUB_WEBHOOK_TOKEN='U2FsdGVkX1+GEHdp/Cmu73+ctvrzSGXc9OvL+8bZyjOe6ZPkqr/GIPgpJHiEp+hR'
 #Set to True if you want bot to add build/test labels to your repo

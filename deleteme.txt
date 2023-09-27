@@ -8,3 +8,4 @@ iarspider c3
 iarspider c4
 cmsbuild c5
 cmsbuild c6
+cmsbuild c7

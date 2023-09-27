@@ -242,6 +242,14 @@
       "start_date": 1386892800
     }
   ], 
+  "antoniovagnerini": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "start_date": 1695772800
+    }
+  ], 
   "antoniovilela": [
     {
       "category": [
@@ -1509,6 +1517,7 @@
       "category": [
         "dqm"
       ], 
+      "end_date": 1695772800, 
       "start_date": 1648425600
     }
   ], 
@@ -1852,6 +1861,7 @@
       "category": [
         "dqm"
       ], 
+      "end_date": 1695772800, 
       "start_date": 1631491200
     }
   ], 

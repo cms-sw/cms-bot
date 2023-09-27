@@ -1355,6 +1355,7 @@ CMSSW_CATEGORIES = {
     "RecoParticleFlow/PFClusterShapeProducer",
     "RecoParticleFlow/PFClusterTools",
     "RecoParticleFlow/PFProducer",
+    "RecoParticleFlow/PFRecHitProducer",
     "RecoParticleFlow/PFRootEvent",
     "RecoParticleFlow/PFSimProducer",
     "RecoParticleFlow/PFTracking",

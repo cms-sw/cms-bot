@@ -214,7 +214,7 @@ for org in orgs:
     if not backup:
       print("  Skipping mirror, no change")
       continue
-    brepo = join(backup_store, repo_name, "repo")
+    brepo = join(repo_dir, "repo")
     if exists(brepo):
       getstatusoutput("mv %s %s.%s" % (brepo, brepo, int(time())))
     getstatusoutput("rm -rf %s.tmp" % brepo)
@@ -229,6 +229,7 @@ for org in orgs:
         with open(repo_stat, "w") as obj:
           dump(repo, obj)
         print("  Backed up",repo_name)
+        getstatusoutput("find %s -mindepth 1 -maxdepth 1 -name 'repo.*' | sort |  head -n -100 | xargs rm -rf" % repo_dir)
       else:
         print(o)
         err = 1

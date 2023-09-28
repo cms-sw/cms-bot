@@ -39,6 +39,8 @@ if __name__ == "__main__":
       from github_utils import comment_gh_pr
       try:
           comment_gh_pr(gh, opts.repository, opts.pr, msg)
+          print("Added comment for %s#%s" % (opts.repository, opts.pr))
+          print("Comment message:\n",msg)
       except Exception as e:
           print("Failed to add comment: ",e)
           exit(1)

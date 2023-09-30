@@ -44,7 +44,6 @@ CMSSW_L2 = {
   "civanch":          ["simulation", "geometry", "fastsim"],
   "bsunanda":         ["geometry"],
   "davidlange6":      ["operations"],
-  "emanueleusai":     ["dqm"],
   "emeschi":          ["daq"],
   "vlimant":          ["xpog"],
   "simonepigazzini":  ["xpog"],

@@ -1736,6 +1736,7 @@ CMSSW_CATEGORIES = {
     "DPGAnalysis/HcalNanoAOD",
     "DPGAnalysis/MuonTools",
     "PhysicsTools/NanoAOD",
+    "PhysicsTools/NanoAODTools",
     "PhysicsTools/PatAlgos",
     "PhysicsTools/PatUtils",
     "PhysicsTools/Scouting",

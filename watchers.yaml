@@ -1146,6 +1146,7 @@ rchatter:
 clelange:
 - JetMETCorrections
 - RecoJets
+- PhysicsTools/NanoAODTools
 gkasieczka:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET
@@ -1819,3 +1820,5 @@ jlidrych:
 - RecoLocalTracker/Records
 - RecoLocalTracker/SiStrip
 - RecoLocalTracker/SubCollectionProducers
+lenzip:
+- PhysicsTools/NanoAODTools

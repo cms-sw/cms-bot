@@ -9,6 +9,18 @@ from socket import setdefaulttimeout
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
+def mark_pr_ready_for_test(repo, pr, context="cmsbot/test"):
+    try:
+        latest_commit = pr.get_commits().reversed[0].sha  # Get the latest commit SHA
+        repo.get_commit(latest_commit).create_status(
+            state="success",
+            context=context,
+            description="Ready for testing"
+        )
+        print("Commit status marked as 'Ready for testing'")
+    except GithubException as e:
+        print(f"Failed to mark commit status: {e}")
+
 def process_pr(gh, repo, issue, dryRun):
   from cmsdist_merge_permissions import USERS_TO_TRIGGER_HOOKS, getCommentCommand, hasRights
   print("Issue state:", issue.state)
@@ -42,6 +54,7 @@ def process_pr(gh, repo, issue, dryRun):
     cmd = getCommentCommand(first_line)
     if not cmd: continue
     if (cmd == "ping") and cmdType: continue
+    if (cmd == "test") and cmdType: continue
     if cmd == "merge" and not pr: continue
     if not hasRights (commenter, branch, cmd, chg_files): continue
     cmdType = cmd
@@ -52,6 +65,7 @@ def process_pr(gh, repo, issue, dryRun):
   if issue.state == "open":
     if cmdType == "merge": pr.merge()
     if cmdType == "close": issue.edit(state="closed")
+    if cmdType == "test": mark_pr_ready_for_test(repo, pr)
   elif cmdType == "open": issue.edit(state="open")
   issue.create_comment("Command "+cmdType+" acknowledged.")
   return True

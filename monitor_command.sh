@@ -19,7 +19,7 @@ while [ $(jobs -r -p | wc -l) -gt 0 ] ; do
   sleep 1
   CTIME=$(date +%s)
   let LOG_GAP=${CTIME}-${LOG_CHECK}
-  if [ $LOG_GAP -lt 5 ] ; then continue ; fi
+  if [ $LOG_GAP -lt 300 ] ; then continue ; fi
   LOG_CHECK=${CTIME}
   monitor >> ${MONITOR_COMMAND_LOG} 2>&1
 done

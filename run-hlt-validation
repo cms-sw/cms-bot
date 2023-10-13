@@ -22,7 +22,7 @@ if [  -e "HLTrigger/Configuration/scripts/hltIntegrationTests" ] ; then
       sed -i -e 's|^ *edmCheckMultithreading  *hlt.py|#edmCheckMultithreading hlt.py|' HLTrigger/Configuration/scripts/hltIntegrationTests
     else
       cp $(which edmCheckMultithreading) $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
-      sed -e "s/| *sort  *-u *|/| grep -v '^CkfTrajectoryMaker$' | sort -u |/" $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
+      sed -i -e "s/| *sort  *-u *|/| grep -v '^CkfTrajectoryMaker$' | sort -u |/" $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
       grep edmConfigDump $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
     fi
   fi

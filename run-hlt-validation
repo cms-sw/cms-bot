@@ -15,6 +15,12 @@ export CMS_PATH="/cvmfs/cms-ib.cern.ch"
 export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
 mkdir -p $CMSSW_BASE/src/HLTrigger
 cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger/Configuration/
+#To avoid https://github.com/cms-sw/cmssw/issues/42988 issue
+if [  -e "$CMSSW_BASE/src/HLTrigger/Configuration/scripts/hltIntegrationTests" ] ; then
+  if [ $(echo $RELEASE_FORMAT | cut -d_ -f2) -ge 13 ] ; then
+    sed -i -e 's|^ *edmCheckMultithreading  *hlt.py|#edmCheckMultithreading hlt.py|' $CMSSW_BASE/src/HLTrigger/Configuration/scripts/hltIntegrationTests
+  fi
+fi
 scram build -j $(nproc)
 cd HLTrigger/Configuration/test/
 ls

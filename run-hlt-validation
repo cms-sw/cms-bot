@@ -16,9 +16,15 @@ export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
 mkdir -p $CMSSW_BASE/src/HLTrigger
 cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger/Configuration/
 #To avoid https://github.com/cms-sw/cmssw/issues/42988 issue
-if [  -e "$CMSSW_BASE/src/HLTrigger/Configuration/scripts/hltIntegrationTests" ] ; then
-  if [ $(echo $RELEASE_FORMAT | cut -d_ -f2) -ge 13 ] ; then
-    sed -i -e 's|^ *edmCheckMultithreading  *hlt.py|#edmCheckMultithreading hlt.py|' $CMSSW_BASE/src/HLTrigger/Configuration/scripts/hltIntegrationTests
+if [  -e "HLTrigger/Configuration/scripts/hltIntegrationTests" ] ; then
+  if [ $(grep edmCheckMultithreading HLTrigger/Configuration/scripts/hltIntegrationTests | wc -l) -gt 0 ] ; then
+    if [ $(echo $RELEASE_FORMAT | cut -d_ -f2) -ge 13 ] ; then
+      sed -i -e 's|^ *edmCheckMultithreading  *hlt.py|#edmCheckMultithreading hlt.py|' HLTrigger/Configuration/scripts/hltIntegrationTests
+    else
+      cp $(which edmCheckMultithreading) $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
+      sed -e "s/| *sort  *-u *|/| grep -v '^CkfTrajectoryMaker$' | sort -u |/" $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
+      grep edmConfigDump $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
+    fi
   fi
 fi
 scram build -j $(nproc)

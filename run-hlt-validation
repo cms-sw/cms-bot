@@ -28,6 +28,7 @@ if [  -e "HLTrigger/Configuration/scripts/hltIntegrationTests" ] ; then
   fi
 fi
 scram build -j $(nproc)
+which edmCheckMultithreading || true
 cd HLTrigger/Configuration/test/
 ls
 ./runAll.csh IB | tee -a $WORKSPACE/results/runIB.log

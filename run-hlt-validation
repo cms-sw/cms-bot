@@ -19,12 +19,16 @@ cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger
 if [  -e "HLTrigger/Configuration/scripts/hltIntegrationTests" ] ; then
   if [ $(grep edmCheckMultithreading HLTrigger/Configuration/scripts/hltIntegrationTests | wc -l) -gt 0 ] ; then
     if [ $(echo $RELEASE_FORMAT | cut -d_ -f2) -ge 13 ] ; then
-      sed -i -e 's|^ *edmCheckMultithreading  *hlt.py|#edmCheckMultithreading hlt.py|' HLTrigger/Configuration/scripts/hltIntegrationTests
+      sed -i -e 's|^ *edmCheckMultithreading  *hlt.py|#edmCheckMultithreading hlt.py|' HLTrigger/Configuration/scripts/hltIntegrationTests || true
     else
       cp $(which edmCheckMultithreading) $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
-      sed -i -e "s/| *sort  *-u *|/| grep -Ev '^(CkfTrajectoryMaker|CkfTrackCandidateMaker)$' | sort -u |/" $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading
+      sed -i -e "s/| *sort  *-u *|/| grep -Ev '^(CkfTrajectoryMaker|CkfTrackCandidateMaker)$' | sort -u |/" $CMSSW_BASE/bin/${SCRAM_ARCH}/edmCheckMultithreading || true
     fi
   fi
+fi
+if [ -e "HLTrigger/Configuration/test/runIntegration.csh" ] ; then
+  let hlt_jobs=$(nproc)/2
+  sed -i -e "s| -j  *[0-9][0-9]* | -j ${hlt_jobs} |g" HLTrigger/Configuration/test/runIntegration.csh
 fi
 scram build -j $(nproc)
 which edmCheckMultithreading || true

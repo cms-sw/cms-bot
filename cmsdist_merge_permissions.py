@@ -14,7 +14,6 @@ CMSDIST_PERMISSIONS = {
   "belforte"       : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "mapellidario"   : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
   "germanfgv"      : [ ".+", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
-  "smuzaffar"      : [ "test", COMP_BRANCHES , CMSSW_BRANCHES, ".+" ],
 }
 
 VALID_COMMENTS = {

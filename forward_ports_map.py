@@ -91,6 +91,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"]=[]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/devel")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/g11")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/root628")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/root630")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/cs9")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/g4")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/nonlto")

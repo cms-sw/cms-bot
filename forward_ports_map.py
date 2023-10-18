@@ -102,5 +102,5 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/g1
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/g12_cpp20")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/rootmaster"]=["IB/CMSSW_13_3_X/rootmodule"]
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/g4"]=["IB/CMSSW_13_3_X/g4_vecgeom"]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/root628"]=["IB/CMSSW_13_3_X/g13"]
-GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/root628"].append("IB/CMSSW_13_3_X/g12_cpp20")
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/root630"]=["IB/CMSSW_13_3_X/g13"]
+GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/root630"].append("IB/CMSSW_13_3_X/g12_cpp20")

@@ -146,6 +146,12 @@ def get_last_commit(pr):
       print("Index error: May be PR with no commits")
   return last_commit
 
+def get_package_categories(package):
+  cats = []
+  for cat, packages in list(CMSSW_CATEGORIES.items()):
+    if package in packages: cats.append(cat)
+  return cats
+
 #Read a yaml file
 def read_repo_file(repo_config, repo_file, default=None):
   import yaml
@@ -240,11 +246,15 @@ def has_user_emoji(comment, repository, emoji, user):
   return (e and e['content']==emoji)
 
 def get_assign_categories(line):
-  m = re.match("^\s*(New categories assigned:\s*|unassign\s+|assign\s+)([a-z0-9,\s-]+)\s*$", line, re.I)
+  m = re.match("^\s*(New categories assigned:\s*|(unassign|assign)\s+(from\s+|package\s+|))([a-zA-Z0-9/,\s-]+)\s*$", line, re.I)
   if m:
     assgin_type = m.group(1).lower()
+    if m.group(2): assgin_type = m.group(2).lower()
     new_cats = []
-    for ex_cat in m.group(2).replace(" ","").split(","):
+    for ex_cat in m.group(4).replace(" ","").split(","):
+      if '/' in ex_cat:
+        new_cats += get_package_categories(ex_cat)
+        continue
       if (not ex_cat in CMSSW_CATEGORIES): continue
       new_cats.append(ex_cat)
     return (assgin_type.strip(), new_cats)
@@ -590,10 +600,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print("\n".join(packages))
     for package in packages:
         package_categories[package] = set([])
-        for category, category_packages in list(CMSSW_CATEGORIES.items()):
-            if package in category_packages:
-                package_categories[package].add(category)
-                pkg_categories.add(category)
+        for category in get_package_categories(package):
+            package_categories[package].add(category)
+            pkg_categories.add(category)
     signing_categories.update(pkg_categories)
 
     # For PR, we always require tests.

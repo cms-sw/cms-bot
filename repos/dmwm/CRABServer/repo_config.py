@@ -11,7 +11,7 @@ GH_REPO_ORGANIZATION=basename(dirname(CONFIG_DIR))
 GH_REPO_FULLNAME="dmwm/CRABServer"
 CREATE_EXTERNAL_ISSUE=False
 #Jenkins CI server: User default http://cmsjenkins02.cern.ch:8080/cms-jenkins
-JENKINS_SERVER="http://cmsjenkins10.cern.ch:8080/dmwm-jenkins"
+JENKINS_SERVER="http://cmsjenkins11.cern.ch:8080/dmwm-jenkins"
 #Set to True if you want bot to add build/test labels to your repo
 ADD_LABELS=False
 #Set to True if you want bot to add GH webhooks. cmsbot needs admin rights

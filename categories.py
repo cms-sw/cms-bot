@@ -108,6 +108,7 @@ CMSSW_L2 = {
   "pfs":              ["hgcal-dpg"],
   "felicepantaleo":   ["hgcal-dpg"],
   "fabiocos":         ["mtd-dpg", "operations"],
+  "MartinaMalberti":  ["mtd-dpg"],
   "parbol":           ["mtd-dpg"],
   # pogs
   "bellan":           ["pf"],

@@ -19,7 +19,7 @@ if [ "${INSTALL_SCRIPT}" != "" ] ; then
   export SCRAM_ARCH=$(ls -d ${CMSSW_PROJECT}/lib/* | sed 's|.*/||')
   cd $CMSSW_PROJECT
   rm -rf src; mkdir src
-  scram build clean
+  scram build clean >/dev/null 2>&1
 else
   eval $(grep 'RELEASE_BRANCH=master;' cms-bot/config.map | grep PROD_ARCH=1 )
   export SCRAM_ARCH
@@ -48,8 +48,12 @@ pushd src
 popd
 #Keep original sources to be used by clang-format
 cp -r src src.orig
-
-$CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
+if [ "${CMSSW_RELEASE_BASE}" = "" ] ; then
+  CMSSW_RELEASE_BASE=$(scram l -c ${CMSSW_VERSION} | sed 's|.* ||') \
+  $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
+else
+  $CMSSW_BASE/config/SCRAM/find-extensions.sh -t $CMSSW_BASE
+fi
 cat $CMSSW_BASE/selected-source-files.txt | grep -v '/test/' > $CMSSW_BASE/selected-source-files.txt.filtered || true
 
 ERR=0

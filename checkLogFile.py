@@ -14,7 +14,7 @@ except NameError:  # __file__ not defined in interactive mode
 
 if scriptPath not in sys.path:
     sys.path.append(scriptPath)
-sys.path.append(os.path.join(scriptPath,"python"))
+sys.path.append(os.path.join(scriptPath, "python"))
 
 
 class LogChecker(object):
@@ -40,10 +40,10 @@ class LogChecker(object):
     # --------------------------------------------------------------------------------
     def getTags(self):
         try:
-            prepFile = open('nohup.out', 'r')
+            prepFile = open("nohup.out", "r")
         except IOError:
             try:
-                prepFile = open('prebuild.log', 'r')
+                prepFile = open("prebuild.log", "r")
             except IOError:
                 print("no nohup.out or prebuild.log found in . ")
                 raise
@@ -51,7 +51,7 @@ class LogChecker(object):
         lines = prepFile.readlines()
         prepFile.close()
 
-        pkgTagRe = re.compile(r'Package\s*([a-zA-Z].*)\s*version\s*(.*)\s*checkout\s*(.*)')
+        pkgTagRe = re.compile(r"Package\s*([a-zA-Z].*)\s*version\s*(.*)\s*checkout\s*(.*)")
 
         for line in lines:
             pkgTagMatch = pkgTagRe.match(line)
@@ -61,7 +61,7 @@ class LogChecker(object):
                 stat = pkgTagMatch.group(3).strip()
                 self.pkgVers[pkg] = vers
                 if stat.lower() != "successful":
-                    print("WARNING: problems checking out ", pkg, vers, stat, "(" + line + ')')
+                    print("WARNING: problems checking out ", pkg, vers, stat, "(" + line + ")")
 
         # print "found ", str(len(self.pkgVers.keys())), 'tags'
         # for key, val in self.pkgVers.items():
@@ -71,12 +71,19 @@ class LogChecker(object):
 
     # --------------------------------------------------------------------------------
     def checkLog(self, logFileName):
-        plat = os.environ['SCRAM_ARCH']
+        plat = os.environ["SCRAM_ARCH"]
         pkgName = ""
         import re
-        gmakeCompRe = re.compile("gmake:.*/" + plat + r"/src/([a-zA-Z].*)/([a-zA-Z].*)/src/([a-zA-Z].*)\.o.*")
-        gmakeTestRe = re.compile("gmake:.*/" + plat + r"/src/([a-zA-Z].*)/([a-zA-Z].*)/test/([a-zA-Z].*)\.o.*")
-        gmakeLinkRe = re.compile("gmake:.*/" + plat + r"/src/([a-zA-Z].*)/([a-zA-Z].*)/(lib[a-zA-Z].*\.so).*")
+
+        gmakeCompRe = re.compile(
+            "gmake:.*/" + plat + r"/src/([a-zA-Z].*)/([a-zA-Z].*)/src/([a-zA-Z].*)\.o.*"
+        )
+        gmakeTestRe = re.compile(
+            "gmake:.*/" + plat + r"/src/([a-zA-Z].*)/([a-zA-Z].*)/test/([a-zA-Z].*)\.o.*"
+        )
+        gmakeLinkRe = re.compile(
+            "gmake:.*/" + plat + r"/src/([a-zA-Z].*)/([a-zA-Z].*)/(lib[a-zA-Z].*\.so).*"
+        )
         gmakeGeneric = re.compile("gmake:.*")
 
         self.fileIndex += 1
@@ -85,12 +92,19 @@ class LogChecker(object):
         print("in :", os.getcwd())
         print("checking file ", logFileName)
         print("================================================================================\n")
-        htmlFileName = logFileName.replace('/', '_').replace(".", '-') + ".html"
+        htmlFileName = logFileName.replace("/", "_").replace(".", "-") + ".html"
         if self.htmlOut and self.sumLog:
             self.sumLog.write(
-                '<image src="http://cern.ch/pfeiffer/aaLibrarian/colline.gif" width="90%" height="3"></image>\n')
-            self.sumLog.write('<h3>Checking <a href="' + htmlFileName + '">log file ' + logFileName + '</a></h3>\n')
-            self.sumLog.write('\n')
+                '<image src="http://cern.ch/pfeiffer/aaLibrarian/colline.gif" width="90%" height="3"></image>\n'
+            )
+            self.sumLog.write(
+                '<h3>Checking <a href="'
+                + htmlFileName
+                + '">log file '
+                + logFileName
+                + "</a></h3>\n"
+            )
+            self.sumLog.write("\n")
             self.sumLog.write("<p>\n")
 
         self.getTags()
@@ -103,11 +117,13 @@ class LogChecker(object):
 
         if len(lines) < 200:
             if self.htmlOut and self.sumLog:
-                self.sumLog.write('<font color="#ff0000"><b>Warning:</b> suspiciously short log file!</font>\n')
+                self.sumLog.write(
+                    '<font color="#ff0000"><b>Warning:</b> suspiciously short log file!</font>\n'
+                )
 
         nErr = 0
         nWarn = 0
-        errorList = {'make': []}
+        errorList = {"make": []}
 
         subSysCompErr = {}
         subSysTestErr = {}
@@ -183,7 +199,7 @@ class LogChecker(object):
                 if item[0] not in compErrPkg:
                     compErrPkg.append(item[0])
                 startIndex = len(key) + len(item[0]) + 1
-                print("      " + item[0] + ' (' + str(item[1])[startIndex:] + ')')
+                print("      " + item[0] + " (" + str(item[1])[startIndex:] + ")")
         print("--------------------------------------------------------------------------------")
         testErrPkg = []
         for key, val in subSysTestErr.items():
@@ -191,18 +207,16 @@ class LogChecker(object):
             for item in val:
                 if item[0] not in testErrPkg:
                     testErrPkg.append(item[0])
-                print("      " + item[0] + ' (' + str(item[1]) + ')')
+                print("      " + item[0] + " (" + str(item[1]) + ")")
         print("--------------------------------------------------------------------------------")
         nLinkErr = 0
         for key, val in subSysLinkErr.items():
-
             subSys = key.split("/")[0]
-            if ((subSys not in subSysCompErr.keys()) and
-                    (subSys not in subSysTestErr.keys())):
+            if (subSys not in subSysCompErr.keys()) and (subSys not in subSysTestErr.keys()):
                 nLinkErr += 1
                 print(str(len(val)) + " ERRORs in link-step found for subsystem", subSys)
                 for item in val:
-                    print("      " + item[0] + ' (' + str(item[1]) + ')')
+                    print("      " + item[0] + " (" + str(item[1]) + ")")
         print("--------------------------------------------------------------------------------")
         genErrPkg = []
         for key, val in list(subSysGenErr.items()):
@@ -210,7 +224,7 @@ class LogChecker(object):
             for item in val:
                 if item[0] not in genErrPkg:
                     genErrPkg.append(item[0])
-                print("      " + item[0] + ' (' + str(item[3]) + ')')
+                print("      " + item[0] + " (" + str(item[3]) + ")")
         print("--------------------------------------------------------------------------------")
         print("\nA total of ", len(compErrPkg), " packages failed compilation.")
         print("\nA total of ", len(testErrPkg), " packages failed compiling tetsts.")
@@ -228,65 +242,103 @@ class LogChecker(object):
                         errLines.append(int(i))
 
             try:
-                htmlFile = open(os.path.join(self.logDir, htmlFileName), 'w')
+                htmlFile = open(os.path.join(self.logDir, htmlFileName), "w")
             except IOError:
                 print("ERROR opening htmlFile ", os.path.join(self.logDir, htmlFileName))
                 raise
 
-            htmlFile.write("<html>\n<head><title>LogCheck for " + logFileName + "</title></head>\n<body>\n")
+            htmlFile.write(
+                "<html>\n<head><title>LogCheck for " + logFileName + "</title></head>\n<body>\n"
+            )
             htmlFile.write("<h1>LogCheck for " + logFileName + "</h1>\n")
             htmlFile.write("<h2>Analysis from " + time.asctime() + "</h2>\n")
 
             for key, val in subSysCompErr.items():
-                htmlFile.write('<p>\n')
-                htmlFile.write('<a href="' + htmlFileName + '#' + key + '">' + str(
-                    len(val)) + ' Compile ERRORs found for subsystem ' + key)
-                htmlFile.write('</a> <br />\n')
-                htmlFile.write('</p>\n')
+                htmlFile.write("<p>\n")
+                htmlFile.write(
+                    '<a href="'
+                    + htmlFileName
+                    + "#"
+                    + key
+                    + '">'
+                    + str(len(val))
+                    + " Compile ERRORs found for subsystem "
+                    + key
+                )
+                htmlFile.write("</a> <br />\n")
+                htmlFile.write("</p>\n")
 
             for key, val in subSysLinkErr.items():
-                htmlFile.write('<p>\n')
-                htmlFile.write('<a href="' + htmlFileName + '#' + key + '">' + str(
-                    len(val)) + ' Linker ERRORs found for subsystem ' + key)
-                htmlFile.write('</a> <br />\n')
-                htmlFile.write('</p>\n')
+                htmlFile.write("<p>\n")
+                htmlFile.write(
+                    '<a href="'
+                    + htmlFileName
+                    + "#"
+                    + key
+                    + '">'
+                    + str(len(val))
+                    + " Linker ERRORs found for subsystem "
+                    + key
+                )
+                htmlFile.write("</a> <br />\n")
+                htmlFile.write("</p>\n")
 
             for key, val in subSysCompErr.items():
-                htmlFile.write('<p>\n')
-                htmlFile.write('<a name=' + key + '>\n')
-                htmlFile.write(str(len(val)) + ' ERRORs found for subsystem ' + key + '<br />\n')
-                htmlFile.write('<ol>\n')
+                htmlFile.write("<p>\n")
+                htmlFile.write("<a name=" + key + ">\n")
+                htmlFile.write(str(len(val)) + " ERRORs found for subsystem " + key + "<br />\n")
+                htmlFile.write("<ol>\n")
                 for item in val:
                     pkg = item[0]
                     try:
-                        htmlFile.write('<li>package ' + pkg + ' file ' + item[1] + ' Tag: ' + self.pkgVers[
-                            key + "/" + pkg] + ' <br />\n')
+                        htmlFile.write(
+                            "<li>package "
+                            + pkg
+                            + " file "
+                            + item[1]
+                            + " Tag: "
+                            + self.pkgVers[key + "/" + pkg]
+                            + " <br />\n"
+                        )
                     except KeyError:
-                        htmlFile.write('<li>package ' + pkg + ' file ' + item[1] + ' Tag: <unknown> ??? <br />\n')
+                        htmlFile.write(
+                            "<li>package "
+                            + pkg
+                            + " file "
+                            + item[1]
+                            + " Tag: <unknown> ??? <br />\n"
+                        )
                     index = item[2]
-                    htmlFile.write('<a href="' + htmlFileName + '#line_' + str(index) + '">\n')
-                    htmlFile.write('<pre>\n')
+                    htmlFile.write('<a href="' + htmlFileName + "#line_" + str(index) + '">\n')
+                    htmlFile.write("<pre>\n")
                     try:
                         for delta in range(-5, 1):
                             if self.htmlOut:
                                 htmlFile.write(str(index + delta) + " : " + lines[index + delta])
-                            # print " ", index+delta, ":", lines[index+delta],                            
+                            # print " ", index+delta, ":", lines[index+delta],
                     except IndexError:
                         pass
-                    htmlFile.write('</pre>\n')
-                    htmlFile.write('</a></li>\n')
+                    htmlFile.write("</pre>\n")
+                    htmlFile.write("</a></li>\n")
                     htmlFile.write("<hr />\n")
-                htmlFile.write('</ol>\n')
-                htmlFile.write('</p>\n')
+                htmlFile.write("</ol>\n")
+                htmlFile.write("</p>\n")
 
             for key, val in subSysGenErr.items():
-                htmlFile.write('<p>\n')
+                htmlFile.write("<p>\n")
                 htmlFile.write(
-                    '<a href="' + htmlFileName + '#' + key + '">' + str(len(val)) + ' UNKNOWN ERRORs found ')
-                htmlFile.write('</a> <br />\n')
-                htmlFile.write('</p>\n')
+                    '<a href="'
+                    + htmlFileName
+                    + "#"
+                    + key
+                    + '">'
+                    + str(len(val))
+                    + " UNKNOWN ERRORs found "
+                )
+                htmlFile.write("</a> <br />\n")
+                htmlFile.write("</p>\n")
 
-            htmlFile.write('<pre>\n')
+            htmlFile.write("<pre>\n")
             for index in range(len(lines)):
                 # html-ify:
                 line = lines[index]
@@ -298,8 +350,8 @@ class LogChecker(object):
                     htmlFile.write('<a name="line_' + str(index) + '">')
                     htmlFile.write('<font color="red" size+=3><b>\n')
                     htmlFile.write(line)
-                    htmlFile.write('</b></font>')
-                    htmlFile.write('</a> \n')
+                    htmlFile.write("</b></font>")
+                    htmlFile.write("</a> \n")
                 else:
                     htmlFile.write(line)
             htmlFile.write("</pre>\n</body>\n</html>")
@@ -313,8 +365,10 @@ class LogChecker(object):
         if len(errorList.items()) > 500:
             if self.htmlOut and self.sumLog:
                 self.sumLog.write(
-                    '<font color="#ff0000"><b>Caution:</b> Too many errors found (' +
-                    str(len(errorList.items())) + '), printout suppressed !!</font>\n')
+                    '<font color="#ff0000"><b>Caution:</b> Too many errors found ('
+                    + str(len(errorList.items()))
+                    + "), printout suppressed !!</font>\n"
+                )
                 errLimit = True
 
         if self.verbose > 0 and not errLimit:
@@ -324,17 +378,25 @@ class LogChecker(object):
                     if self.htmlOut and self.sumLog:
                         self.sumLog.write('<a name="' + pkgName + '"></a>\n')
                         self.sumLog.write("<hr />\n")
-                        self.sumLog.write('<a href="file' + str(self.fileIndex) + '.html#line_' + str(index) + '">\n')
+                        self.sumLog.write(
+                            '<a href="file'
+                            + str(self.fileIndex)
+                            + ".html#line_"
+                            + str(index)
+                            + '">\n'
+                        )
                     try:
                         print("------------------------------------------")
                         for delta in range(-2, 2):
                             if self.htmlOut and self.sumLog:
-                                self.sumLog.write(str(index + delta) + " : " + lines[index + delta])
-                            print(" ", index + delta, ":", lines[index + delta], end=' ')
+                                self.sumLog.write(
+                                    str(index + delta) + " : " + lines[index + delta]
+                                )
+                            print(" ", index + delta, ":", lines[index + delta], end=" ")
                     except IndexError:
                         pass
                     if self.htmlOut and self.sumLog:
-                        self.sumLog.write('</a>\n')
+                        self.sumLog.write("</a>\n")
 
         msg = "In total: "
         if nErr == 0:
@@ -353,7 +415,7 @@ class LogChecker(object):
         print(msg)
         if self.htmlOut and self.sumLog:
             self.sumLog.write(msg + "\n")
-            self.sumLog.write('</p>\n')
+            self.sumLog.write("</p>\n")
 
         return nErr, nWarn
 
@@ -362,18 +424,22 @@ class LogChecker(object):
     def checkFiles(self, fileList=None):
         if fileList is None:
             fileList = []
-        print("going to check ", len(fileList), ' files:', fileList)
+        print("going to check ", len(fileList), " files:", fileList)
 
         import socket
+
         hostName = socket.gethostname().lower()
 
         import time
+
         date = time.ctime()
 
         if self.htmlOut and not self.sumLog:
-            self.sumLog = open(os.path.join(self.logDir, "CheckLog-summary.html"), 'w')
-            self.sumLog.write("<html>\n<head><title>Summary of logfiles</title></head>\n<body>\n<pre>\n")
-            self.sumLog.write('<h2>Check of logfiles</h2>\n')
+            self.sumLog = open(os.path.join(self.logDir, "CheckLog-summary.html"), "w")
+            self.sumLog.write(
+                "<html>\n<head><title>Summary of logfiles</title></head>\n<body>\n<pre>\n"
+            )
+            self.sumLog.write("<h2>Check of logfiles</h2>\n")
             self.sumLog.write("<p>\n")
             self.sumLog.write("Checking done on " + hostName + " at " + date)
             self.sumLog.write("</p>\n")
@@ -389,7 +455,7 @@ class LogChecker(object):
         nFilWarn = 0
         for fileName in fileList:
             file = fileName
-            if fileName[:2] == './':
+            if fileName[:2] == "./":
                 file = fileName[2:]
             try:
                 nErr, nWarn = self.checkLog(file)
@@ -405,12 +471,14 @@ class LogChecker(object):
             if nWarn > 0:
                 nFilWarn += 1
 
-        print("\n================================================================================\n")
+        print(
+            "\n================================================================================\n"
+        )
 
         if nFiles > 0:
             print("Checked a total of ", nFiles, "log files.")
-            print("A total of ", totErr, "errors in ", nFilErr, 'files.')
-            print("A total of ", totWarn, "warnings in ", nFilWarn, 'files.')
+            print("A total of ", totErr, "errors in ", nFilErr, "files.")
+            print("A total of ", totWarn, "warnings in ", nFilWarn, "files.")
         #            print "Files with errors: "
         #            for f in self.errFiles:
         #                print "\t", f
@@ -422,13 +490,17 @@ class LogChecker(object):
         if self.htmlOut and self.sumLog:
             self.sumLog.write('<a name="summary"></a><hr />\n')
             self.sumLog.write("Checked a total of " + str(nFiles) + " log files.\n")
-            self.sumLog.write("A total of " + str(totErr) + " errors in " + str(nFilErr) + ' files.\n')
-            self.sumLog.write("A total of " + str(totWarn) + " warnings in " + str(nFilWarn) + ' files.\n')
+            self.sumLog.write(
+                "A total of " + str(totErr) + " errors in " + str(nFilErr) + " files.\n"
+            )
+            self.sumLog.write(
+                "A total of " + str(totWarn) + " warnings in " + str(nFilWarn) + " files.\n"
+            )
             self.sumLog.write("Files with errors: \n")
 
             self.sumLog.write("<table>\n")
             for f in self.errFiles:
-                self.sumLog.write('<tr><td><a href="#' + f + '">' + f + '</a> </td></tr>\n')
+                self.sumLog.write('<tr><td><a href="#' + f + '">' + f + "</a> </td></tr>\n")
             self.sumLog.write("</table>\n")
 
             self.sumLog.write("\n")
@@ -446,9 +518,9 @@ def main():
         import archived_argparse as argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--html', default=False, action='store_true')
-    parser.add_argument('--verbose', default=0)
-    parser.add_argument('files', nargs='+')
+    parser.add_argument("--html", default=False, action="store_true")
+    parser.add_argument("--verbose", default=0)
+    parser.add_argument("files", nargs="+")
     args = parser.parse_args()
 
     html = args.html

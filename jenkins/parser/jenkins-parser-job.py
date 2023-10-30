@@ -24,7 +24,7 @@ def process_build(build, job_dir, job_to_retry, error_list, retry_object, retry_
     else:
         # Mark as retried
         actions.mark_build_as_retried(job_dir, job_to_retry, build)
-        print("[" + job_to_retry + "] ... #" + str(build)+ " OK")
+        print("[" + job_to_retry + "] ... #" + str(build) + " OK")
 
 
 def check_and_trigger_action(
@@ -42,9 +42,7 @@ def check_and_trigger_action(
     lines = text_log.readlines()
     text_log.close()
 
-    job_url = (
-        os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
-    )
+    job_url = os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
 
     print("Parsing build #" + build_to_retry + " (" + job_url + ") ...")
 
@@ -56,11 +54,7 @@ def check_and_trigger_action(
         for line in reversed(lines):
             if re.search(regex, line):
                 print(
-                    "... Found message "
-                    + regex
-                    + " in "
-                    + log_file_path
-                    + ". Taking action ..."
+                    "... Found message " + regex + " in " + log_file_path + ". Taking action ..."
                 )
                 if "retry" in action:
                     actions.trigger_retry_action(
@@ -77,7 +71,7 @@ def check_and_trigger_action(
                 else:
                     # Take action on the nodes
                     node_name = helpers.grep(envvars_file_path, "NODE_NAME=", True) or ""
-                    node_name = (node_name.split("=")[1].replace("\n", ""))
+                    node_name = node_name.split("=")[1].replace("\n", "")
                     job_url = (
                         os.environ.get("JENKINS_URL")
                         + "job/"
@@ -172,34 +166,28 @@ def check_and_trigger_action(
 
         build_file_path = os.path.join(build_dir_path, "build.xml")
         display_name = helpers.grep(build_file_path, "<displayName>", True) or ""
-        display_name = display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")
+        display_name = (
+            display_name.replace("<displayName>", "")
+            .replace("</displayName>", "")
+            .replace("\n", "")
+        )
         actions.notify_noaction(display_name, job_to_retry, build_to_retry, job_url)
 
 
 def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=18):
     """Check builds running time and notify in case it exceeds the maximum time defined (default max time = 18h)."""
-    job_url = (
-        os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
-    )
-    parser_url = (
-        os.environ.get("JENKINS_URL") + "job/jenkins-test-parser/" + parser_build_id
-    )
+    job_url = os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
+    parser_url = os.environ.get("JENKINS_URL") + "job/jenkins-test-parser/" + parser_build_id
 
-    build_file_path = functools.reduce(
-        os.path.join, [job_dir, build_to_check, "build.xml"]
-    )
+    build_file_path = functools.reduce(os.path.join, [job_dir, build_to_check, "build.xml"])
 
     if not os.path.exists(build_file_path):
         print("[DEBUG] No time check for ", job_url)
-        processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(
-            build_to_retry
-        )
+        processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(build_to_retry)
         return
     if helpers.grep(build_file_path, "<result>"):
         print("[DEBUG] No time check for ", job_url)
-        processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(
-            build_to_retry
-        )
+        processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(build_to_retry)
         return
 
     if (
@@ -219,14 +207,15 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
     start_timestamp = start_timestamp.replace("<startTime>", "").replace("</startTime>", "")
 
     display_name = helpers.grep(build_file_path, "<displayName>", True) or ""
-    display_name = display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")
-  
+    display_name = (
+        display_name.replace("<displayName>", "").replace("</displayName>", "").replace("\n", "")
+    )
+
     start_datetime = datetime.datetime.fromtimestamp(int(start_timestamp) / 1000)
     now = datetime.datetime.now()
     duration = now - start_datetime
 
     if duration > datetime.timedelta(hours=max_running_time):
-
         print(
             "Build #"
             + build_to_retry
@@ -237,13 +226,16 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
             + " hours!"
         )
 
-        processed_object["parserInfo"]["runningBuilds"][job_to_retry][
-            build_to_retry
-        ] = "emailSent"
+        processed_object["parserInfo"]["runningBuilds"][job_to_retry][build_to_retry] = "emailSent"
 
         # Mark as notified
         actions.notify_pendingbuild(
-            display_name, build_to_retry, job_to_retry, duration, job_url, parser_url,
+            display_name,
+            build_to_retry,
+            job_to_retry,
+            duration,
+            job_url,
+            parser_url,
         )
 
     else:
@@ -260,15 +252,12 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
 
 
 if __name__ == "__main__":
-
     # Set start time
     start_time = datetime.datetime.now()
 
     # Parse the build id of the current job
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "parser_build_id", help="Input current build id from Jenkins env vars"
-    )
+    parser.add_argument("parser_build_id", help="Input current build id from Jenkins env vars")
     args = parser.parse_args()
     parser_build_id = args.parser_build_id
 
@@ -279,12 +268,9 @@ if __name__ == "__main__":
         os.environ.get("HOME") + "/builds/jenkins-test-parser/parser-info.json"
     )  # This file keeps track of the last log processed and the pending builds
     html_file_path = (
-        os.environ.get("HOME")
-        + "/builds/jenkins-test-parser-monitor/json-web-info.json"
+        os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-web-info.json"
     )
-    retry_queue_path = (
-        os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
-    )
+    retry_queue_path = os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
 
     # Get job-config info - always present (cloned from github)
     with open(jobs_config_path, "r") as jobs_file:
@@ -296,11 +282,11 @@ if __name__ == "__main__":
         with open(parser_info_path, "r") as processed_file:  # Get last parsed object just once
             processed_object = json.load(processed_file)
     except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
-         print(f"Error occurred: {str(e)}")
-         print("Restoring parser-info.json file...")
-         with open(parser_info_path, "w") as json_file:
-             processed_object = {"parserInfo":{"lastRevision":{},"runningBuilds":{}}}
-             json.dump(processed_object, json_file, indent=2)
+        print(f"Error occurred: {str(e)}")
+        print("Restoring parser-info.json file...")
+        with open(parser_info_path, "w") as json_file:
+            processed_object = {"parserInfo": {"lastRevision": {}, "runningBuilds": {}}}
+            json.dump(processed_object, json_file, indent=2)
 
     # Get retry queue
     try:
@@ -308,12 +294,12 @@ if __name__ == "__main__":
             retry_object = json.load(retry_file)
             retry_entries = retry_object["retryQueue"]
     except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
-         print(f"Error occurred: {str(e)}")
-         print("Restoring retry_queue.json file...")
-         with open(retry_queue_path, "w") as json_file:
-             retry_object = {"retryQueue": {}}
-             json.dump(retry_object, json_file, indent=2)
-             retry_entries = retry_object["retryQueue"]
+        print(f"Error occurred: {str(e)}")
+        print("Restoring retry_queue.json file...")
+        with open(retry_queue_path, "w") as json_file:
+            retry_object = {"retryQueue": {}}
+            json.dump(retry_object, json_file, indent=2)
+            retry_entries = retry_object["retryQueue"]
 
     T = 1
     time_check = True
@@ -344,9 +330,7 @@ if __name__ == "__main__":
 
             # Get revision number
             try:
-                latest_revision = processed_object["parserInfo"]["lastRevision"][
-                    job_to_retry
-                ]
+                latest_revision = processed_object["parserInfo"]["lastRevision"][job_to_retry]
             except KeyError:
                 latest_revision = 0
                 processed_object["parserInfo"]["lastRevision"][job_to_retry] = "0"
@@ -381,11 +365,13 @@ if __name__ == "__main__":
                         retry_object,
                         retry_delay,
                     )
-                         
+
                 # Update last processed log only if greater than current revision number
                 max_latest_revision = max([int(build_id) for build_id in missing_builds])
                 if max_latest_revision > int(latest_revision):
-                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max_latest_revision
+                    processed_object["parserInfo"]["lastRevision"][
+                        job_to_retry
+                    ] = max_latest_revision
 
             # Update running builds checking > last revision number
             new_running_builds = helpers.get_running_builds(job_dir, latest_revision)
@@ -398,13 +384,9 @@ if __name__ == "__main__":
             for build in sorted(total_running_builds):
                 if (
                     build
-                    not in processed_object["parserInfo"]["runningBuilds"][
-                        job_to_retry
-                    ].keys()
+                    not in processed_object["parserInfo"]["runningBuilds"][job_to_retry].keys()
                 ):
-                    processed_object["parserInfo"]["runningBuilds"][job_to_retry][
-                        build
-                    ] = ""
+                    processed_object["parserInfo"]["runningBuilds"][job_to_retry][build] = ""
 
             finished_builds = helpers.get_finished_builds(job_dir, total_running_builds)
 
@@ -426,13 +408,13 @@ if __name__ == "__main__":
                         retry_object,
                         retry_delay,
                     )
-                    processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(
-                        build
-                    )
+                    processed_object["parserInfo"]["runningBuilds"][job_to_retry].pop(build)
                 # Update last processed log only if greater than current revision number
                 max_latest_revision = max([int(build_id) for build_id in finished_builds])
                 if max_latest_revision > int(latest_revision):
-                    processed_object["parserInfo"]["lastRevision"][job_to_retry] = max_latest_revision
+                    processed_object["parserInfo"]["lastRevision"][
+                        job_to_retry
+                    ] = max_latest_revision
 
             # Get updated value for total_running_builds
             total_running_builds = list(
@@ -449,9 +431,7 @@ if __name__ == "__main__":
                     + job_to_retry
                 )
                 for build_to_check in sorted(total_running_builds):
-                    check_running_time(
-                        job_dir, build_to_check, job_to_retry, max_running_time
-                    )
+                    check_running_time(job_dir, build_to_check, job_to_retry, max_running_time)
 
             # print("[" + job_to_retry + "] ... Done")
 

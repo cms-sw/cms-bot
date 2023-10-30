@@ -1,0 +1,19 @@
+name: Black Style Check
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'
+
+jobs:
+  black_check:
+    name: Check Python Code Style with Black
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the code
+      uses: actions/checkout@v2
+
+    - uses: psf/black@stable
+      with:
+        options: "--check --diff --verbose -l 99 -t py36 -t py37 -t py38 -t py39 -t py310 -t py311"

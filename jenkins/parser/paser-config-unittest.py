@@ -20,9 +20,7 @@ job_names = [jenkins_jobs[job_id]["jobName"] for job_id in range(len(jenkins_job
 _, output = getstatusoutput(
     'curl -s https://raw.githubusercontent.com/cms-sw/cmssdt-wiki/master/jenkins_reports/All.md | grep "## \[.*\](.*"'
 )
-valid_job_names = [
-    re.sub("\]\(.*", "", item.replace("## [", "")) for item in output.split("\n")
-]
+valid_job_names = [re.sub("\]\(.*", "", item.replace("## [", "")) for item in output.split("\n")]
 # Check that valid_job_names contains all elements of job_names
 assert all(
     item in valid_job_names for item in job_names
@@ -48,9 +46,7 @@ valid_actions = [
     "nodeOff",
     "nodeReconnect",
 ]  # TODO: Find a better way to get all valid actions
-defined_actions = [
-    error_msg[error_category]["action"] for error_category in error_msg.keys()
-]
+defined_actions = [error_msg[error_category]["action"] for error_category in error_msg.keys()]
 # Check that valid_actions contains all defined actions
 assert all(
     item in valid_actions for item in defined_actions

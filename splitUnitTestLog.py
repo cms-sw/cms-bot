@@ -10,11 +10,10 @@ import time
 
 class LogSplitter(object):
     def __init__(self, outFileIn=None, verbIn=False):
-
         self.outFile = sys.stdout
         if outFileIn:
             print("Summary file:", outFileIn)
-            self.outFile = open(outFileIn, 'w')
+            self.outFile = open(outFileIn, "w")
 
         self.verbose = verbIn
 
@@ -31,14 +30,13 @@ class LogSplitter(object):
     # --------------------------------------------------------------------------------
 
     def split(self, logFile):
+        self.outFile.write("going to check " + logFile + "\n")
 
-        self.outFile.write("going to check " + logFile + '\n')
+        subsysRe = re.compile("^>> Tests for package ([A-Z].*/[A-Z].*) ran.")
 
-        subsysRe = re.compile('^>> Tests for package ([A-Z].*/[A-Z].*) ran.')
-
-        pkgTestStartRe = re.compile('^===== Test \"(.*)\" ====')
-        pkgTestEndRe = re.compile(r'^\^\^\^\^ End Test (.*) \^\^\^\^')
-        pkgTestResultRe = re.compile('.*---> test ([^ ]+) (had ERRORS|succeeded)')
+        pkgTestStartRe = re.compile('^===== Test "(.*)" ====')
+        pkgTestEndRe = re.compile(r"^\^\^\^\^ End Test (.*) \^\^\^\^")
+        pkgTestResultRe = re.compile(".*---> test ([^ ]+) (had ERRORS|succeeded)")
 
         pkgStartRe = re.compile("^>> Entering Package (.*)")
         # pkgEndRe   = re.compile("^>> Leaving Package (.*)")
@@ -48,7 +46,7 @@ class LogSplitter(object):
         subsysPkgMap = {}
 
         baseDir = os.path.split(logFile)[0]
-        logDirs = os.path.join(baseDir, 'unitTestLogs')
+        logDirs = os.path.join(baseDir, "unitTestLogs")
         print("logDirs ", logDirs)
         if not os.path.exists(logDirs):
             os.makedirs(logDirs)
@@ -85,7 +83,7 @@ class LogSplitter(object):
             actPkgLines += 1
             subsysMatch = subsysRe.match(line)
             if subsysMatch:
-                subsys, pkg = subsysMatch.group(1).split('/')
+                subsys, pkg = subsysMatch.group(1).split("/")
                 if pkg not in pkgSubsysMap:
                     pkgSubsysMap[pkg] = subsys
                 if subsys in subsysPkgMap:
@@ -105,13 +103,19 @@ class LogSplitter(object):
             if pkgEndMatch:
                 pkg = pkgEndMatch.group(1)
                 if actPkg != pkg:
-                    self.outFile.write("pkgEndMatch> package mismatch: pkg found " + pkg + ' actPkg=' + actPkg + '\n')
+                    self.outFile.write(
+                        "pkgEndMatch> package mismatch: pkg found "
+                        + pkg
+                        + " actPkg="
+                        + actPkg
+                        + "\n"
+                    )
                 pkgLines[pkg] = actPkgLines
 
                 if len(actLogLines) > 2:
                     actLogDir = os.path.join(logDirs, pkg)
                     os.makedirs(actLogDir)
-                    actLogFile = open(os.path.join(actLogDir, 'unitTest.log'), 'w')
+                    actLogFile = open(os.path.join(actLogDir, "unitTest.log"), "w")
                     actLogFile.write("".join(actLogLines))
                     actLogFile.close()
                     actLogLines = []
@@ -140,26 +144,31 @@ class LogSplitter(object):
                 tst = pkgTestEndMatch.group(1)
                 if actTest != tst:
                     self.outFile.write(
-                        "pkgTestEndMatch> test mismatch: tst found " + tst + ' actTest=' + actTest + '\n')
+                        "pkgTestEndMatch> test mismatch: tst found "
+                        + tst
+                        + " actTest="
+                        + actTest
+                        + "\n"
+                    )
                 testLines[tst] = actTstLines
 
         stopTime = time.time()
         lf.close()
 
-        self.outFile.write("found a total of " + str(nLines) + ' lines in logfile.\n')
-        self.outFile.write("analysis took " + str(stopTime - startTime) + ' sec.\n')
+        self.outFile.write("found a total of " + str(nLines) + " lines in logfile.\n")
+        self.outFile.write("analysis took " + str(stopTime - startTime) + " sec.\n")
 
-        self.outFile.write("total number of tests: " + str(len(list(results.keys()))) + '\n')
+        self.outFile.write("total number of tests: " + str(len(list(results.keys()))) + "\n")
         nMax = 1000
         self.outFile.write("tests with more than " + str(nMax) + " lines of logs:\n")
         for pkg, lines in list(testLines.items()):
             if lines > nMax:
-                self.outFile.write("  " + pkg + ' : ' + str(lines) + '\n')
+                self.outFile.write("  " + pkg + " : " + str(lines) + "\n")
 
         self.outFile.write("Number of tests for packages: \n")
         noTests = 0
         nrTests = 0
-        indent = '    '
+        indent = "    "
         totalOK = 0
         totalFail = 0
         unitTestResults = {}
@@ -169,35 +178,59 @@ class LogSplitter(object):
             else:
                 nrTests += 1
                 if self.verbose:
-                    self.outFile.write('-' * 80 + '\n')
-                self.outFile.write(indent + pkg + ' : ')
+                    self.outFile.write("-" * 80 + "\n")
+                self.outFile.write(indent + pkg + " : ")
                 nOK = 0
                 if self.verbose:
                     self.outFile.write("\n")
                 for tNam in testNames[pkg]:
-                    if results[tNam] == 'succeeded':
+                    if results[tNam] == "succeeded":
                         nOK += 1
                         totalOK += 1
                     else:
                         totalFail += 1
                     if self.verbose:
-                        self.outFile.write(indent * 2 + tNam + ' ' + results[tNam] + '\n')
+                        self.outFile.write(indent * 2 + tNam + " " + results[tNam] + "\n")
                 if self.verbose:
                     self.outFile.write(indent + pkg + " : ")
                 self.outFile.write(
-                    indent + str(len(testNames[pkg])) + ' tests in total,  OK:' + str(nOK) + ' fail:' + str(
-                        len(testNames[pkg]) - nOK) + '\n')
+                    indent
+                    + str(len(testNames[pkg]))
+                    + " tests in total,  OK:"
+                    + str(nOK)
+                    + " fail:"
+                    + str(len(testNames[pkg]) - nOK)
+                    + "\n"
+                )
                 unitTestResults[pkg] = [testNames[pkg], nOK, len(testNames[pkg]) - nOK]
 
-        self.outFile.write(indent + str(nrTests) + " packages  with   tests (" + str(
-            float(nrTests) / float(len(list(pkgTests.keys())))) + ")\n")
-        self.outFile.write(indent + str(noTests) + " packages without tests (" + str(
-            float(noTests) / float(len(list(pkgTests.keys())))) + ")\n")
-        self.outFile.write(indent + "in total:  tests OK : " + str(totalOK) + ' tests FAIL : ' + str(totalFail) + '\n')
+        self.outFile.write(
+            indent
+            + str(nrTests)
+            + " packages  with   tests ("
+            + str(float(nrTests) / float(len(list(pkgTests.keys()))))
+            + ")\n"
+        )
+        self.outFile.write(
+            indent
+            + str(noTests)
+            + " packages without tests ("
+            + str(float(noTests) / float(len(list(pkgTests.keys()))))
+            + ")\n"
+        )
+        self.outFile.write(
+            indent
+            + "in total:  tests OK : "
+            + str(totalOK)
+            + " tests FAIL : "
+            + str(totalFail)
+            + "\n"
+        )
 
         try:
             from pickle import Pickler
-            resFile = open(baseDir + '/unitTestResults.pkl', 'wb')
+
+            resFile = open(baseDir + "/unitTestResults.pkl", "wb")
             pklr = Pickler(resFile, protocol=2)
             pklr.dump(unitTestResults)
             pklr.dump(results)
@@ -211,6 +244,7 @@ class LogSplitter(object):
 
 # ================================================================================
 
+
 def main():
     try:
         import argparse
@@ -218,9 +252,9 @@ def main():
         import archived_argparse as argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--logFile', dest='logFile', required=True)
-    parser.add_argument('-v', '--verbose', default=False, action='store_true')
-    parser.add_argument('-s', '--outFile', dest='outFile')
+    parser.add_argument("-l", "--logFile", dest="logFile", required=True)
+    parser.add_argument("-v", "--verbose", default=False, action="store_true")
+    parser.add_argument("-s", "--outFile", dest="outFile")
     args = parser.parse_args()
 
     logFile = args.logFile

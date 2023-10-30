@@ -10,5 +10,5 @@ def main():
     print("GitHub API rate limit: {0}".format(gh.get_rate_limit()))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

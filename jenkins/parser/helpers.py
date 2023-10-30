@@ -37,15 +37,11 @@ def get_errors_list(jobs_object, job_id):
 
         # Check if forceRetry field has been set
         if jobs_object["jobsConfig"]["errorMsg"][ii].get("forceRetry") == "true":
-            force_retry_regex.extend(
-                jobs_object["jobsConfig"]["errorMsg"][ii]["errorStr"]
-            )
+            force_retry_regex.extend(jobs_object["jobsConfig"]["errorMsg"][ii]["errorStr"])
         else:
             # If not, check value from defaultConfig section
             if jobs_object["defaultConfig"]["forceRetry"] == "true":
-                force_retry_regex.extend(
-                    jobs_object["jobsConfig"]["errorMsg"][ii]["errorStr"]
-                )
+                force_retry_regex.extend(jobs_object["jobsConfig"]["errorMsg"][ii]["errorStr"])
 
     # Get the error keys of the concrete job ii
     error_keys = jobs_object["jobsConfig"]["jenkinsJobs"][job_id]["errorType"][:]
@@ -58,7 +54,7 @@ def get_errors_list(jobs_object, job_id):
 
 
 def append_actions(error_keys, jenkins_errors):
-    """ Match error regex with the action to perform."""
+    """Match error regex with the action to perform."""
     # Get the error messages of the error keys
     error_list = []
     # We append the action to perform to the error message
@@ -84,7 +80,8 @@ def get_finished_builds(job_dir, running_builds):
         build
         for build in running_builds
         if grep(
-            functools.reduce(os.path.join, [job_dir, build, "build.xml"]), "<result>",
+            functools.reduce(os.path.join, [job_dir, build, "build.xml"]),
+            "<result>",
         )
     ]
 
@@ -96,12 +93,8 @@ def get_running_builds(job_dir, last_processed_log):
         for dir in os.scandir(job_dir)
         if dir.name.isdigit()
         and int(dir.name) > int(last_processed_log)
-        and os.path.isfile(
-            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
-        )
-        and not grep(
-            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
-        )
+        and os.path.isfile(functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]))
+        and not grep(functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>")
     ]
 
 
@@ -113,10 +106,6 @@ def get_missing_builds(job_dir, total_running_builds, last_processed_log):
         if dir.name.isdigit()
         and int(dir.name) > int(last_processed_log)
         and dir.name not in total_running_builds
-        and os.path.isfile(
-            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"])
-        )
-        and grep(
-            functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>"
-        )
+        and os.path.isfile(functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]))
+        and grep(functools.reduce(os.path.join, [job_dir, dir.name, "build.xml"]), "<result>")
     ]

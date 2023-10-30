@@ -24,28 +24,20 @@ error_rex = re.compile(
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-a", "--architecture", help="Release architecture (e.g. el9_amd64_gcc13)"
-    )
+    parser.add_argument("-a", "--architecture", help="Release architecture (e.g. el9_amd64_gcc13)")
     parser.add_argument("-d", "--date", help="IB date")
     parser.add_argument("-s", "--series", help="IB series (e.g. CMSSW_13_3_X)")
-    parser.add_argument(
-        "-f", "--filter", help="Only display errors containing given text"
-    )
+    parser.add_argument("-f", "--filter", help="Only display errors containing given text")
 
     args = parser.parse_args()
 
     print(f"Getting IB data for {args.series} on {args.date}")
     comp = libib.get_ib_comparision(args.date, args.series)[args.series]
     if comp is None:
-        print(
-            f"No errors found for IB {args.series} on {args.date} arch {args.architecture}"
-        )
+        print(f"No errors found for IB {args.series} on {args.date} arch {args.architecture}")
         return
 
-    print(
-        f"Extracting build errors for {args.series} on {args.date} arch {args.architecture}"
-    )
+    print(f"Extracting build errors for {args.series} on {args.date} arch {args.architecture}")
     _, errors = libib.check_ib(comp, True)
     errors = errors[args.architecture]["build"]
     seen_errors = set()

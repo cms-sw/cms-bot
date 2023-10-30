@@ -184,7 +184,8 @@
     "errorMsg": {
       "timedOut": {
         "errorStr": [
-          "Build timed out"
+          "Build timed out",
+	  "Waiting for IB since 3600 secs"
         ],
         "action": "retryNow"
       },

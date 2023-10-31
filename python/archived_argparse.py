@@ -183,7 +183,6 @@ class HelpFormatter(object):
     """
 
     def __init__(self, prog, indent_increment=2, max_help_position=24, width=None):
-
         # default setting for width
         if width is None:
             try:
@@ -278,7 +277,6 @@ class HelpFormatter(object):
 
     def add_argument(self, action):
         if action.help is not SUPPRESS:
-
             # find all invocations
             get_invocation = self._format_action_invocation
             invocations = [get_invocation(action)]
@@ -343,7 +341,6 @@ class HelpFormatter(object):
             # wrap the usage parts if it's too long
             text_width = self._width - self._current_indent
             if len(prefix) + len(usage) > text_width:
-
                 # break usage into wrappable parts
                 part_regexp = r"\(.*?\)+|\[.*?\]+|\S+"
                 opt_usage = format(optionals, groups)
@@ -434,7 +431,6 @@ class HelpFormatter(object):
         # collect all actions format strings
         parts = []
         for i, action in enumerate(actions):
-
             # suppressed arguments are marked with None
             # remove | separators for suppressed arguments
             if action.help is SUPPRESS:
@@ -1029,7 +1025,6 @@ class _SubParsersAction(Action):
             sup.__init__(option_strings=[], dest=dest, help=help, metavar=metavar)
 
     def __init__(self, option_strings, prog, parser_class, dest=SUPPRESS, help=None, metavar=None):
-
         self._prog_prefix = prog
         self._parser_class = parser_class
         self._name_parser_map = {}
@@ -1336,7 +1331,6 @@ class _ActionsContainer(object):
         # map each action to its group
         group_map = {}
         for group in container._action_groups:
-
             # if a group with the title exists, use that, otherwise
             # create a new group matching the container's group
             if group.title not in title_group_map:
@@ -1428,7 +1422,6 @@ class _ActionsContainer(object):
             raise ValueError(msg % self.conflict_handler)
 
     def _check_conflict(self, action):
-
         # find all options that conflict with this option
         confl_optionals = []
         for option_string in action.option_strings:
@@ -1449,10 +1442,8 @@ class _ActionsContainer(object):
         raise ArgumentError(action, message % conflict_string)
 
     def _handle_conflict_resolve(self, action, conflicting_actions):
-
         # remove all conflicting options
         for option_string, action in conflicting_actions:
-
             # remove the conflicting option
             action.option_strings.remove(option_string)
             self._option_string_actions.pop(option_string, None)
@@ -1546,7 +1537,6 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
         conflict_handler="error",
         add_help=True,
     ):
-
         if version is not None:
             import warnings
 
@@ -1749,7 +1739,6 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
         arg_string_pattern_parts = []
         arg_strings_iter = iter(arg_strings)
         for i, arg_string in enumerate(arg_strings_iter):
-
             # all args after -- are non-options
             if arg_string == "--":
                 arg_string_pattern_parts.append("-")
@@ -1796,7 +1785,6 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
 
         # function to convert arg_strings into an optional action
         def consume_optional(start_index):
-
             # get the optional identified at this index
             option_tuple = option_string_indices[start_index]
             action, option_string, explicit_arg = option_tuple
@@ -1806,7 +1794,6 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
             match_argument = self._match_argument
             action_tuples = []
             while True:
-
                 # if we found no optional action, skip it
                 if action is None:
                     extras.append(arg_strings[start_index])
@@ -1899,7 +1886,6 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
         else:
             max_option_string_index = -1
         while start_index <= max_option_string_index:
-
             # consume any Positionals preceding the next option
             next_option_string_index = min(
                 [index for index in option_string_indices if index >= start_index]
@@ -1979,7 +1965,6 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
         # expand arguments referencing files
         new_arg_strings = []
         for arg_string in arg_strings:
-
             # for regular arguments, just add them back into the list
             if not arg_string or arg_string[0] not in self.fromfile_prefix_chars:
                 new_arg_strings.append(arg_string)

@@ -141,7 +141,6 @@ class LogFileAnalyzer(object):
         pass
 
     def getTagList(self):
-
         import glob
 
         srcdir = os.path.dirname(self.pkgsList) + "/"
@@ -219,7 +218,6 @@ class LogFileAnalyzer(object):
         print("creating html pages took ", str(stop - start), "sec.")
 
     def makeHTMLSummaryPage(self):
-
         keyList = self.errorKeys
 
         htmlDir = "../html/"

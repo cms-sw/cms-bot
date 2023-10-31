@@ -8,6 +8,7 @@ from os.path import dirname, abspath
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import urlencode, HTTPSConnection
 
+
 # FIXME - is this script is used ?
 def format(s, **kwds):
     return s % kwds

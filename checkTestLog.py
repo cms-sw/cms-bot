@@ -21,7 +21,6 @@ sys.path.append(os.path.join(scriptPath, "python"))
 
 class TestLogChecker(object):
     def __init__(self, outFileIn=None, verbIn=False):
-
         self.outFile = sys.stdout
         if outFileIn:
             print("Summary file:", outFileIn)
@@ -40,7 +39,6 @@ class TestLogChecker(object):
         return
 
     def checkScramWarnings(self, logFile, verbose=False):
-
         self.outFile.write("going to check " + logFile + " for scram warnings\n")
 
         # """
@@ -113,7 +111,6 @@ class TestLogChecker(object):
     # --------------------------------------------------------------------------------
 
     def check(self, logFile):
-
         self.outFile.write("going to check " + logFile + "\n")
 
         subsysRe = re.compile("^>> Tests for package ([A-Za-z].*/[A-Za-z].*) ran.")

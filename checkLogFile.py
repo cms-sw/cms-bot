@@ -211,7 +211,6 @@ class LogChecker(object):
         print("--------------------------------------------------------------------------------")
         nLinkErr = 0
         for key, val in subSysLinkErr.items():
-
             subSys = key.split("/")[0]
             if (subSys not in subSysCompErr.keys()) and (subSys not in subSysTestErr.keys()):
                 nLinkErr += 1

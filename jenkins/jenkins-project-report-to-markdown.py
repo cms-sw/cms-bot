@@ -53,7 +53,6 @@ def write_markdown_file(view_data_dict, all_project_dict, markdown_output_dir):
     view_name = view_data_dict["name"]
 
     with open(markdown_output_dir + "/" + view_name.replace(" ", "-") + ".md", "w") as output_f:
-
         # write view description
         output_f.write("# [{0}]({1})\n\n".format(view_name, link_to_view(view_name)))
         output_f.write("**View description:** {0}\n\n".format(view_data_dict["description"]))

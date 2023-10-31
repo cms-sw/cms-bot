@@ -340,7 +340,7 @@ class RemapRules:
 
     def apply(self, archive_dir, install_dir):
         # move files or directory from 'src' to 'dst'
-        for (src, dst) in self.move:
+        for src, dst in self.move:
             if src == ".":
                 src = archive_dir
             else:
@@ -359,7 +359,7 @@ class RemapRules:
             if os.path.exists(src):
                 movetree(src, dst)
         # symlink files or directory from 'src' (relative) to 'dst'
-        for (src, dst) in self.link:
+        for src, dst in self.link:
             dst = os.path.join(install_dir, dst)
             tmp = os.path.join(os.path.dirname(dst), src)
             debug(f"attempt to symlink {src} to {dst}")
@@ -399,7 +399,6 @@ class RemapRules:
 
 
 def build_remap_rules(target):
-
     remap = {
         # these rules are applied to every package, if the sources exist, after the package-specific ones
         "*": RemapRules(
@@ -620,7 +619,6 @@ def main():
         whitelist = args.select
 
     for arg in args.version:
-
         # Start a CVMFS transaction
         if args.cvmfs:
             subprocess.run(["/bin/cvmfs_server", "transaction", "patatrack.cern.ch"])

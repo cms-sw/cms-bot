@@ -52,7 +52,6 @@ class LogUpdater(object):
         return
 
     def updateUnitTestLogs(self, subdir=""):
-
         print("\n--> going to copy unit test logs to", self.webTargetDir, "... \n")
         # copy back the test and relval logs to the install area
         # check size first ... sometimes the log _grows_ to tens of GB !!

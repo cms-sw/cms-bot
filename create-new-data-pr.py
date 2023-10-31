@@ -28,7 +28,6 @@ def get_tag_from_string(tag_string=None):
 
 
 if __name__ == "__main__":
-
     parser = OptionParser(usage="%prog <cms-data-repo> <cms-dist repo> <pull-request-id>")
 
     parser.add_option(

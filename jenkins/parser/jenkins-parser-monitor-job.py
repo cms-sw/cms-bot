@@ -36,7 +36,6 @@ with open(
     os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/test-parser-web-info.html",
     "w",
 ) as html_file:  # Static web page
-
     head = '<!DOCTYPE html>\n\
 <html>\n\
    <head>\n\

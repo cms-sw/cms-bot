@@ -76,6 +76,7 @@ setdefaulttimeout(300)
 CMSDIST_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
 CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
 
+
 # Prepare various comments regardless of whether they will be made or not.
 def format(s, **kwds):
     return s % kwds

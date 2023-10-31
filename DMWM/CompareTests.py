@@ -31,7 +31,6 @@ if len(sys.argv) == 2:
     filePattern = "*/%s-*.xml" % sys.argv[1]
 for kind, directory in [("base", "./MasterUnitTests/"), ("test", "./LatestUnitTests/")]:
     for xunitFile in glob.iglob(directory + filePattern):
-
         ts, tr = xunitparser.parse(open(xunitFile))
         for tc in ts:
             testName = "%s:%s" % (tc.classname, tc.methodname)

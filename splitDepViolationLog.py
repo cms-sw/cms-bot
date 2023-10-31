@@ -10,7 +10,6 @@ import time
 
 class DepViolSplitter(object):
     def __init__(self, outFileIn=None, verbIn=False):
-
         self.outFile = sys.stdout
         if outFileIn:
             print("Summary file:", outFileIn)
@@ -31,7 +30,6 @@ class DepViolSplitter(object):
     # --------------------------------------------------------------------------------
 
     def split(self, logFile):
-
         self.outFile.write("going to check " + logFile + "\n")
 
         pkgStartRe = re.compile(r"^>> Checking dependency for (.*)\s*$")
@@ -58,7 +56,6 @@ class DepViolSplitter(object):
         actLogLines = []
         startFound = False
         for line in lines:
-
             # write out log to individual log file ...
             if startFound and ">> Done Checking dependency " not in line:
                 actLogLines.append(line)

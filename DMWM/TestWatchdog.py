@@ -15,7 +15,6 @@ testPid = 0
 while not testPid:
     print("TESTWATCH: Polling")
     for process in psutil.process_iter():
-
         try:
             if (
                 "python" in process.cmdline()[0]

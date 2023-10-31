@@ -16,7 +16,6 @@ def _format(s, **kwds):
 
 
 def getWorkflowStatsFromES(release="*", arch="*", lastNdays=7, page_size=0):
-
     stats = es_query(
         index="relvals_stats_*",
         query=format(
@@ -37,13 +36,11 @@ have a function that narrows the result to fields of interest, described in a li
 
 
 def filterElasticSearchResult(ES_result=None, list_of_fields=None):
-
     # arch = ES_result[0]['_source']['architecture']
     # print arch
     final_struct = {}
 
     for element in ES_result:
-
         source_object = element["_source"]
         if source_object["exit_code"] is not 0:
             continue
@@ -74,7 +71,6 @@ deeper in this context :)  ,this function
 
 
 def compareMetrics(firstObject=None, secondObject=None, workflow=None, stepnum=None):
-
     fields = []
     comparison_results = {}
 
@@ -124,7 +120,6 @@ def compareMetrics(firstObject=None, secondObject=None, workflow=None, stepnum=N
 
 
 if __name__ == "__main__":
-
     opts = None
     release = None
     fields = ["time", "rss_max", "cpu_avg", "rss_75", "rss_25", "rss_avg"]

@@ -216,7 +216,6 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
     duration = now - start_datetime
 
     if duration > datetime.timedelta(hours=max_running_time):
-
         print(
             "Build #"
             + build_to_retry
@@ -253,7 +252,6 @@ def check_running_time(job_dir, build_to_retry, job_to_retry, max_running_time=1
 
 
 if __name__ == "__main__":
-
     # Set start time
     start_time = datetime.datetime.now()
 

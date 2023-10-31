@@ -275,7 +275,6 @@ def notify_noaction(display_name, job_to_retry, build_to_retry, job_url):
 def update_cmssdt_page(
     html_file, job, build, error, job_url, retry_url, action, refresh_only=False
 ):
-
     try:
         with open(html_file, "r") as openfile:
             json_object = json.load(openfile)
@@ -288,7 +287,6 @@ def update_cmssdt_page(
             json.dump(json_object, json_file)
 
     if refresh_only == False:
-
         id = str(job + "#" + build)
         retry_time = datetime.datetime.now().replace(microsecond=0)
 
@@ -309,13 +307,11 @@ def update_cmssdt_page(
     trigger_web_update = os.environ.get("JENKINS_CLI_CMD") + " build jenkins-test-parser-monitor"
 
     if refresh_only == False or cleanup_flag == 1:
-
         print(trigger_web_update)
         os.system(trigger_web_update)
 
 
 def cleanup_cmssdt_page(json_object):
-
     builds_dir = os.environ.get("HOME") + "/builds"
     cleanup_flag = 0
 
@@ -373,7 +369,6 @@ def cleanup_cmssdt_page(json_object):
 
 
 def update_retry_link_cmssdt_page(retry_url_file, job, build, retry_url):
-
     with open(retry_url_file, "r") as openfile:
         json_object = json.load(openfile)
 

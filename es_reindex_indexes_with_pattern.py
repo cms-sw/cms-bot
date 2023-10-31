@@ -6,7 +6,6 @@ import json
 from time import sleep
 
 if __name__ == "__main__":
-
     pattern = sys.argv[1]
     indexes = get_indexes("cmssdt-" + pattern + "*").splitlines()
     indexes_name_only = []

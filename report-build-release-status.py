@@ -139,6 +139,7 @@ BASE_INSTALLATION_URL = (
 # Functions
 # --------------------------------------------------------------------------------
 
+
 #
 # posts a message to the issue in github
 # if dry-run is selected it doesn't post the message and just prints it
@@ -264,7 +265,6 @@ if __name__ == "__main__":
         add_label(repo, issue, new_label)
 
     elif action == POST_TOOL_CONF_BUILDING:
-
         msg_details = ""
         if opts.details:
             msg_details = opts.details
@@ -280,7 +280,6 @@ if __name__ == "__main__":
         add_label(repo, issue, new_label)
 
     elif action == BUILD_OK:
-
         results_url = BASE_BUILD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = BUILD_OK_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
@@ -288,7 +287,6 @@ if __name__ == "__main__":
         add_label(repo, issue, arch + "-build-ok")
 
     elif action == TOOL_CONF_OK:
-
         results_url = BASE_BUILD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = TOOL_CONF_OK_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
@@ -296,7 +294,6 @@ if __name__ == "__main__":
         add_label(repo, issue, arch + "-tool-conf-ok")
 
     elif action == BUILD_ERROR:
-
         results_url = BASE_BUILD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = BUILD_ERROR_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
@@ -304,7 +301,6 @@ if __name__ == "__main__":
         add_label(repo, issue, arch + "-build-error")
 
     elif action == TOOL_CONF_ERROR:
-
         results_url = BASE_BUILD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = TOOL_CONF_ERROR_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
@@ -312,14 +308,12 @@ if __name__ == "__main__":
         add_label(repo, issue, arch + "-tool-conf-error")
 
     elif action == UPLOADING:
-
         msg = UPLOADING_MSG.format(
             architecture=arch, machine=hostname, jk_build_number=jenkins_build_number
         )
         post_message(repo, issue, msg)
 
     elif action == UPLOAD_OK:
-
         results_url = BASE_UPLOAD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = UPLOAD_OK_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
@@ -327,7 +321,6 @@ if __name__ == "__main__":
         add_label(repo, issue, arch + "-upload-ok")
 
     elif action == UPLOAD_ERROR:
-
         results_url = BASE_UPLOAD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = UPLOAD_ERROR_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
@@ -335,41 +328,34 @@ if __name__ == "__main__":
         add_label(repo, issue, arch + "-upload-error")
 
     elif action == CLEANUP_OK:
-
         results_url = BASE_CLEANUP_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = CLEANUP_OK_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
 
     elif action == CLEANUP_ERROR:
-
         results_url = BASE_CLEANUP_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = CLEANUP_ERROR_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg)
 
     elif action == TESTS_OK:
-
         results_url = BASE_BUILD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = TESTS_OK_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg + get_test_log(test_logfile))
 
     elif action == TESTS_ERROR:
-
         results_url = BASE_BUILD_LOG_URL % (release_name, arch, jenkins_build_number)
         msg = TESTS_ERROR_MSG.format(architecture=arch, log_url=results_url)
         post_message(repo, issue, msg + get_test_log(test_logfile))
 
     elif action == RELEASE_NOTES_OK:
-
         msg = RELEASE_NOTES_OK_MSG.format(rel_name=release_name)
         post_message(repo, issue, msg)
 
     elif action == RELEASE_NOTES_ERROR:
-
         msg = RELEASE_NOTES_ERROR_MSG.format(rel_name=release_name)
         post_message(repo, issue, msg)
 
     elif action in [INSTALLATION_OK, INSTALLATION_SKIP]:
-
         results_url = BASE_INSTALLATION_URL.format(
             rel_name=release_name, architecture=arch, job_id=jenkins_build_number
         )
@@ -381,7 +367,6 @@ if __name__ == "__main__":
         add_label(repo, issue, arch + "-installation-ok")
 
     elif action == INSTALLATION_ERROR:
-
         results_url = BASE_INSTALLATION_URL.format(
             rel_name=release_name, architecture=arch, job_id=jenkins_build_number
         )

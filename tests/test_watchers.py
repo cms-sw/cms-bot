@@ -23,7 +23,7 @@ VALUE_RE = "[A-Za-z0-0.*+]"
 
 w = yaml.load(open("watchers.yaml", "r"), Loader=Loader)
 assert type(w) == dict
-for (key, value) in w.items():
+for key, value in w.items():
     assert type(key) == str
     assert re.match(KEY_RE, key)
     assert type(value) == list
@@ -37,7 +37,7 @@ assert type(CMSSW_CATEGORIES) == dict
 
 PACKAGE_RE = "^([A-Z][0-9A-Za-z]*(/[a-zA-Z][0-9A-Za-z]*|)|.gitignore|pull_request_template.md|.clang-[^/]+)$"
 
-for (key, value) in CMSSW_CATEGORIES.items():
+for key, value in CMSSW_CATEGORIES.items():
     assert type(key) == str
     assert type(value) == list
     if len(value) == 0:

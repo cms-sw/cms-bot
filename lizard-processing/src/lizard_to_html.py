@@ -170,7 +170,6 @@ def main(source_f_path, output_d, link_root):
     g_link_root = link_root
 
     with open(source_f_path, "r") as source_f:
-
         do_split = False
 
         # --- { all_functions.html }

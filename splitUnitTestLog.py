@@ -10,7 +10,6 @@ import time
 
 class LogSplitter(object):
     def __init__(self, outFileIn=None, verbIn=False):
-
         self.outFile = sys.stdout
         if outFileIn:
             print("Summary file:", outFileIn)
@@ -31,7 +30,6 @@ class LogSplitter(object):
     # --------------------------------------------------------------------------------
 
     def split(self, logFile):
-
         self.outFile.write("going to check " + logFile + "\n")
 
         subsysRe = re.compile("^>> Tests for package ([A-Z].*/[A-Z].*) ran.")

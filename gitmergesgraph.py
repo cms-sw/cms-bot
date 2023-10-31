@@ -24,6 +24,7 @@ MAGIC_COMMAND_GRAPH = (
 # This regular expression allows to identify if a merge commit is an automatic forward port
 AUTO_FORWARD_PORT_REGEX = "Merge CMSSW.+ into CMSSW.+"
 
+
 #
 # load the graph for a given release queue
 # maxNodes limits the number of nodes(commits) to check, -1 means no maximum
@@ -46,7 +47,6 @@ def load_graph(release_queue, maxNodes):
             return all_nodes
         # check if the line contains a node
         if INFO_SEPARATOR in line:
-
             node_number += 1
             line_parts = line.split(INFO_SEPARATOR)
             lanes = line_parts[0].replace('"', "").replace(" ", "")
@@ -170,7 +170,6 @@ def get_prs_brought_by_commit(graph, commit_hash):
 
 
 class Node(object):
-
     # initializes the node with a hash, the lane (line in history), and a description
     def __init__(self, hash, desc, lane):
         self.hash = hash

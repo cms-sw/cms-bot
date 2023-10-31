@@ -1,0 +1,65 @@
+name: Black Style Check
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'
+
+jobs:
+  black_check:
+    name: Check Python Code Style with Black
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out the code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+
+    - name: Install Black
+      run: pip install black
+
+    - name: Check Code Style with Black
+      id: black
+      run: black --check .
+
+    - name: Comment on Pull Request (success)
+      if: steps.build.outcome == 'success'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { data: pullRequest } = await github.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          await github.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: 'Black has checked the code style, and no modifications are required.',
+          });
+
+    - name: Comment on Pull Request (failure)
+      if: steps.build.outcome != 'success'
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const { data: pullRequest } = await github.pulls.get({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          await github.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: 'Black has detected code style violations.',
+          });

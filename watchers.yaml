@@ -1698,6 +1698,7 @@ watson-ij:
 - Validation/MuonGEMHits
 - Validation/MuonGEMRecHits
 - DQM/GEM
+- Geometry/MuonCommonData
 trk-dqm:
 - DQM/SiOuterTracker
 - DQM/SiPixelCommon

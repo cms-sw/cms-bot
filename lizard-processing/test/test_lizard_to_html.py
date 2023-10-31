@@ -9,21 +9,30 @@ from lizard_to_html import *
 lines_th = [
     "NLOC    CCN   token  PARAM  length  location  ",
     "NLOC    Avg.NLOC  AvgCCN  Avg.token  function_cnt    file",
-    "Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt"
+    "Total nloc   Avg.NLOC  AvgCCN  Avg.token   Fun Cnt  Warning cnt   Fun Rt   nloc Rt",
 ]
 
-line_td = "6      3     28      0       6 AlignableDetOrUnitPtr::operator Alignable " \
-          "*@20-25@cms-sw-cmssw-630acaf/Alignment/CommonAlignment/src/AlignableDetOrUnitPtr.cc "
+line_td = (
+    "6      3     28      0       6 AlignableDetOrUnitPtr::operator Alignable "
+    "*@20-25@cms-sw-cmssw-630acaf/Alignment/CommonAlignment/src/AlignableDetOrUnitPtr.cc "
+)
 
-line_warning = '!!!! Warnings (cyclomatic_complexity > 5 or length > 1000 or parameter_count > 100) !!!!'
-line_no_warning = 'No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or parameter_count > 100)'
-line_files = '21 file analyzed.'
+line_warning = (
+    "!!!! Warnings (cyclomatic_complexity > 5 or length > 1000 or parameter_count > 100) !!!!"
+)
+line_no_warning = (
+    "No thresholds exceeded (cyclomatic_complexity > 15 or length > 1000 or parameter_count > 100)"
+)
+line_files = "21 file analyzed."
 
 
 class TestSequenceFunctions(unittest.TestCase):
     def test_main(self):
-        main(os.path.join(os.path.dirname(__file__), "../", './test-data/lizard-test-output.txt'), '/tmp',
-             'https://github.com/cms-sw/cmssw/blob/master/')
+        main(
+            os.path.join(os.path.dirname(__file__), "../", "./test-data/lizard-test-output.txt"),
+            "/tmp",
+            "https://github.com/cms-sw/cmssw/blob/master/",
+        )
 
     def test_reg_th(self):
         for line in lines_th:
@@ -59,5 +68,6 @@ class TestSequenceFunctions(unittest.TestCase):
         self.assertEqual(len(re.split(regex_split, lines_th[1].strip())), 6)
         self.assertEqual(len(re.split(regex_split, lines_th[2].strip())), 8)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

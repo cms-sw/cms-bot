@@ -3,7 +3,9 @@
 import json
 import os
 
-webinfo_file = os.path.join(os.environ.get("HOME"), "builds/jenkins-test-parser-monitor/json-web-info.json")
+webinfo_file = os.path.join(
+    os.environ.get("HOME"), "builds/jenkins-test-parser-monitor/json-web-info.json"
+)
 
 try:
     with open(webinfo_file, "r") as json_file:  # Keeps track of the actions taken by parser job
@@ -15,7 +17,9 @@ except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
         json_object = {"parserActions": {}}
         json.dump(json_object, json_file, indent=2)
 
-retryinfo_file = os.path.join(os.environ.get("HOME"), "builds/jenkins-test-parser-monitor/json-retry-info.json")
+retryinfo_file = os.path.join(
+    os.environ.get("HOME"), "builds/jenkins-test-parser-monitor/json-retry-info.json"
+)
 
 try:
     with open(retryinfo_file, "r") as json_file:  # Keeps track of the links to the retry job
@@ -29,8 +33,7 @@ except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
         json.dump(retryinfo_template, json_file, indent=2)
 
 with open(
-    os.environ.get("HOME")
-    + "/builds/jenkins-test-parser-monitor/test-parser-web-info.html",
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/test-parser-web-info.html",
     "w",
 ) as html_file:  # Static web page
 
@@ -152,9 +155,7 @@ with open(
                     )
                 else:
                     html_file.writelines(
-                        "      <td>"
-                        + json_object["parserActions"][id][item]
-                        + "</td>\n"
+                        "      <td>" + json_object["parserActions"][id][item] + "</td>\n"
                     )
 
         elif action == "Retry":
@@ -178,9 +179,7 @@ with open(
                     )
                 else:
                     html_file.writelines(
-                        "      <td>"
-                        + json_object["parserActions"][id][item]
-                        + "</td>\n"
+                        "      <td>" + json_object["parserActions"][id][item] + "</td>\n"
                     )
 
         html_file.writelines("   </tr>\n")

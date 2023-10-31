@@ -9,9 +9,7 @@ import libib
 # noinspection PyUnresolvedReferences
 from libib import PackageInfo, ErrorInfo
 
-if sys.version_info.major < 3 or (
-    sys.version_info.major == 3 and sys.version_info.minor < 6
-):
+if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
     print("This script requires Python 3.6 or newer!", file=sys.stderr)
     exit(0)
 
@@ -67,14 +65,11 @@ def main():
                                 file=f,
                             )
                         for error in errors[arch]["utest"]:
-                            print(
-                                f"| [{error.name}]({error.url}) | TBD | TBD |", file=f
-                            )
+                            print(f"| [{error.name}]({error.url}) | TBD | TBD |", file=f)
 
                         for error in errors[arch]["relval"]:
                             print(
-                                f"| [{error.name}]({error.url}) | {error.data} | "
-                                f"TBD |",
+                                f"| [{error.name}]({error.url}) | {error.data} | " f"TBD |",
                                 file=f,
                             )
                     else:

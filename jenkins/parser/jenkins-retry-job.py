@@ -44,7 +44,7 @@ print(
 
 
 def findParametersAction(root):
-    """ It finds Jenkins parameters under section ParametersAction in xml file."""
+    """It finds Jenkins parameters under section ParametersAction in xml file."""
     if root.tag == "parameters":
         return root
     for x in root:
@@ -55,7 +55,7 @@ def findParametersAction(root):
 
 
 def getParameters(root, payload):
-    """ Append Jenkins parameters of the form parameter=value (n.text=v.text) elements to a list."""
+    """Append Jenkins parameters of the form parameter=value (n.text=v.text) elements to a list."""
     n = root.find("name")
     if n is not None:
         if n.text is None:
@@ -123,20 +123,14 @@ with open("parameters.txt", "w") as propfile:
 
 
 # Update static webpage
-tracker_path = (
-    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/parser-web-info.html"
-)
+tracker_path = os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/parser-web-info.html"
 job_url = os.environ.get("JENKINS_URL") + "job/" + job_to_retry + "/" + build_to_retry
-retry_url = (
-    os.environ.get("JENKINS_URL") + "job/jenkins-test-retry/" + current_build_number
-)
+retry_url = os.environ.get("JENKINS_URL") + "job/jenkins-test-retry/" + current_build_number
 
 retry_url_file_path = (
     os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json"
 )
-actions.update_retry_link_cmssdt_page(
-    retry_url_file_path, job_to_retry, build_to_retry, retry_url
-)
+actions.update_retry_link_cmssdt_page(retry_url_file_path, job_to_retry, build_to_retry, retry_url)
 
 # Format retry label depending on parser action
 times = "time" if retry_counter_update == 1 else "times"

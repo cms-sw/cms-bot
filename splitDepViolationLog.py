@@ -14,7 +14,7 @@ class DepViolSplitter(object):
         self.outFile = sys.stdout
         if outFileIn:
             print("Summary file:", outFileIn)
-            self.outFile = open(outFileIn, 'w')
+            self.outFile = open(outFileIn, "w")
 
         self.verbose = verbIn
 
@@ -32,19 +32,19 @@ class DepViolSplitter(object):
 
     def split(self, logFile):
 
-        self.outFile.write("going to check " + logFile + '\n')
+        self.outFile.write("going to check " + logFile + "\n")
 
-        pkgStartRe = re.compile(r'^>> Checking dependency for (.*)\s*$')
-        pkgEndRe = re.compile(r'^>> Done Checking dependency for (.*)\s*$')
+        pkgStartRe = re.compile(r"^>> Checking dependency for (.*)\s*$")
+        pkgEndRe = re.compile(r"^>> Done Checking dependency for (.*)\s*$")
 
-        depViolRe = re.compile(r'\s*\*+ERROR: Dependency violation')
+        depViolRe = re.compile(r"\s*\*+ERROR: Dependency violation")
 
-        logDirs = os.path.join(os.path.split(logFile)[0], 'depViolationLogs')
+        logDirs = os.path.join(os.path.split(logFile)[0], "depViolationLogs")
         print("logDirs ", logDirs)
         if not os.path.exists(logDirs):
             os.makedirs(logDirs)
 
-        lf = open(logFile, 'r')
+        lf = open(logFile, "r")
         lines = lf
 
         startTime = time.time()
@@ -78,7 +78,13 @@ class DepViolSplitter(object):
             if pkgEndMatch:
                 pkg = pkgEndMatch.group(1)
                 if actPkg != pkg:
-                    self.outFile.write("pkgEndMatch> package mismatch: pkg found " + pkg + ' actPkg=' + actPkg + '\n')
+                    self.outFile.write(
+                        "pkgEndMatch> package mismatch: pkg found "
+                        + pkg
+                        + " actPkg="
+                        + actPkg
+                        + "\n"
+                    )
 
                 if len(actLogLines) > 2:
                     pkgViol[pkg] = len(depViolRe.findall("".join(actLogLines)))
@@ -88,7 +94,7 @@ class DepViolSplitter(object):
                         os.makedirs(actLogDir)
                     # os.makedirs(actLogDir)
                     ###############################################
-                    actLogFile = open(os.path.join(actLogDir, 'depViolation.log'), 'w')
+                    actLogFile = open(os.path.join(actLogDir, "depViolation.log"), "w")
                     actLogFile.write("".join(actLogLines))
                     actLogFile.close()
                     actLogLines = []
@@ -97,17 +103,21 @@ class DepViolSplitter(object):
         stopTime = time.time()
         lf.close()
 
-        self.outFile.write("found a total of " + str(nLines) + ' lines in logfile.\n')
-        self.outFile.write("analysis took " + str(stopTime - startTime) + ' sec.\n')
+        self.outFile.write("found a total of " + str(nLines) + " lines in logfile.\n")
+        self.outFile.write("analysis took " + str(stopTime - startTime) + " sec.\n")
 
-        self.outFile.write("total number of packages with violations: " + str(len(list(pkgViol.keys()))) + '\n')
+        self.outFile.write(
+            "total number of packages with violations: " + str(len(list(pkgViol.keys()))) + "\n"
+        )
 
         import pprint
+
         pprint.pprint(pkgViol)
 
         try:
             from pickle import Pickler
-            resFile = open('depViolationSummary.pkl', 'wb')
+
+            resFile = open("depViolationSummary.pkl", "wb")
             pklr = Pickler(resFile, protocol=2)
             pklr.dump(pkgViol)
             resFile.close()
@@ -126,9 +136,9 @@ def main():
         import archived_argparse as argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--logFile', default=None, required=True)
-    parser.add_argument('-v', '--verbose', action='store_true', default=False)
-    parser.add_argument('-s', '--outFile', default=None)
+    parser.add_argument("-l", "--logFile", default=None, required=True)
+    parser.add_argument("-v", "--verbose", action="store_true", default=False)
+    parser.add_argument("-s", "--outFile", default=None)
     args = parser.parse_args()
 
     logFile = args.logFile

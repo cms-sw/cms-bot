@@ -12,7 +12,7 @@ def pythonNameFromCfgName(cfgName):
     return newName.replace("/data/", "/python/").replace(".cf", "_cf") + ".py"
 
 
-releaseBase = os.path.expandvars("$CMSSW_RELEASE_BASE/src") + '/'
+releaseBase = os.path.expandvars("$CMSSW_RELEASE_BASE/src") + "/"
 files = glob.glob(releaseBase + "*/*/data/*cf[fi]")
 
 # give 'em two hours
@@ -25,8 +25,8 @@ for f in files:
     pythonFile = pythonNameFromCfgName(f)
     if os.path.exists(pythonFile):
         if os.path.getmtime(f) > os.path.getmtime(pythonNameFromCfgName(f)) + gracePeriod:
-            subsys, pkg, pydir, fname = pythonFile.split('/')
-            pkgName = subsys + '_' + pkg
+            subsys, pkg, pydir, fname = pythonFile.split("/")
+            pkgName = subsys + "_" + pkg
             if pkgName in pkgInfo:
                 pkgInfo[pkgName].append(pythonFile)
             else:
@@ -36,8 +36,8 @@ for f in files:
             # print f
     else:
         missingFiles.append(pythonFile)
-        subsys, pkg, pydir, fname = pythonFile.split('/')
-        pkgName = subsys + '_' + pkg
+        subsys, pkg, pydir, fname = pythonFile.split("/")
+        pkgName = subsys + "_" + pkg
         if pkgName in pkgInfo:
             pkgInfo[pkgName].append(pythonFile)
         else:
@@ -49,7 +49,7 @@ for f in files:
 nFiles = 0
 pkgList.sort()
 for pkg in pkgList:
-    print('-' * 80)
+    print("-" * 80)
     print("Package:", pkg)
     for fName in pkgInfo[pkg]:
         status = "update needed :"
@@ -58,4 +58,4 @@ for pkg in pkgList:
         print("  ", status, fName)
         nFiles += 1
 
-print("\nFound a total of ", len(pkgList), "problematic packages and ", nFiles, 'files.')
+print("\nFound a total of ", len(pkgList), "problematic packages and ", nFiles, "files.")

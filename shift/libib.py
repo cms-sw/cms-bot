@@ -201,9 +201,7 @@ def check_ib(data, compilation_only=False):
 
                 for itm in pkg_errors.items():
                     res[arch]["build"].append(
-                        LogEntry(
-                            name=pkg.name(), url=f"{url_prefix}/{pkg.name()}", data=itm
-                        )
+                        LogEntry(name=pkg.name(), url=f"{url_prefix}/{pkg.name()}", data=itm)
                     )
 
     if not compilation_only:

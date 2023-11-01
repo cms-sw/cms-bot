@@ -1,29 +1,36 @@
 #! /usr/bin/env python
 
-from __future__ import (print_function, division)
+from __future__ import print_function, division
 
 import glob
 import psutil
 import sys
 import time
 
-from psutil import (AccessDenied, NoSuchProcess)
+from psutil import AccessDenied, NoSuchProcess
 
 time.sleep(60)
 
 testPid = 0
 while not testPid:
-    print ('TESTWATCH: Polling')
+    print("TESTWATCH: Polling")
     for process in psutil.process_iter():
-
         try:
-            if 'python' in process.cmdline()[0] and 'setup.py' in process.cmdline()[1] and process.cmdline()[2] == 'test':
+            if (
+                "python" in process.cmdline()[0]
+                and "setup.py" in process.cmdline()[1]
+                and process.cmdline()[2] == "test"
+            ):
                 testPid = process.pid
-                print ('TESTWATCH: Found pid %s' % testPid)
+                print("TESTWATCH: Found pid %s" % testPid)
         except TypeError:
-            if 'python' in process.cmdline[0] and 'setup.py' in process.cmdline[1] and process.cmdline[2] == 'test':
+            if (
+                "python" in process.cmdline[0]
+                and "setup.py" in process.cmdline[1]
+                and process.cmdline[2] == "test"
+            ):
                 testPid = process.pid
-                print ('TESTWATCH: Found pid %s' % testPid)
+                print("TESTWATCH: Found pid %s" % testPid)
         except (IndexError, AccessDenied, NoSuchProcess):
             pass
     time.sleep(10)
@@ -38,7 +45,7 @@ while True:
             userCPU = process.cpu_times().user
         except AttributeError:
             userCPU = process.get_cpu_times()[0]
-        for xunitFile in glob.iglob('nosetests*.xml'):
+        for xunitFile in glob.iglob("nosetests*.xml"):
             foundXML = True
 
         if not foundXML:
@@ -46,7 +53,7 @@ while True:
         else:
             xmlAge = time.time() - noXMLTime
             if xmlAge > 450:
-                print('TESTWATCH: XML file is %s seconds old. Killing process' % xmlAge)
+                print("TESTWATCH: XML file is %s seconds old. Killing process" % xmlAge)
                 process.terminate()
                 time.sleep(10)
                 process.kill()

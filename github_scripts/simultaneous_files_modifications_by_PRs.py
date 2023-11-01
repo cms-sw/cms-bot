@@ -13,53 +13,63 @@ from subprocess import getstatusoutput as run_cmd
 def build_open_file_list(prs_dict, branch):
     open_file_list = {}
     for pr in prs_dict:
-        if prs_dict[pr]['base_branch'] == branch:
-            for file in prs_dict[pr]['changed_files_names']:
+        if prs_dict[pr]["base_branch"] == branch:
+            for file in prs_dict[pr]["changed_files_names"]:
                 if file in open_file_list:
                     open_file_list[file].append(pr)
                 else:
-                    open_file_list[file] = [pr, ]
+                    open_file_list[file] = [
+                        pr,
+                    ]
 
     return open_file_list
 
 
 def check_pr_dict(prs_dict, prs_list, pr_number):
-    for my_file in prs_dict[pr_number]['changed_files_names']:
+    for my_file in prs_dict[pr_number]["changed_files_names"]:
         if len(prs_list[my_file]) > 1:
-            print("File ", my_file, " modified in PR(s):", ', '.join(['#'+p  for p in  prs_list[my_file] if p!=pr_number]))
+            print(
+                "File ",
+                my_file,
+                " modified in PR(s):",
+                ", ".join(["#" + p for p in prs_list[my_file] if p != pr_number]),
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: SearchPROverlap.py <PR number> [ <branch> ]")
         print(
-            "       <PR number>: number of PR belonging to <branch>, or \"all\" for loop on all open PRs in <branch>\n"
-            "       If \"all\" is given as <PR number>, then a branch must be given as well.")
+            '       <PR number>: number of PR belonging to <branch>, or "all" for loop on all open PRs in <branch>\n'
+            '       If "all" is given as <PR number>, then a branch must be given as well.'
+        )
         exit()
 
     my_pr = sys.argv[1]
     my_branch = None
-    e, o = run_cmd('curl -s -k -L https://raw.githubusercontent.com/cms-sw/cms-prs/master/cms-sw/cmssw/.other/files_changed_by_prs.json')
+    e, o = run_cmd(
+        "curl -s -k -L https://raw.githubusercontent.com/cms-sw/cms-prs/master/cms-sw/cmssw/.other/files_changed_by_prs.json"
+    )
     prs_dict = json.loads(o)
     if my_pr not in prs_dict and not "all":
         print("PR # ", my_pr, "does not exists", file=sys.stderr)
         exit(1)
     if len(sys.argv) > 2:
         my_branch = sys.argv[2]
-    elif len(sys.argv) == 2 and my_pr == 'all':
-        print("ERROR: If \"all\" is given as <PR number>, then a branch must be given as well.")
+    elif len(sys.argv) == 2 and my_pr == "all":
+        print('ERROR: If "all" is given as <PR number>, then a branch must be given as well.')
         exit(1)
     else:
         pr_metadata = prs_dict[my_pr]
-        my_branch = pr_metadata['base_branch']
+        my_branch = pr_metadata["base_branch"]
     my_list = build_open_file_list(prs_dict, my_branch)
 
     if my_pr == "all":
         for pr in prs_dict:
-            if prs_dict[pr]['base_branch'] == my_branch:
+            if prs_dict[pr]["base_branch"] == my_branch:
                 check_pr_dict(prs_dict, my_list, pr)
     else:
-        if prs_dict[my_pr]['base_branch'] != my_branch:
+        if prs_dict[my_pr]["base_branch"] != my_branch:
             print("PR # ", my_pr, " not belonging to branch ", my_branch, file=sys.stderr)
             exit(1)
         else:

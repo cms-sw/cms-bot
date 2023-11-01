@@ -9,21 +9,15 @@ import helpers
 
 email_addresses = "cms-sdt-logs@cern.ch"
 
-html_file_path = (
-    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-web-info.json"
-)
+html_file_path = os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-web-info.json"
 retry_url_file = (
     os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/json-retry-info.json"
 )
-retry_queue_path = (
-    os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
-)
+retry_queue_path = os.environ.get("HOME") + "/builds/jenkins-test-parser/retry_queue.json"
 
 
 def send_email(email_msg, email_subject, email_addresses):
-    email_cmd = (
-        'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
-    )
+    email_cmd = 'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
     print(email_cmd)
     os.system(email_cmd)
 
@@ -32,9 +26,7 @@ def trigger_create_gridnode_action(node_name):
     node_config_path = os.environ.get("HOME") + "/nodes/" + node_name + "/config.xml"
     if helpers.grep(node_config_path, "auto-recreate", True):
         print("Recreating grid node ...")
-        trigger_create_gridnode = (
-            os.environ.get("JENKINS_CLI_CMD") + " build grid-create-node"
-        )
+        trigger_create_gridnode = os.environ.get("JENKINS_CLI_CMD") + " build grid-create-node"
         print(trigger_create_gridnode)
         os.system(trigger_create_gridnode)
     else:
@@ -54,13 +46,9 @@ def trigger_retry_action(
 ):
     # Skip autoretry if Jenkins already retries, unless connection issue.
     if regex not in force_retry_regex:
-        if helpers.grep(
-            os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True
-        ):
+        if helpers.grep(os.path.join(build_dir_path, "build.xml"), "<maxSchedule>", True):
             print("... Jenkins already takes care of retrying. Skipping ...")
-            if helpers.grep(
-                os.path.join(build_dir_path, "build.xml"), "<retryCount>", True
-            ):
+            if helpers.grep(os.path.join(build_dir_path, "build.xml"), "<retryCount>", True):
                 return
             # Update description of the failed job
             update_label = (
@@ -95,13 +83,11 @@ def trigger_retry_action(
         )
     elif action == "retryLate":
         # Store retry command into a file
-        print(
-            "This failure will be retried with a delay of " + str(delay_time) + " min"
-        )
+        print("This failure will be retried with a delay of " + str(delay_time) + " min")
         retry_entry = job_to_retry + "#" + build_to_retry
-        retry_time = datetime.datetime.now().replace(
-            microsecond=0
-        ) + datetime.timedelta(minutes=delay_time)
+        retry_time = datetime.datetime.now().replace(microsecond=0) + datetime.timedelta(
+            minutes=delay_time
+        )
         retry_object["retryQueue"][retry_entry] = {}
         retry_object["retryQueue"][retry_entry]["retryTime"] = str(retry_time)
         retry_object["retryQueue"][retry_entry]["retryCommand"] = trigger_retry
@@ -128,11 +114,7 @@ def trigger_retry_action(
 def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
     nodeoff_msg = "'Node\ marked\ as\ offline\ beacuse\ of\ " + job_url + "'"
     take_nodeoff = (
-        os.environ.get("JENKINS_CLI_CMD")
-        + " offline-node "
-        + node_name
-        + " -m "
-        + nodeoff_msg
+        os.environ.get("JENKINS_CLI_CMD") + " offline-node " + node_name + " -m " + nodeoff_msg
     )
     print(take_nodeoff)
     os.system(take_nodeoff)
@@ -153,15 +135,9 @@ def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
 def trigger_reconnect_action(job_to_retry, build_to_retry, job_url, node_name):
     nodeoff_msg = "'Node\ reconnected\ by\ " + job_url + "'"
     disconnect_node = (
-        os.environ.get("JENKINS_CLI_CMD")
-        + " disconnect-node "
-        + node_name
-        + " -m "
-        + nodeoff_msg
+        os.environ.get("JENKINS_CLI_CMD") + " disconnect-node " + node_name + " -m " + nodeoff_msg
     )
-    connect_node = (
-        os.environ.get("JENKINS_CLI_CMD") + " connect-node " + node_name + " -f"
-    )
+    connect_node = os.environ.get("JENKINS_CLI_CMD") + " connect-node " + node_name + " -f"
     print(disconnect_node)
     os.system(disconnect_node)
     time.sleep(10)
@@ -181,9 +157,7 @@ def trigger_reconnect_action(job_to_retry, build_to_retry, job_url, node_name):
     os.system(update_label)
 
 
-def notify_nodeoff(
-    node_name, regex, job_to_retry, build_to_retry, job_url, node_url, parser_url
-):
+def notify_nodeoff(node_name, regex, job_to_retry, build_to_retry, job_url, node_url, parser_url):
     email_msg = (
         "Node "
         + node_name
@@ -227,9 +201,7 @@ def notify_nodereconnect(
     send_email(email_msg, email_subject, email_addresses)
 
 
-def notify_pendingbuild(
-    display_name, build_to_retry, job_to_retry, duration, job_url, parser_url
-):
+def notify_pendingbuild(display_name, build_to_retry, job_to_retry, duration, job_url, parser_url):
     email_msg = (
         "Build"
         + display_name
@@ -246,17 +218,10 @@ def notify_pendingbuild(
     )
 
     email_subject = (
-        "Pending build "
-        + display_name
-        + " (#"
-        + build_to_retry
-        + ") from job "
-        + job_to_retry
+        "Pending build " + display_name + " (#" + build_to_retry + ") from job " + job_to_retry
     )
 
-    email_cmd = (
-        'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
-    )
+    email_cmd = 'echo "' + email_msg + '" | mail -s "' + email_subject + '" ' + email_addresses
     send_email(email_msg, email_subject, email_addresses)
 
 
@@ -310,7 +275,6 @@ def notify_noaction(display_name, job_to_retry, build_to_retry, job_url):
 def update_cmssdt_page(
     html_file, job, build, error, job_url, retry_url, action, refresh_only=False
 ):
-
     try:
         with open(html_file, "r") as openfile:
             json_object = json.load(openfile)
@@ -323,7 +287,6 @@ def update_cmssdt_page(
             json.dump(json_object, json_file)
 
     if refresh_only == False:
-
         id = str(job + "#" + build)
         retry_time = datetime.datetime.now().replace(microsecond=0)
 
@@ -341,18 +304,14 @@ def update_cmssdt_page(
     with open(html_file, "w") as openfile:
         json.dump(json_object, openfile, indent=2)
 
-    trigger_web_update = (
-        os.environ.get("JENKINS_CLI_CMD") + " build jenkins-test-parser-monitor"
-    )
+    trigger_web_update = os.environ.get("JENKINS_CLI_CMD") + " build jenkins-test-parser-monitor"
 
     if refresh_only == False or cleanup_flag == 1:
-
         print(trigger_web_update)
         os.system(trigger_web_update)
 
 
 def cleanup_cmssdt_page(json_object):
-
     builds_dir = os.environ.get("HOME") + "/builds"
     cleanup_flag = 0
 
@@ -410,7 +369,6 @@ def cleanup_cmssdt_page(json_object):
 
 
 def update_retry_link_cmssdt_page(retry_url_file, job, build, retry_url):
-
     with open(retry_url_file, "r") as openfile:
         json_object = json.load(openfile)
 

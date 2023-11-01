@@ -55,18 +55,12 @@ if __name__ == "__main__":
     parser.add_option(
         "-d", "--date", dest="date", action="store", help="CMSSW IB date (YYYY-MM-DD)"
     )
-    parser.add_option(
-        "-H", "--hour", dest="hour", action="store", help="CMSSW IB hour (HH)"
-    )
+    parser.add_option("-H", "--hour", dest="hour", action="store", help="CMSSW IB hour (HH)")
     parser.add_option(
         "-M", "--minute", dest="minute", action="store", help="CMSSW IB minute (MM)", default="00"
     )
-    parser.add_option(
-        "-b", "--branch", dest="branch", action="store", help="CMSSW branch"
-    )
-    parser.add_option(
-        "-q", "--queue", dest="queue", action="store", help="CMSSW IB queue"
-    )
+    parser.add_option("-b", "--branch", dest="branch", action="store", help="CMSSW branch")
+    parser.add_option("-q", "--queue", dest="queue", action="store", help="CMSSW IB queue")
     opts, args = parser.parse_args()
 
     RELEASE_NAME = opts.release_name  # "CMSSW_13_0_X_2023-02-02-1100"
@@ -89,9 +83,9 @@ if __name__ == "__main__":
 
         head = None
         for commit_ in commits_:
-            if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"][
-                "author"
-            ]["name"] in (CMSSW_L1 + ["cmsbuild"]):
+            if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"]["author"][
+                "name"
+            ] in (CMSSW_L1 + ["cmsbuild"]):
                 head = commit_
                 break
 
@@ -108,8 +102,6 @@ if __name__ == "__main__":
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [
-        t["ref"].replace("refs/tags/", "")
-        for t in tags
-        if t["object"]["sha"] == HEAD_SHA
+        t["ref"].replace("refs/tags/", "") for t in tags if t["object"]["sha"] == HEAD_SHA
     ]
     print(" ".join(RELEASE_LIST[::-1]))

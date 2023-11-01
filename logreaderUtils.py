@@ -12,9 +12,7 @@ class ResultTypeEnum(object):
 
 # Do not forget to include to list if ResultTypeEnum is updated
 # Will be same ordering as in Log reader interface
-all_controls = [
-    ResultTypeEnum.ISSUE, ResultTypeEnum.TEST
-]
+all_controls = [ResultTypeEnum.ISSUE, ResultTypeEnum.TEST]
 
 
 def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
@@ -23,33 +21,33 @@ def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
             # will ignore " IgnoreCompletely" messages
             "str_to_match": "Begin(?! IgnoreCompletely)(.*Exception)",
             "name": "{0}",
-            "control_type": ResultTypeEnum.ISSUE
+            "control_type": ResultTypeEnum.ISSUE,
         },
         {
             "str_to_match": "edm::service::InitRootHandlers",
             "name": "Segmentation fault",
-            "control_type": ResultTypeEnum.ISSUE
+            "control_type": ResultTypeEnum.ISSUE,
         },
         {
             "str_to_match": "sig_dostack_then_abort",
             "name": "sig_dostack_then_abort",
-            "control_type": ResultTypeEnum.ISSUE
+            "control_type": ResultTypeEnum.ISSUE,
         },
         {
             "str_to_match": ": runtime error:",
             "name": "Runtime error",
-            "control_type": ResultTypeEnum.ISSUE
+            "control_type": ResultTypeEnum.ISSUE,
         },
         {
             "str_to_match": ": Assertion .* failed",
             "name": "Assertion failure",
-            "control_type": ResultTypeEnum.ISSUE
+            "control_type": ResultTypeEnum.ISSUE,
         },
         {
             "str_to_match": "==ERROR: AddressSanitizer:",
             "name": "Address Sanitizer error",
-            "control_type": ResultTypeEnum.ISSUE
-        }
+            "control_type": ResultTypeEnum.ISSUE,
+        },
     ]
     line_nr = index + 1
 
@@ -64,7 +62,7 @@ def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
                 "lineStart": line_nr,
                 "lineEnd": line_nr,
                 "name": name + " at line #" + str(line_nr),
-                "control_type": rule["control_type"]
+                "control_type": rule["control_type"],
             }
             config_list.append(new_exception_config)
             return config_list

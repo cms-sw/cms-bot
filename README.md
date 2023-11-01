@@ -40,3 +40,20 @@ basis.
 
 - [es-templates](https://github.com/cms-sw/cms-bot/tree/master/es-templates): contains the templates for the logged dataes-templates.
 - [es-cleanup-indexes](https://github.com/cms-sw/cms-bot/blob/master/es-cleanup-indexes): cleanups old indexes in elasticsearch.
+
+# Code style
+
+This project uses [Black](https://pypi.org/project/black) to ensure uniform code style. The following options are used:
+
+```
+--line-length 99 --target-version py36 --target-version py37 --target-version py38 --target-version py39 --target-version py310 --target-version py311
+```
+
+## Ignoring formatting commits
+
+We record commits containing only code-style changes in [`.git-blame-ignore-revs`](.git-blame-ignore-revs) file. Use the following command on your local
+copy of this repository to exculse these commits from `git blame`:
+
+```
+$ git config blame.ignoreRevsFile .git-blame-ignore-revs
+```

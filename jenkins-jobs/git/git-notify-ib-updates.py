@@ -9,6 +9,7 @@ import urllib.error
 
 from github_utils import github_api
 from urllib.error import HTTPError
+
 # noinspection PyUnresolvedReferences
 import libib
 
@@ -129,11 +130,7 @@ def main():
             for arch in new_result:
                 arch_report = []
                 for error in new_result[arch]["build"]:
-                    if (
-                        old_result
-                        and arch in old_result
-                        and error in old_result[arch]["build"]
-                    ):
+                    if old_result and arch in old_result and error in old_result[arch]["build"]:
                         continue
 
                     arch_report.append(
@@ -141,28 +138,16 @@ def main():
                     )
 
                 for error in new_result[arch]["utest"]:
-                    if (
-                        old_result
-                        and arch in old_result
-                        and error in old_result[arch]["utest"]
-                    ):
+                    if old_result and arch in old_result and error in old_result[arch]["utest"]:
                         continue
 
-                    arch_report.append(
-                        f"| [{error.name}]({error.url}) | TBD | "
-                    )
+                    arch_report.append(f"| [{error.name}]({error.url}) | TBD | ")
 
                 for error in new_result[arch]["relval"]:
-                    if (
-                        old_result
-                        and arch in old_result
-                        and error in old_result[arch]["relval"]
-                    ):
+                    if old_result and arch in old_result and error in old_result[arch]["relval"]:
                         continue
 
-                    arch_report.append(
-                        f"| [{error.name}]({error.url}) | {error.data} | "
-                    )
+                    arch_report.append(f"| [{error.name}]({error.url}) | {error.data} | ")
 
                 if len(arch_report) > (max_report_lines + 1):
                     arch_report_l = len(arch_report)
@@ -173,7 +158,8 @@ def main():
 
                 if arch_report:
                     arch_report.insert(
-                        0, table_header.format(rel=rel, ib_date=ib_date.rsplit("-", 1)[0], arch=arch)
+                        0,
+                        table_header.format(rel=rel, ib_date=ib_date.rsplit("-", 1)[0], arch=arch),
                     )
                     if first_report:
                         arch_report.insert(0, header)
@@ -181,9 +167,7 @@ def main():
 
                     payload = {"text": "\n".join(arch_report)}
                     jsondata = json.dumps(payload).encode("utf-8")
-                    with open(
-                        f"{workspace}/report_{payload_index:03d}.json", "wb"
-                    ) as f:
+                    with open(f"{workspace}/report_{payload_index:03d}.json", "wb") as f:
                         f.write(jsondata)
 
                     payload_index += 1
@@ -193,7 +177,8 @@ def main():
             print("#!/bin/bash", file=f)
             for i in range(payload_index):
                 print(
-                    f'curl -H "Content-Type: application/json" --data-binary "@report_{i:03d}.json" $MM_WEBHOOK_URL', file=f
+                    f'curl -H "Content-Type: application/json" --data-binary "@report_{i:03d}.json" $MM_WEBHOOK_URL',
+                    file=f,
                 )
                 print(f"rm -f report_{i:03d}.json", file=f)
     else:
@@ -202,7 +187,9 @@ def main():
 
     # Save new json files
     for rel in changed_rels:
-        url_ = f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/_data%2F{rel}.json"
+        url_ = (
+            f"https://github.com/cms-sw/cms-sw.github.io/raw/{newest_commit_id}/_data%2F{rel}.json"
+        )
         try:
             data = libib.fetch(url_, libib.ContentType.TEXT)
         except urllib.error.HTTPError as e:

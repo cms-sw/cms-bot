@@ -32,7 +32,9 @@ labels = []
 
 INVALID_REQUEST_MSG = "No category found for requested package {package}"
 EXISTS_MSG = "Requested repository {repo} already exists"
-ACK_MSG = "Request received. I will create the requested repository after this issue is fully signed."
+ACK_MSG = (
+    "Request received. I will create the requested repository after this issue is fully signed."
+)
 COMPLETE_MSG = "Repository created: {url}"
 
 # -------------------------------------------------------------------------------
@@ -185,9 +187,7 @@ def main():
     # 3. Does the requested repository already exist?
     repo = None
     try:
-        repo = gh.get_organization("cms-data").get_repo(
-            category_name + "-" + package_name
-        )
+        repo = gh.get_organization("cms-data").get_repo(category_name + "-" + package_name)
     except github.UnknownObjectException:
         pass
 
@@ -248,11 +248,11 @@ def main():
                 has_wiki=False,
                 has_projects=False,
                 private=False,
-                auto_init=True
+                auto_init=True,
             )
 
             with open("new-repo.txt", "w") as out:
-              out.write("REPOSITORY=cms-data/%s-%s\n" % (category_name, package_name))
+                out.write("REPOSITORY=cms-data/%s-%s\n" % (category_name, package_name))
             post_message(issue, COMPLETE_MSG.format(url=new_repo.html_url), comments)
             close_issue(issue)
         else:

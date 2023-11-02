@@ -81,7 +81,7 @@ let NCPU2=${NCPU}*2
 rm -rf ${RESULTS_DIR} ${RESULTS_FILE}
 mkdir ${RESULTS_DIR}
 
-TEST_RELVALS_INPUT=true
+TEST_RELVALS_INPUT=false
 DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
@@ -106,6 +106,7 @@ fi
 
 if $PRODUCTION_RELEASE ; then
   DO_DAS_QUERY=true
+  TEST_RELVALS_INPUT=true
 fi
 
 # ----------

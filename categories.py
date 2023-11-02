@@ -80,7 +80,6 @@ CMSSW_L2 = {
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],
     "mandrenguyen": ["reconstruction"],
     "mdhildreth": ["simulation", "geometry", "fastsim"],
-    "missirol": ["hlt"],
     "mkirsano": ["generators"],
     "menglu21": ["generators"],
     "rappoccio": ["operations"],

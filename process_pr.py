@@ -1147,7 +1147,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         # Reset signatures for changed files; reset ORP signature if anything changed
         commit_changed_files = get_changed_files_in_commit(last_commit_obj)
-        chg_categories = [x for x in set([cmssw_file2Package(repo_config, f) for f in commit_changed_files])]
+        chg_categories = [
+            x for x in set([cmssw_file2Package(repo_config, f) for f in commit_changed_files])
+        ]
 
         if chg_categories:
             chg_categories.extend(("orp", "tests", "code-checks"))
@@ -1282,8 +1284,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
-
-
 
     # end of parsing comments section
 

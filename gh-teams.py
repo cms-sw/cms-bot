@@ -63,7 +63,6 @@ REPO_TEAMS["cms-sw"]["configdb-owners"] = {
         "Martin-Grunewald",
         "Sam-Harper",
         "silviodonato",
-        "missirol",
         "mmusich",
     ],
     "repositories": {"hlt-confdb": "admin", "web-confdb": "admin"},

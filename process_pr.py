@@ -22,7 +22,7 @@ from cms_static import (
     CREATE_REPO,
 )
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
-from githublabels import TYPE_COMMANDS
+from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from datetime import datetime
@@ -120,6 +120,10 @@ AUTO_TEST_REPOS = ["cms-sw/cmssw"]
 REGEX_TEST_REG = re.compile(TEST_REGEXP, re.I)
 REGEX_TEST_ABORT = re.compile(
     "^\s*((@|)cmsbuild\s*[,]*\s+|)(please\s*[,]*\s+|)abort(\s+test|)$", re.I
+)
+REGEX_TEST_IGNORE = re.compile(
+    r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
+    re.I,
 )
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
@@ -1110,6 +1114,36 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if m.group(2):
                     code_check_apply_patch = True
 
+        # Check L2 signoff for users in this PR signing categories
+        if [x for x in commenter_categories if x in signing_categories]:
+            ctype = ""
+            selected_cats = []
+            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
+                ctype = "+1"
+                selected_cats = commenter_categories
+            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
+                ctype = "-1"
+                selected_cats = commenter_categories
+            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
+                category_name = first_line[1:].lower()
+                if category_name in commenter_categories:
+                    ctype = first_line[0] + "1"
+                    selected_cats = [category_name]
+            if ctype == "+1":
+                for sign in selected_cats:
+                    signatures[sign] = "approved"
+                    if (test_comment is None) and (
+                        (repository in auto_test_repo) or ("*" in auto_test_repo)
+                    ):
+                        test_comment = comment
+                    if sign == "orp":
+                        mustClose = False
+            elif ctype == "-1":
+                for sign in selected_cats:
+                    signatures[sign] = "rejected"
+                    if sign == "orp":
+                        mustClose = False
+
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
             continue
@@ -1237,37 +1271,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
+                elif REGEX_TEST_IGNORE.match(first_line) and (signatures["tests"] == "rejected"):
+                    reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
+                    if reason not in TEST_IGNORE_REASON:
+                        print("Invalid ignore reason:", reason)
+                        set_comment_emoji(comment.id, repository, "-1")
+                        reason = ""
 
-        # Check L2 signoff for users in this PR signing categories
-        if [x for x in commenter_categories if x in signing_categories]:
-            ctype = ""
-            selected_cats = []
-            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
-                ctype = "+1"
-                selected_cats = commenter_categories
-            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
-                ctype = "-1"
-                selected_cats = commenter_categories
-            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
-                category_name = first_line[1:].lower()
-                if category_name in commenter_categories:
-                    ctype = first_line[0] + "1"
-                    selected_cats = [category_name]
-            if ctype == "+1":
-                for sign in selected_cats:
-                    signatures[sign] = "approved"
-                    if (test_comment is None) and (
-                        (repository in auto_test_repo) or ("*" in auto_test_repo)
-                    ):
-                        test_comment = comment
-                    if sign == "orp":
-                        mustClose = False
-            elif ctype == "-1":
-                for sign in selected_cats:
-                    signatures[sign] = "rejected"
-                    if sign == "orp":
-                        mustClose = False
-            continue
+                    if reason:
+                        signatures["tests"] = reason
+                        set_comment_emoji(comment.id, repository)
 
     # end of parsing comments section
 
@@ -1559,6 +1572,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     xlabs = ["backport", "urgent", "backport-ok", "compilation-warnings"]
     for lab in TYPE_COMMANDS:
         xlabs.append(lab)
+
+    if set(labels).intersection(set("tests-" + x for x in TEST_IGNORE_REASON)):
+        labels.append("tests-approved")
+
     missingApprovals = [
         x
         for x in labels
@@ -1732,6 +1749,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         requiresTestMessage = " (tests are also fine)"
     elif "tests-rejected" in labels:
         requiresTestMessage = " (but tests are reportedly failing)"
+    elif labels.intersection(set("tests-" + x for x in TEST_IGNORE_REASON)):
+        requiresTestMessage = " (test failures were overridden)"
 
     autoMergeMsg = ""
     if (

@@ -79,8 +79,12 @@ def update_milestone(repo, source, srcMilestone, desMilestone, dryRun=False):
         if pr.milestone.number == desMilestone.number:
             print("  Milestone already updated for PR:", pr.number)
         elif pr.milestone.number == srcMilestone.number:
+            msg =  "Milestone for this pull request has been moved to %s." % desMilestone.title
+            msg += "Please open a backport if it should also go in to %s." % srcMilestone.title
+            print(msg)
             if not dryRun:
                 issue = repo.get_issue(pr.number)
+                issue.create_comment(msg)
                 issue.edit(milestone=desMilestone)
             print("  Updated milestone for PR:", pr.number)
         else:

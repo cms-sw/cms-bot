@@ -209,7 +209,7 @@ def update_forward_port(new_br, dryRun=False):
     new_cyc = new_br[:-1]
     dev_cyc = CMSSW_DEVEL_BRANCH[:-1]
     with open(fwdport_file, "a") as ref:
-        ref.write("\n#Automatically added\n")
+        ref.write("\n# Automatically added\n")
         for l in o.split("\n"):
             ref.write("%s\n" % l.replace(dev_cyc, new_cyc))
     return

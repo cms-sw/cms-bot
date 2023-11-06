@@ -1114,35 +1114,25 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if m.group(2):
                     code_check_apply_patch = True
 
-        # Check L2 signoff for users in this PR signing categories
-        if [x for x in commenter_categories if x in signing_categories]:
-            ctype = ""
-            selected_cats = []
-            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
-                ctype = "+1"
-                selected_cats = commenter_categories
-            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
-                ctype = "-1"
-                selected_cats = commenter_categories
-            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
-                category_name = first_line[1:].lower()
-                if category_name in commenter_categories:
-                    ctype = first_line[0] + "1"
-                    selected_cats = [category_name]
-            if ctype == "+1":
-                for sign in selected_cats:
-                    signatures[sign] = "approved"
-                    if (test_comment is None) and (
-                        (repository in auto_test_repo) or ("*" in auto_test_repo)
-                    ):
-                        test_comment = comment
-                    if sign == "orp":
-                        mustClose = False
-            elif ctype == "-1":
-                for sign in selected_cats:
-                    signatures[sign] = "rejected"
-                    if sign == "orp":
-                        mustClose = False
+        # Set "tests" signature state earlier
+        if commenter == cmsbuild_user:
+            if not issue.pull_request and not push_test_issue:
+                continue
+
+            if re.match(FAILED_TESTS_MSG, first_line) or re.match(
+                IGNORING_TESTS_MSG, first_line
+            ):
+                signatures["tests"] = "pending"
+            elif re.match(TRIGERING_TESTS_MSG, first_line) or re.match(
+                TRIGERING_TESTS_MSG1, first_line
+            ):
+                signatures["tests"] = "started"
+            elif "+1" in first_line:
+                signatures["tests"] = "approved"
+            elif "-1" in first_line:
+                signatures["tests"] = "rejected"
+            else:
+                signatures["tests"] = "pending"
 
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
@@ -1281,6 +1271,36 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     if reason:
                         signatures["tests"] = reason
                         set_comment_emoji(comment.id, repository)
+
+        # Check L2 signoff for users in this PR signing categories
+        if [x for x in commenter_categories if x in signing_categories]:
+            ctype = ""
+            selected_cats = []
+            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
+                ctype = "+1"
+                selected_cats = commenter_categories
+            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
+                ctype = "-1"
+                selected_cats = commenter_categories
+            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
+                category_name = first_line[1:].lower()
+                if category_name in commenter_categories:
+                    ctype = first_line[0] + "1"
+                    selected_cats = [category_name]
+            if ctype == "+1":
+                for sign in selected_cats:
+                    signatures[sign] = "approved"
+                    if (test_comment is None) and (
+                        (repository in auto_test_repo) or ("*" in auto_test_repo)
+                    ):
+                        test_comment = comment
+                    if sign == "orp":
+                        mustClose = False
+            elif ctype == "-1":
+                for sign in selected_cats:
+                    signatures[sign] = "rejected"
+                    if sign == "orp":
+                        mustClose = False
 
     # end of parsing comments section
 

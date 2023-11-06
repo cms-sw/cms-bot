@@ -97,7 +97,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/cu
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/master"].append("IB/CMSSW_13_3_X/g12_cpp20")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_3_X/root630"] = ["IB/CMSSW_13_3_X/g12_cpp20"]
 
-#Automatically added
+# Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_0_X"] = []
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_14_0_X"].append("CMSSW_14_0_DEVEL_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_14_0_X/master"] = []

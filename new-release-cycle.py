@@ -80,7 +80,7 @@ def update_milestone(repo, source, srcMilestone, desMilestone, dryRun=False):
             print("  Milestone already updated for PR:", pr.number)
         elif pr.milestone.number == srcMilestone.number:
             msg = "Milestone for this pull request has been moved to %s." % desMilestone.title
-            msg += "Please open a backport if it should also go in to %s." % srcMilestone.title
+            msg += " Please open a backport if it should also go in to %s." % srcMilestone.title
             print(msg)
             if not dryRun:
                 issue = repo.get_issue(pr.number)
@@ -107,7 +107,7 @@ def add_milestone_in_cmsbot(new_br, cmssw_brs, milestone, dryRun=False):
         relFile.write("# Automatically added by cms-bot for %s release cycle\n" % (new_br))
         relFile.write("######################################################################\n")
         relFile.write(
-            'RELEASE_BRANCH_MILESTONE["%s"]=%s\n' % (new_br, 0 if dryRun else milestone.number)
+            'RELEASE_BRANCH_MILESTONE["%s"] = %s\n' % (new_br, 0 if dryRun else milestone.number)
         )
         relFile.write('RELEASE_BRANCH_PRODUCTION.append("%s")\n' % (new_br))
         for br in cmssw_brs:

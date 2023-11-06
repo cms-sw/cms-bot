@@ -970,6 +970,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     test_params_msg = ""
     test_params_comment = None
     code_check_apply_patch = False
+    override_tests_failure = None
 
     # start of parsing comments section
     for c in issue.get_comments():
@@ -1114,24 +1115,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if m.group(2):
                     code_check_apply_patch = True
 
-        # Set "tests" signature state earlier
-        if commenter == cmsbuild_user:
-            if not issue.pull_request and not push_test_issue:
-                continue
-
-            if re.match(FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
-                signatures["tests"] = "pending"
-            elif re.match(TRIGERING_TESTS_MSG, first_line) or re.match(
-                TRIGERING_TESTS_MSG1, first_line
-            ):
-                signatures["tests"] = "started"
-            elif "+1" in first_line:
-                signatures["tests"] = "approved"
-            elif "-1" in first_line:
-                signatures["tests"] = "rejected"
-            else:
-                signatures["tests"] = "pending"
-
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
             continue
@@ -1259,7 +1242,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
-                elif REGEX_TEST_IGNORE.match(first_line) and (signatures["tests"] == "rejected"):
+                elif REGEX_TEST_IGNORE.match(first_line):
                     reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
                     if reason not in TEST_IGNORE_REASON:
                         print("Invalid ignore reason:", reason)
@@ -1267,7 +1250,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         reason = ""
 
                     if reason:
-                        signatures["tests"] = reason
+                        override_tests_failure = reason
                         set_comment_emoji(comment.id, repository)
 
         # Check L2 signoff for users in this PR signing categories
@@ -1523,7 +1506,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print(
                     "DryRun: Setting status Waiting for authorized user to issue the test command."
                 )
-
     # Labels coming from signature.
     labels = []
     for cat in signing_categories:
@@ -1531,6 +1513,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if cat in signatures:
             l = cat + "-" + signatures[cat]
         labels.append(l)
+
+    # Process "ignore tests failure"
+    if override_tests_failure and signatures["tests"] == "rejected":
+        labels.remove("tests-rejected")
+        labels.append("tests-approved")
+        labels.append("tests-" + override_tests_failure)
+        signatures["tests"] = "approved"
 
     if not issue.pull_request and len(signing_categories) == 0:
         labels.append("pending-assignment")

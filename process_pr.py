@@ -1119,9 +1119,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if not issue.pull_request and not push_test_issue:
                 continue
 
-            if re.match(FAILED_TESTS_MSG, first_line) or re.match(
-                IGNORING_TESTS_MSG, first_line
-            ):
+            if re.match(FAILED_TESTS_MSG, first_line) or re.match(IGNORING_TESTS_MSG, first_line):
                 signatures["tests"] = "pending"
             elif re.match(TRIGERING_TESTS_MSG, first_line) or re.match(
                 TRIGERING_TESTS_MSG1, first_line

@@ -42,6 +42,8 @@ for lab in get_dpg_pog():
         continue
     TYPE_COMMANDS[lab] = [LABEL_COLORS["doc"], lab, "mtype"]
 
+TEST_IGNORE_REASON = ["manual-override", "ib-failure", "external-failure"]
+
 COMMON_LABELS = {
     "tests-started": LABEL_COLORS["hold"],
     "fully-signed": LABEL_COLORS["approved"],
@@ -59,6 +61,9 @@ COMMON_LABELS = {
 
 for lab in TYPE_COMMANDS:
     COMMON_LABELS[lab] = TYPE_COMMANDS[lab][0]
+
+for reason in TEST_IGNORE_REASON:
+    COMMON_LABELS["tests-" + reason] = LABEL_COLORS["info"]
 
 COMPARISON_LABELS = {
     "comparison-notrun": "bfe5bf",

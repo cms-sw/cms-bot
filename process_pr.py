@@ -1246,12 +1246,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
                     if reason not in TEST_IGNORE_REASON:
                         print("Invalid ignore reason:", reason)
-                        set_comment_emoji(comment.id, repository, "-1")
+                        if not dryRun:
+                            set_comment_emoji(comment.id, repository, "-1")
                         reason = ""
 
                     if reason:
                         override_tests_failure = reason
-                        set_comment_emoji(comment.id, repository)
+                        if not dryRun:
+                            set_comment_emoji(comment.id, repository)
 
         # Check L2 signoff for users in this PR signing categories
         if [x for x in commenter_categories if x in signing_categories]:
@@ -1508,18 +1510,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 )
     # Labels coming from signature.
     labels = []
+
+    # Process "ignore tests failure"
+    if override_tests_failure and signatures["tests"] == "rejected":
+        signatures["tests"] = "approved"
+        labels.append("tests-" + override_tests_failure)
+
     for cat in signing_categories:
         l = cat + "-pending"
         if cat in signatures:
             l = cat + "-" + signatures[cat]
         labels.append(l)
-
-    # Process "ignore tests failure"
-    if override_tests_failure and signatures["tests"] == "rejected":
-        labels.remove("tests-rejected")
-        labels.append("tests-approved")
-        labels.append("tests-" + override_tests_failure)
-        signatures["tests"] = "approved"
 
     if not issue.pull_request and len(signing_categories) == 0:
         labels.append("pending-assignment")
@@ -1579,9 +1580,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     xlabs = ["backport", "urgent", "backport-ok", "compilation-warnings"]
     for lab in TYPE_COMMANDS:
         xlabs.append(lab)
-
-    if set(labels).intersection(set("tests-" + x for x in TEST_IGNORE_REASON)):
-        labels.append("tests-approved")
 
     missingApprovals = [
         x
@@ -1752,12 +1750,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # Do not complain about tests
     requiresTestMessage = " after it passes the integration tests"
-    if "tests-approved" in labels:
+    if labels.intersection(set("tests-" + x for x in TEST_IGNORE_REASON)):
+        requiresTestMessage = " (test failures were overridden)"
+    elif "tests-approved" in labels:
         requiresTestMessage = " (tests are also fine)"
     elif "tests-rejected" in labels:
         requiresTestMessage = " (but tests are reportedly failing)"
-    elif labels.intersection(set("tests-" + x for x in TEST_IGNORE_REASON)):
-        requiresTestMessage = " (test failures were overridden)"
 
     autoMergeMsg = ""
     if (

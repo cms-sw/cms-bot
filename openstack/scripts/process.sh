@@ -2,7 +2,8 @@
 THISDIR=$(dirname $0)
 REQ="${1}/request"
 RES="${1}/response"
-[ "${2}" = "acron" ] || exit 0
+touch "${REQ}/job-${2}"
+[ "${2}" = "acrontab" ] || exit 0
 LOCK="${REQ}/lock"
 if [ -f ${LOCK} ] ; then
   let age=$(date +%s)-$(stat -c %Y ${LOCK})
@@ -52,7 +53,7 @@ while [ $(date +%s) -lt ${STIME} ] ; do
   sleep 10
 done
 touch ${REQ}/status ${LOCK}
-find ${REQ} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf 
-find ${RES} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf
+(find ${REQ} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf ) || true
+(find ${RES} -mindepth 1 -maxdepth 1 -mmin +59 | xargs  --no-run-if-empty rm -rf ) || true
 echo "$(date): ${XID} Stopped" >> ${REQ}/status
 rm -f ${LOCK} || true

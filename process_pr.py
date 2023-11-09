@@ -20,6 +20,7 @@ from cms_static import (
     CMSBOT_IGNORE_MSG,
     VALID_CMS_SW_REPOS_FOR_TESTS,
     CREATE_REPO,
+    CMSBOT_TECHNICAL_MSG,
 )
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
@@ -28,7 +29,7 @@ import re, time
 from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
-from github_utils import edit_pr, api_rate_limits, github_time
+from github_utils import edit_pr, api_rate_limits
 from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji, set_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
@@ -899,7 +900,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Watchers " + ", ".join(watchers))
         all_commits = get_pr_commits_reversed(pr)
         for commit in all_commits:
-            events[commit.commit.committer.date] = get_changed_files_in_commit(commit)
+            events[commit.commit.committer.date] = get_changed_files_in_commit(repo, commit)
         if all_commits:
             last_commit_obj = all_commits[0]
         else:
@@ -975,6 +976,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
         print("Pre check status:", pre_checks_state)
     already_seen = None
+    technical_comment = None
     pull_request_updated = False
     comparison_done = False
     comparison_notrun = False
@@ -1033,6 +1035,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 else:
                     pull_request_updated = True
             continue
+
+        if (commenter == cmsbuild_user) and re.match(CMSBOT_TECHNICAL_MSG, first_line):
+            technical_comment = comment
 
         assign_type, new_cats = get_assign_categories(first_line)
         if new_cats:
@@ -1178,7 +1183,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         mustClose = False
 
         if new_signatures:
-            events[github_time(comment.created_at)] = {"type": "sign", "value": new_signatures}
+            events[comment.created_at] = {"type": "sign", "value": new_signatures}
 
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
@@ -1322,33 +1327,62 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     # end of parsing comments section
 
-    # Get the commit cache from the `already_seen` commit
+    # Get the commit cache from `already_seen` commit or technical commit
     print("Recalculating signatures")
-    if already_seen:
+    cache_comment = None
+    new_comment = False
+
+    if technical_comment:
+        cache_comment = technical_comment
+    else:
+        if already_seen:
+            cache_comment = already_seen
+        else:
+            new_comment = True
+            # if not dryRun:
+            #     cache_comment = issue.create_comment(CMSBOT_TECHNICAL_MSG + "\n")
+
+    if cache_comment:
         print("Loading commit cache")
-        seen_commits_match = REGEX_COMMITS_SEEN.search(already_seen.body)
+        seen_commits_match = REGEX_COMMITS_SEEN.search(cache_comment.body)
         if seen_commits_match:
             commit_cache = loads(seen_commits_match[1])
 
-        for commit in all_commits:
-            if commit.sha not in commit_cache:
-                commit_cache[commit.sha] = {
-                    "time": github_time(commit.committer.date),
-                    "files": get_changed_files_in_commit(repo, commit),
-                }
+    old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+    new_body = REGEX_COMMITS_SEEN.sub(
+        "<!-- commits cache: " + dumps_compact(commit_cache) + " -->", old_body
+    )
 
-            cache_entry = commit_cache[commit.sha]
-            events[cache_entry["time"]] = {"type": "commit", "value": cache_entry["files"]}
+    if not dryRun:
+        if new_comment:
+            issue.create_comment(new_body)
+        else:
+            cache_comment.edit(new_body)
+    else:
+        if new_comment:
+            print("DRY RUN: Creating technical comment with text")
+            print(new_body)
+        else:
+            print("DRY RUN: Updating existing comment with text")
+            print(new_body)
 
-        if not dryRun:
-            new_body = REGEX_COMMITS_SEEN.sub("", already_seen.body)
-            new_body += "<!-- commits cache: " + dumps_compact(commit_cache) + " -->"
-            already_seen.edit(new_body)
+    for commit in all_commits:
+        if commit.sha not in commit_cache:
+            commit_cache[commit.sha] = {
+                "time": int(commit.commit.committer.date.timestamp()),
+                "files": get_changed_files_in_commit(repo, commit),
+            }
+
+        cache_entry = commit_cache[commit.sha]
+        events[datetime.fromtimestamp(cache_entry["time"])] = {
+            "type": "commit",
+            "value": cache_entry["files"],
+        }
 
     events = dict(sorted(events.items()))
 
-    for event in events:
-        if event["type"] == "comment":
+    for event in events.values():
+        if event["type"] == "sign":
             for cat, sign in event["value"].items():
                 signatures[cat] = sign
         elif event["type"] == "commit":

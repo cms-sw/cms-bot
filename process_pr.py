@@ -28,11 +28,11 @@ import re, time
 from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
-from github_utils import edit_pr, api_rate_limits
+from github_utils import edit_pr, api_rate_limits, github_time
 from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji, set_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
-from json import dumps, load
+from json import dumps, load, loads
 
 try:
     from categories import CMSSW_LABELS
@@ -125,6 +125,7 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
+REGEX_COMMITS_SEEN = re.compile(r"<!-- commits cache: (.*) -->")
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
@@ -204,18 +205,35 @@ def get_commenter_categories(commenter, comment_date):
 
 
 def get_last_commit(pr):
-    last_commit = None
+    commits_ = get_pr_commits_reversed(pr)
+    if commits_:
+        return commits_[-1]
+    else:
+        return None
+
+
+def get_changed_files_in_commit(repo, commit_obj):
+    commit = repo.get_commit(commit_obj.commit.sha)
+    return [x.filename for x in commit.files]
+
+
+def get_pr_commits_reversed(pr):
+    """
+
+    :param pr:
+    :return: PaginatedList[Commit] | List[Commit]
+    """
     try:
         # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-        last_commit = pr.get_commits().reversed[0]
-    except:
+        return pr.get_commits().reversed
+    except:  # noqa
         # This seems to fail for more than 250 commits. Not sure if the
         # problem is github itself or the bindings.
         try:
-            last_commit = pr.get_commits()[pr.commits - 1]
+            return reversed(list(pr.get_commits()))
         except IndexError:
             print("Index error: May be PR with no commits")
-    return last_commit
+    return []
 
 
 def get_package_categories(package):
@@ -666,6 +684,10 @@ def get_status_state(context, statuses):
     return ""
 
 
+def dumps_compact(value):
+    return dumps(value, separators=(",", ":"))
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
@@ -740,6 +762,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # For future pre_checks
     # if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
     pre_checks_url = {}
+
+    events = {}
+    commit_cache = {}
+    all_commits = []
+
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
@@ -870,8 +897,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             watchers.update(set(watchingGroups[watcher]))
         watchers = set([gh_user_char + u for u in watchers])
         print("Watchers " + ", ".join(watchers))
-        last_commit_obj = get_last_commit(pr)
-        if last_commit_obj is None:
+        all_commits = get_pr_commits_reversed(pr)
+        for commit in all_commits:
+            events[commit.commit.committer.date] = get_changed_files_in_commit(commit)
+        if all_commits:
+            last_commit_obj = all_commits[0]
+        else:
             return
         last_commit = last_commit_obj.commit
         commit_statuses = last_commit_obj.get_combined_status().statuses
@@ -1115,6 +1146,40 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if m.group(2):
                     code_check_apply_patch = True
 
+        new_signatures = {}
+        # Check L2 signoff for users in this PR signing categories
+        if [x for x in commenter_categories if x in signing_categories]:
+            ctype = ""
+            selected_cats = []
+            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
+                ctype = "+1"
+                selected_cats = commenter_categories
+            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
+                ctype = "-1"
+                selected_cats = commenter_categories
+            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
+                category_name = first_line[1:].lower()
+                if category_name in commenter_categories:
+                    ctype = first_line[0] + "1"
+                    selected_cats = [category_name]
+            if ctype == "+1":
+                for sign in selected_cats:
+                    new_signatures[sign] = "approved"
+                    if (test_comment is None) and (
+                        (repository in auto_test_repo) or ("*" in auto_test_repo)
+                    ):
+                        test_comment = comment
+                    if sign == "orp":
+                        mustClose = False
+            elif ctype == "-1":
+                for sign in selected_cats:
+                    new_signatures[sign] = "rejected"
+                    if sign == "orp":
+                        mustClose = False
+
+        if new_signatures:
+            events[github_time(comment.created_at)] = {"type": "sign", "value": new_signatures}
+
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
             continue
@@ -1255,37 +1320,44 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         if not dryRun:
                             set_comment_emoji(comment.id, repository)
 
-        # Check L2 signoff for users in this PR signing categories
-        if [x for x in commenter_categories if x in signing_categories]:
-            ctype = ""
-            selected_cats = []
-            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
-                ctype = "+1"
-                selected_cats = commenter_categories
-            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
-                ctype = "-1"
-                selected_cats = commenter_categories
-            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
-                category_name = first_line[1:].lower()
-                if category_name in commenter_categories:
-                    ctype = first_line[0] + "1"
-                    selected_cats = [category_name]
-            if ctype == "+1":
-                for sign in selected_cats:
-                    signatures[sign] = "approved"
-                    if (test_comment is None) and (
-                        (repository in auto_test_repo) or ("*" in auto_test_repo)
-                    ):
-                        test_comment = comment
-                    if sign == "orp":
-                        mustClose = False
-            elif ctype == "-1":
-                for sign in selected_cats:
-                    signatures[sign] = "rejected"
-                    if sign == "orp":
-                        mustClose = False
-
     # end of parsing comments section
+
+    # Get the commit cache from the `already_seen` commit
+    print("Recalculating signatures")
+    if already_seen:
+        print("Loading commit cache")
+        seen_commits_match = REGEX_COMMITS_SEEN.search(already_seen.body)
+        if seen_commits_match:
+            commit_cache = loads(seen_commits_match[1])
+
+        for commit in all_commits:
+            if commit.sha not in commit_cache:
+                commit_cache[commit.sha] = {
+                    "time": github_time(commit.committer.date),
+                    "files": get_changed_files_in_commit(repo, commit),
+                }
+
+            cache_entry = commit_cache[commit.sha]
+            events[cache_entry["time"]] = {"type": "commit", "value": cache_entry["files"]}
+
+        if not dryRun:
+            new_body = REGEX_COMMITS_SEEN.sub("", already_seen.body)
+            new_body += "<!-- commits cache: " + dumps_compact(commit_cache) + " -->"
+            already_seen.edit(new_body)
+
+    events = dict(sorted(events.items()))
+
+    for event in events:
+        if event["type"] == "comment":
+            for cat, sign in event["value"].items():
+                signatures[cat] = sign
+        elif event["type"] == "commit":
+            chg_categories = [
+                x for x in set(cmssw_file2Package(repo_config, f) for f in event["value"])
+            ]
+            signatures["orp"] = "pending"
+            for cat in chg_categories:
+                signatures[cat] = "pending"
 
     if push_test_issue:
         auto_close_push_test_issue = True

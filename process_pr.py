@@ -126,7 +126,8 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
-REGEX_COMMITS_SEEN = re.compile(r"<!-- commits cache: (.*) -->")
+REGEX_COMMITS_CACHE = re.compile(r"<!-- commits cache: (.*) -->")
+REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
@@ -177,6 +178,7 @@ MULTILINE_COMMENTS_MAP = {
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
 }
 
+MAX_INITIAL_COMMITS_IN_PR = 20
 L2_DATA = {}
 
 
@@ -767,6 +769,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     events = {}
     commit_cache = {}
     all_commits = []
+    override_too_many_commits = False
+    warned_too_many_commits = False
+
+    l2s = ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
@@ -899,12 +905,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         watchers = set([gh_user_char + u for u in watchers])
         print("Watchers " + ", ".join(watchers))
         all_commits = get_pr_commits_reversed(pr)
-        for commit in all_commits:
-            events[commit.commit.committer.date] = get_changed_files_in_commit(repo, commit)
+
         if all_commits:
             last_commit_obj = all_commits[0]
         else:
             return
+
         last_commit = last_commit_obj.commit
         commit_statuses = last_commit_obj.get_combined_status().statuses
         bot_status = get_status(bot_status_name, commit_statuses)
@@ -1036,8 +1042,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     pull_request_updated = True
             continue
 
-        if (commenter == cmsbuild_user) and re.match(CMSBOT_TECHNICAL_MSG, first_line):
+        if (
+            (commenter == cmsbuild_user)
+            and re.match(CMSBOT_TECHNICAL_MSG, first_line)
+            and not technical_comment
+        ):
             technical_comment = comment
+
+        if (commenter == cmsbuild_user) and "This PR contains too many commits" in first_line:
+            warned_too_many_commits = True
+
+        if commenter in l2s and re.match("^\s*" + REGEX_IGNORE_COMMIT_COUNT + "\s*$", first_line):
+            override_too_many_commits = True
 
         assign_type, new_cats = get_assign_categories(first_line)
         if new_cats:
@@ -1326,45 +1342,41 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             set_comment_emoji(comment.id, repository)
 
     # end of parsing comments section
+    if (
+        (not warned_too_many_commits)
+        and not override_too_many_commits
+        and len(all_commits) >= MAX_INITIAL_COMMITS_IN_PR
+    ):
+        issue.create_comment(
+            f"This PR contains too many commits ({len(all_commits)} > {MAX_INITIAL_COMMITS_IN_PR}). "
+            f"Make sure you chose the right target branch. "
+            "\n{l2s}, you can override this check with `+commit-count`."
+        )
+
+    if len(all_commits) < MAX_INITIAL_COMMITS_IN_PR or override_too_many_commits:
+        for commit in all_commits:
+            events[commit.commit.committer.date] = get_changed_files_in_commit(repo, commit)
 
     # Get the commit cache from `already_seen` commit or technical commit
     print("Recalculating signatures")
     cache_comment = None
-    new_comment = False
 
     if technical_comment:
         cache_comment = technical_comment
     else:
         if already_seen:
             cache_comment = already_seen
-        else:
-            new_comment = True
-            # if not dryRun:
-            #     cache_comment = issue.create_comment(CMSBOT_TECHNICAL_MSG + "\n")
 
     if cache_comment:
         print("Loading commit cache")
-        seen_commits_match = REGEX_COMMITS_SEEN.search(cache_comment.body)
+        seen_commits_match = REGEX_COMMITS_CACHE.search(cache_comment.body)
         if seen_commits_match:
             commit_cache = loads(seen_commits_match[1])
 
     old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
-    new_body = REGEX_COMMITS_SEEN.sub(
+    new_body = REGEX_COMMITS_CACHE.sub(
         "<!-- commits cache: " + dumps_compact(commit_cache) + " -->", old_body
     )
-
-    if not dryRun:
-        if new_comment:
-            issue.create_comment(new_body)
-        else:
-            cache_comment.edit(new_body)
-    else:
-        if new_comment:
-            print("DRY RUN: Creating technical comment with text")
-            print(new_body)
-        else:
-            print("DRY RUN: Updating existing comment with text")
-            print(new_body)
 
     for commit in all_commits:
         if commit.sha not in commit_cache:
@@ -1378,6 +1390,20 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             "type": "commit",
             "value": cache_entry["files"],
         }
+
+    if not dryRun:
+        if cache_comment:
+            if old_body != new_body:
+                cache_comment.edit(new_body)
+        else:
+            issue.create_comment(new_body)
+    else:
+        if cache_comment:
+            print("DRY RUN: Updating existing comment with text")
+            print(new_body)
+        else:
+            print("DRY RUN: Creating technical comment with text")
+            print(new_body)
 
     events = dict(sorted(events.items()))
 
@@ -1777,7 +1803,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             uname = ""
             if issue.user.name:
                 uname = issue.user.name.encode("ascii", "ignore").decode()
-            l2s = ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
             issueMessage = format(
                 "%(msgPrefix)s %(gh_user_char)s%(user)s"
                 " %(name)s.\n\n"

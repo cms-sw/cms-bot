@@ -62,7 +62,7 @@ pushd $CMSSW_BASE/src
   git repack -a -d ${THRDS}
   git repack -a -d ${THRDS}
   OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
-  if ! git cms-checkout-topic -u ${REPO_USER}:${PULL_REQUEST} >${UP_DIR}/cms-checkout-topic.log 2>&1 ; then
+  if ! git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} >${UP_DIR}/cms-checkout-topic.log 2>&1 ; then
     echo '-code-checks' > ${UP_DIR}/code-checks.md
     echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
     echo -e '\nERROR: Unable to merge PR.' >> ${UP_DIR}/code-checks.md

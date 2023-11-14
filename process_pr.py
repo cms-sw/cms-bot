@@ -905,7 +905,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 f.write("ISSUE_NUMBER=" + str(issue.number) + "\n")
 
     # Process the issue comments
-    signatures = dict([(x, "pending") for x in signing_categories])
     extra_pre_checks = []
     pre_checks = []
     if issue.pull_request:
@@ -1276,8 +1275,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     ):
         issue.create_comment(
             f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
-            f"Make sure you chose the right target branch. "
-            "\n{l2s}, you can override this check with `+commit-count`."
+            "Make sure you chose the right target branch.\n"
+            f"{l2s}, you can override this check with `+commit-count`."
         )
 
     # Get the commit cache from `already_seen` commit or technical commit
@@ -1398,6 +1397,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Following categories affected:")
         print("\n".join(signing_categories))
 
+        signatures = dict([(x, "pending") for x in signing_categories])
+
         if cmssw_repo:
             # If there is a new package, add also a dummy "new" category.
             all_packages = [
@@ -1480,7 +1481,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         auto_close_push_test_issue = True
         try:
             auto_close_push_test_issue = repo_config.AUTO_CLOSE_PUSH_TESTS_ISSUE
-        except:
+        except AttributeError:
             pass
         if (
             auto_close_push_test_issue
@@ -2138,10 +2139,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Pull request is already fully signed. Not sending message.")
     else:
         print("Already notified L2 about " + str(pr.number))
-    if commentMsg and not dryRun:
+    if commentMsg and dryRun:
         print("The following comment will be made:")
         try:
-            print(commentMsg.decode("ascii", "replace"))
+            print(commentMsg.encode("ascii", "replace").decode())
         except:
             pass
     for pre_check in pre_checks + extra_pre_checks:

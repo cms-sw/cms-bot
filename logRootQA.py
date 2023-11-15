@@ -11,6 +11,7 @@ import subprocess as sub
 Log_Lines_Filter = [
     ("This TensorFlow binary is optimized with"),
     ("[PostMaster", "[Error"),
+    ("from active sources because its quality"),
     ("Initiating request to open file", "root://"),
     ("Successfully opened file", "root://"),
     ("Closed file", "root://"),

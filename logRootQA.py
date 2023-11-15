@@ -70,6 +70,9 @@ def checkLines(l1, l2):
 def filteredLines(f):
     retval = {}
     for l in openfile(f):
+        l = re.sub('20\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d\d*:', 'Date:', l)
+        if 'Begin processing the' in l:
+            l = re.sub(' on stream \d', 'on stream N',l)
         sl = l.strip()
         skip = False
         for data in Log_Lines_Filter:

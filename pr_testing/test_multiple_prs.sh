@@ -416,6 +416,17 @@ if ${BUILD_EXTERNAL} ; then
       popd
     fi
 
+    #Process cmsdist Build options
+    BUILD_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
+    if [ "${BUILD_OPTS}" != "" ] ; then
+      for opts in $(echo ${BUILD_OPTS} | tr ',' '\n') ; do
+        case $opts in
+          lto:0 ) [ ! -e ${WORKSPACE}/cmsdist/compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' ${WORKSPACE}/cmsdist/compilation_flags_lto.file || true ;;
+          * ) echo "Unknown option '$opt'" ;;
+        esac
+      done
+    fi
+
     # Build the whole cmssw-tool-conf toolchain
     CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then

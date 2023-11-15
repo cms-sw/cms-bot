@@ -59,7 +59,7 @@ pushd $BUILD_DIR/CMSDIST
   if [ "${BUILD_OPTS}" != "" ] ; then
     for opts in $(echo ${BUILD_OPTS} | tr ',' '\n') ; do
       case $opts in
-        lto:0 ) [ ! -e compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' compilation_flags_lto.file ;;
+        lto:0 ) [ ! -e compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' compilation_flags_lto.file || true ;;
         * ) echo "Unknown option '$opt'" ;;
       esac
     done

@@ -71,8 +71,8 @@ def filteredLines(f):
     retval = {}
     for l in openfile(f):
         # look for and remove timestamps
-        l = re.sub("20\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d+:", "DATETIME", l)
-        l = re.sub("\d\d-(\d\d|[A-ZA-z]{3})-20\d\d \d\d:\d\d:\d\d.\d+", "DATETIME", l)
+        l = re.sub("20\d\d-\d\d-\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
+        l = re.sub("\d\d-(\d\d|[A-ZA-z]{3})-20\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
         if "Begin processing the" in l:
             l = re.sub(" on stream \d", " on stream N", l)
         sl = l.strip()

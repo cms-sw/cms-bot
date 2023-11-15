@@ -70,9 +70,11 @@ def checkLines(l1, l2):
 def filteredLines(f):
     retval = {}
     for l in openfile(f):
-        l = re.sub("20\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d+:", "Date:", l)
+        # look for and remove timestamps
+        l = re.sub("20\d\d-\d\d-\d\d \d\d:\d\d:\d\d\.\d+:", "DATETIME", l)
+        l = re.sub("\d\d-(\d\d|[A-ZA-z]{3})-20\d\d \d\d:\d\d:\d\d.\d+", "DATETIME", l)
         if "Begin processing the" in l:
-            l = re.sub(" on stream \d", "on stream N", l)
+            l = re.sub(" on stream \d", " on stream N", l)
         sl = l.strip()
         skip = False
         for data in Log_Lines_Filter:
@@ -88,22 +90,6 @@ def filteredLines(f):
             continue
         if "P       Y      T    H   H  III  A   A" in l:
             continue
-        # look for and remove timestamps
-        if "-" in l and ":" in l:
-            sp = l.strip().split()
-
-            ds = []
-            for i in range(0, len(sp) - 1):
-                if sp[i].count("-") == 2 and sp[i + 1].count(":") == 2 and "-20" in sp[i]:
-                    ds.append(sp[i])  # its a date
-                    ds.append(sp[i + 1])  # its a date
-            if len(ds) != 0:
-                sp2 = l.strip().split(" ")
-                sp3 = []
-                for i in range(0, len(sp2)):
-                    if sp2[i] not in ds:
-                        sp3.append(sp2[i])
-                sl = " ".join(sp3)
         retval[sl] = 1
     return retval
 

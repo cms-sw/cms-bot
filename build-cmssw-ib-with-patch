@@ -18,6 +18,7 @@ CMSSW_TOOL_CONF_ONLY=$9
 DRY_RUN="${10}"
 FORCE_CMSDIST_TAG="${11}"
 DEBUG_EXTERNALS="${12}"
+BUILD_OPTS="${13}"
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
@@ -116,6 +117,14 @@ REV_PKGS=""
 for p in cms-common fakesystem gcc-fixinclude SCRAMV1 SCRAMV2 ; do
   [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
 done
+if [ "${BUILD_OPTS}" != "" ] ; then
+  for opts in $(echo ${BUILD_OPTS} | tr ',' '\n') ; do
+    case $opts in
+      lto:0 ) [ ! -e CMSDIST/compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' CMSDIST/compilation_flags_lto.file ;;
+      * ) echo "Unknown option '$opt'" ;;
+    esac
+  done
+fi
 if [ "${REV_PKGS}" != "" ] ; then
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${REV_PKGS}
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true

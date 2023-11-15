@@ -44,6 +44,7 @@ pushd $BUILD_DIR/CMSDIST
     *patch*)
     BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
     CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
+    BUILD_OPTS=""
     PATCH='-patch'
     ;;
     * )
@@ -55,6 +56,14 @@ pushd $BUILD_DIR/CMSDIST
   #push the REL tag once release is build successfully
   git checkout $CMSDIST_TAG
   git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE
+  if [ "${BUILD_OPTS}" != "" ] ; then
+    for opts in $(echo ${BUILD_OPTS} | tr ',' '\n') ; do
+      case $opts in
+        lto:0 ) [ ! -e compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' compilation_flags_lto.file ;;
+        * ) echo "Unknown option '$opt'" ;;
+      esac
+    done
+  fi
 popd
 
 git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS

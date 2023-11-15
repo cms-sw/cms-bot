@@ -43,6 +43,7 @@ for QUEUE in $RELEASE_QUEUES; do
     unset SINGULARITY
     unset PROD_ARCH
     unset FORCE_FULL_IB
+    unset BUILD_OPTS
     SKIP_TESTS=false
     eval "$IB_INFO"
     if [ "${SKIP_TESTS}" = "1" ] ; then SKIP_TESTS=true; fi
@@ -91,6 +92,7 @@ for QUEUE in $RELEASE_QUEUES; do
     echo "SLAVE_LABELS=$SLAVE_LABELS" >> $WORKSPACE/properties
     echo "SKIP_TESTS=$SKIP_TESTS" >> $WORKSPACE/properties
     echo "DEBUG_EXTERNALS=$DEBUG_EXTERNALS" >> $WORKSPACE/properties
+    echo "BUILD_OPTS=$BUILD_OPTS" >> $WORKSPACE/properties
     if [ "X$ALWAYS_BUILD" = X ]; then
       echo "RELEASE_LIST=`echo ${RELEASE_LIST} | tr \\n \\ `" >> $WORKSPACE/properties
     else

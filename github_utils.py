@@ -135,9 +135,7 @@ def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
 
 def get_ported_PRs(repo, src_branch, des_branch):
     done_prs_id = {}
-    prRe = re.compile(
-        "Automatically ported from " + src_branch + " #(\d+)\s+.*", re.MULTILINE
-    )
+    prRe = re.compile("Automatically ported from " + src_branch + " #(\d+)\s+.*", re.MULTILINE)
     for pr in repo.get_pulls(base=des_branch):
         body = pr.body.encode("ascii", "ignore")
         if sys.version_info[0] == 3:
@@ -265,14 +263,9 @@ def port_pr(repo, pr_num, des_branch, dryRun=False):
     print(newHead)
     print(newBody)
     if not dryRun:
-        newPR = repo.create_pull(
-            title=pr.title, body=newBody, base=des_branch, head=newHead
-        )
+        newPR = repo.create_pull(title=pr.title, body=newBody, base=des_branch, head=newHead)
     else:
-        print(
-            "DryRun: should have created Pull Request for %s using %s"
-            % (des_branch, newHead)
-        )
+        print("DryRun: should have created Pull Request for %s using %s" % (des_branch, newHead))
     print("Every thing looks good")
     git_cmd = format(
         "cd %(clone_dir)s; git branch -d %(new_branch)s",
@@ -448,9 +441,7 @@ def get_failed_pending_members(org):
 
 
 def get_delete_pending_members(org, invitation_id):
-    return github_api(
-        "/orgs/%s/invitations/%s" % (org, invitation_id), method="DELETE", raw=True
-    )
+    return github_api("/orgs/%s/invitations/%s" % (org, invitation_id), method="DELETE", raw=True)
 
 
 def get_organization_members(org, role="all", filter="all"):
@@ -492,9 +483,7 @@ def edit_pr(repo, pr_num, title=None, body=None, state=None, base=None):
         params["base"] = base
     if state:
         params["state"] = state
-    return github_api(
-        uri="/repos/%s/pulls/%s" % (repo, pr_num), params=params, method="PATCH"
-    )
+    return github_api(uri="/repos/%s/pulls/%s" % (repo, pr_num), params=params, method="PATCH")
 
 
 def create_issue_comment(repo, issue_num, body):
@@ -506,9 +495,7 @@ def create_issue_comment(repo, issue_num, body):
 
 def get_issue_labels(repo, issue_num):
     get_gh_token(repo)
-    return github_api(
-        uri="/repos/%s/issues/%s/labels" % (repo, issue_num), method="GET"
-    )
+    return github_api(uri="/repos/%s/issues/%s/labels" % (repo, issue_num), method="GET")
 
 
 def add_issue_labels(repo, issue_num, labels=[]):
@@ -571,11 +558,7 @@ def github_api(
         headers = {}
     url = "https://api.github.com%s" % uri
     data = ""
-    if (
-        per_page
-        and ("per_page" not in params)
-        and (not method in ["POST", "PATCH", "PUT"])
-    ):
+    if per_page and ("per_page" not in params) and (not method in ["POST", "PATCH", "PUT"]):
         params["per_page"] = per_page
     if method == "GET":
         if params:
@@ -719,9 +702,7 @@ def set_gh_user(user):
 
 def get_combined_statuses(commit, repository):
     get_gh_token(repository)
-    return github_api(
-        "/repos/%s/commits/%s/status" % (repository, commit), method="GET"
-    )
+    return github_api("/repos/%s/commits/%s/status" % (repository, commit), method="GET")
 
 
 def get_pr_commits(pr, repository, per_page=None, last_page=False):
@@ -776,9 +757,7 @@ def get_repository_issues(
 
 def get_issue_comments(repository, issue_num):
     get_gh_token(repository)
-    return github_api(
-        "/repos/%s/issues/%s/comments" % (repository, issue_num), method="GET"
-    )
+    return github_api("/repos/%s/issues/%s/comments" % (repository, issue_num), method="GET")
 
 
 def get_issue(repository, issue_num):
@@ -813,8 +792,7 @@ def get_comment_emojis(comment_id, repository):
 def delete_comment_emoji(emoji_id, comment_id, repository):
     get_gh_token(repository)
     return github_api(
-        "/repos/%s/issues/comments/%s/reactions/%s"
-        % (repository, comment_id, emoji_id),
+        "/repos/%s/issues/comments/%s/reactions/%s" % (repository, comment_id, emoji_id),
         method="DELETE",
         raw=True,
     )
@@ -854,9 +832,7 @@ def mark_commit_status(
         for s in statuses["statuses"]:
             if s["context"].startswith(context + "/"):
                 params["context"] = s["context"]
-                github_api(
-                    "/repos/%s/statuses/%s" % (repository, commit), params=params
-                )
+                github_api("/repos/%s/statuses/%s" % (repository, commit), params=params)
     return
 
 
@@ -868,9 +844,7 @@ def get_branch(repository, branch_name):
 
 def get_git_tag(repository, tag_name):
     get_gh_token(repository)
-    data = github_api(
-        "/repos/%s/git/ref/tags/%s" % (repository, tag_name), method="GET"
-    )
+    data = github_api("/repos/%s/git/ref/tags/%s" % (repository, tag_name), method="GET")
     return data
 
 
@@ -922,13 +896,10 @@ def get_org_package_versions(org, package, package_type="container", token_file=
     )
 
 
-def get_org_package_version(
-    org, package, version_id, package_type="container", token_file=None
-):
+def get_org_package_version(org, package, version_id, package_type="container", token_file=None):
     get_gh_token(token_file=token_file)
     return github_api(
-        "/orgs/%s/packages/%s/%s/versions/%s"
-        % (org, package_type, package, version_id),
+        "/orgs/%s/packages/%s/%s/versions/%s" % (org, package_type, package, version_id),
         method="GET",
     )
 
@@ -951,9 +922,7 @@ def get_commits(repository, branch, until, per_page=1):
 
 def find_tags(repository, name):
     get_gh_token(repository)
-    data = github_api(
-        "/repos/%s/git/matching-refs/tags/%s" % (repository, name), method="GET"
-    )
+    data = github_api("/repos/%s/git/matching-refs/tags/%s" % (repository, name), method="GET")
 
     return data
 

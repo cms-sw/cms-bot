@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from datetime import datetime
+
 from github import Github
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
@@ -44,7 +46,8 @@ repo = gh.get_repo(opts.repository)
 label = [repo.get_label("future-commit")]
 cnt = 0
 for issue in repo.get_issues(state="open", sort="updated", labels=label):
-    if not issue.pull_request:
+    pr = issue.pull_request
+    if not pr:
         continue
     last_commit = get_last_commit(pr)
     if last_commit is None:

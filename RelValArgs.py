@@ -64,7 +64,7 @@ RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", "-w gpu"])
 RELVAL_KEYS["enableIMT"].append(
     [THREADED_ROOT, "--customise FWCore/Concurrency/enableIMT.enableIMT"]
 )
-RELVAL_KEYS["TIMEOUT"].append(["(_ASAN_|_ppc64|_aarch64_)", "14400"])
+RELVAL_KEYS["TIMEOUT"].append(["(ASAN|_ppc64|_aarch64_)", "14400"])
 RELVAL_KEYS["TIMEOUT"].append([".+", "9000"])
 if "CMS_RELVALS_USER_OPTS" in environ:
     RELVAL_KEYS["USER_OVERRIDE_OPTS"].append([".+", environ["CMS_RELVALS_USER_OPTS"]])

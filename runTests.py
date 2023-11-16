@@ -117,8 +117,8 @@ class UnitTester(IBThreadBase):
             return
         precmd = ""
         paralleJobs = MachineCPUCount
-        if ("_ASAN_X" in os.environ["CMSSW_VERSION"]) or (
-            "_UBSAN_X" in os.environ["CMSSW_VERSION"]
+        if ("ASAN" in os.environ["CMSSW_VERSION"]) or (
+            "UBSAN" in os.environ["CMSSW_VERSION"]
         ):
             paralleJobs = int(MachineCPUCount / 2)
         if (self.xType == "GPU") or ("_GPU_X" in os.environ["CMSSW_VERSION"]):

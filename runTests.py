@@ -117,9 +117,7 @@ class UnitTester(IBThreadBase):
             return
         precmd = ""
         paralleJobs = MachineCPUCount
-        if ("ASAN" in os.environ["CMSSW_VERSION"]) or (
-            "UBSAN" in os.environ["CMSSW_VERSION"]
-        ):
+        if ("ASAN" in os.environ["CMSSW_VERSION"]) or ("UBSAN" in os.environ["CMSSW_VERSION"]):
             paralleJobs = int(MachineCPUCount / 2)
         if (self.xType == "GPU") or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
             precmd = "export USER_UNIT_TESTS=cuda ;"

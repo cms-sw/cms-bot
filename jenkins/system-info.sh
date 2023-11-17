@@ -12,7 +12,7 @@ ACTUAL_MEMORY=$($FREE_CMD -m | grep Mem: | awk '{print $2}')
 if [ -d $HOME/bin ] ; then export PATH=$HOME/bin:$PATH ; fi
 OVERRIDE_NPROC=$(nproc)
 OVERRIDE_MEMORY=$(free -m | grep Mem: | awk '{print $2}')
-$(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs --no-run-if-empty kill -9) || true
+#$(pgrep -a 'proofserv.exe'  | grep '^[1-9][0-9]* ' | sed 's| .*||' | xargs --no-run-if-empty kill -9) || true
 for repo in cms cms-ib grid projects unpacked ; do
   ls -l /cvmfs/${repo}.cern.ch >/dev/null 2>&1 || true
 done

@@ -18,31 +18,18 @@ if __name__ == "__main__":
     print("Max calls: ", limit)
     reset_time = datetime.fromtimestamp(gh.rate_limiting_resettime)
     print("Reset time (GMT): ", reset_time)
-
-    JENKINS_PREFIX = "jenkins"
-    try:
-        JENKINS_PREFIX = os.environ["JENKINS_URL"].strip("/").split("/")[-1]
-    except:
-        JENKINS_PREFIX = "jenkins"
+    gh_user = gh.get_user("cms-sw")
 
     current_time = datetime.utcnow() - datetime(1970, 1, 1)
     current_time = round(current_time.total_seconds() * 1000)
 
     gh_api_index = "cmssdt-github-api-" + str(int(((current_time / 86400000) + 4) / 7))
     gh_api_document = "github-api-data"
-    unique_id = (
-        JENKINS_PREFIX
-        + "/"
-        + str(reset_time).split(" ")[0].replace("-", "")
-        + "/"
-        + str(reset_time).split(" ")[1].replace(":", "")
-        + "/"
-        + str(remaining)
-    )
+    unique_id = str(gh_user) + str(current_time)
     unique_id = sha1(unique_id.encode()).hexdigest()
 
     payload = dict()
-    payload["jenkins_server"] = JENKINS_PREFIX
+    payload["jenkins_server"] = gh_user
     payload["api_limit"] = limit
     payload["api_remaining"] = remaining
     payload["reset_time"] = str(reset_time)

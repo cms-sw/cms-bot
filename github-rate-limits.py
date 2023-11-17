@@ -29,7 +29,7 @@ if __name__ == "__main__":
     unique_id = sha1(unique_id.encode()).hexdigest()
 
     payload = dict()
-    payload["jenkins_server"] = str(gh_user)
+    payload["gh_user"] = str(gh_user)
     payload["api_limit"] = limit
     payload["api_remaining"] = remaining
     payload["reset_time"] = str(reset_time)

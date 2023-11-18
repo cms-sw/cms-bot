@@ -462,6 +462,9 @@ if [ "X$RUN_JR_COMP" = Xtrue ]; then
     echo 'Doing histogram, log and root comparison:'
     (${CMSBOT_PYTHON_CMD} $CMS_BOT_DIR/logRootQA.py $WORKSPACE/data/${COMPARISON_RELEASE} $WORKSPACE/data/PR-${PR_NUM} ${JR_COMP_DIR} $WORKSPACE/results/default-comparison  >> $QALOG 2>&1) || true
     (grep -a SUMMARY $QALOG | cut -d' ' -f2-100 >> $JR_COMP_DIR/qaResultsSummary.log 2>&1) || true
+    sed -i -re "s#((added|removed) [1-9][0-9]* lines)#[\1](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/validateJR/logRootQA-events.log)#" $JR_COMP_DIR/qaResultsSummary.log || true
+    sed -i -re "s#(Reco comparison results:.*)#[\1](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/validateJR.html)#" $JR_COMP_DIR/qaResultsSummary.log || true
+    sed -i -re "s#(Total failures:.*)#[\1](${JENKINS_ARTIFACTS_URL}/${COMP_UPLOAD_DIR}/validateJR.html)#" $JR_COMP_DIR/qaResultsSummary.log || true
     echo "<html><body><h3>Default comparison: Workflows with failed comparisons</h3>" > $JRHTML
     echo "<table><tr><td>WF #</td><td>Failed</td></tr>" >> $JRHTML
     grep -a 'Histogram comparison details' $QALOG  | grep '\.log *\[[1-9][0-9]* *, *[1-9][0-9]*'  | sed 's|.*/default-comparison/\(\([^_]*\)_.*\)RelMonComp.*.log \[[1-9][0-9]* *, *\([1-9][0-9]*\) *,.*|<tr><td><a href="\1">\2</a></td><td align="right">\3</td></tr>|' >> $JRHTML

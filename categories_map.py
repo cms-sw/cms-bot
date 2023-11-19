@@ -1809,6 +1809,7 @@ CMSSW_LABELS = {
         "CondTools/BeamSpot",
         "CUDADataFormats/Track",
         "CUDADataFormats/Vertex",
+        "DataFormats/BeamSpot",
         "DataFormats/Track",
         "DataFormats/VertexReco",
         "DataFormats/V0Candidate",

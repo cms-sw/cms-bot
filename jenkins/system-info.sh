@@ -100,7 +100,10 @@ echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
 JAVA_VERSION=$(java -version 2>&1 | grep ' version ' | tr ' ' '\n' | grep '"[1-9]'  | sed 's|"||g' | cut -d. -f1)
-if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
+if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
+  echo "DATA_JAVA=/etc/alternatives/jre_17/bin/java"
+  SLAVE_LABELS="${SLAVE_LABELS} java-17"
+elif [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
   echo "DATA_JAVA=/etc/alternatives/jre_11/bin/java"
   SLAVE_LABELS="${SLAVE_LABELS} java-11"
 else

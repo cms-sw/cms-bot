@@ -116,7 +116,7 @@ if [ "${MULTI_MASTER_SLAVE}" = "true" ] ; then
   #set +x
   let MAX_WAIT_TIME=60*60*12
   WAIT_GAP=60
-  SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+-jar\s+.*/slave.*\s+"
+  SLAVE_CMD_REGEX="^java\s+-DMULTI_MASTER_SLAVE=true\s+.*\s+"
   START_ALL_SHARED=true
   while true ; do
     if [ $(grep '</temporaryOfflineCause>' ${HOME}/nodes/${NODE_NAME}/config.xml | wc -l) -eq 0 ] ; then
@@ -162,6 +162,7 @@ if [ "${JAVA}" = "" ] ; then
   JAVA=$(get_data JAVA)
   if [ "${JAVA}" = "" ] ; then JAVA="java"; fi
 fi
-ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp \
+ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} \
   --add-opens java.base/java.lang=ALL-UNNAMED \
-  --add-opens java.base/java.lang.reflect=ALL-UNNAMED"
+  --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
+  -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"

@@ -162,4 +162,6 @@ if [ "${JAVA}" = "" ] ; then
   JAVA=$(get_data JAVA)
   if [ "${JAVA}" = "" ] ; then JAVA="java"; fi
 fi
-ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp"
+ssh $SSH_OPTS $TARGET "${pre_cmd} ${JAVA} ${EXTRA_JAVA_ARGS} -jar $WORKSPACE/slave.jar -jar-cache $WORKSPACE/tmp \
+  --add-opens java.base/java.lang=ALL-UNNAMED \
+  --add-opens java.base/java.lang.reflect=ALL-UNNAMED"

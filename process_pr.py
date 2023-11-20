@@ -1246,11 +1246,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         and not ok_too_many_commits
         and pr.commits >= MAX_INITIAL_COMMITS_IN_PR
     ):
-        issue.create_comment(
-            f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
-            "Make sure you chose the right target branch.\n"
-            f"{l2s}, you can override this check with `+commit-count`."
-        )
+        if not dryRun:
+            issue.create_comment(
+                f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
+                "Make sure you chose the right target branch.\n"
+                f"{l2s}, you can override this check with `+commit-count`."
+            )
+        return
 
     # Get the commit cache from `already_seen` commit or technical commit
     print("Recalculating signatures")

@@ -12,7 +12,14 @@
         "upgrade", 
         "pdmv"
       ], 
+      "end_date": 1700524800, 
       "start_date": 1691539200
+    }, 
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "start_date": 1700524800
     }
   ], 
   "ChrisMisan": [

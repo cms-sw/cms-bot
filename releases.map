@@ -3985,3 +3985,4 @@ architecture=slc7_amd64_gcc11;label=CMSSW_13_2_8;type=Production;state=Announced
 architecture=el8_aarch64_gcc11;label=CMSSW_13_0_15;type=Production;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc11;label=CMSSW_13_0_15;type=Production;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc11;label=CMSSW_13_0_15;type=Production;state=Announced;prodarch=0;
+architecture=el8_ppc64le_gcc11;label=CMSSW_13_0_15;type=Production;state=Announced;prodarch=0;

@@ -1270,7 +1270,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if seen_commits_match:
             commit_cache = loads(seen_commits_match[1])
 
-    chg_files = set()
+    chg_files = get_changed_files(repo, pr)
 
     if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
         for commit in all_commits:
@@ -1285,8 +1285,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 "type": "commit",
                 "value": cache_entry["files"],
             }
-
-            chg_files.update(cache_entry["files"])
 
     old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
     new_body = (
@@ -1451,7 +1449,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
             signatures["orp"] = "pending"
             for cat in chg_categories:
-                signatures[cat] = "pending"
+                if cat in signing_categories:
+                    signatures[cat] = "pending"
 
     if push_test_issue:
         auto_close_push_test_issue = True

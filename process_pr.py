@@ -30,7 +30,7 @@ from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
-from datetime import datetime
+from datetime import datetime, timezone
 from os.path import join, exists, dirname
 from os import environ
 from github_utils import edit_pr, api_rate_limits, get_pr_commits_reversed
@@ -843,7 +843,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Latest commit sha: ", last_commit.sha)
         print("PR update time", pr.updated_at)
         print("Time UTC:", datetime.utcnow())
-        if last_commit_date > datetime.utcnow():
+        if last_commit_date > datetime.now(timezone.utc):
             print("==== Future commit found ====")
             add_labels = True
             try:
@@ -1281,7 +1281,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 }
 
             cache_entry = commit_cache[commit.sha]
-            events[datetime.fromtimestamp(cache_entry["time"])] = {
+            events[datetime.fromtimestamp(cache_entry["time"], timezone.utc)] = {
                 "type": "commit",
                 "value": cache_entry["files"],
             }
@@ -1445,9 +1445,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             mustClose = False
 
         elif event["type"] == "commit":
-            chg_categories = [
-                x for x in set(cmssw_file2Package(repo_config, f) for f in event["value"])
-            ]
+            chg_categories = set()
+            for fn in event["value"]:
+                chg_categories.update(get_package_categories(cmssw_file2Package(repo_config, fn)))
+
             signatures["orp"] = "pending"
             for cat in chg_categories:
                 signatures[cat] = "pending"

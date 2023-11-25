@@ -28,6 +28,8 @@ WORKSPACE="$2"
 DOCKER_IMG_HOST="$3"
 CLEANUP_WORKSPACE="$4"
 USER_HOME_MD5="$5"
+JAVA_CMD="$6"
+if [ "${JAVA_CMD}" = "" ] ; then JAVA_CMD="java"; fi
 if [ "X$WORKSPACE" = "X" ] ; then echo DATA_ERROR="Missing workspace directory." ;        exit 1; fi
 if [ ! -e  $HOME ] ;         then echo DATA_ERROR="Home directory $HOME not available." ; exit 1; fi
 if [ "${CLEANUP_WORKSPACE}" = "cleanup" ] ; then rm -rf $WORKSPACE ; fi
@@ -99,20 +101,20 @@ fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
-JAVA_VERSION=$(java -version 2>&1 | grep ' version ' | tr ' ' '\n' | grep '"[1-9]'  | sed 's|"||g' | cut -d. -f1)
-### FIXME ###
-#Enable java-17 once jenkins is movd to 2.426 and above
-####
-#if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
-#  echo "DATA_JAVA=/etc/alternatives/jre_17/bin/java"
-#  SLAVE_LABELS="${SLAVE_LABELS} java-17"
-if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
-  echo "DATA_JAVA=/etc/alternatives/jre_11/bin/java"
-  SLAVE_LABELS="${SLAVE_LABELS} java-11"
-else
-  echo "DATA_JAVA=java"
-  SLAVE_LABELS="${SLAVE_LABELS} java-${JAVA_VERSION} java-default"
+if [ "${JAVA_CMD}" = "java" ] ; then
+  #Enable java-17 once jenkins is movd to 2.426 and above
+  #if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
+  #  JAVA_CMD="/etc/alternatives/jre_17/bin/java"
+  if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
+    JAVA_CMD="/etc/alternatives/jre_11/bin/java"
+  else
+    SLAVE_LABELS="${SLAVE_LABELS} java-default"
+  fi
 fi
+echo "DATA_JAVA=${JAVA_CMD}"
+JAVA_VERSION=$(${JAVA_CMD} -version 2>&1 | grep ' version ' | tr ' ' '\n' | grep '"[1-9]'  | sed 's|"||g' | cut -d. -f1)
+SLAVE_LABELS="${SLAVE_LABELS} java-${JAVA_VERSION}"
+
 
 #Check for EOS
 [ -e /eos/cms/store ] && SLAVE_LABELS="${SLAVE_LABELS} eos"

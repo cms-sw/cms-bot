@@ -29,6 +29,7 @@ LABEL_TYPES = {
 TYPE_COMMANDS = {
     "bug-fix": ["b8860b", "bug(-fix|fix|)", "type"],
     "new-feature": [LABEL_COLORS["info"], "(new-|)(feature|idea)", "type"],
+    "root": [LABEL_COLORS["info"], "root", "mtype"],
     "documentation": [LABEL_COLORS["doc"], "doc(umentation|)", "mtype"],
     "performance-improvements": [
         "5b9ee3",

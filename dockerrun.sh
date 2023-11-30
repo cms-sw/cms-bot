@@ -13,10 +13,7 @@ function dockerrun()
     IMG="cmssw/${os}:${arch}"
     if [ $(uname -m) != "${arch}" ] ; then
       CONTAINER_TYPE="qemu"
-      QEMU_ARGS="$PROOTDIR/qemu-${arch}"
-      if [ $(grep 'VERSION_ID="9' /etc/os-release | wc -l) -gt 0 ] ; then
-        QEMU_ARGS="$PROOTDIR/latest/qemu-${arch}"
-      fi
+      QEMU_ARGS="$PROOTDIR/latest/qemu-${arch}"
       if [ "${arch}" = "aarch64" ] ; then
         QEMU_ARGS="${QEMU_ARGS} -cpu cortex-a57"
       elif [ "${arch}" = "ppc64le" ] ; then

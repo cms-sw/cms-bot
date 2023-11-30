@@ -1,8 +1,8 @@
 #!/bin/bash -ex
 QEMU_RELS="https://github.com/multiarch/qemu-user-static/releases/download/"
 VER="$1"
-SET_LATEST=false
-[ "${2}" = "True" ] && SET_LATEST=true
+SET_LATEST=true
+[ "${2}" != "true" ] && SET_LATEST=false
 
 if [ "$VER" = "" ] ; then
   echo "ERROR: Missing qemu version."

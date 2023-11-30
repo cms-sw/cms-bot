@@ -15,7 +15,7 @@ INST_DIR="${CVMFS_BASEDIR}/proot"
 if [ ! -d ${INST_DIR}/${VER} ] ; then
   mkdir -p $VER
   for arch in ppc64le aarch64 ; do
-    wget -O $VER/qemu-${arch} "${QEMU_RELS}/v${VER}/qemu-${arch}-static"
+    wget -O $VER/qemu-${arch} "${QEMU_RELS}/${VER}/qemu-${arch}-static"
     chmod +x $VER/qemu-${arch}
   done
 fi

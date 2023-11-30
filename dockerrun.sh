@@ -39,7 +39,7 @@ function dockerrun()
       ;;
     qemu)
       ls ${IMAGE_BASE} >/dev/null 2>&1
-      CMD_ARG="-b /tmp:tmp -b /cvmfs:/cvmfs -w ${THISDIR}"
+      CMD_ARG="-b /tmp:/tmp -b /cvmfs:/cvmfs -w ${THISDIR}"
       if [ -d /build ] ; then CMD_ARG="-b /build:/build ${CMD_ARG}"; fi
       if [ "${MOUNT_DIRS}" != "" ] ; then for p in ${MOUNT_DIRS} ; do CMD_ARG="${CMD_ARG} -b $p"; done ; fi
       ARGS="cd ${THISDIR}; $@"

@@ -9,7 +9,7 @@ if [ "$VER" = "" ] ; then
   exit 1
 fi
 
-source $(dirname $0/..)/utils.sh
+source $(dirname $0)/utils.sh
 INST_DIR="${CVMFS_BASEDIR}/proot"
 
 if [ ! -d ${INST_DIR}/${VER} ] ; then

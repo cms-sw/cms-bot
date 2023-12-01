@@ -1741,6 +1741,12 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/PatUtils",
         "PhysicsTools/Scouting",
     ],
+    "l1scouting": [
+        "DataFormats/L1Scouting",
+        "DataFormats/L1ScoutingRawData",
+        "EventFilter/L1ScoutingRawToDigi",
+        "L1TriggerScouting/Utilities",
+    ],
 }
 
 # Just like CMSSW_CATEGORIES but it creates non-blocking (no signature needed) github labels

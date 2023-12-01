@@ -68,7 +68,7 @@ CMSSW_L2 = {
     "civanch": ["simulation", "geometry", "fastsim"],
     "bsunanda": ["geometry"],
     "davidlange6": ["operations"],
-    "emeschi": ["daq"],
+    "emeschi": ["daq", "l1scouting"],
     "vlimant": ["xpog"],
     "simonepigazzini": ["xpog"],
     "fwyzard": ["heterogeneous"],
@@ -102,6 +102,7 @@ CMSSW_L2 = {
     "saumyaphor4252": ["alca", "db"],
     "perrotta": ["alca", "db"],
     "consuegs": ["alca", "db"],
+    "Mmiglio": ["l1scouting"],
     CMSBUILD_USER: ["tests"],
     # dpgs
     "connorpa": ["trk-dpg"],

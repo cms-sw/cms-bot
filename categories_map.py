@@ -1202,6 +1202,7 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/PatUtils",
         "PhysicsTools/SelectorUtils",
         "PhysicsTools/TensorFlow",
+        "PhysicsTools/PyTorch",
         "RecoBTag/BTagTools",
         "RecoBTag/CTagging",
         "RecoBTag/Combined",

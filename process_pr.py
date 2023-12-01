@@ -808,123 +808,115 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if is_closed_branch(pr.base.ref):
             mustClose = True
 
-        if issue.pull_request:
-            pr = repo.get_pull(prId)
-
-            # Process the changes for the given pull request so that we can determine the
-            # signatures it requires.
-            if cmssw_repo or not external_repo:
-                if cmssw_repo:
-                    if pr.base.ref == "master":
-                        signing_categories.add("code-checks")
-                    updateMilestone(repo, issue, pr, dryRun)
-
-                chg_files = get_changed_files(repo, pr)
-                packages = sorted(list(set(cmssw_file2Package(repo_config, f) for f in chg_files)))
-                for pkg_file in chg_files:
-                    for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
-                        for regex in pkgs_regexp:
-                            if regex.match(pkg_file):
-                                extra_labels["mtype"].append(ex_lab)
-                                print(
-                                    "Non-Blocking label:%s:%s:%s"
-                                    % (ex_lab, regex.pattern, pkg_file)
-                                )
-                                break
-                if not extra_labels["mtype"]:
-                    del extra_labels["mtype"]
-                print("Extra non-blocking labels:", extra_labels)
-                print("First Package: ", packages[0])
-                create_test_property = True
-            else:
-                add_external_category = True
-                packages = {"externals/" + repository}
-                ex_pkg = external_to_package(repository)
-                if ex_pkg:
-                    packages.add(ex_pkg)
-                if (repo_org != GH_CMSSW_ORGANIZATION) or (
-                    repo_name in VALID_CMS_SW_REPOS_FOR_TESTS
-                ):
-                    create_test_property = True
-                if (repo_name == GH_CMSDIST_REPO) and (
-                    not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref)
-                ):
-                    print("Skipping PR as it does not belong to valid CMSDIST branch")
-                    return
-
-            print("Following packages affected:")
-            print("\n".join(packages))
-            for package in packages:
-                package_categories[package] = set([])
-                for category in get_package_categories(package):
-                    package_categories[package].add(category)
-                    pkg_categories.add(category)
-            signing_categories.update(pkg_categories)
-
-            # For PR, we always require tests.
-            signing_categories.add("tests")
-            if add_external_category:
-                signing_categories.add("externals")
-            if cms_repo:
-                print("This pull request requires ORP approval")
-                signing_categories.add("orp")
-
-            print("Following categories affected:")
-            print("\n".join(signing_categories))
-
-            signatures = dict([(x, "pending") for x in signing_categories])
-
+        # Process the changes for the given pull request so that we can determine the
+        # signatures it requires.
+        if cmssw_repo or not external_repo:
             if cmssw_repo:
-                # If there is a new package, add also a dummy "new" category.
-                all_packages = [
-                    package
-                    for category_packages in list(CMSSW_CATEGORIES.values())
-                    for package in category_packages
-                ]
-                has_category = all([package in all_packages for package in packages])
-                if not has_category:
-                    new_package_message = (
-                        "\nThe following packages do not have a category, yet:\n\n"
-                    )
-                    new_package_message += (
-                        "\n".join([package for package in packages if not package in all_packages])
-                        + "\n"
-                    )
-                    new_package_message += "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py to assign category\n"
-                    print(new_package_message)
-                    signing_categories.add("new-package")
+                if pr.base.ref == "master":
+                    signing_categories.add("code-checks")
+                updateMilestone(repo, issue, pr, dryRun)
 
-            # Add watchers.yaml information to the WATCHERS dict.
-            WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
-            # Given the files modified by the PR, check if there are additional developers watching one or more.
-            author = pr.user.login
-            watchers = set(
-                [
-                    user
-                    for chg_file in chg_files
-                    for user, watched_regexp in list(WATCHERS.items())
-                    for regexp in watched_regexp
-                    if re.match("^" + regexp + ".*", chg_file) and user != author
-                ]
-            )
-            # Handle category watchers
-            catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
-            non_block_cats = [] if not "mtype" in extra_labels else extra_labels["mtype"]
-            for user, cats in list(catWatchers.items()):
-                for cat in cats:
-                    if (cat in signing_categories) or (cat in non_block_cats):
-                        print("Added ", user, " to watch due to cat", cat)
-                        watchers.add(user)
+            chg_files = get_changed_files(repo, pr)
+            packages = sorted(list(set(cmssw_file2Package(repo_config, f) for f in chg_files)))
+            for pkg_file in chg_files:
+                for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
+                    for regex in pkgs_regexp:
+                        if regex.match(pkg_file):
+                            extra_labels["mtype"].append(ex_lab)
+                            print(
+                                "Non-Blocking label:%s:%s:%s" % (ex_lab, regex.pattern, pkg_file)
+                            )
+                            break
+            if not extra_labels["mtype"]:
+                del extra_labels["mtype"]
+            print("Extra non-blocking labels:", extra_labels)
+            print("First Package: ", packages[0])
+            create_test_property = True
+        else:
+            add_external_category = True
+            packages = {"externals/" + repository}
+            ex_pkg = external_to_package(repository)
+            if ex_pkg:
+                packages.add(ex_pkg)
+            if (repo_org != GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
+                create_test_property = True
+            if (repo_name == GH_CMSDIST_REPO) and (
+                not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref)
+            ):
+                print("Skipping PR as it does not belong to valid CMSDIST branch")
+                return
 
-            # Handle watchers
-            watchingGroups = read_repo_file(repo_config, "groups.yaml", {})
-            for watcher in [x for x in watchers]:
-                if watcher not in watchingGroups:
-                    continue
-                watchers.remove(watcher)
-                watchers.update(set(watchingGroups[watcher]))
-            watchers = set([gh_user_char + u for u in watchers])
-            print("Watchers " + ", ".join(watchers))
+        print("Following packages affected:")
+        print("\n".join(packages))
+        for package in packages:
+            package_categories[package] = set([])
+            for category in get_package_categories(package):
+                package_categories[package].add(category)
+                pkg_categories.add(category)
+        signing_categories.update(pkg_categories)
+
+        # For PR, we always require tests.
+        signing_categories.add("tests")
+        if add_external_category:
+            signing_categories.add("externals")
+        if cms_repo:
+            print("This pull request requires ORP approval")
+            signing_categories.add("orp")
+
+        print("Following categories affected:")
+        print("\n".join(signing_categories))
+
+        signatures = dict([(x, "pending") for x in signing_categories])
+
+        if cmssw_repo:
+            # If there is a new package, add also a dummy "new" category.
+            all_packages = [
+                package
+                for category_packages in list(CMSSW_CATEGORIES.values())
+                for package in category_packages
+            ]
+            has_category = all([package in all_packages for package in packages])
+            if not has_category:
+                new_package_message = "\nThe following packages do not have a category, yet:\n\n"
+                new_package_message += (
+                    "\n".join([package for package in packages if not package in all_packages])
+                    + "\n"
+                )
+                new_package_message += "Please create a PR for https://github.com/cms-sw/cms-bot/blob/master/categories_map.py to assign category\n"
+                print(new_package_message)
+                signing_categories.add("new-package")
+
+        # Add watchers.yaml information to the WATCHERS dict.
+        WATCHERS = read_repo_file(repo_config, "watchers.yaml", {})
+        # Given the files modified by the PR, check if there are additional developers watching one or more.
+        author = pr.user.login
+        watchers = set(
+            [
+                user
+                for chg_file in chg_files
+                for user, watched_regexp in list(WATCHERS.items())
+                for regexp in watched_regexp
+                if re.match("^" + regexp + ".*", chg_file) and user != author
+            ]
+        )
+        # Handle category watchers
+        catWatchers = read_repo_file(repo_config, "category-watchers.yaml", {})
+        non_block_cats = [] if not "mtype" in extra_labels else extra_labels["mtype"]
+        for user, cats in list(catWatchers.items()):
+            for cat in cats:
+                if (cat in signing_categories) or (cat in non_block_cats):
+                    print("Added ", user, " to watch due to cat", cat)
+                    watchers.add(user)
+
+        # Handle watchers
+        watchingGroups = read_repo_file(repo_config, "groups.yaml", {})
+        for watcher in [x for x in watchers]:
+            if watcher not in watchingGroups:
+                continue
+            watchers.remove(watcher)
+            watchers.update(set(watchingGroups[watcher]))
+        watchers = set([gh_user_char + u for u in watchers])
+        print("Watchers " + ", ".join(watchers))
 
         all_commits = get_pr_commits_reversed(pr)
 

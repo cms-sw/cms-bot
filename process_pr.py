@@ -1410,7 +1410,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         return
 
     # Get the commit cache from `already_seen` commit or technical commit
-    print("Searching for commit cache")
+    print("Checking for commit cache")
     cache_comment = None
 
     if technical_comment:

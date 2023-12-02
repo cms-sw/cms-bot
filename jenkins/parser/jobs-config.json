@@ -179,6 +179,11 @@
         "jobName": "ib-run-iwyu",
         "errorType": [],
         "maxTime": "6"
+      },
+      {
+	"jobName": "ib-run-pr-wait-deployment",
+	"errorType": ["timedOut", "hudsonConnection", "busError", "cvmfsFailure", "afsFailure", "workspaceFailure"],
+	"maxTime": "3"
       }
     ],
     "errorMsg": {

@@ -45,12 +45,7 @@ def get_page_range():
 
 
 def _check_rate_limits(
-    rate_limit,
-    rate_limit_max,
-    rate_limiting_resettime,
-    msg=True,
-    when_slow=False,
-    prefix="",
+    rate_limit, rate_limit_max, rate_limiting_resettime, msg=True, when_slow=False, prefix=""
 ):
     global GH_TOKENS, GH_TOKEN_INDEX
     from calendar import timegm
@@ -103,12 +98,7 @@ def _check_rate_limits(
 
 def check_rate_limits(msg=True, when_slow=False, prefix=""):
     _check_rate_limits(
-        GH_RATE_LIMIT[0],
-        GH_RATE_LIMIT[1],
-        GH_RATE_LIMIT[2],
-        msg,
-        when_slow,
-        prefix=prefix,
+        GH_RATE_LIMIT[0], GH_RATE_LIMIT[1], GH_RATE_LIMIT[2], msg, when_slow, prefix=prefix
     )
 
 
@@ -466,9 +456,7 @@ def add_organization_member(org, member, role="member"):
 
 def invite_organization_member(org, member, role="direct_member"):
     return github_api(
-        "/orgs/%s/invitations" % org,
-        params={"role": role, "invitee_id": member},
-        method="POST",
+        "/orgs/%s/invitations" % org, params={"role": role, "invitee_id": member}, method="POST"
     )
 
 
@@ -519,9 +507,7 @@ def set_issue_labels(repo, issue_num, labels=[]):
 def remove_issue_labels_all(repo, issue_num):
     get_gh_token(repo)
     return github_api(
-        uri="/repos/%s/issues/%s/labels" % (repo, issue_num),
-        method="DELETE",
-        status=[204],
+        uri="/repos/%s/issues/%s/labels" % (repo, issue_num), method="DELETE", status=[204]
     )
 
 
@@ -621,14 +607,7 @@ def github_api(
             if max_pages > 0 and page > max_pages:
                 break
             data += github_api(
-                uri,
-                params,
-                method,
-                headers,
-                page,
-                raw=raw,
-                per_page=per_page,
-                all_pages=False,
+                uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False
             )
     return data
 
@@ -737,8 +716,7 @@ def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
     get_gh_token(repository)
     params = {"content": emoji}
     return github_api(
-        "/repos/%s/issues/comments/%s/reactions" % (repository, comment_id),
-        params=params,
+        "/repos/%s/issues/comments/%s/reactions" % (repository, comment_id), params=params
     )
 
 
@@ -784,8 +762,7 @@ def get_release_by_tag(repository, tag):
 def get_comment_emojis(comment_id, repository):
     get_gh_token(repository)
     return github_api(
-        "/repos/%s/issues/comments/%s/reactions" % (repository, comment_id),
-        method="GET",
+        "/repos/%s/issues/comments/%s/reactions" % (repository, comment_id), method="GET"
     )
 
 
@@ -813,12 +790,7 @@ def mark_commit_status(
     reset=False,
 ):
     get_gh_token(repository)
-    params = {
-        "state": state,
-        "target_url": url,
-        "description": description,
-        "context": context,
-    }
+    params = {"state": state, "target_url": url, "description": description, "context": context}
     github_api("/repos/%s/statuses/%s" % (repository, commit), params=params)
     if reset:
         statuses = get_combined_statuses(commit, repository)
@@ -881,9 +853,7 @@ def get_org_packages(org, package_type="container", visibility=None, token_file=
 def get_org_package(org, package, package_type="container", token_file=None):
     get_gh_token(token_file=token_file)
     return github_api(
-        "/orgs/%s/packages/%s/%s" % (org, package_type, package),
-        method="GET",
-        all_pages=True,
+        "/orgs/%s/packages/%s/%s" % (org, package_type, package), method="GET", all_pages=True
     )
 
 
@@ -943,7 +913,6 @@ def get_last_commit(pr):
 
 def get_pr_commits_reversed(pr):
     """
-
     :param pr:
     :return: PaginatedList[Commit] | List[Commit]
     """

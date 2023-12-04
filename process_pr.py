@@ -1393,6 +1393,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 "value": cache_entry["files"],
             }
 
+    print("Saving commit cache")
     old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
     new_body = (
         REGEX_COMMITS_CACHE.sub("", old_body)
@@ -1414,8 +1415,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             print("DRY RUN: Creating technical comment with text")
             print(new_body)
 
-    print("Events:", events)
     events = dict(sorted(events.items()))
+    import pprint
+
+    print("Events:", pprint.pformat(events))
     print("Recalculating signatures")
 
     for event in events.values():
@@ -1440,12 +1443,19 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             else:
                 print(f"Ignoring event: {signing_categories}, {selected_cats}")
         elif event["type"] == "commit":
-            chg_categories = {"orp", "tests", "code-checks"}
-            for fn in event["value"]:
-                chg_categories.update(get_package_categories(cmssw_file2Package(repo_config, fn)))
+            if cmssw_repo:
+                chg_categories = {"orp", "tests", "code-checks"}
+                for fn in event["value"]:
+                    chg_categories.update(
+                        get_package_categories(cmssw_file2Package(repo_config, fn))
+                    )
 
-            for cat in chg_categories:
-                if cat in signing_categories:
+                for cat in chg_categories:
+                    if cat in signing_categories:
+                        signatures[cat] = "pending"
+            else:
+                print("Resetting all signatures for external/user repos")
+                for cat in signing_categories:
                     signatures[cat] = "pending"
 
     if push_test_issue:
@@ -1553,7 +1563,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if (
                 bot_status
                 and bot_status.target_url == turl
-                and signatures["tests"] == "pending"
+                # and signatures["tests"] == "pending"
                 and (" requested by " in bot_status.description)
             ):
                 signatures["tests"] = "started"

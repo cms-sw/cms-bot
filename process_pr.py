@@ -26,7 +26,7 @@ from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
-from datetime import datetime, timezone
+from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
 from github_utils import edit_pr, api_rate_limits, get_pr_commits_reversed
@@ -126,6 +126,8 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
+REGEX_COMMITS_CACHE = re.compile(r"<!-- commits cache: (.*) -->")
+REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
@@ -905,8 +907,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Latest commit message: ", last_commit.message.encode("ascii", "ignore").decode())
         print("Latest commit sha: ", last_commit.sha)
         print("PR update time", pr.updated_at)
-        print("Time UTC:", datetime.now(timezone.utc)())
-        if last_commit_date > datetime.now(timezone.utc)():
+        print("Time UTC:", datetime.utcnow())
+        if last_commit_date > datetime.utcnow():
             print("==== Future commit found ====")
             add_labels = True
             try:
@@ -1386,7 +1388,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 }
 
             cache_entry = commit_cache[commit.sha]
-            events[datetime.fromtimestamp(cache_entry["time"], timezone.utc)] = {
+            events[datetime.fromtimestamp(cache_entry["time"])] = {
                 "type": "commit",
                 "value": cache_entry["files"],
             }
@@ -1412,13 +1414,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             print("DRY RUN: Creating technical comment with text")
             print(new_body)
 
-    events = dict(sorted(events.items()))
     print("Events:", events)
+    events = dict(sorted(events.items()))
     print("Recalculating signatures")
 
     for event in events.values():
         if event["type"] == "sign":
-            print("Sign:", event["value"])
             selected_cats = event["value"]["selected_cats"]
             ctype = event["value"]["ctype"]
             if any(x in signing_categories for x in selected_cats):

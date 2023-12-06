@@ -1384,7 +1384,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if commit.sha not in commit_cache:
                 commit_cache[commit.sha] = {
                     "time": int(commit.commit.committer.date.timestamp()),
-                    "files": get_changed_files_in_commit(repo, commit),
+                    "files": sorted(get_changed_files_in_commit(repo, commit)),
                 }
 
             cache_entry = commit_cache[commit.sha]
@@ -1432,7 +1432,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         if (
                             (test_comment is None)
                             and ((repository in auto_test_repo) or ("*" in auto_test_repo))
-                            and sign != "code-checks"
+                            and sign not in ("code-checks", "tests", "orp")
                         ):
                             test_comment = event["value"]["comment"]
                         # if sign == "orp":

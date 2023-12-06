@@ -1399,6 +1399,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
         for commit in all_commits:
             if commit.sha not in commit_cache:
+                api_rate_limits(gh)
                 commit_cache[commit.sha] = {
                     "time": int(commit.commit.committer.date.timestamp()),
                     "files": sorted(

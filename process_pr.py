@@ -26,10 +26,16 @@ from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
+import zlib, base64
 from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
-from github_utils import edit_pr, api_rate_limits, get_pr_commits_reversed
+from github_utils import (
+    edit_pr,
+    api_rate_limits,
+    get_pr_commits_reversed,
+    get_commit,
+)
 from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji, set_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
@@ -205,11 +211,6 @@ def get_commenter_categories(commenter, comment_date):
         if ("end_date" not in item) or (comment_date < item["end_date"]):
             return item["category"]
     return []
-
-
-def get_changed_files_in_commit(repo, commit_obj):
-    commit = repo.get_commit(commit_obj.commit.sha)
-    return [x.filename for x in commit.files]
 
 
 def get_package_categories(package):
@@ -660,8 +661,19 @@ def get_status_state(context, statuses):
     return ""
 
 
-def dumps_compact(value):
-    return dumps(dict(sorted(value.items())), separators=(",", ":"))
+def dumps_maybe_compress(value):
+    json_ = dumps(value, separators=(",", ":"), sort_keys=True)
+    if len(json_) > 32000:
+        return "b64:" + base64.encodebytes(zlib.compress(json_.encode())).decode("ascii", "ignore")
+    else:
+        return json_
+
+
+def loads_maybe_decompress(data):
+    if data.startswith("b64:"):
+        data = zlib.decompress(base64.decodebytes(data[4:].encode())).decode()
+
+    return loads(data)
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
@@ -1380,14 +1392,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         seen_commits_match = REGEX_COMMITS_CACHE.search(cache_comment.body)
         if seen_commits_match:
             print("Loading commit cache")
-            commit_cache = loads(seen_commits_match[1])
+            commit_cache = loads_maybe_decompress(seen_commits_match[1])
 
     if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
         for commit in all_commits:
             if commit.sha not in commit_cache:
                 commit_cache[commit.sha] = {
                     "time": int(commit.commit.committer.date.timestamp()),
-                    "files": sorted(get_changed_files_in_commit(repo, commit)),
+                    "files": sorted(
+                        x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
+                    ),
                 }
 
             cache_entry = commit_cache[commit.sha]
@@ -1401,22 +1415,25 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     new_body = (
         REGEX_COMMITS_CACHE.sub("", old_body)
         + "<!-- commits cache: "
-        + dumps_compact(commit_cache)
+        + dumps_maybe_compress(commit_cache)
         + " -->"
     )
-    if not dryRun:
-        if cache_comment:
-            if old_body != new_body:
-                cache_comment.edit(new_body)
+    if len(new_body) <= 65535:
+        if not dryRun:
+            if cache_comment:
+                if old_body != new_body:
+                    cache_comment.edit(new_body)
+            else:
+                issue.create_comment(new_body)
         else:
-            issue.create_comment(new_body)
+            if cache_comment:
+                print("DRY RUN: Updating existing comment with text")
+                print(new_body)
+            else:
+                print("DRY RUN: Creating technical comment with text")
+                print(new_body)
     else:
-        if cache_comment:
-            print("DRY RUN: Updating existing comment with text")
-            print(new_body)
-        else:
-            print("DRY RUN: Creating technical comment with text")
-            print(new_body)
+        raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
 
     events = dict(sorted(events.items()))
     import pprint

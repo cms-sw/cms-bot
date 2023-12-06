@@ -4000,3 +4000,4 @@ architecture=slc7_amd64_gcc12;label=CMSSW_14_0_0_pre1;type=Development;state=Ann
 architecture=el9_aarch64_gcc12;label=CMSSW_13_3_1;type=Production;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc12;label=CMSSW_13_3_1;type=Production;state=Announced;prodarch=0;
 architecture=el8_amd64_gcc12;label=CMSSW_13_3_1;type=Production;state=Announced;prodarch=1;
+architecture=el8_ppc64le_gcc12;label=CMSSW_13_3_1;type=Production;state=Announced;prodarch=0;

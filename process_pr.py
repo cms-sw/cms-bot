@@ -1031,9 +1031,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             and not technical_comment
         ):
             technical_comment = comment
+            continue
 
         if (commenter == cmsbuild_user) and "This PR contains too many commits" in first_line:
             warned_too_many_commits = True
+            continue
 
         if commenter in CMSSW_ISSUES_TRACKERS and re.match(
             r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line
@@ -1435,13 +1437,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     else:
         raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
 
-    events = dict(sorted(events.items()))
+    events = sorted(events.items())
     import pprint
 
     print("Events:", pprint.pformat(events))
     print("Recalculating signatures")
 
-    for event in events.values():
+    for _, event in events:
         if event["type"] == "sign":
             selected_cats = event["value"]["selected_cats"]
             ctype = event["value"]["ctype"]
@@ -1471,6 +1473,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     chg_categories.update(
                         get_package_categories(cmssw_file2Package(repo_config, fn))
                     )
+
+                chg_categories.update(assign_cats.keys())
 
                 for cat in chg_categories:
                     if cat in signing_categories:

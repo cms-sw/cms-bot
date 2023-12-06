@@ -661,7 +661,7 @@ def get_status_state(context, statuses):
 
 
 def dumps_compact(value):
-    return dumps(value, separators=(",", ":"))
+    return dumps(dict(sorted(value.items())), separators=(",", ":"))
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
@@ -1027,6 +1027,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line
         ):
             ok_too_many_commits = True
+            continue
 
         assign_type, new_cats = get_assign_categories(first_line)
         if new_cats:

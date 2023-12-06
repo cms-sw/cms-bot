@@ -127,7 +127,7 @@ def get_wf_error_msg(out_file, filename=True):
             elif "----- Begin Fatal Exception" in line:
                 error_lines += "\n" + line
                 reading = True
-            elif 'A fatal system signal has occurred:' in line:
+            elif "A fatal system signal has occurred:" in line:
                 error_lines += "\n" + line
                 break
     if not error_lines and filename:

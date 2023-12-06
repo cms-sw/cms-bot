@@ -744,7 +744,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     ok_too_many_commits = False
     warned_too_many_commits = False
 
-    l2s = ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
@@ -1024,7 +1023,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if (commenter == cmsbuild_user) and "This PR contains too many commits" in first_line:
             warned_too_many_commits = True
 
-        if commenter in l2s and re.match(
+        if commenter in CMSSW_ISSUES_TRACKERS and re.match(
             r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line
         ):
             ok_too_many_commits = True
@@ -1359,7 +1358,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             issue.create_comment(
                 f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
                 "Make sure you chose the right target branch.\n"
-                f"{l2s}, you can override this check with `+commit-count`."
+                f"{', '.join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])}, "
+                "you can override this check with `+commit-count`."
             )
         return
 

@@ -1429,8 +1429,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if ctype == "+1":
                     for sign in selected_cats:
                         signatures[sign] = "approved"
-                        if (test_comment is None) and (
-                            (repository in auto_test_repo) or ("*" in auto_test_repo)
+                        if (
+                            (test_comment is None)
+                            and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+                            and sign != "code-checks"
                         ):
                             test_comment = event["value"]["comment"]
                         # if sign == "orp":

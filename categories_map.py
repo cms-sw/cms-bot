@@ -1737,6 +1737,13 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/PatUtils",
         "PhysicsTools/Scouting",
     ],
+    "ml": [
+        "PhysicsTools/PyTorch",
+        "PhysicsTools/TensorFlow",
+        "PhysicsTools/ONNXRuntime",
+        "PhysicsTools/MVAComputer",
+        "PhysicsTools/MVATrainer",
+    ],
 }
 
 # Just like CMSSW_CATEGORIES but it creates non-blocking (no signature needed) github labels
@@ -1828,11 +1835,4 @@ CMSSW_LABELS = {
         "Validation/Tracking",
     ],
     "hcal": ["DPGAnalysis/HcalNanoAOD"],
-    "ml": [
-        "PhysicsTools/PyTorch",
-        "PhysicsTools/TensorFlow",
-        "PhysicsTools/ONNXRuntime",
-        "PhysicsTools/MVAComputer",
-        "PhysicsTools/MVATrainer"
-    ]
 }

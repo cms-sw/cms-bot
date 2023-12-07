@@ -158,7 +158,7 @@ CMSSW_L2 = {
     "jordan-martins": ["ppd"],
     # ML
     "valsdav": ["ml"],
-    "wpmccormack": ["ml"]
+    "wpmccormack": ["ml"],
 }
 
 # All CMS_SDT members can sign externals ( e.g Pull Requests in cms-sw/cmsdist , cms-data and cms-externals

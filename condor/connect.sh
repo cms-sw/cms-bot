@@ -1,8 +1,4 @@
 #!/bin/bash -e
-if [ "$DEBUG" = "true" ] ; then
-  export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-  set -x
-fi
 #########################################
 JOBS_STATUS_0='Unexpanded'
 JOBS_STATUS_1='Idle'

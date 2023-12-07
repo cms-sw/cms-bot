@@ -556,10 +556,15 @@ def github_api(
     last_page=False,
     all_pages=True,
     max_pages=-1,
-    status=[],
+    status=None,
 ):
+    if status is None:
+        status = []
+
+    check_rate_limits(msg=False)
+
     global GH_RATE_LIMIT, GH_PAGE_RANGE
-    if max_pages > 0 and page > max_pages:
+    if max_pages > 0 and page > max_pages:  # noqa for readability
         return "[]" if raw else []
     if not params:
         params = {}

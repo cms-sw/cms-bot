@@ -522,6 +522,29 @@ def get_rate_limits():
     return github_api(uri="/rate_limit", method="GET")
 
 
+def merge_dicts(old, new):
+    for k, v in new.items():
+        if k not in old:
+            old[k] = new[k]
+            continue
+
+        if isinstance(v, dict):
+            old[k] = merge_dicts(old[k], new[k])
+            continue
+
+        if isinstance(v, list):
+            old[k].extend(v)
+            continue
+
+        if old[k] != new[k]:
+            raise RuntimeError(
+                f"Unable to merge dictionaries: value for key {k} differs. "
+                "Old {old[k]} {type(old[k])}, new {new[k]}, {type(new[k])}"
+            )
+
+    return old
+
+
 def github_api(
     uri,
     params=None,
@@ -604,11 +627,12 @@ def github_api(
                 all_pages=False,
             )
         for page in GH_PAGE_RANGE:
-            if max_pages > 0 and page > max_pages:
+            if max_pages > 0 and page > max_pages:  # noqa for readability
                 break
-            data += github_api(
+            new_data = github_api(
                 uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False
             )
+            data = merge_dicts(data, new_data)
     return data
 
 
@@ -645,6 +669,10 @@ def pr_get_changed_files(pr):
         except:
             pass
     return rez
+
+
+def get_commit(repository, commit_sha):
+    return github_api(f"/repos/{repository}/commits/{commit_sha}", method="GET")
 
 
 def get_unix_time(data_obj):

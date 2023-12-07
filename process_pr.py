@@ -1345,11 +1345,28 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
                     print("Comment message:", first_line)
                     signatures["tests"] = "pending"
+                    events[comment.created_at] = {
+                        "type": "sign",
+                        "value": {
+                            "ctype": "pending",
+                            "selected_cats": ["tests"],
+                            "comment": comment,
+                        },
+                    }
                     continue
                 elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] == "pending"):
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
+                    events[comment.created_at] = {
+                        "type": "sign",
+                        "value": {
+                            "ctype": "pending",
+                            "selected_cats": ["tests"],
+                            "comment": comment,
+                        },
+                    }
+                    continue
                 elif REGEX_TEST_IGNORE.match(first_line):
                     reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
                     if reason not in TEST_IGNORE_REASON:
@@ -1357,7 +1374,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         if not dryRun:
                             set_comment_emoji(comment.id, repository, "-1")
                         reason = ""
-
                     if reason:
                         override_tests_failure = reason
                         if not dryRun:
@@ -1463,8 +1479,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         signatures[sign] = "rejected"
                         if sign == "orp":
                             mustClose = False
+                elif ctype == "pending":
+                    if selected_cats != ["tests"]:
+                        print(f"Invalid signature: {event['value']}")
+                        exit(1)
+                    else:
+                        signatures["tests"] = "pending"
             else:
-                print(f"Ignoring event: {signing_categories}, {selected_cats}")
+                print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
         elif event["type"] == "commit":
             if cmssw_repo:
                 chg_categories = {"orp", "tests", "code-checks"}
@@ -1588,7 +1610,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if (
                 bot_status
                 and bot_status.target_url == turl
-                # and signatures["tests"] == "pending"
+                and signatures["tests"] == "pending"
                 and (" requested by " in bot_status.description)
             ):
                 signatures["tests"] = "started"

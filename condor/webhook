@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 CONDOR_USER="$(echo ${LABELS} | tr ' ' '\n' | grep '^user-' | sed 's|^user-||')"
-CONDOR_SUMBITTER_SYSTEM="lxplus.cern.ch"
+CONDOR_SUMBITTER_SYSTEM="lxplus7.cern.ch"
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 CONDOR_JOB_ID=$(echo $CONDOR_JOB_ID | sed 's|\.0$||')
 NODE_NAME="grid${CONDOR_JOB_ID}"

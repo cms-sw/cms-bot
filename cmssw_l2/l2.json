@@ -204,6 +204,7 @@
       "category": [
         "tau-pog"
       ], 
+      "end_date": 1701648000, 
       "start_date": 1632873600
     }
   ], 
@@ -401,6 +402,14 @@
       "start_date": 1632873600
     }
   ], 
+  "cardinia": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "start_date": 1701648000
+    }
+  ], 
   "cecilecaillol": [
     {
       "category": [
@@ -583,6 +592,14 @@
       ], 
       "end_date": 1448496000, 
       "start_date": 1442793600
+    }
+  ], 
+  "danielwinterbottom": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "start_date": 1701648000
     }
   ], 
   "davidlange6": [
@@ -1240,6 +1257,7 @@
       "category": [
         "tau-pog"
       ], 
+      "end_date": 1701648000, 
       "start_date": 1632787200
     }
   ], 

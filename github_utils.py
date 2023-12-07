@@ -632,7 +632,10 @@ def github_api(
             new_data = github_api(
                 uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False
             )
-            data = merge_dicts(data, new_data)
+            if isinstance(data, dict):
+                data = merge_dicts(data, new_data)
+            else:
+                data += new_data
     return data
 
 

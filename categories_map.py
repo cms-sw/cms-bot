@@ -222,8 +222,6 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/JetMCAlgos",
         "PhysicsTools/JetMCUtils",
         "PhysicsTools/KinFitter",
-        "PhysicsTools/MVAComputer",
-        "PhysicsTools/MVATrainer",
         "PhysicsTools/ParallelAnalysis",
         "PhysicsTools/PatExamples",
         "PhysicsTools/PythonAnalysis",
@@ -1197,12 +1195,9 @@ CMSSW_CATEGORIES = {
         "MagneticField/VolumeGeometry",
         "PhysicsTools/MXNet",
         "PhysicsTools/IsolationAlgos",
-        "PhysicsTools/ONNXRuntime",
         "PhysicsTools/PatAlgos",
         "PhysicsTools/PatUtils",
         "PhysicsTools/SelectorUtils",
-        "PhysicsTools/TensorFlow",
-        "PhysicsTools/PyTorch",
         "RecoBTag/BTagTools",
         "RecoBTag/CTagging",
         "RecoBTag/Combined",
@@ -1833,4 +1828,11 @@ CMSSW_LABELS = {
         "Validation/Tracking",
     ],
     "hcal": ["DPGAnalysis/HcalNanoAOD"],
+    "ml": [
+        "PhysicsTools/PyTorch",
+        "PhysicsTools/TensorFlow",
+        "PhysicsTools/ONNXRuntime",
+        "PhysicsTools/MVAComputer",
+        "PhysicsTools/MVATrainer"
+    ]
 }

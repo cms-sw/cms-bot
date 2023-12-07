@@ -5,7 +5,7 @@ function monitor(){
   date
   uptime
   free -g
-  ps -u $(whoami) -o pid,start_time,rss,size,vsize,cmd --forest
+  ps -u $(whoami) -o pid,start_time,pcpu,rss,size,vsize,cmd --forest
 }
 
 log="monitor_command_exit_code.txt"

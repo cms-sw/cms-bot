@@ -149,8 +149,8 @@ CMSSW_L2 = {
     "mondalspandan": ["btv-pog"],
     "michael-pitt": ["proton-pog"],
     "kshcheli": ["proton-pog"],
-    "kandrosov": ["tau-pog"],
-    "alebihan": ["tau-pog"],
+    "cardinia": ["tau-pog"],
+    "danielwinterbottom": ["tau-pog"],
     "slava77": ["tracking-pog"],
     "kskovpen": ["tracking-pog"],
     # PPD

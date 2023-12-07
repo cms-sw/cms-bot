@@ -1364,76 +1364,77 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             set_comment_emoji(comment.id, repository)
     # end of parsing comments section
 
-    if (
-        (not warned_too_many_commits)
-        and not ok_too_many_commits
-        and pr.commits >= MAX_INITIAL_COMMITS_IN_PR
-    ):
-        if not dryRun:
-            issue.create_comment(
-                f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
-                "Make sure you chose the right target branch.\n"
-                f"{', '.join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])}, "
-                "you can override this check with `+commit-count`."
-            )
-        return
+    if issue.pull_request:
+        if (
+            (not warned_too_many_commits)
+            and not ok_too_many_commits
+            and pr.commits >= MAX_INITIAL_COMMITS_IN_PR
+        ):
+            if not dryRun:
+                issue.create_comment(
+                    f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
+                    "Make sure you chose the right target branch.\n"
+                    f"{', '.join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])}, "
+                    "you can override this check with `+commit-count`."
+                )
+            return
 
-    # Get the commit cache from `already_seen` commit or technical commit
-    print("Checking for commit cache")
-    cache_comment = None
+        # Get the commit cache from `already_seen` commit or technical commit
+        print("Checking for commit cache")
+        cache_comment = None
 
-    if technical_comment:
-        cache_comment = technical_comment
-    else:
-        if already_seen:
-            cache_comment = already_seen
+        if technical_comment:
+            cache_comment = technical_comment
+        else:
+            if already_seen:
+                cache_comment = already_seen
 
-    if cache_comment:
-        seen_commits_match = REGEX_COMMITS_CACHE.search(cache_comment.body)
-        if seen_commits_match:
-            print("Loading commit cache")
-            commit_cache = loads_maybe_decompress(seen_commits_match[1])
+        if cache_comment:
+            seen_commits_match = REGEX_COMMITS_CACHE.search(cache_comment.body)
+            if seen_commits_match:
+                print("Loading commit cache")
+                commit_cache = loads_maybe_decompress(seen_commits_match[1])
 
-    if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-        for commit in all_commits:
-            if commit.sha not in commit_cache:
-                commit_cache[commit.sha] = {
-                    "time": int(commit.commit.committer.date.timestamp()),
-                    "files": sorted(
-                        x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
-                    ),
+        if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
+            for commit in all_commits:
+                if commit.sha not in commit_cache:
+                    commit_cache[commit.sha] = {
+                        "time": int(commit.commit.committer.date.timestamp()),
+                        "files": sorted(
+                            x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
+                        ),
+                    }
+
+                cache_entry = commit_cache[commit.sha]
+                events[datetime.fromtimestamp(cache_entry["time"])] = {
+                    "type": "commit",
+                    "value": cache_entry["files"],
                 }
 
-            cache_entry = commit_cache[commit.sha]
-            events[datetime.fromtimestamp(cache_entry["time"])] = {
-                "type": "commit",
-                "value": cache_entry["files"],
-            }
-
-    print("Saving commit cache")
-    old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
-    new_body = (
-        REGEX_COMMITS_CACHE.sub("", old_body)
-        + "<!-- commits cache: "
-        + dumps_maybe_compress(commit_cache)
-        + " -->"
-    )
-    if len(new_body) <= 65535:
-        if not dryRun:
-            if cache_comment:
-                if old_body != new_body:
-                    cache_comment.edit(new_body)
+        print("Saving commit cache")
+        old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+        new_body = (
+            REGEX_COMMITS_CACHE.sub("", old_body)
+            + "<!-- commits cache: "
+            + dumps_maybe_compress(commit_cache)
+            + " -->"
+        )
+        if len(new_body) <= 65535:
+            if not dryRun:
+                if cache_comment:
+                    if old_body != new_body:
+                        cache_comment.edit(new_body)
+                else:
+                    issue.create_comment(new_body)
             else:
-                issue.create_comment(new_body)
+                if cache_comment:
+                    print("DRY RUN: Updating existing comment with text")
+                    print(new_body)
+                else:
+                    print("DRY RUN: Creating technical comment with text")
+                    print(new_body)
         else:
-            if cache_comment:
-                print("DRY RUN: Updating existing comment with text")
-                print(new_body)
-            else:
-                print("DRY RUN: Creating technical comment with text")
-                print(new_body)
-    else:
-        raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
+            raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
 
     events = sorted(events.items())
     import pprint

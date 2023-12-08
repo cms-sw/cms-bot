@@ -349,6 +349,8 @@ CMSSW_CATEGORIES = {
         "DataFormats/OnlineMetaData",
         "DataFormats/Scalers",
         "DataFormats/TCDS",
+        "DataFormats/L1ScoutingRawData",
+        "DataFormats/L1Scouting",
         "EventFilter/AutoBU",
         "EventFilter/Configuration",
         "EventFilter/Cosmics",
@@ -370,6 +372,7 @@ CMSSW_CATEGORIES = {
         "EventFilter/SiStripChannelChargeFilter",
         "EventFilter/StorageManager",
         "EventFilter/Utilities",
+        "L1TriggerScouting/Utilities",
         "IORawData/CSCCommissioning",
         "IORawData/DaqSource",
     ],
@@ -1740,12 +1743,6 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/PatAlgos",
         "PhysicsTools/PatUtils",
         "PhysicsTools/Scouting",
-    ],
-    "l1scouting": [
-        "DataFormats/L1Scouting",
-        "DataFormats/L1ScoutingRawData",
-        "EventFilter/L1ScoutingRawToDigi",
-        "L1TriggerScouting/Utilities",
     ],
 }
 

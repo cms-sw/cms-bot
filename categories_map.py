@@ -356,6 +356,7 @@ CMSSW_CATEGORIES = {
         "EventFilter/EcalDigiToRaw",
         "EventFilter/FEDInterface",
         "EventFilter/Goodies",
+        "EventFilter/L1ScoutingRawToDigi",
         "EventFilter/Message2log4cplus",
         "EventFilter/Modules",
         "EventFilter/OnlineMetaDataRawToDigi",

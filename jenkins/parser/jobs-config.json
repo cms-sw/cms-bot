@@ -92,6 +92,15 @@
         "maxTime": "6"
       },
       {
+        "jobName": "ib-run-invalid-includes",
+        "errorType": [
+            "gitErrors",
+            "cvmfsFailure",
+            "busError"
+        ],
+        "maxTime": "6"
+      },
+      {
         "jobName": "auto-forward-port-branch",
         "errorType": [
           "gitErrors"

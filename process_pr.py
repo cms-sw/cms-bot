@@ -1,3 +1,5 @@
+import copy
+
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -40,6 +42,7 @@ from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_e
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps, load, loads
+
 
 try:
     from categories import CMSSW_LABELS
@@ -751,6 +754,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
     pre_checks_url = {}
     events = {}
+
     commit_cache = {}
     all_commits = []
     ok_too_many_commits = False
@@ -1159,10 +1163,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
             ctype = "+1"
-            selected_cats = commenter_categories
+            selected_cats = copy.copy(commenter_categories)
         elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
             ctype = "-1"
-            selected_cats = commenter_categories
+            selected_cats = copy.copy(commenter_categories)
         elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
             category_name = first_line[1:].lower()
             if category_name in commenter_categories:
@@ -1172,6 +1176,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "orp" in selected_cats:
             # Lines 1281, 1286 of original code
             mustClose = False
+
+        if "tests" in selected_cats:
+            selected_cats.remove("tests")
+
+        if "code-checks" in selected_cats:
+            selected_cats.remove("code-checks")
 
         if selected_cats:
             events[comment.created_at] = {
@@ -1217,25 +1227,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             elif "-code-checks" == first_line:
                 signatures["code-checks"] = "rejected"
                 pre_checks_url["code-checks"] = comment.html_url
-                events[comment.created_at] = {
-                    "type": "sign",
-                    "value": {
-                        "ctype": "-1",
-                        "selected_cats": ["code-checks"],
-                        "comment": comment,
-                    },
-                }
             elif "+code-checks" == first_line:
                 signatures["code-checks"] = "approved"
                 pre_checks_url["code-checks"] = comment.html_url
-                events[comment.created_at] = {
-                    "type": "sign",
-                    "value": {
-                        "ctype": "+1",
-                        "selected_cats": ["code-checks"],
-                        "comment": comment,
-                    },
-                }
             elif re.match("^Comparison not run.+", first_line):
                 if ("tests" in signatures) and signatures["tests"] != "pending":
                     comparison_notrun = True
@@ -1277,25 +1271,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         len([1 for l in comment_lines if "Compilation Warnings: Yes" in l]) > 0
                     )
                     pre_checks_url["tests"] = comment.html_url
-                    events[comment.created_at] = {
-                        "type": "sign",
-                        "value": {
-                            "ctype": "+1",
-                            "selected_cats": ["tests"],
-                            "comment": comment,
-                        },
-                    }
                 elif "-1" in first_line:
                     signatures["tests"] = "rejected"
                     pre_checks_url["tests"] = comment.html_url
-                    events[comment.created_at] = {
-                        "type": "sign",
-                        "value": {
-                            "ctype": "-1",
-                            "selected_cats": ["tests"],
-                            "comment": comment,
-                        },
-                    }
                 else:
                     signatures["tests"] = "pending"
                 print(
@@ -1312,14 +1290,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 mustClose = False
                 if ("orp" in commenter_categories) and ("orp" in signatures):
                     signatures["orp"] = "approved"
-                    events[comment.created_at] = {
-                        "type": "sign",
-                        "value": {
-                            "ctype": "+1",
-                            "selected_cats": ["orp"],
-                            "comment": comment,
-                        },
-                    }
                 continue
 
             # Check if the someone asked to trigger the tests
@@ -1440,10 +1410,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     import pprint
 
     print("Events:", pprint.pformat(events))
-    print("Recalculating signatures")
-
-    # Save tests signature
-    test_signature = signatures.get("tests", None)
+    print("Recalculating signatures", signatures)
 
     # Process commits and signatures
     for _, event in events:
@@ -1460,36 +1427,27 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             and sign not in ("code-checks", "tests", "orp")
                         ):
                             test_comment = event["value"]["comment"]
-                        # if sign == "orp":
-                        #     mustClose = False
                 elif ctype == "-1":
                     for sign in selected_cats:
                         signatures[sign] = "rejected"
-                        if sign == "orp":
-                            mustClose = False
             else:
                 print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
         elif event["type"] == "commit":
             if cmssw_repo:
-                chg_categories = {"orp", "code-checks"}
-                for fn in event["value"]:
-                    chg_categories.update(
-                        get_package_categories(cmssw_file2Package(repo_config, fn))
-                    )
+                # chg_categories = {"orp", "code-checks"}
+                # for fn in event["value"]:
+                #     chg_categories.update(
+                #         get_package_categories(cmssw_file2Package(repo_config, fn))
+                #     )
+                #
+                # chg_categories.update(assign_cats.keys())
 
-                chg_categories.update(assign_cats.keys())
-
-                for cat in chg_categories:
+                for cat in assign_cats.keys():
                     if cat in signing_categories:
                         signatures[cat] = "pending"
             else:
-                print("Resetting all signatures for external/user repos")
                 for cat in signing_categories:
                     signatures[cat] = "pending"
-
-    # Restore "tests" signature
-    if test_signature is not None:
-        signatures["tests"] = test_signature
 
     if push_test_issue:
         auto_close_push_test_issue = True

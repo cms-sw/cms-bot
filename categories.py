@@ -70,7 +70,7 @@ CMSSW_L2 = {
     "davidlange6": ["operations"],
     "emeschi": ["daq"],
     "vlimant": ["xpog"],
-    "simonepigazzini": ["xpog"],
+    "hqucms": ["xpog"],
     "fwyzard": ["heterogeneous"],
     "GurpreetSinghChahal": ["generators"],
     "jfernan2": ["reconstruction"],

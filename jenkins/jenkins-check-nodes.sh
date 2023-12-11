@@ -188,11 +188,12 @@ function aarch_ppc_cleanup {
     echo ${jenkins_nodes_list[@]}
     for node_name in ${jenkins_nodes_list[@]}; do
         if [ -e "$blacklist_path/$node_name.offline" ]; then
-            offline_reason=$(grep -e "string" -m 2 "$nodes_path/$node_name/config.xml" | awk '{split($0,a,"<string>|</string>"); print a[2]}' | tail -n 1)
-            if [ $(echo $offline_reason | grep "has been blacklisted" | wc -l) -gt 0 ]; then
-                echo "Bringing node $node_name online again ..."
-                node_on $node_name
-            fi
+            # offline_reason=$(grep -e "string" -m 2 "$nodes_path/$node_name/config.xml" | awk '{split($0,a,"<string>|</string>"); print a[2]}' | tail -n 1)
+            # if [ $(echo $offline_reason | grep "has been blacklisted" | wc -l) -gt 0 ]; then
+            echo "Bringing node $node_name online again ..."
+            node_on $node_name
+	    connect_node $node_name
+            # fi
         fi
     done
 }

@@ -1345,27 +1345,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
                     print("Comment message:", first_line)
                     signatures["tests"] = "pending"
-                    events[comment.created_at] = {
-                        "type": "sign",
-                        "value": {
-                            "ctype": "pending",
-                            "selected_cats": ["tests"],
-                            "comment": comment,
-                        },
-                    }
                     continue
                 elif REGEX_TEST_ABORT.match(first_line) and (signatures["tests"] == "pending"):
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
-                    events[comment.created_at] = {
-                        "type": "sign",
-                        "value": {
-                            "ctype": "pending",
-                            "selected_cats": ["tests"],
-                            "comment": comment,
-                        },
-                    }
                     continue
                 elif REGEX_TEST_IGNORE.match(first_line):
                     reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
@@ -1458,6 +1442,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print("Events:", pprint.pformat(events))
     print("Recalculating signatures")
 
+    # Save tests signature
+    test_signature = signatures.get("tests", None)
+
+    # Process commits and signatures
     for _, event in events:
         if event["type"] == "sign":
             selected_cats = event["value"]["selected_cats"]
@@ -1489,7 +1477,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
         elif event["type"] == "commit":
             if cmssw_repo:
-                chg_categories = {"orp", "tests", "code-checks"}
+                chg_categories = {"orp", "code-checks"}
                 for fn in event["value"]:
                     chg_categories.update(
                         get_package_categories(cmssw_file2Package(repo_config, fn))
@@ -1504,6 +1492,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print("Resetting all signatures for external/user repos")
                 for cat in signing_categories:
                     signatures[cat] = "pending"
+
+    # Restore "tests" signature
+    if test_signature is not None:
+        signatures["tests"] = test_signature
 
     if push_test_issue:
         auto_close_push_test_issue = True

@@ -1467,12 +1467,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         signatures[sign] = "rejected"
                         if sign == "orp":
                             mustClose = False
-                elif ctype == "pending":
-                    if selected_cats != ["tests"]:
-                        print(f"Invalid signature: {event['value']}")
-                        exit(1)
-                    else:
-                        signatures["tests"] = "pending"
             else:
                 print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
         elif event["type"] == "commit":

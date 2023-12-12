@@ -1434,6 +1434,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
         elif event["type"] == "commit":
             if cmssw_repo:
+                chg_categories = set()
                 for fn in event["value"]:
                     chg_categories.update(
                         get_package_categories(cmssw_file2Package(repo_config, fn))

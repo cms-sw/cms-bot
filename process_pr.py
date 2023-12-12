@@ -1397,17 +1397,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             else:
                 if cache_comment:
                     print("DRY RUN: Updating existing comment with text")
-                    print(new_body)
+                    print(new_body.encode("ascii", "ignore").decode())
                 else:
                     print("DRY RUN: Creating technical comment with text")
-                    print(new_body)
+                    print(new_body.encode("ascii", "ignore").decode())
         else:
             raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
 
     events = sorted(events.items())
     import pprint
 
-    print("Events:", pprint.pformat(events))
+    print("Events:", pprint.pformat(events).encode("ascii", "ignore").decode())
     print("Recalculating signatures", signatures)
 
     # Process commits and signatures

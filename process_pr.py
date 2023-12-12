@@ -1,5 +1,3 @@
-import copy
-
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -1163,10 +1161,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
             ctype = "+1"
-            selected_cats = copy.copy(commenter_categories)
+            selected_cats = commenter_categories[:]
         elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
             ctype = "-1"
-            selected_cats = copy.copy(commenter_categories)
+            selected_cats = commenter_categories[:]
         elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
             category_name = first_line[1:].lower()
             if category_name in commenter_categories:

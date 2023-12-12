@@ -1434,15 +1434,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
         elif event["type"] == "commit":
             if cmssw_repo:
-                # chg_categories = {"orp", "code-checks"}
-                # for fn in event["value"]:
-                #     chg_categories.update(
-                #         get_package_categories(cmssw_file2Package(repo_config, fn))
-                #     )
-                #
-                # chg_categories.update(assign_cats.keys())
+                for fn in event["value"]:
+                    chg_categories.update(
+                        get_package_categories(cmssw_file2Package(repo_config, fn))
+                    )
+                chg_categories.update(assign_cats.keys())
 
-                for cat in assign_cats.keys():
+                for cat in chg_categories:
                     if cat in signing_categories:
                         signatures[cat] = "pending"
             else:

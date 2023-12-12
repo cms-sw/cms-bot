@@ -81,3 +81,4 @@ if __name__ == "__main__":
         from process_pr import process_pr
 
         process_pr(repo_config, gh, repo, repo.get_issue(prId), opts.dryRun, force=opts.force)
+        api_rate_limits(gh)

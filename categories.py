@@ -96,6 +96,7 @@ CMSSW_L2 = {
     "smorovic": ["daq"],
     "smuzaffar": ["core"],
     "srimanob": ["upgrade"],
+    "subirsarkar": ["upgrade"],
     "ssekmen": ["fastsim"],
     "francescobrivio": ["db"],
     "tvami": ["analysis"],

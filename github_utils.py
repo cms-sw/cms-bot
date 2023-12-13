@@ -681,7 +681,7 @@ def pr_get_changed_files(pr):
 
 
 def get_commit(repository, commit_sha):
-    return github_api(f"/repos/{repository}/commits/{commit_sha}", method="GET", merge_dict=True)
+    return github_api("/repos/{0}/commits/{1}".format(repository, commit_sha), method="GET", merge_dict=True)
 
 
 def get_unix_time(data_obj):

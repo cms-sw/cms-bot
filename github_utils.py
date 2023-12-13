@@ -557,6 +557,7 @@ def github_api(
     all_pages=True,
     max_pages=-1,
     status=None,
+    merge_dict=False,
 ):
     if status is None:
         status = []
@@ -637,7 +638,7 @@ def github_api(
             new_data = github_api(
                 uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False
             )
-            if isinstance(data, dict):
+            if merge_dict:
                 data = merge_dicts(data, new_data)
             else:
                 data += new_data
@@ -680,7 +681,7 @@ def pr_get_changed_files(pr):
 
 
 def get_commit(repository, commit_sha):
-    return github_api(f"/repos/{repository}/commits/{commit_sha}", method="GET")
+    return github_api(f"/repos/{repository}/commits/{commit_sha}", method="GET", merge_dict=True)
 
 
 def get_unix_time(data_obj):

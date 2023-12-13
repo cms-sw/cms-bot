@@ -1,3 +1,7 @@
+#########################################################
+# This library need to support both python3 and python2 #
+# so makes sure changes work for both py2/py3
+#########################################################
 from __future__ import print_function
 from sys import argv, version_info
 from hashlib import md5

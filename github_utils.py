@@ -538,8 +538,8 @@ def merge_dicts(old, new):
 
         if old[k] != new[k]:
             raise RuntimeError(
-                f"Unable to merge dictionaries: value for key {k} differs. "
-                "Old {old[k]} {type(old[k])}, new {new[k]}, {type(new[k])}"
+                "Unable to merge dictionaries: value for key {0} differs. ".format(k)
+                + "Old {0} {1}, new {2}, {3}".format(old[k], type(old[k]), new[k], type(new[k]))
             )
 
     return old

@@ -522,6 +522,29 @@ def get_rate_limits():
     return github_api(uri="/rate_limit", method="GET")
 
 
+def merge_dicts(old, new):
+    for k, v in new.items():
+        if k not in old:
+            old[k] = new[k]
+            continue
+
+        if isinstance(v, dict):
+            old[k] = merge_dicts(old[k], new[k])
+            continue
+
+        if isinstance(v, list):
+            old[k].extend(v)
+            continue
+
+        if old[k] != new[k]:
+            raise RuntimeError(
+                f"Unable to merge dictionaries: value for key {k} differs. "
+                "Old {old[k]} {type(old[k])}, new {new[k]}, {type(new[k])}"
+            )
+
+    return old
+
+
 def github_api(
     uri,
     params=None,
@@ -533,10 +556,15 @@ def github_api(
     last_page=False,
     all_pages=True,
     max_pages=-1,
-    status=[],
+    status=None,
 ):
+    if status is None:
+        status = []
+
+    check_rate_limits(msg=False)
+
     global GH_RATE_LIMIT, GH_PAGE_RANGE
-    if max_pages > 0 and page > max_pages:
+    if max_pages > 0 and page > max_pages:  # noqa for readability
         return "[]" if raw else []
     if not params:
         params = {}
@@ -604,11 +632,15 @@ def github_api(
                 all_pages=False,
             )
         for page in GH_PAGE_RANGE:
-            if max_pages > 0 and page > max_pages:
+            if max_pages > 0 and page > max_pages:  # noqa for readability
                 break
-            data += github_api(
+            new_data = github_api(
                 uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False
             )
+            if isinstance(data, dict):
+                data = merge_dicts(data, new_data)
+            else:
+                data += new_data
     return data
 
 
@@ -645,6 +677,10 @@ def pr_get_changed_files(pr):
         except:
             pass
     return rez
+
+
+def get_commit(repository, commit_sha):
+    return github_api(f"/repos/{repository}/commits/{commit_sha}", method="GET")
 
 
 def get_unix_time(data_obj):
@@ -901,3 +937,29 @@ def get_pr(repository, pr_id):
     data = github_api("/repos/%s/pulls/%s" % (repository, pr_id), method="GET")
 
     return data
+
+
+def get_last_commit(pr):
+    commits_ = get_pr_commits_reversed(pr)
+    if commits_:
+        return commits_[-1]
+    else:
+        return None
+
+
+def get_pr_commits_reversed(pr):
+    """
+    :param pr:
+    :return: PaginatedList[Commit] | List[Commit]
+    """
+    try:
+        # This requires at least PyGithub 1.23.0. Making it optional for the moment.
+        return pr.get_commits().reversed
+    except:  # noqa
+        # This seems to fail for more than 250 commits. Not sure if the
+        # problem is github itself or the bindings.
+        try:
+            return reversed(list(pr.get_commits()))
+        except IndexError:
+            print("Index error: May be PR with no commits")
+    return []

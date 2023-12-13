@@ -20,19 +20,27 @@ from cms_static import (
     CMSBOT_IGNORE_MSG,
     VALID_CMS_SW_REPOS_FOR_TESTS,
     CREATE_REPO,
+    CMSBOT_TECHNICAL_MSG,
 )
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
+import zlib, base64
 from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
-from github_utils import edit_pr, api_rate_limits
+from github_utils import (
+    edit_pr,
+    api_rate_limits,
+    get_pr_commits_reversed,
+    get_commit,
+)
 from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji, set_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
-from json import dumps, load
+from json import dumps, load, loads
+
 
 try:
     from categories import CMSSW_LABELS
@@ -125,6 +133,8 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
+REGEX_COMMITS_CACHE = re.compile(r"<!-- commits cache: (.*) -->")
+REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
@@ -175,6 +185,7 @@ MULTILINE_COMMENTS_MAP = {
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
 }
 
+MAX_INITIAL_COMMITS_IN_PR = 200
 L2_DATA = {}
 
 
@@ -201,21 +212,6 @@ def get_commenter_categories(commenter, comment_date):
         if ("end_date" not in item) or (comment_date < item["end_date"]):
             return item["category"]
     return []
-
-
-def get_last_commit(pr):
-    last_commit = None
-    try:
-        # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-        last_commit = pr.get_commits().reversed[0]
-    except:
-        # This seems to fail for more than 250 commits. Not sure if the
-        # problem is github itself or the bindings.
-        try:
-            last_commit = pr.get_commits()[pr.commits - 1]
-        except IndexError:
-            print("Index error: May be PR with no commits")
-    return last_commit
 
 
 def get_package_categories(package):
@@ -666,6 +662,21 @@ def get_status_state(context, statuses):
     return ""
 
 
+def dumps_maybe_compress(value):
+    json_ = dumps(value, separators=(",", ":"), sort_keys=True)
+    if len(json_) > 32000:
+        return "b64:" + base64.encodebytes(zlib.compress(json_.encode())).decode("ascii", "ignore")
+    else:
+        return json_
+
+
+def loads_maybe_decompress(data):
+    if data.startswith("b64:"):
+        data = zlib.decompress(base64.decodebytes(data[4:].encode())).decode()
+
+    return loads(data)
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
@@ -740,6 +751,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # For future pre_checks
     # if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
     pre_checks_url = {}
+    events = {}
+
+    commit_cache = {}
+    all_commits = []
+    ok_too_many_commits = False
+    warned_too_many_commits = False
+
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
@@ -870,9 +888,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             watchers.update(set(watchingGroups[watcher]))
         watchers = set([gh_user_char + u for u in watchers])
         print("Watchers " + ", ".join(watchers))
-        last_commit_obj = get_last_commit(pr)
-        if last_commit_obj is None:
+
+        all_commits = get_pr_commits_reversed(pr)
+
+        if all_commits:
+            last_commit_obj = all_commits[0]
+        else:
             return
+
         last_commit = last_commit_obj.commit
         commit_statuses = last_commit_obj.get_combined_status().statuses
         bot_status = get_status(bot_status_name, commit_statuses)
@@ -944,6 +967,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
         print("Pre check status:", pre_checks_state)
     already_seen = None
+    technical_comment = None
     pull_request_updated = False
     comparison_done = False
     comparison_notrun = False
@@ -1001,6 +1025,24 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     pull_request_updated = False
                 else:
                     pull_request_updated = True
+            continue
+
+        if (
+            (commenter == cmsbuild_user)
+            and re.match(CMSBOT_TECHNICAL_MSG, first_line)
+            and not technical_comment
+        ):
+            technical_comment = comment
+            continue
+
+        if (commenter == cmsbuild_user) and "This PR contains too many commits" in first_line:
+            warned_too_many_commits = True
+            continue
+
+        if commenter in CMSSW_ISSUES_TRACKERS and re.match(
+            r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line
+        ):
+            ok_too_many_commits = True
             continue
 
         assign_type, new_cats = get_assign_categories(first_line)
@@ -1114,6 +1156,40 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     code_checks_tools = m.group(1).strip().split(" ")[-1]
                 if m.group(2):
                     code_check_apply_patch = True
+
+        selected_cats = []
+
+        if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
+            ctype = "+1"
+            selected_cats = commenter_categories[:]
+        elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
+            ctype = "-1"
+            selected_cats = commenter_categories[:]
+        elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
+            category_name = first_line[1:].lower()
+            if category_name in commenter_categories:
+                ctype = first_line[0] + "1"
+                selected_cats = [category_name]
+
+        if "orp" in selected_cats:
+            # Lines 1281, 1286 of original code
+            mustClose = False
+
+        if "tests" in selected_cats:
+            selected_cats.remove("tests")
+
+        if "code-checks" in selected_cats:
+            selected_cats.remove("code-checks")
+
+        if selected_cats:
+            events[comment.created_at] = {
+                "type": "sign",
+                "value": {
+                    "ctype": ctype,
+                    "selected_cats": selected_cats,
+                    "comment": comment,
+                },
+            }
 
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
@@ -1242,6 +1318,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
+                    continue
                 elif REGEX_TEST_IGNORE.match(first_line):
                     reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
                     if reason not in TEST_IGNORE_REASON:
@@ -1249,43 +1326,126 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         if not dryRun:
                             set_comment_emoji(comment.id, repository, "-1")
                         reason = ""
-
                     if reason:
                         override_tests_failure = reason
                         if not dryRun:
                             set_comment_emoji(comment.id, repository)
-
-        # Check L2 signoff for users in this PR signing categories
-        if [x for x in commenter_categories if x in signing_categories]:
-            ctype = ""
-            selected_cats = []
-            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
-                ctype = "+1"
-                selected_cats = commenter_categories
-            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
-                ctype = "-1"
-                selected_cats = commenter_categories
-            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
-                category_name = first_line[1:].lower()
-                if category_name in commenter_categories:
-                    ctype = first_line[0] + "1"
-                    selected_cats = [category_name]
-            if ctype == "+1":
-                for sign in selected_cats:
-                    signatures[sign] = "approved"
-                    if (test_comment is None) and (
-                        (repository in auto_test_repo) or ("*" in auto_test_repo)
-                    ):
-                        test_comment = comment
-                    if sign == "orp":
-                        mustClose = False
-            elif ctype == "-1":
-                for sign in selected_cats:
-                    signatures[sign] = "rejected"
-                    if sign == "orp":
-                        mustClose = False
-
     # end of parsing comments section
+
+    if issue.pull_request:
+        if (
+            (not warned_too_many_commits)
+            and not ok_too_many_commits
+            and pr.commits >= MAX_INITIAL_COMMITS_IN_PR
+        ):
+            if not dryRun:
+                issue.create_comment(
+                    f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
+                    "Make sure you chose the right target branch.\n"
+                    f"{', '.join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])}, "
+                    "you can override this check with `+commit-count`."
+                )
+            return
+
+        # Get the commit cache from `already_seen` commit or technical commit
+        print("Checking for commit cache")
+        cache_comment = None
+
+        if technical_comment:
+            cache_comment = technical_comment
+        else:
+            if already_seen:
+                cache_comment = already_seen
+
+        if cache_comment:
+            seen_commits_match = REGEX_COMMITS_CACHE.search(cache_comment.body)
+            if seen_commits_match:
+                print("Loading commit cache")
+                commit_cache = loads_maybe_decompress(seen_commits_match[1])
+
+        if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
+            for commit in all_commits:
+                if commit.sha not in commit_cache:
+                    commit_cache[commit.sha] = {
+                        "time": int(commit.commit.committer.date.timestamp()),
+                        "files": sorted(
+                            x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
+                        ),
+                    }
+
+                cache_entry = commit_cache[commit.sha]
+                events[datetime.fromtimestamp(cache_entry["time"])] = {
+                    "type": "commit",
+                    "value": cache_entry["files"],
+                }
+
+        print("Saving commit cache")
+        old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+        new_body = (
+            REGEX_COMMITS_CACHE.sub("", old_body)
+            + "<!-- commits cache: "
+            + dumps_maybe_compress(commit_cache)
+            + " -->"
+        )
+        if len(new_body) <= 65535:
+            if not dryRun:
+                if cache_comment:
+                    if old_body != new_body:
+                        cache_comment.edit(new_body)
+                else:
+                    issue.create_comment(new_body)
+            else:
+                if cache_comment:
+                    print("DRY RUN: Updating existing comment with text")
+                    print(new_body.encode("ascii", "ignore").decode())
+                else:
+                    print("DRY RUN: Creating technical comment with text")
+                    print(new_body.encode("ascii", "ignore").decode())
+        else:
+            raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
+
+    events = sorted(events.items())
+    import pprint
+
+    print("Events:", pprint.pformat(events).encode("ascii", "ignore").decode())
+    print("Recalculating signatures", signatures)
+
+    # Process commits and signatures
+    for _, event in events:
+        if event["type"] == "sign":
+            selected_cats = event["value"]["selected_cats"]
+            ctype = event["value"]["ctype"]
+            if any(x in signing_categories for x in selected_cats):
+                if ctype == "+1":
+                    for sign in selected_cats:
+                        signatures[sign] = "approved"
+                        if (
+                            (test_comment is None)
+                            and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+                            and sign not in ("code-checks", "tests", "orp")
+                        ):
+                            test_comment = event["value"]["comment"]
+                elif ctype == "-1":
+                    for sign in selected_cats:
+                        signatures[sign] = "rejected"
+            else:
+                print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
+        elif event["type"] == "commit":
+            test_comment = None
+            if cmssw_repo:
+                chg_categories = set()
+                for fn in event["value"]:
+                    chg_categories.update(
+                        get_package_categories(cmssw_file2Package(repo_config, fn))
+                    )
+                chg_categories.update(assign_cats.keys())
+
+                for cat in chg_categories:
+                    if cat in signing_categories:
+                        signatures[cat] = "pending"
+            else:
+                for cat in signing_categories:
+                    signatures[cat] = "pending"
 
     if push_test_issue:
         auto_close_push_test_issue = True
@@ -1638,7 +1798,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
         print("Blockers:", blockers)
 
-    print("Changed Labels:", labels - old_labels, old_labels - labels)
+    print("Changed Labels: added", labels - old_labels, "removed", old_labels - labels)
     if old_labels == labels:
         print("Labels unchanged.")
     elif not dryRunOrig:
@@ -1934,7 +2094,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Pull request is already fully signed. Not sending message.")
     else:
         print("Already notified L2 about " + str(pr.number))
-    if commentMsg and not dryRun:
+    if commentMsg and dryRun:
         print("The following comment will be made:")
         try:
             print(commentMsg.decode("ascii", "replace"))

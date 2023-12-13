@@ -538,8 +538,8 @@ def merge_dicts(old, new):
 
         if old[k] != new[k]:
             raise RuntimeError(
-                f"Unable to merge dictionaries: value for key {k} differs. "
-                "Old {old[k]} {type(old[k])}, new {new[k]}, {type(new[k])}"
+                "Unable to merge dictionaries: value for key {0} differs. ".format(k)
+                + "Old {0} {1}, new {2}, {3}".format(old[k], type(old[k]), new[k], type(new[k]))
             )
 
     return old
@@ -680,7 +680,7 @@ def pr_get_changed_files(pr):
 
 
 def get_commit(repository, commit_sha):
-    return github_api(f"/repos/{repository}/commits/{commit_sha}", method="GET")
+    return github_api("/repos/{0}/commits/{1}".format(repository, commit_sha), method="GET")
 
 
 def get_unix_time(data_obj):

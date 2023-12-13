@@ -1431,7 +1431,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             else:
                 print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
         elif event["type"] == "commit":
-            test_comment = None
             if cmssw_repo:
                 chg_categories = set()
                 for fn in event["value"]:

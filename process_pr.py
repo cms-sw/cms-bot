@@ -36,10 +36,10 @@ from github_utils import (
     get_pr_commits_reversed,
     get_commit,
 )
-from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji, set_gh_user
+from github_utils import set_comment_emoji, get_comment_emojis, set_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
-from json import dumps, load, loads
+from json import dumps, dump, load, loads
 
 
 try:
@@ -133,7 +133,7 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
-REGEX_COMMITS_CACHE = re.compile(r"<!-- commits cache: (.*) -->")
+REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->")
 REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
@@ -201,6 +201,41 @@ def init_l2_data(cms_repo):
         for user in CMSSW_L2:
             l2_data[user] = [{"start_date": 0, "category": CMSSW_L2[user]}]
     return l2_data
+
+
+def read_bot_cache(comment_msg):
+    seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
+    if seen_commits_match:
+        print("Loading bot cache")
+        return loads_maybe_decompress(seen_commits_match[1])
+    return {}
+
+
+def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
+    old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+    new_body = (
+        REGEX_COMMITS_CACHE.sub("", old_body)
+        + "<!-- bot cache: "
+        + dumps_maybe_compress(bot_cache)
+        + " -->"
+    )
+    if old_body == new_body:
+        return
+    print("Saving bot cache")
+    if len(new_body) <= 65535:
+        if not dryRun:
+            if cache_comment:
+                cache_comment.edit(new_body)
+            else:
+                issue.create_comment(new_body)
+        else:
+            if cache_comment:
+                print("DRY RUN: Updating existing comment with text")
+            else:
+                print("DRY RUN: Creating technical comment with text")
+            print(new_body.encode("ascii", "ignore").decode())
+    else:
+        raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
 
 
 def get_commenter_categories(commenter, comment_date):
@@ -331,16 +366,32 @@ def modify_comment(comment, match, replace, dryRun):
     return 0
 
 
-def get_user_emoji(comment, repository, user):
-    for e in get_comment_emojis(comment.id, repository):
-        if e["user"]["login"].encode("ascii", "ignore").decode() == user:
-            return e
-    return None
+def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
+    if dryRun:
+        return
+    comment_id = str(comment.id)
+    if (
+        (not comment_id in bot_cache["emoji"])
+        or (bot_cache["emoji"][comment_id] != emoji)
+        or (comment.reactions[emoji] == 0)
+    ):
+        set_comment_emoji(comment.id, repository, emoji=emoji, reset_other=reset_other)
+        bot_cache["emoji"][comment_id] = emoji
+    return
 
 
-def has_user_emoji(comment, repository, emoji, user):
-    e = get_user_emoji(comment, repository, user)
-    return e and e["content"] == emoji
+def has_user_emoji(bot_cache, comment, repository, emoji, user):
+    e = None
+    comment_id = str(comment.id)
+    if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
+        e = bot_cache["emoji"][comment_id]
+    else:
+        for x in get_comment_emojis(comment.id, repository):
+            if x["user"]["login"].encode("ascii", "ignore").decode() == user:
+                e = x["content"]
+                bot_cache["emoji"][comment_id] = x
+                break
+    return e and e == emoji
 
 
 def get_assign_categories(line):
@@ -752,8 +803,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
     pre_checks_url = {}
     events = {}
-
-    commit_cache = {}
     all_commits = []
     ok_too_many_commits = False
     warned_too_many_commits = False
@@ -995,10 +1044,30 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     test_params_comment = None
     code_check_apply_patch = False
     override_tests_failure = None
+    bot_cache = {}
 
-    # start of parsing comments section
-    for c in issue.get_comments():
-        all_comments.append(c)
+    # start of parsing comments to find the bot_cache
+    # to use information during the actual comment loop
+    for comment in issue.get_comments():
+        all_comments.append(comment)
+        if bot_cache or technical_comment:
+            continue
+        if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
+            continue
+        comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+        first_line = "".join([l.strip() for l in comment_msg.split("\n") if l.strip()][0:1])
+        if re.match(ISSUE_SEEN_MSG, first_line):
+            already_seen = comment
+            bot_cache = read_bot_cache(comment_msg)
+            print("Read bot cache from already seen comment:", comment)
+        elif re.match(CMSBOT_TECHNICAL_MSG, first_line):
+            technical_comment = comment
+            bot_cache = read_bot_cache(comment_msg)
+            print("Read bot cache from technical comment:", comment)
+
+    if not "emoji" in bot_cache:
+        bot_cache["emoji"] = {}
+
     for comment in all_comments:
         ack_comment = comment
         commenter = comment.user.login.encode("ascii", "ignore").decode()
@@ -1013,37 +1082,28 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
         # The first line is an invariant.
         comment_lines = [l.strip() for l in comment_msg.split("\n") if l.strip()]
-        first_line = comment_lines[0:1]
-        if not first_line:
-            continue
-        first_line = first_line[0]
-        if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
-            already_seen = comment
-            backport_pr_num = get_backported_pr(comment_msg)
-            if issue.pull_request and last_commit_date:
-                if comment.created_at >= last_commit_date:
-                    pull_request_updated = False
-                else:
-                    pull_request_updated = True
-            continue
-
-        if (
-            (commenter == cmsbuild_user)
-            and re.match(CMSBOT_TECHNICAL_MSG, first_line)
-            and not technical_comment
-        ):
-            technical_comment = comment
-            continue
-
-        if (commenter == cmsbuild_user) and "This PR contains too many commits" in first_line:
-            warned_too_many_commits = True
-            continue
-
-        if commenter in CMSSW_ISSUES_TRACKERS and re.match(
-            r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line
-        ):
-            ok_too_many_commits = True
-            continue
+        first_line = "".join(comment_lines[0:1])
+        if commenter == cmsbuild_user:
+            if re.match(ISSUE_SEEN_MSG, first_line):
+                if not already_seen:
+                    already_seen = comment
+                backport_pr_num = get_backported_pr(comment_msg)
+                if issue.pull_request and last_commit_date:
+                    pull_request_updated = comment.created_at < last_commit_date
+                continue
+            if re.match(CMSBOT_TECHNICAL_MSG, first_line):
+                if not technical_comment:
+                    technical_comment = comment
+                continue
+            if "This PR contains too many commits" in first_line:
+                warned_too_many_commits = True
+                continue
+            if re.match("^" + HOLD_MSG + ".+", first_line):
+                for u in first_line.split(HOLD_MSG, 2)[1].split(","):
+                    u = u.strip().lstrip("@")
+                    if u in hold:
+                        hold[u] = 0
+                continue
 
         assign_type, new_cats = get_assign_categories(first_line)
         if new_cats:
@@ -1051,7 +1111,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 for ex_cat in new_cats:
                     if ex_cat in assign_cats:
                         assign_cats[ex_cat] = 1
-            if commenter_categories or (commenter in CMSSW_ISSUES_TRACKERS):
+            elif commenter_categories or (commenter in CMSSW_ISSUES_TRACKERS):
+                set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
                 if assign_type == "assign":
                     for ex_cat in new_cats:
                         if not ex_cat in signing_categories:
@@ -1068,70 +1129,81 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         # Some of the special users can say "hold" prevent automatic merging of
         # fully signed PRs.
+        comment_emoji = ""
         if re.match("^hold$", first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers + PR_HOLD_MANAGERS):
                 hold[commenter] = 1
-            continue
-        if re.match(REGEX_EX_CMDS, first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match(REGEX_EX_CMDS, first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers + [requestor]):
                 check_extra_labels(first_line.lower(), extra_labels)
-            continue
-        if re.match(REGEX_TYPE_CMDS, first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match(REGEX_TYPE_CMDS, first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers + [requestor]):
-                valid_labs = check_type_labels(first_line.lower(), extra_labels)
-                if not dryRun:
-                    if valid_labs:
-                        set_comment_emoji(comment.id, repository, emoji="+1")
-                    else:
-                        set_comment_emoji(comment.id, repository, emoji="-1")
-        if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
+                comment_emoji = (
+                    "+1" if check_type_labels(first_line.lower(), extra_labels) else "-1"
+                )
+        elif re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
+            comment_emoji = "-1"
             if valid_commenter:
                 ignore_tests = check_ignore_bot_tests(first_line.split(" ", 1)[-1])
-            continue
-        if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
+            comment_emoji = "-1"
             if valid_commenter:
                 enable_tests, ignore = check_enable_bot_tests(first_line.split(" ", 1)[-1])
-                if not dryRun:
-                    set_comment_emoji(comment.id, repository, emoji="+1")
-            continue
-        if re.match("^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match("^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers):
                 tester = first_line.split("@", 1)[-1].split(" ", 1)[0]
                 if not tester in TRIGGER_PR_TESTS:
                     TRIGGER_PR_TESTS.append(tester)
                     extra_testers.append(tester)
                     print("Added user in test category:", tester)
-            continue
-        if re.match("^unhold$", first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match("^unhold$", first_line, re.I):
+            comment_emoji = "-1"
             if "orp" in commenter_categories:
                 hold = {}
+                comment_emoji = "+1"
             elif commenter_categories or (commenter in releaseManagers + PR_HOLD_MANAGERS):
                 if commenter in hold:
                     del hold[commenter]
-            continue
-        if (commenter == cmsbuild_user) and (re.match("^" + HOLD_MSG + ".+", first_line)):
-            for u in first_line.split(HOLD_MSG, 2)[1].split(","):
-                u = u.strip().lstrip("@")
-                if u in hold:
-                    hold[u] = 0
-        if CLOSE_REQUEST.match(first_line):
+                    comment_emoji = "+1"
+        elif CLOSE_REQUEST.match(first_line):
+            comment_emoji = "-1"
             if (commenter_categories or (commenter in releaseManagers)) or (
                 (not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)
             ):
                 reOpen = False
                 if issue.state == "open":
                     mustClose = True
+                comment_emoji = "+1"
                 print("==>Closing request received from %s" % commenter)
-            continue
-        if REOPEN_REQUEST.match(first_line):
+        elif REOPEN_REQUEST.match(first_line):
+            comment_emoji = "-1"
             if (commenter_categories or (commenter in releaseManagers)) or (
                 (not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)
             ):
                 mustClose = False
                 if (issue.state == "closed") and (comment.created_at >= issue.closed_at):
                     reOpen = True
+                comment_emoji = "+1"
                 print("==>Reopen request received from %s" % commenter)
+        elif re.match(r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line):
+            comment_emoji = "-1"
+            if commenter in CMSSW_ISSUES_TRACKERS:
+                ok_too_many_commits = True
+                comment_emoji = "+1"
+
+        if comment_emoji:
+            set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=comment_emoji)
             continue
+
         if valid_commenter:
             valid_multiline_comment, test_params, test_params_m = multiline_check_function(
                 first_line, comment_lines, repository
@@ -1139,6 +1211,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if test_params_m:
                 test_params_msg = str(comment.id) + ":" + test_params_m
                 test_params_comment = comment
+                continue
             elif valid_multiline_comment:
                 test_params_comment = comment
                 global_test_params = dict(test_params)
@@ -1156,6 +1229,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     code_checks_tools = m.group(1).strip().split(" ")[-1]
                 if m.group(2):
                     code_check_apply_patch = True
+                set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1")
 
         selected_cats = []
 
@@ -1175,11 +1249,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             # Lines 1281, 1286 of original code
             mustClose = False
 
-        if "tests" in selected_cats:
-            selected_cats.remove("tests")
-
-        if "code-checks" in selected_cats:
-            selected_cats.remove("code-checks")
+        for cat in ["tests", "code-checks"]:
+            if cat in selected_cats:
+                selected_cats.remove(cat)
 
         if selected_cats:
             events[comment.created_at] = {
@@ -1190,6 +1262,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     "comment": comment,
                 },
             }
+            continue
 
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
@@ -1202,7 +1275,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if code_checks_status and (code_checks_status[0].updated_at >= comment.created_at):
                 continue
             if first_line in pre_checks:
-                if pre_checks_state["code-checks"] in ["pending", ""]:
+                if (pre_checks_state["code-checks"] in ["pending", ""]) and (
+                    not code_checks_status
+                ):
                     continue
             elif pre_checks_state["code-checks"] in ["pending"]:
                 continue
@@ -1281,13 +1356,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         if issue.pull_request or push_test_issue:
             # Check if the release manager asked for merging this.
-            if ((commenter in releaseManagers) or ("orp" in commenter_categories)) and re.match(
-                "^\s*(merge)\s*$", first_line, re.I
-            ):
-                mustMerge = True
-                mustClose = False
-                if ("orp" in commenter_categories) and ("orp" in signatures):
-                    signatures["orp"] = "approved"
+            if re.match("^\s*(merge)\s*$", first_line, re.I):
+                emoji = "-1"
+                if (commenter in releaseManagers) or ("orp" in commenter_categories):
+                    mustMerge = True
+                    mustClose = False
+                    emoji = "+1"
+                    if ("orp" in commenter_categories) and ("orp" in signatures):
+                        signatures["orp"] = "approved"
+                set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=emoji)
                 continue
 
             # Check if the someone asked to trigger the tests
@@ -1323,14 +1400,19 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
                     if reason not in TEST_IGNORE_REASON:
                         print("Invalid ignore reason:", reason)
-                        if not dryRun:
-                            set_comment_emoji(comment.id, repository, "-1")
+                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "-1")
                         reason = ""
                     if reason:
                         override_tests_failure = reason
-                        if not dryRun:
-                            set_comment_emoji(comment.id, repository)
+                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
+
     # end of parsing comments section
+    cache_comment = None
+    if technical_comment:
+        cache_comment = technical_comment
+    else:
+        if already_seen:
+            cache_comment = already_seen
 
     if issue.pull_request:
         if (
@@ -1347,78 +1429,42 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 )
             return
 
-        # Get the commit cache from `already_seen` commit or technical commit
-        print("Checking for commit cache")
-        cache_comment = None
-
-        if technical_comment:
-            cache_comment = technical_comment
-        else:
-            if already_seen:
-                cache_comment = already_seen
-
-        if cache_comment:
-            seen_commits_match = REGEX_COMMITS_CACHE.search(cache_comment.body)
-            if seen_commits_match:
-                print("Loading commit cache")
-                commit_cache = loads_maybe_decompress(seen_commits_match[1])
-
+        print("Processing commits")
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
             for commit in all_commits:
-                if commit.sha not in commit_cache:
-                    commit_cache[commit.sha] = {"time": int(commit.commit.committer.date.timestamp())}
-                    if len(commit.parents)>1:
-                        commit_cache[commit.sha]["files"] = []
+                if commit.sha not in bot_cache:
+                    bot_cache[commit.sha] = {"time": int(commit.commit.committer.date.timestamp())}
+                    if len(commit.parents) > 1:
+                        bot_cache[commit.sha]["files"] = []
                     else:
-                        commit_cache[commit.sha]["files"] = sorted(
+                        bot_cache[commit.sha]["files"] = sorted(
                             x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
                         )
-                elif len(commit.parents)>1:
-                    commit_cache[commit.sha]["files"] =[]
+                elif len(commit.parents) > 1:
+                    bot_cache[commit.sha]["files"] = []
 
-                cache_entry = commit_cache[commit.sha]
+                if commit.sha not in bot_cache:
+                    bot_cache[commit.sha] = {
+                        "time": int(commit.commit.committer.date.timestamp()),
+                        "files": sorted(
+                            x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
+                        ),
+                    }
+
+                cache_entry = bot_cache[commit.sha]
                 events[datetime.fromtimestamp(cache_entry["time"])] = {
                     "type": "commit",
                     "value": cache_entry["files"],
                 }
 
-        print("Saving commit cache")
-        old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
-        new_body = (
-            REGEX_COMMITS_CACHE.sub("", old_body)
-            + "<!-- commits cache: "
-            + dumps_maybe_compress(commit_cache)
-            + " -->"
-        )
-        if len(new_body) <= 65535:
-            if not dryRun:
-                if cache_comment:
-                    if old_body != new_body:
-                        cache_comment.edit(new_body)
-                else:
-                    issue.create_comment(new_body)
-            else:
-                if cache_comment:
-                    print("DRY RUN: Updating existing comment with text")
-                    print(new_body.encode("ascii", "ignore").decode())
-                else:
-                    print("DRY RUN: Creating technical comment with text")
-                    print(new_body.encode("ascii", "ignore").decode())
-        else:
-            raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
-
-    events = sorted(events.items())
-    import pprint
-
-    print("Events:", pprint.pformat(events).encode("ascii", "ignore").decode())
-    print("Recalculating signatures", signatures)
-
     # Process commits and signatures
-    for _, event in events:
+    for _, event in sorted(events.items()):
+        print("Event:", event)
         if event["type"] == "sign":
             selected_cats = event["value"]["selected_cats"]
             ctype = event["value"]["ctype"]
             if any(x in signing_categories for x in selected_cats):
+                set_comment_emoji_cache(dryRun, bot_cache, event["value"]["comment"], repository)
                 if ctype == "+1":
                     comment = event["value"]["comment"]
                     for sign in selected_cats:
@@ -1450,6 +1496,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             else:
                 for cat in signing_categories:
                     signatures[cat] = "pending"
+        print("Signatures:", signatures)
 
     if push_test_issue:
         auto_close_push_test_issue = True
@@ -1550,7 +1597,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     last_commit_obj.create_status(
                         "success", description=desc, target_url=turl, context=bot_status_name
                     )
-                    set_comment_emoji(test_comment.id, repository)
+                    set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
             if bot_status:
                 print(bot_status.target_url, turl, signatures["tests"], bot_status.description)
             if (
@@ -1852,6 +1899,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):
             issueMessage = "This issue is fully signed and ready to be closed."
         print("Issue Message:", issueMessage)
+        write_bot_cache(bot_cache, cache_comment, issue, dryRunOrig)
         if issueMessage and not dryRun:
             issue.create_comment(issueMessage)
         return
@@ -1896,15 +1944,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             create_properties_file_tests(
                 repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config
             )
-            if not dryRun:
-                set_comment_emoji(test_comment.id, repository)
+            set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
         elif abort_test and bot_status and (not bot_status.description.startswith("Aborted")):
-            if not has_user_emoji(abort_test, repository, "+1", cmsbuild_user):
+            if not has_user_emoji(bot_cache, abort_test, repository, "+1", cmsbuild_user):
                 create_properties_file_tests(
                     repository, prId, global_test_params, dryRun, abort=True
                 )
+                set_comment_emoji_cache(dryRun, bot_cache, abort_test, repository)
                 if not dryRun:
-                    set_comment_emoji(abort_test.id, repository)
                     last_commit_obj.create_status(
                         "pending",
                         description="Aborted, waiting for authorized user to issue the test command.",
@@ -2172,12 +2219,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Test params:", test_params_msg)
         url = ""
         if test_params_comment:
-            e = get_user_emoji(test_params_comment, repository, cmsbuild_user)
-            print(e)
             if not dryRun:
                 emoji = "-1" if "ERRORS: " in test_params_msg else "+1"
-                if e and (e["content"] != emoji):
-                    delete_comment_emoji(str(e["id"]), test_params_comment.id, repository)
                 state = "success" if emoji == "+1" else "error"
                 last_commit_obj.create_status(
                     state,
@@ -2185,8 +2228,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     target_url=test_params_comment.html_url,
                     context=bot_test_param_name,
                 )
-                if (not e) or (e["content"] != emoji):
-                    set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
+                set_comment_emoji_cache(
+                    dryRun, bot_cache, test_params_comment, repository, emoji=emoji
+                )
+    write_bot_cache(bot_cache, cache_comment, issue, dryRunOrig)
     if ack_comment:
         state = get_status(bot_ack_name, commit_statuses)
         if (not state) or (state.target_url != ack_comment.html_url):

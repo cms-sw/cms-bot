@@ -36,6 +36,7 @@ function run_check {
 	    if [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
                 # If aarch or ppc, bring node off
                 aarch_ppc_disconnect $node
+		# TODO: If aarch (olarm), scp dummy file to /afs cmsbuild area
             elif [[ $(echo $node | grep '^lxplus' | wc -l) -gt 0 ]]; then
                 # If lxplus, disconnect all nodes connected to this host
                 lxplus_disconnect $node
@@ -193,6 +194,7 @@ function aarch_ppc_cleanup {
             echo "Bringing node $node_name online again ..."
             node_on $node_name
 	    connect_node $node_name
+     	    # TODO: If aarch (olarm), clean dummy file in /afs cmsbuild area
             # fi
         fi
     done

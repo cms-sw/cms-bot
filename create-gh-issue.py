@@ -57,6 +57,8 @@ cmd = (
     % (quote(args.title), args.repo)
 )
 print("Checking existing Issue", cmd)
+print(e)
+print(o)
 e, o = run_cmd(cmd)
 print("Existing Issues:", e, o)
 issue = None

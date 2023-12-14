@@ -1420,14 +1420,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             ctype = event["value"]["ctype"]
             if any(x in signing_categories for x in selected_cats):
                 if ctype == "+1":
+                    comment = event["value"]["comment"]
                     for sign in selected_cats:
                         signatures[sign] = "approved"
                         if (
                             (test_comment is None)
                             and ((repository in auto_test_repo) or ("*" in auto_test_repo))
                             and sign not in ("code-checks", "tests", "orp")
+                            and (comment.created_at >= last_commit_date)
                         ):
-                            test_comment = event["value"]["comment"]
+                            test_comment = comment
                 elif ctype == "-1":
                     for sign in selected_cats:
                         signatures[sign] = "rejected"

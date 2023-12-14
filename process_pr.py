@@ -1366,12 +1366,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
             for commit in all_commits:
                 if commit.sha not in commit_cache:
-                    commit_cache[commit.sha] = {
-                        "time": int(commit.commit.committer.date.timestamp()),
-                        "files": sorted(
+                    commit_cache[commit.sha] = {"time": int(commit.commit.committer.date.timestamp())}
+                    if len(commit.parents)>1:
+                        commit_cache[commit.sha]["files"] = []
+                    else:
+                        commit_cache[commit.sha]["files"] = sorted(
                             x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
-                        ),
-                    }
+                        )
+                elif len(commit.parents)>1:
+                    commit_cache[commit.sha]["files"] =[]
 
                 cache_entry = commit_cache[commit.sha]
                 events[datetime.fromtimestamp(cache_entry["time"])] = {

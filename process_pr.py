@@ -72,6 +72,7 @@ except:
     def is_closed_branch(*args):
         return False
 
+
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
 CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)

@@ -69,7 +69,7 @@ if __name__ == "__main__":
         from github import Github
 
         repo_dir = join(SCRIPT_DIR, "repos", opts.repository.replace("-", "_"))
-        if exists(join(repo_dir, "repo_config.py")):
+        if exists(repo_dir):
             sys.path.insert(0, repo_dir)
         import repo_config
 

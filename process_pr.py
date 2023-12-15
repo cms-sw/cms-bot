@@ -746,7 +746,6 @@ def add_nonblocking_labels(chg_files, extra_labels):
     if not extra_labels["mtype"]:
         del extra_labels["mtype"]
     print("Extra non-blocking labels:", extra_labels)
-    print("First Package: ", packages[0])
     return
 
 

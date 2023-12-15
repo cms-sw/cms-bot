@@ -1808,8 +1808,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         need_external = True
     # Now updated the labels.
     xlabs = ["backport", "urgent", "backport-ok", "compilation-warnings"]
-    for lab in TYPE_COMMANDS:
-        xlabs.append(lab)
+    for xtype in extra_labels:
+        if xtype != "mtype":
+            xlabs.append(extra_labels[xtype][0])
+        else:
+            for lab in extra_labels[lab]:
+                xlabs.append(lab)
 
     missingApprovals = [
         x

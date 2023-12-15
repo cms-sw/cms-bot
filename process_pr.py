@@ -478,7 +478,10 @@ def check_type_labels(first_line, extra_labels):
                 obj_labels = rem_labels if rem_lab else ex_labels
                 if lab_type not in obj_labels:
                     obj_labels[lab_type] = []
-                obj_labels[lab_type].append(lab)
+                if len(TYPE_COMMANDS[lab]>3) and TYPE_COMMANDS[lab][3]:
+                    obj_labels[lab_type].append(type_cmd)
+                else:
+                    obj_labels[lab_type].append(lab)
                 valid_lab = True
                 break
         if not valid_lab:

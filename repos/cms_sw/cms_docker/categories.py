@@ -1,7 +1,6 @@
-from os.path import join
-
-_default_bot_dir = "/".join(__file__.split("/")[0:-4])
-exec(open(join(_default_bot_dir, "categories.py")).read())
+_file_items = __file__.split("/")
+_default_bot_dir = "/".join(_file_items[0:-4])
+exec(open("%s/%s" % (_default_bot_dir, _file_items[-1])).read())
 
 CMSSW_CONTAINERS = [
     "cc7",

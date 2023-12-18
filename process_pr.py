@@ -73,13 +73,6 @@ except:
         return False
 
 
-dpg_pog = get_dpg_pog()
-for l in CMSSW_LABELS.keys():
-    if not l in dpg_pog:
-        del CMSSW_LABELS[l]
-    else:
-        CMSSW_LABELS[l] = [re.compile("^(" + p + ").*$") for p in CMSSW_LABELS[l]]
-
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
 CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
@@ -187,6 +180,20 @@ MULTILINE_COMMENTS_MAP = {
 
 MAX_INITIAL_COMMITS_IN_PR = 200
 L2_DATA = {}
+
+
+def update_CMSSW_LABELS(repo_config):
+    try:
+        check_dpg_pog = repo_config.CHECK_DPG_POG
+    except:
+        check_dpg_pog = False
+    dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
+    for l in CMSSW_LABELS.keys():
+        if check_dpg_pog and (not l in dpg_pog):
+            del CMSSW_LABELS[l]
+        else:
+            CMSSW_LABELS[l] = [re.compile("^(" + p + ").*$") for p in CMSSW_LABELS[l]]
+    return
 
 
 def init_l2_data(cms_repo):
@@ -471,7 +478,10 @@ def check_type_labels(first_line, extra_labels):
                 obj_labels = rem_labels if rem_lab else ex_labels
                 if lab_type not in obj_labels:
                     obj_labels[lab_type] = []
-                obj_labels[lab_type].append(lab)
+                if (len(TYPE_COMMANDS[lab]) > 3) and TYPE_COMMANDS[lab][3]:
+                    obj_labels[lab_type].append(type_cmd)
+                else:
+                    obj_labels[lab_type].append(lab)
                 valid_lab = True
                 break
         if not valid_lab:
@@ -728,6 +738,20 @@ def loads_maybe_decompress(data):
     return loads(data)
 
 
+def add_nonblocking_labels(chg_files, extra_labels):
+    for pkg_file in chg_files:
+        for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
+            for regex in pkgs_regexp:
+                if regex.match(pkg_file):
+                    extra_labels["mtype"].append(ex_lab)
+                    print("Non-Blocking label:%s:%s:%s" % (ex_lab, regex.pattern, pkg_file))
+                    break
+    if not extra_labels["mtype"]:
+        del extra_labels["mtype"]
+    print("Extra non-blocking labels:", extra_labels)
+    return
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
@@ -751,6 +775,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         cmsbuild_user = repo_config.CMSBUILD_USER
     print("Working on ", repo.full_name, " for PR/Issue ", prId, "with admin user", cmsbuild_user)
     print("Notify User: ", gh_user_char)
+    update_CMSSW_LABELS(repo_config)
     set_gh_user(cmsbuild_user)
     cmssw_repo = repo_name == GH_CMSSW_REPO
     cms_repo = repo_org in EXTERNAL_REPOS
@@ -773,7 +798,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     watchers = []
     # Process Pull Request
     pkg_categories = set([])
-    REGEX_TYPE_CMDS = "^type\s+(([-+]|)[a-z][a-z0-9-]+)(\s*,\s*([-+]|)[a-z][a-z0-9-]+)*$"
+    REGEX_TYPE_CMDS = "^type\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
     REGEX_EX_CMDS = "^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (
         repo.full_name
     )
@@ -840,19 +865,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             packages = sorted(
                 [x for x in set([cmssw_file2Package(repo_config, f) for f in chg_files])]
             )
-            for pkg_file in chg_files:
-                for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
-                    for regex in pkgs_regexp:
-                        if regex.match(pkg_file):
-                            extra_labels["mtype"].append(ex_lab)
-                            print(
-                                "Non-Blocking label:%s:%s:%s" % (ex_lab, regex.pattern, pkg_file)
-                            )
-                            break
-            if not extra_labels["mtype"]:
-                del extra_labels["mtype"]
-            print("Extra non-blocking labels:", extra_labels)
-            print("First Package: ", packages[0])
+            add_nonblocking_labels(chg_files, extra_labels)
             create_test_property = True
         else:
             add_external_category = True
@@ -867,6 +880,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             ):
                 print("Skipping PR as it does not belong to valid CMSDIST branch")
                 return
+            try:
+                if repo_config.NONBLOCKING_LABELS:
+                    chg_files = get_changed_files(repo, pr)
+                    add_nonblocking_labels(chg_files, extra_labels)
+            except:
+                pass
 
         print("Following packages affected:")
         print("\n".join(packages))
@@ -1789,8 +1808,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         need_external = True
     # Now updated the labels.
     xlabs = ["backport", "urgent", "backport-ok", "compilation-warnings"]
-    for lab in TYPE_COMMANDS:
-        xlabs.append(lab)
+    for xtype in extra_labels:
+        if xtype != "mtype":
+            xlabs.append(extra_labels[xtype][0])
+        else:
+            for lab in extra_labels[lab]:
+                xlabs.append(lab)
 
     missingApprovals = [
         x

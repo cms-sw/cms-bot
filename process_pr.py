@@ -401,7 +401,7 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
     return e and e == emoji
 
 
-def get_assign_categories(line):
+def get_assign_categories(line, extra_labels):
     m = re.match(
         "^\s*(New categories assigned:\s*|(unassign|assign)\s+(from\s+|package\s+|))([a-zA-Z0-9/,\s-]+)\s*$",
         line,
@@ -415,6 +415,7 @@ def get_assign_categories(line):
         for ex_cat in m.group(4).replace(" ", "").split(","):
             if "/" in ex_cat:
                 new_cats += get_package_categories(ex_cat)
+                add_nonblocking_labels([ex_cat], extra_labels)
                 continue
             if not ex_cat in CMSSW_CATEGORIES:
                 continue
@@ -1124,7 +1125,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         hold[u] = 0
                 continue
 
-        assign_type, new_cats = get_assign_categories(first_line)
+        assign_type, new_cats = get_assign_categories(first_line, extra_labels)
         if new_cats:
             if (assign_type == "new categories assigned:") and (commenter == cmsbuild_user):
                 for ex_cat in new_cats:

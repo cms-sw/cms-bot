@@ -1490,7 +1490,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     for sign in selected_cats:
                         signatures[sign] = "approved"
                         if (
-                            (test_comment is None)
+                            issue.pull_request
+                            and (test_comment is None)
                             and ((repository in auto_test_repo) or ("*" in auto_test_repo))
                             and sign not in ("code-checks", "tests", "orp")
                             and (comment.created_at >= last_commit_date)

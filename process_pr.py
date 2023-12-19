@@ -1813,7 +1813,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if xtype != "mtype":
             xlabs.append(extra_labels[xtype][0])
         else:
-            for lab in extra_labels[lab]:
+            for lab in extra_labels["mtype"]:
                 xlabs.append(lab)
 
     missingApprovals = [
@@ -1829,6 +1829,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         and not x in xlabs
     ]
 
+    print("Missing Approvals:",missingApprovals)
     if not missingApprovals:
         print("The pull request is complete.")
     if missingApprovals:

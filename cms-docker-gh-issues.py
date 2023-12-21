@@ -11,7 +11,11 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 parser = ArgumentParser()
 parser.add_argument(
-    "-r", "--repository", dest="repo", help="Github Repositoy name e.g cms-sw/cms-bot", type=str,
+    "-r",
+    "--repository",
+    dest="repo",
+    help="Github Repositoy name e.g cms-sw/cms-bot",
+    type=str,
 )
 parser.add_argument("-t", "--title", dest="title", help="Issue title", type=str)
 parser.add_argument(

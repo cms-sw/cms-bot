@@ -1830,7 +1830,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         and not x in xlabs
     ]
 
-    print("Missing Approvals:",missingApprovals)
+    print("Missing Approvals:", missingApprovals)
     if not missingApprovals:
         print("The pull request is complete.")
     if missingApprovals:

@@ -63,11 +63,12 @@ print("Authentication succeeeded to " + str(gh_repo.full_name))
 
 label_str = "+label:".join([""] + [str(label) for label in args.labels])
 
+issues_curl = (
+    "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title+type:issue%s'"
+    % (args.repo, label_str)
+)
+
 if args.comment == False:
-    issues_curl = (
-        "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title+type:issue%s'"
-        % (args.repo, label_str)
-    )
     pulls_curl = (
         "curl -s 'https://api.github.com/repos/%s/pulls?q=+is:open+label:%s'"
         % (args.repo, args.labels[0])
@@ -90,7 +91,6 @@ if args.comment == False:
         pulls_obj = json.loads(pulls_obj)
         urls = ""
         for pull in pulls_obj:
-            print(pull["html_url"])
             urls += str(pull["html_url"]) + " "
         print("The following PRs have matching labels: ", urls)
 
@@ -105,17 +105,13 @@ if args.comment == False:
             "The following PRs should be probably merged before building the new image: "
             + urls
         )
-        print(issue_comment)
         create_issue_comment(gh_repo.full_name, issue_number, issue_comment)
     else:
         # Check state of the issue: open/closed...
         issue_title = issues_dict["items"][0]["title"]
-        print(issue_title)
         issue_number = issues_dict["items"][0]["number"]
-        print(issue_number)
 
         state = issues_dict["items"][0]["state"]
-        print(state)
         if state == "open":
             print("Issue is already open... Nothing to do!")
         elif state == "closed":
@@ -135,11 +131,6 @@ if args.comment == False:
     # Delete property files
     sys.exit(0)
 else:
-    issues_curl = (
-        "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title+type:issue%s'"
-        % (args.repo, label_str)
-    )
-
     print("Checking existing Issue", issues_curl)
     exit_code, issues_obj = run_cmd(issues_curl)
     print(issues_obj)
@@ -155,8 +146,5 @@ else:
     else:
         print("Adding issue comment...")
         issue_title = issues_dict["items"][0]["title"]
-        print(issue_title)
         issue_number = issues_dict["items"][0]["number"]
-        print(issue_number)
-        print("MESSAGE: ", msg)
         create_issue_comment(gh_repo.full_name, issue_number, msg)

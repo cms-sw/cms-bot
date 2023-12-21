@@ -11,11 +11,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 parser = ArgumentParser()
 parser.add_argument(
-    "-r",
-    "--repository",
-    dest="repo",
-    help="Github Repositoy name e.g cms-sw/cms-bot",
-    type=str,
+    "-r", "--repository", dest="repo", help="Github Repositoy name e.g cms-sw/cms-bot", type=str,
 )
 parser.add_argument("-t", "--title", dest="title", help="Issue title", type=str)
 parser.add_argument(
@@ -63,15 +59,15 @@ print("Authentication succeeeded to " + str(gh_repo.full_name))
 
 label_str = "+label:".join([""] + [str(label) for label in args.labels])
 
-issues_curl = (
-    "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title+type:issue%s'"
-    % (args.repo, label_str)
+issues_curl = "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title+type:issue%s'" % (
+    args.repo,
+    label_str,
 )
 
 if args.comment == False:
-    pulls_curl = (
-        "curl -s 'https://api.github.com/repos/%s/pulls?q=+is:open+label:%s'"
-        % (args.repo, args.labels[0])
+    pulls_curl = "curl -s 'https://api.github.com/repos/%s/pulls?q=+is:open+label:%s'" % (
+        args.repo,
+        args.labels[0],
     )
 
     print("Checking existing Issue", issues_curl)
@@ -102,8 +98,7 @@ if args.comment == False:
 
         # Comment related PRs
         issue_comment = (
-            "The following PRs should be probably merged before building the new image: "
-            + urls
+            "The following PRs should be probably merged before building the new image: " + urls
         )
         create_issue_comment(gh_repo.full_name, issue_number, issue_comment)
     else:

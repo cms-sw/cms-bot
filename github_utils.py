@@ -742,6 +742,42 @@ def get_pr_latest_commit(pr, repository):
     return str(get_pr_commits(pr, repository, per_page=1, last_page=True)[-1]["sha"])
 
 
+def get_issue_emojis(issue_id, repository):
+    get_gh_token(repository)
+    return github_api(
+        "/repos/%s/issues/%s/reactions" % (repository, issue_id), method="GET"
+    )
+
+
+def delete_issue_emoji(emoji_id, issue_id, repository):
+    get_gh_token(repository)
+    return github_api(
+        "/repos/%s/issues/%s/reactions/%s" % (repository, issue_id, emoji_id),
+        method="DELETE",
+        raw=True,
+    )
+
+
+def set_issue_emoji(issue_id, repository, emoji="+1", reset_other=True):
+    cur_emoji = None
+    if reset_other:
+        for e in get_issue_emojis(issue_id, repository):
+            login = e["user"]["login"].encode("ascii", "ignore")
+            if sys.version_info[0] == 3:
+                login = login.decode()
+            if login == GH_USER:
+                if e["content"] != emoji:
+                    delete_issue_emoji(e["id"], issue_id, repository)
+                else:
+                    cur_emoji = e
+    if cur_emoji:
+        return cur_emoji
+    get_gh_token(repository)
+    params = {"content": emoji}
+    return github_api(
+        "/repos/%s/issues/%s/reactions" % (repository, issue_id), params=params
+    )
+
 def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
     cur_emoji = None
     if reset_other:

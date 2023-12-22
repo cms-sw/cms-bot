@@ -397,7 +397,12 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
     if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
         e = bot_cache["emoji"][comment_id]
     else:
-        for x in get_comment_emojis(comment.id, repository):
+        emojis = None
+        if "Issue.Issue" in str(type(comment)):
+            emojis = get_issue_emojis(comment.number, repository)
+        else:
+            emojis = get_comment_emojis(comment.id, repository)
+        for x in emojis:
             if x["user"]["login"].encode("ascii", "ignore").decode() == user:
                 e = x["content"]
                 bot_cache["emoji"][comment_id] = x

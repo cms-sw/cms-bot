@@ -44,6 +44,7 @@ pushd $BUILD_DIR/CMSDIST
     *patch*)
     BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
     CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
+    BUILD_OPTS=""
     PATCH='-patch'
     ;;
     * )
@@ -55,6 +56,10 @@ pushd $BUILD_DIR/CMSDIST
   #push the REL tag once release is build successfully
   git checkout $CMSDIST_TAG
   git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE
+  if [ "${BUILD_OPTS}" != "" ] ; then
+    echo "${BUILD_OPTS}" > etc/build_options.txt
+    (git add etc/build_options.txt ; git commit -m 'Added build options' etc/build_options.txt) || true
+  fi
 popd
 
 git clone -b $PKGTOOLS_TAG git@github.com:cms-sw/pkgtools.git $BUILD_DIR/PKGTOOLS
@@ -77,13 +82,11 @@ pushd $BUILD_DIR
     Darwin ) MD5_CMD=md5;;
     * )      MD5_CMD=md5sum;;
   esac
-  if [ "${BUILD_OPTS}" != "" ] ; then echo "--build-options ${BUILD_OPTS}" > cmsBuild.opts ; fi
   if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
     CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps --tag hash $(cmsbuild_args ${CMSSW_X_Y_Z})"
   else
     CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi
-  if [ -e cmsBuild.opts ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} $(cat cmsBuild.opts)" ; fi
   if [ -f CMSDIST/fakesystem.spec ] ; then
     PYTHONPATH= $CMSBUILD_CMD -i fake             build  fakesystem
     PYTHONPATH= $CMSBUILD_CMD -i fake --sync-back upload fakesystem

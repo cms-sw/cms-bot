@@ -416,17 +416,6 @@ if ${BUILD_EXTERNAL} ; then
       popd
     fi
 
-    #Process cmsdist Build options
-    BUILD_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
-    if [ "${BUILD_OPTS}" != "" ] ; then
-      for opts in $(echo ${BUILD_OPTS} | tr ',' '\n') ; do
-        case $opts in
-          lto:0 ) [ ! -e ${WORKSPACE}/cmsdist/compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' ${WORKSPACE}/cmsdist/compilation_flags_lto.file || true ;;
-          * ) echo "Unknown option '$opt'" ;;
-        esac
-      done
-    fi
-
     # Build the whole cmssw-tool-conf toolchain
     CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
@@ -439,6 +428,10 @@ if ${BUILD_EXTERNAL} ; then
       dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
+    #Process cmsdist Build options
+    BUILD_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
+    if [ "${BUILD_OPTS}" != "" ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --build-options ${BUILD_OPTS}" ; fi
+
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \

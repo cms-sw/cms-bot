@@ -29,7 +29,9 @@ WORKER=`hostname -s`
 # the jenkins build number is the one of the job in jenkins doing the upload
 $WORKSPACE/report-build-release-status $BUILD_NUMBER $WORKER $ISSUE_NUMBER $ARCHITECTURE $CMSSW_X_Y_Z UPLOADING $DRY_RUN_PARAM
 pushd $BUILD_DIR
-  PYTHONPATH= PKGTOOLS/cmsBuild $(cmsbuild_args ${CMSSW_X_Y_Z}) --server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER}  --architecture=$ARCHITECTURE --sync-back upload cmssw$PATCH
+  CMSBUILD_ARGS="--server http://${CMSREP_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_SERVER}  --architecture=$ARCHITECTURE"
+  if [ -e cmsBuild.opts ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} $(cat cmsBuild.opts)" ; fi
+  PYTHONPATH= PKGTOOLS/cmsBuild $(cmsbuild_args ${CMSSW_X_Y_Z}) ${CMSBUILD_ARGS} --sync-back upload cmssw$PATCH
 popd
 if [ -e $WORKSPACE/TEST.DONE ] ; then
   chmod -R +w $WORKSPACE

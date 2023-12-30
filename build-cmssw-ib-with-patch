@@ -117,14 +117,7 @@ REV_PKGS=""
 for p in cms-common fakesystem gcc-fixinclude SCRAMV1 SCRAMV2 ; do
   [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
 done
-if [ "${BUILD_OPTS}" != "" ] ; then
-  for opts in $(echo ${BUILD_OPTS} | tr ',' '\n') ; do
-    case $opts in
-      lto:0 ) [ ! -e CMSDIST/compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' CMSDIST/compilation_flags_lto.file || true;;
-      * ) echo "Unknown option '$opt'" ;;
-    esac
-  done
-fi
+if [ "${BUILD_OPTS}" != "" ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --build-options ${BUILD_OPTS}" ; fi
 if [ "${REV_PKGS}" != "" ] ; then
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${REV_PKGS}
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true

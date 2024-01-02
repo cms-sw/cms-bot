@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from sys import exit, argv
 from os import pipe, close, fork, fdopen, write, waitpid
 from os.path import exists

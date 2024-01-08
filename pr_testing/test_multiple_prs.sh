@@ -35,6 +35,7 @@ function get_pr_relval_args() {
 }
 
 # Constants
+export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script
@@ -652,8 +653,7 @@ echo_section "end of build external"
 
 # This part responsible for testing CMSSW
 echo_section "Testing CMSSW"
-voms-proxy-init -voms cms -valid 24:00 -out $WORKSPACE/x509up_u`id -u` || true  # To get access to jenkins artifact machine
-export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
+voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artifact machine
 
 ### to know at the end of the tests if everything went ok
 ALL_OK=true

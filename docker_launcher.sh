@@ -20,6 +20,7 @@ else
 fi
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
+export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 XPATH=""
 py3or2_dir="$HOME/bin"
 if [ ! -e ${py3or2_dir} ] ; then
@@ -91,7 +92,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   if [ -d $HOME/bin ] ; then
     CMD2RUN="${CMD2RUN}export PATH=\$HOME/bin:\$PATH; "
   fi
-  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -rfc -valid 24:00 -out $WORKSPACE/x509up_u`id -u` || true ; voms-proxy-info || true; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
+  CMD2RUN="${CMD2RUN}voms-proxy-init -voms cms -rfc -valid 24:00 || true ; voms-proxy-info || true; echo \$HOME; cd $WORKSPACE; echo \$PATH; $@"
   if $HAS_DOCKER ; then
     docker pull $DOCKER_IMG
     set +x
@@ -99,7 +100,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     case $XUSER in
       cmsbld ) DOCKER_OPT="${DOCKER_OPT} -u $(id -u):$(id -g) -v /etc/passwd:/etc/passwd -v /etc/group:/etc/group" ;;
     esac
-    export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
     for e in $DOCKER_JOB_ENV GIT_CONFIG_NOSYSTEM WORKSPACE BUILD_URL BUILD_NUMBER JOB_NAME NODE_NAME NODE_LABELS DOCKER_IMG RUCIO_ACCOUNT X509_USER_PROXY; do DOCKER_OPT="${DOCKER_OPT} -e $e"; done
     if [ "${PYTHONPATH}" != "" ] ; then DOCKER_OPT="${DOCKER_OPT} -e PYTHONPATH" ; fi
     for m in $(echo $MOUNT_POINTS,/etc/localtime,${BUILD_BASEDIR},/home/$XUSER | tr ',' '\n') ; do

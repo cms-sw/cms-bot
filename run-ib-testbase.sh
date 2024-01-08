@@ -8,6 +8,7 @@ cvmfs_config probe || true
 for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
 done
+export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 voms-proxy-init -voms cms || true
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}

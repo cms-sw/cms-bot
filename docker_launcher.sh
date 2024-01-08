@@ -20,6 +20,7 @@ else
 fi
 export DBS_URL=https://cmsweb.cern.ch:8443/dbs/prod/global/DBSReader
 export GIT_CONFIG_NOSYSTEM=1
+if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
 export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 XPATH=""
 py3or2_dir="$HOME/bin"
@@ -49,7 +50,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       export DOCKER_IMG="${DOCKER_IMG}:${UNAME_M}"
     fi
   fi
-  if [ "X$WORKSPACE" = "X" ] ; then export WORKSPACE=$(/bin/pwd) ; fi
   BUILD_BASEDIR=$(dirname $WORKSPACE)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
   MOUNT_POINTS="/cvmfs,/tmp,$(echo $WORKSPACE | cut -d/ -f1,2),/var/run/user,/run/user,/etc/pki/ca-trust"

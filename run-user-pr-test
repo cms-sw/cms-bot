@@ -8,7 +8,6 @@ if ! scram version 2>/dev/null ; then
   source /cvmfs/cms.cern.ch/cmsset_default.sh
 fi
 cd $WORKSPACE
-export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 export CI_UPLOAD_DIR=$WORKSPACE/upload
 mkdir $WORKSPACE/upload
 REPO_DIR=$CMS_BOT_DIR/repos/$(echo $REPOSITORY | tr '-' '_')

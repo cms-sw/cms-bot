@@ -35,7 +35,6 @@ function get_pr_relval_args() {
 }
 
 # Constants
-export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 echo LD_LIBRARY_PATH=${LD_LIBRARY_PATH} || true
 ls ${LD_LIBRARY_PATH} || true
 SCRIPTPATH="$( cd "$(dirname "$0")" ; pwd -P )"  # Absolute path to script

@@ -652,7 +652,8 @@ echo_section "end of build external"
 
 # This part responsible for testing CMSSW
 echo_section "Testing CMSSW"
-voms-proxy-init -voms cms -valid 24:00 || true  # To get access to jenkins artifact machine
+voms-proxy-init -voms cms -valid 24:00 -out $WORKSPACE/x509up_u`id -u` || true  # To get access to jenkins artifact machine
+export X509_USER_PROXY=$WORKSPACE/x509up_u`id -u`
 
 ### to know at the end of the tests if everything went ok
 ALL_OK=true

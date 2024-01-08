@@ -10,14 +10,14 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 parser = ArgumentParser()
 parser.add_argument(
-    "-r", "--repository", dest="repo", help="Github Repositoy name e.g cms-sw/cms-bot", type=str
+    "-r", "--repository", dest="repo", help="GitHub Repository name e.g cms-sw/cms-bot", type=str
 )
 parser.add_argument("-t", "--title", dest="title", help="Issue title", type=str)
 parser.add_argument(
     "-m",
     "--message",
     dest="msg",
-    help="Message to be posted s body of the GH issue",
+    help="Message to be posted in the body of the GH issue",
     type=str,
     default="",
 )
@@ -25,9 +25,16 @@ parser.add_argument(
     "-R",
     "--report_file",
     dest="report_file",
-    help="File name contaning the issue message",
+    help="File name containing the issue message",
     type=str,
     default="",
+)
+parser.add_argument(
+    "-q",
+    "--quiet",
+    dest="quiet",
+    help="Do not take any action if the issue already exists",
+    default=False,
 )
 
 args = parser.parse_args()
@@ -66,8 +73,10 @@ if not e:
     except:
         pass
 if issue:
-    print("Updating comment")
-    issue.create_comment(msg)
+    print(args.quiet)
+    if args.quiet == False:
+        print("Updating comment")
+        issue.create_comment(msg)
 else:
     print("Creating issue request")
     gh_repo.create_issue(args.title, msg)

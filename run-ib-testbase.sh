@@ -1,9 +1,6 @@
 #!/bin/bash
 cat <<EOF
 #!/bin/bash -ex
-echo "================ ENV ============="
-env
-echo "=================================="
 klist || true
 kinit -R || true
 hostname

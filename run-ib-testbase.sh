@@ -1,6 +1,9 @@
 #!/bin/bash
 cat <<EOF
 #!/bin/bash -ex
+echo "================ ENV ============="
+env
+echo "=================================="
 klist || true
 kinit -R || true
 hostname
@@ -9,6 +12,7 @@ for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
 done
 voms-proxy-init -voms cms || true
+voms-proxy-info || true
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export SCRAM_ARCH=${ARCHITECTURE}

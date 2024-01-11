@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -885,7 +883,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if pr.base.ref == "master":
                     signing_categories.add("code-checks")
                 updateMilestone(repo, issue, pr, dryRun)
-                pass
             chg_files = get_changed_files(repo, pr)
             packages = sorted(
                 [x for x in set([cmssw_file2Package(repo_config, f) for f in chg_files])]

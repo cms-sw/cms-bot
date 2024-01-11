@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -135,6 +137,7 @@ REGEX_TEST_IGNORE = re.compile(
     re.I,
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->")
+REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
 REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
@@ -380,6 +383,17 @@ def modify_comment(comment, match, replace, dryRun):
     return 0
 
 
+def get_comment_emojis_(comment):
+    try:
+        return comment.reactions
+    except AttributeError:
+        import itertools
+
+        return defaultdict(
+            lambda: 0, zip((x.content for x in comment.get_reactions()), itertools.repeat(1))
+        )
+
+
 def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
     if dryRun:
         return
@@ -387,7 +401,7 @@ def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", 
     if (
         (not comment_id in bot_cache["emoji"])
         or (bot_cache["emoji"][comment_id] != emoji)
-        or (comment.reactions[emoji] == 0)
+        or (get_comment_emojis_(comment)[emoji] == 0)
     ):
         if "Issue.Issue" in str(type(comment)):
             set_issue_emoji(comment.number, repository, emoji=emoji, reset_other=reset_other)
@@ -882,6 +896,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if pr.base.ref == "master":
                     signing_categories.add("code-checks")
                 updateMilestone(repo, issue, pr, dryRun)
+                pass
             chg_files = get_changed_files(repo, pr)
             packages = sorted(
                 [x for x in set([cmssw_file2Package(repo_config, f) for f in chg_files])]
@@ -1474,7 +1489,50 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             return
 
         print("Processing commits")
+        commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
+            seen_commits_cnt = len(commit_cache)
+            if all_commits.totalCount < seen_commits_cnt:
+                print(
+                    "Number of commits in cache ({0}) is greater than the number of commits in PR ({1}) - possible squash detected".format(
+                        seen_commits_cnt, all_commits.totalCount
+                    )
+                )
+
+                last_seen_commit_sha = sorted(
+                    [(k, commit_cache[k]["time"]) for k in commit_cache], key=lambda q: q[1]
+                )[-1][0]
+                new_head_commit_sha = pr.head.sha
+                base_commit_sha = pr.base.sha
+
+                changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
+                changes_after_squash = repo.compare(base_commit_sha, new_head_commit_sha)
+
+                diff_before_squash = {
+                    (file.filename, file.patch) for file in changes_before_squash.files
+                }
+                diff_after_squash = {
+                    (file.filename, file.patch) for file in changes_after_squash.files
+                }
+
+                if diff_before_squash ^ diff_after_squash:
+                    print("PR diff changed, will not preserve signatures")
+                else:
+                    print("PR diff not changed, preserving signatures")
+                    bot_cache[new_head_commit_sha] = {
+                        "time": bot_cache[last_seen_commit_sha]["time"] + 1,
+                        "files": sorted(
+                            x["filename"]
+                            for x in get_commit(repo.full_name, new_head_commit_sha)["files"]
+                        ),
+                    }
+
+                # Clean removed commits from cache
+                for k in commit_cache:
+                    if not any(k == commit.sha for commit in all_commits):
+                        print("Removing commit {0} from cache".format(k))
+                        del bot_cache[k]
+
             for commit in all_commits:
                 if commit.sha not in bot_cache:
                     bot_cache[commit.sha] = {"time": int(commit.commit.committer.date.timestamp())}

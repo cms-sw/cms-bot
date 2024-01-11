@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from github import Github
+from github import Github, GithubException
 from optparse import OptionParser
 import repo_config
 from os.path import expanduser
@@ -80,6 +80,12 @@ if __name__ == "__main__":
         % (opts.data_repo, data_pr_base_branch)
     )
     last_release_tag = get_tag_from_string(out)
+
+    err, out = run_cmd(
+        "GIT_DIR=repo git ls-tree -r %s --name-only | grep '/config.pbtxt$' | wc -l"
+        % (data_pr_base_branch)
+    )
+    add_cms_triton_check = int(out) > 0
 
     if last_release_tag:
         comparison = data_repo.compare(data_pr_base_branch, last_release_tag)
@@ -197,6 +203,44 @@ if __name__ == "__main__":
         update_file_object = dist_repo.update_file(
             cmsswdataspec, mssg, "\n".join(new_content), content_file.sha, repo_tag_pr_branch
         )
+
+    # PostBuild for CMS Triton Checks
+    datafile = "data/data-%s.file" % data_pkg
+    try:
+        content_file = dist_repo.get_contents(datafile, repo_tag_pr_branch)
+    except GithubException as e:
+        if e.status == 404:
+            content_file = None
+        else:
+            raise e
+    #Do not add cmsTriton checks if data/cmsTritonPostBuild.file not exists
+    if add_cms_triton_check:
+        cms_triton_postbuild = "data/cmsTritonPostBuild"
+        try:
+            dist_repo.get_contents(cms_triton_postbuild + ".file", repo_tag_pr_branch)
+        except GithubException as e:
+            if e.status == 404:
+                add_cms_triton_check = False
+            else:
+                raise e
+    # Create/Update data/data-Repo-Name.file if add_cms_triton_check
+    if add_cms_triton_check:
+        new_contents = "## INCLUDE %s" % cms_triton_postbuild
+        if content_file is None:
+            dist_repo.create_file(
+                datafile, "Newly added for cmsTritonPostBuild", new_contents, repo_tag_pr_branch
+            )
+        else:
+            datafile_raw = [l.decode() for l in content_file.decoded_content.splitlines()]
+            if not [l for l in datafile_raw if new_contents in l]:
+                datafile_raw.append(new_contents)
+                dist_repo.update_file(
+                    datafile,
+                    "Added cmsTritonPostBuild",
+                    "\n".join(datafile_raw),
+                    content_file.sha,
+                    repo_tag_pr_branch,
+                )
 
     title = "Update tag for " + repo_name_only + " to " + new_tag
     body = "Move " + repo_name_only + " data to new tag, see \n" + data_repo_pr.html_url + "\n"

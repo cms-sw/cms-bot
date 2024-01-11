@@ -64,8 +64,11 @@ if [ -e cmsdist/data/cmsswdata.txt ] ; then
       if [ $(grep "Requires:  *data-${PKG_NAME} *$"  cmsdist/cmsswdata.spec | wc -l) -eq 0 ] ; then
         sed -i -e "s|^\(Source: .*\)$|\1\nRequires: data-${PKG_NAME}|" cmsdist/cmsswdata.spec
       fi
-      touch cmsdist/data/data-${PKG_NAME}.file
-      rm -rf cmsdist/data/data-${PKG_NAME}.* 
+      if [ -f cmsdist/data/cmsTritonPostBuild.file -a -e ${PKG_NAME} ] ; then
+        if [ $(find ${PKG_NAME} -name config.pbtxt -type f | wc -l) -gt 0 ] ; then
+          echo "## INCLUDE data/cmsTritonPostBuild" >> cmsdist/data/data-${PKG_NAME}.file
+        fi
+      fi
     ;;
   esac
 fi

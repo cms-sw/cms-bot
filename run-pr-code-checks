@@ -69,7 +69,7 @@ pushd $CMSSW_BASE/src
     echo -e "\nSee log ${UP_URL}/cms-checkout-topic.log" >> ${UP_DIR}/code-checks.md
     if ! $DRY_RUN ; then
       send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
-      ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+      ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
     fi
     exit 0
   fi
@@ -94,7 +94,7 @@ pushd $CMSSW_BASE/src
     echo '```' >> ${UP_DIR}/code-checks.md
     if ! $DRY_RUN ; then
       send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
-      ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+      ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
     fi
     exit 0
   fi
@@ -102,7 +102,7 @@ pushd $CMSSW_BASE/src
   NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
   if [ $DSIZE -lt 0 ] ; then DSIZE=0 ; fi
-  $CMS_BOT_DIR/pr-checks/check-pr-files -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > ${UP_DIR}/invalid_files.txt || true
+  $CMS_BOT_DIR/pr-checks/check-pr-files.py -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > ${UP_DIR}/invalid_files.txt || true
   touch ${UP_DIR}/duplicate-data.txt
   if [ -d ${CMSSW_RELEASE_BASE}/external/${SCRAM_ARCH}/data ] ; then
     for f in $(cat ${UP_DIR}/all-changed-files.txt) ; do
@@ -129,7 +129,7 @@ if $CODE_CHECKS ; then
       echo '```' >> ${UP_DIR}/code-checks.md
       if ! $DRY_RUN ; then
         send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
-        ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+        ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
       fi
       exit 0
     fi
@@ -227,5 +227,5 @@ echo -e "${MSG}${HOW_TO_RUN}" > ${UP_DIR}/code-checks.md
 if ! $DRY_RUN ; then
   send_jenkins_artifacts ${UP_DIR}/ pr-code-checks/${REPO_USER}-PR-${PULL_REQUEST}/${BUILD_NUMBER}
   eval `scram unset -sh`
-  ${CMS_BOT_DIR}/comment-gh-pr -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
+  ${CMS_BOT_DIR}/comment-gh-pr.py -r ${REPOSITORY} -p $PULL_REQUEST -R ${UP_DIR}/code-checks.md
 fi

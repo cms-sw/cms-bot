@@ -319,7 +319,7 @@ if [ "X$RUN_TR_COMP" = Xtrue ]; then
     wait_dqm_comp 0.5
     WF_DIR=`echo ${WF} | cut -d "/" -f1`
     echo "Running: edm::TriggerResults ${WF_DIR}"
-    (${CMS_BOT_DIR}/compareTriggerResults -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
+    (${CMS_BOT_DIR}/compareTriggerResults.py -r ${WORKSPACE}/data/${COMPARISON_RELEASE} -t ${WORKSPACE}/data/PR-${PR_NUM} \
       -f "*/${WF_DIR}/step*.root" -o ${WORKSPACE}/upload/triggerResults > ${WORKSPACE}/upload/triggerResults/${WF_DIR}.log 2>&1 || true) &
   done
 fi
@@ -503,7 +503,7 @@ wait || true
 
 if [ "X$RUN_TR_COMP" = Xtrue ]; then
   echo "[`date`] Done comparisons of edm::TriggerResults"
-  ${CMS_BOT_DIR}/compareTriggerResultsSummary -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1 || true
+  ${CMS_BOT_DIR}/compareTriggerResultsSummary.py -i ${WORKSPACE}/upload/triggerResults -f "*/*.json" -o ${WORKSPACE}/upload/triggerResults/index.html -F html > ${WORKSPACE}/upload/triggerResults.log 2>&1 || true
   echo "[`date`] Summary of TriggerResults comparisons saved in ${WORKSPACE}/upload/triggerResults.log"
   echo "HLT_TRIGGER_COMPARISON${TEST_FLAVOR_STR};OK,HLT Trigger ${UC_TEST_FLAVOR} comparison,See results,/SDT/jenkins-artifacts/${COMP_UPLOAD_DIR}/triggerResults/" >> ${RESULTS_FILE}
   if [ -f ${JR_COMP_DIR}/qaResultsSummary.log ]; then

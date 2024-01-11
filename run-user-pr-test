@@ -23,7 +23,7 @@ if [ "X${PULL_REQUEST}" != "X" ] ; then
   cd userrepo
   git fetch origin pull/${PULL_REQUEST}/head:CHANGES_${PULL_REQUEST}
   git merge CHANGES_${PULL_REQUEST}
-  COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
+  COMMIT=$($CMS_BOT_DIR/process-pull-request.py -c -r ${REPOSITORY} ${PULL_REQUEST})
   $CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
     -t JENKINS_TEST_URL \
     -m "${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
@@ -81,7 +81,7 @@ if [ -f ${JOB_SUMMARY_LOG} ] ; then
   cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
 fi
 if [ "X${PULL_REQUEST}" != "X" ] ; then
-  $WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
+  $WORKSPACE/cms-bot/comment-gh-pr.py -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
 else
   OPEN_ISSUE=$(grep '^ *OPEN_ISSUE_FOR_PUSH_TESTS *=' $REPO_DIR/repo_config.py | sed 's|^.*OPEN_ISSUE_FOR_PUSH_TESTS *=||;s| ||g' || true)
   if [ "X${OPEN_ISSUE}" = "XTrue" ] ; then

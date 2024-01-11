@@ -383,17 +383,6 @@ def modify_comment(comment, match, replace, dryRun):
     return 0
 
 
-def get_comment_emojis_(comment):
-    try:
-        return comment.reactions
-    except AttributeError:
-        import itertools
-
-        return defaultdict(
-            lambda: 0, zip((x.content for x in comment.get_reactions()), itertools.repeat(1))
-        )
-
-
 def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
     if dryRun:
         return
@@ -401,7 +390,7 @@ def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", 
     if (
         (not comment_id in bot_cache["emoji"])
         or (bot_cache["emoji"][comment_id] != emoji)
-        or (get_comment_emojis_(comment)[emoji] == 0)
+        or (comment.reactions[emoji] == 0)
     ):
         if "Issue.Issue" in str(type(comment)):
             set_issue_emoji(comment.number, repository, emoji=emoji, reset_other=reset_other)

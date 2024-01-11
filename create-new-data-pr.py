@@ -213,7 +213,7 @@ if __name__ == "__main__":
             content_file = None
         else:
             raise e
-    #Do not add cmsTriton checks if data/cmsTritonPostBuild.file not exists
+    # Do not add cmsTriton checks if data/cmsTritonPostBuild.file not exists
     if add_cms_triton_check:
         cms_triton_postbuild = "data/cmsTritonPostBuild"
         try:

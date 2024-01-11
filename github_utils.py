@@ -744,9 +744,7 @@ def get_pr_latest_commit(pr, repository):
 
 def get_issue_emojis(issue_id, repository):
     get_gh_token(repository)
-    return github_api(
-        "/repos/%s/issues/%s/reactions" % (repository, issue_id), method="GET"
-    )
+    return github_api("/repos/%s/issues/%s/reactions" % (repository, issue_id), method="GET")
 
 
 def delete_issue_emoji(emoji_id, issue_id, repository):
@@ -774,9 +772,8 @@ def set_issue_emoji(issue_id, repository, emoji="+1", reset_other=True):
         return cur_emoji
     get_gh_token(repository)
     params = {"content": emoji}
-    return github_api(
-        "/repos/%s/issues/%s/reactions" % (repository, issue_id), params=params
-    )
+    return github_api("/repos/%s/issues/%s/reactions" % (repository, issue_id), params=params)
+
 
 def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
     cur_emoji = None

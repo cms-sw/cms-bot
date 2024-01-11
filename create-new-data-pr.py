@@ -205,17 +205,9 @@ if __name__ == "__main__":
         )
 
     # PostBuild for CMS Triton Checks
-    datafile = "data/data-%s.file" % data_pkg
-    try:
-        content_file = dist_repo.get_contents(datafile, repo_tag_pr_branch)
-    except GithubException as e:
-        if e.status == 404:
-            content_file = None
-        else:
-            raise e
     # Do not add cmsTriton checks if data/cmsTritonPostBuild.file not exists
+    cms_triton_postbuild = "data/cmsTritonPostBuild"
     if add_cms_triton_check:
-        cms_triton_postbuild = "data/cmsTritonPostBuild"
         try:
             dist_repo.get_contents(cms_triton_postbuild + ".file", repo_tag_pr_branch)
         except GithubException as e:
@@ -225,6 +217,14 @@ if __name__ == "__main__":
                 raise e
     # Create/Update data/data-Repo-Name.file if add_cms_triton_check
     if add_cms_triton_check:
+        datafile = "data/data-%s.file" % data_pkg
+        try:
+            content_file = dist_repo.get_contents(datafile, repo_tag_pr_branch)
+        except GithubException as e:
+            if e.status == 404:
+                content_file = None
+            else:
+                raise e
         new_contents = "## INCLUDE %s" % cms_triton_postbuild
         if content_file is None:
             dist_repo.create_file(

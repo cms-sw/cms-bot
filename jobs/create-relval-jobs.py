@@ -77,10 +77,10 @@ for t in thrds:
 # Get Workflow stats from ES
 print("Getting Workflow stats from ES.....")
 stats = {}
-if '_X_' in cmssw_ver:
+if "_X_" in cmssw_ver:
     release_cycle = str.lower(cmssw_ver.split("_X_")[0] + "_X")
 else:
-    release_cycle = str.lower('_'.join(cmssw_ver.split("_")[:3]) + "_X")
+    release_cycle = str.lower("_".join(cmssw_ver.split("_")[:3]) + "_X")
 days_history = 10
 # if ('_ppc64le_' in arch) or ('_aarch64_' in arch) or ('cc8_' in arch) or ('gcc10' in arch):
 #  days_history=3

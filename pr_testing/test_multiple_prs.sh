@@ -158,7 +158,7 @@ ls /cvmfs/cms-ib.cern.ch || true
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 # Put hashcodes of last commits to a file. Mostly used for commenting back
-COMMIT=$(${CMSBOT_PYTHON_CMD} ${CMS_BOT_DIR}/process-pull-request -c -r ${PR_REPO} ${PR_NUMBER})
+COMMIT=$(${CMSBOT_PYTHON_CMD} ${CMS_BOT_DIR}/process-pull-request.py -c -r ${PR_REPO} ${PR_NUMBER})
 echo "${PULL_REQUEST}=${COMMIT}" > ${WORKSPACE}/prs_commits
 cp ${WORKSPACE}/prs_commits ${WORKSPACE}/prs_commits.txt
 

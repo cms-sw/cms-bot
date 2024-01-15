@@ -24,7 +24,7 @@ def check_commits_files(repo, pr, detail=False):
     invalid_status = [("A", "D"), ("C", "D"), ("R", "D"), ("X", "X"), ("U", "U")]
 
     all_ok = False
-    e, o = run_cmd("%s/process-pull-request -a -c -r %s %s" % (CMS_BOT_DIR, repo, pr))
+    e, o = run_cmd("%s/process-pull-request.py -a -c -r %s %s" % (CMS_BOT_DIR, repo, pr))
     if e:
         print(o)
         return all_ok

@@ -8,7 +8,7 @@ cd $WORKSPACE
 # The pull request number is $1
 PULL_REQUESTS=$(echo $1 | sed 's/^ *//;s/ *$//')
 PULL_REQUEST="$(echo ${PULL_REQUESTS} | sed 's| .*||')"
-COMMIT=$(${CMS_BOT_DIR}/process-pull-request -c -r $(echo ${PULL_REQUEST} | sed 's/#.*//') $(echo ${PULL_REQUEST} | sed 's/.*#//'))
+COMMIT=$(${CMS_BOT_DIR}/process-pull-request.py -c -r $(echo ${PULL_REQUEST} | sed 's/#.*//') $(echo ${PULL_REQUEST} | sed 's/.*#//'))
 echo "${PULL_REQUEST}=${COMMIT}" > ${WORKSPACE}/prs_commits
 source $CMS_BOT_DIR/pr_testing/_helper_functions.sh
 source $CMS_BOT_DIR/common/github_reports.sh

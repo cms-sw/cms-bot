@@ -2053,16 +2053,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             devReleaseRelVal=devReleaseRelVal,
             branch=pr.base.ref,
         )
+        has_unmerged_externals = False
         if "PULL_REQUESTS" in global_test_params:
-            messageFullySigned += "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
-            linked_prs = global_test_params["PULL_REQUEST"].split()
+            messageNotifyExternalPRs = "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
+            linked_prs = global_test_params["PULL_REQUESTS  "].split()
             prepend_comma = False
-            if not dryRun:
-                for linked_pr in linked_prs[1:]:
-                    linked_pr_repo, linked_pr_id = linked_pr.split("#")
-                    r = gh.get_repository(linked_pr_repo)
-                    linked_pr = r.get_issue(linked_pr_id)
-                    if linked_pr.state != "closed":
+            for linked_pr in linked_prs[1:]:
+                linked_pr_repo, linked_pr_id = linked_pr.split("#")
+                r = gh.get_repository(linked_pr_repo)
+                linked_pr = r.get_issue(linked_pr_id)
+                if linked_pr.state != "closed":
+                    has_unmerged_externals = True
+                    if not dryRun:
                         linked_pr.create_comment(
                             "**REMINDER** "
                             + releaseManagersList
@@ -2070,8 +2072,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             + linked_prs[0]
                             + ", and should probably be merged together with it"
                         )
-                        messageFullySigned += (", " if prepend_comma else "") + linked_pr
-                        prepend_comma = True
+                    messageNotifyExternalPRs += (", " if prepend_comma else "") + linked_pr
+                    prepend_comma = True
+
+        if has_unmerged_externals:
+            messageFullySigned += messageNotifyExternalPRs
 
         print("Fully signed message updated")
         if not dryRun:

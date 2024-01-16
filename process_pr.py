@@ -2058,11 +2058,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             linked_prs = global_test_params["PULL_REQUEST"].split()
             messageFullySigned += ", ".join(linked_prs[1:])
             if not dryRun:
-                for pr in linked_prs[1:]:
-                    repo, pr_id = pr.split("#")
-                    r = gh.get_repository(repo)
-                    pr = r.get_issue(pr_id)
-                    pr.create_comment(
+                for linked_pr in linked_prs[1:]:
+                    linked_pr_repo, linked_pr_id = linked_pr.split("#")
+                    r = gh.get_repository(linked_pr_repo)
+                    linked_pr = r.get_issue(linked_pr_id)
+                    linked_pr.create_comment(
                         "**REMINDER** "
                         + releaseManagersList
                         + ": This PR was used to test "

@@ -2033,23 +2033,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 managers=releaseManagersList,
             )
 
-        if not is_hold and ("PULL_REQUESTS" in global_test_params):
-            autoMergeMsg += "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
-            linked_prs = global_test_params["PULL_REQUEST"].split()
-            autoMergeMsg += ", ".join(linked_prs[1:])
-            if not dryRun:
-                for pr in linked_prs[1:]:
-                    repo, pr_id = pr.split("#")
-                    r = gh.get_repository(repo)
-                    pr = r.get_issue(pr_id)
-                    pr.create_comment(
-                        "**REMINDER** "
-                        + releaseManagersList
-                        + ": This PR was used to test "
-                        + linked_prs[0]
-                        + ", and should probably be merged together with it"
-                    )
-
     devReleaseRelVal = ""
     if (pr.base.ref in RELEASE_BRANCH_PRODUCTION) and (pr.base.ref != "master"):
         devReleaseRelVal = (
@@ -2070,6 +2053,22 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             devReleaseRelVal=devReleaseRelVal,
             branch=pr.base.ref,
         )
+        if "PULL_REQUESTS" in global_test_params:
+            messageFullySigned += "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
+            linked_prs = global_test_params["PULL_REQUEST"].split()
+            messageFullySigned += ", ".join(linked_prs[1:])
+            if not dryRun:
+                for pr in linked_prs[1:]:
+                    repo, pr_id = pr.split("#")
+                    r = gh.get_repository(repo)
+                    pr = r.get_issue(pr_id)
+                    pr.create_comment(
+                        "**REMINDER** "
+                        + releaseManagersList
+                        + ": This PR was used to test "
+                        + linked_prs[0]
+                        + ", and should probably be merged together with it"
+                    )
         print("Fully signed message updated")
         if not dryRun:
             issue.create_comment(messageFullySigned)

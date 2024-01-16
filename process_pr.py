@@ -2056,7 +2056,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "PULL_REQUESTS" in global_test_params:
             messageFullySigned += "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
             linked_prs = global_test_params["PULL_REQUEST"].split()
-            # messageFullySigned += ", ".join(linked_prs[1:])
             prepend_comma = False
             if not dryRun:
                 for linked_pr in linked_prs[1:]:

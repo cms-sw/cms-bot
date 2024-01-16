@@ -2056,19 +2056,24 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "PULL_REQUESTS" in global_test_params:
             messageFullySigned += "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
             linked_prs = global_test_params["PULL_REQUEST"].split()
-            messageFullySigned += ", ".join(linked_prs[1:])
+            # messageFullySigned += ", ".join(linked_prs[1:])
+            prepend_comma = False
             if not dryRun:
                 for linked_pr in linked_prs[1:]:
                     linked_pr_repo, linked_pr_id = linked_pr.split("#")
                     r = gh.get_repository(linked_pr_repo)
                     linked_pr = r.get_issue(linked_pr_id)
-                    linked_pr.create_comment(
-                        "**REMINDER** "
-                        + releaseManagersList
-                        + ": This PR was used to test "
-                        + linked_prs[0]
-                        + ", and should probably be merged together with it"
-                    )
+                    if linked_pr.state != "closed":
+                        linked_pr.create_comment(
+                            "**REMINDER** "
+                            + releaseManagersList
+                            + ": This PR was used to test "
+                            + linked_prs[0]
+                            + ", and should probably be merged together with it"
+                        )
+                        messageFullySigned += (", " if prepend_comma else "") + linked_pr
+                        prepend_comma = True
+
         print("Fully signed message updated")
         if not dryRun:
             issue.create_comment(messageFullySigned)

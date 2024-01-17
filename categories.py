@@ -105,7 +105,7 @@ CMSSW_L2 = {
     "consuegs": ["alca", "db"],
     CMSBUILD_USER: ["tests"],
     # dpgs
-    "connorpa": ["trk-dpg"],
+    "mdelcourt": ["trk-dpg"],
     "sroychow": ["trk-dpg"],
     "wang0jin": ["ecal-dpg"],
     "thomreis": ["ecal-dpg"],

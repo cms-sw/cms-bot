@@ -41,6 +41,12 @@ from github_utils import set_issue_emoji, get_issue_emojis
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps, dump, load, loads
+import yaml
+
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 
 try:
@@ -197,11 +203,12 @@ def update_CMSSW_LABELS(repo_config):
     return
 
 
-def init_l2_data(cms_repo):
+def init_l2_data(repo_config, cms_repo):
     l2_data = {}
     if cms_repo:
         with open(join(dirname(__file__), "cmssw_l2", "l2.json")) as ref:
-            l2_data = load(ref)
+            default_l2_data = load(ref)
+        l2_data = read_repo_file(repo_config, "l2.json", default_l2_data, False)
         for user in CMSSW_L2:
             if (user in l2_data) and ("end_date" in l2_data[user][-1]):
                 del l2_data[user][-1]["end_date"]
@@ -266,18 +273,16 @@ def get_package_categories(package):
 
 
 # Read a yaml file
-def read_repo_file(repo_config, repo_file, default=None):
-    import yaml
-
-    try:
-        from yaml import CLoader as Loader, CDumper as Dumper
-    except ImportError:
-        from yaml import Loader, Dumper
+def read_repo_file(repo_config, repo_file, default=None, is_yaml=True):
     file_path = join(repo_config.CONFIG_DIR, repo_file)
     contents = default
     if exists(file_path):
         with open(file_path, "r") as f:
-            contents = yaml.load(f, Loader=Loader)
+            if is_yaml:
+                contents = yaml.load(f, Loader=Loader)
+            else:
+                contents = load(f)
+
         if not contents:
             contents = default
     return contents
@@ -818,7 +823,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         known_ignore_tests,
     )
     REGEX_EX_ENABLE_TESTS = "^enable\s+(%s)$" % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
-    L2_DATA = init_l2_data(cms_repo)
+    L2_DATA = init_l2_data(repo_config, cms_repo)
     last_commit_date = None
     last_commit_obj = None
     push_test_issue = False

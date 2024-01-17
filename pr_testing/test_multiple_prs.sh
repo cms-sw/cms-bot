@@ -597,7 +597,7 @@ if ${BUILD_EXTERNAL} ; then
         over=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
         echo "Checking version in release: $over vs $nver"
         if [ "$nver" = "$over" ] ; then continue ; fi
-        echo "Settings up $name: $over vs $nver"
+        echo "Setting up $name: $over vs $nver"
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml

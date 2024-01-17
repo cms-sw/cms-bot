@@ -2056,24 +2056,30 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         has_unmerged_externals = False
         if "PULL_REQUESTS" in global_test_params:
             messageNotifyExternalPRs = "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
-            linked_prs = global_test_params["PULL_REQUESTS  "].split()
+            linked_prs = global_test_params["PULL_REQUESTS"].split()
             prepend_comma = False
             for linked_pr in linked_prs[1:]:
                 linked_pr_repo, linked_pr_id = linked_pr.split("#")
-                r = gh.get_repository(linked_pr_repo)
-                linked_pr = r.get_issue(linked_pr_id)
-                if linked_pr.state != "closed":
+                r = gh.get_repo(linked_pr_repo)
+                linked_pr_obj = r.get_issue(int(linked_pr_id))
+                if linked_pr_obj.state != "closed":
                     has_unmerged_externals = True
+                    comment_text = (
+                        "**REMINDER** "
+                        + releaseManagersList
+                        + ": This PR was tested with "
+                        + linked_prs[0]
+                        + ", please check if they should be merged together"
+                    )
+
                     if not dryRun:
-                        linked_pr.create_comment(
-                            "**REMINDER** "
-                            + releaseManagersList
-                            + ": This PR was used to test "
-                            + linked_prs[0]
-                            + ", and should probably be merged together with it"
-                        )
+                        linked_pr_obj.create_comment(comment_text)
+                    else:
+                        print("DRY-RUN: not posting comment", comment_text)
                     messageNotifyExternalPRs += (", " if prepend_comma else "") + linked_pr
                     prepend_comma = True
+        else:
+            messageNotifyExternalPRs = ""
 
         if has_unmerged_externals:
             messageFullySigned += messageNotifyExternalPRs
@@ -2081,6 +2087,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Fully signed message updated")
         if not dryRun:
             issue.create_comment(messageFullySigned)
+        else:
+            print("DRY-RUN: not posting comment", messageFullySigned)
 
     unsigned = [k for (k, v) in list(signatures.items()) if v == "pending"]
     missing_notifications = [

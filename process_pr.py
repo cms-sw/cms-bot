@@ -2053,17 +2053,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             devReleaseRelVal=devReleaseRelVal,
             branch=pr.base.ref,
         )
-        has_unmerged_externals = False
+
+        messageNotifyExternalPRs = ""
         if "PULL_REQUESTS" in global_test_params:
-            messageNotifyExternalPRs = "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
+            unclosed_linked_prs = []
             linked_prs = global_test_params["PULL_REQUESTS"].split()
-            prepend_comma = False
             for linked_pr in linked_prs[1:]:
                 linked_pr_repo, linked_pr_id = linked_pr.split("#")
                 r = gh.get_repo(linked_pr_repo)
                 linked_pr_obj = r.get_issue(int(linked_pr_id))
                 if linked_pr_obj.state != "closed":
-                    has_unmerged_externals = True
+                    unclosed_linked_prs.append(linked_pr)
                     comment_text = (
                         "**REMINDER** "
                         + releaseManagersList
@@ -2076,13 +2076,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         linked_pr_obj.create_comment(comment_text)
                     else:
                         print("DRY-RUN: not posting comment", comment_text)
-                    messageNotifyExternalPRs += (", " if prepend_comma else "") + linked_pr
-                    prepend_comma = True
-        else:
-            messageNotifyExternalPRs = ""
 
-        if has_unmerged_externals:
-            messageFullySigned += messageNotifyExternalPRs
+            messageNotifyExternalPRs = ", ".join(unclosed_linked_prs)
+
+        if messageNotifyExternalPRs:
+            messageFullySigned += (
+                "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
+                + messageNotifyExternalPRs
+            )
 
         print("Fully signed message updated")
         if not dryRun:

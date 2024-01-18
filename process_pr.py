@@ -26,6 +26,7 @@ from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
+from collections import defaultdict
 import zlib, base64
 from datetime import datetime
 from os.path import join, exists, dirname
@@ -842,7 +843,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # For future pre_checks
     # if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
     pre_checks_url = {}
-    events = {}
+    events = defaultdict(list)
     all_commits = []
     ok_too_many_commits = False
     warned_too_many_commits = False
@@ -1288,14 +1289,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 selected_cats.remove(cat)
 
         if selected_cats:
-            events[comment.created_at] = {
-                "type": "sign",
-                "value": {
-                    "ctype": ctype,
-                    "selected_cats": selected_cats,
-                    "comment": comment,
-                },
-            }
+            events[comment.created_at].append(
+                {
+                    "type": "sign",
+                    "value": {
+                        "ctype": ctype,
+                        "selected_cats": selected_cats,
+                        "comment": comment,
+                    },
+                }
+            )
             continue
 
         # Ignore all other messages which are before last commit.
@@ -1486,52 +1489,57 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     }
 
                 cache_entry = bot_cache[commit.sha]
-                events[datetime.fromtimestamp(cache_entry["time"])] = {
-                    "type": "commit",
-                    "value": cache_entry["files"],
-                }
+                events[datetime.fromtimestamp(cache_entry["time"])].append(
+                    {
+                        "type": "commit",
+                        "value": cache_entry["files"],
+                    }
+                )
 
     # Process commits and signatures
-    for _, event in sorted(events.items()):
-        print("Event:", event)
-        if event["type"] == "sign":
-            selected_cats = event["value"]["selected_cats"]
-            ctype = event["value"]["ctype"]
-            if any(x in signing_categories for x in selected_cats):
-                set_comment_emoji_cache(dryRun, bot_cache, event["value"]["comment"], repository)
-                if ctype == "+1":
-                    comment = event["value"]["comment"]
-                    for sign in selected_cats:
-                        signatures[sign] = "approved"
-                        if (
-                            issue.pull_request
-                            and (test_comment is None)
-                            and ((repository in auto_test_repo) or ("*" in auto_test_repo))
-                            and sign not in ("code-checks", "tests", "orp")
-                            and (comment.created_at >= last_commit_date)
-                        ):
-                            test_comment = comment
-                elif ctype == "-1":
-                    for sign in selected_cats:
-                        signatures[sign] = "rejected"
-            else:
-                print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
-        elif event["type"] == "commit":
-            if cmssw_repo:
-                chg_categories = set()
-                for fn in event["value"]:
-                    chg_categories.update(
-                        get_package_categories(cmssw_file2Package(repo_config, fn))
+    for _, eventlist in sorted(events.items()):
+        for event in eventlist:
+            print("Event:", event)
+            if event["type"] == "sign":
+                selected_cats = event["value"]["selected_cats"]
+                ctype = event["value"]["ctype"]
+                if any(x in signing_categories for x in selected_cats):
+                    set_comment_emoji_cache(
+                        dryRun, bot_cache, event["value"]["comment"], repository
                     )
-                chg_categories.update(assign_cats.keys())
+                    if ctype == "+1":
+                        comment = event["value"]["comment"]
+                        for sign in selected_cats:
+                            signatures[sign] = "approved"
+                            if (
+                                issue.pull_request
+                                and (test_comment is None)
+                                and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+                                and sign not in ("code-checks", "tests", "orp")
+                                and (comment.created_at >= last_commit_date)
+                            ):
+                                test_comment = comment
+                    elif ctype == "-1":
+                        for sign in selected_cats:
+                            signatures[sign] = "rejected"
+                else:
+                    print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
+            elif event["type"] == "commit":
+                if cmssw_repo:
+                    chg_categories = set()
+                    for fn in event["value"]:
+                        chg_categories.update(
+                            get_package_categories(cmssw_file2Package(repo_config, fn))
+                        )
+                    chg_categories.update(assign_cats.keys())
 
-                for cat in chg_categories:
-                    if cat in signing_categories:
+                    for cat in chg_categories:
+                        if cat in signing_categories:
+                            signatures[cat] = "pending"
+                else:
+                    for cat in signing_categories:
                         signatures[cat] = "pending"
-            else:
-                for cat in signing_categories:
-                    signatures[cat] = "pending"
-        print("Signatures:", signatures)
+            print("Signatures:", signatures)
 
     if push_test_issue:
         auto_close_push_test_issue = True

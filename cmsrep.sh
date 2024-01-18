@@ -9,6 +9,7 @@ function cmsbuild_args()
     CMSSW_*_SKYLAKEAVX512* ) echo --vectorization haswell,skylake-avx512 ;;
     CMSSW_*_SANDYBRIDGE* ) echo --vectorization sandybridge ;;
     CMSSW_*_HASWELL* ) echo --vectorization haswell ;;
+    CMSSW_*_MULTIARCHS* ) echo --vectorization x86-64-v3 ;;
     * ) ;;
   esac
 }

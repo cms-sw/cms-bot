@@ -384,6 +384,7 @@ PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
 SKIP_STATIC_CHECKS=false
 [ $(echo ",${SKIP_TESTS}," | grep ',static,' | wc -l) -gt 0 ] && SKIP_STATIC_CHECKS=true
+MULTI_VEC=""
 if ${BUILD_EXTERNAL} ; then
     export USE_IB_TAG=false
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
@@ -436,6 +437,7 @@ if ${BUILD_EXTERNAL} ; then
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args ${CMSSW_QUEUE}_FOOBAR)"
+    MULTI_VEC=$(echo "$COMPILATION_CMD" | tr ' ' '\n' | grep -A1 '\-\-vector' | tail -1 | tr ',' ' ')
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     echo "#${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
     UPLOAD_OPTS="--upload-tmp-repository ${PR_EXTERNAL_REPO}"
@@ -518,6 +520,7 @@ if ${BUILD_EXTERNAL} ; then
           done;
           perl -p -i -e 's|\@([^@]*)\@|$ENV{$1}|g' scram-buildrules/Projects/CMSSW/Self.xml
         )
+        [ "$MULTI_VEC" = "" ] || sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTI_VEC}\"|" scram-buildrules/Projects/CMSSW/Self.xml
         cp scram-buildrules/Projects/CMSSW/Self.xml $CMSSW_IB/config/Self.xml
       else
         cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml

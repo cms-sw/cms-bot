@@ -520,7 +520,10 @@ if ${BUILD_EXTERNAL} ; then
           done;
           perl -p -i -e 's|\@([^@]*)\@|$ENV{$1}|g' scram-buildrules/Projects/CMSSW/Self.xml
         )
-        [ "$MULTI_VEC" = "" ] || sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTI_VEC}\"|" scram-buildrules/Projects/CMSSW/Self.xml
+        if [ "$MULTI_VEC" != "" ] ; then
+          sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTI_VEC}\"|" scram-buildrules/Projects/CMSSW/Self.xml
+          sed -i -e 's|</tool>|<runtime name="SCRAM_TARGET" value="auto"/><runtime name="USER_TARGETS_ALL" value="1"/></tool>|' scram-buildrules/Projects/CMSSW/Self.xml
+        fi
         cp scram-buildrules/Projects/CMSSW/Self.xml $CMSSW_IB/config/Self.xml
       else
         cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml

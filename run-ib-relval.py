@@ -120,9 +120,9 @@ if __name__ == "__main__":
 
             p = None
             stime = time()
-            xopt = "-c 150 -m 85"
+            xopt = "-c 125 -m 85"
             if "lxplus" in socket.gethostname():
-                xopt = "-c 120 -m 40"
+                xopt = "-c 100 -m 40"
             p = Popen(
                 "cd %s/pyRelval ; %s/jobs/jobscheduler.py -M 0 %s -o time %s"
                 % (cmssw_base, SCRIPT_DIR, xopt, opts.jobConfig),

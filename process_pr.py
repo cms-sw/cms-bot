@@ -1481,7 +1481,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Processing commits")
         commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-            seen_commits_cnt = sum(x.get("squashed", False) for x in commit_cache.values())
+            seen_commits_cnt = sum((not x.get("squashed", False)) for x in commit_cache.values())
             if all_commits.totalCount < seen_commits_cnt:
                 print(
                     "Number of commits in cache ({0}) is greater than the number of commits in PR ({1}) - possible squash detected".format(
@@ -1513,16 +1513,32 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if diff_before_squash ^ diff_after_squash:
                     print("PR diff changed, will not preserve signatures")
                 else:
-                    print("PR diff not changed, preserving signatures")
+                    print("PR diff not changed, preserving signatures and commit statuses")
                     bot_cache[new_head_commit_sha] = {
                         "time": bot_cache[last_seen_commit_sha]["time"] + 1,
                         "files": [],
                     }
 
-                # Clean removed commits from cache
+                    # Restore commit statuses
+                    old_commit_statuses = (
+                        repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
+                    )
+                    for status in old_commit_statuses:
+                        import github
+
+                        if not dryRun:
+                            last_commit_obj.create_status(
+                                state=status.state,
+                                description=status.description,
+                                target_url=status.target_url or github.GithubObject.NotSet,
+                                context=status.context,
+                            )
+                        print(status.context, "=", status.state)
+
+                # Mark removed commits in cache as squashed
                 for k in commit_cache:
                     if not any(k == commit.sha for commit in all_commits):
-                        print("Removing commit {0} from cache".format(k))
+                        print("Updating commit {0} in cache".format(k))
                         bot_cache[k]["squashed"] = True
 
             for commit in all_commits:

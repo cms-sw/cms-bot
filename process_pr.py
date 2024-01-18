@@ -1481,7 +1481,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Processing commits")
         commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-            seen_commits_cnt = len(commit_cache)
+            seen_commits_cnt = sum(x.get("squashed", False) for x in commit_cache.values())
             if all_commits.totalCount < seen_commits_cnt:
                 print(
                     "Number of commits in cache ({0}) is greater than the number of commits in PR ({1}) - possible squash detected".format(
@@ -1490,7 +1490,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 )
 
                 last_seen_commit_sha = sorted(
-                    [(k, commit_cache[k]["time"]) for k in commit_cache], key=lambda q: q[1]
+                    [
+                        (k, commit_cache[k]["time"])
+                        for k in commit_cache
+                        if not commit_cache[k].get("squashed", False)
+                    ],
+                    key=lambda q: q[1],
                 )[-1][0]
                 new_head_commit_sha = pr.head.sha
                 base_commit_sha = pr.base.sha
@@ -1514,9 +1519,18 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "files": [],
                     }
 
+                # Clean removed commits from cache
+                for k in commit_cache:
+                    if not any(k == commit.sha for commit in all_commits):
+                        print("Removing commit {0} from cache".format(k))
+                        bot_cache[k]["squashed"] = True
+
             for commit in all_commits:
                 if commit.sha not in bot_cache:
-                    bot_cache[commit.sha] = {"time": int(commit.commit.committer.date.timestamp())}
+                    bot_cache[commit.sha] = {
+                        "time": int(commit.commit.committer.date.timestamp()),
+                        "squashed": False,
+                    }
                     if len(commit.parents) > 1:
                         bot_cache[commit.sha]["files"] = []
                     else:
@@ -1543,13 +1557,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 )
 
             # Inject events from cached commits
-            for k, entry in commit_cache.items():
-                if entry["time"] not in events:
+            for k, cache_entry in commit_cache.items():
+                if cache_entry["time"] not in events:
                     print("Adding back cached commit {0}".format(k))
-                    events[entry["time"]].append(
+                    events[datetime.fromtimestamp(cache_entry["time"])].append(
                         {
                             "type": "commit",
-                            "value": entry["files"],
+                            "value": cache_entry["files"],
                         }
                     )
 
@@ -1593,40 +1607,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         chg_categories.update(
                             get_package_categories(cmssw_file2Package(repo_config, fn))
                         )
-                        if ctype == "+1":
-                            comment = event["value"]["comment"]
-                            for sign in selected_cats:
-                                signatures[sign] = "approved"
-                                if (
-                                    issue.pull_request
-                                    and (test_comment is None)
-                                    and ((repository in auto_test_repo) or ("*" in auto_test_repo))
-                                    and sign not in ("code-checks", "tests", "orp")
-                                    and (comment.created_at >= last_commit_date)
-                                ):
-                                    test_comment = comment
-                        elif ctype == "-1":
-                            for sign in selected_cats:
-                                signatures[sign] = "rejected"
-                    else:
-                        print(
-                            f"Ignoring event: {selected_cats} includes none of {signing_categories}"
-                        )
-                elif event["type"] == "commit":
-                    if cmssw_repo:
-                        chg_categories = set()
-                        for fn in event["value"]:
-                            chg_categories.update(
-                                get_package_categories(cmssw_file2Package(repo_config, fn))
-                            )
-                        chg_categories.update(assign_cats.keys())
 
                         for cat in chg_categories:
                             if cat in signing_categories:
                                 signatures[cat] = "pending"
-                    else:
-                        for cat in signing_categories:
-                            signatures[cat] = "pending"
+                else:
+                    for cat in signing_categories:
+                        signatures[cat] = "pending"
                 print("Signatures:", signatures)
 
     if push_test_issue:

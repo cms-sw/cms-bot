@@ -1086,6 +1086,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     code_check_apply_patch = False
     override_tests_failure = None
     bot_cache = {}
+    old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
 
     # start of parsing comments to find the bot_cache
     # to use information during the actual comment loop
@@ -1519,7 +1520,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "files": [],
                     }
 
-                    # Restore commit statuses
+                    # Restore commit/pre-checks statuses
                     old_commit_statuses = (
                         repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
                     )
@@ -1533,7 +1534,23 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                 target_url=status.target_url or github.GithubObject.NotSet,
                                 context=status.context,
                             )
-                        print(status.context, "=", status.state)
+
+                        for pre_check in pre_checks + extra_pre_checks:
+                            if "%s/%s" % (cms_status_prefix, pre_check) == status.context:
+                                pre_checks_state[pre_check] = status.state
+                                pre_checks_url[pre_check] = status.target_url
+                                break
+
+                        for pre_check in pre_checks + extra_pre_checks:
+                            if pre_checks_state.get(pre_check) is None:
+                                pre_checks_state[pre_check] = ""
+
+                    # Restore tests and code-checks labels. The logic to set the former is quite complicated, so we trust old labels
+                    for lab in old_labels:
+                        if lab.startswith("code-checks"):
+                            signatures["code-checks"] = lab.split("-", 2)[2]
+                        if lab.startswith("tests"):
+                            signatures["tests"] = lab.split("-", 1)[1]
 
                 # Mark removed commits in cache as squashed
                 for k in commit_cache:

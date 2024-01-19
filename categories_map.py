@@ -815,6 +815,7 @@ CMSSW_CATEGORIES = {
         "Geometry/HGCalGeometry",
         "Geometry/HGCalSimData",
         "Geometry/HGCalTBCommonData",
+        "Geometry/HGCalMapping",
         "Geometry/HcalAlgo",
         "Geometry/HcalCommonData",
         "Geometry/HcalEventSetup",

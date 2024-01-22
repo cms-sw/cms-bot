@@ -1460,6 +1460,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if already_seen:
             cache_comment = already_seen
 
+    reset_all_signatures = False
+
     if issue.pull_request:
         if (
             (not warned_too_many_commits)
@@ -1555,7 +1557,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 # Mark removed commits in cache as squashed
                 for k in commit_cache:
                     if not any(k == commit.sha for commit in all_commits):
-                        print("Updating commit {0} in cache".format(k))
+                        print("Marked commit {0} as squashed".format(k))
                         bot_cache[k]["squashed"] = True
 
             for commit in all_commits:
@@ -1570,16 +1572,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         bot_cache[commit.sha]["files"] = sorted(
                             x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
                         )
+
+                    if (
+                        commit.commit.committer.date.timestamp()
+                        < last_commit_obj.commit.committer.date.timestamp()
+                    ):
+                        print("Back-dated commit found, resetting all signatures")
+                        reset_all_signatures = True
+
                 elif len(commit.parents) > 1:
                     bot_cache[commit.sha]["files"] = []
-
-                if commit.sha not in bot_cache:
-                    bot_cache[commit.sha] = {
-                        "time": int(commit.commit.committer.date.timestamp()),
-                        "files": sorted(
-                            x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
-                        ),
-                    }
 
                 cache_entry = bot_cache[commit.sha]
                 events[datetime.fromtimestamp(cache_entry["time"])].append(
@@ -1648,6 +1650,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     for cat in signing_categories:
                         signatures[cat] = "pending"
                 print("Signatures:", signatures)
+
+    if reset_all_signatures:
+        for cat in signatures:
+            signatures[cat] = "pending"
 
     if push_test_issue:
         auto_close_push_test_issue = True
@@ -2331,6 +2337,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         " Please bring this up in the ORP"
         " meeting if really needed.\n"
     )
+
+    if reset_all_signatures:
+        messageUpdatedPR = (
+            "**WARNING** Back-dated commit detected, all signatures were reset" + messageUpdatedPR
+        )
 
     commentMsg = ""
     print("Status: Not see= %s, Updated: %s" % (already_seen, pull_request_updated))

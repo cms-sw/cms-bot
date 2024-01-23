@@ -813,6 +813,7 @@ CMSSW_CATEGORIES = {
         "Geometry/GlobalTrackingGeometryBuilder",
         "Geometry/HGCalCommonData",
         "Geometry/HGCalGeometry",
+        "Geometry/HGCalMapping",
         "Geometry/HGCalSimData",
         "Geometry/HGCalTBCommonData",
         "Geometry/HcalAlgo",
@@ -1632,6 +1633,7 @@ CMSSW_CATEGORIES = {
     "upgrade": [
         "CalibTracker/SiPhase2TrackerESProducers",
         "CondFormats/HGCalObjects",
+        "Geometry/HGCalMapping",
         "CondTools/SiPhase2Tracker",
         "Configuration/Geometry",
         "Configuration/PyReleaseValidation",

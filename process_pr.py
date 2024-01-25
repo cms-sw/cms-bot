@@ -1600,7 +1600,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
 
     # Process commits and signatures
-    signed_commits = []
+    signed_commit_sha = ""
     flattened_eventlist = []
     for _, eventlist in sorted(events.items()):
         flattened_eventlist.extend(eventlist)
@@ -1610,16 +1610,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if event["type"] == "sign":
             comment = event["value"]["comment"]
             cached_signed_comments = bot_cache["signatures"].get(comment.id)
-            expected_signed_comments = hashlib.sha256(
-                "".join(signed_commits).encode("ascii", "ignore")
-            )
-            if cached_signed_comments and cached_signed_comments != expected_signed_comments:
+            if cached_signed_comments and cached_signed_comments != signed_commit_sha:
                 print(
                     "WARNING: For comment {0}, cached list of signed commits doesn't match the present list of signed commits. All signatures will be reset."
                 )
                 reset_all_signatures = True
                 break
-            bot_cache["signatures"][comment.id] = expected_signed_comments
+            bot_cache["signatures"][comment.id] = signed_commit_sha
             selected_cats = event["value"]["selected_cats"]
             ctype = event["value"]["ctype"]
             if any(x in signing_categories for x in selected_cats):
@@ -1647,7 +1644,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 )
         elif event["type"] == "commit":
             if event["value"]["files"]:
-                signed_commits.append(event["value"]["sha"])
+                signed_commit_sha = event["value"]["sha"]
             if cmssw_repo:
                 chg_categories = set()
                 for fn in event["value"]["files"]:
@@ -2353,7 +2350,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     if reset_all_signatures and not new_pr:
         messageUpdatedPR = (
-            "**WARNING** Back-dated commit(s) detected, all signatures were reset" + messageUpdatedPR
+            "**WARNING** Back-dated commit(s) detected, all signatures were reset"
+            + messageUpdatedPR
         )
 
     commentMsg = ""

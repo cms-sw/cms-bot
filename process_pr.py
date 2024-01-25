@@ -1521,7 +1521,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 else:
                     print("PR diff not changed, preserving signatures and commit statuses")
                     bot_cache[new_head_commit_sha] = {
-                        "time": bot_cache[last_seen_commit_sha]["time"] + 1,
+                        "time": bot_cache[last_seen_commit_sha]["time"],
                         "files": [],
                     }
 
@@ -1598,7 +1598,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
             # Inject events from cached commits
             for k, cache_entry in commit_cache.items():
-                if cache_entry["time"] not in events:
+                if cache_entry["squashed"]:
                     print("Adding back cached commit {0}".format(k))
                     events[datetime.fromtimestamp(cache_entry["time"])].append(
                         {

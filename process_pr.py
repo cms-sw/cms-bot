@@ -1616,9 +1616,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         extra_labels["type"] = [extra_labels["type"][-1]]
 
     # Deleting elements if they have no labels
-    for ltype in extra_labels:
-        if not extra_labels[ltype]:
-            del extra_labels[ltype]
+    #FIXME
+    #for ltype in extra_labels:
+    #    if not extra_labels[ltype]:
+    #        del extra_labels[ltype]
 
     # Always set test pending label
     if "tests" in signatures:

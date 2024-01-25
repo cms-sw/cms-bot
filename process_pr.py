@@ -1461,6 +1461,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             cache_comment = already_seen
 
     reset_all_signatures = False
+    new_pr = True
 
     if issue.pull_request:
         if (
@@ -1483,6 +1484,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         print("Processing commits")
         commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
+        if commit_cache:
+            new_pr = False
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
             seen_commits_cnt = sum((not x.get("squashed", False)) for x in commit_cache.values())
             if all_commits.totalCount < seen_commits_cnt:
@@ -1526,6 +1529,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     old_commit_statuses = (
                         repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
                     )
+                    commit_statuses = old_commit_statuses
+                    bot_status = get_status(bot_status_name, commit_statuses)
                     for status in old_commit_statuses:
                         import github
 
@@ -1576,7 +1581,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     if (
                         commit.commit.committer.date.timestamp()
                         < last_commit_obj.commit.committer.date.timestamp()
-                    ):
+                    ) and not new_pr:
                         print("Back-dated commit found, resetting all signatures")
                         reset_all_signatures = True
 
@@ -2338,7 +2343,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         " meeting if really needed.\n"
     )
 
-    if reset_all_signatures:
+    if reset_all_signatures and not new_pr:
         messageUpdatedPR = (
             "**WARNING** Back-dated commit detected, all signatures were reset" + messageUpdatedPR
         )

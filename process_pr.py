@@ -1598,7 +1598,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
             # Inject events from cached commits
             for k, cache_entry in commit_cache.items():
-                if cache_entry["squashed"]:
+                if cache_entry.get("squashed", False):
                     print("Adding back cached commit {0}".format(k))
                     events[datetime.fromtimestamp(cache_entry["time"])].append(
                         {

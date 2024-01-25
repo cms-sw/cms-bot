@@ -1609,9 +1609,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "mtype" in extra_labels:
             extra_labels["mtype"].extend(state_labels.values())
         else:
-            extra_labels["mtype"] = state_labels.values()
+            extra_labels["mtype"] = list(state_labels.values())
     if "mtype" in extra_labels:
-        extra_labels["mtype"].extend(list(set(extra_labels["mtype"])))
+        extra_labels["mtype"] = list(set(extra_labels["mtype"]))
     if "type" in extra_labels:
         extra_labels["type"] = [extra_labels["type"][-1]]
 

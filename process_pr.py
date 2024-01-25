@@ -1648,9 +1648,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             get_package_categories(cmssw_file2Package(repo_config, fn))
                         )
 
-                        for cat in chg_categories:
-                            if cat in signing_categories:
-                                signatures[cat] = "pending"
+                    chg_categories.update(assign_cats.keys())
+                    for cat in chg_categories:
+                        if cat in signing_categories:
+                            signatures[cat] = "pending"
                 else:
                     for cat in signing_categories:
                         signatures[cat] = "pending"

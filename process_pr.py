@@ -1,3 +1,5 @@
+import hashlib
+
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -1560,10 +1562,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             signatures["tests"] = lab.split("-", 1)[1]
 
                 # Mark removed commits in cache as squashed
-                for k in commit_cache:
-                    if not any(k == commit.sha for commit in all_commits):
-                        print("Marked commit {0} as squashed".format(k))
-                        bot_cache[k]["squashed"] = True
+                for commit_sha in commit_cache:
+                    if not any(commit_sha == commit.sha for commit in all_commits):
+                        print("Marked commit {0} as squashed".format(commit_sha))
+                        bot_cache[commit_sha]["squashed"] = True
 
             for commit in all_commits:
                 if commit.sha not in bot_cache:
@@ -1578,84 +1580,89 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
                         )
 
-                    if (
-                        commit.commit.committer.date.timestamp()
-                        < last_commit_obj.commit.committer.date.timestamp()
-                    ) and not new_pr:
-                        print("Back-dated commit found, resetting all signatures")
-                        reset_all_signatures = True
-
                 elif len(commit.parents) > 1:
                     bot_cache[commit.sha]["files"] = []
 
                 cache_entry = bot_cache[commit.sha]
                 events[datetime.fromtimestamp(cache_entry["time"])].append(
-                    {
-                        "type": "commit",
-                        "value": cache_entry["files"],
-                    }
+                    {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
                 )
 
             # Inject events from cached commits
-            for k, cache_entry in commit_cache.items():
+            for commit_sha, cache_entry in commit_cache.items():
                 if cache_entry.get("squashed", False):
-                    print("Adding back cached commit {0}".format(k))
+                    print("Adding back cached commit {0}".format(commit_sha))
                     events[datetime.fromtimestamp(cache_entry["time"])].append(
                         {
                             "type": "commit",
-                            "value": cache_entry["files"],
+                            "value": {"files": cache_entry["files"], "sha": commit_sha},
                         }
                     )
 
     # Process commits and signatures
+    signed_commits = []
+    flattened_eventlist = []
     for _, eventlist in sorted(events.items()):
-        for event in eventlist:
-            print("Event:", event)
-            if event["type"] == "sign":
-                selected_cats = event["value"]["selected_cats"]
-                ctype = event["value"]["ctype"]
-                if any(x in signing_categories for x in selected_cats):
-                    set_comment_emoji_cache(
-                        dryRun, bot_cache, event["value"]["comment"], repository
+        flattened_eventlist.extend(eventlist)
+
+    for event in flattened_eventlist:
+        print("Event:", event)
+        if event["type"] == "sign":
+            comment = event["value"]["comment"]
+            cached_signed_comments = bot_cache["signatures"].get(comment.id)
+            expected_signed_comments = hashlib.sha256(
+                "".join(signed_commits).encode("ascii", "ignore")
+            )
+            if cached_signed_comments and cached_signed_comments != expected_signed_comments:
+                print(
+                    "WARNING: For comment {0}, cached list of signed commits doesn't match the present list of signed commits. All signatures will be reset."
+                )
+                reset_all_signatures = True
+                break
+            bot_cache["signatures"][comment.id] = expected_signed_comments
+            selected_cats = event["value"]["selected_cats"]
+            ctype = event["value"]["ctype"]
+            if any(x in signing_categories for x in selected_cats):
+                set_comment_emoji_cache(dryRun, bot_cache, event["value"]["comment"], repository)
+
+                if ctype == "+1":
+                    for sign in selected_cats:
+                        signatures[sign] = "approved"
+                        if (
+                            issue.pull_request
+                            and (test_comment is None)
+                            and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+                            and sign not in ("code-checks", "tests", "orp")
+                            and (comment.created_at >= last_commit_date)
+                        ):
+                            test_comment = comment
+                elif ctype == "-1":
+                    for sign in selected_cats:
+                        signatures[sign] = "rejected"
+            else:
+                print(
+                    "Ignoring event: {0} includes none of {1}".format(
+                        selected_cats, signing_categories
+                    )
+                )
+        elif event["type"] == "commit":
+            if event["value"]["files"]:
+                signed_commits.append(event["value"]["sha"])
+            if cmssw_repo:
+                chg_categories = set()
+                for fn in event["value"]["files"]:
+                    chg_categories.update(
+                        get_package_categories(cmssw_file2Package(repo_config, fn))
                     )
 
-                    if ctype == "+1":
-                        comment = event["value"]["comment"]
-                        for sign in selected_cats:
-                            signatures[sign] = "approved"
-                            if (
-                                issue.pull_request
-                                and (test_comment is None)
-                                and ((repository in auto_test_repo) or ("*" in auto_test_repo))
-                                and sign not in ("code-checks", "tests", "orp")
-                                and (comment.created_at >= last_commit_date)
-                            ):
-                                test_comment = comment
-                    elif ctype == "-1":
-                        for sign in selected_cats:
-                            signatures[sign] = "rejected"
-                else:
-                    print(
-                        "Ignoring event: {0} includes none of {1}".format(
-                            selected_cats, signing_categories
-                        )
-                    )
-            elif event["type"] == "commit":
-                if cmssw_repo:
-                    chg_categories = set()
-                    for fn in event["value"]:
-                        chg_categories.update(
-                            get_package_categories(cmssw_file2Package(repo_config, fn))
-                        )
-
-                    chg_categories.update(assign_cats.keys())
-                    for cat in chg_categories:
-                        if cat in signing_categories:
-                            signatures[cat] = "pending"
-                else:
-                    for cat in signing_categories:
+                chg_categories.update(assign_cats.keys())
+                for cat in chg_categories:
+                    if cat in signing_categories:
                         signatures[cat] = "pending"
-                print("Signatures:", signatures)
+            else:
+                for cat in signing_categories:
+                    signatures[cat] = "pending"
+            print("Signatures:", signatures)
 
     if reset_all_signatures:
         for cat in signatures:
@@ -2236,7 +2243,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         else:
             print("DRY-RUN: not posting comment", messageFullySigned)
 
-    unsigned = [k for (k, v) in list(signatures.items()) if v == "pending"]
+    unsigned = [commit_sha for (commit_sha, v) in list(signatures.items()) if v == "pending"]
     missing_notifications = [
         gh_user_char + name
         for name, l2_categories in list(CMSSW_L2.items())
@@ -2346,7 +2353,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     if reset_all_signatures and not new_pr:
         messageUpdatedPR = (
-            "**WARNING** Back-dated commit detected, all signatures were reset" + messageUpdatedPR
+            "**WARNING** Back-dated commit(s) detected, all signatures were reset" + messageUpdatedPR
         )
 
     commentMsg = ""

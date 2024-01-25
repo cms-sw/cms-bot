@@ -480,7 +480,7 @@ def check_extra_labels(first_line, extra_labels):
         extra_labels["backport"] = ["backport", bp_pr]
 
 
-def check_type_labels(first_line, extra_labels):
+def check_type_labels(first_line, extra_labels, state_labels):
     ex_labels = {}
     rem_labels = {}
     for type_cmd in [x.strip() for x in first_line.split(" ", 1)[-1].split(",") if x.strip()]:
@@ -494,7 +494,9 @@ def check_type_labels(first_line, extra_labels):
                 obj_labels = rem_labels if rem_lab else ex_labels
                 if lab_type not in obj_labels:
                     obj_labels[lab_type] = []
-                if (len(TYPE_COMMANDS[lab]) > 3) and TYPE_COMMANDS[lab][3]:
+                if (len(TYPE_COMMANDS[lab]) > 4) and TYPE_COMMANDS[lab][4] == "state":
+                    state_labels[lab] = type_cmd
+                elif (len(TYPE_COMMANDS[lab]) > 3) and TYPE_COMMANDS[lab][3]:
                     obj_labels[lab_type].append(type_cmd)
                 else:
                     obj_labels[lab_type].append(lab)
@@ -804,6 +806,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     chg_files = []
     package_categories = {}
     extra_labels = {"mtype": []}
+    state_labels = {}
     add_external_category = False
     signing_categories = set([])
     new_package_message = ""
@@ -1179,7 +1182,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers + [requestor]):
                 comment_emoji = (
-                    "+1" if check_type_labels(first_line.lower(), extra_labels) else "-1"
+                    "+1"
+                    if check_type_labels(first_line.lower(), extra_labels, state_labels)
+                    else "-1"
                 )
         elif re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
             comment_emoji = "-1"
@@ -1595,14 +1600,25 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             break
 
     old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
-    print("Stats:", backport_pr_num, extra_labels)
+    print("Stats:", backport_pr_num, extra_labels, state_labels)
     print("Old Labels:", sorted(old_labels))
     print("Compilation Warnings: ", comp_warnings)
     print("Singnatures: ", signatures)
+    # Add state labels as mtype labels
+    if len(state_labels) != 0:
+        if "mtype" in extra_labels:
+            extra_labels["mtype"].extend(state_labels.values())
+        else:
+            extra_labels["mtype"] = list(state_labels.values())
     if "mtype" in extra_labels:
         extra_labels["mtype"] = list(set(extra_labels["mtype"]))
     if "type" in extra_labels:
         extra_labels["type"] = [extra_labels["type"][-1]]
+
+    # Deleting elements if they have no labels
+    for ltype in extra_labels:
+        if not extra_labels[ltype]:
+            del extra_labels[ltype]
 
     # Always set test pending label
     if "tests" in signatures:

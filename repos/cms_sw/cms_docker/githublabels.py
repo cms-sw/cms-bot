@@ -9,3 +9,10 @@ for data in CMSSW_CONTAINERS:
 
 for arch in ["x86_64", "ppc64le", "aarch64"]:
     TYPE_COMMANDS[arch] = [LABEL_COLORS["doc"], "%s-[0-9a-f]+" % arch, "mtype", True]
+    TYPE_COMMANDS[arch + "-cms-docker"] = [
+        LABEL_COLORS["doc"],
+        "%s-([a-z]+-|)(queued|building|done|error)" % arch,
+        "mtype",
+        True,
+        "state",
+    ]

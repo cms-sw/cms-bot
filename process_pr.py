@@ -817,7 +817,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     watchers = []
     # Process Pull Request
     pkg_categories = set([])
-    REGEX_TYPE_CMDS = "^(type|(build-|)state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
+    REGEX_TYPE_CMDS = (
+        "^(type|(build-|)state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
+    )
     REGEX_EX_CMDS = "^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (
         repo.full_name
     )
@@ -1616,8 +1618,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         extra_labels["type"] = [extra_labels["type"][-1]]
 
     # Deleting elements if they have no labels
-    #FIXME
-    #for ltype in extra_labels:
+    # FIXME
+    # for ltype in extra_labels:
     #    if not extra_labels[ltype]:
     #        del extra_labels[ltype]
 

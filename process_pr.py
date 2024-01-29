@@ -1,5 +1,3 @@
-import hashlib
-
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -1527,39 +1525,40 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "files": [],
                     }
 
+                    # TODO: Remove this block
                     # Restore commit/pre-checks statuses
-                    old_commit_statuses = (
-                        repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
-                    )
-                    commit_statuses = old_commit_statuses
-                    bot_status = get_status(bot_status_name, commit_statuses)
-                    for status in old_commit_statuses:
-                        import github
-
-                        if not dryRun:
-                            last_commit_obj.create_status(
-                                state=status.state,
-                                description=status.description,
-                                target_url=status.target_url or github.GithubObject.NotSet,
-                                context=status.context,
-                            )
-
-                        for pre_check in pre_checks + extra_pre_checks:
-                            if "%s/%s" % (cms_status_prefix, pre_check) == status.context:
-                                pre_checks_state[pre_check] = status.state
-                                pre_checks_url[pre_check] = status.target_url
-                                break
-
-                        for pre_check in pre_checks + extra_pre_checks:
-                            if pre_checks_state.get(pre_check) is None:
-                                pre_checks_state[pre_check] = ""
-
-                    # Restore tests and code-checks labels. The logic to set the former is quite complicated, so we trust old labels
-                    for lab in old_labels:
-                        if lab.startswith("code-checks"):
-                            signatures["code-checks"] = lab.split("-", 2)[2]
-                        if lab.startswith("tests"):
-                            signatures["tests"] = lab.split("-", 1)[1]
+                    # old_commit_statuses = (
+                    #     repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
+                    # )
+                    # commit_statuses = old_commit_statuses
+                    # bot_status = get_status(bot_status_name, commit_statuses)
+                    # for status in old_commit_statuses:
+                    #     import github
+                    #
+                    #     if not dryRun:
+                    #         last_commit_obj.create_status(
+                    #             state=status.state,
+                    #             description=status.description,
+                    #             target_url=status.target_url or github.GithubObject.NotSet,
+                    #             context=status.context,
+                    #         )
+                    #
+                    #     for pre_check in pre_checks + extra_pre_checks:
+                    #         if "%s/%s" % (cms_status_prefix, pre_check) == status.context:
+                    #             pre_checks_state[pre_check] = status.state
+                    #             pre_checks_url[pre_check] = status.target_url
+                    #             break
+                    #
+                    #     for pre_check in pre_checks + extra_pre_checks:
+                    #         if pre_checks_state.get(pre_check) is None:
+                    #             pre_checks_state[pre_check] = ""
+                    #
+                    # # Restore tests and code-checks labels. The logic to set the former is quite complicated, so we trust old labels
+                    # for lab in old_labels:
+                    #     if lab.startswith("code-checks"):
+                    #         signatures["code-checks"] = lab.split("-", 2)[2]
+                    #     if lab.startswith("tests"):
+                    #         signatures["tests"] = lab.split("-", 1)[1]
 
                 # Mark removed commits in cache as squashed
                 for commit_sha in commit_cache:
@@ -1609,8 +1608,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Event:", event)
         if event["type"] == "sign":
             comment = event["value"]["comment"]
-            cached_signed_comments = bot_cache["signatures"].get(comment.id)
-            if cached_signed_comments and cached_signed_comments != signed_commit_sha:
+            cached_signed_commit_sha = bot_cache["signatures"].get(comment.id)
+            if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
                 print(
                     "WARNING: For comment {0}, cached list of signed commits doesn't match the present list of signed commits. All signatures will be reset."
                 )

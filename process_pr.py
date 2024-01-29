@@ -1614,7 +1614,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     "WARNING: For comment {0}, cached list of signed commits doesn't match the present list of signed commits. All signatures will be reset."
                 )
                 reset_all_signatures = True
-            bot_cache["signatures"][comment.id] = signed_commit_sha
+            if cached_signed_commit_sha is None:
+                bot_cache["signatures"][comment.id] = signed_commit_sha
             selected_cats = event["value"]["selected_cats"]
             ctype = event["value"]["ctype"]
             if any(x in signing_categories for x in selected_cats):

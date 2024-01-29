@@ -1460,7 +1460,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if already_seen:
             cache_comment = already_seen
 
-    reset_all_signatures = False
     new_pr = True
 
     if issue.pull_request:
@@ -1611,9 +1610,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             cached_signed_commit_sha = bot_cache["signatures"].get(comment.id)
             if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
                 print(
-                    "WARNING: For comment {0}, cached list of signed commits doesn't match the present list of signed commits. All signatures will be reset."
+                    "WARNING: For comment {0}, cached commit's SHA doesn't match the present list of signed commits. This comment will be ignored."
                 )
-                reset_all_signatures = True
+                continue
+
             if cached_signed_commit_sha is None:
                 bot_cache["signatures"][comment.id] = signed_commit_sha
             selected_cats = event["value"]["selected_cats"]
@@ -1659,10 +1659,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 for cat in signing_categories:
                     signatures[cat] = "pending"
             print("Signatures:", signatures)
-
-    if reset_all_signatures:
-        for cat in signatures:
-            signatures[cat] = "pending"
 
     if push_test_issue:
         auto_close_push_test_issue = True
@@ -2346,12 +2342,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         " Please bring this up in the ORP"
         " meeting if really needed.\n"
     )
-
-    if reset_all_signatures and not new_pr:
-        messageUpdatedPR = (
-            "**WARNING** Back-dated commit(s) detected, all signatures were reset"
-            + messageUpdatedPR
-        )
 
     commentMsg = ""
     print("Status: Not see= %s, Updated: %s" % (already_seen, pull_request_updated))

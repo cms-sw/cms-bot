@@ -14,6 +14,11 @@ jobs:
     - name: Check out the code
       uses: actions/checkout@v2
 
+    - name: Sync with master
+      run: |
+        git fetch origin master
+        git merge origin/master -X ours
+
     - uses: psf/black@stable
       with:
         options: "--check --diff --verbose -l 99 -t py36 -t py37 -t py38 -t py39 -t py310 -t py311"

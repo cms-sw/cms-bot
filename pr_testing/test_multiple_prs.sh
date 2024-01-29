@@ -468,6 +468,9 @@ if ${BUILD_EXTERNAL} ; then
     done
 
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,externals' >> ${RESULTS_DIR}/toolconf.txt
+    if [ $(grep 'RPM installation stderr' $WORKSPACE/cmsswtoolconf.log |wc -l) -gt 0 ] ; then
+      echo 'CMSSWTOOLCONF_INSTALL;ERROR,Externals Installation,See Log,cmsswtoolconf.log' >> ${RESULTS_DIR}/toolconf.txt
+    fi
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR,Externals compilation,See Log,cmsswtoolconf.log' >> ${RESULTS_DIR}/toolconf.txt
       ${CMS_BOT_DIR}/report-pull-request-results "PARSE_EXTERNAL_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log \

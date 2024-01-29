@@ -109,9 +109,7 @@ if __name__ == "__main__":
             print(index, "matches", pattern)
             now = datetime.now()
             td = now - d
-            total_seconds = (
-                td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6
-            ) / 10**6
+            total_seconds = (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 10**6
             if total_seconds < timedelta:
                 print(index, "is recent enough. Keeping.")
                 continue

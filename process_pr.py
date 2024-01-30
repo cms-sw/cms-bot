@@ -1492,9 +1492,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         print("Processing commits")
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-            all_commits_sha = [commit.sha for commit in all_commits]
-            if any(commit_sha not in all_commits_sha for commit_sha in bot_cache["commits"]):
-                print("Possible squash detected")
+            missing_commits = set(
+                k
+                for k in bot_cache["commits"]
+                if not bot_cache["commits"][k].get("squashed", False)
+            ).difference(commit.sha for commit in all_commits)
+            if missing_commits:
+                print("Possible squash detected: the following commits are missing")
+                print(missing_commits)
 
                 last_seen_commit_sha = sorted(
                     [
@@ -1562,10 +1567,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     #         signatures["tests"] = lab.split("-", 1)[1]
 
                 # Mark removed commits in cache as squashed
-                for commit_sha in bot_cache["commits"]:
-                    if not any(commit_sha == commit.sha for commit in all_commits):
-                        print("Marked commit {0} as squashed".format(commit_sha))
-                        bot_cache[commit_sha]["squashed"] = True
+                for commit_sha in missing_commits:
+                    print("Marked commit {0} as squashed".format(commit_sha))
+                    bot_cache[commit_sha]["squashed"] = True
 
             for commit in all_commits:
                 if commit.sha not in bot_cache["commits"]:
@@ -1589,7 +1593,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 )
 
             # Inject events from cached commits
-            for commit_sha, cache_entry in bot_cache["commits"].items():
+            for commit_sha in missing_commits:
+                cache_entry = bot_cache["commits"][commit_sha]
                 if cache_entry.get("squashed", False):
                     print("Adding back cached commit {0}".format(commit_sha))
                     events[datetime.fromtimestamp(cache_entry["time"])].append(

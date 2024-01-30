@@ -233,7 +233,9 @@ def read_bot_cache(comment_msg):
     if seen_commits_match:
         print("Loading bot cache")
         res = loads_maybe_decompress(seen_commits_match[1])
-        res.update(BOT_CACHE_TEMPLATE)
+        for k, v in BOT_CACHE_TEMPLATE.items():
+            if k not in res:
+                res[k] = v
         collect_commit_cache(res)
         return res
     return {}

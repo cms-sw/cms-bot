@@ -1151,9 +1151,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if not technical_comment:
                     technical_comment = comment
                 continue
-            if re.match("This PR contains (too |)many commits", first_line):
-                warned_too_many_commits = True
-                continue
             if re.match("^" + HOLD_MSG + ".+", first_line):
                 for u in first_line.split(HOLD_MSG, 2)[1].split(","):
                     u = u.strip().lstrip("@")
@@ -1259,6 +1256,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     ok_too_many_commits = True
                     comment_emoji = "+1"
                 else:
+                    warned_too_many_commits = False
                     comment_emoji = "-1"
 
         if comment_emoji:
@@ -1329,6 +1327,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
+            continue
+
+        if commenter == cmsbuild_user and (
+            (
+                "This PR contains many commits" in first_line
+                and pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
+            )
+            or "This PR contains too many commits" in first_line
+        ):
+            warned_too_many_commits = True
             continue
 
         if cmssw_repo and first_line == "code-checks":
@@ -1478,7 +1486,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             cache_comment = already_seen
 
     if issue.pull_request:
-        if pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD and (not warned_too_many_commits):
+        if (
+            pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD
+            and (not warned_too_many_commits)
+            and (not ok_too_many_commits)
+        ):
             if pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD:
                 if not dryRun:
                     issue.create_comment(

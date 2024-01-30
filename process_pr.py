@@ -1527,7 +1527,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 ],
                 key=lambda q: q[1],
             )[-1][0]
-            last_seen_commit_time = bot_cache["commits"][last_seen_commit_sha]["time"]
             new_head_commit_sha = pr.head.sha
             base_commit_sha = pr.base.sha
 
@@ -1545,6 +1544,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print("PR diff changed, will not preserve signatures")
             else:
                 print("PR diff not changed, preserving signatures and commit statuses")
+                last_seen_commit_time = bot_cache["commits"][last_seen_commit_sha]["time"]
 
                 # TODO: Remove this block
                 # Restore commit/pre-checks statuses

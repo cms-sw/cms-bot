@@ -189,6 +189,7 @@ MULTILINE_COMMENTS_MAP = {
 
 MAX_INITIAL_COMMITS_IN_PR = 200
 L2_DATA = {}
+BOT_CACHE_DEFAULT = {"emoji": {}, "signatures": {}}
 
 
 def update_CMSSW_LABELS(repo_config):
@@ -224,7 +225,9 @@ def read_bot_cache(comment_msg):
     seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
     if seen_commits_match:
         print("Loading bot cache")
-        return loads_maybe_decompress(seen_commits_match[1])
+        res = loads_maybe_decompress(seen_commits_match[1])
+        res.update(BOT_CACHE_DEFAULT)
+        return res
     return {}
 
 
@@ -1107,9 +1110,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             bot_cache = read_bot_cache(comment_msg)
             print("Read bot cache from technical comment:", comment)
 
-    if not "emoji" in bot_cache:
-        bot_cache["emoji"] = {}
-
     for comment in all_comments:
         ack_comment = comment
         commenter = comment.user.login.encode("ascii", "ignore").decode()
@@ -1460,8 +1460,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if already_seen:
             cache_comment = already_seen
 
-    new_pr = True
-
     if issue.pull_request:
         if (
             (not warned_too_many_commits)
@@ -1483,8 +1481,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         print("Processing commits")
         commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
-        if commit_cache:
-            new_pr = False
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
             seen_commits_cnt = sum((not x.get("squashed", False)) for x in commit_cache.values())
             if all_commits.totalCount < seen_commits_cnt:

@@ -2,7 +2,7 @@
 from __future__ import print_function
 from github import Github
 from os.path import expanduser, abspath, dirname, join, exists
-import sys, re, json
+import sys, re, json, glob
 from argparse import ArgumentParser
 from _py2with3compatibility import run_cmd
 from github_utils import add_issue_labels, create_issue_comment, get_issue_labels
@@ -11,11 +11,7 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 parser = ArgumentParser()
 parser.add_argument(
-    "-r",
-    "--repository",
-    dest="repo",
-    help="Github Repositoy name e.g cms-sw/cms-bot",
-    type=str,
+    "-r", "--repository", dest="repo", help="Github Repositoy name e.g cms-sw/cms-bot", type=str,
 )
 parser.add_argument("-t", "--title", dest="title", help="Issue title", type=str)
 parser.add_argument(
@@ -69,7 +65,8 @@ issues_curl = "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title
 )
 
 if args.comment == False:
-    pulls_curl = "curl -s 'https://api.github.com/repos/%s/pulls?q=+is:open+label:%s'" % (
+
+    pulls_curl = "curl -s 'https://api.github.com/repos/%s/issues?state=open&labels=%s'" % (
         args.repo,
         args.labels[0],
     )
@@ -91,20 +88,24 @@ if args.comment == False:
         pulls_obj = json.loads(pulls_obj)
         urls = ""
         for pull in pulls_obj:
-            urls += str(pull["html_url"]) + " "
-        print("The following PRs have matching labels: ", urls)
+            pull_obj = pull.get("pull_request")
+            if pull_obj != None:
+                urls += "* " + str(pull_obj.get("html_url")) + "\n"
+        print("The following PRs have matching labels: \n", urls)
 
-        # Get current issue number
-        print("Check newly created Issue", issues_curl)
-        exit_code, issues_obj = run_cmd(issues_curl)
-        issues_dict = json.loads(issues_obj)
-        issue_number = issues_dict["items"][0]["number"]
+        issues = gh_repo.get_issues(labels=[str(label) for label in args.labels])
+
+        for issue in issues:
+            issue_number = issue.number
 
         # Comment related PRs
-        issue_comment = (
-            "The following PRs should be probably merged before building the new image: " + urls
-        )
-        create_issue_comment(gh_repo.full_name, issue_number, issue_comment)
+        if urls != "":
+            issue_comment = (
+                "The following PRs should be probably merged before building the new image: \n"
+                + urls
+            )
+            print(issue_comment)
+            create_issue_comment(gh_repo.full_name, issue_number, issue_comment)
     else:
         # Check state of the issue: open/closed...
         issue_title = issues_dict["items"][0]["title"]
@@ -119,11 +120,10 @@ if args.comment == False:
             existing_labels = get_issue_labels(gh_repo.full_name, issue_number)
             print(existing_labels)
             for label_obj in existing_labels:
-                if label_obj["name"] == "building":
+                if "building" in label_obj["name"] or "queued" in label_obj["name"]:
                     print("Build already triggered... Nothing to do!")
-                    sys.exit(0)
-
-            add_issue_labels(gh_repo.full_name, issue_number, ["building"])
+                    with open("gh-info.tmp", "a") as f:
+                        f.write(str(label_obj["name"]) + "\n")
             # Don't delete property files
             sys.exit(1)
 
@@ -135,7 +135,6 @@ else:
     print(issues_obj)
 
     issues_dict = json.loads(issues_obj)
-    print("Existing Issues: " + str(issues_dict["total_count"]))
 
     # We should have only one matching issue
     assert issues_dict["total_count"] <= 1

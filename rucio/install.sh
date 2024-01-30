@@ -98,9 +98,9 @@ fi
 
 if $RUN_TESTS ; then
   if [ "${X509_USER_CERT}" != "" -a "${X509_USER_KEY}" != "" ] ; then
-    voms-proxy-init -cert $X509_USER_CERT -key $X509_USER_KEY
+    voms-proxy-init -voms cms -cert $X509_USER_CERT -key $X509_USER_KEY
   else
-    voms-proxy-init
+    voms-proxy-init -voms cms
   fi
   export RUCIO_ACCOUNT=$(voms-proxy-info | grep '^subject' | sed 's|.*Users/CN=||;s|/.*||')
   rucio whoami

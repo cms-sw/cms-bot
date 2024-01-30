@@ -5,7 +5,7 @@ export PATH=${CMSSW_BASE}/cms-bot/das-utils:${PATH}
 export PYTHONUNBUFFERED=1
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
 export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local
-voms-proxy-init
+voms-proxy-init -voms cms
 
 rm -rf all-pyRelval
 mkdir all-pyRelval

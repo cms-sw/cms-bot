@@ -1491,17 +1491,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             return
 
         print("Processing commits")
-        # commit_cache = bot_cache["commits"]
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-            seen_commits_cnt = sum(
-                (not x.get("squashed", False)) for x in bot_cache["commits"].values()
-            )
-            if all_commits.totalCount < seen_commits_cnt:
-                print(
-                    "Number of commits in cache ({0}) is greater than the number of commits in PR ({1}) - possible squash detected".format(
-                        seen_commits_cnt, all_commits.totalCount
-                    )
-                )
+            all_commits_sha = [commit.sha for commit in all_commits]
+            if any(commit_sha not in all_commits_sha for commit_sha in bot_cache["commits"]):
+                print("Possible squash detected")
 
                 last_seen_commit_sha = sorted(
                     [

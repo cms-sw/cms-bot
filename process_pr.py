@@ -189,7 +189,7 @@ MULTILINE_COMMENTS_MAP = {
 
 MAX_INITIAL_COMMITS_IN_PR = 200
 L2_DATA = {}
-BOT_CACHE_DEFAULT = {"emoji": {}, "signatures": {}}
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 
 
 def update_CMSSW_LABELS(repo_config):
@@ -221,12 +221,20 @@ def init_l2_data(repo_config, cms_repo):
     return l2_data
 
 
+def collect_commit_cache(bot_cache):
+    commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
+    for k in commit_cache:
+        del bot_cache[k]
+    bot_cache["commits"] = commit_cache
+
+
 def read_bot_cache(comment_msg):
     seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
     if seen_commits_match:
         print("Loading bot cache")
         res = loads_maybe_decompress(seen_commits_match[1])
-        res.update(BOT_CACHE_DEFAULT)
+        res.update(BOT_CACHE_TEMPLATE)
+        collect_commit_cache(res)
         return res
     return {}
 
@@ -1480,9 +1488,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             return
 
         print("Processing commits")
-        commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
+        # commit_cache = bot_cache["commits"]
         if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-            seen_commits_cnt = sum((not x.get("squashed", False)) for x in commit_cache.values())
+            seen_commits_cnt = sum(
+                (not x.get("squashed", False)) for x in bot_cache["commits"].values()
+            )
             if all_commits.totalCount < seen_commits_cnt:
                 print(
                     "Number of commits in cache ({0}) is greater than the number of commits in PR ({1}) - possible squash detected".format(
@@ -1492,9 +1502,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
                 last_seen_commit_sha = sorted(
                     [
-                        (k, commit_cache[k]["time"])
-                        for k in commit_cache
-                        if not commit_cache[k].get("squashed", False)
+                        (k, bot_cache["commits"][k]["time"])
+                        for k in bot_cache["commits"]
+                        if not bot_cache["commits"][k].get("squashed", False)
                     ],
                     key=lambda q: q[1],
                 )[-1][0]
@@ -1556,34 +1566,34 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     #         signatures["tests"] = lab.split("-", 1)[1]
 
                 # Mark removed commits in cache as squashed
-                for commit_sha in commit_cache:
+                for commit_sha in bot_cache["commits"]:
                     if not any(commit_sha == commit.sha for commit in all_commits):
                         print("Marked commit {0} as squashed".format(commit_sha))
                         bot_cache[commit_sha]["squashed"] = True
 
             for commit in all_commits:
-                if commit.sha not in bot_cache:
-                    bot_cache[commit.sha] = {
+                if commit.sha not in bot_cache["commits"]:
+                    bot_cache["commits"][commit.sha] = {
                         "time": int(commit.commit.committer.date.timestamp()),
                         "squashed": False,
                     }
                     if len(commit.parents) > 1:
-                        bot_cache[commit.sha]["files"] = []
+                        bot_cache["commits"][commit.sha]["files"] = []
                     else:
-                        bot_cache[commit.sha]["files"] = sorted(
+                        bot_cache["commits"][commit.sha]["files"] = sorted(
                             x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
                         )
 
                 elif len(commit.parents) > 1:
-                    bot_cache[commit.sha]["files"] = []
+                    bot_cache["commits"][commit.sha]["files"] = []
 
-                cache_entry = bot_cache[commit.sha]
+                cache_entry = bot_cache["commits"][commit.sha]
                 events[datetime.fromtimestamp(cache_entry["time"])].append(
                     {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
                 )
 
             # Inject events from cached commits
-            for commit_sha, cache_entry in commit_cache.items():
+            for commit_sha, cache_entry in bot_cache["commits"].items():
                 if cache_entry.get("squashed", False):
                     print("Adding back cached commit {0}".format(commit_sha))
                     events[datetime.fromtimestamp(cache_entry["time"])].append(

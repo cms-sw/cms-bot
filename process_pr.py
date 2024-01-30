@@ -187,7 +187,8 @@ MULTILINE_COMMENTS_MAP = {
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
 }
 
-MAX_INITIAL_COMMITS_IN_PR = 200
+TOO_MANY_COMMITS_WARN_THRESHOLD = 150
+TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
 BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 
@@ -865,6 +866,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     pre_checks_url = {}
     events = defaultdict(list)
     all_commits = []
+    all_commit_shas = []
     ok_too_many_commits = False
     warned_too_many_commits = False
 
@@ -994,6 +996,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Watchers " + ", ".join(watchers))
 
         all_commits = get_pr_commits_reversed(pr)
+        all_commit_shas = [commit.sha for commit in all_commits]
 
         if all_commits:
             last_commit_obj = all_commits[0]
@@ -1148,7 +1151,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if not technical_comment:
                     technical_comment = comment
                 continue
-            if "This PR contains too many commits" in first_line:
+            if re.match("This PR contains (too |)many commits", first_line):
                 warned_too_many_commits = True
                 continue
             if re.match("^" + HOLD_MSG + ".+", first_line):
@@ -1252,8 +1255,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         elif re.match(r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line):
             comment_emoji = "-1"
             if commenter in CMSSW_ISSUES_TRACKERS:
-                ok_too_many_commits = True
-                comment_emoji = "+1"
+                if pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD:
+                    ok_too_many_commits = True
+                    comment_emoji = "+1"
+                else:
+                    comment_emoji = "-1"
 
         if comment_emoji:
             set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=comment_emoji)
@@ -1472,137 +1478,152 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             cache_comment = already_seen
 
     if issue.pull_request:
-        if (
-            (not warned_too_many_commits)
-            and not ok_too_many_commits
-            and pr.commits >= MAX_INITIAL_COMMITS_IN_PR
-        ):
-            if not dryRun:
-                issue.create_comment(
-                    "This PR contains too many commits ({0} > {1}). "
-                    "Make sure you chose the right target branch.\n"
-                    "{2}, "
-                    "you can override this check with `+commit-count`.".format(
-                        pr.commits,
-                        MAX_INITIAL_COMMITS_IN_PR,
-                        ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS]),
+        if pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD and (not warned_too_many_commits):
+            if pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR contains many commits ({0} >= {1}) and will not be processed. "
+                        "Please ensure you have selected the correct target branch and consider squashing unnecessary commits.\n"
+                        "{2}, to re-enable processing of this PR, you can write `+commit-count` in a comment. Thanks.".format(
+                            pr.commits,
+                            TOO_MANY_COMMITS_WARN_THRESHOLD,
+                            ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS]),
+                        )
                     )
-                )
+            else:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR contains too many commits ({0} >= {1}) and will not be processed.\n"
+                        "Please ensure you have selected the correct target branch and consider squashing unnecessary commits.\n"
+                        "The processing of this PR will resume once the commit count drops below the limit.".format(
+                            pr.commits,
+                            TOO_MANY_COMMITS_FAIL_THRESHOLD,
+                        )
+                    )
+
+            return
+
+        if pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD and not ok_too_many_commits:
+            print("Commit count reached and not overridden, quitting")
             return
 
         print("Processing commits")
-        if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-            missing_commits = set(
-                k
-                for k in bot_cache["commits"]
-                if not bot_cache["commits"][k].get("squashed", False)
-            ).difference(commit.sha for commit in all_commits)
-            if missing_commits:
-                print("Possible squash detected: the following commits are missing")
-                print(missing_commits)
 
-                last_seen_commit_sha = sorted(
-                    [
-                        (k, bot_cache["commits"][k]["time"])
-                        for k in bot_cache["commits"]
-                        if not bot_cache["commits"][k].get("squashed", False)
-                    ],
-                    key=lambda q: q[1],
-                )[-1][0]
-                new_head_commit_sha = pr.head.sha
-                base_commit_sha = pr.base.sha
+        missing_commits = set(
+            k for k in bot_cache["commits"] if not bot_cache["commits"][k].get("squashed", False)
+        ).difference(all_commit_shas)
+        last_seen_commit_time = None
+        if missing_commits:
+            print(
+                "Possible squash detected: the following commits were cached, but missing from PR"
+            )
+            print(missing_commits)
 
-                changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
-                changes_after_squash = repo.compare(base_commit_sha, new_head_commit_sha)
+            last_seen_commit_sha = sorted(
+                [
+                    (k, bot_cache["commits"][k]["time"])
+                    for k in bot_cache["commits"]
+                    if not bot_cache["commits"][k].get("squashed", False)
+                ],
+                key=lambda q: q[1],
+            )[-1][0]
+            last_seen_commit_time = bot_cache["commits"][last_seen_commit_sha]["time"]
+            new_head_commit_sha = pr.head.sha
+            base_commit_sha = pr.base.sha
 
-                diff_before_squash = {
-                    (file.filename, file.patch) for file in changes_before_squash.files
-                }
-                diff_after_squash = {
-                    (file.filename, file.patch) for file in changes_after_squash.files
-                }
+            changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
+            changes_after_squash = repo.compare(base_commit_sha, new_head_commit_sha)
 
-                if diff_before_squash ^ diff_after_squash:
-                    print("PR diff changed, will not preserve signatures")
-                else:
-                    print("PR diff not changed, preserving signatures and commit statuses")
-                    bot_cache[new_head_commit_sha] = {
-                        "time": bot_cache[last_seen_commit_sha]["time"],
-                        "files": [],
-                    }
+            diff_before_squash = {
+                (file.filename, file.patch) for file in changes_before_squash.files
+            }
+            diff_after_squash = {
+                (file.filename, file.patch) for file in changes_after_squash.files
+            }
 
-                    # TODO: Remove this block
-                    # Restore commit/pre-checks statuses
-                    # old_commit_statuses = (
-                    #     repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
-                    # )
-                    # commit_statuses = old_commit_statuses
-                    # bot_status = get_status(bot_status_name, commit_statuses)
-                    # for status in old_commit_statuses:
-                    #     import github
-                    #
-                    #     if not dryRun:
-                    #         last_commit_obj.create_status(
-                    #             state=status.state,
-                    #             description=status.description,
-                    #             target_url=status.target_url or github.GithubObject.NotSet,
-                    #             context=status.context,
-                    #         )
-                    #
-                    #     for pre_check in pre_checks + extra_pre_checks:
-                    #         if "%s/%s" % (cms_status_prefix, pre_check) == status.context:
-                    #             pre_checks_state[pre_check] = status.state
-                    #             pre_checks_url[pre_check] = status.target_url
-                    #             break
-                    #
-                    #     for pre_check in pre_checks + extra_pre_checks:
-                    #         if pre_checks_state.get(pre_check) is None:
-                    #             pre_checks_state[pre_check] = ""
-                    #
-                    # # Restore tests and code-checks labels. The logic to set the former is quite complicated, so we trust old labels
-                    # for lab in old_labels:
-                    #     if lab.startswith("code-checks"):
-                    #         signatures["code-checks"] = lab.split("-", 2)[2]
-                    #     if lab.startswith("tests"):
-                    #         signatures["tests"] = lab.split("-", 1)[1]
+            if diff_before_squash ^ diff_after_squash:
+                print("PR diff changed, will not preserve signatures")
+            else:
+                print("PR diff not changed, preserving signatures and commit statuses")
 
-                # Mark removed commits in cache as squashed
-                for commit_sha in missing_commits:
-                    print("Marked commit {0} as squashed".format(commit_sha))
-                    bot_cache[commit_sha]["squashed"] = True
+                # TODO: Remove this block
+                # Restore commit/pre-checks statuses
+                # old_commit_statuses = (
+                #     repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
+                # )
+                # commit_statuses = old_commit_statuses
+                # bot_status = get_status(bot_status_name, commit_statuses)
+                # for status in old_commit_statuses:
+                #     import github
+                #
+                #     if not dryRun:
+                #         last_commit_obj.create_status(
+                #             state=status.state,
+                #             description=status.description,
+                #             target_url=status.target_url or github.GithubObject.NotSet,
+                #             context=status.context,
+                #         )
+                #
+                #     for pre_check in pre_checks + extra_pre_checks:
+                #         if "%s/%s" % (cms_status_prefix, pre_check) == status.context:
+                #             pre_checks_state[pre_check] = status.state
+                #             pre_checks_url[pre_check] = status.target_url
+                #             break
+                #
+                #     for pre_check in pre_checks + extra_pre_checks:
+                #         if pre_checks_state.get(pre_check) is None:
+                #             pre_checks_state[pre_check] = ""
+                #
+                # # Restore tests and code-checks labels. The logic to set the former is quite complicated, so we trust old labels
+                # for lab in old_labels:
+                #     if lab.startswith("code-checks"):
+                #         signatures["code-checks"] = lab.split("-", 2)[2]
+                #     if lab.startswith("tests"):
+                #         signatures["tests"] = lab.split("-", 1)[1]
 
-            for commit in all_commits:
-                if commit.sha not in bot_cache["commits"]:
-                    bot_cache["commits"][commit.sha] = {
-                        "time": int(commit.commit.committer.date.timestamp()),
-                        "squashed": False,
-                    }
-                    if len(commit.parents) > 1:
-                        bot_cache["commits"][commit.sha]["files"] = []
-                    else:
-                        bot_cache["commits"][commit.sha]["files"] = sorted(
-                            x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
-                        )
-
-                elif len(commit.parents) > 1:
-                    bot_cache["commits"][commit.sha]["files"] = []
-
-                cache_entry = bot_cache["commits"][commit.sha]
-                events[datetime.fromtimestamp(cache_entry["time"])].append(
-                    {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
-                )
-
-            # Inject events from cached commits
+            # Mark removed commits in cache as squashed
             for commit_sha in missing_commits:
-                cache_entry = bot_cache["commits"][commit_sha]
-                if cache_entry.get("squashed", False):
-                    print("Adding back cached commit {0}".format(commit_sha))
-                    events[datetime.fromtimestamp(cache_entry["time"])].append(
-                        {
-                            "type": "commit",
-                            "value": {"files": cache_entry["files"], "sha": commit_sha},
-                        }
+                print("Marked commit {0} as squashed".format(commit_sha))
+                bot_cache[commit_sha]["squashed"] = True
+
+        for commit in all_commits:
+            if commit.sha not in bot_cache["commits"]:
+                bot_cache["commits"][commit.sha] = {
+                    "time": int(commit.commit.committer.date.timestamp()),
+                    "squashed": False,
+                }
+                if len(commit.parents) > 1:
+                    bot_cache["commits"][commit.sha]["files"] = []
+                else:
+                    bot_cache["commits"][commit.sha]["files"] = sorted(
+                        x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
                     )
+
+            elif len(commit.parents) > 1:
+                bot_cache["commits"][commit.sha]["files"] = []
+
+            if (
+                last_seen_commit_time
+                and commit.commit.committer.date.timestamp() > last_seen_commit_time
+            ):
+                bot_cache["commits"][commit.sha]["files"] = []
+
+            cache_entry = bot_cache["commits"][commit.sha]
+            events[datetime.fromtimestamp(cache_entry["time"])].append(
+                {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
+            )
+
+        # Inject events from cached commits
+        for commit_sha in missing_commits:
+            cache_entry = bot_cache["commits"][commit_sha]
+            if cache_entry.get("squashed", False):
+                print("Adding back cached commit {0}".format(commit_sha))
+                events[datetime.fromtimestamp(cache_entry["time"])].append(
+                    {
+                        "type": "commit",
+                        "value": {"files": cache_entry["files"], "sha": commit_sha},
+                    }
+                )
 
     # Process commits and signatures
     signed_commit_sha = ""

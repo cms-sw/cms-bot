@@ -1648,8 +1648,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
                 )
         elif event["type"] == "commit":
-            if event["value"]["files"]:
-                signed_commit_sha = event["value"]["sha"]
+            signed_commit_sha = event["value"]["sha"]
             if cmssw_repo:
                 chg_categories = set()
                 for fn in event["value"]["files"]:

@@ -223,9 +223,10 @@ def init_l2_data(repo_config, cms_repo):
 
 def collect_commit_cache(bot_cache):
     commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
-    for k in commit_cache:
-        del bot_cache[k]
-    bot_cache["commits"] = commit_cache
+    if commit_cache:
+        for k in commit_cache:
+            del bot_cache[k]
+        bot_cache["commits"] = commit_cache
 
 
 def read_bot_cache(comment_msg):

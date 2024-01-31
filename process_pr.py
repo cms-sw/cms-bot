@@ -1253,12 +1253,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         elif re.match(r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line):
             comment_emoji = "-1"
             if commenter in CMSSW_ISSUES_TRACKERS:
-                if pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD:
-                    ok_too_many_commits = True
-                    comment_emoji = "+1"
-                else:
-                    ok_too_many_commits = False
-                    comment_emoji = "-1"
+                ok_too_many_commits = pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
+                comment_emoji = "+1"
 
         if comment_emoji:
             set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=comment_emoji)

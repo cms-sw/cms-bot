@@ -98,9 +98,7 @@ if args.comment == False:
         print("The following PRs have matching labels: \n", urls)
 
         issues = gh_repo.get_issues(labels=[str(label) for label in args.labels])
-
-        for issue in issues:
-            issue_number = issue.number
+        issue_number = issue.number
 
         # Comment related PRs
         if urls != "":

@@ -135,7 +135,6 @@ REGEX_TEST_IGNORE = re.compile(
     re.I,
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->")
-REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
 REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
@@ -190,7 +189,6 @@ MULTILINE_COMMENTS_MAP = {
 TOO_MANY_COMMITS_WARN_THRESHOLD = 150
 TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
-BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 
 
 def update_CMSSW_LABELS(repo_config):
@@ -223,6 +221,7 @@ def init_l2_data(repo_config, cms_repo):
 
 
 def collect_commit_cache(bot_cache):
+    REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
     commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
     if commit_cache:
         for k in commit_cache:
@@ -231,6 +230,8 @@ def collect_commit_cache(bot_cache):
 
 
 def read_bot_cache(comment_msg):
+    BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
+
     seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
     if seen_commits_match:
         print("Loading bot cache")
@@ -1256,7 +1257,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     ok_too_many_commits = True
                     comment_emoji = "+1"
                 else:
-                    warned_too_many_commits = False
+                    ok_too_many_commits = False
                     comment_emoji = "-1"
 
         if comment_emoji:

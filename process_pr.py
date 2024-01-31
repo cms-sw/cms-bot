@@ -867,7 +867,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     pre_checks_url = {}
     events = defaultdict(list)
     all_commits = []
-    all_commit_shas = []
+    all_commit_shas = set()
     ok_too_many_commits = False
     warned_too_many_commits = False
 
@@ -997,7 +997,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Watchers " + ", ".join(watchers))
 
         all_commits = get_pr_commits_reversed(pr)
-        all_commit_shas = [commit.sha for commit in all_commits]
+        all_commit_shas = {commit.sha for commit in all_commits}
 
         if all_commits:
             last_commit_obj = all_commits[0]
@@ -1517,7 +1517,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         missing_commits = set(
             k for k in bot_cache["commits"] if not bot_cache["commits"][k].get("squashed", False)
         ).difference(all_commit_shas)
-        last_seen_commit_time = None
+        new_commits = all_commit_shas.difference(k for k in bot_cache["commits"])
         if missing_commits:
             print(
                 "Possible squash detected: the following commits were cached, but missing from PR"
@@ -1607,10 +1607,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             elif len(commit.parents) > 1:
                 bot_cache["commits"][commit.sha]["files"] = []
 
-            if (
-                last_seen_commit_time
-                and commit.commit.committer.date.timestamp() > last_seen_commit_time
-            ):
+            if last_seen_commit_time is not None and commit.sha in new_commits:
                 bot_cache["commits"][commit.sha]["files"] = []
                 bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
 

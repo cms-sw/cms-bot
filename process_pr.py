@@ -1329,16 +1329,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if issue.pull_request and (comment.created_at < last_commit_date):
             continue
 
-        if commenter == cmsbuild_user and (
-            (
-                "This PR contains many commits" in first_line
-                and pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
-            )
-            or "This PR contains too many commits" in first_line
-        ):
-            warned_too_many_commits = True
-            continue
-
         if cmssw_repo and first_line == "code-checks":
             signatures[first_line] = "pending"
             if first_line not in pre_checks + extra_pre_checks:
@@ -1359,6 +1349,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         # Check for cmsbuild_user comments and tests requests only for pull requests
         if commenter == cmsbuild_user:
             if not issue.pull_request and not push_test_issue:
+                continue
+            if (
+                "This PR contains many commits" in first_line
+                and pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
+            ) or "This PR contains too many commits" in first_line:
+                warned_too_many_commits = True
                 continue
             sec_line = comment_lines[1:2]
             if not sec_line:

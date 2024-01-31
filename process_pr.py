@@ -1521,6 +1521,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             k for k in bot_cache["commits"] if not bot_cache["commits"][k].get("squashed", False)
         ).difference(all_commit_shas)
         last_seen_commit_time = None
+        last_seen_commit_sha = None
         if missing_commits:
             print(
                 "Possible squash detected: the following commits were cached, but missing from PR"
@@ -1615,6 +1616,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 and commit.commit.committer.date.timestamp() > last_seen_commit_time
             ):
                 bot_cache["commits"][commit.sha]["files"] = []
+                bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
 
             cache_entry = bot_cache["commits"][commit.sha]
             events[datetime.fromtimestamp(cache_entry["time"])].append(

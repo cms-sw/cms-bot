@@ -118,6 +118,8 @@ if args.comment == False:
     # Delete property files
     sys.exit(0)
 else:
+    for issue in gh_repo.get_issues(labels=[str(label) for label in args.labels]):
+        issue_number = issue.number
+
     print("Adding issue comment...")
-    issue_number = issue.number
     create_issue_comment(gh_repo.full_name, issue_number, msg)

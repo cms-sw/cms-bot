@@ -1536,16 +1536,24 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
             print(missing_commits)
 
-            last_seen_commit_sha = sorted(
-                [
-                    (k, bot_cache["commits"][k]["time"])
-                    for k in bot_cache["commits"]
-                    if not bot_cache["commits"][k].get("squashed", False)
-                ],
-                key=lambda q: q[1],
-            )[-1][0]
+            if not "last_seen_sha" in bot_cache:
+                bot_cache["last_seen_sha"] = sorted(
+                    [
+                        (k, bot_cache["commits"][k]["time"])
+                        for k in bot_cache["commits"]
+                        if not bot_cache["commits"][k].get("squashed", False)
+                    ],
+                    key=lambda q: q[1],
+                )[-1][0]
+
+            last_seen_commit_sha = bot_cache["last_seen_sha"]
             new_head_commit_sha = pr.head.sha
             base_commit_sha = pr.base.sha
+            print(
+                "Base sha {0}, New head sha {1}, last_seen_sha {2}".format(
+                    base_commit_sha, new_head_commit_sha, last_seen_commit_sha
+                )
+            )
 
             changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
             changes_after_squash = repo.compare(base_commit_sha, new_head_commit_sha)
@@ -1569,6 +1577,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 print("Marked commit {0} as squashed".format(commit_sha))
                 bot_cache["commits"][commit_sha]["squashed"] = True
 
+        bot_cache["last_seen_sha"] = pr.head.sha
         for commit in all_commits:
             if commit.sha not in bot_cache["commits"]:
                 bot_cache["commits"][commit.sha] = {

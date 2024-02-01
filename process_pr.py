@@ -1514,6 +1514,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         print("Processing commits")
 
+        # Make sure to mark squashed=False if a cached/squashed commit is added back
+        for commit_sha in all_commit_shas:
+            if commit_sha in bot_cache["commits"]:
+                bot_cache["commits"][commit_sha]["squashed"] = False
+                print("INFO: A squashed commit {0} is added back.".format(commit_sha))
+
         # "Squashed" flag is used to avoid finding missing commits after we have actually
         # handled the squash
         missing_commits = set(
@@ -1613,7 +1619,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             cached_signed_commit_sha = bot_cache["signatures"].get(comment_id)
             if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
                 print(
-                    "WARNING: For comment {0}, cached commit's SHA doesn't match the present list of signed commits. This comment will be ignored."
+                    "WARNING: Comment {0}, cached commit {1} doesn't match the present commit {2}. "
+                    "This comment will be ignored.".format(
+                        comment_id, cached_signed_commit_sha, signed_commit_sha
+                    )
                 )
                 continue
 
@@ -1640,7 +1649,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 )
         elif event["type"] == "commit":
             auto_test_comment = None
-            signed_commit_sha = event["value"]["sha"]
+            # Only signed commits with files
+            if event["value"]["files"]:
+                signed_commit_sha = event["value"]["sha"]
             if cmssw_repo:
                 chg_categories = set()
                 for fn in event["value"]["files"]:

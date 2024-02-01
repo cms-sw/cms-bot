@@ -1515,10 +1515,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Processing commits")
 
         # Make sure to mark squashed=False if a cached/squashed commit is added back
-        for commit_sha in all_commit_shas:
-            if commit_sha in bot_cache["commits"]:
-                bot_cache["commits"][commit_sha]["squashed"] = False
-                print("INFO: A squashed commit {0} is added back.".format(commit_sha))
+        for commit_sha in [
+            sha
+            for sha in all_commit_shas
+            if sha in bot_cache["commits"] and bot_cache["commits"][sha].get("squashed", False)
+        ]:
+            bot_cache["commits"][commit_sha]["squashed"] = False
+            print("INFO: A squashed commit {0} is added back.".format(commit_sha))
 
         # "Squashed" flag is used to avoid finding missing commits after we have actually
         # handled the squash

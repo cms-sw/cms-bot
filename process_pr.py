@@ -1558,7 +1558,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             # Mark removed commits in cache as squashed
             for commit_sha in missing_commits:
                 print("Marked commit {0} as squashed".format(commit_sha))
-                bot_cache[commit_sha]["squashed"] = True
+                bot_cache["commits"][commit_sha]["squashed"] = True
 
         for commit in all_commits:
             if commit.sha not in bot_cache["commits"]:
@@ -1606,7 +1606,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Event:", event)
         if event["type"] == "sign":
             comment = event["value"]["comment"]
-            cached_signed_commit_sha = bot_cache["signatures"].get(comment.id)
+            comment_id = str (comment.id)
+            cached_signed_commit_sha = bot_cache["signatures"].get(comment_id)
             if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
                 print(
                     "WARNING: For comment {0}, cached commit's SHA doesn't match the present list of signed commits. This comment will be ignored."
@@ -1614,7 +1615,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 continue
 
             if cached_signed_commit_sha is None:
-                bot_cache["signatures"][comment.id] = signed_commit_sha
+                bot_cache["signatures"][comment_id] = signed_commit_sha
             selected_cats = event["value"]["selected_cats"]
             ctype = event["value"]["ctype"]
             if any(x in signing_categories for x in selected_cats):

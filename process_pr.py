@@ -1631,7 +1631,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             and (test_comment is None)
                             and ((repository in auto_test_repo) or ("*" in auto_test_repo))
                             and sign not in ("code-checks", "tests", "orp")
-                            and (comment.created_at >= datetime.fromtimestamp(bot_cache["commits"][signed_commit_sha]["time"]))
+                            and (
+                                comment.created_at
+                                >= datetime.fromtimestamp(
+                                    bot_cache["commits"][signed_commit_sha]["time"]
+                                )
+                            )
                         ):
                             test_comment = comment
                 elif ctype == "-1":

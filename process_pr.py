@@ -1514,6 +1514,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         print("Processing commits")
 
+        # "Squashed" flag is used to avoid finding missing commits after we have actually
+        # handled the squash
         missing_commits = set(
             k for k in bot_cache["commits"] if not bot_cache["commits"][k].get("squashed", False)
         ).difference(all_commit_shas)
@@ -1553,41 +1555,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 last_seen_commit_time = bot_cache["commits"][last_seen_commit_sha]["time"]
                 new_commits = all_commit_shas.difference(k for k in bot_cache["commits"])
 
-                # TODO: Remove this block
-                # Restore commit/pre-checks statuses
-                # old_commit_statuses = (
-                #     repo.get_commit(last_seen_commit_sha).get_combined_status().statuses
-                # )
-                # commit_statuses = old_commit_statuses
-                # bot_status = get_status(bot_status_name, commit_statuses)
-                # for status in old_commit_statuses:
-                #     import github
-                #
-                #     if not dryRun:
-                #         last_commit_obj.create_status(
-                #             state=status.state,
-                #             description=status.description,
-                #             target_url=status.target_url or github.GithubObject.NotSet,
-                #             context=status.context,
-                #         )
-                #
-                #     for pre_check in pre_checks + extra_pre_checks:
-                #         if "%s/%s" % (cms_status_prefix, pre_check) == status.context:
-                #             pre_checks_state[pre_check] = status.state
-                #             pre_checks_url[pre_check] = status.target_url
-                #             break
-                #
-                #     for pre_check in pre_checks + extra_pre_checks:
-                #         if pre_checks_state.get(pre_check) is None:
-                #             pre_checks_state[pre_check] = ""
-                #
-                # # Restore tests and code-checks labels. The logic to set the former is quite complicated, so we trust old labels
-                # for lab in old_labels:
-                #     if lab.startswith("code-checks"):
-                #         signatures["code-checks"] = lab.split("-", 2)[2]
-                #     if lab.startswith("tests"):
-                #         signatures["tests"] = lab.split("-", 1)[1]
-
             # Mark removed commits in cache as squashed
             for commit_sha in missing_commits:
                 print("Marked commit {0} as squashed".format(commit_sha))
@@ -1619,8 +1586,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
 
         # Inject events from cached commits
-        for commit_sha in missing_commits:
-            cache_entry = bot_cache["commits"][commit_sha]
+        for commit_sha, cache_entry in bot_cache["commits"].items():
             if cache_entry.get("squashed", False):
                 print("Adding back cached commit {0}".format(commit_sha))
                 events[datetime.fromtimestamp(cache_entry["time"])].append(

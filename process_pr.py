@@ -1602,6 +1602,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     for _, eventlist in sorted(events.items()):
         flattened_eventlist.extend(eventlist)
 
+    auto_test_comment = None
     for event in flattened_eventlist:
         print("Event:", event)
         if event["type"] == "sign":
@@ -1626,19 +1627,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if ctype == "+1":
                     for sign in selected_cats:
                         signatures[sign] = "approved"
-                        if (
-                            issue.pull_request
-                            and (test_comment is None)
-                            and ((repository in auto_test_repo) or ("*" in auto_test_repo))
-                            and sign not in ("code-checks", "tests", "orp")
-                            and (
-                                comment.created_at
-                                >= datetime.fromtimestamp(
-                                    bot_cache["commits"][signed_commit_sha]["time"]
-                                )
-                            )
-                        ):
-                            test_comment = comment
+                        if sign not in ("code-checks", "tests", "orp"):
+                            auto_test_comment = comment
                 elif ctype == "-1":
                     for sign in selected_cats:
                         signatures[sign] = "rejected"
@@ -1649,6 +1639,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     )
                 )
         elif event["type"] == "commit":
+            auto_test_comment = None
             signed_commit_sha = event["value"]["sha"]
             if cmssw_repo:
                 chg_categories = set()
@@ -1665,6 +1656,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 for cat in signing_categories:
                     signatures[cat] = "pending"
             print("Signatures:", signatures)
+
+    if (
+        issue.pull_request
+        and auto_test_comment
+        and (test_comment is None)
+        and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+    ):
+        test_comment = auto_test_comment
 
     if push_test_issue:
         auto_close_push_test_issue = True

@@ -63,11 +63,6 @@ print("Authentication succeeeded to " + str(gh_repo.full_name))
 
 if args.comment == False:
 
-    pulls_curl = "curl -s 'https://api.github.com/repos/%s/issues?state=open&labels=%s'" % (
-        args.repo,
-        args.labels[0],
-    )
-
     for issue in gh_repo.get_issues(state="open", labels=[str(label) for label in args.labels]):
         print("Issue already opened... Nothing to do!")
         # Delete property files
@@ -83,6 +78,11 @@ if args.comment == False:
         issue_obj = gh_repo.create_issue(title=args.title, body=msg, labels=args.labels)
         issue_number = issue_obj.number
         print("New issue number: ", issue_number)
+
+        pulls_curl = "curl -s 'https://api.github.com/repos/%s/issues?state=open&labels=%s'" % (
+            args.repo,
+            args.labels[0],
+        )
 
         print("Checking existing PR with matching labels", pulls_curl)
         exit_code, pulls_obj = run_cmd(pulls_curl)

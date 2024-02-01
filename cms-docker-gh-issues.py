@@ -2,9 +2,8 @@
 from __future__ import print_function
 from github import Github
 from os.path import expanduser, abspath, dirname, join, exists
-import sys, re, json, glob
+import sys, re
 from argparse import ArgumentParser
-from _py2with3compatibility import run_cmd
 from github_utils import add_issue_labels, create_issue_comment, get_issue_labels
 
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
@@ -63,13 +62,15 @@ print("Authentication succeeeded to " + str(gh_repo.full_name))
 
 if args.comment == False:
 
-    for issue in gh_repo.get_issues(state="open", labels=[str(label) for label in args.labels]):
-        print("Issue already opened... Nothing to do!")
-        # Delete property files
-        sys.exit(0)
-
     issue_number = None
-    for issue in gh_repo.get_issues(state="closed", labels=[str(label) for label in args.labels]):
+    for issue in gh_repo.get_issues(
+        labels=[str(label) for label in args.labels], state="all", creator="cmsbuild"
+    ):
+        if issue.state == "open":
+            print("Issue already opened... Nothing to do!")
+            # Delete property files
+            sys.exit(0)
+        # We can have multiple issues closed, we take the one that was opened first
         print("Issue already closed... Ready for building!")
         issue_number = issue.number
 
@@ -79,19 +80,11 @@ if args.comment == False:
         issue_number = issue_obj.number
         print("New issue number: ", issue_number)
 
-        pulls_curl = "curl -s 'https://api.github.com/repos/%s/issues?state=open&labels=%s'" % (
-            args.repo,
-            args.labels[0],
-        )
-
         print("Checking existing PR with matching labels", pulls_curl)
-        exit_code, pulls_obj = run_cmd(pulls_curl)
-        pulls_obj = json.loads(pulls_obj)
         urls = ""
-        for pull in pulls_obj:
-            pull_obj = pull.get("pull_request")
-            if pull_obj != None:
-                urls += "* " + str(pull_obj.get("html_url")) + "\n"
+        for pull in gh_repo.get_issues(labels=[args.labels[0]], state="open"):
+            if pull.pull_request:
+                urls += "* " + str(pull.html_url) + "\n"
         print("The following PRs have matching labels: \n", urls)
 
         # Comment related PRs

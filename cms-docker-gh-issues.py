@@ -61,13 +61,6 @@ gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip()
 gh_repo = gh.get_repo(args.repo)
 print("Authentication succeeeded to " + str(gh_repo.full_name))
 
-label_str = "+label:".join([""] + [str(label) for label in args.labels])
-
-issues_curl = "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title+type:issue%s'" % (
-    args.repo,
-    label_str,
-)
-
 if args.comment == False:
 
     pulls_curl = "curl -s 'https://api.github.com/repos/%s/issues?state=open&labels=%s'" % (
@@ -75,17 +68,21 @@ if args.comment == False:
         args.labels[0],
     )
 
-    print("Checking existing Issue", issues_curl)
-    exit_code, issues_obj = run_cmd(issues_curl)
-    issues_dict = json.loads(issues_obj)
-    print("Existing Issues: " + str(issues_dict["total_count"]))
+    for issue in gh_repo.get_issues(state="open", labels=[str(label) for label in args.labels]):
+        print("Issue already opened... Nothing to do!")
+        # Delete property files
+        sys.exit(0)
 
-    # We should have only one matching issue
-    assert issues_dict["total_count"] <= 1
+    issue_number = None
+    for issue in gh_repo.get_issues(state="closed", labels=[str(label) for label in args.labels]):
+        print("Issue already closed... Ready for building!")
+        issue_number = issue.number
 
-    if issues_dict["total_count"] == 0:
-        print("Creating issue request")
-        gh_repo.create_issue(title=args.title, body=msg, labels=args.labels)
+    if issue_number == None:
+        print("Creating issue request...")
+        issue_obj = gh_repo.create_issue(title=args.title, body=msg, labels=args.labels)
+        issue_number = issue_obj.number
+        print("New issue number: ", issue_number)
 
         print("Checking existing PR with matching labels", pulls_curl)
         exit_code, pulls_obj = run_cmd(pulls_curl)
@@ -97,9 +94,6 @@ if args.comment == False:
                 urls += "* " + str(pull_obj.get("html_url")) + "\n"
         print("The following PRs have matching labels: \n", urls)
 
-        issues = gh_repo.get_issues(labels=[str(label) for label in args.labels])
-        issue_number = issue.number
-
         # Comment related PRs
         if urls != "":
             issue_comment = (
@@ -109,42 +103,21 @@ if args.comment == False:
             print(issue_comment)
             create_issue_comment(gh_repo.full_name, issue_number, issue_comment)
     else:
-        # Check state of the issue: open/closed...
-        issue_title = issues_dict["items"][0]["title"]
-        issue_number = issues_dict["items"][0]["number"]
-
-        state = issues_dict["items"][0]["state"]
-        if state == "open":
-            print("Issue is already open... Nothing to do!")
-        elif state == "closed":
-            print("Ready for building!")
-            # Process "building" label
-            existing_labels = get_issue_labels(gh_repo.full_name, issue_number)
-            print(existing_labels)
-            for label_obj in existing_labels:
-                if "building" in label_obj["name"] or "queued" in label_obj["name"]:
-                    print("Build already triggered... Nothing to do!")
-                    with open("gh-info.tmp", "a") as f:
-                        f.write(str(label_obj["name"]) + "\n")
-            # Don't delete property files
-            sys.exit(1)
+        print("Ready for building!")
+        # Process "building" or "queued" labels
+        existing_labels = get_issue_labels(gh_repo.full_name, issue_number)
+        print("Existing labels:", existing_labels)
+        for label_obj in existing_labels:
+            if "building" in label_obj["name"] or "queued" in label_obj["name"]:
+                print("Build already triggered... Nothing to do!")
+                with open("gh-info.tmp", "a") as f:
+                    f.write(str(label_obj["name"]) + "\n")
+        # Don't delete property files
+        sys.exit(1)
 
     # Delete property files
     sys.exit(0)
 else:
-    print("Checking existing Issue", issues_curl)
-    exit_code, issues_obj = run_cmd(issues_curl)
-    print(issues_obj)
-
-    issues_dict = json.loads(issues_obj)
-
-    # We should have only one matching issue
-    assert issues_dict["total_count"] <= 1
-
-    if issues_dict["total_count"] == 0:
-        print("No matching issues found, skipping...")
-    else:
-        print("Adding issue comment...")
-        issue_title = issues_dict["items"][0]["title"]
-        issue_number = issues_dict["items"][0]["number"]
-        create_issue_comment(gh_repo.full_name, issue_number, msg)
+    print("Adding issue comment...")
+    issue_number = issue.number
+    create_issue_comment(gh_repo.full_name, issue_number, msg)

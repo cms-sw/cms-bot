@@ -1606,7 +1606,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Event:", event)
         if event["type"] == "sign":
             comment = event["value"]["comment"]
-            comment_id = str (comment.id)
+            comment_id = str(comment.id)
             cached_signed_commit_sha = bot_cache["signatures"].get(comment_id)
             if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
                 print(

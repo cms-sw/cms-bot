@@ -1605,6 +1605,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     for event in flattened_eventlist:
         print("Event:", event)
         if event["type"] == "sign":
+            if not signed_commit_sha:
+                continue
             comment = event["value"]["comment"]
             comment_id = str(comment.id)
             cached_signed_commit_sha = bot_cache["signatures"].get(comment_id)
@@ -1629,7 +1631,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             and (test_comment is None)
                             and ((repository in auto_test_repo) or ("*" in auto_test_repo))
                             and sign not in ("code-checks", "tests", "orp")
-                            and (comment.created_at >= last_commit_date)
+                            and (comment.created_at >= datetime.fromtimestamp(bot_cache["commits"][signed_commit_sha]["time"]))
                         ):
                             test_comment = comment
                 elif ctype == "-1":

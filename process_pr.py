@@ -1558,12 +1558,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
             changes_after_squash = repo.compare(base_commit_sha, new_head_commit_sha)
 
+            # Use changed file checksum which is abailable for all files added/removed/modify
+            # checksum also works for binary files and renamed files
+            # checksum will not work if file is rebased and gets updated contents from upstream
             diff_before_squash = {
-                (file.filename, file.patch) for file in changes_before_squash.files
+                (file.filename, file.sha) for file in changes_before_squash.files
             }
-            diff_after_squash = {
-                (file.filename, file.patch) for file in changes_after_squash.files
-            }
+            diff_after_squash = {(file.filename, file.sha) for file in changes_after_squash.files}
 
             if diff_before_squash ^ diff_after_squash:
                 print("PR diff changed, will not preserve signatures")

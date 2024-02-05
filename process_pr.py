@@ -186,7 +186,8 @@ MULTILINE_COMMENTS_MAP = {
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
 }
 
-MAX_INITIAL_COMMITS_IN_PR = 200
+TOO_MANY_COMMITS_WARN_THRESHOLD = 150
+TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
 
 
@@ -219,11 +220,27 @@ def init_l2_data(repo_config, cms_repo):
     return l2_data
 
 
+def collect_commit_cache(bot_cache):
+    REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
+    commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
+    if commit_cache:
+        for k in commit_cache:
+            del bot_cache[k]
+        bot_cache["commits"] = commit_cache
+
+
 def read_bot_cache(comment_msg):
+    BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
+
     seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
     if seen_commits_match:
         print("Loading bot cache")
-        return loads_maybe_decompress(seen_commits_match[1])
+        res = loads_maybe_decompress(seen_commits_match[1])
+        for k, v in BOT_CACHE_TEMPLATE.items():
+            if k not in res:
+                res[k] = v
+        collect_commit_cache(res)
+        return res
     return {}
 
 
@@ -251,7 +268,7 @@ def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
                 print("DRY RUN: Creating technical comment with text")
             print(new_body.encode("ascii", "ignore").decode())
     else:
-        raise RuntimeError(f"Updated comment body too long: {len(new_body)} > 65535")
+        raise RuntimeError("Updated comment body too long: {0} > 65535".format(len(new_body)))
 
 
 def get_commenter_categories(commenter, comment_date):
@@ -850,6 +867,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     pre_checks_url = {}
     events = defaultdict(list)
     all_commits = []
+    all_commit_shas = set()
     ok_too_many_commits = False
     warned_too_many_commits = False
 
@@ -979,6 +997,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Watchers " + ", ".join(watchers))
 
         all_commits = get_pr_commits_reversed(pr)
+        all_commit_shas = {commit.sha for commit in all_commits}
 
         if all_commits:
             last_commit_obj = all_commits[0]
@@ -1085,6 +1104,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     code_check_apply_patch = False
     override_tests_failure = None
     bot_cache = {}
+    old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
 
     # start of parsing comments to find the bot_cache
     # to use information during the actual comment loop
@@ -1104,9 +1124,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             technical_comment = comment
             bot_cache = read_bot_cache(comment_msg)
             print("Read bot cache from technical comment:", comment)
-
-    if not "emoji" in bot_cache:
-        bot_cache["emoji"] = {}
 
     for comment in all_comments:
         ack_comment = comment
@@ -1134,9 +1151,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if re.match(CMSBOT_TECHNICAL_MSG, first_line):
                 if not technical_comment:
                     technical_comment = comment
-                continue
-            if "This PR contains too many commits" in first_line:
-                warned_too_many_commits = True
                 continue
             if re.match("^" + HOLD_MSG + ".+", first_line):
                 for u in first_line.split(HOLD_MSG, 2)[1].split(","):
@@ -1239,7 +1253,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         elif re.match(r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line):
             comment_emoji = "-1"
             if commenter in CMSSW_ISSUES_TRACKERS:
-                ok_too_many_commits = True
+                ok_too_many_commits = pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
                 comment_emoji = "+1"
 
         if comment_emoji:
@@ -1332,6 +1346,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         # Check for cmsbuild_user comments and tests requests only for pull requests
         if commenter == cmsbuild_user:
             if not issue.pull_request and not push_test_issue:
+                continue
+            if (
+                "This PR contains many commits" in first_line
+                and pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
+            ) or "This PR contains too many commits" in first_line:
+                warned_too_many_commits = True
                 continue
             sec_line = comment_lines[1:2]
             if not sec_line:
@@ -1460,93 +1480,214 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     if issue.pull_request:
         if (
-            (not warned_too_many_commits)
-            and not ok_too_many_commits
-            and pr.commits >= MAX_INITIAL_COMMITS_IN_PR
+            pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD
+            and (not warned_too_many_commits)
+            and (not ok_too_many_commits)
         ):
-            if not dryRun:
-                issue.create_comment(
-                    f"This PR contains too many commits ({pr.commits} > {MAX_INITIAL_COMMITS_IN_PR}). "
-                    "Make sure you chose the right target branch.\n"
-                    f"{', '.join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])}, "
-                    "you can override this check with `+commit-count`."
-                )
+            if pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR contains many commits ({0} >= {1}) and will not be processed. "
+                        "Please ensure you have selected the correct target branch and consider squashing unnecessary commits.\n"
+                        "{2}, to re-enable processing of this PR, you can write `+commit-count` in a comment. Thanks.".format(
+                            pr.commits,
+                            TOO_MANY_COMMITS_WARN_THRESHOLD,
+                            ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS]),
+                        )
+                    )
+            else:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR contains too many commits ({0} >= {1}) and will not be processed.\n"
+                        "Please ensure you have selected the correct target branch and consider squashing unnecessary commits.\n"
+                        "The processing of this PR will resume once the commit count drops below the limit.".format(
+                            pr.commits,
+                            TOO_MANY_COMMITS_FAIL_THRESHOLD,
+                        )
+                    )
+
+            return
+
+        if pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD and not ok_too_many_commits:
+            print("Commit count reached and not overridden, quitting")
             return
 
         print("Processing commits")
-        if pr.commits < MAX_INITIAL_COMMITS_IN_PR or ok_too_many_commits:
-            for commit in all_commits:
-                if commit.sha not in bot_cache:
-                    bot_cache[commit.sha] = {"time": int(commit.commit.committer.date.timestamp())}
-                    if len(commit.parents) > 1:
-                        bot_cache[commit.sha]["files"] = []
-                    else:
-                        bot_cache[commit.sha]["files"] = sorted(
-                            x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
-                        )
-                elif len(commit.parents) > 1:
-                    bot_cache[commit.sha]["files"] = []
 
-                if commit.sha not in bot_cache:
-                    bot_cache[commit.sha] = {
-                        "time": int(commit.commit.committer.date.timestamp()),
-                        "files": sorted(
-                            x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
-                        ),
-                    }
+        # Make sure to mark squashed=False if a cached/squashed commit is added back
+        for commit_sha in [
+            sha
+            for sha in all_commit_shas
+            if sha in bot_cache["commits"] and bot_cache["commits"][sha].get("squashed", False)
+        ]:
+            bot_cache["commits"][commit_sha]["squashed"] = False
+            print("INFO: A squashed commit {0} is added back.".format(commit_sha))
 
-                cache_entry = bot_cache[commit.sha]
+        # "Squashed" flag is used to avoid finding missing commits after we have actually
+        # handled the squash
+        missing_commits = set(
+            k for k in bot_cache["commits"] if not bot_cache["commits"][k].get("squashed", False)
+        ).difference(all_commit_shas)
+        last_seen_commit_time = None
+        new_commits = set()
+        if missing_commits:
+            print(
+                "Possible squash detected: the following commits were cached, but missing from PR"
+            )
+            print(missing_commits)
+
+            if not "last_seen_sha" in bot_cache:
+                bot_cache["last_seen_sha"] = sorted(
+                    [
+                        (k, bot_cache["commits"][k]["time"])
+                        for k in bot_cache["commits"]
+                        if not bot_cache["commits"][k].get("squashed", False)
+                    ],
+                    key=lambda q: q[1],
+                )[-1][0]
+
+            last_seen_commit_sha = bot_cache["last_seen_sha"]
+            new_head_commit_sha = pr.head.sha
+            base_commit_sha = pr.base.sha
+            print(
+                "Base sha {0}, New head sha {1}, last_seen_sha {2}".format(
+                    base_commit_sha, new_head_commit_sha, last_seen_commit_sha
+                )
+            )
+
+            changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
+            changes_after_squash = repo.compare(base_commit_sha, new_head_commit_sha)
+
+            # Use changed file checksum which is abailable for all files added/removed/modify
+            # checksum also works for binary files and renamed files
+            # checksum will not work if file is rebased and gets updated contents from upstream
+            diff_before_squash = {
+                (file.filename, file.sha) for file in changes_before_squash.files
+            }
+            diff_after_squash = {(file.filename, file.sha) for file in changes_after_squash.files}
+
+            if diff_before_squash ^ diff_after_squash:
+                print("PR diff changed, will not preserve signatures")
+            else:
+                print("PR diff not changed, preserving signatures and commit statuses")
+                last_seen_commit_time = bot_cache["commits"][last_seen_commit_sha]["time"]
+                new_commits = all_commit_shas.difference(k for k in bot_cache["commits"])
+
+            # Mark removed commits in cache as squashed
+            for commit_sha in missing_commits:
+                print("Marked commit {0} as squashed".format(commit_sha))
+                bot_cache["commits"][commit_sha]["squashed"] = True
+
+        bot_cache["last_seen_sha"] = pr.head.sha
+        for commit in all_commits:
+            if commit.sha not in bot_cache["commits"]:
+                bot_cache["commits"][commit.sha] = {
+                    "time": int(commit.commit.committer.date.timestamp()),
+                    "squashed": False,
+                }
+                if len(commit.parents) > 1:
+                    bot_cache["commits"][commit.sha]["files"] = []
+                else:
+                    bot_cache["commits"][commit.sha]["files"] = sorted(
+                        x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
+                    )
+
+            elif len(commit.parents) > 1:
+                bot_cache["commits"][commit.sha]["files"] = []
+
+            if commit.sha in new_commits:
+                bot_cache["commits"][commit.sha]["files"] = []
+                bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
+
+            cache_entry = bot_cache["commits"][commit.sha]
+            events[datetime.fromtimestamp(cache_entry["time"])].append(
+                {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
+            )
+
+        # Inject events from cached commits
+        for commit_sha, cache_entry in bot_cache["commits"].items():
+            if cache_entry.get("squashed", False):
+                print("Adding back cached commit {0}".format(commit_sha))
                 events[datetime.fromtimestamp(cache_entry["time"])].append(
                     {
                         "type": "commit",
-                        "value": cache_entry["files"],
+                        "value": {"files": cache_entry["files"], "sha": commit_sha},
                     }
                 )
 
     # Process commits and signatures
+    signed_commit_sha = ""
+    flattened_eventlist = []
     for _, eventlist in sorted(events.items()):
-        for event in eventlist:
-            print("Event:", event)
-            if event["type"] == "sign":
-                selected_cats = event["value"]["selected_cats"]
-                ctype = event["value"]["ctype"]
-                if any(x in signing_categories for x in selected_cats):
-                    set_comment_emoji_cache(
-                        dryRun, bot_cache, event["value"]["comment"], repository
-                    )
-                    if ctype == "+1":
-                        comment = event["value"]["comment"]
-                        for sign in selected_cats:
-                            signatures[sign] = "approved"
-                            if (
-                                issue.pull_request
-                                and (test_comment is None)
-                                and ((repository in auto_test_repo) or ("*" in auto_test_repo))
-                                and sign not in ("code-checks", "tests", "orp")
-                                and (comment.created_at >= last_commit_date)
-                            ):
-                                test_comment = comment
-                    elif ctype == "-1":
-                        for sign in selected_cats:
-                            signatures[sign] = "rejected"
-                else:
-                    print(f"Ignoring event: {selected_cats} includes none of {signing_categories}")
-            elif event["type"] == "commit":
-                if cmssw_repo:
-                    chg_categories = set()
-                    for fn in event["value"]:
-                        chg_categories.update(
-                            get_package_categories(cmssw_file2Package(repo_config, fn))
-                        )
-                    chg_categories.update(assign_cats.keys())
+        flattened_eventlist.extend(eventlist)
 
-                    for cat in chg_categories:
-                        if cat in signing_categories:
-                            signatures[cat] = "pending"
-                else:
-                    for cat in signing_categories:
+    auto_test_comment = None
+    for event in flattened_eventlist:
+        print("Event:", event)
+        if event["type"] == "sign":
+            if not signed_commit_sha:
+                continue
+            comment = event["value"]["comment"]
+            comment_id = str(comment.id)
+            cached_signed_commit_sha = bot_cache["signatures"].get(comment_id)
+            if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
+                print(
+                    "WARNING: Comment {0}, cached commit {1} doesn't match the present commit {2}. "
+                    "This comment will be ignored.".format(
+                        comment_id, cached_signed_commit_sha, signed_commit_sha
+                    )
+                )
+                continue
+
+            if cached_signed_commit_sha is None:
+                bot_cache["signatures"][comment_id] = signed_commit_sha
+            selected_cats = event["value"]["selected_cats"]
+            ctype = event["value"]["ctype"]
+            if any(x in signing_categories for x in selected_cats):
+                set_comment_emoji_cache(dryRun, bot_cache, event["value"]["comment"], repository)
+
+                if ctype == "+1":
+                    for sign in selected_cats:
+                        signatures[sign] = "approved"
+                        if sign not in ("code-checks", "tests", "orp"):
+                            auto_test_comment = comment
+                elif ctype == "-1":
+                    for sign in selected_cats:
+                        signatures[sign] = "rejected"
+            else:
+                print(
+                    "Ignoring event: {0} includes none of {1}".format(
+                        selected_cats, signing_categories
+                    )
+                )
+        elif event["type"] == "commit":
+            auto_test_comment = None
+            # Only signed commits with files
+            if event["value"]["files"]:
+                signed_commit_sha = event["value"]["sha"]
+            if cmssw_repo:
+                chg_categories = set()
+                for fn in event["value"]["files"]:
+                    chg_categories.update(
+                        get_package_categories(cmssw_file2Package(repo_config, fn))
+                    )
+
+                chg_categories.update(assign_cats.keys())
+                for cat in chg_categories:
+                    if cat in signing_categories:
                         signatures[cat] = "pending"
+            else:
+                for cat in signing_categories:
+                    signatures[cat] = "pending"
             print("Signatures:", signatures)
+
+    if (
+        issue.pull_request
+        and auto_test_comment
+        and (test_comment is None)
+        and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+    ):
+        test_comment = auto_test_comment
 
     if push_test_issue:
         auto_close_push_test_issue = True
@@ -2123,7 +2264,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         else:
             print("DRY-RUN: not posting comment", messageFullySigned)
 
-    unsigned = [k for (k, v) in list(signatures.items()) if v == "pending"]
+    unsigned = [commit_sha for (commit_sha, v) in list(signatures.items()) if v == "pending"]
     missing_notifications = [
         gh_user_char + name
         for name, l2_categories in list(CMSSW_L2.items())

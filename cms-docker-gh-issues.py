@@ -82,7 +82,7 @@ if args.comment == False:
 
         print("Checking existing PR with matching labels", pulls_curl)
         urls = ""
-        for pull in gh_repo.get_issues(labels=[args.labels[0]], state="open"):
+        for pull in gh_repo.get_issues(labels=[args.labels[0]]):
             if pull.pull_request:
                 urls += "* " + str(pull.html_url) + "\n"
         print("The following PRs have matching labels: \n", urls)
@@ -111,7 +111,7 @@ if args.comment == False:
     # Delete property files
     sys.exit(0)
 else:
-    for issue in gh_repo.get_issues(labels=[str(label) for label in args.labels]):
+    for issue in gh_repo.get_issues(labels=[str(label) for label in args.labels], state="all"):
         issue_number = issue.number
 
     print("Adding issue comment...")

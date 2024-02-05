@@ -2,9 +2,8 @@
 from __future__ import print_function
 from github import Github
 from os.path import expanduser, abspath, dirname, join, exists
-import sys, re, json
+import sys, re
 from argparse import ArgumentParser
-from _py2with3compatibility import run_cmd
 from github_utils import add_issue_labels, create_issue_comment, get_issue_labels
 
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
@@ -61,89 +60,59 @@ gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip()
 gh_repo = gh.get_repo(args.repo)
 print("Authentication succeeeded to " + str(gh_repo.full_name))
 
-label_str = "+label:".join([""] + [str(label) for label in args.labels])
-
-issues_curl = "curl -s 'https://api.github.com/search/issues?q=+repo:%s+in:title+type:issue%s'" % (
-    args.repo,
-    label_str,
-)
-
 if args.comment == False:
-    pulls_curl = "curl -s 'https://api.github.com/repos/%s/pulls?q=+is:open+label:%s'" % (
-        args.repo,
-        args.labels[0],
-    )
 
-    print("Checking existing Issue", issues_curl)
-    exit_code, issues_obj = run_cmd(issues_curl)
-    issues_dict = json.loads(issues_obj)
-    print("Existing Issues: " + str(issues_dict["total_count"]))
+    issue_number = None
+    for issue in gh_repo.get_issues(
+        labels=[str(label) for label in args.labels], state="all", creator="cmsbuild"
+    ):
+        if issue.state == "open":
+            print("Issue already opened... Nothing to do!")
+            # Delete property files
+            sys.exit(0)
+        # We can have multiple issues closed, we take the one that was opened first
+        print("Issue already closed... Ready for building!")
+        issue_number = issue.number
 
-    # We should have only one matching issue
-    assert issues_dict["total_count"] <= 1
-
-    if issues_dict["total_count"] == 0:
-        print("Creating issue request")
-        gh_repo.create_issue(title=args.title, body=msg, labels=args.labels)
+    if issue_number == None:
+        print("Creating issue request...")
+        issue_obj = gh_repo.create_issue(title=args.title, body=msg, labels=args.labels)
+        issue_number = issue_obj.number
+        print("New issue number: ", issue_number)
 
         print("Checking existing PR with matching labels", pulls_curl)
-        exit_code, pulls_obj = run_cmd(pulls_curl)
-        pulls_obj = json.loads(pulls_obj)
         urls = ""
-        for pull in pulls_obj:
-            urls += str(pull["html_url"]) + " "
-        print("The following PRs have matching labels: ", urls)
-
-        # Get current issue number
-        print("Check newly created Issue", issues_curl)
-        exit_code, issues_obj = run_cmd(issues_curl)
-        issues_dict = json.loads(issues_obj)
-        issue_number = issues_dict["items"][0]["number"]
+        for pull in gh_repo.get_issues(labels=[args.labels[0]]):
+            if pull.pull_request:
+                urls += "* " + str(pull.html_url) + "\n"
+        print("The following PRs have matching labels: \n", urls)
 
         # Comment related PRs
-        issue_comment = (
-            "The following PRs should be probably merged before building the new image: " + urls
-        )
-        create_issue_comment(gh_repo.full_name, issue_number, issue_comment)
+        if urls != "":
+            issue_comment = (
+                "The following PRs should be probably merged before building the new image: \n"
+                + urls
+            )
+            print(issue_comment)
+            create_issue_comment(gh_repo.full_name, issue_number, issue_comment)
     else:
-        # Check state of the issue: open/closed...
-        issue_title = issues_dict["items"][0]["title"]
-        issue_number = issues_dict["items"][0]["number"]
-
-        state = issues_dict["items"][0]["state"]
-        if state == "open":
-            print("Issue is already open... Nothing to do!")
-        elif state == "closed":
-            print("Ready for building!")
-            # Process "building" label
-            existing_labels = get_issue_labels(gh_repo.full_name, issue_number)
-            print(existing_labels)
-            for label_obj in existing_labels:
-                if label_obj["name"] == "building":
-                    print("Build already triggered... Nothing to do!")
-                    sys.exit(0)
-
-            add_issue_labels(gh_repo.full_name, issue_number, ["building"])
-            # Don't delete property files
-            sys.exit(1)
+        print("Ready for building!")
+        # Process "building" or "queued" labels
+        existing_labels = get_issue_labels(gh_repo.full_name, issue_number)
+        print("Existing labels:", existing_labels)
+        for label_obj in existing_labels:
+            if "building" in label_obj["name"] or "queued" in label_obj["name"]:
+                print("Build already triggered... Nothing to do!")
+                with open("gh-info.tmp", "a") as f:
+                    f.write(str(label_obj["name"]) + "\n")
+        # Don't delete property files
+        sys.exit(1)
 
     # Delete property files
     sys.exit(0)
 else:
-    print("Checking existing Issue", issues_curl)
-    exit_code, issues_obj = run_cmd(issues_curl)
-    print(issues_obj)
+    for issue in gh_repo.get_issues(labels=[str(label) for label in args.labels], state="all"):
+        issue_number = issue.number
 
-    issues_dict = json.loads(issues_obj)
-    print("Existing Issues: " + str(issues_dict["total_count"]))
-
-    # We should have only one matching issue
-    assert issues_dict["total_count"] <= 1
-
-    if issues_dict["total_count"] == 0:
-        print("No matching issues found, skipping...")
-    else:
-        print("Adding issue comment...")
-        issue_title = issues_dict["items"][0]["title"]
-        issue_number = issues_dict["items"][0]["number"]
-        create_issue_comment(gh_repo.full_name, issue_number, msg)
+    print("Adding issue comment...")
+    create_issue_comment(gh_repo.full_name, issue_number, msg)

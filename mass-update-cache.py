@@ -86,8 +86,9 @@ def main():
                         print(
                             "python3",
                             "process-pull-request.py",
-                            "-n" if args.dryrun else "",
-                            "-r",
+                            "--force",
+                            "--dry-run" if args.dryrun else "",
+                            "--repository",
                             args.repository,
                             file=f,
                         )

@@ -20,6 +20,8 @@ setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 
+# Notice: can't use `process_pr.read_bot_cache` since it modifies bot cache before returning.
+# Another solution is to add a flag to `read_bot_cache` to load cache without adding missing keys
 def load_bot_cache_local(comment_msg):
     seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
     if seen_commits_match:

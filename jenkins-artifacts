@@ -1,18 +1,25 @@
 #!/bin/bash -ex
-cmssdt_script="$(dirname $0)/cmssdt.sh"
-if [ ! -e "${cmssdt_script}" ] ; then
-  cmssdt_script=$(cd $(dirname ${BASH_ARGV[0]}); /bin/pwd)/cmssdt.sh
+if [ "${ARTIFACTS_SERVER}" = "" ] ; then
+  cmssdt_script="$(dirname $0)/cmssdt.sh"
+  if [ ! -e "${cmssdt_script}" ] ; then
+    cmssdt_script=$(cd $(dirname ${BASH_ARGV[0]}); /bin/pwd)/cmssdt.sh
+  fi
+  source $cmssdt_script
+  ARTIFACTS_SERVER="${CMSSDT_SERVER}"
 fi
-source $cmssdt_script
-if [ "$ARTIFACTS_USER" = "" ] ; then ARTIFACTS_USER=$(whoami) ; fi
-case ${ARTIFACTS_USER} in
-  cmsbld|cvcmsib|cvcmsci|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;
-esac
-JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
+if [ "${ARTIFACTS_USER}" = "" ] ; then
+  ARTIFACTS_USER=$(whoami)
+  case ${ARTIFACTS_USER} in
+    cmsbld|cvcmsib|cvcmsci|jenkins|cmsbot) ARTIFACTS_USER="cmsbuild" ;;
+  esac
+fi
+if [ "${ARTIFACT_BASE_DIR}" = "" ] ; then
+  JENKINS_PREFIX=$(echo "${JENKINS_URL}" | sed 's|/*$||;s|.*/||')
 if [ "X${JENKINS_PREFIX}" = "X" ] ; then JENKINS_PREFIX="jenkins" ; fi
-ARTIFACTS_MACHINE="${ARTIFACTS_USER}@${CMSSDT_SERVER}"
+  ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
+fi
+ARTIFACTS_MACHINE="${ARTIFACTS_USER}@${ARTIFACTS_SERVER}"
 ARTIFACT_BASE_DIR_MAIN="/data/sdt/SDT/jenkins-artifacts"
-ARTIFACT_BASE_DIR="/data/sdt/SDT/${JENKINS_PREFIX}-artifacts"
 DEFAULT_TIMEOUT=60
 SSH_OPTS="-q -o ConnectTimeout=${DEFAULT_TIMEOUT} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 CVMFS_ARTIFACT_DIR="/cvmfs/cms-ci.cern.ch/jenkins-artifacts"

@@ -53,7 +53,7 @@ def process_repo(gh, repo, args):
     for issue in repo.get_pulls(sort="updated", direction="desc", state="all"):
         print("  Processing PR#{0}: {1}".format(issue.number, issue.title))
         bot_cache = None
-        for comment in issue.get_comments():
+        for comment in issue.get_issue_comments():
             if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
                 continue
             comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
@@ -72,12 +72,14 @@ def process_repo(gh, repo, args):
             print("    PR needs to be reprocessed")
             # Notice: can't "just" call process_pr, since it modifies global variables :(
             # process_pr(repo_config, gh, repo, issue, args.dryrun, cmsbuild_user=None, force=False)
-            if not args.dryrun:
-                res.append(
-                    "python3 process-pull-request.py --force " + "--dry-run"
-                    if args.dryrun
-                    else "" + "--repository" + args.repository
-                )
+            res.append(
+                "python3 process-pull-request.py --force "
+                + (" --dry-run " if args.dryrun else " ")
+                + "--repository "
+                + repo.full_name
+                + " "
+                + str(issue.number)
+            )
 
         if not bot_cache:
             break
@@ -119,10 +121,10 @@ def main():
 
             cnt += len(res)
 
-        if args.dryrun:
-            print(f"Would update {0} PRs/Issues".format(cnt))
-        else:
-            print(f"Updated {0} PRs/Issues".format(cnt))
+    if args.dryrun:
+        print(f"Would update {0} PRs/Issues".format(cnt))
+    else:
+        print(f"Updated {0} PRs/Issues".format(cnt))
 
 
 if __name__ == "__main__":

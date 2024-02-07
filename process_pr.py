@@ -1625,7 +1625,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     for event in flattened_eventlist:
         print("Event:", event)
         if event["type"] == "sign":
-            if not signed_commit_sha:
+            if (not signed_commit_sha) and issue.pull_request:
                 continue
             comment = event["value"]["comment"]
             comment_id = str(comment.id)

@@ -1348,28 +1348,6 @@ mtosi:
 - SLHCUpgradeSimulations/Configuration
 - TrackingTools
 - TrackPropagation
-ebrondol:
-- DataFormats/HGCRecHit
-- RecoTracker/CkfPattern
-- RecoTracker/Configuration
-- RecoTracker/GeometryESProducer
-- RecoTracker/IterativeTracking
-- RecoTracker/MeasurementDet
-- RecoTracker/TkNavigation
-- RecoTracker/TrackProducer
-- RecoHGCal
-- RecoLocalCalo/Configuration
-- RecoLocalCalo/HGC
-- RecoLocalCalo/HGCalRecAlgos
-- RecoLocalCalo/HGCalRecProducers
-- RecoParticleFlow/PFTracking
-- RecoParticleFlow/PFClusterProducer
-- TrackingTools
-- TrackPropagation
-- Validation/Configuration
-- Validation/Geometry
-- Validation/HGCalValidation
-- Validation/RecoTrack
 alberto-sanchez:
 - GeneratorInterface
 seemasharmafnal:

@@ -91,6 +91,7 @@ def format(s, **kwds):
     return s % kwds
 
 
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -230,8 +231,6 @@ def collect_commit_cache(bot_cache):
 
 
 def read_bot_cache(comment_msg):
-    BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
-
     seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
     if seen_commits_match:
         print("Loading bot cache")
@@ -1124,6 +1123,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             technical_comment = comment
             bot_cache = read_bot_cache(comment_msg)
             print("Read bot cache from technical comment:", comment)
+
+    # Make sure bot cache has the needed keys 
+    for k, v in BOT_CACHE_TEMPLATE.items():
+        if k not in bot_cache:
+            bot_cache[k] = v
 
     for comment in all_comments:
         ack_comment = comment

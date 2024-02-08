@@ -52,6 +52,7 @@ def process_repo(gh, repo, args):
 
     for issue in repo.get_pulls(sort="updated", direction="desc", state="all"):
         print("  Processing PR#{0}: {1}".format(issue.number, issue.title))
+        api_rate_limits(gh)
         bot_cache = None
         for comment in issue.get_issue_comments():
             if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
@@ -60,14 +61,16 @@ def process_repo(gh, repo, args):
             first_line = "".join(
                 [line.strip() for line in comment_msg.split("\n") if line.strip()][0:1]
             )
-            if re.match(ISSUE_SEEN_MSG, first_line):
+            if re.match(CMSBOT_TECHNICAL_MSG, first_line):
                 bot_cache = load_bot_cache_local(comment_msg)
-                print("    Read bot cache from already seen comment:", comment)
-                break
-            elif re.match(CMSBOT_TECHNICAL_MSG, first_line):
+                if bot_cache:
+                    print("    Read bot cache from already seen comment:", comment)
+                    break
+            elif re.match(ISSUE_SEEN_MSG, first_line):
                 bot_cache = load_bot_cache_local(comment_msg)
-                print("    Read bot cache from technical comment:", comment)
-                break
+                if bot_cache:
+                    print("    Read bot cache from technical comment:", comment)
+                    break
         if bot_cache and ("commits" not in bot_cache):
             print("    PR needs to be reprocessed")
             # Notice: can't "just" call process_pr, since it modifies global variables :(
@@ -82,9 +85,9 @@ def process_repo(gh, repo, args):
             )
 
         if not bot_cache:
+            print("No bot cache, stopping here")
             break
 
-        api_rate_limits(gh)
     return res
 
 
@@ -116,15 +119,16 @@ def main():
             except github.UnknownObjectException:
                 continue
             res = process_repo(gh, repo, args)
+            print("Writing {0} line(s) to script".format(len(res)))
             for line in res:
                 print(line, file=f)
 
             cnt += len(res)
 
     if args.dryrun:
-        print(f"Would update {0} PRs/Issues".format(cnt))
+        print("Would update {0} PRs/Issues".format(cnt))
     else:
-        print(f"Updated {0} PRs/Issues".format(cnt))
+        print("Updated {0} PRs/Issues".format(cnt))
 
 
 if __name__ == "__main__":

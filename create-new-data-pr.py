@@ -203,3 +203,7 @@ if __name__ == "__main__":
     change_tag_pull_request = dist_repo.create_pull(
         title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch
     )
+
+    if data_pr_base_branch == data_repo_default_branch:
+        print("cms-data PR was for default branch, will merge now")
+        change_tag_pull_request.merge()

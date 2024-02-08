@@ -1103,7 +1103,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     test_params_comment = None
     code_check_apply_patch = False
     override_tests_failure = None
-    bot_cache = {"emoji": {}, "signatures": {}, "commits": {}}
+    bot_cache = {}
     old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
 
     # start of parsing comments to find the bot_cache

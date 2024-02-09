@@ -1124,7 +1124,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             bot_cache = read_bot_cache(comment_msg)
             print("Read bot cache from technical comment:", comment)
 
-    # Make sure bot cache has the needed keys 
+    # Make sure bot cache has the needed keys
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in bot_cache:
             bot_cache[k] = v

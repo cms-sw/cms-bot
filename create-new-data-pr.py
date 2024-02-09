@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 from github import Github
-from optparse import OptionParser
+from argparse import ArgumentParser
 import repo_config
 from os.path import expanduser
 from json import loads
@@ -28,42 +28,38 @@ def get_tag_from_string(tag_string=None):
 
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="%prog <cms-data-repo> <cms-dist repo> <pull-request-id>")
+    parser = ArgumentParser(usage="%(prog)s <cms-data-repo> <cms-dist-repo> <pull-request-id>")
 
-    parser.add_option(
-        "-r",
-        "--data-repo",
-        dest="data_repo",
-        help="Github data repositoy name e.g. cms-data/RecoTauTag-TrainingFiles.",
+    parser.add_argument(
+        "data_repo",
+        metavar="<cms-data-repo>",
+        help="Github data repository name e.g. cms-data/RecoTauTag-TrainingFiles.",
         type=str,
-        default=None,
     )
-    parser.add_option(
-        "-d",
-        "--dist-repo",
-        dest="dist_repo",
-        help="Github dist repositoy name e.g. cms-sw/cmsdist.",
+    parser.add_argument(
+        "dist_repo",
+        metavar="<cms-dist-repo>",
+        help="Github dist repository name e.g. cms-sw/cmsdist.",
         type=str,
         default="",
     )
-    parser.add_option(
-        "-p",
-        "--pull-request",
-        dest="pull_request",
+    parser.add_argument(
+        "pull_request",
+        metavar="<pull-request-id>",
         help="Pull request number",
         type=str,
-        default=None,
     )
-    parser.add_option(
-        "-n", "--no-merge", dest="merge", help="Disable automerge", type=bool, default=False
+    parser.add_argument(
+        "-n", "--no-merge", dest="merge", help="Disable automerge", action="store_false"
     )
-    opts, args = parser.parse_args()
+
+    args = parser.parse_args()
 
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 
-    data_repo = gh.get_repo(opts.data_repo)
-    data_prid = int(opts.pull_request)
-    dist_repo = gh.get_repo(opts.dist_repo)
+    data_repo = gh.get_repo(args.data_repo)
+    data_prid = int(args.pull_request)
+    dist_repo = gh.get_repo(args.dist_repo)
     data_repo_pr = data_repo.get_pull(data_prid)
     if not data_repo_pr.merged:
         print("The pull request isn't merged !")
@@ -80,7 +76,7 @@ if __name__ == "__main__":
 
     err, out = run_cmd(
         "rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'"
-        % (opts.data_repo, data_pr_base_branch)
+        % (args.data_repo, data_pr_base_branch)
     )
     last_release_tag = get_tag_from_string(out)
 
@@ -98,7 +94,7 @@ if __name__ == "__main__":
     # if created files and modified files are the same count, all files are new
 
     response = urlopen(
-        "https://api.github.com/repos/%s/pulls/%s" % (opts.data_repo, opts.pull_request)
+        "https://api.github.com/repos/%s/pulls/%s" % (args.data_repo, args.pull_request)
     )
     res_json = loads(response.read().decode())
     print(res_json["additions"], res_json["changed_files"], res_json["deletions"])
@@ -123,7 +119,7 @@ if __name__ == "__main__":
             print("New tag data", tag_data)
             new_tag = "V%s" % "-".join(tag_data)
             try:
-                has_tag = get_git_tree(new_tag, opts.data_repo)
+                has_tag = get_git_tree(new_tag, args.data_repo)
                 if "sha" not in has_tag:
                     break
                 last_release_tag = last_release_tag + "-00-00"
@@ -134,7 +130,7 @@ if __name__ == "__main__":
             ref="refs/tags/" + new_tag, sha=data_repo.get_branch(data_pr_base_branch).commit.sha
         )
     default_cms_dist_branch = dist_repo.default_branch
-    repo_name_only = opts.data_repo.split("/")[1]
+    repo_name_only = args.data_repo.split("/")[1]
     repo_tag_pr_branch = "update-" + repo_name_only + "-to-" + new_tag
 
     sb = dist_repo.get_branch(default_cms_dist_branch)
@@ -207,7 +203,7 @@ if __name__ == "__main__":
         title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch
     )
 
-    if opts.merge and (data_pr_base_branch == data_repo_default_branch):
+    if args.merge and (data_pr_base_branch == data_repo_default_branch):
         print("cms-data PR was for default branch, will merge now")
         change_tag_pull_request.create_issue_comment(
             "This PR will be merged automatically because cms-data PR was for default branch"

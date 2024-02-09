@@ -31,20 +31,23 @@ if __name__ == "__main__":
     parser = ArgumentParser(usage="%(prog)s <cms-data-repo> <cms-dist-repo> <pull-request-id>")
 
     parser.add_argument(
-        "data_repo",
+        "-r",
+        "--data_repo",
         metavar="<cms-data-repo>",
         help="Github data repository name e.g. cms-data/RecoTauTag-TrainingFiles.",
         type=str,
     )
     parser.add_argument(
-        "dist_repo",
+        "-d",
+        "--dist_repo",
         metavar="<cms-dist-repo>",
         help="Github dist repository name e.g. cms-sw/cmsdist.",
         type=str,
         default="",
     )
     parser.add_argument(
-        "pull_request",
+        "-p",
+        "--pull_request",
         metavar="<pull-request-id>",
         help="Pull request number",
         type=str,
@@ -208,4 +211,4 @@ if __name__ == "__main__":
         change_tag_pull_request.create_issue_comment(
             "This PR will be merged automatically because cms-data PR was for default branch"
         )
-        change_tag_pull_request.merge()
+        # change_tag_pull_request.merge()

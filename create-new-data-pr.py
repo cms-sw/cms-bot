@@ -54,6 +54,9 @@ if __name__ == "__main__":
         type=str,
         default=None,
     )
+    parser.add_option(
+        "-n", "--no-merge", dest="merge", help="Disable automerge", type=bool, default=False
+    )
     opts, args = parser.parse_args()
 
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
@@ -204,6 +207,9 @@ if __name__ == "__main__":
         title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch
     )
 
-    if data_pr_base_branch == data_repo_default_branch:
+    if opts.merge and (data_pr_base_branch == data_repo_default_branch):
         print("cms-data PR was for default branch, will merge now")
+        change_tag_pull_request.create_issue_comment(
+            "This PR will be merged automatically because cms-data PR was for default branch"
+        )
         change_tag_pull_request.merge()

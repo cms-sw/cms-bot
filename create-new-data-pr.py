@@ -211,4 +211,4 @@ if __name__ == "__main__":
         change_tag_pull_request.create_issue_comment(
             "This PR will be merged automatically because cms-data PR was for default branch"
         )
-        # change_tag_pull_request.merge()
+        change_tag_pull_request.merge()

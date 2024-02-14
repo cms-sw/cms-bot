@@ -371,7 +371,7 @@ def cleanup_cmssdt_page(json_object):
 def update_retry_link_cmssdt_page(retry_url_file, job, build, retry_url):
     with open(retry_url_file, "r") as openfile:
         json_object = json.load(openfile)
-
+    print(json_object)
     if job in json_object["retryUrl"].keys():
         json_object["retryUrl"][job][build] = retry_url
     else:

@@ -80,7 +80,7 @@ if args.comment == False:
         issue_number = issue_obj.number
         print("New issue number: ", issue_number)
 
-        print("Checking existing PR with matching labels", pulls_curl)
+        print("Checking existing PR with matching labels...")
         urls = ""
         for pull in gh_repo.get_issues(labels=[args.labels[0]]):
             if pull.pull_request:

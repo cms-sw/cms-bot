@@ -66,7 +66,9 @@ if __name__ == "__main__":
         else:
             print(get_pr_latest_commit(args[0], opts.repository))
     else:
-        from github import Github
+        from github import Github, enable_console_debug_logging
+
+        enable_console_debug_logging()
 
         repo_dir = join(SCRIPT_DIR, "repos", opts.repository.replace("-", "_"))
         if exists(repo_dir):

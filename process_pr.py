@@ -1,5 +1,3 @@
-import sys
-
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -997,7 +995,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         watchers = set([gh_user_char + u for u in watchers])
         print("Watchers " + ", ".join(watchers))
 
-        all_commits = [x for x in pr.get_commits()][::-1]
+        all_commits = get_pr_commits_reversed(pr)
         all_commit_shas = {commit.sha for commit in all_commits}
 
         if all_commits:

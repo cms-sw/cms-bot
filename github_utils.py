@@ -1003,3 +1003,28 @@ def get_pr_commits_reversed(pr):
         except IndexError:
             print("Index error: May be PR with no commits")
     return []
+
+
+def enable_github_loggin():
+    import logging
+
+    class MyHandler(logging.Handler):
+        level = 0
+
+        def emit(self, record):
+            try:
+                msg = self.format(record)
+                msg = " ".join(msg.split(" ", 2)[:2])
+                sys.stdout.write(msg + "\n")
+                sys.stdout.flush()
+            except RecursionError:
+                raise
+            except Exception:
+                self.handleError(record)
+
+    hd = MyHandler()
+    logger = logging.getLogger("github")
+    logger.setLevel(logging.DEBUG)
+    if logger.hasHandlers():
+        logger.removeHandler(logger.handlers[0])
+    logger.addHandler(hd)

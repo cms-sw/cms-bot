@@ -2091,20 +2091,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             backport_msg = ""
             if backport_pr_num:
                 backport_msg = "%s%s\n" % (BACKPORT_STR, backport_pr_num)
-            uname = ""
-            if issue.user.name:
-                uname = issue.user.name.encode("ascii", "ignore").decode()
             l2s = ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
             issueMessage = format(
-                "%(msgPrefix)s %(gh_user_char)s%(user)s"
-                " %(name)s.\n\n"
+                "%(msgPrefix)s %(gh_user_char)s%(user)s.\n\n"
                 "%(l2s)s can you please review it and eventually sign/assign?"
                 " Thanks.\n\n"
                 'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-issues.html">here</a>\n%(backport_msg)s',
                 msgPrefix=NEW_ISSUE_PREFIX,
                 user=requestor,
                 gh_user_char=gh_user_char,
-                name=uname,
                 backport_msg=backport_msg,
                 l2s=l2s,
             )
@@ -2321,7 +2316,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 pkg_msg.append("- %s (**new**)" % pkg)
         messageNewPR = format(
             "%(msgPrefix)s %(gh_user_char)s%(user)s"
-            " %(name)s for %(branch)s.\n\n"
+            " for %(branch)s.\n\n"
             "It involves the following packages:\n\n"
             "%(packages)s\n\n"
             "%(new_package_message)s\n"
@@ -2334,7 +2329,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             msgPrefix=NEW_PR_PREFIX,
             user=pr.user.login,
             gh_user_char=gh_user_char,
-            name=pr.user.name and "(%s)" % pr.user.name or "",
             branch=pr.base.ref,
             l2s=", ".join(missing_notifications),
             packages="\n".join(pkg_msg),
@@ -2353,7 +2347,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     else:
         messageNewPR = format(
             "%(msgPrefix)s %(gh_user_char)s%(user)s"
-            " %(name)s for branch %(branch)s.\n\n"
+            " for branch %(branch)s.\n\n"
             "%(l2s)s can you please review it and eventually sign?"
             " Thanks.\n"
             "%(watchers)s"
@@ -2362,7 +2356,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             msgPrefix=NEW_PR_PREFIX,
             user=pr.user.login,
             gh_user_char=gh_user_char,
-            name=pr.user.name and "(%s)" % pr.user.name or "",
             branch=pr.base.ref,
             l2s=", ".join(missing_notifications),
             releaseManagers=releaseManagersMsg,

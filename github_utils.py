@@ -3,6 +3,8 @@
 # so makes sure changes work for both py2/py3
 #########################################################
 from __future__ import print_function
+
+import logging
 from sys import argv, version_info
 from hashlib import md5
 import json, sys, datetime
@@ -593,6 +595,7 @@ def github_api(
             url = url + "&"
         url = url + "page=%s" % page
     headers["Authorization"] = "token " + get_gh_token()
+    logging.getLogger("github").debug("%s %s", method, url)
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
@@ -993,3 +996,28 @@ def get_pr_commits_reversed(pr):
     :return: List[Commit]
     """
     return list(reversed(list(pr.get_commits())))
+
+
+def enable_github_loggin():
+    import logging
+
+    class MyHandler(logging.Handler):
+        level = logging.DEBUG
+
+        def emit(self, record):
+            try:
+                msg = self.format(record)
+                msg = " ".join(msg.split(" ", 2)[:2])
+                sys.stdout.write(msg + "\n")
+                sys.stdout.flush()
+            except RecursionError:
+                raise
+            except Exception:
+                self.handleError(record)
+
+    hd = MyHandler()
+    logger = logging.getLogger("github")
+    logger.setLevel(logging.DEBUG)
+    if logger.hasHandlers():
+        logger.removeHandler(logger.handlers[0])
+    logger.addHandler(hd)

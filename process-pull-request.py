@@ -5,7 +5,13 @@ Returns top commit of a PR (mostly used to comments)
 from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits, get_pr_commits, get_pr_latest_commit, get_gh_token
+from github_utils import (
+    api_rate_limits,
+    get_pr_commits,
+    get_pr_latest_commit,
+    get_gh_token,
+    enable_github_loggin,
+)
 
 setdefaulttimeout(120)
 import sys
@@ -54,7 +60,17 @@ if __name__ == "__main__":
         type=str,
         default="cms-sw/cmssw",
     )
+    parser.add_option(
+        "-d",
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Enable debug logging in PyGithub",
+        default=False,
+    )
     opts, args = parser.parse_args()
+    if opts.debug:
+        enable_github_loggin()
 
     if len(args) != 1:
         parser.error("Too many/few arguments")

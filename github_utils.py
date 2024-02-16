@@ -3,6 +3,8 @@
 # so makes sure changes work for both py2/py3
 #########################################################
 from __future__ import print_function
+
+import logging
 from sys import argv, version_info
 from hashlib import md5
 import json, sys, datetime
@@ -593,6 +595,7 @@ def github_api(
             url = url + "&"
         url = url + "page=%s" % page
     headers["Authorization"] = "token " + get_gh_token()
+    logging.debug("%s %s", method, url)
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)

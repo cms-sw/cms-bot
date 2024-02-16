@@ -595,7 +595,7 @@ def github_api(
             url = url + "&"
         url = url + "page=%s" % page
     headers["Authorization"] = "token " + get_gh_token()
-    logging.debug("%s %s", method, url)
+    logging.getLogger("github").debug("%s %s", method, url)
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
@@ -1002,7 +1002,7 @@ def enable_github_loggin():
     import logging
 
     class MyHandler(logging.Handler):
-        level = 0
+        level = logging.DEBUG
 
         def emit(self, record):
             try:

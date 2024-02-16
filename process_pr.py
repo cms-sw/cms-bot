@@ -360,7 +360,7 @@ def updateMilestone(repo, issue, pr, dryRun):
     if pr.state != "open":
         print("PR not open, not setting/checking milestone")
         return
-    if issue.milestone and issue.milestone.id == milestoneId:
+    if issue.milestone and issue.milestone.number == milestoneId:
         return
     milestone = repo.get_milestone(milestoneId)
     print("Setting milestone to %s" % milestone.title)
@@ -2235,9 +2235,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if "PULL_REQUESTS" in global_test_params:
             unclosed_linked_prs = []
             linked_prs = global_test_params["PULL_REQUESTS"].split()
+            extra_repos = {repository: repo}
             for linked_pr in linked_prs[1:]:
                 linked_pr_repo, linked_pr_id = linked_pr.split("#")
-                r = gh.get_repo(linked_pr_repo)
+                if not linked_pr_repo in extra_repos:
+                    extra_repos[linked_pr_repo] = gh.get_repo(linked_pr_repo)
+                r = extra_repos[linked_pr_repo]
                 linked_pr_obj = r.get_issue(int(linked_pr_id))
                 if linked_pr_obj.state != "closed":
                     unclosed_linked_prs.append(linked_pr)

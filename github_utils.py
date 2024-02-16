@@ -990,19 +990,9 @@ def get_last_commit(pr):
 def get_pr_commits_reversed(pr):
     """
     :param pr:
-    :return: PaginatedList[Commit] | List[Commit]
+    :return: List[Commit]
     """
-    try:
-        # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-        return pr.get_commits().reversed
-    except:  # noqa
-        # This seems to fail for more than 250 commits. Not sure if the
-        # problem is github itself or the bindings.
-        try:
-            return reversed(list(pr.get_commits()))
-        except IndexError:
-            print("Index error: May be PR with no commits")
-    return []
+    return list(reversed(list(pr.get_commits())))
 
 
 def enable_github_loggin():

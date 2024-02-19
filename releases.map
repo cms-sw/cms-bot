@@ -4079,3 +4079,4 @@ architecture=el9_amd64_gcc12;label=CMSSW_14_0_0;type=Production;state=Announced;
 architecture=el8_amd64_gcc12;label=CMSSW_14_0_0;type=Production;state=Announced;prodarch=1;
 architecture=slc7_amd64_gcc12;label=CMSSW_14_0_0;type=Production;state=Announced;prodarch=0;
 architecture=el9_amd64_gcc12;label=CMSSW_14_0_0_MULTIARCHS;type=Production;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc12;label=CMSSW_14_0_0_MULTIARCHS;type=Production;state=Announced;prodarch=1;

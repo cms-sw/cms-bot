@@ -1,83 +1,100 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import sys
+
 sys.exit(0)  # TODO script not run anymore?
 
-from _py2with3compatibility import run_cmd
-from socket import gethostname
-from argparse import ArgumentParser
-import time
 import pickle
-import struct
 import socket
+import struct
+import time
+from argparse import ArgumentParser
+from socket import gethostname
+
+from _py2with3compatibility import run_cmd
+
 
 def chunks(l, n):
-  for i in range(0, len(l), n):
-    yield l[i:i+n]
+    for i in range(0, len(l), n):
+        yield l[i : i + n]
+
 
 def format(s, **kwds):
-  return s % kwds
+    return s % kwds
 
-CARBON_SERVER="localhost"
-CARBON_PORT=2004
+
+CARBON_SERVER = "localhost"
+CARBON_PORT = 2004
+
 
 # 100 metrics at the time
 def sendMetrics(metrics):
-  for l in chunks(metrics, 100):
-    payload = pickle.dumps(l)
-    print(len(payload))
-    header = struct.pack("!L", len(payload))
-    message = header + payload
-    sock = socket.socket()
-    print(CARBON_SERVER, CARBON_PORT)
-    sock.connect((CARBON_SERVER, CARBON_PORT))
-    sock.sendall(message)
-    sock.close()
+    for l in chunks(metrics, 100):
+        payload = pickle.dumps(l)
+        print(len(payload))
+        header = struct.pack("!L", len(payload))
+        message = header + payload
+        sock = socket.socket()
+        print(CARBON_SERVER, CARBON_PORT)
+        sock.connect((CARBON_SERVER, CARBON_PORT))
+        sock.sendall(message)
+        sock.close()
+
 
 def aggregate(metrics):
-  aggregated = {}
-  for x in metrics:
-    print(x[0])
-    if x[0] in list(aggregated.keys()):
-      aggregated[x[0]][1][1] += x[1][1]
-      print(x[0],"now", aggregated[x[0]][1][1])
-    else:
-      aggregated[x[0]] = x
-  return [x for x in list(aggregated.values())]
+    aggregated = {}
+    for x in metrics:
+        print(x[0])
+        if x[0] in list(aggregated.keys()):
+            aggregated[x[0]][1][1] += x[1][1]
+            print(x[0], "now", aggregated[x[0]][1][1])
+        else:
+            aggregated[x[0]] = x
+    return [x for x in list(aggregated.values())]
+
 
 if __name__ == "__main__":
-  parser = ArgumentParser()
-  parser.add_argument("--dest", dest="server", help="destination carbon server", default="localhost:2004")
-  opts = parser.parse_args() 
-  if not ":" in opts.server:
-    opts.dest += ":2004"
-  
-  CARBON_SERVER, CARBON_PORT = opts.server.split(":", 1)
-  CARBON_PORT=int(CARBON_PORT)
-  
-  fields = ("pid", "comm", "pcpu", "rss", "vsize")
-  cmd = 'ps -U cmsbuild -o %s= -o %s= -o %s= -o %s= -o %s=' % fields
-  err, out = run_cmd(cmd)
-  if err:
-    print("Error while reading process data")
-    exit(1)
-  print(out)
-  metrics = []
-  timestamp = time.time()
-  for l in out.split("\n"):
-    data = dict(list(zip(fields, [x for x in l.split(" ") if x])))
-    try:
-      data["pid"] = int(data["pid"])
-      data["pcpu"] = float(data["pcpu"])
-      data["rss"] = float(data["rss"])
-      data["vsize"] = float(data["vsize"])
-    except:
-      continue
-    if data["pcpu"] < 1:
-      continue
-    hostname = gethostname().split(".",1)[0]
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--dest", dest="server", help="destination carbon server", default="localhost:2004"
+    )
+    opts = parser.parse_args()
+    if ":" not in opts.server:
+        opts.dest += ":2004"
+
+    CARBON_SERVER, CARBON_PORT = opts.server.split(":", 1)
+    CARBON_PORT = int(CARBON_PORT)
+
+    fields = ("pid", "comm", "pcpu", "rss", "vsize")
+    cmd = "ps -U cmsbuild -o %s= -o %s= -o %s= -o %s= -o %s=" % fields
+    err, out = run_cmd(cmd)
+    if err:
+        print("Error while reading process data")
+        exit(1)
+    print(out)
+    metrics = []
     timestamp = time.time()
-    metrics.append([".".join(["RunStats", hostname, data["comm"], "pcpu"]), [timestamp, data["pcpu"]]])
-    metrics.append([".".join(["RunStats", hostname, data["comm"], "rss"]), [timestamp, data["rss"]]])
-    metrics.append([".".join(["RunStats", hostname, data["comm"], "vsize"]), [timestamp, data["vsize"]]])
-  sendMetrics(aggregate(metrics))
+    for l in out.split("\n"):
+        data = dict(list(zip(fields, [x for x in l.split(" ") if x])))
+        try:
+            data["pid"] = int(data["pid"])
+            data["pcpu"] = float(data["pcpu"])
+            data["rss"] = float(data["rss"])
+            data["vsize"] = float(data["vsize"])
+        except:
+            continue
+        if data["pcpu"] < 1:
+            continue
+        hostname = gethostname().split(".", 1)[0]
+        timestamp = time.time()
+        metrics.append(
+            [".".join(["RunStats", hostname, data["comm"], "pcpu"]), [timestamp, data["pcpu"]]]
+        )
+        metrics.append(
+            [".".join(["RunStats", hostname, data["comm"], "rss"]), [timestamp, data["rss"]]]
+        )
+        metrics.append(
+            [".".join(["RunStats", hostname, data["comm"], "vsize"]), [timestamp, data["vsize"]]]
+        )
+    sendMetrics(aggregate(metrics))

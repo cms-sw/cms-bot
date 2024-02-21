@@ -5,6 +5,8 @@ Created by Andreas Pfeiffer on 2008-08-05.
 Copyright (c) 2008 CERN. All rights reserved.
 """
 from __future__ import print_function
+
+import argparse
 import sys, os, re, time
 import getopt
 
@@ -638,16 +640,16 @@ class LogFileAnalyzer(object):
             },
         ]
 
-        miscErrRe = re.compile("^gmake: \*\*\* (.*)$")
-        genericLinkErrRe = re.compile("^gmake: \*\*\* \[tmp/.*?/lib.*?" + shLib + "\] Error 1")
+        miscErrRe = re.compile(r"^gmake: \*\*\* (.*)$")
+        genericLinkErrRe = re.compile(r"^gmake: \*\*\* \[tmp/.*?/lib.*?" + shLib + "] Error 1")
 
         if "_gcc46" in os.environ["SCRAM_ARCH"]:
             errorInf.append(
-                {str("^.*?:\d+\: warning\: "): ["compWarning", "from external in package"]}
+                {str(r"^.*?:\d+\: warning\: "): ["compWarning", "from external in package"]}
             )
         else:
             errorInf.append(
-                {str("^.*?:\d+\: warning\: "): ["ignoreWarning", "from external in package"]}
+                {str(r"^.*?:\d+\: warning\: "): ["ignoreWarning", "from external in package"]}
             )
             errorInf.append(
                 {str("^.*?ERROR:Private Header:"): ["compError", "Private header usage."]}
@@ -708,13 +710,6 @@ class LogFileAnalyzer(object):
 # ================================================================================
 
 help_message = """
-     -h, --help          : print this message
-     -l, --logDir  <dir> : the path to the dir with the log files to analyze
-     -r, --release <name>: Release version
-     -p, --pkgList <file>: Path to PackageList.cmssw file
-     -t, --topURL  <url> : the base URL to use for generating the html files
-     -v, --verbose <lvl> : set verbosity level, the higher the number, the more verbose printout you will get
-
 Example:
 when run in: /build/intBld/rc/wed-21/CMSSW_3_1_X_2009-07-08-2100/tmp/slc4_ia32_gcc345/cache/log/src as:
 buildLogAnalyzer.py http://cern.ch/cms-sdt/rc/slc4_ia32_gcc345/www/wed/3.1-wed-21/CMSSW_3_1_X_2009-07-08-2100/new/
@@ -741,55 +736,77 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv
 
-    try:
-        try:
-            opts, args = getopt.getopt(
-                argv[1:],
-                "hv:l:t:p:r:",
-                [
-                    "help",
-                    "verbose=",
-                    "logDir=",
-                    "topURL=",
-                    "pkgList=",
-                    "release=",
-                    "ignoreWarning=",
-                ],
-            )
-        except getopt.error as msg:
-            raise Usage(msg)
+    parser = argparse.ArgumentParser(description="Process log files", epilog=help_message)
+    """
+         -h, --help          : print this message
+     -l, --logDir  <dir> : the path to the dir with the log files to analyze
+     -r, --release <name>: Release version
+     -p, --pkgList <file>: Path to PackageList.cmssw file
+     -t, --topURL  <url> : the base URL to use for generating the html files
+     -v, --verbose <lvl> : set verbosity level, the higher the number, the more verbose printout you will get
+    """
+    parser.add_argument(
+        "-l",
+        "--logDir",
+        dest="logDir",
+        metavar="<dir>",
+        help="The path to the dir with the log files to analyze",
+        default=None,
+    )
+    parser.add_argument("-r", "--release", metavar="<name>", help="Release version", default=None)
+    parser.add_argument(
+        "-p",
+        "--pkgList",
+        dest="pkgList",
+        metavar="<file>",
+        help="Path to PackageList.cmssw file",
+        default=None,
+    )
+    parser.add_argument(
+        "-t",
+        "--topURL",
+        metavar="<url>",
+        help="The base URL to use for generating the html files",
+        default=None,
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        metavar="<lvl>",
+        help="Set verbosity level, the higher the number, the more verbose printout you will get",
+        default=None,
+    )
+    parser.add_argument("--ignoreWarning", help=argparse.SUPPRESS, default=None)
 
-        # option processing
-        for option, value in opts:
-            if option in ("-v", "--verbose"):
-                verbose = int(value)
-            if option in ("-h", "--help"):
-                raise Usage(help_message)
-            if option in ("-l", "--logDir"):
-                logDir = value
-            if option in ("-r", "--release"):
-                rel = value
-            if option in ("-p", "--pkgList"):
-                pkgList = value
-            if option in ("-t", "--topURL"):
-                topURL = value
-            if option == "--ignoreWarning":
-                igWarning = [w.strip() for w in value.split(",") if w.strip()]
+    args = parser.parse_args()
 
-        if not topURL:
-            raise Usage(help_message)
+    if args.verbose:
+        verbose = int(args.verbose)
 
-        if not os.path.exists(logDir):
-            return
+    if args.logDir:
+        logDir = args.logDir
 
-        lfa = LogFileAnalyzer(logDir, topURL, verbose, pkgList, rel, igWarning)
-        lfa.analyze()
-        lfa.report()
+    if args.release:
+        release = args.release
 
-    except Usage as err:
-        print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
-        print("\t for help use --help", file=sys.stderr)
-        return 2
+    if args.pkgList:
+        pkgList = args.pkgList
+
+    if args.topURL:
+        topURL = args.topURL
+    else:
+        parser.print_usage()
+        return 1
+
+    if not os.path.exists(logDir):
+        return 1
+
+    if args.ignoreWarning:
+        igWarning = [w.strip() for w in args.ignoreWarning.split(",") if w.strip()]
+
+    lfa = LogFileAnalyzer(logDir, topURL, verbose, pkgList, rel, igWarning)
+    lfa.analyze()
+    lfa.report()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,16 @@
+name: Ruff Style Check
+
+on:
+  pull_request:
+    paths:
+      - '**/*.py'
+
+jobs:
+  ruff:
+    name: Check Python Code Style with Ruff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+      - name: Check style
+        uses: chartboost/ruff-action@v1

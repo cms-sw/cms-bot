@@ -43,11 +43,9 @@ basis.
 
 # Code style
 
-This project uses [Black](https://pypi.org/project/black) to ensure uniform code style. The following options are used:
-
-```
---line-length 99 --target-version py36 --target-version py37 --target-version py38 --target-version py39 --target-version py310 --target-version py311
-```
+This project uses [Black](https://pypi.org/project/black) and [Ruff](https://pypi.org/project/ruff) to ensure uniform code style.
+We use [pre-commit](https://pypi.org/project/pre-commit) to automate code style checks on commit, see [https://pre-commit.com/#install]
+for installation instructions.
 
 ## Ignoring formatting commits
 

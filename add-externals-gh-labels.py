@@ -1,33 +1,39 @@
 #!/usr/bin/env python3
+import argparse
+import importlib
+from os.path import abspath, dirname, exists, expanduser, join
+from socket import setdefaulttimeout
+from sys import argv
+
 from github import Github
-from os.path import expanduser, dirname, abspath, join, exists
-from githublabels import (
-    LABEL_TYPES,
-    COMMON_LABELS,
-    COMPARISON_LABELS,
-    CMSSW_BUILD_LABELS,
-    LABEL_COLORS,
-)
+
 from categories import (
+    CMSSW_CATEGORIES,
+    CMSSW_REPOS,
     COMMON_CATEGORIES,
     EXTERNAL_CATEGORIES,
     EXTERNAL_REPOS,
-    CMSSW_REPOS,
-    CMSSW_CATEGORIES,
 )
-from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS, GH_CMSSW_ORGANIZATION
-from socket import setdefaulttimeout
-from github_utils import api_rate_limits
+from cms_static import GH_CMSSW_ORGANIZATION, VALID_CMS_SW_REPOS_FOR_TESTS
 from cmsutils import get_config_map_properties
-from sys import argv
+from github_utils import api_rate_limits
+from githublabels import (
+    CMSSW_BUILD_LABELS,
+    COMMON_LABELS,
+    COMPARISON_LABELS,
+    LABEL_COLORS,
+    LABEL_TYPES,
+)
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
 
 
-def setRepoLabels(gh, repo_name, all_labels, dryRun=False, ignore=[]):
+def setRepoLabels(gh, repo_name, all_labels, dryRun=False, ignore=None):
+    if ignore is None:
+        ignore = []
     repos = []
-    if not "/" in repo_name:
+    if "/" not in repo_name:
         user = gh.get_user(repo_name)
         for repo in user.get_repos():
             skip = False
@@ -53,7 +59,7 @@ def setRepoLabels(gh, repo_name, all_labels, dryRun=False, ignore=[]):
             cur_labels[lab.name] = lab
         api_rate_limits(gh)
         for lab in all_labels:
-            if not lab in cur_labels:
+            if lab not in cur_labels:
                 print("  Creating new label ", lab, "=>", all_labels[lab])
                 if not dryRun:
                     repo.create_label(lab, all_labels[lab])
@@ -74,11 +80,9 @@ def setRepoLabels(gh, repo_name, all_labels, dryRun=False, ignore=[]):
         ref.close()
 
 
-if __name__ == "__main__":
-    from optparse import OptionParser
-
-    parser = OptionParser(usage="%prog [-n|--dry-run] [-e|--externals] [-c|--cmssw]  [-a|--all]")
-    parser.add_option(
+def main():
+    parser = argparse.ArgumentParser(description="Update GitHub repositories with labels.")
+    parser.add_argument(
         "-n",
         "--dry-run",
         dest="dryRun",
@@ -86,7 +90,7 @@ if __name__ == "__main__":
         help="Do not modify Github",
         default=False,
     )
-    parser.add_option(
+    parser.add_argument(
         "-e",
         "--externals",
         dest="externals",
@@ -94,7 +98,7 @@ if __name__ == "__main__":
         help="Only process CMS externals repositories",
         default=False,
     )
-    parser.add_option(
+    parser.add_argument(
         "-u",
         "--users",
         dest="users",
@@ -102,15 +106,23 @@ if __name__ == "__main__":
         help="Only process Users externals repositories",
         default=False,
     )
-    parser.add_option(
+    parser.add_argument(
         "-c",
         "--cmssw",
         dest="cmssw",
         action="store_true",
-        help="Only process " + ",".join(CMSSW_REPOS) + " repository",
+        help="Only process CMSSW repositories",
         default=False,
     )
-    parser.add_option(
+    parser.add_argument(
+        "-a",
+        "--all",
+        dest="all",
+        action="store_true",
+        help="Process all CMS repositories (i.e., externals and cmssw)",
+        default=False,
+    )
+    parser.add_argument(
         "-r",
         "--repository",
         dest="repository",
@@ -118,15 +130,7 @@ if __name__ == "__main__":
         type=str,
         default=None,
     )
-    parser.add_option(
-        "-a",
-        "--all",
-        dest="all",
-        action="store_true",
-        help="Process all CMS repository i.e. externals and cmssw",
-        default=False,
-    )
-    opts, args = parser.parse_args()
+    opts = parser.parse_args()
 
     if opts.all:
         opts.externals = True
@@ -138,6 +142,8 @@ if __name__ == "__main__":
 
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
     api_rate_limits(gh)
+
+    all_labels = {}
 
     if opts.cmssw or opts.externals:
         all_labels = COMMON_LABELS
@@ -174,7 +180,6 @@ if __name__ == "__main__":
             ]:
                 all_labels[arch + "-" + inproc] = LABEL_COLORS["hold"]
             all_labels[arch + "-finished"] = LABEL_COLORS["approved"]
-        repos = CMSSW_REPOS if not opts.repository else [opts.repository]
         for repo_name in CMSSW_REPOS:
             setRepoLabels(gh, repo_name, all_labels, opts.dryRun)
 
@@ -183,13 +188,15 @@ if __name__ == "__main__":
 
         for rconf in glob(join(SCRIPT_DIR, "repos", "*", "*", "repo_config.py")):
             repo_data = rconf.split("/")[-4:-1]
-            exec("from " + ".".join(repo_data) + " import repo_config")
+            module_name = ".".join(repo_data) + ".repo_config"
+            repo_config = importlib.import_module(module_name)
             try:
                 if not repo_config.ADD_LABELS:
                     continue
-            except:
+            except AttributeError:
                 continue
-            exec("from " + ".".join(repo_data) + " import categories")
+
+            categories = getattr(repo_config, "categories", None)
             print(repo_config.GH_TOKEN, repo_config.GH_REPO_FULLNAME)
             gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
             all_labels = COMMON_LABELS
@@ -199,3 +206,7 @@ if __name__ == "__main__":
                 for lab in LABEL_TYPES:
                     all_labels[cat + "-" + lab] = LABEL_TYPES[lab]
             setRepoLabels(gh, repo_config.GH_REPO_FULLNAME, all_labels, opts.dryRun)
+
+
+if __name__ == "__main__":
+    main()

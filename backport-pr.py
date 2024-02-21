@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github, GithubException
-from sys import exit
-from os.path import expanduser
+
 from argparse import ArgumentParser
-from cms_static import GH_CMSSW_ORGANIZATION
-from cms_static import GH_CMSSW_REPO
+from os.path import expanduser
+from sys import exit
+
+from github import Github
+
 from _py2with3compatibility import run_cmd
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
 
 CMSSW_GIT_REF = "/cvmfs/cms.cern.ch/cmssw.git.daily"
 
@@ -16,7 +18,7 @@ def backport_pull(repo, pr, branch):
     print("Source Branch:", pr_branch)
     if pr_branch == branch:
         return "Warning: Can not backport, same branch %s vs %s" % (pr_branch, branch), False
-    br = gh_repo.get_branch(branch)
+
     commits = []
     for c in pr.get_commits().reversed:
         commits.insert(0, "git cherry-pick %s" % c.sha)
@@ -64,7 +66,7 @@ def backport_pull(repo, pr, branch):
     )
 
 
-if __name__ == "__main__":
+def main():
     parser = ArgumentParser()
     parser.add_argument(
         "-r",
@@ -106,3 +108,7 @@ if __name__ == "__main__":
         status = "failed\n**Reason:**\n"
     print(res)
     pr.create_issue_comment("backport %s\n%s" % (status, res[0]))
+
+
+if __name__ == "__main__":
+    main()

@@ -69,7 +69,7 @@ if args.comment == False:
         if issue.state == "open":
             print("Issue already opened... Nothing to do!")
             # Delete property files
-            sys.exit(0)
+            sys.exit(1)
         # We can have multiple issues closed, we take the one that was opened first
         print("Issue already closed... Ready for building!")
         issue_number = issue.number
@@ -106,10 +106,10 @@ if args.comment == False:
                 with open("gh-info.tmp", "a") as f:
                     f.write(str(label_obj["name"]) + "\n")
         # Don't delete property files
-        sys.exit(1)
+        sys.exit(0)
 
     # Delete property files
-    sys.exit(0)
+    sys.exit(1)
 else:
     for issue in gh_repo.get_issues(labels=[str(label) for label in args.labels], state="all"):
         issue_number = issue.number

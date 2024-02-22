@@ -34,7 +34,6 @@ echo "INPROGRESS" > $WORKSPACE/crab/statusfile
 cat $WORKSPACE/crab/.requestcache 
 export ID=$(id -u)
 export TASK_ID=$(grep crab_${CRAB_REQUEST} $WORKSPACE/crab/.requestcache | sed 's|^V||')
-export SUBMISSION_NAME=$(echo $TASK_ID | cut -d ":" -f2 | cut -d "_" -f2-)
 
 if [ "${TASK_ID}" = "" ] ; then exit 1 ; fi
 

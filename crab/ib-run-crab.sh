@@ -34,20 +34,23 @@ echo "INPROGRESS" > $WORKSPACE/crab/statusfile
 cat $WORKSPACE/crab/.requestcache 
 export ID=$(id -u)
 export TASK_ID=$(grep crab_${CRAB_REQUEST} $WORKSPACE/crab/.requestcache | sed 's|^V||')
+export SUBMISSION_NAME=$(echo $TASK_ID | cut -d ":" -f2 | cut -d "_" -f2-)
 
 if [ "${TASK_ID}" = "" ] ; then exit 1 ; fi
 
 echo "Keep checking job information until grid site has been assigned"
-GRIDSITE=""
-while [ "${GRIDSITE}" = "" ]
+GRIDSITE="N/Ayet"
+while [ "${GRIDSITE}" = "N/Ayet" ]
 do
   sleep 10
-  export GRIDSITE=$(curl -s -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "https://cmsweb.cern.ch:8443/crabserver/${CRABCONFIGINSTANCE}/task?subresource=search&workflow=${TASK_ID}" | grep -o "http.*/${TASK_ID}")
+  echo "Gridsite has not been assigned yet!"
+  export GRIDSITE=$(crab status -d ./crab | grep "Grid scheduler - Task Worker:" | cut -d ":" -f2 | cut -d "-" -f1 | tr -d '\t' | tr -d " ")
 done
 
 # Store information for the monitoring job
 echo "CRAB_BUILD_ID=$BUILD_ID" >> $WORKSPACE/crab/parameters.property
-echo "CRAB_GRIDSITE=$GRIDSITE" >> $WORKSPACE/crab/parameters.property
+GRIDSITE_NAME="http://$(echo $GRIDSITE | cut -d "@" -f2)/mon/cmsbot/${TASK_ID}"
+echo "CRAB_GRIDSITE=$GRIDSITE_NAME" >> $WORKSPACE/crab/parameters.property
 echo "RELEASE_FORMAT=$RELEASE_FORMAT" >> $WORKSPACE/crab/parameters.property
 echo "ARCHITECTURE=$ARCHITECTURE" >> $WORKSPACE/crab/parameters.property
 echo "PULL_REQUESTS=$PULL_REQUESTS" >> $WORKSPACE/crab/parameters.property

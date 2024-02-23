@@ -33,7 +33,8 @@ except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
         json.dump(retryinfo_template, json_file, indent=2)
 
 with open(
-    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/test-parser-web-info.html", "w",
+    os.environ.get("HOME") + "/builds/jenkins-test-parser-monitor/test-parser-web-info.html",
+    "w",
 ) as html_file:  # Static web page
     head = '<!DOCTYPE html>\n\
 <html>\n\
@@ -227,7 +228,8 @@ with open(
                 + node
                 + '</td>\n        <td><a href="https://cmssdt.cern.ch/jenkins/computer/'
                 + node
-                + '">https://cmssdt.cern.ch/jenkins/computer/' + node
+                + '">https://cmssdt.cern.ch/jenkins/computer/'
+                + node
             )
         elif ".cern.ch" in node:
             node = node.split(".cern.ch")[0]

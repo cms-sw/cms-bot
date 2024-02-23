@@ -13,7 +13,7 @@ GRIDSITE=$2
 voms-proxy-init -voms cms
 status=""
 while true ; do
-  curl -s -L -X GET --cert "/tmp/x509up_u${ID}" --key "/tmp/x509up_u${ID}" --capath "/etc/grid-security/certificates/" "${GRIDSITE}/status_cache" > $WORKSPACE/status-${CRABCLIENT_TYPE}.log 2>&1
+  curl "${GRIDSITE}/status_cache" > $WORKSPACE/status-${CRABCLIENT_TYPE}.log 2>&1
   cat $WORKSPACE/status-${CRABCLIENT_TYPE}.log
   errval=$(grep -o "404 Not Found" $WORKSPACE/status-${CRABCLIENT_TYPE}.log || echo "")
   cat $WORKSPACE/status-${CRABCLIENT_TYPE}.log >> $WORKSPACE/testsResults/crab-logfile-${CRABCLIENT_TYPE}

@@ -49,7 +49,6 @@ try:
 except ImportError:
     from yaml import Loader, Dumper
 
-
 try:
     from categories import CMSSW_LABELS
 except:
@@ -235,31 +234,62 @@ def collect_commit_cache(bot_cache):
         bot_cache["commits"] = commit_cache
 
 
-def read_bot_cache(comment_msg):
-    seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
-    if seen_commits_match:
-        print("Loading bot cache")
-        res = loads_maybe_decompress(seen_commits_match[1])
-        for k, v in BOT_CACHE_TEMPLATE.items():
-            if k not in res:
-                res[k] = v
-        collect_commit_cache(res)
-        return res
+def read_bot_cache(data):
+    print("Loading bot cache")
+    res = loads_maybe_decompress(data)
+    for k, v in BOT_CACHE_TEMPLATE.items():
+        if k not in res:
+            res[k] = v
+    collect_commit_cache(res)
+    return res
+
+
+def extract_bot_cache(comment_msgs):
+    print(
+        "Reading bot cache from technical comment(s):",
+        ",".join(str(c) for c in comment_msgs),
+    )
+
+    data = ""
+    for comment_msg in comment_msgs:
+        seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg.body)
+        if seen_commits_match:
+            data += seen_commits_match[1]
+
+    if data:
+        return read_bot_cache(data)
+
     return {}
 
 
-def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
-    old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
-    new_body = (
-        REGEX_COMMITS_CACHE.sub("", old_body)
-        + "<!-- bot cache: "
-        + dumps_maybe_compress(bot_cache)
-        + " -->"
-    )
-    if old_body == new_body:
-        return
-    print("Saving bot cache")
-    if len(new_body) <= 65535:
+def prepare_bot_cache(bot_cache):
+    res = []
+    data = dumps_maybe_compress(bot_cache)
+    while data:
+        # The limit is 65535 chars, and minimal bot cache comment is
+        # `cms-bot internal usage<!-- bot cache:  -->`, 42 characters.
+        # But since the cache can be embedded in an "already seen" comment, whose length is not
+        # known in advance, we limit the amout of (encoded cache) data per comment to 55k chars.
+        part, data = data[:55000], data[55000:]
+        res.append(part)
+
+    return res
+
+
+def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
+    data = prepare_bot_cache(bot_cache)
+    for i, part in enumerate(data):
+        try:
+            cache_comment = cache_comments[i]
+        except (TypeError, IndexError):
+            cache_comment = None
+
+        old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+        new_body = REGEX_COMMITS_CACHE.sub("", old_body) + "<!-- bot cache: " + part + " -->"
+        if old_body == new_body:
+            continue
+
+        print("Saving bot cache ({0}/{1})".format(i + 1, len(data)))
         if not dryRun:
             if cache_comment:
                 cache_comment.edit(new_body)
@@ -271,8 +301,17 @@ def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
             else:
                 print("DRY RUN: Creating technical comment with text")
             print(new_body.encode("ascii", "ignore").decode())
-    else:
-        raise RuntimeError("Updated comment body too long: {0} > 65535".format(len(new_body)))
+
+    # If new commit cache is smaller than previous one, cleanup old technical comments
+    if len(data) < len(cache_comments):
+        for i in range(len(data), len(cache_comments)):
+            print(
+                "Deleting bot cache comment ({0}/{1})".format(
+                    i + 1 - len(data), len(cache_comments) - len(data)
+                )
+            )
+            if not dryRun:
+                cache_comments[i].delete()
 
 
 def get_commenter_categories(commenter, comment_date):
@@ -764,7 +803,7 @@ def get_status_state(context, statuses):
 
 def dumps_maybe_compress(value):
     json_ = dumps(value, separators=(",", ":"), sort_keys=True)
-    if len(json_) > 32000:
+    if len(json_) > 55000:
         return "b64:" + base64.encodebytes(zlib.compress(json_.encode())).decode("ascii", "ignore")
     else:
         return json_
@@ -1081,7 +1120,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
         print("Pre check status:", pre_checks_state)
     already_seen = None
-    technical_comment = None
+    technical_comments = []
     pull_request_updated = False
     comparison_done = False
     comparison_notrun = False
@@ -1116,20 +1155,19 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # to use information during the actual comment loop
     for comment in issue.get_comments():
         all_comments.append(comment)
-        if bot_cache or technical_comment:
-            continue
         if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
             continue
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
         first_line = "".join([l.strip() for l in comment_msg.split("\n") if l.strip()][0:1])
-        if re.match(ISSUE_SEEN_MSG, first_line):
+        if (not already_seen) and re.match(ISSUE_SEEN_MSG, first_line):
             already_seen = comment
-            bot_cache = read_bot_cache(comment_msg)
-            print("Read bot cache from already seen comment:", comment)
+            if REGEX_COMMITS_CACHE.search(comment_msg):
+                technical_comments.append(comment)
         elif re.match(CMSBOT_TECHNICAL_MSG, first_line):
-            technical_comment = comment
-            bot_cache = read_bot_cache(comment_msg)
-            print("Read bot cache from technical comment:", comment)
+            technical_comments.append(comment)
+
+    if technical_comments:
+        bot_cache = extract_bot_cache(technical_comments)
 
     # Make sure bot cache has the needed keys
     for k, v in BOT_CACHE_TEMPLATE.items():
@@ -1159,10 +1197,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if issue.pull_request and last_commit_date:
                     pull_request_updated = comment.created_at < last_commit_date
                 continue
-            if re.match(CMSBOT_TECHNICAL_MSG, first_line):
-                if not technical_comment:
-                    technical_comment = comment
-                continue
+
             if re.match("^" + HOLD_MSG + ".+", first_line):
                 for u in first_line.split(HOLD_MSG, 2)[1].split(","):
                     u = u.strip().lstrip("@")
@@ -1495,12 +1530,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
-    cache_comment = None
-    if technical_comment:
-        cache_comment = technical_comment
-    else:
-        if already_seen:
-            cache_comment = already_seen
 
     if issue.pull_request:
         if (
@@ -2159,7 +2188,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):
             issueMessage = "This issue is fully signed and ready to be closed."
         print("Issue Message:", issueMessage)
-        write_bot_cache(bot_cache, cache_comment, issue, dryRunOrig)
+        write_bot_cache(bot_cache, technical_comments, issue, dryRunOrig)
         if issueMessage and not dryRun:
             issue.create_comment(issueMessage)
         return
@@ -2526,7 +2555,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 set_comment_emoji_cache(
                     dryRun, bot_cache, test_params_comment, repository, emoji=emoji
                 )
-    write_bot_cache(bot_cache, cache_comment, issue, dryRunOrig)
+    write_bot_cache(bot_cache, technical_comments, issue, dryRunOrig)
     if ack_comment:
         state = get_status(bot_ack_name, commit_statuses)
         if (not state) or (state.target_url != ack_comment.html_url):

@@ -7,8 +7,10 @@ Copyright (c) 2008 CERN. All rights reserved.
 from __future__ import print_function
 
 import argparse
-import sys, os, re, time
-import getopt
+import os
+import re
+import sys
+import time
 
 if sys.version_info[0] == 3:
 
@@ -75,12 +77,19 @@ class LogFileAnalyzer(object):
     """docstring for LogFileAnalyzer"""
 
     def __init__(
-        self, topDirIn=".", topUrlIn="", verbose=-1, pkgsList=None, release=None, ignoreWarnings=[]
+        self,
+        topDirIn=".",
+        topUrlIn="",
+        verbose=-1,
+        pkgsList=None,
+        release=None,
+        ignoreWarnings=None,
     ):
         super(LogFileAnalyzer, self).__init__()
 
+        self.anaTime = 0.0
         self.topDir = os.path.abspath(topDirIn)
-        self.ignoreWarnings = ignoreWarnings
+        self.ignoreWarnings = ignoreWarnings if ignoreWarnings else []
         self.topURL = topUrlIn
         if not pkgsList:
             pkgsList = "../../../../../src/PackageList.cmssw"
@@ -296,7 +305,7 @@ class LogFileAnalyzer(object):
             pkgList = sorted(self.errMap[key], key=lambda x: x.name())
 
             for pkg in pkgList:
-                if not pkg.name() in self.tagList:
+                if pkg.name() not in self.tagList:
                     continue
                 styleClass = "ok"
                 for cKey in self.errorKeys:
@@ -321,6 +330,7 @@ class LogFileAnalyzer(object):
                     htmlFile.write("<td>")
                     if pKey in pkg.errSummary.keys():
                         if sys.version_info[0] < 3:
+                            # noinspection PyUnresolvedReferences
                             htmlFile.write(str(pkg.errSummary[pKey]).decode("ascii", "ignore"))
                         else:
                             htmlFile.write(str(pkg.errSummary[pKey]))
@@ -333,7 +343,7 @@ class LogFileAnalyzer(object):
         pkgList = sorted(self.pkgOK, key=lambda x: x.name())
 
         for pkg in pkgList:
-            if not pkg.name() in self.tagList:
+            if pkg.name() not in self.tagList:
                 continue
             htmlFile.write(" <tr>")
             htmlFile.write('<td class="ok">&nbsp;</td>')
@@ -350,7 +360,7 @@ class LogFileAnalyzer(object):
             )
             htmlFile.write(link)
             htmlFile.write("</td>")
-            for pKey in self.errorKeys:
+            for _ in self.errorKeys:
                 htmlFile.write("<td>")
                 htmlFile.write(" - ")
                 htmlFile.write("</td>")
@@ -383,7 +393,7 @@ class LogFileAnalyzer(object):
     def makeHTMLLogFile(self, pkg):
         """docstring for makeHTMLFile"""
 
-        if not pkg.name() in self.tagList:
+        if pkg.name() not in self.tagList:
             return
         htmlDir = "../html/" + pkg.name() + "/"
         if not os.path.exists(htmlDir):
@@ -443,121 +453,121 @@ class LogFileAnalyzer(object):
             {str("^.*? cannot find -l(.*?)$"): ["linkError", 'missing library "%s"']},
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    r"^gmake: \*\*\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
                     + "/src/"
                     + subsys
                     + pkg
-                    + "/classes_rflx\.cpp"
+                    + r"/classes_rflx\.cpp"
                 ): ["dictError", "for package dictionary"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    r"^gmake: \*\*\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
                     + "/src/"
                     + subsys
                     + pkg
-                    + "/.*?\."
+                    + r"/.*?\."
                     + shLib
                 ): ["linkError", "for package library"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    r"^gmake: \*\*\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
                     + "/src/"
                     + subsys
                     + pkg
-                    + "/.*?\.o"
+                    + r"/.*?\.o"
                 ): ["compError", "for package library"]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/.*?\.o"): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/bin/(.*?)/.*?\.o"): [
                     "compError",
                     "for executable %s",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/\1"): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/\1"): [
                     "linkError",
                     "for executable %s",
                 ]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/lib\1\." + shLib
+                    r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/bin/(.*?)/lib\1\\." + shLib
                 ): ["linkError", "for shared library %s in bin"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    r"^gmake: \*\*\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
-                    + "/test/stubs/lib(.*?)\."
+                    + r"/test/stubs/lib(.*?)\."
                     + shLib
                 ): ["linkError", "for shared library %s in test/stubs"]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/.*?\." + shLib
+                    r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/test/(.*?)/.*?\." + shLib
                 ): ["linkError", "for shared library %s in test"]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/stubs/.*?\.o"): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/test/stubs/.*?\.o"): [
                     "compError",
                     "for library in test/stubs",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/.*?\.o"): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/test/(.*?)/.*?\.o"): [
                     "compError",
                     "for executable %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\." + shLib): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/test/(.*?)\." + shLib): [
                     "linkError",
                     "for shared library %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)\.o"): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/test/(.*?)\.o"): [
                     "compError",
                     "for executable %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/\1"): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/(.*?)/\1"): [
                     "linkError",
                     "for executable %s in test",
                 ]
             },
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/plugins/(.*?)/.*?\.o"): [
+                str(r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/plugins/(.*?)/.*?\.o"): [
                     "compError",
                     "for plugin %s in plugins",
                 ]
             },
             {
                 str(
-                    "^gmake: \*\*\* .*?/src/"
+                    r"^gmake: \*\*\* .*?/src/"
                     + subsys
                     + "/"
                     + pkg
-                    + "/plugins/(.*?)/lib.*?\."
+                    + r"/plugins/(.*?)/lib.*?\."
                     + shLib
                 ): ["linkError", "for plugin library %s in plugins"]
             },
             {
-                str("^ *\*\*\* Break \*\*\* illegal instruction"): [
+                str(r"^ *\*\*\* Break \*\*\* illegal instruction"): [
                     "compError",
                     "Break illegal instruction",
                 ]
@@ -569,7 +579,9 @@ class LogFileAnalyzer(object):
             {str("^TypeError: .*"): ["pythonError", "type error in module"]},
             {str("^ValueError: .*"): ["pythonError", "value error in module"]},
             {
-                str("^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + "/test/data/download\.url"): [
+                str(
+                    r"^gmake: \*\*\* .*?/src/" + subsys + "/" + pkg + r"/test/data/download\.url"
+                ): [
                     "dwnlError",
                     "for file in data/download.url in test",
                 ]
@@ -582,11 +594,11 @@ class LogFileAnalyzer(object):
                     + subsys
                     + "/"
                     + pkg
-                    + ".*?\:\d*\: warning: "
+                    + r".*?\:\d*\: warning: "
                 ): ["compWarning", "for file in package"]
             },
             {
-                str("^ */.*?/" + self.release + "/src/.*?\:\d+\: warning: "): [
+                str("^ */.*?/" + self.release + r"/src/.*?\:\d+\: warning: "): [
                     "compWarning",
                     "for file in release",
                 ]
@@ -594,25 +606,31 @@ class LogFileAnalyzer(object):
             {str("^Warning: "): ["compWarning", "for file in package"]},
             {
                 str(
-                    "^ */.*?/" + self.release + "/src/" + subsys + "/" + pkg + ".*?\:\d+\: error: "
+                    "^ */.*?/"
+                    + self.release
+                    + "/src/"
+                    + subsys
+                    + "/"
+                    + pkg
+                    + r".*?\:\d+\: error: "
                 ): ["compError", "for file in package"]
             },
             {
-                str("^ */.*?/" + self.release + "/src/.*?\:\d+\: error: "): [
+                str("^ */.*?/" + self.release + r"/src/.*?\:\d+\: error: "): [
                     "compError",
                     "for file in release",
                 ]
             },
-            {str("^.*?\:\d+\: error: "): ["compError", "for file in externals"]},
+            {str(r"^.*?\:\d+\: error: "): ["compError", "for file in externals"]},
             {
                 str(
                     "^ *tmp/.*?/src/"
                     + subsys
                     + "/"
                     + pkg
-                    + "/src/(.*?)/lib.*?\."
+                    + r"/src/(.*?)/lib.*?\."
                     + shLib
-                    + "\: undefined reference to .*"
+                    + r"\: undefined reference to .*"
                 ): ["linkError", "for package library %s "]
             },
             {
@@ -621,9 +639,9 @@ class LogFileAnalyzer(object):
                     + subsys
                     + "/"
                     + pkg
-                    + "/plugins/(.*?)/lib.*?\."
+                    + r"/plugins/(.*?)/lib.*?\."
                     + shLib
-                    + "\: undefined reference to .*"
+                    + r"\: undefined reference to .*"
                 ): ["linkError", "for plugin library %s in plugins"]
             },
             {
@@ -725,35 +743,30 @@ class Usage(Exception):
 
 
 def main(argv=None):
-    logDir = "."
-    topURL = "./"
-    verbose = -1
     pkgList = os.getenv("CMSSW_BASE", None)
     if pkgList:
         pkgList += "/src/PackageList.cmssw"
-    rel = os.getenv("CMSSW_VERSION", None)
     igWarning = []
     if argv is None:
         argv = sys.argv
 
     parser = argparse.ArgumentParser(description="Process log files", epilog=help_message)
-    """
-         -h, --help          : print this message
-     -l, --logDir  <dir> : the path to the dir with the log files to analyze
-     -r, --release <name>: Release version
-     -p, --pkgList <file>: Path to PackageList.cmssw file
-     -t, --topURL  <url> : the base URL to use for generating the html files
-     -v, --verbose <lvl> : set verbosity level, the higher the number, the more verbose printout you will get
-    """
+
     parser.add_argument(
         "-l",
         "--logDir",
         dest="logDir",
         metavar="<dir>",
         help="The path to the dir with the log files to analyze",
-        default=None,
+        default=".",
     )
-    parser.add_argument("-r", "--release", metavar="<name>", help="Release version", default=None)
+    parser.add_argument(
+        "-r",
+        "--release",
+        metavar="<name>",
+        help="Release version",
+        default=os.getenv("CMSSW_VERSION", None),
+    )
     parser.add_argument(
         "-p",
         "--pkgList",
@@ -767,44 +780,27 @@ def main(argv=None):
         "--topURL",
         metavar="<url>",
         help="The base URL to use for generating the html files",
-        default=None,
+        default="",
+        required=True,
     )
     parser.add_argument(
         "-v",
         "--verbose",
         metavar="<lvl>",
         help="Set verbosity level, the higher the number, the more verbose printout you will get",
-        default=None,
+        default=-1,
+        type=int,
     )
     parser.add_argument("--ignoreWarning", help=argparse.SUPPRESS, default=None)
 
-    args = parser.parse_args()
-
-    if args.verbose:
-        verbose = int(args.verbose)
-
-    if args.logDir:
-        logDir = args.logDir
-
-    if args.release:
-        release = args.release
-
-    if args.pkgList:
-        pkgList = args.pkgList
-
-    if args.topURL:
-        topURL = args.topURL
-    else:
-        parser.print_usage()
-        return 1
-
-    if not os.path.exists(logDir):
-        return 1
+    args = parser.parse_args(argv)
 
     if args.ignoreWarning:
         igWarning = [w.strip() for w in args.ignoreWarning.split(",") if w.strip()]
 
-    lfa = LogFileAnalyzer(logDir, topURL, verbose, pkgList, rel, igWarning)
+    lfa = LogFileAnalyzer(
+        args.logDir, args.topURL, args.verbose, args.pkgList, args.release, igWarning
+    )
     lfa.analyze()
     lfa.report()
 

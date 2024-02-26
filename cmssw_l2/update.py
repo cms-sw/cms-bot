@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+from json import dump, load
 from sys import argv, exit
-from json import load, dump
 
 try:
     from categories import CMSSW_L2

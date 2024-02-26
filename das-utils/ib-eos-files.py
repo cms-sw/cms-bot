@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-from sys import exit
-from os.path import abspath, dirname, exists, getmtime
 import json
-from hashlib import sha256
-from threading import Thread
-from time import sleep, time
 import re
 import sys
+from hashlib import sha256
+from os.path import abspath, dirname, exists, getmtime
+from sys import exit
+from threading import Thread
+from time import sleep, time
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import getstatusoutput
@@ -26,7 +26,7 @@ def get_alive_threads(threads):
 
 try:
     CMS_BOT_DIR = dirname(abspath(__file__))
-except Exception as e:
+except Exception:
     from sys import argv
 
     CMS_BOT_DIR = dirname(abspath(argv[0]))
@@ -59,9 +59,9 @@ def get_lfns_from_kibana(days=7):
     print("Collecting unique LFN from Kibana ....")
     used_lfns = {}
     for hit in json.loads(from_kibaba)["hits"]["hits"]:
-        if not "_source" in hit:
+        if "_source" not in hit:
             continue
-        if not "lfn" in hit["_source"]:
+        if "lfn" not in hit["_source"]:
             continue
         lfn = hit["_source"]["lfn"].strip()
         if (not lfn) or ("/store/user/cmsbuild" in lfn):
@@ -86,7 +86,7 @@ def get_lfns_from_das(lfn_per_query=1):
         lfn_count = 0
         err, out = run_cmd("grep '/store/' %s" % lfn_file, debug=False, exit_on_error=False)
         for lfn in out.split("\n"):
-            if not "/store/" in lfn:
+            if "/store/" not in lfn:
                 continue
             lfn = lfn.strip("\n").replace('"', "").replace(",", "").strip(" ")
             used_lfns[lfn] = 1
@@ -158,7 +158,7 @@ def eos_size(eos_file):
     err, out = run_cmd(
         "%s ls -l %s | awk '{print $5}'" % (eos_cmd, eos_file), debug=True, exit_on_error=False
     )
-    if err or not re.match("^\d+$", out):
+    if err or not re.match(r"^\d+$", out):
         return -1
     return int(out)
 
@@ -178,11 +178,11 @@ def check_dead_transfers(threads, info, progress_check=600, init_transfer_wait=6
             info[lfn][1] = pcheck
             mtime = getmtime(info[lfn][3])
             err, out = run_cmd(
-                "grep '\[ *[1-9][0-9]*\%%\]' %s | tail -1" % info[lfn][3],
+                r"grep '\[ *[1-9][0-9]*\%%\]' %s | tail -1" % info[lfn][3],
                 debug=False,
                 exit_on_error=False,
             )
-            out = re.sub("^.*\[", "", re.sub("\].*$", "", out.split("\n")[-1].split("\r")[-1]))
+            out = re.sub(r"^.*\[", "", re.sub(r"\].*$", "", out.split("\n")[-1].split("\r")[-1]))
             if mtime != info[lfn][2]:
                 info[lfn][2] = mtime
                 print("  In progress: %s %s" % (lfn, out))

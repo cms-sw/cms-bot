@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import re
 from sys import argv, exit
+
 from _py2with3compatibility import run_cmd
 
 
@@ -16,16 +18,16 @@ def parse_workflows(workflow_file):
     steps = 0
     for line in out.split("\n"):
         line = line.strip()
-        m = re.match("^.*\[(\d+)\] *: *(.+)$", line)
+        m = re.match(r"^.*\[(\d+)\] *: *(.+)$", line)
         if not m:
             continue
         step = m.group(1)
         cmd = m.group(2).strip()
         prefix, rest = line.split(":", 1)
         items = prefix.split(" ")
-        if re.match("^\d+(\.\d+|)$", items[0]):
+        if re.match(r"^\d+(\.\d+|)$", items[0]):
             wf = items[0]
-        if not wf in wfs:
+        if wf not in wfs:
             wfs[wf] = {}
         wfs[wf][step] = re.sub("  +", " ", cmd)
         steps += 1
@@ -44,11 +46,11 @@ new_wf = []
 new_step = []
 chg_step = []
 for wf in wfs["new"]:
-    if not wf in wfs["old"]:
+    if wf not in wfs["old"]:
         new_wf.append(wf)
     else:
         for step in wfs["new"][wf]:
-            if not step in wfs["old"][wf]:
+            if step not in wfs["old"][wf]:
                 new_step.append(wf)
                 break
             elif not wfs["old"][wf] == wfs["new"][wf]:

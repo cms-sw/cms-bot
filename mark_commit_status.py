@@ -7,14 +7,16 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
+
 from optparse import OptionParser
+from sys import exit
+
 from github_utils import (
     api_rate_limits,
-    mark_commit_status,
     get_combined_statuses,
     get_pr_latest_commit,
+    mark_commit_status,
 )
-from sys import exit
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog")

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from _py2with3compatibility import urlopen
 from json import loads
 from os import system
 from sys import exit
+
+from _py2with3compatibility import urlopen
 
 ip_file = "/data/sdt/github-hook-meta.txt"
 cnt = 0

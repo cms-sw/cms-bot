@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from categories_map import CMSSW_CATEGORIES
+
 import sys
+
+from categories_map import CMSSW_CATEGORIES
 
 
 def package2category(filename):
@@ -11,7 +13,7 @@ def package2category(filename):
     cat = "unknown"
     if file_pack in pack2cat:
         cat = "-".join(sorted(pack2cat[file_pack]))
-    if not cat in cats:
+    if cat not in cats:
         cats[cat] = {}
     cats[cat][file_pack] = 1
 

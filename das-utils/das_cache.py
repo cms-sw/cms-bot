@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from sys import exit
-from os import environ
-from os.path import exists, dirname, abspath, basename, join
-from time import time, sleep
-import json, threading, re
-from optparse import OptionParser
 
+import json
+import re
 import sys
+import threading
+from optparse import OptionParser
+from os import environ
+from os.path import abspath, basename, dirname, exists, join
+from sys import exit
+from time import sleep, time
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd
@@ -87,9 +89,9 @@ def run_das_client(
         print("  Failed to load das output:", sha, e)
         return False
     if (
-        (not "status" in jdata)
+        ("status" not in jdata)
         or (jdata["status"] != "ok")
-        or (not "data" in jdata)
+        or ("data" not in jdata)
         or (("ecode" in jdata) and (jdata["ecode"] != ""))
     ):
         print("Failed: %s %s\n  %s" % (sha, query, out))
@@ -100,9 +102,9 @@ def run_das_client(
         for item in jdata["data"]:
             try:
                 if (
-                    (not fx in item)
+                    (fx not in item)
                     or (not item[fx])
-                    or (not fn in item[fx][0])
+                    or (fn not in item[fx][0])
                     or (item[fx][0][fn] is None)
                 ):
                     all_ok = False
@@ -140,7 +142,7 @@ def run_das_client(
         if fields[0] == "file" and res in ignore_lfn:
             print("  Ignoring %s" % res)
             continue
-        if not res in results:
+        if res not in results:
             results.append(res)
     print("  Results:", sha, len(results))
     if (len(results) == 0) and ("site=T2_CH_CERN" in query):
@@ -157,7 +159,7 @@ def run_das_client(
         write_json(xfile + ".tmp", jdata)
         if exists(xfile):
             e, o = run_cmd(
-                "diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\(\.[0-9]*\|\)$'"
+                "diff -u %s %s.tmp | grep '^+ ' | sed 's| ||g;s|\"||g;s|^+[a-zA-Z0-9][a-zA-Z0-9_]*:||;s|,$||' | grep -v '[0-9][0-9]*\\(\\.[0-9]*\\|\\)$'"
                 % (xfile, xfile)
             )
             if o:
@@ -272,7 +274,7 @@ if __name__ == "__main__":
             qs = {}
             rewrite = False
             for query in [line.rstrip("\n").strip() for line in open(qfile)]:
-                if not "=" in query:
+                if "=" not in query:
                     continue
                 if "--query " in query:
                     query = query.split("--query ")[1].split("'")[1]
@@ -291,7 +293,7 @@ if __name__ == "__main__":
     for query in query_sha:
         if "site=T2_CH_CERN" in query:
             query = re.sub("  +", " ", query.replace("site=T2_CH_CERN", "").strip())
-            if not query in query_sha:
+            if query not in query_sha:
                 from hashlib import sha256
 
                 sha = sha256(query.encode()).hexdigest()
@@ -354,9 +356,9 @@ if __name__ == "__main__":
                     try:
                         xdata = read_json(jfile)
                         if (
-                            (not "status" in xdata)
+                            ("status" not in xdata)
                             or (xdata["status"] != "ok")
-                            or (not "data" in xdata)
+                            or ("data" not in xdata)
                         ):
                             okcache = False
                         else:
@@ -364,13 +366,13 @@ if __name__ == "__main__":
                                 if not okcache:
                                     break
                                 for x in field_map:
-                                    if not x in item:
+                                    if x not in item:
                                         continue
                                     if len(item[x]) > 0:
                                         continue
                                     okcache = False
                                     break
-                    except IOError as e:
+                    except IOError:
                         print(
                             "  ERROR: [%s/%s] Reading json cached file %s"
                             % (nquery, tqueries, outfile)

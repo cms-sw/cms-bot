@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
+import json
 import sys
 from os.path import exists, join
-import json
-from es_utils import get_summary_stats_from_json_file
+
 from _py2with3compatibility import run_cmd
+from es_utils import get_summary_stats_from_json_file
 
 data = []
 e, o = run_cmd(

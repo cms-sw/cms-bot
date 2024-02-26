@@ -7,13 +7,15 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-import sys
+
 import json
+import sys
 from os import environ
 from os.path import exists
+
+from cmsutils import doCmd
 from RelValArgs import GetMatrixOptions
 from runPyRelValThread import PyRelValsThread, splitWorkflows
-from cmsutils import doCmd
 
 print("Diving workflows")
 workdir = sys.argv[1]
@@ -47,7 +49,7 @@ if exists(RelValtimes):
     uwf = []
     owfs = [x[0] for x in owf]
     for wf in workflows:
-        if not wf in owfs:
+        if wf not in owfs:
             uwf.append([wf, max_tm])
     workflows = uwf + owf
 if workflows:

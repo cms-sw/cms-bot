@@ -1,10 +1,10 @@
 # A ridicously long mapping for categories. Good enough for now.
+from categories_map import CMSSW_CATEGORIES, CMSSW_LABELS
 from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from categories_map import CMSSW_CATEGORIES, CMSSW_LABELS
-from repo_config import CMSBUILD_USER
 from releases import SPECIAL_RELEASE_MANAGERS
+from repo_config import CMSBUILD_USER
 
 authors = {}
 # Any Githib user whose comments/requests should be ignored
@@ -41,7 +41,7 @@ TRIGGER_PR_TESTS = list(
             "slava77",
         ]
         + REQUEST_BUILD_RELEASE
-        + [a for a in authors if authors[a] > 10 and not a in GITHUB_BLACKLIST_AUTHORS]
+        + [a for a in authors if authors[a] > 10 and a not in GITHUB_BLACKLIST_AUTHORS]
     )
 )
 # List of on additional release managers
@@ -166,7 +166,7 @@ CMSSW_L2 = {
 for user in CMS_SDT:
     if user not in CMSSW_L2:
         CMSSW_L2[user] = ["externals"]
-    elif not "externals" in CMSSW_L2[user]:
+    elif "externals" not in CMSSW_L2[user]:
         CMSSW_L2[user].append("externals")
 
 # All CMSSW L1 can sign for ORP

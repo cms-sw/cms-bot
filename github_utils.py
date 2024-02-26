@@ -4,14 +4,17 @@
 #########################################################
 from __future__ import print_function
 
+import datetime
+import json
 import logging
-from sys import argv, version_info
-from hashlib import md5
-import json, sys, datetime
-from time import sleep, gmtime, mktime, strptime
-from _py2with3compatibility import run_cmd, urlopen, Request, urlencode
-from os.path import exists, dirname, abspath, join, basename, expanduser
 import re
+import sys
+from hashlib import md5
+from os.path import abspath, basename, dirname, exists, expanduser, join
+from sys import argv, version_info
+from time import gmtime, mktime, sleep, strptime
+
+from _py2with3compatibility import Request, run_cmd, urlencode, urlopen
 
 GH_TOKENS = []
 GH_USER = None
@@ -28,7 +31,7 @@ except:
 
 try:
     scriptPath = dirname(abspath(__file__))
-except Exception as e:
+except Exception:
     scriptPath = dirname(abspath(argv[0]))
 
 
@@ -131,7 +134,7 @@ def api_rate_limits(gh, msg=True, when_slow=False, prefix=""):
 
 def get_ported_PRs(repo, src_branch, des_branch):
     done_prs_id = {}
-    prRe = re.compile("Automatically ported from " + src_branch + " #(\d+)\s+.*", re.MULTILINE)
+    prRe = re.compile("Automatically ported from " + src_branch + r" #(\d+)\s+.*", re.MULTILINE)
     for pr in repo.get_pulls(base=des_branch):
         body = pr.body.encode("ascii", "ignore")
         if sys.version_info[0] == 3:
@@ -199,7 +202,7 @@ def port_pr(repo, pr_num, des_branch, dryRun=False):
     new_commit = None
     new_commits = {}
     for line in out.split("\n"):
-        m = re.match("^commit\s+([0-9a-f]+)$", line)
+        m = re.match(r"^commit\s+([0-9a-f]+)$", line)
         if m:
             print("New commit:", m.group(1), last_commit)
             if last_commit:
@@ -207,7 +210,7 @@ def port_pr(repo, pr_num, des_branch, dryRun=False):
             new_commit = m.group(1)
             new_commits[new_commit] = None
             continue
-        m = re.match("^\s*\(cherry\s+picked\s+from\s+commit\s([0-9a-f]+)\)$", line)
+        m = re.match(r"^\s*\(cherry\s+picked\s+from\s+commit\s([0-9a-f]+)\)$", line)
         if m:
             print("found commit", m.group(1))
             last_commit = m.group(1)
@@ -287,7 +290,7 @@ def prs2relnotes(notes, ref_repo=""):
 
 
 def cache_invalid_pr(pr_id, cache):
-    if not "invalid_prs" in cache:
+    if "invalid_prs" not in cache:
         cache["invalid_prs"] = []
     cache["invalid_prs"].append(pr_id)
     cache["dirty"] = True
@@ -318,7 +321,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
                 cache_invalid_pr(pr_hash_id, cache)
                 continue
             pr = json.load(open(pr_cache))
-            if not "auther_sha" in pr:
+            if "auther_sha" not in pr:
                 print("  Invalid/Indirect PR", pr)
                 cache_invalid_pr(pr_hash_id, cache)
                 continue
@@ -340,7 +343,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
                 "hash": parent_hash,
                 "branch": pr["branch"],
             }
-            if not pr_number in cache:
+            if pr_number not in cache:
                 cache[pr_number] = {}
                 cache[pr_number]["notes"] = new_notes[pr_number]
                 cache[pr_number]["pr"] = pr
@@ -579,7 +582,7 @@ def github_api(
         headers = {}
     url = "https://api.github.com%s" % uri
     data = ""
-    if per_page and ("per_page" not in params) and (not method in ["POST", "PATCH", "PUT"]):
+    if per_page and ("per_page" not in params) and (method not in ["POST", "PATCH", "PUT"]):
         params["per_page"] = per_page
     if method == "GET":
         if params:
@@ -589,7 +592,7 @@ def github_api(
     if version_info[0] == 3:
         data = data.encode("utf-8")
     if page > 1:
-        if not "?" in url:
+        if "?" not in url:
             url = url + "?"
         else:
             url = url + "&"

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-import json, sys, requests
+import json
+import sys
+
+import requests
 
 gw = sys.argv[1]
 path = sys.argv[2].strip("/")

@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-import re, json, sys
+
+import json
+import re
+import sys
 from datetime import datetime
-from os.path import getmtime, exists
-from _py2with3compatibility import run_cmd
-from es_utils import send_payload
 from hashlib import sha1
+from os.path import exists, getmtime
+
+from _py2with3compatibility import run_cmd
 from cmsutils import cmsswIB2Week
+from es_utils import send_payload
 
 ReDate = re.compile(
-    "^.* DATE=[A-Z][a-z]{2}\s+([A-Z][a-z]{2}\s+[0-9]{1,2}\s+\d\d:\d\d:\d\d\s+)[A-Z]{3,4}\s+(\d\d\d\d)"
+    r"^.* DATE=[A-Z][a-z]{2}\s+([A-Z][a-z]{2}\s+[0-9]{1,2}\s+\d\d:\d\d:\d\d\s+)[A-Z]{3,4}\s+(\d\d\d\d)"
 )
-ReUpload = re.compile("^.*sync-back\s+upload\s+(.*\s|)cmssw(-patch|)(\s.*|)$")
-ReRel = re.compile("^[+]\s+RELEASE_FORMAT=(CMSSW_.+)")
-ReArch = re.compile("^[+]\s+ARCHITECTURE=(.+)")
-ReType = re.compile(".+specs-only\s+build\s+(cmssw-patch).*")
-ReFinish = re.compile("Finished:\s+[A-Z]+")
+ReUpload = re.compile(r"^.*sync-back\s+upload\s+(.*\s|)cmssw(-patch|)(\s.*|)$")
+ReRel = re.compile(r"^[+]\s+RELEASE_FORMAT=(CMSSW_.+)")
+ReArch = re.compile(r"^[+]\s+ARCHITECTURE=(.+)")
+ReType = re.compile(r".+specs-only\s+build\s+(cmssw-patch).*")
+ReFinish = re.compile(r"Finished:\s+[A-Z]+")
 ReReleaseQueue = re.compile("(.*_X)")
 
 
@@ -111,7 +115,7 @@ for logFile in logs:
     if force or (not exists(flagFile)):
         print("Processing ", logFile)
         done = True
-        if re.match("^.+/builds/\d+/log$", logFile):
+        if re.match(r"^.+/builds/\d+/log$", logFile):
             done = process_build_any_ib(logFile)
         if done:
             run_cmd('touch "' + flagFile + '"')

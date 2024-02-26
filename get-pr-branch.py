@@ -7,9 +7,10 @@ argv[1] - Pull request ID
 argv[2] - Repository (optional)
 """
 
-from sys import exit, argv, path
-from os.path import expanduser, dirname, abspath, join, exists
+from os.path import abspath, dirname, exists, expanduser, join
 from socket import setdefaulttimeout
+from sys import argv, exit, path
+
 from github_utils import get_pr
 
 setdefaulttimeout(120)
@@ -30,8 +31,8 @@ if __name__ == "__main__":
         exit(1)
 
     if pr["base"]["ref"] == "master":
-        from releases import CMSSW_DEVEL_BRANCH
         from _py2with3compatibility import run_cmd
+        from releases import CMSSW_DEVEL_BRANCH
 
         e, o = run_cmd(
             "curl -k -s -L https://cmssdt.cern.ch/SDT/BaselineDevRelease | grep '^CMSSW_'"

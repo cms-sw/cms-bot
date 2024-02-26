@@ -1,26 +1,28 @@
 #!/usr/bin/env python3
-from sys import exit, argv
-from os import environ
-from os.path import exists, join, dirname
-from json import load, dump
-from time import time, sleep, gmtime
-from subprocess import getstatusoutput
+import re
+import threading
 from hashlib import md5
-import threading, re
+from json import dump, load
+from os import environ
+from os.path import dirname, exists, join
+from subprocess import getstatusoutput
+from sys import argv, exit
+from time import gmtime, sleep, time
+
 from github_utils import (
-    get_organization_repositores,
-    get_repository_issues,
     check_rate_limits,
-    github_time,
-    get_issue_comments,
-    get_page_range,
     get_gh_token,
+    get_issue_comments,
+    get_organization_repositores,
+    get_page_range,
+    get_releases,
+    get_repository_issues,
+    github_time,
 )
-from github_utils import get_releases
 
 get_gh_token(token_file=argv[1])
 backup_store = argv[2]
-comment_imgs_regexp = re.compile("^(.*?)\!\[[^\]]+\]\(([^\)]+)\)(.*)$")
+comment_imgs_regexp = re.compile(r"^(.*?)\!\[[^\]]+\]\(([^\)]+)\)(.*)$")
 if not exists(backup_store):
     print("Backup store not exists.")
     exit(1)

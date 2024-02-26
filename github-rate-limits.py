@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-import json, os
+
+import json
+import os
 from datetime import datetime
 from hashlib import sha1
 from os.path import expanduser
 from socket import setdefaulttimeout
+
 from github import Github
+
 from es_utils import send_payload
 
 setdefaulttimeout(120)

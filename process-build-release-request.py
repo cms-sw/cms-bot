@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 import json
 import re
-from _py2with3compatibility import run_cmd, quote, Request, urlopen, HTTPError
 from datetime import datetime, timedelta
 from optparse import OptionParser
-from os.path import dirname, abspath, exists
-from os.path import expanduser
+from os.path import abspath, dirname, exists, expanduser
 from socket import setdefaulttimeout
 
 import yaml
 
+from _py2with3compatibility import HTTPError, Request, quote, run_cmd, urlopen
+
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Dumper, Loader
 from github import Github
 
-from categories import REQUEST_BUILD_RELEASE, APPROVE_BUILD_RELEASE
-from cms_static import BUILD_REL, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
+from categories import APPROVE_BUILD_RELEASE, REQUEST_BUILD_RELEASE
+from cms_static import BUILD_REL, GH_CMSDIST_REPO, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
 from cmsutils import get_config_map_properties, get_full_release_archs
-from github_utils import api_rate_limits, get_ref_commit, get_commit_info
-from github_utils import get_branch
+from github_utils import api_rate_limits, get_branch, get_commit_info, get_ref_commit
 from releases import get_release_managers
 
 setdefaulttimeout(120)
@@ -34,7 +34,7 @@ except:
 
 try:
     CMS_BOT_DIR = dirname(abspath(__file__))
-except Exception as e:
+except Exception:
     from sys import argv
 
     CMS_BOT_DIR = dirname(abspath(argv[0]))
@@ -938,10 +938,10 @@ def guess_prev_rel_name(release_name, issue):
         return re.sub("_" + num_str + "$", "_" + prev_num_str, release_name)
     rel_match = (
         re.sub("_" + num_str + "$", "_" + prev_num_str, release_name)
-        + "\(_[a-zA-Z]*patch[0-9][0-9]*\|\);"
+        + r"\(_[a-zA-Z]*patch[0-9][0-9]*\|\);"
     )
     if number == 0:
-        rel_match = release_name + "_pre\([0-9][0-9]*\);"
+        rel_match = release_name + r"_pre\([0-9][0-9]*\);"
     ret, out = run_cmd(
         "grep 'label="
         + rel_match
@@ -1135,7 +1135,7 @@ if __name__ == "__main__":
 
     if "PRODUCTION_ARCHITECTURE:" in issue_body:
         req_arch = issue_body.split("PRODUCTION_ARCHITECTURE:", 1)[1].split("\n", 1)[0].strip()
-        if not req_arch in architectures:
+        if req_arch not in architectures:
             msg = (
                 "You requested production architecutre to be %s but this is not a valid architecture for this release cycle."
                 % req_arch
@@ -1182,13 +1182,13 @@ if __name__ == "__main__":
 
     print(release_branch)
     for rm in get_release_managers(release_branch):
-        if not rm in APPROVE_BUILD_RELEASE:
+        if rm not in APPROVE_BUILD_RELEASE:
             APPROVE_BUILD_RELEASE.append(rm)
-        if not rm in REQUEST_BUILD_RELEASE:
+        if rm not in REQUEST_BUILD_RELEASE:
             REQUEST_BUILD_RELEASE.append(rm)
 
     # 3. Is the author authorized to trigger a build?
-    if not issue.user.login in REQUEST_BUILD_RELEASE:
+    if issue.user.login not in REQUEST_BUILD_RELEASE:
         print("User not authorized")
         post_message(issue, NOT_AUTHORIZED_MSG)
         exit(0)

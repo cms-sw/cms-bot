@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from github import Github
-from argparse import ArgumentParser
-import repo_config
-from os.path import expanduser
-from json import loads
+
 import re
+from argparse import ArgumentParser
+from json import loads
+from os.path import expanduser
+
+from github import Github
+
+import repo_config
+from _py2with3compatibility import HTTPError, run_cmd, urlopen
 from github_utils import get_git_tree
-from _py2with3compatibility import run_cmd, HTTPError, urlopen
 
 
 def update_tag_version(current_version):
@@ -126,7 +129,7 @@ if __name__ == "__main__":
                 if "sha" not in has_tag:
                     break
                 last_release_tag = last_release_tag + "-00-00"
-            except HTTPError as e:
+            except HTTPError:
                 break
         print(new_tag)
         tag_ref = data_repo.create_git_ref(

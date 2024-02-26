@@ -15,11 +15,13 @@
 #     - delete: delete the index.
 
 from __future__ import print_function
-from argparse import ArgumentParser
-from _py2with3compatibility import run_cmd
-from datetime import datetime
+
 import re
+from argparse import ArgumentParser
+from datetime import datetime
 from os import getenv
+
+from _py2with3compatibility import run_cmd
 
 CONFIG = [
     ["mesos-offers-%Y.%m.%d", "1M", "delete"],
@@ -104,7 +106,7 @@ if __name__ == "__main__":
         for index in indices:
             try:
                 d = datetime.strptime(index, pattern)
-            except ValueError as e:
+            except ValueError:
                 continue
             print(index, "matches", pattern)
             now = datetime.now()

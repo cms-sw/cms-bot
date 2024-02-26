@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 import sys
-from sys import exit, argv
-from re import match
-from github import Github
-from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
+from os.path import abspath, dirname, exists, expanduser, join
+from re import match
 from socket import setdefaulttimeout
+from sys import argv, exit
+
+from github import Github
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
@@ -43,7 +44,7 @@ def process_pr(gh, repo, issue, dryRun):
     USERS_TO_TRIGGER_HOOKS.add("cmsbuild")
     for comment in issue.get_comments():
         commenter = comment.user.login
-        if not commenter in USERS_TO_TRIGGER_HOOKS:
+        if commenter not in USERS_TO_TRIGGER_HOOKS:
             continue
         comment_msg = comment.body.encode("ascii", "ignore").decode()
         comment_lines = [l.strip() for l in comment_msg.split("\n") if l.strip()][0:1]
@@ -54,7 +55,7 @@ def process_pr(gh, repo, issue, dryRun):
         if commenter == "cmsbuild":
             if not cmdType:
                 continue
-            if match("^Command\s+" + cmdType + "\s+acknowledged.$", first_line):
+            if match(r"^Command\s+" + cmdType + r"\s+acknowledged.$", first_line):
                 print("Acknowledged ", cmdType)
                 cmdType = None
             continue

@@ -1,9 +1,11 @@
 #!/bin/env python
 from __future__ import print_function
+
+from json import dumps, loads
 from os.path import basename
 from sys import argv, exit
+
 from _py2with3compatibility import run_cmd
-from json import loads, dumps
 
 try:
     authors_info = {}

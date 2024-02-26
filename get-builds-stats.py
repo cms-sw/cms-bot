@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from cmsutils import MachineMemoryGB, MachineCPUCount
-import json, re, sys
+
+import json
+import re
+import sys
+
+from cmsutils import MachineCPUCount, MachineMemoryGB
 
 r = open(sys.argv[1])
 items = json.load(r)

@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import json
-
 from optparse import OptionParser
 
 usage = "usage: %prog [options] message"
@@ -30,9 +29,9 @@ with open("pylint.out", "r") as pylintFile:
             scorePart = line.strip("Your code has been rated at ")
             score = scorePart.split("/")[0]
             try:
-                if not filename in report:
+                if filename not in report:
                     report[filename] = {}
-                if not label in report[filename]:
+                if label not in report[filename]:
                     report[filename][label] = {}
                 if filename and label:
                     report[filename][label]["score"] = score
@@ -67,12 +66,12 @@ with open("pylint.out", "r") as pylintFile:
             elif severity == "C":
                 comments += 1
 
-            if not filename in report:
+            if filename not in report:
                 report[filename] = {}
 
-            if not label in report[filename]:
+            if label not in report[filename]:
                 report[filename][label] = {}
-            if not "events" in report[filename][label]:
+            if "events" not in report[filename][label]:
                 report[filename][label]["events"] = []
             report[filename][label]["events"].append(
                 (lineNumber, severity, code, objectName, message)

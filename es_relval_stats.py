@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from sys import exit, argv
-from _py2with3compatibility import run_cmd
-from os.path import isdir, basename, exists, join
+
 import json
-from es_utils import es_send_resource_stats
-from hashlib import sha1
-import threading
-from time import sleep
 import re
+import threading
+from hashlib import sha1
+from os.path import basename, exists, isdir, join
+from sys import argv, exit
+from time import sleep
+
+from _py2with3compatibility import run_cmd
+from es_utils import es_send_resource_stats
 
 partial_log_dirpath = argv[1]
 jobs = 6

@@ -1,12 +1,12 @@
 import argparse
-import libib
-import re
 import os
-
+import re
 from dataclasses import dataclass, field
 
+import libib
+
 # noinspection PyUnresolvedReferences
-from libib import PackageInfo, ErrorInfo
+from libib import ErrorInfo, PackageInfo
 
 
 @dataclass(frozen=True)

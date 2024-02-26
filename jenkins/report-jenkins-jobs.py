@@ -27,11 +27,10 @@ parents = defaultdict(list)
 import json
 import time
 
-
 try:
     fd = open("/tmp/report_gen.txt")
     txt = fd.read()
-except Exception as e:
+except Exception:
     print("Error reading the file")
 data_uns = json.loads(txt)
 data = sorted(list(data_uns.items()), key=lambda s: s[0].lower())

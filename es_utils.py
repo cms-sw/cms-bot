@@ -1,13 +1,19 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import sys, json, re, ssl, base64
-from os.path import exists
-from os import getenv
+
+import base64
+import json
+import re
+import ssl
+import sys
 from hashlib import sha1
-from cmsutils import cmsswIB2Week, percentile
-from _py2with3compatibility import Request, urlopen
+from os import getenv
 from os import stat as tstat
+from os.path import exists
 from time import time
+
+from _py2with3compatibility import Request, urlopen
+from cmsutils import cmsswIB2Week, percentile
 
 CMSSDT_ES_QUERY = "https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 # ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
@@ -56,7 +62,7 @@ def get_ssl_context():
     sslcon = None
     try:
         sslcon = ssl._create_unverified_context()
-    except Exception as e:
+    except Exception:
         sslcon = None
     return sslcon
 
@@ -203,7 +209,7 @@ def get_template(index=""):
 def find_indexes(index):
     idxs = {}
     for line in get_indexes(index).split("\n"):
-        line = re.sub("\s\s+", " ", line.strip())
+        line = re.sub(r"\s\s+", " ", line.strip())
         if not line:
             continue
         data = line.split(" ")
@@ -214,7 +220,7 @@ def find_indexes(index):
         else:
             st = data[1]
             idx = data[2]
-        if not st in idxs:
+        if st not in idxs:
             idxs[st] = []
         idxs[st].append(idx)
     return idxs
@@ -277,9 +283,9 @@ def es_workflow_stats(es_hits, rss="rss_75", cpu="cpu_75"):
             continue
         wf = hit["workflow"]
         step = hit["step"]
-        if not wf in wf_stats:
+        if wf not in wf_stats:
             wf_stats[wf] = {}
-        if not step in wf_stats[wf]:
+        if step not in wf_stats[wf]:
             wf_stats[wf][step] = []
         wf_stats[wf][step].append(
             [hit["time"], hit[rss], hit[cpu], hit["rss_max"], hit["cpu_max"]]
@@ -329,7 +335,7 @@ def get_summary_stats_from_json_file(stats_dict_file_path, cpu_normalize):
             if x in ["time", "num_threads", "processes", "num_fds"]:
                 sdata[x] = data[-1]
                 continue
-            if not x in ["rss", "vms", "pss", "uss", "shared", "data", "cpu"]:
+            if x not in ["rss", "vms", "pss", "uss", "shared", "data", "cpu"]:
                 continue
             dlen = len(data)
             if (x == "cpu") and (cpu_normalize > 1) and (data[-1] > 100):
@@ -463,7 +469,7 @@ def get_externals_build_stats(arch="*", lastNdays=30, cpus=0, memoryGB=0, defaul
 
         cpus = MachineCPUCount
     if memoryGB <= 0:
-        from cmsutils import MachineMemoryGB, MachineCPUCount
+        from cmsutils import MachineCPUCount, MachineMemoryGB
 
         memoryGB = MachineMemoryGB
     mem = memoryGB * 1024 * 1024 * 1024

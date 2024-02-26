@@ -3,11 +3,13 @@
 # A script to generate the list of releases to deprecate, via a set of regexp.
 # TODO unused
 from __future__ import print_function
-from _py2with3compatibility import urlopen
-from xml.sax import make_parser, handler
+
 import re
-from optparse import OptionParser
 from json import load
+from optparse import OptionParser
+from xml.sax import handler, make_parser
+
+from _py2with3compatibility import urlopen
 
 INCIPIT = """
 Hi All,

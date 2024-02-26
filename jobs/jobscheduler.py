@@ -7,14 +7,17 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-from operator import itemgetter
-from time import sleep, time
-from copy import deepcopy
-import threading, json, os
-from optparse import OptionParser
-from subprocess import Popen
-from os.path import abspath, dirname
+
+import json
+import os
 import sys
+import threading
+from copy import deepcopy
+from operator import itemgetter
+from optparse import OptionParser
+from os.path import abspath, dirname
+from subprocess import Popen
+from time import sleep, time
 
 sys.path.append(dirname(dirname(abspath(sys.argv[0]))))
 from cmsutils import MachineCPUCount, MachineMemoryGB
@@ -53,7 +56,7 @@ def simulate_done_job(thrds, resources):
     while [t for t in xthrds if t.is_alive()]:
         sleep(0.001)
     for t in thrds:
-        if not t in xthrds:
+        if t not in xthrds:
             thrds[t]["time2finish"] = thrds[t]["time2finish"] - thdtime
     return xthrds
 
@@ -74,7 +77,7 @@ def runJob(job):
 
 
 def getFinalCommand(group, jobs, resources):
-    if not "final" in group:
+    if "final" not in group:
         group["final"] = deepcopy(jobs["final_per_group"])
     job = group.pop("final")
     job["jobid"] = group["name"] + "-final"
@@ -186,9 +189,9 @@ def checkJobs(thrds, resources):
 
 
 def initJobs(jobs, resources, otype):
-    if not "final" in jobs:
+    if "final" not in jobs:
         jobs["final"] = "true"
-    if not "final_per_group" in jobs:
+    if "final_per_group" not in jobs:
         jobs["final_per_group"] = {"command": "true", "cpu": 1, "rss": 1, "time": 1}
     for env, value in jobs["env"].items():
         os.putenv(env, value)
@@ -213,7 +216,7 @@ def initJobs(jobs, resources, otype):
                 job["rss"] = 1024 * 1024 * 1024 * 6
             for x in ["rss", "cpu"]:
                 for y in [x + "_avg", x + "_max"]:
-                    if (not y in job) or (job[y] == 0):
+                    if (y not in job) or (job[y] == 0):
                         job[y] = job[x]
             if not simulation:
                 print(">>", group["name"], job)
@@ -321,9 +324,9 @@ if __name__ == "__main__":
         opts.memory = 200
     if opts.cpu > 300:
         opts.cpu = 300
-    if not opts.type in ["", "avg", "max"]:
+    if opts.type not in ["", "avg", "max"]:
         parser.error("Invalid -t|--type value '%s' provided." % opts.type)
-    if not opts.order in ["dynamic", "time", "rss", "cpu"]:
+    if opts.order not in ["dynamic", "time", "rss", "cpu"]:
         parser.error("Invalid -o|--order value '%s' provided." % opts.order)
     if opts.maxJobs <= 0:
         opts.maxJobs = MachineCPUCount

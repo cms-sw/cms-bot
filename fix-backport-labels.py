@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import print_function
+
 import re
-from github import Github
-from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
+from os.path import abspath, dirname, exists, expanduser, join
 from socket import setdefaulttimeout
+
+from github import Github
+
+from cms_static import CMSBUILD_GH_USER, ISSUE_SEEN_MSG
 from github_utils import api_rate_limits
-from cms_static import ISSUE_SEEN_MSG, CMSBUILD_GH_USER
 
 setdefaulttimeout(120)
 import sys

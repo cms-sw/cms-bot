@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 with open("addedFiles.txt", "r") as addedFiles:
     for fileName in addedFiles:

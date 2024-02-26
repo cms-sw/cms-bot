@@ -1,5 +1,6 @@
-from milestones import *
 import re
+
+from milestones import *
 
 # Default development branch
 # Changes from master branch will be merge in to it

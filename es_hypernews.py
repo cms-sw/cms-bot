@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-import sys, os, re
+import os
+import re
+import sys
 from datetime import datetime, timedelta
-from _py2with3compatibility import run_cmd
-from es_utils import send_payload
 from hashlib import sha1
 from json import dumps
 from time import time
+
+from _py2with3compatibility import run_cmd
+from es_utils import send_payload
 
 apache_log_dir = "/var/log/httpd"
 ssl_error_log = "ssl_error_log"
@@ -20,7 +23,7 @@ if len(sys.argv) == 1:
     cmd_to_get_logs = cmd_to_get_logs + " | tail -2"
     prev_hour = datetime.now() - timedelta(hours=1)
     filter_search = (
-        " | grep '" + prev_hour.strftime("^\[%a %b %d %H:[0-5][0-9]:[0-5][0-9] %Y\] ") + "'"
+        " | grep '" + prev_hour.strftime(r"^\[%a %b %d %H:[0-5][0-9]:[0-5][0-9] %Y\] ") + "'"
     )
 
 err, out = run_cmd(cmd_to_get_logs)
@@ -28,7 +31,7 @@ if err:
     print(out)
     sys.exit(1)
 ReTime = re.compile(
-    "^\[[A-Za-z]{3} ([A-Za-z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4})\] \[[^\]]+\] \[client (.+)\]\s(.+)"
+    r"^\[[A-Za-z]{3} ([A-Za-z]{3} [0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2} [0-9]{4})\] \[[^\]]+\] \[client (.+)\]\s(.+)"
 )
 for log in out.split("\n"):
     find_cmd = "grep '%s' %s %s" % (search_for, log, filter_search)

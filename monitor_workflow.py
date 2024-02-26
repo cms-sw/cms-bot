@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-from os import system, getpid
-from sys import argv, exit
-from time import sleep, time
-import psutil
-from threading import Thread
 import subprocess
+from os import getpid, system
+from sys import argv, exit
+from threading import Thread
+from time import sleep, time
+
+import psutil
 
 job = {"exit_code": 0, "command": "true"}
 
@@ -72,7 +73,7 @@ def monitor(stop):
                 .replace("file:", "")
                 .replace(".root", "")
             )
-        if not "step" in step:
+        if "step" not in step:
             step = "step1"
     else:
         step = stime

@@ -1,18 +1,21 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import os
 import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
-from releases import *
-from categories import *
 import yaml
 
+from categories import *
+from releases import *
+
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
+    from yaml import Dumper, Loader
 
 import re
 

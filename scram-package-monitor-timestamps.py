@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import os, errno
+import errno
+import os
 from optparse import OptionParser
 from os.path import join
 from time import strftime

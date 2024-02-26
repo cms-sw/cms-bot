@@ -8,8 +8,8 @@ import os
 import re
 import time
 
-import helpers
 import actions
+import helpers
 
 
 def process_build(build, job_dir, job_to_retry, error_list, retry_object, retry_delay):

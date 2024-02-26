@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from os.path import dirname, abspath
+
 import sys
+from os.path import abspath, dirname
 
 cmsbot_dir = None
 if __file__:
@@ -14,7 +15,7 @@ from es_utils import delete_index, find_indexes
 
 for i in sys.argv[1:]:
     idxs = find_indexes(i)
-    if not "close" in idxs:
+    if "close" not in idxs:
         continue
     for ix in sorted(idxs["close"]):
         print("Deleting ", ix)

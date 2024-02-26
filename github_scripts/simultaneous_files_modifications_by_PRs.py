@@ -6,7 +6,6 @@ This is primarily used to avoid merge conflicts.
 
 import json
 import sys
-
 from subprocess import getstatusoutput as run_cmd
 
 

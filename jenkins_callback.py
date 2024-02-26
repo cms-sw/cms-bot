@@ -1,14 +1,15 @@
+from json import loads
+
 from _py2with3compatibility import (
-    Request,
-    urlopen,
-    urlencode,
-    build_opener,
-    install_opener,
     CookieJar,
     HTTPCookieProcessor,
     HTTPError,
+    Request,
+    build_opener,
+    install_opener,
+    urlencode,
+    urlopen,
 )
-from json import loads
 
 
 def update_crumb(jenkins_url, headers):

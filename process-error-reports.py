@@ -6,15 +6,17 @@
 # Parses github issues looking for past errors.
 # Updates past errors to match the current status.
 
+import hashlib
+import re
 from argparse import ArgumentParser
 from glob import glob
-from github import Github, Label
-from os.path import basename, join, expanduser, exists
-from _py2with3compatibility import run_cmd
-import re
-import hashlib
 from operator import itemgetter
+from os.path import basename, exists, expanduser, join
 from socket import setdefaulttimeout
+
+from github import Github, Label
+
+from _py2with3compatibility import run_cmd
 
 setdefaulttimeout(120)
 
@@ -28,8 +30,8 @@ FAILED_RE = "Step([0-9])-FAILED"
 # - Replace regexp special caratecters with their escaped counter parts
 # - Replace back @@@ to be "(.*)" for the matching
 def reEscape(s):
-    s = re.sub("%\([a-z_A-Z]+\)s", "@@@", s)
-    s = re.sub("([\[\]\(\)\*\+\.])", "\\\\\\1", s)
+    s = re.sub(r"%\([a-z_A-Z]+\)s", "@@@", s)
+    s = re.sub(r"([\[\]\(\)\*\+\.])", "\\\\\\1", s)
     s = s.replace("\n", "\\n")
     s = re.sub("@@@", "(.*)", s)
     return s
@@ -195,8 +197,8 @@ def understandFatalRootError(name, t, p, info):
         print("Log not found")
         return None
     print(len(log))
-    print(not "----- Begin Fatal Exception" in log)
-    if not "----- Begin Fatal Exception" in log:
+    print("----- Begin Fatal Exception" not in log)
+    if "----- Begin Fatal Exception" not in log:
         return None
     matcher = str(
         ".*An exception of category 'FatalRootError' occurred.*"
@@ -331,7 +333,7 @@ if __name__ == "__main__":
         for workflow, info in workflows.items():
             for step in info["steps"]:
                 (h, errorTitle, errorMessage) = understandError(name, t, p, info)
-                if not h in validErrorReport:
+                if h not in validErrorReport:
                     validErrorReport[h] = {
                         "queue": t,
                         "current_release": name,
@@ -363,7 +365,7 @@ if __name__ == "__main__":
         parts = tm.groups()
         queue, error_title, first_release, error_hash = parts
 
-        if not error_hash in pastIssues:
+        if error_hash not in pastIssues:
             pastIssues[error_hash] = {
                 "queue": queue,
                 "first_release": first_release,
@@ -392,7 +394,7 @@ if __name__ == "__main__":
     # - If an error was already reported, do not do anything.
     #
     for h, payload in validErrorReport.items():
-        if not h in pastIssues:
+        if h not in pastIssues:
             print("New error detected for %s. Will post a message" % payload["queue"])
             postNewMessage(dryRun=args.dryRun, repo=repo, labels=relvalIssueLabel, **payload)
             continue

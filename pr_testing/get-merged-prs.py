@@ -7,11 +7,12 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-from os import environ
-from os.path import dirname, basename, abspath, join
-from json import dumps, dump, load
-from optparse import OptionParser
+
 import sys
+from json import dump, dumps, load
+from optparse import OptionParser
+from os import environ
+from os.path import abspath, basename, dirname, join
 
 sys.path.append(dirname(dirname(abspath(__file__))))
 from github_utils import get_merge_prs

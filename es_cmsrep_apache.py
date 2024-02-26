@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-from sys import exit
 from datetime import datetime
-from time import mktime
-from es_utils import send_payload
 from hashlib import sha1
 from json import dumps
-from logwatch import logwatch, run_cmd, LOGWATCH_APACHE_IGNORE_AGENTS
+from sys import exit
+from time import mktime
+
+from es_utils import send_payload
+from logwatch import LOGWATCH_APACHE_IGNORE_AGENTS, logwatch, run_cmd
 
 
 def process(line, count):

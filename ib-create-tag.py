@@ -9,23 +9,22 @@ exec ${python_cmd} $0 ${1+"$@"}
 from __future__ import print_function
 
 import datetime
-from _py2with3compatibility import HTTPError
-from os.path import dirname, abspath
-from socket import setdefaulttimeout
 import sys
+from os.path import abspath, dirname
+from socket import setdefaulttimeout
 
+from _py2with3compatibility import HTTPError
+from categories import CMSSW_L1
 from cms_static import (
     GH_CMSSW_ORGANIZATION,
     GH_CMSSW_REPO,
 )
 from github_utils import (
-    get_git_tag,
     create_git_tag,
-    get_commits,
     find_tags,
+    get_commits,
+    get_git_tag,
 )
-
-from categories import CMSSW_L1
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))

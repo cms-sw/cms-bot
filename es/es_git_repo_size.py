@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
+import json
+import sys
 from hashlib import sha1
-import sys, json
+from os.path import abspath, dirname
 from time import time
-
-from os.path import dirname, abspath
 
 if __file__:
     cmsbot_dir = dirname(dirname(abspath(__file__)))
 else:
     cmsbot_dir = dirname(dirname(abspath(sys.argv[0])))
 sys.path.insert(0, cmsbot_dir)
-from es_utils import send_payload
 from _py2with3compatibility import run_cmd
+from es_utils import send_payload
 
 repo = sys.argv[1]
 e, o = run_cmd("git clone --bare https://github.com/%s.git repo" % repo)

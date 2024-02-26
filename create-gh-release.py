@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-import sys, json
+import json
+import sys
 from os.path import expanduser
+
 from _py2with3compatibility import Request, urlopen
 from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
 

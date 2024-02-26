@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from sys import argv
+
 from es_utils import es_send_external_stats
 
 if __name__ == "__main__":

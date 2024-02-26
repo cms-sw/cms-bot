@@ -1,6 +1,10 @@
 #!/bin/env python
 from __future__ import print_function
-import sys, json, os
+
+import json
+import os
+import sys
+
 from es_utils import send_payload
 
 timestp = os.path.getmtime(sys.argv[1])

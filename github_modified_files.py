@@ -5,14 +5,15 @@ Dumps to file to be loaded by other script.
 We assume that all PRs we are interested in are made for the master branch.
 """
 
-from github import Github
-from github_utils import *
-from os.path import expanduser
-
-from repo_config import GH_TOKEN
-from argparse import ArgumentParser
 import json
 import logging
+from argparse import ArgumentParser
+from os.path import expanduser
+
+from github import Github
+
+from github_utils import *
+from repo_config import GH_TOKEN
 
 # logger and logger config
 # https://docs.python.org/2/library/logger.html

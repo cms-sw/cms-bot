@@ -7,8 +7,10 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-from sys import exit, argv
+
 from os import environ
+from sys import argv, exit
+
 from cmsutils import cmsRunProcessCount, doCmd
 from logUpdater import LogUpdater
 

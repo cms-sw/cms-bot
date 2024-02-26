@@ -1,9 +1,8 @@
 import json
 import os
 import re
-from subprocess import getstatusoutput
 import time
-
+from subprocess import getstatusoutput
 
 jobs_config_path = "jenkins/parser/jobs-config.json"
 error_types = []
@@ -18,9 +17,9 @@ print("[TEST 1]: Checking that all jobs defined in jobs-config.json exist in Jen
 job_names = [jenkins_jobs[job_id]["jobName"] for job_id in range(len(jenkins_jobs))]
 
 _, output = getstatusoutput(
-    'curl -s https://raw.githubusercontent.com/cms-sw/cmssdt-wiki/master/jenkins_reports/All.md | grep "## \[.*\](.*"'
+    r'curl -s https://raw.githubusercontent.com/cms-sw/cmssdt-wiki/master/jenkins_reports/All.md | grep "## \[.*\](.*"'
 )
-valid_job_names = [re.sub("\]\(.*", "", item.replace("## [", "")) for item in output.split("\n")]
+valid_job_names = [re.sub(r"\]\(.*", "", item.replace("## [", "")) for item in output.split("\n")]
 # Check that valid_job_names contains all elements of job_names
 assert all(
     item in valid_job_names for item in job_names

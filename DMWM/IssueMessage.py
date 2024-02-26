@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
 import os
+from optparse import OptionParser
 
 from github import Github
-from optparse import OptionParser
 
 usage = "usage: %prog [options] message"
 parser = OptionParser(usage)

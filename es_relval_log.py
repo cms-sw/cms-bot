@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-from hashlib import sha1
-import os, sys, json, re
-from os.path import exists
-from es_utils import send_payload
+import json
+import os
+import re
+import sys
 import xml.etree.ElementTree as ET
+from hashlib import sha1
+from os.path import exists
+
 from cmsutils import cmsswIB2Week
+from es_utils import send_payload
 
 
 def find_step_cmd(cmdfile, step):
@@ -46,7 +50,7 @@ def es_parse_jobreport(payload, logFile):
         + ".xml"
     )
     if not os.path.exists(xmlFile):
-        if not "/JobReport1.xml" in xmlFile:
+        if "/JobReport1.xml" not in xmlFile:
             print("No JR File:", xmlFile)
         return payload
     payload["jobreport"] = "/".join(payload["url"].split("/")[:-1]) + "/" + xmlFile.split("/")[-1]
@@ -145,7 +149,7 @@ def es_parse_log(logFile):
             if " Initiating request to open file " in l:
                 try:
                     rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-                    if (not "file:" in rootfile) and (not rootfile in datasets):
+                    if ("file:" not in rootfile) and (rootfile not in datasets):
                         # if (i+2)<total_lines:
                         #  if (rootfile in lines[i+1]) and (rootfile in lines[i+2]) and ("Successfully opened file " in lines[i+1]) and ("Closed file " in lines[i+2]):
                         #    print "File read with no valid events: %s" % rootfile

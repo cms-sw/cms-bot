@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 from optparse import OptionParser
 from os.path import expanduser
+from socket import setdefaulttimeout
+
+from github import Github
+
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from github import Github
 from github_utils import port_pr
-from socket import setdefaulttimeout
 
 setdefaulttimeout(120)
 

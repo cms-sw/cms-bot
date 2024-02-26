@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from github import Github, GithubException
-from os.path import expanduser, dirname, abspath, join
+
 from optparse import OptionParser
-from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, GH_CMSDIST_REPO
-from sys import exit, argv
-from _py2with3compatibility import run_cmd
+from os.path import abspath, dirname, expanduser, join
 from socket import setdefaulttimeout
+from sys import argv, exit
+
+from github import Github, GithubException
+
+from _py2with3compatibility import run_cmd
+from cms_static import GH_CMSDIST_REPO, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
 from releases import CMSSW_DEVEL_BRANCH
 
 setdefaulttimeout(120)
@@ -19,7 +22,7 @@ except NameError:
 
 try:
     scriptPath = dirname(abspath(__file__))
-except Exception as e:
+except Exception:
     scriptPath = dirname(abspath(argv[0]))
 
 
@@ -41,7 +44,7 @@ def create_branch(repo, base_branch, new_branch, dryRun=False):
         print("Branch already exists: ", new_branch)
         return
     except GithubException as e:
-        if not "Branch not found" in e.data["message"]:
+        if "Branch not found" not in e.data["message"]:
             raise e
     if not dryRun:
         repo.create_git_ref("refs/heads/" + new_branch, base_ref.commit.sha)
@@ -137,7 +140,7 @@ def config_map_branches(new_br, dev_br, config_file):
             continue
         l = l.replace("RELEASE_BRANCH=master;", "RELEASE_BRANCH=%s;" % dev_br)
         new_config.append(l)
-        if ("RELEASE_BRANCH=" + dev_cyc in l) and (not "DISABLED=" in l):
+        if ("RELEASE_BRANCH=" + dev_cyc in l) and ("DISABLED=" not in l):
             cmssw_br = l.split("RELEASE_BRANCH=")[1].split(";")[0]
             cmssw_brs[cmssw_br] = cmssw_br.replace(dev_cyc, new_cyc)
             cmsdist_br = l.split("CMSDIST_TAG=")[1].split(";")[0]

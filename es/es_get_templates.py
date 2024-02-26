@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from os.path import dirname, abspath, join
+
 import sys
+from os.path import abspath, dirname, join
 
 cmsbot_dir = None
 if __file__:
@@ -9,9 +10,9 @@ if __file__:
 else:
     cmsbot_dir = dirname(dirname(abspath(sys.argv[0])))
 sys.path.insert(0, cmsbot_dir)
-from _py2with3compatibility import run_cmd
-
 import json
+
+from _py2with3compatibility import run_cmd
 from es_utils import get_template
 
 tmpl = json.loads(get_template())

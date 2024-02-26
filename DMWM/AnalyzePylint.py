@@ -24,7 +24,7 @@ with open("pylintReport.json", "r") as reportFile:
         fileReport = report[filename]
         if "test" in fileReport and "base" not in fileReport:
             testReport = fileReport["test"]
-            if not "score" in testReport:
+            if "score" not in testReport:
                 continue
             reportOn[filename] = True
             summaryMessage += "* New file %s with score %s, %s warnings, and %s errors\n" % (
@@ -36,7 +36,7 @@ with open("pylintReport.json", "r") as reportFile:
         if "test" in fileReport and "base" in fileReport:
             testReport = fileReport["test"]
             baseReport = fileReport["base"]
-            if not "score" in testReport or not "score" in baseReport:
+            if "score" not in testReport or "score" not in baseReport:
                 continue
             if (
                 float(testReport["score"]) < float(baseReport["score"])
@@ -61,7 +61,7 @@ with open("pylintReport.json", "r") as reportFile:
         fileReport = report[filename]
         if "test" in fileReport:
             testReport = fileReport["test"]
-            if not "score" in testReport:
+            if "score" not in testReport:
                 continue
             if float(testReport["score"]) < 8.0 or filename in reportOn:
                 if float(testReport["score"]) < 8.0:

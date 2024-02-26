@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
-import sys, re, json
+import json
+import re
+import sys
+from optparse import OptionParser
 from os import environ, popen
 from os.path import dirname, realpath
-from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option("--logfile")
@@ -17,7 +19,7 @@ def extract_data(inputfile):
         first_char = file.read(1)
         if not first_char:
             print("Error: Input file is empty"), sys.exit(1)
-        pattern = re.compile("^([a-z]+)\+([\w-]+)\+([\w.-]+)\s\(([\w]+)\)")
+        pattern = re.compile(r"^([a-z]+)\+([\w-]+)\+([\w.-]+)\s\(([\w]+)\)")
         matched_lines = [pattern.match(l) for l in file.readlines()]
         for line in matched_lines:
             if line:

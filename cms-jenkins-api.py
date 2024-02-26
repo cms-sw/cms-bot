@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # A script to communicate with jenkins in a secure way.
 from __future__ import print_function
+
 import json
-import sys
 import os
-from _py2with3compatibility import run_cmd
+import sys
 from argparse import ArgumentParser
+
+from _py2with3compatibility import run_cmd
 
 COOKIE_JAR = "~/private/ssocookie.txt"
 JENKINS_URL = "https://cmssdt.cern.ch/jenkins"

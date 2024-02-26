@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from es_utils import get_indexes, open_index, close_index, delete_index, send_request
-import sys
+
 import json
+import sys
 from time import sleep
+
+from es_utils import close_index, delete_index, get_indexes, open_index, send_request
 
 if __name__ == "__main__":
     pattern = sys.argv[1]

@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github
-from os.path import expanduser, abspath, dirname, join, exists
-import sys, re
+
+import re
+import sys
 from argparse import ArgumentParser
-from _py2with3compatibility import run_cmd, quote
+from os.path import abspath, dirname, exists, expanduser, join
+
+from github import Github
+
+from _py2with3compatibility import quote, run_cmd
 
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 

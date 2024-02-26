@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 from copy import deepcopy
 
 MSG_GCC_ABI_INCOMPETIBILITY = "GCC ABI incompetibility. GridPacks were built with gcc4"
@@ -177,7 +178,7 @@ KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
 
 
 def get_known_errors(release, architecture, test_type):
-    if not test_type in KNOWN_ERRORS:
+    if test_type not in KNOWN_ERRORS:
         return {}
     from re import match
 

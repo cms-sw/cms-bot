@@ -1,17 +1,19 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from _py2with3compatibility import run_cmd
-from os.path import dirname
-from xml.sax import parseString, ContentHandler
+
 import argparse
+import pickle
 import re
-from sys import exit
+import socket
+import struct
 import sys
 import time
-import pickle
-import struct
-import socket
 from datetime import date, timedelta
+from os.path import dirname
+from sys import exit
+from xml.sax import ContentHandler, parseString
+
+from _py2with3compatibility import run_cmd
 
 CARBON_SERVER = "0.0.0.0"
 CARBON_PORT = 2004
@@ -32,7 +34,7 @@ class JobReportHandler(ContentHandler):
         if name != "Metric":
             return
 
-        if not attrs["Name"] in self.counters:
+        if attrs["Name"] not in self.counters:
             return
         if "nan" in attrs["Value"]:
             return
@@ -86,7 +88,7 @@ def sendMetrics(metrics, server, port):
 def calculateFileSizeMetrics(release, architecture, timestamp, fullRelease, args):
     timestamp = time.mktime(timestamp)
     cmd = format(
-        "find %(base)s/vol*/%(architecture)s/cms/cmssw*/%(fullRelease)s/lib/%(architecture)s -name '*.so' -exec wc -c {} \; | sed -e 's|/.*/||;s|[.]so||'",
+        r"find %(base)s/vol*/%(architecture)s/cms/cmssw*/%(fullRelease)s/lib/%(architecture)s -name '*.so' -exec wc -c {} \; | sed -e 's|/.*/||;s|[.]so||'",
         base=IB_BASE_DIR,
         releasePath=releasePath,
         fullRelease=fullRelease,

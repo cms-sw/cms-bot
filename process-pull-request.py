@@ -2,15 +2,16 @@
 """
 Returns top commit of a PR (mostly used to comments)
 """
-from os.path import expanduser, dirname, abspath, join, exists
 from optparse import OptionParser
+from os.path import abspath, dirname, exists, expanduser, join
 from socket import setdefaulttimeout
+
 from github_utils import (
     api_rate_limits,
+    enable_github_loggin,
+    get_gh_token,
     get_pr_commits,
     get_pr_latest_commit,
-    get_gh_token,
-    enable_github_loggin,
 )
 
 setdefaulttimeout(120)

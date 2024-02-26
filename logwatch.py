@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from os.path import exists, join, basename, getmtime
-from sys import exit
-from _py2with3compatibility import getstatusoutput
+
 from hashlib import sha256
+from os.path import basename, exists, getmtime, join
+from sys import exit
 from time import time
+
+from _py2with3compatibility import getstatusoutput
 
 LOGWATCH_APACHE_IGNORE_AGENTS = [
     "www.google.com/bot.html",

@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-import datetime, json
-import sys
+import datetime
+import json
 import os
+import sys
 from hashlib import sha1
-from es_utils import get_payload_wscroll, send_payload, delete_hit
+
+from es_utils import delete_hit, get_payload_wscroll, send_payload
 
 JENKINS_PREFIX = "jenkins"
 try:
@@ -39,7 +41,7 @@ current_offline_nodes = []
 
 content_hash = get_payload_wscroll("cmssdt-jenkins-queue-*", query_pending_builds)
 if content_hash:
-    if (not "hits" in content_hash) or (not "hits" in content_hash["hits"]):
+    if ("hits" not in content_hash) or ("hits" not in content_hash["hits"]):
         print("ERROR: ", content_hash)
         sys.exit(1)
 
@@ -90,7 +92,7 @@ content_hash = get_payload_wscroll("cmssdt-jenkins-offline-node*", query_offline
 
 es_offline_nodes = []
 if content_hash:
-    if (not "hits" in content_hash) or (not "hits" in content_hash["hits"]):
+    if ("hits" not in content_hash) or ("hits" not in content_hash["hits"]):
         print("ERROR: ", content_hash)
         sys.exit(1)
 

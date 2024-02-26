@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 import re
-from sys import exit
 from datetime import datetime
-from time import mktime
-from es_utils import send_payload
 from hashlib import sha1
 from json import dumps
-from logwatch import logwatch, run_cmd, LOGWATCH_APACHE_IGNORE_AGENTS
+from sys import exit
+from time import mktime
+
+from es_utils import send_payload
+from logwatch import LOGWATCH_APACHE_IGNORE_AGENTS, logwatch, run_cmd
 
 
 def process(line, count):
@@ -35,7 +36,7 @@ def process(line, count):
     payload["@timestamp"] = int(tsec * 1000)
     if len(items) > 10:
         payload["referrer"] = items[10][1:-1]
-    if len(items) > 11 and re.match('^"[0-9]+(\.[0-9]+)+"$', items[11]):
+    if len(items) > 11 and re.match(r'^"[0-9]+(\.[0-9]+)+"$', items[11]):
         payload["ip"] = items[11][1:-1]
         if len(items) > 12:
             agent = " ".join(items[12:]).replace('"', "")

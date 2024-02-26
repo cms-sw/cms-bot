@@ -2,7 +2,7 @@
 import re
 import sys
 from argparse import ArgumentParser
-from os.path import dirname, abspath, join, exists
+from os.path import abspath, dirname, exists, join
 from socket import setdefaulttimeout
 
 import github
@@ -10,8 +10,8 @@ import github
 from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS
 from github_utils import api_rate_limits, get_gh_token, set_gh_user
 from process_pr import (
-    ISSUE_SEEN_MSG,
     CMSBOT_TECHNICAL_MSG,
+    ISSUE_SEEN_MSG,
     REGEX_COMMITS_CACHE,
     loads_maybe_decompress,
 )

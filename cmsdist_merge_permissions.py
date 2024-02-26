@@ -1,5 +1,5 @@
 # cmsdist/comp rules
-from re import match, IGNORECASE
+from re import IGNORECASE, match
 
 CMSSW_BRANCHES = "^IB/CMSSW_.+$"
 ALL_BRANCHES = ".+"
@@ -18,11 +18,11 @@ CMSDIST_PERMISSIONS = {
 }
 
 VALID_COMMENTS = {
-    "^(please(\s*,|)\s+|)merge$": "merge",
-    "^(please(\s*,|)\s+|)close$": "close",
-    "^(please(\s*,|)\s+|)(re|)open$": "open",
+    r"^(please(\s*,|)\s+|)merge$": "merge",
+    r"^(please(\s*,|)\s+|)close$": "close",
+    r"^(please(\s*,|)\s+|)(re|)open$": "open",
     "^ping$": "ping",
-    "^(please(\s*,|)\s+|)test$": "test",
+    r"^(please(\s*,|)\s+|)test$": "test",
 }
 
 
@@ -35,7 +35,7 @@ def getCommentCommand(comment):
 
 
 def hasRights(user, branch, type, files=[]):
-    if not user in CMSDIST_PERMISSIONS:
+    if user not in CMSDIST_PERMISSIONS:
         return False
     if not match(CMSDIST_PERMISSIONS[user][0], type):
         return False
@@ -54,9 +54,9 @@ def hasRights(user, branch, type, files=[]):
 
 
 def isValidWebHook(payload):
-    if not payload["repository"]["full_name"] in ["cms-sw/cmsdist"]:
+    if payload["repository"]["full_name"] not in ["cms-sw/cmsdist"]:
         return False
-    if not payload["comment"]["user"]["login"] in CMSDIST_PERMISSIONS.keys():
+    if payload["comment"]["user"]["login"] not in CMSDIST_PERMISSIONS.keys():
         return False
     comment_lines = [
         l.strip()

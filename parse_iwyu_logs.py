@@ -1,6 +1,8 @@
 #!/bin/env python
 from __future__ import print_function
-import sys, json
+
+import json
+import sys
 
 fd = open(sys.argv[1], "r")
 info = {}

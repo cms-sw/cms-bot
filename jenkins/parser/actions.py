@@ -1,11 +1,10 @@
+import datetime
 import functools
+import json
 import os
 import time
-import json
-import datetime
 
 import helpers
-
 
 email_addresses = "cms-sdt-logs@cern.ch"
 
@@ -57,7 +56,7 @@ def trigger_retry_action(
                 + job_to_retry
                 + " "
                 + build_to_retry
-                + " 'Retried\ by\ Jenkins'"
+                + r" 'Retried\ by\ Jenkins'"
             )
             print(update_label)
             os.system(update_label)
@@ -102,7 +101,7 @@ def trigger_retry_action(
             + job_to_retry
             + " "
             + build_to_retry
-            + " 'Build\ will\ be\ retried\ with\ some\ delay'"
+            + r" 'Build\ will\ be\ retried\ with\ some\ delay'"
         )
         print(update_label)
         os.system(update_label)
@@ -112,7 +111,7 @@ def trigger_retry_action(
 
 
 def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
-    nodeoff_msg = "'Node\ marked\ as\ offline\ beacuse\ of\ " + job_url + "'"
+    nodeoff_msg = r"'Node\ marked\ as\ offline\ beacuse\ of\ " + job_url + "'"
     take_nodeoff = (
         os.environ.get("JENKINS_CLI_CMD") + " offline-node " + node_name + " -m " + nodeoff_msg
     )
@@ -126,14 +125,14 @@ def trigger_nodeoff_action(job_to_retry, build_to_retry, job_url, node_name):
         + job_to_retry
         + " "
         + build_to_retry
-        + " 'Node\ marked\ as\ offline\ and\ job\ retried.\ Please,\ take\ the\ appropiate\ action\ and\ relaunch\ the\ node.\ Also,\ make\ sure\ that\ the\ job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
+        + r" 'Node\ marked\ as\ offline\ and\ job\ retried.\ Please,\ take\ the\ appropiate\ action\ and\ relaunch\ the\ node.\ Also,\ make\ sure\ that\ the\ job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
     )
     print(update_label)
     os.system(update_label)
 
 
 def trigger_reconnect_action(job_to_retry, build_to_retry, job_url, node_name):
-    nodeoff_msg = "'Node\ reconnected\ by\ " + job_url + "'"
+    nodeoff_msg = r"'Node\ reconnected\ by\ " + job_url + "'"
     disconnect_node = (
         os.environ.get("JENKINS_CLI_CMD") + " disconnect-node " + node_name + " -m " + nodeoff_msg
     )
@@ -151,7 +150,7 @@ def trigger_reconnect_action(job_to_retry, build_to_retry, job_url, node_name):
         + job_to_retry
         + " "
         + build_to_retry
-        + " 'Node\ has\ been\ forced\ to\ reconnect\ and\ job\ has\ been\ retried.\ Please,\ make\ sure\ that\ the\ node\ is\ in\ good\ state\ and job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
+        + r" 'Node\ has\ been\ forced\ to\ reconnect\ and\ job\ has\ been\ retried.\ Please,\ make\ sure\ that\ the\ node\ is\ in\ good\ state\ and job\ is\ running\ fine\ now.\ It\ might\ be\ queueing.'"
     )
     print(update_label)
     os.system(update_label)
@@ -231,7 +230,7 @@ def mark_build_as_retried(job_dir, job_to_retry, build_to_retry):
         "jenkins-test-retry",
         verbose=False,
     ):
-        label = "Retried'\ 'build"
+        label = r"Retried'\ 'build"
 
         update_label = (
             os.environ.get("JENKINS_CLI_CMD")
@@ -253,7 +252,7 @@ def update_no_action_label(job_to_retry, build_to_retry, job_url):
         + job_to_retry
         + " "
         + build_to_retry
-        + " '[No\ action\ has\ been\ taken\ by\ the\ parser\ job]'"
+        + r" '[No\ action\ has\ been\ taken\ by\ the\ parser\ job]'"
     )
     print(update_label)
     os.system(update_label)

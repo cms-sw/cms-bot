@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # test commit
-from github import Github, GithubException
-from os.path import expanduser
-from optparse import OptionParser
-from datetime import datetime
-from sys import exit
 import re
+from datetime import datetime
+from optparse import OptionParser
+from os.path import expanduser
 from socket import setdefaulttimeout
+from sys import exit
+
+from github import Github, GithubException
 
 setdefaulttimeout(120)
 

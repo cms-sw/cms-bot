@@ -2,11 +2,12 @@
 """
 Modifies last cmsbot message on Github
 """
-from github import Github
-from os.path import expanduser, dirname, abspath, join, exists
-from optparse import OptionParser
 import sys
+from optparse import OptionParser
+from os.path import abspath, dirname, exists, expanduser, join
 from socket import setdefaulttimeout
+
+from github import Github
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
@@ -61,18 +62,17 @@ if __name__ == "__main__":
         parser.error("Missing message to append")
     if not opts.msgtype:
         parser.error("Missing message type")
-    if not opts.msgtype in valid_types:
+    if opts.msgtype not in valid_types:
         parser.error("Invalid message type " + opts.msgtype)
 
     repo_dir = join(SCRIPT_DIR, "repos", opts.repository.replace("-", "_"))
     if exists(join(repo_dir, "repo_config.py")):
         sys.path.insert(0, repo_dir)
     import repo_config
-    from process_pr import modify_comment, find_last_comment
-    from process_pr import TRIGERING_TESTS_MSG, TRIGERING_STYLE_TEST_MSG
+    from process_pr import TRIGERING_STYLE_TEST_MSG, TRIGERING_TESTS_MSG, find_last_comment, modify_comment
 
-    valid_types["JENKINS_TEST_URL"] = ["^\s*" + TRIGERING_TESTS_MSG + ".*$", None]
-    valid_types["JENKINS_STYLE_URL"] = ["^\s*" + TRIGERING_STYLE_TEST_MSG + ".*$", None]
+    valid_types["JENKINS_TEST_URL"] = [r"^\s*" + TRIGERING_TESTS_MSG + ".*$", None]
+    valid_types["JENKINS_STYLE_URL"] = [r"^\s*" + TRIGERING_STYLE_TEST_MSG + ".*$", None]
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
     issue = gh.get_repo(opts.repository).get_issue(int(args[0]))
     last_comment = find_last_comment(

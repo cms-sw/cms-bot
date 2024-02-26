@@ -7,6 +7,7 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
+
 import glob
 import os
 import re
@@ -21,8 +22,8 @@ sys.path.insert(0, CMS_BOT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
 from _py2with3compatibility import run_cmd
 from cmsutils import MachineCPUCount
-from RelValArgs import GetMatrixOptions, FixWFArgs
-from es_utils import es_query, format, es_workflow_stats
+from es_utils import es_query, es_workflow_stats, format
+from RelValArgs import FixWFArgs, GetMatrixOptions
 
 
 def createJob(workflow, cmssw_ver, arch):
@@ -98,7 +99,7 @@ while True:
         end_time=1000 * int(time()),
         scroll=True,
     )
-    if (not "hits" in stats) or (not "hits" in stats["hits"]) or (not stats["hits"]["hits"]):
+    if ("hits" not in stats) or ("hits" not in stats["hits"]) or (not stats["hits"]["hits"]):
         xrelease_cycle = str.lower("_".join(cmssw_ver.split("_", 4)[0:3]) + "_X")
         if xrelease_cycle != release_cycle:
             release_cycle = xrelease_cycle
@@ -133,7 +134,7 @@ for cmds_log in o.split("\n"):
                 "cpu": 300,
                 "rss": 4.5 * 1024 * 1024 * 1024,
                 "time": 120,
-                "command": re.sub("\s*;\s*$", "", c.split(":", 1)[-1]),
+                "command": re.sub(r"\s*;\s*$", "", c.split(":", 1)[-1]),
             }
             step = c.split(":")[0]
             if (wf in wf_stats) and (step in wf_stats[wf]):

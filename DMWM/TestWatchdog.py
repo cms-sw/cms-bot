@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
 import glob
-import psutil
 import sys
 import time
 
+import psutil
 from psutil import AccessDenied, NoSuchProcess
 
 time.sleep(60)
@@ -38,6 +38,7 @@ while not testPid:
 noXMLTime = time.time()
 while True:
     foundXML = False
+    # noinspection PyBroadException
     try:
         time.sleep(10)
         process = psutil.Process(testPid)
@@ -57,7 +58,7 @@ while True:
                 process.terminate()
                 time.sleep(10)
                 process.kill()
-    except:
+    except Exception:
         sys.exit(0)
 
 sys.exit(0)

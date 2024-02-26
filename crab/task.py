@@ -1,5 +1,8 @@
+import os
+import re
+import time
+
 from CRABClient.UserUtilities import config
-import os, re, time
 
 archs = os.environ["SCRAM_ARCH"].split("_")
 osMajorVer = int(re.sub("[a-z]", "", archs[0]))

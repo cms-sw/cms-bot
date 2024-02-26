@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from os.path import dirname, abspath
-import sys, re
+
+import re
+import sys
+from os.path import abspath, dirname
 
 # TODO are these script used?
 cmsbot_dir = None
@@ -11,8 +13,9 @@ else:
     cmsbot_dir = dirname(dirname(abspath(sys.argv[0])))
 sys.path.insert(0, cmsbot_dir)
 
-from es_utils import get_indexes, close_index, find_indexes, open_index
 from time import time
+
+from es_utils import close_index, find_indexes, get_indexes, open_index
 
 try:
     weeks = int(sys.argv[1])
@@ -28,7 +31,7 @@ try:
     if sys.argv[2]:
         for ix in sys.argv[2:]:
             ixs = find_indexes(ix)
-            if not "open" in ixs:
+            if "open" not in ixs:
                 continue
             for i in ixs["open"]:
                 idxs.append(i)
@@ -38,13 +41,13 @@ except:
     ixs = find_indexes("cmssdt-*")
     for k in ixs:
         for idx in ixs[k]:
-            m = re.match("^(.+)[_-]([\d]+)$", idx)
+            m = re.match(r"^(.+)[_-]([\d]+)$", idx)
             if m:
                 ix = m.group(1)
                 wk = m.group(2)
-                if not k in types:
+                if k not in types:
                     types[k] = {}
-                if not ix in types[k]:
+                if ix not in types[k]:
                     types[k][ix] = []
                 types[k][ix].append(wk)
                 if ix in ignore_index:
@@ -54,7 +57,7 @@ except:
                 if (k == "close") and ((cur_week - int(wk)) <= weeks):
                     odxs.append(idx)
             else:
-                if not k in rest:
+                if k not in rest:
                     rest[k] = []
                 rest[k].append(idx)
     for k in rest:

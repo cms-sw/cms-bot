@@ -2,13 +2,15 @@
 # This script can be used to sync the production releases which are
 # declared as announced in the tag collector and
 from __future__ import print_function
+
 from optparse import OptionParser
-from _py2with3compatibility import run_cmd
-from sys import exit
 
 # Apparently there are many ways to import json, depending on the python
 # version. This should make sure you get one.
-from os.path import join, dirname
+from os.path import dirname, join
+from sys import exit
+
+from _py2with3compatibility import run_cmd
 
 HOME_DIR = dirname(__file__)
 

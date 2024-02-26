@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import re
-from os import environ, uname
-from os.path import dirname, abspath
+from os import environ
+from os.path import abspath, dirname
+
 from _py2with3compatibility import run_cmd
 
 monitor_script = ""
@@ -33,7 +35,7 @@ RELVAL_KEYS = {
 }
 THREADED_ROOT = "NON_THREADED_CMSSW"
 THREADED_IBS = "NON_THREADED_CMSSW"
-if not "CMSSW_NON_THREADED" in environ:
+if "CMSSW_NON_THREADED" not in environ:
     THREADED_ROOT = "CMSSW_9_[1-9]_ROOT6_X_.+"
     THREADED_IBS = "CMSSW_(8_[1-9][0-9]*|(9|[1-9][0-9]+)_[0-9]+)_.+:([a-z]+)([6-9]|[1-9][0-9]+)_[^_]+_gcc(5[3-9]|[6-9]|[1-9][0-9])[0-9]*"
 RELVAL_KEYS["customiseWithTimeMemorySummary"].append(
@@ -139,7 +141,7 @@ def GetMatrixOptions(release, arch, dasfile=None):
         cmd = cmd.replace(m.group(1), val)
         m = re.search("(@([a-zA-Z_]+)@)", cmd)
 
-    return re.sub("\s+", " ", cmd)
+    return re.sub(r"\s+", " ", cmd)
 
 
 def FixWFArgs(release, arch, wf, args):

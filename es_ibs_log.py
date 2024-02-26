@@ -1,15 +1,19 @@
 #!/bin/env python3
 from __future__ import print_function
 
-from hashlib import sha1
-import os, json, datetime, sys
+import datetime
+import json
+import os
+import sys
+import traceback
 from glob import glob
-from os.path import exists, dirname, getmtime
-from es_utils import send_payload
+from hashlib import sha1
+from os.path import dirname, exists, getmtime
+
 from _py2with3compatibility import run_cmd
 from cmsutils import cmsswIB2Week
-from logreaderUtils import transform_and_write_config_file, add_exception_to_config, ResultTypeEnum
-import traceback
+from es_utils import send_payload
+from logreaderUtils import ResultTypeEnum, add_exception_to_config, transform_and_write_config_file
 
 
 def sha1hexdigest(data):
@@ -19,7 +23,7 @@ def sha1hexdigest(data):
 def send_unittest_dataset(datasets, payload, id, index, doc):
     for ds in datasets:
         print("Processing ", ds)
-        if not "root://" in ds:
+        if "root://" not in ds:
             continue
         ds_items = ds.split("?", 1)
         ds_items.append("")
@@ -55,7 +59,7 @@ def process_unittest_log(logFile):
             "control_type": ResultTypeEnum.ISSUE,
         },
         {
-            "str_to_match": '===== Test "([^\s]+)" ====',
+            "str_to_match": r'===== Test "([^\s]+)" ====',
             "name": "{0}",
             "control_type": ResultTypeEnum.TEST,
         },
@@ -79,7 +83,7 @@ def process_unittest_log(logFile):
             elif " Initiating request to open file " in l:
                 try:
                     rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-                    if (not "file:" in rootfile) and (not rootfile in datasets):
+                    if ("file:" not in rootfile) and (rootfile not in datasets):
                         datasets.append(rootfile)
                 except Exception as e:
                     print("ERROR: ", logFile, e)
@@ -112,7 +116,7 @@ def process_addon_log(logFile):
             if " Initiating request to open file " in l:
                 try:
                     rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-                    if (not "file:" in rootfile) and (not rootfile in datasets):
+                    if ("file:" not in rootfile) and (rootfile not in datasets):
                         datasets.append(rootfile)
                 except:
                     pass
@@ -141,7 +145,7 @@ def process_hlt_log(logFile):
             if " Initiating request to open file " in l:
                 try:
                     rootfile = l.split(" Initiating request to open file ")[1].split(" ")[0]
-                    if (not "file:" in rootfile) and (not rootfile in datasets):
+                    if ("file:" not in rootfile) and (rootfile not in datasets):
                         datasets.append(rootfile)
                 except:
                     pass

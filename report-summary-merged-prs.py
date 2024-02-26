@@ -3,21 +3,23 @@
 This script generates json file (like CMSSW_10_0_X.json) which is then used to render cmssdt ib page.
 """
 from __future__ import print_function
-from optparse import OptionParser
-import subprocess
-import re
-import json
-from pickle import Unpickler
-from os.path import basename, dirname, exists, join, expanduser, getmtime
-from glob import glob
-from github import Github
-from pprint import pformat
 
+import json
+import re
+import subprocess
+from glob import glob
+from optparse import OptionParser
+from os.path import basename, dirname, exists, expanduser, getmtime, join
+from pickle import Unpickler
+from pprint import pformat
+from socket import setdefaulttimeout
+
+from github import Github
+
+from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
 from cmsutils import get_config_map_properties
 from github_utils import get_merge_prs
-from cms_static import GH_CMSSW_REPO, GH_CMSSW_ORGANIZATION
 from releases import CMSSW_DEVEL_BRANCH
-from socket import setdefaulttimeout
 
 setdefaulttimeout(120)
 CMSSW_REPO_NAME = join(GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO)
@@ -974,7 +976,7 @@ def find_material_budget_results(comparisons, architecture):
         else:
             comp["material_budget"] = arch + ":" + comparison
         comp["material_budget_v2"] = {"status": status, "arch": arch}
-        if (comparison is None) or (comparison is "-1"):
+        if (comparison is None) or (comparison == "-1"):
             pass
         elif comparison == "0":
             comp["material_budget_comparison"] = {"status": "found", "results": "ok", "arch": arch}
@@ -1498,7 +1500,7 @@ def identify_release_groups(results):
         if not group:
             group = [prefix, []]
             groups.append(group)
-        if not item[0] in group[1]:
+        if item[0] not in group[1]:
             group[1].append(item[0])
 
     structure = {"all_release_queues": [], "all_prefixes": [], "default_release": ""}
@@ -1926,7 +1928,7 @@ if __name__ == "__main__":
     ubsan_data = {}
     out, err, rcode = get_output_command("wc -l %s" % CHECK_UBSANLOG_PATH)
     for line in out.split("\n"):
-        if not "/CMSSW_" in line:
+        if "/CMSSW_" not in line:
             continue
         print("UBSAN", line)
         count, rel = line.strip().split(" ", 1)

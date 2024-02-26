@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github
+
 from os.path import expanduser
+
+from github import Github
+
 from repo_config import GH_TOKEN
 
 

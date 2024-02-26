@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-from optparse import OptionParser
 import json
 import re
-from github_utils import github_api, get_gh_token
-from collections import namedtuple
-from os.path import expanduser, join, exists
-from hashlib import md5
 import time
+from collections import namedtuple
+from hashlib import md5
+from optparse import OptionParser
+from os.path import exists, expanduser, join
 
-RX_RELEASE = re.compile("CMSSW_(\d+)_(\d+)_(\d+)(_pre[0-9]+)*(_cand[0-9]+)*(_patch[0-9]+)*")
+from github_utils import get_gh_token, github_api
+
+RX_RELEASE = re.compile(r"CMSSW_(\d+)_(\d+)_(\d+)(_pre[0-9]+)*(_cand[0-9]+)*(_patch[0-9]+)*")
 RX_AUTHOR = re.compile("(.*)(@[a-zA-Z-_0-9]+)")
-RX_COMPARE = re.compile("(https://github.*compare.*\.\.\..*)")
-RX_COMMIT = re.compile("^-\s+(:arrow_right:\s*|)([^/]+\/[^/]+|)\#(\d{0,5})( from.*)")
+RX_COMPARE = re.compile(r"(https://github.*compare.*\.\.\..*)")
+RX_COMMIT = re.compile(r"^-\s+(:arrow_right:\s*|)([^/]+\/[^/]+|)\#(\d{0,5})( from.*)")
 
 Release = namedtuple(
     "Release", ["major", "minor", "subminor", "pre", "cand", "patch", "published_at"]
@@ -78,7 +79,7 @@ def getReleasesNotes(opts):
             error_releases[rel_name] = "Does not match release regexp:" + rel_id
             print("  Skipping release (does not match release regexp):", rel_name)
             continue
-        if (not "body" in release) or (not release["body"]):
+        if ("body" not in release) or (not release["body"]):
             error_releases[rel_name] = "Empty release body message:" + rel_id
             print("  Skipping release (empty release body message):", rel_name)
             continue

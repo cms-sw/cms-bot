@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-from github import Github
-from os.path import expanduser, exists, join, dirname, abspath
-from os import environ
-from optparse import OptionParser
-from github_hooks_config import get_repository_hooks, get_event_hooks
-from github_utils import api_rate_limits
 import hashlib
-from categories import EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS
-from sys import argv
+from optparse import OptionParser
+from os import environ
+from os.path import abspath, dirname, exists, expanduser, join
 from socket import setdefaulttimeout
+from sys import argv
+
+from github import Github
+
+from categories import CMSDIST_REPOS, CMSSW_REPOS, EXTERNAL_REPOS
+from github_hooks_config import get_event_hooks, get_repository_hooks
+from github_utils import api_rate_limits
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(argv[0]))
@@ -32,7 +34,7 @@ def match_config(new, old):
     elif set(new["events"]) != set(old.events):
         return False
     for key in new["config"]:
-        if (not key in old.config) or (key != "secret" and new["config"][key] != old.config[key]):
+        if (key not in old.config) or (key != "secret" and new["config"][key] != old.config[key]):
             return False
     return True
 
@@ -138,7 +140,7 @@ if __name__ == "__main__":
     # get repos to be processed
     repos = {}
     for r in set(repos_names):
-        if not "/" in r:
+        if "/" not in r:
             for repo in ghx.get_user(r).get_repos():
                 repos[repo.full_name] = repo
             api_rate_limits(ghx)

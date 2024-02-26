@@ -1,4 +1,4 @@
-from os.path import basename, dirname, abspath
+from os.path import abspath, basename, dirname
 
 CONFIG_DIR = dirname(abspath(__file__))
 GITHUB_WEBHOOK_TOKEN = "U2FsdGVkX1+8ckT0H3wKIUb59hZQrF5PZ2VlBxYyFek="

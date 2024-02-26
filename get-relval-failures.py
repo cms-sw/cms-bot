@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+
 from es_utils import get_payload_wscroll
 
 parser = argparse.ArgumentParser()
@@ -21,7 +22,7 @@ query_relval_failures = """{
 content_hash = get_payload_wscroll("cmssdt-ib-matrix-*", query_relval_failures)
 
 if content_hash:
-    if (not "hits" in content_hash) or (not "hits" in content_hash["hits"]):
+    if ("hits" not in content_hash) or ("hits" not in content_hash["hits"]):
         print("ERROR: ", content_hash)
         sys.exit(1)
 

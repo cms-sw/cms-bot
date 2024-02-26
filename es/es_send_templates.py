@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import json
 import sys
-from os.path import dirname, abspath, join, exists
+from os.path import abspath, dirname, exists, join
 
 cmsbot_dir = None
 if __file__:

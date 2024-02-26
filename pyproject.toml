@@ -14,7 +14,7 @@ lint.select = [
   # see: isort
   "I",
 ]
-lint.ignore = ["E501"]
+lint.ignore = ["E501", "E741"]
 lint.ignore-init-module-imports = true
 lint.unfixable = ["F401"]
 

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+import json
+import re
 from optparse import OptionParser
 from os.path import exists, expanduser, join
-from _py2with3compatibility import run_cmd, Request, urlopen, HTTPError
-from github import Github
-import json
-from sys import exit
-import re
-from cms_static import GH_CMSSW_REPO, GH_CMSDIST_REPO, GH_CMSSW_ORGANIZATION
-from github_utils import prs2relnotes, get_merge_prs, get_release_by_tag
 from socket import setdefaulttimeout
+from sys import exit
+
+from github import Github
+
+from _py2with3compatibility import HTTPError, Request, run_cmd, urlopen
 from categories import get_dpg_pog
+from cms_static import GH_CMSDIST_REPO, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
+from github_utils import get_merge_prs, get_release_by_tag, prs2relnotes
 
 setdefaulttimeout(120)
 CMSDIST_REPO_NAME = join(GH_CMSSW_ORGANIZATION, GH_CMSDIST_REPO)

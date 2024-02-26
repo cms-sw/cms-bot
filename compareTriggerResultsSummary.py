@@ -4,10 +4,11 @@ Script to summarise the outputs of compareTriggerResults
 (i.e. the outputs of hltDiff in .json format)
 """
 from __future__ import print_function
+
 import argparse
-import os
-import json
 import glob
+import json
+import os
 
 
 def KILL(message):

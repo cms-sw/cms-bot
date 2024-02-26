@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from hashlib import sha1
-import os, re, sys, json, datetime, time, functools
-import xml.etree.ElementTree as ET
+
+import datetime
+import functools
+import json
+import os
+import re
 import subprocess
-from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
+import sys
+import time
+import xml.etree.ElementTree as ET
+from hashlib import sha1
+
+from es_utils import get_payload, get_payload_wscroll, resend_payload, send_payload
 
 JENKINS_PREFIX = "jenkins"
 try:
@@ -134,7 +142,7 @@ except ValueError:
 es_queue = dict()
 es_indexes = dict()
 if elements_inqueue:
-    if (not "hits" in elements_inqueue) or (not "hits" in elements_inqueue["hits"]):
+    if ("hits" not in elements_inqueue) or ("hits" not in elements_inqueue["hits"]):
         print("ERROR: ", elements_inqueue)
     for entry in elements_inqueue["hits"]["hits"]:
         es_indexes[entry["_id"]] = entry["_index"]
@@ -214,7 +222,7 @@ queue_content_hash = get_payload_wscroll("cmssdt-jenkins-queue*", query_inqueue0
 es_queue = dict()
 es_indexes = dict()
 for entry in queue_content_hash["hits"]["hits"]:
-    if not "queue_id" in entry["_source"]:
+    if "queue_id" not in entry["_source"]:
         continue
     queue_id = entry["_source"]["queue_id"]
     entry["_source"]["queue_hash"] = entry["_id"]
@@ -225,7 +233,7 @@ print("[INFO] Checking status of running/finished builds ...")
 all_local = []
 path = "/build/builds"
 document = "builds-data"
-rematch = re.compile(".*/\d+$")
+rematch = re.compile(r".*/\d+$")
 for root, dirs, files in os.walk(path):
     if rematch.match(root):
         logFile = root + "/build.xml"
@@ -329,13 +337,13 @@ content_hash = get_payload_wscroll("jenkins-*", query_running_builds)
 if not content_hash:
     running_builds_elastic = {}
 else:
-    if (not "hits" in content_hash) or (not "hits" in content_hash["hits"]):
+    if ("hits" not in content_hash) or ("hits" not in content_hash["hits"]):
         print("ERROR: ", content_hash)
         sys.exit(1)
     print("Found:", len(content_hash["hits"]["hits"]))
     for hit in content_hash["hits"]["hits"]:
         if hit["_index"].startswith("cmssdt-jenkins-jobs-"):
-            if not "jenkins_server" in hit["_source"]:
+            if "jenkins_server" not in hit["_source"]:
                 hit["_source"]["jenkins_server"] = JENKINS_PREFIX
             if hit["_source"]["jenkins_server"] != JENKINS_PREFIX:
                 continue

@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
+import json
 import sys
-from os.path import exists, dirname, abspath
-import yaml, json
+from os.path import abspath, dirname, exists
+
+import yaml
 
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CDumper as Dumper
+    from yaml import CLoader as Loader
 except ImportError:
-    from yaml import Loader, Dumper
-from sys import exit
+    from yaml import Dumper, Loader
 from optparse import OptionParser
+from sys import exit
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd

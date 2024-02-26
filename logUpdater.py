@@ -7,10 +7,12 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
+
 import os
-from os.path import dirname, abspath, join
-from cmsutils import doCmd, getIBReleaseInfo
+from os.path import abspath, dirname, join
 from time import sleep
+
+from cmsutils import doCmd, getIBReleaseInfo
 
 SCRIPT_DIR = dirname(abspath(__file__))
 

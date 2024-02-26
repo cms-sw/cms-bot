@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from os.path import dirname, abspath
+import json
+import sys
+from os.path import abspath, dirname
 from sys import argv
 from time import time
-import json, sys
 
 cmsbot_dir = None
 if __file__:
@@ -11,8 +12,8 @@ else:
     cmsbot_dir = dirname(dirname(abspath(argv[0])))
 sys.path.insert(0, cmsbot_dir)
 
-from es_utils import es_query
 from _py2with3compatibility import run_cmd
+from es_utils import es_query
 
 if __name__ == "__main__":
     from optparse import OptionParser

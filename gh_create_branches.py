@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github, GithubException
-from os.path import expanduser
+
 from argparse import ArgumentParser
+from os.path import expanduser
+from socket import setdefaulttimeout
+
+from github import Github, GithubException
+
+from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from cms_static import GH_CMSDIST_REPO as gh_cmsdist
-from socket import setdefaulttimeout
 
 setdefaulttimeout(120)
 
@@ -20,7 +23,7 @@ def create_branch(repo, src_branch, des_branch, dryRun=False):
         print("  Branch already exists: ", des_branch)
         return
     except GithubException as e:
-        if not "Branch not found" in e.data["message"]:
+        if "Branch not found" not in e.data["message"]:
             raise e
     if not dryRun:
         repo.create_git_ref("refs/heads/" + des_branch, base_ref.commit.sha)

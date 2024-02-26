@@ -4,20 +4,24 @@ This job will check if there are queued jobs for jenkins slaves with 'condor' la
 Then it will kill needed amount of placeholder jobs.
 """
 from __future__ import print_function
+
+import re
+import sys
+from os.path import abspath, dirname, exists, join
 from pprint import pprint
-import re, sys
-from os.path import dirname, abspath, join, exists
 
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 CMS_BOT_DIR = dirname(SCRIPT_DIR)
 sys.path.insert(0, CMS_BOT_DIR)
-from xml.etree import cElementTree as ET
-import requests
 from collections import defaultdict
 from os import environ
+from xml.etree import cElementTree as ET
+
+import requests
+
 from _py2with3compatibility import run_cmd
 
-RX_Project = re.compile(".+\/job\/(.+)\/(\d+)\/")
+RX_Project = re.compile(r".+\/job\/(.+)\/(\d+)\/")
 RX_Queue_why = re.compile("^Waiting for next available executor.*\u2018(.*)\u2019")
 RX_Queue_nolabel = re.compile("^There are no nodes with the label.*\u2018(.*)\u2019")
 JENKINS_URL = environ["LOCAL_JENKINS_URL"]

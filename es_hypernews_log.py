@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-from _py2with3compatibility import run_cmd
-import re, sys, datetime
-from es_utils import send_payload
+import datetime
+import re
+import sys
 from json import dumps
+
+from _py2with3compatibility import run_cmd
+from es_utils import send_payload
 
 
 def cust_strip(str_in):
@@ -27,8 +30,8 @@ def map_int_val(pair):
 
 
 # get relevant info
-match_hn = re.compile(".*\|\/.*emails")
-match_tmp = re.compile(".*\|\/.*Time\(s\)")
+match_hn = re.compile(r".*\|\/.*emails")
+match_tmp = re.compile(r".*\|\/.*Time\(s\)")
 temp_fails = []
 egrps = []
 payload = {}

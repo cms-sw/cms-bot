@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import sys
+
 import re
+import sys
 
 unknown = 0
 
 
 def fix_file(line):
     global unknown
-    m = re.match('^(\s*INSERT\s+INTO\s+files\s+VALUES\s+\((\d+),\s*["])([^"]*)(["].*$)', line)
+    m = re.match(r'^(\s*INSERT\s+INTO\s+files\s+VALUES\s+\((\d+),\s*["])([^"]*)(["].*$)', line)
     if m:
         xf = m.group(3)
         if xf:

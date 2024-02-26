@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from optparse import OptionParser
-from github import Github
-from os.path import expanduser
-import requests
+
 import json
+from optparse import OptionParser
+from os.path import expanduser
 from socket import setdefaulttimeout
+
+import requests
+from github import Github
 
 setdefaulttimeout(120)
 from os import environ

@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import print_function
+
+from os import environ
 from os.path import abspath, dirname
 from sys import argv, exit, path
-from os import environ
 
 path.append(dirname(dirname(dirname(abspath(__file__)))))  # in order to import top level modules
-from _py2with3compatibility import run_cmd, Request, urlopen, quote_plus
+from _py2with3compatibility import Request, quote_plus, run_cmd, urlopen
 
 repo = argv[1]
 e, o = run_cmd(

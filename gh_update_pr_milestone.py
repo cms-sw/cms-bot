@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github, GithubException
-from sys import exit
-from os.path import expanduser
+
 from argparse import ArgumentParser
+from os.path import expanduser
+from socket import setdefaulttimeout
+from sys import exit
+
+from github import Github, GithubException
+
 from cms_static import GH_CMSSW_ORGANIZATION as gh_user
 from cms_static import GH_CMSSW_REPO as gh_cmssw
-from socket import setdefaulttimeout
 
 setdefaulttimeout(120)
 

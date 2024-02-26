@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from os.path import dirname, abspath
+
 import sys
+from os.path import abspath, dirname
 
 sys.path.append(dirname(dirname(abspath(__file__))))
-from hashlib import sha1
 import json
-from es_utils import send_payload
+from hashlib import sha1
+
 from _py2with3compatibility import run_cmd
 from cmsutils import cmsswIB2Week
+from es_utils import send_payload
 
 err, logs = run_cmd(
     "find /data/sdt/SDT/jenkins-artifacts/cmssw-afs-eos-comparison -mindepth 1 -maxdepth 1 -name '*.json' -type f"

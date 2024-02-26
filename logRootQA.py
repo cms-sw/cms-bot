@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from fnmatch import fnmatch
+
+import json
 import os
 import re
-import sys
-import json
 import subprocess as sub
+import sys
+from fnmatch import fnmatch
 
 Log_Lines_Filter = [
     ("This TensorFlow binary is optimized with"),
@@ -50,7 +51,7 @@ def getCommonFiles(d1, d2, pattern):
 
 
 def getWorkflow(f):
-    m = re.search("/\d+\.\d+_", f)
+    m = re.search(r"/\d+\.\d+_", f)
     if not m:
         return "(none)"
     return m.group().replace("/", "").replace("_", "")
@@ -72,16 +73,16 @@ def filteredLines(f):
     retval = {}
     for l in openfile(f):
         # look for and remove timestamps
-        l = re.sub("20\d\d-\d\d-\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
-        l = re.sub("\d\d-(\d\d|[A-ZA-z]{3})-20\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
+        l = re.sub(r"20\d\d-\d\d-\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
+        l = re.sub(r"\d\d-(\d\d|[A-ZA-z]{3})-20\d\d \d\d:\d\d:\d\d(\.\d+|)", "DATETIME", l)
         if "Begin processing the" in l:
-            l = re.sub(" on stream \d", " on stream N", l)
+            l = re.sub(r" on stream \d", " on stream N", l)
         sl = l.strip()
         skip = False
         for data in Log_Lines_Filter:
             skip = True
             for s in data:
-                if not s in sl:
+                if s not in sl:
                     skip = False
                     break
             if not skip:
@@ -216,7 +217,7 @@ def checkDQMSize(r1, r2, diff, wfs):
         ]
     )
     lines = output.splitlines()
-    total = re.search("-?\d+\.\d+", lines[-1])
+    total = re.search(r"-?\d+\.\d+", lines[-1])
     if not total:
         print("Weird output", r1)
         print(output)
@@ -226,7 +227,7 @@ def checkDQMSize(r1, r2, diff, wfs):
     print(lines, diff)
     maxdiff = 10
     for line in lines:
-        if re.match("\s*-?\d+.*", line):  # normal output line
+        if re.match(r"\s*-?\d+.*", line):  # normal output line
             if line not in diff:
                 if len(diff) == maxdiff:
                     diff.append(" ... <truncated>")
@@ -256,7 +257,7 @@ def summaryJR(jrDir):
     for d, subdir, files in os.walk(jrDir):
         if not d.split("/")[-1].startswith("all_"):
             continue
-        if not "_" in d:
+        if "_" not in d:
             continue
         relative_d = d.replace(root, "")
         diffs = [file for file in files if file.endswith(".png")]

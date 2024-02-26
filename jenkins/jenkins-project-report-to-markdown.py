@@ -14,7 +14,7 @@ parents = defaultdict(list)
 
 # global parameters
 jenkins_home = "https://cmssdt.cern.ch/jenkins/"
-split_pat = "\*"  # to match bullet list in markdown
+split_pat = r"\*"  # to match bullet list in markdown
 
 # markdown_output_dir = '/tmp/jenkins_reports/'
 markdown_output_dir_name = "jenkins_reports"
@@ -230,7 +230,7 @@ def main(args):
             while is_old_line:
                 try:
                     line = next(summary_iterator)
-                except Exception as e:
+                except Exception:
                     # no more lines to read
                     end_of_file = True
                     break

@@ -4,7 +4,7 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../"))
 
-from logreaderUtils import transform_and_write_config_file, add_exception_to_config, ResultTypeEnum
+from logreaderUtils import ResultTypeEnum, add_exception_to_config, transform_and_write_config_file
 
 unittestlog = """
 ===== Test "Para_" ====
@@ -18,9 +18,9 @@ Running .
 OK (1)
 
 ---> test Para_ succeeded
- 
+
 ^^^^ End Test Para_ ^^^^
- 
+
 ===== Test "Cons_" ====
 Running .
  zhalf=20 rIn-Z=10 rOut-Z=15 rIn+Z=20 rOut+Z=25 startPhi=0 deltaPhi=90
@@ -38,9 +38,9 @@ Failures !!!
 Run: 1   Failure total: 1   Failures: 1   Errors: 0
 
 ---> test Cons_ had ERRORS
- 
+
 ^^^^ End Test Cons_ ^^^^
- 
+
 ===== Test "Sphere_" ====
 Running .
  innerRadius=10 outerRadius=15 startPhi=0 deltaPhi=90 startTheta=0 deltaTheta=180
@@ -52,9 +52,9 @@ Running .
 OK (1)
 
 ---> test Sphere_ succeeded
- 
+
 ^^^^ End Test Sphere_ ^^^^
- 
+
 ===== Test "ExtrudedPolygon_" ====
 Running . XY Points[cm]=-30, -30; -30, 30; 30, 30; 30, -30; 15, -30; 15, 15; -15, 15; -15, -30;  with 4 Z sections: z[cm]=-60, x[cm]=0, y[cm]=30, scale[cm]=0.8; z[cm]=-15, x[cm]=0, y[cm]=-30, scale[cm]=1; z[cm]=10, x[cm]=0, y[cm]=0, scale[cm]=0.6; z[cm]=60, x[cm]=0, y[cm]=30, scale[cm]=1.2;
 	g4 volume = 2.136e+07 cm3
@@ -123,7 +123,7 @@ class TestSequenceFunctions(unittest.TestCase):
                 "control_type": ResultTypeEnum.ISSUE,
             },
             {
-                "str_to_match": '===== Test "([^\s]+)" ====',
+                "str_to_match": r'===== Test "([^\s]+)" ====',
                 "name": "{0}",
                 "control_type": ResultTypeEnum.TEST,
             },

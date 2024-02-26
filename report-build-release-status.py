@@ -1,20 +1,22 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from _py2with3compatibility import getoutput
+
+import re
+from datetime import datetime
 from optparse import OptionParser
+from os import environ
+from os.path import expanduser
+from socket import setdefaulttimeout
+
+from _py2with3compatibility import getoutput
 from github_utils import (
+    add_issue_labels,
     create_issue_comment,
     get_issue_labels,
     remove_issue_label,
-    add_issue_labels,
     remove_issue_labels_all,
 )
-from os.path import expanduser
-from datetime import datetime
-from socket import setdefaulttimeout
-from os import environ
-import re
 
 setdefaulttimeout(120)
 JENKINS_PREFIX = "jenkins"
@@ -175,7 +177,7 @@ def remove_label(repo, issue, label):
         print("Removing label: %s" % l)
         try:
             remove_issue_label(repo, issue, l)
-        except Exception as e:
+        except Exception:
             pass
 
 
@@ -194,13 +196,13 @@ def remove_labels(repo, issue):
 #
 def get_test_log(logfile):
     from os import getenv
-    from os.path import join, exists
+    from os.path import exists, join
 
     logmsg = ""
     try:
         logfile = join(getenv("WORKSPACE"), logfile)
         try:
-            logmsg = "\n\nTests results:\n" + getoutput("grep 'ERROR\| tests passed' " + logfile)
+            logmsg = "\n\nTests results:\n" + getoutput(r"grep 'ERROR\| tests passed' " + logfile)
         except:
             logmsg = "\n\nUnable to read tests log: No such file " + logfile
     except:

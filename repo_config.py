@@ -1,5 +1,6 @@
-from cms_static import GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO, CMSBUILD_GH_USER
-from os.path import dirname, abspath
+from os.path import abspath, dirname
+
+from cms_static import CMSBUILD_GH_USER, GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO
 
 GH_TOKEN = "~/.github-token"
 GH_TOKEN_READONLY = "~/.github-token-readonly"

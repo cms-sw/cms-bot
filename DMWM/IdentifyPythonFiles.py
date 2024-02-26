@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 
-from __future__ import print_function, division
+from __future__ import division, print_function
 
-import os
 from optparse import OptionParser
 
 usage = "usage: %prog [options] list_of_files.txt"

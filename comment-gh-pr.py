@@ -3,12 +3,15 @@
 Makes a comment on Pull request on Github
 """
 from __future__ import print_function
-from github import Github
-from os.path import expanduser, dirname, abspath, join, exists
+
+import re
+import sys
 from optparse import OptionParser
-from sys import exit
-import re, sys
+from os.path import abspath, dirname, exists, expanduser, join
 from socket import setdefaulttimeout
+from sys import exit
+
+from github import Github
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))

@@ -22,7 +22,7 @@ try:
     with open("code/test/etc/UnstableTests.txt") as unstableFile:
         for line in unstableFile:
             unstableTests.append(line.strip())
-except:
+except IOError:
     print("Was not able to open list of unstable tests")
 
 # Parse all the various nose xunit test reports looking for changes

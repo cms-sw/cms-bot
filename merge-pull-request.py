@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 from argparse import ArgumentParser
-from github import Github
 from os.path import expanduser
-from sys import exit
 from socket import setdefaulttimeout
+from sys import exit
+
+from github import Github
 
 setdefaulttimeout(120)
 

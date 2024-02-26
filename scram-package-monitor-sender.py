@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-import os, sys, json, socket, re, base64
+import base64
+import json
+import os
+import re
+import socket
+import sys
 from glob import glob
-from optparse import OptionParser
-from os.path import basename, join
-from os import getenv
-from time import strftime, localtime, strptime, sleep
 from hashlib import sha1
-from _py2with3compatibility import run_cmd, Request, urlopen, HTTPError
+from optparse import OptionParser
+from os import getenv
+from os.path import basename, join
+from time import localtime, sleep, strftime, strptime
+
+from _py2with3compatibility import HTTPError, Request, run_cmd, urlopen
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%S.0"
 SLEEP_CYCLE = 2  # seconds

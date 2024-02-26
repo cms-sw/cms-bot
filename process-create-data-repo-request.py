@@ -4,16 +4,16 @@ from datetime import datetime
 from optparse import OptionParser
 from os.path import expanduser
 from socket import setdefaulttimeout
-from typing import Optional, Any
+from typing import Any, Optional
 
 import github
 from github import Github
 
 from categories_map import CMSSW_CATEGORIES
 from cms_static import (
-    GH_CMSSW_REPO,
     CREATE_REPO,
     GH_CMSSW_ORGANIZATION,
+    GH_CMSSW_REPO,
 )
 from github_utils import api_rate_limits
 

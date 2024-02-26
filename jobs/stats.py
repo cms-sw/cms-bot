@@ -7,8 +7,9 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
+
 import sys
-from os.path import getmtime, join, dirname, abspath
+from os.path import abspath, dirname, getmtime, join
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd
@@ -18,9 +19,9 @@ e, o = run_cmd("ls -d wf*of*")
 for d in o.split("\n"):
     s, s1 = d.split(".list-", 1)
     xt = int(getmtime(d) - getmtime(join(d, "jobs.json")))
-    if not s in cache:
+    if s not in cache:
         cache[s] = {}
-    if not xt in cache[s]:
+    if xt not in cache[s]:
         cache[s][xt] = []
     e, o = run_cmd("find %s -name 'workflow.log' -type f" % d)
     tp = 0

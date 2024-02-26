@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from os import getuid
+
 import json
 import sys
-from os.path import dirname, abspath
+from os import getuid
+from os.path import abspath, dirname
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
-from _py2with3compatibility import urlencode, HTTPSConnection
+from _py2with3compatibility import HTTPSConnection, urlencode
 
 
 # FIXME - is this script is used ?
@@ -92,7 +93,7 @@ class CMSWeb(object):
             return False, {}
         block_data = {"at_cern": "no", "replicas": [], "ds_files": "0", "ds_owner": "UNKNOWN"}
         for replica in jmsg["phedex"]["block"][0]["replica"]:
-            if (not "group" in replica) or (not replica["group"]):
+            if ("group" not in replica) or (not replica["group"]):
                 continue
             block_data["replica"].append(replica["node"])
             block_data["ds_files"] = str(replica["files"])

@@ -7,18 +7,21 @@ If no cached PRs directory is given, it will give all modules.
 """
 
 from __future__ import print_function
-from github import Github
-from github_utils import *
-from os.path import expanduser, exists
-from repo_config import GH_TOKEN
-from argparse import ArgumentParser
-from glob import glob
+
 import json
-from _py2with3compatibility import run_cmd, cmp_f
-from categories_map import CMSSW_CATEGORIES
 import logging
 import sys
+from argparse import ArgumentParser
+from glob import glob
+from os.path import exists, expanduser
 from pprint import pformat
+
+from github import Github
+
+from _py2with3compatibility import cmp_f, run_cmd
+from categories_map import CMSSW_CATEGORIES
+from github_utils import *
+from repo_config import GH_TOKEN
 
 # logger and logger config
 # https://docs.python.org/2/library/logger.html
@@ -67,7 +70,7 @@ def get_changed_filenames_by_pr(old_prs_dict, pr_list):
 
 def get_git_mt(path, filename):
     status, rez = run_cmd('cd %s; git log -1 --format="%%ad" --date=unix -- %s' % (path, filename))
-    if status is not 0:
+    if status != 0:
         print("ERROR, " + rez)
         sys.exit(1)  # todo throws an exception
     return rez

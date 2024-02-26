@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from os.path import dirname, abspath
+
+import re
+import sys
 from optparse import OptionParser
-import sys, re
+from os.path import abspath, dirname
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd
@@ -35,12 +37,12 @@ def check_commits_files(repo, pr, detail=False):
         if e:
             print(o)
             return all_ok
-        for l in [re.sub("\s+", " ", x.strip()) for x in o.split("\n") if x.strip()]:
+        for l in [re.sub(r"\s+", " ", x.strip()) for x in o.split("\n") if x.strip()]:
             (t, f) = l.split(" ")
-            if not f in data:
+            if f not in data:
                 data[f] = []
                 details[f] = {}
-            if not t in data[f]:
+            if t not in data[f]:
                 data[f].append(t)
                 details[f][t] = []
             details[f][t].append(c)

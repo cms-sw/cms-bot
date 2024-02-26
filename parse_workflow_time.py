@@ -1,7 +1,8 @@
 #!/bin/env python
-from datetime import datetime
-import re, json
+import json
+import re
 from argparse import ArgumentParser
+from datetime import datetime
 
 parser = ArgumentParser()
 parser.add_argument("-i", "--input")

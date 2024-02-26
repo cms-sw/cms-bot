@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
+from os.path import exists, join
 from sys import argv
-from os.path import join, exists
 
 exceptions_regexp = []
 
@@ -17,7 +18,7 @@ for file_path in [f.strip("\n").strip("/") for f in open(argv[1]).readlines()]:
         # If it exists then we allow to have files with [0-9] under it
         if exists(join(argv[2], xpath)):
             break
-        if not xpath in uniq_paths:
+        if xpath not in uniq_paths:
             uniq_paths.append(xpath)
         break
 if uniq_paths:

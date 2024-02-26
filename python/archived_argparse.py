@@ -95,7 +95,6 @@ import os as _os
 import re as _re
 import sys as _sys
 import textwrap as _textwrap
-
 from gettext import gettext as _
 
 try:
@@ -1380,7 +1379,7 @@ class _ActionsContainer(object):
         long_option_strings = []
         for option_string in args:
             # error on strings that don't start with an appropriate prefix
-            if not option_string[0] in self.prefix_chars:
+            if option_string[0] not in self.prefix_chars:
                 msg = _("invalid option string %r: " "must start with a character %r")
                 tup = option_string, self.prefix_chars
                 raise ValueError(msg % tup)
@@ -2032,7 +2031,7 @@ class ArgumentParser(_AttributeHolder, _ActionsContainer):
             return None
 
         # if it doesn't start with a prefix, it was meant to be positional
-        if not arg_string[0] in self.prefix_chars:
+        if arg_string[0] not in self.prefix_chars:
             return None
 
         # if the option string is present in the parser, return the action

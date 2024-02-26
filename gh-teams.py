@@ -1,15 +1,25 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from copy import deepcopy
-from github import Github
-from os.path import expanduser, exists
+
 from argparse import ArgumentParser
-from sys import exit
+from copy import deepcopy
+from os.path import exists, expanduser
 from socket import setdefaulttimeout
-from github_utils import api_rate_limits, github_api, add_organization_member
-from github_utils import create_team, get_pending_members, get_gh_token
-from github_utils import get_delete_pending_members, get_failed_pending_members
-from categories import CMSSW_L1, CMSSW_L2, CMS_SDT
+from sys import exit
+
+from github import Github
+
+from categories import CMS_SDT, CMSSW_L1, CMSSW_L2
+from github_utils import (
+    add_organization_member,
+    api_rate_limits,
+    create_team,
+    get_delete_pending_members,
+    get_failed_pending_members,
+    get_gh_token,
+    get_pending_members,
+    github_api,
+)
 
 setdefaulttimeout(120)
 
@@ -91,7 +101,7 @@ for user in CMSSW_L2:
     REPO_TEAMS["cms-sw"]["all-l2"]["members"].append(user)
     for cat in CMSSW_L2[user]:
         cat = "%s-l2" % cat
-        if not cat in REPO_TEAMS["cms-sw"]:
+        if cat not in REPO_TEAMS["cms-sw"]:
             REPO_TEAMS["cms-sw"][cat] = {"members": []}
         REPO_TEAMS["cms-sw"][cat]["members"].append(user)
 
@@ -133,9 +143,9 @@ for org_name in CMS_ORGANIZATIONS:
     chg_flag = 0
     for mem in org.get_members(role="admin"):
         login = mem.login.encode("ascii", "ignore").decode()
-        if not login in cache["users"]:
+        if login not in cache["users"]:
             cache["users"][login] = mem
-        if not login in REPO_OWNERS[org_name]:
+        if login not in REPO_OWNERS[org_name]:
             print("    =>Removing owner:", login)
             if not args.dryRun:
                 try:
@@ -146,7 +156,7 @@ for org_name in CMS_ORGANIZATIONS:
                     err_code = 1
         else:
             ok_mems.append(login)
-    for login in [l for l in REPO_OWNERS[org_name] if not l in ok_mems]:
+    for login in [l for l in REPO_OWNERS[org_name] if l not in ok_mems]:
         print("    =>Adding owner:", login)
         if not args.dryRun:
             add_organization_member(org_name, login, role="admin")
@@ -195,11 +205,11 @@ for org_name in CMS_ORGANIZATIONS:
         print("      Existing Members:", tm_members_login)
         ok_mems = ["*"]
         chg_flag = 0
-        if not "*" in members:
+        if "*" not in members:
             for mem in tm_members:
                 api_rate_limits(gh, msg=False)
                 login = mem.login.encode("ascii", "ignore").decode()
-                if not login in cache["users"]:
+                if login not in cache["users"]:
                     cache["users"][login] = mem
                 if login in members:
                     ok_mems.append(login)
@@ -208,7 +218,7 @@ for org_name in CMS_ORGANIZATIONS:
                         team.remove_from_members(mem)
                     print("      =>Removed member:", login)
                     chg_flag += 1
-            for login in [l for l in members if not l in ok_mems]:
+            for login in [l for l in members if l not in ok_mems]:
                 api_rate_limits(gh, msg=False)
                 if login in pending_members:
                     print("    => Can not add member, pending invitation: %s" % login)
@@ -223,7 +233,7 @@ for org_name in CMS_ORGANIZATIONS:
                             print("  =>", ex)
                             err_code = 1
                     continue
-                if not login in cache["users"]:
+                if login not in cache["users"]:
                     cache["users"][login] = gh.get_user(login)
                 if not args.dryRun:
                     try:
@@ -236,7 +246,7 @@ for org_name in CMS_ORGANIZATIONS:
         total_changes += chg_flag
         if not chg_flag:
             print("      OK Team members")
-        if not "repositories" in team_info:
+        if "repositories" not in team_info:
             ref = open(xfile, "w")
             ref.close()
             continue
@@ -261,14 +271,14 @@ for org_name in CMS_ORGANIZATIONS:
                 r for r in team_repos if r.name.encode("ascii", "ignore").decode() == repo_name
             ]
             if (repo_name in team_info["repositories"]) or (
-                "*" in team_info["repositories"] and (not inv_repo in team_info["repositories"])
+                "*" in team_info["repositories"] and (inv_repo not in team_info["repositories"])
             ):
                 prem = "pull"
                 if repo_name in team_info["repositories"]:
                     prem = team_info["repositories"][repo_name]
                 elif "*" in team_info["repositories"]:
                     prem = team_info["repositories"]["*"]
-                if not repo_name in team_repos_name:
+                if repo_name not in team_repos_name:
                     if not args.dryRun:
                         if not repo:
                             repo.append(gh.get_repo(org_name + "/" + repo_name))

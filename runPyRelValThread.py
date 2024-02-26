@@ -1,12 +1,19 @@
 #! /usr/bin/env python
 from __future__ import print_function
-import os, glob, re, shutil, time, threading
+
+import glob
+import json
+import os
+import re
+import shutil
+import threading
+import time
+
+from _py2with3compatibility import run_cmd
 from cmsutils import doCmd
 from es_relval_log import es_parse_log
+from logreaderUtils import add_exception_to_config, transform_and_write_config_file
 from RelValArgs import FixWFArgs
-from _py2with3compatibility import run_cmd
-import json
-from logreaderUtils import transform_and_write_config_file, add_exception_to_config
 
 
 def runStep1Only(basedir, workflow, args=""):
@@ -75,7 +82,7 @@ def runThreadMatrix(basedir, workflow, args="", logger=None, wf_err={}):
         False,
         wfdir,
     )
-    logRE = re.compile("^(.*/[0-9]+(\.[0-9]+|)_([^/]+))/step1_dasquery.log$")
+    logRE = re.compile(r"^(.*/[0-9]+(\.[0-9]+|)_([^/]+))/step1_dasquery.log$")
     for logFile in glob.glob(outfolder + "/step1_dasquery.log"):
         m = logRE.match(logFile)
         if not m:
@@ -100,7 +107,7 @@ def runThreadMatrix(basedir, workflow, args="", logger=None, wf_err={}):
 def find_argv(args, arg):
     val = ""
     fullval = ""
-    reX = re.compile("\s*((" + arg + ")(\s+|=)([^ ]+))")
+    reX = re.compile(r"\s*((" + arg + r")(\s+|=)([^ ]+))")
     m = reX.search(args)
     if m:
         glen = len(m.groups())
@@ -171,7 +178,7 @@ class PyRelValsThread(object):
             + self.args["s"]
             + " "
             + self.args["l"]
-            + " |  grep -v ' workflows with ' | grep -E '^[0-9][0-9]*(\.[0-9][0-9]*|)\s\s*' | sort -nr | awk '{print $1}'"
+            + r" |  grep -v ' workflows with ' | grep -E '^[0-9][0-9]*(\.[0-9][0-9]*|)\s\s*' | sort -nr | awk '{print $1}'"
         )
         print("RunTheMatrix>>", workflowsCmd)
         cmsstat, workflows = doCmd(workflowsCmd)
@@ -260,7 +267,7 @@ class PyRelValsThread(object):
         for logFile in glob.glob(self.basedir + "/*/workflow.log"):
             inFile = open(logFile)
             for line in inFile:
-                if re.match("^\s*(\d+\s+)+tests passed,\s+(\d+\s+)+failed\s*$", line):
+                if re.match(r"^\s*(\d+\s+)+tests passed,\s+(\d+\s+)+failed\s*$", line):
                     res = line.strip().split(" tests passed, ")
                     res[0] = res[0].split()
                     res[1] = res[1].replace(" failed", "").split()
@@ -317,7 +324,7 @@ class PyRelValsThread(object):
                 inFile = open(logFile)
                 line = inFile.readline().strip()
                 inFile.close()
-                m = re.match("^(\d+)(\.\d+|)$", line)
+                m = re.match(r"^(\d+)(\.\d+|)$", line)
                 if m:
                     time_info[wf] = int(m.group(1))
             except Exception as e:
@@ -328,7 +335,7 @@ class PyRelValsThread(object):
 
     def parseLog(self):
         logData = {}
-        logRE = re.compile("^.*/([1-9][0-9]*(\.[0-9]+|))_[^/]+/step([1-9])_.*\.log$")
+        logRE = re.compile(r"^.*/([1-9][0-9]*(\.[0-9]+|))_[^/]+/step([1-9])_.*\.log$")
         max_steps = 0
         for logFile in glob.glob(self.basedir + "/[1-9]*/step[0-9]*.log"):
             m = logRE.match(logFile)

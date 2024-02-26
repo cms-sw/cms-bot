@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 
 from __future__ import print_function
-from _py2with3compatibility import run_cmd
+
 import re
+
+from _py2with3compatibility import run_cmd
 
 #
 # Interprets the commit history of a branch as a graph.

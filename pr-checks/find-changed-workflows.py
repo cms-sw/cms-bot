@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import sys, re
+
+import re
+import sys
 
 
 def read_workflows(wfile):
@@ -8,9 +10,9 @@ def read_workflows(wfile):
     data = {}
     wf = ""
     for line in fin.readlines():
-        m = re.match("^([^[]+)\[(\d+)]:\s+(.+)", line)
+        m = re.match(r"^([^[]+)\[(\d+)]:\s+(.+)", line)
         if m:
-            cmd = re.sub("\s\s+", " ", m.group(3).strip())
+            cmd = re.sub(r"\s\s+", " ", m.group(3).strip())
             if m.group(1).strip():
                 wf = m.group(1).strip().split(" ", 1)[0]
                 data[wf] = []
@@ -27,7 +29,7 @@ ndata = read_workflows(new)
 cdata = {}
 for wf in ndata:
     cdata[wf] = []
-    if not wf in odata:
+    if wf not in odata:
         cdata[wf] = ["New workflow"]
         continue
     nlen = len(ndata[wf])

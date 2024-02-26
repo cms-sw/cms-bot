@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-from github import Github
-from os.path import expanduser
 from argparse import ArgumentParser
+from os.path import expanduser
+
+from github import Github
 
 parser = ArgumentParser()
 parser.add_argument(

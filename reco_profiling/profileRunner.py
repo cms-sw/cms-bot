@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # Profile runner for reco releases
 # maintained by the CMS reco group
-import subprocess
 import glob
-import sys
 import os
 import shutil
+import subprocess
+import sys
 
 workflow_configs = {
     # Run3 HI workflow
@@ -423,7 +423,7 @@ def writeProfilingScript(wfdir, runscript, cmdlist):
 
         # ensure that compiler include paths are added to ROOT_INCLUDE_PATH
         fi.write(
-            "for path in $(LC_ALL=C g++   -xc++ -E -v /dev/null 2>&1 | sed -n -e '/^.include/,${' -e '/^ \/.*++/p' -e '}');do ROOT_INCLUDE_PATH=$path:$ROOT_INCLUDE_PATH; done"
+            r"for path in $(LC_ALL=C g++   -xc++ -E -v /dev/null 2>&1 | sed -n -e '/^.include/,${' -e '/^ \/.*++/p' -e '}');do ROOT_INCLUDE_PATH=$path:$ROOT_INCLUDE_PATH; done"
         )
         fi.write("\n")
 
@@ -458,7 +458,7 @@ def copyProfilingOutputs(wfdir, out_dir, outfiles):
 def main(wf, num_events, out_dir):
     wfdir = getWFDir(wf)
 
-    if not (wfdir is None):
+    if wfdir is not None:
         print("Output directory {} exists, aborting".format(wfdir))
         sys.exit(1)
 

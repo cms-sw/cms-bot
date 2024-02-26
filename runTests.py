@@ -26,7 +26,7 @@ if scriptPath not in sys.path:
     sys.path.append(scriptPath)
 sys.path.append(os.path.join(scriptPath, "python"))
 
-from cmsutils import doCmd, MachineCPUCount, getHostName
+from cmsutils import MachineCPUCount, doCmd, getHostName
 
 if MachineCPUCount <= 0:
     MachineCPUCount = 2

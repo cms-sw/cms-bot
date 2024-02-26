@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github
-from os.path import expanduser, dirname, abspath, join, exists
-from optparse import OptionParser
-from datetime import datetime, timedelta
-from socket import setdefaulttimeout
-from github_utils import api_rate_limits
-from github_hooks_config import get_repository_hooks
+
 import sys
+from datetime import datetime, timedelta
+from optparse import OptionParser
+from os.path import abspath, dirname, exists, expanduser, join
+from socket import setdefaulttimeout
+
+from github import Github
+
+from github_hooks_config import get_repository_hooks
+from github_utils import api_rate_limits
 
 setdefaulttimeout(None)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))
@@ -82,8 +85,8 @@ if __name__ == "__main__":
     if exists(join(repo_dir, "repo_config.py")):
         sys.path.insert(0, repo_dir)
     import repo_config
-    from process_pr import process_pr
     from categories import EXTERNAL_REPOS
+    from process_pr import process_pr
 
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
     api_rate_limits(gh)
@@ -94,7 +97,7 @@ if __name__ == "__main__":
         repos = EXTERNAL_REPOS
     err = 0
     for repo_name in repos:
-        if not "/" in repo_name:
+        if "/" not in repo_name:
             user = gh.get_user(repo_name)
             for repo in user.get_repos():
                 err += check_prs(gh, repo, since, opts.issue, opts.dryRun)

@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github
-from os.path import expanduser
-from optparse import OptionParser
-from datetime import datetime, timedelta
+
 import re
+from datetime import datetime, timedelta
+from optparse import OptionParser
+from os.path import expanduser
+
+from github import Github
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog <since-n-seconds>")

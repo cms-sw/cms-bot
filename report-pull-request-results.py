@@ -7,14 +7,17 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-from io import open
-from os.path import expanduser, dirname, join, exists, abspath
-from optparse import OptionParser
-from _py2with3compatibility import run_cmd
-import re
+
 import json
-import os, sys
+import os
+import re
+import sys
+from io import open
+from optparse import OptionParser
+from os.path import abspath, dirname, exists, expanduser, join
 from socket import setdefaulttimeout
+
+from _py2with3compatibility import run_cmd
 from github_utils import api_rate_limits
 
 setdefaulttimeout(120)
@@ -177,7 +180,7 @@ def read_matrix_log_file(matrix_log):
         line = line.strip()
         if "ERROR executing" in line:
             print("processing: %s" % line)
-            parts = re.sub("\s+", " ", line).split(" ")
+            parts = re.sub(r"\s+", " ", line).split(" ")
             workflow_info = parse_workflow_info(parts, relval_dir)
             if "number" in workflow_info:
                 workflows_with_error.append(workflow_info)
@@ -231,7 +234,7 @@ def read_matrix_log_file(matrix_log):
 #
 def cmd_to_addon_test(command, addon_dir):
     try:
-        cmdMatch = re.match("^\[(.+):(\d+)\] +(.*)", command)
+        cmdMatch = re.match(r"^\[(.+):(\d+)\] +(.*)", command)
         addon_subdir = cmdMatch.group(1)
         logfile = "step%s.log" % cmdMatch.group(2)
         e, o = run_cmd("ls -d %s/%s/%s 2>/dev/null | tail -1" % (addon_dir, addon_subdir, logfile))

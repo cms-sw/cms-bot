@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import argparse
-import re
 import os
+import re
 
 # constants
 html_start = """
@@ -13,7 +13,7 @@ html_start = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
-    
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
@@ -65,13 +65,13 @@ h2 = "<h2 {klass}>{0}\n</h2>\n"
 
 # regex
 regex_dashes = "^(-|=)*$"
-regex_td = "^[ ]*[\d *]+.*\..+$"
+regex_td = r"^[ ]*[\d *]+.*\..+$"
 # regex_th = '^[^\d\W]+$'
 regex_th = ".*(NLOC)"
 regex_th_total = "^Total nloc"
 regex_H1_warnings = " *^!+.*!+ *$"
-regex_H1_no_warnings = "^No thresholds exceeded \("
-regex_H1_files = "^\d+ file analyzed"
+regex_H1_no_warnings = r"^No thresholds exceeded \("
+regex_H1_files = r"^\d+ file analyzed"
 regex_split = "[ ]{2,}|[ ]*$]"
 regex_split_td = "[ ]{1,}|[ ]*$]"
 regex_line_to_url = "[a-zA-Z]"

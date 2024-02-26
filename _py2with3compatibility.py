@@ -6,46 +6,45 @@ import sys
 
 if sys.version_info[0] == 2:
     # python 2 modules
-    from commands import getstatusoutput as run_cmd
-    from commands import getstatusoutput, getoutput
-    from httplib import HTTPSConnection
-
     # urllib
-    from urllib import urlencode, quote_plus, quote, unquote
+    from urllib import quote, quote_plus, unquote, urlencode
+
+    from commands import getoutput, getstatusoutput
+    from commands import getstatusoutput as run_cmd
+    from cookielib import CookieJar
+    from httplib import HTTPSConnection
     from urllib2 import (
-        Request,
-        urlopen,
-        HTTPSHandler,
-        build_opener,
-        install_opener,
-        unquote,
+        HTTPBasicAuthHandler,
+        HTTPCookieProcessor,
         HTTPError,
         HTTPPasswordMgrWithDefaultRealm,
-        HTTPBasicAuthHandler,
-        HTTPCookieProcessor,
-    )
-    from urlparse import urlparse
-    from cookielib import CookieJar
-else:
-    # python 3 modules
-    from subprocess import getstatusoutput as run_cmd
-    from subprocess import getstatusoutput, getoutput
-    from http.client import HTTPSConnection
-
-    # urllib
-    from urllib.parse import urlencode, quote_plus, quote, unquote, urlparse
-    from urllib.request import (
-        Request,
-        urlopen,
         HTTPSHandler,
+        Request,
         build_opener,
         install_opener,
-        HTTPPasswordMgrWithDefaultRealm,
+        urlopen,
+    )
+    from urlparse import urlparse
+else:
+    # python 3 modules
+    from http.client import HTTPSConnection
+    from http.cookiejar import CookieJar
+    from subprocess import getoutput, getstatusoutput
+    from subprocess import getstatusoutput as run_cmd
+    from urllib.error import HTTPError
+
+    # urllib
+    from urllib.parse import quote, quote_plus, unquote, urlencode, urlparse
+    from urllib.request import (
         HTTPBasicAuthHandler,
         HTTPCookieProcessor,
+        HTTPPasswordMgrWithDefaultRealm,
+        HTTPSHandler,
+        Request,
+        build_opener,
+        install_opener,
+        urlopen,
     )
-    from urllib.error import HTTPError
-    from http.cookiejar import CookieJar
 
 
 def cmp_f(a, b):

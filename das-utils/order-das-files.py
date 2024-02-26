@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 import sys
-from sys import stdin, exit
-
-from os.path import dirname, abspath
+from os.path import abspath, dirname
+from sys import exit, stdin
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd
@@ -34,7 +33,7 @@ for eos_file in eos_files.split("\n"):
     if eos_file in all_dasfiles:
         new_order.append(eos_file)
 for das_file in all_dasfiles:
-    if not das_file in new_order:
+    if das_file not in new_order:
         new_order.append(das_file)
 
 print("\n".join(new_order))

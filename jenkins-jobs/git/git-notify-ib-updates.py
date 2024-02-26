@@ -6,15 +6,15 @@ import logging
 import os
 import sys
 import urllib.error
-
-from github_utils import github_api
 from urllib.error import HTTPError
 
 # noinspection PyUnresolvedReferences
 import libib
 
 # noinspection PyUnresolvedReferences
-from libib import PackageInfo, ErrorInfo
+from libib import ErrorInfo, PackageInfo
+
+from github_utils import github_api
 
 try:
     current_shifter = libib.fetch("/SDT/shifter.txt", content_type=libib.ContentType.TEXT)

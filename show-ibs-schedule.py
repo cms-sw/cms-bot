@@ -23,7 +23,7 @@ for spec in specs:
         for day in spec["BUILD_DAY"].split(","):
             try:
                 day = int(day.strip())
-                if not day in data:
+                if day not in data:
                     continue
                 sel_days.append(day)
             except:
@@ -33,20 +33,20 @@ for spec in specs:
         for hour in spec["BUILD_HOUR"].split(","):
             try:
                 hour = int(hour.strip())
-                if not hour in hours:
+                if hour not in hours:
                     continue
                 sel_hours.append(hour)
             except:
                 pass
     for day in data.keys():
-        if not day in sel_days:
+        if day not in sel_days:
             continue
         for hour in data[day].keys():
-            if not hour in sel_hours:
+            if hour not in sel_hours:
                 continue
             if (rel in dev_rel) or ((day == 0) and (hour == 0)):
                 data[day][hour].append(spec)
-            elif (not 0 in sel_days) or (not not 0 in sel_hours):
+            elif (0 not in sel_days) or (not 0 not in sel_hours):
                 data[day][hour].append(spec)
 
 print("Day\tHour\tx86_64\tppc64le\taarch64")

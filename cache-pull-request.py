@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-from github import Github
-from os.path import expanduser, exists
-from optparse import OptionParser
-from socket import setdefaulttimeout
-from github_utils import api_rate_limits
-from json import dumps, load
 import re
+from json import dumps, load
+from optparse import OptionParser
+from os.path import exists, expanduser
+from socket import setdefaulttimeout
+
+from github import Github
+
+from github_utils import api_rate_limits
 
 setdefaulttimeout(120)
 
@@ -41,7 +43,7 @@ def process(repo, prId, prCache):
     if pr.head.user:
         data["author"] = pr.head.user.login.encode("ascii", "ignore").decode()
     data["auther_ref"] = pr.head.ref.encode("ascii", "ignore").decode()
-    if not "freeze" in data:
+    if "freeze" not in data:
         data["auther_sha"] = pr.head.sha.encode("ascii", "ignore").decode()
     data["review_comments"] = pr.review_comments
     data["commits"] = pr.commits
@@ -54,7 +56,7 @@ def process(repo, prId, prCache):
         if pr.merged:
             data["merged_at"] = pr.merged_at.strftime("%s")
             data["merged_by"] = pr.merged_by.login.encode("ascii", "ignore").decode()
-            if not "freeze" in data:
+            if "freeze" not in data:
                 if pr.merge_commit_sha:
                     data["merge_commit_sha"] = pr.merge_commit_sha.encode(
                         "ascii", "ignore"
@@ -62,7 +64,7 @@ def process(repo, prId, prCache):
                 else:
                     data["merge_commit_sha"] = ""
     data["release-notes"] = []
-    REGEX_RN = re.compile("^release(-| )note(s|)\s*:\s*", re.I)
+    REGEX_RN = re.compile(r"^release(-| )note(s|)\s*:\s*", re.I)
     if issue.body:
         msg = issue.body.encode("ascii", "ignore").decode().strip()
         if REGEX_RN.match(msg):

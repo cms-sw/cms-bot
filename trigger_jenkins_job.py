@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-from optparse import OptionParser
-from jenkins_callback import build_jobs
 import json
+from optparse import OptionParser
+
+from jenkins_callback import build_jobs
 
 
 def process(opts):

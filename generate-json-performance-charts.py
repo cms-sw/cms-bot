@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 from __future__ import print_function
-from optparse import OptionParser
-from os import listdir
-from os import path
-import re
+
 import json
+import re
+from optparse import OptionParser
+from os import listdir, path
 
 # ------------------------------------------------------------------------------------------------------------
 # This script reads a list of the workflows, steps and parameters for which you want to see the graphs
@@ -50,7 +50,7 @@ def add_steps_to_wf(wf):
 def get_workflows():
     workflows = []
     for wf_name in get_wfs_ordered(BASE_DIR):
-        if path.isdir("%s/%s/" % (BASE_DIR, wf_name)) and not "bootstrap" in wf_name:
+        if path.isdir("%s/%s/" % (BASE_DIR, wf_name)) and "bootstrap" not in wf_name:
             print("Adding %s" % wf_name)
             wf = {}
             wf["wf_name"] = wf_name

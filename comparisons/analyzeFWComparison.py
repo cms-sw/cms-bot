@@ -6,9 +6,9 @@ python -V >/dev/null 2>&1 && python_cmd="python"
 exec ${python_cmd} $0 ${1+"$@"}
 """
 
+import re
 from optparse import OptionParser
 from os import walk
-import re
 
 # -----------------------------------------------------------------------------------
 # This script analyses the results from the FWlite comparison ( JR Comparison )
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         # naming convention is that a comparison sub-directory starts with 'all_'
         if not current_dir.split("/")[-1].startswith("all_"):
             continue
-        if not "_" in current_dir:
+        if "_" not in current_dir:
             continue
         current_wf = current_dir.split(
             "_",

@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 from __future__ import print_function
-from github import Github
-from os.path import expanduser, abspath, dirname, join, exists
-import sys, re
+
+import re
+import sys
 from argparse import ArgumentParser
+from os.path import abspath, dirname, exists, expanduser, join
+
+from github import Github
+
 from github_utils import add_issue_labels, create_issue_comment, get_issue_labels
 
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))

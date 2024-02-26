@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from datetime import datetime
+from optparse import OptionParser
+from os.path import abspath, dirname, exists, expanduser, join
+from socket import setdefaulttimeout
 
 from github import Github
-from os.path import expanduser, dirname, abspath, join, exists
-from optparse import OptionParser
-from socket import setdefaulttimeout
+
 from github_utils import api_rate_limits
 
 setdefaulttimeout(120)

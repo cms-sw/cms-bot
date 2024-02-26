@@ -7,7 +7,7 @@ import urllib.error
 import libib
 
 # noinspection PyUnresolvedReferences
-from libib import PackageInfo, ErrorInfo
+from libib import ErrorInfo, PackageInfo
 
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
     print("This script requires Python 3.6 or newer!", file=sys.stderr)

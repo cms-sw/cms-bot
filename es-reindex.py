@@ -4,15 +4,17 @@
 # for the old index name.
 
 from __future__ import print_function
-from _py2with3compatibility import run_cmd, Request, HTTPSHandler, build_opener, install_opener
-from argparse import ArgumentParser
-import json
+
 import base64
-from os import getenv
+import json
 
 # Avoid checking for certificate since we execute this only inside CERN.
 # Drop the following stanza if not.
 import ssl
+from argparse import ArgumentParser
+from os import getenv
+
+from _py2with3compatibility import HTTPSHandler, Request, build_opener, install_opener, run_cmd
 
 if hasattr(ssl, "_create_unverified_context"):
     ssl._create_default_https_context = ssl._create_unverified_context

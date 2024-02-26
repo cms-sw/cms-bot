@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import functools
-import re
-import os
-import xml.etree.ElementTree as ET
 import datetime
+import functools
+import os
+import re
+import xml.etree.ElementTree as ET
 
 import actions
 import helpers
@@ -99,7 +99,7 @@ if retry_counter != []:
             + job_to_retry
             + " "
             + build_to_retry
-            + " 'Maximum\ retries\ exceeded!'"
+            + r" 'Maximum\ retries\ exceeded!'"
         )
         print(update_label)
         os.system(update_label)
@@ -136,29 +136,29 @@ actions.update_retry_link_cmssdt_page(retry_url_file_path, job_to_retry, build_t
 times = "time" if retry_counter_update == 1 else "times"
 
 retry_label = (
-    "Job'\ 'retried'\ '"
+    r"Job'\ 'retried'\ '"
     + str(retry_counter_update)
-    + "'\ '"
+    + r"'\ '"
     + times
-    + "'\ 'by'\ 'retry'\ 'job'\ '#"
+    + r"'\ 'by'\ 'retry'\ 'job'\ '#"
     + str(current_build_number)
 )
 
 nodeoff_label = (
-    "Node'\ 'marked'\ 'as'\ 'offline'\ 'and'\ 'job'\ 'retried.'\ 'Please,'\ 'take'\ 'the'\ 'appropiate'\ 'action'\ 'and'\ 'relaunch'\ 'the'\ 'node.'\ 'Also,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
+    r"Node'\ 'marked'\ 'as'\ 'offline'\ 'and'\ 'job'\ 'retried.'\ 'Please,'\ 'take'\ 'the'\ 'appropiate'\ 'action'\ 'and'\ 'relaunch'\ 'the'\ 'node.'\ 'Also,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
     + str(retry_counter_update)
-    + "'\ '"
+    + r"'\ '"
     + times
-    + "'\ 'by'\ 'retry'\ 'job'\ '#"
+    + r"'\ 'by'\ 'retry'\ 'job'\ '#"
     + str(current_build_number)
 )
 
 nodereconnect_label = (
-    "Node'\ 'has'\ 'been'\ 'forced'\ 'to'\ 'reconnect'\ 'and'\ 'job'\ 'has'\ 'been'\ 'retried.'\ 'Please,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'node'\ 'is'\ 'in'\ 'good'\ 'state'\ 'and'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
+    r"Node'\ 'has'\ 'been'\ 'forced'\ 'to'\ 'reconnect'\ 'and'\ 'job'\ 'has'\ 'been'\ 'retried.'\ 'Please,'\ 'make'\ 'sure'\ 'that'\ 'the'\ 'node'\ 'is'\ 'in'\ 'good'\ 'state'\ 'and'\ 'job'\ 'is'\ 'running'\ 'fine'\ 'now.'\ 'Job'\ 'has'\ 'been'\ 'retried'\ '"
     + str(retry_counter_update)
-    + "'\ '"
+    + r"'\ '"
     + times
-    + "'\ 'by'\ 'retry'\ 'job'\ '#"
+    + r"'\ 'by'\ 'retry'\ 'job'\ '#"
     + str(current_build_number)
 )
 

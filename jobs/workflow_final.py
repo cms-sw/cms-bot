@@ -7,15 +7,20 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-import sys, json, glob, os, re
+
+import glob
+import json
+import os
+import re
+import sys
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
 CMS_BOT_DIR = os.path.dirname(SCRIPT_DIR)
 sys.path.insert(0, CMS_BOT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
+from _py2with3compatibility import run_cmd
 from cmssw_known_errors import get_known_errors
 from logUpdater import LogUpdater
-from _py2with3compatibility import run_cmd
 
 
 def update_cmdlog(workflow_dir, jobs):
@@ -62,11 +67,11 @@ def update_worklog(workflow_dir, jobs):
     for job in jobs["commands"]:
         step_num += 1
         try:
-            m = re.match("^.*\s+step([1-9][0-9]*)\s+.*$", job["command"])
+            m = re.match(r"^.*\s+step([1-9][0-9]*)\s+.*$", job["command"])
             if m:
                 cmd_step = int(m.group(1))
             else:
-                m = re.match(".*\s*>\s*step([1-9][0-9]*)_[^\s]+\.log.*$", job["command"])
+                m = re.match(r".*\s*>\s*step([1-9][0-9]*)_[^\s]+\.log.*$", job["command"])
                 if m:
                     cmd_step = int(m.group(1))
                 else:
@@ -90,7 +95,7 @@ def update_worklog(workflow_dir, jobs):
                 test_passed += " 1"
                 test_failed += " 0"
                 steps_res.append("PASSED")
-        except Exception as e:
+        except Exception:
             print("ERROR: Unable to find step number:", job["command"])
             pass
         if job["exit_code"] == -1:
@@ -115,7 +120,7 @@ def update_worklog(workflow_dir, jobs):
     e, o = run_cmd(
         "grep ' exit: ' %s | sed 's|exit:.*$|exit: %s|'" % (workflow_logfile, exit_codes.strip())
     )
-    o = re.sub("\s+Step0-.+\s+-\s+time\s+", step_str + "  - time ", o)
+    o = re.sub(r"\s+Step0-.+\s+-\s+time\s+", step_str + "  - time ", o)
     wfile = open(workflow_logfile, "w")
     wfile.write(o + "\n")
     wfile.write("%s tests passed, %s failed\n" % (test_passed.strip(), test_failed.strip()))
@@ -179,6 +184,6 @@ if __name__ == "__main__":
     update_timelog(workflow_dir, jobs)
     update_hostname(workflow_dir)
     update_known_error(workflow, workflow_dir)
-    if not "CMSSW_DRY_RUN" in os.environ:
+    if "CMSSW_DRY_RUN" not in os.environ:
         upload_logs(workflow, workflow_dir, exit_code)
     run_cmd("touch %s/workflow_upload_done" % workflow_dir)

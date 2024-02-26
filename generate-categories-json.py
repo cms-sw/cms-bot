@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 from __future__ import print_function
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1
+
 import json
+
+from categories import CMSSW_CATEGORIES, CMSSW_L1, CMSSW_L2
 
 # Generates a json file sumarizing the categories, their packages, and conveners
 # it asumes that categories.py from https://raw.githubusercontent.com/cms-sw/cms-bot/HEAD/categories.py

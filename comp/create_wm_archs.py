@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
+from os.path import dirname, exists, join
 from subprocess import getstatusoutput
-from os.path import join, dirname, exists
 from sys import exit
 
 CMS_CVMFS = "/cvmfs/cms.cern.ch"

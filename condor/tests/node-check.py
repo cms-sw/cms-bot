@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
-from sys import exit, argv
-from os import pipe, close, fork, fdopen, write, waitpid
-from os.path import exists
-from time import sleep, time
-from threading import Thread
-from re import match
-from array import array
-
-from os.path import dirname, abspath
 import sys
+from array import array
+from os import close, fdopen, fork, pipe, waitpid, write
+from os.path import abspath, dirname, exists
+from re import match
+from sys import argv, exit
+from threading import Thread
+from time import sleep, time
 
 sys.path.append(
     dirname(dirname(dirname(abspath(__file__))))

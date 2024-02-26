@@ -7,18 +7,21 @@ exec ${python_cmd} $0 ${1+"$@"}
 """
 
 from __future__ import print_function
-from sys import exit, argv
+
+import re
+import socket
 from optparse import OptionParser
 from os import environ, system, waitpid
-from runPyRelValThread import PyRelValsThread
-from RelValArgs import GetMatrixOptions, isThreaded
-from logUpdater import LogUpdater
-from cmsutils import cmsRunProcessCount, MachineMemoryGB
-from cmssw_known_errors import get_known_errors
-from subprocess import Popen
 from os.path import abspath, dirname
-import re, socket
+from subprocess import Popen
+from sys import argv, exit
 from time import time
+
+from cmssw_known_errors import get_known_errors
+from cmsutils import MachineMemoryGB, cmsRunProcessCount
+from logUpdater import LogUpdater
+from RelValArgs import GetMatrixOptions, isThreaded
+from runPyRelValThread import PyRelValsThread
 
 SCRIPT_DIR = dirname(abspath(argv[0]))
 

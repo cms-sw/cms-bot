@@ -131,7 +131,7 @@ def fix_symlinks(install_dir, dry_run=False):
                 err, out = subprocess.getstatusoutput(
                     "objdump -p %s | grep 'SONAME'" % os.path.join(dirname, lib)
                 )
-                if not "SONAME" in out:
+                if "SONAME" not in out:
                     continue
                 lib_names = ["lib%s.so" % xlib, out.split("SONAME")[-1].strip()]
                 for l in lib_names:
@@ -220,7 +220,7 @@ def parse_catalog(json_file, os_arch):
     try:
         catalog = json.load(open(json_file, "r"))
     except json.decoder.JSONDecodeError as e:
-        error(f"the catalog at is not a valid JSON file")
+        error("the catalog at is not a valid JSON file")
         raise e
 
     # Skip the 'release_date' and other non-package entries, and the components

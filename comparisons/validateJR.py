@@ -1,4 +1,6 @@
-import glob, os, sys
+import glob
+import os
+import sys
 
 
 def makedirs(dir):
@@ -28,7 +30,7 @@ def compile_lib():
     # if not os.path.isfile(f'{lib_dir}/validate_C.so'):
     if not os.path.isfile("%s/validate_C.so" % (lib_dir,)):
         makedirs(lib_dir)
-        if not "VALIDATE_C_SCRIPT" in os.environ or not os.environ["VALIDATE_C_SCRIPT"]:
+        if "VALIDATE_C_SCRIPT" not in os.environ or not os.environ["VALIDATE_C_SCRIPT"]:
             os.environ["VALIDATE_C_SCRIPT"] = os.path.join(
                 os.environ["HOME"], "tools", "validate.C"
             )
@@ -128,7 +130,7 @@ def process_file(each_root_file):
     if any([pat in each_root_file for pat in ["inDQM", "DQM_V"]]):
         return
     processName = last_process(each_root_file)
-    if not processName in process_of_interest:
+    if processName not in process_of_interest:
         return
     # print(f"found process of interest {processName} in file {each_root_file}")
     ref_path, fileName = each_root_file.rsplit("/", 1)

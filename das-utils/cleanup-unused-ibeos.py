@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
 import json
-from time import time
-from sys import argv, exit
-from os.path import dirname, abspath
 import sys
+from os.path import abspath, dirname
+from sys import argv, exit
+from time import time
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import top level modules
 from _py2with3compatibility import run_cmd

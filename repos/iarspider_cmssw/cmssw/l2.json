@@ -1,0 +1,2535 @@
+{
+  "AdrianoDee": [
+    {
+      "category": [
+        "upgrade"
+      ], 
+      "end_date": 1691539200, 
+      "start_date": 1629936000
+    }, 
+    {
+      "category": [
+        "upgrade", 
+        "pdmv"
+      ], 
+      "end_date": 1700524800, 
+      "start_date": 1691539200
+    }, 
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "start_date": 1700524800
+    }
+  ], 
+  "ChrisMisan": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1678147200, 
+      "start_date": 1656892800
+    }
+  ], 
+  "Dr15Jones": [
+    {
+      "category": [
+        "core", 
+        "visualization", 
+        "geometry"
+      ], 
+      "start_date": 1377043200
+    }
+  ], 
+  "ErnestaP": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1600300800, 
+      "start_date": 1600214400
+    }
+  ], 
+  "GurpreetSinghChahal": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1536796800, 
+      "start_date": 1488153600
+    }, 
+    {
+      "category": [
+        "generators"
+      ], 
+      "start_date": 1588377600
+    }
+  ], 
+  "JanFSchulte": [
+    {
+      "category": [
+        "muon-pog"
+      ], 
+      "start_date": 1662422400
+    }
+  ], 
+  "Martin-Grunewald": [
+    {
+      "category": [
+        "hlt"
+      ], 
+      "start_date": 1377043200
+    }
+  ], 
+  "MartinaMalberti": [
+    {
+      "category": [
+        "mtd-dpg"
+      ], 
+      "start_date": 1698278400
+    }
+  ], 
+  "RSalvatico": [
+    {
+      "category": [
+        "egamma-pog"
+      ], 
+      "start_date": 1687478400
+    }
+  ], 
+  "SWuchterl": [
+    {
+      "category": [
+        "btv-pog"
+      ], 
+      "start_date": 1693353600
+    }
+  ], 
+  "Saptaparna": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1694649600, 
+      "start_date": 1626393600
+    }
+  ], 
+  "SiewYan": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "start_date": 1569456000
+    }
+  ], 
+  "StoyanStoynev": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1420588800, 
+      "start_date": 1400630400
+    }
+  ], 
+  "YuanChao": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1601596800, 
+      "start_date": 1600905600
+    }
+  ], 
+  "a-kapoor": [
+    {
+      "category": [
+        "egamma-pog"
+      ], 
+      "start_date": 1670112000
+    }
+  ], 
+  "aandvalenzuela": [
+    {
+      "category": [
+        "externals"
+      ], 
+      "start_date": 1649030400
+    }
+  ], 
+  "abdoulline": [
+    {
+      "category": [
+        "hcal-dpg"
+      ], 
+      "start_date": 1691020800
+    }
+  ], 
+  "adrianodee": [
+    {
+      "category": [
+        "upgrade"
+      ], 
+      "end_date": 1629936000, 
+      "start_date": 1627689600
+    }
+  ], 
+  "agrohsje": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1642550400, 
+      "start_date": 1557187200
+    }
+  ], 
+  "ahmad3213": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1675555200, 
+      "start_date": 1611532800
+    }
+  ], 
+  "alberto-sanchez": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "start_date": 1524528000
+    }
+  ], 
+  "alebihan": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "end_date": 1701648000, 
+      "start_date": 1632873600
+    }
+  ], 
+  "alja": [
+    {
+      "category": [
+        "visualization"
+      ], 
+      "start_date": 1382572800
+    }
+  ], 
+  "alkaloge": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "start_date": 1652403702
+    }
+  ], 
+  "aloeliger": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "start_date": 1676937600
+    }
+  ], 
+  "andresib": [
+    {
+      "category": [
+        "rpc-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "andrius-k": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1631491200, 
+      "start_date": 1531440000
+    }
+  ], 
+  "anton-a": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1400630400, 
+      "start_date": 1386892800
+    }
+  ], 
+  "antoniovagnerini": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "start_date": 1695772800
+    }
+  ], 
+  "antoniovilela": [
+    {
+      "category": [
+        "operations", 
+        "orp", 
+        "orp"
+      ], 
+      "start_date": 1692144000
+    }
+  ], 
+  "apfeiffer1": [
+    {
+      "category": [
+        "db"
+      ], 
+      "end_date": 1421798400, 
+      "start_date": 1377043200
+    }
+  ], 
+  "arizzi": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1519776000, 
+      "start_date": 1519603200
+    }, 
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1540512000, 
+      "start_date": 1519776000
+    }
+  ], 
+  "arunhep": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1536537600, 
+      "start_date": 1479254400
+    }
+  ], 
+  "battibass": [
+    {
+      "category": [
+        "dt-dpg"
+      ], 
+      "end_date": 1632873600, 
+      "start_date": 1618272000
+    }, 
+    {
+      "category": [
+        "muon-dpg", 
+        "dt-dpg"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
+  "bbilin": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1694649600, 
+      "start_date": 1626134400
+    }, 
+    {
+      "category": [
+        "generators"
+      ], 
+      "start_date": 1694649600
+    }
+  ], 
+  "bellan": [
+    {
+      "category": [
+        "pf"
+      ], 
+      "start_date": 1687478400
+    }
+  ], 
+  "bendavid": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1387584000
+    }
+  ], 
+  "benkrikler": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "end_date": 1603152000, 
+      "start_date": 1559952000
+    }
+  ], 
+  "boudoul": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1416355200
+    }
+  ], 
+  "broen": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1442793600, 
+      "start_date": 1442534400
+    }
+  ], 
+  "bsunanda": [
+    {
+      "category": [
+        "geometry"
+      ], 
+      "start_date": 1656979200
+    }
+  ], 
+  "camclean": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "end_date": 1652400000, 
+      "start_date": 1632873600
+    }
+  ], 
+  "cardinia": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "start_date": 1701648000
+    }
+  ], 
+  "cecilecaillol": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "end_date": 1685491200, 
+      "start_date": 1614124800
+    }
+  ], 
+  "cerminar": [
+    {
+      "category": [
+        "operations"
+      ], 
+      "end_date": 1391385600, 
+      "start_date": 1387497600
+    }, 
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1531872000, 
+      "start_date": 1407801600
+    }
+  ], 
+  "chayanit": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1631836800, 
+      "start_date": 1565222400
+    }
+  ], 
+  "christopheralanwest": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1619827200, 
+      "start_date": 1554854400
+    }
+  ], 
+  "civanch": [
+    {
+      "category": [
+        "simulation"
+      ], 
+      "end_date": 1379462400, 
+      "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "simulation", 
+        "geometry"
+      ], 
+      "end_date": 1406160000, 
+      "start_date": 1379462400
+    }, 
+    {
+      "category": [
+        "simulation", 
+        "geometry", 
+        "fastsim"
+      ], 
+      "start_date": 1406160000
+    }
+  ], 
+  "clacaputo": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1693526400, 
+      "start_date": 1639008000
+    }
+  ], 
+  "cmsbuild": [
+    {
+      "category": [
+        "tests"
+      ], 
+      "end_date": 1503360000, 
+      "start_date": 1383523200
+    }, 
+    {
+      "category": [
+        "tests", 
+        "code-checks"
+      ], 
+      "end_date": 1556928000, 
+      "start_date": 1503360000
+    }, 
+    {
+      "category": [
+        "tests"
+      ], 
+      "start_date": 1556928000
+    }
+  ], 
+  "cmsdoxy": [
+    {
+      "category": [
+        "docs"
+      ], 
+      "end_date": 1594252800, 
+      "start_date": 1377734400
+    }
+  ], 
+  "connorpa": [
+    {
+      "category": [
+        "trk-dpg"
+      ], 
+      "start_date": 1632787200
+    }
+  ], 
+  "consuegs": [
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "start_date": 1687996800
+    }
+  ], 
+  "covarell": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1473033600, 
+      "start_date": 1413331200
+    }
+  ], 
+  "cschwick": [
+    {
+      "category": [
+        "lumi-pog"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
+  "cseez": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "cvuosalo": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1488499200, 
+      "start_date": 1420588800
+    }, 
+    {
+      "category": [
+        "geometry"
+      ], 
+      "end_date": 1656979200, 
+      "start_date": 1534377600
+    }
+  ], 
+  "danduggan": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1442793600, 
+      "start_date": 1378944000
+    }, 
+    {
+      "category": [
+        "dqm", 
+        "pdmv"
+      ], 
+      "end_date": 1448496000, 
+      "start_date": 1442793600
+    }
+  ], 
+  "danielwinterbottom": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "start_date": 1701648000
+    }
+  ], 
+  "davidlange6": [
+    {
+      "category": [
+        "orp"
+      ], 
+      "end_date": 1391385600, 
+      "start_date": 1379635200
+    }, 
+    {
+      "category": [
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1391385600
+    }, 
+    {
+      "category": [
+        "operations", 
+        "analysis", 
+        "orp"
+      ], 
+      "end_date": 1471478400, 
+      "start_date": 1458691200
+    }, 
+    {
+      "category": [
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1585094400, 
+      "start_date": 1471478400
+    }, 
+    {
+      "category": [
+        "operations"
+      ], 
+      "start_date": 1585094400
+    }
+  ], 
+  "ddaina": [
+    {
+      "category": [
+        "externals"
+      ], 
+      "end_date": 1641254400, 
+      "start_date": 1633478400
+    }
+  ], 
+  "degano": [
+    {
+      "category": [
+        "tests"
+      ], 
+      "end_date": 1409184000, 
+      "start_date": 1388966400
+    }, 
+    {
+      "category": [
+        "externals"
+      ], 
+      "end_date": 1468368000, 
+      "start_date": 1440028800
+    }
+  ], 
+  "deguio": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1464652800, 
+      "start_date": 1377043200
+    }
+  ], 
+  "demattia": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1389052800, 
+      "start_date": 1377043200
+    }
+  ], 
+  "diguida": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1387411200
+    }
+  ], 
+  "dmitrijus": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1532995200, 
+      "start_date": 1461542400
+    }
+  ], 
+  "dpiparo": [
+    {
+      "category": [
+        "orp"
+      ], 
+      "end_date": 1693440000, 
+      "start_date": 1585699200
+    }
+  ], 
+  "efeyazgan": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1589673600, 
+      "start_date": 1498694400
+    }
+  ], 
+  "eliasron": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1389225600, 
+      "start_date": 1379548800
+    }
+  ], 
+  "emanueleusai": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1696032000, 
+      "start_date": 1631491200
+    }
+  ], 
+  "emeschi": [
+    {
+      "category": [
+        "daq"
+      ], 
+      "start_date": 1377734400
+    }
+  ], 
+  "epalencia": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "start_date": 1638748800
+    }
+  ], 
+  "fabferro": [
+    {
+      "category": [
+        "ctpps-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "fabiocos": [
+    {
+      "category": [
+        "operations"
+      ], 
+      "end_date": 1379462400, 
+      "start_date": 1377216000
+    }, 
+    {
+      "category": [
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1391385600, 
+      "start_date": 1379462400
+    }, 
+    {
+      "category": [
+        "orp"
+      ], 
+      "end_date": 1411430400, 
+      "start_date": 1391385600
+    }, 
+    {
+      "category": [
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1585699200, 
+      "start_date": 1515715200
+    }, 
+    {
+      "category": [
+        "operations"
+      ], 
+      "end_date": 1618272000, 
+      "start_date": 1585699200
+    }, 
+    {
+      "category": [
+        "mtd-dpg"
+      ], 
+      "end_date": 1618358400, 
+      "start_date": 1618272000
+    }, 
+    {
+      "category": [
+        "operations", 
+        "mtd-dpg"
+      ], 
+      "start_date": 1618358400
+    }
+  ], 
+  "fabozzi": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1536796800, 
+      "start_date": 1442793600
+    }
+  ], 
+  "fcavallo": [
+    {
+      "category": [
+        "dt-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "felicepantaleo": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
+  "fgolf": [
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1544400000, 
+      "start_date": 1540512000
+    }, 
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1658880000, 
+      "start_date": 1544400000
+    }
+  ], 
+  "fioriNTU": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1611532800, 
+      "start_date": 1550793600
+    }
+  ], 
+  "francescobrivio": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1631491200, 
+      "start_date": 1611792000
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "end_date": 1632787200, 
+      "start_date": 1631491200
+    }, 
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1633478400, 
+      "start_date": 1632787200
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "end_date": 1693872000, 
+      "start_date": 1633478400
+    }, 
+    {
+      "category": [
+        "db"
+      ], 
+      "start_date": 1693872000
+    }
+  ], 
+  "franzoni": [
+    {
+      "category": [
+        "operations"
+      ], 
+      "end_date": 1416355200, 
+      "start_date": 1377216000
+    }, 
+    {
+      "category": [
+        "operations", 
+        "pdmv"
+      ], 
+      "end_date": 1442793600, 
+      "start_date": 1416355200
+    }, 
+    {
+      "category": [
+        "operations", 
+        "pdmv", 
+        "alca"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1442793600
+    }, 
+    {
+      "category": [
+        "operations", 
+        "alca"
+      ], 
+      "end_date": 1585008000, 
+      "start_date": 1458691200
+    }, 
+    {
+      "category": [
+        "operations"
+      ], 
+      "end_date": 1621814400, 
+      "start_date": 1585008000
+    }
+  ], 
+  "fwyzard": [
+    {
+      "category": [
+        "hlt"
+      ], 
+      "end_date": 1543276800, 
+      "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "heterogeneous", 
+        "hlt"
+      ], 
+      "end_date": 1545091200, 
+      "start_date": 1543276800
+    }, 
+    {
+      "category": [
+        "hlt"
+      ], 
+      "end_date": 1576454400, 
+      "start_date": 1545091200
+    }, 
+    {
+      "category": [
+        "heterogeneous", 
+        "hlt"
+      ], 
+      "end_date": 1625702400, 
+      "start_date": 1576454400
+    }, 
+    {
+      "category": [
+        "heterogeneous"
+      ], 
+      "start_date": 1625702400
+    }
+  ], 
+  "georgia14": [
+    {
+      "category": [
+        "hcal-dpg"
+      ], 
+      "end_date": 1691020800, 
+      "start_date": 1618272000
+    }
+  ], 
+  "ggovi": [
+    {
+      "category": [
+        "db"
+      ], 
+      "end_date": 1678147200, 
+      "start_date": 1377043200
+    }
+  ], 
+  "ghellwig": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1522972800, 
+      "start_date": 1462147200
+    }
+  ], 
+  "giamman": [
+    {
+      "category": [
+        "fastsim"
+      ], 
+      "end_date": 1377475200, 
+      "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "fastsim", 
+        "simulation"
+      ], 
+      "end_date": 1389225600, 
+      "start_date": 1377475200
+    }, 
+    {
+      "category": [
+        "fastsim"
+      ], 
+      "end_date": 1404086400, 
+      "start_date": 1389225600
+    }
+  ], 
+  "gkaratha": [
+    {
+      "category": [
+        "muon-pog"
+      ], 
+      "start_date": 1632787200
+    }
+  ], 
+  "gouskos": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1662336000, 
+      "start_date": 1594080000
+    }
+  ], 
+  "govoni": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1512000000, 
+      "start_date": 1441065600
+    }
+  ], 
+  "gpetruc": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1519776000, 
+      "start_date": 1519603200
+    }, 
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1540512000, 
+      "start_date": 1519776000
+    }
+  ], 
+  "gudrutis": [
+    {
+      "category": [
+        "externals"
+      ], 
+      "end_date": 1566777600, 
+      "start_date": 1506297600
+    }
+  ], 
+  "hengne": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1454457600, 
+      "start_date": 1448496000
+    }
+  ], 
+  "hqucms": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "start_date": 1701993600
+    }
+  ], 
+  "iahmad-khan": [
+    {
+      "category": [
+        "externals"
+      ], 
+      "end_date": 1454457600, 
+      "start_date": 1448236800
+    }
+  ], 
+  "ianna": [
+    {
+      "category": [
+        "geometry"
+      ], 
+      "end_date": 1674518400, 
+      "start_date": 1377043200
+    }
+  ], 
+  "iarspider": [
+    {
+      "category": [
+        "externals",
+        "l1",
+        "upgrade",
+        "dqm",
+        "db"
+      ], 
+      "start_date": 1620000000
+    }
+  ], 
+  "igv4321": [
+    {
+      "category": [
+        "hcal-dpg"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
+  "jainshilpi": [
+    {
+      "category": [
+        "ecal-dpg"
+      ], 
+      "end_date": 1680048000, 
+      "start_date": 1632873600
+    }
+  ], 
+  "jan-kaspar": [
+    {
+      "category": [
+        "ctpps-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "jfernan2": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1671494400, 
+      "start_date": 1508889600
+    }, 
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "start_date": 1693526400
+    }
+  ], 
+  "jhakala": [
+    {
+      "category": [
+        "hcal-dpg"
+      ], 
+      "start_date": 1691020800
+    }
+  ], 
+  "jhgoh": [
+    {
+      "category": [
+        "rpc-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "jlee": [
+    {
+      "category": [
+        "gem-dpg"
+      ], 
+      "end_date": 1632873600, 
+      "start_date": 1618358400
+    }
+  ], 
+  "jmduarte": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "end_date": 1614124800, 
+      "start_date": 1603152000
+    }
+  ], 
+  "johnalison": [
+    {
+      "category": [
+        "btv-pog"
+      ], 
+      "end_date": 1693353600, 
+      "start_date": 1632787200
+    }
+  ], 
+  "jordan-martins": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1661904000, 
+      "start_date": 1596585600
+    }, 
+    {
+      "category": [
+        "ppd"
+      ], 
+      "start_date": 1686182400
+    }
+  ], 
+  "jpata": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1662076800, 
+      "start_date": 1593993600
+    }
+  ], 
+  "jshlee": [
+    {
+      "category": [
+        "gem-dpg"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
+  "juska": [
+    {
+      "category": [
+        "pf"
+      ], 
+      "end_date": 1687478400, 
+      "start_date": 1632787200
+    }
+  ], 
+  "kamon": [
+    {
+      "category": [
+        "gem-dpg"
+      ], 
+      "start_date": 1618358400
+    }
+  ], 
+  "kandrosov": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "end_date": 1701648000, 
+      "start_date": 1632787200
+    }
+  ], 
+  "kdlong": [
+    {
+      "category": [
+        "pf"
+      ], 
+      "start_date": 1632787200
+    }
+  ], 
+  "kirschen": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "start_date": 1632787200
+    }
+  ], 
+  "kkousour": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1506902400, 
+      "start_date": 1493683200
+    }
+  ], 
+  "kmaeshima": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1631491200, 
+      "start_date": 1497398400
+    }
+  ], 
+  "knollejo": [
+    {
+      "category": [
+        "lumi-pog"
+      ], 
+      "start_date": 1632787200
+    }
+  ], 
+  "kpedro88": [
+    {
+      "category": [
+        "upgrade"
+      ], 
+      "end_date": 1531267200, 
+      "start_date": 1485993600
+    }, 
+    {
+      "category": [
+        "upgrade", 
+        "orp"
+      ], 
+      "end_date": 1566172800, 
+      "start_date": 1531267200
+    }, 
+    {
+      "category": [
+        "upgrade", 
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1578528000, 
+      "start_date": 1566172800
+    }, 
+    {
+      "category": [
+        "upgrade", 
+        "operations"
+      ], 
+      "end_date": 1581638400, 
+      "start_date": 1578528000
+    }, 
+    {
+      "category": [
+        "upgrade"
+      ], 
+      "end_date": 1630454400, 
+      "start_date": 1581638400
+    }
+  ], 
+  "kshcheli": [
+    {
+      "category": [
+        "proton-pog"
+      ], 
+      "start_date": 1632787200
+    }
+  ], 
+  "kskovpen": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1687392000, 
+      "start_date": 1626134400
+    }, 
+    {
+      "category": [
+        "tracking-pog"
+      ], 
+      "start_date": 1687392000
+    }
+  ], 
+  "ktf": [
+    {
+      "category": [
+        "core", 
+        "visualization", 
+        "geometry"
+      ], 
+      "end_date": 1386460800, 
+      "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "core", 
+        "visualization", 
+        "geometry"
+      ], 
+      "end_date": 1412208000, 
+      "start_date": 1386460800
+    }, 
+    {
+      "category": [
+        "core", 
+        "visualization", 
+        "geometry"
+      ], 
+      "end_date": 1430179200, 
+      "start_date": 1412208000
+    }
+  ], 
+  "lfinco": [
+    {
+      "category": [
+        "egamma-pog"
+      ], 
+      "end_date": 1670112000, 
+      "start_date": 1632787200
+    }
+  ], 
+  "lpernie": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1548115200, 
+      "start_date": 1498608000
+    }
+  ], 
+  "lveldere": [
+    {
+      "category": [
+        "fastsim"
+      ], 
+      "end_date": 1657497600, 
+      "start_date": 1381881600
+    }
+  ], 
+  "makortel": [
+    {
+      "category": [
+        "heterogeneous"
+      ], 
+      "end_date": 1545091200, 
+      "start_date": 1543276800
+    }, 
+    {
+      "category": [
+        "heterogeneous", 
+        "core", 
+        "visualization", 
+        "geometry"
+      ], 
+      "start_date": 1578268800
+    }
+  ], 
+  "malbouis": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1631491200, 
+      "start_date": 1611792000
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "end_date": 1632787200, 
+      "start_date": 1631491200
+    }, 
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1633478400, 
+      "start_date": 1632787200
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "end_date": 1678147200, 
+      "start_date": 1633478400
+    }, 
+    {
+      "category": [
+        "ppd"
+      ], 
+      "start_date": 1686182400
+    }
+  ], 
+  "mandrenguyen": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "start_date": 1660262400
+    }
+  ], 
+  "mariadalfonso": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1662336000, 
+      "start_date": 1594080000
+    }
+  ], 
+  "mdhildred": [
+    {
+      "category": [
+        "simulation"
+      ], 
+      "end_date": 1378944000, 
+      "start_date": 1377043200
+    }
+  ], 
+  "mdhildreth": [
+    {
+      "category": [
+        "simulation"
+      ], 
+      "end_date": 1379462400, 
+      "start_date": 1378944000
+    }, 
+    {
+      "category": [
+        "simulation", 
+        "geometry"
+      ], 
+      "end_date": 1406160000, 
+      "start_date": 1379462400
+    }, 
+    {
+      "category": [
+        "simulation", 
+        "geometry", 
+        "fastsim"
+      ], 
+      "start_date": 1406160000
+    }
+  ], 
+  "menglu21": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "start_date": 1659312000
+    }
+  ], 
+  "michael-pitt": [
+    {
+      "category": [
+        "proton-pog"
+      ], 
+      "start_date": 1632787200
+    }
+  ], 
+  "micsucmed": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1695772800, 
+      "start_date": 1648425600
+    }
+  ], 
+  "mileva": [
+    {
+      "category": [
+        "muon-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "miquork": [
+    {
+      "category": [
+        "jetmet-pog"
+      ], 
+      "end_date": 1691539200, 
+      "start_date": 1652403702
+    }, 
+    {
+      "category": [
+        "pdmv", 
+        "jetmet-pog"
+      ], 
+      "start_date": 1691539200
+    }
+  ], 
+  "missirol": [
+    {
+      "category": [
+        "hlt"
+      ], 
+      "end_date": 1698883200, 
+      "start_date": 1632096000
+    }
+  ], 
+  "mkirsano": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "start_date": 1569456000
+    }
+  ], 
+  "mmusich": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1494806400, 
+      "start_date": 1413417600
+    }, 
+    {
+      "category": [
+        "trk-dpg"
+      ], 
+      "end_date": 1632787200, 
+      "start_date": 1618272000
+    }, 
+    {
+      "category": [
+        "trk-dpg", 
+        "tracking-pog"
+      ], 
+      "end_date": 1662422400, 
+      "start_date": 1632787200
+    }, 
+    {
+      "category": [
+        "tracking-pog"
+      ], 
+      "end_date": 1693267200, 
+      "start_date": 1662422400
+    }, 
+    {
+      "category": [
+        "tracking-pog", 
+        "hlt"
+      ], 
+      "end_date": 1694563200, 
+      "start_date": 1693267200
+    }, 
+    {
+      "category": [
+        "hlt"
+      ], 
+      "start_date": 1694563200
+    }
+  ], 
+  "mommsen": [
+    {
+      "category": [
+        "daq"
+      ], 
+      "end_date": 1598486400, 
+      "start_date": 1377734400
+    }
+  ], 
+  "mondalspandan": [
+    {
+      "category": [
+        "btv-pog"
+      ], 
+      "start_date": 1693353600
+    }
+  ], 
+  "montjj": [
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1472688000, 
+      "start_date": 1471478400
+    }
+  ], 
+  "monttj": [
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1391385600
+    }
+  ], 
+  "mrodozov": [
+    {
+      "category": [
+        "externals"
+      ], 
+      "end_date": 1633478400, 
+      "start_date": 1494806400
+    }
+  ], 
+  "mseidel42": [
+    {
+      "category": [
+        "hcal-dpg"
+      ], 
+      "end_date": 1649808000, 
+      "start_date": 1618272000
+    }
+  ], 
+  "mtosi": [
+    {
+      "category": [
+        "tracking-pog"
+      ], 
+      "end_date": 1655769600, 
+      "start_date": 1632787200
+    }
+  ], 
+  "mulhearn": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "end_date": 1511913600, 
+      "start_date": 1377734400
+    }
+  ], 
+  "namapane": [
+    {
+      "category": [
+        "dt-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "nclopezo": [
+    {
+      "category": [
+        "tests"
+      ], 
+      "end_date": 1432857600, 
+      "start_date": 1379376000
+    }
+  ], 
+  "nothingface0": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "start_date": 1683676800
+    }
+  ], 
+  "nsmith-": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "end_date": 1550534400, 
+      "start_date": 1511913600
+    }
+  ], 
+  "ojeda": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1416355200, 
+      "start_date": 1389225600
+    }
+  ], 
+  "parbol": [
+    {
+      "category": [
+        "mtd-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "pavlov": [
+    {
+      "category": [
+        "rpc-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "pbo0": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1631491200, 
+      "start_date": 1631491200
+    }
+  ], 
+  "perrotta": [
+    {
+      "category": [
+        "hlt"
+      ], 
+      "end_date": 1488499200, 
+      "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1625702400, 
+      "start_date": 1488499200
+    }, 
+    {
+      "category": [
+        "reconstruction", 
+        "orp"
+      ], 
+      "end_date": 1627344000, 
+      "start_date": 1625702400
+    }, 
+    {
+      "category": [
+        "operations", 
+        "reconstruction", 
+        "orp"
+      ], 
+      "end_date": 1629244800, 
+      "start_date": 1627344000
+    }, 
+    {
+      "category": [
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1687996800, 
+      "start_date": 1629244800
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db", 
+        "orp", 
+        "orp"
+      ], 
+      "end_date": 1688688000, 
+      "start_date": 1687996800
+    }, 
+    {
+      "category": [
+        "operations", 
+        "alca", 
+        "db", 
+        "orp", 
+        "orp"
+      ], 
+      "end_date": 1693440000, 
+      "start_date": 1688688000
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "start_date": 1693440000
+    }
+  ], 
+  "perrozzi": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1557187200, 
+      "start_date": 1461628800
+    }
+  ], 
+  "peruzzim": [
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1544400000, 
+      "start_date": 1540512000
+    }, 
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1602201600, 
+      "start_date": 1544400000
+    }
+  ], 
+  "pfs": [
+    {
+      "category": [
+        "hgcal-dpg"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
+  "pgunnell": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1596585600, 
+      "start_date": 1530748800
+    }
+  ], 
+  "pmandrik": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1695772800, 
+      "start_date": 1631491200
+    }
+  ], 
+  "pohsun": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1630454400, 
+      "start_date": 1528156800
+    }
+  ], 
+  "prebello": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1568073600, 
+      "start_date": 1506902400
+    }
+  ], 
+  "ptcox": [
+    {
+      "category": [
+        "csc-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "qliphy": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1595548800, 
+      "start_date": 1534291200
+    }, 
+    {
+      "category": [
+        "generators", 
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1598572800, 
+      "start_date": 1595548800
+    }, 
+    {
+      "category": [
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1661644800, 
+      "start_date": 1598572800
+    }
+  ], 
+  "rappoccio": [
+    {
+      "category": [
+        "operations", 
+        "orp", 
+        "orp"
+      ], 
+      "start_date": 1657152000
+    }
+  ], 
+  "rcastello": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1422403200, 
+      "start_date": 1377129600
+    }
+  ], 
+  "rekovic": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "end_date": 1676937600, 
+      "start_date": 1458604800
+    }
+  ], 
+  "rovere": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1416355200, 
+      "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "hgcal-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "rvenditti": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "start_date": 1611532800
+    }
+  ], 
+  "santocch": [
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1653264000, 
+      "start_date": 1545091200
+    }
+  ], 
+  "saumyaphor4252": [
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "start_date": 1659052800
+    }
+  ], 
+  "sbein": [
+    {
+      "category": [
+        "fastsim"
+      ], 
+      "start_date": 1563062400
+    }
+  ], 
+  "schneiml": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1596153600, 
+      "start_date": 1530835200
+    }
+  ], 
+  "sextonkennedy": [
+    {
+      "category": [
+        "orp", 
+        "orp"
+      ], 
+      "start_date": 1693440000
+    }
+  ], 
+  "silviodonato": [
+    {
+      "category": [
+        "hlt"
+      ], 
+      "end_date": 1472774400, 
+      "start_date": 1472688000
+    }, 
+    {
+      "category": [
+        "orp"
+      ], 
+      "end_date": 1576800000, 
+      "start_date": 1576454400
+    }, 
+    {
+      "category": [
+        "operations", 
+        "orp"
+      ], 
+      "end_date": 1628553600, 
+      "start_date": 1576800000
+    }, 
+    {
+      "category": [
+        "operations"
+      ], 
+      "end_date": 1629244800, 
+      "start_date": 1628553600
+    }
+  ], 
+  "simonepigazzini": [
+    {
+      "category": [
+        "ecal-dpg"
+      ], 
+      "end_date": 1677628800, 
+      "start_date": 1632873600
+    }, 
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1701993600, 
+      "start_date": 1677628800
+    }
+  ], 
+  "slava77": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1655769600, 
+      "start_date": 1377043200
+    }, 
+    {
+      "category": [
+        "tracking-pog"
+      ], 
+      "start_date": 1655769600
+    }
+  ], 
+  "smorovic": [
+    {
+      "category": [
+        "daq"
+      ], 
+      "start_date": 1598486400
+    }
+  ], 
+  "smuzaffar": [
+    {
+      "category": [
+        "tests"
+      ], 
+      "end_date": 1383177600, 
+      "start_date": 1379635200
+    }, 
+    {
+      "category": [
+        "core"
+      ], 
+      "end_date": 1448236800, 
+      "start_date": 1435104000
+    }, 
+    {
+      "category": [
+        "core", 
+        "externals"
+      ], 
+      "end_date": 1454457600, 
+      "start_date": 1448236800
+    }, 
+    {
+      "category": [
+        "core"
+      ], 
+      "end_date": 1455667200, 
+      "start_date": 1454457600
+    }, 
+    {
+      "category": [
+        "core", 
+        "externals"
+      ], 
+      "start_date": 1455667200
+    }
+  ], 
+  "soureek": [
+    {
+      "category": [
+        "btv-pog"
+      ], 
+      "end_date": 1693353600, 
+      "start_date": 1632787200
+    }
+  ], 
+  "srimanob": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1488153600, 
+      "start_date": 1416355200
+    }, 
+    {
+      "category": [
+        "upgrade"
+      ], 
+      "start_date": 1609632000
+    }
+  ], 
+  "sroychow": [
+    {
+      "category": [
+        "trk-dpg"
+      ], 
+      "start_date": 1662422400
+    }
+  ], 
+  "sscruz": [
+    {
+      "category": [
+        "muon-pog"
+      ], 
+      "end_date": 1662422400, 
+      "start_date": 1632787200
+    }
+  ], 
+  "ssekmen": [
+    {
+      "category": [
+        "fastsim"
+      ], 
+      "start_date": 1423612800
+    }
+  ], 
+  "subansal": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1661904000, 
+      "start_date": 1661904000
+    }
+  ], 
+  "subirsarkar": [
+    {
+      "category": [
+        "upgrade"
+      ], 
+      "start_date": 1702339200
+    }
+  ], 
+  "sunilUIET": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "start_date": 1661904000
+    }
+  ], 
+  "swagata87": [
+    {
+      "category": [
+        "egamma-pog"
+      ], 
+      "end_date": 1695081600, 
+      "start_date": 1632787200
+    }, 
+    {
+      "category": [
+        "pf"
+      ], 
+      "start_date": 1695081600
+    }
+  ], 
+  "swertz": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "end_date": 1685404800, 
+      "start_date": 1658880000
+    }
+  ], 
+  "syuvivida": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "start_date": 1662595200
+    }
+  ], 
+  "thomreis": [
+    {
+      "category": [
+        "l1"
+      ], 
+      "end_date": 1546905600, 
+      "start_date": 1511913600
+    }, 
+    {
+      "category": [
+        "ecal-dpg"
+      ], 
+      "start_date": 1618358400
+    }
+  ], 
+  "thspeer": [
+    {
+      "category": [
+        "reconstruction"
+      ], 
+      "end_date": 1401667200, 
+      "start_date": 1377043200
+    }
+  ], 
+  "thuer": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1512000000, 
+      "start_date": 1394496000
+    }
+  ], 
+  "tjavaid": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "start_date": 1683676800
+    }
+  ], 
+  "tlampen": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1630454400, 
+      "start_date": 1555286400
+    }
+  ], 
+  "tocheng": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1606780800, 
+      "start_date": 1531699200
+    }
+  ], 
+  "tsusa": [
+    {
+      "category": [
+        "trk-dpg"
+      ], 
+      "end_date": 1662422400, 
+      "start_date": 1618272000
+    }
+  ], 
+  "tulamor": [
+    {
+      "category": [
+        "externals"
+      ], 
+      "end_date": 1568073600, 
+      "start_date": 1567987200
+    }
+  ], 
+  "tvami": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1631491200, 
+      "start_date": 1625097600
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "end_date": 1632787200, 
+      "start_date": 1631491200
+    }, 
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1633478400, 
+      "start_date": 1632787200
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db"
+      ], 
+      "end_date": 1690848000, 
+      "start_date": 1633478400
+    }, 
+    {
+      "category": [
+        "alca", 
+        "db", 
+        "analysis"
+      ], 
+      "end_date": 1693872000, 
+      "start_date": 1690848000
+    }, 
+    {
+      "category": [
+        "analysis"
+      ], 
+      "start_date": 1693872000
+    }
+  ], 
+  "vadler": [
+    {
+      "category": [
+        "analysis"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1377043200
+    }
+  ], 
+  "valsdav": [
+    {
+      "category": [
+        "ml"
+      ], 
+      "start_date": 1701993600
+    }
+  ], 
+  "vanbesien": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1530835200, 
+      "start_date": 1442793600
+    }
+  ], 
+  "vavati": [
+    {
+      "category": [
+        "ctpps-dpg"
+      ], 
+      "start_date": 1618272000
+    }
+  ], 
+  "vazzolini": [
+    {
+      "category": [
+        "dqm"
+      ], 
+      "end_date": 1531440000, 
+      "start_date": 1497398400
+    }
+  ], 
+  "vciulli": [
+    {
+      "category": [
+        "generators"
+      ], 
+      "end_date": 1458691200, 
+      "start_date": 1377043200
+    }
+  ], 
+  "vlimant": [
+    {
+      "category": [
+        "operations"
+      ], 
+      "end_date": 1416355200, 
+      "start_date": 1377475200
+    }, 
+    {
+      "category": [
+        "xpog"
+      ], 
+      "start_date": 1658880000
+    }
+  ], 
+  "vmariani": [
+    {
+      "category": [
+        "tracking-pog"
+      ], 
+      "end_date": 1662422400, 
+      "start_date": 1632787200
+    }
+  ], 
+  "wajidalikhan": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1650585600, 
+      "start_date": 1585008000
+    }
+  ], 
+  "wang-hui": [
+    {
+      "category": [
+        "hcal-dpg"
+      ], 
+      "start_date": 1647216000
+    }
+  ], 
+  "wang0jin": [
+    {
+      "category": [
+        "ecal-dpg"
+      ], 
+      "start_date": 1680048000
+    }
+  ], 
+  "watson-ij": [
+    {
+      "category": [
+        "gem-dpg"
+      ], 
+      "start_date": 1632873600
+    }
+  ], 
+  "wpmccormack": [
+    {
+      "category": [
+        "ml"
+      ], 
+      "start_date": 1701993600
+    }
+  ], 
+  "yuanchao": [
+    {
+      "category": [
+        "alca"
+      ], 
+      "end_date": 1678147200, 
+      "start_date": 1601596800
+    }
+  ], 
+  "zhenhu": [
+    {
+      "category": [
+        "pdmv"
+      ], 
+      "end_date": 1585008000, 
+      "start_date": 1530748800
+    }
+  ]
+}

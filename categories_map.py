@@ -741,6 +741,7 @@ CMSSW_CATEGORIES = {
         "GeneratorInterface/AlpgenInterface",
         "GeneratorInterface/BeamHaloGenerator",
         "GeneratorInterface/CascadeInterface",
+        "GeneratorInterface/CepGenInterface",
         "GeneratorInterface/Configuration",
         "GeneratorInterface/Core",
         "GeneratorInterface/CosmicMuonGenerator",

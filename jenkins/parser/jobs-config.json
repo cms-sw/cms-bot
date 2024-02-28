@@ -285,6 +285,12 @@
           "mount hook function failure.*doesn't exist in container"
 	],
 	"action": "nodeOff"
+      },
+      "diskFullFailure": {
+	"errorStr": [
+	  "No space left on device"
+	],
+	"action": "nodeOff"
       }
     }
   }

@@ -1,0 +1,68 @@
+[{
+	"type": "update-milestone",
+	"data": {
+		"id": 4,
+		"title": "CMSSW_14_1_X"
+	}
+}, {
+	"type": "status",
+	"data": {
+		"commit": "8caa0b5f78a85355bea286f2a8354f85a0cabfc0",
+		"status": "pending",
+		"description": "Waiting for authorized user to issue the test command.",
+		"target_url": null,
+		"context": "bot/12/jenkins"
+	}
+}, {
+	"type": "add-label",
+	"data": ["code-checks-pending", "core-pending", "orp-pending", "pending-signatures", "tests-pending"]
+}, {
+	"type": "remove-label",
+	"data": []
+}, {
+	"type": "create-property-file",
+	"data": {
+		"filename": "trigger-code-checks-iarspider-cmssw-cmssw-12.properties",
+		"data": {
+			"PULL_REQUEST": "12",
+			"CONTEXT_PREFIX": "cms/12",
+			"CMSSW_TOOL_CONF": "",
+			"APPLY_PATCH": "false"
+		}
+	}
+}, {
+	"type": "status",
+	"data": {
+		"commit": "8caa0b5f78a85355bea286f2a8354f85a0cabfc0",
+		"status": "pending",
+		"description": "code-checks requested",
+		"target_url": null,
+		"context": "cms/12/code-checks"
+	}
+}, {
+	"type": "write-bot-cache",
+	"data": {
+		"emoji": {},
+		"signatures": {},
+		"commits": {
+			"8caa0b5f78a85355bea286f2a8354f85a0cabfc0": {
+				"time": 1709025945,
+				"squashed": false,
+				"files": ["Utilities/ReleaseScripts/test/BuildFile.xml"]
+			}
+		},
+		"last_seen_sha": "8caa0b5f78a85355bea286f2a8354f85a0cabfc0"
+	}
+}, {
+	"type": "create-bot-cache",
+	"data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"8caa0b5f78a85355bea286f2a8354f85a0cabfc0\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1709025945}},\"emoji\":{},\"last_seen_sha\":\"8caa0b5f78a85355bea286f2a8354f85a0cabfc0\",\"signatures\":{}} -->"
+}, {
+	"type": "status",
+	"data": {
+		"commit": "8caa0b5f78a85355bea286f2a8354f85a0cabfc0",
+		"status": "success",
+		"description": "Comment by iarspider at 2024-02-27 10:29:07 UTC processed.",
+		"target_url": "https://github.com/iarspider-cmssw/cmssw/pull/12",
+		"context": "bot/12/ack"
+	}
+}]

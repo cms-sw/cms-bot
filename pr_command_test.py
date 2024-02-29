@@ -72,12 +72,14 @@ except ImportError:
     def get_dpg_pog(*args):
         return {}
 
+
 try:
     from categories import external_to_package
 except ImportError:
 
     def external_to_package(*args):
         return ""
+
 
 try:
     from releases import get_release_managers, is_closed_branch
@@ -86,9 +88,9 @@ except ImportError:
     def get_release_managers(*args):
         return []
 
-
     def is_closed_branch(*args):
         return False
+
 
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
@@ -211,67 +213,103 @@ logger: Optional[logging.Logger] = None
 ### Helper functions ###
 
 
-def ignore_issue(repo_config, repo, issue):
-    if issue.number in repo_config.IGNORE_ISSUES:
-        return True
-    if (repo.full_name in repo_config.IGNORE_ISSUES) and (
-            issue.number in repo_config.IGNORE_ISSUES[repo.full_name]
-    ):
-        return True
-    if re.match(BUILD_REL, issue.title):
-        return True
-    if issue.body:
-        if re.search(
-                CMSBOT_IGNORE_MSG,
-                issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip(),
-                re.I,
-        ):
-            return True
-    return False
-
-
-def notify_user(issue):
-    if issue.body and re.search(
-            CMSBOT_NO_NOTIFY_MSG,
-            issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip(),
-            re.I,
-    ):
-        return False
-    return True
-
-
-def set_comment_emoji_cache(dryRun, comment, repository, emoji="+1", reset_other=True):
-    global bot_cache
-
-    if dryRun:
-        return
-    comment_id = str(comment.id)
-    if (
-            (comment_id not in bot_cache["emoji"])
-            or (bot_cache["emoji"][comment_id] != emoji)
-            or (comment.reactions[emoji] == 0)
-    ):
-        if "Issue.Issue" in str(type(comment)):
-            set_issue_emoji(comment.number, repository, emoji=emoji, reset_other=reset_other)
+def update_CMSSW_LABELS(repo_config):
+    try:
+        check_dpg_pog = repo_config.CHECK_DPG_POG
+    except:
+        check_dpg_pog = False
+    dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
+    for l in CMSSW_LABELS.keys():
+        if check_dpg_pog and (not l in dpg_pog):
+            del CMSSW_LABELS[l]
         else:
-            set_comment_emoji(comment.id, repository, emoji=emoji, reset_other=reset_other)
-        bot_cache["emoji"][comment_id] = emoji
+            CMSSW_LABELS[l] = [
+                re.compile("^(" + p + ").*$") if isinstance(p, str) else p for p in CMSSW_LABELS[l]
+            ]
     return
 
 
-def get_prs_list_from_string(pr_string="", repo_string=""):
-    prs = []
-    for pr in [
-        x.strip().split("/github.com/", 1)[-1].replace("/pull/", "#").strip("/")
-        for x in pr_string.split(",")
-        if x.strip()
-    ]:
-        while "//" in pr:
-            pr = pr.replace("//", "/")
-        if pr.startswith("#"):
-            pr = repo_string + pr
-        prs.append(pr)
-    return prs
+def init_l2_data(repo_config, cms_repo):
+    l2_data = {}
+    if cms_repo:
+        with open(join(dirname(__file__), "cmssw_l2", "l2.json")) as ref:
+            default_l2_data = load(ref)
+        l2_data = read_repo_file(repo_config, "l2.json", default_l2_data, False)
+        for user in CMSSW_L2:
+            if (user in l2_data) and ("end_date" in l2_data[user][-1]):
+                del l2_data[user][-1]["end_date"]
+    else:
+        for user in CMSSW_L2:
+            l2_data[user] = [{"start_date": 0, "category": CMSSW_L2[user]}]
+    return l2_data
+
+
+def collect_commit_cache(bot_cache):
+    REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
+    commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
+    if commit_cache:
+        for k in commit_cache:
+            del bot_cache[k]
+        bot_cache["commits"] = commit_cache
+
+
+def read_bot_cache(comment_msg):
+    seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
+    if seen_commits_match:
+        print("Loading bot cache")
+        res = loads_maybe_decompress(seen_commits_match[1])
+        for k, v in BOT_CACHE_TEMPLATE.items():
+            if k not in res:
+                res[k] = v
+        collect_commit_cache(res)
+        return res
+    return {}
+
+
+def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
+    old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+    new_body = (
+        REGEX_COMMITS_CACHE.sub("", old_body)
+        + "<!-- bot cache: "
+        + dumps_maybe_compress(bot_cache)
+        + " -->"
+    )
+    if old_body == new_body:
+        return
+    print("Saving bot cache")
+    if len(new_body) <= 65535:
+        if not dryRun:
+            if cache_comment:
+                cache_comment.edit(new_body)
+            else:
+                issue.create_comment(new_body)
+        else:
+            if cache_comment:
+                print("DRY RUN: Updating existing comment with text")
+            else:
+                print("DRY RUN: Creating technical comment with text")
+            print(new_body.encode("ascii", "ignore").decode())
+    else:
+        raise RuntimeError("Updated comment body too long: {0} > 65535".format(len(new_body)))
+
+
+def get_commenter_categories(commenter, comment_date):
+    if commenter not in L2_DATA:
+        return []
+    for item in L2_DATA[commenter]:
+        if comment_date < item["start_date"]:
+            return []
+        if ("end_date" not in item) or (comment_date < item["end_date"]):
+            return item["category"]
+    return []
+
+
+def get_package_categories(package):
+    cats = []
+    for cat, packages in list(CMSSW_CATEGORIES.items()):
+        if package in packages:
+            cats.append(cat)
+    return cats
 
 
 # Read a yaml file
@@ -290,32 +328,53 @@ def read_repo_file(repo_config, repo_file, default=None, is_yaml=True):
     return contents
 
 
-def init_l2_data(repo_config, cms_repo):
-    l2_data = {}
-    if cms_repo:
-        with open(join(dirname(__file__), "cmssw_l2", "l2.json")) as ref:
-            default_l2_data = load(ref)
-        l2_data = read_repo_file(repo_config, "l2.json", default_l2_data, False)
-        for user in CMSSW_L2:
-            if (user in l2_data) and ("end_date" in l2_data[user][-1]):
-                del l2_data[user][-1]["end_date"]
-    else:
-        for user in CMSSW_L2:
-            l2_data[user] = [{"start_date": 0, "category": CMSSW_L2[user]}]
-    return l2_data
+#
+# creates a properties file to trigger the test of the pull request
+#
 
 
-def update_CMSSW_LABELS(repo_config):
-    check_dpg_pog = getattr(repo_config, "CHECK_DPG_POG", False)
-    dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
-    for lab in CMSSW_LABELS.keys():
-        if check_dpg_pog and (lab not in dpg_pog):
-            del CMSSW_LABELS[lab]
-        else:
-            CMSSW_LABELS[lab] = [re.compile("^(" + p + ").*$") for p in CMSSW_LABELS[lab]]
-    return
+def create_properties_file_tests(
+    repository, pr_number, parameters, dryRun, abort=False, req_type="tests", repo_config=None
+):
+    if abort:
+        req_type = "abort"
+    repo_parts = repository.split("/")
+    if req_type in "tests":
+        try:
+            if not repo_parts[0] in EXTERNAL_REPOS:
+                req_type = "user-" + req_type
+            elif not repo_config.CMS_STANDARD_TESTS:
+                req_type = "user-" + req_type
+        except:
+            pass
+    out_file_name = "trigger-%s-%s-%s.properties" % (
+        req_type,
+        repository.replace("/", "-"),
+        pr_number,
+    )
+
+    try:
+        if repo_config.JENKINS_SLAVE_LABEL:
+            parameters["RUN_LABEL"] = repo_config.JENKINS_SLAVE_LABEL
+    except:
+        pass
+    print("PropertyFile: ", out_file_name)
+    print("Data:", parameters)
+    create_property_file(out_file_name, parameters, dryRun)
 
 
+def create_property_file(out_file_name, parameters, dryRun):
+    if dryRun:
+        print("Not creating properties file (dry-run): %s" % out_file_name)
+        return
+    print("Creating properties file %s" % out_file_name)
+    out_file = open(out_file_name, "w")
+    for k in parameters:
+        out_file.write("%s=%s\n" % (k, parameters[k]))
+    out_file.close()
+
+
+# Update the milestone for a given issue.
 def updateMilestone(repo, issue, pr, dryRun):
     milestoneId = RELEASE_BRANCH_MILESTONE.get(pr.base.label.split(":")[1], None)
     if not milestoneId:
@@ -333,6 +392,209 @@ def updateMilestone(repo, issue, pr, dryRun):
     issue.edit(milestone=milestone)
 
 
+def find_last_comment(issue, user, match):
+    last_comment = None
+    for comment in issue.get_comments():
+        if (user != comment.user.login) or (not comment.body):
+            continue
+        if not re.match(
+            match, comment.body.encode("ascii", "ignore").decode().strip("\n\t\r "), re.MULTILINE
+        ):
+            continue
+        last_comment = comment
+        print("Matched comment from ", comment.user.login + " with comment id ", comment.id)
+    return last_comment
+
+
+def modify_comment(comment, match, replace, dryRun):
+    comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+    if match:
+        new_comment_msg = re.sub(match, replace, comment_msg)
+    else:
+        new_comment_msg = comment_msg + "\n" + replace
+    if new_comment_msg != comment_msg:
+        if not dryRun:
+            comment.edit(new_comment_msg)
+            print("Message updated")
+    return 0
+
+
+def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
+    if dryRun:
+        return
+    comment_id = str(comment.id)
+    if (
+        (not comment_id in bot_cache["emoji"])
+        or (bot_cache["emoji"][comment_id] != emoji)
+        or (comment.reactions[emoji] == 0)
+    ):
+        if "Issue.Issue" in str(type(comment)):
+            set_issue_emoji(comment.number, repository, emoji=emoji, reset_other=reset_other)
+        else:
+            set_comment_emoji(comment.id, repository, emoji=emoji, reset_other=reset_other)
+        bot_cache["emoji"][comment_id] = emoji
+    return
+
+
+def has_user_emoji(bot_cache, comment, repository, emoji, user):
+    e = None
+    comment_id = str(comment.id)
+    if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
+        e = bot_cache["emoji"][comment_id]
+    else:
+        emojis = None
+        if "Issue.Issue" in str(type(comment)):
+            emojis = get_issue_emojis(comment.number, repository)
+        else:
+            emojis = get_comment_emojis(comment.id, repository)
+        for x in emojis:
+            if x["user"]["login"].encode("ascii", "ignore").decode() == user:
+                e = x["content"]
+                bot_cache["emoji"][comment_id] = x
+                break
+    return e and e == emoji
+
+
+def get_assign_categories(line, extra_labels):
+    m = re.match(
+        "^\s*(New categories assigned:\s*|(unassign|assign)\s+(from\s+|package\s+|))([a-zA-Z0-9/,\s-]+)\s*$",
+        line,
+        re.I,
+    )
+    if m:
+        assgin_type = m.group(1).lower()
+        if m.group(2):
+            assgin_type = m.group(2).lower()
+        new_cats = []
+        for ex_cat in m.group(4).replace(" ", "").split(","):
+            if "/" in ex_cat:
+                new_cats += get_package_categories(ex_cat)
+                add_nonblocking_labels([ex_cat], extra_labels)
+                continue
+            if not ex_cat in CMSSW_CATEGORIES:
+                continue
+            new_cats.append(ex_cat)
+        return (assgin_type.strip(), new_cats)
+    return ("", [])
+
+
+def ignore_issue(repo_config, repo, issue):
+    if issue.number in repo_config.IGNORE_ISSUES:
+        return True
+    if (repo.full_name in repo_config.IGNORE_ISSUES) and (
+        issue.number in repo_config.IGNORE_ISSUES[repo.full_name]
+    ):
+        return True
+    if re.match(BUILD_REL, issue.title):
+        return True
+    if issue.body:
+        if re.search(
+            CMSBOT_IGNORE_MSG,
+            issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip(),
+            re.I,
+        ):
+            return True
+    return False
+
+
+def notify_user(issue):
+    if issue.body and re.search(
+        CMSBOT_NO_NOTIFY_MSG,
+        issue.body.encode("ascii", "ignore").decode().split("\n", 1)[0].strip(),
+        re.I,
+    ):
+        return False
+    return True
+
+
+def get_prs_list_from_string(pr_string="", repo_string=""):
+    prs = []
+    for pr in [
+        x.strip().split("/github.com/", 1)[-1].replace("/pull/", "#").strip("/")
+        for x in pr_string.split(",")
+        if x.strip()
+    ]:
+        while "//" in pr:
+            pr = pr.replace("//", "/")
+        if pr.startswith("#"):
+            pr = repo_string + pr
+        prs.append(pr)
+    return prs
+
+
+def parse_extra_params(full_comment, repo):
+    global ALL_CHECK_FUNCTIONS
+    xerrors = {"format": [], "key": [], "value": []}
+    matched_extra_args = {}
+    if ALL_CHECK_FUNCTIONS is None:
+        all_globals = globals()
+        ALL_CHECK_FUNCTIONS = dict(
+            [
+                (f, all_globals[f])
+                for f in all_globals
+                if f.startswith("check_") and callable(all_globals[f])
+            ]
+        )
+    for l in full_comment[1:]:
+        l = l.strip()
+        if l.startswith("-"):
+            l = l[1:]
+        elif l.startswith("*"):
+            l = l[1:]
+        l = l.strip()
+        if l == "":
+            continue
+        if not "=" in l:
+            xerrors["format"].append("'%s'" % l)
+            continue
+        line_args = l.split("=", 1)
+        line_args[0] = line_args[0].replace(" ", "")
+        line_args[1] = line_args[1].strip()
+        found = False
+        for k, pttrn in MULTILINE_COMMENTS_MAP.items():
+            if not re.match("^(%s)$" % k, line_args[0], re.I):
+                continue
+            if (len(pttrn) < 3) or (not pttrn[2]):
+                line_args[1] = line_args[1].replace(" ", "")
+            param = pttrn[1]
+            if not re.match("^(%s)$" % pttrn[0], line_args[1], re.I):
+                xerrors["value"].append(line_args[0])
+                found = True
+                break
+            try:
+                func = "check_%s" % param.lower()
+                if func in ALL_CHECK_FUNCTIONS:
+                    line_args[1], new_param = ALL_CHECK_FUNCTIONS[func](
+                        line_args[1], repo, matched_extra_args, line_args[0], param
+                    )
+                    if new_param:
+                        param = new_param
+            except:
+                pass
+            matched_extra_args[param] = line_args[1]
+            found = True
+            break
+        if not found:
+            xerrors["key"].append(line_args[0])
+    error_lines = []
+    for k in sorted(xerrors.keys()):
+        if xerrors[k]:
+            error_lines.append("%s:%s" % (k, ",".join(xerrors[k])))
+    if error_lines:
+        matched_extra_args = {"errors": "ERRORS: " + "; ".join(error_lines)}
+    return matched_extra_args
+
+
+def multiline_check_function(first_line, comment_lines, repository):
+    if first_line.lower() not in ["test parameters", "test parameters:"]:
+        return False, {}, ""
+    extra_params = parse_extra_params(comment_lines, repository)
+    print(extra_params)
+    if "errors" in extra_params:
+        return False, {}, extra_params["errors"]
+    return True, extra_params, ""
+
+
 def get_changed_files(repo, pr, use_gh_patch=False):
     if (not use_gh_patch) and (pr.changed_files <= 300):
         pr_files = []
@@ -346,8 +608,8 @@ def get_changed_files(repo, pr, use_gh_patch=False):
         print("PR Files: ", pr_files)
         return pr_files
     cmd = (
-            "curl -s -L https://patch-diff.githubusercontent.com/raw/%s/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq"
-            % (repo.full_name, pr.number)
+        "curl -s -L https://patch-diff.githubusercontent.com/raw/%s/pull/%s.patch | grep '^diff --git ' | sed 's|.* a/||;s|  *b/| |' | tr ' ' '\n' | sort | uniq"
+        % (repo.full_name, pr.number)
     )
     e, o = run_cmd(cmd)
     if e:
@@ -424,14 +686,11 @@ def add_nonblocking_labels(chg_files, extra_labels):
     print("Extra non-blocking labels:", extra_labels)
     return
 
-def get_package_categories(package):
-    cats = []
-    for cat, packages in list(CMSSW_CATEGORIES.items()):
-        if package in packages:
-            cats.append(cat)
-    return cats
 
-### Functions to check for test parameters' correctness ###
+#######################################################
+# Functions to check for test parameters' correctness #
+#######################################################
+
 
 def check_function(func):
     def wrapper(*args, **kwargs):
@@ -575,17 +834,18 @@ def check_test_cmd(first_line, repo, params):
     return False, "", "", ""
 
 
-### Commands ###
-
+############
+# Commands #
+############
 commands = {}
 
 
 def command(
-        *,
-        trigger: Union[str, Pattern, Callable],
-        acl: Union[str, Iterable[str], Callable, None] = None,
-        ack: bool = True,
-        multiline: bool = False,
+    *,
+    trigger: Union[str, Pattern, Callable],
+    acl: Union[str, Iterable[str], Callable, None] = None,
+    ack: bool = True,
+    multiline: bool = False,
 ):
     def decorator(func):
         commands[func.__name__] = {
@@ -676,10 +936,10 @@ def check_acl(comment: IssueComment, command_acl: Union[str, Iterable[str], Call
 
 
 def check_trigger(
-        first_line: str,
-        comment_lines: Iterable[str],
-        multiline: bool,
-        command_trigger: Union[str, Pattern, Callable],
+    first_line: str,
+    comment_lines: Iterable[str],
+    multiline: bool,
+    command_trigger: Union[str, Pattern, Callable],
 ) -> bool:
     first_line = comment_lines[0:1]
 
@@ -687,19 +947,19 @@ def check_trigger(
         return command_trigger("\n".join(comment_lines) if multiline else first_line)
     elif isinstance(command_trigger, Pattern):
         return (
-                command_trigger.match(
-                    "\n".join(comment_lines) if multiline else first_line,
-                )
-                is not None
+            command_trigger.match(
+                "\n".join(comment_lines) if multiline else first_line,
+            )
+            is not None
         )
     elif isinstance(command_trigger, str):
         return (
-                re.match(
-                    "^" + command_trigger + "$",
-                    "\n".join(comment_lines),
-                    re.MULTILINE if multiline else 0,
-                )
-                is not None
+            re.match(
+                "^" + command_trigger + "$",
+                "\n".join(comment_lines),
+                re.MULTILINE if multiline else 0,
+            )
+            is not None
         )
     else:
         raise TypeError()
@@ -757,7 +1017,9 @@ def process_comment(pr: Union[PullRequest, Issue], comment: IssueComment, repo: 
 ### Main function ###
 
 
-def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, loglevel=logging.DEBUG):
+def process_pr(
+    repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False, loglevel=logging.DEBUG
+):
     global L2_DATA, logger
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
@@ -778,7 +1040,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
     if not cmsbuild_user:
         cmsbuild_user = repo_config.CMSBUILD_USER
-    logger.info("Working on %s for PR/Issue %s with admin user %s", repo.full_name, prId, cmsbuild_user)
+    logger.info(
+        "Working on %s for PR/Issue %s with admin user %s", repo.full_name, prId, cmsbuild_user
+    )
     logger.debug("Notify User: %s", gh_user_char)
 
     update_CMSSW_LABELS(repo_config)
@@ -786,7 +1050,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     cmssw_repo = repo_name == GH_CMSSW_REPO
     cms_repo = repo_org in EXTERNAL_REPOS
     external_repo = (repository != CMSSW_REPO_NAME) and (
-            len([e for e in EXTERNAL_REPOS if repo_org == e]) > 0
+        len([e for e in EXTERNAL_REPOS if repo_org == e]) > 0
     )
     # create_test_property = False
     # packages = set([])
@@ -814,7 +1078,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         known_ignore_tests,
         known_ignore_tests,
     )  # TODO: \s*
-    REGEX_EX_ENABLE_TESTS = r"^enable\s+(%s)$" % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]  # TODO: \s*
+    REGEX_EX_ENABLE_TESTS = (
+        r"^enable\s+(%s)$" % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
+    )  # TODO: \s*
     L2_DATA = init_l2_data(repo_config, cms_repo)
     # last_commit_date = None
     # last_commit_obj = None
@@ -856,7 +1122,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                             user=requestor,
                             gh_user_char=gh_user_char,
                             dev_branch=CMSSW_DEVEL_BRANCH,
-                        ))
+                        )
+                    )
                     issue.create_comment(msg)
             return
 
@@ -886,7 +1153,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if (repo_org != GH_CMSSW_ORGANIZATION) or (repo_name in VALID_CMS_SW_REPOS_FOR_TESTS):
                 create_test_property = True
             if (repo_name == GH_CMSDIST_REPO) and (
-                    not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref)
+                not re.match(VALID_CMSDIST_BRANCHES, pr.base.ref)
             ):
                 print("Skipping PR as it does not belong to valid CMSDIST branch")
                 return

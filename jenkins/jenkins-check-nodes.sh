@@ -23,11 +23,13 @@ function run_check {
     scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh "cmsbuild@$node:/tmp" || (echo "Cannot scp script" && exit 1)
     ssh $SSH_OPTS "cmsbuild@"$node "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS"; exit_code=$?
     if [[ ${exit_code} -eq 0 ]]; then
-	echo "PASS" > "$blacklist_path/$node"
-	scp "$blacklist_path/$node" cmsbuild@lxplus.cern.ch:/afs/cern.ch/user/c/cmsbuild/nodes-info/"$node"
         rm -f "$blacklist_path/$node"
         # Special .offline cleanup for aarch and ppc nodes
         if [[ $(echo $node | grep -e 'olarm\|ibmminsky' | wc -l) -gt 0 ]]; then
+            touch "$blacklist_path/$node"
+            echo "PASS" > "$blacklist_path/$node"
+            scp "$blacklist_path/$node" cmsbuild@lxplus.cern.ch:/afs/cern.ch/user/c/cmsbuild/nodes-info/"$node"
+            rm -f "$blacklist_path/$node"
             aarch_ppc_cleanup $node
         fi
     else
@@ -35,12 +37,12 @@ function run_check {
 	# Check if node is already in the blacklist
 	if [ ! -e $blacklist_path/$node ]; then 
             touch "$blacklist_path/$node" || exit 1
-	    echo "ERROR" > "$blacklist_path/$node" || exit 1
-	    scp "$blacklist_path/$node" cmsbuild@lxplus.cern.ch:/afs/cern.ch/user/c/cmsbuild/nodes-info/"$node"
 	    if [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
                 # If aarch or ppc, bring node off
                 aarch_ppc_disconnect $node
-		# TODO: If aarch (olarm), scp dummy file to /afs cmsbuild area
+		# If aarch (olarm), scp dummy file to /afs cmsbuild area
+		echo "ERROR" > "$blacklist_path/$node"
+		scp "$blacklist_path/$node" cmsbuild@lxplus.cern.ch:/afs/cern.ch/user/c/cmsbuild/nodes-info/"$node"
             elif [[ $(echo $node | grep '^lxplus' | wc -l) -gt 0 ]]; then
                 # If lxplus, disconnect all nodes connected to this host
                 lxplus_disconnect $node

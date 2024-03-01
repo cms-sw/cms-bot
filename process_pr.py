@@ -2571,8 +2571,10 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             else:
                 print("Dryrun: Setting pending status for %s" % pre_check)
 
-    if commentMsg and not dryRun:
-        issue.create_comment(commentMsg)
+    if commentMsg:
+        pr_actions.append({"type": "comment", "data": commentMsg})
+        if not dryRun:
+            issue.create_comment(commentMsg)
 
     # Check if it needs to be automatically merged.
     if all(

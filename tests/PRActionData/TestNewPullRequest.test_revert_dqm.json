@@ -1,0 +1,109 @@
+[{
+	"type": "load-bot-cache",
+	"data": {
+		"commits": {
+			"3b192221516cc417648a8b891424d272a5a00960": {
+				"files": ["Utilities/ReleaseScripts/test/BuildFile.xml"],
+				"squashed": false,
+				"time": 1709559701
+			},
+			"77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948": {
+				"files": ["Utilities/ReleaseScripts/test/BuildFile.xml"],
+				"squashed": false,
+				"time": 1709292636
+			},
+			"9e54289a6833ed8ebb9382515908e68824d437c7": {
+				"files": ["DQMServices/Components/test/dqmiofilecopy.sh"],
+				"squashed": false,
+				"time": 1709301231
+			},
+			"49b1d2b0148732077c746dc66ea00cd9b25d0079": {
+				"time": 1709561170,
+				"squashed": false,
+				"files": ["DQMServices/Components/test/dqmiofilecopy.sh"]
+			}
+		},
+		"emoji": {
+			"1973271222": "+1"
+		},
+		"last_seen_sha": "49b1d2b0148732077c746dc66ea00cd9b25d0079",
+		"signatures": {
+			"1973271222": "77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948"
+		}
+	}
+}, {
+	"type": "emoji",
+	"data": [1973271222, "+1", true]
+}, {
+	"type": "status",
+	"data": {
+		"commit": "49b1d2b0148732077c746dc66ea00cd9b25d0079",
+		"status": "pending",
+		"description": "Waiting for authorized user to issue the test command.",
+		"target_url": null,
+		"context": "bot/13/jenkins"
+	}
+}, {
+	"type": "add-label",
+	"data": []
+}, {
+	"type": "remove-label",
+	"data": ["dqm-pending"]
+}, {
+	"type": "status",
+	"data": {
+		"commit": "49b1d2b0148732077c746dc66ea00cd9b25d0079",
+		"status": "success",
+		"description": "Check details",
+		"target_url": "https://github.com/iarspider-cmssw/cmssw/pull/13#issuecomment-1976796678",
+		"context": "cms/13/code-checks"
+	}
+}, {
+	"type": "comment",
+	"data": "Pull request #13 was updated. Dr15Jones, iarspider, makortel, smuzaffar can you please check and sign again.\n"
+}, {
+	"type": "write-bot-cache",
+	"data": {
+		"commits": {
+			"3b192221516cc417648a8b891424d272a5a00960": {
+				"files": ["Utilities/ReleaseScripts/test/BuildFile.xml"],
+				"squashed": false,
+				"time": 1709559701
+			},
+			"77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948": {
+				"files": ["Utilities/ReleaseScripts/test/BuildFile.xml"],
+				"squashed": false,
+				"time": 1709292636
+			},
+			"9e54289a6833ed8ebb9382515908e68824d437c7": {
+				"files": ["DQMServices/Components/test/dqmiofilecopy.sh"],
+				"squashed": false,
+				"time": 1709301231
+			},
+			"49b1d2b0148732077c746dc66ea00cd9b25d0079": {
+				"time": 1709561170,
+				"squashed": false,
+				"files": ["DQMServices/Components/test/dqmiofilecopy.sh"]
+			}
+		},
+		"emoji": {
+			"1973271222": "+1"
+		},
+		"last_seen_sha": "49b1d2b0148732077c746dc66ea00cd9b25d0079",
+		"signatures": {
+			"1973271222": "77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948"
+		}
+	}
+}, {
+	"type": "update-bot-cache",
+	"data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"3b192221516cc417648a8b891424d272a5a00960\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1709559701},\"49b1d2b0148732077c746dc66ea00cd9b25d0079\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":false,\"time\":1709561170},\"77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1709292636},\"9e54289a6833ed8ebb9382515908e68824d437c7\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":false,\"time\":1709301231}},\"emoji\":{\"1973271222\":\"+1\"},\"last_seen_sha\":\"49b1d2b0148732077c746dc66ea00cd9b25d0079\",\"signatures\":{\"1973271222\":\"77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948\"}} -->"
+}, {
+	"type": "status",
+	"data": {
+		"commit": "49b1d2b0148732077c746dc66ea00cd9b25d0079",
+		"status": "success",
+		"description": "Comment by iarspider at 2024-03-04 15:06:26 UTC processed.",
+		"target_url": "https://github.com/iarspider-cmssw/cmssw/pull/13#issuecomment-1976796678",
+		"context": "bot/13/ack"
+	}
+}]

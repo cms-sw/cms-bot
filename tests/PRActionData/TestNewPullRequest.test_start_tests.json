@@ -1,0 +1,93 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "3b192221516cc417648a8b891424d272a5a00960": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709559701
+                },
+                "49b1d2b0148732077c746dc66ea00cd9b25d0079": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709561170
+                },
+                "77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709292636
+                },
+                "9e54289a6833ed8ebb9382515908e68824d437c7": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709301231
+                }
+            },
+            "emoji": {
+                "1973271222": "+1"
+            },
+            "last_seen_sha": "49b1d2b0148732077c746dc66ea00cd9b25d0079",
+            "signatures": {
+                "1973271222": "77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1973271222,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "tests-started"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "tests-pending"
+        ]
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-tests-iarspider-cmssw-cmssw-13.properties",
+            "data": {
+                "PULL_REQUESTS": "iarspider-cmssw/cmssw#13",
+                "EXTRA_RELVALS_TESTS": "THREADING GPU HIGH_STATS NANO",
+                "CONTEXT_PREFIX": "cms/13"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1978843538,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "49b1d2b0148732077c746dc66ea00cd9b25d0079",
+            "status": "success",
+            "description": "Comment by iarspider at 2024-03-05 14:03:47 UTC processed.",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/13#issuecomment-1978843538",
+            "context": "bot/13/ack"
+        }
+    }
+]

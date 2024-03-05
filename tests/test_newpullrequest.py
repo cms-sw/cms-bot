@@ -19,7 +19,7 @@ class TestNewPullRequest(Framework.TestCase):
         sys.path.insert(
             0,
             os.path.abspath(
-                os.path.join(os.path.dirname(__file__), "../", "repos", "iarspider_cmssw", "cmssw")
+                os.path.join(os.path.dirname(__file__), "..", "repos", "iarspider_cmssw", "cmssw")
             ),
         )
         if "repo_config" in sys.modules:
@@ -192,7 +192,175 @@ class TestNewPullRequest(Framework.TestCase):
 
         if self.recordMode:
             with open(fileName, "w") as f:
-                json.dump(res, f)
+                json.dump(res, f, indent=4)
+        else:
+            with open(fileName, "r") as f:
+                expected = json.load(f)
+
+            TestNewPullRequest.compareActions(res, expected)
+
+    def test_start_tests(self):
+        from process_pr import process_pr
+
+        prId = 13
+        repo = self.g.get_repo("iarspider-cmssw/cmssw")
+        res = process_pr(
+            self.repo_config,
+            self.g,
+            repo,
+            repo.get_issue(prId),
+            True,
+            self.repo_config.CMSBUILD_USER,
+        )
+
+        fileName = os.path.join(
+            self.actionDataFolder,
+            "{0}.{1}.json".format(self.__class__.__name__, sys._getframe().f_code.co_name),
+        )
+
+        if self.recordMode:
+            with open(fileName, "w") as f:
+                json.dump(res, f, indent=4)
+        else:
+            with open(fileName, "r") as f:
+                expected = json.load(f)
+
+            TestNewPullRequest.compareActions(res, expected)
+
+    def test_tests_rejected(self):
+        from process_pr import process_pr
+
+        prId = 13
+        repo = self.g.get_repo("iarspider-cmssw/cmssw")
+        res = process_pr(
+            self.repo_config,
+            self.g,
+            repo,
+            repo.get_issue(prId),
+            True,
+            self.repo_config.CMSBUILD_USER,
+        )
+
+        fileName = os.path.join(
+            self.actionDataFolder,
+            "{0}.{1}.json".format(self.__class__.__name__, sys._getframe().f_code.co_name),
+        )
+
+        if self.recordMode:
+            with open(fileName, "w") as f:
+                json.dump(res, f, indent=4)
+        else:
+            with open(fileName, "r") as f:
+                expected = json.load(f)
+
+            TestNewPullRequest.compareActions(res, expected)
+
+    def test_tests_passed(self):
+        from process_pr import process_pr
+
+        prId = 13
+        repo = self.g.get_repo("iarspider-cmssw/cmssw")
+        res = process_pr(
+            self.repo_config,
+            self.g,
+            repo,
+            repo.get_issue(prId),
+            True,
+            self.repo_config.CMSBUILD_USER,
+        )
+
+        fileName = os.path.join(
+            self.actionDataFolder,
+            "{0}.{1}.json".format(self.__class__.__name__, sys._getframe().f_code.co_name),
+        )
+
+        if self.recordMode:
+            with open(fileName, "w") as f:
+                json.dump(res, f, indent=4)
+        else:
+            with open(fileName, "r") as f:
+                expected = json.load(f)
+
+            TestNewPullRequest.compareActions(res, expected)
+
+    def test_fully_signed(self):
+        from process_pr import process_pr
+
+        prId = 13
+        repo = self.g.get_repo("iarspider-cmssw/cmssw")
+        res = process_pr(
+            self.repo_config,
+            self.g,
+            repo,
+            repo.get_issue(prId),
+            True,
+            self.repo_config.CMSBUILD_USER,
+        )
+
+        fileName = os.path.join(
+            self.actionDataFolder,
+            "{0}.{1}.json".format(self.__class__.__name__, sys._getframe().f_code.co_name),
+        )
+
+        if self.recordMode:
+            with open(fileName, "w") as f:
+                json.dump(res, f, indent=4)
+        else:
+            with open(fileName, "r") as f:
+                expected = json.load(f)
+
+            TestNewPullRequest.compareActions(res, expected)
+
+    def test_hold(self):
+        from process_pr import process_pr
+
+        prId = 13
+        repo = self.g.get_repo("iarspider-cmssw/cmssw")
+        res = process_pr(
+            self.repo_config,
+            self.g,
+            repo,
+            repo.get_issue(prId),
+            True,
+            self.repo_config.CMSBUILD_USER,
+        )
+
+        fileName = os.path.join(
+            self.actionDataFolder,
+            "{0}.{1}.json".format(self.__class__.__name__, sys._getframe().f_code.co_name),
+        )
+
+        if self.recordMode:
+            with open(fileName, "w") as f:
+                json.dump(res, f, indent=4)
+        else:
+            with open(fileName, "r") as f:
+                expected = json.load(f)
+
+            TestNewPullRequest.compareActions(res, expected)
+
+    def test_unhold(self):
+        from process_pr import process_pr
+
+        prId = 13
+        repo = self.g.get_repo("iarspider-cmssw/cmssw")
+        res = process_pr(
+            self.repo_config,
+            self.g,
+            repo,
+            repo.get_issue(prId),
+            True,
+            self.repo_config.CMSBUILD_USER,
+        )
+
+        fileName = os.path.join(
+            self.actionDataFolder,
+            "{0}.{1}.json".format(self.__class__.__name__, sys._getframe().f_code.co_name),
+        )
+
+        if self.recordMode:
+            with open(fileName, "w") as f:
+                json.dump(res, f, indent=4)
         else:
             with open(fileName, "r") as f:
                 expected = json.load(f)

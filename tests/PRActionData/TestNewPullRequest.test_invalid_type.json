@@ -1,0 +1,154 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "3b192221516cc417648a8b891424d272a5a00960": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709559701
+                },
+                "49b1d2b0148732077c746dc66ea00cd9b25d0079": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709561170
+                },
+                "77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709292636
+                },
+                "9e54289a6833ed8ebb9382515908e68824d437c7": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709301231
+                },
+                "adf49e7de798752fe3fa66aa551c3465e2f548ed": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709645913
+                }
+            },
+            "emoji": {
+                "1973271222": "+1",
+                "1978843538": "+1",
+                "1979012305": "+1",
+                "1979071470": "+1",
+                "1979073658": "+1",
+                "1979086545": "+1",
+                "1980409778": "+1",
+                "1980417957": "+1",
+                "1980448370": "+1",
+                "1980451048": "+1",
+                "1980453982": "+1",
+                "1980461113": "+1",
+                "1980462776": "+1"
+            },
+            "last_seen_sha": "adf49e7de798752fe3fa66aa551c3465e2f548ed",
+            "signatures": {
+                "1973271222": "77d5d2b7bba87d92b9fe9133bdb4ebe1e70c2948",
+                "1979071470": "adf49e7de798752fe3fa66aa551c3465e2f548ed"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1979073658,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1979086545,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1980409778,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1980417957,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1980461113,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1980462776,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1980465609,
+            "-1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1973271222,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1979071470,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": []
+    },
+    {
+        "type": "remove-label",
+        "data": []
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "adf49e7de798752fe3fa66aa551c3465e2f548ed",
+            "status": "success",
+            "description": "Comment by iarspider at 2024-03-06 09:42:56 UTC processed.",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/13#issuecomment-1980465609",
+            "context": "bot/13/ack"
+        }
+    }
+]

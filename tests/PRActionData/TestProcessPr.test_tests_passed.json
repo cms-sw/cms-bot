@@ -1,0 +1,79 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "5fc1707b960fc8257af8750d2dbfe499d808ce4f": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709816269
+                },
+                "8c2016079eccecc395237c4ddbe42da3c51efdd5": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709813350
+                },
+                "c5ac20db2b823be7c2ba649f69a52621cbd826ff": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709814363
+                },
+                "d0a19efb3e364c671b1958eb1e3e73d466bdbaf1": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709816427
+                }
+            },
+            "emoji": {
+                "1983497745": "+1",
+                "1983570003": "+1"
+            },
+            "last_seen_sha": "d0a19efb3e364c671b1958eb1e3e73d466bdbaf1",
+            "signatures": {
+                "1983497745": "8c2016079eccecc395237c4ddbe42da3c51efdd5"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1983497745,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "create-comment",
+        "data": "+1\n\nok"
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "d0a19efb3e364c671b1958eb1e3e73d466bdbaf1",
+            "state": "success",
+            "target_url": "https://cmssdt.cern.ch/jenkins/job/ib-run-pr-tests/",
+            "description": "Finished",
+            "context": "cms/15/el8_amd64_gcc12/required"
+        }
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "tests-approved"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "tests-rejected"
+        ]
+    }
+]

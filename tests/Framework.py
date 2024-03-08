@@ -330,20 +330,6 @@ class BasicTestCase(unittest.TestCase):
 
 
 class TestCase(BasicTestCase):
-    @staticmethod
-    def compareActions(res_, expected_):
-        res = {json.dumps(x, sort_keys=True) for x in res_}
-        expected = {json.dumps(x, sort_keys=True) for x in expected_}
-
-        if res.symmetric_difference(expected):
-            for itm in res - expected:
-                print("New action", itm)
-
-            for itm in expected - res:
-                print("Missing action", itm)
-
-            pytest.fail("Actions mismatch")
-
     def doCheckFrame(self, obj, frame):
         if obj._headers == {} and frame is None:
             return

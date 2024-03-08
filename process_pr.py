@@ -42,6 +42,7 @@ from github_utils import set_issue_emoji, get_issue_emojis
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps, dump, load, loads
+import github
 import yaml
 
 try:
@@ -249,6 +250,28 @@ def read_bot_cache(comment_msg):
     return {}
 
 
+def edit_comment(comment, dryRun, body):
+    assert isinstance(dryRun, bool)
+    assert isinstance(body, str)
+    pr_actions.append({"type": "edit-comment", "data": body})
+    if not dryRun:
+        comment.edit(body)
+    else:
+        print("DRY RUN: Updating existing comment with text")
+        print(body.encode("ascii", "ignore").decode())
+
+
+def create_comment(issue, dryRun, body):
+    assert isinstance(dryRun, bool)
+    assert isinstance(body, str)
+    pr_actions.append({"type": "create-comment", "data": body})
+    if not dryRun:
+        issue.create_comment(body)
+    else:
+        print("DRY RUN: Creating comment with text")
+        print(body.encode("ascii", "ignore").decode())
+
+
 def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
     old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
     new_body = (
@@ -262,20 +285,10 @@ def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
     print("Saving bot cache")
     pr_actions.append({"type": "write-bot-cache", "data": bot_cache})
     if len(new_body) <= 65535:
-        if not dryRun:
-            if cache_comment:
-                cache_comment.edit(new_body)
-            else:
-                issue.create_comment(new_body)
+        if cache_comment:
+            edit_comment(cache_comment, dryRun, new_body)
         else:
-            if cache_comment:
-                print("DRY RUN: Updating existing comment with text")
-                pr_actions.append({"type": "update-bot-cache"})
-            else:
-                print("DRY RUN: Creating technical comment with text")
-                pr_actions.append({"type": "create-bot-cache"})
-            print(new_body.encode("ascii", "ignore").decode())
-            pr_actions[-1]["data"] = new_body
+            create_comment(issue, dryRun, new_body)
     else:
         raise RuntimeError("Updated comment body too long: {0} > 65535".format(len(new_body)))
 
@@ -355,7 +368,10 @@ def create_property_file(out_file_name, parameters, dryRun):
         {"type": "create-property-file", "data": {"filename": out_file_name, "data": parameters}}
     )
     if dryRun:
-        print("Not creating properties file (dry-run): %s" % out_file_name)
+        print(
+            "DRY RUN: Not creating properties file %s: %s"
+            % (out_file_name, ";".join("{0}={1}".format(k, v) for k, v in parameters.items()))
+        )
         return
     print("Creating properties file %s" % out_file_name)
     out_file = open(out_file_name, "w")
@@ -436,11 +452,12 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
     if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
         e = bot_cache["emoji"][comment_id]
     else:
-        emojis = None
-        if "Issue.Issue" in str(type(comment)):
-            emojis = get_issue_emojis(comment.number, repository)
-        else:
-            emojis = get_comment_emojis(comment.id, repository)
+        emojis = comment.get_reactions()
+        # print("Emojis", emojis)
+        # if "Issue.Issue" in str(type(comment)):
+        #     emojis = get_issue_emojis(comment.number, repository)
+        # else:
+        #     emojis = get_comment_emojis(comment.id, repository)
         for x in emojis:
             if x["user"]["login"].encode("ascii", "ignore").decode() == user:
                 e = x["content"]
@@ -801,6 +818,49 @@ def add_nonblocking_labels(chg_files, extra_labels):
         del extra_labels["mtype"]
     print("Extra non-blocking labels:", extra_labels)
     return
+
+
+"""
+state,
+        target_url=github.GithubObject.NotSet,
+        description=github.GithubObject.NotSet,
+        context=github.GithubObject.NotSet,
+"""
+
+
+def create_commit_status(commit, dryRun, state, target_url=None, description=None, context=None):
+    pr_actions.append(
+        {
+            "type": "status",
+            "data": {
+                "commit": commit.sha,
+                "state": state,
+                "target_url": target_url,
+                "description": description,
+                "context": context,
+            },
+        }
+    )
+
+    if target_url is None:
+        target_url = github.GithubObject.NotSet
+
+    if description is None:
+        description = github.GithubObject.NotSet
+
+    if context is None:
+        context = github.GithubObject.NotSet
+
+    if not dryRun:
+        commit.create_status(
+            state, target_url=target_url, description=description, context=context
+        )
+    else:
+        print(
+            "DRY RUN: set commit status state={0}, target_url={1}, description={2}, context={3}".format(
+                state, target_url, description, context
+            )
+        )
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
@@ -1524,10 +1584,6 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                         ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS]),
                     )
                 )
-                if not dryRun:
-                    issue.create_comment(msg)
-                else:
-                    pr_actions.append({"type": "comment", "data": msg})
             else:
                 msg = (
                     "This PR contains too many commits ({0} >= {1}) and will not be processed.\n"
@@ -1537,11 +1593,8 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                         TOO_MANY_COMMITS_FAIL_THRESHOLD,
                     )
                 )
-                if not dryRun:
-                    issue.create_comment(msg)
-                else:
-                    pr_actions.append({"type": "comment", "data": msg})
 
+            create_comment(issue, dryRun, msg)
             return
 
         if pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD and not ok_too_many_commits:
@@ -1835,23 +1888,15 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                 else:
                     desc = "Tests %s" % desc
                 print(desc)
-                if not dryRun:
-                    last_commit_obj.create_status(
-                        "success", description=desc, target_url=turl, context=bot_status_name
-                    )
-                    pr_actions.append(
-                        {
-                            "type": "status",
-                            "data": {
-                                "commit": last_commit_obj.sha,
-                                "status": "success",
-                                "description": desc,
-                                "target_url": turl,
-                                "context": bot_status_name,
-                            },
-                        }
-                    )
-                    set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
+                create_commit_status(
+                    last_commit_obj,
+                    dryRun,
+                    state="success",
+                    description=desc,
+                    target_url=turl,
+                    context=bot_status_name,
+                )
+                set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
             if bot_status:
                 print(bot_status.target_url, turl, signatures["tests"], bot_status.description)
             if (
@@ -1905,25 +1950,15 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                                 "Some test might have been restarted for %s. Resetting the status"
                                 % status.context
                             )
-                            pr_actions.append(
-                                {
-                                    "type": "status",
-                                    "data": {
-                                        "commit": last_commit_obj.sha,
-                                        "status": "success",
-                                        "description": "OK",
-                                        "target_url": status.target_url,
-                                        "context": status.context,
-                                    },
-                                }
+
+                            create_commit_status(
+                                last_commit_obj,
+                                dryRun,
+                                state="success",
+                                description="OK",
+                                target_url=status.target_url,
+                                context=status.context,
                             )
-                            if not dryRun:
-                                last_commit_obj.create_status(
-                                    "success",
-                                    description="OK",
-                                    target_url=status.target_url,
-                                    context=status.context,
-                                )
                         continue
                     if "success" in all_states:
                         lab_stats[cdata[-1]][-1] = "success"
@@ -1940,7 +1975,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                     if (lab_stats[cdata[-1]][-1] != "pending") and (
                         not status.description.startswith("Finished")
                     ):
-                        if result_url:
+                        if result_url or dryRun:
                             url = (
                                 result_url.replace(
                                     "/SDT/jenkins-artifacts/",
@@ -1949,7 +1984,10 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                                 + "/pr-result"
                             )
                             print("PR Result:", url)
-                            e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
+                            if dryRun:
+                                e, o = "", "ok"
+                            else:
+                                e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
                             if e:
                                 print(o)
                                 raise Exception("System-error: unable to get PR result")
@@ -1958,29 +1996,16 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                                 if lab_stats[cdata[-1]][-1] == "error":
                                     res = "-1"
                                 res = "%s\n\n%s" % (res, o)
-                                pr_actions.append({"type": "comment", "data": res})
-                                if not dryRun:
-                                    issue.create_comment(res)
-                        pr_actions.append(
-                            {
-                                "type": "status",
-                                "data": {
-                                    "commit": last_commit_obj.sha,
-                                    "status": "success",
-                                    "description": "Finished",
-                                    "target_url": status.target_url,
-                                    "context": status.context,
-                                },
-                            }
+                                create_comment(issue, dryRun, res)
+                        create_commit_status(
+                            last_commit_obj,
+                            dryRun,
+                            state="success",
+                            description="Finished",
+                            target_url=status.target_url,
+                            context=status.context,
                         )
-                        if not dryRun:
-                            last_commit_obj.create_status(
-                                "success",
-                                description="Finished",
-                                target_url=status.target_url,
-                                context=status.context,
-                            )
-                    print("Lab Status", lab_stats)
+                print("Lab Status", lab_stats)
                 lab_state = "required"
                 if lab_state not in lab_stats:
                     lab_state = "optional"
@@ -1989,29 +2014,13 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                     if "error" in lab_stats[lab_state]:
                         signatures["tests"] = "rejected"
         elif not bot_status:
-            pr_actions.append(
-                {
-                    "type": "status",
-                    "data": {
-                        "commit": last_commit_obj.sha,
-                        "status": "pending",
-                        "description": "Waiting for authorized user to issue the test command.",
-                        "target_url": None,
-                        "context": bot_status_name,
-                    },
-                }
+            create_commit_status(
+                last_commit_obj,
+                dryRun,
+                state="pending",
+                description="Waiting for authorized user to issue the test command.",
+                context=bot_status_name,
             )
-
-            if not dryRun:
-                last_commit_obj.create_status(
-                    "pending",
-                    description="Waiting for authorized user to issue the test command.",
-                    context=bot_status_name,
-                )
-            else:
-                print(
-                    "DryRun: Setting status Waiting for authorized user to issue the test command."
-                )
     # Labels coming from signature.
     labels = []
 
@@ -2136,9 +2145,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             + ",".join(new_l2s)
             + " you have been requested to review this Pull request/Issue and eventually sign? Thanks"
         )
-        pr_actions.append({"type": "comment", "data": msg})
-        if not dryRun:
-            issue.create_comment(msg)
+        create_comment(issue, dryRun, msg)
 
     # update blocker massge
     if new_blocker:
@@ -2147,13 +2154,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             + blockers
             + "\nThey need to issue an `unhold` command to remove the `hold` state or L1 can `unhold` it for all"
         )
-        pr_actions.append({"type": "comment", "data": msg})
-        if not dryRun:
-            issue.create_comment(
-                HOLD_MSG
-                + blockers
-                + "\nThey need to issue an `unhold` command to remove the `hold` state or L1 can `unhold` it for all"
-            )
+        create_comment(issue, dryRun, msg)
         print("Blockers:", blockers)
 
     print("Changed Labels: added", labels - old_labels, "removed", old_labels - labels)
@@ -2190,7 +2191,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             backport_msg = ""
             if backport_pr_num:
                 backport_msg = "%s%s\n" % (BACKPORT_STR, backport_pr_num)
-            l2s = ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
+            l2s = ", ".join([gh_user_char + name for name in sorted(CMSSW_ISSUES_TRACKERS)])
             issueMessage = format(
                 "%(msgPrefix)s %(gh_user_char)s%(user)s.\n\n"
                 "%(l2s)s can you please review it and eventually sign/assign?"
@@ -2207,9 +2208,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
         print("Issue Message:", issueMessage)
         write_bot_cache(bot_cache, cache_comment, issue, dryRunOrig)
         if issueMessage:
-            pr_actions.append({"type": "comment", "data": issueMessage})
-            if not dryRun:
-                issue.create_comment(issueMessage)
+            create_comment(issue, dryRun, issueMessage)
         return
 
     # get release managers
@@ -2259,26 +2258,15 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                     repository, prId, global_test_params, dryRun, abort=True
                 )
                 set_comment_emoji_cache(dryRun, bot_cache, abort_test, repository)
-                pr_actions.append(
-                    {
-                        "type": "status",
-                        "data": {
-                            "commit": last_commit_obj.sha,
-                            "status": "pending",
-                            "description": "Aborted, waiting for authorized user to issue the test command.",
-                            "target_url": abort_test.html_url,
-                            "context": bot_status_name,
-                        },
-                    }
-                )
 
-                if not dryRun:
-                    last_commit_obj.create_status(
-                        "pending",
-                        description="Aborted, waiting for authorized user to issue the test command.",
-                        target_url=abort_test.html_url,
-                        context=bot_status_name,
-                    )
+                create_commit_status(
+                    last_commit_obj,
+                    dryRun,
+                    state="pending",
+                    description="Aborted, waiting for authorized user to issue the test command.",
+                    target_url=abort_test.html_url,
+                    context=bot_status_name,
+                )
 
     # Do not complain about tests
     requiresTestMessage = " after it passes the integration tests"
@@ -2361,11 +2349,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                         + ", please check if they should be merged together"
                     )
 
-                    pr_actions.append({"type": "comment", "data": comment_text})
-                    if not dryRun:
-                        linked_pr_obj.create_comment(comment_text)
-                    else:
-                        print("DRY-RUN: not posting comment", comment_text)
+                    create_comment(linked_pr_obj, dryRun, comment_text)
 
             messageNotifyExternalPRs = ", ".join(unclosed_linked_prs)
 
@@ -2376,30 +2360,31 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             )
 
         print("Fully signed message updated")
-        pr_actions.append({"type": "comment", "data": messageFullySigned})
-        if not dryRun:
-            issue.create_comment(messageFullySigned)
-        else:
-            print("DRY-RUN: not posting comment", messageFullySigned)
+        create_comment(issue, dryRun, messageFullySigned)
 
     unsigned = [commit_sha for (commit_sha, v) in list(signatures.items()) if v == "pending"]
-    missing_notifications = [
-        gh_user_char + name
-        for name, l2_categories in list(CMSSW_L2.items())
-        for signature in signing_categories
-        if signature in l2_categories and signature in unsigned and signature not in ["orp"]
-    ]
+    missing_notifications = sorted(
+        list(
+            {
+                gh_user_char + name
+                for name, l2_categories in list(CMSSW_L2.items())
+                for signature in signing_categories
+                if signature in l2_categories
+                and signature in unsigned
+                and signature not in ["orp"]
+            }
+        )
+    )
 
-    missing_notifications = set(missing_notifications)
     # Construct message for the watchers
     watchersMsg = ""
     if watchers:
         watchersMsg = format(
             "%(watchers)s this is something you requested to" " watch as well.\n",
-            watchers=", ".join(watchers),
+            watchers=", ".join(sorted(watchers)),
         )
     # Construct message for the release managers.
-    managers = ", ".join([gh_user_char + x for x in releaseManagers])
+    managers = ", ".join([gh_user_char + x for x in sorted(releaseManagers)])
 
     releaseManagersMsg = ""
     if releaseManagers:
@@ -2520,26 +2505,15 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                 state = "success" if signatures[pre_check] == "approved" else "error"
                 url = pre_checks_url[pre_check]
                 print("Setting status: %s,%s,%s" % (pre_check, state, url))
-                pr_actions.append(
-                    {
-                        "type": "status",
-                        "data": {
-                            "commit": last_commit_obj.sha,
-                            "status": state,
-                            "description": "Check details",
-                            "target_url": url,
-                            "context": "%s/%s" % (cms_status_prefix, pre_check),
-                        },
-                    }
-                )
 
-                if not dryRunOrig:
-                    last_commit_obj.create_status(
-                        state,
-                        target_url=url,
-                        description="Check details",
-                        context="%s/%s" % (cms_status_prefix, pre_check),
-                    )
+                create_commit_status(
+                    last_commit_obj,
+                    dryRunOrig,
+                    state=state,
+                    target_url=url,
+                    description="Check details",
+                    context="%s/%s" % (cms_status_prefix, pre_check),
+                )
             continue
         if pre_checks_state[pre_check] == "":
             params = {"PULL_REQUEST": "%s" % (prId), "CONTEXT_PREFIX": cms_status_prefix}
@@ -2549,32 +2523,17 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             create_properties_file_tests(
                 repository, prId, params, dryRunOrig, abort=False, req_type=pre_check
             )
-            pr_actions.append(
-                {
-                    "type": "status",
-                    "data": {
-                        "commit": last_commit_obj.sha,
-                        "status": "pending",
-                        "description": "%s requested" % pre_check,
-                        "target_url": None,
-                        "context": "%s/%s" % (cms_status_prefix, pre_check),
-                    },
-                }
+
+            create_commit_status(
+                last_commit_obj,
+                dryRunOrig,
+                state="pending",
+                description="%s requested" % pre_check,
+                context="%s/%s" % (cms_status_prefix, pre_check),
             )
 
-            if not dryRunOrig:
-                last_commit_obj.create_status(
-                    "pending",
-                    description="%s requested" % pre_check,
-                    context="%s/%s" % (cms_status_prefix, pre_check),
-                )
-            else:
-                print("Dryrun: Setting pending status for %s" % pre_check)
-
     if commentMsg:
-        pr_actions.append({"type": "comment", "data": commentMsg})
-        if not dryRun:
-            issue.create_comment(commentMsg)
+        create_comment(issue, dryRun, commentMsg)
 
     # Check if it needs to be automatically merged.
     if all(
@@ -2610,26 +2569,15 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
         if test_params_comment:
             emoji = "-1" if "ERRORS: " in test_params_msg else "+1"
             state = "success" if emoji == "+1" else "error"
-            pr_actions.append(
-                {
-                    "type": "status",
-                    "data": {
-                        "commit": last_commit_obj.sha,
-                        "status": state,
-                        "description": None,
-                        "target_url": test_params_comment.html_url,
-                        "context": bot_test_param_name,
-                    },
-                }
+            create_commit_status(
+                last_commit_obj,
+                dryRun,
+                state=state,
+                description=test_params_msg,
+                target_url=test_params_comment.html_url,
+                context=bot_test_param_name,
             )
 
-            if not dryRun:
-                last_commit_obj.create_status(
-                    state,
-                    description=test_params_msg,
-                    target_url=test_params_comment.html_url,
-                    context=bot_test_param_name,
-                )
             set_comment_emoji_cache(
                 dryRun, bot_cache, test_params_comment, repository, emoji=emoji
             )
@@ -2641,23 +2589,11 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                 ack_comment.user.login.encode("ascii", "ignore").decode(),
                 ack_comment.created_at,
             )
-            print(desc)
-            pr_actions.append(
-                {
-                    "type": "status",
-                    "data": {
-                        "commit": last_commit_obj.sha,
-                        "status": "success",
-                        "description": desc,
-                        "target_url": ack_comment.html_url,
-                        "context": bot_ack_name,
-                    },
-                }
+            create_commit_status(
+                last_commit_obj,
+                dryRun,
+                state="success",
+                description=desc,
+                target_url=ack_comment.html_url,
+                context=bot_ack_name,
             )
-            if not dryRun:
-                last_commit_obj.create_status(
-                    "success",
-                    description=desc,
-                    target_url=ack_comment.html_url,
-                    context=bot_ack_name,
-                )

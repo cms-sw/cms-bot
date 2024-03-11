@@ -62,7 +62,7 @@ else
   else
     echo -e "-1\nTested at: ${COMMIT}\n" >> ${RESULT_LOG}
   fi
-  UPDIR=$(grep '^ *JENKINS_UPLOAD_DIRECTORY=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_UPLOAD_DIRECTORY=||;s|["]||g' || true)
+  UPDIR=$(grep '^ *JENKINS_UPLOAD_DIRECTORY *=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_UPLOAD_DIRECTORY *= *||;s|["]||g' || true)
   if [ "X${UPDIR}" = "X" ] ; then
     if [ "X${PULL_REQUEST}" != "X" ] ; then
       UPDIR="${JOB_NAME}/PR-${PULL_REQUEST}/${BUILD_NUMBER}"
@@ -87,7 +87,7 @@ else
   if [ "X${OPEN_ISSUE}" = "XTrue" ] ; then
     $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -R ${RESULT_LOG}
   else
-    NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL=||;s|["]||g' || true)
+    NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL *=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL *= *||;s|["]||g' || true)
     if [ "X${NOTIFY_EMAIL}" != "X" ] ; then
       cat ${RESULT_LOG} | mail -s "[Jenkins]: $REPOSITORY tests finished" "${NOTIFY_EMAIL}"
     fi

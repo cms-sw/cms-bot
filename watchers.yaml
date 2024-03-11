@@ -1548,6 +1548,7 @@ fabiocos:
 - Mixing
 - RecoLocalFastTime
 - RecoMTD
+- RecoVertex
 - SimDataFormats
 - SimFastTiming
 - SimG4CMS

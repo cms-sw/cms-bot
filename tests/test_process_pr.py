@@ -195,3 +195,9 @@ class TestProcessPr(Framework.TestCase):
     # Not yet implemented
     def test_too_many_commits(self):
         self.runTest()
+
+    def test_future_commit(self):
+        self.runTest()
+
+    def test_backdated_commit(self):
+        self.runTest()

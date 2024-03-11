@@ -202,7 +202,9 @@ def update_CMSSW_LABELS(repo_config):
         if check_dpg_pog and (not l in dpg_pog):
             del CMSSW_LABELS[l]
         else:
-            CMSSW_LABELS[l] = [re.compile("^(" + p + ").*$") for p in CMSSW_LABELS[l]]
+            CMSSW_LABELS[l] = [
+                re.compile("^(" + p + ").*$") if isinstance(p, str) else p for p in CMSSW_LABELS[l]
+            ]
     return
 
 

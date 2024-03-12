@@ -572,6 +572,10 @@ if ${BUILD_EXTERNAL} ; then
     set +x
     TOOL_SETUP=true
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
+      echo "===== Tools in release ====="
+      ls -l ${BTOOLS}/*.xml || true
+      echo "===== Tools in PR ====="
+      ls -l ${CTOOLS}/*.xml || true
       # Setup all the toolfiles previously built
       DEP_NAMES=
       if [ -e "${BTOOLS}/cmssw.xml" ] ; then cp ${BTOOLS}/cmssw.xml ${CTOOLS}/cmssw.xml ; fi

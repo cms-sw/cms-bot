@@ -136,7 +136,7 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
-REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->")
+REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
 REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
@@ -236,18 +236,48 @@ def collect_commit_cache(bot_cache):
         bot_cache["commits"] = commit_cache
 
 
-def read_bot_cache(comment_msg):
+def read_bot_cache(data):
+    print("Loading bot cache")
+    res = loads_maybe_decompress(data)
+    for k, v in BOT_CACHE_TEMPLATE.items():
+        if k not in res:
+            res[k] = v
+    collect_commit_cache(res)
+    pr_actions.append({"type": "load-bot-cache", "data": res})
+    return res
+
+
+def extact_bot_cache(comment_msg):
     seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg)
     if seen_commits_match:
-        print("Loading bot cache")
-        res = loads_maybe_decompress(seen_commits_match[1])
-        for k, v in BOT_CACHE_TEMPLATE.items():
-            if k not in res:
-                res[k] = v
-        collect_commit_cache(res)
-        pr_actions.append({"type": "load-bot-cache", "data": res})
-        return res
+        return read_bot_cache(seen_commits_match[1])
     return {}
+
+
+def extract_bot_cache(comments):
+    data = ""
+    for comment in comments:
+        seen_commits_match = REGEX_COMMITS_CACHE.search(comment.body)
+        if seen_commits_match:
+            data += seen_commits_match[1]
+
+    if data:
+        return read_bot_cache(data)
+
+    return {}
+
+
+def prepare_bot_cache(bot_cache):
+    res = []
+    data = dumps_maybe_compress(bot_cache)
+    while data:
+        # The limit is 65535 chars, and minimal bot cache comment is"cms-bot internal usage0<!-- bot cache:  -->",
+        # 43 characters. This leaves us 65492 chars for actual data. Keeping 2 extra characters in case bot cache
+        # spans more than 10 commits (usage0...usage9)
+        part, data = data[:55000], data[55000:]
+        res.append(part)
+
+    return res
 
 
 def edit_comment(comment, dryRun, body):
@@ -272,25 +302,37 @@ def create_comment(issue, dryRun, body):
         print(body.encode("ascii", "ignore").decode())
 
 
-def write_bot_cache(bot_cache, cache_comment, issue, dryRun):
-    old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
-    new_body = (
-        REGEX_COMMITS_CACHE.sub("", old_body)
-        + "<!-- bot cache: "
-        + dumps_maybe_compress(bot_cache)
-        + " -->"
-    )
-    if old_body == new_body:
-        return
-    print("Saving bot cache")
+def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
+    data = prepare_bot_cache(bot_cache)
     pr_actions.append({"type": "write-bot-cache", "data": bot_cache})
-    if len(new_body) <= 65535:
+    for i, part in enumerate(data):
+        try:
+            cache_comment = cache_comments[i]
+        except (TypeError, IndexError):
+            cache_comment = None
+
+        old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+        new_body = REGEX_COMMITS_CACHE.sub("", old_body) + "<!-- bot cache: " + part + " -->"
+        if old_body == new_body:
+            continue
+
+        print("Saving bot cache ({0}/{1})".format(i + 1, len(data)))
         if cache_comment:
             edit_comment(cache_comment, dryRun, new_body)
         else:
             create_comment(issue, dryRun, new_body)
-    else:
-        raise RuntimeError("Updated comment body too long: {0} > 65535".format(len(new_body)))
+
+    # If new commit cache is smaller than previous one, cleanup old technical comments
+    if len(data) < len(cache_comments):
+        for i in range(len(data), len(cache_comments)):
+            print(
+                "Deleting bot cache comment ({0}/{1})".format(
+                    i + 1 - len(data), len(cache_comments) - len(data)
+                )
+            )
+            pr_actions.append({"type": "delete-comment", "data": str(cache_comments[i])})
+            if not dryRun:
+                cache_comments[i].delete()
 
 
 def get_commenter_categories(commenter, comment_date):
@@ -793,7 +835,7 @@ def get_status_state(context, statuses):
 
 def dumps_maybe_compress(value):
     json_ = dumps(value, separators=(",", ":"), sort_keys=True)
-    if len(json_) > 32000:
+    if len(json_) > 55000:
         return "b64:" + base64.encodebytes(zlib.compress(json_.encode())).decode("ascii", "ignore")
     else:
         return json_
@@ -1160,7 +1202,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             )
         print("Pre check status:", pre_checks_state)
     already_seen = None
-    technical_comment = None
+    technical_comments = []
     pull_request_updated = False
     comparison_done = False
     comparison_notrun = False
@@ -1195,20 +1237,18 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
     # to use information during the actual comment loop
     for comment in issue.get_comments():
         all_comments.append(comment)
-        if bot_cache or technical_comment:
-            continue
         if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
             continue
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
         first_line = "".join([l.strip() for l in comment_msg.split("\n") if l.strip()][0:1])
-        if re.match(ISSUE_SEEN_MSG, first_line):
+        if (not already_seen) and re.match(ISSUE_SEEN_MSG, first_line):
             already_seen = comment
-            bot_cache = read_bot_cache(comment_msg)
-            print("Read bot cache from already seen comment:", comment)
+            if REGEX_COMMITS_CACHE.search(comment_msg):
+                technical_comments.append(comment)
         elif re.match(CMSBOT_TECHNICAL_MSG, first_line):
-            technical_comment = comment
-            bot_cache = read_bot_cache(comment_msg)
-            print("Read bot cache from technical comment:", comment)
+            technical_comments.append(comment)
+
+    bot_cache = extract_bot_cache(technical_comments)
 
     # Make sure bot cache has the needed keys
     for k, v in BOT_CACHE_TEMPLATE.items():
@@ -1237,10 +1277,6 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                 backport_pr_num = get_backported_pr(comment_msg)
                 if issue.pull_request and last_commit_date:
                     pull_request_updated = comment.created_at < last_commit_date
-                continue
-            if re.match(CMSBOT_TECHNICAL_MSG, first_line):
-                if not technical_comment:
-                    technical_comment = comment
                 continue
             if re.match("^" + HOLD_MSG + ".+", first_line):
                 for u in first_line.split(HOLD_MSG, 2)[1].split(","):
@@ -1561,13 +1597,6 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
-    cache_comment = None
-    if technical_comment:
-        cache_comment = technical_comment
-    else:
-        if already_seen:
-            cache_comment = already_seen
-
     if issue.pull_request:
         if (
             pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD
@@ -1677,10 +1706,10 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
                 if len(commit.parents) > 1:
                     bot_cache["commits"][commit.sha]["files"] = []
                 else:
+                    # Notice: can't use commit.files, because it only returns first 300 ones
+                    # TODO: cached mode for get_commit
                     bot_cache["commits"][commit.sha]["files"] = sorted(
-                        # x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
-                        x.filename
-                        for x in commit.files
+                        x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
                     )
 
             elif len(commit.parents) > 1:
@@ -2581,7 +2610,7 @@ def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force):
             set_comment_emoji_cache(
                 dryRun, bot_cache, test_params_comment, repository, emoji=emoji
             )
-    write_bot_cache(bot_cache, cache_comment, issue, dryRunOrig)
+    write_bot_cache(bot_cache, technical_comments, issue, dryRunOrig)
     if ack_comment:
         state = get_status(bot_ack_name, commit_statuses)
         if (not state) or (state.target_url != ack_comment.html_url):

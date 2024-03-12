@@ -584,10 +584,15 @@ if ${BUILD_EXTERNAL} ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
       DEP_NAMES=""
+      #Fix for SCRAMV2 based releases were tools can have different capitalizations
+      ALL_NEW_TOOLS=$(ls ${CTOOLS}/ | tr '[A-Z]\n' '[a-z] ')
+      #In some releases libjpeg-turbo tool exists via libjpg
+      [ $(echo " ${ALL_NEW_TOOLS} " | grep " libjpg.xml " | wc -l) -gt 0 ] && ALL_NEW_TOOLS="${ALL_NEW_TOOLS} libjpeg-turbo.xml"
       for xml in $(ls ${BTOOLS}/*.xml) ; do
         name=$(basename $xml)
-        tool=$(echo $name | sed 's|.xml$||')
-        if [ ! -e ${CTOOLS}/$name ] ; then
+        lcname=$(echo $name | tr '[A-Z]' '[a-z]')
+        if [ $(echo " ${ALL_NEW_TOOLS} " | grep " ${lcname} " |wc -l) -eq 0 ] ; then
+          tool=$(echo $name | sed 's|.xml$||')
           echo "Removed tool $name"
           DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
         fi

@@ -572,10 +572,6 @@ if ${BUILD_EXTERNAL} ; then
     set +x
     TOOL_SETUP=true
     if [ "X$BUILD_FULL_CMSSW" != "Xtrue" ] ; then
-      echo "===== Tools in release ====="
-      ls -l ${BTOOLS}/*.xml || true
-      echo "===== Tools in PR ====="
-      ls -l ${CTOOLS}/*.xml || true
       # Setup all the toolfiles previously built
       DEP_NAMES=
       if [ -e "${BTOOLS}/cmssw.xml" ] ; then cp ${BTOOLS}/cmssw.xml ${CTOOLS}/cmssw.xml ; fi
@@ -621,6 +617,7 @@ if ${BUILD_EXTERNAL} ; then
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
       touch $CTOOLS/*.xml
       (scram setup && scram setup self && rm -rf $WORKSPACE/$CMSSW_IB/external && scram build -r echo_CXX) >> $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
+      echo "DEP_NAMES=${DEP_NAMES}"
       if $TOOL_SETUP ; then
         if [ "${DEP_NAMES}" != "" ] ; then
           CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)

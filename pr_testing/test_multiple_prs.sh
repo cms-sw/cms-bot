@@ -584,7 +584,7 @@ if ${BUILD_EXTERNAL} ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
       DEP_NAMES=""
-      ALL_NEW_TOOLS=$(ls ${CTOOLS}/ | tr '[A-Z]' '[a-z]')
+      ALL_NEW_TOOLS=$(ls ${CTOOLS}/ | tr '[A-Z]\n' '[a-z] ')
       for xml in $(ls ${BTOOLS}/*.xml) ; do
         name=$(basename $xml)
         lcname=$(echo $name | tr '[A-Z]' '[a-z]')

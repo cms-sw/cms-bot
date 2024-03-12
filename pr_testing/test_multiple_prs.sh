@@ -584,10 +584,12 @@ if ${BUILD_EXTERNAL} ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
       DEP_NAMES=""
+      ALL_NEW_TOOLS=$(ls ${CTOOLS}/ | tr '[A-Z]' '[a-z]')
       for xml in $(ls ${BTOOLS}/*.xml) ; do
         name=$(basename $xml)
-        tool=$(echo $name | sed 's|.xml$||')
-        if [ ! -e ${CTOOLS}/$name ] ; then
+        lcname=$(echo $name | tr '[A-Z]' '[a-z]')
+        if [ $(echo " ${ALL_NEW_TOOLS} " | grep " ${lcname} " |wc -l) -eq 0 ] ; then
+          tool=$(echo $name | sed 's|.xml$||')
           echo "Removed tool $name"
           DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
         fi

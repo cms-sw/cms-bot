@@ -43,6 +43,7 @@ REPO_TEAMS["cms-externals"]["boost-developers"] = {
 }
 REPO_TEAMS["cms-externals"]["Developers"]["members"].append("gartung")
 REPO_TEAMS["cms-externals"]["Developers"]["members"].append("fwyzard")
+REPO_TEAMS["cms-externals"]["Developers"]["members"].append("valsdav")
 
 # Teams for cms-sw
 REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = {

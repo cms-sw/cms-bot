@@ -1761,6 +1761,7 @@ CMSSW_CATEGORIES = {
     "ml": [
         "PhysicsTools/PyTorch",
         "PhysicsTools/TensorFlow",
+        "PhysicsTools/TensorFlowAOT",
         "PhysicsTools/ONNXRuntime",
         "PhysicsTools/MVAComputer",
         "PhysicsTools/MVATrainer",

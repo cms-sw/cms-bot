@@ -42,6 +42,7 @@ from github_utils import set_issue_emoji, get_issue_emojis
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps, dump, load, loads
+import github
 import yaml
 
 try:
@@ -191,6 +192,8 @@ TOO_MANY_COMMITS_WARN_THRESHOLD = 150
 TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
 
+pr_actions = []
+
 
 def update_CMSSW_LABELS(repo_config):
     try:
@@ -239,6 +242,7 @@ def read_bot_cache(data):
         if k not in res:
             res[k] = v
     collect_commit_cache(res)
+    pr_actions.append({"type": "load-bot-cache", "data": res})
     return res
 
 
@@ -275,6 +279,28 @@ def prepare_bot_cache(bot_cache):
     return res
 
 
+def edit_comment(comment, dryRun, body):
+    assert isinstance(dryRun, bool)
+    assert isinstance(body, str)
+    pr_actions.append({"type": "edit-comment", "data": body})
+    if not dryRun:
+        comment.edit(body)
+    else:
+        print("DRY RUN: Updating existing comment with text")
+        print(body.encode("ascii", "ignore").decode())
+
+
+def create_comment(issue, dryRun, body):
+    assert isinstance(dryRun, bool)
+    assert isinstance(body, str)
+    pr_actions.append({"type": "create-comment", "data": body})
+    if not dryRun:
+        issue.create_comment(body)
+    else:
+        print("DRY RUN: Creating comment with text")
+        print(body.encode("ascii", "ignore").decode())
+
+
 def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
     data = prepare_bot_cache(bot_cache)
     for i, part in enumerate(data):
@@ -289,17 +315,10 @@ def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
             continue
 
         print("Saving bot cache ({0}/{1})".format(i + 1, len(data)))
-        if not dryRun:
-            if cache_comment:
-                cache_comment.edit(new_body)
-            else:
-                issue.create_comment(new_body)
+        if cache_comment:
+            edit_comment(cache_comment, dryRun, new_body)
         else:
-            if cache_comment:
-                print("DRY RUN: Updating existing comment with text")
-            else:
-                print("DRY RUN: Creating technical comment with text")
-            print(new_body.encode("ascii", "ignore").decode())
+            create_comment(issue, dryRun, new_body)
 
     # If new commit cache is smaller than previous one, cleanup old technical comments
     if len(data) < len(cache_comments):
@@ -309,6 +328,7 @@ def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
                     i + 1 - len(data), len(cache_comments) - len(data)
                 )
             )
+            pr_actions.append({"type": "delete-comment", "data": str(cache_comments[i])})
             if not dryRun:
                 cache_comments[i].delete()
 
@@ -384,8 +404,14 @@ def create_properties_file_tests(
 
 
 def create_property_file(out_file_name, parameters, dryRun):
+    pr_actions.append(
+        {"type": "create-property-file", "data": {"filename": out_file_name, "data": parameters}}
+    )
     if dryRun:
-        print("Not creating properties file (dry-run): %s" % out_file_name)
+        print(
+            "DRY RUN: Not creating properties file %s: %s"
+            % (out_file_name, ";".join("{0}={1}".format(k, v) for k, v in parameters.items()))
+        )
         return
     print("Creating properties file %s" % out_file_name)
     out_file = open(out_file_name, "w")
@@ -407,6 +433,9 @@ def updateMilestone(repo, issue, pr, dryRun):
         return
     milestone = repo.get_milestone(milestoneId)
     print("Setting milestone to %s" % milestone.title)
+    pr_actions.append(
+        {"type": "update-milestone", "data": {"id": milestoneId, "title": milestone.title}}
+    )
     if dryRun:
         return
     issue.edit(milestone=milestone)
@@ -440,6 +469,7 @@ def modify_comment(comment, match, replace, dryRun):
 
 
 def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
+    pr_actions.append({"type": "emoji", "data": (comment.id, emoji, reset_other)})
     if dryRun:
         return
     comment_id = str(comment.id)
@@ -463,10 +493,7 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
         e = bot_cache["emoji"][comment_id]
     else:
         emojis = None
-        if "Issue.Issue" in str(type(comment)):
-            emojis = get_issue_emojis(comment.number, repository)
-        else:
-            emojis = get_comment_emojis(comment.id, repository)
+        emojis = comment.get_reactions()
         for x in emojis:
             if x["user"]["login"].encode("ascii", "ignore").decode() == user:
                 e = x["content"]
@@ -829,7 +856,47 @@ def add_nonblocking_labels(chg_files, extra_labels):
     return
 
 
+def create_commit_status(commit, dryRun, state, target_url=None, description=None, context=None):
+    pr_actions.append(
+        {
+            "type": "status",
+            "data": {
+                "commit": commit.sha,
+                "state": state,
+                "target_url": target_url,
+                "description": description,
+                "context": context,
+            },
+        }
+    )
+
+    if target_url is None:
+        target_url = github.GithubObject.NotSet
+
+    if description is None:
+        description = github.GithubObject.NotSet
+
+    if context is None:
+        context = github.GithubObject.NotSet
+
+    if not dryRun:
+        commit.create_status(
+            state, target_url=target_url, description=description, context=context
+        )
+    else:
+        print(
+            "DRY RUN: set commit status state={0}, target_url={1}, description={2}, context={3}".format(
+                state, target_url, description, context
+            )
+        )
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
+    _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user, force)
+    return pr_actions
+
+
+def _process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
         return

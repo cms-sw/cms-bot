@@ -62,7 +62,7 @@ def main():
     print("GitHub API rate limit before: {}".format(gh.get_rate_limit()))
     for pr in pr_list:
         nr = str(pr.number)
-        if pr.state == "closed":
+        if pr.state == "closed" or pr.draft:
             if nr in rez:
                 del rez[nr]
             continue

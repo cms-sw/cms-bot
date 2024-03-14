@@ -192,6 +192,7 @@ TOO_MANY_COMMITS_WARN_THRESHOLD = 150
 TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 TOO_MANY_FILES_WARN_THRESHOLD = 1500
 TOO_MANY_FILES_FAIL_THRESHOLD = 3001
+CHANGED_FILES_FROM_DIFF_THRESHOLD = 500
 L2_DATA = {}
 
 
@@ -741,7 +742,7 @@ def multiline_check_function(first_line, comment_lines, repository):
 
 
 def get_changed_files(repo, pr, use_gh_patch=False):
-    if (not use_gh_patch) and (pr.changed_files <= TOO_MANY_FILES_WARN_THRESHOLD):
+    if (not use_gh_patch) and (pr.changed_files <= CHANGED_FILES_FROM_DIFF_THRESHOLD):
         pr_files = []
         for f in pr.get_files():
             pr_files.append(f.filename)

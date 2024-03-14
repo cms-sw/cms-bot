@@ -137,6 +137,7 @@ REGEX_TEST_IGNORE = re.compile(
 )
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
 REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
+REGEX_IGNORE_FILE_COUNT = "\+file-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
@@ -189,6 +190,8 @@ MULTILINE_COMMENTS_MAP = {
 
 TOO_MANY_COMMITS_WARN_THRESHOLD = 150
 TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
+TOO_MANY_FILES_WARN_THRESHOLD = 1500
+TOO_MANY_FILES_FAIL_THRESHOLD = 3001
 L2_DATA = {}
 
 
@@ -871,6 +874,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     all_commit_shas = set()
     ok_too_many_commits = False
     warned_too_many_commits = False
+    ok_too_many_files = False
+    warned_too_many_files = False
 
     if issue.pull_request:
         pr = repo.get_pull(prId)
@@ -1261,6 +1266,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if commenter in CMSSW_ISSUES_TRACKERS:
                 ok_too_many_commits = pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
                 comment_emoji = "+1"
+        elif re.match(r"^\s*" + REGEX_IGNORE_FILE_COUNT + r"\s*$", first_line):
+            comment_emoji = "-1"
+            if commenter in CMSSW_ISSUES_TRACKERS:
+                ok_too_many_files = pr.changed_files < TOO_MANY_FILES_FAIL_THRESHOLD
+                comment_emoji = "+1"
 
         if comment_emoji:
             set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=comment_emoji)
@@ -1359,6 +1369,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             ) or "This PR contains too many commits" in first_line:
                 warned_too_many_commits = True
                 continue
+
+            if (
+                "This PR touches many files" in first_line
+                and pr.changed_files < TOO_MANY_FILES_FAIL_THRESHOLD
+            ) or "This PR touches too many files" in first_line:
+                warned_too_many_files = True
+                continue
+
             sec_line = comment_lines[1:2]
             if not sec_line:
                 sec_line = ""
@@ -1516,6 +1534,39 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         if pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD and not ok_too_many_commits:
             print("Commit count reached and not overridden, quitting")
+            return
+
+        if (
+            pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD
+            and (not warned_too_many_files)
+            and (not ok_too_many_files)
+        ):
+            if pr.commits < TOO_MANY_FILES_FAIL_THRESHOLD:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR touches many files ({0} >= {1}) and will not be processed. "
+                        "Please ensure you have selected the correct target branch and consider splitting this PR into several.\n"
+                        "{2}, to re-enable processing of this PR, you can write `+file-count` in a comment. Thanks.".format(
+                            pr.changed_files,
+                            TOO_MANY_FILES_WARN_THRESHOLD,
+                            ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS]),
+                        )
+                    )
+            else:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR touches too many files ({0} >= {1}) and will not be processed.\n"
+                        "Please ensure you have selected the correct target branch and consider splitting this PR into several.\n"
+                        "The processing of this PR will resume once the number of changed files drops below the limit.".format(
+                            pr.changed_files,
+                            TOO_MANY_FILES_FAIL_THRESHOLD,
+                        )
+                    )
+
+            return
+
+        if pr.changed_files >= TOO_MANY_FILES_WARN_THRESHOLD and not ok_too_many_files:
+            print("Changed file count reached and not overridden, quitting")
             return
 
         print("Processing commits")

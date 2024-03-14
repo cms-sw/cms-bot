@@ -1,0 +1,61 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "2a9454e30606b17e52000110972998326ce9e428": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1711538467
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "2a9454e30606b17e52000110972998326ce9e428",
+            "signatures": {}
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "2a9454e30606b17e52000110972998326ce9e428",
+            "state": "pending",
+            "target_url": null,
+            "description": "Waiting for authorized user to issue the test command.",
+            "context": "bot/17/jenkins"
+        }
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "code-checks-approved"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "code-checks-pending"
+        ]
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "2a9454e30606b17e52000110972998326ce9e428",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2045177271",
+            "description": "Check details",
+            "context": "cms/17/code-checks"
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "2a9454e30606b17e52000110972998326ce9e428",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2045177271",
+            "description": "Comment by iarspider at 2024-04-09 13:25:57 UTC processed.",
+            "context": "bot/17/ack"
+        }
+    }
+]

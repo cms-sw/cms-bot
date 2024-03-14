@@ -139,12 +139,17 @@ class LoadClient(object):
         exit(0)
 
 
-childs = int(argv[1])
-memory = int(argv[2])
-try:
-    max_time = int(argv[3])
-except:
-    max_time = 0
-master = LoadMaster(memory, childs, None, max_time)
-master.start()
-print("ALL OK")
+def main():
+    childs = int(argv[1])
+    memory = int(argv[2])
+    try:
+        max_time = int(argv[3])
+    except:
+        max_time = 0
+    master = LoadMaster(memory, childs, None, max_time)
+    master.start()
+    print("ALL OK")
+
+
+if __name__ == "__main__":
+    main()

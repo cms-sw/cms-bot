@@ -1,2 +1,8 @@
 *.pyc
 .idea
+GithubCredentials.py
+*.properties
+/shift/cache/
+/shift/out
+/tests/tmp/TestProcessPr.test_mark_passed.txt
+/tests/tmp/TestProcessPr.test_mark_rejected.txt

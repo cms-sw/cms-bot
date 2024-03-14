@@ -186,6 +186,7 @@ MULTILINE_COMMENTS_MAP = {
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
 }
 
+BOT_CACHE_CHUNK_SIZE = 55000
 TOO_MANY_COMMITS_WARN_THRESHOLD = 150
 TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
@@ -264,8 +265,9 @@ def prepare_bot_cache(bot_cache):
         # The limit is 65535 chars, and minimal bot cache comment is
         # `cms-bot internal usage<!-- bot cache:  -->`, 42 characters.
         # But since the cache can be embedded in an "already seen" comment, whose length is not
-        # known in advance, we limit the amout of (encoded cache) data per comment to 55k chars.
-        part, data = data[:55000], data[55000:]
+        # known in advance, we limit the amout of (encoded cache) data per comment
+        # to BOT_CACHE_CHUNK_SIZE chars.
+        part, data = data[:BOT_CACHE_CHUNK_SIZE], data[BOT_CACHE_CHUNK_SIZE:]
         res.append(part)
 
     return res
@@ -798,7 +800,7 @@ def get_status_state(context, statuses):
 
 def dumps_maybe_compress(value):
     json_ = dumps(value, separators=(",", ":"), sort_keys=True)
-    if len(json_) > 55000:
+    if len(json_) > BOT_CACHE_CHUNK_SIZE:
         return "b64:" + base64.encodebytes(zlib.compress(json_.encode())).decode("ascii", "ignore")
     else:
         return json_

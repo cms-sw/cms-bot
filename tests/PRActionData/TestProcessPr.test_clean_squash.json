@@ -1,0 +1,264 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "5fc1707b960fc8257af8750d2dbfe499d808ce4f": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": true,
+                    "time": 1709816269
+                },
+                "8c2016079eccecc395237c4ddbe42da3c51efdd5": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709813350
+                },
+                "c5ac20db2b823be7c2ba649f69a52621cbd826ff": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709814363
+                },
+                "d0a19efb3e364c671b1958eb1e3e73d466bdbaf1": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": true,
+                    "time": 1709816427
+                },
+                "44be64ada3ce4ff2fc44441b069179ba350d8435": {
+                    "time": 1709816427,
+                    "squashed": false,
+                    "files": []
+                }
+            },
+            "emoji": {
+                "1983497745": "+1",
+                "1983570003": "+1",
+                "1983736386": "+1",
+                "1983744361": "+1",
+                "1983771087": "+1",
+                "1983784616": "+1",
+                "1985460583": "+1",
+                "1985464778": "+1",
+                "1985469045": "+1",
+                "1985473738": "+1",
+                "1985475256": "-1",
+                "1985525681": "+1"
+            },
+            "last_seen_sha": "44be64ada3ce4ff2fc44441b069179ba350d8435",
+            "signatures": {
+                "1983497745": "8c2016079eccecc395237c4ddbe42da3c51efdd5",
+                "1985525681": "d0a19efb3e364c671b1958eb1e3e73d466bdbaf1"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1983736386,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1983771087,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1985464778,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1985469045,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1985473738,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1985475256,
+            "-1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1983497745,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1985525681,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "44be64ada3ce4ff2fc44441b069179ba350d8435",
+            "state": "pending",
+            "target_url": null,
+            "description": "Waiting for authorized user to issue the test command.",
+            "context": "bot/15/jenkins"
+        }
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "code-checks-pending"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "code-checks-approved"
+        ]
+    },
+    {
+        "type": "create-property-file",
+        "data": {
+            "filename": "trigger-code-checks-iarspider-cmssw-cmssw-15.properties",
+            "data": {
+                "PULL_REQUEST": "15",
+                "CONTEXT_PREFIX": "cms/15",
+                "CMSSW_TOOL_CONF": "",
+                "APPLY_PATCH": "false"
+            }
+        }
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "44be64ada3ce4ff2fc44441b069179ba350d8435",
+            "state": "pending",
+            "target_url": null,
+            "description": "code-checks requested",
+            "context": "cms/15/code-checks"
+        }
+    },
+    {
+        "type": "create-comment",
+        "data": "Pull request #15 was updated. iarspider can you please check and sign again.\n"
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "44be64ada3ce4ff2fc44441b069179ba350d8435",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/15#issuecomment-1983744361",
+            "description": "1983744361:{\"PULL_REQUESTS\": \"cms-sw/cms-bot#2134\", \"SKIP_TESTS\": \"header,static\"}",
+            "context": "bot/15/test_parameters"
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1983744361,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "write-bot-cache",
+        "data": {
+            "commits": {
+                "5fc1707b960fc8257af8750d2dbfe499d808ce4f": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": true,
+                    "time": 1709816269
+                },
+                "8c2016079eccecc395237c4ddbe42da3c51efdd5": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709813350
+                },
+                "c5ac20db2b823be7c2ba649f69a52621cbd826ff": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": false,
+                    "time": 1709814363
+                },
+                "d0a19efb3e364c671b1958eb1e3e73d466bdbaf1": {
+                    "files": [
+                        "DQMServices/Components/test/dqmiofilecopy.sh"
+                    ],
+                    "squashed": true,
+                    "time": 1709816427
+                },
+                "44be64ada3ce4ff2fc44441b069179ba350d8435": {
+                    "time": 1709816427,
+                    "squashed": false,
+                    "files": []
+                }
+            },
+            "emoji": {
+                "1983497745": "+1",
+                "1983570003": "+1",
+                "1983736386": "+1",
+                "1983744361": "+1",
+                "1983771087": "+1",
+                "1983784616": "+1",
+                "1985460583": "+1",
+                "1985464778": "+1",
+                "1985469045": "+1",
+                "1985473738": "+1",
+                "1985475256": "-1",
+                "1985525681": "+1"
+            },
+            "last_seen_sha": "44be64ada3ce4ff2fc44441b069179ba350d8435",
+            "signatures": {
+                "1983497745": "8c2016079eccecc395237c4ddbe42da3c51efdd5",
+                "1985525681": "d0a19efb3e364c671b1958eb1e3e73d466bdbaf1"
+            }
+        }
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"44be64ada3ce4ff2fc44441b069179ba350d8435\":{\"files\":[],\"squashed\":false,\"time\":1709816427},\"5fc1707b960fc8257af8750d2dbfe499d808ce4f\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":true,\"time\":1709816269},\"8c2016079eccecc395237c4ddbe42da3c51efdd5\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1709813350},\"c5ac20db2b823be7c2ba649f69a52621cbd826ff\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":false,\"time\":1709814363},\"d0a19efb3e364c671b1958eb1e3e73d466bdbaf1\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":true,\"time\":1709816427}},\"emoji\":{\"1983497745\":\"+1\",\"1983570003\":\"+1\",\"1983736386\":\"+1\",\"1983744361\":\"+1\",\"1983771087\":\"+1\",\"1983784616\":\"+1\",\"1985460583\":\"+1\",\"1985464778\":\"+1\",\"1985469045\":\"+1\",\"1985473738\":\"+1\",\"1985475256\":\"-1\",\"1985525681\":\"+1\"},\"last_seen_sha\":\"44be64ada3ce4ff2fc44441b069179ba350d8435\",\"signatures\":{\"1983497745\":\"8c2016079eccecc395237c4ddbe42da3c51efdd5\",\"1985525681\":\"d0a19efb3e364c671b1958eb1e3e73d466bdbaf1\"}} -->"
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "44be64ada3ce4ff2fc44441b069179ba350d8435",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/15#issuecomment-1985526161",
+            "description": "Comment by iarspider at 2024-03-08 11:25:45 UTC processed.",
+            "context": "bot/15/ack"
+        }
+    }
+]

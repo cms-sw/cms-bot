@@ -1,0 +1,80 @@
+[
+    {
+        "type": "load-bot-cache",
+        "data": {
+            "commits": {
+                "8c2016079eccecc395237c4ddbe42da3c51efdd5": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709813350
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "8c2016079eccecc395237c4ddbe42da3c51efdd5",
+            "signatures": {
+                "1983497745": "8c2016079eccecc395237c4ddbe42da3c51efdd5"
+            }
+        }
+    },
+    {
+        "type": "emoji",
+        "data": [
+            1983497745,
+            "+1",
+            true
+        ]
+    },
+    {
+        "type": "add-label",
+        "data": [
+            "core-approved",
+            "fully-signed"
+        ]
+    },
+    {
+        "type": "remove-label",
+        "data": [
+            "core-pending",
+            "pending-signatures"
+        ]
+    },
+    {
+        "type": "create-comment",
+        "data": "This pull request is fully signed and it will be integrated in one of the next master IBs after it passes the integration tests. This pull request will now be reviewed by the release team before it's merged. iarspider (and backports should be raised in the release meeting by the corresponding L2)"
+    },
+    {
+        "type": "write-bot-cache",
+        "data": {
+            "commits": {
+                "8c2016079eccecc395237c4ddbe42da3c51efdd5": {
+                    "files": [
+                        "Utilities/ReleaseScripts/test/BuildFile.xml"
+                    ],
+                    "squashed": false,
+                    "time": 1709813350
+                }
+            },
+            "emoji": {},
+            "last_seen_sha": "8c2016079eccecc395237c4ddbe42da3c51efdd5",
+            "signatures": {
+                "1983497745": "8c2016079eccecc395237c4ddbe42da3c51efdd5"
+            }
+        }
+    },
+    {
+        "type": "edit-comment",
+        "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"8c2016079eccecc395237c4ddbe42da3c51efdd5\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1709813350}},\"emoji\":{},\"last_seen_sha\":\"8c2016079eccecc395237c4ddbe42da3c51efdd5\",\"signatures\":{\"1983497745\":\"8c2016079eccecc395237c4ddbe42da3c51efdd5\"}} -->"
+    },
+    {
+        "type": "status",
+        "data": {
+            "commit": "8c2016079eccecc395237c4ddbe42da3c51efdd5",
+            "state": "success",
+            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/15#issuecomment-1983497745",
+            "description": "Comment by iarspider at 2024-03-07 13:24:02 UTC processed.",
+            "context": "bot/15/ack"
+        }
+    }
+]

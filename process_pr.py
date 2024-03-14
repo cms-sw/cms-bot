@@ -760,7 +760,14 @@ def get_changed_files(repo, pr, use_gh_patch=False):
     e, o = run_cmd(cmd)
     if e:
         return []
-    return o.split("\n")
+    if o:
+        return o.split("\n")
+    else:
+        print(
+            "ERROR: Request to https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff did not return any changes, is the PR too big?"
+            % (repo.full_name, pr.number)
+        )
+        exit(1)
 
 
 def get_backported_pr(msg):

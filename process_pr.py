@@ -759,7 +759,12 @@ def get_changed_files(repo, pr, use_gh_patch=False):
     )
     e, o = run_cmd(cmd)
     if e:
-        return []
+        print(
+            "ERROR: Request to https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff failed"
+            % (repo.full_name, pr.number)
+        )
+        print(e)
+        exit(1)
     if o:
         return o.split("\n")
     else:

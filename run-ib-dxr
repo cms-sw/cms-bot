@@ -29,4 +29,5 @@ rsync -aL --no-owner --no-group --exclude '.scram' --exclude '*.pyc' ${CMSSW_REL
 (find src/cfipython -name '__pycache__' | xargs rm -rf) || true
 find src/cfipython -type d -empty -delete || true
 sed -i -r 's| -v | |' config/dxr.config
+export USER_CXXFLAGS="-Wno-deprecated-copy -Wno-deprecated"
 scram b -j ${NJOB} -k dxr || true

@@ -57,7 +57,7 @@ COMMON_LABELS = {
     "new-package-pending": LABEL_COLORS["rejected"],
     "backport": LABEL_COLORS["info"],
     "backport-ok": LABEL_COLORS["approved"],
-    "urgent": LABEL_COLORS["urgent"]
+    "urgent": LABEL_COLORS["urgent"],
     "process-complete": LABEL_COLORS["approved"],
     "hold": LABEL_COLORS["hold"],
     "compilation-warnings": LABEL_COLORS["hold"],

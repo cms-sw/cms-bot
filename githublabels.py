@@ -13,6 +13,9 @@ LABEL_COLORS = {
     "rejected": "e11d21",
     "info": "0000ff",
     "doc": "257fdb",
+    "urgent": "cc317c",
+    "performance": "5b9ee3",
+    "bug": "b8860b",
 }
 
 LABEL_TYPES = {
@@ -27,12 +30,13 @@ LABEL_TYPES = {
 #                                type: only apply the last comment
 #                                mtype: accomulate all comments]
 TYPE_COMMANDS = {
-    "bug-fix": ["b8860b", "bug(-fix|fix|)", "type"],
+    "bug-fix": [LABEL_COLORS["bug"], "bug(-fix|fix|)", "type"],
     "new-feature": [LABEL_COLORS["info"], "(new-|)(feature|idea)", "type"],
     "root": [LABEL_COLORS["info"], "root", "mtype"],
     "documentation": [LABEL_COLORS["doc"], "doc(umentation|)", "mtype"],
+    "hlt-integration": [LABEL_COLORS["doc"], "hlt-int(egration|)", "mtype"],
     "performance-improvements": [
-        "5b9ee3",
+        LABEL_COLORS["performance"],
         "performance|improvements|performance-improvements",
         "mtype",
     ],
@@ -53,7 +57,7 @@ COMMON_LABELS = {
     "new-package-pending": LABEL_COLORS["rejected"],
     "backport": LABEL_COLORS["info"],
     "backport-ok": LABEL_COLORS["approved"],
-    "urgent": "cc317c",
+    "urgent": LABEL_COLORS["urgent"]
     "process-complete": LABEL_COLORS["approved"],
     "hold": LABEL_COLORS["hold"],
     "compilation-warnings": LABEL_COLORS["hold"],

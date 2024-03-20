@@ -45,7 +45,7 @@ mkdir -p "$WORKSPACE/matrix-results"
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
 pushd "$WORKSPACE/matrix-results"
   NJOBS=$(nproc)
-  CMD_OPTS=""
+  CMD_OPTS="${RUN_THE_MATRIX_CMD_OPTS}"
   case "${TEST_FLAVOR}" in
     gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;

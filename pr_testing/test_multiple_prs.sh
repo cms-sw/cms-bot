@@ -262,6 +262,7 @@ if $DO_COMPARISON ; then
     echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
     echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
+    echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
@@ -1215,9 +1216,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
   echo "MATRIX_ARGS=${WF_COMMON}" >> $WORKSPACE/run-relvals.prop
-  if $PRODUCTION_RELEASE && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
-    echo "RUN_THE_MATRIX_CMD_OPTS=--maxmem_profile" >> $WORKSPACE/run-relvals.prop
-  fi
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop

@@ -82,10 +82,13 @@ if __name__ == "__main__":
             sys.exit(1)
 
         head = None
+        valid_author = CMSSW_L1 + ["cmsbuild", "Cms Build"]
+        valid_committer = ["Cms Build", "GitHub"]
         for commit_ in commits_:
-            if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"]["author"][
-                "name"
-            ] in (CMSSW_L1 + ["cmsbuild"]):
+            if (
+                commit_["commit"]["committer"]["name"] in valid_committer
+                and commit_["commit"]["author"]["name"] in valid_author
+            ):
                 head = commit_
                 break
 

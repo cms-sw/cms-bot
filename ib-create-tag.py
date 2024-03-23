@@ -104,7 +104,6 @@ if __name__ == "__main__":
             )
 
     tags = find_tags(repo, QUEUE + "_20")
-    print(tags)
     RELEASE_LIST = [
         t["ref"].replace("refs/tags/", "") for t in tags if t["object"]["sha"] == HEAD_SHA
     ]

@@ -71,6 +71,8 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_6_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_6_X/master"].append("IB/CMSSW_12_6_X/g11")
 
 # Automatically added
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_13_0_X"] = []
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_13_0_X"].append("CMSSW_13_0_HeavyIon_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/master"].append("IB/CMSSW_13_0_X/cs9")
 

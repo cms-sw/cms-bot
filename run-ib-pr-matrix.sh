@@ -43,9 +43,11 @@ fi
 #Actually run  runTheMatrix.py for the selected workflows
 mkdir -p "$WORKSPACE/matrix-results"
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
+[ "${PRODUCTION_RELEASE}" != "true" ] && PRODUCTION_RELEASE="false"
 pushd "$WORKSPACE/matrix-results"
   NJOBS=$(nproc)
-  CMD_OPTS="${RUN_THE_MATRIX_CMD_OPTS}"
+  CMD_OPTS=""
+  if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then CMD_OPTS="--maxmem_profile" ; fi
   case "${TEST_FLAVOR}" in
     gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;

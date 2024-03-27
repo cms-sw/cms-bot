@@ -222,7 +222,7 @@ with open(
 
     for node in os.listdir("/var/lib/jenkins/workspace/cache/blacklist/"):
         file_path = "/var/lib/jenkins/workspace/cache/blacklist/" + node
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             reason = file.read()
         if ".offline" in node:
             node = node.split(".offline")[0]

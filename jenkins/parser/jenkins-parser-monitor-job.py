@@ -222,8 +222,11 @@ with open(
 
     for node in os.listdir("/var/lib/jenkins/workspace/cache/blacklist/"):
         file_path = "/var/lib/jenkins/workspace/cache/blacklist/" + node
-        with open(file_path, "r") as file:
-            reason = file.read()
+        try:
+            with open(file_path, "r") as file:
+                reason = file.read()
+        except:
+            reason = "Unknown"
         if ".offline" in node:
             node = node.split(".offline")[0]
             print("Node " + node + " is blacklisted")

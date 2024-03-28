@@ -4120,3 +4120,4 @@ architecture=el8_amd64_gcc11;label=CMSSW_13_0_18_HeavyIon;type=Production;state=
 architecture=el8_aarch64_gcc12;label=CMSSW_14_1_0_pre2;type=Development;state=Announced;prodarch=0;
 architecture=el9_aarch64_gcc12;label=CMSSW_14_1_0_pre2;type=Development;state=Announced;prodarch=0;
 architecture=el8_ppc64le_gcc12;label=CMSSW_14_1_0_pre2;type=Development;state=Announced;prodarch=0;
+architecture=el9_amd64_gcc12;label=CMSSW_14_1_0_pre2;type=Development;state=Announced;prodarch=0;

@@ -46,6 +46,10 @@ REPO_TEAMS["cms-externals"]["Developers"]["members"].append("fwyzard")
 REPO_TEAMS["cms-externals"]["Developers"]["members"].append("valsdav")
 
 # Teams for cms-sw
+REPO_TEAMS["cms-sw"]["core-team"] = {
+    "members": ["dan131riley"],
+    "repositories": {"*": "pull"},
+}
 REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = {
     "members": [],
     "repositories": {"RecoLuminosity-LumiDB": "admin"},

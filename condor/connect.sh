@@ -22,6 +22,7 @@ JENKINS_DEBUG="${DEBUG-false}"
 JENKINS_CALLBACK="${JENKINS_CALLBACK-http://cmsjenkins03.cern.ch:8080/jenkins/}"
 
 if [ $REQUEST_CPUS -lt 1 ] ; then REQUEST_CPUS=1 ; fi
+if [ "${REQUEST_MEMORY}" == "" ] ; then let REQUEST_MEMORY=${REQUEST_CPUS}*2500 ; fi
 if [ $REQUEST_MAXRUNTIME -lt 3600 ] ; then REQUEST_MAXRUNTIME=3600 ; fi
 ##########################################
 here=$(dirname $0)
@@ -53,6 +54,7 @@ chmod +x ${script_name}.sh
 
 sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
 sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
+sed -i -e "s|@REQUEST_MEMORY@|$REQUEST_MEMORY|"         job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
 sed -i -e "s|@INPUT_FILES@|$INPUT_FILES|"               job.sub

@@ -38,7 +38,7 @@ echo "Adler-32 checksum of test file stageout_verify_$$.bin is ${CHKSUM}"
 MRC=""
 SUMMARY=""
 echo ""
-OS_VER=$(uname -r | sed 's|.*\.el|el|;s|_.*||')
+OS_VER=$(rpm -q --queryformat '%{RELEASE}' glibc | sed 's|.*\.el|el|;s|_.*||')
 echo "OS: ${OS_VER}, Known errors: ${KNOWN_ERRORS}"
 for PROTO in root gsiftp srm davs; do
    PASSED=0

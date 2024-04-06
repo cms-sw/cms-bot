@@ -10,6 +10,8 @@ trap '/bin/rm -f /tmp/stageout_verify_$$.bin 1> /dev/null 2>&1' 0
 voms-proxy-init -voms cms
 voms-proxy-info -all
 
+KNOWN_ERRORS = "el9:srm"
+
 STAGEOUT="gsiftp://gridftp.echo.stfc.ac.uk/cms: \
           gsiftp://eoscmsftp.cern.ch/eos/cms \
           srm://srmcms.pic.es:8443/srm/managerv2?SFN=/pnfs/pic.es/data/cms/disk \
@@ -37,6 +39,7 @@ echo "Adler-32 checksum of test file stageout_verify_$$.bin is ${CHKSUM}"
 MRC=""
 SUMMARY=""
 echo ""
+OS_VER=$(uname -r | sed 's|.*\.el|el|;s|_.*||')
 for PROTO in root gsiftp srm davs; do
    PASSED=0
    TOTAL=0
@@ -59,11 +62,20 @@ for PROTO in root gsiftp srm davs; do
       fi
    done
    SUMMARY="${SUMMARY} ${PROTO}($PASSED/$TOTAL)"
+   KNOWN_ERROR=$(echo "${KNOWN_ERRORS}" | tr ' ' '\n' | grep "^${OS_VER}:${PROTO}$" | wc -l)
    if [ $PASSED -eq 0 ] ; then
        echo "Failed: $PASSED/$TOTAL"
-       MRC="${MRC} ${PROTO}($PASSED/$TOTAL)"
+       if [ $KNOWN_ERROR -eq 0 ] ; then
+         MRC="${MRC} ${PROTO}($PASSED/$TOTAL)"
+       else
+         echo "  OK: Ignoring this failure as ${PROTO} is part of known error for ${OS_VER}."
+       fi
    else
        echo "Passed: $PASSED/$TOTAL"
+       if [ $KNOWN_ERROR -gt 0 ] ; then
+         echo "  Fail: Passed but it is suppose to fail, please update KNOWN_ERRORS if ${PROTO} works on ${OS_VER}"
+         MRC="${MRC} ${PROTO}($PASSED/$TOTAL)"
+       fi
    fi
    echo ""
 done

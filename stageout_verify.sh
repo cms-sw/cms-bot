@@ -10,8 +10,7 @@ trap '/bin/rm -f /tmp/stageout_verify_$$.bin 1> /dev/null 2>&1' 0
 voms-proxy-init -voms cms
 voms-proxy-info -all
 
-KNOWN_ERRORS = "el9:srm"
-
+KNOWN_ERRORS="el9:srm"
 STAGEOUT="gsiftp://gridftp.echo.stfc.ac.uk/cms: \
           gsiftp://eoscmsftp.cern.ch/eos/cms \
           srm://srmcms.pic.es:8443/srm/managerv2?SFN=/pnfs/pic.es/data/cms/disk \
@@ -40,6 +39,7 @@ MRC=""
 SUMMARY=""
 echo ""
 OS_VER=$(uname -r | sed 's|.*\.el|el|;s|_.*||')
+echo "OS: ${OS_VER}, Known errors: ${KNOWN_ERRORS}"
 for PROTO in root gsiftp srm davs; do
    PASSED=0
    TOTAL=0
@@ -63,6 +63,7 @@ for PROTO in root gsiftp srm davs; do
    done
    SUMMARY="${SUMMARY} ${PROTO}($PASSED/$TOTAL)"
    KNOWN_ERROR=$(echo "${KNOWN_ERRORS}" | tr ' ' '\n' | grep "^${OS_VER}:${PROTO}$" | wc -l)
+   echo "Know error: ${OS_VER}:${PROTO}: ${KNOWN_ERROR}"
    if [ $PASSED -eq 0 ] ; then
        echo "Failed: $PASSED/$TOTAL"
        if [ $KNOWN_ERROR -eq 0 ] ; then

@@ -11,7 +11,7 @@ parser.add_argument(
     "-b",
     "--base_branch",
     dest="base_branch",
-    help="Repository branch againt which new Pull request should be created",
+    help="Repository branch against which new Pull request should be created",
     type=str,
 )
 parser.add_argument(
@@ -45,7 +45,7 @@ if not args.title:
     parser.error("Missing PR title")
 print("Authenticating to Github and connecting to repo")
 gh = Github(login_or_token=open(expanduser("~/.github-token")).read().strip())
-print("Authentication succeeeded")
+print("Authentication succeeded")
 gh_repo = gh.get_repo(args.repo)
 print("Creating pull request")
 pr = gh_repo.create_pull(

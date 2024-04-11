@@ -58,7 +58,7 @@ import repo_config
 
 gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 gh_repo = gh.get_repo(args.repo)
-print("Authentication succeeeded to " + str(gh_repo.full_name))
+print("Authentication succeeded to " + str(gh_repo.full_name))
 
 if args.comment == False:
 

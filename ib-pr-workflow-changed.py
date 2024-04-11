@@ -57,5 +57,5 @@ for wf in wfs["new"]:
 
 print("New workflows:%s: %s" % (len(new_wf), ",".join(new_wf)))
 print("Workflows with new steps:%s: %s" % (len(new_step), ",".join(new_step)))
-print("Wrokflows with changed steps:%s: %s" % (len(chg_step), ",".join(chg_step)))
+print("Workflows with changed steps:%s: %s" % (len(chg_step), ",".join(chg_step)))
 print("WORKFLOWS TO RUN:", ",".join(new_wf + new_step + chg_step))

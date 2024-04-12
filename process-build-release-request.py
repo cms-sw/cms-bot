@@ -78,7 +78,7 @@ QUEUING_BUILDS_MSG = (
     "Queuing Jenkins build for the following architectures: %s \n"
     'You can abort the build by writing "Abort" in a comment. I will delete the release, '
     "the cmssw and cmsdist tag, and close the issue. You can't abort the upload once at"
-    " least one achitecture is being uploaded. \n"
+    " least one architecture is being uploaded. \n"
     "If you are building cmssw-tool-conf first, I will wait for each architecture to finish to start the build of cmssw."
 )
 QUEUING_TOOLCONF_MSG = (
@@ -472,7 +472,7 @@ def delete_tag(org, repo, tag):
     status, out = run_cmd(cmd)
     print(out)
     if status != 0:
-        msg = "I was not able to delete the tag %s. Probaly it had not been created." % tag
+        msg = "I was not able to delete the tag %s. Probably it had not been created." % tag
         print(msg)
         return msg
     msg = "%s tag %s successfully deleted." % (repo, tag)
@@ -974,7 +974,7 @@ if __name__ == "__main__":
         "--force",
         dest="force",
         action="store_true",
-        help="Ignore previous comments in the issue and proccess it again",
+        help="Ignore previous comments in the issue and process it again",
         default=False,
     )
     parser.add_option(

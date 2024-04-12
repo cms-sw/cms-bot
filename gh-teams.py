@@ -106,7 +106,7 @@ parser.add_argument(
     "-o",
     "--organization",
     dest="organization",
-    help="Github Organization name e.g. cms-sw. Default is * i.e. all cms origanizations",
+    help="Github Organization name e.g. cms-sw. Default is * i.e. all cms organizations",
     type=str,
     default="*",
 )

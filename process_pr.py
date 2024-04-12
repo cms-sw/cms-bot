@@ -1783,7 +1783,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     print("Stats:", backport_pr_num, extra_labels, state_labels)
     print("Old Labels:", sorted(old_labels))
     print("Compilation Warnings: ", comp_warnings)
-    print("Singnatures: ", signatures)
+    print("Signatures: ", signatures)
     # Add state labels as mtype labels
     if len(state_labels) != 0:
         if "mtype" in extra_labels:

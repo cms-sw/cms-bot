@@ -12,7 +12,7 @@ if "CMS_DISABLE_MONITORING" not in environ:
     if e:
         e, o = run_cmd("python3 -c 'import psutil'")
         if e:
-            print("Monitering of relval steps disabled: import psutils failed")
+            print("Monitoring of relval steps disabled: import psutils failed")
             monitor_script = ""
         else:
             monitor_script = "python3 " + monitor_script

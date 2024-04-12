@@ -227,7 +227,7 @@ class LogChecker(object):
                 print("      " + item[0] + " (" + str(item[3]) + ")")
         print("--------------------------------------------------------------------------------")
         print("\nA total of ", len(compErrPkg), " packages failed compilation.")
-        print("\nA total of ", len(testErrPkg), " packages failed compiling tetsts.")
+        print("\nA total of ", len(testErrPkg), " packages failed compiling tests.")
         print("\nA total of ", nLinkErr, " packages failed linking(only).")
         print("\nA total of ", len(genErrPkg), " unknown  errors.")
         print("\n")

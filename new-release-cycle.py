@@ -202,7 +202,7 @@ def update_forward_port(new_br, dryRun=False):
     e, o = run_cmd("grep GIT_REPO_FWPORTS %s | grep '%s'" % (fwdport_file, CMSSW_DEVEL_BRANCH))
     if e:
         print(
-            "ERROR: Unable to find forward ports for existsing development release %s"
+            "ERROR: Unable to find forward ports for existing development release %s"
             % CMSSW_DEVEL_BRANCH
         )
         exit(1)
@@ -239,7 +239,7 @@ def update_release_map(new_br, dryRun=False):
         )
         exit(1)
     if len(map_line.split("\n")) > 1:
-        print("ERROR: Found multiple entrie for '%s' in releases.map" % CMSSW_DEVEL_BRANCH)
+        print("ERROR: Found multiple entries for '%s' in releases.map" % CMSSW_DEVEL_BRANCH)
         print(map_line)
         exit(1)
     run_cmd(

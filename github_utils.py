@@ -95,7 +95,7 @@ def _check_rate_limits(
                 return
         if msg:
             print(
-                "%sSlowing down for %s sec due to api rate limits %s approching zero (reset in %s secs)"
+                "%sSlowing down for %s sec due to api rate limits %s approaching zero (reset in %s secs)"
                 % (prefix, doSleep, rate_limit, rate_reset_sec)
             )
         sleep(doSleep)
@@ -314,7 +314,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
             pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
             print("Checking cached file: " + pr_cache)
             if not exists(pr_cache):
-                print("  Chache does not exists: ", pr_cache)
+                print("  Cache does not exists: ", pr_cache)
                 cache_invalid_pr(pr_hash_id, cache)
                 continue
             pr = json.load(open(pr_cache))

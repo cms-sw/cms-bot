@@ -245,7 +245,7 @@ def understandStep1Error(name, t, p, info):
 # understanding plugins.
 def understandGenericError(name, t, p, info):
     errorTitle = "generic error"
-    errorMessage = "I could not fully undestand what is going on, but some relval fails.\nPlease have a look at the errors."
+    errorMessage = "I could not fully understand what is going on, but some relval fails.\nPlease have a look at the errors."
     h = hashlib.sha1((name + "generic error").encode()).hexdigest()[:10]
     return (h, errorTitle, errorMessage)
 

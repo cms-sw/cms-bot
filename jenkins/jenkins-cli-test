@@ -1,0 +1,71 @@
+#!/bin/bash -ex
+kinit -R
+cd $WORKSPACE
+URL=$LOCAL_JENKINS_URL
+DSA=$LOCAL_JENKINS_DSA_KEY
+echo "Testing Jenkins CLI"
+CLI_ENABLED=false
+JAVA_CMD=$(ps -u `whoami` -o cmd | grep 'jenkins.war' | grep /java | sed 's| .*||')
+${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -i ~/.ssh/id_rsa-openstack -s ${LOCAL_JENKINS_URL}/ who-am-i >cli.log 2>&1 || true
+if [ $(grep 'Handshake error' cli.log | wc -l) -eq 0 ] ; then
+  CLI_ENABLED=True
+  if ${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -i ~/.ssh/id_rsa-openstack -s ${LOCAL_JENKINS_URL}/ version  ; then
+    echo "User anonymous should not be able to read version"
+    exit 1
+  fi
+
+  USER=$(${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -s $URL who-am-i | grep 'Authenticated as:' | sed 's|.* ||')
+  if [ "$USER" != "anonymous" ] ; then
+    echo "Error: Unable to connect as anonymous user"
+    exit 1
+  fi
+  echo "anonymous user: OK"
+fi
+
+USER=$(${JENKINS_CLI_CMD} who-am-i | grep 'Authenticated as:' | sed 's|.* ||')
+if [ "$USER" != "localcli" ] ; then
+  echo "Error: Unable to connect as localclis user"
+  exit 1
+fi
+echo "localcli user: OK"
+
+GIT_DIR=$WORKSPACE/cmsjenkins
+if [ ! -d $GIT_DIR ] ; then
+  git clone --depth 1 -q https://github.com/cms-sw/jenkins-backup.git $GIT_DIR
+  echo "Git clone: OK"
+fi
+cd $GIT_DIR
+git pull -q --rebase
+cd $WORKSPACE
+echo "Git clone: OK"
+
+if $CLI_ENABLED ; then
+  if ${JAVA_CMD} -jar ${JENKINS_HOME}/jenkins-cli.jar -s $URL groovy ${GIT_DIR}/get_plugins.groovy ; then
+    echo "ERROR: user anonymous should not be able t get plugin list"
+    exit 1
+  fi
+  echo "Groovy anonymous: OK"
+fi
+
+cat ${GIT_DIR}/get_plugins.groovy | ${JENKINS_CLI_CMD} groovy = > plugins.txt
+if [ $(cat plugins.txt | grep ':' | wc -l) -lt 20 ] ; then
+  echo "ERROR: user localcli did not get complete list of plugins"
+  cat plugins.txt
+  exit 1
+fi
+echo "Groovy localcli: OK"
+
+JOB_PARAM=$(date +%s)
+${JENKINS_CLI_CMD} \
+  build 'jenkins-installation-trigger-cli' \
+  -p JOB_PARAM1=${JOB_PARAM} -p JOB_PARAM2=${JOB_PARAM} -s
+
+LOGFILE="${JENKINS_HOME}/jobs/jenkins-installation-trigger-cli/builds/lastSuccessfulBuild/log"
+if [ ! -e $LOGFILE ] ; then
+  LOGFILE=$(ls -rt ${JENKINS_HOME}/jobs/jenkins-installation-trigger-cli/builds/*/log | tail -1)
+fi
+if [ $(grep "^JOB_PARAM=${JOB_PARAM}$" $LOGFILE | wc -l) -ne 2 ] ; then
+  echo "Error: Unable to run jenkins job"
+  exit 1
+fi
+echo "Groovy Start job: OK"

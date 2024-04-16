@@ -24,5 +24,6 @@ VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cms-git-tools",
     "cms-common",
     "cms_oracleocci_abi_hack",
+    "cms-docker",
     "siteconf",
 ]

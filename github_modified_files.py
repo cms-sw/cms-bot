@@ -32,7 +32,7 @@ def main():
         "-l",
         "--logging",
         default="DEBUG",
-        choices=logging._levelNames,
+        choices=logging._nameToLevel,
         help="Set level of logging",
     )
     args = parser.parse_args()

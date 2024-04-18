@@ -1686,7 +1686,11 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if ctype == "+1":
                     for sign in selected_cats:
                         signatures[sign] = "approved"
-                        if sign not in ("code-checks", "tests", "orp"):
+                        if auto_test_comment is None and sign not in (
+                            "code-checks",
+                            "tests",
+                            "orp",
+                        ):
                             auto_test_comment = comment
                 elif ctype == "-1":
                     for sign in selected_cats:

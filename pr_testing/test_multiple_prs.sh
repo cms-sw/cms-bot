@@ -1261,6 +1261,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     WF1=$(echo "${WF_COMMON}" | sed 's|;.*||')
     WF2="$(get_pr_relval_args $DO_COMPARISON _THREADING | sed 's|.*;||')"
     [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF2="${WF2};-l ${WORKFLOWS_PR_LABELS}"
+    WF2=$(echo "${WF2}" | sed 's|^;*||')
     if [ "${WF2}" != "" ] ; then WF1="${WF1};${WF2}"; fi
     echo "MATRIX_ARGS=${WF1}" >> $WORKSPACE/run-relvals-threading.prop
   fi

@@ -1021,6 +1021,7 @@ CMSSW_CATEGORIES = {
         "L1Trigger/L1TMuonEndCapPhase2",
         "L1Trigger/L1TMuonOverlap",
         "L1Trigger/L1TMuonOverlapPhase1",
+        "L1Trigger/L1TMuonOverlapPhase2",
         "L1Trigger/L1TNtuples",
         "L1Trigger/L1TTwinMux",
         "L1Trigger/L1TZDC",

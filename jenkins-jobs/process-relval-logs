@@ -8,7 +8,7 @@ function process_ubsan()
   ublog1="${ubdir}/full_runtime_errors.log"
   ublog2="${ubdir}/ubsan_runtime_errors.log"
   ublog3="${ubdir}/ubsan_runtime_errors_ignored.log"
-  grep ': runtime error:' */step?.log  | grep '/CMSSW_' | sed 's|_.*\/\(step[1-9][0-9]*\).*.log:|/\1:|;s|:.*/CMSSW_[^/]*/src/|:|' > ${ublog1}
+  grep ': runtime error:' */step?.log  | grep '/CMSSW_\|^src/' | sed 's|_.*\/\(step[1-9][0-9]*\).*.log:|/\1:|;s|:.*/CMSSW_[^/]*/|:|;s|:src/|:|' > ${ublog1}
   for u in $(cat ${ublog1} | sed 's|^[^:]*:||;s| .*||' | sort -u) ; do
     md5=$(echo "$u" | md5sum | sed 's| .*||')
     c2=$(echo $md5 | cut -c1,2)

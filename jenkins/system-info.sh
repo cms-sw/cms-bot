@@ -104,7 +104,7 @@ SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 if [ "${JAVA_CMD}" = "java" ] ; then
   if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
     JAVA_CMD="/etc/alternatives/jre_17/bin/java"
-  if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
+  elif [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
     JAVA_CMD="/etc/alternatives/jre_11/bin/java"
   else
     SLAVE_LABELS="${SLAVE_LABELS} java-default"

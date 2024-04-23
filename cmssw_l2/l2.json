@@ -145,6 +145,7 @@
       "category": [
         "egamma-pog"
       ], 
+      "end_date": 1713830400, 
       "start_date": 1670112000
     }
   ], 
@@ -171,6 +172,14 @@
       ], 
       "end_date": 1629936000, 
       "start_date": 1627689600
+    }
+  ], 
+  "afiqaize": [
+    {
+      "category": [
+        "egamma-pog"
+      ], 
+      "start_date": 1713830400
     }
   ], 
   "agrohsje": [

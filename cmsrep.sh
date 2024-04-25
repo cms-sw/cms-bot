@@ -18,7 +18,7 @@ function cmsbuild_args()
 function cmssw_default_target()
 {
   case $1 in
-    SKYLAKEAVX|SANDYBRIDGE|HASWELL|MULTIARCHS) echo auto ;;
+    *SKYLAKE*|*SANDYBRIDGE*|*HASWELL*|*MULTIARCHS*) echo auto ;;
     *) echo default ;;
   esac
 }

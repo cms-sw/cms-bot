@@ -561,9 +561,9 @@ if ${BUILD_EXTERNAL} ; then
         )
         if [ "$MULTIARCH_OPTS" != "" ] ; then
           MULTIARCH_OPTSX=$(echo ${MULTIARCH_OPTS} | tr ',' ' ')
-          sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTIARCH_OPTSX}\"|" scram-buildrules/Projects/CMSSW/Self.xml
           DEFAULT_TARGET=$(cmssw_default_target $CMSSW_IB)
-          sed -i -e "s|</tool>| <runtime name=\"SCRAM_TARGET\" value=\"${DEFAULT_TARGET}\"/>\n <runtime name=\"USER_TARGETS_ALL\" value=\"1\"/>\n</tool>|' scram-buildrules/Projects/CMSSW/Self.xml
+          sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTIARCH_OPTSX}\"|" scram-buildrules/Projects/CMSSW/Self.xml
+	  sed -i -e "s|</tool>| <runtime name=\"SCRAM_TARGET\" value=\"${DEFAULT_TARGET}\"/>\n <runtime name=\"USER_TARGETS_ALL\" value=\"1\"/>\n</tool>|" scram-buildrules/Projects/CMSSW/Self.xml
         fi
         cp scram-buildrules/Projects/CMSSW/Self.xml $CMSSW_IB/config/Self.xml
       else

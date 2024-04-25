@@ -45,7 +45,7 @@ pushd $BUILD_DIR/CMSDIST
     BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
     CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
     BUILD_OPTS=""
-    MUTLIARCH_OPTS=""
+    MULTIARCH_OPTS=""
     PATCH='-patch'
     ;;
     * )

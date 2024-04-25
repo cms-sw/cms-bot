@@ -253,6 +253,14 @@ if [ "${USE_BASELINE}" = "self" ] ; then
   COMPARISON_ARCH="$SCRAM_ARCH"
 fi
 
+WORKFLOWS_PR_LABELS=""
+scram -a $SCRAM_ARCH project $CMSSW_IB
+set +x
+pushd $CMSSW_IB
+  $(eval `scram run -sh` ; runTheMatrix.py -n -e | grep '\[1\]:' > wfs.step1)
+  sed 's| .*||' wfs.step1 > wfs.all
+popd
+set -x
 if $DO_COMPARISON ; then
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
@@ -266,12 +274,42 @@ if $DO_COMPARISON ; then
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+
+    PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
+    EX_WFS=""
+    set +x
+    for l in ${PR_LABELS} ; do
+       EX_WFS="${EX_WFS},$(get_pr_baseline_worklflow _LAB_${l})"
+    done
+    EX_WFS=$(echo "${EX_WFS}" | sed 's|^,*||;s|,*$||;s|,,*|,|g')
+    if [ "${EX_WFS}" != "" ] ; then
+      $(cd $WORKSPACE/$CMSSW_IB; eval `scram run -sh` ; runTheMatrix.py -n -e -s ${WF_LIST} | grep '\[1\]:' | sed 's| .*||' > wfs.default)
+      for wf in $(echo ${EX_WFS} | tr ',' '\n') ; do
+        if grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.all ; then
+          if ! grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.default ; then
+            WORKFLOWS_PR_LABELS="${WORKFLOWS_PR_LABELS},${wf}"
+          else
+            echo "WARNING: Workflow already part of default tests: $wf"
+          fi
+        else
+          echo "WARNING: No such workflow: $wf"
+        fi
+      done
+      WORKFLOWS_PR_LABELS=$(echo "${WORKFLOWS_PR_LABELS}" | sed 's|^,*||')
+      echo "WORKFLOWS_PR_LABELS=${WORKFLOWS_PR_LABELS}"
+      if [ "${WORKFLOWS_PR_LABELS}" != "" ] ; then
+        grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-03.default
+        echo "WORKFLOWS=-l ${WORKFLOWS_PR_LABELS}" >> run-baseline-${BUILD_ID}-03.default
+      fi
+    fi
+    set -x
     if [ "${MATRIX_EXTRAS}" != "" ] ; then
       WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
       echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
       echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
     fi
+
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
@@ -492,7 +530,6 @@ if ${BUILD_EXTERNAL} ; then
       if [ "${OLD_DASGOCLIENT}" != "${XDAS}" ] ; then TEST_DASGOCLIENT=true ; fi
     fi
     echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
-    scram -a $SCRAM_ARCH project $CMSSW_IB
 
     # To make sure we always pick scram from local area
     rm -f $CMSSW_IB/config/scram_basedir
@@ -680,10 +717,6 @@ CLANG_BUILD_OK=true
 PYTHON3_BUILD_OK=true
 RUN_TESTS=true
 
-cd $WORKSPACE
-if [ ! -d CMSSW_* ]; then  # if no directory that starts with "CMSSW_" exist, then bootstrap with SCRAM
-  scram -a $SCRAM_ARCH  project $CMSSW_IB
-fi
 cd $WORKSPACE/$CMSSW_IB
 
 set +x
@@ -1215,6 +1248,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
+  [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
   echo "MATRIX_ARGS=${WF_COMMON}" >> $WORKSPACE/run-relvals.prop
   if $PRODUCTION_RELEASE && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
     echo "RUN_THE_MATRIX_CMD_OPTS=--maxmem_profile" >> $WORKSPACE/run-relvals.prop
@@ -1226,6 +1260,8 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
     WF1=$(echo "${WF_COMMON}" | sed 's|;.*||')
     WF2="$(get_pr_relval_args $DO_COMPARISON _THREADING | sed 's|.*;||')"
+    [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF2="${WF2};-l ${WORKFLOWS_PR_LABELS}"
+    WF2=$(echo "${WF2}" | sed 's|^;*||')
     if [ "${WF2}" != "" ] ; then WF1="${WF1};${WF2}"; fi
     echo "MATRIX_ARGS=${WF1}" >> $WORKSPACE/run-relvals-threading.prop
   fi
@@ -1245,7 +1281,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       TEST_RELVALS_INPUT=false
     fi
     if $TEST_RELVALS_INPUT ; then
-      WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
+      WF_LIST=$(cat $WORKSPACE/${CMSSW_IB}/wfs.step1 | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_ARGS=-l ${WF_LIST}"      >> $WORKSPACE/run-relvals-input.prop

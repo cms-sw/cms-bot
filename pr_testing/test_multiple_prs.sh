@@ -474,7 +474,7 @@ if ${BUILD_EXTERNAL} ; then
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
-        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args \"${BUILD_OPTS}\" \"${MULTIARCH_OPTS}\")"
+        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     echo "#${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
     UPLOAD_OPTS="--upload-tmp-repository ${PR_EXTERNAL_REPO}"

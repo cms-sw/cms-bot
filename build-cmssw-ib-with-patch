@@ -108,7 +108,7 @@ CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmsp
 EX_OPTS=""
 if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
-  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args \"${BUILD_OPTS}\" \"${MULTIARCH_OPTS}\")"
+  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
 fi
 
 ## build and upload revision based packages

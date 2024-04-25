@@ -60,7 +60,7 @@ pushd $BUILD_DIR/CMSDIST
   [ -f ${CMSBUILD_OPTS_FILE} ] && source ${CMSBUILD_OPTS_FILE}
   if [ $(echo $CMSSW_X_Y_Z | grep patch | wc -l) -eq 0 ] ; then
     [ "${BUILD_OPTS}" = "" ]     || echo "BUILD_OPTS=\"${BUILD_OPTS}\""         >> ${CMSBUILD_OPTS_FILE}
-    [ "${MUTLIARCH_OPTS}" = "" ] || echo "MUTLIARCH_OPTS=\"${MUTLIARCH_OPTS}\"" >> ${CMSBUILD_OPTS_FILE}
+    [ "${MULTIARCH_OPTS}" = "" ] || echo "MULTIARCH_OPTS=\"${MULTIARCH_OPTS}\"" >> ${CMSBUILD_OPTS_FILE}
     if [ -e ${CMSBUILD_OPTS_FILE} ] ; then
       (git add ${CMSBUILD_OPTS_FILE} ; git commit -m 'Added build options' ${CMSBUILD_OPTS_FILE}) || true
     fi

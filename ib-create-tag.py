@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
         head = None
         for commit_ in commits_:
-            if len(commit_["parents"])==1:
+            if len(commit_["parents"]) == 1:
                 continue
             if commit_["url"].startswith(commit_url):
                 head = commit_
@@ -101,7 +101,7 @@ if __name__ == "__main__":
                 HEAD_SHA,
             )
         else:
-            print("Tag head: ",HEAD_SHA)
+            print("Tag head: ", HEAD_SHA)
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [

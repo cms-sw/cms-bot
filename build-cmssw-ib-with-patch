@@ -18,7 +18,6 @@ CMSSW_TOOL_CONF_ONLY=$9
 DRY_RUN="${10}"
 FORCE_CMSDIST_TAG="${11}"
 DEBUG_EXTERNALS="${12}"
-BUILD_OPTS="${13}"
 # Workspace is usually defined by jenkins. If not running in
 # jenkins it will assume the current directory is the workspace.
 WORKSPACE="${WORKSPACE-$PWD}"
@@ -109,7 +108,7 @@ CMSBUILD_CMD="PKGTOOLS/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmsp
 EX_OPTS=""
 if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
-  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args ${RELEASE_NAME})"
+  CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
 fi
 
 ## build and upload revision based packages
@@ -117,7 +116,6 @@ REV_PKGS=""
 for p in cms-common fakesystem gcc-fixinclude SCRAMV1 SCRAMV2 ; do
   [ -e CMSDIST/${p}.spec ] && REV_PKGS="${REV_PKGS} ${p}"
 done
-if [ "${BUILD_OPTS}" != "" ] ; then CMSBUILD_CMD="${CMSBUILD_CMD} --build-options ${BUILD_OPTS}" ; fi
 if [ "${REV_PKGS}" != "" ] ; then
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --debug build ${REV_PKGS}
   PYTHONPATH= $CMSBUILD_CMD ${EX_OPTS} --sync-back upload ${REV_PKGS} || true

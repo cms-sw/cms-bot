@@ -423,7 +423,6 @@ PR_EXTERNAL_REPO=""
 TEST_DASGOCLIENT=false
 SKIP_STATIC_CHECKS=false
 [ $(echo ",${SKIP_TESTS}," | grep ',static,' | wc -l) -gt 0 ] && SKIP_STATIC_CHECKS=true
-MULTI_VEC=""
 if ${BUILD_EXTERNAL} ; then
     export USE_IB_TAG=false
     mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW externals" || true
@@ -469,14 +468,13 @@ if ${BUILD_EXTERNAL} ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
     #Process cmsdist Build options
-    BUILD_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
-    if [ "${BUILD_OPTS}" != "" ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --build-options ${BUILD_OPTS}" ; fi
+    BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
+    MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')
 
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
-        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args ${CMSSW_QUEUE}_FOOBAR)"
-    MULTI_VEC=$(echo "$COMPILATION_CMD" | tr ' ' '\n' | grep -A1 '\-\-vector' | tail -1 | tr ',' ' ')
+        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
     echo "#${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
     UPLOAD_OPTS="--upload-tmp-repository ${PR_EXTERNAL_REPO}"
@@ -561,9 +559,11 @@ if ${BUILD_EXTERNAL} ; then
           done;
           perl -p -i -e 's|\@([^@]*)\@|$ENV{$1}|g' scram-buildrules/Projects/CMSSW/Self.xml
         )
-        if [ "$MULTI_VEC" != "" ] ; then
-          sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTI_VEC}\"|" scram-buildrules/Projects/CMSSW/Self.xml
-          sed -i -e 's|</tool>|<runtime name="SCRAM_TARGET" value="auto"/><runtime name="USER_TARGETS_ALL" value="1"/></tool>|' scram-buildrules/Projects/CMSSW/Self.xml
+        if [ "$MULTIARCH_OPTS" != "" ] ; then
+          MULTIARCH_OPTSX=$(echo ${MULTIARCH_OPTS} | tr ',' ' ')
+          DEFAULT_TARGET=$(cmssw_default_target $CMSSW_IB)
+          sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTIARCH_OPTSX}\"|" scram-buildrules/Projects/CMSSW/Self.xml
+	  sed -i -e "s|</tool>| <runtime name=\"SCRAM_TARGET\" value=\"${DEFAULT_TARGET}\"/>\n <runtime name=\"USER_TARGETS_ALL\" value=\"1\"/>\n</tool>|" scram-buildrules/Projects/CMSSW/Self.xml
         fi
         cp scram-buildrules/Projects/CMSSW/Self.xml $CMSSW_IB/config/Self.xml
       else

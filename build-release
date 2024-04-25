@@ -45,6 +45,7 @@ pushd $BUILD_DIR/CMSDIST
     BASE_RELEASE=`echo $CMSSW_X_Y_Z | sed 's/_patch[0-9]*//g'`
     CMSDIST_TAG=REL/$BASE_RELEASE/$ARCHITECTURE
     BUILD_OPTS=""
+    MUTLIARCH_OPTS=""
     PATCH='-patch'
     ;;
     * )
@@ -56,9 +57,13 @@ pushd $BUILD_DIR/CMSDIST
   #push the REL tag once release is build successfully
   git checkout $CMSDIST_TAG
   git checkout -b TMP-$CMSSW_X_Y_Z-$ARCHITECTURE
-  if [ "${BUILD_OPTS}" != "" ] ; then
-    echo "${BUILD_OPTS}" > etc/build_options.txt
-    (git add etc/build_options.txt ; git commit -m 'Added build options' etc/build_options.txt) || true
+  [ -f ${CMSBUILD_OPTS_FILE} ] && source ${CMSBUILD_OPTS_FILE}
+  if [ $(echo $CMSSW_X_Y_Z | grep patch | wc -l) -eq 0 ] ; then
+    [ "${BUILD_OPTS}" = "" ]     || echo "BUILD_OPTS=\"${BUILD_OPTS}\""         >> ${CMSBUILD_OPTS_FILE}
+    [ "${MUTLIARCH_OPTS}" = "" ] || echo "MUTLIARCH_OPTS=\"${MUTLIARCH_OPTS}\"" >> ${CMSBUILD_OPTS_FILE}
+    if [ -e ${CMSBUILD_OPTS_FILE} ] ; then
+      (git add ${CMSBUILD_OPTS_FILE} ; git commit -m 'Added build options' ${CMSBUILD_OPTS_FILE}) || true
+    fi
   fi
 popd
 
@@ -83,7 +88,7 @@ pushd $BUILD_DIR
     * )      MD5_CMD=md5sum;;
   esac
   if [ $(echo $PKGTOOLS_TAG | cut -d- -f2) -gt 31 ] ; then
-    CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps --tag hash $(cmsbuild_args ${CMSSW_X_Y_Z})"
+    CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
   else
     CMSBUILD_CMD="${CMSBUILD_CMD} --tag `echo $QUEUE | $MD5_CMD |  tr '0123456789' 'ghijklmnop' | cut -b1-6`"
   fi

@@ -49,8 +49,7 @@ HOUR=`python -c "import os;from datetime import datetime;print datetime.strptime
 CMSSW_MAJOR_MINOR=`echo $RELEASE_NAME | sed -e 's/CMSSW_\([0-9]*\)_\([0-9]*\).*/\1.\2/g'`
 
 CMSBUILD_ARGS="--server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER}"
-if [ "${BUILD_OPTS}" != "" ] ; then CMSBUILD_ARGS="${CMSBUILD_ARGS} --build-options ${BUILD_OPTS}" ; fi
-PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE --work-dir cms build fwlite
+PYTHONPATH= PKGTOOLS/cmsBuild ${CMSBUILD_ARGS} -k --builders 2 -j 20 --repository $REPOSITORY --architecture $ARCHITECTURE $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}") --work-dir cms build fwlite
 
 pushd ${WORKSPACE}/cms/WEB/build-logs/${ARCHITECTURE}/${RELEASE_FORMAT}_FWLITE/logs/src
   tar xzf src-logs.tgz

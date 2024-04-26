@@ -93,8 +93,8 @@ if [ ${PY_VER} = "2" ] ; then
   if [ ! -e ${INSTALL_DIR}/setup-1.22.7.sh ] ; then
     mv ${INSTALL_DIR}/setup.sh ${INSTALL_DIR}/setup-1.22.7.sh
   fi
-  ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup.sh
 fi
+ln -sf setup-py3.sh ${INSTALL_DIR}/setup.sh
 
 if $RUN_TESTS ; then
   if [ "${X509_USER_CERT}" != "" -a "${X509_USER_KEY}" != "" ] ; then

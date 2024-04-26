@@ -1692,6 +1692,7 @@ CMSSW_CATEGORIES = {
         "L1Trigger/L1TTrackMatch",
         "L1Trigger/ME0Trigger",
         "L1Trigger/L1TMuonEndCapPhase2",
+        "L1Trigger/L1TMuonOverlapPhase2",
         "L1Trigger/Phase2L1GT",
         "L1Trigger/Phase2L1ParticleFlow",
         "L1Trigger/TrackTrigger",

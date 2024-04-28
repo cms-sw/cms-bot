@@ -88,6 +88,7 @@ DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
+BUILD_VERBOSE=true
 if [ "${BUILD_VERBOSE}" = "true" ] ; then
   BUILD_VERBOSE="-v"
 else
@@ -1048,7 +1049,7 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS scram b -k -j ${NCPU}"
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS scram b ${BUILD_VERBOSE} -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes $USER_FLAGS scram build ${BUILD_VERBOSE} -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
 fi

@@ -96,6 +96,7 @@ if [ "$arch" = "aarch64" ] ; then
 elif [ "$arch" = "x86_64" ] ; then
   arch="amd64"
   SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
+  SLAVE_LABELS="${SLAVE_LABELS} $(ld.so --help | grep -E ' x86-64-v[0-9]+ ' | grep -i supported | sed 's|^ *||;s| .*||' | grep x86-64-v | tr '\n' ' ')"
   HOST_ARCH=$(cat /proc/cpuinfo 2> /dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
 fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"

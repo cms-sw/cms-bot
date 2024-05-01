@@ -574,9 +574,9 @@ class LogFileAnalyzer(object):
             },
             {
                 str(
-                    "^ */.*?/"
+                    "^ *(/.*?/"
                     + self.release
-                    + "/src/"
+                    + "/|)src/"
                     + subsys
                     + "/"
                     + pkg
@@ -584,7 +584,7 @@ class LogFileAnalyzer(object):
                 ): ["compWarning", "for file in package"]
             },
             {
-                str("^ */.*?/" + self.release + "/src/.*?\:\d+\: warning: "): [
+                str("^ *(/.*?/" + self.release + "/|)src/.*?\:\d+\: warning: "): [
                     "compWarning",
                     "for file in release",
                 ]
@@ -592,11 +592,11 @@ class LogFileAnalyzer(object):
             {str("^Warning: "): ["compWarning", "for file in package"]},
             {
                 str(
-                    "^ */.*?/" + self.release + "/src/" + subsys + "/" + pkg + ".*?\:\d+\: error: "
+                    "^ *(/.*?/" + self.release + "/|)src/" + subsys + "/" + pkg + ".*?\:\d+\: error: "
                 ): ["compError", "for file in package"]
             },
             {
-                str("^ */.*?/" + self.release + "/src/.*?\:\d+\: error: "): [
+                str("^ *(/.*?/" + self.release + "/|)src/.*?\:\d+\: error: "): [
                     "compError",
                     "for file in release",
                 ]

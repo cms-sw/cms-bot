@@ -468,6 +468,9 @@ if ${BUILD_EXTERNAL} ; then
       dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
+    if [ $(grep 'upload-package-store' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store"
+    fi
     #Process cmsdist Build options
     BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
     MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')

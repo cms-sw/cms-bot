@@ -134,12 +134,12 @@ def check_updates(req_data):
             json.dump(jdata, open("cache/%s.json" % p, "w"), sort_keys=True, indent=2)
         if True:
             try:
-              v = jdata["info"]["version"]
+                v = jdata["info"]["version"]
             except Exception as inst:
-              print("ERROR: ",inst)
-              print("SKIPPED: Failed for ",data)
-              print(jdata)
-              continue
+                print("ERROR: ", inst)
+                print("SKIPPED: Failed for ", data)
+                print(jdata)
+                continue
             if ignore_count:
                 ignore_count -= 1
                 if ov != v:

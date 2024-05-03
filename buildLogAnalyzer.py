@@ -592,7 +592,13 @@ class LogFileAnalyzer(object):
             {str("^Warning: "): ["compWarning", "for file in package"]},
             {
                 str(
-                    "^ *(/.*?/" + self.release + "/|)src/" + subsys + "/" + pkg + ".*?\:\d+\: error: "
+                    "^ *(/.*?/"
+                    + self.release
+                    + "/|)src/"
+                    + subsys
+                    + "/"
+                    + pkg
+                    + ".*?\:\d+\: error: "
                 ): ["compError", "for file in package"]
             },
             {

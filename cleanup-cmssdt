@@ -50,7 +50,7 @@ DAYS_TO_KEEP=8
 DIRS="lizard flawfinder invalid-includes cmssw-afs-eos-comparison ubsan_logs ib-run-crab"
 DIRS="${DIRS} check_headers valgrind HLT-Validation ib-static-analysis ib-baseline-tests ib-dqm-tests profiling igprof"
 DIRS="${DIRS} iwyu material-budget das_query build-any-ib check-unused-cmsdist-packages"
-DIRS="${DIRS} test-os-alma8 test-os-cs8 test-os-ubi8 test-os-lxplus8 test-os-rhel8 test-os-rocky8 test-os-el8"
+DIRS="${DIRS} test-os-alma8 test-os-cs8 test-os-ubi8 test-os-lxplus8 test-os-rhel8 test-os-rocky8 test-os-el8 cms-containers-run-cmssw-test"
 for dir in ${DIRS}; do
   [ -d ${JENKINS_ARTIFACTS}/$dir ] || continue
   DIRS_PROCESSED="${DIRS_PROCESSED} ${dir}"

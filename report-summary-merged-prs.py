@@ -1065,6 +1065,21 @@ def find_one_profiling_result(magic_command):
     return "inprogress"
 
 
+def find_one_vtune_result(magic_command):
+    """
+    Looks for one vtune result
+    """
+    command_to_execute = magic_command.replace("WORKFLOW", "11834.21")
+    print("Running ", command_to_execute)
+    out, err, ret_code = get_output_command(command_to_execute)
+    print("Ran:", out, err, ret_code, command_to_execute)
+    file = out.strip()
+    if (ret_code == 0) and (out != ""):
+        print("found", file)
+        return {"status": "passed", "data": file}
+    print("inprogress")
+    return "inprogress"
+
 def find_general_test_results(
     test_field, comparisons, architecture, magic_command, results_function=find_one_test_results
 ):

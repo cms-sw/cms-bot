@@ -437,6 +437,25 @@ add_igprof_tests_link = function ( title_cell, isFound, currentTag ){
 }
 
 /**
+ * Generates the vtune tests link link and adds it to the cell for the IB
+ */
+add_vtune_tests_link = function ( title_cell, isFound, currentTag ){
+  if ( isFound == 'not-found'){return}
+  if (isFound == 'inprogress'){
+    add_inprogress_item(title_cell,' Vtune')
+    return
+  }
+  if ( isFound == 'found' ){
+    var url = CMSSDT_SERVER+'/vtune/ui/' + currentTag
+    var sa_link = $("<a></a>").attr("href", url)
+    sa_link.append($('<span class="glyphicon glyphicon-list-alt"></span>'))
+    sa_link.append($('<span></span>').text(' Vtune'))
+    title_cell.append(sa_link)
+    title_cell.append($("<br>"))
+  }
+}
+
+/**
  * Generates the link to the Relvals Exception Page if the results were found
  * and addsit to the cell for the IB
  */

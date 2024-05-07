@@ -16,6 +16,7 @@ VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cmssw",
     "cmsdist",
     "cmssdt-ib",
+    "cmssdt-web",
     "cms-bot",
     "root",
     "cmssw-config",

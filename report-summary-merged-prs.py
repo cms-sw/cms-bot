@@ -913,6 +913,8 @@ def add_tests_to_results(
                 comp["material_budget"] = "not-found"
             if not comp.get("igprof"):
                 comp["igprof"] = "not-found"
+            if not comp.get("vtune"):
+                comp["vtune"] = "not-found"
             if not comp.get("profiling"):
                 comp["profiling"] = "not-found"
             if not comp.get("comp_baseline"):
@@ -1062,6 +1064,21 @@ def find_one_profiling_result(magic_command):
     print("inprogress")
     return "inprogress"
 
+
+def find_one_vtune_result(magic_command):
+    """
+    Looks for one vtune result
+    """
+    command_to_execute = magic_command.replace("WORKFLOW", "11834.21")
+    print("Running ", command_to_execute)
+    out, err, ret_code = get_output_command(command_to_execute)
+    print("Ran:", out, err, ret_code, command_to_execute)
+    file = out.strip()
+    if (ret_code == 0) and (out != ""):
+        print("found", file)
+        return {"status": "passed", "data": file}
+    print("inprogress")
+    return "inprogress"
 
 def find_general_test_results(
     test_field, comparisons, architecture, magic_command, results_function=find_one_test_results
@@ -1649,6 +1666,11 @@ if __name__ == "__main__":
         + JENKINS_ARTIFACTS_DIR
         + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME||"'
     )
+    MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
+        "ls "
+        + JENKINS_ARTIFACTS_DIR
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME||"'
+    )
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = (
         "test -f "
         + JENKINS_ARTIFACTS_DIR
@@ -1899,6 +1921,13 @@ if __name__ == "__main__":
                         arch,
                         MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3,
                         find_one_profiling_result,
+                    )
+                    find_general_test_results(
+                        "vtune",
+                        release_queue_results["comparisons"],
+                        arch,
+                        MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER,
+                        find_one_vtune_result,
                     )
                 if "check-headers" in tests_to_find:
                     find_check_headers(release_queue_results["comparisons"], arch)

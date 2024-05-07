@@ -913,6 +913,8 @@ def add_tests_to_results(
                 comp["material_budget"] = "not-found"
             if not comp.get("igprof"):
                 comp["igprof"] = "not-found"
+            if not comp.get("vtune"):
+                comp["vtune"] = "not-found"
             if not comp.get("profiling"):
                 comp["profiling"] = "not-found"
             if not comp.get("comp_baseline"):
@@ -1649,6 +1651,11 @@ if __name__ == "__main__":
         + JENKINS_ARTIFACTS_DIR
         + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME||"'
     )
+    MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
+        "ls "
+        + JENKINS_ARTIFACTS_DIR
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME||"'
+    )
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = (
         "test -f "
         + JENKINS_ARTIFACTS_DIR
@@ -1899,6 +1906,13 @@ if __name__ == "__main__":
                         arch,
                         MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3,
                         find_one_profiling_result,
+                    )
+                    find_general_test_results(
+                        "vtune",
+                        release_queue_results["comparisons"],
+                        arch,
+                        MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER,
+                        find_one_vtune_result,
                     )
                 if "check-headers" in tests_to_find:
                     find_check_headers(release_queue_results["comparisons"], arch)

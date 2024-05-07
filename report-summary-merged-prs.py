@@ -709,7 +709,6 @@ def print_results(results):
             print("\t" + "Valgrind: " + comp["valgrind"])
             print("\t" + "Material budget: " + comp["material_budget"])
             print("\t" + "Igprof: " + comp["igprof"])
-            print("\t" + "VTune: " + comp["vtune"])
             print("\t" + "Profiling: " + comp["profiling"])
             print("\t" + "Comparison Baseline: " + comp["comp_baseline"])
             print("\t" + "Comparison Baseline State: " + comp["comp_baseline_state"])

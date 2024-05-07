@@ -709,6 +709,7 @@ def print_results(results):
             print("\t" + "Valgrind: " + comp["valgrind"])
             print("\t" + "Material budget: " + comp["material_budget"])
             print("\t" + "Igprof: " + comp["igprof"])
+            print("\t" + "VTune: " + comp["vtune"])
             print("\t" + "Profiling: " + comp["profiling"])
             print("\t" + "Comparison Baseline: " + comp["comp_baseline"])
             print("\t" + "Comparison Baseline State: " + comp["comp_baseline_state"])
@@ -1069,10 +1070,9 @@ def find_one_vtune_result(magic_command):
     """
     Looks for one vtune result
     """
-    command_to_execute = magic_command.replace("WORKFLOW", "11834.21")
-    print("Running ", command_to_execute)
-    out, err, ret_code = get_output_command(command_to_execute)
-    print("Ran:", out, err, ret_code, command_to_execute)
+    print("Running ", magic_command)
+    out, err, ret_code = get_output_command(magic_command)
+    print("Ran:", out, err, ret_code, magic_command)
     file = out.strip()
     if (ret_code == 0) and (out != ""):
         print("found", file)

@@ -155,12 +155,13 @@ if __name__ == "__main__":
     # remove the existing line no matter where it is and put the new line right under default
 
     count = 0  # omit first line linebreaker
+    repo_name_str = "%s=" % repo_name_only
     for line in cmsswdatafile_raw.splitlines():
         line = line.decode()
         updated_line = None
         if "[default]" in line:
             updated_line = "\n" + line + "\n" + repo_name_only + "=" + new_tag + ""
-        elif repo_name_only in line:
+        elif line.strip().startswith(repo_name_str):
             updated_line = ""
         else:
             if count > 0:
@@ -187,7 +188,7 @@ if __name__ == "__main__":
         new_content.append(line)
         if not line.startswith("Requires: "):
             continue
-        if data_pkg in line:
+        if line.strip().endswith(data_pkg):
             added_pkg = False
             break
         if not added_pkg:

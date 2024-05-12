@@ -256,12 +256,6 @@ fi
 
 WORKFLOWS_PR_LABELS=""
 scram -a $SCRAM_ARCH project $CMSSW_IB
-set +x
-pushd $CMSSW_IB
-  $(eval `scram run -sh` ; runTheMatrix.py -n -e | grep '\[1\]:' > wfs.step1)
-  sed 's| .*||' wfs.step1 > wfs.all
-popd
-set -x
 if $DO_COMPARISON ; then
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
@@ -284,7 +278,14 @@ if $DO_COMPARISON ; then
     done
     EX_WFS=$(echo "${EX_WFS}" | sed 's|^,*||;s|,*$||;s|,,*|,|g')
     if [ "${EX_WFS}" != "" ] ; then
-      $(cd $WORKSPACE/$CMSSW_IB; eval `scram run -sh` ; runTheMatrix.py -n -e -s ${WF_LIST} | grep '\[1\]:' | sed 's| .*||' > wfs.default)
+      (
+        set +x
+        cd $WORKSPACE/$CMSSW_IB
+        eval `scram run -sh`
+        runTheMatrix.py -n -e | grep '\[1\]:' | sed 's| .*||' > wfs.all
+        runTheMatrix.py -n -e -s ${WF_LIST} | grep '\[1\]:' | sed 's| .*||' > wfs.default
+        set -x
+      )
       for wf in $(echo ${EX_WFS} | tr ',' '\n') ; do
         if grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.all ; then
           if ! grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.default ; then
@@ -1285,6 +1286,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       TEST_RELVALS_INPUT=false
     fi
     if $TEST_RELVALS_INPUT ; then
+      runTheMatrix.py -n -e | grep '\[1\]:' > $WORKSPACE/${CMSSW_IB}/wfs.step1
       WF_LIST=$(cat $WORKSPACE/${CMSSW_IB}/wfs.step1 | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop

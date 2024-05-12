@@ -72,7 +72,7 @@ function process_dir()
         rm -rf */*.tex || true
         rm -rf */fort.* || true
         if [[ "$dir" == *"_UBSAN_X"* ]]; then
-          process_ubsan &
+          process_ubsan
         fi
         find . -mindepth 2 -maxdepth 2 -type d | xargs --no-run-if-empt rm -rf
         zip -q -1 -r $dir/../pyRelValMatrixLogs/pyRelValMatrixLogs.zip .
@@ -81,7 +81,6 @@ function process_dir()
         touch $dir/../pyRelValMatrixLogs/run/done
         rm -f $dir/../pyRelValMatrixLogs/run/all.done
         rm -f $dir/../pyRelValMatrixLogs/run/all.pages
-        wait
       popd
       mv $dir ${dir}.tmp
       echo "All workflows completed: $dir"

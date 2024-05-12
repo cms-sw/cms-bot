@@ -1079,6 +1079,7 @@ def find_one_vtune_result(magic_command):
     print("inprogress")
     return "inprogress"
 
+
 def find_general_test_results(
     test_field, comparisons, architecture, magic_command, results_function=find_one_test_results
 ):

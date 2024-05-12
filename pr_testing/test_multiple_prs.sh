@@ -1286,7 +1286,7 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       TEST_RELVALS_INPUT=false
     fi
     if $TEST_RELVALS_INPUT ; then
-      runTheMatrix.py -n -e | grep '\[1\]:' > wfs.step1
+      runTheMatrix.py -n -e | grep '\[1\]:' > $WORKSPACE/${CMSSW_IB}/wfs.step1
       WF_LIST=$(cat $WORKSPACE/${CMSSW_IB}/wfs.step1 | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop

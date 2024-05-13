@@ -16,6 +16,7 @@ case $1 in
   vocms-arm*|CMS_Miscellaneous_ARM)
     export OS_TENANT_ID=d9e1127a-94a0-4ced-a3ee-22707eab3449
     export OS_PROJECT_NAME="CMS Miscellaneous ARM"
+    ;;
   *)
     export OS_TENANT_ID="63b9ceb9-4743-42a0-ab89-1a121443ab1d"
     export OS_PROJECT_NAME="CMS SDT Build"

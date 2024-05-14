@@ -62,6 +62,9 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_1_X/master"].append("IB/CMSSW_12_1_X/cc
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_2_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_2_X/master"].append("IB/CMSSW_12_2_X/cc8")
 
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_4_X"] = []
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_12_4_X"].append("CMSSW_12_4_HLT_X")
+
 # Automatically added
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_5_X/master"].append("IB/CMSSW_12_5_X/g11")
@@ -73,6 +76,7 @@ GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_12_6_X/master"].append("IB/CMSSW_12_6_X/g1
 # Automatically added
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_13_0_X"] = []
 GIT_REPO_FWPORTS["cmssw"]["CMSSW_13_0_X"].append("CMSSW_13_0_HeavyIon_X")
+GIT_REPO_FWPORTS["cmssw"]["CMSSW_13_0_X"].append("CMSSW_13_0_HLT_X")
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/master"] = []
 GIT_REPO_FWPORTS["cmsdist"]["IB/CMSSW_13_0_X/master"].append("IB/CMSSW_13_0_X/cs9")
 

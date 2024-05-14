@@ -1,0 +1,22 @@
+#!/bin/sh -ex
+
+# Parameters set by jenkins:
+# ARCHITECTURE
+# RELEASE_FORMAT
+# WORKSPACE
+ls /cvmfs/cms-ib.cern.ch || true
+source /cvmfs/cms.cern.ch/cmsset_default.sh
+SCRAM_ARCH=$ARCHITECTURE
+scram -a $ARCHITECTURE p $RELEASE_FORMAT
+cd $RELEASE_FORMAT/src
+eval `scram run -sh`
+export CMS_PATH="/cvmfs/cms-ib.cern.ch"
+export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
+mkdir -p $CMSSW_BASE/src/HLTrigger
+cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger/Configuration/
+which edmCheckMultithreading || true
+cd HLTrigger/Configuration/test/
+ls
+./runHLTTiming.sh
+ls
+cp Phase2Timing_resources*.json $WORKSPACE/results

@@ -75,7 +75,8 @@ popd
 for WF in $(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's| .*||' | sort | uniq );do
 	pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results/$WF
 	    for log in $(ls step*.log);do
-		grep "Memory Report: " $log | tail -5 >> $WF_maxmem_profile.txt
+		echo $log >> ${WF}_maxmem_profile.txt
+		grep "Memory Report: " $log | tail -5 >> ${WF}_maxmem_profile.txt
 	    done
 	popd
 done

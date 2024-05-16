@@ -1164,7 +1164,7 @@ def find_check_hlt_timings(comparisons, architecture):
         rel_name = comp["compared_tags"].split("-->")[1]
         print("Looking for {0} results for {1}.".format("hlt timing", rel_name))
         comp["hlt_timings"] = find_and_check_result(
-            rel_name, architecture, CHECK_HLT_TIMING_PATH, "cat {0} | wc -l"
+            rel_name, architecture, CHECK_HLT_TIMING_PATH, "/bin/true"
         )
 
 

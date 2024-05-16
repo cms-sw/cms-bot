@@ -20,6 +20,7 @@ field_map = {
     "dataset": "name",
 }
 opts = None
+file_limits = {"dataset=/SingleMu/Run2012D-ZMu-15Apr2014-v1/RAW-RECO run=208307": 150}
 ignore_lfn = [
     "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/007A3BD1-02CD-E311-853B-002590D0AFC8.root",
     "/store/data/Run2012D/SingleMu/RAW-RECO/ZMu-15Apr2014-v1/00000/02161409-13CD-E311-B62B-00259073E4A2.root",
@@ -148,6 +149,10 @@ def run_das_client(
         lmt = 0
         if "file" in fields:
             lmt = 100
+            for lim in file_limits:
+                if lim in query:
+                    lmt = file_limits[lim]
+                    break
         print("Removed T2_CH_CERN restrictions and limit set to %s: %s" % (lmt, query))
         return run_das_client(
             outfile, query, override, dasclient, options, threshold, retry, limit=lmt

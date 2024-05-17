@@ -78,6 +78,17 @@ pushd "$WORKSPACE/matrix-results"
     fi
   done
   set -x
+
+  LOG=runall-report-step123-.${BUILD_ID}.log
+  for WF in $(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's| .*||' | sort | uniq );do
+      pushd $WF
+      for log in $(ls step*.log);do
+        echo ${log} | sed 's|.log$||' >> maxmem_profile_${WF}.txt
+        grep "Memory Report: " $log | tail -5 >> maxmem_profile_${WF}.txt
+      done
+      popd
+  done
+
 popd
 
 if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then

@@ -72,15 +72,6 @@ pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results
   done
 popd
 
-for WF in $(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's| .*||' | sort | uniq );do
-	pushd $WORKSPACE/runTheMatrix${UC_TEST_FLAVOR}-results/$WF
-	    for log in $(ls step*.log);do
-		echo $log >> ${WF}_maxmem_profile.txt
-		grep "Memory Report: " $log | tail -5 >> ${WF}_maxmem_profile.txt
-	    done
-	popd
-done
-
 TEST_ERRORS=$(grep -ai -E "ERROR .*" ${LOG} | grep -v 'DAS QL ERROR' | grep -v 'ERROR failed to parse X509 proxy') || true
 GENERAL_ERRORS=`grep -a "ALL_OK" ${LOG}` || true
 

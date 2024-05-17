@@ -28,7 +28,7 @@ from repo_config import GH_REPO_ORGANIZATION
 import re, time
 from collections import defaultdict
 import zlib, base64
-from datetime import datetime
+import datetime
 from os.path import join, exists, dirname
 from os import environ
 from github_utils import (
@@ -1070,8 +1070,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Latest commit message: ", last_commit.message.encode("ascii", "ignore").decode())
         print("Latest commit sha: ", last_commit.sha)
         print("PR update time", pr.updated_at)
-        print("Time UTC:", datetime.utcnow())
-        if last_commit_date > datetime.utcnow():
+        print("Time UTC:", datetime.datetime.now(datetime.timezone.utc))
+        if last_commit_date > datetime.datetime.now(datetime.timezone.utc):
             print("==== Future commit found ====")
             add_labels = True
             try:
@@ -1637,7 +1637,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
 
             cache_entry = bot_cache["commits"][commit.sha]
-            events[datetime.fromtimestamp(cache_entry["time"])].append(
+            commit_time = datetime.datetime.fromtimestamp(
+                cache_entry["time"], datetime.timezone.utc
+            )
+            events[commit_time].append(
                 {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
             )
 
@@ -1645,7 +1648,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         for commit_sha, cache_entry in bot_cache["commits"].items():
             if cache_entry.get("squashed", False):
                 print("Adding back cached commit {0}".format(commit_sha))
-                events[datetime.fromtimestamp(cache_entry["time"])].append(
+                commit_time = datetime.datetime.fromtimestamp(
+                    cache_entry["time"], datetime.timezone.utc
+                )
+                events[commit_time].append(
                     {
                         "type": "commit",
                         "value": {"files": cache_entry["files"], "sha": commit_sha},

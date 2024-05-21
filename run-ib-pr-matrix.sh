@@ -81,11 +81,12 @@ pushd "$WORKSPACE/matrix-results"
 
   if [[ $CMD_OPTS =~ maxmem_profile ]] ; then
     LOG=runall-report-step123-.${BUILD_ID}.log
-    for WF in $(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's| .*||' | sort | uniq );do
+    for WF in $(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's| .*||' | sort | uniq ) ; do
+      memFile=maxmem_profile_$(echo $WF | cut -d_ -f1).txt
       pushd $WF
       for log in $(ls step*.log);do
-        echo ${log} | sed 's|.log$||' >> maxmem_profile_${WF}.txt
-        grep "Memory Report: " $log | tail -5 >> maxmem_profile_${WF}.txt
+        echo ${log} | cut -d_ -f1 >> ${memFile}
+        grep "Memory Report: " $log | tail -5 >> ${memFile}
       done
       popd
     done

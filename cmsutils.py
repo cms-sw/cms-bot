@@ -139,14 +139,18 @@ def getIBReleaseInfo(rel):
     return (rc, day, hour)
 
 
+def epoch2week(epoch_sec, week_offset=4):
+    week = int(((epoch_sec / 86400) + 4) / 7)
+    if week_offset > 1:
+        week = week - (week % week_offset)
+    return str(week)
+
+
 def cmsswIB2Week(release, week_offset=4):
     from datetime import datetime
 
     rel_sec = int(datetime.strptime(release.split("_")[-1], "%Y-%m-%d-%H%M").strftime("%s"))
-    week = int(((rel_sec / 86400) + 4) / 7)
-    if week_offset > 1:
-        week = week - (week % week_offset)
-    return (str(week), rel_sec)
+    return (epoch2week(rel_sec, week_offset), rel_sec)
 
 
 #

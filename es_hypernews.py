@@ -3,6 +3,7 @@ import sys, os, re
 from datetime import datetime, timedelta
 from _py2with3compatibility import run_cmd
 from es_utils import send_payload
+from cmsutils import epoch2week
 from hashlib import sha1
 from json import dumps
 from time import time
@@ -37,7 +38,7 @@ for log in out.split("\n"):
         m = ReTime.match(line)
         if m:
             tsec = int(datetime.strptime(m.group(1), "%b %d %H:%M:%S %Y").strftime("%s"))
-            week = str(int(tsec / (86400 * 7)))
+            week = epoch2week(tsec)
             timestamp = tsec * 1000
             payload = {}
             payload["@timestamp"] = timestamp

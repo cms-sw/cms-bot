@@ -5,6 +5,7 @@ import os, re, sys, json, datetime, time, functools
 import xml.etree.ElementTree as ET
 import subprocess
 from es_utils import send_payload, get_payload, resend_payload, get_payload_wscroll
+from cmsutils import epoch2week
 
 JENKINS_PREFIX = "jenkins"
 try:
@@ -175,7 +176,7 @@ for element in queue_json["items"]:
     id = sha1(unique_id.encode()).hexdigest()
     jenkins_queue[id] = payload
 
-queue_index = "cmssdt-jenkins-queue-" + str(int(((current_time / 86400000) + 4) / 7))
+queue_index = "cmssdt-jenkins-queue-" + epoch2week(current_time/1000)
 queue_document = "queue-data"
 
 # Update information in elastic search
@@ -288,7 +289,7 @@ for root, dirs, files in os.walk(path):
                     )
 
                 all_local.append(id)
-                weekindex = "jenkins-jobs-" + str(int((((int(jstime) / 1000) / 86400) + 4) / 7))
+                weekindex = "jenkins-jobs-" + epoch2week(int(jstime) / 1000)
                 print(
                     "==>", id, payload["job_name"], payload["build_number"], payload["job_status"]
                 )

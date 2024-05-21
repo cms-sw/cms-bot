@@ -7,6 +7,7 @@ from os.path import expanduser
 from socket import setdefaulttimeout
 from github import Github
 from es_utils import send_payload
+from cmsutils import epoch2week
 
 setdefaulttimeout(120)
 
@@ -23,7 +24,7 @@ if __name__ == "__main__":
     current_time = datetime.utcnow() - datetime(1970, 1, 1)
     current_time = round(current_time.total_seconds() * 1000)
 
-    gh_api_index = "cmssdt-github-api-" + str(int(((current_time / 86400000) + 4) / 7))
+    gh_api_index = "cmssdt-github-api-" + epoch2week(current_time / 1000)
     gh_api_document = "github-api-data"
     unique_id = user + str(current_time)
     unique_id = sha1(unique_id.encode()).hexdigest()

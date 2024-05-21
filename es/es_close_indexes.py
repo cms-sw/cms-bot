@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from os.path import dirname, abspath
 import sys, re
@@ -12,6 +12,7 @@ else:
 sys.path.insert(0, cmsbot_dir)
 
 from es_utils import get_indexes, close_index, find_indexes, open_index
+from cmsutils import epoch2week
 from time import time
 
 try:
@@ -21,7 +22,7 @@ except:
 ignore_index = []
 for idx in sys.argv[2:]:
     ignore_index.append(idx)
-cur_week = int(((time() / 86400) + 4) / 7)
+cur_week = int(epoch2week(time(), 1))
 idxs = []
 odxs = []
 try:

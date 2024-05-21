@@ -7,6 +7,7 @@ from optparse import OptionParser
 import subprocess
 import re
 import json
+import sys
 from pickle import Unpickler
 from os.path import basename, dirname, exists, join, expanduser, getmtime
 from glob import glob
@@ -529,6 +530,9 @@ def get_output_command(command_to_execute):
     )
     out, err = p.communicate()
     ret_code = p.returncode
+    if sys.version_info[0] > 2:
+        out = out.decode("ascii")
+        err = err.decode("ascii")
 
     if ret_code != 0:
         print_verbose(ret_code)

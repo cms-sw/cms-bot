@@ -14,7 +14,7 @@ from es_utils import get_indexes, find_indexes
 from cmsutils import epoch2week
 from time import time
 
-cur_week = int(epoch2week(time(),1))
+cur_week = int(epoch2week(time(), 1))
 print(sys.argv)
 for i in sys.argv[1:]:
     idxs = find_indexes(i)

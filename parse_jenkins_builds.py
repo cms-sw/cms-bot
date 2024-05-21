@@ -176,7 +176,7 @@ for element in queue_json["items"]:
     id = sha1(unique_id.encode()).hexdigest()
     jenkins_queue[id] = payload
 
-queue_index = "cmssdt-jenkins-queue-" + epoch2week(current_time/1000)
+queue_index = "cmssdt-jenkins-queue-" + epoch2week(current_time / 1000)
 queue_document = "queue-data"
 
 # Update information in elastic search

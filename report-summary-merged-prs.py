@@ -305,7 +305,7 @@ def get_results_one_relval_file(filename):
     details = {"num_passed": 0, "num_failed": 1, "known_failed": 0}
 
     print_verbose("Analyzing: " + filename)
-    lines = file(filename).read().split("\n")
+    lines = open(filename).read().split("\n")
     results = [x for x in lines if " tests passed" in x]
     if len(results) == 0:
         return False, details

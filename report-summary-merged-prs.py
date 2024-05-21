@@ -332,7 +332,7 @@ def get_results_details_one_build_file(file, type):
     The second element is a dictionary containing the details of the results.
     If the tests are all ok this dictionary is empty
     """
-    summFile = open(file, "r")
+    summFile = open(file, "rb")
     pklr = Unpickler(summFile)
     [rel, plat, anaTime] = pklr.load()
     errorKeys = pklr.load()

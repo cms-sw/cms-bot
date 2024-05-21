@@ -13,6 +13,9 @@ jobs:
         python-version: ["3.6"]
 
     steps:
+      - uses: MathRobin/timezone-action@v1.1
+        with:
+          timezoneLinux: 'Europe/Paris'
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4

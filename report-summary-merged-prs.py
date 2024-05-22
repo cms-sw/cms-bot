@@ -1164,8 +1164,8 @@ def find_check_hlt(comparisons, architecture):
 def find_check_hlt_timings(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp["compared_tags"].split("-->")[1]
-        print("Looking for {0} results for {1}.".format("hlt timing", rel_name))
-        comp["hlt_timings"] = find_and_check_result(
+        print("Looking for {0} results for {1}.".format("hlt p2 timing", rel_name))
+        comp["hlt-p2-timing"] = find_and_check_result(
             rel_name, architecture, CHECK_HLT_TIMING_PATH, "/bin/true"
         )
 
@@ -1701,7 +1701,7 @@ if __name__ == "__main__":
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"
     )
     CHECK_HLT_TIMING_PATH = (
-        JENKINS_ARTIFACTS_DIR + "/hlt_timings/RELEASE_NAME/Phase2Timing_resources.json"
+        JENKINS_ARTIFACTS_DIR + "/hlt-p2-timing/RELEASE_NAME/Phase2Timing_resources.json"
     )
     CHECK_CRAB_PATH = JENKINS_ARTIFACTS_DIR + "/ib-run-crab/RELEASE_NAME/*"
     MAGIC_COMMAND_FIND_DQM_TESTS = (
@@ -1872,7 +1872,7 @@ if __name__ == "__main__":
                 tests_to_find = additional_tests[arch]
                 if "HLT" in tests_to_find:
                     find_check_hlt(release_queue_results["comparisons"], arch)
-                if "hlt-timing" in tests_to_find:
+                if "hlt-p2-timing" in tests_to_find:
                     find_check_hlt_timings(release_queue_results["comparisons"], arch)
                 if "crab" in tests_to_find:
                     find_check_crab(release_queue_results["comparisons"], arch)

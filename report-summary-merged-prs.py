@@ -1161,7 +1161,7 @@ def find_check_hlt(comparisons, architecture):
         )
 
 
-def find_check_hlt_timings(comparisons, architecture):
+def find_check_hlt_p2_timing(comparisons, architecture):
     for comp in comparisons:
         rel_name = comp["compared_tags"].split("-->")[1]
         print("Looking for {0} results for {1}.".format("hlt p2 timing", rel_name))
@@ -1873,7 +1873,7 @@ if __name__ == "__main__":
                 if "HLT" in tests_to_find:
                     find_check_hlt(release_queue_results["comparisons"], arch)
                 if "hlt-p2-timing" in tests_to_find:
-                    find_check_hlt_timings(release_queue_results["comparisons"], arch)
+                    find_check_hlt_p2_timing(release_queue_results["comparisons"], arch)
                 if "crab" in tests_to_find:
                     find_check_crab(release_queue_results["comparisons"], arch)
                 if "static-checks" in tests_to_find:

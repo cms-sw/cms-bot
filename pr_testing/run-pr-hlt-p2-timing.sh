@@ -14,8 +14,9 @@ HLT_P2_SCRIPT="src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh
 if [ -e ${CMSSW_CVMFS_PATH}/${HLT_P2_SCRIPT} ] ; then
   HLT_P2_SCRIPT="${CMSSW_CVMFS_PATH}/${HLT_P2_SCRIPT}"
 else
-  HLT_P2_SCRIPT="${CMSSW_RELEASE_BASE}/${HLT_P2_SCRIPT}"
+  HLT_P2_SCRIPT="${CMSSW_BASE}/${HLT_P2_SCRIPT}"
 fi
+export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
 timeout $TIMEOUT ${HLT_P2_SCRIPT} 2>&1 | tee $WORKSPACE/hlt-p2-timing.log
 CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${RELEASE_FORMAT}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
 

@@ -458,7 +458,7 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link"
+    CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link --trace"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
     fi

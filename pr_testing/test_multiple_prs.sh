@@ -1339,7 +1339,7 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
 fi
 
 if [ "${DO_HLT_P2_TIMING}" = "true" ] ;  then
-  cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt-p2-timing.prop
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt_p2_timing.prop
 fi
 
 rm -f $WORKSPACE/test-env.txt

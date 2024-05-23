@@ -1701,7 +1701,7 @@ if __name__ == "__main__":
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"
     )
     CHECK_HLT_TIMING_PATH = (
-        JENKINS_ARTIFACTS_DIR + "/hlt-p2-timing/RELEASE_NAME/Phase2Timing_resources.json"
+        JENKINS_ARTIFACTS_DIR + "/hlt-p2-timing/RELEASE_NAME/ARCHITECTURE/Phase2Timing_resources.json"
     )
     CHECK_CRAB_PATH = JENKINS_ARTIFACTS_DIR + "/ib-run-crab/RELEASE_NAME/*"
     MAGIC_COMMAND_FIND_DQM_TESTS = (

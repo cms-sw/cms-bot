@@ -1158,10 +1158,12 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
     DO_GPU_TESTS=true
     mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
-  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING' | wc -l) -gt 0 ] ; then
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
     if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
-      DO_HLT_P2_TIMING=true
-      mark_commit_status_all_prs 'hlt_p2_profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+      if [ -e ${CMSSW_CVMFS_PATH}/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh ]; then
+        DO_HLT_P2_TIMING=true
+        mark_commit_status_all_prs 'hlt_p2_profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+      fi
     fi
   fi
 else

@@ -11,10 +11,10 @@ mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Runni
 
 # Do work
 HLT_P2_SCRIPT="src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh"
-if [ -e ${CMSSW_CVMFS_PATH}/${HLT_P2_SCRIPT} ] ; then
-  HLT_P2_SCRIPT="${CMSSW_CVMFS_PATH}/${HLT_P2_SCRIPT}"
-else
+if [ -e ${CMSSW_BASE}/${HLT_P2_SCRIPT} ] ; then
   HLT_P2_SCRIPT="${CMSSW_BASE}/${HLT_P2_SCRIPT}"
+else
+  HLT_P2_SCRIPT="${CMSSW_RELEASE_BASE}/${HLT_P2_SCRIPT}"
 fi
 export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
 timeout $TIMEOUT ${HLT_P2_SCRIPT} 2>&1 | tee $WORKSPACE/hlt-p2-timing.log

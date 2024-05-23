@@ -11,7 +11,7 @@ mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Runni
 
 # Do work
 timeout $TIMEOUT ${CMSSW_CVMFS_PATH}/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh 2>&1 | tee $WORKSPACE/hlt-p2-timing.log
-CHART_URL="/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${UPLOAD_PATH}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
+CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${RELEASE_FORMAT}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
 
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts

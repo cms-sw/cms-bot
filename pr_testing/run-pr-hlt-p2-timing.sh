@@ -5,7 +5,7 @@ echo "FAILED" > $WORKSPACE/testsResults/statusfile-hlt-p2-timing.log
 source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
 
 PR_REPO_NUM=$(echo $PULL_REQUEST | cut -d '/' -f 2)
-UPLOAD_PATH="${RELEASE_FORMAT}+${PR_REPO_NUM}/${ARCHITECTURE}/${BUILD_NUMBER}"
+UPLOAD_PATH="${CMSSW_VERSION}+${PR_REPO_NUM}/${ARCHITECTURE}/${BUILD_NUMBER}"
 # Report test started
 mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Running"
 
@@ -18,7 +18,7 @@ else
 fi
 export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
 timeout $TIMEOUT ${HLT_P2_SCRIPT} 2>&1 | tee $WORKSPACE/hlt-p2-timing.log
-CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${RELEASE_FORMAT}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
+CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
 
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts

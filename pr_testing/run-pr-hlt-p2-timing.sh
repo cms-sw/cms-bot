@@ -4,7 +4,7 @@ echo "FAILED" > $WORKSPACE/testsResults/statusfile-hlt-p2-timing.log
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
 source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
 
-PR_REPO_NUM=$(echo $PULL_REQUEST | cut -d '/' -f 2)
+PR_REPO_NUM=$(echo $PULL_REQUEST | sed 's|^.*/||;s|#||')
 UPLOAD_PATH="${CMSSW_VERSION}+${PR_REPO_NUM}/${ARCHITECTURE}/${BUILD_NUMBER}"
 # Report test started
 mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Running"

@@ -10,7 +10,13 @@ UPLOAD_PATH="${RELEASE_FORMAT}+${PR_REPO_NUM}/${ARCHITECTURE}/${BUILD_NUMBER}"
 mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Running"
 
 # Do work
-timeout $TIMEOUT ${CMSSW_CVMFS_PATH}/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh 2>&1 | tee $WORKSPACE/hlt-p2-timing.log
+HLT_P2_SCRIPT="src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh"
+if [ -e ${CMSSW_CVMFS_PATH}/${HLT_P2_SCRIPT} ] ; then
+  HLT_P2_SCRIPT="${CMSSW_CVMFS_PATH}/${HLT_P2_SCRIPT}"
+else
+  HLT_P2_SCRIPT="${CMSSW_RELEASE_BASE}/${HLT_P2_SCRIPT}"
+fi
+timeout $TIMEOUT ${HLT_P2_SCRIPT} 2>&1 | tee $WORKSPACE/hlt-p2-timing.log
 CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${RELEASE_FORMAT}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
 
 # Upload results

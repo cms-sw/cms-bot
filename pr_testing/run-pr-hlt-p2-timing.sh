@@ -18,8 +18,8 @@ if [ -f $WORKSPACE/Phase2Timing_resources.json ] ; then
   touch ${RESULTS_DIR}/hlt-p2-timing-failed.res
   echo "HLT P2 timing: [chart](${CHART_URL})" > ${RESULTS_DIR}/hlt-p2-timing-report.res
 
-  # mv WORKSPACE/Phase2Timing_resources*.json $WORKSPACE/testsResults
-  send_jenkins_artifacts $WORKSPACE/Phase2Timing_resources*.json pr-hlt-p2-timing/${UPLOAD_UNIQ_ID}
+  mv WORKSPACE/Phase2Timing_resources*.json $WORKSPACE/testsResults
+  send_jenkins_artifacts $WORKSPACE/testsResults pr-hlt-p2-timing/${UPLOAD_UNIQ_ID}
   mark_commit_status_all_prs 'hlt-p2-timing' 'success' -u "${BUILD_URL}" -d "HLT Phase2 timing data collected"
 else
   echo "HLT_P2_TIMING;ERROR,HLT Phase 2 timing Test,See Logs,hlt-p2-timing.log" >> ${RESULTS_DIR}/hlt-p2-timing.txt

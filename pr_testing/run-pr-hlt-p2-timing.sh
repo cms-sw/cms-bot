@@ -1,16 +1,6 @@
 #!/bin/bash -ex
 echo "FAILED" > $WORKSPACE/testsResults/statusfile-hlt-p2-timing.log
 
-if [ "${SINGULARITY_IMAGE}" = "" ] ; then
-  osver=$(echo ${SCRAM_ARCH} | tr '_' '\n' | head -1 | sed 's|^[a-z][a-z]*||')
-  ls /cvmfs/singularity.opensciencegrid.org >/dev/null 2>&1 || true
-  IMG_PATH="/cvmfs/singularity.opensciencegrid.org/cmssw/cms:rhel${osver}"
-  if [ ! -e "${IMG_PATH}" ] ; then
-    IMG_PATH="/cvmfs/unpacked.cern.ch/registry.hub.docker.com/${DOCKER_IMG}"
-  fi
-  export SINGULARITY_IMAGE="${IMG_PATH}"
-fi
-
 [ "${WORKSPACE}" != "" ]         || export WORKSPACE=$(pwd) && cd $WORKSPACE
 mkdir -p $WORKSPACE/testsResults
 source $WORKSPACE/cms-bot/pr_testing/setup-pr-test-env.sh
@@ -26,8 +16,8 @@ timeout $TIMEOUT ${CMSSW_CVMFS_PATH}/src/HLTrigger/Configuration/python/HLT_75e3
 source $WORKSPACE/cms-bot/jenkins-artifacts
 if [ -f $WORKSPACE/Phase2Timing_resources.json ] ; then
   echo "PASSED" > $WORKSPACE/statusfile-hlt-p2-timing.log
-  touch $WORKSPACE/testsResults/hlt-p2-timing-failed-${CRABCLIENT_TYPE}.res
-  touch $WORKSPACE/testsResults/hlt-p2-timing-report-${CRABCLIENT_TYPE}.res
+  touch $WORKSPACE/testsResults/hlt-p2-timing-failed.res
+  touch $WORKSPACE/testsResults/hlt-p2-timing-report.res
 
   mv WORKSPACE/Phase2Timing_resources*.json $WORKSPACE/testsResults
   mark_commit_status_all_prs 'hlt-p2-timing' 'success' -u "${BUILD_URL}" -d "HLT Phase2 timing data collected"

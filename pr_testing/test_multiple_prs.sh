@@ -86,6 +86,7 @@ DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
+DO_HLT_P2_TIMING=false
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
 BUILD_VERBOSE=true
@@ -1157,11 +1158,18 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
     DO_GPU_TESTS=true
     mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING' | wc -l) -gt 0 ] ; then
+    if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
+      DO_HLT_P2_TIMING=true
+      mark_commit_status_all_prs 'hlt_p2_profiling' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+    fi
+  fi
 else
   DO_TESTS=false
   DO_SHORT_MATRIX=false
   DO_ADDON_TESTS=false
   DO_CRAB_TESTS=false
+  DO_HLT_P2_TIMING=false
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
@@ -1327,4 +1335,9 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
     echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop
   done
 fi
+
+if [ "${DO_HLT_P2_TIMING}" = "true" ] ;  then
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt-p2-timing.prop
+fi
+
 rm -f $WORKSPACE/test-env.txt

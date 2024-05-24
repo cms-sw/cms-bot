@@ -14,8 +14,8 @@ else
   HLT_P2_SCRIPT="${CMSSW_RELEASE_BASE}/${HLT_P2_SCRIPT}"
 fi
 
-mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload
-pushd $WORKSPACE/json_upload
+mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload $WORKSPACE/rundir
+pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
   timeout $TIMEOUT ${HLT_P2_SCRIPT} 2>&1 | tee ${RESULTS_DIR}/hlt-p2-timing.log
 popd
@@ -23,11 +23,12 @@ popd
 # Upload results
 source $WORKSPACE/cms-bot/jenkins-artifacts
 touch ${RESULTS_DIR}/15-hlt-p2-timing-report.res ${RESULTS_DIR}/15-hlt-p2-timing-failed.res
-if [ -f $WORKSPACE/json_upload/Phase2Timing_resources.json ] ; then
+if [ -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
   CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   echo "\n* **HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/15-hlt-p2-timing-report.res
 
+  mv $WORKSPACE/rundir/Phase2Timing*.json $WORKSPACE/json_upload
   send_jenkins_artifacts $WORKSPACE/json_upload hlt-p2-timing/${UPLOAD_PATH}
   mark_commit_status_all_prs 'hlt-p2-timing' 'success' -u "${BUILD_URL}" -d "HLT Phase2 timing data collected"
 else
@@ -35,5 +36,5 @@ else
   echo "HLTP2Timing" > ${RESULTS_DIR}/15-hlt-p2-timing-failed.res
   mark_commit_status_all_prs 'hlt-p2-timing' 'error' -u "${BUILD_URL}" -d "HLT Phase2 timing script failed"
 fi
-rm -rf $WORKSPACE/json_upload
+rm -rf $WORKSPACE/json_upload $WORKSPACE/rundir
 prepare_upload_results

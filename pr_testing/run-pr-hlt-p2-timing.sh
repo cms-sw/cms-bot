@@ -26,7 +26,7 @@ touch ${RESULTS_DIR}/15-hlt-p2-timing-report.res ${RESULTS_DIR}/15-hlt-p2-timing
 if [ -f $WORKSPACE/rundir/Phase2Timing_resources.json ] ; then
   CHART_URL="https://cmssdt.cern.ch/circles/web/piechart.php?data_name=hlt-p2-timing&resource=time_thread&filter=${CMSSW_VERSION}&dataset=${UPLOAD_PATH}/Phase2Timing_resources"
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
-  echo "\n* **HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/15-hlt-p2-timing-report.res
+  echo -e "\n* **HLT P2 Timing**: [chart](${CHART_URL})" > ${RESULTS_DIR}/15-hlt-p2-timing-report.res
 
   mv $WORKSPACE/rundir/Phase2Timing*.json $WORKSPACE/json_upload
   send_jenkins_artifacts $WORKSPACE/json_upload hlt-p2-timing/${UPLOAD_PATH}

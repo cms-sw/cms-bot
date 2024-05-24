@@ -71,6 +71,7 @@ CMSSW_L2 = {
     "emeschi": ["daq"],
     "vlimant": ["xpog"],
     "hqucms": ["xpog"],
+    "ftorrresd" : ["xpog"],
     "fwyzard": ["heterogeneous"],
     "GurpreetSinghChahal": ["generators"],
     "jfernan2": ["reconstruction"],

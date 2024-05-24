@@ -25,7 +25,7 @@ source $WORKSPACE/cms-bot/jenkins-artifacts
 if [ -f $WORKSPACE/Phase2Timing_resources.json ] ; then
   echo "HLT_P2_TIMING;SUCCESS,HLT Phase 2 timing Test,See Chart,${CHART_URL}" >> ${RESULTS_DIR}/hlt-p2-timing.txt
   touch ${RESULTS_DIR}/15-hlt-p2-timing-failed.res
-  echo "HLT P2 timing: [chart](${CHART_URL})" > ${RESULTS_DIR}/15-hlt-p2-timing-report.res
+  echo "* HLT P2 timing: [chart](${CHART_URL})" > ${RESULTS_DIR}/15-hlt-p2-timing-report.res
 
   mv $WORKSPACE/Phase2Timing_resources*.json $WORKSPACE/testsResults
   send_jenkins_artifacts $WORKSPACE/testsResults hlt-p2-timing/${UPLOAD_PATH}

@@ -27,7 +27,7 @@ cd $CMSSW_PROJECT
 
 if [ "${INSTALL_DIR}" != "" ] ; then
   rm -rf config/toolbox/${SCRAM_ARCH}/tools/selected
-  rsync -a ${INSTALL_DIR}/config/toolbox/${SCRAM_ARCH}/tools/selected/ config/toolbox/${SCRAM_ARCH}/tools/selected/
+  cp -r ${INSTALL_DIR}/config/toolbox/${SCRAM_ARCH}/tools/selected  config/toolbox/${SCRAM_ARCH}/tools/selected
   scram setup
   scram setup self
   scram build clean >/dev/null 2>&1

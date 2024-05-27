@@ -33,11 +33,10 @@ $WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WO
 SLAVE_LABELS=$($WORKSPACE/cache/cms-bot/jenkins/system-info.sh "${JENKINS_SLAVE_JAR_MD5}" "${WORKSPACE}" | grep '^DATA_SLAVE_LABELS=' | sed 's|^DATA_SLAVE_LABELS=|condor |')
 if [ $(nproc) -lt 8 ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} scripts" 
-fi
-if [ "X${EXTRA_LABELS}" != "X" ] ; then SLAVE_LABELS="${SLAVE_LABELS} ${EXTRA_LABELS}" ;fi
-if [ $(echo ${SLAVE_LABELS} | tr ' ' '\n' | grep '^cpu-xlarge$' | wc -l) -gt 0 ] ; then
+elif [ $(nproc) -gt 8 ] ; then
   SLAVE_LABELS="${SLAVE_LABELS} cmsbuild"
 fi
+if [ "X${EXTRA_LABELS}" != "X" ] ; then SLAVE_LABELS="${SLAVE_LABELS} ${EXTRA_LABELS}" ;fi
 
 JENKINS_WEBHOOK="${JENKINS_WEBHOOK-https://cmssdt.cern.ch/SDT/cgi-bin/condor_webhook}"
 JOB_ID=$(grep '^ *ClusterId *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g').0

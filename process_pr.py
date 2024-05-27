@@ -1,4 +1,5 @@
-# Dummy change
+import sys
+
 import pygithub_wrappers
 from categories import (
     CMSSW_L2,
@@ -194,7 +195,7 @@ TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
 
 ########################################
-# Only for preparing PR, remove once our copy is updated
+# Remove once our copy of pygithub is updated
 # Taken from: https://github.com/PyGithub/PyGithub/pull/2939/files
 import github
 
@@ -311,10 +312,11 @@ def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
             continue
 
         print("Saving bot cache ({0}/{1})".format(i + 1, len(data)))
-        if cache_comment:
-            cache_comment.edit(new_body)
-        else:
-            issue.create_comment(new_body)
+        if (not dryRun) or pygithub_wrappers.testMode:
+            if cache_comment:
+                cache_comment.edit(new_body)
+            else:
+                issue.create_comment(new_body)
 
     # If new commit cache is smaller than previous one, cleanup old technical comments
     if len(data) < len(cache_comments):
@@ -460,8 +462,9 @@ def modify_comment(comment, match, replace, dryRun):
     else:
         new_comment_msg = comment_msg + "\n" + replace
     if new_comment_msg != comment_msg:
-        comment.edit(new_comment_msg)
-        print("Message updated")
+        if (not dryRun) or pygithub_wrappers.testMode:
+            comment.edit(new_comment_msg)
+            print("Message updated")
     return 0
 
 

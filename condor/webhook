@@ -34,8 +34,17 @@ elif [ ! -f ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml ] ; then
   echo "USER=${CONDOR_USER}" >> shutdown.txt
 elif [ "${STATUS}" = "offline" ] ; then
   ${JENKINS_CLI_CMD} offline-node ${NODE_NAME} || true
-  if [ $(grep '^ *<label>' ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml | grep 'auto-recreate' | wc -l) -gt 0 ] ; then
+  LABELS=$(grep '^ *<label>' ${JENKINS_HOME}/nodes/${NODE_NAME}/config.xml)
+  if [ $(echo " ${LABELS} " | grep ' auto-recreate ' | wc -l) -gt 0 ] ; then
     echo "REPLACE_NODE=${CONDOR_JOB_ID}" > create-node.txt
+    if [ $(echo " ${LABELS} " | grep ' el9 ' | wc -l) -gt 0 ] ; then
+      echo "REQUEST_ALMA9=true" >> create-node.txt
+    fi
+    if [ $(echo " ${LABELS} " | grep ' aarch64 ' | wc -l) -gt 0 ] ; then
+      echo "REQUEST_ARM64=true" >> create-node.txt
+      echo "REQUEST_CPUS=$(echo \"${LABELS}\" | tr ' ' '\n' | grep '^cpu-[1-9][0-9]*$' | sed 's|^cpu-||')" >> create-node.txt
+      echo "REQUEST_MAXRUNTIME=604800" >> create-node.txt
+    fi
   fi
 elif [ "${STATUS}" = "shutdown" ] ; then
   ${JENKINS_CLI_CMD} disconnect-node  ${NODE_NAME} || true

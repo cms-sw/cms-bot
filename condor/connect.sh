@@ -29,7 +29,7 @@ here=$(dirname $0)
 cd $WORKSPACE
 mkdir -p logs
 
-script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
+script_name=${JOB_NAME}-${NODE_ARCH}-${BUILD_NUMBER}.$(date +%Y%m%d)
 SLAVE_JAR_DIR="${WORKSPACE}"
 while [ ! -e ${SLAVE_JAR_DIR}/slave.jar ] ; do
   SLAVE_JAR_DIR=$(dirname $SLAVE_JAR_DIR)

@@ -1416,6 +1416,7 @@ CMSSW_CATEGORIES = {
         "RecoTracker/FinalTrackSelectors",
         "RecoTracker/GeometryESProducer",
         "RecoTracker/IterativeTracking",
+        "RecoTracker/LSTCore",
         "RecoTracker/MeasurementDet",
         "RecoTracker/MkFit",
         "RecoTracker/MkFitCMS",

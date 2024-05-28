@@ -116,7 +116,7 @@ PROD_ARCH_NOT_READY_MSG = (
     " You don't need to write the command again."
 )
 REL_NAME_REGEXP = (
-    "(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
+    "(CMSSW_[0-9]+_[0-9]+)(_[0-9]+)(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 )
 UPLOAD_COMMENT = "upload %s"
 UPLOAD_ALL_COMMENT = "^[uU]pload all$"
@@ -924,8 +924,11 @@ def check_to_build_after_tool_conf(issue, release_name, release_queue, docker_im
 # Guesses the previous release name based on the name given as a parameter
 #
 def guess_prev_rel_name(release_name, issue):
-    num_str = release_name.split("_")[-1]
-    number = int(re.search("[0-9]+$", release_name).group(0))
+    rel_name_match = re.match(REL_NAME_REGEXP, release_name)
+    num_str = rel_name_match.group(4)
+    if num_str == "":
+        num_str = rel_name_match.group(2)
+    number = int(re.search("[0-9]+$", num_str).group(0))
     prev_number = number - 1
     prev_num_str = num_str.replace(str(number), str(prev_number))
 
@@ -934,14 +937,11 @@ def guess_prev_rel_name(release_name, issue):
             if "pre" in num_str:
                 post_message(issue, PREVIOUS_RELEASE_NAME_MSG.format(release_name=release_name))
                 exit(0)
-            return re.sub("_" + num_str + "$", "", release_name)
-        return re.sub("_" + num_str + "$", "_" + prev_num_str, release_name)
-    rel_match = (
-        re.sub("_" + num_str + "$", "_" + prev_num_str, release_name)
-        + "\(_[a-zA-Z]*patch[0-9][0-9]*\|\);"
-    )
+            return "".join(list(rel_name_match.group(1,2,3))+[rel_name_match.group(5)])
+        return "".join(list(rel_name_match.group(1,2,3))+[prev_num_str]+[rel_name_match.group(5)])
+    rel_match = rel_name_match.group(1)+prev_num_str+"\(_[a-zA-Z]*patch[0-9][0-9]*\|\)"+rel_name_match.group(5)+";"
     if number == 0:
-        rel_match = release_name + "_pre\([0-9][0-9]*\);"
+        rel_match = rel_name_match.group(1)+rel_name_match.group(2)+"_pre\([0-9][0-9]*\)"+rel_name_match.group(5)+";"
     ret, out = run_cmd(
         "grep 'label="
         + rel_match
@@ -1039,9 +1039,9 @@ if __name__ == "__main__":
             exit(0)
 
         release_queue = "".join(
-            [x for x in rel_name_match.group(1, 4)]
+            [x for x in rel_name_match.group(1, 5)]
             + ["_X"]
-            + [x.strip("0123456789") for x in rel_name_match.group(2)]
+            + [x.strip("0123456789") for x in rel_name_match.group(3)]
         )
 
     release_tag_commit = None
@@ -1070,7 +1070,7 @@ if __name__ == "__main__":
     architectures = [x["SCRAM_ARCH"] for x in specs if x["RELEASE_QUEUE"] == release_queue]
     if not architectures:
         print("Trying default queue")
-        release_queue = "".join([x for x in rel_name_match.group(1, 2)] + ["_X"])
+        release_queue = "".join([x for x in rel_name_match.group(1, 3)] + ["_X"])
         print(release_queue)
         architectures = [x["SCRAM_ARCH"] for x in specs if x["RELEASE_QUEUE"] == release_queue]
 

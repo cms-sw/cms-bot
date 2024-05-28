@@ -84,15 +84,21 @@ if $CLANG_FORMAT ; then
     git diff > $WORKSPACE/upload/code-format-orig.patch
   popd
   cat $WORKSPACE/upload/code-format-orig.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs-orig.log
-  mv src src.format
-  mv src.tidy src
-  scram b clean
-  scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format.log 2>&1 || ERR=1
-  pushd src
-    git diff --name-only > $WORKSPACE/upload/code-format.txt
-    git diff > $WORKSPACE/upload/code-format.patch
-  popd
-  cat $WORKSPACE/upload/code-format.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs.log  
+  if $CLANG_TIDY ; then
+    mv src src.format
+    mv src.tidy src
+    scram b clean
+    scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format.log 2>&1 || ERR=1
+    pushd src
+      git diff --name-only > $WORKSPACE/upload/code-format.txt
+      git diff > $WORKSPACE/upload/code-format.patch
+    popd
+    cat $WORKSPACE/upload/code-format.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs.log
+  else
+    mv $WORKSPACE/upload/code-format-orig.txt $WORKSPACE/upload/code-format.txt
+    mv $WORKSPACE/upload/code-format-orig.patch $WORKSPACE/upload/code-format.patch
+    mv $WORKSPACE/upload/code-format-pkgs-orig.log $WORKSPACE/upload/code-format-pkgs.log
+  fi
 else
   touch $WORKSPACE/upload/code-format.txt
 fi

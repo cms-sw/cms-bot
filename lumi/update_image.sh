@@ -11,8 +11,10 @@ if [ -f cmssw_${OS}:${TAG}.sif ]; then
 fi
 
 echo "Building cmssw_${OS}:${TAG}.sif"
-singularity build cmssw_${OS}:${TAG}.sif docker://cmssw/${OS}:${TAG}
-chmod 644 cmssw_${OS}:${TAG}.sif
-ln -s -f cmssw_${OS}:${TAG}.sif cmssw_${OS}.sif
+rm -f cmssw_${OS}:${TAG}-tmp.sif
+singularity build cmssw_${OS}:${TAG}-tmp.sif docker://cmssw/${OS}:${TAG}
+chmod 644 cmssw_${OS}:${TAG}-tmp.sif
+mv cmssw_${OS}:${TAG}-tmp.sif cmssw_${OS}:${TAG}.sif
+ln -sf cmssw_${OS}:${TAG}.sif cmssw_${OS}.sif
 chown -h .project_462000245 cmssw_${OS}:${TAG}.sif cmssw_${OS}.sif
 echo "Done"

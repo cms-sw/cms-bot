@@ -8,4 +8,4 @@ JENKINS_VERSION=$(jenkins --version)
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 scp $SSH_OPTS /var/lib/jenkins/slave.jar ${CONNECTION}:~/cmsbuild/slave-${NODE_NAME}.jar
-ssh $SSH_OPTS ${CONNECTION} "~/cmsbuild/cms-bot/lumi/get_slot.sh ${OS} ~/cmsbuild/cms-bot/slave-${NODE_NAME}.jar"
+ssh $SSH_OPTS ${CONNECTION} "~/cmsbuild/cms-bot/lumi/get_slot.sh ${OS} ~/cmsbuild/slave-${NODE_NAME}.jar"

@@ -3,7 +3,7 @@
 echo "[$(date)] Requesting slot on LUMI HPC"
 
 OS=$1
-JAVA_CMD=$2
+JENKINS_JAR=$2
 
 # work around a problem with the ROCm device permissions
 export ROCM_TARGET_LST=${HOME}/.rocm_targets
@@ -41,4 +41,4 @@ echo "SINGULARITY_CACHEDIR: $SINGULARITY_CACHEDIR"
 srun --pty --time=$REQUEST_TIME --partition=$REQUEST_PARTITION --hint=multithread --nodes=$REQUEST_NODE \
 --ntasks=$REQUEST_TASKS --cpus-per-task=$REQUEST_CPU --gpus=$REQUEST_GPU --mem=$REQUEST_MEMORY \
 -- /project/$SLURM_ACCOUNT/cvmfsexec/singcvmfs exec --bind /opt,/project/$SLURM_ACCOUNT,/scratch/$SLURM_ACCOUNT \
---bind $SINGULARITY_SCRATCH:/workspace:image-src=/ --env PS1="$SINGULARITY_PROMPT" "$SINGULARITY_CACHEDIR/cmssw_el8.sif" $(dirname $0)/jenkins_java.sh $JAVA_CMD
+--bind $SINGULARITY_SCRATCH:/workspace:image-src=/ --env PS1="$SINGULARITY_PROMPT" "$SINGULARITY_CACHEDIR/cmssw_${OS}.sif" $(dirname $0)/jenkins_java.sh ${JENKINS_JAR}

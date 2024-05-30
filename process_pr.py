@@ -820,11 +820,13 @@ def add_nonblocking_labels(chg_files, extra_labels):
         for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
             for regex in pkgs_regexp:
                 if regex.match(pkg_file):
+                    if not "mtype" in extra_labels:
+                        extra_labels["mtype"] = []
                     extra_labels["mtype"].append(ex_lab)
                     print("Non-Blocking label:%s:%s:%s" % (ex_lab, regex.pattern, pkg_file))
                     break
-    # if ("mtype" in extra_labels) and (not extra_labels["mtype"]):
-    #     del extra_labels["mtype"]
+    if ("mtype" in extra_labels) and (not extra_labels["mtype"]):
+        del extra_labels["mtype"]
     print("Extra non-blocking labels:", extra_labels)
     return
 

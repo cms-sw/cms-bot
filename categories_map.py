@@ -304,6 +304,7 @@ CMSSW_CATEGORIES = {
         "FWCore/Sources",
         "FWCore/TFWLiteSelector",
         "FWCore/TFWLiteSelectorTest",
+        "FWCore/TestModules",
         "FWCore/TestProcessor",
         "FWCore/Utilities",
         "FWCore/Version",

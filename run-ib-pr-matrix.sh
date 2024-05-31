@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+!/bin/sh -ex
 TEST_FLAVOR=$1
 CMS_BOT_DIR=$(cd $(dirname $0) >/dev/null 2>&1; pwd -P)
 ARTIFACT_DIR="ib-baseline-tests/${RELEASE_FORMAT}/${ARCHITECTURE}/${REAL_ARCH}/matrix${TEST_FLAVOR}-results"
@@ -47,7 +47,8 @@ UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
 pushd "$WORKSPACE/matrix-results"
   NJOBS=$(nproc)
   CMD_OPTS=""
-  if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then CMD_OPTS="--maxmem_profile" ; fi
+  #FIX ME: Disabled maxmem_profile see https://github.com/cms-sw/cmssw/issues/45116
+  #if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then CMD_OPTS="--maxmem_profile" ; fi
   case "${TEST_FLAVOR}" in
     gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;

@@ -4189,3 +4189,4 @@ architecture=el9_amd64_gcc12;label=CMSSW_14_0_7_patch1;type=Production;state=Ann
 architecture=el8_amd64_gcc12;label=CMSSW_14_0_7_patch1;type=Production;state=Announced;prodarch=1;
 architecture=el8_amd64_gcc12;label=CMSSW_14_0_7_HLTTest;type=Production;state=Announced;prodarch=1;
 architecture=el8_amd64_gcc12;label=CMSSW_14_0_7_HLTTest_MULTIARCHS;type=Production;state=Announced;prodarch=1;
+architecture=el8_amd64_gcc12;label=CMSSW_14_0_7_patch2_MULTIARCHS;type=Production;state=Announced;prodarch=1;

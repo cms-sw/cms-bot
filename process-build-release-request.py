@@ -937,11 +937,25 @@ def guess_prev_rel_name(release_name, issue):
             if "pre" in num_str:
                 post_message(issue, PREVIOUS_RELEASE_NAME_MSG.format(release_name=release_name))
                 exit(0)
-            return "".join(list(rel_name_match.group(1,2,3))+[rel_name_match.group(5)])
-        return "".join(list(rel_name_match.group(1,2,3))+[prev_num_str]+[rel_name_match.group(5)])
-    rel_match = rel_name_match.group(1)+prev_num_str+"\(_[a-zA-Z]*patch[0-9][0-9]*\|\)"+rel_name_match.group(5)+";"
+            return "".join(list(rel_name_match.group(1, 2, 3)) + [rel_name_match.group(5)])
+        return "".join(
+            list(rel_name_match.group(1, 2, 3)) + [prev_num_str] + [rel_name_match.group(5)]
+        )
+    rel_match = (
+        rel_name_match.group(1)
+        + prev_num_str
+        + "\(_[a-zA-Z]*patch[0-9][0-9]*\|\)"
+        + rel_name_match.group(5)
+        + ";"
+    )
     if number == 0:
-        rel_match = rel_name_match.group(1)+rel_name_match.group(2)+"_pre\([0-9][0-9]*\)"+rel_name_match.group(5)+";"
+        rel_match = (
+            rel_name_match.group(1)
+            + rel_name_match.group(2)
+            + "_pre\([0-9][0-9]*\)"
+            + rel_name_match.group(5)
+            + ";"
+        )
     ret, out = run_cmd(
         "grep 'label="
         + rel_match

@@ -1777,7 +1777,7 @@ CMSSW_CATEGORIES = {
         "PhysicsTools/ONNXRuntime",
         "PhysicsTools/MVAComputer",
         "PhysicsTools/MVATrainer",
-        "PhysicsTools/XGBoost"
+        "PhysicsTools/XGBoost",
     ],
 }
 

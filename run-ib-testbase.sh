@@ -10,6 +10,11 @@ for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.
 done
 voms-proxy-init -voms cms || true
 voms-proxy-info || true
+if [ "\$(systemctl is-system-running 2>/dev/null || true)" = "offline" ] ; then
+  if [ "\${DBUS_SESSION_BUS_ADDRESS}" != "" ] ; then
+    unset DBUS_SESSION_BUS_ADDRESS
+  fi
+fi
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export SCRAM_ARCH=${ARCHITECTURE}

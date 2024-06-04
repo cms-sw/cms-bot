@@ -1,5 +1,6 @@
 import sys
 
+import github_utils
 import pygithub_wrappers
 from categories import (
     CMSSW_L2,
@@ -193,25 +194,6 @@ BOT_CACHE_CHUNK_SIZE = 55000
 TOO_MANY_COMMITS_WARN_THRESHOLD = 150
 TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
-
-########################################
-# Remove once our copy of pygithub is updated
-# Taken from: https://github.com/PyGithub/PyGithub/pull/2939/files
-import github
-
-
-def files(self):
-    return github.PaginatedList.PaginatedList(
-        github.File.File,
-        self._requester,
-        self.url,
-        {},
-        None,
-        "files",
-    )
-
-
-########################################
 
 
 def update_CMSSW_LABELS(repo_config):
@@ -856,39 +838,9 @@ def add_nonblocking_labels(chg_files, extra_labels):
     return
 
 
-def create_commit_status(commit, dryRun, state, target_url=None, description=None, context=None):
-    pygithub_wrappers.actions.append(
-        {
-            "type": "status",
-            "data": {
-                "commit": commit.sha,
-                "state": state,
-                "target_url": target_url,
-                "description": description,
-                "context": context,
-            },
-        }
-    )
-
-    if target_url is None:
-        target_url = github.GithubObject.NotSet
-
-    if description is None:
-        description = github.GithubObject.NotSet
-
-    if context is None:
-        context = github.GithubObject.NotSet
-
-    if not dryRun:
-        commit.create_status(
-            state, target_url=target_url, description=description, context=context
-        )
-    else:
-        print(
-            "DRY RUN: set commit status state={0}, target_url={1}, description={2}, context={3}".format(
-                state, target_url, description, context
-            )
-        )
+# TODO: remove once we update pygithub
+def get_commit_files(repo_, commit):
+    return (x["filename"] for x in github_utils.get_commit(repo_.full_name, commit.sha)["files"])
 
 
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
@@ -1699,7 +1651,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     bot_cache["commits"][commit.sha]["files"] = []
                 else:
                     bot_cache["commits"][commit.sha]["files"] = sorted(
-                        x.filename for x in files(commit)
+                        get_commit_files(repo, commit)
                     )
 
             elif len(commit.parents) > 1:
@@ -1907,9 +1859,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 else:
                     desc = "Tests %s" % desc
                 print(desc)
-                create_commit_status(
-                    last_commit_obj,
-                    dryRun,
+                last_commit_obj.create_status(
                     state="success",
                     description=desc,
                     target_url=turl,
@@ -1970,9 +1920,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                 "Some test might have been restarted for %s. Resetting the status"
                                 % status.context
                             )
-                            create_commit_status(
-                                last_commit_obj,
-                                dryRun,
+                            last_commit_obj.create_status(
                                 state="success",
                                 description="OK",
                                 target_url=status.target_url,
@@ -2019,9 +1967,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                 res = "%s\n\n%s" % (res, o)
                                 create_comment(issue, dryRun, res)
 
-                        create_commit_status(
-                            last_commit_obj,
-                            dryRun,
+                        last_commit_obj.create_status(
                             state="success",
                             description="Finished",
                             target_url=status.target_url,
@@ -2036,9 +1982,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     if "error" in lab_stats[lab_state]:
                         signatures["tests"] = "rejected"
         elif not bot_status:
-            create_commit_status(
-                last_commit_obj,
-                dryRun,
+            last_commit_obj.create_status(
                 state="pending",
                 description="Waiting for authorized user to issue the test command.",
                 context=bot_status_name,
@@ -2279,9 +2223,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     repository, prId, global_test_params, dryRun, abort=True
                 )
                 set_comment_emoji_cache(dryRun, bot_cache, abort_test, repository)
-                create_commit_status(
-                    last_commit_obj,
-                    dryRun,
+                last_commit_obj.create_status(
                     state="pending",
                     description="Aborted, waiting for authorized user to issue the test command.",
                     target_url=abort_test.html_url,
@@ -2524,9 +2466,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 state = "success" if signatures[pre_check] == "approved" else "error"
                 url = pre_checks_url[pre_check]
                 print("Setting status: %s,%s,%s" % (pre_check, state, url))
-                create_commit_status(
-                    last_commit_obj,
-                    dryRunOrig,
+                last_commit_obj.create_status(
                     state=state,
                     target_url=url,
                     description="Check details",
@@ -2541,9 +2481,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             create_properties_file_tests(
                 repository, prId, params, dryRunOrig, abort=False, req_type=pre_check
             )
-            create_commit_status(
-                last_commit_obj,
-                dryRunOrig,
+            last_commit_obj.create_status(
                 state="pending",
                 description="%s requested" % pre_check,
                 context="%s/%s" % (cms_status_prefix, pre_check),
@@ -2586,9 +2524,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         if test_params_comment:
             emoji = "-1" if "ERRORS: " in test_params_msg else "+1"
             state = "success" if emoji == "+1" else "error"
-            create_commit_status(
-                last_commit_obj,
-                dryRun,
+            last_commit_obj.create_status(
                 state=state,
                 description=test_params_msg,
                 target_url=test_params_comment.html_url,
@@ -2606,9 +2542,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 ack_comment.created_at,
             )
             print(desc)
-            create_commit_status(
-                last_commit_obj,
-                dryRun,
+            last_commit_obj.create_status(
                 state="success",
                 description=desc,
                 target_url=ack_comment.html_url,

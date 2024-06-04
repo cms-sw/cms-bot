@@ -4,12 +4,103 @@ import os
 import sys
 import traceback
 
+import github
 import pytest
 
+import pygithub_wrappers
 from . import Framework
 from .Framework import readLine
+from pygithub_wrappers import dryRun, actions
 
-from github.PaginatedList import PaginatedList
+github__issuecomment__edit = github.IssueComment.IssueComment.edit
+
+
+def comment__edit(self, body):
+    actions.append({"type": "edit-comment", "data": body})
+    if dryRun:
+        print("DRY RUN: Updating existing comment with text")
+        print(body.encode("ascii", "ignore").decode())
+    else:
+        return github__issuecomment__edit(self, body)
+
+
+github.IssueComment.IssueComment.edit = comment__edit
+
+github__issue__create_comment = github.Issue.Issue.create_comment
+
+
+def issue__create_comment(self, body):
+    actions.append({"type": "create-comment", "data": body})
+    if dryRun:
+        print("DRY RUN: Creating comment with text")
+        print(body.encode("ascii", "ignore").decode())
+    else:
+        github__issue__create_comment(self, body)
+
+
+github.Issue.Issue.create_comment = issue__create_comment
+
+github__commit__create_status = github.Commit.Commit.create_status
+
+
+def commit__create_status(self, state, target_url=None, description=None, context=None):
+    actions.append(
+        {
+            "type": "status",
+            "data": {
+                "commit": self.sha,
+                "state": state,
+                "target_url": target_url,
+                "description": description,
+                "context": context,
+            },
+        }
+    )
+
+    if target_url is None:
+        target_url = github.GithubObject.NotSet
+
+    if description is None:
+        description = github.GithubObject.NotSet
+
+    if context is None:
+        context = github.GithubObject.NotSet
+
+    if dryRun:
+        print(
+            "DRY RUN: set commit status state={0}, target_url={1}, description={2}, context={3}".format(
+                state, target_url, description, context
+            )
+        )
+    else:
+        github__commit__create_status(
+            self, state, target_url=target_url, description=description, context=context
+        )
+
+
+github.Commit.Commit.create_status = commit__create_status
+
+########################################
+# TODO: remove once we update pygithub
+# Taken from: https://github.com/PyGithub/PyGithub/pull/2939/files
+
+
+def get_commit_files(commit):
+    return github.PaginatedList.PaginatedList(
+        github.File.File,
+        commit._requester,
+        commit.url,
+        {},
+        None,
+        "files",
+    )
+
+
+def get_commit_files_pygithub(repo, commit):
+    return (x.filename for x in get_commit_files(commit))
+
+
+########################################
 
 
 class TestProcessPr(Framework.TestCase):
@@ -61,7 +152,9 @@ class TestProcessPr(Framework.TestCase):
             self.__eventFile.close()
 
     def setUp(self):
+        global dryRun
         super().setUp()
+        dryRun = True
 
         self.__eventFileName = ""
         self.__eventFile = None
@@ -88,7 +181,10 @@ class TestProcessPr(Framework.TestCase):
         self.repo_config = sys.modules["repo_config"]
         assert "iarspider_cmssw" in self.repo_config.__file__
 
-        self.process_pr = importlib.import_module("process_pr").process_pr
+        self.process_pr_module = importlib.import_module("process_pr")
+        self.process_pr = self.process_pr_module.process_pr
+        # TODO: remove once we update pygithub
+        self.process_pr_module.get_commit_files = get_commit_files_pygithub
 
     def runTest(self, prId=17):
         repo = self.g.get_repo("iarspider-cmssw/cmssw")

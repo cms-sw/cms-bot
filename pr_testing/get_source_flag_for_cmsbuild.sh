@@ -59,13 +59,21 @@ fi
 if [ -e cmsdist/data/cmsswdata.txt ] ; then
   case ${PKG_REPO} in
     cms-data/*)
-      data_tag=$(grep "^ *${PKG_NAME}=" cmsdist/data/cmsswdata.txt || echo "${PKG_NAME}=V00-00-00")
-      sed -i -e "/^ *${PKG_NAME}=.*/d;s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
-      if [ $(grep "Requires:  *data-${PKG_NAME} *$"  cmsdist/cmsswdata.spec | wc -l) -eq 0 ] ; then
+      grep -E "^( *${PKG_NAME}=|\[)" cmsdist/data/cmsswdata.txt > data-pkg-info.txt || true
+      data_tag=$(grep "^ *${PKG_NAME}=" data-pkg-info.txt || echo "${PKG_NAME}=V00-00-00")
+      del_data_file=false
+      if [ "$data_tag" = "${PKG_NAME}=V00-00-00" ] ; then
+        del_data_file=true
+        sed -i -e "s/^ *\[default\].*/[default]\n${data_tag}/" cmsdist/data/cmsswdata.txt
         sed -i -e "s|^\(Source: .*\)$|\1\nRequires: data-${PKG_NAME}|" cmsdist/cmsswdata.spec
+      elif [ $(grep -B1 "^ *${PKG_NAME}=" data-pkg-info.txt | head -1 | grep default | wc -l) -eq 0 ] ; then
+        del_data_file=true
       fi
-      touch cmsdist/data/data-${PKG_NAME}.file
-      rm -rf cmsdist/data/data-${PKG_NAME}.* 
+      if $del_data_file ; then
+        touch cmsdist/data/data-${PKG_NAME}.file
+        rm -rf cmsdist/data/data-${PKG_NAME}.*
+      fi
+      echo rm -f data-pkg-info.txt
     ;;
   esac
 fi

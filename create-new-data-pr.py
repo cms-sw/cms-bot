@@ -151,55 +151,78 @@ if __name__ == "__main__":
     cmsswdatafile = "data/cmsswdata.txt"
     content_file = dist_repo.get_contents(cmsswdatafile, repo_tag_pr_branch)
     cmsswdatafile_raw = content_file.decoded_content
-    new_content = ""
-    # remove the existing line no matter where it is and put the new line right under default
 
-    count = 0  # omit first line linebreaker
     repo_name_str = "%s=" % repo_name_only
+    data_lines = []
+    has_data = False
+    in_default = False
+    is_default = False
     for line in cmsswdatafile_raw.splitlines():
         line = line.decode()
-        updated_line = None
-        if "[default]" in line:
-            updated_line = "\n" + line + "\n" + repo_name_only + "=" + new_tag + ""
+        data_lines.append(line)
+        if has_data:
+            continue
+        if line.startswith("["):
+            is_default = "[default]" in line
         elif line.strip().startswith(repo_name_str):
-            updated_line = ""
-        else:
-            if count > 0:
-                updated_line = "\n" + line
-            else:
-                updated_line = line
-        count = count + 1
-        new_content = new_content + updated_line
+            has_data = True
+            in_default = is_default
 
+    new_lines = []
+    if in_default:
+        for line in data_lines:
+            if line.strip().startswith(repo_name_str):
+                line = repo_name_only + "=" + new_tag
+            new_lines.append(line)
+    else:
+        for line in data_lines:
+            if "[default]" in line:
+                new_lines.append(line)
+                new_lines.append(repo_name_only + "=" + new_tag)
+            elif not line.strip().startswith(repo_name_str):
+                new_lines.append(line)
+        # Delete extra data.file if data package was not in default section
+        if has_data:
+            try:
+                dfile_name = "data/data-%s.file" % repo_name_only
+                dfile = dist_repo.get_contents(dfile_name, repo_tag_pr_branch)
+                dist_repo.delete_file(
+                    dfile_name, "data package moved to github", dfile.sha, repo_tag_pr_branch
+                )
+            except:
+                pass
+
+    new_content = "\n".join(new_lines)
     mssg = "Update tag for " + repo_name_only + " to " + new_tag
     update_file_object = dist_repo.update_file(
         cmsswdatafile, mssg, new_content, content_file.sha, repo_tag_pr_branch
     )
 
     # file with tags on the default branch
-    cmsswdataspec = "cmsswdata.spec"
-    content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
-    cmsswdatafile_raw = content_file.decoded_content
-    new_content = []
-    data_pkg = " data-" + repo_name_only
-    added_pkg = False
-    for line in cmsswdatafile_raw.splitlines():
-        line = line.decode()
-        new_content.append(line)
-        if not line.startswith("Requires: "):
-            continue
-        if line.strip().endswith(data_pkg):
-            added_pkg = False
-            break
-        if not added_pkg:
-            added_pkg = True
-            new_content.append("Requires:" + data_pkg)
+    if not has_data:
+        cmsswdataspec = "cmsswdata.spec"
+        content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
+        cmsswdatafile_raw = content_file.decoded_content
+        new_content = []
+        data_pkg = " data-" + repo_name_only
+        added_pkg = False
+        for line in cmsswdatafile_raw.splitlines():
+            line = line.decode()
+            new_content.append(line)
+            if not line.startswith("Requires: "):
+                continue
+            if line.strip().endswith(data_pkg):
+                added_pkg = False
+                break
+            if not added_pkg:
+                added_pkg = True
+                new_content.append("Requires:" + data_pkg)
 
-    if added_pkg:
-        mssg = "Update cmssdata spec for" + data_pkg
-        update_file_object = dist_repo.update_file(
-            cmsswdataspec, mssg, "\n".join(new_content), content_file.sha, repo_tag_pr_branch
-        )
+        if added_pkg:
+            mssg = "Update cmssdata spec for" + data_pkg
+            update_file_object = dist_repo.update_file(
+                cmsswdataspec, mssg, "\n".join(new_content), content_file.sha, repo_tag_pr_branch
+            )
 
     title = "Update tag for " + repo_name_only + " to " + new_tag
     body = "Move " + repo_name_only + " data to new tag, see \n" + data_repo_pr.html_url + "\n"

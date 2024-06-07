@@ -1,3 +1,5 @@
+import copy
+
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -37,8 +39,7 @@ from github_utils import (
     get_pr_commits_reversed,
     get_commit,
 )
-from github_utils import set_comment_emoji, get_comment_emojis, set_gh_user
-from github_utils import set_issue_emoji, get_issue_emojis
+from github_utils import set_gh_user, get_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
 from json import dumps, dump, load, loads
@@ -237,7 +238,7 @@ def read_bot_cache(data):
     res = loads_maybe_decompress(data)
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in res:
-            res[k] = v
+            res[k] = copy.deepcopy(v)
     collect_commit_cache(res)
     return res
 
@@ -439,6 +440,20 @@ def modify_comment(comment, match, replace, dryRun):
     return 0
 
 
+# github_utils.set_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L569
+# github_utils.set_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L149
+# github_utils.delete_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L587
+# github_utils.delete_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L168
+def set_emoji(repository, comment, emoji, reset_other):
+    if reset_other:
+        for e in comment.get_reactions():
+            login = e.user.login.encode("ascii", "ignore").decode()
+            if login == get_gh_user() and e.content != emoji:
+                comment.delete_reaction(e.id)
+
+    comment.create_reaction(emoji)
+
+
 def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
     if dryRun:
         return
@@ -448,10 +463,7 @@ def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", 
         or (bot_cache["emoji"][comment_id] != emoji)
         or (comment.reactions[emoji] == 0)
     ):
-        if "Issue.Issue" in str(type(comment)):
-            set_issue_emoji(comment.number, repository, emoji=emoji, reset_other=reset_other)
-        else:
-            set_comment_emoji(comment.id, repository, emoji=emoji, reset_other=reset_other)
+        set_emoji(repository, comment, emoji, reset_other)
         bot_cache["emoji"][comment_id] = emoji
     return
 
@@ -462,11 +474,9 @@ def has_user_emoji(bot_cache, comment, repository, emoji, user):
     if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
         e = bot_cache["emoji"][comment_id]
     else:
-        emojis = None
-        if "Issue.Issue" in str(type(comment)):
-            emojis = get_issue_emojis(comment.number, repository)
-        else:
-            emojis = get_comment_emojis(comment.id, repository)
+        # github_utils.get_issue_emojis -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L556
+        # github_utils.get_comment_emojis -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L135
+        emojis = comment.get_reactions()
         for x in emojis:
             if x["user"]["login"].encode("ascii", "ignore").decode() == user:
                 e = x["content"]
@@ -831,10 +841,26 @@ def add_nonblocking_labels(chg_files, extra_labels):
     return
 
 
+# TODO: remove once we update pygithub
+def get_commit_files(repo_, commit):
+    return (x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
+
+
+def on_labels_changed(added_labels, removed_labels):
+    # Placeholder function replaced during testing
+    pass
+
+
+def fetch_pr_result(url):
+    e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
+    return e, o
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
+
     gh_user_char = "@"
     if not notify_user(issue):
         gh_user_char = ""
@@ -1171,7 +1197,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # Make sure bot cache has the needed keys
     for k, v in BOT_CACHE_TEMPLATE.items():
         if k not in bot_cache:
-            bot_cache[k] = v
+            bot_cache[k] = copy.deepcopy(v)
 
     for comment in all_comments:
         ack_comment = comment
@@ -1531,7 +1557,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         "{2}, to re-enable processing of this PR, you can write `+commit-count` in a comment. Thanks.".format(
                             pr.commits,
                             TOO_MANY_COMMITS_WARN_THRESHOLD,
-                            ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS]),
+                            ", ".join(
+                                sorted([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
+                            ),
                         )
                     )
             else:
@@ -1628,7 +1656,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     bot_cache["commits"][commit.sha]["files"] = []
                 else:
                     bot_cache["commits"][commit.sha]["files"] = sorted(
-                        x["filename"] for x in get_commit(repo.full_name, commit.sha)["files"]
+                        get_commit_files(repo, commit)
                     )
 
             elif len(commit.parents) > 1:
@@ -1929,7 +1957,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                 + "/pr-result"
                             )
                             print("PR Result:", url)
-                            e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
+                            e, o = fetch_pr_result(url)
                             if e:
                                 print(o)
                                 raise Exception("System-error: unable to get PR result")
@@ -2101,6 +2129,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Blockers:", blockers)
 
     print("Changed Labels: added", labels - old_labels, "removed", old_labels - labels)
+    on_labels_changed(labels - old_labels, old_labels - labels)
     if old_labels == labels:
         print("Labels unchanged.")
     elif not dryRunOrig:
@@ -2130,7 +2159,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             backport_msg = ""
             if backport_pr_num:
                 backport_msg = "%s%s\n" % (BACKPORT_STR, backport_pr_num)
-            l2s = ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
+            l2s = ", ".join(gh_user_char + name for name in sorted(CMSSW_ISSUES_TRACKERS))
             issueMessage = format(
                 "%(msgPrefix)s %(gh_user_char)s%(user)s.\n\n"
                 "%(l2s)s can you please review it and eventually sign/assign?"
@@ -2306,23 +2335,28 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             print("DRY-RUN: not posting comment", messageFullySigned)
 
     unsigned = [commit_sha for (commit_sha, v) in list(signatures.items()) if v == "pending"]
-    missing_notifications = [
-        gh_user_char + name
-        for name, l2_categories in list(CMSSW_L2.items())
-        for signature in signing_categories
-        if signature in l2_categories and signature in unsigned and signature not in ["orp"]
-    ]
+    missing_notifications = sorted(
+        list(
+            set(
+                gh_user_char + name
+                for name, l2_categories in list(CMSSW_L2.items())
+                for signature in signing_categories
+                if signature in l2_categories
+                and signature in unsigned
+                and signature not in ["orp"]
+            )
+        )
+    )
 
-    missing_notifications = set(missing_notifications)
     # Construct message for the watchers
     watchersMsg = ""
     if watchers:
         watchersMsg = format(
             "%(watchers)s this is something you requested to" " watch as well.\n",
-            watchers=", ".join(watchers),
+            watchers=", ".join(sorted(watchers)),
         )
     # Construct message for the release managers.
-    managers = ", ".join([gh_user_char + x for x in releaseManagers])
+    managers = ", ".join([gh_user_char + x for x in sorted(releaseManagers)])
 
     releaseManagersMsg = ""
     if releaseManagers:

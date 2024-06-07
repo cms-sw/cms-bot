@@ -36,16 +36,6 @@
         ]
     },
     {
-        "type": "status",
-        "data": {
-            "commit": "e4d069b76c464274bf6e7d7cf9bac2153ed9a903",
-            "state": "pending",
-            "target_url": null,
-            "description": "Waiting for authorized user to issue the test command.",
-            "context": "bot/17/jenkins"
-        }
-    },
-    {
         "type": "add-label",
         "data": [
             "code-checks-pending",
@@ -85,15 +75,5 @@
     {
         "type": "edit-comment",
         "data": "cms-bot internal usage<!-- bot cache: {\"commits\":{\"2a9454e30606b17e52000110972998326ce9e428\":{\"files\":[\"Utilities/ReleaseScripts/test/BuildFile.xml\"],\"squashed\":false,\"time\":1711538467},\"e4d069b76c464274bf6e7d7cf9bac2153ed9a903\":{\"files\":[\"DQMServices/Components/test/dqmiofilecopy.sh\"],\"squashed\":false,\"time\":1712819089}},\"emoji\":{\"2049242908\":\"+1\"},\"last_seen_sha\":\"e4d069b76c464274bf6e7d7cf9bac2153ed9a903\",\"signatures\":{\"2049242908\":\"2a9454e30606b17e52000110972998326ce9e428\"}} -->"
-    },
-    {
-        "type": "status",
-        "data": {
-            "commit": "e4d069b76c464274bf6e7d7cf9bac2153ed9a903",
-            "state": "success",
-            "target_url": "https://github.com/iarspider-cmssw/cmssw/pull/17#issuecomment-2049247192",
-            "description": "Comment by iarspider at 2024-04-11 09:03:19 UTC processed.",
-            "context": "bot/17/ack"
-        }
     }
 ]

@@ -725,6 +725,10 @@ def set_gh_user(user):
     GH_USER = user
 
 
+def get_gh_user():
+    return GH_USER
+
+
 def get_combined_statuses(commit, repository):
     get_gh_token(repository)
     return github_api("/repos/%s/commits/%s/status" % (repository, commit), method="GET")

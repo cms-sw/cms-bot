@@ -4,7 +4,10 @@ cd ${CMSSW_BASE}
 export PATH=${CMSSW_BASE}/cms-bot/das-utils:${PATH}
 export PYTHONUNBUFFERED=1
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
-export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
 voms-proxy-init -voms cms
 
 rm -rf all-pyRelval

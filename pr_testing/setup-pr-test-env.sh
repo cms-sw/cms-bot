@@ -40,7 +40,10 @@ elif ! which scram >/dev/null 2>&1 ; then
 fi
 which dasgoclient
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
-export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
 mkdir -p ${RESULTS_DIR}
 [ "${ARCHITECTURE}" != "" ] && export SCRAM_ARCH=${ARCHITECTURE}
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils

@@ -66,7 +66,10 @@ pushd "$WORKSPACE/matrix-results"
     CMD_OPTS="${CMD_OPTS} ${EXTRA_MATRIX_COMMAND_ARGS}"
   fi
   [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
+  if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+    CMS_SITE_OVERRIDE="local"
+  fi
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt
   ERRORS_FILE=wf_errors.${BUILD_ID}.txt

@@ -56,7 +56,10 @@ echo "LD_LIBRARY_PATH"
 echo \$LD_LIBRARY_PATH | tr ':' '\n'
 set -x
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"
-export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
 export CMSBOT_PYTHON_CMD=\$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py

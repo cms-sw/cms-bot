@@ -4203,3 +4203,4 @@ architecture=el8_amd64_gcc12;label=CMSSW_14_0_8_MULTIARCHS;type=Production;state
 architecture=slc7_amd64_gcc12;label=CMSSW_14_0_8;type=Production;state=Announced;prodarch=0;
 architecture=el8_aarch64_gcc10;label=CMSSW_12_4_21;type=Production;state=Announced;prodarch=0;
 architecture=slc7_amd64_gcc10;label=CMSSW_12_4_21;type=Production;state=Announced;prodarch=0;
+architecture=el8_amd64_gcc10;label=CMSSW_12_4_21;type=Production;state=Announced;prodarch=1;

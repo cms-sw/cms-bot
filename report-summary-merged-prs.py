@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 This script generates json file (like CMSSW_10_0_X.json) which is then used to render cmssdt ib page.
 """

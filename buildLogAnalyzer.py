@@ -631,7 +631,7 @@ class LogFileAnalyzer(object):
                 ): ["linkError", "for plugin library %s in plugins"]
             },
             {
-                str("^error: class '.*?' has a different checksum for ClassVersion"): [
+                str("error: class .+ has a different checksum for ClassVersion"): [
                     "compError",
                     "for a different checksum for ClassVersion",
                 ]

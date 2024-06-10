@@ -15,7 +15,7 @@ function cmsbuild_args()
     for x in $(echo "$1" | tr ',' ' ') ; do
       case $x in
         upload_store ) arg="${arg} --upload-package-store" ;;
-        * ) BLD_OPTS="${ BLD_OPTS},$x" ;;
+        * ) BLD_OPTS="${BLD_OPTS},$x" ;;
       esac
     done
     [ "$BLD_OPTS" != "" ] && arg="${arg} --build-options $(echo ${BLD_OPTS} | sed 's|^,||')"

@@ -482,7 +482,11 @@ if ${BUILD_EXTERNAL} ; then
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
         $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
-    echo "#PR ${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
+    if [ -e cmsdist/cmssw-tool-conf.spec ] ; then
+      echo "#PR ${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
+    else
+      echo "#PR ${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.file
+    fi
     UPLOAD_OPTS="--upload-tmp-repository ${PR_EXTERNAL_REPO}"
     if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
       UPLOAD_OPTS="--sync-back"

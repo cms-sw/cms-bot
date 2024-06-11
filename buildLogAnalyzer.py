@@ -584,7 +584,7 @@ class LogFileAnalyzer(object):
                 ): ["compWarning", "for file in package"]
             },
             {
-                str("^ *(/.*?/" + self.release + "/|)src/.*?\:\d+\: warning( #[0-9]+-[a-Z]|): "): [
+                str("^ *(/.*?/" + self.release + "/|)src/.*?\:\d+\: warning( #[0-9]+-[a-zA-Z]|): "): [
                     "compWarning",
                     "for file in release",
                 ]

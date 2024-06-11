@@ -4211,3 +4211,4 @@ architecture=slc7_amd64_gcc11;label=CMSSW_13_0_19;type=Production;state=Announce
 architecture=el8_amd64_gcc11;label=CMSSW_13_0_19_HLT;type=Production;state=Announced;prodarch=1;
 architecture=el8_amd64_gcc11;label=CMSSW_13_0_19_HeavyIon;type=Production;state=Announced;prodarch=1;
 architecture=el8_aarch64_gcc11;label=CMSSW_13_0_19;type=Production;state=Announced;prodarch=0;
+architecture=el8_aarch64_gcc12;label=CMSSW_14_0_9;type=Production;state=Announced;prodarch=0;

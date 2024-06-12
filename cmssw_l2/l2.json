@@ -86,6 +86,7 @@
       "category": [
         "mtd-dpg"
       ], 
+      "end_date": 1718150400, 
       "start_date": 1698278400
     }
   ], 
@@ -1520,6 +1521,14 @@
       ], 
       "end_date": 1662336000, 
       "start_date": 1594080000
+    }
+  ], 
+  "martinamalberti": [
+    {
+      "category": [
+        "mtd-dpg"
+      ], 
+      "start_date": 1718150400
     }
   ], 
   "mdelcourt": [

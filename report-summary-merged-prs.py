@@ -320,7 +320,7 @@ def get_results_one_relval_file(filename):
         print(e)
         return False, details
     with open(summary_file, "w") as ref:
-        json.dump(details, ref)
+        json.dump(details, ref, sort_keys=True)
     return details["num_failed"] == 0, details
 
 
@@ -1341,7 +1341,7 @@ def generate_separated_json_results(results):
         file_name = rq["release_name"] + ".json"
         summary_file_name = rq["release_name"] + "_summary.txt"
         out_json = open(file_name, "w")
-        json.dump(rq, out_json, indent=4)
+        json.dump(rq, out_json, sort_keys=True, indent=4)
         out_json.close()
 
         f_summary = open(summary_file_name, "w")
@@ -1486,7 +1486,7 @@ def generate_ib_json_short_summary(results):
     short_summary["all_archs"] = ARCHITECTURES
     short_summary["prod_archs"] = get_production_archs(get_config_map_properties())
     out_json = open("LatestIBsSummary.json", "w")
-    json.dump(short_summary, out_json, indent=4)
+    json.dump(short_summary, out_json, sort_keys=True, indent=4)
     out_json.close()
 
 
@@ -1997,9 +1997,9 @@ if __name__ == "__main__":
     generate_ib_json_short_summary(results)
 
     out_json = open("merged_prs_summary.json", "w")
-    json.dump(results, out_json, indent=4)
+    json.dump(results, out_json, sort_keys=True, indent=4)
     out_json.close()
 
     out_groups = open("structure.json", "w")
-    json.dump(structure, out_groups, indent=4)
+    json.dump(structure, out_groups, sort_keys=True, indent=4)
     out_groups.close()

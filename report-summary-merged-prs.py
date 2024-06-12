@@ -978,7 +978,7 @@ def find_material_budget_results(comparisons, architecture):
         else:
             comp["material_budget"] = arch + ":" + comparison
         comp["material_budget_v2"] = {"status": status, "arch": arch}
-        if (comparison is None) or (comparison is "-1"):
+        if comparison in [None, "-1"]:
             pass
         elif comparison == "0":
             comp["material_budget_comparison"] = {"status": "found", "results": "ok", "arch": arch}

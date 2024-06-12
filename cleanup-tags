@@ -4,7 +4,7 @@ function cleanup_git_tag ()
 {
   local tag="$1"
   local d=$(echo "$tag" | sed 's|.*_X||;s|/.*||;s|.*_2|2|')
-  local DEL_TAG=$(python -c "import os;from time import time;from datetime import datetime;print int(datetime.strptime('$d', '%Y-%m-%d-%H%M').strftime('%s'))<(time()-(${DAYS_TO_KEEP}*86400))")
+  local DEL_TAG=$(python3 -c "import os;from time import time;from datetime import datetime;print (int(datetime.strptime('$d', '%Y-%m-%d-%H%M').strftime('%s'))<(time()-(${DAYS_TO_KEEP}*86400)))")
   if [ "${DEL_TAG}" = "True" ] ; then
     $ECHO git push origin :$tag 
   else

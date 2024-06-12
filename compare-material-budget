@@ -5,7 +5,7 @@ case $CMS_BOT_DIR in /*) ;; *) CMS_BOT_DIR=$(pwd)/${CMS_BOT_DIR} ;; esac
 REF_CMSSW_VERSION=$1
 eval `scram run -sh`
 if [ "X$REF_CMSSW_VERSION" = "X" ] ; then
-  REF_CMSSW_VERSION=$(export PYTHONPATH=$CMS_BOT_DIR ; python -c 'from material_budget_ref import get_ref; get_ref()')
+  REF_CMSSW_VERSION=$(export PYTHONPATH=$CMS_BOT_DIR ; python3 -c 'from material_budget_ref import get_ref; get_ref()')
 fi
 #Remove biglib path from LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$(echo $LD_LIBRARY_PATH | tr ':' '\n' | grep -v /biglib/$SCRAM_ARCH | tr '\n' ':' | sed 's|:$||')

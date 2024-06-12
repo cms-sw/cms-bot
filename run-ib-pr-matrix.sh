@@ -117,7 +117,11 @@ if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
   echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
 
   REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
-  DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')
+  if python3 -v ; then
+    DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python3 -c 'from releases import CMSSW_DEVEL_BRANCH; print (CMSSW_DEVEL_BRANCH)')
+  else
+    DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print (CMSSW_DEVEL_BRANCH)')
+  fi
   if [ "X${REL_QUEUE}" = "X${DEV_QUEUE}" ] ; then
     echo "${REL_QUEUE}" > $WORKSPACE/BaselineDevRelease
     send_jenkins_artifacts $WORKSPACE/BaselineDevRelease ib-baseline-tests/BaselineDevRelease

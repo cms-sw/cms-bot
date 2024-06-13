@@ -33,7 +33,7 @@ def esReportPackages(results):
     except HTTPError as e:
         print(e)
         try:
-            print(result.read())
+            print(result.read().decode())
         except:
             pass
 

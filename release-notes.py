@@ -165,7 +165,9 @@ if __name__ == "__main__":
                     json.dumps(
                         {"body": header + cmssw_notes_str + cmsdist_header + cmsdist_notes_str}
                     ).encode(),
-                ).read()
+                )
+                .read()
+                .decode()
             )
         else:
             print(header)

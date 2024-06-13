@@ -72,7 +72,7 @@ def load_graph(release_queue, maxNodes):
                 # connect this node with the previous one from of the same lane
                 previous_node = get_previous_node_lane(prev_node_lane, lane)
 
-            if previous_node == None:
+            if previous_node is None:
                 set_previous_node_lane(prev_node_lane, lane, new_node)
                 previous_lane = lane
                 continue
@@ -171,12 +171,12 @@ def get_prs_brought_by_commit(graph, commit_hash):
 
 class Node(object):
     # initializes the node with a hash, the lane (line in history), and a description
-    def __init__(self, hash, desc, lane):
-        self.hash = hash
+    def __init__(self, hash_, desc, lane):
+        self.hash = hash_
         self.desc = desc
         self.lane = lane
         self.is_from_merge = lane > 1
-        self.is_automated_merge = re.match(AUTO_FORWARD_PORT_REGEX, desc) != None
+        self.is_automated_merge = re.match(AUTO_FORWARD_PORT_REGEX, desc) is not None
         # which commit brought this one to the release queue
         self.brought_by = None
         # which commits did this commit bring

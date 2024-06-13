@@ -171,9 +171,18 @@ def main():
         for x in all_branch_modules_w_mt
         if (x[0] not in modules_mod_by_prs) and (x[0] not in already_done_modules)
     ]
-    unmodified_modules_sorted_by_time = sorted(
-        unmodified_modules_sorted_by_time, cmp=lambda x, y: cmp_f(x[1], y[1])
-    )
+
+    if sys.version_info.major < 3:
+        unmodified_modules_sorted_by_time = sorted(
+            unmodified_modules_sorted_by_time, cmp=lambda x, y: cmp_f(x[1], y[1])
+        )
+    else:
+        import functools
+
+        unmodified_modules_sorted_by_time = sorted(
+            unmodified_modules_sorted_by_time,
+            key=functools.cmp_to_key(lambda x, y: cmp_f(x[1], y[1])),
+        )
 
     logger.debug("Modules not modified by prs:")
     logger.debug(pformat(unmodified_modules_sorted_by_time))

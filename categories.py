@@ -75,7 +75,6 @@ CMSSW_L2 = {
     "fwyzard": ["heterogeneous"],
     "GurpreetSinghChahal": ["generators"],
     "jfernan2": ["reconstruction"],
-    "kskovpen": ["pdmv"],
     "sunilUIET": ["pdmv"],
     "miquork": ["pdmv", "jetmet-pog"],
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],
@@ -154,7 +153,7 @@ CMSSW_L2 = {
     "cardinia": ["tau-pog"],
     "danielwinterbottom": ["tau-pog"],
     "slava77": ["tracking-pog"],
-    "kskovpen": ["tracking-pog"],
+    "kskovpen": ["pdmv", "tracking-pog"],
     # PPD
     "malbouis": ["ppd"],
     "jordan-martins": ["ppd"],

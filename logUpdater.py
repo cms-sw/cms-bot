@@ -8,6 +8,7 @@ exec ${python_cmd} $0 ${1+"$@"}
 
 from __future__ import print_function
 import os
+import socket
 from os.path import dirname, abspath, join
 from cmsutils import doCmd, getIBReleaseInfo
 from time import sleep
@@ -181,7 +182,10 @@ class LogUpdater(object):
             return (1, str(e))
 
     def copy2RemoteHost(self, src, des, host):
-        cmd = "scp " + self.ssh_opt + " -r " + src + " " + host + ":" + des
+        ssh_tunnel = ""
+        if "cern.ch" not in socket.getfqdn():
+            ssh_tunnel = "-J cmsbuild@lxplus.cern.ch "
+        cmd = "scp " + ssh_tunnel + self.ssh_opt + " -r " + src + " " + host + ":" + des
         try:
             if self.dryRun:
                 print("CMD>>", cmd)

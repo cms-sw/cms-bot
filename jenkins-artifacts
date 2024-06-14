@@ -62,8 +62,9 @@ function send_jenkins_artifacts ()
   local IS_DIR=$(test -d $SRC && echo "/")
   local DES_DIR=$DES
   if [ "X$IS_DIR" = "X" ] ; then DES_DIR=$(dirname $DES) ; fi
+  if [ $(uname -n | grep "cern.ch" | wc -l) -eq 0 ]; then SSH_TUNNEL="-J cmsbuild@lxplus.cern.ch" ; fi
   for i in 1 2 3 4 5 6 7 8 9 ;  do
-    ( ssh $SSH_OPTS ${ARTIFACTS_MACHINE} mkdir -p ${ARTIFACT_BASE_DIR}/${DES_DIR} && \
+    ( ssh $SSH_TUNNEL $SSH_OPTS ${ARTIFACTS_MACHINE} mkdir -p ${ARTIFACT_BASE_DIR}/${DES_DIR} && \
       rsync ${SEND_JENKINS_ARTIFACTS_OPTS} -azl -e "ssh $SSH_OPTS" ${SRC}${IS_DIR} ${ARTIFACTS_MACHINE}:${ARTIFACT_BASE_DIR}/${DES_DIR}${IS_DIR} && echo "JA_STATUS=OK") && return
     sleep 60
   done

@@ -134,7 +134,9 @@ def postNewMessage(
     repo.create_issue(title=title, body=body, labels=labels)
 
 
-def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwds):
+def updateBugReport(dryRun=False, error_text="", workflows=None, issue=None, **kwds):
+    if workflows is None:
+        workflows = []
     print(workflows)
     workflows.sort(key=itemgetter("workflowId"))
     links = [RELVAL_ISSUE_LINK_TEMPLATE % s for s in workflows]

@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 from __future__ import print_function
 import json
 import re
@@ -15,7 +14,9 @@ class ResultTypeEnum(object):
 all_controls = [ResultTypeEnum.ISSUE, ResultTypeEnum.TEST]
 
 
-def add_exception_to_config(line, index, config_list, custom_rule_list=[]):
+def add_exception_to_config(line, index, config_list, custom_rule_list=None):
+    if custom_rule_list is None:
+        custom_rule_list = []
     default_rules_list = [
         {
             # will ignore " IgnoreCompletely" messages

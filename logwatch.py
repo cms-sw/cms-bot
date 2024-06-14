@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import print_function
 from os.path import exists, join, basename, getmtime
 from sys import exit

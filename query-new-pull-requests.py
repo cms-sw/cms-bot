@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from github import Github
 from os.path import expanduser
 from optparse import OptionParser
@@ -33,8 +32,7 @@ if __name__ == "__main__":
     repo = gh.get_repo(opts.repository)
 
     if opts.only_tests_pending:
-        queried_labels = []
-        queried_labels.append(repo.get_label("tests-pending"))
+        queried_labels = [repo.get_label("tests-pending")]
         issues = repo.get_issues(state="open", labels=queried_labels, sort="updated", since=since)
     else:
         label = [repo.get_label("release-build-request")]

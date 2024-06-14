@@ -1391,7 +1391,15 @@
       "category": [
         "tracking-pog"
       ], 
+      "end_date": 1718236800, 
       "start_date": 1687392000
+    }, 
+    {
+      "category": [
+        "pdmv", 
+        "tracking-pog"
+      ], 
+      "start_date": 1718236800
     }
   ], 
   "ktf": [

@@ -9,6 +9,10 @@ JENKINS_JAR=$2
 USER=cmsbuild
 SESSION=$OS
 
+# CMS config
+export CMS_SITE_OVERRIDE=T2_FI_HIP
+export ARTIFACTS_USER=cmsbuild
+
 # set up the project number
 export SLURM_ACCOUNT=project_462000245
 export SBATCH_ACCOUNT=$SLURM_ACCOUNT

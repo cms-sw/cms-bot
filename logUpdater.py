@@ -50,6 +50,8 @@ class LogUpdater(object):
             + self.release
         )
         self.ssh_opt = "-o CheckHostIP=no -o ConnectTimeout=60 -o ConnectionAttempts=5 -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no"
+        if "cern.ch" not in socket.getfqdn():
+            self.ssh_opt = "-J cmsbuild@lxplus.cern.ch " + self.ssh_opt
         return
 
     def updateUnitTestLogs(self, subdir=""):
@@ -182,10 +184,7 @@ class LogUpdater(object):
             return (1, str(e))
 
     def copy2RemoteHost(self, src, des, host):
-        ssh_tunnel = ""
-        if "cern.ch" not in socket.getfqdn():
-            ssh_tunnel = "-J cmsbuild@lxplus.cern.ch "
-        cmd = "scp " + ssh_tunnel + self.ssh_opt + " -r " + src + " " + host + ":" + des
+        cmd = "scp " + self.ssh_opt + " -r " + src + " " + host + ":" + des
         try:
             if self.dryRun:
                 print("CMD>>", cmd)

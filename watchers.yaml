@@ -823,33 +823,18 @@ mmarionncern:
 mkirsano:
 - GeneratorInterface
 mmusich:
-- Alignment/CommonAlignment
-- Alignment/CommonAlignmentAlgorithm
-- Alignment/CommonAlignmentParametrization
-- Alignment/CommonAlignmentProducer
-- Alignment/MillePedeAlignmentAlgorithm
-- Alignment/OfflineValidation
-- Alignment/ReferenceTrajectories
-- Alignment/SurveyAnalysis
-- Alignment/TrackerAlignment
-- Alignment/TwoBodyDecay
-- CalibTracker/Configuration
-- CalibTracker/Records
-- CalibTracker/SiStrip
-- DataFormats/SiStrip
-- DPGAnalysis/SiStripTools
+- .*DataFormats
+- .*L1T
+- .*HL
+- .*Trig
+- Alignment
+- CalibTracker
+- DPGAnalysis
 - DQM/Si
 - DQM/Track
 - MuonAnalysis/MomentumScaleCalibration
-- RecoLocalTracker/ClusterParameterEstimator
-- RecoLocalTracker/Configuration
-- RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip
-- RecoLocalTracker/SubCollectionProducers
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
-- SimTracker/SiStripDigitizer
+- RecoLocalTracker
+- SimTracker
 namapane:
 - .*Magnetic
 nhanvtran:

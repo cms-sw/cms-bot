@@ -22,6 +22,7 @@ ARTIFACTS_MACHINE="${ARTIFACTS_USER}@${ARTIFACTS_SERVER}"
 ARTIFACT_BASE_DIR_MAIN="/data/sdt/SDT/jenkins-artifacts"
 DEFAULT_TIMEOUT=60
 SSH_OPTS="-q -o ConnectTimeout=${DEFAULT_TIMEOUT} -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
+if [ $(uname -n | grep "cern.ch" | wc -l) -eq 0 ]; then SSH_OPTS="-J $ARTIFACTS_USER@lxtunnel.cern.ch $SSH_OPTS" ; fi
 CVMFS_ARTIFACT_DIR="/cvmfs/cms-ci.cern.ch/jenkins-artifacts"
 
 function cmd_jenkins_artifacts ()

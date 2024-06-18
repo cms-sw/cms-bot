@@ -4,6 +4,7 @@ cat <<EOF
 klist || true
 kinit -R || true
 hostname
+umask 0002
 cvmfs_config probe || true
 for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true

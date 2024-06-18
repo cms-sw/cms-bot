@@ -4,7 +4,7 @@ from os.path import exists
 from os import getenv
 from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile, epoch2week
-from urllib.request import Request, urlopen
+from _py2with3compatibility import Request, urlopen
 from os import stat as tstat
 from time import time
 

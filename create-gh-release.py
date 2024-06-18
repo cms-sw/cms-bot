@@ -26,7 +26,7 @@ request = Request(
 request.get_method = lambda: "POST"
 print("--")
 try:
-    print(urlopen(request, json.dumps(params).encode()).read())
+    print(urlopen(request, json.dumps(params).encode()).read().decode())
     print("OK release", release_name, "created")
 except Exception as e:
     print("There was an error while creating the release:\n", e)

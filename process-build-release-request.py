@@ -373,7 +373,7 @@ def get_release_github(repository, release_name):
         + release_name
     )
     try:
-        print(urlopen(request).read())
+        print(urlopen(request).read().decode())
         return True
     except Exception as e:
         print("There was an error while creating the release:\n", e)
@@ -442,7 +442,7 @@ def delete_release_github(release_name):
     )
 
     request = Request(releases_url, headers={"Authorization": "token " + GH_TOKEN})
-    releases = json.loads(urlopen(request).read())
+    releases = json.loads(urlopen(request).read().decode())
     matchingRelease = [x["id"] for x in releases if x["name"] == release_name]
 
     if len(matchingRelease) < 1:
@@ -454,7 +454,7 @@ def delete_release_github(release_name):
     request.get_method = lambda: "DELETE"
 
     try:
-        print(urlopen(request).read())
+        print(urlopen(request).read().decode())
         return "Release successfully deleted"
     except Exception as e:
         return "There was an error while deleting the release:\n %s" % e

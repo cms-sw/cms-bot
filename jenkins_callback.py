@@ -1,13 +1,14 @@
-from _py2with3compatibility import (
+from urllib.parse import urlencode
+from urllib.request import (
     Request,
     urlopen,
-    urlencode,
     build_opener,
     install_opener,
-    CookieJar,
-    HTTPCookieProcessor,
-    HTTPError,
+    HTTPBasicAuthHandler,
 )
+from urllib.error import HTTPError
+from http.cookiejar import CookieJar
+
 from json import loads
 
 
@@ -23,7 +24,9 @@ def update_crumb(jenkins_url, headers):
     return headers
 
 
-def build_jobs(jenkins_url, jobs_data, headers={}, user="cmssdt"):
+def build_jobs(jenkins_url, jobs_data, headers=None, user="cmssdt"):
+    if headers is None:
+        headers = {}
     for rk in ["OIDC_CLAIM_CERN_UPN"]:
         if rk not in headers:
             headers[rk] = user

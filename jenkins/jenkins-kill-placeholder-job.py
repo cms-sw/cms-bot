@@ -3,7 +3,6 @@
 This job will check if there are queued jobs for jenkins slaves with 'condor' label and how many.
 Then it will kill needed amount of placeholder jobs.
 """
-from __future__ import print_function
 from pprint import pprint
 import re, sys
 from os.path import dirname, abspath, join, exists
@@ -15,9 +14,9 @@ from xml.etree import cElementTree as ET
 import requests
 from collections import defaultdict
 from os import environ
-from _py2with3compatibility import run_cmd
+import subprocess
 
-RX_Project = re.compile(".+\/job\/(.+)\/(\d+)\/")
+RX_Project = re.compile(".+/job/(.+)/(\d+)/")
 RX_Queue_why = re.compile("^Waiting for next available executor.*\u2018(.*)\u2019")
 RX_Queue_nolabel = re.compile("^There are no nodes with the label.*\u2018(.*)\u2019")
 JENKINS_URL = environ["LOCAL_JENKINS_URL"]
@@ -68,7 +67,7 @@ def auto_node_schedule(auto_jobs):
     count = 0
     for job in auto_jobs:
         jid = auto_jobs[job]
-        err, out = run_cmd(
+        err, out = subprocess.getstatusoutput(
             "cat %s/jenkins/find-jenkins-job.groovy | %s groovy = '%s' 'JENKINS_DYNAMIC_JOB_ID=%s'"
             % (CMS_BOT_DIR, environ["JENKINS_CLI_CMD"], job, jid)
         )
@@ -76,10 +75,12 @@ def auto_node_schedule(auto_jobs):
             count += 1
             prop_file = "jenkins-trigger-dynamic-job-%s.txt" % count
             jpram = join(SCRIPT_DIR, "auto-nodes", job)
-            run_cmd("echo 'JENKINS_DYNAMIC_JOB_NAME=%s' > %s" % (job, prop_file))
-            run_cmd("echo 'JENKINS_DYNAMIC_JOB_ID=%s' >> %s" % (jid, prop_file))
+            subprocess.getstatusoutput(
+                "echo 'JENKINS_DYNAMIC_JOB_NAME=%s' > %s" % (job, prop_file)
+            )
+            subprocess.getstatusoutput("echo 'JENKINS_DYNAMIC_JOB_ID=%s' >> %s" % (jid, prop_file))
             if exists(jpram):
-                run_cmd("cat %s >> %s" % (jpram, prop_file))
+                subprocess.getstatusoutput("cat %s >> %s" % (jpram, prop_file))
         else:
             print(out)
     return

@@ -35,7 +35,9 @@ def runStep1Only(basedir, workflow, args=""):
     return
 
 
-def runThreadMatrix(basedir, workflow, args="", logger=None, wf_err={}):
+def runThreadMatrix(basedir, workflow, args="", logger=None, wf_err=None):
+    if wf_err is None:
+        wf_err = {}
     args = FixWFArgs(os.environ["CMSSW_VERSION"], os.environ["SCRAM_ARCH"], workflow, args)
     workdir = os.path.join(basedir, workflow)
     matrixCmd = "runTheMatrix.py -l " + workflow + " " + args
@@ -213,7 +215,11 @@ class PyRelValsThread(object):
             t.join()
         return
 
-    def run_workflows(self, workflows=[], logger=None, known_errors={}):
+    def run_workflows(self, workflows=None, logger=None, known_errors=None):
+        if workflows is None:
+            workflows = []
+        if known_errors is None:
+            known_errors = {}
         if not workflows:
             return
         workflows = workflows[::-1]

@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import sys, json, re, ssl, base64
 from os.path import exists
 from os import getenv
 from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile, epoch2week
-from _py2with3compatibility import Request, urlopen
+from urllib.request import Request, urlopen
 from os import stat as tstat
 from time import time
 

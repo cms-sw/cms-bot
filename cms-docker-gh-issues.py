@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from __future__ import print_function
 from github import Github
 from os.path import expanduser, abspath, dirname, join, exists
@@ -60,7 +60,7 @@ gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip()
 gh_repo = gh.get_repo(args.repo)
 print("Authentication succeeded to " + str(gh_repo.full_name))
 
-if args.comment == False:
+if not args.comment:
 
     issue_number = None
     for issue in gh_repo.get_issues(
@@ -74,7 +74,7 @@ if args.comment == False:
         print("Issue already closed... Ready for building!")
         issue_number = issue.number
 
-    if issue_number == None:
+    if issue_number is None:
         print("Creating issue request...")
         issue_obj = gh_repo.create_issue(title=args.title, body=msg, labels=args.labels)
         issue_number = issue_obj.number

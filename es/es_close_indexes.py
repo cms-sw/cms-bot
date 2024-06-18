@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
-from __future__ import print_function
 from os.path import dirname, abspath
 import sys, re
 
-# TODO are these script used?
 cmsbot_dir = None
 if __file__:
     cmsbot_dir = dirname(dirname(abspath(__file__)))

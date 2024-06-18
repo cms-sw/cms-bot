@@ -1,5 +1,4 @@
-#!/bin/env python
-from __future__ import print_function
+#!/bin/env python3
 import sys, json, os
 from es_utils import send_payload
 
@@ -11,6 +10,7 @@ try:
     data = json.loads(open(sys.argv[1]).read().strip())
 except:
     print("json file not found/processed")
+    exit(1)
 payload = {}
 payload["architecture"] = arch
 payload["release"] = rel

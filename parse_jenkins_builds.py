@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from __future__ import print_function
 from hashlib import sha1
 import os, re, sys, json, datetime, time, functools
 import xml.etree.ElementTree as ET
@@ -307,7 +306,7 @@ for entry in es_queue:
         if dir.isdigit():
             file_path = functools.reduce(os.path.join, [job_path, dir, "build.xml"])
             queue_id = grep(file_path, str(es_queue[entry]["queue_id"]), True)
-            if queue_id != None:
+            if queue_id is not None:
                 queue_id.replace("<queueId>", "").replace("</queueId>", "").replace("\n", "")
                 jstime = (
                     grep(file_path, str("<startTime>"), True)

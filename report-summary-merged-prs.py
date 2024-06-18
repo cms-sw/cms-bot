@@ -599,7 +599,9 @@ def execute_magic_command_tags(
     return tags
 
 
-def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache={}):
+def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache=None):
+    if cache is None:
+        cache = {}
     comp = {}
     comp["compared_tags"] = "%s-->%s" % (start_tag, end_tag)
     comp["release_name"] = end_tag
@@ -620,7 +622,9 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
     return comp
 
 
-def compare_tags(branch, tags, git_dir, repo, cache={}):
+def compare_tags(branch, tags, git_dir, repo, cache=None):
+    if cache is None:
+        cache = {}
     comparisons = []
     if len(tags) > 1:
         comparisons.append(

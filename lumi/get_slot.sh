@@ -54,6 +54,8 @@ if ! [ -f $SINGCVMFS_CACHEIMAGE ]; then
   /usr/sbin/mkfs.ext3 -m 0 -E root_owner $SINGCVMFS_CACHEIMAGE 50G
 fi
 
+klist $SCRATCH/krb5cc_$USER || true
+
 echo "#########################################"
 
 REQUEST_TIME="48:00:00"

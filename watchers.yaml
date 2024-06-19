@@ -1714,7 +1714,10 @@ ram1123:
   - DataFormats/EgammaCandidates
 dinyar:
   - DataFormats/L1TMuon
+  - DataFormats/L1Scouting
+  - DataFormats/L1ScoutingRawData
   - DataFormats/L1Trigger
+  - EventFilter/L1ScoutingRawToDigi
   - EventFilter/L1TRawToDigi
   - L1Trigger/L1TCommon
   - L1Trigger/L1TMuon

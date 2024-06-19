@@ -4,8 +4,9 @@ echo "[$(date)] Requesting slot on LUMI HPC"
 
 OS=$1
 USER=$2
-JENKINS_JAR=$3
-export SLURM_ACCOUNT=$4
+NODE_NAME=$3
+JENKINS_JAR=$4
+export SLURM_ACCOUNT=$5
 
 # use one session per OS
 SESSION=$OS
@@ -53,6 +54,9 @@ if ! [ -f $SINGCVMFS_CACHEIMAGE ]; then
   mkdir -p $(dirname $SINGCVMFS_CACHEIMAGE)
   /usr/sbin/mkfs.ext3 -m 0 -E root_owner $SINGCVMFS_CACHEIMAGE 50G
 fi
+
+export KRB5CCNAME=FILE:$SCRATCH/krb5cc_${USER}_${NODE_NAME}
+klist || true
 
 echo "#########################################"
 

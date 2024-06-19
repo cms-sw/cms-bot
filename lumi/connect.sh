@@ -22,5 +22,6 @@ echo "Launching LUMI node... for ${OS} using ${TARGET}"
 JENKINS_VERSION=$(jenkins --version)
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
-scp $SSH_OPTS /var/lib/jenkins/slave.jar ${TARGET}:~/cmsbuild/slave-${NODE_NAME}.jar
-ssh $SSH_OPTS ${TARGET} "~/cmsbuild/cms-bot/lumi/get_slot.sh ${OS} ${USER} ~/cmsbuild/slave-${NODE_NAME}.jar ${SLURM_ACCOUNT}"
+JENKINS_JAR=~/cmsbuild/slave-${NODE_NAME}.jar
+scp $SSH_OPTS /var/lib/jenkins/slave.jar ${TARGET}:${JENKINS_JAR}
+ssh $SSH_OPTS ${TARGET} "~/cmsbuild/cms-bot/lumi/get_slot.sh ${OS} ${USER} ${NODE_NAME} ${JENKINS_JAR} ${SLURM_ACCOUNT}"

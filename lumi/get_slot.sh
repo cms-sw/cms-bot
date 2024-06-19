@@ -5,7 +5,7 @@ echo "[$(date)] Requesting slot on LUMI HPC"
 OS=$1
 USER=$2
 JENKINS_JAR=$3
-SLURM_ACCOUNT=$4
+export SLURM_ACCOUNT=$4
 
 # use one session per OS
 SESSION=$OS

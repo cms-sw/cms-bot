@@ -3,14 +3,19 @@
 echo "[$(date)] Requesting slot on LUMI HPC"
 
 OS=$1
-JENKINS_JAR=$2
+USER=$2
+NODE_NAME=$3
+JENKINS_JAR=$4
+export SLURM_ACCOUNT=$5
 
 # use one session per OS
-USER=cmsbuild
 SESSION=$OS
 
+# CMS config
+export CMS_SITE_OVERRIDE=T2_FI_HIP
+export ARTIFACTS_USER=${USER}
+
 # set up the project number
-export SLURM_ACCOUNT=project_462000245
 export SBATCH_ACCOUNT=$SLURM_ACCOUNT
 export SALLOC_ACCOUNT=$SLURM_ACCOUNT
 
@@ -49,6 +54,9 @@ if ! [ -f $SINGCVMFS_CACHEIMAGE ]; then
   mkdir -p $(dirname $SINGCVMFS_CACHEIMAGE)
   /usr/sbin/mkfs.ext3 -m 0 -E root_owner $SINGCVMFS_CACHEIMAGE 50G
 fi
+
+export KRB5CCNAME=FILE:$SCRATCH/krb5cc_${USER}_${NODE_NAME}
+klist || true
 
 echo "#########################################"
 

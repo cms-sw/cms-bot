@@ -11,7 +11,7 @@ SCRATCH=/scratch/$SLURM_ACCOUNT/$USER/$SESSION
 
 KTAB=${HOME}/keytabs/$(echo $TARGET | sed 's|@.*||').keytab
 if [ ! -f $KTAB ] ; then KTAB=${HOME}/keytabs/cmsbld.keytab ; fi
-export KRB5CCNAME=FILE:/tmp/krb5cc_$USER
+export KRB5CCNAME=FILE:/tmp/krb5cc_${USER}_${NODE_NAME}
 kinit $USER@CERN.CH -k -t ${KTAB}
 klist || true
 
@@ -23,4 +23,4 @@ JENKINS_VERSION=$(jenkins --version)
 SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
 
 scp $SSH_OPTS /var/lib/jenkins/slave.jar ${TARGET}:~/cmsbuild/slave-${NODE_NAME}.jar
-ssh $SSH_OPTS ${TARGET} "~/cmsbuild/cms-bot/lumi/get_slot.sh ${OS} ~/cmsbuild/slave-${NODE_NAME}.jar"
+ssh $SSH_OPTS ${TARGET} "~/cmsbuild/cms-bot/lumi/get_slot.sh ${OS} ${USER} ~/cmsbuild/slave-${NODE_NAME}.jar ${SLURM_ACCOUNT}"

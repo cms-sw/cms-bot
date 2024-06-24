@@ -14,6 +14,7 @@ jobs:
         python-version: [ '3.x' ]
     name: Python ${{ matrix.python-version }}
     steps:
+      - run: echo "${{ github.actor }} is testing out GitHub Actions 🚀"
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2

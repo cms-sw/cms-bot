@@ -109,9 +109,17 @@ EX_OPTS=""
 if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   EX_OPTS="--force-tag"
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
-  #if [ $(grep 'upload-package-store' PKGTOOLS/cmsBuild | wc -l) -gt 0 ] ; then
-  #  CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store"
-  #fi
+  if [ $(grep 'upload-package-store' PKGTOOLS/cmsBuild | wc -l) -gt 0 ] ; then
+    case  $ARCHITECTURE in
+      el9_amd64_gcc13 )
+        if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+          CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store-s3"
+        elif [ $(grep 'upload-package-store' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+          CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store"
+        fi
+        ;;
+    esac
+  fi
 fi
 
 ## build and upload revision based packages

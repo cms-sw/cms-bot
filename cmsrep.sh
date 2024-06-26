@@ -15,7 +15,7 @@ function cmsbuild_args()
     BLD_OPTS=""
     for x in $(echo "$1" | tr ',' ' ') ; do
       case $x in
-        upload_store ) arg="${arg} --upload-package-store" ;;
+        upload_store ) arg="${arg} --upload-package-store-s3" ;;
         * ) BLD_OPTS="${BLD_OPTS},$x" ;;
       esac
     done

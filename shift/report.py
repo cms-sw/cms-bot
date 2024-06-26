@@ -46,7 +46,7 @@ def main():
             release_name, errors = libib.check_ib(comp)
             with open(f"out/{release_name}.md", "w") as f:
                 print(f"## {release_name}\n", file=f)
-                print("-- INSERT SCREENSHOT HERE --\n", file=f)
+                # print("-- INSERT SCREENSHOT HERE --\n", file=f)
                 for arch in errors:
                     print(f"### {arch}\n", file=f)
                     if any(

@@ -173,7 +173,7 @@ def check_ib(data, compilation_only=False):
             _ = pklr.load()
             _ = pklr.load()
             _ = pklr.load()
-            packageList: list[PackageInfo] = pklr.load()
+            packageList: List[PackageInfo] = pklr.load()
             summIO.close()
 
             url_prefix = f"https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/{plat}/{rel}"
@@ -270,7 +270,7 @@ def check_ib(data, compilation_only=False):
                     exitcodeName = exitcodes.get(exitcode, str(exitcode))
                     if rvItem["exitcode"] != 0 and rvItem["known_error"] == 0:
                         for i, rvStep in enumerate(rvItem["steps"]):
-                            if rvStep["status"] == "FAILED":
+                            if rvStep["status"] in ("FAILED", "DAS_ERROR"):
                                 webURL = (
                                     f"http://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
                                     f"{arch}/"
@@ -288,9 +288,11 @@ def check_ib(data, compilation_only=False):
                                 break
                         else:
                             logger.error(
-                                f"ERROR: RelVal {rvItem['id']} failed with {exitcodeName} "
+                                f"RelVal {rvItem['id']} in IB {data['release_name']} for {arch} failed with {exitcodeName} "
                                 f"at UNKNOWN step"
                             )
+                            for i, rvStep in enumerate(rvItem["steps"]):
+                                print(f"Step {i} status {rvStep['status']}")
 
     logger.info("=" * 80)
     return data["release_name"], res

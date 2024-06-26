@@ -329,7 +329,7 @@ if $DO_COMPARISON ; then
       echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
     done
   popd
-  send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
+  #send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
   rm -rf $WORKSPACE/ib-baseline-tests
 fi
 
@@ -752,7 +752,8 @@ echo '{}' > $RECENT_COMMITS_FILE
 touch $WORKSPACE/changed-files
 if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
-  if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; fi
+  if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; else git cms-init --upstream-only ; fi
+
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
     echo 'I will add the following pull request to the test'
@@ -784,6 +785,31 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     prepare_upload_results
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Merge: Unknow error while merging."
     exit 0
+  fi
+
+  if $PRODUCTION_RELEASE ; then
+    pushd ..
+      mv src src.tmp
+      mkdir src && cd src
+      DSIZE=0
+      THRDS=""
+      NUM_PROC=$(nproc)
+      if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
+      if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; else git cms-init --upstream-only ; fi
+      git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NUM_PROC}" || true
+      git repack -a -d ${THRDS}
+      git repack -a -d ${THRDS}
+      OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
+      PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
+      git cms-merge-topic --debug --ssh -u ${CMSSW_ORG}:${PR_NR}
+      git repack -d ${THRDS}
+      NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
+      let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
+      if [ $DSIZE -gt 0 ]; then echo "\n* - This PR adds an extra ${DSIZE}KB to repository" > ${RESULTS_DIR}/16-git-repo-size-report.res; fi
+      cd ..
+      rm -rf src && mv src.tmp src
+      exit 0
+    popd
   fi
 
   #############################################

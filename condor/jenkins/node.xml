@@ -27,7 +27,7 @@
           <string>CMSSW_GIT_REFERENCE</string>
           <string>/cvmfs/cms.cern.ch/cmssw.git.daily</string>
           <string>PYTHONPATH</string>
-          <string>/cvmfs/cms-ib.cern.ch/jenkins-env/python/PyGithub</string>
+          <string>/cvmfs/cms-ib.cern.ch/jenkins-env/py23</string>
           <string>SINGULARITY_OPTIONS</string>
           <string>--nv</string>
         </tree-map>

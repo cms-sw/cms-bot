@@ -470,7 +470,9 @@ if ${BUILD_EXTERNAL} ; then
       dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
-    if [ $(grep 'upload-package-store' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+    if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
+    elif [ $(grep 'upload-package-store' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store"
     fi
     #Process cmsdist Build options

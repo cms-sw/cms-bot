@@ -1,0 +1,40 @@
+name: Test changes to process_pr.py
+
+on:
+  push:
+    paths:
+    - process_pr.py
+    - .github/workflows/test-process-pr.yaml
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.9", "3.10", "3.11"]
+
+    steps:
+      - uses: MathRobin/timezone-action@v1.1
+        with:
+          timezoneLinux: 'Europe/Paris'
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: PyGithub/PyGithub
+          ref: v1.56
+          path: tmp
+          sparse-checkout: tests/Framework.py
+          sparse-checkout-cone-mode: false
+      - run: mv tmp/tests/Framework.py tests/
+      - run: sed -i -e 's/pool_size=self.pool_size/per_page=100/g' tests/Framework.py
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r tests/test-requirements.txt
+      - name: Test with pytest
+        run: |
+          pytest -v -s tests/test_process_pr.py --auth_with_token

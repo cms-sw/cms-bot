@@ -1790,3 +1790,18 @@ jlidrych:
 - RecoLocalTracker/SubCollectionProducers
 lenzip:
 - PhysicsTools/NanoAODTools
+martinamalberti:
+- DataFormats/ForwardDetId
+- DataFormats/FTLDigi
+- DataFormats/FTLRecHit
+- DetectorDescription
+- Geometry
+- RecoLocalFastTime
+- RecoMTD
+- RecoVertex
+- SimDataFormats
+- SimFastTiming
+- SimG4CMS
+- SimG4Core
+- SimGeneral
+- Validation/MtdValidation

@@ -113,3 +113,6 @@ def main():
         sort_keys=True,
         separators=(",", ": "),
     )
+
+if __name__ == "__main__":
+    main()

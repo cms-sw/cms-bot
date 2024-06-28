@@ -53,6 +53,8 @@ def main():
         if items[2] == "interface":
             continue
         for src in usedby[inc].split(" "):
+            if not src:
+                continue
             sitems = src.split("/")
             if (items[0] == sitems[0]) and (items[1] == sitems[1]) and (items[2] == sitems[2]):
                 continue

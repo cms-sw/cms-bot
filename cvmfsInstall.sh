@@ -188,6 +188,8 @@ rm -f $BASEDIR/latest
 ln -s $(grep "^nweek-" ${CMS_BOT_DIR}/ib-weeks | tail -1) $BASEDIR/latest
 
 if $CVMFS_INSTALL ; then
+  # Remove RPMs before publishing
+  rm -rf $WORKDIR/*/var/cmspkg/rpms || true
   # Write everything in the repository
   echo "Publishing started" `date`
   time cvmfs_server publish

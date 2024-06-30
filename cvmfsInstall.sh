@@ -147,7 +147,6 @@ for REPOSITORY in $REPOSITORIES; do
         ${CMSPKG} install -y $x || true
         time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
         time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
-        rm -rf $WORKDIR/*/var/cmspkg/rpms || true
         relname=`echo $x | awk -F + '{print $NF}'`
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'`
         if [ "X$timestamp" != "X" ] ; then
@@ -159,6 +158,7 @@ for REPOSITORY in $REPOSITORIES; do
         fi
       fi
     ) || true
+rm -rf $WORKDIR/*/var/cmspkg/rpms || true
 done #End week repository
 
 mkdir -p $BASEDIR/scramdb/etc/scramrc
@@ -188,8 +188,6 @@ rm -f $BASEDIR/latest
 ln -s $(grep "^nweek-" ${CMS_BOT_DIR}/ib-weeks | tail -1) $BASEDIR/latest
 
 if $CVMFS_INSTALL ; then
-  # Remove RPMs before publishing
-  rm -rf $WORKDIR/*/var/cmspkg/rpms || true
   # Write everything in the repository
   echo "Publishing started" `date`
   time cvmfs_server publish

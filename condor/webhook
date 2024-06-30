@@ -38,11 +38,12 @@ elif [ "${STATUS}" = "offline" ] ; then
   if [ $(echo " ${LABELS} " | grep ' auto-recreate ' | wc -l) -gt 0 ] ; then
     echo "REPLACE_NODE=${CONDOR_JOB_ID}" > create-node.txt
     [ $(echo " ${LABELS} " | grep ' el9 ' | wc -l) -gt 0 ] && echo "REQUEST_ALMA9=true" >> create-node.txt
-    echo "REQUEST_CPUS=$(echo \"${LABELS}\" | tr ' ' '\n' | grep '^cpu-[1-9][0-9]*$' | sed 's|^cpu-||')" >> create-node.txt
     if [ $(echo " ${LABELS} " | grep ' aarch64 ' | wc -l) -gt 0 ] ; then
+      echo "REQUEST_CPUS=10" >> create-node.txt
       echo "NODE_ARCH=aarch64" >> create-node.txt
       echo "REQUEST_MAXRUNTIME=604800" >> create-node.txt
     elif [ $(echo " ${LABELS} " | grep ' x86_64 ' | wc -l) -gt 0 ] ; then
+      echo "REQUEST_CPUS=16" >> create-node.txt
       echo "NODE_ARCH=x86_64" >> create-node.txt
     fi
   fi

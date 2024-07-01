@@ -263,3 +263,7 @@ def main():
 
     tls = LogSplitter(outFileIn=outFile, verbIn=verb)
     tls.split(logFile)
+
+
+if __name__ == "__main__":
+    main()

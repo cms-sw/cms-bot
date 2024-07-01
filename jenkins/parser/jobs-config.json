@@ -92,6 +92,15 @@
         "maxTime": "6"
       },
       {
+        "jobName": "ib-run-invalid-includes",
+        "errorType": [
+            "gitErrors",
+            "cvmfsFailure",
+            "busError"
+        ],
+        "maxTime": "6"
+      },
+      {
         "jobName": "auto-forward-port-branch",
         "errorType": [
           "gitErrors"
@@ -179,6 +188,11 @@
         "jobName": "ib-run-iwyu",
         "errorType": [],
         "maxTime": "6"
+      },
+      {
+	"jobName": "ib-run-pr-wait-deployment",
+	"errorType": ["timedOut", "hudsonConnection", "busError", "cvmfsFailure", "afsFailure", "workspaceFailure"],
+	"maxTime": "3"
       }
     ],
     "errorMsg": {
@@ -269,6 +283,12 @@
       "singularityMountFailure": {    
         "errorStr": [
           "mount hook function failure.*doesn't exist in container"
+	],
+	"action": "nodeOff"
+      },
+      "diskFullFailure": {
+	"errorStr": [
+	  "No space left on device"
 	],
 	"action": "nodeOff"
       }

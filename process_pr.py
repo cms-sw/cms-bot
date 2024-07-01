@@ -1,3 +1,5 @@
+import copy
+
 from categories import (
     CMSSW_L2,
     CMSSW_L1,
@@ -20,19 +22,33 @@ from cms_static import (
     CMSBOT_IGNORE_MSG,
     VALID_CMS_SW_REPOS_FOR_TESTS,
     CREATE_REPO,
+    CMSBOT_TECHNICAL_MSG,
 )
 from cms_static import BACKPORT_STR, GH_CMSSW_ORGANIZATION, CMSBOT_NO_NOTIFY_MSG
 from githublabels import TYPE_COMMANDS, TEST_IGNORE_REASON
 from repo_config import GH_REPO_ORGANIZATION
 import re, time
+from collections import defaultdict
+import zlib, base64
 from datetime import datetime
 from os.path import join, exists, dirname
 from os import environ
-from github_utils import edit_pr, api_rate_limits
-from github_utils import set_comment_emoji, get_comment_emojis, delete_comment_emoji, set_gh_user
+from github_utils import (
+    edit_pr,
+    api_rate_limits,
+    get_pr_commits_reversed,
+    get_commit,
+)
+from github_utils import set_gh_user, get_gh_user
 from socket import setdefaulttimeout
 from _py2with3compatibility import run_cmd
-from json import dumps, load
+from json import dumps, dump, load, loads
+import yaml
+
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 try:
     from categories import CMSSW_LABELS
@@ -65,13 +81,6 @@ except:
         return False
 
 
-dpg_pog = get_dpg_pog()
-for l in CMSSW_LABELS.keys():
-    if not l in dpg_pog:
-        del CMSSW_LABELS[l]
-    else:
-        CMSSW_LABELS[l] = [re.compile("^(" + p + ").*$") for p in CMSSW_LABELS[l]]
-
 setdefaulttimeout(300)
 CMSDIST_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSDIST_REPO)
 CMSSW_REPO_NAME = join(GH_REPO_ORGANIZATION, GH_CMSSW_REPO)
@@ -82,6 +91,7 @@ def format(s, **kwds):
     return s % kwds
 
 
+BOT_CACHE_TEMPLATE = {"emoji": {}, "signatures": {}, "commits": {}}
 TRIGERING_TESTS_MSG = "The tests are being triggered in jenkins."
 TRIGERING_TESTS_MSG1 = "Jenkins tests started for "
 TRIGERING_STYLE_TEST_MSG = "The project style tests are being triggered in jenkins."
@@ -125,11 +135,13 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
+REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
+REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 TEST_WAIT_GAP = 720
 ALL_CHECK_FUNCTIONS = None
 EXTRA_RELVALS_TESTS = ["threading", "gpu", "high-stats", "nano"]
 EXTRA_RELVALS_TESTS_OPTS = "_" + "|_".join(EXTRA_RELVALS_TESTS)
-EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|profiling|none"
+EXTRA_TESTS = "|".join(EXTRA_RELVALS_TESTS) + "|hlt_p2_timing|profiling|none"
 SKIP_TESTS = "|".join(["static", "header"])
 ENABLE_TEST_PTRN = "enable(_test(s|)|)"
 JENKINS_NODES = "[a-zA-Z0-9_|&\s()-]+"
@@ -175,14 +187,34 @@ MULTILINE_COMMENTS_MAP = {
     + "|_input|)": [RELVAL_OPTS, "EXTRA_MATRIX_COMMAND_ARGS", True],
 }
 
+BOT_CACHE_CHUNK_SIZE = 55000
+TOO_MANY_COMMITS_WARN_THRESHOLD = 150
+TOO_MANY_COMMITS_FAIL_THRESHOLD = 240
 L2_DATA = {}
 
 
-def init_l2_data(cms_repo):
+def update_CMSSW_LABELS(repo_config):
+    try:
+        check_dpg_pog = repo_config.CHECK_DPG_POG
+    except:
+        check_dpg_pog = False
+    dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
+    for l in CMSSW_LABELS.keys():
+        if check_dpg_pog and (not l in dpg_pog):
+            del CMSSW_LABELS[l]
+        else:
+            CMSSW_LABELS[l] = [
+                re.compile("^(" + p + ").*$") if isinstance(p, str) else p for p in CMSSW_LABELS[l]
+            ]
+    return
+
+
+def init_l2_data(repo_config, cms_repo):
     l2_data = {}
     if cms_repo:
         with open(join(dirname(__file__), "cmssw_l2", "l2.json")) as ref:
-            l2_data = load(ref)
+            default_l2_data = load(ref)
+        l2_data = read_repo_file(repo_config, "l2.json", default_l2_data, False)
         for user in CMSSW_L2:
             if (user in l2_data) and ("end_date" in l2_data[user][-1]):
                 del l2_data[user][-1]["end_date"]
@@ -190,6 +222,96 @@ def init_l2_data(cms_repo):
         for user in CMSSW_L2:
             l2_data[user] = [{"start_date": 0, "category": CMSSW_L2[user]}]
     return l2_data
+
+
+def collect_commit_cache(bot_cache):
+    REGEX_COMMIT_SHA = re.compile("^[a-f0-9]{40}$", re.IGNORECASE)
+    commit_cache = {k: v for k, v in bot_cache.items() if REGEX_COMMIT_SHA.match(k)}
+    if commit_cache:
+        for k in commit_cache:
+            del bot_cache[k]
+        bot_cache["commits"] = commit_cache
+
+
+def read_bot_cache(data):
+    print("Loading bot cache")
+    res = loads_maybe_decompress(data)
+    for k, v in BOT_CACHE_TEMPLATE.items():
+        if k not in res:
+            res[k] = copy.deepcopy(v)
+    collect_commit_cache(res)
+    return res
+
+
+def extract_bot_cache(comment_msgs):
+    print(
+        "Reading bot cache from technical comment(s):",
+        ",".join(str(c) for c in comment_msgs),
+    )
+
+    data = ""
+    for comment_msg in comment_msgs:
+        seen_commits_match = REGEX_COMMITS_CACHE.search(comment_msg.body)
+        if seen_commits_match:
+            data += seen_commits_match[1]
+
+    if data:
+        return read_bot_cache(data)
+
+    return {}
+
+
+def prepare_bot_cache(bot_cache):
+    res = []
+    data = dumps_maybe_compress(bot_cache)
+    while data:
+        # The limit is 65535 chars, and minimal bot cache comment is
+        # `cms-bot internal usage<!-- bot cache:  -->`, 42 characters.
+        # But since the cache can be embedded in an "already seen" comment, whose length is not
+        # known in advance, we limit the amout of (encoded cache) data per comment
+        # to BOT_CACHE_CHUNK_SIZE chars.
+        part, data = data[:BOT_CACHE_CHUNK_SIZE], data[BOT_CACHE_CHUNK_SIZE:]
+        res.append(part)
+
+    return res
+
+
+def write_bot_cache(bot_cache, cache_comments, issue, dryRun):
+    data = prepare_bot_cache(bot_cache)
+    for i, part in enumerate(data):
+        try:
+            cache_comment = cache_comments[i]
+        except (TypeError, IndexError):
+            cache_comment = None
+
+        old_body = cache_comment.body if cache_comment else CMSBOT_TECHNICAL_MSG
+        new_body = REGEX_COMMITS_CACHE.sub("", old_body) + "<!-- bot cache: " + part + " -->"
+        if old_body == new_body:
+            continue
+
+        print("Saving bot cache ({0}/{1})".format(i + 1, len(data)))
+        if not dryRun:
+            if cache_comment:
+                cache_comment.edit(new_body)
+            else:
+                issue.create_comment(new_body)
+        else:
+            if cache_comment:
+                print("DRY RUN: Updating existing comment with text")
+            else:
+                print("DRY RUN: Creating technical comment with text")
+            print(new_body.encode("ascii", "ignore").decode())
+
+    # If new commit cache is smaller than previous one, cleanup old technical comments
+    if len(data) < len(cache_comments):
+        for i in range(len(data), len(cache_comments)):
+            print(
+                "Deleting bot cache comment ({0}/{1})".format(
+                    i + 1 - len(data), len(cache_comments) - len(data)
+                )
+            )
+            if not dryRun:
+                cache_comments[i].delete()
 
 
 def get_commenter_categories(commenter, comment_date):
@@ -203,21 +325,6 @@ def get_commenter_categories(commenter, comment_date):
     return []
 
 
-def get_last_commit(pr):
-    last_commit = None
-    try:
-        # This requires at least PyGithub 1.23.0. Making it optional for the moment.
-        last_commit = pr.get_commits().reversed[0]
-    except:
-        # This seems to fail for more than 250 commits. Not sure if the
-        # problem is github itself or the bindings.
-        try:
-            last_commit = pr.get_commits()[pr.commits - 1]
-        except IndexError:
-            print("Index error: May be PR with no commits")
-    return last_commit
-
-
 def get_package_categories(package):
     cats = []
     for cat, packages in list(CMSSW_CATEGORIES.items()):
@@ -227,18 +334,16 @@ def get_package_categories(package):
 
 
 # Read a yaml file
-def read_repo_file(repo_config, repo_file, default=None):
-    import yaml
-
-    try:
-        from yaml import CLoader as Loader, CDumper as Dumper
-    except ImportError:
-        from yaml import Loader, Dumper
+def read_repo_file(repo_config, repo_file, default=None, is_yaml=True):
     file_path = join(repo_config.CONFIG_DIR, repo_file)
     contents = default
     if exists(file_path):
         with open(file_path, "r") as f:
-            contents = yaml.load(f, Loader=Loader)
+            if is_yaml:
+                contents = yaml.load(f, Loader=Loader)
+            else:
+                contents = load(f)
+
         if not contents:
             contents = default
     return contents
@@ -299,7 +404,7 @@ def updateMilestone(repo, issue, pr, dryRun):
     if pr.state != "open":
         print("PR not open, not setting/checking milestone")
         return
-    if issue.milestone and issue.milestone.id == milestoneId:
+    if issue.milestone and issue.milestone.number == milestoneId:
         return
     milestone = repo.get_milestone(milestoneId)
     print("Setting milestone to %s" % milestone.title)
@@ -335,19 +440,52 @@ def modify_comment(comment, match, replace, dryRun):
     return 0
 
 
-def get_user_emoji(comment, repository, user):
-    for e in get_comment_emojis(comment.id, repository):
-        if e["user"]["login"].encode("ascii", "ignore").decode() == user:
-            return e
-    return None
+# github_utils.set_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L569
+# github_utils.set_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L149
+# github_utils.delete_issue_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L587
+# github_utils.delete_comment_emoji -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L168
+def set_emoji(repository, comment, emoji, reset_other):
+    if reset_other:
+        for e in comment.get_reactions():
+            login = e.user.login.encode("ascii", "ignore").decode()
+            if login == get_gh_user() and e.content != emoji:
+                comment.delete_reaction(e.id)
+
+    comment.create_reaction(emoji)
 
 
-def has_user_emoji(comment, repository, emoji, user):
-    e = get_user_emoji(comment, repository, user)
-    return e and e["content"] == emoji
+def set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1", reset_other=True):
+    if dryRun:
+        return
+    comment_id = str(comment.id)
+    if (
+        (not comment_id in bot_cache["emoji"])
+        or (bot_cache["emoji"][comment_id] != emoji)
+        or (comment.reactions[emoji] == 0)
+    ):
+        set_emoji(repository, comment, emoji, reset_other)
+        bot_cache["emoji"][comment_id] = emoji
+    return
 
 
-def get_assign_categories(line):
+def has_user_emoji(bot_cache, comment, repository, emoji, user):
+    e = None
+    comment_id = str(comment.id)
+    if (comment_id in bot_cache["emoji"]) and (comment.reactions[emoji] > 0):
+        e = bot_cache["emoji"][comment_id]
+    else:
+        # github_utils.get_issue_emojis -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/Issue.py#L556
+        # github_utils.get_comment_emojis -> https://github.com/PyGithub/PyGithub/blob/v1.56/github/IssueComment.py#L135
+        emojis = comment.get_reactions()
+        for x in emojis:
+            if x["user"]["login"].encode("ascii", "ignore").decode() == user:
+                e = x["content"]
+                bot_cache["emoji"][comment_id] = x
+                break
+    return e and e == emoji
+
+
+def get_assign_categories(line, extra_labels):
     m = re.match(
         "^\s*(New categories assigned:\s*|(unassign|assign)\s+(from\s+|package\s+|))([a-zA-Z0-9/,\s-]+)\s*$",
         line,
@@ -361,6 +499,7 @@ def get_assign_categories(line):
         for ex_cat in m.group(4).replace(" ", "").split(","):
             if "/" in ex_cat:
                 new_cats += get_package_categories(ex_cat)
+                add_nonblocking_labels([ex_cat], extra_labels)
                 continue
             if not ex_cat in CMSSW_CATEGORIES:
                 continue
@@ -410,7 +549,7 @@ def check_extra_labels(first_line, extra_labels):
         extra_labels["backport"] = ["backport", bp_pr]
 
 
-def check_type_labels(first_line, extra_labels):
+def check_type_labels(first_line, extra_labels, state_labels):
     ex_labels = {}
     rem_labels = {}
     for type_cmd in [x.strip() for x in first_line.split(" ", 1)[-1].split(",") if x.strip()]:
@@ -424,7 +563,12 @@ def check_type_labels(first_line, extra_labels):
                 obj_labels = rem_labels if rem_lab else ex_labels
                 if lab_type not in obj_labels:
                     obj_labels[lab_type] = []
-                obj_labels[lab_type].append(lab)
+                if (len(TYPE_COMMANDS[lab]) > 4) and TYPE_COMMANDS[lab][4] == "state":
+                    state_labels[lab] = type_cmd
+                elif (len(TYPE_COMMANDS[lab]) > 3) and TYPE_COMMANDS[lab][3]:
+                    obj_labels[lab_type].append(type_cmd)
+                else:
+                    obj_labels[lab_type].append(lab)
                 valid_lab = True
                 break
         if not valid_lab:
@@ -666,10 +810,57 @@ def get_status_state(context, statuses):
     return ""
 
 
+def dumps_maybe_compress(value):
+    json_ = dumps(value, separators=(",", ":"), sort_keys=True)
+    if len(json_) > BOT_CACHE_CHUNK_SIZE:
+        return "b64:" + base64.encodebytes(zlib.compress(json_.encode())).decode("ascii", "ignore")
+    else:
+        return json_
+
+
+def loads_maybe_decompress(data):
+    if data.startswith("b64:"):
+        data = zlib.decompress(base64.decodebytes(data[4:].encode())).decode()
+
+    return loads(data)
+
+
+def add_nonblocking_labels(chg_files, extra_labels):
+    for pkg_file in chg_files:
+        for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
+            for regex in pkgs_regexp:
+                if regex.match(pkg_file):
+                    if not "mtype" in extra_labels:
+                        extra_labels["mtype"] = []
+                    extra_labels["mtype"].append(ex_lab)
+                    print("Non-Blocking label:%s:%s:%s" % (ex_lab, regex.pattern, pkg_file))
+                    break
+    if ("mtype" in extra_labels) and (not extra_labels["mtype"]):
+        del extra_labels["mtype"]
+    print("Extra non-blocking labels:", extra_labels)
+    return
+
+
+# TODO: remove once we update pygithub
+def get_commit_files(repo_, commit):
+    return (x["filename"] for x in get_commit(repo_.full_name, commit.sha)["files"])
+
+
+def on_labels_changed(added_labels, removed_labels):
+    # Placeholder function replaced during testing
+    pass
+
+
+def fetch_pr_result(url):
+    e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
+    return e, o
+
+
 def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=False):
     global L2_DATA
     if (not force) and ignore_issue(repo_config, repo, issue):
         return
+
     gh_user_char = "@"
     if not notify_user(issue):
         gh_user_char = ""
@@ -689,6 +880,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         cmsbuild_user = repo_config.CMSBUILD_USER
     print("Working on ", repo.full_name, " for PR/Issue ", prId, "with admin user", cmsbuild_user)
     print("Notify User: ", gh_user_char)
+    update_CMSSW_LABELS(repo_config)
     set_gh_user(cmsbuild_user)
     cmssw_repo = repo_name == GH_CMSSW_REPO
     cms_repo = repo_org in EXTERNAL_REPOS
@@ -701,6 +893,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     chg_files = []
     package_categories = {}
     extra_labels = {"mtype": []}
+    state_labels = {}
     add_external_category = False
     signing_categories = set([])
     new_package_message = ""
@@ -711,7 +904,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     watchers = []
     # Process Pull Request
     pkg_categories = set([])
-    REGEX_TYPE_CMDS = "^type\s+(([-+]|)[a-z][a-z0-9-]+)(\s*,\s*([-+]|)[a-z][a-z0-9-]+)*$"
+    REGEX_TYPE_CMDS = (
+        "^(type|(build-|)state)\s+(([-+]|)[a-z][a-z0-9_-]+)(\s*,\s*([-+]|)[a-z][a-z0-9_-]+)*$"
+    )
     REGEX_EX_CMDS = "^urgent$|^backport\s+(of\s+|)(#|http(s|):/+github\.com/+%s/+pull/+)\d+$" % (
         repo.full_name
     )
@@ -721,7 +916,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         known_ignore_tests,
     )
     REGEX_EX_ENABLE_TESTS = "^enable\s+(%s)$" % MULTILINE_COMMENTS_MAP[ENABLE_TEST_PTRN][0]
-    L2_DATA = init_l2_data(cms_repo)
+    L2_DATA = init_l2_data(repo_config, cms_repo)
     last_commit_date = None
     last_commit_obj = None
     push_test_issue = False
@@ -740,6 +935,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     # For future pre_checks
     # if prId>=somePRNumber: default_pre_checks+=["some","new","checks"]
     pre_checks_url = {}
+    events = defaultdict(list)
+    all_commits = []
+    all_commit_shas = set()
+    ok_too_many_commits = False
+    warned_too_many_commits = False
+
     if issue.pull_request:
         pr = repo.get_pull(prId)
         if pr.changed_files == 0:
@@ -773,19 +974,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             packages = sorted(
                 [x for x in set([cmssw_file2Package(repo_config, f) for f in chg_files])]
             )
-            for pkg_file in chg_files:
-                for ex_lab, pkgs_regexp in list(CMSSW_LABELS.items()):
-                    for regex in pkgs_regexp:
-                        if regex.match(pkg_file):
-                            extra_labels["mtype"].append(ex_lab)
-                            print(
-                                "Non-Blocking label:%s:%s:%s" % (ex_lab, regex.pattern, pkg_file)
-                            )
-                            break
-            if not extra_labels["mtype"]:
-                del extra_labels["mtype"]
-            print("Extra non-blocking labels:", extra_labels)
-            print("First Package: ", packages[0])
+            add_nonblocking_labels(chg_files, extra_labels)
             create_test_property = True
         else:
             add_external_category = True
@@ -800,6 +989,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             ):
                 print("Skipping PR as it does not belong to valid CMSDIST branch")
                 return
+            try:
+                if repo_config.NONBLOCKING_LABELS:
+                    chg_files = get_changed_files(repo, pr)
+                    add_nonblocking_labels(chg_files, extra_labels)
+            except:
+                pass
 
         print("Following packages affected:")
         print("\n".join(packages))
@@ -870,9 +1065,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             watchers.update(set(watchingGroups[watcher]))
         watchers = set([gh_user_char + u for u in watchers])
         print("Watchers " + ", ".join(watchers))
-        last_commit_obj = get_last_commit(pr)
-        if last_commit_obj is None:
+
+        all_commits = get_pr_commits_reversed(pr)
+        all_commit_shas = {commit.sha for commit in all_commits}
+
+        if all_commits:
+            last_commit_obj = all_commits[0]
+        else:
             return
+
         last_commit = last_commit_obj.commit
         commit_statuses = last_commit_obj.get_combined_status().statuses
         bot_status = get_status(bot_status_name, commit_statuses)
@@ -944,6 +1145,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
         print("Pre check status:", pre_checks_state)
     already_seen = None
+    technical_comments = []
     pull_request_updated = False
     comparison_done = False
     comparison_notrun = False
@@ -971,10 +1173,32 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     test_params_comment = None
     code_check_apply_patch = False
     override_tests_failure = None
+    bot_cache = {}
+    old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
 
-    # start of parsing comments section
-    for c in issue.get_comments():
-        all_comments.append(c)
+    # start of parsing comments to find the bot_cache
+    # to use information during the actual comment loop
+    for comment in issue.get_comments():
+        all_comments.append(comment)
+        if comment.user.login.encode("ascii", "ignore").decode() != cmsbuild_user:
+            continue
+        comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
+        first_line = "".join([l.strip() for l in comment_msg.split("\n") if l.strip()][0:1])
+        if (not already_seen) and re.match(ISSUE_SEEN_MSG, first_line):
+            already_seen = comment
+            if REGEX_COMMITS_CACHE.search(comment_msg):
+                technical_comments.append(comment)
+        elif re.match(CMSBOT_TECHNICAL_MSG, first_line):
+            technical_comments.append(comment)
+
+    if technical_comments:
+        bot_cache = extract_bot_cache(technical_comments)
+
+    # Make sure bot cache has the needed keys
+    for k, v in BOT_CACHE_TEMPLATE.items():
+        if k not in bot_cache:
+            bot_cache[k] = copy.deepcopy(v)
+
     for comment in all_comments:
         ack_comment = comment
         commenter = comment.user.login.encode("ascii", "ignore").decode()
@@ -989,27 +1213,31 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         comment_msg = comment.body.encode("ascii", "ignore").decode() if comment.body else ""
         # The first line is an invariant.
         comment_lines = [l.strip() for l in comment_msg.split("\n") if l.strip()]
-        first_line = comment_lines[0:1]
-        if not first_line:
-            continue
-        first_line = first_line[0]
-        if (commenter == cmsbuild_user) and re.match(ISSUE_SEEN_MSG, first_line):
-            already_seen = comment
-            backport_pr_num = get_backported_pr(comment_msg)
-            if issue.pull_request and last_commit_date:
-                if comment.created_at >= last_commit_date:
-                    pull_request_updated = False
-                else:
-                    pull_request_updated = True
-            continue
+        first_line = "".join(comment_lines[0:1])
+        if commenter == cmsbuild_user:
+            if re.match(ISSUE_SEEN_MSG, first_line):
+                if not already_seen:
+                    already_seen = comment
+                backport_pr_num = get_backported_pr(comment_msg)
+                if issue.pull_request and last_commit_date:
+                    pull_request_updated = comment.created_at < last_commit_date
+                continue
 
-        assign_type, new_cats = get_assign_categories(first_line)
+            if re.match("^" + HOLD_MSG + ".+", first_line):
+                for u in first_line.split(HOLD_MSG, 2)[1].split(","):
+                    u = u.strip().lstrip("@")
+                    if u in hold:
+                        hold[u] = 0
+                continue
+
+        assign_type, new_cats = get_assign_categories(first_line, extra_labels)
         if new_cats:
             if (assign_type == "new categories assigned:") and (commenter == cmsbuild_user):
                 for ex_cat in new_cats:
                     if ex_cat in assign_cats:
                         assign_cats[ex_cat] = 1
-            if commenter_categories or (commenter in CMSSW_ISSUES_TRACKERS):
+            elif commenter_categories or (commenter in CMSSW_ISSUES_TRACKERS):
+                set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
                 if assign_type == "assign":
                     for ex_cat in new_cats:
                         if not ex_cat in signing_categories:
@@ -1026,70 +1254,83 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         # Some of the special users can say "hold" prevent automatic merging of
         # fully signed PRs.
+        comment_emoji = ""
         if re.match("^hold$", first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers + PR_HOLD_MANAGERS):
                 hold[commenter] = 1
-            continue
-        if re.match(REGEX_EX_CMDS, first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match(REGEX_EX_CMDS, first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers + [requestor]):
                 check_extra_labels(first_line.lower(), extra_labels)
-            continue
-        if re.match(REGEX_TYPE_CMDS, first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match(REGEX_TYPE_CMDS, first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers + [requestor]):
-                valid_labs = check_type_labels(first_line.lower(), extra_labels)
-                if not dryRun:
-                    if valid_labs:
-                        set_comment_emoji(comment.id, repository, emoji="+1")
-                    else:
-                        set_comment_emoji(comment.id, repository, emoji="-1")
-        if re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
+                comment_emoji = (
+                    "+1"
+                    if check_type_labels(first_line.lower(), extra_labels, state_labels)
+                    else "-1"
+                )
+        elif re.match(REGEX_EX_IGNORE_CHKS, first_line, re.I):
+            comment_emoji = "-1"
             if valid_commenter:
                 ignore_tests = check_ignore_bot_tests(first_line.split(" ", 1)[-1])
-            continue
-        if re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match(REGEX_EX_ENABLE_TESTS, first_line, re.I):
+            comment_emoji = "-1"
             if valid_commenter:
                 enable_tests, ignore = check_enable_bot_tests(first_line.split(" ", 1)[-1])
-                if not dryRun:
-                    set_comment_emoji(comment.id, repository, emoji="+1")
-            continue
-        if re.match("^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match("^allow\s+@([^ ]+)\s+test\s+rights$", first_line, re.I):
+            comment_emoji = "-1"
             if commenter_categories or (commenter in releaseManagers):
                 tester = first_line.split("@", 1)[-1].split(" ", 1)[0]
                 if not tester in TRIGGER_PR_TESTS:
                     TRIGGER_PR_TESTS.append(tester)
                     extra_testers.append(tester)
                     print("Added user in test category:", tester)
-            continue
-        if re.match("^unhold$", first_line, re.I):
+                comment_emoji = "+1"
+        elif re.match("^unhold$", first_line, re.I):
+            comment_emoji = "-1"
             if "orp" in commenter_categories:
                 hold = {}
+                comment_emoji = "+1"
             elif commenter_categories or (commenter in releaseManagers + PR_HOLD_MANAGERS):
                 if commenter in hold:
                     del hold[commenter]
-            continue
-        if (commenter == cmsbuild_user) and (re.match("^" + HOLD_MSG + ".+", first_line)):
-            for u in first_line.split(HOLD_MSG, 2)[1].split(","):
-                u = u.strip().lstrip("@")
-                if u in hold:
-                    hold[u] = 0
-        if CLOSE_REQUEST.match(first_line):
+                    comment_emoji = "+1"
+        elif CLOSE_REQUEST.match(first_line):
+            comment_emoji = "-1"
             if (commenter_categories or (commenter in releaseManagers)) or (
                 (not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)
             ):
                 reOpen = False
                 if issue.state == "open":
                     mustClose = True
+                comment_emoji = "+1"
                 print("==>Closing request received from %s" % commenter)
-            continue
-        if REOPEN_REQUEST.match(first_line):
+        elif REOPEN_REQUEST.match(first_line):
+            comment_emoji = "-1"
             if (commenter_categories or (commenter in releaseManagers)) or (
                 (not issue.pull_request) and (commenter in CMSSW_ISSUES_TRACKERS)
             ):
                 mustClose = False
                 if (issue.state == "closed") and (comment.created_at >= issue.closed_at):
                     reOpen = True
+                comment_emoji = "+1"
                 print("==>Reopen request received from %s" % commenter)
+        elif re.match(r"^\s*" + REGEX_IGNORE_COMMIT_COUNT + r"\s*$", first_line):
+            comment_emoji = "-1"
+            if commenter in CMSSW_ISSUES_TRACKERS:
+                ok_too_many_commits = pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
+                comment_emoji = "+1"
+
+        if comment_emoji:
+            set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=comment_emoji)
             continue
+
         if valid_commenter:
             valid_multiline_comment, test_params, test_params_m = multiline_check_function(
                 first_line, comment_lines, repository
@@ -1097,6 +1338,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if test_params_m:
                 test_params_msg = str(comment.id) + ":" + test_params_m
                 test_params_comment = comment
+                continue
             elif valid_multiline_comment:
                 test_params_comment = comment
                 global_test_params = dict(test_params)
@@ -1114,6 +1356,42 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     code_checks_tools = m.group(1).strip().split(" ")[-1]
                 if m.group(2):
                     code_check_apply_patch = True
+                set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1")
+
+        selected_cats = []
+
+        if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
+            ctype = "+1"
+            selected_cats = commenter_categories[:]
+        elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
+            ctype = "-1"
+            selected_cats = commenter_categories[:]
+        elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
+            category_name = first_line[1:].lower()
+            if category_name in commenter_categories:
+                ctype = first_line[0] + "1"
+                selected_cats = [category_name]
+
+        if "orp" in selected_cats:
+            # Lines 1281, 1286 of original code
+            mustClose = False
+
+        for cat in ["tests", "code-checks"]:
+            if cat in selected_cats:
+                selected_cats.remove(cat)
+
+        if selected_cats:
+            events[comment.created_at].append(
+                {
+                    "type": "sign",
+                    "value": {
+                        "ctype": ctype,
+                        "selected_cats": selected_cats,
+                        "comment": comment,
+                    },
+                }
+            )
+            continue
 
         # Ignore all other messages which are before last commit.
         if issue.pull_request and (comment.created_at < last_commit_date):
@@ -1126,7 +1404,9 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             if code_checks_status and (code_checks_status[0].updated_at >= comment.created_at):
                 continue
             if first_line in pre_checks:
-                if pre_checks_state["code-checks"] in ["pending", ""]:
+                if (pre_checks_state["code-checks"] in ["pending", ""]) and (
+                    not code_checks_status
+                ):
                     continue
             elif pre_checks_state["code-checks"] in ["pending"]:
                 continue
@@ -1137,6 +1417,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         # Check for cmsbuild_user comments and tests requests only for pull requests
         if commenter == cmsbuild_user:
             if not issue.pull_request and not push_test_issue:
+                continue
+            if (
+                "This PR contains many commits" in first_line
+                and pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD
+            ) or "This PR contains too many commits" in first_line:
+                warned_too_many_commits = True
                 continue
             sec_line = comment_lines[1:2]
             if not sec_line:
@@ -1205,13 +1491,15 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
 
         if issue.pull_request or push_test_issue:
             # Check if the release manager asked for merging this.
-            if ((commenter in releaseManagers) or ("orp" in commenter_categories)) and re.match(
-                "^\s*(merge)\s*$", first_line, re.I
-            ):
-                mustMerge = True
-                mustClose = False
-                if ("orp" in commenter_categories) and ("orp" in signatures):
-                    signatures["orp"] = "approved"
+            if re.match("^\s*(merge)\s*$", first_line, re.I):
+                emoji = "-1"
+                if (commenter in releaseManagers) or ("orp" in commenter_categories):
+                    mustMerge = True
+                    mustClose = False
+                    emoji = "+1"
+                    if ("orp" in commenter_categories) and ("orp" in signatures):
+                        signatures["orp"] = "approved"
+                set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji=emoji)
                 continue
 
             # Check if the someone asked to trigger the tests
@@ -1242,50 +1530,235 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     abort_test = comment
                     test_comment = None
                     signatures["tests"] = "pending"
+                    continue
                 elif REGEX_TEST_IGNORE.match(first_line):
                     reason = REGEX_TEST_IGNORE.match(first_line)[1].strip()
                     if reason not in TEST_IGNORE_REASON:
                         print("Invalid ignore reason:", reason)
-                        if not dryRun:
-                            set_comment_emoji(comment.id, repository, "-1")
+                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "-1")
                         reason = ""
-
                     if reason:
                         override_tests_failure = reason
-                        if not dryRun:
-                            set_comment_emoji(comment.id, repository)
-
-        # Check L2 signoff for users in this PR signing categories
-        if [x for x in commenter_categories if x in signing_categories]:
-            ctype = ""
-            selected_cats = []
-            if re.match("^([+]1|approve[d]?|sign|signed)$", first_line, re.I):
-                ctype = "+1"
-                selected_cats = commenter_categories
-            elif re.match("^([-]1|reject|rejected)$", first_line, re.I):
-                ctype = "-1"
-                selected_cats = commenter_categories
-            elif re.match("^[+-][a-z][a-z0-9-]+$", first_line, re.I):
-                category_name = first_line[1:].lower()
-                if category_name in commenter_categories:
-                    ctype = first_line[0] + "1"
-                    selected_cats = [category_name]
-            if ctype == "+1":
-                for sign in selected_cats:
-                    signatures[sign] = "approved"
-                    if (test_comment is None) and (
-                        (repository in auto_test_repo) or ("*" in auto_test_repo)
-                    ):
-                        test_comment = comment
-                    if sign == "orp":
-                        mustClose = False
-            elif ctype == "-1":
-                for sign in selected_cats:
-                    signatures[sign] = "rejected"
-                    if sign == "orp":
-                        mustClose = False
+                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
+
+    if issue.pull_request:
+        if (
+            pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD
+            and (not warned_too_many_commits)
+            and (not ok_too_many_commits)
+        ):
+            if pr.commits < TOO_MANY_COMMITS_FAIL_THRESHOLD:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR contains many commits ({0} >= {1}) and will not be processed. "
+                        "Please ensure you have selected the correct target branch and consider squashing unnecessary commits.\n"
+                        "{2}, to re-enable processing of this PR, you can write `+commit-count` in a comment. Thanks.".format(
+                            pr.commits,
+                            TOO_MANY_COMMITS_WARN_THRESHOLD,
+                            ", ".join(
+                                sorted([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
+                            ),
+                        )
+                    )
+            else:
+                if not dryRun:
+                    issue.create_comment(
+                        "This PR contains too many commits ({0} >= {1}) and will not be processed.\n"
+                        "Please ensure you have selected the correct target branch and consider squashing unnecessary commits.\n"
+                        "The processing of this PR will resume once the commit count drops below the limit.".format(
+                            pr.commits,
+                            TOO_MANY_COMMITS_FAIL_THRESHOLD,
+                        )
+                    )
+
+            return
+
+        if pr.commits >= TOO_MANY_COMMITS_WARN_THRESHOLD and not ok_too_many_commits:
+            print("Commit count reached and not overridden, quitting")
+            return
+
+        print("Processing commits")
+
+        # Make sure to mark squashed=False if a cached/squashed commit is added back
+        for commit_sha in [
+            sha
+            for sha in all_commit_shas
+            if sha in bot_cache["commits"] and bot_cache["commits"][sha].get("squashed", False)
+        ]:
+            bot_cache["commits"][commit_sha]["squashed"] = False
+            print("INFO: A squashed commit {0} is added back.".format(commit_sha))
+
+        # "Squashed" flag is used to avoid finding missing commits after we have actually
+        # handled the squash
+        missing_commits = set(
+            k for k in bot_cache["commits"] if not bot_cache["commits"][k].get("squashed", False)
+        ).difference(all_commit_shas)
+        last_seen_commit_time = None
+        new_commits = set()
+        if missing_commits:
+            print(
+                "Possible squash detected: the following commits were cached, but missing from PR"
+            )
+            print(missing_commits)
+
+            if not "last_seen_sha" in bot_cache:
+                bot_cache["last_seen_sha"] = sorted(
+                    [
+                        (k, bot_cache["commits"][k]["time"])
+                        for k in bot_cache["commits"]
+                        if not bot_cache["commits"][k].get("squashed", False)
+                    ],
+                    key=lambda q: q[1],
+                )[-1][0]
+
+            last_seen_commit_sha = bot_cache["last_seen_sha"]
+            new_head_commit_sha = pr.head.sha
+            base_commit_sha = pr.base.sha
+            print(
+                "Base sha {0}, New head sha {1}, last_seen_sha {2}".format(
+                    base_commit_sha, new_head_commit_sha, last_seen_commit_sha
+                )
+            )
+
+            changes_before_squash = repo.compare(base_commit_sha, last_seen_commit_sha)
+            changes_after_squash = repo.compare(base_commit_sha, new_head_commit_sha)
+
+            # Use changed file checksum which is abailable for all files added/removed/modify
+            # checksum also works for binary files and renamed files
+            # checksum will not work if file is rebased and gets updated contents from upstream
+            diff_before_squash = {
+                (file.filename, file.sha) for file in changes_before_squash.files
+            }
+            diff_after_squash = {(file.filename, file.sha) for file in changes_after_squash.files}
+
+            if diff_before_squash ^ diff_after_squash:
+                print("PR diff changed, will not preserve signatures")
+            else:
+                print("PR diff not changed, preserving signatures and commit statuses")
+                last_seen_commit_time = bot_cache["commits"][last_seen_commit_sha]["time"]
+                new_commits = all_commit_shas.difference(k for k in bot_cache["commits"])
+
+            # Mark removed commits in cache as squashed
+            for commit_sha in missing_commits:
+                print("Marked commit {0} as squashed".format(commit_sha))
+                bot_cache["commits"][commit_sha]["squashed"] = True
+
+        bot_cache["last_seen_sha"] = pr.head.sha
+        for commit in all_commits:
+            if commit.sha not in bot_cache["commits"]:
+                bot_cache["commits"][commit.sha] = {
+                    "time": int(commit.commit.committer.date.timestamp()),
+                    "squashed": False,
+                }
+                if len(commit.parents) > 1:
+                    bot_cache["commits"][commit.sha]["files"] = []
+                else:
+                    bot_cache["commits"][commit.sha]["files"] = sorted(
+                        get_commit_files(repo, commit)
+                    )
+
+            elif len(commit.parents) > 1:
+                bot_cache["commits"][commit.sha]["files"] = []
+
+            if commit.sha in new_commits:
+                bot_cache["commits"][commit.sha]["files"] = []
+                bot_cache["commits"][commit.sha]["time"] = last_seen_commit_time
+
+            cache_entry = bot_cache["commits"][commit.sha]
+            events[datetime.fromtimestamp(cache_entry["time"])].append(
+                {"type": "commit", "value": {"files": cache_entry["files"], "sha": commit.sha}}
+            )
+
+        # Inject events from cached commits
+        for commit_sha, cache_entry in bot_cache["commits"].items():
+            if cache_entry.get("squashed", False):
+                print("Adding back cached commit {0}".format(commit_sha))
+                events[datetime.fromtimestamp(cache_entry["time"])].append(
+                    {
+                        "type": "commit",
+                        "value": {"files": cache_entry["files"], "sha": commit_sha},
+                    }
+                )
+
+    # Process commits and signatures
+    signed_commit_sha = ""
+    flattened_eventlist = []
+    for _, eventlist in sorted(events.items()):
+        flattened_eventlist.extend(eventlist)
+
+    auto_test_comment = None
+    for event in flattened_eventlist:
+        print("Event:", event)
+        if event["type"] == "sign":
+            if (not signed_commit_sha) and issue.pull_request:
+                continue
+            comment = event["value"]["comment"]
+            comment_id = str(comment.id)
+            cached_signed_commit_sha = bot_cache["signatures"].get(comment_id)
+            if cached_signed_commit_sha and cached_signed_commit_sha != signed_commit_sha:
+                print(
+                    "WARNING: Comment {0}, cached commit {1} doesn't match the present commit {2}. "
+                    "This comment will be ignored.".format(
+                        comment_id, cached_signed_commit_sha, signed_commit_sha
+                    )
+                )
+                continue
+
+            if cached_signed_commit_sha is None:
+                bot_cache["signatures"][comment_id] = signed_commit_sha
+            selected_cats = event["value"]["selected_cats"]
+            ctype = event["value"]["ctype"]
+            if any(x in signing_categories for x in selected_cats):
+                set_comment_emoji_cache(dryRun, bot_cache, event["value"]["comment"], repository)
+
+                if ctype == "+1":
+                    for sign in selected_cats:
+                        signatures[sign] = "approved"
+                        if auto_test_comment is None and sign not in (
+                            "code-checks",
+                            "tests",
+                            "orp",
+                        ):
+                            auto_test_comment = comment
+                elif ctype == "-1":
+                    for sign in selected_cats:
+                        signatures[sign] = "rejected"
+            else:
+                print(
+                    "Ignoring event: {0} includes none of {1}".format(
+                        selected_cats, signing_categories
+                    )
+                )
+        elif event["type"] == "commit":
+            auto_test_comment = None
+            # Only signed commits with files
+            if event["value"]["files"]:
+                signed_commit_sha = event["value"]["sha"]
+            if cmssw_repo:
+                chg_categories = set()
+                for fn in event["value"]["files"]:
+                    chg_categories.update(
+                        get_package_categories(cmssw_file2Package(repo_config, fn))
+                    )
+
+                chg_categories.update(assign_cats.keys())
+                for cat in chg_categories:
+                    if cat in signing_categories:
+                        signatures[cat] = "pending"
+            else:
+                for cat in signing_categories:
+                    signatures[cat] = "pending"
+            print("Signatures:", signatures)
+
+    if (
+        issue.pull_request
+        and auto_test_comment
+        and (test_comment is None)
+        and ((repository in auto_test_repo) or ("*" in auto_test_repo))
+    ):
+        test_comment = auto_test_comment
 
     if push_test_issue:
         auto_close_push_test_issue = True
@@ -1341,14 +1814,26 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             break
 
     old_labels = set([x.name.encode("ascii", "ignore").decode() for x in issue.labels])
-    print("Stats:", backport_pr_num, extra_labels)
+    print("Stats:", backport_pr_num, extra_labels, state_labels)
     print("Old Labels:", sorted(old_labels))
     print("Compilation Warnings: ", comp_warnings)
-    print("Singnatures: ", signatures)
+    print("Signatures: ", signatures)
+    # Add state labels as mtype labels
+    if len(state_labels) != 0:
+        if "mtype" in extra_labels:
+            extra_labels["mtype"].extend(state_labels.values())
+        else:
+            extra_labels["mtype"] = list(state_labels.values())
     if "mtype" in extra_labels:
         extra_labels["mtype"] = list(set(extra_labels["mtype"]))
     if "type" in extra_labels:
         extra_labels["type"] = [extra_labels["type"][-1]]
+
+    # Deleting elements if they have no labels
+    # FIXME
+    # for ltype in extra_labels:
+    #    if not extra_labels[ltype]:
+    #        del extra_labels[ltype]
 
     # Always set test pending label
     if "tests" in signatures:
@@ -1386,7 +1871,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     last_commit_obj.create_status(
                         "success", description=desc, target_url=turl, context=bot_status_name
                     )
-                    set_comment_emoji(test_comment.id, repository)
+                    set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
             if bot_status:
                 print(bot_status.target_url, turl, signatures["tests"], bot_status.description)
             if (
@@ -1472,7 +1957,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                                 + "/pr-result"
                             )
                             print("PR Result:", url)
-                            e, o = run_cmd("curl -k -s -L --max-time 60 %s" % url)
+                            e, o = fetch_pr_result(url)
                             if e:
                                 print(o)
                                 raise Exception("System-error: unable to get PR result")
@@ -1578,8 +2063,12 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         need_external = True
     # Now updated the labels.
     xlabs = ["backport", "urgent", "backport-ok", "compilation-warnings"]
-    for lab in TYPE_COMMANDS:
-        xlabs.append(lab)
+    for xtype in extra_labels:
+        if xtype != "mtype":
+            xlabs.append(extra_labels[xtype][0])
+        else:
+            for lab in extra_labels["mtype"]:
+                xlabs.append(lab)
 
     missingApprovals = [
         x
@@ -1594,6 +2083,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         and not x in xlabs
     ]
 
+    print("Missing Approvals:", missingApprovals)
     if not missingApprovals:
         print("The pull request is complete.")
     if missingApprovals:
@@ -1638,7 +2128,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             )
         print("Blockers:", blockers)
 
-    print("Changed Labels:", labels - old_labels, old_labels - labels)
+    print("Changed Labels: added", labels - old_labels, "removed", old_labels - labels)
+    on_labels_changed(labels - old_labels, old_labels - labels)
     if old_labels == labels:
         print("Labels unchanged.")
     elif not dryRunOrig:
@@ -1668,26 +2159,22 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             backport_msg = ""
             if backport_pr_num:
                 backport_msg = "%s%s\n" % (BACKPORT_STR, backport_pr_num)
-            uname = ""
-            if issue.user.name:
-                uname = issue.user.name.encode("ascii", "ignore").decode()
-            l2s = ", ".join([gh_user_char + name for name in CMSSW_ISSUES_TRACKERS])
+            l2s = ", ".join(gh_user_char + name for name in sorted(CMSSW_ISSUES_TRACKERS))
             issueMessage = format(
-                "%(msgPrefix)s %(gh_user_char)s%(user)s"
-                " %(name)s.\n\n"
+                "%(msgPrefix)s %(gh_user_char)s%(user)s.\n\n"
                 "%(l2s)s can you please review it and eventually sign/assign?"
                 " Thanks.\n\n"
                 'cms-bot commands are listed <a href="http://cms-sw.github.io/cms-bot-cmssw-issues.html">here</a>\n%(backport_msg)s',
                 msgPrefix=NEW_ISSUE_PREFIX,
                 user=requestor,
                 gh_user_char=gh_user_char,
-                name=uname,
                 backport_msg=backport_msg,
                 l2s=l2s,
             )
         elif ("fully-signed" in labels) and (not "fully-signed" in old_labels):
             issueMessage = "This issue is fully signed and ready to be closed."
         print("Issue Message:", issueMessage)
+        write_bot_cache(bot_cache, technical_comments, issue, dryRunOrig)
         if issueMessage and not dryRun:
             issue.create_comment(issueMessage)
         return
@@ -1732,15 +2219,14 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             create_properties_file_tests(
                 repository, prId, global_test_params, dryRun, abort=False, repo_config=repo_config
             )
-            if not dryRun:
-                set_comment_emoji(test_comment.id, repository)
+            set_comment_emoji_cache(dryRun, bot_cache, test_comment, repository)
         elif abort_test and bot_status and (not bot_status.description.startswith("Aborted")):
-            if not has_user_emoji(abort_test, repository, "+1", cmsbuild_user):
+            if not has_user_emoji(bot_cache, abort_test, repository, "+1", cmsbuild_user):
                 create_properties_file_tests(
                     repository, prId, global_test_params, dryRun, abort=True
                 )
+                set_comment_emoji_cache(dryRun, bot_cache, abort_test, repository)
                 if not dryRun:
-                    set_comment_emoji(abort_test.id, repository)
                     last_commit_obj.create_status(
                         "pending",
                         description="Aborted, waiting for authorized user to issue the test command.",
@@ -1807,28 +2293,70 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             devReleaseRelVal=devReleaseRelVal,
             branch=pr.base.ref,
         )
+
+        messageNotifyExternalPRs = ""
+        if "PULL_REQUESTS" in global_test_params:
+            unclosed_linked_prs = []
+            linked_prs = global_test_params["PULL_REQUESTS"].split()
+            extra_repos = {repository: repo}
+            for linked_pr in linked_prs[1:]:
+                linked_pr_repo, linked_pr_id = linked_pr.split("#")
+                if not linked_pr_repo in extra_repos:
+                    extra_repos[linked_pr_repo] = gh.get_repo(linked_pr_repo)
+                r = extra_repos[linked_pr_repo]
+                linked_pr_obj = r.get_issue(int(linked_pr_id))
+                if linked_pr_obj.state != "closed":
+                    unclosed_linked_prs.append(linked_pr)
+                    comment_text = (
+                        "**REMINDER** "
+                        + releaseManagersList
+                        + ": This PR was tested with "
+                        + linked_prs[0]
+                        + ", please check if they should be merged together"
+                    )
+
+                    if not dryRun:
+                        linked_pr_obj.create_comment(comment_text)
+                    else:
+                        print("DRY-RUN: not posting comment", comment_text)
+
+            messageNotifyExternalPRs = ", ".join(unclosed_linked_prs)
+
+        if messageNotifyExternalPRs:
+            messageFullySigned += (
+                "\n**Notice** This PR was tested with additional Pull Request(s), please also merge them if necessary: "
+                + messageNotifyExternalPRs
+            )
+
         print("Fully signed message updated")
         if not dryRun:
             issue.create_comment(messageFullySigned)
+        else:
+            print("DRY-RUN: not posting comment", messageFullySigned)
 
-    unsigned = [k for (k, v) in list(signatures.items()) if v == "pending"]
-    missing_notifications = [
-        gh_user_char + name
-        for name, l2_categories in list(CMSSW_L2.items())
-        for signature in signing_categories
-        if signature in l2_categories and signature in unsigned and signature not in ["orp"]
-    ]
+    unsigned = [commit_sha for (commit_sha, v) in list(signatures.items()) if v == "pending"]
+    missing_notifications = sorted(
+        list(
+            set(
+                gh_user_char + name
+                for name, l2_categories in list(CMSSW_L2.items())
+                for signature in signing_categories
+                if signature in l2_categories
+                and signature in unsigned
+                and signature not in ["orp"]
+            )
+        )
+    )
 
-    missing_notifications = set(missing_notifications)
     # Construct message for the watchers
     watchersMsg = ""
     if watchers:
         watchersMsg = format(
             "%(watchers)s this is something you requested to" " watch as well.\n",
-            watchers=", ".join(watchers),
+            watchers=", ".join(sorted(watchers)),
         )
     # Construct message for the release managers.
-    managers = ", ".join([gh_user_char + x for x in releaseManagers])
+    managers = ", ".join([gh_user_char + x for x in sorted(releaseManagers)])
 
     releaseManagersMsg = ""
     if releaseManagers:
@@ -1861,7 +2389,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 pkg_msg.append("- %s (**new**)" % pkg)
         messageNewPR = format(
             "%(msgPrefix)s %(gh_user_char)s%(user)s"
-            " %(name)s for %(branch)s.\n\n"
+            " for %(branch)s.\n\n"
             "It involves the following packages:\n\n"
             "%(packages)s\n\n"
             "%(new_package_message)s\n"
@@ -1874,7 +2402,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             msgPrefix=NEW_PR_PREFIX,
             user=pr.user.login,
             gh_user_char=gh_user_char,
-            name=pr.user.name and "(%s)" % pr.user.name or "",
             branch=pr.base.ref,
             l2s=", ".join(missing_notifications),
             packages="\n".join(pkg_msg),
@@ -1893,7 +2420,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
     else:
         messageNewPR = format(
             "%(msgPrefix)s %(gh_user_char)s%(user)s"
-            " %(name)s for branch %(branch)s.\n\n"
+            " for branch %(branch)s.\n\n"
             "%(l2s)s can you please review it and eventually sign?"
             " Thanks.\n"
             "%(watchers)s"
@@ -1902,7 +2429,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             msgPrefix=NEW_PR_PREFIX,
             user=pr.user.login,
             gh_user_char=gh_user_char,
-            name=pr.user.name and "(%s)" % pr.user.name or "",
             branch=pr.base.ref,
             l2s=", ".join(missing_notifications),
             releaseManagers=releaseManagersMsg,
@@ -1934,7 +2460,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Pull request is already fully signed. Not sending message.")
     else:
         print("Already notified L2 about " + str(pr.number))
-    if commentMsg and not dryRun:
+    if commentMsg and dryRun:
         print("The following comment will be made:")
         try:
             print(commentMsg.decode("ascii", "replace"))
@@ -2008,12 +2534,8 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
         print("Test params:", test_params_msg)
         url = ""
         if test_params_comment:
-            e = get_user_emoji(test_params_comment, repository, cmsbuild_user)
-            print(e)
             if not dryRun:
                 emoji = "-1" if "ERRORS: " in test_params_msg else "+1"
-                if e and (e["content"] != emoji):
-                    delete_comment_emoji(str(e["id"]), test_params_comment.id, repository)
                 state = "success" if emoji == "+1" else "error"
                 last_commit_obj.create_status(
                     state,
@@ -2021,8 +2543,10 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                     target_url=test_params_comment.html_url,
                     context=bot_test_param_name,
                 )
-                if (not e) or (e["content"] != emoji):
-                    set_comment_emoji(test_params_comment.id, repository, emoji=emoji)
+                set_comment_emoji_cache(
+                    dryRun, bot_cache, test_params_comment, repository, emoji=emoji
+                )
+    write_bot_cache(bot_cache, technical_comments, issue, dryRunOrig)
     if ack_comment:
         state = get_status(bot_ack_name, commit_statuses)
         if (not state) or (state.target_url != ack_comment.html_url):

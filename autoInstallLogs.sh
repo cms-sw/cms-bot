@@ -49,8 +49,8 @@ for WEEK in 0 1; do
     REL_TYPE=`echo $REL_NAME | sed -e's/.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\(.*\|\)$/new\1/'`
     CMSSW_NAME=`echo $REL_NAME | sed -e's/^\(CMSSW_.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\).*$/\1/'`
     CMSSW_DATE=`echo $CMSSW_NAME | sed -e's/.*\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\)$/\1/'`
-    CMSSW_WEEKDAY=`python -c "import time;print time.strftime('%a', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower()"`
-    CMSSW_HOUR=`python -c "import time;print time.strftime('%H', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower()"`
+    CMSSW_WEEKDAY=`python3 -c "import time;print (time.strftime('%a', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower())"`
+    CMSSW_HOUR=`python3 -c "import time;print (time.strftime('%H', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower())"`
     CMSSW_QUEUE=`echo $CMSSW_NAME | sed -e's/_X_.*//;s/^CMSSW_//' | tr _ .`
     REL_LOGS_DIR="$IB_BASEDIR/$SCRAM_ARCH/www/$CMSSW_WEEKDAY/$CMSSW_QUEUE-$CMSSW_WEEKDAY-$CMSSW_HOUR/$CMSSW_NAME"
     REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"

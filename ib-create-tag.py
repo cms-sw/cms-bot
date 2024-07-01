@@ -72,6 +72,7 @@ if __name__ == "__main__":
     QUEUE = opts.queue  # "CMSSW_13_0_X"
 
     repo = "%s/%s" % (GH_CMSSW_ORGANIZATION, GH_CMSSW_REPO)
+    commit_url = "https://api.github.com/repos/%s/commits/" % repo
 
     try:
         ref = get_git_tag(repo, RELEASE_NAME)
@@ -83,9 +84,9 @@ if __name__ == "__main__":
 
         head = None
         for commit_ in commits_:
-            if commit_["commit"]["committer"]["name"] == "GitHub" and commit_["commit"]["author"][
-                "name"
-            ] in (CMSSW_L1 + ["cmsbuild"]):
+            if len(commit_["parents"]) == 1:
+                continue
+            if commit_["url"].startswith(commit_url):
                 head = commit_
                 break
 
@@ -99,6 +100,8 @@ if __name__ == "__main__":
                 RELEASE_NAME,
                 HEAD_SHA,
             )
+        else:
+            print("Tag head: ", HEAD_SHA)
 
     tags = find_tags(repo, QUEUE + "_20")
     RELEASE_LIST = [

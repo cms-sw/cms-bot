@@ -22,20 +22,32 @@ function run_check {
     SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
     scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh "cmsbuild@$node:/tmp" || (echo "Cannot scp script" && exit 1)
     ssh $SSH_OPTS "cmsbuild@"$node "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS"; exit_code=$?
-    if [[ ${exit_code} -eq 0 ]]; then
+    ssh $SSH_OPTS "cmsbuild@"$node "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS" >> $WORKSPACE/logfile
+    cat $WORKSPACE/logfile
+    error=$(cat $WORKSPACE/logfile | grep "ERROR")
+    error_count=$(cat $WORKSPACE/logfile | grep "ERROR" | wc -l)
+    if [[ ${error_count} -eq 0 ]]; then
         rm -f "$blacklist_path/$node"
         # Special .offline cleanup for aarch and ppc nodes
         if [[ $(echo $node | grep -e 'olarm\|ibmminsky' | wc -l) -gt 0 ]]; then
+            touch "$blacklist_path/$node"
+            echo "PASS" > "$blacklist_path/$node"
+            scp "$blacklist_path/$node" cmsbuild@lxplus.cern.ch:/afs/cern.ch/user/c/cmsbuild/nodes-info/"$node"
+            rm -f "$blacklist_path/$node"
             aarch_ppc_cleanup $node
         fi
     else
-        echo "... ERROR! Blacklisting ${node} ..."
+	echo "$error! Blacklisting ${node} ..."
+	rm $WORKSPACE/logfile
 	# Check if node is already in the blacklist
 	if [ ! -e $blacklist_path/$node ]; then 
-            touch "$blacklist_path/$node" || exit 1
+	    touch "$blacklist_path/$node" || exit 1
+	    echo "$error" > "$blacklist_path/$node"
 	    if [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
                 # If aarch or ppc, bring node off
                 aarch_ppc_disconnect $node
+		# If aarch (olarm), scp dummy file to /afs cmsbuild area
+		scp "$blacklist_path/$node" cmsbuild@lxplus.cern.ch:/afs/cern.ch/user/c/cmsbuild/nodes-info/"$node"
             elif [[ $(echo $node | grep '^lxplus' | wc -l) -gt 0 ]]; then
                 # If lxplus, disconnect all nodes connected to this host
                 lxplus_disconnect $node
@@ -115,7 +127,7 @@ function node_off {
     ${JENKINS_CLI_CMD} offline-node ${affected_node} -m "Node\ ${affected_node}\ has\ been\ blacklisted"
     # Store that node has been set offline
     echo "Storing .offline info at: $blacklist_path"
-    touch "$blacklist_path/$affected_node.offline"
+    echo "$error" > "$blacklist_path/$affected_node.offline"
 }
 
 function node_on {
@@ -188,11 +200,13 @@ function aarch_ppc_cleanup {
     echo ${jenkins_nodes_list[@]}
     for node_name in ${jenkins_nodes_list[@]}; do
         if [ -e "$blacklist_path/$node_name.offline" ]; then
-            offline_reason=$(grep -e "string" -m 2 "$nodes_path/$node_name/config.xml" | awk '{split($0,a,"<string>|</string>"); print a[2]}' | tail -n 1)
-            if [ $(echo $offline_reason | grep "has been blacklisted" | wc -l) -gt 0 ]; then
-                echo "Bringing node $node_name online again ..."
-                node_on $node_name
-            fi
+            # offline_reason=$(grep -e "string" -m 2 "$nodes_path/$node_name/config.xml" | awk '{split($0,a,"<string>|</string>"); print a[2]}' | tail -n 1)
+            # if [ $(echo $offline_reason | grep "has been blacklisted" | wc -l) -gt 0 ]; then
+            echo "Bringing node $node_name online again ..."
+            node_on $node_name
+	    connect_node $node_name
+     	    # TODO: If aarch (olarm), clean dummy file in /afs cmsbuild area
+            # fi
         fi
     done
 }

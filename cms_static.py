@@ -11,9 +11,12 @@ BACKPORT_STR = "- Backported from #"
 CMSBUILD_GH_USER = "cmsbuild"
 CMSBOT_IGNORE_MSG = "<cmsbot>\s*</cmsbot>"
 CMSBOT_NO_NOTIFY_MSG = "<notify>\s*</notify>"
+CMSBOT_TECHNICAL_MSG = "cms-bot internal usage"
 VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cmssw",
     "cmsdist",
+    "cmssdt-ib",
+    "cmssdt-web",
     "cms-bot",
     "root",
     "cmssw-config",
@@ -23,6 +26,6 @@ VALID_CMS_SW_REPOS_FOR_TESTS = [
     "cms-git-tools",
     "cms-common",
     "cms_oracleocci_abi_hack",
+    "cms-docker",
     "siteconf",
-    "scram-tools",
 ]

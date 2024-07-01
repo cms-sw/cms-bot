@@ -19,7 +19,7 @@ IGNORE_ISSUES = []
 # Valid Web hooks
 VALID_WEB_HOOKS = ["push"]
 # Set the Jenkins slave label is your tests needs special machines to run.
-JENKINS_SLAVE_LABEL = "lxplus7||lxplus6"
+JENKINS_SLAVE_LABEL = "lxplus"
 
 
 def file2Package(filename):

@@ -14,10 +14,10 @@ fi
 RELEASE_NAME=${RELEASE_QUEUE}_2099-01-01-2400
 perl -p -i -e "s/### RPM cms cmssw .*/### RPM cms cmssw ${RELEASE_NAME}/" cmsdist/cmssw.spec
 
-PYTHONPATH= ./pkgtools/cmsBuild $(cmsbuild_args ${RELEASE_NAME}) --use-dev --repo cms --architecture $ARCHITECTURE --work-dir w --pretend build cmssw-patch cmssw-ib bootstrap-driver cms-common fwlite gcc-toolfile $PKGS
+PYTHONPATH= ./pkgtools/cmsBuild $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}") --use-dev --repo cms --architecture $ARCHITECTURE --work-dir w --pretend build cmssw-patch cmssw-ib bootstrap-driver cms-common fwlite gcc-toolfile $PKGS
 mkdir upload
 used="upload/${RELEASE_QUEUE}-${ARCHITECTURE}.txt"
-python -c "import json; print '\n'.join(['${CMSDIST_TAG}:%s' % f for f in json.load(open('w/cmsdist_files.json')).keys()])" | sort > $used
+python3 -c "import json; print ('\n'.join(['${CMSDIST_TAG}:%s' % f for f in json.load(open('w/cmsdist_files.json')).keys()]))" | sort > $used
 mv w/cmsdist_files.json upload/${RELEASE_QUEUE}-${ARCHITECTURE}.json
 source $CMS_BOT_DIR/jenkins-artifacts
 send_jenkins_artifacts $(/bin/pwd)/upload/ check-unused-cmsdist-packages/${UPLOAD_ID}/

@@ -78,7 +78,7 @@ QUEUING_BUILDS_MSG = (
     "Queuing Jenkins build for the following architectures: %s \n"
     'You can abort the build by writing "Abort" in a comment. I will delete the release, '
     "the cmssw and cmsdist tag, and close the issue. You can't abort the upload once at"
-    " least one achitecture is being uploaded. \n"
+    " least one architecture is being uploaded. \n"
     "If you are building cmssw-tool-conf first, I will wait for each architecture to finish to start the build of cmssw."
 )
 QUEUING_TOOLCONF_MSG = (
@@ -116,7 +116,7 @@ PROD_ARCH_NOT_READY_MSG = (
     " You don't need to write the command again."
 )
 REL_NAME_REGEXP = (
-    "(CMSSW_[0-9]+_[0-9]+)_[0-9]+(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
+    "(CMSSW_[0-9]+_[0-9]+)(_[0-9]+)(_SLHC[0-9]*|)(_pre[0-9]+|_[a-zA-Z]*patch[0-9]+|)(_[^_]*|)"
 )
 UPLOAD_COMMENT = "upload %s"
 UPLOAD_ALL_COMMENT = "^[uU]pload all$"
@@ -373,7 +373,7 @@ def get_release_github(repository, release_name):
         + release_name
     )
     try:
-        print(urlopen(request).read())
+        print(urlopen(request).read().decode())
         return True
     except Exception as e:
         print("There was an error while creating the release:\n", e)
@@ -442,7 +442,7 @@ def delete_release_github(release_name):
     )
 
     request = Request(releases_url, headers={"Authorization": "token " + GH_TOKEN})
-    releases = json.loads(urlopen(request).read())
+    releases = json.loads(urlopen(request).read().decode())
     matchingRelease = [x["id"] for x in releases if x["name"] == release_name]
 
     if len(matchingRelease) < 1:
@@ -454,7 +454,7 @@ def delete_release_github(release_name):
     request.get_method = lambda: "DELETE"
 
     try:
-        print(urlopen(request).read())
+        print(urlopen(request).read().decode())
         return "Release successfully deleted"
     except Exception as e:
         return "There was an error while deleting the release:\n %s" % e
@@ -472,7 +472,7 @@ def delete_tag(org, repo, tag):
     status, out = run_cmd(cmd)
     print(out)
     if status != 0:
-        msg = "I was not able to delete the tag %s. Probaly it had not been created." % tag
+        msg = "I was not able to delete the tag %s. Probably it had not been created." % tag
         print(msg)
         return msg
     msg = "%s tag %s successfully deleted." % (repo, tag)
@@ -924,8 +924,11 @@ def check_to_build_after_tool_conf(issue, release_name, release_queue, docker_im
 # Guesses the previous release name based on the name given as a parameter
 #
 def guess_prev_rel_name(release_name, issue):
-    num_str = release_name.split("_")[-1]
-    number = int(re.search("[0-9]+$", release_name).group(0))
+    rel_name_match = re.match(REL_NAME_REGEXP, release_name)
+    num_str = rel_name_match.group(4)
+    if num_str == "":
+        num_str = rel_name_match.group(2)
+    number = int(re.search("[0-9]+$", num_str).group(0))
     prev_number = number - 1
     prev_num_str = num_str.replace(str(number), str(prev_number))
 
@@ -934,14 +937,25 @@ def guess_prev_rel_name(release_name, issue):
             if "pre" in num_str:
                 post_message(issue, PREVIOUS_RELEASE_NAME_MSG.format(release_name=release_name))
                 exit(0)
-            return re.sub("_" + num_str + "$", "", release_name)
-        return re.sub("_" + num_str + "$", "_" + prev_num_str, release_name)
+            return "".join(list(rel_name_match.group(1, 2, 3)) + [rel_name_match.group(5)])
+        return "".join(
+            list(rel_name_match.group(1, 2, 3)) + [prev_num_str] + [rel_name_match.group(5)]
+        )
     rel_match = (
-        re.sub("_" + num_str + "$", "_" + prev_num_str, release_name)
-        + "\(_[a-zA-Z]*patch[0-9][0-9]*\|\);"
+        rel_name_match.group(1)
+        + prev_num_str
+        + "\(_[a-zA-Z]*patch[0-9][0-9]*\|\)"
+        + rel_name_match.group(5)
+        + ";"
     )
     if number == 0:
-        rel_match = release_name + "_pre\([0-9][0-9]*\);"
+        rel_match = (
+            rel_name_match.group(1)
+            + rel_name_match.group(2)
+            + "_pre\([0-9][0-9]*\)"
+            + rel_name_match.group(5)
+            + ";"
+        )
     ret, out = run_cmd(
         "grep 'label="
         + rel_match
@@ -974,7 +988,7 @@ if __name__ == "__main__":
         "--force",
         dest="force",
         action="store_true",
-        help="Ignore previous comments in the issue and proccess it again",
+        help="Ignore previous comments in the issue and process it again",
         default=False,
     )
     parser.add_option(
@@ -1039,9 +1053,9 @@ if __name__ == "__main__":
             exit(0)
 
         release_queue = "".join(
-            [x for x in rel_name_match.group(1, 4)]
+            [x for x in rel_name_match.group(1, 5)]
             + ["_X"]
-            + [x.strip("0123456789") for x in rel_name_match.group(2)]
+            + [x.strip("0123456789") for x in rel_name_match.group(3)]
         )
 
     release_tag_commit = None
@@ -1070,7 +1084,7 @@ if __name__ == "__main__":
     architectures = [x["SCRAM_ARCH"] for x in specs if x["RELEASE_QUEUE"] == release_queue]
     if not architectures:
         print("Trying default queue")
-        release_queue = "".join([x for x in rel_name_match.group(1, 2)] + ["_X"])
+        release_queue = "".join([x for x in rel_name_match.group(1, 3)] + ["_X"])
         print(release_queue)
         architectures = [x["SCRAM_ARCH"] for x in specs if x["RELEASE_QUEUE"] == release_queue]
 

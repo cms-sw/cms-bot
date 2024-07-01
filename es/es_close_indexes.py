@@ -1,9 +1,7 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from os.path import dirname, abspath
 import sys, re
 
-# TODO are these script used?
 cmsbot_dir = None
 if __file__:
     cmsbot_dir = dirname(dirname(abspath(__file__)))
@@ -12,6 +10,7 @@ else:
 sys.path.insert(0, cmsbot_dir)
 
 from es_utils import get_indexes, close_index, find_indexes, open_index
+from cmsutils import epoch2week
 from time import time
 
 try:
@@ -21,7 +20,7 @@ except:
 ignore_index = []
 for idx in sys.argv[2:]:
     ignore_index.append(idx)
-cur_week = int(((time() / 86400) + 4) / 7)
+cur_week = int(epoch2week(time(), 1))
 idxs = []
 odxs = []
 try:

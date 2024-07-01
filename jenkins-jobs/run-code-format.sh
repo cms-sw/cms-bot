@@ -1,7 +1,7 @@
 #!/bin/bash -ex
 
 [ "${WORKSPACE}" = "" ] && export WORKSPACE=$(/bin/pwd -P)
-INSTALL_SCRIPT="$1"
+INSTALL_DIR="$1"
 CMSSW_CONFIG_TAG="$2"
 EXTRA_PRS="$3"
 CLANG_TIDY="$4"
@@ -13,20 +13,24 @@ CMSSW_QUEUE="$7"
 [ "${TEST_CHANGES}" != "true" ] && TEST_CHANGES=false
 
 mkdir $WORKSPACE/upload
-if [ "${INSTALL_SCRIPT}" != "" ] ; then
-  ${INSTALL_SCRIPT}
-  CMSSW_PROJECT=$(ls -d CMSSW_*)
-  export SCRAM_ARCH=$(ls -d ${CMSSW_PROJECT}/lib/* | sed 's|.*/||')
-  cd $CMSSW_PROJECT
-  rm -rf src; mkdir src
-  scram build clean >/dev/null 2>&1
+if [ "${INSTALL_DIR}" != "" ] ; then
+  CMSSW_PROJECT=$(basename ${INSTALL_DIR})
+  SCRAM_ARCH=$(ls ${INSTALL_DIR}/config/toolbox/)
 else
   eval $(grep 'RELEASE_BRANCH=master;' cms-bot/config.map | grep PROD_ARCH=1 )
   export SCRAM_ARCH
   [ "${CMSSW_QUEUE}" = "" ] || RELEASE_QUEUE="${CMSSW_QUEUE}"
-  CMSSW_PROJECT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | tr -s ' ' |  cut -d ' '   -f2 | tail -n 1)
-  scram -a ${SCRAM_ARCH} project ${CMSSW_PROJECT}
-  cd $CMSSW_PROJECT
+  CMSSW_PROJECT=$(scram -a $SCRAM_ARCH l -c $RELEASE_QUEUE | grep -v 'cmssw-patch' | tr -s ' ' |  cut -d ' '   -f2 | tail -n 1)
+fi
+scram -a ${SCRAM_ARCH} project ${CMSSW_PROJECT}
+cd $CMSSW_PROJECT
+
+if [ "${INSTALL_DIR}" != "" ] ; then
+  rm -rf config/toolbox/${SCRAM_ARCH}/tools/selected
+  cp -r ${INSTALL_DIR}/config/toolbox/${SCRAM_ARCH}/tools/selected  config/toolbox/${SCRAM_ARCH}/tools/selected
+  scram setup
+  scram setup self
+  scram build clean >/dev/null 2>&1
 fi
 if [ "${CMSSW_CONFIG_TAG}" != "" ] ; then
   git clone git@github.com:cms-sw/cmssw-config
@@ -80,15 +84,21 @@ if $CLANG_FORMAT ; then
     git diff > $WORKSPACE/upload/code-format-orig.patch
   popd
   cat $WORKSPACE/upload/code-format-orig.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs-orig.log
-  mv src src.format
-  mv src.tidy src
-  scram b clean
-  scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format.log 2>&1 || ERR=1
-  pushd src
-    git diff --name-only > $WORKSPACE/upload/code-format.txt
-    git diff > $WORKSPACE/upload/code-format.patch
-  popd
-  cat $WORKSPACE/upload/code-format.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs.log  
+  if $CLANG_TIDY ; then
+    mv src src.format
+    mv src.tidy src
+    scram b clean
+    scram build -k -j ${NUM_PROC} code-format-all > $WORKSPACE/upload/code-format.log 2>&1 || ERR=1
+    pushd src
+      git diff --name-only > $WORKSPACE/upload/code-format.txt
+      git diff > $WORKSPACE/upload/code-format.patch
+    popd
+    cat $WORKSPACE/upload/code-format.txt | cut -d/ -f1,2 | sort | uniq > $WORKSPACE/upload/code-format-pkgs.log
+  else
+    mv $WORKSPACE/upload/code-format-orig.txt $WORKSPACE/upload/code-format.txt
+    mv $WORKSPACE/upload/code-format-orig.patch $WORKSPACE/upload/code-format.patch
+    mv $WORKSPACE/upload/code-format-pkgs-orig.log $WORKSPACE/upload/code-format-pkgs.log
+  fi
 else
   touch $WORKSPACE/upload/code-format.txt
 fi

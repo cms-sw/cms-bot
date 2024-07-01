@@ -9,6 +9,8 @@ from _py2with3compatibility import run_cmd
 
 
 def hasInclude(inc, src, cache):
+    if not src:
+        return False
     if src not in cache:
         cache[src] = {}
         for e in ["CMSSW_BASE", "CMSSW_RELEASE_BASE", "CMSSW_FULL_RELEASE_BASE"]:
@@ -113,3 +115,7 @@ def main():
         sort_keys=True,
         separators=(",", ": "),
     )
+
+
+if __name__ == "__main__":
+    main()

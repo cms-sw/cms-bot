@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 import sys, json, re, ssl, base64
 from os.path import exists
 from os import getenv
 from hashlib import sha1
-from cmsutils import cmsswIB2Week, percentile
+from cmsutils import cmsswIB2Week, percentile, epoch2week
 from _py2with3compatibility import Request, urlopen
 from os import stat as tstat
 from time import time
@@ -404,7 +403,7 @@ def es_send_external_stats(
     es_doc_name="externals-stats-summary",
 ):
     file_stamp = int(tstat(stats_dict_file_path).st_mtime)  # get the file stamp from the file
-    week = str((file_stamp / 86400 + 4) / 7)
+    week = epoch2week(file_stamp)
     with open(opts_dict_file_path, "r") as opts_dict_f:
         opts_dict = json.load(opts_dict_f)
     index_sha = sha1(

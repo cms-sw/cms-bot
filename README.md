@@ -10,19 +10,19 @@ To have it working you'll need a `~/.github-token` which can access the
 
 # Release integration
 
-- [process-pull-request](https://github.com/cms-sw/cms-bot/blob/master/process-pull-request):
+- [process-pull-request.py](https://github.com/cms-sw/cms-bot/blob/master/process-pull-request.py):
 this is the script which updates the status of a CMSSW PR. It parses all the
 messages associated to the specified PR and if it spots a transition (e.g. a L2
 signature) it posts a message acknowledging what happended, updates the tags
 etc. The state of the PR is fully obtained by parsing all the comments, so that
 we do not have to maintain our own state tracking DB.
 - [watchers.yaml](https://github.com/cms-sw/cms-bot/blob/master/watchers.yaml):
-contains all the information required by `process-pull-requests` to notify
+contains all the information required by `process-pull-requests.py` to notify
 developers when a PR touches the packages they watch.
 
 # Release building
 
-- [process-build-release-request](https://github.com/cms-sw/cms-bot/blob/master/process-build-release-request)
+- [process-build-release-request.py](https://github.com/cms-sw/cms-bot/blob/master/process-build-release-request.py)
 - [release-build](): script used to build a release which has been requested
 through a Github issue.
 - [upload-release](): script used to upload a release to the repository. When
@@ -39,7 +39,7 @@ Elasticsearch for "live" data from which we dump precomputed views on a
 basis.
 
 - [es-templates](https://github.com/cms-sw/cms-bot/tree/master/es-templates): contains the templates for the logged dataes-templates.
-- [es-cleanup-indexes](https://github.com/cms-sw/cms-bot/blob/master/es-cleanup-indexes): cleanups old indexes in elasticsearch.
+- [es-cleanup-indexes.py](https://github.com/cms-sw/cms-bot/blob/master/es-cleanup-indexes.py): cleanups old indexes in elasticsearch.
 
 # Code style
 

@@ -330,9 +330,11 @@ if __name__ == "__main__":
     resources = {
         "total": {
             "cpu": opts.maxcpu if (opts.maxcpu > 0) else MachineCPUCount * opts.cpu,
-            "rss": opts.maxmemory
-            if (opts.maxmemory > 0)
-            else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory),
+            "rss": (
+                opts.maxmemory
+                if (opts.maxmemory > 0)
+                else int(MachineMemoryGB * 1024 * 1024 * 10.24 * opts.memory)
+            ),
         },
         "total_groups": 0,
         "total_jobs": 0,

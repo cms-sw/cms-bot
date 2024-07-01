@@ -9,6 +9,7 @@ import json
 import subprocess as sub
 
 Log_Lines_Filter = [
+    ("Memory Report: "),
     ("This TensorFlow binary is optimized with"),
     ("[PostMaster", "[Error"),
     ("from active sources because its quality"),

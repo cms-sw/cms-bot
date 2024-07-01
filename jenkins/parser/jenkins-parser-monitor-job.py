@@ -105,7 +105,7 @@ with open(
       </style>\n\
    </head>\n\
    <body>\n\
-      <h1>Jenkins parser monitor</h1>\n\
+      <h1>Jenkins Parser Monitoring</h1>\n\
       <p>The table below displays the activity of the <a href="https://cmssdt.cern.ch/jenkins/job/jenkins-test-parser/">Jenkins Parser job</a>.</p>\n\
       <p>Red entries correspond to failed jobs where the Jenkins Parser has not taken any action. Please, take the appropiate action in those cases. White entries correspond to jobs retried by the Parser because a known Error Message was found in the log.</p>\n\
       <input type="text" id="SearchBar" onkeyup="myFunction()" placeholder="Filter by job name ..." title="Type job name">\n\
@@ -115,7 +115,7 @@ with open(
             <th>Job Name</th>\n\
             <th>Build Number</th>\n\
             <th>Error Message</th>\n\
-            <th>Retry job</th>\n\
+            <th>Retry Job</th>\n\
          </tr>\n\
          </tr>\n\
          </thead>\n\
@@ -204,7 +204,57 @@ with open(
            }\n\
          }\n\
       </script>\n\
-   </body>\n\
-</html>\n'
+      <p> </p>\n\
+      <p> </p>\n\
+      <h1>Jenkins Blacklist</h1>\n\
+      <p>The table below displays the blacklisted nodes in our Jenkins infrastructure. There is a <a href="https://cmssdt.cern.ch/jenkins/job/nodes-sanity-check/">sanity job</a> that checks if CernVM-FS repositories are accessible and if singularity can start a container on the nodes. If not, the node is blacklisted and displayed in the table below.</p>\n\
+      <p>If the table entry is red, please take the appropiate action (open a SNOW ticket, run the start_cvmfs.sh script on aarch64 machines, etc) and re-run the sanity job to take the node out of the blacklist. In any case, the sanity job automatically runs every 30 min.</p>\n\
+      <p> </p>\n\
+      <table id="Offline" class="Table">\n\
+         <tr class="header">\n\
+            <th>Blacklisted Node</th>\n\
+            <th>Node Url</th>\n\
+            <th>Reason</th>\n\
+         </tr>\n\
+         </thead>\n\
+      <tbody>\n'
+    html_file.write(tail)
+
+    for node in os.listdir("/var/lib/jenkins/workspace/cache/blacklist/"):
+        file_path = "/var/lib/jenkins/workspace/cache/blacklist/" + node
+        try:
+            with open(file_path, "r") as file:
+                reason = file.read()
+        except:
+            reason = "Unknown"
+        if ".offline" in node:
+            node = node.split(".offline")[0]
+            print("Node " + node + " is blacklisted")
+            html_file.writelines(
+                '      <tr class="NoAction">\n        <td>'
+                + node
+                + '</td>\n        <td><a href="https://cmssdt.cern.ch/jenkins/computer/'
+                + node
+                + '">https://cmssdt.cern.ch/jenkins/computer/'
+                + node
+                + "</td><td>"
+                + str(reason)
+                + "</td></tr>"
+            )
+        elif ".cern.ch" in node:
+            node = node.split(".cern.ch")[0]
+            print("Lxplus host " + node + " is blacklisted")
+            html_file.writelines(
+                '      <tr class="Retry">\n        <td>'
+                + node
+                + "</td>\n        <td>Lxplus host is blacklisted, no Jenkins node will connect to it </td>\n<td>"
+                + reason
+                + "</td>      </tr>\n"
+            )
+
+    tail = "      </table>\n\
+      </body>\n\
+      <p> </p>\n\
+  </html>"
 
     html_file.write(tail)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 from github import Github
-from optparse import OptionParser
+from argparse import ArgumentParser
 import repo_config
 from os.path import expanduser
 from json import loads
@@ -28,39 +28,41 @@ def get_tag_from_string(tag_string=None):
 
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="%prog <cms-data-repo> <cms-dist repo> <pull-request-id>")
+    parser = ArgumentParser(usage="%(prog)s <cms-data-repo> <cms-dist-repo> <pull-request-id>")
 
-    parser.add_option(
+    parser.add_argument(
         "-r",
-        "--data-repo",
-        dest="data_repo",
-        help="Github data repositoy name e.g. cms-data/RecoTauTag-TrainingFiles.",
+        "--data_repo",
+        metavar="<cms-data-repo>",
+        help="Github data repository name e.g. cms-data/RecoTauTag-TrainingFiles.",
         type=str,
-        default=None,
     )
-    parser.add_option(
+    parser.add_argument(
         "-d",
-        "--dist-repo",
-        dest="dist_repo",
-        help="Github dist repositoy name e.g. cms-sw/cmsdist.",
+        "--dist_repo",
+        metavar="<cms-dist-repo>",
+        help="Github dist repository name e.g. cms-sw/cmsdist.",
         type=str,
         default="",
     )
-    parser.add_option(
+    parser.add_argument(
         "-p",
-        "--pull-request",
-        dest="pull_request",
+        "--pull_request",
+        metavar="<pull-request-id>",
         help="Pull request number",
         type=str,
-        default=None,
     )
-    opts, args = parser.parse_args()
+    parser.add_argument(
+        "-n", "--no-merge", dest="merge", help="Disable automerge", action="store_false"
+    )
+
+    args = parser.parse_args()
 
     gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
 
-    data_repo = gh.get_repo(opts.data_repo)
-    data_prid = int(opts.pull_request)
-    dist_repo = gh.get_repo(opts.dist_repo)
+    data_repo = gh.get_repo(args.data_repo)
+    data_prid = int(args.pull_request)
+    dist_repo = gh.get_repo(args.dist_repo)
     data_repo_pr = data_repo.get_pull(data_prid)
     if not data_repo_pr.merged:
         print("The pull request isn't merged !")
@@ -77,7 +79,7 @@ if __name__ == "__main__":
 
     err, out = run_cmd(
         "rm -rf repo && git clone --bare https://github.com/%s -b %s repo && GIT_DIR=repo git log --pretty='%%d'"
-        % (opts.data_repo, data_pr_base_branch)
+        % (args.data_repo, data_pr_base_branch)
     )
     last_release_tag = get_tag_from_string(out)
 
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     # if created files and modified files are the same count, all files are new
 
     response = urlopen(
-        "https://api.github.com/repos/%s/pulls/%s" % (opts.data_repo, opts.pull_request)
+        "https://api.github.com/repos/%s/pulls/%s" % (args.data_repo, args.pull_request)
     )
     res_json = loads(response.read().decode())
     print(res_json["additions"], res_json["changed_files"], res_json["deletions"])
@@ -120,7 +122,7 @@ if __name__ == "__main__":
             print("New tag data", tag_data)
             new_tag = "V%s" % "-".join(tag_data)
             try:
-                has_tag = get_git_tree(new_tag, opts.data_repo)
+                has_tag = get_git_tree(new_tag, args.data_repo)
                 if "sha" not in has_tag:
                     break
                 last_release_tag = last_release_tag + "-00-00"
@@ -131,7 +133,7 @@ if __name__ == "__main__":
             ref="refs/tags/" + new_tag, sha=data_repo.get_branch(data_pr_base_branch).commit.sha
         )
     default_cms_dist_branch = dist_repo.default_branch
-    repo_name_only = opts.data_repo.split("/")[1]
+    repo_name_only = args.data_repo.split("/")[1]
     repo_tag_pr_branch = "update-" + repo_name_only + "-to-" + new_tag
 
     sb = dist_repo.get_branch(default_cms_dist_branch)
@@ -149,57 +151,88 @@ if __name__ == "__main__":
     cmsswdatafile = "data/cmsswdata.txt"
     content_file = dist_repo.get_contents(cmsswdatafile, repo_tag_pr_branch)
     cmsswdatafile_raw = content_file.decoded_content
-    new_content = ""
-    # remove the existing line no matter where it is and put the new line right under default
 
-    count = 0  # omit first line linebreaker
+    repo_name_str = "%s=" % repo_name_only
+    data_lines = []
+    has_data = False
+    in_default = False
+    is_default = False
     for line in cmsswdatafile_raw.splitlines():
         line = line.decode()
-        updated_line = None
-        if "[default]" in line:
-            updated_line = "\n" + line + "\n" + repo_name_only + "=" + new_tag + ""
-        elif repo_name_only in line:
-            updated_line = ""
-        else:
-            if count > 0:
-                updated_line = "\n" + line
-            else:
-                updated_line = line
-        count = count + 1
-        new_content = new_content + updated_line
+        data_lines.append(line)
+        if has_data:
+            continue
+        if line.startswith("["):
+            is_default = "[default]" in line
+        elif line.strip().startswith(repo_name_str):
+            has_data = True
+            in_default = is_default
 
+    new_lines = []
+    if in_default:
+        for line in data_lines:
+            if line.strip().startswith(repo_name_str):
+                line = repo_name_only + "=" + new_tag
+            new_lines.append(line)
+    else:
+        for line in data_lines:
+            if "[default]" in line:
+                new_lines.append(line)
+                new_lines.append(repo_name_only + "=" + new_tag)
+            elif not line.strip().startswith(repo_name_str):
+                new_lines.append(line)
+        # Delete extra data.file if data package was not in default section
+        if has_data:
+            try:
+                dfile_name = "data/data-%s.file" % repo_name_only
+                dfile = dist_repo.get_contents(dfile_name, repo_tag_pr_branch)
+                dist_repo.delete_file(
+                    dfile_name, "data package moved to github", dfile.sha, repo_tag_pr_branch
+                )
+            except:
+                pass
+
+    new_content = "\n".join(new_lines)
     mssg = "Update tag for " + repo_name_only + " to " + new_tag
     update_file_object = dist_repo.update_file(
         cmsswdatafile, mssg, new_content, content_file.sha, repo_tag_pr_branch
     )
 
     # file with tags on the default branch
-    cmsswdataspec = "cmsswdata.spec"
-    content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
-    cmsswdatafile_raw = content_file.decoded_content
-    new_content = []
-    data_pkg = " data-" + repo_name_only
-    added_pkg = False
-    for line in cmsswdatafile_raw.splitlines():
-        line = line.decode()
-        new_content.append(line)
-        if not line.startswith("Requires: "):
-            continue
-        if data_pkg in line:
-            added_pkg = False
-            break
-        if not added_pkg:
-            added_pkg = True
-            new_content.append("Requires:" + data_pkg)
+    if not has_data:
+        cmsswdataspec = "cmsswdata.spec"
+        content_file = dist_repo.get_contents(cmsswdataspec, repo_tag_pr_branch)
+        cmsswdatafile_raw = content_file.decoded_content
+        new_content = []
+        data_pkg = " data-" + repo_name_only
+        added_pkg = False
+        for line in cmsswdatafile_raw.splitlines():
+            line = line.decode()
+            new_content.append(line)
+            if not line.startswith("Requires: "):
+                continue
+            if line.strip().endswith(data_pkg):
+                added_pkg = False
+                break
+            if not added_pkg:
+                added_pkg = True
+                new_content.append("Requires:" + data_pkg)
 
-    if added_pkg:
-        mssg = "Update cmssdata spec for" + data_pkg
-        update_file_object = dist_repo.update_file(
-            cmsswdataspec, mssg, "\n".join(new_content), content_file.sha, repo_tag_pr_branch
-        )
+        if added_pkg:
+            mssg = "Update cmssdata spec for" + data_pkg
+            update_file_object = dist_repo.update_file(
+                cmsswdataspec, mssg, "\n".join(new_content), content_file.sha, repo_tag_pr_branch
+            )
 
     title = "Update tag for " + repo_name_only + " to " + new_tag
     body = "Move " + repo_name_only + " data to new tag, see \n" + data_repo_pr.html_url + "\n"
     change_tag_pull_request = dist_repo.create_pull(
         title=title, body=body, base=default_cms_dist_branch, head=repo_tag_pr_branch
     )
+
+    if args.merge and (data_pr_base_branch == data_repo_default_branch):
+        print("cms-data PR was for default branch, will merge now")
+        change_tag_pull_request.create_issue_comment(
+            "This PR will be merged automatically because cms-data PR was for default branch"
+        )
+        change_tag_pull_request.merge()

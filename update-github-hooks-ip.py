@@ -16,5 +16,5 @@ with open("%s.tmp" % ip_file, "w") as ref:
 if cnt:
     system("mv %s.tmp %s" % (ip_file, ip_file))
 else:
-    system("rm -f %s.tmp %s" % ip_file)
+    system("rm -f %s.tmp" % ip_file)
     exit(1)

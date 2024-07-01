@@ -1,6 +1,7 @@
 universe                = @REQUEST_UNIVERSE@
 +MaxRuntime             = @REQUEST_MAXRUNTIME@
 request_cpus            = @REQUEST_CPUS@
+request_memory          = @REQUEST_MEMORY@
 executable              = @SCRIPT_NAME@.sh
 transfer_input_files    = @INPUT_FILES@
 should_transfer_files   = yes

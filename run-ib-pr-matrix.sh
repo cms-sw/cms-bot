@@ -43,9 +43,11 @@ fi
 #Actually run  runTheMatrix.py for the selected workflows
 mkdir -p "$WORKSPACE/matrix-results"
 UC_TEST_FLAVOR=$(echo ${TEST_FLAVOR} | tr '[a-z]' '[A-Z]')
+[ "${PRODUCTION_RELEASE}" != "true" ] && PRODUCTION_RELEASE="false"
 pushd "$WORKSPACE/matrix-results"
   NJOBS=$(nproc)
   CMD_OPTS=""
+  if ${PRODUCTION_RELEASE} && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then CMD_OPTS="--maxmem_profile" ; fi
   case "${TEST_FLAVOR}" in
     gpu )        MATRIX_ARGS="-w gpu ${MATRIX_ARGS}" ;;
     high_stats ) CMD_OPTS="-n 500" ; MATRIX_ARGS="-i all ${MATRIX_ARGS}" ;;
@@ -63,7 +65,10 @@ pushd "$WORKSPACE/matrix-results"
     CMD_OPTS="${CMD_OPTS} ${EXTRA_MATRIX_COMMAND_ARGS}"
   fi
   [ "${CMD_OPTS}" != "" ] && MATRIX_ARGS="${MATRIX_ARGS} --command ' ${CMD_OPTS}'"
-  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
+  if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+    CMS_SITE_OVERRIDE="local"
+  fi
+  eval CMS_PATH=/cvmfs/cms-ib.cern.ch SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE runTheMatrix.py -j ${NJOBS} ${MATRIX_ARGS} 2>&1 | tee -a matrixTests.${BUILD_ID}.log
   mv runall-report-step123-.log runall-report-step123-.${BUILD_ID}.log
   find . -name DQM*.root | sort | sed 's|^./||' > wf_mapping.${BUILD_ID}.txt
   ERRORS_FILE=wf_errors.${BUILD_ID}.txt
@@ -76,6 +81,20 @@ pushd "$WORKSPACE/matrix-results"
     fi
   done
   set -x
+
+  if [[ $CMD_OPTS =~ maxmem_profile ]] ; then
+    LOG=runall-report-step123-.${BUILD_ID}.log
+    for WF in $(grep -a '^[1-9][0-9]*' ${LOG} | grep ' Step[0-9]' | sed 's| .*||' | sort | uniq ) ; do
+      memFile=maxmem_profile_$(echo $WF | cut -d_ -f1).txt
+      pushd $WF
+      for log in $(ls step*.log);do
+        echo ${log} | cut -d_ -f1 >> ${memFile}
+        grep "Memory Report: " $log | tail -5 >> ${memFile}
+      done
+      popd
+    done
+  fi 
+
 popd
 
 if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
@@ -97,7 +116,11 @@ if [ "${UPLOAD_ARTIFACTS}" = "true" ] ; then
   echo "CVMFS_SERVER=cms-ci"         >> $WORKSPACE/cvmfs-deploy-baseline
 
   REL_QUEUE=$(echo ${RELEASE_FORMAT} | sed 's|_X_.*|_X|')
-  DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print CMSSW_DEVEL_BRANCH')
+  if python3 -v ; then
+    DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python3 -c 'from releases import CMSSW_DEVEL_BRANCH; print (CMSSW_DEVEL_BRANCH)')
+  else
+    DEV_QUEUE=$(cd ${CMS_BOT_DIR}; python -c 'from releases import CMSSW_DEVEL_BRANCH; print (CMSSW_DEVEL_BRANCH)')
+  fi
   if [ "X${REL_QUEUE}" = "X${DEV_QUEUE}" ] ; then
     echo "${REL_QUEUE}" > $WORKSPACE/BaselineDevRelease
     send_jenkins_artifacts $WORKSPACE/BaselineDevRelease ib-baseline-tests/BaselineDevRelease

@@ -12,7 +12,10 @@ scram -a $ARCHITECTURE p $RELEASE_FORMAT
 cd $RELEASE_FORMAT/src
 eval `scram run -sh`
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"
-export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
 mkdir -p $CMSSW_BASE/src/HLTrigger
 cp -r $CMSSW_RELEASE_BASE/src/HLTrigger/Configuration/ $CMSSW_BASE/src/HLTrigger/Configuration/
 #To avoid https://github.com/cms-sw/cmssw/issues/42988 issue

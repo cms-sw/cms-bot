@@ -823,33 +823,18 @@ mmarionncern:
 mkirsano:
 - GeneratorInterface
 mmusich:
-- Alignment/CommonAlignment
-- Alignment/CommonAlignmentAlgorithm
-- Alignment/CommonAlignmentParametrization
-- Alignment/CommonAlignmentProducer
-- Alignment/MillePedeAlignmentAlgorithm
-- Alignment/OfflineValidation
-- Alignment/ReferenceTrajectories
-- Alignment/SurveyAnalysis
-- Alignment/TrackerAlignment
-- Alignment/TwoBodyDecay
-- CalibTracker/Configuration
-- CalibTracker/Records
-- CalibTracker/SiStrip
-- DataFormats/SiStrip
-- DPGAnalysis/SiStripTools
+- .*DataFormats
+- .*L1T
+- .*HL
+- .*Trig
+- Alignment
+- CalibTracker
+- DPGAnalysis
 - DQM/Si
 - DQM/Track
 - MuonAnalysis/MomentumScaleCalibration
-- RecoLocalTracker/ClusterParameterEstimator
-- RecoLocalTracker/Configuration
-- RecoLocalTracker/Records
-- RecoLocalTracker/SiStrip
-- RecoLocalTracker/SubCollectionProducers
-- SimTracker/Common
-- SimTracker/Configuration
-- SimTracker/Records
-- SimTracker/SiStripDigitizer
+- RecoLocalTracker
+- SimTracker
 namapane:
 - .*Magnetic
 nhanvtran:
@@ -1348,28 +1333,6 @@ mtosi:
 - SLHCUpgradeSimulations/Configuration
 - TrackingTools
 - TrackPropagation
-ebrondol:
-- DataFormats/HGCRecHit
-- RecoTracker/CkfPattern
-- RecoTracker/Configuration
-- RecoTracker/GeometryESProducer
-- RecoTracker/IterativeTracking
-- RecoTracker/MeasurementDet
-- RecoTracker/TkNavigation
-- RecoTracker/TrackProducer
-- RecoHGCal
-- RecoLocalCalo/Configuration
-- RecoLocalCalo/HGC
-- RecoLocalCalo/HGCalRecAlgos
-- RecoLocalCalo/HGCalRecProducers
-- RecoParticleFlow/PFTracking
-- RecoParticleFlow/PFClusterProducer
-- TrackingTools
-- TrackPropagation
-- Validation/Configuration
-- Validation/Geometry
-- Validation/HGCalValidation
-- Validation/RecoTrack
 alberto-sanchez:
 - GeneratorInterface
 seemasharmafnal:
@@ -1570,6 +1533,7 @@ fabiocos:
 - Mixing
 - RecoLocalFastTime
 - RecoMTD
+- RecoVertex
 - SimDataFormats
 - SimFastTiming
 - SimG4CMS
@@ -1750,7 +1714,10 @@ ram1123:
   - DataFormats/EgammaCandidates
 dinyar:
   - DataFormats/L1TMuon
+  - DataFormats/L1Scouting
+  - DataFormats/L1ScoutingRawData
   - DataFormats/L1Trigger
+  - EventFilter/L1ScoutingRawToDigi
   - EventFilter/L1TRawToDigi
   - L1Trigger/L1TCommon
   - L1Trigger/L1TMuon
@@ -1823,3 +1790,18 @@ jlidrych:
 - RecoLocalTracker/SubCollectionProducers
 lenzip:
 - PhysicsTools/NanoAODTools
+martinamalberti:
+- DataFormats/ForwardDetId
+- DataFormats/FTLDigi
+- DataFormats/FTLRecHit
+- DetectorDescription
+- Geometry
+- RecoLocalFastTime
+- RecoMTD
+- RecoVertex
+- SimDataFormats
+- SimFastTiming
+- SimG4CMS
+- SimG4Core
+- SimGeneral
+- Validation/MtdValidation

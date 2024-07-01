@@ -30,7 +30,10 @@ popd
 cp $WORKSPACE/das-utils/das_client $WORKSPACE/das-utils/das_client.py || true
 $WORKSPACE/das-utils/use-ibeos-sort
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
-export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
 export PATH=$WORKSPACE/das-utils:$PATH
 which das_client
 mkdir $TEST_DIR/matrixTests

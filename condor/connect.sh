@@ -1,8 +1,4 @@
 #!/bin/bash -e
-if [ "$DEBUG" = "true" ] ; then
-  export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
-  set -x
-fi
 #########################################
 JOBS_STATUS_0='Unexpanded'
 JOBS_STATUS_1='Idle'
@@ -23,16 +19,17 @@ REQUEST_CPUS="${REQUEST_CPUS-1}"
 REQUEST_UNIVERSE="${REQUEST_UNIVERSE-vanilla}"
 REQUEST_MAXRUNTIME="${REQUEST_MAXRUNTIME-432000}"
 JENKINS_DEBUG="${DEBUG-false}"
-JENKINS_CALLBACK="${JENKINS_CALLBACK-http://cmsjenkins03.cern.ch:8080/jenkins/}"
+JENKINS_CALLBACK="${JENKINS_CALLBACK-http://cmsjenkins01.cern.ch:8080/jenkins/}"
 
 if [ $REQUEST_CPUS -lt 1 ] ; then REQUEST_CPUS=1 ; fi
+if [ "${REQUEST_MEMORY}" == "" ] ; then let REQUEST_MEMORY=${REQUEST_CPUS}*2500 ; fi
 if [ $REQUEST_MAXRUNTIME -lt 3600 ] ; then REQUEST_MAXRUNTIME=3600 ; fi
 ##########################################
 here=$(dirname $0)
 cd $WORKSPACE
 mkdir -p logs
 
-script_name=${JOB_NAME}-${BUILD_NUMBER}.$(date +%Y%m%d%H%M%S)
+script_name=${JOB_NAME}-${NODE_ARCH}-${BUILD_NUMBER}.$(date +%Y%m%d)
 SLAVE_JAR_DIR="${WORKSPACE}"
 while [ ! -e ${SLAVE_JAR_DIR}/slave.jar ] ; do
   SLAVE_JAR_DIR=$(dirname $SLAVE_JAR_DIR)
@@ -57,6 +54,7 @@ chmod +x ${script_name}.sh
 
 sed -i -e "s|@SCRIPT_NAME@|${script_name}|"             job.sub
 sed -i -e "s|@REQUEST_CPUS@|$REQUEST_CPUS|"             job.sub
+sed -i -e "s|@REQUEST_MEMORY@|$REQUEST_MEMORY|"         job.sub
 sed -i -e "s|@REQUEST_UNIVERSE@|$REQUEST_UNIVERSE|"     job.sub
 sed -i -e "s|@REQUEST_MAXRUNTIME@|$REQUEST_MAXRUNTIME|" job.sub
 sed -i -e "s|@INPUT_FILES@|$INPUT_FILES|"               job.sub

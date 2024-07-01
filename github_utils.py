@@ -1,4 +1,10 @@
+#########################################################
+# This library need to support both python3 and python2 #
+# so makes sure changes work for both py2/py3
+#########################################################
 from __future__ import print_function
+
+import logging
 from sys import argv, version_info
 from hashlib import md5
 import json, sys, datetime
@@ -89,7 +95,7 @@ def _check_rate_limits(
                 return
         if msg:
             print(
-                "%sSlowing down for %s sec due to api rate limits %s approching zero (reset in %s secs)"
+                "%sSlowing down for %s sec due to api rate limits %s approaching zero (reset in %s secs)"
                 % (prefix, doSleep, rate_limit, rate_reset_sec)
             )
         sleep(doSleep)
@@ -308,7 +314,7 @@ def fill_notes_description(notes, repo_name, cmsprs, cache={}):
             pr_cache = join(cmsprs, repo_name, pr_md5[0:2], pr_md5[2:] + ".json")
             print("Checking cached file: " + pr_cache)
             if not exists(pr_cache):
-                print("  Chache does not exists: ", pr_cache)
+                print("  Cache does not exists: ", pr_cache)
                 cache_invalid_pr(pr_hash_id, cache)
                 continue
             pr = json.load(open(pr_cache))
@@ -522,6 +528,29 @@ def get_rate_limits():
     return github_api(uri="/rate_limit", method="GET")
 
 
+def merge_dicts(old, new):
+    for k, v in new.items():
+        if k not in old:
+            old[k] = new[k]
+            continue
+
+        if isinstance(v, dict):
+            old[k] = merge_dicts(old[k], new[k])
+            continue
+
+        if isinstance(v, list):
+            old[k].extend(v)
+            continue
+
+        if old[k] != new[k]:
+            raise RuntimeError(
+                "Unable to merge dictionaries: value for key {0} differs. ".format(k)
+                + "Old {0} {1}, new {2}, {3}".format(old[k], type(old[k]), new[k], type(new[k]))
+            )
+
+    return old
+
+
 def github_api(
     uri,
     params=None,
@@ -533,10 +562,16 @@ def github_api(
     last_page=False,
     all_pages=True,
     max_pages=-1,
-    status=[],
+    status=None,
+    merge_dict=False,
 ):
+    if status is None:
+        status = []
+
+    check_rate_limits(msg=False)
+
     global GH_RATE_LIMIT, GH_PAGE_RANGE
-    if max_pages > 0 and page > max_pages:
+    if max_pages > 0 and page > max_pages:  # noqa for readability
         return "[]" if raw else []
     if not params:
         params = {}
@@ -560,6 +595,7 @@ def github_api(
             url = url + "&"
         url = url + "page=%s" % page
     headers["Authorization"] = "token " + get_gh_token()
+    logging.getLogger("github").debug("%s %s", method, url)
     request = Request(url, data=data, headers=headers)
     request.get_method = lambda: method
     response = urlopen(request)
@@ -604,11 +640,15 @@ def github_api(
                 all_pages=False,
             )
         for page in GH_PAGE_RANGE:
-            if max_pages > 0 and page > max_pages:
+            if max_pages > 0 and page > max_pages:  # noqa for readability
                 break
-            data += github_api(
+            new_data = github_api(
                 uri, params, method, headers, page, raw=raw, per_page=per_page, all_pages=False
             )
+            if merge_dict:
+                data = merge_dicts(data, new_data)
+            else:
+                data += new_data
     return data
 
 
@@ -647,6 +687,12 @@ def pr_get_changed_files(pr):
     return rez
 
 
+def get_commit(repository, commit_sha):
+    return github_api(
+        "/repos/{0}/commits/{1}".format(repository, commit_sha), method="GET", merge_dict=True
+    )
+
+
 def get_unix_time(data_obj):
     return data_obj.strftime("%s")
 
@@ -679,6 +725,10 @@ def set_gh_user(user):
     GH_USER = user
 
 
+def get_gh_user():
+    return GH_USER
+
+
 def get_combined_statuses(commit, repository):
     get_gh_token(repository)
     return github_api("/repos/%s/commits/%s/status" % (repository, commit), method="GET")
@@ -697,6 +747,39 @@ def get_pr_commits(pr, repository, per_page=None, last_page=False):
 def get_pr_latest_commit(pr, repository):
     get_gh_token(repository)
     return str(get_pr_commits(pr, repository, per_page=1, last_page=True)[-1]["sha"])
+
+
+def get_issue_emojis(issue_id, repository):
+    get_gh_token(repository)
+    return github_api("/repos/%s/issues/%s/reactions" % (repository, issue_id), method="GET")
+
+
+def delete_issue_emoji(emoji_id, issue_id, repository):
+    get_gh_token(repository)
+    return github_api(
+        "/repos/%s/issues/%s/reactions/%s" % (repository, issue_id, emoji_id),
+        method="DELETE",
+        raw=True,
+    )
+
+
+def set_issue_emoji(issue_id, repository, emoji="+1", reset_other=True):
+    cur_emoji = None
+    if reset_other:
+        for e in get_issue_emojis(issue_id, repository):
+            login = e["user"]["login"].encode("ascii", "ignore")
+            if sys.version_info[0] == 3:
+                login = login.decode()
+            if login == GH_USER:
+                if e["content"] != emoji:
+                    delete_issue_emoji(e["id"], issue_id, repository)
+                else:
+                    cur_emoji = e
+    if cur_emoji:
+        return cur_emoji
+    get_gh_token(repository)
+    params = {"content": emoji}
+    return github_api("/repos/%s/issues/%s/reactions" % (repository, issue_id), params=params)
 
 
 def set_comment_emoji(comment_id, repository, emoji="+1", reset_other=True):
@@ -901,3 +984,44 @@ def get_pr(repository, pr_id):
     data = github_api("/repos/%s/pulls/%s" % (repository, pr_id), method="GET")
 
     return data
+
+
+def get_last_commit(pr):
+    commits_ = get_pr_commits_reversed(pr)
+    if commits_:
+        return commits_[-1]
+    else:
+        return None
+
+
+def get_pr_commits_reversed(pr):
+    """
+    :param pr:
+    :return: List[Commit]
+    """
+    return list(reversed(list(pr.get_commits())))
+
+
+def enable_github_loggin():
+    import logging
+
+    class MyHandler(logging.Handler):
+        level = logging.DEBUG
+
+        def emit(self, record):
+            try:
+                msg = self.format(record)
+                msg = " ".join(msg.split(" ", 2)[:2])
+                sys.stdout.write(msg + "\n")
+                sys.stdout.flush()
+            except RecursionError:
+                raise
+            except Exception:
+                self.handleError(record)
+
+    hd = MyHandler()
+    logger = logging.getLogger("github")
+    logger.setLevel(logging.DEBUG)
+    if logger.hasHandlers():
+        logger.removeHandler(logger.handlers[0])
+    logger.addHandler(hd)

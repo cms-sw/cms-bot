@@ -96,16 +96,16 @@ if [ "$arch" = "aarch64" ] ; then
 elif [ "$arch" = "x86_64" ] ; then
   arch="amd64"
   SLAVE_LABELS="${SLAVE_LABELS} ${arch}"
+  SLAVE_LABELS="${SLAVE_LABELS} $(ld.so --help | grep -E ' x86-64-v[0-9]+ ' | grep -i supported | sed 's|^ *||;s| .*||' | grep x86-64-v | tr '\n' ' ')"
   HOST_ARCH=$(cat /proc/cpuinfo 2> /dev/null | grep vendor_id | sed 's|.*: *||' | tail -1)
 fi
 echo "DATA_HOST_ARCH=${HOST_ARCH}"
 SLAVE_LABELS="${SLAVE_LABELS} ${HOST_ARCH}"
 
 if [ "${JAVA_CMD}" = "java" ] ; then
-  #Enable java-17 once jenkins is movd to 2.426 and above
-  #if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
-  #  JAVA_CMD="/etc/alternatives/jre_17/bin/java"
-  if [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
+  if [ -e "/etc/alternatives/jre_17/bin/java" ] ; then
+    JAVA_CMD="/etc/alternatives/jre_17/bin/java"
+  elif [ -e "/etc/alternatives/jre_11/bin/java" ] ; then
     JAVA_CMD="/etc/alternatives/jre_11/bin/java"
   else
     SLAVE_LABELS="${SLAVE_LABELS} java-default"

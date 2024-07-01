@@ -4,6 +4,7 @@ from sys import exit
 from datetime import datetime
 from time import mktime
 from es_utils import send_payload
+from cmsutils import epoch2week
 from hashlib import sha1
 from json import dumps
 from logwatch import logwatch, run_cmd, LOGWATCH_APACHE_IGNORE_AGENTS
@@ -31,7 +32,7 @@ def process(line, count):
     except:
         payload["bytes"] = 0
     tsec = mktime(datetime.strptime(items[3][1:], "%d/%b/%Y:%H:%M:%S").timetuple())
-    week = str(int(tsec / (86400 * 7)))
+    week = epoch2week(tsec)
     payload["@timestamp"] = int(tsec * 1000)
     if len(items) > 10:
         payload["referrer"] = items[10][1:-1]

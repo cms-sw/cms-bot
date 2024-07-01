@@ -134,7 +134,9 @@ def postNewMessage(
     repo.create_issue(title=title, body=body, labels=labels)
 
 
-def updateBugReport(dryRun=False, error_text="", workflows=[], issue=None, **kwds):
+def updateBugReport(dryRun=False, error_text="", workflows=None, issue=None, **kwds):
+    if workflows is None:
+        workflows = []
     print(workflows)
     workflows.sort(key=itemgetter("workflowId"))
     links = [RELVAL_ISSUE_LINK_TEMPLATE % s for s in workflows]
@@ -245,7 +247,7 @@ def understandStep1Error(name, t, p, info):
 # understanding plugins.
 def understandGenericError(name, t, p, info):
     errorTitle = "generic error"
-    errorMessage = "I could not fully undestand what is going on, but some relval fails.\nPlease have a look at the errors."
+    errorMessage = "I could not fully understand what is going on, but some relval fails.\nPlease have a look at the errors."
     h = hashlib.sha1((name + "generic error").encode()).hexdigest()[:10]
     return (h, errorTitle, errorMessage)
 

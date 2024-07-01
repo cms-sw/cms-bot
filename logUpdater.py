@@ -8,6 +8,7 @@ exec ${python_cmd} $0 ${1+"$@"}
 
 from __future__ import print_function
 import os
+import socket
 from os.path import dirname, abspath, join
 from cmsutils import doCmd, getIBReleaseInfo
 from time import sleep
@@ -49,6 +50,8 @@ class LogUpdater(object):
             + self.release
         )
         self.ssh_opt = "-o CheckHostIP=no -o ConnectTimeout=60 -o ConnectionAttempts=5 -o StrictHostKeyChecking=no -o BatchMode=yes -o PasswordAuthentication=no"
+        if "cern.ch" not in socket.getfqdn():
+            self.ssh_opt = "-J " + self.remote.split("@")[0] + "@lxplus.cern.ch " + self.ssh_opt
         return
 
     def updateUnitTestLogs(self, subdir=""):

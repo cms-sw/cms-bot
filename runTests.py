@@ -121,6 +121,8 @@ class UnitTester(IBThreadBase):
             paralleJobs = int(MachineCPUCount / 2)
         if (self.xType == "GPU") or ("_GPU_X" in os.environ["CMSSW_VERSION"]):
             precmd = "export USER_UNIT_TESTS=cuda ;"
+        if (self.xType == "ROCM") or ("_ROCM_X" in os.environ["CMSSW_VERSION"]):
+            precmd = "export USER_UNIT_TESTS=rocm ;"
         skiptests = ""
         if "lxplus" in getHostName():
             skiptests = "SKIP_UNITTESTS=ExpressionEvaluatorUnitTest"

@@ -2,9 +2,11 @@
 rm -f ${LOCALRT}/used-ibeos-sort
 rm -f ${LOCALRT}/ibeos_cache.txt
 
-for i in 0 1 2 3 4 5 6 7 8 9 ; do
+for i in 0 1 2 3 4 ; do
   ERR=NO
-  curl -L -s "https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/ibeos.txt" > ${LOCALRT}/ibeos_cache.txt || ERR=YES
+  if ! curl -L "https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/ibeos.txt" > ${LOCALRT}/ibeos_cache.txt ; then
+    wget -O ${LOCALRT}/ibeos_cache.txt "https://raw.githubusercontent.com/cms-sw/cms-sw.github.io/master/das_queries/ibeos.txt" || ERR=YES
+  fi
   if [ $ERR = "NO" ] ; then break ; fi
   echo "Failed: to checkout cms-sw.github.io/master/das_queries/ibeos.txt ... retry"
   rm -f ${LOCALRT}/ibeos_cache.txt

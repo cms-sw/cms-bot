@@ -7,6 +7,11 @@ source ${CMS_BOT_DIR}/cmsrep.sh
 source ${PR_TESTING_DIR}/_helper_functions.sh
 source ${CMS_BOT_DIR}/jenkins-artifacts
 source ${COMMON}/github_reports.sh
+if [ "$(systemctl is-system-running 2>/dev/null || true)" = "offline" ] ; then
+  if [ "${DBUS_SESSION_BUS_ADDRESS}" != "" ] ; then
+    unset DBUS_SESSION_BUS_ADDRESS
+  fi
+fi
 NCPU=$(${COMMON}/get_cpu_number.sh)
 if [ "${DRY_RUN}" = "false" ] ; then AUTO_POST_MESSAGE="true"; fi
 NO_POST=''
@@ -35,7 +40,10 @@ elif ! which scram >/dev/null 2>&1 ; then
 fi
 which dasgoclient
 export CMS_PATH=/cvmfs/cms-ib.cern.ch
-export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/local
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/$CMS_SITE_OVERRIDE
 mkdir -p ${RESULTS_DIR}
 [ "${ARCHITECTURE}" != "" ] && export SCRAM_ARCH=${ARCHITECTURE}
 export SCRAM_PREFIX_PATH=${CMS_BOT_DIR}/das-utils

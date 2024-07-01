@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 from sys import exit, argv
 from os import pipe, close, fork, fdopen, write, waitpid
 from os.path import exists
@@ -50,7 +49,7 @@ class LoadMaster(object):
     def remove_child(self):
         if len(self.childs) == 0:
             return
-        write(self.childs[-1][1], "stop\n")
+        write(self.childs[-1][1], b"stop\n")
         waitpid(self.childs[-1][0], 0)
         self.childs.pop()
         print("Childs:", len(self.childs))

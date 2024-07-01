@@ -1,1 +1,1 @@
-CMSSDT_SERVER=cmssdt01.cern.ch
+CMSSDT_SERVER=cmssdt9-02.cern.ch

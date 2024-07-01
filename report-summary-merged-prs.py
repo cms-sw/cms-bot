@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 """
 This script generates json file (like CMSSW_10_0_X.json) which is then used to render cmssdt ib page.
 """
@@ -304,7 +304,7 @@ def get_results_one_relval_file(filename):
     details = {"num_passed": 0, "num_failed": 1, "known_failed": 0}
 
     print_verbose("Analyzing: " + filename)
-    lines = file(filename).read().split("\n")
+    lines = open(filename).read().split("\n")
     results = [x for x in lines if " tests passed" in x]
     if len(results) == 0:
         return False, details
@@ -320,7 +320,7 @@ def get_results_one_relval_file(filename):
         print(e)
         return False, details
     with open(summary_file, "w") as ref:
-        json.dump(details, ref)
+        json.dump(details, ref, sort_keys=True)
     return details["num_failed"] == 0, details
 
 
@@ -331,7 +331,7 @@ def get_results_details_one_build_file(file, type):
     The second element is a dictionary containing the details of the results.
     If the tests are all ok this dictionary is empty
     """
-    summFile = open(file, "r")
+    summFile = open(file, "rb")
     pklr = Unpickler(summFile)
     [rel, plat, anaTime] = pklr.load()
     errorKeys = pklr.load()
@@ -529,6 +529,8 @@ def get_output_command(command_to_execute):
     )
     out, err = p.communicate()
     ret_code = p.returncode
+    out = out.decode("ascii")
+    err = err.decode("ascii")
 
     if ret_code != 0:
         print_verbose(ret_code)
@@ -597,7 +599,9 @@ def execute_magic_command_tags(
     return tags
 
 
-def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache={}):
+def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cache=None):
+    if cache is None:
+        cache = {}
     comp = {}
     comp["compared_tags"] = "%s-->%s" % (start_tag, end_tag)
     comp["release_name"] = end_tag
@@ -618,7 +622,9 @@ def execute_command_compare_tags(branch, start_tag, end_tag, git_dir, repo, cach
     return comp
 
 
-def compare_tags(branch, tags, git_dir, repo, cache={}):
+def compare_tags(branch, tags, git_dir, repo, cache=None):
+    if cache is None:
+        cache = {}
     comparisons = []
     if len(tags) > 1:
         comparisons.append(
@@ -913,6 +919,8 @@ def add_tests_to_results(
                 comp["material_budget"] = "not-found"
             if not comp.get("igprof"):
                 comp["igprof"] = "not-found"
+            if not comp.get("vtune"):
+                comp["vtune"] = "not-found"
             if not comp.get("profiling"):
                 comp["profiling"] = "not-found"
             if not comp.get("comp_baseline"):
@@ -974,7 +982,7 @@ def find_material_budget_results(comparisons, architecture):
         else:
             comp["material_budget"] = arch + ":" + comparison
         comp["material_budget_v2"] = {"status": status, "arch": arch}
-        if (comparison is None) or (comparison is "-1"):
+        if comparison in [None, "-1"]:
             pass
         elif comparison == "0":
             comp["material_budget_comparison"] = {"status": "found", "results": "ok", "arch": arch}
@@ -1063,6 +1071,21 @@ def find_one_profiling_result(magic_command):
     return "inprogress"
 
 
+def find_one_vtune_result(magic_command):
+    """
+    Looks for one vtune result
+    """
+    print("Running ", magic_command)
+    out, err, ret_code = get_output_command(magic_command)
+    print("Ran:", out, err, ret_code, magic_command)
+    file = out.strip()
+    if (ret_code == 0) and (out != ""):
+        print("found", file)
+        return {"status": "passed", "data": file}
+    print("inprogress")
+    return "inprogress"
+
+
 def find_general_test_results(
     test_field, comparisons, architecture, magic_command, results_function=find_one_test_results
 ):
@@ -1140,6 +1163,17 @@ def find_check_hlt(comparisons, architecture):
         comp["hlt_tests"] = find_and_check_result(
             rel_name, architecture, CHECK_HLT_PATH, 'grep -h -c "exit status: *[1-9]" {0}'
         )
+
+
+def find_check_hlt_p2_timing(comparisons, architecture):
+    for comp in comparisons:
+        rel_name = comp["compared_tags"].split("-->")[1]
+        print("Looking for {0} results for {1}.".format("hlt p2 timing", rel_name))
+        comp["hlt-p2-timing"] = find_and_check_result(
+            rel_name, architecture, CHECK_HLT_TIMING_PATH, "/bin/true"
+        )
+        if comp["hlt-p2-timing"] == "passed":
+            comp["hlt-p2-timing"] = {"status": "passed", "arch": architecture}
 
 
 def find_check_crab(comparisons, architecture):
@@ -1311,7 +1345,7 @@ def generate_separated_json_results(results):
         file_name = rq["release_name"] + ".json"
         summary_file_name = rq["release_name"] + "_summary.txt"
         out_json = open(file_name, "w")
-        json.dump(rq, out_json, indent=4)
+        json.dump(rq, out_json, sort_keys=True, indent=4)
         out_json.close()
 
         f_summary = open(summary_file_name, "w")
@@ -1456,7 +1490,7 @@ def generate_ib_json_short_summary(results):
     short_summary["all_archs"] = ARCHITECTURES
     short_summary["prod_archs"] = get_production_archs(get_config_map_properties())
     out_json = open("LatestIBsSummary.json", "w")
-    json.dump(short_summary, out_json, indent=4)
+    json.dump(short_summary, out_json, sort_keys=True, indent=4)
     out_json.close()
 
 
@@ -1649,6 +1683,11 @@ if __name__ == "__main__":
         + JENKINS_ARTIFACTS_DIR
         + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3_gpu_nsys.txt 2>/dev/null | head -1 | sed "s|.*/RELEASE_NAME||"'
     )
+    MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
+        "ls "
+        + JENKINS_ARTIFACTS_DIR
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/*/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME||;s|step3-vtune.log$||"'
+    )
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = (
         "test -f "
         + JENKINS_ARTIFACTS_DIR
@@ -1666,6 +1705,10 @@ if __name__ == "__main__":
     )
     CHECK_HLT_PATH = (
         JENKINS_ARTIFACTS_DIR + "/HLT-Validation/RELEASE_NAME/ARCHITECTURE/jenkins.log"
+    )
+    CHECK_HLT_TIMING_PATH = (
+        JENKINS_ARTIFACTS_DIR
+        + "/hlt-p2-timing/RELEASE_NAME/ARCHITECTURE/Phase2Timing_resources.json"
     )
     CHECK_CRAB_PATH = JENKINS_ARTIFACTS_DIR + "/ib-run-crab/RELEASE_NAME/*"
     MAGIC_COMMAND_FIND_DQM_TESTS = (
@@ -1836,6 +1879,8 @@ if __name__ == "__main__":
                 tests_to_find = additional_tests[arch]
                 if "HLT" in tests_to_find:
                     find_check_hlt(release_queue_results["comparisons"], arch)
+                if "hlt-p2-timing" in tests_to_find:
+                    find_check_hlt_p2_timing(release_queue_results["comparisons"], arch)
                 if "crab" in tests_to_find:
                     find_check_crab(release_queue_results["comparisons"], arch)
                 if "static-checks" in tests_to_find:
@@ -1900,6 +1945,13 @@ if __name__ == "__main__":
                         MAGIC_COMMAND_FIND_PROFILING_CHECKS_FILTER3,
                         find_one_profiling_result,
                     )
+                    find_general_test_results(
+                        "vtune",
+                        release_queue_results["comparisons"],
+                        arch,
+                        MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER,
+                        find_one_vtune_result,
+                    )
                 if "check-headers" in tests_to_find:
                     find_check_headers(release_queue_results["comparisons"], arch)
                 # will run every time for Q/A, that is why not checked if it is in tests to find
@@ -1949,9 +2001,9 @@ if __name__ == "__main__":
     generate_ib_json_short_summary(results)
 
     out_json = open("merged_prs_summary.json", "w")
-    json.dump(results, out_json, indent=4)
+    json.dump(results, out_json, sort_keys=True, indent=4)
     out_json.close()
 
     out_groups = open("structure.json", "w")
-    json.dump(structure, out_groups, indent=4)
+    json.dump(structure, out_groups, sort_keys=True, indent=4)
     out_groups.close()

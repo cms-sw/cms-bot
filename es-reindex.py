@@ -1,14 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # A script which creates a new index using a new mapping and create an alias
 # for the old index name.
 
-from __future__ import print_function
-from _py2with3compatibility import run_cmd, Request, HTTPSHandler, build_opener, install_opener
 from argparse import ArgumentParser
+from urllib.request import Request, build_opener, install_opener, HTTPSHandler
 import json
 import base64
 from os import getenv
+import subprocess
 
 # Avoid checking for certificate since we execute this only inside CERN.
 # Drop the following stanza if not.
@@ -30,7 +30,7 @@ def writeToES(server, data):
 
     new_request = Request(url, data)
     new_request.get_method = lambda: "PUT"
-    base64string = base64.encodestring(getenv("ES_AUTH")).replace("\n", "")
+    base64string = base64.encodebytes(getenv("ES_AUTH").encode()).replace(b"\n", b"").decode()
     new_request.add_header("Authorization", "Basic %s" % base64string)
     try:
         response = opener.open(new_request)
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         user_string=user_string,
     )
     print(cmd)
-    err, out = run_cmd(cmd)
+    err, out = subprocess.getstatusoutput(cmd)
     if err:
         print("Error while getting indices")
         print(out)
@@ -94,7 +94,7 @@ if __name__ == "__main__":
             user_string=user_string,
             scroll_id=result["_scroll_id"],
         )
-        err, out = run_cmd(cmd)
+        err, out = subprocess.getstatusoutput(cmd)
         if err:
             print("Error while getting entries")
             print(out)

@@ -5,14 +5,12 @@ tracking-pog:
   - mmusich
   - VourMa
 btv-pog:
-  - JyothsnaKomaragiri
-  - emilbols
   - andrzejnovak
   - demuller
   - AlexDeMoor
-  - AnnikaStein
   - Ming-Yan
   - Senphy
+  - castaned
 ecal-offline:
   - wang0jin
   - thomreis
@@ -22,6 +20,7 @@ pixel-offline:
   - ferencek
   - tvami
   - mroguljic
+  - tsusa
 trk-dqm:
   - arossi83
   - sroychow

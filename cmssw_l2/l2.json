@@ -86,6 +86,7 @@
       "category": [
         "mtd-dpg"
       ], 
+      "end_date": 1718150400, 
       "start_date": 1698278400
     }
   ], 
@@ -145,6 +146,7 @@
       "category": [
         "egamma-pog"
       ], 
+      "end_date": 1713830400, 
       "start_date": 1670112000
     }
   ], 
@@ -171,6 +173,14 @@
       ], 
       "end_date": 1629936000, 
       "start_date": 1627689600
+    }
+  ], 
+  "afiqaize": [
+    {
+      "category": [
+        "egamma-pog"
+      ], 
+      "start_date": 1713830400
     }
   ], 
   "agrohsje": [
@@ -204,6 +214,7 @@
       "category": [
         "tau-pog"
       ], 
+      "end_date": 1701648000, 
       "start_date": 1632873600
     }
   ], 
@@ -401,6 +412,14 @@
       "start_date": 1632873600
     }
   ], 
+  "cardinia": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "start_date": 1701648000
+    }
+  ], 
   "cecilecaillol": [
     {
       "category": [
@@ -515,6 +534,7 @@
       "category": [
         "trk-dpg"
       ], 
+      "end_date": 1705449600, 
       "start_date": 1632787200
     }
   ], 
@@ -583,6 +603,14 @@
       ], 
       "end_date": 1448496000, 
       "start_date": 1442793600
+    }
+  ], 
+  "danielwinterbottom": [
+    {
+      "category": [
+        "tau-pog"
+      ], 
+      "start_date": 1701648000
     }
   ], 
   "davidlange6": [
@@ -928,6 +956,14 @@
       "start_date": 1585008000
     }
   ], 
+  "ftorrresd": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "start_date": 1716508800
+    }
+  ], 
   "fwyzard": [
     {
       "category": [
@@ -1075,6 +1111,14 @@
       ], 
       "end_date": 1454457600, 
       "start_date": 1448496000
+    }
+  ], 
+  "hqucms": [
+    {
+      "category": [
+        "xpog"
+      ], 
+      "start_date": 1701993600
     }
   ], 
   "iahmad-khan": [
@@ -1240,6 +1284,7 @@
       "category": [
         "tau-pog"
       ], 
+      "end_date": 1701648000, 
       "start_date": 1632787200
     }
   ], 
@@ -1346,7 +1391,15 @@
       "category": [
         "tracking-pog"
       ], 
+      "end_date": 1718236800, 
       "start_date": 1687392000
+    }, 
+    {
+      "category": [
+        "pdmv", 
+        "tracking-pog"
+      ], 
+      "start_date": 1718236800
     }
   ], 
   "ktf": [
@@ -1476,6 +1529,22 @@
       ], 
       "end_date": 1662336000, 
       "start_date": 1594080000
+    }
+  ], 
+  "martinamalberti": [
+    {
+      "category": [
+        "mtd-dpg"
+      ], 
+      "start_date": 1718150400
+    }
+  ], 
+  "mdelcourt": [
+    {
+      "category": [
+        "trk-dpg"
+      ], 
+      "start_date": 1705449600
     }
   ], 
   "mdhildred": [
@@ -2072,6 +2141,7 @@
       "category": [
         "xpog"
       ], 
+      "end_date": 1701993600, 
       "start_date": 1677628800
     }
   ], 
@@ -2192,6 +2262,14 @@
       ], 
       "end_date": 1661904000, 
       "start_date": 1661904000
+    }
+  ], 
+  "subirsarkar": [
+    {
+      "category": [
+        "upgrade"
+      ], 
+      "start_date": 1702339200
     }
   ], 
   "sunilUIET": [
@@ -2367,6 +2445,14 @@
       "start_date": 1377043200
     }
   ], 
+  "valsdav": [
+    {
+      "category": [
+        "ml"
+      ], 
+      "start_date": 1701993600
+    }
+  ], 
   "vanbesien": [
     {
       "category": [
@@ -2457,6 +2543,14 @@
         "gem-dpg"
       ], 
       "start_date": 1632873600
+    }
+  ], 
+  "wpmccormack": [
+    {
+      "category": [
+        "ml"
+      ], 
+      "start_date": 1701993600
     }
   ], 
   "yuanchao": [

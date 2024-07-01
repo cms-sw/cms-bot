@@ -93,14 +93,14 @@ if [ ${PY_VER} = "2" ] ; then
   if [ ! -e ${INSTALL_DIR}/setup-1.22.7.sh ] ; then
     mv ${INSTALL_DIR}/setup.sh ${INSTALL_DIR}/setup-1.22.7.sh
   fi
-  ln -sf setup-py${PY_VER}.sh ${INSTALL_DIR}/setup.sh
 fi
+ln -sf setup-py3.sh ${INSTALL_DIR}/setup.sh
 
 if $RUN_TESTS ; then
   if [ "${X509_USER_CERT}" != "" -a "${X509_USER_KEY}" != "" ] ; then
-    voms-proxy-init -cert $X509_USER_CERT -key $X509_USER_KEY
+    voms-proxy-init -voms cms -cert $X509_USER_CERT -key $X509_USER_KEY
   else
-    voms-proxy-init
+    voms-proxy-init -voms cms
   fi
   export RUCIO_ACCOUNT=$(voms-proxy-info | grep '^subject' | sed 's|.*Users/CN=||;s|/.*||')
   rucio whoami

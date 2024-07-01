@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-from __future__ import print_function
+from collections import defaultdict
 from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1
 import json
 
@@ -22,13 +22,11 @@ all_categories = list(CMSSW_CATEGORIES.keys())
 # {
 #   "<category>" : [ "<person1>" , "person2" , ... , "personN" ]
 # }
-categories_to_people = {}
+categories_to_people = defaultdict(list)
 
 for person in list(CMSSW_L2.keys()):
     categories = CMSSW_L2[person]
     for cat in categories:
-        if not categories_to_people.get(cat):
-            categories_to_people[cat] = []
         categories_to_people[cat].append(person)
 
 print("----------------")
@@ -40,6 +38,5 @@ output["categories_to_people"] = categories_to_people
 output["categories_to_packages"] = CMSSW_CATEGORIES
 output["L1"] = CMSSW_L1
 
-out_json = open(OUTPUT_FILE, "w")
-json.dump(output, out_json, indent=4)
-out_json.close()
+with open(OUTPUT_FILE, "w") as out_json:
+    json.dump(output, out_json, indent=4)

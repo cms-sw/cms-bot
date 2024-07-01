@@ -1,3 +1,5 @@
+from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS
+
 GITHUB_HOOKS = {}
 GITHUB_HOOKS["Jenkins_Github_Hook"] = {
     "active": True,
@@ -24,9 +26,14 @@ REPO_HOOK_MAP.append(["cms-sw/xsecdb", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/web-confdb", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/RecoLuminosity-LumiDB", ["Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-sw/DQM-Integration", ["Jenkins_Github_Hook_Push"]])
-REPO_HOOK_MAP.append(["cms-sw/.+", ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-data/.+", ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
 REPO_HOOK_MAP.append(["cms-externals/.+", ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
+
+for n in VALID_CMS_SW_REPOS_FOR_TESTS:
+    r = "cms-sw/%s" % n
+    if [x for x in REPO_HOOK_MAP if x[0] == r]:
+        continue
+    REPO_HOOK_MAP.append(["cms-sw/%s" % n, ["Jenkins_Github_Hook", "Jenkins_Github_Hook_Push"]])
 
 
 def is_valid_gh_repo(repo_name):

@@ -26,7 +26,7 @@ echo "${MATRIX_ARGS}"  | tr ';' '\n' | while IFS= read -r args; do
     args=$(echo "${args}" | sed "s|all|${ALL_WFS}|")
   fi
   dateBefore=$(date +"%s")
-  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee ${LOG}.tmp
+  (LOCALRT=${WORKSPACE}/${CMSSW_VERSION} RUN_THE_MATRIX_CMD_OPTS=${RUN_THE_MATRIX_CMD_OPTS} CHECK_WORKFLOWS=false UPLOAD_ARTIFACTS=false MATRIX_ARGS="$args" timeout $MATRIX_TIMEOUT ${CMS_BOT_DIR}/run-ib-pr-matrix.sh "${TEST_FLAVOR}" && echo ALL_OK) 2>&1 | tee ${LOG}.tmp
   if [ $(grep -a "ALL_OK" ${LOG}.tmp | wc -l) -eq 0 ] ; then echo "ERROR Running runTheMatrix for '$args'" >> ${LOG}.tmp ; fi
   cat ${LOG}.tmp >> ${LOG}
   rm -rf ${LOG}.tmp
@@ -98,7 +98,7 @@ else
     echo "COMPARISON${UC_TEST_FLAVOR};QUEUED,Comparison ${UC_TEST_FLAVOR} with the baseline,See results,See results" >> ${RESULTS_DIR}/comparison${UC_TEST_FLAVOR}.txt
     TRIGGER_COMPARISON_FILE=$WORKSPACE/'comparison.properties'
     echo "Creating properties file $TRIGGER_COMPARISON_FILE"
-    echo "RELEASE_FORMAT=$COMPARISON_REL" > $TRIGGER_COMPARISON_FILE
+    echo "RELEASE_FORMAT=${CMSSW_VERSION}" > $TRIGGER_COMPARISON_FILE
     echo "ARCHITECTURE=${SCRAM_ARCH}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUESTS=${PULL_REQUESTS}" >> $TRIGGER_COMPARISON_FILE
     echo "PULL_REQUEST_JOB_ID=${PR_TEST_BUILD_NUMBER}" >> $TRIGGER_COMPARISON_FILE

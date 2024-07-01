@@ -68,7 +68,7 @@ def process_comment(body, repo):
                 else:
                     print("    Download user content: ", url)
             except:
-                print("ERROR: Runing ", cmd)
+                print("ERROR: Running ", cmd)
                 err = 1
     return err
 

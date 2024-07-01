@@ -175,6 +175,14 @@ KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
     "10805.31": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
 }
 
+# 14 and above
+RelFilter = "CMSSW_(14|1[5-9]|[2-9][0-9]|[1-9][0-9][0-9]+)_.+"
+KNOWN_ERRORS["relvals"][RelFilter] = {}
+KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
+    "180.1": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
+    "181.1": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
+}
+
 
 def get_known_errors(release, architecture, test_type):
     if not test_type in KNOWN_ERRORS:

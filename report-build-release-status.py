@@ -63,14 +63,14 @@ BUILDING_TOOL_CONF_MSG = (
     "{details}" % JENKINS_PREFIX
 )
 BUILD_OK_MSG = (
-    "The build has finished sucessfully for the architecture {architecture} and is ready to be uploaded. \n"
+    "The build has finished successfully for the architecture {architecture} and is ready to be uploaded. \n"
     'You can start the uploads by writing the comment: "upload all". I will upload all the architectures as soon as the build finishes successfully.\n'
     "You can see the log for the build here: \n"
     "{log_url} \n"
     "Some tests ( runTheMatrix.py -s ) are being run, the results will be posted when done."
 )
 TOOL_CONF_OK_MSG = (
-    "The cmssw-tool-conf build has finished sucessfully for the architecture {architecture} and it was automatically uploaded. \n"
+    "The cmssw-tool-conf build has finished successfully for the architecture {architecture} and it was automatically uploaded. \n"
     'Remember that if you write "+1" I will start to build this and all the architectures as soon as their cmssw-tool-conf finish.\n'
     "You can see the log for the build here: \n"
     "{log_url} \n"
@@ -107,7 +107,7 @@ INSTALLATION_ERROR_MSG = (
     "The was error installing {architecture}. \n You can see the log here: \n {log_url}"
 )
 CLEANUP_OK_MSG = "The workspace for {architecture} has been deleted \n You can see the log here: \n {log_url} \n"
-CLEANUP_ERROR_MSG = "There was an error deletng the workspace for {architecture} \n You can see the log here: \n {log_url} \n"
+CLEANUP_ERROR_MSG = "There was an error deleting the workspace for {architecture} \n You can see the log here: \n {log_url} \n"
 TESTS_OK_MSG = (
     "The tests have finished for {architecture} \n You can see the log here: \n {log_url} \n"
 )
@@ -230,7 +230,7 @@ if __name__ == "__main__":
         "--details",
         dest="details",
         action="store",
-        help="Add aditional details to the message",
+        help="Add additional details to the message",
         default=False,
     )
 

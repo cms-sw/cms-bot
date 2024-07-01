@@ -23,7 +23,7 @@ if [ "X${PULL_REQUEST}" != "X" ] ; then
   cd userrepo
   git fetch origin pull/${PULL_REQUEST}/head:CHANGES_${PULL_REQUEST}
   git merge CHANGES_${PULL_REQUEST}
-  COMMIT=$($CMS_BOT_DIR/process-pull-request -c -r ${REPOSITORY} ${PULL_REQUEST})
+  COMMIT=$($CMS_BOT_DIR/process-pull-request.py -c -r ${REPOSITORY} ${PULL_REQUEST})
   $CMS_BOT_DIR/modify_comment.py -r $REPOSITORY \
     -t JENKINS_TEST_URL \
     -m "${JENKINS_URL}/job/${JOB_NAME}/${BUILD_NUMBER}/console  Started: $(date '+%Y/%m/%d %H:%M')" $PULL_REQUEST || true
@@ -62,7 +62,7 @@ else
   else
     echo -e "-1\nTested at: ${COMMIT}\n" >> ${RESULT_LOG}
   fi
-  UPDIR=$(grep '^ *JENKINS_UPLOAD_DIRECTORY=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_UPLOAD_DIRECTORY=||;s|["]||g' || true)
+  UPDIR=$(grep '^ *JENKINS_UPLOAD_DIRECTORY *=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_UPLOAD_DIRECTORY *= *||;s|["]||g' || true)
   if [ "X${UPDIR}" = "X" ] ; then
     if [ "X${PULL_REQUEST}" != "X" ] ; then
       UPDIR="${JOB_NAME}/PR-${PULL_REQUEST}/${BUILD_NUMBER}"
@@ -81,13 +81,13 @@ if [ -f ${JOB_SUMMARY_LOG} ] ; then
   cat ${JOB_SUMMARY_LOG} >> ${RESULT_LOG}
 fi
 if [ "X${PULL_REQUEST}" != "X" ] ; then
-  $WORKSPACE/cms-bot/comment-gh-pr -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
+  $WORKSPACE/cms-bot/comment-gh-pr.py -r $REPOSITORY -p ${PULL_REQUEST} -R ${RESULT_LOG}
 else
   OPEN_ISSUE=$(grep '^ *OPEN_ISSUE_FOR_PUSH_TESTS *=' $REPO_DIR/repo_config.py | sed 's|^.*OPEN_ISSUE_FOR_PUSH_TESTS *=||;s| ||g' || true)
   if [ "X${OPEN_ISSUE}" = "XTrue" ] ; then
     $WORKSPACE/cms-bot/create-gh-issue.py -r "${REPOSITORY}" -t "${ISSUE_TITLE}" -R ${RESULT_LOG}
   else
-    NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL=||;s|["]||g' || true)
+    NOTIFY_EMAIL=$(grep '^ *JENKINS_NOTIFICATION_EMAIL *=' $REPO_DIR/repo_config.py | sed 's|^.*JENKINS_NOTIFICATION_EMAIL *= *||;s|["]||g' || true)
     if [ "X${NOTIFY_EMAIL}" != "X" ] ; then
       cat ${RESULT_LOG} | mail -s "[Jenkins]: $REPOSITORY tests finished" "${NOTIFY_EMAIL}"
     fi

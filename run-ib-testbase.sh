@@ -4,11 +4,18 @@ cat <<EOF
 klist || true
 kinit -R || true
 hostname
+umask 0002
 cvmfs_config probe || true
 for cvmfs_dir in cms-ci.cern.ch  \$(grep CVMFS_REPOSITORIES= /etc/cvmfs/default.local | sed "s|.*=||;s|'||g" | sed 's|"||g' | tr ',' '\n'  | grep cern.ch) ; do
   ls -l /cvmfs/\${cvmfs_dir} >/dev/null 2>&1 || true
 done
 voms-proxy-init -voms cms || true
+voms-proxy-info || true
+if [ "\$(systemctl is-system-running 2>/dev/null || true)" = "offline" ] ; then
+  if [ "\${DBUS_SESSION_BUS_ADDRESS}" != "" ] ; then
+    unset DBUS_SESSION_BUS_ADDRESS
+  fi
+fi
 export PYTHONUNBUFFERED=1
 export ARCHITECTURE=${ARCHITECTURE}
 export SCRAM_ARCH=${ARCHITECTURE}
@@ -50,7 +57,10 @@ echo "LD_LIBRARY_PATH"
 echo \$LD_LIBRARY_PATH | tr ':' '\n'
 set -x
 export CMS_PATH="/cvmfs/cms-ib.cern.ch"
-export SITECONFIG_PATH="/cvmfs/cms-ib.cern.ch/SITECONF/local"
+if [ "X$CMS_SITE_OVERRIDE" == "X" ]; then
+  CMS_SITE_OVERRIDE="local"
+fi
+export SITECONFIG_PATH=/cvmfs/cms-ib.cern.ch/SITECONF/\$CMS_SITE_OVERRIDE
 export CMSBOT_PYTHON_CMD=\$(which python3 >/dev/null 2>&1 && echo python3 || echo python)
 if [ "${NO_IBEOS_UPDATES}" = "" ] ; then
   cp $WORKSPACE/cms-bot/das-utils/das_client $WORKSPACE/cms-bot/das-utils/das_client.py

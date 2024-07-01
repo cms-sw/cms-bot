@@ -12,7 +12,7 @@ if "CMS_DISABLE_MONITORING" not in environ:
     if e:
         e, o = run_cmd("python3 -c 'import psutil'")
         if e:
-            print("Monitering of relval steps disabled: import psutils failed")
+            print("Monitoring of relval steps disabled: import psutils failed")
             monitor_script = ""
         else:
             monitor_script = "python3 " + monitor_script
@@ -60,7 +60,7 @@ RELVAL_KEYS["WORKFLOWS"].append(
         "-w upgrade -l 10000,10061,10200,10261,12200,12261,14400,14461,12600,12661,14000,14061,12800,12861,13000,13061,13800,13861",
     ]
 )
-RELVAL_KEYS["WORKFLOWS"].append(["_GPU_", "-w gpu"])
+RELVAL_KEYS["WORKFLOWS"].append(["_(GPU|ROCM)_", "-w gpu"])
 RELVAL_KEYS["enableIMT"].append(
     [THREADED_ROOT, "--customise FWCore/Concurrency/enableIMT.enableIMT"]
 )

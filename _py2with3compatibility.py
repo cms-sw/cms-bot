@@ -1,6 +1,7 @@
 """
 Logic to take care of imports depending on the python version
 """
+
 import sys
 
 if sys.version_info[0] == 2:

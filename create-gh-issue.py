@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+#!/bin/bash
+
+""":"
+python_cmd="python3"
+python -V >/dev/null 2>&1 && python_cmd="python"
+exec ${python_cmd} $0 ${1+"$@"}
+"""
+
 from __future__ import print_function
 from github import Github
 from os.path import expanduser, abspath, dirname, join, exists
@@ -10,14 +17,14 @@ SCRIPT_DIR = dirname(abspath(sys.argv[0]))
 
 parser = ArgumentParser()
 parser.add_argument(
-    "-r", "--repository", dest="repo", help="Github Repositoy name e.g cms-sw/cms-bot", type=str
+    "-r", "--repository", dest="repo", help="GitHub Repository name e.g cms-sw/cms-bot", type=str
 )
 parser.add_argument("-t", "--title", dest="title", help="Issue title", type=str)
 parser.add_argument(
     "-m",
     "--message",
     dest="msg",
-    help="Message to be posted s body of the GH issue",
+    help="Message to be posted in the body of the GH issue",
     type=str,
     default="",
 )
@@ -25,9 +32,16 @@ parser.add_argument(
     "-R",
     "--report_file",
     dest="report_file",
-    help="File name contaning the issue message",
+    help="File name containing the issue message",
     type=str,
     default="",
+)
+parser.add_argument(
+    "-q",
+    "--quiet",
+    dest="quiet",
+    help="Do not take any action if the issue already exists",
+    default=False,
 )
 
 args = parser.parse_args()
@@ -50,8 +64,8 @@ if exists(join(repo_dir, "repo_config.py")):
 import repo_config
 
 gh = Github(login_or_token=open(expanduser(repo_config.GH_TOKEN)).read().strip())
-print("Authentication succeeeded")
 gh_repo = gh.get_repo(args.repo)
+print("Authentication succeeded to " + str(gh_repo))
 cmd = (
     "curl -s 'https://api.github.com/search/issues?q=%s+repo:%s+in:title+type:issue' | grep '\"number\"' | head -1 | sed -e 's|.*: ||;s|,.*||'"
     % (quote(args.title), args.repo)
@@ -66,8 +80,10 @@ if not e:
     except:
         pass
 if issue:
-    print("Updating comment")
-    issue.create_comment(msg)
+    print(args.quiet)
+    if args.quiet == False:
+        print("Updating comment")
+        issue.create_comment(msg)
 else:
     print("Creating issue request")
     gh_repo.create_issue(args.title, msg)

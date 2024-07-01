@@ -2,7 +2,7 @@
 THRESHOLD_TIME=""
 [ "X$1" = "X" ] || THRESHOLD_TIME="--threshold $1"
 EXTRA_OPTS="$2"
-voms-proxy-init
+voms-proxy-init  -voms cms
 WORKSPACE="${WORKSPACE-$PWD}"
 JOBS=$(nproc)
 USE_DASGO=$3

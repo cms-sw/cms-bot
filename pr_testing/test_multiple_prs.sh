@@ -86,8 +86,10 @@ DO_COMPARISON=false
 DO_MB_COMPARISON=false
 DO_DAS_QUERY=false
 DO_CRAB_TESTS=false
+DO_HLT_P2_TIMING=false
 [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] && DO_COMPARISON=true
 [ $(echo ${RELEASE_FORMAT} | grep 'SAN_X'   | wc -l) -gt 0 ] && DO_COMPARISON=false
+BUILD_VERBOSE=true
 if [ "${BUILD_VERBOSE}" = "true" ] ; then
   BUILD_VERBOSE="-v"
 else
@@ -158,7 +160,7 @@ ls /cvmfs/cms-ib.cern.ch || true
 which scram 2>/dev/null || source /cvmfs/cms.cern.ch/cmsset_default.sh
 
 # Put hashcodes of last commits to a file. Mostly used for commenting back
-COMMIT=$(${CMSBOT_PYTHON_CMD} ${CMS_BOT_DIR}/process-pull-request -c -r ${PR_REPO} ${PR_NUMBER})
+COMMIT=$(${CMSBOT_PYTHON_CMD} ${CMS_BOT_DIR}/process-pull-request.py -c -r ${PR_REPO} ${PR_NUMBER})
 echo "${PULL_REQUEST}=${COMMIT}" > ${WORKSPACE}/prs_commits
 cp ${WORKSPACE}/prs_commits ${WORKSPACE}/prs_commits.txt
 
@@ -253,6 +255,8 @@ if [ "${USE_BASELINE}" = "self" ] ; then
   COMPARISON_ARCH="$SCRAM_ARCH"
 fi
 
+WORKFLOWS_PR_LABELS=""
+scram -a $SCRAM_ARCH project $CMSSW_IB
 if $DO_COMPARISON ; then
   mkdir $WORKSPACE/ib-baseline-tests
   pushd $WORKSPACE/ib-baseline-tests
@@ -262,15 +266,53 @@ if $DO_COMPARISON ; then
     echo "ARCHITECTURE=$COMPARISON_ARCH" >> run-baseline-${BUILD_ID}-01.default
     echo "DOCKER_IMG=cmssw/${COMP_OS}"   >> run-baseline-${BUILD_ID}-01.default
     echo "TEST_FLAVOR="                  >> run-baseline-${BUILD_ID}-01.default
+    echo "PRODUCTION_RELEASE=${PRODUCTION_RELEASE}" >> run-baseline-${BUILD_ID}-01.default
     WF_LIST=$(get_pr_baseline_worklflow)
     [ "${WF_LIST}" = "" ] || WF_LIST="-l ${WF_LIST}"
     echo "WORKFLOWS=-s ${WF_LIST}" >> run-baseline-${BUILD_ID}-01.default
+
+    PR_LABELS=$(curl -s https://api.github.com/repos/${PR_REPO}/issues/${PR_NUMBER}/labels | grep '"name":' | sed 's|.*: *||;s|"||g;s|-pending||;s|-approved||;s|-rejected||' | tr ',\n' '  ' | tr '[a-z-]' '[A-Z_]')
+    EX_WFS=""
+    set +x
+    for l in ${PR_LABELS} ; do
+       EX_WFS="${EX_WFS},$(get_pr_baseline_worklflow _LAB_${l})"
+    done
+    EX_WFS=$(echo "${EX_WFS}" | sed 's|^,*||;s|,*$||;s|,,*|,|g')
+    if [ "${EX_WFS}" != "" ] ; then
+      (
+        set +x
+        cd $WORKSPACE/$CMSSW_IB
+        eval `scram run -sh`
+        runTheMatrix.py -n -e | grep '\[1\]:' | sed 's| .*||' > wfs.all
+        runTheMatrix.py -n -e -s ${WF_LIST} | grep '\[1\]:' | sed 's| .*||' > wfs.default
+        set -x
+      )
+      for wf in $(echo ${EX_WFS} | tr ',' '\n') ; do
+        if grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.all ; then
+          if ! grep -q "^${wf}$" $WORKSPACE/$CMSSW_IB/wfs.default ; then
+            WORKFLOWS_PR_LABELS="${WORKFLOWS_PR_LABELS},${wf}"
+          else
+            echo "WARNING: Workflow already part of default tests: $wf"
+          fi
+        else
+          echo "WARNING: No such workflow: $wf"
+        fi
+      done
+      WORKFLOWS_PR_LABELS=$(echo "${WORKFLOWS_PR_LABELS}" | sed 's|^,*||')
+      echo "WORKFLOWS_PR_LABELS=${WORKFLOWS_PR_LABELS}"
+      if [ "${WORKFLOWS_PR_LABELS}" != "" ] ; then
+        grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-03.default
+        echo "WORKFLOWS=-l ${WORKFLOWS_PR_LABELS}" >> run-baseline-${BUILD_ID}-03.default
+      fi
+    fi
+    set -x
     if [ "${MATRIX_EXTRAS}" != "" ] ; then
       WF_LIST=$(order_workflow_list ${MATRIX_EXTRAS})
       grep -v '^\(WORKFLOWS\|MATRIX_ARGS\)=' run-baseline-${BUILD_ID}-01.default > run-baseline-${BUILD_ID}-02.default
       echo "WORKFLOWS=-l ${WF_LIST}"    >> run-baseline-${BUILD_ID}-02.default
       echo "MATRIX_ARGS=${EXTRA_MATRIX_ARGS}" >> run-baseline-${BUILD_ID}-02.default
     fi
+
     for ex_type in ${EXTRA_RELVALS_TESTS} ; do
       [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep "^${ex_type}$" | wc -l) -gt 0 ] || continue
       WF_LIST=$(get_pr_baseline_worklflow "_${ex_type}")
@@ -416,19 +458,8 @@ if ${BUILD_EXTERNAL} ; then
       popd
     fi
 
-    #Process cmsdist Build options
-    BUILD_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
-    if [ "${BUILD_OPTS}" != "" ] ; then
-      for opts in $(echo ${BUILD_OPTS} | tr ',' '\n') ; do
-        case $opts in
-          lto:0 ) [ ! -e ${WORKSPACE}/cmsdist/compilation_flags_lto.file ] || sed -i -e 's|^%define\s\s*enable_lto\s\s*1|%define enable_lto 0|' ${WORKSPACE}/cmsdist/compilation_flags_lto.file || true ;;
-          * ) echo "Unknown option '$opt'" ;;
-        esac
-      done
-    fi
-
     # Build the whole cmssw-tool-conf toolchain
-    CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link"
+    CMSBUILD_ARGS="--tag ${PR_NUM} --define cmsswdata_version_link --trace"
     if [ ${PKG_TOOL_VERSION} -gt 31 ] ; then
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --monitor --log-deps --force-tag --tag hash --delete-build-directory --link-parent-repository"
     fi
@@ -439,12 +470,25 @@ if ${BUILD_EXTERNAL} ; then
       dbg_pkgs=$(echo "${CONFIG_LINE}" | tr ';' '\n' | grep "^DEBUG_EXTERNALS=" | sed 's|.*=||')
       CMSBUILD_ARGS="${CMSBUILD_ARGS} --define cms_debug_packages=${dbg_pkgs}"
     fi
+    if [ $(grep 'upload-package-store-s3' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store-s3"
+    elif [ $(grep 'upload-package-store' pkgtools/cmsBuild | wc -l) -gt 0 ] ; then
+      CMSBUILD_ARGS="${CMSBUILD_ARGS} --upload-package-store"
+    fi
+    #Process cmsdist Build options
+    BUILD_OPTS=$(echo $CONFIG_LINE     | tr ';' '\n' | grep "^BUILD_OPTS=" | sed 's|^BUILD_OPTS=||')
+    MULTIARCH_OPTS=$(echo $CONFIG_LINE | tr ';' '\n' | grep "^MULTIARCH_OPTS=" | sed 's|^MULTIARCH_OPTS=||')
+
     PKGS="cms-common cms-git-tools cmssw-tool-conf"
     COMPILATION_CMD="PYTHONPATH= ./pkgtools/cmsBuild --server http://${CMSREP_IB_SERVER}/cgi-bin/cmspkg --upload-server ${CMSREP_IB_SERVER} \
         ${CMSBUILD_ARGS} --builders 3 -i $WORKSPACE/$BUILD_DIR $REF_REPO \
-        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args ${CMSSW_QUEUE}_FOOBAR)"
+        $SOURCE_FLAG --arch $ARCHITECTURE -j ${NCPU} $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
     PR_EXTERNAL_REPO="PR_$(echo ${RPM_UPLOAD_REPO}_${CMSSW_QUEUE}_${ARCHITECTURE} | md5sum | sed 's| .*||' | tail -c 9)"
-    echo "#${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
+    if [ -e cmsdist/cmssw-tool-conf.spec ] ; then
+      echo "#PR ${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.spec
+    else
+      echo "#PR ${PR_EXTERNAL_REPO}" >> cmsdist/cmssw-tool-conf.file
+    fi
     UPLOAD_OPTS="--upload-tmp-repository ${PR_EXTERNAL_REPO}"
     if [ $(curl -s --head http://${CMSREP_IB_SERVER}/cmssw/repos/${CMS_WEEKLY_REPO}.${PR_EXTERNAL_REPO}/${ARCHITECTURE}/latest/ 2>&1 | head -1 | grep " 200 OK" |wc -l) -gt 0 ] ; then
       UPLOAD_OPTS="--sync-back"
@@ -473,6 +517,9 @@ if ${BUILD_EXTERNAL} ; then
     done
 
     echo 'CMSSWTOOLCONF_LOGS;OK,External Build Logs,See Log,externals' >> ${RESULTS_DIR}/toolconf.txt
+    if [ $(grep 'RPM installation stderr' $WORKSPACE/cmsswtoolconf.log |wc -l) -gt 0 ] ; then
+      echo 'CMSSWTOOLCONF_INSTALL;ERROR,Externals Installation,See Log,cmsswtoolconf.log' >> ${RESULTS_DIR}/toolconf.txt
+    fi
     if [ "X$TEST_ERRORS" != X ] || [ "X$GENERAL_ERRORS" == X ]; then
       echo 'CMSSWTOOLCONF_RESULTS;ERROR,Externals compilation,See Log,cmsswtoolconf.log' >> ${RESULTS_DIR}/toolconf.txt
       ${CMS_BOT_DIR}/report-pull-request-results "PARSE_EXTERNAL_BUILD_FAIL" --unit-tests-file $WORKSPACE/cmsswtoolconf.log \
@@ -493,7 +540,6 @@ if ${BUILD_EXTERNAL} ; then
       if [ "${OLD_DASGOCLIENT}" != "${XDAS}" ] ; then TEST_DASGOCLIENT=true ; fi
     fi
     echo /cvmfs/cms.cern.ch > $WORKSPACE/$BUILD_DIR/etc/scramrc/links.db
-    scram -a $SCRAM_ARCH project $CMSSW_IB
 
     # To make sure we always pick scram from local area
     rm -f $CMSSW_IB/config/scram_basedir
@@ -525,6 +571,12 @@ if ${BUILD_EXTERNAL} ; then
           done;
           perl -p -i -e 's|\@([^@]*)\@|$ENV{$1}|g' scram-buildrules/Projects/CMSSW/Self.xml
         )
+        if [ "$MULTIARCH_OPTS" != "" ] ; then
+          MULTIARCH_OPTSX=$(echo ${MULTIARCH_OPTS} | tr ',' ' ')
+          DEFAULT_TARGET=$(cmssw_default_target $CMSSW_IB)
+          sed -i -e "s| SCRAM_TARGETS=.*\"| SCRAM_TARGETS=\"${MULTIARCH_OPTSX}\"|" scram-buildrules/Projects/CMSSW/Self.xml
+	  sed -i -e "s|</tool>| <runtime name=\"SCRAM_TARGET\" value=\"${DEFAULT_TARGET}\"/>\n <runtime name=\"USER_TARGETS_ALL\" value=\"1\"/>\n</tool>|" scram-buildrules/Projects/CMSSW/Self.xml
+        fi
         cp scram-buildrules/Projects/CMSSW/Self.xml $CMSSW_IB/config/Self.xml
       else
         cp -f scram-buildrules/CMSSW_BuildFile.xml $CMSSW_IB/config/BuildFile.xml
@@ -578,10 +630,15 @@ if ${BUILD_EXTERNAL} ; then
         chmod +x ${RMV_CMSSW_EXTERNAL}
       fi
       DEP_NAMES=""
+      #Fix for SCRAMV2 based releases were tools can have different capitalizations
+      ALL_NEW_TOOLS=$(ls ${CTOOLS}/ | tr '[A-Z]\n' '[a-z] ')
+      #In some releases libjpeg-turbo tool exists via libjpg
+      [ $(echo " ${ALL_NEW_TOOLS} " | grep " libjpg.xml " | wc -l) -gt 0 ] && ALL_NEW_TOOLS="${ALL_NEW_TOOLS} libjpeg-turbo.xml"
       for xml in $(ls ${BTOOLS}/*.xml) ; do
         name=$(basename $xml)
-        tool=$(echo $name | sed 's|.xml$||')
-        if [ ! -e ${CTOOLS}/$name ] ; then
+        lcname=$(echo $name | tr '[A-Z]' '[a-z]')
+        if [ $(echo " ${ALL_NEW_TOOLS} " | grep " ${lcname} " |wc -l) -eq 0 ] ; then
+          tool=$(echo $name | sed 's|.xml$||')
           echo "Removed tool $name"
           DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
         fi
@@ -604,12 +661,13 @@ if ${BUILD_EXTERNAL} ; then
         over=$(grep '<tool ' ${BTOOLS}/$name | tr ' ' '\n' | grep 'version=' | sed 's|version="||;s|".*||g')
         echo "Checking version in release: $over vs $nver"
         if [ "$nver" = "$over" ] ; then continue ; fi
-        echo "Settings up $name: $over vs $nver"
+        echo "Setting up $name: $over vs $nver"
         DEP_NAMES="$DEP_NAMES echo_${tool}_USED_BY"
       done
       sed -i -e 's|.*/lib/python2.7/site-packages" .*||;s|.*/lib/python3.6/site-packages" .*||' ../config/Self.xml
       touch $CTOOLS/*.xml
       (scram setup && scram setup self && rm -rf $WORKSPACE/$CMSSW_IB/external && scram build -r echo_CXX) >> $WORKSPACE/scram-tool-setup.log 2>&1 || TOOL_SETUP=false
+      echo "DEP_NAMES=${DEP_NAMES}"
       if $TOOL_SETUP ; then
         if [ "${DEP_NAMES}" != "" ] ; then
           CMSSW_DEPx=$(scram build ${DEP_NAMES} | tr ' ' '\n' | grep '^cmssw/\|^self/' | cut -d"/" -f 2,3 | sort | uniq)
@@ -671,10 +729,6 @@ CLANG_BUILD_OK=true
 PYTHON3_BUILD_OK=true
 RUN_TESTS=true
 
-cd $WORKSPACE
-if [ ! -d CMSSW_* ]; then  # if no directory that starts with "CMSSW_" exist, then bootstrap with SCRAM
-  scram -a $SCRAM_ARCH  project $CMSSW_IB
-fi
 cd $WORKSPACE/$CMSSW_IB
 
 set +x
@@ -1006,7 +1060,7 @@ if [ "X$EXTRA_CMSSW_PACKAGES" != "X" ] ; then
   git cms-addpkg $(echo "${EXTRA_CMSSW_PACKAGES}" | tr ',' ' ') || true
 fi
 mark_commit_status_all_prs '' 'pending' -u "${BUILD_URL}" -d "Building CMSSW" || true
-COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS scram b -k -j ${NCPU}"
+COMPILATION_CMD="scram b vclean && BUILD_LOG=yes $USER_FLAGS scram b ${BUILD_VERBOSE} -k -j ${NCPU}"
 if [ "$BUILD_EXTERNAL" = "true" -a $(grep '^edm_checks:' $WORKSPACE/$CMSSW_IB/config/SCRAM/GMake/Makefile.rules | wc -l) -gt 0 ] ; then
   COMPILATION_CMD="scram b vclean && BUILD_LOG=yes SCRAM_NOEDM_CHECKS=yes $USER_FLAGS scram build ${BUILD_VERBOSE} -k -j ${NCPU} && scram b -k -j ${NCPU} edm_checks"
 fi
@@ -1110,11 +1164,20 @@ if [ "X$BUILD_OK" = Xtrue -a "$RUN_TESTS" = "true" ]; then
     DO_GPU_TESTS=true
     mark_commit_status_all_prs 'unittests/gpu' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
   fi
+  if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^HLT_P2_TIMING$' | wc -l) -gt 0 ] ; then
+    if [ $(echo ${ARCHITECTURE}   | grep "_amd64_" | wc -l) -gt 0 ] ; then
+      if [ -e ${CMSSW_RELEASE_BASE}/src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh ]; then
+        DO_HLT_P2_TIMING=true
+        mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Waiting for tests to start"
+      fi
+    fi
+  fi
 else
   DO_TESTS=false
   DO_SHORT_MATRIX=false
   DO_ADDON_TESTS=false
   DO_CRAB_TESTS=false
+  DO_HLT_P2_TIMING=false
 fi
 
 REPORT_OPTS="--report-url ${PR_RESULT_URL} $NO_POST"
@@ -1206,7 +1269,11 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
   echo "COMPARISON_REL=${COMPARISON_REL}" >> $WORKSPACE/run-relvals.prop
   echo "COMPARISON_ARCH=${COMPARISON_ARCH}" >> $WORKSPACE/run-relvals.prop
   WF_COMMON="-s $(get_pr_relval_args $DO_COMPARISON '')"
+  [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF_COMMON="${WF_COMMON};-l ${WORKFLOWS_PR_LABELS}"
   echo "MATRIX_ARGS=${WF_COMMON}" >> $WORKSPACE/run-relvals.prop
+  if $PRODUCTION_RELEASE && cmsDriver.py --help | grep -q '\-\-maxmem_profile'  ; then
+    echo "RUN_THE_MATRIX_CMD_OPTS=--maxmem_profile" >> $WORKSPACE/run-relvals.prop
+  fi
 
   if [ $(echo ${ENABLE_BOT_TESTS} | tr ',' ' ' | tr ' ' '\n' | grep '^THREADING$' | wc -l) -gt 0 ] ; then
     cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-threading.prop
@@ -1214,6 +1281,8 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-threading.prop
     WF1=$(echo "${WF_COMMON}" | sed 's|;.*||')
     WF2="$(get_pr_relval_args $DO_COMPARISON _THREADING | sed 's|.*;||')"
+    [ "${WORKFLOWS_PR_LABELS}" != "" ] && WF2="${WF2};-l ${WORKFLOWS_PR_LABELS}"
+    WF2=$(echo "${WF2}" | sed 's|^;*||')
     if [ "${WF2}" != "" ] ; then WF1="${WF1};${WF2}"; fi
     echo "MATRIX_ARGS=${WF1}" >> $WORKSPACE/run-relvals-threading.prop
   fi
@@ -1233,7 +1302,8 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
       TEST_RELVALS_INPUT=false
     fi
     if $TEST_RELVALS_INPUT ; then
-      WF_LIST=$(runTheMatrix.py -i all -n -e | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
+      runTheMatrix.py -n -e | grep '\[1\]:' > $WORKSPACE/${CMSSW_IB}/wfs.step1
+      WF_LIST=$(cat $WORKSPACE/${CMSSW_IB}/wfs.step1 | grep '\[1\]:  *input from' | sed 's| .*||' |tr '\n' ',' | sed 's|,*$||')
       cp $WORKSPACE/test-env.txt $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_TIMEOUT=$MATRIX_TIMEOUT" >> $WORKSPACE/run-relvals-input.prop
       echo "MATRIX_ARGS=-l ${WF_LIST}"      >> $WORKSPACE/run-relvals-input.prop
@@ -1273,4 +1343,9 @@ if [ "${DO_PROFILING}" = "true" ]  ; then
     echo "PROFILING_WORKFLOWS=${wf}" >> $WORKSPACE/run-profiling-$wf.prop
   done
 fi
+
+if [ "${DO_HLT_P2_TIMING}" = "true" ] ;  then
+  cp $WORKSPACE/test-env.txt $WORKSPACE/run-hlt_p2_timing.prop
+fi
+
 rm -f $WORKSPACE/test-env.txt

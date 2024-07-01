@@ -43,8 +43,13 @@ REPO_TEAMS["cms-externals"]["boost-developers"] = {
 }
 REPO_TEAMS["cms-externals"]["Developers"]["members"].append("gartung")
 REPO_TEAMS["cms-externals"]["Developers"]["members"].append("fwyzard")
+REPO_TEAMS["cms-externals"]["Developers"]["members"].append("valsdav")
 
 # Teams for cms-sw
+REPO_TEAMS["cms-sw"]["core-team"] = {
+    "members": ["dan131riley"],
+    "repositories": {"*": "pull"},
+}
 REPO_TEAMS["cms-sw"]["RecoLuminosity-LumiDB-admins"] = {
     "members": [],
     "repositories": {"RecoLuminosity-LumiDB": "admin"},
@@ -64,6 +69,7 @@ REPO_TEAMS["cms-sw"]["configdb-owners"] = {
         "Sam-Harper",
         "silviodonato",
         "mmusich",
+        "missirol",
     ],
     "repositories": {"hlt-confdb": "admin", "web-confdb": "admin"},
 }
@@ -100,7 +106,7 @@ parser.add_argument(
     "-o",
     "--organization",
     dest="organization",
-    help="Github Organization name e.g. cms-sw. Default is * i.e. all cms origanizations",
+    help="Github Organization name e.g. cms-sw. Default is * i.e. all cms organizations",
     type=str,
     default="*",
 )

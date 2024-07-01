@@ -1805,3 +1805,9 @@ martinamalberti:
 - SimG4Core
 - SimGeneral
 - Validation/MtdValidation
+Mmiglio:
+- DataFormats/L1Scouting
+- DataFormats/L1ScoutingRawData
+- EventFilter/L1ScoutingRawToDigi
+- L1TriggerScouting/OnlineProcessing
+- L1TriggerScouting/Utilities

@@ -37,8 +37,8 @@ SYS_SCRIPT="system-${REMOTE_USER}-$(hostname -s).sh"
 scp -p $SSH_OPTS ${SCRIPT_DIR}/system-info.sh "$TARGET:/tmp/${SYS_SCRIPT}"
 
 SYSENV=""
-[ "${AGENT_CORES}"  != ""] && SYSENV="JENKINS_AGENT_CORES=${AGENT_CORES}"
-[ "${AGENT_MEMORY}" != ""] && SYSENV="JENKINS_AGENT_MEMORY=${AGENT_MEMORY} ${SYSENV}"
+[ "${AGENT_CORES}"  != "" ] && SYSENV="JENKINS_AGENT_CORES=${AGENT_CORES}"
+[ "${AGENT_MEMORY}" != "" ] && SYSENV="JENKINS_AGENT_MEMORY=${AGENT_MEMORY} ${SYSENV}"
 SYSTEM_DATA=$((ssh -n $SSH_OPTS $TARGET "${SYSENV} /tmp/${SYS_SCRIPT} '${JENKINS_SLAVE_JAR_MD5}' '${WORKSPACE}' '${DOCKER_IMG_HOST}' '${CLEANUP_WORKSPACE}' '${USER_HOME_MD5}' '${JAVA_CMD}'" || echo "DATA_ERROR=Fail to run system-info.sh") | grep '^DATA_' | tr '\n' ';')
 
 if [ $(get_data ERROR | wc -l) -gt 0 ] ; then

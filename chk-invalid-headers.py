@@ -56,7 +56,9 @@ def main():
             continue
         for src in usedby[inc].split(" "):
             sitems = src.split("/")
-            if (items[0] == sitems[0]) and (items[1] == sitems[1]) and (items[2] == sitems[2]):
+            if (items[0] == sitems[0]) and (items[1] == sitems[1]):
+                continue
+            if (items[2] == sitems[2]) and (items[2] == "test"):
                 continue
             if hasInclude(inc, src, includes):
                 if src not in errs:

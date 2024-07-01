@@ -25,8 +25,6 @@ function run_check {
     else
       user=cmsbuild
     fi
-    echo "user $user, node $node"
-    exit 0
     SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -u ${user}"
     scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh "$node:/tmp" || (echo "Cannot scp script" && exit 1)
     ssh $SSH_OPTS ${node} "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS"; exit_code=$?

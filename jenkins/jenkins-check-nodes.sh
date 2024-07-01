@@ -19,17 +19,25 @@ job_url="${JENKINS_URL}job/nodes-sanity-check/${BUILD_NUMBER}"
 
 function run_check {
     node=$1
-    SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60"
-    scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh "cmsbuild@$node:/tmp" || (echo "Cannot scp script" && exit 1)
-    ssh $SSH_OPTS "cmsbuild@"$node "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS"; exit_code=$?
-    ssh $SSH_OPTS "cmsbuild@"$node "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS" >> $WORKSPACE/logfile
+    if [[ $node == *@* ]]; then
+      user=${node%@*}
+      node=${node#*@}
+    else
+      user=cmsbuild
+    fi
+    echo "user $user, node $node"
+    exit 0
+    SSH_OPTS="-q -o IdentitiesOnly=yes -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -u ${user}"
+    scp $SSH_OPTS ${WORKSPACE}/cms-bot/jenkins/nodes-sanity-check.sh "$node:/tmp" || (echo "Cannot scp script" && exit 1)
+    ssh $SSH_OPTS ${node} "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS"; exit_code=$?
+    ssh $SSH_OPTS ${node} "sh /tmp/nodes-sanity-check.sh $SINGULARITY $PATHS" >> $WORKSPACE/logfile
     cat $WORKSPACE/logfile
     error=$(cat $WORKSPACE/logfile | grep "ERROR")
     error_count=$(cat $WORKSPACE/logfile | grep "ERROR" | wc -l)
     if [[ ${error_count} -eq 0 ]]; then
         rm -f "$blacklist_path/$node"
         # Special .offline cleanup for aarch and ppc nodes
-        if [[ $(echo $node | grep -e 'olarm\|ibmminsky' | wc -l) -gt 0 ]]; then
+        if [[ $(echo $node | grep -e 'arm\|ibmminsky' | wc -l) -gt 0 ]]; then
             touch "$blacklist_path/$node"
             echo "PASS" > "$blacklist_path/$node"
             scp "$blacklist_path/$node" cmsbuild@lxplus.cern.ch:/afs/cern.ch/user/c/cmsbuild/nodes-info/"$node"
@@ -40,7 +48,7 @@ function run_check {
 	echo "$error! Blacklisting ${node} ..."
 	rm $WORKSPACE/logfile
 	# Check if node is already in the blacklist
-	if [ ! -e $blacklist_path/$node ]; then 
+	if [ ! -e $blacklist_path/$node ]; then
 	    touch "$blacklist_path/$node" || exit 1
 	    echo "$error" > "$blacklist_path/$node"
 	    if [[ $(echo $node | grep '^olarm\|^ibmminsky' | wc -l) -gt 0 ]]; then
@@ -96,7 +104,7 @@ function lxplus_disconnect {
 function aarch_ppc_disconnect {
     nodes_path="$HOME/nodes/*"
     host=$1
-    node_off_list=()   
+    node_off_list=()
     for folder in $nodes_path; do
         node=$(grep agentCommand $folder/config.xml | tr ' <>' '\n\n\n' | grep '@' | sort | uniq | cut -d "@" -f 2 | cut -d "." -f 1)
         if [[ $node == $host ]]; then
@@ -165,7 +173,7 @@ function lxplus_blacklist_cleanup {
             echo "Affected lxplus node ${filename} is no longer a valid host. Removing it from blacklist ..."
             rm -f $file
         else
-            echo "Affected lxplus node ${filename} is still a valid host. Keeping it in blacklist ..." 
+            echo "Affected lxplus node ${filename} is still a valid host. Keeping it in blacklist ..."
         fi
     done
 }
@@ -238,7 +246,7 @@ done
 
 # Cleanup of lxplus hosts, if needed
 if [ $(echo "${NODES[@]}" | grep "lxplus" | wc -l) -gt 0 ]; then
-    if [[ "$TEST_SINGLE_LXPLUS_HOST" == "false" ]]; then 
+    if [[ "$TEST_SINGLE_LXPLUS_HOST" == "false" ]]; then
         lxplus_blacklist_cleanup $lxplus_hosts
     fi
     lxplus_offline_cleanup

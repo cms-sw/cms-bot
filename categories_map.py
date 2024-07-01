@@ -374,6 +374,7 @@ CMSSW_CATEGORIES = {
         "EventFilter/StorageManager",
         "EventFilter/Utilities",
         "L1TriggerScouting/Utilities",
+        "L1TriggerScouting/OnlineProcessing",
         "IORawData/CSCCommissioning",
         "IORawData/DaqSource",
     ],

@@ -18,9 +18,8 @@ function guess_mime() {
 
 function usage(){
   echo -e "$1
-Usage: $0 -s src-file [-e] [-d des-file] [-S server] [-b bucket] [-a acl] [-m mime-type] [-D] [-h]
+Usage: $0 <upload|copy|move|delete|exists|touch> [-d des-file] [-S server] [-b bucket] [-a acl] [-m mime-type] [-D] [-h] <-s file-name | file-name>
   -s src-file Source/local file
-  -e          Check if src-file exists in S3, default is upload src to des
   -d des-obj  Destination file/Object name, default is <src-file>
   -S server   AWS host/server, default: s3.cern.ch
   -b bucket   S3 bucke name, default: cmsrep
@@ -32,29 +31,67 @@ Usage: $0 -s src-file [-e] [-d des-file] [-S server] [-b bucket] [-a acl] [-m mi
   exit $2
 }
 
+function move_file(){
+  copy_file $1 $2
+  delete_file $1
+}
+
+function touch_file(){
+  xdate=$(date +%s)
+  copy_file $1 ${1}-${xdate}
+  copy_file ${1}-${xdate} $1
+  delete_file ${1}-${xdate}
+}
+
+function copy_file(){
+  date=$(date +"%a, %d %b %Y %T %z")
+  str="PUT\n\n\n${date}\nx-amz-acl:${ACL}\nx-amz-copy-source:/${BUCKET}/${1}\n/${BUCKET}/${2}"
+  sign=$(hmac_sha1 "${str}"  "${aws_secret_access_key}")
+  curl -s -X PUT \
+    -H "Host: ${BUCKET}.${SERVER}" \
+    -H "Date: $date" \
+    -H "X-Amz-Acl: ${ACL}" \
+    -H "X-Amz-Copy-Source: /${BUCKET}/${1}" \
+    -H "Authorization: AWS ${aws_access_key_id}:${sign}" \
+    "https://${BUCKET}.${SERVER}/${2}"
+  has_file ${2}
+}
+
 function upload_file(){
-  sha256=$(sha256sum ${SRC_FILE} | cut -d' ' -f1)
+  sha256=$(sha256sum ${1} | cut -d' ' -f1)
   date=$(date +"%a, %d %b %Y %T %z")
   xdate=$(date +%s)
-  str="PUT\n\n${MIME}\n${date}\nx-amz-acl:${ACL}\nx-amz-meta-sha256:${sha256}\nx-amz-meta-xdate:${xdate}\n/${BUCKET}/${DES_FILE}"
+  str="PUT\n\n${MIME}\n${date}\nx-amz-acl:${ACL}\nx-amz-meta-sha256:${sha256}\nx-amz-meta-xdate:${xdate}\n/${BUCKET}/${2}"
   sign=$(hmac_sha1 "${str}"  "${aws_secret_access_key}")
-  curl -X PUT -T "${SRC_FILE}" \
+  curl -s -X PUT -T "${1}" \
     -H "Host: ${BUCKET}.${SERVER}" \
     -H "Date: $date" \
     -H "Content-Type: ${MIME}" \
-    -H "X-Amz-Acl:${ACL}" \
+    -H "X-Amz-Acl: ${ACL}" \
     -H "X-Amz-Meta-Sha256: ${sha256}" \
     -H "X-Amz-Meta-Xdate: ${xdate}" \
     -H "Authorization: AWS ${aws_access_key_id}:${sign}" \
-    "https://${BUCKET}.${SERVER}/${DES_FILE}"
+    "https://${BUCKET}.${SERVER}/${2}"
+  has_file ${2}
+}
+
+function delete_file(){
+  date=$(date +"%a, %d %b %Y %T %z")
+  str="DELETE\n\n\n${date}\n/${BUCKET}/${1}"
+  sign=$(hmac_sha1 "${str}"  "${aws_secret_access_key}")
+  curl -s -X DELETE \
+    -H "Host: ${BUCKET}.${SERVER}" \
+    -H "Date: $date" \
+    -H "Authorization: AWS ${aws_access_key_id}:${sign}" \
+    "https://${BUCKET}.${SERVER}/${1}"
 }
 
 function has_file(){
-  RES_TXT=$(curl -s --head https://${BUCKET}.${SERVER}/${DES_FILE} 2>&1)
+  RES_TXT=$(curl -s --head https://${BUCKET}.${SERVER}/${1} 2>&1)
   RES=$(echo "${RES_TXT}" | grep '^HTTP' | head -1 | cut -d' ' -f2)
   if [ "${RES}" != "200" ] ; then
     echo "${RES_TXT}"
-    echo "Error: https://${BUCKET}.${SERVER}/${DES_FILE} file does not exist."
+    echo "Error: https://${BUCKET}.${SERVER}/${1} file does not exist."
     exit 1
   fi
 }
@@ -66,8 +103,19 @@ DES_FILE=""
 ACL="public-read"
 MIME=""
 SERVER="s3.cern.ch"
-CHK_EXISTS=false
 XFILE=""
+CMD="upload"
+case "$1" in
+  u|up|upload)  CMD="upload" ;;
+  c|cp|copy)    CMD="copy"   ;;
+  e|exists)     CMD="exists" ;;
+  m|mv|move)    CMD="move"   ;;
+  d|del|delete) CMD="delete" ;;
+  r|rm|remove)  CMD="delete" ;;
+  t|touch)      CMD="touch"  ;;
+  *) usage "Invalid command: $1" 1;;
+esac
+shift
 while [[ $# -gt 0 ]] ; do
   opt=$1; shift
   case $opt in
@@ -77,7 +125,6 @@ while [[ $# -gt 0 ]] ; do
     -m) MIME="$1";     shift ;;
     -b) BUCKET="$1";   shift ;;
     -S) SERVER="$1";   shift ;;
-    -e) CHK_EXISTS=true;;
     -c) CREDENTIALS="$1"; shift ;;
     -D) set -x;;
     -h) usage "" 0;;
@@ -85,27 +132,37 @@ while [[ $# -gt 0 ]] ; do
   esac
 done
 
-if $CHK_EXISTS ; then
-  [ "${DES_FILE}" = "" ] && DES_FILE=${XFILE}
+if [ "$CMD" = "exists" ] ; then
+  [ "${SRC_FILE}" = "" ] && SRC_FILE=${XFILE}
+  [ "$SRC_FILE" = "" ]   && usage "Error: Missing file name/path. Use '$0 exists file-path-under-backet'" 1
+  has_file $SRC_FILE
 else
+  [ -f "${CREDENTIALS}" ] && eval $(grep '^[a-z]' ${CREDENTIALS} | grep '=' | sed 's| ||g')
+  [ "${aws_secret_access_key}" = "" ] && echo "Error: aws_secret_access_key not set in ${CREDENTIALS} file" && exit 1
+  [ "${aws_access_key_id}" = ""     ] && echo "Error: aws_access_key_id not set in ${CREDENTIALS} file" && exit 1
   [ "$SRC_FILE" = "" ]   && SRC_FILE=${XFILE}
-  [ "$SRC_FILE" = "" ]   && usage "Error: Missing source file name/path." 1
-  [ "${DES_FILE}" = "" ] && DES_FILE="${SRC_FILE}"
-  DES_FILE=$(echo -n "$DES_FILE" | sed "s|^/*||;s|\/$|\/$(basename $SRC_FILE)|")
+  [ "$SRC_FILE" = "" ]   && usage "Error: Missing source file name/path. Use -s file-path-under-backet" 1
+  if [ "$CMD" = "delete" ] ; then
+    delete_file ${SRC_FILE}
+  elif [ "$CMD" = "touch" ] ; then
+    touch_file ${SRC_FILE}
+  elif [ "$CMD" = "copy" -o "$CMD" = "move" ] ; then
+    if [ "${DES_FILE}" = "" -o "${DES_FILE}" = "${SRC_FILE}" ] ; then
+      echo "Error: Invalid destination file '${DES_FILE}'"
+      exit 1
+    fi
+    if [ $CMD = "copy" ] ; then
+      copy_file ${SRC_FILE} ${DES_FILE}
+    elif [ $CMD = "move" ] ; then
+      move_file ${SRC_FILE} ${DES_FILE}
+    fi
+  else
+    [ "${DES_FILE}" = "" ] && DES_FILE="${SRC_FILE}"
+    DES_FILE=$(echo -n "$DES_FILE" | sed "s|^/*||;s|\/$|\/$(basename $SRC_FILE)|")
+    [ "$MIME" = "" ] && MIME=$(guess_mime $SRC_FILE)
+    [ ! -e "$SRC_FILE" ] && usage "Error: No such file: $SRC_FILE" 1
+    echo "Uploading: $SRC_FILE ($MIME) to $BUCKET:$DES_FILE"
+    upload_file ${SRC_FILE} ${DES_FILE}
+    echo "$SRC_FILE successfully uploaded to backet $BUCKET as $DES_FILE."
+  fi
 fi
-
-#Checking for file in S3
-$CHK_EXISTS && has_file && exit 0
-
-#Upload local file to S3
-[ "$MIME" = "" ] && MIME=$(guess_mime $SRC_FILE)
-[ ! -e "$SRC_FILE" ] && usage "Error: No such file: $SRC_FILE" 1
-
-[ -f "${CREDENTIALS}" ] && eval $(grep '^[a-z]' ${CREDENTIALS} | grep '=' | sed 's| ||g')
-[ "${aws_secret_access_key}" = "" ] && echo "Error: aws_secret_access_key not set in ${CREDENTIALS} file" && exit 1
-[ "${aws_access_key_id}" = ""     ] && echo "Error: aws_access_key_id not set in ${CREDENTIALS} file" && exit 1
-
-echo "Uploading: $SRC_FILE ($MIME) to $BUCKET:$DES_FILE"
-upload_file
-has_file
-echo "$SRC_FILE successfully uploaded to backet $BUCKET as $DES_FILE."

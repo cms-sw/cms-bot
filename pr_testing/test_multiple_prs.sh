@@ -752,7 +752,7 @@ echo '{}' > $RECENT_COMMITS_FILE
 touch $WORKSPACE/changed-files
 if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
-  if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; else git cms-init --upstream-only ; fi
+  if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; fi
 
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
@@ -798,8 +798,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
       git repack -a -d ${THRDS}
       git repack -a -d ${THRDS}
       OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
-      PR_NR=$(echo ${PULL_REQUEST} | sed 's/.*#//' )
-      git cms-merge-topic --debug --ssh -u ${CMSSW_ORG}:${PR_NR}
+      git cms-merge-topic --debug --ssh -u ${CMSSW_ORG}:${PR_NUMBER}
       git repack -d ${THRDS}
       NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
       let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0

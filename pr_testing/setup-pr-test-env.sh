@@ -74,6 +74,7 @@ else
   popd
 fi
 export PATH=$CMS_BOT_DIR/das-utils:$PATH
+export MALLOC_CONF=junk:true
 CMSSW_IB=${CMSSW_VERSION}
 CMSSW_QUEUE=$(echo ${CMSSW_VERSION} | sed 's|_X.*|_X|')
 if [ "${UPLOAD_UNIQ_ID}" != "" ] ; then

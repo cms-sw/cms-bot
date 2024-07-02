@@ -54,7 +54,7 @@ def main():
         items = [x for x in inc.split("/") if x]
         if items[2] == "interface":
             continue
-        for src in usedby[inc].split(" "):
+        for src in [s for s in usedby[inc].split(" ") if s]:
             sitems = [x for x in src.split("/") if x]
             if (items[0] == sitems[0]) and (items[1] == sitems[1]):
                 continue
@@ -65,7 +65,7 @@ def main():
                     errs[src] = {}
                 errs[src][inc] = includes[src][inc]
             if src in uses:
-                for isrc in uses[src].strip().split(" "):
+                for isrc in [s for s in uses[src].strip().split(" ") if s]:
                     xchk = "%s:%s" % (src, inc)
                     if xchk in checked:
                         continue

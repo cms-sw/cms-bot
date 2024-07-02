@@ -56,12 +56,6 @@ git cms-init --upstream-only
 DSIZE=0
 source $CMS_BOT_DIR/jenkins-artifacts
 pushd $CMSSW_BASE/src
-  git checkout -b codechecks-${PULL_REQUEST} $CMSSW_VERSION
-  THRDS=""
-  git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NUM_PROC}" || true
-  git repack -a -d ${THRDS}
-  git repack -a -d ${THRDS}
-  OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
   if ! git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} >${UP_DIR}/cms-checkout-topic.log 2>&1 ; then
     echo '-code-checks' > ${UP_DIR}/code-checks.md
     echo -e "\nLogs: $UP_URL" >> ${UP_DIR}/code-checks.md
@@ -98,10 +92,6 @@ pushd $CMSSW_BASE/src
     fi
     exit 0
   fi
-  git repack -d ${THRDS}
-  NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
-  let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
-  if [ $DSIZE -lt 0 ] ; then DSIZE=0 ; fi
   $CMS_BOT_DIR/pr-checks/check-pr-files.py -d -r ${REPO_USER}/cmssw ${PULL_REQUEST} > ${UP_DIR}/invalid_files.txt || true
   touch ${UP_DIR}/duplicate-data.txt
   if [ -d ${CMSSW_RELEASE_BASE}/external/${SCRAM_ARCH}/data ] ; then
@@ -212,7 +202,6 @@ if [ -s ${UP_DIR}/duplicate-data.txt ] ; then
     RES="-code-checks"
     MSG="${MSG}\n\n- Error: Found data files available in both cmssw and cms-data. Please update these data files directly in cms-data repository: ${UP_URL}/duplicate-data.txt"
 fi
-if [ $DSIZE -gt 0 ] ; then MSG="${MSG}\n\n- This PR adds an extra ${DSIZE}KB to repository" ; fi
 if [ -s ${UP_DIR}/invalid_files.txt ] ; then
     MSG="${MSG}\n\n- Found files with invalid states:\n$(cat ${UP_DIR}/invalid_files.txt | sed 's|^\(\s*\)|\1  - |')"
 fi

@@ -808,7 +808,6 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
       if [ $DSIZE -gt 0 ]; then echo "\n* - This PR adds an extra ${DSIZE}KB to repository" > ${RESULTS_DIR}/16-git-repo-size-report.res; fi
       cd ..
       rm -rf src && mv src.tmp src
-      exit 0
     popd
   fi
 

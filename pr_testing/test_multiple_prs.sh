@@ -787,7 +787,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     exit 0
   fi
 
-  if [[ $PRODUCTION_RELEASE == "true" -a ${PULL_REQUEST} == "*/cmssw#*" ]]; then
+  if [[ $PRODUCTION_RELEASE == "true" && ${PULL_REQUEST} == "*/cmssw#*" ]]; then
     pushd ${CMSSW_BASE}
       mv src src.tmp
       mkdir src && cd src

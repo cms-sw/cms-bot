@@ -1066,6 +1066,7 @@ CMSSW_CATEGORIES = {
         "L1TriggerConfig/XmlConfigTools",
         "L1TriggerOffline/Configuration",
         "L1TriggerOffline/L1Analyzer",
+        "L1TriggerScouting/OnlineProcessing",
         "Phase2L1Trigger/CalibratedDigis",
         "SLHCUpgradeSimulations/L1CaloTrigger",
         "SimCalorimetry/EcalEBTrigPrimAlgos",

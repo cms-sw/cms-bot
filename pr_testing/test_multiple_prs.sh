@@ -329,7 +329,7 @@ if $DO_COMPARISON ; then
       echo "MATRIX_ARGS=${WF_ARGS}" >> run-baseline-${BUILD_ID}-02.${ex_type_lc}
     done
   popd
-  #send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
+  send_jenkins_artifacts $WORKSPACE/ib-baseline-tests/ ib-baseline-tests/
   rm -rf $WORKSPACE/ib-baseline-tests
 fi
 

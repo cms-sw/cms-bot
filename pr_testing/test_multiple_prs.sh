@@ -787,16 +787,14 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     exit 0
   fi
 
-  if $PRODUCTION_RELEASE ; then
-    pushd ..
+  if [[ $PRODUCTION_RELEASE -a ${PULL_REQUEST} == "*/cmssw#*" ]]; then
+    pushd ${CMSSW_BASE}
       mv src src.tmp
       mkdir src && cd src
       DSIZE=0
       THRDS=""
-      NUM_PROC=$(nproc)
-      if [ $NUM_PROC = "0" ] ; then NUM_PROC=1; fi
-      if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; else git cms-init --upstream-only ; fi
-      git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NUM_PROC}" || true
+      git cms-init --upstream-only && git checkout -b codechecks $CMSSW_IB
+      git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NCPU}" || true
       git repack -a -d ${THRDS}
       git repack -a -d ${THRDS}
       OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')

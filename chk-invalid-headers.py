@@ -51,11 +51,11 @@ def main():
     errs = {}
     checked = {}
     for inc in usedby:
-        items = inc.split("/")
+        items = [x for x in inc.split("/") if x]
         if items[2] == "interface":
             continue
         for src in usedby[inc].split(" "):
-            sitems = src.split("/")
+            sitems = [x for x in src.split("/") if x]
             if (items[0] == sitems[0]) and (items[1] == sitems[1]):
                 continue
             if (items[2] == sitems[2]) and (items[2] == "test"):

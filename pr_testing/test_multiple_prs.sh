@@ -802,7 +802,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
       git repack -d ${THRDS}
       NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
       let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
-      if [ $DSIZE -gt 0 ]; then echo -e "\n* - This PR adds an extra ${DSIZE}KB to repository" > ${RESULTS_DIR}/16-git-repo-size-report.res; fi
+      if [ $DSIZE -gt 0 ]; then echo "**Size**: This PR adds an extra ${DSIZE}KB to repository" > ${RESULTS_DIR}/09-git-repo-size-report.res; fi
       cd ..
       rm -rf src && mv src.tmp src
     popd

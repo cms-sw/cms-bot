@@ -536,21 +536,22 @@ if ${BUILD_EXTERNAL} ; then
         echo "Checking cmsset_default.sh for $sh under $os" >>  $WORKSPACE/cmsset_default/run.log
         if ! $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -e $WORKSPACE/$BUILD_DIR/cmsset_default.sh >>$WORKSPACE/cmsset_default/run.log 2>&1 ; then
           CMSSET_DEFAULT_ERR="${CMSSET_DEFAULT_ERR} $sh:$os"
-          echo "Failed: $sh:$os" >> $WORKSPACE/cmsset_default/run.log
+          echo "Failed" >> $WORKSPACE/cmsset_default/run.log
           $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -ex $WORKSPACE/$BUILD_DIR/cmsset_default.sh > $WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1 || true
         else
-          echo "OK: $sh:$os" >> $WORKSPACE/cmsset_default/run.log
+          echo "OK" >> $WORKSPACE/cmsset_default/run.log
         fi
       done
     done
     if [ "${CMSSET_DEFAULT_ERR}" != "" ]  ; then
-      echo 'CMSSET_DEFAULT_RESULTS;ERROR,Environment setup,See Log,cmsset_default' >> ${RESULTS_DIR}/cmsset_default.txt
-      echo -e "\n## Setting up env\n\nUnable to run cmsset_default.sh for ${CMSSET_DEFAULT_ERR}" >> 10-report.res
+      echo "CMSSet_Default" >> ${RESULTS_DIR}/09-failed.res
+      echo 'CMSSET_DEFAULT_RESULTS;ERROR,Environment setup,See Log,cmsset_default' >> ${RESULTS_DIR}/toolconf.txt
+      echo "**Failed environment setup**: \`${CMSSET_DEFAULT_ERR}\`" >> ${RESULTS_DIR}/09-report.res
       prepare_upload_results
       mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Environment setup error"
       exit 0
     else
-      echo 'CMSSET_DEFAULT_RESULTS;OK,Environment setup,See Log,cmsset_default/run.log' >> ${RESULTS_DIR}/cmsset_default.txt
+      echo 'CMSSET_DEFAULT_RESULTS;OK,Environment setup,See Log,cmsset_default/run.log' >> ${RESULTS_DIR}/toolconf.txt
     fi
 
     OLD_DASGOCLIENT=$(dasgoclient --version  | tr ' ' '\n' | grep '^git=' | sed 's|^git=||')

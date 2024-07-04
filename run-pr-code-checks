@@ -53,7 +53,6 @@ fi
 
 touch ${UP_DIR}/all-changed-files.txt
 git cms-init --upstream-only
-DSIZE=0
 source $CMS_BOT_DIR/jenkins-artifacts
 pushd $CMSSW_BASE/src
   if ! git cms-merge-topic -u ${REPO_USER}:${PULL_REQUEST} >${UP_DIR}/cms-checkout-topic.log 2>&1 ; then

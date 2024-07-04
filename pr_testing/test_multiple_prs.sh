@@ -787,9 +787,8 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
 
   if [[ "$PRODUCTION_RELEASE" == "true" && "${PULL_REQUEST}" == *"/cmssw#"* ]]; then
     pushd ${CMSSW_BASE}
-      mv src src.tmp
-      mkdir src && cd src
-      DSIZE=0
+      mv src src.tmp && mkdir src
+      cd src
       THRDS=""
       git cms-init --upstream-only && git checkout -b codechecks $CMSSW_IB
       git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NCPU}" || true

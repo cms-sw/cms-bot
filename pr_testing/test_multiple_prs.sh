@@ -99,16 +99,21 @@ fi
 PRODUCTION_RELEASE=false
 CMSSW_BRANCH=$(echo "${CONFIG_LINE}" | sed 's|.*RELEASE_BRANCH=||;s|;.*||')
 CMSSW_DEVEL_BRANCH=$(cd $CMS_BOT_DIR; ${CMSBOT_PYTHON_CMD} -c 'from releases import CMSSW_DEVEL_BRANCH; print(CMSSW_DEVEL_BRANCH)')
-if [ "${CMSSW_BRANCH}" = "master" ] ; then CMSSW_BRANCH=${CMSSW_DEVEL_BRANCH} ; fi
+CMSSW_DEVEL_REL=false
+CMSSW_DEVEL_PROD_ARCH=false
+if [ "${CMSSW_BRANCH}" = "master" ] ; then
+  CMSSW_BRANCH=${CMSSW_DEVEL_BRANCH}
+  CMSSW_DEVEL_REL=true
+fi
 if [ $(echo "${CONFIG_LINE}" | grep "PROD_ARCH=1" | wc -l) -gt 0 ] ; then
   if [ $(echo "${CONFIG_LINE}" | grep "ADDITIONAL_TESTS=" | wc -l) -gt 0 ] ; then
     PRODUCTION_RELEASE=true
+    if ${CMSSW_DEVEL_REL} ; then
+      DO_DAS_QUERY=true
+      TEST_RELVALS_INPUT=true
+      CMSSW_DEVEL_PROD_ARCH=true
+    fi
   fi
-fi
-
-if $PRODUCTION_RELEASE ; then
-  DO_DAS_QUERY=true
-  TEST_RELVALS_INPUT=true
 fi
 
 # ----------
@@ -409,6 +414,10 @@ for U_REPO in ${UNIQ_REPOS}; do
 	;;
 	esac
 done
+if $CMSDIST_ONLY ; then
+  DO_DAS_QUERY=false
+  TEST_RELVALS_INPUT=false
+fi
 
 # Prepera html templates
 cp $CMS_BOT_DIR/templates/PullRequestSummary.html $WORKSPACE/summary.html
@@ -785,7 +794,7 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     exit 0
   fi
 
-  if [[ "$PRODUCTION_RELEASE" == "true" && "${PULL_REQUEST}" == *"/cmssw#"* ]]; then
+  if [[ "${PRODUCTION_RELEASE}" == "true" && "${PULL_REQUEST}" == *"/cmssw#"* ]]; then
     pushd ${CMSSW_BASE}
       mv src src.tmp && mkdir src
       cd src
@@ -1314,8 +1323,6 @@ if [ "X$DO_SHORT_MATRIX" = Xtrue ]; then
     done
     if [ $(runTheMatrix.py --help | grep '^ *--maxSteps' | wc -l) -eq 0 ] ; then
       mark_commit_status_all_prs "relvals/input" 'success' -u "${BUILD_URL}" -d "Not ran, runTheMatrix does not support --maxSteps flag" -e
-      TEST_RELVALS_INPUT=false
-    elif $CMSDIST_ONLY ; then
       TEST_RELVALS_INPUT=false
     fi
     if $TEST_RELVALS_INPUT ; then

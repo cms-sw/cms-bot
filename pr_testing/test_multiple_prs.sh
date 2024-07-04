@@ -751,6 +751,7 @@ touch $WORKSPACE/changed-files
 if [ ! -d $WORKSPACE/cms-prs ]  ; then git clone --depth 1 git@github.com:cms-sw/cms-prs $WORKSPACE/cms-prs ; fi
 if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
   if $USE_IB_TAG ; then git cms-init --upstream-only $CMSSW_IB ; fi
+
   # this is to test several pull requests at the same time
   for PR in $( echo ${PULL_REQUESTS} | tr ' ' '\n' | grep "/cmssw#"); do
     echo 'I will add the following pull request to the test'
@@ -782,6 +783,27 @@ if ! $CMSDIST_ONLY ; then # If a CMSSW specific PR was specified #
     prepare_upload_results
     mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Merge: Unknow error while merging."
     exit 0
+  fi
+
+  if [[ "$PRODUCTION_RELEASE" == "true" && "${PULL_REQUEST}" == *"/cmssw#"* ]]; then
+    pushd ${CMSSW_BASE}
+      mv src src.tmp
+      mkdir src && cd src
+      DSIZE=0
+      THRDS=""
+      git cms-init --upstream-only && git checkout -b codechecks $CMSSW_IB
+      git repack -h 2>&1 | grep '\-\-threads' && THRDS="--threads ${NCPU}" || true
+      git repack -a -d ${THRDS}
+      git repack -a -d ${THRDS}
+      OSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
+      git cms-merge-topic --debug --ssh -u ${CMSSW_ORG}:${PR_NUMBER}
+      git repack -d ${THRDS}
+      NSIZE=$(du -sk .git/objects/pack | sed 's|\s.*||')
+      let DSIZE=${NSIZE}-${OSIZE} || DSIZE=0
+      if [ $DSIZE -gt 0 ]; then echo "**Size**: This PR adds an extra ${DSIZE}KB to repository" > ${RESULTS_DIR}/09-git-repo-size-report.res; fi
+      cd ..
+      rm -rf src && mv src.tmp src
+    popd
   fi
 
   #############################################

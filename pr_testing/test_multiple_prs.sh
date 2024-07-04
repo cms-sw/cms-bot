@@ -537,7 +537,7 @@ if ${BUILD_EXTERNAL} ; then
         if ! $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -e $WORKSPACE/$BUILD_DIR/cmsset_default.sh >>$WORKSPACE/cmsset_default/run.log 2>&1 ; then
           CMSSET_DEFAULT_ERR="${CMSSET_DEFAULT_ERR} $sh:$os"
           echo "Failed: $sh:$os" >> $WORKSPACE/cmsset_default/run.log
-          $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -ex $WORKSPACE/$BUILD_DIR/cmsset_default.sh > $WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1
+          $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -ex $WORKSPACE/$BUILD_DIR/cmsset_default.sh > $WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1 || true
         else
           echo "OK: $sh:$os" >> $WORKSPACE/cmsset_default/run.log
         fi

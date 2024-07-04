@@ -528,24 +528,24 @@ if ${BUILD_EXTERNAL} ; then
     fi
 
     #Testing sourcing of cmsset_default
-    CMSSET_DEFAULT_OK=true
+    CMSSET_DEFAULT_ERR=""
     mkdir $WORKSPACE/cmsset_default
     EL_OS=$(ls $WORKSPACE/$BUILD_DIR/common/cmssw-el* | sed 's|.*/common/cmssw-el|el|' | grep -v 'el5')
     for sh in bash sh zsh ; do
       for os in $EL_OS ; do
         echo "Checking cmsset_default.sh for $sh under $os" >>  $WORKSPACE/cmsset_default/run.log
         if ! $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -e $WORKSPACE/$BUILD_DIR/cmsset_default.sh >>$WORKSPACE/cmsset_default/run.log 2>&1 ; then
-          CMSSET_DEFAULT_OK=false
-          echo " => Failed $sh:$os" >> $WORKSPACE/cmsset_default/run.log
+          CMSSET_DEFAULT_ERR="${CMSSET_DEFAULT_ERR} $sh:$os"
+          echo "Failed: $sh:$os" >> $WORKSPACE/cmsset_default/run.log
           $WORKSPACE/$BUILD_DIR/common/cmssw-$os -- $sh -ex $WORKSPACE/$BUILD_DIR/cmsset_default.sh > $WORKSPACE/cmsset_default/${sh}-${os}.log 2>&1
         else
-          echo "OK $sh:$os" >> $WORKSPACE/cmsset_default/run.log
+          echo "OK: $sh:$os" >> $WORKSPACE/cmsset_default/run.log
         fi
       done
     done
-    if ! ${CMSSET_DEFAULT_OK} ; then
+    if [ "${CMSSET_DEFAULT_ERR}" != "" ]  ; then
       echo 'CMSSET_DEFAULT_RESULTS;ERROR,Environment setup,See Log,cmsset_default' >> ${RESULTS_DIR}/cmsset_default.txt
-      echo -e "\n## Setting up env\n\nUnable to run cmsset_default.sh" >> 10-report.res
+      echo -e "\n## Setting up env\n\nUnable to run cmsset_default.sh for ${CMSSET_DEFAULT_ERR}" >> 10-report.res
       prepare_upload_results
       mark_commit_status_all_prs '' 'error' -u "${PR_RESULT_URL}" -d "Environment setup error"
       exit 0

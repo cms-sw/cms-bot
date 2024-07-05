@@ -6,7 +6,7 @@ from hashlib import sha1
 from cmsutils import cmsswIB2Week, percentile, epoch2week
 from _py2with3compatibility import Request, urlopen
 from os import stat as tstat
-from time import time
+from time import time, sleep
 
 CMSSDT_ES_QUERY = "https://cmssdt.cern.ch/SDT/cgi-bin/es_query"
 # ES_SERVER = 'https://es-cmssdt7.cern.ch:9203'
@@ -103,6 +103,7 @@ def send_request(
     ignore_doc=False,
     ignore_new=False,
 ):
+    sleep(0.01)  # temporary fix for sending too many DNS requests
     if (not ignore_new) and (ES_SERVER != ES_NEW_SERVER) and (es_ser == ES_SERVER):
         if not send_request(
             uri, payload, passwd_file, method, es_ser=ES_NEW_SERVER, ignore_doc=ignore_doc

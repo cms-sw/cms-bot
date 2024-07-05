@@ -529,7 +529,6 @@ class TestProcessPr(Framework.TestCase):
         self.__eventFileName = ""
         self.__eventFile = None
 
-
         if "process_pr" not in sys.modules:
             importlib.import_module("process_pr")
 

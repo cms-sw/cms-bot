@@ -87,7 +87,7 @@ def main():
             pkg_errs[pkg] = {}
         pkg_errs[pkg][e] = errs[e]
 
-    print("ERRORS:",pkg_errs)
+    print("ERRORS:", pkg_errs)
     outdir = "invalid-includes"
     run_cmd("rm -f %s; mkdir %s" % (outdir, outdir))
     all_count = {}

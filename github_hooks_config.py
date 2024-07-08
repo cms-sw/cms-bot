@@ -1,17 +1,18 @@
 from cms_static import VALID_CMS_SW_REPOS_FOR_TESTS
 
+CMSSDT_BASE_URL = "https://cmssdt.cern.ch/SDT/cgi-bin/github_webhook"
 GITHUB_HOOKS = {}
 GITHUB_HOOKS["Jenkins_Github_Hook"] = {
     "active": True,
     "events": ["issues", "pull_request", "issue_comment", "status"],
-    "config": {"url": "https://cmssdt.cern.ch/SDT/cgi-bin/github_webhook", "content_type": "json"},
+    "config": {"url": CMSSDT_BASE_URL, "content_type": "json"},
 }
 
 GITHUB_HOOKS["Jenkins_Github_Hook_Push"] = {
     "active": True,
     "events": ["push"],
     "config": {
-        "url": "https://cmssdt.cern.ch/SDT/cgi-bin/github_webhook?push",
+        "url": "%s?push" % CMSSDT_BASE_URL,
         "content_type": "json",
     },
 }

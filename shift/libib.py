@@ -1,5 +1,7 @@
 import datetime
 import io
+import os
+
 import json
 import logging
 import pickle
@@ -110,6 +112,7 @@ def make_url(url):
 
 def fetch(url, content_type=ContentType.JSON, payload=None):
     url = make_url(url)
+    # print("Fetching", url)
     try:
         response = urllib.request.urlopen(url, timeout=10)
     except urllib.error.HTTPError as e:
@@ -145,6 +148,273 @@ def get_exitcodes():
     exitcodes_ = fetch("https://cms-sw.github.io/exitcodes.json")
     for k, v in exitcodes_.items():
         exitcodes[int(k)] = v
+
+
+def fetch_and_find(url, start_line, callback):
+    url = make_url(url)
+    try:
+        with urllib.request.urlopen(url) as response:
+            for current_line_number, line in enumerate(response, start=1):
+                if current_line_number > start_line:
+                    line = line.decode("utf-8")
+                    should_stop, res = callback(line)
+                    if should_stop:
+                        return res
+
+    except urllib.error.URLError as e:
+        print(f"An error occurred: {e}")
+        return None
+
+    return None
+
+
+def extract_relval_error(release_name, arch, rvItem):
+    def first_valid_frame(line):
+        def remove_templates(name):
+            stack = []
+            result = []
+            last_index = 0
+
+            for i, char in enumerate(name):
+                if char == "<":
+                    if not stack:
+                        result.append(name[last_index:i])
+                    stack.append("<")
+                elif char == ">":
+                    if stack:
+                        stack.pop()
+                        if not stack:
+                            last_index = i + 1
+
+            if not stack:
+                result.append(name[last_index:])
+
+            return "".join(result)
+
+        if line.startswith("Thread") or (not line.strip()) or line.startswith("Current Modules:"):
+            return True, ""
+        m = re.match("^#\d+\s+0x[0-9a-f]{16,16} in ([^?].+) from (.+)$", line)
+        if not m:
+            return False, None
+        else:
+            if "cms/cmssw" not in m.group(2):
+                return False, None
+            return True, remove_templates(m.group(1).strip())
+
+    def parse_missing_product(line):
+        if not hasattr(parse_missing_product, "state"):
+            parse_missing_product.state = {"state": 0}
+        if (
+            line.strip() == "An exception of category 'ProductNotFound' occurred while"
+            and parse_missing_product.state["state"] == 0
+        ):
+            parse_missing_product.state = {"state": 1}
+        else:
+            parse_missing_product.state = {"state": 2}
+
+        if parse_missing_product.state["state"] == 1:
+            m = re.match("^.*Calling method for module (.*)$", line)
+            if m:
+                parse_missing_product.state = {"method": m.group(1)}
+                return False
+
+            m = re.match("^Looking for type: (.*)$", line)
+            if m:
+                parse_missing_product.state["type"] = m.group(1)
+                return False
+
+            m = re.match("^Looking for module label: (.*)$", line)
+            if m:
+                parse_missing_product.state["label"] = m.group(1)
+                return False
+
+            m = re.match("^Looking for productInstanceName: (.*)$", line)
+            if m:
+                parse_missing_product.state["name"] = m.group(1)
+                parse_missing_product.state["state"] = 0
+                return True
+
+        elif parse_missing_product.state["state"] == 2 and "End Fatal Exception " in line:
+            parse_missing_product.state["state"] = 0
+        return False
+
+    def parse_asserion(line):
+        m = re.search("Assertion `(.*)' failed", line)
+        if m:
+            return True, f"Assertion `{m.groups(1)[0]}` failed"
+        else:
+            return True, f"Unknown assertion"
+
+    ret = []
+    exitcode = rvItem["exitcode"]
+    exitcodeName = exitcodes.get(exitcode, str(exitcode))
+    if rvItem["exitcode"] != 0 and rvItem["known_error"] == 0:
+        for i, rvStep in enumerate(rvItem["steps"]):
+            if rvStep["status"] == "DAS_ERROR":
+                return LogEntry(
+                    name=f"Relval {rvItem['id']} step {i + 1}",
+                    url="",
+                    data={
+                        "exit_code": "DAS_ERROR",
+                        "workflow": rvItem["id"],
+                        "step": 1,
+                        "details": f"DAS ERROR in Relval {rvItem['id']}",
+                    },
+                )
+
+            if rvStep["status"] in ("FAILED", "DAS_ERROR"):
+                webURL = (
+                    f"http://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
+                    f"{arch}/"
+                    f"{release_name}/pyRelValMatrixLogs/run/"
+                    f"{rvItem['id']}_{rvItem['name']}/step{i + 1}_"
+                    f"{rvItem['name']}.log"
+                )
+                webURL_t = webURL + "#/{lineStart}-{lineEnd}"
+                logURL = f"https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/raw/{arch}/{release_name}/pyRelValMatrixLogs/run/{rvItem['id']}_{rvItem['name']}/step{i + 1}_{rvItem['name']}.log"
+
+                utlDataURL = f"https://cmssdt.cern.ch/SDT/cgi-bin/buildlogs/raw_read_config/{arch}/{release_name}/pyRelValMatrixLogs/run/{rvItem['id']}_{rvItem['name']}/"
+
+                if rvStep["status"] != "DAS_ERROR":
+                    utlDataURL = utlDataURL + f"step{i + 1}_{rvItem['name']}.log"
+                else:
+                    utlDataURL = utlDataURL + f"step{i + 1}_dasquery.log"
+
+                try:
+                    utlData = fetch(utlDataURL)
+                except urllib.error.HTTPError:
+                    return LogEntry(
+                        name=f"Relval {rvItem['id']} step {i + 1}",
+                        url=webURL,
+                        data={
+                            "exit_code": exitcodeName,
+                            "workflow": rvItem["id"],
+                            "step": i + 1,
+                            "details": f"Unknown failure in Relval {rvItem['id']} step {i + 1}",
+                            "line": -1,
+                        },
+                    )
+
+                for ctl in utlData["show_controls"]:
+                    if ctl["name"] != "Issues":
+                        continue
+                    for obj in ctl["list"]:
+                        if obj["control_type"] == "Issues" and obj["name"].startswith(
+                            "Segmentation fault"
+                        ):
+                            continue
+                        if exitcodeName == "SIGSEGV" and obj["name"].startswith(
+                            "sig_dostack_then_abort"
+                        ):
+                            res = fetch_and_find(logURL, int(obj["lineStart"]), first_valid_frame)
+                            if res:
+                                if res.startswith("cling::"):
+                                    res = "CLING"
+                                res = re.split(r"[(<]", res, 1)[0]
+                                return LogEntry(
+                                    name=f"Relval {rvItem['id']} step {i + 1}",
+                                    url=webURL_t.format(**obj),
+                                    data={
+                                        "details": f"SIGSEGV in `{res}`",
+                                        "workflow": rvItem["id"],
+                                        "step": i + 1,
+                                        "line": obj["lineStart"],
+                                        "func": res,
+                                        "exit_code": exitcodeName,
+                                    },
+                                )
+
+                        if exitcodeName == "OtherCMS" and obj["name"] == "Mount failure":
+                            return LogEntry(
+                                name=f"Relval {rvItem['id']} step {i + 1}",
+                                url=webURL_t.format(**obj),
+                                data={
+                                    "details": "Mount failure",
+                                    "workflow": rvItem["id"],
+                                    "step": i + 1,
+                                    "line": obj["lineStart"],
+                                    "exit_code": exitcodeName,
+                                },
+                            )
+
+                        if exitcodeName == "SIGABRT" and obj["name"].startswith(
+                            "Assertion failure"
+                        ):
+                            res = fetch_and_find(logURL, int(obj["lineStart"]) - 1, parse_asserion)
+                            return LogEntry(
+                                name=f"Relval {rvItem['id']} step {i + 1}",
+                                url=webURL_t.format(**obj),
+                                data={
+                                    "details": res,
+                                    "workflow": rvItem["id"],
+                                    "step": i + 1,
+                                    "exit_code": exitcodeName,
+                                    "assertion": res,
+                                },
+                            )
+
+                        if exitcodeName == "ProductNotFound":
+                            ret = fetch_and_find(logURL, int(obj["lineStart"]), first_valid_frame)
+                            if ret:
+                                state = getattr(parse_missing_product, "state", None)
+                                if state:
+                                    return LogEntry(
+                                        name=f"Relval {rvItem['id']} step {i + 1}",
+                                        url=webURL_t.format(**obj),
+                                        data={
+                                            "details": "Product {type} {name} missing in module {method}".format(
+                                                **state
+                                            ),
+                                            "workflow": rvItem["id"],
+                                            "step": i + 1,
+                                            "line": obj["lineStart"],
+                                            "exit_code": exitcodeName,
+                                            "product_type": state["type"],
+                                            "product_name": state["name"],
+                                            "method": state["method"],
+                                        },
+                                    )
+
+                        return LogEntry(
+                            name=f"Relval {rvItem['id']} step {i + 1}",
+                            url=webURL_t.format(**obj),
+                            data={
+                                "exit_code": exitcodeName,
+                                "workflow": rvItem["id"],
+                                "step": i + 1,
+                                "line": obj["lineStart"],
+                            },
+                        )
+                else:
+                    return LogEntry(
+                        name=f"Relval {rvItem['id']} step {i+1}",
+                        url=webURL,
+                        data={
+                            "exit_code": exitcodeName,
+                            "workflow": rvItem["id"],
+                            "step": i + 1,
+                            "line": -1,
+                        },
+                    )
+
+    logger.error(
+        f"RelVal {rvItem['id']} in IB {release_name} for {arch} failed with {exitcodeName} "
+        f"at UNKNOWN step"
+    )
+    for i, rvStep in enumerate(rvItem["steps"]):
+        print(f"Step {i} status {rvStep['status']}")
+
+    return LogEntry(
+        name=f"Relval {rvItem['id']} step UNKNOWN",
+        url="",
+        data={
+            "exit_code": exitcodeName,
+            "workflow": rvItem["id"],
+            "step": -1,
+        },
+    )
+
+    # print("!!!")
 
 
 def check_ib(data, compilation_only=False):
@@ -266,34 +536,11 @@ def check_ib(data, compilation_only=False):
                     rvData = []
 
                 for rvItem in rvData:
-                    exitcode = rvItem["exitcode"]
-                    exitcodeName = exitcodes.get(exitcode, str(exitcode))
-                    if rvItem["exitcode"] != 0 and rvItem["known_error"] == 0:
-                        for i, rvStep in enumerate(rvItem["steps"]):
-                            if rvStep["status"] in ("FAILED", "DAS_ERROR"):
-                                webURL = (
-                                    f"http://cmssdt.cern.ch/SDT/cgi-bin/logreader/"
-                                    f"{arch}/"
-                                    f"{data['release_name']}/pyRelValMatrixLogs/run/"
-                                    f"{rvItem['id']}_{rvItem['name']}/step{i + 1}_"
-                                    f"{rvItem['name']}.log"
-                                )
-                                res[arch]["relval"].append(
-                                    LogEntry(
-                                        name=f"Relval" f" {rvItem['id']} step {i + 1}",
-                                        url=webURL,
-                                        data=exitcodeName,
-                                    )
-                                )
-                                break
-                        else:
-                            logger.error(
-                                f"RelVal {rvItem['id']} in IB {data['release_name']} for {arch} failed with {exitcodeName} "
-                                f"at UNKNOWN step"
-                            )
-                            for i, rvStep in enumerate(rvItem["steps"]):
-                                print(f"Step {i} status {rvStep['status']}")
-
+                    if rvItem["exitcode"] == 0 or rvItem["known_error"] == 1:
+                        continue
+                    x = extract_relval_error(data["release_name"], arch, rvItem)
+                    assert x
+                    res[arch]["relval"].append(x)
     logger.info("=" * 80)
     return data["release_name"], res
 
@@ -371,3 +618,52 @@ def get_ib_dates(cmssw_release):
         ib_dates.append(previous_ib_date)
 
     return ib_dates
+
+
+def parse_config_line(line):
+    res = {}
+    data = [x.strip() for x in line.split(";") if x.strip()]
+    for var in data:
+        k, v = var.split("=")
+        try:
+            v = int(v)
+        except ValueError:
+            pass
+
+        if isinstance(v, str):
+            tmp = v.split(",")
+            if len(tmp) > 1:
+                res[k] = []
+                for itm in tmp:
+                    try:
+                        itm = int(itm)
+                    except ValueError:
+                        pass
+
+                    res[k].append(itm)
+            else:
+                res[k] = v
+
+    return res
+
+
+def get_expected_ibs(series, ib_date):
+    res = []
+    y, m, d, h = (int(x) for x in ib_date.split("-"))
+    h = int(h) // 100
+    d = datetime.date(y, m, d)
+    wd = d.isoweekday() % 7  # to make Sunday = 0
+
+    cms_bot_dir = os.getenv("CMS_BOT_DIR", os.path.dirname(os.path.dirname(__file__)))
+    with open(os.path.join(cms_bot_dir, "config.map"), "r") as f:
+        for line in f:
+            data = parse_config_line(line)
+            if (
+                data["CMSDIST_TAG"].startswith("IB/" + series)
+                and data.get("DISABLED", 0) == 0
+                and h in data.get("BUILD_HOUR", (11, 23))
+                and wd in data.get("BUILD_DAY", (0, 1, 2, 3, 4, 5, 6))
+            ):
+                res.append((data["RELEASE_QUEUE"], data["SCRAM_ARCH"]))
+
+    return res

@@ -20,7 +20,6 @@ record_actions = False
 
 # Utility function for recording calls and optionally calling the original function
 def hook_and_call_original(hook, original_function, call_original, self, *args, **kwargs):
-
     if call_original:
         res = original_function(self, *args, **kwargs)
     else:
@@ -236,6 +235,12 @@ def dummy_fetch_pr_result(*args, **kwargs):
     assert len(kwargs) == 0, "Signature of process_pr.fetch_pr_result changed"
 
     return "", "ook"
+
+
+def on_github_init(original_function, self, *args, **kwargs):
+    kwargs["per_page"] = 100
+    # raise RuntimeError()
+    original_function(self, *args, **kwargs)
 
 
 class TestProcessPr(Framework.TestCase):
@@ -518,12 +523,12 @@ class TestProcessPr(Framework.TestCase):
 
     def setUp(self):
         super().setUp()
+        self.setUpHooks()
+        self.setUpReactions()
 
         self.__eventFileName = ""
         self.__eventFile = None
 
-        self.setUpHooks()
-        self.setUpReactions()
         if "process_pr" not in sys.modules:
             importlib.import_module("process_pr")
 

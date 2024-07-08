@@ -3,9 +3,9 @@ from github import Github
 from os.path import expanduser, exists, join, dirname, abspath
 from os import environ
 from optparse import OptionParser
-from github_hooks_config import get_repository_hooks, get_event_hooks
+from github_hooks_config import get_repository_hooks, get_event_hooks, CMSSDT_BASE_URL
 from github_utils import api_rate_limits
-import hashlib
+import hashlib, copy
 from categories import EXTERNAL_REPOS, CMSSW_REPOS, CMSDIST_REPOS
 from sys import argv
 from socket import setdefaulttimeout
@@ -23,6 +23,17 @@ def get_secret(hook_name):
         if not exists(secret_file):
             secret_file = "/data/secrets/github_hook_secret_cmsbot"
     return open(secret_file, "r").read().split("\n")[0].strip()
+
+
+# Get hook url
+def get_url(repo_name, hook, secret, hk_conf):
+    url = hk_conf[hook]["config"]["url"]
+    ss = "%s:%s:%s" % (repo_name, hook, secret)
+    data = hashlib.sha256(ss.encode()).hexdigest()
+    xparam = "name=%s&data=%s" % (hook, data)
+    if "?" in url:
+        return "%s&%s" % (url, xparam)
+    return "%s?%s" % (url, xparam)
 
 
 # match hook config
@@ -146,6 +157,7 @@ if __name__ == "__main__":
             repos[r] = None
 
     # process repos
+    print("Dryrun:", opts.dryRun)
     for repo_name in repos:
         gh = ghx
         isUserRepo = False
@@ -176,20 +188,25 @@ if __name__ == "__main__":
             repo = gh.get_repo(repo_name)
         repo_hooks_all = {}
         for hook in repo.get_hooks():
-            if "name" in hook.config:
-                repo_hooks_all[hook.config["name"]] = hook
+            url = hook.config["url"]
+            if not url.startswith(CMSSDT_BASE_URL):
+                continue
+            if "name=Jenkins_Github_" in url:
+                name = [
+                    x.split("=")[-1]
+                    for x in url.split("?")[-1].split("&")
+                    if x.startswith("name=Jenkins_Github_")
+                ][0]
+                repo_hooks_all[name] = hook
         api_rate_limits(gh)
-        print("Dryrun:", opts.dryRun)
         for hook in hooks:
             print("checking for web hook", hook)
-            hook_conf = hk_conf[hook]
+            secret = get_secret(hook)
+            hook_conf = copy.deepcopy(hk_conf[hook])
             hook_conf["name"] = "web"
             hook_conf["config"]["insecure_ssl"] = "1"
-            hook_conf["config"]["secret"] = get_secret(hook)
-            hook_conf["config"]["name"] = hook
-            hook_conf["config"]["data"] = hashlib.sha256(
-                hook_conf["config"]["secret"].encode()
-            ).hexdigest()
+            hook_conf["config"]["secret"] = secret
+            hook_conf["config"]["url"] = get_url(repo_name, hook, secret, hk_conf)
             if hook in repo_hooks_all:
                 old_hook = repo_hooks_all[hook]
                 if opts.force or not match_config(hook_conf, old_hook):

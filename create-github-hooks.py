@@ -31,8 +31,10 @@ def get_url(repo_name, hook, secret, hk_conf):
     ss = "%s:%s:%s" % (repo_name, hook, secret)
     data = hashlib.sha256(ss.encode()).hexdigest()
     xparam = "name=%s&data=%s" % (hook, data)
-    if "?" in url: return "%s&%s" % (url, xparam)
+    if "?" in url:
+        return "%s&%s" % (url, xparam)
     return "%s?%s" % (url, xparam)
+
 
 # match hook config
 def match_config(new, old):
@@ -187,9 +189,14 @@ if __name__ == "__main__":
         repo_hooks_all = {}
         for hook in repo.get_hooks():
             url = hook.config["url"]
-            if not url.startswith(CMSSDT_BASE_URL): continue
-            if 'name=Jenkins_Github_' in url:
-                name = [x.split("=")[-1] for x in url.split("?")[-1].split("&") if x.startswith('name=Jenkins_Github_')][0]
+            if not url.startswith(CMSSDT_BASE_URL):
+                continue
+            if "name=Jenkins_Github_" in url:
+                name = [
+                    x.split("=")[-1]
+                    for x in url.split("?")[-1].split("&")
+                    if x.startswith("name=Jenkins_Github_")
+                ][0]
                 repo_hooks_all[name] = hook
         api_rate_limits(gh)
         for hook in hooks:

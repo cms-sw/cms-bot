@@ -4,7 +4,7 @@ from urllib.request import (
     urlopen,
     build_opener,
     install_opener,
-    HTTPBasicAuthHandler,
+    HTTPCookieProcessor,
 )
 from urllib.error import HTTPError
 from http.cookiejar import CookieJar

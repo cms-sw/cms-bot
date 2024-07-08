@@ -1585,7 +1585,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             and (not warned_too_many_files)
             and (not ok_too_many_files)
         ):
-            if pr.commits < TOO_MANY_FILES_FAIL_THRESHOLD:
+            if pr.changed_files < TOO_MANY_FILES_FAIL_THRESHOLD:
                 if not dryRun:
                     issue.create_comment(
                         "This PR touches many files ({0} >= {1}) and will not be processed. "

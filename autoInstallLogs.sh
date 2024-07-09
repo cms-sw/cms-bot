@@ -39,7 +39,7 @@ for WEEK in 0 1; do
   # notice it must finish with something which matches %Y-%m-%d-%H00
   # We only sync the last 7 days.
   rm -f ibs.txt
-  ssh -o StrictHostKeyChecking=no $REPO_USER@$REPO_SERVER find ${REPO_PATH}/repos/cms.week$WEEK -mindepth 6 -maxdepth 6 -type d -path '*/WEB/build-logs/*/CMSSW_*' >ibs.txt 2>&1 || true
+  ssh -o StrictHostKeyChecking=no $REPO_USER@$REPO_SERVER find ${REPO_PATH}/cms.week$WEEK -mindepth 6 -maxdepth 6 -type d -path '*/WEB/build-logs/*/CMSSW_*' >ibs.txt 2>&1 || true
   [ $(grep _X_ ibs.txt | wc -l) -gt 0 ] || continue
   for ib in $(cat ibs.txt | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$') ; do
     logdir=$(echo $ib | sed 's|/WEB/build-logs/.*|/WEB/build-logs|')

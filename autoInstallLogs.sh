@@ -38,20 +38,20 @@ find $IB_BASEDIR -mindepth 4 -maxdepth 5 -path '*/www/*/*' -o -path '*/www/*/*/C
 for WEEK in 0 1; do
   # notice it must finish with something which matches %Y-%m-%d-%H00
   # We only sync the last 7 days.
-  XREPO_PATH=$REPO_PATH
-  XDEPTH=2
-  ssh -o StrictHostKeyChecking=no  $REPO_USER@$REPO_SERVER test -d $REPO_PATH/repos/cms.week$WEEK && XREPO_PATH="$REPO_PATH/repos" && XDEPTH=4 || true
-  for logdir in $(ssh -o StrictHostKeyChecking=no  $REPO_USER@$REPO_SERVER find $XREPO_PATH/cms.week$WEEK/ -mindepth 2 -maxdepth $XDEPTH -path '*/WEB/build-logs' -type d) ; do
-  BUILDS=`ssh -o StrictHostKeyChecking=no  $REPO_USER@$REPO_SERVER find $logdir -mtime -7 -mindepth 2 -maxdepth 2 -type d | sed 's|^.*/WEB/build-logs/||' | grep CMSSW | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$' || true`
-  for x in $BUILDS; do
-    SCRAM_ARCH=`echo $x | cut -f1 -d/`
-    REL_NAME=`echo $x | cut -f2 -d/`
-    REL_TYPE=`echo $REL_NAME | sed -e's/.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\(.*\|\)$/new\1/'`
-    CMSSW_NAME=`echo $REL_NAME | sed -e's/^\(CMSSW_.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\).*$/\1/'`
-    CMSSW_DATE=`echo $CMSSW_NAME | sed -e's/.*\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\)$/\1/'`
-    CMSSW_WEEKDAY=`python3 -c "import time;print (time.strftime('%a', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower())"`
-    CMSSW_HOUR=`python3 -c "import time;print (time.strftime('%H', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower())"`
-    CMSSW_QUEUE=`echo $CMSSW_NAME | sed -e's/_X_.*//;s/^CMSSW_//' | tr _ .`
+  rm -f ibs.txt
+  ssh -o StrictHostKeyChecking=no $REPO_USER@$REPO_SERVER find ${REPO_PATH}/repos/cms.week$WEEK -mindepth 6 -maxdepth 6 -type d -path '*/WEB/build-logs/*/CMSSW_*' >ibs.txt 2>&1 || true
+  [ $(grep _X_ ibs.txt | wc -l) -gt 0 ] || continue
+  for ib in $(cat ibs.txt | grep _X_ | grep '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9].*$') ; do
+    logdir=$(echo $ib | sed 's|/WEB/build-logs/.*|/WEB/build-logs|')
+    x=$(echo $ib | sed 's|^.*/WEB/build-logs/||')
+    SCRAM_ARCH=$(echo $x | cut -f1 -d/)
+    REL_NAME=$(echo $x | cut -f2 -d/)
+    REL_TYPE=$(echo $REL_NAME | sed -e's/.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\(.*\|\)$/new\1/')
+    CMSSW_NAME=$(echo $REL_NAME | sed -e's/^\(CMSSW_.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\).*$/\1/')
+    CMSSW_DATE=$(echo $CMSSW_NAME | sed -e's/.*\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\)$/\1/')
+    CMSSW_WEEKDAY=$(python3 -c "import time;print (time.strftime('%a', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower())")
+    CMSSW_HOUR=$(python3 -c "import time;print (time.strftime('%H', time.strptime('$CMSSW_DATE', '%Y-%m-%d-%H00')).lower())")
+    CMSSW_QUEUE=$(echo $CMSSW_NAME | sed -e's/_X_.*//;s/^CMSSW_//' | tr _ .)
     REL_LOGS_DIR="$IB_BASEDIR/$SCRAM_ARCH/www/$CMSSW_WEEKDAY/$CMSSW_QUEUE-$CMSSW_WEEKDAY-$CMSSW_HOUR/$CMSSW_NAME"
     REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
@@ -69,6 +69,5 @@ for WEEK in 0 1; do
         fi
       fi
     fi
-  done
   done
 done

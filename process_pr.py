@@ -204,7 +204,7 @@ def update_CMSSW_LABELS(repo_config):
         check_dpg_pog = False
     dpg_pog = {} if not check_dpg_pog else get_dpg_pog()
     for l in CMSSW_LABELS.keys():
-        if check_dpg_pog and (not l in dpg_pog):
+        if check_dpg_pog and (not l in dpg_pog) and (not l in TYPE_COMMANDS):
             del CMSSW_LABELS[l]
         else:
             CMSSW_LABELS[l] = [

@@ -1791,7 +1791,9 @@ CMSSW_CATEGORIES = {
 # Format: label = [regexp1, regexp2]
 # where regexpX can be part of cmssw package e.g SiStrip will match all cmssw packages with SiStrip in them
 # "jetmet": [ "SubSystem1/", "SubSystem2/Package"]
+import re
 CMSSW_LABELS = {
+    "changes-dataformats": [re.compile("^.+/src/classes_def(.+|).xml$")],
     "trk": [
         "Alignment/APEEstimation",
         "Alignment/HIPAlignmentAlgorithm",

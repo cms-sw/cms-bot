@@ -35,6 +35,7 @@ TYPE_COMMANDS = {
     "root": [LABEL_COLORS["info"], "root", "mtype"],
     "documentation": [LABEL_COLORS["doc"], "doc(umentation|)", "mtype"],
     "hlt-integration": [LABEL_COLORS["doc"], "hlt-int(egration|)", "mtype"],
+    "changes-dataformats": [LABEL_COLORS["doc"], "(change(s|)-|)dataformats", "mtype"],
     "performance-improvements": [
         LABEL_COLORS["performance"],
         "performance|improvements|performance-improvements",

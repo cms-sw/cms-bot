@@ -1771,6 +1771,8 @@ a-kapoor:
   - DataFormats/EgammaReco
 SohamBhattacharya:
 - HLTrigger/Configuration/python/HLT_75e33
+VourMa:
+- HLTrigger/Configuration/python/HLT_75e33
 AnnikaStein:
 - Configuration/Eras
 - DataFormats/NanoAOD

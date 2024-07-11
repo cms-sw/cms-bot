@@ -39,8 +39,7 @@ function move_file(){
 function touch_file(){
   xdate=$(date +%s)
   copy_file $1 ${1}-${xdate}
-  copy_file ${1}-${xdate} $1
-  delete_file ${1}-${xdate}
+  move_file ${1}-${xdate} $1
 }
 
 function copy_file(){
@@ -96,6 +95,17 @@ function has_file(){
   fi
 }
 
+function ask_permissions(){
+  if ! $FORCE ; then
+    read -p "Do you really want to $1:(yY/nN): " RES
+    case "$RES" in
+      y|Y) ;;
+      n|N) echo "Nothing done" ; exit 0;;
+      * ) echo "Invalid response: $RES"; exit 1;;
+    esac
+  fi
+}
+
 CREDENTIALS="${HOME}/.aws/credentials"
 BUCKET="cmsrep"
 SRC_FILE=""
@@ -105,17 +115,19 @@ MIME=""
 SERVER="s3.cern.ch"
 XFILE=""
 CMD="upload"
+FORCE=false
 case "$1" in
-  u|up|upload)  CMD="upload" ;;
+  u|up|upload)  CMD="upload" ; shift ;;
   c|cp|copy)    CMD="copy"   ;;
   e|exists)     CMD="exists" ;;
   m|mv|move)    CMD="move"   ;;
   d|del|delete) CMD="delete" ;;
   r|rm|remove)  CMD="delete" ;;
   t|touch)      CMD="touch"  ;;
-  *) usage "Invalid command: $1" 1;;
+  -*)                        ;;
+  *) [ ! -f "$1" ]  && usage "Invalid command: $1" 1;;
 esac
-shift
+[ "$CMD" = "upload" ] || shift
 while [[ $# -gt 0 ]] ; do
   opt=$1; shift
   case $opt in
@@ -126,6 +138,7 @@ while [[ $# -gt 0 ]] ; do
     -b) BUCKET="$1";   shift ;;
     -S) SERVER="$1";   shift ;;
     -c) CREDENTIALS="$1"; shift ;;
+    -f) FORCE=true;;
     -D) set -x;;
     -h) usage "" 0;;
     *) XFILE=$opt ;;
@@ -143,14 +156,17 @@ else
   [ "$SRC_FILE" = "" ]   && SRC_FILE=${XFILE}
   [ "$SRC_FILE" = "" ]   && usage "Error: Missing source file name/path. Use -s file-path-under-backet" 1
   if [ "$CMD" = "delete" ] ; then
+    ask_permissions "delete S3:${BUCKET}/${SRC_FILE}"
     delete_file ${SRC_FILE}
   elif [ "$CMD" = "touch" ] ; then
+    ask_permissions "update timestamp of S3:${BUCKET}/${SRC_FILE}"
     touch_file ${SRC_FILE}
   elif [ "$CMD" = "copy" -o "$CMD" = "move" ] ; then
     if [ "${DES_FILE}" = "" -o "${DES_FILE}" = "${SRC_FILE}" ] ; then
       echo "Error: Invalid destination file '${DES_FILE}'"
       exit 1
     fi
+    ask_permissions "$CMD S3:${BUCKET}/${SRC_FILE} to S3:${BUCKET}/${DES_FILE}"
     if [ $CMD = "copy" ] ; then
       copy_file ${SRC_FILE} ${DES_FILE}
     elif [ $CMD = "move" ] ; then
@@ -161,6 +177,7 @@ else
     DES_FILE=$(echo -n "$DES_FILE" | sed "s|^/*||;s|\/$|\/$(basename $SRC_FILE)|")
     [ "$MIME" = "" ] && MIME=$(guess_mime $SRC_FILE)
     [ ! -e "$SRC_FILE" ] && usage "Error: No such file: $SRC_FILE" 1
+    ask_permissions "upload local file ${SRC_FILE} to S3:${BUCKET}/${DES_FILE}"
     echo "Uploading: $SRC_FILE ($MIME) to $BUCKET:$DES_FILE"
     upload_file ${SRC_FILE} ${DES_FILE}
     echo "$SRC_FILE successfully uploaded to backet $BUCKET as $DES_FILE."

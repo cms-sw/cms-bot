@@ -1573,6 +1573,17 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
 
     # end of parsing comments section
+    # Check if it needs to be automatically closed.
+    if mustClose:
+        if issue.state == "open":
+            print("This pull request must be closed.")
+            if not dryRun:
+                issue.edit(state="closed")
+    elif reOpen:
+        if issue.state == "closed":
+            print("This pull request must be reopened.")
+            if not dryRun:
+                issue.edit(state="open")
 
     if issue.pull_request:
         if (
@@ -2204,18 +2215,6 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             pass
         if add_labels:
             issue.edit(labels=list(labels))
-
-    # Check if it needs to be automatically closed.
-    if mustClose:
-        if issue.state == "open":
-            print("This pull request must be closed.")
-            if not dryRunOrig:
-                issue.edit(state="closed")
-    elif reOpen:
-        if issue.state == "closed":
-            print("This pull request must be reopened.")
-            if not dryRunOrig:
-                issue.edit(state="open")
 
     if not issue.pull_request:
         issueMessage = None

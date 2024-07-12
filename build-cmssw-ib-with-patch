@@ -27,7 +27,7 @@ rm -rf $WORKSPACE/../build-cache &
 cd $WORKSPACE
 rm -rf ${WRKDIR}/SPECS
 
-BUILD_JOBS=4
+BUILD_JOBS=3
 BUILD_NPROC=$(nproc)
 
 case $ARCHITECTURE in

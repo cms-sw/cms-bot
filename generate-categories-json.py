@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
-from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_L1
+from categories import CMSSW_CATEGORIES, CMSSW_L2, CMSSW_ORP
 import json
 
 # Generates a json file sumarizing the categories, their packages, and conveners
@@ -36,7 +36,7 @@ output = {}
 output["people_to_categories"] = CMSSW_L2
 output["categories_to_people"] = categories_to_people
 output["categories_to_packages"] = CMSSW_CATEGORIES
-output["L1"] = CMSSW_L1
+output["ORP"] = CMSSW_ORP
 
 with open(OUTPUT_FILE, "w") as out_json:
     json.dump(output, out_json, indent=4)

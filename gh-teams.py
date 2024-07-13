@@ -9,11 +9,11 @@ from socket import setdefaulttimeout
 from github_utils import api_rate_limits, github_api, add_organization_member
 from github_utils import create_team, get_pending_members, get_gh_token
 from github_utils import get_delete_pending_members, get_failed_pending_members
-from categories import CMSSW_L1, CMSSW_L2, CMS_SDT
+from categories import CMSSW_ORP, CMSSW_L2, CMS_SDT
 
 setdefaulttimeout(120)
 
-CMS_OWNERS = ["davidlange6", "smuzaffar", "cmsbuild"] + CMSSW_L1[:]
+CMS_OWNERS = ["davidlange6", "smuzaffar", "cmsbuild"] + CMSSW_ORP[:]
 CMS_ORGANIZATIONS = ["cms-data", "cms-externals", "cms-sw"]
 
 REPO_OWNERS = {}
@@ -89,7 +89,7 @@ REPO_TEAMS["cms-sw"]["cms-sw-admins"] = {
 }
 
 REPO_TEAMS["cms-sw"]["all-l2"] = {
-    "members": CMSSW_L1[:],
+    "members": CMSSW_ORP[:],
 }
 
 for user in CMSSW_L2:

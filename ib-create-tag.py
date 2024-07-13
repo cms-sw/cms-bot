@@ -25,7 +25,7 @@ from github_utils import (
     find_tags,
 )
 
-from categories import CMSSW_L1
+from categories import CMSSW_ORP
 
 setdefaulttimeout(120)
 SCRIPT_DIR = dirname(abspath(sys.argv[0]))

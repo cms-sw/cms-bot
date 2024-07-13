@@ -8,9 +8,9 @@ except Exception as e:
     print("Python import error:", e)
     exit(0)
 try:
-    from categories import CMSSW_L1
+    from categories import CMSSW_ORP
 except:
-    CMSSW_L1 = {}
+    CMSSW_ORP = {}
 
 l2_file = argv[1]
 ctime = int(int(argv[2]) / 86400) * 86400
@@ -18,7 +18,7 @@ data = {}
 with open(l2_file) as ref:
     data = load(ref)
 
-for u in CMSSW_L1:
+for u in CMSSW_ORP:
     if u not in CMSSW_L2:
         CMSSW_L2[u] = ["orp"]
     else:

@@ -29,7 +29,7 @@ jobs:
       - name: Compiling all python files
         run: python -m compileall $(ls | grep -v cuda | grep -v v_scheduler | grep -v venv)
       - name: Test importing CMSSW_L2/L1
-        run: python -c 'from categories import CMSSW_L2,CMSSW_L1'
+        run: python -c 'from categories import CMSSW_L2,CMSSW_ORP'
       - name: Checking watchers
         run: PYTHONPATH=. python tests/test_watchers.py
       - name: Checking config map

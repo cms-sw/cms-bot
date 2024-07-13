@@ -10,12 +10,12 @@ authors = {}
 # Any Githib user whose comments/requests should be ignored
 GITHUB_BLACKLIST_AUTHORS = []
 # CMS Offline Release Planning managers
-CMSSW_L1 = ["sextonkennedy", "rappoccio", "antoniovilela"]
+CMSSW_ORP = ["sextonkennedy", "rappoccio", "antoniovilela"]
 # CMS-SDT members who has admin rights to various github organizations and repositories.
 # They are also reposionsible to sign for externals
 CMS_SDT = ["iarspider", "smuzaffar", "aandvalenzuela"]
 # List of gh users who can approve a release build request
-APPROVE_BUILD_RELEASE = list(set(["smuzaffar"] + CMSSW_L1 + SPECIAL_RELEASE_MANAGERS))
+APPROVE_BUILD_RELEASE = list(set(["smuzaffar"] + CMSSW_ORP + SPECIAL_RELEASE_MANAGERS))
 # List of gh users who can request to build a release.
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 # List og gh users who are allowed to trigger Pull Request testing
@@ -53,7 +53,7 @@ EXTERNAL_REPOS = ["cms-data", "cms-externals", gh_user]
 
 CMSSW_REPOS = [gh_user + "/" + gh_cmssw]
 CMSDIST_REPOS = [gh_user + "/" + gh_cmsdist]
-CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1 + ["smuzaffar", "Dr15Jones", "makortel"]))
+CMSSW_ISSUES_TRACKERS = list(set(CMSSW_ORP + ["smuzaffar", "Dr15Jones", "makortel"]))
 COMPARISON_MISSING_MAP = ["slava77"]
 
 # CMS L2's and the CMSSW categories they are responsible for. They can also request to start pull requests testing
@@ -171,7 +171,7 @@ for user in CMS_SDT:
         CMSSW_L2[user].append("externals")
 
 # All CMSSW L1 can sign for ORP
-for user in CMSSW_L1:
+for user in CMSSW_ORP:
     if user not in CMSSW_L2:
         CMSSW_L2[user] = ["orp"]
     else:

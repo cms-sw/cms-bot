@@ -2,7 +2,7 @@ import copy
 
 from categories import (
     CMSSW_L2,
-    CMSSW_L1,
+    CMSSW_ORP,
     TRIGGER_PR_TESTS,
     CMSSW_ISSUES_TRACKERS,
     PR_HOLD_MANAGERS,
@@ -1135,7 +1135,7 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
             br = "_".join(pr.base.ref.split("/")[:2][-1].split("_")[:3]) + "_X"
             if br:
                 extra_rm = extra_rm + get_release_managers(br)
-        releaseManagers = list(set(extra_rm + CMSSW_L1))
+        releaseManagers = list(set(extra_rm + CMSSW_ORP))
     else:
         try:
             if (

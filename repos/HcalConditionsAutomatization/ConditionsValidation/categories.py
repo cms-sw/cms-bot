@@ -3,8 +3,8 @@ from cms_static import GH_CMSDIST_REPO as gh_cmsdist
 from repo_config import GH_REPO_ORGANIZATION as gh_user
 from repo_config import CMSBUILD_USER, GH_REPO_NAME
 
-CMSSW_L1 = []
-APPROVE_BUILD_RELEASE = list(set([] + CMSSW_L1))
+CMSSW_ORP = []
+APPROVE_BUILD_RELEASE = list(set([] + CMSSW_ORP))
 REQUEST_BUILD_RELEASE = APPROVE_BUILD_RELEASE
 TRIGGER_PR_TESTS = list(set(["smuzaffar"] + REQUEST_BUILD_RELEASE))
 PR_HOLD_MANAGERS = []
@@ -15,7 +15,7 @@ EXTERNAL_REPOS = []
 
 CMSSW_REPOS = [gh_user + "/" + gh_cmssw]
 CMSDIST_REPOS = [gh_user + "/" + gh_cmsdist]
-CMSSW_ISSUES_TRACKERS = list(set(CMSSW_L1))
+CMSSW_ISSUES_TRACKERS = list(set(CMSSW_ORP))
 COMPARISON_MISSING_MAP = []
 
 # github_user:[list of categories]

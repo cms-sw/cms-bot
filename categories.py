@@ -78,7 +78,7 @@ CMSSW_L2 = {
     "sunilUIET": ["pdmv"],
     "miquork": ["pdmv", "jetmet-pog"],
     "makortel": ["heterogeneous", "core", "visualization", "geometry"],
-    "mandrenguyen": ["reconstruction"],
+    "mandrenguyen": ["reconstruction", "operations"],
     "mdhildreth": ["simulation", "geometry", "fastsim"],
     "mkirsano": ["generators"],
     "menglu21": ["generators"],

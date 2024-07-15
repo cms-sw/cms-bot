@@ -121,7 +121,6 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     docker run --rm --net=host $DOCKER_OPT $DOCKER_IMG sh -c "$CMD2RUN"
   else
     ws=$(echo $WORKSPACE |  cut -d/ -f1-2)
-    CLEAN_UP_CACHE=false
     DOCKER_IMGX=""
     if [ -e /cvmfs/singularity.opensciencegrid.org/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/singularity.opensciencegrid.org/$DOCKER_IMG
@@ -129,12 +128,8 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     fi
     if [ "$DOCKER_IMGX" = "" ] ; then DOCKER_IMGX="docker://$DOCKER_IMG" ; fi
-    if test -w ${BUILD_BASEDIR} ; then
-      export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/.singularity"
-    else
-      CLEAN_UP_CACHE=true
-      export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
-    fi
+    CLEAN_UP_CACHE=true
+    export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
     mkdir -p $SINGULARITY_CACHEDIR
     export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
     EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS}"

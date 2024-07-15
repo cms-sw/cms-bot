@@ -128,17 +128,15 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     elif [ -e /cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG ] ; then
       DOCKER_IMGX=/cvmfs/unpacked.cern.ch/registry.hub.docker.com/$DOCKER_IMG
     fi
-    if [ "$DOCKER_IMGX" = "" ] ; then
-      DOCKER_IMGX="docker://$DOCKER_IMG"
-      if test -w ${BUILD_BASEDIR} ; then
-        export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/.singularity"
-      else
-        CLEAN_UP_CACHE=true
-        export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
-      fi
-      mkdir -p $SINGULARITY_CACHEDIR
-      export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
+    if [ "$DOCKER_IMGX" = "" ] ; then DOCKER_IMGX="docker://$DOCKER_IMG" ; fi
+    if test -w ${BUILD_BASEDIR} ; then
+      export SINGULARITY_CACHEDIR="${BUILD_BASEDIR}/.singularity"
+    else
+      CLEAN_UP_CACHE=true
+      export SINGULARITY_CACHEDIR="${WORKSPACE}/.singularity"
     fi
+    mkdir -p $SINGULARITY_CACHEDIR
+    export APPTAINER_CACHEDIR="${SINGULARITY_CACHEDIR}"
     EX_OPTIONS="${SINGULARITY_OPTIONS} ${APPTAINER_OPTIONS}"
     if [ "${CHECK_NVIDIA}" != "false" -a -e "/proc/driver/nvidia/version" ] ; then
       nvidia-smi || true

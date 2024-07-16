@@ -7,11 +7,12 @@ sdir=$(realpath $(dirname $0))
 old_commit="$(tail -1 ${sdir}/commit.txt)"
 new_commit="${old_commit}"
 commit_cnt=0
+BOT_DIR=$(cd $(dirname $0)/.. ; /bin/pwd -P)
+export PYTHONPATH=${BOT_DIR}
+export PYTHONUNBUFFERED=1
 rm -rf update_cmssw_l2
 git clone -q git@github.com:cms-sw/cms-bot update_cmssw_l2
 pushd update_cmssw_l2
-  export PYTHONPATH=$(/bin/pwd -P)
-  export PYTHONUNBUFFERED=1
   git checkout ${old_commit}
   for data in $(git log --no-merges --pretty=format:"%H:%at," ${old_commit}..master | tr ',' '\n' | grep : | tac) ; do
     commit=$(echo $data | sed 's|:.*||')

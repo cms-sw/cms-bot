@@ -18,12 +18,6 @@ data = {}
 with open(l2_file) as ref:
     data = load(ref)
 
-for u in CMSSW_ORP:
-    if u not in CMSSW_L2:
-        CMSSW_L2[u] = ["orp"]
-    else:
-        CMSSW_L2[u].append("orp")
-
 data_chg = False
 for u in CMSSW_L2:
     if u not in data:

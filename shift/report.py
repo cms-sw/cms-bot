@@ -299,7 +299,7 @@ def main():
                             buffer.close()
                         print("", file=f)
                     else:
-                        print('<span style="color:green">No issues</span>', file=buffer)
+                        print('<span style="color:green">No issues</span>', file=f)
 
 
 def validate_date(x):

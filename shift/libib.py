@@ -324,7 +324,7 @@ def extract_relval_error(release_name, arch, rvItem):
                                     },
                                 )
 
-                        if exitcodeName == "OtherCMS" and obj["name"] == "Mount failure":
+                        if exitcodeName == "OtherCMS" and obj["name"].startswith("Mount failure"):
                             return LogEntry(
                                 name=f"Relval {rvItem['id']} step {i + 1}",
                                 url=webURL_t.format(**obj),

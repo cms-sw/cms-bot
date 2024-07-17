@@ -1130,10 +1130,11 @@ TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
 GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
 rm -f $WORKSPACE/deprecated-warnings.log
-for i in $(grep ": warning: " $WORKSPACE/build.log | grep "/$CMSSW_IB/" | sed "s|.*/$CMSSW_IB/src/||;s|:.*||;s| ||g" | sort -u) ; do
+grep -E ': warning:|: warning #[0-9]+-D:' $WORKSPACE/build.log | grep -E "/$CMSSW_IB/src/|^\s*src/" | sed "s|: warning #[0-9]+-D:|: warning:|;s|.*/$CMSSW_IB/||" > $WORKSPACE/all-warnings.log
+for i in $(cat $WORKSPACE/all-warnings.log | sed 's|^src/||;s|:.*||;s| ||g;s|[(].*||' | sort -u) ; do
   if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
     echo $i > $WORKSPACE/warning.log
-    grep ": warning: " $WORKSPACE/build.log | grep "/$i" >> $WORKSPACE/warning.log
+    grep ": warning: " $WORKSPACE/all-warnings.log | grep "/$i" >> $WORKSPACE/warning.log
     if $IS_DEV_BRANCH ; then
       if [ $(grep ": warning: " $WORKSPACE/warning.log | grep 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
         cat $WORKSPACE/warning.log >>  $WORKSPACE/deprecated-warnings.log

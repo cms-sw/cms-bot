@@ -90,6 +90,14 @@
       "start_date": 1698278400
     }
   ],
+  "Pavlov": [
+    {
+      "category": [
+        "rpc-dpg"
+      ],
+      "start_date": 1721174400
+    }
+  ],
   "RSalvatico": [
     {
       "category": [
@@ -1835,6 +1843,7 @@
       "category": [
         "rpc-dpg"
       ],
+      "end_date": 1721174400,
       "start_date": 1618272000
     }
   ],

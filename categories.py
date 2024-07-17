@@ -120,7 +120,7 @@ CMSSW_L2 = {
     "ptcox": ["csc-dpg"],
     "jhgoh": ["rpc-dpg"],
     "andresib": ["rpc-dpg"],
-    "pavlov": ["rpc-dpg"],
+    "Pavlov": ["rpc-dpg"],
     "kamon": ["gem-dpg"],
     "jshlee": ["gem-dpg"],
     "watson-ij": ["gem-dpg"],

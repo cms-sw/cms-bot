@@ -13,6 +13,16 @@ function get_pr_baseline_worklflow() {
   order_workflow_list $($CMS_BOT_DIR/cmssw-pr-test-config $1),${2}
 }
 
+function get_compilation_warnings() {
+  grep -E ': warning:|: warning #[0-9]+-D:' $1 | grep -E "/$CMSSW_IB/src/|^\s*src/" | sed "s|: warning #[0-9]+-D:|: warning:|;s|.*/$CMSSW_IB/||"
+}
+
+function get_warnings_files(){
+  for i in $(cat $1 | sed 's|^src/||;s|:.*||;s| ||g;s|[(].*||' | sort -u) ; do
+    [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] && echo $i
+  done
+}
+
 function get_pr_relval_args() {
   local WF_ARGS
   local WF_LIST
@@ -907,11 +917,10 @@ if [ "X$TEST_CLANG_COMPILATION" = Xtrue -a $NEED_CLANG_TEST = true -a "X$CMSSW_P
 
   TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/buildClang.log` || true
   GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/buildClang.log` || true
-  for i in $(grep ": warning: " $WORKSPACE/buildClang.log | grep "/$CMSSW_IB/" | sed "s|.*/$CMSSW_IB/src/||;s|:.*||;s| ||g" | sort -u) ; do
-    if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
-      echo $i >> $WORKSPACE/clang-new-warnings.log
-      grep ": warning: " $WORKSPACE/buildClang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
-    fi
+  get_compilation_warnings $WORKSPACE/buildClang.log > $WORKSPACE/all-warnings-clang.log
+  for i in $(get_warnings_files $WORKSPACE/all-warnings-clang.log) ; do
+    echo $i >> $WORKSPACE/clang-new-warnings.log
+    grep ": warning: " $WORKSPACE/all-warnings-clang.log | grep "/$i" >> $WORKSPACE/clang-new-warnings.log
   done
   if [ -e $WORKSPACE/clang-new-warnings.log ]  ; then
     echo 'CLANG_NEW_WARNINGS;ERROR,Clang Warnings to fix,See Log,clang-new-warnings.log' >> ${RESULTS_DIR}/clang.txt
@@ -1130,21 +1139,19 @@ TEST_ERRORS=`grep -E "^gmake: .* Error [0-9]" $WORKSPACE/build.log` || true
 GENERAL_ERRORS=`grep "ALL_OK" $WORKSPACE/build.log` || true
 
 rm -f $WORKSPACE/deprecated-warnings.log
-grep -E ': warning:|: warning #[0-9]+-D:' $WORKSPACE/build.log | grep -E "/$CMSSW_IB/src/|^\s*src/" | sed "s|: warning #[0-9]+-D:|: warning:|;s|.*/$CMSSW_IB/||" > $WORKSPACE/all-warnings.log
-for i in $(cat $WORKSPACE/all-warnings.log | sed 's|^src/||;s|:.*||;s| ||g;s|[(].*||' | sort -u) ; do
-  if [ $(grep "$i" $WORKSPACE/changed-files | wc -l) -gt 0 ] ; then
-    echo $i > $WORKSPACE/warning.log
-    grep ": warning: " $WORKSPACE/all-warnings.log | grep "/$i" >> $WORKSPACE/warning.log
-    if $IS_DEV_BRANCH ; then
-      if [ $(grep ": warning: " $WORKSPACE/warning.log | grep 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
-        cat $WORKSPACE/warning.log >>  $WORKSPACE/deprecated-warnings.log
-      fi
+get_compilation_warnings $WORKSPACE/build.log > $WORKSPACE/all-warnings.log
+for i in $(get_warnings_files $WORKSPACE/all-warnings.log) ; do
+  echo $i > $WORKSPACE/warning.log
+  grep ": warning: " $WORKSPACE/all-warnings.log | grep "/$i" >> $WORKSPACE/warning.log
+  if $IS_DEV_BRANCH ; then
+    if [ $(grep ": warning: " $WORKSPACE/warning.log | grep 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
+      cat $WORKSPACE/warning.log >>  $WORKSPACE/deprecated-warnings.log
     fi
-    if [ $(grep ": warning: " $WORKSPACE/warning.log | grep -v 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
-      cat $WORKSPACE/warning.log >> $WORKSPACE/new-build-warnings.log
-    fi
-    rm -f $WORKSPACE/warning.log
   fi
+  if [ $(grep ": warning: " $WORKSPACE/warning.log | grep -v 'Wdeprecated-declarations' | wc -l) -gt 0 ] ; then
+    cat $WORKSPACE/warning.log >> $WORKSPACE/new-build-warnings.log
+  fi
+  rm -f $WORKSPACE/warning.log
 done
 if [ -e $WORKSPACE/new-build-warnings.log ]  ; then
     echo 'BUILD_NEW_WARNINGS;ERROR,Compilation Warnings to fix,See Log,new-build-warnings.log' >> ${RESULTS_DIR}/buildrules.txt

@@ -62,6 +62,7 @@
       "category": [
         "generators"
       ],
+      "end_date": 1721260800,
       "start_date": 1588377600
     }
   ],
@@ -128,6 +129,7 @@
       "category": [
         "generators"
       ],
+      "end_date": 1721260800,
       "start_date": 1569456000
     }
   ],
@@ -214,6 +216,7 @@
       "category": [
         "generators"
       ],
+      "end_date": 1721260800,
       "start_date": 1524528000
     }
   ],
@@ -1463,6 +1466,14 @@
       ],
       "end_date": 1657497600,
       "start_date": 1381881600
+    }
+  ],
+  "lviliani": [
+    {
+      "category": [
+        "generators"
+      ],
+      "start_date": 1721260800
     }
   ],
   "makortel": [

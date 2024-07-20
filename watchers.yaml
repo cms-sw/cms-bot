@@ -585,8 +585,9 @@ fabferro:
 - RecoCTPPS
 forthommel:
 - EventFilter/CTPPSRawToDigi
-- RecoPPS
+- GeneratorInterface/CepGenInterface
 - RecoHGCal
+- RecoPPS
 - SimPPS/DirectSimProducer
 fwyzard:
 - FWCore/ServiceRegistry

@@ -21,7 +21,7 @@ sys.path.insert(0, CMS_BOT_DIR)
 sys.path.insert(0, SCRIPT_DIR)
 from _py2with3compatibility import run_cmd
 from cmsutils import MachineCPUCount
-from RelValArgs import GetMatrixOptions, FixWFArgs
+from RelValArgs import GetMatrixOptions, FixWFArgs, GetWFThreads
 from es_utils import es_query, format, es_workflow_stats
 
 
@@ -41,9 +41,10 @@ def createJob(workflow, cmssw_ver, arch):
         workflow_dir = glob.glob(format("%(workflow)s/%(workflow)s_*", workflow=workflow))[0]
         run_cmd(
             format(
-                "mv %(workflow)s/runall-report-step123-.log %(workflow_dir)s/workflow.log; touch %(workflow_dir)s/cmdLog; mv %(workflow_dir)s .; rm -rf %(workflow)s",
+                "mv %(workflow)s/runall-report-step123-.log %(workflow_dir)s/workflow.log; echo %(wf_thrds)s > %(workflow_dir)s/threads.txt ; touch %(workflow_dir)s/cmdLog; mv %(workflow_dir)s .; rm -rf %(workflow)s",
                 workflow=workflow,
                 workflow_dir=workflow_dir,
+                wf_thrds=GetWFThreads(workflow_args),
             )
         )
         print("Commands for workflow %s generated" % workflow)

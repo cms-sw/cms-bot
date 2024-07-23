@@ -142,6 +142,12 @@ def GetMatrixOptions(release, arch, dasfile=None):
     return re.sub("\s+", " ", cmd)
 
 
+def GetWFThreads(args):
+    if not " -t " in args:
+        return "1"
+    return args.split(" -t ")[-1].strip().split()[0]
+
+
 def FixWFArgs(release, arch, wf, args):
     if isThreaded(release, arch):
         if int(release.split("_")[1]) >= 12:

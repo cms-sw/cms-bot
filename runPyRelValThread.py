@@ -3,7 +3,7 @@ from __future__ import print_function
 import os, glob, re, shutil, time, threading
 from cmsutils import doCmd
 from es_relval_log import es_parse_log
-from RelValArgs import FixWFArgs
+from RelValArgs import FixWFArgs, GetWFThreads
 from _py2with3compatibility import run_cmd
 import json
 from logreaderUtils import transform_and_write_config_file, add_exception_to_config
@@ -91,6 +91,7 @@ def runThreadMatrix(basedir, workflow, args="", logger=None, wf_err=None):
     )
     ret = doCmd("echo " + str(wftime) + " > " + os.path.join(outfolder, "time.log"))
     ret = doCmd("hostname -s > " + os.path.join(outfolder, "hostname"))
+    ret = doCmd("echo %s > %s/threads.txt" % (GetWFThreads(args), outfolder))
     if wf_err:
         json.dump(wf_err, open("%s/known_error.json" % outfolder, "w"))
     if logger:

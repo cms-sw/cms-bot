@@ -33,11 +33,7 @@ if not exists("%s/threads.txt" % partial_log_dirpath):
         o = "1"
     run_cmd("echo %s > %s/threads.txt" % (o, partial_log_dirpath))
 
-e, o = run_cmd("head -1 %s/threads.txt" % partial_log_dirpath)
-if e:
-    print(o)
-    exit(1)
-cmsThreads = o.strip("\n")
+cmsThreads = open(join(partial_log_dirpath, "threads.txt")).read().split("\n")[0]
 e, o = run_cmd("ls -d %s/*" % partial_log_dirpath)
 threads = []
 for wf in o.split("\n"):
@@ -49,6 +45,9 @@ for wf in o.split("\n"):
     hostname = ""
     if exists(join(wf, "hostname")):
         hostname = open(join(wf, "hostname")).read().split("\n")[0]
+    wf_thrds = cmsThreads
+    if exists(join(wf, "threads.txt")):
+        wf_thrds = open(join(wf, "threads.txt")).read().split("\n")[0]
     exit_codes = {}
     if exists(join(wf, "workflow.log")):
         e, o = run_cmd(
@@ -82,7 +81,7 @@ for wf in o.split("\n"):
                 sleep(0.1)
             else:
                 break
-        params = {"cmsthreads": cmsThreads}
+        params = {"cmsthreads": wf_thrds}
         t = threading.Thread(
             target=es_send_resource_stats,
             args=(release, arch, wfnum, s, sfile, hostname, exit_code, params),

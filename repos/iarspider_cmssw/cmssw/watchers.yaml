@@ -757,10 +757,6 @@ jhgoh:
 - Validation/RecoMuon
 - Validation/RPCRecHits
 - Validation/MuonRPCDigis
-kkrajczar:
-- Validation/RecoHI
-kurtejung:
-- RecoHI
 lecriste:
 - RecoHGCal
 - RecoLocalCalo/HGCalRecProducers
@@ -785,9 +781,6 @@ mandrenguyen:
 - RecoHI
 - HeavyIonsAnalysis
 - DataFormats/HeavyIonEvent
-miheejo:
-- RecoHI/HiMuonAlgos
-- RecoHI/Configuration
 mariadalfonso:
 - CalibCalorimetry/HcalAlgos
 - CondFormats/JetMETObjects
@@ -933,8 +926,6 @@ rovere:
 - SimG4Core
 - SimCalorimetry
 - HLTrigger/Configuration/python/HLT_75e33
-rylanC24:
-- Validation/RecoHI
 schoef:
 - CondFormats/JetMETObjects
 - DQMOffline/JetMET
@@ -1096,25 +1087,6 @@ yduhm:
 - RecoLocalTracker/SubCollectionProducers
 yenjie:
 - RecoHI
-yetkinyilmaz:
-- RecoHI
-- HeavyIonsAnalysis
-- DataFormats/HeavyIonEvent
-yslai:
-- RecoHI/HiJetAlgos
-- RecoJets/JetProducers
-- DataFormats/HeavyIonEvent
-dgulhan:
-- RecoTracker
-- RecoHI
-- TrackingTools
-- SimTracker
-- SimGeneral/TrackingAnalysis
-- RecoVertex
-- RecoPixelVertexing
-- Configuration/StandardSequences
-- Validation/RecoTrack
-- Validation/RecoVertex
 amagitte:
 - RecoMuon/GlobalTrackingTools
 - DataFormats/MuonReco

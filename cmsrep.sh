@@ -22,7 +22,7 @@ function cmsbuild_args()
     [ "$BLD_OPTS" != "" ] && arg="${arg} --build-options $(echo ${BLD_OPTS} | sed 's|^,||')"
   fi
   [ "$2" != "" ] && arg="${arg} --vectorization $2"
-  [[ "$3" =~ "riscv64" ]] && arg="${arg} --use-system-tools=gcc,autotools --build-without=cuda,rocm,tensorflow,openloops,valgrind --upload-user=cmsbuild"
+  [[ "$3" =~ "riscv64" ]] && arg="${arg} --use-system-tools=gcc,autotools --build-without=cuda,rocm,tensorflow,openloops,valgrind"
   [ "${arg}" = "" ] || echo "${arg}"
 }
 

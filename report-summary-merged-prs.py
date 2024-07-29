@@ -1071,6 +1071,25 @@ def find_one_profiling_result(magic_command):
     return "inprogress"
 
 
+def find_one_class_version_result(magic_command):
+    """
+    Looks for one class_version result
+    """
+    print("Running ", command_to_execute)
+    out, err, ret_code = get_output_command(command_to_execute)
+    print("Ran:", out, err, ret_code, command_to_execute)
+    file = out.strip()
+    if (ret_code == 0) and (out != ""):
+        print("found", file)
+        out, err, ret_code = get_output_command("grep '^ *FAILED:' %s |wc -l" % file)
+        if int(out) > 0:
+            return {"status": "error", "data": file}
+        else:
+            return {"status": "passed", "data": file}
+    print("inprogress")
+    return "inprogress"
+
+
 def find_one_vtune_result(magic_command):
     """
     Looks for one vtune result
@@ -1718,7 +1737,11 @@ if __name__ == "__main__":
         "test -d " + JENKINS_ARTIFACTS_DIR + "/lizard/RELEASE_NAME/ARCHITECTURE"
     )
     MAGIC_COMMAND_FIND_CLASS_VERSIONS = (
-        "test -d " + JENKINS_ARTIFACTS_DIR + "/class_versions/RELEASE_NAME/ARCHITECTURE"
+        "test -f "
+        + JENKINS_ARTIFACTS_DIR
+        + "/class_versions/RELEASE_NAME/ARCHITECTURE/class_versions.html && echo "
+        + JENKINS_ARTIFACTS_DIR
+        + "/class_versions/RELEASE_NAME/ARCHITECTURE/class_versions.html"
     )
     MAGIC_COMMAND_FIND_CHECK_HEADERS = (
         "test -d " + JENKINS_ARTIFACTS_DIR + "/check_headers/RELEASE_NAME/ARCHITECTURE"
@@ -1912,6 +1935,7 @@ if __name__ == "__main__":
                         release_queue_results["comparisons"],
                         arch,
                         MAGIC_COMMAND_FIND_CLASS_VERSIONS,
+                        find_one_class_version_result,
                     )
                 if "flawfinder" in tests_to_find:
                     find_general_test_results(

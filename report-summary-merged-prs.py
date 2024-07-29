@@ -1717,6 +1717,9 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_LIZARD = (
         "test -d " + JENKINS_ARTIFACTS_DIR + "/lizard/RELEASE_NAME/ARCHITECTURE"
     )
+    MAGIC_COMMAND_FIND_CLASS_VERSIONS = (
+        "test -d " + JENKINS_ARTIFACTS_DIR + "/class_versions/RELEASE_NAME/ARCHITECTURE"
+    )
     MAGIC_COMMAND_FIND_CHECK_HEADERS = (
         "test -d " + JENKINS_ARTIFACTS_DIR + "/check_headers/RELEASE_NAME/ARCHITECTURE"
     )
@@ -1902,6 +1905,13 @@ if __name__ == "__main__":
                         release_queue_results["comparisons"],
                         arch,
                         MAGIC_COMMAND_FIND_LIZARD,
+                    )
+                if "class_versions" in tests_to_find:
+                    find_general_test_results(
+                        "class_versions",
+                        release_queue_results["comparisons"],
+                        arch,
+                        MAGIC_COMMAND_FIND_CLASS_VERSIONS,
                     )
                 if "flawfinder" in tests_to_find:
                     find_general_test_results(

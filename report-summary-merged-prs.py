@@ -1081,7 +1081,7 @@ def find_one_class_version_result(command_to_execute):
     file = out.strip()
     if (ret_code == 0) and (out != ""):
         print("found", file)
-        out, err, ret_code = get_output_command("grep '^ *FAILED:' %s |wc -l" % file)
+        out, err, ret_code = get_output_command("grep '^ *FAILED:' %s/%s |wc -l" % (JENKINS_ARTIFACTS_DIR, file))
         if int(out) > 0:
             return {"status": "error", "data": file}
         else:
@@ -1740,7 +1740,6 @@ if __name__ == "__main__":
         "test -f "
         + JENKINS_ARTIFACTS_DIR
         + "/class_versions/RELEASE_NAME/ARCHITECTURE/class_versions.html && echo "
-        + JENKINS_ARTIFACTS_DIR
         + "/class_versions/RELEASE_NAME/ARCHITECTURE/class_versions.html"
     )
     MAGIC_COMMAND_FIND_CHECK_HEADERS = (

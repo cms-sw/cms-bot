@@ -1073,7 +1073,7 @@ def find_one_profiling_result(magic_command):
 
 def find_one_class_version_result(magic_command):
     """
-    Looks for one class_version result
+    Looks for one class-version result
     """
     print("Running ", command_to_execute)
     out, err, ret_code = get_output_command(command_to_execute)
@@ -1929,9 +1929,9 @@ if __name__ == "__main__":
                         arch,
                         MAGIC_COMMAND_FIND_LIZARD,
                     )
-                if "class_versions" in tests_to_find:
+                if "class-versions" in tests_to_find:
                     find_general_test_results(
-                        "class_versions",
+                        "class-versions",
                         release_queue_results["comparisons"],
                         arch,
                         MAGIC_COMMAND_FIND_CLASS_VERSIONS,

@@ -111,6 +111,7 @@ if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}")"
 fi
 [ $(grep 'upload-package-store-s3' PKGTOOLS/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store-s3"
+[[ "$ARCHITECTUR" =~ "_riscv64_" ]] && CMSBUILD_CMD="${CMSBUILD_CMD} --use-system-tools=gcc,autotools --build-without=cuda,rocm,tensorflow,openloops,valgrind --ssh-options='-J cmsbuild@lxplus.cern.ch'"
 
 ## build and upload revision based packages
 REV_PKGS=""

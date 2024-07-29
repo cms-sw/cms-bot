@@ -1071,7 +1071,7 @@ def find_one_profiling_result(magic_command):
     return "inprogress"
 
 
-def find_one_class_version_result(command_to_execute):
+def find_one_class_versions_result(command_to_execute):
     """
     Looks for one class-version result
     """
@@ -1934,7 +1934,7 @@ if __name__ == "__main__":
                         release_queue_results["comparisons"],
                         arch,
                         MAGIC_COMMAND_FIND_CLASS_VERSIONS,
-                        find_one_class_version_result,
+                        find_one_class_versions_result,
                     )
                 if "flawfinder" in tests_to_find:
                     find_general_test_results(

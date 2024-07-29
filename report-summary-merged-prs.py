@@ -1071,7 +1071,7 @@ def find_one_profiling_result(magic_command):
     return "inprogress"
 
 
-def find_one_class_version_result(magic_command):
+def find_one_class_version_result(command_to_execute):
     """
     Looks for one class-version result
     """

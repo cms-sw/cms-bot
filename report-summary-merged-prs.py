@@ -1083,7 +1083,7 @@ def find_one_class_version_result(command_to_execute):
         out, err, ret_code = get_output_command("grep '^ *FAILED:' %s/%s |wc -l" % (JENKINS_ARTIFACTS_DIR, file))
         print("found", file, "with error count",out)
         if int(out) > 0:
-            return {"status": "error", "data": file}
+            return {"status": "errors", "data": file}
         else:
             return {"status": "passed", "data": file}
     print("inprogress")

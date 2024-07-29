@@ -111,6 +111,8 @@ if [ $(echo ${PKGTOOLS_TAG} | cut -d- -f 2)  -gt 31 ] ; then
   CMSBUILD_CMD="${CMSBUILD_CMD} --delete-build-directory --monitor --log-deps --tag hash $(cmsbuild_args "${BUILD_OPTS}" "${MULTIARCH_OPTS}" "${ARCHITECTURE}")"
 fi
 [ $(grep 'upload-package-store-s3' PKGTOOLS/cmsBuild | wc -l) -eq 0 ] || CMSBUILD_CMD="${CMSBUILD_CMD} --upload-package-store-s3"
+${CMSBUILD_CMD} --pretend build SCRAMV1
+exit 0
 
 ## build and upload revision based packages
 REV_PKGS=""

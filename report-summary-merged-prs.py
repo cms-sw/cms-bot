@@ -529,8 +529,8 @@ def get_output_command(command_to_execute):
     )
     out, err = p.communicate()
     ret_code = p.returncode
-    out = out.decode("ascii")
-    err = err.decode("ascii")
+    out = out.decode("ascii", errors="ignore")
+    err = err.decode("ascii", errors="ignore")
 
     if ret_code != 0:
         print_verbose(ret_code)

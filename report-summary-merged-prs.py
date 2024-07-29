@@ -1080,8 +1080,8 @@ def find_one_class_version_result(command_to_execute):
     print("Ran:", out, err, ret_code, command_to_execute)
     file = out.strip()
     if (ret_code == 0) and (out != ""):
-        print("found", file)
         out, err, ret_code = get_output_command("grep '^ *FAILED:' %s/%s |wc -l" % (JENKINS_ARTIFACTS_DIR, file))
+        print("found", file, "with error count",out)
         if int(out) > 0:
             return {"status": "error", "data": file}
         else:

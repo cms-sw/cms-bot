@@ -1928,7 +1928,7 @@ if __name__ == "__main__":
                         arch,
                         MAGIC_COMMAND_FIND_LIZARD,
                     )
-                if "class_versions" in tests_to_find:
+                if "class-versions" in tests_to_find:
                     find_general_test_results(
                         "class_versions",
                         release_queue_results["comparisons"],

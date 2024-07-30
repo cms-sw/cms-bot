@@ -181,6 +181,8 @@ KNOWN_ERRORS["relvals"][RelFilter] = {}
 KNOWN_ERRORS["relvals"][RelFilter][".+_(aarch64|ppc64le)_.+"] = {
     "180.1": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
     "181.1": {"step": 3, "exitcode": 16640, "reason": MSG_TRITON_INCOMPETIBILITY},
+    "2500.912":  {"step": 1, "exitcode": 16640, "reason": MSG_ARCH_INCOMPETIBILITY},
+    "2500.913":  {"step": 1, "exitcode": 16640, "reason": MSG_ARCH_INCOMPETIBILITY},
 }
 
 

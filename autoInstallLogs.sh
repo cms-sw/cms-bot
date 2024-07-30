@@ -51,7 +51,7 @@ for WEEK in 0 1; do
     CMSSW_NAME=$(echo $REL_NAME | sed -e's/^\(CMSSW_.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]\).*$/\1/')
     REL_LOGS_DIR="$IB_BASEDIR/$SCRAM_ARCH/www/$(${THISDIR}/ib2buildlog.py ${CMSSW_NAME})"
     REL_LOGS="${REL_LOGS_DIR}/${REL_TYPE}"
-    [ -d ${REL_LOGS_DIR} ] || continue
+    [ -d ${REL_LOGS_DIR} ] || [[ "${SCRAM_ARCH}" =~ "riscv64" ]] || continue
     mkdir -p $REL_LOGS || echo "Cannot create directory for $REL_LOGS"
     if [ ! -f ${REL_LOGS}/index.html ] ; then
       rsync -a --no-group --no-owner $REPO_USER@${REPO_SERVER}:$logdir/$x/logs/html/ $REL_LOGS/ || echo "Unable to sync logs in $REL_LOGS."

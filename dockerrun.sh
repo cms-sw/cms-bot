@@ -9,7 +9,11 @@ function dockerrun()
     if [ -z "${THISDIR}" ]    ; then THISDIR=$(/bin/pwd -P) ; fi
     if [ -z "${WORKDIR}" ]    ; then WORKDIR=$(/bin/pwd -P) ; fi
     arch=$(echo $SCRAM_ARCH | cut -d_ -f2 | sed 's|amd64|x86_64|')
-    os=$(echo $SCRAM_ARCH | cut -d_ -f1 | sed 's|^[a-z]*|el|')
+    os=$(echo $SCRAM_ARCH | cut -d_ -f1)
+    case $os in
+      slc*|cc*|cs* ) os=$(echo $os | sed 's|^[a-z]*|el|') ;;
+      fc38 ) os="fc39" ;;
+    esac
     IMG="cmssw/${os}:${arch}"
     if [ $(uname -m) != "${arch}" ] ; then
       CONTAINER_TYPE="qemu"
@@ -18,6 +22,8 @@ function dockerrun()
         QEMU_ARGS="${QEMU_ARGS} -cpu cortex-a57"
       elif [ "${arch}" = "ppc64le" ] ; then
         QEMU_ARGS="${QEMU_ARGS} -cpu POWER8"
+      elif [ "${arch}" = "riscv64" ] ; then
+        QEMU_ARGS="${QEMU_ARGS} -cpu rv64"
       fi
     fi
   fi

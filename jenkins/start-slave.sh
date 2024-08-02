@@ -78,7 +78,7 @@ if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^no_label$' | wc -l) -eq 0 ] ; t
       * ) if [ $(echo "${CUR_LABS}" | tr ' ' '\n' | grep '^release-build$' | wc -l) -gt 0 ] ; then slave_labels="${slave_labels} release-build"; fi ;;
     esac
     case $(get_data HOST_CMS_ARCH) in
-      *_aarch64|*_ppc64le ) slave_labels="${slave_labels} cmsbuild";;
+      *_aarch64|*_ppc64le|*_riscv64 ) slave_labels="${slave_labels} cmsbuild";;
     esac
     ;;
   esac

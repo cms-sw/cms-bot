@@ -145,6 +145,9 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
       [ -e $x ] || continue
       BINDPATH="${BINDPATH},${m}"
     done
+    if [ "${SSH_CONFIG_DIR}" != "" ] ; then
+      [ ! -e "${SSH_CONFIG_DIR}" ] || BINDPATH="${BINDPATH},${SSH_CONFIG_DIR}:${HOME}/.ssh"
+    fi
     CONTAINER_CMD="singularity"
     BINDPATH_ENV="SINGULARITY_BINDPATH"
     if which apptainer >/dev/null 2>&1 ; then

@@ -816,6 +816,7 @@ CMSSW_CATEGORIES = {
         "Geometry/ForwardSimData",
         "Geometry/GEMGeometry",
         "Geometry/GEMGeometryBuilder",
+        "Geometry/GeometryAligner",
         "Geometry/GlobalTrackingGeometryBuilder",
         "Geometry/HGCalCommonData",
         "Geometry/HGCalGeometry",

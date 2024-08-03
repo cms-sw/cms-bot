@@ -39,7 +39,6 @@ if [ ! -d ${CMSSW_BASE}/lib/${ARCHITECTURE} ] ; then
 else
   cd ${CMSSW_BASE}
 fi
-for os in el6 el7 el8 el9 ; do cmssw-\${os} -- uname -a || true ; done
 if [ -f config/SCRAM/linkexternal.py ] ; then
   sed -i -e 's|%s build|echo %s build|'  config/SCRAM/linkexternal.py || true
 fi

@@ -40,7 +40,7 @@ fi
 cd $CMSSW_BASE
 [ -e prods.txt ]    || scram b echo_${PROD_TYPE} | grep '_PRODS =' | sed 's|.*= ||' | tr ' ' '\n' | sort | uniq | grep '[a-zA-Z]' > prods.txt
 [ -e lcgdict.txt ]  || cat prods.txt | sed 's|^|echo_|;s|$|_LCGDICTS|' | xargs scram b | grep -v ' = *$' > lcgdict.txt
-[ -e packages.txt ] ||sed 's|_LCGDICTS = .*||;s|^|echo_|' lcgdict.txt | xargs scram b | grep ' cmssw/' | sed 's|  *||g;s|cmssw/||' | cut -d/ -f1,2 > packages.txt
+[ -e packages.txt ] ||sed 's|_LCGDICTS = .*||;s|^|echo_|' lcgdict.txt | xargs scram b | grep -E ' (cmssw|self)/' | sed -E -e 's|  *||g;s|(cmssw\|self)/||g' | cut -d/ -f1,2 > packages.txt
 if [ ! -e override-xml.txt ] ; then
 touch override-xml.txt
 for dir in ${PROJ_DIRS} ; do

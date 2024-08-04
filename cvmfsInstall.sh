@@ -145,8 +145,8 @@ for REPOSITORY in $REPOSITORIES; do
         x="cms+cmssw-ib+$RELEASE_NAME"
         ${CMSPKG} clean
         ${CMSPKG} install -y $x || true
-        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
-        time ${CMSPKG} install -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
+        time ${CMSPKG} install  --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw/'` || true
+        time ${CMSPKG} install  --ignore-size -y `echo $x | sed -e 's/cmssw-ib/cmssw-patch/'` || true
         relname=`echo $x | awk -F + '{print $NF}'`
         timestamp=`echo $relname | awk -F _ '{print $NF}' | grep '^20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]$' | sed 's|-||g'`
         if [ "X$timestamp" != "X" ] ; then

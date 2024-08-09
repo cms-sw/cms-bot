@@ -169,6 +169,22 @@ def fetch_and_find(url, start_line, callback):
 
 
 def extract_relval_error(release_name, arch, rvItem):
+    def exception_message(line):
+        if not hasattr(exception_message, "state"):
+            exception_message.state = {"state": 0}
+        if line.strip() == "Exception Message:" and exception_message.state["state"] == 0:
+            exception_message.state["state"] = 1
+            return False, None
+
+        if "End Fatal Exception" in line:
+            exception_message.state["state"] = 0
+            return True, "\n".join(exception_message.state["data"])
+
+        if exception_message.state["state"] == 1:
+            exception_message.state["data"] = exception_message.state.get("data", []).append(line)
+
+        return False, None
+
     def first_valid_frame(line):
         def remove_templates(name):
             stack = []
@@ -192,7 +208,7 @@ def extract_relval_error(release_name, arch, rvItem):
             return "".join(result)
 
         if line.startswith("Thread") or (not line.strip()) or line.startswith("Current Modules:"):
-            return True, ""
+            return True, "?"
         m = re.match("^#\d+\s+0x[0-9a-f]{16,16} in ([^?].+) from (.+)$", line)
         if not m:
             return False, None
@@ -241,7 +257,7 @@ def extract_relval_error(release_name, arch, rvItem):
     def parse_asserion(line):
         m = re.search("Assertion `(.*)' failed", line)
         if m:
-            return True, f"Assertion `{m.groups(1)[0]}` failed"
+            return True, f"Assertion '{m.groups(1)[0]}' failed"
         else:
             return True, f"Unknown assertion"
 
@@ -255,7 +271,7 @@ def extract_relval_error(release_name, arch, rvItem):
                     name=f"Relval {rvItem['id']} step {i + 1}",
                     url="",
                     data={
-                        "exit_code": "DAS_ERROR",
+                        "exit_code_name": "DAS_ERROR",
                         "workflow": rvItem["id"],
                         "step": 1,
                         "details": f"DAS ERROR in Relval {rvItem['id']}",
@@ -287,71 +303,80 @@ def extract_relval_error(release_name, arch, rvItem):
                         name=f"Relval {rvItem['id']} step {i + 1}",
                         url=webURL,
                         data={
-                            "exit_code": exitcodeName,
+                            "exit_code_name": exitcodeName,
                             "workflow": rvItem["id"],
                             "step": i + 1,
                             "details": f"Unknown failure in Relval {rvItem['id']} step {i + 1}",
                             "line": -1,
                         },
                     )
-
                 for ctl in utlData["show_controls"]:
                     if ctl["name"] != "Issues":
                         continue
                     for obj in ctl["list"]:
-                        if obj["control_type"] == "Issues" and obj["name"].startswith(
-                            "Segmentation fault"
-                        ):
+                        if obj["name"].startswith("Segmentation fault"):
                             continue
-                        if exitcodeName == "SIGSEGV" and obj["name"].startswith(
-                            "sig_dostack_then_abort"
-                        ):
-                            res = fetch_and_find(logURL, int(obj["lineStart"]), first_valid_frame)
-                            if res:
-                                if res.startswith("cling::"):
-                                    res = "CLING"
-                                res = re.split(r"[(<]", res, 1)[0]
+
+                        if exitcodeName == "SIGSEGV":
+                            if obj["name"].startswith("sig_dostack_then_abort"):
+                                res = fetch_and_find(
+                                    logURL, int(obj["lineStart"]), first_valid_frame
+                                )
+                                if res:
+                                    if res.startswith("cling::"):
+                                        res = "CLING"
+                                    res = re.split(r"[(<]", res, 1)[0]
+                                    return LogEntry(
+                                        name=f"Relval {rvItem['id']} step {i + 1}",
+                                        url=webURL_t.format(**obj),
+                                        data={
+                                            "details": f"SIGSEGV in `{res}`",
+                                            "workflow": rvItem["id"],
+                                            "step": i + 1,
+                                            "line": obj["lineStart"],
+                                            "func": res,
+                                            "exit_code_name": exitcodeName,
+                                        },
+                                    )
+                            else:
+                                continue
+
+                        if exitcodeName == "OtherCMS":
+                            if obj["name"].startswith("Mount failure"):
                                 return LogEntry(
                                     name=f"Relval {rvItem['id']} step {i + 1}",
                                     url=webURL_t.format(**obj),
                                     data={
-                                        "details": f"SIGSEGV in `{res}`",
+                                        "details": "Mount failure",
                                         "workflow": rvItem["id"],
                                         "step": i + 1,
                                         "line": obj["lineStart"],
-                                        "func": res,
-                                        "exit_code": exitcodeName,
+                                        "exit_code_name": exitcodeName,
                                     },
                                 )
+                            elif obj["name"].startswith("Fatal Exception"):
+                                res = fetch_and_find(
+                                    logURL, int(obj["lineStart"]), exception_message
+                                )
 
-                        if exitcodeName == "OtherCMS" and obj["name"].startswith("Mount failure"):
-                            return LogEntry(
-                                name=f"Relval {rvItem['id']} step {i + 1}",
-                                url=webURL_t.format(**obj),
-                                data={
-                                    "details": "Mount failure",
-                                    "workflow": rvItem["id"],
-                                    "step": i + 1,
-                                    "line": obj["lineStart"],
-                                    "exit_code": exitcodeName,
-                                },
-                            )
-
-                        if exitcodeName == "SIGABRT" and obj["name"].startswith(
-                            "Assertion failure"
-                        ):
-                            res = fetch_and_find(logURL, int(obj["lineStart"]) - 1, parse_asserion)
-                            return LogEntry(
-                                name=f"Relval {rvItem['id']} step {i + 1}",
-                                url=webURL_t.format(**obj),
-                                data={
-                                    "details": res,
-                                    "workflow": rvItem["id"],
-                                    "step": i + 1,
-                                    "exit_code": exitcodeName,
-                                    "assertion": res,
-                                },
-                            )
+                        if exitcodeName == "SIGABRT":
+                            if obj["name"].startswith("Assertion failure"):
+                                res = fetch_and_find(
+                                    logURL, int(obj["lineStart"]) - 1, parse_asserion
+                                )
+                                return LogEntry(
+                                    name=f"Relval {rvItem['id']} step {i + 1}",
+                                    url=webURL_t.format(**obj),
+                                    data={
+                                        "details": res,
+                                        "workflow": rvItem["id"],
+                                        "step": i + 1,
+                                        "exit_code_name": exitcodeName,
+                                        "assertion": res,
+                                    },
+                                )
+                            else:
+                                continue
 
                         if exitcodeName == "ProductNotFound":
                             ret = fetch_and_find(logURL, int(obj["lineStart"]), first_valid_frame)
@@ -368,7 +393,7 @@ def extract_relval_error(release_name, arch, rvItem):
                                             "workflow": rvItem["id"],
                                             "step": i + 1,
                                             "line": obj["lineStart"],
-                                            "exit_code": exitcodeName,
+                                            "exit_code_name": exitcodeName,
                                             "product_type": state["type"],
                                             "product_name": state["name"],
                                             "method": state["method"],
@@ -379,7 +404,7 @@ def extract_relval_error(release_name, arch, rvItem):
                             name=f"Relval {rvItem['id']} step {i + 1}",
                             url=webURL_t.format(**obj),
                             data={
-                                "exit_code": exitcodeName,
+                                "exit_code_name": exitcodeName,
                                 "workflow": rvItem["id"],
                                 "step": i + 1,
                                 "line": obj["lineStart"],
@@ -390,7 +415,7 @@ def extract_relval_error(release_name, arch, rvItem):
                         name=f"Relval {rvItem['id']} step {i+1}",
                         url=webURL,
                         data={
-                            "exit_code": exitcodeName,
+                            "exit_code_name": exitcodeName,
                             "workflow": rvItem["id"],
                             "step": i + 1,
                             "line": -1,
@@ -408,7 +433,7 @@ def extract_relval_error(release_name, arch, rvItem):
         name=f"Relval {rvItem['id']} step UNKNOWN",
         url="",
         data={
-            "exit_code": exitcodeName,
+            "exit_code_name": exitcodeName,
             "workflow": rvItem["id"],
             "step": -1,
         },

@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 import argparse
+import copy
 import datetime
 import io
+import json
 import os
 import shutil
 import sys
+import time
 import urllib
 import urllib.error
+
+import es_utils
 
 try:
     import github
@@ -26,6 +31,23 @@ if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_in
 g = None
 repo_cache = {}
 issue_cache = {}
+
+
+def search_es(index, **kwargs):
+    kwargs.pop("line", None)
+    kwargs.pop("details", None)
+    query = " AND ".join(
+        "{0}:{1}".format(k, f'\\"{v}\\"' if isinstance(v, str) else v) for k, v in kwargs.items()
+    )
+    # if kwargs.get("workflow", None) == "280.0":
+    #     print(f"Sending query: index cmssdt-{index}-failures, query {query}")
+    ret = es_utils.es_query(
+        f"cmssdt-{index}-failures", query, start_time=0, end_time=1000 * int(time.time())
+    )
+    # if kwargs.get("workflow", None) == "280.0":
+    #     print(ret)
+    #     exit(0)
+    return tuple(x["_source"] for x in ret["hits"]["hits"])
 
 
 def is_maybe_resolved(ib_date, issue):
@@ -75,99 +97,10 @@ def is_maybe_resolved(ib_date, issue):
     return issue.state == "closed" and closed_at < ib_datetime
 
 
-known_failures = {
-    "build": [
-        {
-            "module": "RecoTracker/PixelSeeding",
-            "type": "compWarning",
-            "issue": 45340,
-        },
-        {
-            "module": "Validation/CTPPS",
-            "type": "compError",
-            "issue": 45304,
-        },
-    ],
-    "utest": [
-        {"module": "FWCore/Concurrency/testFWCoreConcurrencyCatch2", "issue": 45402},
-    ],
-    "relval": [
-        {
-            "workflow": "280.0",
-            "step": 1,
-            "exit_code": "SIGSEGV",
-            "func": "amptset_",
-            "issue": 33682,
-        },
-        {"workflow": "29696.0", "step": 1, "exit_code": "DAS_ERROR", "issue": 45371},
-        {"workflow": "29700.0", "step": 1, "exit_code": "DAS_ERROR", "issue": 45371},
-        {"workflow": "181.1", "step": 2, "exit_code": "OtherCMS", "issue": 44866},
-        {
-            "workflow": "29634.501",
-            "step": 3,
-            "exit_code": "SIGABRT",
-            "issue": 45177,
-            "assertion": "Assertion `commonParamsGPU_.thePitchY == p.thePitchY` failed",
-        },
-        {
-            "workflow": "29634.502",
-            "step": 3,
-            "exit_code": "SIGABRT",
-            "issue": 45177,
-            "assertion": "Assertion `commonParamsGPU_.thePitchY == p.thePitchY` failed",
-        },
-        {
-            "workflow": "546.0",
-            "step": 2,
-            "exit_code": "ProductNotFound",
-            "issue": 45411,
-        },
-        {
-            "workflow": "547.0",
-            "step": 3,
-            "exit_code": "ProductNotFound",
-            "issue": 45411,
-        },
-        {
-            "workflow": "548.0",
-            "step": 3,
-            "exit_code": "ProductNotFound",
-            "issue": 45411,
-        },
-        {
-            "workflow": "1001.3",
-            "step": 2,
-            "exit_code": "ProductNotFound",
-            "issue": 45385,
-        },
-        {
-            "workflow": "1001.4",
-            "step": 2,
-            "exit_code": "ProductNotFound",
-            "issue": 45385,
-        },
-        {
-            "workflow": "1002.3",
-            "step": 2,
-            "exit_code": "ProductNotFound",
-            "issue": 45385,
-        },
-        {
-            "workflow": "1002.4",
-            "step": 2,
-            "exit_code": "ProductNotFound",
-            "issue": 45385,
-        },
-    ],
-}
-
-
 def get_known_failure(failure_type, **kwargs):
-    for failure in known_failures.get(failure_type, []):
-        if failure_type == "relval" and failure["exit_code"] != kwargs["exit_code"]:
-            continue
-        if all(k == "details" or k == "line" or failure[k] == kwargs[k] for k in kwargs):
-            return failure
+    res = search_es(failure_type, **kwargs)
+    if res:
+        return res[0]
     else:
         return None
 
@@ -224,13 +157,19 @@ def main():
                         )
                     ):
                         all_known = True
-                        print("| What failed | Description | Issue |", file=buffer)
-                        print("| ----------- | ----------- | ----- |", file=buffer)
+                        print(
+                            "| What failed | Description | GH Issue | Failure descriptor |",
+                            file=buffer,
+                        )
+                        print(
+                            "| ----------- | ----------- | -------- | ------------------ |",
+                            file=buffer,
+                        )
                         for error in errors[arch]["build"]:
                             extra_data = "TBD"
-                            known_failure = get_known_failure(
-                                "build", module=error.name, type=error.data[0]
-                            )
+                            failure_desc = dict(module=error.name, type=error.data[0])
+                            known_failure = get_known_failure("build", **failure_desc)
+                            failure_desc["index"] = "build"
                             if known_failure:
                                 if is_maybe_resolved(ib_date, known_failure["issue"]):
                                     extra_data = ":exclamation_mark: " + str(
@@ -241,9 +180,10 @@ def main():
                                     continue
                             else:
                                 all_known = False
+                            failure_data = json.dumps(failure_desc)
                             print(
                                 f"| [{error.name}]({error.url}) | {error.data[1]}x "
-                                f"{error.data[0]} | {extra_data} |",
+                                f"{error.data[0]} | {extra_data} | `{failure_data}` |",
                                 file=buffer,
                             )
 
@@ -261,8 +201,10 @@ def main():
                             else:
                                 all_known = False
 
+                            failure_desc = dict(module=error.name, index="utest")
+                            failure_data = json.dumps(failure_desc)
                             print(
-                                f"| [{error.name}]({error.url}) | TBD | {extra_data} |",
+                                f"| [{error.name}]({error.url}) | TBD | {extra_data} | `{failure_data}` |",
                                 file=buffer,
                             )
 
@@ -284,22 +226,26 @@ def main():
                             else:
                                 all_known = False
 
-                            desc = error.data.get("details", None) or error.data["exit_code"]
-
+                            desc = error.data.get("details", None) or error.data["exit_code_name"]
+                            failure_desc = copy.deepcopy(error.data)
+                            failure_desc.pop("line", None)
+                            failure_desc.pop("details", None)
+                            failure_desc["index"] = "relval"
+                            failure_data = json.dumps(failure_desc)
                             print(
-                                f"| [{error.name}]({error.url}) | {desc} | {extra_data} |",
+                                f"| [{error.name}]({error.url}) | {desc} | {extra_data} | `{failure_data}` |",
                                 file=buffer,
                             )
 
                         if all_known:
-                            print('<span style="color:orange">Only known issues</span>', file=f)
+                            print('<span style="color:orange">Only known issues</span>\n', file=f)
                         else:
                             buffer.seek(0)
                             shutil.copyfileobj(buffer, f)
                             buffer.close()
                         print("", file=f)
                     else:
-                        print('<span style="color:green">No issues</span>', file=f)
+                        print('<span style="color:green">No issues</span>\n', file=f)
 
 
 def validate_date(x):

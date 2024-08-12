@@ -325,7 +325,10 @@ def extract_relval_error(release_name, arch, rvItem):
                                 if res:
                                     if res.startswith("cling::"):
                                         res = "CLING"
-                                    res = re.split(r"[(<]", res, 1)[0]
+                                    if res.startswith("("):
+                                        res = "(" + re.split(r"[(<]", res, 1)[1]
+                                    else:
+                                        res = re.split(r"[(<]", res, 1)[0]
                                     return LogEntry(
                                         name=f"Relval {rvItem['id']} step {i + 1}",
                                         url=webURL_t.format(**obj),
@@ -357,6 +360,17 @@ def extract_relval_error(release_name, arch, rvItem):
                             elif obj["name"].startswith("Fatal Exception"):
                                 res = fetch_and_find(
                                     logURL, int(obj["lineStart"]), exception_message
+                                )
+                                return LogEntry(
+                                    name=f"Relval {rvItem['id']} step {i + 1}",
+                                    url=webURL_t.format(**obj),
+                                    data={
+                                        "details": "Fatal exception{0}".format(res or ""),
+                                        "workflow": rvItem["id"],
+                                        "step": i + 1,
+                                        "line": obj["lineStart"],
+                                        "exit_code_name": exitcodeName,
+                                    },
                                 )
 
                         if exitcodeName == "SIGABRT":

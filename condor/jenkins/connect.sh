@@ -7,7 +7,11 @@ LABELS=$(grep '<label>' ${HOME}/nodes/${NODE_NAME}/config.xml | tr '<>' ' ')
 GRID_ID=$(echo "${LABELS}"     | grep -o "gridid-\w*\.0"                  | awk 'BEGIN {FS="-";} { print $2 }')
 SCHEDD_NAME=$(echo "${LABELS}" | grep -o "schedulername-\w*\.*\w*\.*\w*"  | awk 'BEGIN {FS="-";} { print $2 }')
 JAVA="java"
-[ "$(echo ${LABELS} | grep -o 'java-11')" = "java-11" ] && JAVA="/etc/alternatives/jre_11/bin/java"
+if [ "$(echo ${LABELS} | grep -o 'java-17')" = "java-17" ] ; then
+  JAVA="/etc/alternatives/jre_17/bin/java"
+elif [ "$(echo ${LABELS} | grep -o 'java-11')" = "java-11" ] ; then
+  JAVA="/etc/alternatives/jre_11/bin/java"
+fi
 
 export SLAVE_TYPE=$(echo $TARGET | sed 's|^.*@||;s|[.].*||')
 if [ $(echo $SLAVE_TYPE | grep '^lxplus\|^aiadm' | wc -l) -gt 0 ] ; then

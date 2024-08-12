@@ -1576,14 +1576,13 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                         override_tests_failure = reason
                         set_comment_emoji_cache(dryRun, bot_cache, comment, repository)
                 elif REGEX_FAILURE_DATA.match(first_line):
-                    if has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
-                        continue
-
-                    data = REGEX_FAILURE_DATA.match(first_line)[1].strip()
-                    # b64-encode data to safely pass it as enviroment variable; replace new-lines with @
-                    data = base64.b64encode(data.encode()).decode().replace("\n", "@")
-                    with open("failure-metadata.prop", "w") as f:
-                        f.write("DATA=" + data)
+                    if not has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
+                        data = REGEX_FAILURE_DATA.match(first_line)[1].strip()
+                        # b64-encode data to safely pass it as enviroment variable; replace new-lines with @
+                        data = base64.b64encode(data.encode()).decode().replace("\n", "@")
+                        with open("failure-metadata.prop", "w") as f:
+                            f.write("DATA=" + data)
+                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "+1", True)
 
     # end of parsing comments section
     # Check if it needs to be automatically closed.

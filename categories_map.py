@@ -606,6 +606,7 @@ CMSSW_CATEGORIES = {
         "DQMOffline/PFTau",
         "DQMOffline/RecoB",
         "DQMOffline/Trigger",
+        "DQMOffline/ParticleFlow",
         "DQMServices/ClientConfig",
         "DQMServices/Components",
         "DQMServices/Core",

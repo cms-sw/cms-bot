@@ -51,50 +51,53 @@ def search_es(index, **kwargs):
 
 
 def is_maybe_resolved(ib_date, issue):
-    global repo_cache
+    # TODO: FIXME
+    # global repo_cache
+    #
+    # y, m, d, h = [int(x) for x in ib_date.split("-", 5)[:-1] if x]
+    # h = h // 100
+    #
+    # ib_datetime = datetime.datetime(
+    #     y, m, d, h, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=2))
+    # )
+    #
+    # if g is None:
+    #     return False
+    #
+    # issue = str(issue)
+    #
+    # if "#" in issue:
+    #     repo_name, issue_id = issue.split("#")
+    # else:
+    #     repo_name = "cms-sw/cmssw"
+    #     issue_id = issue
+    #
+    # if not repo_name:
+    #     repo_name = "cms-sw/cmssw"
+    #
+    # if isinstance(issue_id, str):
+    #     issue_id = int(issue_id)
+    #
+    # repo = repo_cache.get(repo_name, None)
+    # if not repo:
+    #     repo = g.get_repo(repo_name)
+    #     repo_cache[repo_name] = repo
+    #
+    # issue = issue_cache.get(issue_id)
+    # if not issue:
+    #     issue = repo.get_issue(issue_id)
+    #     issue_cache[issue_id] = issue
+    #
+    # if issue.closed_at:
+    #     closed_at = issue.closed_at.replace(tzinfo=datetime.timezone.utc).astimezone(
+    #         datetime.timezone(datetime.timedelta(hours=2))
+    #     )
+    #
+    # else:
+    #     closed_at = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=2)))
 
-    y, m, d, h = [int(x) for x in ib_date.split("-", 5)[:-1] if x]
-    h = h // 100
-
-    ib_datetime = datetime.datetime(
-        y, m, d, h, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=2))
-    )
-
-    if g is None:
-        return False
-
-    issue = str(issue)
-
-    if "#" in issue:
-        repo_name, issue_id = issue.split("#")
-    else:
-        repo_name = "cms-sw/cmssw"
-        issue_id = issue
-
-    if not repo_name:
-        repo_name = "cms-sw/cmssw"
-
-    if isinstance(issue_id, str):
-        issue_id = int(issue_id)
-
-    repo = repo_cache.get(repo_name, None)
-    if not repo:
-        repo = g.get_repo(repo_name)
-        repo_cache[repo_name] = repo
-
-    issue = issue_cache.get(issue_id)
-    if not issue:
-        issue = repo.get_issue(issue_id)
-        issue_cache[issue_id] = issue
-
-    if issue.closed_at:
-        closed_at = issue.closed_at.replace(tzinfo=datetime.timezone.utc).astimezone(
-            datetime.timezone(datetime.timedelta(hours=2))
-        )
-    else:
-        closed_at = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=2)))
-
-    return issue.state == "closed" and closed_at < ib_datetime
+    # return issue.state == "closed" and (closed_at + datetime.timedelta(hours=6) < ib_datetime)
+    return False
 
 
 def get_known_failure(failure_type, **kwargs):
@@ -156,6 +159,11 @@ def main():
                             errors[arch]["relval"],
                         )
                     ):
+                        print(
+                            len(errors[arch]["build"]),
+                            len(errors[arch]["utest"]),
+                            len(errors[arch]["relval"]),
+                        )
                         all_known = True
                         print(
                             "| What failed | Description | GH Issue | Failure descriptor |",

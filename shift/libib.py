@@ -156,7 +156,7 @@ def fetch_and_find(url, start_line, callback):
         with urllib.request.urlopen(url) as response:
             for current_line_number, line in enumerate(response, start=1):
                 if current_line_number > start_line:
-                    line = line.decode("utf-8")
+                    line = line.decode("utf-8").strip()
                     should_stop, res = callback(line)
                     if should_stop:
                         return res
@@ -174,6 +174,7 @@ def extract_relval_error(release_name, arch, rvItem):
             exception_message.state = {"state": 0}
         if line.strip() == "Exception Message:" and exception_message.state["state"] == 0:
             exception_message.state["state"] = 1
+            exception_message.state["data"] = []
             return False, None
 
         if "End Fatal Exception" in line:
@@ -181,7 +182,7 @@ def extract_relval_error(release_name, arch, rvItem):
             return True, "\n".join(exception_message.state["data"])
 
         if exception_message.state["state"] == 1:
-            exception_message.state["data"] = exception_message.state.get("data", []).append(line)
+            exception_message.state["data"].append(line)
 
         return False, None
 
@@ -357,7 +358,7 @@ def extract_relval_error(release_name, arch, rvItem):
                                         "exit_code_name": exitcodeName,
                                     },
                                 )
-                            elif obj["name"].startswith("Fatal Exception"):
+                            elif "Fatal Exception" in obj["name"]:
                                 res = fetch_and_find(
                                     logURL, int(obj["lineStart"]), exception_message
                                 )

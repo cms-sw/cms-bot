@@ -7,17 +7,16 @@ UPLOAD_PATH="${CMSSW_VERSION}-${PR_REPO_NUM}/${ARCHITECTURE}/${BUILD_NUMBER}"
 mark_commit_status_all_prs 'hlt-p2-timing' 'pending' -u "${BUILD_URL}" -d "Running"
 
 # Do work
-HLT_P2_SCRIPT="src/HLTrigger/Configuration/python/HLT_75e33/test/runHLTTiming.sh"
-if [ -e ${CMSSW_BASE}/${HLT_P2_SCRIPT} ] ; then
-  HLT_P2_SCRIPT="${CMSSW_BASE}/${HLT_P2_SCRIPT}"
-else
-  HLT_P2_SCRIPT="${CMSSW_RELEASE_BASE}/${HLT_P2_SCRIPT}"
-fi
+HLT_P2_SCRIPT="src/HLTrigger/Configuration/python/HLT_75e33/test"
+HLT_BASEDIR="${CMSSW_BASE}"
+if [ ! -e "${HLT_BASEDIR}/${HLT_P2_SCRIPT}" ] ; then HLT_BASEDIR="${CMSSW_RELEASE_BASE}" ; fi
+mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload
+cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT} $WORKSPACE/rundir
+rm -rf $WORKSPACE/rundir/__pycache__
 
-mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload $WORKSPACE/rundir
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  timeout $TIMEOUT ${HLT_P2_SCRIPT} 2>&1 | tee ${RESULTS_DIR}/hlt-p2-timing.log
+  timeout $TIMEOUT bash -ex ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${WORKSPACE}/hlt-p2-timing.log
 popd
 
 # Upload results

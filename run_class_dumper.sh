@@ -9,7 +9,7 @@ for file in `cmsglimpse -l -F src/classes.*.h$ include | sed -e 's|^src/||'`;do
 done
 cd ${LOCALRT}/tmp/
 touch dump-start
-#touch function-dumper.txt.unsorted plugins.txt.unsorted classes.txt.dumperct.unsorted classes.txt.dumperft.unsorted classes.txt.dumperall.unsorted
+touch function-dumper.txt.unsorted plugins.txt.unsorted classes.txt.dumperct.unsorted classes.txt.dumperft.unsorted classes.txt.dumperall.unsorted
 cd ${LOCALRT}/src/Utilities/StaticAnalyzers
 scram b -j $J
 cd ${LOCALRT}/

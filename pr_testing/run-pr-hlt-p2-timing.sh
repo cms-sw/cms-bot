@@ -12,6 +12,7 @@ HLT_BASEDIR="${CMSSW_BASE}"
 if [ ! -e "${HLT_BASEDIR}/${HLT_P2_SCRIPT}" ] ; then HLT_BASEDIR="${CMSSW_RELEASE_BASE}" ; fi
 mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload
 cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT} $WORKSPACE/rundir
+rm -rf $WORKSPACE/rundir/__pycache__
 
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}

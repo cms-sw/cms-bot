@@ -1097,9 +1097,9 @@ def find_one_vtune_result(magic_command):
     Looks for one vtune result
     """
     command_to_execute = magic_command.replace("WORKFLOW", "12634.21")
-    print("Running ", magic_command)
-    out, err, ret_code = get_output_command(magic_command)
-    print("Ran:", out, err, ret_code, magic_command)
+    print("Running ", command_to_execute)
+    out, err, ret_code = get_output_command(command_to_execute)
+    print("Ran:", out, err, ret_code, command_to_execute)
     file = out.strip()
     if (ret_code == 0) and (out != ""):
         print("found", file)
@@ -1708,7 +1708,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
         "ls "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/|;s|/step3-vtune.log$|r-step3-WORKFLOW-hs|"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$|r-step3-WORKFLOW-hs|"'
     )
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = (
         "test -f "

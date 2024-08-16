@@ -11,7 +11,7 @@ HLT_P2_SCRIPT="src/HLTrigger/Configuration/python/HLT_75e33/test"
 HLT_BASEDIR="${CMSSW_BASE}"
 if [ ! -e "${HLT_BASEDIR}/${HLT_P2_SCRIPT}" ] ; then HLT_BASEDIR="${CMSSW_RELEASE_BASE}" ; fi
 mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload $WORKSPACE/rundir
-rsync -a ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/ $WORKSPACE/rundir/
+cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/* $WORKSPACE/rundir/
 
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}

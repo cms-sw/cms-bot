@@ -17,7 +17,7 @@ fi
 mkdir -p ${RESULTS_DIR} $WORKSPACE/json_upload $WORKSPACE/rundir
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  timeout $TIMEOUT ${HLT_P2_SCRIPT} 2>&1 | tee ${RESULTS_DIR}/hlt-p2-timing.log
+  timeout $TIMEOUT ${HLT_P2_SCRIPT} >${RESULTS_DIR}/hlt-p2-timing.log 2>&1 | tee ${RESULTS_DIR}/hlt-p2-timing.log
 popd
 
 # Upload results

@@ -15,7 +15,7 @@ cp -r ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/* $WORKSPACE/rundir/
 
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh >${RESULTS_DIR}/hlt-p2-timing.log 2>&1 | tee ${RESULTS_DIR}/hlt-p2-timing.log
+  timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${RESULTS_DIR}/hlt-p2-timing.log
 popd
 
 # Upload results

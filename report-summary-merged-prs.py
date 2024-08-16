@@ -1708,7 +1708,7 @@ if __name__ == "__main__":
     MAGIC_COMMAND_FIND_VTUNE_CHECKS_FILTER = (
         "ls "
         + JENKINS_ARTIFACTS_DIR
-        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$|r-step3-WORKFLOW-hs|"'
+        + '/profiling/RELEASE_NAME/ARCHITECTURE/WORKFLOW/step3-vtune.log 2>/dev/null | head -1 |  sed "s|.*/RELEASE_NAME/||;s|/step3-vtune.log$|/r-step3-WORKFLOW-hs|"'
     )
     MAGIC_COMMAND_FIND_COMPARISON_BASELINE = (
         "test -f "

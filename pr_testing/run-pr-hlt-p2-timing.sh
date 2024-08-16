@@ -16,7 +16,7 @@ rm -rf $WORKSPACE/rundir/__pycache__
 
 pushd $WORKSPACE/rundir
   export LOCALRT=${WORKSPACE}/${CMSSW_VERSION}
-  timeout $TIMEOUT ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${RESULTS_DIR}/hlt-p2-timing.log
+  timeout $TIMEOUT bash -ex ${HLT_BASEDIR}/${HLT_P2_SCRIPT}/runHLTTiming.sh 2>&1 | tee -a ${RESULTS_DIR}/hlt-p2-timing.log
 popd
 
 # Upload results

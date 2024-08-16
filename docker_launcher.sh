@@ -56,7 +56,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
   fi
   BUILD_BASEDIR=$(dirname $WORKSPACE)
   export KRB5CCNAME=$(klist | grep 'Ticket cache: FILE:' | sed 's|.* ||')
-  MOUNT_POINTS="/cvmfs,/tmp,$(echo $WORKSPACE | cut -d/ -f1,2),/var/run/user,/run/user,/etc/pki/ca-trust"
+  MOUNT_POINTS="/cvmfs,/tmp,$(echo $WORKSPACE | cut -d/ -f1,2),/var/run/user,/run/user,/etc/pki/ca-trust,${EXTRA_MOUNTS}"
   for xdir in /cvmfs/grid.cern.ch/etc/grid-security:/etc/grid-security /cvmfs/grid.cern.ch/etc/grid-security/vomses:/etc/vomses ; do
     ldir=$(echo $xdir | sed 's|.*:||')
     if [ $(echo "${IGNORE_MOUNTS}" | tr ' ' '\n' | grep "^${ldir}$" | wc -l) -gt 0 ] ; then
@@ -140,7 +140,7 @@ if [ "X$DOCKER_IMG" != X -a "X$RUN_NATIVE" = "X" ]; then
     else
       export CUDA_VISIBLE_DEVICES=""
     fi
-    for m in $(echo "$MOUNT_POINTS" | tr ',' '\n') ; do
+    for m in $(echo "$MOUNT_POINTS" | tr ',' '\n' | grep -v '^$') ; do
       x=$(echo $m | sed 's|:.*||')
       [ -e $x ] || continue
       BINDPATH="${BINDPATH},${m}"

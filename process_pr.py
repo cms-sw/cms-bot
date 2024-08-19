@@ -135,6 +135,10 @@ REGEX_TEST_IGNORE = re.compile(
     r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)ignore\s+tests-rejected\s+(?:with|)([a-z -]+)$",
     re.I,
 )
+REGEX_FAILURE_METADATA = re.compile(
+    r"^\s*(?:(?:@|)cmsbuild\s*[,]*\s+|)(?:please\s*[,]*\s+|)(?:attach\s+|)failure-metadata\s+(.+)$",
+    re.I,
+)
 REGEX_COMMITS_CACHE = re.compile(r"<!-- (?:commits|bot) cache: (.*) -->", re.DOTALL)
 REGEX_IGNORE_COMMIT_COUNT = "\+commit-count"
 REGEX_IGNORE_FILE_COUNT = "\+file-count"
@@ -1380,6 +1384,16 @@ def process_pr(repo_config, gh, repo, issue, dryRun, cmsbuild_user=None, force=F
                 if m.group(2):
                     code_check_apply_patch = True
                 set_comment_emoji_cache(dryRun, bot_cache, comment, repository, emoji="+1")
+
+                m = REGEX_FAILURE_DATA.match(first_line)
+                if m and commenter in CMSSW_ISSUES_TRACKERS:
+                    if not has_user_emoji(bot_cache, comment, repository, "+1", cmsbuild_user):
+                        data = m[1].strip()
+                        # b64-encode data to safely pass it as enviroment variable; replace new-lines with @
+                        data = base64.b64encode(data.encode()).decode().replace("\n", "@")
+                        with open("failure-metadata.prop", "w") as f:
+                            f.write("DATA=" + data)
+                        set_comment_emoji_cache(dryRun, bot_cache, comment, repository, "+1", True)
 
         selected_cats = []
 

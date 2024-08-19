@@ -17,7 +17,9 @@ DRY_RUN_PARAM=$6
 HERE=$WORKSPACE/build
 BUILD_DIR=$HERE/$CMSSW_X_Y_Z-build
 case $CMSSW_X_Y_Z in
-    *patch*) 
+    *patch*)
+      BUILD_OPTS=""
+      MULTIARCH_OPTS=""
       PATCH='-patch';;
     *)
       PATCH=''

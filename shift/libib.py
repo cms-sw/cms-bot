@@ -366,11 +366,12 @@ def extract_relval_error(release_name, arch, rvItem):
                                     name=f"Relval {rvItem['id']} step {i + 1}",
                                     url=webURL_t.format(**obj),
                                     data={
-                                        "details": "Fatal exception{0}".format(res or ""),
+                                        "details": "Fatal exception: {0}".format(res or ""),
                                         "workflow": rvItem["id"],
                                         "step": i + 1,
                                         "line": obj["lineStart"],
                                         "exit_code_name": exitcodeName,
+                                        "exception": res,
                                     },
                                 )
 

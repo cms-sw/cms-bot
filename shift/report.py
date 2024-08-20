@@ -24,13 +24,22 @@ import libib
 # noinspection PyUnresolvedReferences
 from libib import PackageInfo, ErrorInfo
 
-if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
-    print("This script requires Python 3.6 or newer!", file=sys.stderr)
+if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 7):
+    print("This script requires Python 3.7 or newer!", file=sys.stderr)
     exit(0)
 
 g = None
 repo_cache = {}
 issue_cache = {}
+localtz = None
+
+
+# Taken from https://stackoverflow.com/a/59673310
+def currenttz():
+    if time.daylight:
+        return datetime.timezone(datetime.timedelta(seconds=-time.altzone), time.tzname[1])
+    else:
+        return datetime.timezone(datetime.timedelta(seconds=-time.timezone), time.tzname[0])
 
 
 def search_es(index, **kwargs):
@@ -50,54 +59,48 @@ def search_es(index, **kwargs):
     return tuple(x["_source"] for x in ret["hits"]["hits"])
 
 
-def is_maybe_resolved(ib_date, issue):
-    # TODO: FIXME
-    # global repo_cache
-    #
-    # y, m, d, h = [int(x) for x in ib_date.split("-", 5)[:-1] if x]
-    # h = h // 100
-    #
-    # ib_datetime = datetime.datetime(
-    #     y, m, d, h, 0, tzinfo=datetime.timezone(datetime.timedelta(hours=2))
-    # )
-    #
-    # if g is None:
-    #     return False
-    #
-    # issue = str(issue)
-    #
-    # if "#" in issue:
-    #     repo_name, issue_id = issue.split("#")
-    # else:
-    #     repo_name = "cms-sw/cmssw"
-    #     issue_id = issue
-    #
-    # if not repo_name:
-    #     repo_name = "cms-sw/cmssw"
-    #
-    # if isinstance(issue_id, str):
-    #     issue_id = int(issue_id)
-    #
-    # repo = repo_cache.get(repo_name, None)
-    # if not repo:
-    #     repo = g.get_repo(repo_name)
-    #     repo_cache[repo_name] = repo
-    #
-    # issue = issue_cache.get(issue_id)
-    # if not issue:
-    #     issue = repo.get_issue(issue_id)
-    #     issue_cache[issue_id] = issue
-    #
-    # if issue.closed_at:
-    #     closed_at = issue.closed_at.replace(tzinfo=datetime.timezone.utc).astimezone(
-    #         datetime.timezone(datetime.timedelta(hours=2))
-    #     )
-    #
-    # else:
-    #     closed_at = datetime.datetime.now(tz=datetime.timezone(datetime.timedelta(hours=2)))
+def is_issue_closed(ib_date, issue):
+    global repo_cache
 
-    # return issue.state == "closed" and (closed_at + datetime.timedelta(hours=6) < ib_datetime)
-    return False
+    y, m, d, h = [int(x) for x in ib_date.split("-", 5)[:-1] if x]
+    h = h // 100
+
+    ib_datetime = datetime.datetime(y, m, d, h, 0, tzinfo=localtz)
+
+    if g is None:
+        return False
+
+    issue = str(issue)
+
+    if "#" in issue:
+        repo_name, issue_id = issue.split("#")
+    else:
+        repo_name = "cms-sw/cmssw"
+        issue_id = issue
+
+    if not repo_name:
+        repo_name = "cms-sw/cmssw"
+
+    if isinstance(issue_id, str):
+        issue_id = int(issue_id)
+
+    repo = repo_cache.get(repo_name, None)
+    if not repo:
+        repo = g.get_repo(repo_name)
+        repo_cache[repo_name] = repo
+
+    issue = issue_cache.get(issue_id)
+    if not issue:
+        issue = repo.get_issue(issue_id)
+        issue_cache[issue_id] = issue
+
+    if issue.closed_at:
+        closed_at = issue.closed_at.replace(tzinfo=datetime.timezone.utc).astimezone(localtz)
+    else:
+        closed_at = datetime.datetime.now(tz=localtz)
+
+    return issue.state == "closed" and (closed_at < ib_datetime)
+    # return False
 
 
 def get_known_failure(failure_type, **kwargs):
@@ -109,6 +112,18 @@ def get_known_failure(failure_type, **kwargs):
 
 
 def main():
+    def format_issue(issue_):
+        issue_ = str(issue_)
+        if "#" not in issue_:
+            repo = "cms-sw/cmssw"
+            issue_no = issue_
+            issue_txt = f"#{issue_no}"
+        else:
+            repo, issue_no = issue_.split("#", 1)
+            issue_txt = f"{repo}#{issue_no}"
+
+        return f"[{issue_txt}](https://github.com/{repo}/{issue_no})"
+
     global g
     if github:
         g = github.Github(
@@ -150,7 +165,6 @@ def main():
                 print(f"## {release_name}\n", file=f)
                 # print("-- INSERT SCREENSHOT HERE --\n", file=f)
                 for arch in errors:
-                    buffer = io.StringIO()
                     print(f"### {arch}\n", file=f)
                     if any(
                         (
@@ -160,79 +174,56 @@ def main():
                         )
                     ):
                         print(
-                            len(errors[arch]["build"]),
-                            len(errors[arch]["utest"]),
-                            len(errors[arch]["relval"]),
-                        )
-                        all_known = True
-                        print(
                             "| What failed | Description | GH Issue | Failure descriptor |",
-                            file=buffer,
+                            file=f,
                         )
                         print(
                             "| ----------- | ----------- | -------- | ------------------ |",
-                            file=buffer,
+                            file=f,
                         )
                         for error in errors[arch]["build"]:
-                            extra_data = "TBD"
+                            issue_data = "TBD"
                             failure_desc = dict(module=error.name, type=error.data[0])
                             known_failure = get_known_failure("build", **failure_desc)
                             failure_desc["index"] = "build"
                             if known_failure:
-                                if is_maybe_resolved(ib_date, known_failure["issue"]):
-                                    extra_data = ":exclamation_mark: " + str(
-                                        known_failure["issue"]
-                                    )
-                                    all_known = False
-                                else:
-                                    continue
-                            else:
-                                all_known = False
+                                issue_data = format_issue(known_failure["issue"])
+                                if is_issue_closed(ib_date, known_failure["issue"]):
+                                    issue_data = ":exclamation_mark: " + issue_data
+
                             failure_data = json.dumps(failure_desc)
                             print(
                                 f"| [{error.name}]({error.url}) | {error.data[1]}x "
-                                f"{error.data[0]} | {extra_data} | `{failure_data}` |",
-                                file=buffer,
+                                f"{error.data[0]} | {issue_data} | failure-metadata `{failure_data}` |",
+                                file=f,
                             )
 
                         for error in errors[arch]["utest"]:
-                            extra_data = "TBD"
+                            issue_data = "TBD"
                             known_failure = get_known_failure("utest", module=error.name)
                             if known_failure:
-                                if is_maybe_resolved(ib_date, known_failure["issue"]):
-                                    extra_data = ":exclamation_mark: " + str(
-                                        known_failure["issue"]
-                                    )
-                                    all_known = False
-                                else:
-                                    continue
-                            else:
-                                all_known = False
+                                issue_data = format_issue(known_failure["issue"])
+                                if is_issue_closed(ib_date, known_failure["issue"]):
+                                    issue_data = ":exclamation_mark: " + issue_data
 
                             failure_desc = dict(module=error.name, index="utest")
                             failure_data = json.dumps(failure_desc)
                             print(
-                                f"| [{error.name}]({error.url}) | TBD | {extra_data} | `{failure_data}` |",
-                                file=buffer,
+                                f"| [{error.name}]({error.url}) | TBD | {issue_data} | failure-metadata `{failure_data}` |",
+                                file=f,
                             )
 
                         for error in errors[arch]["relval"]:
                             assert isinstance(error, libib.LogEntry)
-                            extra_data = "TBD"
+                            issue_data = "TBD"
                             known_failure = get_known_failure(
                                 "relval",
                                 **error.data,
                             )
                             if known_failure:
-                                if is_maybe_resolved(ib_date, known_failure["issue"]):
-                                    extra_data = ":exclamation_mark: #" + str(
-                                        known_failure["issue"]
-                                    )
-                                    all_known = False
-                                else:
-                                    continue
-                            else:
-                                all_known = False
+                                issue_data = format_issue(known_failure["issue"])
+                                if is_issue_closed(ib_date, known_failure["issue"]):
+                                    issue_data = ":exclamation_mark: " + issue_data
 
                             desc = error.data.get("details", None) or error.data["exit_code_name"]
                             failure_desc = copy.deepcopy(error.data)
@@ -241,16 +232,10 @@ def main():
                             failure_desc["index"] = "relval"
                             failure_data = json.dumps(failure_desc)
                             print(
-                                f"| [{error.name}]({error.url}) | {desc} | {extra_data} | `{failure_data}` |",
-                                file=buffer,
+                                f"| [{error.name}]({error.url}) | {desc} | {issue_data} | failure-metadata `{failure_data}` |",
+                                file=f,
                             )
 
-                        if all_known:
-                            print('<span style="color:orange">Only known issues</span>\n', file=f)
-                        else:
-                            buffer.seek(0)
-                            shutil.copyfileobj(buffer, f)
-                            buffer.close()
                         print("", file=f)
                     else:
                         print('<span style="color:green">No issues</span>\n', file=f)
@@ -283,5 +268,6 @@ if __name__ == "__main__":
         # nargs="*",
     )
     args = parser.parse_args()
+    localtz = currenttz()
     main()
     # print(libib.get_expected_ibs("CMSSW_14_1_X", "2024-07-03-2300"))

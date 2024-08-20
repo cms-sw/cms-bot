@@ -3,6 +3,7 @@ ls -drt ${_CONDOR_SCRATCH_DIR}/.condor_ssh_to_job_* 2>/dev/null | head -n -1 | x
 SCRIPT_DIR=$(dirname $0)
 MAX_CPUS=$(grep -i '^ *RequestCpus *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
 MAX_MEMORY=$(grep -i '^ *RequestMemory *=' ${_CONDOR_JOB_AD} | sed 's|.*= *||;s| ||g')
+[ "${MAX_MEMORY}" = "" ] && let MAX_MEMORY=${MAX_CPUS}*2*1000
 let MEMORY_PER_CPU="${MAX_MEMORY}/(${MAX_CPUS}*2)"
 echo "start"  > auto-load
 $SCRIPT_DIR/node-check.py ${MAX_CPUS} ${MEMORY_PER_CPU} > out.log 2>&1 &

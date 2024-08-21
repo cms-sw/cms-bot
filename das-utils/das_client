@@ -53,7 +53,11 @@ if [ "${QUERY}" = "" -o "${HELP}" != "" ] ; then
   ${ORIG_DAS_CLIENT} "$@"
   exit $?
 fi
-
+CURL_OPTS="-f -L -s"
+case $(cmsos) in
+  slc6_*|el6_* ) CURL_OPTS="${CURL_OPTS} --tlsv1" ;;
+  * ) ;;
+esac
 QUERY=$(echo "${QUERY}" | sed 's|^ *||;s| *$||;s|  *| |g;s| =|=|g;s|= |=|g;')
 QUERY_SHA_HASH=$(echo -n "${QUERY}" | sha256sum | sed 's| .*$||;s| *||')
 QUERY_SHA=$(echo "${QUERY_SHA_HASH}" | sed 's|^\(..\)|\1/\1|')
@@ -65,7 +69,7 @@ mkdir -p ${DAS_QUERY_DIR}
 echo "${QUERY}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.query
 touch ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.info
 if [ "${FORMAT}" = "json" ]  ; then
-  QUERY_RESULTS=$(curl -f -L -s "${QUERY_URL}.json" || true)
+  QUERY_RESULTS=$(curl ${CURL_OPTS} "${QUERY_URL}.json" || true)
   if [ "${QUERY_RESULTS}" = "" ] ; then
     sleep 1
     ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
@@ -73,7 +77,7 @@ if [ "${FORMAT}" = "json" ]  ; then
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
 else
-  QUERY_RESULTS=$((curl -f -L -s "${QUERY_URL}" || true) | grep -a /store/ | sed 's| ||g;s|"||g;s|,||g')
+  QUERY_RESULTS=$((curl ${CURL_OPTS} "${QUERY_URL}" || true) | grep -a /store/ | sed 's| ||g;s|"||g;s|,||g')
   [ $((get_parent_cmds $$ 0 2>&1 || true) | grep -a '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
   if [ "${QUERY_RESULTS}" = "" ] ; then
     sleep 1

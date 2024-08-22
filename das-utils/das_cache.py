@@ -154,7 +154,7 @@ def run_das_client(
             fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
             res.append(str(fdata).replace(" ", ""))
             if (f == "file.nevents"):
-                res = "  " + res
+                res = "  %s" % res
                 if fdata < 900:
                     res_ok = False
         res = " ".join(res)

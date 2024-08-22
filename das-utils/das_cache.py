@@ -29,15 +29,19 @@ ignore_lfn = [
     "/store/relval/CMSSW_12_3_0_pre5/RelValTTbar_14TeV/GEN-SIM/123X_mcRun4_realistic_v4_2026D88noPU-v1/10000/49e54274-4298-4576-b47b-866e2247eab5.root",
 ]
 
-
-def write_json(outfile, cache):
+def write_file(outfile, data):
     outdir = dirname(outfile)
     if not exists(outdir):
         run_cmd("mkdir -p %s" % outdir)
     ofile = open(outfile, "w")
     if ofile:
-        ofile.write(json.dumps(cache, sort_keys=True, indent=2, separators=(",", ": ")))
+        ofile.write(data)
         ofile.close()
+
+
+def write_json(outfile, cache):
+     data = json.dumps(cache, sort_keys=True, indent=2, separators=(",", ": "))
+     write_file(outfile, data)
 
 
 def read_json(infile):
@@ -331,6 +335,9 @@ if __name__ == "__main__":
             print("IGNORED : %s" % sha)
             continue
         outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
+        query_file = outfile+".query"
+        if not exists(query_file):
+            write_file(query_file, query)
         print("[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))
         vold = False
         if exists(outfile):

@@ -11,7 +11,7 @@ import sys
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd
-
+order_fields= ["file", "run", "lumi"]
 field_map = {
     "file": "name",
     "lumi": "number",
@@ -53,6 +53,8 @@ def run_das_client(
     if "=" in field:
         field = field.split("=", 1)[0]
     fields = field.split(",")
+    ofields = [f for f in order_fields if f in fields] + [f for f in fields if f not in order_fields]
+    fields = ofields[:]
     field_filter = ""
     field = fields[-1]
     if field in ["file", "site", "dataset"]:
@@ -126,21 +128,12 @@ def run_das_client(
     run_cmd("rm -f %s" % efile)
     results = []
     for item in jdata["data"]:
-        res = str(item[field][0][field_map[field]])
-        xf = "lumi"
-        if (len(fields) > 1) and (fields[0] == xf):
-            try:
-                res = res + " [" + ",".join([str(i) for i in item[xf][0][field_map[xf]]]) + "]"
-            except Exception as e:
-                with open(efile, "w") as ofile:
-                    ofile.write("Wrong DAS result format for lumi\n")
-                    ofile.write(json.dumps(item))
-                    ofile.write("\n%s\n" % e)
-                print("  Failed to load das output:", sha, e)
-                return False
-        if fields[0] == "file" and res in ignore_lfn:
-            print("  Ignoring %s" % res)
+        if ("file" in fields) and str(item["file"][0][field_map["file"]]) in ignore_lfn:
             continue
+        res=[]
+        for f in fields:
+          res.append(str(item[f][0][field_map[f]]))
+        res = " ".join(res)
         if not res in results:
             results.append(res)
     print("  Results:", sha, len(results))

@@ -153,7 +153,7 @@ def run_das_client(
             fvalue = field_map[fname]
             fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
             res.append(str(fdata).replace(" ", ""))
-            if (f == "file.nevents") and (fdata == 0):
+            if (f == "file.nevents") and (fdata < 900):
                 res_ok = False
         res = " ".join(res)
         if res_ok:
@@ -192,12 +192,14 @@ def run_das_client(
         else:
             run_cmd("mv %s.tmp %s" % (xfile, xfile))
         print("  Success %s '%s', found %s results." % (sha, query, len(results)))
-        if results:
+        if total_results:
             with open(outfile, "w") as ofile:
-                for res in sorted(results):
-                    ofile.write(res + "\n")
-                for res in sorted(xresults):
-                    ofile.write(res + "\n")
+                if results:
+                    for res in sorted(results):
+                        ofile.write(res + "\n")
+                else:
+                    for res in sorted(xresults):
+                        ofile.write(res + "\n")
             run_cmd("echo '%s' > %s.timestamp" % (int(time()), outfile))
         else:
             run_cmd("rm -f %s" % (outfile))

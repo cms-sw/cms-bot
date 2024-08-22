@@ -77,14 +77,16 @@ if [ "${FORMAT}" = "json" ]  ; then
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
 else
-  QUERY_RESULTS=$((${DOWNLOAD_CMD} "${QUERY_URL}" || true) | grep -a /store/ | sed 's|\s*$||g;s|"||g')
+  QUERY_RESULTS=$((${DOWNLOAD_CMD} "${QUERY_URL}" || true) | sed 's|\s*$||g;s|"||g')
   if [ "${QUERY_RESULTS}" = "" ] ; then
     sleep 1
     ${ORIG_DAS_CLIENT} "$@" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   else
     echo "${QUERY_RESULTS}" > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out
   fi
-  [ $((get_parent_cmds $$ 0 2>&1 || true) | grep -a '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
+  if [ $(echo "${QUERY_RESULTS}" | grep /store/ |wc -l) -gt 0 ] ; then
+    [ $((get_parent_cmds $$ 0 2>&1 || true) | grep -a '/cmsDriver.py' | wc -l) -gt 0 ] && LIMIT_RESULTS="YES"
+  fi
 fi
 if [ "$LIMIT_RESULTS" = "YES" ] ; then
   cat ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.out | ibeos-lfn-sort > ${DAS_QUERY_DIR}/${QUERY_SHA_HASH}.selected

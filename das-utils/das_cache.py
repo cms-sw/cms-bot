@@ -136,7 +136,7 @@ def run_das_client(
             continue
         res=[]
         for f in fields:
-          res.append(str(item[f][0][field_map[f]])replace(' ',''))
+          res.append(str(item[f][0][field_map[f]]).replace(' ',''))
         res = " ".join(res)
         if not res in results:
             results.append(res)

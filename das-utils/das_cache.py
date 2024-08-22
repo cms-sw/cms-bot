@@ -141,19 +141,28 @@ def run_das_client(
         return False
     run_cmd("rm -f %s" % efile)
     results = []
+    xresults = []
     for item in jdata["data"]:
         if ("file" in top_fields) and str(item["file"][0][field_map["file"]]) in ignore_lfn:
             continue
         res = []
+        res_ok = True
         for f in fields:
             fitems = f.split(".")
             fname = fitems[0]
             fvalue = field_map[fname]
             fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
             res.append(str(fdata).replace(" ", ""))
+            if (f == "file.nevents") and (fdata == 0):
+                res_ok = False
         res = " ".join(res)
-        if not res in results:
-            results.append(res)
+        if res_ok:
+            if not res in results:
+                results.append(res)
+        else:
+            if not res in xresults:
+                xresults.append(res)
+    results += xresults
     print("  Results:", sha, len(results))
     if (len(results) == 0) and ("site=T2_CH_CERN" in query):
         query = query.replace("site=T2_CH_CERN", "").strip()

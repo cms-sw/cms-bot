@@ -11,7 +11,8 @@ import sys
 
 sys.path.append(dirname(dirname(abspath(__file__))))  # in order to import cms-bot level modules
 from _py2with3compatibility import run_cmd
-order_fields= ["file", "run", "lumi"]
+
+order_fields = ["file", "run", "lumi"]
 field_map = {
     "file": "name",
     "lumi": "number",
@@ -29,6 +30,7 @@ ignore_lfn = [
     "/store/relval/CMSSW_12_3_0_pre5/RelValTTbar_14TeV/GEN-SIM/123X_mcRun4_realistic_v4_2026D88noPU-v1/10000/49e54274-4298-4576-b47b-866e2247eab5.root",
 ]
 
+
 def write_file(outfile, data):
     outdir = dirname(outfile)
     if not exists(outdir):
@@ -40,8 +42,8 @@ def write_file(outfile, data):
 
 
 def write_json(outfile, cache):
-     data = json.dumps(cache, sort_keys=True, indent=2, separators=(",", ": "))
-     write_file(outfile, data)
+    data = json.dumps(cache, sort_keys=True, indent=2, separators=(",", ": "))
+    write_file(outfile, data)
 
 
 def read_json(infile):
@@ -57,12 +59,20 @@ def run_das_client(
     if "=" in field:
         field = field.split("=", 1)[0]
     fields = field.split(",")
-    ofields = [f for f in order_fields if f in fields] + [f for f in fields if f not in order_fields]
+    ofields = [f for f in order_fields if f in fields] + [
+        f for f in fields if f not in order_fields
+    ]
     fields = ofields[:]
     field_filter = ""
     field = fields[-1]
-    if field in ["file", "site", "dataset"]:
-        field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
+    if not "grep " in query:
+        if field in ["file", "site", "dataset"]:
+            field_filter = " | grep %s.name | sort %s.name | unique" % (field, field)
+    else:
+        fields = [
+            f for f in query.split("grep ")[-1].split("|")[0].replace(" ", "").split(",") if f
+        ]
+    top_fields = [f.split(".")[0] for f in fields]
     retry_str = ""
     if "das_client" in dasclient:
         retry_str = "--retry=%s" % retry
@@ -102,7 +112,7 @@ def run_das_client(
         print("Failed: %s %s\n  %s" % (sha, query, out))
         return False
     all_ok = True
-    for fx in fields:
+    for fx in top_fields:
         fn = field_map[fx]
         for item in jdata["data"]:
             try:
@@ -132,11 +142,15 @@ def run_das_client(
     run_cmd("rm -f %s" % efile)
     results = []
     for item in jdata["data"]:
-        if ("file" in fields) and str(item["file"][0][field_map["file"]]) in ignore_lfn:
+        if ("file" in top_fields) and str(item["file"][0][field_map["file"]]) in ignore_lfn:
             continue
-        res=[]
+        res = []
         for f in fields:
-          res.append(str(item[f][0][field_map[f]]).replace(' ',''))
+            fitems = f.split(".")
+            fname = fitems[0]
+            fvalue = field_map[fname]
+            fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
+            res.append(str(fdata).replace(" ", ""))
         res = " ".join(res)
         if not res in results:
             results.append(res)
@@ -335,7 +349,7 @@ if __name__ == "__main__":
             print("IGNORED : %s" % sha)
             continue
         outfile = "%s/%s/%s" % (opts.store, sha[0:2], sha)
-        query_file = outfile+".query"
+        query_file = outfile + ".query"
         if not exists(query_file):
             write_file(query_file, query)
         print("[%s/%s] Quering %s '%s'" % (nquery, tqueries, sha, query))

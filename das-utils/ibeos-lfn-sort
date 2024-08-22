@@ -1,26 +1,44 @@
 #!/bin/bash
+MAX_COUNT=20
 IBEOS_FILES=""
 NON_IBEOS_FILES=""
+ALL_DATA=()
+XCOUNT=0
+INDX=0
 if [ -f ${LOCALRT}/ibeos_cache.txt ] ; then
-  while read LFN ; do
+  while read DATA ; do
+    ALL_DATA+=("${DATA}")
+    LFN=$(echo "${DATA}" | tr ' ' '\n' | grep '/store/' | head -1)
     case $LFN in
       /store/* )
         if [ $(grep -a "^${LFN}$" ${LOCALRT}/ibeos_cache.txt | wc -l) -gt 0 ] ; then
-          IBEOS_FILES="$IBEOS_FILES $LFN"
+          IBEOS_FILES="$IBEOS_FILES ${LFN}:${INDX}"
+          let XCOUNT+=1
+          [ $XCOUNT -ge $MAX_COUNT ] && break
         else
-          NON_IBEOS_FILES="$NON_IBEOS_FILES $LFN"
+          NON_IBEOS_FILES="$NON_IBEOS_FILES ${LFN}:${INDX}"
         fi
         ;;
     esac
+    let INDX+=1
   done
 else
-  while read LFN ; do
+  while read DATA ; do
+    ALL_DATA+=("${DATA}")
+    LFN=$(echo "${DATA}" | tr ' ' '\n' | grep '/store/' | head -1)
     case $LFN in
-      /store/* ) NON_IBEOS_FILES="$NON_IBEOS_FILES $LFN" ;;
+      /store/* )
+        NON_IBEOS_FILES="$NON_IBEOS_FILES ${LFN}:${INDX}"
+        let XCOUNT+=1
+        [ $XCOUNT -ge $MAX_COUNT ] && break
+        ;;
     esac
+    let INDX+=1
   done
 fi
-IBEOS_FILES=$(echo $IBEOS_FILES | tr ' ' '\n' | grep -a '/store' | sort -u)
-NON_IBEOS_FILES=$(echo $NON_IBEOS_FILES | tr ' ' '\n' | grep -a '/store' | sort -u)
-echo "$IBEOS_FILES $NON_IBEOS_FILES" | tr ' ' '\n' | grep -a '/store' | head -n 20
-
+IBEOS_FILES=$(echo $IBEOS_FILES | tr ' ' '\n' | grep -a '^/store/' | sort -t: -k1,1 -u)
+NON_IBEOS_FILES=$(echo $NON_IBEOS_FILES | tr ' ' '\n' | grep -a '^/store/' | sort -t: -k1,1 -u)
+for lfn in $(echo "$IBEOS_FILES $NON_IBEOS_FILES" | tr ' ' '\n' | grep -a '^/store/' | head -n ${MAX_COUNT}) ; do
+  INDX=$(echo $lfn | sed 's|.*:||')
+  echo "${ALL_DATA[$INDX]}"
+done

@@ -162,9 +162,9 @@ def run_das_client(
         else:
             if not res in xresults:
                 xresults.append(res)
-    results += xresults
-    print("  Results:", sha, len(results))
-    if (len(results) == 0) and ("site=T2_CH_CERN" in query):
+    total_results = results + xresults
+    print("  Results:", sha, len(total_results))
+    if (len(total_results) == 0) and ("site=T2_CH_CERN" in query):
         query = query.replace("site=T2_CH_CERN", "").strip()
         lmt = 0
         if "file" in fields:
@@ -177,7 +177,7 @@ def run_das_client(
         return run_das_client(
             outfile, query, override, dasclient, options, threshold, retry, limit=lmt
         )
-    if results or override:
+    if total_results or override:
         xfile = outfile + ".json"
         write_json(xfile + ".tmp", jdata)
         if exists(xfile):
@@ -195,6 +195,8 @@ def run_das_client(
         if results:
             with open(outfile, "w") as ofile:
                 for res in sorted(results):
+                    ofile.write(res + "\n")
+                for res in sorted(xresults):
                     ofile.write(res + "\n")
             run_cmd("echo '%s' > %s.timestamp" % (int(time()), outfile))
         else:

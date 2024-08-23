@@ -153,7 +153,7 @@ def run_das_client(
             fvalue = field_map[fname]
             fdata = item[fname][0][fvalue] if (len(fitems) == 1) else item[fname][0][fitems[1]]
             res.append(str(fdata).replace(" ", ""))
-            if (f == "file.nevents") and len(res)>1:
+            if (f == "file.nevents") and len(res) > 1:
                 res[-1] = "  %s" % res[-1]
                 if fdata < 900:
                     res_ok = False

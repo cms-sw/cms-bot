@@ -101,7 +101,10 @@ def get_lfns_for_cmsbuild_eos(lfn_per_query=1, days=7):
     kibana_lfns = get_lfns_from_kibana(days)
     eos_lfns = {}
     for lfn in kibana_lfns + das_lfns:
-        eos_lfns[lfn.strip()] = 1
+        if lfn.startswith("/store/"):
+            eos_lfns[lfn.strip()] = 1
+        else:
+            print("Skipping LFN:", lfn)
     print("LFNs from Kibana: %s" % len(kibana_lfns))
     print("LFNs from DAS Queries: %s" % len(das_lfns))
     print("Total LFNs: %s" % len(eos_lfns))
